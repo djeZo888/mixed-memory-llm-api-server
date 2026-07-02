@@ -2,7 +2,7 @@
 
 M5A is a mandatory research-only milestone before GPU stack installation. It exists to prevent an accidental mismatch between the NVIDIA host driver, CUDA Toolkit, PyTorch CUDA wheels, KTransformers GPU components, ik_llama CUDA builds, and NVIDIA Container Toolkit on a mixed system-RAM plus NVIDIA-VRAM workstation.
 
-Until `reports/m5a-cuda-driver-compatibility.md` passes and the human approves the selected version matrix, do not install or configure:
+Until `reports/m5a-cuda-nvidia-compatibility.md` passes and the human approves the selected version matrix, do not install or configure:
 
 - NVIDIA host drivers.
 - CUDA Toolkit or host CUDA packages.
@@ -14,12 +14,17 @@ Until `reports/m5a-cuda-driver-compatibility.md` passes and the human approves t
 
 M5A is documentation and read-only inventory only. It must not install packages, mutate system configuration, build software, download models, or configure Docker/NVIDIA services.
 
+
+## Current M5A Execution Result
+
+The current M5A execution report is `reports/m5a-cuda-nvidia-compatibility.md`. Its conclusion is `STOP` for installation until human review approves the selected version matrix. It recommends host-driver-only M5B with Ubuntu `nvidia-driver-595-open` as the candidate branch, documents R580 LTS as the longer-support fallback, recommends no host CUDA Toolkit for M5B, and keeps KTransformers Blackwell GPU support blocked until SM_120 source-build proof exists.
+
 ## Required Report
 
 The milestone report path is:
 
 ```text
-reports/m5a-cuda-driver-compatibility.md
+reports/m5a-cuda-nvidia-compatibility.md
 ```
 
 The report must include:
@@ -75,6 +80,7 @@ If any answer is uncertain, the report conclusion must be `STOP` and no GPU inst
 Prefer official vendor and upstream project sources. The report should include links, access dates, and the exact table or release notes consulted.
 
 - NVIDIA CUDA Toolkit Release Notes: <https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html>
+- NVIDIA CUDA 12.8 Release Notes: <https://docs.nvidia.com/cuda/archive/12.8.0/cuda-toolkit-release-notes/index.html>
 - NVIDIA CUDA Compatibility Guide: <https://docs.nvidia.com/deploy/cuda-compatibility/latest/index.html>
 - NVIDIA CUDA Installation Guide for Linux: <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>
 - NVIDIA CUDA GPU compute capability list: <https://developer.nvidia.com/cuda/gpus>

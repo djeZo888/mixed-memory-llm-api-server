@@ -70,6 +70,20 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - `user` was not added to the `docker` group
 - NVIDIA Container Toolkit is not installed
 
+
+## Current M5A Research Snapshot
+
+- Active M5A branch: `milestone/m5a-cuda-nvidia-compatibility-research`
+- M5A execution report: `reports/m5a-cuda-nvidia-compatibility.md`
+- M5A conclusion: `STOP` for installation until human review approves the version matrix.
+- Stale remote branches deleted before M5A:
+  - `milestone/m4b-docker-containerd-install`
+  - `test/git-attribution-fix`
+- No other branch was deleted.
+- Detected GPU inventory before driver install: two NVIDIA PCI display devices with device ID `10de:2bb1`, subsystem `10de:204b`; `nvidia-smi` and `nvcc` are absent; `nouveau` is loaded.
+- Current recommendation for human review: M5B should install only the selected host NVIDIA driver first, with Ubuntu `nvidia-driver-595-open` as the recommended candidate and R580 LTS documented as the longer-support fallback.
+- Host CUDA Toolkit, PyTorch, KTransformers, ik_llama, NVIDIA Container Toolkit, models, and API exposure remain blocked.
+
 ## Guardrails
 
 - Run `scripts/common/require-data-mounted.sh` before heavy work.
@@ -82,9 +96,10 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 ## Next Recommended Milestone
 
-- M5A CUDA/NVIDIA compatibility research execution
-- M5A is research/report only
-- M5A must not install drivers, CUDA, PyTorch, KTransformers, ik_llama, NVIDIA Container Toolkit, or models
+- Human review of `reports/m5a-cuda-nvidia-compatibility.md`
+- Do not start M5B until the human approves the driver/CUDA/PyTorch/backend/container matrix
+- If approved, M5B should be host NVIDIA driver installation only, followed by `nvidia-smi` validation before and after reboot
+- M5B must not install CUDA Toolkit, PyTorch, KTransformers, ik_llama, NVIDIA Container Toolkit, models, or API services
 
 ## Known Future Model Candidates
 
