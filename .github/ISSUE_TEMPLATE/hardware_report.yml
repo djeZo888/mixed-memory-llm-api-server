@@ -1,0 +1,44 @@
+name: Hardware report
+description: Share a sanitized hardware compatibility report.
+title: "[Hardware]: "
+labels:
+  - hardware
+body:
+  - type: markdown
+    attributes:
+      value: Do not include secrets, tokens, private keys, passwords, public IPs, or model weights.
+  - type: input
+    id: os
+    attributes:
+      label: OS version
+      placeholder: Ubuntu 24.04.4 LTS
+    validations:
+      required: true
+  - type: textarea
+    id: cpu_ram
+    attributes:
+      label: CPU and RAM
+      description: CPU model, core count, thread count, and system RAM.
+    validations:
+      required: true
+  - type: textarea
+    id: gpu
+    attributes:
+      label: GPU inventory
+      description: GPU model, count, driver version, and VRAM.
+    validations:
+      required: true
+  - type: textarea
+    id: storage
+    attributes:
+      label: Storage layout
+      description: Root disk, data disk, and mount information.
+    validations:
+      required: true
+  - type: textarea
+    id: benchmark
+    attributes:
+      label: Benchmark summary
+      description: Backend, model, quantization, context, tokens/sec, RAM, VRAM, and stability result.
+    validations:
+      required: false
