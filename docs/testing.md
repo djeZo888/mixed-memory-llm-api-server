@@ -12,6 +12,25 @@ Shell scripts must use `set -euo pipefail`, support `--help`, and destructive sc
 
 Later storage tests must verify `/data` survives reboot, is mounted by UUID, is a different filesystem than root, and large AI data is not on root.
 
+## Root-Disk Guard Tests
+
+M3 adds static and fixture tests for `scripts/common/require-data-mounted.sh` and `scripts/common/root-disk-guard.sh`.
+
+Run:
+
+```bash
+bash -n scripts/common/require-data-mounted.sh
+bash -n scripts/common/root-disk-guard.sh
+bash -n tests/shell/test-root-disk-guard-static.sh
+bash -n tests/shell/test-root-disk-guard-fixtures.sh
+tests/shell/test-root-disk-guard-static.sh
+tests/shell/test-root-disk-guard-fixtures.sh
+scripts/common/require-data-mounted.sh
+scripts/common/root-disk-guard.sh
+```
+
+The fixture test builds fake roots under `tests/fixtures` and must not touch real `/`, real `/data`, `/etc/fstab`, Docker, NVIDIA, or model directories.
+
 ## Docker Tests
 
 Later Docker tests must verify Docker Root Dir is `/data/docker`, root Docker/containerd directories are absent, empty, small, relocated, or documented, and `hello-world` works.

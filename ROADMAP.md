@@ -16,11 +16,11 @@ Perform a dry-run proving the intended 2 TB data disk is unused, unmounted, non-
 
 ## M3 root-disk guard
 
-Create reusable checks that fail when model weights, Hugging Face cache, Docker data, containerd snapshots, builds, logs, or service data appear on the root disk.
+Create reusable checks that fail when model weights, Hugging Face cache, Docker data, containerd snapshots, builds, logs, or service data appear on the root disk. M3 produces `scripts/common/require-data-mounted.sh`, `scripts/common/root-disk-guard.sh`, fixture/static tests, documentation, and `reports/m3-root-disk-guard.md`.
 
 ## M4 Docker/containerd storage
 
-Install and configure Docker only after `/data` is mounted. Docker root must be `/data/docker`; containerd storage must be relocated or explicitly documented as safe.
+Install and configure Docker only after `/data` is mounted and M3 root-disk guard passes. Docker root must be `/data/docker`; containerd storage must be relocated or explicitly documented as safe.
 
 ## M5 NVIDIA host driver
 
