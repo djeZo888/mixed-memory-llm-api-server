@@ -35,6 +35,21 @@ The fixture test builds fake roots under `tests/fixtures` and must not touch rea
 
 Later Docker tests must verify Docker Root Dir is `/data/docker`, root Docker/containerd directories are absent, empty, small, relocated, or documented, and `hello-world` works.
 
+M4A adds static tests for Docker/containerd planning scripts:
+
+```bash
+bash -n scripts/docker/install-docker.sh
+bash -n scripts/docker/configure-docker-data-root.sh
+bash -n scripts/docker/verify-docker-storage.sh
+bash -n tests/shell/test-docker-scripts-static.sh
+tests/shell/test-docker-scripts-static.sh
+scripts/docker/install-docker.sh --dry-run
+scripts/docker/configure-docker-data-root.sh --dry-run
+scripts/docker/verify-docker-storage.sh || true
+```
+
+`hello-world` is reserved for M4B after Docker Root Dir is verified as `/data/docker`.
+
 ## GPU Tests
 
 Later GPU tests must verify host `nvidia-smi` and GPU access inside Docker containers.

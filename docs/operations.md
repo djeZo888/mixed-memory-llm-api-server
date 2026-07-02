@@ -31,3 +31,27 @@ scripts/common/root-disk-guard.sh --report reports/m3-root-disk-guard.md
 ```
 
 The guard is read-only. It reports suspicious files, large high-risk root paths, root free-space pressure, `/data` mount problems, and Hugging Face cache environment mistakes. It does not clean or repair anything.
+
+## Docker/containerd Storage
+
+Before M4B actual installation, review the M4A dry-run report and confirm Docker/containerd storage will stay on `/data`.
+
+Dry-run commands:
+
+```bash
+scripts/docker/install-docker.sh --dry-run
+scripts/docker/configure-docker-data-root.sh --dry-run
+scripts/docker/verify-docker-storage.sh || true
+```
+
+Actual M4B commands require explicit approval flags:
+
+```bash
+scripts/common/require-data-mounted.sh
+scripts/common/root-disk-guard.sh
+scripts/docker/install-docker.sh --yes-install-docker
+scripts/docker/configure-docker-data-root.sh --yes-configure-docker-storage
+scripts/docker/verify-docker-storage.sh
+```
+
+Do not pull images or run containers until `scripts/docker/verify-docker-storage.sh` confirms Docker Root Dir is `/data/docker` and `/var/lib/docker` plus `/var/lib/containerd` are absent, empty, small, relocated, or documented.
