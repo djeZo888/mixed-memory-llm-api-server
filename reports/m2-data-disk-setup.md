@@ -1210,3 +1210,20 @@ Earlier STOP sections in this report document safety-gate defects found during e
 PASS
 
 VM still needs reboot verification. Next recommended task: reboot VM 120 only, then run M2B post-reboot verification.
+
+
+## M2B automated reboot prepared
+
+- Timestamp: 2026-07-02T09:15:41+00:00
+- Temporary service path: `/etc/systemd/system/m2b-post-reboot-verify.service`
+- Temporary runner path: `/data/services/m2b-post-reboot/m2b-post-reboot-verify.sh`
+- Log path: `/data/logs/m2b-post-reboot-verify.log`
+- Status path: `/data/services/m2b-post-reboot/PASS` or `/data/services/m2b-post-reboot/STOP`
+- Service enabled: `m2b-post-reboot-verify.service`
+- Reboot command to be run from inside the guest only: `sudo -n systemctl reboot`
+- Reboot target: VM 120 guest only; no Proxmox UI action and no forced reboot.
+- Docker was not installed or configured.
+- NVIDIA drivers or toolkit were not installed or configured.
+- No inference backends were configured.
+- No models were downloaded.
+- No API was exposed.
