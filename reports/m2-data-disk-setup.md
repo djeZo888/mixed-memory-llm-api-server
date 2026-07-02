@@ -1227,3 +1227,680 @@ VM still needs reboot verification. Next recommended task: reboot VM 120 only, t
 - No inference backends were configured.
 - No models were downloaded.
 - No API was exposed.
+
+## M2A Read-Only Verification
+
+- Timestamp: 2026-07-02T09:17:14+00:00
+- Hostname: llmserver
+- User: user
+- Branch: milestone/m2-data-disk-setup
+
+### findmnt /data
+
+```console
+$ findmnt /data
+TARGET SOURCE    FSTYPE OPTIONS
+/data  /dev/sdb1 ext4   rw,relatime
+
+[exit=0]
+```
+
+### fstab active /data entry
+
+```console
+$ grep -E '^[[:space:]]*UUID=[^[:space:]]+[[:space:]]+/data[[:space:]]+ext4[[:space:]]+' /etc/fstab
+UUID=8daf56f1-5649-4163-9d87-919c2d271875 /data ext4 defaults,nofail,x-systemd.device-timeout=30 0 2
+
+[exit=0]
+```
+
+### df -hT / /data
+
+```console
+$ df -hT / /data
+Filesystem                        Type  Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  6.4G  7.1G  48% /
+/dev/sdb1                         ext4  2.0T  796K  1.9T   1% /data
+
+[exit=0]
+```
+
+### lsblk verification
+
+```console
+$ lsblk -o NAME\,PATH\,SIZE\,TYPE\,FSTYPE\,LABEL\,UUID\,MOUNTPOINTS\,MODEL\,SERIAL
+NAME                      PATH                               SIZE TYPE FSTYPE      LABEL   UUID                                   MOUNTPOINTS MODEL         SERIAL
+sda                       /dev/sda                            32G disk                                                                        QEMU HARDDISK drive-scsi0
+├─sda1                    /dev/sda1                            1G part vfat                BBE0-E924                              /boot/efi
+├─sda2                    /dev/sda2                            2G part ext4                1e35ddc8-6f3c-4eec-9650-6ef93d252b3b   /boot
+└─sda3                    /dev/sda3                         28.9G part LVM2_member         2PRJo6-giqY-jfyu-CBsX-1A7g-qwn3-6Vlfwp
+  └─ubuntu--vg-ubuntu--lv /dev/mapper/ubuntu--vg-ubuntu--lv 14.5G lvm  ext4                bc752bce-bb3f-4802-8adf-69c45a88689d   /
+sdb                       /dev/sdb                             2T disk                                                                        QEMU HARDDISK aidata2tb
+└─sdb1                    /dev/sdb1                            2T part ext4        AI_DATA 8daf56f1-5649-4163-9d87-919c2d271875   /data
+
+[exit=0]
+```
+
+### root and data source summary
+
+```console
+$ printf 'root=%s\ndata=%s\n' '/dev/mapper/ubuntu--vg-ubuntu--lv' '/dev/sdb1'
+root=/dev/mapper/ubuntu--vg-ubuntu--lv
+data=/dev/sdb1
+
+[exit=0]
+```
+
+### directory permission verification summary
+
+```console
+$ stat -c '%A %a %U:%G %n' /data /data/models /data/hf-cache /data/hf-cache/hub /data/hf-cache/xet /data/hf-cache/assets /data/hf-cache/datasets /data/hf-cache/transformers /data/hf-cache/xdg /data/docker /data/containerd /data/services /data/build /data/logs /data/backups /data/services/secrets
+drwxr-xr-x 755 root:root /data
+drwxrwsr-x 2775 user:ai /data/models
+drwxrwsr-x 2775 user:ai /data/hf-cache
+drwxrwsr-x 2775 user:ai /data/hf-cache/hub
+drwxrwsr-x 2775 user:ai /data/hf-cache/xet
+drwxrwsr-x 2775 user:ai /data/hf-cache/assets
+drwxrwsr-x 2775 user:ai /data/hf-cache/datasets
+drwxrwsr-x 2775 user:ai /data/hf-cache/transformers
+drwxrwsr-x 2775 user:ai /data/hf-cache/xdg
+drwx--x--x 711 root:root /data/docker
+drwx--x--x 711 root:root /data/containerd
+drwxrwsr-x 2775 user:ai /data/services
+drwxrwsr-x 2775 user:ai /data/build
+drwxrwsr-x 2775 user:ai /data/logs
+drwxrwsr-x 2775 user:ai /data/backups
+drwxrws--- 2770 user:ai /data/services/secrets
+
+[exit=0]
+```
+
+### AI data env vars in login shell
+
+```console
+$ bash -lc "env | grep -E '^(AI_DATA|HF_HOME|HF_HUB_CACHE|HF_XET_CACHE|HF_ASSETS_CACHE|HF_DATASETS_CACHE|TRANSFORMERS_CACHE|XDG_CACHE_HOME|AI_BUILD_DIR|AI_LOG_DIR)=' | sort"
+AI_BUILD_DIR=/data/build
+AI_DATA=/data
+AI_LOG_DIR=/data/logs
+HF_ASSETS_CACHE=/data/hf-cache/assets
+HF_DATASETS_CACHE=/data/hf-cache/datasets
+HF_HOME=/data/hf-cache
+HF_HUB_CACHE=/data/hf-cache/hub
+HF_XET_CACHE=/data/hf-cache/xet
+TRANSFORMERS_CACHE=/data/hf-cache/transformers
+XDG_CACHE_HOME=/data/hf-cache/xdg
+
+[exit=0]
+```
+
+## M2A Read-Only Verification Conclusion
+
+PASS
+
+/data mount, UUID fstab entry, AI_DATA label, directory permissions, and AI/Hugging Face environment variables verified. Reboot verification is still required.
+
+## M2A Read-Only Verification
+
+- Timestamp: 2026-07-02T09:17:15+00:00
+- Hostname: llmserver
+- User: user
+- Branch: milestone/m2-data-disk-setup
+
+### findmnt /data
+
+```console
+$ findmnt /data
+TARGET SOURCE    FSTYPE OPTIONS
+/data  /dev/sdb1 ext4   rw,relatime
+
+[exit=0]
+```
+
+### fstab active /data entry
+
+```console
+$ grep -E '^[[:space:]]*UUID=[^[:space:]]+[[:space:]]+/data[[:space:]]+ext4[[:space:]]+' /etc/fstab
+UUID=8daf56f1-5649-4163-9d87-919c2d271875 /data ext4 defaults,nofail,x-systemd.device-timeout=30 0 2
+
+[exit=0]
+```
+
+### df -hT / /data
+
+```console
+$ df -hT / /data
+Filesystem                        Type  Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  6.4G  7.1G  48% /
+/dev/sdb1                         ext4  2.0T  808K  1.9T   1% /data
+
+[exit=0]
+```
+
+### lsblk verification
+
+```console
+$ lsblk -o NAME\,PATH\,SIZE\,TYPE\,FSTYPE\,LABEL\,UUID\,MOUNTPOINTS\,MODEL\,SERIAL
+NAME                      PATH                               SIZE TYPE FSTYPE      LABEL   UUID                                   MOUNTPOINTS MODEL         SERIAL
+sda                       /dev/sda                            32G disk                                                                        QEMU HARDDISK drive-scsi0
+├─sda1                    /dev/sda1                            1G part vfat                BBE0-E924                              /boot/efi
+├─sda2                    /dev/sda2                            2G part ext4                1e35ddc8-6f3c-4eec-9650-6ef93d252b3b   /boot
+└─sda3                    /dev/sda3                         28.9G part LVM2_member         2PRJo6-giqY-jfyu-CBsX-1A7g-qwn3-6Vlfwp
+  └─ubuntu--vg-ubuntu--lv /dev/mapper/ubuntu--vg-ubuntu--lv 14.5G lvm  ext4                bc752bce-bb3f-4802-8adf-69c45a88689d   /
+sdb                       /dev/sdb                             2T disk                                                                        QEMU HARDDISK aidata2tb
+└─sdb1                    /dev/sdb1                            2T part ext4        AI_DATA 8daf56f1-5649-4163-9d87-919c2d271875   /data
+
+[exit=0]
+```
+
+### root and data source summary
+
+```console
+$ printf 'root=%s\ndata=%s\n' '/dev/mapper/ubuntu--vg-ubuntu--lv' '/dev/sdb1'
+root=/dev/mapper/ubuntu--vg-ubuntu--lv
+data=/dev/sdb1
+
+[exit=0]
+```
+
+### directory permission verification summary
+
+```console
+$ stat -c '%A %a %U:%G %n' /data /data/models /data/hf-cache /data/hf-cache/hub /data/hf-cache/xet /data/hf-cache/assets /data/hf-cache/datasets /data/hf-cache/transformers /data/hf-cache/xdg /data/docker /data/containerd /data/services /data/build /data/logs /data/backups /data/services/secrets
+drwxr-xr-x 755 root:root /data
+drwxrwsr-x 2775 user:ai /data/models
+drwxrwsr-x 2775 user:ai /data/hf-cache
+drwxrwsr-x 2775 user:ai /data/hf-cache/hub
+drwxrwsr-x 2775 user:ai /data/hf-cache/xet
+drwxrwsr-x 2775 user:ai /data/hf-cache/assets
+drwxrwsr-x 2775 user:ai /data/hf-cache/datasets
+drwxrwsr-x 2775 user:ai /data/hf-cache/transformers
+drwxrwsr-x 2775 user:ai /data/hf-cache/xdg
+drwx--x--x 711 root:root /data/docker
+drwx--x--x 711 root:root /data/containerd
+drwxrwsr-x 2775 user:ai /data/services
+drwxrwsr-x 2775 user:ai /data/build
+drwxrwsr-x 2775 user:ai /data/logs
+drwxrwsr-x 2775 user:ai /data/backups
+drwxrws--- 2770 user:ai /data/services/secrets
+
+[exit=0]
+```
+
+### AI data env vars in login shell
+
+```console
+$ bash -lc "env | grep -E '^(AI_DATA|HF_HOME|HF_HUB_CACHE|HF_XET_CACHE|HF_ASSETS_CACHE|HF_DATASETS_CACHE|TRANSFORMERS_CACHE|XDG_CACHE_HOME|AI_BUILD_DIR|AI_LOG_DIR)=' | sort"
+AI_BUILD_DIR=/data/build
+AI_DATA=/data
+AI_LOG_DIR=/data/logs
+HF_ASSETS_CACHE=/data/hf-cache/assets
+HF_DATASETS_CACHE=/data/hf-cache/datasets
+HF_HOME=/data/hf-cache
+HF_HUB_CACHE=/data/hf-cache/hub
+HF_XET_CACHE=/data/hf-cache/xet
+TRANSFORMERS_CACHE=/data/hf-cache/transformers
+XDG_CACHE_HOME=/data/hf-cache/xdg
+
+[exit=0]
+```
+
+## M2A Read-Only Verification Conclusion
+
+PASS
+
+/data mount, UUID fstab entry, AI_DATA label, directory permissions, and AI/Hugging Face environment variables verified. Reboot verification is still required.
+
+## M2B post-reboot verification
+
+- Timestamp: 2026-07-02T09:17:15+00:00
+- Hostname: llmserver
+- Uptime:  09:17:15 up 0 min,  3 users,  load average: 0.19, 0.07, 0.02
+- Git branch: milestone/m2-data-disk-setup
+- Commit before verification: aeafb731b496ae9a6487464e9ec56a783368bccc
+
+### findmnt /data Summary
+
+```text
+TARGET SOURCE    FSTYPE OPTIONS
+/data  /dev/sdb1 ext4   rw,relatime
+```
+
+### df -hT / /data Summary
+
+```text
+Filesystem                        Type  Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  6.4G  7.1G  48% /
+/dev/sdb1                         ext4  2.0T  812K  1.9T   1% /data
+```
+
+### lsblk Summary
+
+```text
+NAME                      PATH                               SIZE TYPE FSTYPE      LABEL   UUID                                   MOUNTPOINTS MODEL         SERIAL
+sda                       /dev/sda                            32G disk                                                                        QEMU HARDDISK drive-scsi0
+├─sda1                    /dev/sda1                            1G part vfat                BBE0-E924                              /boot/efi
+├─sda2                    /dev/sda2                            2G part ext4                1e35ddc8-6f3c-4eec-9650-6ef93d252b3b   /boot
+└─sda3                    /dev/sda3                         28.9G part LVM2_member         2PRJo6-giqY-jfyu-CBsX-1A7g-qwn3-6Vlfwp
+  └─ubuntu--vg-ubuntu--lv /dev/mapper/ubuntu--vg-ubuntu--lv 14.5G lvm  ext4                bc752bce-bb3f-4802-8adf-69c45a88689d   /
+sdb                       /dev/sdb                             2T disk                                                                        QEMU HARDDISK aidata2tb
+└─sdb1                    /dev/sdb1                            2T part ext4        AI_DATA 8daf56f1-5649-4163-9d87-919c2d271875   /data
+```
+
+### fstab /data Line
+
+```text
+UUID=8daf56f1-5649-4163-9d87-919c2d271875 /data ext4 defaults,nofail,x-systemd.device-timeout=30 0 2
+```
+
+### Directory And Permission Summary
+
+```text
+drwxr-xr-x 755 root:root /data
+drwxrwsr-x 2775 user:ai /data/models
+drwxrwsr-x 2775 user:ai /data/hf-cache
+drwxrwsr-x 2775 user:ai /data/hf-cache/hub
+drwxrwsr-x 2775 user:ai /data/hf-cache/xet
+drwxrwsr-x 2775 user:ai /data/hf-cache/assets
+drwxrwsr-x 2775 user:ai /data/hf-cache/datasets
+drwxrwsr-x 2775 user:ai /data/hf-cache/transformers
+drwxrwsr-x 2775 user:ai /data/hf-cache/xdg
+drwx--x--x 711 root:root /data/docker
+drwx--x--x 711 root:root /data/containerd
+drwxrwsr-x 2775 user:ai /data/services
+drwxrwsr-x 2775 user:ai /data/build
+drwxrwsr-x 2775 user:ai /data/logs
+drwxrwsr-x 2775 user:ai /data/backups
+drwxrws--- 2770 user:ai /data/services/secrets
+```
+
+### Old Root-Disk /data Backup Summary
+
+```text
+drwxr-xr-x 4 root root 4096 Jul  1 00:52 /data.pre-mount-root-20260702-083425
+   393230      4 drwxr-xr-x   4 root     root         4096 Jul  1 00:52 /data.pre-mount-root-20260702-083425
+   393231      4 drwxr-xr-x   2 root     root         4096 Jun 30 22:38 /data.pre-mount-root-20260702-083425/docker
+   393262      4 drwxr-xr-x   3 root     root         4096 Jul  1 00:52 /data.pre-mount-root-20260702-083425/services
+   393263      4 drwxr-xr-x   2 root     root         4096 Jul  1 00:52 /data.pre-mount-root-20260702-083425/services/codex-smoke-test
+```
+
+### Environment Variable Check
+
+```text
+AI_BUILD_DIR=/data/build
+AI_DATA=/data
+AI_LOG_DIR=/data/logs
+HF_ASSETS_CACHE=/data/hf-cache/assets
+HF_DATASETS_CACHE=/data/hf-cache/datasets
+HF_HOME=/data/hf-cache
+HF_HUB_CACHE=/data/hf-cache/hub
+HF_XET_CACHE=/data/hf-cache/xet
+TRANSFORMERS_CACHE=/data/hf-cache/transformers
+XDG_CACHE_HOME=/data/hf-cache/xdg
+```
+
+### Checks Before Commit
+
+```text
+bash -n scripts/storage/prepare-data-disk.sh: PASS
+bash -n scripts/storage/verify-data-mount.sh: PASS
+bash -n tests/shell/test-prepare-data-disk-static.sh: PASS
+tests/shell/test-prepare-data-disk-static.sh: PASS
+scripts/storage/verify-data-mount.sh: PASS
+
+```
+
+### PASS/STOP Conclusion
+
+PASS
+
+/data survived reboot on /dev/sdb1 with ext4 label AI_DATA and UUID 8daf56f1-5649-4163-9d87-919c2d271875. /data is separate from /. The fstab entry uses UUID= and not /dev/sdb1. Required directories, ownership, permissions, old root-disk /data backup, and AI/Hugging Face login-shell environment variables were verified.
+
+No Docker, NVIDIA, inference backend, model download, or API exposure changes were made by this post-reboot verifier.
+
+Next recommended milestone: M3 root-disk guard.
+
+## M2B post-reboot verification
+
+- Timestamp: 2026-07-02T09:17:15+00:00
+- Hostname: llmserver
+- Uptime:  09:17:15 up 0 min,  3 users,  load average: 0.19, 0.07, 0.02
+- Git branch: milestone/m2-data-disk-setup
+
+### PASS/STOP Conclusion
+
+STOP
+
+Reason: secret scan found possible real secret
+
+No Docker, NVIDIA, model, or API configuration was intentionally changed by this post-reboot verifier.
+
+## M2A Read-Only Verification
+
+- Timestamp: 2026-07-02T09:17:57+00:00
+- Hostname: llmserver
+- User: user
+- Branch: milestone/m2-data-disk-setup
+
+### findmnt /data
+
+```console
+$ findmnt /data
+TARGET SOURCE    FSTYPE OPTIONS
+/data  /dev/sdb1 ext4   rw,relatime
+
+[exit=0]
+```
+
+### fstab active /data entry
+
+```console
+$ grep -E '^[[:space:]]*UUID=[^[:space:]]+[[:space:]]+/data[[:space:]]+ext4[[:space:]]+' /etc/fstab
+UUID=8daf56f1-5649-4163-9d87-919c2d271875 /data ext4 defaults,nofail,x-systemd.device-timeout=30 0 2
+
+[exit=0]
+```
+
+### df -hT / /data
+
+```console
+$ df -hT / /data
+Filesystem                        Type  Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  6.4G  7.1G  48% /
+/dev/sdb1                         ext4  2.0T  824K  1.9T   1% /data
+
+[exit=0]
+```
+
+### lsblk verification
+
+```console
+$ lsblk -o NAME\,PATH\,SIZE\,TYPE\,FSTYPE\,LABEL\,UUID\,MOUNTPOINTS\,MODEL\,SERIAL
+NAME                      PATH                               SIZE TYPE FSTYPE      LABEL   UUID                                   MOUNTPOINTS MODEL         SERIAL
+sda                       /dev/sda                            32G disk                                                                        QEMU HARDDISK drive-scsi0
+├─sda1                    /dev/sda1                            1G part vfat                BBE0-E924                              /boot/efi
+├─sda2                    /dev/sda2                            2G part ext4                1e35ddc8-6f3c-4eec-9650-6ef93d252b3b   /boot
+└─sda3                    /dev/sda3                         28.9G part LVM2_member         2PRJo6-giqY-jfyu-CBsX-1A7g-qwn3-6Vlfwp
+  └─ubuntu--vg-ubuntu--lv /dev/mapper/ubuntu--vg-ubuntu--lv 14.5G lvm  ext4                bc752bce-bb3f-4802-8adf-69c45a88689d   /
+sdb                       /dev/sdb                             2T disk                                                                        QEMU HARDDISK aidata2tb
+└─sdb1                    /dev/sdb1                            2T part ext4        AI_DATA 8daf56f1-5649-4163-9d87-919c2d271875   /data
+
+[exit=0]
+```
+
+### root and data source summary
+
+```console
+$ printf 'root=%s\ndata=%s\n' '/dev/mapper/ubuntu--vg-ubuntu--lv' '/dev/sdb1'
+root=/dev/mapper/ubuntu--vg-ubuntu--lv
+data=/dev/sdb1
+
+[exit=0]
+```
+
+### directory permission verification summary
+
+```console
+$ stat -c '%A %a %U:%G %n' /data /data/models /data/hf-cache /data/hf-cache/hub /data/hf-cache/xet /data/hf-cache/assets /data/hf-cache/datasets /data/hf-cache/transformers /data/hf-cache/xdg /data/docker /data/containerd /data/services /data/build /data/logs /data/backups /data/services/secrets
+drwxr-xr-x 755 root:root /data
+drwxrwsr-x 2775 user:ai /data/models
+drwxrwsr-x 2775 user:ai /data/hf-cache
+drwxrwsr-x 2775 user:ai /data/hf-cache/hub
+drwxrwsr-x 2775 user:ai /data/hf-cache/xet
+drwxrwsr-x 2775 user:ai /data/hf-cache/assets
+drwxrwsr-x 2775 user:ai /data/hf-cache/datasets
+drwxrwsr-x 2775 user:ai /data/hf-cache/transformers
+drwxrwsr-x 2775 user:ai /data/hf-cache/xdg
+drwx--x--x 711 root:root /data/docker
+drwx--x--x 711 root:root /data/containerd
+drwxrwsr-x 2775 user:ai /data/services
+drwxrwsr-x 2775 user:ai /data/build
+drwxrwsr-x 2775 user:ai /data/logs
+drwxrwsr-x 2775 user:ai /data/backups
+drwxrws--- 2770 user:ai /data/services/secrets
+
+[exit=0]
+```
+
+### AI data env vars in login shell
+
+```console
+$ bash -lc "env | grep -E '^(AI_DATA|HF_HOME|HF_HUB_CACHE|HF_XET_CACHE|HF_ASSETS_CACHE|HF_DATASETS_CACHE|TRANSFORMERS_CACHE|XDG_CACHE_HOME|AI_BUILD_DIR|AI_LOG_DIR)=' | sort"
+AI_BUILD_DIR=/data/build
+AI_DATA=/data
+AI_LOG_DIR=/data/logs
+HF_ASSETS_CACHE=/data/hf-cache/assets
+HF_DATASETS_CACHE=/data/hf-cache/datasets
+HF_HOME=/data/hf-cache
+HF_HUB_CACHE=/data/hf-cache/hub
+HF_XET_CACHE=/data/hf-cache/xet
+TRANSFORMERS_CACHE=/data/hf-cache/transformers
+XDG_CACHE_HOME=/data/hf-cache/xdg
+
+[exit=0]
+```
+
+## M2A Read-Only Verification Conclusion
+
+PASS
+
+/data mount, UUID fstab entry, AI_DATA label, directory permissions, and AI/Hugging Face environment variables verified. Reboot verification is still required.
+
+## M2A Read-Only Verification
+
+- Timestamp: 2026-07-02T09:17:57+00:00
+- Hostname: llmserver
+- User: user
+- Branch: milestone/m2-data-disk-setup
+
+### findmnt /data
+
+```console
+$ findmnt /data
+TARGET SOURCE    FSTYPE OPTIONS
+/data  /dev/sdb1 ext4   rw,relatime
+
+[exit=0]
+```
+
+### fstab active /data entry
+
+```console
+$ grep -E '^[[:space:]]*UUID=[^[:space:]]+[[:space:]]+/data[[:space:]]+ext4[[:space:]]+' /etc/fstab
+UUID=8daf56f1-5649-4163-9d87-919c2d271875 /data ext4 defaults,nofail,x-systemd.device-timeout=30 0 2
+
+[exit=0]
+```
+
+### df -hT / /data
+
+```console
+$ df -hT / /data
+Filesystem                        Type  Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  6.4G  7.1G  48% /
+/dev/sdb1                         ext4  2.0T  836K  1.9T   1% /data
+
+[exit=0]
+```
+
+### lsblk verification
+
+```console
+$ lsblk -o NAME\,PATH\,SIZE\,TYPE\,FSTYPE\,LABEL\,UUID\,MOUNTPOINTS\,MODEL\,SERIAL
+NAME                      PATH                               SIZE TYPE FSTYPE      LABEL   UUID                                   MOUNTPOINTS MODEL         SERIAL
+sda                       /dev/sda                            32G disk                                                                        QEMU HARDDISK drive-scsi0
+├─sda1                    /dev/sda1                            1G part vfat                BBE0-E924                              /boot/efi
+├─sda2                    /dev/sda2                            2G part ext4                1e35ddc8-6f3c-4eec-9650-6ef93d252b3b   /boot
+└─sda3                    /dev/sda3                         28.9G part LVM2_member         2PRJo6-giqY-jfyu-CBsX-1A7g-qwn3-6Vlfwp
+  └─ubuntu--vg-ubuntu--lv /dev/mapper/ubuntu--vg-ubuntu--lv 14.5G lvm  ext4                bc752bce-bb3f-4802-8adf-69c45a88689d   /
+sdb                       /dev/sdb                             2T disk                                                                        QEMU HARDDISK aidata2tb
+└─sdb1                    /dev/sdb1                            2T part ext4        AI_DATA 8daf56f1-5649-4163-9d87-919c2d271875   /data
+
+[exit=0]
+```
+
+### root and data source summary
+
+```console
+$ printf 'root=%s\ndata=%s\n' '/dev/mapper/ubuntu--vg-ubuntu--lv' '/dev/sdb1'
+root=/dev/mapper/ubuntu--vg-ubuntu--lv
+data=/dev/sdb1
+
+[exit=0]
+```
+
+### directory permission verification summary
+
+```console
+$ stat -c '%A %a %U:%G %n' /data /data/models /data/hf-cache /data/hf-cache/hub /data/hf-cache/xet /data/hf-cache/assets /data/hf-cache/datasets /data/hf-cache/transformers /data/hf-cache/xdg /data/docker /data/containerd /data/services /data/build /data/logs /data/backups /data/services/secrets
+drwxr-xr-x 755 root:root /data
+drwxrwsr-x 2775 user:ai /data/models
+drwxrwsr-x 2775 user:ai /data/hf-cache
+drwxrwsr-x 2775 user:ai /data/hf-cache/hub
+drwxrwsr-x 2775 user:ai /data/hf-cache/xet
+drwxrwsr-x 2775 user:ai /data/hf-cache/assets
+drwxrwsr-x 2775 user:ai /data/hf-cache/datasets
+drwxrwsr-x 2775 user:ai /data/hf-cache/transformers
+drwxrwsr-x 2775 user:ai /data/hf-cache/xdg
+drwx--x--x 711 root:root /data/docker
+drwx--x--x 711 root:root /data/containerd
+drwxrwsr-x 2775 user:ai /data/services
+drwxrwsr-x 2775 user:ai /data/build
+drwxrwsr-x 2775 user:ai /data/logs
+drwxrwsr-x 2775 user:ai /data/backups
+drwxrws--- 2770 user:ai /data/services/secrets
+
+[exit=0]
+```
+
+### AI data env vars in login shell
+
+```console
+$ bash -lc "env | grep -E '^(AI_DATA|HF_HOME|HF_HUB_CACHE|HF_XET_CACHE|HF_ASSETS_CACHE|HF_DATASETS_CACHE|TRANSFORMERS_CACHE|XDG_CACHE_HOME|AI_BUILD_DIR|AI_LOG_DIR)=' | sort"
+AI_BUILD_DIR=/data/build
+AI_DATA=/data
+AI_LOG_DIR=/data/logs
+HF_ASSETS_CACHE=/data/hf-cache/assets
+HF_DATASETS_CACHE=/data/hf-cache/datasets
+HF_HOME=/data/hf-cache
+HF_HUB_CACHE=/data/hf-cache/hub
+HF_XET_CACHE=/data/hf-cache/xet
+TRANSFORMERS_CACHE=/data/hf-cache/transformers
+XDG_CACHE_HOME=/data/hf-cache/xdg
+
+[exit=0]
+```
+
+## M2A Read-Only Verification Conclusion
+
+PASS
+
+/data mount, UUID fstab entry, AI_DATA label, directory permissions, and AI/Hugging Face environment variables verified. Reboot verification is still required.
+
+## M2B post-reboot verification
+
+- Timestamp: 2026-07-02T09:17:57+00:00
+- Hostname: llmserver
+- Uptime:  09:17:57 up 1 min,  3 users,  load average: 0.09, 0.06, 0.02
+- Git branch: milestone/m2-data-disk-setup
+- Commit before verification: aeafb731b496ae9a6487464e9ec56a783368bccc
+
+### findmnt /data Summary
+
+```text
+TARGET SOURCE    FSTYPE OPTIONS
+/data  /dev/sdb1 ext4   rw,relatime
+```
+
+### df -hT / /data Summary
+
+```text
+Filesystem                        Type  Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  6.4G  7.1G  48% /
+/dev/sdb1                         ext4  2.0T  836K  1.9T   1% /data
+```
+
+### lsblk Summary
+
+```text
+NAME                      PATH                               SIZE TYPE FSTYPE      LABEL   UUID                                   MOUNTPOINTS MODEL         SERIAL
+sda                       /dev/sda                            32G disk                                                                        QEMU HARDDISK drive-scsi0
+├─sda1                    /dev/sda1                            1G part vfat                BBE0-E924                              /boot/efi
+├─sda2                    /dev/sda2                            2G part ext4                1e35ddc8-6f3c-4eec-9650-6ef93d252b3b   /boot
+└─sda3                    /dev/sda3                         28.9G part LVM2_member         2PRJo6-giqY-jfyu-CBsX-1A7g-qwn3-6Vlfwp
+  └─ubuntu--vg-ubuntu--lv /dev/mapper/ubuntu--vg-ubuntu--lv 14.5G lvm  ext4                bc752bce-bb3f-4802-8adf-69c45a88689d   /
+sdb                       /dev/sdb                             2T disk                                                                        QEMU HARDDISK aidata2tb
+└─sdb1                    /dev/sdb1                            2T part ext4        AI_DATA 8daf56f1-5649-4163-9d87-919c2d271875   /data
+```
+
+### fstab /data Line
+
+```text
+UUID=8daf56f1-5649-4163-9d87-919c2d271875 /data ext4 defaults,nofail,x-systemd.device-timeout=30 0 2
+```
+
+### Directory And Permission Summary
+
+```text
+drwxr-xr-x 755 root:root /data
+drwxrwsr-x 2775 user:ai /data/models
+drwxrwsr-x 2775 user:ai /data/hf-cache
+drwxrwsr-x 2775 user:ai /data/hf-cache/hub
+drwxrwsr-x 2775 user:ai /data/hf-cache/xet
+drwxrwsr-x 2775 user:ai /data/hf-cache/assets
+drwxrwsr-x 2775 user:ai /data/hf-cache/datasets
+drwxrwsr-x 2775 user:ai /data/hf-cache/transformers
+drwxrwsr-x 2775 user:ai /data/hf-cache/xdg
+drwx--x--x 711 root:root /data/docker
+drwx--x--x 711 root:root /data/containerd
+drwxrwsr-x 2775 user:ai /data/services
+drwxrwsr-x 2775 user:ai /data/build
+drwxrwsr-x 2775 user:ai /data/logs
+drwxrwsr-x 2775 user:ai /data/backups
+drwxrws--- 2770 user:ai /data/services/secrets
+```
+
+### Old Root-Disk /data Backup Summary
+
+```text
+drwxr-xr-x 4 root root 4096 Jul  1 00:52 /data.pre-mount-root-20260702-083425
+   393230      4 drwxr-xr-x   4 root     root         4096 Jul  1 00:52 /data.pre-mount-root-20260702-083425
+   393231      4 drwxr-xr-x   2 root     root         4096 Jun 30 22:38 /data.pre-mount-root-20260702-083425/docker
+   393262      4 drwxr-xr-x   3 root     root         4096 Jul  1 00:52 /data.pre-mount-root-20260702-083425/services
+   393263      4 drwxr-xr-x   2 root     root         4096 Jul  1 00:52 /data.pre-mount-root-20260702-083425/services/codex-smoke-test
+```
+
+### Environment Variable Check
+
+```text
+AI_BUILD_DIR=/data/build
+AI_DATA=/data
+AI_LOG_DIR=/data/logs
+HF_ASSETS_CACHE=/data/hf-cache/assets
+HF_DATASETS_CACHE=/data/hf-cache/datasets
+HF_HOME=/data/hf-cache
+HF_HUB_CACHE=/data/hf-cache/hub
+HF_XET_CACHE=/data/hf-cache/xet
+TRANSFORMERS_CACHE=/data/hf-cache/transformers
+XDG_CACHE_HOME=/data/hf-cache/xdg
+```
+
+### Checks Before Commit
+
+```text
+bash -n scripts/storage/prepare-data-disk.sh: PASS
+bash -n scripts/storage/verify-data-mount.sh: PASS
+bash -n tests/shell/test-prepare-data-disk-static.sh: PASS
+tests/shell/test-prepare-data-disk-static.sh: PASS
+scripts/storage/verify-data-mount.sh: PASS
+
+```
+
+### PASS/STOP Conclusion
+
+PASS
+
+/data survived reboot on /dev/sdb1 with ext4 label AI_DATA and UUID 8daf56f1-5649-4163-9d87-919c2d271875. /data is separate from /. The fstab entry uses UUID= and not /dev/sdb1. Required directories, ownership, permissions, old root-disk /data backup, and AI/Hugging Face login-shell environment variables were verified.
+
+No Docker, NVIDIA, inference backend, model download, or API exposure changes were made by this post-reboot verifier.
+
+Next recommended milestone: M3 root-disk guard.
