@@ -55,3 +55,5 @@ scripts/docker/verify-docker-storage.sh
 ```
 
 Do not pull images or run containers until `scripts/docker/verify-docker-storage.sh` confirms Docker Root Dir is `/data/docker` and `/var/lib/docker` plus `/var/lib/containerd` are absent, empty, small, relocated, or documented.
+
+After M4B, `/data/docker` is Docker-managed. Its observed mode may be `0710`; that is acceptable when Docker Root Dir remains `/data/docker`, `scripts/docker/verify-docker-storage.sh` passes, and the root-disk guard passes. Do not change Docker data-root permissions merely to match the earlier M2 bootstrap placeholder policy.

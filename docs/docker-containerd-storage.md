@@ -43,6 +43,14 @@ Snapshotter data is treated as persistent and should remain under the containerd
 
 Users are not added to the `docker` group by default. Membership in that group is effectively root-equivalent on the host. Operators should use `sudo -n docker ...` until a later security milestone explicitly approves a different access model.
 
+## Docker-managed Permissions After Installation
+
+M2 creates `/data/docker` and `/data/containerd` as bootstrap placeholders before Docker and containerd are installed. Those initial permissions are intentionally simple so later milestones can prove the paths exist on `/data`.
+
+After M4B, Docker and containerd own and manage these storage trees. The daemons may tighten permissions under their data roots. `/data/docker` mode `0710` is acceptable when Docker Root Dir is `/data/docker` and Docker storage verification passes.
+
+Do not recursively `chmod` Docker's data-root. Do not change Docker data-root permissions just to match older M2 bootstrap expectations. Post-M4 verification is based on `scripts/docker/verify-docker-storage.sh` and `scripts/common/root-disk-guard.sh`, not on forcing daemon-managed paths back to placeholder modes.
+
 ## M4A Versus M4B
 
 M4A is planning and dry-run only. It creates scripts, static tests, documentation, and reports. It does not install packages, add apt repositories, edit `/etc/docker/daemon.json`, edit `/etc/containerd/config.toml`, restart services, pull images, run containers, or change group membership.
@@ -77,4 +85,3 @@ sudo -n docker compose version
 ```
 
 `hello-world` is intentionally reserved for M4B after storage configuration is verified.
-

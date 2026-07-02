@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPORT_PATH="${M4_REPORT_PATH:-reports/m4-docker-containerd-storage.md}"
+REPORT_PATH="${M4_REPORT_PATH:-reports/m4b-docker-containerd-install.md}"
 DOCKER_DAEMON_JSON="/etc/docker/daemon.json"
 CONTAINERD_CONFIG="/etc/containerd/config.toml"
 DOCKER_DATA_ROOT="/data/docker"
+CONTAINERD_BASE="/data/containerd"
 CONTAINERD_ROOT="/data/containerd/root"
 CONTAINERD_STATE="/run/containerd"
 NONTRIVIAL_MIB=128
@@ -67,7 +68,7 @@ path_mib() {
 
 print_plan() {
   cat <<EOF
-M4 Docker/containerd storage configuration plan
+M4B Docker/containerd storage configuration plan
 
 No commands are executed in dry-run mode.
 
@@ -84,15 +85,13 @@ Planned Docker configuration:
 - Set "data-root" to "$DOCKER_DATA_ROOT".
 
 Planned containerd configuration:
-- Create /etc/containerd if needed.
-- Use containerd's generated default config when no config exists.
+- Generate default config with containerd config default.
 - Set top-level root to "$CONTAINERD_ROOT".
-- Keep runtime state at "$CONTAINERD_STATE".
-- Treat snapshotter data as persistent data under containerd root unless a future config explicitly overrides it.
-- STOP if existing config cannot be parsed or changed safely.
+- Set top-level state to "$CONTAINERD_STATE".
+- Keep snapshotter data under the containerd root.
+- Do not configure GPU container runtime support.
 
 This script never deletes existing Docker/containerd data automatically.
-Report path for actual configuration: $REPORT_PATH
 EOF
 }
 
@@ -128,6 +127,23 @@ run_logged() {
   } >> "$REPORT_PATH"
 }
 
+run_shell_logged() {
+  local label="$1"
+  local command="$2"
+  {
+    printf '\n### %s\n\n' "$label"
+    printf '```console\n'
+    printf '$ %s\n' "$command"
+    set +e
+    bash -o pipefail -c "$command" 2>&1
+    local status=$?
+    set -e
+    printf '\n[exit=%s]\n' "$status"
+    printf '```\n'
+    return "$status"
+  } >> "$REPORT_PATH"
+}
+
 if [[ "$mode" == "dry-run" ]]; then
   print_plan
   exit 0
@@ -135,12 +151,12 @@ fi
 
 cd "$(repo_root)"
 
+sudo -n true
 scripts/common/require-data-mounted.sh
 scripts/common/root-disk-guard.sh
 
-[[ -d /data/docker ]] || { echo "STOP: /data/docker missing" >&2; exit 1; }
-[[ -d /data/containerd ]] || { echo "STOP: /data/containerd missing" >&2; exit 1; }
 command -v python3 >/dev/null 2>&1 || { echo "STOP: python3 required to preserve daemon.json safely" >&2; exit 1; }
+command -v containerd >/dev/null 2>&1 || { echo "STOP: containerd command missing; install Docker packages before configuring containerd" >&2; exit 1; }
 
 docker_root_mib=$(path_mib /var/lib/docker)
 containerd_root_mib=$(path_mib /var/lib/containerd)
@@ -154,7 +170,9 @@ if (( containerd_root_mib > NONTRIVIAL_MIB )); then
 fi
 
 append_report_header
-run_logged "pre-configuration /var/lib sizes" sudo -n du -sx -m /var/lib/docker /var/lib/containerd
+run_shell_logged "pre-configuration /var/lib sizes" "sudo -n du -sx -m /var/lib/docker /var/lib/containerd 2>/dev/null || true"
+
+run_logged "create /data Docker/containerd storage directories" sudo -n install -m 0711 -o root -g root -d "$DOCKER_DATA_ROOT" "$CONTAINERD_BASE" "$CONTAINERD_ROOT"
 run_logged "create Docker config directory" sudo -n install -m 0755 -d /etc/docker
 run_logged "write Docker daemon.json data-root" sudo -n env DOCKER_DAEMON_JSON="$DOCKER_DAEMON_JSON" DOCKER_DATA_ROOT="$DOCKER_DATA_ROOT" python3 - <<'PY'
 import json
@@ -175,12 +193,10 @@ with tmp.open("w", encoding="utf-8") as handle:
     handle.write("\n")
 tmp.replace(path)
 PY
+run_logged "validate Docker daemon.json JSON" python3 -m json.tool "$DOCKER_DAEMON_JSON"
 
 run_logged "create containerd config directory" sudo -n install -m 0755 -d /etc/containerd
-if [[ ! -s "$CONTAINERD_CONFIG" ]]; then
-  command -v containerd >/dev/null 2>&1 || { echo "STOP: containerd command missing; install Docker packages before configuring containerd" >&2; exit 1; }
-  run_logged "generate default containerd config" sudo -n bash -c "containerd config default > '$CONTAINERD_CONFIG'"
-fi
+run_logged "write generated containerd default config" sudo -n bash -c "containerd config default > '$CONTAINERD_CONFIG'"
 run_logged "configure containerd root and state" sudo -n env CONTAINERD_CONFIG="$CONTAINERD_CONFIG" CONTAINERD_ROOT="$CONTAINERD_ROOT" CONTAINERD_STATE="$CONTAINERD_STATE" python3 - <<'PY'
 import os
 import re
@@ -196,11 +212,10 @@ tmp = path.with_suffix(path.suffix + ".tmp")
 tmp.write_text(text, encoding="utf-8")
 tmp.replace(path)
 PY
-run_logged "create containerd data root" sudo -n install -m 0711 -d "$CONTAINERD_ROOT"
-run_logged "post-configuration /var/lib sizes" sudo -n du -sx -m /var/lib/docker /var/lib/containerd
+run_shell_logged "containerd config root/state check" "grep -E '^(root|state) = ' '$CONTAINERD_CONFIG'"
+run_shell_logged "containerd config validator availability" "containerd --help | grep -E 'config' || true"
+run_shell_logged "post-configuration /var/lib and /data sizes" "sudo -n du -sx -m /var/lib/docker /var/lib/containerd '$DOCKER_DATA_ROOT' '$CONTAINERD_BASE' '$CONTAINERD_ROOT' 2>/dev/null || true"
 run_logged "post-configuration root-disk guard" scripts/common/root-disk-guard.sh
 
-cat <<EOF
-PASS: Docker/containerd storage configuration written. Review and restart services only in an approved milestone.
-EOF
+echo "PASS: Docker/containerd storage configuration written. Start services deliberately after daemon-reload."
 

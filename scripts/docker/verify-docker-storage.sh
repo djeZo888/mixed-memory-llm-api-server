@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPORT_PATH="${M4_REPORT_PATH:-reports/m4a-docker-containerd-plan.md}"
+REPORT_PATH="${M4_REPORT_PATH:-reports/m4b-docker-containerd-install.md}"
 SMALL_ROOT_MIB="${M4_SMALL_ROOT_MIB:-128}"
 DOCKER_DATA_ROOT="/data/docker"
 CONTAINERD_DATA_ROOT="/data/containerd"
+CONTAINERD_ROOT="/data/containerd/root"
+CONTAINERD_STATE="/run/containerd"
+DOCKER_DAEMON_JSON="/etc/docker/daemon.json"
+CONTAINERD_CONFIG="/etc/containerd/config.toml"
 
 usage() {
   cat <<'EOF'
 Usage: scripts/docker/verify-docker-storage.sh [--help] [--report PATH]
 
 Read-only verification for Docker/containerd storage policy. This script does
-not pull images, run containers, edit config, or restart services.
+not edit config, restart services, or configure GPU runtime support.
 EOF
 }
 
@@ -70,6 +74,23 @@ run_capture() {
   } >> "$REPORT_PATH"
 }
 
+run_shell_capture() {
+  local label="$1"
+  local command="$2"
+  {
+    printf '\n### %s\n\n' "$label"
+    printf '```console\n'
+    printf '$ %s\n' "$command"
+    set +e
+    bash -o pipefail -c "$command" 2>&1
+    local status=$?
+    set -e
+    printf '\n[exit=%s]\n' "$status"
+    printf '```\n'
+    return "$status"
+  } >> "$REPORT_PATH"
+}
+
 path_mib() {
   local path="$1"
   if [[ ! -e "$path" ]]; then
@@ -91,8 +112,10 @@ append_header
 run_capture "require /data mounted" scripts/common/require-data-mounted.sh || stop "/data mount requirement failed"
 run_capture "pre-verification root-disk guard" scripts/common/root-disk-guard.sh || stop "root-disk guard failed before Docker verification"
 run_capture "df -hT / /data" df -hT / /data
+
 [[ -d "$DOCKER_DATA_ROOT" ]] || stop "$DOCKER_DATA_ROOT is missing"
 [[ -d "$CONTAINERD_DATA_ROOT" ]] || stop "$CONTAINERD_DATA_ROOT is missing"
+[[ -d "$CONTAINERD_ROOT" ]] || stop "$CONTAINERD_ROOT is missing"
 
 docker_mib=$(path_mib /var/lib/docker)
 containerd_mib=$(path_mib /var/lib/containerd)
@@ -111,23 +134,41 @@ if (( containerd_mib > SMALL_ROOT_MIB )); then
   stop "/var/lib/containerd is ${containerd_mib} MiB, above ${SMALL_ROOT_MIB} MiB"
 fi
 
-if ! command -v docker >/dev/null 2>&1; then
-  run_capture "docker command lookup" command -v docker || true
-  stop "Docker is not installed yet; this is expected during M4A dry-run"
-fi
+command -v docker >/dev/null 2>&1 || stop "Docker is not installed"
+command -v containerd >/dev/null 2>&1 || stop "containerd is not installed"
 
-run_capture "systemctl status docker" systemctl status docker --no-pager || true
-run_capture "systemctl status containerd" systemctl status containerd --no-pager || true
+run_capture "systemctl is-active containerd" sudo -n systemctl is-active containerd || stop "containerd service is not active"
+run_capture "systemctl is-active docker" sudo -n systemctl is-active docker || stop "docker service is not active"
+run_capture "systemctl status containerd" sudo -n systemctl status containerd --no-pager || true
+run_capture "systemctl status docker" sudo -n systemctl status docker --no-pager || true
 run_capture "sudo docker version" sudo -n docker version || stop "sudo docker version failed"
 run_capture "sudo docker info" sudo -n docker info || stop "sudo docker info failed"
 run_capture "sudo docker compose version" sudo -n docker compose version || stop "sudo docker compose version failed"
+run_capture "sudo docker buildx version" sudo -n docker buildx version || stop "sudo docker buildx version failed"
 
 docker_root=$(sudo -n docker info --format '{{.DockerRootDir}}' 2>/dev/null || true)
 [[ "$docker_root" == "$DOCKER_DATA_ROOT" ]] || stop "Docker Root Dir is ${docker_root:-unknown}, expected $DOCKER_DATA_ROOT"
 
+grep -Fq "\"data-root\": \"$DOCKER_DATA_ROOT\"" "$DOCKER_DAEMON_JSON" || stop "$DOCKER_DAEMON_JSON does not set data-root to $DOCKER_DATA_ROOT"
+grep -Fxq "root = \"$CONTAINERD_ROOT\"" "$CONTAINERD_CONFIG" || stop "$CONTAINERD_CONFIG does not set root to $CONTAINERD_ROOT"
+grep -Fxq "state = \"$CONTAINERD_STATE\"" "$CONTAINERD_CONFIG" || stop "$CONTAINERD_CONFIG does not set state to $CONTAINERD_STATE"
+
+run_capture "hello-world image inspect" sudo -n docker image inspect hello-world:latest || stop "hello-world image missing; run sudo -n docker run --rm hello-world in M4B"
+run_capture "sudo docker system df" sudo -n docker system df || stop "sudo docker system df failed"
+run_shell_capture "Docker/containerd root and data sizes" "sudo -n du -sh /var/lib/docker /var/lib/containerd '$DOCKER_DATA_ROOT' '$CONTAINERD_DATA_ROOT' '$CONTAINERD_ROOT' 2>/dev/null || true"
 run_capture "post-verification root-disk guard" scripts/common/root-disk-guard.sh || stop "root-disk guard failed after Docker verification"
 
-cat >> "$REPORT_PATH" <<'EOF'
+cat >> "$REPORT_PATH" <<EOF
+
+## Docker/containerd Verification Summary
+
+- Docker installed: yes
+- containerd installed: yes
+- Docker Root Dir: $docker_root
+- containerd root: $CONTAINERD_ROOT
+- containerd state: $CONTAINERD_STATE
+- hello-world image present: yes
+- root-disk guard: PASS
 
 ## Docker/containerd Verification Conclusion
 

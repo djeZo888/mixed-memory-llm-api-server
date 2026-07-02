@@ -5,22 +5,35 @@ REPORT_PATH="reports/m2-data-disk-setup.md"
 
 usage() {
   cat <<'EOF'
-Usage: scripts/storage/verify-data-mount.sh [--help]
+Usage: scripts/storage/verify-data-mount.sh [--help] [--permission-fixture-root PATH]
 
 Run read-only verification for the M2A /data setup and append results to
 reports/m2-data-disk-setup.md.
 EOF
 }
 
-if [[ "${1:-}" == "--help" ]]; then
-  usage
-  exit 0
-fi
-
-if [[ "${1:-}" != "" ]]; then
-  usage >&2
-  exit 2
-fi
+PERMISSION_FIXTURE_ROOT=""
+ALLOW_NON_ROOT_OWNER_FOR_PERMISSION_FIXTURE=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --help)
+      usage
+      exit 0
+      ;;
+    --permission-fixture-root)
+      [[ $# -ge 2 ]] || {
+        usage >&2
+        exit 2
+      }
+      PERMISSION_FIXTURE_ROOT="$2"
+      shift 2
+      ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
 
 
 sanitize() {
@@ -103,6 +116,110 @@ verify_dir() {
   [[ "$actual_mode" == "$mode" ]] || fail "${path} mode ${actual_mode}, expected ${mode}"
 }
 
+require_root_owner() {
+  local path="$1"
+  local actual_owner="$2"
+  if [[ "$ALLOW_NON_ROOT_OWNER_FOR_PERMISSION_FIXTURE" == "1" ]]; then
+    return 0
+  fi
+  [[ "$actual_owner" == "root" ]] || fail "${path} owner ${actual_owner}, expected root"
+}
+
+docker_root_dir() {
+  if command -v docker >/dev/null 2>&1; then
+    sudo -n docker info --format '{{.DockerRootDir}}' 2>/dev/null || true
+  fi
+}
+
+mode_has_any_bits() {
+  local mode="$1"
+  local mask="$2"
+  (( (8#$mode & 8#$mask) != 0 ))
+}
+
+fixture_normalized_mode() {
+  local mode="$1"
+  if [[ "$ALLOW_NON_ROOT_OWNER_FOR_PERMISSION_FIXTURE" == "1" ]]; then
+    echo "${mode: -3}"
+  else
+    echo "$mode"
+  fi
+}
+
+verify_docker_managed_dir() {
+  local path="$1"
+  local actual_owner actual_group actual_mode docker_root
+  [[ -d "$path" ]] || fail "required directory missing: ${path}"
+  actual_owner=$(stat -c '%U' "$path")
+  actual_group=$(stat -c '%G' "$path")
+  actual_mode=$(stat -c '%a' "$path")
+  actual_mode=$(fixture_normalized_mode "$actual_mode")
+  docker_root=$(docker_root_dir)
+
+  if [[ "$docker_root" == "/data/docker" ]]; then
+    require_root_owner "$path" "$actual_owner"
+    mode_has_any_bits "$actual_mode" 002 && fail "${path} mode ${actual_mode} must not be world-writable"
+    mode_has_any_bits "$actual_mode" 020 && fail "${path} mode ${actual_mode} must not be group-writable"
+    case "$actual_mode" in
+      700|710|711) ;;
+      *) fail "${path} mode ${actual_mode}, expected Docker-managed restrictive mode 700, 710, or 711" ;;
+    esac
+    cat >> "$REPORT_PATH" <<EOF
+
+Docker-managed permission check: ${path} is owned by ${actual_owner}:${actual_group} with mode ${actual_mode}. Docker Root Dir is /data/docker, so restrictive daemon-managed permissions are accepted.
+EOF
+  else
+    if [[ "$ALLOW_NON_ROOT_OWNER_FOR_PERMISSION_FIXTURE" == "1" ]]; then
+      [[ "$actual_mode" == "711" ]] || fail "${path} mode ${actual_mode}, expected pre-Docker placeholder mode 711"
+    else
+      verify_dir "$path" root root 711
+    fi
+  fi
+}
+
+verify_containerd_managed_dir() {
+  local path="$1"
+  local actual_owner actual_mode
+  [[ -d "$path" ]] || fail "required directory missing: ${path}"
+  actual_owner=$(stat -c '%U' "$path")
+  actual_mode=$(stat -c '%a' "$path")
+  actual_mode=$(fixture_normalized_mode "$actual_mode")
+  require_root_owner "$path" "$actual_owner"
+  mode_has_any_bits "$actual_mode" 002 && fail "${path} mode ${actual_mode} must not be world-writable"
+  mode_has_any_bits "$actual_mode" 020 && fail "${path} mode ${actual_mode} must not be group-writable"
+  case "$actual_mode" in
+    700|710|711) ;;
+    *) fail "${path} mode ${actual_mode}, expected restrictive root-owned mode 700, 710, or 711" ;;
+  esac
+}
+
+verify_containerd_root_dir() {
+  local path="$1"
+  local actual_owner actual_mode
+  [[ -d "$path" ]] || fail "required directory missing: ${path}"
+  actual_owner=$(stat -c '%U' "$path")
+  actual_mode=$(stat -c '%a' "$path")
+  actual_mode=$(fixture_normalized_mode "$actual_mode")
+  require_root_owner "$path" "$actual_owner"
+  mode_has_any_bits "$actual_mode" 007 && fail "${path} mode ${actual_mode} must not grant permissions to other users"
+  mode_has_any_bits "$actual_mode" 020 && fail "${path} mode ${actual_mode} must not be group-writable"
+  case "$actual_mode" in
+    700|710|750) ;;
+    *) fail "${path} mode ${actual_mode}, expected restrictive containerd root mode 700, 710, or 750" ;;
+  esac
+}
+
+if [[ -n "$PERMISSION_FIXTURE_ROOT" ]]; then
+  ALLOW_NON_ROOT_OWNER_FOR_PERMISSION_FIXTURE=1
+  REPORT_PATH=/tmp/verify-data-mount-permission-fixture-report.md
+  : > "$REPORT_PATH"
+  verify_docker_managed_dir "$PERMISSION_FIXTURE_ROOT/docker"
+  verify_containerd_managed_dir "$PERMISSION_FIXTURE_ROOT/containerd"
+  verify_containerd_root_dir "$PERMISSION_FIXTURE_ROOT/containerd/root"
+  echo "PASS: storage permission fixture accepted"
+  exit 0
+fi
+
 append_header
 run_capture "findmnt /data" findmnt /data || fail "/data is not mounted"
 DATA_SOURCE=$(findmnt -n -o SOURCE /data)
@@ -153,8 +270,11 @@ verify_dir /data/hf-cache/assets user ai 2775
 verify_dir /data/hf-cache/datasets user ai 2775
 verify_dir /data/hf-cache/transformers user ai 2775
 verify_dir /data/hf-cache/xdg user ai 2775
-verify_dir /data/docker root root 711
-verify_dir /data/containerd root root 711
+verify_docker_managed_dir /data/docker
+verify_containerd_managed_dir /data/containerd
+if [[ -d /data/containerd/root ]]; then
+  verify_containerd_root_dir /data/containerd/root
+fi
 verify_dir /data/services user ai 2775
 verify_dir /data/build user ai 2775
 verify_dir /data/logs user ai 2775
@@ -185,7 +305,7 @@ cat >> "$REPORT_PATH" <<'EOF'
 
 PASS
 
-/data mount, UUID fstab entry, AI_DATA label, directory permissions, and AI/Hugging Face environment variables verified. Reboot verification is still required.
+/data mount, UUID fstab entry, AI_DATA label, directory permissions, and AI/Hugging Face environment variables verified. Docker/containerd directories are daemon-managed after M4B; verifier accepts restrictive daemon-managed permissions instead of forcing the initial M2 bootstrap mode. Reboot verification is still required.
 EOF
 
 echo "PASS: verified /data mount"

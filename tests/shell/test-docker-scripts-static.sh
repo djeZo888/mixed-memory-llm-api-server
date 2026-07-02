@@ -39,8 +39,12 @@ for script in scripts/docker/install-docker.sh scripts/docker/configure-docker-d
   grep -q '/data/containerd' "$script" || fail "$script missing /data/containerd policy"
 done
 
+grep -q '/etc/apt/keyrings/docker.asc' scripts/docker/install-docker.sh || fail "install script must use docker.asc key path"
+grep -q '/etc/apt/sources.list.d/docker.sources' scripts/docker/install-docker.sh || fail "install script must use docker.sources source path"
+grep -q 'policy-rc.d' scripts/docker/install-docker.sh || fail "install script must block package service auto-start"
+
 if grep -RInE 'get\.docker\.com|curl[[:space:]].*sh|bash[[:space:]]*<|sh[[:space:]]*<' "${scripts[@]}"; then
-  fail "Docker convenience script reference found"
+  fail "Docker shortcut installer script reference found"
 fi
 
 if grep -RInE 'usermod[[:space:]].*docker|gpasswd[[:space:]].*docker|groupadd[[:space:]].*docker' "${scripts[@]}"; then

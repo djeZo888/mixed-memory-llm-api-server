@@ -824,6 +824,8 @@ create_dirs_and_permissions() {
   run_capture_shell "set setgid modes on user data directories" "sudo -n find /data/models /data/hf-cache /data/services /data/build /data/logs /data/backups -type d -exec chmod 2775 {} +" || stop_now "failed to chmod user data dirs"
   run_capture "set secrets ownership" sudo -n chown user:ai /data/services/secrets || stop_now "failed to chown secrets dir"
   run_capture "set secrets mode" sudo -n chmod 2770 /data/services/secrets || stop_now "failed to chmod secrets dir"
+  # These are initial bootstrap placeholders. Docker and containerd may tighten
+  # permissions later after they own/manage their data roots.
   run_capture "set docker ownership" sudo -n chown root:root /data/docker || stop_now "failed to chown docker dir"
   run_capture "set docker mode" sudo -n chmod 0711 /data/docker || stop_now "failed to chmod docker dir"
   run_capture "set containerd ownership" sudo -n chown root:root /data/containerd || stop_now "failed to chown containerd dir"

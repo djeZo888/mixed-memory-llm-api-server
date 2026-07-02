@@ -1,11 +1,11 @@
 # M3 Root-Disk Guard Report
 
 - Milestone ID: M3
-- Timestamp: 2026-07-02T09:54:54+00:00
+- Timestamp: 2026-07-02T20:17:26+00:00
 - Hostname: llmserver
 - User: user
-- Branch: milestone/m3-root-disk-guard
-- Commit before work: a0a263a92d3c6434ee75cae996af286c1488fb06
+- Branch: milestone/m4b-docker-containerd-install
+- Commit before work: 9f046a8e30129ccd3ef39810db772f968f234378
 - Root path inspected: `/`
 - Data path checked/excluded: `/data`
 - Sudo coverage: sudo -n available for read-only inspection
@@ -37,8 +37,8 @@ TARGET SOURCE    FSTYPE OPTIONS
 ```console
 $ df -hT / /data
 Filesystem                        Type  Size  Used Avail Use% Mounted on
-/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  6.5G  7.1G  48% /
-/dev/sdb1                         ext4  2.0T  1.1M  1.9T   1% /data
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  6.9G  6.6G  52% /
+/dev/sdb1                         ext4  2.0T  2.5M  1.9T   1% /data
 
 [exit=0]
 ```
@@ -65,7 +65,7 @@ XDG_CACHE_HOME=/data/hf-cache/xdg
 
 | Path | Source | Fstype | Label | UUID/identity | Free GiB |
 | --- | --- | --- | --- | --- | --- |
-| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `804208` | 7 |
+| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `803905` | 7 |
 | `/data` | `/dev/sdb1` | `ext4` | `AI_DATA` | `8daf56f1-5649-4163-9d87-919c2d271875` | 1912 |
 
 ## Root Free Space Thresholds
@@ -109,7 +109,7 @@ AI and Hugging Face environment variables were checked in a fresh login shell.
 | `/home/user/codex-bootstrap` | yes | 2 | WARN | expected old bootstrap repo; small |
 | `/tmp` | yes | 1 | PASS | below warning threshold |
 | `/var/tmp` | yes | 1 | PASS | below warning threshold |
-| `/var/log` | yes | 164 | PASS | below warning threshold |
+| `/var/log` | yes | 194 | PASS | below warning threshold |
 | `/opt` | yes | 1 | PASS | below warning threshold |
 | `/srv` | yes | 1 | PASS | below warning threshold |
 | `/models` | no | 0 | PASS | absent |
@@ -143,21 +143,8 @@ AI and Hugging Face environment variables were checked in a fresh login shell.
 
 ## Tests And Checks Run
 
-- `bash -n scripts/common/require-data-mounted.sh`
-- `bash -n scripts/common/root-disk-guard.sh`
-- `bash -n tests/shell/test-root-disk-guard-static.sh`
-- `bash -n tests/shell/test-root-disk-guard-fixtures.sh`
-- `tests/shell/test-root-disk-guard-static.sh`
-- `tests/shell/test-root-disk-guard-fixtures.sh`
-- `scripts/common/require-data-mounted.sh`
 - `scripts/common/root-disk-guard.sh --report reports/m3-root-disk-guard.md`
-- `scripts/storage/verify-data-mount.sh`
-- `git diff --check`
-- grep-based secret scan after report update.
-
-## Secret Scan Result
-
-The grep-based secret scan matched only intentional sanitizer patterns, static test patterns, documentation warnings, CI checks, `.gitignore` entries, and prior report command text. No real secrets, tokens, passwords, private keys, auth files, or real `.env` files were detected in the repository.
+- Additional milestone checks are appended after command execution.
 
 ## Conclusion
 
