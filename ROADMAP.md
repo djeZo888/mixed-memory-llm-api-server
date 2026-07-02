@@ -18,9 +18,13 @@ Perform a dry-run proving the intended 2 TB data disk is unused, unmounted, non-
 
 Create reusable checks that fail when model weights, Hugging Face cache, Docker data, containerd snapshots, builds, logs, or service data appear on the root disk. M3 produces `scripts/common/require-data-mounted.sh`, `scripts/common/root-disk-guard.sh`, fixture/static tests, documentation, and `reports/m3-root-disk-guard.md`.
 
-## M4 Docker/containerd storage
+## M4A Docker/containerd storage planning
 
-Install and configure Docker only after `/data` is mounted and M3 root-disk guard passes. Docker root must be `/data/docker`; containerd storage must be relocated or explicitly documented as safe.
+Create Docker/containerd installation and storage scripts, static tests, dry-run output, and `reports/m4a-docker-containerd-plan.md` without installing packages or editing system configuration. M4A must document Docker's official Ubuntu apt repository method, Docker `data-root` policy, containerd persistent root policy, current `/var/lib/docker` and `/var/lib/containerd` state, and the checks required before actual installation.
+
+## M4B Docker/containerd storage installation
+
+Install and configure Docker only after M4A review, `/data` is mounted, and M3 root-disk guard passes. Docker root must be `/data/docker`; containerd persistent storage must be under `/data/containerd` or explicitly documented as safe. M4B must verify storage before any image pull or container run.
 
 ## M5A CUDA/NVIDIA compatibility research
 
