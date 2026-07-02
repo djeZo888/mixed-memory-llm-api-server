@@ -19,6 +19,7 @@ These instructions are durable project rules for agents and operators working in
 - After M2 completes, use `/data` for all large AI-server data.
 - The root disk must not store models, Hugging Face cache, Docker layers, containerd snapshots, builds, logs, or service data.
 - Do not download model weights until `/data` is mounted and verified.
+- Before and after any milestone that installs Docker/containerd, downloads models, builds inference software, writes logs, or deploys services, run `scripts/common/require-data-mounted.sh` and `scripts/common/root-disk-guard.sh`. Stop if either fails.
 - Expected future data roots include `/data/models`, `/data/hf-cache`, `/data/docker`, `/data/containerd`, `/data/build`, `/data/logs`, `/data/services`, and `/data/services/secrets`.
 
 ## Git Rules
