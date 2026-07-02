@@ -22,13 +22,19 @@ Create reusable checks that fail when model weights, Hugging Face cache, Docker 
 
 Install and configure Docker only after `/data` is mounted and M3 root-disk guard passes. Docker root must be `/data/docker`; containerd storage must be relocated or explicitly documented as safe.
 
-## M5 NVIDIA host driver
+## M5A CUDA/NVIDIA compatibility research
 
-Install the appropriate Ubuntu/NVIDIA host driver path after requesting a VM checkpoint. Verify all expected GPUs with `nvidia-smi` before and after reboot.
+Before any NVIDIA driver, CUDA Toolkit, PyTorch CUDA wheel, KTransformers GPU component, ik_llama CUDA build, or NVIDIA Container Toolkit installation, produce `reports/m5a-cuda-driver-compatibility.md` from official sources where possible. The report must inventory the GPUs, compute capability, Ubuntu/kernel versions, available Ubuntu and NVIDIA driver branches, CUDA Toolkit versions, CUDA minimum driver requirements, PyTorch CUDA wheel support, KTransformers and kt-kernel requirements, ik_llama CUDA build requirements, Docker/NVIDIA Container Toolkit requirements, and the exact verification tests for the chosen stack.
+
+M5A must explicitly answer whether to use R580 LTS, R595 production, or another driver branch; whether host CUDA Toolkit should be installed; whether CUDA 12.8, CUDA 13.0, or another Toolkit should be used; which PyTorch CUDA wheel should be used; whether KTransformers supports Blackwell RTX PRO 6000 through wheels, source builds, or not yet; whether ik_llama compiles and runs for Blackwell compute capability; and what tests prove the selected stack works. Human approval of the selected version matrix is required before M5B, M6, M7 GPU build work, or any GPU backend installation.
+
+## M5B NVIDIA host driver
+
+Install the approved Ubuntu/NVIDIA host driver path after M5A passes and a VM checkpoint has been requested. Verify all expected GPUs with `nvidia-smi` before and after reboot.
 
 ## M6 NVIDIA Container Toolkit
 
-Install and configure NVIDIA Container Toolkit. Verify `docker run --gpus all ... nvidia-smi` works while Docker storage remains on `/data`.
+Install and configure the approved NVIDIA Container Toolkit path after M5A and M5B pass. Verify `docker run --gpus all ... nvidia-smi` works while Docker storage remains on `/data`.
 
 ## M7 backend runtime abstraction
 

@@ -39,6 +39,7 @@ These instructions are durable project rules for agents and operators working in
 - Every script or config must have tests or documented verification commands.
 - Every milestone must record checks run, warnings, pass/fail status, and next recommended action.
 - Do not install packages, configure system services, or mutate disks outside the approved milestone scope.
+- Do not install NVIDIA drivers, CUDA Toolkit, PyTorch CUDA wheels, KTransformers GPU components, ik_llama CUDA builds, or NVIDIA Container Toolkit until M5A CUDA/NVIDIA compatibility research has passed and the human has approved the selected version matrix.
 
 ## Script Rules
 
