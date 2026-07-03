@@ -40,8 +40,8 @@ Codex did not access the Proxmox host. This section records the human-supplied h
 - Host logs show VFIO reset activity during VM stop/start/reboot, with reset-done lines.
 - Host logs show correctable PCIe AER Data Link Layer events around GPU reset/start activity, especially on root port `0000:e0:01.1`.
 - Correctable AER warning policy: not a blocker for M6, but monitor after M6/M7 and later GPU load tests.
-- Host logs still show QEMU Guest Agent guest-ping timeouts.
-- QGA follow-up policy: not a GPU-driver blocker, but repair as M5C before M6.
+- Historical host logs showed QEMU Guest Agent guest-ping timeouts.
+- QGA follow-up update after M5B merge: human Proxmox host check `qm agent 120 ping` returned no output and produced no new guest-ping warning, so QGA currently works. The older guest-ping timeouts are historical/temporary and not a current blocker.
 - Prior logs showed live snapshot failure with `VFIO migration is not supported in kernel`.
 - VFIO snapshot policy: avoid live snapshots with VFIO GPUs; use stopped/offline snapshots unless live snapshots are explicitly tested and approved.
 
@@ -77,4 +77,13 @@ No packages, NVIDIA/CUDA changes beyond the already-completed M5B driver install
 
 ## Conclusion
 
-PASS. M5B is merged into `main`. The next recommended task is M5C QEMU Guest Agent repair and Proxmox guest-operations verification before M6 NVIDIA Container Toolkit.
+PASS. M5B is merged into `main`. QGA currently works based on human Proxmox host verification. The next recommended task is M6A NVIDIA Container Toolkit planning/dry-run.
+
+## QEMU Guest Agent Status Update After M5B Merge
+
+- Timestamp: 2026-07-03T08:40:48+00:00
+- Human Proxmox host check: `qm agent 120 ping`.
+- Result: command returned no output and produced no new guest-ping warning.
+- Interpretation: QEMU Guest Agent currently works.
+- Older guest-ping timeouts remain documented as historical/temporary observations, not a current blocker for M6A planning.
+- No package installs, service changes, NVIDIA/CUDA/Docker/model/API changes, or Proxmox host access were performed by Codex for this status update.

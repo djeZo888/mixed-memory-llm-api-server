@@ -36,9 +36,13 @@ M5A must explicitly answer whether to use R580 LTS, R595 production, or another 
 
 Install the approved Ubuntu/NVIDIA host driver path after M5A passes and a VM checkpoint has been requested. Verify all expected GPUs with `nvidia-smi` before and after reboot.
 
-## M5C QEMU Guest Agent repair and Proxmox guest-operations verification
+## M5C QEMU Guest Agent status review
 
-Repair guest management before container GPU enablement. Install and enable `qemu-guest-agent` inside the VM if missing, then verify Proxmox guest operations through `qm agent 120 ping` by manual host-side review or human-supplied result. Verify guest shutdown and reboot behavior. M5C must not install or configure NVIDIA/CUDA further, NVIDIA Container Toolkit, PyTorch, KTransformers, ik_llama, models, inference backends, Docker NVIDIA runtime, Docker/containerd settings, or API exposure.
+Guest management was reviewed after M5B. Human Proxmox host verification ran `qm agent 120 ping`; it returned no output and produced no new guest-ping warning, so QEMU Guest Agent currently works. Older guest-ping timeouts are historical/temporary and not a current blocker. If QGA warnings recur, repair guest agent behavior in a focused maintenance task with no NVIDIA/CUDA/container-toolkit/model/API changes.
+
+## M6A NVIDIA Container Toolkit planning/dry-run
+
+Plan and dry-run the approved NVIDIA Container Toolkit path after M5B. M6A must preserve Docker Root Dir `/data/docker` and containerd root `/data/containerd/root`, document package/configuration changes before install, define rollback and verification commands, and keep any image pulls or `docker run --gpus all ... nvidia-smi` execution for the approved install milestone. M6A must not install NVIDIA Container Toolkit, configure Docker NVIDIA runtime, download models, configure inference backends, or expose API unless explicitly expanded.
 
 ## M6 NVIDIA Container Toolkit
 

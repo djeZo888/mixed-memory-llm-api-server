@@ -89,12 +89,12 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - `nouveau` is not loaded or bound to the GPUs; the NVIDIA driver is bound.
 - `nvcc` is absent.
 - CUDA Toolkit is absent.
-- NVIDIA Container Toolkit is absent and must wait until after M5C and explicit M6 approval.
+- NVIDIA Container Toolkit is absent and must wait until M6A planning/dry-run and explicit install approval.
 - Host CUDA Toolkit, PyTorch, KTransformers, ik_llama, models, and API exposure remain blocked until their approved milestones.
 - Human Proxmox review: VM 120 has `hostpci0: 0000:c1:00,pcie=1,rombar=1` and `hostpci1: 0000:e1:00,pcie=1,rombar=1`, with parent snapshot `before-m5b-nvidia-driver-595-open`; `qm status 120` reports running.
 - Proxmox host logs show VFIO reset activity with reset-done lines during VM stop/start/reboot.
 - Proxmox host logs show correctable PCIe AER Data Link Layer events around GPU reset/start activity, especially root port `0000:e0:01.1`; human decision: monitor after M6/M7/load tests, but not a blocker for M6.
-- Proxmox host logs still show QEMU Guest Agent guest-ping timeouts; human decision: fix as M5C before M6.
+- QEMU Guest Agent status after M5B merge: human Proxmox host check `qm agent 120 ping` returned no output and produced no new guest-ping warning, so QGA currently works. Older guest-ping timeouts are documented as historical/temporary, not a current blocker.
 - Live snapshots with VFIO GPUs remain disallowed because prior logs showed `VFIO migration is not supported in kernel`; use stopped/offline snapshots unless explicitly tested and approved.
 
 ## Guardrails
@@ -109,10 +109,10 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 ## Next Recommended Milestone
 
-- M5C QEMU Guest Agent repair and Proxmox guest-operations verification should run before M6.
-- M5C should install/enable `qemu-guest-agent` inside the VM if missing, verify guest agent ping from Proxmox by human-supplied result or approved host-side check, and verify guest shutdown/reboot behavior.
-- M5C must not install or configure NVIDIA/CUDA further, NVIDIA Container Toolkit, PyTorch, KTransformers, ik_llama, models, inference backends, Docker NVIDIA runtime, or API services.
-- M6 NVIDIA Container Toolkit may start only after M5B remains passed and M5C/QGA follow-up is resolved or explicitly waived by the human.
+- M6A NVIDIA Container Toolkit planning/dry-run is next.
+- M6A should review the approved NVIDIA Container Toolkit path, simulate or dry-run package/configuration steps where possible, preserve Docker Root Dir `/data/docker` and containerd root `/data/containerd/root`, and define the exact M6 install/rollback checks.
+- QGA is currently working based on human Proxmox host verification with `qm agent 120 ping`; older guest-ping timeouts are historical/temporary and not a current blocker.
+- M6A must not install NVIDIA Container Toolkit, configure Docker NVIDIA runtime, download models, configure inference backends, or expose API unless explicitly expanded.
 
 ## Known Future Model Candidates
 
@@ -139,4 +139,4 @@ Future sessions should read:
 - `reports/m4b-main-merge.md`
 - Latest reports
 
-Then continue with M5C QEMU Guest Agent repair before M6 unless the human explicitly waives that follow-up.
+Then continue with M6A NVIDIA Container Toolkit planning/dry-run.
