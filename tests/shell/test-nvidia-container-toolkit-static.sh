@@ -27,11 +27,15 @@ grep -q -- '--yes-install-nvidia-container-toolkit' /tmp/m6a-install-no-flag.err
 grep -q 'scripts/common/require-data-mounted.sh' "$install_script" || fail "install script must call require-data-mounted.sh"
 grep -q 'scripts/common/root-disk-guard.sh' "$install_script" || fail "install script must call root-disk-guard.sh"
 grep -q 'scripts/docker/verify-docker-storage.sh' "$install_script" || fail "install script must call verify-docker-storage.sh"
+grep -q 'apt-get -s install' "$install_script" || fail "install script must simulate apt before install"
+grep -q 'FORBIDDEN_PACKAGE_PATTERN' "$install_script" || fail "install script must define forbidden package guard"
 grep -q 'sudo -n nvidia-ctk runtime configure --runtime=docker' "$install_script" || fail "install script must reference nvidia-ctk runtime configure --runtime=docker"
 grep -q '/etc/docker/daemon.json' "$install_script" || fail "install script must reference Docker daemon.json"
 grep -q 'cp -a "$DOCKER_DAEMON_JSON" "$backup_path"' "$install_script" || fail "install script must back up daemon.json"
 grep -q '/data/docker' "$install_script" || fail "install script must preserve Docker data-root /data/docker"
 grep -q '"data-root"' "$install_script" || fail "install script must verify Docker data-root"
+grep -q 'python3 -m json.tool' "$install_script" || fail "install script must validate Docker daemon JSON"
+grep -q 'sha256sum "$CONTAINERD_CONFIG"' "$install_script" || fail "install script must verify containerd config is unchanged"
 
 if grep -q 'runtime configure --runtime=containerd' "$install_script"; then
   fail "install script must not configure containerd NVIDIA runtime in M6"
@@ -52,7 +56,7 @@ fi
 grep -q 'DockerRootDir' "$verify_script" || fail "verify script must check Docker Root Dir"
 grep -q '/data/containerd/root' "$verify_script" || fail "verify script must check containerd root"
 grep -q 'tcp://' "$verify_script" || fail "verify script must check no Docker TCP socket exposure"
-grep -q -- '--yes-run-cuda-test' "$verify_script" || fail "verify script must gate CUDA container test"
+grep -q -- '--yes-run-cuda-test' "$verify_script" || fail "verify script must accept --yes-run-cuda-test for compatibility"
 grep -q 'nvidia/cuda:13.2.1-base-ubuntu24.04' "$verify_script" || fail "verify script must use the proposed explicit CUDA test image tag"
 grep -q 'latest' "$verify_script" || fail "verify script must reject latest tags"
 

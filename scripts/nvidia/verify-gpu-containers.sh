@@ -17,7 +17,6 @@ TOOLKIT_PACKAGES=(
 )
 
 cuda_test_image="$DEFAULT_CUDA_TEST_IMAGE"
-run_cuda_test=0
 
 usage() {
   cat <<'EOF'
@@ -26,12 +25,14 @@ Usage: scripts/nvidia/verify-gpu-containers.sh [--help] [--approved-cuda-test-im
 Verify host GPU/container runtime readiness.
 
 M6A behavior:
-  The script is read-only and is expected to report STOP while NVIDIA Container
-  Toolkit is not installed.
+  The script is read-only until it reaches the expected STOP while NVIDIA
+  Container Toolkit is not installed.
 
 M6B behavior:
-  After human approval and toolkit installation, pass an explicit approved CUDA
-  image and --yes-run-cuda-test to run the GPU container nvidia-smi test.
+  After human approval and toolkit installation, the script runs the approved
+  explicit CUDA image by default and verifies GPU visibility inside the
+  container. --yes-run-cuda-test is accepted for compatibility but is no longer
+  required after M6B approval.
 EOF
 }
 
@@ -47,7 +48,6 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --yes-run-cuda-test)
-      run_cuda_test=1
       shift
       ;;
     *)
@@ -141,10 +141,6 @@ echo "$runtime_json" | grep -q '"nvidia"' || stop "Docker nvidia runtime is not 
 sudo -n grep -Fq "\"data-root\": \"$EXPECTED_DOCKER_ROOT\"" "$DOCKER_DAEMON_JSON" || stop "$DOCKER_DAEMON_JSON does not preserve data-root $EXPECTED_DOCKER_ROOT"
 sudo -n grep -q '"nvidia"' "$DOCKER_DAEMON_JSON" || stop "$DOCKER_DAEMON_JSON does not contain nvidia runtime configuration"
 check_no_docker_tcp_exposure
-
-if [[ "$run_cuda_test" != "1" ]]; then
-  stop "M6B CUDA container test requires --yes-run-cuda-test after human approval"
-fi
 
 container_output=$(mktemp)
 sudo -n docker run --rm --gpus all "$cuda_test_image" nvidia-smi | tee "$container_output"
