@@ -2,7 +2,7 @@
 
 M5A is a mandatory research-only milestone before GPU stack installation. It exists to prevent an accidental mismatch between the NVIDIA host driver, CUDA Toolkit, PyTorch CUDA wheels, KTransformers GPU components, ik_llama CUDA builds, and NVIDIA Container Toolkit on a mixed system-RAM plus NVIDIA-VRAM workstation.
 
-Until `reports/m5a-cuda-driver-compatibility.md` passes and the human approves the selected version matrix, do not install or configure:
+Until `reports/m5a-cuda-nvidia-compatibility.md` passes and the human approves the selected version matrix, do not install or configure:
 
 - NVIDIA host drivers.
 - CUDA Toolkit or host CUDA packages.
@@ -14,12 +14,28 @@ Until `reports/m5a-cuda-driver-compatibility.md` passes and the human approves t
 
 M5A is documentation and read-only inventory only. It must not install packages, mutate system configuration, build software, download models, or configure Docker/NVIDIA services.
 
+
+## Corrected Expected Hardware
+
+Human review corrected the expected VM hardware profile:
+
+- Expected hardware: 2 x RTX PRO 6000 Blackwell Workstation Edition 96 GB.
+- No RTX 6000 Ada is expected in this VM.
+- RTX PRO 6000 Blackwell Workstation Edition is Blackwell compute capability 12.0.
+- RTX 6000 Ada is Ada compute capability 8.9 and is only a contrast/reference point, not the VM profile.
+- M5B must validate exact GPU names, PCI bus IDs, driver binding, and memory totals through `nvidia-smi` after driver installation and after reboot.
+- M5B must include passthrough reliability checks; `lspci` visibility alone is not sufficient proof of stable VFIO passthrough.
+
+## Current M5A Execution Result
+
+The current M5A execution report is `reports/m5a-cuda-nvidia-compatibility.md`. Its conclusion is `STOP` for installation until human review approves the selected version matrix. It recommends host-driver-only M5B with Ubuntu `nvidia-driver-595-open` as the candidate branch, documents R580 LTS as the longer-support fallback, recommends no host CUDA Toolkit for M5B, and keeps KTransformers Blackwell GPU support blocked until SM_120 source-build proof exists.
+
 ## Required Report
 
 The milestone report path is:
 
 ```text
-reports/m5a-cuda-driver-compatibility.md
+reports/m5a-cuda-nvidia-compatibility.md
 ```
 
 The report must include:
@@ -75,6 +91,7 @@ If any answer is uncertain, the report conclusion must be `STOP` and no GPU inst
 Prefer official vendor and upstream project sources. The report should include links, access dates, and the exact table or release notes consulted.
 
 - NVIDIA CUDA Toolkit Release Notes: <https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html>
+- NVIDIA CUDA 12.8 Release Notes: <https://docs.nvidia.com/cuda/archive/12.8.0/cuda-toolkit-release-notes/index.html>
 - NVIDIA CUDA Compatibility Guide: <https://docs.nvidia.com/deploy/cuda-compatibility/latest/index.html>
 - NVIDIA CUDA Installation Guide for Linux: <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>
 - NVIDIA CUDA GPU compute capability list: <https://developer.nvidia.com/cuda/gpus>
@@ -114,6 +131,9 @@ Required post-install tests:
 nvidia-smi
 nvidia-smi -L
 nvidia-smi --query-gpu=name,driver_version,memory.total,compute_cap --format=csv
+nvidia-smi --query-gpu=index,name,pci.bus_id,driver_version,memory.total,power.limit --format=csv
+nvidia-smi topo -m
+nvidia-smi -q -d MEMORY,PCI,POWER
 nvcc --version
 python3 - <<'PY'
 import torch
@@ -124,7 +144,7 @@ PY
 
 Additional required checks after the relevant install milestones:
 
-- Detect both RTX PRO 6000 Blackwell and RTX 6000 Ada if both are attached.
+- Detect exactly two RTX PRO 6000 Blackwell Workstation Edition GPUs; no RTX 6000 Ada is expected in this VM.
 - Compile and run a tiny CUDA sample if CUDA Toolkit is installed.
 - Build and test the ik_llama CUDA backend.
 - Run a KTransformers small-model smoke test.
@@ -133,6 +153,8 @@ Additional required checks after the relevant install milestones:
 - Confirm build trees remain under `/data/build`.
 - Confirm logs remain under `/data/logs`.
 - Run the root-disk guard before and after GPU stack installation.
+- Manual Proxmox passthrough checks after M5B: `journalctl` VFIO/PCIe/AER/reset scans, `qm config 120`, `qm status 120`, and confirmation that VM start/stop/reboot does not trigger unrecovered GPU reset failures.
+- Do not use live snapshots with VFIO GPUs unless explicitly tested and supported.
 
 If `nvcc` is intentionally absent because host CUDA Toolkit is not installed, the report must say so and define the equivalent container-build verification.
 

@@ -40,6 +40,7 @@ These instructions are durable project rules for agents and operators working in
 - Every milestone must record checks run, warnings, pass/fail status, and next recommended action.
 - Do not install packages, configure system services, or mutate disks outside the approved milestone scope.
 - Do not install NVIDIA drivers, CUDA Toolkit, PyTorch CUDA wheels, KTransformers GPU components, ik_llama CUDA builds, or NVIDIA Container Toolkit until M5A CUDA/NVIDIA compatibility research has passed and the human has approved the selected version matrix.
+- The current M5A execution report is `reports/m5a-cuda-nvidia-compatibility.md`; its conclusion is `STOP` for installation until human review, so no NVIDIA/CUDA/backend/model work is authorized by the report alone.
 
 ## Script Rules
 
