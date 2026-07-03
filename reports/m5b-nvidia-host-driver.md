@@ -7308,3 +7308,351 @@ $ grep -RInE '(HF_TOKEN|OPENAI_API_KEY|GITHUB_TOKEN|password|passwd|PRIVATE KEY|
 
 The grep-based secret scan matched only intentional documentation, safety rules, examples, or scan pattern text. No real secrets, tokens, passwords, private keys, auth files, real .env files, MEMORY.md, or local Codex memory files were identified.
 
+
+## Docker/containerd Storage Verification
+
+- Timestamp: 2026-07-03T07:39:16+00:00
+- Hostname: llmserver
+- User: user
+- Branch: milestone/m5b-nvidia-host-driver
+
+### require /data mounted
+
+```console
+$ scripts/common/require-data-mounted.sh
+PASS: /data is mounted and ready
+- root source: /dev/mapper/ubuntu--vg-ubuntu--lv
+- data source: /dev/sdb1
+- data fstype: ext4
+- data label: AI_DATA
+- data UUID: 8daf56f1-5649-4163-9d87-919c2d271875
+
+[exit=0]
+```
+
+### pre-verification root-disk guard
+
+```console
+$ scripts/common/root-disk-guard.sh
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+### df -hT / /data
+
+```console
+$ df -hT / /data
+Filesystem                        Type  Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  8.9G  4.6G  66% /
+/dev/sdb1                         ext4  2.0T  3.7M  1.9T   1% /data
+
+[exit=0]
+```
+
+### /var/lib Docker/containerd size summary
+
+| Path | MiB | Policy |
+| --- | ---: | --- |
+| `/var/lib/docker` | 0 | absent/empty/small or documented |
+| `/var/lib/containerd` | 0 | absent/empty/small or documented |
+
+### systemctl is-active containerd
+
+```console
+$ sudo -n systemctl is-active containerd
+active
+
+[exit=0]
+```
+
+### systemctl is-active docker
+
+```console
+$ sudo -n systemctl is-active docker
+active
+
+[exit=0]
+```
+
+### systemctl status containerd
+
+```console
+$ sudo -n systemctl status containerd --no-pager
+● containerd.service - containerd container runtime
+     Loaded: loaded (/usr/lib/systemd/system/containerd.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-07-03 07:35:25 UTC; 3min 51s ago
+       Docs: https://containerd.io
+   Main PID: 2091 (containerd)
+      Tasks: 36
+     Memory: 88.2M (peak: 94.0M)
+        CPU: 662ms
+     CGroup: /system.slice/containerd.service
+             └─2091 /usr/bin/containerd
+
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875859853Z" level=info msg="Start cni network conf syncer for default"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875865272Z" level=info msg="Start streaming server"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875873444Z" level=info msg="Registered namespace \"k8s.io\" with NRI"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875878251Z" level=info msg="runtime interface starting up..."
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875881666Z" level=info msg="starting plugins..."
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875890109Z" level=info msg="Synchronizing NRI (plugin) with current runtime state"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875902768Z" level=info msg=serving... address=/run/containerd/containerd.sock.ttrpc
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875941546Z" level=info msg=serving... address=/run/containerd/containerd.sock
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.876173504Z" level=info msg="containerd successfully booted in 0.033839s"
+Jul 03 07:35:25 llmserver systemd[1]: Started containerd.service - containerd container runtime.
+
+[exit=0]
+```
+
+### systemctl status docker
+
+```console
+$ sudo -n systemctl status docker --no-pager
+● docker.service - Docker Application Container Engine
+     Loaded: loaded (/usr/lib/systemd/system/docker.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-07-03 07:35:28 UTC; 3min 49s ago
+TriggeredBy: ● docker.socket
+       Docs: https://docs.docker.com
+   Main PID: 2261 (dockerd)
+      Tasks: 41
+     Memory: 119.9M (peak: 126.1M)
+        CPU: 674ms
+     CGroup: /system.slice/docker.service
+             └─2261 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.673114630Z" level=info msg="Restoring containers: start."
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.775998332Z" level=info msg="Deleting nftables IPv4 rules" error="running nft: /dev/stdin:1:17-30: Error: Could not process rule: No such file or directory\ndelete table ip docker-bridges\n                ^^^^^^^^^^^^^^\n exit status 1"
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.788141528Z" level=info msg="Deleting nftables IPv6 rules" error="running nft: /dev/stdin:1:18-31: Error: Could not process rule: No such file or directory\ndelete table ip6 docker-bridges\n                 ^^^^^^^^^^^^^^\n exit status 1"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.052444560Z" level=info msg="Loading containers: done."
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.058049123Z" level=info msg="Docker daemon" commit=8ec5ab3 containerd-snapshotter=true storage-driver=overlayfs version=29.6.1
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.058280870Z" level=info msg="Initializing buildkit"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.220160582Z" level=info msg="Completed buildkit initialization"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.224043800Z" level=info msg="Daemon has completed initialization"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.224122648Z" level=info msg="API listen on /run/docker.sock"
+Jul 03 07:35:28 llmserver systemd[1]: Started docker.service - Docker Application Container Engine.
+
+[exit=0]
+```
+
+### sudo docker version
+
+```console
+$ sudo -n docker version
+Client: Docker Engine - Community
+ Version:           29.6.1
+ API version:       1.55
+ Go version:        go1.26.4
+ Git commit:        8900f1d
+ Built:             Fri Jun 26 11:40:19 2026
+ OS/Arch:           linux/amd64
+ Context:           default
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          29.6.1
+  API version:      1.55 (minimum version 1.40)
+  Go version:       go1.26.4
+  Git commit:       8ec5ab3
+  Built:            Fri Jun 26 11:40:19 2026
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          v2.2.5
+  GitCommit:        e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ runc:
+  Version:          1.3.6
+  GitCommit:        v1.3.6-0-g491b69ba
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+
+[exit=0]
+```
+
+### sudo docker info
+
+```console
+$ sudo -n docker info
+Client: Docker Engine - Community
+ Version:    29.6.1
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.35.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v5.3.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 1
+ Server Version: 29.6.1
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ CDI spec directories:
+  /etc/cdi
+  /var/run/cdi
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ runc version: v1.3.6-0-g491b69ba
+ init version: de40ad0
+ Security Options:
+  apparmor
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.8.0-134-generic
+ Operating System: Ubuntu 24.04.4 LTS
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 112
+ Total Memory: 881.8GiB
+ Name: llmserver
+ ID: fba62709-52b6-4594-98a7-b3a7e2626f3b
+ Docker Root Dir: /data/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  ::1/128
+  127.0.0.0/8
+ Live Restore Enabled: false
+ Firewall Backend: iptables
+  EnableUserlandProxy: true
+  UserlandProxyPath: /usr/bin/docker-proxy
+
+
+[exit=0]
+```
+
+### sudo docker compose version
+
+```console
+$ sudo -n docker compose version
+Docker Compose version v5.3.0
+
+[exit=0]
+```
+
+### sudo docker buildx version
+
+```console
+$ sudo -n docker buildx version
+github.com/docker/buildx v0.35.0 a319e5b15052cf6557ceb666eb8ff6e32380b782
+
+[exit=0]
+```
+
+### hello-world image inspect
+
+```console
+$ sudo -n docker image inspect hello-world:latest
+[
+    {
+        "Id": "sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d",
+        "RepoTags": [
+            "hello-world:latest"
+        ],
+        "RepoDigests": [
+            "hello-world@sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-03-23T21:33:59.562202219Z",
+        "Config": {
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "Cmd": [
+                "/hello"
+            ],
+            "WorkingDir": "/"
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 16227,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:897b3f2a7c1bc2f3d02432f7892fe31c6272c521ad4d70257df624504a3238b4"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-07-02T19:39:50.349224487Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d",
+            "size": 12212
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "docker.io/library/hello-world"
+                }
+            ]
+        }
+    }
+]
+
+[exit=0]
+```
+
+### sudo docker system df
+
+```console
+$ sudo -n docker system df
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          1         0         38.09kB   25.87kB (67%)
+Containers      0         0         0B        0B
+Local Volumes   0         0         0B        0B
+Build Cache     0         0         0B        0B
+
+[exit=0]
+```
+
+### Docker/containerd root and data sizes
+
+```console
+$ sudo -n du -sh /var/lib/docker /var/lib/containerd '/data/docker' '/data/containerd' '/data/containerd/root' 2>/dev/null || true
+236K	/data/docker
+336K	/data/containerd
+
+[exit=0]
+```
+
+### post-verification root-disk guard
+
+```console
+$ scripts/common/root-disk-guard.sh
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+## Docker/containerd Verification Summary
+
+- Docker installed: yes
+- containerd installed: yes
+- Docker Root Dir: /data/docker
+- containerd root: /data/containerd/root
+- containerd state: /run/containerd
+- hello-world image present: yes
+- root-disk guard: PASS
+
+## Docker/containerd Verification Conclusion
+
+PASS

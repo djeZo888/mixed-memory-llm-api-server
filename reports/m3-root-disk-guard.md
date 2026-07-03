@@ -1,11 +1,11 @@
 # M3 Root-Disk Guard Report
 
 - Milestone ID: M3
-- Timestamp: 2026-07-03T07:38:43+00:00
+- Timestamp: 2026-07-03T07:39:18+00:00
 - Hostname: llmserver
 - User: user
 - Branch: milestone/m5b-nvidia-host-driver
-- Commit before work: 66317199bba2e38e551a0f2fbdcfffa43888040e
+- Commit before work: ff28cf8fda831a8f4a97f10a7f4cfdfb1a460e30
 - Root path inspected: `/`
 - Data path checked/excluded: `/data`
 - Sudo coverage: sudo -n available for read-only inspection
@@ -38,7 +38,7 @@ TARGET SOURCE    FSTYPE OPTIONS
 $ df -hT / /data
 Filesystem                        Type  Size  Used Avail Use% Mounted on
 /dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  8.9G  4.6G  66% /
-/dev/sdb1                         ext4  2.0T  3.5M  1.9T   1% /data
+/dev/sdb1                         ext4  2.0T  3.7M  1.9T   1% /data
 
 [exit=0]
 ```
