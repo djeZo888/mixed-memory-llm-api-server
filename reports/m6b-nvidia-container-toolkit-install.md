@@ -118,7 +118,7 @@ Out of scope: CUDA Toolkit, `cuda`, `cuda-toolkit`, `cuda-drivers`, `nvidia-cuda
 
 ## Post-Reboot Verification
 
-Pending.
+PASS. The systemd verifier `m6b-post-reboot-verify.service` completed successfully after guest reboot. Log path: `/data/logs/m6b-post-reboot-verify.log`. Status path: `/data/services/m6b-post-reboot/PASS`.
 
 ## Pre-Reboot Checks And Commit Gate
 
@@ -133,4 +133,26 @@ Pending.
 
 ## Conclusion
 
-Pre-reboot PASS. Post-reboot verification is pending.
+PASS. NVIDIA Container Toolkit install, Docker runtime configuration, approved CUDA container GPU test, root-disk guard, Docker/containerd storage verification, and post-reboot verification all passed.
+
+# M6B post-reboot NVIDIA Container Toolkit verification
+
+- Timestamp: 2026-07-03T16:28:07+00:00
+- nvidia-ctk version: NVIDIA Container Toolkit CLI version 1.19.1
+- Docker runtime config:
+  - Docker Root Dir: /data/docker
+  - Runtimes/Default Runtime/containerd:
+    -  Storage Driver: overlayfs
+    -   driver-type: io.containerd.snapshotter.v1
+    -  Runtimes: io.containerd.runc.v2 nvidia runc
+    -  Default Runtime: runc
+    -  containerd version: e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+    -  Docker Root Dir: /data/docker
+- Docker storage config: containerd root /data/containerd/root, state /run/containerd; /var/lib/docker absent; /var/lib/containerd absent
+- GPU container image: nvidia/cuda:13.2.1-base-ubuntu24.04
+- GPU container nvidia-smi output summary:
+  - 0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:01:00.0, 595.71.05, 97887 MiB, 600.00 W
+  - 1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:02:00.0, 595.71.05, 97887 MiB, 600.00 W
+- root-disk guard result: PASS
+- PASS/STOP: PASS
+- Scope confirmation: no CUDA Toolkit, PyTorch, KTransformers, ik_llama, model, or API changes were made by post-reboot verification.

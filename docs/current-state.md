@@ -40,7 +40,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M5A CUDA/NVIDIA compatibility research: merged into main
 - M5B NVIDIA host driver: passed and merged into main
 - M6A NVIDIA Container Toolkit planning/dry-run: merged into `main` with corrected future test image `nvidia/cuda:13.2.1-base-ubuntu24.04`
-- M6B NVIDIA Container Toolkit install: branch `milestone/m6b-nvidia-container-toolkit-install`, pre-reboot install and GPU container test passed; post-reboot verification pending
+- M6B NVIDIA Container Toolkit install: branch `milestone/m6b-nvidia-container-toolkit-install`, pre-reboot install, GPU container test, guest reboot, and post-reboot verification passed
 
 ## Current Storage
 
@@ -124,8 +124,8 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 ## Next Recommended Milestone
 
-- M6B post-reboot verification is next.
-- After M6B post-reboot PASS and human review, merge M6B into `main`, then continue to M7 backend runtime abstraction.
+- Human review and merge of M6B into `main` is next.
+- After M6B is merged, continue to M7 backend runtime abstraction.
 - QGA is currently working based on human Proxmox host verification with `qm agent 120 ping`; older guest-ping timeouts are historical/temporary and not a current blocker.
 - M6B must not configure containerd NVIDIA runtime, install CUDA Toolkit, install PyTorch, install KTransformers, install ik_llama, download models, configure inference backends, or expose API unless explicitly expanded.
 
