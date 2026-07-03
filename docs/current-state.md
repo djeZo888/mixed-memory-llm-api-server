@@ -37,6 +37,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M4A Docker/containerd plan: merged
 - M5A CUDA/NVIDIA compatibility gate: merged
 - M4B Docker/containerd install: squash-merged by this task
+- M5A CUDA/NVIDIA compatibility research: merged into main
 
 ## Current Storage
 
@@ -73,19 +74,18 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 ## Current M5A Research Snapshot
 
-- Active M5A branch: `milestone/m5a-cuda-nvidia-compatibility-research`
+- M5A is merged into `main`.
 - M5A execution report: `reports/m5a-cuda-nvidia-compatibility.md`
-- M5A conclusion: `STOP` for installation until human review approves the version matrix.
-- Stale remote branches deleted before M5A:
-  - `milestone/m4b-docker-containerd-install`
-  - `test/git-attribution-fix`
-- No other branch was deleted.
+- M5A main merge and pre-M5B handoff report: `reports/m5a-main-merge.md`
+- M5A result: research-only `STOP` for installation until human approval.
 - Expected GPU inventory after driver installation: 2 x RTX PRO 6000 Blackwell Workstation Edition 96 GB.
 - No RTX 6000 Ada is expected in this VM.
-- Current pre-driver state: `lspci` sees two NVIDIA PCI display devices with device ID `10de:2bb1`, subsystem `10de:204b`; `nvidia-smi` and `nvcc` are absent; `nouveau` is loaded.
+- Current pre-driver state: `lspci` sees two NVIDIA PCI display devices with device ID `10de:2bb1`, subsystem `10de:204b`; `nvidia-smi` is absent; `nvcc` is absent; `nouveau` is loaded.
 - M5B must validate exact GPU names, VRAM, PCI bus IDs, driver binding, and passthrough stability before M6/M7/M8.
 - Current recommendation for human review: M5B should install only the selected host NVIDIA driver first, with Ubuntu `nvidia-driver-595-open` as the recommended candidate and R580 LTS documented as the longer-support fallback.
-- Host CUDA Toolkit, PyTorch, KTransformers, ik_llama, NVIDIA Container Toolkit, models, and API exposure remain blocked.
+- M5B must not install CUDA Toolkit unless explicitly approved.
+- M6 NVIDIA Container Toolkit must wait until host `nvidia-smi` passes in M5B.
+- Host CUDA Toolkit, PyTorch, KTransformers, ik_llama, NVIDIA Container Toolkit, models, and API exposure remain blocked until their approved milestones.
 
 ## Guardrails
 
@@ -99,10 +99,12 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 ## Next Recommended Milestone
 
-- Human review of `reports/m5a-cuda-nvidia-compatibility.md`
-- Do not start M5B until the human approves the driver/CUDA/PyTorch/backend/container matrix
-- If approved, M5B should be host NVIDIA driver installation only, followed by `nvidia-smi` validation before and after reboot
-- M5B must not install CUDA Toolkit, PyTorch, KTransformers, ik_llama, NVIDIA Container Toolkit, models, or API services
+- Start a fresh ChatGPT/Codex context before M5B.
+- M5B host NVIDIA driver installation may start only after human approval.
+- M5B should install only the approved host NVIDIA driver, followed by `nvidia-smi` validation before and after reboot.
+- M5B must not install CUDA Toolkit unless explicitly approved.
+- M5B must not install PyTorch, KTransformers, ik_llama, NVIDIA Container Toolkit, models, or API services.
+- M6 NVIDIA Container Toolkit may start only after host `nvidia-smi` passes.
 
 ## Known Future Model Candidates
 
@@ -122,7 +124,9 @@ Future sessions should read:
 - `docs/cuda-driver-compatibility.md`
 - `docs/root-disk-guard.md`
 - `docs/docker-containerd-storage.md`
+- `reports/m5a-cuda-nvidia-compatibility.md`
+- `reports/m5a-main-merge.md`
 - `reports/m4b-main-merge.md`
 - Latest reports
 
-Then continue with M5A only.
+Then continue with M5B only after human approval, keeping M5B host-driver-only unless explicitly expanded.

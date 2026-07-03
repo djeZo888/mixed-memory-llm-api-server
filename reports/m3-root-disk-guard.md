@@ -1,11 +1,11 @@
 # M3 Root-Disk Guard Report
 
 - Milestone ID: M3
-- Timestamp: 2026-07-03T00:59:07+00:00
+- Timestamp: 2026-07-03T01:10:57+00:00
 - Hostname: llmserver
 - User: user
-- Branch: milestone/m5a-cuda-nvidia-compatibility-research
-- Commit before work: d338c0cc7c5c0ee86a8000cf00fae910950ae63d
+- Branch: main
+- Commit before work: 3be1f1c564923b3249c9db8266362859d661102c
 - Root path inspected: `/`
 - Data path checked/excluded: `/data`
 - Sudo coverage: sudo -n available for read-only inspection
