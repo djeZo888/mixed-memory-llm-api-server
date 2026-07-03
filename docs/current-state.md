@@ -40,7 +40,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M5A CUDA/NVIDIA compatibility research: merged into main
 - M5B NVIDIA host driver: passed and merged into main
 - M6A NVIDIA Container Toolkit planning/dry-run: merged into `main` with corrected future test image `nvidia/cuda:13.2.1-base-ubuntu24.04`
-- M6B NVIDIA Container Toolkit install: branch `milestone/m6b-nvidia-container-toolkit-install`, pre-reboot install, GPU container test, guest reboot, and post-reboot verification passed
+- M6B NVIDIA Container Toolkit install: merged into `main`; pre-reboot install, GPU container test, guest reboot, and post-reboot verification passed
 
 ## Current Storage
 
@@ -72,7 +72,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - `/data/containerd` root/state policy is documented
 - `hello-world`: passed
 - `user` was not added to the `docker` group
-- NVIDIA Container Toolkit is installed on the M6B branch:
+- NVIDIA Container Toolkit is installed:
   - `nvidia-container-toolkit 1.19.1-1`
   - `nvidia-container-toolkit-base 1.19.1-1`
   - `libnvidia-container-tools 1.19.1-1`
@@ -100,9 +100,10 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - `nouveau` is not loaded or bound to the GPUs; the NVIDIA driver is bound.
 - `nvcc` is absent.
 - CUDA Toolkit is absent.
-- NVIDIA Container Toolkit is installed on the M6B branch and Docker runtime configuration is present.
-- `nvidia-ctk` is installed on the M6B branch.
-- Corrected future M6B CUDA container test image: `nvidia/cuda:13.2.1-base-ubuntu24.04`.
+- NVIDIA Container Toolkit is installed and Docker runtime configuration is present.
+- `nvidia-ctk` is installed.
+- Approved CUDA container test image `nvidia/cuda:13.2.1-base-ubuntu24.04` passed.
+- The CUDA container saw exactly two NVIDIA RTX PRO 6000 Blackwell Workstation Edition GPUs with `97887 MiB` each.
 - M6B pulled and ran `nvidia/cuda:13.2.1-base-ubuntu24.04` for `nvidia-smi` only.
 - Host CUDA Toolkit and `nvcc` remain absent.
 - PyTorch, KTransformers, ik_llama, models, and API exposure remain blocked until their approved milestones.
@@ -124,10 +125,15 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 ## Next Recommended Milestone
 
-- Human review and merge of M6B into `main` is next.
-- After M6B is merged, continue to M7 backend runtime abstraction.
+- M7A model/runtime research is next.
+- M7A must be research-only: no model downloads, no backend installation, no inference backend configuration, and no API service changes.
+- M7A must use current official/current web sources where possible.
+- M7A should produce:
+  - 3 large/high-quality model candidates.
+  - 3 smaller/faster model candidates.
+  - A runtime/backend recommendation matrix for human review.
 - QGA is currently working based on human Proxmox host verification with `qm agent 120 ping`; older guest-ping timeouts are historical/temporary and not a current blocker.
-- M6B must not configure containerd NVIDIA runtime, install CUDA Toolkit, install PyTorch, install KTransformers, install ik_llama, download models, configure inference backends, or expose API unless explicitly expanded.
+- Future work must not configure containerd NVIDIA runtime, install CUDA Toolkit, install PyTorch, install KTransformers, install ik_llama, download models, configure inference backends, or expose API unless explicitly expanded by the relevant milestone.
 
 ## Known Future Model Candidates
 
@@ -154,7 +160,9 @@ Future sessions should read:
 - `docs/nvidia-container-toolkit.md` if present
 - `reports/m6a-nvidia-container-toolkit-plan.md` if present
 - `reports/m6a-main-merge.md` if present
+- `reports/m6b-main-merge.md` if present
+- `reports/m6b-nvidia-container-toolkit-install.md` if present
 - `reports/m4b-main-merge.md`
 - Latest reports
 
-Then continue with M6B NVIDIA Container Toolkit install only after explicit approval.
+Then continue with M7A model/runtime research only.

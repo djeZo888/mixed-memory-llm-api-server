@@ -1,11 +1,11 @@
 # M3 Root-Disk Guard Report
 
 - Milestone ID: M3
-- Timestamp: 2026-07-03T16:28:07+00:00
+- Timestamp: 2026-07-03T17:15:35+00:00
 - Hostname: llmserver
 - User: user
-- Branch: milestone/m6b-nvidia-container-toolkit-install
-- Commit before work: 67d3ebd4131d3304a27a11afdebfc856e8cc8231
+- Branch: main
+- Commit before work: 1037886799211e311325173217fbbdeb3545ec00
 - Root path inspected: `/`
 - Data path checked/excluded: `/data`
 - Sudo coverage: sudo -n available for read-only inspection
@@ -65,7 +65,7 @@ XDG_CACHE_HOME=/data/hf-cache/xdg
 
 | Path | Source | Fstype | Label | UUID/identity | Free GiB |
 | --- | --- | --- | --- | --- | --- |
-| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785815` | 4 |
+| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785818` | 4 |
 | `/data` | `/dev/sdb1` | `ext4` | `AI_DATA` | `8daf56f1-5649-4163-9d87-919c2d271875` | 1912 |
 
 ## Root Free Space Thresholds

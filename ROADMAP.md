@@ -46,15 +46,19 @@ Plan and dry-run the approved NVIDIA Container Toolkit path after M5B. M6A must 
 
 ## M6B NVIDIA Container Toolkit
 
-Install and configure the approved NVIDIA Container Toolkit path after M6A human review. M6B may add the NVIDIA Container Toolkit apt repository, install the approved toolkit packages, back up and modify `/etc/docker/daemon.json` through `sudo nvidia-ctk runtime configure --runtime=docker`, restart Docker after config verification, and verify `docker run --gpus all ... nvidia-smi` works while Docker storage remains on `/data`. M6B must not configure the containerd NVIDIA runtime unless a later review explicitly expands the Docker-only path.
+Completed. Installed and configured the approved NVIDIA Container Toolkit Docker path after M6A human review. M6B added the NVIDIA Container Toolkit apt repository, installed the approved toolkit packages, backed up and modified `/etc/docker/daemon.json` through `sudo nvidia-ctk runtime configure --runtime=docker`, restarted Docker after config verification, and verified `docker run --gpus all ... nvidia-smi` works while Docker storage remains on `/data`. M6B did not configure the containerd NVIDIA runtime.
 
-## M7 backend runtime abstraction
+## M7A model/runtime research and shortlist
 
-Add runtime environment examples, backend profiles, and common start/stop/status/benchmark scripts for KTransformers and ik_llama only after M6B passes.
+Research current model and runtime options using official/current web sources where possible. M7A must be research-only: no model downloads, no backend installs, no runtime builds, no inference service configuration, and no API exposure. Produce a shortlist of three large/high-quality model candidates, three smaller/faster model candidates, and a runtime/backend recommendation matrix for human review.
+
+## M7B backend runtime abstraction
+
+After M7A human review, add runtime environment examples, backend profiles, and common start/stop/status/benchmark scripts for the selected KTransformers, ik_llama, or other approved backend paths.
 
 ## M8 small model API smoke service
 
-Select a small open model, download only to `/data/models`, start a localhost backend, expose OpenAI-compatible chat completions, test auth, streaming, health, logs, restart, and reboot behavior.
+After M7B passes, select a small open model, download only to `/data/models`, start a localhost backend, expose OpenAI-compatible chat completions, test auth, streaming, health, logs, restart, and reboot behavior.
 
 ## M9 fast technical/coding model
 
