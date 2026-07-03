@@ -1,11 +1,11 @@
 # M3 Root-Disk Guard Report
 
 - Milestone ID: M3
-- Timestamp: 2026-07-03T07:33:59+00:00
+- Timestamp: 2026-07-03T07:38:43+00:00
 - Hostname: llmserver
 - User: user
 - Branch: milestone/m5b-nvidia-host-driver
-- Commit before work: 22d495342d21006f629986b70d9a9a7be39e8d48
+- Commit before work: 66317199bba2e38e551a0f2fbdcfffa43888040e
 - Root path inspected: `/`
 - Data path checked/excluded: `/data`
 - Sudo coverage: sudo -n available for read-only inspection
@@ -38,7 +38,7 @@ TARGET SOURCE    FSTYPE OPTIONS
 $ df -hT / /data
 Filesystem                        Type  Size  Used Avail Use% Mounted on
 /dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  8.9G  4.6G  66% /
-/dev/sdb1                         ext4  2.0T  3.1M  1.9T   1% /data
+/dev/sdb1                         ext4  2.0T  3.5M  1.9T   1% /data
 
 [exit=0]
 ```
@@ -65,7 +65,7 @@ XDG_CACHE_HOME=/data/hf-cache/xdg
 
 | Path | Source | Fstype | Label | UUID/identity | Free GiB |
 | --- | --- | --- | --- | --- | --- |
-| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785878` | 5 |
+| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785883` | 5 |
 | `/data` | `/dev/sdb1` | `ext4` | `AI_DATA` | `8daf56f1-5649-4163-9d87-919c2d271875` | 1912 |
 
 ## Root Free Space Thresholds
@@ -109,7 +109,7 @@ AI and Hugging Face environment variables were checked in a fresh login shell.
 | `/home/user/codex-bootstrap` | yes | 2 | WARN | expected old bootstrap repo; small |
 | `/tmp` | yes | 1 | PASS | below warning threshold |
 | `/var/tmp` | yes | 1 | PASS | below warning threshold |
-| `/var/log` | yes | 213 | PASS | below warning threshold |
+| `/var/log` | yes | 226 | PASS | below warning threshold |
 | `/opt` | yes | 1 | PASS | below warning threshold |
 | `/srv` | yes | 1 | PASS | below warning threshold |
 | `/models` | no | 0 | PASS | absent |

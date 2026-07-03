@@ -1743,7 +1743,7 @@ Setting up libwayland-server0:amd64 (1.22.0-2.1build1) ...
 Setting up libx11-xcb1:amd64 (2:1.8.7-1build1) ...
 Setting up libpciaccess0:amd64 (0.17-3ubuntu0.24.04.2) ...
 Setting up session-migration (0.3.9build1) ...
-Created symlink /etc/systemd/user/graphical-session-pre.target.wants/session-migration.service → /usr/lib/systemd/user/session-migration.service.
+Created symlink /etc/systemd/user/graphical-session-pre.target.wants/session-migration.service → /usr/lib/systemd/user/session-migration.service.
 Setting up fontconfig (2.15.0-1.1ubuntu2) ...
 Regenerating fonts cache... done.
 Setting up lto-disabled-list (47) ...
@@ -1841,11 +1841,11 @@ Setting up libgl1-mesa-dri:amd64 (25.2.8-0ubuntu0.24.04.2) ...
 Setting up libavahi-common3:amd64 (0.8-13ubuntu6.2) ...
 Setting up nvidia-kernel-common-595 (595.71.05-0ubuntu0.24.04.1) ...
 update-initramfs: deferring update (trigger activated)
-Created symlink /etc/systemd/system/systemd-hibernate.service.wants/nvidia-hibernate.service → /usr/lib/systemd/system/nvidia-hibernate.service.
-Created symlink /etc/systemd/system/systemd-suspend.service.wants/nvidia-resume.service → /usr/lib/systemd/system/nvidia-resume.service.
-Created symlink /etc/systemd/system/systemd-hibernate.service.wants/nvidia-resume.service → /usr/lib/systemd/system/nvidia-resume.service.
-Created symlink /etc/systemd/system/systemd-suspend-then-hibernate.service.wants/nvidia-resume.service → /usr/lib/systemd/system/nvidia-resume.service.
-Created symlink /etc/systemd/system/systemd-suspend.service.wants/nvidia-suspend.service → /usr/lib/systemd/system/nvidia-suspend.service.
+Created symlink /etc/systemd/system/systemd-hibernate.service.wants/nvidia-hibernate.service → /usr/lib/systemd/system/nvidia-hibernate.service.
+Created symlink /etc/systemd/system/systemd-suspend.service.wants/nvidia-resume.service → /usr/lib/systemd/system/nvidia-resume.service.
+Created symlink /etc/systemd/system/systemd-hibernate.service.wants/nvidia-resume.service → /usr/lib/systemd/system/nvidia-resume.service.
+Created symlink /etc/systemd/system/systemd-suspend-then-hibernate.service.wants/nvidia-resume.service → /usr/lib/systemd/system/nvidia-resume.service.
+Created symlink /etc/systemd/system/systemd-suspend.service.wants/nvidia-suspend.service → /usr/lib/systemd/system/nvidia-suspend.service.
 Setting up dconf-service (0.40.0-4ubuntu0.1) ...
 Setting up libnvidia-extra-595:amd64 (595.71.05-0ubuntu0.24.04.1) ...
 Setting up xfonts-utils (1:7.7+6build3) ...
@@ -2587,4 +2587,4724 @@ origin	git@github.com:djeZo888/mixed-memory-llm-api-server.git (push)
 ```
 
 The grep-based secret scan matched only intentional documentation, safety rules, examples, sanitizer/static-test code, prior report text, and the scan pattern itself. No real secrets, tokens, passwords, private keys, auth files, real .env files, MEMORY.md, or local Codex memory files were identified.
+
+
+# M5B post-reboot NVIDIA driver verification
+
+- Timestamp: 2026-07-03T07:35:52+00:00
+- Hostname: llmserver
+- Uptime: up 0 minutes
+- Runner: /data/services/m5b-post-reboot/m5b-post-reboot-verify.sh
+- Log: /data/logs/m5b-post-reboot-verify.log
+
+### hostname
+
+```console
+$ hostname
+llmserver
+
+[exit=0]
+```
+
+### uptime
+
+```console
+$ uptime
+ 07:35:52 up 0 min,  3 users,  load average: 0.43, 0.12, 0.04
+
+[exit=0]
+```
+
+### date -Is
+
+```console
+$ date -Is
+2026-07-03T07:35:52+00:00
+
+[exit=0]
+```
+
+### require-data-mounted
+
+```console
+$ scripts/common/require-data-mounted.sh
+PASS: /data is mounted and ready
+- root source: /dev/mapper/ubuntu--vg-ubuntu--lv
+- data source: /dev/sdb1
+- data fstype: ext4
+- data label: AI_DATA
+- data UUID: 8daf56f1-5649-4163-9d87-919c2d271875
+
+[exit=0]
+```
+
+### root-disk-guard
+
+```console
+$ scripts/common/root-disk-guard.sh --report reports/m3-root-disk-guard.md
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+
+## Docker/containerd Storage Verification
+
+- Timestamp: 2026-07-03T07:35:53+00:00
+- Hostname: llmserver
+- User: user
+- Branch: milestone/m5b-nvidia-host-driver
+
+### require /data mounted
+
+```console
+$ scripts/common/require-data-mounted.sh
+PASS: /data is mounted and ready
+- root source: /dev/mapper/ubuntu--vg-ubuntu--lv
+- data source: /dev/sdb1
+- data fstype: ext4
+- data label: AI_DATA
+- data UUID: 8daf56f1-5649-4163-9d87-919c2d271875
+
+[exit=0]
+```
+
+### pre-verification root-disk guard
+
+```console
+$ scripts/common/root-disk-guard.sh
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+### df -hT / /data
+
+```console
+$ df -hT / /data
+Filesystem                        Type  Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  8.9G  4.6G  66% /
+/dev/sdb1                         ext4  2.0T  3.2M  1.9T   1% /data
+
+[exit=0]
+```
+
+### /var/lib Docker/containerd size summary
+
+| Path | MiB | Policy |
+| --- | ---: | --- |
+| `/var/lib/docker` | 0 | absent/empty/small or documented |
+| `/var/lib/containerd` | 0 | absent/empty/small or documented |
+
+### systemctl is-active containerd
+
+```console
+$ sudo -n systemctl is-active containerd
+active
+
+[exit=0]
+```
+
+### systemctl is-active docker
+
+```console
+$ sudo -n systemctl is-active docker
+active
+
+[exit=0]
+```
+
+### systemctl status containerd
+
+```console
+$ sudo -n systemctl status containerd --no-pager
+● containerd.service - containerd container runtime
+     Loaded: loaded (/usr/lib/systemd/system/containerd.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-07-03 07:35:25 UTC; 28s ago
+       Docs: https://containerd.io
+   Main PID: 2091 (containerd)
+      Tasks: 21
+     Memory: 75.6M (peak: 82.4M)
+        CPU: 128ms
+     CGroup: /system.slice/containerd.service
+             └─2091 /usr/bin/containerd
+
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875859853Z" level=info msg="Start cni network conf syncer for default"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875865272Z" level=info msg="Start streaming server"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875873444Z" level=info msg="Registered namespace \"k8s.io\" with NRI"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875878251Z" level=info msg="runtime interface starting up..."
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875881666Z" level=info msg="starting plugins..."
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875890109Z" level=info msg="Synchronizing NRI (plugin) with current runtime state"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875902768Z" level=info msg=serving... address=/run/containerd/containerd.sock.ttrpc
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875941546Z" level=info msg=serving... address=/run/containerd/containerd.sock
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.876173504Z" level=info msg="containerd successfully booted in 0.033839s"
+Jul 03 07:35:25 llmserver systemd[1]: Started containerd.service - containerd container runtime.
+
+[exit=0]
+```
+
+### systemctl status docker
+
+```console
+$ sudo -n systemctl status docker --no-pager
+● docker.service - Docker Application Container Engine
+     Loaded: loaded (/usr/lib/systemd/system/docker.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-07-03 07:35:28 UTC; 25s ago
+TriggeredBy: ● docker.socket
+       Docs: https://docs.docker.com
+   Main PID: 2261 (dockerd)
+      Tasks: 39
+     Memory: 112.6M (peak: 119.6M)
+        CPU: 382ms
+     CGroup: /system.slice/docker.service
+             └─2261 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.673114630Z" level=info msg="Restoring containers: start."
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.775998332Z" level=info msg="Deleting nftables IPv4 rules" error="running nft: /dev/stdin:1:17-30: Error: Could not process rule: No such file or directory\ndelete table ip docker-bridges\n                ^^^^^^^^^^^^^^\n exit status 1"
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.788141528Z" level=info msg="Deleting nftables IPv6 rules" error="running nft: /dev/stdin:1:18-31: Error: Could not process rule: No such file or directory\ndelete table ip6 docker-bridges\n                 ^^^^^^^^^^^^^^\n exit status 1"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.052444560Z" level=info msg="Loading containers: done."
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.058049123Z" level=info msg="Docker daemon" commit=8ec5ab3 containerd-snapshotter=true storage-driver=overlayfs version=29.6.1
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.058280870Z" level=info msg="Initializing buildkit"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.220160582Z" level=info msg="Completed buildkit initialization"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.224043800Z" level=info msg="Daemon has completed initialization"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.224122648Z" level=info msg="API listen on /run/docker.sock"
+Jul 03 07:35:28 llmserver systemd[1]: Started docker.service - Docker Application Container Engine.
+
+[exit=0]
+```
+
+### sudo docker version
+
+```console
+$ sudo -n docker version
+Client: Docker Engine - Community
+ Version:           29.6.1
+ API version:       1.55
+ Go version:        go1.26.4
+ Git commit:        8900f1d
+ Built:             Fri Jun 26 11:40:19 2026
+ OS/Arch:           linux/amd64
+ Context:           default
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          29.6.1
+  API version:      1.55 (minimum version 1.40)
+  Go version:       go1.26.4
+  Git commit:       8ec5ab3
+  Built:            Fri Jun 26 11:40:19 2026
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          v2.2.5
+  GitCommit:        e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ runc:
+  Version:          1.3.6
+  GitCommit:        v1.3.6-0-g491b69ba
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+
+[exit=0]
+```
+
+### sudo docker info
+
+```console
+$ sudo -n docker info
+Client: Docker Engine - Community
+ Version:    29.6.1
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.35.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v5.3.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 1
+ Server Version: 29.6.1
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ CDI spec directories:
+  /etc/cdi
+  /var/run/cdi
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ runc version: v1.3.6-0-g491b69ba
+ init version: de40ad0
+ Security Options:
+  apparmor
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.8.0-134-generic
+ Operating System: Ubuntu 24.04.4 LTS
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 112
+ Total Memory: 881.8GiB
+ Name: llmserver
+ ID: fba62709-52b6-4594-98a7-b3a7e2626f3b
+ Docker Root Dir: /data/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  ::1/128
+  127.0.0.0/8
+ Live Restore Enabled: false
+ Firewall Backend: iptables
+  EnableUserlandProxy: true
+  UserlandProxyPath: /usr/bin/docker-proxy
+
+
+[exit=0]
+```
+
+### sudo docker compose version
+
+```console
+$ sudo -n docker compose version
+Docker Compose version v5.3.0
+
+[exit=0]
+```
+
+### sudo docker buildx version
+
+```console
+$ sudo -n docker buildx version
+github.com/docker/buildx v0.35.0 a319e5b15052cf6557ceb666eb8ff6e32380b782
+
+[exit=0]
+```
+
+### hello-world image inspect
+
+```console
+$ sudo -n docker image inspect hello-world:latest
+[
+    {
+        "Id": "sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d",
+        "RepoTags": [
+            "hello-world:latest"
+        ],
+        "RepoDigests": [
+            "hello-world@sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-03-23T21:33:59.562202219Z",
+        "Config": {
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "Cmd": [
+                "/hello"
+            ],
+            "WorkingDir": "/"
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 16227,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:897b3f2a7c1bc2f3d02432f7892fe31c6272c521ad4d70257df624504a3238b4"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-07-02T19:39:50.349224487Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d",
+            "size": 12212
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "docker.io/library/hello-world"
+                }
+            ]
+        }
+    }
+]
+
+[exit=0]
+```
+
+### sudo docker system df
+
+```console
+$ sudo -n docker system df
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          1         0         38.09kB   25.87kB (67%)
+Containers      0         0         0B        0B
+Local Volumes   0         0         0B        0B
+Build Cache     0         0         0B        0B
+
+[exit=0]
+```
+
+### Docker/containerd root and data sizes
+
+```console
+$ sudo -n du -sh /var/lib/docker /var/lib/containerd '/data/docker' '/data/containerd' '/data/containerd/root' 2>/dev/null || true
+236K	/data/docker
+336K	/data/containerd
+
+[exit=0]
+```
+
+### post-verification root-disk guard
+
+```console
+$ scripts/common/root-disk-guard.sh
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+## Docker/containerd Verification Summary
+
+- Docker installed: yes
+- containerd installed: yes
+- Docker Root Dir: /data/docker
+- containerd root: /data/containerd/root
+- containerd state: /run/containerd
+- hello-world image present: yes
+- root-disk guard: PASS
+
+## Docker/containerd Verification Conclusion
+
+PASS
+### Docker storage verifier
+
+```console
+$ scripts/docker/verify-docker-storage.sh
+PASS: Docker/containerd storage verified
+
+[exit=0]
+```
+
+### os-release
+
+```console
+$ cat /etc/os-release
+PRETTY_NAME="Ubuntu 24.04.4 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.4 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+
+[exit=0]
+```
+
+### uname -a
+
+```console
+$ uname -a
+Linux llmserver 6.8.0-134-generic #134-Ubuntu SMP PREEMPT_DYNAMIC Fri Jun 26 18:43:11 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+
+[exit=0]
+```
+
+### lspci NVIDIA/display inventory
+
+```console
+$ lspci -nn | egrep -i 'nvidia|vga|3d|display' || true
+00:01.0 VGA compatible controller [0300]: Device [1234:1111] (rev 02)
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+01:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+02:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+02:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+
+[exit=0]
+```
+
+### lspci driver binding summary
+
+```console
+$ lspci -nnk | egrep -A5 -i 'nvidia|vga|3d|display' || true
+00:01.0 VGA compatible controller [0300]: Device [1234:1111] (rev 02)
+	Subsystem: Red Hat, Inc. Device [1af4:1100]
+	Kernel driver in use: bochs-drm
+	Kernel modules: bochs
+00:1a.0 USB controller [0c03]: Intel Corporation 82801I (ICH9 Family) USB UHCI Controller #4 [8086:2937] (rev 03)
+	Subsystem: Red Hat, Inc. QEMU Virtual Machine [1af4:1100]
+--
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:204b]
+	Kernel driver in use: nvidia
+	Kernel modules: nvidiafb, nouveau, nvidia_drm, nvidia
+01:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:0000]
+	Kernel driver in use: snd_hda_intel
+	Kernel modules: snd_hda_intel
+02:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:204b]
+	Kernel driver in use: nvidia
+	Kernel modules: nvidiafb, nouveau, nvidia_drm, nvidia
+02:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:0000]
+	Kernel driver in use: snd_hda_intel
+	Kernel modules: snd_hda_intel
+05:01.0 PCI bridge [0604]: Red Hat, Inc. QEMU PCI-PCI bridge [1b36:0001]
+05:02.0 PCI bridge [0604]: Red Hat, Inc. QEMU PCI-PCI bridge [1b36:0001]
+05:03.0 PCI bridge [0604]: Red Hat, Inc. QEMU PCI-PCI bridge [1b36:0001]
+
+[exit=0]
+```
+
+### lsmod nvidia/nouveau/vfio summary
+
+```console
+$ lsmod | egrep 'nvidia|nouveau|vfio' || true
+nvidia_uvm           2060288  0
+nvidia_drm            139264  0
+nvidia_modeset       1744896  1 nvidia_drm
+nvidia              14794752  2 nvidia_uvm,nvidia_modeset
+video                  77824  1 nvidia_modeset
+ecc                    45056  1 nvidia
+
+[exit=0]
+```
+
+### command -v nvidia-smi
+
+```console
+$ command -v nvidia-smi
+/usr/bin/nvidia-smi
+
+[exit=0]
+```
+
+### nvidia-smi
+
+```console
+$ nvidia-smi
+Fri Jul  3 07:35:55 2026
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA RTX PRO 6000 Blac...    Off |   00000000:01:00.0 Off |                  Off |
+| 30%   35C    P8             15W /  600W |       2MiB /  97887MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA RTX PRO 6000 Blac...    Off |   00000000:02:00.0 Off |                  Off |
+| 30%   41C    P8             33W /  600W |      34MiB /  97887MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+
+[exit=0]
+```
+
+### nvidia-smi -L
+
+```console
+$ nvidia-smi -L
+GPU 0: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (UUID: GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237)
+GPU 1: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (UUID: GPU-69acfa26-8b60-61b5-702d-aee252c163cc)
+
+[exit=0]
+```
+
+### nvidia-smi query-gpu CSV
+
+```console
+$ nvidia-smi --query-gpu=index\,name\,pci.bus_id\,driver_version\,memory.total\,power.limit --format=csv
+index, name, pci.bus_id, driver_version, memory.total [MiB], power.limit [W]
+0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:01:00.0, 595.71.05, 97887 MiB, 600.00 W
+1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:02:00.0, 595.71.05, 97887 MiB, 600.00 W
+
+[exit=0]
+```
+
+### nvidia-smi topology
+
+```console
+$ nvidia-smi topo -m
+	[4mGPU0	GPU1	CPU Affinity	NUMA Affinity	GPU NUMA ID[0m
+GPU0	 X 	PHB	0-111	0-6		N/A
+GPU1	PHB	 X 	0-111	0-6		N/A
+
+Legend:
+
+  X    = Self
+  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing at most a single PCIe bridge
+  NV#  = Connection traversing a bonded set of # NVLinks
+
+[exit=0]
+```
+
+### nvidia-smi memory PCI power detail
+
+```console
+$ nvidia-smi -q -d MEMORY\,PCI\,POWER
+Failed to parse --display/-d flags
+
+[exit=2]
+```
+
+## M5B Post-reboot Conclusion
+
+STOP
+
+Reason: nvidia-smi detail query failed
+
+Manual Proxmox VFIO/AER/reset checks are still required outside Codex.
+
+## Post-reboot verifier retry note
+
+The first post-reboot verifier run stopped because NVIDIA-SMI 595 rejects `PCI` as a `-d/--display` flag. Manual inspection confirmed `nvidia-smi`, `nvidia-smi -L`, query-gpu CSV, memory detail, and power detail work. The verifier was rerun with the original `MEMORY,PCI,POWER` command recorded as non-fatal and with `nvidia-smi -q`, `nvidia-smi -q -d MEMORY`, and `nvidia-smi -q -d POWER` used for PCI, memory, and power evidence.
+
+# M5B post-reboot NVIDIA driver verification
+
+- Timestamp: 2026-07-03T07:37:25+00:00
+- Hostname: llmserver
+- Uptime: up 2 minutes
+- Runner: /data/services/m5b-post-reboot/m5b-post-reboot-verify.sh
+- Log: /data/logs/m5b-post-reboot-verify.log
+
+### hostname
+
+```console
+$ hostname
+llmserver
+
+[exit=0]
+```
+
+### uptime
+
+```console
+$ uptime
+ 07:37:25 up 2 min,  3 users,  load average: 0.11, 0.10, 0.04
+
+[exit=0]
+```
+
+### date -Is
+
+```console
+$ date -Is
+2026-07-03T07:37:25+00:00
+
+[exit=0]
+```
+
+### require-data-mounted
+
+```console
+$ scripts/common/require-data-mounted.sh
+PASS: /data is mounted and ready
+- root source: /dev/mapper/ubuntu--vg-ubuntu--lv
+- data source: /dev/sdb1
+- data fstype: ext4
+- data label: AI_DATA
+- data UUID: 8daf56f1-5649-4163-9d87-919c2d271875
+
+[exit=0]
+```
+
+### root-disk-guard
+
+```console
+$ scripts/common/root-disk-guard.sh --report reports/m3-root-disk-guard.md
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+
+## Docker/containerd Storage Verification
+
+- Timestamp: 2026-07-03T07:37:26+00:00
+- Hostname: llmserver
+- User: user
+- Branch: milestone/m5b-nvidia-host-driver
+
+### require /data mounted
+
+```console
+$ scripts/common/require-data-mounted.sh
+PASS: /data is mounted and ready
+- root source: /dev/mapper/ubuntu--vg-ubuntu--lv
+- data source: /dev/sdb1
+- data fstype: ext4
+- data label: AI_DATA
+- data UUID: 8daf56f1-5649-4163-9d87-919c2d271875
+
+[exit=0]
+```
+
+### pre-verification root-disk guard
+
+```console
+$ scripts/common/root-disk-guard.sh
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+### df -hT / /data
+
+```console
+$ df -hT / /data
+Filesystem                        Type  Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  8.9G  4.6G  66% /
+/dev/sdb1                         ext4  2.0T  3.2M  1.9T   1% /data
+
+[exit=0]
+```
+
+### /var/lib Docker/containerd size summary
+
+| Path | MiB | Policy |
+| --- | ---: | --- |
+| `/var/lib/docker` | 0 | absent/empty/small or documented |
+| `/var/lib/containerd` | 0 | absent/empty/small or documented |
+
+### systemctl is-active containerd
+
+```console
+$ sudo -n systemctl is-active containerd
+active
+
+[exit=0]
+```
+
+### systemctl is-active docker
+
+```console
+$ sudo -n systemctl is-active docker
+active
+
+[exit=0]
+```
+
+### systemctl status containerd
+
+```console
+$ sudo -n systemctl status containerd --no-pager
+● containerd.service - containerd container runtime
+     Loaded: loaded (/usr/lib/systemd/system/containerd.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-07-03 07:35:25 UTC; 2min 1s ago
+       Docs: https://containerd.io
+   Main PID: 2091 (containerd)
+      Tasks: 30
+     Memory: 79.6M (peak: 86.7M)
+        CPU: 348ms
+     CGroup: /system.slice/containerd.service
+             └─2091 /usr/bin/containerd
+
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875859853Z" level=info msg="Start cni network conf syncer for default"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875865272Z" level=info msg="Start streaming server"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875873444Z" level=info msg="Registered namespace \"k8s.io\" with NRI"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875878251Z" level=info msg="runtime interface starting up..."
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875881666Z" level=info msg="starting plugins..."
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875890109Z" level=info msg="Synchronizing NRI (plugin) with current runtime state"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875902768Z" level=info msg=serving... address=/run/containerd/containerd.sock.ttrpc
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875941546Z" level=info msg=serving... address=/run/containerd/containerd.sock
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.876173504Z" level=info msg="containerd successfully booted in 0.033839s"
+Jul 03 07:35:25 llmserver systemd[1]: Started containerd.service - containerd container runtime.
+
+[exit=0]
+```
+
+### systemctl status docker
+
+```console
+$ sudo -n systemctl status docker --no-pager
+● docker.service - Docker Application Container Engine
+     Loaded: loaded (/usr/lib/systemd/system/docker.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-07-03 07:35:28 UTC; 1min 59s ago
+TriggeredBy: ● docker.socket
+       Docs: https://docs.docker.com
+   Main PID: 2261 (dockerd)
+      Tasks: 39
+     Memory: 115.2M (peak: 119.7M)
+        CPU: 449ms
+     CGroup: /system.slice/docker.service
+             └─2261 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.673114630Z" level=info msg="Restoring containers: start."
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.775998332Z" level=info msg="Deleting nftables IPv4 rules" error="running nft: /dev/stdin:1:17-30: Error: Could not process rule: No such file or directory\ndelete table ip docker-bridges\n                ^^^^^^^^^^^^^^\n exit status 1"
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.788141528Z" level=info msg="Deleting nftables IPv6 rules" error="running nft: /dev/stdin:1:18-31: Error: Could not process rule: No such file or directory\ndelete table ip6 docker-bridges\n                 ^^^^^^^^^^^^^^\n exit status 1"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.052444560Z" level=info msg="Loading containers: done."
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.058049123Z" level=info msg="Docker daemon" commit=8ec5ab3 containerd-snapshotter=true storage-driver=overlayfs version=29.6.1
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.058280870Z" level=info msg="Initializing buildkit"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.220160582Z" level=info msg="Completed buildkit initialization"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.224043800Z" level=info msg="Daemon has completed initialization"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.224122648Z" level=info msg="API listen on /run/docker.sock"
+Jul 03 07:35:28 llmserver systemd[1]: Started docker.service - Docker Application Container Engine.
+
+[exit=0]
+```
+
+### sudo docker version
+
+```console
+$ sudo -n docker version
+Client: Docker Engine - Community
+ Version:           29.6.1
+ API version:       1.55
+ Go version:        go1.26.4
+ Git commit:        8900f1d
+ Built:             Fri Jun 26 11:40:19 2026
+ OS/Arch:           linux/amd64
+ Context:           default
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          29.6.1
+  API version:      1.55 (minimum version 1.40)
+  Go version:       go1.26.4
+  Git commit:       8ec5ab3
+  Built:            Fri Jun 26 11:40:19 2026
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          v2.2.5
+  GitCommit:        e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ runc:
+  Version:          1.3.6
+  GitCommit:        v1.3.6-0-g491b69ba
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+
+[exit=0]
+```
+
+### sudo docker info
+
+```console
+$ sudo -n docker info
+Client: Docker Engine - Community
+ Version:    29.6.1
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.35.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v5.3.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 1
+ Server Version: 29.6.1
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ CDI spec directories:
+  /etc/cdi
+  /var/run/cdi
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ runc version: v1.3.6-0-g491b69ba
+ init version: de40ad0
+ Security Options:
+  apparmor
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.8.0-134-generic
+ Operating System: Ubuntu 24.04.4 LTS
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 112
+ Total Memory: 881.8GiB
+ Name: llmserver
+ ID: fba62709-52b6-4594-98a7-b3a7e2626f3b
+ Docker Root Dir: /data/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  ::1/128
+  127.0.0.0/8
+ Live Restore Enabled: false
+ Firewall Backend: iptables
+  EnableUserlandProxy: true
+  UserlandProxyPath: /usr/bin/docker-proxy
+
+
+[exit=0]
+```
+
+### sudo docker compose version
+
+```console
+$ sudo -n docker compose version
+Docker Compose version v5.3.0
+
+[exit=0]
+```
+
+### sudo docker buildx version
+
+```console
+$ sudo -n docker buildx version
+github.com/docker/buildx v0.35.0 a319e5b15052cf6557ceb666eb8ff6e32380b782
+
+[exit=0]
+```
+
+### hello-world image inspect
+
+```console
+$ sudo -n docker image inspect hello-world:latest
+[
+    {
+        "Id": "sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d",
+        "RepoTags": [
+            "hello-world:latest"
+        ],
+        "RepoDigests": [
+            "hello-world@sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-03-23T21:33:59.562202219Z",
+        "Config": {
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "Cmd": [
+                "/hello"
+            ],
+            "WorkingDir": "/"
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 16227,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:897b3f2a7c1bc2f3d02432f7892fe31c6272c521ad4d70257df624504a3238b4"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-07-02T19:39:50.349224487Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d",
+            "size": 12212
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "docker.io/library/hello-world"
+                }
+            ]
+        }
+    }
+]
+
+[exit=0]
+```
+
+### sudo docker system df
+
+```console
+$ sudo -n docker system df
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          1         0         38.09kB   25.87kB (67%)
+Containers      0         0         0B        0B
+Local Volumes   0         0         0B        0B
+Build Cache     0         0         0B        0B
+
+[exit=0]
+```
+
+### Docker/containerd root and data sizes
+
+```console
+$ sudo -n du -sh /var/lib/docker /var/lib/containerd '/data/docker' '/data/containerd' '/data/containerd/root' 2>/dev/null || true
+236K	/data/docker
+336K	/data/containerd
+
+[exit=0]
+```
+
+### post-verification root-disk guard
+
+```console
+$ scripts/common/root-disk-guard.sh
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+## Docker/containerd Verification Summary
+
+- Docker installed: yes
+- containerd installed: yes
+- Docker Root Dir: /data/docker
+- containerd root: /data/containerd/root
+- containerd state: /run/containerd
+- hello-world image present: yes
+- root-disk guard: PASS
+
+## Docker/containerd Verification Conclusion
+
+PASS
+### Docker storage verifier
+
+```console
+$ scripts/docker/verify-docker-storage.sh
+PASS: Docker/containerd storage verified
+
+[exit=0]
+```
+
+### os-release
+
+```console
+$ cat /etc/os-release
+PRETTY_NAME="Ubuntu 24.04.4 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.4 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+
+[exit=0]
+```
+
+### uname -a
+
+```console
+$ uname -a
+Linux llmserver 6.8.0-134-generic #134-Ubuntu SMP PREEMPT_DYNAMIC Fri Jun 26 18:43:11 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+
+[exit=0]
+```
+
+### lspci NVIDIA/display inventory
+
+```console
+$ lspci -nn | egrep -i 'nvidia|vga|3d|display' || true
+00:01.0 VGA compatible controller [0300]: Device [1234:1111] (rev 02)
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+01:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+02:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+02:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+
+[exit=0]
+```
+
+### lspci driver binding summary
+
+```console
+$ lspci -nnk | egrep -A5 -i 'nvidia|vga|3d|display' || true
+00:01.0 VGA compatible controller [0300]: Device [1234:1111] (rev 02)
+	Subsystem: Red Hat, Inc. Device [1af4:1100]
+	Kernel driver in use: bochs-drm
+	Kernel modules: bochs
+00:1a.0 USB controller [0c03]: Intel Corporation 82801I (ICH9 Family) USB UHCI Controller #4 [8086:2937] (rev 03)
+	Subsystem: Red Hat, Inc. QEMU Virtual Machine [1af4:1100]
+--
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:204b]
+	Kernel driver in use: nvidia
+	Kernel modules: nvidiafb, nouveau, nvidia_drm, nvidia
+01:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:0000]
+	Kernel driver in use: snd_hda_intel
+	Kernel modules: snd_hda_intel
+02:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:204b]
+	Kernel driver in use: nvidia
+	Kernel modules: nvidiafb, nouveau, nvidia_drm, nvidia
+02:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:0000]
+	Kernel driver in use: snd_hda_intel
+	Kernel modules: snd_hda_intel
+05:01.0 PCI bridge [0604]: Red Hat, Inc. QEMU PCI-PCI bridge [1b36:0001]
+05:02.0 PCI bridge [0604]: Red Hat, Inc. QEMU PCI-PCI bridge [1b36:0001]
+05:03.0 PCI bridge [0604]: Red Hat, Inc. QEMU PCI-PCI bridge [1b36:0001]
+
+[exit=0]
+```
+
+### lsmod nvidia/nouveau/vfio summary
+
+```console
+$ lsmod | egrep 'nvidia|nouveau|vfio' || true
+nvidia_uvm           2060288  0
+nvidia_drm            139264  0
+nvidia_modeset       1744896  1 nvidia_drm
+nvidia              14794752  2 nvidia_uvm,nvidia_modeset
+video                  77824  1 nvidia_modeset
+ecc                    45056  1 nvidia
+
+[exit=0]
+```
+
+### command -v nvidia-smi
+
+```console
+$ command -v nvidia-smi
+/usr/bin/nvidia-smi
+
+[exit=0]
+```
+
+### nvidia-smi
+
+```console
+$ nvidia-smi
+Fri Jul  3 07:37:28 2026
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA RTX PRO 6000 Blac...    Off |   00000000:01:00.0 Off |                  Off |
+| 30%   32C    P8             15W /  600W |       2MiB /  97887MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA RTX PRO 6000 Blac...    Off |   00000000:02:00.0 Off |                  Off |
+| 30%   38C    P8             32W /  600W |      34MiB /  97887MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+
+[exit=0]
+```
+
+### nvidia-smi -L
+
+```console
+$ nvidia-smi -L
+GPU 0: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (UUID: GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237)
+GPU 1: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (UUID: GPU-69acfa26-8b60-61b5-702d-aee252c163cc)
+
+[exit=0]
+```
+
+### nvidia-smi query-gpu CSV
+
+```console
+$ nvidia-smi --query-gpu=index\,name\,pci.bus_id\,driver_version\,memory.total\,power.limit --format=csv
+index, name, pci.bus_id, driver_version, memory.total [MiB], power.limit [W]
+0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:01:00.0, 595.71.05, 97887 MiB, 600.00 W
+1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:02:00.0, 595.71.05, 97887 MiB, 600.00 W
+
+[exit=0]
+```
+
+### nvidia-smi topology
+
+```console
+$ nvidia-smi topo -m
+	[4mGPU0	GPU1	CPU Affinity	NUMA Affinity	GPU NUMA ID[0m
+GPU0	 X 	PHB	0-111	0-6		N/A
+GPU1	PHB	 X 	0-111	0-6		N/A
+
+Legend:
+
+  X    = Self
+  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing at most a single PCIe bridge
+  NV#  = Connection traversing a bonded set of # NVLinks
+
+[exit=0]
+```
+
+### nvidia-smi requested MEMORY,PCI,POWER detail (unsupported PCI display flag in 595)
+
+```console
+$ nvidia-smi -q -d MEMORY\,PCI\,POWER
+Failed to parse --display/-d flags
+
+[exit=2]
+```
+
+### nvidia-smi full query for PCI detail
+
+```console
+$ nvidia-smi -q
+
+==============NVSMI LOG==============
+
+Timestamp                                              : Fri Jul  3 07:37:28 2026
+Driver Version                                         : 595.71.05
+CUDA Version                                           : 13.2
+
+Attached GPUs                                          : 2
+GPU 00000000:01:00.0
+    Product Name                                       : NVIDIA RTX PRO 6000 Blackwell Workstation Edition
+    Product Brand                                      : NVIDIA RTX
+    Product Architecture                               : Blackwell
+    Display Mode                                       : Requested functionality has been deprecated
+    Display Attached                                   : No
+    Display Active                                     : Disabled
+    Persistence Mode                                   : Disabled
+    Addressing Mode                                    : HMM
+    MIG Mode
+        Current                                        : N/A
+        Pending                                        : N/A
+    Accounting Mode                                    : Disabled
+    Accounting Mode Buffer Size                        : 4000
+    Driver Model
+        Current                                        : N/A
+        Pending                                        : N/A
+    Serial Number                                      : 1792525050955
+    GPU UUID                                           : GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237
+    GPU PDI                                            : 0x2fc57a11785567f6
+    Minor Number                                       : 0
+    VBIOS Version                                      : 98.02.52.00.02
+    MultiGPU Board                                     : No
+    Board ID                                           : 0x100
+    Board Part Number                                  : 900-5G144-2200-000
+    GPU Part Number                                    : 2BB1-870-A1
+    FRU Part Number                                    : N/A
+    Platform Info
+        Chassis Serial Number                          :
+        Slot Number                                    : 0
+        Tray Index                                     : 0
+        Host ID                                        : 1
+        Peer Type                                      : Direct Connected
+        Module Id                                      : 1
+        GPU Fabric GUID                                : 0x0000000000000000
+    Inforom Version
+        Image Version                                  : G144.0520.00.02
+        OEM Object                                     : 2.1
+        ECC Object                                     : 7.16
+        Power Management Object                        : N/A
+    Inforom BBX Object Flush
+        Latest Timestamp                               : N/A
+        Latest Duration                                : N/A
+    GPU Operation Mode
+        Current                                        : N/A
+        Pending                                        : N/A
+    GPU C2C Mode                                       : Disabled
+    GPU Virtualization Mode
+        Virtualization Mode                            : Pass-Through
+        Host VGPU Mode                                 : N/A
+        vGPU Heterogeneous Mode                        : N/A
+    GPU Recovery Action                                : None
+    GSP Firmware Version                               : 595.71.05
+    IBMNPU
+        Relaxed Ordering Mode                          : N/A
+    PCI
+        Bus                                            : 0x01
+        Device                                         : 0x00
+        Domain                                         : 0x0000
+        Base Classcode                                 : 0x3
+        Sub Classcode                                  : 0x0
+        Device Id                                      : 0x2BB110DE
+        Bus Id                                         : 00000000:01:00.0
+        Sub System Id                                  : 0x204B10DE
+        GPU Link Info
+            PCIe Generation
+                Max                                    : 5
+                Current                                : 1
+                Device Current                         : 1
+                Device Max                             : 5
+                Host Max                               : N/A
+            Link Width
+                Max                                    : 16x
+                Current                                : 16x
+        Bridge Chip
+            Type                                       : N/A
+            Firmware                                   : N/A
+        Replays Since Reset                            : 0
+        Replay Number Rollovers                        : 0
+        Tx Throughput                                  : 888 KB/s
+        Rx Throughput                                  : 595 KB/s
+        Atomic Caps Outbound                           : N/A
+        Atomic Caps Inbound                            : FETCHADD_32 FETCHADD_64 SWAP_32 SWAP_64 CAS_32 CAS_64
+    Fan Speed                                          : 30 %
+    Performance State                                  : P8
+    Clocks Event Reasons
+        Idle                                           : Not Active
+        Applications Clocks Setting                    : Not Active
+        SW Power Cap                                   : Not Active
+        HW Slowdown                                    : Not Active
+            HW Thermal Slowdown                        : Not Active
+            HW Power Brake Slowdown                    : Not Active
+        Sync Boost                                     : Not Active
+        SW Thermal Slowdown                            : Not Active
+        Display Clock Setting                          : Not Active
+    Clocks Event Reasons Counters
+        SW Power Capping                               : 200402 us
+        Sync Boost                                     : 0 us
+        SW Thermal Slowdown                            : 0 us
+        HW Thermal Slowdown                            : 0 us
+        HW Power Braking                               : 0 us
+    Sparse Operation Mode                              : N/A
+    FB Memory Usage
+        Total                                          : 97887 MiB
+        Reserved                                       : 638 MiB
+        Used                                           : 2 MiB
+        Free                                           : 97249 MiB
+    BAR1 Memory Usage
+        Total                                          : 131072 MiB
+        Used                                           : 1 MiB
+        Free                                           : 131071 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+    Compute Mode                                       : Default
+    Utilization
+        GPU                                            : 0 %
+        Memory                                         : 0 %
+        Encoder                                        : 0 %
+        Decoder                                        : 0 %
+        JPEG                                           : 0 %
+        OFA                                            : 0 %
+    Encoder Stats
+        Active Sessions                                : 0
+        Average FPS                                    : 0
+        Average Latency                                : 0
+    FBC Stats
+        Active Sessions                                : 0
+        Average FPS                                    : 0
+        Average Latency                                : 0
+    DRAM Encryption Mode
+        Current                                        : Disabled
+        Pending                                        : Disabled
+    ECC Mode
+        Current                                        : Disabled
+        Pending                                        : Disabled
+    ECC Errors
+        Volatile
+            SRAM Correctable                           : N/A
+            SRAM Uncorrectable Parity                  : N/A
+            SRAM Uncorrectable SEC-DED                 : N/A
+            DRAM Correctable                           : N/A
+            DRAM Uncorrectable                         : N/A
+        Aggregate
+            SRAM Correctable                           : N/A
+            SRAM Uncorrectable Parity                  : N/A
+            SRAM Uncorrectable SEC-DED                 : N/A
+            DRAM Correctable                           : N/A
+            DRAM Uncorrectable                         : N/A
+            SRAM Threshold Exceeded                    : N/A
+        Aggregate Uncorrectable SRAM Sources
+            SRAM L2                                    : N/A
+            SRAM SM                                    : N/A
+            SRAM Microcontroller                       : N/A
+            SRAM PCIE                                  : N/A
+            SRAM Other                                 : N/A
+        Channel Repair Pending                         : No
+        TPC Repair Pending                             : No
+        Unrepairable Memory                            : N/A
+    Retired Pages
+        Single Bit ECC                                 : N/A
+        Double Bit ECC                                 : N/A
+        Pending Page Blacklist                         : N/A
+    Remapped Rows
+        Correctable Error                              : 0
+        Inactive Correctable Error                     : 0
+        Uncorrectable Error                            : 0
+        Inactive Uncorrectable Error                   : 0
+        Pending                                        : No
+        Remapping Failure Occurred                     : No
+        Bank Remap Availability Histogram
+            Max                                        : 512 bank(s)
+            High                                       : 0 bank(s)
+            Partial                                    : 0 bank(s)
+            Low                                        : 0 bank(s)
+            None                                       : 0 bank(s)
+    Temperature
+        GPU Current Temp                               : 32 C
+        GPU T.Limit Temp                               : 61 C
+        GPU Shutdown T.Limit Temp                      : -5 C
+        GPU Slowdown T.Limit Temp                      : -2 C
+        GPU Max Operating T.Limit Temp                 : 0 C
+        GPU Target Temperature                         : N/A
+        Memory Current Temp                            : N/A
+        Memory Max Operating T.Limit Temp              : N/A
+    GPU Power Readings
+        Average Power Draw                             : 15.08 W
+        Instantaneous Power Draw                       : 15.08 W
+        Current Power Limit                            : 600.00 W
+        Requested Power Limit                          : 600.00 W
+        Default Power Limit                            : 600.00 W
+        Min Power Limit                                : 150.00 W
+        Max Power Limit                                : 600.00 W
+    GPU Memory Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+    Power Smoothing                                    : N/A
+    Workload Power Profiles
+        Requested Profiles                             : N/A
+        Enforced Profiles                              : N/A
+    EDPp Multiplier                                    : N/A
+    Clocks
+        Graphics                                       : 180 MHz
+        SM                                             : 180 MHz
+        Memory                                         : 405 MHz
+        Video                                          : 600 MHz
+    Applications Clocks
+        Graphics                                       : Requested functionality has been deprecated
+        Memory                                         : Requested functionality has been deprecated
+    Default Applications Clocks
+        Graphics                                       : Requested functionality has been deprecated
+        Memory                                         : Requested functionality has been deprecated
+    Deferred Clocks
+        Memory                                         : N/A
+    Max Clocks
+        Graphics                                       : 3090 MHz
+        SM                                             : 3090 MHz
+        Memory                                         : 14001 MHz
+        Video                                          : 3090 MHz
+    Max Customer Boost Clocks
+        Graphics                                       : N/A
+    Clock Policy
+        Auto Boost                                     : N/A
+        Auto Boost Default                             : N/A
+    Fabric
+        State                                          : N/A
+        Status                                         : N/A
+        CliqueId                                       : N/A
+        ClusterUUID                                    : N/A
+        Health
+            Summary                                    : N/A
+            Bandwidth                                  : N/A
+            Route Recovery in progress                 : N/A
+            Route Unhealthy                            : N/A
+            Access Timeout Recovery                    : N/A
+            Incorrect Configuration                    : N/A
+            Partition Assigned                         : N/A
+    Processes                                          : None
+    Capabilities
+        EGM                                            : disabled
+
+GPU 00000000:02:00.0
+    Product Name                                       : NVIDIA RTX PRO 6000 Blackwell Workstation Edition
+    Product Brand                                      : NVIDIA RTX
+    Product Architecture                               : Blackwell
+    Display Mode                                       : Requested functionality has been deprecated
+    Display Attached                                   : Yes
+    Display Active                                     : Disabled
+    Persistence Mode                                   : Disabled
+    Addressing Mode                                    : HMM
+    MIG Mode
+        Current                                        : N/A
+        Pending                                        : N/A
+    Accounting Mode                                    : Disabled
+    Accounting Mode Buffer Size                        : 4000
+    Driver Model
+        Current                                        : N/A
+        Pending                                        : N/A
+    Serial Number                                      : 1792825000515
+    GPU UUID                                           : GPU-69acfa26-8b60-61b5-702d-aee252c163cc
+    GPU PDI                                            : 0x3802a64ab95f128c
+    Minor Number                                       : 1
+    VBIOS Version                                      : 98.02.52.00.02
+    MultiGPU Board                                     : No
+    Board ID                                           : 0x200
+    Board Part Number                                  : 900-5G144-2200-000
+    GPU Part Number                                    : 2BB1-870-A1
+    FRU Part Number                                    : N/A
+    Platform Info
+        Chassis Serial Number                          :
+        Slot Number                                    : 0
+        Tray Index                                     : 0
+        Host ID                                        : 1
+        Peer Type                                      : Direct Connected
+        Module Id                                      : 1
+        GPU Fabric GUID                                : 0x0000000000000000
+    Inforom Version
+        Image Version                                  : G144.0520.00.02
+        OEM Object                                     : 2.1
+        ECC Object                                     : 7.16
+        Power Management Object                        : N/A
+    Inforom BBX Object Flush
+        Latest Timestamp                               : N/A
+        Latest Duration                                : N/A
+    GPU Operation Mode
+        Current                                        : N/A
+        Pending                                        : N/A
+    GPU C2C Mode                                       : Disabled
+    GPU Virtualization Mode
+        Virtualization Mode                            : Pass-Through
+        Host VGPU Mode                                 : N/A
+        vGPU Heterogeneous Mode                        : N/A
+    GPU Recovery Action                                : None
+    GSP Firmware Version                               : 595.71.05
+    IBMNPU
+        Relaxed Ordering Mode                          : N/A
+    PCI
+        Bus                                            : 0x02
+        Device                                         : 0x00
+        Domain                                         : 0x0000
+        Base Classcode                                 : 0x3
+        Sub Classcode                                  : 0x0
+        Device Id                                      : 0x2BB110DE
+        Bus Id                                         : 00000000:02:00.0
+        Sub System Id                                  : 0x204B10DE
+        GPU Link Info
+            PCIe Generation
+                Max                                    : 5
+                Current                                : 1
+                Device Current                         : 1
+                Device Max                             : 5
+                Host Max                               : N/A
+            Link Width
+                Max                                    : 16x
+                Current                                : 16x
+        Bridge Chip
+            Type                                       : N/A
+            Firmware                                   : N/A
+        Replays Since Reset                            : 0
+        Replay Number Rollovers                        : 0
+        Tx Throughput                                  : 771 KB/s
+        Rx Throughput                                  : 484 KB/s
+        Atomic Caps Outbound                           : N/A
+        Atomic Caps Inbound                            : FETCHADD_32 FETCHADD_64 SWAP_32 SWAP_64 CAS_32 CAS_64
+    Fan Speed                                          : 30 %
+    Performance State                                  : P8
+    Clocks Event Reasons
+        Idle                                           : Not Active
+        Applications Clocks Setting                    : Not Active
+        SW Power Cap                                   : Not Active
+        HW Slowdown                                    : Not Active
+            HW Thermal Slowdown                        : Not Active
+            HW Power Brake Slowdown                    : Not Active
+        Sync Boost                                     : Not Active
+        SW Thermal Slowdown                            : Not Active
+        Display Clock Setting                          : Not Active
+    Clocks Event Reasons Counters
+        SW Power Capping                               : 200214 us
+        Sync Boost                                     : 0 us
+        SW Thermal Slowdown                            : 0 us
+        HW Thermal Slowdown                            : 0 us
+        HW Power Braking                               : 0 us
+    Sparse Operation Mode                              : N/A
+    FB Memory Usage
+        Total                                          : 97887 MiB
+        Reserved                                       : 638 MiB
+        Used                                           : 34 MiB
+        Free                                           : 97217 MiB
+    BAR1 Memory Usage
+        Total                                          : 131072 MiB
+        Used                                           : 33 MiB
+        Free                                           : 131039 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+    Compute Mode                                       : Default
+    Utilization
+        GPU                                            : 0 %
+        Memory                                         : 0 %
+        Encoder                                        : 0 %
+        Decoder                                        : 0 %
+        JPEG                                           : 0 %
+        OFA                                            : 0 %
+    Encoder Stats
+        Active Sessions                                : 0
+        Average FPS                                    : 0
+        Average Latency                                : 0
+    FBC Stats
+        Active Sessions                                : 0
+        Average FPS                                    : 0
+        Average Latency                                : 0
+    DRAM Encryption Mode
+        Current                                        : Disabled
+        Pending                                        : Disabled
+    ECC Mode
+        Current                                        : Disabled
+        Pending                                        : Disabled
+    ECC Errors
+        Volatile
+            SRAM Correctable                           : N/A
+            SRAM Uncorrectable Parity                  : N/A
+            SRAM Uncorrectable SEC-DED                 : N/A
+            DRAM Correctable                           : N/A
+            DRAM Uncorrectable                         : N/A
+        Aggregate
+            SRAM Correctable                           : N/A
+            SRAM Uncorrectable Parity                  : N/A
+            SRAM Uncorrectable SEC-DED                 : N/A
+            DRAM Correctable                           : N/A
+            DRAM Uncorrectable                         : N/A
+            SRAM Threshold Exceeded                    : N/A
+        Aggregate Uncorrectable SRAM Sources
+            SRAM L2                                    : N/A
+            SRAM SM                                    : N/A
+            SRAM Microcontroller                       : N/A
+            SRAM PCIE                                  : N/A
+            SRAM Other                                 : N/A
+        Channel Repair Pending                         : No
+        TPC Repair Pending                             : No
+        Unrepairable Memory                            : N/A
+    Retired Pages
+        Single Bit ECC                                 : N/A
+        Double Bit ECC                                 : N/A
+        Pending Page Blacklist                         : N/A
+    Remapped Rows
+        Correctable Error                              : 0
+        Inactive Correctable Error                     : 0
+        Uncorrectable Error                            : 0
+        Inactive Uncorrectable Error                   : 0
+        Pending                                        : No
+        Remapping Failure Occurred                     : No
+        Bank Remap Availability Histogram
+            Max                                        : 512 bank(s)
+            High                                       : 0 bank(s)
+            Partial                                    : 0 bank(s)
+            Low                                        : 0 bank(s)
+            None                                       : 0 bank(s)
+    Temperature
+        GPU Current Temp                               : 38 C
+        GPU T.Limit Temp                               : 55 C
+        GPU Shutdown T.Limit Temp                      : -5 C
+        GPU Slowdown T.Limit Temp                      : -2 C
+        GPU Max Operating T.Limit Temp                 : 0 C
+        GPU Target Temperature                         : N/A
+        Memory Current Temp                            : N/A
+        Memory Max Operating T.Limit Temp              : N/A
+    GPU Power Readings
+        Average Power Draw                             : 32.31 W
+        Instantaneous Power Draw                       : 32.41 W
+        Current Power Limit                            : 600.00 W
+        Requested Power Limit                          : 600.00 W
+        Default Power Limit                            : 600.00 W
+        Min Power Limit                                : 150.00 W
+        Max Power Limit                                : 600.00 W
+    GPU Memory Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+    Power Smoothing                                    : N/A
+    Workload Power Profiles
+        Requested Profiles                             : N/A
+        Enforced Profiles                              : N/A
+    EDPp Multiplier                                    : N/A
+    Clocks
+        Graphics                                       : 180 MHz
+        SM                                             : 180 MHz
+        Memory                                         : 405 MHz
+        Video                                          : 600 MHz
+    Applications Clocks
+        Graphics                                       : Requested functionality has been deprecated
+        Memory                                         : Requested functionality has been deprecated
+    Default Applications Clocks
+        Graphics                                       : Requested functionality has been deprecated
+        Memory                                         : Requested functionality has been deprecated
+    Deferred Clocks
+        Memory                                         : N/A
+    Max Clocks
+        Graphics                                       : 3090 MHz
+        SM                                             : 3090 MHz
+        Memory                                         : 14001 MHz
+        Video                                          : 3090 MHz
+    Max Customer Boost Clocks
+        Graphics                                       : N/A
+    Clock Policy
+        Auto Boost                                     : N/A
+        Auto Boost Default                             : N/A
+    Fabric
+        State                                          : N/A
+        Status                                         : N/A
+        CliqueId                                       : N/A
+        ClusterUUID                                    : N/A
+        Health
+            Summary                                    : N/A
+            Bandwidth                                  : N/A
+            Route Recovery in progress                 : N/A
+            Route Unhealthy                            : N/A
+            Access Timeout Recovery                    : N/A
+            Incorrect Configuration                    : N/A
+            Partition Assigned                         : N/A
+    Processes                                          : None
+    Capabilities
+        EGM                                            : disabled
+
+
+[exit=0]
+```
+
+### nvidia-smi memory detail
+
+```console
+$ nvidia-smi -q -d MEMORY
+
+==============NVSMI LOG==============
+
+Timestamp                                              : Fri Jul  3 07:37:28 2026
+Driver Version                                         : 595.71.05
+CUDA Version                                           : 13.2
+
+Attached GPUs                                          : 2
+GPU 00000000:01:00.0
+    FB Memory Usage
+        Total                                          : 97887 MiB
+        Reserved                                       : 638 MiB
+        Used                                           : 2 MiB
+        Free                                           : 97249 MiB
+    BAR1 Memory Usage
+        Total                                          : 131072 MiB
+        Used                                           : 1 MiB
+        Free                                           : 131071 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+
+GPU 00000000:02:00.0
+    FB Memory Usage
+        Total                                          : 97887 MiB
+        Reserved                                       : 638 MiB
+        Used                                           : 34 MiB
+        Free                                           : 97217 MiB
+    BAR1 Memory Usage
+        Total                                          : 131072 MiB
+        Used                                           : 33 MiB
+        Free                                           : 131039 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+
+
+[exit=0]
+```
+
+### nvidia-smi power detail
+
+```console
+$ nvidia-smi -q -d POWER
+
+==============NVSMI LOG==============
+
+Timestamp                                              : Fri Jul  3 07:37:29 2026
+Driver Version                                         : 595.71.05
+CUDA Version                                           : 13.2
+
+Attached GPUs                                          : 2
+GPU 00000000:01:00.0
+    GPU Power Readings
+        Average Power Draw                             : 15.08 W
+        Instantaneous Power Draw                       : 15.08 W
+        Current Power Limit                            : 600.00 W
+        Requested Power Limit                          : 600.00 W
+        Default Power Limit                            : 600.00 W
+        Min Power Limit                                : 150.00 W
+        Max Power Limit                                : 600.00 W
+    Power Samples
+        Duration                                       : 103.31 sec
+        Number of Samples                              : 119
+        Max                                            : 57.81 W
+        Min                                            : 14.77 W
+        Avg                                            : 15.25 W
+    GPU Memory Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+    EDPp Multiplier                                    : N/A
+
+GPU 00000000:02:00.0
+    GPU Power Readings
+        Average Power Draw                             : 32.31 W
+        Instantaneous Power Draw                       : 32.41 W
+        Current Power Limit                            : 600.00 W
+        Requested Power Limit                          : 600.00 W
+        Default Power Limit                            : 600.00 W
+        Min Power Limit                                : 150.00 W
+        Max Power Limit                                : 600.00 W
+    Power Samples
+        Duration                                       : 102.33 sec
+        Number of Samples                              : 119
+        Max                                            : 98.16 W
+        Min                                            : 31.97 W
+        Avg                                            : 32.62 W
+    GPU Memory Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+    EDPp Multiplier                                    : N/A
+
+
+[exit=0]
+```
+
+### nvcc after reboot
+
+```console
+$ command -v nvcc || true; nvcc --version || true
+bash: line 1: nvcc: command not found
+
+[exit=0]
+```
+
+### Installed NVIDIA/CUDA/container-toolkit packages after reboot
+
+```console
+$ dpkg -l | egrep 'nvidia|cuda|container-toolkit' || true
+ii  libnvidia-cfg1-595:amd64              595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA binary OpenGL/GLX configuration library
+ii  libnvidia-common-595                  595.71.05-0ubuntu0.24.04.1                       amd64        Shared files used by the NVIDIA libraries
+ii  libnvidia-compute-595:amd64           595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA libcompute package
+ii  libnvidia-decode-595:amd64            595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA Video Decoding runtime libraries
+ii  libnvidia-egl-wayland1:amd64          1:1.1.13-1ubuntu0.1                              amd64        Wayland EGL External Platform library -- shared library
+ii  libnvidia-encode-595:amd64            595.71.05-0ubuntu0.24.04.1                       amd64        NVENC Video Encoding runtime library
+ii  libnvidia-extra-595:amd64             595.71.05-0ubuntu0.24.04.1                       amd64        Extra libraries for the NVIDIA driver
+ii  libnvidia-fbc1-595:amd64              595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA OpenGL-based Framebuffer Capture runtime library
+ii  libnvidia-gl-595:amd64                595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA OpenGL/GLX/EGL/GLES GLVND libraries and Vulkan ICD
+ii  nvidia-compute-utils-595              595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA compute utilities
+ii  nvidia-dkms-595-open                  595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA DKMS package (open kernel module)
+ii  nvidia-driver-595-open                595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA driver (open kernel) metapackage
+ii  nvidia-firmware-595-595.71.05         595.71.05-0ubuntu0.24.04.1                       amd64        Firmware files used by the kernel module
+ii  nvidia-kernel-common-595              595.71.05-0ubuntu0.24.04.1                       amd64        Shared files used with the kernel module
+ii  nvidia-kernel-source-595-open         595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA kernel source package
+ii  nvidia-prime                          0.8.17.2                                         all          Tools to enable NVIDIA's Prime
+ii  nvidia-settings                       510.47.03-0ubuntu4.24.04.1                       amd64        Tool for configuring the NVIDIA graphics driver
+ii  nvidia-utils-595                      595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA driver support binaries
+ii  screen-resolution-extra               0.18.3ubuntu0.24.04.1                            all          Extension for the nvidia-settings control panel
+ii  xserver-xorg-video-nvidia-595         595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA binary Xorg driver
+
+[exit=0]
+```
+
+### Docker Root Dir and containerd info
+
+```console
+$ sudo -n docker info | egrep 'Docker Root Dir|Storage Driver|containerd' || true
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Runtimes: io.containerd.runc.v2 runc
+ containerd version: e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ Docker Root Dir: /data/docker
+
+[exit=0]
+```
+
+### Docker/containerd path sizes
+
+```console
+$ sudo -n du -sh /var/lib/docker /var/lib/containerd /data/docker /data/containerd /data/containerd/root 2>/dev/null || true
+236K	/data/docker
+336K	/data/containerd
+
+[exit=0]
+```
+
+## M5B Post-reboot Conclusion
+
+STOP
+
+Reason: one or more GPUs did not report approximately 96 GB VRAM
+
+Manual Proxmox VFIO/AER/reset checks are still required outside Codex.
+
+## Post-reboot verifier retry note 2
+
+The second verifier run stopped because the script parsed `driver_version` instead of `memory.total` from the no-header query CSV. The query output shows both GPUs report `97887 MiB`; the runner was corrected to validate the fifth CSV column.
+
+# M5B post-reboot NVIDIA driver verification
+
+- Timestamp: 2026-07-03T07:38:00+00:00
+- Hostname: llmserver
+- Uptime: up 2 minutes
+- Runner: /data/services/m5b-post-reboot/m5b-post-reboot-verify.sh
+- Log: /data/logs/m5b-post-reboot-verify.log
+
+### hostname
+
+```console
+$ hostname
+llmserver
+
+[exit=0]
+```
+
+### uptime
+
+```console
+$ uptime
+ 07:38:00 up 2 min,  3 users,  load average: 0.11, 0.10, 0.04
+
+[exit=0]
+```
+
+### date -Is
+
+```console
+$ date -Is
+2026-07-03T07:38:00+00:00
+
+[exit=0]
+```
+
+### require-data-mounted
+
+```console
+$ scripts/common/require-data-mounted.sh
+PASS: /data is mounted and ready
+- root source: /dev/mapper/ubuntu--vg-ubuntu--lv
+- data source: /dev/sdb1
+- data fstype: ext4
+- data label: AI_DATA
+- data UUID: 8daf56f1-5649-4163-9d87-919c2d271875
+
+[exit=0]
+```
+
+### root-disk-guard
+
+```console
+$ scripts/common/root-disk-guard.sh --report reports/m3-root-disk-guard.md
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+
+## Docker/containerd Storage Verification
+
+- Timestamp: 2026-07-03T07:38:01+00:00
+- Hostname: llmserver
+- User: user
+- Branch: milestone/m5b-nvidia-host-driver
+
+### require /data mounted
+
+```console
+$ scripts/common/require-data-mounted.sh
+PASS: /data is mounted and ready
+- root source: /dev/mapper/ubuntu--vg-ubuntu--lv
+- data source: /dev/sdb1
+- data fstype: ext4
+- data label: AI_DATA
+- data UUID: 8daf56f1-5649-4163-9d87-919c2d271875
+
+[exit=0]
+```
+
+### pre-verification root-disk guard
+
+```console
+$ scripts/common/root-disk-guard.sh
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+### df -hT / /data
+
+```console
+$ df -hT / /data
+Filesystem                        Type  Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  8.9G  4.6G  66% /
+/dev/sdb1                         ext4  2.0T  3.4M  1.9T   1% /data
+
+[exit=0]
+```
+
+### /var/lib Docker/containerd size summary
+
+| Path | MiB | Policy |
+| --- | ---: | --- |
+| `/var/lib/docker` | 0 | absent/empty/small or documented |
+| `/var/lib/containerd` | 0 | absent/empty/small or documented |
+
+### systemctl is-active containerd
+
+```console
+$ sudo -n systemctl is-active containerd
+active
+
+[exit=0]
+```
+
+### systemctl is-active docker
+
+```console
+$ sudo -n systemctl is-active docker
+active
+
+[exit=0]
+```
+
+### systemctl status containerd
+
+```console
+$ sudo -n systemctl status containerd --no-pager
+● containerd.service - containerd container runtime
+     Loaded: loaded (/usr/lib/systemd/system/containerd.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-07-03 07:35:25 UTC; 2min 35s ago
+       Docs: https://containerd.io
+   Main PID: 2091 (containerd)
+      Tasks: 30
+     Memory: 82.3M (peak: 86.7M)
+        CPU: 445ms
+     CGroup: /system.slice/containerd.service
+             └─2091 /usr/bin/containerd
+
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875859853Z" level=info msg="Start cni network conf syncer for default"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875865272Z" level=info msg="Start streaming server"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875873444Z" level=info msg="Registered namespace \"k8s.io\" with NRI"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875878251Z" level=info msg="runtime interface starting up..."
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875881666Z" level=info msg="starting plugins..."
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875890109Z" level=info msg="Synchronizing NRI (plugin) with current runtime state"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875902768Z" level=info msg=serving... address=/run/containerd/containerd.sock.ttrpc
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875941546Z" level=info msg=serving... address=/run/containerd/containerd.sock
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.876173504Z" level=info msg="containerd successfully booted in 0.033839s"
+Jul 03 07:35:25 llmserver systemd[1]: Started containerd.service - containerd container runtime.
+
+[exit=0]
+```
+
+### systemctl status docker
+
+```console
+$ sudo -n systemctl status docker --no-pager
+● docker.service - Docker Application Container Engine
+     Loaded: loaded (/usr/lib/systemd/system/docker.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-07-03 07:35:28 UTC; 2min 33s ago
+TriggeredBy: ● docker.socket
+       Docs: https://docs.docker.com
+   Main PID: 2261 (dockerd)
+      Tasks: 41
+     Memory: 116.0M (peak: 122.0M)
+        CPU: 525ms
+     CGroup: /system.slice/docker.service
+             └─2261 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.673114630Z" level=info msg="Restoring containers: start."
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.775998332Z" level=info msg="Deleting nftables IPv4 rules" error="running nft: /dev/stdin:1:17-30: Error: Could not process rule: No such file or directory\ndelete table ip docker-bridges\n                ^^^^^^^^^^^^^^\n exit status 1"
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.788141528Z" level=info msg="Deleting nftables IPv6 rules" error="running nft: /dev/stdin:1:18-31: Error: Could not process rule: No such file or directory\ndelete table ip6 docker-bridges\n                 ^^^^^^^^^^^^^^\n exit status 1"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.052444560Z" level=info msg="Loading containers: done."
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.058049123Z" level=info msg="Docker daemon" commit=8ec5ab3 containerd-snapshotter=true storage-driver=overlayfs version=29.6.1
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.058280870Z" level=info msg="Initializing buildkit"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.220160582Z" level=info msg="Completed buildkit initialization"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.224043800Z" level=info msg="Daemon has completed initialization"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.224122648Z" level=info msg="API listen on /run/docker.sock"
+Jul 03 07:35:28 llmserver systemd[1]: Started docker.service - Docker Application Container Engine.
+
+[exit=0]
+```
+
+### sudo docker version
+
+```console
+$ sudo -n docker version
+Client: Docker Engine - Community
+ Version:           29.6.1
+ API version:       1.55
+ Go version:        go1.26.4
+ Git commit:        8900f1d
+ Built:             Fri Jun 26 11:40:19 2026
+ OS/Arch:           linux/amd64
+ Context:           default
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          29.6.1
+  API version:      1.55 (minimum version 1.40)
+  Go version:       go1.26.4
+  Git commit:       8ec5ab3
+  Built:            Fri Jun 26 11:40:19 2026
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          v2.2.5
+  GitCommit:        e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ runc:
+  Version:          1.3.6
+  GitCommit:        v1.3.6-0-g491b69ba
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+
+[exit=0]
+```
+
+### sudo docker info
+
+```console
+$ sudo -n docker info
+Client: Docker Engine - Community
+ Version:    29.6.1
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.35.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v5.3.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 1
+ Server Version: 29.6.1
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ CDI spec directories:
+  /etc/cdi
+  /var/run/cdi
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ runc version: v1.3.6-0-g491b69ba
+ init version: de40ad0
+ Security Options:
+  apparmor
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.8.0-134-generic
+ Operating System: Ubuntu 24.04.4 LTS
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 112
+ Total Memory: 881.8GiB
+ Name: llmserver
+ ID: fba62709-52b6-4594-98a7-b3a7e2626f3b
+ Docker Root Dir: /data/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  ::1/128
+  127.0.0.0/8
+ Live Restore Enabled: false
+ Firewall Backend: iptables
+  EnableUserlandProxy: true
+  UserlandProxyPath: /usr/bin/docker-proxy
+
+
+[exit=0]
+```
+
+### sudo docker compose version
+
+```console
+$ sudo -n docker compose version
+Docker Compose version v5.3.0
+
+[exit=0]
+```
+
+### sudo docker buildx version
+
+```console
+$ sudo -n docker buildx version
+github.com/docker/buildx v0.35.0 a319e5b15052cf6557ceb666eb8ff6e32380b782
+
+[exit=0]
+```
+
+### hello-world image inspect
+
+```console
+$ sudo -n docker image inspect hello-world:latest
+[
+    {
+        "Id": "sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d",
+        "RepoTags": [
+            "hello-world:latest"
+        ],
+        "RepoDigests": [
+            "hello-world@sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-03-23T21:33:59.562202219Z",
+        "Config": {
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "Cmd": [
+                "/hello"
+            ],
+            "WorkingDir": "/"
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 16227,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:897b3f2a7c1bc2f3d02432f7892fe31c6272c521ad4d70257df624504a3238b4"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-07-02T19:39:50.349224487Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d",
+            "size": 12212
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "docker.io/library/hello-world"
+                }
+            ]
+        }
+    }
+]
+
+[exit=0]
+```
+
+### sudo docker system df
+
+```console
+$ sudo -n docker system df
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          1         0         38.09kB   25.87kB (67%)
+Containers      0         0         0B        0B
+Local Volumes   0         0         0B        0B
+Build Cache     0         0         0B        0B
+
+[exit=0]
+```
+
+### Docker/containerd root and data sizes
+
+```console
+$ sudo -n du -sh /var/lib/docker /var/lib/containerd '/data/docker' '/data/containerd' '/data/containerd/root' 2>/dev/null || true
+236K	/data/docker
+336K	/data/containerd
+
+[exit=0]
+```
+
+### post-verification root-disk guard
+
+```console
+$ scripts/common/root-disk-guard.sh
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+## Docker/containerd Verification Summary
+
+- Docker installed: yes
+- containerd installed: yes
+- Docker Root Dir: /data/docker
+- containerd root: /data/containerd/root
+- containerd state: /run/containerd
+- hello-world image present: yes
+- root-disk guard: PASS
+
+## Docker/containerd Verification Conclusion
+
+PASS
+### Docker storage verifier
+
+```console
+$ scripts/docker/verify-docker-storage.sh
+PASS: Docker/containerd storage verified
+
+[exit=0]
+```
+
+### os-release
+
+```console
+$ cat /etc/os-release
+PRETTY_NAME="Ubuntu 24.04.4 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.4 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+
+[exit=0]
+```
+
+### uname -a
+
+```console
+$ uname -a
+Linux llmserver 6.8.0-134-generic #134-Ubuntu SMP PREEMPT_DYNAMIC Fri Jun 26 18:43:11 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+
+[exit=0]
+```
+
+### lspci NVIDIA/display inventory
+
+```console
+$ lspci -nn | egrep -i 'nvidia|vga|3d|display' || true
+00:01.0 VGA compatible controller [0300]: Device [1234:1111] (rev 02)
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+01:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+02:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+02:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+
+[exit=0]
+```
+
+### lspci driver binding summary
+
+```console
+$ lspci -nnk | egrep -A5 -i 'nvidia|vga|3d|display' || true
+00:01.0 VGA compatible controller [0300]: Device [1234:1111] (rev 02)
+	Subsystem: Red Hat, Inc. Device [1af4:1100]
+	Kernel driver in use: bochs-drm
+	Kernel modules: bochs
+00:1a.0 USB controller [0c03]: Intel Corporation 82801I (ICH9 Family) USB UHCI Controller #4 [8086:2937] (rev 03)
+	Subsystem: Red Hat, Inc. QEMU Virtual Machine [1af4:1100]
+--
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:204b]
+	Kernel driver in use: nvidia
+	Kernel modules: nvidiafb, nouveau, nvidia_drm, nvidia
+01:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:0000]
+	Kernel driver in use: snd_hda_intel
+	Kernel modules: snd_hda_intel
+02:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:204b]
+	Kernel driver in use: nvidia
+	Kernel modules: nvidiafb, nouveau, nvidia_drm, nvidia
+02:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:0000]
+	Kernel driver in use: snd_hda_intel
+	Kernel modules: snd_hda_intel
+05:01.0 PCI bridge [0604]: Red Hat, Inc. QEMU PCI-PCI bridge [1b36:0001]
+05:02.0 PCI bridge [0604]: Red Hat, Inc. QEMU PCI-PCI bridge [1b36:0001]
+05:03.0 PCI bridge [0604]: Red Hat, Inc. QEMU PCI-PCI bridge [1b36:0001]
+
+[exit=0]
+```
+
+### lsmod nvidia/nouveau/vfio summary
+
+```console
+$ lsmod | egrep 'nvidia|nouveau|vfio' || true
+nvidia_uvm           2060288  0
+nvidia_drm            139264  0
+nvidia_modeset       1744896  1 nvidia_drm
+nvidia              14794752  2 nvidia_uvm,nvidia_modeset
+video                  77824  1 nvidia_modeset
+ecc                    45056  1 nvidia
+
+[exit=0]
+```
+
+### command -v nvidia-smi
+
+```console
+$ command -v nvidia-smi
+/usr/bin/nvidia-smi
+
+[exit=0]
+```
+
+### nvidia-smi
+
+```console
+$ nvidia-smi
+Fri Jul  3 07:38:02 2026
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA RTX PRO 6000 Blac...    Off |   00000000:01:00.0 Off |                  Off |
+| 30%   31C    P8             15W /  600W |       2MiB /  97887MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA RTX PRO 6000 Blac...    Off |   00000000:02:00.0 Off |                  Off |
+| 30%   37C    P8             31W /  600W |      34MiB /  97887MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+
+[exit=0]
+```
+
+### nvidia-smi -L
+
+```console
+$ nvidia-smi -L
+GPU 0: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (UUID: GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237)
+GPU 1: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (UUID: GPU-69acfa26-8b60-61b5-702d-aee252c163cc)
+
+[exit=0]
+```
+
+### nvidia-smi query-gpu CSV
+
+```console
+$ nvidia-smi --query-gpu=index\,name\,pci.bus_id\,driver_version\,memory.total\,power.limit --format=csv
+index, name, pci.bus_id, driver_version, memory.total [MiB], power.limit [W]
+0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:01:00.0, 595.71.05, 97887 MiB, 600.00 W
+1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:02:00.0, 595.71.05, 97887 MiB, 600.00 W
+
+[exit=0]
+```
+
+### nvidia-smi topology
+
+```console
+$ nvidia-smi topo -m
+	[4mGPU0	GPU1	CPU Affinity	NUMA Affinity	GPU NUMA ID[0m
+GPU0	 X 	PHB	0-111	0-6		N/A
+GPU1	PHB	 X 	0-111	0-6		N/A
+
+Legend:
+
+  X    = Self
+  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing at most a single PCIe bridge
+  NV#  = Connection traversing a bonded set of # NVLinks
+
+[exit=0]
+```
+
+### nvidia-smi requested MEMORY,PCI,POWER detail (unsupported PCI display flag in 595)
+
+```console
+$ nvidia-smi -q -d MEMORY\,PCI\,POWER
+Failed to parse --display/-d flags
+
+[exit=2]
+```
+
+### nvidia-smi full query for PCI detail
+
+```console
+$ nvidia-smi -q
+
+==============NVSMI LOG==============
+
+Timestamp                                              : Fri Jul  3 07:38:03 2026
+Driver Version                                         : 595.71.05
+CUDA Version                                           : 13.2
+
+Attached GPUs                                          : 2
+GPU 00000000:01:00.0
+    Product Name                                       : NVIDIA RTX PRO 6000 Blackwell Workstation Edition
+    Product Brand                                      : NVIDIA RTX
+    Product Architecture                               : Blackwell
+    Display Mode                                       : Requested functionality has been deprecated
+    Display Attached                                   : No
+    Display Active                                     : Disabled
+    Persistence Mode                                   : Disabled
+    Addressing Mode                                    : HMM
+    MIG Mode
+        Current                                        : N/A
+        Pending                                        : N/A
+    Accounting Mode                                    : Disabled
+    Accounting Mode Buffer Size                        : 4000
+    Driver Model
+        Current                                        : N/A
+        Pending                                        : N/A
+    Serial Number                                      : 1792525050955
+    GPU UUID                                           : GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237
+    GPU PDI                                            : 0x2fc57a11785567f6
+    Minor Number                                       : 0
+    VBIOS Version                                      : 98.02.52.00.02
+    MultiGPU Board                                     : No
+    Board ID                                           : 0x100
+    Board Part Number                                  : 900-5G144-2200-000
+    GPU Part Number                                    : 2BB1-870-A1
+    FRU Part Number                                    : N/A
+    Platform Info
+        Chassis Serial Number                          :
+        Slot Number                                    : 0
+        Tray Index                                     : 0
+        Host ID                                        : 1
+        Peer Type                                      : Direct Connected
+        Module Id                                      : 1
+        GPU Fabric GUID                                : 0x0000000000000000
+    Inforom Version
+        Image Version                                  : G144.0520.00.02
+        OEM Object                                     : 2.1
+        ECC Object                                     : 7.16
+        Power Management Object                        : N/A
+    Inforom BBX Object Flush
+        Latest Timestamp                               : N/A
+        Latest Duration                                : N/A
+    GPU Operation Mode
+        Current                                        : N/A
+        Pending                                        : N/A
+    GPU C2C Mode                                       : Disabled
+    GPU Virtualization Mode
+        Virtualization Mode                            : Pass-Through
+        Host VGPU Mode                                 : N/A
+        vGPU Heterogeneous Mode                        : N/A
+    GPU Recovery Action                                : None
+    GSP Firmware Version                               : 595.71.05
+    IBMNPU
+        Relaxed Ordering Mode                          : N/A
+    PCI
+        Bus                                            : 0x01
+        Device                                         : 0x00
+        Domain                                         : 0x0000
+        Base Classcode                                 : 0x3
+        Sub Classcode                                  : 0x0
+        Device Id                                      : 0x2BB110DE
+        Bus Id                                         : 00000000:01:00.0
+        Sub System Id                                  : 0x204B10DE
+        GPU Link Info
+            PCIe Generation
+                Max                                    : 5
+                Current                                : 1
+                Device Current                         : 1
+                Device Max                             : 5
+                Host Max                               : N/A
+            Link Width
+                Max                                    : 16x
+                Current                                : 16x
+        Bridge Chip
+            Type                                       : N/A
+            Firmware                                   : N/A
+        Replays Since Reset                            : 0
+        Replay Number Rollovers                        : 0
+        Tx Throughput                                  : 886 KB/s
+        Rx Throughput                                  : 487 KB/s
+        Atomic Caps Outbound                           : N/A
+        Atomic Caps Inbound                            : FETCHADD_32 FETCHADD_64 SWAP_32 SWAP_64 CAS_32 CAS_64
+    Fan Speed                                          : 30 %
+    Performance State                                  : P8
+    Clocks Event Reasons
+        Idle                                           : Not Active
+        Applications Clocks Setting                    : Not Active
+        SW Power Cap                                   : Not Active
+        HW Slowdown                                    : Not Active
+            HW Thermal Slowdown                        : Not Active
+            HW Power Brake Slowdown                    : Not Active
+        Sync Boost                                     : Not Active
+        SW Thermal Slowdown                            : Not Active
+        Display Clock Setting                          : Not Active
+    Clocks Event Reasons Counters
+        SW Power Capping                               : 200402 us
+        Sync Boost                                     : 0 us
+        SW Thermal Slowdown                            : 0 us
+        HW Thermal Slowdown                            : 0 us
+        HW Power Braking                               : 0 us
+    Sparse Operation Mode                              : N/A
+    FB Memory Usage
+        Total                                          : 97887 MiB
+        Reserved                                       : 638 MiB
+        Used                                           : 2 MiB
+        Free                                           : 97249 MiB
+    BAR1 Memory Usage
+        Total                                          : 131072 MiB
+        Used                                           : 1 MiB
+        Free                                           : 131071 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+    Compute Mode                                       : Default
+    Utilization
+        GPU                                            : 0 %
+        Memory                                         : 0 %
+        Encoder                                        : 0 %
+        Decoder                                        : 0 %
+        JPEG                                           : 0 %
+        OFA                                            : 0 %
+    Encoder Stats
+        Active Sessions                                : 0
+        Average FPS                                    : 0
+        Average Latency                                : 0
+    FBC Stats
+        Active Sessions                                : 0
+        Average FPS                                    : 0
+        Average Latency                                : 0
+    DRAM Encryption Mode
+        Current                                        : Disabled
+        Pending                                        : Disabled
+    ECC Mode
+        Current                                        : Disabled
+        Pending                                        : Disabled
+    ECC Errors
+        Volatile
+            SRAM Correctable                           : N/A
+            SRAM Uncorrectable Parity                  : N/A
+            SRAM Uncorrectable SEC-DED                 : N/A
+            DRAM Correctable                           : N/A
+            DRAM Uncorrectable                         : N/A
+        Aggregate
+            SRAM Correctable                           : N/A
+            SRAM Uncorrectable Parity                  : N/A
+            SRAM Uncorrectable SEC-DED                 : N/A
+            DRAM Correctable                           : N/A
+            DRAM Uncorrectable                         : N/A
+            SRAM Threshold Exceeded                    : N/A
+        Aggregate Uncorrectable SRAM Sources
+            SRAM L2                                    : N/A
+            SRAM SM                                    : N/A
+            SRAM Microcontroller                       : N/A
+            SRAM PCIE                                  : N/A
+            SRAM Other                                 : N/A
+        Channel Repair Pending                         : No
+        TPC Repair Pending                             : No
+        Unrepairable Memory                            : N/A
+    Retired Pages
+        Single Bit ECC                                 : N/A
+        Double Bit ECC                                 : N/A
+        Pending Page Blacklist                         : N/A
+    Remapped Rows
+        Correctable Error                              : 0
+        Inactive Correctable Error                     : 0
+        Uncorrectable Error                            : 0
+        Inactive Uncorrectable Error                   : 0
+        Pending                                        : No
+        Remapping Failure Occurred                     : No
+        Bank Remap Availability Histogram
+            Max                                        : 512 bank(s)
+            High                                       : 0 bank(s)
+            Partial                                    : 0 bank(s)
+            Low                                        : 0 bank(s)
+            None                                       : 0 bank(s)
+    Temperature
+        GPU Current Temp                               : 32 C
+        GPU T.Limit Temp                               : 61 C
+        GPU Shutdown T.Limit Temp                      : -5 C
+        GPU Slowdown T.Limit Temp                      : -2 C
+        GPU Max Operating T.Limit Temp                 : 0 C
+        GPU Target Temperature                         : N/A
+        Memory Current Temp                            : N/A
+        Memory Max Operating T.Limit Temp              : N/A
+    GPU Power Readings
+        Average Power Draw                             : 16.61 W
+        Instantaneous Power Draw                       : 16.61 W
+        Current Power Limit                            : 600.00 W
+        Requested Power Limit                          : 600.00 W
+        Default Power Limit                            : 600.00 W
+        Min Power Limit                                : 150.00 W
+        Max Power Limit                                : 600.00 W
+    GPU Memory Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+    Power Smoothing                                    : N/A
+    Workload Power Profiles
+        Requested Profiles                             : N/A
+        Enforced Profiles                              : N/A
+    EDPp Multiplier                                    : N/A
+    Clocks
+        Graphics                                       : 180 MHz
+        SM                                             : 180 MHz
+        Memory                                         : 405 MHz
+        Video                                          : 600 MHz
+    Applications Clocks
+        Graphics                                       : Requested functionality has been deprecated
+        Memory                                         : Requested functionality has been deprecated
+    Default Applications Clocks
+        Graphics                                       : Requested functionality has been deprecated
+        Memory                                         : Requested functionality has been deprecated
+    Deferred Clocks
+        Memory                                         : N/A
+    Max Clocks
+        Graphics                                       : 3090 MHz
+        SM                                             : 3090 MHz
+        Memory                                         : 14001 MHz
+        Video                                          : 3090 MHz
+    Max Customer Boost Clocks
+        Graphics                                       : N/A
+    Clock Policy
+        Auto Boost                                     : N/A
+        Auto Boost Default                             : N/A
+    Fabric
+        State                                          : N/A
+        Status                                         : N/A
+        CliqueId                                       : N/A
+        ClusterUUID                                    : N/A
+        Health
+            Summary                                    : N/A
+            Bandwidth                                  : N/A
+            Route Recovery in progress                 : N/A
+            Route Unhealthy                            : N/A
+            Access Timeout Recovery                    : N/A
+            Incorrect Configuration                    : N/A
+            Partition Assigned                         : N/A
+    Processes                                          : None
+    Capabilities
+        EGM                                            : disabled
+
+GPU 00000000:02:00.0
+    Product Name                                       : NVIDIA RTX PRO 6000 Blackwell Workstation Edition
+    Product Brand                                      : NVIDIA RTX
+    Product Architecture                               : Blackwell
+    Display Mode                                       : Requested functionality has been deprecated
+    Display Attached                                   : Yes
+    Display Active                                     : Disabled
+    Persistence Mode                                   : Disabled
+    Addressing Mode                                    : HMM
+    MIG Mode
+        Current                                        : N/A
+        Pending                                        : N/A
+    Accounting Mode                                    : Disabled
+    Accounting Mode Buffer Size                        : 4000
+    Driver Model
+        Current                                        : N/A
+        Pending                                        : N/A
+    Serial Number                                      : 1792825000515
+    GPU UUID                                           : GPU-69acfa26-8b60-61b5-702d-aee252c163cc
+    GPU PDI                                            : 0x3802a64ab95f128c
+    Minor Number                                       : 1
+    VBIOS Version                                      : 98.02.52.00.02
+    MultiGPU Board                                     : No
+    Board ID                                           : 0x200
+    Board Part Number                                  : 900-5G144-2200-000
+    GPU Part Number                                    : 2BB1-870-A1
+    FRU Part Number                                    : N/A
+    Platform Info
+        Chassis Serial Number                          :
+        Slot Number                                    : 0
+        Tray Index                                     : 0
+        Host ID                                        : 1
+        Peer Type                                      : Direct Connected
+        Module Id                                      : 1
+        GPU Fabric GUID                                : 0x0000000000000000
+    Inforom Version
+        Image Version                                  : G144.0520.00.02
+        OEM Object                                     : 2.1
+        ECC Object                                     : 7.16
+        Power Management Object                        : N/A
+    Inforom BBX Object Flush
+        Latest Timestamp                               : N/A
+        Latest Duration                                : N/A
+    GPU Operation Mode
+        Current                                        : N/A
+        Pending                                        : N/A
+    GPU C2C Mode                                       : Disabled
+    GPU Virtualization Mode
+        Virtualization Mode                            : Pass-Through
+        Host VGPU Mode                                 : N/A
+        vGPU Heterogeneous Mode                        : N/A
+    GPU Recovery Action                                : None
+    GSP Firmware Version                               : 595.71.05
+    IBMNPU
+        Relaxed Ordering Mode                          : N/A
+    PCI
+        Bus                                            : 0x02
+        Device                                         : 0x00
+        Domain                                         : 0x0000
+        Base Classcode                                 : 0x3
+        Sub Classcode                                  : 0x0
+        Device Id                                      : 0x2BB110DE
+        Bus Id                                         : 00000000:02:00.0
+        Sub System Id                                  : 0x204B10DE
+        GPU Link Info
+            PCIe Generation
+                Max                                    : 5
+                Current                                : 1
+                Device Current                         : 1
+                Device Max                             : 5
+                Host Max                               : N/A
+            Link Width
+                Max                                    : 16x
+                Current                                : 16x
+        Bridge Chip
+            Type                                       : N/A
+            Firmware                                   : N/A
+        Replays Since Reset                            : 0
+        Replay Number Rollovers                        : 0
+        Tx Throughput                                  : 2456 KB/s
+        Rx Throughput                                  : 488 KB/s
+        Atomic Caps Outbound                           : N/A
+        Atomic Caps Inbound                            : FETCHADD_32 FETCHADD_64 SWAP_32 SWAP_64 CAS_32 CAS_64
+    Fan Speed                                          : 30 %
+    Performance State                                  : P8
+    Clocks Event Reasons
+        Idle                                           : Not Active
+        Applications Clocks Setting                    : Not Active
+        SW Power Cap                                   : Not Active
+        HW Slowdown                                    : Not Active
+            HW Thermal Slowdown                        : Not Active
+            HW Power Brake Slowdown                    : Not Active
+        Sync Boost                                     : Not Active
+        SW Thermal Slowdown                            : Not Active
+        Display Clock Setting                          : Not Active
+    Clocks Event Reasons Counters
+        SW Power Capping                               : 200214 us
+        Sync Boost                                     : 0 us
+        SW Thermal Slowdown                            : 0 us
+        HW Thermal Slowdown                            : 0 us
+        HW Power Braking                               : 0 us
+    Sparse Operation Mode                              : N/A
+    FB Memory Usage
+        Total                                          : 97887 MiB
+        Reserved                                       : 638 MiB
+        Used                                           : 34 MiB
+        Free                                           : 97217 MiB
+    BAR1 Memory Usage
+        Total                                          : 131072 MiB
+        Used                                           : 33 MiB
+        Free                                           : 131039 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+    Compute Mode                                       : Default
+    Utilization
+        GPU                                            : 0 %
+        Memory                                         : 0 %
+        Encoder                                        : 0 %
+        Decoder                                        : 0 %
+        JPEG                                           : 0 %
+        OFA                                            : 0 %
+    Encoder Stats
+        Active Sessions                                : 0
+        Average FPS                                    : 0
+        Average Latency                                : 0
+    FBC Stats
+        Active Sessions                                : 0
+        Average FPS                                    : 0
+        Average Latency                                : 0
+    DRAM Encryption Mode
+        Current                                        : Disabled
+        Pending                                        : Disabled
+    ECC Mode
+        Current                                        : Disabled
+        Pending                                        : Disabled
+    ECC Errors
+        Volatile
+            SRAM Correctable                           : N/A
+            SRAM Uncorrectable Parity                  : N/A
+            SRAM Uncorrectable SEC-DED                 : N/A
+            DRAM Correctable                           : N/A
+            DRAM Uncorrectable                         : N/A
+        Aggregate
+            SRAM Correctable                           : N/A
+            SRAM Uncorrectable Parity                  : N/A
+            SRAM Uncorrectable SEC-DED                 : N/A
+            DRAM Correctable                           : N/A
+            DRAM Uncorrectable                         : N/A
+            SRAM Threshold Exceeded                    : N/A
+        Aggregate Uncorrectable SRAM Sources
+            SRAM L2                                    : N/A
+            SRAM SM                                    : N/A
+            SRAM Microcontroller                       : N/A
+            SRAM PCIE                                  : N/A
+            SRAM Other                                 : N/A
+        Channel Repair Pending                         : No
+        TPC Repair Pending                             : No
+        Unrepairable Memory                            : N/A
+    Retired Pages
+        Single Bit ECC                                 : N/A
+        Double Bit ECC                                 : N/A
+        Pending Page Blacklist                         : N/A
+    Remapped Rows
+        Correctable Error                              : 0
+        Inactive Correctable Error                     : 0
+        Uncorrectable Error                            : 0
+        Inactive Uncorrectable Error                   : 0
+        Pending                                        : No
+        Remapping Failure Occurred                     : No
+        Bank Remap Availability Histogram
+            Max                                        : 512 bank(s)
+            High                                       : 0 bank(s)
+            Partial                                    : 0 bank(s)
+            Low                                        : 0 bank(s)
+            None                                       : 0 bank(s)
+    Temperature
+        GPU Current Temp                               : 37 C
+        GPU T.Limit Temp                               : 56 C
+        GPU Shutdown T.Limit Temp                      : -5 C
+        GPU Slowdown T.Limit Temp                      : -2 C
+        GPU Max Operating T.Limit Temp                 : 0 C
+        GPU Target Temperature                         : N/A
+        Memory Current Temp                            : N/A
+        Memory Max Operating T.Limit Temp              : N/A
+    GPU Power Readings
+        Average Power Draw                             : 31.82 W
+        Instantaneous Power Draw                       : 31.82 W
+        Current Power Limit                            : 600.00 W
+        Requested Power Limit                          : 600.00 W
+        Default Power Limit                            : 600.00 W
+        Min Power Limit                                : 150.00 W
+        Max Power Limit                                : 600.00 W
+    GPU Memory Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+    Power Smoothing                                    : N/A
+    Workload Power Profiles
+        Requested Profiles                             : N/A
+        Enforced Profiles                              : N/A
+    EDPp Multiplier                                    : N/A
+    Clocks
+        Graphics                                       : 180 MHz
+        SM                                             : 180 MHz
+        Memory                                         : 405 MHz
+        Video                                          : 600 MHz
+    Applications Clocks
+        Graphics                                       : Requested functionality has been deprecated
+        Memory                                         : Requested functionality has been deprecated
+    Default Applications Clocks
+        Graphics                                       : Requested functionality has been deprecated
+        Memory                                         : Requested functionality has been deprecated
+    Deferred Clocks
+        Memory                                         : N/A
+    Max Clocks
+        Graphics                                       : 3090 MHz
+        SM                                             : 3090 MHz
+        Memory                                         : 14001 MHz
+        Video                                          : 3090 MHz
+    Max Customer Boost Clocks
+        Graphics                                       : N/A
+    Clock Policy
+        Auto Boost                                     : N/A
+        Auto Boost Default                             : N/A
+    Fabric
+        State                                          : N/A
+        Status                                         : N/A
+        CliqueId                                       : N/A
+        ClusterUUID                                    : N/A
+        Health
+            Summary                                    : N/A
+            Bandwidth                                  : N/A
+            Route Recovery in progress                 : N/A
+            Route Unhealthy                            : N/A
+            Access Timeout Recovery                    : N/A
+            Incorrect Configuration                    : N/A
+            Partition Assigned                         : N/A
+    Processes                                          : None
+    Capabilities
+        EGM                                            : disabled
+
+
+[exit=0]
+```
+
+### nvidia-smi memory detail
+
+```console
+$ nvidia-smi -q -d MEMORY
+
+==============NVSMI LOG==============
+
+Timestamp                                              : Fri Jul  3 07:38:03 2026
+Driver Version                                         : 595.71.05
+CUDA Version                                           : 13.2
+
+Attached GPUs                                          : 2
+GPU 00000000:01:00.0
+    FB Memory Usage
+        Total                                          : 97887 MiB
+        Reserved                                       : 638 MiB
+        Used                                           : 2 MiB
+        Free                                           : 97249 MiB
+    BAR1 Memory Usage
+        Total                                          : 131072 MiB
+        Used                                           : 1 MiB
+        Free                                           : 131071 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+
+GPU 00000000:02:00.0
+    FB Memory Usage
+        Total                                          : 97887 MiB
+        Reserved                                       : 638 MiB
+        Used                                           : 34 MiB
+        Free                                           : 97217 MiB
+    BAR1 Memory Usage
+        Total                                          : 131072 MiB
+        Used                                           : 33 MiB
+        Free                                           : 131039 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+
+
+[exit=0]
+```
+
+### nvidia-smi power detail
+
+```console
+$ nvidia-smi -q -d POWER
+
+==============NVSMI LOG==============
+
+Timestamp                                              : Fri Jul  3 07:38:03 2026
+Driver Version                                         : 595.71.05
+CUDA Version                                           : 13.2
+
+Attached GPUs                                          : 2
+GPU 00000000:01:00.0
+    GPU Power Readings
+        Average Power Draw                             : 16.61 W
+        Instantaneous Power Draw                       : 16.61 W
+        Current Power Limit                            : 600.00 W
+        Requested Power Limit                          : 600.00 W
+        Default Power Limit                            : 600.00 W
+        Min Power Limit                                : 150.00 W
+        Max Power Limit                                : 600.00 W
+    Power Samples
+        Duration                                       : 118.00 sec
+        Number of Samples                              : 119
+        Max                                            : 17.80 W
+        Min                                            : 14.77 W
+        Avg                                            : 15.04 W
+    GPU Memory Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+    EDPp Multiplier                                    : N/A
+
+GPU 00000000:02:00.0
+    GPU Power Readings
+        Average Power Draw                             : 31.82 W
+        Instantaneous Power Draw                       : 31.82 W
+        Current Power Limit                            : 600.00 W
+        Requested Power Limit                          : 600.00 W
+        Default Power Limit                            : 600.00 W
+        Min Power Limit                                : 150.00 W
+        Max Power Limit                                : 600.00 W
+    Power Samples
+        Duration                                       : 118.01 sec
+        Number of Samples                              : 119
+        Max                                            : 33.02 W
+        Min                                            : 31.65 W
+        Avg                                            : 32.32 W
+    GPU Memory Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+    EDPp Multiplier                                    : N/A
+
+
+[exit=0]
+```
+
+### nvcc after reboot
+
+```console
+$ command -v nvcc || true; nvcc --version || true
+bash: line 1: nvcc: command not found
+
+[exit=0]
+```
+
+### Installed NVIDIA/CUDA/container-toolkit packages after reboot
+
+```console
+$ dpkg -l | egrep 'nvidia|cuda|container-toolkit' || true
+ii  libnvidia-cfg1-595:amd64              595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA binary OpenGL/GLX configuration library
+ii  libnvidia-common-595                  595.71.05-0ubuntu0.24.04.1                       amd64        Shared files used by the NVIDIA libraries
+ii  libnvidia-compute-595:amd64           595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA libcompute package
+ii  libnvidia-decode-595:amd64            595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA Video Decoding runtime libraries
+ii  libnvidia-egl-wayland1:amd64          1:1.1.13-1ubuntu0.1                              amd64        Wayland EGL External Platform library -- shared library
+ii  libnvidia-encode-595:amd64            595.71.05-0ubuntu0.24.04.1                       amd64        NVENC Video Encoding runtime library
+ii  libnvidia-extra-595:amd64             595.71.05-0ubuntu0.24.04.1                       amd64        Extra libraries for the NVIDIA driver
+ii  libnvidia-fbc1-595:amd64              595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA OpenGL-based Framebuffer Capture runtime library
+ii  libnvidia-gl-595:amd64                595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA OpenGL/GLX/EGL/GLES GLVND libraries and Vulkan ICD
+ii  nvidia-compute-utils-595              595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA compute utilities
+ii  nvidia-dkms-595-open                  595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA DKMS package (open kernel module)
+ii  nvidia-driver-595-open                595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA driver (open kernel) metapackage
+ii  nvidia-firmware-595-595.71.05         595.71.05-0ubuntu0.24.04.1                       amd64        Firmware files used by the kernel module
+ii  nvidia-kernel-common-595              595.71.05-0ubuntu0.24.04.1                       amd64        Shared files used with the kernel module
+ii  nvidia-kernel-source-595-open         595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA kernel source package
+ii  nvidia-prime                          0.8.17.2                                         all          Tools to enable NVIDIA's Prime
+ii  nvidia-settings                       510.47.03-0ubuntu4.24.04.1                       amd64        Tool for configuring the NVIDIA graphics driver
+ii  nvidia-utils-595                      595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA driver support binaries
+ii  screen-resolution-extra               0.18.3ubuntu0.24.04.1                            all          Extension for the nvidia-settings control panel
+ii  xserver-xorg-video-nvidia-595         595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA binary Xorg driver
+
+[exit=0]
+```
+
+### Docker Root Dir and containerd info
+
+```console
+$ sudo -n docker info | egrep 'Docker Root Dir|Storage Driver|containerd' || true
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Runtimes: io.containerd.runc.v2 runc
+ containerd version: e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ Docker Root Dir: /data/docker
+
+[exit=0]
+```
+
+### Docker/containerd path sizes
+
+```console
+$ sudo -n du -sh /var/lib/docker /var/lib/containerd /data/docker /data/containerd /data/containerd/root 2>/dev/null || true
+236K	/data/docker
+336K	/data/containerd
+
+[exit=0]
+```
+
+## M5B Post-reboot Validation Summary
+
+- nvidia-smi: PASS
+- GPU count: 2
+- GPU names: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (UUID;NVIDIA RTX PRO 6000 Blackwell Workstation Edition (UUID
+
+- Query CSV:
+
+```csv
+0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:01:00.0, 595.71.05, 97887 MiB, 600.00 W
+1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:02:00.0, 595.71.05, 97887 MiB, 600.00 W
+```
+
+- nouveau loaded/bound: not bound to NVIDIA GPUs; see lsmod/lspci sections above.
+- nvidia modules loaded: PASS
+- nvcc: absent
+- CUDA Toolkit packages: absent
+- NVIDIA Container Toolkit packages: absent
+- Docker Root Dir: /data/docker
+- containerd root: /data/containerd/root
+- containerd state: /run/containerd
+- /data guard: PASS
+- root-disk guard: PASS
+- Docker storage verifier: PASS
+- Scope confirmation: CUDA Toolkit, PyTorch, KTransformers, ik_llama, NVIDIA Container Toolkit, models, Docker NVIDIA runtime, Docker/containerd configuration, and API exposure were not installed or configured by M5B.
+- Manual Proxmox host checks still required: VFIO/PCIe/AER/reset logs plus VM config/status checks outside Codex.
+
+## M5B Post-reboot Conclusion
+
+PASS
+### git diff --check
+
+```console
+$ git diff --check
+reports/m5b-nvidia-host-driver.md:3111: trailing whitespace.
++Fri Jul  3 07:35:55 2026
+reports/m5b-nvidia-host-driver.md:3721: trailing whitespace.
++Fri Jul  3 07:37:28 2026
+reports/m5b-nvidia-host-driver.md:3840: trailing whitespace.
++        Chassis Serial Number                          :
+reports/m5b-nvidia-host-driver.md:3894: trailing whitespace.
++        Atomic Caps Inbound                            : FETCHADD_32 FETCHADD_64 SWAP_32 SWAP_64 CAS_32 CAS_64
+reports/m5b-nvidia-host-driver.md:4006: trailing whitespace.
++    GPU Memory Power Readings
+reports/m5b-nvidia-host-driver.md:4090: trailing whitespace.
++        Chassis Serial Number                          :
+reports/m5b-nvidia-host-driver.md:4144: trailing whitespace.
++        Atomic Caps Inbound                            : FETCHADD_32 FETCHADD_64 SWAP_32 SWAP_64 CAS_32 CAS_64
+reports/m5b-nvidia-host-driver.md:4256: trailing whitespace.
++    GPU Memory Power Readings
+reports/m5b-nvidia-host-driver.md:4389: trailing whitespace.
++    GPU Memory Power Readings
+reports/m5b-nvidia-host-driver.md:4417: trailing whitespace.
++    GPU Memory Power Readings
+reports/m5b-nvidia-host-driver.md:5025: trailing whitespace.
++Fri Jul  3 07:38:02 2026
+reports/m5b-nvidia-host-driver.md:5144: trailing whitespace.
++        Chassis Serial Number                          :
+reports/m5b-nvidia-host-driver.md:5198: trailing whitespace.
++        Atomic Caps Inbound                            : FETCHADD_32 FETCHADD_64 SWAP_32 SWAP_64 CAS_32 CAS_64
+reports/m5b-nvidia-host-driver.md:5310: trailing whitespace.
++    GPU Memory Power Readings
+reports/m5b-nvidia-host-driver.md:5394: trailing whitespace.
++        Chassis Serial Number                          :
+reports/m5b-nvidia-host-driver.md:5448: trailing whitespace.
++        Atomic Caps Inbound                            : FETCHADD_32 FETCHADD_64 SWAP_32 SWAP_64 CAS_32 CAS_64
+reports/m5b-nvidia-host-driver.md:5560: trailing whitespace.
++    GPU Memory Power Readings
+reports/m5b-nvidia-host-driver.md:5693: trailing whitespace.
++    GPU Memory Power Readings
+reports/m5b-nvidia-host-driver.md:5721: trailing whitespace.
++    GPU Memory Power Readings
+
+[exit=2]
+```
+
+## M5B Post-reboot Conclusion
+
+STOP
+
+Reason: git diff --check failed
+
+Manual Proxmox VFIO/AER/reset checks are still required outside Codex.
+
+# M5B post-reboot NVIDIA driver verification
+
+- Timestamp: 2026-07-03T07:38:41+00:00
+- Hostname: llmserver
+- Uptime: up 3 minutes
+- Runner: /data/services/m5b-post-reboot/m5b-post-reboot-verify.sh
+- Log: /data/logs/m5b-post-reboot-verify.log
+
+### hostname
+
+```console
+$ hostname
+llmserver
+
+[exit=0]
+```
+
+### uptime
+
+```console
+$ uptime
+ 07:38:41 up 3 min,  3 users,  load average: 0.26, 0.15, 0.06
+
+[exit=0]
+```
+
+### date -Is
+
+```console
+$ date -Is
+2026-07-03T07:38:41+00:00
+
+[exit=0]
+```
+
+### require-data-mounted
+
+```console
+$ scripts/common/require-data-mounted.sh
+PASS: /data is mounted and ready
+- root source: /dev/mapper/ubuntu--vg-ubuntu--lv
+- data source: /dev/sdb1
+- data fstype: ext4
+- data label: AI_DATA
+- data UUID: 8daf56f1-5649-4163-9d87-919c2d271875
+
+[exit=0]
+```
+
+### root-disk-guard
+
+```console
+$ scripts/common/root-disk-guard.sh --report reports/m3-root-disk-guard.md
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+
+## Docker/containerd Storage Verification
+
+- Timestamp: 2026-07-03T07:38:42+00:00
+- Hostname: llmserver
+- User: user
+- Branch: milestone/m5b-nvidia-host-driver
+
+### require /data mounted
+
+```console
+$ scripts/common/require-data-mounted.sh
+PASS: /data is mounted and ready
+- root source: /dev/mapper/ubuntu--vg-ubuntu--lv
+- data source: /dev/sdb1
+- data fstype: ext4
+- data label: AI_DATA
+- data UUID: 8daf56f1-5649-4163-9d87-919c2d271875
+
+[exit=0]
+```
+
+### pre-verification root-disk guard
+
+```console
+$ scripts/common/root-disk-guard.sh
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+### df -hT / /data
+
+```console
+$ df -hT / /data
+Filesystem                        Type  Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  8.9G  4.6G  66% /
+/dev/sdb1                         ext4  2.0T  3.5M  1.9T   1% /data
+
+[exit=0]
+```
+
+### /var/lib Docker/containerd size summary
+
+| Path | MiB | Policy |
+| --- | ---: | --- |
+| `/var/lib/docker` | 0 | absent/empty/small or documented |
+| `/var/lib/containerd` | 0 | absent/empty/small or documented |
+
+### systemctl is-active containerd
+
+```console
+$ sudo -n systemctl is-active containerd
+active
+
+[exit=0]
+```
+
+### systemctl is-active docker
+
+```console
+$ sudo -n systemctl is-active docker
+active
+
+[exit=0]
+```
+
+### systemctl status containerd
+
+```console
+$ sudo -n systemctl status containerd --no-pager
+● containerd.service - containerd container runtime
+     Loaded: loaded (/usr/lib/systemd/system/containerd.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-07-03 07:35:25 UTC; 3min 17s ago
+       Docs: https://containerd.io
+   Main PID: 2091 (containerd)
+      Tasks: 30
+     Memory: 84.1M (peak: 86.7M)
+        CPU: 542ms
+     CGroup: /system.slice/containerd.service
+             └─2091 /usr/bin/containerd
+
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875859853Z" level=info msg="Start cni network conf syncer for default"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875865272Z" level=info msg="Start streaming server"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875873444Z" level=info msg="Registered namespace \"k8s.io\" with NRI"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875878251Z" level=info msg="runtime interface starting up..."
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875881666Z" level=info msg="starting plugins..."
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875890109Z" level=info msg="Synchronizing NRI (plugin) with current runtime state"
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875902768Z" level=info msg=serving... address=/run/containerd/containerd.sock.ttrpc
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.875941546Z" level=info msg=serving... address=/run/containerd/containerd.sock
+Jul 03 07:35:25 llmserver containerd[2091]: time="2026-07-03T07:35:25.876173504Z" level=info msg="containerd successfully booted in 0.033839s"
+Jul 03 07:35:25 llmserver systemd[1]: Started containerd.service - containerd container runtime.
+
+[exit=0]
+```
+
+### systemctl status docker
+
+```console
+$ sudo -n systemctl status docker --no-pager
+● docker.service - Docker Application Container Engine
+     Loaded: loaded (/usr/lib/systemd/system/docker.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-07-03 07:35:28 UTC; 3min 14s ago
+TriggeredBy: ● docker.socket
+       Docs: https://docs.docker.com
+   Main PID: 2261 (dockerd)
+      Tasks: 41
+     Memory: 119.6M (peak: 126.1M)
+        CPU: 607ms
+     CGroup: /system.slice/docker.service
+             └─2261 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.673114630Z" level=info msg="Restoring containers: start."
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.775998332Z" level=info msg="Deleting nftables IPv4 rules" error="running nft: /dev/stdin:1:17-30: Error: Could not process rule: No such file or directory\ndelete table ip docker-bridges\n                ^^^^^^^^^^^^^^\n exit status 1"
+Jul 03 07:35:27 llmserver dockerd[2261]: time="2026-07-03T07:35:27.788141528Z" level=info msg="Deleting nftables IPv6 rules" error="running nft: /dev/stdin:1:18-31: Error: Could not process rule: No such file or directory\ndelete table ip6 docker-bridges\n                 ^^^^^^^^^^^^^^\n exit status 1"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.052444560Z" level=info msg="Loading containers: done."
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.058049123Z" level=info msg="Docker daemon" commit=8ec5ab3 containerd-snapshotter=true storage-driver=overlayfs version=29.6.1
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.058280870Z" level=info msg="Initializing buildkit"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.220160582Z" level=info msg="Completed buildkit initialization"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.224043800Z" level=info msg="Daemon has completed initialization"
+Jul 03 07:35:28 llmserver dockerd[2261]: time="2026-07-03T07:35:28.224122648Z" level=info msg="API listen on /run/docker.sock"
+Jul 03 07:35:28 llmserver systemd[1]: Started docker.service - Docker Application Container Engine.
+
+[exit=0]
+```
+
+### sudo docker version
+
+```console
+$ sudo -n docker version
+Client: Docker Engine - Community
+ Version:           29.6.1
+ API version:       1.55
+ Go version:        go1.26.4
+ Git commit:        8900f1d
+ Built:             Fri Jun 26 11:40:19 2026
+ OS/Arch:           linux/amd64
+ Context:           default
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          29.6.1
+  API version:      1.55 (minimum version 1.40)
+  Go version:       go1.26.4
+  Git commit:       8ec5ab3
+  Built:            Fri Jun 26 11:40:19 2026
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          v2.2.5
+  GitCommit:        e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ runc:
+  Version:          1.3.6
+  GitCommit:        v1.3.6-0-g491b69ba
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+
+[exit=0]
+```
+
+### sudo docker info
+
+```console
+$ sudo -n docker info
+Client: Docker Engine - Community
+ Version:    29.6.1
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.35.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v5.3.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 1
+ Server Version: 29.6.1
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ CDI spec directories:
+  /etc/cdi
+  /var/run/cdi
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ runc version: v1.3.6-0-g491b69ba
+ init version: de40ad0
+ Security Options:
+  apparmor
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.8.0-134-generic
+ Operating System: Ubuntu 24.04.4 LTS
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 112
+ Total Memory: 881.8GiB
+ Name: llmserver
+ ID: fba62709-52b6-4594-98a7-b3a7e2626f3b
+ Docker Root Dir: /data/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  ::1/128
+  127.0.0.0/8
+ Live Restore Enabled: false
+ Firewall Backend: iptables
+  EnableUserlandProxy: true
+  UserlandProxyPath: /usr/bin/docker-proxy
+
+
+[exit=0]
+```
+
+### sudo docker compose version
+
+```console
+$ sudo -n docker compose version
+Docker Compose version v5.3.0
+
+[exit=0]
+```
+
+### sudo docker buildx version
+
+```console
+$ sudo -n docker buildx version
+github.com/docker/buildx v0.35.0 a319e5b15052cf6557ceb666eb8ff6e32380b782
+
+[exit=0]
+```
+
+### hello-world image inspect
+
+```console
+$ sudo -n docker image inspect hello-world:latest
+[
+    {
+        "Id": "sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d",
+        "RepoTags": [
+            "hello-world:latest"
+        ],
+        "RepoDigests": [
+            "hello-world@sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-03-23T21:33:59.562202219Z",
+        "Config": {
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "Cmd": [
+                "/hello"
+            ],
+            "WorkingDir": "/"
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 16227,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:897b3f2a7c1bc2f3d02432f7892fe31c6272c521ad4d70257df624504a3238b4"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-07-02T19:39:50.349224487Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d",
+            "size": 12212
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "docker.io/library/hello-world"
+                }
+            ]
+        }
+    }
+]
+
+[exit=0]
+```
+
+### sudo docker system df
+
+```console
+$ sudo -n docker system df
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          1         0         38.09kB   25.87kB (67%)
+Containers      0         0         0B        0B
+Local Volumes   0         0         0B        0B
+Build Cache     0         0         0B        0B
+
+[exit=0]
+```
+
+### Docker/containerd root and data sizes
+
+```console
+$ sudo -n du -sh /var/lib/docker /var/lib/containerd '/data/docker' '/data/containerd' '/data/containerd/root' 2>/dev/null || true
+236K	/data/docker
+336K	/data/containerd
+
+[exit=0]
+```
+
+### post-verification root-disk guard
+
+```console
+$ scripts/common/root-disk-guard.sh
+PASS: root disk guard passed
+
+[exit=0]
+```
+
+## Docker/containerd Verification Summary
+
+- Docker installed: yes
+- containerd installed: yes
+- Docker Root Dir: /data/docker
+- containerd root: /data/containerd/root
+- containerd state: /run/containerd
+- hello-world image present: yes
+- root-disk guard: PASS
+
+## Docker/containerd Verification Conclusion
+
+PASS
+### Docker storage verifier
+
+```console
+$ scripts/docker/verify-docker-storage.sh
+PASS: Docker/containerd storage verified
+
+[exit=0]
+```
+
+### os-release
+
+```console
+$ cat /etc/os-release
+PRETTY_NAME="Ubuntu 24.04.4 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.4 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+
+[exit=0]
+```
+
+### uname -a
+
+```console
+$ uname -a
+Linux llmserver 6.8.0-134-generic #134-Ubuntu SMP PREEMPT_DYNAMIC Fri Jun 26 18:43:11 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+
+[exit=0]
+```
+
+### lspci NVIDIA/display inventory
+
+```console
+$ lspci -nn | egrep -i 'nvidia|vga|3d|display' || true
+00:01.0 VGA compatible controller [0300]: Device [1234:1111] (rev 02)
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+01:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+02:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+02:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+
+[exit=0]
+```
+
+### lspci driver binding summary
+
+```console
+$ lspci -nnk | egrep -A5 -i 'nvidia|vga|3d|display' || true
+00:01.0 VGA compatible controller [0300]: Device [1234:1111] (rev 02)
+	Subsystem: Red Hat, Inc. Device [1af4:1100]
+	Kernel driver in use: bochs-drm
+	Kernel modules: bochs
+00:1a.0 USB controller [0c03]: Intel Corporation 82801I (ICH9 Family) USB UHCI Controller #4 [8086:2937] (rev 03)
+	Subsystem: Red Hat, Inc. QEMU Virtual Machine [1af4:1100]
+--
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:204b]
+	Kernel driver in use: nvidia
+	Kernel modules: nvidiafb, nouveau, nvidia_drm, nvidia
+01:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:0000]
+	Kernel driver in use: snd_hda_intel
+	Kernel modules: snd_hda_intel
+02:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2bb1] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:204b]
+	Kernel driver in use: nvidia
+	Kernel modules: nvidiafb, nouveau, nvidia_drm, nvidia
+02:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22e8] (rev a1)
+	Subsystem: NVIDIA Corporation Device [10de:0000]
+	Kernel driver in use: snd_hda_intel
+	Kernel modules: snd_hda_intel
+05:01.0 PCI bridge [0604]: Red Hat, Inc. QEMU PCI-PCI bridge [1b36:0001]
+05:02.0 PCI bridge [0604]: Red Hat, Inc. QEMU PCI-PCI bridge [1b36:0001]
+05:03.0 PCI bridge [0604]: Red Hat, Inc. QEMU PCI-PCI bridge [1b36:0001]
+
+[exit=0]
+```
+
+### lsmod nvidia/nouveau/vfio summary
+
+```console
+$ lsmod | egrep 'nvidia|nouveau|vfio' || true
+nvidia_uvm           2060288  0
+nvidia_drm            139264  0
+nvidia_modeset       1744896  1 nvidia_drm
+nvidia              14794752  2 nvidia_uvm,nvidia_modeset
+video                  77824  1 nvidia_modeset
+ecc                    45056  1 nvidia
+
+[exit=0]
+```
+
+### command -v nvidia-smi
+
+```console
+$ command -v nvidia-smi
+/usr/bin/nvidia-smi
+
+[exit=0]
+```
+
+### nvidia-smi
+
+```console
+$ nvidia-smi
+Fri Jul  3 07:38:44 2026
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA RTX PRO 6000 Blac...    Off |   00000000:01:00.0 Off |                  Off |
+| 30%   31C    P8             15W /  600W |       2MiB /  97887MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA RTX PRO 6000 Blac...    Off |   00000000:02:00.0 Off |                  Off |
+| 30%   37C    P8             31W /  600W |      34MiB /  97887MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+
+[exit=0]
+```
+
+### nvidia-smi -L
+
+```console
+$ nvidia-smi -L
+GPU 0: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (UUID: GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237)
+GPU 1: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (UUID: GPU-69acfa26-8b60-61b5-702d-aee252c163cc)
+
+[exit=0]
+```
+
+### nvidia-smi query-gpu CSV
+
+```console
+$ nvidia-smi --query-gpu=index\,name\,pci.bus_id\,driver_version\,memory.total\,power.limit --format=csv
+index, name, pci.bus_id, driver_version, memory.total [MiB], power.limit [W]
+0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:01:00.0, 595.71.05, 97887 MiB, 600.00 W
+1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:02:00.0, 595.71.05, 97887 MiB, 600.00 W
+
+[exit=0]
+```
+
+### nvidia-smi topology
+
+```console
+$ nvidia-smi topo -m
+	[4mGPU0	GPU1	CPU Affinity	NUMA Affinity	GPU NUMA ID[0m
+GPU0	 X 	PHB	0-111	0-6		N/A
+GPU1	PHB	 X 	0-111	0-6		N/A
+
+Legend:
+
+  X    = Self
+  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing at most a single PCIe bridge
+  NV#  = Connection traversing a bonded set of # NVLinks
+
+[exit=0]
+```
+
+### nvidia-smi requested MEMORY,PCI,POWER detail (unsupported PCI display flag in 595)
+
+```console
+$ nvidia-smi -q -d MEMORY\,PCI\,POWER
+Failed to parse --display/-d flags
+
+[exit=2]
+```
+
+### nvidia-smi full query for PCI detail
+
+```console
+$ nvidia-smi -q
+
+==============NVSMI LOG==============
+
+Timestamp                                              : Fri Jul  3 07:38:44 2026
+Driver Version                                         : 595.71.05
+CUDA Version                                           : 13.2
+
+Attached GPUs                                          : 2
+GPU 00000000:01:00.0
+    Product Name                                       : NVIDIA RTX PRO 6000 Blackwell Workstation Edition
+    Product Brand                                      : NVIDIA RTX
+    Product Architecture                               : Blackwell
+    Display Mode                                       : Requested functionality has been deprecated
+    Display Attached                                   : No
+    Display Active                                     : Disabled
+    Persistence Mode                                   : Disabled
+    Addressing Mode                                    : HMM
+    MIG Mode
+        Current                                        : N/A
+        Pending                                        : N/A
+    Accounting Mode                                    : Disabled
+    Accounting Mode Buffer Size                        : 4000
+    Driver Model
+        Current                                        : N/A
+        Pending                                        : N/A
+    Serial Number                                      : 1792525050955
+    GPU UUID                                           : GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237
+    GPU PDI                                            : 0x2fc57a11785567f6
+    Minor Number                                       : 0
+    VBIOS Version                                      : 98.02.52.00.02
+    MultiGPU Board                                     : No
+    Board ID                                           : 0x100
+    Board Part Number                                  : 900-5G144-2200-000
+    GPU Part Number                                    : 2BB1-870-A1
+    FRU Part Number                                    : N/A
+    Platform Info
+        Chassis Serial Number                          :
+        Slot Number                                    : 0
+        Tray Index                                     : 0
+        Host ID                                        : 1
+        Peer Type                                      : Direct Connected
+        Module Id                                      : 1
+        GPU Fabric GUID                                : 0x0000000000000000
+    Inforom Version
+        Image Version                                  : G144.0520.00.02
+        OEM Object                                     : 2.1
+        ECC Object                                     : 7.16
+        Power Management Object                        : N/A
+    Inforom BBX Object Flush
+        Latest Timestamp                               : N/A
+        Latest Duration                                : N/A
+    GPU Operation Mode
+        Current                                        : N/A
+        Pending                                        : N/A
+    GPU C2C Mode                                       : Disabled
+    GPU Virtualization Mode
+        Virtualization Mode                            : Pass-Through
+        Host VGPU Mode                                 : N/A
+        vGPU Heterogeneous Mode                        : N/A
+    GPU Recovery Action                                : None
+    GSP Firmware Version                               : 595.71.05
+    IBMNPU
+        Relaxed Ordering Mode                          : N/A
+    PCI
+        Bus                                            : 0x01
+        Device                                         : 0x00
+        Domain                                         : 0x0000
+        Base Classcode                                 : 0x3
+        Sub Classcode                                  : 0x0
+        Device Id                                      : 0x2BB110DE
+        Bus Id                                         : 00000000:01:00.0
+        Sub System Id                                  : 0x204B10DE
+        GPU Link Info
+            PCIe Generation
+                Max                                    : 5
+                Current                                : 1
+                Device Current                         : 1
+                Device Max                             : 5
+                Host Max                               : N/A
+            Link Width
+                Max                                    : 16x
+                Current                                : 16x
+        Bridge Chip
+            Type                                       : N/A
+            Firmware                                   : N/A
+        Replays Since Reset                            : 0
+        Replay Number Rollovers                        : 0
+        Tx Throughput                                  : 780 KB/s
+        Rx Throughput                                  : 465 KB/s
+        Atomic Caps Outbound                           : N/A
+        Atomic Caps Inbound                            : FETCHADD_32 FETCHADD_64 SWAP_32 SWAP_64 CAS_32 CAS_64
+    Fan Speed                                          : 30 %
+    Performance State                                  : P8
+    Clocks Event Reasons
+        Idle                                           : Not Active
+        Applications Clocks Setting                    : Not Active
+        SW Power Cap                                   : Not Active
+        HW Slowdown                                    : Not Active
+            HW Thermal Slowdown                        : Not Active
+            HW Power Brake Slowdown                    : Not Active
+        Sync Boost                                     : Not Active
+        SW Thermal Slowdown                            : Not Active
+        Display Clock Setting                          : Not Active
+    Clocks Event Reasons Counters
+        SW Power Capping                               : 200402 us
+        Sync Boost                                     : 0 us
+        SW Thermal Slowdown                            : 0 us
+        HW Thermal Slowdown                            : 0 us
+        HW Power Braking                               : 0 us
+    Sparse Operation Mode                              : N/A
+    FB Memory Usage
+        Total                                          : 97887 MiB
+        Reserved                                       : 638 MiB
+        Used                                           : 2 MiB
+        Free                                           : 97249 MiB
+    BAR1 Memory Usage
+        Total                                          : 131072 MiB
+        Used                                           : 1 MiB
+        Free                                           : 131071 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+    Compute Mode                                       : Default
+    Utilization
+        GPU                                            : 0 %
+        Memory                                         : 0 %
+        Encoder                                        : 0 %
+        Decoder                                        : 0 %
+        JPEG                                           : 0 %
+        OFA                                            : 0 %
+    Encoder Stats
+        Active Sessions                                : 0
+        Average FPS                                    : 0
+        Average Latency                                : 0
+    FBC Stats
+        Active Sessions                                : 0
+        Average FPS                                    : 0
+        Average Latency                                : 0
+    DRAM Encryption Mode
+        Current                                        : Disabled
+        Pending                                        : Disabled
+    ECC Mode
+        Current                                        : Disabled
+        Pending                                        : Disabled
+    ECC Errors
+        Volatile
+            SRAM Correctable                           : N/A
+            SRAM Uncorrectable Parity                  : N/A
+            SRAM Uncorrectable SEC-DED                 : N/A
+            DRAM Correctable                           : N/A
+            DRAM Uncorrectable                         : N/A
+        Aggregate
+            SRAM Correctable                           : N/A
+            SRAM Uncorrectable Parity                  : N/A
+            SRAM Uncorrectable SEC-DED                 : N/A
+            DRAM Correctable                           : N/A
+            DRAM Uncorrectable                         : N/A
+            SRAM Threshold Exceeded                    : N/A
+        Aggregate Uncorrectable SRAM Sources
+            SRAM L2                                    : N/A
+            SRAM SM                                    : N/A
+            SRAM Microcontroller                       : N/A
+            SRAM PCIE                                  : N/A
+            SRAM Other                                 : N/A
+        Channel Repair Pending                         : No
+        TPC Repair Pending                             : No
+        Unrepairable Memory                            : N/A
+    Retired Pages
+        Single Bit ECC                                 : N/A
+        Double Bit ECC                                 : N/A
+        Pending Page Blacklist                         : N/A
+    Remapped Rows
+        Correctable Error                              : 0
+        Inactive Correctable Error                     : 0
+        Uncorrectable Error                            : 0
+        Inactive Uncorrectable Error                   : 0
+        Pending                                        : No
+        Remapping Failure Occurred                     : No
+        Bank Remap Availability Histogram
+            Max                                        : 512 bank(s)
+            High                                       : 0 bank(s)
+            Partial                                    : 0 bank(s)
+            Low                                        : 0 bank(s)
+            None                                       : 0 bank(s)
+    Temperature
+        GPU Current Temp                               : 31 C
+        GPU T.Limit Temp                               : 62 C
+        GPU Shutdown T.Limit Temp                      : -5 C
+        GPU Slowdown T.Limit Temp                      : -2 C
+        GPU Max Operating T.Limit Temp                 : 0 C
+        GPU Target Temperature                         : N/A
+        Memory Current Temp                            : N/A
+        Memory Max Operating T.Limit Temp              : N/A
+    GPU Power Readings
+        Average Power Draw                             : 16.52 W
+        Instantaneous Power Draw                       : 16.52 W
+        Current Power Limit                            : 600.00 W
+        Requested Power Limit                          : 600.00 W
+        Default Power Limit                            : 600.00 W
+        Min Power Limit                                : 150.00 W
+        Max Power Limit                                : 600.00 W
+    GPU Memory Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+    Power Smoothing                                    : N/A
+    Workload Power Profiles
+        Requested Profiles                             : N/A
+        Enforced Profiles                              : N/A
+    EDPp Multiplier                                    : N/A
+    Clocks
+        Graphics                                       : 180 MHz
+        SM                                             : 180 MHz
+        Memory                                         : 405 MHz
+        Video                                          : 600 MHz
+    Applications Clocks
+        Graphics                                       : Requested functionality has been deprecated
+        Memory                                         : Requested functionality has been deprecated
+    Default Applications Clocks
+        Graphics                                       : Requested functionality has been deprecated
+        Memory                                         : Requested functionality has been deprecated
+    Deferred Clocks
+        Memory                                         : N/A
+    Max Clocks
+        Graphics                                       : 3090 MHz
+        SM                                             : 3090 MHz
+        Memory                                         : 14001 MHz
+        Video                                          : 3090 MHz
+    Max Customer Boost Clocks
+        Graphics                                       : N/A
+    Clock Policy
+        Auto Boost                                     : N/A
+        Auto Boost Default                             : N/A
+    Fabric
+        State                                          : N/A
+        Status                                         : N/A
+        CliqueId                                       : N/A
+        ClusterUUID                                    : N/A
+        Health
+            Summary                                    : N/A
+            Bandwidth                                  : N/A
+            Route Recovery in progress                 : N/A
+            Route Unhealthy                            : N/A
+            Access Timeout Recovery                    : N/A
+            Incorrect Configuration                    : N/A
+            Partition Assigned                         : N/A
+    Processes                                          : None
+    Capabilities
+        EGM                                            : disabled
+
+GPU 00000000:02:00.0
+    Product Name                                       : NVIDIA RTX PRO 6000 Blackwell Workstation Edition
+    Product Brand                                      : NVIDIA RTX
+    Product Architecture                               : Blackwell
+    Display Mode                                       : Requested functionality has been deprecated
+    Display Attached                                   : Yes
+    Display Active                                     : Disabled
+    Persistence Mode                                   : Disabled
+    Addressing Mode                                    : HMM
+    MIG Mode
+        Current                                        : N/A
+        Pending                                        : N/A
+    Accounting Mode                                    : Disabled
+    Accounting Mode Buffer Size                        : 4000
+    Driver Model
+        Current                                        : N/A
+        Pending                                        : N/A
+    Serial Number                                      : 1792825000515
+    GPU UUID                                           : GPU-69acfa26-8b60-61b5-702d-aee252c163cc
+    GPU PDI                                            : 0x3802a64ab95f128c
+    Minor Number                                       : 1
+    VBIOS Version                                      : 98.02.52.00.02
+    MultiGPU Board                                     : No
+    Board ID                                           : 0x200
+    Board Part Number                                  : 900-5G144-2200-000
+    GPU Part Number                                    : 2BB1-870-A1
+    FRU Part Number                                    : N/A
+    Platform Info
+        Chassis Serial Number                          :
+        Slot Number                                    : 0
+        Tray Index                                     : 0
+        Host ID                                        : 1
+        Peer Type                                      : Direct Connected
+        Module Id                                      : 1
+        GPU Fabric GUID                                : 0x0000000000000000
+    Inforom Version
+        Image Version                                  : G144.0520.00.02
+        OEM Object                                     : 2.1
+        ECC Object                                     : 7.16
+        Power Management Object                        : N/A
+    Inforom BBX Object Flush
+        Latest Timestamp                               : N/A
+        Latest Duration                                : N/A
+    GPU Operation Mode
+        Current                                        : N/A
+        Pending                                        : N/A
+    GPU C2C Mode                                       : Disabled
+    GPU Virtualization Mode
+        Virtualization Mode                            : Pass-Through
+        Host VGPU Mode                                 : N/A
+        vGPU Heterogeneous Mode                        : N/A
+    GPU Recovery Action                                : None
+    GSP Firmware Version                               : 595.71.05
+    IBMNPU
+        Relaxed Ordering Mode                          : N/A
+    PCI
+        Bus                                            : 0x02
+        Device                                         : 0x00
+        Domain                                         : 0x0000
+        Base Classcode                                 : 0x3
+        Sub Classcode                                  : 0x0
+        Device Id                                      : 0x2BB110DE
+        Bus Id                                         : 00000000:02:00.0
+        Sub System Id                                  : 0x204B10DE
+        GPU Link Info
+            PCIe Generation
+                Max                                    : 5
+                Current                                : 1
+                Device Current                         : 1
+                Device Max                             : 5
+                Host Max                               : N/A
+            Link Width
+                Max                                    : 16x
+                Current                                : 16x
+        Bridge Chip
+            Type                                       : N/A
+            Firmware                                   : N/A
+        Replays Since Reset                            : 0
+        Replay Number Rollovers                        : 0
+        Tx Throughput                                  : 1991 KB/s
+        Rx Throughput                                  : 490 KB/s
+        Atomic Caps Outbound                           : N/A
+        Atomic Caps Inbound                            : FETCHADD_32 FETCHADD_64 SWAP_32 SWAP_64 CAS_32 CAS_64
+    Fan Speed                                          : 30 %
+    Performance State                                  : P8
+    Clocks Event Reasons
+        Idle                                           : Not Active
+        Applications Clocks Setting                    : Not Active
+        SW Power Cap                                   : Not Active
+        HW Slowdown                                    : Not Active
+            HW Thermal Slowdown                        : Not Active
+            HW Power Brake Slowdown                    : Not Active
+        Sync Boost                                     : Not Active
+        SW Thermal Slowdown                            : Not Active
+        Display Clock Setting                          : Not Active
+    Clocks Event Reasons Counters
+        SW Power Capping                               : 200214 us
+        Sync Boost                                     : 0 us
+        SW Thermal Slowdown                            : 0 us
+        HW Thermal Slowdown                            : 0 us
+        HW Power Braking                               : 0 us
+    Sparse Operation Mode                              : N/A
+    FB Memory Usage
+        Total                                          : 97887 MiB
+        Reserved                                       : 638 MiB
+        Used                                           : 34 MiB
+        Free                                           : 97217 MiB
+    BAR1 Memory Usage
+        Total                                          : 131072 MiB
+        Used                                           : 33 MiB
+        Free                                           : 131039 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+    Compute Mode                                       : Default
+    Utilization
+        GPU                                            : 0 %
+        Memory                                         : 0 %
+        Encoder                                        : 0 %
+        Decoder                                        : 0 %
+        JPEG                                           : 0 %
+        OFA                                            : 0 %
+    Encoder Stats
+        Active Sessions                                : 0
+        Average FPS                                    : 0
+        Average Latency                                : 0
+    FBC Stats
+        Active Sessions                                : 0
+        Average FPS                                    : 0
+        Average Latency                                : 0
+    DRAM Encryption Mode
+        Current                                        : Disabled
+        Pending                                        : Disabled
+    ECC Mode
+        Current                                        : Disabled
+        Pending                                        : Disabled
+    ECC Errors
+        Volatile
+            SRAM Correctable                           : N/A
+            SRAM Uncorrectable Parity                  : N/A
+            SRAM Uncorrectable SEC-DED                 : N/A
+            DRAM Correctable                           : N/A
+            DRAM Uncorrectable                         : N/A
+        Aggregate
+            SRAM Correctable                           : N/A
+            SRAM Uncorrectable Parity                  : N/A
+            SRAM Uncorrectable SEC-DED                 : N/A
+            DRAM Correctable                           : N/A
+            DRAM Uncorrectable                         : N/A
+            SRAM Threshold Exceeded                    : N/A
+        Aggregate Uncorrectable SRAM Sources
+            SRAM L2                                    : N/A
+            SRAM SM                                    : N/A
+            SRAM Microcontroller                       : N/A
+            SRAM PCIE                                  : N/A
+            SRAM Other                                 : N/A
+        Channel Repair Pending                         : No
+        TPC Repair Pending                             : No
+        Unrepairable Memory                            : N/A
+    Retired Pages
+        Single Bit ECC                                 : N/A
+        Double Bit ECC                                 : N/A
+        Pending Page Blacklist                         : N/A
+    Remapped Rows
+        Correctable Error                              : 0
+        Inactive Correctable Error                     : 0
+        Uncorrectable Error                            : 0
+        Inactive Uncorrectable Error                   : 0
+        Pending                                        : No
+        Remapping Failure Occurred                     : No
+        Bank Remap Availability Histogram
+            Max                                        : 512 bank(s)
+            High                                       : 0 bank(s)
+            Partial                                    : 0 bank(s)
+            Low                                        : 0 bank(s)
+            None                                       : 0 bank(s)
+    Temperature
+        GPU Current Temp                               : 37 C
+        GPU T.Limit Temp                               : 56 C
+        GPU Shutdown T.Limit Temp                      : -5 C
+        GPU Slowdown T.Limit Temp                      : -2 C
+        GPU Max Operating T.Limit Temp                 : 0 C
+        GPU Target Temperature                         : N/A
+        Memory Current Temp                            : N/A
+        Memory Max Operating T.Limit Temp              : N/A
+    GPU Power Readings
+        Average Power Draw                             : 31.78 W
+        Instantaneous Power Draw                       : 31.78 W
+        Current Power Limit                            : 600.00 W
+        Requested Power Limit                          : 600.00 W
+        Default Power Limit                            : 600.00 W
+        Min Power Limit                                : 150.00 W
+        Max Power Limit                                : 600.00 W
+    GPU Memory Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+    Power Smoothing                                    : N/A
+    Workload Power Profiles
+        Requested Profiles                             : N/A
+        Enforced Profiles                              : N/A
+    EDPp Multiplier                                    : N/A
+    Clocks
+        Graphics                                       : 180 MHz
+        SM                                             : 180 MHz
+        Memory                                         : 405 MHz
+        Video                                          : 600 MHz
+    Applications Clocks
+        Graphics                                       : Requested functionality has been deprecated
+        Memory                                         : Requested functionality has been deprecated
+    Default Applications Clocks
+        Graphics                                       : Requested functionality has been deprecated
+        Memory                                         : Requested functionality has been deprecated
+    Deferred Clocks
+        Memory                                         : N/A
+    Max Clocks
+        Graphics                                       : 3090 MHz
+        SM                                             : 3090 MHz
+        Memory                                         : 14001 MHz
+        Video                                          : 3090 MHz
+    Max Customer Boost Clocks
+        Graphics                                       : N/A
+    Clock Policy
+        Auto Boost                                     : N/A
+        Auto Boost Default                             : N/A
+    Fabric
+        State                                          : N/A
+        Status                                         : N/A
+        CliqueId                                       : N/A
+        ClusterUUID                                    : N/A
+        Health
+            Summary                                    : N/A
+            Bandwidth                                  : N/A
+            Route Recovery in progress                 : N/A
+            Route Unhealthy                            : N/A
+            Access Timeout Recovery                    : N/A
+            Incorrect Configuration                    : N/A
+            Partition Assigned                         : N/A
+    Processes                                          : None
+    Capabilities
+        EGM                                            : disabled
+
+
+[exit=0]
+```
+
+### nvidia-smi memory detail
+
+```console
+$ nvidia-smi -q -d MEMORY
+
+==============NVSMI LOG==============
+
+Timestamp                                              : Fri Jul  3 07:38:44 2026
+Driver Version                                         : 595.71.05
+CUDA Version                                           : 13.2
+
+Attached GPUs                                          : 2
+GPU 00000000:01:00.0
+    FB Memory Usage
+        Total                                          : 97887 MiB
+        Reserved                                       : 638 MiB
+        Used                                           : 2 MiB
+        Free                                           : 97249 MiB
+    BAR1 Memory Usage
+        Total                                          : 131072 MiB
+        Used                                           : 1 MiB
+        Free                                           : 131071 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+
+GPU 00000000:02:00.0
+    FB Memory Usage
+        Total                                          : 97887 MiB
+        Reserved                                       : 638 MiB
+        Used                                           : 34 MiB
+        Free                                           : 97217 MiB
+    BAR1 Memory Usage
+        Total                                          : 131072 MiB
+        Used                                           : 33 MiB
+        Free                                           : 131039 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+
+
+[exit=0]
+```
+
+### nvidia-smi power detail
+
+```console
+$ nvidia-smi -q -d POWER
+
+==============NVSMI LOG==============
+
+Timestamp                                              : Fri Jul  3 07:38:44 2026
+Driver Version                                         : 595.71.05
+CUDA Version                                           : 13.2
+
+Attached GPUs                                          : 2
+GPU 00000000:01:00.0
+    GPU Power Readings
+        Average Power Draw                             : 16.52 W
+        Instantaneous Power Draw                       : 16.52 W
+        Current Power Limit                            : 600.00 W
+        Requested Power Limit                          : 600.00 W
+        Default Power Limit                            : 600.00 W
+        Min Power Limit                                : 150.00 W
+        Max Power Limit                                : 600.00 W
+    Power Samples
+        Duration                                       : 118.00 sec
+        Number of Samples                              : 119
+        Max                                            : 17.80 W
+        Min                                            : 14.79 W
+        Avg                                            : 15.05 W
+    GPU Memory Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+    EDPp Multiplier                                    : N/A
+
+GPU 00000000:02:00.0
+    GPU Power Readings
+        Average Power Draw                             : 31.78 W
+        Instantaneous Power Draw                       : 31.78 W
+        Current Power Limit                            : 600.00 W
+        Requested Power Limit                          : 600.00 W
+        Default Power Limit                            : 600.00 W
+        Min Power Limit                                : 150.00 W
+        Max Power Limit                                : 600.00 W
+    Power Samples
+        Duration                                       : 117.99 sec
+        Number of Samples                              : 119
+        Max                                            : 32.72 W
+        Min                                            : 31.25 W
+        Avg                                            : 32.12 W
+    GPU Memory Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+    EDPp Multiplier                                    : N/A
+
+
+[exit=0]
+```
+
+### nvcc after reboot
+
+```console
+$ command -v nvcc || true; nvcc --version || true
+bash: line 1: nvcc: command not found
+
+[exit=0]
+```
+
+### Installed NVIDIA/CUDA/container-toolkit packages after reboot
+
+```console
+$ dpkg -l | egrep 'nvidia|cuda|container-toolkit' || true
+ii  libnvidia-cfg1-595:amd64              595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA binary OpenGL/GLX configuration library
+ii  libnvidia-common-595                  595.71.05-0ubuntu0.24.04.1                       amd64        Shared files used by the NVIDIA libraries
+ii  libnvidia-compute-595:amd64           595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA libcompute package
+ii  libnvidia-decode-595:amd64            595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA Video Decoding runtime libraries
+ii  libnvidia-egl-wayland1:amd64          1:1.1.13-1ubuntu0.1                              amd64        Wayland EGL External Platform library -- shared library
+ii  libnvidia-encode-595:amd64            595.71.05-0ubuntu0.24.04.1                       amd64        NVENC Video Encoding runtime library
+ii  libnvidia-extra-595:amd64             595.71.05-0ubuntu0.24.04.1                       amd64        Extra libraries for the NVIDIA driver
+ii  libnvidia-fbc1-595:amd64              595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA OpenGL-based Framebuffer Capture runtime library
+ii  libnvidia-gl-595:amd64                595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA OpenGL/GLX/EGL/GLES GLVND libraries and Vulkan ICD
+ii  nvidia-compute-utils-595              595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA compute utilities
+ii  nvidia-dkms-595-open                  595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA DKMS package (open kernel module)
+ii  nvidia-driver-595-open                595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA driver (open kernel) metapackage
+ii  nvidia-firmware-595-595.71.05         595.71.05-0ubuntu0.24.04.1                       amd64        Firmware files used by the kernel module
+ii  nvidia-kernel-common-595              595.71.05-0ubuntu0.24.04.1                       amd64        Shared files used with the kernel module
+ii  nvidia-kernel-source-595-open         595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA kernel source package
+ii  nvidia-prime                          0.8.17.2                                         all          Tools to enable NVIDIA's Prime
+ii  nvidia-settings                       510.47.03-0ubuntu4.24.04.1                       amd64        Tool for configuring the NVIDIA graphics driver
+ii  nvidia-utils-595                      595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA driver support binaries
+ii  screen-resolution-extra               0.18.3ubuntu0.24.04.1                            all          Extension for the nvidia-settings control panel
+ii  xserver-xorg-video-nvidia-595         595.71.05-0ubuntu0.24.04.1                       amd64        NVIDIA binary Xorg driver
+
+[exit=0]
+```
+
+### Docker Root Dir and containerd info
+
+```console
+$ sudo -n docker info | egrep 'Docker Root Dir|Storage Driver|containerd' || true
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Runtimes: io.containerd.runc.v2 runc
+ containerd version: e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ Docker Root Dir: /data/docker
+
+[exit=0]
+```
+
+### Docker/containerd path sizes
+
+```console
+$ sudo -n du -sh /var/lib/docker /var/lib/containerd /data/docker /data/containerd /data/containerd/root 2>/dev/null || true
+236K	/data/docker
+336K	/data/containerd
+
+[exit=0]
+```
+
+## M5B Post-reboot Validation Summary
+
+- nvidia-smi: PASS
+- GPU count: 2
+- GPU names: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (UUID;NVIDIA RTX PRO 6000 Blackwell Workstation Edition (UUID
+
+- Query CSV:
+
+```csv
+0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:01:00.0, 595.71.05, 97887 MiB, 600.00 W
+1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 00000000:02:00.0, 595.71.05, 97887 MiB, 600.00 W
+```
+
+- nouveau loaded/bound: not bound to NVIDIA GPUs; see lsmod/lspci sections above.
+- nvidia modules loaded: PASS
+- nvcc: absent
+- CUDA Toolkit packages: absent
+- NVIDIA Container Toolkit packages: absent
+- Docker Root Dir: /data/docker
+- containerd root: /data/containerd/root
+- containerd state: /run/containerd
+- /data guard: PASS
+- root-disk guard: PASS
+- Docker storage verifier: PASS
+- Scope confirmation: CUDA Toolkit, PyTorch, KTransformers, ik_llama, NVIDIA Container Toolkit, models, Docker NVIDIA runtime, Docker/containerd configuration, and API exposure were not installed or configured by M5B.
+- Manual Proxmox host checks still required: VFIO/PCIe/AER/reset logs plus VM config/status checks outside Codex.
+
+## M5B Post-reboot Conclusion
+
+PASS
+### git diff --check
+
+```console
+$ git diff --check
+
+[exit=0]
+```
+
+### grep-based secret scan
+
+```console
+$ grep -RInE '(HF_TOKEN|OPENAI_API_KEY|GITHUB_TOKEN|password|passwd|PRIVATE KEY|BEGIN OPENSSH|BEGIN RSA|auth.json|ai-vm.sudo)' . --exclude-dir=.git || true
+./tests/shell/test-prepare-data-disk-static.sh:36:if grep -RInE '(BEGIN OPENSSH|BEGIN RSA|PRIVATE KEY|HF_TOKEN=[A-Za-z0-9_./+:-]{8,}|OPENAI_API_KEY=[A-Za-z0-9_./+:-]{8,}|GITHUB_TOKEN=[A-Za-z0-9_./+:-]{8,})' "$PREPARE" "$VERIFY"; then
+./tests/shell/test-root-disk-guard-static.sh:52:if grep -RInE '(BEGIN OPENSSH|BEGIN RSA|PRIVATE KEY|HF_TOKEN=[A-Za-z0-9_./+:-]{8,}|OPENAI_API_KEY=[A-Za-z0-9_./+:-]{8,}|GITHUB_TOKEN=[A-Za-z0-9_./+:-]{8,})' "$ROOT_GUARD" "$REQUIRE_DATA"; then
+./tests/shell/test-docker-scripts-static.sh:50:if grep -RInE 'usermod[[:space:]].*docker|gpasswd[[:space:]].*docker|groupadd[[:space:]].*docker' "${scripts[@]}"; then
+./tests/shell/test-docker-scripts-static.sh:58:if grep -RInE '(BEGIN OPENSSH|BEGIN RSA|PRIVATE KEY|HF_TOKEN=[A-Za-z0-9_./+:-]{8,}|OPENAI_API_KEY=[A-Za-z0-9_./+:-]{8,}|GITHUB_TOKEN=[A-Za-z0-9_./+:-]{8,})' "${scripts[@]}"; then
+./scripts/preflight/disk-dry-run.sh:38:    -e 's/(HF_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./scripts/preflight/disk-dry-run.sh:39:    -e 's/(OPENAI_API_KEY=)[^[:space:]]+/\1[REDACTED]/g' \
+./scripts/preflight/disk-dry-run.sh:40:    -e 's/(GITHUB_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./scripts/preflight/disk-dry-run.sh:42:    -e 's/((password|passwd)[=:][[:space:]]*)[^[:space:]]+/\1[REDACTED]/Ig' \
+./scripts/preflight/disk-dry-run.sh:123:if git remote -v 2>/dev/null | grep -Eq '(://[^[:space:]]*:[^[:space:]@]*@|token|password|passwd|GITHUB_TOKEN)'; then
+./scripts/preflight/disk-dry-run.sh:149:Reason for STOP: sudo -n true failed after sudo -k. No password was requested or read.
+./scripts/preflight/vm-preflight.sh:33:- never prompts for a sudo password
+./scripts/preflight/vm-preflight.sh:51:    -e 's/(HF_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./scripts/preflight/vm-preflight.sh:52:    -e 's/(OPENAI_API_KEY=)[^[:space:]]+/\1[REDACTED]/g' \
+./scripts/preflight/vm-preflight.sh:53:    -e 's/(GITHUB_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./scripts/preflight/vm-preflight.sh:55:    -e 's/((password|passwd)[=:][[:space:]]*)[^[:space:]]+/\1[REDACTED]/Ig' \
+./scripts/preflight/vm-preflight.sh:113:  git remote -v 2>/dev/null | grep -Eq '(://[^[:space:]]*:[^[:space:]@]*@|token|password|passwd|GITHUB_TOKEN)'
+./scripts/preflight/vm-preflight.sh:352:- No secrets, tokens, passwords, private keys, auth files, real .env files, MEMORY.md, or local Codex memory files were read or written.
+./scripts/storage/prepare-data-disk.sh:58:    -e 's/(HF_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./scripts/storage/prepare-data-disk.sh:59:    -e 's/(OPENAI_API_KEY=)[^[:space:]]+/\1[REDACTED]/g' \
+./scripts/storage/prepare-data-disk.sh:60:    -e 's/(GITHUB_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./scripts/storage/prepare-data-disk.sh:62:    -e 's/((password|passwd)[=:][[:space:]]*)[^[:space:]]+/\1[REDACTED]/Ig' \
+./scripts/storage/prepare-data-disk.sh:206:  if git remote -v 2>/dev/null | grep -Eq '(://[^[:space:]]*:[^[:space:]@]*@|token|password|passwd|GITHUB_TOKEN)'; then
+./scripts/storage/verify-data-mount.sh:41:    -e 's/(HF_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./scripts/storage/verify-data-mount.sh:42:    -e 's/(OPENAI_API_KEY=)[^[:space:]]+/\1[REDACTED]/g' \
+./scripts/storage/verify-data-mount.sh:43:    -e 's/(GITHUB_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./scripts/storage/verify-data-mount.sh:45:    -e 's/((password|passwd)[=:][[:space:]]*)[^[:space:]]+/\1[REDACTED]/Ig' \
+./scripts/common/root-disk-guard.sh:524:      -name auth.json -o \
+./AGENTS.md:32:- Do not commit real `.env` files, tokens, passwords, private keys, API keys, Hugging Face tokens, GitHub tokens, SSH keys, sudo files, auth files, model weights, or service secrets.
+./.github/workflows/ci.yml:49:          forbidden=$(find . -path ./.git -prune -o \( -name .env -o -name '*.key' -o -name '*.pem' -o -name auth.json -o -name MEMORY.md \) -print)
+./.github/ISSUE_TEMPLATE/bug_report.yml:9:      value: Do not include secrets, tokens, private keys, passwords, or model weights.
+./.github/ISSUE_TEMPLATE/hardware_report.yml:9:      value: Do not include secrets, tokens, private keys, passwords, public IPs, or model weights.
+./.gitignore:15:auth.json
+./SECURITY.md:9:Do not commit secrets, tokens, passwords, SSH keys, API keys, sudo files, real `.env` files, Hugging Face tokens, GitHub tokens, auth files, model weights, or `/data/services/secrets` contents.
+./reports/m3-main-merge.md:35:The grep-based secret scan matched only intentional documentation, test, sanitizer, `.gitignore`, CI, and prior report command strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m4b-main-merge.md:47:The grep-based secret scan matched only intentional documentation, sanitizer, static-test, `.gitignore`, CI, and prior report strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m4a-docker-containerd-plan.md:114:The grep-based secret scan found only intentional documentation, static-test, sanitizer, `.gitignore`, CI, and prior report command strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m5a-cuda-nvidia-compatibility.md:339:The grep-based secret scan matched only intentional documentation, safety rules, examples, and scan pattern text. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were found.
+./reports/m5a-main-merge.md:116:The grep-based secret scan matched only intentional documentation, test, sanitizer, `.gitignore`, CI, and prior report strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m4b-docker-permission-policy.md:72:The grep-based secret scan matched only intentional documentation, sanitizer, static-test, `.gitignore`, CI, and prior report strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m4a-main-merge.md:36:The grep-based secret scan matched only intentional documentation, test, sanitizer, `.gitignore`, CI, and prior report command strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m4b-docker-containerd-install.md:975:- Grep-based secret scan: matched only intentional documentation, static-test, sanitizer, `.gitignore`, CI, and prior report command strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m1-vm-preflight.md:512:- No secrets, tokens, passwords, private keys, auth files, real .env files, MEMORY.md, or local Codex memory files were read or written.
+./reports/m2-main-merge.md:31:grep -RInE "(HF_TOKEN|OPENAI_API_KEY|GITHUB_TOKEN|password|passwd|PRIVATE KEY|BEGIN OPENSSH|BEGIN RSA|auth.json|ai-vm.sudo)" . --exclude-dir=.git || true
+./reports/m5b-nvidia-host-driver.md:2544:./tests/shell/test-prepare-data-disk-static.sh:36:if grep -RInE '(BEGIN OPENSSH|BEGIN RSA|PRIVATE KEY|HF_TOKEN=[A-Za-z0-9_./+:-]{8,}|OPENAI_API_KEY=[A-Za-z0-9_./+:-]{8,}|GITHUB_TOKEN=[A-Za-z0-9_./+:-]{8,})' "$PREPARE" "$VERIFY"; then
+./reports/m5b-nvidia-host-driver.md:2545:./tests/shell/test-root-disk-guard-static.sh:52:if grep -RInE '(BEGIN OPENSSH|BEGIN RSA|PRIVATE KEY|HF_TOKEN=[A-Za-z0-9_./+:-]{8,}|OPENAI_API_KEY=[A-Za-z0-9_./+:-]{8,}|GITHUB_TOKEN=[A-Za-z0-9_./+:-]{8,})' "$ROOT_GUARD" "$REQUIRE_DATA"; then
+./reports/m5b-nvidia-host-driver.md:2546:./tests/shell/test-docker-scripts-static.sh:50:if grep -RInE 'usermod[[:space:]].*docker|gpasswd[[:space:]].*docker|groupadd[[:space:]].*docker' "${scripts[@]}"; then
+./reports/m5b-nvidia-host-driver.md:2547:./tests/shell/test-docker-scripts-static.sh:58:if grep -RInE '(BEGIN OPENSSH|BEGIN RSA|PRIVATE KEY|HF_TOKEN=[A-Za-z0-9_./+:-]{8,}|OPENAI_API_KEY=[A-Za-z0-9_./+:-]{8,}|GITHUB_TOKEN=[A-Za-z0-9_./+:-]{8,})' "${scripts[@]}"; then
+./reports/m5b-nvidia-host-driver.md:2548:./scripts/preflight/disk-dry-run.sh:38:    -e 's/(HF_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./reports/m5b-nvidia-host-driver.md:2549:./scripts/preflight/disk-dry-run.sh:39:    -e 's/(OPENAI_API_KEY=)[^[:space:]]+/\1[REDACTED]/g' \
+./reports/m5b-nvidia-host-driver.md:2550:./scripts/preflight/disk-dry-run.sh:40:    -e 's/(GITHUB_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./reports/m5b-nvidia-host-driver.md:2551:./scripts/preflight/disk-dry-run.sh:42:    -e 's/((password|passwd)[=:][[:space:]]*)[^[:space:]]+/\1[REDACTED]/Ig' \
+./reports/m5b-nvidia-host-driver.md:2552:./scripts/preflight/disk-dry-run.sh:123:if git remote -v 2>/dev/null | grep -Eq '(://[^[:space:]]*:[^[:space:]@]*@|token|password|passwd|GITHUB_TOKEN)'; then
+./reports/m5b-nvidia-host-driver.md:2553:./scripts/preflight/disk-dry-run.sh:149:Reason for STOP: sudo -n true failed after sudo -k. No password was requested or read.
+./reports/m5b-nvidia-host-driver.md:2554:./scripts/preflight/vm-preflight.sh:33:- never prompts for a sudo password
+./reports/m5b-nvidia-host-driver.md:2555:./scripts/preflight/vm-preflight.sh:51:    -e 's/(HF_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./reports/m5b-nvidia-host-driver.md:2556:./scripts/preflight/vm-preflight.sh:52:    -e 's/(OPENAI_API_KEY=)[^[:space:]]+/\1[REDACTED]/g' \
+./reports/m5b-nvidia-host-driver.md:2557:./scripts/preflight/vm-preflight.sh:53:    -e 's/(GITHUB_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./reports/m5b-nvidia-host-driver.md:2558:./scripts/preflight/vm-preflight.sh:55:    -e 's/((password|passwd)[=:][[:space:]]*)[^[:space:]]+/\1[REDACTED]/Ig' \
+./reports/m5b-nvidia-host-driver.md:2559:./scripts/preflight/vm-preflight.sh:113:  git remote -v 2>/dev/null | grep -Eq '(://[^[:space:]]*:[^[:space:]@]*@|token|password|passwd|GITHUB_TOKEN)'
+./reports/m5b-nvidia-host-driver.md:2560:./scripts/preflight/vm-preflight.sh:352:- No secrets, tokens, passwords, private keys, auth files, real .env files, MEMORY.md, or local Codex memory files were read or written.
+./reports/m5b-nvidia-host-driver.md:2561:./scripts/storage/prepare-data-disk.sh:58:    -e 's/(HF_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./reports/m5b-nvidia-host-driver.md:2562:./scripts/storage/prepare-data-disk.sh:59:    -e 's/(OPENAI_API_KEY=)[^[:space:]]+/\1[REDACTED]/g' \
+./reports/m5b-nvidia-host-driver.md:2563:./scripts/storage/prepare-data-disk.sh:60:    -e 's/(GITHUB_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./reports/m5b-nvidia-host-driver.md:2564:./scripts/storage/prepare-data-disk.sh:62:    -e 's/((password|passwd)[=:][[:space:]]*)[^[:space:]]+/\1[REDACTED]/Ig' \
+./reports/m5b-nvidia-host-driver.md:2565:./scripts/storage/prepare-data-disk.sh:206:  if git remote -v 2>/dev/null | grep -Eq '(://[^[:space:]]*:[^[:space:]@]*@|token|password|passwd|GITHUB_TOKEN)'; then
+./reports/m5b-nvidia-host-driver.md:2566:./scripts/storage/verify-data-mount.sh:41:    -e 's/(HF_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./reports/m5b-nvidia-host-driver.md:2567:./scripts/storage/verify-data-mount.sh:42:    -e 's/(OPENAI_API_KEY=)[^[:space:]]+/\1[REDACTED]/g' \
+./reports/m5b-nvidia-host-driver.md:2568:./scripts/storage/verify-data-mount.sh:43:    -e 's/(GITHUB_TOKEN=)[^[:space:]]+/\1[REDACTED]/g' \
+./reports/m5b-nvidia-host-driver.md:2569:./scripts/storage/verify-data-mount.sh:45:    -e 's/((password|passwd)[=:][[:space:]]*)[^[:space:]]+/\1[REDACTED]/Ig' \
+./reports/m5b-nvidia-host-driver.md:2570:./scripts/common/root-disk-guard.sh:524:      -name auth.json -o \
+./reports/m5b-nvidia-host-driver.md:2571:./AGENTS.md:32:- Do not commit real `.env` files, tokens, passwords, private keys, API keys, Hugging Face tokens, GitHub tokens, SSH keys, sudo files, auth files, model weights, or service secrets.
+./reports/m5b-nvidia-host-driver.md:2572:./.github/workflows/ci.yml:49:          forbidden=$(find . -path ./.git -prune -o \( -name .env -o -name '*.key' -o -name '*.pem' -o -name auth.json -o -name MEMORY.md \) -print)
+./reports/m5b-nvidia-host-driver.md:2573:./.github/ISSUE_TEMPLATE/bug_report.yml:9:      value: Do not include secrets, tokens, private keys, passwords, or model weights.
+./reports/m5b-nvidia-host-driver.md:2574:./.github/ISSUE_TEMPLATE/hardware_report.yml:9:      value: Do not include secrets, tokens, private keys, passwords, public IPs, or model weights.
+./reports/m5b-nvidia-host-driver.md:2575:./.gitignore:15:auth.json
+./reports/m5b-nvidia-host-driver.md:2576:./SECURITY.md:9:Do not commit secrets, tokens, passwords, SSH keys, API keys, sudo files, real `.env` files, Hugging Face tokens, GitHub tokens, auth files, model weights, or `/data/services/secrets` contents.
+./reports/m5b-nvidia-host-driver.md:2577:./reports/m3-main-merge.md:35:The grep-based secret scan matched only intentional documentation, test, sanitizer, `.gitignore`, CI, and prior report command strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m5b-nvidia-host-driver.md:2578:./reports/m4b-main-merge.md:47:The grep-based secret scan matched only intentional documentation, sanitizer, static-test, `.gitignore`, CI, and prior report strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m5b-nvidia-host-driver.md:2579:./reports/m4a-docker-containerd-plan.md:114:The grep-based secret scan found only intentional documentation, static-test, sanitizer, `.gitignore`, CI, and prior report command strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m5b-nvidia-host-driver.md:2580:./reports/m5a-cuda-nvidia-compatibility.md:339:The grep-based secret scan matched only intentional documentation, safety rules, examples, and scan pattern text. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were found.
+./reports/m5b-nvidia-host-driver.md:2581:./reports/m5a-main-merge.md:116:The grep-based secret scan matched only intentional documentation, test, sanitizer, `.gitignore`, CI, and prior report strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m5b-nvidia-host-driver.md:2582:./reports/m4b-docker-permission-policy.md:72:The grep-based secret scan matched only intentional documentation, sanitizer, static-test, `.gitignore`, CI, and prior report strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m5b-nvidia-host-driver.md:2583:./reports/m4a-main-merge.md:36:The grep-based secret scan matched only intentional documentation, test, sanitizer, `.gitignore`, CI, and prior report command strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m5b-nvidia-host-driver.md:2584:./reports/m4b-docker-containerd-install.md:975:- Grep-based secret scan: matched only intentional documentation, static-test, sanitizer, `.gitignore`, CI, and prior report command strings. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were detected.
+./reports/m5b-nvidia-host-driver.md:2585:./reports/m1-vm-preflight.md:512:- No secrets, tokens, passwords, private keys, auth files, real .env files, MEMORY.md, or local Codex memory files were read or written.
+./reports/m5b-nvidia-host-driver.md:2586:./reports/m2-main-merge.md:31:grep -RInE "(HF_TOKEN|OPENAI_API_KEY|GITHUB_TOKEN|password|passwd|PRIVATE KEY|BEGIN OPENSSH|BEGIN RSA|auth.json|ai-vm.sudo)" . --exclude-dir=.git || true
+./reports/m5b-nvidia-host-driver.md:2589:The grep-based secret scan matched only intentional documentation, safety rules, examples, sanitizer/static-test code, prior report text, and the scan pattern itself. No real secrets, tokens, passwords, private keys, auth files, real .env files, MEMORY.md, or local Codex memory files were identified.
+
+[exit=0]
+```
+
+### Secret scan interpretation
+
+The grep-based secret scan matched only intentional documentation, safety rules, examples, or scan pattern text. No real secrets, tokens, passwords, private keys, auth files, real .env files, MEMORY.md, or local Codex memory files were identified.
 
