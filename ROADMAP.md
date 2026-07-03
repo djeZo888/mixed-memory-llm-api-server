@@ -52,21 +52,23 @@ Completed. Installed and configured the approved NVIDIA Container Toolkit Docker
 
 Research current model and runtime options using official/current web sources where possible. M7A must be research-only: no model downloads, no backend installs, no runtime builds, no inference service configuration, and no API exposure. Produce a shortlist of three large/high-quality model candidates, three smaller/faster model candidates, and a runtime/backend recommendation matrix for human review.
 
+M7A produced `reports/m7a-model-runtime-research.md` on branch `milestone/m7a-model-runtime-research`. Its conclusion is PASS for research and shortlist, STOP for downloads/installs/builds/services/API exposure until human review. The recommended first backend for M7B is a pinned localhost-only SGLang Docker profile; KTransformers/KT-Kernel remains the large-MoE heterogeneous RAM+VRAM path to prototype after the first smoke path is defined.
+
 ## M7B backend runtime abstraction
 
-After M7A human review, add runtime environment examples, backend profiles, and common start/stop/status/benchmark scripts for the selected KTransformers, ik_llama, or other approved backend paths.
+After M7A human review, add runtime environment examples, backend profiles, and common start/stop/status/benchmark scripts for the selected SGLang, vLLM, KTransformers/KT-Kernel, ik_llama, or other approved backend paths. Keep backends bound to `127.0.0.1` by default, pin versions/images, and keep model/cache/build/log paths under `/data`.
 
 ## M8 small model API smoke service
 
-After M7B passes, select a small open model, download only to `/data/models`, start a localhost backend, expose OpenAI-compatible chat completions, test auth, streaming, health, logs, restart, and reboot behavior.
+After M7B passes and human approval is explicit, download `Qwen/Qwen3-0.6B` only to `/data/models` with cache under `/data/hf-cache`, start a localhost backend, expose OpenAI-compatible chat completions on localhost only, test auth, streaming, health, logs, restart, and reboot behavior.
 
 ## M9 fast technical/coding model
 
-Deploy and benchmark Qwen/Qwen3.6-35B-A3B through the API, recording throughput, context stability, RAM, VRAM, startup time, and failure modes.
+Deploy and benchmark `Qwen/Qwen3-30B-A3B-Instruct-2507` first through the localhost API, recording throughput, context stability, RAM, VRAM, startup time, and failure modes. Then compare `Qwen/Qwen3.6-35B-A3B` in text-only mode and `Qwen/Qwen3-Coder-30B-A3B-Instruct` if the human prioritizes coding-specific quality.
 
 ## M10 larger model benchmarks
 
-Benchmark Qwen/Qwen3.5-122B-A10B, Qwen/Qwen3.5-397B-A17B, and zai-org/GLM-5.2 one model at a time, with storage and memory estimates before downloads.
+Benchmark `Qwen/Qwen3-235B-A22B-Instruct-2507`, `MiniMaxAI/MiniMax-M3`, and `zai-org/GLM-5.2` one model at a time, with storage and memory estimates before downloads. Use `deepseek-ai/DeepSeek-V4-Flash` as the practical large-model feasibility comparator if human review prioritizes fit and speed before the largest candidates.
 
 ## M11 authenticated API exposure
 

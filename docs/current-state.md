@@ -41,6 +41,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M5B NVIDIA host driver: passed and merged into main
 - M6A NVIDIA Container Toolkit planning/dry-run: merged into `main` with corrected future test image `nvidia/cuda:13.2.1-base-ubuntu24.04`
 - M6B NVIDIA Container Toolkit install: merged into `main`; pre-reboot install, GPU container test, guest reboot, and post-reboot verification passed
+- M7A model/runtime research: `reports/m7a-model-runtime-research.md` produced on branch `milestone/m7a-model-runtime-research`; research-only, pending human review and merge
 
 ## Current Storage
 
@@ -107,6 +108,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M6B pulled and ran `nvidia/cuda:13.2.1-base-ubuntu24.04` for `nvidia-smi` only.
 - Host CUDA Toolkit and `nvcc` remain absent.
 - PyTorch, KTransformers, ik_llama, models, and API exposure remain blocked until their approved milestones.
+- M7A did not install PyTorch, KTransformers, ik_llama, vLLM, SGLang, CUDA Toolkit, model weights, backend services, or API exposure.
 - Human Proxmox review: VM 120 has `hostpci0: 0000:c1:00,pcie=1,rombar=1` and `hostpci1: 0000:e1:00,pcie=1,rombar=1`, with parent snapshot `before-m5b-nvidia-driver-595-open`; `qm status 120` reports running.
 - Proxmox host logs show VFIO reset activity with reset-done lines during VM stop/start/reboot.
 - Proxmox host logs show correctable PCIe AER Data Link Layer events around GPU reset/start activity, especially root port `0000:e0:01.1`; human decision: monitor after M6/M7/load tests, but not a blocker for M6.
@@ -122,26 +124,49 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - Do not download models before M5/M6/M7/M8 readiness.
 - Do not expose API without authentication/firewall review.
 - Do not commit secrets.
+- M7A is a research gate only. It does not approve model downloads, backend installs/builds, service creation, Docker/containerd changes, restarts, or API exposure.
 
-## Next Recommended Milestone
+## Current M7A Result
 
-- M7A model/runtime research is next.
-- M7A must be research-only: no model downloads, no backend installation, no inference backend configuration, and no API service changes.
-- M7A must use current official/current web sources where possible.
-- M7A should produce:
-  - 3 large/high-quality model candidates.
-  - 3 smaller/faster model candidates.
-  - A runtime/backend recommendation matrix for human review.
+- M7A report: `reports/m7a-model-runtime-research.md`.
+- PASS for research and shortlist.
+- STOP for downloads, backend installs/builds, service creation, Docker/containerd changes, restarts, and API exposure until human review approves M7B.
+- Top large/high-quality candidates:
+  - `Qwen/Qwen3-235B-A22B-Instruct-2507`
+  - `MiniMaxAI/MiniMax-M3`
+  - `zai-org/GLM-5.2`
+- Large feasibility comparator:
+  - `deepseek-ai/DeepSeek-V4-Flash`
+- Top smaller/faster candidates:
+  - `Qwen/Qwen3-30B-A3B-Instruct-2507`
+  - `Qwen/Qwen3.6-35B-A3B`
+  - `Qwen/Qwen3-30B-A3B-Thinking-2507`
+- Coding-specific alternate:
+  - `Qwen/Qwen3-Coder-30B-A3B-Instruct`
+- Recommended first download after approval: `Qwen/Qwen3-0.6B` for smoke testing only.
+- Recommended first real model after smoke: `Qwen/Qwen3-30B-A3B-Instruct-2507`.
+- Recommended first backend to implement in M7B: pinned, localhost-only SGLang Docker profile with all model/cache/log/build paths under `/data`.
+- KTransformers/KT-Kernel remains the large-MoE heterogeneous RAM+VRAM path to prototype after SGLang smoke is defined.
 - QGA is currently working based on human Proxmox host verification with `qm agent 120 ping`; older guest-ping timeouts are historical/temporary and not a current blocker.
 - Future work must not configure containerd NVIDIA runtime, install CUDA Toolkit, install PyTorch, install KTransformers, install ik_llama, download models, configure inference backends, or expose API unless explicitly expanded by the relevant milestone.
 
+## Next Recommended Milestone
+
+- Human review of `reports/m7a-model-runtime-research.md`.
+- Then M7B backend runtime abstraction.
+- M7B should add backend profiles, environment examples, and start/stop/status/benchmark script skeletons without downloading large models unless explicitly approved.
+
 ## Known Future Model Candidates
 
-- Small smoke-test model first
+- `Qwen/Qwen3-0.6B` for small smoke-test model first
+- `Qwen/Qwen3-30B-A3B-Instruct-2507`
 - `Qwen/Qwen3.6-35B-A3B`
-- `Qwen/Qwen3.5-122B-A10B`
-- `Qwen/Qwen3.5-397B-A17B`
+- `Qwen/Qwen3-30B-A3B-Thinking-2507`
+- `Qwen/Qwen3-Coder-30B-A3B-Instruct`
+- `Qwen/Qwen3-235B-A22B-Instruct-2507`
+- `MiniMaxAI/MiniMax-M3`
 - `zai-org/GLM-5.2`
+- `deepseek-ai/DeepSeek-V4-Flash` as large feasibility comparator
 
 ## New-chat Instruction
 
@@ -162,7 +187,8 @@ Future sessions should read:
 - `reports/m6a-main-merge.md` if present
 - `reports/m6b-main-merge.md` if present
 - `reports/m6b-nvidia-container-toolkit-install.md` if present
+- `reports/m7a-model-runtime-research.md` if present
 - `reports/m4b-main-merge.md`
 - Latest reports
 
-Then continue with M7A model/runtime research only.
+Then continue with human review of M7A or M7B backend runtime abstraction only.
