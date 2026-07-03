@@ -38,7 +38,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M5A CUDA/NVIDIA compatibility gate: merged
 - M4B Docker/containerd install: squash-merged by this task
 - M5A CUDA/NVIDIA compatibility research: merged into main
-- M5B NVIDIA host driver: passed; pending/under main merge documentation in this task
+- M5B NVIDIA host driver: passed and merged into main
 
 ## Current Storage
 
@@ -80,6 +80,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M5A main merge and pre-M5B handoff report: `reports/m5a-main-merge.md`.
 - M5B host NVIDIA driver installation passed with Ubuntu `nvidia-driver-595-open` / `nvidia-utils-595`.
 - M5B execution report: `reports/m5b-nvidia-host-driver.md`.
+- M5B main merge report: `reports/m5b-main-merge.md`.
 - Installed NVIDIA driver version: `595.71.05`.
 - `nvidia-smi -L` reports exactly two GPUs:
   - GPU 0: NVIDIA RTX PRO 6000 Blackwell Workstation Edition, PCI `00000000:01:00.0`, memory `97887 MiB`.
