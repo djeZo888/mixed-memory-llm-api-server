@@ -1,35 +1,47 @@
 # Model Matrix
 
-Do not download large models before `/data`, Docker storage, cache paths, root-disk guard, GPU driver, and API smoke tests are complete.
+Do not download models before the relevant milestone explicitly approves the download path, cache path, backend, and verification sequence. M7A is research-only.
 
 ## Hardware Profile
 
 `llmserver-vm120-2x-rtx-pro-6000-blackwell-96gb`
 
-- Expected GPU inventory: 2 x RTX PRO 6000 Blackwell Workstation Edition 96 GB.
-- Expected total VRAM: about 192 GB before driver/runtime/model overhead.
+- Current GPU inventory: 2 x NVIDIA RTX PRO 6000 Blackwell Workstation Edition.
+- Current VRAM: `97887 MiB` per GPU, about 192 GB total before overhead.
 - No RTX 6000 Ada is expected in this VM.
-- Current pre-driver PCI inventory sees two NVIDIA `10de:2bb1` display devices with subsystem `10de:204b`, but `nvidia-smi` is absent and `nouveau` is loaded.
-- Blackwell backend support must be verified before selecting KTransformers or ik_llama GPU profiles.
-- M5B must prove exact GPU identity, VRAM, PCI bus IDs, and passthrough stability before M6/M7/M8.
+- System RAM target: 1 TB.
+- `/data` is mounted and has the required model/cache/build/log/service roots.
+- Docker Root Dir is `/data/docker`.
+- containerd root is `/data/containerd/root`.
+- Host NVIDIA driver `595.71.05` works.
+- NVIDIA Container Toolkit works for Docker GPU containers.
+- Host CUDA Toolkit and `nvcc` remain absent.
 
-## GPU Compatibility Gate
+## Runtime Gate
 
-M5A execution produced `reports/m5a-cuda-nvidia-compatibility.md` with a `STOP` conclusion for installation until human review. Host-driver-only M5B may proceed only after the human approves the recommended matrix. KTransformers Blackwell GPU support is not proven by current prebuilt kt-kernel wheels because the published GPU matrix lists SM 80, 86, 89, and 90, not SM 120.
+M7A produced `reports/m7a-model-runtime-research.md` as a source-cited shortlist. Its conclusion is PASS for research and STOP for downloads, backend installs, builds, service creation, Docker/containerd changes, and API exposure until human review approves M7B.
 
-Until M5B/M6/M7 pass, keep all GPU-backed model work blocked. CPU-only smoke work may proceed later only when it stays within `/data` storage rules and does not download large model weights before approval.
+KTransformers/KT-Kernel remains the most important heterogeneous RAM+VRAM path for very large MoE models, but SGLang is the recommended first backend to implement for the smoke and 30B-class API path because current model cards list SGLang support and OpenAI-compatible serving. vLLM is the main cross-check backend. ik_llama and llama.cpp are GGUF/quantized fallback paths.
+
+## Shortlist
 
 | Priority | Model | Role | First backend | Status | Gate |
 | --- | --- | --- | --- | --- | --- |
-| 0 | Small smoke-test model | API/auth/logging validation | To be selected | Planned | Wait for M8 storage/API approval; CPU-only remains acceptable if GPU is blocked. |
-| 1 | Qwen/Qwen3.6-35B-A3B | Fast technical/coding | KTransformers first, ik_llama fallback if GGUF path is better | Blocked for GPU | Requires human review of M5A, M5B driver pass, M6 toolkit pass if containers are used, and M7 backend smoke. |
-| 2 | Qwen/Qwen3.5-122B-A10B | Larger fast/quality | KTransformers | Blocked for GPU | Requires proven KTransformers/kt-kernel SM_120 support or approved CPU/GGUF fallback. |
-| 3 | Qwen/Qwen3.5-397B-A17B | Big quality | KTransformers | Blocked for GPU | Requires storage sizing, model download approval, and proven backend support. |
-| 4 | zai-org/GLM-5.2 | Big quality | KTransformers | Blocked for GPU | Requires proven backend support and model-specific memory plan. |
+| 0 | `Qwen/Qwen3-0.6B` | Small smoke-test model | SGLang first, vLLM optional | Recommended first download after M8 approval | M7B backend abstraction, M8 download approval, `/data/models` and `/data/hf-cache` guard checks |
+| 1 | `Qwen/Qwen3-30B-A3B-Instruct-2507` | First real fast technical/general model | SGLang first, vLLM cross-check | Recommended first real model after smoke | M7B runtime profile, M9 benchmark approval, reduced context first |
+| 2 | `Qwen/Qwen3.6-35B-A3B` | Higher-quality fast coding/agentic model | SGLang or vLLM text-only first | Top smaller/faster candidate | Use text-only mode first; prove runtime supports `qwen3_5_moe` on this VM |
+| 3 | `Qwen/Qwen3-30B-A3B-Thinking-2507` | Smaller reasoning model | SGLang first, vLLM cross-check | Top smaller/faster candidate | Limit output/context initially because thinking mode increases KV/cache pressure |
+| 4 | `Qwen/Qwen3-Coder-30B-A3B-Instruct` | Coding-specific alternate | vLLM or SGLang, ik_llama if GGUF chosen | Alternate | Use if M9 focuses on code repair/generation over general technical chat |
+| 5 | `Qwen/Qwen3-235B-A22B-Instruct-2507` | Large/high-quality general model | KTransformers or SGLang/vLLM after memory plan | Top large candidate | Native BF16 footprint is about 438 GiB; 1M context is not viable on this VM without far more GPU memory |
+| 6 | `MiniMaxAI/MiniMax-M3` | Large agentic/coding/multimodal model | KTransformers or SGLang/vLLM after license/runtime review | Top large candidate | Native footprint is about 796 GiB; review MiniMax Community license and custom-code/runtime path |
+| 7 | `zai-org/GLM-5.2` | Frontier large coding/agentic model | KTransformers or SGLang/vLLM after memory plan | Top large candidate | Native footprint is about 1403 GiB; not a first download |
+| 8 | `deepseek-ai/DeepSeek-V4-Flash` | Large feasibility comparator | SGLang or KTransformers after memory plan | Alternate/comparator | Official FP4+FP8 footprint is about 149 GiB; strongest first large-quality experiment if feasibility outranks top-list purity |
 
 ## Current Backend Notes
 
-- Recommended PyTorch wheel family after approval: `cu128` first.
-- Host CUDA Toolkit approach: do not install for M5B; use driver-only validation first.
-- KTransformers: do not rely on prebuilt wheels for Blackwell; require source-build proof for SM_120.
-- ik_llama: appears plausible for Blackwell through CUDA, but remains unverified until source build and smoke test.
+- Recommended first M7B backend profile: pinned SGLang Docker profile, localhost-only, all model/cache/log/build mounts under `/data`.
+- Recommended cross-check backend: vLLM pinned version/profile for the same small and 30B-class models.
+- Recommended large-MoE experimental path: KTransformers/KT-Kernel after M7B proves Blackwell behavior on this host.
+- Recommended quantized/GGUF fallback: ik_llama first, llama.cpp as reference.
+- Do not use `latest` images or unpinned commits in implementation milestones.
+- Do not attempt 1M context first on any model. Start at 4K/32K for smoke, then 128K, and only then 262K if memory is stable.
