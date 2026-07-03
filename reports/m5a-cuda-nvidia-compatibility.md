@@ -14,6 +14,20 @@
 
 No packages, NVIDIA drivers, CUDA Toolkit, PyTorch wheels, KTransformers components, ik_llama builds, NVIDIA Container Toolkit packages, models, inference backends, API exposure, disks, fstab, mountpoints, partitioning, systemd services, history rewrites, or force-pushes were installed or configured during M5A.
 
+
+## Human-Reviewed GPU Inventory Correction
+
+Human review corrected the expected hardware profile for this VM:
+
+- Expected VM GPU inventory is two RTX PRO 6000 Blackwell Workstation Edition 96 GB cards.
+- No RTX 6000 Ada card is expected in this VM.
+- Current M5A PCI-only detection saw two NVIDIA devices with PCI ID `10de:2bb1` and subsystem `10de:204b`.
+- Because `nvidia-smi` is not installed and `nouveau` is loaded, final GPU model names and memory totals must be confirmed after NVIDIA driver installation.
+- RTX PRO 6000 Blackwell Workstation Edition is compute capability 12.0 according to NVIDIA's CUDA GPU compute capability table.
+- RTX 6000 Ada is compute capability 8.9 and should not be used as the expected hardware profile for this VM.
+- NVIDIA's RTX PRO 6000 Blackwell Workstation Edition product page lists 96 GB GDDR7 memory with error-correcting code (ECC).
+- This correction does not change the M5A `STOP` conclusion: no installation until human approval.
+
 ## Stale Branch Cleanup Result
 
 Only the two requested stale branches were inspected and deleted.
@@ -62,20 +76,21 @@ Read-only PCI inventory currently sees two NVIDIA display functions, both with t
 
 ## Expected GPU Inventory If Passthrough Devices Are Visible
 
-The project research target includes RTX PRO 6000 Blackwell Workstation class hardware and RTX 6000 Ada class compatibility. The current VM PCI output shows two identical NVIDIA `10de:2bb1` display devices and does not show a separately identifiable RTX 6000 Ada device. Treat the following as expected compatibility targets, not confirmed installed names, until `nvidia-smi -L` and `nvidia-smi --query-gpu=name,driver_version,memory.total,compute_cap --format=csv` pass after M5B.
+Human-reviewed expected hardware for this VM is exactly two RTX PRO 6000 Blackwell Workstation Edition 96 GB cards. The current VM PCI output shows two identical NVIDIA `10de:2bb1` display devices with subsystem `10de:204b`, which is consistent with two passed-through NVIDIA GPUs, but it is not sufficient proof of final model name, VRAM, driver binding, or passthrough reliability. No RTX 6000 Ada card is expected in this VM.
 
-| Expected GPU | Expected architecture | Compute capability | Source status |
-| --- | --- | ---: | --- |
-| NVIDIA RTX PRO 6000 Blackwell Workstation Edition | Blackwell | 12.0 | NVIDIA CUDA GPU compute capability table lists this GPU under compute capability 12.0. |
-| NVIDIA RTX 6000 Ada | Ada Lovelace | 8.9 | NVIDIA CUDA GPU compute capability table lists this GPU under compute capability 8.9. |
+| Hardware role | Expected GPU | Expected count | Expected architecture | Compute capability | Expected memory | Source status |
+| --- | --- | ---: | --- | ---: | --- | --- |
+| VM GPU profile | NVIDIA RTX PRO 6000 Blackwell Workstation Edition | 2 | Blackwell | 12.0 | 96 GB GDDR7 ECC each | NVIDIA CUDA GPU compute capability table lists this GPU under compute capability 12.0; NVIDIA RTX PRO 6000 product page lists 96 GB GDDR7 ECC memory. |
+| Contrast/reference only | NVIDIA RTX 6000 Ada | 0 | Ada Lovelace | 8.9 | n/a | NVIDIA CUDA GPU compute capability table lists RTX 6000 Ada under compute capability 8.9, but this is not expected hardware for this VM. |
 
 ## Official Sources Consulted
 
-Access date for web sources: 2026-07-02.
+Access date for original web sources: 2026-07-02. GPU inventory correction sources were checked on 2026-07-03.
 
 | Topic | Source |
 | --- | --- |
 | CUDA GPU compute capability | https://developer.nvidia.com/cuda/gpus |
+| RTX PRO 6000 Blackwell Workstation product specifications | https://www.nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000/ |
 | CUDA Toolkit current release notes and minimum driver tables | https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html |
 | CUDA 12.8 release notes and Blackwell compiler support | https://docs.nvidia.com/cuda/archive/12.8.0/cuda-toolkit-release-notes/index.html |
 | CUDA minor-version compatibility | https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html |
@@ -91,8 +106,8 @@ Access date for web sources: 2026-07-02.
 
 | GPU / architecture | Compute capability | Practical meaning for this project |
 | --- | ---: | --- |
-| RTX PRO 6000 Blackwell Workstation Edition | 12.0 | Requires backend/kernel support for `sm_120`; CUDA 12.8 release notes added compiler support for SM_120. |
-| RTX 6000 Ada | 8.9 | Supported by current KTransformers kt-kernel prebuilt GPU matrix and by CUDA 11.8+ era software. |
+| RTX PRO 6000 Blackwell Workstation Edition | 12.0 | Expected VM hardware; requires backend/kernel support for `sm_120`; CUDA 12.8 release notes added compiler support for SM_120. |
+| RTX 6000 Ada | 8.9 | Contrast/reference only; not expected in this VM and must not drive the hardware profile. |
 | Blackwell architecture in NVIDIA data-center architecture matrix | 10.0 and 12.0 | Blackwell support is ongoing, but the exact workstation Blackwell target here is `sm_120`. |
 
 ## Local Ubuntu Driver Availability
@@ -168,7 +183,7 @@ M6 must preserve the existing M4B Docker storage policy. After toolkit configura
 ## Exact Risks And Uncertainties
 
 - `nvidia-smi` is unavailable before M5B, so exact marketing names, VRAM totals, and compute capabilities are not yet confirmed from the host driver.
-- Current PCI inventory shows two identical NVIDIA `10de:2bb1` display devices and no separately named RTX 6000 Ada device.
+- Current PCI inventory shows two identical NVIDIA `10de:2bb1` display devices with subsystem `10de:204b`; expected post-driver inventory is two RTX PRO 6000 Blackwell Workstation Edition 96 GB GPUs, not RTX 6000 Ada.
 - `nouveau` is loaded. M5B must account for proprietary/open NVIDIA driver module handling through the Ubuntu package path, not ad hoc module changes in M5A.
 - NVIDIA's lifecycle source favors R580 for long support, while local Ubuntu device resolution recommends R595-open for the exact detected `10de:2bb1` modalias.
 - CUDA 13.x is current, but CUDA 12.8 is the first release note explicitly adding SM_120 compiler support and is the lower-change first toolkit choice if native builds become necessary.
@@ -212,22 +227,54 @@ M6 must preserve the existing M4B Docker storage policy. After toolkit configura
 
 ## Verification Tests Required For M5B/M6/M7
 
-M5B host-driver tests:
+M5B host-driver and GPU passthrough validation gate:
 
 ```bash
 scripts/common/require-data-mounted.sh
 scripts/common/root-disk-guard.sh
-lspci -nn | egrep -i 'nvidia|vga|3d|display' || true
-lsmod | egrep 'nvidia|nouveau|vfio' || true
+lspci -nnk | egrep -A4 -i 'nvidia|vga|3d|display'
+lsmod | egrep 'nvidia|nouveau|vfio'
 nvidia-smi
 nvidia-smi -L
-nvidia-smi --query-gpu=name,driver_version,memory.total,compute_cap --format=csv
+nvidia-smi --query-gpu=index,name,pci.bus_id,driver_version,memory.total,power.limit --format=csv
+nvidia-smi topo -m
+nvidia-smi -q -d MEMORY,PCI,POWER
+scripts/docker/verify-docker-storage.sh
+scripts/common/root-disk-guard.sh
 sudo -n reboot
 nvidia-smi
 nvidia-smi -L
-nvidia-smi --query-gpu=name,driver_version,memory.total,compute_cap --format=csv
+nvidia-smi --query-gpu=index,name,pci.bus_id,driver_version,memory.total,power.limit --format=csv
+scripts/docker/verify-docker-storage.sh
 scripts/common/root-disk-guard.sh
 ```
+
+M5B must verify:
+
+- Exactly two GPUs are visible.
+- Each GPU name is RTX PRO 6000 Blackwell or the equivalent official driver name for RTX PRO 6000 Blackwell Workstation Edition.
+- Each GPU reports about 96 GB VRAM.
+- `nouveau` is not bound to either GPU after driver install.
+- GPU PCI bus IDs match the passed-through VM devices.
+- No GPU is missing after VM reboot.
+- No persistent Xorg/display stack is required for compute use.
+- Docker storage still passes and root-disk guard still passes.
+- NVIDIA Container Toolkit is not installed until M6.
+
+## Passthrough Reliability Checks
+
+These checks are to be performed after M5B driver installation and after VM reboot. The VM has passed-through Blackwell GPUs, and historical logs showed VFIO reset activity and correctable PCIe AER events. The project must not assume passthrough is reliable only because `lspci` sees devices. Host-side Proxmox checks are manual/human unless Proxmox SSH is explicitly configured for Codex later; this M5A follow-up does not access the Proxmox host.
+
+Required manual Proxmox host checks after M5B:
+
+```bash
+journalctl -b -k | egrep -i 'vfio|nvidia|nouveau|pcie|aer|reset|120'
+journalctl -b -p warning --no-pager | egrep -i 'vfio|pcie|aer|nvidia|nouveau|120'
+qm config 120
+qm status 120
+```
+
+Manual Proxmox validation must confirm VM start/stop/reboot does not trigger unrecovered GPU reset failures. Do not use live snapshots with VFIO GPUs unless explicitly tested and supported.
 
 M6 NVIDIA Container Toolkit tests:
 
@@ -286,9 +333,11 @@ cmake --build /data/build/ik_llama --config Release -j$(nproc)
 - Official-source web research listed above
 - `git diff --check`
 - Grep-based secret scan
+- Human-reviewed GPU inventory correction and passthrough validation update on 2026-07-03
+- Re-run of read-only live inventory on 2026-07-03
 
 The grep-based secret scan matched only intentional documentation, safety rules, examples, and scan pattern text. No real secrets, tokens, passwords, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were found.
 
 ## PASS/STOP Conclusion
 
-STOP for installation. The branch cleanup and M5A research report are complete, but the VM must not proceed to NVIDIA/CUDA/backend installation automatically. Human review is required before M5B. The recommended next install milestone, if approved, is host-driver-only M5B using Ubuntu `nvidia-driver-595-open`, followed by `nvidia-smi` validation. KTransformers Blackwell GPU support remains unproven and must stay blocked until a later source-build smoke test proves SM_120 support.
+STOP for installation. The branch cleanup and M5A research report are complete, and the human-reviewed GPU correction does not change the STOP conclusion. The VM must not proceed to NVIDIA/CUDA/backend installation automatically. Human review is required before M5B. The recommended next install milestone, if approved, is host-driver-only M5B using Ubuntu `nvidia-driver-595-open`, followed by `nvidia-smi` validation. KTransformers Blackwell GPU support remains unproven and must stay blocked until a later source-build smoke test proves SM_120 support.

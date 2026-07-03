@@ -2,6 +2,17 @@
 
 Do not download large models before `/data`, Docker storage, cache paths, root-disk guard, GPU driver, and API smoke tests are complete.
 
+## Hardware Profile
+
+`llmserver-vm120-2x-rtx-pro-6000-blackwell-96gb`
+
+- Expected GPU inventory: 2 x RTX PRO 6000 Blackwell Workstation Edition 96 GB.
+- Expected total VRAM: about 192 GB before driver/runtime/model overhead.
+- No RTX 6000 Ada is expected in this VM.
+- Current pre-driver PCI inventory sees two NVIDIA `10de:2bb1` display devices with subsystem `10de:204b`, but `nvidia-smi` is absent and `nouveau` is loaded.
+- Blackwell backend support must be verified before selecting KTransformers or ik_llama GPU profiles.
+- M5B must prove exact GPU identity, VRAM, PCI bus IDs, and passthrough stability before M6/M7/M8.
+
 ## GPU Compatibility Gate
 
 M5A execution produced `reports/m5a-cuda-nvidia-compatibility.md` with a `STOP` conclusion for installation until human review. Host-driver-only M5B may proceed only after the human approves the recommended matrix. KTransformers Blackwell GPU support is not proven by current prebuilt kt-kernel wheels because the published GPU matrix lists SM 80, 86, 89, and 90, not SM 120.

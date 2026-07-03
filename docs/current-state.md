@@ -80,7 +80,10 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
   - `milestone/m4b-docker-containerd-install`
   - `test/git-attribution-fix`
 - No other branch was deleted.
-- Detected GPU inventory before driver install: two NVIDIA PCI display devices with device ID `10de:2bb1`, subsystem `10de:204b`; `nvidia-smi` and `nvcc` are absent; `nouveau` is loaded.
+- Expected GPU inventory after driver installation: 2 x RTX PRO 6000 Blackwell Workstation Edition 96 GB.
+- No RTX 6000 Ada is expected in this VM.
+- Current pre-driver state: `lspci` sees two NVIDIA PCI display devices with device ID `10de:2bb1`, subsystem `10de:204b`; `nvidia-smi` and `nvcc` are absent; `nouveau` is loaded.
+- M5B must validate exact GPU names, VRAM, PCI bus IDs, driver binding, and passthrough stability before M6/M7/M8.
 - Current recommendation for human review: M5B should install only the selected host NVIDIA driver first, with Ubuntu `nvidia-driver-595-open` as the recommended candidate and R580 LTS documented as the longer-support fallback.
 - Host CUDA Toolkit, PyTorch, KTransformers, ik_llama, NVIDIA Container Toolkit, models, and API exposure remain blocked.
 
