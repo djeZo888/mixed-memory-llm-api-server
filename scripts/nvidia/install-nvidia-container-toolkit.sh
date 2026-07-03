@@ -16,6 +16,7 @@ NVIDIA_PACKAGES=(
   libnvidia-container-tools
   libnvidia-container1
 )
+FORBIDDEN_PACKAGE_PATTERN='(^|[^[:alnum:]_.+-])(cuda|cuda-toolkit|cuda-drivers|nvidia-cuda-toolkit|pytorch|torch|ktransformers|ik_llama|vllm|sglang)([^[:alnum:]_.+-]|$)'
 
 usage() {
   cat <<'EOF'
@@ -113,6 +114,22 @@ check_no_docker_tcp_exposure() {
   fi
 }
 
+validate_docker_daemon_json() {
+  sudo -n cat "$DOCKER_DAEMON_JSON" | python3 -m json.tool >/dev/null
+}
+
+check_apt_simulation_scope() {
+  local simulation_output
+  simulation_output=$(mktemp)
+  sudo -n apt-get -s install "${NVIDIA_PACKAGES[@]}" >"$simulation_output"
+  cat "$simulation_output"
+
+  if grep -Ei "$FORBIDDEN_PACKAGE_PATTERN" "$simulation_output"; then
+    echo "STOP: apt simulation proposed out-of-scope package names" >&2
+    exit 1
+  fi
+}
+
 print_plan() {
   cat <<EOF
 M6A NVIDIA Container Toolkit dry-run plan
@@ -131,6 +148,8 @@ Future M6B required pre-checks:
 - scripts/common/root-disk-guard.sh
 - scripts/docker/verify-docker-storage.sh
 - nvidia-smi
+- sudo -n apt-get -s install ${NVIDIA_PACKAGES[*]}
+- STOP if apt simulation proposes CUDA Toolkit, CUDA drivers, PyTorch, KTransformers, ik_llama, vLLM, or SGLang packages.
 - Docker Root Dir remains $DOCKER_DATA_ROOT
 - containerd root remains $CONTAINERD_ROOT
 - Docker has no TCP socket exposure
@@ -171,11 +190,12 @@ verify_storage_policy
 nvidia-smi >/dev/null
 check_no_docker_tcp_exposure
 
-for command_name in apt-get curl gpg sed tee cp date install grep nvidia-smi docker; do
+for command_name in apt-get curl gpg sed tee cp date install grep nvidia-smi docker python3 sha256sum; do
   require_command "$command_name"
 done
 
 backup_path="${DOCKER_DAEMON_JSON}.pre-m6b-nvidia-container-toolkit.$(date -u +%Y%m%dT%H%M%SZ).bak"
+containerd_config_before=$(sudo -n sha256sum "$CONTAINERD_CONFIG" | awk '{print $1}')
 sudo -n cp -a "$DOCKER_DAEMON_JSON" "$backup_path"
 
 sudo -n install -m 0755 -d /usr/share/keyrings
@@ -185,6 +205,7 @@ curl -s -L "$NVIDIA_STABLE_LIST_URL" \
   | sudo -n tee "$NVIDIA_SOURCE_LIST" >/dev/null
 
 sudo -n apt-get update
+check_apt_simulation_scope
 sudo -n apt-get install -y "${NVIDIA_PACKAGES[@]}"
 
 command -v nvidia-ctk >/dev/null 2>&1 || {
@@ -194,9 +215,19 @@ command -v nvidia-ctk >/dev/null 2>&1 || {
 
 sudo -n nvidia-ctk runtime configure --runtime=docker
 
+validate_docker_daemon_json
 sudo -n grep -Fq "\"data-root\": \"$DOCKER_DATA_ROOT\"" "$DOCKER_DAEMON_JSON" || {
   echo "STOP: $DOCKER_DAEMON_JSON lost data-root $DOCKER_DATA_ROOT after nvidia-ctk configuration" >&2
   echo "Rollback: restore $backup_path, restart Docker, and rerun storage checks." >&2
+  exit 1
+}
+sudo -n grep -q '"nvidia"' "$DOCKER_DAEMON_JSON" || {
+  echo "STOP: $DOCKER_DAEMON_JSON does not contain NVIDIA runtime configuration" >&2
+  exit 1
+}
+containerd_config_after=$(sudo -n sha256sum "$CONTAINERD_CONFIG" | awk '{print $1}')
+[[ "$containerd_config_before" == "$containerd_config_after" ]] || {
+  echo "STOP: $CONTAINERD_CONFIG changed during Docker-only M6B path" >&2
   exit 1
 }
 check_no_docker_tcp_exposure
