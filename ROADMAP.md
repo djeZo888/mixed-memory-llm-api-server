@@ -44,13 +44,13 @@ Guest management was reviewed after M5B. Human Proxmox host verification ran `qm
 
 Plan and dry-run the approved NVIDIA Container Toolkit path after M5B. M6A must preserve Docker Root Dir `/data/docker` and containerd root `/data/containerd/root`, document package/configuration changes before install, define rollback and verification commands, and keep any image pulls or `docker run --gpus all ... nvidia-smi` execution for the approved install milestone. M6A must not install NVIDIA Container Toolkit, configure Docker NVIDIA runtime, download models, configure inference backends, or expose API unless explicitly expanded.
 
-## M6 NVIDIA Container Toolkit
+## M6B NVIDIA Container Toolkit
 
-Install and configure the approved NVIDIA Container Toolkit path after M5A and M5B pass. Verify `docker run --gpus all ... nvidia-smi` works while Docker storage remains on `/data`.
+Install and configure the approved NVIDIA Container Toolkit path after M6A human review. M6B may add the NVIDIA Container Toolkit apt repository, install the approved toolkit packages, back up and modify `/etc/docker/daemon.json` through `sudo nvidia-ctk runtime configure --runtime=docker`, restart Docker after config verification, and verify `docker run --gpus all ... nvidia-smi` works while Docker storage remains on `/data`. M6B must not configure the containerd NVIDIA runtime unless a later review explicitly expands the Docker-only path.
 
 ## M7 backend runtime abstraction
 
-Add runtime environment examples, backend profiles, and common start/stop/status/benchmark scripts for KTransformers and ik_llama.
+Add runtime environment examples, backend profiles, and common start/stop/status/benchmark scripts for KTransformers and ik_llama only after M6B passes.
 
 ## M8 small model API smoke service
 
