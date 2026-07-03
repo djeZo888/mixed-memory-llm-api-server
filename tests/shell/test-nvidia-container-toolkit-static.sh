@@ -53,7 +53,7 @@ grep -q 'DockerRootDir' "$verify_script" || fail "verify script must check Docke
 grep -q '/data/containerd/root' "$verify_script" || fail "verify script must check containerd root"
 grep -q 'tcp://' "$verify_script" || fail "verify script must check no Docker TCP socket exposure"
 grep -q -- '--yes-run-cuda-test' "$verify_script" || fail "verify script must gate CUDA container test"
-grep -q 'nvidia/cuda:13.2.0-base-ubuntu24.04' "$verify_script" || fail "verify script must use the proposed explicit CUDA test image tag"
+grep -q 'nvidia/cuda:13.2.1-base-ubuntu24.04' "$verify_script" || fail "verify script must use the proposed explicit CUDA test image tag"
 grep -q 'latest' "$verify_script" || fail "verify script must reject latest tags"
 
 if grep -RInE '(BEGIN OPENSSH|BEGIN RSA|PRIVATE KEY|HF_TOKEN=[A-Za-z0-9_./+:-]{8,}|OPENAI_API_KEY=[A-Za-z0-9_./+:-]{8,}|GITHUB_TOKEN=[A-Za-z0-9_./+:-]{8,})' "$install_script" "$verify_script"; then

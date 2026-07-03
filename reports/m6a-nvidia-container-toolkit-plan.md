@@ -119,12 +119,12 @@ Run the root-disk guard before package work, before Docker restart, and after th
 Proposed explicit official NVIDIA CUDA image:
 
 ```text
-nvidia/cuda:13.2.0-base-ubuntu24.04
+nvidia/cuda:13.2.1-base-ubuntu24.04
 ```
 
 Source and compatibility:
 
-- Docker Hub `nvidia/cuda` tag metadata lists `13.2.0-base-ubuntu24.04` for linux/amd64; the amd64 compressed size is about `184320929` bytes. Source: `https://hub.docker.com/r/nvidia/cuda/tags` and Docker Hub tag API query `https://hub.docker.com/v2/repositories/nvidia/cuda/tags?page_size=100&name=13.2.0-base`.
+- Docker Hub `nvidia/cuda` tag metadata lists `13.2.1-base-ubuntu24.04` for linux/amd64; the amd64 compressed size is about `184406258` bytes. Source: `https://hub.docker.com/r/nvidia/cuda/tags` and Docker Hub tag API query `https://hub.docker.com/v2/repositories/nvidia/cuda/tags?page_size=100&name=13.2.1-base`.
 - NVIDIA CUDA release notes at `https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html` list CUDA 13.x minor-version compatibility with driver branch `>= 580`.
 - NVIDIA CUDA release notes list CUDA 13.2 GA as requiring Linux driver `>=595.45.04` and CUDA 13.2 Update 1 as requiring `>=595.58.03`; the host driver is `595.71.05`.
 
@@ -133,7 +133,7 @@ M6A did not pull or run this image. Do not use `nvidia/cuda:latest`.
 Expected M6B test after human approval:
 
 ```bash
-sudo docker run --rm --gpus all nvidia/cuda:13.2.0-base-ubuntu24.04 nvidia-smi
+sudo docker run --rm --gpus all nvidia/cuda:13.2.1-base-ubuntu24.04 nvidia-smi
 ```
 
 Expected M6B container checks:
@@ -186,7 +186,7 @@ Rollback must not change disks, fstab, mountpoints, containerd storage policy, m
 - `command -v nvcc || true`
 - `nvcc --version || true`
 - `sudo -n du -sh /var/lib/docker /var/lib/containerd /data/docker /data/containerd /data/containerd/root 2>/dev/null || true`
-- Docker Hub tag metadata lookup for `nvidia/cuda:13.2.0-base-ubuntu24.04` without pulling the image.
+- Docker Hub tag metadata lookup for `nvidia/cuda:13.2.1-base-ubuntu24.04` without pulling the image.
 - NVIDIA CUDA release notes review for CUDA 13.2 driver compatibility.
 - `chmod +x scripts/nvidia/install-nvidia-container-toolkit.sh`
 - `chmod +x scripts/nvidia/verify-gpu-containers.sh`
@@ -202,6 +202,10 @@ Rollback must not change disks, fstab, mountpoints, containerd storage policy, m
 - Final `scripts/docker/verify-docker-storage.sh`: PASS.
 - `git diff --check`: PASS.
 - Grep-based secret scan: matched only intentional documentation, sanitizer/static-test code, `.gitignore`/CI patterns, prior report text, and scan pattern text. No real secrets, tokens, private keys, auth files, real `.env` files, `MEMORY.md`, or local Codex memory files were identified.
+
+## Human Review Correction
+
+Human review correction: use nvidia/cuda:13.2.1-base-ubuntu24.04 instead of 13.2.0-base-ubuntu24.04. CUDA 13.2 Update 1 is compatible with driver 595.71.05; CUDA 13.3 images are not selected because CUDA 13.3 requires the 610 driver branch. Do not use nvidia/cuda:latest.
 
 ## Conclusion
 

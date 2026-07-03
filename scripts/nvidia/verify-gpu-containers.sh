@@ -8,7 +8,7 @@ EXPECTED_CONTAINERD_ROOT="/data/containerd/root"
 EXPECTED_CONTAINERD_STATE="/run/containerd"
 DOCKER_DAEMON_JSON="/etc/docker/daemon.json"
 CONTAINERD_CONFIG="/etc/containerd/config.toml"
-DEFAULT_CUDA_TEST_IMAGE="nvidia/cuda:13.2.0-base-ubuntu24.04"
+DEFAULT_CUDA_TEST_IMAGE="nvidia/cuda:13.2.1-base-ubuntu24.04"
 TOOLKIT_PACKAGES=(
   nvidia-container-toolkit
   nvidia-container-toolkit-base

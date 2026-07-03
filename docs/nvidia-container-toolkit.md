@@ -83,12 +83,12 @@ Docker must not expose TCP sockets. M6B must check `/etc/docker/daemon.json` and
 Use an explicit official NVIDIA CUDA image tag, never `latest`. M6A proposes:
 
 ```text
-nvidia/cuda:13.2.0-base-ubuntu24.04
+nvidia/cuda:13.2.1-base-ubuntu24.04
 ```
 
 Rationale:
 
-- It is an official `nvidia/cuda` tag listed by Docker Hub for linux/amd64. Source: `https://hub.docker.com/r/nvidia/cuda/tags` and Docker Hub tag API query `https://hub.docker.com/v2/repositories/nvidia/cuda/tags?page_size=100&name=13.2.0-base`.
+- It is an official `nvidia/cuda` tag listed by Docker Hub for linux/amd64. Source: `https://hub.docker.com/r/nvidia/cuda/tags` and Docker Hub tag API query `https://hub.docker.com/v2/repositories/nvidia/cuda/tags?page_size=100&name=13.2.1-base`.
 - It is a base image, smaller than runtime/devel/cuDNN/TensorRT images, and sufficient for an `nvidia-smi` runtime smoke test.
 - The VM host driver is `595.71.05`; NVIDIA CUDA release notes at `https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html` list CUDA 13.2 GA as requiring Linux driver `>=595.45.04` and CUDA 13.2 Update 1 as requiring `>=595.58.03`, so this driver is compatible with CUDA 13.2 images.
 
@@ -117,14 +117,14 @@ Expected M6B GPU container test after installation and Docker restart:
 
 ```bash
 scripts/nvidia/verify-gpu-containers.sh \
-  --approved-cuda-test-image nvidia/cuda:13.2.0-base-ubuntu24.04 \
+  --approved-cuda-test-image nvidia/cuda:13.2.1-base-ubuntu24.04 \
   --yes-run-cuda-test
 ```
 
 The container test command inside that verifier is:
 
 ```bash
-sudo docker run --rm --gpus all nvidia/cuda:13.2.0-base-ubuntu24.04 nvidia-smi
+sudo docker run --rm --gpus all nvidia/cuda:13.2.1-base-ubuntu24.04 nvidia-smi
 ```
 
 M6B must confirm the container sees exactly two GPUs matching the host GPU names and expected VRAM, and must rerun the root-disk guard afterward.

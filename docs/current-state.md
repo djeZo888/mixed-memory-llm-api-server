@@ -94,7 +94,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - CUDA Toolkit is absent.
 - NVIDIA Container Toolkit is absent.
 - `nvidia-ctk` is absent.
-- M6A proposes `nvidia/cuda:13.2.0-base-ubuntu24.04` as the explicit future M6B CUDA container test image, but M6A did not pull or run it.
+- M6A proposes `nvidia/cuda:13.2.1-base-ubuntu24.04` as the explicit future M6B CUDA container test image, but M6A did not pull or run it.
 - NVIDIA Container Toolkit install/configuration must wait for M6B after human review of M6A.
 - Host CUDA Toolkit, PyTorch, KTransformers, ik_llama, models, and API exposure remain blocked until their approved milestones.
 - Human Proxmox review: VM 120 has `hostpci0: 0000:c1:00,pcie=1,rombar=1` and `hostpci1: 0000:e1:00,pcie=1,rombar=1`, with parent snapshot `before-m5b-nvidia-driver-595-open`; `qm status 120` reports running.
