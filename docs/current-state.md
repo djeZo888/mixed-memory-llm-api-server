@@ -39,7 +39,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M4B Docker/containerd install: squash-merged by this task
 - M5A CUDA/NVIDIA compatibility research: merged into main
 - M5B NVIDIA host driver: passed and merged into main
-- M6A NVIDIA Container Toolkit planning/dry-run: branch `milestone/m6a-nvidia-container-toolkit-plan`, pending human review and merge
+- M6A NVIDIA Container Toolkit planning/dry-run: merged into `main` with corrected future test image `nvidia/cuda:13.2.1-base-ubuntu24.04`
 
 ## Current Storage
 
@@ -94,8 +94,9 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - CUDA Toolkit is absent.
 - NVIDIA Container Toolkit is absent.
 - `nvidia-ctk` is absent.
-- M6A proposes `nvidia/cuda:13.2.1-base-ubuntu24.04` as the explicit future M6B CUDA container test image, but M6A did not pull or run it.
-- NVIDIA Container Toolkit install/configuration must wait for M6B after human review of M6A.
+- Corrected future M6B CUDA container test image: `nvidia/cuda:13.2.1-base-ubuntu24.04`.
+- M6A did not pull or run the CUDA image.
+- NVIDIA Container Toolkit install/configuration must wait for M6B.
 - Host CUDA Toolkit, PyTorch, KTransformers, ik_llama, models, and API exposure remain blocked until their approved milestones.
 - Human Proxmox review: VM 120 has `hostpci0: 0000:c1:00,pcie=1,rombar=1` and `hostpci1: 0000:e1:00,pcie=1,rombar=1`, with parent snapshot `before-m5b-nvidia-driver-595-open`; `qm status 120` reports running.
 - Proxmox host logs show VFIO reset activity with reset-done lines during VM stop/start/reboot.
@@ -115,11 +116,10 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 ## Next Recommended Milestone
 
-- Human review of M6A NVIDIA Container Toolkit planning/dry-run is next.
-- After M6A review, the next execution milestone is M6B actual NVIDIA Container Toolkit install.
+- M6B actual NVIDIA Container Toolkit install is next after explicit approval.
 - M6B should use the approved NVIDIA Container Toolkit path, preserve Docker Root Dir `/data/docker` and containerd root `/data/containerd/root`, back up `/etc/docker/daemon.json`, configure Docker with `sudo nvidia-ctk runtime configure --runtime=docker`, verify Docker has no TCP socket exposure, restart Docker only after config verification, and run the approved explicit CUDA image test.
 - QGA is currently working based on human Proxmox host verification with `qm agent 120 ping`; older guest-ping timeouts are historical/temporary and not a current blocker.
-- M6B must not configure containerd NVIDIA runtime, download models, configure inference backends, or expose API unless explicitly expanded.
+- M6B must not configure containerd NVIDIA runtime, install CUDA Toolkit, install PyTorch, install KTransformers, install ik_llama, download models, configure inference backends, or expose API unless explicitly expanded.
 
 ## Known Future Model Candidates
 
@@ -145,7 +145,8 @@ Future sessions should read:
 - `reports/m5b-main-merge.md` if present
 - `docs/nvidia-container-toolkit.md` if present
 - `reports/m6a-nvidia-container-toolkit-plan.md` if present
+- `reports/m6a-main-merge.md` if present
 - `reports/m4b-main-merge.md`
 - Latest reports
 
-Then continue with human review of M6A, followed by M6B NVIDIA Container Toolkit install only after approval.
+Then continue with M6B NVIDIA Container Toolkit install only after explicit approval.
