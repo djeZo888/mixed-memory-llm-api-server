@@ -36,6 +36,10 @@ M5A must explicitly answer whether to use R580 LTS, R595 production, or another 
 
 Install the approved Ubuntu/NVIDIA host driver path after M5A passes and a VM checkpoint has been requested. Verify all expected GPUs with `nvidia-smi` before and after reboot.
 
+## M5C QEMU Guest Agent repair and Proxmox guest-operations verification
+
+Repair guest management before container GPU enablement. Install and enable `qemu-guest-agent` inside the VM if missing, then verify Proxmox guest operations through `qm agent 120 ping` by manual host-side review or human-supplied result. Verify guest shutdown and reboot behavior. M5C must not install or configure NVIDIA/CUDA further, NVIDIA Container Toolkit, PyTorch, KTransformers, ik_llama, models, inference backends, Docker NVIDIA runtime, Docker/containerd settings, or API exposure.
+
 ## M6 NVIDIA Container Toolkit
 
 Install and configure the approved NVIDIA Container Toolkit path after M5A and M5B pass. Verify `docker run --gpus all ... nvidia-smi` works while Docker storage remains on `/data`.

@@ -1,11 +1,11 @@
 # M3 Root-Disk Guard Report
 
 - Milestone ID: M3
-- Timestamp: 2026-07-03T01:10:57+00:00
+- Timestamp: 2026-07-03T08:30:12+00:00
 - Hostname: llmserver
 - User: user
-- Branch: main
-- Commit before work: 3be1f1c564923b3249c9db8266362859d661102c
+- Branch: milestone/m5b-nvidia-host-driver
+- Commit before work: 8a8240500466aa2445a3bb47467441b71c4219af
 - Root path inspected: `/`
 - Data path checked/excluded: `/data`
 - Sudo coverage: sudo -n available for read-only inspection
@@ -37,8 +37,8 @@ TARGET SOURCE    FSTYPE OPTIONS
 ```console
 $ df -hT / /data
 Filesystem                        Type  Size  Used Avail Use% Mounted on
-/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  6.9G  6.6G  52% /
-/dev/sdb1                         ext4  2.0T  2.8M  1.9T   1% /data
+/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  8.9G  4.6G  66% /
+/dev/sdb1                         ext4  2.0T  3.8M  1.9T   1% /data
 
 [exit=0]
 ```
@@ -65,7 +65,7 @@ XDG_CACHE_HOME=/data/hf-cache/xdg
 
 | Path | Source | Fstype | Label | UUID/identity | Free GiB |
 | --- | --- | --- | --- | --- | --- |
-| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `803894` | 7 |
+| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785889` | 5 |
 | `/data` | `/dev/sdb1` | `ext4` | `AI_DATA` | `8daf56f1-5649-4163-9d87-919c2d271875` | 1912 |
 
 ## Root Free Space Thresholds
@@ -109,7 +109,7 @@ AI and Hugging Face environment variables were checked in a fresh login shell.
 | `/home/user/codex-bootstrap` | yes | 2 | WARN | expected old bootstrap repo; small |
 | `/tmp` | yes | 1 | PASS | below warning threshold |
 | `/var/tmp` | yes | 1 | PASS | below warning threshold |
-| `/var/log` | yes | 197 | PASS | below warning threshold |
+| `/var/log` | yes | 226 | PASS | below warning threshold |
 | `/opt` | yes | 1 | PASS | below warning threshold |
 | `/srv` | yes | 1 | PASS | below warning threshold |
 | `/models` | no | 0 | PASS | absent |
@@ -136,6 +136,7 @@ AI and Hugging Face environment variables were checked in a fresh login shell.
 
 - /home/user/codex-bootstrap exists and is small
 - /data.pre-mount-root-20260702-083425 exists and is small
+- root free space is 5 GiB, below warning threshold 6 GiB
 
 ## STOP Entries
 

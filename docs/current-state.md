@@ -38,6 +38,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M5A CUDA/NVIDIA compatibility gate: merged
 - M4B Docker/containerd install: squash-merged by this task
 - M5A CUDA/NVIDIA compatibility research: merged into main
+- M5B NVIDIA host driver: passed; pending/under main merge documentation in this task
 
 ## Current Storage
 
@@ -72,20 +73,28 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - NVIDIA Container Toolkit is not installed
 
 
-## Current M5A Research Snapshot
+## Current GPU Driver State
 
 - M5A is merged into `main`.
-- M5A execution report: `reports/m5a-cuda-nvidia-compatibility.md`
-- M5A main merge and pre-M5B handoff report: `reports/m5a-main-merge.md`
-- M5A result: research-only `STOP` for installation until human approval.
-- Expected GPU inventory after driver installation: 2 x RTX PRO 6000 Blackwell Workstation Edition 96 GB.
-- No RTX 6000 Ada is expected in this VM.
-- Current pre-driver state: `lspci` sees two NVIDIA PCI display devices with device ID `10de:2bb1`, subsystem `10de:204b`; `nvidia-smi` is absent; `nvcc` is absent; `nouveau` is loaded.
-- M5B must validate exact GPU names, VRAM, PCI bus IDs, driver binding, and passthrough stability before M6/M7/M8.
-- Current recommendation for human review: M5B should install only the selected host NVIDIA driver first, with Ubuntu `nvidia-driver-595-open` as the recommended candidate and R580 LTS documented as the longer-support fallback.
-- M5B must not install CUDA Toolkit unless explicitly approved.
-- M6 NVIDIA Container Toolkit must wait until host `nvidia-smi` passes in M5B.
-- Host CUDA Toolkit, PyTorch, KTransformers, ik_llama, NVIDIA Container Toolkit, models, and API exposure remain blocked until their approved milestones.
+- M5A execution report: `reports/m5a-cuda-nvidia-compatibility.md`.
+- M5A main merge and pre-M5B handoff report: `reports/m5a-main-merge.md`.
+- M5B host NVIDIA driver installation passed with Ubuntu `nvidia-driver-595-open` / `nvidia-utils-595`.
+- M5B execution report: `reports/m5b-nvidia-host-driver.md`.
+- Installed NVIDIA driver version: `595.71.05`.
+- `nvidia-smi -L` reports exactly two GPUs:
+  - GPU 0: NVIDIA RTX PRO 6000 Blackwell Workstation Edition, PCI `00000000:01:00.0`, memory `97887 MiB`.
+  - GPU 1: NVIDIA RTX PRO 6000 Blackwell Workstation Edition, PCI `00000000:02:00.0`, memory `97887 MiB`.
+- No RTX 6000 Ada is expected or reported.
+- `nouveau` is not loaded or bound to the GPUs; the NVIDIA driver is bound.
+- `nvcc` is absent.
+- CUDA Toolkit is absent.
+- NVIDIA Container Toolkit is absent and must wait until after M5C and explicit M6 approval.
+- Host CUDA Toolkit, PyTorch, KTransformers, ik_llama, models, and API exposure remain blocked until their approved milestones.
+- Human Proxmox review: VM 120 has `hostpci0: 0000:c1:00,pcie=1,rombar=1` and `hostpci1: 0000:e1:00,pcie=1,rombar=1`, with parent snapshot `before-m5b-nvidia-driver-595-open`; `qm status 120` reports running.
+- Proxmox host logs show VFIO reset activity with reset-done lines during VM stop/start/reboot.
+- Proxmox host logs show correctable PCIe AER Data Link Layer events around GPU reset/start activity, especially root port `0000:e0:01.1`; human decision: monitor after M6/M7/load tests, but not a blocker for M6.
+- Proxmox host logs still show QEMU Guest Agent guest-ping timeouts; human decision: fix as M5C before M6.
+- Live snapshots with VFIO GPUs remain disallowed because prior logs showed `VFIO migration is not supported in kernel`; use stopped/offline snapshots unless explicitly tested and approved.
 
 ## Guardrails
 
@@ -99,12 +108,10 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 ## Next Recommended Milestone
 
-- Start a fresh ChatGPT/Codex context before M5B.
-- M5B host NVIDIA driver installation may start only after human approval.
-- M5B should install only the approved host NVIDIA driver, followed by `nvidia-smi` validation before and after reboot.
-- M5B must not install CUDA Toolkit unless explicitly approved.
-- M5B must not install PyTorch, KTransformers, ik_llama, NVIDIA Container Toolkit, models, or API services.
-- M6 NVIDIA Container Toolkit may start only after host `nvidia-smi` passes.
+- M5C QEMU Guest Agent repair and Proxmox guest-operations verification should run before M6.
+- M5C should install/enable `qemu-guest-agent` inside the VM if missing, verify guest agent ping from Proxmox by human-supplied result or approved host-side check, and verify guest shutdown/reboot behavior.
+- M5C must not install or configure NVIDIA/CUDA further, NVIDIA Container Toolkit, PyTorch, KTransformers, ik_llama, models, inference backends, Docker NVIDIA runtime, or API services.
+- M6 NVIDIA Container Toolkit may start only after M5B remains passed and M5C/QGA follow-up is resolved or explicitly waived by the human.
 
 ## Known Future Model Candidates
 
@@ -126,7 +133,9 @@ Future sessions should read:
 - `docs/docker-containerd-storage.md`
 - `reports/m5a-cuda-nvidia-compatibility.md`
 - `reports/m5a-main-merge.md`
+- `reports/m5b-nvidia-host-driver.md`
+- `reports/m5b-main-merge.md` if present
 - `reports/m4b-main-merge.md`
 - Latest reports
 
-Then continue with M5B only after human approval, keeping M5B host-driver-only unless explicitly expanded.
+Then continue with M5C QEMU Guest Agent repair before M6 unless the human explicitly waives that follow-up.
