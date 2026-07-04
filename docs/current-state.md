@@ -41,7 +41,8 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M5B NVIDIA host driver: passed and merged into main
 - M6A NVIDIA Container Toolkit planning/dry-run: merged into `main` with corrected future test image `nvidia/cuda:13.2.1-base-ubuntu24.04`
 - M6B NVIDIA Container Toolkit install: merged into `main`; pre-reboot install, GPU container test, guest reboot, and post-reboot verification passed
-- M7A model/runtime research: `reports/m7a-model-runtime-research.md` produced on branch `milestone/m7a-model-runtime-research`; research-only, pending human review and merge
+- M7A model/runtime research: merged into `main`; research-only report is `reports/m7a-model-runtime-research.md`
+- M7A main merge report: `reports/m7a-main-merge.md`
 
 ## Current Storage
 
@@ -129,8 +130,12 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 ## Current M7A Result
 
 - M7A report: `reports/m7a-model-runtime-research.md`.
+- M7A was merged into `main` with merge commit `e4f5dbf6ad2680d3a96965bd7083c03bdc2e5081`.
+- M7A main merge report: `reports/m7a-main-merge.md`.
 - PASS for research and shortlist.
 - STOP for downloads, backend installs/builds, service creation, Docker/containerd changes, restarts, and API exposure until human review approves M7B.
+- Human decision: model choice is intentionally not final. The system should support several model/runtime profiles and allow only one active model/backend at a time.
+- M7B must build a model/runtime manager abstraction, not a single hard-coded model path.
 - Top large/high-quality candidates:
   - `Qwen/Qwen3-235B-A22B-Instruct-2507`
   - `MiniMaxAI/MiniMax-M3`
@@ -147,14 +152,16 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - Recommended first real model after smoke: `Qwen/Qwen3-30B-A3B-Instruct-2507`.
 - Recommended first backend to implement in M7B: pinned, localhost-only SGLang Docker profile with all model/cache/log/build paths under `/data`.
 - KTransformers/KT-Kernel remains the large-MoE heterogeneous RAM+VRAM path to prototype after SGLang smoke is defined.
+- The manager should make new model profiles easy to add without changing the API contract or hard-coding one backend/model into scripts.
 - QGA is currently working based on human Proxmox host verification with `qm agent 120 ping`; older guest-ping timeouts are historical/temporary and not a current blocker.
 - Future work must not configure containerd NVIDIA runtime, install CUDA Toolkit, install PyTorch, install KTransformers, install ik_llama, download models, configure inference backends, or expose API unless explicitly expanded by the relevant milestone.
 
 ## Next Recommended Milestone
 
-- Human review of `reports/m7a-model-runtime-research.md`.
-- Then M7B backend runtime abstraction.
-- M7B should add backend profiles, environment examples, and start/stop/status/benchmark script skeletons without downloading large models unless explicitly approved.
+- M7B model/runtime manager abstraction.
+- M7B should add profile definitions, environment examples, and common start/stop/status/benchmark script skeletons for multiple supported model/runtime profiles.
+- M7B must keep only one model/backend active at a time.
+- M7B must not download models, install backends, build runtimes, modify Docker/containerd config, restart Docker/containerd, create services, or expose API unless explicitly expanded.
 
 ## Known Future Model Candidates
 
@@ -188,7 +195,8 @@ Future sessions should read:
 - `reports/m6b-main-merge.md` if present
 - `reports/m6b-nvidia-container-toolkit-install.md` if present
 - `reports/m7a-model-runtime-research.md` if present
+- `reports/m7a-main-merge.md` if present
 - `reports/m4b-main-merge.md`
 - Latest reports
 
-Then continue with human review of M7A or M7B backend runtime abstraction only.
+Then continue with M7B model/runtime manager abstraction only.

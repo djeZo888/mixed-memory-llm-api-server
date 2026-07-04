@@ -52,15 +52,15 @@ Completed. Installed and configured the approved NVIDIA Container Toolkit Docker
 
 Research current model and runtime options using official/current web sources where possible. M7A must be research-only: no model downloads, no backend installs, no runtime builds, no inference service configuration, and no API exposure. Produce a shortlist of three large/high-quality model candidates, three smaller/faster model candidates, and a runtime/backend recommendation matrix for human review.
 
-M7A produced `reports/m7a-model-runtime-research.md` on branch `milestone/m7a-model-runtime-research`. Its conclusion is PASS for research and shortlist, STOP for downloads/installs/builds/services/API exposure until human review. The recommended first backend for M7B is a pinned localhost-only SGLang Docker profile; KTransformers/KT-Kernel remains the large-MoE heterogeneous RAM+VRAM path to prototype after the first smoke path is defined.
+Completed and merged into `main`. M7A produced `reports/m7a-model-runtime-research.md` on branch `milestone/m7a-model-runtime-research`; `reports/m7a-main-merge.md` records the main merge. Its conclusion is PASS for research and shortlist, STOP for downloads/installs/builds/services/API exposure until a later approved milestone. Human review decided not to lock a final model yet; the project should support several model/runtime profiles and allow only one active model/backend at a time.
 
-## M7B backend runtime abstraction
+## M7B model/runtime manager abstraction
 
-After M7A human review, add runtime environment examples, backend profiles, and common start/stop/status/benchmark scripts for the selected SGLang, vLLM, KTransformers/KT-Kernel, ik_llama, or other approved backend paths. Keep backends bound to `127.0.0.1` by default, pin versions/images, and keep model/cache/build/log paths under `/data`.
+Add a model/runtime manager abstraction with profile definitions, runtime environment examples, and common start/stop/status/benchmark script skeletons for SGLang, vLLM, KTransformers/KT-Kernel, ik_llama, or other approved backend paths. M7B must keep backends bound to `127.0.0.1` by default, pin versions/images, keep model/cache/build/log paths under `/data`, make new model profiles easy to add, and ensure only one model/backend is active at a time. M7B must not download models, install backends, build runtimes, modify Docker/containerd config, restart Docker/containerd, create services, or expose API unless explicitly expanded.
 
 ## M8 small model API smoke service
 
-After M7B passes and human approval is explicit, download `Qwen/Qwen3-0.6B` only to `/data/models` with cache under `/data/hf-cache`, start a localhost backend, expose OpenAI-compatible chat completions on localhost only, test auth, streaming, health, logs, restart, and reboot behavior.
+After M7B passes and human approval is explicit, use the manager abstraction to download `Qwen/Qwen3-0.6B` only to `/data/models` with cache under `/data/hf-cache`, start one localhost backend/profile, expose OpenAI-compatible chat completions on localhost only, test auth, streaming, health, logs, restart, and reboot behavior.
 
 ## M9 fast technical/coding model
 
