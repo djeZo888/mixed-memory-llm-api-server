@@ -66,7 +66,9 @@ Completed and merged into `main`. M8A produced `reports/m8a-sglang-smoke-plan.md
 
 ## M8B small model API smoke service
 
-Next. After M8A planning has passed, merged, and human approval is explicit, use the manager abstraction to download `Qwen/Qwen3-0.6B` only to `/data/models/qwen3-0.6b-smoke` with cache under `/data/hf-cache`, pull the human-approved pinned SGLang image, start one localhost backend/profile on `127.0.0.1:30000`, expose OpenAI-compatible chat completions on localhost only, test auth/front-door assumptions, streaming, health, logs, stop/deactivate, restart, and reboot behavior. M8B or a later explicitly approved milestone is the first permitted actual smoke-model deploy/run.
+Attempted on branch `milestone/m8b-sglang-smoke-deploy` and stopped before readiness. The linux/amd64 digest for `lmsysorg/sglang:v0.5.14-cu130-runtime` matched the M8A recorded digest, the pinned image was pulled, and `Qwen/Qwen3-0.6B` was downloaded to `/data/models/qwen3-0.6b-smoke`. The SGLang container then exited during startup because the pinned image Python environment raised `ModuleNotFoundError: No module named 'distro'`. No active manager state was written, no API smoke request passed, and no public API exposure was configured.
+
+M8B is not complete until a reviewed remediation path starts the localhost-only backend on `127.0.0.1:30000`, verifies `/v1/models`, non-streaming chat, streaming chat, logs, stop/deactivate behavior, and post-run guards. Do not hot-patch the failed container or install host packages as an unreviewed workaround.
 
 ## M9 fast technical/coding model
 

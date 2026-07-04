@@ -1,5 +1,13 @@
 # SGLang Smoke Deployment Plan
 
+## M8B Attempt Result
+
+M8B was attempted on branch `milestone/m8b-sglang-smoke-deploy` and stopped before readiness. The linux/amd64 digest for `lmsysorg/sglang:v0.5.14-cu130-runtime` was re-verified as `sha256:344f361284ba3514d0c93fb7c810f4cdbf89c789117cb51ebea8497d2c8ed101`, the image was pulled, and `Qwen/Qwen3-0.6B` was downloaded to `/data/models/qwen3-0.6b-smoke`.
+
+The container `sglang-smoke-qwen3-0.6b` exited during startup with `ModuleNotFoundError: No module named 'distro'` from the pinned image Python environment. No active manager state was written, no API smoke request was sent, and no public or localhost API endpoint remained running. The failed container is left exited for diagnostics; the model files remain under `/data/models/qwen3-0.6b-smoke`.
+
+Human review is required before retrying M8B with a reviewed remediation path, such as a different pinned SGLang image digest or a reviewed derivative image. Do not hot-patch the running container or install host packages as an unreviewed workaround.
+
 M8A defines the planned SGLang smoke deployment for `Qwen/Qwen3-0.6B`. It is planning and dry-run only. It does not download model weights, pull Docker images, start containers, install backend software, expose an API, create services, restart Docker/containerd, or change Docker/containerd configuration.
 
 ## Purpose
@@ -115,6 +123,30 @@ Stop the Compose profile and remove only the smoke container. Keep downloaded mo
 ## Security Note
 
 M8 keeps the backend local. Public API exposure, LAN binding, API keys, TLS, firewall changes, and a front-door service are later milestones, not M8A or M8B.
+
+## Local Operations Reference
+
+After a successful future retry, query the local OpenAI-compatible endpoint with:
+
+```bash
+curl -fsS http://127.0.0.1:30000/v1/models
+scripts/api/smoke-openai-chat.sh --yes-run-smoke-api
+```
+
+Inspect the failed or future smoke container with:
+
+```bash
+sudo -n docker ps -a --filter name=sglang-smoke-qwen3-0.6b
+sudo -n docker logs --tail 200 sglang-smoke-qwen3-0.6b
+```
+
+A later reviewed stop/deactivate task can stop the runtime with:
+
+```bash
+sudo -n docker compose -f /data/services/llm-manager/compose/sglang-smoke.compose.yml --profile sglang-smoke down
+```
+
+Public exposure is still not configured. Do not add Caddy, reverse proxy, firewall changes, TLS, LAN/public binds, or API keys in M8B.
 
 ## Sources
 
