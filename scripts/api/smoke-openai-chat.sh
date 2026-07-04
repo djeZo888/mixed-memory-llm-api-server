@@ -53,7 +53,7 @@ done
 
 [[ "$URL" == http://127.0.0.1:* || "$URL" == http://localhost:* ]] || fail "smoke API target must be local only"
 
-payload=$(printf '{"model":"%s","messages":[{"role":"user","content":"Reply with exactly: smoke test ok"}],"temperature":0,"max_tokens":16}' "$MODEL")
+payload=$(printf '{"model":"%s","messages":[{"role":"system","content":"You are a smoke test assistant."},{"role":"user","content":"Reply with a short confirmation that the smoke test works."}],"temperature":0,"max_tokens":64}' "$MODEL")
 
 if [[ "$DRY_RUN" == "1" ]]; then
   cat <<EOF
@@ -67,6 +67,33 @@ fi
 
 [[ "$YES_RUN" == "1" ]] || fail "real API smoke request is reserved for M8B; pass --dry-run in M8A"
 
-curl -sS -X POST "$URL" \
+response="$(curl -fsS -X POST "$URL" \
   -H 'Content-Type: application/json' \
-  --data "$payload"
+  --data "$payload")"
+
+SMOKE_RESPONSE="$response" python3 - <<'PY'
+import json
+import os
+import sys
+
+raw = os.environ["SMOKE_RESPONSE"]
+try:
+    data = json.loads(raw)
+except json.JSONDecodeError as exc:
+    print(raw)
+    raise SystemExit(f"STOP: response was not valid JSON: {exc}")
+
+try:
+    content = data["choices"][0]["message"]["content"]
+except (KeyError, IndexError, TypeError) as exc:
+    print(json.dumps(data, indent=2, sort_keys=True))
+    raise SystemExit(f"STOP: missing choices[0].message.content: {exc}")
+
+if not isinstance(content, str) or not content.strip():
+    print(json.dumps(data, indent=2, sort_keys=True))
+    raise SystemExit("STOP: empty chat completion content")
+
+print("PASS: chat completion content received")
+print("content:")
+print(content.strip())
+PY

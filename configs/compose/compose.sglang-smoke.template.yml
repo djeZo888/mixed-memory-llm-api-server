@@ -1,18 +1,19 @@
 # M8A template only. Do not run this file in M8A.
 # M8B must receive human approval before any model download, image pull, or container start.
-# Proposed pinned image for M8B after review: lmsysorg/sglang:v0.5.14-cu130-runtime.
+# Proposed pinned image for M8B remediation after review: lmsysorg/sglang:v0.5.14-cu130.
 # Set SGLANG_IMAGE_TAG to that exact pinned tag, or another human-approved pinned tag, before M8B.
 services:
   sglang-smoke:
     image: ${SGLANG_IMAGE_TAG}
+    container_name: sglang-smoke-qwen3-0.6b
     profiles: ["sglang-smoke"]
-    gpus: all
+    restart: "no"
     shm_size: "32gb"
     ipc: host
     ports:
       - "127.0.0.1:30000:30000"
     volumes:
-      - /data/models:/data/models
+      - /data/models:/data/models:ro
       - /data/hf-cache:/data/hf-cache
       - /data/logs:/data/logs
     environment:
@@ -35,8 +36,8 @@ services:
       - 0.0.0.0
       - --port
       - "30000"
-      - --reasoning-parser
-      - qwen3
+      - --served-model-name
+      - qwen3-0.6b-smoke
     healthcheck:
       # SGLang runtime profile records /health as the expected health path.
       # M8B must verify this endpoint against the selected image before treating readiness as passed.
@@ -45,3 +46,10 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

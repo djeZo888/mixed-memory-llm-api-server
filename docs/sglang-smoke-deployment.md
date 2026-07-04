@@ -8,6 +8,26 @@ The container `sglang-smoke-qwen3-0.6b` exited during startup with `ModuleNotFou
 
 Human review is required before retrying M8B with a reviewed remediation path, such as a different pinned SGLang image digest or a reviewed derivative image. Do not hot-patch the running container or install host packages as an unreviewed workaround.
 
+## M8B Remediation Result
+
+Human review approved switching from the broken runtime image to the full CUDA 13.0 image:
+
+```text
+lmsysorg/sglang:v0.5.14-cu130
+```
+
+M8B remediation verified the linux/amd64 manifest digest `sha256:9611bd4c5624b0e9e17829506188a12f17205f2083de0dd44d6c521733553a50`, pulled the full image, verified that `distro`, `openai`, and `sglang.srt.entrypoints.openai.protocol` import inside the image, and started `sglang-smoke-qwen3-0.6b` on host bind `127.0.0.1:30000` only.
+
+The smoke service is active at:
+
+```text
+http://127.0.0.1:30000/v1
+```
+
+`/v1/models`, non-streaming `/v1/chat/completions`, and streaming `/v1/chat/completions` all passed. Public exposure, LAN binding, reverse proxy, firewall changes, API auth, TLS, and front-door service setup remain unconfigured.
+
+Do not use `lmsysorg/sglang:v0.5.14-cu130-runtime` for this smoke path again until upstream fixes and verifies the missing dependency issue.
+
 M8A defines the planned SGLang smoke deployment for `Qwen/Qwen3-0.6B`. It is planning and dry-run only. It does not download model weights, pull Docker images, start containers, install backend software, expose an API, create services, restart Docker/containerd, or change Docker/containerd configuration.
 
 ## Purpose
@@ -89,7 +109,7 @@ M8B must stop if `/data` is not mounted, Docker Root Dir is not `/data/docker`, 
 
 Do not use `lmsysorg/sglang:latest` or `lmsysorg/sglang:latest-runtime`.
 
-M8A proposes this pinned image for M8B after human review:
+M8A proposed this pinned runtime image for M8B after human review:
 
 ```text
 lmsysorg/sglang:v0.5.14-cu130-runtime
@@ -97,7 +117,13 @@ lmsysorg/sglang:v0.5.14-cu130-runtime
 
 Docker Hub listed this tag on 2026-07-04 with linux/amd64 digest `sha256:344f361284ba3514d0c93fb7c810f4cdbf89c789117cb51ebea8497d2c8ed101`. SGLang documentation states Docker images are published under `lmsysorg/sglang`, runtime variants are smaller, and CUDA 13 is the default SGLang environment. NVIDIA CUDA release notes list CUDA 13.x minor-version compatibility as requiring driver `>= 580`, and CUDA 13.0 GA as requiring Linux driver `>=580.65.06`; this VM has driver `595.71.05`.
 
-M8B must still verify the image by pulling only after human approval, then recording the digest actually pulled.
+The first M8B attempt proved that runtime image is missing `distro` in this environment. The remediated active smoke deployment uses the full image:
+
+```text
+lmsysorg/sglang:v0.5.14-cu130
+```
+
+Future retries must verify the selected image digest before pull/run.
 
 ## M8A Boundary
 
@@ -126,14 +152,14 @@ M8 keeps the backend local. Public API exposure, LAN binding, API keys, TLS, fir
 
 ## Local Operations Reference
 
-After a successful future retry, query the local OpenAI-compatible endpoint with:
+Query the active local OpenAI-compatible endpoint with:
 
 ```bash
 curl -fsS http://127.0.0.1:30000/v1/models
 scripts/api/smoke-openai-chat.sh --yes-run-smoke-api
 ```
 
-Inspect the failed or future smoke container with:
+Inspect the active smoke container with:
 
 ```bash
 sudo -n docker ps -a --filter name=sglang-smoke-qwen3-0.6b

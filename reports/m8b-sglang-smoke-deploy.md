@@ -6,7 +6,7 @@
 - Base branch: `main`
 - Repository: `git@github.com:djeZo888/mixed-memory-llm-api-server.git`
 - Repo path: `/data/services/mixed-memory-llm-api-server`
-- Conclusion: STOP. The reviewed image tag and smoke model were prepared, but the SGLang container exited during Python import before readiness.
+- Conclusion: PASS after remediation. The first runtime-image attempt stopped correctly, then the human-approved full-image remediation deployed the localhost-only smoke backend successfully.
 
 ## Baseline
 
@@ -189,7 +189,7 @@ Containers: 99.35MB
 - `scripts/llmctl active`: `active: none`.
 - `scripts/llmctl status`: `planning_only`, `active: none`.
 - `git diff --check`: PASS.
-- Grep-based secret scan: the broad scan matched only intentional docs, tests, sanitizer patterns, prior reports, and safety strings. The changed-file scan matched only the intentional report statement that no `HF_TOKEN` was used. No real secrets, tokens, passwords, private keys, auth files, real `.env`, `MEMORY.md`, local Codex memory file, or sudo helper content was identified.
+- Grep-based secret scan: the broad scan matched only intentional docs, tests, sanitizer patterns, prior reports, and safety strings. The changed-file scan matched only intentional env-example comments, scanner patterns, and report text. No real secrets, tokens, passwords, private keys, auth files, real `.env`, `MEMORY.md`, local Codex memory file, or sudo helper content was identified.
 
 ## No-Action Confirmations
 
@@ -206,6 +206,164 @@ Containers: 99.35MB
 
 ## Result
 
-STOP.
+Initial attempt: STOP.
 
-M8B did not complete the live localhost API smoke deployment. Human review is required before retrying with a remediated runtime image/dependency path.
+M8B did not complete the live localhost API smoke deployment during the first runtime-image attempt. Human review then approved the full-image remediation recorded below.
+
+# M8B remediation: switch from runtime image to full cu130 image
+
+- Timestamp: `2026-07-04T20:28:20Z`
+- Failed image: `lmsysorg/sglang:v0.5.14-cu130-runtime`
+- Failed image error: `ModuleNotFoundError: No module named 'distro'`
+- Upstream issue summary: SGLang runtime images have known reports of missing `distro` and related Python dependencies.
+- Reviewed remediation: use the full CUDA 13.0 image `lmsysorg/sglang:v0.5.14-cu130`.
+- No host package install was performed.
+- No host CUDA Toolkit install was performed.
+- No manual container patching was performed.
+- The runtime image should not be used again until the upstream dependency issue is fixed and verified.
+
+## Remediation Image Verification
+
+- Image tag: `lmsysorg/sglang:v0.5.14-cu130`
+- Manifest method: `sudo -n docker buildx imagetools inspect lmsysorg/sglang:v0.5.14-cu130`
+- Index digest: `sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3`
+- linux/amd64 manifest digest: `sha256:9611bd4c5624b0e9e17829506188a12f17205f2083de0dd44d6c521733553a50`
+- Docker Hub last updated: `2026-06-26T04:19:55.870754Z`
+- Docker Hub linux/amd64 compressed size: `13197750510` bytes
+- Pull result: PASS after one transient connection reset and retry.
+- Local image ID: `sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3`
+- Local repo digest: `lmsysorg/sglang@sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3`
+- Local image created: `2026-06-26T04:10:15.190695493Z`
+- Local image size: `13197829770` bytes
+
+## Import And Dependency Test
+
+The full image passed the required non-serving import gate in a container with no published ports, no model server, no HF token, and no secret mounts.
+
+```text
+distro import ok
+openai import ok
+sglang openai protocol import ok
+```
+
+`python3 -m pip check || true` reported:
+
+```text
+nixl 1.3.0 requires nixl-cu12, which is not installed.
+moviepy 2.2.1 has requirement pillow<12.0,>=9.2.0, but you have pillow 12.2.0.
+```
+
+Those `pip check` findings did not block M8B because the required `distro`, `openai`, and SGLang OpenAI protocol imports passed and the live smoke tests passed.
+
+## Remediated Runtime
+
+- Runtime compose file: `/data/services/llm-manager/compose/sglang-smoke.compose.yml`
+- Runtime compose file Git-tracked: no.
+- Runtime image: `lmsysorg/sglang:v0.5.14-cu130`
+- Container name: `sglang-smoke-qwen3-0.6b`
+- Restart policy: `no`
+- Host bind: `127.0.0.1:30000:30000`
+- Rendered Compose config showed `host_ip: 127.0.0.1`.
+- Public host bind check: PASS.
+- Model mount: `/data/models:/data/models:ro`
+- Cache mount: `/data/hf-cache:/data/hf-cache`
+- Log mount: `/data/logs:/data/logs`
+- GPU access: Compose device reservation with `driver: nvidia`, `count: all`, `capabilities: [gpu]`
+
+## Remediated Startup And API Results
+
+- Container status: `Up 2 minutes (healthy)` at evidence capture.
+- Published port: `127.0.0.1:30000->30000/tcp`
+- `ss -tulpn | grep ':30000'`: `127.0.0.1:30000` only.
+- `/health`: HTTP 200 with empty body.
+- `/v1/models`: PASS, returned `qwen3-0.6b-smoke` with `max_model_len` `40960`.
+- Non-streaming chat smoke: PASS, HTTP 200, valid JSON, non-empty `choices[0].message.content`.
+- Streaming chat smoke: PASS, received `67` SSE `data:` chunks and a `[DONE]` chunk.
+- `scripts/api/smoke-openai-chat.sh --yes-run-smoke-api`: PASS.
+- `scripts/sglang/verify-sglang-smoke-live.sh`: PASS.
+
+## Active State After Remediation
+
+`/data/services/llm-manager/active/active.json` was created outside Git with no secrets.
+
+```json
+{
+  "bind": "127.0.0.1",
+  "compose_file": "/data/services/llm-manager/compose/sglang-smoke.compose.yml",
+  "container_name": "sglang-smoke-qwen3-0.6b",
+  "deployed_at": "2026-07-04T20:27:26Z",
+  "endpoint": "http://127.0.0.1:30000/v1",
+  "image": "lmsysorg/sglang:v0.5.14-cu130",
+  "model_path": "/data/models/qwen3-0.6b-smoke",
+  "model_profile": "qwen3-0.6b-smoke",
+  "port": 30000,
+  "runtime_profile": "sglang",
+  "status": "active"
+}
+```
+
+`scripts/llmctl active` reports:
+
+```text
+active: active
+model_profile: qwen3-0.6b-smoke
+runtime_profile: sglang
+container_name: sglang-smoke-qwen3-0.6b
+bind: 127.0.0.1
+port: 30000
+endpoint: http://127.0.0.1:30000/v1
+model_path: /data/models/qwen3-0.6b-smoke
+image: lmsysorg/sglang:v0.5.14-cu130
+state_file: /data/services/llm-manager/active/active.json
+```
+
+## Remediation Guard Results
+
+- `scripts/common/require-data-mounted.sh`: PASS
+- `scripts/common/root-disk-guard.sh --report reports/m3-root-disk-guard.md`: PASS
+- `scripts/docker/verify-docker-storage.sh`: PASS
+- `scripts/nvidia/verify-gpu-containers.sh`: PASS with `nvidia/cuda:13.2.1-base-ubuntu24.04`
+- `scripts/llmctl validate`: PASS
+- `scripts/llmctl active`: PASS, active smoke backend reported.
+- `scripts/llmctl status`: PASS, `manager_status: active`.
+
+Disk usage after remediation:
+
+```text
+Images: 69.75GB
+Containers: 170.3MB
+/data/docker: 27G
+/data/containerd: 66G
+/data/models/qwen3-0.6b-smoke: 1.5G
+/data/hf-cache: 208K
+/data/logs/sglang-smoke: 4.0K
+```
+
+## Remediation Checks And Secret Scan
+
+- Shell syntax checks: PASS for `scripts/sglang/plan-sglang-smoke.sh`, `scripts/sglang/verify-sglang-smoke-plan.sh`, `scripts/api/smoke-openai-chat.sh`, `scripts/sglang/verify-sglang-smoke-live.sh`, and `tests/shell/test-sglang-smoke-static.sh`.
+- `tests/shell/test-sglang-smoke-static.sh`: PASS.
+- `scripts/sglang/verify-sglang-smoke-plan.sh`: PASS with the active smoke backend.
+- `scripts/sglang/verify-sglang-smoke-live.sh`: PASS.
+- `scripts/api/smoke-openai-chat.sh --yes-run-smoke-api`: PASS.
+- `git diff --check`: PASS.
+- Grep-based secret scan: matched only intentional docs, tests, sanitizer patterns, env-example comments, prior reports, and safety strings. No real secrets, tokens, passwords, private keys, auth files, real `.env`, `MEMORY.md`, local Codex memory file, or sudo helper content was identified.
+
+## Final No-Action Confirmations
+
+- No public API exposure was configured.
+- No `0.0.0.0` host bind was configured.
+- No additional model was downloaded during remediation.
+- No first real model was downloaded.
+- No Qwen3-30B or larger model was downloaded.
+- No host SGLang, PyTorch, CUDA Toolkit, KTransformers, vLLM, ik_llama, or other backend install occurred.
+- No Docker/containerd daemon configuration was modified.
+- Docker/containerd was not restarted.
+- No systemd service was created.
+- No Proxmox host, disk partition, fstab, or mountpoint change occurred.
+
+## Final Result
+
+PASS.
+
+M8B remediation deployed `qwen3-0.6b-smoke` on SGLang through the full `lmsysorg/sglang:v0.5.14-cu130` image, bound externally only to `127.0.0.1:30000`, and passed local OpenAI-compatible non-streaming and streaming smoke tests.

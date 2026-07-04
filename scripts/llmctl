@@ -31,6 +31,13 @@ STATE_ROOT = Path(
         str(DATA_ROOT / "services" / "llm-manager" / "state"),
     )
 )
+ACTIVE_ROOT = Path(
+    os.environ.get(
+        "LLMCTL_ACTIVE_DIR",
+        str(DATA_ROOT / "services" / "llm-manager" / "active"),
+    )
+)
+ACTIVE_FILE = ACTIVE_ROOT / "active.json"
 
 REQUIRE_DATA = "scripts/common/require-data-mounted.sh"
 ROOT_GUARD = "scripts/common/root-disk-guard.sh"
@@ -378,26 +385,51 @@ def cmd_validate(_args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_active(_args: argparse.Namespace) -> int:
-    state_file = STATE_ROOT / "active.json"
+def load_active_state() -> tuple[Path, dict[str, Any]] | None:
+    state_file = ACTIVE_FILE
     if not state_file.exists():
-        print("active: none")
-        return 0
+        legacy_file = STATE_ROOT / "active.json"
+        if legacy_file.exists():
+            state_file = legacy_file
+        else:
+            return None
     try:
         state = json.loads(state_file.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        eprint(f"FAIL: invalid active state file: {exc}")
-        return 1
-    print(f"active_model: {state.get('model', 'unknown')}")
-    print(f"active_runtime: {state.get('runtime', 'unknown')}")
+        raise LlmctlError(f"invalid active state file: {exc}")
+    return state_file, state
+
+
+def cmd_active(_args: argparse.Namespace) -> int:
+    active = load_active_state()
+    if active is None:
+        print("active: none")
+        return 0
+    state_file, state = active
+    print(f"active: {state.get('status', 'unknown')}")
+    print(f"model_profile: {state.get('model_profile', state.get('model', 'unknown'))}")
+    print(f"runtime_profile: {state.get('runtime_profile', state.get('runtime', 'unknown'))}")
+    print(f"container_name: {state.get('container_name', 'unknown')}")
+    print(f"bind: {state.get('bind', 'unknown')}")
+    print(f"port: {state.get('port', 'unknown')}")
+    print(f"endpoint: {state.get('endpoint', 'unknown')}")
+    print(f"model_path: {state.get('model_path', 'unknown')}")
+    print(f"image: {state.get('image', 'unknown')}")
     print(f"state_file: {state_file}")
     return 0
 
 
 def cmd_status(_args: argparse.Namespace) -> int:
-    print("manager_status: planning_only")
+    active = load_active_state()
+    if active is None:
+        print("manager_status: planning_only")
+    else:
+        _, state = active
+        print("manager_status: active")
+        print(f"active_status: {state.get('status', 'unknown')}")
     print("runtime_state_dir:", STATE_ROOT)
-    print("real_activation: reserved_for_later_milestones")
+    print("active_state_dir:", ACTIVE_ROOT)
+    print("real_activation: available_for_m8b_smoke")
     return cmd_active(_args)
 
 
@@ -459,9 +491,18 @@ def cmd_deactivate(args: argparse.Namespace) -> int:
     if not args.dry_run:
         eprint("STOP: deactivate requires --dry-run in M7B; real deactivation is reserved")
         return 2
+    active = load_active_state()
     print("DRY-RUN: would stop the active runtime and clear active state")
+    if active is not None:
+        _, state = active
+        compose_file = state.get("compose_file", "unknown")
+        container_name = state.get("container_name", "unknown")
+        print(f"container_name: {container_name}")
+        print(f"compose_file: {compose_file}")
+        print(f"stop_command: sudo -n docker compose -f {compose_file} --profile sglang-smoke down")
     print(f"state_dir: {STATE_ROOT}")
-    print("writes_planned: none in M7B")
+    print(f"active_state_dir: {ACTIVE_ROOT}")
+    print("writes_planned: none in dry-run")
     return 0
 
 
@@ -469,8 +510,16 @@ def cmd_logs(args: argparse.Namespace) -> int:
     if not args.dry_run:
         eprint("STOP: logs requires --dry-run in M7B")
         return 2
+    active = load_active_state()
     print("DRY-RUN: would inspect manager/runtime logs")
     print(f"logs_root: {LOGS_ROOT}")
+    if active is not None:
+        _, state = active
+        container_name = state.get("container_name", "unknown")
+        print(f"container_name: {container_name}")
+        print(f"log_command: sudo -n docker logs --tail 200 {container_name}")
+    else:
+        print("active: none")
     print("no log files were read")
     return 0
 
@@ -512,6 +561,7 @@ def cmd_env(_args: argparse.Namespace) -> int:
     print(f"LOGS_ROOT={LOGS_ROOT}")
     print(f"BUILD_ROOT={BUILD_ROOT}")
     print(f"STATE_ROOT={STATE_ROOT}")
+    print(f"ACTIVE_ROOT={ACTIVE_ROOT}")
     print(f"SECRET_ROOT={SECRET_ROOT}")
     print("SECRET_VALUES=not_read")
     return 0
