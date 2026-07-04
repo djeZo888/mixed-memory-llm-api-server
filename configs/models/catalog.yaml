@@ -1,0 +1,16 @@
+version: 1
+policy: one_active_model_backend
+first_smoke_profile: qwen3-0.6b-smoke
+first_real_profile: qwen3-30b-a3b-instruct-2507
+large_moe_path: ktransformers
+model_profiles:
+  - qwen3-0.6b-smoke
+  - qwen3-30b-a3b-instruct-2507
+  - qwen3-235b-a22b-instruct-2507
+  - minimax-m3
+  - glm-5.2
+runtime_profiles:
+  - sglang
+  - ktransformers
+  - ik-llama
+  - vllm

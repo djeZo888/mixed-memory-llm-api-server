@@ -1,0 +1,17 @@
+name: ik-llama
+kind: native
+status: experimental
+openai_compatible: true
+localhost_bind_default: true
+gpu_required: true
+heterogeneous_ram_vram: true
+config_template: none
+healthcheck_path: /health
+default_port: 8002
+risks:
+  - GGUF quality and conversion compatibility must be reviewed per model.
+  - CUDA build path is not approved in M7B.
+  - Use only after a dedicated build and smoke plan is approved.
+source_urls:
+  - https://github.com/ikawrakow/ik_llama.cpp
+  - https://github.com/ikawrakow/ik_llama.cpp/blob/main/docs/build.md

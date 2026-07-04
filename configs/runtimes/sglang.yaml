@@ -1,0 +1,17 @@
+name: sglang
+kind: docker
+status: planned
+openai_compatible: true
+localhost_bind_default: true
+gpu_required: true
+heterogeneous_ram_vram: false
+config_template: configs/compose/compose.sglang.template.yml
+healthcheck_path: /health
+default_port: 8000
+risks:
+  - Actual image tag is not selected in M7B.
+  - Long-context settings must start conservatively on two 96 GB GPUs.
+  - Backend must bind to 127.0.0.1 until API exposure is reviewed.
+source_urls:
+  - https://github.com/sgl-project/sglang
+  - https://docs.sglang.io/

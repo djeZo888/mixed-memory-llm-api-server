@@ -1,0 +1,26 @@
+name: qwen3-235b-a22b-instruct-2507
+provider: Qwen
+hf_repo: Qwen/Qwen3-235B-A22B-Instruct-2507
+family: qwen3_moe
+role: large
+model_type: moe
+total_params: 235B
+active_params: 22B
+context_window: 262144
+license: Apache-2.0
+expected_precision: BF16 safetensors
+expected_storage_gb: 438
+expected_min_vram_gb: 192
+expected_min_system_ram_gb: 768
+recommended_runtimes:
+  - sglang
+  - vllm
+  - ktransformers
+preferred_runtime: sglang
+allowed_first_download: false
+notes: Top large candidate from M7A; do not download until human review approves storage, memory, runtime, and reduced-context test plan.
+source_urls:
+  - https://huggingface.co/Qwen/Qwen3-235B-A22B-Instruct-2507
+  - https://github.com/sgl-project/sglang
+  - https://docs.vllm.ai/
+  - https://github.com/kvcache-ai/ktransformers

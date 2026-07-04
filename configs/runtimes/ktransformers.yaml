@@ -1,0 +1,17 @@
+name: ktransformers
+kind: hybrid
+status: experimental
+openai_compatible: false
+localhost_bind_default: true
+gpu_required: true
+heterogeneous_ram_vram: true
+config_template: configs/compose/compose.ktransformers.template.yml
+healthcheck_path: /health
+default_port: 8001
+risks:
+  - Blackwell SM_120 behavior must be proven before large-model use.
+  - KT-Kernel/source build path must keep build artifacts under /data/build.
+  - API serving path may need an adapter or gateway in a later milestone.
+source_urls:
+  - https://github.com/kvcache-ai/ktransformers
+  - https://kvcache-ai.github.io/ktransformers/
