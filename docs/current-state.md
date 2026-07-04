@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M7B merged into `main`; M8A planning branch in progress
+- Project state: M0-M8A merged into `main`
 
 ## Git Attribution
 
@@ -46,6 +46,8 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M7A main merge report: `reports/m7a-main-merge.md`
 - M7B model/runtime manager abstraction: merged into `main`; dry-run/planning report is `reports/m7b-model-runtime-manager.md`
 - M7B main merge report: `reports/m7b-main-merge.md`
+- M8A SGLang smoke deployment plan: merged into `main`; planning/dry-run only, report is `reports/m8a-sglang-smoke-plan.md`
+- M8A main merge report: `reports/m8a-main-merge.md`
 
 ## Current Storage
 
@@ -107,7 +109,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - CUDA Toolkit is absent.
 - NVIDIA Container Toolkit is installed and Docker runtime configuration is present.
 - `nvidia-ctk` is installed.
-- Approved CUDA container test image `nvidia/cuda:13.2.1-base-ubuntu24.04` passed.
+- Approved CUDA container test image `nvidia/cuda:13.2.1-base-ubuntu24.04` passed. GPU container verification passed again during M8A merge validation.
 - The CUDA container saw exactly two NVIDIA RTX PRO 6000 Blackwell Workstation Edition GPUs with `97887 MiB` each.
 - M6B pulled and ran `nvidia/cuda:13.2.1-base-ubuntu24.04` for `nvidia-smi` only.
 - Host CUDA Toolkit and `nvcc` remain absent.
@@ -183,38 +185,46 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M7B did not download models, install backends, pull backend Docker images, run model/backend containers, expose API, modify Docker/containerd config, restart Docker/containerd, or create services.
 
 
-## Current M8A Branch Result
+## Current M8A Result
 
-- Branch: `milestone/m8a-sglang-smoke-plan`.
-- M8A status: planning/dry-run only until merged and reviewed.
+- M8A is merged into `main` with merge commit `a43c9a6d00c7bc1115a609809c2a417b637115f4`.
+- M8A source commit: `fda5e3c7a910e064fa2b34b76a5711fb56d3b1fa`.
 - M8A report: `reports/m8a-sglang-smoke-plan.md`.
+- M8A main merge report: `reports/m8a-main-merge.md`.
 - SGLang smoke deployment doc: `docs/sglang-smoke-deployment.md`.
-- Smoke model profile remains `qwen3-0.6b-smoke` for `Qwen/Qwen3-0.6B`.
-- Preferred smoke runtime remains `sglang`.
+- M8A completed as planning/dry-run only.
+- Active model/backend remains none.
+- `scripts/llmctl status` remains `planning_only` with `active: none`.
 - Proposed pinned SGLang image for M8B review: `lmsysorg/sglang:v0.5.14-cu130-runtime`.
+- linux/amd64 digest recorded by M8A: `sha256:344f361284ba3514d0c93fb7c810f4cdbf89c789117cb51ebea8497d2c8ed101`.
+- M8B must verify the linux/amd64 digest before any pull or run.
+- Smoke model: `Qwen/Qwen3-0.6B`.
+- Smoke model license: Apache-2.0.
+- Smoke model context length: `32768`.
+- Model profile: `qwen3-0.6b-smoke`.
+- Runtime profile: `sglang`.
 - Planned local model path: `/data/models/qwen3-0.6b-smoke`.
-- Planned local endpoint: `http://127.0.0.1:30000/v1/chat/completions`.
-- Active model remains none.
-- No model has been downloaded by M8A.
-- No SGLang image has been pulled by M8A.
+- Planned localhost bind: `127.0.0.1:30000`.
+- Planned OpenAI-compatible endpoint: `/v1/chat/completions` at `http://127.0.0.1:30000/v1/chat/completions`.
+- Backend remains localhost-only.
+- No public API exposure is allowed in M8.
+- No model was downloaded by M8A.
+- No SGLang image was pulled by M8A.
 - No backend is running from M8A.
-- No API has been exposed by M8A.
-- Next after human review: M8B actual localhost-only SGLang smoke deployment.
+- No API was exposed by M8A.
 
 ## Next Recommended Milestone
 
-- M8A SGLang smoke-model deployment planning/dry-run.
-- Current M8A work branch: `milestone/m8a-sglang-smoke-plan`.
-- M8A must be planning/dry-run only unless explicitly expanded after human review.
-- M8A should plan the SGLang + `Qwen/Qwen3-0.6B` smoke path.
-- M8A should not download `Qwen/Qwen3-0.6B` yet.
-- M8A should not pull an SGLang Docker image yet.
-- M8A should not run backend containers yet.
-- M8A should not expose API yet.
-- M8A should preserve localhost-only backend binding.
-- M8A should use the manager and profiles created in M7B.
-- M8B or later should perform any actual smoke-model deploy/run only after human review and explicit approval.
-- M9 remains the first real fast-model path after smoke.
+- M8B actual localhost-only SGLang smoke deployment.
+- M8B may download `Qwen/Qwen3-0.6B` to `/data/models/qwen3-0.6b-smoke` only.
+- M8B may pull `lmsysorg/sglang:v0.5.14-cu130-runtime` only after verifying the linux/amd64 digest.
+- M8B may start the SGLang smoke container bound only to `127.0.0.1:30000`.
+- M8B may run local OpenAI-compatible API smoke tests.
+- M8B must not expose API publicly.
+- M8B must not bind the host to `0.0.0.0`.
+- M8B must not install unrelated backends.
+- M8B must not select or download the first real model yet.
+- M9 remains the first real fast-model path only after M8B is reviewed and merged.
 
 ## Carry-Forward Operational Warnings
 
@@ -260,8 +270,12 @@ Future sessions should read:
 - `docs/model-matrix.md` if present
 - `reports/m7b-model-runtime-manager.md` if present
 - `reports/m7b-main-merge.md` if present
+- `reports/m8a-sglang-smoke-plan.md` if present
+- `reports/m8a-main-merge.md` if present
+- `docs/sglang-smoke-deployment.md` if present
+- `docs/pre-m8b-handoff.md` if present
 - `docs/pre-m8-handoff.md` if present
 - `reports/m4b-main-merge.md`
 - Latest reports
 
-Then continue with M8A SGLang smoke-model deployment planning/dry-run only.
+Then continue with M8B actual localhost-only SGLang smoke deployment only after human review.
