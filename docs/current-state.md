@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M7B merged into `main`
+- Project state: M0-M7B merged into `main`; M8A planning branch in progress
 
 ## Git Attribution
 
@@ -182,9 +182,29 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - New models should be added as declarative profiles instead of hard-coding model-specific behavior into deployment logic.
 - M7B did not download models, install backends, pull backend Docker images, run model/backend containers, expose API, modify Docker/containerd config, restart Docker/containerd, or create services.
 
+
+## Current M8A Branch Result
+
+- Branch: `milestone/m8a-sglang-smoke-plan`.
+- M8A status: planning/dry-run only until merged and reviewed.
+- M8A report: `reports/m8a-sglang-smoke-plan.md`.
+- SGLang smoke deployment doc: `docs/sglang-smoke-deployment.md`.
+- Smoke model profile remains `qwen3-0.6b-smoke` for `Qwen/Qwen3-0.6B`.
+- Preferred smoke runtime remains `sglang`.
+- Proposed pinned SGLang image for M8B review: `lmsysorg/sglang:v0.5.14-cu130-runtime`.
+- Planned local model path: `/data/models/qwen3-0.6b-smoke`.
+- Planned local endpoint: `http://127.0.0.1:30000/v1/chat/completions`.
+- Active model remains none.
+- No model has been downloaded by M8A.
+- No SGLang image has been pulled by M8A.
+- No backend is running from M8A.
+- No API has been exposed by M8A.
+- Next after human review: M8B actual localhost-only SGLang smoke deployment.
+
 ## Next Recommended Milestone
 
 - M8A SGLang smoke-model deployment planning/dry-run.
+- Current M8A work branch: `milestone/m8a-sglang-smoke-plan`.
 - M8A must be planning/dry-run only unless explicitly expanded after human review.
 - M8A should plan the SGLang + `Qwen/Qwen3-0.6B` smoke path.
 - M8A should not download `Qwen/Qwen3-0.6B` yet.

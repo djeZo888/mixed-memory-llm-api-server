@@ -39,6 +39,15 @@ M7B adds a model/runtime manager abstraction. Model choices remain profile-based
 | 7 | `zai-org/GLM-5.2` | Frontier large coding/agentic model | KTransformers or SGLang/vLLM after memory plan | Top large candidate | Native footprint is about 1403 GiB; not a first download |
 | 8 | `deepseek-ai/DeepSeek-V4-Flash` | Large feasibility comparator | SGLang or KTransformers after memory plan | Alternate/comparator | Official FP4+FP8 footprint is about 149 GiB; strongest first large-quality experiment if feasibility outranks top-list purity |
 
+
+## M8A Smoke Path
+
+M8A keeps `Qwen/Qwen3-0.6B` as the first smoke-test model and SGLang as the first smoke runtime. The planned local model path is `/data/models/qwen3-0.6b-smoke`; M8B must download to that path before launch and must not rely on SGLang auto-downloading from Hugging Face.
+
+The planned localhost endpoint is `http://127.0.0.1:30000/v1/chat/completions`. The host binding must remain `127.0.0.1:30000:30000`; public or LAN exposure is out of scope for M8.
+
+M8A proposes the pinned runtime image `lmsysorg/sglang:v0.5.14-cu130-runtime` for human review. M8A does not download the model, pull the image, start a backend, or select any final large model.
+
 ## Current Backend Notes
 
 - Recommended first M7B backend profile: pinned SGLang Docker profile, localhost-only, all model/cache/log/build mounts under `/data`.

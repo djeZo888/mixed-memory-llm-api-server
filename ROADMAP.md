@@ -62,15 +62,15 @@ Completed and merged into `main`. M7B created `scripts/llmctl`, declarative mode
 
 ## M8A SGLang smoke-model deployment planning/dry-run
 
-Plan the SGLang + `Qwen/Qwen3-0.6B` smoke path using the M7B manager/profiles. M8A must be planning/dry-run only unless explicitly expanded after human review. It must not download models, install backend software, pull Docker images, run backend containers, expose API, modify Docker/containerd config, restart Docker/containerd, or create services. It must preserve localhost-only backend binding and produce a report that can be reviewed before any runtime action.
+Plan the SGLang + `Qwen/Qwen3-0.6B` smoke path using the M7B manager/profiles. M8A must be planning/dry-run only unless explicitly expanded after human review. It must not download models, install backend software, pull Docker images, run backend containers, expose API, modify Docker/containerd config, restart Docker/containerd, or create services. It must preserve localhost-only backend binding, use `/data/models/qwen3-0.6b-smoke` as the planned local model path, default to `127.0.0.1:30000`, and produce a report that can be reviewed before any runtime action.
 
 ## M8B small model API smoke service
 
-After M8A planning passes and human approval is explicit, use the manager abstraction to download `Qwen/Qwen3-0.6B` only to `/data/models` with cache under `/data/hf-cache`, start one localhost backend/profile, expose OpenAI-compatible chat completions on localhost only, test auth, streaming, health, logs, restart, and reboot behavior. M8B or a later explicitly approved milestone is the first permitted actual smoke-model deploy/run.
+After M8A planning passes and human approval is explicit, use the manager abstraction to download `Qwen/Qwen3-0.6B` only to `/data/models/qwen3-0.6b-smoke` with cache under `/data/hf-cache`, pull the human-approved pinned SGLang image, start one localhost backend/profile on `127.0.0.1:30000`, expose OpenAI-compatible chat completions on localhost only, test auth/front-door assumptions, streaming, health, logs, stop/deactivate, restart, and reboot behavior. M8B or a later explicitly approved milestone is the first permitted actual smoke-model deploy/run.
 
 ## M9 fast technical/coding model
 
-Deploy and benchmark `Qwen/Qwen3-30B-A3B-Instruct-2507` first through the localhost API, recording throughput, context stability, RAM, VRAM, startup time, and failure modes. Then compare `Qwen/Qwen3.6-35B-A3B` in text-only mode and `Qwen/Qwen3-Coder-30B-A3B-Instruct` if the human prioritizes coding-specific quality.
+Only after M8B passes, deploy and benchmark `Qwen/Qwen3-30B-A3B-Instruct-2507` first through the localhost API, recording throughput, context stability, RAM, VRAM, startup time, and failure modes. Then compare `Qwen/Qwen3.6-35B-A3B` in text-only mode and `Qwen/Qwen3-Coder-30B-A3B-Instruct` if the human prioritizes coding-specific quality.
 
 ## M10 larger model benchmarks
 
