@@ -11,6 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
+- Project state: M0-M7B merged into `main`
 
 ## Git Attribution
 
@@ -43,7 +44,8 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M6B NVIDIA Container Toolkit install: merged into `main`; pre-reboot install, GPU container test, guest reboot, and post-reboot verification passed
 - M7A model/runtime research: merged into `main`; research-only report is `reports/m7a-model-runtime-research.md`
 - M7A main merge report: `reports/m7a-main-merge.md`
-- M7B model/runtime manager abstraction: in progress on branch `milestone/m7b-model-runtime-manager`
+- M7B model/runtime manager abstraction: merged into `main`; dry-run/planning report is `reports/m7b-model-runtime-manager.md`
+- M7B main merge report: `reports/m7b-main-merge.md`
 
 ## Current Storage
 
@@ -127,6 +129,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - Do not expose API without authentication/firewall review.
 - Do not commit secrets.
 - M7A is a research gate only. It does not approve model downloads, backend installs/builds, service creation, Docker/containerd changes, restarts, or API exposure.
+- M7B is a dry-run/planning manager gate only. It added profiles, templates, docs, and tests, but does not approve model downloads, backend installs/builds, Docker image pulls, runtime containers, service creation, Docker/containerd changes, restarts, or API exposure.
 
 ## Current M7A Result
 
@@ -134,7 +137,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M7A was merged into `main` with merge commit `e4f5dbf6ad2680d3a96965bd7083c03bdc2e5081`.
 - M7A main merge report: `reports/m7a-main-merge.md`.
 - PASS for research and shortlist.
-- STOP for downloads, backend installs/builds, service creation, Docker/containerd changes, restarts, and API exposure until human review approves M7B.
+- STOP for downloads, backend installs/builds, service creation, Docker/containerd changes, restarts, and API exposure until a later approved milestone explicitly expands scope.
 - Human decision: model choice is intentionally not final. The system should support several model/runtime profiles and allow only one active model/backend at a time.
 - M7B must build a model/runtime manager abstraction, not a single hard-coded model path.
 - Top large/high-quality candidates:
@@ -157,13 +160,48 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - QGA is currently working based on human Proxmox host verification with `qm agent 120 ping`; older guest-ping timeouts are historical/temporary and not a current blocker.
 - Future work must not configure containerd NVIDIA runtime, install CUDA Toolkit, install PyTorch, install KTransformers, install ik_llama, download models, configure inference backends, or expose API unless explicitly expanded by the relevant milestone.
 
+## Current M7B Result
+
+- M7B report: `reports/m7b-model-runtime-manager.md`.
+- M7B was merged into `main` with merge commit `dc32c8239baf1bcf9cd38c1e57939bb268364969`.
+- M7B main merge report: `reports/m7b-main-merge.md`.
+- `scripts/llmctl` exists and supports metadata, validation, planning, dry-run activation, dry-run deactivation, status, logs dry-run, download planning, and environment inspection commands.
+- Model profiles exist under `configs/models/profiles/`:
+  - `qwen3-0.6b-smoke`
+  - `qwen3-30b-a3b-instruct-2507`
+  - `qwen3-235b-a22b-instruct-2507`
+  - `minimax-m3`
+  - `glm-5.2`
+- Runtime profiles exist under `configs/runtimes/`:
+  - `sglang`
+  - `ktransformers`
+  - `ik-llama`
+  - `vllm`
+- Only one model/backend should be active at once.
+- Model choice is intentionally not final.
+- New models should be added as declarative profiles instead of hard-coding model-specific behavior into deployment logic.
+- M7B did not download models, install backends, pull backend Docker images, run model/backend containers, expose API, modify Docker/containerd config, restart Docker/containerd, or create services.
+
 ## Next Recommended Milestone
 
-- M7B model/runtime manager abstraction is the current branch task.
-- M7B adds `scripts/llmctl`, declarative model profiles, runtime profiles, compose templates, docs, tests, and `reports/m7b-model-runtime-manager.md`.
-- M7B must keep only one model/backend active at a time.
-- M7B must not download models, install backends, build runtimes, modify Docker/containerd config, restart Docker/containerd, create services, or expose API unless explicitly expanded.
-- If M7B passes review and merges, the next recommended task is M8A SGLang smoke-model deployment planning/dry-run.
+- M8A SGLang smoke-model deployment planning/dry-run.
+- M8A must be planning/dry-run only unless explicitly expanded after human review.
+- M8A should plan the SGLang + `Qwen/Qwen3-0.6B` smoke path.
+- M8A should not download `Qwen/Qwen3-0.6B` yet.
+- M8A should not pull an SGLang Docker image yet.
+- M8A should not run backend containers yet.
+- M8A should not expose API yet.
+- M8A should preserve localhost-only backend binding.
+- M8A should use the manager and profiles created in M7B.
+- M8B or later should perform any actual smoke-model deploy/run only after human review and explicit approval.
+- M9 remains the first real fast-model path after smoke.
+
+## Carry-Forward Operational Warnings
+
+- Correctable PCIe AER warnings have been observed during passthrough reset/start activity and should be monitored during future load tests.
+- VFIO reset activity has shown reset-done lines.
+- Avoid live snapshots with VFIO GPUs because live snapshot previously failed with VFIO migration unsupported.
+- QGA is currently working based on human `qm agent 120 ping` verification.
 
 ## Known Future Model Candidates
 
@@ -198,7 +236,12 @@ Future sessions should read:
 - `reports/m6b-nvidia-container-toolkit-install.md` if present
 - `reports/m7a-model-runtime-research.md` if present
 - `reports/m7a-main-merge.md` if present
+- `docs/model-runtime-manager.md` if present
+- `docs/model-matrix.md` if present
+- `reports/m7b-model-runtime-manager.md` if present
+- `reports/m7b-main-merge.md` if present
+- `docs/pre-m8-handoff.md` if present
 - `reports/m4b-main-merge.md`
 - Latest reports
 
-Then continue with M7B model/runtime manager abstraction only.
+Then continue with M8A SGLang smoke-model deployment planning/dry-run only.

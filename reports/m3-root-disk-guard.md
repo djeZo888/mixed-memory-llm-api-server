@@ -1,11 +1,11 @@
 # M3 Root-Disk Guard Report
 
 - Milestone ID: M3
-- Timestamp: 2026-07-04T08:55:00+00:00
+- Timestamp: 2026-07-04T11:13:40+00:00
 - Hostname: llmserver
 - User: user
 - Branch: milestone/m7b-model-runtime-manager
-- Commit before work: 957fc19e0d79b180dd7624e8151ea312db91f918
+- Commit before work: d7a31be06888180da45e5fd430b6dd8db30c0b8a
 - Root path inspected: `/`
 - Data path checked/excluded: `/data`
 - Sudo coverage: sudo -n available for read-only inspection
@@ -38,7 +38,7 @@ TARGET SOURCE    FSTYPE OPTIONS
 $ df -hT / /data
 Filesystem                        Type  Size  Used Avail Use% Mounted on
 /dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  9.0G  4.5G  67% /
-/dev/sdb1                         ext4  2.0T  689M  1.9T   1% /data
+/dev/sdb1                         ext4  2.0T  690M  1.9T   1% /data
 
 [exit=0]
 ```
@@ -65,7 +65,7 @@ XDG_CACHE_HOME=/data/hf-cache/xdg
 
 | Path | Source | Fstype | Label | UUID/identity | Free GiB |
 | --- | --- | --- | --- | --- | --- |
-| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785799` | 4 |
+| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785778` | 4 |
 | `/data` | `/dev/sdb1` | `ext4` | `AI_DATA` | `8daf56f1-5649-4163-9d87-919c2d271875` | 1912 |
 
 ## Root Free Space Thresholds
