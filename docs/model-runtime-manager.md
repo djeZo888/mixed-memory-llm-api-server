@@ -109,6 +109,23 @@ To add a model later:
 
 No deployment logic should need hard-coded model names beyond tests and documentation.
 
+
+## M8A SGLang Smoke Plan
+
+M8A keeps `qwen3-0.6b-smoke` as the smoke model profile and `sglang` as the preferred smoke runtime. The smoke-specific deployment plan lives in:
+
+```text
+configs/compose/compose.sglang-smoke.template.yml
+configs/sglang/smoke.env.example
+scripts/sglang/plan-sglang-smoke.sh
+scripts/sglang/verify-sglang-smoke-plan.sh
+scripts/api/smoke-openai-chat.sh
+```
+
+The planned M8B local model path is `/data/models/qwen3-0.6b-smoke`, the planned cache root is `/data/hf-cache`, the planned log directory is `/data/logs/sglang-smoke`, and the planned local endpoint is `http://127.0.0.1:30000/v1/chat/completions`.
+
+M8A proposes `lmsysorg/sglang:v0.5.14-cu130-runtime` for human review. M8B must still pull and verify the exact digest after approval. No final large model is selected.
+
 ## Future API Integration
 
 Backends must bind to `127.0.0.1` by default. A later API front door can route to the one active backend while keeping the external contract stable. Public or LAN exposure remains blocked until authentication, firewall, and TLS policy are reviewed.
@@ -116,7 +133,7 @@ Backends must bind to `127.0.0.1` by default. A later API front door can route t
 The intended sequence is:
 
 1. M7B: manager abstraction and dry-run planning only.
-2. M8A: SGLang smoke-model deployment planning/dry-run.
-3. M8B or later: approved smoke-model download and localhost runtime test.
+2. M8A: SGLang smoke-model deployment planning/dry-run for `qwen3-0.6b-smoke` on SGLang.
+3. M8B or later: approved smoke-model download and localhost runtime test on `127.0.0.1:30000`.
 4. M9: first real fast model benchmark.
 5. M10: large model experiments one at a time.
