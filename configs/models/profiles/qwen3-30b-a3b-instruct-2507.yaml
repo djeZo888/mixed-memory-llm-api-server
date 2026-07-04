@@ -1,0 +1,27 @@
+name: qwen3-30b-a3b-instruct-2507
+provider: Qwen
+hf_repo: Qwen/Qwen3-30B-A3B-Instruct-2507
+family: qwen3_moe
+role: fast
+model_type: moe
+total_params: 30.5B
+active_params: 3.3B
+context_window: 262144
+license: Apache-2.0
+expected_precision: BF16 safetensors
+expected_storage_gb: 56.9
+expected_min_vram_gb: 96
+expected_min_system_ram_gb: 128
+recommended_runtimes:
+  - sglang
+  - vllm
+  - ktransformers
+  - ik-llama
+preferred_runtime: sglang
+allowed_first_download: true
+notes: First intended real model after the smoke profile passes; start with reduced context before testing full 262K context.
+source_urls:
+  - https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507
+  - https://github.com/sgl-project/sglang
+  - https://docs.vllm.ai/
+  - https://github.com/kvcache-ai/ktransformers

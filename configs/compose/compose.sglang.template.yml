@@ -1,0 +1,35 @@
+# M7B template only. Do not run this file as-is.
+# Actual pinned image tags, model paths, ports, and launch arguments are selected
+# in M8/M9 after human approval. This template must bind to localhost by default.
+services:
+  sglang:
+    image: "${SGLANG_IMAGE:?select a pinned SGLang image tag in M8 or M9}"
+    profiles:
+      - "${LLM_PROFILE:?set model profile name}"
+    gpus: all
+    ports:
+      - "127.0.0.1:${LLM_PORT:-8000}:8000"
+    volumes:
+      - /data/models:/data/models
+      - /data/hf-cache:/data/hf-cache
+      - /data/logs:/data/logs
+    environment:
+      HF_HOME: /data/hf-cache
+      HF_HUB_CACHE: /data/hf-cache/hub
+      TRANSFORMERS_CACHE: /data/hf-cache/transformers
+      XDG_CACHE_HOME: /data/hf-cache/xdg
+    command:
+      - "python"
+      - "-m"
+      - "sglang.launch_server"
+      - "--host"
+      - "127.0.0.1"
+      - "--port"
+      - "8000"
+      - "--model-path"
+      - "${MODEL_PATH:?selected later under /data/models}"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

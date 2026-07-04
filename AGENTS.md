@@ -53,6 +53,9 @@ These instructions are durable project rules for agents and operators working in
 ## Backend Strategy
 
 - Do not hard-code one model, quantization, host, port, or backend.
+- Use `scripts/llmctl` and declarative profiles under `configs/models/` and `configs/runtimes/` for model/runtime planning.
+- Only one model/backend should be active at a time.
+- New models should be added as profiles instead of rewriting deployment logic.
 - Backends should bind to `127.0.0.1` by default.
 - Any API exposure beyond localhost must require API-key authentication and documented firewall/TLS policy.
 - KTransformers is preferred first for Hugging Face-format large MoE models and heterogeneous CPU/GPU experiments.

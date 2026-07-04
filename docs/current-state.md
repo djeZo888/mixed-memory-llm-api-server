@@ -43,6 +43,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M6B NVIDIA Container Toolkit install: merged into `main`; pre-reboot install, GPU container test, guest reboot, and post-reboot verification passed
 - M7A model/runtime research: merged into `main`; research-only report is `reports/m7a-model-runtime-research.md`
 - M7A main merge report: `reports/m7a-main-merge.md`
+- M7B model/runtime manager abstraction: in progress on branch `milestone/m7b-model-runtime-manager`
 
 ## Current Storage
 
@@ -158,10 +159,11 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 ## Next Recommended Milestone
 
-- M7B model/runtime manager abstraction.
-- M7B should add profile definitions, environment examples, and common start/stop/status/benchmark script skeletons for multiple supported model/runtime profiles.
+- M7B model/runtime manager abstraction is the current branch task.
+- M7B adds `scripts/llmctl`, declarative model profiles, runtime profiles, compose templates, docs, tests, and `reports/m7b-model-runtime-manager.md`.
 - M7B must keep only one model/backend active at a time.
 - M7B must not download models, install backends, build runtimes, modify Docker/containerd config, restart Docker/containerd, create services, or expose API unless explicitly expanded.
+- If M7B passes review and merges, the next recommended task is M8A SGLang smoke-model deployment planning/dry-run.
 
 ## Known Future Model Candidates
 

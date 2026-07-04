@@ -4,6 +4,8 @@
 secrets/
 /data/
 models/
+!configs/models/
+!configs/models/**
 hf-cache/
 /docker/
 /containerd/

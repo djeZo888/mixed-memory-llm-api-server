@@ -23,6 +23,8 @@ M7A produced `reports/m7a-model-runtime-research.md` as a source-cited shortlist
 
 KTransformers/KT-Kernel remains the most important heterogeneous RAM+VRAM path for very large MoE models, but SGLang is the recommended first backend to implement for the smoke and 30B-class API path because current model cards list SGLang support and OpenAI-compatible serving. vLLM is the main cross-check backend. ik_llama and llama.cpp are GGUF/quantized fallback paths.
 
+M7B adds a model/runtime manager abstraction. Model choices remain profile-based rather than final. Use `configs/models/catalog.yaml`, `configs/models/profiles/*.yaml`, `configs/runtimes/*.yaml`, and `scripts/llmctl` to validate and plan future activation. Only one model/backend should be active at a time.
+
 ## Shortlist
 
 | Priority | Model | Role | First backend | Status | Gate |
@@ -43,5 +45,7 @@ KTransformers/KT-Kernel remains the most important heterogeneous RAM+VRAM path f
 - Recommended cross-check backend: vLLM pinned version/profile for the same small and 30B-class models.
 - Recommended large-MoE experimental path: KTransformers/KT-Kernel after M7B proves Blackwell behavior on this host.
 - Recommended quantized/GGUF fallback: ik_llama first, llama.cpp as reference.
+- M7B manager state root: `/data/services/llm-manager/state`.
+- M7B is dry-run/planning only; real downloads and activation remain blocked.
 - Do not use `latest` images or unpinned commits in implementation milestones.
 - Do not attempt 1M context first on any model. Start at 4K/32K for smoke, then 128K, and only then 262K if memory is stable.

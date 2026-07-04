@@ -1,0 +1,25 @@
+name: qwen3-0.6b-smoke
+provider: Qwen
+hf_repo: Qwen/Qwen3-0.6B
+family: qwen3
+role: smoke
+model_type: dense
+total_params: 0.6B
+active_params: 0.6B
+context_window: 32768
+license: Apache-2.0
+expected_precision: BF16 safetensors
+expected_storage_gb: 1.4
+expected_min_vram_gb: 4
+expected_min_system_ram_gb: 8
+recommended_runtimes:
+  - sglang
+  - vllm
+  - ik-llama
+preferred_runtime: sglang
+allowed_first_download: true
+notes: Small smoke-test profile for M8 after M7B review; validates manager, storage, localhost API, logs, and auth without quality benchmarking.
+source_urls:
+  - https://huggingface.co/Qwen/Qwen3-0.6B
+  - https://github.com/sgl-project/sglang
+  - https://docs.vllm.ai/

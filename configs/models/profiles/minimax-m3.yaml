@@ -1,0 +1,26 @@
+name: minimax-m3
+provider: MiniMax AI
+hf_repo: MiniMaxAI/MiniMax-M3
+family: minimax_m3
+role: research
+model_type: moe
+total_params: 427B
+active_params: not_published
+context_window: 1048576
+license: MiniMax Community
+expected_precision: BF16 safetensors with model-specific sparse attention
+expected_storage_gb: 796
+expected_min_vram_gb: 192
+expected_min_system_ram_gb: 768
+recommended_runtimes:
+  - ktransformers
+  - sglang
+  - vllm
+preferred_runtime: ktransformers
+allowed_first_download: false
+notes: Large/research candidate from M7A; requires license review, custom-code review, and runtime proof before any download.
+source_urls:
+  - https://huggingface.co/MiniMaxAI/MiniMax-M3
+  - https://github.com/MiniMax-AI/MSA
+  - https://github.com/kvcache-ai/ktransformers
+  - https://github.com/sgl-project/sglang

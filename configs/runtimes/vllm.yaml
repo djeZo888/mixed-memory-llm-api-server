@@ -1,0 +1,17 @@
+name: vllm
+kind: docker
+status: planned
+openai_compatible: true
+localhost_bind_default: true
+gpu_required: true
+heterogeneous_ram_vram: false
+config_template: none
+healthcheck_path: /health
+default_port: 8003
+risks:
+  - Actual image tag is not selected in M7B.
+  - New model architectures may require current or nightly versions.
+  - Long-context settings must be proven gradually.
+source_urls:
+  - https://github.com/vllm-project/vllm
+  - https://docs.vllm.ai/

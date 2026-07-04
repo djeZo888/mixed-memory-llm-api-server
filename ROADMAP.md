@@ -58,9 +58,11 @@ Completed and merged into `main`. M7A produced `reports/m7a-model-runtime-resear
 
 Add a model/runtime manager abstraction with profile definitions, runtime environment examples, and common start/stop/status/benchmark script skeletons for SGLang, vLLM, KTransformers/KT-Kernel, ik_llama, or other approved backend paths. M7B must keep backends bound to `127.0.0.1` by default, pin versions/images, keep model/cache/build/log paths under `/data`, make new model profiles easy to add, and ensure only one model/backend is active at a time. M7B must not download models, install backends, build runtimes, modify Docker/containerd config, restart Docker/containerd, create services, or expose API unless explicitly expanded.
 
+M7B creates `scripts/llmctl`, declarative model/runtime profiles, compose templates, manager documentation, and shell tests. M7B remains dry-run/planning only. If it passes review, the next task is M8A SGLang smoke-model deployment planning/dry-run.
+
 ## M8 small model API smoke service
 
-After M7B passes and human approval is explicit, use the manager abstraction to download `Qwen/Qwen3-0.6B` only to `/data/models` with cache under `/data/hf-cache`, start one localhost backend/profile, expose OpenAI-compatible chat completions on localhost only, test auth, streaming, health, logs, restart, and reboot behavior.
+After M8A planning passes and human approval is explicit, use the manager abstraction to download `Qwen/Qwen3-0.6B` only to `/data/models` with cache under `/data/hf-cache`, start one localhost backend/profile, expose OpenAI-compatible chat completions on localhost only, test auth, streaming, health, logs, restart, and reboot behavior.
 
 ## M9 fast technical/coding model
 

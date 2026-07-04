@@ -1,0 +1,26 @@
+name: glm-5.2
+provider: Z.ai
+hf_repo: zai-org/GLM-5.2
+family: glm_moe_dsa
+role: research
+model_type: moe
+total_params: 753B
+active_params: not_published
+context_window: 1048576
+license: MIT
+expected_precision: BF16/F32 safetensors
+expected_storage_gb: 1403
+expected_min_vram_gb: 192
+expected_min_system_ram_gb: 1024
+recommended_runtimes:
+  - ktransformers
+  - sglang
+  - vllm
+preferred_runtime: ktransformers
+allowed_first_download: false
+notes: Large/research candidate from M7A; native footprint is too large for a first download and requires a heterogeneous RAM+VRAM memory plan.
+source_urls:
+  - https://huggingface.co/zai-org/GLM-5.2
+  - https://huggingface.co/papers/2602.15763
+  - https://github.com/kvcache-ai/ktransformers
+  - https://github.com/sgl-project/sglang

@@ -1,0 +1,37 @@
+# M7B template only. Do not run this file as-is.
+# Actual pinned image tags/build outputs are selected after a KTransformers
+# build plan is approved. Build artifacts must remain under /data/build.
+services:
+  ktransformers:
+    image: "${KTRANSFORMERS_IMAGE:?select a pinned KTransformers image tag later}"
+    profiles:
+      - "${LLM_PROFILE:?set model profile name}"
+    gpus: all
+    ports:
+      - "127.0.0.1:${LLM_PORT:-8001}:8001"
+    volumes:
+      - /data/models:/data/models
+      - /data/hf-cache:/data/hf-cache
+      - /data/logs:/data/logs
+      - /data/build:/data/build
+    environment:
+      HF_HOME: /data/hf-cache
+      HF_HUB_CACHE: /data/hf-cache/hub
+      TRANSFORMERS_CACHE: /data/hf-cache/transformers
+      XDG_CACHE_HOME: /data/hf-cache/xdg
+      KT_BUILD_ROOT: /data/build/ktransformers
+    command:
+      - "python"
+      - "-m"
+      - "ktransformers.server"
+      - "--host"
+      - "127.0.0.1"
+      - "--port"
+      - "8001"
+      - "--model-path"
+      - "${MODEL_PATH:?selected later under /data/models}"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
