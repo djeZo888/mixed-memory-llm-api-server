@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M8C merged into `main`; SGLang smoke backend is active locally and lifecycle-managed by `scripts/llmctl`
+- Project state: M0-M9A merged into `main`; M9B branch deploys the first real fast model locally. Active backend is `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only.
 
 ## Git Attribution
 
@@ -54,6 +54,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M8C main merge report: `reports/m8c-main-merge.md`
 - M9A first real fast-model plan: merged into `main`; report is `reports/m9a-first-real-fast-model-plan.md`
 - M9A main merge report: `reports/m9a-main-merge.md`
+- M9B first real fast-model deployment: branch `milestone/m9b-first-real-fast-model-deploy`; report is `reports/m9b-first-real-fast-model-deploy.md`
 
 ## Current Storage
 
@@ -133,7 +134,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - Run `scripts/common/root-disk-guard.sh` before and after Docker, model, build, log, or service work.
 - Run `scripts/docker/verify-docker-storage.sh` after Docker/containerd changes.
 - Do not install NVIDIA/CUDA/PyTorch GPU/KTransformers GPU/ik_llama CUDA/NVIDIA Container Toolkit before M5A compatibility research passes and the human approves the selected version matrix.
-- Do not download models before M5/M6/M7/M8 readiness.
+- Do not download additional models before the relevant milestone explicitly approves the model, path, cache, runtime, and verification sequence.
 - Do not expose API without authentication/firewall review.
 - Do not commit secrets.
 - M7A is a research gate only. It does not approve model downloads, backend installs/builds, service creation, Docker/containerd changes, restarts, or API exposure.
@@ -310,13 +311,37 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M9B must not expose a public API or bind the host to `0.0.0.0`.
 - M9B must preserve Docker/containerd storage policy and `/data` guardrails.
 
+## Current M9B Result
+
+- M9B branch: `milestone/m9b-first-real-fast-model-deploy`.
+- M9B report: `reports/m9b-first-real-fast-model-deploy.md`.
+- Result: PASS on the branch; human review and merge to `main` are next.
+- Smoke backend was stopped cleanly through `scripts/llmctl stop --yes`.
+- Smoke model files remain preserved at `/data/models/qwen3-0.6b-smoke` (`1.5G`).
+- First real model downloaded: `Qwen/Qwen3-30B-A3B-Instruct-2507` only.
+- First real model path: `/data/models/qwen3-30b-a3b-instruct-2507` (`57G`).
+- Active model/backend: `qwen3-30b-a3b-instruct-2507` on SGLang.
+- Active endpoint: `http://127.0.0.1:30001/v1`.
+- Active bind: `127.0.0.1:30001` only; no public API exposure is configured.
+- Container: `sglang-qwen3-30b-a3b-instruct-2507`, healthy from image `lmsysorg/sglang:v0.5.14-cu130`.
+- Runtime compose file outside Git: `/data/services/llm-manager/compose/sglang-qwen3-30b.compose.yml`.
+- Active state outside Git: `/data/services/llm-manager/active/active.json`.
+- Launch args: `--tp 2 --context-length 32768 --mem-fraction-static 0.75`.
+- `/v1/models`, non-streaming chat, streaming chat, and a technical PCIe passthrough prompt passed.
+- Runtime VRAM after warmup was about `76294 MiB` on GPU 0 and `76326 MiB` on GPU 1.
+- Root-disk guard, Docker storage verifier, and GPU container verifier passed after deployment.
+- `scripts/llmctl active`, `status`, `logs --dry-run`, `stop --dry-run`, and `restart --dry-run` reflect the real model. `restart --yes` is intentionally unsupported for the real model until M9C lifecycle review.
+- No fallback/coder/larger/alternate model was downloaded.
+- No host SGLang, PyTorch, CUDA Toolkit, KTransformers, vLLM, or ik_llama install occurred.
+- No Docker/containerd daemon config change or restart occurred.
+- No model files/images were deleted and Docker prune was not run.
+
 ## Next Recommended Milestone
 
-- Start a fresh Codex context for M9B actual first real fast-model deployment.
-- M9B approved target: `Qwen/Qwen3-30B-A3B-Instruct-2507`.
-- M9B approved local path: `/data/models/qwen3-30b-a3b-instruct-2507`.
-- The smoke backend remains active for local verification at `http://127.0.0.1:30000/v1` until M9B is explicitly approved to stop it through `scripts/llmctl`.
-- M9B must download only the approved model to `/data/models`, keep cache under `/data/hf-cache`, use a localhost-only bind, and preserve the no-public-API boundary.
+- Human review, then merge M9B into `main` if PASS.
+- After merge, choose M9C first real model lifecycle/benchmark review or M10 API/front-door/auth planning.
+- M9C should benchmark and harden lifecycle behavior for the active 30B model before enabling `restart --yes` for the real model.
+- M10 should remain planning-only for API/front-door/auth until a separate implementation milestone approves exposure.
 
 ## Carry-Forward Operational Warnings
 
@@ -375,4 +400,4 @@ Future sessions should read:
 - `docs/pre-m9b-handoff.md` if present
 - Latest reports
 
-Then continue with M9A first real fast-model planning/dry-run.
+Then continue with human review and merge of M9B if PASS, or M9C/M10 planning after merge.

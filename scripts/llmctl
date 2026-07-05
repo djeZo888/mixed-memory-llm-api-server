@@ -57,6 +57,23 @@ SMOKE_COMPOSE_FILE = Path(
     )
 )
 SMOKE_COMPOSE_PROFILE = "sglang-smoke"
+
+REAL_MODEL_PROFILE = "qwen3-30b-a3b-instruct-2507"
+REAL_RUNTIME_PROFILE = "sglang"
+REAL_CONTAINER_NAME = "sglang-qwen3-30b-a3b-instruct-2507"
+REAL_BIND = "127.0.0.1"
+REAL_PORT = 30001
+REAL_CONTAINER_PORT = 30000
+REAL_ENDPOINT = "http://127.0.0.1:30001/v1"
+REAL_MODEL_PATH = Path("/data/models/qwen3-30b-a3b-instruct-2507")
+REAL_IMAGE = "lmsysorg/sglang:v0.5.14-cu130"
+REAL_COMPOSE_FILE = Path(
+    os.environ.get(
+        "LLMCTL_REAL_COMPOSE_FILE",
+        "/data/services/llm-manager/compose/sglang-qwen3-30b.compose.yml",
+    )
+)
+
 START_TIMEOUT_SECONDS = int(os.environ.get("LLMCTL_START_TIMEOUT_SECONDS", "600"))
 
 REQUIRE_DATA = "scripts/common/require-data-mounted.sh"
@@ -453,15 +470,12 @@ def docker_cmd(*args: str) -> list[str]:
     return ["sudo", "-n", "docker", *args]
 
 
-def compose_cmd(compose_file: Path, *args: str) -> list[str]:
-    return docker_cmd(
-        "compose",
-        "-f",
-        str(compose_file),
-        "--profile",
-        SMOKE_COMPOSE_PROFILE,
-        *args,
-    )
+def compose_cmd(compose_file: Path, *args: str, profile: str | None = SMOKE_COMPOSE_PROFILE) -> list[str]:
+    cmd = docker_cmd("compose", "-f", str(compose_file))
+    if profile:
+        cmd.extend(["--profile", profile])
+    cmd.extend(args)
+    return cmd
 
 
 def docker_root_dir() -> str:
@@ -510,7 +524,7 @@ def require_active_state() -> tuple[Path, dict[str, Any]]:
             f"active state missing: {ACTIVE_FILE}; run start --yes only for the known smoke deployment"
         )
     state_file, state = active
-    validate_smoke_state(state)
+    validate_supported_state(state)
     return state_file, state
 
 
@@ -525,22 +539,84 @@ def state_for_start() -> tuple[Path | None, dict[str, Any]]:
     return state_file, state
 
 
-def validate_smoke_state(state: dict[str, Any]) -> None:
-    expected = {
-        "model_profile": SMOKE_MODEL_PROFILE,
-        "runtime_profile": SMOKE_RUNTIME_PROFILE,
-        "container_name": SMOKE_CONTAINER_NAME,
-        "bind": SMOKE_BIND,
-        "port": SMOKE_PORT,
-        "endpoint": SMOKE_ENDPOINT,
-        "model_path": str(SMOKE_MODEL_PATH),
-        "image": SMOKE_IMAGE,
-    }
-    for key, value in expected.items():
-        if state.get(key) != value:
+def expected_deployment(state: dict[str, Any]) -> dict[str, Any]:
+    model_profile = state.get("model_profile")
+    if model_profile == SMOKE_MODEL_PROFILE:
+        return {
+            "model_profile": SMOKE_MODEL_PROFILE,
+            "runtime_profile": SMOKE_RUNTIME_PROFILE,
+            "container_name": SMOKE_CONTAINER_NAME,
+            "bind": SMOKE_BIND,
+            "port": SMOKE_PORT,
+            "container_port": SMOKE_PORT,
+            "endpoint": SMOKE_ENDPOINT,
+            "model_path": str(SMOKE_MODEL_PATH),
+            "image": SMOKE_IMAGE,
+            "compose_file": str(SMOKE_COMPOSE_FILE),
+            "compose_profile": SMOKE_COMPOSE_PROFILE,
+            "served_model_name": SMOKE_MODEL_PROFILE,
+            "label": "M8B SGLang smoke deployment",
+        }
+    if model_profile == REAL_MODEL_PROFILE:
+        return {
+            "model_profile": REAL_MODEL_PROFILE,
+            "runtime_profile": REAL_RUNTIME_PROFILE,
+            "container_name": REAL_CONTAINER_NAME,
+            "bind": REAL_BIND,
+            "port": REAL_PORT,
+            "container_port": REAL_CONTAINER_PORT,
+            "endpoint": REAL_ENDPOINT,
+            "model_path": str(REAL_MODEL_PATH),
+            "image": REAL_IMAGE,
+            "compose_file": str(REAL_COMPOSE_FILE),
+            "compose_profile": "",
+            "served_model_name": REAL_MODEL_PROFILE,
+            "label": "M9B SGLang real fast deployment",
+        }
+    raise LlmctlError(
+        "active state is not a supported SGLang deployment: "
+        f"model_profile={model_profile!r}"
+    )
+
+
+def validate_supported_state(state: dict[str, Any]) -> None:
+    expected = expected_deployment(state)
+    for key in (
+        "model_profile",
+        "runtime_profile",
+        "container_name",
+        "bind",
+        "port",
+        "endpoint",
+        "model_path",
+        "image",
+    ):
+        if state.get(key) != expected[key]:
             raise LlmctlError(
-                f"active state is not the M8B smoke deployment: {key}={state.get(key)!r}"
+                "active state does not match supported deployment "
+                f"{expected['model_profile']}: {key}={state.get(key)!r}"
             )
+    if state.get("compose_file") and str(state.get("compose_file")) != expected["compose_file"]:
+        raise LlmctlError(
+            f"active state compose_file is not expected for {expected['model_profile']}: "
+            f"{state.get('compose_file')!r}"
+        )
+
+
+def validate_smoke_state(state: dict[str, Any]) -> None:
+    validate_supported_state(state)
+    if state.get("model_profile") != SMOKE_MODEL_PROFILE:
+        raise LlmctlError(
+            "active state is not the M8B smoke deployment: "
+            f"model_profile={state.get('model_profile')!r}"
+        )
+
+
+def state_compose_profile(state: dict[str, Any]) -> str | None:
+    if "compose_profile" in state:
+        value = state.get("compose_profile")
+        return str(value) if value else None
+    return expected_deployment(state)["compose_profile"] or None
 
 
 def state_compose_file(state: dict[str, Any]) -> Path:
@@ -602,11 +678,16 @@ def port_lines() -> str:
         return ""
 
 
+def port_lines_for(port: int) -> list[str]:
+    needle = f":{port}"
+    return [line for line in port_lines().splitlines() if needle in line]
+
+
 def port_30000_lines() -> list[str]:
-    return [line for line in port_lines().splitlines() if ":30000" in line]
+    return port_lines_for(30000)
 
 
-def endpoint_models_ok(endpoint: str) -> bool:
+def endpoint_models_ok(endpoint: str, expected_model: str = SMOKE_MODEL_PROFILE) -> bool:
     if skip_docker():
         return os.environ.get("LLMCTL_FAKE_ENDPOINT_OK") == "1"
     try:
@@ -619,46 +700,54 @@ def endpoint_models_ok(endpoint: str) -> bool:
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError):
         return False
     model_ids = [item.get("id") for item in data.get("data", [])]
-    return SMOKE_MODEL_PROFILE in model_ids
+    return expected_model in model_ids
 
 
-def localhost_bind_ok(lines: list[str]) -> bool:
+def localhost_bind_ok(lines: list[str], port: int = 30000) -> bool:
     if not lines:
         return False
     joined = "\n".join(lines)
-    if "0.0.0.0:30000" in joined or "[::]:30000" in joined:
+    if f"0.0.0.0:{port}" in joined or f"[::]:{port}" in joined:
         return False
-    return "127.0.0.1:30000" in joined
+    return f"127.0.0.1:{port}" in joined
 
 
 def state_stale_warnings(state: dict[str, Any]) -> list[str]:
+    expected = expected_deployment(state)
     status = str(state.get("status", "unknown"))
-    container_name = str(state.get("container_name", SMOKE_CONTAINER_NAME))
-    endpoint = str(state.get("endpoint", SMOKE_ENDPOINT))
+    container_name = str(state.get("container_name", expected["container_name"]))
+    endpoint = str(state.get("endpoint", expected["endpoint"]))
+    port = int(state.get("port", expected["port"]))
+    expected_model = str(state.get("served_model_name", expected["served_model_name"]))
     live_status, live_health = container_status(container_name)
-    listeners = port_30000_lines()
+    listeners = port_lines_for(port)
+    endpoint_ok = endpoint_models_ok(endpoint, expected_model)
     warnings: list[str] = []
     if status == "active":
         if live_status != "running":
             warnings.append(
                 f"active_state_stale: active.json says active but container is {live_status}"
             )
-        elif not endpoint_models_ok(endpoint):
+        elif not endpoint_ok:
             warnings.append("active_state_stale: endpoint /v1/models is not healthy")
-        if listeners and not localhost_bind_ok(listeners):
-            warnings.append("active_state_stale: port 30000 is not localhost-only")
+        if listeners and not localhost_bind_ok(listeners, port):
+            warnings.append(f"active_state_stale: port {port} is not localhost-only")
         if not listeners and live_status == "running":
-            warnings.append("active_state_stale: container running but port 30000 is not listening")
+            warnings.append(
+                f"active_state_stale: container running but port {port} is not listening"
+            )
     elif status == "stopped":
         if live_status == "running":
             warnings.append("active_state_stale: active.json says stopped but container is running")
         if listeners:
-            warnings.append("active_state_stale: active.json says stopped but port 30000 is listening")
+            warnings.append(
+                f"active_state_stale: active.json says stopped but port {port} is listening"
+            )
     print(f"live_container_status: {live_status}")
     if live_health:
         print(f"live_container_health: {live_health}")
-    print(f"live_port_30000: {'listening' if listeners else 'not_listening'}")
-    print(f"live_endpoint_models: {'ok' if endpoint_models_ok(endpoint) else 'not_ok'}")
+    print(f"live_port_{port}: {'listening' if listeners else 'not_listening'}")
+    print(f"live_endpoint_models: {'ok' if endpoint_ok else 'not_ok'}")
     return warnings
 
 
@@ -714,7 +803,8 @@ def cmd_status(_args: argparse.Namespace) -> int:
         print(f"active_status: {state.get('status', 'unknown')}")
         print("runtime_state_dir:", STATE_ROOT)
         print("active_state_dir:", ACTIVE_ROOT)
-        print("real_activation: available_for_m8b_smoke")
+        activation = "active_m9b_real_fast" if state.get("model_profile") == REAL_MODEL_PROFILE else "available_for_m8b_smoke"
+        print(f"real_activation: {activation}")
         for warning in warnings:
             print(f"WARN: {warning}")
         return print_active_state(state_file, state, include_live=False, warnings=warnings)
@@ -831,19 +921,19 @@ def ensure_lifecycle_preflight(
     lifecycle_host_checks(require_gpu=require_gpu)
     validate_smoke_state(state)
     compose_file = state_compose_file(state)
-    ensure_localhost_compose_bind(compose_file)
+    ensure_localhost_compose_bind(compose_file, state)
     if check_port:
         ensure_port_available_for_start(str(state.get("container_name", SMOKE_CONTAINER_NAME)))
     return compose_file
 
 
-def wait_for_stopped(container_name: str, timeout_seconds: int = 90) -> None:
+def wait_for_stopped(container_name: str, port: int = 30000, timeout_seconds: int = 90) -> None:
     if skip_docker():
         return
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
         live_status, _ = container_status(container_name)
-        if live_status != "running" and not port_30000_lines():
+        if live_status != "running" and not port_lines_for(port):
             return
         time.sleep(2)
     raise LlmctlError(f"container did not stop cleanly within {timeout_seconds}s")
@@ -852,8 +942,11 @@ def wait_for_stopped(container_name: str, timeout_seconds: int = 90) -> None:
 def wait_for_ready(state: dict[str, Any], timeout_seconds: int = START_TIMEOUT_SECONDS) -> None:
     if skip_docker():
         return
-    container_name = str(state.get("container_name", SMOKE_CONTAINER_NAME))
-    endpoint = str(state.get("endpoint", SMOKE_ENDPOINT))
+    expected = expected_deployment(state)
+    container_name = str(state.get("container_name", expected["container_name"]))
+    endpoint = str(state.get("endpoint", expected["endpoint"]))
+    port = int(state.get("port", expected["port"]))
+    expected_model = str(state.get("served_model_name", expected["served_model_name"]))
     deadline = time.monotonic() + timeout_seconds
     last_status = "unknown"
     while time.monotonic() < deadline:
@@ -861,37 +954,53 @@ def wait_for_ready(state: dict[str, Any], timeout_seconds: int = START_TIMEOUT_S
         last_status = f"{live_status}/{health}"
         if live_status in {"exited", "dead"}:
             raise LlmctlError(f"container exited during startup: {last_status}")
-        listeners = port_30000_lines()
-        if live_status == "running" and localhost_bind_ok(listeners) and endpoint_models_ok(endpoint):
+        listeners = port_lines_for(port)
+        if (
+            live_status == "running"
+            and localhost_bind_ok(listeners, port)
+            and endpoint_models_ok(endpoint, expected_model)
+        ):
             return
         time.sleep(5)
-    raise LlmctlError(f"smoke endpoint was not ready within {timeout_seconds}s; last status {last_status}")
+    raise LlmctlError(
+        f"endpoint was not ready within {timeout_seconds}s; last status {last_status}"
+    )
 
 
 def plan_lifecycle(command: str, state: dict[str, Any]) -> None:
-    compose_file = Path(str(state.get("compose_file") or SMOKE_COMPOSE_FILE))
-    container_name = state.get("container_name", SMOKE_CONTAINER_NAME)
-    print(f"DRY-RUN: would {command} M8B SGLang smoke deployment")
-    print(f"model_profile: {state.get('model_profile', SMOKE_MODEL_PROFILE)}")
-    print(f"runtime_profile: {state.get('runtime_profile', SMOKE_RUNTIME_PROFILE)}")
+    expected = expected_deployment(state)
+    compose_file = Path(str(state.get("compose_file") or expected["compose_file"]))
+    compose_profile = state_compose_profile(state)
+    profile_args = f" --profile {compose_profile}" if compose_profile else ""
+    container_name = state.get("container_name", expected["container_name"])
+    port = int(state.get("port", expected["port"]))
+    container_port = int(expected["container_port"])
+    print(f"DRY-RUN: would {command} {expected['label']}")
+    print(f"model_profile: {state.get('model_profile', expected['model_profile'])}")
+    print(f"runtime_profile: {state.get('runtime_profile', expected['runtime_profile'])}")
     print(f"container_name: {container_name}")
     print(f"compose_file: {compose_file}")
-    print(f"endpoint: {state.get('endpoint', SMOKE_ENDPOINT)}")
-    print("host_bind: 127.0.0.1:30000")
+    print(f"endpoint: {state.get('endpoint', expected['endpoint'])}")
+    print(f"host_bind: 127.0.0.1:{port}")
     if command == "start":
-        print(f"start_command: sudo -n docker compose -f {compose_file} --profile {SMOKE_COMPOSE_PROFILE} up -d")
+        print(f"start_command: sudo -n docker compose -f {compose_file}{profile_args} up -d")
         print("state_update: status=active started_at=<timestamp>")
     elif command == "stop":
-        print(f"stop_command: sudo -n docker compose -f {compose_file} --profile {SMOKE_COMPOSE_PROFILE} stop")
+        print(f"stop_command: sudo -n docker compose -f {compose_file}{profile_args} stop")
         print("state_update: status=stopped stopped_at=<timestamp>")
     elif command == "restart":
-        print(f"restart_stop_command: sudo -n docker compose -f {compose_file} --profile {SMOKE_COMPOSE_PROFILE} stop")
-        print(f"restart_start_command: sudo -n docker compose -f {compose_file} --profile {SMOKE_COMPOSE_PROFILE} up -d")
-        print("state_update: status=active restarted_at=<timestamp>")
+        if state.get("model_profile") == REAL_MODEL_PROFILE:
+            print("restart_yes_supported: false")
+            print("restart_yes_result: STOP: restart --yes is unsupported for the M9B real model until M9C review")
+        else:
+            print(f"restart_stop_command: sudo -n docker compose -f {compose_file}{profile_args} stop")
+            print(f"restart_start_command: sudo -n docker compose -f {compose_file}{profile_args} up -d")
+            print("state_update: status=active restarted_at=<timestamp>")
     elif command == "deactivate":
-        print(f"deactivate_command: sudo -n docker compose -f {compose_file} --profile {SMOKE_COMPOSE_PROFILE} down")
+        print(f"deactivate_command: sudo -n docker compose -f {compose_file}{profile_args} down")
         print(f"archive_target: {ACTIVE_HISTORY_ROOT}/active-YYYYMMDD-HHMMSS.json")
         print("state_update: active.json moved to history")
+    print(f"container_internal_port: {container_port}")
     print("model_file_deletion: none")
     print("image_deletion: none")
     print("docker_prune: never")
@@ -907,7 +1016,7 @@ def cmd_start(args: argparse.Namespace) -> int:
     compose_file = ensure_lifecycle_preflight(state, require_gpu=True, check_port=True)
     ensure_model_files_exist()
     if not skip_docker():
-        run_passthrough(compose_cmd(compose_file, "up", "-d"))
+        run_passthrough(compose_cmd(compose_file, "up", "-d", profile=state_compose_profile(state)))
         wait_for_ready(state)
     updated = update_active_state(state, status="active", started_at=utc_timestamp())
     print("PASS: smoke deployment started")
@@ -923,8 +1032,8 @@ def cmd_stop(args: argparse.Namespace) -> int:
         return 2
     compose_file = ensure_lifecycle_preflight(state, require_gpu=False, check_port=False)
     if not skip_docker():
-        run_passthrough(compose_cmd(compose_file, "stop"))
-        wait_for_stopped(str(state.get("container_name", SMOKE_CONTAINER_NAME)))
+        run_passthrough(compose_cmd(compose_file, "stop", profile=state_compose_profile(state)))
+        wait_for_stopped(str(state.get("container_name", SMOKE_CONTAINER_NAME)), int(state.get("port", SMOKE_PORT)))
     updated = update_active_state(state, status="stopped", stopped_at=utc_timestamp())
     print("PASS: smoke deployment stopped")
     return print_active_state(ACTIVE_FILE, updated)
@@ -937,11 +1046,18 @@ def cmd_restart(args: argparse.Namespace) -> int:
         return 0
     if not require_yes(args, "restart"):
         return 2
+    if state.get("model_profile") == REAL_MODEL_PROFILE:
+        eprint(
+            "STOP: restart --yes is unsupported for the M9B real model until "
+            "M9C lifecycle/benchmark review; use stop --yes only if a human "
+            "explicitly wants to stop it"
+        )
+        return 2
     compose_file = ensure_lifecycle_preflight(state, require_gpu=True, check_port=False)
     if not skip_docker():
-        run_passthrough(compose_cmd(compose_file, "stop"))
-        wait_for_stopped(str(state.get("container_name", SMOKE_CONTAINER_NAME)))
-        run_passthrough(compose_cmd(compose_file, "up", "-d"))
+        run_passthrough(compose_cmd(compose_file, "stop", profile=state_compose_profile(state)))
+        wait_for_stopped(str(state.get("container_name", SMOKE_CONTAINER_NAME)), int(state.get("port", SMOKE_PORT)))
+        run_passthrough(compose_cmd(compose_file, "up", "-d", profile=state_compose_profile(state)))
         wait_for_ready(state)
     updated = update_active_state(state, status="active", restarted_at=utc_timestamp())
     print("PASS: smoke deployment restarted")
@@ -957,8 +1073,8 @@ def cmd_deactivate(args: argparse.Namespace) -> int:
         return 2
     compose_file = ensure_lifecycle_preflight(state, require_gpu=False, check_port=False)
     if not skip_docker():
-        run_passthrough(compose_cmd(compose_file, "down"))
-        wait_for_stopped(str(state.get("container_name", SMOKE_CONTAINER_NAME)))
+        run_passthrough(compose_cmd(compose_file, "down", profile=state_compose_profile(state)))
+        wait_for_stopped(str(state.get("container_name", SMOKE_CONTAINER_NAME)), int(state.get("port", SMOKE_PORT)))
     ACTIVE_HISTORY_ROOT.mkdir(parents=True, exist_ok=True)
     archive = ACTIVE_HISTORY_ROOT / f"active-{compact_timestamp()}.json"
     state_file.replace(archive)
@@ -989,7 +1105,7 @@ def cmd_logs(args: argparse.Namespace) -> int:
     if active is None:
         raise LlmctlError("active state missing; no active container logs to inspect")
     _, state = active
-    validate_smoke_state(state)
+    validate_supported_state(state)
     container_name = str(state.get("container_name", SMOKE_CONTAINER_NAME))
     if skip_docker():
         print("SKIP: docker logs skipped for fixture mode")

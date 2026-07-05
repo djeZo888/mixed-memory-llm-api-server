@@ -1,34 +1,86 @@
 # SGLang First Real Fast Model Plan
 
-M9A plans the first real fast-model deployment after the live SGLang smoke service. It is planning/dry-run only. It does not download `Qwen/Qwen3-30B-A3B-Instruct-2507`, pull Docker images, stop smoke, start containers, expose an API, install packages, or modify Docker/containerd.
+M9A planned the first real fast-model deployment after the live SGLang smoke service. M9B has now deployed `Qwen/Qwen3-30B-A3B-Instruct-2507` locally on SGLang while keeping public exposure absent.
+
+## M9B Actual Result
+
+M9B deployed the first real fast model successfully on branch `milestone/m9b-first-real-fast-model-deploy`.
+
+- Active model: `Qwen/Qwen3-30B-A3B-Instruct-2507`.
+- Served model name: `qwen3-30b-a3b-instruct-2507`.
+- Runtime: SGLang in Docker image `lmsysorg/sglang:v0.5.14-cu130`.
+- Local model path: `/data/models/qwen3-30b-a3b-instruct-2507`.
+- Endpoint: `http://127.0.0.1:30001/v1`.
+- Host bind: `127.0.0.1:30001` only.
+- Runtime compose file: `/data/services/llm-manager/compose/sglang-qwen3-30b.compose.yml`.
+- Active state file: `/data/services/llm-manager/active/active.json`.
+- Launch args: `--tp 2 --context-length 32768 --mem-fraction-static 0.75`.
+- Smoke model was stopped but preserved at `/data/models/qwen3-0.6b-smoke`.
+- `/v1/models`, non-streaming chat, streaming chat, and a technical PCIe passthrough prompt passed.
+- Public API exposure remains absent; no firewall, Caddy, reverse proxy, TLS, auth, or front-door service was added.
+
+Query the local endpoint:
+
+```bash
+curl -fsS http://127.0.0.1:30001/v1/models
+curl -fsS http://127.0.0.1:30001/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"qwen3-30b-a3b-instruct-2507","messages":[{"role":"user","content":"Reply with one short sentence."}],"max_tokens":64,"temperature":0}'
+```
+
+Inspect logs and state:
+
+```bash
+scripts/llmctl active
+scripts/llmctl status
+scripts/llmctl logs --dry-run
+scripts/llmctl logs --yes
+sudo -n docker logs --tail 200 sglang-qwen3-30b-a3b-instruct-2507
+```
+
+Lifecycle support after M9B:
+
+```bash
+scripts/llmctl stop --dry-run
+scripts/llmctl stop --yes
+scripts/llmctl restart --dry-run
+```
+
+`restart --dry-run` documents the intended refusal for the real model. `restart --yes` remains unsupported for the real model until M9C lifecycle/benchmark review. Use `stop --yes` only when a human explicitly wants to stop the active real backend.
+
+Run live verification:
+
+```bash
+scripts/sglang/verify-sglang-real-fast-live.sh
+```
 
 ## Current Baseline
 
-- Active smoke model: `qwen3-0.6b-smoke`
+- Active real model: `qwen3-30b-a3b-instruct-2507`
 - Runtime: SGLang
-- Active endpoint: `http://127.0.0.1:30000/v1`
-- Bind: `127.0.0.1:30000` only
+- Active endpoint: `http://127.0.0.1:30001/v1`
+- Bind: `127.0.0.1:30001` only
 - Active image: `lmsysorg/sglang:v0.5.14-cu130`
-- Active model path: `/data/models/qwen3-0.6b-smoke`
-- M9A context-sync result: PASS
+- Active model path: `/data/models/qwen3-30b-a3b-instruct-2507`
+- M9B result: PASS on branch `milestone/m9b-first-real-fast-model-deploy`
 
-The smoke service remains running during M9A. M9B must stop it through `scripts/llmctl stop --yes` only after human approval.
+The smoke service is stopped but its model files and image are preserved.
 
 ## Recommendation
 
-Recommended M9B primary model:
+M9B primary model:
 
 ```text
 Qwen/Qwen3-30B-A3B-Instruct-2507
 ```
 
-Planned local path:
+Actual local path:
 
 ```text
 /data/models/qwen3-30b-a3b-instruct-2507
 ```
 
-Planned first real endpoint:
+Actual first real endpoint:
 
 ```text
 http://127.0.0.1:30001/v1
@@ -53,18 +105,18 @@ Template:
 configs/compose/compose.sglang-qwen3-30b.template.yml
 ```
 
-Initial conservative launch settings:
+M9B actual conservative launch settings:
 
 ```text
 image: lmsysorg/sglang:v0.5.14-cu130
 host bind: 127.0.0.1:30001:30000
 model path: /data/models/qwen3-30b-a3b-instruct-2507
-context length: 32768
-max running requests: 1
-mem fraction static: 0.70
+tensor parallelism: --tp 2
+context length: --context-length 32768
+memory fraction: --mem-fraction-static 0.75
 ```
 
-M9A keeps the full SGLang image used successfully by M8B/M8C. SGLang docs publish Docker images under `lmsysorg/sglang` and state CUDA 13 is the default environment. The smaller runtime image is not selected here because M8B found the pinned runtime variant missing the `distro` dependency in this environment.
+M9B used the full SGLang image already verified by M8B/M8C. SGLang docs publish Docker images under `lmsysorg/sglang` and state CUDA 13 is the default environment. The smaller runtime image is not selected here because M8B found the pinned runtime variant missing the `distro` dependency in this environment.
 
 ## M9B Sequence
 
@@ -101,4 +153,4 @@ M9A keeps the full SGLang image used successfully by M8B/M8C. SGLang docs publis
 
 ## M9A Boundary
 
-PASS for planning only. STOP for actual download/deployment until human review.
+M9A was planning-only. M9B has now completed the approved actual download/deployment on the milestone branch and should be reviewed before merge.
