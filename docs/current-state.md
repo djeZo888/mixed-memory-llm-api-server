@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M8A merged into `main`; M8B deployed on branch `milestone/m8b-sglang-smoke-deploy` after full-image remediation
+- Project state: M0-M8B merged into `main`; M8B smoke backend is active locally after full-image remediation
 
 ## Git Attribution
 
@@ -48,6 +48,8 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M7B main merge report: `reports/m7b-main-merge.md`
 - M8A SGLang smoke deployment plan: merged into `main`; planning/dry-run only, report is `reports/m8a-sglang-smoke-plan.md`
 - M8A main merge report: `reports/m8a-main-merge.md`
+- M8B SGLang smoke deployment: merged into `main` after full-image remediation; report is `reports/m8b-sglang-smoke-deploy.md`
+- M8B main merge report: `reports/m8b-main-merge.md`
 
 ## Current Storage
 
@@ -216,6 +218,10 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 ## Current M8B Result
 
 - M8B branch: `milestone/m8b-sglang-smoke-deploy`.
+- M8B source commit: `e204955f9268a2124f0590c80a30e1f0ad8b6fa2`.
+- M8B merged into `main` with merge commit `2330b8b432243cea6ddc6effc1fb60065d7d1759`.
+- M8B main merge report: `reports/m8b-main-merge.md`.
+- Pre-M9 handoff: `docs/pre-m9-handoff.md`.
 - M8B report: `reports/m8b-sglang-smoke-deploy.md`.
 - Result: PASS after remediation.
 - The linux/amd64 digest for `lmsysorg/sglang:v0.5.14-cu130-runtime` was re-verified as `sha256:344f361284ba3514d0c93fb7c810f4cdbf89c789117cb51ebea8497d2c8ed101`.
@@ -231,6 +237,8 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - Container `sglang-smoke-qwen3-0.6b` is running and healthy from image `lmsysorg/sglang:v0.5.14-cu130`.
 - Active model/backend: `qwen3-0.6b-smoke` on SGLang.
 - Endpoint: `http://127.0.0.1:30000/v1`.
+- Bind: `127.0.0.1` only.
+- Image: `lmsysorg/sglang:v0.5.14-cu130`.
 - Model path: `/data/models/qwen3-0.6b-smoke`.
 - `/health` returned HTTP 200.
 - `/v1/models` returned `qwen3-0.6b-smoke`.
@@ -240,14 +248,15 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - No public API exposure was configured.
 - No first real model, Qwen3-30B, or larger model was downloaded.
 - No host SGLang, PyTorch, CUDA Toolkit, KTransformers, vLLM, ik_llama, or unrelated backend install occurred.
-- The runtime image `lmsysorg/sglang:v0.5.14-cu130-runtime` is known-broken for this smoke path until upstream fixes the missing `distro` dependency and it is re-verified.
+- The runtime image `lmsysorg/sglang:v0.5.14-cu130-runtime` is currently rejected for this smoke path because it is missing the `distro` dependency; do not reuse it until upstream fixes the issue and the image is re-verified.
 - Root-disk guard, Docker storage verifier, and GPU container verifier passed after remediation.
 
 ## Next Recommended Milestone
 
-- Human review, then merge M8B into `main` if accepted.
-- M8C optional stop/deactivate policy if the human wants a focused runtime-control milestone.
-- M9A first real fast-model planning only after M8B is reviewed and merged.
+- M8B is merged into `main`; the smoke backend remains active for local verification.
+- Decide whether to keep the smoke backend running, add a real deactivate flow in M8C, or plan M9A.
+- M8C is optional smoke lifecycle/deactivate policy if the human wants a focused runtime-control milestone.
+- M9A first real fast-model planning starts only after human review of the merged M8B state.
 
 ## Carry-Forward Operational Warnings
 
@@ -296,9 +305,11 @@ Future sessions should read:
 - `reports/m8a-sglang-smoke-plan.md` if present
 - `reports/m8a-main-merge.md` if present
 - `docs/sglang-smoke-deployment.md` if present
+- `docs/pre-m9-handoff.md` if present
+- `reports/m8b-main-merge.md` if present
 - `docs/pre-m8b-handoff.md` if present
 - `docs/pre-m8-handoff.md` if present
 - `reports/m4b-main-merge.md`
 - Latest reports
 
-Then continue with M8B actual localhost-only SGLang smoke deployment only after human review.
+Then choose M8C smoke lifecycle/deactivate policy or M9A first real fast-model planning after human review.
