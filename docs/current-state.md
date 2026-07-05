@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M9A merged into `main`; M9B branch deploys the first real fast model locally. Active backend is `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only.
+- Project state: M0-M9B merged into `main`. Active backend is `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. Public API exposure is still not configured; M9C benchmark/lifecycle/resource review is next before M10 API/front-door/auth planning.
 
 ## Git Attribution
 
@@ -54,7 +54,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M8C main merge report: `reports/m8c-main-merge.md`
 - M9A first real fast-model plan: merged into `main`; report is `reports/m9a-first-real-fast-model-plan.md`
 - M9A main merge report: `reports/m9a-main-merge.md`
-- M9B first real fast-model deployment: branch `milestone/m9b-first-real-fast-model-deploy`; report is `reports/m9b-first-real-fast-model-deploy.md`
+- M9B first real fast-model deployment: merged into `main`; deployment report is `reports/m9b-first-real-fast-model-deploy.md`; main merge report is `reports/m9b-main-merge.md`
 
 ## Current Storage
 
@@ -315,7 +315,10 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 - M9B branch: `milestone/m9b-first-real-fast-model-deploy`.
 - M9B report: `reports/m9b-first-real-fast-model-deploy.md`.
-- Result: PASS on the branch; human review and merge to `main` are next.
+- M9B source commit: `4fb333a649d5e0169d616fd3b1c1980b7b0ac15d`.
+- M9B merged into `main` with merge commit `c33d09d31bba66f6a0af2bb4c8b9b451887adbe0`.
+- M9B main merge report: `reports/m9b-main-merge.md`.
+- Result: PASS and merged; the first real model is active locally.
 - Smoke backend was stopped cleanly through `scripts/llmctl stop --yes`.
 - Smoke model files remain preserved at `/data/models/qwen3-0.6b-smoke` (`1.5G`).
 - First real model downloaded: `Qwen/Qwen3-30B-A3B-Instruct-2507` only.
@@ -338,10 +341,10 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 ## Next Recommended Milestone
 
-- Human review, then merge M9B into `main` if PASS.
-- After merge, choose M9C first real model lifecycle/benchmark review or M10 API/front-door/auth planning.
-- M9C should benchmark and harden lifecycle behavior for the active 30B model before enabling `restart --yes` for the real model.
-- M10 should remain planning-only for API/front-door/auth until a separate implementation milestone approves exposure.
+- M9C benchmark/lifecycle/resource review for the active 30B model is next.
+- M9C should benchmark latency/throughput/context behavior, review resource usage and logs, and harden lifecycle behavior before enabling `restart --yes` for the real model.
+- M10 API/front-door/auth planning should wait until after M9C review.
+- Public API exposure remains unconfigured and blocked until a separate approved implementation milestone.
 
 ## Carry-Forward Operational Warnings
 
@@ -398,6 +401,9 @@ Future sessions should read:
 - `reports/m9a-first-real-fast-model-plan.md` if present
 - `reports/m9a-main-merge.md` if present
 - `docs/pre-m9b-handoff.md` if present
+- `reports/m9b-first-real-fast-model-deploy.md` if present
+- `reports/m9b-main-merge.md` if present
+- `docs/pre-m9c-handoff.md` if present
 - Latest reports
 
-Then continue with human review and merge of M9B if PASS, or M9C/M10 planning after merge.
+Then continue with M9C benchmark/lifecycle/resource review before M10 API/front-door/auth planning.

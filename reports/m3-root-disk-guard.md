@@ -1,11 +1,11 @@
 # M3 Root-Disk Guard Report
 
 - Milestone ID: M3
-- Timestamp: 2026-07-05T15:26:37+00:00
+- Timestamp: 2026-07-05T17:28:14+00:00
 - Hostname: llmserver
 - User: user
-- Branch: milestone/m9b-first-real-fast-model-deploy
-- Commit before work: 8e7ed7a1aa39202359d3b40d6433a2315dfc771e
+- Branch: main
+- Commit before work: c33d09d31bba66f6a0af2bb4c8b9b451887adbe0
 - Root path inspected: `/`
 - Data path checked/excluded: `/data`
 - Sudo coverage: sudo -n available for read-only inspection
@@ -65,7 +65,7 @@ XDG_CACHE_HOME=/data/hf-cache/xdg
 
 | Path | Source | Fstype | Label | UUID/identity | Free GiB |
 | --- | --- | --- | --- | --- | --- |
-| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785643` | 4 |
+| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785641` | 4 |
 | `/data` | `/dev/sdb1` | `ext4` | `AI_DATA` | `8daf56f1-5649-4163-9d87-919c2d271875` | 1789 |
 
 ## Root Free Space Thresholds
