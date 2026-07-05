@@ -58,3 +58,16 @@ M8A proposes the pinned runtime image `lmsysorg/sglang:v0.5.14-cu130-runtime` fo
 - M7B is dry-run/planning only; real downloads and activation remain blocked.
 - Do not use `latest` images or unpinned commits in implementation milestones.
 - Do not attempt 1M context first on any model. Start at 4K/32K for smoke, then 128K, and only then 262K if memory is stable.
+
+
+## M9A First Real Fast-Model Plan
+
+M9A keeps `Qwen/Qwen3-30B-A3B-Instruct-2507` as the recommended first real fast model. Current Hugging Face metadata reports 16 safetensors totaling 61.07 GB decimal / 56.87 GiB. The model card lists Apache-2.0 license, 30.5B total parameters, 3.3B active parameters, 262,144 native context, non-thinking-only behavior, and SGLang/vLLM deployment guidance.
+
+`Qwen/Qwen3.6-35B-A3B` is now tracked as a higher-quality fast follow-up profile. It is Apache-2.0, 35B total / 3B active, about 71.90 GB decimal / 66.97 GiB safetensors, multimodal/hybrid GDN, and should be tested text-only first because SGLang docs require `sglang>=0.5.10` and recommend careful memory/context settings.
+
+`Qwen/Qwen3-30B-A3B-Thinking-2507` is now tracked as a reasoning follow-up profile. It shares the primary model footprint but is thinking-only, so M9B should not use it as the first low-risk real deployment.
+
+`Qwen/Qwen3-Coder-30B-A3B-Instruct` remains the coding-specific fallback candidate if human review decides coding quality is more important than the lowest-risk first real path.
+
+Planned M9B primary path: download `Qwen/Qwen3-30B-A3B-Instruct-2507` only to `/data/models/qwen3-30b-a3b-instruct-2507`, keep cache under `/data/hf-cache`, use the verified full SGLang image `lmsysorg/sglang:v0.5.14-cu130`, bind only to `127.0.0.1:30001`, start at 32K context and one running request, then scale context only after VRAM/RAM checks pass. M9A remains planning-only and does not approve downloads, image pulls, container starts, smoke stop, or API exposure.

@@ -76,9 +76,9 @@ M9A first real fast-model planning/dry-run is next.
 
 ## M9 fast technical/coding model
 
-M9A is planning/dry-run only. It should plan the first real fast-model path for `Qwen/Qwen3-30B-A3B-Instruct-2507`, compare relevant first real fast-model candidates, and define storage, runtime, image, digest, download, benchmark, rollback, and guard steps. M9A must not download the first real model or pull new backend images.
+M9A first real fast-model planning/dry-run is implemented on branch `milestone/m9a-first-real-fast-model-plan`. It compares current first real fast candidates, keeps SGLang as the preferred backend, and recommends `Qwen/Qwen3-30B-A3B-Instruct-2507` as the M9B primary model. M9A remains planning-only: no real model download, Docker image pull, new runtime container, smoke stop, Docker/containerd change, package install, or public API exposure.
 
-M9B is the later actual first real fast-model deployment milestone after human review of M9A. M9B may deploy and benchmark the selected model through the localhost API, recording throughput, context stability, RAM, VRAM, startup time, and failure modes. Later compare `Qwen/Qwen3.6-35B-A3B` in text-only mode and `Qwen/Qwen3-Coder-30B-A3B-Instruct` if the human prioritizes coding-specific quality.
+M9B is the later actual first real fast-model deployment milestone after human review of M9A. M9B should stop the smoke backend through `scripts/llmctl`, download the selected real model only to `/data/models`, start the real SGLang profile on a localhost-only port, run `/v1/models` and chat tests, and record throughput, context stability, RAM, VRAM, startup time, and failure modes. Later compare `Qwen/Qwen3.6-35B-A3B` in text-only mode and `Qwen/Qwen3-Coder-30B-A3B-Instruct` if the human prioritizes coding-specific quality.
 
 ## M10 larger model benchmarks
 
