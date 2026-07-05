@@ -29,8 +29,9 @@ done
 COMPOSE="configs/compose/compose.sglang-smoke.template.yml"
 ENV_EXAMPLE="configs/sglang/smoke.env.example"
 REPORT="reports/m8a-sglang-smoke-plan.md"
+M8B_REPORT="reports/m8b-sglang-smoke-deploy.md"
 DOC="docs/sglang-smoke-deployment.md"
-PROPOSED_IMAGE="lmsysorg/sglang:v0.5.14-cu130-runtime"
+PROPOSED_IMAGE="lmsysorg/sglang:v0.5.14-cu130"
 
 [[ -f "$COMPOSE" ]] || fail "$COMPOSE missing"
 [[ -f "$ENV_EXAMPLE" ]] || fail "$ENV_EXAMPLE missing"
@@ -47,7 +48,7 @@ for path in /data/models /data/hf-cache /data/logs /data/models/qwen3-0.6b-smoke
   grep -Fq "$path" "$COMPOSE" "$ENV_EXAMPLE" "$REPORT" "$DOC" || fail "missing planned path reference: $path"
 done
 
-grep -Fq "$PROPOSED_IMAGE" "$REPORT" || fail "report does not record proposed pinned SGLang image"
+grep -Fq "$PROPOSED_IMAGE" "$M8B_REPORT" "$DOC" "$ENV_EXAMPLE" || fail "M8B docs/config do not record remediation pinned SGLang image"
 grep -Fq "$PROPOSED_IMAGE" "$DOC" || fail "deployment doc does not record proposed pinned SGLang image"
 if grep -En 'lmsysorg/sglang:(latest|latest-runtime)$|SGLANG_IMAGE_TAG=.*latest' "$COMPOSE" "$ENV_EXAMPLE" "$REPORT" "$DOC"; then
   fail "latest SGLang image tag found where a pinned tag is required"
@@ -61,10 +62,15 @@ fi
 
 active="$(scripts/llmctl active)"
 echo "$active"
-[[ "$active" == "active: none" ]] || fail "llmctl reports active backend"
+if [[ "$active" != "active: none" ]]; then
+  grep -q '^model_profile: qwen3-0.6b-smoke$' <<<"$active" || fail "unexpected active model"
+  grep -q '^runtime_profile: sglang$' <<<"$active" || fail "unexpected active runtime"
+  grep -q '^bind: 127.0.0.1$' <<<"$active" || fail "active runtime is not localhost-bound"
+  grep -q '^port: 30000$' <<<"$active" || fail "active runtime is not on port 30000"
+fi
 
-if sudo -n docker ps --format '{{.Image}} {{.Names}} {{.Command}}' 2>/dev/null | grep -Ei 'sglang|qwen3-0\.6b-smoke'; then
-  fail "SGLang or smoke-model container is already running"
+if sudo -n docker ps --format '{{.Names}}' 2>/dev/null | grep -Ei 'sglang|qwen3-0\.6b-smoke'; then
+  [[ "$active" != "active: none" ]] || fail "SGLang or smoke-model container is already running without active state"
 fi
 
 echo "PASS: SGLang smoke plan verification passed"

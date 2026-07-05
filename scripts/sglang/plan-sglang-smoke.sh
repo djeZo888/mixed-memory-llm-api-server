@@ -104,7 +104,7 @@ bind_address: 127.0.0.1
 container_host: 0.0.0.0 inside container only
 port: 30000
 compose_template: configs/compose/compose.sglang-smoke.template.yml
-proposed_sglang_image: lmsysorg/sglang:v0.5.14-cu130-runtime
+proposed_sglang_image: lmsysorg/sglang:v0.5.14-cu130
 
 planned_m8b_steps:
   1. create /data/models/qwen3-0.6b-smoke

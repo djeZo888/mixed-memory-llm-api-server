@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M8A merged into `main`
+- Project state: M0-M8A merged into `main`; M8B deployed on branch `milestone/m8b-sglang-smoke-deploy` after full-image remediation
 
 ## Git Attribution
 
@@ -213,18 +213,41 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - No backend is running from M8A.
 - No API was exposed by M8A.
 
+## Current M8B Result
+
+- M8B branch: `milestone/m8b-sglang-smoke-deploy`.
+- M8B report: `reports/m8b-sglang-smoke-deploy.md`.
+- Result: PASS after remediation.
+- The linux/amd64 digest for `lmsysorg/sglang:v0.5.14-cu130-runtime` was re-verified as `sha256:344f361284ba3514d0c93fb7c810f4cdbf89c789117cb51ebea8497d2c8ed101`.
+- The pinned image was pulled successfully; Docker stores the tag under repo digest `lmsysorg/sglang@sha256:9e436f44523e9f53519c6175fefd1e0d373322bf54b8154bb331a2f5e4840ad2`.
+- `Qwen/Qwen3-0.6B` was downloaded to `/data/models/qwen3-0.6b-smoke`.
+- Downloaded smoke model size: `1.5G`.
+- Initial failure: the runtime image Python environment raised `ModuleNotFoundError: No module named 'distro'` while importing `openai` during `python3 -m sglang.launch_server`.
+- Remediation: human review approved switching to the full image `lmsysorg/sglang:v0.5.14-cu130`.
+- Full image linux/amd64 manifest digest verified: `sha256:9611bd4c5624b0e9e17829506188a12f17205f2083de0dd44d6c521733553a50`.
+- Full image import gate passed for `distro`, `openai`, and `sglang.srt.entrypoints.openai.protocol`.
+- Runtime compose file exists outside Git at `/data/services/llm-manager/compose/sglang-smoke.compose.yml`.
+- The compose file publishes only `127.0.0.1:30000:30000` and rendered config showed `host_ip: 127.0.0.1`.
+- Container `sglang-smoke-qwen3-0.6b` is running and healthy from image `lmsysorg/sglang:v0.5.14-cu130`.
+- Active model/backend: `qwen3-0.6b-smoke` on SGLang.
+- Endpoint: `http://127.0.0.1:30000/v1`.
+- Model path: `/data/models/qwen3-0.6b-smoke`.
+- `/health` returned HTTP 200.
+- `/v1/models` returned `qwen3-0.6b-smoke`.
+- Non-streaming chat completion smoke passed.
+- Streaming chat completion smoke passed with SSE chunks and `[DONE]`.
+- `/data/services/llm-manager/active/active.json` records the active smoke backend and contains no secrets.
+- No public API exposure was configured.
+- No first real model, Qwen3-30B, or larger model was downloaded.
+- No host SGLang, PyTorch, CUDA Toolkit, KTransformers, vLLM, ik_llama, or unrelated backend install occurred.
+- The runtime image `lmsysorg/sglang:v0.5.14-cu130-runtime` is known-broken for this smoke path until upstream fixes the missing `distro` dependency and it is re-verified.
+- Root-disk guard, Docker storage verifier, and GPU container verifier passed after remediation.
+
 ## Next Recommended Milestone
 
-- M8B actual localhost-only SGLang smoke deployment.
-- M8B may download `Qwen/Qwen3-0.6B` to `/data/models/qwen3-0.6b-smoke` only.
-- M8B may pull `lmsysorg/sglang:v0.5.14-cu130-runtime` only after verifying the linux/amd64 digest.
-- M8B may start the SGLang smoke container bound only to `127.0.0.1:30000`.
-- M8B may run local OpenAI-compatible API smoke tests.
-- M8B must not expose API publicly.
-- M8B must not bind the host to `0.0.0.0`.
-- M8B must not install unrelated backends.
-- M8B must not select or download the first real model yet.
-- M9 remains the first real fast-model path only after M8B is reviewed and merged.
+- Human review, then merge M8B into `main` if accepted.
+- M8C optional stop/deactivate policy if the human wants a focused runtime-control milestone.
+- M9A first real fast-model planning only after M8B is reviewed and merged.
 
 ## Carry-Forward Operational Warnings
 
