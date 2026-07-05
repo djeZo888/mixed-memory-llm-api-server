@@ -52,6 +52,8 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M8B main merge report: `reports/m8b-main-merge.md`
 - M8C smoke lifecycle manager: merged into `main`; report is `reports/m8c-smoke-lifecycle-manager.md`
 - M8C main merge report: `reports/m8c-main-merge.md`
+- M9A first real fast-model plan: merged into `main`; report is `reports/m9a-first-real-fast-model-plan.md`
+- M9A main merge report: `reports/m9a-main-merge.md`
 
 ## Current Storage
 
@@ -285,27 +287,36 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - No models were downloaded, no Docker images were pulled, and no host backend packages were installed by M8C.
 
 
-## Current M9A Branch Result
+## Current M9A Result
 
 - M9A branch: `milestone/m9a-first-real-fast-model-plan`.
-- M9A report: `reports/m9a-first-real-fast-model-plan.md`.
-- Result: PASS for planning only; STOP for actual download/deployment until human review.
-- Context-sync before branching passed on `llmserver` in `/data/services/mixed-memory-llm-api-server`.
-- The live smoke backend remained active, healthy, and localhost-only at `http://127.0.0.1:30000/v1`.
+- M9A source commit: `670e1349e18f33cd004a8f49fe63ddb16bd987ca`.
+- M9A merged into `main` with merge commit `e04385fe096ee3d2ed0e41e28f8c3feaf11312b2`.
+- M9A planning report: `reports/m9a-first-real-fast-model-plan.md`.
+- M9A main merge report: `reports/m9a-main-merge.md`.
+- Result: PASS and merged. STOP for actual download/deployment until M9B human approval.
+- Context-sync before M9A branch creation passed on `llmserver` in `/data/services/mixed-memory-llm-api-server`.
+- M9A merge validation passed with the live smoke backend active, healthy, and localhost-only at `http://127.0.0.1:30000/v1`.
 - Recommended M9B primary model: `Qwen/Qwen3-30B-A3B-Instruct-2507`.
+- Fallback model after human review if coding-specific quality is needed: `Qwen/Qwen3-Coder-30B-A3B-Instruct`.
 - Planned M9B local path: `/data/models/qwen3-30b-a3b-instruct-2507`.
 - Planned first real bind: `127.0.0.1:30001:30000`.
 - Planned SGLang image: `lmsysorg/sglang:v0.5.14-cu130`.
-- Fallback model after human review if coding-specific quality is needed: `Qwen/Qwen3-Coder-30B-A3B-Instruct`.
-- M9A added profiles for `qwen3.6-35b-a3b` and `qwen3-30b-a3b-thinking-2507` for comparison, but did not approve their download.
-- No first real model was downloaded, no Docker image was pulled, no new backend container was started, and smoke was not stopped.
+- First real model has not been downloaded yet.
+- No first real Docker image pull or real-model/backend container run has occurred.
+- Smoke remains active: `qwen3-0.6b-smoke` on SGLang at `http://127.0.0.1:30000/v1`.
+- M9B must run in a fresh Codex context.
+- M9B may stop smoke through `scripts/llmctl` only after explicit human approval.
+- M9B must not expose a public API or bind the host to `0.0.0.0`.
+- M9B must preserve Docker/containerd storage policy and `/data` guardrails.
 
 ## Next Recommended Milestone
 
-- Human review of M9A is next.
-- After review, M9B may perform the actual first real fast-model deployment for `Qwen/Qwen3-30B-A3B-Instruct-2507`.
+- Start a fresh Codex context for M9B actual first real fast-model deployment.
+- M9B approved target: `Qwen/Qwen3-30B-A3B-Instruct-2507`.
+- M9B approved local path: `/data/models/qwen3-30b-a3b-instruct-2507`.
 - The smoke backend remains active for local verification at `http://127.0.0.1:30000/v1` until M9B is explicitly approved to stop it through `scripts/llmctl`.
-- M9B must download only to `/data/models`, keep cache under `/data/hf-cache`, use a localhost-only bind, and preserve the no-public-API boundary.
+- M9B must download only the approved model to `/data/models`, keep cache under `/data/hf-cache`, use a localhost-only bind, and preserve the no-public-API boundary.
 
 ## Carry-Forward Operational Warnings
 
@@ -359,6 +370,9 @@ Future sessions should read:
 - `docs/pre-m8b-handoff.md` if present
 - `docs/pre-m8-handoff.md` if present
 - `reports/m4b-main-merge.md`
+- `reports/m9a-first-real-fast-model-plan.md` if present
+- `reports/m9a-main-merge.md` if present
+- `docs/pre-m9b-handoff.md` if present
 - Latest reports
 
 Then continue with M9A first real fast-model planning/dry-run.

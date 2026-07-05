@@ -72,22 +72,20 @@ Completed and merged into `main` after remediation. The first attempt with `lmsy
 
 Completed and merged into `main`. M8C adds reviewed `llmctl` lifecycle commands for the existing SGLang smoke deployment: status, active, logs, stop, start, restart, and deactivate. Mutating commands require `--yes`, preserve model files and Docker images, keep the backend localhost-only, and keep `active.json` consistent. M8C performs no model downloads, image pulls, host package installs, public API exposure, Docker/containerd daemon changes, or systemd service creation. `reports/m8c-main-merge.md` records the main merge.
 
-M9A first real fast-model planning/dry-run is next.
-
 ## M9 fast technical/coding model
 
-M9A first real fast-model planning/dry-run is implemented on branch `milestone/m9a-first-real-fast-model-plan`. It compares current first real fast candidates, keeps SGLang as the preferred backend, and recommends `Qwen/Qwen3-30B-A3B-Instruct-2507` as the M9B primary model. M9A remains planning-only: no real model download, Docker image pull, new runtime container, smoke stop, Docker/containerd change, package install, or public API exposure.
+M9A first real fast-model planning/dry-run is complete and merged into `main`. M9A produced `reports/m9a-first-real-fast-model-plan.md`; `reports/m9a-main-merge.md` records the main merge. It recommends `Qwen/Qwen3-30B-A3B-Instruct-2507` as the M9B primary model, with `Qwen/Qwen3-Coder-30B-A3B-Instruct` as the coding-specific fallback after review. M9A remained planning-only: no real model download, Docker image pull, new runtime container, smoke stop, Docker/containerd change, package install, or public API exposure.
 
-M9B is the later actual first real fast-model deployment milestone after human review of M9A. M9B should stop the smoke backend through `scripts/llmctl`, download the selected real model only to `/data/models`, start the real SGLang profile on a localhost-only port, run `/v1/models` and chat tests, and record throughput, context stability, RAM, VRAM, startup time, and failure modes. Later compare `Qwen/Qwen3.6-35B-A3B` in text-only mode and `Qwen/Qwen3-Coder-30B-A3B-Instruct` if the human prioritizes coding-specific quality.
+M9B is next. M9B is the actual first real fast-model deployment milestone. It should run in a fresh Codex context, start with context-sync, stop smoke only through `scripts/llmctl` after explicit human approval, download `Qwen/Qwen3-30B-A3B-Instruct-2507` only to `/data/models/qwen3-30b-a3b-instruct-2507`, start the real SGLang profile on localhost-only bind `127.0.0.1:30001:30000`, run `/v1/models` and chat tests, and record throughput, context stability, RAM, VRAM, startup time, and failure modes.
 
-## M10 larger model benchmarks
+## M10 API/front-door/auth planning
 
-Benchmark `Qwen/Qwen3-235B-A22B-Instruct-2507`, `MiniMaxAI/MiniMax-M3`, and `zai-org/GLM-5.2` one model at a time, with storage and memory estimates before downloads. Use `deepseek-ai/DeepSeek-V4-Flash` as the practical large-model feasibility comparator if human review prioritizes fit and speed before the largest candidates.
+After M9B passes, M10 should be API/front-door/auth planning only. It should choose LAN-only, VPN-only, or public TLS exposure strategy, define API-key handling, firewall/TLS policy, reverse proxy or gateway placement, and unauthorized-access tests. M10 must not expose a public API until a later approved implementation milestone.
 
-## M11 authenticated API exposure
+## M11 larger model benchmarks
 
-Choose LAN-only, VPN-only, or public TLS exposure. Keep backends local by default, require API keys, configure firewall policy, and verify unauthorized access fails.
+After M9B and M10 planning, benchmark `Qwen/Qwen3-235B-A22B-Instruct-2507`, `MiniMaxAI/MiniMax-M3`, and `zai-org/GLM-5.2` one model at a time, with storage and memory estimates before downloads. Use `deepseek-ai/DeepSeek-V4-Flash` as the practical large-model feasibility comparator if human review prioritizes fit and speed before the largest candidates.
 
-## M12 observability and operations
+## M12 authenticated API exposure and operations
 
-Add health scripts, model memory reports, log rotation, restart policies, backup/restore docs for configs and secrets, upgrade procedure, and troubleshooting docs.
+Implement the reviewed API exposure plan only after approval, then add health scripts, model memory reports, log rotation, restart policies, backup/restore docs for configs and secrets, upgrade procedure, and troubleshooting docs.

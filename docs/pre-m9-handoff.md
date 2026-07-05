@@ -1,71 +1,84 @@
-# Pre-M9 Handoff
+# Pre-M9 / Pre-M9B Handoff
 
-- Timestamp: `2026-07-05T06:36:37Z`
-- Latest main commit after M8B merge: `2330b8b432243cea6ddc6effc1fb60065d7d1759`
-- M8B source commit: `e204955f9268a2124f0590c80a30e1f0ad8b6fa2`
+- Timestamp: `2026-07-05T14:41:54Z`
+- Latest main commit after M9A merge: `e04385fe096ee3d2ed0e41e28f8c3feaf11312b2`
+- M9A source commit: `670e1349e18f33cd004a8f49fe63ddb16bd987ca`
+- M9A main merge report: `reports/m9a-main-merge.md`
+- M9A planning report: `reports/m9a-first-real-fast-model-plan.md`
 - Active model/backend: `qwen3-0.6b-smoke` on SGLang.
 - Endpoint: `http://127.0.0.1:30000/v1`
 - Bind: `127.0.0.1:30000` only.
 - Image: `lmsysorg/sglang:v0.5.14-cu130`
-- Verified linux/amd64 manifest digest: `sha256:9611bd4c5624b0e9e17829506188a12f17205f2083de0dd44d6c521733553a50`
-- Model path: `/data/models/qwen3-0.6b-smoke`
-- Model size: `1.5G`
-- Container: `sglang-smoke-qwen3-0.6b` (`healthy` during merge validation).
-- Public API exposure: not configured.
+- Smoke model path: `/data/models/qwen3-0.6b-smoke`
 - First real model: not downloaded.
-- M8C lifecycle manager: merged into `main` with merge commit `88ce5abd478a15a4cb40acbec4268ed2c5745618`.
-- M8C main merge report: `reports/m8c-main-merge.md`.
-- Final lifecycle state after M8C validation: active and healthy.
+- Public API exposure: not configured.
 
-## Active Smoke Deployment Summary
+## M9A Merge State
 
-M8B deployed the small `Qwen/Qwen3-0.6B` smoke model behind a localhost-only SGLang OpenAI-compatible endpoint. The first runtime-image attempt failed with `ModuleNotFoundError: No module named 'distro'`; human review approved switching to the full `lmsysorg/sglang:v0.5.14-cu130` image, whose required import gate and live API smoke tests passed.
+M9A first real fast-model planning/dry-run was accepted by human review and merged into `main`. It recommends `Qwen/Qwen3-30B-A3B-Instruct-2507` as the first real fast model, with `Qwen/Qwen3-Coder-30B-A3B-Instruct` as the coding-specific fallback after review.
 
-## Manual Local Tests
+M9A was planning/dry-run only. It did not download a real model, pull a SGLang image, stop smoke, start a real-model container, install packages, modify Docker/containerd, or expose an API.
 
-List models:
+## M9B Scope
 
-```bash
-curl -fsS http://127.0.0.1:30000/v1/models
+M9B is the actual first real fast-model deployment milestone. It must run in a fresh Codex context and start with context-sync from `main`.
+
+Approved M9B target:
+
+```text
+Qwen/Qwen3-30B-A3B-Instruct-2507
 ```
 
-Run a non-streaming chat smoke request:
+Approved local model path:
 
-```bash
-curl -fsS http://127.0.0.1:30000/v1/chat/completions \
-  -H 'Content-Type: application/json' \
-  -d '{"model":"qwen3-0.6b-smoke","messages":[{"role":"system","content":"You are a smoke test assistant."},{"role":"user","content":"Reply with a short confirmation that the smoke test works."}],"max_tokens":64,"temperature":0}'
+```text
+/data/models/qwen3-30b-a3b-instruct-2507
 ```
 
-Inspect the container:
+Planned localhost bind:
 
-```bash
-sudo -n docker ps --filter name=sglang-smoke-qwen3-0.6b
-sudo -n docker logs --tail 200 sglang-smoke-qwen3-0.6b
+```text
+127.0.0.1:30001:30000
 ```
 
-## Manual Stop Command
+## M9B Allowed Actions
 
-Prefer the reviewed M8C lifecycle commands:
+- Stop smoke through reviewed `scripts/llmctl stop --yes` only after explicit human approval in the M9B task.
+- Download `Qwen/Qwen3-30B-A3B-Instruct-2507` to `/data/models/qwen3-30b-a3b-instruct-2507` only.
+- Keep Hugging Face cache under `/data/hf-cache`.
+- Start the SGLang real model on a localhost-only bind.
+- Run local `/health`, `/v1/models`, non-streaming chat, streaming chat, and functional API tests.
+- Validate root-disk, Docker storage, GPU container support, and active manager state before and after deployment.
+- Record startup time, throughput, RAM, VRAM, context stability, and failure modes.
+
+## M9B Forbidden Actions
+
+- No public API exposure.
+- No `0.0.0.0` host bind.
+- No larger or alternate model downloads without explicit human approval.
+- No Docker/containerd daemon configuration changes.
+- No Docker/containerd restart unless explicitly approved in a later task.
+- No unrelated backend installs or builds.
+- No SGLang/PyTorch/KTransformers/vLLM/ik_llama/CUDA Toolkit host installation.
+- No Docker image deletion, model deletion, or Docker prune.
+- No disk, fstab, mountpoint, partitioning, or Proxmox host access.
+
+## Smoke Operations Reference
+
+Use the reviewed M8C lifecycle commands for smoke state:
 
 ```bash
-scripts/llmctl status
 scripts/llmctl active
-scripts/llmctl logs --dry-run
-scripts/llmctl logs --yes
+scripts/llmctl status
 scripts/llmctl stop --dry-run
 scripts/llmctl stop --yes
 scripts/llmctl start --dry-run
 scripts/llmctl start --yes
-scripts/llmctl restart --dry-run
-scripts/llmctl restart --yes
-scripts/llmctl deactivate --dry-run
+scripts/sglang/verify-sglang-lifecycle.sh
 ```
 
-`stop --yes` stops the smoke container but keeps the smoke deployment selected in `active.json`. `start --yes` starts that existing deployment again. `restart --yes` performs a guarded stop/start cycle. `deactivate --yes` archives `active.json` and leaves no active backend; test it only when the service should no longer be active.
-
-Manual Docker commands can make `/data/services/llm-manager/active/active.json` stale. Use `scripts/llmctl status` or `scripts/sglang/verify-sglang-lifecycle.sh` to detect stale state.
+Manual Docker commands can make `/data/services/llm-manager/active/active.json` stale. Prefer `scripts/llmctl` for smoke lifecycle actions.
 
 ## Next Decision
 
-Proceed to M9A first real fast-model planning/dry-run. M9A should compare first real fast-model candidates, define storage/runtime/image/digest/download/benchmark/rollback plans, and keep all actual model downloads and backend image pulls blocked. Do not download the first real model in M9A.
+Start a fresh Codex context for M9B actual first real fast-model deployment. Do not start M9B from this merge/handoff context.
