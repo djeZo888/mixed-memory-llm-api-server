@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""M7B model/runtime manager.
+"""Model/runtime manager.
 
-This is a planning and validation tool only. Real model downloads, backend
-installs, runtime activation, and API exposure are reserved for later
-milestones.
+Profile validation and new-model activation remain guarded. M8C adds safe
+lifecycle controls for the already deployed localhost-only SGLang smoke
+runtime.
 """
 
 from __future__ import annotations
@@ -13,6 +13,8 @@ import json
 import os
 import subprocess
 import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -38,6 +40,24 @@ ACTIVE_ROOT = Path(
     )
 )
 ACTIVE_FILE = ACTIVE_ROOT / "active.json"
+ACTIVE_HISTORY_ROOT = ACTIVE_ROOT / "history"
+
+SMOKE_MODEL_PROFILE = "qwen3-0.6b-smoke"
+SMOKE_RUNTIME_PROFILE = "sglang"
+SMOKE_CONTAINER_NAME = "sglang-smoke-qwen3-0.6b"
+SMOKE_BIND = "127.0.0.1"
+SMOKE_PORT = 30000
+SMOKE_ENDPOINT = "http://127.0.0.1:30000/v1"
+SMOKE_MODEL_PATH = Path("/data/models/qwen3-0.6b-smoke")
+SMOKE_IMAGE = "lmsysorg/sglang:v0.5.14-cu130"
+SMOKE_COMPOSE_FILE = Path(
+    os.environ.get(
+        "LLMCTL_SMOKE_COMPOSE_FILE",
+        "/data/services/llm-manager/compose/sglang-smoke.compose.yml",
+    )
+)
+SMOKE_COMPOSE_PROFILE = "sglang-smoke"
+START_TIMEOUT_SECONDS = int(os.environ.get("LLMCTL_START_TIMEOUT_SECONDS", "600"))
 
 REQUIRE_DATA = "scripts/common/require-data-mounted.sh"
 ROOT_GUARD = "scripts/common/root-disk-guard.sh"
@@ -400,12 +420,255 @@ def load_active_state() -> tuple[Path, dict[str, Any]] | None:
     return state_file, state
 
 
-def cmd_active(_args: argparse.Namespace) -> int:
+def utc_timestamp() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def compact_timestamp() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+
+
+def skip_docker() -> bool:
+    return os.environ.get("LLMCTL_SKIP_DOCKER") == "1"
+
+
+def run_capture(cmd: list[str], check: bool = True, timeout: int | None = None) -> str:
+    result = subprocess.run(
+        cmd,
+        cwd=REPO_ROOT,
+        check=check,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=timeout,
+    )
+    return result.stdout.strip()
+
+
+def run_passthrough(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(cmd, cwd=REPO_ROOT, check=check, text=True)
+
+
+def docker_cmd(*args: str) -> list[str]:
+    return ["sudo", "-n", "docker", *args]
+
+
+def compose_cmd(compose_file: Path, *args: str) -> list[str]:
+    return docker_cmd(
+        "compose",
+        "-f",
+        str(compose_file),
+        "--profile",
+        SMOKE_COMPOSE_PROFILE,
+        *args,
+    )
+
+
+def docker_root_dir() -> str:
+    if skip_docker():
+        return os.environ.get("LLMCTL_FAKE_DOCKER_ROOT_DIR", "/data/docker")
+    return run_capture(docker_cmd("info", "--format", "{{.DockerRootDir}}"))
+
+
+def ensure_docker_root_dir() -> None:
+    root_dir = docker_root_dir()
+    if root_dir != "/data/docker":
+        raise LlmctlError(f"Docker Root Dir must be /data/docker, got: {root_dir}")
+
+
+def lifecycle_host_checks(require_gpu: bool = False) -> None:
+    if os.environ.get("LLMCTL_SKIP_HOST_CHECKS") == "1":
+        print("SKIP: host checks skipped for fixture mode")
+        return
+    run_check(REQUIRE_DATA)
+    run_check(ROOT_GUARD)
+    run_check(VERIFY_DOCKER)
+    ensure_docker_root_dir()
+    if require_gpu:
+        run_check(VERIFY_GPU)
+
+
+def smoke_state_template(status: str = "stopped") -> dict[str, Any]:
+    return {
+        "model_profile": SMOKE_MODEL_PROFILE,
+        "runtime_profile": SMOKE_RUNTIME_PROFILE,
+        "compose_file": str(SMOKE_COMPOSE_FILE),
+        "container_name": SMOKE_CONTAINER_NAME,
+        "bind": SMOKE_BIND,
+        "port": SMOKE_PORT,
+        "endpoint": SMOKE_ENDPOINT,
+        "model_path": str(SMOKE_MODEL_PATH),
+        "image": SMOKE_IMAGE,
+        "status": status,
+    }
+
+
+def require_active_state() -> tuple[Path, dict[str, Any]]:
     active = load_active_state()
     if active is None:
-        print("active: none")
-        return 0
+        raise LlmctlError(
+            f"active state missing: {ACTIVE_FILE}; run start --yes only for the known smoke deployment"
+        )
     state_file, state = active
+    validate_smoke_state(state)
+    return state_file, state
+
+
+def state_for_start() -> tuple[Path | None, dict[str, Any]]:
+    active = load_active_state()
+    if active is None:
+        state = smoke_state_template("stopped")
+        print("INFO: active.json missing; using known M8B smoke compose fallback")
+        return None, state
+    state_file, state = active
+    validate_smoke_state(state)
+    return state_file, state
+
+
+def validate_smoke_state(state: dict[str, Any]) -> None:
+    expected = {
+        "model_profile": SMOKE_MODEL_PROFILE,
+        "runtime_profile": SMOKE_RUNTIME_PROFILE,
+        "container_name": SMOKE_CONTAINER_NAME,
+        "bind": SMOKE_BIND,
+        "port": SMOKE_PORT,
+        "endpoint": SMOKE_ENDPOINT,
+        "model_path": str(SMOKE_MODEL_PATH),
+        "image": SMOKE_IMAGE,
+    }
+    for key, value in expected.items():
+        if state.get(key) != value:
+            raise LlmctlError(
+                f"active state is not the M8B smoke deployment: {key}={state.get(key)!r}"
+            )
+
+
+def state_compose_file(state: dict[str, Any]) -> Path:
+    compose_file = Path(str(state.get("compose_file") or SMOKE_COMPOSE_FILE))
+    if not compose_file.exists():
+        raise LlmctlError(f"compose file missing: {compose_file}")
+    return compose_file
+
+
+def compose_config_text(compose_file: Path) -> str:
+    if skip_docker():
+        return compose_file.read_text(encoding="utf-8")
+    return run_capture(compose_cmd(compose_file, "config"))
+
+
+def ensure_localhost_compose_bind(compose_file: Path) -> None:
+    raw = compose_file.read_text(encoding="utf-8")
+    public_ipv4_bind = "0.0.0.0:" + "30000:30000"
+    public_ipv6_bind = "[::]:" + "30000:30000"
+    if public_ipv4_bind in raw or public_ipv6_bind in raw:
+        raise LlmctlError("public host bind detected in compose file")
+    rendered = compose_config_text(compose_file)
+    if "host_ip: 0.0.0.0" in rendered or "host_ip: '0.0.0.0'" in rendered:
+        raise LlmctlError("public host bind detected in rendered compose config")
+    if "host_ip: \"0.0.0.0\"" in rendered or "host_ip: ::" in rendered:
+        raise LlmctlError("public host bind detected in rendered compose config")
+    if "127.0.0.1:30000:30000" not in raw and "host_ip: 127.0.0.1" not in rendered:
+        raise LlmctlError("localhost-only 127.0.0.1:30000 bind was not found")
+
+
+def container_status(container_name: str) -> tuple[str, str]:
+    if skip_docker():
+        return (
+            os.environ.get("LLMCTL_FAKE_CONTAINER_STATUS", "missing"),
+            os.environ.get("LLMCTL_FAKE_CONTAINER_HEALTH", ""),
+        )
+    try:
+        raw = run_capture(
+            docker_cmd(
+                "inspect",
+                "-f",
+                "{{.State.Status}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
+                container_name,
+            ),
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        return "missing", ""
+    status, _, health = raw.partition("|")
+    return status or "unknown", health or "none"
+
+
+def port_lines() -> str:
+    if skip_docker():
+        return os.environ.get("LLMCTL_FAKE_PORT_LINES", "")
+    try:
+        return run_capture(["ss", "-H", "-ltnp"], check=True)
+    except subprocess.CalledProcessError:
+        return ""
+
+
+def port_30000_lines() -> list[str]:
+    return [line for line in port_lines().splitlines() if ":30000" in line]
+
+
+def endpoint_models_ok(endpoint: str) -> bool:
+    if skip_docker():
+        return os.environ.get("LLMCTL_FAKE_ENDPOINT_OK") == "1"
+    try:
+        output = run_capture(
+            ["curl", "-fsS", "--max-time", "5", f"{endpoint}/models"],
+            check=True,
+            timeout=8,
+        )
+        data = json.loads(output)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError):
+        return False
+    model_ids = [item.get("id") for item in data.get("data", [])]
+    return SMOKE_MODEL_PROFILE in model_ids
+
+
+def localhost_bind_ok(lines: list[str]) -> bool:
+    if not lines:
+        return False
+    joined = "\n".join(lines)
+    if "0.0.0.0:30000" in joined or "[::]:30000" in joined:
+        return False
+    return "127.0.0.1:30000" in joined
+
+
+def state_stale_warnings(state: dict[str, Any]) -> list[str]:
+    status = str(state.get("status", "unknown"))
+    container_name = str(state.get("container_name", SMOKE_CONTAINER_NAME))
+    endpoint = str(state.get("endpoint", SMOKE_ENDPOINT))
+    live_status, live_health = container_status(container_name)
+    listeners = port_30000_lines()
+    warnings: list[str] = []
+    if status == "active":
+        if live_status != "running":
+            warnings.append(
+                f"active_state_stale: active.json says active but container is {live_status}"
+            )
+        elif not endpoint_models_ok(endpoint):
+            warnings.append("active_state_stale: endpoint /v1/models is not healthy")
+        if listeners and not localhost_bind_ok(listeners):
+            warnings.append("active_state_stale: port 30000 is not localhost-only")
+        if not listeners and live_status == "running":
+            warnings.append("active_state_stale: container running but port 30000 is not listening")
+    elif status == "stopped":
+        if live_status == "running":
+            warnings.append("active_state_stale: active.json says stopped but container is running")
+        if listeners:
+            warnings.append("active_state_stale: active.json says stopped but port 30000 is listening")
+    print(f"live_container_status: {live_status}")
+    if live_health:
+        print(f"live_container_health: {live_health}")
+    print(f"live_port_30000: {'listening' if listeners else 'not_listening'}")
+    print(f"live_endpoint_models: {'ok' if endpoint_models_ok(endpoint) else 'not_ok'}")
+    return warnings
+
+
+def print_active_state(
+    state_file: Path,
+    state: dict[str, Any],
+    *,
+    include_live: bool = True,
+    warnings: list[str] | None = None,
+) -> int:
     print(f"active: {state.get('status', 'unknown')}")
     print(f"model_profile: {state.get('model_profile', state.get('model', 'unknown'))}")
     print(f"runtime_profile: {state.get('runtime_profile', state.get('runtime', 'unknown'))}")
@@ -416,21 +679,45 @@ def cmd_active(_args: argparse.Namespace) -> int:
     print(f"model_path: {state.get('model_path', 'unknown')}")
     print(f"image: {state.get('image', 'unknown')}")
     print(f"state_file: {state_file}")
+    if include_live:
+        warnings = state_stale_warnings(state)
+    elif warnings is None:
+        warnings = []
+    for warning in warnings:
+        print(f"WARN: {warning}")
     return 0
+
+
+def cmd_active(_args: argparse.Namespace) -> int:
+    active = load_active_state()
+    if active is None:
+        print("active: none")
+        return 0
+    state_file, state = active
+    return print_active_state(state_file, state)
 
 
 def cmd_status(_args: argparse.Namespace) -> int:
     active = load_active_state()
     if active is None:
         print("manager_status: planning_only")
+        print("active: none")
+        print("runtime_state_dir:", STATE_ROOT)
+        print("active_state_dir:", ACTIVE_ROOT)
+        print("real_activation: available_for_m8b_smoke")
+        return 0
     else:
-        _, state = active
-        print("manager_status: active")
+        state_file, state = active
+        warnings = state_stale_warnings(state)
+        manager_status = "stale" if warnings else state.get("status", "unknown")
+        print(f"manager_status: {manager_status}")
         print(f"active_status: {state.get('status', 'unknown')}")
-    print("runtime_state_dir:", STATE_ROOT)
-    print("active_state_dir:", ACTIVE_ROOT)
-    print("real_activation: available_for_m8b_smoke")
-    return cmd_active(_args)
+        print("runtime_state_dir:", STATE_ROOT)
+        print("active_state_dir:", ACTIVE_ROOT)
+        print("real_activation: available_for_m8b_smoke")
+        for warning in warnings:
+            print(f"WARN: {warning}")
+        return print_active_state(state_file, state, include_live=False, warnings=warnings)
 
 
 def plan_activation(model_name: str, runtime_name: str) -> int:
@@ -468,7 +755,7 @@ def plan_activation(model_name: str, runtime_name: str) -> int:
     print(f"hf_cache_mount: {HF_CACHE_ROOT}:/data/hf-cache")
     print(f"logs_mount: {LOGS_ROOT}:/data/logs")
     print(f"state_dir: {STATE_ROOT}")
-    print("writes_planned: none in M7B")
+    print("writes_planned: none for plan-activate")
     print("real_activation: reserved_for_later_milestones")
     return 0
 
@@ -479,7 +766,10 @@ def cmd_plan_activate(args: argparse.Namespace) -> int:
 
 def cmd_activate(args: argparse.Namespace) -> int:
     if not args.dry_run:
-        eprint("STOP: activate requires --dry-run in M7B; real activation is reserved")
+        eprint(
+            "STOP: activate for new model/runtime pairs is reserved; use --dry-run "
+            "or use start --yes for the existing M8B smoke deployment"
+        )
         return 2
     result = plan_activation(args.model_profile, args.runtime)
     if result == 0:
@@ -487,40 +777,224 @@ def cmd_activate(args: argparse.Namespace) -> int:
     return result
 
 
-def cmd_deactivate(args: argparse.Namespace) -> int:
-    if not args.dry_run:
-        eprint("STOP: deactivate requires --dry-run in M7B; real deactivation is reserved")
+def require_yes(args: argparse.Namespace, command: str) -> bool:
+    if args.dry_run:
+        return False
+    if args.yes:
+        return True
+    eprint(f"STOP: {command} is mutating and requires --yes")
+    eprint(f"dry_run_command: scripts/llmctl {command} --dry-run")
+    return False
+
+
+def write_active_state(state: dict[str, Any]) -> None:
+    ACTIVE_ROOT.mkdir(parents=True, exist_ok=True)
+    tmp = ACTIVE_FILE.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp.replace(ACTIVE_FILE)
+
+
+def update_active_state(state: dict[str, Any], **updates: Any) -> dict[str, Any]:
+    merged = dict(state)
+    merged.update(updates)
+    merged["last_checked_at"] = utc_timestamp()
+    write_active_state(merged)
+    return merged
+
+
+def ensure_model_files_exist() -> None:
+    if not SMOKE_MODEL_PATH.is_dir():
+        raise LlmctlError(f"smoke model path missing: {SMOKE_MODEL_PATH}")
+    if not (SMOKE_MODEL_PATH / "config.json").is_file():
+        raise LlmctlError(f"smoke model config missing under: {SMOKE_MODEL_PATH}")
+
+
+def ensure_port_available_for_start(container_name: str) -> None:
+    listeners = port_30000_lines()
+    if not listeners:
+        return
+    live_status, _ = container_status(container_name)
+    if live_status == "running" and localhost_bind_ok(listeners):
+        return
+    raise LlmctlError(
+        "port 30000 is occupied by an unknown or non-localhost listener: "
+        + " | ".join(listeners)
+    )
+
+
+def ensure_lifecycle_preflight(
+    state: dict[str, Any],
+    *,
+    require_gpu: bool,
+    check_port: bool,
+) -> Path:
+    lifecycle_host_checks(require_gpu=require_gpu)
+    validate_smoke_state(state)
+    compose_file = state_compose_file(state)
+    ensure_localhost_compose_bind(compose_file)
+    if check_port:
+        ensure_port_available_for_start(str(state.get("container_name", SMOKE_CONTAINER_NAME)))
+    return compose_file
+
+
+def wait_for_stopped(container_name: str, timeout_seconds: int = 90) -> None:
+    if skip_docker():
+        return
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        live_status, _ = container_status(container_name)
+        if live_status != "running" and not port_30000_lines():
+            return
+        time.sleep(2)
+    raise LlmctlError(f"container did not stop cleanly within {timeout_seconds}s")
+
+
+def wait_for_ready(state: dict[str, Any], timeout_seconds: int = START_TIMEOUT_SECONDS) -> None:
+    if skip_docker():
+        return
+    container_name = str(state.get("container_name", SMOKE_CONTAINER_NAME))
+    endpoint = str(state.get("endpoint", SMOKE_ENDPOINT))
+    deadline = time.monotonic() + timeout_seconds
+    last_status = "unknown"
+    while time.monotonic() < deadline:
+        live_status, health = container_status(container_name)
+        last_status = f"{live_status}/{health}"
+        if live_status in {"exited", "dead"}:
+            raise LlmctlError(f"container exited during startup: {last_status}")
+        listeners = port_30000_lines()
+        if live_status == "running" and localhost_bind_ok(listeners) and endpoint_models_ok(endpoint):
+            return
+        time.sleep(5)
+    raise LlmctlError(f"smoke endpoint was not ready within {timeout_seconds}s; last status {last_status}")
+
+
+def plan_lifecycle(command: str, state: dict[str, Any]) -> None:
+    compose_file = Path(str(state.get("compose_file") or SMOKE_COMPOSE_FILE))
+    container_name = state.get("container_name", SMOKE_CONTAINER_NAME)
+    print(f"DRY-RUN: would {command} M8B SGLang smoke deployment")
+    print(f"model_profile: {state.get('model_profile', SMOKE_MODEL_PROFILE)}")
+    print(f"runtime_profile: {state.get('runtime_profile', SMOKE_RUNTIME_PROFILE)}")
+    print(f"container_name: {container_name}")
+    print(f"compose_file: {compose_file}")
+    print(f"endpoint: {state.get('endpoint', SMOKE_ENDPOINT)}")
+    print("host_bind: 127.0.0.1:30000")
+    if command == "start":
+        print(f"start_command: sudo -n docker compose -f {compose_file} --profile {SMOKE_COMPOSE_PROFILE} up -d")
+        print("state_update: status=active started_at=<timestamp>")
+    elif command == "stop":
+        print(f"stop_command: sudo -n docker compose -f {compose_file} --profile {SMOKE_COMPOSE_PROFILE} stop")
+        print("state_update: status=stopped stopped_at=<timestamp>")
+    elif command == "restart":
+        print(f"restart_stop_command: sudo -n docker compose -f {compose_file} --profile {SMOKE_COMPOSE_PROFILE} stop")
+        print(f"restart_start_command: sudo -n docker compose -f {compose_file} --profile {SMOKE_COMPOSE_PROFILE} up -d")
+        print("state_update: status=active restarted_at=<timestamp>")
+    elif command == "deactivate":
+        print(f"deactivate_command: sudo -n docker compose -f {compose_file} --profile {SMOKE_COMPOSE_PROFILE} down")
+        print(f"archive_target: {ACTIVE_HISTORY_ROOT}/active-YYYYMMDD-HHMMSS.json")
+        print("state_update: active.json moved to history")
+    print("model_file_deletion: none")
+    print("image_deletion: none")
+    print("docker_prune: never")
+
+
+def cmd_start(args: argparse.Namespace) -> int:
+    _, state = state_for_start()
+    if args.dry_run:
+        plan_lifecycle("start", state)
+        return 0
+    if not require_yes(args, "start"):
         return 2
-    active = load_active_state()
-    print("DRY-RUN: would stop the active runtime and clear active state")
-    if active is not None:
-        _, state = active
-        compose_file = state.get("compose_file", "unknown")
-        container_name = state.get("container_name", "unknown")
-        print(f"container_name: {container_name}")
-        print(f"compose_file: {compose_file}")
-        print(f"stop_command: sudo -n docker compose -f {compose_file} --profile sglang-smoke down")
-    print(f"state_dir: {STATE_ROOT}")
-    print(f"active_state_dir: {ACTIVE_ROOT}")
-    print("writes_planned: none in dry-run")
+    compose_file = ensure_lifecycle_preflight(state, require_gpu=True, check_port=True)
+    ensure_model_files_exist()
+    if not skip_docker():
+        run_passthrough(compose_cmd(compose_file, "up", "-d"))
+        wait_for_ready(state)
+    updated = update_active_state(state, status="active", started_at=utc_timestamp())
+    print("PASS: smoke deployment started")
+    return print_active_state(ACTIVE_FILE, updated)
+
+
+def cmd_stop(args: argparse.Namespace) -> int:
+    _, state = require_active_state()
+    if args.dry_run:
+        plan_lifecycle("stop", state)
+        return 0
+    if not require_yes(args, "stop"):
+        return 2
+    compose_file = ensure_lifecycle_preflight(state, require_gpu=False, check_port=False)
+    if not skip_docker():
+        run_passthrough(compose_cmd(compose_file, "stop"))
+        wait_for_stopped(str(state.get("container_name", SMOKE_CONTAINER_NAME)))
+    updated = update_active_state(state, status="stopped", stopped_at=utc_timestamp())
+    print("PASS: smoke deployment stopped")
+    return print_active_state(ACTIVE_FILE, updated)
+
+
+def cmd_restart(args: argparse.Namespace) -> int:
+    _, state = require_active_state()
+    if args.dry_run:
+        plan_lifecycle("restart", state)
+        return 0
+    if not require_yes(args, "restart"):
+        return 2
+    compose_file = ensure_lifecycle_preflight(state, require_gpu=True, check_port=False)
+    if not skip_docker():
+        run_passthrough(compose_cmd(compose_file, "stop"))
+        wait_for_stopped(str(state.get("container_name", SMOKE_CONTAINER_NAME)))
+        run_passthrough(compose_cmd(compose_file, "up", "-d"))
+        wait_for_ready(state)
+    updated = update_active_state(state, status="active", restarted_at=utc_timestamp())
+    print("PASS: smoke deployment restarted")
+    return print_active_state(ACTIVE_FILE, updated)
+
+
+def cmd_deactivate(args: argparse.Namespace) -> int:
+    state_file, state = require_active_state()
+    if args.dry_run:
+        plan_lifecycle("deactivate", state)
+        return 0
+    if not require_yes(args, "deactivate"):
+        return 2
+    compose_file = ensure_lifecycle_preflight(state, require_gpu=False, check_port=False)
+    if not skip_docker():
+        run_passthrough(compose_cmd(compose_file, "down"))
+        wait_for_stopped(str(state.get("container_name", SMOKE_CONTAINER_NAME)))
+    ACTIVE_HISTORY_ROOT.mkdir(parents=True, exist_ok=True)
+    archive = ACTIVE_HISTORY_ROOT / f"active-{compact_timestamp()}.json"
+    state_file.replace(archive)
+    print("PASS: smoke deployment deactivated")
+    print(f"archived_active_state: {archive}")
+    print("active: none")
     return 0
 
 
 def cmd_logs(args: argparse.Namespace) -> int:
-    if not args.dry_run:
-        eprint("STOP: logs requires --dry-run in M7B")
-        return 2
     active = load_active_state()
-    print("DRY-RUN: would inspect manager/runtime logs")
-    print(f"logs_root: {LOGS_ROOT}")
-    if active is not None:
-        _, state = active
-        container_name = state.get("container_name", "unknown")
-        print(f"container_name: {container_name}")
-        print(f"log_command: sudo -n docker logs --tail 200 {container_name}")
-    else:
-        print("active: none")
-    print("no log files were read")
+    if args.dry_run:
+        print("DRY-RUN: would inspect manager/runtime logs")
+        print(f"logs_root: {LOGS_ROOT}")
+        if active is not None:
+            _, state = active
+            container_name = state.get("container_name", "unknown")
+            print(f"container_name: {container_name}")
+            print(f"log_command: sudo -n docker logs --tail {args.tail} {container_name}")
+        else:
+            print("active: none")
+        print("no log files were read")
+        return 0
+    if not args.yes:
+        eprint("STOP: logs output requires --yes or use --dry-run")
+        eprint("dry_run_command: scripts/llmctl logs --dry-run")
+        return 2
+    if active is None:
+        raise LlmctlError("active state missing; no active container logs to inspect")
+    _, state = active
+    validate_smoke_state(state)
+    container_name = str(state.get("container_name", SMOKE_CONTAINER_NAME))
+    if skip_docker():
+        print("SKIP: docker logs skipped for fixture mode")
+        return 0
+    run_passthrough(docker_cmd("logs", "--tail", str(args.tail), container_name))
     return 0
 
 
@@ -569,8 +1043,8 @@ def cmd_env(_args: argparse.Namespace) -> int:
 
 def unsupported_real_command(command: str) -> int:
     eprint(
-        f"STOP: {command} is reserved for later milestones; use plan-* or --dry-run "
-        "commands in M7B"
+        f"STOP: {command} is reserved for later milestones; use plan-* or lifecycle "
+        "commands for the existing smoke deployment"
     )
     return 2
 
@@ -578,7 +1052,7 @@ def unsupported_real_command(command: str) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="llmctl",
-        description="Validate and plan model/runtime profiles. M7B is dry-run only.",
+        description="Validate profiles and manage the M8B SGLang smoke lifecycle.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -611,11 +1085,29 @@ def build_parser() -> argparse.ArgumentParser:
 
     deactivate = subparsers.add_parser("deactivate")
     deactivate.add_argument("--dry-run", action="store_true")
+    deactivate.add_argument("--yes", action="store_true")
     deactivate.set_defaults(func=cmd_deactivate)
 
     logs = subparsers.add_parser("logs")
     logs.add_argument("--dry-run", action="store_true")
+    logs.add_argument("--yes", action="store_true")
+    logs.add_argument("--tail", type=int, default=200)
     logs.set_defaults(func=cmd_logs)
+
+    start = subparsers.add_parser("start")
+    start.add_argument("--dry-run", action="store_true")
+    start.add_argument("--yes", action="store_true")
+    start.set_defaults(func=cmd_start)
+
+    stop = subparsers.add_parser("stop")
+    stop.add_argument("--dry-run", action="store_true")
+    stop.add_argument("--yes", action="store_true")
+    stop.set_defaults(func=cmd_stop)
+
+    restart = subparsers.add_parser("restart")
+    restart.add_argument("--dry-run", action="store_true")
+    restart.add_argument("--yes", action="store_true")
+    restart.set_defaults(func=cmd_restart)
 
     plan_download = subparsers.add_parser("plan-download")
     plan_download.add_argument("model_profile")
@@ -626,7 +1118,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
-    if argv and argv[0] in {"download", "start", "stop", "restart"}:
+    if argv and argv[0] in {"download"}:
         return unsupported_real_command(argv[0])
     parser = build_parser()
     args = parser.parse_args(argv)

@@ -13,6 +13,8 @@
 - Container: `sglang-smoke-qwen3-0.6b` (`healthy` during merge validation).
 - Public API exposure: not configured.
 - First real model: not downloaded.
+- M8C lifecycle manager: implemented on `milestone/m8c-smoke-lifecycle-manager` pending human review/merge.
+- Final lifecycle state after M8C validation: active and healthy.
 
 ## Active Smoke Deployment Summary
 
@@ -43,17 +45,26 @@ sudo -n docker logs --tail 200 sglang-smoke-qwen3-0.6b
 
 ## Manual Stop Command
 
-Use this only when the human explicitly decides to stop the smoke backend:
+Prefer the reviewed M8C lifecycle commands:
 
 ```bash
-sudo -n docker compose -f /data/services/llm-manager/compose/sglang-smoke.compose.yml --profile sglang-smoke down
+scripts/llmctl status
+scripts/llmctl active
+scripts/llmctl logs --dry-run
+scripts/llmctl logs --yes
+scripts/llmctl stop --dry-run
+scripts/llmctl stop --yes
+scripts/llmctl start --dry-run
+scripts/llmctl start --yes
+scripts/llmctl restart --dry-run
+scripts/llmctl restart --yes
+scripts/llmctl deactivate --dry-run
 ```
 
-Warning: manual stop may make `/data/services/llm-manager/active/active.json` stale until M8C implements a reviewed real deactivate workflow.
+`stop --yes` stops the smoke container but keeps the smoke deployment selected in `active.json`. `start --yes` starts that existing deployment again. `restart --yes` performs a guarded stop/start cycle. `deactivate --yes` archives `active.json` and leaves no active backend; test it only when the service should no longer be active.
+
+Manual Docker commands can make `/data/services/llm-manager/active/active.json` stale. Use `scripts/llmctl status` or `scripts/sglang/verify-sglang-lifecycle.sh` to detect stale state.
 
 ## Next Decision
 
-Choose one:
-
-- M8C lifecycle/deactivate policy, if the smoke backend should have reviewed stop/status semantics.
-- M9A first real fast-model planning, after human review confirms M8B should remain merged and the smoke state is acceptable.
+After M8C human review/merge, proceed to M9A first real fast-model planning/dry-run. Keep model downloads and backend image pulls blocked until that planning milestone explicitly approves them.
