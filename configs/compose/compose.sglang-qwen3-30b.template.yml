@@ -1,0 +1,58 @@
+# M9A template only. Do not run this file in M9A.
+# M9B requires human approval before model download, image pull, or container start.
+# The host bind is localhost-only. The in-container host is 0.0.0.0 so Docker can forward from 127.0.0.1 only.
+services:
+  sglang-qwen3-30b:
+    image: lmsysorg/sglang:v0.5.14-cu130
+    container_name: sglang-qwen3-30b-a3b-instruct-2507
+    profiles: ["sglang-real-fast"]
+    restart: "no"
+    shm_size: "32gb"
+    ipc: host
+    ports:
+      - "127.0.0.1:30001:30000"
+    volumes:
+      - /data/models:/data/models:ro
+      - /data/hf-cache:/data/hf-cache
+      - /data/logs:/data/logs
+    environment:
+      HF_HOME: /data/hf-cache
+      HF_HUB_CACHE: /data/hf-cache/hub
+      HF_XET_CACHE: /data/hf-cache/xet
+      HF_ASSETS_CACHE: /data/hf-cache/assets
+      HF_DATASETS_CACHE: /data/hf-cache/datasets
+      TRANSFORMERS_CACHE: /data/hf-cache/transformers
+      XDG_CACHE_HOME: /data/hf-cache/xdg
+      SGLANG_LOG_DIR: /data/logs/sglang-qwen3-30b-a3b-instruct-2507
+      PYTHONUNBUFFERED: "1"
+    command:
+      - python3
+      - -m
+      - sglang.launch_server
+      - --model-path
+      - /data/models/qwen3-30b-a3b-instruct-2507
+      - --host
+      - 0.0.0.0
+      - --port
+      - "30000"
+      - --served-model-name
+      - qwen3-30b-a3b-instruct-2507
+      - --context-length
+      - "32768"
+      - --mem-fraction-static
+      - "0.70"
+      - --max-running-requests
+      - "1"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:30000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 20
+      start_period: 300s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

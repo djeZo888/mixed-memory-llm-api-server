@@ -284,11 +284,28 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - The first real model has not been downloaded.
 - No models were downloaded, no Docker images were pulled, and no host backend packages were installed by M8C.
 
+
+## Current M9A Branch Result
+
+- M9A branch: `milestone/m9a-first-real-fast-model-plan`.
+- M9A report: `reports/m9a-first-real-fast-model-plan.md`.
+- Result: PASS for planning only; STOP for actual download/deployment until human review.
+- Context-sync before branching passed on `llmserver` in `/data/services/mixed-memory-llm-api-server`.
+- The live smoke backend remained active, healthy, and localhost-only at `http://127.0.0.1:30000/v1`.
+- Recommended M9B primary model: `Qwen/Qwen3-30B-A3B-Instruct-2507`.
+- Planned M9B local path: `/data/models/qwen3-30b-a3b-instruct-2507`.
+- Planned first real bind: `127.0.0.1:30001:30000`.
+- Planned SGLang image: `lmsysorg/sglang:v0.5.14-cu130`.
+- Fallback model after human review if coding-specific quality is needed: `Qwen/Qwen3-Coder-30B-A3B-Instruct`.
+- M9A added profiles for `qwen3.6-35b-a3b` and `qwen3-30b-a3b-thinking-2507` for comparison, but did not approve their download.
+- No first real model was downloaded, no Docker image was pulled, no new backend container was started, and smoke was not stopped.
+
 ## Next Recommended Milestone
 
-- The smoke backend remains active for local verification at `http://127.0.0.1:30000/v1`.
-- M9A first real fast-model planning/dry-run is the next recommended milestone.
-- M9A must remain planning/dry-run only and must not download a first real model until human review approves a later deployment milestone.
+- Human review of M9A is next.
+- After review, M9B may perform the actual first real fast-model deployment for `Qwen/Qwen3-30B-A3B-Instruct-2507`.
+- The smoke backend remains active for local verification at `http://127.0.0.1:30000/v1` until M9B is explicitly approved to stop it through `scripts/llmctl`.
+- M9B must download only to `/data/models`, keep cache under `/data/hf-cache`, use a localhost-only bind, and preserve the no-public-API boundary.
 
 ## Carry-Forward Operational Warnings
 

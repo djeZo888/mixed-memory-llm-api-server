@@ -1,6 +1,6 @@
-name: qwen3-30b-a3b-instruct-2507
+name: qwen3-30b-a3b-thinking-2507
 provider: Qwen
-hf_repo: Qwen/Qwen3-30B-A3B-Instruct-2507
+hf_repo: Qwen/Qwen3-30B-A3B-Thinking-2507
 family: qwen3_moe
 role: fast
 model_type: moe
@@ -11,17 +11,16 @@ license: Apache-2.0
 expected_precision: BF16 safetensors
 expected_storage_gb: 61.1
 expected_min_vram_gb: 96
-expected_min_system_ram_gb: 128
+expected_min_system_ram_gb: 192
 recommended_runtimes:
   - sglang
   - vllm
   - ktransformers
   - ik-llama
 preferred_runtime: sglang
-allowed_first_download: true
-notes: Recommended first real model after smoke; use local /data model path, start with 32768 context and one running request, then increase only after VRAM and API stability pass.
+allowed_first_download: false
+notes: Reasoning-focused sibling of the first real candidate; defer until the non-thinking model proves runtime stability because thinking output increases KV/cache and latency pressure.
 source_urls:
-  - https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507
+  - https://huggingface.co/Qwen/Qwen3-30B-A3B-Thinking-2507
   - https://qwen.readthedocs.io/en/latest/deployment/sglang.html
   - https://docs.sglang.io/cookbook/autoregressive/Qwen/Qwen3
-  - https://docs.sglang.io/docs/get-started/install
