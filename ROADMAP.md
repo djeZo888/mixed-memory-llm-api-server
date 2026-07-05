@@ -70,13 +70,15 @@ Completed and merged into `main` after remediation. The first attempt with `lmsy
 
 ## M8C smoke lifecycle/deactivate policy
 
-Completed on branch `milestone/m8c-smoke-lifecycle-manager` if `reports/m8c-smoke-lifecycle-manager.md` concludes PASS. M8C adds reviewed `llmctl` lifecycle commands for the existing SGLang smoke deployment: status, active, logs, stop, start, restart, and deactivate. Mutating commands require `--yes`, preserve model files and Docker images, keep the backend localhost-only, and keep `active.json` consistent. M8C performs no model downloads, image pulls, host package installs, public API exposure, Docker/containerd daemon changes, or systemd service creation.
+Completed and merged into `main`. M8C adds reviewed `llmctl` lifecycle commands for the existing SGLang smoke deployment: status, active, logs, stop, start, restart, and deactivate. Mutating commands require `--yes`, preserve model files and Docker images, keep the backend localhost-only, and keep `active.json` consistent. M8C performs no model downloads, image pulls, host package installs, public API exposure, Docker/containerd daemon changes, or systemd service creation. `reports/m8c-main-merge.md` records the main merge.
 
-M9A first real fast-model planning/dry-run starts only after human review and merge of M8C.
+M9A first real fast-model planning/dry-run is next.
 
 ## M9 fast technical/coding model
 
-After human review of the merged M8C lifecycle manager, plan the first real fast-model path for `Qwen/Qwen3-30B-A3B-Instruct-2507`. M9A should remain planning/dry-run until it explicitly approves storage, runtime, image, digest, download, benchmark, and rollback steps. Later deploy and benchmark the model through the localhost API, recording throughput, context stability, RAM, VRAM, startup time, and failure modes. Then compare `Qwen/Qwen3.6-35B-A3B` in text-only mode and `Qwen/Qwen3-Coder-30B-A3B-Instruct` if the human prioritizes coding-specific quality.
+M9A is planning/dry-run only. It should plan the first real fast-model path for `Qwen/Qwen3-30B-A3B-Instruct-2507`, compare relevant first real fast-model candidates, and define storage, runtime, image, digest, download, benchmark, rollback, and guard steps. M9A must not download the first real model or pull new backend images.
+
+M9B is the later actual first real fast-model deployment milestone after human review of M9A. M9B may deploy and benchmark the selected model through the localhost API, recording throughput, context stability, RAM, VRAM, startup time, and failure modes. Later compare `Qwen/Qwen3.6-35B-A3B` in text-only mode and `Qwen/Qwen3-Coder-30B-A3B-Instruct` if the human prioritizes coding-specific quality.
 
 ## M10 larger model benchmarks
 

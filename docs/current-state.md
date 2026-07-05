@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M8B merged into `main`; M8C smoke lifecycle manager is implemented on `milestone/m8c-smoke-lifecycle-manager` pending review/merge
+- Project state: M0-M8C merged into `main`; SGLang smoke backend is active locally and lifecycle-managed by `scripts/llmctl`
 
 ## Git Attribution
 
@@ -50,7 +50,8 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M8A main merge report: `reports/m8a-main-merge.md`
 - M8B SGLang smoke deployment: merged into `main` after full-image remediation; report is `reports/m8b-sglang-smoke-deploy.md`
 - M8B main merge report: `reports/m8b-main-merge.md`
-- M8C smoke lifecycle manager: implemented on branch `milestone/m8c-smoke-lifecycle-manager`; report is `reports/m8c-smoke-lifecycle-manager.md`
+- M8C smoke lifecycle manager: merged into `main`; report is `reports/m8c-smoke-lifecycle-manager.md`
+- M8C main merge report: `reports/m8c-main-merge.md`
 
 ## Current Storage
 
@@ -256,8 +257,20 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 - M8C branch: `milestone/m8c-smoke-lifecycle-manager`.
 - M8C report: `reports/m8c-smoke-lifecycle-manager.md`.
-- Result: PASS if the branch validation report is accepted.
+- M8C source commit: `fe4e196d21dc5a0bd73fe875f885959bd7a49468`.
+- M8C merged into `main` with merge commit `88ce5abd478a15a4cb40acbec4268ed2c5745618`.
+- M8C main merge report: `reports/m8c-main-merge.md`.
+- Result: PASS and merged.
 - `scripts/llmctl` supports smoke lifecycle commands: `start`, `stop`, `restart`, `deactivate`, `logs`, `active`, and `status`.
+- Lifecycle command forms:
+  - `scripts/llmctl status`
+  - `scripts/llmctl active`
+  - `scripts/llmctl logs --dry-run`
+  - `scripts/llmctl logs --yes`
+  - `scripts/llmctl stop --dry-run|--yes`
+  - `scripts/llmctl start --dry-run|--yes`
+  - `scripts/llmctl restart --dry-run|--yes`
+  - `scripts/llmctl deactivate --dry-run|--yes`
 - Mutating lifecycle commands require `--yes`; dry-run plans are available with `--dry-run`.
 - `stop --yes` stops the smoke container and records `status: stopped`.
 - `start --yes` starts the existing smoke compose deployment and records `status: active`.
@@ -266,14 +279,16 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - `scripts/sglang/verify-sglang-lifecycle.sh` verifies active or stopped smoke state without modifying state.
 - Controlled M8C validation stopped, started, and restarted the smoke container, then left it active and healthy.
 - Active endpoint after M8C validation: `http://127.0.0.1:30000/v1`.
+- Active bind after M8C validation: `127.0.0.1` only.
 - Public API exposure remains unconfigured.
+- The first real model has not been downloaded.
 - No models were downloaded, no Docker images were pulled, and no host backend packages were installed by M8C.
 
 ## Next Recommended Milestone
 
-- M8C is complete on branch `milestone/m8c-smoke-lifecycle-manager` if its report conclusion is PASS; merge it after human review.
 - The smoke backend remains active for local verification at `http://127.0.0.1:30000/v1`.
-- M9A first real fast-model planning/dry-run is the next recommended milestone after M8C review/merge.
+- M9A first real fast-model planning/dry-run is the next recommended milestone.
+- M9A must remain planning/dry-run only and must not download a first real model until human review approves a later deployment milestone.
 
 ## Carry-Forward Operational Warnings
 
@@ -329,4 +344,4 @@ Future sessions should read:
 - `reports/m4b-main-merge.md`
 - Latest reports
 
-Then choose M8C smoke lifecycle/deactivate policy or M9A first real fast-model planning after human review.
+Then continue with M9A first real fast-model planning/dry-run.

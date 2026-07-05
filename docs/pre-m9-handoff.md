@@ -13,7 +13,8 @@
 - Container: `sglang-smoke-qwen3-0.6b` (`healthy` during merge validation).
 - Public API exposure: not configured.
 - First real model: not downloaded.
-- M8C lifecycle manager: implemented on `milestone/m8c-smoke-lifecycle-manager` pending human review/merge.
+- M8C lifecycle manager: merged into `main` with merge commit `88ce5abd478a15a4cb40acbec4268ed2c5745618`.
+- M8C main merge report: `reports/m8c-main-merge.md`.
 - Final lifecycle state after M8C validation: active and healthy.
 
 ## Active Smoke Deployment Summary
@@ -67,4 +68,4 @@ Manual Docker commands can make `/data/services/llm-manager/active/active.json` 
 
 ## Next Decision
 
-After M8C human review/merge, proceed to M9A first real fast-model planning/dry-run. Keep model downloads and backend image pulls blocked until that planning milestone explicitly approves them.
+Proceed to M9A first real fast-model planning/dry-run. M9A should compare first real fast-model candidates, define storage/runtime/image/digest/download/benchmark/rollback plans, and keep all actual model downloads and backend image pulls blocked. Do not download the first real model in M9A.
