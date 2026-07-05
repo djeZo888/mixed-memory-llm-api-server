@@ -68,11 +68,15 @@ Completed and merged into `main`. M8A produced `reports/m8a-sglang-smoke-plan.md
 
 Completed and merged into `main` after remediation. The first attempt with `lmsysorg/sglang:v0.5.14-cu130-runtime` stopped before readiness because the image Python environment raised `ModuleNotFoundError: No module named 'distro'`. Human review approved switching to the full image `lmsysorg/sglang:v0.5.14-cu130`; its linux/amd64 digest was verified, the required `distro`, `openai`, and SGLang OpenAI protocol imports passed, and the smoke backend started on `127.0.0.1:30000` only. `/v1/models`, non-streaming chat, streaming chat, logs, active state, root-disk guard, Docker storage verification, and GPU container verification passed. No public API exposure was configured. `reports/m8b-main-merge.md` records the main merge. M8B is complete/merged.
 
-M8C may define a focused stop/deactivate policy if needed. M9A first real fast-model planning starts only after human review of the merged M8B state.
+## M8C smoke lifecycle/deactivate policy
+
+Completed on branch `milestone/m8c-smoke-lifecycle-manager` if `reports/m8c-smoke-lifecycle-manager.md` concludes PASS. M8C adds reviewed `llmctl` lifecycle commands for the existing SGLang smoke deployment: status, active, logs, stop, start, restart, and deactivate. Mutating commands require `--yes`, preserve model files and Docker images, keep the backend localhost-only, and keep `active.json` consistent. M8C performs no model downloads, image pulls, host package installs, public API exposure, Docker/containerd daemon changes, or systemd service creation.
+
+M9A first real fast-model planning/dry-run starts only after human review and merge of M8C.
 
 ## M9 fast technical/coding model
 
-After human review of the merged M8B smoke state, plan, then deploy and benchmark `Qwen/Qwen3-30B-A3B-Instruct-2507` first through the localhost API, recording throughput, context stability, RAM, VRAM, startup time, and failure modes. Then compare `Qwen/Qwen3.6-35B-A3B` in text-only mode and `Qwen/Qwen3-Coder-30B-A3B-Instruct` if the human prioritizes coding-specific quality.
+After human review of the merged M8C lifecycle manager, plan the first real fast-model path for `Qwen/Qwen3-30B-A3B-Instruct-2507`. M9A should remain planning/dry-run until it explicitly approves storage, runtime, image, digest, download, benchmark, and rollback steps. Later deploy and benchmark the model through the localhost API, recording throughput, context stability, RAM, VRAM, startup time, and failure modes. Then compare `Qwen/Qwen3.6-35B-A3B` in text-only mode and `Qwen/Qwen3-Coder-30B-A3B-Instruct` if the human prioritizes coding-specific quality.
 
 ## M10 larger model benchmarks
 

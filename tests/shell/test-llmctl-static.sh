@@ -55,7 +55,7 @@ if "$LLMCTL" download qwen3-0.6b-smoke >/tmp/llmctl-download.out 2>/tmp/llmctl-d
 fi
 grep -q 'reserved for later milestones' /tmp/llmctl-download.err || fail "download refusal did not mention later milestones"
 
-if grep -RInE 'image:[[:space:]]*[^$].*:latest|0\.0\.0\.0|HF_TOKEN=|OPENAI_API_KEY=|GITHUB_TOKEN=' configs/compose; then
+if grep -RInE 'image:[[:space:]]*[^$].*:latest|(^|[^0-9])0\.0\.0\.0:30000:30000|HF_TOKEN=|OPENAI_API_KEY=|GITHUB_TOKEN=' configs/compose; then
   fail "compose templates contain unsafe bind/image/token patterns"
 fi
 

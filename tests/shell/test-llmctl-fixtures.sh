@@ -77,7 +77,7 @@ env "${env_prefix[@]}" scripts/llmctl show-model fixture-smoke | grep -q 'hf_rep
 env "${env_prefix[@]}" scripts/llmctl show-runtime fixture-runtime | grep -q 'default_port: 18000' || fail "show-runtime failed"
 
 env "${env_prefix[@]}" scripts/llmctl plan-activate fixture-smoke --runtime fixture-runtime >/tmp/llmctl-fixture-plan-activate.out || fail "plan-activate failed"
-grep -q 'writes_planned: none in M7B' /tmp/llmctl-fixture-plan-activate.out || fail "plan-activate did not stay dry"
+grep -q 'writes_planned: none for plan-activate' /tmp/llmctl-fixture-plan-activate.out || fail "plan-activate did not stay dry"
 
 env "${env_prefix[@]}" scripts/llmctl activate fixture-smoke --runtime fixture-runtime --dry-run >/tmp/llmctl-fixture-activate.out || fail "activate dry-run failed"
 grep -q 'DRY-RUN' /tmp/llmctl-fixture-activate.out || fail "activate did not report dry-run"

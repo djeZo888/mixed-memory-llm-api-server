@@ -166,13 +166,27 @@ sudo -n docker ps -a --filter name=sglang-smoke-qwen3-0.6b
 sudo -n docker logs --tail 200 sglang-smoke-qwen3-0.6b
 ```
 
-A later reviewed stop/deactivate task can stop the runtime with:
+M8C adds reviewed lifecycle commands for the smoke service:
 
 ```bash
-sudo -n docker compose -f /data/services/llm-manager/compose/sglang-smoke.compose.yml --profile sglang-smoke down
+scripts/llmctl status
+scripts/llmctl active
+scripts/llmctl logs --dry-run
+scripts/llmctl logs --yes
+scripts/llmctl stop --dry-run
+scripts/llmctl stop --yes
+scripts/llmctl start --dry-run
+scripts/llmctl start --yes
+scripts/llmctl restart --dry-run
+scripts/llmctl restart --yes
+scripts/llmctl deactivate --dry-run
 ```
 
-Public exposure is still not configured. Do not add Caddy, reverse proxy, firewall changes, TLS, LAN/public binds, or API keys in M8B.
+Use `stop --yes` to stop the container while preserving the selected smoke deployment in active state. Use `start --yes` to bring the same smoke deployment back. Use `restart --yes` for a guarded stop/start cycle. `deactivate --yes` archives active state and leaves no active backend; it is not needed for normal smoke restarts.
+
+All mutating lifecycle commands require `--yes`, preserve `/data/models/qwen3-0.6b-smoke`, and do not remove Docker images or prune Docker data.
+
+Public exposure is still not configured. Do not add Caddy, reverse proxy, firewall changes, TLS, LAN/public binds, or API keys in M8C.
 
 ## Sources
 

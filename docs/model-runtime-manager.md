@@ -23,7 +23,13 @@ The manager state root is:
 /data/services/llm-manager/state
 ```
 
-M7B does not write real activation state. Future milestones may write state there after they add approved activation/deactivation behavior.
+The active state root is:
+
+```text
+/data/services/llm-manager/active
+```
+
+M8C manages the already deployed SGLang smoke backend through `/data/services/llm-manager/active/active.json`. New model activation remains guarded for later milestones.
 
 ## Model Profiles
 
@@ -80,7 +86,49 @@ scripts/llmctl activate qwen3-0.6b-smoke --runtime sglang --dry-run
 
 The plan validates the model and runtime profiles, checks storage and GPU prerequisites, confirms localhost binding policy, and prints the mounts and paths that would be used later.
 
-M7B requires `--dry-run` for mutating commands. Real activation, deactivation, download, runtime start, runtime stop, and API exposure all stop in M7B.
+M7B required `--dry-run` for mutating commands. M8C keeps new model activation and downloads guarded, but allows lifecycle operations for the already deployed smoke backend.
+
+## M8C Smoke Lifecycle Commands
+
+M8C adds lifecycle commands for the existing `qwen3-0.6b-smoke` SGLang deployment only:
+
+```bash
+scripts/llmctl status
+scripts/llmctl active
+scripts/llmctl logs --dry-run
+scripts/llmctl logs --yes
+scripts/llmctl stop --dry-run
+scripts/llmctl stop --yes
+scripts/llmctl start --dry-run
+scripts/llmctl start --yes
+scripts/llmctl restart --dry-run
+scripts/llmctl restart --yes
+scripts/llmctl deactivate --dry-run
+scripts/llmctl deactivate --yes
+```
+
+Every mutating lifecycle command requires `--yes`. Without `--yes`, the command stops and prints the matching dry-run command. `logs --yes` prints recent logs for the active smoke container; `logs --dry-run` prints the exact `docker logs` command without reading logs.
+
+`stop --yes` stops the smoke container and updates `active.json` to `status: stopped`. It does not delete model files, Docker images, or Docker data.
+
+`start --yes` starts the existing smoke deployment from `/data/services/llm-manager/compose/sglang-smoke.compose.yml`, verifies `/data`, Docker storage, Docker Root Dir, GPU containers, compose localhost binding, model files, and port ownership, then updates `active.json` to `status: active`.
+
+`restart --yes` performs a guarded stop/start cycle and updates `active.json` with `status: active` and `restarted_at`.
+
+`deactivate --yes` runs compose `down` for the smoke deployment only, then moves active state to:
+
+```text
+/data/services/llm-manager/active/history/active-YYYYMMDD-HHMMSS.json
+```
+
+It leaves no active model. It must not delete model files, remove images, or run Docker prune.
+
+`deactivate` and `stop` are intentionally different:
+
+- `stop` keeps the smoke deployment selected but stopped, so `start --yes` can bring it back.
+- `deactivate` archives `active.json` and leaves no active backend selected.
+
+`scripts/llmctl active` reads `active.json` and warns when the recorded state is stale, such as `status: active` with no running container, or `status: stopped` while port `30000` is listening. Manual Docker commands can therefore make state stale until `llmctl` updates it again.
 
 ## Why M7B Does Not Download Models
 
