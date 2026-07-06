@@ -36,7 +36,8 @@ PASS. The M9C context-sync gate started from clean `main`, verified Git identity
 
 ## Latency And Throughput Summary
 
-- Largest context tested successfully: `context_16k (16581 prompt chars)`.
+- Largest context tested successfully: `context_16k` with `16,581` prompt characters and `3,518` prompt tokens.
+- Correction: M9C did not test a true 16K-token context; true 8K/16K/24K token context testing remains future work.
 - Streaming TTFT: `0.033s`.
 - Streaming total elapsed: `0.614s`.
 - Streaming chunks: `155`.
@@ -96,7 +97,18 @@ No real stop or restart was executed in M9C.
 - Run a later dry-run-only tuning review before changing memory fraction, context length, CUDA graph, or MoE kernel-related flags.
 - Benchmark a 24K generated-context case later before trying anything near the configured 32K context limit.
 - Do not attempt full 262K context on this deployment; that belongs to a later tuning milestone with explicit memory planning.
-- If M9C is accepted, proceed to M10 API/front-door/auth planning while keeping public exposure absent until a later approved implementation milestone.
+- Human decision after M9C: add a large-model feasibility path before API/front-door/auth work. Proceed next to M9D large-model feasibility and selection planning/dry-run, then M9E proof-of-life only after human review.
+
+## Post-Benchmark Reboot Recovery Note
+
+- Timestamp: `2026-07-06T22:45:43Z`.
+- A VM reboot terminated the real-model container; no Docker restart policy, systemd service, or boot persistence policy is intentionally configured yet.
+- First post-reboot state observed before this recovery was `exited`/`unhealthy` with exit code `137`; prior logs showed `SIGTERM` followed by graceful SGLang shutdown.
+- Human then ran `scripts/llmctl start --yes`. During cold start the container was `running`, Docker health was `starting`, port `127.0.0.1:30001` was listening, and `/v1/models` returned connection-reset/not-ready responses. This was a startup readiness window, not a confirmed runtime failure.
+- `scripts/llmctl` readiness semantics were fixed so active state plus a running container with `health=starting` is reported as `manager_status: starting`, not stale, while exited containers remain `stale` and unhealthy containers report `unhealthy`.
+- `scripts/llmctl start --yes` now waits up to 20 minutes for readiness by default and prints periodic container/health/port/models status lines; `--no-wait` is available when an operator explicitly wants to skip waiting.
+- Final recovered state: container `sglang-qwen3-30b-a3b-instruct-2507` is `running`/`healthy`, `127.0.0.1:30001` is listening, `/v1/models` passes, and a chat completion returned non-empty content.
+- Auto-start, Docker restart policy, and systemd boot policy remain deferred to a later approved milestone.
 
 ## Secret Scan
 

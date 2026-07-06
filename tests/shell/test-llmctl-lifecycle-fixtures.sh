@@ -40,12 +40,51 @@ write_active() {
 YAML
 }
 
+write_real_active() {
+  local status="$1"
+  cat >"$tmp/active/active.json" <<YAML
+{
+  "model_profile": "qwen3-30b-a3b-instruct-2507",
+  "runtime_profile": "sglang",
+  "compose_file": "/data/services/llm-manager/compose/sglang-qwen3-30b.compose.yml",
+  "container_name": "sglang-qwen3-30b-a3b-instruct-2507",
+  "bind": "127.0.0.1",
+  "port": 30001,
+  "endpoint": "http://127.0.0.1:30001/v1",
+  "model_path": "/data/models/qwen3-30b-a3b-instruct-2507",
+  "image": "lmsysorg/sglang:v0.5.14-cu130",
+  "status": "$status"
+}
+YAML
+}
+
 fixture_env=(
   LLMCTL_SKIP_HOST_CHECKS=1
   LLMCTL_SKIP_DOCKER=1
   LLMCTL_ACTIVE_DIR="$tmp/active"
   LLMCTL_SMOKE_COMPOSE_FILE="$tmp/smoke.compose.yml"
 )
+
+run_status_case() {
+  local name="$1"
+  local container_status="$2"
+  local health="$3"
+  local endpoint_ok="$4"
+  local port_lines="$5"
+  local expected="$6"
+  local out="/tmp/llmctl-lifecycle-status-$name.out"
+
+  env "${fixture_env[@]}" \
+    LLMCTL_FAKE_CONTAINER_STATUS="$container_status" \
+    LLMCTL_FAKE_CONTAINER_HEALTH="$health" \
+    LLMCTL_FAKE_ENDPOINT_OK="$endpoint_ok" \
+    LLMCTL_FAKE_PORT_LINES="$port_lines" \
+    scripts/llmctl status >"$out" || fail "status case failed: $name"
+  grep -q "manager_status: $expected" "$out" || fail "status case $name did not report $expected"
+}
+
+smoke_port_line='LISTEN 0 4096 127.0.0.1:30000 0.0.0.0:*'
+real_port_line='LISTEN 0 4096 127.0.0.1:30001 0.0.0.0:*'
 
 write_active active
 
@@ -56,6 +95,24 @@ grep -q 'WARN: active_state_stale' /tmp/llmctl-lifecycle-active.out || fail "sta
 env "${fixture_env[@]}" scripts/llmctl status >/tmp/llmctl-lifecycle-status.out || fail "status parsing failed"
 grep -q 'manager_status: stale' /tmp/llmctl-lifecycle-status.out || fail "status did not report stale"
 
+run_status_case starting running starting 0 "$smoke_port_line" starting
+if grep -q 'manager_status: stale' /tmp/llmctl-lifecycle-status-starting.out; then
+  fail "starting case was incorrectly reported stale"
+fi
+grep -q 'active_state_starting' /tmp/llmctl-lifecycle-status-starting.out || fail "starting case did not explain readiness"
+
+run_status_case exited exited unhealthy 0 '' stale
+run_status_case unhealthy running unhealthy 0 "$smoke_port_line" unhealthy
+run_status_case active running healthy 1 "$smoke_port_line" active
+
+write_real_active active
+run_status_case real-active running healthy 1 "$real_port_line" active
+grep -q 'real_activation: active_m9b_real_fast' /tmp/llmctl-lifecycle-status-real-active.out || fail "real model status missing activation marker"
+
+env "${fixture_env[@]}" scripts/llmctl start --dry-run >/tmp/llmctl-lifecycle-real-start-dry.out || fail "real start dry-run failed"
+grep -q 'model_profile: qwen3-30b-a3b-instruct-2507' /tmp/llmctl-lifecycle-real-start-dry.out || fail "real start dry-run did not use active real model"
+
+write_active active
 for command in start stop restart deactivate; do
   env "${fixture_env[@]}" scripts/llmctl "$command" --dry-run >/tmp/llmctl-lifecycle-"$command"-dry.out || fail "$command dry-run failed"
   grep -q 'DRY-RUN' /tmp/llmctl-lifecycle-"$command"-dry.out || fail "$command dry-run missing DRY-RUN"

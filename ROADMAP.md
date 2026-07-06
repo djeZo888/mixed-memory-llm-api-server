@@ -78,15 +78,27 @@ M9A first real fast-model planning/dry-run is complete and merged into `main`. M
 
 M9B first real fast-model deployment is complete and merged into `main`. M9B stopped smoke through `scripts/llmctl`, downloaded only `Qwen/Qwen3-30B-A3B-Instruct-2507` to `/data/models/qwen3-30b-a3b-instruct-2507`, started SGLang on localhost-only bind `127.0.0.1:30001:30000`, and passed `/v1/models`, non-streaming chat, streaming chat, local-only exposure checks, root-disk guard, Docker storage verification, and GPU container verification. No public API exposure, host backend install, CUDA Toolkit install, Docker/containerd daemon change, fallback model download, model deletion, image deletion, or prune occurred. `reports/m9b-main-merge.md` records the main merge.
 
-M9C benchmark/lifecycle/resource review is complete on branch `milestone/m9c-real-model-benchmark-review` and should be reviewed/merged if PASS. M9C added standard-library benchmark scripts, documented real-model benchmarking, ran modest local cases through `context_16k`, verified streaming, captured GPU/resource observations, and checked `llmctl` lifecycle dry-runs without stopping or restarting the real model. No public API exposure, model download, Docker image pull, host backend install, launch-arg change, Docker/containerd daemon change, model/image deletion, or prune occurred. `reports/m9c-real-model-benchmark-review.md` records the result.
+M9C benchmark/lifecycle/resource review is complete on branch `milestone/m9c-real-model-benchmark-review` and should be reviewed/merged if PASS. M9C added standard-library benchmark scripts, documented real-model benchmarking, ran modest local cases through `context_16k`, verified streaming, captured GPU/resource observations, and checked `llmctl` lifecycle dry-runs without stopping or restarting the real model. Correction: the largest M9C context was `16,581` prompt characters / `3,518` prompt tokens, not a true 16K-token context test. After a VM reboot and manual `llmctl start --yes`, M9C also fixed readiness semantics so `health=starting` plus an unready `/v1/models` is reported as `starting`, not stale; `start --yes` now waits for readiness by default. No public API exposure, model download, Docker image pull, host backend install, launch-arg change, Docker/containerd daemon change, model/image deletion, Docker restart policy, systemd service, or prune occurred. `reports/m9c-real-model-benchmark-review.md` records the result. Next is M9D large-model feasibility and selection planning/dry-run before API/front-door/auth work unless a human explicitly changes sequencing.
+
+## M9D large-model feasibility and selection planning/dry-run
+
+Plan and dry-run the large-model proof path before API/front-door/auth work. M9D must evaluate candidate fit, memory/storage/runtime risks, launch options, and verification gates for `Qwen/Qwen3-235B-A22B-Instruct-2507`, `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8`, `zai-org/GLM-5.2`, and `MiniMaxAI/MiniMax-M3`. M9D must not download models, pull images, install backends, change containers, expose API, or modify Docker/containerd daemon configuration.
+
+## M9E actual large-model proof-of-life
+
+After M9D human review, run one approved large-model proof-of-life at a time with explicit model path, runtime, storage, memory, launch args, rollback, and localhost-only verification. No public API exposure should be added in M9E unless separately approved.
+
+## Optional boot persistence / auto-start policy
+
+A later lifecycle milestone may decide whether the active backend should auto-start after VM reboot. That milestone should choose between no auto-start, Docker restart policy, or systemd orchestration, and must verify logs, readiness waiting, failure behavior, and manual recovery. M9C intentionally does not add Docker restart policy or systemd service.
 
 ## M10 API/front-door/auth planning
 
-After M9C review/merge, M10 should be API/front-door/auth planning only. It should choose LAN-only, VPN-only, or public TLS exposure strategy, define API-key handling, firewall/TLS policy, reverse proxy or gateway placement, and unauthorized-access tests. M10 must not expose a public API until a later approved implementation milestone; public exposure remains blocked until M10/M11 review produces an approved plan.
+After the large-model proof path or an explicit human sequencing decision, M10 should be API/front-door/auth planning only. It should choose LAN-only, VPN-only, or public TLS exposure strategy, define API-key handling, firewall/TLS policy, reverse proxy or gateway placement, and unauthorized-access tests. M10 must not expose a public API until a later approved implementation milestone; public exposure remains blocked until M10/M11 review produces an approved plan.
 
 ## M11 larger model benchmarks
 
-After M9B and M10 planning, benchmark `Qwen/Qwen3-235B-A22B-Instruct-2507`, `MiniMaxAI/MiniMax-M3`, and `zai-org/GLM-5.2` one model at a time, with storage and memory estimates before downloads. Use `deepseek-ai/DeepSeek-V4-Flash` as the practical large-model feasibility comparator if human review prioritizes fit and speed before the largest candidates.
+After M9D/M9E or an explicit human decision, benchmark larger candidates such as `Qwen/Qwen3-235B-A22B-Instruct-2507`, `MiniMaxAI/MiniMax-M3`, and `zai-org/GLM-5.2` one model at a time, with storage and memory estimates before downloads. Use `deepseek-ai/DeepSeek-V4-Flash` as the practical large-model feasibility comparator if human review prioritizes fit and speed before the largest candidates.
 
 ## M12 authenticated API exposure and operations
 

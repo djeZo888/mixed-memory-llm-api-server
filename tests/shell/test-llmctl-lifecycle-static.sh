@@ -20,6 +20,7 @@ done
 grep -q 'start' /tmp/llmctl-start-help.out || fail "start help missing command text"
 grep -q -- '--dry-run' /tmp/llmctl-start-help.out || fail "start help missing --dry-run"
 grep -q -- '--yes' /tmp/llmctl-start-help.out || fail "start help missing --yes"
+grep -q -- '--no-wait' /tmp/llmctl-start-help.out || fail "start help missing --no-wait"
 grep -q -- '--yes' /tmp/llmctl-stop-help.out || fail "stop help missing --yes"
 grep -q -- '--yes' /tmp/llmctl-restart-help.out || fail "restart help missing --yes"
 grep -q -- '--yes' /tmp/llmctl-deactivate-help.out || fail "deactivate help missing --yes"
@@ -72,6 +73,9 @@ for command in start stop restart deactivate; do
   grep -q 'DRY-RUN' /tmp/llmctl-"$command"-dry-run.out || fail "$command dry-run did not report DRY-RUN"
   grep -q 'model_file_deletion: none' /tmp/llmctl-"$command"-dry-run.out || fail "$command dry-run missing model deletion policy"
   grep -q 'image_deletion: none' /tmp/llmctl-"$command"-dry-run.out || fail "$command dry-run missing image deletion policy"
+  if [[ "$command" == "start" ]]; then
+    grep -q 'wait_for_readiness: yes by default' /tmp/llmctl-start-dry-run.out || fail "start dry-run missing readiness wait policy"
+  fi
 done
 
 env "${fixture_env[@]}" "$LLMCTL" logs --dry-run >/tmp/llmctl-logs-dry-run.out || fail "logs --dry-run failed"
@@ -79,6 +83,10 @@ grep -q 'log_command:' /tmp/llmctl-logs-dry-run.out || fail "logs dry-run missin
 
 if grep -RInE 'docker[[:space:]]+prune|system[[:space:]]+prune|docker[[:space:]]+(rmi|image[[:space:]]+rm)|shutil\.rmtree|rm[[:space:]-].*/data/models|0\.0\.0\.0:30000:30000' "$LLMCTL" "$VERIFY"; then
   fail "dangerous lifecycle pattern found"
+fi
+
+if grep -RInE 'known M8B smoke deployment|existing M8B smoke deployment|run start --yes only for the known smoke deployment' "$LLMCTL"; then
+  fail "old smoke-only lifecycle failure string found"
 fi
 
 if grep -RInE '(BEGIN OPENSSH|BEGIN RSA|PRIVATE KEY|HF_TOKEN=[A-Za-z0-9_./+:-]{8,}|OPENAI_API_KEY=[A-Za-z0-9_./+:-]{8,}|GITHUB_TOKEN=[A-Za-z0-9_./+:-]{8,})' "$LLMCTL" "$VERIFY"; then
