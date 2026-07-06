@@ -78,11 +78,11 @@ M9A first real fast-model planning/dry-run is complete and merged into `main`. M
 
 M9B first real fast-model deployment is complete and merged into `main`. M9B stopped smoke through `scripts/llmctl`, downloaded only `Qwen/Qwen3-30B-A3B-Instruct-2507` to `/data/models/qwen3-30b-a3b-instruct-2507`, started SGLang on localhost-only bind `127.0.0.1:30001:30000`, and passed `/v1/models`, non-streaming chat, streaming chat, local-only exposure checks, root-disk guard, Docker storage verification, and GPU container verification. No public API exposure, host backend install, CUDA Toolkit install, Docker/containerd daemon change, fallback model download, model deletion, image deletion, or prune occurred. `reports/m9b-main-merge.md` records the main merge.
 
-M9C benchmark/lifecycle/resource review is next. It should review stop/start/restart semantics for the real model, benchmark latency/throughput and context behavior, inspect warnings such as missing optimized MoE kernel config, review disk/VRAM/log behavior under sustained use, and decide whether `restart --yes` should become supported for the real model. M9C must not expose a public API, download a new model, or install host backend packages unless a separate human-approved task expands scope.
+M9C benchmark/lifecycle/resource review is complete on branch `milestone/m9c-real-model-benchmark-review` and should be reviewed/merged if PASS. M9C added standard-library benchmark scripts, documented real-model benchmarking, ran modest local cases through `context_16k`, verified streaming, captured GPU/resource observations, and checked `llmctl` lifecycle dry-runs without stopping or restarting the real model. No public API exposure, model download, Docker image pull, host backend install, launch-arg change, Docker/containerd daemon change, model/image deletion, or prune occurred. `reports/m9c-real-model-benchmark-review.md` records the result.
 
 ## M10 API/front-door/auth planning
 
-After M9C review, M10 should be API/front-door/auth planning only. It should choose LAN-only, VPN-only, or public TLS exposure strategy, define API-key handling, firewall/TLS policy, reverse proxy or gateway placement, and unauthorized-access tests. M10 must not expose a public API until a later approved implementation milestone.
+After M9C review/merge, M10 should be API/front-door/auth planning only. It should choose LAN-only, VPN-only, or public TLS exposure strategy, define API-key handling, firewall/TLS policy, reverse proxy or gateway placement, and unauthorized-access tests. M10 must not expose a public API until a later approved implementation milestone; public exposure remains blocked until M10/M11 review produces an approved plan.
 
 ## M11 larger model benchmarks
 
