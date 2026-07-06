@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M9B merged into `main`; M9C benchmark/lifecycle/resource review is complete on branch `milestone/m9c-real-model-benchmark-review` with a post-reboot startup-readiness fix ready for review/merge. Active backend is recovered and healthy: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. `scripts/llmctl status` now distinguishes `starting`, `active`, `stale`, `unhealthy`, and `stopped`; `start --yes` waits for readiness by default. No auto-start policy exists yet. Public API exposure is still not configured; M9D large-model feasibility and selection planning/dry-run is next after M9C review/merge.
+- Project state: M0-M9C merged into `main`. Active backend is recovered and healthy: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. `scripts/llmctl status` distinguishes `starting`, `active`, `stale`, `unhealthy`, and `stopped`; `start --yes` waits for readiness by default. No auto-start policy exists yet. Public API exposure is still not configured; M9D large-model feasibility and selection planning/dry-run is next before API/front-door/auth work unless a human changes sequencing.
 
 ## Git Attribution
 
@@ -55,7 +55,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M9A first real fast-model plan: merged into `main`; report is `reports/m9a-first-real-fast-model-plan.md`
 - M9A main merge report: `reports/m9a-main-merge.md`
 - M9B first real fast-model deployment: merged into `main`; deployment report is `reports/m9b-first-real-fast-model-deploy.md`; main merge report is `reports/m9b-main-merge.md`
-- M9C real model benchmark/lifecycle/resource review: complete on branch `milestone/m9c-real-model-benchmark-review`; report is `reports/m9c-real-model-benchmark-review.md`; benchmarking doc is `docs/real-model-benchmarking.md`; post-reboot recovery clarified SGLang cold-start readiness semantics
+- M9C real model benchmark/lifecycle/resource review: merged into `main` with merge commit `db9afcd5a1f29f6daed5f82bda7afc6791fbd89a`; report is `reports/m9c-real-model-benchmark-review.md`; main merge report is `reports/m9c-main-merge.md`; benchmarking doc is `docs/real-model-benchmarking.md`; post-reboot recovery clarified SGLang cold-start readiness semantics
 
 ## Current Storage
 
