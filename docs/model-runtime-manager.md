@@ -29,7 +29,7 @@ The active state root is:
 /data/services/llm-manager/active
 ```
 
-M8C manages the already deployed SGLang smoke backend through `/data/services/llm-manager/active/active.json`. New model activation remains guarded for later milestones.
+M8C introduced lifecycle management through `/data/services/llm-manager/active/active.json`. M9B/M9C extend that lifecycle handling to the active localhost-only SGLang deployment recorded in `active.json`; new model activation remains guarded for later milestones.
 
 ## Model Profiles
 
@@ -90,7 +90,7 @@ M7B required `--dry-run` for mutating commands. M8C keeps new model activation a
 
 ## M8C Smoke Lifecycle Commands
 
-M8C adds lifecycle commands for the existing `qwen3-0.6b-smoke` SGLang deployment only:
+M8C added lifecycle commands for the existing `qwen3-0.6b-smoke` SGLang deployment; M9B/M9C keep the same command surface data-driven for the active SGLang deployment:
 
 ```bash
 scripts/llmctl status
@@ -111,7 +111,7 @@ Every mutating lifecycle command requires `--yes`. Without `--yes`, the command 
 
 `stop --yes` stops the smoke container and updates `active.json` to `status: stopped`. It does not delete model files, Docker images, or Docker data.
 
-`start --yes` starts the existing smoke deployment from `/data/services/llm-manager/compose/sglang-smoke.compose.yml`, verifies `/data`, Docker storage, Docker Root Dir, GPU containers, compose localhost binding, model files, and port ownership, then updates `active.json` to `status: active`.
+`start --yes` starts the selected active deployment compose file, verifies `/data`, Docker storage, Docker Root Dir, GPU containers, compose localhost binding, model files, and port ownership, waits for readiness by default, then updates `active.json` to `status: active`.
 
 `restart --yes` performs a guarded stop/start cycle and updates `active.json` with `status: active` and `restarted_at`.
 
@@ -128,7 +128,21 @@ It leaves no active model. It must not delete model files, remove images, or run
 - `stop` keeps the smoke deployment selected but stopped, so `start --yes` can bring it back.
 - `deactivate` archives `active.json` and leaves no active backend selected.
 
-`scripts/llmctl active` reads `active.json` and warns when the recorded state is stale, such as `status: active` with no running container, or `status: stopped` while port `30000` is listening. Manual Docker commands can therefore make state stale until `llmctl` updates it again.
+`scripts/llmctl active` reads `active.json` and reports live container status, Docker health, localhost port readiness, and `/v1/models` readiness. Manual Docker commands can make state stale until `llmctl` updates it again.
+
+## Lifecycle Status Semantics
+
+`active.json` remains the selected deployment record. Live status is derived from that state plus Docker status, Docker health, localhost port listeners, and `/v1/models` readiness. `scripts/llmctl status` uses these categories:
+
+- `active`: `active.json` says active, the container is running, Docker health is healthy or unavailable, the expected localhost port is listening on `127.0.0.1`, and `/v1/models` returns the served model.
+- `starting`: the container is running but readiness is still in progress, such as Docker health `starting`, the port not listening yet, or `/v1/models` not ready during cold start. This is not classified as stale.
+- `stale`: `active.json` and live state disagree structurally, such as active state with an exited/missing container, stopped state with a running container, or a non-localhost bind.
+- `unhealthy`: the container is running but Docker health is `unhealthy`, or Docker health is healthy while `/v1/models` is still not healthy.
+- `stopped`: `active.json` says stopped and no managed container/port is active.
+
+`scripts/llmctl start --yes` runs the active deployment compose file and waits up to 20 minutes for readiness by default. During the wait it prints periodic `startup_status` lines with container status, Docker health, port state, and `/v1/models` result. Use `--no-wait` only when an operator explicitly wants to skip readiness waiting. Early connection resets from `/v1/models` during Docker health `starting` are treated as cold-start readiness, not immediate failure.
+
+Boot persistence is intentionally not configured yet: no Docker restart policy and no systemd service are added by M9C. A later milestone can decide whether the active backend should auto-start after reboot.
 
 ## Why M7B Does Not Download Models
 

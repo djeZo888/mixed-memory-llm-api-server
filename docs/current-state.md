@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M9B merged into `main`. Active backend is `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. Public API exposure is still not configured; M9C benchmark/lifecycle/resource review is next before M10 API/front-door/auth planning.
+- Project state: M0-M9B merged into `main`; M9C benchmark/lifecycle/resource review is complete on branch `milestone/m9c-real-model-benchmark-review` with a post-reboot startup-readiness fix ready for review/merge. Active backend is recovered and healthy: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. `scripts/llmctl status` now distinguishes `starting`, `active`, `stale`, `unhealthy`, and `stopped`; `start --yes` waits for readiness by default. No auto-start policy exists yet. Public API exposure is still not configured; M9D large-model feasibility and selection planning/dry-run is next after M9C review/merge.
 
 ## Git Attribution
 
@@ -55,6 +55,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M9A first real fast-model plan: merged into `main`; report is `reports/m9a-first-real-fast-model-plan.md`
 - M9A main merge report: `reports/m9a-main-merge.md`
 - M9B first real fast-model deployment: merged into `main`; deployment report is `reports/m9b-first-real-fast-model-deploy.md`; main merge report is `reports/m9b-main-merge.md`
+- M9C real model benchmark/lifecycle/resource review: complete on branch `milestone/m9c-real-model-benchmark-review`; report is `reports/m9c-real-model-benchmark-review.md`; benchmarking doc is `docs/real-model-benchmarking.md`; post-reboot recovery clarified SGLang cold-start readiness semantics
 
 ## Current Storage
 
@@ -339,12 +340,33 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - No Docker/containerd daemon config change or restart occurred.
 - No model files/images were deleted and Docker prune was not run.
 
+## Current M9C Result
+
+- M9C branch: `milestone/m9c-real-model-benchmark-review`.
+- M9C report: `reports/m9c-real-model-benchmark-review.md`.
+- Benchmarking doc: `docs/real-model-benchmarking.md`.
+- Result: PASS on the branch; human review and merge to `main` are next.
+- Active model/backend remains unchanged: `qwen3-30b-a3b-instruct-2507` on SGLang.
+- Active endpoint remains `http://127.0.0.1:30001/v1`.
+- Active bind remains `127.0.0.1:30001` only; no public API exposure is configured.
+- Launch args remain `--tp 2 --context-length 32768 --mem-fraction-static 0.75`.
+- Benchmark cases passed: `tiny_health`, `technical_short`, `coding_short`, `streaming_short`, `context_4k`, `context_8k`, and `context_16k`.
+- Largest context tested successfully: `context_16k` with `16581` prompt characters and reported `3518` prompt tokens.
+- Streaming result: TTFT about `0.033s`, total elapsed about `0.614s`, `155` SSE chunks.
+- Non-streaming output throughput where token usage was returned was about `158-249` output tokens/sec across the modest cases.
+- GPU snapshots showed memory steady around `76360 MiB` on GPU 0 and `76392 MiB` on GPU 1, peak observed GPU utilization `100%`, peak observed power about `287 W` on GPU 0 and `310 W` on GPU 1.
+- Lifecycle checks were dry-run only: `status`, `logs --dry-run`, `stop --dry-run`, and `restart --dry-run` passed.
+- Root-disk guard, Docker storage verifier, GPU container verifier, and SGLang real-fast live verifier passed after benchmarks.
+- SGLang log tail had no warning/error lines matching the M9C scanner during the captured post-benchmark window.
+- No model download, Docker image pull, package install, launch-arg change, real stop/restart, public exposure, model/image deletion, or Docker prune occurred.
+
+
 ## Next Recommended Milestone
 
-- M9C benchmark/lifecycle/resource review for the active 30B model is next.
-- M9C should benchmark latency/throughput/context behavior, review resource usage and logs, and harden lifecycle behavior before enabling `restart --yes` for the real model.
-- M10 API/front-door/auth planning should wait until after M9C review.
+- Human review, then merge M9C into `main` if PASS.
+- After M9C merge, M10 API/front-door/auth planning is next.
 - Public API exposure remains unconfigured and blocked until a separate approved implementation milestone.
+- Real restart testing and launch-arg tuning should remain separate human-approved lifecycle/tuning tasks.
 
 ## Carry-Forward Operational Warnings
 
@@ -404,6 +426,8 @@ Future sessions should read:
 - `reports/m9b-first-real-fast-model-deploy.md` if present
 - `reports/m9b-main-merge.md` if present
 - `docs/pre-m9c-handoff.md` if present
+- `docs/real-model-benchmarking.md` if present
+- `reports/m9c-real-model-benchmark-review.md` if present
 - Latest reports
 
-Then continue with M9C benchmark/lifecycle/resource review before M10 API/front-door/auth planning.
+Then continue with human review and merge of M9C if PASS, followed by M10 API/front-door/auth planning.
