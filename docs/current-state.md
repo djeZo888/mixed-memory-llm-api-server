@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M9C merged into `main`. Active backend is recovered and healthy: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. `scripts/llmctl status` distinguishes `starting`, `active`, `stale`, `unhealthy`, and `stopped`; `start --yes` waits for readiness by default. No auto-start policy exists yet. Public API exposure is still not configured; M9D large-model feasibility and selection planning/dry-run is next before API/front-door/auth work unless a human changes sequencing.
+- Project state: M0-M9C merged into `main`; M9D large-model feasibility and selection planning/dry-run is the current branch milestone. Active backend is healthy: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. `scripts/llmctl status` distinguishes `starting`, `active`, `stale`, `unhealthy`, and `stopped`; `start --yes` waits for readiness by default. No auto-start policy exists yet. Public API exposure is still not configured. M9E is the earliest actual large-model proof-of-life after human review; M10 API/front-door/auth remains deferred unless a human changes sequencing.
 
 ## Git Attribution
 
@@ -56,6 +56,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M9A main merge report: `reports/m9a-main-merge.md`
 - M9B first real fast-model deployment: merged into `main`; deployment report is `reports/m9b-first-real-fast-model-deploy.md`; main merge report is `reports/m9b-main-merge.md`
 - M9C real model benchmark/lifecycle/resource review: merged into `main` with merge commit `db9afcd5a1f29f6daed5f82bda7afc6791fbd89a`; report is `reports/m9c-real-model-benchmark-review.md`; main merge report is `reports/m9c-main-merge.md`; benchmarking doc is `docs/real-model-benchmarking.md`; post-reboot recovery clarified SGLang cold-start readiness semantics
+- M9D large-model feasibility and selection planning/dry-run: current branch milestone; report is `reports/m9d-large-model-feasibility-plan.md`; no large model download or runtime install is approved by M9D
 
 ## Current Storage
 
@@ -345,7 +346,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M9C branch: `milestone/m9c-real-model-benchmark-review`.
 - M9C report: `reports/m9c-real-model-benchmark-review.md`.
 - Benchmarking doc: `docs/real-model-benchmarking.md`.
-- Result: PASS on the branch; human review and merge to `main` are next.
+- Result: PASS and merged into `main`.
 - Active model/backend remains unchanged: `qwen3-30b-a3b-instruct-2507` on SGLang.
 - Active endpoint remains `http://127.0.0.1:30001/v1`.
 - Active bind remains `127.0.0.1:30001` only; no public API exposure is configured.
@@ -361,12 +362,34 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - No model download, Docker image pull, package install, launch-arg change, real stop/restart, public exposure, model/image deletion, or Docker prune occurred.
 
 
+
+## Current M9D Branch Result
+
+- M9D branch: `milestone/m9d-large-model-feasibility-plan`.
+- M9D report: `reports/m9d-large-model-feasibility-plan.md`.
+- Large-model feasibility doc: `docs/large-model-feasibility.md`.
+- Result: PASS for planning. STOP for actual download/deploy until human review.
+- No large model was downloaded in M9D.
+- No backend/runtime was installed or built in M9D.
+- No Docker image was pulled in M9D.
+- No model/backend container was started in M9D.
+- The current 30B SGLang backend remains active at `http://127.0.0.1:30001/v1` and bound to `127.0.0.1` only.
+- Recommended first M9E proof-of-life candidate: `MiniMaxAI/MiniMax-M3-MXFP8`.
+- Recommended M9E runtime path: KTransformers/KT-Kernel plus SGLang heterogeneous CPU/GPU serving.
+- Fallback candidate: `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` only after human review and a proven current offload/two-GPU path.
+- Recommended first M9E context: 8192 tokens or less; do not attempt 1M context first.
+- M9C context correction remains active: largest M9C context was `16,581` prompt characters / `3,518` prompt tokens, not a true 16K-token test.
+- Reboot policy remains unchanged: no Docker restart policy or systemd auto-start exists yet; boot persistence remains a later milestone.
+- M10 API/front-door/auth remains deferred until after M9E or an explicit human sequencing change.
+
 ## Next Recommended Milestone
 
-- Human review, then merge M9C into `main` if PASS.
-- After M9C merge, M10 API/front-door/auth planning is next.
+- Human review of M9D large-model feasibility and selection plan.
+- After M9D review, M9E actual large-model proof-of-life may run one approved model/runtime path at a time.
+- M9E should keep localhost-only exposure, stop the current 30B backend only after explicit human approval, and include rollback to the 30B backend.
+- M10 API/front-door/auth planning remains deferred until after M9E or an explicit human sequencing change.
 - Public API exposure remains unconfigured and blocked until a separate approved implementation milestone.
-- Real restart testing and launch-arg tuning should remain separate human-approved lifecycle/tuning tasks.
+- Real restart testing, launch-arg tuning, and boot persistence remain separate human-approved lifecycle/tuning tasks.
 
 ## Carry-Forward Operational Warnings
 
@@ -430,4 +453,4 @@ Future sessions should read:
 - `reports/m9c-real-model-benchmark-review.md` if present
 - Latest reports
 
-Then continue with human review and merge of M9C if PASS, followed by M10 API/front-door/auth planning.
+Then continue with human review of M9D, followed by M9E actual large-model proof-of-life if approved. M10 API/front-door/auth remains deferred.
