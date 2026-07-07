@@ -1,11 +1,11 @@
 # M3 Root-Disk Guard Report
 
 - Milestone ID: M3
-- Timestamp: 2026-07-06T23:39:52+00:00
+- Timestamp: 2026-07-07T00:52:41+00:00
 - Hostname: llmserver
 - User: user
-- Branch: milestone/m9d-large-model-feasibility-plan
-- Commit before work: 43d2f58ecbf13d24fdd472a4f2e5807b872bb633
+- Branch: main
+- Commit before work: 3ae263395fe1c5bca260a0136ab77a6f18110bcb
 - Root path inspected: `/`
 - Data path checked/excluded: `/data`
 - Sudo coverage: sudo -n available for read-only inspection
@@ -65,7 +65,7 @@ XDG_CACHE_HOME=/data/hf-cache/xdg
 
 | Path | Source | Fstype | Label | UUID/identity | Free GiB |
 | --- | --- | --- | --- | --- | --- |
-| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785831` | 4 |
+| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785825` | 4 |
 | `/data` | `/dev/sdb1` | `ext4` | `AI_DATA` | `8daf56f1-5649-4163-9d87-919c2d271875` | 1789 |
 
 ## Root Free Space Thresholds
@@ -109,7 +109,7 @@ AI and Hugging Face environment variables were checked in a fresh login shell.
 | `/home/user/codex-bootstrap` | yes | 2 | WARN | expected old bootstrap repo; small |
 | `/tmp` | yes | 1 | PASS | below warning threshold |
 | `/var/tmp` | yes | 1 | PASS | below warning threshold |
-| `/var/log` | yes | 334 | PASS | below warning threshold |
+| `/var/log` | yes | 336 | PASS | below warning threshold |
 | `/opt` | yes | 1 | PASS | below warning threshold |
 | `/srv` | yes | 1 | PASS | below warning threshold |
 | `/models` | no | 0 | PASS | absent |

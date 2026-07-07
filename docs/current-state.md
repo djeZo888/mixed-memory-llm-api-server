@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M9C merged into `main`; M9D large-model feasibility and selection planning/dry-run is the current branch milestone. Active backend is healthy: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. `scripts/llmctl status` distinguishes `starting`, `active`, `stale`, `unhealthy`, and `stopped`; `start --yes` waits for readiness by default. No auto-start policy exists yet. Public API exposure is still not configured. M9E is the earliest actual large-model proof-of-life after human review; M10 API/front-door/auth remains deferred unless a human changes sequencing.
+- Project state: M0-M9D merged into `main`. M9D selected the large-model proof-of-life target for M9E: `MiniMaxAI/MiniMax-M3-MXFP8` via KTransformers / KT-Kernel plus SGLang heterogeneous CPU/GPU serving, with `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` as fallback after human review. Active backend is healthy: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. No large model has been downloaded yet. `scripts/llmctl status` distinguishes `starting`, `active`, `stale`, `unhealthy`, and `stopped`; `start --yes` waits for readiness by default. No auto-start policy exists yet. Public API exposure is still not configured. M9E is the next actual large-model proof-of-life after human review; M9E must stop the current 30B backend through `scripts/llmctl` before any large proof attempt. M10 API/front-door/auth remains deferred unless a human changes sequencing.
 
 ## Git Attribution
 
@@ -56,7 +56,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M9A main merge report: `reports/m9a-main-merge.md`
 - M9B first real fast-model deployment: merged into `main`; deployment report is `reports/m9b-first-real-fast-model-deploy.md`; main merge report is `reports/m9b-main-merge.md`
 - M9C real model benchmark/lifecycle/resource review: merged into `main` with merge commit `db9afcd5a1f29f6daed5f82bda7afc6791fbd89a`; report is `reports/m9c-real-model-benchmark-review.md`; main merge report is `reports/m9c-main-merge.md`; benchmarking doc is `docs/real-model-benchmarking.md`; post-reboot recovery clarified SGLang cold-start readiness semantics
-- M9D large-model feasibility and selection planning/dry-run: current branch milestone; report is `reports/m9d-large-model-feasibility-plan.md`; no large model download or runtime install is approved by M9D
+- M9D large-model feasibility and selection planning/dry-run: merged into `main` with merge commit `3ae263395fe1c5bca260a0136ab77a6f18110bcb`; source commit `c3131db02ace63ffca6a8180d9d3ddea5094d2ae`; report is `reports/m9d-large-model-feasibility-plan.md`; main merge report is `reports/m9d-main-merge.md`; no large model download or runtime install was performed by M9D
 
 ## Current Storage
 
@@ -363,9 +363,13 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 
 
 
-## Current M9D Branch Result
+## Current M9D Result
 
 - M9D branch: `milestone/m9d-large-model-feasibility-plan`.
+- M9D source commit: `c3131db02ace63ffca6a8180d9d3ddea5094d2ae`.
+- M9D merged into `main` with merge commit `3ae263395fe1c5bca260a0136ab77a6f18110bcb`.
+- M9D main merge report: `reports/m9d-main-merge.md`.
+- Pre-M9E handoff: `docs/pre-m9e-large-model-poc-handoff.md`.
 - M9D report: `reports/m9d-large-model-feasibility-plan.md`.
 - Large-model feasibility doc: `docs/large-model-feasibility.md`.
 - Result: PASS for planning. STOP for actual download/deploy until human review.
@@ -374,19 +378,23 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - No Docker image was pulled in M9D.
 - No model/backend container was started in M9D.
 - The current 30B SGLang backend remains active at `http://127.0.0.1:30001/v1` and bound to `127.0.0.1` only.
-- Recommended first M9E proof-of-life candidate: `MiniMaxAI/MiniMax-M3-MXFP8`.
-- Recommended M9E runtime path: KTransformers/KT-Kernel plus SGLang heterogeneous CPU/GPU serving.
+- Selected first M9E proof-of-life target: `MiniMaxAI/MiniMax-M3-MXFP8`.
+- Selected M9E runtime path: KTransformers / KT-Kernel plus SGLang heterogeneous CPU/GPU serving.
 - Fallback candidate: `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` only after human review and a proven current offload/two-GPU path.
 - Recommended first M9E context: 8192 tokens or less; do not attempt 1M context first.
 - M9C context correction remains active: largest M9C context was `16,581` prompt characters / `3,518` prompt tokens, not a true 16K-token test.
 - Reboot policy remains unchanged: no Docker restart policy or systemd auto-start exists yet; boot persistence remains a later milestone.
+- M9E must stop the current 30B backend through `scripts/llmctl` before any large proof-of-life attempt.
+- M9E must keep localhost-only exposure and must not expose a public API.
 - M10 API/front-door/auth remains deferred until after M9E or an explicit human sequencing change.
 
 ## Next Recommended Milestone
 
-- Human review of M9D large-model feasibility and selection plan.
-- After M9D review, M9E actual large-model proof-of-life may run one approved model/runtime path at a time.
-- M9E should keep localhost-only exposure, stop the current 30B backend only after explicit human approval, and include rollback to the 30B backend.
+- Start a fresh Codex context for M9E actual large-model proof-of-life after human review.
+- M9E target: `MiniMaxAI/MiniMax-M3-MXFP8` via KTransformers / KT-Kernel plus SGLang heterogeneous CPU/GPU serving.
+- M9E fallback: `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` only if the primary is explicitly rejected or blocked by review.
+- M9E must stop the current 30B backend through `scripts/llmctl` before any large proof-of-life attempt.
+- M9E must keep localhost-only exposure and include rollback to the 30B backend.
 - M10 API/front-door/auth planning remains deferred until after M9E or an explicit human sequencing change.
 - Public API exposure remains unconfigured and blocked until a separate approved implementation milestone.
 - Real restart testing, launch-arg tuning, and boot persistence remain separate human-approved lifecycle/tuning tasks.
@@ -451,6 +459,10 @@ Future sessions should read:
 - `docs/pre-m9c-handoff.md` if present
 - `docs/real-model-benchmarking.md` if present
 - `reports/m9c-real-model-benchmark-review.md` if present
+- `docs/large-model-feasibility.md` if present
+- `reports/m9d-large-model-feasibility-plan.md` if present
+- `reports/m9d-main-merge.md` if present
+- `docs/pre-m9e-large-model-poc-handoff.md` if present
 - Latest reports
 
-Then continue with human review of M9D, followed by M9E actual large-model proof-of-life if approved. M10 API/front-door/auth remains deferred.
+Then start M9E actual large-model proof-of-life only after human review and explicit approval to stop the current 30B backend. M10 API/front-door/auth remains deferred.
