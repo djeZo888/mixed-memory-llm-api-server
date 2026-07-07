@@ -82,11 +82,11 @@ M9C benchmark/lifecycle/resource review is complete and merged into `main`. M9C 
 
 ## M9D large-model feasibility and selection planning/dry-run
 
-Plan and dry-run the large-model proof path before API/front-door/auth work. M9D must evaluate candidate fit, memory/storage/runtime risks, launch options, and verification gates for `Qwen/Qwen3-235B-A22B-Instruct-2507`, `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8`, `zai-org/GLM-5.2`, and `MiniMaxAI/MiniMax-M3`. M9D must not download models, pull images, install backends, change containers, expose API, or modify Docker/containerd daemon configuration.
+M9D plans and dry-runs the large-model proof path before API/front-door/auth work. It evaluates `Qwen/Qwen3-235B-A22B-Instruct-2507`, `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8`, `zai-org/GLM-5.2`, `MiniMaxAI/MiniMax-M3`, `MiniMaxAI/MiniMax-M3-MXFP8`, and the relevant `nvidia/MiniMax-M3-NVFP4` comparison card. M9D remains planning-only: no large model download, Docker image pull, backend/runtime install or build, model/backend container start, active-model stop/restart, public API exposure, or Docker/containerd daemon change. M9D records `MiniMaxAI/MiniMax-M3-MXFP8` via KTransformers/KT-Kernel plus SGLang hybrid as the preliminary first M9E proof-of-life candidate, with `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` as the fallback after human review. The M9C context correction carries forward: the largest M9C context was `16,581` prompt characters / `3,518` prompt tokens, not a true 16K-token context test.
 
 ## M9E actual large-model proof-of-life
 
-After M9D human review, run one approved large-model proof-of-life at a time with explicit model path, runtime, storage, memory, launch args, rollback, and localhost-only verification. No public API exposure should be added in M9E unless separately approved.
+After M9D human review, run one approved large-model proof-of-life at a time with explicit model path, runtime, storage, memory, launch args, rollback, and localhost-only verification. M9E may stop the current 30B model only after explicit human approval, should start with 8192 tokens or less, and should not attempt 1M context. No public API exposure should be added in M9E unless separately approved.
 
 ## Optional boot persistence / auto-start policy
 
