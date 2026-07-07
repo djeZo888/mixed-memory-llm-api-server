@@ -1,6 +1,6 @@
 # Model Matrix
 
-Do not download models before the relevant milestone explicitly approves the download path, cache path, backend, and verification sequence. M9D is planning/dry-run only and does not approve large-model downloads or runtime installs.
+Do not download models before the relevant milestone explicitly approves the download path, cache path, backend, and verification sequence. M9E downloaded only `MiniMaxAI/MiniMax-M3-MXFP8`; fallback downloads remain blocked unless a separate human-approved task says so.
 
 ## Hardware Profile
 
@@ -51,10 +51,10 @@ M9D refreshes the large-model matrix using current Hugging Face metadata and cur
 | `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` | Fallback after review | 236.43 GB / 220.19 GiB | SGLang/vLLM listed by model card | Still exceeds aggregate VRAM before KV/cache overhead; needs proven offload or a larger GPU plan. |
 | `zai-org/GLM-5.2` | Defer BF16; possible later FP8 KT path | 1506.67 GB / 1403.19 GiB BF16; FP8 metadata about 755.63 GB / 703.74 GiB | KTransformers/KT-Kernel plus SGLang tutorial exists | Too large for first download; high storage and RAM risk. |
 | `MiniMaxAI/MiniMax-M3` | Defer native BF16 | 854.18 GB / 795.51 GiB | SGLang/vLLM/KTransformers references exist | Use the MXFP8 variant first if MiniMax is selected. |
-| `MiniMaxAI/MiniMax-M3-MXFP8` | Recommended first M9E proof candidate | 443.75 GB / 413.27 GiB | KTransformers/KT-Kernel plus SGLang hybrid | Best current-source match for this 1 TB RAM plus 2 x 96 GB VRAM VM, but Blackwell workstation support must be proven. |
+| `MiniMaxAI/MiniMax-M3-MXFP8` | M9E downloaded; launch STOP | Downloaded size `414G` at `/data/models/minimax-m3-mxfp8` | KTransformers/KT-Kernel plus SGLang-KT hybrid | Runtime preflight passed, but launch failed before readiness because `sgl_kernel` common ops did not load on SM120 and `libnuma.so.1` was missing in the runtime image. Remediation is required before proof-of-life can pass. |
 | `nvidia/MiniMax-M3-NVFP4` | Relevant comparison only | 250.10 GB / 232.93 GiB | vLLM nightly per NVIDIA model card | Relevant for Blackwell, but current card points to nightly vLLM support and TP8, not a proven 2-GPU path. |
 
-M9D preliminary recommendation: use `MiniMaxAI/MiniMax-M3-MXFP8` through KTransformers/KT-Kernel plus SGLang for the first M9E proof-of-life, start with text-only prompts and 8192 tokens or less, and keep the current 30B model running until M9E human review. `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` is the fallback if human review prioritizes Apache-2.0 and a current offload path is proven. M10 API/front-door/auth remains deferred.
+M9E attempted the recommended `MiniMaxAI/MiniMax-M3-MXFP8` path through KTransformers/KT-Kernel plus SGLang-KT. The model downloaded successfully, but the launch stopped before `/v1/models` because `sgl_kernel` could not load common ops on SM120; error details include missing `libnuma.so.1`. The current active backend is the restored 30B SGLang service. `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` remains a fallback only after separate human approval; it was not downloaded in M9E. M10 API/front-door/auth remains deferred.
 
 ## M8A Smoke Path
 

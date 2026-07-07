@@ -90,7 +90,9 @@ M9D selected `MiniMaxAI/MiniMax-M3-MXFP8` via KTransformers / KT-Kernel plus SGL
 
 ## M9E actual large-model proof-of-life
 
-M9E is next after M9D merge and human review. Run one approved large-model proof-of-life at a time with explicit model path, runtime, storage, memory, launch args, rollback, and localhost-only verification. M9E may stop the current 30B model only after explicit human approval, should start with 8192 tokens or less, and should not attempt 1M context. No public API exposure should be added in M9E unless separately approved.
+M9E was attempted on branch `milestone/m9e-large-model-poc` and stopped before MiniMax API proof. It downloaded only `MiniMaxAI/MiniMax-M3-MXFP8` to `/data/models/minimax-m3-mxfp8` (`414G`), built the isolated `local/minimax-m3-ktransformers:0.6.3-post1` KTransformers / KT-Kernel plus SGLang-KT image, and launched `minimax-m3-mxfp8-poc` on localhost-only bind `127.0.0.1:30002:30000`. The container exited before readiness because `sgl_kernel` could not load common ops; logs include missing `libnuma.so.1` and SM120 common-ops loading failure context. `/v1/models` and chat proof did not pass. The prior 30B backend was restored healthy at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. No fallback model was downloaded, no public API was exposed, and no Docker/containerd daemon change occurred.
+
+Next: M9E remediation planning. Fix and re-verify the isolated MiniMax runtime image, including `libnuma.so.1`, `sgl_kernel` common ops, SM120 behavior, and the `Triton is not supported` warning before a relaunch. M9F stability/benchmark work should wait until MiniMax proof-of-life passes.
 
 ## Optional boot persistence / auto-start policy
 

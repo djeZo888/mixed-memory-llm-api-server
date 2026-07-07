@@ -1,0 +1,86 @@
+# M9E template only. Render/copy to
+# /data/services/llm-manager/compose/minimax-m3-poc.compose.yml only after the
+# runtime build/import gate and MiniMax-M3-MXFP8 download have both passed.
+# Host bind is localhost-only. In-container host is 0.0.0.0 so Docker can
+# forward from 127.0.0.1 only.
+services:
+  minimax-m3-mxfp8-poc:
+    image: ${MINIMAX_RUNTIME_IMAGE:-local/minimax-m3-ktransformers:0.6.3-post1}
+    container_name: minimax-m3-mxfp8-poc
+    restart: "no"
+    shm_size: "64gb"
+    ipc: host
+    ports:
+      - "127.0.0.1:30002:30000"
+    volumes:
+      - /data/models:/data/models:ro
+      - /data/hf-cache:/data/hf-cache
+      - /data/logs:/data/logs
+    environment:
+      HF_HOME: /data/hf-cache
+      HF_HUB_CACHE: /data/hf-cache/hub
+      HF_XET_CACHE: /data/hf-cache/xet
+      HF_ASSETS_CACHE: /data/hf-cache/assets
+      HF_DATASETS_CACHE: /data/hf-cache/datasets
+      TRANSFORMERS_CACHE: /data/hf-cache/transformers
+      XDG_CACHE_HOME: /data/hf-cache/xdg
+      SGLANG_LOG_DIR: /data/logs/minimax-m3-poc
+      PYTHONUNBUFFERED: "1"
+    command:
+      - python3
+      - -m
+      - sglang.launch_server
+      - --model-path
+      - /data/models/minimax-m3-mxfp8
+      - --kt-weight-path
+      - /data/models/minimax-m3-mxfp8
+      - --kt-method
+      - MXFP8
+      - --kt-cpuinfer
+      - "64"
+      - --kt-threadpool-count
+      - "7"
+      - --kt-num-gpu-experts
+      - "8"
+      - --kt-gpu-prefill-token-threshold
+      - "500"
+      - --tp-size
+      - "2"
+      - --quantization
+      - mxfp8
+      - --moe-runner-backend
+      - triton
+      - --trust-remote-code
+      - --host
+      - 0.0.0.0
+      - --port
+      - "30000"
+      - --served-model-name
+      - minimax-m3-mxfp8-poc
+      - --context-length
+      - "8192"
+      - --mem-fraction-static
+      - "0.55"
+      - --chunked-prefill-size
+      - "4096"
+      - --cuda-graph-max-bs
+      - "1"
+      - --tool-call-parser
+      - minimax-m3
+      - --reasoning-parser
+      - minimax-m3
+      - --max-running-requests
+      - "1"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:30000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 90
+      start_period: 2700s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

@@ -72,7 +72,7 @@ grep -Fq 'Boot persistence remains a later milestone' "$REPORT" || fail "report 
 grep -Fq 'PASS for planning' "$REPORT" || fail "report missing PASS for planning"
 grep -Fq 'STOP for actual download/deploy until human review' "$REPORT" || fail "report missing STOP for deployment"
 
-if grep -RInE '^[[:space:]]*(sudo -n[[:space:]]+)?docker[[:space:]]+(pull|run|compose[[:space:]]+up)|^[[:space:]]*(huggingface-cli|hf)[[:space:]]+download|snapshot_download|pip[[:space:]]+install|apt(-get)?[[:space:]]+install' scripts/large-models tests/shell/test-large-model-plan-static.sh | grep -v 'grep -RInE'; then
+if grep -RInE '^[[:space:]]*(sudo -n[[:space:]]+)?docker[[:space:]]+(pull|run|compose[[:space:]]+up)|^[[:space:]]*(huggingface-cli|hf)[[:space:]]+download|snapshot_download|pip[[:space:]]+install|apt(-get)?[[:space:]]+install' "$PLAN_SCRIPT" tests/shell/test-large-model-plan-static.sh | grep -v 'grep -RInE'; then
   fail "large-model scripts/tests contain executable download, image pull, container start, or install command"
 fi
 

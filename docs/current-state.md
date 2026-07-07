@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M9D merged into `main`. M9D selected the large-model proof-of-life target for M9E: `MiniMaxAI/MiniMax-M3-MXFP8` via KTransformers / KT-Kernel plus SGLang heterogeneous CPU/GPU serving, with `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` as fallback after human review. Active backend is healthy: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. No large model has been downloaded yet. `scripts/llmctl status` distinguishes `starting`, `active`, `stale`, `unhealthy`, and `stopped`; `start --yes` waits for readiness by default. No auto-start policy exists yet. Public API exposure is still not configured. M9E is the next actual large-model proof-of-life after human review; M9E must stop the current 30B backend through `scripts/llmctl` before any large proof attempt. M10 API/front-door/auth remains deferred unless a human changes sequencing.
+- Project state: M0-M9E have been attempted, with M0-M9D merged into `main` and M9E stopped on branch `milestone/m9e-large-model-poc`. M9E downloaded only `MiniMaxAI/MiniMax-M3-MXFP8` to `/data/models/minimax-m3-mxfp8` (`414G`) and built the isolated KTransformers / KT-Kernel plus SGLang-KT runtime image `local/minimax-m3-ktransformers:0.6.3-post1`. The MiniMax container `minimax-m3-mxfp8-poc` exited before readiness because `sgl_kernel` could not load common ops; logs cite missing `libnuma.so.1` and SM120 common-ops loading failure context. The previous 30B backend was restored and is healthy: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. `scripts/llmctl status` distinguishes `starting`, `active`, `stale`, `unhealthy`, and `stopped`; `start --yes` waits for readiness by default. No auto-start policy exists yet. Public API exposure is still not configured. The next large-model task is M9E remediation planning, not fallback download and not M9F benchmarking. M10 API/front-door/auth remains deferred unless a human changes sequencing.
 
 ## Git Attribution
 
@@ -57,6 +57,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M9B first real fast-model deployment: merged into `main`; deployment report is `reports/m9b-first-real-fast-model-deploy.md`; main merge report is `reports/m9b-main-merge.md`
 - M9C real model benchmark/lifecycle/resource review: merged into `main` with merge commit `db9afcd5a1f29f6daed5f82bda7afc6791fbd89a`; report is `reports/m9c-real-model-benchmark-review.md`; main merge report is `reports/m9c-main-merge.md`; benchmarking doc is `docs/real-model-benchmarking.md`; post-reboot recovery clarified SGLang cold-start readiness semantics
 - M9D large-model feasibility and selection planning/dry-run: merged into `main` with merge commit `3ae263395fe1c5bca260a0136ab77a6f18110bcb`; source commit `c3131db02ace63ffca6a8180d9d3ddea5094d2ae`; report is `reports/m9d-large-model-feasibility-plan.md`; main merge report is `reports/m9d-main-merge.md`; no large model download or runtime install was performed by M9D
+- M9E actual large-model proof-of-life: STOP on branch `milestone/m9e-large-model-poc`; report is `reports/m9e-large-model-poc.md`; downloaded `MiniMaxAI/MiniMax-M3-MXFP8` only to `/data/models/minimax-m3-mxfp8` (`414G`), built `local/minimax-m3-ktransformers:0.6.3-post1`, stopped 30B only after preflight and download passed, then restored 30B after MiniMax launch failed before readiness due `sgl_kernel` / missing `libnuma.so.1` common-ops loading failure. No fallback model download, public API exposure, Docker daemon change, model deletion, image deletion, or Docker prune occurred.
 
 ## Current Storage
 
@@ -386,18 +387,38 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - Reboot policy remains unchanged: no Docker restart policy or systemd auto-start exists yet; boot persistence remains a later milestone.
 - M9E must stop the current 30B backend through `scripts/llmctl` before any large proof-of-life attempt.
 - M9E must keep localhost-only exposure and must not expose a public API.
-- M10 API/front-door/auth remains deferred until after M9E or an explicit human sequencing change.
+- M10 API/front-door/auth remains deferred until after M9E remediation or an explicit human sequencing change.
+
+## Current M9E Result
+
+- M9E branch: `milestone/m9e-large-model-poc`.
+- M9E report: `reports/m9e-large-model-poc.md`.
+- Large-model POC doc: `docs/large-model-poc.md`.
+- Result: STOP before MiniMax API proof.
+- Runtime preflight passed for `local/minimax-m3-ktransformers:0.6.3-post1`.
+- MiniMax model downloaded: `MiniMaxAI/MiniMax-M3-MXFP8` only.
+- MiniMax model path: `/data/models/minimax-m3-mxfp8` (`414G`).
+- Required model files were present: `config.json`, `chat_template.jinja`, tokenizer files, `model.safetensors.index.json`, and 31 safetensors shards.
+- 30B was stopped through `scripts/llmctl` only after runtime preflight and model download passed.
+- MiniMax compose used localhost-only host bind `127.0.0.1:30002:30000`.
+- MiniMax container: `minimax-m3-mxfp8-poc`, exited with status 1 before readiness.
+- Failure: `sgl_kernel` could not load common ops on compute capability 12.0 / SM120; error details include missing `libnuma.so.1` and no fallback `common_ops` module.
+- Diagnostics: `/data/logs/minimax-m3-poc/m9e-failure-20260707T030539Z`.
+- `/v1/models` and chat proof did not pass for MiniMax.
+- Failed MiniMax container was stopped but not removed; model files and Docker images were preserved.
+- 30B was restored through `scripts/llmctl start --yes`.
+- `scripts/sglang/verify-sglang-real-fast-live.sh` passed after restore.
+- Current active backend is again `Qwen/Qwen3-30B-A3B-Instruct-2507` at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only.
+- No fallback model download, public API exposure, Docker/containerd daemon change, model deletion, image deletion, Docker prune, systemd service, or Docker restart policy occurred.
 
 ## Next Recommended Milestone
 
-- Start a fresh Codex context for M9E actual large-model proof-of-life after human review.
-- M9E target: `MiniMaxAI/MiniMax-M3-MXFP8` via KTransformers / KT-Kernel plus SGLang heterogeneous CPU/GPU serving.
-- M9E fallback: `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` only if the primary is explicitly rejected or blocked by review.
-- M9E must stop the current 30B backend through `scripts/llmctl` before any large proof-of-life attempt.
-- M9E must keep localhost-only exposure and include rollback to the 30B backend.
-- M10 API/front-door/auth planning remains deferred until after M9E or an explicit human sequencing change.
-- Public API exposure remains unconfigured and blocked until a separate approved implementation milestone.
-- Real restart testing, launch-arg tuning, and boot persistence remain separate human-approved lifecycle/tuning tasks.
+- Start M9E remediation planning after human review of `reports/m9e-large-model-poc.md`.
+- Remediation should be narrowly scoped to the isolated MiniMax runtime image and should verify `libnuma.so.1`, `sgl_kernel` common ops loading, SM120 behavior, and the `Triton is not supported` warning before relaunch.
+- Do not download the fallback `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` unless a separate human-approved task explicitly says so.
+- Do not start M9F stability/benchmark work until MiniMax proof-of-life passes.
+- Keep the restored 30B backend active unless a later approved task stops it through `scripts/llmctl`.
+- Keep localhost-only exposure; public API exposure remains unconfigured and blocked until a separate approved implementation milestone.
 
 ## Carry-Forward Operational Warnings
 
@@ -463,6 +484,8 @@ Future sessions should read:
 - `reports/m9d-large-model-feasibility-plan.md` if present
 - `reports/m9d-main-merge.md` if present
 - `docs/pre-m9e-large-model-poc-handoff.md` if present
+- `docs/large-model-poc.md` if present
+- `reports/m9e-large-model-poc.md` if present
 - Latest reports
 
-Then start M9E actual large-model proof-of-life only after human review and explicit approval to stop the current 30B backend. M10 API/front-door/auth remains deferred.
+Then review the M9E STOP report and plan remediation before any MiniMax relaunch. M10 API/front-door/auth remains deferred.

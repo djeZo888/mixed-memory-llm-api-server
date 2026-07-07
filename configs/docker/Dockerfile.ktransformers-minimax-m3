@@ -1,0 +1,62 @@
+# M9E isolated MiniMax-M3 proof-of-life runtime.
+# This Dockerfile intentionally installs only inside the image. It must not be
+# used to install host Python packages or a host CUDA Toolkit.
+ARG BASE_IMAGE=nvidia/cuda:13.2.1-base-ubuntu24.04
+FROM ${BASE_IMAGE}
+
+ARG BASE_IMAGE=nvidia/cuda:13.2.1-base-ubuntu24.04
+ARG KTRANSFORMERS_SOURCE_URL=https://github.com/kvcache-ai/ktransformers.git
+ARG KTRANSFORMERS_COMMIT=cb9f47d142a507cac5d74450b30463d2e8d1cf58
+ARG KT_KERNEL_VERSION=0.6.3.post1
+ARG SGLANG_KT_VERSION=0.6.3.post1
+
+LABEL org.opencontainers.image.title="mixed-memory minimax m3 ktransformers runtime" \
+      org.opencontainers.image.description="M9E isolated SGLang-KT plus KT-Kernel runtime for MiniMax-M3-MXFP8 proof-of-life" \
+      org.opencontainers.image.source="https://github.com/djeZo888/mixed-memory-llm-api-server" \
+      org.opencontainers.image.vendor="djeZo888" \
+      org.mixed-memory.milestone="M9E" \
+      org.mixed-memory.base-image="${BASE_IMAGE}" \
+      org.mixed-memory.ktransformers-source="${KTRANSFORMERS_SOURCE_URL}" \
+      org.mixed-memory.ktransformers-commit="${KTRANSFORMERS_COMMIT}" \
+      org.mixed-memory.kt-kernel-version="${KT_KERNEL_VERSION}" \
+      org.mixed-memory.sglang-kt-version="${SGLANG_KT_VERSION}"
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_INPUT=1 \
+    PYTHONUNBUFFERED=1 \
+    VIRTUAL_ENV=/opt/minimax-m3-runtime \
+    HF_HOME=/data/hf-cache \
+    HF_HUB_CACHE=/data/hf-cache/hub \
+    HF_XET_CACHE=/data/hf-cache/xet \
+    HF_ASSETS_CACHE=/data/hf-cache/assets \
+    HF_DATASETS_CACHE=/data/hf-cache/datasets \
+    TRANSFORMERS_CACHE=/data/hf-cache/transformers \
+    XDG_CACHE_HOME=/data/hf-cache/xdg
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      git \
+      python3 \
+      python3-pip \
+      python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv "${VIRTUAL_ENV}" \
+    && python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && python3 -m pip install --no-cache-dir \
+      "kt-kernel==${KT_KERNEL_VERSION}" \
+      "sglang-kt==${SGLANG_KT_VERSION}"
+
+RUN python3 - <<'PY'
+import importlib.metadata as metadata
+for dist in ("kt-kernel", "sglang-kt"):
+    print(f"{dist}={metadata.version(dist)}")
+import kt_kernel
+import sglang
+import sglang.launch_server
+print("import-ok")
+PY

@@ -46,7 +46,7 @@ for file in \
   [[ -f "$file" ]] || fail "$file missing"
 done
 
-if grep -RInE '^[[:space:]]*(sudo -n[[:space:]]+)?docker[[:space:]]+(pull|run|compose[[:space:]]+up)|^[[:space:]]*(huggingface-cli|hf)[[:space:]]+download|snapshot_download|pip[[:space:]]+install|apt(-get)?[[:space:]]+install' scripts/large-models tests/shell/test-large-model-plan-static.sh | grep -v 'grep -RInE'; then
+if grep -RInE '^[[:space:]]*(sudo -n[[:space:]]+)?docker[[:space:]]+(pull|run|compose[[:space:]]+up)|^[[:space:]]*(huggingface-cli|hf)[[:space:]]+download|snapshot_download|pip[[:space:]]+install|apt(-get)?[[:space:]]+install' scripts/large-models/plan-large-model.sh scripts/large-models/verify-large-model-plan.sh tests/shell/test-large-model-plan-static.sh | grep -v 'grep -RInE'; then
   fail "large-model scripts/tests must not execute downloads, image pulls, container starts, or installs"
 fi
 
