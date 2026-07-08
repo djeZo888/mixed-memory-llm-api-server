@@ -11,7 +11,7 @@ This file is the compact source-of-truth handoff for future Codex and ChatGPT se
 - Hostname: `llmserver`
 - User: `user`
 - OS: Ubuntu 24.04.4 LTS
-- Project state: M0-M9E have been attempted, with M0-M9D merged into `main`, M9E stopped on branch `milestone/m9e-large-model-poc`, and M9E-R1 stopped on branch `milestone/m9e-r1-minimax-runtime-remediation`. M9E downloaded only `MiniMaxAI/MiniMax-M3-MXFP8` to `/data/models/minimax-m3-mxfp8` (`414G`) and built the isolated KTransformers / KT-Kernel plus SGLang-KT runtime image `local/minimax-m3-ktransformers:0.6.3-post1`. M9E-R1 built `local/minimax-m3-ktransformers:0.6.3-post1-r1` with container-isolated `libnuma1`, `libnuma-dev`, and `numactl`; `libnuma.so.1`, `sgl_kernel`, and `common_ops` now load in verification. The R1 MiniMax relaunch still stopped before `/v1/models` because the current SGLang MXFP8 path asserts SM90 or SM100 support while this VM is RTX PRO 6000 Blackwell Workstation / SM120. The previous 30B backend was restored and is healthy: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. `scripts/llmctl status` distinguishes `starting`, `active`, `stale`, `unhealthy`, and `stopped`; `start --yes` waits for readiness by default. No auto-start policy exists yet. Public API exposure is still not configured. The next large-model task is SM120-specific MiniMax remediation planning, not fallback download and not M9F benchmarking. M10 API/front-door/auth remains deferred unless a human changes sequencing.
+- Project state: M0-M9E have been attempted, with M0-M9D merged into `main`, M9E stopped on branch `milestone/m9e-large-model-poc`, M9E-R1 stopped on branch `milestone/m9e-r1-minimax-runtime-remediation`, and M9E-R2 stopped on branch `milestone/m9e-r2-sm120-minimax-remediation`. M9E downloaded only `MiniMaxAI/MiniMax-M3-MXFP8` to `/data/models/minimax-m3-mxfp8` (`414G`) and built the isolated KTransformers / KT-Kernel plus SGLang-KT runtime image `local/minimax-m3-ktransformers:0.6.3-post1`. M9E-R1 built `local/minimax-m3-ktransformers:0.6.3-post1-r1` with container-isolated `libnuma1`, `libnuma-dev`, and `numactl`; `libnuma.so.1`, `sgl_kernel`, and `common_ops` now load in verification. The R1 MiniMax relaunch still stopped before `/v1/models` because the current SGLang MXFP8 path asserts SM90 or SM100 support while this VM is RTX PRO 6000 Blackwell Workstation / SM120. The previous 30B backend was restored and is healthy: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. `scripts/llmctl status` distinguishes `starting`, `active`, `stale`, `unhealthy`, and `stopped`; `start --yes` waits for readiness by default. No auto-start policy exists yet. Public API exposure is still not configured. The next large-model task is upstream/release-level SM120 support follow-up or an explicitly approved alternate runtime/model decision, not fallback download and not M9F benchmarking. M10 API/front-door/auth remains deferred unless a human changes sequencing.
 
 ## Git Attribution
 
@@ -59,6 +59,7 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - M9D large-model feasibility and selection planning/dry-run: merged into `main` with merge commit `3ae263395fe1c5bca260a0136ab77a6f18110bcb`; source commit `c3131db02ace63ffca6a8180d9d3ddea5094d2ae`; report is `reports/m9d-large-model-feasibility-plan.md`; main merge report is `reports/m9d-main-merge.md`; no large model download or runtime install was performed by M9D
 - M9E actual large-model proof-of-life: STOP on branch `milestone/m9e-large-model-poc`; report is `reports/m9e-large-model-poc.md`; downloaded `MiniMaxAI/MiniMax-M3-MXFP8` only to `/data/models/minimax-m3-mxfp8` (`414G`), built `local/minimax-m3-ktransformers:0.6.3-post1`, stopped 30B only after preflight and download passed, then restored 30B after MiniMax launch failed before readiness due `sgl_kernel` / missing `libnuma.so.1` common-ops loading failure. No fallback model download, public API exposure, Docker daemon change, model deletion, image deletion, or Docker prune occurred.
 - M9E-R1 MiniMax runtime remediation: STOP on branch `milestone/m9e-r1-minimax-runtime-remediation`; report addendum is in `reports/m9e-large-model-poc.md`; built `local/minimax-m3-ktransformers:0.6.3-post1-r1` with container-only NUMA packages, verified `libnuma.so.1` and `sgl_kernel/common_ops` loading, then stopped before proof because R1 launch hit the SGLang MXFP8 `assert is_sm100_supported() or is_sm90_supported()` path on SM120. 30B was restored healthy at `http://127.0.0.1:30001/v1`. No fallback model download, public API exposure, Docker daemon change, model deletion, image deletion, restart policy, systemd service, or Docker prune occurred.
+- M9E-R2 SM120 compatibility remediation: STOP on branch `milestone/m9e-r2-sm120-minimax-remediation`; report addendum is in `reports/m9e-large-model-poc.md`; upstream repro doc is `docs/minimax-sm120-upstream-repro.md`; R2 found the released MiniMax-M3-MXFP8 path expects SM100 datacenter Blackwell for CUDA native MXFP8/Cutlass and lacks native SM120 `common_ops`, so no R2 image was built and MiniMax was not relaunched. The 30B backend remained active and healthy at `http://127.0.0.1:30001/v1`. No fallback model download, public API exposure, Docker daemon change, model deletion, image deletion, restart policy, systemd service, or Docker prune occurred.
 
 ## Current Storage
 
@@ -412,12 +413,27 @@ Old history was not rewritten. Do not create new commits unless Git config uses 
 - Current active backend is again `Qwen/Qwen3-30B-A3B-Instruct-2507` at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only.
 - No fallback model download, public API exposure, Docker/containerd daemon change, model deletion, image deletion, Docker prune, systemd service, or Docker restart policy occurred.
 
+
+## Current M9E-R2 Result
+
+- M9E-R2 branch: `milestone/m9e-r2-sm120-minimax-remediation`.
+- M9E-R2 report addendum: `reports/m9e-large-model-poc.md`.
+- Upstream-ready repro doc: `docs/minimax-sm120-upstream-repro.md`.
+- Result: STOP before R2 image build and before MiniMax relaunch.
+- Classification: D, with C-adjacent kernel coverage risk. The released MiniMax-M3-MXFP8 SGLang-KT CUDA path expects SM100 datacenter Blackwell for native MXFP8/Cutlass, not SM120 workstation Blackwell.
+- Exact assertion source: `/opt/minimax-m3-runtime/lib/python3.12/site-packages/sglang/srt/layers/quantization/fp8.py:788`.
+- Additional hard guard: `/opt/minimax-m3-runtime/lib/python3.12/site-packages/sglang/srt/layers/moe/cutlass_moe.py:147` requires SM100 for MXFP8.
+- `sgl_kernel` in R1 contains `sm90/common_ops.abi3.so` and `sm100/common_ops.abi3.so`, but no native `sm120` common ops.
+- Current active backend remains `Qwen/Qwen3-30B-A3B-Instruct-2507` at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only.
+- R2 did not build an R2 runtime image, did not stop 30B, did not relaunch MiniMax, and did not download the fallback model.
+- Public API exposure remains unconfigured; Docker/containerd daemon configuration remains unchanged.
+
 ## Next Recommended Milestone
 
-- Start M9E remediation planning after human review of `reports/m9e-large-model-poc.md`.
-- Remediation should be narrowly scoped to the isolated MiniMax runtime image and should verify `libnuma.so.1`, `sgl_kernel` common ops loading, SM120 behavior, and the `Triton is not supported` warning before relaunch.
+- Prepare an upstream report or track upstream releases for MiniMax-M3-MXFP8 on SM120, using `docs/minimax-sm120-upstream-repro.md` and `reports/m9e-large-model-poc.md`.
+- A future local remediation should start only after upstream provides a merged/released SM120 path for the relevant SGLang-KT MiniMax branch and `sgl-kernel` common ops, or after the human explicitly approves a different runtime, quantization, or model path.
 - Do not download the fallback `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` unless a separate human-approved task explicitly says so.
-- Do not start M9F stability/benchmark work until MiniMax proof-of-life passes.
+- Do not start M9F stability/benchmark work until MiniMax proof-of-life passes or a human changes sequencing.
 - Keep the restored 30B backend active unless a later approved task stops it through `scripts/llmctl`.
 - Keep localhost-only exposure; public API exposure remains unconfigured and blocked until a separate approved implementation milestone.
 
@@ -489,4 +505,4 @@ Future sessions should read:
 - `reports/m9e-large-model-poc.md` if present
 - Latest reports
 
-Then review the M9E STOP report and plan remediation before any MiniMax relaunch. M10 API/front-door/auth remains deferred.
+Then review the M9E/M9E-R1/M9E-R2 STOP reports and the SM120 upstream repro before any MiniMax relaunch. M10 API/front-door/auth remains deferred.

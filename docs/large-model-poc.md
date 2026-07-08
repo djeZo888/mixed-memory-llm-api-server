@@ -12,9 +12,12 @@ M9E attempted the first approved large-model proof-of-life target: `MiniMaxAI/Mi
 - Model size: `414G`.
 - Initial runtime image: `local/minimax-m3-ktransformers:0.6.3-post1`.
 - R1 runtime image: `local/minimax-m3-ktransformers:0.6.3-post1-r1`.
+- R2 runtime image: not built; R2 stopped before build because no clean SM120-compatible released/source path was identified.
 - Runtime compose path used for launch attempts: `/data/services/llm-manager/compose/minimax-m3-poc.compose.yml`.
 - Repo compose template: `configs/compose/compose.minimax-m3-poc.template.yml`.
 - Latest R1 diagnostics: `/data/logs/minimax-m3-poc/m9e-r1-failure-20260708T203230Z`.
+- Latest R2 diagnostics: `/data/logs/minimax-m3-poc/m9e-r2-r1-runtime-diagnostic.log`, `/data/logs/minimax-m3-poc/m9e-r2-assert-source-search.log`, and `/data/logs/minimax-m3-poc/m9e-r2-common-ops-coverage.log`.
+- Upstream repro doc: `docs/minimax-sm120-upstream-repro.md`.
 - Current active backend is restored 30B at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only.
 
 ## What Passed
@@ -39,6 +42,19 @@ AssertionError
 
 The runtime package contains `sm90` and `sm100` common ops, not native `sm120` common ops. `sgl_kernel` imports through the SM100 compatibility/fallback path, but MiniMax MXFP8 serving still stops before readiness on RTX PRO 6000 Blackwell Workstation / SM120.
 
+
+## M9E-R2 Result
+
+- Result: STOP.
+- Branch: `milestone/m9e-r2-sm120-minimax-remediation`.
+- R2 did not build `local/minimax-m3-ktransformers:0.6.3-post1-r2` and did not relaunch MiniMax.
+- Classification: D, with C-adjacent kernel coverage risk. The released MiniMax-M3-MXFP8 CUDA path expects SM100 datacenter Blackwell for native MXFP8/Cutlass and rejects SM120 workstation Blackwell.
+- Exact assertion source: `/opt/minimax-m3-runtime/lib/python3.12/site-packages/sglang/srt/layers/quantization/fp8.py:788`.
+- Additional hard guard: `/opt/minimax-m3-runtime/lib/python3.12/site-packages/sglang/srt/layers/moe/cutlass_moe.py:147` requires SM100 for MXFP8.
+- `sgl_kernel` contains `sm90` and `sm100` common ops only; no native `sm120` common ops were present in `sgl-kernel 0.3.21`.
+- 30B remained active and healthy throughout R2; no restore was needed.
+- No fallback model download, public API exposure, Docker daemon change, model deletion, image deletion, or Docker prune occurred.
+
 ## Current Boundary
 
 MiniMax did not achieve `/v1/models` or chat proof. The current active service is the restored 30B SGLang backend:
@@ -51,4 +67,4 @@ MiniMax did not achieve `/v1/models` or chat proof. The current active service i
 
 ## Next Step
 
-Next task: SM120-specific MiniMax runtime remediation planning. Determine whether current SGLang-KT/MXFP8 can support SM120 through an upstream wheel/source build or whether a different approved runtime, quantization path, or model path is required. Do not download fallback models without separate human approval.
+Next task: upstream/release-level SM120 support follow-up or an explicitly approved alternate runtime, quantization, or model decision. The local R2 attempt found no clean released/source-level SM120 gate for MiniMax-M3-MXFP8. Do not download fallback models without separate human approval.

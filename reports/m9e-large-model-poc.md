@@ -417,7 +417,122 @@ STOP after launch attempt.
 
 ### R1 next recommended task
 
-Plan an SM120-specific MiniMax remediation before any further launch attempt. The next task should focus on whether the SGLang-KT/MXFP8 path can support RTX PRO 6000 Blackwell Workstation / SM120, whether an upstream wheel/source build with native SM120 support exists, or whether a different approved runtime/quantization/model path is required. Do not download the fallback model unless separately approved.
+R1 recommendation, superseded by R2: SM120-specific remediation was investigated in M9E-R2. R2 found no clean released/source-level SM120 gate, so the next task is upstream/release-level support follow-up or an explicitly approved alternate runtime/model decision. Do not download the fallback model unless separately approved.
+
+## M9E-R2 SM120 compatibility remediation
+
+- Timestamp: `2026-07-08T21:35:35Z`
+- Branch: `milestone/m9e-r2-sm120-minimax-remediation`
+- Base branch: `milestone/m9e-r1-minimax-runtime-remediation`
+- Result: STOP. R2 identified no clean released/source-level SM120 remediation path for MiniMax-M3-MXFP8 in the current SGLang-KT / `sgl-kernel` / KT-Kernel stack, so it did not build an R2 image and did not relaunch MiniMax.
+- Current active backend after R2: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. R2 never stopped the 30B service.
+
+### R1 result summary
+
+- R1 image: `local/minimax-m3-ktransformers:0.6.3-post1-r1`.
+- R1 fixed missing container runtime dependencies: `libnuma.so.1` is present, `sgl_kernel` imports, and `common_ops` ldd resolves.
+- R1 remaining blocker: MiniMax launch reached SGLang MXFP8 initialization and failed with `assert is_sm100_supported() or is_sm90_supported()` on RTX PRO 6000 Blackwell Workstation / compute capability 12.0 / SM120.
+
+### R2 baseline gates
+
+- VM and repo path: PASS (`hostname=llmserver`, repo path `/data/services/mixed-memory-llm-api-server`).
+- Branch sync: PASS; R2 branch was created from `milestone/m9e-r1-minimax-runtime-remediation` at R1 commit `1f90c3a`.
+- Git identity: PASS (`CodexAIagent <133749519+djeZo888@users.noreply.github.com>`).
+- `/data` mount guard: PASS.
+- Root-disk guard: PASS with report `/tmp/root-disk-guard-before-m9e-r2.md`.
+- Docker storage verifier: PASS.
+- GPU container verifier: PASS with `nvidia/cuda:13.2.1-base-ubuntu24.04`.
+- Hardware: 2 x `NVIDIA RTX PRO 6000 Blackwell Workstation Edition`, driver `595.71.05`, `97887 MiB` each, compute capability `12.0`.
+- Storage sample: `/` had `4.5G` available; `/data` had `1.3T` available; MiniMax model remained `414G`; 30B model remained `57G`.
+- 30B active gate: PASS. `scripts/llmctl active`, `scripts/llmctl status`, and `scripts/sglang/verify-sglang-real-fast-live.sh` passed before R2 diagnostics.
+- Known verifier report side effects on `reports/m3-root-disk-guard.md` and `reports/m4b-docker-containerd-install.md` were restored before R2 documentation changes.
+
+### Official/upstream source refresh
+
+| Source | URL | R2 support notes |
+| --- | --- | --- |
+| KTransformers MiniMax-M3 tutorial | `https://github.com/kvcache-ai/ktransformers/blob/main/doc/en/kt-kernel/MiniMax-M3-Tutorial.md` | Uses `MiniMaxAI/MiniMax-M3-MXFP8` with SGLang plus KT-Kernel for CPU/GPU heterogeneous inference. The tutorial lists supported GPUs as SM90 Hopper and says upstream SGLang targets SM100 datacenter Blackwell so far; it does not list SM120 workstation Blackwell. It recommends CUDA 12.0+ and CUDA 12.8+ for FP8/MXFP8. |
+| KT-Kernel README / PyPI | `https://github.com/kvcache-ai/ktransformers/blob/main/kt-kernel/README.md`, `https://pypi.org/project/kt-kernel/` | Current `kt-kernel 0.6.3.post1` docs say prebuilt CUDA wheel support covers SM80/86/89/90 and list Ampere/Ada/Hopper in the explicit matrix. They do not explicitly list SM120. |
+| KTransformers issue #2058 | `https://github.com/kvcache-ai/ktransformers/issues/2058` | Same MiniMax-M3-MXFP8 + RTX PRO 6000 Blackwell / SM120 assertion was reported upstream. A maintainer response points to the MiniMax tutorial and states SM120 is not supported. |
+| KTransformers issue #2081 | `https://github.com/kvcache-ai/ktransformers/issues/2081` | New open MiniMax-M3-MXFP8 report on RTX PRO 4500 / SM120 hits the same `assert is_sm100_supported() or is_sm90_supported()` boundary and asks whether SGLang support is required. |
+| KTransformers issue #1680 | `https://github.com/kvcache-ai/ktransformers/issues/1680` | Older SM120 sparse-attention question notes RTX Blackwell uncertainty. A maintainer response says that behavior follows SGLang support. |
+| SGLang MiniMax-M3 feature issue / PR | `https://github.com/sgl-project/sglang/issues/27536`, `https://github.com/sgl-project/sglang/pull/29107` | SGLang has open MiniMax-M3 support work. The open PR explicitly targets MiniMax-M3 W4A paths on Hopper, not confirmed MiniMax-M3-MXFP8 on SM120. |
+| SGLang / sgl-kernel SM120 issue #29900 and PR #29902 | `https://github.com/sgl-project/sglang/issues/29900`, `https://github.com/sgl-project/sglang/pull/29902` | Current sgl-kernel testing on RTX PRO 6000 / SM120 records expected-unsupported failures for DeepGEMM UE8M0, FlashMLA, and fp8 blockwise MoE. This confirms SM120 support gaps in adjacent common kernel paths. |
+| SGLang PR #28125 | `https://github.com/sgl-project/sglang/pull/28125` | Open source-level PR adds SM120/SM121 dispatch for `fp8_blockwise_scaled_grouped_mm`, validated on RTX PRO 6000 with CUDA 12.8 and torch 2.11. It is open, not a released/merged wheel path, and does not by itself prove MiniMax-M3-MXFP8 works end-to-end. |
+| NVIDIA CUDA GPU compute capability table | `https://developer.nvidia.com/cuda/gpus` | NVIDIA lists `NVIDIA RTX PRO 6000 Blackwell Workstation Edition` under compute capability 12.0. |
+| NVIDIA Blackwell Compatibility Guide | `https://docs.nvidia.com/cuda/blackwell-compatibility-guide/index.html` | NVIDIA documents that CUDA binaries need compatible cubin or forward-compatible PTX; if neither compatible cubin nor PTX is present, kernel launch fails. PTX/native coverage is therefore a real gate for SM120. |
+
+### R2 R1-image diagnostics
+
+Diagnostics were saved under `/data/logs/minimax-m3-poc/`:
+
+- Runtime diagnostic: `m9e-r2-r1-runtime-diagnostic.log`.
+- Assertion/source search: `m9e-r2-assert-source-search.log`.
+- Common-ops coverage: `m9e-r2-common-ops-coverage.log`.
+
+R1 runtime facts:
+
+- Image: `local/minimax-m3-ktransformers:0.6.3-post1-r1`.
+- OS in image: Ubuntu 24.04.4 LTS.
+- Python: `3.12.3`.
+- Torch: `2.9.1+cu128`; torch CUDA runtime: `12.8`.
+- Packages: `sglang-kt 0.6.3.post1`, `sgl-kernel 0.3.21`, `kt-kernel 0.6.3.post1`, `flashinfer-python 0.6.3`, `flashinfer-cubin 0.6.3`, `transformers 5.13.0`.
+- Torch sees both GPUs and reports device 0 capability `(12, 0)`.
+- `sglang.launch_server --help` still exposes required KT/MiniMax flags, including `--kt-weight-path`, `--kt-method`, `--kt-cpuinfer`, `--kt-threadpool-count`, `--kt-num-gpu-experts`, `--quantization`, and `--tp-size` / `--tensor-parallel-size`.
+
+Exact source paths found in the installed R1 image:
+
+- `/opt/minimax-m3-runtime/lib/python3.12/site-packages/sglang/srt/layers/quantization/fp8.py:788`: `assert is_sm100_supported() or is_sm90_supported()`.
+- `/opt/minimax-m3-runtime/lib/python3.12/site-packages/sglang/srt/layers/moe/cutlass_moe.py:147`: `assert is_sm100_supported(), "MXFP8 requires SM100"`.
+- `/opt/minimax-m3-runtime/lib/python3.12/site-packages/sglang/srt/server_args.py:2538`: `mxfp8 quantization forces --moe-runner-backend=cutlass` for the CUDA/native MXFP8 branch used here.
+- `/opt/minimax-m3-runtime/lib/python3.12/site-packages/sglang/srt/server_args.py:2034`: MiniMax-M3 has an SM100-specific backend branch, but no SM120 branch.
+- `/opt/minimax-m3-runtime/lib/python3.12/site-packages/sglang/srt/utils/common.py:253`: `is_sm120_supported()` exists and returns true on this host, but `mxfp8_block_convert_required()` returns false for compute capability major >= 10, so the launch stays on the native CUDA MXFP8/Cutlass path rather than a safer conversion path.
+
+Common-ops coverage result:
+
+- `sgl_kernel` contains `sm90/common_ops.abi3.so` and `sm100/common_ops.abi3.so` only.
+- No `sgl_kernel/sm120/` directory or native SM120 `common_ops` file is present in `sgl-kernel 0.3.21` inside R1.
+- On the SM120 host, `sgl_kernel.load_utils` selects the `sm100` common_ops path for any non-SM90 GPU; Python import loads `/opt/minimax-m3-runtime/lib/python3.12/site-packages/sgl_kernel/sm100/common_ops.abi3.so`.
+- With the image runtime library path set to torch/NVIDIA wheel library directories, ldd resolves both `sm90` and `sm100` common ops, including `libnuma.so.1`.
+- The R1 image does not include `file`, `strings`, `cuobjdump`, or `nvdisasm`, so deeper fatbin/PTX inspection was not available inside the image.
+
+### SM120 support classification
+
+Classification: D, with C-adjacent kernel coverage risk.
+
+- D: The active MiniMax-M3-MXFP8 runtime path expects SM100 datacenter Blackwell for CUDA native MXFP8/Cutlass, not SM120 workstation Blackwell. The path hard-requires SM90/SM100 at FP8 MoE initialization and hard-requires SM100 in the Cutlass MXFP8 kernel wrapper.
+- C-adjacent: the installed `sgl-kernel` wheel lacks native SM120 `common_ops` and current upstream SGLang issues show SM120 gaps in related common kernel paths. R2 did not identify a released wheel, documented build flag, or clean source-build recipe that makes this stack SM120-compatible end-to-end.
+- The open SGLang SM120 PR #28125 is relevant but not sufficient for this task: it is open/unreleased, targets `fp8_blockwise_scaled_grouped_mm`, and would still need integration with the SGLang-KT MiniMax-M3-MXFP8 branch plus the SM100-only Python/Cutlass guards before a safe MiniMax launch gate could pass.
+
+### R2 build and relaunch decision
+
+- R2 image built: no.
+- R2 image tag: not created.
+- MiniMax relaunched: no.
+- MiniMax endpoint/chat result: not run; STOP occurred before relaunch by design.
+- 30B restore result: restore was not needed because R2 never stopped 30B. The 30B backend remained healthy during R2 diagnostics.
+- Fallback model download: not performed.
+- Public API exposure: not configured.
+- Docker/containerd daemon changes: not performed.
+- Docker/containerd daemon restart: not performed.
+- Docker prune, image deletion, model deletion: not performed.
+- Upstream repro doc: `docs/minimax-sm120-upstream-repro.md`.
+
+### R2 final validation
+
+- Shell syntax checks passed for `scripts/large-models/build-ktransformers-minimax-runtime.sh`, `scripts/large-models/verify-ktransformers-minimax-runtime.sh`, and `scripts/large-models/verify-minimax-m3-poc-live.sh` when present.
+- `/data` mount guard: PASS.
+- Root-disk guard: PASS with committed report `reports/m3-root-disk-guard.md`.
+- Docker storage verifier: PASS.
+- GPU container verifier: PASS with `nvidia/cuda:13.2.1-base-ubuntu24.04`.
+- STOP-state live verifier: `scripts/sglang/verify-sglang-real-fast-live.sh` passed for the active 30B service.
+- `scripts/llmctl active` and `scripts/llmctl status` reported the 30B backend running, healthy, listening on `127.0.0.1:30001`, and `/v1/models` OK.
+- `git diff --check`: PASS.
+
+### R2 next recommended task
+
+Prepare an upstream report or track upstream releases for MiniMax-M3-MXFP8 on SM120. A future local remediation should start only after upstream provides a merged/released SM120 path for the relevant SGLang-KT MiniMax branch and `sgl-kernel` common ops, or after the human explicitly approves a different runtime, quantization, or model path. Do not download the fallback model unless separately approved.
+
 
 ## Secret Scan
 
@@ -425,13 +540,14 @@ Plan an SM120-specific MiniMax remediation before any further launch attempt. Th
 - Changed-file value-shaped scan over the M9E files returned no matches for real-looking HF, OpenAI, or GitHub tokens and no private key blocks.
 - No real secret, token, password, private key, auth file, local sudo helper, real `.env`, `MEMORY.md`, or local Codex memory content was identified in the M9E changes.
 - M9E-R1 broad grep scan matched only intentional docs, tests, scanner patterns, safety strings, and historical report text. A narrower changed-file value-shaped scan over the R1 files returned no matches for real tokens, private key blocks, or password assignments.
+- M9E-R2 broad grep scan matched only intentional docs, tests, scanner patterns, safety strings, env-example comments, and historical report text. A narrower changed-file value-shaped scan over the R2 files returned no matches for real tokens, private key blocks, or password/passwd assignments.
 
 ## Final Conclusion
 
 STOP.
 
-M9E proved the gated preflight and download path but did not achieve MiniMax-M3 API proof-of-life. M9E-R1 proved the missing `libnuma.so.1` dependency was real and fixed it inside the isolated image, and `sgl_kernel/common_ops` now import successfully. The R1 relaunch still stopped before `/v1/models` because the current SGLang MXFP8 path asserts SM90 or SM100 support while this VM is RTX PRO 6000 Blackwell Workstation / SM120. The MiniMax model files remain downloaded and preserved at `/data/models/minimax-m3-mxfp8`. The previous 30B SGLang backend is restored healthy and active on `http://127.0.0.1:30001/v1`.
+M9E proved the gated preflight and download path but did not achieve MiniMax-M3 API proof-of-life. M9E-R1 proved the missing `libnuma.so.1` dependency was real and fixed it inside the isolated image, and `sgl_kernel/common_ops` now import successfully. The R1 relaunch still stopped before `/v1/models` because the current SGLang MXFP8 path asserts SM90 or SM100 support while this VM is RTX PRO 6000 Blackwell Workstation / SM120. M9E-R2 investigated the SM120 boundary and stopped before build/relaunch because the released MiniMax-M3-MXFP8 CUDA path expects SM100 datacenter Blackwell for native MXFP8/Cutlass, the installed `sgl-kernel` wheel has no native SM120 common ops, and no clean released/source-level SM120 gate was identified. The MiniMax model files remain downloaded and preserved at `/data/models/minimax-m3-mxfp8`. The previous 30B SGLang backend remained healthy and active on `http://127.0.0.1:30001/v1`.
 
 ## Recommended Next Task
 
-Human review, then SM120-specific MiniMax remediation planning. The next remediation should determine whether the current SGLang-KT/MXFP8 stack can support SM120 through an upstream wheel/source build or whether a different approved runtime, quantization path, or model path is required. Do not download fallback models unless a separate human-approved task explicitly says so.
+Human review, then upstream/release-level SM120 support follow-up for MiniMax-M3-MXFP8 or an explicitly approved alternate runtime, quantization, or model decision. R2 found no clean released/source-level SM120 gate for the current SGLang-KT/MXFP8 stack. Do not download fallback models unless a separate human-approved task explicitly says so.
