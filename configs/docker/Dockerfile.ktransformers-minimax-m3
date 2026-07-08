@@ -14,7 +14,7 @@ LABEL org.opencontainers.image.title="mixed-memory minimax m3 ktransformers runt
       org.opencontainers.image.description="M9E isolated SGLang-KT plus KT-Kernel runtime for MiniMax-M3-MXFP8 proof-of-life" \
       org.opencontainers.image.source="https://github.com/djeZo888/mixed-memory-llm-api-server" \
       org.opencontainers.image.vendor="djeZo888" \
-      org.mixed-memory.milestone="M9E" \
+      org.mixed-memory.milestone="M9E-R1" \
       org.mixed-memory.base-image="${BASE_IMAGE}" \
       org.mixed-memory.ktransformers-source="${KTRANSFORMERS_SOURCE_URL}" \
       org.mixed-memory.ktransformers-commit="${KTRANSFORMERS_COMMIT}" \
@@ -40,6 +40,9 @@ RUN apt-get update \
       ca-certificates \
       curl \
       git \
+      libnuma1 \
+      libnuma-dev \
+      numactl \
       python3 \
       python3-pip \
       python3-venv \

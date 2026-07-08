@@ -5,7 +5,7 @@
 # forward from 127.0.0.1 only.
 services:
   minimax-m3-mxfp8-poc:
-    image: ${MINIMAX_RUNTIME_IMAGE:-local/minimax-m3-ktransformers:0.6.3-post1}
+    image: ${MINIMAX_RUNTIME_IMAGE:-local/minimax-m3-ktransformers:0.6.3-post1-r1}
     container_name: minimax-m3-mxfp8-poc
     restart: "no"
     shm_size: "64gb"

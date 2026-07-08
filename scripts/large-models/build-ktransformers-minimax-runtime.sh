@@ -7,9 +7,10 @@ Usage: scripts/large-models/build-ktransformers-minimax-runtime.sh --dry-run
        scripts/large-models/build-ktransformers-minimax-runtime.sh --yes-build-runtime
 
 Build the isolated M9E MiniMax-M3 runtime image. The real build is intentionally
-gated behind --yes-build-runtime. This script does not install host packages,
-does not install into system Python, does not download model weights, does not
-modify Docker/containerd daemon configuration, and does not start a model
+gated behind --yes-build-runtime. The R1 image adds the NUMA runtime dependency
+inside the container only. This script does not install host packages, does not
+install into system Python, does not download model weights, does not modify
+Docker/containerd daemon configuration, and does not start a model
 backend service.
 
 Environment overrides:
@@ -58,7 +59,7 @@ cd "$(repo_root)"
 dockerfile="configs/docker/Dockerfile.ktransformers-minimax-m3"
 [[ -f "$dockerfile" ]] || fail "missing Dockerfile: $dockerfile"
 
-image_tag="${MINIMAX_RUNTIME_IMAGE:-local/minimax-m3-ktransformers:0.6.3-post1}"
+image_tag="${MINIMAX_RUNTIME_IMAGE:-local/minimax-m3-ktransformers:0.6.3-post1-r1}"
 base_image="${MINIMAX_RUNTIME_BASE_IMAGE:-nvidia/cuda:13.2.1-base-ubuntu24.04}"
 kt_kernel_version="${KT_KERNEL_VERSION:-0.6.3.post1}"
 sglang_kt_version="${SGLANG_KT_VERSION:-0.6.3.post1}"
@@ -79,6 +80,7 @@ ktransformers_commit: $ktransformers_commit
 kt_kernel_version: $kt_kernel_version
 sglang_kt_version: $sglang_kt_version
 build_root: $build_root
+build_log: /data/logs/minimax-m3-poc/m9e-r1-build.log
 pip_cache_root: /data/build/pip-cache
 model_download_performed: false
 fallback_model_download_performed: false
@@ -113,7 +115,7 @@ tmp_record="$(mktemp)"
 trap 'rm -f "$tmp_record"' EXIT
 
 {
-  echo "# M9E MiniMax-M3 Runtime Build Record"
+  echo "# M9E-R1 MiniMax-M3 Runtime Build Record"
   echo
   echo "- Timestamp: \`$timestamp\`"
   echo "- Image: \`$image_tag\`"
@@ -121,6 +123,7 @@ trap 'rm -f "$tmp_record"' EXIT
   echo "- Dockerfile: \`$dockerfile\`"
   echo "- KTransformers source URL: \`$ktransformers_source_url\`"
   echo "- KTransformers commit: \`$ktransformers_commit\`"
+  echo "- Container NUMA packages: \`libnuma1 libnuma-dev numactl\`"
   echo "- kt-kernel package: \`$kt_kernel_version\`"
   echo "- sglang-kt package: \`$sglang_kt_version\`"
   echo "- Build root: \`$build_root\`"
@@ -134,11 +137,11 @@ trap 'rm -f "$tmp_record"' EXIT
   echo "## Docker Build Output"
 } >"$tmp_record"
 
-build_log="$build_root/docker-build-$(date -u +%Y%m%dT%H%M%SZ).log"
+build_log="/data/logs/minimax-m3-poc/m9e-r1-build.log"
 sudo -n docker build \
   --pull=false \
   --progress=plain \
-  --label "org.mixed-memory.milestone=M9E" \
+  --label "org.mixed-memory.milestone=M9E-R1" \
   --label "org.mixed-memory.model=MiniMaxAI/MiniMax-M3-MXFP8" \
   --build-arg "BASE_IMAGE=$base_image" \
   --build-arg "KTRANSFORMERS_SOURCE_URL=$ktransformers_source_url" \

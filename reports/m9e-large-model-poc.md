@@ -7,7 +7,7 @@
 - Selected large model: `MiniMaxAI/MiniMax-M3-MXFP8`
 - Runtime path: KTransformers / KT-Kernel plus SGLang-KT heterogeneous CPU/GPU serving
 - Expected storage reservation: 500-650 GB on `/data`
-- Conclusion: STOP. The runtime built and imported, and the MiniMax model downloaded successfully, but the MiniMax container exited before readiness because `sgl_kernel` could not load `common_ops`; the log includes `ImportError: libnuma.so.1: cannot open shared object file: No such file or directory` and SM120-specific `common_ops` lookup failure context. The prior 30B backend was restored and verified healthy.
+- Conclusion: STOP. M9E built the initial runtime and downloaded the MiniMax model successfully, but the first container exited before readiness because `sgl_kernel` could not load `common_ops`; the log included missing `libnuma.so.1` and SM120-specific `common_ops` lookup failure context. M9E-R1 recovered the post-reboot 30B service, rebuilt the isolated runtime as `local/minimax-m3-ktransformers:0.6.3-post1-r1`, fixed `libnuma.so.1` and `sgl_kernel/common_ops` import loading, then retried MiniMax. The R1 relaunch still stopped before `/v1/models` because the SGLang MXFP8 path asserts SM90 or SM100 support and this VM is SM120. The prior 30B backend was restored and verified healthy again.
 
 ## Explicit STOP Gates
 
@@ -338,18 +338,100 @@ PASS.
 - Firewall, Caddy, reverse proxy, and API auth/front-door: not configured.
 - Proxmox snapshots: not used.
 
+## M9E-R1 MiniMax runtime remediation
+
+- Timestamp: `2026-07-08T20:35:00Z`
+- Branch: `milestone/m9e-r1-minimax-runtime-remediation`
+- Base branch: `milestone/m9e-large-model-poc`
+- Result: STOP. R1 fixed the missing NUMA dependency and proved `sgl_kernel/common_ops` can import in the remediated image, but MiniMax still did not reach `/v1/models` on SM120.
+
+### 30B recovery gate at task start
+
+PASS before MiniMax remediation.
+
+- After the VM reboot, `active.json` still identified `qwen3-30b-a3b-instruct-2507` as active, but the Docker container was exited, port `127.0.0.1:30001` was not listening, and `/v1/models` was not OK.
+- `scripts/llmctl start --dry-run` and `scripts/llmctl start --yes` recovered the existing 30B service without downloading models or changing runtime policy.
+- `scripts/sglang/verify-sglang-real-fast-live.sh`, `scripts/llmctl active`, `scripts/llmctl status`, and direct `/v1/models` all passed before R1 MiniMax work continued.
+
+### Existing image diagnosis
+
+- Existing image: `local/minimax-m3-ktransformers:0.6.3-post1`.
+- Failed container inspected: `minimax-m3-mxfp8-poc`, originally `Exited (1)` before readiness.
+- Diagnostic logs: `/data/logs/minimax-m3-poc/m9e-r1-existing-image-diagnostic.log`, `/data/logs/minimax-m3-poc/m9e-r1-existing-image-ldd.log`, `/data/logs/minimax-m3-poc/m9e-r1-existing-container-tail500.log`.
+- Existing image `ldconfig`/`find` found no `libnuma.so.1`.
+- Existing image `sgl_kernel` import failed with the prior `common_ops` loader error. The package contained `sgl_kernel/sm90/common_ops.abi3.so` and `sgl_kernel/sm100/common_ops.abi3.so`, but no explicit `sm120` common ops file.
+- Existing image ldd showed `libnuma.so.1 => not found` for both `sm90` and `sm100` common ops. Other Torch/CUDA libraries required the runtime library path used by Python, so the actionable missing OS dependency was `libnuma.so.1`.
+
+### R1 image build and runtime verification
+
+- R1 Dockerfile change: added only container-isolated apt packages `libnuma1`, `libnuma-dev`, and `numactl`.
+- R1 image tag: `local/minimax-m3-ktransformers:0.6.3-post1-r1`.
+- Build log: `/data/logs/minimax-m3-poc/m9e-r1-build.log`.
+- Build record: `/data/build/ktransformers-minimax-m3/runtime-build-latest.md`.
+- Verification record: `/data/build/ktransformers-minimax-m3/runtime-verify-latest.md`.
+- `libnuma.so.1` verified present through `ldconfig` and filesystem lookup.
+- `kt-kernel=0.6.3.post1`, `sglang-kt=0.6.3.post1`, `kt_kernel`, `sglang`, and `sglang.launch_server` imported.
+- The image does not install a separate `ktransformers` Python module; the active runtime path is the `sglang-kt` plus `kt-kernel` wheel path used in M9E.
+- `sgl_kernel` imported successfully with GPUs visible, and `common_ops` ldd resolved `libnuma.so.1` plus Torch/CUDA dependencies.
+- `python3 -m sglang.launch_server --help` passed. Required flags were present: `--kt-weight-path`, `--kt-method`, `--kt-cpuinfer`, `--kt-threadpool-count`, `--kt-num-gpu-experts`, `--quantization`, and tensor-parallel flag `--tp-size`.
+- SM120/common_ops status: no native `sm120` common ops file was present. The wheel contained `sm90` and `sm100`; `sgl_kernel` import succeeded through the package loader's SM100 compatibility/fallback path, not native SM120 coverage.
+- Runtime warnings still included `Triton is not supported on current platform, roll back to CPU` and NUMA bind warnings from the containerized `kt_kernel_ext` probe, but they did not block import verification.
+
+### MiniMax R1 relaunch result
+
+STOP after launch attempt.
+
+- 30B was stopped through `scripts/llmctl stop --dry-run` and `scripts/llmctl stop --yes` only after the R1 runtime verification passed.
+- 30B model files remained preserved at `/data/models/qwen3-30b-a3b-instruct-2507` (`57G`).
+- Previous failed MiniMax container was removed; no image or model files were removed.
+- Runtime compose path: `/data/services/llm-manager/compose/minimax-m3-poc.compose.yml`.
+- Compose image: `local/minimax-m3-ktransformers:0.6.3-post1-r1`.
+- Compose rendered `host_ip: 127.0.0.1`, published `127.0.0.1:30002:30000`, and kept `restart: "no"`.
+- MiniMax container started and port `127.0.0.1:30002` listened, but `/v1/models` repeatedly reset the connection and never returned a model list.
+- Diagnostics: `/data/logs/minimax-m3-poc/m9e-r1-failure-20260708T203230Z`.
+- Primary R1 launch blocker from logs: `AssertionError` at the SGLang MXFP8 quantization path, `assert is_sm100_supported() or is_sm90_supported()`, followed by `Received sigquit from a child process`.
+- Interpretation: `libnuma` was a real blocker and is fixed, but it was not the only blocker. MiniMax MXFP8 serving remains unresolved on RTX PRO 6000 Blackwell Workstation / SM120 because the current SGLang MXFP8 code path requires SM90 or SM100.
+- MiniMax `/v1/models` did not pass and no chat proof was run.
+
+### R1 recovery and final guards
+
+- Failed MiniMax container was stopped for recovery and left available for diagnostics; no images were removed and no Docker prune was run.
+- `scripts/llmctl start --yes` restored the previous 30B service.
+- `scripts/sglang/verify-sglang-real-fast-live.sh` passed after restore, including `/v1/models`, non-streaming chat, and streaming checks.
+- Current active backend after R1: `Qwen/Qwen3-30B-A3B-Instruct-2507` on SGLang at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only.
+- Final `/data` mount guard, root-disk guard, Docker storage verifier, GPU container verifier, and `scripts/llmctl active/status` passed.
+- Final MiniMax container state after recovery: `minimax-m3-mxfp8-poc` is exited; it is not active.
+
+### R1 scope confirmations
+
+- No public API exposure was configured.
+- No public host bind was used.
+- No fallback model was downloaded.
+- No Docker/containerd daemon configuration was changed.
+- No Docker/containerd daemon was restarted.
+- No Docker restart policy, systemd service, firewall, reverse proxy, Caddy, or API auth/front-door was created.
+- No model files were deleted.
+- No Docker images were deleted.
+- No Docker prune was run.
+- No host CUDA Toolkit, host SGLang/KTransformers, host Python package, or host system package install was performed.
+
+### R1 next recommended task
+
+Plan an SM120-specific MiniMax remediation before any further launch attempt. The next task should focus on whether the SGLang-KT/MXFP8 path can support RTX PRO 6000 Blackwell Workstation / SM120, whether an upstream wheel/source build with native SM120 support exists, or whether a different approved runtime/quantization/model path is required. Do not download the fallback model unless separately approved.
+
 ## Secret Scan
 
 - Broad grep-based scan matched only intentional docs, tests, scanner patterns, safety strings, historical report text, and env-example comments.
 - Changed-file value-shaped scan over the M9E files returned no matches for real-looking HF, OpenAI, or GitHub tokens and no private key blocks.
 - No real secret, token, password, private key, auth file, local sudo helper, real `.env`, `MEMORY.md`, or local Codex memory content was identified in the M9E changes.
+- M9E-R1 broad grep scan matched only intentional docs, tests, scanner patterns, safety strings, and historical report text. A narrower changed-file value-shaped scan over the R1 files returned no matches for real tokens, private key blocks, or password assignments.
 
 ## Final Conclusion
 
 STOP.
 
-M9E proved the gated preflight and download path but did not achieve MiniMax-M3 API proof-of-life. The immediate blocker is the isolated runtime image failing to load SGLang kernel common ops on SM120 due to missing `libnuma.so.1` and no successful `common_ops` fallback. The MiniMax model files remain downloaded and preserved at `/data/models/minimax-m3-mxfp8`. The previous 30B SGLang backend is restored healthy and active on `http://127.0.0.1:30001/v1`.
+M9E proved the gated preflight and download path but did not achieve MiniMax-M3 API proof-of-life. M9E-R1 proved the missing `libnuma.so.1` dependency was real and fixed it inside the isolated image, and `sgl_kernel/common_ops` now import successfully. The R1 relaunch still stopped before `/v1/models` because the current SGLang MXFP8 path asserts SM90 or SM100 support while this VM is RTX PRO 6000 Blackwell Workstation / SM120. The MiniMax model files remain downloaded and preserved at `/data/models/minimax-m3-mxfp8`. The previous 30B SGLang backend is restored healthy and active on `http://127.0.0.1:30001/v1`.
 
 ## Recommended Next Task
 
-Human review, then M9E remediation planning. The next remediation should be narrowly scoped to the MiniMax runtime image and should verify `sgl_kernel` common ops loading, `libnuma.so.1`, SM120 behavior, and the `Triton is not supported` warning before any relaunch. Do not download fallback models unless a separate human-approved task explicitly says so.
+Human review, then SM120-specific MiniMax remediation planning. The next remediation should determine whether the current SGLang-KT/MXFP8 stack can support SM120 through an upstream wheel/source build or whether a different approved runtime, quantization path, or model path is required. Do not download fallback models unless a separate human-approved task explicitly says so.

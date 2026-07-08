@@ -10,48 +10,38 @@ M9E attempted the first approved large-model proof-of-life target: `MiniMaxAI/Mi
 - Selected model: `MiniMaxAI/MiniMax-M3-MXFP8`.
 - Local model path: `/data/models/minimax-m3-mxfp8`.
 - Model size: `414G`.
-- Runtime image built: `local/minimax-m3-ktransformers:0.6.3-post1`.
-- Runtime compose path used for the failed launch: `/data/services/llm-manager/compose/minimax-m3-poc.compose.yml`.
+- Initial runtime image: `local/minimax-m3-ktransformers:0.6.3-post1`.
+- R1 runtime image: `local/minimax-m3-ktransformers:0.6.3-post1-r1`.
+- Runtime compose path used for launch attempts: `/data/services/llm-manager/compose/minimax-m3-poc.compose.yml`.
 - Repo compose template: `configs/compose/compose.minimax-m3-poc.template.yml`.
-- Failed container: `minimax-m3-mxfp8-poc`, exited with status 1.
-- Failure diagnostics: `/data/logs/minimax-m3-poc/m9e-failure-20260707T030539Z`.
-- Prior 30B backend was restored and is active at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only.
+- Latest R1 diagnostics: `/data/logs/minimax-m3-poc/m9e-r1-failure-20260708T203230Z`.
+- Current active backend is restored 30B at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only.
 
 ## What Passed
 
-- Context-sync gate passed on `llmserver` in `/data/services/mixed-memory-llm-api-server`.
-- Runtime build/import preflight passed before model download.
-- Required SGLang-KT MiniMax/KTransformers launch flags were present in `python3 -m sglang.launch_server --help`.
-- `MiniMaxAI/MiniMax-M3-MXFP8` downloaded successfully to `/data/models/minimax-m3-mxfp8`.
-- Required model files were present: `config.json`, tokenizer/chat template files, and 31 safetensors shards.
-- Root-disk guard, Docker storage verification, and GPU container verification passed.
-- No fallback model was downloaded.
-- No public API exposure was configured.
-- No Docker/containerd daemon configuration was changed.
+- MiniMax model download completed and fallback model download did not occur.
+- Initial M9E runtime build/import preflight passed before download.
+- M9E-R1 added `libnuma1`, `libnuma-dev`, and `numactl` inside the isolated Docker image only.
+- R1 verification proved `libnuma.so.1` is present, `sgl_kernel` imports, `common_ops` loads, ldd resolves dependencies, and required KT/SGLang launch flags are present.
+- Root-disk guard, Docker storage verification, GPU container verification, and 30B restore verification passed.
+- No public API exposure, Docker daemon change, restart policy, systemd service, model deletion, image deletion, or Docker prune occurred.
 
-## Failure Boundary
+## Current Failure Boundary
 
-The MiniMax container exited before readiness. The log shows `sgl_kernel` failed to load common ops on the SM120 GPUs, with `libnuma.so.1` missing in the runtime image:
+The original M9E blocker was missing `libnuma.so.1`, which prevented `sgl_kernel` common ops from loading. R1 fixed that dependency.
 
-```text
-[sgl_kernel] CRITICAL: Could not load any common_ops library!
-GPU Info:
-- Compute capability: 120
-- Expected variant: SM120 (precise math for compatibility)
-Error details from previous import attempts:
-- ImportError: libnuma.so.1: cannot open shared object file: No such file or directory
-- ModuleNotFoundError: No module named 'common_ops'
-```
-
-The container also printed:
+The current blocker is SM120 support in the SGLang MXFP8 path. The R1 launch reached container startup and `127.0.0.1:30002` listened, but `/v1/models` never passed. Logs show:
 
 ```text
-Triton is not supported on current platform, roll back to CPU.
+assert is_sm100_supported() or is_sm90_supported()
+AssertionError
 ```
+
+The runtime package contains `sm90` and `sm100` common ops, not native `sm120` common ops. `sgl_kernel` imports through the SM100 compatibility/fallback path, but MiniMax MXFP8 serving still stops before readiness on RTX PRO 6000 Blackwell Workstation / SM120.
 
 ## Current Boundary
 
-M9E did not achieve `/v1/models` or chat proof for MiniMax. The current active service is the restored 30B SGLang backend:
+MiniMax did not achieve `/v1/models` or chat proof. The current active service is the restored 30B SGLang backend:
 
 - Model: `Qwen/Qwen3-30B-A3B-Instruct-2507`.
 - Container: `sglang-qwen3-30b-a3b-instruct-2507`.
@@ -61,4 +51,4 @@ M9E did not achieve `/v1/models` or chat proof for MiniMax. The current active s
 
 ## Next Step
 
-Next task: M9E remediation planning, not M9F benchmarking. Remediation should update and rebuild only the isolated MiniMax runtime image, verify `libnuma.so.1` and `sgl_kernel` common ops loading inside the image, account for SM120 support limits, and then relaunch MiniMax only after the preflight proves those imports cleanly.
+Next task: SM120-specific MiniMax runtime remediation planning. Determine whether current SGLang-KT/MXFP8 can support SM120 through an upstream wheel/source build or whether a different approved runtime, quantization path, or model path is required. Do not download fallback models without separate human approval.
