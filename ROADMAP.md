@@ -92,20 +92,67 @@ M9D selected `MiniMaxAI/MiniMax-M3-MXFP8` via KTransformers / KT-Kernel plus SGL
 
 M9E was attempted on branch `milestone/m9e-large-model-poc` and stopped before MiniMax API proof. It downloaded only `MiniMaxAI/MiniMax-M3-MXFP8` to `/data/models/minimax-m3-mxfp8` (`414G`), built the isolated `local/minimax-m3-ktransformers:0.6.3-post1` KTransformers / KT-Kernel plus SGLang-KT image, and launched `minimax-m3-mxfp8-poc` on localhost-only bind `127.0.0.1:30002:30000`. The initial container exited before readiness because `sgl_kernel` could not load common ops; logs included missing `libnuma.so.1` and SM120 common-ops loading failure context. M9E-R1 rebuilt the isolated image as `local/minimax-m3-ktransformers:0.6.3-post1-r1`, verified `libnuma.so.1` and `sgl_kernel/common_ops` loading, and relaunched MiniMax. R1 still stopped before `/v1/models` because the current SGLang MXFP8 code path asserts SM90 or SM100 support while this VM is SM120. M9E-R2 investigated SM120 remediation on branch `milestone/m9e-r2-sm120-minimax-remediation` and stopped before build/relaunch: the released MiniMax-M3-MXFP8 CUDA path expects SM100 datacenter Blackwell for native MXFP8/Cutlass, `sgl-kernel 0.3.21` has SM90/SM100 common ops but no native SM120 common ops, and no clean released/source-level SM120 gate was identified. The prior 30B backend remained healthy at `http://127.0.0.1:30001/v1`, bound to `127.0.0.1` only. No fallback model was downloaded, no public API was exposed, and no Docker/containerd daemon change occurred.
 
-Next: upstream/release-level SM120 support follow-up for MiniMax-M3-MXFP8, or an explicitly approved alternate runtime, quantization, or model decision. M9F stability/benchmark work should wait until MiniMax proof-of-life passes or a human changes sequencing.
+Next: M9F reframes the large-model path around offline resilience, mixed RAM/VRAM inference, local memory/RAG, and model-role routing. MiniMax remains parked until upstream SM120 support changes; Qwen3.5 FP8 becomes the next investigation candidate after planning review.
+
+## M9F offline-resilience and mixed-memory large-model architecture plan
+
+M9F records the human mission correction: the project is primarily an offline/local AI resilience system, not a cost-saving exercise. Large mixed-memory inference and local memory/RAG have priority over public API exposure; public API exposure remains deferred.
+
+M9F produces:
+
+- `docs/offline-resilience-goals.md`
+- `docs/model-roles.md`
+- `docs/mixed-memory-large-model-strategy.md`
+- `docs/memory-rag-architecture.md`
+- `reports/m9f-offline-resilience-mixed-memory-plan.md`
+- `scripts/large-models/plan-qwen35-mixed-memory.sh`
+- `scripts/large-models/verify-qwen35-mixed-memory-plan.sh`
+- `tests/shell/test-qwen35-mixed-memory-plan-static.sh`
+
+M9F is planning-only. It does not download models, pull images, build or install runtimes, stop or restart the active 30B service, start model/backend containers, expose API, add public binds, or change Docker/containerd daemon configuration. The current 30B SGLang backend remains active at `http://127.0.0.1:30001/v1`, localhost-only.
+
+M9F selects `Qwen/Qwen3.5-397B-A17B-FP8` as the next large mixed-memory investigation candidate, not as an approved download. Public API exposure remains deferred. Cost saving is not the primary goal. Offline resilience is the primary goal. The large mixed-memory model path has priority over public exposure.
+
+## M9G Qwen3.5 mixed-memory runtime preflight
+
+M9G should be runtime preflight only unless a human explicitly expands scope. It should refresh current Qwen3.5, SGLang, KTransformers, vLLM, and NVIDIA SM120 sources; choose one isolated runtime path; verify SM120 import/kernel gates without Qwen3.5 weights; verify launch flags; and keep the 30B service running.
+
+M9G must not download `Qwen/Qwen3.5-397B-A17B-FP8` until runtime and SM120 gates pass and a later human-approved milestone authorizes the download.
+
+## M9H Qwen3.5 mixed-memory proof-of-life
+
+M9H may download and launch `Qwen/Qwen3.5-397B-A17B-FP8` only after M9G passes and human review approves the model path, cache path, runtime, rollback plan, and localhost-only endpoint. First proof should use 8192 or 16384 context, one request, short output, and no long-context stress.
+
+If Qwen3.5 launch fails, capture diagnostics and restore/verify the current 30B backend.
+
+## M9I true long-context tests
+
+M9I should test true long-context behavior only after a stable current or large model is active. Tests should progress from modest context to larger windows and should record token counts, RAM/VRAM pressure, latency, throughput, and answer quality.
+
+## M10 local memory/RAG subsystem planning
+
+Plan the local memory subsystem, including `/data/memory/raw`, `/data/memory/processed`, `/data/memory/indexes`, `/data/memory/qdrant`, `/data/memory/manifests`, `/data/memory/snapshots`, `/data/logs/memory`, local embeddings, local reranking, provenance, citations, backup/export, and `llmctl memory` commands.
+
+## M11 local memory/RAG implementation
+
+Implement the reviewed local memory/RAG plan. Keep ingestion, indexing, vector DB storage, logs, and backups under `/data`. Retrieval must work offline after ingestion. Do not expose public API as part of M11 unless a later approved front-door milestone says so.
+
+## M12 offline web archive / scraping-to-memory pipeline
+
+Integrate a later browser/scraper VM with the memory subsystem so online pages can be saved with timestamp, URL, source, content hash, normalized text, provenance, and retrieval metadata for offline later use. This VM remains API/backend-focused and should not become the browser automation host.
+
+## M13 model router and role-based model switching
+
+Implement model-role routing for technical expert, general expert, and long-context worker roles. Routing should prefer the smallest local model that can do the job well and escalate to the large mixed-memory backend only when quality/context requirements justify it.
+
+## M14 OpenClaw/local agent integration
+
+Plan and integrate OpenClaw or another local agent layer only after local model serving and memory APIs are stable. OpenClaw can connect to localhost SGLang or vLLM through OpenAI-compatible providers, but tool execution and remote channel exposure need separate security review.
+
+## M15 API/front-door/auth
+
+Public or LAN API exposure stays deferred until after robust local model function, memory/RAG, and model routing are reviewed. M15 should choose LAN-only, VPN-only, or public TLS exposure strategy, define API-key handling, firewall/TLS policy, gateway placement, and unauthorized-access tests. M15 must not expose a public API until a later approved implementation milestone.
 
 ## Optional boot persistence / auto-start policy
 
-A later lifecycle milestone may decide whether the active backend should auto-start after VM reboot. That milestone should choose between no auto-start, Docker restart policy, or systemd orchestration, and must verify logs, readiness waiting, failure behavior, and manual recovery. M9C intentionally does not add Docker restart policy or systemd service.
-
-## M10 API/front-door/auth planning
-
-After the large-model proof path or an explicit human sequencing decision, M10 should be API/front-door/auth planning only. It should choose LAN-only, VPN-only, or public TLS exposure strategy, define API-key handling, firewall/TLS policy, reverse proxy or gateway placement, and unauthorized-access tests. M10 must not expose a public API until a later approved implementation milestone; public exposure remains blocked until M10/M11 review produces an approved plan.
-
-## M11 larger model benchmarks
-
-After M9E or an explicit human decision, benchmark larger candidates such as `Qwen/Qwen3-235B-A22B-Instruct-2507`, `MiniMaxAI/MiniMax-M3`, and `zai-org/GLM-5.2` one model at a time, with storage and memory estimates before downloads. Use `deepseek-ai/DeepSeek-V4-Flash` as the practical large-model feasibility comparator if human review prioritizes fit and speed before the largest candidates.
-
-## M12 authenticated API exposure and operations
-
-Implement the reviewed API exposure plan only after approval, then add health scripts, model memory reports, log rotation, restart policies, backup/restore docs for configs and secrets, upgrade procedure, and troubleshooting docs.
+A later lifecycle milestone may decide whether the active backend should auto-start after VM reboot. That milestone should choose between no auto-start, Docker restart policy, or systemd orchestration, and must verify logs, readiness waiting, failure behavior, and manual recovery. M9C intentionally did not add Docker restart policy or systemd service; M9F keeps boot persistence later and optional.

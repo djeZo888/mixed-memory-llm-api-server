@@ -1,6 +1,6 @@
 # Model Matrix
 
-Do not download models before the relevant milestone explicitly approves the download path, cache path, backend, and verification sequence. M9E downloaded only `MiniMaxAI/MiniMax-M3-MXFP8`; fallback downloads remain blocked unless a separate human-approved task says so.
+Do not download models before the relevant milestone explicitly approves the download path, cache path, backend, and verification sequence. M9E downloaded only `MiniMaxAI/MiniMax-M3-MXFP8`; M9F downloads no models and selects `Qwen/Qwen3.5-397B-A17B-FP8` for planning/preflight only. Fallback downloads remain blocked unless a separate human-approved task says so.
 
 ## Hardware Profile
 
@@ -40,6 +40,23 @@ M7B adds a model/runtime manager abstraction. Model choices remain profile-based
 | 8 | `deepseek-ai/DeepSeek-V4-Flash` | Large feasibility comparator | SGLang or KTransformers after memory plan | Alternate/comparator | Official FP4+FP8 footprint is about 149 GiB; strongest first large-quality experiment if feasibility outranks top-list purity |
 
 
+
+## M9F Offline-Resilience Role Matrix
+
+M9F classifies models by system role instead of treating a single model as final. The primary mission is offline/local AI resilience, with public API exposure deferred.
+
+| Model | Role classification | Parameters | Context | Quantization | Expected storage | Expected RAM/VRAM | Runtime path | SM120 risk | M9F recommendation |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Qwen/Qwen3-30B-A3B-Instruct-2507` | Current technical/general local model | 30.5B total / 3.3B active | 262K model card; deployed at 32K | native current checkpoint | Downloaded `57G` | Runs on 2 x 96 GB with current SGLang config | SGLang `lmsysorg/sglang:v0.5.14-cu130` | Low; already proven | Keep active and healthy as fallback/resilience baseline. |
+| `MiniMaxAI/MiniMax-M3-MXFP8` | Parked large mixed-memory candidate | about 428B total / 23B active | 1M | MXFP8 | Downloaded `414G` | Fits RAM/storage but not pure VRAM | KTransformers/SGLang-KT | Proven blocker: released path is SM90/SM100-oriented | Park until upstream SM120 support changes. |
+| `Qwen/Qwen3.5-397B-A17B` | Source/reference for future large expert/worker | 397B total / 17B active | 262K native; about 1.01M extensible | BF16 | 806.80 GB / 751.39 GiB | Too large for VRAM; high RAM/storage pressure | SGLang/vLLM/KTransformers claimed by card | Unknown on 2 x RTX PRO SM120 | Do not download first; use as reference. |
+| `Qwen/Qwen3.5-397B-A17B-FP8` | Next large mixed-memory proof candidate; general expert and long-context worker | 397B total / 17B active | 262K native; about 1.01M extensible | FP8 block size 128 | 406.15 GB / 378.26 GiB | Fits RAM/storage; exceeds aggregate VRAM before KV/cache | SGLang main branch, vLLM current/nightly, possible KTransformers | Unknown; official examples are datacenter/multi-GPU shapes | Select for M9G runtime preflight only, no download in M9F. |
+| `nvidia/Qwen3.5-397B-A17B-NVFP4` | Quantized comparison candidate | 397B total / 17B active | up to 262K | NVFP4 | 251.19 GB / 233.93 GiB | Smaller but still above 2 x 96 GB before KV/cache | SGLang/vLLM; NVIDIA ModelOpt | Blackwell-positive, but B200-oriented; SM120 workstation unproven | Track as comparison, not first target. |
+| `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` | Lower-storage fallback/general expert candidate | 235B total / 22B active | 262K native | FP8 | 236.43 GB / 220.19 GiB | Still above aggregate VRAM before overhead | SGLang/vLLM/KTransformers references | Unknown but likely lower model-specific risk than MiniMax | Keep fallback only after separate review. |
+| `zai-org/GLM-5.2` / `zai-org/GLM-5.2-FP8` | Later long-context/agentic large candidate | large MoE | 1M class | BF16 / FP8 | 1506.67 GB BF16; 755.63 GB FP8 | High storage/RAM risk | KTransformers/SGLang docs exist | Unknown | Later candidate, not next proof. |
+| `deepseek-ai/DeepSeek-V4-Flash` | Feasibility comparator | large MoE | model-specific | FP4/FP8 mix | 159.62 GB / 148.66 GiB | Better fit than Qwen3.5, lower mission quality target | SGLang/KTransformers comparator | Unknown | Use only if feasibility outranks large expert quality. |
+
+M9G must verify SM120 runtime gates before any Qwen3.5 download. M9H is the earliest possible Qwen3.5 proof-of-life milestone after M9G passes and human review approves download/runtime scope.
 
 ## M9D Large-Model Feasibility Update
 
