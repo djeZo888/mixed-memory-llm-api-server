@@ -7,6 +7,8 @@ Use a transient systemd job with file logs, RuntimeMaxSec=36h, MemoryMax=2G.
 Existing partials resume in place. Corrupt/ambiguous artifacts are preserved.
 """
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
 import fcntl
 import hashlib
 import json
@@ -14,8 +16,10 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import sys
 import time
+import threading
 import urllib.error
 import urllib.request
 from storage_guard import check, common
@@ -29,10 +33,15 @@ CHUNK = 16 * 1024**2
 class IntegrityError(RuntimeError):
     pass
 
-def digest(path):
+class Cancelled(RuntimeError):
+    pass
+
+def digest(path, cancel=None):
     h = hashlib.sha256()
     with path.open('rb') as f:
         for b in iter(lambda: f.read(CHUNK), b''):
+            if cancel is not None and cancel.is_set():
+                raise Cancelled("acquisition cancelled")
             h.update(b)
     return h.hexdigest()
 
@@ -82,6 +91,13 @@ class Acquisition:
         self.transferred = 0
         self.last_status = 0
         self.owns_lock = False
+        self.workers = getattr(args, 'workers', 4)
+        if self.workers not in (1, 3, 4):
+            raise ValueError('workers must be 1, 3 or 4')
+        self.mutex = threading.RLock()
+        self.cancel = threading.Event()
+        self.state['workers'] = self.workers
+        self.state['helper_sha256'] = digest(Path(__file__))
 
     def guard(self):
         result = check(self.args.model_uuid)
@@ -90,34 +106,120 @@ class Acquisition:
             no_symlinks(path)
             if path.exists() and os.stat(path).st_dev != os.stat(device).st_dev:
                 raise IntegrityError('nested mount redirects run/artifact path')
+        self.require_capacity(self.workers * CHUNK)
         return result
 
-    def status(self, force=False):
-        now = time.monotonic()
-        if not force and now - self.last_status < 15:
-            return
-        self.guard()
-        self.state['updated_utc'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
-        self.state['session_bytes_downloaded'] = self.transferred
-        self.state['session_average_bytes_per_second'] = int(self.transferred / max(now-self.start, 1))
-        self.state['bytes_present'] = sum(f.get('bytes_present', 0) for f in self.state['files'].values())
-        self.state['verified_bytes'] = sum(f.get('bytes_present', 0) for f in self.state['files'].values() if f.get('sha256_verified'))
-        self.state['verified_shards'] = sum(bool(f.get('sha256_verified')) for f in self.state['files'].values())
-        self.atomic_json('acquisition-status.json', self.state)
-        self.last_status = now
+    def require_capacity(self, remaining=0):
+        location = DEST if DEST.exists() else Path('/data/models-large')
+        if shutil.disk_usage(location).free < remaining + 20 * 1024**3:
+            raise IntegrityError('insufficient model-disk free space including 20 GiB reserve')
 
-    def atomic_json(self, name, value):
-        self.guard()
-        final = self.run / 'evidence' / name
-        tmp = final.with_suffix('.tmp')
-        no_symlinks(final)
-        no_symlinks(tmp)
-        with tmp.open('w') as f:
-            json.dump(value, f, indent=2)
-            f.write('\n')
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp, final)
+    def model_device(self):
+        return os.stat('/data/models-large').st_dev
+
+    def cancelled(self):
+        if self.cancel.is_set():
+            raise Cancelled('acquisition cancelled')
+
+    def failure_guard(self):
+        # Model mount loss may still be reported on independently verified /data.
+        check()
+        for path in (self.run, self.run / 'evidence'):
+            no_symlinks(path)
+            if os.stat(path).st_dev != os.stat('/data').st_dev:
+                raise IntegrityError('unsafe failure status path')
+
+    def status(self, force=False, failure=False):
+        with self.mutex:
+            now = time.monotonic()
+            if not force and now - self.last_status < 15:
+                return
+            self.state['updated_utc'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+            self.state['session_bytes_downloaded'] = self.transferred
+            self.state['session_average_bytes_per_second'] = int(self.transferred / max(now-self.start, 1))
+            rows = self.state['files']
+            self.state['bytes_present'] = sum(f.get('bytes_present', 0) for f in rows.values())
+            self.state['verified_bytes'] = sum(f.get('bytes_present', 0) for f in rows.values() if f.get('sha256_verified'))
+            self.state['verified_shards'] = sum(bool(f.get('sha256_verified')) for f in rows.values())
+            self.state['active_shards'] = [p for p, f in rows.items() if f.get('status') in ('DOWNLOADING', 'HASHING')]
+            self.atomic_json('acquisition-status.json', self.state, failure=failure)
+            self.last_status = now
+
+    def atomic_json(self, name, value, failure=False):
+        with self.mutex:
+            (self.failure_guard if failure else self.guard)()
+            final = self.run / 'evidence' / name
+            tmp = final.with_suffix('.tmp')
+            no_symlinks(final)
+            no_symlinks(tmp)
+            with tmp.open('w') as f:
+                json.dump(value, f, indent=2)
+                f.write('\n')
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp, final)
+            directory = os.open(str(final.parent), os.O_DIRECTORY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+
+    @contextmanager
+    def owner(self):
+        lock = DEST / '.d1-acquisition.lock'
+        no_symlinks(lock)
+        with lock.open('a') as lockfile:
+            fcntl.flock(lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            self.owns_lock = True
+            try:
+                yield
+            except BaseException as exc:
+                self.cancel.set()
+                with self.mutex:
+                    self.state.update(status='CANCELLED' if isinstance(exc, Cancelled) else 'STOP',
+                                      error_type=type(exc).__name__)
+                    for row in self.state['files'].values():
+                        if row.get('status') in ('PENDING', 'DOWNLOADING', 'HASHING'):
+                            row['status'] = 'CANCELLED'
+                try:
+                    self.status(True, failure=True)
+                    common(self.run / 'evidence/root-acquisition-stopped.md')
+                except Exception:
+                    # Never fall back to root or an unverified status filesystem.
+                    print('STOP: final status write/guard unavailable; previous JSON may be stale', file=sys.stderr)
+                raise
+            finally:
+                self.owns_lock = False
+                fcntl.flock(lockfile, fcntl.LOCK_UN)
+
+    def run_workers(self, artifacts):
+        if len({a['path'] for a in artifacts}) != len(artifacts):
+            raise IntegrityError('duplicate shard task')
+        errors = []
+        def worker(a):
+            try:
+                self.cancelled()
+                self.one(a)
+            except BaseException as exc:
+                self.cancel.set()
+                with self.mutex:
+                    self.state['files'][a['path']].update(
+                        status='CANCELLED' if isinstance(exc, Cancelled) else 'FAILED',
+                        error_type=type(exc).__name__)
+                raise
+        # Only eleven futures and at most four CHUNK buffers; no unbounded queues/logs.
+        with ThreadPoolExecutor(max_workers=self.workers, thread_name_prefix='d1-shard') as pool:
+            futures = [pool.submit(worker, a) for a in artifacts]
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except BaseException as exc:
+                    errors.append(exc)
+                    self.cancel.set()
+        if errors:
+            # Do not hide the original failure behind a peer's cancellation.
+            raise next((e for e in errors if not isinstance(e, Cancelled)), errors[0])
+        self.cancelled()
 
     def acquire(self):
         identity = self.guard()
@@ -132,11 +234,7 @@ class Acquisition:
         no_symlinks(DEST)
         DEST.mkdir(exist_ok=True)
         self.guard()
-        lock = DEST / '.d1-acquisition.lock'
-        no_symlinks(lock)
-        with lock.open('a') as lockfile:
-            fcntl.flock(lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            self.owns_lock = True
+        with self.owner():
             common(self.run / 'evidence/root-acquisition-before.md')
             self.guard()
             # Pin metadata again on every resume; no signed URLs/headers are recorded.
@@ -169,18 +267,19 @@ class Acquisition:
                 if n > a['size_bytes']:
                     raise IntegrityError('oversize partial/final')
                 remaining -= n
-                self.state['files'][a['path']] = {'bytes_present': n, 'sha256_verified': False}
-            if shutil.disk_usage(DEST).free < remaining + 20 * 1024**3:
-                raise IntegrityError('insufficient model-disk free space including 20 GiB reserve')
+                self.state['files'][a['path']] = {'bytes_present': n, 'initial_bytes': n, 'sha256_verified': False, 'status': 'PENDING'}
+            self.require_capacity(remaining)
             self.state['status'] = 'DOWNLOADING'
             self.status(True)
-            for a in artifacts:
-                self.one(a)
+            self.run_workers(artifacts)
             # Final acceptance reads all exact filesystem sizes; each SHA was computed above.
-            if len(list(selected.glob('*.gguf'))) != 11 or any((DEST/a['path']).stat().st_size != a['size_bytes'] for a in artifacts):
+            if ({p.name for p in selected.iterdir()} != {Path(a['path']).name for a in artifacts}
+                    or any((DEST/a['path']).stat().st_size != a['size_bytes'] for a in artifacts)
+                    or not all(self.state['files'][a['path']].get('sha256_verified') for a in artifacts)):
                 raise IntegrityError('final artifact set mismatch')
             self.guard()
             common(self.run / 'evidence/root-acquisition-after.md')
+            self.cancelled()
             self.state['status'] = 'PASS_ALL_11_COMPUTED_SHA256'
             self.status(True)
 
@@ -188,11 +287,14 @@ class Acquisition:
         final = DEST / a['path']
         partial = final.with_name(final.name + '.partial')
         row = self.state['files'][a['path']]
-        self.state['current_shard'] = a['path']
         if not final.exists():
             for attempt in range(6):
-                self.guard()  # required immediately before each transfer/resume
+                self.cancelled()
+                self.guard()  # immediately before each transfer/resume
+                no_symlinks(partial)
                 offset = partial.stat().st_size if partial.exists() else 0
+                if offset > a['size_bytes']:
+                    raise IntegrityError('oversize partial')
                 if offset == a['size_bytes']:
                     break
                 url = f'https://huggingface.co/{REPO_ID}/resolve/{REV}/{a["path"]}'
@@ -202,52 +304,81 @@ class Acquisition:
                 try:
                     with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=90) as response:
                         validate_response(response, offset, a['size_bytes'])
+                        self.cancelled()
                         self.guard()
                         no_symlinks(partial)
-                        with partial.open('ab') as f:
-                            if os.fstat(f.fileno()).st_dev != os.stat('/data/models-large').st_dev:
-                                raise IntegrityError('partial file on wrong device')
-                            while True:
-                                block = response.read(min(CHUNK, a['size_bytes'] - offset + 1))
-                                if not block:
-                                    break
-                                if offset + len(block) > a['size_bytes']:
-                                    raise IntegrityError('HTTP body exceeds expected size')
-                                self.guard()  # before every bulk file write, including mid-stream mount loss
-                                f.write(block)
-                                offset += len(block)
-                                self.transferred += len(block)
-                                row['bytes_present'] = offset
-                                self.status()
-                            f.flush()
-                            os.fsync(f.fileno())
+                        with self.mutex:
+                            row.update(status='DOWNLOADING', last_request_offset=offset,
+                                       response_status=response.status,
+                                       content_range=response.headers.get('Content-Range'),
+                                       attempt=attempt + 1)
+                            row.setdefault('first_request_offset', offset)
+                            self.status(True)
+                        # Unbuffered append preserves existing offsets; fsync even on cancellation.
+                        with partial.open('ab', buffering=0) as f:
+                            if os.fstat(f.fileno()).st_dev != self.model_device() or os.fstat(f.fileno()).st_size != offset:
+                                raise IntegrityError('partial file device/offset changed')
+                            try:
+                                while True:
+                                    self.cancelled()
+                                    block = response.read(min(CHUNK, a['size_bytes'] - offset + 1))
+                                    if not block:
+                                        break
+                                    if offset + len(block) > a['size_bytes']:
+                                        raise IntegrityError('HTTP body exceeds expected size')
+                                    self.guard()  # mid-stream UUID/root guard before every bulk write
+                                    self.cancelled()
+                                    n = f.write(block)
+                                    offset += n
+                                    with self.mutex:
+                                        self.transferred += n
+                                        row['bytes_present'] = offset
+                                        self.status()
+                                    if n != len(block):
+                                        raise OSError('short file write')
+                            finally:
+                                os.fsync(f.fileno())
                     if offset != a['size_bytes']:
                         raise OSError('incomplete transfer')
                     break
                 except (urllib.error.URLError, TimeoutError, OSError) as exc:
-                    # Only exception class, never credential-bearing redirect URL/HTTP body.
-                    row['last_transfer_error'] = type(exc).__name__
-                    self.status(True)
+                    # Only exception class; never URLs, headers containing credentials, or bodies.
+                    with self.mutex:
+                        row['last_transfer_error'] = type(exc).__name__
+                        self.status(True)
                     if attempt == 5:
                         raise RuntimeError('bounded download retry limit') from None
-                    time.sleep(min(2**attempt, 30))
+                    if self.cancel.wait(min(2**attempt, 30)):
+                        raise Cancelled('acquisition cancelled')
         target = final if final.exists() else partial
+        self.cancelled()
         self.guard()
-        self.state['status'] = 'HASHING'
-        self.status(True)
-        if target.stat().st_size != a['size_bytes'] or digest(target) != a['sha256']:
+        no_symlinks(target)
+        with self.mutex:
+            row['status'] = 'HASHING'
+            self.status(True)
+        if target.stat().st_size != a['size_bytes'] or digest(target, self.cancel) != a['sha256']:
             raise IntegrityError('computed SHA256/size mismatch: artifact preserved')
+        self.cancelled()
         if target == partial:
             self.guard()
+            no_symlinks(final)
+            if final.exists():
+                raise IntegrityError('final appeared during transfer')
+            # A complete partial from an interrupted owner may not have been fsynced.
+            with partial.open('rb') as f:
+                os.fsync(f.fileno())
+            self.cancelled()
             os.replace(partial, final)
             directory = os.open(str(final.parent), os.O_DIRECTORY)
             try:
                 os.fsync(directory)
             finally:
                 os.close(directory)
-        row.update(bytes_present=a['size_bytes'], sha256_verified=True, computed_sha256=a['sha256'])
-        self.state['status'] = 'DOWNLOADING'
-        self.status(True)
+        with self.mutex:
+            row.update(bytes_present=a['size_bytes'], sha256_verified=True,
+                       computed_sha256=a['sha256'], status='VERIFIED')
+            self.status(True)
 
 
 def main():
@@ -257,20 +388,18 @@ def main():
     p.add_argument('--model-uuid', required=True)
     p.add_argument('--storage-ready', type=Path, required=True)
     p.add_argument('--ready-sha256', required=True)
+    p.add_argument('--workers', type=int, choices=(1, 3, 4), default=4,
+                   help='distinct shard workers; 1 is the sequential fallback (default: 4)')
     args = p.parse_args()
     job = Acquisition(args)
+    def request_stop(signum, frame):
+        job.cancel.set()
+    signal.signal(signal.SIGTERM, request_stop)
+    signal.signal(signal.SIGINT, request_stop)
     try:
         job.acquire()
     except Exception as exc:
-        job.state.update(status='STOP', error_type=type(exc).__name__)
-        # A failed guard must not cause fallback writes onto the wrong filesystem.
-        try:
-            if not job.owns_lock:
-                raise RuntimeError('job does not own acquisition lock')
-            job.status(True)
-            common(job.run / 'evidence/root-acquisition-stopped.md')
-        except Exception:
-            pass
+        # owner() records terminal state before releasing its global flock.
         print('STOP acquisition: ' + type(exc).__name__, file=sys.stderr)
         return 1
     return 0
