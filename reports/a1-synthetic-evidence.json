@@ -1,0 +1,553 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "synthetic",
+  "status": "PASS",
+  "requested_model": "synthetic-add-model",
+  "base_url": "http://127.0.0.1:55529/v1",
+  "auth": "enabled",
+  "limits": {
+    "max_rounds": 12,
+    "max_tool_calls": 32,
+    "max_output_bytes": 16384,
+    "test_timeout": 10,
+    "request_timeout": 3,
+    "overall_timeout": 20,
+    "max_tokens": 1024,
+    "max_response_bytes": 262144,
+    "stream_tools": true
+  },
+  "checks": {
+    "models": {
+      "status": "PASS",
+      "detail": {
+        "available_model_ids": [
+          "synthetic-add-model"
+        ]
+      },
+      "elapsed_seconds": 0.002622
+    },
+    "chat": {
+      "status": "PASS",
+      "detail": {
+        "message": {
+          "role": "assistant",
+          "content": "Hello worker"
+        },
+        "model": "synthetic-add-model",
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 7,
+          "completion_tokens": 5,
+          "total_tokens": 12
+        },
+        "reasoning": {
+          "reasoning_content": "Synthetic reasoning, distinct from content and tools."
+        },
+        "stream_done": false,
+        "elapsed_seconds": 0.000585
+      },
+      "elapsed_seconds": 0.000622
+    },
+    "streaming_end": {
+      "status": "PASS",
+      "detail": {
+        "message": {
+          "role": "assistant",
+          "content": "Hello worker "
+        },
+        "model": "synthetic-add-model",
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 7,
+          "completion_tokens": 5,
+          "total_tokens": 12
+        },
+        "reasoning": {
+          "reasoning_content": "Synthetic reasoning, distinct from content and tools."
+        },
+        "stream_done": true,
+        "elapsed_seconds": 0.000534
+      },
+      "elapsed_seconds": 0.000567
+    },
+    "invalid_model": {
+      "status": "PASS",
+      "detail": {
+        "rejected_http_status": 404
+      },
+      "elapsed_seconds": 0.000493
+    },
+    "auth_missing_models": {
+      "status": "PASS",
+      "detail": {
+        "rejected_http_status": 401
+      },
+      "elapsed_seconds": 0.000455
+    },
+    "auth_missing_chat": {
+      "status": "PASS",
+      "detail": {
+        "rejected_http_status": 401
+      },
+      "elapsed_seconds": 0.000486
+    },
+    "auth_wrong_models": {
+      "status": "PASS",
+      "detail": {
+        "rejected_http_status": 401
+      },
+      "elapsed_seconds": 0.00045
+    },
+    "auth_wrong_chat": {
+      "status": "PASS",
+      "detail": {
+        "rejected_http_status": 401
+      },
+      "elapsed_seconds": 0.000443
+    },
+    "auth_correct_models": {
+      "status": "PASS",
+      "detail": {
+        "available_model_ids": [
+          "synthetic-add-model"
+        ]
+      },
+      "elapsed_seconds": 0.000475
+    },
+    "auth_correct_chat": {
+      "status": "PASS",
+      "detail": {
+        "message": {
+          "role": "assistant",
+          "content": "Hello worker"
+        },
+        "model": "synthetic-add-model",
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 7,
+          "completion_tokens": 5,
+          "total_tokens": 12
+        },
+        "reasoning": {
+          "reasoning_content": "Synthetic reasoning, distinct from content and tools."
+        },
+        "stream_done": false,
+        "elapsed_seconds": 0.000431
+      },
+      "elapsed_seconds": 0.000461
+    },
+    "tool_roundtrip": {
+      "status": "PASS",
+      "detail": "See actual fixture calls, test results and independent verification in agent.evidence"
+    }
+  },
+  "opencode_e2e": "NOT_TESTED",
+  "clean_linux_install": "NOT_TESTED",
+  "agent": {
+    "status": "PASS",
+    "rounds": [
+      {
+        "round": 1,
+        "message": {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "read-code",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\": \"calc.py\"}"
+              }
+            },
+            {
+              "id": "read-test",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\": \"test_calc.py\"}"
+              }
+            }
+          ]
+        },
+        "model": "synthetic-add-model",
+        "finish_reason": "tool_calls",
+        "usage": {
+          "prompt_tokens": 7,
+          "completion_tokens": 5,
+          "total_tokens": 12
+        },
+        "reasoning": {
+          "reasoning_content": "Synthetic reasoning, distinct from content and tools."
+        },
+        "stream_done": true,
+        "elapsed_seconds": 0.001216
+      },
+      {
+        "round": 2,
+        "message": {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "edit-code",
+              "type": "function",
+              "function": {
+                "name": "write_file",
+                "arguments": "{\"path\": \"calc.py\", \"content\": \"def add(a, b):\\n    return a + b\\n\"}"
+              }
+            }
+          ]
+        },
+        "model": "synthetic-add-model",
+        "finish_reason": "tool_calls",
+        "usage": {
+          "prompt_tokens": 7,
+          "completion_tokens": 5,
+          "total_tokens": 12
+        },
+        "reasoning": {
+          "reasoning_content": "Synthetic reasoning, distinct from content and tools."
+        },
+        "stream_done": true,
+        "elapsed_seconds": 0.000877
+      },
+      {
+        "round": 3,
+        "message": {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "test-code",
+              "type": "function",
+              "function": {
+                "name": "run_tests",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        "model": "synthetic-add-model",
+        "finish_reason": "tool_calls",
+        "usage": {
+          "prompt_tokens": 7,
+          "completion_tokens": 5,
+          "total_tokens": 12
+        },
+        "reasoning": {
+          "reasoning_content": "Synthetic reasoning, distinct from content and tools."
+        },
+        "stream_done": true,
+        "elapsed_seconds": 0.00066
+      },
+      {
+        "round": 4,
+        "message": {
+          "role": "assistant",
+          "content": "I fixed the bug and all tests passed. "
+        },
+        "model": "synthetic-add-model",
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 7,
+          "completion_tokens": 5,
+          "total_tokens": 12
+        },
+        "reasoning": {
+          "reasoning_content": "Synthetic reasoning, distinct from content and tools."
+        },
+        "stream_done": true,
+        "elapsed_seconds": 0.001079
+      }
+    ],
+    "evidence": {
+      "workspace": "/private/var/folders/80/bb_94jdn2hb56v135qmjzgjr0000gp/T/a1-agent-49oxcm65",
+      "disposable": true,
+      "initial_test": {
+        "exit_code": 1,
+        "passed": false,
+        "output": "test_negative (__main__.AddTests.test_negative) ... FAIL\ntest_positive (__main__.AddTests.test_positive) ... FAIL\ntest_zero (__main__.AddTests.test_zero) ... FAIL\n\n======================================================================\nFAIL: test_negative (__main__.AddTests.test_negative)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/80/bb_94jdn2hb56v135qmjzgjr0000gp/T/a1-agent-49oxcm65/test_calc.py\", line 14, in test_negative\n    self.assertEqual(add(-4, -3), -7)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\nAssertionError: -1 != -7\n\n======================================================================\nFAIL: test_positive (__main__.AddTests.test_positive)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/80/bb_94jdn2hb56v135qmjzgjr0000gp/T/a1-agent-49oxcm65/test_calc.py\", line 11, in test_positive\n    self.assertEqual(add(2, 3), 5)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^\nAssertionError: -1 != 5\n\n======================================================================\nFAIL: test_zero (__main__.AddTests.test_zero)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/80/bb_94jdn2hb56v135qmjzgjr0000gp/T/a1-agent-49oxcm65/test_calc.py\", line 18, in test_zero\n    self.assertEqual(add(0, 9), 9)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^\nAssertionError: -9 != 9\n\n----------------------------------------------------------------------\nRan 3 tests in 0.001s\n\nFAILED (failures=3)\n",
+        "elapsed_seconds": 0.045594,
+        "command": [
+          "python3",
+          "-I",
+          "-B",
+          "test_calc.py"
+        ],
+        "implementation_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+        "tests_sha256": "0db9ff2126ec29252997e054e2334a4cfe82bcb8636a640ebe756e38bc00ea36",
+        "version": 0
+      },
+      "calls": [
+        {
+          "id": "read-code",
+          "name": "read_file",
+          "arguments": {
+            "path": "calc.py"
+          },
+          "implementation_before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+          "version_before": 0,
+          "result": {
+            "path": "calc.py",
+            "content": "def add(a, b):\n    return a - b\n"
+          },
+          "elapsed_seconds": 0.000243,
+          "version_after": 0,
+          "implementation_after_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8"
+        },
+        {
+          "id": "read-test",
+          "name": "read_file",
+          "arguments": {
+            "path": "test_calc.py"
+          },
+          "implementation_before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+          "version_before": 0,
+          "result": {
+            "path": "test_calc.py",
+            "content": "\"\"\"Trusted immutable acceptance tests; execute with python -I -B.\"\"\"\nimport pathlib\nimport unittest\n\nnamespace = {\"__builtins__\": {}}\nexec(compile(pathlib.Path(\"calc.py\").read_text(encoding=\"utf-8\"), \"calc.py\", \"exec\"), namespace)\nadd = namespace[\"add\"]\n\nclass AddTests(unittest.TestCase):\n    def test_positive(self):\n        self.assertEqual(add(2, 3), 5)\n\n    def test_negative(self):\n        self.assertEqual(add(-4, -3), -7)\n\n    def test_zero(self):\n        self.assertEqual(add(9, 0), 9)\n        self.assertEqual(add(0, 9), 9)\n\nif __name__ == \"__main__\":\n    unittest.main(verbosity=2)\n"
+          },
+          "elapsed_seconds": 0.000238,
+          "version_after": 0,
+          "implementation_after_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8"
+        },
+        {
+          "id": "edit-code",
+          "name": "write_file",
+          "arguments": {
+            "path": "calc.py",
+            "content": "def add(a, b):\n    return a + b\n"
+          },
+          "implementation_before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+          "version_before": 0,
+          "result": {
+            "path": "calc.py",
+            "written_bytes": 32,
+            "implementation_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+            "version": 1
+          },
+          "elapsed_seconds": 0.000396,
+          "version_after": 1,
+          "implementation_after_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772"
+        },
+        {
+          "id": "test-code",
+          "name": "run_tests",
+          "arguments": {},
+          "implementation_before_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+          "version_before": 1,
+          "result": {
+            "exit_code": 0,
+            "passed": true,
+            "output": "test_negative (__main__.AddTests.test_negative) ... ok\ntest_positive (__main__.AddTests.test_positive) ... ok\ntest_zero (__main__.AddTests.test_zero) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+            "elapsed_seconds": 0.044619,
+            "command": [
+              "python3",
+              "-I",
+              "-B",
+              "test_calc.py"
+            ],
+            "implementation_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+            "tests_sha256": "0db9ff2126ec29252997e054e2334a4cfe82bcb8636a640ebe756e38bc00ea36",
+            "version": 1
+          },
+          "elapsed_seconds": 0.045042,
+          "version_after": 1,
+          "implementation_after_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772"
+        }
+      ],
+      "diff": "--- initial/calc.py\n+++ final/calc.py\n@@ -1,2 +1,2 @@\n def add(a, b):\n-    return a - b\n+    return a + b\n",
+      "implementation_changed": true,
+      "implementation_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+      "tests_unchanged": true,
+      "tests_sha256": "0db9ff2126ec29252997e054e2334a4cfe82bcb8636a640ebe756e38bc00ea36",
+      "expected_tests_sha256": "0db9ff2126ec29252997e054e2334a4cfe82bcb8636a640ebe756e38bc00ea36",
+      "final_test": {
+        "exit_code": 0,
+        "passed": true,
+        "output": "test_negative (__main__.AddTests.test_negative) ... ok\ntest_positive (__main__.AddTests.test_positive) ... ok\ntest_zero (__main__.AddTests.test_zero) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+        "elapsed_seconds": 0.044492,
+        "command": [
+          "python3",
+          "-I",
+          "-B",
+          "test_calc.py"
+        ],
+        "implementation_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+        "tests_sha256": "0db9ff2126ec29252997e054e2334a4cfe82bcb8636a640ebe756e38bc00ea36",
+        "version": 1,
+        "status": "PASS"
+      },
+      "elapsed_seconds": 0.143406,
+      "success": true,
+      "failure_reasons": []
+    },
+    "final_answer": "I fixed the bug and all tests passed. ",
+    "elapsed_seconds": 0.144164
+  },
+  "requests": [
+    {
+      "path": "/models",
+      "stream": false,
+      "status": 200,
+      "success": true,
+      "requested_model": null,
+      "elapsed_seconds": 0.002607
+    },
+    {
+      "path": "/chat/completions",
+      "stream": false,
+      "status": 200,
+      "success": true,
+      "requested_model": "synthetic-add-model",
+      "model": "synthetic-add-model",
+      "usage": {
+        "prompt_tokens": 7,
+        "completion_tokens": 5,
+        "total_tokens": 12
+      },
+      "finish_reason": "stop",
+      "elapsed_seconds": 0.000587
+    },
+    {
+      "path": "/chat/completions",
+      "stream": true,
+      "status": 200,
+      "success": true,
+      "requested_model": "synthetic-add-model",
+      "model": "synthetic-add-model",
+      "usage": {
+        "prompt_tokens": 7,
+        "completion_tokens": 5,
+        "total_tokens": 12
+      },
+      "finish_reason": "stop",
+      "elapsed_seconds": 0.000536
+    },
+    {
+      "path": "/chat/completions",
+      "stream": false,
+      "status": 404,
+      "success": false,
+      "requested_model": "__a1_invalid_model_0c0162193b954d0f8ac5a8bd8c25f408",
+      "elapsed_seconds": 0.000465
+    },
+    {
+      "path": "/models",
+      "stream": false,
+      "status": 401,
+      "success": false,
+      "requested_model": null,
+      "elapsed_seconds": 0.000449
+    },
+    {
+      "path": "/chat/completions",
+      "stream": false,
+      "status": 401,
+      "success": false,
+      "requested_model": "synthetic-add-model",
+      "elapsed_seconds": 0.000476
+    },
+    {
+      "path": "/models",
+      "stream": false,
+      "status": 401,
+      "success": false,
+      "requested_model": null,
+      "elapsed_seconds": 0.000445
+    },
+    {
+      "path": "/chat/completions",
+      "stream": false,
+      "status": 401,
+      "success": false,
+      "requested_model": "synthetic-add-model",
+      "elapsed_seconds": 0.000431
+    },
+    {
+      "path": "/models",
+      "stream": false,
+      "status": 200,
+      "success": true,
+      "requested_model": null,
+      "elapsed_seconds": 0.000462
+    },
+    {
+      "path": "/chat/completions",
+      "stream": false,
+      "status": 200,
+      "success": true,
+      "requested_model": "synthetic-add-model",
+      "model": "synthetic-add-model",
+      "usage": {
+        "prompt_tokens": 7,
+        "completion_tokens": 5,
+        "total_tokens": 12
+      },
+      "finish_reason": "stop",
+      "elapsed_seconds": 0.000432
+    },
+    {
+      "path": "/chat/completions",
+      "stream": true,
+      "status": 200,
+      "success": true,
+      "requested_model": "synthetic-add-model",
+      "model": "synthetic-add-model",
+      "usage": {
+        "prompt_tokens": 7,
+        "completion_tokens": 5,
+        "total_tokens": 12
+      },
+      "finish_reason": "tool_calls",
+      "elapsed_seconds": 0.001218
+    },
+    {
+      "path": "/chat/completions",
+      "stream": true,
+      "status": 200,
+      "success": true,
+      "requested_model": "synthetic-add-model",
+      "model": "synthetic-add-model",
+      "usage": {
+        "prompt_tokens": 7,
+        "completion_tokens": 5,
+        "total_tokens": 12
+      },
+      "finish_reason": "tool_calls",
+      "elapsed_seconds": 0.000879
+    },
+    {
+      "path": "/chat/completions",
+      "stream": true,
+      "status": 200,
+      "success": true,
+      "requested_model": "synthetic-add-model",
+      "model": "synthetic-add-model",
+      "usage": {
+        "prompt_tokens": 7,
+        "completion_tokens": 5,
+        "total_tokens": 12
+      },
+      "finish_reason": "tool_calls",
+      "elapsed_seconds": 0.000662
+    },
+    {
+      "path": "/chat/completions",
+      "stream": true,
+      "status": 200,
+      "success": true,
+      "requested_model": "synthetic-add-model",
+      "model": "synthetic-add-model",
+      "usage": {
+        "prompt_tokens": 7,
+        "completion_tokens": 5,
+        "total_tokens": 12
+      },
+      "finish_reason": "stop",
+      "elapsed_seconds": 0.001082
+    }
+  ],
+  "elapsed_seconds": 0.15128
+}
