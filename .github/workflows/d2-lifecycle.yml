@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Run lifecycle state, security, profile and API fixtures
         shell: bash
@@ -31,8 +33,86 @@ jobs:
           bash tests/shell/test-llmctl-lifecycle-fixtures.sh
           bash tests/shell/test-sglang-smoke-static.sh
 
-      - name: Check whitespace
+      - name: Test whitespace event ranges
         shell: bash
         run: |
           set -euo pipefail
-          git show --format= --check HEAD
+          python3 tests/ci/test_d2_whitespace.py -v
+
+      - name: Check whitespace
+        shell: bash
+        env:
+          D2_EVENT_NAME: ${{ github.event_name }}
+          D2_HEAD_SHA: ${{ github.sha }}
+          D2_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          D2_PUSH_BEFORE_SHA: ${{ github.event.before }}
+          D2_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import re
+          import subprocess
+
+          def git(*args, check=True, input=None):
+              return subprocess.run(
+                  ["git", *args], input=input, text=True, capture_output=True, check=check
+              )
+
+          def sha(name, allow_zero=False):
+              value = os.environ.get(name, "")
+              if not re.fullmatch(r"[0-9a-fA-F]{40}", value):
+                  raise SystemExit(f"Invalid SHA metadata: {name}")
+              value = value.lower()
+              if not allow_zero and value == "0" * 40:
+                  raise SystemExit(f"Zero SHA is not a commit: {name}")
+              return value
+
+          def commit(value):
+              kind = git("cat-file", "-t", value, check=False)
+              if kind.returncode:
+                  # A force-push may remove beforeSHA from all fetched branches.
+                  git("fetch", "--no-tags", "origin", value)
+                  kind = git("cat-file", "-t", value)
+              if kind.stdout.strip() != "commit":
+                  raise SystemExit("Diff endpoint is not a commit")
+              return value
+
+          if git("rev-parse", "--is-shallow-repository").stdout.strip() != "false":
+              raise SystemExit("Whitespace checking requires fetch-depth: 0")
+          head = sha("D2_HEAD_SHA")
+          if git("rev-parse", "HEAD").stdout.strip() != head:
+              raise SystemExit("Checkout HEAD does not match the event SHA")
+          commit(head)
+          event = os.environ.get("D2_EVENT_NAME", "")
+          if event == "pull_request":
+              base = commit(sha("D2_PR_BASE_SHA"))
+              git("merge-base", "--is-ancestor", base, head)
+              reason = "recorded PR base to tested merge commit"
+          elif event == "push":
+              base = sha("D2_PUSH_BEFORE_SHA", allow_zero=True)
+              if base != "0" * 40:
+                  base = commit(base)
+                  reason = "recorded push before to event commit"
+              else:
+                  default = os.environ.get("D2_DEFAULT_BRANCH", "")
+                  if not default or git("check-ref-format", "refs/heads/" + default,
+                                        check=False).returncode:
+                      raise SystemExit("Invalid default branch metadata")
+                  # checkout's full-history fetch supplies remote branch refs.
+                  default_ref = "refs/remotes/origin/" + default
+                  tip = git("rev-parse", "--verify", default_ref + "^{commit}", check=False)
+                  common = (git("merge-base", tip.stdout.strip(), head, check=False)
+                            if tip.returncode == 0 else None)
+                  if common is not None and common.returncode == 0 and common.stdout.strip() != head:
+                      base = common.stdout.strip()
+                      reason = "first push: merge-base with fetched default branch"
+                  else:
+                      # No distinct branch base: check all content, never skip the gate.
+                      base = git("hash-object", "-t", "tree", "--stdin", input="").stdout.strip()
+                      reason = "first push: empty-tree fallback (full initial content check)"
+          else:
+              raise SystemExit("Unsupported whitespace-check event")
+          print(f"Whitespace range: {base}..{head} ({reason})", flush=True)
+          subprocess.run(["git", "diff", "--no-ext-diff", "--check", base, head, "--"], check=True)
+          PY
