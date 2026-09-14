@@ -1,0 +1,38 @@
+name: D2 lifecycle source regressions
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-worker-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run lifecycle state, security, profile and API fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests/lifecycle -p 'test_*.py' -v
+
+      - name: Preserve planning and lifecycle CLI regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tests/shell/test-llmctl-static.sh
+          bash tests/shell/test-llmctl-fixtures.sh
+          bash tests/shell/test-llmctl-lifecycle-static.sh
+          bash tests/shell/test-llmctl-lifecycle-fixtures.sh
+          bash tests/shell/test-sglang-smoke-static.sh
+
+      - name: Check whitespace
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show --format= --check HEAD

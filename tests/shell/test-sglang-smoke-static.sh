@@ -38,8 +38,12 @@ scripts/api/smoke-openai-chat.sh --dry-run >/tmp/sglang-api-dry-run.out || fail 
 grep -q 'DRY-RUN: no API request sent' /tmp/sglang-api-dry-run.out || fail "API dry-run did not stay dry"
 grep -q 'http://127.0.0.1:30000/v1/chat/completions' /tmp/sglang-api-dry-run.out || fail "API dry-run target mismatch"
 
-scripts/sglang/verify-sglang-smoke-plan.sh >/tmp/sglang-verify-plan.out || fail "plan verifier failed"
-grep -q 'PASS: SGLang smoke plan verification passed' /tmp/sglang-verify-plan.out || fail "plan verifier did not report PASS"
+# The retained plan verifier must function before Docker is installed. It reads
+# only the explicit offline status contract; live readiness is never claimed.
+scripts/sglang/verify-sglang-smoke-plan.sh >/tmp/sglang-plan-verify.out || fail "offline plan verifier failed"
+grep -q '^PASS: SGLang smoke plan verification passed$' /tmp/sglang-plan-verify.out || fail "plan verifier did not report PASS"
+grep -q '^live_host_checks: NOT_TESTED$' /tmp/sglang-plan-verify.out || fail "plan verifier did not label host checks untested"
+grep -q '^readiness: NOT_TESTED$' /tmp/sglang-plan-verify.out || fail "plan verifier did not label readiness untested"
 
 compose="configs/compose/compose.sglang-smoke.template.yml"
 grep -Fq '127.0.0.1:30000:30000' "$compose" || fail "compose template must bind localhost"
@@ -59,7 +63,6 @@ fi
 grep -Fq 'lmsysorg/sglang:v0.5.14-cu130-runtime' reports/m8a-sglang-smoke-plan.md || fail "report must document proposed pinned image"
 secret_matches="$(grep -RInE '(HF_TOKEN=[A-Za-z0-9_./+:-]{8,}|OPENAI_API_KEY=[A-Za-z0-9_./+:-]{8,}|GITHUB_TOKEN=[A-Za-z0-9_./+:-]{8,}|BEGIN OPENSSH|BEGIN RSA|PRIVATE KEY)' configs/compose/compose.sglang-smoke.template.yml configs/sglang/smoke.env.example scripts/sglang scripts/api docs/sglang-smoke-deployment.md reports/m8a-sglang-smoke-plan.md | grep -v 'grep -RInE' || true)"
 if [[ -n "$secret_matches" ]]; then
-  echo "$secret_matches" >&2
   fail "secret-like content found"
 fi
 

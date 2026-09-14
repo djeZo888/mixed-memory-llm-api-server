@@ -1,0 +1,26 @@
+# D2 source only. D3 installs AFTER removing the R1 obsolete boot writer.
+# This one-shot intent replayer is the only boot owner; Docker restart=no.
+[Unit]
+Description=Restore explicitly desired llmctl deployment
+Requires=docker.service
+After=docker.service
+RequiresMountsFor=/data /data/models-large
+BindsTo=data.mount data-models\x2dlarge.mount
+After=data.mount data-models\x2dlarge.mount
+ConditionPathIsMountPoint=/data
+ConditionPathIsMountPoint=/data/models-large
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/data/services/mixed-memory-llm-api-server
+ExecStart=/usr/bin/python3 /data/services/mixed-memory-llm-api-server/scripts/llmctl boot-start --yes --instance /data/services/llm-manager/deployment-instance.json
+ExecStop=/usr/bin/python3 /data/services/mixed-memory-llm-api-server/scripts/llmctl boot-stop --yes --instance /data/services/llm-manager/deployment-instance.json
+TimeoutStartSec=3h
+TimeoutStopSec=5min
+UMask=0077
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target
