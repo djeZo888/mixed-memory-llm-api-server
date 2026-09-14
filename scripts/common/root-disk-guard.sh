@@ -3,6 +3,12 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
+# Registered installations use a read-only generic guard. Its optional report
+# is constrained to the registered data logs; legacy test flags cannot bypass it.
+if [[ "${1:-}" != "--help" && ( -e /etc/local-ai-server || -L /etc/local-ai-server ) ]]; then
+  exec /usr/bin/python3 -I -B "$SCRIPT_DIR/registered-storage.py" --root-guard "$@"
+fi
+
 REPORT_PATH="reports/m3-root-disk-guard.md"
 ROOT_PATH="/"
 DATA_PATH="/data"

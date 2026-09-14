@@ -1,0 +1,21 @@
+name: I1 installer source fixtures
+on:
+  push:
+  pull_request:
+jobs:
+  installer-fixtures:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Synthetic installer boundaries (no package/device/service mutations)
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/install -p 'test_*.py' -v
+          bash -n install.sh scripts/common/require-data-mounted.sh scripts/common/root-disk-guard.sh
+          ./install.sh --help
+          ./install.sh plan --profile flagship-hybrid --model-set glm,qwen --fixture-host tests/install/fixtures/ubuntu-host.json > /tmp/i1-fixture-plan.json
+          python3 -c 'import json; p=json.load(open("/tmp/i1-fixture-plan.json")); assert p["ready"] is False and p["evidence_class"] == "SYNTHETIC_FIXTURE"'
