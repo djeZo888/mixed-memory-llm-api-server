@@ -7,90 +7,58 @@ fail() {
 }
 
 LLMCTL="scripts/llmctl"
-VERIFY="scripts/sglang/verify-sglang-lifecycle.sh"
-
+LIFECYCLE="scripts/lifecycle"
+INSTANCE="configs/deployments/instances/ai-vm-d0b.json"
 [[ -x "$LLMCTL" ]] || fail "$LLMCTL missing or not executable"
-[[ -f "$VERIFY" ]] || fail "$VERIFY missing"
-
-"$LLMCTL" --help >/dev/null || fail "llmctl --help failed"
-for command in start stop restart deactivate logs; do
-  "$LLMCTL" "$command" --help >/tmp/llmctl-"$command"-help.out || fail "$command --help failed"
-done
-
-grep -q 'start' /tmp/llmctl-start-help.out || fail "start help missing command text"
-grep -q -- '--dry-run' /tmp/llmctl-start-help.out || fail "start help missing --dry-run"
-grep -q -- '--yes' /tmp/llmctl-start-help.out || fail "start help missing --yes"
-grep -q -- '--no-wait' /tmp/llmctl-start-help.out || fail "start help missing --no-wait"
-grep -q -- '--yes' /tmp/llmctl-stop-help.out || fail "stop help missing --yes"
-grep -q -- '--yes' /tmp/llmctl-restart-help.out || fail "restart help missing --yes"
-grep -q -- '--yes' /tmp/llmctl-deactivate-help.out || fail "deactivate help missing --yes"
-grep -q -- '--yes' /tmp/llmctl-logs-help.out || fail "logs help missing --yes"
+[[ -f "$LIFECYCLE/manager.py" && -f "$LIFECYCLE/runtime_io.py" ]] || fail "lifecycle source missing"
+[[ -f "$INSTANCE" ]] || fail "explicit deployment instance missing"
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-mkdir -p "$tmp/active"
-cat >"$tmp/smoke.compose.yml" <<'YAML'
-services:
-  sglang-smoke:
-    image: lmsysorg/sglang:v0.5.14-cu130
-    container_name: sglang-smoke-qwen3-0.6b
-    profiles: ["sglang-smoke"]
-    ports:
-      - "127.0.0.1:30000:30000"
-YAML
-cat >"$tmp/active/active.json" <<YAML
-{
-  "model_profile": "qwen3-0.6b-smoke",
-  "runtime_profile": "sglang",
-  "compose_file": "$tmp/smoke.compose.yml",
-  "container_name": "sglang-smoke-qwen3-0.6b",
-  "bind": "127.0.0.1",
-  "port": 30000,
-  "endpoint": "http://127.0.0.1:30000/v1",
-  "model_path": "/data/models/qwen3-0.6b-smoke",
-  "image": "lmsysorg/sglang:v0.5.14-cu130",
-  "status": "active"
-}
-YAML
-
-fixture_env=(
-  LLMCTL_SKIP_HOST_CHECKS=1
-  LLMCTL_SKIP_DOCKER=1
-  LLMCTL_ACTIVE_DIR="$tmp/active"
-  LLMCTL_SMOKE_COMPOSE_FILE="$tmp/smoke.compose.yml"
-)
-
-for command in start stop restart deactivate; do
-  if env "${fixture_env[@]}" "$LLMCTL" "$command" >/tmp/llmctl-"$command".out 2>/tmp/llmctl-"$command".err; then
+"$LLMCTL" --help >"$tmp/help" || fail "llmctl --help failed"
+for command in select activate start stop restart deactivate boot-start boot-stop recover-stop logs; do
+  "$LLMCTL" "$command" --help >"$tmp/$command-help" || fail "$command --help failed"
+  grep -q -- '--instance' "$tmp/$command-help" || fail "$command help missing explicit instance"
+  grep -q -- '--dry-run' "$tmp/$command-help" || fail "$command help missing --dry-run"
+  grep -q -- '--yes' "$tmp/$command-help" || fail "$command help missing --yes"
+  args=("$command")
+  if [[ "$command" == select || "$command" == activate ]]; then
+    args+=(glm-5.3-ud-q4-k-xl-8k)
+  fi
+  if "$LLMCTL" "${args[@]}" --instance "$INSTANCE" >"$tmp/$command.out" 2>"$tmp/$command.err"; then
     fail "$command without --yes or --dry-run succeeded"
   fi
-  grep -q -- '--yes' /tmp/llmctl-"$command".err || fail "$command refusal did not mention --yes"
-  grep -q -- '--dry-run' /tmp/llmctl-"$command".err || fail "$command refusal did not show dry-run command"
+  grep -q -- '--yes or --dry-run' "$tmp/$command.err" || fail "$command refusal missing confirmation/dry-run guidance"
 done
 
-for command in start stop restart deactivate; do
-  env "${fixture_env[@]}" "$LLMCTL" "$command" --dry-run >/tmp/llmctl-"$command"-dry-run.out || fail "$command --dry-run failed"
-  grep -q 'DRY-RUN' /tmp/llmctl-"$command"-dry-run.out || fail "$command dry-run did not report DRY-RUN"
-  grep -q 'model_file_deletion: none' /tmp/llmctl-"$command"-dry-run.out || fail "$command dry-run missing model deletion policy"
-  grep -q 'image_deletion: none' /tmp/llmctl-"$command"-dry-run.out || fail "$command dry-run missing image deletion policy"
-  if [[ "$command" == "start" ]]; then
-    grep -q 'wait_for_readiness: yes by default' /tmp/llmctl-start-dry-run.out || fail "start dry-run missing readiness wait policy"
-  fi
-done
-
-env "${fixture_env[@]}" "$LLMCTL" logs --dry-run >/tmp/llmctl-logs-dry-run.out || fail "logs --dry-run failed"
-grep -q 'log_command:' /tmp/llmctl-logs-dry-run.out || fail "logs dry-run missing log command"
-
-if grep -RInE 'docker[[:space:]]+prune|system[[:space:]]+prune|docker[[:space:]]+(rmi|image[[:space:]]+rm)|shutil\.rmtree|rm[[:space:]-].*/data/models|0\.0\.0\.0:30000:30000' "$LLMCTL" "$VERIFY"; then
-  fail "dangerous lifecycle pattern found"
+grep -q -- '--no-wait' "$tmp/start-help" || fail "deprecated no-wait help missing"
+if "$LLMCTL" start --instance "$INSTANCE" --yes --no-wait >"$tmp/no-wait.out" 2>"$tmp/no-wait.err"; then
+  fail "unbounded no-wait start was accepted"
 fi
+grep -q 'no_wait_refused_use_bounded_start' "$tmp/no-wait.err" || fail "no-wait refusal not specific"
 
-if grep -RInE 'known M8B smoke deployment|existing M8B smoke deployment|run start --yes only for the known smoke deployment' "$LLMCTL"; then
-  fail "old smoke-only lifecycle failure string found"
+"$LLMCTL" logs --dry-run >"$tmp/logs-dry" || fail "logs --dry-run failed"
+grep -q 'DRY-RUN.*bounded Docker logs' "$tmp/logs-dry" || fail "logs dry-run missing bounded log policy"
+if "$LLMCTL" logs --yes >"$tmp/logs.out" 2>"$tmp/logs.err"; then
+  fail "raw runtime logs were relayed without reviewed redaction"
 fi
+grep -q 'raw_logs_disabled' "$tmp/logs.err" || fail "raw log refusal missing"
 
-if grep -RInE '(BEGIN OPENSSH|BEGIN RSA|PRIVATE KEY|HF_TOKEN=[A-Za-z0-9_./+:-]{8,}|OPENAI_API_KEY=[A-Za-z0-9_./+:-]{8,}|GITHUB_TOKEN=[A-Za-z0-9_./+:-]{8,})' "$LLMCTL" "$VERIFY"; then
+# Keep destructive-download-secret checks alongside executable behavior tests.
+if grep -RInE 'docker[[:space:]]+prune|system[[:space:]]+prune|docker[[:space:]]+(rmi|image[[:space:]]+rm)|shutil\.rmtree|rm[[:space:]-].*/data/models|docker[[:space:]]+(image[[:space:]]+)?pull' "$LLMCTL" "$LIFECYCLE" --include='*.py'; then
+  fail "dangerous lifecycle deletion/pull pattern found"
+fi
+if grep -RInE '(BEGIN OPENSSH|BEGIN RSA|PRIVATE KEY|HF_TOKEN=[A-Za-z0-9_./+:-]{8,}|OPENAI_API_KEY=[A-Za-z0-9_./+:-]{8,}|GITHUB_TOKEN=[A-Za-z0-9_./+:-]{8,})' "$LLMCTL" "$LIFECYCLE" --include='*.py'; then
   fail "hard-coded secret-like content found"
 fi
+python3 - <<'PY_CHECK'
+from pathlib import Path
+source = Path("scripts/lifecycle/runtime_io.py").read_text()
+assert '["container", "create", "--pull", "never", *argv]' in source
+assert "stderr=subprocess.DEVNULL" in source
+assert "os.O_NOFOLLOW" in source
+assert "LLMCTL_SKIP_DOCKER" not in Path("scripts/lifecycle/manager.py").read_text()
+assert "LLMCTL_SKIP_HOST_CHECKS" not in Path("scripts/lifecycle/manager.py").read_text()
+PY_CHECK
 
-echo "PASS: llmctl lifecycle static checks"
+echo "PASS: llmctl lifecycle help, refusals, and safety source checks"

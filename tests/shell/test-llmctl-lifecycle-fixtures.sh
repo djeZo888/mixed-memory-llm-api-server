@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# CLI-only worker fixtures. Stateful transition/API/container fixtures live in
+# tests/lifecycle and inject dependencies instead of production bypass variables.
 fail() {
   echo "FAIL: $*" >&2
   exit 1
@@ -8,136 +10,72 @@ fail() {
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
+LLMCTL="scripts/llmctl"
+INSTANCE="configs/deployments/instances/ai-vm-d0b.json"
 
-mkdir -p "$tmp/active" "$tmp/data" "$tmp/configs/models/profiles" "$tmp/configs/runtimes"
-
-cat >"$tmp/smoke.compose.yml" <<'YAML'
-services:
-  sglang-smoke:
-    image: lmsysorg/sglang:v0.5.14-cu130
-    container_name: sglang-smoke-qwen3-0.6b
-    profiles: ["sglang-smoke"]
-    restart: "no"
-    ports:
-      - "127.0.0.1:30000:30000"
-YAML
-
-write_active() {
-  local status="$1"
-  cat >"$tmp/active/active.json" <<YAML
-{
-  "model_profile": "qwen3-0.6b-smoke",
-  "runtime_profile": "sglang",
-  "compose_file": "$tmp/smoke.compose.yml",
-  "container_name": "sglang-smoke-qwen3-0.6b",
-  "bind": "127.0.0.1",
-  "port": 30000,
-  "endpoint": "http://127.0.0.1:30000/v1",
-  "model_path": "/data/models/qwen3-0.6b-smoke",
-  "image": "lmsysorg/sglang:v0.5.14-cu130",
-  "status": "$status"
-}
-YAML
-}
-
-write_real_active() {
-  local status="$1"
-  cat >"$tmp/active/active.json" <<YAML
-{
-  "model_profile": "qwen3-30b-a3b-instruct-2507",
-  "runtime_profile": "sglang",
-  "compose_file": "/data/services/llm-manager/compose/sglang-qwen3-30b.compose.yml",
-  "container_name": "sglang-qwen3-30b-a3b-instruct-2507",
-  "bind": "127.0.0.1",
-  "port": 30001,
-  "endpoint": "http://127.0.0.1:30001/v1",
-  "model_path": "/data/models/qwen3-30b-a3b-instruct-2507",
-  "image": "lmsysorg/sglang:v0.5.14-cu130",
-  "status": "$status"
-}
-YAML
-}
-
-fixture_env=(
-  LLMCTL_SKIP_HOST_CHECKS=1
-  LLMCTL_SKIP_DOCKER=1
-  LLMCTL_ACTIVE_DIR="$tmp/active"
-  LLMCTL_SMOKE_COMPOSE_FILE="$tmp/smoke.compose.yml"
-)
-
-run_status_case() {
-  local name="$1"
-  local container_status="$2"
-  local health="$3"
-  local endpoint_ok="$4"
-  local port_lines="$5"
-  local expected="$6"
-  local out="/tmp/llmctl-lifecycle-status-$name.out"
-
-  env "${fixture_env[@]}" \
-    LLMCTL_FAKE_CONTAINER_STATUS="$container_status" \
-    LLMCTL_FAKE_CONTAINER_HEALTH="$health" \
-    LLMCTL_FAKE_ENDPOINT_OK="$endpoint_ok" \
-    LLMCTL_FAKE_PORT_LINES="$port_lines" \
-    scripts/llmctl status >"$out" || fail "status case failed: $name"
-  grep -q "manager_status: $expected" "$out" || fail "status case $name did not report $expected"
-}
-
-smoke_port_line='LISTEN 0 4096 127.0.0.1:30000 0.0.0.0:*'
-real_port_line='LISTEN 0 4096 127.0.0.1:30001 0.0.0.0:*'
-
-write_active active
-
-env "${fixture_env[@]}" scripts/llmctl active >/tmp/llmctl-lifecycle-active.out || fail "active parsing failed"
-grep -q 'model_profile: qwen3-0.6b-smoke' /tmp/llmctl-lifecycle-active.out || fail "active output missing model"
-grep -q 'WARN: active_state_stale' /tmp/llmctl-lifecycle-active.out || fail "stale active state warning missing"
-
-env "${fixture_env[@]}" scripts/llmctl status >/tmp/llmctl-lifecycle-status.out || fail "status parsing failed"
-grep -q 'manager_status: stale' /tmp/llmctl-lifecycle-status.out || fail "status did not report stale"
-
-run_status_case starting running starting 0 "$smoke_port_line" starting
-if grep -q 'manager_status: stale' /tmp/llmctl-lifecycle-status-starting.out; then
-  fail "starting case was incorrectly reported stale"
-fi
-grep -q 'active_state_starting' /tmp/llmctl-lifecycle-status-starting.out || fail "starting case did not explain readiness"
-
-run_status_case exited exited unhealthy 0 '' stale
-run_status_case unhealthy running unhealthy 0 "$smoke_port_line" unhealthy
-run_status_case active running healthy 1 "$smoke_port_line" active
-
-write_real_active active
-run_status_case real-active running healthy 1 "$real_port_line" active
-grep -q 'real_activation: active_m9b_real_fast' /tmp/llmctl-lifecycle-status-real-active.out || fail "real model status missing activation marker"
-
-env "${fixture_env[@]}" scripts/llmctl start --dry-run >/tmp/llmctl-lifecycle-real-start-dry.out || fail "real start dry-run failed"
-grep -q 'model_profile: qwen3-30b-a3b-instruct-2507' /tmp/llmctl-lifecycle-real-start-dry.out || fail "real start dry-run did not use active real model"
-
-write_active active
-for command in start stop restart deactivate; do
-  env "${fixture_env[@]}" scripts/llmctl "$command" --dry-run >/tmp/llmctl-lifecycle-"$command"-dry.out || fail "$command dry-run failed"
-  grep -q 'DRY-RUN' /tmp/llmctl-lifecycle-"$command"-dry.out || fail "$command dry-run missing DRY-RUN"
+# Refuse a live deployment host: these shell tests deliberately assume no state.
+for path in /data/services/llm-manager/active/active.json /data/services/llm-manager/state/active.json /run/llmctl/recovery.json; do
+  [[ ! -e "$path" && ! -L "$path" ]] || fail "worker-only fixture requires absent lifecycle state"
 done
 
-rm -f "$tmp/active/active.json"
-if env "${fixture_env[@]}" scripts/llmctl stop --dry-run >/tmp/llmctl-lifecycle-missing-stop.out 2>/tmp/llmctl-lifecycle-missing-stop.err; then
-  fail "stop dry-run succeeded without active.json"
+for command in start restart; do
+  if "$LLMCTL" "$command" --instance "$INSTANCE" --dry-run >"$tmp/$command.out" 2>"$tmp/$command.err"; then
+    fail "$command unexpectedly selected a model from absent state"
+  fi
+  grep -q '^FAIL: no_deployment_selected_use_select$' "$tmp/$command.err" || fail "$command missing-selection refusal was not specific"
+  [[ ! -s "$tmp/$command.out" ]] || fail "$command emitted a misleading fallback plan"
+done
+
+for command in stop deactivate; do
+  "$LLMCTL" "$command" --instance "$INSTANCE" --dry-run >"$tmp/$command.json" || fail "$command dry-run failed"
+  python3 - "$tmp/$command.json" "$command" <<'PY_CHECK'
+import json
+import sys
+value = json.load(open(sys.argv[1]))
+assert value["dry_run"] is True and value["action"] == sys.argv[2]
+assert value["selected"] is None and value["writes"] is False
+assert value["model_file_deletion"] == value["image_deletion"] == "none"
+PY_CHECK
+done
+
+for deployment in glm-5.3-ud-q4-k-xl-8k glm-5.3-ud-q4-k-xl-32k qwen3-30b-a3b-instruct-2507 qwen3-0.6b-smoke; do
+  "$LLMCTL" select "$deployment" --instance "$INSTANCE" --dry-run >"$tmp/select.json" || fail "explicit select dry-run failed: $deployment"
+  python3 - "$tmp/select.json" "$deployment" <<'PY_CHECK'
+import json
+import sys
+value = json.load(open(sys.argv[1]))
+assert value["selected"] == sys.argv[2]
+assert value["dry_run"] is True and value["writes"] is False
+assert value["wait_for_readiness"] is True
+assert value["model_file_deletion"] == value["image_deletion"] == "none"
+PY_CHECK
+done
+
+# An unavailable observation never becomes healthy based on missing/stale state.
+if "$LLMCTL" status --instance "$tmp/missing-instance.json" >"$tmp/status.json" 2>"$tmp/status.err"; then
+  fail "status with missing instance reported success"
 fi
-grep -q 'active state missing' /tmp/llmctl-lifecycle-missing-stop.err || fail "missing active.json failure was not specific"
+python3 - "$tmp/status.json" <<'PY_CHECK'
+import json
+import sys
+value = json.load(open(sys.argv[1]))
+assert value["selected"] is None and value["desired"] == "stopped"
+assert value["observed"] == "failed" and value["container_running"] is None
+assert value["failure"] == "instance_missing_observation_unavailable"
+PY_CHECK
 
-env "${fixture_env[@]}" scripts/llmctl start --dry-run >/tmp/llmctl-lifecycle-missing-start.out || fail "start dry-run fallback failed"
-grep -q 'active.json missing' /tmp/llmctl-lifecycle-missing-start.out || fail "start fallback did not explain missing active.json"
-
-write_active stopped
-env "${fixture_env[@]}" scripts/llmctl active >/tmp/llmctl-lifecycle-stopped-active.out || fail "stopped active parsing failed"
-grep -q 'active: stopped' /tmp/llmctl-lifecycle-stopped-active.out || fail "stopped active output missing"
-
-env "${fixture_env[@]}" scripts/llmctl deactivate --yes >/tmp/llmctl-lifecycle-deactivate.out || fail "fixture deactivate failed"
-grep -q 'archived_active_state:' /tmp/llmctl-lifecycle-deactivate.out || fail "deactivate did not report archive"
-[[ ! -e "$tmp/active/active.json" ]] || fail "active.json still present after deactivate"
-find "$tmp/active/history" -type f -name 'active-*.json' | grep -q . || fail "active history archive missing"
-
-if [[ -e /data/services/llm-manager/active/history ]]; then
-  echo "INFO: real active history directory exists; fixture test did not inspect or modify it"
+# Invalid JSON and arbitrary diagnostic text must not be echoed in exceptions.
+printf '%s\n' '{invalid-synthetic-fixture-content' >"$tmp/invalid-instance.json"
+if "$LLMCTL" select glm-5.3-ud-q4-k-xl-8k --instance "$tmp/invalid-instance.json" --dry-run >"$tmp/invalid.out" 2>"$tmp/invalid.err"; then
+  fail "invalid instance passed"
+fi
+grep -q '^FAIL: invalid_or_missing_json$' "$tmp/invalid.err" || fail "invalid instance diagnostic was not sanitized"
+if grep -q 'invalid-synthetic-fixture-content' "$tmp/invalid.out" "$tmp/invalid.err"; then
+  fail "invalid instance data leaked into output"
 fi
 
-echo "PASS: llmctl lifecycle fixture checks"
+for path in /data/services/llm-manager/active/active.json /data/services/llm-manager/state/active.json /run/llmctl/recovery.json; do
+  [[ ! -e "$path" && ! -L "$path" ]] || fail "read-only CLI fixtures wrote lifecycle state"
+done
+
+echo "PASS: llmctl lifecycle CLI fixtures; transition/API fixtures are tests/lifecycle"
