@@ -87,3 +87,27 @@ jobs:
               sys.exit(1)
           print('markdown-local-links-ok')
           PY
+
+  client-regressions:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Select target Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run reviewed A1 client suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 --version
+          PYTHONDONTWRITEBYTECODE=1 python3 -W error::ResourceWarning -m unittest discover -s tests -p 'test_agent*.py' -v
+
+      - name: Run bootstrap client suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -W error::ResourceWarning -m unittest discover -s scripts/client/tests -p 'test_*.py' -v
