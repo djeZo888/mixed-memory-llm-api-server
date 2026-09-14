@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "ai-vm/REPLACE_WITH_PUBLISHED_MODEL_ID",
+  "provider": {
+    "ai-vm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "ai-vm through SSH",
+      "options": {
+        "baseURL": "{env:LLM_BASE_URL}",
+        "apiKey": "{env:LLM_API_KEY}"
+      },
+      "models": {
+        "REPLACE_WITH_PUBLISHED_MODEL_ID": {
+          "name": "Published ai-vm model"
+        }
+      }
+    }
+  }
+}
