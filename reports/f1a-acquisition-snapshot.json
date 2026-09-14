@@ -1,0 +1,537 @@
+{
+  "sample_utc": "2026-09-14T23:23:42Z",
+  "units": {
+    "f1a-qwen-fast-acquire-20260915.service": "MainPID=73182\nResult=success\nExecMainStartTimestamp=Mon 2026-09-14 23:22:28 UTC\nExecMainStatus=0\nMemoryCurrent=2145488896\nTasksCurrent=3\nActiveState=active\nSubState=running\nInvocationID=490c652a660b4e258e5b13d34cc82ebb\n",
+    "d1-glm53-acquire-20260915-d1b-p4.service": "MainPID=49253\nResult=success\nExecMainStartTimestamp=Mon 2026-09-14 23:02:39 UTC\nExecMainStatus=0\nMemoryCurrent=2145857536\nTasksCurrent=5\nActiveState=active\nSubState=running\nInvocationID=55ab64073abe462189f82c54ce8e299e\n"
+  },
+  "qwen_state": {
+    "status": "DOWNLOADING_WEIGHTS",
+    "pid": 73182,
+    "repo_id": "Qwen/Qwen3-Coder-Next-FP8",
+    "revision": "da6e2ed27304dd39abadd9c82ef50e8de67bdd4c",
+    "destination": "/data/models-large/qwen3-coder-next-fp8",
+    "total_bytes": 80407722953,
+    "files": {
+      "chat_template.jinja": {
+        "bytes_present": 6068,
+        "initial_bytes": 0,
+        "sha256_verified": true,
+        "artifact_verified": true,
+        "status": "VERIFIED",
+        "last_request_offset": 0,
+        "response_status": 200,
+        "content_range": null,
+        "attempt": 1,
+        "first_request_offset": 0,
+        "git_blob_sha1_verified": true,
+        "computed_git_blob_sha1": "1ac848e36c5e24a7f31f64b5631eb8890ffe916f",
+        "computed_sha256": "c79a833039a43602150cce0902403d6e376c50930c1b2a139b2964e1f0c322a0"
+      },
+      "config.json": {
+        "bytes_present": 9836,
+        "initial_bytes": 0,
+        "sha256_verified": true,
+        "artifact_verified": true,
+        "status": "VERIFIED",
+        "last_request_offset": 0,
+        "response_status": 200,
+        "content_range": null,
+        "attempt": 1,
+        "first_request_offset": 0,
+        "git_blob_sha1_verified": true,
+        "computed_git_blob_sha1": "18fedb533a9d8ee1879d06011bc04ad6d2fa56ca",
+        "computed_sha256": "8756acedd5ae0df36b2d6d774c87e30b422c3f4988015aa0b7e6c32f21769cdf"
+      },
+      "generation_config.json": {
+        "bytes_present": 214,
+        "initial_bytes": 0,
+        "sha256_verified": true,
+        "artifact_verified": true,
+        "status": "VERIFIED",
+        "last_request_offset": 0,
+        "response_status": 200,
+        "content_range": null,
+        "attempt": 1,
+        "first_request_offset": 0,
+        "git_blob_sha1_verified": true,
+        "computed_git_blob_sha1": "022ede02b13f6204bb4994da82c1d9d627abe288",
+        "computed_sha256": "37a3c1ef63516ca489c575f0db1c0405ddc0c3dbaca9ed987344c966c37aeef5"
+      },
+      "merges.txt": {
+        "bytes_present": 1671839,
+        "initial_bytes": 0,
+        "sha256_verified": true,
+        "artifact_verified": true,
+        "status": "VERIFIED",
+        "last_request_offset": 0,
+        "response_status": 200,
+        "content_range": null,
+        "attempt": 1,
+        "first_request_offset": 0,
+        "git_blob_sha1_verified": true,
+        "computed_git_blob_sha1": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0",
+        "computed_sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3"
+      },
+      "model-00001-of-00040.safetensors": {
+        "bytes_present": 1006632960,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "DOWNLOADING",
+        "last_request_offset": 0,
+        "response_status": 200,
+        "content_range": null,
+        "attempt": 1,
+        "first_request_offset": 0
+      },
+      "model-00002-of-00040.safetensors": {
+        "bytes_present": 1006632960,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "DOWNLOADING",
+        "last_request_offset": 0,
+        "response_status": 200,
+        "content_range": null,
+        "attempt": 1,
+        "first_request_offset": 0
+      },
+      "model-00003-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00004-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00005-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00006-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00007-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00008-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00009-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00010-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00011-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00012-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00013-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00014-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00015-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00016-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00017-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00018-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00019-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00020-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00021-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00022-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00023-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00024-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00025-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00026-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00027-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00028-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00029-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00030-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00031-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00032-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00033-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00034-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00035-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00036-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00037-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00038-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00039-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model-00040-of-00040.safetensors": {
+        "bytes_present": 0,
+        "initial_bytes": 0,
+        "sha256_verified": false,
+        "artifact_verified": false,
+        "status": "PENDING"
+      },
+      "model.safetensors.index.json": {
+        "bytes_present": 14819483,
+        "initial_bytes": 0,
+        "sha256_verified": true,
+        "artifact_verified": true,
+        "status": "VERIFIED",
+        "last_request_offset": 0,
+        "response_status": 200,
+        "content_range": null,
+        "attempt": 1,
+        "first_request_offset": 0,
+        "computed_sha256": "0ac9834aa1e30eb60d921d25e1755f97e92dfd47cf74ac2613e474243adcc4cf"
+      },
+      "tokenizer.json": {
+        "bytes_present": 7032399,
+        "initial_bytes": 0,
+        "sha256_verified": true,
+        "artifact_verified": true,
+        "status": "VERIFIED",
+        "last_request_offset": 0,
+        "response_status": 200,
+        "content_range": null,
+        "attempt": 1,
+        "first_request_offset": 0,
+        "git_blob_sha1_verified": true,
+        "computed_git_blob_sha1": "90c73275ae7b61cd2b6c4f263018057d516f0c95",
+        "computed_sha256": "19564a48c4f71a2a1b937cce34c737a1e662b171c5f5d7edf641a15cd896f07d"
+      },
+      "tokenizer_config.json": {
+        "bytes_present": 11681,
+        "initial_bytes": 0,
+        "sha256_verified": true,
+        "artifact_verified": true,
+        "status": "VERIFIED",
+        "last_request_offset": 0,
+        "response_status": 200,
+        "content_range": null,
+        "attempt": 1,
+        "first_request_offset": 0,
+        "git_blob_sha1_verified": true,
+        "computed_git_blob_sha1": "46884e3ddb4376bd1319321ac71a0a442d4258d0",
+        "computed_sha256": "fc76878832c668e3f0f8be66e6239a475b9093d2fe5cef97c242369779e6c6e6"
+      },
+      "vocab.json": {
+        "bytes_present": 2776833,
+        "initial_bytes": 0,
+        "sha256_verified": true,
+        "artifact_verified": true,
+        "status": "VERIFIED",
+        "last_request_offset": 0,
+        "response_status": 200,
+        "content_range": null,
+        "attempt": 1,
+        "first_request_offset": 0,
+        "git_blob_sha1_verified": true,
+        "computed_git_blob_sha1": "4783fe10ac3adce15ac8f358ef5462739852c569",
+        "computed_sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+      }
+    },
+    "started_utc": "2026-09-14T23:22:28Z",
+    "tool_calls": "NOT_TESTED",
+    "workers": 2,
+    "helper_sha256": "b2a19c96034c1bc48bad39c516b67365af885a701532670a72f310fb18a505bb",
+    "reused_transfer_sha256": "950334895648a53db8ffef32171f2e97a64bdf6b0c07eed56424a4649a76fcf4",
+    "manifest_sha256": "022674d4daf63fa57c2798a30fea80c6dde7b1b2e73630ae3c3aa94e45debb9e",
+    "glm_manifest_sha256": "8e7cb419a9dea83f1978f936455cedace1b964cbbb3580f7be191998f6a999d3",
+    "model_inference": "NOT_TESTED",
+    "capacity": {
+      "model_free_bytes": 2977301622784,
+      "qwen_remaining_bytes": 78368128680,
+      "glm_remaining_bytes": 277152012448,
+      "reserve_bytes": 21474836480,
+      "write_buffer_bytes": 33554432
+    },
+    "mounts": {
+      "data": {
+        "target": "/data",
+        "source": "/dev/sdb1",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+        "fstype": "ext4",
+        "options": "rw,relatime"
+      },
+      "root_free_bytes": 5196976128,
+      "models_large": {
+        "target": "/data/models-large",
+        "source": "/dev/sdc1",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+        "fstype": "ext4",
+        "options": "rw,relatime"
+      }
+    },
+    "updated_utc": "2026-09-14T23:23:39Z",
+    "session_bytes_downloaded": 2039594273,
+    "session_average_bytes_per_second": 28597606,
+    "bytes_present": 2039594273,
+    "sha256_verified_bytes": 26328353,
+    "active_artifacts": [
+      "model-00001-of-00040.safetensors",
+      "model-00002-of-00040.safetensors"
+    ],
+    "download_complete_artifacts": 8,
+    "sha256_verified_artifacts": 8,
+    "verified_weight_shards": 0,
+    "fully_verified_artifacts": 8,
+    "fully_verified_bytes": 26328353,
+    "index_referenced_shards": 40,
+    "runtime_asset_contract": "PASS_NATIVE_NO_TRUST_REMOTE_CODE"
+  },
+  "qwen_actual_files": [
+    {
+      "path": "chat_template.jinja",
+      "bytes": 6068,
+      "inode": 119275524
+    },
+    {
+      "path": "config.json",
+      "bytes": 9836,
+      "inode": 119275523
+    },
+    {
+      "path": "generation_config.json",
+      "bytes": 214,
+      "inode": 119275525
+    },
+    {
+      "path": "merges.txt",
+      "bytes": 1671839,
+      "inode": 119275526
+    },
+    {
+      "path": "model-00001-of-00040.safetensors.partial",
+      "bytes": 1056964608,
+      "inode": 119275531
+    },
+    {
+      "path": "model-00002-of-00040.safetensors.partial",
+      "bytes": 1040187392,
+      "inode": 119275532
+    },
+    {
+      "path": "model.safetensors.index.json",
+      "bytes": 14819483,
+      "inode": 119275528
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 7032399,
+      "inode": 119275527
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 11681,
+      "inode": 119275529
+    },
+    {
+      "path": "vocab.json",
+      "bytes": 2776833,
+      "inode": 119275530
+    }
+  ],
+  "qwen_actual_present_bytes": 2123480353,
+  "qwen_live_lock_second_owner_refused": true,
+  "glm_state_summary": {
+    "status": "DOWNLOADING",
+    "pid": 49253,
+    "updated_utc": "2026-09-14T23:23:29Z",
+    "bytes_present": 189348575237,
+    "verified_shards": 2,
+    "verified_bytes": 49443371013
+  },
+  "glm_helper_sha256": "950334895648a53db8ffef32171f2e97a64bdf6b0c07eed56424a4649a76fcf4",
+  "log_bytes": 228
+}
