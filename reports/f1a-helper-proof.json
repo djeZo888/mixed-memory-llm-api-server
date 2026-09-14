@@ -1,0 +1,15 @@
+{
+  "scripts/f1a/acquire.py": "b2a19c96034c1bc48bad39c516b67365af885a701532670a72f310fb18a505bb",
+  "scripts/f1a/launch-acquisition.sh": "edd3ef757a443999d19142626e0575353f3ea4393b0eb63434e5606712cb835c",
+  "scripts/f1a/test_acquire.py": "b068b2331680deb9c41a1063156a1cd4275092cd935de7bb9e69c3aa3f787b7d",
+  "scripts/f1a/prepare_manifest.py": "c14f0e32668d8519bcc22cbb88b29b69e4ba338c9c8dca728e8b81c24bfd0831",
+  "scripts/f1a/test_prepare_manifest.py": "d07fedd79fa3a069f8728bf8454225409d6b6a736b93257ca7900bd31d304c46",
+  "scripts/d1/acquire.py": "950334895648a53db8ffef32171f2e97a64bdf6b0c07eed56424a4649a76fcf4",
+  "scripts/d1/storage_guard.py": "3a0ff753b1375f5ff38e2d531e43fef845a993fae8023141af51c84beb4338d1",
+  "scripts/d1/test_helpers.py": "0c182768ed426ffcf64229c26080fe0773720b68743e56c604a5ffe7da63e788",
+  "scripts/d1/test_parallel.py": "98a679dd92cb2e1ac83cf191bf14dbadcb6f982dd6a32c04914d1a94777e5256",
+  "scripts/common/require-data-mounted.sh": "5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f",
+  "scripts/common/root-disk-guard.sh": "9945b21e13568caa77e1e19d56ac05f30adc692d40a94a6c1dbe1b23ed4e7eb2",
+  "reports/f1a-qwen-manifest.json": "022674d4daf63fa57c2798a30fea80c6dde7b1b2e73630ae3c3aa94e45debb9e",
+  "reports/r2-flagship-artifact.json": "8e7cb419a9dea83f1978f936455cedace1b964cbbb3580f7be191998f6a999d3"
+}
