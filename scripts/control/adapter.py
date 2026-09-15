@@ -255,7 +255,14 @@ class ManagerSession:
         return self._dispatch('stop', lease, deadline)
 
     def select(self, target, lease, deadline):
-        return self._dispatch('select', lease, deadline, target)
+        _lease(self.manager, lease)
+        with self._bounded(deadline):
+            # Read the current preference under the transition's held lease.
+            boot_policy = self.manager.read_state().get('boot_policy')
+            if type(boot_policy) is not str or boot_policy not in ('manual', 'resume'):
+                raise ControlError('observation_unavailable')
+            return self.manager.dispatch('select', deployment_id=target,
+                                         boot_policy=boot_policy, lease=lease)
 
     def start(self, lease, deadline):
         return self._dispatch('start', lease, deadline)

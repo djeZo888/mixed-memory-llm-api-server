@@ -106,6 +106,21 @@ it. Then stop the old backend, prove it stopped, select/start the target, observ
 its actual outcome and persist it. Failure never automatically resurrects the
 old model. An invalid target or failed preflight leaves the old backend running.
 
+An ordinary switch preserves the current trusted Manager boot preference,
+`manual` or `resume`. The production adapter reads and validates this preference
+inside its bounded select call while holding the same canonical lease, then
+passes it explicitly to Manager selection. Unreadable or invalid state refuses
+selection through the existing failure path. No request field sets boot policy.
+After a successful switch, desired intent is `running`; boot-start resumes the
+selected model only when the preserved preference is `resume`.
+
+An explicit API stop persists `desired=stopped` independently of boot preference.
+A stopped/resume selection stays stopped across service restart and boot-start;
+a later explicit switch deliberately starts its chosen model while preserving
+resume. CLI selection retains its existing default/explicit policy behavior.
+Deactivate still clears selection and resets manual; boot-stop preserves desired
+intent. Recovery and volatile stop retain the persistence limits documented below.
+
 U1 owns semantic generation: the counter changes when selected deployment,
 desired running/stopped intent, immutable container/start identity, or actual
 running state changes. It does not change on polling times or health checks.

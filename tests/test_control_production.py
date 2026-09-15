@@ -32,12 +32,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tests'))
 sys.path.insert(0, str(ROOT / 'tests/lifecycle'))
 sys.path.insert(0, str(ROOT / 'scripts'))
-from common.lifecycle_lease import acquire_lease, transition_in_progress, LeaseBusy
+from common.lifecycle_lease import acquire_lease, transition_in_progress, LeaseBusy, LeaseError
 from control.adapter import ProductionBackend, ManagerJournalStore
 from control.core import Application
 from control.http import make_server
 from control.journal import Journal
-from control.protocol import StorageUnavailable
+from control.protocol import ControlError, Deadline, StorageUnavailable
 from install import prerequisites
 from lifecycle.manager import Manager
 from lifecycle.runtime_io import LifecycleError
@@ -415,6 +415,13 @@ class ProductionHTTPTests(unittest.TestCase):
     def mutations(self):
         return [item for item in self.fixture.docker.calls if item[0] in {'stop', 'remove', 'create', 'start_enter'}]
 
+    def assert_intent(self, selected, desired, boot_policy):
+        state = self.fixture.load().read_state()
+        self.assertEqual((state['selected'], state['desired'], state['boot_policy']),
+                         (selected, desired, boot_policy))
+        self.assertTrue(state['state_persisted'])
+        return state
+
     def test_every_route_authenticates_before_actual_owner_io(self):
         before = len(self.fixture.managers)
         for method, path in [('GET', '/control/v1/status'), ('GET', '/control/v1/catalog'),
@@ -457,6 +464,7 @@ class ProductionHTTPTests(unittest.TestCase):
                 self.assertEqual(operation['status'], 'failed', operation)
                 self.assertEqual(self.mutations(), [], 'target preflight stopped or replaced the old container')
                 self.assertTrue(next(item for item in self.fixture.docker.records if item['Id'] == self.old_identity)['State']['Running'])
+                self.assert_intent(OLD, 'running', 'resume')
                 inspections = [event for event, held, thread in self.fixture.docker.lock_events
                                if event == ('run', ('image', 'inspect', 'local/fixture:target')) and held
                                and thread == 'control-transition']
@@ -471,6 +479,7 @@ class ProductionHTTPTests(unittest.TestCase):
                 status, result = self.request('POST', '/control/v1/switch', dict(body, **change), 'reject-' + expected + str(len(change)))
                 self.assertEqual(status, 409, result)
                 self.assertEqual(result['error']['code'], expected)
+                self.assert_intent(OLD, 'running', 'resume')
         self.assertEqual(self.mutations(), [])
 
     def test_switch_borrows_one_lease_and_admits_durably_before_first_stop(self):
@@ -488,7 +497,7 @@ class ProductionHTTPTests(unittest.TestCase):
         self.assertTrue(receipt['state_persisted'])
         operation = self.finish(receipt)
         self.assertEqual(operation['status'], 'succeeded', operation)
-        self.assertEqual(self.fixture.load().read_state()['boot_policy'], 'manual')
+        selected = self.assert_intent(TARGET, 'running', 'resume')
         self.assertTrue(receipts_at_stop)
         self.assertEqual(self.fixture.docker.max_running, 1)
         self.assertEqual([item for item in self.mutations() if item[0] == 'stop'], [('stop', self.old_identity)])
@@ -499,6 +508,147 @@ class ProductionHTTPTests(unittest.TestCase):
         self.assertTrue(target['endpoint']['ready'])
         self.assertEqual(target['endpoint']['base_url'], 'http://127.0.0.1:30109/v1')
         self.assertGreater(discovery['generation'], body['expected_generation'])
+
+        # Exercise real boot intent, not just the saved preference field.
+        self.fixture.docker.on_mutation = None
+        self.fixture.docker.calls.clear()
+        self.fixture.docker.lock_events.clear()
+        with self.fixture.lease() as lease:
+            self.fixture.load().dispatch('boot-stop', lease=lease)
+            stopped = self.assert_intent(TARGET, 'running', 'resume')
+            self.assertFalse(stopped['container_running'])
+            self.fixture.load().dispatch('boot-start', lease=lease)
+            self.fixture.load().dispatch('boot-start', lease=lease)
+            lease.validate()
+        resumed = self.assert_intent(TARGET, 'running', 'resume')
+        self.assertTrue(resumed['container_running'])
+        self.assertEqual(resumed['container']['id'], selected['container']['id'])
+        self.assertEqual([item for item in self.mutations() if item[0] == 'start_enter'],
+                         [('start_enter', selected['container']['id'])])
+        self.assertTrue(all(held for event, held, _ in self.fixture.docker.lock_events
+                            if event[0] in {'stop', 'remove', 'create', 'start_enter'}))
+        self.assertEqual(self.fixture.docker.max_running, 1)
+
+    def test_manual_switch_preserves_manual_and_boot_start_does_not_start(self):
+        manager = self.fixture.load()
+        with self.fixture.lease() as lease:
+            manager.dispatch('stop', lease=lease)
+            manager.dispatch('select', OLD, boot_policy='manual', lease=lease)
+            manager.dispatch('start', lease=lease)
+        self.fixture.docker.calls.clear()
+        self.assert_intent(OLD, 'running', 'manual')
+        status, receipt = self.request('POST', '/control/v1/switch', self.body(switch=True), 'manual-switch')
+        self.assertEqual(status, 202, receipt)
+        self.assertEqual(self.finish(receipt)['status'], 'succeeded')
+        selected = self.assert_intent(TARGET, 'running', 'manual')
+        self.assertTrue(selected['container_running'])
+        self.assertEqual([item for item in self.mutations() if item[0] == 'start_enter'],
+                         [('start_enter', selected['container']['id'])])
+        self.fixture.docker.calls.clear()
+        with self.fixture.lease() as lease:
+            self.fixture.load().dispatch('boot-stop', lease=lease)
+            self.fixture.load().dispatch('boot-start', lease=lease)
+            self.fixture.load().dispatch('boot-start', lease=lease)
+        stopped = self.assert_intent(TARGET, 'running', 'manual')
+        self.assertFalse(stopped['container_running'])
+        self.assertFalse(any(item[0] == 'start_enter' for item in self.mutations()))
+        self.assertEqual(self.fixture.docker.max_running, 1)
+
+    def test_switch_replay_and_idempotency_conflict_preserve_boot_intent(self):
+        body = self.body(switch=True)
+        status, receipt = self.request('POST', '/control/v1/switch', body, 'switch-replay')
+        self.assertEqual(status, 202, receipt)
+        self.assertEqual(self.finish(receipt)['status'], 'succeeded')
+        selected = self.assert_intent(TARGET, 'running', 'resume')
+        mutations = self.mutations()
+        status, replay = self.request('POST', '/control/v1/switch', body, 'switch-replay')
+        self.assertEqual(status, 202, replay)
+        self.assertTrue(replay['replayed'])
+        self.assertEqual(replay['operation']['id'], receipt['operation']['id'])
+        status, refused = self.request('POST', '/control/v1/switch',
+                                       dict(body, deployment_id=OLD), 'switch-replay')
+        self.assertEqual((status, refused['error']['code']), (409, 'idempotency_conflict'))
+        self.assertEqual(self.assert_intent(TARGET, 'running', 'resume'), selected)
+        self.assertEqual(self.mutations(), mutations)
+
+    def test_select_reads_current_policy_over_stale_manager_and_observation(self):
+        backend = ProductionBackend(self.fixture.configs, manager_loader=self.fixture.load)
+        for prior, current in [('manual', 'resume'), ('resume', 'manual')]:
+            with self.subTest(prior=prior, current=current):
+                session = backend.open()
+                with self.fixture.lease() as lease:
+                    session.manager.dispatch('stop', lease=lease)
+                    session.manager.dispatch('select', OLD, boot_policy=prior, lease=lease)
+                    observation = session.observe(Deadline.after(5))
+                    self.fixture.load().dispatch('select', OLD, boot_policy=current, lease=lease)
+                    self.assertEqual(session.manager.state['boot_policy'], prior)
+                    self.assertEqual(observation['boot_policy'], prior)
+                    session.select(TARGET, lease, Deadline.after(5))
+                    lease.validate()
+                self.assert_intent(TARGET, 'stopped', current)
+
+    def test_select_refuses_invalid_or_unreadable_current_state_without_mutation(self):
+        session = ProductionBackend(self.fixture.configs, manager_loader=self.fixture.load).open()
+        path = session.manager.state_file
+        original = path.read_bytes()
+        state = json.loads(original)
+        with self.fixture.lease() as lease:
+            for value in (None, True, 1, [], {}, 'automatic'):
+                with self.subTest(boot_policy=value):
+                    self.fixture.write_json(path, dict(state, boot_policy=value))
+                    invalid = path.read_bytes()
+                    with self.assertRaisesRegex(LifecycleError, '^invalid_state$'):
+                        session.select(TARGET, lease, Deadline.after(5))
+                    self.assertEqual(path.read_bytes(), invalid)
+                    self.assertEqual(self.mutations(), [])
+            missing = dict(state)
+            missing.pop('boot_policy')
+            self.fixture.write_json(path, missing)
+            with self.assertRaisesRegex(LifecycleError, '^invalid_state$'):
+                session.select(TARGET, lease, Deadline.after(5))
+            path.unlink()
+            path.mkdir(mode=0o700)
+            try:
+                with self.assertRaisesRegex(LifecycleError, '^invalid_or_missing_json$'):
+                    session.select(TARGET, lease, Deadline.after(5))
+                self.assertTrue(path.is_dir())
+                self.assertEqual(self.mutations(), [])
+                lease.validate()
+            finally:
+                path.rmdir()
+                path.write_bytes(original)
+                path.chmod(0o600)
+        self.assert_intent(OLD, 'running', 'resume')
+
+    def test_select_refuses_wrong_or_stale_lease_before_storage_or_docker_io(self):
+        session = ProductionBackend(self.fixture.configs, manager_loader=self.fixture.load).open()
+        with self.fixture.lease() as stale:
+            pass
+        foreign = self.fixture.base / 'foreign-owner'
+        foreign.mkdir(mode=0o700)
+        with acquire_lease(system_root=foreign, trusted_uid=os.geteuid()) as wrong:
+            for lease, expected in [(wrong, 'borrowed_lease_scope_mismatch'),
+                                    (stale, 'lease_not_active'), (None, 'invalid_borrowed_lease')]:
+                with self.subTest(expected=expected):
+                    checks = self.fixture.storage.full_checks
+                    calls = list(self.fixture.docker.calls)
+                    with self.assertRaisesRegex(LeaseError, '^' + expected + '$'):
+                        session.select(TARGET, lease, Deadline.after(5))
+                    self.assertEqual(self.fixture.storage.full_checks, checks)
+                    self.assertEqual(self.fixture.docker.calls, calls)
+        self.assert_intent(OLD, 'running', 'resume')
+
+    def test_select_expired_deadline_refuses_before_storage_or_docker_io(self):
+        session = ProductionBackend(self.fixture.configs, manager_loader=self.fixture.load).open()
+        with self.fixture.lease() as lease:
+            checks = self.fixture.storage.full_checks
+            calls = list(self.fixture.docker.calls)
+            with self.assertRaisesRegex(ControlError, '^deadline_exceeded$'):
+                session.select(TARGET, lease, Deadline.after(-1))
+            lease.validate()
+            self.assertEqual(self.fixture.storage.full_checks, checks)
+            self.assertEqual(self.fixture.docker.calls, calls)
+        self.assert_intent(OLD, 'running', 'resume')
 
     def test_external_canonical_lease_conflicts_without_queue(self):
         body = self.body(switch=True)
@@ -551,10 +701,12 @@ with acquire_lease(system_root=Path(sys.argv[2]),trusted_uid=os.geteuid()):
         self.assertEqual(self.mutations(), [])
 
     def test_success_receipt_replays_after_fresh_application_without_second_stop(self):
+        """Stopped/resume survives reopen and boot until an explicit new switch."""
         body = self.body()
         status, receipt = self.request('POST', '/control/v1/stop', body, 'durable-stop')
         self.assertEqual(status, 202, receipt)
         self.assertEqual(self.finish(receipt)['status'], 'succeeded')
+        self.assert_intent(OLD, 'stopped', 'resume')
         directory = self.fixture.base / 'run/llmctl'
         lock = directory / 'lifecycle.lock'
         recovery = directory / 'recovery.json'
@@ -582,6 +734,22 @@ with acquire_lease(system_root=Path(sys.argv[2]),trusted_uid=os.geteuid()):
         self.assertEqual(replay['operation']['id'], receipt['operation']['id'])
         self.assertEqual(self.finish(replay)['status'], 'succeeded')
         self.assertEqual([item for item in self.mutations() if item[0] == 'stop'], [('stop', self.old_identity)])
+        self.assert_intent(OLD, 'stopped', 'resume')
+        with self.fixture.lease() as lease:
+            self.fixture.load().dispatch('boot-start', lease=lease)
+            self.fixture.load().dispatch('boot-start', lease=lease)
+        stopped = self.assert_intent(OLD, 'stopped', 'resume')
+        self.assertFalse(stopped['container_running'])
+        self.assertFalse(any(item[0] == 'start_enter' for item in self.mutations()))
+        status, switched = self.request('POST', '/control/v1/switch', self.body(switch=True), 'switch-after-stop')
+        self.assertEqual(status, 202, switched)
+        self.assertEqual(self.finish(switched)['status'], 'succeeded')
+        selected = self.assert_intent(TARGET, 'running', 'resume')
+        self.assertTrue(selected['container_running'])
+        self.assertEqual([item for item in self.mutations() if item[0] == 'start_enter'],
+                         [('start_enter', selected['container']['id'])])
+        self.assertEqual([item for item in self.mutations() if item[0] == 'stop'], [('stop', self.old_identity)])
+        self.assertEqual(self.fixture.docker.max_running, 1)
 
     def test_equal_control_inference_key_blocks_switch_but_allows_explicit_stop(self):
         inference = Path(self.fixture.storage.binding.path('data', 'services/secrets/llm-api-key'))
