@@ -1,0 +1,78 @@
+{
+  "effective_ingress": "effective ingress and transport configuration passed; upstream readiness unknown",
+  "generation_requests": 0,
+  "guard_identity": "PASS",
+  "listeners": [
+    "LISTEN 0      4096               127.0.0.1:30002 0.0.0.0:* users:((\"docker-proxy\",pid=150263,fd=8))               ",
+    "LISTEN 0      4096   10.156.100.60%enp6s18:30002 0.0.0.0:* users:((\"systemd\",pid=1,fd=76))                        "
+  ],
+  "model": {
+    "command_sha256": "89510f6d1b0ede1ae1bba8a1f9097c42fa063f2196ee14c000e6c9810e7fae00",
+    "id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+    "image": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "name": "/llmctl-glm-5.3-32k",
+    "network_mode": "bridge",
+    "pid": 149976,
+    "restart_count": 0,
+    "running": true,
+    "started_at": "2026-09-15T00:48:45.235739944Z"
+  },
+  "model_unchanged": true,
+  "require_data_mounted": "PASS",
+  "root_available_bytes": 5210505216,
+  "root_available_gib": 4.8526611328125,
+  "root_disk_guard": "PASS",
+  "status": "PASS",
+  "units": {
+    "llm-private-control.service": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "/etc/systemd/system/llm-private-control.service",
+      "NeedDaemonReload": "no",
+      "SubState": "dead",
+      "UnitFileState": "static"
+    },
+    "llm-private-control.socket": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "/etc/systemd/system/llm-private-control.socket",
+      "NeedDaemonReload": "no",
+      "SubState": "dead",
+      "UnitFileState": "disabled"
+    },
+    "llm-private-glm.service": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "/etc/systemd/system/llm-private-glm.service",
+      "NeedDaemonReload": "no",
+      "SubState": "dead",
+      "UnitFileState": "static"
+    },
+    "llm-private-glm.socket": {
+      "ActiveState": "active",
+      "DropInPaths": "",
+      "FragmentPath": "/etc/systemd/system/llm-private-glm.socket",
+      "NeedDaemonReload": "no",
+      "SubState": "listening",
+      "UnitFileState": "enabled"
+    },
+    "llm-private-qwen38.service": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "/etc/systemd/system/llm-private-qwen38.service",
+      "NeedDaemonReload": "no",
+      "SubState": "dead",
+      "UnitFileState": "static"
+    },
+    "llm-private-qwen38.socket": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "/etc/systemd/system/llm-private-qwen38.socket",
+      "NeedDaemonReload": "no",
+      "SubState": "dead",
+      "UnitFileState": "disabled"
+    }
+  },
+  "unrelated_ipv4_filter_unchanged": true,
+  "utc": "2026-09-15T02:48:48.712345+00:00"
+}
