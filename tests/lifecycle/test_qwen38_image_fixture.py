@@ -232,12 +232,59 @@ class Qwen38ImageFixtureTests(unittest.TestCase):
             code = inner.main(["--actual-image", "--repo", "/fixture"])
         self.assertEqual(code, 2)
         self.assertTrue(sentinel not in output.getvalue(), "synthetic token disclosure")
-        self.assertEqual(json.loads(output.getvalue()), {"status": "FAIL", "code": "actual_image_fixture_failed"})
+        failure = json.loads(output.getvalue())
+        self.assertEqual(set(failure), {"status", "code", "failure_origin"})
+        self.assertEqual((failure["status"], failure["code"]), ("FAIL", "actual_image_fixture_failed"))
+        parsed = host.failure_metadata(output.getvalue().encode())
+        self.assertEqual(parsed["status"], "SAFE_ORIGIN")
+        self.assertEqual(parsed["origin"]["exception_class"], "RuntimeError")
         output = io.StringIO()
         with patch.object(host, "run", side_effect=RuntimeError(sentinel)), redirect_stdout(output):
             code = host.main(["--repo", "/fixture", "--output", "/data/receipt.json"])
         self.assertEqual(code, 1)
         self.assertTrue(sentinel not in output.getvalue(), "synthetic token disclosure")
+
+    def test_origin_selects_concrete_fixture_callsite_after_opaque_cache_failure(self):
+        sentinel = secrets.token_urlsafe(32)
+        child = SimpleNamespace(returncode=1, stdout=sentinel.encode(), stderr=sentinel.encode())
+        with patch.object(inner.subprocess, "run", return_value=child):
+            try:
+                inner.run_cache_probe(ROOT)
+            except inner.FixtureFailure as error:
+                origin = inner.failure_origin(error)
+                # The failed callsite precedes the generic require frame.
+                frame = error.__traceback__
+                expected = None
+                while frame is not None:
+                    if frame.tb_frame.f_code is inner.run_cache_probe.__code__:
+                        expected = frame.tb_lineno
+                    frame = frame.tb_next
+            else:
+                self.fail("failed cache child accepted")
+        self.assertTrue(sentinel not in json.dumps(origin), "synthetic token disclosure")
+        self.assertEqual(origin, {"filename": "run_pinned_image.py", "line": expected,
+                                  "exception_class": "FixtureFailure"})
+        self.assertEqual(inner.FAILURE_CLASSES, host.FAILURE_CLASSES)
+
+    def test_unknown_exception_class_and_deep_traceback_cannot_disclose(self):
+        sentinel = secrets.token_urlsafe(32)
+        unknown = type(sentinel, (RuntimeError,), {})
+        output = io.StringIO()
+        with patch.object(inner, "run_actual", side_effect=unknown(sentinel)), redirect_stdout(output):
+            self.assertEqual(inner.main(["--actual-image", "--repo", str(ROOT)]), 2)
+        self.assertTrue(sentinel not in output.getvalue(), "synthetic token disclosure")
+        self.assertEqual(json.loads(output.getvalue())["failure_origin"]["exception_class"], "OTHER")
+
+        def deep(depth):
+            if depth:
+                return deep(depth - 1)
+            raise RuntimeError(sentinel)
+
+        output = io.StringIO()
+        with patch.object(inner, "run_actual", side_effect=lambda *_: deep(70)), redirect_stdout(output):
+            self.assertEqual(inner.main(["--actual-image", "--repo", str(ROOT)]), 2)
+        self.assertTrue(sentinel not in output.getvalue(), "synthetic token disclosure")
+        self.assertIsNone(json.loads(output.getvalue())["failure_origin"])
 
     def test_root_filesystem_output_refused_before_docker(self):
         with tempfile.TemporaryDirectory() as directory:

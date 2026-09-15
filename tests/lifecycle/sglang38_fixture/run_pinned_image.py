@@ -59,6 +59,14 @@ SCENARIOS = ("all", "warmup-auth-failure", "warmup-timeout")
 FAULT_MARKER = b"Q38S_AUTHENTICATED_WARMUP_FAULT_REACHED\n"
 
 
+FAILURE_CLASSES = frozenset((
+    "FixtureFailure", "AssertionError", "AttributeError", "ImportError", "ModuleNotFoundError",
+    "TypeError", "ValueError", "KeyError", "IndexError", "RuntimeError", "OSError",
+    "FileNotFoundError", "PermissionError", "TimeoutError", "TimeoutExpired", "JSONDecodeError",
+    "SystemExit", "KeyboardInterrupt", "MemoryError", "RecursionError", "OTHER",
+))
+
+
 class FixtureFailure(Exception):
     """Only fixed diagnostic codes may leave this helper."""
 
@@ -66,6 +74,27 @@ class FixtureFailure(Exception):
 def require(condition, code):
     if not condition:
         raise FixtureFailure(code)
+
+
+def failure_origin(error):
+    """Select a local callsite without messages, locals, source text or paths.
+
+    A deeper cache child or launcher may already have discarded its cause.
+    This is only the last approved fixture callsite, never a deepest-cause claim.
+    """
+    origin = None
+    frame = error.__traceback__
+    for _ in range(64):
+        if frame is None:
+            return origin
+        code = frame.tb_frame.f_code
+        if (code.co_filename == __file__ and code is not require.__code__
+                and type(frame.tb_lineno) is int and 1 <= frame.tb_lineno <= 100000):
+            kind = type(error).__name__
+            origin = {"filename": "run_pinned_image.py", "line": frame.tb_lineno,
+                      "exception_class": kind if kind in FAILURE_CLASSES else "OTHER"}
+        frame = frame.tb_next
+    return None
 
 
 class Parser(argparse.ArgumentParser):
@@ -797,7 +826,8 @@ def main(argv=None):
         # Deliberate abort children terminate via os._exit after one fixed marker.
         # An ordinary exception in those children must be distinguishable from
         # that success condition without emitting any captured backend data.
-        print(json.dumps({"status": "FAIL", "code": "actual_image_fixture_failed"}, sort_keys=True))
+        print(json.dumps({"status": "FAIL", "code": "actual_image_fixture_failed",
+                          "failure_origin": failure_origin(error)}, sort_keys=True))
         return 2
 
 
