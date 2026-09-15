@@ -1,0 +1,43 @@
+{
+  "artifact": {
+    "created_at": "2026-09-15T01:39:47Z",
+    "digest": "sha256:cc93e9a76db61fc81b532d2b9bbe609b2fbea0ea25743c45820295175c830618",
+    "expired": false,
+    "expires_at": "2026-09-29T01:39:47Z",
+    "id": 10376034175,
+    "name": "i2r-evidence-34918085832-1",
+    "size_in_bytes": 21143
+  },
+  "evidence_class": "actual_systemd_synthetic_package",
+  "exact_git_source_hashes_verified": 127,
+  "full_source_acceptance": "NOT_TESTED",
+  "preserved_files": {
+    "i2r-hosted-evidence.json": {
+      "bytes": 259989,
+      "sha256": "549858e2779e5b9459c95d891890f4e43190d01fd58c038fa44552d4429282fa"
+    },
+    "i2r-hosted-plan.json": {
+      "bytes": 513,
+      "sha256": "973e4a23881a1f2a8d52a2f208b8e18fd3e88c9e1dcec2ed4b4d2ba3b409f9d4"
+    },
+    "i2r-source-manifest.json": {
+      "bytes": 14060,
+      "sha256": "abc81d8fbce9638234a695d6dadc0d6b4e06d239469efbd087935cef6e9b4383"
+    }
+  },
+  "revision4_containment": "unbound_apt_is_source_only_actual_runner_path_NOT_TESTED",
+  "run": {
+    "conclusion": "success",
+    "created_at": "2026-09-15T01:38:40Z",
+    "event": "push",
+    "head_branch": "milestone/i2r-package-linux",
+    "head_sha": "e9fe5d00f9bcc6c1dffc93a3fb75c660aa037a48",
+    "html_url": "https://github.com/djeZo888/mixed-memory-llm-api-server/actions/runs/34918085832",
+    "id": 34918085832,
+    "path": ".github/workflows/i2r-linux.yml",
+    "run_attempt": 1,
+    "status": "completed",
+    "updated_at": "2026-09-15T01:39:50Z"
+  },
+  "schema": 1
+}

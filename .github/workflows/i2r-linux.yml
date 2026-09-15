@@ -1,0 +1,69 @@
+name: I2R actual Linux package ownership
+
+on:
+  push:
+    branches: ['milestone/i2r-package-linux']
+    paths:
+      - '.github/workflows/i2r-linux.yml'
+      - 'scripts/validation/i2r/**'
+      - 'tests/validation/test_i2r*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-ownership:
+    if: github.repository == 'djeZo888/mixed-memory-llm-api-server'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact reviewed source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Verify local safety tests and exact source head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/validation -p 'test_i2r*.py' -v
+          python3 scripts/validation/i2r/run.py --dry-run
+
+      - name: Actual systemd and canonical lease with harmless fake packages
+        shell: bash
+        timeout-minutes: 11
+        run: |
+          set -euo pipefail
+          result=0
+          /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin \
+            /usr/bin/sudo -n /usr/bin/env -i \
+            PATH=/usr/sbin:/usr/bin:/sbin:/bin LC_ALL=C PYTHONDONTWRITEBYTECODE=1 \
+            GITHUB_ACTIONS="$GITHUB_ACTIONS" RUNNER_ENVIRONMENT="$RUNNER_ENVIRONMENT" \
+            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_SHA="$GITHUB_SHA" \
+            GITHUB_RUN_ID="$GITHUB_RUN_ID" GITHUB_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+            RUNNER_TEMP="$RUNNER_TEMP" ImageOS="$ImageOS" ImageVersion="$ImageVersion" \
+            I2P_DISPOSABLE_ACK=github-hosted-ubuntu-24.04 \
+            I2R_BIND_ACK=readonly-fake-apt-dpkg-on-ephemeral-ubuntu-only \
+            /usr/bin/python3 scripts/validation/i2r/run.py \
+            --output-dir "$RUNNER_TEMP/i2r-evidence" || result=$?
+          for item in i2r-evidence i2r-evidence/evidence.json i2r-evidence/plan.json i2r-evidence/source-manifest.json; do
+            if test -e "$RUNNER_TEMP/$item"; then
+              /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin \
+                /usr/bin/sudo -n /usr/bin/chown "$(id -u):$(id -g)" "$RUNNER_TEMP/$item"
+            fi
+          done
+          exit "$result"
+
+      - name: Preserve bounded sanitized JSON evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: i2r-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/i2r-evidence/evidence.json
+            ${{ runner.temp }}/i2r-evidence/plan.json
+            ${{ runner.temp }}/i2r-evidence/source-manifest.json
+          if-no-files-found: error
+          retention-days: 14
