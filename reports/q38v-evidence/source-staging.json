@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "source_root": "/data/build/q38v-20260915/source",
+  "source_root_dev": 2065,
+  "source_root_inode": 44302338,
+  "commit": "f17ec2c37d4c706752dd3fbe1978519983578b71",
+  "tree": "a667371eac8b46642ab87ff8e1d1be26ab501ca4",
+  "archive_sha256": "47f44a7aa1ef072728fe67e24bc312146e4dc1e5a29730c1b58b00660d5c95a3",
+  "source_manifest_sha256": "4bc0705e36531df5eedababbb3e5b1ff4eb66a0561346445fec6587619a6f5ac",
+  "file_count": 535,
+  "ownership_modes_links_readability": "PASS",
+  "bind_directories": "0555",
+  "regular_files": "0444 or 0555",
+  "task_parent_mode": "0o2700"
+}

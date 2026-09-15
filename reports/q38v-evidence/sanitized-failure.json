@@ -1,0 +1,72 @@
+{
+  "status": "FAIL",
+  "phase": "PRE_LAUNCH_CURRENT_ROOT_DISK_GUARD",
+  "category": "GUARD_FIXED_TMP_OUTPUT_PERMISSION_DENIED",
+  "origin_script": "/data/services/mixed-memory-llm-api-server/scripts/common/root-disk-guard.sh",
+  "origin_line": 249,
+  "fixed_redirection_path": "/tmp/root-disk-guard-require-data-mounted.out",
+  "fixture_launched": false,
+  "owned_containers_created": [],
+  "owned_containers_removed": [],
+  "owned_containers_remaining": [],
+  "source_snapshot_created": false,
+  "actual_image_inspect": "NOT_RUN_PRE_LAUNCH_STOP",
+  "pre_guards": [
+    {
+      "guard": "require-data-mounted.sh",
+      "exit": 0,
+      "sha256": "5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f"
+    },
+    {
+      "guard": "root-disk-guard.sh",
+      "exit": 1,
+      "sha256": "13ea9adb021c3027fd6484c74e92c0dba19ec8abca779be45687b43df895ee0d"
+    }
+  ],
+  "post_mounts": [
+    {
+      "target": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+      "exact_match": true
+    },
+    {
+      "target": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+      "exact_match": true
+    }
+  ],
+  "root_free_bytes_post": 5218979840,
+  "observed_at_utc": "2026-09-15T02:35:23.555251+00:00",
+  "private_artifacts": {
+    "pre-current-guard-status.json": {
+      "sha256": "4fa1d5ce35fe0d6df3450ec0a044d2eda2034a7126a4999748bdec1baca07db2",
+      "bytes": 288,
+      "mode": "0o600"
+    },
+    "pre-current-require-data-mounted.sh.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "0o600"
+    },
+    "pre-current-require-data-mounted.sh.stdout": {
+      "sha256": "fb496425d4453877d2c25cda3c7a59a947162e739ad7dcdb08de9ec9cbfabed4",
+      "bytes": 199,
+      "mode": "0o600"
+    },
+    "pre-current-root-disk-guard.sh.stderr": {
+      "sha256": "9fbc46dcd7e005d6def882e3a75cbc40a9fa121e4f37af56c20e2c22adbef078",
+      "bytes": 182,
+      "mode": "0o600"
+    },
+    "pre-current-root-disk-guard.sh.stdout": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "0o600"
+    },
+    "pre-current-root-guard.md": {
+      "sha256": "70b81311514d5050864ef7682fbf6b7cf9046d002a6d2ab38d5220eea9cf74f5",
+      "bytes": 4884,
+      "mode": "0o600"
+    }
+  }
+}
