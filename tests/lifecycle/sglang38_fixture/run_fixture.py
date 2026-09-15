@@ -150,7 +150,7 @@ OWNER_LABEL = "local-ai-server.q38b-fixture-owner"
 CLEANUP_TIMEOUT = 30
 CLI_DRAIN_TIMEOUT = 2
 FAILURE_CLASSES = frozenset((
-    "FixtureFailure", "AssertionError", "AttributeError", "ImportError", "ModuleNotFoundError",
+    "FixtureFailure", "LaunchError", "AssertionError", "AttributeError", "ImportError", "ModuleNotFoundError",
     "TypeError", "ValueError", "KeyError", "IndexError", "RuntimeError", "OSError",
     "FileNotFoundError", "PermissionError", "TimeoutError", "TimeoutExpired", "JSONDecodeError",
     "SystemExit", "KeyboardInterrupt", "MemoryError", "RecursionError", "OTHER",
@@ -183,10 +183,24 @@ def failure_metadata(stdout):
                            parse_constant=reject_constant)
         if (type(value) is not dict or set(value) not in (
                 {"status", "code"}, {"status", "code", "failure_origin"},
-                {"status", "code", "failure_origin", "cache_failure"})
+                {"status", "code", "failure_origin", "cache_failure"},
+                {"status", "code", "failure_origin", "launch_failure"})
                 or value["status"] != "FAIL" or value["code"] != "actual_image_fixture_failed"):
             return rejected
         result = {"status": "FIXED_FAILURE_ONLY", "code": "actual_image_fixture_failed"}
+        if "launch_failure" in value:
+            launch = value["launch_failure"]
+            if (type(launch) is not dict or set(launch) != {
+                    "result", "captured", "engine_calls", "first_exception_class"}
+                    or not (launch["result"] is None or type(launch["result"]) is int
+                            and -255 <= launch["result"] <= 255)
+                    or any(type(launch[name]) is not int or not 0 <= launch[name] <= 100000
+                           for name in ("captured", "engine_calls"))
+                    or not (launch["first_exception_class"] is None
+                            or type(launch["first_exception_class"]) is str
+                            and launch["first_exception_class"] in FAILURE_CLASSES)):
+                return rejected
+            result["launch_failure"] = dict(launch)
         if "cache_failure" in value:
             cache_failure = CACHE.validate_failure(value["cache_failure"])
             if cache_failure is None:

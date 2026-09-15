@@ -60,7 +60,7 @@ FAULT_MARKER = b"Q38S_AUTHENTICATED_WARMUP_FAULT_REACHED\n"
 
 
 FAILURE_CLASSES = frozenset((
-    "FixtureFailure", "AssertionError", "AttributeError", "ImportError", "ModuleNotFoundError",
+    "FixtureFailure", "LaunchError", "AssertionError", "AttributeError", "ImportError", "ModuleNotFoundError",
     "TypeError", "ValueError", "KeyError", "IndexError", "RuntimeError", "OSError",
     "FileNotFoundError", "PermissionError", "TimeoutError", "TimeoutExpired", "JSONDecodeError",
     "SystemExit", "KeyboardInterrupt", "MemoryError", "RecursionError", "OTHER",
@@ -95,6 +95,71 @@ def failure_origin(error):
                       "exception_class": kind if kind in FAILURE_CLASSES else "OTHER"}
         frame = frame.tb_next
     return None
+
+
+def checked_launch(launcher, argv, captured, engine_calls, sentinel):
+    """Keep the first swallowed exception at the launcher's existing log seam.
+
+    Only the failure operands/class leave via JSON. A bounded, sentinel-redacted
+    exception and frame coordinates go to original stderr for Worker1's private
+    capture, never captured application logs or a receipt. No locals, source
+    lines, arguments, environment or application contents are inspected.
+    """
+    first_error = None
+    original_error = launcher.LOGGER.error
+
+    def remember_error(message, *args, **kwargs):
+        nonlocal first_error
+        if message in ("sglang38_file_auth_launch_failed", "sglang38_file_auth_cleanup_failed"):
+            active = sys.exc_info()[1]
+            if first_error is None and active is not None:
+                first_error = active
+        return original_error(message, *args, **kwargs)
+
+    result = None
+    escaped = None
+    try:
+        # Native resolution sets SGLANG_MAMBA_SSM_DTYPE. Keep that real change
+        # throughout this launch, then restore the pre-launch environment for
+        # the independent injection-failure case and child fixture processes.
+        with patch.dict(os.environ), patch.object(launcher.LOGGER, "error", side_effect=remember_error):
+            result = launcher.main(argv)
+    except BaseException as error:
+        escaped = error
+        if first_error is None:
+            first_error = error
+    operands = {"result": result, "captured": len(captured), "engine_calls": len(engine_calls)}
+    if (escaped is not None or first_error is not None
+            or not (result == 0 and len(captured) == 1 and len(engine_calls) == 1)):
+        kind = type(first_error).__name__ if first_error is not None else None
+        safe_kind = kind if kind in FAILURE_CLASSES else "OTHER" if kind else None
+        # The real launcher returns 0/1. Unexpected values still fail and cannot
+        # carry arbitrary backend objects through the safe metadata boundary.
+        failure = {**operands, "result": result if type(result) is int and -255 <= result <= 255 else None,
+                   "first_exception_class": safe_kind}
+        try:
+            frames = []
+            frame = first_error.__traceback__ if first_error is not None else None
+            for _ in range(32):
+                if frame is None:
+                    break
+                frames.append({"filename": Path(frame.tb_frame.f_code.co_filename).name,
+                               "function": frame.tb_frame.f_code.co_name, "line": frame.tb_lineno})
+                frame = frame.tb_next
+            private = {"marker": "Q38NEXT_PRIVATE_LAUNCH_FAILURE", "source_revision": SOURCE_REVISION,
+                       "fixture_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                       "launcher_sha256": hashlib.sha256(Path(launcher.__file__).read_bytes()).hexdigest(),
+                       "operands": failure, "frames": frames,
+                       "exception_message": str(first_error).replace(sentinel, "<synthetic-key-redacted>")[:4096]
+                           if first_error is not None else None}
+            raw = json.dumps(private, sort_keys=True).replace(sentinel, "<synthetic-key-redacted>").encode()
+            os.write(2, raw[:16383] + b"\n")
+        except Exception:
+            pass  # Diagnostic failure must retain the original CLI failure.
+        error = FixtureFailure("actual_native_launch_setup_failed")
+        error.launch_failure = failure
+        raise error from escaped
+    return result
 
 
 class Parser(argparse.ArgumentParser):
@@ -754,9 +819,7 @@ def run_actual(repo, scenario, captured_logs, context=131072):
                 if scenario == "warmup-timeout":
                     # Fault injection only: same watchdog/abort path, short deadline.
                     stack.enter_context(patch.object(launcher, "STARTUP_TIMEOUT", 0.4))
-                result = launcher.main(argv)
-            require(result == 0 and len(captured) == 1 and len(engine_calls) == 1,
-                    "actual_native_launch_setup_failed")
+                checked_launch(launcher, argv, captured, engine_calls, sentinel)
             no_secret(captured_logs.getvalue(), sentinel)
             require(KEY_PATH.read_bytes() == sentinel.encode(), "existing_fixture_key_changed")
 
@@ -768,7 +831,8 @@ def run_actual(repo, scenario, captured_logs, context=131072):
                                      stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                      stderr=subprocess.DEVNULL)
             try:
-                with patch.object(auth, "add_api_key_middleware", return_value=None), \
+                with patch.dict(os.environ), \
+                     patch.object(auth, "add_api_key_middleware", return_value=None), \
                      patch.object(server.Engine, "_launch_subprocesses") as workers, \
                      patch.object(server.uvicorn, "run") as uvicorn:
                     require(launcher.main(argv) == 1, "no_op_injection_not_refused")
@@ -867,6 +931,18 @@ def main(argv=None):
         cache_failure = cache_failure_metadata(error)
         if cache_failure is not None:
             failure["cache_failure"] = cache_failure
+        if type(error) is FixtureFailure and error.args == ("actual_native_launch_setup_failed",):
+            # Reuse the host's closed failure parser before exposing metadata.
+            try:
+                host_spec = importlib.util.spec_from_file_location("q38next_failure_boundary",
+                    Path(__file__).with_name("run_fixture.py"))
+                host = importlib.util.module_from_spec(host_spec)
+                host_spec.loader.exec_module(host)
+                candidate = {**failure, "launch_failure": error.__dict__.get("launch_failure")}
+                if "launch_failure" in host.failure_metadata(json.dumps(candidate).encode()):
+                    failure = candidate
+            except Exception:
+                pass  # Metadata availability cannot replace the original FAIL.
         print(json.dumps(failure, sort_keys=True))
         return 2
 
