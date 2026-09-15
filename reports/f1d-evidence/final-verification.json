@@ -1,0 +1,20 @@
+{
+  "collected_utc": "2026-09-15T00:18:21.064318+00:00",
+  "evidence_class": "live_host_protected_receipt_and_permission_validation_no_inference",
+  "profile_validation": "PASS",
+  "reviewed_completion_validator": "PASS",
+  "reviewed_launcher_validator": "PASS",
+  "download_user_payload_write_denials": 48,
+  "download_user_qwen_directory_and_mount_write_denied": true,
+  "glm_child_still_writable_by_acquisition_user": true,
+  "legacy_recorded_status": "active",
+  "legacy_model_profile": "qwen3-30b-a3b-instruct-2507",
+  "legacy_state_sha256": "bd34931c6ed9cc0c887795dcefaebd65b4ceec95f061374938b09443a5c47a78",
+  "running_containers": "",
+  "glm_unit": "MainPID=49253\nActiveState=active\nSubState=running\nInvocationID=55ab64073abe462189f82c54ce8e299e",
+  "root_available_bytes": 5228720128,
+  "auth_gate_passed": false,
+  "model_start": "NOT_TESTED",
+  "api_acceptance": "NOT_TESTED",
+  "desired_inference_state": "stopped; historical selection unchanged; no Qwen lifecycle instance published"
+}
