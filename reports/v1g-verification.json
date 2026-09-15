@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "session_id": "01a0a2ac-177e-7b80-850c-f173fb5dd43e",
+  "source": {
+    "a1_reviewed_and_executed": "66ef3d45f2225b3187e3d246637f6aaa3cf32514",
+    "a2o_reviewed": "0880e01ca2d283617feb3a129c18ce3cb6c7f4c4",
+    "a2o_merge": "ebd428e1bfb0ad03eb88b7f11699ca0a674ed21c",
+    "a1_sources_unchanged": true,
+    "sha256": {
+      "scripts/agent/acceptance.py": "0eb52a12c9cfae2846c32b1780b08c714d8be2f273804ac50cf0b2874c2c9133",
+      "scripts/agent/protocol.py": "86ab326557186fcaa925b629e932309bbcf414bed8a96976deb1fb3e42273354",
+      "scripts/agent/fixture.py": "a92eb9dfad1ce156ce32e4b80ab3eb0c8bf5948d8a383f7f1dc5a0e22c4281dd",
+      "scripts/validation/v1g/run_a1.py": "e7c48c8445d6b278fdaa2e0b2b06e7c80bbbace035c9d5b7caaf32de301667fc",
+      "scripts/client/bootstrap.py": "ccf94f52a48346f02105112d93ee41010a6dd034406272e8a4a54d02fc12ca12",
+      "scripts/client/client_common.py": "b6e1b4995a717067846c4cd3835c72f7c493c5aaac4d09d985f9a93d2383e1b0",
+      "scripts/client/package-lock.json": "eb4f16892e1e7d955fc8aa5e949f8c31b6c6d26d98acb3eb2f9be26d2673d3b7",
+      "scripts/validation/v1g/summarize_a1.py": "1e83808a7127b2fe33404fa9cb43b691d4ce5abf64d513eebef0ccdee5b9e8a7",
+      "scripts/validation/v1g/test_stop_guard.py": "8acbdea62d47b62cee5460ff10cb381839658c718ad28040a7d9d16dad36a0e3"
+    }
+  },
+  "live_execution": {
+    "started_utc": "2026-09-15T01:29:42Z",
+    "ended_utc": "2026-09-15T01:29:58Z",
+    "exit_code": 1,
+    "elapsed_seconds": 15.78696,
+    "timed_out": false,
+    "external_timeout_seconds": 1800
+  },
+  "runtime_handoff": {
+    "evidence_kind": "D3_HANDOFF_NOT_REMEASURED_BY_V1G",
+    "model": "glm-5.3",
+    "deployment": "glm-5.3-ud-q4-k-xl-32k",
+    "context_tokens": 32768,
+    "image": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "runtime_revision": "v0.4.1/b29c606",
+    "clear_thinking": true,
+    "sole_generation_request_lease": true
+  },
+  "worker_tunnel": {
+    "local_host": "127.0.0.1",
+    "local_port": 55756,
+    "target": "ai-vm:127.0.0.1:30002",
+    "pid": 63192,
+    "control_identity": "PRIVATE/ssh-control",
+    "strict_existing_host_key_checks": true,
+    "exit_on_forward_failure": true,
+    "source_key_root_0600_single_link_regular": true,
+    "worker_private_directory_0700_key_0600": true,
+    "tunnel_close_exit_code": 0,
+    "control_socket_removed": true,
+    "process_absent": true,
+    "listener_absent": true,
+    "lease_released_utc": "2026-09-15T01:30:34Z"
+  },
+  "evidence_classification": {
+    "live_a1_initial_nonstream_attempt": "FAIL_MODEL_IDENTITY_CONTRACT",
+    "live_a1_nonstream_tools": "NOT_TESTED",
+    "live_a1_stream_tools_run": "NOT_TESTED",
+    "live_opencode_e2e": "NOT_TESTED",
+    "opencode_native_events": "NOT_TESTED",
+    "word_count_fixture_baseline_and_final": "NOT_TESTED",
+    "hosted_tests_this_session": "NOT_TESTED",
+    "clean_linux_install": "NOT_TESTED",
+    "reboot": "NOT_TESTED",
+    "synthetic_regressions": "PASS"
+  },
+  "synthetic_verification": {
+    "a1_tests": {
+      "ran": 94,
+      "passed": 94,
+      "failed": 0,
+      "seconds": 9.341
+    },
+    "client_tests": {
+      "ran": 42,
+      "passed": 41,
+      "skipped": 1,
+      "failed": 0,
+      "seconds": 3.43,
+      "skipped_reason": "Existing installed-CLI check requires V0_CLIENT_PREFIX; not supplied because live OpenCode path stopped."
+    },
+    "external_stop_guard": {
+      "evidence_kind": "synthetic",
+      "checks": {
+        "exit_1": true,
+        "overall_fail": true,
+        "failed_invalid_model": true,
+        "exactly_four_requests": true,
+        "no_auth_or_tools_after_failure": true,
+        "all_chat_requests_low": true,
+        "key_absent_from_report": true
+      },
+      "status": "PASS",
+      "requests": 4,
+      "inference_vm_contacted": false,
+      "initial_verification_attempt": "setup error: mocked completion default retained original synthetic model identity; observer correctly stopped at chat identity mismatch; verifier expected later invalid_model field and raised KeyError. Only synthetic setup was corrected; no live retry.",
+      "reproducible_regression": {
+        "command": "python3 -B scripts/validation/v1g/test_stop_guard.py -v",
+        "tests": 1,
+        "status": "PASS",
+        "seconds": 0.101
+      }
+    }
+  },
+  "failure_policy": {
+    "no_live_retries": true,
+    "dependent_requests_stopped": true,
+    "no_existing_implementation_edits": true,
+    "no_vm_mutations": true,
+    "no_model_quality_conclusion": true
+  },
+  "raw_evidence_policy": "Private outside checkout; publication is allowlisted and scanned against exact actual key in memory. A1 retains content/reasoning for passing chat/SSE probes. Invalid-model failure retains HTTP/model/usage/finish metadata but discards that completion body; corresponding lengths NOT_REPORTED. Reviewed A1 does not capture raw HTTP byte streams.",
+  "warnings": [
+    "Full requested acceptance was blocked by invalid-model HTTP200 before auth matrix and tool fixture.",
+    "SSE usage was absent; do not add unknown counters as zero.",
+    "As-run external runner pins HEAD and records source hash; reviewed source equality was also checked with git diff. Its generic process-group cleanup does not itself track separately sessioned fixture tests on interruption. No fixture/test child was created in this run.",
+    "No OpenCode bootstrap, fixture, CLI execution or native events occurred. Approved A2O was merged for source provenance only."
+  ],
+  "publication_precommit_checks": {
+    "actual_key_tracked_files": 397,
+    "actual_key_scan": "PASS",
+    "filename_only_grep_owned_files": 6,
+    "filename_only_grep_scan": "PASS",
+    "remote_no_credentials": "PASS",
+    "whitespace": "PASS",
+    "exact_scope": "PASS"
+  }
+}
