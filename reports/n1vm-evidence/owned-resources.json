@@ -1,0 +1,93 @@
+{
+  "utc": "2026-09-15T02:48:01.476518+00:00",
+  "result": "PASS",
+  "metadata": [
+    {
+      "path": "/etc/systemd/system/multi-user.target.wants",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 2,
+      "inode": 263137,
+      "device": 64512,
+      "mtime_ns": 1789440410012129598,
+      "ctime_ns": 1789440410012129598
+    },
+    {
+      "path": "/run",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 34,
+      "inode": 1,
+      "device": 26,
+      "mtime_ns": 1789440481444638885,
+      "ctime_ns": 1789440481444638885
+    },
+    {
+      "path": "/etc/llm-server",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 2,
+      "inode": 264312,
+      "device": 64512,
+      "mtime_ns": 1789440246841906006,
+      "ctime_ns": 1789440246841906006
+    },
+    {
+      "path": "/usr/local/lib/llm-server/private-network",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 2,
+      "inode": 833476,
+      "device": 64512,
+      "mtime_ns": 1789440210255617941,
+      "ctime_ns": 1789440210255617941
+    },
+    {
+      "path": "/etc/llm-server/private-network-state.json",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o600",
+      "nlink": 1,
+      "inode": 266373,
+      "device": 64512,
+      "mtime_ns": 1789440246841906006,
+      "ctime_ns": 1789440246841906006,
+      "sha256": "38969d24cf79aec51c821743cd4a035689b0b248b04c0f38080322bf8c9185a7"
+    },
+    {
+      "path": "/run/llm-private-network.lock",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o600",
+      "nlink": 1,
+      "inode": 11259,
+      "device": 26,
+      "mtime_ns": 1789440246715905023,
+      "ctime_ns": 1789440246715905023,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/etc/systemd/system/multi-user.target.wants/llm-private-glm.socket",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o777",
+      "nlink": 1,
+      "inode": 263933,
+      "device": 64512,
+      "mtime_ns": 1789440410012129598,
+      "ctime_ns": 1789440410012129598,
+      "target": "/etc/systemd/system/llm-private-glm.socket"
+    }
+  ],
+  "enable_parent_verification_timing": "post-enable supplemental check; initial inventory verified its ancestors and link absence, not this exact directory",
+  "owned_firewall_chain": "LLM-PRIVATE-IN",
+  "owned_firewall_tag": "llm-private-n1s-v1",
+  "source_deliverables_manifest": "deploy-manifest-planned.json",
+  "created_resource_record": "created-resources.jsonl",
+  "inverse_executed": false,
+  "receipt_backup": "policy-receipt-backup.json"
+}

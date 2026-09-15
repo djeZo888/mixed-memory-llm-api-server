@@ -1,0 +1,17 @@
+{
+  "utc": "2026-09-15T02:43:30.351608+00:00",
+  "command": [
+    "systemd-analyze",
+    "verify",
+    "--man=no",
+    "/etc/systemd/system/llm-private-control.socket",
+    "/etc/systemd/system/llm-private-control.service",
+    "/etc/systemd/system/llm-private-glm.socket",
+    "/etc/systemd/system/llm-private-glm.service",
+    "/etc/systemd/system/llm-private-qwen38.socket",
+    "/etc/systemd/system/llm-private-qwen38.service"
+  ],
+  "returncode": 0,
+  "stdout": "",
+  "stderr": ""
+}

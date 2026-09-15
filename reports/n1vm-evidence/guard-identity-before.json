@@ -1,0 +1,133 @@
+{
+  "metadata": {
+    "/": {
+      "ctime_ns": 1782981265974014726,
+      "device": 64512,
+      "gid": 0,
+      "inode": 2,
+      "mode": "0o755",
+      "mtime_ns": 1782981265974014726,
+      "nlink": 25,
+      "size": 4096,
+      "uid": 0
+    },
+    "/data": {
+      "ctime_ns": 1789439649114270885,
+      "device": 2065,
+      "gid": 0,
+      "inode": 2,
+      "mode": "0o755",
+      "mtime_ns": 1789439649114270885,
+      "nlink": 13,
+      "size": 4096,
+      "uid": 0
+    },
+    "/data/services": {
+      "ctime_ns": 1789438267038444322,
+      "device": 2065,
+      "gid": 1001,
+      "inode": 67633153,
+      "mode": "0o2755",
+      "mtime_ns": 1789438267038444322,
+      "nlink": 12,
+      "size": 4096,
+      "uid": 0
+    },
+    "/data/services/releases": {
+      "ctime_ns": 1789432817596707316,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67634266,
+      "mode": "0o2755",
+      "mtime_ns": 1789432817596707316,
+      "nlink": 5,
+      "size": 4096,
+      "uid": 0
+    },
+    "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915": {
+      "ctime_ns": 1789432817606707394,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635083,
+      "mode": "0o2700",
+      "mtime_ns": 1789432817606707394,
+      "nlink": 9,
+      "size": 4096,
+      "uid": 0
+    },
+    "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts": {
+      "ctime_ns": 1789432817609707418,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635277,
+      "mode": "0o700",
+      "mtime_ns": 1789432665000000000,
+      "nlink": 17,
+      "size": 4096,
+      "uid": 0
+    },
+    "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common": {
+      "ctime_ns": 1789432817609707418,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635298,
+      "mode": "0o700",
+      "mtime_ns": 1789432665000000000,
+      "nlink": 2,
+      "size": 4096,
+      "uid": 0
+    },
+    "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/.gitkeep": {
+      "ctime_ns": 1789432817609707418,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635299,
+      "mode": "0o600",
+      "mtime_ns": 1789432665000000000,
+      "nlink": 1,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "uid": 0
+    },
+    "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/require-data-mounted.sh": {
+      "ctime_ns": 1789432817610707426,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635300,
+      "mode": "0o700",
+      "mtime_ns": 1789432665000000000,
+      "nlink": 1,
+      "sha256": "5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f",
+      "size": 2606,
+      "uid": 0
+    },
+    "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/root-disk-guard.sh": {
+      "ctime_ns": 1789432817610707426,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635301,
+      "mode": "0o700",
+      "mtime_ns": 1789432665000000000,
+      "nlink": 1,
+      "sha256": "2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813",
+      "size": 19958,
+      "uid": 0
+    }
+  },
+  "mounts": [
+    {
+      "fstype": "ext4",
+      "source": "/dev/sdb1",
+      "target": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    {
+      "fstype": "ext4",
+      "source": "/dev/sdc1",
+      "target": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    }
+  ],
+  "root_available_bytes": 5211570176,
+  "utc": "2026-09-15T02:41:34.007108+00:00"
+}

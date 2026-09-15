@@ -1,0 +1,178 @@
+{
+  "absent_destinations": [
+    "/usr/local/lib/llm-server/private-network/private_network.py",
+    "/etc/llm-server/network.json",
+    "/etc/systemd/system/llm-private-control.socket",
+    "/etc/systemd/system/llm-private-control.service",
+    "/etc/systemd/system/llm-private-glm.socket",
+    "/etc/systemd/system/llm-private-glm.service",
+    "/etc/systemd/system/llm-private-qwen38.socket",
+    "/etc/systemd/system/llm-private-qwen38.service"
+  ],
+  "existing_parents": {
+    "/": {
+      "ctime_ns": 1782981265974014726,
+      "device": 64512,
+      "gid": 0,
+      "inode": 2,
+      "mode": "0o755",
+      "mtime_ns": 1782981265974014726,
+      "nlink": 25,
+      "size": 4096,
+      "uid": 0
+    },
+    "/etc": {
+      "ctime_ns": 1783407151147663187,
+      "device": 64512,
+      "gid": 0,
+      "inode": 262145,
+      "mode": "0o755",
+      "mtime_ns": 1783407151147663187,
+      "nlink": 122,
+      "size": 12288,
+      "uid": 0
+    },
+    "/etc/systemd": {
+      "ctime_ns": 1782852795754273948,
+      "device": 64512,
+      "gid": 0,
+      "inode": 262243,
+      "mode": "0o755",
+      "mtime_ns": 1782852795754273948,
+      "nlink": 6,
+      "size": 4096,
+      "uid": 0
+    },
+    "/etc/systemd/system": {
+      "ctime_ns": 1783095910086569168,
+      "device": 64512,
+      "gid": 0,
+      "inode": 263120,
+      "mode": "0o755",
+      "mtime_ns": 1783095910086569168,
+      "nlink": 31,
+      "size": 4096,
+      "uid": 0
+    },
+    "/usr": {
+      "ctime_ns": 1782852545999705574,
+      "device": 64512,
+      "gid": 0,
+      "inode": 655363,
+      "mode": "0o755",
+      "mtime_ns": 1770682617000000000,
+      "nlink": 12,
+      "size": 4096,
+      "uid": 0
+    },
+    "/usr/local": {
+      "ctime_ns": 1782852554803714303,
+      "device": 64512,
+      "gid": 0,
+      "inode": 655385,
+      "mode": "0o755",
+      "mtime_ns": 1770682617000000000,
+      "nlink": 10,
+      "size": 4096,
+      "uid": 0
+    },
+    "/usr/local/lib": {
+      "ctime_ns": 1782852554803714303,
+      "device": 64512,
+      "gid": 0,
+      "inode": 672033,
+      "mode": "0o755",
+      "mtime_ns": 1770683159000000000,
+      "nlink": 3,
+      "size": 4096,
+      "uid": 0
+    }
+  },
+  "filter_sha256": "d0c1568ebbe0cab2c6554d0c01782b21cf88355ca902594eeab9573de715d473",
+  "listeners": [
+    "LISTEN 0      4096       127.0.0.1:30002 0.0.0.0:* users:((\"docker-proxy\",pid=150263,fd=8))               "
+  ],
+  "model": {
+    "command_sha256": "89510f6d1b0ede1ae1bba8a1f9097c42fa063f2196ee14c000e6c9810e7fae00",
+    "id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+    "image": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "name": "/llmctl-glm-5.3-32k",
+    "network_mode": "bridge",
+    "pid": 149976,
+    "restart_count": 0,
+    "running": true,
+    "started_at": "2026-09-15T00:48:45.235739944Z"
+  },
+  "new_parentdirs": [
+    "/etc/llm-server",
+    "/usr/local/lib/llm-server",
+    "/usr/local/lib/llm-server/private-network"
+  ],
+  "systemd_version": "255.4-1ubuntu8.16",
+  "unit_search_paths": [
+    "/etc/systemd/system",
+    "/etc/systemd/system.attached",
+    "/etc/systemd/system.control",
+    "/lib/systemd/system",
+    "/run/systemd/generator",
+    "/run/systemd/generator.early",
+    "/run/systemd/generator.late",
+    "/run/systemd/system",
+    "/run/systemd/system.attached",
+    "/run/systemd/system.control",
+    "/run/systemd/transient",
+    "/usr/lib/systemd/system",
+    "/usr/local/lib/systemd/system"
+  ],
+  "units": {
+    "llm-private-control.service": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "",
+      "LoadState": "not-found",
+      "SubState": "dead",
+      "UnitFileState": ""
+    },
+    "llm-private-control.socket": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "",
+      "LoadState": "not-found",
+      "SubState": "dead",
+      "UnitFileState": ""
+    },
+    "llm-private-glm.service": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "",
+      "LoadState": "not-found",
+      "SubState": "dead",
+      "UnitFileState": ""
+    },
+    "llm-private-glm.socket": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "",
+      "LoadState": "not-found",
+      "SubState": "dead",
+      "UnitFileState": ""
+    },
+    "llm-private-qwen38.service": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "",
+      "LoadState": "not-found",
+      "SubState": "dead",
+      "UnitFileState": ""
+    },
+    "llm-private-qwen38.socket": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "",
+      "LoadState": "not-found",
+      "SubState": "dead",
+      "UnitFileState": ""
+    }
+  },
+  "utc": "2026-09-15T02:41:34.077951+00:00"
+}

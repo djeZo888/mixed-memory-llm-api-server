@@ -1,0 +1,50 @@
+[
+  {
+    "source": "scripts/control/private_network.py",
+    "destination": "/usr/local/lib/llm-server/private-network/private_network.py",
+    "sha256": "ad0c48db68ce47213f292abb74aebc9b321b41baefc3385785bb7322e7e78ddc",
+    "mode": "0644"
+  },
+  {
+    "source": "configs/network/ai-vm-private-api.json",
+    "destination": "/etc/llm-server/network.json",
+    "sha256": "095bbf0ea64c792efa49ddf16a78383ec74528abe605c86b54ba8ac01563cb60",
+    "mode": "0600"
+  },
+  {
+    "source": "configs/network/llm-private-control.socket",
+    "destination": "/etc/systemd/system/llm-private-control.socket",
+    "sha256": "9fc827cdb6b0819dd5c1d01e860bf44f230e174f5a27af02cdf3645a727e19fc",
+    "mode": "0644"
+  },
+  {
+    "source": "configs/network/llm-private-control.service",
+    "destination": "/etc/systemd/system/llm-private-control.service",
+    "sha256": "8a2c5350d8fdffdf0a1fc154538d5210f40b09c0eb88cddf6368fa77d748ba24",
+    "mode": "0644"
+  },
+  {
+    "source": "configs/network/llm-private-glm.socket",
+    "destination": "/etc/systemd/system/llm-private-glm.socket",
+    "sha256": "884d669f6cb05aab8460fe01c634370025eea366b151a70a888fb746a4967fee",
+    "mode": "0644"
+  },
+  {
+    "source": "configs/network/llm-private-glm.service",
+    "destination": "/etc/systemd/system/llm-private-glm.service",
+    "sha256": "329b70c762a866acc8f1547f8374d18d97c19f8e8caface17f77507517d108a8",
+    "mode": "0644"
+  },
+  {
+    "source": "configs/network/llm-private-qwen38.socket",
+    "destination": "/etc/systemd/system/llm-private-qwen38.socket",
+    "sha256": "0c964858717fbf9b838fe2b0e606f19128ee9ef7dfba0ed6fb660d7dc1282ad7",
+    "mode": "0644"
+  },
+  {
+    "source": "configs/network/llm-private-qwen38.service",
+    "destination": "/etc/systemd/system/llm-private-qwen38.service",
+    "sha256": "a7cfd0d1a333a9a830d1ef63449dbdc5607978712ea0f616fa4bd9d67fffbff5",
+    "mode": "0644"
+  }
+]
