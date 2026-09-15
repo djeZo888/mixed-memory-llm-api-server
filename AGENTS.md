@@ -32,11 +32,13 @@ and the relevant task handoff before work; preserve their evidence boundaries.
   agents run on clients as an explicit ordinary user in a trusted workspace;
   human chat UI belongs on the separate frontend VM.
 - Exactly two current model identities: **GLM5.3 UD-Q4_K_XL** flagship and
-  **Qwen3.8-27B FP8** fast model. No automatic downloads or activations.
+  **Qwen3.8-27B FP8** fast model. Historical defaults do not authorize unrequested
+  downloads or activations; task-authorized live deployment is permitted.
 - Use [`scripts/llmctl`](scripts/llmctl) and declarative
   [model](configs/models/) and [runtime](configs/runtimes/) profiles. Keep the
-  architecture extensible without hard-coding a model, quantization, backend,
-  host or port into deployment logic. Prefer official implementation sources.
+  architecture extensible; deliberate reviewed host, port, model, quantization
+  and runtime pins are allowed per deployment. Prefer official implementation
+  sources.
 - Aim for the highest practical supported context capacity on the hardware.
   Distinguish declared capacity, configured capacity and measured occupied
   context. Neither 32K nor a 2048-token test output budget is a product limit;
