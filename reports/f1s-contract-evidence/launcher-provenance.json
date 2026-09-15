@@ -1,9 +1,10 @@
 {
   "schema_version": 1,
   "path": "scripts/lifecycle/sglang_file_auth.py",
-  "sha256": "1bf781b83d1a6bf25b63b948550cf2926e16247f48d6f977188954e9a10d212a",
+  "sha256": "b47a334466e32ca8384478721d77e00352003c5809bdeccf2a0553dc496210a7",
   "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
-  "source_scope": "F1S reviewed-path source; worker mocked source tests PASS; actual pinned-image execution NOT_TESTED",
+  "source_scope": "F1E bounded build-metadata correction to reviewed F1S launcher; source tests only; actual pinned-image auth execution NOT_TESTED for this hash; pending root review/merge",
   "installed_source_root": "/sgl-workspace/sglang/python/sglang",
-  "auth_review": "reports/f1s-contract-evidence/F1A-REVIEW.md"
+  "auth_review": "reports/f1s-contract-evidence/F1A-REVIEW.md",
+  "build_metadata_evidence": "reports/f1e-build-metadata-evidence.json"
 }
