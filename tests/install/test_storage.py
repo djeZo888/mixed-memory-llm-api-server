@@ -5,14 +5,14 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import sys
 import unittest
 from unittest.mock import patch
 
 
 MODULE = Path(__file__).resolve().parents[2] / "scripts/install/storage.py"
-SPEC = importlib.util.spec_from_file_location("storage_under_test", MODULE)
-storage = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(storage)
+sys.path.insert(0, str(MODULE.parent.parent))
+from install import storage
 GUARD_SPEC = importlib.util.spec_from_file_location("guard_under_test", MODULE.parent.parent / "common/registered-storage.py")
 guard = importlib.util.module_from_spec(GUARD_SPEC)
 GUARD_SPEC.loader.exec_module(guard)
@@ -320,50 +320,23 @@ class StorageTests(unittest.TestCase):
         self.assertNotIn("SENSITIVE", str(caught.exception))
         self.assertFalse((self.root / storage.REGISTRATION_PATH.lstrip("/")).exists())
 
-    def blank_disk(self):
-        dev = self.root / "dev"
-        (dev / "disk/by-id").mkdir(parents=True)
-        (dev / "nvme2n1").touch()
-        (dev / "disk/by-id/nvme-fixture").symlink_to("../../nvme2n1")
-        (self.root / "sys/class/block/nvme2n1/holders").mkdir(parents=True)
-        self.runner.blocks.append(disk("/dev/nvme2n1", "259:2", serial="blank-fixture"))
-        return self.subject(storage_mode="initialize", initialize_empty_disk="/dev/disk/by-id/nvme-fixture", confirm_disk_id="nvme-fixture")
-
-    def test_blank_disk_plan_and_checkpoint_perform_no_mutation(self):
-        subject = self.blank_disk()
-        result = subject.plan()
-        self.assertFalse(result["disk_mutation_performed"])
-        self.assertEqual(result["identity"]["serial"], "blank-fixture")
-        saved = self.root / "disk-plan.json"
-        saved.write_text(json.dumps(result))
-        subject.config["disk_plan"] = str(saved)
-        with self.assertRaisesRegex(storage.StorageCheckpoint, "I1b"):
-            subject.adopt()
-        self.assertEqual(self.runner.mutations, [])
-        self.assertFalse((self.root / storage.REGISTRATION_PATH.lstrip("/")).exists())
-
-    def test_blank_disk_rejects_identity_drift_and_in_use_targets(self):
-        subject = self.blank_disk()
-        saved = self.root / "disk-plan.json"
-        saved.write_text(json.dumps(subject.plan()))
-        subject.config["disk_plan"] = str(saved)
-        self.runner.blocks[-1]["serial"] = "replacement-disk"
-        with self.assertRaisesRegex(storage.StorageError, "identity changed"):
-            subject.adopt()
-        self.runner.blocks[-1]["mountpoints"] = ["/in-use"]
-        with self.assertRaisesRegex(storage.StorageError, "unused blank"):
-            subject.plan()
+    def test_initialize_plan_delegates_readonly_disk_transaction(self):
+        with patch("install.disk_init.plan", return_value={"disk_mutation_performed": False}) as helper:
+            subject = self.subject(storage_mode="initialize")
+            self.assertEqual(subject.plan(), {"disk_mutation_performed": False})
+            helper.assert_called_once_with(subject)
         self.assertEqual(self.runner.mutations, [])
 
-    def test_blank_disk_requires_confirmation_and_empty_holders(self):
-        subject = self.blank_disk()
-        subject.config["confirm_disk_id"] = "wrong"
-        with self.assertRaisesRegex(storage.StorageError, "matching disk ID"):
-            subject.plan()
-        subject.config["confirm_disk_id"] = "nvme-fixture"
-        (self.root / "sys/class/block/nvme2n1/holders/dm-0").touch()
-        with self.assertRaisesRegex(storage.StorageError, "holders"):
-            subject.plan()
+    def test_initialize_adopt_returns_helper_registration(self):
+        expected = {"data": {"uuid": "fixture"}}
+        with patch("install.disk_init.initialize", return_value=expected) as helper:
+            subject = self.subject(storage_mode="initialize")
+            self.assertIs(subject.adopt(), expected)
+            helper.assert_called_once_with(subject)
+
+    def test_existing_adopt_never_calls_disk_initializer(self):
+        with patch("install.disk_init.initialize", side_effect=AssertionError("must not initialize")):
+            self.subject().adopt()
 
 
 if __name__ == "__main__":

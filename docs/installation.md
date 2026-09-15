@@ -128,10 +128,14 @@ unsafe ancestry and symlinked/missing mounts are refused. `--storage-mode mount
 --data-uuid UUID` supports an explicit existing filesystem and narrowly backed-up
 fstab entry. Historical ai-vm UUIDs are never new-host defaults.
 
-Blank-disk plan uses explicit stable by-id and matching confirmation. Formatting
-remains unimplemented here; [I1S owns the concrete continuation](orchestration/i1s-storage-handoff.md).
-It must prove transaction ownership and safe interruption before that checkpoint
-can be removed. No live device is a formatting-test target.
+Explicit blank-disk planning accepts `--storage-mode initialize
+--initialize-empty-disk /dev/disk/by-id/ID --confirm-disk-id ID`. I1S adds the
+journal-owned GPT/ext4 transaction behind `Storage.adopt()`, requiring an exact
+saved plan and confirmation. The public dispatcher still refuses initialization
+pending I1c integration and actual Linux recovery verification. See the
+[disk transaction contract and recovery rules](install/disk-initialization.md).
+Source tests pass; actual Linux loop formatting remains **NOT_TESTED** here.
+No live device is a formatting-test target.
 
 Trust anchors are root-owned private `/etc/local-ai-server/storage.json` and
 `bootstrap.json`. Stage state is under `<data>/services/installer`. Directory-FD
