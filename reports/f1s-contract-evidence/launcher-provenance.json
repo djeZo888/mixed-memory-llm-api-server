@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "path": "scripts/lifecycle/sglang_file_auth.py",
+  "sha256": "1bf781b83d1a6bf25b63b948550cf2926e16247f48d6f977188954e9a10d212a",
+  "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+  "source_scope": "F1S reviewed-path source; worker mocked source tests PASS; actual pinned-image execution NOT_TESTED",
+  "installed_source_root": "/sgl-workspace/sglang/python/sglang",
+  "auth_review": "reports/f1s-contract-evidence/F1A-REVIEW.md"
+}

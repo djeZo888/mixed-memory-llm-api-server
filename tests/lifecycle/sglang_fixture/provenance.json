@@ -1,0 +1,33 @@
+{
+  "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+  "version": "0.5.14",
+  "scope": "AST-selected installed-source functions; FastAPI/Starlette/model/worker/Uvicorn collaborators mocked. Not live inference or full installed-image integration.",
+  "sources": {
+    "auth_native.py": {
+      "installed_path": "srt/utils/auth.py",
+      "source_sha256": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+      "fixture_sha256": "5f9a861ee326cb323f749582b02d1a9f39c639ed4978ac5c4954370215ab84dd",
+      "names": [
+        "AuthDecision",
+        "AuthLevel",
+        "auth_level",
+        "_get_auth_level_from_app_and_scope",
+        "app_has_admin_force_endpoints",
+        "decide_request_auth",
+        "add_api_key_middleware"
+      ]
+    },
+    "http_native.py": {
+      "installed_path": "srt/entrypoints/http_server.py",
+      "source_sha256": "7854f5bec953d0b69874d4220f4982249d24017f2a1225ddd9ea3e5b7ada1d23",
+      "fixture_sha256": "2e3c595abaaa57467d41018b5cd6318ebb5d647b3981804e19a548ab58ba1471",
+      "names": [
+        "get_server_info",
+        "server_info",
+        "_wait_and_warmup",
+        "_setup_and_run_http_server",
+        "launch_server"
+      ]
+    }
+  }
+}

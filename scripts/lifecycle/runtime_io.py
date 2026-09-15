@@ -234,7 +234,8 @@ def _read_key(path: str | Path) -> str:
 
 
 def probe(endpoint: str, expected_model: str, key_file: str | Path | None,
-          require_auth: bool = True, timeout: float = 3) -> str:
+          require_auth: bool = True, timeout: float = 3,
+          check_wrong_key: bool = False) -> str:
     """Return ready/auth_error/wrong_model/not_ready, with no response details.
 
     Direct HTTP avoids environment proxies and does not follow redirects. The
@@ -251,7 +252,7 @@ def probe(endpoint: str, expected_model: str, key_file: str | Path | None,
         key = _read_key(key_file) if key_file is not None else None
         deadline = time.monotonic() + timeout
 
-        def request(path, authenticated=False, read_json=False):
+        def request(path, authenticated=False, read_json=False, wrong_key=False):
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise TimeoutError
@@ -273,7 +274,12 @@ def probe(endpoint: str, expected_model: str, key_file: str | Path | None,
             try:
                 headers = {"Accept": "application/json", "Connection": "close"}
                 if authenticated and key is not None:
-                    headers["Authorization"] = "Bearer " + key
+                    token = key
+                    if wrong_key:
+                        token = "llmctl-invalid-readiness-key"
+                        if token == key:
+                            token += "-different"
+                    headers["Authorization"] = "Bearer " + token
                 connection.request("GET", path, headers=headers)
                 response = connection.getresponse()
                 payload = b""
@@ -303,6 +309,12 @@ def probe(endpoint: str, expected_model: str, key_file: str | Path | None,
                 return "auth_error"
             if status not in (401, 403):
                 return "not_ready"
+            if check_wrong_key:
+                status, _ = request("/v1/models", authenticated=True, wrong_key=True)
+                if status == 200:
+                    return "auth_error"
+                if status not in (401, 403):
+                    return "not_ready"
         status, _ = request("/health", authenticated=True)
         if status in (401, 403):
             return "auth_error"
@@ -322,3 +334,19 @@ def probe(endpoint: str, expected_model: str, key_file: str | Path | None,
         return "auth_error"
     except (OSError, ValueError, TypeError, http.client.HTTPException):
         return "not_ready"
+
+
+def probe_sglang(endpoint: str, expected_model: str, key_file: str | Path | None,
+                 require_auth: bool = True, timeout: float = 3) -> str:
+    """SGLang readiness: health Up AND exact authenticated alias AND auth denial.
+
+    Native available_models can return metadata while still Starting. Native
+    /health returns 503 until the custom authenticated warmup marks Up. Neither
+    endpoint suffices alone. All requests share probe's one absolute deadline.
+    Keep GLM's existing probe contract unchanged; SGLang additionally rejects a
+    wrong key before accepting readiness. No response/key diagnostics are emitted.
+    """
+    if not require_auth:
+        return "auth_error"
+    return probe(endpoint, expected_model, key_file, require_auth=True,
+                 timeout=timeout, check_wrong_key=True)

@@ -92,5 +92,6 @@
       "GLM clear_thinking=true is an explicit D3 live-test preset; accepted template kwargs syntax does not prove model-specific semantics or tool behavior.",
       "Final llama.cpp image ID is distinct from its pinned CUDA base digests."
     ]
-  }
+  },
+  "backend": "llama_cpp"
 }

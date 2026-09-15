@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "id": "qwen3-coder-next",
+  "model": "qwen3-coder-next-fp8",
+  "runtime": "sglang-qwen-next-0.5.14",
+  "purpose": "Bounded official Qwen3-Coder-Next FP8 candidate; actual pinned-image authentication and full artifact completion are pre-activation gates",
+  "container_name": "llmctl-qwen3-coder-next",
+  "endpoint": {
+    "host": "127.0.0.1",
+    "port": 30003,
+    "api_prefix": "/v1",
+    "served_model": "qwen3-coder-next"
+  },
+  "container_port": 30003,
+  "container_host": "0.0.0.0",
+  "auth": {
+    "key_file": "/data/services/secrets/llm-api-key",
+    "container_key_file": "/run/secrets/llm-api-key",
+    "mode": "0600"
+  },
+  "paths": {
+    "model": "/data/models-large/qwen3-coder-next-fp8",
+    "cache": "/data/models-large/runtime-cache/sglang-qwen-next",
+    "logs": "/data/logs/llmctl/qwen3-coder-next",
+    "service": "/data/services/llm-manager/qwen3-coder-next"
+  },
+  "mounts": [
+    {
+      "source": "/data/models-large/qwen3-coder-next-fp8",
+      "target": "/models",
+      "read_only": true,
+      "required_mount": "/data/models-large"
+    },
+    {
+      "source": "/data/models-large/runtime-cache/sglang-qwen-next",
+      "target": "/cache",
+      "read_only": false,
+      "required_mount": "/data/models-large"
+    },
+    {
+      "source": "/data/logs/llmctl/qwen3-coder-next",
+      "target": "/logs",
+      "read_only": false,
+      "required_mount": "/data"
+    },
+    {
+      "source": "/data/services/llm-manager/qwen3-coder-next",
+      "target": "/service",
+      "read_only": false,
+      "required_mount": "/data"
+    },
+    {
+      "source": "/data/services/secrets/llm-api-key",
+      "target": "/run/secrets/llm-api-key",
+      "read_only": true,
+      "required_mount": "/data"
+    },
+    {
+      "source": "/data/services/llm-manager/adapters/sglang_file_auth.py",
+      "target": "/opt/llmctl/sglang_file_auth.py",
+      "read_only": true,
+      "required_mount": "/data"
+    }
+  ],
+  "launch": {
+    "context_size": 32768,
+    "timeout_seconds": 7200,
+    "warmup_timeout_seconds": 600,
+    "poll_seconds": 5,
+    "request_timeout_seconds": 5,
+    "stop_timeout_seconds": 60,
+    "gpus": [
+      "0",
+      "1"
+    ],
+    "tp_size": 2,
+    "tokenizer_worker_num": 1,
+    "tool_call_parser": "qwen3_coder",
+    "max_running_requests": 1,
+    "mem_fraction_static": 0.75,
+    "load_format": "safetensors"
+  },
+  "logs": {
+    "driver": "json-file",
+    "max_size": "20m",
+    "max_file": 3
+  },
+  "boot_policy": "manual",
+  "docker_restart_policy": "no",
+  "notes": [
+    "Host publication is exactly 127.0.0.1:30003:30003/tcp through Docker bridge; container 0.0.0.0 accepts that forwarding.",
+    "Only one backend may be active, including GLM and retained historical SGLang containers on other ports.",
+    "Existing protected exact-byte API key is mounted read-only and must never be overwritten or rotated by installation.",
+    "The standalone launcher is installed from reviewed source, hash-verified and mounted read-only; no key enters ServerArgs, argv, environment or Docker configuration.",
+    "Native auth exempts paths beginning /health and /metrics and all OPTIONS requests; all WebSocket scopes are rejected. Admin-force routes remain denied without an admin key.",
+    "Custom authenticated warmup must complete before server status becomes Up. Ready observation is not real agent/tool acceptance or a memory-fit claim.",
+    "Acquisition completion and pinned-image auth gate remain false in the template; this profile cannot authorize downloading, service activation or VM work."
+  ]
+}

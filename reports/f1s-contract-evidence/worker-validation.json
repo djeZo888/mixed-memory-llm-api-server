@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "host": "mac-worker2",
+  "os": "Darwin arm64",
+  "python": "3.14.7",
+  "recorded_at_utc": "2026-09-15T00:01:30.637127+00:00",
+  "scope": "SOURCE_FIXTURES_ONLY",
+  "reviewed_base": "35e02ba6d1b781812c7e54628222660de4328e2e",
+  "branch": "milestone/f1s-qwen-next-adapter",
+  "lifecycle": {
+    "command": "python3 -m unittest discover -s tests/lifecycle -p 'test_*.py' -q",
+    "result": "PASS",
+    "tests": 198,
+    "seconds": 8.445
+  },
+  "shell": {
+    "result": "PASS",
+    "commands": [
+      "bash tests/shell/test-llmctl-static.sh",
+      "bash tests/shell/test-llmctl-fixtures.sh",
+      "bash tests/shell/test-llmctl-lifecycle-static.sh",
+      "bash tests/shell/test-llmctl-lifecycle-fixtures.sh",
+      "bash tests/shell/test-sglang-smoke-static.sh",
+      "bash scripts/sglang/verify-sglang-smoke-plan.sh"
+    ]
+  },
+  "compile": "PASS",
+  "whitespace": "PASS",
+  "changed_file_grep_secret_scan": "PASS_NO_VALUES_PRINTED",
+  "pinned_image_fixture": "NOT_TESTED_DOCKER_UNAVAILABLE",
+  "live_inference": "NOT_TESTED",
+  "agent_acceptance": "NOT_TESTED",
+  "storage_portability": "NOT_CLAIMED_D2_TWO_MOUNT_SCOPE_RETAINED_L1_SEPARATE",
+  "launcher_sha256": "1bf781b83d1a6bf25b63b948550cf2926e16247f48d6f977188954e9a10d212a"
+}
