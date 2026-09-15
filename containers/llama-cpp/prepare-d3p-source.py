@@ -141,6 +141,10 @@ def prepare(source, recipe, check_only=False):
         if derived != manifest["derived_tree"]:
             raise RuntimeError("derived tree mismatch; source remains unchanged")
     if not check_only:
+        # A copied checkout retains the old index stat cache. Only after the
+        # clean index, raw bytes/modes and prospective tree have all passed,
+        # persist refreshed stat data explicitly (optional locks stay off).
+        git(source, "update-index", "--refresh")
         # apply --index validates worktree/index agreement again and is atomic on
         # rejected hunks (no --reject, --3way, offset override or fuzzy fallback).
         git(source, "apply", "--check", "--index", "--whitespace=error-all", str(patch))
