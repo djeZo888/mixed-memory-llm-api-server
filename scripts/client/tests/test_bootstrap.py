@@ -123,7 +123,8 @@ class BootstrapTests(unittest.TestCase):
         for value in ("http://127.0.0.1/v1", "http://127.0.0.1:0/v1", "http://127.0.0.1:65536/v1",
                       "http://0.0.0.0:30002/v1", "https://example.org:443/v1", "ftp://localhost:30002/v1",
                       "http://localhost:30002/v1/", "http://localhost:30002/v1?key=synthetic",
-                      "http://localhost:30002/v1#fragment", "http://localhost:30002/{env:OTHER}"):
+                      "http://localhost:30002/v1#fragment", "http://localhost:30002/v1?",
+                      "http://localhost:30002/v1#", "http://localhost:30002/{env:OTHER}"):
             with self.subTest(url=value):
                 self.assert_rejected_without_mutation(base_url=value)
         rejected = self.assert_rejected_without_mutation(base_url="http://test:synthetic-password@localhost:30002/v1")

@@ -15,13 +15,13 @@ sys.dont_write_bytecode = True
 from client_common import (ClientError, VERSION, absolute_path, binary_path, config_for,
                            endpoint, isolated_env, json_bytes, key_env_name, model_id,
                            native_package, private_dir, refuse_managed_preferences,
-                           reasoning_effort, run_capture, runtime_dir, verify_install, write_new)
+                           reasoning_effort, run_capture, runtime_dir, validate_endpoint_auth, verify_install, write_new)
 
 
 def parser():
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument("--prefix", required=True, help="New/managed absolute private installation prefix")
-    result.add_argument("--base-url", required=True, help="Exact localhost API base URL including port and /v1")
+    result.add_argument("--base-url", required=True, help="Exact HTTP(S) loopback or canonical RFC1918 IPv4 URL with port and /v1; private IPv4 requires a key")
     result.add_argument("--model", required=True, help="Exact model ID published by the API")
     auth = result.add_mutually_exclusive_group(required=True)
     auth.add_argument("--api-key-file", help="Absolute protected newline-free key file; not opened during bootstrap")
@@ -60,6 +60,7 @@ def bootstrap(args):
     settings = {"version": VERSION, "base_url": endpoint(args.base_url), "model": model_id(args.model),
                 "auth": auth, "context_tokens": args.context_tokens, "output_tokens": args.output_tokens,
                 "lock_sha256": hashlib.sha256(lock).hexdigest()}
+    validate_endpoint_auth(settings)
     if args.reasoning_effort is not None:
         settings["reasoning_effort"] = reasoning_effort(args.reasoning_effort)
     native_package()
