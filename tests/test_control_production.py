@@ -4,9 +4,8 @@ Synthetic resources: temporary one-byte artifact, inert disposable key, profile
 and acquisition evidence, Linux storage discovery, Docker inspect inventory and
 API probe results. Real behavior: Python adapter/Manager, canonical OS flock,
 I1R package admission, fsynced temporary fixture files, TCP sockets and HTTP server.
-The strict actual I1b writer case is separate: the current L1 guard lacks I1W
-check_path forwarding. HTTP tests use an explicitly controlled writer, never a
-production fallback or synthesized lifecycle forwarding.
+HTTP tests use the actual MountedStorageGuard/AnchoredRoot writer with explicit
+worker discovery, mountinfo and uid seams. No lifecycle forwarding is replaced.
 This is worker-only evidence, not installed systemd, real image execution,
 mount detach, GPU/inference, two-model acceptance or whole-install acceptance.
 """
@@ -137,7 +136,7 @@ class ControlledWriter:
 
 class ActualManagerFixture:
     """Only constructor-owned host I/O is injected; no Manager method override."""
-    def __init__(self, *, actual_writer=False):
+    def __init__(self, *, actual_writer=True):
         self.storage = LocalStorageFixture()
         self.writer = self.storage.api if actual_writer else ControlledWriter(self.storage)
         self.base = self.storage.base
@@ -311,9 +310,8 @@ def recovery_http_child(root):
 
 
 class ActualWriterIntegrationTests(unittest.TestCase):
-    @unittest.expectedFailure
-    def test_current_l1_requires_reviewed_i1w_path_verifier_forwarding(self):
-        """Remove expectedFailure only after received reviewed L1B writer passes."""
+    def test_reviewed_l1_i1w_path_verifier_forwarding(self):
+        """Execute the received L1 forwarding over the actual anchored writer."""
         fixture = ActualManagerFixture(actual_writer=True)
         self.addCleanup(fixture.close)
         manager = fixture.load()

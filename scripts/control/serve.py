@@ -38,15 +38,16 @@ def main(argv=None):
     application = server = None
     try:
         _trusted_bootstrap()
-        from control.installation import validate_installation
+        from control.installation import validate_installation, read_advertised_policy
         key = validate_installation()
+        advertised_policy = read_advertised_policy()
         from control.adapter import production_application
         from control.http import make_server
         if args.check_binding:
             print(json.dumps({'status': 'binding_validated', 'listener_started': False,
                               'normal_lifecycle_acceptance': 'not_performed'}))
             return 0
-        application = production_application(_ROOT / 'configs', key)
+        application = production_application(_ROOT / 'configs', key, advertised_policy=advertised_policy)
         server = make_server(application, key, host='127.0.0.1', port=30000)
         def interrupted(_signum, _frame):
             raise KeyboardInterrupt

@@ -448,6 +448,7 @@ print(json.dumps({'imported_from_recovery_copy': True, 'configs_present': False,
         output = io.StringIO()
         with patch.object(serve, '_trusted_bootstrap'), \
                 patch.object(installation, 'validate_installation', return_value=b'x' * 40), \
+                patch.object(installation, 'read_advertised_policy', return_value=None), \
                 patch.object(adapter, 'production_application', side_effect=AssertionError('unexpected application')), \
                 patch.object(http, 'make_server', side_effect=AssertionError('unexpected listener')), \
                 patch('sys.stdout', output):
