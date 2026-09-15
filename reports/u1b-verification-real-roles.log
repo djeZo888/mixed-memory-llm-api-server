@@ -1,0 +1,10 @@
+test_preparation_uses_actual_full_verifier_and_real_writer (__main__.RealStorageDiscoveryFixtureTests.test_preparation_uses_actual_full_verifier_and_real_writer)
+A full-role fixture smoke test does not close pending role acceptance. ... ok
+test_data_only_guard_denies_model_anchor_and_path_even_when_mounted (__main__.RealStorageRoleIntegrationTests.test_data_only_guard_denies_model_anchor_and_path_even_when_mounted) ... ok
+test_equal_roots_normal_state_host_guard_report_and_trusted_stop (__main__.RealStorageRoleIntegrationTests.test_equal_roots_normal_state_host_guard_report_and_trusted_stop) ... ok
+test_split_models_absent_preserves_data_state_report_and_trusted_stop (__main__.RealStorageRoleIntegrationTests.test_split_models_absent_preserves_data_state_report_and_trusted_stop) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.364s
+
+OK

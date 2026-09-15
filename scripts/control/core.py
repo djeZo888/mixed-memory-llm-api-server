@@ -19,7 +19,7 @@ import time
 import uuid
 
 from common.lifecycle_lease import acquire_lease, LeaseBusy, LeaseError
-from .catalog import Catalog
+from .catalog import Catalog, _endpoint
 from .journal import JournalCorrupt, JournalUnavailable
 from .protocol import ControlError, Deadline, PackageBlocked, StorageUnavailable
 
@@ -28,6 +28,7 @@ IDENTITY = re.compile(r"[0-9a-f]{64}\Z")
 OPID = re.compile(r"[0-9a-f]{32}\Z")
 KEY = re.compile(r"[a-zA-Z0-9_.:-]{1,128}\Z")
 SAFE_CODES = frozenset({
+    "catalog_unavailable", "credential_separation_unverified",
     "invalid_request", "unknown_route", "method_not_allowed", "unknown_deployment",
     "target_unavailable", "lifecycle_busy", "stale_state", "interruption_ack_required",
     "idempotency_conflict", "storage_unavailable", "owner_unavailable",
@@ -102,6 +103,12 @@ def observation(raw):
               "ready_proof": {k: ready for k in
                   ("trusted_identity", "safe_network", "authenticated_model", "runtime_health")},
               "failure_code": raw.get("failure") if raw.get("failure") in SAFE_CODES else None}
+    try:
+        result["endpoint"] = _endpoint(raw.get("endpoint"))
+    except ValueError:
+        result["endpoint"] = None
+    if result["endpoint"] is not None:
+        result["endpoint"]["ready"] = ready
     # Health or polling times do not change semantic generation. Immutable start
     # identity, saved selection/intent and actual running state do.
     fingerprint = digest([selected, desired, container_id, running]) if fresh else None
@@ -284,7 +291,10 @@ class Application:
         return session, snapshot
 
     def _make_volatile(self, op):
-        self._state["entries"].pop(op["id"], None)
+        # A failed update does not revoke an acknowledged durable receipt. Keep
+        # that same operation in entries so a later successful save preserves
+        # its idempotency digest and final outcome across process restart.
+        # New recovery-only operations still live solely in the volatile map.
         if len(self._volatile) >= 16:
             del self._volatile[min(self._volatile, key=lambda key: self._volatile[key]["created_at"])]
         self._volatile[op["id"]] = op
@@ -492,7 +502,12 @@ class Application:
                 return
 
     def _transition(self, ticket, lease):
-        deadline = Deadline.after(self.transition_seconds)
+        transition_deadline = Deadline.after(self.transition_seconds)
+        # Before the receipt, metadata/admission must use the ticket budget,
+        # never a model-start timeout. The actual loader remains synchronous;
+        # cancellation still prevents mutation when it eventually returns.
+        deadline = Deadline(min(transition_deadline.end, ticket.expires_at or
+                                time.monotonic() + self.admission_seconds))
         session, recovery = self._get_session(ticket.kind == "stop")
         try:
             if not recovery:
@@ -544,7 +559,7 @@ class Application:
                 raise ControlError("interruption_ack_required", 409)
         now, opid = time.time(), uuid.uuid4().hex
         operation = {"id": opid, "kind": ticket.kind, "target": target, "status": "pending",
-                     "created_at": now, "updated_at": now, "deadline": now + deadline.remaining(),
+                     "created_at": now, "updated_at": now, "deadline": now + transition_deadline.remaining(),
                      "completed_at": None, "request_digest": digest([ticket.kind, request]),
                      "idempotency_digest": digest(ticket.key), "generation": snapshot["generation"],
                      "active_identity": snapshot["active_identity"], "failure_code": None,
@@ -593,6 +608,7 @@ class Application:
                     self._save(volatile=True)
                 return
             self._current = opid
+        deadline = transition_deadline
         try:
             with self._state_lock:
                 operation.update(status="running", updated_at=time.time())

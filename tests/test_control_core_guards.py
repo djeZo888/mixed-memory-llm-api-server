@@ -267,13 +267,13 @@ class ResponseAndBindingGuards(unittest.TestCase):
         self.assertNotIn("ready_proof", result)
 
     def test_production_binding_refuses_without_any_fixture_fallback(self):
+        from control import installation
         with patch.dict(os.environ, {"CONTROL_BACKEND": "fixture", "LLMCTL_TEST_ROOT": "/not-an-installed-owner"}), \
                 patch("subprocess.run", side_effect=AssertionError("must not spawn a fallback")), \
                 patch("os.system", side_effect=AssertionError("must not spawn a fallback")):
-            with self.assertRaises(ControlError) as rejected:
-                production_application()
-        self.assertEqual(rejected.exception.code, "production_adapter_unavailable")
-        self.assertEqual(rejected.exception.status, 503)
+            with self.assertRaises(installation.InstallationError) as rejected:
+                installation.validate_installation()
+        self.assertEqual(str(rejected.exception), "unsafe_or_missing_control_installation")
 
     def test_deadline_is_monotonic_and_fails_at_expiry(self):
         with patch("control.protocol.time.monotonic", return_value=10):
