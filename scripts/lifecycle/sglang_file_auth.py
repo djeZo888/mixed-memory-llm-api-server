@@ -23,6 +23,15 @@ import time
 
 LOGGER = logging.getLogger("llmctl.sglang_file_auth")
 STARTUP_TIMEOUT = 7200
+# Public Config.Env metadata for the exact image recorded in launcher provenance:
+# sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3
+# Absence remains allowed; never infer/inject defaults. Image identity and exact
+# inherited environment are separately enforced by the lifecycle manager.
+BUILD_METADATA = {
+    "SGLANG_BUILD_COMMIT": "49e384ce9d304648e9959666ecb8ce8cd98d0deb",
+    "SGLANG_BUILD_URL": "https://github.com/sgl-project/sglang/actions/runs/28210048245",
+    "SGLANG_IMAGE_TAG": "lmsysorg/sglang:v0.5.14",
+}
 FIXED_FLAGS = {
     "--model-path": "/models",
     "--served-model-name": "qwen3-coder-next",
@@ -94,7 +103,9 @@ def read_key(path):
 def validate_environment():
     # The pinned image supplies all libraries. Runtime environment switches must
     # not open a second gRPC listener or activate plugin/alternate launch paths.
-    if any(name.startswith("SGLANG_") for name in os.environ):
+    if any(name.startswith("SGLANG_")
+           and (name not in BUILD_METADATA or value != BUILD_METADATA[name])
+           for name, value in os.environ.items()):
         raise LaunchError("launch_environment_invalid")
     if os.environ.get("DISABLE_OPENAPI_DOC") != "1":
         raise LaunchError("launch_environment_invalid")

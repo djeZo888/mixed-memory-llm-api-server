@@ -2199,7 +2199,7 @@
       "observed_reference_image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
       "platform": "linux/amd64",
       "profile": "configs/runtimes/llama-cpp-v0.4.1-d1.json",
-      "profile_sha256": "adc636db00bb092fe33dfab20302ab954a7796600f7b829163a8e685af0db1a7",
+      "profile_sha256": "cf313fe24894cc640c91b77fa8432cf31224e69fad17050ea58d1ae73139e4bd",
       "proof": "reports/d1-runtime-proof.json",
       "proof_sha256": "93f5ac6c302e10eef8408350d27090c917e150879702d9bfbad1adb803abb760",
       "registry_artifacts": [

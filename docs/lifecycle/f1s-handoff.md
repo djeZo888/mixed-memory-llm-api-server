@@ -240,11 +240,30 @@ Models metadata while health is 503 remains not-ready. Native health is exempt
 from auth, so health success alone never opens readiness. GLM keeps its existing
 probe behavior. Probe failures emit safe codes without response payloads.
 
-## Final launcher source identity
+## Current launcher source identity (F1E correction)
 
-`scripts/lifecycle/sglang_file_auth.py` SHA256: `1bf781b83d1a6bf25b63b948550cf2926e16247f48d6f977188954e9a10d212a`.
+`scripts/lifecycle/sglang_file_auth.py` SHA256: `b47a334466e32ca8384478721d77e00352003c5809bdeccf2a0553dc496210a7`.
 Provenance: `reports/f1s-contract-evidence/launcher-provenance.json`.
 I1 must copy these exact bytes to the protected readonly-mounted launcher path
 and record this hash; F1D must bind its actual-image auth evidence to this hash.
 The runtime additionally sets `DISABLE_OPENAPI_DOC=1` to disable documentation UI.
 Current D2 two-mount scope is preserved; arbitrary data-root portability is L1.
+
+F1E permits only the three exact public build-metadata name/value pairs in
+[the pinned-image evidence](../../reports/f1e-build-metadata-evidence.json).
+The launcher preserves absence without injecting defaults; present empty or
+altered values and every other `SGLANG_*` name fail. The manager separately pins
+the image and exact inherited environment; absence acceptance is not a supported
+deployment override. Runtime controls, version, plugins and launch paths retain
+their existing restrictions.
+
+[F1E source report](../../reports/f1e-source.md) supersedes the launcher hash only;
+historical F1S validation still refers to the old bytes. The supplied F1D blocker
+reports that the old actual-image gate failed before sentinel/native startup.
+F1E's one read-only SSH inspection attempt failed, so metadata evidence is
+explicitly attributed to that supplied blocker. **The corrected launcher's
+actual-image auth gate is NOT_TESTED; `auth_gate_passed` remains false.** Root
+review/merge must precede F1D/F1Db's actual-image rerun. The blocker also leaves
+actual signal delivery, native `/model_info` auth coverage and actual-image
+negative key-file/rejected-mode cases to F1D/F1Db; native lifespan/model
+initialization remains NOT_TESTED. Source tests do not close those gaps.

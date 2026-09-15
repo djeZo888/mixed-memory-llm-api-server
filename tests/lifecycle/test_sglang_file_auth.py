@@ -13,6 +13,7 @@ import dataclasses
 import hashlib
 import importlib.util
 import io
+import itertools
 import json
 import logging
 import os
@@ -34,6 +35,12 @@ import sglang_file_auth as launcher
 import runtime_io
 
 FIXTURE = Path(__file__).with_name("sglang_fixture")
+# Independent expected values from the supplied pinned-image blocker evidence.
+PUBLIC_BUILD_METADATA = {
+    "SGLANG_BUILD_COMMIT": "49e384ce9d304648e9959666ecb8ce8cd98d0deb",
+    "SGLANG_BUILD_URL": "https://github.com/sgl-project/sglang/actions/runs/28210048245",
+    "SGLANG_IMAGE_TAG": "lmsysorg/sglang:v0.5.14",
+}
 
 
 def load_module(name, path):
@@ -381,19 +388,88 @@ class AuthTests(unittest.TestCase):
                 with self.assertRaises(launcher.LaunchError):
                     launcher.validate_server_args(args)
 
-    def test_secondary_listener_environment_and_plugins_refused(self):
-        with mock.patch.dict(os.environ, {"SGLANG_ENABLE_GRPC": "1"}):
-            with self.assertRaises(launcher.LaunchError):
+    def test_exact_build_metadata_absence_and_subsets_do_not_inject_defaults(self):
+        for count in range(4):
+            for names in itertools.combinations(PUBLIC_BUILD_METADATA, count):
+                env = {"DISABLE_OPENAPI_DOC": "1", **{
+                    name: PUBLIC_BUILD_METADATA[name] for name in names}}
+                with self.subTest(names=names), mock.patch.dict(os.environ, env, clear=True), \
+                     mock.patch.object(launcher.importlib.metadata, "version", return_value="0.5.14") as version, \
+                     mock.patch.object(launcher.importlib.metadata, "entry_points", return_value={}):
+                    launcher.validate_environment()
+                    version.assert_called_once_with("sglang")
+                    self.assertEqual(dict(os.environ), env)
+
+    def invalid_build_environments(self):
+        base = {"DISABLE_OPENAPI_DOC": "1", **PUBLIC_BUILD_METADATA}
+        for name, expected in PUBLIC_BUILD_METADATA.items():
+            for kind, changed in (("empty", ""), ("modified", expected + "-altered"),
+                                  ("leading_space", " " + expected), ("newline", expected + "\n"),
+                                  ("synthetic_secret", self.sentinel)):
+                yield name, kind, {**base, name: changed}
+        for name in ("SGLANG_", "SGLANG_UNKNOWN", "SGLANG_BUILD_COMMIT_EXTRA",
+                     "SGLANG_BUILD_URL_EXTRA", "SGLANG_IMAGE_TAG_EXTRA",
+                     "SGLANG_ENABLE_GRPC", "SGLANG_USE_RAY", "SGLANG_PLUGINS",
+                     "SGLANG_ENABLE_TORCH_COMPILE", "SGLANG_SKIP_SERVER_WARMUP"):
+            for kind, value in (("empty", ""), ("disabled", "0"), ("enabled", "1"),
+                                ("synthetic_secret", self.sentinel)):
+                yield name, kind, {**base, name: value}
+
+    def test_every_altered_metadata_and_unknown_runtime_variable_refused(self):
+        for name, kind, env in self.invalid_build_environments():
+            with self.subTest(name=name, kind=kind), mock.patch.dict(os.environ, env, clear=True), \
+                 mock.patch.object(launcher.importlib.metadata, "version") as version:
+                with self.assertRaises(launcher.LaunchError) as raised:
+                    launcher.validate_environment()
+                self.assertEqual(str(raised.exception), "launch_environment_invalid")
+                version.assert_not_called()
+
+    def test_invalid_environment_main_stops_before_native_import_and_key_read(self):
+        original_import = __import__
+        native_imports = []
+
+        def guarded_import(name, *args, **kwargs):
+            if name == "sglang" or name.startswith("sglang."):
+                native_imports.append(name)
+                raise AssertionError("native import before validation")
+            return original_import(name, *args, **kwargs)
+
+        for name, kind, env in self.invalid_build_environments():
+            with self.subTest(name=name, kind=kind), mock.patch.dict(os.environ, env, clear=True), \
+                 mock.patch.object(launcher, "read_key") as read_key, \
+                 mock.patch.object(launcher, "validate_environment", wraps=launcher.validate_environment) as validate, \
+                 mock.patch("builtins.__import__", side_effect=guarded_import):
+                self.assertEqual(launcher.main(cli()), 1)
+                validate.assert_called_once()
+                read_key.assert_not_called()
+                self.assertEqual(native_imports, [])
+        self.assertEqual(set(self.logs.getvalue().splitlines()), {"sglang_file_auth_launch_failed"})
+
+    def test_build_metadata_does_not_bypass_documentation_version_or_plugin_checks(self):
+        env = {"DISABLE_OPENAPI_DOC": "1", **PUBLIC_BUILD_METADATA}
+        with mock.patch.dict(os.environ, env, clear=True), \
+             mock.patch.object(launcher.importlib.metadata, "version", return_value="0.5.14") as version, \
+             mock.patch.object(launcher.importlib.metadata, "entry_points", return_value={}) as points:
+            for value in (None, "", "0", "true"):
+                if value is None:
+                    del os.environ["DISABLE_OPENAPI_DOC"]
+                else:
+                    os.environ["DISABLE_OPENAPI_DOC"] = value
+                with self.assertRaisesRegex(launcher.LaunchError, "^launch_environment_invalid$"):
+                    launcher.validate_environment()
+            os.environ["DISABLE_OPENAPI_DOC"] = "1"
+            version.return_value = "other"
+            with self.assertRaisesRegex(launcher.LaunchError, "^launch_version_invalid$"):
                 launcher.validate_environment()
-        with mock.patch.dict(os.environ, {"DISABLE_OPENAPI_DOC": "1"}, clear=True), mock.patch.object(launcher.importlib.metadata, "version", return_value="0.5.14"), mock.patch.object(launcher.importlib.metadata, "entry_points", return_value={"sglang_plugins": []}):
-            with self.assertRaises(launcher.LaunchError):
+            version.side_effect = launcher.importlib.metadata.PackageNotFoundError
+            with self.assertRaisesRegex(launcher.LaunchError, "^launch_version_invalid$"):
                 launcher.validate_environment()
-        with mock.patch.dict(os.environ, {}, clear=True):
-            with self.assertRaises(launcher.LaunchError):
-                launcher.validate_environment()
-        with mock.patch.dict(os.environ, {"DISABLE_OPENAPI_DOC": "1"}, clear=True), mock.patch.object(launcher.importlib.metadata, "version", return_value="other"):
-            with self.assertRaises(launcher.LaunchError):
-                launcher.validate_environment()
+            version.side_effect, version.return_value = None, "0.5.14"
+            for group in ("sglang", "sglang_plugins", "SGLANG_plugins"):
+                for entry_points in ({group: []}, types.SimpleNamespace(groups={group})):
+                    points.return_value = entry_points
+                    with self.assertRaisesRegex(launcher.LaunchError, "^launch_plugins_unsupported$"):
+                        launcher.validate_environment()
 
     def test_spawn_import_is_inert(self):
         with mock.patch.object(launcher.os, "open", side_effect=AssertionError("key read during import")), mock.patch.dict(os.environ, {}, clear=True):
@@ -565,7 +641,11 @@ class AuthTests(unittest.TestCase):
             "sglang.srt.entrypoints": types.SimpleNamespace(http_server=server),
             "sglang.srt.utils": types.SimpleNamespace(kill_process_tree=cleanup),
         }
-        with mock.patch.dict(sys.modules, modules), mock.patch.object(launcher, "validate_environment"), mock.patch.object(launcher, "read_key", return_value=launcher._PrivateKey(self.sentinel)):
+        with mock.patch.dict(sys.modules, modules), \
+             mock.patch.dict(os.environ, {"DISABLE_OPENAPI_DOC": "1", **PUBLIC_BUILD_METADATA}, clear=True), \
+             mock.patch.object(launcher.importlib.metadata, "version", return_value="0.5.14"), \
+             mock.patch.object(launcher.importlib.metadata, "entry_points", return_value={}), \
+             mock.patch.object(launcher, "read_key", return_value=launcher._PrivateKey(self.sentinel)):
             self.assertEqual(launcher.main(cli()), 0)
         self.assertIs(server.captured[0][0], server.app)
         self.no_leak(prepared)
@@ -573,6 +653,11 @@ class AuthTests(unittest.TestCase):
         cleanup.assert_called_once_with(os.getpid(), include_parent=False)
 
     def test_fixture_provenance_hashes(self):
+        provenance = json.loads((ROOT / "reports/f1s-contract-evidence/launcher-provenance.json").read_text())
+        self.assertEqual(provenance["sha256"], hashlib.sha256((ROOT / provenance["path"]).read_bytes()).hexdigest())
+        evidence = json.loads((ROOT / provenance["build_metadata_evidence"]).read_text())
+        self.assertEqual(provenance["image_id"], evidence["image_id"])
+        self.assertEqual(evidence["public_build_metadata"], PUBLIC_BUILD_METADATA)
         manifest = json.loads((FIXTURE / "provenance.json").read_text())
         self.assertEqual(manifest["version"], "0.5.14")
         for name, source in manifest["sources"].items():

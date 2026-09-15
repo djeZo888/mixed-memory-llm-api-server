@@ -8,10 +8,11 @@ readonly /fixture checkout, and empty private tmpfs mounts at /models and
 The installed parser, ServerArgs.__post_init__, HTTP setup, native auth,
 FastAPI/Starlette routes and response serializers run unchanged. Synthetic
 collaborators replace CUDA discovery and engine/model/worker startup only.
-Uvicorn.run is captured instead of opening an inference listener; the native
-lifespan's model-serving initialization is therefore NOT_TESTED. A synthetic
-loopback HTTP server exercises the launcher's real authenticated warmup I/O.
-Failure subprocesses additionally exercise actual launcher process cleanup.
+Route cases capture Uvicorn.run; a separate disposable SIGINT case runs real
+Uvicorn with lifespan="off" and synthetic engine descendants. Native lifespan
+model-serving initialization is NOT_TESTED. A synthetic loopback HTTP server
+exercises real authenticated warmup I/O. Abort/signal children use owned sessions,
+bounded deadlines and survivor checks before emergency cleanup.
 
 No source-extracted or replacement-framework fallback exists. Missing native
 dependencies or unsupported native preprocessing produce a nonzero FAIL.
@@ -35,6 +36,8 @@ from pathlib import Path
 import pickle
 import runpy
 import secrets
+import selectors
+import signal
 import socket
 import stat
 import subprocess
@@ -53,8 +56,24 @@ HARDWARE_STUBS = (
     "is_available", "device_count", "current_device", "get_device_capability",
     "get_device_properties", "get_device_name", "mem_get_info",
 )
-SCENARIOS = ("all", "warmup-auth-failure", "warmup-timeout")
+SCENARIOS = ("all", "warmup-auth-failure", "warmup-timeout", "signal-int")
 FAULT_MARKER = b"F1S_AUTHENTICATED_WARMUP_FAULT_REACHED\n"
+SIGNAL_READY = b"F1E2_NATIVE_SIGNAL_READY\n"
+SIGNAL_DONE = b"F1E2_NATIVE_SIGNAL_CLEANUP_PASS\n"
+PROCESS_TIMEOUT = 180
+PROCESS_TREE_CODE = """
+import subprocess, sys
+p = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(150)'],
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                     stderr=subprocess.DEVNULL)
+print(p.pid, flush=True)
+try:
+    p.wait(timeout=150)
+finally:
+    if p.poll() is None:
+        p.kill()
+    p.wait()
+"""
 
 
 class FixtureFailure(Exception):
@@ -84,6 +103,77 @@ def no_secret(value, sentinel):
     # Never put a failed comparison or the checked data in an assertion message.
     raw = value if isinstance(value, bytes) else str(value).encode("utf-8")
     require(sentinel.encode("ascii") not in raw, "sentinel_disclosure")
+
+
+def read_process_output(child, *, until=None, timeout=PROCESS_TIMEOUT):
+    """Drain private pipes with a deadline and limit; never relay child data."""
+    output = {"stdout": bytearray(), "stderr": bytearray()}
+    deadline = time.monotonic() + timeout
+    with selectors.DefaultSelector() as selector:
+        for name in output:
+            selector.register(getattr(child, name), selectors.EVENT_READ, name)
+        while selector.get_map():
+            remaining = deadline - time.monotonic()
+            require(remaining > 0, "fixture_child_deadline")
+            for key, _ in selector.select(min(remaining, 0.1)):
+                data = os.read(key.fd, 4096)
+                if not data:
+                    selector.unregister(key.fileobj)
+                else:
+                    output[key.data].extend(data)
+                    require(sum(map(len, output.values())) <= 65536,
+                            "fixture_child_output_limit")
+            if until is not None and bytes(output["stdout"]) == until:
+                require(not output["stderr"], "fixture_child_unexpected_stderr")
+                return bytes(output["stdout"]), bytes(output["stderr"])
+    require(until is None, "fixture_child_not_ready")
+    child.wait(timeout=max(0.01, deadline - time.monotonic()))
+    return bytes(output["stdout"]), bytes(output["stderr"])
+
+
+def wait_owned_group_gone(group, timeout=5):
+    """Reap adopted fixture descendants (helper is container PID1), then check."""
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            while os.waitpid(-group, os.WNOHANG)[0]:
+                pass
+        except ChildProcessError:
+            pass
+        try:
+            os.killpg(group, 0)
+        except ProcessLookupError:
+            return
+        require(time.monotonic() < deadline, "fixture_process_group_survived")
+        time.sleep(0.02)
+
+
+@contextmanager
+def disposable_child(command):
+    """Own a new session; emergency cleanup never establishes a test PASS."""
+    child = subprocess.Popen(command, start_new_session=True, stdin=subprocess.DEVNULL,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
+    try:
+        require(os.getpgid(child.pid) == child.pid, "fixture_child_session_invalid")
+        yield child
+    finally:
+        # All fixture descendants inherit this group. No host/other test group
+        # is signalled. This runs on timeout, unexpected output and exceptions.
+        try:
+            # Reap an already-exited leader before signalling its group (a
+            # zombie-only group can otherwise raise EPERM on Darwin).
+            child.poll()
+            try:
+                os.killpg(child.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        finally:
+            try:
+                child.wait(timeout=5)
+            finally:
+                child.stdout.close()
+                child.stderr.close()
+        wait_owned_group_gone(child.pid)
 
 
 def verify_sources(repo):
@@ -232,7 +322,8 @@ class SyntheticTokenizer:
         self.is_generation = True
         self.served_model_name = ALIAS
         self.model_path = "/models"
-        self.model_config = SimpleNamespace(context_len=32768,
+        self.model_config_reads = 0
+        self._model_config = SimpleNamespace(context_len=32768,
             is_image_understandable_model=False, is_audio_understandable_model=False,
             hf_config=SimpleNamespace(model_type="qwen3_next", architectures=["Qwen3NextForCausalLM"]))
         self.socket_mapping = SimpleNamespace(clear_all_sockets=lambda: None)
@@ -242,6 +333,14 @@ class SyntheticTokenizer:
         self.disconnect_seen = False
         self.generation_calls = 0
         self.diagnostic_calls = 0
+
+    @property
+    def model_config(self):
+        # model_info's first native statement reads this collaborator. Counting
+        # that access observes handler entry without replacing/wrapping the
+        # installed endpoint or FastAPI's generated request handler.
+        self.model_config_reads += 1
+        return self._model_config
 
     async def get_internal_state(self):
         self.diagnostic_calls += 1
@@ -313,6 +412,254 @@ def warmup_http_server(sentinel, mode):
         thread.join(timeout=3)
 
 
+async def check_model_info_route(server, app, tokenizer, sentinel, wrong):
+    routes = [route for route in app.routes if getattr(route, "path", None) == "/model_info"]
+    require(len(routes) == 1 and routes[0].methods == {"GET"}
+            and routes[0].endpoint is server.model_info
+            and routes[0].dependant.call is server.model_info,
+            "native_model_info_route_wiring_missing")
+    before = tokenizer.model_config_reads
+    for token in (None, wrong):
+        status, payload, messages = await asgi_request(app, "/model_info", token)
+        require(status == 401, "native_model_info_auth_rejection_failed")
+        require(tokenizer.model_config_reads == before,
+                "unauthorized_model_info_reached_handler")
+        no_secret(payload, sentinel)
+        no_secret(messages, sentinel)
+    status, payload, messages = await asgi_request(app, "/model_info", sentinel)
+    require(status == 200 and tokenizer.model_config_reads == before + 1,
+            "native_model_info_handler_not_reached")
+    require(json.loads(payload) == {
+        "model_path": "/models", "tokenizer_path": tokenizer.server_args.tokenizer_path,
+        "is_generation": True,
+        "preferred_sampling_params": tokenizer.server_args.preferred_sampling_params,
+        "weight_version": tokenizer.server_args.weight_version,
+        "has_image_understanding": False, "has_audio_understanding": False,
+        "model_type": "qwen3_next", "architectures": ["Qwen3NextForCausalLM"],
+    }, "native_model_info_response_changed")
+    no_secret(payload, sentinel)
+    no_secret(messages, sentinel)
+
+
+@contextmanager
+def negative_key_fixture(kind, sentinel):
+    """Temporarily replace only our synthetic key; preserve its original inode.
+
+    The enclosing fixture_files() has already verified the private tmpfs. A
+    private exclusive directory parks the original; restoration is an exclusive
+    link, so an unexpected replacement is never overwritten. Wrong ownership
+    is tested only if the isolated container actually permits chown.
+    """
+    import tempfile
+
+    original = KEY_PATH.lstat()
+    require(stat.S_ISREG(original.st_mode) and original.st_uid == os.geteuid()
+            and stat.S_IMODE(original.st_mode) == 0o600
+            and KEY_PATH.read_bytes() == sentinel.encode("ascii"),
+            "negative_fixture_key_identity_invalid")
+    staging = Path(tempfile.mkdtemp(prefix=".f1e2-negative-", dir=KEY_PATH.parent))
+    saved = staging / "original"
+    identity = None
+    moved = False
+    try:
+        os.rename(KEY_PATH, saved)
+        moved = True
+        require((saved.stat().st_dev, saved.stat().st_ino) ==
+                (original.st_dev, original.st_ino), "negative_fixture_key_changed")
+        allowed = True
+        if kind == "missing":
+            pass
+        elif kind == "symlink":
+            KEY_PATH.symlink_to(saved)
+            identity = KEY_PATH.lstat()
+        elif kind == "directory":
+            KEY_PATH.mkdir(mode=0o700)
+            identity = KEY_PATH.lstat()
+        elif kind == "fifo":
+            os.mkfifo(KEY_PATH, 0o600)
+            identity = KEY_PATH.lstat()
+        else:
+            values = {"mode0644": sentinel.encode(), "mode0400": sentinel.encode(),
+                      "mode0000": sentinel.encode(), "wrong-owner": sentinel.encode(),
+                      "empty": b"", "newline": sentinel.encode() + b"\n",
+                      "crlf": sentinel.encode() + b"\r\n",
+                      "space": sentinel.encode() + b" ",
+                      "nul": sentinel.encode() + b"\0", "nonascii": b"\xff",
+                      "oversized": b"x" * 4097}
+            require(kind in values, "negative_fixture_case_invalid")
+            fd = os.open(KEY_PATH, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                         0o600)
+            try:
+                identity = os.fstat(fd)
+                with os.fdopen(fd, "wb", closefd=False) as stream:
+                    stream.write(values[kind])
+                    stream.flush()
+                mode = {"mode0644": 0o644, "mode0400": 0o400, "mode0000": 0o000}.get(kind, 0o600)
+                os.fchmod(fd, mode)
+                if kind == "wrong-owner":
+                    rejected_uid = 65534 if os.geteuid() != 65534 else 65533
+                    try:
+                        os.fchown(fd, rejected_uid, -1)
+                    except PermissionError:
+                        # The reviewed --cap-drop ALL image normally cannot
+                        # chown. No fstat mock or ownership PASS is substituted.
+                        allowed = False
+                    if allowed:
+                        require(os.fstat(fd).st_uid not in (0, os.geteuid()),
+                                "negative_fixture_owner_not_changed")
+            finally:
+                os.close(fd)
+        yield allowed
+    finally:
+        if identity is not None:
+            current = KEY_PATH.lstat()
+            require((current.st_dev, current.st_ino) == (identity.st_dev, identity.st_ino),
+                    "negative_fixture_case_identity_changed")
+            if stat.S_ISDIR(current.st_mode):
+                KEY_PATH.rmdir()
+            else:
+                KEY_PATH.unlink()
+        if moved:
+            # os.link refuses an existing destination, including a symlink.
+            os.link(saved, KEY_PATH, follow_symlinks=False)
+            saved.unlink()
+        staging.rmdir()
+        restored = KEY_PATH.lstat()
+        require((restored.st_dev, restored.st_ino) == (original.st_dev, original.st_ino)
+                and KEY_PATH.read_bytes() == sentinel.encode("ascii"),
+                "negative_fixture_restore_failed")
+
+
+def check_negative_contracts(launcher, server, ServerArgs, argv, sentinel):
+    """Guard main with real native normalization and actual synthetic key files.
+
+    prepare_server_args is only spied through, never replaced by a namespace or
+    copied source. Disallowed normalized fields are explicit post-normalization
+    fault injection. Auth installation and engine/listener entry are forbidden.
+    """
+    args_module = importlib.import_module("sglang.srt.server_args")
+    native_prepare = args_module.prepare_server_args
+    native_read = launcher.read_key
+    require(args_module.ServerArgs is ServerArgs and dataclasses.is_dataclass(ServerArgs),
+            "negative_native_server_args_required")
+    outcomes = {"key_files": [], "cli_modes": [], "normalized_mode_faults": [],
+                "wrong_owner": "NOT_TESTED_CAPABILITY_UNAVAILABLE"}
+
+    def run_case(case_argv, *, key_case=False, fault=None):
+        prepared, reads, accepted, boundaries, errors = [], [], [], [], []
+        evidence = io.StringIO()
+
+        def prepare(values):
+            value = native_prepare(values)
+            require(type(value) is ServerArgs, "negative_native_server_args_replaced")
+            launcher.validate_server_args(value)
+            if fault is not None:
+                field, invalid = fault
+                require(hasattr(value, field), "negative_native_mode_field_missing")
+                setattr(value, field, invalid)
+            for snapshot in (repr(value), dataclasses.asdict(value), pickle.dumps(value)):
+                no_secret(snapshot, sentinel)
+            prepared.append(value)
+            return value
+
+        def read(path):
+            reads.append(True)
+            result = native_read(path)
+            accepted.append(True)
+            return result
+
+        def forbidden(*_args, **_kwargs):
+            boundaries.append(True)
+            raise FixtureFailure("negative_launch_boundary_reached")
+
+        class Errors(logging.Handler):
+            def emit(self, record):
+                errors.append(record.getMessage())
+
+        error_handler = Errors()
+        native_handler = logging.StreamHandler(evidence)
+        launcher.LOGGER.addHandler(error_handler)
+        logging.getLogger().addHandler(native_handler)
+        try:
+            with ExitStack() as stack:
+                stack.enter_context(redirect_stdout(evidence))
+                stack.enter_context(redirect_stderr(evidence))
+                stack.enter_context(patch.object(args_module, "prepare_server_args", side_effect=prepare))
+                stack.enter_context(patch.object(launcher, "read_key", side_effect=read))
+                stack.enter_context(patch.object(launcher, "install_auth", side_effect=forbidden))
+                stack.enter_context(patch.object(server, "launch_server", side_effect=forbidden))
+                stack.enter_context(patch.object(server.Engine, "_launch_subprocesses", side_effect=forbidden))
+                stack.enter_context(patch.object(server.uvicorn, "run", side_effect=forbidden))
+                result = launcher.main(case_argv)
+        finally:
+            launcher.LOGGER.removeHandler(error_handler)
+            logging.getLogger().removeHandler(native_handler)
+        require(result == 1 and not accepted and not boundaries,
+                "negative_contract_not_refused_before_launch")
+        require(len(prepared) == int(key_case or fault is not None)
+                and len(reads) == int(key_case), "negative_contract_boundary_order_changed")
+        require(errors == ["sglang_file_auth_launch_failed"], "negative_contract_output_changed")
+        no_secret(evidence.getvalue(), sentinel)
+        no_secret(case_argv, sentinel)
+        no_secret(os.environ, sentinel)
+        require(not getattr(server.app, "_llmctl_file_auth_installed", False)
+                and not getattr(server.app, "middleware_stack", None),
+                "negative_contract_modified_application")
+
+    for kind in ("missing", "symlink", "directory", "fifo", "mode0644", "mode0400",
+                 "mode0000", "empty", "newline", "crlf", "space", "nul", "nonascii",
+                 "oversized", "wrong-owner"):
+        with negative_key_fixture(kind, sentinel) as available:
+            if available:
+                run_case(argv, key_case=True)
+                outcomes["key_files"].append(kind)
+                if kind == "wrong-owner":
+                    outcomes["wrong_owner"] = "PASS_ACTUAL_FILESYSTEM"
+
+    for name, flag, invalid in (
+        ("multiple-tokenizers", "--tokenizer-worker-num", "2"),
+        ("different-host", "--host", "127.0.0.1"),
+        ("different-port", "--port", "30004"),
+        ("different-model", "--model-path", "/fixture-invalid-model"),
+        ("different-key-path", "--key-file", "/run/secrets/fixture-invalid-key"),
+        ("different-warmup-timeout", "--warmup-timeout", "1"),
+        ("different-tp", "--tp-size", "1"),
+        ("different-load-format", "--load-format", "gguf"),
+    ):
+        rejected = list(argv)
+        rejected[rejected.index(flag) + 1] = invalid
+        run_case(rejected)
+        outcomes["cli_modes"].append(name)
+    for name, extra in (("duplicate-option", ["--port", "30003"]),
+                        ("inline-api-key", ["--api-key", "fixture-disallowed-key"]),
+                        ("inline-admin-key", ["--admin-api-key", "fixture-disallowed-key"]),
+                        ("config-option", ["--config", "/fixture-invalid-config"]),
+                        ("ray-option", ["--use-ray"]),
+                        ("encoder-option", ["--encoder-only"]),
+                        ("http2-option", ["--enable-http2"]),
+                        ("reload-option", ["--reload"]),
+                        ("tool-server-option", ["--tool-server", "fixture-invalid"]),
+                        ("grpc-option", ["--grpc-mode"]),
+                        ("unknown-option", ["--fixture-unknown", "1"])):
+        run_case(list(argv) + extra)
+        outcomes["cli_modes"].append(name)
+
+    for field, invalid in (("api_key", "fixture-disallowed-key"),
+                           ("admin_api_key", "fixture-disallowed-key"),
+                           ("tokenizer_worker_num", 2), ("dp_size", 2), ("nnodes", 2),
+                           ("disaggregation_mode", "prefill"), ("grpc_mode", True),
+                           ("use_ray", True), ("enable_http2", True),
+                           ("encoder_only", True), ("enable_ssl_refresh", True),
+                           ("tool_server", "fixture-invalid"),
+                           ("skip_server_warmup", True), ("skip_tokenizer_init", True),
+                           ("trust_remote_code", True), ("enable_metrics", True),
+                           ("quantization", "fixture-unsupported"),
+                           ("tokenizer_path", "/fixture-invalid-tokenizer")):
+        run_case(argv, fault=(field, invalid))
+        outcomes["normalized_mode_faults"].append(field)
+    return outcomes
+
+
 def check_routes(server, app, tokenizer, sentinel, wrong):
     from starlette.responses import JSONResponse
 
@@ -329,6 +676,7 @@ def check_routes(server, app, tokenizer, sentinel, wrong):
     app.state.openai_serving_chat = chat
 
     async def checks():
+        await check_model_info_route(server, app, tokenizer, sentinel, wrong)
         start_health = await asgi_request(app, "/health", sentinel)
         require(start_health[0] == 503, "starting_health_must_reject")
         model_while_starting = await asgi_request(app, "/v1/models", sentinel)
@@ -425,6 +773,10 @@ def run_actual(repo, scenario, captured_logs):
                 imported = runpy.run_path(str(launcher_path), run_name="__mp_main__")
             require("main" in imported, "spawn_import_failed")
 
+            negative_contracts = None
+            if scenario == "all":
+                negative_contracts = check_negative_contracts(launcher, server, ServerArgs, argv, sentinel)
+
             @auth.auth_level(auth.AuthLevel.ADMIN_FORCE)
             async def forced():
                 raise FixtureFailure("admin_force_handler_reached")
@@ -437,7 +789,8 @@ def run_actual(repo, scenario, captured_logs):
             server.app.add_api_route("/__f1s/admin-force", forced, methods=["GET"], include_in_schema=False)
             for path in ("/health_f1s_probe", "/metrics_f1s_probe"):
                 server.app.add_api_route(path, public_probe, methods=["GET"], include_in_schema=False)
-            engine_calls, captured = [], []
+            engine_calls, captured, owned_workers = [], [], []
+            native_uvicorn_run = server.uvicorn.run
 
             def engine_start(**kwargs):
                 args = kwargs["server_args"]
@@ -450,6 +803,22 @@ def run_actual(repo, scenario, captured_logs):
                 # repr with the installed engine logger without executing CUDA.
                 logging.getLogger("sglang.srt.entrypoints.engine").warning("server_args=%r", args)
                 tokenizer = SyntheticTokenizer(args, server)
+                if scenario == "signal-int":
+                    child = subprocess.Popen([sys.executable, "-c", PROCESS_TREE_CODE],
+                        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL, bufsize=0)
+                    owned_workers.append(child)
+                    with selectors.DefaultSelector() as selector:
+                        selector.register(child.stdout, selectors.EVENT_READ)
+                        require(bool(selector.select(5)), "fixture_descendant_not_ready")
+                        identity = os.read(child.stdout.fileno(), 64)
+                    require(identity.endswith(b"\n") and identity.strip().isdigit(),
+                            "fixture_descendant_identity_invalid")
+                    descendant = int(identity)
+                    require(child.poll() is None and descendant != child.pid
+                            and os.getpgid(descendant) == os.getpgrp()
+                            and os.getpgid(child.pid) == os.getpgrp(),
+                            "fixture_descendant_group_invalid")
                 engine_calls.append((args, tokenizer))
                 return tokenizer, SimpleNamespace(), SimpleNamespace(), SimpleNamespace(scheduler_infos=[{}]), None
 
@@ -464,6 +833,29 @@ def run_actual(repo, scenario, captured_logs):
                 require(len(layers) == 2 and sum(m.kwargs.get("api_key") is None for m in layers) == 1,
                         "final_native_auth_layering_missing")
                 no_secret(repr(app.user_middleware), sentinel)
+                if scenario == "signal-int":
+                    # Real Uvicorn owns its OS handlers, startup and shutdown.
+                    # Only native model lifespan is disabled; no signal callback
+                    # or process cleanup function is replaced by this fixture.
+                    native_startup = server.uvicorn.Server.startup
+                    native_handle_exit = server.uvicorn.Server.handle_exit
+                    instances = []
+
+                    async def observe_startup(instance, *args, **options):
+                        await native_startup(instance, *args, **options)
+                        installed = signal.getsignal(signal.SIGINT)
+                        require(instance.started and getattr(installed, "__self__", None) is instance
+                                and getattr(installed, "__func__", None) is native_handle_exit,
+                                "native_uvicorn_signal_handler_missing")
+                        instances.append(instance)
+                        os.write(1, SIGNAL_READY)
+
+                    with patch.object(server.uvicorn.Server, "startup", observe_startup):
+                        native_uvicorn_run(app, **kwargs, lifespan="off")
+                    require(len(instances) == 1 and instances[0].should_exit
+                            and instances[0]._captured_signals == [signal.SIGINT],
+                            "native_signal_not_observed")
+                    return
                 if scenario == "all":
                     check_routes(server, app, engine_calls[-1][1], sentinel, wrong)
                 mode = {"all": "success", "warmup-auth-failure": "auth-failure",
@@ -490,6 +882,13 @@ def run_actual(repo, scenario, captured_logs):
                     "actual_native_launch_setup_failed")
             no_secret(captured_logs.getvalue(), sentinel)
             require(KEY_PATH.read_bytes() == sentinel.encode(), "existing_fixture_key_changed")
+            if scenario == "signal-int":
+                require(len(owned_workers) == 1, "signal_fixture_worker_missing")
+                for child in owned_workers:
+                    child.wait(timeout=5)
+                    child.stdout.close()
+                    require(child.returncode == -signal.SIGKILL, "native_cleanup_did_not_kill_worker")
+                return {"native_sigint_launcher_cleanup": "PASS"}
 
             # Re-import the real installed module to obtain its actual fresh app.
             # Deliberately broken injection must fail before workers/Uvicorn and
@@ -511,7 +910,8 @@ def run_actual(repo, scenario, captured_logs):
                     child.kill()
                     child.wait(timeout=5)
             no_secret(captured_logs.getvalue(), sentinel)
-    return {"native_routes_and_final_chain": "PASS", "native_prepare_and_normalization": "PASS",
+    return {"native_routes_and_final_chain": "PASS", "native_model_info_bearer_cases": "PASS",
+            "negative_contracts": negative_contracts, "native_prepare_and_normalization": "PASS",
             "health_starting_503_up_200": "PASS", "sentinel_absence": "PASS",
             "injection_failure_child_cleanup": "PASS", "spawn_import": "PASS"}
 
@@ -521,16 +921,32 @@ def run_failure_children(repo):
     # os._exit in the real launcher skips finally; remove only owned fixture
     # files after the child is gone, never accept a preexisting file.
     for scenario in SCENARIOS[1:]:
-        require(not KEY_PATH.exists() and not CONFIG_PATH.exists(), "fixture_files_not_clean")
-        result = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--actual-image",
-                                 "--repo", str(repo), "--internal-scenario", scenario],
-                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, timeout=180, check=False)
-        require(result.returncode == 1 and result.stdout == FAULT_MARKER and result.stderr == b"",
-                "warmup_failure_subprocess_not_closed")
+        require(not os.path.lexists(KEY_PATH) and not os.path.lexists(CONFIG_PATH),
+                "fixture_files_not_clean")
+        command = [sys.executable, str(Path(__file__).resolve()), "--actual-image",
+                   "--repo", str(repo), "--internal-scenario", scenario]
+        with disposable_child(command) as child:
+            if scenario == "signal-int":
+                read_process_output(child, until=SIGNAL_READY)
+                # Delivery is to the launcher process only. Native launcher
+                # cleanup must remove its workers; the controller does not
+                # signal the group to make this success condition pass.
+                os.kill(child.pid, signal.SIGINT)
+                output, errors = read_process_output(child, timeout=15)
+                require(child.returncode == 0 and output == SIGNAL_DONE and not errors,
+                        "native_signal_subprocess_not_closed")
+            else:
+                output, errors = read_process_output(child)
+                require(child.returncode == 1 and output == FAULT_MARKER and not errors,
+                        "warmup_failure_subprocess_not_closed")
+            # Check before the emergency finally cleanup: a survivor is FAIL.
+            wait_owned_group_gone(child.pid)
         # These files can exist only if the exclusive child created them. Do not
         # use this cleanup for an ordinary helper invocation with existing files.
         for path in (KEY_PATH, CONFIG_PATH):
+            if scenario == "signal-int":
+                require(not os.path.lexists(path), "signal_fixture_file_survived")
+                continue
             meta = path.lstat()
             require(stat.S_ISREG(meta.st_mode) and meta.st_uid == os.geteuid(),
                     "child_fixture_file_identity_invalid")
@@ -556,13 +972,26 @@ def main(argv=None):
                 result = run_actual(options.repo, options.internal_scenario, log_capture)
             finally:
                 logging.getLogger().removeHandler(handler)
+        if options.internal_scenario == "signal-int":
+            require(result == {"native_sigint_launcher_cleanup": "PASS"},
+                    "native_signal_result_invalid")
+            os.write(1, SIGNAL_DONE)
+            return 0
         if options.internal_scenario != "all":
             raise FixtureFailure("expected_abort_not_observed")
         run_failure_children(options.repo)
         result.update(status="PASS_ACTUAL_INSTALLED_SOURCE_FIXTURE", image_id_pin=IMAGE_ID,
                       image_identity_verification="HOST_DOCKER_INSPECT_REQUIRED",
+                      helper_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                      launcher_sha256=hashlib.sha256((options.repo /
+                          "scripts/lifecycle/sglang_file_auth.py").read_bytes()).hexdigest(),
+                      native_http_dependency_versions={name: importlib.metadata.version(name)
+                          for name in ("fastapi", "starlette", "uvicorn")},
                       hardware_discovery_stubs=list(HARDWARE_STUBS),
                       warmup_failure_and_timeout_cleanup="PASS",
+                      actual_sigint_native_uvicorn_launcher_cleanup="PASS",
+                      sigterm_sigquit="NOT_TESTED",
+                      signal_native_uvicorn_lifespan="DISABLED_MODEL_INITIALIZATION_NOT_TESTED",
                       model_loading="STUBBED_NOT_TESTED", gpu_execution="NOT_TESTED",
                       native_lifespan_model_serving_initialization="NOT_TESTED",
                       live_inference_and_agent_acceptance="NOT_TESTED")
