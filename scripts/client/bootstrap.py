@@ -30,7 +30,8 @@ def parser():
     result.add_argument("--context-tokens", required=True, type=int, help="Operator-supplied model context limit")
     result.add_argument("--output-tokens", required=True, type=int, help="Operator-supplied output limit")
     result.add_argument("--reasoning-effort", type=reasoning_effort,
-                        help="Optional literal low; omitted by default (new prefix required to change)")
+                        help="Optional literal none or low; none is explicit, omission keeps the default "
+                             "(new prefix required to change)")
     result.add_argument("--dry-run", "--plan", action="store_true", help="Validate and describe only; no writes/network/processes")
     return result
 

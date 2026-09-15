@@ -105,24 +105,26 @@ Use A1's [protected key entry procedure](agent-client.md#protected-key-file)
 during coordinated V1. V0 used a nonexistent local reference and did not fetch
 the VM key.
 
-## Optional low reasoning effort (A2O)
+## Optional explicit reasoning effort (A2O / Q38C)
 
-Add **`--reasoning-effort low`** to the bootstrap command when the backend
-handoff requires it. This extension accepts only the exact string `low`;
-omitting the option preserves V0's generated configuration and manifest shape.
+Add **`--reasoning-effort none`** or **`--reasoning-effort low`** when the backend
+handoff requires it. Only those exact strings are accepted; `none` is an explicit
+selection, distinct from omission. Omitting the option preserves V0's generated
+configuration and manifest shape.
 It does not assign an effort default to every model or expose a token budget.
 
-The optional manifest field is `bootstrap.json` → `reasoning_effort: "low"`.
+The optional manifest field is `bootstrap.json` → `reasoning_effort`.
 The generated model option is
-`provider.local.models[exact_model_id].options.reasoningEffort: "low"`.
+`provider.local.models[exact_model_id].options.reasoningEffort`, using the same
+selected literal `none` or `low`.
 OpenCode **1.18.31**, with bundled `@ai-sdk/openai-compatible` **2.0.41**, maps
-that option to request **top-level `reasoning_effort: "low"`**. See the
+that option to request **top-level `reasoning_effort`**, with that exact value. See the
 [pinned primary-source review](../reports/a2o-provider-source.md) and
 [actual-process synthetic wire evidence](../reports/a2o-opencode-reasoning.md).
 
 The dry-run JSON includes `reasoning_effort` only when selected. An identical
 bootstrap verifies the manifest, generated config and installed helper; changing
-between omitted and low requires a **new private prefix**. Never hand-edit
+between omitted, `none` and `low` requires a **new private prefix**. Never hand-edit
 installed config/manifest files. This is a bootstrap setting; the launcher has
 no effort override. Existing V0 installations remain usable with their copied
 V0 launcher; rerunning changed helper source against them requires a new prefix,
@@ -134,6 +136,17 @@ Keep the endpoint and protected key reference from the operator handoff. These
 are that service's initial values, not defaults for other models. Root must
 review A2O before V1 creates its new config. Actual GLM read/edit/test acceptance
 and continuation remain V1 work; A1's reasoning replay policy is unchanged.
+
+For the reviewed Q38 fast-no-thinking profile, use exact model `qwen3.8-27b`
+and **`--reasoning-effort none`**, with limits from the authorized runtime handoff.
+Pinned SGLang **0.5.19** maps that top-level value to false thinking switches;
+the reviewed server also supplies `--default-chat-template-kwargs
+'{"enable_thinking":false}'`. No per-request template field is required for this
+exact combination. The client adds no arbitrary body fields. See the
+[Q38C source proof and actual CLI wire report](../reports/q38c-client-none.md).
+This proof does not qualify native Q38 formatting, thinking behavior or live
+agent quality; those remain **NOT_TESTED by Q38C**, pending Worker1/V1 gates.
+Do not silently reuse GLM's `low` selection for Q38.
 
 ## Launcher and local provider
 
@@ -346,19 +359,22 @@ PYTHONDONTWRITEBYTECODE=1 python3 -W error::ResourceWarning \
   scripts/client/tests/wire_fixture.py --help
 PYTHONDONTWRITEBYTECODE=1 python3 -W error::ResourceWarning \
   scripts/client/tests/wire_fixture.py \
-  --work-root /absolute/private/new-a2o-wire-run
+  --work-root /absolute/private/new-q38c-wire-run
 ```
 
-This installs the committed npm lock into three fresh private prefixes (HTTPS
+This installs the committed npm lock into five fresh private prefixes (HTTPS
 to npm is needed for installation), starts a loopback synthetic HTTP listener,
-and runs the actual pinned launcher. It checks omitted effort and low effort
-for a GLM ID and a generic ID, ordinary requests, auxiliary requests, and real
-two-round `read` tool continuations. The fixture contents are disposable; no
+and runs the actual pinned launcher. It preserves default GLM and low GLM/generic
+regressions, adds default Qwen and explicit `none` Qwen, and checks ordinary
+requests, identified title requests, all auxiliary requests, and real two-round
+`read` tool continuations. The fixture contents are disposable; no
 host project, real key, inference backend, network tool or bash/edit permission
 grant is used. It preserves the launcher's environment and permission controls.
 This remains configuration isolation, not an OS sandbox.
 
-Every captured request must have the expected top-level effort presence/value.
+Every received request must have the expected top-level effort presence/value,
+with no template/body override. Received and validated counts must match; the
+report records request and CLI event counts plus installed package versions.
 The synthetic server asks OpenCode to read a file containing an unpredictable
 marker, then verifies the matching tool result in its next request. The runner
 also requires an actual completed read event and final text event. It caps
