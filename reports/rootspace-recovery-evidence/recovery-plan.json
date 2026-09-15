@@ -1,0 +1,115 @@
+{
+  "task": "ROOTSPACE",
+  "phase": "AUTHORIZED_EXACT_ARCHIVE_DRY_RUN",
+  "utc": "2026-09-15T04:58:47.130102+00:00",
+  "authorization": "../coordination-input.md and current user continuation explicitly authorize exactly two raw crash artifacts despite root capacity STOP",
+  "source_commit_preserved": "39189271c76338ac4573d1f6e5fc14618ad6fef8",
+  "root_before": {
+    "available_bytes": 3629473792,
+    "free_including_reserved_bytes": 4423245824,
+    "total_bytes": 15186501632
+  },
+  "identity_only": {
+    "schema_version": 1,
+    "roots": {
+      "backups": "/data/backups",
+      "build": "/data/build",
+      "containerd": "/data/containerd",
+      "docker": "/data/docker",
+      "hf_cache": "/data/hf-cache",
+      "logs": "/data/logs",
+      "models": "/data/models-large",
+      "secrets": "/data/services/secrets",
+      "services": "/data/services",
+      "state": "/data/services/installer"
+    },
+    "data": {
+      "path": "/data",
+      "mount": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+      "fstype": "ext4",
+      "source": "/dev/sdb1",
+      "device": "8:17",
+      "parents": [
+        "/dev/sdb",
+        "/dev/sdb1"
+      ]
+    },
+    "models": {
+      "path": "/data/models-large",
+      "mount": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+      "fstype": "ext4",
+      "source": "/dev/sdc1",
+      "device": "8:33",
+      "parents": [
+        "/dev/sdc",
+        "/dev/sdc1"
+      ]
+    },
+    "storage_mode": "existing",
+    "verified_roles": [
+      "data",
+      "models"
+    ]
+  },
+  "source_expected": [
+    {
+      "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+      "dev": 64512,
+      "inode": 266791,
+      "uid": 0,
+      "gid": 0,
+      "mode": 256,
+      "nlink": 1,
+      "size": 970436608,
+      "allocated_bytes": 970440704,
+      "mtime_ns": 1789446869471533227,
+      "ctime_ns": 1789446869681534442,
+      "atime_ns": 1789446866852518081
+    },
+    {
+      "path": "/var/crash/_usr_bin_python3.12.0.crash",
+      "dev": 64512,
+      "inode": 266790,
+      "uid": 0,
+      "gid": 0,
+      "mode": 416,
+      "nlink": 1,
+      "size": 608314664,
+      "allocated_bytes": 608321536,
+      "mtime_ns": 1789446866852518081,
+      "ctime_ns": 1789446866852518081,
+      "atime_ns": 1789446866853518087
+    }
+  ],
+  "archive_directory": "/data/logs/rootspace-recovery-20260915-archive",
+  "archive_directory_mode": "0700",
+  "archive_uid": 0,
+  "archive_gid": 0,
+  "files": [
+    {
+      "source": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+      "destination": "/data/logs/rootspace-recovery-20260915-archive/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+      "mode": "0400"
+    },
+    {
+      "source": "/var/crash/_usr_bin_python3.12.0.crash",
+      "destination": "/data/logs/rootspace-recovery-20260915-archive/_usr_bin_python3.12.0.crash",
+      "mode": "0400"
+    }
+  ],
+  "checks": [
+    "root/data/models UUIDs and protected current guard hashes/modes/ancestry before and after",
+    "anchored nonsymlink source/destination directory FDs",
+    "exact source metadata match and zero other active inode references before copying",
+    "copy both using O_EXCL; fsync; hash source stream, re-read source, independently reopen/re-hash archive; match all hashes",
+    "repeat source identity/owner/mode/size/mtime/ctime and in-use immediately before each exact unlink",
+    "unlink only the two listed unchanged originals; close own FDs; fsync source directories; verify absence",
+    "full registered and registered --root-guard must PASS after recovery; report warning below6GiB",
+    "GLM identity unchanged and zero established API connections plus last slot stopped/idle; no requests sent"
+  ],
+  "expected_root_release_allocated_bytes": 1578762240,
+  "other_deletion_paths": [],
+  "raw_bytes_destination": "VM /data/logs only; never stdout/worker/Git"
+}
