@@ -1,0 +1,402 @@
+{
+  "schema_version": 1,
+  "source_schema": "A1_ACCEPTANCE_SCHEMA_1",
+  "evidence_kind": "live",
+  "requested_model": "glm-5.3",
+  "status": "FAIL",
+  "elapsed_seconds": 15.656353,
+  "text_length_basis": "DECODED_A1_REPORT_STRINGS_AFTER_A1_REDACTION_NOT_RAW_WIRE",
+  "usage_accounting": "PER_REQUEST_ONLY_NO_TOTALS; MISSING_COUNTERS_ARE_NOT_REPORTED",
+  "opencode_e2e": "NOT_TESTED",
+  "clean_linux_install": "NOT_TESTED",
+  "limits": {
+    "max_rounds": 12,
+    "max_tool_calls": 32,
+    "max_tokens": 2048,
+    "max_output_bytes": 16384,
+    "max_response_bytes": 262144,
+    "request_timeout": 300.0,
+    "overall_timeout": 1800.0,
+    "test_timeout": 10.0,
+    "reasoning_effort": "low",
+    "stream_tools": false
+  },
+  "checks": {
+    "models": {
+      "status": "PASS",
+      "elapsed_seconds": 0.008487,
+      "rejected_http_status": "NOT_REPORTED",
+      "returned_model": "NOT_REPORTED",
+      "finish_reason": "NOT_REPORTED",
+      "stream_done": "NOT_REPORTED",
+      "content_lengths": {
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "reasoning_lengths": {
+        "string_values": 0,
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "failure_category": "NONE",
+      "diagnostics": "NOT_REPORTED"
+    },
+    "chat": {
+      "status": "PASS",
+      "elapsed_seconds": 6.50139,
+      "rejected_http_status": "NOT_REPORTED",
+      "returned_model": "glm-5.3",
+      "finish_reason": "stop",
+      "stream_done": false,
+      "content_lengths": {
+        "characters": 32,
+        "utf8_bytes": 32
+      },
+      "reasoning_lengths": {
+        "string_values": 0,
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "failure_category": "NONE",
+      "diagnostics": "NOT_REPORTED"
+    },
+    "streaming_end": {
+      "status": "PASS",
+      "elapsed_seconds": 2.00535,
+      "rejected_http_status": "NOT_REPORTED",
+      "returned_model": "glm-5.3",
+      "finish_reason": "stop",
+      "stream_done": true,
+      "content_lengths": {
+        "characters": 8,
+        "utf8_bytes": 11
+      },
+      "reasoning_lengths": {
+        "string_values": 0,
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "failure_category": "NONE",
+      "diagnostics": "NOT_REPORTED"
+    },
+    "invalid_model": {
+      "status": "FAIL",
+      "elapsed_seconds": 7.132644,
+      "rejected_http_status": "NOT_REPORTED",
+      "returned_model": "NOT_REPORTED",
+      "finish_reason": "NOT_REPORTED",
+      "stream_done": "NOT_REPORTED",
+      "content_lengths": {
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "reasoning_lengths": {
+        "string_values": 0,
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "failure_category": "model_identity_contract",
+      "diagnostics": "NOT_REPORTED"
+    },
+    "auth_missing_models": {
+      "status": "NOT_TESTED",
+      "elapsed_seconds": "NOT_REPORTED",
+      "rejected_http_status": "NOT_REPORTED",
+      "returned_model": "NOT_REPORTED",
+      "finish_reason": "NOT_REPORTED",
+      "stream_done": "NOT_REPORTED",
+      "content_lengths": {
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "reasoning_lengths": {
+        "string_values": 0,
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "failure_category": "NOT_REPORTED",
+      "diagnostics": "NOT_REPORTED"
+    },
+    "auth_missing_chat": {
+      "status": "NOT_TESTED",
+      "elapsed_seconds": "NOT_REPORTED",
+      "rejected_http_status": "NOT_REPORTED",
+      "returned_model": "NOT_REPORTED",
+      "finish_reason": "NOT_REPORTED",
+      "stream_done": "NOT_REPORTED",
+      "content_lengths": {
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "reasoning_lengths": {
+        "string_values": 0,
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "failure_category": "NOT_REPORTED",
+      "diagnostics": "NOT_REPORTED"
+    },
+    "auth_wrong_models": {
+      "status": "NOT_TESTED",
+      "elapsed_seconds": "NOT_REPORTED",
+      "rejected_http_status": "NOT_REPORTED",
+      "returned_model": "NOT_REPORTED",
+      "finish_reason": "NOT_REPORTED",
+      "stream_done": "NOT_REPORTED",
+      "content_lengths": {
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "reasoning_lengths": {
+        "string_values": 0,
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "failure_category": "NOT_REPORTED",
+      "diagnostics": "NOT_REPORTED"
+    },
+    "auth_wrong_chat": {
+      "status": "NOT_TESTED",
+      "elapsed_seconds": "NOT_REPORTED",
+      "rejected_http_status": "NOT_REPORTED",
+      "returned_model": "NOT_REPORTED",
+      "finish_reason": "NOT_REPORTED",
+      "stream_done": "NOT_REPORTED",
+      "content_lengths": {
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "reasoning_lengths": {
+        "string_values": 0,
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "failure_category": "NOT_REPORTED",
+      "diagnostics": "NOT_REPORTED"
+    },
+    "auth_correct_models": {
+      "status": "NOT_TESTED",
+      "elapsed_seconds": "NOT_REPORTED",
+      "rejected_http_status": "NOT_REPORTED",
+      "returned_model": "NOT_REPORTED",
+      "finish_reason": "NOT_REPORTED",
+      "stream_done": "NOT_REPORTED",
+      "content_lengths": {
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "reasoning_lengths": {
+        "string_values": 0,
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "failure_category": "NOT_REPORTED",
+      "diagnostics": "NOT_REPORTED"
+    },
+    "auth_correct_chat": {
+      "status": "NOT_TESTED",
+      "elapsed_seconds": "NOT_REPORTED",
+      "rejected_http_status": "NOT_REPORTED",
+      "returned_model": "NOT_REPORTED",
+      "finish_reason": "NOT_REPORTED",
+      "stream_done": "NOT_REPORTED",
+      "content_lengths": {
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "reasoning_lengths": {
+        "string_values": 0,
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "failure_category": "NOT_REPORTED",
+      "diagnostics": "NOT_REPORTED"
+    },
+    "tool_roundtrip": {
+      "status": "NOT_TESTED",
+      "elapsed_seconds": "NOT_REPORTED",
+      "rejected_http_status": "NOT_REPORTED",
+      "returned_model": "NOT_REPORTED",
+      "finish_reason": "NOT_REPORTED",
+      "stream_done": "NOT_REPORTED",
+      "content_lengths": {
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "reasoning_lengths": {
+        "string_values": 0,
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      },
+      "failure_category": "NOT_REPORTED",
+      "diagnostics": "NOT_REPORTED"
+    }
+  },
+  "requests": [
+    {
+      "sequence": 1,
+      "path": "/models",
+      "stream": false,
+      "http_status": 200,
+      "request_success": true,
+      "requested_model": "NOT_REPORTED",
+      "returned_model": "NOT_REPORTED",
+      "finish_reason": "NOT_REPORTED",
+      "usage": {
+        "prompt_tokens": "NOT_REPORTED",
+        "completion_tokens": "NOT_REPORTED",
+        "total_tokens": "NOT_REPORTED",
+        "prompt_tokens_details": {
+          "cached_tokens": "NOT_REPORTED",
+          "audio_tokens": "NOT_REPORTED"
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": "NOT_REPORTED",
+          "audio_tokens": "NOT_REPORTED",
+          "accepted_prediction_tokens": "NOT_REPORTED",
+          "rejected_prediction_tokens": "NOT_REPORTED"
+        }
+      },
+      "elapsed_seconds": 0.008416,
+      "diagnostics": "NOT_REPORTED"
+    },
+    {
+      "sequence": 2,
+      "path": "/chat/completions",
+      "stream": false,
+      "http_status": 200,
+      "request_success": true,
+      "requested_model": "glm-5.3",
+      "returned_model": "glm-5.3",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 18,
+        "completion_tokens": 11,
+        "total_tokens": 29,
+        "prompt_tokens_details": {
+          "cached_tokens": 10,
+          "audio_tokens": "NOT_REPORTED"
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": "NOT_REPORTED",
+          "audio_tokens": "NOT_REPORTED",
+          "accepted_prediction_tokens": "NOT_REPORTED",
+          "rejected_prediction_tokens": "NOT_REPORTED"
+        }
+      },
+      "elapsed_seconds": 6.500652,
+      "diagnostics": "NOT_REPORTED"
+    },
+    {
+      "sequence": 3,
+      "path": "/chat/completions",
+      "stream": true,
+      "http_status": 200,
+      "request_success": true,
+      "requested_model": "glm-5.3",
+      "returned_model": "glm-5.3",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": "NOT_REPORTED",
+        "completion_tokens": "NOT_REPORTED",
+        "total_tokens": "NOT_REPORTED",
+        "prompt_tokens_details": {
+          "cached_tokens": "NOT_REPORTED",
+          "audio_tokens": "NOT_REPORTED"
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": "NOT_REPORTED",
+          "audio_tokens": "NOT_REPORTED",
+          "accepted_prediction_tokens": "NOT_REPORTED",
+          "rejected_prediction_tokens": "NOT_REPORTED"
+        }
+      },
+      "elapsed_seconds": 2.004981,
+      "diagnostics": "NOT_REPORTED"
+    },
+    {
+      "sequence": 4,
+      "path": "/chat/completions",
+      "stream": false,
+      "http_status": 200,
+      "request_success": true,
+      "requested_model": "INVALID_MODEL_PROBE",
+      "returned_model": "glm-5.3",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 15,
+        "completion_tokens": 25,
+        "total_tokens": 40,
+        "prompt_tokens_details": {
+          "cached_tokens": 11,
+          "audio_tokens": "NOT_REPORTED"
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": "NOT_REPORTED",
+          "audio_tokens": "NOT_REPORTED",
+          "accepted_prediction_tokens": "NOT_REPORTED",
+          "rejected_prediction_tokens": "NOT_REPORTED"
+        }
+      },
+      "elapsed_seconds": 7.131564,
+      "diagnostics": "NOT_REPORTED"
+    }
+  ],
+  "agent": {
+    "status": "NOT_TESTED",
+    "elapsed_seconds": "NOT_REPORTED",
+    "failure_category": "NOT_REPORTED",
+    "diagnostics": "NOT_REPORTED",
+    "final_answer_lengths": {
+      "characters": "NOT_REPORTED",
+      "utf8_bytes": "NOT_REPORTED"
+    },
+    "rounds": [],
+    "tools": [],
+    "tool_counts": {},
+    "model_tool_rounds_observed": 0,
+    "tool_calls_observed": 0,
+    "tool_result_count": 0,
+    "evidence": {
+      "initial_test": {
+        "status": "NOT_TESTED",
+        "passed": "NOT_REPORTED",
+        "exit_code": "NOT_REPORTED",
+        "elapsed_seconds": "NOT_REPORTED",
+        "command": "NOT_REPORTED",
+        "implementation_sha256": "NOT_REPORTED",
+        "tests_sha256": "NOT_REPORTED",
+        "output_lengths": {
+          "characters": "NOT_REPORTED",
+          "utf8_bytes": "NOT_REPORTED"
+        },
+        "failure_classification": "NOT_REPORTED",
+        "assertion_error_occurrences": "NOT_REPORTED",
+        "expected_initial_source_hash_matches": "NOT_REPORTED"
+      },
+      "final_test": {
+        "status": "NOT_TESTED",
+        "passed": "NOT_REPORTED",
+        "exit_code": "NOT_REPORTED",
+        "elapsed_seconds": "NOT_REPORTED",
+        "command": "NOT_REPORTED",
+        "implementation_sha256": "NOT_REPORTED",
+        "tests_sha256": "NOT_REPORTED",
+        "output_lengths": {
+          "characters": "NOT_REPORTED",
+          "utf8_bytes": "NOT_REPORTED"
+        }
+      },
+      "implementation_changed": "NOT_REPORTED",
+      "implementation_sha256": "NOT_REPORTED",
+      "tests_unchanged": "NOT_REPORTED",
+      "tests_sha256": "NOT_REPORTED",
+      "expected_tests_sha256": "NOT_REPORTED",
+      "success": "NOT_REPORTED",
+      "diff_lengths": {
+        "characters": "NOT_REPORTED",
+        "utf8_bytes": "NOT_REPORTED"
+      }
+    }
+  }
+}
