@@ -1,0 +1,3 @@
+Available devices:
+  CUDA0: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (97249 MiB, 79836 MiB free)
+  CUDA1: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (97249 MiB, 83724 MiB free)

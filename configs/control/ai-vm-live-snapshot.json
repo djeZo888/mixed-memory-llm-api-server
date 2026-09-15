@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "reviewed_source_selection",
-  "status": "OWNER_FINAL_GLM_RUNTIME_DEPLOYMENT_AND_PROOF_CLOSURE_REQUIRED",
+  "status": "SOURCE_BOUND_LIVE_ACCEPTANCE_NOT_TESTED",
   "source_root": "/usr/local/lib/llm-server/control-api",
   "config_root": "/usr/local/lib/llm-server/control-api/configs",
   "source_closure_manifest": "scripts/control/source-closure.json",
@@ -9,16 +9,32 @@
     {
       "id": "glm-5.3-ud-q4-k-xl",
       "model_id": "unsloth/GLM-5.3-GGUF",
-      "runtime": null,
+      "runtime": "llama-cpp-v0.4.1-d3br",
       "network_role": "glm",
-      "composition_owner": "D3PD/D3T",
-      "runtime_source": null,
-      "runtime_sha256": null,
-      "measured_image_id": null,
-      "patched_image_proof": null,
-      "recipe_dependency_closure": null,
-      "deployment_source": null,
-      "deployment_sha256": null
+      "composition_owner": "D3RD (D3BR/D3T)",
+      "runtime_source": "configs/runtimes/llama-cpp-v0.4.1-d3br.json",
+      "runtime_sha256": "d073105a70540df73cef325df7fdcfa32651f5a6aa8387b584708fb51b802d50",
+      "measured_image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+      "patched_image_proof": {
+        "path": "reports/d3rp-runtime-proof.json",
+        "sha256": "7babbd505096b86b801d57f5050e46eb28b330f80617000d886f5314bd590615"
+      },
+      "recipe_dependency_closure": {
+        "containers/llama-cpp/Dockerfile.d3p": "704fe3dcbcddd4497147b2b12b09ac674cb1b7c2ce2b049197620691b6acd92a",
+        "containers/llama-cpp/Dockerfile.d3p.dockerignore": "875afccc85a373f21e7fc8197b2c91ffd6a8ae321aef56767a5099c7fe7d4761",
+        "containers/llama-cpp/prepare-d3p-source.py": "47be70ebc01f7f5ff6d790c510bc9bf1ef9cf604ed725449ec3e52548798138a",
+        "containers/llama-cpp/build-d3p-runtime.sh": "67c5124ff21ec4a0e56e8678b6e888300c11aa0aa33b2e05ffb80627e6bf3a9f",
+        "containers/llama-cpp/d3p-source.json": "a073747a339995e3dc6f1b509c7d977765d46f1959340ee4b2895230bf7c13c7",
+        "containers/llama-cpp/strict-model-chat.patch": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b"
+      },
+      "deployment_source": "configs/deployments/glm-5.3-ud-q4-k-xl-n76-32k.json",
+      "deployment_sha256": "3d4e9124ccc9dcc3a2864040bedb5dcc43332166a1a1586ce0b98a78acfb279d",
+      "deployment_sources": {
+        "configs/deployments/glm-5.3-ud-q4-k-xl-n76-32k.json": "3d4e9124ccc9dcc3a2864040bedb5dcc43332166a1a1586ce0b98a78acfb279d",
+        "configs/deployments/glm-5.3-ud-q4-k-xl-n76-native1m.json": "a15c41c0532f565720c0ead787e0b5ca0908b467e691d3bfad937c839243b47d"
+      },
+      "context_evidence": "declared_only",
+      "capability_status": "NOT_TESTED"
     },
     {
       "id": "qwen38-27b-fp8",
