@@ -250,17 +250,30 @@ class Manager:
 
     def persistent_json(self, path, value):
         """I1b owns directory anchoring; all paths below the anchor are relative."""
-        root = Path(self.binding.path('data'))
+        data = Path(self.binding.path('data'))
         target = Path(path)
-        require(target != root and target.is_relative_to(root), 'persistent_path_outside_data')
+        require(str(target) == str(path), 'invalid_persistent_path')
+        require(target != data and target.is_relative_to(data), 'persistent_path_outside_data')
+        require(self.binding.path('data', str(target.relative_to(data))) == str(target),
+                'invalid_persistent_path')
+        # The coincident data/models root is models-owned. Durable lifecycle
+        # state and reports belong below a more-specific registered service/log
+        # root; let the actual writer retain final path-role authorization.
+        candidates = [(Path(self.binding.path(role)), role) for role in ('services', 'state', 'logs')]
+        candidates = [(root, role) for root, role in candidates
+                      if root != data and root.is_relative_to(data)
+                      and target != root and target.is_relative_to(root)]
+        require(bool(candidates), 'persistent_path_outside_service_roots')
+        root, role = max(candidates, key=lambda item: len(item[0].parts))
         relative = str(target.relative_to(root))
-        require(self.binding.path('data', relative) == str(target), 'invalid_persistent_path')
-        self.binding.validate_path('data', str(target))
+        require(self.binding.path(role, relative) == str(target), 'invalid_persistent_path')
+        self.binding.validate_path(role, str(target))
         writer = self.persistent_writer()
         try:
             with self.binding.mounted_guard(writer, roles=('data',)) as guard:
                 with _entered_storage_context(writer.AnchoredRoot(str(root), guard)) as anchored:
-                    anchored.mkdir(str(Path(relative).parent), mode=0o700, parents=True)
+                    if Path(relative).parent != Path('.'):
+                        anchored.mkdir(str(Path(relative).parent), mode=0o700, parents=True)
                     anchored.atomic_json(relative, value)
                     anchored.check()
         except Exception:
@@ -732,6 +745,11 @@ class Manager:
                 if m["target"] not in {d["auth"]["container_key_file"], qwen_next.LAUNCHER_TARGET}:
                     require(source.is_dir(), "mount_source_not_directory")
         require(self.docker.capture("info", "--format", "{{.DockerRootDir}}").strip() == self.binding.path('data', 'docker'), "docker_root_outside_data")
+        if not d.get('legacy'):
+            # U1 preflights under its borrowed lease before stopping the old
+            # backend. Reuse the exact read-only local image/argument checks;
+            # _start still repeats create_args before container creation.
+            self.create_args(d)
 
     def create_args(self, d: dict) -> list[str]:
         self.validate_deployment(d)

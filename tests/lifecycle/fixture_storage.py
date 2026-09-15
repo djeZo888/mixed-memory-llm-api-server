@@ -27,11 +27,13 @@ class HistoricalBinding:
         self.identity = copy.deepcopy(self.registry)
 
     def path(self, role, suffix=''):
-        if role not in {'data', 'models'} or not isinstance(suffix, str) or (suffix and
+        if role not in {'data', 'models', *self.registry['roots']} or not isinstance(suffix, str) or (suffix and
                 (not re.fullmatch(r'[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*', suffix)
                  or any(p in {'.', '..'} for p in suffix.split('/')))):
             raise BindingError('invalid_storage_suffix')
-        return self.registry[role]['path'] + ('/' + suffix if suffix else '')
+        root = (self.registry[role]['path'] if role in {'data', 'models'}
+                else self.registry['roots'][role])
+        return root + ('/' + suffix if suffix else '')
 
     def verify(self, roles=('data', 'models')):
         return copy.deepcopy(self.registry)

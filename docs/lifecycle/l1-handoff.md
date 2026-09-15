@@ -4,6 +4,8 @@ L1 is source-only. The server role remains API-only. No host installation,
 model acquisition, build, activation, key operation, disk mutation, GPU test or
 boot occurred on the worker. See [source report](../../reports/l1-registered-lifecycle.md).
 Full installer/production apply remains blocked on reviewed installer completion.
+The bounded [L1B corrections and U1B preflight contract](l1b-handoff.md)
+supersede the original writer-consumer gaps below; I1c acceptance stays pending.
 
 ## Public imports and ownership
 
@@ -96,31 +98,35 @@ Manager consumes I1b `install.storage_io.MountedStorageGuard(storage)` and
 
 ```python
 with binding.mounted_guard(storage_io, roles=('data',)) as guard:
-    with storage_io.AnchoredRoot(binding.path('data'), guard) as data:
-        data.mkdir('services/llm-manager/active')
-        data.atomic_json('services/llm-manager/active/active.json', stopped_state)
+    with storage_io.AnchoredRoot(binding.path('services'), guard) as data:
+        data.mkdir('llm-manager/active')
+        data.atomic_json('llm-manager/active/active.json', stopped_state)
         data.check()
 ```
 
 `binding.mounted_guard(storage_io, roles=('data','models'))` yields a callable
-checked snapshot guard with `verify_full()`. It compares captured stable binding
+checked snapshot guard with `verify_full()` and `check_path(actual_absolute_path)`.
+It compares captured stable binding
 identity on every returned snapshot, including any full-check result. It calls
 the actual shared `verify_full()` before and after the operation and closes the
 shared context on success/error, including entry failures after descriptor
 construction. I1b retains registration descriptors, rereads mountinfo, and owns
-anchored writes/commit checks. The current guard tracks named roots; a new
-same-device mount below a deeper descendant remains a required failing shared
-integration test. See the report; full mount-race acceptance is not claimed.
+anchored writes/commit checks. Reviewed I1W tracks actual operation paths and
+rejects newly inserted descendant mounts, including same-device mounts. L1B
+forwards that capability without dropping binding identity/error checks. The
+worker test proves successful preflight and opened anchor before synthetic
+insertion/refusal; actual Linux mount-race acceptance remains separate.
 Relative `mkdir`, `stat`, `read_json`, `atomic_json` and `check` stay inside that
 context. No duplicate writer, timed cache or preflight-only guard is substituted.
-The actual reviewed I1b writer source `6e04a510` is merged. Tests distinguish its
+The actual reviewed I1W writer source `bb007686` is merged. Tests distinguish its
 real descriptor I/O with synthetic worker mount observations from injected API
 contracts and actual Linux mounts. Injected contracts are not integrated evidence.
 
-The initial I1 verifier and frozen mounted-guard constructor check both roles
-even for a data-only request. The adapter forwards `roles` only if the actual
-shared constructor explicitly supports it. Until I1c supplies that role-aware
-guard, missing models can prevent durable stop state.
+The checked-in initial I1 Storage verifier lacks the required role selection.
+The actual I1W mounted guard requires explicit role attestation for data-only
+requests and does not invent it. Until I1c supplies its published role-capable
+Storage, production data-only persistence fails closed. Local full-role writer
+fixtures are not a passing data-only integration result.
 Emergency stop still uses the protected `/run/llmctl/recovery.json` container
 ID/image/owner/instance identity. Missing data, registry, profile, key or model
 cannot authorize a new container or stop an unrelated one. Stop does not read
