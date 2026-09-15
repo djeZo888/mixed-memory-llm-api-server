@@ -29,5 +29,19 @@
         "launch_server"
       ]
     }
+  },
+  "actual_image_helper": {
+    "path": "tests/lifecycle/sglang_fixture/run_pinned_image.py",
+    "sha256": "c08ae64da3b04abcebdf241920adb40fbfaf8a93daa075dffd64d5f86013cfc7",
+    "source_report": "reports/f1e2-source.md",
+    "execution_status": "NOT_TESTED_ACTUAL_IMAGE_F1E2",
+    "scope": "Installed native ASGI model_info/auth/ServerArgs/key-reader cases; native Uvicorn SIGINT with lifespan off and synthetic engine descendants; no AST fallback.",
+    "key_file_cases": 14,
+    "wrong_owner": "Actual fchown only if permitted; otherwise NOT_TESTED_CAPABILITY_UNAVAILABLE",
+    "rejected_cli_cases": 19,
+    "normalized_mode_fault_cases": 18,
+    "model_engine_cuda": "SYNTHETIC_COLLABORATORS_NO_REAL_INFERENCE",
+    "native_full_lifespan": "NOT_TESTED_SEPARATE_F1D_PROOF",
+    "actual_command_reference": "docs/lifecycle/f1s-handoff.md#shipped-actual-image-auth-fixture"
   }
 }

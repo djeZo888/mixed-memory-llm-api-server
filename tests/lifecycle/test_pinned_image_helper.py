@@ -4,7 +4,7 @@ These tests do not claim execution of the pinned SGLang image. Native source
 and framework behavior belongs to run_pinned_image.py --actual-image only.
 """
 import asyncio
-from contextlib import redirect_stdout
+from contextlib import nullcontext, redirect_stdout
 import hashlib
 import importlib.util
 import io
@@ -27,6 +27,14 @@ spec.loader.exec_module(helper)
 
 
 class PinnedImageHelperControlTests(unittest.TestCase):
+    def test_current_helper_provenance_is_exact_and_not_live_evidence(self):
+        provenance = json.loads(HELPER.with_name("provenance.json").read_text())
+        current = provenance["actual_image_helper"]
+        self.assertEqual(current["path"], str(HELPER.relative_to(ROOT)))
+        self.assertEqual(current["sha256"], hashlib.sha256(HELPER.read_bytes()).hexdigest())
+        self.assertEqual(current["execution_status"], "NOT_TESTED_ACTUAL_IMAGE_F1E2")
+        self.assertEqual(provenance["image_id"], helper.IMAGE_ID)
+
     def test_explicit_actual_image_mode_required(self):
         with self.assertRaises(helper.FixtureFailure):
             helper.parse_options(["--repo", "/fixture"])
@@ -137,8 +145,9 @@ class PinnedImageHelperControlTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             key, config = Path(directory) / "key", Path(directory) / "config"
             with patch.object(helper, "KEY_PATH", key), patch.object(helper, "CONFIG_PATH", config), \
-                 patch.object(helper.subprocess, "run", return_value=SimpleNamespace(
-                     returncode=2, stdout=b'{"status":"FAIL"}', stderr=b"")) as child:
+                 patch.object(helper, "disposable_child", return_value=nullcontext(
+                     SimpleNamespace(returncode=2))) as child, \
+                 patch.object(helper, "read_process_output", return_value=(b'{"status":"FAIL"}', b"")):
                 with self.assertRaisesRegex(helper.FixtureFailure, "warmup_failure_subprocess_not_closed"):
                     helper.run_failure_children(Path("/fixture"))
                 args = child.call_args.args[0]
