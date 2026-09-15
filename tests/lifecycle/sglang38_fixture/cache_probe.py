@@ -18,6 +18,7 @@ import io
 import json
 import os
 from pathlib import Path
+import resource
 import stat
 import sys
 
@@ -84,7 +85,7 @@ FAILURE_CODES = frozenset((
     "cache_probe_hash_mismatch", "cache_resolved_path_mismatch",
     "cache_resolver_source_mismatch", "cache_result_invalid", "cache_result_mismatch",
     "cache_result_types_invalid", "cache_write_failed", "empty_model_and_secret_tmpfs_required",
-    "fixture_repository_required", "gpu_device_node_present", "gpu_visible", "home_changed",
+    "fixture_repository_required", "fixture_core_limit_required", "gpu_device_node_present", "gpu_visible", "home_changed",
     "installed_package_missing", "installed_version_mismatch", "isolation_changed",
     "launcher_source_hash_mismatch", "linux_pinned_image_required",
     "no_gpu_runtime_environment_required", "private_directory_required", "private_tmpfs_required",
@@ -203,6 +204,9 @@ def verify_isolation():
             and os.environ.get("NVIDIA_DRIVER_CAPABILITIES") == "compute,utility"
             and os.environ.get("CUDA_VISIBLE_DEVICES") == "",
             "no_gpu_runtime_environment_required")
+    # Linux fs/coredump.c aborts piped core handlers at a one-byte soft limit.
+    # Verify the inherited container limit before any native library imports.
+    require(resource.getrlimit(resource.RLIMIT_CORE) == (1, 1), "fixture_core_limit_required")
     check_mounts(Path("/proc/self/mountinfo").read_text())
     for target in (Path("/cache"), Path("/models"), Path("/run/secrets")):
         meta = target.lstat()

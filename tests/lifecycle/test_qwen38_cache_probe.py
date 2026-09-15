@@ -73,6 +73,7 @@ def synthetic_isolation(*, mounts=None, metadata=None, contents=None, devices=()
 
     with ExitStack() as stack:
         stack.enter_context(patch.object(probe.sys, "platform", "linux"))
+        stack.enter_context(patch.object(probe.resource, "getrlimit", return_value=(1, 1)))
         stack.enter_context(patch.object(probe.os, "geteuid", return_value=1000))
         # Linux dev_t observations, independent of the macOS host encoding.
         stack.enter_context(patch.object(probe.os, "major", side_effect=lambda value: value[0]))
@@ -95,6 +96,18 @@ class CacheProbeTests(unittest.TestCase):
             with self.assertRaisesRegex(probe.ProbeError, "linux_pinned_image_required"):
                 probe.verify_isolation()
         read.assert_not_called()
+
+    def test_inherited_core_limit_is_exact_before_filesystem_or_native_imports(self):
+        for limits in ((0, 0), (-1, -1), (1, -1), (0, 1), (1024, 1024)):
+            with self.subTest(limits=limits), patch.object(probe.sys, "platform", "linux"), \
+                    patch.dict(os.environ, runtime_environment(), clear=True), \
+                    patch.object(probe.resource, "getrlimit", return_value=limits), \
+                    patch.object(probe.Path, "read_text") as read, \
+                    patch.object(probe.importlib, "import_module") as native:
+                with self.assertRaisesRegex(probe.ProbeError, "fixture_core_limit_required"):
+                    probe.verify_isolation()
+                read.assert_not_called()
+                native.assert_not_called()
 
     def test_measured_inner_none_and_void_pass_real_isolation_without_environment_rewrite(self):
         for visible in ("none", "void"):

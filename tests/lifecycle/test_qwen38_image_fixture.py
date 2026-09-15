@@ -131,6 +131,8 @@ class Qwen38ImageFixtureTests(unittest.TestCase):
         self.assertNotIn("--privileged", command)
         self.assertEqual(command[command.index("--runtime") + 1], "nvidia")
         self.assertEqual(command[command.index("--log-driver") + 1], "none")
+        self.assertEqual(command.count("--ulimit"), 1)
+        self.assertEqual(command[command.index("--ulimit") + 1], "core=1:1")
         self.assertEqual([value for value in command if value.startswith("NVIDIA_VISIBLE_DEVICES=")],
                          ["NVIDIA_VISIBLE_DEVICES=none"])
         self.assertIn("NVIDIA_DRIVER_CAPABILITIES=compute,utility", command)
