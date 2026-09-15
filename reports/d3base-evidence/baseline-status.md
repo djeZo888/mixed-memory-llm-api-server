@@ -100,3 +100,7 @@ Backend prompt1320 evaluated tokens/22135.537ms; decode64 tokens/112294.399ms. M
 Sole request lease RELEASED; tunnel31379 absent and port54597 unbound. Private checkpoint/key retained.
 Checkpoint remains PENDING_RECONCILIATION/cold_cache_NOT_TESTED; operational completion reconciled by complete response, native slot release, no API connections and zero owned children.
 Baseline/candidate/occupied proof has not passed; highest_proven_window=null.
+
+## Coordinator final acceptance
+
+Root accepts the completed request as a **PARTIALLY CACHED baseline** (50 cached,1320 evaluated) for later candidate comparison using identical body hashes/native timings with cache difference disclosed. No zero-cache retry, duplicate harness or more requests. Lease already released and tunnel cleaned at03:58:45 UTC. Checkpoint remains unchanged PENDING_RECONCILIATION/cold_cache_NOT_TESTED; no STAGE_PASS is manufactured. Source candidate-gate reuse is a later-owner integration gap.
