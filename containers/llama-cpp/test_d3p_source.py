@@ -9,6 +9,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -76,15 +77,103 @@ class SourceTests(unittest.TestCase):
     def prepare(self, check_only=False):
         return source_helper.prepare(self.source, self.recipe, check_only)
 
+    def snapshot(self):
+        # Include every Git index/object and worktree file's bytes and mode.
+        return {str(path.relative_to(self.source)):
+                (path.lstat().st_mode,
+                 os.readlink(path) if path.is_symlink() else
+                 path.read_bytes() if path.is_file() else None)
+                for path in self.source.rglob("*")}
+
+    def copy_checkout(self):
+        original = self.source
+        self.source = original.parent / "copied-source"
+        shutil.copytree(original, self.source, copy_function=shutil.copy2)
+        self.assertEqual((original / ".git/index").read_bytes(),
+                         (self.source / ".git/index").read_bytes())
+        self.assertNotEqual((original / "sample.txt").stat().st_ino,
+                            (self.source / "sample.txt").stat().st_ino)
+
     def test_check_only_preserves_every_checkout_and_git_file(self):
-        def snapshot():
-            return {str(path.relative_to(self.source)): path.read_bytes()
-                    for path in self.source.rglob("*") if path.is_file()}
-        before = snapshot()
+        before = self.snapshot()
         result = self.prepare(check_only=True)
         self.assertEqual(result["derived_tree"], self.derived)
         self.assertEqual(result["source_state"], "verified-upstream")
-        self.assertEqual(snapshot(), before)
+        self.assertEqual(self.snapshot(), before)
+
+    def assert_original_index_failure_then_corrected_apply(self):
+        before = self.snapshot()
+        self.assertEqual(self.prepare(check_only=True)["source_state"], "verified-upstream")
+        self.assertEqual(self.snapshot(), before)
+        # This is the original helper's exact first APPLY subprocess. It fails
+        # on the real stale index; no Git result or failure is mocked here.
+        with self.assertRaisesRegex(RuntimeError, "sample.txt: does not match index"):
+            source_helper.git(self.source, "apply", "--check", "--index",
+                              "--whitespace=error-all",
+                              str(self.recipe / source_helper.PATCH_FILE))
+        self.assertEqual(self.snapshot(), before)
+        self.assertEqual(self.prepare()["source_state"], "verified-patched")
+        self.assertEqual(self.git("write-tree").decode().strip(), self.derived)
+        self.assertEqual(self.git("rev-parse", "HEAD").decode().strip(), self.base)
+
+    def test_copied_checkout_reproduces_original_index_failure_then_applies(self):
+        self.copy_checkout()
+        self.assert_original_index_failure_then_corrected_apply()
+
+    def test_stat_invalidated_checkout_reproduces_original_index_failure_then_applies(self):
+        path = self.source / "sample.txt"
+        previous = path.stat()
+        # Deliberately invalidate only cached stat data, retaining bytes/mode.
+        os.utime(path, ns=(previous.st_atime_ns, previous.st_mtime_ns - 2_000_000_000))
+        self.assert_original_index_failure_then_corrected_apply()
+
+    def assert_refused_before_refresh(self, pattern):
+        before = self.snapshot()
+        with mock.patch.object(source_helper, "git", wraps=source_helper.git) as calls:
+            with self.assertRaisesRegex(RuntimeError, pattern):
+                self.prepare()
+        self.assertFalse(any(call.args[1:3] == ("update-index", "--refresh")
+                             for call in calls.call_args_list))
+        self.assertEqual(self.snapshot(), before)
+
+    def test_copied_same_size_raw_tampering_refused_before_refresh(self):
+        self.copy_checkout()
+        # Make status trust size/mtime, then preserve both while changing bytes.
+        # The helper's independent raw-blob check must still reject this source.
+        self.git("config", "core.trustctime", "false")
+        self.git("config", "core.checkStat", "minimal")
+        path = self.source / "sample.txt"
+        timestamp = 1_700_000_000_000_000_000
+        os.utime(path, ns=(timestamp, timestamp))
+        self.git("update-index", "--refresh")
+        previous = path.stat()
+        path.write_bytes(b"tampered\n")
+        os.utime(path, ns=(previous.st_atime_ns, previous.st_mtime_ns))
+        self.assertEqual(path.stat().st_size, previous.st_size)
+        self.assertEqual(source_helper.git(self.source, "status", "--porcelain=v1"), b"")
+        self.assert_refused_before_refresh("tracked content differs from pinned Git blob")
+
+    def test_copied_mode_tampering_refused_before_refresh(self):
+        self.copy_checkout()
+        self.git("config", "core.filemode", "false")
+        (self.source / "sample.txt").chmod(0o755)
+        self.assert_refused_before_refresh("tracked executable mode changed")
+
+    def test_copied_index_tampering_refused_before_refresh(self):
+        self.copy_checkout()
+        other_blob = self.git("rev-parse", "HEAD:second.txt").decode().strip()
+        self.git("update-index", "--cacheinfo", "100644", other_blob, "sample.txt")
+        self.assert_refused_before_refresh("dirty")
+
+    def test_copied_same_size_patch_tampering_refused_before_refresh(self):
+        self.copy_checkout()
+        patch = self.recipe / source_helper.PATCH_FILE
+        previous = patch.read_bytes()
+        changed = previous.replace(b"+patched\n", b"+altered\n")
+        self.assertNotEqual(changed, previous)
+        self.assertEqual(len(changed), len(previous))
+        patch.write_bytes(changed)
+        self.assert_refused_before_refresh("patch SHA256 mismatch")
 
     def test_exact_apply_records_tree_without_fabricating_commit(self):
         result = self.prepare()
@@ -141,10 +230,10 @@ class SourceTests(unittest.TestCase):
             self.prepare()
 
     def test_wrong_derived_tree_fails_before_source_changes(self):
+        self.copy_checkout()
         self.manifest["derived_tree"] = "0" * 40
         self.save_manifest()
-        with self.assertRaisesRegex(RuntimeError, "derived tree mismatch"):
-            self.prepare()
+        self.assert_refused_before_refresh("derived tree mismatch")
         self.assertFalse(self.git("status", "--porcelain"))
         self.assertEqual((self.source / "sample.txt").read_text(), "original\n")
 
@@ -173,10 +262,11 @@ class SourceTests(unittest.TestCase):
             path.unlink()
 
     def test_index_flags_cannot_hide_changes(self):
+        self.copy_checkout()
         for flag in ("assume-unchanged", "skip-worktree"):
             self.git("update-index", "--" + flag, "sample.txt")
-            with self.subTest(flag=flag), self.assertRaisesRegex(RuntimeError, "hidden"):
-                self.prepare()
+            with self.subTest(flag=flag):
+                self.assert_refused_before_refresh("hidden")
             self.git("update-index", "--no-" + flag, "sample.txt")
 
     def test_filemode_config_cannot_hide_executable_change(self):
