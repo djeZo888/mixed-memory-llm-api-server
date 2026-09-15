@@ -1,0 +1,29 @@
+{
+  "actual_fixture_invocations": 1,
+  "base_commit": "1e65e17534ae6be3a23ec54bda800ad64fcee7d8",
+  "cleanup": "PASS_SHIPPED_AND_INDEPENDENT_EXACT_ID_NAME_ABSENCE",
+  "context_131072": "FAIL",
+  "context_262144": "NOT_RUN",
+  "final_commit_bundle_attribution": "recorded after commit in ../Q38VR2-handoff.md",
+  "grep_secret_check": {
+    "exit": 1,
+    "pattern": "-----BEGIN ([A-Z ]+ )?PRIVATE KEY-----|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|hf_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9_-]{20,}|(api[_-]?key|password|token)[[:space:]]*[:=][[:space:]]*\"[^\"[:space:]]{12,}\"",
+    "status": "PASS_NO_MATCHES",
+    "tool": "rg"
+  },
+  "independent_launch_review": "NO_CONCRETE_BLOCKER",
+  "independent_report_review": "NO_CONCRETE_BLOCKER",
+  "local_preparation_warnings": [
+    "Postcheck script preparation substring error corrected before VM invocation; fixture not rerun.",
+    "Initial rg pattern missing -- option terminator; corrected check returned no matches."
+  ],
+  "new_source_tests": "NOT_RUN_REPORT_ONLY",
+  "push": "NOT_REQUESTED_NOT_PERFORMED",
+  "receipt": "NOT_PRODUCED",
+  "registered_guards": "PASS_BEFORE_AND_AFTER",
+  "root_stop_bytes": 4294967296,
+  "source_edits": 0,
+  "source_manifest_committed_bytes_checked": 870,
+  "status": "PASS_REPORT_ONLY_VERIFICATION",
+  "whitespace_check": "PASS"
+}

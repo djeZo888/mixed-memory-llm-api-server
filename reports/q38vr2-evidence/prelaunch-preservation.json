@@ -1,0 +1,22 @@
+{
+  "control": {
+    "ActiveState": "inactive",
+    "MainPID": "0",
+    "SubState": "dead",
+    "UnitFileState": "disabled"
+  },
+  "glm_selected_metadata_sha256": "f17d3cf7bfcc2ac7ef087e41b078395a69a53d8bdbdef5d6015b30ec62cad404",
+  "previous_exact_owned_container_absent": true,
+  "reviewed_source": {
+    "file_count": 870,
+    "root": {
+      "dev": 2065,
+      "gid": 0,
+      "ino": 44433419,
+      "mode": "0555",
+      "nlink": 9,
+      "uid": 0
+    },
+    "status": "PASS"
+  }
+}
