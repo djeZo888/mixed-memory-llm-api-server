@@ -1,0 +1,10 @@
+test_anchored_reads_and_refusals (__main__.SwapContract.test_anchored_reads_and_refusals) ... ok
+test_binding_change (__main__.SwapContract.test_binding_change) ... ok
+test_exact_path_forms (__main__.SwapContract.test_exact_path_forms) ... ok
+test_gates_host_movement_is_diagnostic (__main__.SwapContract.test_gates_host_movement_is_diagnostic) ... ok
+test_integer_bytes (__main__.SwapContract.test_integer_bytes) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.003s
+
+OK

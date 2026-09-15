@@ -1,0 +1,220 @@
+import hashlib,json,os,re,select,signal,subprocess,sys,time
+from pathlib import Path
+AgentError=RuntimeError
+GIB=1073741824
+NATIVE_CONTEXT=1048576
+BASELINE_IMAGE='sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62'
+MOUNTS={'/data': '8daf56f1-5649-4163-9d87-919c2d271875', '/data/models-large': 'a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a'}
+ERROR_PATTERNS={'cuda': 'CUDA error|unsupported.*(?:kernel|arch)|NVRM: Xid', 'oom': 'out of memory|\\bOOM\\b|Killed process', 'storage': 'SIGBUS|I/O error|EXT4-fs error|Buffer I/O|blk_update_request.*error', 'runtime': 'GGML_ASSERT|illegal instruction|error:|failed to (?:allocate|reserve)', 'fusion_fallback': '(?:Flash Attention|Lightning Indexer).*not supported|(?:flash_attn|fused_lid).*disabled'}
+BEFORE={'registered_mounts': {'/data': '8daf56f1-5649-4163-9d87-919c2d271875', '/data/models-large': 'a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a'}}
+FULL={'vmstat': {}, 'host_swap_used_kib': 0, 'gpus': [], 'native': None}
+class Error(AgentError):
+    """Safe fixed diagnostic; never contains raw command/log output."""
+
+def parse_log_line(line, state):
+    """Consume one Docker log message; retain numeric diagnostics only."""
+    state["log_lines"] += 1
+    for name, pattern in ERROR_PATTERNS.items():
+        state["errors"][name] += len(re.findall(pattern, line, re.I))
+    slot = re.search(r"initializing, n_slots = (\d+), n_ctx_slot = (\d+)", line)
+    if slot:
+        state["slot_count"], state["slot_context"] = map(int, slot.groups())
+    threads = re.search(r"threadpool init, n_threads = (\d+)", line)
+    if threads:
+        state["n_threads"] = int(threads.group(1))
+    marker = line.find("D3T_NATIVE_V1")
+    if marker < 0:
+        return
+    record = line[marker:].rstrip("\r\n")
+    names = ("n_ctx", "n_ctx_seq", "n_seq_max", "n_batch", "n_ubatch", "flash_attn",
+             "fused_lid", "lid_nodes", "fa_nodes", "no_alloc")
+    graph = re.fullmatch("D3T_NATIVE_V1 kind=graph " + " ".join(name + r"=(\d+)" for name in names), record)
+    if graph:
+        if state.get("native_group_open"):
+            raise Error("incomplete_native_group")
+        candidate = dict(zip(names, map(int, graph.groups())))
+        candidate.update({"graph_log_line": state["log_lines"], "compute_bytes": {},
+                          "cache_bytes": {}, "compute_log_lines": {}, "cache_log_lines": {}})
+        state.update(native=None, native_pending=candidate, native_group_open=True, native_phase="compute")
+        if candidate["fused_lid"] != 1 or candidate["flash_attn"] != 1 or candidate["no_alloc"] != 0:
+            state["errors"]["fusion_fallback"] += 1
+        return
+    if record == "D3T_NATIVE_V1 kind=end":
+        if not state.get("native_group_open"):
+            raise Error("unexpected_native_end")
+        state["native_pending"]["end_log_line"] = state["log_lines"]
+        state["native"] = state["native_pending"]
+        state["native_group_open"] = False
+        return
+    buffer = re.fullmatch(r"D3T_NATIVE_V1 kind=(compute|cache) backend=(.+) bytes=(\d+)", record)
+    if not buffer or not state.get("native_group_open"):
+        raise Error("malformed_or_unordered_native_diagnostic")
+    kind, backend, byte_count = buffer.groups()
+    if len(backend) > 256 or kind == "compute" and state["native_phase"] == "cache":
+        raise Error("native_buffer_order_or_name_invalid")
+    state["native_phase"] = kind
+    if backend in ("CUDA0", "CUDA1"):
+        candidate = state["native_pending"]
+        if backend in candidate[kind + "_bytes"]:
+            raise Error("duplicate_native_required_backend")
+        candidate[kind + "_bytes"][backend] = int(byte_count)
+        candidate[kind + "_log_lines"][backend] = state["log_lines"]
+
+def _reviewed_args(args, image_id, context):
+    # The protected manager emits these canonical long options. Reject any
+    # unknown override, including RoPE, context shift, cache reuse or a key value.
+    flags = {"--cpu-moe", "--jinja", "--no-webui"}
+    options = {"--model", "--host", "--port", "--alias", "--api-key-file", "--ctx-size",
+               "--parallel", "--n-gpu-layers", "--split-mode", "--tensor-split", "--load-mode",
+               "--device", "--chat-template-kwargs", "--n-cpu-moe"}
+    values = {}
+    index = 0
+    while index < len(args):
+        name = args[index]
+        if name in values or name not in flags | options:
+            raise Error("unreviewed_or_duplicate_runtime_option")
+        if name in flags:
+            values[name] = True
+            index += 1
+        else:
+            if index + 1 >= len(args):
+                raise Error("incomplete_runtime_option")
+            values[name] = args[index + 1]
+            index += 2
+    required = {"--host": "0.0.0.0", "--port": "30002", "--alias": "glm-5.3",
+                "--ctx-size": str(context), "--parallel": "1", "--n-gpu-layers": "999",
+                "--split-mode": "layer", "--tensor-split": "1,1", "--load-mode": "none",
+                "--device": "CUDA0,CUDA1", "--jinja": True, "--no-webui": True}
+    if any(values.get(key) != value for key, value in required.items()):
+        raise Error("reviewed_runtime_option_mismatch")
+    if json.loads(values.get("--chat-template-kwargs", "null")) != {"clear_thinking": True}:
+        raise Error("reviewed_template_option_mismatch")
+    if values.get("--model") != "/models/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf" or values.get("--api-key-file") != "/run/secrets/llm-api-key":
+        raise Error("reviewed_model_or_key_file_option_mismatch")
+    if image_id == BASELINE_IMAGE:
+        if context != 32768 or values.get("--cpu-moe") is not True or "--n-cpu-moe" in values:
+            raise Error("old_d1_is_32k_all_cpu_baseline_only")
+        return "all_cpu"
+    if values.get("--n-cpu-moe") != "76" or "--cpu-moe" in values:
+        raise Error("only_reviewed_n76_candidate")
+    return "n_cpu_moe_76"
+
+def _run(argv, limit=65536):
+    begin=time.monotonic();deadline=globals().get('TELEMETRY_DEADLINE',begin+10)
+    if begin>=deadline:raise Error('telemetry_remaining_deadline_exhausted')
+    timing={'command':argv[0],'begin_monotonic':begin,'timeout_budget_seconds':max(.001,deadline-begin)}
+    try:
+        result=subprocess.run(argv,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=max(.001,deadline-begin),env=dict(os.environ,LC_ALL="C",TZ="UTC"))
+        timing['returncode']=result.returncode
+        if result.returncode or len(result.stdout)>limit:raise Error('bounded_telemetry_command_failed')
+        return result.stdout.decode('utf-8',errors='strict')
+    except subprocess.TimeoutExpired:
+        timing['timeout']=True
+        raise Error('telemetry_call_exhausted_remaining_freshness_budget')
+    finally:
+        timing['end_monotonic']=time.monotonic();timing['duration_seconds']=timing['end_monotonic']-begin
+        if 'TELEMETRY_CALLS' in globals():TELEMETRY_CALLS.append(timing)
+
+def _metrics(path, names):
+    raw = Path(path).read_bytes()
+    if len(raw) > 131072:
+        raise Error("proc_read_bound_exceeded")
+    result = {}
+    for line in raw.decode().splitlines():
+        parts = line.replace(":", " ").split()
+        if parts and parts[0] in names:
+            result[parts[0]] = int(parts[1])
+    if set(result) != set(names):
+        raise Error("required_proc_metric_missing")
+    return result
+
+def _local_snapshot(container_id, image_id, context, state):
+    """Runs fixed read-only telemetry in the ephemeral SSH Python process."""
+    began = time.monotonic(); sample_begin_utc = time.time()
+    container = json.loads(_run(['docker', 'inspect', '--format', '{"Id":{{json .Id}},"Image":{{json .Image}},"Args":{{json .Args}},"State":{{json .State}},"LogPath":{{json .LogPath}},"RestartCount":{{json .RestartCount}},"NetworkSettings":{"Ports":{{json .NetworkSettings.Ports}}}}', container_id], 262144))
+    if container["Id"] != container_id or container["Image"] != image_id:
+        raise Error("container_or_image_identity_changed")
+    placement = _reviewed_args(container["Args"], image_id, context)
+    if container["NetworkSettings"]["Ports"] != {"30002/tcp": [{"HostIp": "127.0.0.1", "HostPort": "30002"}]}:
+        raise Error("reviewed_loopback_publication_mismatch")
+    status = container["State"]
+    pid = status["Pid"]
+    identity = (pid, status["StartedAt"], container["LogPath"])
+    if "process_identity" in state and state["process_identity"] != identity:
+        raise Error("container_process_restarted")
+    state["process_identity"] = identity
+    if not status["Running"] or status["OOMKilled"] or not isinstance(pid, int) or pid <= 0:
+        raise Error("container_not_safe_running")
+    before_binding = _pid_cgroup_binding(pid, container_id)
+    mounts = {}
+    for target, uuid in MOUNTS.items():
+        entry = json.loads(_run(["findmnt", "-J", "-o", "TARGET,UUID,FSTYPE", "--target", target]))["filesystems"][0]
+        if entry != {"target": target, "uuid": uuid, "fstype": "ext4"}:
+            raise Error("exact_mount_identity_failed")
+        mounts[target] = entry["uuid"]
+    log = Path(container["LogPath"])
+    if not str(log).startswith("/data/docker/containers/" + container_id + "/"):
+        raise Error("container_log_outside_data")
+    st = log.stat()
+    if "log_inode" in state and state["log_inode"] != (st.st_dev, st.st_ino):
+        raise Error("log_rotated_monitoring_gap")
+    state["log_inode"] = (st.st_dev, st.st_ino)
+    offset = state.get("log_offset", 0)
+    if st.st_size < offset or st.st_size - offset > (524288 if offset == 0 else 65536):
+        raise Error("log_read_bound_or_gap")
+    with log.open("rb") as handle:
+        handle.seek(offset)
+        data = handle.read(st.st_size - offset)
+    state["log_offset"] = st.st_size
+    state["log_hash"].update(data)
+    pending = state.get("log_pending", b"") + data
+    lines = pending.split(b"\n")
+    state["log_pending"] = lines.pop()
+    for raw in lines:
+        row = json.loads(raw)
+        if row["time"] >= status["StartedAt"]:
+            parse_log_line(row["log"], state)
+    kernel = _run(["dmesg", "--level", "err,crit,alert,emerg", "--since", status["StartedAt"][:19].replace("T", " ")])
+    kernel_errors = {name: len(re.findall(pattern, kernel, re.I)) for name, pattern in ERROR_PATTERNS.items()}
+    host = _metrics("/proc/meminfo", {"MemTotal", "MemAvailable", "SwapTotal", "SwapFree"})
+    process = _metrics("/proc/%d/status" % pid, {"VmRSS"}); process["Rss"] = process.pop("VmRSS")
+    process.update(_metrics("/proc/%d/status" % pid, {"VmSwap"}))
+    vmstat = _metrics("/proc/vmstat", {"pswpin", "pswpout", "oom_kill"})
+    if "vmstat_start" not in state:
+        state["vmstat_start"] = vmstat.copy()
+    gpu_raw = _run(["nvidia-smi", "--query-gpu=index,uuid,memory.total,memory.free", "--format=csv,noheader,nounits"])
+    gpus = []
+    for line in gpu_raw.splitlines():
+        index, uuid, total, free = [part.strip() for part in line.split(",")]
+        gpus.append({"index": int(index), "uuid": uuid, "total_bytes": int(total) * 1024 ** 2,
+                     "free_bytes": int(free) * 1024 ** 2})
+    gpu_ids = tuple((gpu["index"], gpu["uuid"]) for gpu in gpus)
+    if "gpu_ids" in state and state["gpu_ids"] != gpu_ids:
+        raise Error("gpu_identity_changed")
+    state["gpu_ids"] = gpu_ids
+    cg_value, cg_identity, cg_read = _owned_cgroup_swap(container)
+    state['last_cgroup_read'] = {'cgroup_swap_current_bytes': cg_value, 'identity': cg_identity, 'read': cg_read}
+    _same_binding(before_binding, cg_identity['binding'])
+    after = json.loads(_run(['docker', 'inspect', '--format', '{"Id":{{json .Id}},"Image":{{json .Image}},"State":{{json .State}},"RestartCount":{{json .RestartCount}}}', container_id]))
+    if (after['Id'], after['Image'], after['State']['Pid'], after['State']['StartedAt'], after['RestartCount']) != (container_id, image_id, pid, status['StartedAt'], container['RestartCount']):
+        raise Error('docker_identity_changed_after_cgroup_read')
+    if not after['State']['Running'] or after['State']['OOMKilled'] or after['State']['Paused'] or after['State']['Restarting']:
+        raise Error('docker_oom_or_state_changed_after_cgroup_read')
+    _same_binding(before_binding, _pid_cgroup_binding(pid, container_id))
+    root = os.statvfs("/")
+    result = {"timestamp": time.time(), "sample_begin_utc": sample_begin_utc, "sample_begin_monotonic": began, "sample_end_monotonic": time.monotonic(), "sample_elapsed_seconds": time.monotonic() - began,
+              "schema_version": 2, "cgroup_swap_current_bytes": cg_value, "cgroup_identity": cg_identity, "cgroup_read": cg_read, "process_start_ticks": before_binding["start_ticks"],
+              "sampled_only": True, "required_context": context,
+              "container": {"id": container_id, "image_id": image_id, "pid": pid,
+                            "started_at": status["StartedAt"], "running": status["Running"],
+                            "oom_killed": status["OOMKilled"], "paused":status["Paused"], "restarting":status["Restarting"], "restart_count":container["RestartCount"]},
+              "mounts": mounts, "root_available_bytes": root.f_bavail * root.f_frsize,
+              "host_kib": host, "process_kib": process, "vmstat": vmstat,
+              "host_swap_used_kib": host["SwapTotal"] - host["SwapFree"],
+              "vmstat_delta": {key: vmstat[key] - state["vmstat_start"][key] for key in vmstat},
+              "gpus": gpus, "errors": {key: state["errors"][key] + kernel_errors[key] for key in ERROR_PATTERNS},
+              "slot_count": state.get("slot_count"), "slot_context": state.get("slot_context"),
+              "n_threads": state.get("n_threads"), "placement": placement,
+              "log": {"path": str(log), "read_bytes": state["log_offset"], "sha256": state["log_hash"].hexdigest()},
+              "native": state.get("native")}
+    return result
