@@ -98,11 +98,13 @@ when unmounted. Existing config/data are preserved. A content-addressed fstab
 backup is on the verified data filesystem before fstab replacement. A conflicting
 entry or an already-mounted UUID at another target is refused.
 
-Blank-disk **planning only** accepts `--storage-mode initialize
---initialize-empty-disk /dev/disk/by-id/ID --confirm-disk-id ID`. It checks stable
-serial/WWN/size, signatures, partitions, holders and root/boot ancestry. Actual
-initialization is pending I1b; this revision cannot partition or format a disk.
-NVMe partition topology is tested synthetically; no real device was exercised.
+Explicit blank-disk planning accepts `--storage-mode initialize
+--initialize-empty-disk /dev/disk/by-id/ID --confirm-disk-id ID`. I1S adds the
+journal-owned GPT/ext4 transaction behind `Storage.adopt()`, requiring an exact
+saved plan and confirmation. The current main-stage I1b stop remains in place;
+public apply still refuses initialization pending integration. See the
+[disk transaction contract and recovery rules](install/disk-initialization.md).
+Source tests pass; actual Linux loop formatting remains **NOT_TESTED** here.
 
 Tiny protected trust anchors:
 

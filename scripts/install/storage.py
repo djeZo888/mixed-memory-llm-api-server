@@ -391,40 +391,8 @@ class Storage:
         return content, content.rstrip("\n") + ("\n" if content else "") + "".join(x + "\n" for x in additions)
 
     def _disk_plan(self):
-        by_id = self.config.get("initialize_empty_disk", "")
-        confirmation = self.config.get("confirm_disk_id", "")
-        if not re.fullmatch(r"/dev/disk/by-id/[A-Za-z0-9_.:+-]+", by_id) or Path(by_id).name != confirmation or "-part" in confirmation:
-            raise StorageError("initialization requires an exact stable by-id and matching disk ID")
-        target = self._local(by_id)
-        if not target.is_symlink():
-            raise StorageError("stable disk ID must resolve through an existing by-id link")
-        resolved = target.resolve(strict=True)
-        try:
-            source = "/" + str(resolved.relative_to(self.system_root))
-        except ValueError:
-            raise StorageError("disk identity escaped system root") from None
-        blocks = self._blocks()
-        protected = self._protected_disks(blocks)
-        if source not in blocks:
-            raise StorageError("stable ID is absent from block topology")
-        self._safe_block(blocks, source, protected)
-        row = blocks[source]
-        if row.get("type") != "disk" or row.get("children") or row["parents"] or row.get("uuid") or row.get("fstype") or any(row.get("mountpoints") or []):
-            raise StorageError("initialization target is not an unused blank whole disk")
-        holders = self._local("/sys/class/block/" + Path(source).name + "/holders")
-        if not holders.is_dir() or any(holders.iterdir()):
-            raise StorageError("disk holders are present or cannot be checked")
-        signatures = self._json(["wipefs", "--no-act", "--json", "--output", "DEVICE,OFFSET,TYPE,UUID,LABEL", source]).get("signatures")
-        if signatures != []:
-            raise StorageError("disk contains signatures or signature discovery is incomplete")
-        if not (row.get("wwn") or row.get("serial")) or int(row.get("size", 0)) <= 0:
-            raise StorageError("disk serial/WWN or size is unavailable")
-        identity = {"by_id": by_id, "serial": row.get("serial"), "wwn": row.get("wwn"), "size_bytes": int(row["size"])}
-        digest = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
-        return {"schema_version": 1, "mode": "initialize", "identity": identity,
-                "identity_sha256": digest, "status": "pending_implementation",
-                "checkpoint": "I1b: blank-disk mutation and disposable loopback verification required",
-                "disk_mutation_performed": False}
+        from install.disk_init import plan
+        return plan(self)
 
     def plan(self):
         if self.mode == "initialize":
@@ -458,17 +426,8 @@ class Storage:
 
     def adopt(self):
         if self.mode == "initialize":
-            current = self._disk_plan()
-            plan_file = self.config.get("disk_plan")
-            if not plan_file:
-                raise StorageError("initialization requires a saved read-only disk plan")
-            try:
-                previous = json.loads(Path(plan_file).read_text())
-            except (OSError, ValueError):
-                raise StorageError("saved disk plan is unavailable or invalid") from None
-            if previous.get("identity_sha256") != current["identity_sha256"]:
-                raise StorageError("blank disk identity changed since plan")
-            raise StorageCheckpoint(current["checkpoint"])
+            from install.disk_init import initialize
+            return initialize(self)
         if self.system_root == Path("/") and os.geteuid() != 0:
             raise StorageError("storage adoption requires root or sudo")
         if self.read_registration() is not None:
