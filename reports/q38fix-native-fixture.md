@@ -1,69 +1,94 @@
-# Q38FIX — source correction; actual fixture STOP
+# Q38FIX — three attempts exhausted; no native acceptance
 
-**Incomplete. No native/auth receipt or model acceptance.** One of three allowed
-pair attempts ran; its only container exited 2 at 131072. No 262144 invocation.
-The registered post-run guard failed with root free space below 4 GiB. No retry,
-unrelated cleanup, real model/key use, production change or installer work followed.
+**STOP: all three allowed actual pair attempts were used, with three containers total.**
+Every 131072 invocation failed; 262144 never ran. Neither context has native PASS,
+and no auth/acceptance receipt exists. The original execution bound was
+2026-09-15 **04:27:37Z–05:57:37Z**. Final cleanup verification completed at
+05:17:10.912442Z. Q38FIX operations are stopped; **Q38NEXT source ownership is Worker2**.
+This publication changes reports only and makes no VM calls.
 
-## Frozen correction
+## Source and focused checks
 
-Source commit `ea4a02e7135db05f192402a74669210ce07c01be`, based on approved
-`dad2d58b57ab2367dee254cff1a885567b0c76f4`. Q38DEV observed
-`/dev/nvidia-modeset` character 195:254, alongside nvidiactl 195:255 and the two
-UVM controls 511:0/511:1. NVIDIA toolkit's
-[pinned global-control discoverer](https://raw.githubusercontent.com/NVIDIA/nvidia-container-toolkit/09ceee5dde66ba9ce25c7cc69b1ebd5e6e3266fa/pkg/nvcdi/common-nvml.go)
-lists those four names. The probe now admits only their exact observed character
-identities; name enumeration and lstat reject accelerator roots, descendants,
-symlinks, other types and per-GPU device numbers without opening nodes.
+Approved base: `dad2d58b57ab2367dee254cff1a885567b0c76f4`.
+Final executed source: `a0d70509759927a1acde8f12d1149eeac4e4a034`, subsequently
+reviewed/merged by root. Exact image:
+`lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262`;
+image config ID `sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813`.
+Final provenance SHA256:
+`4f8ac18cab3ea1fb58ec625c7a0cb77f22105bac1761ce196a3eb05f91b3809e`.
 
-Host literal `none`, inner `none`/`void`, native zero-GPU, cache/auth/source and
-lifetime gates remain unchanged. Only probe/test source and mechanical
-provenance, adapter digest and three L2 inventory hash entries changed.
-No installed closure was changed by this task.
+The fixture admits the observed modeset character device 195:254 while retaining
+accelerator/symlink rejection. Final UVM handling permits dynamic majors; the
+attempt1 current-boot major511 constraint was removed. Host NVIDIA `none`, inner
+`none`/`void`, native zero-GPU, isolated cache, auth, secret and lifetime gates remain.
+Later corrections enforce core1:1, retain bounded fault stderr privately before
+postguards, and set fixture-only `OPENBLAS_NUM_THREADS=1`; pids128 remains fixed.
+No production launcher/runtime/Manager/installer behavior was changed.
+Primary support: [NVIDIA control names](https://raw.githubusercontent.com/NVIDIA/nvidia-container-toolkit/09ceee5dde66ba9ce25c7cc69b1ebd5e6e3266fa/pkg/nvcdi/common-nvml.go),
+[Linux6.8 piped-core limit1 short-circuit](https://raw.githubusercontent.com/torvalds/linux/v6.8/fs/coredump.c),
+[OpenBLAS startup thread control](https://www.openmathlib.org/OpenBLAS/docs/runtime_variables/).
 
-PASS: 143 focused fixture tests; 18 checks from an immutable committed archive;
-read-only source review and whitespace/hash checks. Tests cover observed device
-metadata and forbidden variants. No full repository or installer suite ran.
+[90 final focused tests](q38fix-evidence/final-focused-tests.txt) and
+[15 transport checks](q38fix-evidence/final-transport-tests.txt) passed during execution.
+[Source integrity](q38fix-evidence/final-source-integrity.json) verifies the frozen
+closure, mechanical adapter/provenance/L2 synchronization and exact task attribution.
+It is source-only evidence. No source bytes changed after attempt3; packaging ran no tests.
 
-## Actual result and evidence limit
+## Actual results
 
-Exact image reference:
-`lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262`.
-Frozen eight-file source and its hashes are in
-[source-manifest.json](q38fix-evidence/source-manifest.json).
-The unchanged shipped pair driver was called with a task-local reporting observer.
+All times below are 2026-09-15 UTC, from context start through cleanup verification;
+attempt1 ends at the retained Docker destroy event.
 
-Container `d86f3ddad58dd6e493f60f468fa0f00a6db2ba6058244c15718a9aa040d6ab17`:
-created **04:33:58.098719Z**, started **04:33:58.405748Z**, exited **2** at
-**04:34:29.849217Z**, destroyed **04:34:29.891880Z**, all 2026-09-15 UTC.
-Independent exact ID/name absence and unchanged staged hashes were verified at
-**04:36:13.567420Z**. Zero owned containers remain; no acceptance receipt exists.
+| Attempt | Executed source | Window | 131072 result |
+|---|---|---|---|
+|1|`ea4a02e7135db05f192402a74669210ce07c01be`|04:33:58.044989–04:34:29.891880|Exit2; removed; postguard STOP; native output UNKNOWN|
+|2|`a27948661c3f295dcb74a8ffbdf515c2d9990d22`|05:11:01.865150–05:11:09.529132|Exit2; OpenBLAS thread creation failure; removed; guards PASS|
+|3|`a0d70509759927a1acde8f12d1149eeac4e4a034`|05:14:51.785098–05:15:17.354216|Exit2; combined launch-setup predicate failed; removed; guards PASS|
 
-The postguard failure interrupted the observer before it saved the native fixed
-failure and shipped lifetime record. Those details are unavailable; Docker's
-exit/destroy events and independent absence are retained. This does **not** prove
-native cache/auth success or the next native failure's cause.
+**Attempt1 remains historical, unchanged:** [phase result](q38fix-evidence/phase-result.json),
+[source manifest](q38fix-evidence/source-manifest.json),
+[Docker terminal events](q38fix-evidence/docker-terminal-events.txt) and
+[independent absence](q38fix-evidence/final-absence-and-source.json).
+Its postguard interrupted recording before native output/lifetime details were saved.
+Root free space fell from 5,208,317,952 to 3,629,547,520 bytes, below4GiB; that
+historical guard remains FAIL. ROOTSPACE later performed separately authorized
+recovery and root cleared the pause after full guards passed at05:00:12.981924Z.
+Correcting unpublished attribution did not change the original executed `ea4` reference.
 
-Before-run root free space was 5,208,317,952 bytes. After the postguard failure,
-read-only df showed 3,629,547,520 bytes, below the 4,294,967,296-byte stop floor.
-The growth cause was not investigated outside this task's scope. Final registered
-guard status is **FAIL**, not cleanup/guard PASS. No further VM writes occurred.
+**Attempt2:** [terminal](q38fix-evidence/attempt-2-terminal.json) and
+[manifest](q38fix-evidence/attempt-2-manifest.json).
+Retained private stderr identifies OpenBLAS pthread creation failure at thread63/64
+while installed SciPy imports `_fblas`, ending in KeyboardInterrupt. This supports
+the final fixture-only thread-demand correction; it does not recover attempt1's output.
 
-D3PERFVM's recorded request window, 04:31:48.112009–04:32:15.601556Z, ended before
-this fixture. Other owners' overlap is not asserted. No GLM request or mutation
-was performed by Q38FIX.
+**Attempt3 / current known gap:** [terminal](q38fix-evidence/attempt-3-terminal.json) and
+[manifest](q38fix-evidence/attempt-3-manifest.json).
+`run_pinned_image.py:758` rejected
+`result == 0 and len(captured) == 1 and len(engine_calls) == 1`
+after `launcher.main(argv)` returned. Which operand failed and any swallowed launcher
+exception are **UNKNOWN**. Stderr is empty. Reaching this later check establishes
+partial progress only; it is not cache/auth acceptance. No fourth attempt ran.
 
-## Handoff
+## Cleanup, storage and ownership
 
-[Phase result](q38fix-evidence/phase-result.json) and
-[absence/source proof](q38fix-evidence/final-absence-and-source.json) retain exact
-identities and limits. Full preparation scripts, failed preflight, fixed-mode
-preflight, VM guard/start records, Docker reconciliation and session output remain
-in the worker task directory beside this repository. Protected VM artifacts remain
-under `/data/build/q38fix-20260915/attempt-1` and
-`/data/logs/q38fix-20260915/attempt-1`.
+[Final independent verification](q38fix-evidence/final-cleanup-and-guards.json),
+05:17:10.434465Z–05:17:10.912442Z, records all three exact container ID/name pairs
+absent, every staged source matching its executed commit, no receipts, and full
+registered data/root guards PASS. Root free space was **5,208,211,456 bytes**.
+Attempts2/3 used checked core1:1 and produced no new/changed Apport files;
+both monitored directories were empty. Attempt3 root delta was0;
+attempt2 delta was−163,840 bytes, without Apport growth. Concurrent root variation
+is not attributed to the fixture. Historical attempt1 cleanup/guard evidence is preserved.
 
-Root must resolve the storage stop before any further authorized actual run.
-Future orchestration must preserve the terminal native result before a postguard
-can interrupt its recording. Worker2/root final source/result review remains a
-gate before real Qwen model/key/live configuration; no successful pair is available.
+No GLM request or mutation was made by Q38FIX. D3PERFVM's request window
+04:31:48.112009–04:32:15.601556Z ended before attempt1. Coordinator-recorded D3CAP2
+transition start05:09:01Z overlaps attempt2's window; precise request overlap and
+subsequent D3CAP activity remain the owner's evidence.
+
+Raw native streams, synthetic inputs and crash archives remain outside Git; selected
+records contain only safe terminal metadata, hashes and guard/absence facts.
+The complete local final-verification artifact has SHA256
+`32f9b320828530dd1cf98d52f0c5db754d398b1a52c55eea0892e973efc1c5bd`.
+Q38FIX owns no surviving container or real server lifecycle/request work.
+Worker2 owns Q38NEXT source investigation. **No real Qwen model/key/live configuration
+activation follows from these failures; independent final review and actual acceptance remain required.**

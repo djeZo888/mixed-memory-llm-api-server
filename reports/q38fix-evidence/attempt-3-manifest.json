@@ -1,0 +1,55 @@
+{
+  "attempt": 3,
+  "commit": "a0d70509759927a1acde8f12d1149eeac4e4a034",
+  "files": {
+    "scripts/runtime/qwen38_oci.py": {
+      "bytes": 7121,
+      "git_blob": "0d576756001b85bb674d25966713b483adea7c06",
+      "mode": "0444",
+      "sha256": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f"
+    },
+    "scripts/runtime/sglang38_file_auth.py": {
+      "bytes": 20463,
+      "git_blob": "da3b9391ee9b527954a2f903e6f4bb08804a468e",
+      "mode": "0444",
+      "sha256": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be"
+    },
+    "tests/lifecycle/sglang38_fixture/auth_native.py": {
+      "bytes": 7289,
+      "git_blob": "e7ef0767f12279da0411fc51ba9530d80d11c07c",
+      "mode": "0444",
+      "sha256": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7"
+    },
+    "tests/lifecycle/sglang38_fixture/cache_probe.py": {
+      "bytes": 19812,
+      "git_blob": "1400ea99f8999122e75a4cb0ab5e87616cf4fa0a",
+      "mode": "0444",
+      "sha256": "11e09615725d9588fd082fbbf8f4776a77d5a20f6dde09022a14df3e828bff73"
+    },
+    "tests/lifecycle/sglang38_fixture/chat_template.jinja": {
+      "bytes": 8952,
+      "git_blob": "c0c686f9c38d70d179fb7b5f5aa7530bc913dda3",
+      "mode": "0444",
+      "sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041"
+    },
+    "tests/lifecycle/sglang38_fixture/provenance.json": {
+      "bytes": 17889,
+      "git_blob": "6a793390857c00c85194cd4f649c844058945b90",
+      "mode": "0444",
+      "sha256": "4f8ac18cab3ea1fb58ec625c7a0cb77f22105bac1761ce196a3eb05f91b3809e"
+    },
+    "tests/lifecycle/sglang38_fixture/run_fixture.py": {
+      "bytes": 36799,
+      "git_blob": "dca23e4a1fcc687def4e9390291455966268c3ed",
+      "mode": "0444",
+      "sha256": "7d23dfc941edf127815bbd3d5699316910d989eb5a363cd734c64b838536f08b"
+    },
+    "tests/lifecycle/sglang38_fixture/run_pinned_image.py": {
+      "bytes": 46874,
+      "git_blob": "993de26bc16f75e5edaf0eb4d9c959320cef84d6",
+      "mode": "0444",
+      "sha256": "a5c8061a9dd11bba06740600e0b029fdfcf4377113eddb15dad7d3605db2b63c"
+    }
+  },
+  "tree": "49aee59ea66d6b0866f439765c310367f0d762c5"
+}
