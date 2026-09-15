@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "path": "tests/lifecycle/sglang_fixture/check_cache_paths.py",
+  "sha256": "6ca8ed2ffdf98e6f4e33271204f42abcf1140ee8f8a3421b3e8d216c2f973749",
+  "launcher_path": "scripts/lifecycle/sglang_file_auth.py",
+  "launcher_sha256": "93ddd96d6a3d346b3e62b0eec08d6666c70c1ebc7b2cc727d02c191c9d50a5b2",
+  "source_evidence_path": "reports/f1c-cache-source-evidence.json",
+  "source_evidence_sha256": "57b1629f8b868a2aec14df9d52935433939717df12c0a40799eb8fee0e00c178",
+  "runtime_path": "configs/runtimes/sglang-qwen-next-0.5.14.json",
+  "runtime_sha256": "54a276babcd2518125aabd8338b68beaae571d8b3e5b1270be00afec78d0decc",
+  "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+  "interface": [
+    "python3",
+    "/fixture/tests/lifecycle/sglang_fixture/check_cache_paths.py",
+    "--actual-image",
+    "--repo",
+    "/fixture"
+  ],
+  "actual_image_result": "NOT_TESTED",
+  "proof_scope": "real installed resolver and bounded filesystem proof only when later executed in root-approved isolated exact image; no GPU driver or model behavior proof"
+}

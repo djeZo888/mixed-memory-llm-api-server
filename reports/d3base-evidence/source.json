@@ -1,0 +1,14 @@
+{
+  "head": "1e65e17534ae6be3a23ec54bda800ad64fcee7d8",
+  "worker": "mac-worker1.local",
+  "uid": 502,
+  "files": {
+    "scripts/d3t/probe.py": "c3448c61284443e0327ae259f52eb7e9a67c1f1e91e0da48e60b3e80bc24b0a5",
+    "scripts/d3t/accounting.py": "f0433bb7bad24b6767d204823bd515a8094db8d27ceb0707b5dd9184327eb98f",
+    "scripts/d3t/guards.py": "2b337ec360dd76c73f68d6a739a2de1ac40c839d9e610b02d10ea348ddfd863f",
+    "scripts/d3t/README.md": "9b5067eee269cbbd948a9a917c5f3768310c65d89f7239416b9837ed51017552",
+    "scripts/agent/protocol.py": "86ab326557186fcaa925b629e932309bbcf414bed8a96976deb1fb3e42273354",
+    "scripts/agent/fixture.py": "a92eb9dfad1ce156ce32e4b80ab3eb0c8bf5948d8a383f7f1dc5a0e22c4281dd",
+    "AGENTS.md": "8fafbb76b18fc07c5f7c268e9c26762ad024e52b4fab5d6cd5e18d740ab3b5d3"
+  }
+}

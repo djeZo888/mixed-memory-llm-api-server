@@ -1,0 +1,1401 @@
+{
+  "schema_version": 1,
+  "task": "C0",
+  "session_id": "01a0a269-ef98-7920-a75c-3266fa861151",
+  "source_host": "llmserver",
+  "ssh_alias": "ai-vm",
+  "collector_worker": "Mac-Worker2",
+  "source_base": "75a6bf915f30a1582348071eb733d05c33e10eb7",
+  "branch": "milestone/c0-obsolete-model-inventory",
+  "observation_window_utc": {
+    "start": "2026-09-15T00:14:41Z",
+    "end": "2026-09-15T00:26:24.766839+00:00"
+  },
+  "scope": "read-only inventory and future plan; no VM mutation, tests, inference, builds, guard reports or weight reads/hashes",
+  "byte_semantics": {
+    "allocated_bytes": "sum st_blocks * 512 once per device/inode, including directories; old trees matched du -sx -B1",
+    "apparent_bytes": "regular file lengths plus symlink lengths; old trees matched du -sx --apparent-size -B1; no symlinks observed",
+    "lstat_size_sum_including_directory_metadata": "diagnostic size sum including directory st_size, not du apparent bytes",
+    "nested_totals": "parent and child cache totals overlap and must not be added"
+  },
+  "filesystem": {
+    "schema_version": 1,
+    "started_utc": "2026-09-15T00:17:17.822629+00:00",
+    "source_host": "llmserver",
+    "ssh_alias": "ai-vm",
+    "method": "lstat/scandir only, no weight contents/hashes, no symlink traversal, no device crossing; 10000 entries/root, depth16, 45s total bound",
+    "mounts": {
+      "/data": {
+        "id": 48,
+        "parent": 31,
+        "target": "/data",
+        "source": "/dev/sdb1",
+        "fstype": "ext4",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+        "maj:min": "8:17",
+        "options": "rw,relatime"
+      },
+      "/data/models-large": {
+        "id": 65,
+        "parent": 48,
+        "target": "/data/models-large",
+        "source": "/dev/sdc1",
+        "fstype": "ext4",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+        "maj:min": "8:33",
+        "options": "rw,relatime"
+      }
+    },
+    "roots": [
+      {
+        "path": "/data/models/minimax-m3-mxfp8",
+        "exists": true,
+        "realpath": "/data/models/minimax-m3-mxfp8",
+        "device": 2065,
+        "inode": 12320800,
+        "mount": {
+          "id": 48,
+          "parent": 31,
+          "target": "/data",
+          "source": "/dev/sdb1",
+          "fstype": "ext4",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+          "maj:min": "8:17",
+          "options": "rw,relatime"
+        },
+        "counts": {
+          "directory": 7,
+          "file": 159
+        },
+        "unique_inodes": 166,
+        "allocated_bytes": 443776548864,
+        "regular_file_apparent_bytes": 443776023939,
+        "weight_file_count": 31,
+        "weight_apparent_bytes": 443749077256,
+        "partial_file_count": 0,
+        "errors": [],
+        "root_identity": {
+          "path": "/data/models/minimax-m3-mxfp8",
+          "device": 2065,
+          "inode": 12320800,
+          "nlink": 4,
+          "kind": "directory",
+          "apparent_bytes": 4096,
+          "allocated_bytes": 4096
+        },
+        "symlinks": [],
+        "multiply_linked_regular_files": [],
+        "direct_children": [
+          {
+            "name": ".cache",
+            "kind": "directory"
+          },
+          {
+            "name": "figures",
+            "kind": "directory"
+          }
+        ],
+        "lstat_size_sum_including_directory_metadata": 443776060803,
+        "apparent_bytes": 443776023939,
+        "disposition": "conditional_C1_model_candidate"
+      },
+      {
+        "path": "/data/models/qwen3-30b-a3b-instruct-2507",
+        "exists": true,
+        "realpath": "/data/models/qwen3-30b-a3b-instruct-2507",
+        "device": 2065,
+        "inode": 12320782,
+        "mount": {
+          "id": 48,
+          "parent": 31,
+          "target": "/data",
+          "source": "/dev/sdb1",
+          "fstype": "ext4",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+          "maj:min": "8:17",
+          "options": "rw,relatime"
+        },
+        "counts": {
+          "directory": 4,
+          "file": 56
+        },
+        "unique_inodes": 60,
+        "allocated_bytes": 61084520448,
+        "regular_file_apparent_bytes": 61084266282,
+        "weight_file_count": 16,
+        "weight_apparent_bytes": 61066575656,
+        "partial_file_count": 0,
+        "errors": [],
+        "root_identity": {
+          "path": "/data/models/qwen3-30b-a3b-instruct-2507",
+          "device": 2065,
+          "inode": 12320782,
+          "nlink": 3,
+          "kind": "directory",
+          "apparent_bytes": 4096,
+          "allocated_bytes": 4096
+        },
+        "symlinks": [],
+        "multiply_linked_regular_files": [],
+        "direct_children": [
+          {
+            "name": ".cache",
+            "kind": "directory"
+          }
+        ],
+        "lstat_size_sum_including_directory_metadata": 61084282666,
+        "apparent_bytes": 61084266282,
+        "disposition": "conditional_C1_model_candidate"
+      },
+      {
+        "path": "/data/models/qwen3-0.6b-smoke",
+        "exists": true,
+        "realpath": "/data/models/qwen3-0.6b-smoke",
+        "device": 2065,
+        "inode": 12320770,
+        "mount": {
+          "id": 48,
+          "parent": 31,
+          "target": "/data",
+          "source": "/dev/sdb1",
+          "fstype": "ext4",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+          "maj:min": "8:17",
+          "options": "rw,relatime"
+        },
+        "counts": {
+          "directory": 4,
+          "file": 22
+        },
+        "unique_inodes": 26,
+        "allocated_bytes": 1519300608,
+        "regular_file_apparent_bytes": 1519210490,
+        "weight_file_count": 1,
+        "weight_apparent_bytes": 1503300328,
+        "partial_file_count": 0,
+        "errors": [],
+        "root_identity": {
+          "path": "/data/models/qwen3-0.6b-smoke",
+          "device": 2065,
+          "inode": 12320770,
+          "nlink": 3,
+          "kind": "directory",
+          "apparent_bytes": 4096,
+          "allocated_bytes": 4096
+        },
+        "symlinks": [],
+        "multiply_linked_regular_files": [],
+        "direct_children": [
+          {
+            "name": ".cache",
+            "kind": "directory"
+          }
+        ],
+        "lstat_size_sum_including_directory_metadata": 1519226874,
+        "apparent_bytes": 1519210490,
+        "disposition": "conditional_C1_model_candidate"
+      },
+      {
+        "path": "/data/hf-cache/hub/models--MiniMaxAI--MiniMax-M3-MXFP8",
+        "exists": true,
+        "realpath": "/data/hf-cache/hub/models--MiniMaxAI--MiniMax-M3-MXFP8",
+        "device": 2065,
+        "inode": 16777426,
+        "mount": {
+          "id": 48,
+          "parent": 31,
+          "target": "/data",
+          "source": "/dev/sdb1",
+          "fstype": "ext4",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+          "maj:min": "8:17",
+          "options": "rw,relatime"
+        },
+        "counts": {
+          "directory": 2,
+          "file": 1
+        },
+        "unique_inodes": 3,
+        "allocated_bytes": 12288,
+        "regular_file_apparent_bytes": 40,
+        "weight_file_count": 0,
+        "weight_apparent_bytes": 0,
+        "partial_file_count": 0,
+        "errors": [],
+        "root_identity": {
+          "path": "/data/hf-cache/hub/models--MiniMaxAI--MiniMax-M3-MXFP8",
+          "device": 2065,
+          "inode": 16777426,
+          "nlink": 3,
+          "kind": "directory",
+          "apparent_bytes": 4096,
+          "allocated_bytes": 4096
+        },
+        "symlinks": [],
+        "multiply_linked_regular_files": [],
+        "direct_children": [
+          {
+            "name": "refs",
+            "kind": "directory"
+          }
+        ],
+        "lstat_size_sum_including_directory_metadata": 8232,
+        "apparent_bytes": 40,
+        "disposition": "retain"
+      },
+      {
+        "path": "/data/hf-cache/hub/models--Qwen--Qwen3-30B-A3B-Instruct-2507",
+        "exists": true,
+        "realpath": "/data/hf-cache/hub/models--Qwen--Qwen3-30B-A3B-Instruct-2507",
+        "device": 2065,
+        "inode": 16777233,
+        "mount": {
+          "id": 48,
+          "parent": 31,
+          "target": "/data",
+          "source": "/dev/sdb1",
+          "fstype": "ext4",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+          "maj:min": "8:17",
+          "options": "rw,relatime"
+        },
+        "counts": {
+          "directory": 2,
+          "file": 1
+        },
+        "unique_inodes": 3,
+        "allocated_bytes": 12288,
+        "regular_file_apparent_bytes": 40,
+        "weight_file_count": 0,
+        "weight_apparent_bytes": 0,
+        "partial_file_count": 0,
+        "errors": [],
+        "root_identity": {
+          "path": "/data/hf-cache/hub/models--Qwen--Qwen3-30B-A3B-Instruct-2507",
+          "device": 2065,
+          "inode": 16777233,
+          "nlink": 3,
+          "kind": "directory",
+          "apparent_bytes": 4096,
+          "allocated_bytes": 4096
+        },
+        "symlinks": [],
+        "multiply_linked_regular_files": [],
+        "direct_children": [
+          {
+            "name": "refs",
+            "kind": "directory"
+          }
+        ],
+        "lstat_size_sum_including_directory_metadata": 8232,
+        "apparent_bytes": 40,
+        "disposition": "retain"
+      },
+      {
+        "path": "/data/hf-cache/hub/models--Qwen--Qwen3-0.6B",
+        "exists": true,
+        "realpath": "/data/hf-cache/hub/models--Qwen--Qwen3-0.6B",
+        "device": 2065,
+        "inode": 16777225,
+        "mount": {
+          "id": 48,
+          "parent": 31,
+          "target": "/data",
+          "source": "/dev/sdb1",
+          "fstype": "ext4",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+          "maj:min": "8:17",
+          "options": "rw,relatime"
+        },
+        "counts": {
+          "directory": 2,
+          "file": 1
+        },
+        "unique_inodes": 3,
+        "allocated_bytes": 12288,
+        "regular_file_apparent_bytes": 40,
+        "weight_file_count": 0,
+        "weight_apparent_bytes": 0,
+        "partial_file_count": 0,
+        "errors": [],
+        "root_identity": {
+          "path": "/data/hf-cache/hub/models--Qwen--Qwen3-0.6B",
+          "device": 2065,
+          "inode": 16777225,
+          "nlink": 3,
+          "kind": "directory",
+          "apparent_bytes": 4096,
+          "allocated_bytes": 4096
+        },
+        "symlinks": [],
+        "multiply_linked_regular_files": [],
+        "direct_children": [
+          {
+            "name": "refs",
+            "kind": "directory"
+          }
+        ],
+        "lstat_size_sum_including_directory_metadata": 8232,
+        "apparent_bytes": 40,
+        "disposition": "retain"
+      },
+      {
+        "path": "/data/hf-cache",
+        "exists": true,
+        "realpath": "/data/hf-cache",
+        "device": 2065,
+        "inode": 16777217,
+        "mount": {
+          "id": 48,
+          "parent": 31,
+          "target": "/data",
+          "source": "/dev/sdb1",
+          "fstype": "ext4",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+          "maj:min": "8:17",
+          "options": "rw,relatime"
+        },
+        "counts": {
+          "directory": 65,
+          "file": 181
+        },
+        "unique_inodes": 246,
+        "allocated_bytes": 36880384,
+        "regular_file_apparent_bytes": 36180588,
+        "weight_file_count": 0,
+        "weight_apparent_bytes": 0,
+        "partial_file_count": 0,
+        "errors": [],
+        "root_identity": {
+          "path": "/data/hf-cache",
+          "device": 2065,
+          "inode": 16777217,
+          "nlink": 10,
+          "kind": "directory",
+          "apparent_bytes": 4096,
+          "allocated_bytes": 4096
+        },
+        "symlinks": [],
+        "multiply_linked_regular_files": [],
+        "direct_children": [
+          {
+            "name": "assets",
+            "kind": "directory"
+          },
+          {
+            "name": "datasets",
+            "kind": "directory"
+          },
+          {
+            "name": "home",
+            "kind": "directory"
+          },
+          {
+            "name": "hub",
+            "kind": "directory"
+          },
+          {
+            "name": "modules",
+            "kind": "directory"
+          },
+          {
+            "name": "transformers",
+            "kind": "directory"
+          },
+          {
+            "name": "xdg",
+            "kind": "directory"
+          },
+          {
+            "name": "xet",
+            "kind": "directory"
+          }
+        ],
+        "lstat_size_sum_including_directory_metadata": 36446828,
+        "apparent_bytes": 36180588,
+        "disposition": "retain"
+      },
+      {
+        "path": "/data/models-large/qwen3-coder-next-fp8",
+        "exists": true,
+        "realpath": "/data/models-large/qwen3-coder-next-fp8",
+        "device": 2081,
+        "inode": 119275521,
+        "mount": {
+          "id": 65,
+          "parent": 48,
+          "target": "/data/models-large",
+          "source": "/dev/sdc1",
+          "fstype": "ext4",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+          "maj:min": "8:33",
+          "options": "rw,relatime"
+        },
+        "counts": {
+          "directory": 1,
+          "file": 49
+        },
+        "unique_inodes": 50,
+        "allocated_bytes": 80408006656,
+        "regular_file_apparent_bytes": 80407722953,
+        "weight_file_count": 40,
+        "weight_apparent_bytes": 80381394600,
+        "partial_file_count": 0,
+        "errors": [],
+        "root_identity": {
+          "path": "/data/models-large/qwen3-coder-next-fp8",
+          "device": 2081,
+          "inode": 119275521,
+          "nlink": 2,
+          "kind": "directory",
+          "apparent_bytes": 4096,
+          "allocated_bytes": 4096
+        },
+        "symlinks": [],
+        "multiply_linked_regular_files": [],
+        "direct_children": [],
+        "lstat_size_sum_including_directory_metadata": 80407727049,
+        "apparent_bytes": 80407722953,
+        "disposition": "retain"
+      },
+      {
+        "path": "/data/models-large/glm-5.3-ud-q4-k-xl",
+        "exists": true,
+        "realpath": "/data/models-large/glm-5.3-ud-q4-k-xl",
+        "device": 2081,
+        "inode": 169607169,
+        "mount": {
+          "id": 65,
+          "parent": 48,
+          "target": "/data/models-large",
+          "source": "/dev/sdc1",
+          "fstype": "ext4",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+          "maj:min": "8:33",
+          "options": "rw,relatime"
+        },
+        "counts": {
+          "directory": 2,
+          "file": 12
+        },
+        "unique_inodes": 14,
+        "allocated_bytes": 459265257472,
+        "regular_file_apparent_bytes": 459264979205,
+        "weight_file_count": 9,
+        "weight_apparent_bytes": 389408276965,
+        "partial_file_count": 2,
+        "errors": [],
+        "root_identity": {
+          "path": "/data/models-large/glm-5.3-ud-q4-k-xl",
+          "device": 2081,
+          "inode": 169607169,
+          "nlink": 3,
+          "kind": "directory",
+          "apparent_bytes": 4096,
+          "allocated_bytes": 4096
+        },
+        "symlinks": [],
+        "multiply_linked_regular_files": [],
+        "direct_children": [
+          {
+            "name": "UD-Q4_K_XL",
+            "kind": "directory"
+          }
+        ],
+        "lstat_size_sum_including_directory_metadata": 459264987397,
+        "apparent_bytes": 459264979205,
+        "disposition": "retain"
+      },
+      {
+        "path": "/data/models-large/runtime-cache",
+        "exists": false,
+        "disposition": "retain"
+      },
+      {
+        "path": "/data/models/glm-5.3-ud-q4-k-xl",
+        "exists": false,
+        "disposition": "retain"
+      }
+    ],
+    "old_model_union": {
+      "allocated_bytes": 506380369920,
+      "directory_count": 15,
+      "regular_file_count": 237,
+      "cross_root_duplicate_inodes": 0,
+      "lstat_size_sum_including_directory_metadata": 506379570343,
+      "apparent_bytes": 506379500711
+    },
+    "ended_utc": "2026-09-15T00:17:17.837541+00:00"
+  },
+  "references": {
+    "source_host": "llmserver",
+    "started_utc": "2026-09-15T00:18:46.735379+00:00",
+    "containers": [
+      {
+        "id": "634daeb70a3ae9aa7403ec8d2256984de9cfe8b5521b839de16a1707164f7522",
+        "name": "/minimax-m3-mxfp8-poc",
+        "image_id": "sha256:362917ee2a4188bdb827c5b97d0f9a8a5c5dd1663b2ea43ad1ef6daa55a0a768",
+        "status": "exited",
+        "running": false,
+        "pid": 0,
+        "restart": {
+          "MaximumRetryCount": 0,
+          "Name": "no"
+        },
+        "mounts": [
+          {
+            "Destination": "/data/logs",
+            "Mode": "rw",
+            "Propagation": "rprivate",
+            "RW": true,
+            "Source": "/data/logs",
+            "Type": "bind"
+          },
+          {
+            "Destination": "/data/models",
+            "Mode": "ro",
+            "Propagation": "rprivate",
+            "RW": false,
+            "Source": "/data/models",
+            "Type": "bind"
+          },
+          {
+            "Destination": "/data/hf-cache",
+            "Mode": "rw",
+            "Propagation": "rprivate",
+            "RW": true,
+            "Source": "/data/hf-cache",
+            "Type": "bind"
+          }
+        ],
+        "compose_project": "compose",
+        "compose_service": "minimax-m3-mxfp8-poc",
+        "compose_file": "/data/services/llm-manager/compose/minimax-m3-poc.compose.yml",
+        "disposition": "retain_unless_separately_scoped_by_root_or_user"
+      },
+      {
+        "id": "321ee2110e2e0130739ca51fe192b23d746ecefca76e746c9e2df3fd8a799153",
+        "name": "/sglang-qwen3-30b-a3b-instruct-2507",
+        "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+        "status": "exited",
+        "running": false,
+        "pid": 0,
+        "restart": {
+          "MaximumRetryCount": 0,
+          "Name": "no"
+        },
+        "mounts": [
+          {
+            "Destination": "/data/hf-cache",
+            "Mode": "rw",
+            "Propagation": "rprivate",
+            "RW": true,
+            "Source": "/data/hf-cache",
+            "Type": "bind"
+          },
+          {
+            "Destination": "/data/logs",
+            "Mode": "rw",
+            "Propagation": "rprivate",
+            "RW": true,
+            "Source": "/data/logs",
+            "Type": "bind"
+          },
+          {
+            "Destination": "/data/models",
+            "Mode": "ro",
+            "Propagation": "rprivate",
+            "RW": false,
+            "Source": "/data/models",
+            "Type": "bind"
+          }
+        ],
+        "compose_project": "compose",
+        "compose_service": "sglang-qwen3-30b",
+        "compose_file": "/data/services/llm-manager/compose/sglang-qwen3-30b.compose.yml",
+        "disposition": "retain_unless_separately_scoped_by_root_or_user"
+      },
+      {
+        "id": "6cfa91273417ad7f5ae23a471aaf7b2f5be47bfab74550df93b71587fb3fb71f",
+        "name": "/sglang-smoke-qwen3-0.6b",
+        "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+        "status": "exited",
+        "running": false,
+        "pid": 0,
+        "restart": {
+          "MaximumRetryCount": 0,
+          "Name": "no"
+        },
+        "mounts": [
+          {
+            "Destination": "/data/models",
+            "Mode": "ro",
+            "Propagation": "rprivate",
+            "RW": false,
+            "Source": "/data/models",
+            "Type": "bind"
+          },
+          {
+            "Destination": "/data/hf-cache",
+            "Mode": "rw",
+            "Propagation": "rprivate",
+            "RW": true,
+            "Source": "/data/hf-cache",
+            "Type": "bind"
+          },
+          {
+            "Destination": "/data/logs",
+            "Mode": "rw",
+            "Propagation": "rprivate",
+            "RW": true,
+            "Source": "/data/logs",
+            "Type": "bind"
+          }
+        ],
+        "compose_project": "compose",
+        "compose_service": "sglang-smoke",
+        "compose_file": "/data/services/llm-manager/compose/sglang-smoke.compose.yml",
+        "disposition": "retain_unless_separately_scoped_by_root_or_user"
+      }
+    ],
+    "images": [
+      {
+        "id": "sha256:362917ee2a4188bdb827c5b97d0f9a8a5c5dd1663b2ea43ad1ef6daa55a0a768",
+        "tags": [
+          "local/minimax-m3-ktransformers:0.6.3-post1-r1"
+        ],
+        "digests": [
+          "local/minimax-m3-ktransformers@sha256:362917ee2a4188bdb827c5b97d0f9a8a5c5dd1663b2ea43ad1ef6daa55a0a768"
+        ],
+        "logical_image_size_bytes": 5515178032,
+        "disposition": "retain_outside_download_cleanup_scope"
+      },
+      {
+        "id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+        "tags": [
+          "lmsysorg/sglang:v0.5.14-cu130"
+        ],
+        "digests": [
+          "lmsysorg/sglang@sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3"
+        ],
+        "logical_image_size_bytes": 13197829770,
+        "disposition": "mandatory_retain"
+      },
+      {
+        "id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+        "tags": [
+          "local/llama-cpp:v0.4.1-b29c606-cu132-sm120-d1"
+        ],
+        "digests": [
+          "local/llama-cpp@sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62"
+        ],
+        "logical_image_size_bytes": 1519481796,
+        "disposition": "mandatory_retain"
+      },
+      {
+        "id": "sha256:7be56e69d8ae7c3648b8fca009fa35980ecd9c6eefaafbff3ee8c224e0043eb5",
+        "tags": [
+          "nvidia/cuda:13.2.1-base-ubuntu24.04"
+        ],
+        "digests": [
+          "nvidia/cuda@sha256:7be56e69d8ae7c3648b8fca009fa35980ecd9c6eefaafbff3ee8c224e0043eb5"
+        ],
+        "logical_image_size_bytes": 184420894,
+        "disposition": "retain_outside_download_cleanup_scope"
+      },
+      {
+        "id": "sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d",
+        "tags": [
+          "hello-world:latest"
+        ],
+        "digests": [
+          "hello-world@sha256:96498ffd522e70807ab6384a5c0485a79b9c7c08ca79ba08623edcad1054e62d"
+        ],
+        "logical_image_size_bytes": 16227,
+        "disposition": "retain_outside_download_cleanup_scope"
+      },
+      {
+        "id": "sha256:9e436f44523e9f53519c6175fefd1e0d373322bf54b8154bb331a2f5e4840ad2",
+        "tags": [
+          "lmsysorg/sglang:v0.5.14-cu130-runtime"
+        ],
+        "digests": [
+          "lmsysorg/sglang@sha256:9e436f44523e9f53519c6175fefd1e0d373322bf54b8154bb331a2f5e4840ad2"
+        ],
+        "logical_image_size_bytes": 12177739292,
+        "disposition": "retain_outside_download_cleanup_scope"
+      },
+      {
+        "id": "sha256:f2378ed66d98d97a20d546d096c5926bda923912ae55ba3d019aac62c8bfd65d",
+        "tags": [
+          "local/minimax-m3-ktransformers:0.6.3-post1"
+        ],
+        "digests": [
+          "local/minimax-m3-ktransformers@sha256:f2378ed66d98d97a20d546d096c5926bda923912ae55ba3d019aac62c8bfd65d"
+        ],
+        "logical_image_size_bytes": 5508530749,
+        "disposition": "retain_outside_download_cleanup_scope"
+      }
+    ],
+    "units": [
+      {
+        "MainPID": "2258",
+        "Result": "success",
+        "WorkingDirectory": "",
+        "Id": "containerd.service",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/usr/lib/systemd/system/containerd.service",
+        "UnitFileState": "enabled"
+      },
+      {
+        "MainPID": "49253",
+        "Result": "success",
+        "WorkingDirectory": "/data/build/d1-glm53-20260915",
+        "Id": "d1-glm53-acquire-20260915-d1b-p4.service",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/run/systemd/transient/d1-glm53-acquire-20260915-d1b-p4.service",
+        "UnitFileState": "transient"
+      },
+      {
+        "MainPID": "0",
+        "Result": "exit-code",
+        "WorkingDirectory": "/data/build/d1-glm53-20260915",
+        "Id": "d1-llama-build-20260915.service",
+        "LoadState": "loaded",
+        "ActiveState": "failed",
+        "SubState": "failed",
+        "FragmentPath": "/run/systemd/transient/d1-llama-build-20260915.service",
+        "UnitFileState": "transient"
+      },
+      {
+        "MainPID": "2305",
+        "Result": "success",
+        "WorkingDirectory": "",
+        "Id": "docker.service",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/usr/lib/systemd/system/docker.service",
+        "UnitFileState": "enabled"
+      },
+      {
+        "MainPID": "0",
+        "Result": "success",
+        "WorkingDirectory": "",
+        "Id": "f1a-qwen-fast-acquire-20260915.service",
+        "LoadState": "not-found",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "FragmentPath": "",
+        "UnitFileState": ""
+      },
+      {
+        "MainPID": "0",
+        "Result": "success",
+        "WorkingDirectory": "/data/services/mixed-memory-llm-api-server",
+        "Id": "m6b-post-reboot-verify.service",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "exited",
+        "FragmentPath": "/etc/systemd/system/m6b-post-reboot-verify.service",
+        "UnitFileState": "disabled"
+      }
+    ],
+    "compose_model_references": [
+      {
+        "path": "/data/services/llm-manager/compose/minimax-m3-poc.compose.yml",
+        "referenced_old_paths": [
+          "/data/models/minimax-m3-mxfp8"
+        ]
+      },
+      {
+        "path": "/data/services/llm-manager/compose/sglang-qwen3-30b.compose.yml",
+        "referenced_old_paths": [
+          "/data/models/qwen3-30b-a3b-instruct-2507"
+        ]
+      },
+      {
+        "path": "/data/services/llm-manager/compose/sglang-smoke.compose.yml",
+        "referenced_old_paths": [
+          "/data/models/qwen3-0.6b-smoke"
+        ]
+      }
+    ],
+    "selected_state_metadata": [
+      {
+        "path": "/data/services/llm-manager/active/active.json",
+        "fields": {
+          "container_name": "sglang-qwen3-30b-a3b-instruct-2507",
+          "model_path": "/data/models/qwen3-30b-a3b-instruct-2507",
+          "model_profile": "qwen3-30b-a3b-instruct-2507",
+          "status": "active"
+        },
+        "old_path_references": [
+          "/data/models/qwen3-30b-a3b-instruct-2507"
+        ],
+        "nested_fields_present": []
+      },
+      {
+        "path": "/data/services/llm-manager/state/active.json",
+        "error": "FileNotFoundError"
+      },
+      {
+        "path": "/data/services/llm-manager/deployment-instance.json",
+        "error": "FileNotFoundError"
+      },
+      {
+        "path": "/run/llmctl/recovery.json",
+        "error": "FileNotFoundError"
+      }
+    ],
+    "model_identity_metadata": [
+      {
+        "path": "/data/models/minimax-m3-mxfp8",
+        "config_fields": {
+          "architectures": [
+            "MiniMaxM3SparseForConditionalGeneration"
+          ],
+          "model_type": "minimax_m3_vl"
+        },
+        "cache_ref_file": "/data/hf-cache/hub/models--MiniMaxAI--MiniMax-M3-MXFP8/refs/main",
+        "cached_revision": "ca165902e868fd015fab5acaff776643be00dc6e",
+        "index_referenced_shards": 31,
+        "index_shards_present": 31,
+        "payload_regular_files_excluding_cache": 52
+      },
+      {
+        "path": "/data/models/qwen3-30b-a3b-instruct-2507",
+        "config_fields": {
+          "architectures": [
+            "Qwen3MoeForCausalLM"
+          ],
+          "model_type": "qwen3_moe"
+        },
+        "cache_ref_file": "/data/hf-cache/hub/models--Qwen--Qwen3-30B-A3B-Instruct-2507/refs/main",
+        "cached_revision": "0d7cf23991f47feeb3a57ecb4c9cee8ea4a17bfe",
+        "index_referenced_shards": 16,
+        "index_shards_present": 16,
+        "payload_regular_files_excluding_cache": 27
+      },
+      {
+        "path": "/data/models/qwen3-0.6b-smoke",
+        "config_fields": {
+          "architectures": [
+            "Qwen3ForCausalLM"
+          ],
+          "model_type": "qwen3"
+        },
+        "cache_ref_file": "/data/hf-cache/hub/models--Qwen--Qwen3-0.6B/refs/main",
+        "cached_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+        "payload_regular_files_excluding_cache": 10
+      }
+    ],
+    "du_crosscheck": "443776548864\t/data/models/minimax-m3-mxfp8\n61084520448\t/data/models/qwen3-30b-a3b-instruct-2507\n1519300608\t/data/models/qwen3-0.6b-smoke\n",
+    "du_apparent_crosscheck": "443776023939\t/data/models/minimax-m3-mxfp8\n61084266282\t/data/models/qwen3-30b-a3b-instruct-2507\n1519210490\t/data/models/qwen3-0.6b-smoke\n",
+    "ended_utc": "2026-09-15T00:18:47.175118+00:00"
+  },
+  "metadata_revisions": [
+    {
+      "path": "/data/models/minimax-m3-mxfp8",
+      "total_records": 52,
+      "revision_counts": {
+        "ca165902e868fd015fab5acaff776643be00dc6e": 52
+      },
+      "weight_revision_counts": {
+        "ca165902e868fd015fab5acaff776643be00dc6e": 31
+      }
+    },
+    {
+      "path": "/data/models/qwen3-30b-a3b-instruct-2507",
+      "total_records": 27,
+      "revision_counts": {
+        "0d7cf23991f47feeb3a57ecb4c9cee8ea4a17bfe": 27
+      },
+      "weight_revision_counts": {
+        "0d7cf23991f47feeb3a57ecb4c9cee8ea4a17bfe": 16
+      }
+    },
+    {
+      "path": "/data/models/qwen3-0.6b-smoke",
+      "total_records": 10,
+      "revision_counts": {
+        "c1899de289a04d12100db370d81485cdf75e47ca": 10
+      },
+      "weight_revision_counts": {
+        "c1899de289a04d12100db370d81485cdf75e47ca": 1
+      }
+    }
+  ],
+  "process_reference_scan": {
+    "method": "unprivileged bounded proc fd/cwd readlink and maps metadata; no argv/env or file payload; inaccessible processes remain unknown",
+    "counts": {
+      "pids_considered": 1123,
+      "fd_unreadable_or_exited": 1118,
+      "maps_unreadable_or_exited": 30,
+      "cwd_unreadable_or_exited": 1119,
+      "maps_readable": 1093,
+      "fd_link_unreadable_or_raced": 33,
+      "fd_readable": 5,
+      "cwd_readable": 4
+    },
+    "hits": []
+  },
+  "cache_accounting": {
+    "started_utc": "2026-09-15T00:26:24.519178+00:00",
+    "source_host": "llmserver",
+    "method": "bounded lstat only, no content reads; 10000 entries/root, maxdepth16, 30 seconds; no symlink traversal/device crossing",
+    "roots": [
+      {
+        "path": "/data/hf-cache",
+        "exists": true,
+        "realpath": "/data/hf-cache",
+        "device": 2065,
+        "inode": 16777217,
+        "mount": {
+          "id": 48,
+          "target": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+          "maj:min": "8:17"
+        },
+        "allocated_bytes": 36880384,
+        "apparent_bytes": 36180588,
+        "counts": {
+          "directory": 65,
+          "file": 181
+        },
+        "errors": [],
+        "complete": true,
+        "subtrees": [
+          {
+            "path": "/data/hf-cache",
+            "allocated_bytes": 36880384,
+            "apparent_bytes": 36180588,
+            "counts": {
+              "directory": 65,
+              "file": 181
+            }
+          },
+          {
+            "path": "/data/hf-cache/assets",
+            "allocated_bytes": 4096,
+            "apparent_bytes": 0,
+            "counts": {
+              "directory": 1
+            }
+          },
+          {
+            "path": "/data/hf-cache/datasets",
+            "allocated_bytes": 4096,
+            "apparent_bytes": 0,
+            "counts": {
+              "directory": 1
+            }
+          },
+          {
+            "path": "/data/hf-cache/home",
+            "allocated_bytes": 20688896,
+            "apparent_bytes": 20119920,
+            "counts": {
+              "directory": 42,
+              "file": 165
+            }
+          },
+          {
+            "path": "/data/hf-cache/home/.cache",
+            "allocated_bytes": 18378752,
+            "apparent_bytes": 18142460,
+            "counts": {
+              "directory": 15,
+              "file": 64
+            }
+          },
+          {
+            "path": "/data/hf-cache/home/.cupy",
+            "allocated_bytes": 8192,
+            "apparent_bytes": 0,
+            "counts": {
+              "directory": 2
+            }
+          },
+          {
+            "path": "/data/hf-cache/home/.nv",
+            "allocated_bytes": 8192,
+            "apparent_bytes": 0,
+            "counts": {
+              "directory": 2
+            }
+          },
+          {
+            "path": "/data/hf-cache/home/.tilelang",
+            "allocated_bytes": 12288,
+            "apparent_bytes": 0,
+            "counts": {
+              "directory": 3
+            }
+          },
+          {
+            "path": "/data/hf-cache/home/.triton",
+            "allocated_bytes": 2277376,
+            "apparent_bytes": 1977460,
+            "counts": {
+              "directory": 19,
+              "file": 101
+            }
+          },
+          {
+            "path": "/data/hf-cache/hub",
+            "allocated_bytes": 40960,
+            "apparent_bytes": 120,
+            "counts": {
+              "directory": 7,
+              "file": 3
+            }
+          },
+          {
+            "path": "/data/hf-cache/hub/models--MiniMaxAI--MiniMax-M3-MXFP8",
+            "allocated_bytes": 12288,
+            "apparent_bytes": 40,
+            "counts": {
+              "directory": 2,
+              "file": 1
+            }
+          },
+          {
+            "path": "/data/hf-cache/hub/models--MiniMaxAI--MiniMax-M3-MXFP8/refs",
+            "allocated_bytes": 8192,
+            "apparent_bytes": 40,
+            "counts": {
+              "directory": 1,
+              "file": 1
+            }
+          },
+          {
+            "path": "/data/hf-cache/hub/models--Qwen--Qwen3-0.6B",
+            "allocated_bytes": 12288,
+            "apparent_bytes": 40,
+            "counts": {
+              "directory": 2,
+              "file": 1
+            }
+          },
+          {
+            "path": "/data/hf-cache/hub/models--Qwen--Qwen3-0.6B/refs",
+            "allocated_bytes": 8192,
+            "apparent_bytes": 40,
+            "counts": {
+              "directory": 1,
+              "file": 1
+            }
+          },
+          {
+            "path": "/data/hf-cache/hub/models--Qwen--Qwen3-30B-A3B-Instruct-2507",
+            "allocated_bytes": 12288,
+            "apparent_bytes": 40,
+            "counts": {
+              "directory": 2,
+              "file": 1
+            }
+          },
+          {
+            "path": "/data/hf-cache/hub/models--Qwen--Qwen3-30B-A3B-Instruct-2507/refs",
+            "allocated_bytes": 8192,
+            "apparent_bytes": 40,
+            "counts": {
+              "directory": 1,
+              "file": 1
+            }
+          },
+          {
+            "path": "/data/hf-cache/modules",
+            "allocated_bytes": 57344,
+            "apparent_bytes": 10268,
+            "counts": {
+              "directory": 7,
+              "file": 9
+            }
+          },
+          {
+            "path": "/data/hf-cache/modules/transformers_modules",
+            "allocated_bytes": 53248,
+            "apparent_bytes": 10268,
+            "counts": {
+              "directory": 6,
+              "file": 8
+            }
+          },
+          {
+            "path": "/data/hf-cache/transformers",
+            "allocated_bytes": 4096,
+            "apparent_bytes": 0,
+            "counts": {
+              "directory": 1
+            }
+          },
+          {
+            "path": "/data/hf-cache/xdg",
+            "allocated_bytes": 4096,
+            "apparent_bytes": 0,
+            "counts": {
+              "directory": 1
+            }
+          },
+          {
+            "path": "/data/hf-cache/xet",
+            "allocated_bytes": 16064512,
+            "apparent_bytes": 16044807,
+            "counts": {
+              "directory": 4,
+              "file": 3
+            }
+          },
+          {
+            "path": "/data/hf-cache/xet/logs",
+            "allocated_bytes": 16052224,
+            "apparent_bytes": 16044807,
+            "counts": {
+              "directory": 1,
+              "file": 3
+            }
+          }
+        ],
+        "symlinks": [],
+        "hardlinked_regular_files": [],
+        "large_files_128MiB_or_more": [],
+        "weight_files": [],
+        "disposition": "retain",
+        "allocated_bytes_is_lower_bound": false
+      },
+      {
+        "path": "/data/build/pip-cache",
+        "exists": true,
+        "realpath": "/data/build/pip-cache",
+        "device": 2065,
+        "inode": 21757955,
+        "mount": {
+          "id": 48,
+          "target": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+          "maj:min": "8:17"
+        },
+        "allocated_bytes": 4096,
+        "apparent_bytes": 0,
+        "counts": {
+          "directory": 1
+        },
+        "errors": [],
+        "complete": true,
+        "subtrees": [
+          {
+            "path": "/data/build/pip-cache",
+            "allocated_bytes": 4096,
+            "apparent_bytes": 0,
+            "counts": {
+              "directory": 1
+            }
+          }
+        ],
+        "symlinks": [],
+        "hardlinked_regular_files": [],
+        "large_files_128MiB_or_more": [],
+        "weight_files": [],
+        "disposition": "retain",
+        "allocated_bytes_is_lower_bound": false
+      },
+      {
+        "path": "/data/build/f1a-qwen-20260915/runtime/cache",
+        "exists": true,
+        "realpath": "/data/build/f1a-qwen-20260915/runtime/cache",
+        "device": 2065,
+        "inode": 41418792,
+        "mount": {
+          "id": 48,
+          "target": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+          "maj:min": "8:17"
+        },
+        "allocated_bytes": 1568768,
+        "apparent_bytes": 1470713,
+        "counts": {
+          "directory": 14,
+          "file": 19
+        },
+        "errors": [
+          {
+            "path": "/data/build/f1a-qwen-20260915/runtime/cache/cuda",
+            "error": "PermissionError"
+          }
+        ],
+        "complete": false,
+        "subtrees": [
+          {
+            "path": "/data/build/f1a-qwen-20260915/runtime/cache",
+            "allocated_bytes": 1568768,
+            "apparent_bytes": 1470713,
+            "counts": {
+              "directory": 14,
+              "file": 19
+            }
+          },
+          {
+            "path": "/data/build/f1a-qwen-20260915/runtime/cache/.cache",
+            "allocated_bytes": 1101824,
+            "apparent_bytes": 1068717,
+            "counts": {
+              "directory": 3,
+              "file": 8
+            }
+          },
+          {
+            "path": "/data/build/f1a-qwen-20260915/runtime/cache/cuda",
+            "allocated_bytes": 4096,
+            "apparent_bytes": 0,
+            "counts": {
+              "directory": 1
+            }
+          },
+          {
+            "path": "/data/build/f1a-qwen-20260915/runtime/cache/flashinfer",
+            "allocated_bytes": 20480,
+            "apparent_bytes": 0,
+            "counts": {
+              "directory": 5,
+              "file": 1
+            }
+          },
+          {
+            "path": "/data/build/f1a-qwen-20260915/runtime/cache/triton",
+            "allocated_bytes": 438272,
+            "apparent_bytes": 401996,
+            "counts": {
+              "directory": 4,
+              "file": 10
+            }
+          }
+        ],
+        "symlinks": [],
+        "hardlinked_regular_files": [],
+        "large_files_128MiB_or_more": [],
+        "weight_files": [],
+        "disposition": "retain",
+        "allocated_bytes_is_lower_bound": true
+      },
+      {
+        "path": "/data/models-large/runtime-cache",
+        "exists": false,
+        "disposition": "retain",
+        "allocated_bytes_is_lower_bound": false,
+        "subtrees": []
+      }
+    ],
+    "related_task_cache_discovery": [
+      {
+        "path": "/data/build/ktransformers-minimax-m3",
+        "matching_direct_children": []
+      },
+      {
+        "path": "/data/build/d1-glm53-20260915",
+        "matching_direct_children": []
+      },
+      {
+        "path": "/data/build/d1b-glm53-20260915",
+        "matching_direct_children": []
+      },
+      {
+        "path": "/data/build/f1a-qwen-20260915",
+        "matching_direct_children": []
+      },
+      {
+        "path": "/data/build/f1d-qwen-20260915",
+        "matching_direct_children": []
+      }
+    ],
+    "ended_utc": "2026-09-15T00:26:24.526260+00:00"
+  },
+  "protected_state": {
+    "started_utc": "2026-09-15T00:26:24.766669+00:00",
+    "source_host": "llmserver",
+    "method": "exact non-auth metadata JSON paths only; emit fixed safe scalar fields, model/path references and boolean evidence flags",
+    "records": [
+      {
+        "path": "/data/services/llm-manager/active/active.json",
+        "safe_fields": {
+          "container_name": "sglang-qwen3-30b-a3b-instruct-2507",
+          "model_path": "/data/models/qwen3-30b-a3b-instruct-2507",
+          "model_profile": "qwen3-30b-a3b-instruct-2507",
+          "runtime_profile": "sglang",
+          "status": "active"
+        }
+      },
+      {
+        "path": "/data/services/llm-manager/state/active.json",
+        "error": "FileNotFoundError"
+      },
+      {
+        "path": "/data/services/llm-manager/deployment-instance.json",
+        "error": "FileNotFoundError"
+      },
+      {
+        "path": "/run/llmctl/recovery.json",
+        "error": "FileNotFoundError"
+      },
+      {
+        "path": "/data/services/llm-manager/acquisition/qwen3-coder-next-fp8.complete.json",
+        "safe_fields": {
+          "artifact_count": 48,
+          "complete": true,
+          "model_root": "/data/models-large/qwen3-coder-next-fp8",
+          "repo_id": "Qwen/Qwen3-Coder-Next-FP8",
+          "revision": "da6e2ed27304dd39abadd9c82ef50e8de67bdd4c",
+          "schema_version": 1,
+          "total_bytes": 80407722953
+        }
+      }
+    ],
+    "ended_utc": "2026-09-15T00:26:24.766839+00:00"
+  },
+  "reference_limits": [
+    "old active.json is recorded selection, not proof of running model",
+    "protected new release/config roots were not exhaustively inspected",
+    "unprivileged proc visibility is incomplete",
+    "F1D and acquisitions can change state during and after this snapshot",
+    "no global filesystem scan or retained-image layer ownership analysis"
+  ],
+  "cleanup_plan": {
+    "executor": "Worker1 only after root review and actual GLM and selected fast replacement API plus real agent acceptance",
+    "status": "STOP_PENDING_GATES",
+    "model_candidates": [
+      "/data/models/minimax-m3-mxfp8",
+      "/data/models/qwen3-30b-a3b-instruct-2507",
+      "/data/models/qwen3-0.6b-smoke"
+    ],
+    "expected_model_allocated_reclaim_bytes": 506380369920,
+    "cache_targets_approved_or_proven_exclusive": [],
+    "additional_cache_reclaim_budget_bytes": 0,
+    "halt_on": [
+      "mount or canonical path identity change",
+      "active or acquisition/job reference",
+      "unresolved shared reference",
+      "symlink escape or external hardlink",
+      "unreadable required ownership/state metadata",
+      "replacement acceptance missing"
+    ],
+    "preserve_roots": [
+      "/data/models-large",
+      "/data/hf-cache",
+      "/data/docker",
+      "/data/containerd",
+      "/data/build",
+      "/data/logs",
+      "/data/services"
+    ],
+    "retain_all_images_and_containers_by_default": true,
+    "forbidden": "global Docker/HF/volume prune or parent data-tree deletion; no DeepSeek installation"
+  }
+}

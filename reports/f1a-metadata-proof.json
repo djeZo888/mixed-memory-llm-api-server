@@ -1,0 +1,22 @@
+{
+  "metadata_url": "https://huggingface.co/api/models/Qwen/Qwen3-Coder-Next-FP8/revision/da6e2ed27304dd39abadd9c82ef50e8de67bdd4c?blobs=true",
+  "manifest_sha256": "022674d4daf63fa57c2798a30fea80c6dde7b1b2e73630ae3c3aa94e45debb9e",
+  "status": "PASS_METADATA_AND_SMALL_ASSET_HASHES_ONLY",
+  "weight_downloaded": false,
+  "small_computed_sha256": {
+    "chat_template.jinja": "c79a833039a43602150cce0902403d6e376c50930c1b2a139b2964e1f0c322a0",
+    "config.json": "8756acedd5ae0df36b2d6d774c87e30b422c3f4988015aa0b7e6c32f21769cdf",
+    "generation_config.json": "37a3c1ef63516ca489c575f0db1c0405ddc0c3dbaca9ed987344c966c37aeef5",
+    "merges.txt": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+    "model.safetensors.index.json": "0ac9834aa1e30eb60d921d25e1755f97e92dfd47cf74ac2613e474243adcc4cf",
+    "tokenizer.json": "19564a48c4f71a2a1b937cce34c737a1e662b171c5f5d7edf641a15cd896f07d",
+    "tokenizer_config.json": "fc76878832c668e3f0f8be66e6239a475b9093d2fe5cef97c242369779e6c6e6",
+    "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+    "README.md": "d9c961c3fe147bebff83bd6bb5dde4a95144c4dc62ffa482ad8882d662e4f6a9"
+  },
+  "weight_index_entries": 148383,
+  "index_tensor_bytes": 80362904064,
+  "tokenizer_class": "Qwen2Tokenizer",
+  "config_auto_map": null,
+  "tokenizer_auto_map": null
+}

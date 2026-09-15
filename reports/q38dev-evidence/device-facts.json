@@ -1,0 +1,107 @@
+{
+  "attach_cli": {
+    "returncode": 0,
+    "stderr": "",
+    "stderr_bytes": 0,
+    "stdout_bytes": 829
+  },
+  "auth_receipt_created": false,
+  "cleanup_finished_utc": "2026-09-15T04:25:07.491195+00:00",
+  "container_before_cleanup": {
+    "ExitCode": 0,
+    "Paused": false,
+    "Pid": 0,
+    "Restarting": false,
+    "Running": false,
+    "Status": "exited"
+  },
+  "container_exit": {
+    "ExitCode": 0,
+    "Paused": false,
+    "Pid": 0,
+    "Restarting": false,
+    "Running": false,
+    "Status": "exited"
+  },
+  "container_lifetime": {
+    "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+    "container_id": "a52cec602c81be1b3c62fed6ddd8854dc0fc396dfc02d2f42204a94c08fd69f3",
+    "container_name": "q38dev-20260915-f9346fc798fa7fcbda05939ec0b981b5",
+    "outcome": "DIAGNOSTIC_OBSERVED"
+  },
+  "controller_started_utc": "2026-09-15T04:25:06.760501+00:00",
+  "create_attempts": 1,
+  "final_guards": "PASS",
+  "finished_utc": "2026-09-15T04:25:07.177105+00:00",
+  "host_config_env_occurrences": {
+    "CUDA_VISIBLE_DEVICES": [
+      ""
+    ],
+    "NVIDIA_DRIVER_CAPABILITIES": [
+      "compute,utility"
+    ],
+    "NVIDIA_VISIBLE_DEVICES": [
+      "none"
+    ]
+  },
+  "host_policy": "VERIFIED_BEFORE_START",
+  "independent_absence": "VERIFIED",
+  "inventory": {
+    "entries": [
+      {
+        "major": 195,
+        "minor": 254,
+        "path": "/dev/nvidia-modeset",
+        "type": "char"
+      },
+      {
+        "major": 511,
+        "minor": 0,
+        "path": "/dev/nvidia-uvm",
+        "type": "char"
+      },
+      {
+        "major": 511,
+        "minor": 1,
+        "path": "/dev/nvidia-uvm-tools",
+        "type": "char"
+      },
+      {
+        "major": 195,
+        "minor": 255,
+        "path": "/dev/nvidiactl",
+        "type": "char"
+      }
+    ],
+    "errors": [],
+    "finished_utc": "2026-09-15T04:25:07.139166211Z",
+    "limits": {
+      "entries": 128,
+      "output_bytes": 32768,
+      "path_bytes": 512,
+      "process_alarm_seconds": 5,
+      "recursion_depth": 16,
+      "symlink_target_bytes": 512
+    },
+    "method": "lstat and directory-name enumeration; readlink only for symlinks, no symlink traversal; no device node open/read/write",
+    "missing_fixed_paths": [
+      "/dev/dri",
+      "/dev/dxg",
+      "/dev/kfd",
+      "/dev/nvidia-caps"
+    ],
+    "started_utc": "2026-09-15T04:25:07.139106121Z",
+    "status": "OBSERVED",
+    "truncated": false
+  },
+  "native_result": "NOT_TESTED_DIAGNOSTIC_CANNOT_AUTHORIZE",
+  "observed_rejected_fixture_names": [
+    "/dev/nvidia-modeset"
+  ],
+  "schema_version": 1,
+  "source_base": "3acd2741635a05e42474f1b19664e477b510cf78",
+  "start_attempts": 1,
+  "started_utc": "2026-09-15T04:25:06.838309+00:00",
+  "status": "OBSERVED",
+  "task": "Q38DEV-20260915"
+}

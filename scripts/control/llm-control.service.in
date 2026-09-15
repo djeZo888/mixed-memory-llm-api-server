@@ -1,0 +1,36 @@
+# SOURCE TEMPLATE. I1c owns generation/reuse, install and host validation.
+[Unit]
+Description=Protected local model control API
+After=local-fs.target docker.service systemd-tmpfiles-setup.service
+Wants=docker.service
+# No data-mount dependency: root source/key and /run permit fresh recovery.
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/
+ExecStart=/usr/bin/python3 -I -B /usr/local/lib/llm-server/control-api/scripts/control/serve.py
+LoadCredential=control-api-key:/etc/llm-server/control-api-key
+UMask=0077
+Restart=no
+KillMode=control-group
+TimeoutStopSec=15
+StandardOutput=null
+StandardError=null
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET
+# Minus permits service startup after the registered data mount disappears.
+ReadWritePaths=-@REGISTERED_DATA_ROOT@ /run/llmctl
+# /etc/tmpfiles.d/llmctl.conf provisions shared root0700 /run/llmctl at boot.
+# Control must never remove shared recovery state on unit stop/restart.
+# No client Docker group/sudo grant. Actual namespace/guard access needs Linux QA.
+
+[Install]
+WantedBy=multi-user.target

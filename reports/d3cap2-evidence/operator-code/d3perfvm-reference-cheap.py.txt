@@ -1,0 +1,60 @@
+"""One D3PERFVM measurement variant assembled from the existing read-only helper.
+No production-source edits. No PSS/smaps reads in the emitted live sampler.
+Verification: review generated source; worker SSH idle sample; actual bounded run.
+"""
+import inspect
+from d3t import guards
+
+def source(before,full):
+    # Keep existing identity/args, numeric log parser, GPU, kernel, mount and host
+    # measurements. Replace only rollup collection, then add frozen start ticks.
+    snapshot=inspect.getsource(guards._local_snapshot)
+    old='process = _metrics("/proc/%d/smaps_rollup" % pid, {"Rss", "Pss", "Swap"})'
+    assert snapshot.count(old)==1
+    snapshot=snapshot.replace(old,'process = _metrics("/proc/%d/status" % pid, {"VmRSS"}); process["Rss"] = process.pop("VmRSS")')
+    snapshot=snapshot.replace('"oom_killed": status["OOMKilled"]}', '"oom_killed": status["OOMKilled"], "paused":status["Paused"], "restarting":status["Restarting"], "restart_count":container["RestartCount"]}')
+    fmt='{"Id":{{json .Id}},"Image":{{json .Image}},"Args":{{json .Args}},"State":{{json .State}},"LogPath":{{json .LogPath}},"RestartCount":{{json .RestartCount}},"NetworkSettings":{"Ports":{{json .NetworkSettings.Ports}}}}'
+    snapshot=snapshot.replace('["docker", "inspect", container_id]', repr(["docker", "inspect", "--format", fmt])[:-1]+", container_id]")
+    snapshot=snapshot.replace(', 262144))[0]', ', 262144))')
+    imports='import hashlib,json,os,re,select,signal,subprocess,sys,time\nfrom pathlib import Path\nAgentError=RuntimeError\n'
+    constants='GIB=%r\nNATIVE_CONTEXT=%r\nBASELINE_IMAGE=%r\nMOUNTS=%r\nERROR_PATTERNS=%r\nBEFORE=%r\nFULL=%r\n' % (guards.GIB,guards.NATIVE_CONTEXT,guards.BASELINE_IMAGE,before['registered_mounts'],guards.ERROR_PATTERNS,before,{k:full[k] for k in ('vmstat','host_swap_used_kib','gpus','native')})
+    helpers='\n'.join(inspect.getsource(x) for x in (guards.Error,guards.parse_log_line,guards._reviewed_args,guards._run,guards._metrics))
+    program=imports+constants+helpers+'\n'+snapshot+'\n'+REMOTE
+    assert 'smaps' not in program and '"Pss"' not in program
+    return program
+
+REMOTE=r'''
+signal.alarm(720)
+state={'log_lines':0,'errors':{key:0 for key in ERROR_PATTERNS},'log_hash':hashlib.sha256(),'vmstat_start':FULL['vmstat'].copy()}
+original_parser=parse_log_line
+def parse_log_line(line,state):
+    original_parser(line,state)
+    if re.search(r'\brelease\b.*stop processing',line,re.I):state['release_count']=state.get('release_count',0)+1
+    if re.search(r'all slots are idle',line,re.I):state['idle_count']=state.get('idle_count',0)+1
+start=time.monotonic();next_sample=start;previous=None
+while time.monotonic()-start<700:
+    try:
+        begin=time.time()
+        s=_local_snapshot(BEFORE['identity']['id'],BEFORE['identity']['image'],32768,state)
+        proc=Path('/proc/243279/stat').read_text().rsplit(')',1)[1].split()
+        s.update(sample_begin_utc=begin,process_start_ticks=int(proc[19]),process_state=proc[0],sampler_pid=os.getpid(),pss_sampling='absent_during_request',release_count=state.get('release_count',0),idle_count=state.get('idle_count',0))
+        c=s['container'];i=BEFORE['identity']
+        assert (c['id'],c['image_id'],c['pid'],c['started_at'],s['process_start_ticks'])==(i['id'],i['image'],i['pid'],i['started_at'],i['start_ticks']),'identity'
+        assert c['running'] and not c['oom_killed'] and not c['paused'] and not c['restarting'] and c['restart_count']==0 and proc[0] not in ('T','t','Z','X','x'),'running_state'
+        assert s['root_available_bytes']>=4*GIB and s['mounts']==BEFORE['registered_mounts'],'storage'
+        assert s['host_kib']['MemAvailable']>0 and s['process_kib']['Rss']>0 and s['process_kib']['VmSwap']==0,'memory'
+        assert s['host_swap_used_kib']==FULL['host_swap_used_kib'] and not any(s['vmstat_delta'].values()),'swap_oom'
+        assert len(s['gpus'])==2 and [(g['index'],g['uuid']) for g in s['gpus']]==[(g['index'],g['uuid']) for g in FULL['gpus']],'gpu_identity'
+        assert all(16*GIB<=g['free_bytes']<=g['total_bytes'] for g in s['gpus']),'gpu_free'
+        assert not any(s['errors'].values()),'numeric_error_counter'
+        assert s['slot_count']==1 and s['slot_context']==32768 and s['n_threads']==112 and s['placement']=='n_cpu_moe_76' and s['native']==FULL['native'],'configuration'
+        s['sample_end_utc']=time.time();s['sample_elapsed_seconds']=s['sample_end_utc']-begin
+        assert s['sample_elapsed_seconds']<2,'sample_duration'
+        if previous is not None:assert 0<s['timestamp']-previous<=2,'sample_gap'
+        previous=s['timestamp'];s['status']='PASS_CHEAP_ONLY'
+        print(json.dumps(s,separators=(',',':')),flush=True)
+    except Exception as exc:
+        print(json.dumps({'status':'STOP','error_type':type(exc).__name__,'utc':time.time()}),flush=True);break
+    next_sample+=1.0
+    if select.select([sys.stdin],[],[],max(0,next_sample-time.monotonic()))[0]:break
+'''

@@ -1,0 +1,25 @@
+import os,stat,json,subprocess,hashlib,datetime
+from pathlib import Path
+BASE=Path('/data/services/n1vm-20260915');os.umask(0o077)
+def metadata(p):
+ m=p.lstat();return {'path':str(p),'uid':m.st_uid,'gid':m.st_gid,'mode':oct(stat.S_IMODE(m.st_mode)),'nlink':m.st_nlink,'inode':m.st_ino,'device':m.st_dev,'mtime_ns':m.st_mtime_ns,'ctime_ns':m.st_ctime_ns}
+rows=[]
+for path in ['/etc/systemd/system/multi-user.target.wants','/run','/etc/llm-server','/usr/local/lib/llm-server/private-network']:
+ p=Path(path)
+ for q in [*reversed(p.parents),p]:
+  m=q.lstat();assert stat.S_ISDIR(m.st_mode) and m.st_uid==0 and not m.st_mode&0o022,str(q)
+ rows.append(metadata(p))
+for path in ['/etc/llm-server/private-network-state.json','/run/llm-private-network.lock']:
+ p=Path(path);m=p.lstat();assert stat.S_ISREG(m.st_mode) and m.st_uid==0 and m.st_gid==0 and m.st_nlink==1 and stat.S_IMODE(m.st_mode)==0o600
+ row=metadata(p);row['sha256']=hashlib.sha256(p.read_bytes()).hexdigest();rows.append(row)
+p=Path('/etc/systemd/system/multi-user.target.wants/llm-private-glm.socket');m=p.lstat();assert stat.S_ISLNK(m.st_mode) and m.st_uid==0 and m.st_gid==0 and os.readlink(p)=='/etc/systemd/system/llm-private-glm.socket';row=metadata(p);row['target']=os.readlink(p);rows.append(row)
+receipt=Path('/etc/llm-server/private-network-state.json').read_bytes()
+fd=os.open(BASE/'policy-receipt-backup.json',os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+with os.fdopen(fd,'wb') as f:f.write(receipt)
+inverse='''# N1VM owned inverse — NOT EXECUTED, retain evidence\n\nRun through worker SSH ai-vm under current authorization. Verify the exact protected D3 guards and require both guards PASS, with report under /data/services/n1vm-20260915. Stop if root available <4GiB.\n\n1. sudo systemctl disable --now llm-private-glm.socket\n2. sudo systemctl stop llm-private-glm.service\n3. Verify all six llm-private-{control,glm,qwen38}.{socket,service} units inactive/failed, all three sockets disabled, all services static/disabled. Control/Qwen should already be off; do not alter any backend.\n4. sudo /usr/bin/python3 -I -B /usr/local/lib/llm-server/private-network/private_network.py remove --dry-run\n5. sudo /usr/bin/python3 -I -B /usr/local/lib/llm-server/private-network/private_network.py remove\n\nOn any refusal retain files/evidence and stop; never flush/restore all rules. Keep all eight exact files until reviewed helper inverse passes. Verify every destination against deploy-manifest-planned.json and created-resources.jsonl, including SHA256, ownership, regular/single-link type. Remove only those proven-new files; never remove changed/preexisting assets. Remove only empty proven-new parent dirs, in reverse order; preserve /etc/llm-server while it retains private-network-state.json. Keep receipt and its original filter snapshot, evidence directory and backup. Record exact removal and rerun daemon-reload only after owned unit removal. Recheck protected guards and native model identity without generation.\n\nThe preexisting multi-user.target.wants parent is not owned and must be retained. The newly created GLM enable symlink is owned and removed by systemctl disable. The helper lock is an owned root0600 runtime artifact; only consider removal after all owned helper/service activity is quiescent. No arbitrary PID kill, Docker/model stop, registry/key/control mutation, disk operation or unrelated cleanup.\n'''
+fd=os.open(BASE/'inverse.md',os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+with os.fdopen(fd,'w') as f:f.write(inverse)
+out={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'result':'PASS','metadata':rows,'enable_parent_verification_timing':'post-enable supplemental check; initial inventory verified its ancestors and link absence, not this exact directory','owned_firewall_chain':'LLM-PRIVATE-IN','owned_firewall_tag':'llm-private-n1s-v1','source_deliverables_manifest':'deploy-manifest-planned.json','created_resource_record':'created-resources.jsonl','inverse_executed':False,'receipt_backup':'policy-receipt-backup.json'}
+fd=os.open(BASE/'owned-resources.json',os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+with os.fdopen(fd,'w') as f:json.dump(out,f,indent=2)
+print(json.dumps(out,indent=2))

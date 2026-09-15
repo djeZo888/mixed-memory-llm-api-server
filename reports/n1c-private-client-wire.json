@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "client_version": "1.18.31",
+  "claim": "same_worker_actual_client_to_synthetic_server_only",
+  "live_llm_acceptance": false,
+  "separate_host_reachability": "NOT_TESTED",
+  "dependency_setup": "existing_pinned_tree_copy_into_bootstrap_generated_prefix",
+  "own_private_address_confirmed": true,
+  "loopback": {
+    "status": "PASS",
+    "base_url": "http://127.0.0.1:64480/v1",
+    "exact_requested_url": "http://127.0.0.1:64480/v1/chat/completions",
+    "host_and_path_checked": true,
+    "synthetic_bearer_checked": true,
+    "request_count": 2,
+    "client_config_check": "PASS",
+    "native_version_check": "PASS",
+    "tls_bypass_enabled": false
+  },
+  "private_ipv4": {
+    "status": "PASS",
+    "base_url": "http://10.156.100.182:64523/v1",
+    "exact_requested_url": "http://10.156.100.182:64523/v1/chat/completions",
+    "host_and_path_checked": true,
+    "synthetic_bearer_checked": true,
+    "request_count": 2,
+    "client_config_check": "PASS",
+    "native_version_check": "PASS",
+    "tls_bypass_enabled": false
+  },
+  "credential_scan": "PASS",
+  "synthetic_key_removed": true
+}

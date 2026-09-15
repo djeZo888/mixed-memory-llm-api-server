@@ -1,0 +1,51 @@
+{
+  "failed_stage": "protected_source",
+  "guard_authority": "REGISTERED_ONLY",
+  "installed_closure": {},
+  "parents": {
+    "/data": {
+      "dev": 2065,
+      "gid": 0,
+      "ino": 2,
+      "mode": "0755",
+      "nlink": 13,
+      "uid": 0
+    },
+    "/data/build": {
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 21757953,
+      "mode": "2755",
+      "nlink": 19,
+      "uid": 0
+    },
+    "/data/logs": {
+      "dev": 2065,
+      "gid": 1000,
+      "ino": 47972353,
+      "mode": "2755",
+      "nlink": 14,
+      "uid": 0
+    },
+    "/etc/local-ai-server": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 266588,
+      "mode": "0700",
+      "nlink": 2,
+      "uid": 0
+    }
+  },
+  "registry": {
+    "dev": 64512,
+    "gid": 0,
+    "ino": 266631,
+    "mode": "0600",
+    "nlink": 1,
+    "sha256": "626db7130b644199f5f632b2ac3c04f86cdd382121573aa6f3825bbca8de9c27",
+    "uid": 0
+  },
+  "status": "STOP",
+  "transport": "Worker1 SSH ai-vm",
+  "utc": "2026-09-15T04:23:18.574025+00:00"
+}

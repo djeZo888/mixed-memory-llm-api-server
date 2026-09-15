@@ -1,0 +1,26 @@
+{
+  "acquisition_complete_sha256": "970b026bbb8a4d500f1aee146c3ffaf51f64ca7d0eb3c3a24237e6a51c35f8c5",
+  "acquisition_lock": "HELD_THROUGH_FINAL_CHECK_THEN_RELEASED",
+  "acquisition_unit": "inactive/dead/MainPID0",
+  "artifact_count": 81,
+  "authentication": "NOT_ATTESTED",
+  "canonical_guard_source_hashes": "PASS",
+  "current_stat_matches": 81,
+  "manifest_sha256": "726012378a40f648a104230d3f5ed5d6bc505cbd09b32918fc29aa81c0f075f2",
+  "open_writers": {
+    "processes_observed": 1114,
+    "shared_writable_mappings": 0,
+    "unreadable_entries": 0,
+    "writable_descriptors": 0
+  },
+  "payload_bytes_read": 0,
+  "proposed_receipt_sha256": "2020e3d4b19a3d4a7221dfbf37a4f558ed98dcbd73e302b716ab95fb04e17dce",
+  "readiness": "NOT_ATTESTED",
+  "receipt_publication": "NOT_PERFORMED_BY_THIS_PROBE",
+  "root_free_bytes": 5210214400,
+  "runtime": "NOT_ATTESTED",
+  "seal_sha256": "a9b1ee9c80ca7030b79387b64f63d494159d0db7966f6510737e20c568584cfe",
+  "status": "PASS_PROTECTED_SEAL_CURRENT",
+  "utc": "2026-09-15T03:06:38.515984+00:00",
+  "verified_bytes_attested": 30890049597
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "role": "server",
+  "profile": "flagship-hybrid",
+  "model_set": "glm,qwen",
+  "storage_mode": "existing",
+  "data_dir": "/data",
+  "data_uuid": null,
+  "model_dir": "/data/models",
+  "model_uuid": null,
+  "expected_gpu_count": 2
+}

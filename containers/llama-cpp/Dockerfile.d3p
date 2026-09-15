@@ -1,0 +1,65 @@
+# D3P: default context is a clean exact upstream checkout, including .git.
+# Named BuildKit context d3p is this recipe directory. Use build-d3p-runtime.sh.
+# New recipe; the D1 rollback recipe/proof remain unchanged.
+ARG CUDA_DEVEL=nvidia/cuda:13.2.1-devel-ubuntu24.04@sha256:0e1f7b8e96fa9ec5e36d4709a38c62df7b5665977446081811c12b8234d874bf
+ARG CUDA_RUNTIME=nvidia/cuda:13.2.1-runtime-ubuntu24.04@sha256:285c50be684df76df5cd0e3162687e74b7b67add47134ff55075e3a9cfa94044
+FROM ${CUDA_DEVEL} AS build
+ARG UBUNTU_SNAPSHOT=20260914T000000Z
+# Immutable Ubuntu snapshot prevents build dependencies drifting between rebuilds.
+RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/* && \
+    printf 'deb [check-valid-until=no] https://snapshot.ubuntu.com/ubuntu/%s noble main universe\ndeb [check-valid-until=no] https://snapshot.ubuntu.com/ubuntu/%s noble-updates main universe\ndeb [check-valid-until=no] https://snapshot.ubuntu.com/ubuntu/%s noble-security main universe\n' "$UBUNTU_SNAPSHOT" "$UBUNTU_SNAPSHOT" "$UBUNTU_SNAPSHOT" > /etc/apt/sources.list && \
+    apt-get update && apt-get install -y --no-install-recommends build-essential cmake ninja-build git libssl-dev ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+# Verifier-only dependency; retain the preceding D1 package layer for cache reuse.
+RUN apt-get update && apt-get install -y --no-install-recommends python3 && \
+    rm -rf /var/lib/apt/lists/*
+ARG D3P_PATCH_SHA256
+ARG D3P_DERIVED_TREE
+ARG CUDA_ARCHITECTURES=120a-real
+ARG BUILD_JOBS=8
+ENV CC=gcc CXX=g++ CUDAHOSTCXX=g++
+WORKDIR /src
+COPY . .
+COPY --from=d3p prepare-d3p-source.py d3p-source.json strict-model-chat.patch Dockerfile.d3p Dockerfile.d3p.dockerignore build-d3p-runtime.sh /d3p/
+RUN python3 /d3p/prepare-d3p-source.py /src > /tmp/d3p-source-provenance.json && \
+    test "$(python3 -c 'import json; print(json.load(open("/d3p/d3p-source.json"))["patch_sha256"])')" = "$D3P_PATCH_SHA256" && \
+    test "$(git write-tree)" = "$D3P_DERIVED_TREE" && \
+    cmake -S . -B /build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_CUDA_ARCHITECTURES="$CUDA_ARCHITECTURES" -DGGML_CUDA=ON \
+      -DGGML_NATIVE=OFF -DGGML_BACKEND_DL=ON -DGGML_CPU_ALL_VARIANTS=ON \
+      -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_APP=OFF \
+      -DLLAMA_BUILD_UI=OFF -DLLAMA_USE_PREBUILT_UI=OFF \
+      -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined && \
+    cmake --build /build --target llama-server --parallel "$BUILD_JOBS" && \
+    mkdir -p /out && cp /build/bin/llama-server /out/ && \
+    find /build -name '*.so*' -exec cp -P {} /out/ \; && \
+    cp /build/CMakeCache.txt /out/CMakeCache.txt && \
+    dpkg-query -W > /out/build-packages.tsv && \
+    nvcc --version > /out/nvcc-version.txt && \
+    cp LICENSE /out/llama-LICENSE && \
+    git rev-parse HEAD > /out/source-commit.txt && \
+    git write-tree > /out/source-tree.txt && \
+    cp /tmp/d3p-source-provenance.json /out/source-provenance.json && \
+    cd /d3p && sha256sum Dockerfile.d3p Dockerfile.d3p.dockerignore prepare-d3p-source.py build-d3p-runtime.sh d3p-source.json strict-model-chat.patch > /out/build-recipe-sha256.txt
+FROM ${CUDA_RUNTIME} AS runtime
+ARG UBUNTU_SNAPSHOT=20260914T000000Z
+RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/* && \
+    printf 'deb [check-valid-until=no] https://snapshot.ubuntu.com/ubuntu/%s noble main universe\ndeb [check-valid-until=no] https://snapshot.ubuntu.com/ubuntu/%s noble-updates main universe\ndeb [check-valid-until=no] https://snapshot.ubuntu.com/ubuntu/%s noble-security main universe\n' "$UBUNTU_SNAPSHOT" "$UBUNTU_SNAPSHOT" "$UBUNTU_SNAPSHOT" > /etc/apt/sources.list && \
+    apt-get update && apt-get install -y --no-install-recommends libgomp1 libssl3t64 ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+ARG D3P_PATCH_SHA256
+ARG D3P_DERIVED_TREE
+LABEL org.opencontainers.image.source="https://github.com/ggml-org/llama.cpp" \
+      org.opencontainers.image.revision="$D3P_DERIVED_TREE" \
+      org.opencontainers.image.version="v0.4.1+d3p" \
+      local.d1.cuda.architectures="120a-real" \
+      local.d3p.source.kind="upstream-plus-checked-patch" \
+      local.d3p.source.revision-kind="git-tree" \
+      local.d3p.source.upstream-commit="b29c606e28a01b1bc8c1351026a0fa6e616bf6c4" \
+      local.d3p.source.patch-sha256="$D3P_PATCH_SHA256" \
+      local.d3p.source.derived-tree="$D3P_DERIVED_TREE"
+COPY --from=build /out/ /opt/llama/
+ENV LD_LIBRARY_PATH=/opt/llama LLAMA_ARG_HOST=127.0.0.1
+WORKDIR /opt/llama
+ENTRYPOINT ["/opt/llama/llama-server"]
+CMD ["--help"]

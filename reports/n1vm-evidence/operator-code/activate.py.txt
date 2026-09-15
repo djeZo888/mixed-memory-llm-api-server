@@ -1,0 +1,81 @@
+import os,stat,json,hashlib,subprocess,datetime
+from pathlib import Path
+BASE=Path('/data/services/n1vm-20260915');os.umask(0o077);os.environ['TMPDIR']=str(BASE/'tmp')
+D3=Path('/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common')
+helper=['/usr/bin/python3','-I','-B','/usr/local/lib/llm-server/private-network/private_network.py']
+def run(args):
+ r=subprocess.run(args,capture_output=True,text=True,timeout=60)
+ assert r.returncode==0,'command failed: '+args[0]+' '+args[-1]
+ return r.stdout
+def save(name,obj):
+ raw=(json.dumps(obj,indent=2,sort_keys=True)+'\n').encode() if not isinstance(obj,str) else obj.encode()
+ fd=os.open(BASE/name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+ with os.fdopen(fd,'wb') as f:f.write(raw);f.flush();os.fsync(f.fileno())
+def guard_identity():
+ expected=json.loads((BASE/'guard-identity-before.json').read_text())['metadata']
+ for path,row in expected.items():
+  p=Path(path);m=p.lstat();assert m.st_uid==row['uid'] and m.st_gid==row['gid'] and oct(stat.S_IMODE(m.st_mode))==row['mode'],'protected guard metadata drift'
+  assert not p.is_symlink()
+  if 'sha256' in row: assert m.st_nlink==1 and hashlib.sha256(p.read_bytes()).hexdigest()==row['sha256'],'guard hash drift'
+ mounts=[]
+ for t,u in [('/data','8daf56f1-5649-4163-9d87-919c2d271875'),('/data/models-large','a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a')]:
+  r=json.loads(run(['findmnt','-J','--mountpoint',t,'-o','TARGET,SOURCE,UUID,FSTYPE']))['filesystems'];assert len(r)==1 and r[0]['uuid']==u and r[0]['target']==t and r[0]['fstype']=='ext4';mounts+=r
+ free=os.statvfs('/').f_bavail*os.statvfs('/').f_frsize;assert free>=4*1024**3,'STOP root free below 4GiB'
+ return mounts,free
+assert json.loads((BASE/'native-auth.json').read_text())['result']=='PASS'
+guard_identity()
+run(helper+['check'])
+activated=False
+try:
+ assert not os.path.lexists('/etc/systemd/system/multi-user.target.wants/llm-private-glm.socket')
+ activated=True
+ enable_output=run(['systemctl','enable','--now','llm-private-glm.socket'])
+ enabled_utc=datetime.datetime.now(datetime.timezone.utc).isoformat()
+ run(helper+['check'])
+ unitstates={}
+ for role in ('control','glm','qwen38'):
+  for suffix in ('socket','service'):
+   name='llm-private-'+role+'.'+suffix
+   raw=run(['systemctl','show',name,'--property=ActiveState,SubState,UnitFileState,FragmentPath,DropInPaths,NeedDaemonReload,Listen,BindToDevice'])
+   fields=dict(l.split('=',1) for l in raw.splitlines() if '=' in l);unitstates[name]=fields
+   assert fields['FragmentPath']=='/etc/systemd/system/'+name and fields['DropInPaths']=='' and fields['NeedDaemonReload']=='no'
+   if suffix=='socket':
+    assert fields['ActiveState']==('active' if role=='glm' else 'inactive')
+    assert fields['UnitFileState']==('enabled' if role=='glm' else 'disabled')
+   elif role!='glm':assert fields['ActiveState']=='inactive' and fields['UnitFileState']=='static'
+ link=Path('/etc/systemd/system/multi-user.target.wants/llm-private-glm.socket');m=link.lstat()
+ assert stat.S_ISLNK(m.st_mode) and m.st_uid==0 and m.st_gid==0 and os.readlink(link)=='/etc/systemd/system/llm-private-glm.socket'
+ all_listeners=run(['ss','-H','-lntp'])
+ selected=[l for l in all_listeners.splitlines() if any(':'+str(p)+' ' in l for p in (30000,30002,30004))]
+ assert len(selected)==2 and any('127.0.0.1:30002 ' in l for l in selected) and any('10.156.100.60%enp6s18:30002 ' in l or '10.156.100.60:30002 ' in l for l in selected),selected
+ raw=run(['/usr/sbin/iptables','-w','5','-t','filter','-S'])
+ foreign='\n'.join(l for l in raw.splitlines() if 'llm-private-n1s-v1' not in l and l!='-N LLM-PRIVATE-IN')+'\n'
+ assert foreign==(BASE/'filter-before.txt').read_text(),'unrelated IPv4 filter drift'
+ x=json.loads(run(['docker','inspect','bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55']))[0]
+ command={'Path':x['Path'],'Args':x['Args'],'Entrypoint':x['Config']['Entrypoint'],'Cmd':x['Config']['Cmd']}
+ identity={'id':x['Id'],'image':x['Image'],'name':x['Name'],'started_at':x['State']['StartedAt'],'pid':x['State']['Pid'],'restart_count':x['RestartCount'],'running':x['State']['Running'],'command_sha256':hashlib.sha256(json.dumps(command,sort_keys=True).encode()).hexdigest(),'network_mode':x['HostConfig']['NetworkMode']}
+ assert identity==json.loads((BASE/'inventory-before.json').read_text())['model'],'model drift'
+ assert x['HostConfig']['PortBindings']=={'30002/tcp':[{'HostIp':'127.0.0.1','HostPort':'30002'}]}
+ assert x['HostConfig']['RestartPolicy']['Name']=='no'
+ mount,free=guard_identity()
+ require_output=run([str(D3/'require-data-mounted.sh')])
+ guard_output=run([str(D3/'root-disk-guard.sh'),'--report',str(BASE/'root-guard-after.md')])
+ mount,free=guard_identity()
+ run(helper+['check'])
+ files=[]
+ for row in json.loads((BASE/'deploy-manifest-planned.json').read_text()):
+  p=Path(row['destination']);m=p.lstat();actual=hashlib.sha256(p.read_bytes()).hexdigest()
+  assert actual==row['sha256'] and m.st_uid==0 and m.st_gid==0 and stat.S_IMODE(m.st_mode)==int(row['mode'],8) and m.st_nlink==1
+  files.append({'path':str(p),'sha256':actual,'uid':0,'gid':0,'mode':row['mode']})
+ result={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'enabled_utc':enabled_utc,'transport_gate':'PASS','endpoint':'http://10.156.100.60:30002/v1','listeners':selected,'units':unitstates,'files':files,'effective_ingress':'PASS','unrelated_ipv4_filter_unchanged':True,'model_unchanged':True,'model':identity,'model_restart_policy':'no','root_available_bytes':free,'root_available_gib':free/1024**3,'require_data_mounted':'PASS','root_disk_guard':'PASS','guard_identity':'PASS exact D3 hashes and protected metadata','mounts':mount,'native_auth':'PASS missing401 wrong401 correct200 glm-5.3 n_ctx32768 health200','worker2_direct_auth_sse_agent':'PENDING_COORDINATOR_HANDSHAKE','generation_requests':0,'new_enable_symlink':{'path':str(link),'target':os.readlink(link),'uid':0,'gid':0}}
+ save('exposure-state.json',result)
+ print(json.dumps(result,indent=2),flush=True)
+except BaseException as exc:
+ rollback=[]
+ if activated:
+  for args in [['systemctl','disable','--now','llm-private-glm.socket'],['systemctl','stop','llm-private-glm.service'],helper+['remove','--dry-run'],helper+['remove']]:
+   r=subprocess.run(args,text=True,capture_output=True,timeout=60);rollback.append({'command':args,'rc':r.returncode,'stdout':r.stdout,'stderr':r.stderr})
+   if r.returncode!=0:break
+ save('activation-failure.json',{'error_category':type(exc).__name__,'error':str(exc),'rollback':rollback,'files_retained_for_review':True})
+ print('STOP activation failed; scoped rollback evidence retained',flush=True)
+ raise

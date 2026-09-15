@@ -1,0 +1,26 @@
+{
+  "container_retry": false,
+  "corrected_image_query": {
+    "returncode": 0,
+    "stderr": "",
+    "stderr_bytes": 0
+  },
+  "environment_input_changes": false,
+  "intermediate_json_parse_failure": "Expecting comma delimiter at line 2 column 1 (char 663); metadata projection lacked final closing brace",
+  "original_failure_preserved": "reports/q38env-evidence/ and commit 52b5d5e4fa1414dd35a000bfaba97b836cd391e2",
+  "reproduced_original_query_error": {
+    "returncode": 1,
+    "stderr": "template parsing error: template: :1:216: executing \"\" at <.Config.Cmd>: map has no entry for key \"Cmd\"\n",
+    "stderr_bytes": 104,
+    "stderr_complete": true,
+    "stdout_bytes": 1
+  },
+  "source_changes": false,
+  "task_local_corrections": [
+    "Config.Cmd missing-key lookup changed to index so missing becomes JSON null",
+    "Added missing closing JSON braces in image/container projection",
+    "Nullable fields use missing-key-safe lookup; existing strict policy/OCI checks unchanged"
+  ],
+  "total_container_create_attempts": 1,
+  "total_container_starts": 1
+}

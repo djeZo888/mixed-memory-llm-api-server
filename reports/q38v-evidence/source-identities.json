@@ -1,0 +1,17 @@
+{
+  "approved_commit": "f17ec2c37d4c706752dd3fbe1978519983578b71",
+  "approved_tree": "a667371eac8b46642ab87ff8e1d1be26ab501ca4",
+  "input_bundle_sha256": "01620ec7ff7bb83e2c67e543b548af82e9fc53ebae975ba2938a17a1fb134a7a",
+  "provenance_sha256": "1f0a49bcbfb0b499d0432b9d4b4b387f6fe5338e084e9e0f7c9578e6f77b1acd",
+  "launcher_sha256": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+  "fixture_sha256": {
+    "auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+    "cache_probe.py": "83197614bd963f54a275d9f01ec8955325b3ea4791387dd5235df189f67e7c99",
+    "chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+    "run_fixture.py": "9cdea022e21f1859e097be51094b9d2822dfc1387f8756448dd7b14d8a251d2c",
+    "run_pinned_image.py": "16a1e0b726295e0f0a9f046b5d496dae70f83677f5145ffdb52bfee01671b454"
+  },
+  "support_sha256": {
+    "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f"
+  }
+}

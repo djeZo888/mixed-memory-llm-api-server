@@ -1,0 +1,444 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "live",
+  "status": "FAIL",
+  "requested_model": "glm-5.3",
+  "base_url": "http://10.156.100.60:30002/v1",
+  "auth": "enabled",
+  "limits": {
+    "max_rounds": 12,
+    "max_tool_calls": 32,
+    "max_output_bytes": 16384,
+    "test_timeout": 10,
+    "request_timeout": 300.0,
+    "overall_timeout": 1800.0,
+    "max_tokens": 2048,
+    "reasoning_effort": "low",
+    "max_response_bytes": 262144,
+    "stream_tools": true
+  },
+  "elapsed_seconds": 77.672917,
+  "source_sha": "5e713441d9ea164b81860ee795c5ef35972ee8e3",
+  "started_utc": "2026-09-15T02:57:53.537098+00:00",
+  "finished_utc": "2026-09-15T02:59:11.305118+00:00",
+  "cli_exit_code": 1,
+  "raw_report_sha256": "290341c8ebbd78f6de2f941115d10f98e62709619f05e671009216cee47cf49d",
+  "transport": "Python standard-library HTTP; direct RFC1918; no proxy or SSH tunnel",
+  "performance": "Potentially D3B build-contended; not an uncontended benchmark",
+  "configured_context_tokens": 32768,
+  "checks": {
+    "models": {
+      "status": "PASS",
+      "elapsed_seconds": 0.012071,
+      "detail": {
+        "available_model_ids": [
+          "glm-5.3"
+        ]
+      }
+    },
+    "chat": {
+      "status": "PASS",
+      "elapsed_seconds": 4.384965,
+      "detail": {
+        "model": "glm-5.3",
+        "finish_reason": "stop",
+        "stream_done": false,
+        "elapsed_seconds": 4.384656,
+        "usage": {
+          "prompt_tokens": 18,
+          "completion_tokens": 11,
+          "total_tokens": 29,
+          "prompt_tokens_details": {
+            "cached_tokens": 17
+          }
+        },
+        "reasoning_fields_present": false
+      }
+    },
+    "streaming_end": {
+      "status": "PASS",
+      "elapsed_seconds": 2.77213,
+      "detail": {
+        "model": "glm-5.3",
+        "finish_reason": "stop",
+        "stream_done": true,
+        "elapsed_seconds": 2.771936,
+        "usage": "NOT_REPORTED",
+        "reasoning_fields_present": false
+      }
+    },
+    "invalid_model": {
+      "status": "FAIL",
+      "elapsed_seconds": 11.695887,
+      "classification": "unknown_model_accepted_with_served_glm_5_3"
+    },
+    "auth_missing_models": {
+      "status": "PASS",
+      "elapsed_seconds": 0.009122,
+      "detail": {
+        "rejected_http_status": 401
+      }
+    },
+    "auth_missing_chat": {
+      "status": "PASS",
+      "elapsed_seconds": 0.009836,
+      "detail": {
+        "rejected_http_status": 401
+      }
+    },
+    "auth_wrong_models": {
+      "status": "PASS",
+      "elapsed_seconds": 0.009727,
+      "detail": {
+        "rejected_http_status": 401
+      }
+    },
+    "auth_wrong_chat": {
+      "status": "PASS",
+      "elapsed_seconds": 0.01,
+      "detail": {
+        "rejected_http_status": 401
+      }
+    },
+    "auth_correct_models": {
+      "status": "PASS",
+      "elapsed_seconds": 0.009986,
+      "detail": {
+        "available_model_ids": [
+          "glm-5.3"
+        ]
+      }
+    },
+    "auth_correct_chat": {
+      "status": "PASS",
+      "elapsed_seconds": 1.996727,
+      "detail": {
+        "model": "glm-5.3",
+        "finish_reason": "stop",
+        "stream_done": false,
+        "elapsed_seconds": 1.996343,
+        "usage": {
+          "prompt_tokens": 18,
+          "completion_tokens": 6,
+          "total_tokens": 24,
+          "prompt_tokens_details": {
+            "cached_tokens": 17
+          }
+        },
+        "reasoning_fields_present": false
+      }
+    },
+    "tool_roundtrip": {
+      "status": "PASS"
+    }
+  },
+  "requests": [
+    {
+      "path": "/models",
+      "stream": false,
+      "status": 200,
+      "success": true,
+      "requested_model": null,
+      "elapsed_seconds": 0.012052,
+      "sequence": 1
+    },
+    {
+      "path": "/chat/completions",
+      "stream": false,
+      "status": 200,
+      "success": true,
+      "requested_model": "glm-5.3",
+      "model": "glm-5.3",
+      "finish_reason": "stop",
+      "elapsed_seconds": 4.384695,
+      "sequence": 2,
+      "usage": {
+        "prompt_tokens": 18,
+        "completion_tokens": 11,
+        "total_tokens": 29,
+        "prompt_tokens_details": {
+          "cached_tokens": 17
+        }
+      }
+    },
+    {
+      "path": "/chat/completions",
+      "stream": true,
+      "status": 200,
+      "success": true,
+      "requested_model": "glm-5.3",
+      "model": "glm-5.3",
+      "finish_reason": "stop",
+      "elapsed_seconds": 2.771968,
+      "sequence": 3,
+      "usage": "NOT_REPORTED"
+    },
+    {
+      "path": "/chat/completions",
+      "stream": false,
+      "status": 200,
+      "success": true,
+      "requested_model": "__a1_invalid_model_acfde815bb0b47108813e4055fe6bf95",
+      "model": "glm-5.3",
+      "finish_reason": "stop",
+      "elapsed_seconds": 11.695358,
+      "sequence": 4,
+      "usage": {
+        "prompt_tokens": 15,
+        "completion_tokens": 38,
+        "total_tokens": 53,
+        "prompt_tokens_details": {
+          "cached_tokens": 14
+        }
+      }
+    },
+    {
+      "path": "/models",
+      "stream": false,
+      "status": 401,
+      "success": false,
+      "requested_model": null,
+      "elapsed_seconds": 0.009075,
+      "sequence": 5
+    },
+    {
+      "path": "/chat/completions",
+      "stream": false,
+      "status": 401,
+      "success": false,
+      "requested_model": "glm-5.3",
+      "elapsed_seconds": 0.009696,
+      "sequence": 6
+    },
+    {
+      "path": "/models",
+      "stream": false,
+      "status": 401,
+      "success": false,
+      "requested_model": null,
+      "elapsed_seconds": 0.009688,
+      "sequence": 7
+    },
+    {
+      "path": "/chat/completions",
+      "stream": false,
+      "status": 401,
+      "success": false,
+      "requested_model": "glm-5.3",
+      "elapsed_seconds": 0.009884,
+      "sequence": 8
+    },
+    {
+      "path": "/models",
+      "stream": false,
+      "status": 200,
+      "success": true,
+      "requested_model": null,
+      "elapsed_seconds": 0.009921,
+      "sequence": 9
+    },
+    {
+      "path": "/chat/completions",
+      "stream": false,
+      "status": 200,
+      "success": true,
+      "requested_model": "glm-5.3",
+      "model": "glm-5.3",
+      "finish_reason": "stop",
+      "elapsed_seconds": 1.996372,
+      "sequence": 10,
+      "usage": {
+        "prompt_tokens": 18,
+        "completion_tokens": 6,
+        "total_tokens": 24,
+        "prompt_tokens_details": {
+          "cached_tokens": 17
+        }
+      }
+    },
+    {
+      "path": "/chat/completions",
+      "stream": true,
+      "status": 200,
+      "success": true,
+      "requested_model": "glm-5.3",
+      "model": "glm-5.3",
+      "finish_reason": "tool_calls",
+      "elapsed_seconds": 7.837146,
+      "sequence": 11,
+      "usage": "NOT_REPORTED"
+    },
+    {
+      "path": "/chat/completions",
+      "stream": true,
+      "status": 200,
+      "success": true,
+      "requested_model": "glm-5.3",
+      "model": "glm-5.3",
+      "finish_reason": "tool_calls",
+      "elapsed_seconds": 28.082938,
+      "sequence": 12,
+      "usage": "NOT_REPORTED"
+    },
+    {
+      "path": "/chat/completions",
+      "stream": true,
+      "status": 200,
+      "success": true,
+      "requested_model": "glm-5.3",
+      "model": "glm-5.3",
+      "finish_reason": "tool_calls",
+      "elapsed_seconds": 7.60422,
+      "sequence": 13,
+      "usage": "NOT_REPORTED"
+    },
+    {
+      "path": "/chat/completions",
+      "stream": true,
+      "status": 200,
+      "success": true,
+      "requested_model": "glm-5.3",
+      "model": "glm-5.3",
+      "finish_reason": "stop",
+      "elapsed_seconds": 12.930435,
+      "sequence": 14,
+      "usage": "NOT_REPORTED"
+    }
+  ],
+  "agent": {
+    "status": "PASS",
+    "elapsed_seconds": 56.762031,
+    "rounds": [
+      {
+        "round": 1,
+        "model": "glm-5.3",
+        "finish_reason": "tool_calls",
+        "stream_done": true,
+        "elapsed_seconds": 7.83714,
+        "usage": "NOT_REPORTED",
+        "reasoning_fields_present": false,
+        "tool_names": [
+          "read_file",
+          "read_file"
+        ]
+      },
+      {
+        "round": 2,
+        "model": "glm-5.3",
+        "finish_reason": "tool_calls",
+        "stream_done": true,
+        "elapsed_seconds": 28.082909,
+        "usage": "NOT_REPORTED",
+        "reasoning_fields_present": false,
+        "tool_names": [
+          "write_file"
+        ]
+      },
+      {
+        "round": 3,
+        "model": "glm-5.3",
+        "finish_reason": "tool_calls",
+        "stream_done": true,
+        "elapsed_seconds": 7.604198,
+        "usage": "NOT_REPORTED",
+        "reasoning_fields_present": false,
+        "tool_names": [
+          "run_tests"
+        ]
+      },
+      {
+        "round": 4,
+        "model": "glm-5.3",
+        "finish_reason": "stop",
+        "stream_done": true,
+        "elapsed_seconds": 12.930398,
+        "usage": "NOT_REPORTED",
+        "reasoning_fields_present": false,
+        "tool_names": []
+      }
+    ],
+    "final_answer_present": true,
+    "evidence": {
+      "disposable": true,
+      "implementation_changed": true,
+      "implementation_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+      "tests_unchanged": true,
+      "tests_sha256": "0db9ff2126ec29252997e054e2334a4cfe82bcb8636a640ebe756e38bc00ea36",
+      "expected_tests_sha256": "0db9ff2126ec29252997e054e2334a4cfe82bcb8636a640ebe756e38bc00ea36",
+      "elapsed_seconds": 56.761088,
+      "success": true,
+      "initial_test": {
+        "exit_code": 1,
+        "passed": false,
+        "elapsed_seconds": 0.096197,
+        "implementation_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+        "tests_sha256": "0db9ff2126ec29252997e054e2334a4cfe82bcb8636a640ebe756e38bc00ea36",
+        "version": 0
+      },
+      "final_test": {
+        "exit_code": 0,
+        "passed": true,
+        "elapsed_seconds": 0.091332,
+        "implementation_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+        "tests_sha256": "0db9ff2126ec29252997e054e2334a4cfe82bcb8636a640ebe756e38bc00ea36",
+        "version": 1,
+        "status": "PASS"
+      },
+      "calls": [
+        {
+          "name": "read_file",
+          "implementation_before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+          "version_before": 0,
+          "elapsed_seconds": 0.000295,
+          "version_after": 0,
+          "implementation_after_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+          "call_id_sha256": "ac6855b95ecae652b68128ba0a776602cda1b6d275d7837cc52cfa10b4ab90d2",
+          "fixture_file": "calc.py",
+          "result_error_present": false
+        },
+        {
+          "name": "read_file",
+          "implementation_before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+          "version_before": 0,
+          "elapsed_seconds": 0.000246,
+          "version_after": 0,
+          "implementation_after_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+          "call_id_sha256": "95fab17deaa2090a00e5fc78ec9f9934fd67ddf8984fd135fac109a81eb95b29",
+          "fixture_file": "test_calc.py",
+          "result_error_present": false
+        },
+        {
+          "name": "write_file",
+          "implementation_before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+          "version_before": 0,
+          "elapsed_seconds": 0.002246,
+          "version_after": 1,
+          "implementation_after_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+          "call_id_sha256": "87e5ac441dd7af0635e736a20287e1fffafe5ae512df883037b82cd2bd755172",
+          "fixture_file": "calc.py",
+          "result_error_present": false
+        },
+        {
+          "name": "run_tests",
+          "implementation_before_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+          "version_before": 1,
+          "elapsed_seconds": 0.097385,
+          "version_after": 1,
+          "implementation_after_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+          "call_id_sha256": "458a3e7791160eb776cc5d641005ff2093a83d83c3ce0f27aa0f6fecc7075ec5",
+          "fixture_file": null,
+          "result_error_present": false,
+          "test": {
+            "exit_code": 0,
+            "passed": true,
+            "elapsed_seconds": 0.094853,
+            "implementation_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+            "tests_sha256": "0db9ff2126ec29252997e054e2334a4cfe82bcb8636a640ebe756e38bc00ea36",
+            "version": 1
+          }
+        }
+      ],
+      "fixture_removed": true
+    }
+  }
+}

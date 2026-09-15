@@ -1,0 +1,2 @@
+# Intentionally include the complete clean upstream checkout and .git.
+# The D3P helper rejects untracked/ignored content before patching.

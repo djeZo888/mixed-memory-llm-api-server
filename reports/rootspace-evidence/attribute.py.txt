@@ -1,0 +1,62 @@
+"""Metadata-only crash attribution; no crash payload, environment, or raw command output."""
+import os,stat,json,datetime,time,subprocess
+from pathlib import Path
+paths=['/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351','/var/crash/_usr_bin_python3.12.0.crash']
+def iso(t):return datetime.datetime.fromtimestamp(t,datetime.timezone.utc).isoformat()
+def md(p,s=None):
+ s=s or os.lstat(p)
+ return {'path':p,'dev':s.st_dev,'inode':s.st_ino,'uid':s.st_uid,'gid':s.st_gid,'mode':oct(stat.S_IMODE(s.st_mode)),'nlink':s.st_nlink,'size':s.st_size,'allocated_bytes':s.st_blocks*512,'mtime_ns':s.st_mtime_ns,'ctime_ns':s.st_ctime_ns,'atime_ns':s.st_atime_ns,'mtime':iso(s.st_mtime),'ctime':iso(s.st_ctime),'atime':iso(s.st_atime)}
+def pm(pid):
+ p=Path('/proc')/pid;v=(p/'stat').read_text();w=v[v.rfind(')')+2:].split();return {'pid':int(pid),'comm':(p/'comm').read_text().strip(),'uid':p.stat().st_uid,'start_ticks':int(w[19])}
+result={'utc':iso(time.time()),'candidate_metadata':[md(p) for p in paths]}
+# Parse only the small text header. Never consume binary/base64 attachment bodies.
+# Command identity is compared internally to known fixture markers, never emitted.
+report=paths[1]; header={};cur=None;total=0;fields=[]
+with open(report,'rb',buffering=0) as f:
+ while total<1024*1024:
+  line=f.readline(16384);total+=len(line)
+  if not line:break
+  if not line.startswith(b' ') and b':' in line:
+   key,value=line.split(b':',1);cur=key.decode('ascii','replace');fields.append(cur)
+   if value.strip()==b'base64':
+    result['first_attachment']={'field':cur,'encoding':'base64','offset':f.tell()};break
+   if cur in {'Date','ExecutablePath','ProblemType','Signal','ProcStatus','ProcCmdline','ProcCwd','ProcCgroup','ProcStat'}:header[cur]=value.strip().decode('utf-8','replace')
+  elif line.startswith(b' ') and cur in {'ProcStatus','ProcCgroup','ProcStat'}:
+   header[cur]+='\n'+line[1:].decode('utf-8','replace').rstrip()
+result['header_metadata_bytes_examined']=total
+result['allowed_crash_metadata']={k:v for k,v in header.items() if k in {'Date','ExecutablePath','ProblemType','Signal'}}
+result['metadata_field_names_before_attachment']=fields
+cmd=header.get('ProcCmdline','');cwd=header.get('ProcCwd','');cg=header.get('ProcCgroup','')
+result['internal_identity_comparison']={
+ 'cmdline_mentions_cache_probe': 'cache_probe.py' in cmd,
+ 'cmdline_mentions_run_fixture': 'run_fixture.py' in cmd,
+ 'cmdline_mentions_auth_native': 'auth_native.py' in cmd,
+ 'cmdline_mentions_q38_fixture':'sglang38_fixture' in cmd,
+ 'cwd_mentions_q38fix':'q38fix-20260915' in cwd,
+ 'cgroup_matches_exact_failed_container':'d86f3ddad58dd6e493f60f468fa0f00a6db2ba6058244c15718a9aa040d6ab17' in cg,
+ 'identity_fields_present':{k:k in header for k in ['ProcCmdline','ProcCwd','ProcCgroup','ProcStat']}}
+ps={}
+for ln in header.get('ProcStatus','').splitlines():
+ if ':' in ln:
+  k,v=ln.split(':',1)
+  if k in ['Name','Pid','PPid','Uid','NSpid']:ps[k]=v.strip()
+result['crashed_process_metadata']=ps
+result['core_filename_process_identity']={'pid':265467,'start_ticks':2515351,'boot_id_matches_current':Path('/proc/sys/kernel/random/boot_id').read_text().strip()=='9423b346-6186-4855-b1cf-f1725a853fe9','process_pid_exists':Path('/proc/265467').exists()}
+keys={(os.lstat(p).st_dev,os.lstat(p).st_ino) for p in paths};refs=[];errs=[];holders=[];count=0
+for e in os.scandir('/proc'):
+ if not e.name.isdigit():continue
+ try:
+  identity=pm(e.name);count+=1
+  if identity['comm'].startswith(('apport','whoopsie')):holders.append(identity)
+  for fd in os.scandir(e.path+'/fd'):
+   try:
+    st=os.stat(fd.path)
+    if (st.st_dev,st.st_ino) in keys:refs.append(dict(identity,fd=int(fd.name),dev=st.st_dev,inode=st.st_ino,size=st.st_size))
+   except FileNotFoundError:pass
+   except OSError as ex:errs.append({'pid':int(e.name),'fd':fd.name,'error':type(ex).__name__})
+  assert pm(e.name)['start_ticks']==identity['start_ticks']
+ except (FileNotFoundError,ProcessLookupError):pass
+ except OSError as ex:errs.append({'pid':int(e.name),'error':type(ex).__name__})
+result['active_reference_scan']={'checked_processes':count,'exact_candidate_fd_references':refs,'crash_handler_processes':holders,'errors':errs}
+result['candidate_metadata_after']=[md(p) for p in paths]
+print(json.dumps(result,indent=2))

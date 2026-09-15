@@ -1,0 +1,4 @@
+PREFLIGHT_PASS exact mounts, originals, metadata, D3B release state, control stopped
+Traceback (most recent call last):
+  File "<stdin>", line 244, in <module>
+AssertionError: container contract changed

@@ -1,0 +1,196 @@
+"""Read-only ROOTSPACE recovery preflight, metadata only."""
+import os,stat,json,time,hashlib,subprocess,datetime,importlib.util
+from pathlib import Path
+G='/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py'
+D='/usr/local/lib/llm-server/control-api/scripts/install/storage.py'
+SOURCES=['/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351','/var/crash/_usr_bin_python3.12.0.crash']
+DEST='/data/logs/rootspace-recovery-20260915-archive'
+CID='7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78'
+def utc():return datetime.datetime.now(datetime.timezone.utc).isoformat()
+def meta(p,s=None):
+ s=s or os.lstat(p)
+ return dict(path=p,dev=s.st_dev,inode=s.st_ino,uid=s.st_uid,gid=s.st_gid,mode=stat.S_IMODE(s.st_mode),nlink=s.st_nlink,size=s.st_size,allocated_bytes=s.st_blocks*512,mtime_ns=s.st_mtime_ns,ctime_ns=s.st_ctime_ns,atime_ns=s.st_atime_ns)
+def ancestry(p,sticky_ok=False):
+ out=[]
+ for q in list(reversed(Path(p).parents))+[Path(p)]:
+  s=os.lstat(q);assert not stat.S_ISLNK(s.st_mode) and s.st_uid==0
+  assert not s.st_mode&0o022 or (sticky_ok and stat.S_ISDIR(s.st_mode) and s.st_mode&stat.S_ISVTX)
+  out.append(meta(str(q),s))
+ return out
+def run(argv):
+ p=subprocess.run(argv,capture_output=True,text=True,timeout=90,env={'PATH':'/usr/sbin:/usr/bin:/sbin:/bin','LC_ALL':'C'})
+ return {'exit_code':p.returncode,'stdout':p.stdout,'stderr':p.stderr}
+def capacity(p):
+ s=os.statvfs(p);return {'available_bytes':s.f_bavail*s.f_frsize,'free_including_reserved_bytes':s.f_bfree*s.f_frsize,'total_bytes':s.f_blocks*s.f_frsize}
+def identity():
+ sources=[]
+ for p,h,mode in [(G,'21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d',0o755),(D,'4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505',0o644)]:
+  a=ancestry(p);got=hashlib.sha256(Path(p).read_bytes()).hexdigest();assert got==h and a[-1]['mode']==mode;sources.append({'path':p,'sha256':got,'ancestry':a})
+ ancestry('/etc/local-ai-server/storage.json')
+ spec=importlib.util.spec_from_file_location('reg',G);g=importlib.util.module_from_spec(spec);spec.loader.exec_module(g)
+ spec=importlib.util.spec_from_file_location('storage',D);d=importlib.util.module_from_spec(spec);spec.loader.exec_module(d)
+ reg=d.Storage({},g.Runner()).read_registration();assert reg['data']['uuid']=='8daf56f1-5649-4163-9d87-919c2d271875' and reg['models']['uuid']=='a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a'
+ s=d.Storage({'data_dir':reg['data']['path'],'data_uuid':reg['data']['uuid'],'model_dir':reg['models']['path'],'model_uuid':reg['models']['uuid'],'storage_mode':reg.get('storage_mode','existing')},g.Runner())
+ snap=s._role_snapshot(reg,('data','models'));assert s._identity(snap)==s._identity(reg)
+ root=run(['/usr/bin/findmnt','-J','-T','/','-o','TARGET,SOURCE,FSTYPE,UUID,MAJ:MIN']);assert root['exit_code']==0
+ root=json.loads(root['stdout'])['filesystems'][0];assert root['uuid']=='bc752bce-bb3f-4802-8adf-69c45a88689d' and root['maj:min']=='252:0' and root['fstype']=='ext4'
+ return {'guard_sources':sources,'registered_identity_only':snap,'root_mount':root,'logs_ancestry':ancestry('/data/logs')}
+def pm(pid):
+ p=Path('/proc')/str(pid);raw=(p/'stat').read_text();words=raw[raw.rfind(')')+2:].split()
+ return {'pid':int(pid),'uid':p.stat().st_uid,'comm':(p/'comm').read_text().strip(),'start_ticks':int(words[19])}
+def refs(keys):
+ found=[];errors=[];handlers=[];checked=0
+ for e in os.scandir('/proc'):
+  if not e.name.isdigit():continue
+  try:
+   m=pm(e.name);checked+=1
+   if m['comm'].startswith(('apport','whoopsie')):handlers.append(m)
+   for fd in os.scandir(e.path+'/fd'):
+    try:
+     s=os.stat(fd.path)
+     if (s.st_dev,s.st_ino) in keys:found.append(dict(m,fd=int(fd.name),dev=s.st_dev,inode=s.st_ino,size=s.st_size))
+    except FileNotFoundError:pass
+    except OSError as ex:errors.append({'pid':int(e.name),'error':type(ex).__name__})
+   assert pm(e.name)['start_ticks']==m['start_ticks']
+  except (FileNotFoundError,ProcessLookupError):pass
+  except OSError as ex:errors.append({'pid':int(e.name),'error':type(ex).__name__})
+ return {'checked_processes':checked,'references':found,'errors':errors,'crash_handlers':handlers}
+def backend():
+ r=run(['/usr/bin/docker','inspect','--format','{{json .Id}} {{json .Image}} {{json .State.Pid}} {{json .State.Status}} {{json .State.StartedAt}} {{json .RestartCount}}',CID]);assert r['exit_code']==0
+ assert '243279 "running" "2026-09-15T04:09:20.746242473Z" 0' in r['stdout']
+ assert 'sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9' in r['stdout']
+ m=pm(243279);assert m=={'pid':243279,'uid':0,'comm':'llama-server','start_ticks':2367582}
+ return {'container':r,'process':m}
+def quiescence():
+ # No requests sent: connection metadata and last slot lifecycle event only.
+ r=run(['/usr/bin/ss','-Htan','state','established','( sport = :30002 or dport = :30002 )']);assert r['exit_code']==0
+ result={'utc':utc(),'established_api_connections':len(r['stdout'].splitlines()),'request_sent':False}
+ p=subprocess.run(['/usr/bin/docker','logs','--timestamps','--tail','250',CID],capture_output=True,text=True,timeout=30)
+ assert p.returncode==0
+ latest=None
+ for line in (p.stdout+'\n'+p.stderr).splitlines():
+  if 'all slots are idle' in line:latest={'event':'all_slots_idle','timestamp':line.split(' ',1)[0]}
+  elif 'slot ' in line and 'processing task' in line:latest={'event':'slot_processing','timestamp':line.split(' ',1)[0]}
+  elif 'slot ' in line and 'stop processing' in line:latest={'event':'slot_stopped_processing','timestamp':line.split(' ',1)[0]}
+ result['last_slot_event_in_tail']=latest
+ result['pass']=result['established_api_connections']==0 and latest is not None and latest['event'] in ['all_slots_idle','slot_stopped_processing']
+ return result
+
+PLAN_JSON='{\n  "task": "ROOTSPACE",\n  "phase": "AUTHORIZED_EXACT_ARCHIVE_DRY_RUN",\n  "utc": "2026-09-15T04:58:47.130102+00:00",\n  "authorization": "../coordination-input.md and current user continuation explicitly authorize exactly two raw crash artifacts despite root capacity STOP",\n  "source_commit_preserved": "39189271c76338ac4573d1f6e5fc14618ad6fef8",\n  "root_before": {\n    "available_bytes": 3629473792,\n    "free_including_reserved_bytes": 4423245824,\n    "total_bytes": 15186501632\n  },\n  "identity_only": {\n    "schema_version": 1,\n    "roots": {\n      "backups": "/data/backups",\n      "build": "/data/build",\n      "containerd": "/data/containerd",\n      "docker": "/data/docker",\n      "hf_cache": "/data/hf-cache",\n      "logs": "/data/logs",\n      "models": "/data/models-large",\n      "secrets": "/data/services/secrets",\n      "services": "/data/services",\n      "state": "/data/services/installer"\n    },\n    "data": {\n      "path": "/data",\n      "mount": "/data",\n      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",\n      "fstype": "ext4",\n      "source": "/dev/sdb1",\n      "device": "8:17",\n      "parents": [\n        "/dev/sdb",\n        "/dev/sdb1"\n      ]\n    },\n    "models": {\n      "path": "/data/models-large",\n      "mount": "/data/models-large",\n      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",\n      "fstype": "ext4",\n      "source": "/dev/sdc1",\n      "device": "8:33",\n      "parents": [\n        "/dev/sdc",\n        "/dev/sdc1"\n      ]\n    },\n    "storage_mode": "existing",\n    "verified_roles": [\n      "data",\n      "models"\n    ]\n  },\n  "source_expected": [\n    {\n      "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",\n      "dev": 64512,\n      "inode": 266791,\n      "uid": 0,\n      "gid": 0,\n      "mode": 256,\n      "nlink": 1,\n      "size": 970436608,\n      "allocated_bytes": 970440704,\n      "mtime_ns": 1789446869471533227,\n      "ctime_ns": 1789446869681534442,\n      "atime_ns": 1789446866852518081\n    },\n    {\n      "path": "/var/crash/_usr_bin_python3.12.0.crash",\n      "dev": 64512,\n      "inode": 266790,\n      "uid": 0,\n      "gid": 0,\n      "mode": 416,\n      "nlink": 1,\n      "size": 608314664,\n      "allocated_bytes": 608321536,\n      "mtime_ns": 1789446866852518081,\n      "ctime_ns": 1789446866852518081,\n      "atime_ns": 1789446866853518087\n    }\n  ],\n  "archive_directory": "/data/logs/rootspace-recovery-20260915-archive",\n  "archive_directory_mode": "0700",\n  "archive_uid": 0,\n  "archive_gid": 0,\n  "files": [\n    {\n      "source": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",\n      "destination": "/data/logs/rootspace-recovery-20260915-archive/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",\n      "mode": "0400"\n    },\n    {\n      "source": "/var/crash/_usr_bin_python3.12.0.crash",\n      "destination": "/data/logs/rootspace-recovery-20260915-archive/_usr_bin_python3.12.0.crash",\n      "mode": "0400"\n    }\n  ],\n  "checks": [\n    "root/data/models UUIDs and protected current guard hashes/modes/ancestry before and after",\n    "anchored nonsymlink source/destination directory FDs",\n    "exact source metadata match and zero other active inode references before copying",\n    "copy both using O_EXCL; fsync; hash source stream, re-read source, independently reopen/re-hash archive; match all hashes",\n    "repeat source identity/owner/mode/size/mtime/ctime and in-use immediately before each exact unlink",\n    "unlink only the two listed unchanged originals; close own FDs; fsync source directories; verify absence",\n    "full registered and registered --root-guard must PASS after recovery; report warning below6GiB",\n    "GLM identity unchanged and zero established API connections plus last slot stopped/idle; no requests sent"\n  ],\n  "expected_root_release_allocated_bytes": 1578762240,\n  "other_deletion_paths": [],\n  "raw_bytes_destination": "VM /data/logs only; never stdout/worker/Git"\n}\n'
+# ROOTSPACE authorized exact transfer. Shared read-only helpers are prepended by worker.
+import sys
+PLAN=json.loads(PLAN_JSON)
+EXPECTED=PLAN['source_expected']
+DIRFLAGS=os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC
+READFLAGS=os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC|os.O_NOATIME
+R={'task':'ROOTSPACE','started_utc':utc(),'archive_directory':DEST,'copies':[],'deletions':[],'vm_mutations_scope':'two authorized raw crash archives only'}
+def emit(event,**kw):print(json.dumps({'event':event,'utc':utc(),**kw}),flush=True)
+def pin_equal(a,b):
+ for key in ['dev','inode','uid','gid','mode','nlink','size','allocated_bytes','mtime_ns','ctime_ns','atime_ns']:assert a[key]==b[key],key
+
+def open_dir(p,sticky_ok=False):
+ fd=os.open('/',DIRFLAGS)
+ try:
+  for component in Path(p).parts[1:]:
+   nxt=os.open(component,DIRFLAGS,dir_fd=fd);os.close(fd);fd=nxt
+   s=os.fstat(fd);assert s.st_uid==0 and (not s.st_mode&0o022 or (sticky_ok and s.st_mode&stat.S_ISVTX))
+  assert os.fstat(fd).st_ino==os.lstat(p).st_ino and os.fstat(fd).st_dev==os.lstat(p).st_dev
+  return fd
+ except BaseException:os.close(fd);raise
+
+def digest_fd(fd):
+ os.lseek(fd,0,os.SEEK_SET);h=hashlib.sha256();count=0
+ while True:
+  b=os.read(fd,4*1024*1024)
+  if not b:break
+  h.update(b);count+=len(b)
+ return h.hexdigest(),count
+
+def no_other_refs(keys,allowed):
+ r=refs(keys);assert not r['errors'] and not r['crash_handlers']
+ assert all((v['pid'],v['fd']) in allowed for v in r['references'])
+ return r
+
+sourcefds=[];parentfds=[];archivefd=None;logsfd=None
+try:
+ assert '--apply' in sys.argv
+ R['identity_before']=identity();R['root_before']=capacity('/');R['data_before']=capacity('/data/logs')
+ assert R['data_before']['available_bytes']>sum(s['size'] for s in EXPECTED)+1024**3
+ R['backend_before']=backend();R['quiescence_before']=quiescence();assert R['quiescence_before']['pass']
+ assert not os.path.lexists(DEST)
+ for wanted in EXPECTED:
+  p=wanted['path'];ancestry(p,True);pin_equal(meta(p),wanted)
+ R['source_reference_before']=no_other_refs({(s['dev'],s['inode']) for s in EXPECTED},set())
+ logsfd=open_dir('/data/logs');assert os.fstat(logsfd).st_dev==os.stat('/data').st_dev
+ os.mkdir(Path(DEST).name,0o700,dir_fd=logsfd)
+ archivefd=os.open(Path(DEST).name,DIRFLAGS,dir_fd=logsfd);os.fchown(archivefd,0,0);os.fchmod(archivefd,0o700);os.fsync(archivefd);os.fsync(logsfd)
+ R['archive_directory_initial']=meta(DEST,os.fstat(archivefd));assert R['archive_directory_initial']['dev']==os.stat('/data').st_dev
+ emit('protected_archive_created',path=DEST,mode='0700',uid=0,gid=0)
+ for wanted in EXPECTED:
+  p=wanted['path'];name=Path(p).name
+  parent=open_dir(str(Path(p).parent),True);parentfds.append(parent)
+  src=os.open(name,READFLAGS,dir_fd=parent);sourcefds.append(src)
+  pin_equal(meta(p,os.fstat(src)),wanted);pin_equal(meta(p,os.stat(name,dir_fd=parent,follow_symlinks=False)),wanted)
+  dst=os.open(name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC,0o600,dir_fd=archivefd)
+  try:
+   os.fchown(dst,0,0);h=hashlib.sha256();count=0
+   while True:
+    block=os.read(src,4*1024*1024)
+    if not block:break
+    h.update(block);count+=len(block);view=memoryview(block)
+    while view:
+     n=os.write(dst,view);assert n>0;view=view[n:]
+   assert count==wanted['size']
+   os.utime(dst,ns=(wanted['atime_ns'],wanted['mtime_ns']));os.fchmod(dst,0o400);os.fsync(dst)
+   archived=meta(DEST+'/'+name,os.fstat(dst));assert archived['uid']==0 and archived['gid']==0 and archived['mode']==0o400 and archived['nlink']==1
+  finally:os.close(dst)
+  os.fsync(archivefd)
+  src_hash,src_count=digest_fd(src);assert src_hash==h.hexdigest() and src_count==count
+  reread=os.open(name,READFLAGS,dir_fd=archivefd)
+  try:
+   check=meta(DEST+'/'+name,os.fstat(reread));pin_equal(check,archived)
+   dst_hash,dst_count=digest_fd(reread);assert dst_hash==src_hash and dst_count==count
+   pin_equal(meta(DEST+'/'+name,os.fstat(reread)),archived)
+  finally:os.close(reread)
+  pin_equal(meta(p,os.fstat(src)),wanted);pin_equal(meta(p,os.stat(name,dir_fd=parent,follow_symlinks=False)),wanted)
+  record={'source_before':wanted,'source_after_copy':meta(p,os.fstat(src)),'archive':archived,'sha256_source_copy_stream':h.hexdigest(),'sha256_source_reread':src_hash,'sha256_archive_independent_reread':dst_hash,'verified_bytes':count,'archive_fsync_complete':True}
+  R['copies'].append(record);emit('copy_hash_verified',source=p,archive=archived['path'],size=count,sha256=dst_hash)
+ # Both independently verified raw archives exist before any unlink.
+ R['identity_after_copy']=identity();ancestry(DEST)
+ assert os.fstat(archivefd).st_ino==os.lstat(DEST).st_ino and os.fstat(archivefd).st_dev==os.lstat(DEST).st_dev
+ assert os.fstat(logsfd).st_ino==os.lstat('/data/logs').st_ino and os.fstat(logsfd).st_dev==os.lstat('/data/logs').st_dev
+ R['backend_before_unlink']=backend();assert R['backend_before_unlink']==R['backend_before']
+ R['quiescence_before_unlink']=quiescence();assert R['quiescence_before_unlink']['pass']
+ for i,wanted in enumerate(EXPECTED):
+  p=wanted['path'];name=Path(p).name;src=sourcefds[i];parent=parentfds[i]
+  ancestry(p,True);ancestry(DEST)
+  pin_equal(meta(DEST+'/'+name,os.stat(name,dir_fd=archivefd,follow_symlinks=False)),R['copies'][i]['archive'])
+  allowed={(os.getpid(),fd) for fd in sourcefds if fd is not None}
+  references=no_other_refs({(s['dev'],s['inode']) for s in EXPECTED},allowed)
+  # Last metadata comparison is immediately adjacent to the exact unlink.
+  before=meta(p,os.stat(name,dir_fd=parent,follow_symlinks=False));pin_equal(before,wanted);pin_equal(meta(p,os.fstat(src)),wanted)
+  os.unlink(name,dir_fd=parent)
+  assert not os.path.lexists(p)
+  os.close(src);sourcefds[i]=None;os.fsync(parent)
+  R['deletions'].append({'path':p,'utc':utc(),'source_revalidated_before_unlink':before,'in_use_before_unlink':references,'only_own_read_FDs_allowed':True,'original_absent':True,'own_source_fd_closed':True,'root_capacity_after_close':capacity('/')})
+  emit('exact_original_removed',path=p,root_available_bytes=capacity('/')['available_bytes'])
+ R['archive_directory_final']=meta(DEST,os.fstat(archivefd));R['archives_final']=[meta(c['archive']['path']) for c in R['copies']]
+ os.fsync(archivefd)
+finally:
+ for fd in sourcefds+parentfds+[archivefd,logsfd]:
+  if fd is not None:os.close(fd)
+R['identity_final']=identity();R['root_after']=capacity('/');R['data_after']=capacity('/data/logs')
+R['full_registered_guard']=run(['/usr/bin/python3','-I','-B',G,'--json'])
+R['full_registered_root_guard']=run(['/usr/bin/python3','-I','-B',G,'--root-guard','--json'])
+R['backend_final']=backend();assert R['backend_final']==R['backend_before']
+R['quiescence_final']=quiescence()
+R['candidate_references_final']=no_other_refs({(s['dev'],s['inode']) for s in EXPECTED}|{(c['archive']['dev'],c['archive']['inode']) for c in R['copies']},set())
+R['originals_absent']=all(not os.path.lexists(p) for p in SOURCES)
+R['source_allocated_bytes_released']=sum(s['allocated_bytes'] for s in EXPECTED)
+R['observed_available_increase_bytes']=R['root_after']['available_bytes']-R['root_before']['available_bytes']
+R['completed_utc']=utc()
+R['healthy']=R['full_registered_guard']['exit_code']==0 and R['full_registered_root_guard']['exit_code']==0 and R['originals_absent'] and R['quiescence_final']['pass']
+R['vm_recovery_ownership']='RELEASED' if R['healthy'] else 'RECOVERY_FINISHED_GUARD_OR_QUIESCENCE_FAILURE'
+R['released_utc']=utc();R['no_further_vm_calls_scheduled']=True
+emit('recovery_result',result=R)
+assert R['healthy']

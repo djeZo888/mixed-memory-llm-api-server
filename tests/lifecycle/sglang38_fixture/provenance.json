@@ -1,0 +1,319 @@
+{
+  "actual_image_execution": "NOT_TESTED",
+  "fixture_sha256": {
+    "auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+    "cache_probe.py": "11e09615725d9588fd082fbbf8f4776a77d5a20f6dde09022a14df3e828bff73",
+    "chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+    "run_fixture.py": "0dcdcbaf598529cc92b1503e4c148dfac288c8d8adf821b139d0c68010c8dfc7",
+    "run_pinned_image.py": "b7a49011fdbc5fa02f4dc8cf218e31bfd2a9f52c9ed5dd1058df51ed5941bda8"
+  },
+  "image_id": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
+  "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+  "launcher_path": "scripts/runtime/sglang38_file_auth.py",
+  "launcher_sha256": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+  "model_execution": "NOT_TESTED",
+  "schema_version": 1,
+  "scope": "Q38B source-only native auth/cache fixture; exact OCI relationship, bounded container lifetime; actual image NOT_TESTED",
+  "source_revision": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+  "sources": {
+    "kernels/ops/quantization/fp8_kernel.py": {
+      "bytes": 74938,
+      "sha256": "b84b4f4d56310c3f45a7a400073701ba09275b64a64974c99823f0e81bfb437c",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/kernels/ops/quantization/fp8_kernel.py"
+    },
+    "launch_server.py": {
+      "bytes": 2569,
+      "sha256": "1a3e02c4208e13242b9a47ce92e7bc3769c8e069f863849671b9b8cc8fabdbe7",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/launch_server.py"
+    },
+    "srt/arg_groups/cuda_graph_hook.py": {
+      "bytes": 22503,
+      "sha256": "a234ccf4f8f23328a18ed72ea4c7313286e6b205921d8bcea128e6fb0372defa",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/arg_groups/cuda_graph_hook.py"
+    },
+    "srt/arg_groups/mamba_hook.py": {
+      "bytes": 6500,
+      "sha256": "22e9edafc411b0007e3cd6dfac692021e615a89b3de67bdc1ad8b5a8f28d73d0",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/arg_groups/mamba_hook.py"
+    },
+    "srt/arg_groups/memory_hook.py": {
+      "bytes": 16682,
+      "sha256": "91086cb29f78d52ed7a8e6cc3367adbaea62ca20619392e5e131bf7a2214085d",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/arg_groups/memory_hook.py"
+    },
+    "srt/arg_groups/overrides.py": {
+      "bytes": 77022,
+      "sha256": "af4086d5c3bbfc8789d82b196240226785c104809c48cb1f9a24f6962cafe4ac",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/arg_groups/overrides.py"
+    },
+    "srt/arg_groups/pipeline.py": {
+      "bytes": 13457,
+      "sha256": "4c46d8a8966914e361ed9e5d18956025c1ffe64de928d25b3a6111ac3a0ee8c8",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/arg_groups/pipeline.py"
+    },
+    "srt/configs/mamba_utils.py": {
+      "bytes": 11996,
+      "sha256": "820627a476130e36e8c9aeec2f1ded01d0c068369149e014cc0ef074f1e90808",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/configs/mamba_utils.py"
+    },
+    "srt/configs/model_config.py": {
+      "bytes": 97320,
+      "sha256": "da8db3fd906bc4fdf412cd8cd2ea1787a3385a948bea41cbc66c6fd75664d6b7",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/configs/model_config.py"
+    },
+    "srt/configs/qwen3_5.py": {
+      "bytes": 5186,
+      "sha256": "53f92b2be9d880716a1850cb4484ea2fa46408ab0b05be847ce0fa88edf71890",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/configs/qwen3_5.py"
+    },
+    "srt/configs/qwen3_next.py": {
+      "bytes": 15878,
+      "sha256": "071ce509469c3d3320a7c7dcdb58702a53045fa9856d1c858501e2740b9c5df2",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/configs/qwen3_next.py"
+    },
+    "srt/entrypoints/engine.py": {
+      "bytes": 75580,
+      "sha256": "7617f78e85c00643d0d16896770b5727be066ded5f18bcbc0786ff397825bc72",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/entrypoints/engine.py"
+    },
+    "srt/entrypoints/http_server.py": {
+      "bytes": 106024,
+      "sha256": "d8cc81f8d9866957dd4c0aa59917afa3d4d7d0e28eefaff0a9800157ed068a43",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/entrypoints/http_server.py"
+    },
+    "srt/entrypoints/openai/chat_encoding.py": {
+      "bytes": 7209,
+      "sha256": "c9e34556f895b74967070aeeba58dc57b2126c0c290617e156ab65ad1cd5a677",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/entrypoints/openai/chat_encoding.py"
+    },
+    "srt/entrypoints/openai/protocol.py": {
+      "bytes": 72715,
+      "sha256": "a7cf91c1db5d076b9ad647248351f10b0249153998b974ed4d00610306b01653",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/entrypoints/openai/protocol.py"
+    },
+    "srt/entrypoints/openai/serving_chat.py": {
+      "bytes": 114388,
+      "sha256": "7b05e6ab1d09a71ce253040c9cd62ea7c55a52020b44cf9b76d91c8df9e23240",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/entrypoints/openai/serving_chat.py"
+    },
+    "srt/environ.py": {
+      "bytes": 95868,
+      "sha256": "a39ae8475f2bff6e5cea99f0675bcb6d6647c07540b4b5be65fa7b0b916327cd",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/environ.py"
+    },
+    "srt/function_call/function_call_parser.py": {
+      "bytes": 13707,
+      "sha256": "7433863decb5eefa92e0e227f723221e219a44d7f17c10c6654b9740f15558f3",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/function_call/function_call_parser.py"
+    },
+    "srt/function_call/qwen3_coder_detector.py": {
+      "bytes": 20210,
+      "sha256": "92eeaeaf02ac1c1e966a8b9bbd4393141353ca9177265044fe12e250c0e38089",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/function_call/qwen3_coder_detector.py"
+    },
+    "srt/layers/attention/hybrid_linear_attn_backend.py": {
+      "bytes": 61261,
+      "sha256": "d3fa4f08292c50c6a6a4b81acc19edb2dddd8b217a22a4389b65e12635a64886",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/layers/attention/hybrid_linear_attn_backend.py"
+    },
+    "srt/layers/attention/linear/gdn_backend.py": {
+      "bytes": 45790,
+      "sha256": "e422bf32703fffc99395d1b53b2d97aa50367f585ce98f8c4c04f0a845054db5",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/layers/attention/linear/gdn_backend.py"
+    },
+    "srt/layers/attention/linear/kernels/gdn_triton.py": {
+      "bytes": 8261,
+      "sha256": "c3dfaf1eb04c035df2c7374a6714aeaa66c8a49b6573f8f28b100b9e7e063c82",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/layers/attention/linear/kernels/gdn_triton.py"
+    },
+    "srt/layers/attention/linear/linear_metadata.py": {
+      "bytes": 2541,
+      "sha256": "281621826248a9650fad6ef1189c7f1857cf154e73e6e6fecec3e5f393e48daf",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/layers/attention/linear/linear_metadata.py"
+    },
+    "srt/layers/attention/linear/utils.py": {
+      "bytes": 4492,
+      "sha256": "6545852efd880546b9ee473bfa91c604d39aba51ac47eb7aec8d2918cf08c493",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/layers/attention/linear/utils.py"
+    },
+    "srt/layers/quantization/fp8.py": {
+      "bytes": 116292,
+      "sha256": "02ee1f135dce58da751d6a45fbc810c92a0aeecab4545ba959cd9c6363f81eb5",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/layers/quantization/fp8.py"
+    },
+    "srt/layers/quantization/fp8_utils.py": {
+      "bytes": 80724,
+      "sha256": "cf69596b056ac4c61de43d6f4f3b7791fc50e261193581c1a89d415b47765d0d",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/layers/quantization/fp8_utils.py"
+    },
+    "srt/mem_cache/allocator/mamba.py": {
+      "bytes": 3779,
+      "sha256": "b3d4561b7f96aa55f615c491b3d5a8c8e72e156fd7e6cf639ee7f87cfd80674c",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/mem_cache/allocator/mamba.py"
+    },
+    "srt/mem_cache/kv_cache_configurator.py": {
+      "bytes": 109683,
+      "sha256": "40a4d40ba17dbd5065048a96077484b3158a26c00638a087c4678569597f5f04",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/mem_cache/kv_cache_configurator.py"
+    },
+    "srt/mem_cache/memory_pool.py": {
+      "bytes": 209788,
+      "sha256": "7955db1470ea36b99eb43483a5bd999dbda62119ff54aee7f9e8e01f31b2a9b5",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/mem_cache/memory_pool.py"
+    },
+    "srt/model_executor/cuda_graph_config.py": {
+      "bytes": 10752,
+      "sha256": "9f9250e3c4f9a36e6bd95aea9b57e76068b780ef38a6317c3b6240c0fcd3916d",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/model_executor/cuda_graph_config.py"
+    },
+    "srt/model_executor/model_runner_components/kv_pool_runtime.py": {
+      "bytes": 5708,
+      "sha256": "d7e4c66577ace7803ff36dcdd1c3b852bea8a538924835c8d6425beb9ce3ed2f",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/model_executor/model_runner_components/kv_pool_runtime.py"
+    },
+    "srt/model_executor/pool_configurator.py": {
+      "bytes": 45207,
+      "sha256": "6ea48e3d6c474a4c868d172056e046fa137fadd251913dda4a6431b3aa1ca5fd",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/model_executor/pool_configurator.py"
+    },
+    "srt/model_loader/loader.py": {
+      "bytes": 173875,
+      "sha256": "95fc419d1dcb1cae53e27e433c8cdd6f2fce9bff63cb4fa3ad6f311d6770e229",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/model_loader/loader.py"
+    },
+    "srt/models/qwen3_5.py": {
+      "bytes": 106839,
+      "sha256": "51e1902fc211202d198c53940ab28b9d21bc5496bd185d1a90325b541bb9b1f2",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/models/qwen3_5.py"
+    },
+    "srt/models/qwen3_next.py": {
+      "bytes": 48003,
+      "sha256": "a489dbe53eb6f5ad24f8b0dc04b65f1ef8a14cb4172f37de1a3df759a1f047e6",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/models/qwen3_next.py"
+    },
+    "srt/models/qwen3_vl.py": {
+      "bytes": 63423,
+      "sha256": "520f12f9dc4ba62d053706ad94ccdfe9708bb07118811af1214df36c66f05079",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/models/qwen3_vl.py"
+    },
+    "srt/models/registry.py": {
+      "bytes": 4857,
+      "sha256": "3c5b4e87c5943147c28cb5b68e187cdf8f8f9d880c42f1f6941fce99fe757e41",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/models/registry.py"
+    },
+    "srt/parser/reasoning_parser.py": {
+      "bytes": 82490,
+      "sha256": "f608772b59a98eb62f1e7ee5ea1f17b16a0ca4e2c325c77cbed8ef4594ca15f4",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/parser/reasoning_parser.py"
+    },
+    "srt/parser/template_manager.py": {
+      "bytes": 15271,
+      "sha256": "2c7de852332f68d9ca5e535f42633372aa86e5bd69406ec8a102f43b17855b32",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/parser/template_manager.py"
+    },
+    "srt/plugins/__init__.py": {
+      "bytes": 5037,
+      "sha256": "3a975a73f1a7887e68c81ea7a2530250597ac8ae978efc0b0f70f038a99a3164",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/plugins/__init__.py"
+    },
+    "srt/runtime_context.py": {
+      "bytes": 86932,
+      "sha256": "dba849e17448a3a9c1a86e73128617e2039ff2bff396a25cf4ec3c2203396140",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/runtime_context.py"
+    },
+    "srt/server_args.py": {
+      "bytes": 187623,
+      "sha256": "204fe57ba81acc25b7badcabf3b4b741021767c91f1d64e0df949cb175464b7c",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/server_args.py"
+    },
+    "srt/utils/auth.py": {
+      "bytes": 7289,
+      "sha256": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/utils/auth.py"
+    },
+    "srt/utils/common.py": {
+      "bytes": 159729,
+      "sha256": "86ba460333a7f80b0adf648d29fe2e7cda4d6c3886ebc55acb9bf6b0b2fa5e87",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/utils/common.py"
+    },
+    "srt/utils/hf_transformers/common.py": {
+      "bytes": 23345,
+      "sha256": "63ac897b9ac96701980d12b3660fac0db6677cb581939ae0b75aac2e24a7aeab",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/utils/hf_transformers/common.py"
+    },
+    "srt/utils/hf_transformers/config.py": {
+      "bytes": 10488,
+      "sha256": "c87fa91cdc8dd7e0fcd6093c751d4a5a24bfb2e895480d8b83f2b109bb92265f",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/utils/hf_transformers/config.py"
+    },
+    "srt/utils/log_utils.py": {
+      "bytes": 2203,
+      "sha256": "aa0c540a2c171c54412ab07655705fd057feeef9c45e67b0fc5f30dcedb066f7",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/utils/log_utils.py"
+    },
+    "srt/utils/server_args_config_parser.py": {
+      "bytes": 6655,
+      "sha256": "3966b1206230239aa81def9fd0008d0eab68e5ce11b7bc39f369f5570287a1e6",
+      "status": "SOURCE_ONLY",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/utils/server_args_config_parser.py"
+    }
+  },
+  "support_sha256": {
+    "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f"
+  },
+  "template": {
+    "bytes": 8952,
+    "path": "chat_template.jinja",
+    "repo_id": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+    "status": "SOURCE_ONLY"
+  }
+}

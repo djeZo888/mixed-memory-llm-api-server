@@ -1,0 +1,126 @@
+{
+  "observed_utc": "2026-09-15T03:29:22.596666+00:00",
+  "status": "PASS_CHECKPOINT_WHILE_BUILD_RUNNING",
+  "guard_sources": [
+    {
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/root-disk-guard.sh",
+      "sha256": "2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813",
+      "ordinary_single_link_file": true,
+      "protected_root_ancestors": true
+    },
+    {
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/require-data-mounted.sh",
+      "sha256": "5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f",
+      "ordinary_single_link_file": true,
+      "protected_root_ancestors": true
+    },
+    {
+      "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+      "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d",
+      "ordinary_single_link_file": true,
+      "protected_root_ancestors": true
+    },
+    {
+      "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+      "sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505",
+      "ordinary_single_link_file": true,
+      "protected_root_ancestors": true
+    }
+  ],
+  "registered_root_guard": {
+    "capacity": {
+      "data_available_bytes": 1340182200320,
+      "model_available_bytes": 2590890254336,
+      "root_available_bytes": 5209096192,
+      "shared_model_filesystem": false
+    },
+    "data": {
+      "device": "8:17",
+      "fstype": "ext4",
+      "mount": "/data",
+      "parents": [
+        "/dev/sdb",
+        "/dev/sdb1"
+      ],
+      "path": "/data",
+      "source": "/dev/sdb1",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "models": {
+      "device": "8:33",
+      "fstype": "ext4",
+      "mount": "/data/models-large",
+      "parents": [
+        "/dev/sdc",
+        "/dev/sdc1"
+      ],
+      "path": "/data/models-large",
+      "source": "/dev/sdc1",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "root_payload_scan": {
+      "files_inspected": 4273,
+      "large_payload_threshold_bytes": 134217728,
+      "status": "pass"
+    },
+    "roots": {
+      "backups": "/data/backups",
+      "build": "/data/build",
+      "containerd": "/data/containerd",
+      "docker": "/data/docker",
+      "hf_cache": "/data/hf-cache",
+      "logs": "/data/logs",
+      "models": "/data/models-large",
+      "secrets": "/data/services/secrets",
+      "services": "/data/services",
+      "state": "/data/services/installer"
+    },
+    "schema_version": 1,
+    "storage_mode": "existing",
+    "verified_roles": [
+      "data",
+      "models"
+    ],
+    "warnings": [
+      "root filesystem has less than 6 GiB free"
+    ]
+  },
+  "directories": [
+    {
+      "path": "/data/build",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o2755",
+      "inode": 21757953
+    },
+    {
+      "path": "/data/logs",
+      "uid": 0,
+      "gid": 1000,
+      "mode": "0o2755",
+      "inode": 47972353
+    },
+    {
+      "path": "/data/build/d3p-d3b2-20260915",
+      "uid": 1000,
+      "gid": 1001,
+      "mode": "0o2770",
+      "inode": 44308488
+    },
+    {
+      "path": "/data/logs/d3p-d3b2-20260915",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o700",
+      "inode": 47972510
+    },
+    {
+      "path": "/data/build/d3p-d3b-20260915",
+      "uid": 1000,
+      "gid": 1001,
+      "mode": "0o2770",
+      "inode": 44302940
+    }
+  ],
+  "registered_before_report_sha256": "c7428deecb0eb57d4ca6379747b8d27c8f0fbd4a53541d79bbe184f0e688bba7"
+}

@@ -1,0 +1,384 @@
+{
+  "task": "ROOTSPACE",
+  "status": "RECOVERED_FULL_GUARDS_PASS_OWNERSHIP_RELEASED",
+  "completed_utc": "2026-09-15T05:00:12.981924+00:00",
+  "historical_diagnosis_commit": "39189271c76338ac4573d1f6e5fc14618ad6fef8",
+  "authorization": "Current user continuation and ../coordination-input.md authorize exactly two archives and unchanged original removal; supersedes initial retention/no-large-archive constraint for these files only.",
+  "root_before": {
+    "available_bytes": 3629461504,
+    "free_including_reserved_bytes": 4423233536,
+    "total_bytes": 15186501632
+  },
+  "root_after": {
+    "available_bytes": 5208223744,
+    "free_including_reserved_bytes": 6001995776,
+    "total_bytes": 15186501632
+  },
+  "released_bytes": 1578762240,
+  "above_4GiB_bytes": 913256448,
+  "below_6GiB_bytes": 1234227200,
+  "warning": "less than6GiB free; permitted recovery sufficient; no further eligible exact task cleanup established",
+  "archive_directory": {
+    "path": "/data/logs/rootspace-recovery-20260915-archive",
+    "dev": 2065,
+    "inode": 47972640,
+    "uid": 0,
+    "gid": 0,
+    "mode": 448,
+    "nlink": 2,
+    "size": 4096,
+    "allocated_bytes": 4096,
+    "mtime_ns": 1789448411291604232,
+    "ctime_ns": 1789448411291604232,
+    "atime_ns": 1789448409538588902
+  },
+  "archives": [
+    {
+      "source_before": {
+        "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+        "dev": 64512,
+        "inode": 266791,
+        "uid": 0,
+        "gid": 0,
+        "mode": 256,
+        "nlink": 1,
+        "size": 970436608,
+        "allocated_bytes": 970440704,
+        "mtime_ns": 1789446869471533227,
+        "ctime_ns": 1789446869681534442,
+        "atime_ns": 1789446866852518081
+      },
+      "source_after_copy": {
+        "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+        "dev": 64512,
+        "inode": 266791,
+        "uid": 0,
+        "gid": 0,
+        "mode": 256,
+        "nlink": 1,
+        "size": 970436608,
+        "allocated_bytes": 970440704,
+        "mtime_ns": 1789446869471533227,
+        "ctime_ns": 1789446869681534442,
+        "atime_ns": 1789446866852518081
+      },
+      "archive": {
+        "path": "/data/logs/rootspace-recovery-20260915-archive/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+        "dev": 2065,
+        "inode": 47972641,
+        "uid": 0,
+        "gid": 0,
+        "mode": 256,
+        "nlink": 1,
+        "size": 970436608,
+        "allocated_bytes": 970440704,
+        "mtime_ns": 1789446869471533227,
+        "ctime_ns": 1789448410146594221,
+        "atime_ns": 1789446866852518081
+      },
+      "sha256_source_copy_stream": "36dd457ac3e3589945da2aa2e5f67c0827d4f8d0399848112cfb7ee85d34b3a5",
+      "sha256_source_reread": "36dd457ac3e3589945da2aa2e5f67c0827d4f8d0399848112cfb7ee85d34b3a5",
+      "sha256_archive_independent_reread": "36dd457ac3e3589945da2aa2e5f67c0827d4f8d0399848112cfb7ee85d34b3a5",
+      "verified_bytes": 970436608,
+      "archive_fsync_complete": true
+    },
+    {
+      "source_before": {
+        "path": "/var/crash/_usr_bin_python3.12.0.crash",
+        "dev": 64512,
+        "inode": 266790,
+        "uid": 0,
+        "gid": 0,
+        "mode": 416,
+        "nlink": 1,
+        "size": 608314664,
+        "allocated_bytes": 608321536,
+        "mtime_ns": 1789446866852518081,
+        "ctime_ns": 1789446866852518081,
+        "atime_ns": 1789446866853518087
+      },
+      "source_after_copy": {
+        "path": "/var/crash/_usr_bin_python3.12.0.crash",
+        "dev": 64512,
+        "inode": 266790,
+        "uid": 0,
+        "gid": 0,
+        "mode": 416,
+        "nlink": 1,
+        "size": 608314664,
+        "allocated_bytes": 608321536,
+        "mtime_ns": 1789446866852518081,
+        "ctime_ns": 1789446866852518081,
+        "atime_ns": 1789446866853518087
+      },
+      "archive": {
+        "path": "/data/logs/rootspace-recovery-20260915-archive/_usr_bin_python3.12.0.crash",
+        "dev": 2065,
+        "inode": 47972642,
+        "uid": 0,
+        "gid": 0,
+        "mode": 256,
+        "nlink": 1,
+        "size": 608314664,
+        "allocated_bytes": 608321536,
+        "mtime_ns": 1789446866852518081,
+        "ctime_ns": 1789448411660607457,
+        "atime_ns": 1789446866853518087
+      },
+      "sha256_source_copy_stream": "08b8ac574c1e92f59a221e9c435a4bf2e13403003514dcb8691d7be0a3e0e5a9",
+      "sha256_source_reread": "08b8ac574c1e92f59a221e9c435a4bf2e13403003514dcb8691d7be0a3e0e5a9",
+      "sha256_archive_independent_reread": "08b8ac574c1e92f59a221e9c435a4bf2e13403003514dcb8691d7be0a3e0e5a9",
+      "verified_bytes": 608314664,
+      "archive_fsync_complete": true
+    }
+  ],
+  "deleted_originals": [
+    {
+      "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+      "utc": "2026-09-15T05:00:12.586655+00:00",
+      "source_revalidated_before_unlink": {
+        "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+        "dev": 64512,
+        "inode": 266791,
+        "uid": 0,
+        "gid": 0,
+        "mode": 256,
+        "nlink": 1,
+        "size": 970436608,
+        "allocated_bytes": 970440704,
+        "mtime_ns": 1789446869471533227,
+        "ctime_ns": 1789446869681534442,
+        "atime_ns": 1789446866852518081
+      },
+      "in_use_before_unlink": {
+        "checked_processes": 1108,
+        "references": [
+          {
+            "pid": 267486,
+            "uid": 0,
+            "comm": "python3",
+            "start_ticks": 2672445,
+            "fd": 6,
+            "dev": 64512,
+            "inode": 266791,
+            "size": 970436608
+          },
+          {
+            "pid": 267486,
+            "uid": 0,
+            "comm": "python3",
+            "start_ticks": 2672445,
+            "fd": 8,
+            "dev": 64512,
+            "inode": 266790,
+            "size": 608314664
+          }
+        ],
+        "errors": [],
+        "crash_handlers": []
+      },
+      "only_own_read_FDs_allowed": true,
+      "original_absent": true,
+      "own_source_fd_closed": true,
+      "root_capacity_after_close": {
+        "available_bytes": 4599902208,
+        "free_including_reserved_bytes": 5393674240,
+        "total_bytes": 15186501632
+      }
+    },
+    {
+      "path": "/var/crash/_usr_bin_python3.12.0.crash",
+      "utc": "2026-09-15T05:00:12.676336+00:00",
+      "source_revalidated_before_unlink": {
+        "path": "/var/crash/_usr_bin_python3.12.0.crash",
+        "dev": 64512,
+        "inode": 266790,
+        "uid": 0,
+        "gid": 0,
+        "mode": 416,
+        "nlink": 1,
+        "size": 608314664,
+        "allocated_bytes": 608321536,
+        "mtime_ns": 1789446866852518081,
+        "ctime_ns": 1789446866852518081,
+        "atime_ns": 1789446866853518087
+      },
+      "in_use_before_unlink": {
+        "checked_processes": 1108,
+        "references": [
+          {
+            "pid": 267486,
+            "uid": 0,
+            "comm": "python3",
+            "start_ticks": 2672445,
+            "fd": 8,
+            "dev": 64512,
+            "inode": 266790,
+            "size": 608314664
+          }
+        ],
+        "errors": [],
+        "crash_handlers": []
+      },
+      "only_own_read_FDs_allowed": true,
+      "original_absent": true,
+      "own_source_fd_closed": true,
+      "root_capacity_after_close": {
+        "available_bytes": 5208223744,
+        "free_including_reserved_bytes": 6001995776,
+        "total_bytes": 15186501632
+      }
+    }
+  ],
+  "originals_absent": true,
+  "registered_guard": {
+    "capacity": {
+      "data_available_bytes": 1337941749760,
+      "model_available_bytes": 2590890250240,
+      "root_available_bytes": 5208223744,
+      "shared_model_filesystem": false
+    },
+    "data": {
+      "device": "8:17",
+      "fstype": "ext4",
+      "mount": "/data",
+      "parents": [
+        "/dev/sdb",
+        "/dev/sdb1"
+      ],
+      "path": "/data",
+      "source": "/dev/sdb1",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "models": {
+      "device": "8:33",
+      "fstype": "ext4",
+      "mount": "/data/models-large",
+      "parents": [
+        "/dev/sdc",
+        "/dev/sdc1"
+      ],
+      "path": "/data/models-large",
+      "source": "/dev/sdc1",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "roots": {
+      "backups": "/data/backups",
+      "build": "/data/build",
+      "containerd": "/data/containerd",
+      "docker": "/data/docker",
+      "hf_cache": "/data/hf-cache",
+      "logs": "/data/logs",
+      "models": "/data/models-large",
+      "secrets": "/data/services/secrets",
+      "services": "/data/services",
+      "state": "/data/services/installer"
+    },
+    "schema_version": 1,
+    "storage_mode": "existing",
+    "verified_roles": [
+      "data",
+      "models"
+    ],
+    "warnings": [
+      "root filesystem has less than 6 GiB free"
+    ]
+  },
+  "registered_root_guard": {
+    "capacity": {
+      "data_available_bytes": 1337941749760,
+      "model_available_bytes": 2590890250240,
+      "root_available_bytes": 5208223744,
+      "shared_model_filesystem": false
+    },
+    "data": {
+      "device": "8:17",
+      "fstype": "ext4",
+      "mount": "/data",
+      "parents": [
+        "/dev/sdb",
+        "/dev/sdb1"
+      ],
+      "path": "/data",
+      "source": "/dev/sdb1",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "models": {
+      "device": "8:33",
+      "fstype": "ext4",
+      "mount": "/data/models-large",
+      "parents": [
+        "/dev/sdc",
+        "/dev/sdc1"
+      ],
+      "path": "/data/models-large",
+      "source": "/dev/sdc1",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "root_payload_scan": {
+      "files_inspected": 4273,
+      "large_payload_threshold_bytes": 134217728,
+      "status": "pass"
+    },
+    "roots": {
+      "backups": "/data/backups",
+      "build": "/data/build",
+      "containerd": "/data/containerd",
+      "docker": "/data/docker",
+      "hf_cache": "/data/hf-cache",
+      "logs": "/data/logs",
+      "models": "/data/models-large",
+      "secrets": "/data/services/secrets",
+      "services": "/data/services",
+      "state": "/data/services/installer"
+    },
+    "schema_version": 1,
+    "storage_mode": "existing",
+    "verified_roles": [
+      "data",
+      "models"
+    ],
+    "warnings": [
+      "root filesystem has less than 6 GiB free"
+    ]
+  },
+  "backend_unchanged": true,
+  "backend": {
+    "container": {
+      "exit_code": 0,
+      "stdout": "\"7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78\" \"sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9\" 243279 \"running\" \"2026-09-15T04:09:20.746242473Z\" 0\n",
+      "stderr": ""
+    },
+    "process": {
+      "pid": 243279,
+      "uid": 0,
+      "comm": "llama-server",
+      "start_ticks": 2367582
+    }
+  },
+  "quiescence": {
+    "utc": "2026-09-15T05:00:12.921023+00:00",
+    "established_api_connections": 0,
+    "request_sent": false,
+    "last_slot_event_in_tail": {
+      "event": "slot_stopped_processing",
+      "timestamp": "2026-09-15T04:32:15.806020433Z"
+    },
+    "pass": true
+  },
+  "final_inode_references": {
+    "checked_processes": 1108,
+    "references": [],
+    "errors": [],
+    "crash_handlers": []
+  },
+  "recovery_ownership": "RELEASED",
+  "ownership_released_utc": "2026-09-15T05:00:12.981933+00:00",
+  "no_further_vm_calls_scheduled": true,
+  "requests_sent": false,
+  "model_transition": false,
+  "installer_work": false,
+  "production_source_changes": false,
+  "raw_artifacts_in_git_or_worker": false,
+  "next_action": "Parent owns approved D3CAP2 assignment after these full-guard/GLM/quiescence observations; ROOTSPACE made no resumption. Observations are point-in-time and do not certify later independent actions."
+}

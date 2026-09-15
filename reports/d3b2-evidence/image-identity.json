@@ -1,0 +1,26 @@
+{
+  "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+  "image_tag": "local/llama-cpp:v0.4.1-b29c606-cu132-sm120-d3p-43e4aeb5b63d",
+  "image_index_sha256": "86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+  "platform_manifest_sha256": "384a22a0b15b9668b89e4ec46ed7363f2bb02e91d3344db102411288551ef62b",
+  "image_config_sha256": "89a1ea2575d8a5ea2c2debd618d420ac03194b1c2d54b85972a8ebff850f3938",
+  "repo_digests": [
+    "local/llama-cpp@sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9"
+  ],
+  "platform": "linux/amd64",
+  "entrypoint": [
+    "/opt/llama/llama-server"
+  ],
+  "oci_labels": {
+    "local.d1.cuda.architectures": "120a-real",
+    "local.d3p.source.derived-tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+    "local.d3p.source.kind": "upstream-plus-checked-patch",
+    "local.d3p.source.patch-sha256": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b",
+    "local.d3p.source.revision-kind": "git-tree",
+    "local.d3p.source.upstream-commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+    "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+    "org.opencontainers.image.revision": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+    "org.opencontainers.image.source": "https://github.com/ggml-org/llama.cpp",
+    "org.opencontainers.image.version": "v0.4.1+d3p"
+  }
+}

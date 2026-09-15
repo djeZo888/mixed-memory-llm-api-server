@@ -1,0 +1,93 @@
+{
+  "argv": [
+    "/usr/bin/python3",
+    "-B",
+    "/data/build/q38vr2-20260915/source/tests/lifecycle/sglang38_fixture/run_fixture.py",
+    "--repo",
+    "/data/build/q38vr2-20260915/source",
+    "--output",
+    "/data/logs/q38vr2-20260915/q38b-auth.json"
+  ],
+  "elapsed_seconds": 0.683699,
+  "exit": 1,
+  "finished_utc": "2026-09-15T03:43:28.981661+00:00",
+  "model_execution": "NOT_TESTED",
+  "receipt_exists": false,
+  "result": {
+    "code": "q38s_image_fixture_failed",
+    "lifetime": {
+      "attach_diagnostic": {
+        "cli_returncode": 2,
+        "cli_signal": null,
+        "container_before_cleanup_stop": {
+          "exit_code": 2,
+          "signal": null,
+          "status": "EXITED"
+        },
+        "failure_kind": "CLI_NONZERO_EXIT",
+        "failure_metadata": {
+          "cache_failure": {
+            "code": "no_gpu_runtime_environment_required",
+            "failure_origin": {
+              "exception_class": "ProbeError",
+              "filename": "cache_probe.py",
+              "line": 196
+            },
+            "status": "FAIL"
+          },
+          "code": "actual_image_fixture_failed",
+          "origin": {
+            "exception_class": "FixtureFailure",
+            "filename": "run_pinned_image.py",
+            "line": 599
+          },
+          "status": "SAFE_ORIGIN"
+        },
+        "operation": "START_ATTACH",
+        "phase": "ATTACH",
+        "schema_version": 1,
+        "stderr": {
+          "capture": "COMPLETE",
+          "captured_bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "capture": "COMPLETE",
+          "captured_bytes": 343,
+          "sha256": "5ede23d097093f0f56c0c4dfb749982e62db8e206a54eb2d1801ace510d72aa6"
+        }
+      },
+      "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+      "container_id": "a176ead245adb6824d7e6d962838c751436c5eaf8a1212f337c5469420b6cf5f",
+      "container_name": "q38b-fixture-784d4d9603cb3c8c4ca52eefa1c51021",
+      "outcome": "ATTACH_FAILED",
+      "runtime_inspect": {
+        "context": 131072,
+        "device_requests": [],
+        "driver_capabilities": "compute,utility",
+        "entrypoint": [
+          "python3"
+        ],
+        "host_devices": [],
+        "model_and_secret_mounts": "EMPTY_PRIVATE_TMPFS",
+        "network": "none",
+        "root_readonly": true,
+        "runtime": "nvidia",
+        "status": "PASS_HOST_INSPECT",
+        "visible_devices": "none"
+      }
+    },
+    "status": "FAIL"
+  },
+  "started_utc": "2026-09-15T03:43:28.295562+00:00",
+  "streams": {
+    "stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout": {
+      "bytes": 1502,
+      "sha256": "f80b34039d6c812d8fbef4fadd5e95db412cdb10018e4c24f44ace771e6857f2"
+    }
+  }
+}

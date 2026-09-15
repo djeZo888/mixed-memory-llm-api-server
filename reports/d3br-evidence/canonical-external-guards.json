@@ -1,0 +1,14 @@
+{
+  "reviewed_commit": "7b541017c3e1b2bda80676bcd31bc87d0a4507bc",
+  "guards": {
+    "root-disk-guard.sh": {
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/root-disk-guard.sh",
+      "sha256": "2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813"
+    },
+    "require-data-mounted.sh": {
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/require-data-mounted.sh",
+      "sha256": "5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f"
+    }
+  },
+  "rule": "Use exact protected corrected D3 release after source/ownership hash checks. Never historical dirty checkout guard. Preserve /tmp artifacts. STOP on real guard failure."
+}

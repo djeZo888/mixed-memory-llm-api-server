@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "kind": "reviewed_source_selection",
+  "status": "SOURCE_BOUND_LIVE_ACCEPTANCE_NOT_TESTED",
+  "source_root": "/usr/local/lib/llm-server/control-api",
+  "config_root": "/usr/local/lib/llm-server/control-api/configs",
+  "source_closure_manifest": "scripts/control/source-closure.json",
+  "offered_models": [
+    {
+      "id": "glm-5.3-ud-q4-k-xl",
+      "model_id": "unsloth/GLM-5.3-GGUF",
+      "runtime": "llama-cpp-v0.4.1-d3br",
+      "network_role": "glm",
+      "composition_owner": "D3RD (D3BR/D3T)",
+      "runtime_source": "configs/runtimes/llama-cpp-v0.4.1-d3br.json",
+      "runtime_sha256": "d073105a70540df73cef325df7fdcfa32651f5a6aa8387b584708fb51b802d50",
+      "measured_image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+      "patched_image_proof": {
+        "path": "reports/d3rp-runtime-proof.json",
+        "sha256": "7babbd505096b86b801d57f5050e46eb28b330f80617000d886f5314bd590615"
+      },
+      "recipe_dependency_closure": {
+        "containers/llama-cpp/Dockerfile.d3p": "704fe3dcbcddd4497147b2b12b09ac674cb1b7c2ce2b049197620691b6acd92a",
+        "containers/llama-cpp/Dockerfile.d3p.dockerignore": "875afccc85a373f21e7fc8197b2c91ffd6a8ae321aef56767a5099c7fe7d4761",
+        "containers/llama-cpp/prepare-d3p-source.py": "47be70ebc01f7f5ff6d790c510bc9bf1ef9cf604ed725449ec3e52548798138a",
+        "containers/llama-cpp/build-d3p-runtime.sh": "67c5124ff21ec4a0e56e8678b6e888300c11aa0aa33b2e05ffb80627e6bf3a9f",
+        "containers/llama-cpp/d3p-source.json": "a073747a339995e3dc6f1b509c7d977765d46f1959340ee4b2895230bf7c13c7",
+        "containers/llama-cpp/strict-model-chat.patch": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b"
+      },
+      "deployment_source": "configs/deployments/glm-5.3-ud-q4-k-xl-n76-32k.json",
+      "deployment_sha256": "3d4e9124ccc9dcc3a2864040bedb5dcc43332166a1a1586ce0b98a78acfb279d",
+      "deployment_sources": {
+        "configs/deployments/glm-5.3-ud-q4-k-xl-n76-32k.json": "3d4e9124ccc9dcc3a2864040bedb5dcc43332166a1a1586ce0b98a78acfb279d",
+        "configs/deployments/glm-5.3-ud-q4-k-xl-n76-native1m.json": "a15c41c0532f565720c0ead787e0b5ca0908b467e691d3bfad937c839243b47d"
+      },
+      "context_evidence": "declared_only",
+      "capability_status": "NOT_TESTED"
+    },
+    {
+      "id": "qwen38-27b-fp8",
+      "model_id": "Qwen/Qwen3.8-27B-FP8",
+      "runtime": "sglang-qwen38-0.5.19",
+      "network_role": "qwen38",
+      "deployment_sources": [
+        "configs/deployments/qwen38-27b-128k.json",
+        "configs/deployments/qwen38-27b-256k.json"
+      ],
+      "context_evidence": "declared_only"
+    }
+  ],
+  "fixed_profile_sha256": {
+    "configs/models/glm-5.3-ud-q4-k-xl.json": "857924551fa83c546bb99f7b524b35c8d79d0cb9ba0a666e0c139bbace0e7e0d",
+    "configs/models/qwen38-27b-fp8.json": "fb62b2689a4c57aa1265b1262830c8d0e3983061c9674640ec9704ce603a44be",
+    "configs/runtimes/sglang-qwen38-0.5.19.json": "17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11",
+    "configs/deployments/qwen38-27b-128k.json": "cee5253c28bd8ff36f33630f27642cc9cdd3857eaa108bd177488efd6a0d133f",
+    "configs/deployments/qwen38-27b-256k.json": "462ed5792940890eaa410c3c6dd4996c6723157eee5fb7021ee210ed2f78523a"
+  },
+  "publication_rule": "Copy exactly the fixed profiles plus the separately owner-reviewed GLM runtime, deployment, measured patched image proof and recipe dependency closure; do not copy profile directories recursively. Old D1 runtime is baseline/rollback only, not selected. This file is an operator handoff, not a runtime configuration loader or an installation receipt.",
+  "live_acceptance": "NOT_TESTED"
+}

@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "id": "glm-5.3-ud-q4-k-xl-8k",
+  "model": "glm-5.3-ud-q4-k-xl",
+  "runtime": "llama-cpp-v0.4.1-d1",
+  "purpose": "Initial conservative proof",
+  "container_name": "llmctl-glm-5.3-8k",
+  "endpoint": {
+    "host": "127.0.0.1",
+    "port": 30002,
+    "api_prefix": "/v1",
+    "served_model": "glm-5.3"
+  },
+  "container_port": 30002,
+  "container_host": "0.0.0.0",
+  "auth": {
+    "key_file": {
+      "role": "data",
+      "suffix": "services/secrets/llm-api-key"
+    },
+    "container_key_file": "/run/secrets/llm-api-key",
+    "mode": "0600"
+  },
+  "paths": {
+    "model": {
+      "role": "models",
+      "suffix": "glm-5.3-ud-q4-k-xl"
+    },
+    "cache": {
+      "role": "models",
+      "suffix": "runtime-cache/llama-cpp-v0.4.1-d1",
+      "historical_suffix": "runtime-cache/llama-cpp"
+    },
+    "logs": {
+      "role": "data",
+      "suffix": "logs/llmctl/glm-5.3-ud-q4-k-xl-8k",
+      "historical_suffix": "logs/llmctl/glm-5.3"
+    },
+    "service": {
+      "role": "data",
+      "suffix": "services/llm-manager/glm-5.3-ud-q4-k-xl-8k",
+      "historical_suffix": "services/llm-manager/glm-5.3"
+    }
+  },
+  "mounts": [
+    {
+      "source": {
+        "role": "models",
+        "suffix": "glm-5.3-ud-q4-k-xl"
+      },
+      "target": "/models",
+      "read_only": true,
+      "required_role": "models"
+    },
+    {
+      "source": {
+        "role": "models",
+        "suffix": "runtime-cache/llama-cpp-v0.4.1-d1",
+        "historical_suffix": "runtime-cache/llama-cpp"
+      },
+      "target": "/cache",
+      "read_only": false,
+      "required_role": "models"
+    },
+    {
+      "source": {
+        "role": "data",
+        "suffix": "logs/llmctl/glm-5.3-ud-q4-k-xl-8k",
+        "historical_suffix": "logs/llmctl/glm-5.3"
+      },
+      "target": "/logs",
+      "read_only": false,
+      "required_role": "data"
+    },
+    {
+      "source": {
+        "role": "data",
+        "suffix": "services/llm-manager/glm-5.3-ud-q4-k-xl-8k",
+        "historical_suffix": "services/llm-manager/glm-5.3"
+      },
+      "target": "/service",
+      "read_only": false,
+      "required_role": "data"
+    },
+    {
+      "source": {
+        "role": "data",
+        "suffix": "services/secrets/llm-api-key"
+      },
+      "target": "/run/secrets/llm-api-key",
+      "read_only": true,
+      "required_role": "data"
+    }
+  ],
+  "launch": {
+    "context_size": 8192,
+    "parallel": 1,
+    "timeout_seconds": 7200,
+    "poll_seconds": 5,
+    "request_timeout_seconds": 5,
+    "stop_timeout_seconds": 60,
+    "gpus": [
+      "0",
+      "1"
+    ],
+    "cpu_moe": true,
+    "jinja": true,
+    "no_webui": true,
+    "n_gpu_layers": 999,
+    "split_mode": "layer",
+    "tensor_split": "1,1",
+    "devices": [
+      "CUDA0",
+      "CUDA1"
+    ],
+    "chat_template_kwargs": {
+      "clear_thinking": true
+    }
+  },
+  "logs": {
+    "driver": "json-file",
+    "max_size": "20m",
+    "max_file": 3
+  },
+  "boot_policy": "manual",
+  "docker_restart_policy": "no",
+  "notes": [
+    "Only one owned deployment may run, including deployments on another port.",
+    "The model directory retains UD-Q4_K_XL; acquisition cache and weights stay within registered storage.",
+    "The runtime cache is scratch space in the registered model namespace, independent of the D1 acquisition cache.",
+    "Host publishing is exactly 127.0.0.1:30002:30002/tcp; container 0.0.0.0 accepts Docker forwarding; effective host port publication must remain loopback-only.",
+    "D3 installs the reviewed lifecycle owner; neither this profile nor selection enables boot restart.",
+    "The D1 CLI supports explicit CUDA0,CUDA1 and chat-template kwargs; clear_thinking=true behavior and inference remain D3 live tests."
+  ]
+}

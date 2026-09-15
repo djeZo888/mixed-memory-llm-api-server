@@ -1,0 +1,1000 @@
+{
+  "schema_version": 1,
+  "task": "V1G2",
+  "session_id": "01a0a2b2-7c4c-7602-a496-2a090a05b540",
+  "source": {
+    "reviewed_integration": "6cffccbf1927ff610c21cfc6a0bea3b2f14bd85a",
+    "sha256": {
+      "scripts/agent/acceptance.py": "0eb52a12c9cfae2846c32b1780b08c714d8be2f273804ac50cf0b2874c2c9133",
+      "scripts/agent/protocol.py": "86ab326557186fcaa925b629e932309bbcf414bed8a96976deb1fb3e42273354",
+      "scripts/agent/fixture.py": "a92eb9dfad1ce156ce32e4b80ab3eb0c8bf5948d8a383f7f1dc5a0e22c4281dd",
+      "scripts/client/bootstrap.py": "ccf94f52a48346f02105112d93ee41010a6dd034406272e8a4a54d02fc12ca12",
+      "scripts/client/client_common.py": "b6e1b4995a717067846c4cd3835c72f7c493c5aaac4d09d985f9a93d2383e1b0",
+      "scripts/client/launch.py": "bb47de96ba33d1088589337876b1ec340d0c7e3157c284217abb45a955338278",
+      "scripts/client/package.json": "a690baa19cd430ef35f12d5c6e2c0d429539dd3150055cf1b34f7b060fe3489f",
+      "scripts/client/package-lock.json": "eb4f16892e1e7d955fc8aa5e949f8c31b6c6d26d98acb3eb2f9be26d2673d3b7",
+      "scripts/validation/v1g2/text_utils.py": "8bff6135c956d931fa755b0cb4e25f19fc5dee661e88f51efbd3d7ec55dd4b44",
+      "scripts/validation/v1g2/test_text_utils.py": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43"
+    }
+  },
+  "runtime": {
+    "model": "glm-5.3",
+    "deployment": "glm-5.3-ud-q4-k-xl-32k",
+    "vm_loopback_endpoint": "http://127.0.0.1:30002/v1",
+    "context_tokens": 32768,
+    "reasoning_effort": "low",
+    "output_tokens": 2048,
+    "clear_thinking": true,
+    "server_identity_evidence": "D3 handoff; unchanged during exclusive request lease, no new VM diagnostics or tuning",
+    "image": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "runtime_version": "v0.4.1/b29c606"
+  },
+  "a1": {
+    "a1_protocol_aggregate": "FAIL",
+    "original_v1g_a1_aggregate": "FAIL_PRESERVED",
+    "runs": [
+      {
+        "mode": "normal",
+        "status": "FAIL",
+        "limits": {
+          "max_rounds": 12,
+          "max_tool_calls": 32,
+          "max_output_bytes": 16384,
+          "test_timeout": 10,
+          "request_timeout": 300.0,
+          "overall_timeout": 1800.0,
+          "max_tokens": 2048,
+          "reasoning_effort": "low",
+          "max_response_bytes": 262144,
+          "stream_tools": false
+        },
+        "checks": {
+          "models": {
+            "status": "PASS",
+            "elapsed_seconds": 0.008252,
+            "http_status": 200
+          },
+          "chat": {
+            "status": "PASS",
+            "elapsed_seconds": 4.358302,
+            "http_status": 200
+          },
+          "streaming_end": {
+            "status": "PASS",
+            "elapsed_seconds": 2.756822,
+            "http_status": 200
+          },
+          "invalid_model": {
+            "status": "FAIL",
+            "elapsed_seconds": 6.143689,
+            "http_status": 200,
+            "returned_model": "glm-5.3",
+            "classification": "known_model_name_incompatibility"
+          },
+          "auth_missing_models": {
+            "status": "PASS",
+            "elapsed_seconds": 0.00937,
+            "http_status": 401
+          },
+          "auth_missing_chat": {
+            "status": "PASS",
+            "elapsed_seconds": 0.010012,
+            "http_status": 401
+          },
+          "auth_wrong_models": {
+            "status": "PASS",
+            "elapsed_seconds": 0.008702,
+            "http_status": 401
+          },
+          "auth_wrong_chat": {
+            "status": "PASS",
+            "elapsed_seconds": 0.010641,
+            "http_status": 401
+          },
+          "auth_correct_models": {
+            "status": "PASS",
+            "elapsed_seconds": 0.010675,
+            "http_status": 200
+          },
+          "auth_correct_chat": {
+            "status": "PASS",
+            "elapsed_seconds": 0.533657,
+            "http_status": 200
+          },
+          "tool_roundtrip": {
+            "status": "PASS"
+          }
+        },
+        "elapsed_seconds": 60.138521,
+        "started_utc": "2026-09-15T01:35:19.014655+00:00",
+        "finished_utc": "2026-09-15T01:36:19.252810+00:00",
+        "process": {
+          "returncode": 1,
+          "timed_out": false,
+          "elapsed_seconds": 60.243603,
+          "started_epoch": 1789436119.0146549,
+          "finished_epoch": 1789436179.25281,
+          "process_group_cleanup": "completed"
+        },
+        "requests": [
+          {
+            "path": "/models",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 0.008227,
+            "sequence": 1
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 4.358135,
+            "sequence": 2,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "stop",
+            "provider_usage": {
+              "prompt_tokens": 18,
+              "completion_tokens": 12,
+              "total_tokens": 30,
+              "prompt_tokens_details": {
+                "cached_tokens": 17
+              }
+            }
+          },
+          {
+            "path": "/chat/completions",
+            "stream": true,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 2.756517,
+            "sequence": 3,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "stop",
+            "provider_usage": "NOT_REPORTED"
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 6.143404,
+            "sequence": 4,
+            "returned_model": "glm-5.3",
+            "requested_model": "INVALID_MODEL_PROBE",
+            "finish_reason": "stop",
+            "provider_usage": {
+              "prompt_tokens": 15,
+              "completion_tokens": 33,
+              "total_tokens": 48,
+              "prompt_tokens_details": {
+                "cached_tokens": 11
+              }
+            }
+          },
+          {
+            "path": "/models",
+            "stream": false,
+            "status": 401,
+            "success": false,
+            "elapsed_seconds": 0.009327,
+            "sequence": 5
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 401,
+            "success": false,
+            "elapsed_seconds": 0.00993,
+            "sequence": 6,
+            "requested_model": "glm-5.3",
+            "provider_usage": "NOT_REPORTED"
+          },
+          {
+            "path": "/models",
+            "stream": false,
+            "status": 401,
+            "success": false,
+            "elapsed_seconds": 0.008664,
+            "sequence": 7
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 401,
+            "success": false,
+            "elapsed_seconds": 0.010558,
+            "sequence": 8,
+            "requested_model": "glm-5.3",
+            "provider_usage": "NOT_REPORTED"
+          },
+          {
+            "path": "/models",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 0.01065,
+            "sequence": 9
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 0.53346,
+            "sequence": 10,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "stop",
+            "provider_usage": {
+              "prompt_tokens": 18,
+              "completion_tokens": 7,
+              "total_tokens": 25,
+              "prompt_tokens_details": {
+                "cached_tokens": 17
+              }
+            }
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 11.570652,
+            "sequence": 11,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "tool_calls",
+            "provider_usage": {
+              "prompt_tokens": 544,
+              "completion_tokens": 25,
+              "total_tokens": 569,
+              "prompt_tokens_details": {
+                "cached_tokens": 9
+              }
+            }
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 14.425412,
+            "sequence": 12,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "tool_calls",
+            "provider_usage": {
+              "prompt_tokens": 802,
+              "completion_tokens": 30,
+              "total_tokens": 832,
+              "prompt_tokens_details": {
+                "cached_tokens": 568
+              }
+            }
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 6.312822,
+            "sequence": 13,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "tool_calls",
+            "provider_usage": {
+              "prompt_tokens": 908,
+              "completion_tokens": 6,
+              "total_tokens": 914,
+              "prompt_tokens_details": {
+                "cached_tokens": 831
+              }
+            }
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 13.69831,
+            "sequence": 14,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "stop",
+            "provider_usage": {
+              "prompt_tokens": 1131,
+              "completion_tokens": 44,
+              "total_tokens": 1175,
+              "prompt_tokens_details": {
+                "cached_tokens": 913
+              }
+            }
+          }
+        ],
+        "agent": {
+          "status": "PASS",
+          "elapsed_seconds": 46.288264,
+          "rounds": [
+            {
+              "round": 1,
+              "finish_reason": "tool_calls",
+              "elapsed_seconds": 11.57064,
+              "stream_done": false,
+              "provider_usage": {
+                "prompt_tokens": 544,
+                "completion_tokens": 25,
+                "total_tokens": 569,
+                "prompt_tokens_details": {
+                  "cached_tokens": 9
+                }
+              },
+              "reasoning_fields_present": false,
+              "tool_names": [
+                "read_file",
+                "read_file"
+              ]
+            },
+            {
+              "round": 2,
+              "finish_reason": "tool_calls",
+              "elapsed_seconds": 14.425353,
+              "stream_done": false,
+              "provider_usage": {
+                "prompt_tokens": 802,
+                "completion_tokens": 30,
+                "total_tokens": 832,
+                "prompt_tokens_details": {
+                  "cached_tokens": 568
+                }
+              },
+              "reasoning_fields_present": false,
+              "tool_names": [
+                "write_file"
+              ]
+            },
+            {
+              "round": 3,
+              "finish_reason": "tool_calls",
+              "elapsed_seconds": 6.312788,
+              "stream_done": false,
+              "provider_usage": {
+                "prompt_tokens": 908,
+                "completion_tokens": 6,
+                "total_tokens": 914,
+                "prompt_tokens_details": {
+                  "cached_tokens": 831
+                }
+              },
+              "reasoning_fields_present": false,
+              "tool_names": [
+                "run_tests"
+              ]
+            },
+            {
+              "round": 4,
+              "finish_reason": "stop",
+              "elapsed_seconds": 13.698239,
+              "stream_done": false,
+              "provider_usage": {
+                "prompt_tokens": 1131,
+                "completion_tokens": 44,
+                "total_tokens": 1175,
+                "prompt_tokens_details": {
+                  "cached_tokens": 913
+                }
+              },
+              "reasoning_fields_present": false,
+              "tool_names": []
+            }
+          ],
+          "tool_sequence": [
+            {
+              "name": "read_file",
+              "implementation_before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+              "implementation_after_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+              "elapsed_seconds": 0.001487,
+              "call_id_sha256": "3d38ac1fb5dfdb1cf9cc4d187824ced88594226a18e7f224fb4967609a11f1f8",
+              "fixture_file": "calc.py"
+            },
+            {
+              "name": "read_file",
+              "implementation_before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+              "implementation_after_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+              "elapsed_seconds": 0.001138,
+              "call_id_sha256": "759b50ac98cb3ff6fb8797148ca24cd24a9821e1b6ec4d83ca17704d7ce71354",
+              "fixture_file": "test_calc.py"
+            },
+            {
+              "name": "write_file",
+              "implementation_before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+              "implementation_after_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+              "elapsed_seconds": 0.008406,
+              "call_id_sha256": "edaaee6384b529645f1b5c7a5dc16b083a6047a46ff62ba55478aaab914821b6",
+              "fixture_file": "calc.py"
+            },
+            {
+              "name": "run_tests",
+              "implementation_before_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+              "implementation_after_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+              "elapsed_seconds": 0.097976,
+              "call_id_sha256": "93448472795246c3dd046da47a5bdee0a566581fe428169909566c0562245639",
+              "test_exit_code": 0,
+              "test_passed": true
+            }
+          ],
+          "initial_test_exit_code": 1,
+          "initial_source_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+          "final_source_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+          "test_sha256": "0db9ff2126ec29252997e054e2334a4cfe82bcb8636a640ebe756e38bc00ea36",
+          "tests_unchanged": true,
+          "implementation_changed": true,
+          "independent_test_exit_code": 0,
+          "independent_test_passed": true,
+          "final_answer_observed": true,
+          "harness_verified": true
+        }
+      },
+      {
+        "mode": "stream",
+        "status": "FAIL",
+        "limits": {
+          "max_rounds": 12,
+          "max_tool_calls": 32,
+          "max_output_bytes": 16384,
+          "test_timeout": 10,
+          "request_timeout": 300.0,
+          "overall_timeout": 1800.0,
+          "max_tokens": 2048,
+          "reasoning_effort": "low",
+          "max_response_bytes": 262144,
+          "stream_tools": true
+        },
+        "checks": {
+          "models": {
+            "status": "PASS",
+            "elapsed_seconds": 0.011858,
+            "http_status": 200
+          },
+          "chat": {
+            "status": "PASS",
+            "elapsed_seconds": 3.386454,
+            "http_status": 200
+          },
+          "streaming_end": {
+            "status": "PASS",
+            "elapsed_seconds": 3.027956,
+            "http_status": 200
+          },
+          "invalid_model": {
+            "status": "FAIL",
+            "elapsed_seconds": 1.937366,
+            "http_status": 200,
+            "returned_model": "glm-5.3",
+            "classification": "known_model_name_incompatibility"
+          },
+          "auth_missing_models": {
+            "status": "PASS",
+            "elapsed_seconds": 0.009524,
+            "http_status": 401
+          },
+          "auth_missing_chat": {
+            "status": "PASS",
+            "elapsed_seconds": 0.009763,
+            "http_status": 401
+          },
+          "auth_wrong_models": {
+            "status": "PASS",
+            "elapsed_seconds": 0.009162,
+            "http_status": 401
+          },
+          "auth_wrong_chat": {
+            "status": "PASS",
+            "elapsed_seconds": 0.01013,
+            "http_status": 401
+          },
+          "auth_correct_models": {
+            "status": "PASS",
+            "elapsed_seconds": 0.012669,
+            "http_status": 200
+          },
+          "auth_correct_chat": {
+            "status": "PASS",
+            "elapsed_seconds": 0.516877,
+            "http_status": 200
+          },
+          "tool_roundtrip": {
+            "status": "PASS"
+          }
+        },
+        "elapsed_seconds": 53.101493,
+        "started_utc": "2026-09-15T01:37:05.643998+00:00",
+        "finished_utc": "2026-09-15T01:37:58.843355+00:00",
+        "process": {
+          "returncode": 1,
+          "timed_out": false,
+          "elapsed_seconds": 53.198949,
+          "started_epoch": 1789436225.643998,
+          "finished_epoch": 1789436278.843355,
+          "process_group_cleanup": "completed"
+        },
+        "requests": [
+          {
+            "path": "/models",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 0.011846,
+            "sequence": 1
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 3.385918,
+            "sequence": 2,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "stop",
+            "provider_usage": {
+              "prompt_tokens": 18,
+              "completion_tokens": 11,
+              "total_tokens": 29,
+              "prompt_tokens_details": {
+                "cached_tokens": 17
+              }
+            }
+          },
+          {
+            "path": "/chat/completions",
+            "stream": true,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 3.02773,
+            "sequence": 3,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "stop",
+            "provider_usage": "NOT_REPORTED"
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 1.936868,
+            "sequence": 4,
+            "returned_model": "glm-5.3",
+            "requested_model": "INVALID_MODEL_PROBE",
+            "finish_reason": "stop",
+            "provider_usage": {
+              "prompt_tokens": 15,
+              "completion_tokens": 25,
+              "total_tokens": 40,
+              "prompt_tokens_details": {
+                "cached_tokens": 14
+              }
+            }
+          },
+          {
+            "path": "/models",
+            "stream": false,
+            "status": 401,
+            "success": false,
+            "elapsed_seconds": 0.009451,
+            "sequence": 5
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 401,
+            "success": false,
+            "elapsed_seconds": 0.009657,
+            "sequence": 6,
+            "requested_model": "glm-5.3",
+            "provider_usage": "NOT_REPORTED"
+          },
+          {
+            "path": "/models",
+            "stream": false,
+            "status": 401,
+            "success": false,
+            "elapsed_seconds": 0.009112,
+            "sequence": 7
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 401,
+            "success": false,
+            "elapsed_seconds": 0.009997,
+            "sequence": 8,
+            "requested_model": "glm-5.3",
+            "provider_usage": "NOT_REPORTED"
+          },
+          {
+            "path": "/models",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 0.01258,
+            "sequence": 9
+          },
+          {
+            "path": "/chat/completions",
+            "stream": false,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 0.51673,
+            "sequence": 10,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "stop",
+            "provider_usage": {
+              "prompt_tokens": 18,
+              "completion_tokens": 7,
+              "total_tokens": 25,
+              "prompt_tokens_details": {
+                "cached_tokens": 17
+              }
+            }
+          },
+          {
+            "path": "/chat/completions",
+            "stream": true,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 1.841732,
+            "sequence": 11,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "tool_calls",
+            "provider_usage": "NOT_REPORTED"
+          },
+          {
+            "path": "/chat/completions",
+            "stream": true,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 10.674336,
+            "sequence": 12,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "tool_calls",
+            "provider_usage": "NOT_REPORTED"
+          },
+          {
+            "path": "/chat/completions",
+            "stream": true,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 5.761457,
+            "sequence": 13,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "tool_calls",
+            "provider_usage": "NOT_REPORTED"
+          },
+          {
+            "path": "/chat/completions",
+            "stream": true,
+            "status": 200,
+            "success": true,
+            "elapsed_seconds": 25.63211,
+            "sequence": 14,
+            "returned_model": "glm-5.3",
+            "requested_model": "glm-5.3",
+            "finish_reason": "stop",
+            "provider_usage": "NOT_REPORTED"
+          }
+        ],
+        "agent": {
+          "status": "PASS",
+          "elapsed_seconds": 44.169321,
+          "rounds": [
+            {
+              "round": 1,
+              "finish_reason": "tool_calls",
+              "elapsed_seconds": 1.841703,
+              "stream_done": true,
+              "provider_usage": "NOT_REPORTED",
+              "reasoning_fields_present": false,
+              "tool_names": [
+                "read_file",
+                "read_file"
+              ]
+            },
+            {
+              "round": 2,
+              "finish_reason": "tool_calls",
+              "elapsed_seconds": 10.674303,
+              "stream_done": true,
+              "provider_usage": "NOT_REPORTED",
+              "reasoning_fields_present": false,
+              "tool_names": [
+                "write_file"
+              ]
+            },
+            {
+              "round": 3,
+              "finish_reason": "tool_calls",
+              "elapsed_seconds": 5.761421,
+              "stream_done": true,
+              "provider_usage": "NOT_REPORTED",
+              "reasoning_fields_present": false,
+              "tool_names": [
+                "run_tests"
+              ]
+            },
+            {
+              "round": 4,
+              "finish_reason": "stop",
+              "elapsed_seconds": 25.632098,
+              "stream_done": true,
+              "provider_usage": "NOT_REPORTED",
+              "reasoning_fields_present": false,
+              "tool_names": []
+            }
+          ],
+          "tool_sequence": [
+            {
+              "name": "read_file",
+              "implementation_before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+              "implementation_after_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+              "elapsed_seconds": 0.001367,
+              "call_id_sha256": "31a3580724ee653b4ac88c3ff333c7f786e4df48ce34ef7185261603f0d052a5",
+              "fixture_file": "calc.py"
+            },
+            {
+              "name": "read_file",
+              "implementation_before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+              "implementation_after_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+              "elapsed_seconds": 0.001135,
+              "call_id_sha256": "2c2815f9181154abab93f45a823ababc3e04c2949261977e03220d079b3ccb9c",
+              "fixture_file": "test_calc.py"
+            },
+            {
+              "name": "write_file",
+              "implementation_before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+              "implementation_after_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+              "elapsed_seconds": 0.003297,
+              "call_id_sha256": "7fcba002d5ec25883388636b5e436b9c23fe8d7e3294a2f609f4451e2b2f3e13",
+              "fixture_file": "calc.py"
+            },
+            {
+              "name": "run_tests",
+              "implementation_before_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+              "implementation_after_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+              "elapsed_seconds": 0.093545,
+              "call_id_sha256": "115d4185c281cf590e8ea32b60c81f7d59a30bfd7c3ad8b3dcfc914756c53dfe",
+              "test_exit_code": 0,
+              "test_passed": true
+            }
+          ],
+          "initial_test_exit_code": 1,
+          "initial_source_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+          "final_source_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772",
+          "test_sha256": "0db9ff2126ec29252997e054e2334a4cfe82bcb8636a640ebe756e38bc00ea36",
+          "tests_unchanged": true,
+          "implementation_changed": true,
+          "independent_test_exit_code": 0,
+          "independent_test_passed": true,
+          "final_answer_observed": true,
+          "harness_verified": true
+        }
+      }
+    ]
+  },
+  "opencode": {
+    "status": "PASS",
+    "process": {
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 151.156741,
+      "started_epoch": 1789436333.0870368,
+      "finished_epoch": 1789436484.244947,
+      "process_group_cleanup": "completed"
+    },
+    "client": {
+      "version": "1.18.31",
+      "configuration_check": "PASS",
+      "reasoning_effort": "low",
+      "context_tokens": 32768,
+      "output_tokens": 2048,
+      "binary_sha256": "16c960ba77421da11b53e785f359b73f328a86118b48feb4af143db5d9afb198"
+    },
+    "baseline": {
+      "command": "python3 -I -B test_text_utils.py",
+      "returncode": 1,
+      "assertion_failures": 5,
+      "import_errors": false,
+      "source_sha256": "8bff6135c956d931fa755b0cb4e25f19fc5dee661e88f51efbd3d7ec55dd4b44",
+      "test_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43"
+    },
+    "final": {
+      "test_exit_code": 0,
+      "test_count": 3,
+      "tests_unchanged": true,
+      "test_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+      "source_sha256": "3fd34f6eaad8377d745966c43047f1ac2c2914a6c731e69e0b281f98e77e45d1",
+      "implementation_changed": true,
+      "only_implementation_changed": true,
+      "arbitrary_whitespace_fix_reviewed": true,
+      "independent_test_pass": true,
+      "final_answer_observed": true
+    },
+    "event_counts": {
+      "step_start": 5,
+      "tool_use": 5,
+      "step_finish": 5,
+      "text": 1
+    },
+    "tool_sequence": [
+      {
+        "event_sequence": 2,
+        "tool": "read",
+        "status": "completed",
+        "call_id_sha256": "ce7f4913994b12b82a734a38eccd122ef92a859b83933ad65e90dd4fe11a31ed",
+        "seconds_from_start": 97.899963,
+        "file": "text_utils.py",
+        "path_within_workspace": true,
+        "tool_elapsed_seconds": 0.022
+      },
+      {
+        "event_sequence": 3,
+        "tool": "read",
+        "status": "error",
+        "call_id_sha256": "654deef55fdb249dbe4d4c133ee2e11374a19fac49ec3532754f9fe54229edf2",
+        "seconds_from_start": 100.074963,
+        "file": "test_text_utils.py",
+        "path_within_workspace": false,
+        "classification": "external_directory_permission_denied",
+        "tool_elapsed_seconds": 0.009
+      },
+      {
+        "event_sequence": 6,
+        "tool": "read",
+        "status": "completed",
+        "call_id_sha256": "5d34da0bdb8ec1db082bed68322eff3e73af5e8e383fabb048f82a71f1852308",
+        "seconds_from_start": 114.534963,
+        "file": "test_text_utils.py",
+        "path_within_workspace": true,
+        "tool_elapsed_seconds": 0.008
+      },
+      {
+        "event_sequence": 9,
+        "tool": "edit",
+        "status": "completed",
+        "call_id_sha256": "11957bb0c24250cc6d5b0cb7702ec184d87b5b45cd37aae7dbbdcb0590c58cf4",
+        "seconds_from_start": 127.434963,
+        "file": "text_utils.py",
+        "path_within_workspace": true,
+        "tool_elapsed_seconds": 0.019
+      },
+      {
+        "event_sequence": 12,
+        "tool": "bash",
+        "status": "completed",
+        "call_id_sha256": "92adca3701d7f70955623fd307bc20d23b540ce784fe7e84b837017944a8e134",
+        "seconds_from_start": 137.595963,
+        "command": "python3 -I -B test_text_utils.py",
+        "exit_code": 0,
+        "test_output_passed": true,
+        "tool_elapsed_seconds": 0.101
+      }
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "reason": "tool-calls",
+        "seconds_from_start": 100.149963,
+        "native_tokens": {
+          "total": 5127,
+          "input": 5058,
+          "output": 59,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 10
+          }
+        },
+        "native_cost": 0
+      },
+      {
+        "step": 2,
+        "reason": "tool-calls",
+        "seconds_from_start": 114.604963,
+        "native_tokens": {
+          "total": 5471,
+          "input": 271,
+          "output": 74,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 5126
+          }
+        },
+        "native_cost": 0
+      },
+      {
+        "step": 3,
+        "reason": "tool-calls",
+        "seconds_from_start": 127.488963,
+        "native_tokens": {
+          "total": 5877,
+          "input": 352,
+          "output": 55,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 5470
+          }
+        },
+        "native_cost": 0
+      },
+      {
+        "step": 4,
+        "reason": "tool-calls",
+        "seconds_from_start": 137.595963,
+        "native_tokens": {
+          "total": 5971,
+          "input": 106,
+          "output": 43,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 5822
+          }
+        },
+        "native_cost": 0
+      },
+      {
+        "step": 5,
+        "reason": "stop",
+        "seconds_from_start": 151.096963,
+        "native_tokens": {
+          "total": 6118,
+          "input": 106,
+          "output": 84,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 5928
+          }
+        },
+        "native_cost": 0
+      }
+    ],
+    "provider_usage": "NOT_REPORTED",
+    "provider_usage_note": "Provider HTTP usage objects were not separately captured. Native OpenCode step token counters are preserved verbatim under native_tokens; zero reasoning/cost/cache-write is a client-reported value, not independent provider accounting.",
+    "reasoning_effort": "low",
+    "reasoning_wire_basis": "Reviewed A2O actual pinned-client wire proof plus unchanged verified generated configuration; V1G2 does not intercept or rewrite wire data.",
+    "configuration_manual_edits": false,
+    "retry_or_budget_increase": false
+  },
+  "cleanup": {
+    "owned_request_processes_active": 0,
+    "owned_opencode_processes_active": 0,
+    "owned_process_group_cleanup": "PASS",
+    "observed_descendant_pids_absent": true,
+    "tunnel_control_identity_verified_before_exit": true,
+    "tunnel_control_removed": true,
+    "tunnel_local_listener_closed": true,
+    "tunnel_closed": true,
+    "vm_mutations": false,
+    "released_utc": "2026-09-15T01:43:09.686758+00:00"
+  },
+  "claim_boundaries": {
+    "full_installer": "PENDING_EXPLICIT_COMPATIBILITY_DECISION",
+    "server_ready": "PENDING_EXPLICIT_COMPATIBILITY_DECISION",
+    "large_occupied_context": "NOT_TESTED",
+    "highest_practical_context": "NOT_TESTED",
+    "fresh_linux_install": "NOT_TESTED",
+    "reboot": "NOT_TESTED",
+    "original_v1g_a1_aggregate": "FAIL_PRESERVED"
+  }
+}

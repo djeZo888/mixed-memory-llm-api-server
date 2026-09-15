@@ -1,0 +1,16 @@
+{
+  "utc": "2026-09-15T05:15:48.351825+00:00",
+  "files": {
+    "admission.json": "a0a8957ca9f45b1e9af44b4ff1fb02a4b117196a5e1784928172c57405d127d7",
+    "scratch-preparation.json": "07edf9e80d2dd7ceee1d0eaa7f951c290dc08cb8d1139dd35e6bf3ec5729a1c3",
+    "preflight-event.json": "c017af02d2415e7953feb75768adac0bcf550818a9dce7917d949725b089f416",
+    "preflight-final-guards.json": "a6aebad6d8567d61e3bd0327d53090df93b3c260d35c5b3573fc3e79e85c2428",
+    "allocation-attempt.json": "22e6f84efcd47c89af22e31547e8e7eb0fb26a5667eb64312cbf487cec63c50f",
+    "first-transition-failure.json": "90f140af93313edcb0d25ff36a200141fc471bd4a49d5cf482a5d80df60d887b",
+    "final-result.json": "4a5e29dfc6396a6a2d502a6ab44051c54282ed62d8fb5b48e64383d00a0fdcaf",
+    "final-after-report-guards.json": "c896a5b8e31c7d17534c75f582887b89e8b4f6dcb5404c48c50b9c5b047e7b30",
+    "closure-result.json": "3ced2b813c5456a57b8ffacdca082591dc72a945bd31736185b7880f09888912",
+    "closure-after-report-guards.json": "49ff87e431ae6a23d0a1418ff77fa9a8f34d8b14449d82ffb7bdd0834cdd394f"
+  },
+  "no_further_vm_calls": true
+}

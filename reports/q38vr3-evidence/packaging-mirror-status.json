@@ -1,0 +1,19 @@
+{
+  "fixture_retries": 0,
+  "next_action": "Report only; no resumed VM writes or corrections.",
+  "optional_VM_files_absent": [
+    "/data/logs/q38vr3-20260915/q38vr3-cache-diagnostic-retry.md",
+    "/data/logs/q38vr3-20260915/evidence/coordination-final.md",
+    "/data/logs/q38vr3-20260915/evidence/final-report-guard.json"
+  ],
+  "registered_guard_expected_mode": "0644",
+  "registered_guard_observed_mode": "0755",
+  "registered_guard_sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d",
+  "separate_readonly_root_guard": {
+    "exit": 0,
+    "root_available_bytes": 5208489984,
+    "stderr_bytes": 0
+  },
+  "status": "STOP_OPTIONAL_MIRROR_ONLY",
+  "worker_changed_protected_metadata": false
+}

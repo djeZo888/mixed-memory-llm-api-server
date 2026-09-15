@@ -1,0 +1,59 @@
+{
+  "collected_utc": "2026-09-15T00:16:12.125072+00:00",
+  "release_commit": "e46c788534d5b71e988c2cdf188f37f6214f7514",
+  "release_clean": true,
+  "old_state_sha256": "bd34931c6ed9cc0c887795dcefaebd65b4ceec95f061374938b09443a5c47a78",
+  "old_state_equals_backup": true,
+  "no_default_instance": true,
+  "canonical_key_absent": true,
+  "backup_tar_sha256": "51456f7ba636d240acb256e3ba2127ab1605b5cc8543d1e44434d6e46735cded",
+  "baseline_gpu": "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97887 MiB, 2 MiB, 0 %\n1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97887 MiB, 34 MiB, 0 %",
+  "baseline_memory": "total        used        free      shared  buff/cache   available\nMem:     946806919168 12101480448 910900068352     2031616 28638912512 934705438720\nSwap:     3157258240   109314048  3047944192",
+  "containers": "634daeb70a3a minimax-m3-mxfp8-poc Exited (137) 2 months ago\n321ee2110e2e sglang-qwen3-30b-a3b-instruct-2507 Exited (0) 2 months ago\n6cfa91273417 sglang-smoke-qwen3-0.6b Exited (0) 2 months ago",
+  "glm_unit": "MainPID=49253\nActiveState=active\nSubState=running\nInvocationID=55ab64073abe462189f82c54ce8e299e",
+  "m6b_unit": "ActiveState=active\nSubState=exited\nUnitFileState=disabled",
+  "files": {
+    "/data/services/releases/e46c788534d5b71e988c2cdf188f37f6214f7514-f1d-20260915/scripts/lifecycle/manager.py": {
+      "sha256": "400e04449f1f50cca7c571ed3439f546d43b2901766ce53bff545911b55df785",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o600",
+      "inode": 67634684
+    },
+    "/data/services/releases/e46c788534d5b71e988c2cdf188f37f6214f7514-f1d-20260915/scripts/lifecycle/qwen_next.py": {
+      "sha256": "a223baf44b45ba6ef7b13ca48c55553f577401b2c6a8fbbaeae7fd52cc141e46",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o600",
+      "inode": 67634685
+    },
+    "/data/services/releases/e46c788534d5b71e988c2cdf188f37f6214f7514-f1d-20260915/scripts/lifecycle/sglang_file_auth.py": {
+      "sha256": "1bf781b83d1a6bf25b63b948550cf2926e16247f48d6f977188954e9a10d212a",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o600",
+      "inode": 67634687
+    },
+    "/data/services/llm-manager/adapters/sglang_file_auth.py": {
+      "sha256": "1bf781b83d1a6bf25b63b948550cf2926e16247f48d6f977188954e9a10d212a",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "inode": 67634756
+    },
+    "/etc/systemd/system/m6b-post-reboot-verify.service": {
+      "sha256": "eb89d7312a0b870163e79e44b9c7f552aeb0b631f9d07fba943c393eddc07ede",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "inode": 262768
+    },
+    "/data/services/m6b-post-reboot/m6b-post-reboot-verify.sh": {
+      "sha256": "35515bdc2158be054fc3474fc4efa6ca9badeeb3d5ef72c56f1c69664187be76",
+      "uid": 1000,
+      "gid": 1000,
+      "mode": "0o755",
+      "inode": 67633643
+    }
+  }
+}

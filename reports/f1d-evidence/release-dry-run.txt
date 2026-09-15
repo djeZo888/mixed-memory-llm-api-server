@@ -1,0 +1,1 @@
+PLAN: backup manager/unit/script/enablement and metadata; protect services+manager inodes only; clone exact new root-owned release; copy exact adapter; create protected acquisition directory; disable only obsolete m6b unit; daemon-reload. No key/state/model change.

@@ -1,0 +1,169 @@
+"""D3PERFVM single exact-body request, PSS only at idle boundaries.
+Usage: python3 -B measure.py --run (one shot); --help is offline.
+All VM operations use worker SSH ai-vm. No model/config/context changes.
+"""
+import copy,datetime,hashlib,json,os,select,socket,subprocess,sys,time
+from pathlib import Path
+if '--help' in sys.argv:print(__doc__);sys.exit(0)
+assert sys.argv[1:]==['--run']
+os.umask(0o077)
+ROOT=Path(__file__).resolve().parent
+sys.path.insert(0,str(ROOT/'repo/scripts'));sys.path.insert(0,str(ROOT))
+from d3t import guards,accounting
+from d3t.probe import Transfer,private_read,write_bytes,write_json,lock
+from agent.protocol import load_api_key
+import cheap
+BASE=ROOT.parent/'D3BASE-20260915/trial';TRIAL=ROOT/'trial'
+CID='7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78'
+IMAGE='sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9'
+BODY_SHA='6682c1aaae6491aaa900da3297c05e17a63bc35adbceaef310bc8ded47b1f89d'
+TRIAL.mkdir(mode=0o700,exist_ok=True)
+assert not (TRIAL/'dispatch.json').exists(),'generation_already_attempted_no_retry'
+SSH=['ssh','-T','-S','none','-o','BatchMode=yes','-o','ConnectTimeout=10','-o','ClearAllForwardings=yes','ai-vm']
+def utc(t):return datetime.datetime.fromtimestamp(t,datetime.timezone.utc).isoformat()
+def emit(phase,**kwargs):
+    v={'utc':time.time(),'phase':phase,**kwargs}
+    with (ROOT/'live-status.md').open('a') as f:f.write('\n```json\n'+json.dumps(v,indent=2)+'\n```\n')
+    print(json.dumps(v),flush=True);return v
+
+def remote(program,timeout=60):
+    r=subprocess.run(SSH+['sudo -n python3 -B -'],input=program.encode(),stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=timeout)
+    assert r.returncode==0,'remote_read_or_guard_failed'
+    return json.loads(r.stdout)
+
+def boundary(phase,before=None,pids=()):
+    wrappers={n:hashlib.sha256((ROOT/'repo/scripts/common'/n).read_bytes()).hexdigest() for n in ('require-data-mounted.sh','root-disk-guard.sh')}
+    values={'PHASE':phase,'CFG':json.loads((ROOT/'VM-GUARDS.json').read_bytes()),'WRAPPERS':wrappers,'CID':CID,'IMAGE':IMAGE,'BEFORE':before,'OWNED_PIDS':list(pids)}
+    r=remote('\n'.join(k+'='+repr(v) for k,v in values.items())+'\n'+(ROOT/'boundary.py').read_text(),90)
+    write_json(TRIAL/(phase+'.json'),r);return r
+
+def sanitize(s):
+    v=copy.deepcopy(s)
+    for g in v.get('gpus',[]):g.pop('uuid',None)
+    return v
+
+class CheapSampler:
+    next=guards.Sampler.next
+    def __init__(self,before,full):
+        self.pending=b''
+        self.program=cheap.source(before,full)
+        write_bytes(TRIAL/'cheap-emitted.py',self.program.encode())
+        self.process=subprocess.Popen(SSH+["sudo -n python3 -B -u -c 'import json,sys;exec(json.loads(sys.stdin.readline()))'"],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True,bufsize=1)
+        self.process.stdin.write(json.dumps(self.program)+'\n');self.process.stdin.flush()
+    def close(self):guards.stop_sampler(self.process)
+
+sampler=tunnel=transfer=None;remote_pids=[];rows=[];result=None;failure=None;before=None;pre=None;native_idle=None
+control_path=str(TRIAL/'ssh-control');port=None;dispatch=None;finished=None;receipt={}
+def emergency_record(exc_type,exc,tb):
+    # Preserve an honest early result if any final reconciliation assertion fails.
+    write_json(ROOT/'result.json',{'status':'STOP_RECONCILIATION_PENDING','request_count':int(dispatch is not None),'error_type':exc_type.__name__,'lease_released':False,'highest_proven_window':None})
+    write_bytes(ROOT/'lease-release.md',b'# D3PERFVM lease NOT RELEASED\n\nFinal reconciliation is pending. Do not dispatch another generation. See protected task evidence.\n')
+    print(json.dumps({'phase':'reconciliation_pending','error_type':exc_type.__name__}),flush=True)
+sys.excepthook=emergency_record
+body=private_read(BASE/'run/baseline.cold.body.json');assert hashlib.sha256(body).hexdigest()==BODY_SHA
+checkpoint=private_read(BASE/'run/state.json')
+oldacct=json.loads(private_read(BASE/'run/baseline.cold.tokens.json'))
+prior=ROOT.parent/'D3N32-20260915'
+assert '"phase": "request_lease_released"' in (prior/'live-status.md').read_text()
+priorclean=json.loads(private_read(prior/'trial/cleanup.json'))
+assert priorclean['owned_tunnel_pid_absent'] and priorclean['owned_tunnel_port_unbound'] and priorclean['baseline_request_lock_free']
+# Distinct final.md and final live handoff were read; requested alternate release filename is absent.
+with lock(BASE/'run','request.lock'):
+  try:
+    before=boundary('admission');assert before['registered_mounts']==guards.MOUNTS
+    emit('admission_pass',identity=before['identity'],root_available_bytes=before['guard']['capacity']['root_available_bytes'],api_connections=0)
+    acct=accounting.native_account(json.loads(body),CID,IMAGE)
+    for k in ('body_sha256','tokens_sha256','rendered_prompt_sha256','template_sha256','input_tokens'):assert acct[k]==oldacct[k],'native_accounting_mismatch'
+    assert acct['tokens_sha256']=='469dd72637c5825cf9cd3b936e7c7033ab0d99ed1dfb14ca94ce4db92bbe455c' and acct['input_tokens']==1370
+    write_json(TRIAL/'accounting-private.json',acct)
+    safeacct={k:v for k,v in acct.items() if k!='token_ids'}
+    # Exact secret bytes transit only an owned pipe, are compared in memory and
+    # written to this worker's protected task file. No hash/value/header output.
+    key=load_api_key(BASE/'api-key')
+    r=subprocess.run(SSH+['sudo -n cat /data/services/secrets/llm-api-key'],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=15,check=True)
+    assert r.stdout==key.encode(),'key_exact_bytes_mismatch'
+    write_bytes(TRIAL/'api-key',r.stdout);del r
+    assert load_api_key(TRIAL/'api-key')==key
+    pre=guards.collect(CID,IMAGE,32768);guards.check_snapshot(pre)
+    assert pre['container']['pid']==before['identity']['pid'] and pre['container']['started_at']==before['identity']['started_at']
+    write_json(TRIAL/'full-before.json',sanitize(pre))
+    emit('pss_before',timestamp=pre['timestamp'],sample_elapsed_seconds=pre['sample_elapsed_seconds'],process_kib=pre['process_kib'])
+    sock=socket.socket();sock.bind(('127.0.0.1',0));port=sock.getsockname()[1];sock.close()
+    tunnel=subprocess.Popen(['ssh','-N','-T','-M','-S',control_path,'-o','ControlPersist=no','-o','BatchMode=yes','-o','ExitOnForwardFailure=yes','-L',f'127.0.0.1:{port}:127.0.0.1:30002','ai-vm'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    for _ in range(100):
+        assert tunnel.poll() is None,'tunnel_failed'
+        try:
+            with socket.create_connection(('127.0.0.1',port),timeout=.2):break
+        except OSError:time.sleep(.05)
+    else:raise RuntimeError('tunnel_unavailable')
+    sampler=CheapSampler(before,pre);sampler_pid=sampler.process.pid
+    def sample(timeout=3):
+        s=sampler.next(timeout=timeout)
+        assert s['status']=='PASS_CHEAP_ONLY' and -0.25<=time.time()-s['timestamp']<=2,'cheap_guard_or_freshness'
+        if rows:assert 0<s['timestamp']-rows[-1]['timestamp']<=2,'sample_gap'
+        if s['sampler_pid'] not in remote_pids:remote_pids.append(s['sampler_pid'])
+        assert len(remote_pids)==1,'sampler_identity'
+        rows.append(sanitize(s))
+        with (TRIAL/'cheap-samples.jsonl').open('a') as f:f.write(json.dumps(rows[-1])+'\n')
+        return s
+    first=sample();release_before=first['release_count']
+    emit('request_lease_acquired',owner='D3PERFVM',worker_pid=os.getpid(),tunnel_pid=tunnel.pid,control_path=control_path,local_port=port,sampler_ssh_pid=sampler_pid,remote_sampler_pid=remote_pids[0],body_sha256=BODY_SHA,accounting=safeacct)
+    dispatch=time.time();write_json(TRIAL/'dispatch.json',{'utc':dispatch,'body_sha256':BODY_SHA,'requests':1,'deadline_seconds':600})
+    emit('dispatch',request_count=1,body_sha256=BODY_SHA)
+    transfer=Transfer(f'http://127.0.0.1:{port}/v1',key,body,False,600)
+    # Observe completion promptly without adding an entire sample interval to wall.
+    last_report=0
+    while not transfer.done.wait(.02):
+        assert time.monotonic()-transfer.started<600,'request_deadline'
+        if select.select([sampler.process.stdout],[],[],0)[0]:
+            s=sample()
+            if time.monotonic()-last_report>20:
+                emit('cheap_telemetry',sample_count=len(rows),duration_seconds=s['sample_elapsed_seconds'],rss_kib=s['process_kib']['Rss'],vm_swap_kib=s['process_kib']['VmSwap'],mem_available_kib=s['host_kib']['MemAvailable'],gpu_free_bytes=[g['free_bytes'] for g in s['gpus']],vmstat_delta=s['vmstat_delta']);last_report=time.monotonic()
+        assert time.time()-rows[-1]['timestamp']<=2,'telemetry_stale'
+    finished=time.time();elapsed=time.monotonic()-transfer.started
+    transfer.thread.join(timeout=5);assert not transfer.thread.is_alive() and transfer.status==200 and transfer.error is None,'transport_failure'
+    assert key.encode() not in transfer.raw,'secret_in_response'
+    write_bytes(TRIAL/'response.raw',transfer.raw)
+    parsed=accounting.parse_response(transfer.raw,False,'glm-5.3');parsed['counters']['elapsed_seconds']=elapsed
+    result={'status':'COMPLETED_ONE_COMPARISON','request_count':1,'http_status':transfer.status,'request_start_utc':utc(dispatch),'response_complete_utc':utc(finished),'counters':parsed['counters'],'finish_reason':parsed['finish_reason'],'raw_sha256':hashlib.sha256(transfer.raw).hexdigest(),'accounting':safeacct,'highest_proven_window':None,'full_sample_pass':False}
+    emit('response_completed',**result)
+    transfer.cancel();transfer.thread.join(timeout=5);transfer=None
+    for _ in range(30):
+        s=sample()
+        if s['release_count']>release_before:native_idle=s;break
+    assert native_idle is not None,'native_slot_release_unreconciled'
+  except BaseException as e:
+    failure={'type':type(e).__name__,'diagnostic':str(e) if isinstance(e,AssertionError) else 'bounded_task_failure'}
+    emit('stopped',failure=failure,request_attempted=dispatch is not None)
+  finally:
+    if transfer is not None:transfer.cancel();transfer.thread.join(timeout=5);assert not transfer.thread.is_alive()
+    if sampler is not None:sampler.close();assert sampler.process.poll() is not None
+    if tunnel is not None:
+        tunnel.terminate()
+        try:tunnel.wait(timeout=5)
+        except subprocess.TimeoutExpired:tunnel.kill();tunnel.wait(timeout=5)
+        assert tunnel.poll() is not None and not Path(control_path).exists()
+        try:
+            sock=socket.create_connection(('127.0.0.1',port),timeout=.2);sock.close();raise AssertionError('owned_port_still_bound')
+        except OSError:pass
+    assert private_read(BASE/'run/state.json')==checkpoint,'baseline_checkpoint_changed'
+    # Boundary checks include native idle markers, zero sockets, stable identity,
+    # guards and absence of the exact remote sampler. No final PSS until idle.
+    if before is not None:
+        final=boundary('final',before,remote_pids)
+        if dispatch is not None:
+            assert any(datetime.datetime.fromisoformat(x['utc'].replace('Z','+00:00')).timestamp()>dispatch for x in final['last_idle_markers']),'post_dispatch_native_idle_missing'
+        post=guards.collect(CID,IMAGE,32768);guards.check_snapshot(post)
+        if pre is not None:
+            assert guards.stable_identity(pre)==guards.stable_identity(post),'final_full_identity'
+            assert post['vmstat']==pre['vmstat'] and post['host_swap_used_kib']==pre['host_swap_used_kib'],'final_swap_oom'
+        write_json(TRIAL/'full-after.json',sanitize(post))
+        receipt={'utc':time.time(),'owner':'D3PERFVM','request_count':int(dispatch is not None),'zero_owned_request_threads':True,'sampler_ssh_pid':sampler.process.pid if sampler else None,'sampler_ssh_reaped':True,'remote_sampler_pids':remote_pids,'remote_sampler_pids_absent':final['owned_remote_pid_absent'],'tunnel_pid':tunnel.pid if tunnel else None,'tunnel_reaped':True,'local_port':port,'port_unbound':True,'control_path_removed':True,'native_api_connections':final['api_connections'],'native_idle_markers':final['last_idle_markers'],'identity':final['identity'],'final_full_sample_timestamp':post['timestamp'],'baseline_checkpoint_unchanged':True}
+# All ownership is closed and shared request lock is free before handoff.
+assert receipt,'release_not_reconciled'
+result=result or {'status':'STOP','request_count':int(dispatch is not None)}
+result.update(failure=failure,lease_released_utc=utc(receipt['utc']),identity_unchanged=True,owned_processes_zero=True,full_sample_pass=False,highest_proven_window=None)
+write_json(ROOT/'result.json',result);write_json(TRIAL/'lease-release.json',receipt)
+text='# D3PERFVM lease release\n\nSole generation lease RELEASED '+utc(receipt['utc'])+'.\n\nOne attempted request; zero owned request threads, samplers or tunnels. Exact remote sampler absent; owned local port unbound and ControlPath removed. Native API established connections zero, with post-dispatch slot release/idle reconciled. Final full PSS and registered guards completed; exact N76 identity unchanged. D3BASE checkpoint unchanged. Existing backend left running; installer STOPPED.\n\nThis is one reduced-monitoring short comparison, not occupied-context or D3T full-sample PASS.\n'
+write_bytes(ROOT/'lease-release.md',text.encode());emit('request_lease_released',**receipt)
+if failure:sys.exit(1)

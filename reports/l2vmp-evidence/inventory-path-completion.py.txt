@@ -1,0 +1,8 @@
+"""Complete only fixed paths identified by focused current-source review."""
+import json,pathlib,stat
+out={}
+for p in ['/usr/local/lib/local-ai-server','/data/services/llm-control','/data/services/llm-control/operations.json','/data/models-large/qwen38-27b-fp8','/etc/tmpfiles.d/llmctl.conf']:
+ try:
+  s=pathlib.Path(p).lstat(); out[p]={'present':True,'uid':s.st_uid,'gid':s.st_gid,'mode':format(stat.S_IMODE(s.st_mode),'04o'),'type':'directory' if stat.S_ISDIR(s.st_mode) else 'regular' if stat.S_ISREG(s.st_mode) else 'other','nlink':s.st_nlink}
+ except FileNotFoundError: out[p]={'present':False}
+print(json.dumps(out,indent=2,sort_keys=True))

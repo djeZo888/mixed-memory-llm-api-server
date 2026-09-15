@@ -1,0 +1,29 @@
+{
+  "result": "PASS_8K_TINY_API_GENERATION_AND_RESIDENT_ALLOCATION",
+  "load_seconds": 342.02,
+  "rss_gib": 411.9050941467285,
+  "pss_gib": 411.9037494659424,
+  "mem_available_gib": 450.3118782043457,
+  "vram_mib": [
+    15650,
+    11746
+  ],
+  "sampled_gpu_sm_peak_percent": {
+    "0": 6,
+    "1": 4
+  },
+  "process_swap_kib": 0,
+  "actual_inference_threads": 112,
+  "affinity": "0-111; no explicit binding",
+  "low_reasoning": "low request; no budget override; finish stop, content4",
+  "scope": "Tiny26prompt/3completion sample; not representative long prompt or sustained decode benchmark",
+  "not_tested": [
+    "32K",
+    "tools",
+    "A1",
+    "V1",
+    "reboot",
+    "cross-backend switch",
+    "timeout"
+  ]
+}

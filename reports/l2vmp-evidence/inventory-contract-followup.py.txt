@@ -1,0 +1,12 @@
+"""One narrowly scoped read-only completion of immutable contract fields."""
+import hashlib,json,pathlib,subprocess
+cid='bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55'
+# Select three reviewed nonsecret values inside Docker template; never request whole Env.
+fmt='{"id":{{json .Id}},"log_config":{{json .HostConfig.LogConfig}},"device_requests":{{json .HostConfig.DeviceRequests}},"required_env":[{{range .Config.Env}}{{if or (eq . "LD_LIBRARY_PATH=/opt/llama") (eq . "LLAMA_ARG_HOST=0.0.0.0") (eq . "XDG_CACHE_HOME=/cache")}}{{json .}},{{end}}{{end}}null]}'
+x=json.loads(subprocess.check_output(['docker','inspect','--format',fmt,cid],text=True))
+x['required_env']=[v for v in x['required_env'] if v is not None]
+x['state_container_running']={}
+for p in ['/data/services/llm-manager/active/active.json','/run/llmctl/recovery.json']:
+ b=pathlib.Path(p).read_bytes(); v=json.loads(b)
+ x['state_container_running'][p]={'sha256':hashlib.sha256(b).hexdigest(),'container_running':v.get('container_running')}
+print(json.dumps(x,indent=2,sort_keys=True))

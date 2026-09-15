@@ -1,0 +1,81 @@
+{
+  "L2_inventory": {
+    "all_current_file_hashes_match": true,
+    "closure_manifest_hash_matches": true,
+    "entry_count": 67,
+    "only_changed_entries": [
+      "scripts/lifecycle/qwen38.py",
+      "tests/lifecycle/sglang38_fixture/cache_probe.py",
+      "tests/lifecycle/sglang38_fixture/provenance.json",
+      "tests/lifecycle/sglang38_fixture/run_fixture.py",
+      "tests/lifecycle/sglang38_fixture/run_pinned_image.py"
+    ],
+    "other_inventory_fields_unchanged": true
+  },
+  "adapter_change": "PROVENANCE_DIGEST_ONLY",
+  "all_authors_and_committers_exact": true,
+  "attempt_3_frozen_source": {
+    "commit": "a0d70509759927a1acde8f12d1149eeac4e4a034",
+    "committed_hashes_match": true,
+    "file_count": 8,
+    "job_sha256": "12cbd61930468b3dd9a95427a2261c3e6c8c5cab534cf956f5b7781a26d96f28",
+    "manifest_sha256": "3ea927380152f668eaea3b85d641589ef0dc8c92cf9b411e70b2e7986d622ffa"
+  },
+  "base": "dad2d58b57ab2367dee254cff1a885567b0c76f4",
+  "clean_tree": true,
+  "diff_whitespace_check": "PASS",
+  "executed_attempt_1_job": {
+    "sha256": "c9033c54ae9e80bee2f2ab28bba446ccb43c2c60baf2a7e3c681e8c016e185bd",
+    "unchanged": true
+  },
+  "fixture_and_support_hashes": {
+    "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+    "scripts/runtime/sglang38_file_auth.py": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+    "tests/lifecycle/sglang38_fixture/auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+    "tests/lifecycle/sglang38_fixture/cache_probe.py": "11e09615725d9588fd082fbbf8f4776a77d5a20f6dde09022a14df3e828bff73",
+    "tests/lifecycle/sglang38_fixture/chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+    "tests/lifecycle/sglang38_fixture/run_fixture.py": "7d23dfc941edf127815bbd3d5699316910d989eb5a363cd734c64b838536f08b",
+    "tests/lifecycle/sglang38_fixture/run_pinned_image.py": "a5c8061a9dd11bba06740600e0b029fdfcf4377113eddb15dad7d3605db2b63c"
+  },
+  "head": "a0d70509759927a1acde8f12d1149eeac4e4a034",
+  "native_acceptance": "NOT_ASSESSED",
+  "provenance_sha256": "4f8ac18cab3ea1fb58ec625c7a0cb77f22105bac1761ce196a3eb05f91b3809e",
+  "selection_note": "Source-only verification snapshot; actual results are recorded separately in terminal evidence.",
+  "source_artifact_sha256": "b05df6495cfcee365d4c66ad761be4de2c21a7520c87de999f77e94e4e7b0578",
+  "status": "PASS_LOCAL_SOURCE_INTEGRITY_ONLY",
+  "task_commit_metadata": [
+    {
+      "author": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>",
+      "commit": "a0d70509759927a1acde8f12d1149eeac4e4a034",
+      "committer": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>"
+    },
+    {
+      "author": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>",
+      "commit": "a27948661c3f295dcb74a8ffbdf515c2d9990d22",
+      "committer": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>"
+    },
+    {
+      "author": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>",
+      "commit": "d2bc4d51a95acebf7b0093be3445fc3e4106e57d",
+      "committer": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>"
+    },
+    {
+      "author": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>",
+      "commit": "edbc9beb1bfc183d21623b4a6ae0d0f8cb948216",
+      "committer": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>"
+    },
+    {
+      "author": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>",
+      "commit": "e89dfa6688997ba5da5918b70a3a4fb26eaf7d02",
+      "committer": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>"
+    },
+    {
+      "author": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>",
+      "commit": "9e961be904c5095cdca6f5bf1c6f955984aa3b8a",
+      "committer": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>"
+    }
+  ],
+  "tracked_changed_bytes_match_committed_head": true,
+  "tree": "49aee59ea66d6b0866f439765c310367f0d762c5",
+  "verified_utc": "2026-09-15T05:17:24.355821+00:00"
+}

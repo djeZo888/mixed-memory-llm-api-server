@@ -1,0 +1,94 @@
+"""Read-only ROOTSPACE metadata collector; streamed over SSH; no VM files written."""
+import os, stat, json, subprocess, hashlib, datetime, importlib.util, time
+from pathlib import Path
+NOW=time.time()
+def utc(t=None): return datetime.datetime.fromtimestamp(NOW if t is None else t, datetime.timezone.utc).isoformat()
+def run(a):
+ p=subprocess.run(a,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,env={'PATH':'/usr/sbin:/usr/bin:/sbin:/bin','LC_ALL':'C'},timeout=90)
+ return {'exit_code':p.returncode,'stdout':p.stdout,'stderr':p.stderr}
+def meta(p,s=None):
+ s=s or os.lstat(p)
+ return dict(path=p,dev=s.st_dev,inode=s.st_ino,uid=s.st_uid,gid=s.st_gid,mode=oct(stat.S_IMODE(s.st_mode)),nlink=s.st_nlink,size=s.st_size,allocated_bytes=s.st_blocks*512,mtime=utc(s.st_mtime),ctime=utc(s.st_ctime),atime=utc(s.st_atime))
+def chain(p):
+ out=[]
+ for q in list(reversed(Path(p).parents))+[Path(p)]:
+  m=meta(str(q)); assert m['uid']==0 and not int(m['mode'],8)&0o022 and not q.is_symlink(), str(q); out.append(m)
+ return out
+def procmeta(pid):
+ b=Path('/proc/'+str(pid)); raw=(b/'stat').read_text(); vals=raw[raw.rfind(')')+2:].split()
+ return {'pid':int(pid),'comm':(b/'comm').read_text().strip(),'uid':b.stat().st_uid,'start_ticks':int(vals[19])}
+out={'task':'ROOTSPACE','started_utc':utc(),'read_only':True,'vm_writes':False}
+guard='/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py'
+dep='/usr/local/lib/llm-server/control-api/scripts/install/storage.py'
+out['protected_source']=[]
+for p,h,mode in [(guard,'21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d',0o755),(dep,'4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505',0o644)]:
+ c=chain(p); got=hashlib.sha256(Path(p).read_bytes()).hexdigest(); assert got==h and stat.S_IMODE(os.stat(p).st_mode)==mode
+ out['protected_source'].append({'ancestry':c,'sha256':got})
+out['registry_ancestry']=chain('/etc/local-ai-server/storage.json')
+spec=importlib.util.spec_from_file_location('guard',guard); g=importlib.util.module_from_spec(spec);spec.loader.exec_module(g)
+spec=importlib.util.spec_from_file_location('storage',dep); m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+reg=m.Storage({},g.Runner()).read_registration()
+assert reg['data']['uuid']=='8daf56f1-5649-4163-9d87-919c2d271875' and reg['models']['uuid']=='a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a'
+s=m.Storage({'data_dir':reg['data']['path'],'data_uuid':reg['data']['uuid'],'model_dir':reg['models']['path'],'model_uuid':reg['models']['uuid'],'storage_mode':reg.get('storage_mode','existing')},g.Runner())
+snap=s._role_snapshot(reg,('data','models')); assert s._identity(snap)==s._identity(reg)
+out['identity_only_not_capacity_pass']=snap
+out['root_mount']=run(['/usr/bin/findmnt','-J','-T','/','-o','TARGET,SOURCE,FSTYPE,UUID,MAJ:MIN,OPTIONS'])
+def capacity():
+ v=os.statvfs('/'); return dict(total_bytes=v.f_blocks*v.f_frsize,free_including_reserved_bytes=v.f_bfree*v.f_frsize,available_bytes=v.f_bavail*v.f_frsize,reserved_unavailable_bytes=(v.f_bfree-v.f_bavail)*v.f_frsize,used_bytes=(v.f_blocks-v.f_bfree)*v.f_frsize,block_size=v.f_frsize,inodes=v.f_files,free_inodes=v.f_ffree)
+out['capacity_before']=capacity()
+for name,args in [('registered_guard',[]),('registered_root_guard',['--root-guard'])]:out[name]=run(['/usr/bin/python3','-I','-B',guard,'--json']+args)
+out['backend']=run(['/usr/bin/docker','inspect','--format','{{json .Id}} {{json .Image}} {{json .State.Pid}} {{json .State.Status}} {{json .State.StartedAt}} {{json .RestartCount}}','7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78'])
+out['backend_process']=procmeta(243279)
+# Mount table is explicit filesystem metadata, not a walk of proc.
+mounts=set()
+for line in Path('/proc/self/mountinfo').read_text().splitlines():
+ target=line.split()[4].replace('\\040',' ').replace('\\011','\t').replace('\\134','\\')
+ if target!='/': mounts.add(target)
+rootdev=os.lstat('/').st_dev
+seen=set(); dirs=[]; files=[]; errors=[]; skipped=[]; counts={'entries':0,'regular_files':0,'duplicate_hardlinks':0}
+def walk(p):
+ total=0; apparent=0
+ try:
+  st=os.lstat(p); key=(st.st_dev,st.st_ino)
+  if key in seen: counts['duplicate_hardlinks']+=1; return 0,0
+  seen.add(key); total+=st.st_blocks*512; apparent+=st.st_size; counts['entries']+=1
+  if stat.S_ISDIR(st.st_mode):
+   with os.scandir(p) as it: entries=sorted(it,key=lambda e:e.name)
+   for e in entries:
+    try:
+     info=e.stat(follow_symlinks=False)
+     if e.path in mounts or info.st_dev!=rootdev: skipped.append({'path':e.path,'dev':info.st_dev});continue
+     a,b=walk(e.path);total+=a;apparent+=b
+    except OSError as ex:errors.append({'path':e.path,'error':type(ex).__name__})
+   dirs.append({'path':p,'allocated_bytes':total,'apparent_bytes':apparent})
+  elif stat.S_ISREG(st.st_mode):
+   counts['regular_files']+=1
+   if st.st_blocks*512>=1024**2 or st.st_size>=1024**2: files.append(meta(p,st))
+ except OSError as ex:errors.append({'path':p,'error':type(ex).__name__})
+ return total,apparent
+out['root_walk']={'allocated_bytes':0}
+a,b=walk('/')
+out['root_walk']={'allocated_bytes':a,'apparent_bytes':b,'counts':counts,'errors':errors,'skipped_mounts':skipped,'directories':sorted((d for d in dirs if d['allocated_bytes']>=8*1024**2 or d['path'].count('/')==1),key=lambda x:-x['allocated_bytes']),'files_at_least_1MiB':sorted(files,key=lambda x:-x['allocated_bytes'])}
+# Explicit FD metadata only: no environ, cmdline, maps contents, or process memory.
+deleted=[]; fd_errors=[]; checked=0
+for entry in os.scandir('/proc'):
+ if not entry.name.isdigit():continue
+ try:
+  pm=procmeta(entry.name); fdpath=entry.path+'/fd'; fds=list(os.scandir(fdpath)); checked+=1
+  for fd in fds:
+   try:
+    st=os.stat(fd.path)
+    if st.st_dev==rootdev and stat.S_ISREG(st.st_mode) and st.st_nlink==0:
+     deleted.append(dict(pm,fd=int(fd.name),**meta(os.readlink(fd.path),st)))
+   except FileNotFoundError:pass
+   except OSError as ex:fd_errors.append({'pid':int(entry.name),'fd':fd.name,'error':type(ex).__name__})
+  assert procmeta(entry.name)['start_ticks']==pm['start_ticks']
+ except (FileNotFoundError,ProcessLookupError):pass
+ except OSError as ex:fd_errors.append({'pid':int(entry.name),'error':type(ex).__name__})
+out['deleted_open']={'processes_checked':checked,'files':deleted,'errors':fd_errors}
+root_source=json.loads(out['root_mount']['stdout'])['filesystems'][0]['source']
+if root_source.startswith('/dev/'):
+ r=run(['/usr/sbin/tune2fs','-l',root_source]); allowed=('Filesystem UUID:','Filesystem state:','Block count:','Reserved block count:','Free blocks:','Block size:','Cluster size:','Reserved blocks uid:','Reserved blocks gid:','Journal size:','Overhead clusters:')
+ out['filesystem_superblock']={'exit_code':r['exit_code'],'metadata':[ln for ln in r['stdout'].splitlines() if ln.startswith(allowed)]}
+out['capacity_after']=capacity(); out['completed_utc']=utc(time.time())
+print(json.dumps(out,indent=2))

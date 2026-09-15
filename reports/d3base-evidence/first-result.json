@@ -1,0 +1,44 @@
+{
+  "observed_utc": "2026-09-15T03:55:34.914642+00:00",
+  "status": "PENDING_RECONCILIATION",
+  "failure_class": "cold_cache_NOT_TESTED",
+  "dispatched_at": 1789444330.149903,
+  "request_deadline": 1789444929.163336,
+  "worker_elapsed_seconds": 137.05595999999787,
+  "counters": {
+    "cached_tokens": 50,
+    "cached_tokens_source": "usage.prompt_tokens_details.cached_tokens",
+    "completion_tokens": 64,
+    "decode_ms": 112294.399,
+    "decode_tokens": 64,
+    "elapsed_seconds": 137.0549194579944,
+    "evaluated_prompt_tokens": 1320,
+    "prompt_ms": 22135.537,
+    "prompt_tokens": 1370,
+    "total_tokens": 1434
+  },
+  "finish_metadata": [
+    {
+      "index": 0,
+      "finish_reason": "stop"
+    }
+  ],
+  "raw_sha256": "6291a2bb8814c37018862ec0a580c0c078a7921e896d2db6519cacf1e1cca445",
+  "accounting": {
+    "body_sha256": "6682c1aaae6491aaa900da3297c05e17a63bc35adbceaef310bc8ded47b1f89d",
+    "common_prefix_tokens": null,
+    "input_tokens": 1370,
+    "rendered_prompt_sha256": "9bcde19e00224e1f7d5892196e079ea3c4951f7c99760f52337f06a216742d5d",
+    "tokens_sha256": "469dd72637c5825cf9cd3b936e7c7033ab0d99ed1dfb14ca94ce4db92bbe455c"
+  },
+  "sample_count": 112,
+  "samples_all_pass": true,
+  "sample_first": 1789444330.3083448,
+  "sample_last": 1789444466.4288764,
+  "request_lock_free": true,
+  "owned_probe_pids": [],
+  "highest_proven_window": null,
+  "native_configured_capacity": null,
+  "later_stages": "PENDING_NOT_TESTED",
+  "successful_results": 0
+}

@@ -1,0 +1,149 @@
+{
+  "closure": {
+    "directories": 17,
+    "directory_metadata": "root:root0755 root filesystem",
+    "exact_directory_membership": true,
+    "files": 46,
+    "manifest_sha256": "bb0176749bd35deace1643d1a70c42be92a9f0b7bc629d41663c594678365f55",
+    "source_commit": "5e713441d9ea164b81860ee795c5ef35972ee8e3"
+  },
+  "files": {
+    "binding-check.json": {
+      "bytes": 137,
+      "sha256": "93054482a1d5ac00007db1c10ae4b2fe800910b96108dd4c3c15c1ba428647c1",
+      "text": "{\"historical_import\":true,\"registered_both_roles\":true,\"readonly_old_container_contract\":\"PASS\",\"catalog_compatibility_installed\":false}\n"
+    },
+    "control-key-action.json": {
+      "bytes": 343,
+      "sha256": "7f6d526676e4426a76567298fea5dc655ae14f71cbe4781bad6e966dd9a26f42",
+      "text": "{\n  \"action\": \"created\",\n  \"inverse\": \"remove only if action=created and exact recorded inode/metadata unchanged; never hash key\",\n  \"metadata\": {\n    \"ctime_ns\": 1789441824562945528,\n    \"dev\": 64512,\n    \"gid\": 0,\n    \"ino\": 266787,\n    \"mode\": \"0600\",\n    \"mtime_ns\": 1789441824559945511,\n    \"nlink\": 1,\n    \"size\": 64,\n    \"uid\": 0\n  }\n}\n"
+    },
+    "finalize-post-root-guard.md": {
+      "bytes": 4813,
+      "sha256": "d8d5689ef2b88325b674d7a8fc6830057edda0fece71444312fc8253d4281f4e",
+      "text": "# M3 Root-Disk Guard Report\n\n- Milestone ID: M3\n- Timestamp: 2026-09-15T03:12:47+00:00\n- Hostname: llmserver\n- User: root\n- Branch: unknown\n- Commit before work: unknown\n- Root path inspected: `/`\n- Data path checked/excluded: `/data`\n- Sudo coverage: sudo -n available for read-only inspection\n- Confirmation: no cleanup or destructive changes were made.\n- Confirmation: no Docker, NVIDIA, model, inference backend, systemd service, or API changes were made.\n\n### findmnt root summary\n\n```console\n$ findmnt /\nTARGET SOURCE                            FSTYPE OPTIONS\n/      /dev/mapper/ubuntu--vg-ubuntu--lv ext4   rw,relatime\n\n[exit=0]\n```\n\n### findmnt /data summary\n\n```console\n$ findmnt /data\nTARGET SOURCE    FSTYPE OPTIONS\n/data  /dev/sdb1 ext4   rw,relatime\n\n[exit=0]\n```\n\n### df -hT / /data\n\n```console\n$ df -hT / /data\nFilesystem                        Type  Size  Used Avail Use% Mounted on\n/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  8.6G  4.9G  64% /\n/dev/sdb1                         ext4  2.0T  664G  1.3T  35% /data\n\n[exit=0]\n```\n\n### AI/Hugging Face env vars\n\n```console\n$ bash -lc env\\ \\|\\ grep\\ -E\\ \\'\\^\\(AI_DATA\\|HF_HOME\\|HF_HUB_CACHE\\|HF_XET_CACHE\\|HF_ASSETS_CACHE\\|HF_DATASETS_CACHE\\|TRANSFORMERS_CACHE\\|XDG_CACHE_HOME\\|AI_BUILD_DIR\\|AI_LOG_DIR\\)=\\'\\ \\|\\ sort\nAI_BUILD_DIR=/data/build\nAI_DATA=/data\nAI_LOG_DIR=/data/logs\nHF_ASSETS_CACHE=/data/hf-cache/assets\nHF_DATASETS_CACHE=/data/hf-cache/datasets\nHF_HOME=/data/hf-cache\nHF_HUB_CACHE=/data/hf-cache/hub\nHF_XET_CACHE=/data/hf-cache/xet\nTRANSFORMERS_CACHE=/data/hf-cache/transformers\nXDG_CACHE_HOME=/data/hf-cache/xdg\n\n[exit=0]\n```\n\n## Mount Summary\n\n| Path | Source | Fstype | Label | UUID/identity | Free GiB |\n| --- | --- | --- | --- | --- | --- |\n| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785412` | 5 |\n| `/data` | `/dev/sdb1` | `ext4` | `AI_DATA` | `8daf56f1-5649-4163-9d87-919c2d271875` | 1249 |\n\n## Root Free Space Thresholds\n\n- Minimum root free space: 4 GiB\n- Warning root free space: 6 GiB\n- High-risk path warning: 512 MiB\n- High-risk path failure: 2048 MiB\n- Suspicious large file failure: 128 MiB\n\n## /data Identity Check\n\n`/data` is mounted and has a different filesystem identity from `/`.\n\n## /data Required Directory Check\n\nRequired `/data` directories were checked by `require-data-mounted.sh`.\n\n## Hugging Face Environment Check\n\nAI and Hugging Face environment variables were checked in a fresh login shell.\n\n## Inspected High-Risk Root Paths\n\n| Path | Exists | MiB | Status | Note |\n| --- | --- | ---: | --- | --- |\n| `/var/lib/docker` | no | 0 | PASS | absent |\n| `/var/lib/containerd` | no | 0 | PASS | absent |\n| `/var/lib/containers` | no | 0 | PASS | absent |\n| `/root/.cache` | no | 0 | PASS | absent |\n| `/root/.cache/huggingface` | no | 0 | PASS | absent |\n| `/root/.cache/torch` | no | 0 | PASS | absent |\n| `/root/.cache/pip` | no | 0 | PASS | absent |\n| `/home/user/.cache` | yes | 1 | PASS | below warning threshold |\n| `/home/user/.cache/huggingface` | no | 0 | PASS | absent |\n| `/home/user/.cache/torch` | no | 0 | PASS | absent |\n| `/home/user/.cache/pip` | no | 0 | PASS | absent |\n| `/home/user/.cache/pypoetry` | no | 0 | PASS | absent |\n| `/home/user/.cache/uv` | no | 0 | PASS | absent |\n| `/home/user/.cache/nvidia` | no | 0 | PASS | absent |\n| `/home/user/codex-bootstrap` | yes | 2 | WARN | expected old bootstrap repo; small |\n| `/tmp` | yes | 1 | PASS | below warning threshold |\n| `/var/tmp` | yes | 1 | PASS | below warning threshold |\n| `/var/log` | yes | 378 | PASS | below warning threshold |\n| `/opt` | yes | 1 | PASS | below warning threshold |\n| `/srv` | yes | 1 | PASS | below warning threshold |\n| `/models` | no | 0 | PASS | absent |\n| `/hf-cache` | no | 0 | PASS | absent |\n| `/docker` | no | 0 | PASS | absent |\n| `/containerd` | no | 0 | PASS | absent |\n| `/build` | no | 0 | PASS | absent |\n| `/logs` | no | 0 | PASS | absent |\n| `/data.pre-mount-root-20260702-083425` | yes | 1 | WARN | expected M2 backup and below warning threshold |\n\n## Suspicious Large File Scan\n\n| Path | MiB | Status | Category |\n| --- | ---: | --- | --- |\n| none | 0 | PASS | no suspicious large model/cache/archive files found on root |\n\n## Secret-Looking Filename Scan\n\n| Path | Status | Category |\n| --- | --- | --- |\n| none | PASS | no secret-looking filenames found in scanned root paths |\n\n## WARN Entries\n\n- /home/user/codex-bootstrap exists and is small\n- /data.pre-mount-root-20260702-083425 exists and is small\n- root free space is 5 GiB, below warning threshold 6 GiB\n\n## STOP Entries\n\n- None.\n\n## Tests And Checks Run\n\n- `scripts/common/root-disk-guard.sh --report /proc/self/fd/3`\n- Additional milestone checks are appended after command execution.\n\n## Conclusion\n\nPASS\n\n## Next Recommended Milestone\n\nM4 Docker/containerd storage.\nPASS: root disk guard passed\n"
+    },
+    "finalize-pre-root-guard.md": {
+      "bytes": 4813,
+      "sha256": "21419e900d3f9958bf36e76297dd43c28c9650d4c240d7419b9f13666a966eb6",
+      "text": "# M3 Root-Disk Guard Report\n\n- Milestone ID: M3\n- Timestamp: 2026-09-15T03:12:46+00:00\n- Hostname: llmserver\n- User: root\n- Branch: unknown\n- Commit before work: unknown\n- Root path inspected: `/`\n- Data path checked/excluded: `/data`\n- Sudo coverage: sudo -n available for read-only inspection\n- Confirmation: no cleanup or destructive changes were made.\n- Confirmation: no Docker, NVIDIA, model, inference backend, systemd service, or API changes were made.\n\n### findmnt root summary\n\n```console\n$ findmnt /\nTARGET SOURCE                            FSTYPE OPTIONS\n/      /dev/mapper/ubuntu--vg-ubuntu--lv ext4   rw,relatime\n\n[exit=0]\n```\n\n### findmnt /data summary\n\n```console\n$ findmnt /data\nTARGET SOURCE    FSTYPE OPTIONS\n/data  /dev/sdb1 ext4   rw,relatime\n\n[exit=0]\n```\n\n### df -hT / /data\n\n```console\n$ df -hT / /data\nFilesystem                        Type  Size  Used Avail Use% Mounted on\n/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  8.6G  4.9G  64% /\n/dev/sdb1                         ext4  2.0T  664G  1.3T  35% /data\n\n[exit=0]\n```\n\n### AI/Hugging Face env vars\n\n```console\n$ bash -lc env\\ \\|\\ grep\\ -E\\ \\'\\^\\(AI_DATA\\|HF_HOME\\|HF_HUB_CACHE\\|HF_XET_CACHE\\|HF_ASSETS_CACHE\\|HF_DATASETS_CACHE\\|TRANSFORMERS_CACHE\\|XDG_CACHE_HOME\\|AI_BUILD_DIR\\|AI_LOG_DIR\\)=\\'\\ \\|\\ sort\nAI_BUILD_DIR=/data/build\nAI_DATA=/data\nAI_LOG_DIR=/data/logs\nHF_ASSETS_CACHE=/data/hf-cache/assets\nHF_DATASETS_CACHE=/data/hf-cache/datasets\nHF_HOME=/data/hf-cache\nHF_HUB_CACHE=/data/hf-cache/hub\nHF_XET_CACHE=/data/hf-cache/xet\nTRANSFORMERS_CACHE=/data/hf-cache/transformers\nXDG_CACHE_HOME=/data/hf-cache/xdg\n\n[exit=0]\n```\n\n## Mount Summary\n\n| Path | Source | Fstype | Label | UUID/identity | Free GiB |\n| --- | --- | --- | --- | --- | --- |\n| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785412` | 5 |\n| `/data` | `/dev/sdb1` | `ext4` | `AI_DATA` | `8daf56f1-5649-4163-9d87-919c2d271875` | 1249 |\n\n## Root Free Space Thresholds\n\n- Minimum root free space: 4 GiB\n- Warning root free space: 6 GiB\n- High-risk path warning: 512 MiB\n- High-risk path failure: 2048 MiB\n- Suspicious large file failure: 128 MiB\n\n## /data Identity Check\n\n`/data` is mounted and has a different filesystem identity from `/`.\n\n## /data Required Directory Check\n\nRequired `/data` directories were checked by `require-data-mounted.sh`.\n\n## Hugging Face Environment Check\n\nAI and Hugging Face environment variables were checked in a fresh login shell.\n\n## Inspected High-Risk Root Paths\n\n| Path | Exists | MiB | Status | Note |\n| --- | --- | ---: | --- | --- |\n| `/var/lib/docker` | no | 0 | PASS | absent |\n| `/var/lib/containerd` | no | 0 | PASS | absent |\n| `/var/lib/containers` | no | 0 | PASS | absent |\n| `/root/.cache` | no | 0 | PASS | absent |\n| `/root/.cache/huggingface` | no | 0 | PASS | absent |\n| `/root/.cache/torch` | no | 0 | PASS | absent |\n| `/root/.cache/pip` | no | 0 | PASS | absent |\n| `/home/user/.cache` | yes | 1 | PASS | below warning threshold |\n| `/home/user/.cache/huggingface` | no | 0 | PASS | absent |\n| `/home/user/.cache/torch` | no | 0 | PASS | absent |\n| `/home/user/.cache/pip` | no | 0 | PASS | absent |\n| `/home/user/.cache/pypoetry` | no | 0 | PASS | absent |\n| `/home/user/.cache/uv` | no | 0 | PASS | absent |\n| `/home/user/.cache/nvidia` | no | 0 | PASS | absent |\n| `/home/user/codex-bootstrap` | yes | 2 | WARN | expected old bootstrap repo; small |\n| `/tmp` | yes | 1 | PASS | below warning threshold |\n| `/var/tmp` | yes | 1 | PASS | below warning threshold |\n| `/var/log` | yes | 378 | PASS | below warning threshold |\n| `/opt` | yes | 1 | PASS | below warning threshold |\n| `/srv` | yes | 1 | PASS | below warning threshold |\n| `/models` | no | 0 | PASS | absent |\n| `/hf-cache` | no | 0 | PASS | absent |\n| `/docker` | no | 0 | PASS | absent |\n| `/containerd` | no | 0 | PASS | absent |\n| `/build` | no | 0 | PASS | absent |\n| `/logs` | no | 0 | PASS | absent |\n| `/data.pre-mount-root-20260702-083425` | yes | 1 | WARN | expected M2 backup and below warning threshold |\n\n## Suspicious Large File Scan\n\n| Path | MiB | Status | Category |\n| --- | ---: | --- | --- |\n| none | 0 | PASS | no suspicious large model/cache/archive files found on root |\n\n## Secret-Looking Filename Scan\n\n| Path | Status | Category |\n| --- | --- | --- |\n| none | PASS | no secret-looking filenames found in scanned root paths |\n\n## WARN Entries\n\n- /home/user/codex-bootstrap exists and is small\n- /data.pre-mount-root-20260702-083425 exists and is small\n- root free space is 5 GiB, below warning threshold 6 GiB\n\n## STOP Entries\n\n- None.\n\n## Tests And Checks Run\n\n- `scripts/common/root-disk-guard.sh --report /proc/self/fd/3`\n- Additional milestone checks are appended after command execution.\n\n## Conclusion\n\nPASS\n\n## Next Recommended Milestone\n\nM4 Docker/containerd storage.\nPASS: root disk guard passed\n"
+    },
+    "originals/index.json": {
+      "bytes": 471,
+      "sha256": "a3f77c21dc3dbd869434be664df4714b2f6608713f269ecb18c71e681bb3cc16",
+      "text": "{\n  \"/data/services/llm-manager/acquisition/glm-5.3-ud-q4-k-xl.complete.json\": \"00.raw\",\n  \"/data/services/llm-manager/active/active.json\": \"01.raw\",\n  \"/data/services/llm-manager/deployment-instance.json\": \"02.raw\",\n  \"/etc/fstab\": \"03.raw\",\n  \"/etc/llm-server/network.json\": \"04.raw\",\n  \"/etc/systemd/system/m6b-post-reboot-verify.service\": \"05.raw\",\n  \"/run/llmctl/recovery.json\": \"06.raw\",\n  \"/usr/local/lib/llm-server/private-network/private_network.py\": \"07.raw\"\n}\n"
+    },
+    "q38-post-root-guard.md": {
+      "bytes": 4813,
+      "sha256": "2433521166cee4c9aa02942ffb68df970d082ccf2eca0f9753fa65911326346f",
+      "text": "# M3 Root-Disk Guard Report\n\n- Milestone ID: M3\n- Timestamp: 2026-09-15T03:14:35+00:00\n- Hostname: llmserver\n- User: root\n- Branch: unknown\n- Commit before work: unknown\n- Root path inspected: `/`\n- Data path checked/excluded: `/data`\n- Sudo coverage: sudo -n available for read-only inspection\n- Confirmation: no cleanup or destructive changes were made.\n- Confirmation: no Docker, NVIDIA, model, inference backend, systemd service, or API changes were made.\n\n### findmnt root summary\n\n```console\n$ findmnt /\nTARGET SOURCE                            FSTYPE OPTIONS\n/      /dev/mapper/ubuntu--vg-ubuntu--lv ext4   rw,relatime\n\n[exit=0]\n```\n\n### findmnt /data summary\n\n```console\n$ findmnt /data\nTARGET SOURCE    FSTYPE OPTIONS\n/data  /dev/sdb1 ext4   rw,relatime\n\n[exit=0]\n```\n\n### df -hT / /data\n\n```console\n$ df -hT / /data\nFilesystem                        Type  Size  Used Avail Use% Mounted on\n/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  8.6G  4.9G  64% /\n/dev/sdb1                         ext4  2.0T  664G  1.3T  35% /data\n\n[exit=0]\n```\n\n### AI/Hugging Face env vars\n\n```console\n$ bash -lc env\\ \\|\\ grep\\ -E\\ \\'\\^\\(AI_DATA\\|HF_HOME\\|HF_HUB_CACHE\\|HF_XET_CACHE\\|HF_ASSETS_CACHE\\|HF_DATASETS_CACHE\\|TRANSFORMERS_CACHE\\|XDG_CACHE_HOME\\|AI_BUILD_DIR\\|AI_LOG_DIR\\)=\\'\\ \\|\\ sort\nAI_BUILD_DIR=/data/build\nAI_DATA=/data\nAI_LOG_DIR=/data/logs\nHF_ASSETS_CACHE=/data/hf-cache/assets\nHF_DATASETS_CACHE=/data/hf-cache/datasets\nHF_HOME=/data/hf-cache\nHF_HUB_CACHE=/data/hf-cache/hub\nHF_XET_CACHE=/data/hf-cache/xet\nTRANSFORMERS_CACHE=/data/hf-cache/transformers\nXDG_CACHE_HOME=/data/hf-cache/xdg\n\n[exit=0]\n```\n\n## Mount Summary\n\n| Path | Source | Fstype | Label | UUID/identity | Free GiB |\n| --- | --- | --- | --- | --- | --- |\n| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785412` | 5 |\n| `/data` | `/dev/sdb1` | `ext4` | `AI_DATA` | `8daf56f1-5649-4163-9d87-919c2d271875` | 1249 |\n\n## Root Free Space Thresholds\n\n- Minimum root free space: 4 GiB\n- Warning root free space: 6 GiB\n- High-risk path warning: 512 MiB\n- High-risk path failure: 2048 MiB\n- Suspicious large file failure: 128 MiB\n\n## /data Identity Check\n\n`/data` is mounted and has a different filesystem identity from `/`.\n\n## /data Required Directory Check\n\nRequired `/data` directories were checked by `require-data-mounted.sh`.\n\n## Hugging Face Environment Check\n\nAI and Hugging Face environment variables were checked in a fresh login shell.\n\n## Inspected High-Risk Root Paths\n\n| Path | Exists | MiB | Status | Note |\n| --- | --- | ---: | --- | --- |\n| `/var/lib/docker` | no | 0 | PASS | absent |\n| `/var/lib/containerd` | no | 0 | PASS | absent |\n| `/var/lib/containers` | no | 0 | PASS | absent |\n| `/root/.cache` | no | 0 | PASS | absent |\n| `/root/.cache/huggingface` | no | 0 | PASS | absent |\n| `/root/.cache/torch` | no | 0 | PASS | absent |\n| `/root/.cache/pip` | no | 0 | PASS | absent |\n| `/home/user/.cache` | yes | 1 | PASS | below warning threshold |\n| `/home/user/.cache/huggingface` | no | 0 | PASS | absent |\n| `/home/user/.cache/torch` | no | 0 | PASS | absent |\n| `/home/user/.cache/pip` | no | 0 | PASS | absent |\n| `/home/user/.cache/pypoetry` | no | 0 | PASS | absent |\n| `/home/user/.cache/uv` | no | 0 | PASS | absent |\n| `/home/user/.cache/nvidia` | no | 0 | PASS | absent |\n| `/home/user/codex-bootstrap` | yes | 2 | WARN | expected old bootstrap repo; small |\n| `/tmp` | yes | 1 | PASS | below warning threshold |\n| `/var/tmp` | yes | 1 | PASS | below warning threshold |\n| `/var/log` | yes | 378 | PASS | below warning threshold |\n| `/opt` | yes | 1 | PASS | below warning threshold |\n| `/srv` | yes | 1 | PASS | below warning threshold |\n| `/models` | no | 0 | PASS | absent |\n| `/hf-cache` | no | 0 | PASS | absent |\n| `/docker` | no | 0 | PASS | absent |\n| `/containerd` | no | 0 | PASS | absent |\n| `/build` | no | 0 | PASS | absent |\n| `/logs` | no | 0 | PASS | absent |\n| `/data.pre-mount-root-20260702-083425` | yes | 1 | WARN | expected M2 backup and below warning threshold |\n\n## Suspicious Large File Scan\n\n| Path | MiB | Status | Category |\n| --- | ---: | --- | --- |\n| none | 0 | PASS | no suspicious large model/cache/archive files found on root |\n\n## Secret-Looking Filename Scan\n\n| Path | Status | Category |\n| --- | --- | --- |\n| none | PASS | no secret-looking filenames found in scanned root paths |\n\n## WARN Entries\n\n- /home/user/codex-bootstrap exists and is small\n- /data.pre-mount-root-20260702-083425 exists and is small\n- root free space is 5 GiB, below warning threshold 6 GiB\n\n## STOP Entries\n\n- None.\n\n## Tests And Checks Run\n\n- `scripts/common/root-disk-guard.sh --report /proc/self/fd/3`\n- Additional milestone checks are appended after command execution.\n\n## Conclusion\n\nPASS\n\n## Next Recommended Milestone\n\nM4 Docker/containerd storage.\nPASS: root disk guard passed\n"
+    },
+    "q38-pre-root-guard.md": {
+      "bytes": 4813,
+      "sha256": "4be80efe05b0da0bf64de503aa4e36183923c09a2a659495b5c89e17fffeb366",
+      "text": "# M3 Root-Disk Guard Report\n\n- Milestone ID: M3\n- Timestamp: 2026-09-15T03:14:33+00:00\n- Hostname: llmserver\n- User: root\n- Branch: unknown\n- Commit before work: unknown\n- Root path inspected: `/`\n- Data path checked/excluded: `/data`\n- Sudo coverage: sudo -n available for read-only inspection\n- Confirmation: no cleanup or destructive changes were made.\n- Confirmation: no Docker, NVIDIA, model, inference backend, systemd service, or API changes were made.\n\n### findmnt root summary\n\n```console\n$ findmnt /\nTARGET SOURCE                            FSTYPE OPTIONS\n/      /dev/mapper/ubuntu--vg-ubuntu--lv ext4   rw,relatime\n\n[exit=0]\n```\n\n### findmnt /data summary\n\n```console\n$ findmnt /data\nTARGET SOURCE    FSTYPE OPTIONS\n/data  /dev/sdb1 ext4   rw,relatime\n\n[exit=0]\n```\n\n### df -hT / /data\n\n```console\n$ df -hT / /data\nFilesystem                        Type  Size  Used Avail Use% Mounted on\n/dev/mapper/ubuntu--vg-ubuntu--lv ext4   15G  8.6G  4.9G  64% /\n/dev/sdb1                         ext4  2.0T  664G  1.3T  35% /data\n\n[exit=0]\n```\n\n### AI/Hugging Face env vars\n\n```console\n$ bash -lc env\\ \\|\\ grep\\ -E\\ \\'\\^\\(AI_DATA\\|HF_HOME\\|HF_HUB_CACHE\\|HF_XET_CACHE\\|HF_ASSETS_CACHE\\|HF_DATASETS_CACHE\\|TRANSFORMERS_CACHE\\|XDG_CACHE_HOME\\|AI_BUILD_DIR\\|AI_LOG_DIR\\)=\\'\\ \\|\\ sort\nAI_BUILD_DIR=/data/build\nAI_DATA=/data\nAI_LOG_DIR=/data/logs\nHF_ASSETS_CACHE=/data/hf-cache/assets\nHF_DATASETS_CACHE=/data/hf-cache/datasets\nHF_HOME=/data/hf-cache\nHF_HUB_CACHE=/data/hf-cache/hub\nHF_XET_CACHE=/data/hf-cache/xet\nTRANSFORMERS_CACHE=/data/hf-cache/transformers\nXDG_CACHE_HOME=/data/hf-cache/xdg\n\n[exit=0]\n```\n\n## Mount Summary\n\n| Path | Source | Fstype | Label | UUID/identity | Free GiB |\n| --- | --- | --- | --- | --- | --- |\n| `/` | `/dev/mapper/ubuntu--vg-ubuntu--lv` | `ext4` | n/a | device id `785412` | 5 |\n| `/data` | `/dev/sdb1` | `ext4` | `AI_DATA` | `8daf56f1-5649-4163-9d87-919c2d271875` | 1249 |\n\n## Root Free Space Thresholds\n\n- Minimum root free space: 4 GiB\n- Warning root free space: 6 GiB\n- High-risk path warning: 512 MiB\n- High-risk path failure: 2048 MiB\n- Suspicious large file failure: 128 MiB\n\n## /data Identity Check\n\n`/data` is mounted and has a different filesystem identity from `/`.\n\n## /data Required Directory Check\n\nRequired `/data` directories were checked by `require-data-mounted.sh`.\n\n## Hugging Face Environment Check\n\nAI and Hugging Face environment variables were checked in a fresh login shell.\n\n## Inspected High-Risk Root Paths\n\n| Path | Exists | MiB | Status | Note |\n| --- | --- | ---: | --- | --- |\n| `/var/lib/docker` | no | 0 | PASS | absent |\n| `/var/lib/containerd` | no | 0 | PASS | absent |\n| `/var/lib/containers` | no | 0 | PASS | absent |\n| `/root/.cache` | no | 0 | PASS | absent |\n| `/root/.cache/huggingface` | no | 0 | PASS | absent |\n| `/root/.cache/torch` | no | 0 | PASS | absent |\n| `/root/.cache/pip` | no | 0 | PASS | absent |\n| `/home/user/.cache` | yes | 1 | PASS | below warning threshold |\n| `/home/user/.cache/huggingface` | no | 0 | PASS | absent |\n| `/home/user/.cache/torch` | no | 0 | PASS | absent |\n| `/home/user/.cache/pip` | no | 0 | PASS | absent |\n| `/home/user/.cache/pypoetry` | no | 0 | PASS | absent |\n| `/home/user/.cache/uv` | no | 0 | PASS | absent |\n| `/home/user/.cache/nvidia` | no | 0 | PASS | absent |\n| `/home/user/codex-bootstrap` | yes | 2 | WARN | expected old bootstrap repo; small |\n| `/tmp` | yes | 1 | PASS | below warning threshold |\n| `/var/tmp` | yes | 1 | PASS | below warning threshold |\n| `/var/log` | yes | 378 | PASS | below warning threshold |\n| `/opt` | yes | 1 | PASS | below warning threshold |\n| `/srv` | yes | 1 | PASS | below warning threshold |\n| `/models` | no | 0 | PASS | absent |\n| `/hf-cache` | no | 0 | PASS | absent |\n| `/docker` | no | 0 | PASS | absent |\n| `/containerd` | no | 0 | PASS | absent |\n| `/build` | no | 0 | PASS | absent |\n| `/logs` | no | 0 | PASS | absent |\n| `/data.pre-mount-root-20260702-083425` | yes | 1 | WARN | expected M2 backup and below warning threshold |\n\n## Suspicious Large File Scan\n\n| Path | MiB | Status | Category |\n| --- | ---: | --- | --- |\n| none | 0 | PASS | no suspicious large model/cache/archive files found on root |\n\n## Secret-Looking Filename Scan\n\n| Path | Status | Category |\n| --- | --- | --- |\n| none | PASS | no secret-looking filenames found in scanned root paths |\n\n## WARN Entries\n\n- /home/user/codex-bootstrap exists and is small\n- /data.pre-mount-root-20260702-083425 exists and is small\n- root free space is 5 GiB, below warning threshold 6 GiB\n\n## STOP Entries\n\n- None.\n\n## Tests And Checks Run\n\n- `scripts/common/root-disk-guard.sh --report /proc/self/fd/3`\n- Additional milestone checks are appended after command execution.\n\n## Conclusion\n\nPASS\n\n## Next Recommended Milestone\n\nM4 Docker/containerd storage.\nPASS: root disk guard passed\n"
+    },
+    "q38-publication.json": {
+      "bytes": 1470,
+      "sha256": "e9272d808ee66de36df85dd982d471031d1a7dd3d369ed2750f688ddd5d49d78",
+      "text": "{\n  \"acquisition_complete_sha256\": \"970b026bbb8a4d500f1aee146c3ffaf51f64ca7d0eb3c3a24237e6a51c35f8c5\",\n  \"acquisition_lock\": \"HELD_EXISTING_EXCLUSIVE\",\n  \"acquisition_unit\": \"inactive/dead/MainPID0\",\n  \"active_recovery_bytes_timestamps\": \"UNCHANGED\",\n  \"actual_reviewed_check_completion\": \"PASS\",\n  \"artifact_count\": 81,\n  \"authentication\": \"NOT_ATTESTED\",\n  \"canonical_guard_source_hashes\": \"PASS\",\n  \"control\": \"STOPPED_DISABLED\",\n  \"current_stat_matches\": 81,\n  \"glm_container_contract\": \"UNCHANGED\",\n  \"instance_sha256\": \"55a1516385441e58c47e410a387afd71cfc20e58cb251ca9f495d9606e79a3ab\",\n  \"manifest_sha256\": \"726012378a40f648a104230d3f5ed5d6bc505cbd09b32918fc29aa81c0f075f2\",\n  \"native_key_exactbytes\": \"UNCHANGED_PRIVATE_COMPARISON\",\n  \"open_writers\": {\n    \"processes_observed\": 1107,\n    \"shared_writable_mappings\": 0,\n    \"unreadable_entries\": 0,\n    \"writable_descriptors\": 0\n  },\n  \"payload_bytes_read\": 0,\n  \"proposed_receipt_sha256\": \"2020e3d4b19a3d4a7221dfbf37a4f558ed98dcbd73e302b716ab95fb04e17dce\",\n  \"readiness\": \"NOT_ATTESTED\",\n  \"receipt_publication\": \"PUBLISHED_PROTECTED_COMPLETE_RECEIPT_AND_INSTANCE_LINK\",\n  \"root_free_bytes\": 5209296896,\n  \"runtime\": \"NOT_ATTESTED\",\n  \"runtime_evidence\": \"UNCHANGED_NO_Q38_RUNTIME_ENTRY_ADDED\",\n  \"seal_sha256\": \"a9b1ee9c80ca7030b79387b64f63d494159d0db7966f6510737e20c568584cfe\",\n  \"status\": \"PASS_PROTECTED_SEAL_CURRENT\",\n  \"utc\": \"2026-09-15T03:14:34.242848+00:00\",\n  \"verified_bytes_attested\": 30890049597\n}\n"
+    },
+    "registered-root-guard.json": {
+      "bytes": 1138,
+      "sha256": "66f14fdd59311648ca39052ea47557f4b71e3c3da2fec2d31065763593e356ac",
+      "text": "{\"capacity\": {\"data_available_bytes\": 1341157208064, \"model_available_bytes\": 2590890254336, \"root_available_bytes\": 5209313280, \"shared_model_filesystem\": false}, \"data\": {\"device\": \"8:17\", \"fstype\": \"ext4\", \"mount\": \"/data\", \"parents\": [\"/dev/sdb\", \"/dev/sdb1\"], \"path\": \"/data\", \"source\": \"/dev/sdb1\", \"uuid\": \"8daf56f1-5649-4163-9d87-919c2d271875\"}, \"models\": {\"device\": \"8:33\", \"fstype\": \"ext4\", \"mount\": \"/data/models-large\", \"parents\": [\"/dev/sdc\", \"/dev/sdc1\"], \"path\": \"/data/models-large\", \"source\": \"/dev/sdc1\", \"uuid\": \"a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a\"}, \"root_payload_scan\": {\"files_inspected\": 4273, \"large_payload_threshold_bytes\": 134217728, \"status\": \"pass\"}, \"roots\": {\"backups\": \"/data/backups\", \"build\": \"/data/build\", \"containerd\": \"/data/containerd\", \"docker\": \"/data/docker\", \"hf_cache\": \"/data/hf-cache\", \"logs\": \"/data/logs\", \"models\": \"/data/models-large\", \"secrets\": \"/data/services/secrets\", \"services\": \"/data/services\", \"state\": \"/data/services/installer\"}, \"schema_version\": 1, \"storage_mode\": \"existing\", \"verified_roles\": [\"data\", \"models\"], \"warnings\": [\"root filesystem has less than 6 GiB free\"]}\n"
+    },
+    "stage-result.json": {
+      "bytes": 379,
+      "sha256": "b8fb36045e2433e494c8a6364f5c4d963d026202f83daaff1b48f8df6e94a33f",
+      "text": "{\n  \"control\": \"STOPPED_DISABLED\",\n  \"mounts_comparison\": \"exact tuples sorted by Destination; Docker inspect array order is not stable\",\n  \"native_key_exactbytes\": \"initial apply private comparison passed before unrelated mount-order assertion; final metadata unchanged\",\n  \"q38_receipt\": \"NOT_YET_PUBLISHED\",\n  \"runtime_auth\": \"NOT_PUBLISHED\",\n  \"status\": \"PASS_STAGED_ONLY\"\n}\n"
+    },
+    "systemd-verify.txt": {
+      "bytes": 7,
+      "sha256": "19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061",
+      "text": "exit=0\n"
+    }
+  },
+  "raw_backup_hashes": {
+    "/data/services/llm-manager/adoption/l2vm-existing-host-20260915/instance-immediate-preimport.raw": {
+      "bytes": 3101,
+      "gid": 0,
+      "ino": 67635477,
+      "mode": "0o600",
+      "sha256": "8a5f7787c00319f093656d4fe0b6953c79ae31669b4da7690e6f7386ecad839a",
+      "uid": 0
+    },
+    "/data/services/llm-manager/adoption/l2vm-existing-host-20260915/originals/00.raw": {
+      "bytes": 5943,
+      "gid": 0,
+      "ino": 67635466,
+      "mode": "0o600",
+      "sha256": "bcd8d9f85baa9bd1fe54dc65b9022487307190cf11583580ab66af845b53f48b",
+      "uid": 0
+    },
+    "/data/services/llm-manager/adoption/l2vm-existing-host-20260915/originals/01.raw": {
+      "bytes": 658,
+      "gid": 0,
+      "ino": 67635467,
+      "mode": "0o600",
+      "sha256": "c63de9b1a77aa4d62496880c7dad8cb6a22a10de9736c5305545e3579d576f1f",
+      "uid": 0
+    },
+    "/data/services/llm-manager/adoption/l2vm-existing-host-20260915/originals/02.raw": {
+      "bytes": 3101,
+      "gid": 0,
+      "ino": 67635468,
+      "mode": "0o600",
+      "sha256": "8a5f7787c00319f093656d4fe0b6953c79ae31669b4da7690e6f7386ecad839a",
+      "uid": 0
+    },
+    "/data/services/llm-manager/adoption/l2vm-existing-host-20260915/originals/03.raw": {
+      "bytes": 1014,
+      "gid": 0,
+      "ino": 67635469,
+      "mode": "0o600",
+      "sha256": "54247ff4b42aa9ecc98700136d580f767b9d4fb6a7d80d599a41e86b1ed263a1",
+      "uid": 0
+    },
+    "/data/services/llm-manager/adoption/l2vm-existing-host-20260915/originals/04.raw": {
+      "bytes": 261,
+      "gid": 0,
+      "ino": 67635470,
+      "mode": "0o600",
+      "sha256": "095bbf0ea64c792efa49ddf16a78383ec74528abe605c86b54ba8ac01563cb60",
+      "uid": 0
+    },
+    "/data/services/llm-manager/adoption/l2vm-existing-host-20260915/originals/05.raw": {
+      "bytes": 378,
+      "gid": 0,
+      "ino": 67635471,
+      "mode": "0o600",
+      "sha256": "eb89d7312a0b870163e79e44b9c7f552aeb0b631f9d07fba943c393eddc07ede",
+      "uid": 0
+    },
+    "/data/services/llm-manager/adoption/l2vm-existing-host-20260915/originals/06.raw": {
+      "bytes": 658,
+      "gid": 0,
+      "ino": 67635472,
+      "mode": "0o600",
+      "sha256": "c63de9b1a77aa4d62496880c7dad8cb6a22a10de9736c5305545e3579d576f1f",
+      "uid": 0
+    },
+    "/data/services/llm-manager/adoption/l2vm-existing-host-20260915/originals/07.raw": {
+      "bytes": 18104,
+      "gid": 0,
+      "ino": 67635473,
+      "mode": "0o600",
+      "sha256": "ad0c48db68ce47213f292abb74aebc9b321b41baefc3385785bb7322e7e78ddc",
+      "uid": 0
+    },
+    "/data/services/llm-manager/adoption/l2vm-existing-host-20260915/q38-immediate-preinstance.raw": {
+      "bytes": 3882,
+      "gid": 0,
+      "ino": 67635485,
+      "mode": "0o600",
+      "sha256": "017dda0da5a7a2d40c28576de6115ffaae2c2f65142440b89802d579e600e292",
+      "uid": 0
+    }
+  }
+}

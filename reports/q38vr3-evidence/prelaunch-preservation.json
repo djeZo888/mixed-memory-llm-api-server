@@ -1,0 +1,15 @@
+{
+  "previous_exact_owned_container_absent": true,
+  "reviewed_source": {
+    "file_count": 1000,
+    "root": {
+      "dev": 2065,
+      "gid": 0,
+      "ino": 44434382,
+      "mode": "0555",
+      "nlink": 9,
+      "uid": 0
+    },
+    "status": "PASS"
+  }
+}

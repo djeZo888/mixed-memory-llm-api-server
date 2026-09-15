@@ -1,0 +1,45 @@
+{
+  "boot_policy": "manual",
+  "container": {
+    "deployment": "glm-5.3-ud-q4-k-xl-32k",
+    "id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+    "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "instance": "ai-vm-d0b",
+    "legacy": false,
+    "name": "llmctl-glm-5.3-32k",
+    "owner": "mixed-memory-llm-api-server"
+  },
+  "container_running": true,
+  "desired": "running",
+  "failure": null,
+  "last_selected": "glm-5.3-ud-q4-k-xl-8k",
+  "observed": "ready",
+  "schema_version": 2,
+  "selected": "glm-5.3-ud-q4-k-xl-32k",
+  "state_persisted": true,
+  "updated_at": 1789433513604541997
+}
+MainPID=0
+Id=d3-glm53-load-32k-20260915.service
+ActiveState=inactive
+SubState=dead
+UnitFileState=
+
+MainPID=0
+Id=llmctl-boot.service
+ActiveState=inactive
+SubState=dead
+UnitFileState=
+
+MainPID=0
+Id=m6b-post-reboot-verify.service
+ActiveState=active
+SubState=exited
+UnitFileState=disabled
+PASS: /data is mounted and ready
+- root source: /dev/mapper/ubuntu--vg-ubuntu--lv
+- data source: /dev/sdb1
+- data fstype: ext4
+- data label: AI_DATA
+- data UUID: 8daf56f1-5649-4163-9d87-919c2d271875
+PASS: root disk guard passed

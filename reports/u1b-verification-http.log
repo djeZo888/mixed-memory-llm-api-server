@@ -1,0 +1,22 @@
+test_received_l1b_i1c_reaches_actual_roles_and_writer (__main__.ActualWriterIntegrationTests.test_received_l1b_i1c_reaches_actual_roles_and_writer)
+Candidate verification only; full actual verifier and writer. ... ok
+test_actual_missing_mismatched_image_or_entrypoint_never_stops_old (__main__.ProductionHTTPTests.test_actual_missing_mismatched_image_or_entrypoint_never_stops_old) ... ok
+test_actual_package_pending_marker_blocks_switch_before_stop (__main__.ProductionHTTPTests.test_actual_package_pending_marker_blocks_switch_before_stop) ... ok
+test_cas_and_interrupt_ack_reject_before_destructive_work (__main__.ProductionHTTPTests.test_cas_and_interrupt_ack_reject_before_destructive_work) ... ok
+test_equal_control_inference_key_blocks_switch_but_allows_explicit_stop (__main__.ProductionHTTPTests.test_equal_control_inference_key_blocks_switch_but_allows_explicit_stop) ... ok
+test_every_route_authenticates_before_actual_owner_io (__main__.ProductionHTTPTests.test_every_route_authenticates_before_actual_owner_io) ... ok
+test_external_canonical_lease_conflicts_without_queue (__main__.ProductionHTTPTests.test_external_canonical_lease_conflicts_without_queue) ... ok
+test_fresh_storage_loss_uses_exact_run_identity_and_preserves_stop_on_restore (__main__.ProductionHTTPTests.test_fresh_storage_loss_uses_exact_run_identity_and_preserves_stop_on_restore) ... ok
+test_fresh_subprocess_recovers_over_real_http_without_data_config_or_inference_key (__main__.ProductionHTTPTests.test_fresh_subprocess_recovers_over_real_http_without_data_config_or_inference_key) ... ok
+test_loading_status_responsive_second_mutation_conflicts (__main__.ProductionHTTPTests.test_loading_status_responsive_second_mutation_conflicts) ... ok
+test_missing_inference_key_keeps_observed_identity_for_explicit_stop (__main__.ProductionHTTPTests.test_missing_inference_key_keeps_observed_identity_for_explicit_stop) ... ok
+test_real_observed_readiness_and_server_relative_discovery_no_weight_read (__main__.ProductionHTTPTests.test_real_observed_readiness_and_server_relative_discovery_no_weight_read) ... ok
+test_recovery_never_adopts_reused_name_or_stops_unrelated_container (__main__.ProductionHTTPTests.test_recovery_never_adopts_reused_name_or_stops_unrelated_container) ... ok
+test_storage_loss_stop_targets_only_trusted_id_among_unrelated_containers (__main__.ProductionHTTPTests.test_storage_loss_stop_targets_only_trusted_id_among_unrelated_containers) ... ok
+test_success_receipt_replays_after_fresh_application_without_second_stop (__main__.ProductionHTTPTests.test_success_receipt_replays_after_fresh_application_without_second_stop) ... ok
+test_switch_borrows_one_lease_and_admits_durably_before_first_stop (__main__.ProductionHTTPTests.test_switch_borrows_one_lease_and_admits_durably_before_first_stop) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 5.996s
+
+OK

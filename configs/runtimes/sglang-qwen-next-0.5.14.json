@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "sglang-qwen-next-0.5.14",
+  "backend": "sglang",
+  "kind": "docker",
+  "image_tag": "lmsysorg/sglang:v0.5.14-cu130",
+  "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+  "source_repository": "https://github.com/sgl-project/sglang",
+  "source_release": "v0.5.14",
+  "entrypoint": [
+    "python3"
+  ],
+  "network_mode": "bridge",
+  "environment": {
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "HF_HOME": "/cache/huggingface",
+    "XDG_CACHE_HOME": "/cache",
+    "TRITON_CACHE_DIR": "/cache/triton",
+    "TORCHINDUCTOR_CACHE_DIR": "/cache/torchinductor",
+    "SGLANG_DG_CACHE_DIR": "/cache/deep_gemm",
+    "SGLANG_CACHE_DIR": "/cache/sglang",
+    "FLASHINFER_WORKSPACE_BASE": "/cache/flashinfer",
+    "CUDA_CACHE_PATH": "/cache/cuda",
+    "TORCH_EXTENSIONS_DIR": "/cache/torch_extensions",
+    "DISABLE_OPENAPI_DOC": "1"
+  },
+  "required_cli_flags": [
+    "--model-path",
+    "--served-model-name",
+    "--host",
+    "--port",
+    "--context-length",
+    "--tp-size",
+    "--tokenizer-worker-num",
+    "--tool-call-parser",
+    "--mem-fraction-static",
+    "--max-running-requests",
+    "--load-format"
+  ],
+  "validation": {
+    "status": "PASS_INSTALLED_SOURCE_ONLY",
+    "evidence_owner": "F1A installed-image source and option inspection; F1D owns actual pinned-image auth and inference probes",
+    "evidence": [
+      "reports/f1s-contract-evidence/F1A-CONTRACT.md",
+      "reports/f1s-contract-evidence/F1A-REVIEW.md",
+      "reports/f1s-contract-evidence/installed-fixtures.json",
+      "reports/f1s-contract-evidence/installed-static.json"
+    ],
+    "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+    "image_default_entrypoint": null,
+    "packages": {
+      "sglang": "0.5.14",
+      "torch": "2.11.0+cu130",
+      "transformers": "5.8.1",
+      "flashinfer-python": "0.6.12"
+    },
+    "supported_flags": [
+      "--model-path",
+      "--served-model-name",
+      "--host",
+      "--port",
+      "--context-length",
+      "--tp-size",
+      "--tokenizer-worker-num",
+      "--tool-call-parser",
+      "--mem-fraction-static",
+      "--max-running-requests",
+      "--load-format"
+    ],
+    "model_architecture": "Qwen3NextForCausalLM",
+    "tool_call_parser": "qwen3_coder",
+    "auth_gate": "NOT_TESTED_PINNED_IMAGE",
+    "inference": "NOT_TESTED",
+    "tool_calls": "NOT_TESTED",
+    "service_activation": "NOT_PERFORMED",
+    "notes": [
+      "The launcher overrides the image entrypoint with python3; F1A did not supply the image default entrypoint.",
+      "Only a separately held protected key is passed to native middleware; ServerArgs.api_key and admin_api_key remain None.",
+      "Wrapper --key-file and --warmup-timeout are adapter flags, not native SGLang CLI flags.",
+      "The reviewed path has one tokenizer worker and custom bounded authenticated tiny generation warmup; no remote model code, plugin, tool server, browser or UI is enabled.",
+      "Source inspection and synthetic tests cannot satisfy the separate instance auth_gate_passed field.",
+      "DISABLE_OPENAPI_DOC=1 suppresses native FastAPI docs/redoc/OpenAPI UI routes before the HTTP app is imported."
+    ]
+  }
+}

@@ -1,0 +1,1226 @@
+{
+  "before": [
+    {
+      "identity": {
+        "ctime_ns": 1789428148338038408,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 2,
+        "mode": "0o2775",
+        "mtime_ns": 1789428148338038408,
+        "nlink": 5,
+        "regular": false,
+        "size_bytes": 4096,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789430441599844089,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275521,
+        "mode": "0o2755",
+        "mtime_ns": 1789430441599844089,
+        "nlink": 2,
+        "regular": false,
+        "size_bytes": 4096,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428148346038482,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275522,
+        "mode": "0o644",
+        "mtime_ns": 1789428148346038482,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 0,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/.f1a-acquisition.lock",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428149794051989,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275524,
+        "mode": "0o644",
+        "mtime_ns": 1789428149754051616,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 6068,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/chat_template.jinja",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428149791051961,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275523,
+        "mode": "0o644",
+        "mtime_ns": 1789428149744051522,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 9836,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/config.json",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428150163055428,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275525,
+        "mode": "0o644",
+        "mtime_ns": 1789428150137055186,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 214,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/generation_config.json",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428150430057916,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275526,
+        "mode": "0o644",
+        "mtime_ns": 1789428150401057646,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 1671839,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/merges.txt",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428302615408177,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275531,
+        "mode": "0o644",
+        "mtime_ns": 1789428300449389822,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2313917472,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00001-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428285824265295,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275532,
+        "mode": "0o644",
+        "mtime_ns": 1789428283911248929,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001731528,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00002-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428400020211699,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275533,
+        "mode": "0o644",
+        "mtime_ns": 1789428397833194098,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001406544,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00003-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428416992347649,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275534,
+        "mode": "0o644",
+        "mtime_ns": 1789428414932331208,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001732024,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00004-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428525634193208,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275535,
+        "mode": "0o644",
+        "mtime_ns": 1789428523973180577,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001732960,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00005-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428501188006428,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275536,
+        "mode": "0o644",
+        "mtime_ns": 1789428499661994704,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2002790192,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00006-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428626479945057,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275537,
+        "mode": "0o644",
+        "mtime_ns": 1789428624938933777,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001731792,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00007-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428650279118516,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275538,
+        "mode": "0o644",
+        "mtime_ns": 1789428648737107320,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001731960,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00008-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428756141874259,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275539,
+        "mode": "0o644",
+        "mtime_ns": 1789428754454862402,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001737552,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00009-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428767633954880,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275540,
+        "mode": "0o644",
+        "mtime_ns": 1789428766079943993,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001411064,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00010-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428844685489112,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275541,
+        "mode": "0o644",
+        "mtime_ns": 1789428843180478777,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2003119416,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00011-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428892131813071,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275542,
+        "mode": "0o644",
+        "mtime_ns": 1789428889854797604,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001735720,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00012-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428931943082251,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275543,
+        "mode": "0o644",
+        "mtime_ns": 1789428930142070123,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001410320,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00013-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428987856456593,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275544,
+        "mode": "0o644",
+        "mtime_ns": 1789428986280446097,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001736280,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00014-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429049315863550,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275545,
+        "mode": "0o644",
+        "mtime_ns": 1789429047780853439,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2003119368,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00015-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429100829201385,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275546,
+        "mode": "0o644",
+        "mtime_ns": 1789429099380191920,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001409888,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00016-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429158996579655,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275547,
+        "mode": "0o644",
+        "mtime_ns": 1789429157417569428,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001735720,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00017-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429214086935103,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275548,
+        "mode": "0o644",
+        "mtime_ns": 1789429212519925028,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001735784,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00018-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429267450277065,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275549,
+        "mode": "0o644",
+        "mtime_ns": 1789429265962267559,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001736712,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00019-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429332000687969,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275550,
+        "mode": "0o644",
+        "mtime_ns": 1789429330373677646,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2002792760,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00020-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429383220012100,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275551,
+        "mode": "0o644",
+        "mtime_ns": 1789429381850003451,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001735552,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00021-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429443678392742,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275552,
+        "mode": "0o644",
+        "mtime_ns": 1789429442300384088,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001735720,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00022-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429510746812806,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275553,
+        "mode": "0o644",
+        "mtime_ns": 1789429509224803296,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001410368,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00023-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429551680068166,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275554,
+        "mode": "0o644",
+        "mtime_ns": 1789429549738056067,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001737192,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00024-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429611963442979,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275555,
+        "mode": "0o644",
+        "mtime_ns": 1789429610033431000,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2003119408,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00025-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429660000740678,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275556,
+        "mode": "0o644",
+        "mtime_ns": 1789429658469731202,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001410328,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00026-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429720666115525,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275557,
+        "mode": "0o644",
+        "mtime_ns": 1789429719180106356,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001735720,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00027-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429775966456262,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275558,
+        "mode": "0o644",
+        "mtime_ns": 1789429774407446668,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001736272,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00028-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429834152813893,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275559,
+        "mode": "0o644",
+        "mtime_ns": 1789429832538803984,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2002793952,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00029-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429887841155476,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275560,
+        "mode": "0o644",
+        "mtime_ns": 1789429886281144552,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001735296,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00030-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789429952345603641,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275561,
+        "mode": "0o644",
+        "mtime_ns": 1789429950746592610,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001735720,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00031-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789430003955957672,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275562,
+        "mode": "0o644",
+        "mtime_ns": 1789430002581948295,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001735784,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00032-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789430066784383802,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275563,
+        "mode": "0o644",
+        "mtime_ns": 1789430065307373841,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001410816,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00033-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789430118705732343,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275564,
+        "mode": "0o644",
+        "mtime_ns": 1789430117074721441,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2003119328,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00034-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789430178692131388,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275565,
+        "mode": "0o644",
+        "mtime_ns": 1789430177222121652,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001735544,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00035-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789430225627441173,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275566,
+        "mode": "0o644",
+        "mtime_ns": 1789430224071430936,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001410328,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00036-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789430291332871617,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275567,
+        "mode": "0o644",
+        "mtime_ns": 1789430289825861784,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001735824,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00037-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789430332820141649,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275568,
+        "mode": "0o644",
+        "mtime_ns": 1789430331377132278,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2001737184,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00038-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789430404684606556,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275569,
+        "mode": "0o644",
+        "mtime_ns": 1789430403368598073,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2002794000,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00039-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789430441599844089,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275570,
+        "mode": "0o644",
+        "mtime_ns": 1789430440284835641,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 1994375208,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00040-of-00040.safetensors",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428156501114371,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275528,
+        "mode": "0o644",
+        "mtime_ns": 1789428156407113498,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 14819483,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/model.safetensors.index.json",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428151306066077,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275527,
+        "mode": "0o644",
+        "mtime_ns": 1789428151210065183,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 7032399,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/tokenizer.json",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428151686069615,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275529,
+        "mode": "0o644",
+        "mtime_ns": 1789428151663069401,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 11681,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/tokenizer_config.json",
+      "xattrs": {}
+    },
+    {
+      "identity": {
+        "ctime_ns": 1789428152372076001,
+        "device": 2081,
+        "gid": 1001,
+        "inode": 119275530,
+        "mode": "0o644",
+        "mtime_ns": 1789428152305075377,
+        "nlink": 1,
+        "regular": true,
+        "size_bytes": 2776833,
+        "symlink": false,
+        "uid": 1000
+      },
+      "path": "/data/models-large/qwen3-coder-next-fp8/vocab.json",
+      "xattrs": {}
+    }
+  ],
+  "created_utc": "2026-09-15T00:16:49.733667+00:00",
+  "glm_before": {
+    "identity": {
+      "ctime_ns": 1789425832767585145,
+      "device": 2081,
+      "gid": 1001,
+      "inode": 169607169,
+      "mode": "0o2755",
+      "mtime_ns": 1789425832767585145,
+      "nlink": 3,
+      "regular": false,
+      "size_bytes": 4096,
+      "symlink": false,
+      "uid": 1000
+    },
+    "unit": {
+      "fields": {
+        "ActiveState": "active",
+        "LoadState": "loaded",
+        "MainPID": "49253",
+        "Result": "success",
+        "SubState": "running"
+      },
+      "query_exit_code": 0,
+      "unit": "d1-glm53-acquire-20260915-d1b-p4.service"
+    }
+  },
+  "mounts": {
+    "/data": {
+      "fstype": "ext4",
+      "options": "rw,relatime",
+      "source": "/dev/sdb1",
+      "target": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "/data/models-large": {
+      "fstype": "ext4",
+      "options": "rw,relatime",
+      "source": "/dev/sdc1",
+      "target": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "root_available_bytes": 5228740608,
+    "root_warning_below_6_gib": true
+  },
+  "planned": [
+    {
+      "gid": 1001,
+      "mode": "0o2755",
+      "path": "/data/models-large",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o2755",
+      "path": "/data/models-large/qwen3-coder-next-fp8",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/.f1a-acquisition.lock",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/chat_template.jinja",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/config.json",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/generation_config.json",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/merges.txt",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00001-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00002-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00003-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00004-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00005-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00006-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00007-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00008-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00009-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00010-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00011-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00012-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00013-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00014-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00015-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00016-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00017-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00018-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00019-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00020-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00021-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00022-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00023-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00024-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00025-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00026-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00027-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00028-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00029-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00030-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00031-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00032-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00033-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00034-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00035-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00036-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00037-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00038-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00039-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00040-of-00040.safetensors",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/model.safetensors.index.json",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/tokenizer.json",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/tokenizer_config.json",
+      "uid": 0
+    },
+    {
+      "gid": 1001,
+      "mode": "0o644",
+      "path": "/data/models-large/qwen3-coder-next-fp8/vocab.json",
+      "uid": 0
+    }
+  ],
+  "restore": "While holding acquisition lock and before any model use, restore only listed path ownership/modes/xattrs after confirming device/inode. Never recursive; ctime cannot be restored. Remove trusted completion before restoring write permissions.",
+  "schema_version": 1
+}

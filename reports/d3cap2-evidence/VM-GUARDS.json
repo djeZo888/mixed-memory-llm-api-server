@@ -1,0 +1,52 @@
+{
+  "reviewed_commit": "7b541017c3e1b2bda80676bcd31bc87d0a4507bc",
+  "guards": {
+    "root-disk-guard.sh": {
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/root-disk-guard.sh",
+      "sha256": "2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813"
+    },
+    "require-data-mounted.sh": {
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/require-data-mounted.sh",
+      "sha256": "5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f"
+    }
+  },
+  "rule": "Use exact protected corrected D3 release after source/ownership hash checks. Never historical dirty checkout guard. Preserve /tmp artifacts. STOP on real guard failure.",
+  "registered_host": {
+    "source_commit": "5e713441d9ea164b81860ee795c5ef35972ee8e3",
+    "registration": "/etc/local-ai-server/storage.json",
+    "guard": {
+      "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+      "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d",
+      "expected_mode": "0755",
+      "owner_uid": 0
+    },
+    "dependency": {
+      "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+      "sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505",
+      "expected_mode": "0644",
+      "owner_uid": 0
+    },
+    "invocation": [
+      "sudo",
+      "-n",
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+      "--root-guard",
+      "--json"
+    ],
+    "report_rule": "Only below root-owned protected existing task parent beneath registered /data/logs. Never fall back to legacy when registry parent exists, is partial/invalid, or disappears after observed.",
+    "evidence": "tasks/L2VM/registration-ready.md",
+    "publication_commit": "e8d8bbad3f2f6345295d440b25f084fed83dc734",
+    "metadata_evidence": {
+      "task": "D3N32",
+      "report_commit": "79e9491be57052518bf4b3b04fa161567cc2effe",
+      "mode_completion": "tasks/D3N32/source-mode-completion.json",
+      "final_verification": "tasks/D3N32/final-verification.json",
+      "verified_utc": "2026-09-15T04:22:32.291304Z",
+      "exact_chmod_timestamp": "not recorded; after04:20:37.752Z request release and before final verification",
+      "protection": "root-owned; group/other nonwritable source and ancestry; guard bytes/inode unchanged"
+    }
+  }
+}

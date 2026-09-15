@@ -1,0 +1,43 @@
+{
+  "baseline_checkpoint_unchanged": true,
+  "control_path_removed": true,
+  "final_full_sample_timestamp": 1789446737.677817,
+  "identity": {
+    "args_sha256": "64c4ec488787da4703bc1505ff0c0955b71f05d4e1080d71b791547e669d3b95",
+    "id": "7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78",
+    "image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+    "pid": 243279,
+    "restart_count": 0,
+    "start_ticks": 2367582,
+    "started_at": "2026-09-15T04:09:20.746242473Z"
+  },
+  "local_port": 55344,
+  "native_api_connections": 0,
+  "native_idle_markers": [
+    {
+      "kind": "slot_release",
+      "utc": "2026-09-15T04:18:53.922886552Z"
+    },
+    {
+      "kind": "slot_release",
+      "utc": "2026-09-15T04:20:36.632935791Z"
+    },
+    {
+      "kind": "slot_release",
+      "utc": "2026-09-15T04:32:15.806020433Z"
+    }
+  ],
+  "owner": "D3PERFVM",
+  "port_unbound": true,
+  "remote_sampler_pids": [
+    263422
+  ],
+  "remote_sampler_pids_absent": true,
+  "request_count": 1,
+  "sampler_ssh_pid": 35022,
+  "sampler_ssh_reaped": true,
+  "tunnel_pid": 35021,
+  "tunnel_reaped": true,
+  "utc": 1789446737.515611,
+  "zero_owned_request_threads": true
+}

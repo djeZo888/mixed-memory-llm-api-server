@@ -1,0 +1,11 @@
+--- reviewed/scripts/control/llm-control.service.in
++++ proposed/etc/systemd/system/llm-control.service
+@@ -27,7 +27,7 @@
+ ProtectControlGroups=yes
+ RestrictAddressFamilies=AF_UNIX AF_INET
+ # Minus permits service startup after the registered data mount disappears.
+-ReadWritePaths=-@REGISTERED_DATA_ROOT@ /run/llmctl
++ReadWritePaths=-/data /run/llmctl
+ # I1c provisions shared root0700 /run/llmctl via boot tmpfiles and preserves it.
+ # Control must never remove shared recovery state on unit stop/restart.
+ # No client Docker group/sudo grant. Actual namespace/guard access needs Linux QA.

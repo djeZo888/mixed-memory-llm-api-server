@@ -1,0 +1,6 @@
+Id=m6b-post-reboot-verify.service
+LoadState=loaded
+ActiveState=active
+SubState=exited
+FragmentPath=/etc/systemd/system/m6b-post-reboot-verify.service
+UnitFileState=disabled

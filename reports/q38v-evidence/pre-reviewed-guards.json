@@ -1,0 +1,32 @@
+{
+  "guard_source_commit": "7b541017c3e1b2bda80676bcd31bc87d0a4507bc",
+  "verified_hashes": {
+    "require-data-mounted.sh": "5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f",
+    "root-disk-guard.sh": "2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813"
+  },
+  "protected_paths": "PASS",
+  "mounts": [
+    {
+      "target": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    {
+      "target": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    }
+  ],
+  "guards": [
+    {
+      "guard": "require-data-mounted.sh",
+      "exit": 0
+    },
+    {
+      "guard": "root-disk-guard.sh",
+      "exit": 0
+    }
+  ],
+  "root_free_bytes": 5213921280,
+  "WARN Entries": "- /home/user/codex-bootstrap exists and is small\n- /data.pre-mount-root-20260702-083425 exists and is small\n- root free space is 5 GiB, below warning threshold 6 GiB",
+  "STOP Entries": "- None.",
+  "Conclusion": "PASS"
+}

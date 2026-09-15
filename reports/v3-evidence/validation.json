@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "checked_utc": "2026-09-15T03:07:04.650367+00:00",
+  "session_id": "01a0a2fe-2808-7a40-b53c-2f5a7be3927f",
+  "source_commit": "5e713441d9ea164b81860ee795c5ef35972ee8e3",
+  "branch": "milestone/v3-direct-glm",
+  "checks": {
+    "source_33_files_match_reviewed_commit": "PASS",
+    "direct_auth_evidence_consistency": "PASS",
+    "a1_invalid_model_aggregate_failure_preserved": "PASS",
+    "a1_real_streamed_tool_and_fixture_chain": "PASS",
+    "native_all_eight_checks_and_pre_post_model_identity": "PASS",
+    "native_immutable_tests_and_independent_rerun": "PASS",
+    "native_pre_post_source_and_npm_sri_integrity": "PASS",
+    "cleanup_and_explicit_lease_release": "PASS",
+    "in_memory_actual_key_json_opencode_escaped_scan": "PASS before key deletion; see cleanup.json",
+    "grep_based_secret_scan": "PASS after review of three unchanged synthetic invalid-URL tests; no real-secret/new-file hits",
+    "tracked_publication_filename_scan": "PASS",
+    "credential_free_git_remote_v": "PASS",
+    "documented_shell_block_bash_n": "PASS",
+    "evidence_source_json_schema_and_hash_consistency": "PASS",
+    "independent_agent_sanitized_report_review": "PASS",
+    "no_existing_source_config_docs_or_tests_changed": "PASS"
+  },
+  "warnings": [
+    "A1 protocol aggregate FAIL solely unknown-model HTTP200 served glm-5.3.",
+    "Potential D3B build contention; no uncontended benchmark or per-token rate.",
+    "Configured32768 short task; native input+cache maximum5783, no occupied32K or hardware limit qualification.",
+    "Provider usage absent for A1 SSE and separately for native OpenCode.",
+    "Installer STOPPED; control/Qwen/frontend/larger-context not tested."
+  ],
+  "next_action": "Coordinator/Worker1 may resume separately authorized work after explicit V3 lease release; preserve unknown-model compatibility failure.",
+  "publication": "Exact author/committer, staged scope, whitespace, clean tree, remote push and full bundle verification recorded in taskroot final.md/results.json after commit to avoid self-referential commit IDs."
+}

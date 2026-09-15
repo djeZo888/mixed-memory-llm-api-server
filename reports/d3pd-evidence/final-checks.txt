@@ -1,0 +1,6 @@
+PASS: staged project and exact native-source git diff --check
+PASS: local rg secret-pattern scan (exit 1, no matching files)
+PASS: git remote -v has no credential-bearing URLs; no push
+PASS: all staged paths within D3PD ownership
+PASS: all recipe/test/rollback/evidence SHA256 values verified
+PASS: final derived source tree and clean staged-to-worktree agreement
