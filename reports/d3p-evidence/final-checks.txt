@@ -1,0 +1,6 @@
+PASS: local rg secret-pattern scan on all staged D3P additions; no credential-bearing remote URL.
+PASS: project and native patch diff whitespace checks.
+PASS: staged file scope is additions only under containers/llama-cpp and reports/d3p-*.
+PASS: D1 recipe/helper/proof/profile bytes unchanged against project base.
+PASS: requested CodexAIagent author and committer identities configured.
+No push, VM operation, installer mutation or image claim.
