@@ -46,10 +46,17 @@ def synthetic_isolation(*, mounts=None, metadata=None, contents=None, devices=()
         return mountinfo() if mounts is None else mounts
 
     def lstat(path):
+        if str(path) in probe.CONTROL_NODES:
+            major, minor = probe.CONTROL_DEVICES[str(path)]
+            return metadata.get(str(path), SimpleNamespace(st_mode=stat.S_IFCHR | 0o666,
+                                                           st_rdev=(major, minor)))
         assert str(path) in ("/cache", "/models", "/run/secrets")
         return metadata.get(str(path), SimpleNamespace(st_mode=stat.S_IFDIR | 0o700, st_uid=1000))
 
     def iterdir(path):
+        if path == Path("/dev"):
+            return iter(sorted({Path("/dev") / Path(name).relative_to("/dev").parts[0]
+                                for name in devices}))
         assert str(path) in ("/models", "/run/secrets")
         return iter(contents.get(str(path), ()))
 
@@ -65,6 +72,9 @@ def synthetic_isolation(*, mounts=None, metadata=None, contents=None, devices=()
     with ExitStack() as stack:
         stack.enter_context(patch.object(probe.sys, "platform", "linux"))
         stack.enter_context(patch.object(probe.os, "geteuid", return_value=1000))
+        # Linux dev_t observations, independent of the macOS host encoding.
+        stack.enter_context(patch.object(probe.os, "major", side_effect=lambda value: value[0]))
+        stack.enter_context(patch.object(probe.os, "minor", side_effect=lambda value: value[1]))
         for name, implementation in (("read_text", read_text), ("lstat", lstat),
                                      ("iterdir", iterdir), ("glob", glob), ("exists", exists)):
             stack.enter_context(patch.object(probe.Path, name, autospec=True, side_effect=implementation))
@@ -145,7 +155,7 @@ class CacheProbeTests(unittest.TestCase):
         for target in ("/models", "/run/secrets"):
             cases.append(({"contents": {target: [Path(target) / "unexpected"]}},
                           "empty_model_and_secret_tmpfs_required"))
-        for device in ("/dev/nvidia0", "/dev/nvidia1", "/dev/nvidia-caps", "/dev/nvidia-modeset",
+        for device in ("/dev/nvidia0", "/dev/nvidia1", "/dev/nvidia-caps", "/dev/nvidia-caps/child",
                        "/dev/dri/renderD128", "/dev/dri/card0", "/dev/kfd", "/dev/dxg"):
             cases.append(({"devices": [device]}, "gpu_device_node_present"))
         for visible in ("none", "void"):
@@ -170,10 +180,40 @@ class CacheProbeTests(unittest.TestCase):
     def test_only_bounded_control_nodes_allowed_and_gpu_nodes_rejected(self):
         self.assertEqual(probe.check_device_names(["/dev/null", *probe.CONTROL_NODES]),
                          sorted(probe.CONTROL_NODES))
-        for device in ("/dev/nvidia0", "/dev/nvidia1", "/dev/nvidia-caps", "/dev/nvidia-modeset",
+        for device in ("/dev/nvidia0", "/dev/nvidia1", "/dev/nvidia-caps", "/dev/nvidia-modeset/child",
                        "/dev/dri/renderD128", "/dev/dri/card0", "/dev/kfd", "/dev/dxg"):
             with self.subTest(device=device), self.assertRaisesRegex(probe.ProbeError, "gpu_device_node_present"):
                 probe.check_device_names([device])
+
+    def test_observed_control_metadata_passes_without_opening_nodes(self):
+        observed = {"/dev/nvidia-modeset": (195, 254), "/dev/nvidiactl": (195, 255),
+                    "/dev/nvidia-uvm": (511, 0), "/dev/nvidia-uvm-tools": (511, 1)}
+        metadata = {name: SimpleNamespace(st_mode=stat.S_IFCHR | 0o666,
+                                         st_rdev=numbers)
+                    for name, numbers in observed.items()}
+        with patch.dict(os.environ, runtime_environment("void"), clear=True), \
+                synthetic_isolation(devices=observed, metadata=metadata), \
+                patch.object(probe.os, "open", side_effect=AssertionError("device opened")):
+            self.assertEqual(probe.verify_isolation(), sorted(observed))
+
+    def test_control_names_cannot_hide_gpu_numbers_symlinks_or_directories(self):
+        for name in probe.CONTROL_NODES:
+            for mode, device in ((stat.S_IFCHR, (195, 0)), (stat.S_IFCHR, (195, 1)),
+                                 (stat.S_IFLNK, (0, 0)), (stat.S_IFDIR, (0, 0)),
+                                 (stat.S_IFREG, (0, 0)), (stat.S_IFBLK, (195, 254))):
+                meta = SimpleNamespace(st_mode=mode | 0o666, st_rdev=device)
+                with self.subTest(name=name, mode=mode, device=device), \
+                        patch.dict(os.environ, runtime_environment(), clear=True), \
+                        synthetic_isolation(devices=[name], metadata={name: meta}), \
+                        self.assertRaisesRegex(probe.ProbeError, "cache_control_nodes_invalid"):
+                    probe.verify_isolation()
+
+    def test_accelerator_roots_rejected_without_traversal_or_symlink_following(self):
+        for name in ("/dev/dri", "/dev/nvidia-caps", "/dev/kfd", "/dev/dxg"):
+            with self.subTest(name=name), patch.dict(os.environ, runtime_environment(), clear=True), \
+                    synthetic_isolation(devices=[name]), \
+                    self.assertRaisesRegex(probe.ProbeError, "gpu_device_node_present"):
+                probe.verify_isolation()
 
     def test_exact_paths_reject_drift_before_any_writes(self):
         probe.check_paths(probe.EXPECTED_PATHS)

@@ -66,7 +66,13 @@ EXPECTED_PATHS = {
     "flashinfer_generated": "/cache/flashinfer/.cache/flashinfer/0.6.18/generated",
     "cuda_configured": "/cache/cuda",
 }
-CONTROL_NODES = frozenset({"/dev/nvidiactl", "/dev/nvidia-uvm", "/dev/nvidia-uvm-tools"})
+# Q38DEV observed these exact character devices; NVIDIA toolkit 1.19.1's
+# controlDeviceNodeDiscoverer lists all four as global controls, not per-GPU nodes.
+CONTROL_DEVICES = {
+    "/dev/nvidia-modeset": (195, 254), "/dev/nvidiactl": (195, 255),
+    "/dev/nvidia-uvm": (511, 0), "/dev/nvidia-uvm-tools": (511, 1),
+}
+CONTROL_NODES = frozenset(CONTROL_DEVICES)
 
 
 class ProbeError(Exception):
@@ -186,7 +192,7 @@ def check_mounts(mountinfo):
 
 def check_device_names(names):
     relevant = {name for name in names if name.startswith(("/dev/nvidia", "/dev/dri/"))
-                or name in ("/dev/kfd", "/dev/dxg")}
+                or name in ("/dev/dri", "/dev/kfd", "/dev/dxg")}
     require(relevant <= CONTROL_NODES, "gpu_device_node_present")
     return sorted(relevant)
 
@@ -205,10 +211,15 @@ def verify_isolation():
                 and stat.S_IMODE(meta.st_mode) == 0o700, "private_directory_required")
         if target != Path("/cache"):
             require(not any(target.iterdir()), "empty_model_and_secret_tmpfs_required")
-    names = [str(path) for path in Path("/dev").glob("nvidia*")]
-    names += [str(path) for path in Path("/dev/dri").glob("*")]
-    names += [str(path) for path in (Path("/dev/kfd"), Path("/dev/dxg")) if path.exists()]
-    return check_device_names(names)
+    # Enumerate names without following symlinks. Refuse accelerator directories
+    # outright, so neither descendants nor dangling symlinks can evade the gate.
+    controls = check_device_names([str(path) for path in Path("/dev").iterdir()])
+    for name in controls:
+        meta = Path(name).lstat()
+        require(stat.S_ISCHR(meta.st_mode)
+                and (os.major(meta.st_rdev), os.minor(meta.st_rdev)) == CONTROL_DEVICES[name],
+                "cache_control_nodes_invalid")
+    return controls
 
 
 def verify_sources(repo):
