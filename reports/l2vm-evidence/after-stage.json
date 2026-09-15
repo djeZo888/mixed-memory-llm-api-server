@@ -1,0 +1,1235 @@
+{
+  "active_jobs": "d3b-glm-cuda-build-20260915.service loaded failed failed /bin/bash -c \"set -euo pipefail; [[ \\\"\\$HOME\\\" == \\\"\\$(cat evidence/original-home.txt)\\\" ]]; printf \\\"%s\\\\n\\\" \\\"\\$\\$\\\" > job.pid; trap 'rc=\\$?; printf \\\"%s\\\\n\\\" \\\"\\$rc\\\" > job.exit; date -u +%FT%TZ > job.finished' EXIT; ./repo/containers/llama-cpp/build-d3p-runtime.sh /data/build/d3p-d3b-20260915\"\nq38a-image-20260915-r2.service      loaded failed failed /usr/bin/python3 -I -B /data/services/q38a-20260915/repo/scripts/q38a/pull_image.py\nq38a-image-20260915.service         loaded failed failed /usr/bin/python3 -I -B /data/services/q38a-20260915/repo/scripts/q38a/pull_image.py\nq38a-weights-20260915.service       loaded failed failed /usr/bin/python3 -I -B /data/services/q38a-20260915/repo/scripts/q38a/acquire.py\n",
+  "blocks": {
+    "blockdevices": [
+      {
+        "children": [
+          {
+            "fstype": "vfat",
+            "maj:min": "8:1",
+            "mountpoints": [
+              "/boot/efi"
+            ],
+            "name": "/dev/sda1",
+            "path": "/dev/sda1",
+            "pkname": "/dev/sda",
+            "ro": false,
+            "type": "part",
+            "uuid": "BBE0-E924"
+          },
+          {
+            "fstype": "ext4",
+            "maj:min": "8:2",
+            "mountpoints": [
+              "/boot"
+            ],
+            "name": "/dev/sda2",
+            "path": "/dev/sda2",
+            "pkname": "/dev/sda",
+            "ro": false,
+            "type": "part",
+            "uuid": "1e35ddc8-6f3c-4eec-9650-6ef93d252b3b"
+          },
+          {
+            "children": [
+              {
+                "fstype": "ext4",
+                "maj:min": "252:0",
+                "mountpoints": [
+                  "/"
+                ],
+                "name": "/dev/mapper/ubuntu--vg-ubuntu--lv",
+                "path": "/dev/mapper/ubuntu--vg-ubuntu--lv",
+                "pkname": "/dev/sda3",
+                "ro": false,
+                "type": "lvm",
+                "uuid": "bc752bce-bb3f-4802-8adf-69c45a88689d"
+              }
+            ],
+            "fstype": "LVM2_member",
+            "maj:min": "8:3",
+            "mountpoints": [
+              null
+            ],
+            "name": "/dev/sda3",
+            "path": "/dev/sda3",
+            "pkname": "/dev/sda",
+            "ro": false,
+            "type": "part",
+            "uuid": "2PRJo6-giqY-jfyu-CBsX-1A7g-qwn3-6Vlfwp"
+          }
+        ],
+        "fstype": null,
+        "maj:min": "8:0",
+        "mountpoints": [
+          null
+        ],
+        "name": "/dev/sda",
+        "path": "/dev/sda",
+        "pkname": null,
+        "ro": false,
+        "type": "disk",
+        "uuid": null
+      },
+      {
+        "children": [
+          {
+            "fstype": "ext4",
+            "maj:min": "8:17",
+            "mountpoints": [
+              "/data"
+            ],
+            "name": "/dev/sdb1",
+            "path": "/dev/sdb1",
+            "pkname": "/dev/sdb",
+            "ro": false,
+            "type": "part",
+            "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+          }
+        ],
+        "fstype": null,
+        "maj:min": "8:16",
+        "mountpoints": [
+          null
+        ],
+        "name": "/dev/sdb",
+        "path": "/dev/sdb",
+        "pkname": null,
+        "ro": false,
+        "type": "disk",
+        "uuid": null
+      },
+      {
+        "children": [
+          {
+            "fstype": "ext4",
+            "maj:min": "8:33",
+            "mountpoints": [
+              "/data/models-large"
+            ],
+            "name": "/dev/sdc1",
+            "path": "/dev/sdc1",
+            "pkname": "/dev/sdc",
+            "ro": false,
+            "type": "part",
+            "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+          }
+        ],
+        "fstype": null,
+        "maj:min": "8:32",
+        "mountpoints": [
+          null
+        ],
+        "name": "/dev/sdc",
+        "path": "/dev/sdc",
+        "pkname": null,
+        "ro": false,
+        "type": "disk",
+        "uuid": null
+      }
+    ]
+  },
+  "container": {
+    "Args": [
+      "--model",
+      "/models/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "30002",
+      "--alias",
+      "glm-5.3",
+      "--api-key-file",
+      "/run/secrets/llm-api-key",
+      "--ctx-size",
+      "32768",
+      "--parallel",
+      "1",
+      "--cpu-moe",
+      "--jinja",
+      "--no-webui",
+      "--n-gpu-layers",
+      "999",
+      "--split-mode",
+      "layer",
+      "--tensor-split",
+      "1,1",
+      "--load-mode",
+      "none",
+      "--device",
+      "CUDA0,CUDA1",
+      "--chat-template-kwargs",
+      "{\"clear_thinking\":true}"
+    ],
+    "Config": {
+      "Cmd": [
+        "--model",
+        "/models/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "30002",
+        "--alias",
+        "glm-5.3",
+        "--api-key-file",
+        "/run/secrets/llm-api-key",
+        "--ctx-size",
+        "32768",
+        "--parallel",
+        "1",
+        "--cpu-moe",
+        "--jinja",
+        "--no-webui",
+        "--n-gpu-layers",
+        "999",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--load-mode",
+        "none",
+        "--device",
+        "CUDA0,CUDA1",
+        "--chat-template-kwargs",
+        "{\"clear_thinking\":true}"
+      ],
+      "Entrypoint": [
+        "/opt/llama/llama-server"
+      ],
+      "Image": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+      "Labels": {
+        "io.llmctl.deployment": "glm-5.3-ud-q4-k-xl-32k",
+        "io.llmctl.instance": "ai-vm-d0b",
+        "io.llmctl.owner": "mixed-memory-llm-api-server",
+        "local.d1.cuda.architectures": "120a-real",
+        "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+        "org.opencontainers.image.revision": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+        "org.opencontainers.image.source": "https://github.com/ggml-org/llama.cpp",
+        "org.opencontainers.image.version": "v0.4.1"
+      }
+    },
+    "HostConfig": {
+      "Binds": null,
+      "DeviceRequests": [
+        {
+          "Capabilities": [
+            [
+              "gpu"
+            ]
+          ],
+          "Count": 0,
+          "DeviceIDs": [
+            "0",
+            "1"
+          ],
+          "Driver": "",
+          "Options": {}
+        }
+      ],
+      "LogConfig": {
+        "Config": {
+          "max-file": "3",
+          "max-size": "20m"
+        },
+        "Type": "json-file"
+      },
+      "NetworkMode": "bridge",
+      "PortBindings": {
+        "30002/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "30002"
+          }
+        ]
+      },
+      "RestartPolicy": {
+        "MaximumRetryCount": 0,
+        "Name": "no"
+      }
+    },
+    "Id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+    "Image": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "Mounts": [
+      {
+        "Destination": "/logs",
+        "Mode": "",
+        "Propagation": "rprivate",
+        "RW": true,
+        "Source": "/data/logs/llmctl/glm-5.3",
+        "Type": "bind"
+      },
+      {
+        "Destination": "/service",
+        "Mode": "",
+        "Propagation": "rprivate",
+        "RW": true,
+        "Source": "/data/services/llm-manager/glm-5.3",
+        "Type": "bind"
+      },
+      {
+        "Destination": "/run/secrets/llm-api-key",
+        "Mode": "",
+        "Propagation": "rprivate",
+        "RW": false,
+        "Source": "/data/services/secrets/llm-api-key",
+        "Type": "bind"
+      },
+      {
+        "Destination": "/models",
+        "Mode": "",
+        "Propagation": "rprivate",
+        "RW": false,
+        "Source": "/data/models-large/glm-5.3-ud-q4-k-xl",
+        "Type": "bind"
+      },
+      {
+        "Destination": "/cache",
+        "Mode": "",
+        "Propagation": "rprivate",
+        "RW": true,
+        "Source": "/data/models-large/runtime-cache/llama-cpp",
+        "Type": "bind"
+      }
+    ],
+    "Name": "/llmctl-glm-5.3-32k",
+    "Path": "/opt/llama/llama-server",
+    "RestartCount": 0,
+    "State": {
+      "FinishedAt": "0001-01-01T00:00:00Z",
+      "Pid": 149976,
+      "Restarting": false,
+      "Running": true,
+      "StartedAt": "2026-09-15T00:48:45.235739944Z",
+      "Status": "running"
+    },
+    "reviewed_environment": {
+      "CUDA_VISIBLE_DEVICES": null,
+      "GGML_CUDA_ENABLE_UNIFIED_MEMORY": null,
+      "NVIDIA_VISIBLE_DEVICES": "all"
+    }
+  },
+  "data_root_children": {
+    "/data/backups": {},
+    "/data/build": {
+      "d1-glm53-20260915": {
+        "ctime_ns": 1789425951516236471,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 40894481,
+        "mode": "2775",
+        "mtime_ns": 1789425951516236471,
+        "nlink": 6,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "d1b-glm53-20260915": {
+        "ctime_ns": 1789426773822455439,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 41418755,
+        "mode": "2775",
+        "mtime_ns": 1789426773822455439,
+        "nlink": 4,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "d3-glm53-20260915": {
+        "ctime_ns": 1789432639430265238,
+        "dev": 2065,
+        "gid": 1000,
+        "ino": 41419339,
+        "mode": "2700",
+        "mtime_ns": 1789432639430265238,
+        "nlink": 6,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "d3p-d3b-20260915": {
+        "ctime_ns": 1789441130892837118,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 44302940,
+        "mode": "2770",
+        "mtime_ns": 1789441130892837118,
+        "nlink": 6,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "f1a-qwen-20260915": {
+        "ctime_ns": 1789428148300038053,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 41418789,
+        "mode": "2775",
+        "mtime_ns": 1789428148300038053,
+        "nlink": 7,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "f1d-qwen-20260915": {
+        "ctime_ns": 1789431386327760875,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 41418929,
+        "mode": "2700",
+        "mtime_ns": 1789431386327760875,
+        "nlink": 7,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "f1db-20260915": {
+        "ctime_ns": 1789434812746921039,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 41419384,
+        "mode": "2700",
+        "mtime_ns": 1789434812746921039,
+        "nlink": 5,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "f1di-20260915": {
+        "ctime_ns": 1789436892492037953,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 41419914,
+        "mode": "2700",
+        "mtime_ns": 1789436892492037953,
+        "nlink": 3,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "f1dx-20260915": {
+        "ctime_ns": 1789436258951901051,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 41419894,
+        "mode": "2700",
+        "mtime_ns": 1789436258951901051,
+        "nlink": 3,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "ktransformers-minimax-m3": {
+        "ctime_ns": 1783542503075547787,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 21757954,
+        "mode": "2775",
+        "mtime_ns": 1783542503075547787,
+        "nlink": 2,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "pip-cache": {
+        "ctime_ns": 1783387504472578958,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 21757955,
+        "mode": "2775",
+        "mtime_ns": 1783387504472578958,
+        "nlink": 2,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "q38a-20260915": {
+        "ctime_ns": 1789438554936633123,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 41419935,
+        "mode": "2700",
+        "mtime_ns": 1789438554936633123,
+        "nlink": 7,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "q38v-20260915": {
+        "ctime_ns": 1789439990955160291,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 44302337,
+        "mode": "2700",
+        "mtime_ns": 1789439990955160291,
+        "nlink": 3,
+        "size": 4096,
+        "type": "dir",
+        "uid": 0
+      }
+    },
+    "/data/hf-cache": {
+      ".agent_harnesses.json": {
+        "ctime_ns": 1783389454730628899,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 16777232,
+        "mode": "0644",
+        "mtime_ns": 1783389454730628899,
+        "nlink": 1,
+        "size": 5473,
+        "type": "file",
+        "uid": 1000
+      },
+      "assets": {
+        "ctime_ns": 1783389409054351772,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 16777220,
+        "mode": "2775",
+        "mtime_ns": 1782981398232591291,
+        "nlink": 2,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "datasets": {
+        "ctime_ns": 1783389409055351778,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 16777221,
+        "mode": "2775",
+        "mtime_ns": 1782981398232591291,
+        "nlink": 2,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "home": {
+        "ctime_ns": 1783389409051351754,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 16777224,
+        "mode": "2775",
+        "mtime_ns": 1783264572116691624,
+        "nlink": 7,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "hub": {
+        "ctime_ns": 1783389455016630631,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 16777218,
+        "mode": "2775",
+        "mtime_ns": 1783389455016630631,
+        "nlink": 5,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "modules": {
+        "ctime_ns": 1783542564969848673,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 40894465,
+        "mode": "2755",
+        "mtime_ns": 1783542564969848673,
+        "nlink": 3,
+        "size": 4096,
+        "type": "dir",
+        "uid": 0
+      },
+      "transformers": {
+        "ctime_ns": 1783389409055351778,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 16777222,
+        "mode": "2775",
+        "mtime_ns": 1782981398232591291,
+        "nlink": 2,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "xdg": {
+        "ctime_ns": 1783389409055351778,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 16777223,
+        "mode": "2775",
+        "mtime_ns": 1782981398232591291,
+        "nlink": 2,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "xet": {
+        "ctime_ns": 1783389409054351772,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 16777219,
+        "mode": "2775",
+        "mtime_ns": 1783185193582724817,
+        "nlink": 4,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      }
+    },
+    "/data/logs": {
+      "benchmarks": {
+        "ctime_ns": 1783312157496243942,
+        "dev": 2065,
+        "gid": 1000,
+        "ino": 47972360,
+        "mode": "2775",
+        "mtime_ns": 1783312157496243942,
+        "nlink": 3,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "d3-final-root-guard.md": {
+        "ctime_ns": 1789433818468030436,
+        "dev": 2065,
+        "gid": 1000,
+        "ino": 47972489,
+        "mode": "0644",
+        "mtime_ns": 1789433818468030436,
+        "nlink": 1,
+        "size": 4802,
+        "type": "file",
+        "uid": 0
+      },
+      "d3-pre-root-guard.md": {
+        "ctime_ns": 1789432110401284496,
+        "dev": 2065,
+        "gid": 1000,
+        "ino": 47972484,
+        "mode": "0644",
+        "mtime_ns": 1789432110401284496,
+        "nlink": 1,
+        "size": 4800,
+        "type": "file",
+        "uid": 0
+      },
+      "d3-prepare-root-guard.md": {
+        "ctime_ns": 1789432285331091539,
+        "dev": 2065,
+        "gid": 1000,
+        "ino": 47972485,
+        "mode": "0644",
+        "mtime_ns": 1789432285331091539,
+        "nlink": 1,
+        "size": 4804,
+        "type": "file",
+        "uid": 0
+      },
+      "git-cleanup": {
+        "ctime_ns": 1783477086568345727,
+        "dev": 2065,
+        "gid": 1000,
+        "ino": 47972465,
+        "mode": "2775",
+        "mtime_ns": 1783477086568345727,
+        "nlink": 2,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "llmctl": {
+        "ctime_ns": 1789432284496083378,
+        "dev": 2065,
+        "gid": 1000,
+        "ino": 47972486,
+        "mode": "2755",
+        "mtime_ns": 1789432284496083378,
+        "nlink": 3,
+        "size": 4096,
+        "type": "dir",
+        "uid": 0
+      },
+      "llmctl-root-disk-guard.md": {
+        "ctime_ns": 1789433513598876661,
+        "dev": 2065,
+        "gid": 1000,
+        "ino": 47972488,
+        "mode": "0644",
+        "mtime_ns": 1789433513598876661,
+        "nlink": 1,
+        "size": 4805,
+        "type": "file",
+        "uid": 0
+      },
+      "m2b-post-reboot-verify.log": {
+        "ctime_ns": 1782983879188137750,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 47972354,
+        "mode": "0644",
+        "mtime_ns": 1782983879188137750,
+        "nlink": 1,
+        "size": 25280,
+        "type": "file",
+        "uid": 0
+      },
+      "m4b-post-reboot-verify.log": {
+        "ctime_ns": 1783021555128482149,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 47972355,
+        "mode": "0644",
+        "mtime_ns": 1783021555128482149,
+        "nlink": 1,
+        "size": 8493,
+        "type": "file",
+        "uid": 0
+      },
+      "m5b-post-reboot-verify.log": {
+        "ctime_ns": 1783064326752597434,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 47972356,
+        "mode": "0644",
+        "mtime_ns": 1783064326752597434,
+        "nlink": 1,
+        "size": 158283,
+        "type": "file",
+        "uid": 1000
+      },
+      "m6b-post-reboot-verify.log": {
+        "ctime_ns": 1789421719580408462,
+        "dev": 2065,
+        "gid": 1000,
+        "ino": 47972357,
+        "mode": "0644",
+        "mtime_ns": 1789421719580408462,
+        "nlink": 1,
+        "size": 44673,
+        "type": "file",
+        "uid": 1000
+      },
+      "minimax-m3-poc": {
+        "ctime_ns": 1783545992007872954,
+        "dev": 2065,
+        "gid": 1000,
+        "ino": 47972458,
+        "mode": "2775",
+        "mtime_ns": 1783545992007872954,
+        "nlink": 4,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "sglang-qwen3-30b": {
+        "ctime_ns": 1783263857682653492,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 47972359,
+        "mode": "2775",
+        "mtime_ns": 1783263857668653419,
+        "nlink": 2,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      },
+      "sglang-smoke": {
+        "ctime_ns": 1783185138800486509,
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 47972358,
+        "mode": "2775",
+        "mtime_ns": 1783185138794486483,
+        "nlink": 2,
+        "size": 4096,
+        "type": "dir",
+        "uid": 1000
+      }
+    }
+  },
+  "directories": {
+    "/": {
+      "ctime_ns": 1782981265974014726,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 2,
+      "mode": "0755",
+      "mtime_ns": 1782981265974014726,
+      "nlink": 25,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/data": {
+      "ctime_ns": 1789439649114270885,
+      "dev": 2065,
+      "gid": 0,
+      "ino": 2,
+      "mode": "0755",
+      "mtime_ns": 1789439649114270885,
+      "nlink": 13,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/data/backups": {
+      "ctime_ns": 1789441824101942847,
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 14417921,
+      "mode": "2755",
+      "mtime_ns": 1782981398233591295,
+      "nlink": 2,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/data/build": {
+      "ctime_ns": 1789441824088942771,
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 21757953,
+      "mode": "2755",
+      "mtime_ns": 1789441057584388661,
+      "nlink": 15,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/data/build/d3p-d3b-20260915": {
+      "ctime_ns": 1789441130892837118,
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 44302940,
+      "mode": "2770",
+      "mtime_ns": 1789441130892837118,
+      "nlink": 6,
+      "size": 4096,
+      "type": "dir",
+      "uid": 1000
+    },
+    "/data/hf-cache": {
+      "ctime_ns": 1789441824095942812,
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 16777217,
+      "mode": "2755",
+      "mtime_ns": 1783542564968848668,
+      "nlink": 10,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/data/logs": {
+      "ctime_ns": 1789441824108942888,
+      "dev": 2065,
+      "gid": 1000,
+      "ino": 47972353,
+      "mode": "2755",
+      "mtime_ns": 1789433818433030191,
+      "nlink": 8,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/data/models-large": {
+      "ctime_ns": 1789439268063108759,
+      "dev": 2081,
+      "gid": 1001,
+      "ino": 2,
+      "mode": "2755",
+      "mtime_ns": 1789439268063108759,
+      "nlink": 8,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/data/services": {
+      "ctime_ns": 1789441824122942969,
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 67633153,
+      "mode": "2755",
+      "mtime_ns": 1789441824122942969,
+      "nlink": 15,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/data/services/installer": {
+      "ctime_ns": 1789441824115942928,
+      "dev": 2065,
+      "gid": 0,
+      "ino": 67635475,
+      "mode": "0700",
+      "mtime_ns": 1789441824115942928,
+      "nlink": 2,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/data/services/llm-control": {
+      "ctime_ns": 1789441824122942969,
+      "dev": 2065,
+      "gid": 0,
+      "ino": 67635476,
+      "mode": "0700",
+      "mtime_ns": 1789441824122942969,
+      "nlink": 2,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/data/services/llm-manager": {
+      "ctime_ns": 1789441824348944284,
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 67633936,
+      "mode": "2755",
+      "mtime_ns": 1789441824348944284,
+      "nlink": 9,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/data/services/llm-manager/acquisition": {
+      "ctime_ns": 1789432284496083378,
+      "dev": 2065,
+      "gid": 0,
+      "ino": 67634754,
+      "mode": "2700",
+      "mtime_ns": 1789432284496083378,
+      "nlink": 2,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/data/services/llm-manager/adoption": {
+      "ctime_ns": 1789441823373938613,
+      "dev": 2065,
+      "gid": 0,
+      "ino": 67635459,
+      "mode": "0700",
+      "mtime_ns": 1789441823373938613,
+      "nlink": 3,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/etc/llm-server": {
+      "ctime_ns": 1789441824562945528,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 264312,
+      "mode": "0755",
+      "mtime_ns": 1789441824562945528,
+      "nlink": 2,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/etc/local-ai-server": {
+      "ctime_ns": 1789441824137943057,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 266588,
+      "mode": "0700",
+      "mtime_ns": 1789441824137943057,
+      "nlink": 2,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/run/llmctl": {
+      "ctime_ns": 1789433513611876753,
+      "dev": 26,
+      "gid": 0,
+      "ino": 6916,
+      "mode": "0700",
+      "mtime_ns": 1789433513611876753,
+      "nlink": 2,
+      "size": 80,
+      "type": "dir",
+      "uid": 0
+    },
+    "/usr/local/lib/llm-server": {
+      "ctime_ns": 1789441824042942504,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833471,
+      "mode": "0755",
+      "mtime_ns": 1789441824042942504,
+      "nlink": 4,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    },
+    "/usr/local/lib/llm-server/control-api": {
+      "ctime_ns": 1789441823962942039,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833479,
+      "mode": "0755",
+      "mtime_ns": 1789441823962942039,
+      "nlink": 6,
+      "size": 4096,
+      "type": "dir",
+      "uid": 0
+    }
+  },
+  "files": {
+    "/data/services/llm-control/operations.json": {
+      "absent": true
+    },
+    "/data/services/llm-manager/acquisition/glm-5.3-ud-q4-k-xl.complete.json": {
+      "ctime_ns": 1789432284496083378,
+      "dev": 2065,
+      "gid": 0,
+      "ino": 67635076,
+      "mode": "0600",
+      "mtime_ns": 1789432284496083378,
+      "nlink": 1,
+      "sha256": "bcd8d9f85baa9bd1fe54dc65b9022487307190cf11583580ab66af845b53f48b",
+      "size": 5943,
+      "type": "file",
+      "uid": 0
+    },
+    "/data/services/llm-manager/acquisition/qwen38-27b-fp8.complete.json": {
+      "absent": true
+    },
+    "/data/services/llm-manager/active/active.json": {
+      "ctime_ns": 1789433513609876739,
+      "dev": 2065,
+      "gid": 0,
+      "ino": 67633848,
+      "mode": "0600",
+      "mtime_ns": 1789433513604876703,
+      "nlink": 1,
+      "sha256": "c63de9b1a77aa4d62496880c7dad8cb6a22a10de9736c5305545e3579d576f1f",
+      "size": 658,
+      "type": "file",
+      "uid": 0
+    },
+    "/data/services/llm-manager/deployment-instance.json": {
+      "ctime_ns": 1789441824348944284,
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 67635478,
+      "mode": "0600",
+      "mtime_ns": 1789441824337944220,
+      "nlink": 1,
+      "sha256": "017dda0da5a7a2d40c28576de6115ffaae2c2f65142440b89802d579e600e292",
+      "size": 3882,
+      "type": "file",
+      "uid": 0
+    },
+    "/etc/fstab": {
+      "ctime_ns": 1789425513716012306,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 262498,
+      "mode": "0644",
+      "mtime_ns": 1789425513716012306,
+      "nlink": 1,
+      "sha256": "54247ff4b42aa9ecc98700136d580f767b9d4fb6a7d80d599a41e86b1ed263a1",
+      "size": 1014,
+      "type": "file",
+      "uid": 0
+    },
+    "/etc/llm-server/control.json": {
+      "ctime_ns": 1789441824552945470,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 266785,
+      "mode": "0600",
+      "mtime_ns": 1789441824549945453,
+      "nlink": 1,
+      "sha256": "0a8b653b944e0e124d6bed90b4f488c91f0d5f2d8dcc0b57e041aae959ce5f53",
+      "size": 77,
+      "type": "file",
+      "uid": 0
+    },
+    "/etc/llm-server/network.json": {
+      "ctime_ns": 1789440210263618005,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 264313,
+      "mode": "0600",
+      "mtime_ns": 1789440210263618005,
+      "nlink": 1,
+      "sha256": "095bbf0ea64c792efa49ddf16a78383ec74528abe605c86b54ba8ac01563cb60",
+      "size": 261,
+      "type": "file",
+      "uid": 0
+    },
+    "/etc/local-ai-server/storage.json": {
+      "ctime_ns": 1789441824137943057,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 266631,
+      "mode": "0600",
+      "mtime_ns": 1789441824134943039,
+      "nlink": 1,
+      "sha256": "626db7130b644199f5f632b2ac3c04f86cdd382121573aa6f3825bbca8de9c27",
+      "size": 925,
+      "type": "file",
+      "uid": 0
+    },
+    "/etc/systemd/system/llm-control.service": {
+      "ctime_ns": 1789441824637945964,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 266789,
+      "mode": "0644",
+      "mtime_ns": 1789441824634945947,
+      "nlink": 1,
+      "sha256": "4a749a92635ecc8c961fe92391b43b0634a67771ab4ec5d10a733a44b5a1d2dc",
+      "size": 1158,
+      "type": "file",
+      "uid": 0
+    },
+    "/etc/systemd/system/llmctl-boot.service": {
+      "absent": true
+    },
+    "/etc/systemd/system/m6b-post-reboot-verify.service": {
+      "ctime_ns": 1783095910086569168,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 262768,
+      "mode": "0644",
+      "mtime_ns": 1783095910086569168,
+      "nlink": 1,
+      "sha256": "eb89d7312a0b870163e79e44b9c7f552aeb0b631f9d07fba943c393eddc07ede",
+      "size": 378,
+      "type": "file",
+      "uid": 0
+    },
+    "/etc/tmpfiles.d/llmctl.conf": {
+      "absent": true
+    },
+    "/run/llmctl/recovery.json": {
+      "ctime_ns": 1789433513611876753,
+      "dev": 26,
+      "gid": 0,
+      "ino": 7673,
+      "mode": "0600",
+      "mtime_ns": 1789433513611876753,
+      "nlink": 1,
+      "sha256": "c63de9b1a77aa4d62496880c7dad8cb6a22a10de9736c5305545e3579d576f1f",
+      "size": 658,
+      "type": "file",
+      "uid": 0
+    },
+    "/usr/local/lib/llm-server/private-network/private_network.py": {
+      "ctime_ns": 1789440210255617941,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833478,
+      "mode": "0644",
+      "mtime_ns": 1789440210255617941,
+      "nlink": 1,
+      "sha256": "ad0c48db68ce47213f292abb74aebc9b321b41baefc3385785bb7322e7e78ddc",
+      "size": 18104,
+      "type": "file",
+      "uid": 0
+    }
+  },
+  "listeners": "LISTEN 0      4096               127.0.0.1:30002 0.0.0.0:*\nLISTEN 0      4096   10.156.100.60%enp6s18:30002 0.0.0.0:*",
+  "mounts": [
+    {
+      "fsroot": "/",
+      "fstype": "ext4",
+      "maj:min": "252:0",
+      "options": "rw,relatime",
+      "source": "/dev/mapper/ubuntu--vg-ubuntu--lv",
+      "target": "/",
+      "uuid": "bc752bce-bb3f-4802-8adf-69c45a88689d"
+    },
+    {
+      "fsroot": "/",
+      "fstype": "ext4",
+      "maj:min": "8:2",
+      "options": "rw,relatime",
+      "source": "/dev/sda2",
+      "target": "/boot",
+      "uuid": "1e35ddc8-6f3c-4eec-9650-6ef93d252b3b"
+    },
+    {
+      "fsroot": "/",
+      "fstype": "ext4",
+      "maj:min": "8:17",
+      "options": "rw,relatime",
+      "source": "/dev/sdb1",
+      "target": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    {
+      "fsroot": "/",
+      "fstype": "vfat",
+      "maj:min": "8:1",
+      "options": "rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro",
+      "source": "/dev/sda1",
+      "target": "/boot/efi",
+      "uuid": "BBE0-E924"
+    },
+    {
+      "fsroot": "/",
+      "fstype": "ext4",
+      "maj:min": "8:33",
+      "options": "rw,relatime",
+      "source": "/dev/sdc1",
+      "target": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    }
+  ],
+  "private_metadata_only": {
+    "/data/services/secrets/llm-api-key": {
+      "ctime_ns": 1789432284490083320,
+      "dev": 2065,
+      "gid": 0,
+      "ino": 67635075,
+      "mode": "0600",
+      "mtime_ns": 1789432284490083320,
+      "nlink": 1,
+      "size": 64,
+      "type": "file",
+      "uid": 0
+    },
+    "/etc/llm-server/control-api-key": {
+      "ctime_ns": 1789441824562945528,
+      "dev": 64512,
+      "gid": 0,
+      "ino": 266787,
+      "mode": "0600",
+      "mtime_ns": 1789441824559945511,
+      "nlink": 1,
+      "size": 64,
+      "type": "file",
+      "uid": 0
+    },
+    "/run/llmctl/lifecycle.lock": {
+      "ctime_ns": 1789432684503637451,
+      "dev": 26,
+      "gid": 0,
+      "ino": 7086,
+      "mode": "0600",
+      "mtime_ns": 1789432684503637451,
+      "nlink": 1,
+      "size": 0,
+      "type": "file",
+      "uid": 0
+    }
+  },
+  "root_available_bytes": 5210996736,
+  "units": {
+    "llm-control.service": "MainPID=0\nLoadState=loaded\nActiveState=inactive\nSubState=dead\nDropInPaths=\nUnitFileState=disabled\n",
+    "llm-private-control.socket": "LoadState=loaded\nActiveState=inactive\nSubState=dead\nDropInPaths=\nUnitFileState=disabled\n",
+    "llm-private-glm.socket": "LoadState=loaded\nActiveState=active\nSubState=running\nDropInPaths=\nUnitFileState=enabled\n",
+    "llm-private-qwen38.socket": "LoadState=loaded\nActiveState=inactive\nSubState=dead\nDropInPaths=\nUnitFileState=disabled\n",
+    "llmctl-boot.service": "MainPID=0\nLoadState=not-found\nActiveState=inactive\nSubState=dead\nDropInPaths=\nUnitFileState=\n",
+    "m6b-post-reboot-verify.service": "MainPID=0\nLoadState=loaded\nActiveState=active\nSubState=exited\nDropInPaths=\nUnitFileState=disabled\n"
+  },
+  "utc": "2026-09-15T03:11:03.117470+00:00"
+}

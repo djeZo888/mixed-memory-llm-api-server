@@ -1,0 +1,11 @@
+{
+  "committer": "CodexAIagent <133749519+djeZo888@users.noreply.github.com> 1789442427 +0200",
+  "final_staged_secret_scan": "PASS including packaging evidence",
+  "grep_based_secret_scan": "PASS no matches; filenames only on failure",
+  "identity": "CodexAIagent <133749519+djeZo888@users.noreply.github.com> 1789442427 +0200",
+  "new_staged_files": 43,
+  "push": "NOT_PERFORMED",
+  "remote_credentials": "PASS no embedded credentials",
+  "scope_reports_only": "PASS",
+  "secret_filename_scan": "PASS"
+}
