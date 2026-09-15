@@ -126,6 +126,7 @@ def docker_command(repo, cache_environment, context, *, container_name=None, own
                "--runtime", "nvidia", "--log-driver", "none",
                "--env", "NVIDIA_VISIBLE_DEVICES=none", "--env", "CUDA_VISIBLE_DEVICES=",
                "--env", "NVIDIA_DRIVER_CAPABILITIES=compute,utility",
+               "--env", "OPENBLAS_NUM_THREADS=1",
                "--platform", "linux/amd64", "--read-only", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
                "--pids-limit", "128", "--memory", "8g", "--shm-size", "64m",
                # Linux's piped-core recursion guard is exactly one byte; zero

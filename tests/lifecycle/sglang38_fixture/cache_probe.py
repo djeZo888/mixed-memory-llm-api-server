@@ -27,6 +27,7 @@ RUNTIME_ENVIRONMENT = {
     "NVIDIA_VISIBLE_DEVICES": "none",
     "NVIDIA_DRIVER_CAPABILITIES": "compute,utility",
     "CUDA_VISIBLE_DEVICES": "",
+    "OPENBLAS_NUM_THREADS": "1",
 }
 # Exact public source files independently reviewed for resolver behavior.
 SOURCE_PINS = {
@@ -85,7 +86,8 @@ FAILURE_CODES = frozenset((
     "cache_probe_hash_mismatch", "cache_resolved_path_mismatch",
     "cache_resolver_source_mismatch", "cache_result_invalid", "cache_result_mismatch",
     "cache_result_types_invalid", "cache_write_failed", "empty_model_and_secret_tmpfs_required",
-    "fixture_repository_required", "fixture_core_limit_required", "gpu_device_node_present", "gpu_visible", "home_changed",
+    "fixture_repository_required", "fixture_core_limit_required", "fixture_blas_threads_required",
+    "gpu_device_node_present", "gpu_visible", "home_changed",
     "installed_package_missing", "installed_version_mismatch", "isolation_changed",
     "launcher_source_hash_mismatch", "linux_pinned_image_required",
     "no_gpu_runtime_environment_required", "private_directory_required", "private_tmpfs_required",
@@ -204,6 +206,9 @@ def verify_isolation():
             and os.environ.get("NVIDIA_DRIVER_CAPABILITIES") == "compute,utility"
             and os.environ.get("CUDA_VISIBLE_DEVICES") == "",
             "no_gpu_runtime_environment_required")
+    # Installed SciPy/OpenBLAS imports otherwise request 64 pthreads under the
+    # fixture's fixed pids=128 limit. Bound demand before loading native code.
+    require(os.environ.get("OPENBLAS_NUM_THREADS") == "1", "fixture_blas_threads_required")
     # Linux fs/coredump.c aborts piped core handlers at a one-byte soft limit.
     # Verify the inherited container limit before any native library imports.
     require(resource.getrlimit(resource.RLIMIT_CORE) == (1, 1), "fixture_core_limit_required")

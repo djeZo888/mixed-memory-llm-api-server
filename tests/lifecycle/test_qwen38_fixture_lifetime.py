@@ -36,7 +36,7 @@ def fixture_container(repo, cache, context, *, name=None, token=None, image_id=N
             "Image": host.IMAGE_REFERENCE, "Labels": {host.OWNER_LABEL: token},
             "Env": [key + "=" + value for key, value in {
                 **cache, "NVIDIA_VISIBLE_DEVICES": "none", "CUDA_VISIBLE_DEVICES": "",
-                "NVIDIA_DRIVER_CAPABILITIES": "compute,utility"}.items()],
+                "NVIDIA_DRIVER_CAPABILITIES": "compute,utility", "OPENBLAS_NUM_THREADS": "1"}.items()],
             "Entrypoint": ["python3"], "User": "0:0", "WorkingDir": "/cache",
             "Cmd": ["-X", "faulthandler", "-B", "/fixture/tests/lifecycle/sglang38_fixture/run_pinned_image.py",
                     "--actual-image", "--repo", "/fixture", "--context", str(context)],
@@ -294,6 +294,19 @@ class Qwen38FixtureLifetimeTests(unittest.TestCase):
             container["Config"]["Env"].append("NVIDIA_VISIBLE_DEVICES=none"))
         self.assert_policy_refused(lambda container:
             container["Config"].__setitem__("Env", ["NVIDIA_VISIBLE_DEVICES"]))
+
+    def test_blas_threads_missing_invalid_or_duplicate_refused_before_start(self):
+        for value in (None, "0", "64", " 1", "1 "):
+            def mutate(container):
+                entries = [entry for entry in container["Config"]["Env"]
+                           if not entry.startswith("OPENBLAS_NUM_THREADS=")]
+                if value is not None:
+                    entries.append("OPENBLAS_NUM_THREADS=" + value)
+                container["Config"]["Env"] = entries
+            with self.subTest(value=value):
+                self.assert_policy_refused(mutate)
+        self.assert_policy_refused(lambda container:
+            container["Config"]["Env"].append("OPENBLAS_NUM_THREADS=1"))
 
     def test_cache_environment_must_match_the_fixed_reviewed_resolver_paths(self):
         approved = {"HF_HOME": "/cache/huggingface"}

@@ -192,6 +192,8 @@ class Qwen38ImageFixtureTests(unittest.TestCase):
                          ["NVIDIA_VISIBLE_DEVICES=none"])
         self.assertIn("NVIDIA_DRIVER_CAPABILITIES=compute,utility", command)
         self.assertIn("CUDA_VISIBLE_DEVICES=", command)
+        self.assertEqual([value for value in command if value.startswith("OPENBLAS_NUM_THREADS=")],
+                         ["OPENBLAS_NUM_THREADS=1"])
         self.assertEqual(command.count("--mount"), 1)
         self.assertEqual(command[command.index("--mount") + 1],
                          "type=bind,src=/reviewed,dst=/fixture,readonly")
