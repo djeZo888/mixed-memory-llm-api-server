@@ -1,0 +1,9 @@
+Test project /Users/agent/CodexProjects/llm-orchestration/tasks/D3PD-20260915/native-build
+    Start 1: d3p-strict-model-chat
+1/2 Test #1: d3p-strict-model-chat ............   Passed    2.00 sec
+    Start 2: d3p-source-integration
+2/2 Test #2: d3p-source-integration ...........   Passed    0.08 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   2.08 sec

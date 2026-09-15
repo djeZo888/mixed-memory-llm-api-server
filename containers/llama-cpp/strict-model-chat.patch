@@ -1,3 +1,55 @@
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 6334f3ccab304749bbf7b51362dee7c9348771d7..6145db3edf82badc657a17ed21e8d6a8698095ae 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -682,12 +682,30 @@ void llama_context::sched_reserve() {
+         }
+     }
+
++    if (model.arch == LLM_ARCH_GLM_DSA) {
++        size_t lid_nodes = 0;
++        size_t fa_nodes = 0;
++        for (const auto & node : get_gf_res_reserve()->get_fused_nodes()) {
++            lid_nodes += node.op == LLM_FUSED_OP_LIGHTNING_INDEXER;
++            fa_nodes  += node.op == LLM_FUSED_OP_FLASH_ATTN;
++        }
++        LLAMA_LOG_WARN("D3T_NATIVE_V1 kind=graph n_ctx=%" PRIu32 " n_ctx_seq=%" PRIu32
++                " n_seq_max=%" PRIu32 " n_batch=%" PRIu32 " n_ubatch=%" PRIu32
++                " flash_attn=%d fused_lid=%d lid_nodes=%zu fa_nodes=%zu no_alloc=%d\n",
++                cparams.n_ctx, cparams.n_ctx_seq, cparams.n_seq_max, cparams.n_batch, cparams.n_ubatch,
++                int(cparams.flash_attn), int(cparams.fused_lid), lid_nodes, fa_nodes, int(model.hparams.no_alloc));
++    }
++
+     for (size_t i = 0; i < backend_ptrs.size(); ++i) {
+         ggml_backend_t             backend = backend_ptrs[i];
+         ggml_backend_buffer_type_t buft    = backend_buft[i];
+         if (!model.hparams.no_alloc) {
+             backend_buf_exp_size[i] = ggml_backend_sched_get_buffer_size(sched.get(), backend);
+         }
++        if (model.arch == LLM_ARCH_GLM_DSA) {
++            LLAMA_LOG_WARN("D3T_NATIVE_V1 kind=compute backend=%s bytes=%zu\n",
++                    ggml_backend_buft_name(buft), backend_buf_exp_size[i]);
++        }
+         if (backend_buf_exp_size[i] > 1) {
+             LLAMA_LOG_INFO("%s: %10s compute buffer size = %8.2f MiB\n", __func__,
+                     ggml_backend_buft_name(buft),
+@@ -695,6 +713,16 @@ void llama_context::sched_reserve() {
+         }
+     }
+
++    if (model.arch == LLM_ARCH_GLM_DSA) {
++        if (memory) {
++            for (const auto & buft_size : memory->memory_breakdown()) {
++                LLAMA_LOG_WARN("D3T_NATIVE_V1 kind=cache backend=%s bytes=%zu\n",
++                        ggml_backend_buft_name(buft_size.first), buft_size.second);
++            }
++        }
++        LLAMA_LOG_WARN("D3T_NATIVE_V1 kind=end\n");
++    }
++
+     if (n_nodes_pp == n_nodes_tg) {
+         LLAMA_LOG_INFO("%s: graph nodes  = %d\n", __func__, n_nodes_pp);
+     } else {
 diff --git a/tools/server/server-chat-model.h b/tools/server/server-chat-model.h
 new file mode 100644
 index 000000000..4b14a213d

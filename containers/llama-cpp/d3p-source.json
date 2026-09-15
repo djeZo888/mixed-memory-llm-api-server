@@ -5,6 +5,6 @@
   "upstream_tree": "950999fe62b7fe55f44ab5b7394e3c8542f37f12",
   "jinja_fix_ancestor": "ae9afff8d2c012ca760eb9c2adf41961cf6f6232",
   "patch_file": "strict-model-chat.patch",
-  "patch_sha256": "f803f6fe8cd91aaff232f1ca2ebb9ec2ed30269ab524637f744f5fe454558a78",
-  "derived_tree": "aa029cce1a5648ac3673c872518414169a505666"
+  "patch_sha256": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b",
+  "derived_tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e"
 }
