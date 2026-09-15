@@ -84,7 +84,9 @@ def receipt(d):
 def image(d):
     return {'Id': q.IMAGE_ID, 'RepoDigests': [q.IMAGE_REFERENCE], 'Os': 'linux', 'Architecture': 'amd64', 'Config': {
             'Env': [k + '=' + v for k, v in d['_runtime']['image_environment'].items()],
-            'Labels': {'org.opencontainers.image.revision': q.SOURCE_REVISION}}}
+            'Entrypoint': list(q.oci.IMAGE_ENTRYPOINT), 'WorkingDir': q.oci.IMAGE_WORKDIR,
+            'Cmd': None, 'Labels': {'org.opencontainers.image.revision': q.SOURCE_REVISION,
+            'org.opencontainers.image.source': q.oci.SOURCE_REPOSITORY}}}
 
 
 def container(d):
@@ -107,22 +109,23 @@ def container(d):
 
 def auth_receipt(d):
     """Entirely synthetic in-memory attestation; never write it to an instance."""
-    from tests.lifecycle.test_qwen38_image_fixture import native_result
+    from tests.lifecycle.test_qwen38_image_fixture import native_result, lifetime
     p = json.loads((ROOT / 'tests/lifecycle/sglang38_fixture/provenance.json').read_text())
     identity = {'image_id': q.IMAGE_ID, 'image_reference': q.IMAGE_REFERENCE,
                 'source_revision': q.SOURCE_REVISION, 'launcher_sha256': q.launcher_hash()}
-    proof = dict(identity, schema_version=1, kind='q38s_actual_image_auth', status='PASS',
-        fixture_sha256=p['fixture_sha256'], source_hashes={k: v['sha256'] for k, v in p['sources'].items()},
+    proof = dict(identity, schema_version=2, kind='q38b_actual_image_auth', status='PASS',
+        fixture_sha256=p['fixture_sha256'], support_sha256=p['support_sha256'], source_hashes={k: v['sha256'] for k, v in p['sources'].items()},
         checks={k: 'PASS' for k in q.AUTH_CHECKS}, contexts=[131072, 262144],
         image_identity_verification='HOST_DOCKER_INSPECT_AND_PINNED_RUN',
-        docker_inspect={k: v for k, v in identity.items() if k != 'launcher_sha256'} | {'os': 'linux', 'architecture': 'amd64'},
+        docker_inspect=q.oci.verify_image(image(d)),
         native_results=[native_result(p, context) for context in (131072, 262144)],
+        container_lifetimes=[lifetime(context) for context in (131072, 262144)],
         model_execution='NOT_TESTED', native_lifespan='NOT_TESTED', live_inference_and_agent_acceptance='NOT_TESTED')
     binding = d['_storage_binding']; path = binding.path('data', q.PROOF_SUFFIX)
     binding.documents[path] = proof
     evidence = dict(identity, flags_verified=True, auth_gate_passed=True,
         supported_flags=d['_runtime']['required_cli_flags'], evidence='SYNTHETIC unit receipt only',
-        auth_gate_evidence=path)
+        auth_gate_evidence=path, docker_inspect=proof['docker_inspect'])
     return proof, {'runtime_evidence': {q.RUNTIME: evidence}}
 
 
@@ -301,7 +304,7 @@ class Reuse(unittest.TestCase):
         # Isolate inspect-contract checks; installed protected-source I/O is a
         # separate production gate and not claimed by this synthetic fixture.
         with patch.object(q, 'validate_launcher'):
-            q.validate_reused(c, d, {}, image(d))
+            q.validate_reused(c, d, {'docker_inspect': q.oci.verify_image(image(d))}, image(d))
 
     def test_exact_inspect_fixture(self):
         d = bound(); self.check(container(d), d)
@@ -362,6 +365,30 @@ class Reuse(unittest.TestCase):
 
 
 class AuthEvidence(unittest.TestCase):
+    def test_cache_lifetime_and_observed_domain_proofs_are_required(self):
+        mutations = (
+            lambda p: p.pop('container_lifetimes'),
+            lambda p: p['container_lifetimes'][0].update(cleanup='FAILED_UNVERIFIED'),
+            lambda p: p['container_lifetimes'][1].update(container_id=p['container_lifetimes'][0]['container_id']),
+            lambda p: p['container_lifetimes'][0]['runtime_inspect'].update(runtime='runc'),
+            lambda p: p['container_lifetimes'][0]['runtime_inspect'].update(visible_devices='all'),
+            lambda p: p['native_results'][0]['cache_probe'].update(native_torch_device_count=1),
+            lambda p: p['native_results'][0]['cache_probe']['resolved_paths'].update(sglang='/root/.cache/sglang'),
+            lambda p: p['native_results'][0]['cache_probe']['driver_library_loading'].update({'libcuda.so.1': 'NOT_TESTED'}),
+            lambda p: p['docker_inspect'].update(image_id_domain='oci_platform_manifest'),
+            lambda p: p.update(support_sha256={}),
+        )
+        for mutation in mutations:
+            d = bound(); proof, instance = auth_receipt(d); mutation(proof)
+            with self.subTest(mutation=mutation), self.assertRaises(LifecycleError):
+                q.evidence(d, instance)
+
+    def test_installer_observed_domain_cannot_be_rewritten_from_auth_proof(self):
+        d = bound(); _, instance = auth_receipt(d)
+        instance['runtime_evidence'][q.RUNTIME]['docker_inspect'] = q.oci.expected_evidence(q.MANIFEST_DIGEST)
+        with self.assertRaisesRegex(LifecycleError, 'qwen38_installer_observed_identity_mismatch'):
+            q.evidence(d, instance)
+
     def test_receipt_schema_and_source_fixture_checks_agree(self):
         from tests.lifecycle.test_qwen38_image_fixture import host
         self.assertEqual(q.AUTH_CHECKS, host.CHECKS)

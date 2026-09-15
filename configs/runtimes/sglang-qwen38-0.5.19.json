@@ -24,7 +24,9 @@
     "TORCHINDUCTOR_CACHE_DIR": "/cache/torchinductor",
     "FLASHINFER_WORKSPACE_BASE": "/cache/flashinfer",
     "CUDA_CACHE_PATH": "/cache/cuda",
-    "DISABLE_OPENAPI_DOC": "1"
+    "DISABLE_OPENAPI_DOC": "1",
+    "SGLANG_CACHE_DIR": "/cache/sglang",
+    "SGLANG_JIT_CACHE_DIR": "/cache/sglang/jit"
   },
   "image_environment": {
     "PATH": "/root/.cargo/bin:/opt/sglang/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/nvidia/bin",

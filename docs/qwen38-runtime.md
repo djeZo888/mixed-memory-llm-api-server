@@ -1,10 +1,13 @@
 # Qwen3.8 bounded runtime source contract
 
-Q38S adds a separate source adapter and two declarative native-context variants.
+Q38B corrects the Q38S adapter and two declarative native-context variants.
 **Actual-image execution, acquisition, model load, live generation, client tool
-continuation and occupied-context performance are NOT_TESTED.** Manager/backend
-dispatch and the final L1 binding integration are a separate coordinator-owned
-change. These files alone do not enable selection or installation.
+continuation and occupied-context performance are NOT_TESTED.** The narrow
+Manager dispatch seam uses frozen L1B `9cb93959105468ea0e140598b51493ee0d13ce9e`,
+under the explicit incoming ownership handoff; final root review remains pending.
+Installer work is stopped. The protected control closure is refreshed in Q38B;
+L2 separately owns publication/read checks for the current two-model roster:
+GLM5.3 and Qwen3.8-27B FP8. Historical Coder-Next source remains deferred.
 
 ## Immutable identities
 
@@ -23,9 +26,12 @@ change. These files alone do not enable selection or installation.
 
 Public OCI manifest and configuration bytes were independently SHA256 checked;
 configuration metadata identifies Linux/amd64 and the pinned source revision.
-The manifest digest identifies a manifest, while Docker `.Id` identifies the
-configuration blob. Creation must use the digest reference; inspect must verify
-the config-image ID, RepoDigests, platform and source label. No layer was fetched.
+The manifest digest identifies the platform manifest; the config digest identifies
+its configuration blob. Docker's observed `.Id` domain is explicit and must
+match the exact relationship in the [OCI contract](q38b-oci-contract.md).
+Creation uses the immutable digest reference with `--pull=never`; source,
+platform, entrypoint, inherited environment and receipt identity must agree.
+No layer was fetched.
 See [source provenance](../reports/q38s-provenance.json) and
 [reviewed research](../reports/q38r-qwen38-evaluation.md).
 
@@ -94,18 +100,23 @@ Source evidence: [native HTTP setup](https://github.com/sgl-project/sglang/blob/
 The actual architecture is `Qwen3_5ForConditionalGeneration`. Pinned 0.5.19
 registers `qwen3_coder` structured tools and `qwen3` reasoning. The checkpoint's
 pinned template supports assistant tool calls, tool results and absent
-`reasoning_content`. For this source task select:
+`reasoning_content`. Q38C's observed pinned client wire selects:
 
 ```json
-{"reasoning_effort":"none","chat_template_kwargs":{"enable_thinking":false}}
+{"reasoning_effort":"none"}
 ```
 
+The request omits `chat_template_kwargs`. Pinned native request normalization
+inserts `thinking:false` and `enable_thinking:false` for `none` before the
+reviewed false server default is merged. The declarations' false template
+setting remains unchanged; no additional client field is required.
 The server default is `enable_thinking:false`. Native per-request effort can
 override defaults: top-level `xhigh` or `low` can enable thinking. The explicit
 preset must be present in actual fast-agent requests; source defaults alone do
 not bound an existing client that sends `xhigh`. The pinned template otherwise
-defaults omitted effort to xhigh. The new actual-image fixture renders synthetic
-no-thinking tool history, parses structured calls in whole/fragmented form and
+defaults omitted effort to xhigh. The actual-image fixture checks the exact
+ordinary and tool-continuation wire shape through native request normalization
+and prompt preparation, renders synthetic no-thinking history, parses structured calls in whole/fragmented form and
 checks empty-think stripping. It does **not** establish model or client continuation.
 [Pinned template](https://huggingface.co/Qwen/Qwen3.8-27B-FP8/blob/017b9c7af6b5689d5dd426a76e0bc077eb5ca20a/chat_template.jinja),
 [request normalization](https://github.com/sgl-project/sglang/blob/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/entrypoints/openai/protocol.py),
@@ -120,7 +131,7 @@ through an actual second-turn generation. If the current client cannot send the
 explicit preset, add that request-config support in separately owned client work
 before fast-agent acceptance. Do not infer compatibility from registration alone.
 
-## Minimal L1 / Manager seam, deliberately not integrated
+## Narrow L1B / Manager dispatch seam
 
 The public adapter is `lifecycle.qwen38`:
 
@@ -132,6 +143,7 @@ The public adapter is `lifecycle.qwen38`:
 | `evidence(d, instance)` | Protected actual-image receipt with exact source/image/launcher/fixture identity |
 | `validate_launcher(d, evidence)` | Root-owned mode0644 installed launcher, exact reviewed bytes |
 | `image_environment(image, d)` | Actual Docker inspect of exact digest/config-image/platform/source/env |
+| `verify_runtime_image(image, d, evidence)` | Exact observed OCI identity block agrees with protected auth/runtime binding evidence |
 | `validate_reused(container, d, evidence, image)` | Exact command/context/GPU/mount/cache/security/network identity |
 | `probe(endpoint, alias, key_file, ...)` | Existing SGLang health-Up + authenticated alias + missing/wrong-key denial |
 
@@ -140,28 +152,34 @@ auth.key_file and mount sources, then injects `_storage_binding`. This adapter
 consumes `path(role,suffix)`, `verify(roles=...)`, `validate_path(role,path)` and
 `read_json(role,path,maximum=...)`. It supplies no storage registration, writer,
 lease or environment override. A fixture duck type is only a unit-test dependency;
-it is not lifecycle authorization. The final reviewed L1 API remains a gate.
+it is not lifecycle authorization. L1B's canonical guards remain in force.
 
-Coordinator changes after L1 freeze must:
+The source integration after the explicit L1B freeze handoff:
 
-1. Dispatch exactly this backend/runtime to these functions; discover only the
+1. Dispatches exactly this backend/runtime to these functions; discovers only the
    declared model/runtime/deployments. Existing ID rules already accept the runtime
    version; no regex expansion is needed.
-2. Permit this launcher target/source role in the existing six-mount SGLang
+2. Permits this launcher target/source role in the existing six-mount SGLang
    contract and retain the common readonly-root/tmpfs/GPU/security renderer.
-3. Inspect/create by `image_ref` (the digest reference), compare `.Id` to `IMAGE_ID`,
-   and call full `image_environment` validation before creation as well as reuse.
-4. Route readiness through the existing SGLang health/auth probe. Model listing
+3. Inspects/creates by the digest reference, binds observed `.Id` and its OCI
+   domain to the exact protected auth receipt, and validates image environment
+   before creation as well as reuse.
+4. Routes readiness through the existing SGLang health/auth probe. Model listing
    while Starting cannot become Ready.
-5. Keep the same canonical minted lease and package admission, one active backend,
+5. Keeps the same canonical minted lease and package admission, one active backend,
    expected-active switch intent, all preflight checks **before stopping the current
    backend**, and existing safe stop/recovery semantics. Never accept an arbitrary
    lock FD or duplicate lock owner.
 
-No Manager/runtime_io/qwen_next/0.5.14 launcher, installer, common storage, lease,
-client, workflow or main-document edit is included.
+Manager changes are limited to this backend dispatch. Shared runtime_io,
+qwen_next/0.5.14 launcher/cache, installer, common storage/lease and clients are
+unchanged by Q38B. The incorporated L1B changes retain their original ownership.
+After the separate U1B702e147 handoff, Q38B also updates only the control closure
+manifest, matching normal-file constants and focused protection/import tests.
+Recovery stays minimal; normal Q38 dependencies are protected before imports.
+The reserved D3T llama validation and command bodies remain unchanged.
 
-## Generic I1c acquisition / evidence publication
+## Protected acquisition / L2 runtime evidence publication
 
 See [exact acquisition mapping](../reports/q38s-i1c-mapping.md). The new normalized
 manifest SHA256 is `726012378a40f648a104230d3f5ed5d6bc505cbd09b32918fc29aa81c0f075f2`.
@@ -175,7 +193,7 @@ Lifecycle completion is a separate protected seal at
 `binding.path('data','services/llm-manager/acquisition/qwen38-27b-fp8.complete.json')`.
 Runtime auth proof is at
 `binding.path('data','services/llm-manager/evidence/sglang-qwen38-0.5.19.auth.json')`.
-I1c publishes receipts/instance evidence with its anchored writer under the same
+L2 runtime binding publishes receipts/instance evidence with its anchored writer under the same
 lease after validating exact acquired files or exact actual-image results.
 Source/mock test success must never set `verified`, `auth_gate_passed`, installed
 or ready flags in a real instance.
@@ -186,7 +204,7 @@ After source review and separately authorized exact-image acquisition, worker1
 runs from a protected reviewed checkout. `Q38_AUTH_OUTPUT` below is a **new** file
 in a protected directory validated against registered data by the L1 caller;
 it is not a launcher environment override. The helper refuses root-filesystem
-output, symlink/unprotected parents and replacement files. I1c validates and
+output, symlink/unprotected parents and replacement files. L2 validates and
 publishes the resulting receipt using its registered anchored writer.
 
 ```sh
@@ -198,17 +216,26 @@ scripts/common/require-data-mounted.sh
 scripts/common/root-disk-guard.sh
 ```
 
-The helper uses `--pull=never`, exact digest, Linux/amd64, runc, no Docker logs,
-no GPU devices, network none, readonly root and bounded private tmpfs. Only the
+The helper uses `--pull=never`, exact digest, Linux/amd64, NVIDIA runtime with
+`NVIDIA_VISIBLE_DEVICES=none`, no Docker logs, no GPU device requests, network
+none, readonly root and bounded private tmpfs. [Pinned NVIDIA behavior and cache
+resolver proof](q38b-cache-research.md) require real driver libraries, zero
+native torch devices and no GPU nodes before creating synthetic fixture files.
+Global control/UVM nodes may exist and are bounded/reported. Only the
 checkout is mounted read-only. Each native-context case creates its own synthetic
 sentinel and tiny synthetic config; no real key/model is mounted. It imports
 the installed native app/auth/ServerArgs/resolution and stubs only model/engine
 collaborators and GPU discovery. Uvicorn is captured; native serving lifespan and
-GPU/model execution remain NOT_TESTED. The 16 receipt checks cover native auth,
+GPU/model execution remain NOT_TESTED. The 18 receipt checks cover cache/device
+proof and native auth,
 ordinary/server_info routes, raw/resolved/worker serialization, logs, streaming,
 disconnect, WebSocket denial, warmup failure/nonready and synthetic parser/template
 behavior. The adapter rejects proof with different image/source/launcher/fixture
-hashes, missing checks or either missing context.
+hashes, missing checks or either missing context. Schema2
+`q38b_actual_image_auth` also requires both distinct container identities,
+host runtime inspection, verified zero exit, quiescence and removal. Timeout,
+signal and CLI failure cleanup targets only each verified immutable ID.
+Unverifiable cleanup fails closed and returns bounded safe failure evidence.
 
 ## Required worker1 / V1 gates
 
@@ -226,4 +253,6 @@ hashes, missing checks or either missing context.
    latency case. Unknown usage stays unknown. A short prompt at 256K proves only
    configuration/allocation; arithmetic establishes no speed or quality claim.
 
-Source checks are documented in the [Q38S report](../reports/q38s-source.md).
+Source checks are documented in the [Q38B report](../reports/q38b-runtime-gates.md).
+The [original pin finalization trace](../reports/q38b-pin-finalization.md)
+distinguishes historical Q38S test claims from its final committed-source defect.

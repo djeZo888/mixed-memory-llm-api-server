@@ -2,17 +2,18 @@
   "actual_image_execution": "NOT_TESTED",
   "fixture_sha256": {
     "auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+    "cache_probe.py": "83197614bd963f54a275d9f01ec8955325b3ea4791387dd5235df189f67e7c99",
     "chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
-    "run_fixture.py": "84d016aafa3c6544d879afc30abd67bfa68419fac334712c91cc39f43d76894b",
-    "run_pinned_image.py": "5c0162e00a761b6b17195abe04d382da842e860daeeae0470b927d8c9d72241b"
+    "run_fixture.py": "9cdea022e21f1859e097be51094b9d2822dfc1387f8756448dd7b14d8a251d2c",
+    "run_pinned_image.py": "16a1e0b726295e0f0a9f046b5d496dae70f83677f5145ffdb52bfee01671b454"
   },
   "image_id": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
   "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
   "launcher_path": "scripts/runtime/sglang38_file_auth.py",
-  "launcher_sha256": "661490ae1ec887313b5abf580f2ccb8e6481fee0b68260b6bbea3ba29b98b58b",
+  "launcher_sha256": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
   "model_execution": "NOT_TESTED",
   "schema_version": 1,
-  "scope": "Immutable public source hashes only. Actual installed image execution NOT_TESTED in Q38S; exact image host driver and native fixture required before protected keys/model.",
+  "scope": "Q38B source-only native auth/cache fixture; exact OCI relationship, bounded container lifetime; actual image NOT_TESTED",
   "source_revision": "0bcd822377da7b5718e674eaf9c870d349424dd1",
   "sources": {
     "kernels/ops/quantization/fp8_kernel.py": {
@@ -303,6 +304,9 @@
       "status": "SOURCE_ONLY",
       "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/utils/server_args_config_parser.py"
     }
+  },
+  "support_sha256": {
+    "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f"
   },
   "template": {
     "bytes": 8952,
