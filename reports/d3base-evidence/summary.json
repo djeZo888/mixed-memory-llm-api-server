@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "outcome": "STOP_COLD_CACHE_QUALIFICATION",
+  "outcome": "PARTIALLY_CACHED_BASELINE",
   "stage": "baseline",
   "request_count": 1,
   "successful_step_count": 0,
@@ -104,5 +104,8 @@
     "exact_q38vr2_fixture_time": null,
     "inference_concurrency": "none per coordinator sole lease",
     "timing_attribution": "complete configurations old D1 versus later patched N76; cannot attribute solely to expert placement"
-  }
+  },
+  "coordinator_acceptance": "Completed cold request retained for later candidate comparison using identical body hashes/native timing with cache differences disclosed; no zero-cache retry, new harness or further request.",
+  "shipped_gate_status": "STOP_COLD_CACHE_QUALIFICATION",
+  "continuation_integration_gap": "Shipped candidate gate still requires baseline PASS and cannot advance stopped checkpoint. Later authorized owner must address contract reuse; current state and source remain unchanged."
 }
