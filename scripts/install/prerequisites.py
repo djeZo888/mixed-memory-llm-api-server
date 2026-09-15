@@ -3,7 +3,6 @@
 The caller owns the installer/lifecycle lock. No command output is included in errors.
 check_* methods are read-only. Driver checkpoints are facts, never success markers.
 """
-from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
@@ -13,6 +12,7 @@ import tempfile
 
 
 GIB = 1024 ** 3
+POLICY_SENTINEL = b"#!/bin/sh\n# local-ai installer temporary package service inhibitor\nexit 101\n"
 
 
 class PrerequisiteError(RuntimeError):
@@ -60,6 +60,47 @@ def atomic_bytes(path, content, mode=0o600):
     finally:
         if tmp.exists():
             tmp.unlink()
+
+
+def assert_package_admission(data_dir, storage_guard, *, policy_path=None):
+    """Read-only canonical-admission gate; acquires no lease and restores nothing.
+
+    L1/I1b call this AFTER acquiring their canonical lifecycle lease and BEFORE
+    any ordinary mutation. Lock availability never proves package quiescence.
+    Every pending marker/gate blocks admission, even if its service is terminal.
+    An explicitly selected recovery operation instead calls recover_policy under
+    that lease, then retries this check. No installer config/lockfile is needed.
+    """
+    storage_guard()
+    data = Path(data_dir)
+    if not data.is_absolute() or data == Path("/") or data.resolve() != data:
+        raise PrerequisiteError("Package admission requires canonical verified data storage")
+    protected_path(data, directory=True)
+    state = data
+    for part in ("services", "installer"):
+        state = state / part
+        if not state.exists() and not state.is_symlink():
+            break
+        protected_path(state, directory=True)
+    pending = any(path.exists() or path.is_symlink() for path in (
+        data / "services/installer/package-service-policy.json",
+        data / "services/installer/package-execution-gate.json"))
+    policy = Path(policy_path or "/usr/sbin/policy-rc.d")
+    if policy.parent.resolve() != policy.parent:
+        raise PrerequisiteError("Unsafe service policy parent", code="existing_policy_changed")
+    protected_path(policy.parent, directory=True)
+    if policy.exists() or policy.is_symlink():
+        protected_path(policy)
+        if policy.stat().st_size > 65536:
+            raise PrerequisiteError("Service policy is unexpectedly large")
+        pending = pending or policy.read_bytes() == POLICY_SENTINEL
+    storage_guard()
+    if pending:
+        raise PrerequisiteError(
+            "Pending package transaction blocks mutation admission even when the lifecycle "
+            "lease is available. Run explicit package recovery under the same canonical lease; "
+            "retain inhibitor and marker until exact quiescence is verified.",
+            code="package_transaction_recovery_required")
 
 
 class Prerequisites:
@@ -114,7 +155,8 @@ class Prerequisites:
         return True
 
     def check_base(self):
-        if (self.state / "package-service-policy.json").exists():
+        if ((self.state / "package-service-policy.json").exists()
+                or (self.state / "package-service-policy.json").is_symlink()):
             return False
         return self._installed(self.lock["requested"]["base"])
 
@@ -187,7 +229,11 @@ class Prerequisites:
                "TMPDIR": str(self.apt_root / "tmp"), "TMP": str(self.apt_root / "tmp"),
                "TEMP": str(self.apt_root / "tmp")}
         self._guard()
-        result = self._run(["apt-get", *self._apt_options(), *args], timeout=timeout, env=env)
+        argv = ["apt-get", *self._apt_options(), *args]
+        if "--no-download" in args:
+            result = self.package_transaction(argv, timeout=timeout, env=env)
+        else:
+            result = self._run(argv, timeout=timeout, env=env)
         self._guard()
         return result
 
@@ -205,79 +251,160 @@ class Prerequisites:
             raise PrerequisiteError("Locked package unavailable or metadata changed: " + name + "=" + version,
                                     code="locked_package_unavailable", public_details={"package": name, "version": version})
 
-    def recover_policy(self):
-        """Writable recovery entry point; call under the exclusive installer lock.
-
-        This must precede completed-stage checks during apply/resume. Verification
-        only observes the pending marker through check_base/check_driver.
-        """
-        self.guard()
-        marker = self.state / "package-service-policy.json"
-        if not marker.exists():
-            return {"changed": False}
-        self._assert_root()
-        self._validate_state_path(marker)
-        saved = json.loads(marker.read_text())
-        original = bytes.fromhex(saved["original_hex"]) if saved["existed"] else None
-        sentinel = b"#!/bin/sh\n# local-ai installer temporary package service inhibitor\nexit 101\n"
+    def _policy_current(self):
         if self.policy_path.parent.resolve() != self.policy_path.parent:
             raise PrerequisiteError("Unsafe service policy parent", code="existing_policy_changed")
         protected_path(self.policy_path.parent, directory=True)
         if self.policy_path.exists() or self.policy_path.is_symlink():
             protected_path(self.policy_path)
-        current = self.policy_path.read_bytes() if self.policy_path.exists() else None
-        if current not in (sentinel, original):
-            raise PrerequisiteError("Package service policy changed outside installer", code="existing_policy_changed")
-        if current == sentinel:
-            if original is None:
-                self.policy_path.unlink()
-            else:
-                atomic_bytes(self.policy_path, original, mode=saved["mode"])
-        self.guard()
-        marker.unlink()
-        return {"changed": True}
-
-    @contextmanager
-    def _inhibit_services(self):
-        """Restore prior policy byte-for-byte, including after a prior interrupted install."""
-        marker = self.state / "package-service-policy.json"
-        sentinel = b"#!/bin/sh\n# local-ai installer temporary package service inhibitor\nexit 101\n"
-        if self.policy_path.parent.resolve() != self.policy_path.parent:
-            raise PrerequisiteError("Refusing symlinked service-start policy parent")
-        protected_path(self.policy_path.parent, directory=True)
-        if self.policy_path.exists() or self.policy_path.is_symlink():
-            protected_path(self.policy_path)
-        current = self.policy_path.read_bytes() if self.policy_path.exists() else None
-        if marker.exists():
-            protected_path(marker)
-            saved = json.loads(marker.read_text())
-            original = bytes.fromhex(saved["original_hex"]) if saved["existed"] else None
-            if current not in (original, sentinel):
-                raise PrerequisiteError("Package service policy changed outside installer; preserve and reconcile it",
-                                        code="existing_policy_changed")
-        else:
-            if current is not None and len(current) > 65536:
+            if self.policy_path.stat().st_size > 65536:
                 raise PrerequisiteError("Service policy is unexpectedly large")
-            saved = {"schema_version": 1, "existed": current is not None,
-                     "original_hex": (current or b"").hex(),
-                     "mode": self.policy_path.stat().st_mode & 0o777 if current is not None else 0o755}
-            original = current
-            self._write_json(marker, saved)
-        self._guard()
-        atomic_bytes(self.policy_path, sentinel, mode=0o755)
+            return self.policy_path.read_bytes()
+        return None
+
+    @staticmethod
+    def _ownership_error(code="package_ownership_unknown"):
+        return PrerequisiteError(
+            "Package recovery is blocked: retain the inhibitor and lifecycle ownership. "
+            "Inspect the exact recorded unit, invocation and cgroup in package-service-policy.json; "
+            "resolve ownership/quiescence before retrying under the canonical lease. "
+            "Do not delete the marker, restore policy, or signal a stored PID.", code=code)
+
+    def _saved_policy(self, marker):
+        self._validate_state_path(marker)
         try:
-            yield
-        finally:
-            if self.policy_path.read_bytes() != sentinel:
-                raise PrerequisiteError("Service policy changed during package installation", code="existing_policy_changed")
-            if original is None:
+            if marker.stat().st_size > 256 * 1024:
+                raise ValueError()
+            saved = json.loads(marker.read_text())
+            if not isinstance(saved, dict):
+                raise ValueError()
+            if (saved.get("schema_version") != 2 or type(saved["existed"]) is not bool
+                    or type(saved["mode"]) is not int or not 0 <= saved["mode"] <= 0o7777
+                    or saved["mode"] & 0o022 or not isinstance(saved["transaction"], dict)
+                    or saved["phase"] not in {"preparing", "owned"}):
+                raise ValueError()
+            original = bytes.fromhex(saved["original_hex"])
+            if len(original) > 65536 or (not saved["existed"] and original):
+                raise ValueError()
+            return saved, original if saved["existed"] else None
+        except (KeyError, ValueError, TypeError, OSError):
+            # Legacy markers have no trustworthy ownership: never auto-upgrade.
+            raise self._ownership_error() from None
+
+    def recover_policy(self):
+        """Reconcile under the caller's canonical lifecycle lease before admission.
+
+        Exact retained transaction identity AND recursive quiescence are required.
+        A legacy/incomplete marker, missing unit, reboot, inspect error or reused
+        identity retains the inhibitor and marker. No stale PID is ever signaled.
+        """
+        self.guard()
+        marker = self.state / "package-service-policy.json"
+        if not marker.exists() and not marker.is_symlink():
+            if self._policy_current() == POLICY_SENTINEL:
+                raise self._ownership_error("package_ownership_marker_missing")
+            return {"changed": False}
+        self._assert_root()
+        saved, original = self._saved_policy(marker)
+        if saved["phase"] != "owned":
+            raise self._ownership_error("package_ownership_incomplete")
+        try:
+            status = self.runner.inspect_package(saved["transaction"])
+            if not isinstance(status, dict) or status.get("state") not in {"live", "quiescent"}:
+                raise ValueError()
+        except Exception:
+            raise self._ownership_error() from None
+        if status.get("state") != "quiescent":
+            raise self._ownership_error("package_scope_live_recovery_required")
+        current = self._policy_current()
+        if current not in (POLICY_SENTINEL, original):
+            raise PrerequisiteError("Package service policy changed outside installer", code="existing_policy_changed")
+        # Quiescence is not a package-success marker. Interrupted dpkg state is
+        # an explicit repair checkpoint, never an unpinned automatic configure.
+        if self._run(["dpkg", "--audit"]):
+            raise PrerequisiteError(
+                "Owned package scope is quiescent but dpkg audit requires repair; retain the "
+                "transaction record and inhibitor. Review a pinned repair under package ownership before retry.",
+                code="package_database_repair_required")
+        self.guard()
+        if original is None:
+            if current is not None:
                 self.policy_path.unlink()
-            else:
-                atomic_bytes(self.policy_path, original, mode=saved["mode"])
-            # Root's tiny policy must be restored even after mount loss. Touch the
-            # data marker only after identity has been checked again.
-            self.guard()
-            marker.unlink()
+        else:
+            # Also repairs a crash after bytes were restored but before mode or
+            # marker retirement. Preserve all original permission bits exactly.
+            atomic_bytes(self.policy_path, original, mode=saved["mode"])
+        policy_fd = os.open(self.policy_path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(policy_fd)
+        finally:
+            os.close(policy_fd)
+        self.guard()
+        # Gate retirement precedes marker retirement. No new process may be
+        # launched from this gate; the exact retained invocation is terminal.
+        gate = self.state / "package-execution-gate.json"
+        if gate.exists() or gate.is_symlink():
+            self._validate_state_path(gate)
+            gate.unlink()
+        marker.unlink()
+        state_fd = os.open(self.state, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(state_fd)
+        finally:
+            os.close(state_fd)
+        return {"changed": True, "package_database_audited": True}
+
+    def package_transaction(self, argv, *, timeout=120, env=None):
+        """Public package mutation boundary, shared by prerequisite/container stages.
+
+        Constructor config supplies the verified data/state root; storage_guard
+        is rechecked before writes. Runner must borrow the caller's canonical
+        lifecycle lease. argv must be the caller's already-reviewed/pinned apt-get
+        plan with explicit data-backed cache/log options. This boundary owns the
+        ONE policy marker/inhibitor and manager identity, including recovery.
+        Successful return proves scope exit and a clean dpkg audit; the caller
+        must still verify its package/version postconditions before stage success.
+        """
+        self.recover_policy()
+        assert_package_admission(self.data, self.guard, policy_path=self.policy_path)
+        self._guard()
+        try:
+            identity = self.runner.package_identity()
+        except Exception as exc:
+            raise self._ownership_error(getattr(exc, "code", "package_borrowed_lifecycle_lease_required")) from None
+        marker = self.state / "package-service-policy.json"
+        gate = self.state / "package-execution-gate.json"
+        if gate.exists() or gate.is_symlink():
+            raise self._ownership_error("package_execution_gate_orphaned")
+        current = self._policy_current()
+        saved = {"schema_version": 2, "existed": current is not None,
+                 "original_hex": (current or b"").hex(),
+                 "mode": stat.S_IMODE(self.policy_path.stat().st_mode) if current is not None else 0o755,
+                 "transaction": identity, "phase": "preparing"}
+        # Both previous policy and allocated unique unit identity precede start.
+        self._write_json(marker, saved)
+        self._guard()
+        atomic_bytes(self.policy_path, POLICY_SENTINEL, mode=0o755)
+        try:
+            saved["transaction"] = self.runner.prepare_package(identity, gate_path=gate, timeout=timeout)
+            saved["phase"] = "owned"
+            self._write_json(marker, saved)
+            self.runner.hold_package_lease(saved["transaction"])
+            self._guard()
+            return self.runner.run_package(saved["transaction"], argv, gate_path=gate,
+                                           timeout=timeout, env=env)
+        except Exception as exc:
+            raise PrerequisiteError(
+                "Owned package command failed; check transaction recovery and dpkg audit before retry.",
+                code=getattr(exc, "code", "package_command_failed")) from None
+        finally:
+            # No unconditional restore: recovery revalidates persisted ownership,
+            # recursive liveness and the existing policy on EVERY exit path.
+            self.recover_policy()
+
+    def _package_install(self, argv, timeout=120, env=None):
+        """Compatibility alias; new stages should use package_transaction."""
+        return self.package_transaction(argv, timeout=timeout, env=env)
 
     def _install(self, group):
         self._assert_root()
@@ -319,8 +446,7 @@ class Prerequisites:
                 *[n + "=" + v for n, v in sorted(all_pins.items())]]
         self._apt(["--download-only", *args], timeout=3600)
         self._guard(root_bound)
-        with self._inhibit_services():
-            self._apt(["--no-download", *args], timeout=3600)
+        self._apt(["--no-download", *args], timeout=3600)
         if not self._installed(all_pins):
             raise PrerequisiteError("Package postcondition failed")
         self._guard()
@@ -353,7 +479,8 @@ class Prerequisites:
 
     def check_driver(self):
         self.guard()
-        if (self.state / "package-service-policy.json").exists():
+        if ((self.state / "package-service-policy.json").exists()
+                or (self.state / "package-service-policy.json").is_symlink()):
             return False
         if self.checkpoint_path.exists():
             self._validate_state_path(self.checkpoint_path)
