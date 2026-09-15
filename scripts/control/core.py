@@ -19,7 +19,7 @@ import time
 import uuid
 
 from common.lifecycle_lease import acquire_lease, LeaseBusy, LeaseError
-from .catalog import Catalog, _endpoint
+from .catalog import Catalog, _endpoint, advertised_endpoint
 from .journal import JournalCorrupt, JournalUnavailable
 from .protocol import ControlError, Deadline, PackageBlocked, StorageUnavailable
 
@@ -158,10 +158,12 @@ class _Ticket:
 
 class Application:
     def __init__(self, backend, journal, *, lease_factory=acquire_lease,
-                 transition_seconds=8000, admission_seconds=2, read_seconds=2):
+                 transition_seconds=8000, admission_seconds=2, read_seconds=2,
+                 advertised_policy=None):
         if not 0 < transition_seconds <= 14400 or not 0 < admission_seconds <= 5 or not 0 < read_seconds <= 5:
             raise ValueError("invalid_deadlines")
         self.backend, self.journal, self.lease_factory = backend, journal, lease_factory
+        self.advertised_policy = copy.deepcopy(advertised_policy)
         self.transition_seconds, self.admission_seconds, self.read_seconds = transition_seconds, admission_seconds, read_seconds
         self._state_lock = threading.RLock()
         self._admission = threading.Lock()
@@ -334,13 +336,15 @@ class Application:
 
     def _read(self, catalog=False):
         self._try_refresh()
+        raw = {}
         try:
             deadline = Deadline.after(self.read_seconds)
             session = self.backend.open()
-            (snapshot, fingerprint), _ = self._fresh(session, deadline)
+            (snapshot, fingerprint), raw = self._fresh(session, deadline)
             records = session.catalog(deadline) if catalog else None
             deadline.remaining()
         except Exception as exc:
+            raw = {}
             try:
                 if not isinstance(exc, StorageUnavailable):
                     raise exc
@@ -369,7 +373,8 @@ class Application:
             snapshot["schema_version"] = 1
             snapshot["failure_code"] = snapshot["failure_code"] or self._journal_error
         if catalog:
-            snapshot["entries"] = Catalog(records).public(snapshot)
+            snapshot["entries"] = Catalog(records).public(snapshot, advertised_policy=self.advertised_policy)
+        snapshot["endpoint"] = advertised_endpoint(snapshot["endpoint"], raw.get("model_id"), self.advertised_policy)
         snapshot.pop("ready_proof", None)
         return 200, snapshot
 

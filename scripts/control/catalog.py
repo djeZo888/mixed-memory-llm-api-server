@@ -149,6 +149,23 @@ def _endpoint(value: object) -> dict | None:
             "server_relative": True, "ready": False}
 
 
+def advertised_endpoint(endpoint: dict | None, model_id: str | None, policy: dict | None) -> dict | None:
+    """Project a sanitized loopback DTO using only a trusted N1S policy.
+
+    Policy is the output of private_network.load_policy(), never request input.
+    An unexposed future model or a different deployed port retains tunnel URLs.
+    This changes no lifecycle endpoint, launch argument or readiness evidence.
+    """
+    result = deepcopy(endpoint)
+    role = {"unsloth/GLM-5.3-GGUF": "glm", "Qwen/Qwen3.8-27B-FP8": "qwen38"}.get(model_id)
+    if result is not None and policy is not None and role is not None:
+        port = policy["ports"][role]
+        if result["base_url"] == f"http://127.0.0.1:{port}/v1":
+            result.update(base_url=f"http://{policy['private_address']}:{port}/v1",
+                          address_scope="private_network", server_relative=False)
+    return result
+
+
 class Catalog:
     """Immutable, sanitized installed-entry snapshot with known-ID lookup.
 
@@ -221,7 +238,7 @@ class Catalog:
             raise ValueError("target_unavailable")
         return deepcopy(record)
 
-    def public(self, snapshot: dict) -> list[dict]:
+    def public(self, snapshot: dict, *, advertised_policy: dict | None = None) -> list[dict]:
         """Merge a fresh trusted observation into allowlisted installed metadata.
 
         Polling timestamps and saved state alone never establish readiness.
@@ -275,6 +292,7 @@ class Catalog:
             record["switch_effect"] = "interrupts_inference"
             if record["endpoint"] is not None:
                 record["endpoint"]["ready"] = state == "ready"
+            record["endpoint"] = advertised_endpoint(record["endpoint"], record["model_id"], advertised_policy)
             result.append(record)
         return result
 

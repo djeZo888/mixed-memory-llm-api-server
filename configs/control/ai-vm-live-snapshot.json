@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "kind": "reviewed_source_selection",
+  "status": "OWNER_FINAL_GLM_RUNTIME_DEPLOYMENT_AND_PROOF_CLOSURE_REQUIRED",
+  "source_root": "/usr/local/lib/llm-server/control-api",
+  "config_root": "/usr/local/lib/llm-server/control-api/configs",
+  "source_closure_manifest": "scripts/control/source-closure.json",
+  "offered_models": [
+    {
+      "id": "glm-5.3-ud-q4-k-xl",
+      "model_id": "unsloth/GLM-5.3-GGUF",
+      "runtime": null,
+      "network_role": "glm",
+      "composition_owner": "D3PD/D3T",
+      "runtime_source": null,
+      "runtime_sha256": null,
+      "measured_image_id": null,
+      "patched_image_proof": null,
+      "recipe_dependency_closure": null,
+      "deployment_source": null,
+      "deployment_sha256": null
+    },
+    {
+      "id": "qwen38-27b-fp8",
+      "model_id": "Qwen/Qwen3.8-27B-FP8",
+      "runtime": "sglang-qwen38-0.5.19",
+      "network_role": "qwen38",
+      "deployment_sources": [
+        "configs/deployments/qwen38-27b-128k.json",
+        "configs/deployments/qwen38-27b-256k.json"
+      ],
+      "context_evidence": "declared_only"
+    }
+  ],
+  "fixed_profile_sha256": {
+    "configs/models/glm-5.3-ud-q4-k-xl.json": "857924551fa83c546bb99f7b524b35c8d79d0cb9ba0a666e0c139bbace0e7e0d",
+    "configs/models/qwen38-27b-fp8.json": "fb62b2689a4c57aa1265b1262830c8d0e3983061c9674640ec9704ce603a44be",
+    "configs/runtimes/sglang-qwen38-0.5.19.json": "17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11",
+    "configs/deployments/qwen38-27b-128k.json": "cee5253c28bd8ff36f33630f27642cc9cdd3857eaa108bd177488efd6a0d133f",
+    "configs/deployments/qwen38-27b-256k.json": "462ed5792940890eaa410c3c6dd4996c6723157eee5fb7021ee210ed2f78523a"
+  },
+  "publication_rule": "Copy exactly the fixed profiles plus the separately owner-reviewed GLM runtime, deployment, measured patched image proof and recipe dependency closure; do not copy profile directories recursively. Old D1 runtime is baseline/rollback only, not selected. This file is an operator handoff, not a runtime configuration loader or an installation receipt.",
+  "live_acceptance": "NOT_TESTED"
+}

@@ -164,11 +164,13 @@ class ManagerSession:
                        observed='unknown' if running else 'stopped', recovery_trusted=recovery)
             raw['ready_proof'] = {}
             raw['endpoint'] = None
+            raw['model_id'] = None
             if not recovery and state.get('selected'):
                 try:
                     selected = manager.deployment(state['selected'])
                     if not selected.get('legacy') and selected['endpoint']['port'] != 30000:
                         raw['endpoint'] = {**selected['endpoint'], 'authentication_required': True}
+                        raw['model_id'] = selected['_model']['repo_id']
                 except Exception:
                     pass
             if identity:
@@ -259,6 +261,7 @@ class ManagerSession:
         return self._dispatch('start', lease, deadline)
 
 
-def production_application(config_root, control_key):
+def production_application(config_root, control_key, *, advertised_policy=None):
     backend = ProductionBackend(config_root, control_key=control_key)
-    return Application(backend, Journal(ManagerJournalStore(backend.load)))
+    return Application(backend, Journal(ManagerJournalStore(backend.load)),
+                       advertised_policy=advertised_policy)

@@ -19,6 +19,7 @@ RECOVERY_FILES = (
     'scripts/control/core.py', 'scripts/control/protocol.py',
     'scripts/control/journal.py', 'scripts/control/catalog.py',
     'scripts/control/discovery.py', 'scripts/control/http.py',
+    'scripts/control/private_network.py',
     'scripts/common/lifecycle_lease.py',
     'scripts/lifecycle/__init__.py', 'scripts/lifecycle/manager.py',
     'scripts/lifecycle/runtime_io.py', 'scripts/lifecycle/storage_binding.py',
@@ -96,6 +97,45 @@ def _key(raw):
     return value
 
 
+def _control_config(device):
+    raw = protected_file(CONFIG_FILE, modes={0o600}, maximum=256, root_device=device)
+    def unique(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise InstallationError()
+            value[key] = item
+        return value
+    try:
+        config = json.loads(raw, object_pairs_hook=unique)
+        if (type(config) is not dict or 'schema_version' not in config
+                or set(config) - {'schema_version', 'advertised_endpoint_policy'}
+                or type(config['schema_version']) is not int or config['schema_version'] != 1
+                or ('advertised_endpoint_policy' in config
+                    and config['advertised_endpoint_policy'] != 'private_network')):
+            raise InstallationError()
+    except (ValueError, UnicodeError):
+        raise InstallationError() from None
+    return config
+
+
+def read_advertised_policy():
+    """Optional DTO setting; exposure policy failure cannot block local recovery.
+
+    Call only after validate_installation() has protected the import closure.
+    No network policy file is required for control startup or trusted stop.
+    Unrelated config/code integrity failures remain fatal.
+    """
+    config = _control_config(Path('/').stat().st_dev)
+    if 'advertised_endpoint_policy' not in config:
+        return None
+    from .private_network import load_policy, PrivateNetworkError
+    try:
+        return load_policy()
+    except PrivateNetworkError:
+        return None
+
+
 def validate_installation():
     if os.geteuid() != 0 or Path(__file__).resolve() != SOURCE_ROOT / 'scripts/control/installation.py':
         raise InstallationError()
@@ -108,21 +148,7 @@ def validate_installation():
         path = SOURCE_ROOT / relative
         if path.exists() or path.is_symlink():
             protected_file(path, root_device=device)
-    raw = protected_file(CONFIG_FILE, modes={0o600}, maximum=256, root_device=device)
-    def unique(pairs):
-        value = {}
-        for key, item in pairs:
-            if key in value:
-                raise InstallationError()
-            value[key] = item
-        return value
-    try:
-        config = json.loads(raw, object_pairs_hook=unique)
-        if (type(config) is not dict or set(config) != {'schema_version'}
-                or type(config['schema_version']) is not int or config['schema_version'] != 1):
-            raise InstallationError()
-    except (ValueError, UnicodeError):
-        raise InstallationError() from None
+    _control_config(device)
     source = _key(protected_file(KEY_SOURCE, modes={0o600}, maximum=257, root_device=device))
     credential = _key(protected_file(CREDENTIAL_FILE, modes={0o400, 0o600}, maximum=257))
     if not hmac.compare_digest(source, credential):

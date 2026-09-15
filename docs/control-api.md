@@ -6,27 +6,26 @@ U1B binds the reviewed U1 core to actual L1 `load_manager`, package admission,
 canonical borrowed leases, preflight, dispatch and protected recovery APIs. The
 fixed production entrypoint validates installed source/config/credentials before
 opening a listener. There is no fixture fallback or runtime configuration input.
-**Combined production review remains required.** The base L1/I1W anchored writer
-has a known `check_path` forwarding gap. Isolated composition with committed
-L1B `9cb9395` and the frozen I1c Storage overlay passes all 180 control tests.
-I1c final source and combined review remain required; controlled-resource HTTP
-results are not installed-host acceptance.
+L2 composes the reviewed lifecycle source and extracts the required Storage
+role-read contract. Focused actual writer/control checks and their limits are
+recorded in `reports/l2-runtime-control-binding.md`. The historical whole
+installer work is paused; source tests do not establish installed-host acceptance.
 
 The API is separate from inference: IPv4 `127.0.0.1:30000`, a dedicated control
 bearer key, JSON only. It serves no UI, inference proxy, agent tools or browser
-control. I1c owns installation and enabling of the source unit template.
+control. Worker1 owns later L2VM deployment; installer work remains stopped.
 
 ## Authentication and bounds
 
 Every route, including unknown routes and unsupported methods, requires
 `Authorization: Bearer <locally-provisioned-control-key>`. Missing/wrong keys
-return the same 401 error. The installer must provision a distinct random control
+return the same 401 error. The deployment owner must provision a distinct random control
 key (32–256 nonspace ASCII bytes), root-owned mode 0600, and reuse it on resume.
 It must never reuse the inference key. The dedicated source is fixed at `/etc/llm-server/control-api-key`, root:root
 0600 on the root filesystem; the inference key stays at its registered data
 path. `LoadCredential` uses that root-resident source and the service reads the
 fixed `/run/credentials/llm-control.service/control-api-key` copy. Both survive
-loss of model/data storage for a new control process. Installer provisioning
+loss of model/data storage for a new control process. Deployment provisioning
 must compare protected inference/control bytes and reject shared paths/inodes
 when inference evidence exists. The adapter also compares actual key values
 before start; missing/equal inference credentials cannot establish Ready and
@@ -122,7 +121,7 @@ requests and agent sessions have no lifecycle lease, drain guarantee or session
 reservation. `switch_effect` is always `interrupts_inference`. Stop may terminate
 an in-flight response/stream. Stop during another transition returns 409; no
 preemptive cancellation or force-kill route exists. The source service template's
-process termination and reboot behavior require I1c/I2 acceptance.
+process termination and reboot behavior require later live acceptance.
 
 Deadlines are finite (default operation 8,000 seconds, maximum 14,400; reads and
 admission 2 seconds, maximum 5). The explicit test port must honor each supplied
@@ -177,11 +176,11 @@ on that port is unavailable and cannot be selected until its lifecycle owner
 assigns a nonconflicting inference port.
 
 The current approved published roster is exactly **GLM5.3 and Qwen3.8-27B FP8**.
-I1c owns the protected installed `configs/deployments` snapshot and default
+L2VM owns the protected installed `configs/deployments` snapshot and default
 selection. It must omit Coder-Next and other deferred deployments from that
 snapshot, even if their downloaded acquisition evidence remains. The catalog
 enumerates published deployment profiles only; saved state and instance evidence
-keys do not add entries. This is an installer publication policy, not a permanent
+keys do not add entries. This is a current-host publication policy, not a permanent
 maximum of two or model-specific routing code. Historical source/tests may remain
 marked deferred. Q38 runtime/source and import-closure integration need their
 owners' combined review before activation.
@@ -227,15 +226,16 @@ authenticated expected-model response and runtime health. Loading requires an
 owned live operation. Saved state and `/v1/models` during warmup are insufficient.
 Missing data remains unavailable/unknown.
 
-An endpoint contains `base_url`, `served_model`, `authentication_required:true`,
+By default an endpoint contains `base_url`, `served_model`, `authentication_required:true`,
 `server_relative:true`, `address_scope:server_loopback`, and `ready`. Its URL is
 relative to the server's loopback, not the remote client's. Port and alias may
 change with each switch. Tunnel that port, use the separate local inference key,
-and refresh discovery before reconnecting. There is no permanent routed URL.
+and refresh discovery before reconnecting. The optional approved LAN DTO policy
+is defined below; there is no permanent model-selection URL.
 
-## Installer and verification handoff
+## Source deployment and verification handoff
 
-The exact installer contract is checked in at
+The historical installer contract (currently paused) is checked in at
 `reports/u1b-installer-contract.md`. `scripts/control/llm-control.service.in`
 installs as **llm-control.service** with only `@REGISTERED_DATA_ROOT@`
 substituted from the fixed protected storage registration. Source root is
@@ -244,12 +244,13 @@ and the control key must be on the root filesystem. The exact required recovery
 import list and normal-only resources are in `scripts/control/source-closure.json`.
 The separate directory respects L1's existing exact boot-recovery file set.
 No model, instance, data directory or profile is required just to start the
-listener. Normal operations retain all full gates. I1c must install the reviewed
+listener. Normal operations retain all full gates. L2VM must publish the reviewed
 closure, protect all ancestors, and provide `/run/llmctl` root0700 via boot
 tmpfiles without removing its shared recovery record on unit shutdown.
 
-Fixed config: `/etc/llm-server/control.json`, root:root 0600, exactly
-`{"schema_version":1}`. No path/host/port/command/backend/environment overrides.
+Fixed config: `/etc/llm-server/control.json`, root:root 0600, defaults to
+`{"schema_version":1}`, with the optional `advertised_endpoint_policy` setting
+defined below. No path/host/port/command/backend/environment overrides.
 Journal: registered data role plus `services/llm-control/operations.json`,
 root0600. Reads use actual `binding.read_json`; writes use actual
 `Manager.persistent_json` and its anchored storage owner. Missing/corrupt/unmounted
@@ -290,5 +291,48 @@ closure is tested in a fresh process from `/`; this does not simulate installed
 systemd. See `reports/u1b-control-binding.md` for exact counts and evidence limits.
 Real two-installed-model switches, discovered-endpoint inference/OpenCode,
 interrupted inference streams, Linux mount detach, service/reboot recovery and
-whole/fresh installation remain NOT_TESTED. I1c/I2 and live acceptance owners must
+whole/fresh installation remain NOT_TESTED. Installer work is paused; live acceptance owners must
 complete those checks after combined review.
+
+## Current ai-vm advertised endpoints (L2 source contract)
+
+The protected root0600 `/etc/llm-server/control.json` may select the N1S policy:
+
+```json
+{"schema_version":1,"advertised_endpoint_policy":"private_network"}
+```
+
+No host, port or URL override is accepted. `read_advertised_policy()` consumes
+`control.private_network.load_policy()` with no arguments after root source
+validation. Only the N1S fixed protected `/etc/llm-server/network.json` supplies
+`10.156.100.60` and role ports 30000/30002/30004. The control listener and every
+backend endpoint remain authenticated loopback. N1S owns the private transport.
+
+Public catalog/status DTOs map `unsloth/GLM-5.3-GGUF` to `glm` and
+`Qwen/Qwen3.8-27B-FP8` to `qwen38`. A DTO receives the private host only when its
+validated deployed profile port matches that role's protected policy port. Its
+served-model alias remains the actual profile alias. For example, an approved
+GLM deployment reports `http://10.156.100.60:30002/v1`,
+`address_scope: "private_network"`, `server_relative: false`. Generic future
+models and unmatched ports retain their existing tunnel DTOs. Header values
+(`Host`, `Forwarded`, `X-Forwarded-*`) never supply an advertised origin.
+
+The optional policy is resolved at control startup. Missing or invalid N1S
+policy raises the safe `PrivateNetworkError` and falls back to the existing
+loopback/tunnel DTO; it does not disable local authenticated control, status,
+or trusted stop/recovery. Configuration and source integrity failures still
+fail closed. The N1S Python module is part of the root source closure, but the
+network policy file is not a recovery dependency. A subsequently changed
+protected policy requires control restart to refresh this DTO snapshot.
+
+Advertisement does not prove a reachable listener, firewall protection or
+remote authentication. Endpoint `ready` continues to reflect existing backend
+observation; direct LAN acceptance remains Worker1/remote-client work. Current
+transport is trusted LAN HTTP. No TLS, CORS or frontend behavior is introduced.
+
+The installed two-model source selection and real receipt prerequisites are in
+[the L2 snapshot handoff](l2-live-snapshot.md). Configured context is declared;
+occupied context remains unknown without separate live evidence. Focused
+source checks: `python3 tests/test_l2_advertised_endpoints.py -v` and
+`python3 tests/test_l2_control_runtime.py -v`. Actual deployed service, Linux
+mount loss and inference remain **NOT_TESTED** by these checks.

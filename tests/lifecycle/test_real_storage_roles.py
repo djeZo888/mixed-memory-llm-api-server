@@ -5,12 +5,13 @@ path mapping, synthetic read-only command responses, injected mountinfo and the
 writer's ordinary-user uid seam keep all filesystem operations in worker temp
 directories. These tests do not establish actual Linux mount acceptance.
 
-The role integration class intentionally fails once at setup until published
-I1c Storage provides its frozen roles API. A preparation fixture is not a PASS
-for that missing source. Run with unittest discover using this file's name.
+The runtime-only L2 extraction supplies the role API from the frozen Storage
+patch. Run with unittest discover using this file's name; no installer workflow
+or Linux mount mutation executes.
 """
 from __future__ import annotations
 
+import copy
 import inspect
 import json
 import os
@@ -172,7 +173,7 @@ class RealRoleFixture:
 
 class RealStorageDiscoveryFixtureTests(unittest.TestCase):
     def test_preparation_uses_actual_full_verifier_and_real_writer(self):
-        """A full-role fixture smoke test does not close pending role acceptance."""
+        """Normal full verification and the actual descriptor writer compose."""
         for layout in ("equal", "nested", "sibling"):
             with self.subTest(layout=layout):
                 fixture = RealRoleFixture(layout=layout)
@@ -193,7 +194,7 @@ class RealStorageRoleIntegrationTests(unittest.TestCase):
         missing = [name for name in ("verify", "guard", "root_payload_guard")
                    if "roles" not in inspect.signature(getattr(Storage, name)).parameters]
         if missing:
-            raise AssertionError("I1c published role-capable Storage dependency pending: missing roles= on "
+            raise AssertionError("runtime role-capable Storage dependency missing roles= on "
                 + ", ".join(missing) + "; real Storage role integration is NOT PASSED")
 
     def fixture(self, **kwargs):
@@ -272,6 +273,123 @@ class RealStorageRoleIntegrationTests(unittest.TestCase):
                     with self.assertRaisesRegex(BindingError, "^mounted_storage_guard_failed$"):
                         guard.check_path(fixture.models + "/denied-model.json")
                 self.assertFalse(Path(fixture.models + "/denied-model.json").exists())
+
+    def test_reduced_roles_require_protected_registration_and_keep_full_identity(self):
+        fixture = self.fixture(layout="sibling")
+        supplied = copy.deepcopy(fixture.registration)
+        supplied["models"]["uuid"] = "changed-unverified-model-uuid"
+        with self.assertRaisesRegex(StorageError, "caller registration conflicts"):
+            fixture.storage.verify(registration=supplied, roles=("data",))
+        registry = fixture.base / "etc/local-ai-server/storage.json"
+        registry.chmod(0o644)
+        with self.assertRaisesRegex(StorageError, "private small regular file"):
+            fixture.storage.guard(roles=("data",))
+        registry.unlink()
+        with self.assertRaisesRegex(StorageError, "requires root-owned registration"):
+            fixture.storage.verify(registration=fixture.registration, roles=("data",))
+
+    def test_invalid_role_selection_fails_before_discovery(self):
+        fixture = self.fixture()
+        before = list(fixture.runner.calls)
+        for roles in ((), [], "data", None, ("data", "unknown")):
+            with self.subTest(roles=roles), self.assertRaisesRegex(StorageError, "verification roles"):
+                fixture.storage.guard(roles=roles)
+        self.assertEqual(fixture.runner.calls, before)
+
+    def test_recovery_never_probes_absent_model_mount_or_capacity(self):
+        fixture = self.fixture(layout="sibling")
+        fixture.remove_model_mount()
+        fixture.runner.calls.clear()
+        snapshot = fixture.storage.root_payload_guard(roles=("data",))
+        self.assertEqual(Storage._identity(snapshot), Storage._identity(fixture.registration))
+        self.assertEqual(snapshot["root_payload_scan"]["status"], "pass")
+        for call in fixture.runner.calls:
+            self.assertIn(call[0], {"lsblk", "findmnt", "df"})
+            self.assertNotEqual(call[-1], fixture.models)
+        self.assertIsNone(snapshot["capacity"]["model_available_bytes"])
+        with self.assertRaisesRegex(StorageError, "dedicated mount is absent"):
+            fixture.storage.guard()
+
+    def test_data_only_rejects_changed_uuid_mount_and_unverified_configuration(self):
+        fixture = self.fixture(layout="sibling")
+        data = next(block for block in fixture.runner.blocks if block["uuid"] == "fixture-data-uuid")
+        data["uuid"] = "changed-data-uuid"
+        with self.assertRaisesRegex(StorageError, "UUID changed"):
+            fixture.storage.verify(roles=("data",))
+        data["uuid"] = "fixture-data-uuid"
+        data["mountpoints"] = [None]
+        with self.assertRaisesRegex(StorageError, "dedicated mount is absent"):
+            fixture.storage.verify(roles=("data",))
+        data["mountpoints"] = [fixture.data]
+        fixture.storage.config["model_uuid"] = "changed-unverified-model-uuid"
+        with self.assertRaisesRegex(StorageError, "configuration differs"):
+            fixture.storage.verify(roles=("data",))
+
+    def test_whole_volume_alias_refused_but_unrelated_subtree_bind_allowed(self):
+        fixture = self.fixture(layout="sibling")
+        path = fixture.base / "proc/self/mountinfo"
+        path.parent.mkdir(parents=True)
+        device = fixture.registration["data"]["device"]
+        subtree = (f"8 2 {device} /services/container {fixture.data}/docker/containers/active "
+                   "rw - ext4 /dev/fixture-data1 rw\n")
+        path.write_text(fixture.mountinfo + subtree)
+        fixture.storage.verify()
+        fixture.storage.guard(roles=("data",))
+        for alias in ("/unregistered-alias", "/unregistered\\040alias"):
+            path.write_text(fixture.mountinfo + subtree
+                + f"9 1 {device} / {alias} rw - ext4 /dev/fixture-data1 rw\n")
+            for roles in (("data", "models"), ("data",)):
+                with self.subTest(alias=alias, roles=roles), self.assertRaisesRegex(StorageError, "whole-filesystem mount alias"):
+                    fixture.storage.verify(roles=roles)
+
+    def test_whole_volume_alias_fixture_fallback_and_invalid_namespace_refused(self):
+        fixture = self.fixture()
+        data = next(block for block in fixture.runner.blocks if block["uuid"] == "fixture-data-uuid")
+        data["mountpoints"].append("/unregistered-volume-alias")
+        with self.assertRaisesRegex(StorageError, "whole-filesystem mount alias"):
+            fixture.storage.verify(roles=("data",))
+        data["mountpoints"].pop()
+        path = fixture.base / "proc/self/mountinfo"
+        path.parent.mkdir(parents=True)
+        for malformed in (b"", b"truncated\n", b"\xff"):
+            path.write_bytes(malformed)
+            with self.subTest(malformed=malformed), self.assertRaisesRegex(StorageError, "mount namespace identity is unavailable"):
+                fixture.storage.verify(roles=("data",))
+
+    def test_real_role_guard_refuses_same_device_nested_mount_before_write(self):
+        for layout in ("equal", "nested", "sibling"):
+            with self.subTest(layout=layout):
+                fixture = self.fixture(layout=layout)
+                state = Path(fixture.binding.path("services", "llm-manager"))
+                state.mkdir(mode=0o700)
+                with fixture.lease(), fixture.binding.mounted_guard(fixture.api, roles=("data",)) as guard:
+                    with fixture.anchored_root(fixture.binding.path("services"), guard) as anchor:
+                        anchor.atomic_json("llm-manager/state.json", {"generation": 1})
+                        device = fixture.registration["data"]["device"]
+                        fixture.mountinfo += (f"8 2 {device} /elsewhere {state} "
+                                              "rw - ext4 /dev/fixture-data1 rw\n")
+                        # The registered service root still passes. The actual
+                        # operation traverses the new same-device descendant.
+                        guard()
+                        with self.assertRaisesRegex(BindingError, "mounted_storage_guard_failed"):
+                            anchor.atomic_json("llm-manager/state.json", {"generation": 2})
+                        self.assertEqual(json.loads((state / "state.json").read_text()), {"generation": 1})
+                        self.assertEqual([path.name for path in state.iterdir()], ["state.json"])
+
+    def test_real_data_only_writer_retains_unverified_registration_byte_guard(self):
+        fixture = self.fixture(layout="sibling")
+        fixture.remove_model_mount()
+        registry = fixture.base / "etc/local-ai-server/storage.json"
+        original = registry.read_bytes()
+        with fixture.lease(), fixture.binding.mounted_guard(fixture.api, roles=("data",)) as guard:
+            with fixture.anchored_root(fixture.binding.path("services"), guard) as anchor:
+                registry.write_bytes(original.replace(b"fixture-model-uuid", b"changed-model-uuid"))
+                try:
+                    with self.assertRaisesRegex(BindingError, "mounted_storage_guard_failed"):
+                        anchor.atomic_json("forbidden.json", {})
+                    self.assertFalse(Path(fixture.binding.path("services", "forbidden.json")).exists())
+                finally:
+                    registry.write_bytes(original)
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@
     "scripts/control/catalog.py",
     "scripts/control/discovery.py",
     "scripts/control/http.py",
+    "scripts/control/private_network.py",
     "scripts/common/lifecycle_lease.py",
     "scripts/lifecycle/__init__.py",
     "scripts/lifecycle/manager.py",

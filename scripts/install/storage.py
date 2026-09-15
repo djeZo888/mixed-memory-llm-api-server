@@ -23,6 +23,14 @@ FSTYPES = {"ext4", "xfs"}
 UUID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]{3,127}$")
 
 
+def verified_roles(roles):
+    """Explicit live role requirements; never alter the registered identity."""
+    if (not isinstance(roles, (tuple, list, set, frozenset)) or not roles
+            or any(role not in {"data", "models"} for role in roles)):
+        raise StorageError("invalid storage verification roles")
+    return tuple(role for role in ("data", "models") if role in roles)
+
+
 class StorageError(RuntimeError):
     """Safe operator error; raw subprocess output must not appear here."""
 
@@ -179,9 +187,50 @@ class Storage:
         if same_uuid != [source]:
             raise StorageError("filesystem UUID is duplicated or inconsistent")
         parents = self._safe_block(blocks, source, protected)
+        self._whole_volume_aliases(source, mount["maj:min"], blocks)
         return {"path": path, "mount": mount["target"], "uuid": fs_uuid,
                 "fstype": mount["fstype"], "source": source,
                 "device": mount["maj:min"], "parents": parents}
+
+    def _whole_volume_aliases(self, source, device, blocks):
+        """Reject a second whole-filesystem exposure outside registered roots.
+
+        A Docker bind of a subtree has a non-root mountinfo filesystem root;
+        unrelated devices/overlay mounts are not duplicate volume exposure.
+        The source's unique UUID was verified against lsblk immediately above.
+        No environment or caller override can nominate another live identity.
+        """
+        allowed = {self.data_dir, self.model_dir}
+        path = self._local("/proc/self/mountinfo")
+        try:
+            with path.open("rb") as stream:
+                raw = stream.read(8 * 1024 ** 2 + 1)
+            if len(raw) > 8 * 1024 ** 2:
+                raise ValueError()
+            lines = raw.decode("utf-8", errors="strict").splitlines()
+            if not lines:
+                raise ValueError()
+            for line in lines:
+                fields = line.split()
+                marker = fields.index("-", 6)
+                if len(fields) != marker + 4:
+                    raise ValueError()
+                if fields[2] != device:
+                    continue
+                decode = lambda value: re.sub(r"\\(040|011|012|134)", lambda m: chr(int(m[1], 8)), value)
+                filesystem_root, target = decode(fields[3]), decode(fields[4])
+                if filesystem_root == "/" and target not in allowed:
+                    raise StorageError("unregistered whole-filesystem mount alias")
+        except FileNotFoundError:
+            if self.system_root == Path("/"):
+                raise StorageError("mount namespace identity is unavailable") from None
+            # Existing explicit worker fixtures describe whole mounts in lsblk.
+            # Fixtures for subtree binds supply actual-format mountinfo below
+            # their system_root. This fallback is unreachable on an installed host.
+            if any(target and target not in allowed for target in blocks[source].get("mountpoints", [])):
+                raise StorageError("unregistered whole-filesystem mount alias") from None
+        except (OSError, ValueError, UnicodeError, IndexError):
+            raise StorageError("mount namespace identity is unavailable") from None
 
     def _roots(self):
         roots = {name: self.data_dir + "/" + suffix for name, suffix in {
@@ -227,8 +276,8 @@ class Storage:
             except (ValueError, IndexError):
                 raise StorageError("cannot determine free storage capacity") from None
         return {"root_available_bytes": available("/"),
-                "data_available_bytes": available(snapshot["data"]["mount"]),
-                "model_available_bytes": available(snapshot["models"]["mount"]),
+                "data_available_bytes": available(snapshot["data"]["mount"]) if "data" in snapshot.get("verified_roles", ("data", "models")) else None,
+                "model_available_bytes": available(snapshot["models"]["mount"]) if "models" in snapshot.get("verified_roles", ("data", "models")) else None,
                 "shared_model_filesystem": snapshot["data"]["uuid"] == snapshot["models"]["uuid"]}
 
     @staticmethod
@@ -257,12 +306,52 @@ class Storage:
             raise StorageError("invalid registered storage schema") from None
         return value
 
-    def verify(self, registration=None):
+    def _role_snapshot(self, registered, roles):
+        """Reuse the registered-mount verifier without probing absent roles.
+
+        Unverified roles retain only stable identity fields, never stale device
+        observations. AnchoredRoot refuses access outside verified roles.
+        """
+        if (registered["roots"] != self._roots()
+                or registered["data"]["path"] != self.data_dir
+                or registered["models"]["path"] != self.model_dir):
+            raise StorageError("configuration differs from registered identity")
+        for role, key in (("data", "data_uuid"), ("models", "model_uuid")):
+            if self.config.get(key) not in (None, "", registered[role]["uuid"]):
+                raise StorageError("configuration differs from registered identity")
+        snapshot = self._identity(registered)
+        snapshot["storage_mode"] = self.mode
+        snapshot["verified_roles"] = list(roles)
+        blocks = self._blocks()
+        protected = self._protected_disks(blocks)
+        for role in roles:
+            expected = registered[role]
+            actual = self._registered_mount(expected["mount"], expected["uuid"], blocks, protected)
+            actual["path"] = expected["path"]
+            snapshot[role] = actual
+        for key, path in snapshot["roots"].items():
+            role = "models" if key == "models" else "data"
+            if role not in roles:
+                continue
+            local = self._no_symlink(path, protected=True)
+            if not local.is_dir():
+                raise StorageError("registered directory disappeared")
+            mount = self._mount(path)
+            if any(mount.get(field) != snapshot[role][expected]
+                   for field, expected in (("uuid", "uuid"), ("target", "mount"), ("maj:min", "device"))):
+                raise StorageError("storage root crosses an unregistered mount")
+        return snapshot
+
+    def verify(self, registration=None, *, roles=("data", "models")):
+        roles = verified_roles(roles)
         trusted = self.read_registration()
         if registration is not None and trusted is not None and self._identity(registration) != self._identity(trusted):
             raise StorageError("caller registration conflicts with root-owned storage identity")
         expected = trusted or registration
-        snapshot = self._snapshot()
+        if roles != ("data", "models") and trusted is None:
+            raise StorageError("role-specific verification requires root-owned registration")
+        snapshot = self._snapshot() if roles == ("data", "models") else self._role_snapshot(trusted, roles)
+        snapshot["verified_roles"] = list(roles)
         if expected is not None and self._identity(snapshot) != self._identity(expected):
             raise StorageError("configuration or mounted storage differs from registered identity")
         snapshot["capacity"] = self._capacity(snapshot)
@@ -272,10 +361,12 @@ class Storage:
         if snapshot["capacity"]["root_available_bytes"] < 6 * GIB:
             snapshot["warnings"].append("root filesystem has less than 6 GiB free")
         if expected is not None:
-            for path in snapshot["roots"].values():
+            for key, path in snapshot["roots"].items():
+                if ("models" if key == "models" else "data") not in roles:
+                    continue
                 if not self._local(path).is_dir():
                     raise StorageError("registered directory disappeared")
-            for key in ("secrets", "state"):
+            for key in (("secrets", "state") if "data" in roles else ()):
                 info = self._local(snapshot["roots"][key]).stat()
                 if info.st_uid != self.owner or info.st_mode & 0o077:
                     raise StorageError("private service directory ownership or mode changed")
@@ -283,13 +374,13 @@ class Storage:
 
     guard = verify
 
-    def root_payload_guard(self, registration=None):
+    def root_payload_guard(self, registration=None, *, roles=("data", "models")):
         """Read-only root payload scan; never follows symlinks or other mounts.
 
         Capacity and exact mounted registration are checked before scanning. A
         caller can only write a report after this returns successfully.
         """
-        snapshot = self.verify(registration)
+        snapshot = self.verify(registration, roles=roles)
         root_device = self.system_root.stat().st_dev
         excluded = [self._local(snapshot[key]["mount"]) for key in ("data", "models")]
 
