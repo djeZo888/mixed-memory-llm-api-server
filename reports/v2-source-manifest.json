@@ -1,0 +1,17 @@
+{
+  "files": {
+    "scripts/client/bootstrap.py": "ccf94f52a48346f02105112d93ee41010a6dd034406272e8a4a54d02fc12ca12",
+    "scripts/client/client_common.py": "b6e1b4995a717067846c4cd3835c72f7c493c5aaac4d09d985f9a93d2383e1b0",
+    "scripts/client/launch.py": "bb47de96ba33d1088589337876b1ec340d0c7e3157c284217abb45a955338278",
+    "scripts/client/package-lock.json": "eb4f16892e1e7d955fc8aa5e949f8c31b6c6d26d98acb3eb2f9be26d2673d3b7",
+    "scripts/client/package.json": "a690baa19cd430ef35f12d5c6e2c0d429539dd3150055cf1b34f7b060fe3489f",
+    "scripts/client/verifier_fixture/test_text_utils.py": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+    "scripts/client/verifier_fixture/text_utils.py": "8bff6135c956d931fa755b0cb4e25f19fc5dee661e88f51efbd3d7ec55dd4b44",
+    "scripts/client/verify.py": "fe812f23983bbcee6ea410fcf590f04438d3b799fb4b18b3681583fc60e5148b",
+    "scripts/client/verify_events.py": "46fba351bc6f6f6ebb59a29f33f258377865b7b6023a118c9fcd2d74d6291798",
+    "scripts/client/verify_integrity.py": "91314866b28b8abd2ba26dbac145785369bc1530889d3e8fe0972fd98cf8eadd"
+  },
+  "source_sha256": "91110fd3b069a6d313b450c7f8bd08f62f37e87c1a09ea3852e5b75597146ace",
+  "test_command_sha256": "d393af3c2be6b3f638d676c9acc0e4d11715a7d9dad0cd3a9cbe5d809bf457b0",
+  "test_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43"
+}
