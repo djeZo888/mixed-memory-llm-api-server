@@ -1,0 +1,515 @@
+{
+  "schema_version": 1,
+  "evidence_class": "actual_client_synthetic_http",
+  "status": "PASS",
+  "live_model_acceptance": false,
+  "server_readiness": "NOT_ASSESSED",
+  "provider_usage": "NOT_REPORTED",
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "FAIL",
+      "failures": [
+        "native_error_event",
+        "native_missing_terminal_stop",
+        "native_missing_implementation_edit",
+        "native_missing_exact_test_command",
+        "native_missing_passing_tool_result",
+        "native_missing_final_response",
+        "opencode_process_failed"
+      ],
+      "checks": {
+        "file_reads": true,
+        "implementation_edit": false,
+        "exact_test_command": false,
+        "passing_tool_result": false,
+        "final_response": false,
+        "immutable_tests": true,
+        "independent_final_rerun": false,
+        "process_tree_reaped": true
+      },
+      "initial_test": {
+        "classification": "assertion_failure",
+        "assertion_failures": 5,
+        "import_errors": 0,
+        "exit_code": 1
+      },
+      "process": {
+        "exit_code": 1,
+        "timed_out": false,
+        "output_limited": false,
+        "process_tree_reaped": true,
+        "elapsed_seconds": 0.974816
+      },
+      "native_tools": [
+        {
+          "event_sequence": 2,
+          "tool": "read",
+          "call_id_sha256": "47b922b6e822af6ef01eebd5d52f054f7f7cffc329347d160467e34aac63d5ae",
+          "status": "completed",
+          "file": "text_utils.py",
+          "path_within_workspace": true
+        },
+        {
+          "event_sequence": 5,
+          "tool": "read",
+          "call_id_sha256": "457b234071d24039da4f757ad30b15497cd8c77e932e53dead3f342a9d470100",
+          "status": "completed",
+          "file": "test_text_utils.py",
+          "path_within_workspace": true
+        },
+        {
+          "event_sequence": 8,
+          "tool": "edit",
+          "call_id_sha256": "834d6dc1a229f4e5461df431c1bb55b1f3dbbfc92647704ce1c7e816ae64fa71",
+          "status": "error",
+          "file": "text_utils.py",
+          "path_within_workspace": true,
+          "classification": "permission_denied"
+        }
+      ],
+      "native_event_counts": {
+        "step_start": 3,
+        "tool_use": 3,
+        "step_finish": 3,
+        "error": 1
+      },
+      "native_steps": [
+        {
+          "reason": "tool-calls",
+          "native_tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "native_cost": 0
+        },
+        {
+          "reason": "tool-calls",
+          "native_tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "native_cost": 0
+        },
+        {
+          "reason": "tool-calls",
+          "native_tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "native_cost": 0
+        }
+      ],
+      "client_versions": {
+        "node_version": "v24.21.0",
+        "npm_version": "11.19.0",
+        "opencode_version": "1.18.31",
+        "plugin_version": "1.18.31"
+      },
+      "tests_before_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+      "tests_after_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+      "source_sha256": "1a4a6aba262def1c4cc932268246a77c0f47d5049a58301bf227c7f652e9e6b7",
+      "report_sha256": "cace1d2380c91a5473823ef33bfdd06c917fc50649c8f52418edae5bb45e79e3",
+      "raw_evidence_sha256": "b36a71487fc07fa812c32c540a30ff92d898383ed1f0d0093851f390ad53e965",
+      "wire_evidence_sha256": "6ae7851d5620e86f84d743108fa115e7c5ef43a10e52e325184295163a603c33",
+      "disposable_key_removed": true,
+      "diagnostic": "native_implementation_edit_permission_denied_no_acceptance"
+    },
+    {
+      "attempt": 2,
+      "status": "FAIL",
+      "failures": [
+        "native_error_event",
+        "native_missing_terminal_stop",
+        "native_missing_implementation_edit",
+        "native_missing_exact_test_command",
+        "native_missing_passing_tool_result",
+        "native_missing_final_response",
+        "opencode_process_failed"
+      ],
+      "checks": {
+        "file_reads": true,
+        "implementation_edit": false,
+        "exact_test_command": false,
+        "passing_tool_result": false,
+        "final_response": false,
+        "immutable_tests": true,
+        "independent_final_rerun": false,
+        "process_tree_reaped": true
+      },
+      "initial_test": {
+        "classification": "assertion_failure",
+        "assertion_failures": 5,
+        "import_errors": 0,
+        "exit_code": 1
+      },
+      "process": {
+        "exit_code": 1,
+        "timed_out": false,
+        "output_limited": false,
+        "process_tree_reaped": true,
+        "elapsed_seconds": 0.96345
+      },
+      "native_tools": [
+        {
+          "event_sequence": 2,
+          "tool": "read",
+          "call_id_sha256": "47b922b6e822af6ef01eebd5d52f054f7f7cffc329347d160467e34aac63d5ae",
+          "status": "completed",
+          "file": "text_utils.py",
+          "path_within_workspace": true
+        },
+        {
+          "event_sequence": 5,
+          "tool": "read",
+          "call_id_sha256": "457b234071d24039da4f757ad30b15497cd8c77e932e53dead3f342a9d470100",
+          "status": "completed",
+          "file": "test_text_utils.py",
+          "path_within_workspace": true
+        },
+        {
+          "event_sequence": 8,
+          "tool": "edit",
+          "call_id_sha256": "834d6dc1a229f4e5461df431c1bb55b1f3dbbfc92647704ce1c7e816ae64fa71",
+          "status": "error",
+          "file": "text_utils.py",
+          "path_within_workspace": true,
+          "classification": "permission_denied"
+        }
+      ],
+      "native_event_counts": {
+        "step_start": 3,
+        "tool_use": 3,
+        "step_finish": 3,
+        "error": 1
+      },
+      "native_steps": [
+        {
+          "reason": "tool-calls",
+          "native_tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "native_cost": 0
+        },
+        {
+          "reason": "tool-calls",
+          "native_tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "native_cost": 0
+        },
+        {
+          "reason": "tool-calls",
+          "native_tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "native_cost": 0
+        }
+      ],
+      "client_versions": {
+        "node_version": "v24.21.0",
+        "npm_version": "11.19.0",
+        "opencode_version": "1.18.31",
+        "plugin_version": "1.18.31"
+      },
+      "tests_before_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+      "tests_after_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+      "source_sha256": "fa7b8b8291171d5b6f7f123ee0293d592bc9467146f84147e630363e2ef763b1",
+      "report_sha256": "b7a4666a9b44da35c7b46c09b7c6a6127b8e57bb1951ff700e095fbefdcae46a",
+      "raw_evidence_sha256": "593b17841beca1eed238b828b0f3dea9071f660d53d422b1b38a5e8dbdff00a0",
+      "wire_evidence_sha256": "6ae7851d5620e86f84d743108fa115e7c5ef43a10e52e325184295163a603c33",
+      "disposable_key_removed": true,
+      "diagnostic": "native_implementation_edit_permission_denied_no_acceptance"
+    },
+    {
+      "attempt": 3,
+      "status": "PASS",
+      "failures": [],
+      "checks": {
+        "file_reads": true,
+        "implementation_edit": true,
+        "exact_test_command": true,
+        "passing_tool_result": true,
+        "final_response": true,
+        "immutable_tests": true,
+        "independent_final_rerun": true,
+        "process_tree_reaped": true
+      },
+      "initial_test": {
+        "classification": "assertion_failure",
+        "assertion_failures": 5,
+        "import_errors": 0,
+        "exit_code": 1
+      },
+      "process": {
+        "exit_code": 0,
+        "timed_out": false,
+        "output_limited": false,
+        "process_tree_reaped": true,
+        "elapsed_seconds": 1.069414
+      },
+      "native_tools": [
+        {
+          "event_sequence": 2,
+          "tool": "read",
+          "call_id_sha256": "47b922b6e822af6ef01eebd5d52f054f7f7cffc329347d160467e34aac63d5ae",
+          "status": "completed",
+          "file": "text_utils.py",
+          "path_within_workspace": true
+        },
+        {
+          "event_sequence": 5,
+          "tool": "read",
+          "call_id_sha256": "457b234071d24039da4f757ad30b15497cd8c77e932e53dead3f342a9d470100",
+          "status": "completed",
+          "file": "test_text_utils.py",
+          "path_within_workspace": true
+        },
+        {
+          "event_sequence": 8,
+          "tool": "edit",
+          "call_id_sha256": "834d6dc1a229f4e5461df431c1bb55b1f3dbbfc92647704ce1c7e816ae64fa71",
+          "status": "completed",
+          "file": "text_utils.py",
+          "path_within_workspace": true
+        },
+        {
+          "event_sequence": 11,
+          "tool": "bash",
+          "call_id_sha256": "3c80cc65d4b30844a239728a3c3b1bd630ab2ab0826684a2480174e64c94bd4c",
+          "status": "completed",
+          "path_within_workspace": true,
+          "exact_test_command": true,
+          "exit_code": 0,
+          "test_output_passed": true
+        }
+      ],
+      "native_event_counts": {
+        "step_start": 5,
+        "tool_use": 4,
+        "step_finish": 5,
+        "text": 1
+      },
+      "native_steps": [
+        {
+          "reason": "tool-calls",
+          "native_tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "native_cost": 0
+        },
+        {
+          "reason": "tool-calls",
+          "native_tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "native_cost": 0
+        },
+        {
+          "reason": "tool-calls",
+          "native_tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "native_cost": 0
+        },
+        {
+          "reason": "tool-calls",
+          "native_tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "native_cost": 0
+        },
+        {
+          "reason": "stop",
+          "native_tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "native_cost": 0
+        }
+      ],
+      "client_versions": {
+        "node_version": "v24.21.0",
+        "npm_version": "11.19.0",
+        "opencode_version": "1.18.31",
+        "plugin_version": "1.18.31"
+      },
+      "tests_before_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+      "tests_after_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+      "source_sha256": "91110fd3b069a6d313b450c7f8bd08f62f37e87c1a09ea3852e5b75597146ace",
+      "report_sha256": "1b2e7d206a28ddfbe1e79498bcf1adeefb625a7ce5c4d0a4f5c925f5a9e4396e",
+      "raw_evidence_sha256": "5590336ab33f753d1349426957f68241343ac49299727ee3ce365eadad97adc1",
+      "wire_evidence_sha256": "1dfe0f9454ef780f2ea52ae3cd7415d696edf46e1b45b251a186d2bd33c7bd00",
+      "disposable_key_removed": true
+    }
+  ],
+  "permission_resolution": {
+    "pinned_opencode_version": "1.18.31",
+    "method": "read_only_pinned_native_binary_and_observed_project_database",
+    "native_permission_pattern": "path.relative(context.worktree,filePath)",
+    "observed_nongit_worktree": "/",
+    "implemented_permission": "exact_implementation_path_relative_to_root_only"
+  },
+  "final_wire": {
+    "status": "PASS",
+    "evidence_class": "actual_client_synthetic_http",
+    "live_model_acceptance": false,
+    "provider_usage": "NOT_REPORTED",
+    "credential_scan": "PASS",
+    "client_versions": {
+      "node_version": "v24.21.0",
+      "npm_version": "11.19.0",
+      "opencode_version": "1.18.31",
+      "plugin_version": "1.18.31"
+    },
+    "verifier_report_sha256": "1b2e7d206a28ddfbe1e79498bcf1adeefb625a7ce5c4d0a4f5c925f5a9e4396e",
+    "raw_evidence_sha256": "5590336ab33f753d1349426957f68241343ac49299727ee3ce365eadad97adc1",
+    "checks": {
+      "file_reads": true,
+      "implementation_edit": true,
+      "exact_test_command": true,
+      "passing_tool_result": true,
+      "final_response": true,
+      "immutable_tests": true,
+      "independent_final_rerun": true,
+      "process_tree_reaped": true
+    },
+    "authenticated_model_gets": 2,
+    "requests": [
+      {
+        "kind": "auxiliary",
+        "authenticated": true,
+        "model": "glm-5.3",
+        "reasoning_effort": "low"
+      },
+      {
+        "kind": "agent",
+        "authenticated": true,
+        "model": "glm-5.3",
+        "reasoning_effort": "low",
+        "max_tokens": 2048,
+        "actual_tool_results_replayed": 0
+      },
+      {
+        "kind": "agent",
+        "authenticated": true,
+        "model": "glm-5.3",
+        "reasoning_effort": "low",
+        "max_tokens": 2048,
+        "actual_tool_results_replayed": 1
+      },
+      {
+        "kind": "agent",
+        "authenticated": true,
+        "model": "glm-5.3",
+        "reasoning_effort": "low",
+        "max_tokens": 2048,
+        "actual_tool_results_replayed": 2
+      },
+      {
+        "kind": "agent",
+        "authenticated": true,
+        "model": "glm-5.3",
+        "reasoning_effort": "low",
+        "max_tokens": 2048,
+        "actual_tool_results_replayed": 3
+      },
+      {
+        "kind": "agent",
+        "authenticated": true,
+        "model": "glm-5.3",
+        "reasoning_effort": "low",
+        "max_tokens": 2048,
+        "actual_tool_results_replayed": 4
+      }
+    ],
+    "immutable_test_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43"
+  },
+  "final_source_artifacts": {
+    "files": {
+      "scripts/client/bootstrap.py": "ccf94f52a48346f02105112d93ee41010a6dd034406272e8a4a54d02fc12ca12",
+      "scripts/client/client_common.py": "b6e1b4995a717067846c4cd3835c72f7c493c5aaac4d09d985f9a93d2383e1b0",
+      "scripts/client/launch.py": "bb47de96ba33d1088589337876b1ec340d0c7e3157c284217abb45a955338278",
+      "scripts/client/package-lock.json": "eb4f16892e1e7d955fc8aa5e949f8c31b6c6d26d98acb3eb2f9be26d2673d3b7",
+      "scripts/client/package.json": "a690baa19cd430ef35f12d5c6e2c0d429539dd3150055cf1b34f7b060fe3489f",
+      "scripts/client/verifier_fixture/test_text_utils.py": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+      "scripts/client/verifier_fixture/text_utils.py": "8bff6135c956d931fa755b0cb4e25f19fc5dee661e88f51efbd3d7ec55dd4b44",
+      "scripts/client/verify.py": "fe812f23983bbcee6ea410fcf590f04438d3b799fb4b18b3681583fc60e5148b",
+      "scripts/client/verify_events.py": "46fba351bc6f6f6ebb59a29f33f258377865b7b6023a118c9fcd2d74d6291798",
+      "scripts/client/verify_integrity.py": "91314866b28b8abd2ba26dbac145785369bc1530889d3e8fe0972fd98cf8eadd"
+    },
+    "source_sha256": "91110fd3b069a6d313b450c7f8bd08f62f37e87c1a09ea3852e5b75597146ace",
+    "test_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+    "test_command_sha256": "d393af3c2be6b3f638d676c9acc0e4d11715a7d9dad0cd3a9cbe5d809bf457b0"
+  },
+  "final_client_integrity": {
+    "status": "pass",
+    "method": "reviewed-source-and-offline-npm-sri",
+    "lock_sha256": "eb4f16892e1e7d955fc8aa5e949f8c31b6c6d26d98acb3eb2f9be26d2673d3b7",
+    "packages_verified": 29,
+    "files_verified": 3650,
+    "native_sha256": "16c960ba77421da11b53e785f359b73f328a86118b48feb4af143db5d9afb198"
+  }
+}
