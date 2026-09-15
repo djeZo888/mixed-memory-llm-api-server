@@ -497,7 +497,7 @@ def validate_output_path(path):
 def write_receipt(output, receipt):
     """Anchor publication to one protected directory; fail on detach/rebinding.
 
-    This is fixture evidence output only. I1c must admit this directory using
+    This is fixture evidence output only. The L2 runtime binding must admit this directory using
     L1's actual registered-root binding before calling this helper. Runtime
     receipt import/publication belongs to that canonical anchored storage API.
     """

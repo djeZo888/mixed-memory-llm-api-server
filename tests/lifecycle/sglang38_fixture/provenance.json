@@ -4,8 +4,8 @@
     "auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
     "cache_probe.py": "83197614bd963f54a275d9f01ec8955325b3ea4791387dd5235df189f67e7c99",
     "chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
-    "run_fixture.py": "f0835cf158d07a1b56a803cbbd20629152e31cea6243ef9b8d14ba3e0468bfd7",
-    "run_pinned_image.py": "18a4edf10a883ca552f9d3fbded01a3c1020f03d1208365bd9e03c72f70a5709"
+    "run_fixture.py": "9cdea022e21f1859e097be51094b9d2822dfc1387f8756448dd7b14d8a251d2c",
+    "run_pinned_image.py": "16a1e0b726295e0f0a9f046b5d496dae70f83677f5145ffdb52bfee01671b454"
   },
   "image_id": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
   "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",

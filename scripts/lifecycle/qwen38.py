@@ -41,7 +41,7 @@ PROFILE_HASHES = {'reports/q38s-acquisition-manifest.json': '726012378a40f648a10
  'configs/runtimes/sglang-qwen38-0.5.19.json': '17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11',
  'configs/deployments/qwen38-27b-128k.json': 'cee5253c28bd8ff36f33630f27642cc9cdd3857eaa108bd177488efd6a0d133f',
  'configs/deployments/qwen38-27b-256k.json': '462ed5792940890eaa410c3c6dd4996c6723157eee5fb7021ee210ed2f78523a',
- 'tests/lifecycle/sglang38_fixture/provenance.json': 'ef902b532c9a66fc2a77a29932161dd3a9da302b5642174145fa333761d371d7'}
+ 'tests/lifecycle/sglang38_fixture/provenance.json': '1f0a49bcbfb0b499d0432b9d4b4b387f6fe5338e084e9e0f7c9578e6f77b1acd'}
 Q38R_SHA256 = '3df6f2a0a46a33b2b48f62609235ff209e50403d679bd8ee120b941445a87ed0'
 AUTH_CHECKS = (
     'native_routes_and_final_chain', 'native_prepare_and_normalization',
@@ -200,7 +200,7 @@ def validate_launcher(d, e):
 
 @safe_errors
 def check_completion(d, instance):
-    """Validate a generic I1c acquisition receipt, never download or invent it.
+    """Validate the protected acquisition receipt, never download or invent it.
 
     Manager must additionally stat all immutable artifacts inside its guarded
     transaction. A receipt attests acquired-byte hashing, not live inference.
@@ -234,7 +234,7 @@ def check_completion(d, instance):
 def evidence(d, instance):
     """Require actual-image proof bound to source, OCI identities and launcher.
 
-    Source/mock passes cannot mint this protected runtime receipt. I1c publishes
+    Source/mock passes cannot mint this protected runtime receipt. L2 publishes
     it only after worker1 runs the exact shipped actual-image fixture.
     """
     validate(d)
@@ -346,7 +346,7 @@ def image_environment(image, d):
 
 @safe_errors
 def verify_runtime_image(image, d, e):
-    """Bind installer/auth proof to this host's exact observed OCI domain."""
+    """Bind runtime/auth proof to this host's exact observed OCI domain."""
     image_environment(image, d)
     observed = oci.verify_image(image)
     require(same(e.get('docker_inspect'), observed), 'qwen38_runtime_observed_identity_mismatch')

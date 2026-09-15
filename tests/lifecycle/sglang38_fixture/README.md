@@ -23,7 +23,7 @@ ID/domain, Linux/amd64 platform, default entrypoint and source are verified. It 
 the exact digest reference, not a tag. Both 131072 and 262144 contexts must pass
 before it publishes one mode-0600 receipt. The anchored output writer checks
 directory identity before and after publication and removes its file if the
-directory is rebound. Runtime evidence import belongs to I1c's canonical L1
+directory is rebound. Runtime evidence import belongs to L2's canonical L1
 binding and anchored storage writer, not to this fixture helper.
 
 Docker runs with `--pull=never`, `--runtime nvidia`, `--network none`, no published

@@ -4,7 +4,7 @@
 Reviewed base `6cffccbf1927ff610c21cfc6a0bea3b2f14bd85a`;
 branch `milestone/q38b-runtime-gates`.
 
-**PASS: bounded Q38 source corrections and 150 focused tests.**
+**PASS: bounded Q38 source corrections and 158 focused tests.**
 **PENDING: final root review and separately owned integration gaps.**
 **NOT_TESTED: actual pinned image, native serving lifespan, GPU/model execution,
 live/client acceptance and occupied-context performance.**
@@ -40,9 +40,9 @@ live/client acceptance and occupied-context performance.**
    unchanged. An explicit nested Docker block records observed config or
    platform-manifest ID and domain, exact relationship, platform, source,
    default entrypoint and workdir. Manifest-domain inspect additionally requires
-   its matching Descriptor. Installer evidence, auth proof, current inspect and
+   its matching Descriptor. Runtime binding evidence, auth proof, current inspect and
    container identity must agree; tags, indexes, arbitrary IDs and cross-domain
-   substitutions fail closed. [I1c handshake](../docs/q38b-oci-contract.md).
+   substitutions fail closed. [OCI/runtime binding handshake](../docs/q38b-oci-contract.md).
 5. **Narrow Manager seam composed after handoff.** Incoming explicitly released
    the seam after frozen L1B `9cb93959105468ea0e140598b51493ee0d13ce9e`, which was
    merged exactly. Dispatch covers declaration, completion, evidence, launcher,
@@ -57,6 +57,21 @@ live/client acceptance and occupied-context performance.**
    Normal Q38 adapter/runtime/fixture/provenance/manifest dependencies are
    protected by the existing root-file checks. Recovery retains its minimal
    file list and requires neither Q38 files, profiles, data nor inference keys.
+
+7. **Exact Q38C wire aligned with the native prompt gate.** Q38C final source
+   `d98a78a357d2cb83f2385e735348685d4ac11ed2` reports the pinned client synthetic
+   wire with top-level `reasoning_effort: "none"` and absent
+   `chat_template_kwargs`. The future actual-image gate now uses native
+   `ChatCompletionRequest.model_validate_json` and `OpenAIServingChat` prompt
+   preparation for ordinary and tool-continuation requests. It requires native
+   false/false normalization before and after server-default merge, native
+   Transformers rendering/encoding and a closed empty-think prefix. Only the
+   tokenizer vocabulary and model metadata are synthetic; there is no extracted
+   normalizer or direct-template fallback. Eight local source-control tests
+   verify the wiring; native execution remains **NOT_TESTED**. The final
+   committed-source verifier includes these controls. Manager and both control
+   files were frozen at `3a470d2b8c90398be0bffe78bccd13fe1c3a0f2e` for L2;
+   this follow-up changes none of them.
 
 The original model/acquisition manifest and both deployment files remain byte
 identical: TP1/GPU0, native 131072/262144 contexts, no MTP/1M, port30004.
@@ -89,11 +104,11 @@ occurred. Source-worker subprocess tests run only tiny controlled local programs
 
 | Check | Result |
 | --- | --- |
-| All eight Q38 test modules | **150 PASS** |
+| All nine Q38 test modules | **158 PASS** |
 | Exact control normal/recovery closure and protection suite | **17 PASS**, including isolated copied-source happy path and drift rejection |
 | Control suite before composing U1B | **133 PASS**, historical intermediate result |
 | Full composed U1B control diagnostic | **180 run; 15 setup ERRORs, 1 unexpected success**, from provisional integration fixtures / obsolete expected-failure marker; no aggregate PASS |
-| Full lifecycle suite | **554 run; 1 FAIL, 2 ERROR**, entirely pending I1c dependency cases below |
+| Full lifecycle suite | **554 run; 1 FAIL, 2 ERROR**, retained dependency cases below |
 | Recovery isolated snapshot import and Q38 Manager suite | **15 PASS** after lazy-import correction; also included above |
 | CLI help, JSON parsing, explicit source/fixture pins, unchanged model/context/manifest/lockfile checks | **PASS** |
 | Actual-image and live gates | **NOT_TESTED** |
@@ -107,7 +122,7 @@ Full lifecycle unresolved cases are retained without skip/xfail/bypass:
 - `test_shared_verifier_gap_unregistered_duplicate_mount_alias`: current
   shared verifier accepts the extra alias. This is the one failing assertion.
 
-These are the documented L1B/I1c integration gaps. No uncommitted installer
+These are documented L1B/I1c source gaps; L2 owns their live composition. No uncommitted installer
 overlay was used, and installer/shared0.5.14 source was not changed. Control
 changes are restricted to the explicitly reassigned closure/file-list seam.
 The full suite is explicitly **not an aggregate PASS**. The earlier full Q38B
@@ -116,7 +131,7 @@ and rerun rather than folded into the dependency failures.
 
 The composed U1B diagnostic uses an explicit production `lifecycle.manager`
 import before discovery to avoid the test directory's same-name package shadowing
-it. Its retained integration fixtures lack the separately supplied provisional
+it. L2 owns this broader composition. Its retained integration fixtures lack the separately supplied provisional
 owner fixture changes; the old expected-failure marker now unexpectedly succeeds
 with frozen L1B. These are recorded, without changing broader control tests or
 gates. Installer work is stopped; its complete test matrix is not a prerequisite
@@ -126,7 +141,7 @@ normal/recovery closure tests are delivered and verified separately.
 Reproduce focused source verification:
 
 ```sh
-python3 -B -m unittest tests.lifecycle.test_qwen38 tests.lifecycle.test_qwen38_image_fixture tests.lifecycle.test_sglang38_file_auth tests.lifecycle.test_qwen38_cache_probe tests.lifecycle.test_qwen38_fixture_lifetime tests.lifecycle.test_qwen38_manager tests.lifecycle.test_qwen38_oci tests.lifecycle.test_qwen38_final_source -q
+python3 -B -m unittest tests.lifecycle.test_qwen38 tests.lifecycle.test_qwen38_image_fixture tests.lifecycle.test_sglang38_file_auth tests.lifecycle.test_qwen38_cache_probe tests.lifecycle.test_qwen38_fixture_lifetime tests.lifecycle.test_qwen38_manager tests.lifecycle.test_qwen38_oci tests.lifecycle.test_qwen38_final_source tests.lifecycle.test_qwen38_native_wire -q
 python3 -B -m unittest discover -s tests/lifecycle -p 'test_*.py' -q
 python3 -B -m unittest tests.test_control_installation -q
 python3 tests/lifecycle/verify_qwen38_git_source.py --commit HEAD

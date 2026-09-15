@@ -36,15 +36,16 @@ installed daemon was executed. The installer pins Docker 29.6.1; the same
 v29.6.1 source URLs returned 404 during this research. Worker1 must observe
 its actual inspect representation. An unsupported representation fails closed.
 
-## Installer boundary and receipt contract
+## Historical installer policy and current L2 receipt contract
 
 The reviewed checkout's `scripts/install/runtime.py::_image_valid` already
 accepts the historical Qwen runtime's config and platform-manifest identities
 from verified registry artifacts only when their reference and platform match
 the selected pin. `_record` / `check` preserve the actual observed `image_id`
 and demand it again on inspection. Its selection registry is currently
-`glm`/`qwen`; Q38 selection integration remains owned by I1c. This Q38B change
-does not edit the installer or `versions.lock.json`.
+`glm`/`qwen`. Installer work is now stopped; L2 owns the live runtime binding
+and approved two-model publication. This Q38B change does not edit the installer
+or `versions.lock.json`.
 
 For Q38, `runtime.qwen38_oci` freezes precisely the relationship above.
 `verify_image(image)` requires the exact immutable repository reference,
@@ -58,7 +59,7 @@ and relabeling a digest as the other domain are rejected.
 The profile and outer receipt `image_id` retain their original meaning: the
 reviewed config digest. The nested `docker_inspect.image_id` is the actual
 observed ID, paired with `image_id_domain` (`oci_config` or
-`oci_platform_manifest`) and the complete fixed relationship. I1c must preserve
+`oci_platform_manifest`) and the complete fixed relationship. L2 runtime binding must preserve
 this block into protected lifecycle evidence. `validate_evidence` checks the
 entire block with type-sensitive equality. The actual host gate and runtime
 must compare the receipt block to fresh `verify_image` output; neither may

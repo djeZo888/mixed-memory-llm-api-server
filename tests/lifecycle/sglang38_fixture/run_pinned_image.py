@@ -430,8 +430,11 @@ def check_native_parser_template(repo):
 
     These checks are not a model-generation or client-continuation proof.
     """
-    from jinja2.sandbox import ImmutableSandboxedEnvironment
-    from sglang.srt.entrypoints.openai.protocol import Tool
+    from tokenizers import Tokenizer, decoders, models, pre_tokenizers
+    from transformers import PreTrainedTokenizerFast
+    from sglang.srt.entrypoints.openai.protocol import ChatCompletionRequest, Tool
+    from sglang.srt.entrypoints.openai.serving_chat import OpenAIServingChat
+    from sglang.srt.parser.template_manager import TemplateManager
     from sglang.srt.function_call.function_call_parser import FunctionCallParser
     from sglang.srt.parser.reasoning_parser import ReasoningParser
     tool_dict = {"type": "function", "function": {"name": "read_fixture", "parameters": {
@@ -466,22 +469,71 @@ def check_native_parser_template(repo):
     require(len(template_bytes) == 8952 and hashlib.sha256(template_bytes).hexdigest()
             == "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
             "checkpoint_template_hash_mismatch")
-    environment = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
-    def reject_template(_message):
-        raise FixtureFailure("checkpoint_template_rejected")
-    environment.globals["raise_exception"] = reject_template
-    messages = [{"role": "user", "content": "Read the fixture"},
-        {"role": "assistant", "content": "", "tool_calls": [{"id": "fixture-call-1",
-            "type": "function", "function": {"name": "read_fixture",
-            "arguments": {"path": "fixture.txt", "count": 3}}}]},
-        {"role": "tool", "tool_call_id": "fixture-call-1", "content": "fixture read"}]
-    rendered = environment.from_string(template_bytes.decode()).render(messages=messages,
-        tools=[tool_dict], add_generation_prompt=True, enable_thinking=False)
-    require("Reasoning effort is set to xhigh" not in rendered
-            and "<function=read_fixture>" in rendered
-            and "<tool_response>\nfixture read\n</tool_response>" in rendered
-            and rendered.endswith("<|im_start|>assistant\n<think>\n\n</think>\n\n"),
-            "native_no_thinking_tool_continuation_template_failed")
+    # Synthetic character vocabulary only; use native Transformers rendering
+    # and encoding through the actual SGLang request-to-prompt helper. No model
+    # tokenizer files, normalizer replacements or extracted-source fallback.
+    class RecordingTokenizer(PreTrainedTokenizerFast):
+        def apply_chat_template(self, *args, **kwargs):
+            self.fixture_template_kwargs = dict(kwargs)
+            rendered = super().apply_chat_template(*args, **kwargs)
+            self.fixture_rendered = rendered
+            return rendered
+
+    vocabulary = {token: index for index, token in enumerate(
+        ["<unk>", *[chr(value) for value in range(9, 127)]])}
+    backend = Tokenizer(models.WordLevel(vocabulary, unk_token="<unk>"))
+    backend.pre_tokenizer = pre_tokenizers.Split(pattern="", behavior="isolated")
+    backend.decoder = decoders.Fuse()
+    tokenizer = RecordingTokenizer(tokenizer_object=backend, unk_token="<unk>",
+                                   chat_template=template_bytes.decode())
+    configuration = {"tool_call_parser": "qwen3_coder", "reasoning_parser": "qwen3"}
+    manager = SimpleNamespace(tokenizer=tokenizer, processor=None,
+        served_model_name=ALIAS, model_path="/models", config_value=configuration.__getitem__,
+        server_args=SimpleNamespace(default_chat_template_kwargs={"enable_thinking": False}),
+        model_config=SimpleNamespace(get_default_sampling_params=lambda: {},
+            hf_config=SimpleNamespace(model_type="qwen3_5",
+                architectures=["Qwen3_5ForConditionalGeneration"])))
+    template_manager = TemplateManager()
+    template_manager.load_chat_template(manager, None, "/models")
+    serving = OpenAIServingChat(manager, template_manager)
+    require(serving.chat_encoding_spec is None and template_manager.chat_template_name is None,
+            "native_qwen_jinja_path_not_selected")
+    wires = {
+        "ordinary": {"model": ALIAS, "reasoning_effort": "none", "stream": True,
+            "messages": [{"role": "user", "content": "Say fixture ready"}]},
+        "tool_continuation": {"model": ALIAS, "reasoning_effort": "none", "stream": True,
+            "tools": [tool_dict], "messages": [
+                {"role": "user", "content": "Read the fixture"},
+                {"role": "assistant", "content": "", "tool_calls": [{"id": "fixture-call-1",
+                    "type": "function", "function": {"name": "read_fixture",
+                        "arguments": '{"path":"fixture.txt","count":3}'}}]},
+                {"role": "tool", "tool_call_id": "fixture-call-1", "content": "fixture read"}]},
+    }
+    for case, wire in wires.items():
+        require("chat_template_kwargs" not in wire and wire["reasoning_effort"] == "none"
+                and wire["stream"] is True and wire["model"] == "qwen3.8-27b",
+                "observed_q38c_wire_changed")
+        request = ChatCompletionRequest.model_validate_json(json.dumps(wire))
+        require(request.chat_template_kwargs == {"thinking": False, "enable_thinking": False},
+                "native_none_normalization_failed")
+        processed = serving._process_messages(request, is_multimodal=False)
+        require(request.chat_template_kwargs == {"thinking": False, "enable_thinking": False}
+                and request.reasoning_effort == "none" and processed.require_reasoning is False,
+                "native_false_default_merge_failed")
+        kwargs = tokenizer.fixture_template_kwargs
+        require(kwargs.get("thinking") is False and kwargs.get("enable_thinking") is False
+                and kwargs.get("reasoning_effort") == "none" and kwargs.get("tokenize") is False
+                and kwargs.get("add_generation_prompt") is True,
+                "native_none_template_arguments_failed")
+        rendered = tokenizer.fixture_rendered
+        require(tokenizer.decode(processed.prompt_ids, clean_up_tokenization_spaces=False) == rendered
+                and "Reasoning effort is set to" not in rendered
+                and rendered.endswith("<|im_start|>assistant\n<think>\n\n</think>\n\n"),
+                "native_none_prompt_prefix_failed")
+        if case == "tool_continuation":
+            require("<function=read_fixture>" in rendered
+                    and "<tool_response>\nfixture read\n</tool_response>" in rendered,
+                    "native_no_thinking_tool_continuation_template_failed")
 
 
 def run_cache_probe(repo):
