@@ -30,6 +30,26 @@ class FakeRunner:
         self.fail_install = False
         self.skip_postcondition = False
         self.downloaded = False
+        self.package_status = {"state": "quiescent", "successful": True}
+
+    # Synthetic ownership adapter only. Real process behavior is covered in
+    # test_package_processes; systemd semantics in test_package_systemd.
+    def package_identity(self):
+        return {"kind": "synthetic", "token": "owned-fixture"}
+
+    def prepare_package(self, identity, *, gate_path, timeout):
+        return identity
+
+    def hold_package_lease(self, identity):
+        pass
+
+    def inspect_package(self, identity):
+        if identity != self.package_identity():
+            raise RuntimeError("unknown fixture transaction")
+        return self.package_status
+
+    def run_package(self, identity, argv, *, gate_path, timeout=120, env=None):
+        return self.run(argv, timeout=timeout, env=env)
 
     def run(self, argv, timeout=60, env=None):
         self.calls.append((argv, env))
@@ -38,6 +58,8 @@ class FakeRunner:
             return self.uid
         if command == "df":
             return "Avail\n" + str(self.root_free if argv[-1] == "/" else self.data_free)
+        if command == "dpkg" and argv[1:] == ["--audit"]:
+            return ""
         if command == "dpkg-query":
             if "${binary:Package}" in argv[3]:
                 return "nvidia-utils-580\t580.1.0\n"
@@ -278,7 +300,8 @@ class PrerequisitesTest(unittest.TestCase):
         self.subject._paths()
         original = b"#!/bin/sh\nexit 42\n"
         self.subject._write_json(self.subject.state / "package-service-policy.json",
-                                 {"schema_version": 1, "existed": True, "original_hex": original.hex(), "mode": 0o750})
+                                 {"schema_version": 2, "existed": True, "original_hex": original.hex(), "mode": 0o750,
+                                  "phase": "owned", "transaction": self.runner.package_identity()})
         self.policy.write_bytes(b"#!/bin/sh\n# local-ai installer temporary package service inhibitor\nexit 101\n")
         self.subject.apply_base()
         self.assertEqual(self.policy.read_bytes(), original)
@@ -288,7 +311,8 @@ class PrerequisitesTest(unittest.TestCase):
         self.subject._paths()
         original = b"#!/bin/sh\nexit 42\n"
         self.subject._write_json(self.subject.state / "package-service-policy.json",
-                                 {"schema_version": 1, "existed": True, "original_hex": original.hex(), "mode": 0o750})
+                                 {"schema_version": 2, "existed": True, "original_hex": original.hex(), "mode": 0o750,
+                                  "phase": "owned", "transaction": self.runner.package_identity()})
         self.policy.write_bytes(b"#!/bin/sh\n# local-ai installer temporary package service inhibitor\nexit 101\n")
         self.runner.installed["base-tool"] = "1.0"
         self.runner.gpu = True
