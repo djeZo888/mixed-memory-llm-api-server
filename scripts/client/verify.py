@@ -40,6 +40,27 @@ class VerifyError(Exception):
     """Only fixed error codes may cross the report boundary."""
 
 
+class Cancellation:
+    """Latch ordinary cancellation; never interrupt owned-process cleanup."""
+
+    def __init__(self):
+        self.signum = None
+        self.deferred = False
+
+    def __call__(self, signum, frame):
+        if self.signum is not None:
+            return
+        self.signum = signum
+        if not self.deferred:
+            self.deferred = True
+            self.check()
+
+    def check(self):
+        if self.signum is not None:
+            raise VerifyError("cancelled_" + signal.Signals(self.signum).name.lower())
+        self.deferred = False
+
+
 def require(condition, code):
     if not condition:
         raise VerifyError(code)
@@ -158,17 +179,30 @@ def run_process(*args, **kwargs):
     Temporarily suspend the outer HTTP/I/O alarm. Every production call passes
     the remaining overall budget to run_bounded. If that budget expires, retain
     its partial output and cleanup result before the next remaining() refusal.
+    Ordinary cancellation is polled by that same runner; signal handlers only
+    latch it until the runner has returned its captured output and cleanup result.
     """
     timer = signal.getitimer(signal.ITIMER_REAL)
     started = time.monotonic()
+    cancellation = signal.getsignal(signal.SIGTERM)
+    if not isinstance(cancellation, Cancellation):
+        cancellation = None
+    if cancellation is not None:
+        cancellation.check()
+        cancellation.deferred = True
+        kwargs["cancel_requested"] = lambda: cancellation.signum is not None
     if timer[0]:
         signal.setitimer(signal.ITIMER_REAL, 0)
     try:
-        return run_bounded(*args, **kwargs)
+        result = run_bounded(*args, **kwargs)
     finally:
         left = timer[0] - (time.monotonic() - started)
-        if timer[0] and left > 0:
+        cancelled = cancellation is not None and cancellation.signum is not None
+        if timer[0] and left > 0 and not cancelled:
             signal.setitimer(signal.ITIMER_REAL, left, timer[1])
+    if cancellation is not None and cancellation.signum is not None:
+        result["cancelled_signal"] = signal.Signals(cancellation.signum).name
+    return result
 
 
 def versions(prefix, workspace, env, remaining):
@@ -200,6 +234,7 @@ def verify(prefix, output_dir, timeout=1800):
     output_dir.mkdir(mode=0o700)
     deadline = time.monotonic() + timeout
     def remaining():
+        cancellation.check()
         value = deadline - time.monotonic()
         require(value > 0, "overall_timeout")
         return value
@@ -211,11 +246,15 @@ def verify(prefix, output_dir, timeout=1800):
               "failures": [], "protocol_acceptance": "NOT_ASSESSED", "server_readiness": "NOT_ASSESSED"}
     raw, secrets = {}, []
     previous_handler = signal.getsignal(signal.SIGALRM)
+    cancellation = Cancellation()
+    previous_cancellation = {sig: signal.getsignal(sig) for sig in (signal.SIGTERM, signal.SIGHUP)}
     def expired(signum, frame):
         raise VerifyError("overall_timeout")
-    signal.signal(signal.SIGALRM, expired)
-    signal.setitimer(signal.ITIMER_REAL, timeout)
     try:
+        for sig in previous_cancellation:
+            signal.signal(sig, cancellation)
+        signal.signal(signal.SIGALRM, expired)
+        signal.setitimer(signal.ITIMER_REAL, timeout)
         report["artifacts"] = source_manifest()
         report["phase"] = "client_integrity"
         settings, integrity = verify_client(prefix, timeout=min(30, remaining()))
@@ -236,12 +275,13 @@ def verify(prefix, output_dir, timeout=1800):
         report["phase"] = "initial_test"
         initial = run_process(list(FIXED_ARGV), workspace, env, timeout=min(30, remaining()), max_output=65536)
         raw["initial_test"] = initial
+        cancellation.check()
         report["initial_test"] = initial_classification(initial)
         require(report["initial_test"]["classification"] == "assertion_failure", "baseline_not_expected_assertions")
         report["phase"] = "credential_and_model_identity_before"
         encoded_key = load_key(settings["auth"])
         key = json.loads('"' + encoded_key + '"')
-        secrets = [key, encoded_key]
+        secrets = [key, json.dumps(key)[1:-1], encoded_key]
         env[KEY_ENV] = encoded_key
         report["observed_model_before"] = observe_model(settings, key, remaining())
         env["OPENCODE_PERMISSION"] = json.dumps({
@@ -262,6 +302,8 @@ def verify(prefix, output_dir, timeout=1800):
                              timeout=remaining(), max_output=MAX_OUTPUT)
         raw["opencode"] = result
         report["process"] = clean_process(result)
+        report["checks"]["process_tree_reaped"] = result["process_tree_reaped"]
+        cancellation.check()
         native = parse_events(result["stdout"], workspace)
         report["native"] = native
         report["checks"].update(native["checks"])
@@ -283,8 +325,9 @@ def verify(prefix, output_dir, timeout=1800):
         final = run_process(list(FIXED_ARGV), workspace, env, timeout=min(30, remaining()), max_output=65536)
         raw["final_test"] = final
         report["final_test"] = clean_process(final)
-        report["checks"]["independent_final_rerun"] = passing_test(final)
         report["checks"]["process_tree_reaped"] &= final["process_tree_reaped"]
+        cancellation.check()
+        report["checks"]["independent_final_rerun"] = passing_test(final)
         require(set(path.name for path in workspace.iterdir()) == set(before), "workspace_changed_during_final_test")
         report["tests_after_sha256"] = sha(read_owned(workspace / "test_text_utils.py"))
         report["checks"]["immutable_tests"] &= report["tests_after_sha256"] == before["test_text_utils.py"]
@@ -314,14 +357,35 @@ def verify(prefix, output_dir, timeout=1800):
             # Local Python/macOS privacy denial is not evidence of a server or firewall failure.
         report["failures"].append(code)
     finally:
+        cancellation.deferred = True
         signal.setitimer(signal.ITIMER_REAL, 0)
-        signal.signal(signal.SIGALRM, previous_handler)
-        report["finished"] = now()
-        artifact = json_bytes(scrub(raw, secrets))
-        report["raw_evidence_sha256"] = sha(artifact)
-        report["raw_evidence_file"] = "raw-evidence.json"
-        write_new(output_dir / "raw-evidence.json", artifact)
-        write_new(output_dir / "report.json", json_bytes(scrub(report, secrets)))
+        try:
+            report["finished"] = now()
+            artifact = json_bytes(scrub(raw, secrets))
+            report["raw_evidence_sha256"] = sha(artifact)
+            report["raw_evidence_file"] = "raw-evidence.json"
+            write_new(output_dir / "raw-evidence.json", artifact)
+            def record_cancellation():
+                report["status"] = "FAIL"
+                report["cancellation_signal"] = signal.Signals(cancellation.signum).name
+                code = "cancelled_" + report["cancellation_signal"].lower()
+                if code not in report["failures"]:
+                    report["failures"].append(code)
+            if cancellation.signum is not None:
+                record_cancellation()
+            report_path = output_dir / "report.json"
+            write_new(report_path, json_bytes(scrub(report, secrets)))
+            if cancellation.signum is not None and "cancellation_signal" not in report:
+                # First cancellation during serialization/write must not leave
+                # a PASS artifact. Only this invocation's new private file is
+                # replaced; the first-signal latch bounds this to one rewrite.
+                record_cancellation()
+                report_path.unlink()
+                write_new(report_path, json_bytes(scrub(report, secrets)))
+        finally:
+            signal.signal(signal.SIGALRM, previous_handler)
+            for sig, handler in previous_cancellation.items():
+                signal.signal(sig, handler)
     return report
 
 

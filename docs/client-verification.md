@@ -21,7 +21,12 @@ The output directory must not already exist. It must be outside Git and the
 client prefix, under existing safe ancestors, with no symlink components or
 `..`. The verifier creates it with mode 0700 and its files with mode 0600.
 `--timeout-seconds` accepts 1 through 1800 (default 1800); process cleanup has a
-small bounded grace period after timeout. `--help` is offline.
+small bounded grace period after timeout or ordinary cancellation. SIGTERM and
+SIGHUP request cancellation; repeated signals are deferred through owned-process
+cleanup and private artifact writing, and original signal handlers are restored.
+Cancellation exits with failure and records the first observed signal, retained process
+output when captured, and the observed cleanup result. Hard SIGKILL remains
+outside this guarantee. `--help` is offline.
 
 The prefix must use authentication. It is checked against the reviewed launcher,
 shared client source, package manifest and lock, generated configuration, and
@@ -80,7 +85,9 @@ is made about hostile same-user interference or unobserved daemonization.
   event counts, tool identities hashed by SHA256, and reported native counters.
 - `raw-evidence.json`: bounded stdout/stderr and process results for the baseline,
   actual native run and final tests when reached. Credential text is redacted
-  before writing. Its exact file bytes are SHA256-bound in the report.
+  before writing, including the raw key, ordinary JSON-escaped key and OpenCode
+  interpolation-escaped key in byte/text/nested evidence. Its exact file bytes
+  are SHA256-bound in the report.
 - `workspace/`: the disposable fixture and model-edited implementation.
 
 Raw data stays private and outside Git. The inference credential is supplied
@@ -107,9 +114,11 @@ provisioning, receipt output, acceptance registry entry or installer gate here.
 
 ## Artifact contract
 
-[The source manifest](../reports/v2-source-manifest.json) lists exact required
+[The current V2R source manifest](../reports/v2r-source-manifest.json) lists exact required
 client/verifier files as sorted repository-relative paths and SHA256 of each
-file's bytes. `source_sha256` is SHA256 of the UTF-8 canonical JSON path-to-hash
+file's bytes. The original [V2 manifest](../reports/v2-source-manifest.json) and
+[V2 evidence](../reports/v2-client-verifier.md) retain their historical source
+identity. `source_sha256` is SHA256 of the UTF-8 canonical JSON path-to-hash
 object: `json.dumps(files, sort_keys=True, separators=(",", ":"))`, using Python's
 default `ensure_ascii=True`. This matches existing `core.digest` serialization
 without importing installer modules. The generated manifest is excluded to
@@ -130,7 +139,7 @@ and reviewed with the corresponding prefix/source compatibility check.
 ## Reproduce source verification
 
 ```sh
-python3 -B -m unittest discover -s scripts/client/tests -p 'test_*.py'
+python3 -B -W error::ResourceWarning -m unittest discover -s scripts/client/tests -p 'test_verify*.py'
 python3 -B scripts/client/tests/verify_wire_fixture.py \
   --work-root /absolute/private/new-v2-synthetic-run
 ```

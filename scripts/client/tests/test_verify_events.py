@@ -316,7 +316,8 @@ class BoundedProcessTests(unittest.TestCase):
 
     def test_invalid_limits_are_rejected_before_execution(self):
         for kwargs in ({"timeout": 0}, {"timeout": float("inf")}, {"max_output": 0},
-                       {"max_output": verifier.MAX_OUTPUT + 1}, {"input": "not bytes"}):
+                       {"max_output": verifier.MAX_OUTPUT + 1}, {"input": "not bytes"},
+                       {"cancel_requested": "not callable"}):
             with self.subTest(kwargs=kwargs), self.assertRaisesRegex(ValueError, "invalid_bounded_process_arguments"):
                 self.run_code("raise SystemExit(99)", **kwargs)
 

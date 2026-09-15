@@ -309,17 +309,20 @@ def _process_snapshot():
     return result
 
 
-def run_bounded(argv, cwd, env, input=None, timeout=1800, max_output=MAX_OUTPUT):
+def run_bounded(argv, cwd, env, input=None, timeout=1800, max_output=MAX_OUTPUT, cancel_requested=None):
     """Execute an internal argv without a shell; bound bytes, time, and cleanup.
 
 The caller provides only reviewed argv. Children run in a fresh session. We
 track observed descendants, including changed process groups, and reap the
 direct child. Cleanup errors are surfaced as process_tree_reaped=False.
+An optional cancellation predicate enters the same cleanup without throwing
+from a signal handler or discarding the captured process result.
 """
     if (os.name != "posix" or not isinstance(argv, (list, tuple)) or not argv or
             any(not isinstance(arg, str) or "\x00" in arg for arg in argv) or
             type(timeout) not in (int, float) or not math.isfinite(timeout) or not 0 < timeout <= 7200 or
             type(max_output) is not int or not 0 < max_output <= MAX_OUTPUT or
+            cancel_requested is not None and not callable(cancel_requested) or
             input is not None and (not isinstance(input, bytes) or len(input) > MAX_LINE)):
         raise ValueError("invalid_bounded_process_arguments")
     started = time.monotonic()
@@ -378,6 +381,8 @@ direct child. Cleanup errors are surfaced as process_tree_reaped=False.
                 observe()
                 next_observation = now + 0.025
             returncode = process.poll()
+            if cancel_requested is not None and cancel_requested():
+                break
             if now - started >= timeout:
                 timed_out = returncode is None or bool(selector.get_map())
                 break
