@@ -78,17 +78,46 @@ automatic conversion into successful package state.
 
 ## Exact I1b caller API
 
+**I1R2 correction:** import the reviewed lease module canonically and validate
+the expected root/UID before exporting. This example documents the internal
+caller contract; I1c still owns production admission and storage handoff glue.
+
 ```python
-runner = Runner(writable=True, package_lease_fd=lease_fd)
-packages = Prerequisites(config, runner, storage_guard)
-packages.recover_policy()  # under canonical lease, before mutation admission
-packages.package_transaction(
-    ["apt-get", *reviewed_data_backed_apt_options, "--no-download", "--yes",
-     "--no-install-recommends", "--no-remove", "install", *exact_version_pins],
-    timeout=3600, env=reviewed_package_environment,
+import os
+from common.lifecycle_lease import (
+    acquire_lease, _validate_borrowed_lease, _export_package_watcher_fd,
 )
-# Verify the requested package versions and stage-specific postconditions.
+from install.core import Runner
+from install.prerequisites import Prerequisites, assert_package_admission
+
+with acquire_lease() as lease:  # production canonical root/UID defaults
+    _validate_borrowed_lease(lease)  # same expected production scope
+    exported_fd = _export_package_watcher_fd(lease)
+    try:
+        runner = Runner(writable=True, package_lease_fd=exported_fd)
+        packages = Prerequisites(config, runner, storage_guard)
+        packages.recover_policy()  # before admission / completed-stage checks
+        assert_package_admission(config["data_dir"], storage_guard)
+        packages.package_transaction(
+            ["apt-get", *reviewed_data_backed_apt_options, "--no-download", "--yes",
+             "--no-install-recommends", "--no-remove", "install", *exact_version_pins],
+            timeout=3600, env=reviewed_package_environment,
+        )
+        # Verify versions/postconditions and finish ALL later stages using runner
+        # inside this try, with admission before each ordinary mutation.
+    finally:
+        os.close(exported_fd)  # before outer lease exit; NEVER LOCK_UN
 ```
+
+The caller owns `exported_fd`; Runner borrows it and does not close it. Keep it
+open throughout Runner's **entire package-use scope**, including failure cleanup
+and later transactions/stages. `run_package()` validates it after watcher READY;
+closing it at READY is premature and fails with
+`package_borrowed_lifecycle_lease_invalid`. `package_identity()` and
+`prepare_package()` also reuse it. The watcher inherits its own duplicate of the
+same flock open-file description and retains it independently until exact
+quiescence. Neither caller nor watcher may use `LOCK_UN`; no reopened lock or
+raw-FD Manager capability replaces the canonical export.
 
 L1's read-only admission API requires no installer config or versions lock:
 
