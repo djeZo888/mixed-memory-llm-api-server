@@ -35,6 +35,8 @@ WINDOWS = dict(zip(STAGES, (32768, 32768, 65536, 131072, 262144, 524288, 1048576
 CAPS = dict(zip(STAGES, (2400, 2400, 7200, 14400, 28800, 43200, 86400)))
 MAX_BODY = 32 * 1024 * 1024
 MAX_RAW = 2 * 1024 * 1024
+STATE_LOCK_TIMEOUT = 5.0
+STATE_LOCK_RETRY = 0.025
 D1_IMAGE = 'sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62'
 
 
@@ -106,15 +108,24 @@ def write_json(path, obj):
 
 @contextlib.contextmanager
 def lock(run, name='state.lock'):
+    """Reject a second request owner immediately; bound short state transactions."""
     fd = os.open(run / name, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     try:
         s = os.fstat(fd)
         require(stat.S_ISREG(s.st_mode) and s.st_uid == os.geteuid()
                 and not s.st_mode & 0o077 and s.st_nlink == 1, 'unsafe_lock')
-        try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            raise AgentError('owned_request_or_state_busy') from None
+        deadline = time.monotonic() + STATE_LOCK_TIMEOUT
+        while True:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if name != 'state.lock':
+                    raise AgentError('owned_request_or_state_busy') from None
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise AgentError('state_lock_timeout') from None
+                time.sleep(min(STATE_LOCK_RETRY, remaining))
         yield
     finally:
         os.close(fd)
@@ -489,6 +500,7 @@ def worker(run, transport=Transfer, sampler_factory=None):
                     with lock(run):
                         latest = read_json(run / 'state.json')
                     require(not latest['cancel_requested'], 'owner_cancelled')
+                    require(time.time() <= s['request_deadline'], 'stage_timeout')
                     if transfer.done.is_set():
                         if completion_seen:
                             break
@@ -516,6 +528,8 @@ def worker(run, transport=Transfer, sampler_factory=None):
                       'resource_evidence': 'bounded_1Hz_samples_not_instantaneous_peaks'}
             with lock(run):
                 s = read_json(run / 'state.json')
+                require(not s['cancel_requested'], 'owner_cancelled')
+                require(time.time() <= s['request_deadline'], 'stage_timeout')
                 rec = s['stages'][s['stage']]
                 rec['results'].append(result)
                 if s['stage'] in ('baseline', 'candidate'):
@@ -523,7 +537,7 @@ def worker(run, transport=Transfer, sampler_factory=None):
                 done = len(rec['results']) == len(steps(s['stage']))
                 rec['status'] = 'PASS' if done else 'PENDING'
                 s['status'] = 'STAGE_PASS' if done else 'STEP_PASS'
-                if done:
+                if done and phase_for(s['stage']) == 'native':
                     s['highest_proven_window'] = WINDOWS[s['stage']]
                 write_json(run / 'state.json', s)
         except Exception as exc:

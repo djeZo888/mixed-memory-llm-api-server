@@ -223,6 +223,74 @@ class DriverTests(unittest.TestCase):
         # At most18 fitting calls plus one final account per occupied cold request.
         self.assertLessEqual(len(self.account_calls), 40)
 
+    def test_occupied_proof_requires_complete_native_stage_and_survives_later_failure(self):
+        # These injected byte counts/samples exercise publication rules only;
+        # configured capacity and short comparisons are not live occupancy proof.
+        state = self.state()
+        state['native_configured_capacity'] = 1048576
+        probe.write_json(self.run / 'state.json', state)
+        for stage in ('baseline', 'candidate'):
+            for step in probe.steps(stage):
+                with self.subTest(stage=stage, step=step):
+                    probe.prepare(self.run, stage, accountant=self.accountant)
+                    self.assertEqual(self.state()['step'], step)
+                    self.dispatch()
+                    self.assertEqual(self.state()['status'], 'STAGE_PASS' if step == 'continuation' else 'STEP_PASS')
+                    self.assertIsNone(self.state()['highest_proven_window'])
+                    self.assertIsNone(probe.status(self.run)['highest_proven_window'])
+            comparison = self.state()['stages'][stage]
+            self.assertEqual(comparison['status'], 'PASS')
+            self.assertEqual([r['name'] for r in comparison['results']],
+                             [stage + '.' + step for step in probe.steps(stage)])
+            self.assertTrue(all(r['status'] == 'PASS' for r in comparison['results']))
+            self.assertLess(comparison['results'][0]['accounting']['input_tokens'], 32768 - 8192 - 256)
+        comparison_evidence = copy.deepcopy(self.state()['stages'])
+
+        for step in probe.steps('64k'):
+            with self.subTest(stage='64k', step=step):
+                probe.prepare(self.run, '64k', accountant=self.accountant)
+                self.assertEqual(self.state()['step'], step)
+                self.assertIsNone(self.state()['highest_proven_window'])
+                if step == 'cold':
+                    count = self.state()['accounting']['input_tokens']
+                    self.assertGreaterEqual(count, 65536 - 8192 - 256)
+                    self.assertLessEqual(count, 65536 - 8192)
+                self.dispatch()
+                self.assertEqual(self.state()['status'], 'STAGE_PASS' if step == 'continuation' else 'STEP_PASS')
+                expected = 65536 if step == 'continuation' else None
+                self.assertEqual(self.state()['highest_proven_window'], expected)
+                self.assertEqual(probe.status(self.run)['highest_proven_window'], expected)
+        results = self.state()['stages']['64k']['results']
+        self.assertEqual([r['name'] for r in results], ['64k.cold', '64k.tool', '64k.continuation'])
+        self.assertEqual(results[0]['checks'], {'early': True, 'middle': True, 'late': True})
+        self.assertTrue(results[1]['checks']['worker_local'])
+        self.assertEqual(results[2]['checks'], {'tool_continuation': True})
+
+        probe.prepare(self.run, '128k', accountant=self.accountant)
+        self.assertEqual(self.state()['highest_proven_window'], 65536)
+        def missing_cache(*args):
+            transfer = self.transport(*args)
+            transfer.raw = self.response(missing_cache=True)
+            return transfer
+        self.dispatch(transport=missing_cache)
+        failed = self.state()
+        self.assertEqual(failed['status'], 'PENDING_RECONCILIATION')
+        self.assertEqual(failed['failure_class'], 'useful_prefix_reuse_NOT_TESTED')
+        self.assertEqual(failed['stages']['128k']['results'], [])
+        self.assertEqual(failed['highest_proven_window'], 65536)
+        self.assertEqual(probe.status(self.run)['highest_proven_window'], 65536)
+        self.assertEqual(failed['native_configured_capacity'], 1048576)
+        self.assertEqual({stage: failed['stages'][stage] for stage in ('baseline', 'candidate')}, comparison_evidence)
+        self.assertEqual(len(self.transfers), 12)
+
+    def test_underoccupied_initial_native_count_cannot_establish_proof(self):
+        self.seed_comparison_pass()
+        body, _ = probe.cold_body(64, 128)
+        with self.assertRaisesRegex(AgentError, 'native_occupied_target_not_reached'):
+            probe.checked_account(body, self.phases['native'], '64k', True, accountant=self.accountant)
+        self.assertIsNone(self.state()['highest_proven_window'])
+        self.assertEqual(self.transfers, [])
+
     def test_launch_checkpoints_before_spawn_and_status_never_reissues(self):
         probe.prepare(self.run, 'baseline', accountant=self.accountant)
         def spawn(*args, **kwargs):

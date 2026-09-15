@@ -81,6 +81,14 @@ Do not run multiple stage commands concurrently. Per-run locks prevent duplicate
 dispatch from this run; the existing root-coordinated exclusive client lease is
 a prerequisite and is not replaced by these local locks.
 
+`request.lock` rejects another owner immediately. Short `state.lock` transactions
+retry every 25ms for at most 5s, including worker reads and success/failure writes.
+Brief status reads therefore serialize with the worker. Exhaustion raises
+`state_lock_timeout`; failure publication gets its own bounded lock attempt. If
+that also expires, the last durable STARTING/IN_FLIGHT checkpoint remains for
+unknown-completion reconciliation. Request deadlines and owner cancellation
+still apply after waiting; no request is automatically retried.
+
 Only `status` resumes monitoring. STARTING/IN_FLIGHT never dispatch again.
 IN_FLIGHT_UNKNOWN/PENDING_RECONCILIATION require root to reconcile server completion;
 never rerun the request to guess. PREPARATION_UNKNOWN/NOT_TESTED also stop the plan.
@@ -116,6 +124,11 @@ Unfused64GiB score path is outside budget and blocks occupancy.
 `state.json`: stage/step/status, durable start/deadline, frozen body SHA256,
 actual input/render/token hashes, exact common-prefix count, completed result
 records and highest_proven_window. `native_configured_capacity` is separate.
+`highest_proven_window` stays null through baseline/candidate short comparisons;
+their PASS records remain under `stages` as comparison evidence. Only a complete
+native occupancy stage, after its initial actual-count lower bound and successful
+retrieval/tool/continuation sequence, advances occupied proof. Later failures
+preserve the last proven value. Source-test fixture values are not live evidence.
 Each result has exact body/raw hashes, elapsed seconds, nullable backend
 prompt/completion/total/cached/evaluated/decode counts and prompt/decode timing,
 retrieval/tool checks and sampled evidence location/count. Missing metrics are
