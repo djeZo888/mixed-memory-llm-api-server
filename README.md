@@ -12,11 +12,12 @@ This repository is API-only. It is intended to run inference backends, expose mo
 
 ## Current installer status
 
-The fresh-Linux installer is **incomplete: I1b continuation required**. I1 adds
-read-only planning, verified dedicated storage, pinned Ubuntu prerequisites and
-an explicit driver/reboot checkpoint. Full `apply` refuses before mutation until
-runtime, acquisition, service, client and acceptance integration is implemented.
-It does not yet leave a fresh machine ready for inference.
+The fresh-Linux installer is **incomplete: final integration required**. I1/I1b
+provide storage/prerequisite, container/toolkit, pinned runtime and GLM/Qwen
+acquisition source stages. Package execution remains pending the reviewed
+I1R/L1 ownership interface; blank-disk provisioning is handed to I1S. Full
+`apply` refuses before mutation until I1c service/control/client/acceptance passes.
+This revision does not leave a fresh machine ready for inference.
 
 ```sh
 ./install.sh --help
@@ -24,8 +25,8 @@ It does not yet leave a fresh machine ready for inference.
 ```
 
 See [installation and partial-boundary commands](docs/installation.md),
-[I1 test evidence](reports/i1-installer-prerequisites.md), and
-[required I1b work](reports/i1b-continuation.md). Ubuntu24.04 amd64 is the supported
+[I1b test evidence](reports/i1b-runtime-acquisition.md), and
+[remaining integration checklist](reports/i1c-installer-checklist.md). Ubuntu24.04 amd64 is the supported
 source target. Full fresh GPU installation/reboot is **NOT_TESTED**.
 
 The roadmap below is historical. Current D1/D1b/F1A artifact acquisition,
