@@ -76,12 +76,67 @@ class Qwen38ImageFixtureTests(unittest.TestCase):
         with patch.object(inner.subprocess, 'run', return_value=child) as process:
             self.assertEqual(inner.run_cache_probe(ROOT), expected)
         command = process.call_args.args[0]
-        self.assertEqual(command[2], str(FIXTURE / 'cache_probe.py'))
+        self.assertEqual(command[1:4], ['-X', 'faulthandler', '-B'])
+        self.assertEqual(command[4], str(FIXTURE / 'cache_probe.py'))
         self.assertEqual(process.call_args.kwargs['timeout'], 120)
         for change in ({'returncode': 1}, {'stderr': b'private detail'}, {'stdout': b'{}'}):
             failed = SimpleNamespace(**(vars(child) | change))
-            with patch.object(inner.subprocess, 'run', return_value=failed), self.assertRaises(Exception):
+            with patch.object(inner.subprocess, 'run', return_value=failed), \
+                    patch.object(inner.os, 'write'), self.assertRaises(Exception):
                 inner.run_cache_probe(ROOT)
+
+    def test_native_fault_stderr_prefix_reaches_original_fd_and_stays_failure(self):
+        for code, raw in ((-11, b'Fatal Python error: Segmentation fault\n  cache_probe.py native import\n'),
+                          (-11, b'x' * 20000), (0, b'native stderr remains a failure')):
+            child = SimpleNamespace(returncode=code, stdout=b'', stderr=raw)
+            with self.subTest(code=code, size=len(raw)), \
+                    patch.object(inner.subprocess, 'run', return_value=child), \
+                    patch.object(inner.os, 'write') as original_fd, \
+                    self.assertRaisesRegex(inner.FixtureFailure, 'cache_probe_child_failed'):
+                inner.run_cache_probe(ROOT)
+            original_fd.assert_called_once_with(
+                2, b'Q38FIX cache_probe stderr prefix (up to 16384 bytes):\n' + raw[:16384])
+
+    def test_successful_cache_probe_does_not_forward_stderr(self):
+        expected = host.CACHE.result_record(dict(host.CACHE.EXPECTED_PATHS), [])
+        child = SimpleNamespace(returncode=0, stdout=json.dumps(expected).encode(), stderr=b'')
+        with patch.object(inner.subprocess, 'run', return_value=child), \
+                patch.object(inner.os, 'write') as original_fd:
+            self.assertEqual(inner.run_cache_probe(ROOT), expected)
+        original_fd.assert_not_called()
+
+    def test_broken_stderr_fd_cannot_replace_native_child_failures(self):
+        child = SimpleNamespace(returncode=-11, stdout=b'', stderr=b'fault trace')
+        with patch.object(inner.subprocess, 'run', return_value=child), \
+                patch.object(inner.os, 'write', side_effect=OSError('closed')), \
+                patch.object(inner.Path, 'exists', return_value=False):
+            with self.assertRaisesRegex(inner.FixtureFailure, 'cache_probe_child_failed'):
+                inner.run_cache_probe(ROOT)
+            with self.assertRaisesRegex(inner.FixtureFailure, 'warmup_failure_subprocess_not_closed'):
+                inner.run_failure_children(ROOT)
+
+    def test_failure_fixture_children_explicitly_enable_faulthandler(self):
+        child = SimpleNamespace(returncode=1, stdout=inner.FAULT_MARKER, stderr=b'')
+        with patch.object(inner.subprocess, 'run', return_value=child) as process, \
+                patch.object(inner.Path, 'exists', return_value=False), \
+                patch.object(inner.Path, 'lstat', return_value=SimpleNamespace(
+                    st_mode=stat.S_IFREG | 0o600, st_uid=os.geteuid())), \
+                patch.object(inner.Path, 'unlink'), patch.object(inner.socket, 'socket') as socket:
+            socket.return_value.connect_ex.return_value = 1
+            inner.run_failure_children(ROOT)
+        self.assertEqual(process.call_count, 2)
+        for call in process.call_args_list:
+            self.assertEqual(call.args[0][1:3], ['-X', 'faulthandler'])
+
+    def test_failure_fixture_crash_prefix_survives_without_acceptance(self):
+        child = SimpleNamespace(returncode=-11, stdout=b'', stderr=b'x' * 20000)
+        with patch.object(inner.subprocess, 'run', return_value=child), \
+                patch.object(inner.Path, 'exists', return_value=False), \
+                patch.object(inner.os, 'write') as original_fd, \
+                self.assertRaisesRegex(inner.FixtureFailure, 'warmup_failure_subprocess_not_closed'):
+            inner.run_failure_children(ROOT)
+        original_fd.assert_called_once_with(
+            2, b'Q38FIX failure fixture stderr prefix (up to 16384 bytes):\n' + child.stderr[:16384])
 
     def test_inner_requires_explicit_actual_mode_and_exact_contexts(self):
         for argv in (["--repo", "/fixture"], ["--actual-image", "--repo", "/fixture", "--fallback"],
@@ -131,6 +186,8 @@ class Qwen38ImageFixtureTests(unittest.TestCase):
         self.assertNotIn("--privileged", command)
         self.assertEqual(command[command.index("--runtime") + 1], "nvidia")
         self.assertEqual(command[command.index("--log-driver") + 1], "none")
+        self.assertEqual(command.count("--ulimit"), 1)
+        self.assertEqual(command[command.index("--ulimit") + 1], "core=1:1")
         self.assertEqual([value for value in command if value.startswith("NVIDIA_VISIBLE_DEVICES=")],
                          ["NVIDIA_VISIBLE_DEVICES=none"])
         self.assertIn("NVIDIA_DRIVER_CAPABILITIES=compute,utility", command)
@@ -140,6 +197,7 @@ class Qwen38ImageFixtureTests(unittest.TestCase):
                          "type=bind,src=/reviewed,dst=/fixture,readonly")
         self.assertIn("/run/secrets:rw,nosuid,nodev,noexec,size=1m,mode=0700", command)
         self.assertIn(host.IMAGE_REFERENCE, command)
+        self.assertEqual(command[command.index(host.IMAGE_REFERENCE) + 1:][:3], ["-X", "faulthandler", "-B"])
         self.assertEqual(command[-2:], ["--context", "262144"])
         self.assertFalse(any(value.startswith("HOME=") for value in command))
         for path in ("/reviewed,src=/etc", "/reviewed\nunsafe"):
@@ -248,7 +306,7 @@ class Qwen38ImageFixtureTests(unittest.TestCase):
     def test_origin_selects_concrete_fixture_callsite_after_opaque_cache_failure(self):
         sentinel = secrets.token_urlsafe(32)
         child = SimpleNamespace(returncode=1, stdout=sentinel.encode(), stderr=sentinel.encode())
-        with patch.object(inner.subprocess, "run", return_value=child):
+        with patch.object(inner.subprocess, "run", return_value=child), patch.object(inner.os, "write"):
             try:
                 inner.run_cache_probe(ROOT)
             except inner.FixtureFailure as error:

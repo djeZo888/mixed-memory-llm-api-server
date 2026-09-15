@@ -38,7 +38,7 @@ def fixture_container(repo, cache, context, *, name=None, token=None, image_id=N
                 **cache, "NVIDIA_VISIBLE_DEVICES": "none", "CUDA_VISIBLE_DEVICES": "",
                 "NVIDIA_DRIVER_CAPABILITIES": "compute,utility"}.items()],
             "Entrypoint": ["python3"], "User": "0:0", "WorkingDir": "/cache",
-            "Cmd": ["-B", "/fixture/tests/lifecycle/sglang38_fixture/run_pinned_image.py",
+            "Cmd": ["-X", "faulthandler", "-B", "/fixture/tests/lifecycle/sglang38_fixture/run_pinned_image.py",
                     "--actual-image", "--repo", "/fixture", "--context", str(context)],
         },
         "HostConfig": {
@@ -50,6 +50,7 @@ def fixture_container(repo, cache, context, *, name=None, token=None, image_id=N
             "VolumesFrom": None, "PidMode": "", "UTSMode": "", "IpcMode": "private",
             "PidsLimit": 128, "Memory": 8 * 1024**3, "ShmSize": 64 * 1024**2,
             "AutoRemove": False, "RestartPolicy": {"Name": "no", "MaximumRetryCount": 0},
+            "Ulimits": [{"Name": "core", "Soft": 1, "Hard": 1}],
             "Tmpfs": {
                 "/models": "rw,nosuid,nodev,noexec,size=8m,mode=0700",
                 "/run/secrets": "rw,nosuid,nodev,noexec,size=1m,mode=0700",
@@ -243,6 +244,25 @@ class Qwen38FixtureLifetimeTests(unittest.TestCase):
                     lambda container, field=field, value=value:
                     container["HostConfig"].__setitem__(field, value))
 
+    def test_core_limit_missing_zero_unlimited_duplicate_or_untyped_refused_before_start(self):
+        core = {"Name": "core", "Soft": 1, "Hard": 1}
+        invalid = (None, [], [dict(core, Soft=0)], [dict(core, Hard=0)],
+                   [dict(core, Soft=-1, Hard=-1)], [dict(core, Soft=True)],
+                   [dict(core, Hard=True)], [dict(core, Soft="1")], [dict(core, Hard="1")],
+                   [dict(core, Name="nofile")], [core, core])
+        for limits in invalid:
+            with self.subTest(limits=limits):
+                self.assert_policy_refused(lambda container: container["HostConfig"].__setitem__("Ulimits", limits))
+        self.assert_policy_refused(lambda container: container["HostConfig"].pop("Ulimits"))
+
+    def test_unrelated_daemon_limit_does_not_replace_core_contract(self):
+        daemon = DockerDaemon(policy_mutator=lambda container: container["HostConfig"]["Ulimits"].append(
+            {"Name": "nofile", "Soft": 1024, "Hard": 4096}))
+        child, lifetime = self.invoke(daemon)
+        self.assertEqual(child.returncode, 0)
+        self.assertEqual(lifetime["cleanup"], "QUIESCENT_REMOVAL_VERIFIED")
+        self.assert_sentinel(daemon)
+
     def test_native_process_entrypoint_user_workspace_and_context_drift_refused(self):
         for field, value in {
             "Entrypoint": ["sh", "-c"], "User": "1000:1000", "WorkingDir": "/root",
@@ -253,6 +273,11 @@ class Qwen38FixtureLifetimeTests(unittest.TestCase):
                 self.assert_policy_refused(
                     lambda container, field=field, value=value:
                     container["Config"].__setitem__(field, value))
+
+    def test_faulthandler_missing_or_altered_refused_before_start(self):
+        for prefix in (["-B"], ["-X", "dev", "-B"]):
+            self.assert_policy_refused(lambda container: container["Config"].__setitem__(
+                "Cmd", prefix + container["Config"]["Cmd"][3:]))
 
     def test_environment_gpu_enablement_void_and_duplicate_overrides_refused(self):
         for key, value in (("NVIDIA_VISIBLE_DEVICES", "all"),

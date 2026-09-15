@@ -18,6 +18,7 @@ import io
 import json
 import os
 from pathlib import Path
+import resource
 import stat
 import sys
 
@@ -66,7 +67,12 @@ EXPECTED_PATHS = {
     "flashinfer_generated": "/cache/flashinfer/.cache/flashinfer/0.6.18/generated",
     "cuda_configured": "/cache/cuda",
 }
-CONTROL_NODES = frozenset({"/dev/nvidiactl", "/dev/nvidia-uvm", "/dev/nvidia-uvm-tools"})
+# Q38DEV observed these character devices; NVIDIA toolkit 1.19.1's
+# controlDeviceNodeDiscoverer lists all four as global controls, not per-GPU nodes.
+STATIC_CONTROL_DEVICES = {
+    "/dev/nvidia-modeset": (195, 254), "/dev/nvidiactl": (195, 255),
+}
+CONTROL_NODES = frozenset({*STATIC_CONTROL_DEVICES, "/dev/nvidia-uvm", "/dev/nvidia-uvm-tools"})
 
 
 class ProbeError(Exception):
@@ -79,7 +85,7 @@ FAILURE_CODES = frozenset((
     "cache_probe_hash_mismatch", "cache_resolved_path_mismatch",
     "cache_resolver_source_mismatch", "cache_result_invalid", "cache_result_mismatch",
     "cache_result_types_invalid", "cache_write_failed", "empty_model_and_secret_tmpfs_required",
-    "fixture_repository_required", "gpu_device_node_present", "gpu_visible", "home_changed",
+    "fixture_repository_required", "fixture_core_limit_required", "gpu_device_node_present", "gpu_visible", "home_changed",
     "installed_package_missing", "installed_version_mismatch", "isolation_changed",
     "launcher_source_hash_mismatch", "linux_pinned_image_required",
     "no_gpu_runtime_environment_required", "private_directory_required", "private_tmpfs_required",
@@ -186,7 +192,7 @@ def check_mounts(mountinfo):
 
 def check_device_names(names):
     relevant = {name for name in names if name.startswith(("/dev/nvidia", "/dev/dri/"))
-                or name in ("/dev/kfd", "/dev/dxg")}
+                or name in ("/dev/dri", "/dev/kfd", "/dev/dxg")}
     require(relevant <= CONTROL_NODES, "gpu_device_node_present")
     return sorted(relevant)
 
@@ -198,6 +204,9 @@ def verify_isolation():
             and os.environ.get("NVIDIA_DRIVER_CAPABILITIES") == "compute,utility"
             and os.environ.get("CUDA_VISIBLE_DEVICES") == "",
             "no_gpu_runtime_environment_required")
+    # Linux fs/coredump.c aborts piped core handlers at a one-byte soft limit.
+    # Verify the inherited container limit before any native library imports.
+    require(resource.getrlimit(resource.RLIMIT_CORE) == (1, 1), "fixture_core_limit_required")
     check_mounts(Path("/proc/self/mountinfo").read_text())
     for target in (Path("/cache"), Path("/models"), Path("/run/secrets")):
         meta = target.lstat()
@@ -205,10 +214,20 @@ def verify_isolation():
                 and stat.S_IMODE(meta.st_mode) == 0o700, "private_directory_required")
         if target != Path("/cache"):
             require(not any(target.iterdir()), "empty_model_and_secret_tmpfs_required")
-    names = [str(path) for path in Path("/dev").glob("nvidia*")]
-    names += [str(path) for path in Path("/dev/dri").glob("*")]
-    names += [str(path) for path in (Path("/dev/kfd"), Path("/dev/dxg")) if path.exists()]
-    return check_device_names(names)
+    # Enumerate names without following symlinks. Refuse accelerator directories
+    # outright, so neither descendants nor dangling symlinks can evade the gate.
+    controls = check_device_names([str(path) for path in Path("/dev").iterdir()])
+    for name in controls:
+        meta = Path(name).lstat()
+        require(stat.S_ISCHR(meta.st_mode), "cache_control_nodes_invalid")
+        if name in STATIC_CONTROL_DEVICES:
+            require((os.major(meta.st_rdev), os.minor(meta.st_rdev)) == STATIC_CONTROL_DEVICES[name],
+                    "cache_control_nodes_invalid")
+        else:
+            # UVM allocates its major dynamically. Do not pin a current-boot
+            # number; still refuse renamed NVIDIA/DRI accelerator devices.
+            require(os.major(meta.st_rdev) not in (195, 226), "cache_control_nodes_invalid")
+    return controls
 
 
 def verify_sources(repo):

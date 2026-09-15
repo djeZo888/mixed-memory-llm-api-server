@@ -128,6 +128,9 @@ def docker_command(repo, cache_environment, context, *, container_name=None, own
                "--env", "NVIDIA_DRIVER_CAPABILITIES=compute,utility",
                "--platform", "linux/amd64", "--read-only", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
                "--pids-limit", "128", "--memory", "8g", "--shm-size", "64m",
+               # Linux's piped-core recursion guard is exactly one byte; zero
+               # does not prevent invoking a core_pattern handler such as Apport.
+               "--ulimit", "core=1:1",
                "--user", "0:0", "--workdir", "/cache", "--entrypoint", "python3",
                "--mount", f"type=bind,src={repo},dst=/fixture,readonly",
                "--tmpfs", "/models:rw,nosuid,nodev,noexec,size=8m,mode=0700",
@@ -137,7 +140,7 @@ def docker_command(repo, cache_environment, context, *, container_name=None, own
     # No host environment is forwarded and HOME retains the image default.
     for name, value in sorted(cache_environment.items()):
         command += ["--env", f"{name}={value}"]
-    return command + [IMAGE_REFERENCE, "-B",
+    return command + [IMAGE_REFERENCE, "-X", "faulthandler", "-B",
         "/fixture/tests/lifecycle/sglang38_fixture/run_pinned_image.py", "--actual-image",
         "--repo", "/fixture", "--context", str(context)]
 
@@ -252,6 +255,12 @@ def verify_fixture_runtime(container, repo, cache_environment, context):
             and type(host.get("ShmSize")) is int and host["ShmSize"] == 64 * 1024**2
             and host.get("RestartPolicy") == {"Name": "no", "MaximumRetryCount": 0}
             and host.get("AutoRemove") is False, "fixture_resource_policy_invalid")
+    limits = host.get("Ulimits")
+    require(type(limits) is list, "fixture_resource_policy_invalid")
+    core = [value for value in limits if type(value) is dict and value.get("Name") == "core"]
+    require(len(core) == 1 and set(core[0]) == {"Name", "Soft", "Hard"}
+            and all(type(core[0][key]) is int and core[0][key] == 1 for key in ("Soft", "Hard")),
+            "fixture_resource_policy_invalid")
     require(not any(host.get(k) for k in ("Binds", "VolumesFrom", "PidMode", "UTSMode"))
             and host.get("IpcMode", "private") == "private", "fixture_namespace_invalid")
     require(host.get("Tmpfs") == {
@@ -270,7 +279,7 @@ def verify_fixture_runtime(container, repo, cache_environment, context):
             and binds[0].get("RW") is False and binds[0].get("Propagation") in ("rprivate", ""),
             "fixture_mounts_invalid")
     require(config.get("Entrypoint") == ["python3"] and config.get("User") == "0:0"
-            and config.get("WorkingDir") == "/cache" and config.get("Cmd") == ["-B",
+            and config.get("WorkingDir") == "/cache" and config.get("Cmd") == ["-X", "faulthandler", "-B",
             "/fixture/tests/lifecycle/sglang38_fixture/run_pinned_image.py", "--actual-image",
             "--repo", "/fixture", "--context", str(context)], "fixture_process_invalid")
     return {"runtime": "nvidia", "visible_devices": "none", "driver_capabilities": "compute,utility",
