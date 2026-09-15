@@ -25,14 +25,7 @@
     "total": 27781427952
   },
   "sha_semantics": "For LFS, sha256 is publisher blob metadata; git_blob_sha1 identifies the pointer, not payload. For ordinary Git files, SHA256 was computed from fetched content and Git blob SHA1 matched metadata. Only 15 small nonweight files were fetched. No tensor header or weight payload was fetched. Empty safetensors-md5sum.txt is inventoried, not an integrity authority.",
-  "artifact_columns": [
-    "path",
-    "size_bytes",
-    "sha256",
-    "git_blob_sha1",
-    "metadata_identity",
-    "verification"
-  ],
+  "artifact_columns": ["path","size_bytes","sha256","git_blob_sha1","metadata_identity","verification"],
   "artifacts": [
     [".gitattributes",1570,"34448b82c17d60fec9b65b1f093c115ddbaadc04beb1b0140b6bfed2e012a930","52373fe24473b1aa44333d318f578ae6bf04b49b","git_blob_sha1","content_hash_VERIFIED"],
     ["LICENSE",11544,"bbedc3fda3305820b977265f01b8619d87570a6739de3a5582c3464840f1e57a","f938136e3adacfd92be087f6e113b5d6d97f678f","git_blob_sha1","content_hash_VERIFIED"],
@@ -152,10 +145,7 @@
       "quant_method": "fp8",
       "fmt": "e4m3",
       "activation_scheme": "dynamic",
-      "weight_block_size": [
-        128,
-        128
-      ],
+      "weight_block_size": [128,128],
       "modules_to_not_convert_count": 882
     }
   },
@@ -196,15 +186,13 @@
         "tp2_GiB_per_gpu_including_reserve": 64.66094970703125,
         "tp2_GiB_aggregate_including_reserve": 129.3218994140625
       }
-    ]
+    ],
+    "runtime_source_pin": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+    "pool_conditions": "TP1 orTP2, attentionDP1, one request, max-mamba1, disabled radix/speculation/ReplaySSM/graphs; max-total-tokens=context; physical size+1=2 state slots"
   },
   "proposed_future_profile": {
-    "runtime": "existing immutable SGLang0.5.14-cu130 only after source and fixture gates",
-    "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
-    "context_stages": [
-      131072,
-      262144
-    ],
+    "runtime": "separate pinned SGLang0.5.19-cu130; retain Coder-Next0.14",
+    "context_stages": [131072,262144],
     "tp_size": 1,
     "max_running_requests": 1,
     "tokenizer_worker_num": 1,
@@ -214,8 +202,8 @@
     "load_format": "safetensors",
     "attention_backend": "flashinfer",
     "linear_attn_backend": "triton",
-    "fp8_gemm_backend": "triton",
-    "chunked_prefill_size": 4096,
+    "fp8_gemm_backend": "cutlass (0.19 SM120 selection; shape-dependent Triton fallback)",
+    "chunked_prefill_size": 2048,
     "max_total_tokens": "equal to stage context; include output headroom within this cap",
     "max_mamba_cache_size": 1,
     "disable_radix_cache": true,
@@ -226,20 +214,21 @@
     "trust_remote_code": false,
     "speculative_algorithm": null,
     "multimodal_requests": "out of scope; text only; full checkpoint retained",
-    "auth": "reviewed F1S file auth, secret stays outside ServerArgs/argv/env; updated allowlist and actual-image sentinel gate required",
-    "authorization": "NOT_APPROVED; no download or activation now"
+    "auth": "0.19 prepare_server_args returns raw settings; resolve_once applies normalization and retains _raw_input/resolved_dict. Validate effective resolved settings, not only raw flags. Keep api_key/admin_api_key None in every snapshot; separate native middleware/file key. Repeat native auth layers, actual startup/child logging/diagnostics, warmup, WebSocket denial and cleanup sentinel tests; .14 fixtures do not transfer.",
+    "authorization": "NOT_APPROVED; no download or activation now",
+    "image_manifest_ref": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "expected_image_config_digest": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
+    "source_commit": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+    "enable_linear_replayssm_spec": false,
+    "reasoning_effort": "xhigh(default),medium,low; top-level xhigh supported in0.19",
+    "mamba_ssm_dtype": "float32 from pinned model config; verify actual dtype"
   },
   "runtime_source": {
     "tag": "v0.5.14",
     "tag_object": "4289f36ef960fad8268a6b94935686e792a81432",
     "commit": "49e384ce9d304648e9959666ecb8ce8cd98d0deb",
     "raw_url_prefix": "https://raw.githubusercontent.com/sgl-project/sglang/49e384ce9d304648e9959666ecb8ce8cd98d0deb/",
-    "columns": [
-      "path",
-      "size_bytes",
-      "sha256",
-      "support_level"
-    ],
+    "columns": ["path","size_bytes","sha256","support_level"],
     "files": [
       ["python/pyproject.toml",5289,"241d5b121aea0dec575c133a27eed1e22f046fa135b5ebb1c68c4eb07eca77d1","CODE_ONLY"],
       ["python/sglang/launch_server.py",2236,"00cee4f587a9cdf03e12f013a74b004cb3946c8fc142403f1e6abe462b8d7344","SUPPLIED_INSTALLED_BYTES_MATCH"],
@@ -286,7 +275,8 @@
       "torch": "2.11.0+cu130",
       "transformers": "5.8.1",
       "flashinfer-python": "0.6.12"
-    }
+    },
+    "role": "Historical0.14 audit and retained Coder-Next baseline only; superseded for Q38 by recommended_runtime"
   },
   "official_recipe": {
     "url": "https://github.com/sgl-project/sglang/blob/df6424967ab850cc53bf0321904a11a0cce099b2/docs/cookbook/autoregressive/Qwen/Qwen3.8-27B.mdx",
@@ -298,27 +288,24 @@
     "earliest_stable_compatible_version": "NOT_ESTABLISHED",
     "installed_image_recipe_match": false,
     "method": "202 hardware/checkpoint/overlay cells;1319-question GSM8K; input8192/output1024/concurrency1; throughput not retaken in sweep; no128K/256K qualification",
-    "mtp_gap": "Official SM120 FlashInfer MTP needs version newer than0.6.15.post1; installed0.6.12. Proposed path has no speculation."
+    "mtp_gap": "0.14 FlashInfer0.6.12 was below MTP recipe floor;0.19 source pins0.6.18 but actual installed contents/speculation NOT_TESTED; speculation remains off.",
+    "selected_runtime": "Separate pinned0.19 per root steering",
+    "measured_cell_source": {
+      "commit": "df6424967ab850cc53bf0321904a11a0cce099b2",
+      "path": "docs/src/snippets/configs/Qwen/qwen3.8-27b.jsx",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/df6424967ab850cc53bf0321904a11a0cce099b2/docs/src/snippets/configs/Qwen/qwen3.8-27b.jsx",
+      "sha256": "8bb8a32a29e20de9a4614ea02195494623cbd78204f4210cbb819afe39c94776",
+      "support_level": "official_recipe_only",
+      "difference_from_bounded_plan": "Published RTXPRO6000 FP8 uses FP8 KV, mem fraction0.85, chunk2048, trust_remote_code; future plan intentionally uses BF16 KV, no remote code, bounded pool/context and no speculation/graphs, therefore not identical measured configuration."
+    }
   },
   "f1s_reviewed_snapshot": {
     "status": "unmerged sibling working-tree source observed read-only; HEAD is parent, not attribution of uncommitted bytes",
     "head_at_inspection": "35e02ba6d1b781812c7e54628222660de4328e2e",
-    "columns": [
-      "path",
-      "size_bytes",
-      "sha256"
-    ],
+    "columns": ["path","size_bytes","sha256"],
     "files": [
-      [
-        "scripts/lifecycle/sglang_file_auth.py",
-        13703,
-        "1bf781b83d1a6bf25b63b948550cf2926e16247f48d6f977188954e9a10d212a"
-      ],
-      [
-        "docs/lifecycle/f1s-handoff.md",
-        15106,
-        "d3fc9295261a77ea3774c0d061b2524a81e82ec6e5e34151a76964884e48e066"
-      ]
+      ["scripts/lifecycle/sglang_file_auth.py",13703,"1bf781b83d1a6bf25b63b948550cf2926e16247f48d6f977188954e9a10d212a"],
+      ["docs/lifecycle/f1s-handoff.md",15106,"d3fc9295261a77ea3774c0d061b2524a81e82ec6e5e34151a76964884e48e066"]
     ]
   },
   "metadata_snapshot_hashes": {
@@ -332,35 +319,188 @@
     "kv_bytes_per_token_BF16": 24576,
     "gdn_state_bytes_per_slot": 77266944,
     "source_url_prefix": "https://huggingface.co/Qwen/Qwen3-Coder-Next-FP8/resolve/da6e2ed27304dd39abadd9c82ef50e8de67bdd4c/",
-    "columns": [
-      "path",
-      "size_bytes",
-      "sha256"
-    ],
+    "columns": ["path","size_bytes","sha256"],
     "files": [
-      [
-        "README.md",
-        8082,
-        "d9c961c3fe147bebff83bd6bb5dde4a95144c4dc62ffa482ad8882d662e4f6a9"
-      ],
-      [
-        "config.json",
-        9836,
-        "8756acedd5ae0df36b2d6d774c87e30b422c3f4988015aa0b7e6c32f21769cdf"
-      ],
-      [
-        "model.safetensors.index.json",
-        14819483,
-        "0ac9834aa1e30eb60d921d25e1755f97e92dfd47cf74ac2613e474243adcc4cf"
-      ]
+      ["README.md",8082,"d9c961c3fe147bebff83bd6bb5dde4a95144c4dc62ffa482ad8882d662e4f6a9"],
+      ["config.json",9836,"8756acedd5ae0df36b2d6d774c87e30b422c3f4988015aa0b7e6c32f21769cdf"],
+      ["model.safetensors.index.json",14819483,"0ac9834aa1e30eb60d921d25e1755f97e92dfd47cf74ac2613e474243adcc4cf"]
     ]
   },
-  "reproduction": [
-    "Research-only: GET metadata_url/tree_url; follow pagination; require revision and exact artifact path/size/Git/LFS identity set. Download no safetensors payload during research.",
-    "For ordinary Git assets, fetch resolve_url_prefix+path, require size, SHA256 and SHA1(b\"blob \"+str(size)+b\"\\0\"+content). For LFS assets require size and raw content SHA256, not pointer SHA1.",
-    "Require set(index.weight_map.values()) equals all 66 .safetensors paths; do not infer expected bytes from empty index.metadata.",
-    "After separate acquisition approval and data/root guards: fetch all exact-revision rows to protected registered /data roots, no model rewrite or omitted shards; reject path escape/symlinks; verify size and raw SHA256 for every artifact; produce protected completion evidence; rerun guards.",
-    "Reproduce upstream code with runtime_source.raw_url_prefix+path; compare byte lengths/SHA256. Verify missing installed modules in immutable image before qualifying runtime. No source code execution is authorized by this manifest.",
-    "JSON structural command: python3 -m json.tool reports/q38r-source-weight-manifest.json; repository whitespace command: git diff --check. Model/API tests remain future gated work."
-  ]
+  "reproduction": ["Research-only: GET metadata_url/tree_url; follow pagination; require revision and exact artifact path/size/Git/LFS identity set. Download no safetensors payload during research.","For ordinary Git assets, fetch resolve_url_prefix+path, require size, SHA256 and SHA1(b\"blob \"+str(size)+b\"\\0\"+content). For LFS assets require size and raw content SHA256, not pointer SHA1.","Require set(index.weight_map.values()) equals all 66 .safetensors paths; do not infer expected bytes from empty index.metadata.","After separate acquisition approval and data/root guards: fetch all exact-revision rows to protected registered /data roots, no model rewrite or omitted shards; reject path escape/symlinks; verify size and raw SHA256 for every artifact; produce protected completion evidence; rerun guards.","Reproduce upstream code with recommended_runtime.source_url_prefix+path for Q38; runtime_source.raw_url_prefix+path only for retained0.14 comparison; compare byte lengths/SHA256. Verify missing installed modules in immutable image before qualifying runtime. No source code execution is authorized by this manifest.","JSON structural command: python3 -m json.tool reports/q38r-source-weight-manifest.json; repository whitespace command: git diff --check. Model/API tests remain future gated work.","Registry read-only: anonymous public bearer token in memory; GET index/platform manifest and config metadata only; raw SHA256 must equal digest headers/descriptors. Verify linux/amd64 and OCI source revision. No layer GET during research. Later approved acquisition uses recommended_runtime.container.pull_ref under /data."],
+  "alternatives_sanity_check": {
+    "access_date": "2026-09-15",
+    "scope": "Exactly two current official alternatives; no broad survey or DeepSeek installation",
+    "eventual_lineup": ["GLM-5.3 first","Qwen3.8-27B-FP8 compact general and large-context role","Qwen3-Coder-Next-FP8 coding role"],
+    "third_fast_slot": "Not justified; user ceiling2-3fastmodels does not require filling thirdslot",
+    "authorization": "Research only; no Q38 or alternative download/pull/build/install/activation",
+    "candidates": [
+      {
+        "repo": "Qwen/Qwen3.6-35B-A3B-FP8",
+        "revision": "95a723d08a9490559dae23d0cff1d9466213d989",
+        "license": "Apache-2.0",
+        "role": "lower-resident-weight MoE coding/thinking alternative to Coder-Next; fallback replacement candidate only, not additive installation",
+        "weights": {
+          "files": 42,
+          "bytes": 37463662160,
+          "gib": 34.89075429737568,
+          "identity_level": "42 published LFS SHA256s agree in pinned API/tree; index references exactly those files; real weights NOT_TESTED",
+          "compact_identity_list_serialization": "json.dumps([[path,bytes,lfs_sha256],...tree order...],separators=(comma,colon))",
+          "compact_identity_list_sha256": "eeb9115b85abb0a8dc5b5717569d60ca4bb6c9795ab8fc9347c18caca785b2b2"
+        },
+        "benchmark_caveat": "Card reports SWE Verified73.4/Pro49.5 via internal bash+file-edit scaffold at200K; Terminal-Bench2.0 51.5 via Harbor/Terminus-2 avg5,256K,80K output,3h,32CPU/48GB. Q38 uses Claude Code at256K and Terminal-Bench2.1, so scores do not rank deployments. FP8 near-parity is publisher claim; no common quantization/hardware/harness or unmeasured speed claim.",
+        "decision": "Retain Qwen3.8 plus Coder-Next intended roles; no evidence from this bounded check justifies a third companion/download. Qwen3.6 is an available smaller-resident-weight replacement candidate if future same-harness quality/latency/memory tests justify replacing a role.",
+        "native_context": 262144,
+        "architecture": "Qwen3_5MoeForConditionalGeneration",
+        "runtime": {
+          "official_recipe": "card recommends SGLang>=0.5.10; qwen3 reasoning + qwen3_coder tools; exampleTP8 is not SM120 evidence",
+          "exact_release": "SGLang0.5.14 commit49e384ce9d304648e9959666ecb8ce8cd98d0deb qwen3_5.py registers exact class and MoE/FP8 loader, CODE_ONLY",
+          "installed_evidence": "F1A generic argument/parser fixtures and tiny Triton block-FP8 linear smoke only; actual Qwen3.6 full load/MoE/GDN/attention/SM120/TTFT/tokens per second NOT_TESTED",
+          "source_url": "https://github.com/sgl-project/sglang/blob/49e384ce9d304648e9959666ecb8ce8cd98d0deb/python/sglang/srt/models/qwen3_5.py",
+          "template": "thinking default; preserve_thinking opt-in; XML tools; qwen3 reasoning and qwen3_coder parser fixtures required; no tested continuation/streaming"
+        },
+        "source_columns": ["url","size_bytes","sha256"],
+        "sources": [
+          ["https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/95a723d08a9490559dae23d0cff1d9466213d989/LICENSE",11343,"50cbab8a892c5f2993b8c7351a99182507472def3b1374558308605d99b86b32"],
+          ["https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/95a723d08a9490559dae23d0cff1d9466213d989/README.md",64855,"24c5494fb559cdfda44abe396f71c18975fec69745aae4a94679316e6e80dbdb"],
+          ["https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/95a723d08a9490559dae23d0cff1d9466213d989/chat_template.jinja",7764,"e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259"],
+          ["https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/95a723d08a9490559dae23d0cff1d9466213d989/config.json",37000,"570ef7ea45a7e1d3de2b1d3c70c4ac3562d0e768acdc195778cb4f4d95025845"],
+          ["https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/95a723d08a9490559dae23d0cff1d9466213d989/model.safetensors.index.json",6329223,"6f176f344e41d35b17af12904e33401da5ebff3b49fccb8bfa0185bc2d50f9d6"],
+          ["https://huggingface.co/api/models/Qwen/Qwen3.6-35B-A3B-FP8/revision/95a723d08a9490559dae23d0cff1d9466213d989?blobs=true",57897,"f2345190254eff387d7442f366d27259fb7e4c2d5c07f7acdd7f40072452b22c"],
+          ["https://huggingface.co/api/models/Qwen/Qwen3.6-35B-A3B-FP8/tree/95a723d08a9490559dae23d0cff1d9466213d989?recursive=true&expand=false&limit=1000",14496,"bd8aa8970625e60fdfee80172a38a880082a5a5b9b707c42518d12d33efc0722"]
+        ]
+      },
+      {
+        "repo": "meta-models/Muse-Glimmer-30B",
+        "revision": "a4e59da52a7bc87ae7251dd5545c0dd437c44b68",
+        "gguf_repo": "meta-models/Muse-Glimmer-30B-GGUF",
+        "gguf_revision": "70bf1b61ac09f91b24d39038091b41c582bc5d7a",
+        "license": "Apache-2.0",
+        "role": "lower-memory general agent/VLM candidate; not selected for a third fast slot",
+        "architecture": "MuseGlimmerForConditionalGeneration",
+        "native_context": 131072,
+        "weight_bytes_bf16": 59553435272,
+        "selected_comparison_artifact_columns": ["path","size_bytes","published_lfs_sha256"],
+        "selected_comparison_artifacts": [
+          ["Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf",16756683904,"4cc57c0f51040a226e5a72cc47b7613f7772950e460a665f7083de89f183f60e"],
+          ["mmproj-Muse-Glimmer-30B-Q4_K_M.gguf",1400328928,"f48b452316f9b213758e8659444029b961a24a07f99a1abb2a9f88b06f7c00c6"]
+        ],
+        "artifact_note": "Comparison metadata only, not acquisition manifest/authorization. Main Q4_K_M is text only; vision optional; DFlash excluded. No weight bytes/headers fetched.",
+        "runtime": "Official GGUF recipe minimum b10353, Jinja and Muse stop/template semantics. Existing llama.cpp v0.4.1 commit b29c606e28a01b1bc8c1351026a0fa6e616bf6c4 includes model registration/implementation CODE_ONLY. No native Muse filename in SGLang0.5.14 model tree; installed Muse architecture/SM120 execution/tool loop NOT_TESTED.",
+        "benchmark_caveat": "SWE original731Pro/500Verified tasks, bash/file tools, high reasoning/temp1/top_p.95/top_k64,avg4; different from Qwen refined tasks/ClaudeCode. Official RTX5090 batch1greedy/DFlash timings are not this server or128K/256K measurements. BF16 and GGUF quantization average claims are not common-harness deployment proof.",
+        "source_columns": ["url","size_bytes","sha256"],
+        "sources": [
+          ["https://huggingface.co/meta-models/Muse-Glimmer-30B/resolve/a4e59da52a7bc87ae7251dd5545c0dd437c44b68/README.md",16892,"5894e358c58f4f8425645a5b0b890468ecb3e6b049c2e941648db077c4b7df58"],
+          ["https://huggingface.co/meta-models/Muse-Glimmer-30B/resolve/a4e59da52a7bc87ae7251dd5545c0dd437c44b68/config.json",5109,"5a9df2d8a385b3d361ab6ae68d73586f4e775033933bd0cd863fb7f3820e6a14"],
+          ["https://huggingface.co/api/models/meta-models/Muse-Glimmer-30B?blobs=true",14102,"a88957a102b7b7753306499df9aa3c74c139f9f3a4f61ebeab9a18a2bbc73bda"],
+          ["https://huggingface.co/meta-models/Muse-Glimmer-30B-GGUF/resolve/70bf1b61ac09f91b24d39038091b41c582bc5d7a/README.md",25814,"08d5b569fdc2abdc983c467e72c24e4ea07927a74ec1e96705d29a40dbde8dce"],
+          ["https://huggingface.co/api/models/meta-models/Muse-Glimmer-30B-GGUF?blobs=true",13132,"9c9b1a84c4d2e4f2854cf7ab4436bb8260b22fe2ef2d20cad5fbf6a6faef37d4"],
+          ["https://research.meta.ai/static/muse-glimmer-methodology",205671,"fb08920ab31c5df3e07e2c3b32856d80d65a48dd14864f42bce8a1ac38026c91"],
+          ["https://raw.githubusercontent.com/ggml-org/llama.cpp/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/models/muse-glimmer.cpp",8799,"4cd16cb4685a4b63e70750854216586345ec2a830147be0527d4f5cead97901f"],
+          ["https://raw.githubusercontent.com/ggml-org/llama.cpp/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-arch.cpp",82217,"1a480fc4899ba76a4e24119d65fbca67905cdd641953ec0eaae878b3c0af560c"],
+          ["https://api.github.com/repos/sgl-project/sglang/contents/python/sglang/srt/models?ref=49e384ce9d304648e9959666ecb8ce8cd98d0deb",219284,"325313894ce1902f201682499a786d1b336742b799068e65ff1275eeda1cf1d4"],
+          ["https://huggingface.co/api/models?author=Qwen&search=Qwen3.8-35B&limit=20",2,"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"]
+        ],
+        "decision": "Keep the two intended Qwen roles; Muse does not establish better matched agent quality, native256K or actual server performance. No install."
+      }
+    ],
+    "metadata_warning": "Extra Muse revision-API recheck returned HTTP429. Current public API responses supplied exact revisions and weights; pinned card/config bytes matched Git identities. No availability/identity was inferred from the failed request.",
+    "unavailable_name_check": "Official author=Qwen search=Qwen3.8-35B API returned empty list; do not invent Qwen3.8-35B-A3B or reuse stale shortlist names."
+  },
+  "recommended_runtime": {
+    "role": "Separate Qwen3.8-only future runtime; root-selected because official cookbook measured RTXPRO6000 on0.5.19; never upgrade/replace Coder-Next0.5.14",
+    "tag": "v0.5.19",
+    "commit": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+    "tag_object": "59f20bffdde59a35cc628372d85d20a979f6271b",
+    "tag_ref_url": "https://api.github.com/repos/sgl-project/sglang/git/ref/tags/v0.5.19",
+    "tag_ref_snapshot_sha256": "43167d89e1e5f031c45cdaf8a367d5e7435213a66626c9914429f09ecbcc05c6",
+    "container": {
+      "repository": "lmsysorg/sglang",
+      "tag": "v0.5.19-cu130",
+      "index_digest": "sha256:d6e7288627be8b02be88e4bba38e73f6d50e2826869f753c13a4c4385ab3eda9",
+      "index_bytes": 1611,
+      "linux_amd64_manifest_digest": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "linux_amd64_manifest_bytes": 13686,
+      "config_digest_expected_image_id": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
+      "config_bytes": 65818,
+      "architecture": "amd64",
+      "os": "linux",
+      "created": "2026-09-04T22:40:24.244111817Z",
+      "compressed_layer_bytes": 15098528761,
+      "layer_count": 70,
+      "pull_ref": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "registry_index_url": "https://registry-1.docker.io/v2/lmsysorg/sglang/manifests/sha256:d6e7288627be8b02be88e4bba38e73f6d50e2826869f753c13a4c4385ab3eda9",
+      "registry_amd64_url": "https://registry-1.docker.io/v2/lmsysorg/sglang/manifests/sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "registry_config_url": "https://registry-1.docker.io/v2/lmsysorg/sglang/blobs/sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
+      "verified": "DockerHub tag/index/platform entries agree with registry manifests; raw JSON SHA256 matches Docker-Content-Digest and config descriptor",
+      "not_performed": "No layer GET, image pull, unpack, install, build or container execution; package/source contents inside layers NOT_TESTED",
+      "CUDA_VERSION": "13.0.3",
+      "source_revision_label": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+      "build_url": "https://github.com/sgl-project/sglang/actions/runs/33912440803",
+      "support_level": "REGISTRY_METADATA_ONLY"
+    },
+    "release_source_dependencies": {
+      "torch": "2.13.0",
+      "transformers": "5.12.1",
+      "flashinfer": "0.6.18",
+      "sgl_kernel_dockerfile": "0.4.6.post1"
+    },
+    "actual_installed_runtime": "NOT_TESTED",
+    "Qwen3_8_load_kernels_auth_256K_performance": "NOT_TESTED",
+    "source_url_prefix": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/",
+    "source_columns": ["path","size_bytes","sha256","support_level"],
+    "sources": [
+      ["python/sglang/srt/entrypoints/http_server.py",106024,"d8cc81f8d9866957dd4c0aa59917afa3d4d7d0e28eefaff0a9800157ed068a43","CODE_ONLY"],
+      ["python/sglang/srt/models/qwen3_vl.py",63423,"520f12f9dc4ba62d053706ad94ccdfe9708bb07118811af1214df36c66f05079","CODE_ONLY"],
+      ["python/sglang/srt/mem_cache/memory_pool.py",209788,"7955db1470ea36b99eb43483a5bd999dbda62119ff54aee7f9e8e01f31b2a9b5","CODE_ONLY"],
+      ["python/sglang/srt/models/registry.py",4857,"3c5b4e87c5943147c28cb5b68e187cdf8f8f9d880c42f1f6941fce99fe757e41","CODE_ONLY"],
+      ["python/sglang/srt/models/qwen3_next.py",48003,"a489dbe53eb6f5ad24f8b0dc04b65f1ef8a14cb4172f37de1a3df759a1f047e6","CODE_ONLY"],
+      ["python/sglang/srt/entrypoints/openai/serving_chat.py",114388,"7b05e6ab1d09a71ce253040c9cd62ea7c55a52020b44cf9b76d91c8df9e23240","CODE_ONLY"],
+      ["python/sglang/srt/parser/reasoning_parser.py",82490,"f608772b59a98eb62f1e7ee5ea1f17b16a0ca4e2c325c77cbed8ef4594ca15f4","CODE_ONLY"],
+      ["python/sglang/srt/entrypoints/openai/protocol.py",72715,"a7cf91c1db5d076b9ad647248351f10b0249153998b974ed4d00610306b01653","CODE_ONLY"],
+      ["python/sglang/srt/layers/quantization/fp8.py",116292,"02ee1f135dce58da751d6a45fbc810c92a0aeecab4545ba959cd9c6363f81eb5","CODE_ONLY"],
+      ["python/pyproject.toml",6699,"dcfa288a1e4d98a73b10f555ccaf3d1aa0c552ea6407ef48bf2b1d62f89e7167","CODE_ONLY"],
+      ["python/sglang/srt/environ.py",95868,"a39ae8475f2bff6e5cea99f0675bcb6d6647c07540b4b5be65fa7b0b916327cd","CODE_ONLY"],
+      ["python/sglang/srt/layers/attention/linear/linear_metadata.py",2541,"281621826248a9650fad6ef1189c7f1857cf154e73e6e6fecec3e5f393e48daf","CODE_ONLY"],
+      ["python/sglang/srt/layers/attention/linear/kernels/gdn_triton.py",8261,"c3dfaf1eb04c035df2c7374a6714aeaa66c8a49b6573f8f28b100b9e7e063c82","CODE_ONLY"],
+      ["python/sglang/srt/entrypoints/engine.py",75580,"7617f78e85c00643d0d16896770b5727be066ded5f18bcbc0786ff397825bc72","CODE_ONLY"],
+      ["python/sglang/srt/configs/model_config.py",97320,"da8db3fd906bc4fdf412cd8cd2ea1787a3385a948bea41cbc66c6fd75664d6b7","CODE_ONLY"],
+      ["python/sglang/srt/configs/mamba_utils.py",11996,"820627a476130e36e8c9aeec2f1ded01d0c068369149e014cc0ef074f1e90808","CODE_ONLY"],
+      ["python/sglang/srt/utils/hf_transformers/common.py",23345,"63ac897b9ac96701980d12b3660fac0db6677cb581939ae0b75aac2e24a7aeab","CODE_ONLY"],
+      ["python/sglang/srt/layers/attention/hybrid_linear_attn_backend.py",61261,"d3fa4f08292c50c6a6a4b81acc19edb2dddd8b217a22a4389b65e12635a64886","CODE_ONLY"],
+      ["python/sglang/srt/models/qwen3_5.py",106839,"51e1902fc211202d198c53940ab28b9d21bc5496bd185d1a90325b541bb9b1f2","CODE_ONLY"],
+      ["python/sglang/srt/function_call/function_call_parser.py",13707,"7433863decb5eefa92e0e227f723221e219a44d7f17c10c6654b9740f15558f3","CODE_ONLY"],
+      ["python/sglang/srt/configs/qwen3_next.py",15878,"071ce509469c3d3320a7c7dcdb58702a53045fa9856d1c858501e2740b9c5df2","CODE_ONLY"],
+      ["python/sglang/srt/server_args.py",187623,"204fe57ba81acc25b7badcabf3b4b741021767c91f1d64e0df949cb175464b7c","CODE_ONLY"],
+      ["python/sglang/srt/utils/common.py",159729,"86ba460333a7f80b0adf648d29fe2e7cda4d6c3886ebc55acb9bf6b0b2fa5e87","CODE_ONLY"],
+      ["python/sglang/srt/function_call/qwen3_coder_detector.py",20210,"92eeaeaf02ac1c1e966a8b9bbd4393141353ca9177265044fe12e250c0e38089","CODE_ONLY"],
+      ["python/sglang/srt/model_loader/loader.py",173875,"95fc419d1dcb1cae53e27e433c8cdd6f2fce9bff63cb4fa3ad6f311d6770e229","CODE_ONLY"],
+      ["python/sglang/srt/layers/quantization/fp8_utils.py",80724,"cf69596b056ac4c61de43d6f4f3b7791fc50e261193581c1a89d415b47765d0d","CODE_ONLY"],
+      ["python/sglang/launch_server.py",2569,"1a3e02c4208e13242b9a47ce92e7bc3769c8e069f863849671b9b8cc8fabdbe7","CODE_ONLY"],
+      ["python/sglang/srt/utils/hf_transformers/config.py",10488,"c87fa91cdc8dd7e0fcd6093c751d4a5a24bfb2e895480d8b83f2b109bb92265f","CODE_ONLY"],
+      ["python/sglang/srt/layers/attention/linear/gdn_backend.py",45790,"e422bf32703fffc99395d1b53b2d97aa50367f585ce98f8c4c04f0a845054db5","CODE_ONLY"],
+      ["python/sglang/srt/layers/attention/linear/utils.py",4492,"6545852efd880546b9ee473bfa91c604d39aba51ac47eb7aec8d2918cf08c493","CODE_ONLY"],
+      ["python/sglang/srt/configs/qwen3_5.py",5186,"53f92b2be9d880716a1850cb4484ea2fa46408ab0b05be847ce0fa88edf71890","CODE_ONLY"],
+      ["python/sglang/srt/utils/auth.py",7289,"016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7","CODE_ONLY"],
+      ["docker/Dockerfile",36002,"11a0f347ada547366b53cd32d8b3c5c7eb2cafdd47910f67afb4d0c566b75f5b","CODE_ONLY"],
+      ["docs/cookbook/autoregressive/Qwen/Qwen3.8-27B.mdx",23620,"e4ae096ef7dc722eb7ad68d5b0a276357bbafd519640ae65a653afc947743085","CODE_ONLY"],
+      ["python/sglang/srt/utils/server_args_config_parser.py",6655,"3966b1206230239aa81def9fd0008d0eab68e5ce11b7bc39f369f5570287a1e6","CODE_ONLY"],
+      ["python/sglang/srt/arg_groups/overrides.py",77022,"af4086d5c3bbfc8789d82b196240226785c104809c48cb1f9a24f6962cafe4ac","CODE_ONLY"],
+      ["python/sglang/srt/arg_groups/pipeline.py",13457,"4c46d8a8966914e361ed9e5d18956025c1ffe64de928d25b3a6111ac3a0ee8c8","CODE_ONLY"],
+      ["python/sglang/srt/entrypoints/openai/chat_encoding.py",7209,"c9e34556f895b74967070aeeba58dc57b2126c0c290617e156ab65ad1cd5a677","CODE_ONLY"],
+      ["docs/src/snippets/configs/Qwen/qwen3.8-27b.jsx",39701,"8f84ae5d2110f7924024f64bdbe8082c4191b09be3d4ba963d32fc6288b86f5d","CODE_ONLY"],
+      ["python/sglang/srt/arg_groups/mamba_hook.py",6500,"22e9edafc411b0007e3cd6dfac692021e615a89b3de67bdc1ad8b5a8f28d73d0","CODE_ONLY"],
+      ["python/sglang/srt/runtime_context.py",86932,"dba849e17448a3a9c1a86e73128617e2039ff2bff396a25cf4ec3c2203396140","CODE_ONLY"],
+      ["python/sglang/kernels/ops/quantization/fp8_kernel.py",74938,"b84b4f4d56310c3f45a7a400073701ba09275b64a64974c99823f0e81bfb437c","CODE_ONLY"],
+      ["python/sglang/srt/model_executor/model_runner_components/kv_pool_runtime.py",5708,"d7e4c66577ace7803ff36dcdd1c3b852bea8a538924835c8d6425beb9ce3ed2f","CODE_ONLY"],
+      ["python/sglang/srt/model_executor/pool_configurator.py",45207,"6ea48e3d6c474a4c868d172056e046fa137fadd251913dda4a6431b3aa1ca5fd","CODE_ONLY"],
+      ["python/sglang/srt/mem_cache/kv_cache_configurator.py",109683,"40a4d40ba17dbd5065048a96077484b3158a26c00638a087c4678569597f5f04","CODE_ONLY"],
+      ["python/sglang/srt/arg_groups/memory_hook.py",16682,"91086cb29f78d52ed7a8e6cc3367adbaea62ca20619392e5e131bf7a2214085d","CODE_ONLY"],
+      ["python/sglang/srt/mem_cache/allocator/mamba.py",3779,"b3d4561b7f96aa55f615c491b3d5a8c8e72e156fd7e6cf639ee7f87cfd80674c","CODE_ONLY"]
+    ],
+    "auth_gate_delta": "0.19 prepare_server_args returns raw settings; resolve_once applies normalization and retains _raw_input/resolved_dict. Validate effective resolved settings, not only raw flags. Keep api_key/admin_api_key None in every snapshot; separate native middleware/file key. Repeat native auth layers, actual startup/child logging/diagnostics, warmup, WebSocket denial and cleanup sentinel tests; .14 fixtures do not transfer.",
+    "api_delta": "0.19 accepts top-level xhigh; use Q38 xhigh/medium/low or disable thinking. 0.14 mismatch is historical only.",
+    "kernel_delta": "0.19 auto selects CUTLASS onSM120; explicit cutlass follows release. Triton fallback depends on shape; all new-stack kernels NOT_TESTED.",
+    "cache_delta": "Disabled radix/max-mamba1/no speculation/no ReplaySSM: .19 charges and allocates size+1=2 state slots. Cap max-total-tokens. State arithmetic unchanged; actual allocation NOT_TESTED.",
+    "gates": ["Review separate declarative profile and strict resolved-argument F1S contract","After separately authorized /data acquisition, verify image config/packages/source/driver imports and actual FastAPI sentinel wiring before keys","Full Q38 hashes/load coverage, SM120 attention/GDN/CUTLASS+Triton kernels, then bounded128K/256K actual agent loop"]
+  }
 }
