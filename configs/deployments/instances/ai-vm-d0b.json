@@ -68,6 +68,8 @@
     "D3 must copy this file to an operator-owned instance path and add final D1 artifact integrity evidence and obsolete boot-owner removal evidence before start.",
     "The supplied final D1 image ID and supported CLI are recorded explicitly for this host; --load-mode none and both CUDA devices are selected. Inference remains untested.",
     "Set obsolete_boot_owner_disabled only after the R1 historical boot verifier is disabled and its branch-changing behavior removed as documented by D3.",
-    "D3/I1 must provision exact API token bytes with no trailing newline, mode0600, without printing or recording its value."
-  ]
+    "D3/I1 must provision exact API token bytes with no trailing newline, mode0600, without printing or recording its value.",
+    "Historical import only: under the canonical lease, explicitly bind storage_identity to matching protected registration while preserving these concrete paths, mount identities, instance ID and all existing evidence. No implicit adoption or relocation."
+  ],
+  "storage_identity": null
 }

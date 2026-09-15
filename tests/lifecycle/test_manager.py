@@ -23,6 +23,8 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from fixture_storage import HistoricalBinding, FixtureWriter
 
 from lifecycle.manager import Manager, cli, process_lock  # noqa: E402
 from lifecycle.runtime_io import LifecycleError  # noqa: E402
@@ -179,6 +181,31 @@ class FakeClock:
 class FixtureManager(Manager):
     """Replace only host I/O; real state parsing, locking and transitions run."""
 
+    def __init__(self, config_root, instance, **kwargs):
+        instance = copy.deepcopy(instance)
+        binding = kwargs.pop('binding', HistoricalBinding())
+        instance['storage_identity'] = binding.identity
+        instance['historical_import'] = True
+        # Only volatile and tiny fixture state paths point into this temporary root.
+        fixture_root = Path(instance['paths']['state']).parent
+        kwargs.setdefault('lease_system_root', fixture_root)
+        kwargs.setdefault('storage_io', FixtureWriter)
+        super().__init__(config_root, instance, binding=binding, **kwargs)
+
+    def persistent_json(self, path, value):
+        # Explicit tiny-file substitute; real AnchoredRoot integration has its own tests.
+        with self.persistent_writer().AnchoredRoot(str(Path(path).parent), lambda: self.binding.verify()) as anchor:
+            anchor.atomic_json(Path(path).name, value)
+            anchor.check()
+
+    def check_package_admission(self):
+        pass  # No package services in the explicit worker fixture.
+
+    def host_path(self, value, *, expected_role=None):
+        if self.test_paths and isinstance(value, str) and value.endswith('/state'):
+            return value
+        return super().host_path(value, expected_role=expected_role)
+
     def check_mounts(self, targets=None):
         pass
 
@@ -203,8 +230,8 @@ class FixtureManager(Manager):
 def make_instance(root):
     instance = json.loads((ROOT / "configs/deployments/instances/ai-vm-d0b.json").read_text())
     instance["paths"] = {"state": str(root / "state"),
-                         "lock": str(root / "run/lifecycle.lock"),
-                         "recovery": str(root / "run/recovery.json")}
+                         "lock": str(root / "run/llmctl/lifecycle.lock"),
+                         "recovery": str(root / "run/llmctl/recovery.json")}
     instance["obsolete_boot_owner_disabled"] = True
     instance["obsolete_boot_owner_evidence"] = "deterministic worker fixture"
     return instance
@@ -371,7 +398,7 @@ class ManagerTests(unittest.TestCase):
                 patch.object(self.manager, "check_artifacts", side_effect=LifecycleError("artifact_missing")), \
                 patch("lifecycle.manager.validate_key_metadata", side_effect=LifecycleError("key_file_invalid")):
             result = self.manager.dispatch("stop")
-        recovery = json.loads((self.root / "run/recovery.json").read_text())
+        recovery = json.loads((self.root / "run/llmctl/recovery.json").read_text())
         self.assertFalse(result["container_running"])
         self.assertEqual(result["desired"], "stopped")
         self.assertFalse(result["state_persisted"])
@@ -585,7 +612,7 @@ class ManagerTests(unittest.TestCase):
 
     def test_recover_stop_rejects_untrusted_recovery_id(self):
         self.start()
-        recovery_path = self.root / "run/recovery.json"
+        recovery_path = self.root / "run/llmctl/recovery.json"
         recovery = json.loads(recovery_path.read_text())
         recovery["container"]["id"] = "--all"
         recovery_path.write_text(json.dumps(recovery))
@@ -759,7 +786,7 @@ class ManagerTests(unittest.TestCase):
     def test_stop_uses_valid_primary_even_when_optional_recovery_is_corrupt(self):
         self.start()
         identity = self.state()["container"]["id"]
-        (self.root / "run/recovery.json").write_text("broken journal")
+        (self.root / "run/llmctl/recovery.json").write_text("broken journal")
         result = self.manager.dispatch("stop")
         self.assertFalse(result["container_running"])
         self.assertIn(("stop", identity), self.docker.calls)
@@ -773,13 +800,14 @@ class ManagerTests(unittest.TestCase):
         self.assertIn(("stop", identity), self.docker.calls)
         self.assertFalse(result["container_running"])
         self.assertFalse(self.docker.inspect(identity)["State"]["Running"])
-        recovery = json.loads((self.root / "run/recovery.json").read_text())
+        recovery = json.loads((self.root / "run/llmctl/recovery.json").read_text())
         self.assertEqual(recovery["container"]["id"], identity)
 
     def test_stop_continues_when_both_state_journals_cannot_be_written(self):
         self.start()
         identity = self.state()["container"]["id"]
-        with patch("lifecycle.manager.atomic_json", side_effect=OSError("fixture write failure")):
+        with patch("lifecycle.manager.atomic_json", side_effect=OSError("fixture write failure")), \
+                patch.object(FixtureWriter.AnchoredRoot, 'atomic_json', side_effect=OSError('fixture write failure')):
             result = self.manager.dispatch("stop")
         self.assertFalse(result["container_running"])
         self.assertFalse(result["state_persisted"])
@@ -817,7 +845,7 @@ class OfflineStatusTests(unittest.TestCase):
         stack = ExitStack()
         for method in ("inventory", "inspect", "capture", "create", "start", "stop", "remove"):
             stack.enter_context(patch.object(self.docker, method, side_effect=AssertionError("offline Docker access")))
-        for method in ("probe", "run", "deployment", "check_mounts", "host_guards", "check_artifacts", "image_evidence"):
+        for method in ("probe", "run", "deployment", "host_guards", "check_artifacts", "image_evidence"):
             stack.enter_context(patch.object(self.manager, method, side_effect=AssertionError("offline live access")))
         stack.enter_context(patch("lifecycle.manager.validate_key_metadata", side_effect=AssertionError("offline key access")))
         return stack
@@ -888,51 +916,30 @@ class StorageValidationTests(unittest.TestCase):
     probe = ManagerTests.probe
     fake_run = ManagerTests.fake_run
 
-    def mount_rows(self):
-        rows = {"/": {"target": "/", "uuid": "root", "fstype": "ext4", "maj:min": "1:1"}}
-        for index, mount in enumerate(self.instance["required_mounts"], 2):
-            rows[mount["target"]] = {"target": mount["target"], "uuid": mount["uuid"],
-                                      "fstype": mount["filesystem"], "maj:min": f"8:{index}"}
-        return rows
-
-    def check_rows(self, rows):
-        self.manager.run = lambda argv, **kwargs: json.dumps({"filesystems": [rows[argv[-1]]]})
-        return Manager.check_mounts(self.manager)
-
-    def test_exact_two_mount_identities_pass(self):
-        self.check_rows(self.mount_rows())
+    def test_registered_mount_check_delegates_to_shared_binding(self):
+        with patch.object(self.manager.binding, 'verify') as verify:
+            Manager.check_mounts(self.manager)
+            verify.assert_called_once_with(roles=('data', 'models'))
         self.assertEqual(self.docker.calls, [])
 
-    def test_wrong_new_disk_uuid_fails(self):
-        rows = self.mount_rows()
-        rows["/data/models-large"]["uuid"] = "0" * 36
-        with self.assertRaisesRegex(LifecycleError, "wrong_mount_uuid"):
-            self.check_rows(rows)
+    def test_data_only_check_requests_data_role(self):
+        with patch.object(self.manager.binding, 'verify') as verify:
+            Manager.check_mounts(self.manager, {'data'})
+            verify.assert_called_once_with(roles={'data'})
+
+    def test_bad_registered_mount_fails_before_docker(self):
+        from lifecycle.storage_binding import BindingError
+        with patch.object(self.manager.binding, 'verify', side_effect=BindingError('wrong_uuid')):
+            with self.assertRaisesRegex(LifecycleError, 'registered_storage_verification_failed'):
+                Manager.check_mounts(self.manager)
         self.assertEqual(self.docker.calls, [])
 
-    def test_parent_fallback_for_unmounted_models_disk_fails(self):
-        rows = self.mount_rows()
-        rows["/data/models-large"] = rows["/data"]
-        with self.assertRaisesRegex(LifecycleError, "unmounted_required_disk"):
-            self.check_rows(rows)
-        self.assertEqual(self.docker.calls, [])
-
-    def test_models_and_data_cannot_share_device(self):
-        rows = self.mount_rows()
-        rows["/data/models-large"]["maj:min"] = rows["/data"]["maj:min"]
-        with self.assertRaisesRegex(LifecycleError, "unsafe_mount_device"):
-            self.check_rows(rows)
-
-    def test_data_cannot_resolve_to_root_device(self):
-        rows = self.mount_rows()
-        rows["/data"]["maj:min"] = rows["/"]["maj:min"]
-        with self.assertRaisesRegex(LifecycleError, "unsafe_mount_device"):
-            self.check_rows(rows)
-
-    def test_missing_instance_uuid_fails(self):
-        self.manager.instance["required_mounts"][1]["uuid"] = None
-        with self.assertRaisesRegex(LifecycleError, "missing_mount_uuid"):
-            self.check_rows(self.mount_rows())
+    def test_instance_cannot_override_registered_identity(self):
+        self.manager.instance['storage_identity']['models']['uuid'] = 'wrong'
+        # Keep fixture binding independent, as the real binding identity property is.
+        self.manager.binding.identity = copy.deepcopy(HistoricalBinding().identity)
+        with self.assertRaisesRegex(LifecycleError, 'registry_instance_identity_mismatch'):
+            Manager.check_mounts(self.manager)
 
     def artifact_fixture(self):
         d = self.manager.deployment(PROOF)

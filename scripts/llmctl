@@ -16,26 +16,21 @@ from pathlib import Path
 from typing import Any
 
 
+# Isolated boot execution (-I) resolves only this reviewed source snapshot.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CONFIG_ROOT = Path(os.environ.get("LLMCTL_CONFIG_ROOT", REPO_ROOT / "configs"))
-DATA_ROOT = Path(os.environ.get("LLMCTL_DATA_ROOT", "/data"))
+CONFIG_ROOT = REPO_ROOT / "configs"
+# These are illustrative offline defaults only. Live commands replace them from
+# the protected registry; environment values are considered only with --offline.
+OFFLINE = False
+DATA_ROOT = Path("/data")
 MODELS_ROOT = DATA_ROOT / "models"
 HF_CACHE_ROOT = DATA_ROOT / "hf-cache"
 LOGS_ROOT = DATA_ROOT / "logs"
 BUILD_ROOT = DATA_ROOT / "build"
 SECRET_ROOT = DATA_ROOT / "services" / "secrets"
-STATE_ROOT = Path(
-    os.environ.get(
-        "LLMCTL_STATE_DIR",
-        str(DATA_ROOT / "services" / "llm-manager" / "state"),
-    )
-)
-ACTIVE_ROOT = Path(
-    os.environ.get(
-        "LLMCTL_ACTIVE_DIR",
-        str(DATA_ROOT / "services" / "llm-manager" / "active"),
-    )
-)
+STATE_ROOT = DATA_ROOT / "services" / "llm-manager" / "state"
+ACTIVE_ROOT = DATA_ROOT / "services" / "llm-manager" / "active"
 ACTIVE_FILE = ACTIVE_ROOT / "active.json"
 ACTIVE_HISTORY_ROOT = ACTIVE_ROOT / "history"
 
@@ -295,14 +290,49 @@ def run_check(script: str, args: list[str] | None = None) -> None:
 
 
 def host_checks(level: str) -> None:
-    if os.environ.get("LLMCTL_SKIP_HOST_CHECKS") == "1":
-        print(f"SKIP: host checks skipped for fixture mode ({level})")
+    if OFFLINE:
+        print("OFFLINE: storage paths are unverified planning assumptions; no live authorization")
         return
+    configure_live_paths()
     run_check(REQUIRE_DATA)
     run_check(ROOT_GUARD)
     if level in {"runtime", "doctor"}:
         run_check(VERIFY_DOCKER)
         run_check(VERIFY_GPU)
+
+
+def configure_paths(data: Path, models: Path) -> None:
+    global DATA_ROOT, MODELS_ROOT, HF_CACHE_ROOT, LOGS_ROOT, BUILD_ROOT, SECRET_ROOT
+    global STATE_ROOT, ACTIVE_ROOT, ACTIVE_FILE, ACTIVE_HISTORY_ROOT
+    DATA_ROOT, MODELS_ROOT = data, models
+    HF_CACHE_ROOT, LOGS_ROOT, BUILD_ROOT = (data / name for name in ("hf-cache", "logs", "build"))
+    SECRET_ROOT = data / "services" / "secrets"
+    STATE_ROOT = data / "services" / "llm-manager" / "state"
+    ACTIVE_ROOT = data / "services" / "llm-manager" / "active"
+    if OFFLINE:
+        STATE_ROOT = Path(os.environ.get("LLMCTL_STATE_DIR", str(STATE_ROOT)))
+        ACTIVE_ROOT = Path(os.environ.get("LLMCTL_ACTIVE_DIR", str(ACTIVE_ROOT)))
+    ACTIVE_FILE, ACTIVE_HISTORY_ROOT = ACTIVE_ROOT / "active.json", ACTIVE_ROOT / "history"
+
+
+def configure_live_paths() -> None:
+    """Consume the shared registry-only validator; no environment trust anchor."""
+    try:
+        result = subprocess.run(
+            ["/usr/bin/python3", "-I", "-B", str(REPO_ROOT / "scripts/common/registered-storage.py"), "--json"],
+            check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL, timeout=120,
+            env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"},
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        raise LlmctlError("registered storage validator unavailable") from None
+    if result.returncode:
+        raise LlmctlError("protected registered storage validation failed; use --offline for unverified planning")
+    try:
+        registered = json.loads(result.stdout)
+        configure_paths(Path(registered["data"]["path"]), Path(registered["models"]["path"]))
+    except (ValueError, TypeError, KeyError):
+        raise LlmctlError("registered storage validator returned invalid metadata") from None
 
 
 def cmd_doctor(_args: argparse.Namespace) -> int:
@@ -457,6 +487,10 @@ def cmd_plan_download(args: argparse.Namespace) -> int:
 
 
 def cmd_env(_args: argparse.Namespace) -> int:
+    if OFFLINE:
+        print("OFFLINE: storage paths are unverified planning assumptions; no live authorization")
+    else:
+        configure_live_paths()
     print(f"CONFIG_ROOT={CONFIG_ROOT}")
     print(f"DATA_ROOT={DATA_ROOT}")
     print(f"MODELS_ROOT={MODELS_ROOT}")
@@ -488,10 +522,12 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("doctor").set_defaults(func=cmd_doctor)
-    subparsers.add_parser("list-models").set_defaults(func=cmd_list_models)
-    subparsers.add_parser("list-runtimes").set_defaults(func=cmd_list_runtimes)
-    subparsers.add_parser("validate").set_defaults(func=cmd_validate)
-    subparsers.add_parser("env").set_defaults(func=cmd_env)
+    offline_parsers = []
+    for name, function in (("list-models", cmd_list_models), ("list-runtimes", cmd_list_runtimes),
+                           ("validate", cmd_validate), ("env", cmd_env)):
+        command = subparsers.add_parser(name)
+        command.set_defaults(func=function)
+        offline_parsers.append(command)
 
     show_model = subparsers.add_parser("show-model")
     show_model.add_argument("name")
@@ -513,16 +549,30 @@ def build_parser() -> argparse.ArgumentParser:
     plan_download.add_argument("model_profile")
     plan_download.set_defaults(func=cmd_plan_download)
 
+    offline_parsers.extend((show_model, show_runtime, plan_activate, plan_download,
+                            subparsers.choices["activate"]))
+    for command in offline_parsers:
+        command.add_argument("--offline", action="store_true",
+                             help="unverified, no-write planning; permit isolated planning environment overrides")
+
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
+    global CONFIG_ROOT, OFFLINE
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] in {"download"}:
         return unsupported_real_command(argv[0])
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
+        OFFLINE = bool(getattr(args, "offline", False))
+        if OFFLINE and args.command == "activate" and not (args.runtime and args.dry_run):
+            raise LlmctlError("--offline activate requires --runtime and --dry-run for planning only")
+        CONFIG_ROOT = Path(os.environ.get("LLMCTL_CONFIG_ROOT", REPO_ROOT / "configs")) if OFFLINE else REPO_ROOT / "configs"
+        if OFFLINE:
+            data = Path(os.environ.get("LLMCTL_DATA_ROOT", "/data"))
+            configure_paths(data, Path(os.environ.get("LLMCTL_MODELS_ROOT", str(data / "models"))))
         if args.command == "activate" and args.runtime and args.dry_run:
             result = plan_activation(args.deployment_id, args.runtime)
             if result == 0:

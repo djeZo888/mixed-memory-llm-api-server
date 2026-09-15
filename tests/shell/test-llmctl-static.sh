@@ -63,8 +63,8 @@ if grep -RInE '(BEGIN OPENSSH|BEGIN RSA|PRIVATE KEY|HF_TOKEN=[A-Za-z0-9_./+:-]{8
   fail "hard-coded secret-like content found"
 fi
 
-LLMCTL_SKIP_HOST_CHECKS=1 "$LLMCTL" validate >/dev/null || fail "llmctl validate failed"
-LLMCTL_SKIP_HOST_CHECKS=1 "$LLMCTL" plan-download qwen3-0.6b-smoke >/tmp/llmctl-plan-download.out || fail "plan-download smoke failed"
+"$LLMCTL" validate >/dev/null || fail "llmctl validate failed"
+"$LLMCTL" plan-download --offline qwen3-0.6b-smoke >/tmp/llmctl-plan-download.out || fail "plan-download smoke failed"
 grep -q 'download_performed: false' /tmp/llmctl-plan-download.out || fail "plan-download did not confirm no download"
 
 echo "PASS: llmctl static checks"

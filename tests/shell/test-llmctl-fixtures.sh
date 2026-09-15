@@ -65,29 +65,28 @@ env_prefix=(
   LLMCTL_CONFIG_ROOT="$tmp/configs"
   LLMCTL_DATA_ROOT="$tmp/data"
   LLMCTL_STATE_DIR="$tmp/state"
-  LLMCTL_SKIP_HOST_CHECKS=1
 )
 
-env "${env_prefix[@]}" scripts/llmctl validate >/tmp/llmctl-fixture-validate.out || fail "fixture validate failed"
+env "${env_prefix[@]}" scripts/llmctl validate --offline >/tmp/llmctl-fixture-validate.out || fail "fixture validate failed"
 grep -q 'PASS: validated' /tmp/llmctl-fixture-validate.out || fail "validate did not report PASS"
 
-env "${env_prefix[@]}" scripts/llmctl list-models | grep -q 'fixture-smoke' || fail "list-models missing fixture"
-env "${env_prefix[@]}" scripts/llmctl list-runtimes | grep -q 'fixture-runtime' || fail "list-runtimes missing fixture"
-env "${env_prefix[@]}" scripts/llmctl show-model fixture-smoke | grep -q 'hf_repo: fixture/smoke' || fail "show-model failed"
-env "${env_prefix[@]}" scripts/llmctl show-runtime fixture-runtime | grep -q 'default_port: 18000' || fail "show-runtime failed"
+env "${env_prefix[@]}" scripts/llmctl list-models --offline | grep -q 'fixture-smoke' || fail "list-models missing fixture"
+env "${env_prefix[@]}" scripts/llmctl list-runtimes --offline | grep -q 'fixture-runtime' || fail "list-runtimes missing fixture"
+env "${env_prefix[@]}" scripts/llmctl show-model fixture-smoke --offline | grep -q 'hf_repo: fixture/smoke' || fail "show-model failed"
+env "${env_prefix[@]}" scripts/llmctl show-runtime fixture-runtime --offline | grep -q 'default_port: 18000' || fail "show-runtime failed"
 
-env "${env_prefix[@]}" scripts/llmctl plan-activate fixture-smoke --runtime fixture-runtime >/tmp/llmctl-fixture-plan-activate.out || fail "plan-activate failed"
+env "${env_prefix[@]}" scripts/llmctl plan-activate fixture-smoke --offline --runtime fixture-runtime >/tmp/llmctl-fixture-plan-activate.out || fail "plan-activate failed"
 grep -q 'writes_planned: none for plan-activate' /tmp/llmctl-fixture-plan-activate.out || fail "plan-activate did not stay dry"
 
-env "${env_prefix[@]}" scripts/llmctl activate fixture-smoke --runtime fixture-runtime --dry-run >/tmp/llmctl-fixture-activate.out || fail "activate dry-run failed"
+env "${env_prefix[@]}" scripts/llmctl activate fixture-smoke --offline --runtime fixture-runtime --dry-run >/tmp/llmctl-fixture-activate.out || fail "activate dry-run failed"
 grep -q 'DRY-RUN' /tmp/llmctl-fixture-activate.out || fail "activate did not report dry-run"
 
-if env "${env_prefix[@]}" scripts/llmctl activate fixture-smoke --runtime fixture-runtime >/tmp/llmctl-fixture-bad-activate.out 2>/tmp/llmctl-fixture-bad-activate.err; then
+if env "${env_prefix[@]}" scripts/llmctl activate fixture-smoke --offline --runtime fixture-runtime >/tmp/llmctl-fixture-bad-activate.out 2>/tmp/llmctl-fixture-bad-activate.err; then
   fail "activate without --dry-run succeeded"
 fi
 grep -q -- '--dry-run' /tmp/llmctl-fixture-bad-activate.err || fail "bad activate did not mention --dry-run"
 
-env "${env_prefix[@]}" scripts/llmctl plan-download fixture-smoke >/tmp/llmctl-fixture-plan-download.out || fail "plan-download failed"
+env "${env_prefix[@]}" scripts/llmctl plan-download fixture-smoke --offline >/tmp/llmctl-fixture-plan-download.out || fail "plan-download failed"
 grep -q 'download_performed: false' /tmp/llmctl-fixture-plan-download.out || fail "plan-download performed work"
 
 cat >"$tmp/configs/models/profiles/bad-model.yaml" <<'YAML'
@@ -114,7 +113,7 @@ source_urls:
   - https://example.invalid/model
 YAML
 
-if env "${env_prefix[@]}" scripts/llmctl validate >/tmp/llmctl-fixture-invalid-model.out 2>/tmp/llmctl-fixture-invalid-model.err; then
+if env "${env_prefix[@]}" scripts/llmctl validate --offline >/tmp/llmctl-fixture-invalid-model.out 2>/tmp/llmctl-fixture-invalid-model.err; then
   fail "invalid model profile passed validation"
 fi
 grep -q 'invalid role' /tmp/llmctl-fixture-invalid-model.err || fail "invalid model failure was not specific"
@@ -137,7 +136,7 @@ source_urls:
   - https://example.invalid/runtime
 YAML
 
-if env "${env_prefix[@]}" scripts/llmctl validate >/tmp/llmctl-fixture-invalid-runtime.out 2>/tmp/llmctl-fixture-invalid-runtime.err; then
+if env "${env_prefix[@]}" scripts/llmctl validate --offline >/tmp/llmctl-fixture-invalid-runtime.out 2>/tmp/llmctl-fixture-invalid-runtime.err; then
   fail "invalid runtime profile passed validation"
 fi
 grep -q 'invalid status' /tmp/llmctl-fixture-invalid-runtime.err || fail "invalid runtime failure was not specific"
