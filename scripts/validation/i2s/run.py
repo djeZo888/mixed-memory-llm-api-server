@@ -20,7 +20,7 @@ CONTEXT_KEYS = ("GITHUB_ACTIONS", "RUNNER_ENVIRONMENT", "GITHUB_REPOSITORY", "GI
 ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C", "PYTHONDONTWRITEBYTECODE": "1"}
 PLAN = {
     "scope": "actual_owned_loop_and_private_scratch_mounts_only",
-    "shipped": "tests/install/loop_disk_transaction.sh --dry-run then --apply, unchanged",
+    "shipped": "tests/install/loop_disk_transaction.sh --dry-run then --apply",
     "loop_backing_bytes_each": 256 * 1024**2,
     "aggregate_backing_budget_bytes": 2 * 1024**3,
     "allocation": "sequential internally allocated protected /run files; no device argument",
@@ -31,6 +31,17 @@ PLAN = {
                    "I1O autonomous child deadline", "I1c role-aware persistence/conversion",
                    "real package installation", "GPU installation", "model/image installation", "reboot"],
 }
+
+AFFECTED_PLAN = dict(PLAN, **{
+    "scope": "I2SF_affected_shipped_fixture_only",
+    "writer": "NOT_TESTED: excluded from bounded I2SF rerun",
+    "process": "NOT_TESTED: excluded from bounded I2SF rerun",
+    "extended_loop": "NOT_TESTED: excluded from bounded I2SF rerun",
+    "allocation": "one internally allocated protected /run 256 MiB file; no device argument",
+    "actual_backing_allocation_limit_bytes": 256 * 1024**2,
+    "private_device_mount": "only task-owned root/dev; conditional nodev diagnostic; tiny bounded tmpfs",
+    "not_tested": PLAN["not_tested"] + ["extended loop matrix", "writer namespace probes", "process lifetime probes"],
+})
 
 
 def load(path, name):
@@ -43,6 +54,7 @@ def load(path, name):
 
 def source_manifest():
     paths = [ROOT / "tests/install/loop_disk_transaction.sh", ROOT / "tests/install/loop_disk_transaction.py",
+             ROOT / "tests/install/test_loop_disk_fixture.py",
              ROOT / ".github/workflows/i2s-linux.yml"]
     for directory in ("scripts/validation/i2s", "scripts/validation/i2p", "scripts/install", "scripts/lifecycle", "scripts/common"):
         paths.extend((ROOT / directory).rglob("*.py"))
@@ -120,7 +132,56 @@ def loop_inventory():
     # Read only loop associations; never enumerate a physical formatting candidate.
     result = subprocess.run(["losetup", "--list", "--json", "--output", "NAME,BACK-FILE,BACK-INO,BACK-MAJ:MIN,OFFSET,SIZELIMIT"],
                             capture_output=True, text=True, timeout=10, env=ENV, check=True)
-    return json.loads(result.stdout).get("loopdevices", [])
+    data = json.loads(result.stdout)
+    if not isinstance(data, dict) or not isinstance(data.get("loopdevices"), list):
+        raise RuntimeError("unknown_parent_loop_inventory")
+    return data["loopdevices"]
+
+
+def parent_snapshot():
+    """Observe the original parent independently; never mutate its resources."""
+    return {"namespace": os.readlink("/proc/self/ns/mnt"),
+            "mountinfo": Path("/proc/self/mountinfo").read_bytes(),
+            "loops": loop_inventory(), "scratch": set(Path("/run").glob("i1s-loop-*"))}
+
+
+def observe_parent(before, after):
+    """Compare exact mountinfo bytes, preserving hashes instead of host paths."""
+    return {
+        "parent_namespace_before": before["namespace"],
+        "parent_namespace_after": after["namespace"],
+        "parent_namespace_unchanged": before["namespace"] == after["namespace"],
+        "parent_mountinfo_unchanged": before["mountinfo"] == after["mountinfo"],
+        "parent_mountinfo_sha256_before": hashlib.sha256(before["mountinfo"]).hexdigest(),
+        "parent_mountinfo_sha256_after": hashlib.sha256(after["mountinfo"]).hexdigest(),
+        "loop_associations_unchanged": before["loops"] == after["loops"],
+        "loop_associations_sha256_before": hashlib.sha256(json.dumps(before["loops"], sort_keys=True).encode()).hexdigest(),
+        "loop_associations_sha256_after": hashlib.sha256(json.dumps(after["loops"], sort_keys=True).encode()).hexdigest(),
+        "remaining_new_scratch": sorted(str(p) for p in after["scratch"] - before["scratch"]),
+        "scope": "independent original parent namespace/mountinfo/loop observer; no cleanup mutations",
+    }
+
+
+def run_shipped(evidence, output_dir, env):
+    before = parent_snapshot()
+    wrapper = str(ROOT / "tests/install/loop_disk_transaction.sh")
+    try:
+        evidence["shipped_dry_run"] = bounded(["bash", wrapper, "--dry-run"], env=env, timeout=30)
+        write_json(output_dir / "evidence.json", evidence)
+        if evidence["shipped_dry_run"]["status"] != "PASS":
+            raise RuntimeError("shipped_prerequisite_blocker_no_apply")
+        evidence["shipped"] = bounded(["bash", wrapper, "--apply"], env=env, timeout=240)
+    finally:
+        evidence["shipped_cleanup_observer"] = observe_parent(before, parent_snapshot())
+        write_json(output_dir / "evidence.json", evidence)
+    observer = evidence["shipped_cleanup_observer"]
+    if (evidence["shipped"].get("cleanup") == "INCOMPLETE" or
+            not all(observer[key] for key in ("parent_namespace_unchanged", "parent_mountinfo_unchanged",
+                                             "loop_associations_unchanged")) or observer["remaining_new_scratch"]):
+        raise RuntimeError("shipped_cleanup_unresolved_stop_matrix")
+    if evidence["shipped"].get("status") != "PASS":
+        raise RuntimeError("shipped_failure_stop_matrix")
+    return before["namespace"]
 
 
 def namespace_child(output_dir):
@@ -158,9 +219,14 @@ def main():
     modes.add_argument("--apply", action="store_true")
     modes.add_argument("--namespace-apply", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--affected-only", action="store_true",
+                        help="I2SF: run only the shipped fixture dry-run/apply and observe cleanup")
     args = parser.parse_args()
+    if args.affected_only and args.namespace_apply:
+        parser.error("affected-only mode cannot enter extended namespace probes")
+    plan = AFFECTED_PLAN if args.affected_only else PLAN
     if args.dry_run:
-        print(json.dumps(PLAN, indent=2))
+        print(json.dumps(plan, indent=2))
         return 0
     context = {key: os.environ.get(key, "") for key in CONTEXT_KEYS}
     i2p = load(ROOT / "scripts/validation/i2p/run.py", "i2s_i2p_guard")
@@ -180,10 +246,10 @@ def main():
     evidence = {"schema": 1, "status": "FAIL", "source_sha": context["GITHUB_SHA"],
                 "github_run_id": context["GITHUB_RUN_ID"], "github_run_attempt": context["GITHUB_RUN_ATTEMPT"],
                 "image_os": context["ImageOS"], "image_version": context["ImageVersion"],
-                "capability": {"status": "NOT_TESTED"}, "plan": PLAN, "not_tested": PLAN["not_tested"],
+                "capability": {"status": "NOT_TESTED"}, "plan": plan, "not_tested": plan["not_tested"],
                 "shipped": {"status": "NOT_TESTED"}, "extended_loop": {"status": "NOT_TESTED"},
                 "namespace_probes": {"status": "NOT_TESTED"}}
-    write_json(args.output_dir / "plan.json", PLAN)
+    write_json(args.output_dir / "plan.json", plan)
     write_json(args.output_dir / "source-manifest.json", source_manifest())
     started = time.monotonic()
     env = safe_environment(context)
@@ -193,29 +259,16 @@ def main():
         if actual_sha != context["GITHUB_SHA"]:
             raise RuntimeError("source_sha_mismatch")
         tools = {"sfdisk": ["sfdisk", "--version"], "losetup": ["losetup", "--version"],
+                 "wipefs": ["wipefs", "--version"],
                  "mkfs.ext4": ["mkfs.ext4", "-V"], "e2fsck": ["e2fsck", "-V"],
                  "mount": ["mount", "--version"], "udevadm": ["udevadm", "--version"],
                  "python": ["python3", "--version"]}
         evidence["tool_versions"] = {name: bounded(argv, env=env, timeout=10, limit=4096) for name, argv in tools.items()}
-        before_namespace = os.readlink("/proc/self/ns/mnt")
-        before_loops = loop_inventory()
-        before_scratch = set(Path("/run").glob("i1s-loop-*"))
-        wrapper = str(ROOT / "tests/install/loop_disk_transaction.sh")
-        evidence["shipped_dry_run"] = bounded(["bash", wrapper, "--dry-run"], env=env, timeout=30)
-        write_json(args.output_dir / "evidence.json", evidence)
-        if evidence["shipped_dry_run"]["status"] != "PASS":
-            raise RuntimeError("shipped_prerequisite_blocker_no_apply")
-        evidence["shipped"] = bounded(["bash", wrapper, "--apply"], env=env, timeout=240)
-        after_loops = loop_inventory()
-        new_scratch = sorted(str(p) for p in set(Path("/run").glob("i1s-loop-*")) - before_scratch)
-        evidence["shipped_cleanup_observer"] = {
-            "parent_namespace_unchanged": os.readlink("/proc/self/ns/mnt") == before_namespace,
-            "loop_associations_unchanged": before_loops == after_loops,
-            "remaining_new_scratch": new_scratch,
-            "scope": "independent parent-namespace observer; no cleanup mutations"}
-        write_json(args.output_dir / "evidence.json", evidence)
-        if evidence["shipped"].get("cleanup") == "INCOMPLETE" or before_loops != after_loops or new_scratch:
-            raise RuntimeError("shipped_cleanup_unresolved_stop_matrix")
+        before_namespace = run_shipped(evidence, args.output_dir, env)
+        if args.affected_only:
+            evidence["status"] = "PASS"
+            print("I2SF affected result: PASS", flush=True)
+            return 0
         env["I2S_PARENT_NAMESPACE"] = before_namespace
         namespace = bounded(["unshare", "--mount", "--propagation", "private", "python3", "-B", str(Path(__file__).resolve()),
                              "--namespace-apply", "--output-dir", str(args.output_dir)], env=env, timeout=120)

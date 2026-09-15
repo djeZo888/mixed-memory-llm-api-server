@@ -14,13 +14,15 @@ i2p = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(i2p)
 REPOSITORY = i2p.REPOSITORY
 WORKFLOW = ".github/workflows/i2s-linux.yml"
+BRANCH = "milestone/i2sf-loop-fixture"
+REVIEWED_BRANCHES = (BRANCH, "milestone/i2s-storage-linux")
 
 
-def validate_run(data, run_id, head):
-    if (data.get("id") != run_id or data.get("head_sha") != head or
+def validate_run(data, run_id, head, branch=BRANCH):
+    if (branch not in REVIEWED_BRANCHES or data.get("id") != run_id or data.get("head_sha") != head or
             data.get("repository", {}).get("full_name") != REPOSITORY or
             data.get("path", "").split("@", 1)[0] != WORKFLOW or
-            data.get("head_branch") != "milestone/i2s-storage-linux" or data.get("event") != "push"):
+            data.get("head_branch") != branch or data.get("event") != "push"):
         raise RuntimeError("refuse_mismatched_i2s_run_identity")
 
 
@@ -46,13 +48,14 @@ def main():
     parser.add_argument("action", choices=("status", "collect"))
     parser.add_argument("--run-id", type=int, required=True)
     parser.add_argument("--head", required=True)
+    parser.add_argument("--branch", choices=REVIEWED_BRANCHES, default=BRANCH)
     parser.add_argument("--destination", type=Path)
     args = parser.parse_args()
     if args.run_id < 1 or not re.fullmatch("[0-9a-f]{40}", args.head):
         parser.error("exact positive run ID and lowercase SHA required")
     api_path = f"repos/{REPOSITORY}/actions/runs/{args.run_id}"
     data = i2p.api(api_path)
-    validate_run(data, args.run_id, args.head)
+    validate_run(data, args.run_id, args.head, args.branch)
     print(json.dumps({key: data.get(key) for key in
                       ("id", "head_sha", "head_branch", "run_attempt", "status", "conclusion", "html_url")}, indent=2))
     if args.action == "status":

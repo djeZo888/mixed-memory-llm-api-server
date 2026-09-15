@@ -1,15 +1,15 @@
-name: I2S actual disposable Linux storage
+name: I2SF affected disposable Linux fixture
 
 on:
   push:
-    branches: ['milestone/i2s-storage-linux']
+    branches: ['milestone/i2sf-loop-fixture']
     paths: ['scripts/validation/i2s/launch.json']
 
 permissions:
   contents: read
 
 jobs:
-  actual-storage-matrix:
+  affected-loop-fixture:
     if: github.repository == 'djeZo888/mixed-memory-llm-api-server'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -25,12 +25,13 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/validation -p 'test_i2s*.py' -v
-          python3 scripts/validation/i2s/run.py --dry-run
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/validation -p 'test_i2s_runner.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/install -p 'test_loop_disk_fixture.py' -v
+          python3 scripts/validation/i2s/run.py --dry-run --affected-only
           bash -n tests/install/loop_disk_transaction.sh
           git diff --check HEAD^
 
-      - name: Run guarded actual matrix with scrubbed sudo environment
+      - name: Run guarded affected fixture with scrubbed sudo environment
         shell: bash
         timeout-minutes: 13
         run: |
@@ -44,7 +45,7 @@ jobs:
             RUNNER_TEMP="$RUNNER_TEMP" ImageOS="$ImageOS" ImageVersion="$ImageVersion" \
             I2P_DISPOSABLE_ACK=github-hosted-ubuntu-24.04 \
             /usr/bin/python3 -B scripts/validation/i2s/run.py \
-            --apply --output-dir "$RUNNER_TEMP/i2s-evidence" || result=$?
+            --apply --affected-only --output-dir "$RUNNER_TEMP/i2s-evidence" || result=$?
           for item in i2s-evidence i2s-evidence/evidence.json i2s-evidence/plan.json i2s-evidence/source-manifest.json; do
             if test -e "$RUNNER_TEMP/$item"; then
               sudo -n chown "$(id -u):$(id -g)" "$RUNNER_TEMP/$item"

@@ -34,7 +34,9 @@ preflight() {
 DRY_RUN: create a private mount namespace; create a new protected /run scratch
 directory and 256 MiB sparse file; allocate its own loop; verify exact backing
 inode, size and offsets; exercise GPT/ext4 transaction recovery and idempotency;
-unmount private targets, detach only that exact owned loop, and remove scratch.
+diagnose exact nodes and mount flags before any transaction; if nodev is
+confirmed, mount one 1 MiB/64-inode device-capable tmpfs only at owned root/dev;
+unmount private targets, detach only that exact owned backing, and remove scratch.
 No physical disk, host fstab, host journal, service, driver or reboot changes.
 EOF
 }
@@ -78,6 +80,12 @@ owned_loop() {
 
 cleanup() {
     local result=$? safe=true
+    # The foreground producer must have returned and accounted for its children.
+    # Signal/timeout death leaves this marker: preserve every resource for VM disposal.
+    if [[ -e "$fixture_root/producer.pending" ]]; then
+        echo "CLEANUP_INCOMPLETE: producer lifetime unresolved; preserve $fixture_root" >&2
+        exit 1
+    fi
     trap - EXIT HUP INT TERM
     if [[ -n "$fixture_loop" ]]; then
         if owned_loop; then
@@ -91,19 +99,19 @@ cleanup() {
                 fi
             fi
             if [[ $safe == true ]] && owned_loop; then
-                losetup --detach "$fixture_loop" || safe=false
-                udevadm settle --timeout=10 || safe=false
-                if losetup --list --noheadings --output NAME "$fixture_loop" | read -r _; then
-                    echo 'Fixture loop detach has not completed; preserving backing file.' >&2
-                    safe=false
-                fi
+                python3 -I -B "$fixture_script_dir/loop_disk_transaction.py" \
+                    --detach-owned "$fixture_identity" "$fixture_loop" || safe=false
             fi
         else
             echo 'Fixture identity changed; refusing detach and preserving scratch.' >&2
             safe=false
         fi
     fi
-    if [[ $fixture_mounted == true ]]; then
+    if [[ $safe == true ]]; then
+        python3 -I -B "$fixture_script_dir/loop_disk_transaction.py" \
+            --remove-dev-mount "$fixture_identity" || safe=false
+    fi
+    if [[ $safe == true && $fixture_mounted == true ]]; then
         if python3 -I -B "$fixture_script_dir/loop_disk_transaction.py" \
                 --check-sysfs "$fixture_identity"; then
             umount -- "$fixture_root/root/sys" || safe=false
@@ -133,11 +141,17 @@ python3 -I -B "$fixture_script_dir/loop_disk_transaction.py" \
     --record-owned "$fixture_identity" "$fixture_backing"
 fixture_loop=$(losetup --find --show --nooverlap --partscan "$fixture_backing")
 [[ $fixture_loop =~ ^/dev/loop[0-9]+$ ]] || { echo 'Unexpected allocated loop name.' >&2; exit 1; }
+python3 -I -B "$fixture_script_dir/loop_disk_transaction.py" \
+    --record-loop "$fixture_identity" "$fixture_loop"
 owned_loop
 mkdir -m 0700 -p "$fixture_root/root/sys"
 mount --bind /sys "$fixture_root/root/sys"
 fixture_mounted=true
 mount --make-private "$fixture_root/root/sys"
 mount -o remount,bind,ro "$fixture_root/root/sys"
+python3 -I -B "$fixture_script_dir/loop_disk_transaction.py" \
+    --record-sysfs "$fixture_identity"
+# This marker is cleared only after the synchronous fixture producer is accounted for.
+: > "$fixture_root/producer.pending"
 python3 -I -B "$fixture_script_dir/loop_disk_transaction.py" \
     --run "$fixture_identity" "$fixture_loop"
