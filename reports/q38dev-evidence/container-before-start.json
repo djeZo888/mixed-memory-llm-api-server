@@ -1,0 +1,89 @@
+{
+  "container": {
+    "Config": {
+      "Cmd": [
+        "-B",
+        "-c",
+        "import os, stat, json, signal, sys, time\n\ndef utc():\n    ns = time.time_ns()\n    return time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(ns // 1000000000)) + '.%09dZ' % (ns % 1000000000)\n\ndef timeout(_signum, _frame):\n    raise TimeoutError()\n\nsignal.signal(signal.SIGALRM, timeout)\nsignal.alarm(5)\nstarted = utc()\nentries, missing, errors, seen = [], [], [], set()\ntruncated = False\n\ndef allowed(path):\n    return (path.startswith('/dev/nvidia') and '/' not in path[len('/dev/'):]) or path.startswith('/dev/nvidia-caps/') or path == '/dev/dri' or path.startswith('/dev/dri/') or path in ('/dev/kfd', '/dev/dxg')\n\ndef visit(path, depth=0):\n    global truncated\n    if path in seen:\n        return\n    if len(seen) >= 128 or len(path.encode()) > 512 or depth > 16:\n        truncated = True\n        return\n    assert allowed(path)\n    seen.add(path)\n    try:\n        meta = os.lstat(path)\n    except FileNotFoundError:\n        missing.append(path)\n        return\n    except OSError as exc:\n        errors.append({'path': path, 'errno': exc.errno})\n        return\n    kind = 'directory' if stat.S_ISDIR(meta.st_mode) else 'char' if stat.S_ISCHR(meta.st_mode) else 'symlink' if stat.S_ISLNK(meta.st_mode) else 'other'\n    item = {'path': path, 'type': kind}\n    if kind == 'char':\n        item.update(major=os.major(meta.st_rdev), minor=os.minor(meta.st_rdev))\n    if kind == 'symlink':\n        target = os.readlink(path)\n        normalized = os.path.normpath(target if target.startswith('/') else os.path.join(os.path.dirname(path), target))\n        if len(target.encode()) <= 512 and len(normalized.encode()) <= 512 and allowed(normalized):\n            item['symlink_target'] = target\n        else:\n            item['symlink_target'] = 'WITHHELD_OUTSIDE_ALLOWLIST_OR_BOUND'\n    entries.append(item)\n    if kind == 'directory' and (path == '/dev/nvidia-caps' or path.startswith('/dev/nvidia-caps/') or path == '/dev/dri' or path.startswith('/dev/dri/')):\n        with os.scandir(path) as children:\n            for child in children:\n                if len(seen) >= 128:\n                    truncated = True\n                    break\n                visit(path + '/' + child.name, depth + 1)\n\nstatus = 'OBSERVED'\ntry:\n    # Filter names only; do not stat or emit any other /dev entry.\n    with os.scandir('/dev') as candidates:\n        for candidate in candidates:\n            if candidate.name.startswith('nvidia'):\n                visit('/dev/' + candidate.name)\n                if len(seen) >= 128:\n                    truncated = True\n                    break\n    for path in ('/dev/nvidia-caps', '/dev/dri', '/dev/kfd', '/dev/dxg'):\n        visit(path)\nexcept TimeoutError:\n    status = 'TIMEOUT_PARTIAL'\nexcept OSError as exc:\n    status = 'ERROR_PARTIAL'\n    errors.append({'errno': exc.errno})\nfinished = utc()\nsignal.alarm(0)\nresult = {'status': status, 'started_utc': started, 'finished_utc': finished, 'entries': sorted(entries, key=lambda item: item['path']), 'missing_fixed_paths': sorted(set(missing)), 'errors': errors[:128], 'truncated': truncated, 'limits': {'entries': 128, 'output_bytes': 32768, 'process_alarm_seconds': 5, 'path_bytes': 512, 'symlink_target_bytes': 512, 'recursion_depth': 16}, 'method': 'lstat and directory-name enumeration; readlink only for symlinks, no symlink traversal; no device node open/read/write'}\nwhile len((json.dumps(result, sort_keys=True) + '\\n').encode()) > 32768:\n    result['truncated'] = True\n    if result['entries']:\n        result['entries'].pop()\n    elif result['errors']:\n        result['errors'].pop()\n    else:\n        raise RuntimeError('output_bound')\nprint(json.dumps(result, sort_keys=True), flush=True)\nsys.exit(0 if status == 'OBSERVED' and not result['truncated'] and not errors else 2)\n"
+      ],
+      "Entrypoint": [
+        "python3"
+      ],
+      "ExposedPorts": null,
+      "Image": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "Labels": {
+        "local-ai-server.q38b-fixture-owner": "f9346fc798fa7fcbda05939ec0b981b5"
+      },
+      "User": "0:0",
+      "Volumes": null,
+      "WorkingDir": "/cache"
+    },
+    "HostConfig": {
+      "AutoRemove": false,
+      "Binds": null,
+      "CapAdd": null,
+      "CapDrop": [
+        "ALL"
+      ],
+      "DeviceCgroupRules": null,
+      "DeviceRequests": null,
+      "Devices": [],
+      "IpcMode": "private",
+      "LogConfig": {
+        "Config": {},
+        "Type": "none"
+      },
+      "Memory": 8589934592,
+      "MemorySwap": 17179869184,
+      "Mounts": null,
+      "NanoCpus": 1000000000,
+      "NetworkMode": "none",
+      "PidMode": "",
+      "PidsLimit": 128,
+      "PortBindings": {},
+      "Privileged": false,
+      "ReadonlyRootfs": true,
+      "RestartPolicy": {
+        "MaximumRetryCount": 0,
+        "Name": "no"
+      },
+      "Runtime": "nvidia",
+      "SecurityOpt": [
+        "no-new-privileges"
+      ],
+      "ShmSize": 67108864,
+      "Tmpfs": {
+        "/cache": "rw,nosuid,nodev,noexec,size=8m,mode=0700",
+        "/models": "rw,nosuid,nodev,noexec,size=8m,mode=0700",
+        "/run/secrets": "rw,nosuid,nodev,noexec,size=1m,mode=0700",
+        "/tmp": "rw,nosuid,nodev,noexec,size=8m,mode=1777"
+      },
+      "UTSMode": "",
+      "VolumesFrom": null
+    },
+    "Id": "a52cec602c81be1b3c62fed6ddd8854dc0fc396dfc02d2f42204a94c08fd69f3",
+    "Image": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "Mounts": [],
+    "Name": "/q38dev-20260915-f9346fc798fa7fcbda05939ec0b981b5",
+    "State": {
+      "ExitCode": 0,
+      "Paused": false,
+      "Pid": 0,
+      "Restarting": false,
+      "Running": false,
+      "Status": "created"
+    }
+  },
+  "host_config_env_occurrences": {
+    "CUDA_VISIBLE_DEVICES": [
+      ""
+    ],
+    "NVIDIA_DRIVER_CAPABILITIES": [
+      "compute,utility"
+    ],
+    "NVIDIA_VISIBLE_DEVICES": [
+      "none"
+    ]
+  },
+  "inspected_utc": "2026-09-15T04:25:06.835307+00:00"
+}
