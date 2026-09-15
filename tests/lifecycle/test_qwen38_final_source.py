@@ -9,6 +9,21 @@ from tests.lifecycle.test_qwen38 import ROOT, bound, auth_receipt, q, LifecycleE
 
 
 class FinalSource(unittest.TestCase):
+    def test_actual_fixture_and_support_source_drift_rejects(self):
+        d = bound(); proof, _ = auth_receipt(d)
+        identity = {name: proof[name] for name in ('image_id', 'image_reference', 'source_revision', 'launcher_sha256')}
+        for relative, code in (
+                ('tests/lifecycle/sglang38_fixture/run_fixture.py', 'qwen38_auth_fixture_changed'),
+                ('scripts/runtime/qwen38_oci.py', 'qwen38_support_source_changed')):
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                for source in ('scripts/runtime', 'tests/lifecycle/sglang38_fixture'):
+                    shutil.copytree(ROOT / source, root / source)
+                target = root / relative
+                target.write_bytes(target.read_bytes() + b'\n')
+                with patch.object(q, 'ROOT', root), self.assertRaisesRegex(LifecycleError, '^' + code + '$'):
+                    q._validate_auth_proof(proof, identity)
+
     def test_final_source_happy_path_and_provenance_drift_rejection(self):
         d = bound()
         _, instance = auth_receipt(d)

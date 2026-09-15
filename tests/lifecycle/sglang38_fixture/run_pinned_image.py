@@ -122,6 +122,10 @@ def verify_sources(repo):
         path = repo / "tests/lifecycle/sglang38_fixture" / name
         require(hashlib.sha256(path.read_bytes()).hexdigest() == identity,
                 "fixture_source_hash_mismatch")
+    for name, digest in expected.get("support_sha256", {}).items():
+        require(name == "scripts/runtime/qwen38_oci.py"
+                and hashlib.sha256((repo / name).read_bytes()).hexdigest() == digest,
+                "support_source_hash_mismatch")
     return launcher_path
 
 
@@ -480,8 +484,30 @@ def check_native_parser_template(repo):
             "native_no_thinking_tool_continuation_template_failed")
 
 
+def run_cache_probe(repo):
+    probe_spec = importlib.util.spec_from_file_location("q38b_actual_cache_probe",
+        repo / "tests/lifecycle/sglang38_fixture/cache_probe.py")
+    cache_probe = importlib.util.module_from_spec(probe_spec)
+    probe_spec.loader.exec_module(cache_probe)
+    # Native imports cache platform/architecture discovery. Isolate no-device
+    # resolver discovery so it cannot contaminate the auth fixture's later
+    # explicitly stubbed hardware setup in this interpreter.
+    child = subprocess.run([sys.executable, "-B",
+        str(repo / "tests/lifecycle/sglang38_fixture/cache_probe.py"),
+        "--actual-image", "--repo", str(repo)], stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120, check=False)
+    require(child.returncode == 0 and child.stderr == b"" and len(child.stdout) <= 131072,
+            "cache_probe_child_failed")
+    result = json.loads(child.stdout)
+    cache_probe.validate_result(result)
+    return result
+
+
 def run_actual(repo, scenario, captured_logs, context=131072):
     launcher_path = verify_sources(repo)
+    # Genuine resolver/device/library checks precede synthetic model/key files
+    # and every hardware discovery stub used by the native auth fixture.
+    cache_result = run_cache_probe(repo)
     spec = importlib.util.spec_from_file_location("q38s_actual_image_launcher", launcher_path)
     launcher = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(launcher)
@@ -650,7 +676,8 @@ def run_actual(repo, scenario, captured_logs, context=131072):
             "server_info_sentinel_absence": "PASS", "websocket_denial": "PASS",
             "native_false_warmup_not_ready": "PASS",
             "native_parser_template_synthetic": "PASS",
-            "native_freeze_gc_has_no_key": "PASS"}
+            "native_freeze_gc_has_no_key": "PASS", "actual_cache_resolvers": "PASS",
+            "no_gpu_driver_libraries": "PASS", "cache_probe": cache_result}
 
 
 def run_failure_children(repo, context=131072):
@@ -701,6 +728,7 @@ def main(argv=None):
                       source_revision=SOURCE_REVISION, image_reference=IMAGE_REFERENCE,
                       launcher_sha256=provenance["launcher_sha256"],
                       fixture_sha256=provenance["fixture_sha256"],
+                      support_sha256=provenance["support_sha256"],
                       source_hashes={name: item["sha256"] for name, item in provenance["sources"].items()},
                       configured_context=options.context,
                       image_identity_verification="HOST_DOCKER_INSPECT_REQUIRED",

@@ -33,12 +33,12 @@ def main():
             package.extractall(directory, filter='data')
         result = subprocess.run([sys.executable, '-B', '-m', 'unittest',
             'tests.lifecycle.test_qwen38.AuthEvidence.test_receipt_schema_and_source_fixture_checks_agree',
-            'tests.lifecycle.test_qwen38_final_source', '-v'], cwd=directory,
+            'tests.lifecycle.test_qwen38_final_source', 'tests.test_control_installation', '-v'], cwd=directory,
             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             timeout=60, check=False)
     print(json.dumps({'commit': commit, 'tree': tree,
         'status': 'PASS' if result.returncode == 0 else 'FAIL',
-        'checks': 'committed-source receipt happy path and byte drift rejection',
+        'checks': 'committed-source receipt happy path, byte drift and exact control closure/protection',
         'actual_image': 'NOT_TESTED', 'live': 'NOT_TESTED'}, sort_keys=True))
     sys.stdout.buffer.write(result.stdout)
     sys.stderr.buffer.write(result.stderr)
