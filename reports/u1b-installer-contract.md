@@ -67,3 +67,20 @@ Actual source pre-admission checks use ticket deadline; L1 loader finite externa
 limits can outlive that deadline, without allowing canceled destructive work.
 L1B/I1c provisional supplied patches may be composed only in isolated TEST COPY;
 they are not included as U1B owned source and do not imply combined review.
+
+## Final user roster — publication requirement
+
+The current approved offered roster is exactly TWO TOTAL models: GLM5.3 and
+Qwen3.8-27B FP8. Coder-Next implementation/live work is deferred; historical
+source/tests/evidence do not authorize publication. I1c owns the approved
+protected configs/deployments snapshot and default selection; it MUST exclude
+Coder-Next and every other deferred deployment from that installed snapshot,
+even if their acquisition evidence remains on data storage. U1B enumerates only
+that protected published deployment directory, not model-integrity or saved-state
+keys. Do not hardcode a permanent maximum of two or add a model-specific router.
+
+The source/import closure is exact for the L1B modules tested here. Q38-owned
+Manager/runtime changes must be combined-reviewed and their required import
+closure refreshed/verified by the source/installer owners before Q38 activation;
+this handoff makes no Q38 runtime or new-closure acceptance claim. No additional
+0.5.14 fixes, model acquisition, VM access or inference were performed by U1B.

@@ -176,6 +176,16 @@ Port 30000 is reserved for control. An installed inference deployment configured
 on that port is unavailable and cannot be selected until its lifecycle owner
 assigns a nonconflicting inference port.
 
+The current approved published roster is exactly **GLM5.3 and Qwen3.8-27B FP8**.
+I1c owns the protected installed `configs/deployments` snapshot and default
+selection. It must omit Coder-Next and other deferred deployments from that
+snapshot, even if their downloaded acquisition evidence remains. The catalog
+enumerates published deployment profiles only; saved state and instance evidence
+keys do not add entries. This is an installer publication policy, not a permanent
+maximum of two or model-specific routing code. Historical source/tests may remain
+marked deferred. Q38 runtime/source and import-closure integration need their
+owners' combined review before activation.
+
 The catalog consumes generic trusted registered model/deployment/runtime and
 small acquisition-evidence DTOs. Multiple deployments per model and a third
 future model require no routing code rewrite. Missing/uninstalled/historical or

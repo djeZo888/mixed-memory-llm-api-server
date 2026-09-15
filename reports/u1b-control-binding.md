@@ -132,3 +132,14 @@ Storage patch as reviewed source.
 Next action: review this source and the exact dependency composition, then let
 installer/live owners run their separately authorized acceptance. No production
 activation or whole-install completion is claimed by this report.
+
+## Final roster steering
+
+Final user roster is GLM5.3 + Qwen3.8-27B FP8 only; Coder-Next implementation/live
+work is deferred. I1c must publish only approved deployment profiles in the
+protected installed `configs/deployments` snapshot and own default selection.
+Retained acquisition evidence cannot add an entry without a published deployment
+profile. Generic discovery and future-profile capability remain unchanged.
+Q38-owned Manager/runtime changes and their root import closure require combined
+review; the closure tested here is exact for the recorded L1B source. No further
+0.5.14 fixes, new-model work or live activity were performed for this steering.
