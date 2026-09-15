@@ -13,7 +13,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "agent"))
-from protocol import APIError, AgentError, Budget, Client, load_api_key, redact, strict_json_loads
+from protocol import APIError, AgentError, Budget, Client, CompletionError, load_api_key, redact, strict_json_loads
 
 
 def call(call_id="call_1", name="read_file", arguments='{"path":"implementation.py"}'):
@@ -129,6 +129,230 @@ class ProtocolTests(unittest.TestCase):
 
     def tearDown(self):
         self.backend.__exit__()
+
+    def serve_completion(self, result, stream=False, done=True):
+        if stream:
+            choice = result["choices"][0]
+            delta = dict(choice["message"])
+            if delta.get("tool_calls"):
+                delta["tool_calls"] = [{"index": i, **item} for i, item in enumerate(delta["tool_calls"])]
+            self.backend.content_type = "text/event-stream"
+            self.backend.response = sse([
+                chunk(delta, model=result["model"]),
+                chunk({}, choice["finish_reason"], model=result["model"]),
+                {"model": result["model"], "choices": [], "usage": result["usage"]},
+            ], done=done)
+        else:
+            self.backend.content_type = "application/json"
+            self.backend.response = result
+
+    def test_reasoning_effort_omission_and_low_on_all_chat_probes(self):
+        key = "synthetic-effort-auth-token"
+        self.backend.api_key = key
+        for options in ({}, {"reasoning_effort": None}, {"reasoning_effort": "low"}):
+            client = Client(self.backend.url, "requested-name", api_key=key, **options)
+            for stream in (False, True):
+                with self.subTest(options=options, stream=stream):
+                    start = len(self.backend.requests)
+                    self.serve_completion(completion(), stream)
+                    client.chat(self.messages, stream=stream)
+                    for auth in (None, "synthetic-wrong-auth-token"):
+                        with self.assertRaises(APIError):
+                            client.chat(self.messages, stream=stream, api_key=auth)
+                    client.chat(self.messages, stream=stream, api_key=key)
+                    self.backend.status = 404
+                    with self.assertRaises(APIError):
+                        client.chat(self.messages, stream=stream, model="deliberately-invalid-model")
+                    self.backend.status = 200
+                    requests = self.backend.requests[start:]
+                    self.assertEqual(len(requests), 5)
+                    self.assertEqual(requests[-1]["body"]["model"], "deliberately-invalid-model")
+                    for request in requests:
+                        body = request["body"]
+                        expected_keys = {"model", "messages", "stream", "max_tokens"}
+                        if options.get("reasoning_effort") is None:
+                            self.assertNotIn("reasoning_effort", body)
+                        else:
+                            expected_keys.add("reasoning_effort")
+                            self.assertEqual(body["reasoning_effort"], "low")
+                        self.assertEqual(set(body), expected_keys)
+                        self.assertEqual(body["stream"], stream)
+
+    def test_reasoning_effort_preserved_across_every_tool_continuation(self):
+        tools = [{"type": "function", "function": {"name": "read_file", "parameters": {"type": "object"}}}]
+        for options in ({}, {"reasoning_effort": None}, {"reasoning_effort": "low"}):
+            for stream in (False, True):
+                with self.subTest(options=options, stream=stream):
+                    client = Client(self.backend.url, "requested-name", **options)
+                    history = list(self.messages)
+                    start = len(self.backend.requests)
+                    for identity in ("first-read", "second-read"):
+                        result = completion(None, [call(identity)])
+                        result["choices"][0]["message"]["reasoning_content"] = "do not replay this reasoning"
+                        self.serve_completion(result, stream)
+                        answer = client.chat(history, tools=tools, stream=stream)
+                        self.assertEqual(answer["message"]["tool_calls"][0]["id"], identity)
+                        history = history + [answer["message"], {"role": "tool", "tool_call_id": identity, "content": "actual file content"}]
+                    self.serve_completion(completion("both files read"), stream)
+                    self.assertEqual(client.chat(history, tools=tools, stream=stream)["message"]["content"], "both files read")
+                    requests = self.backend.requests[start:]
+                    self.assertEqual(len(requests), 3)
+                    for index, request in enumerate(requests):
+                        body = request["body"]
+                        self.assertEqual(body["tools"], tools)
+                        self.assertEqual(body["stream"], stream)
+                        if options.get("reasoning_effort") is None:
+                            self.assertNotIn("reasoning_effort", body)
+                        else:
+                            self.assertEqual(body["reasoning_effort"], "low")
+                        for message in body["messages"]:
+                            self.assertNotIn("reasoning_content", message)
+                        identities = [message["tool_call_id"] for message in body["messages"] if message["role"] == "tool"]
+                        self.assertEqual(identities, ["first-read", "second-read"][:index])
+
+    def test_reasoning_effort_rejects_invalid_types_and_enum_before_http(self):
+        invalid = (True, False, 0, 1, 0.5, [], {}, ["low"], {"reasoning_effort": "low"}, "", "LOW", " low", "low ", "bogus", 'low","max_tokens":999')
+        with patch("protocol.http.client.HTTPConnection") as connect:
+            for value in invalid:
+                with self.subTest(value=value), self.assertRaises(AgentError):
+                    Client(self.backend.url, "requested-name", reasoning_effort=value)
+            connect.assert_not_called()
+        self.assertEqual(self.backend.requests, [])
+
+    def test_generic_reasoning_effort_enum_is_explicit(self):
+        for value in ("none", "minimal", "low", "medium", "high", "xhigh", "max"):
+            with self.subTest(value=value):
+                client = Client(self.backend.url, "requested-name", reasoning_effort=value)
+                client.chat(self.messages)
+                self.assertEqual(self.backend.requests[-1]["body"]["reasoning_effort"], value)
+
+    def test_token_budget_exhaustion_records_safe_metadata_both_modes(self):
+        usage = {"prompt_tokens": 7, "completion_tokens": 2048, "total_tokens": 2055,
+                 "completion_tokens_details": {"reasoning_tokens": 2040}}
+        for stream in (False, True):
+            with self.subTest(stream=stream):
+                result = completion("unfinished answer", usage=usage)
+                result["choices"][0]["finish_reason"] = "length"
+                result["choices"][0]["message"]["reasoning_content"] = "private unfinished reasoning"
+                self.serve_completion(result, stream)
+                with self.assertRaises(CompletionError) as caught:
+                    self.client.chat(self.messages, stream=stream)
+                expected = {"classification": "token_budget_exhausted", "finish_reason": "length",
+                            "model": "served-alias", "usage": usage, "stream_done": stream}
+                self.assertEqual(caught.exception.diagnostics, expected)
+                record = self.client.requests[-1]
+                self.assertFalse(record["success"])
+                for name, value in expected.items():
+                    self.assertEqual(record[name], value)
+                self.assertNotIn("unfinished", str(caught.exception))
+                self.assertNotIn("private", json.dumps(caught.exception.diagnostics))
+
+    def test_partial_tool_json_length_preserves_failure_and_metadata(self):
+        for stream in (False, True):
+            with self.subTest(stream=stream):
+                result = completion(None, [call(arguments='{"path":"incomplete')], usage={"completion_tokens": 2048})
+                result["choices"][0]["finish_reason"] = "length"
+                self.serve_completion(result, stream)
+                before = len(self.backend.requests)
+                with self.assertRaises(CompletionError) as caught:
+                    self.client.chat(self.messages, stream=stream)
+                diagnostic = caught.exception.diagnostics
+                self.assertEqual(diagnostic["classification"], "token_budget_exhausted")
+                self.assertEqual(diagnostic["parsing_failure"], "invalid_assistant_message")
+                self.assertEqual(diagnostic["finish_reason"], "length")
+                self.assertEqual(diagnostic["usage"], {"completion_tokens": 2048})
+                self.assertEqual(diagnostic["model"], "served-alias")
+                self.assertEqual(diagnostic["stream_done"], stream)
+                self.assertEqual(len(self.backend.requests), before + 1)
+                self.assertFalse(self.client.requests[-1]["success"])
+                self.assertEqual(self.client.requests[-1]["parsing_failure"], "invalid_assistant_message")
+                self.assertNotIn("incomplete", json.dumps(diagnostic))
+
+    def test_length_does_not_bypass_invalid_ids_or_duplicate_argument_keys(self):
+        for stream in (False, True):
+            for calls in ([call("invalid id")], [call(), call()], [call(arguments='{"path":"a","path":"b"}')]):
+                with self.subTest(stream=stream, calls=calls):
+                    result = completion(None, calls)
+                    result["choices"][0]["finish_reason"] = "length"
+                    self.serve_completion(result, stream)
+                    with self.assertRaises(CompletionError) as caught:
+                        self.client.chat(self.messages, stream=stream)
+                    self.assertEqual(caught.exception.diagnostics["parsing_failure"], "invalid_assistant_message")
+                    self.assertFalse(self.client.requests[-1]["success"])
+
+    def test_malformed_without_length_and_truncated_sse_are_distinct(self):
+        for stream in (False, True):
+            with self.subTest(stream=stream):
+                self.serve_completion(completion(None, [call(arguments="{")]), stream)
+                with self.assertRaises(AgentError) as caught:
+                    self.client.chat(self.messages, stream=stream)
+                self.assertNotIsInstance(caught.exception, CompletionError)
+                self.assertNotIn("classification", self.client.requests[-1])
+        result = completion("unfinished")
+        result["choices"][0]["finish_reason"] = "length"
+        self.serve_completion(result, stream=True, done=False)
+        missing_done = self.backend.response
+        for response in (missing_done, missing_done + b"data: [DONE]\n"):
+            with self.subTest(response=response):
+                self.backend.response = response
+                with self.assertRaises(AgentError) as caught:
+                    self.client.chat(self.messages, stream=True)
+                self.assertNotIsInstance(caught.exception, CompletionError)
+                self.assertNotIn("classification", self.client.requests[-1])
+                self.assertFalse(self.client.requests[-1]["success"])
+
+    def test_length_diagnostics_allowlist_bounds_and_redacts_provider_values(self):
+        configured = "synthetic-configured-key"
+        override = "synthetic-override-key"
+        self.client.api_key = configured
+        usage = {"prompt_tokens": 7, "completion_tokens": 2048, "total_tokens": 2055,
+                 "completion_tokens_details": {"reasoning_tokens": 2000, "accepted_prediction_tokens": True,
+                                               "rejected_prediction_tokens": -1, "debug": configured},
+                 "prompt_tokens_details": {"cached_tokens": 3, "audio_tokens": 10 ** 200, "debug": override},
+                 "debug": configured, "provider_body": override * 1000}
+        expected_usage = {"prompt_tokens": 7, "completion_tokens": 2048, "total_tokens": 2055,
+                          "completion_tokens_details": {"reasoning_tokens": 2000},
+                          "prompt_tokens_details": {"cached_tokens": 3}}
+        for stream in (False, True):
+            with self.subTest(stream=stream):
+                result = completion("provider body " + configured, usage=usage, model="echo-" + configured + "-" + override)
+                result["choices"][0]["finish_reason"] = "length"
+                result["choices"][0]["message"]["reasoning_content"] = override
+                self.serve_completion(result, stream)
+                with self.assertRaises(CompletionError) as caught:
+                    self.client.chat(self.messages, stream=stream, api_key=override)
+                diagnostic = caught.exception.diagnostics
+                self.assertEqual(diagnostic["usage"], expected_usage)
+                self.assertEqual(diagnostic["model"], "echo-[REDACTED]-[REDACTED]")
+                self.assertEqual(set(diagnostic), {"classification", "finish_reason", "model", "usage", "stream_done"})
+                serialized = json.dumps(diagnostic) + json.dumps(self.client.requests) + str(caught.exception)
+                for private in (configured, override, "provider body", "debug", "reasoning_content"):
+                    self.assertNotIn(private, serialized)
+                self.assertLess(len(json.dumps(diagnostic)), 1024)
+
+    def test_length_diagnostics_bound_redacted_model_and_preserve_counter_schema(self):
+        usage = {"prompt_tokens": 7, "completion_tokens": 2048, "total_tokens": 2055,
+                 "completion_tokens_details": {"reasoning_tokens": 2040}}
+        cases = (("x", "x" * 1024, None),
+                 ("completion_tokens", "served-alias", "served-alias"),
+                 ("reasoning_tokens", "served-alias", "served-alias"))
+        for stream in (False, True):
+            for key, model, expected_model in cases:
+                with self.subTest(stream=stream, key=key):
+                    self.client.api_key = key
+                    result = completion("unfinished", model=model, usage=usage)
+                    result["choices"][0]["finish_reason"] = "length"
+                    self.serve_completion(result, stream)
+                    with self.assertRaises(CompletionError) as caught:
+                        self.client.chat(self.messages, stream=stream)
+                    diagnostic = caught.exception.diagnostics
+                    self.assertEqual(diagnostic["model"], expected_model)
+                    self.assertEqual(diagnostic["usage"], usage)
+                    self.assertEqual(diagnostic["stream_done"], stream)
+                    record = self.client.requests[-1]
+                    self.assertEqual(record["model"], expected_model)
+                    self.assertEqual(record["usage"], usage)
+                    self.assertFalse(record["success"])
 
     def test_nonstream_identity_reasoning_usage(self):
         self.backend.response["choices"][0]["message"]["reasoning_content"] = "private analysis"
