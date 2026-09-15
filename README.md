@@ -10,13 +10,27 @@ The target host class is a headless Linux workstation or VM with large system RA
 
 This repository is API-only. It is intended to run inference backends, expose model inference APIs, and provide repeatable operational checks. It does not implement web browsing, scraping, browser automation, or a human chat UI.
 
-## Current Status
+## Current installer status
 
-Early bootstrap. M0 creates repository structure, durable project instructions, documentation placeholders, CI metadata, issue templates, and a milestone report.
+The fresh-Linux installer is **incomplete: I1b continuation required**. I1 adds
+read-only planning, verified dedicated storage, pinned Ubuntu prerequisites and
+an explicit driver/reboot checkpoint. Full `apply` refuses before mutation until
+runtime, acquisition, service, client and acceptance integration is implemented.
+It does not yet leave a fresh machine ready for inference.
 
-M0 does not install or configure the server. It does not initialize disks, mount `/data`, configure Docker, configure NVIDIA drivers, run systemd services, expose APIs, or download models.
+```sh
+./install.sh --help
+./install.sh plan --profile flagship-hybrid --model-set glm --data-dir /data
+```
 
-Do not download models until `/data` is mounted and verified during later milestones.
+See [installation and partial-boundary commands](docs/installation.md),
+[I1 test evidence](reports/i1-installer-prerequisites.md), and
+[required I1b work](reports/i1b-continuation.md). Ubuntu24.04 amd64 is the supported
+source target. Full fresh GPU installation/reboot is **NOT_TESTED**.
+
+The roadmap below is historical. Current D1/D1b/F1A artifact acquisition,
+D2 lifecycle and V0 client interfaces are separate reviewed components;
+their reports do not establish whole-installer or live-model acceptance.
 
 ## High-Level Install Roadmap
 

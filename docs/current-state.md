@@ -2,6 +2,21 @@
 
 This file is the compact source-of-truth handoff for future Codex and ChatGPT sessions.
 
+## I1 source update — 2026-09-15
+
+Fresh installer source now has a bounded prerequisite interface and synthetic
+checks; **I1b is required** for full deployment. Read
+[installation](installation.md), [I1 report](../reports/i1-installer-prerequisites.md)
+and [continuation](../reports/i1b-continuation.md). Full apply returns78 before
+mutation while required deployment stages are absent; no READY claim is made.
+Storage/base/driver can be explicitly selected as a partial boundary. No live
+adoption, model activation, acquisition-job change, driver installation or reboot
+was performed by I1. Exact package discovery was read-only.
+
+The older project/live-state entries below are historical snapshots, not current
+observations from I1. D1b/F1A downloads and F1S/L1/F1D/D3 live work remain under
+their separate owners; inspect their current reports before making live claims.
+
 ## Project
 
 - Repo SSH URL: `git@github.com:djeZo888/mixed-memory-llm-api-server.git`
