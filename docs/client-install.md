@@ -105,6 +105,36 @@ Use A1's [protected key entry procedure](agent-client.md#protected-key-file)
 during coordinated V1. V0 used a nonexistent local reference and did not fetch
 the VM key.
 
+## Optional low reasoning effort (A2O)
+
+Add **`--reasoning-effort low`** to the bootstrap command when the backend
+handoff requires it. This extension accepts only the exact string `low`;
+omitting the option preserves V0's generated configuration and manifest shape.
+It does not assign an effort default to every model or expose a token budget.
+
+The optional manifest field is `bootstrap.json` → `reasoning_effort: "low"`.
+The generated model option is
+`provider.local.models[exact_model_id].options.reasoningEffort: "low"`.
+OpenCode **1.18.31**, with bundled `@ai-sdk/openai-compatible` **2.0.41**, maps
+that option to request **top-level `reasoning_effort: "low"`**. See the
+[pinned primary-source review](../reports/a2o-provider-source.md) and
+[actual-process synthetic wire evidence](../reports/a2o-opencode-reasoning.md).
+
+The dry-run JSON includes `reasoning_effort` only when selected. An identical
+bootstrap verifies the manifest, generated config and installed helper; changing
+between omitted and low requires a **new private prefix**. Never hand-edit
+installed config/manifest files. This is a bootstrap setting; the launcher has
+no effort override. Existing V0 installations remain usable with their copied
+V0 launcher; rerunning changed helper source against them requires a new prefix,
+as before.
+
+For the reviewed D3 GLM handoff, V1's initial selection is exact model
+`glm-5.3`, context **32768**, output **2048**, and **`--reasoning-effort low`**.
+Keep the endpoint and protected key reference from the operator handoff. These
+are that service's initial values, not defaults for other models. Root must
+review A2O before V1 creates its new config. Actual GLM read/edit/test acceptance
+and continuation remain V1 work; A1's reasoning replay policy is unchanged.
+
 ## Launcher and local provider
 
 ```sh
@@ -307,11 +337,48 @@ single test is explicitly skipped).
 An actual pinned CLI install/help/config test must also be run on clean Linux
 by the installer owner; CI's stdlib suite does not substitute for that test.
 
+The opt-in **actual OpenCode-to-synthetic-server** fixture is separate from
+offline unit tests. Choose a new absolute path outside Git under an existing
+parent, then run:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -W error::ResourceWarning \
+  scripts/client/tests/wire_fixture.py --help
+PYTHONDONTWRITEBYTECODE=1 python3 -W error::ResourceWarning \
+  scripts/client/tests/wire_fixture.py \
+  --work-root /absolute/private/new-a2o-wire-run
+```
+
+This installs the committed npm lock into three fresh private prefixes (HTTPS
+to npm is needed for installation), starts a loopback synthetic HTTP listener,
+and runs the actual pinned launcher. It checks omitted effort and low effort
+for a GLM ID and a generic ID, ordinary requests, auxiliary requests, and real
+two-round `read` tool continuations. The fixture contents are disposable; no
+host project, real key, inference backend, network tool or bash/edit permission
+grant is used. It preserves the launcher's environment and permission controls.
+This remains configuration isolation, not an OS sandbox.
+
+Every captured request must have the expected top-level effort presence/value.
+The synthetic server asks OpenCode to read a file containing an unpredictable
+marker, then verifies the matching tool result in its next request. The runner
+also requires an actual completed read event and final text event. It caps
+requests per invocation and wall time, cleans child process groups and its
+listener, removes its generated key, and retains only allowlisted evidence in
+`wire-evidence.json`. Raw headers, bodies and CLI transcripts are not emitted.
+The private npm/OpenCode state remains for inspection; the runner never reuses
+or deletes an existing work root.
+
+The pinned CLI agent uses `streamText` for these requests. Its `--format json`
+controls event output, not HTTP transport; there is no supported ordinary-agent
+nonstream switch in this pin. SDK nonstream serialization is source-reviewed,
+not claimed as actual OpenCode nonstream execution. A synthetic response is
+not real LLM agent acceptance or proof of live GLM behavior.
+
 Upgrade only in a reviewed change updating the exact package pins, full lock,
 `VERSION`, official source links and isolation review together. Reverify the
 test hooks, key interpolation, disabled providers/plugins/downloads and actual
 CLI help/config. Install into a new prefix; never use `latest`, `opencode
 upgrade`, global npm installation, or curl-pipe-shell. Preserve the previous
-prefix for rollback. Changing endpoint/model/limits/auth also uses a new prefix,
+prefix for rollback. Changing endpoint/model/limits/auth/effort also uses a new prefix,
 keeping existing installations deterministic. No automatic migration of
 sessions or credentials is performed.
