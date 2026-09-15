@@ -14,8 +14,10 @@ and the relevant task handoff before work; preserve their evidence boundaries.
   or test gates current VM completion.
 - Existing explicit project authorization persists. Stale milestone STOP text
   does not require redundant approval. Stay within the current bounded task and
-  root-reviewed ownership/leases; actual destructive or irreversible actions
-  still require approval. Source-only work authorizes no host mutation.
+  root-reviewed ownership/leases. Actual destructive or irreversible actions
+  require explicit authorization for their exact scope; reuse authorization already
+  given in this project and do not ask again. Source-only work authorizes no host
+  mutation.
 - Mac-Orchestrator plans, coordinates, reviews and synchronizes. Remote
   implementation/builds/tests run through fresh bounded Codex sessions in
   isolated mac-worker1/mac-worker2 copies. Worker1 owns authorized VM mutations;
