@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "reviewed_implementation_sha": "3e3b5a1d85e035af9f17c582a70a72ca850b87c5",
+  "scope": "one_guarded_disposable_hosted_ubuntu_24_04_I2S_job",
+  "fixture_backing_limit_bytes": 2147483648,
+  "allow_packages": false,
+  "allow_physical_devices": false
+}
