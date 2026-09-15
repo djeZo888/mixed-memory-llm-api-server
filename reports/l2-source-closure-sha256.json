@@ -10,7 +10,7 @@
     "scripts/control/__init__.py": "09994eed14b3742e621b51ba4ec25972f2ad05a33ffc924973893b4c40be4287",
     "scripts/control/serve.py": "70494341d79ed5be2e9d15fb61e8e9599fcea855d3d305a0e3ba5d8e91b1475f",
     "scripts/control/installation.py": "6bf85921d140e12df329ba42a0eb1b25889d891c0acf4ebec1d48f5cd436bc42",
-    "scripts/control/adapter.py": "3ec236a5fa7cc515a5bd9017826234b2b8843d3fe91885cda01ce98f2b30a994",
+    "scripts/control/adapter.py": "476c8429822e13c41b2a9daf19a10d75ddb93683467cb0cefab05334aa373bf0",
     "scripts/control/core.py": "87320fe0fd6285e8cab290e94a19e7bf3aff4f16d7fa23944577c9c4615b4c31",
     "scripts/control/protocol.py": "ce2fc0a49a9b47ead5816703e35c88d1c915504f1768a3da7082a7ff77994e55",
     "scripts/control/journal.py": "4a1de7a441c3f385b47683d98601074aa0b6e2550ca745f0806633b48e4d1347",
