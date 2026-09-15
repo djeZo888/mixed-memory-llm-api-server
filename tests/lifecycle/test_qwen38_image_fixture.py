@@ -36,8 +36,11 @@ inner, host = load("run_pinned_image"), load("run_fixture")
 
 def inspected():
     return [{"Id": host.IMAGE_ID, "RepoDigests": [host.IMAGE_REFERENCE], "Os": "linux",
-             "Architecture": "amd64", "Config": {"Labels": {
-                 "org.opencontainers.image.revision": host.SOURCE_REVISION}}}]
+             "Architecture": "amd64", "Config": {
+                 "Entrypoint": list(host.OCI.IMAGE_ENTRYPOINT), "Cmd": None,
+                 "WorkingDir": host.OCI.IMAGE_WORKDIR, "Labels": {
+                 "org.opencontainers.image.revision": host.SOURCE_REVISION,
+                 "org.opencontainers.image.source": host.OCI.SOURCE_REPOSITORY}}}]
 
 
 def native_result(provenance, context):
@@ -46,6 +49,8 @@ def native_result(provenance, context):
         image_reference=host.IMAGE_REFERENCE, source_revision=host.SOURCE_REVISION,
         image_identity_verification="HOST_DOCKER_INSPECT_REQUIRED", configured_context=context,
         launcher_sha256=provenance["launcher_sha256"], fixture_sha256=provenance["fixture_sha256"],
+        support_sha256=provenance["support_sha256"],
+        cache_probe=host.CACHE.result_record(dict(host.CACHE.EXPECTED_PATHS), []),
         source_hashes={name: item["sha256"] for name, item in provenance["sources"].items()},
         model_loading="STUBBED_NOT_TESTED", gpu_execution="NOT_TESTED",
         native_lifespan_model_serving_initialization="NOT_TESTED",
@@ -53,7 +58,31 @@ def native_result(provenance, context):
     return value
 
 
+def lifetime(context):
+    """Synthetic receipt collaborator; never attests a Docker execution."""
+    token = ('1' if context == 131072 else '2') * 32
+    return {"container_name": "q38b-fixture-" + token, "container_id": token * 2,
+        "outcome": "FIXTURE_EXITED", "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+        "runtime_inspect": {"runtime": "nvidia", "visible_devices": "none",
+            "driver_capabilities": "compute,utility", "device_requests": [], "host_devices": [],
+            "network": "none", "root_readonly": True, "model_and_secret_mounts": "EMPTY_PRIVATE_TMPFS",
+            "entrypoint": ["python3"], "context": context, "status": "PASS_HOST_INSPECT"}}
+
+
 class Qwen38ImageFixtureTests(unittest.TestCase):
+    def test_native_cache_probe_uses_fresh_child_and_validates_result(self):
+        expected = host.CACHE.result_record(dict(host.CACHE.EXPECTED_PATHS), [])
+        child = SimpleNamespace(returncode=0, stdout=json.dumps(expected).encode(), stderr=b'')
+        with patch.object(inner.subprocess, 'run', return_value=child) as process:
+            self.assertEqual(inner.run_cache_probe(ROOT), expected)
+        command = process.call_args.args[0]
+        self.assertEqual(command[2], str(FIXTURE / 'cache_probe.py'))
+        self.assertEqual(process.call_args.kwargs['timeout'], 120)
+        for change in ({'returncode': 1}, {'stderr': b'private detail'}, {'stdout': b'{}'}):
+            failed = SimpleNamespace(**(vars(child) | change))
+            with patch.object(inner.subprocess, 'run', return_value=failed), self.assertRaises(Exception):
+                inner.run_cache_probe(ROOT)
+
     def test_inner_requires_explicit_actual_mode_and_exact_contexts(self):
         for argv in (["--repo", "/fixture"], ["--actual-image", "--repo", "/fixture", "--fallback"],
                      ["--actual-image", "--repo", "/fixture", "--context", "1048576"]):
@@ -100,9 +129,10 @@ class Qwen38ImageFixtureTests(unittest.TestCase):
         self.assertEqual(command[command.index("--network") + 1], "none")
         self.assertNotIn("--gpus", command)
         self.assertNotIn("--privileged", command)
-        self.assertEqual(command[command.index("--runtime") + 1], "runc")
+        self.assertEqual(command[command.index("--runtime") + 1], "nvidia")
         self.assertEqual(command[command.index("--log-driver") + 1], "none")
-        self.assertIn("NVIDIA_VISIBLE_DEVICES=void", command)
+        self.assertIn("NVIDIA_VISIBLE_DEVICES=none", command)
+        self.assertIn("NVIDIA_DRIVER_CAPABILITIES=compute,utility", command)
         self.assertIn("CUDA_VISIBLE_DEVICES=", command)
         self.assertEqual(command.count("--mount"), 1)
         self.assertEqual(command[command.index("--mount") + 1],
@@ -223,31 +253,31 @@ class Qwen38ImageFixtureTests(unittest.TestCase):
         provenance = json.loads((FIXTURE / "provenance.json").read_text())
         calls = []
 
-        def command(argv, **_kwargs):
-            calls.append(argv)
-            if argv[1:3] == ["image", "inspect"]:
-                return SimpleNamespace(returncode=0, stdout=json.dumps(inspected()).encode(), stderr=b"")
-            context = int(argv[-1])
+        def disposable(repo, cache, context, **kwargs):
+            calls.append((context, kwargs['image_id']))
             return SimpleNamespace(returncode=0,
-                stdout=json.dumps(native_result(provenance, context)).encode(), stderr=b"")
+                stdout=json.dumps(native_result(provenance, context)).encode(), stderr=b""), lifetime(context)
 
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "receipt.json"
-            with patch.object(host, "validate_output_path"), patch.object(host.subprocess, "run", side_effect=command):
+            with patch.object(host, "validate_output_path"), patch.object(host.subprocess, "run",
+                    return_value=SimpleNamespace(returncode=0, stdout=json.dumps(inspected()).encode(), stderr=b"")), \
+                    patch.object(host, "run_disposable_fixture", side_effect=disposable):
                 result = host.run(ROOT, output)
             self.assertEqual(result["contexts"], [131072, 262144])
             self.assertEqual(result["model_execution"], "NOT_TESTED")
             self.assertEqual(result["image_identity_verification"], "HOST_DOCKER_INSPECT_AND_PINNED_RUN")
             self.assertEqual(stat.S_IMODE(output.stat().st_mode), 0o600)
-            self.assertEqual(len(calls), 3)
+            self.assertEqual(calls, [(131072, host.IMAGE_ID), (262144, host.IMAGE_ID)])
 
     def test_host_failure_does_not_write_a_partial_pass_receipt(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "receipt.json"
-            responses = [SimpleNamespace(returncode=0, stdout=json.dumps(inspected()).encode(), stderr=b""),
-                         SimpleNamespace(returncode=2, stdout=b'{"status":"FAIL"}', stderr=b"")]
+            inspected_result = SimpleNamespace(returncode=0, stdout=json.dumps(inspected()).encode(), stderr=b"")
+            failed_result = SimpleNamespace(returncode=2, stdout=b'{"status":"FAIL"}', stderr=b"")
             with patch.object(host, "validate_output_path"), \
-                    patch.object(host.subprocess, "run", side_effect=responses):
+                    patch.object(host.subprocess, "run", return_value=inspected_result), \
+                    patch.object(host, "run_disposable_fixture", return_value=(failed_result, lifetime(131072))):
                 with self.assertRaisesRegex(host.FixtureError, "actual_image_fixture_failed"):
                     host.run(ROOT, output)
             self.assertFalse(output.exists())

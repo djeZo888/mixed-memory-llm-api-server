@@ -42,6 +42,9 @@ CACHE_ENVIRONMENT = {
     "TRANSFORMERS_OFFLINE": "1",
     "HF_HOME": "/cache/huggingface",
     "XDG_CACHE_HOME": "/cache",
+    # Pinned 0.5.19 has independent HOME defaults for these two roots.
+    "SGLANG_CACHE_DIR": "/cache/sglang",
+    "SGLANG_JIT_CACHE_DIR": "/cache/sglang/jit",
     "TRITON_CACHE_DIR": "/cache/triton",
     "TORCHINDUCTOR_CACHE_DIR": "/cache/torchinductor",
     "FLASHINFER_WORKSPACE_BASE": "/cache/flashinfer",
@@ -161,7 +164,8 @@ def validate_environment():
     # Image metadata is not a runtime switch. Every other SGLANG name, plugin
     # group and cache/token override is refused before importing serving code.
     for name, value in os.environ.items():
-        if name.startswith("SGLANG_") and BUILD_METADATA.get(name) != value:
+        if (name.startswith("SGLANG_") and BUILD_METADATA.get(name) != value
+                and CACHE_ENVIRONMENT.get(name) != value):
             raise LaunchError("launch_environment_invalid")
         if (name.startswith(("HF_", "HUGGINGFACE_", "TRANSFORMERS_", "TRITON_",
                              "TORCHINDUCTOR_", "XDG_"))

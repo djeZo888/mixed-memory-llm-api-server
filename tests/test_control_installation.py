@@ -165,6 +165,36 @@ class InstallationValidationTests(unittest.TestCase):
         with self.assertRaises(InstallationError):
             installation.validate_installation()
 
+    def test_present_q38_normal_dependencies_require_protected_files(self):
+        q38_files = [relative for relative in installation.NORMAL_FILES
+                     if any(name in relative for name in ('q38', 'qwen38', 'sglang38'))]
+        self.assertEqual(len(q38_files), 11)
+        for relative in q38_files:
+            self.write(self.source / relative, b'# inert source closure fixture\n', mode=0o644)
+        self.reader.reset_mock()
+        self.assertEqual(installation.validate_installation(), self.value)
+        checked = [call.args[0] for call in self.reader.call_args_list]
+        self.assertEqual(checked, [self.source / relative for relative in installation.RECOVERY_FILES]
+                         + [self.source / relative for relative in q38_files]
+                         + [self.config, self.key, self.credential])
+        for relative in q38_files:
+            source = self.source / relative
+            for kind in ('writable', 'symlink', 'hardlink'):
+                with self.subTest(relative=relative, kind=kind):
+                    source.unlink()
+                    if kind == 'writable':
+                        self.write(source, b'# inert fixture', mode=0o666)
+                    elif kind == 'symlink':
+                        source.symlink_to(self.config)
+                    else:
+                        os.link(self.config, source)
+                    self.reader.reset_mock()
+                    with self.assertRaises(InstallationError):
+                        installation.validate_installation()
+                    self.assertNotIn(self.key, [call.args[0] for call in self.reader.call_args_list])
+                    source.unlink()
+                    self.write(source, b'# inert source closure fixture\n', mode=0o644)
+
     def test_effective_owner_and_source_location_cannot_be_overridden(self):
         with patch.object(installation.os, 'geteuid', return_value=1234), \
                 self.assertRaises(InstallationError):
@@ -216,6 +246,147 @@ class InstallationValidationTests(unittest.TestCase):
 
 
 class EntrypointAndClosureTests(unittest.TestCase):
+    def test_fresh_normal_closure_q38_source_proof_and_drift_checks(self):
+        """Only copied manifest files and four Q38 profile declarations exist.
+
+        This checks the installed layout's import/source closure. It does not
+        call validate_installation, establish file protection, read a key, or
+        execute any native/image fixture. Synthetic proof stays in memory.
+        """
+        manifest = json.loads((ROOT / 'scripts/control/source-closure.json').read_text())
+        files = manifest['recovery_files'] + manifest['normal_files']
+        profiles = {
+            'configs/deployments/qwen38-27b-128k.json',
+            'configs/deployments/qwen38-27b-256k.json',
+            'configs/models/qwen38-27b-fp8.json',
+            'configs/runtimes/sglang-qwen38-0.5.19.json',
+        }
+        self.assertEqual(len(files), len(set(files)))
+        self.assertEqual(tuple(manifest['recovery_files']), installation.RECOVERY_FILES)
+        self.assertEqual(tuple(manifest['normal_files']), installation.NORMAL_FILES)
+        self.assertTrue(all(str(Path(relative).parent) in manifest['normal_profile_directories']
+                            for relative in profiles))
+        with tempfile.TemporaryDirectory(prefix='q38b-normal-closure-') as temporary:
+            source = Path(temporary).resolve()
+            for relative in set(files) | profiles:
+                target = source / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / relative, target)
+            script = """
+import copy, importlib.util, json, pathlib, sys
+root = pathlib.Path(sys.argv[1]).resolve()
+assert pathlib.Path.cwd() == pathlib.Path('/') and sys.flags.isolated
+assert not (root / 'data').exists()
+assert not (root / 'tests/lifecycle/test_qwen38.py').exists()
+sys.path.insert(0, str(root / 'scripts'))
+import control.adapter, control.installation, lifecycle.manager
+assert 'lifecycle.qwen38' not in sys.modules
+q = lifecycle.manager.Manager.sglang_adapter({'_runtime': {'backend': 'sglang_qwen38'}})
+from runtime import qwen38_oci, sglang38_file_auth
+assert q.ROOT == root
+assert {p.name for p in (root / 'configs/models').glob('*.json')} == {'qwen38-27b-fp8.json'}
+assert {p.name for p in (root / 'configs/runtimes').glob('*.json')} == {'sglang-qwen38-0.5.19.json'}
+assert {p.name for p in (root / 'configs/deployments').glob('*.json')} == {
+    'qwen38-27b-128k.json', 'qwen38-27b-256k.json'}
+for identifier, context in q.VARIANTS.items():
+    declaration = q.declared_profile(identifier)
+    assert declaration['launch']['context_size'] == context
+    assert declaration['launch']['gpus'] == ['0']
+for relative in q.PROFILE_HASHES:
+    q._pinned_json(relative)
+assert q.expected_manifest()['artifact_count'] == 81
+fixture_root = root / 'tests/lifecycle/sglang38_fixture'
+spec = importlib.util.spec_from_file_location('q38_closure_host', fixture_root / 'run_fixture.py')
+host = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(host)
+native_module = host.source_module('q38_closure_inner', fixture_root / 'run_pinned_image.py')
+assert callable(native_module.parse_options)
+provenance, cache_environment = host.read_provenance(root)
+assert cache_environment == sglang38_file_auth.CACHE_ENVIRONMENT
+modules = [control.adapter, control.installation, lifecycle.manager, q,
+           qwen38_oci, sglang38_file_auth, host, host.CACHE, native_module]
+assert all(pathlib.Path(module.__file__).is_relative_to(root) for module in modules)
+assert not any(name == 'sglang' or name.startswith('sglang.') for name in sys.modules)
+identity = {'image_id': q.IMAGE_ID, 'image_reference': q.IMAGE_REFERENCE,
+            'source_revision': q.SOURCE_REVISION, 'launcher_sha256': q.launcher_hash()}
+source_hashes = {name: item['sha256'] for name, item in provenance['sources'].items()}
+native_results, lifetimes = [], []
+for index, context in enumerate((131072, 262144), 1):
+    native = {check: 'PASS' for check in q.AUTH_CHECKS}
+    native.update(status='PASS_ACTUAL_INSTALLED_SOURCE_FIXTURE', image_id_pin=q.IMAGE_ID,
+        image_reference=q.IMAGE_REFERENCE, source_revision=q.SOURCE_REVISION,
+        image_identity_verification='HOST_DOCKER_INSPECT_REQUIRED', configured_context=context,
+        launcher_sha256=provenance['launcher_sha256'], fixture_sha256=provenance['fixture_sha256'],
+        support_sha256=provenance['support_sha256'], source_hashes=source_hashes,
+        cache_probe=host.CACHE.result_record(dict(host.CACHE.EXPECTED_PATHS), []),
+        model_loading='STUBBED_NOT_TESTED', gpu_execution='NOT_TESTED',
+        native_lifespan_model_serving_initialization='NOT_TESTED',
+        live_inference_and_agent_acceptance='NOT_TESTED')
+    host.check_native_result(native, provenance, context)
+    native_results.append(native)
+    token = str(index) * 32
+    lifetimes.append({'container_name': 'q38b-fixture-' + token, 'container_id': token * 2,
+        'outcome': 'FIXTURE_EXITED', 'cleanup': 'QUIESCENT_REMOVAL_VERIFIED',
+        'runtime_inspect': {'runtime': 'nvidia', 'visible_devices': 'none',
+            'driver_capabilities': 'compute,utility', 'device_requests': [], 'host_devices': [],
+            'network': 'none', 'root_readonly': True, 'model_and_secret_mounts': 'EMPTY_PRIVATE_TMPFS',
+            'entrypoint': ['python3'], 'context': context, 'status': 'PASS_HOST_INSPECT'}})
+# In-memory synthetic receipt validates the copied source schema only.
+proof = dict(identity, schema_version=2, kind='q38b_actual_image_auth', status='PASS',
+    fixture_sha256=provenance['fixture_sha256'], support_sha256=provenance['support_sha256'],
+    source_hashes=source_hashes, checks={check: 'PASS' for check in q.AUTH_CHECKS},
+    contexts=[131072, 262144], image_identity_verification='HOST_DOCKER_INSPECT_AND_PINNED_RUN',
+    docker_inspect=qwen38_oci.expected_evidence(qwen38_oci.CONFIG_DIGEST),
+    native_results=native_results, container_lifetimes=lifetimes, model_execution='NOT_TESTED',
+    native_lifespan='NOT_TESTED', live_inference_and_agent_acceptance='NOT_TESTED')
+q._validate_auth_proof(proof, identity)
+def refused(call):
+    try:
+        call()
+    except Exception:
+        return
+    raise AssertionError('drift admitted')
+bad = copy.deepcopy(proof)
+bad['docker_inspect']['image_id_domain'] = 'oci_platform_manifest'
+refused(lambda: q._validate_auth_proof(bad, identity))
+bad = copy.deepcopy(proof)
+bad['container_lifetimes'][0]['cleanup'] = 'UNVERIFIED'
+refused(lambda: q._validate_auth_proof(bad, identity))
+drifts = 2
+for relative in ('tests/lifecycle/sglang38_fixture/provenance.json',
+                 'tests/lifecycle/sglang38_fixture/cache_probe.py',
+                 'scripts/runtime/qwen38_oci.py'):
+    path = root / relative
+    original = path.read_bytes()
+    try:
+        path.write_bytes(original + b' ')
+        refused(lambda: q._validate_auth_proof(proof, identity))
+        drifts += 1
+    finally:
+        path.write_bytes(original)
+path = root / 'configs/runtimes/sglang-qwen38-0.5.19.json'
+original = path.read_bytes()
+try:
+    path.write_bytes(original + b' ')
+    refused(lambda: q.declared_profile('qwen38-27b-128k'))
+    drifts += 1
+finally:
+    path.write_bytes(original)
+q._validate_auth_proof(proof, identity)
+host.read_provenance(root)
+print(json.dumps({'source_closure': 'PASS', 'synthetic_receipt_schema': 'PASS',
+                  'drift_rejections': drifts, 'published_q38_declarations': 2,
+                  'actual_image': 'NOT_TESTED', 'key_access': 'NONE'}))
+"""
+            result = subprocess.run([sys.executable, '-I', '-B', '-c', script, str(source)],
+                                    cwd='/', capture_output=True, text=True, timeout=20, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout), {'source_closure': 'PASS',
+                'synthetic_receipt_schema': 'PASS', 'drift_rejections': 6,
+                'published_q38_declarations': 2, 'actual_image': 'NOT_TESTED', 'key_access': 'NONE'})
+            self.assertEqual({str(path.relative_to(source)) for path in source.rglob('*') if path.is_file()},
+                             set(files) | profiles)
+
     def test_fresh_process_imports_only_manifest_recovery_closure_from_root_cwd(self):
         manifest = json.loads((ROOT / 'scripts/control/source-closure.json').read_text())
         self.assertEqual(tuple(manifest['recovery_files']), installation.RECOVERY_FILES)
