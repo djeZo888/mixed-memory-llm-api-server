@@ -1,0 +1,56 @@
+{
+  "runtime_id": "llama-cpp-v0.4.1-d3br",
+  "image_tag": "local/llama-cpp:v0.4.1-b29c606-cu132-sm120-d3p-43e4aeb5b63d",
+  "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+  "repo_digests": [
+    "local/llama-cpp@sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9"
+  ],
+  "image_config_sha256": "89a1ea2575d8a5ea2c2debd618d420ac03194b1c2d54b85972a8ebff850f3938",
+  "platform_manifest_sha256": "384a22a0b15b9668b89e4ec46ed7363f2bb02e91d3344db102411288551ef62b",
+  "source_revision": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+  "binary_sha256": "c81262fd063e9d2fc098d9e116d0ae742ca7ea37344ee3f4b56eb5d088206e0a",
+  "source_kind": "upstream-plus-checked-patch",
+  "upstream_tree": "950999fe62b7fe55f44ab5b7394e3c8542f37f12",
+  "patch_sha256": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b",
+  "derived_tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+  "derived_commit": null,
+  "oci_revision_kind": "git-tree",
+  "build_recipe_manifest_sha256": "87b03d3c2ebd3b4369c6014ccd1ca7fcfb502747f7bee0b81036f7f99c9409bb",
+  "runtime_proof_path": "reports/d3b2-evidence/runtime-proof.json",
+  "runtime_proof_sha256": "1d500eae56d6e777b944b2492071c8b3dd28ea350b04f5c72da5b7bd70d052c9",
+  "supported_flags": [
+    "--model",
+    "--host",
+    "--port",
+    "--alias",
+    "--api-key-file",
+    "--ctx-size",
+    "--parallel",
+    "--cpu-moe",
+    "--jinja",
+    "--no-webui",
+    "--n-gpu-layers",
+    "--split-mode",
+    "--tensor-split",
+    "--load-mode",
+    "--device",
+    "--chat-template-kwargs",
+    "--n-cpu-moe"
+  ],
+  "supported_load_modes": [
+    "auto",
+    "none",
+    "mmap",
+    "mlock",
+    "mmap+mlock",
+    "dio"
+  ],
+  "devices": [
+    "CUDA0",
+    "CUDA1"
+  ],
+  "validation_status": "PASS_BUILD_CLI_ENUMERATION_ONLY",
+  "active_binding_edited": false,
+  "rollback_runtime_id": "llama-cpp-v0.4.1-d1",
+  "rollback_image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62"
+}
