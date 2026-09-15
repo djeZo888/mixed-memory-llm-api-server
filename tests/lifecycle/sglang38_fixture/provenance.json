@@ -2,7 +2,7 @@
   "actual_image_execution": "NOT_TESTED",
   "fixture_sha256": {
     "auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
-    "cache_probe.py": "1983823892cf28f9b0ecfffa54c31442774d86e5851cb4d5337dc9537f7c8983",
+    "cache_probe.py": "f7fcdb1f81fe5f2e1a5be91e8274b1918e64cc622703fd3fb5d2d88cbd26b1c3",
     "chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
     "run_fixture.py": "954ba40800eed06e3d515d118f24a55ae5755ad8c9632326a8dc4cfd15b2c7ac",
     "run_pinned_image.py": "b7ab0b200a73267d05e615afef0eaf0e3c277537e7002b1e9c12da853551e643"

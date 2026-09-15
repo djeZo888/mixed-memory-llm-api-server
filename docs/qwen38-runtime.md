@@ -221,6 +221,11 @@ The helper uses `--pull=never`, exact digest, Linux/amd64, NVIDIA runtime with
 none, readonly root and bounded private tmpfs. [Pinned NVIDIA behavior and cache
 resolver proof](q38b-cache-research.md) require real driver libraries, zero
 native torch devices and no GPU nodes before creating synthetic fixture files.
+Q38EF admits only exact `none` or `void` in the inner cache-probe environment;
+host create/inspect still require literal `none`. Capabilities remain exactly
+`compute,utility` and CUDA visibility exactly empty. Q38ENV measured host `none`
+and inherited Python parent/child `void`; this is environment evidence only.
+See the [Q38EF source correction and evidence boundary](../reports/q38ef-runtime-environment.md).
 Global control/UVM nodes may exist and are bounded/reported. Only the
 checkout is mounted read-only. Each native-context case creates its own synthetic
 sentinel and tiny synthetic config; no real key/model is mounted. It imports

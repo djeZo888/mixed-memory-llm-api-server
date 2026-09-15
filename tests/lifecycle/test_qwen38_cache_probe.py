@@ -1,10 +1,11 @@
 """Worker-only controls for Q38B's actual-image probe; native image NOT_TESTED."""
-from contextlib import ExitStack, redirect_stdout
+from contextlib import contextmanager, ExitStack, redirect_stdout
 import copy
 import importlib.util
 import io
 import os
 from pathlib import Path
+import stat
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -30,6 +31,46 @@ def record():
     return copy.deepcopy(probe.result_record(dict(probe.EXPECTED_PATHS), ["/dev/nvidiactl"]))
 
 
+def runtime_environment(visible="none"):
+    return {"NVIDIA_VISIBLE_DEVICES": visible,
+            "NVIDIA_DRIVER_CAPABILITIES": "compute,utility", "CUDA_VISIBLE_DEVICES": ""}
+
+
+@contextmanager
+def synthetic_isolation(*, mounts=None, metadata=None, contents=None, devices=()):
+    """Supply OS facts only; exercise the real predicate and isolation checks."""
+    metadata, contents = metadata or {}, contents or {}
+
+    def read_text(path):
+        assert path == Path("/proc/self/mountinfo")
+        return mountinfo() if mounts is None else mounts
+
+    def lstat(path):
+        assert str(path) in ("/cache", "/models", "/run/secrets")
+        return metadata.get(str(path), SimpleNamespace(st_mode=stat.S_IFDIR | 0o700, st_uid=1000))
+
+    def iterdir(path):
+        assert str(path) in ("/models", "/run/secrets")
+        return iter(contents.get(str(path), ()))
+
+    def glob(path, pattern):
+        assert (str(path), pattern) in (("/dev", "nvidia*"), ("/dev/dri", "*"))
+        return [Path(name) for name in devices if Path(name).parent == path
+                and (pattern == "*" or Path(name).name.startswith("nvidia"))]
+
+    def exists(path):
+        assert str(path) in ("/dev/kfd", "/dev/dxg")
+        return str(path) in devices
+
+    with ExitStack() as stack:
+        stack.enter_context(patch.object(probe.sys, "platform", "linux"))
+        stack.enter_context(patch.object(probe.os, "geteuid", return_value=1000))
+        for name, implementation in (("read_text", read_text), ("lstat", lstat),
+                                     ("iterdir", iterdir), ("glob", glob), ("exists", exists)):
+            stack.enter_context(patch.object(probe.Path, name, autospec=True, side_effect=implementation))
+        yield
+
+
 class CacheProbeTests(unittest.TestCase):
     def test_help_is_available_without_native_import(self):
         with patch.object(probe.importlib, "import_module", side_effect=AssertionError), \
@@ -43,19 +84,78 @@ class CacheProbeTests(unittest.TestCase):
                 probe.verify_isolation()
         read.assert_not_called()
 
-    def test_exact_no_gpu_runtime_environment_is_required(self):
-        for name in probe.RUNTIME_ENVIRONMENT:
-            for value in (None, "all", "void", "unreviewed"):
-                env = dict(probe.RUNTIME_ENVIRONMENT)
-                if value is None:
-                    del env[name]
-                else:
-                    env[name] = value
-                with self.subTest(name=name, value=value), patch.dict(os.environ, env, clear=True), \
-                        patch.object(probe.sys, "platform", "linux"), patch.object(probe.Path, "read_text") as read:
-                    with self.assertRaisesRegex(probe.ProbeError, "no_gpu_runtime_environment_required"):
+    def test_measured_inner_none_and_void_pass_real_isolation_without_environment_rewrite(self):
+        for visible in ("none", "void"):
+            env = runtime_environment(visible) | {"UNRELATED_ENVIRONMENT": "retained"}
+            with self.subTest(visible=visible), patch.dict(os.environ, env, clear=True), \
+                    synthetic_isolation(devices=probe.CONTROL_NODES):
+                self.assertEqual(probe.verify_isolation(), sorted(probe.CONTROL_NODES))
+                self.assertEqual(dict(os.environ), env)
+
+    def test_other_inner_visible_devices_are_refused_before_filesystem_access(self):
+        invalid = (None, "", "all", "0", "1", "GPU-01234567-89ab-cdef-0123-456789abcdef",
+                   " ", "\t", " none", "none ", "void\n", "NONE", "VOID", "none,void", "unreviewed")
+        for value in invalid:
+            env = runtime_environment()
+            if value is None:
+                del env["NVIDIA_VISIBLE_DEVICES"]
+            else:
+                env["NVIDIA_VISIBLE_DEVICES"] = value
+            with self.subTest(value=value), patch.dict(os.environ, env, clear=True), \
+                    patch.object(probe.sys, "platform", "linux"), patch.object(probe.Path, "read_text") as read:
+                with self.assertRaisesRegex(probe.ProbeError, "no_gpu_runtime_environment_required"):
+                    probe.verify_isolation()
+                self.assertEqual(dict(os.environ), env)
+                read.assert_not_called()
+
+    def test_caps_and_cuda_remain_exact_for_both_allowed_inner_visible_values(self):
+        invalid = {
+            "NVIDIA_DRIVER_CAPABILITIES": (None, "", "all", "compute", "utility", "utility,compute",
+                                           "compute,utility ", " compute,utility", "compute,utility,graphics",
+                                           "COMPUTE,UTILITY", "none", "void", "unreviewed"),
+            "CUDA_VISIBLE_DEVICES": (None, "none", "void", "all", "0", "1", " ", "\t", "\n",
+                                     "GPU-01234567-89ab-cdef-0123-456789abcdef", "unreviewed"),
+        }
+        for visible in ("none", "void"):
+            for name, values in invalid.items():
+                for value in values:
+                    env = runtime_environment(visible)
+                    if value is None:
+                        del env[name]
+                    else:
+                        env[name] = value
+                    with self.subTest(visible=visible, name=name, value=value), \
+                            patch.dict(os.environ, env, clear=True), patch.object(probe.sys, "platform", "linux"), \
+                            patch.object(probe.Path, "read_text") as read:
+                        with self.assertRaisesRegex(probe.ProbeError, "no_gpu_runtime_environment_required"):
+                            probe.verify_isolation()
+                        self.assertEqual(dict(os.environ), env)
+                        read.assert_not_called()
+
+    def test_both_allowed_inner_values_preserve_independent_isolation_refusals(self):
+        cases = [
+            ({"mounts": mountinfo().replace("/ / ro,", "/ / rw,")}, "readonly_container_root_required"),
+            ({"mounts": mountinfo().replace("- tmpfs tmpfs", "- ext4 /dev/other", 1)}, "private_tmpfs_required"),
+        ]
+        for target in ("/cache", "/models", "/run/secrets"):
+            for mode, uid in ((stat.S_IFREG | 0o700, 1000), (stat.S_IFLNK | 0o700, 1000),
+                              (stat.S_IFDIR | 0o755, 1000), (stat.S_IFDIR | 0o700, 1001)):
+                cases.append(({"metadata": {target: SimpleNamespace(st_mode=mode, st_uid=uid)}},
+                              "private_directory_required"))
+        for target in ("/models", "/run/secrets"):
+            cases.append(({"contents": {target: [Path(target) / "unexpected"]}},
+                          "empty_model_and_secret_tmpfs_required"))
+        for device in ("/dev/nvidia0", "/dev/nvidia1", "/dev/nvidia-caps", "/dev/nvidia-modeset",
+                       "/dev/dri/renderD128", "/dev/dri/card0", "/dev/kfd", "/dev/dxg"):
+            cases.append(({"devices": [device]}, "gpu_device_node_present"))
+        for visible in ("none", "void"):
+            for filesystem, code in cases:
+                env = runtime_environment(visible)
+                with self.subTest(visible=visible, filesystem=filesystem, code=code), \
+                        patch.dict(os.environ, env, clear=True), synthetic_isolation(**filesystem):
+                    with self.assertRaisesRegex(probe.ProbeError, code):
                         probe.verify_isolation()
-                    read.assert_not_called()
+                    self.assertEqual(dict(os.environ), env)
 
     def test_readonly_root_and_exact_private_tmpfs_required(self):
         probe.check_mounts(mountinfo())
