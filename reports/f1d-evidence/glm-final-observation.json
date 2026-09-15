@@ -1,0 +1,71 @@
+{
+  "collected_utc": "2026-09-15T00:21:55.600375+00:00",
+  "path": "/data/build/d1-glm53-20260915/evidence/acquisition-status.json",
+  "sha256": "016265905a10ba18084f93aec1b0b004c5cfb4bc9549f00a3664ceb293695c05",
+  "keys": [
+    "status",
+    "pid",
+    "repo_id",
+    "revision",
+    "destination",
+    "total_bytes",
+    "files",
+    "started_utc",
+    "glm_inference",
+    "tool_calls",
+    "workers",
+    "helper_sha256",
+    "mounts",
+    "ready_sha256",
+    "manifest_sha256",
+    "updated_utc",
+    "session_bytes_downloaded",
+    "session_average_bytes_per_second",
+    "bytes_present",
+    "verified_bytes",
+    "verified_shards",
+    "active_shards"
+  ],
+  "status_fields": {
+    "status": "PASS_ALL_11_COMPUTED_SHA256",
+    "pid": 49253,
+    "repo_id": "unsloth/GLM-5.3-GGUF",
+    "revision": "346b3591c7f28d1a23716f97a065ecf12ec14771",
+    "destination": "/data/models-large/glm-5.3-ud-q4-k-xl",
+    "total_bytes": 467289116837,
+    "started_utc": "2026-09-14T23:02:39Z",
+    "glm_inference": "NOT_TESTED",
+    "tool_calls": "NOT_TESTED",
+    "workers": 4,
+    "helper_sha256": "950334895648a53db8ffef32171f2e97a64bdf6b0c07eed56424a4649a76fcf4",
+    "mounts": {
+      "data": {
+        "target": "/data",
+        "source": "/dev/sdb1",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+        "fstype": "ext4",
+        "options": "rw,relatime"
+      },
+      "root_free_bytes": 5197168640,
+      "models_large": {
+        "target": "/data/models-large",
+        "source": "/dev/sdc1",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+        "fstype": "ext4",
+        "options": "rw,relatime"
+      }
+    },
+    "ready_sha256": "31b06dda448a3a339e2911c4a51d9da4d2626737589cb4a54fb5bcaa3f702a2d",
+    "manifest_sha256": "8e7cb419a9dea83f1978f936455cedace1b964cbbb3580f7be191998f6a999d3",
+    "updated_utc": "2026-09-15T00:19:39Z",
+    "session_bytes_downloaded": 411738839200,
+    "session_average_bytes_per_second": 89136082,
+    "bytes_present": 467289116837,
+    "verified_bytes": 467289116837,
+    "verified_shards": 11,
+    "active_shards": []
+  },
+  "unit": "MainPID=0\nResult=success\nExecMainStatus=0\nLoadState=not-found\nActiveState=inactive\nSubState=dead\nInvocationID=\n",
+  "prior_pid_exists": false,
+  "boundary": "Read-only observation; F1D did not stop or restart GLM; no GLM payload hashing/stat alignment or completion attestation performed"
+}

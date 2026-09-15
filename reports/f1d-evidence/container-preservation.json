@@ -1,0 +1,46 @@
+{
+  "collected_utc": "2026-09-15T00:20:32.463249+00:00",
+  "new_qwen_container_created": false,
+  "preserved_old_containers": [
+    {
+      "id": "634daeb70a3ae9aa7403ec8d2256984de9cfe8b5521b839de16a1707164f7522",
+      "name": "/minimax-m3-mxfp8-poc",
+      "image_id": "sha256:362917ee2a4188bdb827c5b97d0f9a8a5c5dd1663b2ea43ad1ef6daa55a0a768",
+      "running": false,
+      "status": "exited",
+      "started_at": "2026-07-08T20:29:20.76720948Z",
+      "finished_at": "2026-07-08T20:32:41.133266177Z",
+      "restart_policy": {
+        "Name": "no",
+        "MaximumRetryCount": 0
+      }
+    },
+    {
+      "id": "321ee2110e2e0130739ca51fe192b23d746ecefca76e746c9e2df3fd8a799153",
+      "name": "/sglang-qwen3-30b-a3b-instruct-2507",
+      "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+      "running": false,
+      "status": "exited",
+      "started_at": "2026-07-08T20:32:55.677224752Z",
+      "finished_at": "2026-07-09T07:31:24.693140641Z",
+      "restart_policy": {
+        "Name": "no",
+        "MaximumRetryCount": 0
+      }
+    },
+    {
+      "id": "6cfa91273417ad7f5ae23a471aaf7b2f5be47bfab74550df93b71587fb3fb71f",
+      "name": "/sglang-smoke-qwen3-0.6b",
+      "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+      "running": false,
+      "status": "exited",
+      "started_at": "2026-07-05T07:17:29.837939909Z",
+      "finished_at": "2026-07-05T15:04:04.296472082Z",
+      "restart_policy": {
+        "Name": "no",
+        "MaximumRetryCount": 0
+      }
+    }
+  ],
+  "llmctl_boot_unit": "LoadState=not-found\nActiveState=inactive\nSubState=dead\n"
+}
