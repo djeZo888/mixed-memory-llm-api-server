@@ -6,6 +6,7 @@ Only allowlisted evidence is emitted; raw requests, headers and CLI output are n
 """
 
 import argparse
+from collections import Counter
 import contextlib
 import hashlib
 import hmac
@@ -13,6 +14,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
 from pathlib import Path
+import platform
 import secrets
 import signal
 import subprocess
@@ -23,12 +25,17 @@ import time
 sys.dont_write_bytecode = True
 CLIENT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(CLIENT))
-from client_common import (VERSION, absolute_path, isolated_env, json_bytes,
-                           private_dir, verify_install, write_new)
+from client_common import (VERSION, absolute_path, binary_path, isolated_env, json_bytes,
+                           native_package, private_dir, runtime_dir, verify_install, write_new)
 
 MAX_REQUESTS = 8  # Per invocation, including OpenCode's own title requests.
 MAX_BODY = 2 * 1024 * 1024
 RUN_TIMEOUT = 60
+SELECTIONS = (("default", None, "glm-5.3"),
+              ("low-glm", "low", "glm-5.3"),
+              ("low-generic", "low", "vendor/model:Q4_K_M"),
+              ("default-qwen", None, "qwen3.8-27b"),
+              ("none-qwen", "none", "qwen3.8-27b"))
 
 
 class FixtureError(Exception):
@@ -95,6 +102,14 @@ class Handler(BaseHTTPRequestHandler):
         super().setup()
         self.connection.settimeout(5)
 
+    def parse_request(self):
+        parsed = super().parse_request()
+        with self.server.lock:
+            self.server.received += 1
+            if not parsed or self.command != "POST":
+                self.server.failure = "unexpected_http_request"
+        return parsed
+
     def do_GET(self):
         self.server.failure = "unexpected_get"
         self.send_error(405)
@@ -103,7 +118,6 @@ class Handler(BaseHTTPRequestHandler):
         server = self.server
         try:
             with server.lock:
-                server.received += 1
                 require(server.received <= MAX_REQUESTS, "request_limit")
                 require(self.path == "/v1/chat/completions", "unexpected_path")
                 length = int(self.headers.get("Content-Length", "0"))
@@ -118,8 +132,16 @@ class Handler(BaseHTTPRequestHandler):
                 present = "reasoning_effort" in body
                 require(present == (server.effort is not None), "effort_presence_mismatch")
                 if present:
-                    require(body["reasoning_effort"] == server.effort, "effort_value_mismatch")
+                    require(type(body["reasoning_effort"]) is str
+                            and body["reasoning_effort"] == server.effort, "effort_value_mismatch")
                 require("reasoningEffort" not in body, "camelcase_on_wire")
+                # SGLang 0.5.19's request validator maps explicit none to false
+                # template switches; the reviewed server default also supplies
+                # false. This client sends no template/body override. See Q38C.
+                require(not set(body).intersection({"chat_template_kwargs", "chatTemplateKwargs",
+                                                    "enable_thinking", "thinking", "extra_body", "reasoning",
+                                                    "input_ids", "chat_template", "continue_final_message"}),
+                        "unexpected_template_or_body_override")
                 # This exact OpenCode CLI path uses streamText. Never pretend that
                 # replying with nonstream JSON tests a nonstream client request.
                 require(body.get("stream") is True, "unexpected_nonstream_request")
@@ -136,6 +158,9 @@ class Handler(BaseHTTPRequestHandler):
                 marker_seen = any(server.marker in json.dumps(m.get("content")) for m in results)
                 continuation = bool(results)
                 kind = "auxiliary" if not offered else server.mode
+                title = not offered and any(
+                    m.get("role") == "user"
+                    and m.get("content") == "Generate a title for this conversation:\n" for m in messages)
                 if continuation:
                     require(server.mode == "tool" and len(results) == 1 and len(calls) == 1,
                             "unexpected_continuation")
@@ -146,6 +171,8 @@ class Handler(BaseHTTPRequestHandler):
                     kind = "continuation"
                 record = {"kind": kind, "model": body["model"], "stream": body["stream"],
                           "reasoning_effort_present": present,
+                          "chat_template_kwargs_present": False,
+                          "title_request": title,
                           "max_tokens": body.get("max_tokens"), "authenticated": authenticated,
                           "tool_schema_count": len(offered), "tool_result_count": len(results),
                           "assistant_call_count": len(calls), "fixture_marker_seen": marker_seen}
@@ -207,13 +234,12 @@ def run_fixture(work_root):
     server.lock = threading.Lock()
     server.key = key
     server.failure = None
+    server.received = 0
     thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True)
     thread.start()
     try:
         base = "http://127.0.0.1:" + str(server.server_port) + "/v1"
-        for label, effort, model in (("default", None, "glm-5.3"),
-                                      ("low-glm", "low", "glm-5.3"),
-                                      ("low-generic", "low", "vendor/model:Q4_K_M")):
+        for label, effort, model in SELECTIONS:
             prefix = work_root / label
             args = [sys.executable, str(CLIENT / "bootstrap.py"), "--prefix", str(prefix),
                     "--base-url", base, "--model", model, "--context-tokens", "32768",
@@ -225,6 +251,11 @@ def run_fixture(work_root):
             child(args, work_root, env, 240, key)
             settings = verify_install(prefix)
             require(settings.get("reasoning_effort") == effort, "installed_manifest_mismatch")
+            packages = {name: json.loads((runtime_dir(prefix) / "node_modules" / name / "package.json")
+                                        .read_text())["version"]
+                        for name in ("opencode-ai", "@opencode-ai/plugin", native_package())}
+            require(all(version == VERSION for version in packages.values()), "installed_version_mismatch")
+            native_hash = hashlib.sha256(binary_path(prefix).read_bytes()).hexdigest()
             # The idempotent path invokes and checks the real native --version.
             child(args, work_root, env, RUN_TIMEOUT, key)
             for mode in ("ordinary", "tool"):
@@ -247,7 +278,12 @@ def run_fixture(work_root):
                 output = child([sys.executable, str(launcher), "--workspace", str(workspace),
                                 "--prompt-file", str(prompt), "run"], work_root, env, RUN_TIMEOUT, key)
                 require(server.failure is None, server.failure or "server_failure")
+                require(server.received == len(server.records), "unaccounted_request")
+                require(sum(r["title_request"] for r in server.records) == 1, "title_request_count")
                 events = [json.loads(line) for line in output.splitlines() if line.strip()]
+                event_counts = Counter(e.get("type") for e in events)
+                require(set(event_counts) <= {"step_start", "step_finish", "text", "tool_use", "error"},
+                        "unexpected_event_type")
                 require(not any(e.get("type") == "error" for e in events), "opencode_error_event")
                 require(any(e.get("type") == "text" and e.get("part", {}).get("text") == "A2O_SYNTHETIC_DONE"
                             for e in events), "missing_final_text_event")
@@ -266,6 +302,9 @@ def run_fixture(work_root):
                 require(hashlib.sha256(fixture.read_bytes()).hexdigest() == fixture_hash, "fixture_modified")
                 require(len(list(workspace.iterdir())) == 1, "workspace_mutated")
                 evidence["cases"].append({"selection": label, "mode": mode, "status": "PASS",
+                                          "installed_packages": packages, "native_binary_sha256": native_hash,
+                                          "request_count": server.received, "event_count": len(events),
+                                          "event_counts": dict(event_counts),
                                           "completed_read_events": len(tool_events),
                                           "tool_rounds": server.tool_rounds, "requests": list(server.records)})
         # Do not retain a key value in OpenCode/npm state, config or logs. Scan
@@ -280,6 +319,14 @@ def run_fixture(work_root):
                     require(key not in tail + block, "credential_persisted_outside_key_file")
                     tail = block[-len(key):]
         evidence["credential_scan"] = "PASS"
+        evidence["request_count"] = sum(c["request_count"] for c in evidence["cases"])
+        evidence["event_count"] = sum(c["event_count"] for c in evidence["cases"])
+        evidence["source_sha256"] = {
+            str(path.relative_to(repo)): hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in (CLIENT / "bootstrap.py", CLIENT / "client_common.py", CLIENT / "launch.py",
+                         CLIENT / "package.json", CLIENT / "package-lock.json", Path(__file__).resolve())}
+        evidence["platform"] = {"os": platform.system(), "machine": platform.machine(),
+                                "python": platform.python_version()}
         evidence["status"] = "PASS"
         return evidence
     finally:

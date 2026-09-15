@@ -3,14 +3,18 @@
 import contextlib
 import importlib.util
 import io
+import json
 import os
 from pathlib import Path
 import secrets
 import signal
 import sys
 import tempfile
+import threading
 import time
 import unittest
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 from test_bootstrap import snapshot
 
@@ -28,6 +32,67 @@ class WireFixtureGuardTests(unittest.TestCase):
         self.root.chmod(0o700)
         self.forbidden = secrets.token_hex(24).encode("ascii")
         self.env = {"PATH": os.environ.get("PATH", ""), "PYTHONDONTWRITEBYTECODE": "1"}
+
+    def test_http_guard_rejects_lost_none_on_every_request_kind(self):
+        # Deliberately malformed HTTP requests test the guard, not the CLI.
+        server = wire.WireServer(("127.0.0.1", 0), wire.Handler)
+        server.lock = threading.Lock()
+        server.key = self.forbidden
+        server.model, server.effort, server.mode = "qwen3.8-27b", "none", "tool"
+        thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
+        thread.start()
+        try:
+            for kind in ("title", "ordinary", "tool", "continuation"):
+                for change, expected in (({}, "effort_presence_mismatch"),
+                                         ({"reasoning_effort": "low"}, "effort_value_mismatch"),
+                                         ({"reasoning_effort": None}, "effort_value_mismatch"),
+                                         ({"reasoning_effort": "none", "chat_template_kwargs":
+                                           {"enable_thinking": True}}, "unexpected_template_or_body_override")):
+                    messages = [{"role": "user", "content": "Generate a title for this conversation:\n"}]
+                    if kind == "continuation":
+                        messages += [{"role": "tool", "tool_call_id": "call_a2o_read", "content": "marker"}]
+                    body = {"model": server.model, "stream": True, "max_tokens": 2048, "messages": messages}
+                    if kind != "title":
+                        body["tools"] = [{"type": "function", "function": {"name": "read"}}]
+                    body.update(change)
+                    with server.lock:
+                        server.received, server.records, server.failure = 0, [], None
+                    request = Request("http://127.0.0.1:" + str(server.server_port) + "/v1/chat/completions",
+                                      data=json.dumps(body).encode(),
+                                      headers={"Authorization": "Bearer " + self.forbidden.decode(),
+                                               "Content-Type": "application/json"})
+                    with self.subTest(kind=kind, change=change):
+                        with self.assertRaises(HTTPError) as caught:
+                            urlopen(request, timeout=5)
+                        self.assertEqual(caught.exception.code, 400)
+                        caught.exception.close()
+                        self.assertEqual(server.failure, expected)
+                        self.assertEqual(server.received, 1)
+                        self.assertEqual(server.records, [])
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+    def test_unsupported_http_methods_are_counted_and_fail_closed(self):
+        server = wire.WireServer(("127.0.0.1", 0), wire.Handler)
+        server.lock = threading.Lock()
+        server.received, server.failure = 0, None
+        thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
+        thread.start()
+        try:
+            for count, method in enumerate(("GET", "OPTIONS", "PUT"), 1):
+                request = Request("http://127.0.0.1:" + str(server.server_port) + "/v1/chat/completions",
+                                  method=method)
+                with self.subTest(method=method), self.assertRaises(HTTPError) as caught:
+                    urlopen(request, timeout=5)
+                caught.exception.close()
+                self.assertEqual(server.received, count)
+                self.assertIsNotNone(server.failure)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
 
     def test_fresh_roots_inside_other_git_directories_or_worktrees_are_refused(self):
         for kind in ("directory", "file"):

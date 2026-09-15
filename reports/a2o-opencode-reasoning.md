@@ -4,6 +4,9 @@
 Real GLM agent acceptance remains **NOT_TESTED by A2O**; root reviews this change
 before V1 creates a new client configuration.
 
+Q38C subsequently adds explicit `none` and retains these low/default regressions;
+see [the Q38C report](q38c-client-none.md). This A2O evidence remains historical.
+
 ## Change and ownership
 
 Base `e6c77debb4989ada0c7a563159f8df45aa89f7b5`, branch

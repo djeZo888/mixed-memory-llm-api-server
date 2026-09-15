@@ -74,9 +74,9 @@ def model_id(value):
 
 
 def reasoning_effort(value):
-    # Deliberately expose only the wire-verified opt-in, not every SDK string.
-    if type(value) is not str or value != "low":
-        raise ClientError("reasoning-effort must be the literal string low; omit it for the default")
+    # Deliberately expose only the reviewed opt-ins, not every SDK string.
+    if type(value) is not str or value not in ("none", "low"):
+        raise ClientError("reasoning-effort must be the literal string none or low; omit it for the default")
     return value
 
 
