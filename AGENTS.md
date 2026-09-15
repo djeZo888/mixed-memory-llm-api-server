@@ -1,88 +1,104 @@
 # AGENTS.md
 
-These instructions are durable project rules for agents and operators working in this repository.
+Current guidance for agents and operators. Read the
+[current scope and ownership checkpoint](docs/orchestration/2026-09-15-status.md)
+and the relevant task handoff before work; preserve their evidence boundaries.
 
-## Project Scope
+## Authorized sequence and ownership
 
-- This VM is API-only.
-- This VM runs inference backends and exposes model inference APIs.
-- This VM must not implement web browsing, scraping, browser automation, or the human chat UI.
-- Another VM will handle browser, scraper, and chat UI work later.
-- Build around an OpenAI-compatible API contract.
-- Support backend profiles for both KTransformers and ik_llama.
-- Use official sources where possible when researching implementation details.
+- Finish working **ai-vm first**: authenticated private-network inference and
+  model catalog/switching APIs, verified from another host. Then complete the
+  separate frontend VM task, **then the installer**.
+- **All installer work is PAUSED**, including implementation, composition and
+  tests. Preserve historical installer code/evidence; no installer requirement
+  or test gates current VM completion.
+- Existing explicit project authorization persists. Stale milestone STOP text
+  does not require redundant approval. Stay within the current bounded task and
+  root-reviewed ownership/leases. Actual destructive or irreversible actions
+  require explicit authorization for their exact scope; reuse authorization already
+  given in this project and do not ask again. Source-only work authorizes no host
+  mutation.
+- Mac-Orchestrator plans, coordinates, reviews and synchronizes. Remote
+  implementation/builds/tests run through fresh bounded Codex sessions in
+  isolated mac-worker1/mac-worker2 copies. Worker1 owns authorized VM mutations;
+  Worker2 owns independent client acceptance. Only assigned workers contact ai-vm.
+- Preserve project task/status/session artifacts, prompts, session IDs, remote
+  paths, bundles, results and dirty checkouts for continuation. Record checks,
+  warnings, pass/fail limits and next action in the task's designated handoff;
+  use `reports/` when within scope. Do not edit concurrently owned source.
 
-## Storage Rules
+## VM role, models and evidence
 
-- M0 must not touch `/dev/sdb` or `/data`.
-- Do not touch `/dev/sdb` except during the approved M2 data-disk milestone.
-- After M2 completes, use `/data` for all large AI-server data.
-- The root disk must not store models, Hugging Face cache, Docker layers, containerd snapshots, builds, logs, or service data.
-- Do not download model weights until `/data` is mounted and verified.
-- Before and after any milestone that installs Docker/containerd, downloads models, builds inference software, writes logs, or deploys services, run `scripts/common/require-data-mounted.sh` and `scripts/common/root-disk-guard.sh`. Stop if either fails.
-- Expected future data roots include `/data/models`, `/data/hf-cache`, `/data/docker`, `/data/containerd`, `/data/build`, `/data/logs`, `/data/services`, and `/data/services/secrets`.
+- ai-vm is API-only, with an OpenAI-compatible inference contract and one active
+  model/backend at a time. Tools, browsing, scraping, browser automation and
+  agents run on clients as an explicit ordinary user in a trusted workspace;
+  human chat UI belongs on the separate frontend VM.
+- Exactly two current model identities: **GLM5.3 UD-Q4_K_XL** flagship and
+  **Qwen3.8-27B FP8** fast model. Historical defaults do not authorize unrequested
+  downloads or activations; task-authorized live deployment is permitted.
+- Use [`scripts/llmctl`](scripts/llmctl) and declarative
+  [model](configs/models/) and [runtime](configs/runtimes/) profiles. Keep the
+  architecture extensible; deliberate reviewed host, port, model, quantization
+  and runtime pins are allowed per deployment. Prefer official implementation
+  sources.
+- Aim for the highest practical supported context capacity on the hardware.
+  Distinguish declared capacity, configured capacity and measured occupied
+  context. Neither 32K nor a 2048-token test output budget is a product limit;
+  source/build checks do not establish accepted native 1M context.
+- Runtime/model readiness, direct API behavior and current profile status must
+  come from durable reviewed/current evidence, never this guidance snapshot.
+  Source checks are not live inference, agent, context or installation acceptance.
+- Native API listeners remain authenticated IPv4 loopback (`127.0.0.1`). Frontend
+  clients use reviewed private transport and explicit protected access policy,
+  including API-key authentication and documented firewall/TLS policy. No public,
+  wildcard or IPv6 exposure; reuse reviewed modules without a new policy framework.
 
-## Git Rules
+## Storage, lifecycle and recovery
 
-- Use feature branches.
-- Do not push directly to `main`.
-- Use one milestone branch per milestone.
-- Do not commit secrets.
-- Do not commit `MEMORY.md` or local Codex memory files.
-- Do not commit real `.env` files, tokens, passwords, private keys, API keys, Hugging Face tokens, GitHub tokens, SSH keys, sudo files, auth files, model weights, or service secrets.
-- Confirm `git remote -v` does not contain credentials before pushing.
-- Run a local grep-based secret check before every push.
+- The protected root-owned `/etc/local-ai-server/storage.json` is storage
+  authority. Verify exact registered data/model UUIDs, mounts, filesystem types,
+  roots and operation paths with protected ancestry and anchored guards. Mere
+  `/data` directory existence is not proof; no environment identity overrides.
+- Before and after authorized downloads, builds, container/service changes or
+  AI-server log/data writes, use the current root-reviewed installed registered
+  storage and root-disk guards; stop on failure. Refresh installed guard/source
+  identities from the current handoff. Never run stale old-checkout helper paths
+  or fall back to historical guards for missing, partial or invalid registration.
+  See [registered guard source](scripts/common/registered-storage.py) and the
+  [path/anchored guard contract](docs/orchestration/writer-api.md) for mechanics,
+  not installer authorization.
+- Keep models, Hugging Face cache, Docker layers, containerd snapshots, builds,
+  AI-server logs and service data off the root disk, in verified registered
+  `/data` roots including the registered model mount. No model download before
+  storage verification. Guard reports belong under protected registered logs.
+- Reuse the [canonical lifecycle lease](scripts/common/lifecycle_lease.py) at
+  `/run/llmctl/lifecycle.lock`; pass its active lease to nested lifecycle calls.
+  Honor root-reviewed request/mutation ownership; no alternate lock or bypass.
+  Preserve protected credentials, active/stopped intent and recovery state.
+- Preserve the [D1 rollback runtime](configs/runtimes/llama-cpp-v0.4.1-d1.json),
+  image and recovery evidence. Cleanup may remove only exact root-reviewed
+  obsolete paths after replacement acceptance and refreshed identity/in-use
+  checks; no global prune or unrelated cleanup.
 
-## Milestone Rules
+## Source and credential hygiene
 
-- Every milestone must create a report under `reports/`.
-- Every script or config must have tests or documented verification commands.
-- Every milestone must record checks run, warnings, pass/fail status, and next recommended action.
-- Do not install packages, configure system services, or mutate disks outside the approved milestone scope.
-- Do not install NVIDIA drivers, CUDA Toolkit, PyTorch CUDA wheels, KTransformers GPU components, ik_llama CUDA builds, or NVIDIA Container Toolkit until M5A CUDA/NVIDIA compatibility research has passed and the human has approved the selected version matrix.
-- The current M5A execution report is `reports/m5a-cuda-nvidia-compatibility.md`; its conclusion is `STOP` for installation until human review, so no NVIDIA/CUDA/backend/model work is authorized by the report alone.
+- Use scoped feature/milestone branches; never push directly to `main`. Confirm
+  `git remote -v` has no credentials and run a local grep-based secret check
+  before every push. Inspect the diff, whitespace, commit metadata and clean tree.
+- Never print or commit secrets: real `.env`, tokens, passwords, private/SSH/API
+  keys, sudo/auth files or service secrets. Do not dump environments or signed
+  URLs, rotate keys unnecessarily, or commit weights, `MEMORY.md` or Codex memory.
+- Shell scripts use `set -euo pipefail` and support `--help`. Destructive scripts
+  support `--dry-run` and refuse unsafe/ambiguous states; disk changes require a
+  reviewed dry-run/report before action. Scripts/configs need scoped tests or
+  documented verification commands. Docs-only maintenance needs no test suite.
 
-## Script Rules
+## Historical provenance
 
-- Shell scripts must use `set -euo pipefail`.
-- Shell scripts must support `--help`.
-- Destructive scripts must support `--dry-run`.
-- Destructive scripts must refuse unsafe or ambiguous states.
-- Disk operations require a dry-run/report step before actual changes.
-
-## Backend Strategy
-
-- Do not hard-code one model, quantization, host, port, or backend.
-- Use `scripts/llmctl` and declarative profiles under `configs/models/` and `configs/runtimes/` for model/runtime planning.
-- Only one model/backend should be active at a time.
-- New models should be added as profiles instead of rewriting deployment logic.
-- Backends should bind to `127.0.0.1` by default.
-- Any API exposure beyond localhost must require API-key authentication and documented firewall/TLS policy.
-- KTransformers is preferred first for Hugging Face-format large MoE models and heterogeneous CPU/GPU experiments.
-- ik_llama is preferred for GGUF or hybrid CPU/GPU experiments where appropriate.
-
-## Initial Model Strategy
-
-1. Small smoke-test model.
-2. Qwen/Qwen3.6-35B-A3B.
-3. Qwen/Qwen3.5-122B-A10B.
-4. Qwen/Qwen3.5-397B-A17B.
-5. zai-org/GLM-5.2.
-
-## Fresh installer completion authorization and source ownership
-
-- The reviewed fresh-installer completion authorization supersedes historical
-  per-milestone approval gates for its selected work. A source-only task still
-  authorizes no host installation, service activation, disk mutation or reboot.
-- Fresh hosts use the fixed root-owned `/etc/local-ai-server/storage.json`
-  registration. The historical ai-vm UUID/disk names above are not defaults for
-  another machine. Generic guards verify exact registered data/model mounts;
-  never use environment overrides to bypass installed identities.
-- I1 is a prerequisites boundary, not a complete installer. Full apply must stay
-  fail-closed until I1b integrates every selected required stage and acceptance.
-  Preserve the honest status in `docs/installation.md` and I1 reports.
-- Reuse reviewed lifecycle and V0 client modules. L1 owns lifecycle portability;
-  F1S owns SGLang file auth/runtime profiles. Record an integration gap rather
-  than bypass their contracts or editing concurrently owned source.
-- Server role remains API-only. Client tools run as an explicitly selected
-  ordinary user in an explicit trusted workspace, never installer root.
+Earlier milestones (including M0/M2 disk rules and M5A installation STOP), old
+model-selection/default-download plans and [installer records](docs/installation.md)
+are historical; see [reports](reports/). Their approval gates do not supersede
+current explicit authorization or gate VM completion. Coder-Next and older
+models are historical/deferred, with no automatic download or activation.
+Retain useful evidence and rollback artifacts without treating them as current
+readiness or reopening paused installer work.
