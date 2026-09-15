@@ -290,6 +290,86 @@ class ReceiptTests(unittest.TestCase):
         self.assertEqual({entry["status"] for entry in persisted["entries"].values()},
                          {"interrupted", "succeeded"})
 
+    def test_running_save_failure_retains_durable_receipt_after_save_and_restart(self):
+        class RecoveryStopFixture(StopBackendFixture):
+            def __init__(self):
+                super().__init__()
+                self.stopped = False
+                self.entered_stop = threading.Event()
+                self.release_stop = threading.Event()
+
+            def observe(self, deadline):
+                deadline.remaining()
+                return {"selected": "fixture-model", "desired": "stopped" if self.stopped else "running",
+                        "container": {"instance": "fixture-owner", "deployment": "fixture-model",
+                                      "id": "fixture-immutable-id", "generation": "fixture-start-1"},
+                        "container_running": not self.stopped,
+                        "observed": "stopped" if self.stopped else "unhealthy",
+                        "observation_available": True, "storage_available": True,
+                        "state_persisted": not self.stopped, "recovery_trusted": True}
+
+            def stop(self, lease, deadline):
+                deadline.remaining()
+                self.stop_calls += 1
+                self.entered_stop.set()
+                if not self.release_stop.wait(2):
+                    raise RuntimeError("fixture_stop_timeout")
+                self.stopped = True
+
+        class RunningFailureStore(MemoryStore):
+            failures = 0
+
+            def write(self, value):
+                if any(entry["status"] == "running" for entry in value["entries"].values()):
+                    self.failures += 1
+                    raise OSError("fixture_running_update_failed")
+                super().write(value)
+
+        backend, store = RecoveryStopFixture(), RunningFailureStore()
+        app = Application(backend, Journal(store), lease_factory=fixture_lease)
+        self.addCleanup(app.close)
+        self.addCleanup(backend.release_stop.set)
+        code, current = app.handle("GET", "/control/v1/status", {}, b"")
+        self.assertEqual(code, 200)
+        payload = json.dumps({"expected_active": current["active_identity"],
+                              "expected_generation": current["generation"]}).encode()
+        headers = {"content-type": "application/json", "idempotency-key": "retained-stop"}
+        code, receipt = app.handle("POST", "/control/v1/stop", headers, payload)
+        self.assertEqual(code, 202)
+        self.assertTrue(receipt["state_persisted"])
+        operation_id, poll_url = receipt["operation"]["id"], receipt["operation"]["poll_url"]
+        self.assertTrue(backend.entered_stop.wait(1))
+        self.assertGreater(store.failures, 0)
+        self.assertEqual(store.value["entries"][operation_id]["status"], "pending")
+        with app._state_lock:
+            self.assertIs(app._state["entries"][operation_id], app._volatile[operation_id])
+        backend.release_stop.set()
+        deadline = time.monotonic() + 2
+        while time.monotonic() < deadline:
+            code, result = app.handle("GET", poll_url, {}, b"")
+            if code == 200 and result["status"] == "succeeded":
+                break
+            threading.Event().wait(0.01)
+        self.assertEqual((code, result["status"]), (200, "succeeded"))
+        self.assertFalse(result["state_persisted"])
+        app.close()
+        app._worker.join(timeout=1)
+        self.assertFalse(app._worker.is_alive())
+        persisted = Journal(store).read()["entries"][operation_id]
+        self.assertEqual(persisted["status"], "succeeded")
+        self.assertEqual(persisted["idempotency_digest"], digest("retained-stop"))
+
+        restarted = Application(backend, Journal(store), lease_factory=fixture_lease)
+        self.addCleanup(restarted.close)
+        code, result = restarted.handle("GET", poll_url, {}, b"")
+        self.assertEqual((code, result["id"], result["status"]), (200, operation_id, "succeeded"))
+        code, replay = restarted.handle("POST", "/control/v1/stop", headers, payload)
+        self.assertEqual(code, 202)
+        self.assertTrue(replay["replayed"])
+        self.assertEqual(replay["operation"]["id"], operation_id)
+        self.assertEqual(replay["operation"]["status"], "succeeded")
+        self.assertEqual(backend.stop_calls, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

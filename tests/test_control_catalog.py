@@ -131,6 +131,25 @@ class CatalogTests(unittest.TestCase):
         self.assertTrue(all(r["bytes"] is None and r["provenance"] == "unknown"
                             for r in entry["requirements"].values()))
 
+    def test_configured_context_never_becomes_verified_occupied_context(self):
+        for configured in (8192, 32768, 131072, 1048576):
+            entry = Catalog([record(context_limit=configured, context={
+                "verified_occupied_tokens": configured,
+                "verified_occupied_provenance": "verified", "evidence": ["short-probe"],
+            })]).public(ready())[0]
+            self.assertEqual(entry["context_limit"], configured)
+            self.assertEqual(entry["context"], {
+                "configured_tokens": configured, "configured_provenance": "declared",
+                "verified_occupied_tokens": None, "verified_occupied_provenance": "unknown",
+                "evidence": [],
+            })
+
+    def test_missing_configured_context_is_unknown(self):
+        entry = Catalog([record(context_limit=None)]).public(observation())[0]
+        self.assertIsNone(entry["context"]["configured_tokens"])
+        self.assertEqual(entry["context"]["configured_provenance"], "unknown")
+        self.assertIsNone(entry["context"]["verified_occupied_tokens"])
+
     def test_verified_tools_require_end_to_end_evidence(self):
         for kind in (None, "parser_flag", "source_inspection"):
             entry = Catalog([record(capabilities={"tool_calling": {

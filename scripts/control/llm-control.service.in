@@ -1,22 +1,17 @@
-# SOURCE TEMPLATE ONLY. I1c owns substitution, review, installation and enabling.
-# serve.py intentionally exits 3 until actual reviewed production integration.
+# SOURCE TEMPLATE. I1c owns generation/reuse, install and host validation.
 [Unit]
 Description=Protected local model control API
 After=local-fs.target docker.service
 Wants=docker.service
-# I1c must validate registered mounts before provisioning. Do not add BindsTo
-# for data/model mounts: an already-running control owner must retain trusted
-# /run stop capability after storage loss. No root-disk data/log fallback.
+# No data-mount dependency: root source/key and /run permit fresh recovery.
 
 [Service]
 Type=simple
 User=root
 Group=root
-WorkingDirectory=@REVIEWED_SOURCE_ROOT@
-ExecStart=/usr/bin/python3 -I -B @REVIEWED_SOURCE_ROOT@/scripts/control/serve.py
-# Distinct root-owned source key, mode 0600; resume reuses it. Credential copy
-# survives source-mount loss. Final adapter must validate this protected copy.
-LoadCredential=control-api-key:@CONTROL_KEY_FILE@
+WorkingDirectory=/
+ExecStart=/usr/bin/python3 -I -B /usr/local/lib/llm-server/control-api/scripts/control/serve.py
+LoadCredential=control-api-key:/etc/llm-server/control-api-key
 UMask=0077
 Restart=no
 KillMode=control-group
@@ -31,9 +26,11 @@ ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes
 RestrictAddressFamilies=AF_UNIX AF_INET
-ReadWritePaths=@REGISTERED_DATA_ROOT@ /run/llmctl
-# Docker socket/registered-source/key/guard access and stop/restart behavior are
-# I1c/I2 host acceptance gates; template settings are not hardening evidence.
+# Minus permits service startup after the registered data mount disappears.
+ReadWritePaths=-@REGISTERED_DATA_ROOT@ /run/llmctl
+# I1c provisions shared root0700 /run/llmctl via boot tmpfiles and preserves it.
+# Control must never remove shared recovery state on unit stop/restart.
+# No client Docker group/sudo grant. Actual namespace/guard access needs Linux QA.
 
 [Install]
 WantedBy=multi-user.target

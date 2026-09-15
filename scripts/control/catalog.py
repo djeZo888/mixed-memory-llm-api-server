@@ -192,6 +192,16 @@ class Catalog:
                 "backend": _identifier(record.get("backend")),
                 "runtime": _identifier(record.get("runtime")),
                 "context_limit": context,
+                "context": {
+                    "configured_tokens": context,
+                    "configured_provenance": "declared" if context is not None else "unknown",
+                    # Installed lifecycle schemas currently provide no occupied
+                    # context acceptance receipt. A large configured limit or a
+                    # successful short probe cannot supply this proof.
+                    "verified_occupied_tokens": None,
+                    "verified_occupied_provenance": "unknown",
+                    "evidence": [],
+                },
                 "quantization": None if quantization is None else _label(quantization, 64),
                 "installed_bytes": _integer(record.get("installed_bytes")),
                 "installed_verified_at": verified_at,
