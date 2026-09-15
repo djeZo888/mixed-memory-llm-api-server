@@ -19,7 +19,8 @@ import tempfile
 import time
 from typing import Any
 
-from .runtime_io import (Docker, LifecycleError, probe, run,
+from . import qwen_next
+from .runtime_io import (Docker, LifecycleError, probe, probe_sglang, run,
                          validate_container_network, validate_key_metadata,
                          validate_published)
 
@@ -138,6 +139,7 @@ class Manager:
         self.config_root, self.instance = Path(config_root), copy.deepcopy(instance)
         self.docker = docker if docker is not None else Docker()
         self.probe, self.run, self.sleep, self.monotonic = probe_fn, run_fn, sleep_fn, monotonic_fn
+        self.sglang_probe = probe_sglang if probe_fn is probe else probe_fn
         require(instance.get("schema_version") == 1, "invalid_instance_version")
         require(bool(ID_RE.fullmatch(str(instance.get("id", "")))), "invalid_instance_id")
         paths = instance.get("paths", {})
@@ -166,7 +168,14 @@ class Manager:
         self.validate_deployment(d)
         return d
 
+    @staticmethod
+    def backend(d: dict) -> str:
+        backend = d["_runtime"].get("backend")
+        require(isinstance(backend, str) and backend in {"llama_cpp", "sglang"}, "unsupported_backend")
+        return backend
+
     def validate_deployment(self, d: dict) -> None:
+        backend = self.backend(d)
         require(d["_runtime"].get("kind") == "docker", "unsupported_runtime_kind")
         require(d["_runtime"].get("network_mode") == "bridge", "unsafe_network_mode")
         require(d.get("docker_restart_policy") == "no", "multiple_supervisors_refused")
@@ -181,7 +190,7 @@ class Manager:
         require(auth.get("mode") == "0600", "unsafe_key_mode")
         require(auth.get("key_file", "").startswith("/data/services/secrets/"), "unsafe_key_path")
         mounts = d.get("mounts", [])
-        require(len(mounts) == 5, "invalid_mount_contract")
+        require(len(mounts) == (6 if backend == "sglang" else 5), "invalid_mount_contract")
         targets = set()
         for m in mounts:
             source, target = Path(m["source"]), Path(m["target"])
@@ -191,7 +200,8 @@ class Manager:
             require(source.is_relative_to(Path(m["required_mount"])) and source != Path(m["required_mount"]), "mount_outside_data")
             require(str(target) not in targets and type(m["read_only"]) is bool, "duplicate_mount_target")
             targets.add(str(target))
-        require(targets == {"/models", "/cache", "/logs", "/service", auth["container_key_file"]}, "invalid_mount_targets")
+        require(targets == {"/models", "/cache", "/logs", "/service", auth["container_key_file"]}
+                | ({qwen_next.LAUNCHER_TARGET} if backend == "sglang" else set()), "invalid_mount_targets")
         by_target = {m["target"]: m for m in mounts}
         for role, target in (("model", "/models"), ("cache", "/cache"), ("logs", "/logs"), ("service", "/service")):
             require(d["paths"][role] == by_target[target]["source"], "path_mount_mismatch")
@@ -202,6 +212,14 @@ class Manager:
                            ("logs", "/data/logs/llmctl"), ("service", "/data/services/llm-manager")):
             require(Path(d["paths"][role]).is_relative_to(root) and Path(d["paths"][role]) != Path(root), "unsafe_role_mount")
         require(auth["container_key_file"] == "/run/secrets/llm-api-key", "unsafe_container_key_path")
+        require(d.get("logs", {}) == {"driver": "json-file", "max_size": "20m", "max_file": 3}, "unbounded_logs")
+        for key, low, high in (("timeout_seconds", 1, 14400), ("poll_seconds", 1, 30),
+                               ("request_timeout_seconds", 1, 30), ("stop_timeout_seconds", 1, 120)):
+            value = d.get("launch", {}).get(key)
+            require(type(value) is int and low <= value <= high, "invalid_launch_limit")
+        if backend == "sglang":
+            qwen_next.validate(d)
+            return
         require(d["_runtime"].get("environment") == {"LD_LIBRARY_PATH": "/opt/llama", "LLAMA_ARG_HOST": "0.0.0.0", "XDG_CACHE_HOME": "/cache"}, "unsafe_runtime_environment")
         launch = d.get("launch", {})
         for key, low, high in (("context_size", 512, 131072), ("parallel", 1, 1),
@@ -249,6 +267,8 @@ class Manager:
             require(root.is_dir() and (root / "config.json").is_file()
                     and any(root.glob("*.safetensors")), "legacy_model_files_missing")
             return
+        if self.backend(d) == "sglang":
+            qwen_next.check_completion(d, self.instance)
         model = d["_model"]
         entries = model.get("artifacts", [])
         require(len(entries) == model.get("artifact_count") and len(entries) > 0, "invalid_artifact_manifest")
@@ -268,6 +288,8 @@ class Manager:
                 and bool(verified.get("evidence")), "d1_integrity_evidence_required")
 
     def image_evidence(self, d: dict) -> dict:
+        if self.backend(d) == "sglang":
+            return qwen_next.evidence(d, self.instance)
         e = self.instance.get("runtime_evidence", {}).get(d["runtime"], {})
         require(bool(DIGEST_RE.fullmatch(str(e.get("image_id", "")))), "d1_image_id_required")
         require(e.get("flags_verified") is True and bool(e.get("evidence")), "d1_flag_evidence_required")
@@ -427,6 +449,12 @@ class Manager:
         validate_container_network(c, d["endpoint"]["port"], d["container_port"], allowed_bridge_networks=allowed, allow_host_ipc=d.get("legacy", False))
         require(c.get("HostConfig", {}).get("RestartPolicy", {}).get("Name", "no") == "no", "multiple_supervisors_refused")
 
+    def probe_deployment(self, d: dict, timeout: float) -> str:
+        check = self.sglang_probe if not d.get("legacy") and self.backend(d) == "sglang" else self.probe
+        return check(self.endpoint(d), d["endpoint"]["served_model"],
+                     d.get("auth", {}).get("key_file"), require_auth=not d.get("legacy", False),
+                     timeout=timeout)
+
     def observe(self) -> dict:
         s = self.state
         if not s.get("container"):
@@ -445,9 +473,7 @@ class Manager:
             if not d.get("legacy"):
                 self.validate_reused_contract(c, d)
             health = c.get("State", {}).get("Health", {}).get("Status")
-            code = self.probe(self.endpoint(d), d["endpoint"]["served_model"],
-                              d.get("auth", {}).get("key_file"), require_auth=not d.get("legacy", False),
-                              timeout=d["launch"]["request_timeout_seconds"])
+            code = self.probe_deployment(d, d["launch"]["request_timeout_seconds"])
             was_starting = s["observed"] == "starting"
             s["observed"] = "ready" if code == "ready" and health != "unhealthy" else "unhealthy"
             if code == "not_ready" and health != "unhealthy" and was_starting and transition_in_progress(self.lock_file):
@@ -487,21 +513,29 @@ class Manager:
                 and bool(self.instance.get("obsolete_boot_owner_evidence")), "obsolete_boot_owner_removal_required")
         self.check_artifacts(d)
         if not d.get("legacy"):
-            self.image_evidence(d)
+            e = self.image_evidence(d)
+            if self.backend(d) == "sglang":
+                qwen_next.validate_launcher(d, e)
             validate_key_metadata(d["auth"]["key_file"])
             for m in d["mounts"]:
                 source = Path(m["source"])
                 require(source.resolve() == source and source.exists(), "mount_source_missing_or_symlink")
-                if m["target"] != d["auth"]["container_key_file"]:
+                if m["target"] not in {d["auth"]["container_key_file"], qwen_next.LAUNCHER_TARGET}:
                     require(source.is_dir(), "mount_source_not_directory")
         require(self.docker.capture("info", "--format", "{{.DockerRootDir}}").strip() == "/data/docker", "docker_root_outside_data")
 
     def create_args(self, d: dict) -> list[str]:
+        self.validate_deployment(d)
+        backend = self.backend(d)
         e = self.image_evidence(d)
         launch, rt = d["launch"], d["_runtime"]
         image = json.loads(self.docker.capture("image", "inspect", rt["image_tag"]))
         require(len(image) == 1 and image[0].get("Id") == e["image_id"], "runtime_image_id_mismatch")
-        require(image[0].get("Config", {}).get("Entrypoint") == rt["entrypoint"], "runtime_entrypoint_mismatch")
+        if backend == "llama_cpp":
+            require(image[0].get("Config", {}).get("Entrypoint") == rt["entrypoint"], "runtime_entrypoint_mismatch")
+        else:
+            # The pinned SGLang image entrypoint is deliberately overridden.
+            qwen_next.validate_launcher(d, e)
         require(len(rt["entrypoint"]) == 1, "unsupported_entrypoint")
         args = ["--name", d["container_name"], "--network", "bridge", "--restart", "no",
                 "--publish", f'127.0.0.1:{d["endpoint"]["port"]}:{d["container_port"]}/tcp',
@@ -513,7 +547,11 @@ class Manager:
             args += ["--label", LABEL + k + "=" + v]
         for m in d["mounts"]:
             args += ["--mount", f'type=bind,source={m["source"]},target={m["target"]}' + (",readonly" if m["read_only"] else "")]
-        require(set(rt.get("environment", {})).issubset({"LD_LIBRARY_PATH", "LLAMA_ARG_HOST", "XDG_CACHE_HOME"}), "unsafe_runtime_environment")
+        if backend == "llama_cpp":
+            require(set(rt.get("environment", {})).issubset({"LD_LIBRARY_PATH", "LLAMA_ARG_HOST", "XDG_CACHE_HOME"}), "unsafe_runtime_environment")
+        else:
+            args += ["--read-only", "--tmpfs", "/tmp:rw,nosuid,nodev,size=1g", "--shm-size", "8g",
+                     "--workdir", "/service", "--no-healthcheck", "--user", "0"]
         for key, value in rt.get("environment", {}).items():
             args += ["--env", key + "=" + value]
         args += [e["image_id"]] + self.launch_command(d, e)
@@ -521,6 +559,9 @@ class Manager:
 
     @staticmethod
     def launch_command(d: dict, e: dict) -> list[str]:
+        if Manager.backend(d) == "sglang":
+            qwen_next.validate(d)
+            return qwen_next.command(d)
         launch = d["launch"]
         return ["--model", "/models/" + d["_model"]["load_entry"],
                  "--host", d["container_host"], "--port", str(d["container_port"]),
@@ -532,7 +573,8 @@ class Manager:
                  "--chat-template-kwargs", json.dumps(launch["chat_template_kwargs"], sort_keys=True, separators=(",", ":"))]
 
     def validate_reused_contract(self, c: dict, d: dict) -> None:
-        """A valid model alias cannot distinguish 8K from 32K; verify launch too."""
+        """A valid model alias cannot distinguish launch contracts; verify all."""
+        self.validate_deployment(d)
         e = self.image_evidence(d)
         require(c.get("Image") == e["image_id"], "runtime_image_id_mismatch")
         config = c.get("Config", {})
@@ -547,6 +589,10 @@ class Manager:
         require(host.get("LogConfig") == {"Type": "json-file", "Config": {"max-size": "20m", "max-file": "3"}}, "container_log_contract_mismatch")
         requests = host.get("DeviceRequests", [])
         require(len(requests) == 1 and requests[0].get("DeviceIDs") == d["launch"]["gpus"], "container_gpu_contract_mismatch")
+        if self.backend(d) == "sglang":
+            image = json.loads(self.docker.capture("image", "inspect", e["image_id"]))
+            require(len(image) == 1 and image[0].get("Id") == e["image_id"], "runtime_image_id_mismatch")
+            qwen_next.validate_reused(c, d, e, image[0])
 
     def _start(self) -> None:
         require(self.state.get("selected") is not None, "no_deployment_selected_use_select")
@@ -602,9 +648,9 @@ class Manager:
                 c = self.trusted_container(self.state["container"])
                 require(self.running(c), "container_exited_during_start")
                 self.network_check(c, d)
-                last = self.probe(self.endpoint(d), d["endpoint"]["served_model"],
-                                  d.get("auth", {}).get("key_file"), require_auth=not d.get("legacy", False),
-                                  timeout=min(d["launch"]["request_timeout_seconds"], max(0.1, deadline - self.monotonic())))
+                minimum = 0 if not d.get("legacy") and self.backend(d) == "sglang" else 0.1
+                last = self.probe_deployment(
+                    d, min(d["launch"]["request_timeout_seconds"], max(minimum, deadline - self.monotonic())))
                 if last == "ready" and c.get("State", {}).get("Health", {}).get("Status") != "unhealthy":
                     self.host_guards()
                     self.check_mounts({"/data"} if d.get("legacy") else None)
@@ -616,6 +662,13 @@ class Manager:
                 self.sleep(min(d["launch"]["poll_seconds"], max(0, deadline - self.monotonic())))
             raise LifecycleError("readiness_timeout")
         except BaseException:
+            if not d.get("legacy") and self.backend(d) == "sglang" and self.state.get("container"):
+                try:
+                    failed = self.trusted_container(self.state["container"])
+                    if self.running(failed):
+                        self.docker.stop(failed["Id"], timeout=d["launch"]["stop_timeout_seconds"])
+                except Exception:
+                    pass  # State below truthfully records failed or unknown cleanup.
             # Retain identity for a deterministic stop; never hide a running failure.
             self.state["observed"] = "failed"
             self.state["failure"] = "start_failed_use_stop_before_retry"
