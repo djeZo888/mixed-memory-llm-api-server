@@ -1,0 +1,17 @@
+{
+  "commit": "9cb93959105468ea0e140598b51493ee0d13ce9e",
+  "files": {
+    "scripts/lifecycle/manager.py": {
+      "committed_sha256": "39c3956404f3ef95925faf64dc00dbac0e804dbefba272f378b0a1c21817d652",
+      "matches_test_copy": true
+    },
+    "scripts/lifecycle/storage_binding.py": {
+      "committed_sha256": "69e61ce6685c310ce83449de75d45b209e63c6454c175f03d42bdad3daea7fbf",
+      "matches_test_copy": true
+    },
+    "tests/lifecycle/test_real_storage_roles.py": {
+      "committed_sha256": "a102b4f611e77cdc20d07495a99a0660eb881de47aaf3d3b0593a24b6956ead1",
+      "matches_test_copy": true
+    }
+  }
+}

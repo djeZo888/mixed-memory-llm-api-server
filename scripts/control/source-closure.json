@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "source_root": "/usr/local/lib/llm-server/control-api",
+  "recovery_files": [
+    "scripts/control/__init__.py",
+    "scripts/control/serve.py",
+    "scripts/control/installation.py",
+    "scripts/control/adapter.py",
+    "scripts/control/core.py",
+    "scripts/control/protocol.py",
+    "scripts/control/journal.py",
+    "scripts/control/catalog.py",
+    "scripts/control/discovery.py",
+    "scripts/control/http.py",
+    "scripts/common/lifecycle_lease.py",
+    "scripts/lifecycle/__init__.py",
+    "scripts/lifecycle/manager.py",
+    "scripts/lifecycle/runtime_io.py",
+    "scripts/lifecycle/storage_binding.py",
+    "scripts/lifecycle/qwen_next.py",
+    "scripts/install/__init__.py",
+    "scripts/install/storage.py"
+  ],
+  "normal_files": [
+    "scripts/install/storage_io.py",
+    "scripts/install/prerequisites.py",
+    "scripts/common/require-data-mounted.sh",
+    "scripts/common/registered-storage.py",
+    "scripts/lifecycle/sglang_file_auth.py",
+    "reports/f1s-contract-evidence/f1a-qwen-manifest.json"
+  ],
+  "normal_profile_directories": [
+    "configs/deployments",
+    "configs/models",
+    "configs/runtimes"
+  ],
+  "normal_profile_installation": "reviewed protected snapshot only; no symlinks; actual Manager validates files"
+}
