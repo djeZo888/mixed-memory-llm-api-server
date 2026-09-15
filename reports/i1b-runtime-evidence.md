@@ -80,9 +80,14 @@ compared, never silently replaced. A verified whole runtime stage is a no-op.
 The narrow Linux process adapter terminates its process group on interruption,
 timeout or guard failure, and waits until no group member can still write before
 releasing descriptors. A successful parent with surviving descendants is also
-refused. Docker daemon storage and server-side build cancellation remain the
-container engine's responsibility; I2 must exercise cancellation during an
-actual disposable Linux build. The shared Runner/prerequisite I1R ownership fix
+refused. This caught-interruption adapter does not itself survive installer
+`SIGKILL`: children do not yet inherit an authorized canonical lease export.
+Before enabling production runtime mutation, I1c must integrate the reviewed
+L1/I1R writer-transaction supervision for long Git/build/pull commands, retaining
+ownership or proving quiescence after parent loss. The current dispatcher must
+stay fail-closed until that interface is integrated. Docker daemon storage and
+server-side build cancellation remain the container engine's responsibility;
+I2 must exercise cancellation during an actual disposable Linux build. The shared Runner/prerequisite I1R ownership fix
 remains required independently; this adapter does not modify that owned source.
 
 ## Validation
