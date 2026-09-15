@@ -1,0 +1,32 @@
+{
+  "base": "5e713441d9ea164b81860ee795c5ef35972ee8e3",
+  "coordinator_final_sha256": "247b1790e958e5db4ae78ef5e0232e2df76018399a8d0f81eed1a8e86b9a42ad",
+  "executed_procedures_sha256": {
+    "reports/l2vm-finalize.py": "ed331e13cfc7d6227360305dfff986793a89988caa2a13c4e5e935cd863cb607",
+    "reports/l2vm-inventory.py": "c82a8d0d3824717d417c8bed2712d74305fc5909b4a911626e38eee457e69bfd",
+    "reports/l2vm-publish-q38.py": "39564e20b7f7f267d3f98bbd93e36ca5d2650f4ecdcfed072bba885559371e2b",
+    "reports/l2vm-q38-check.py": "f9b107421fb915d524b3ea179ee2234d5cc915b664af954ad71b49e87434e7fb",
+    "reports/l2vm-stage.py": "d7833ca148e9d2bb11e9f6f6ae188bcb49f5adef2eb952c5912899a8d015eb0a"
+  },
+  "payload_sha256": "ce44c73db64c9e14748be0de77cc5b41e335f90ed24236c43d3ebed1e6c6597c",
+  "procedure_sha256": "d7833ca148e9d2bb11e9f6f6ae188bcb49f5adef2eb952c5912899a8d015eb0a",
+  "supplied_files": {
+    "VM-GUARDS.json": "81c2b964a056cf8c974d75560070068d840adad4a5c33e88048b03e1fbe2254a",
+    "activation-plan.md": "662369f0d5f9c055e6094e1b261ef4e379f75f380b42f0d3897870b92abe44fb",
+    "coordination-input.md": "0dc8caa5b0356ac1f646a1db3abbb845af65b00795ddb7fac4c2cfd0bd8a3dd1",
+    "d3b-ownership-release.md": "827c78d1050bd18c36a227dbf5e9dd009d6075b850b1ddb46412a53902ee3c3f",
+    "host-facts.md": "496a5fc96925bc7928857bbc1b0f5b094d37c4a8a7b87a059e0b624720a1c3ee",
+    "l2-handshake.md": "b609193d7debd8bf56712bfd8bc28d352cf6b6d93fb8c206768c0b5794a8741d",
+    "proposed/control-unit.diff": "5c81f3f9dcd61a0823c9101ec0c7145d2983bf27ec80bc3596faa4d686aed452",
+    "proposed/control.proposed.json": "0a8b653b944e0e124d6bed90b4f488c91f0d5f2d8dcc0b57e041aae959ce5f53",
+    "proposed/instance-additions.proposed.json": "9cd2a22da17d5a7a4782b6ef2bceb8556b9c94fe729f5ff09b0d9557f32373e9",
+    "proposed/instance.semantic.diff": "0512f563bbc586b56b0fe79d0d4086f1a155993f3200c210c264b12ed026303e",
+    "proposed/llm-control.service.proposed": "4a749a92635ecc8c961fe92391b43b0634a67771ab4ec5d10a733a44b5a1d2dc",
+    "proposed/qwen38-27b-fp8.complete.proposed.json": "2020e3d4b19a3d4a7221dfbf37a4f558ed98dcbd73e302b716ab95fb04e17dce",
+    "proposed/qwen38-instance-model-integrity-addition.proposed.json": "3423d8579fc4f9d77bcb2acb8ae52bc3353498312cbde85862bccfc93173dd0d",
+    "proposed/storage-identity.proposed.json": "42deb2f16663eee48f000adbddb04dafee6f527ec4723ad4bcb6b2e74bc47beb",
+    "proposed/storage.proposed.json": "626db7130b644199f5f632b2ac3c04f86cdd382121573aa6f3825bbca8de9c27",
+    "q38a-handoff.md": "3dea5a2d002b46ee5b2b59cb1334c2298065925818bfea67555196c58dee60db",
+    "root-review.md": "c43fe7d4efc9eb2c827274d3decb3c34a4cf74c308329f77b6baee3c70824c82"
+  }
+}

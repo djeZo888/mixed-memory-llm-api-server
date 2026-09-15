@@ -1,0 +1,6 @@
+PASS: /data is mounted and ready
+- root source: /dev/mapper/ubuntu--vg-ubuntu--lv
+- data source: /dev/sdb1
+- data fstype: ext4
+- data label: AI_DATA
+- data UUID: 8daf56f1-5649-4163-9d87-919c2d271875

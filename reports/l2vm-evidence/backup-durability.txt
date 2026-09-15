@@ -1,0 +1,1 @@
+PASS: existing protected transaction/originals directory FDs fsynced under canonical lease and actual mounted guard; no file bytes/metadata rewritten; lease released
