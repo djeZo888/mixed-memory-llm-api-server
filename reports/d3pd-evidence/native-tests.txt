@@ -1,0 +1,22 @@
+srv          init: The UI is disabled
+srv          init: Use --ui/--no-ui (or deprecated --webui/--no-webui) to enable/disable
+srv          init: The UI is disabled
+srv          init: Use --ui/--no-ui (or deprecated --webui/--no-webui) to enable/disable
+srv    operator(): unauthorized: Invalid API Key
+srv    operator(): unauthorized: Invalid API Key
+srv    operator(): unauthorized: Invalid API Key
+srv    operator(): unauthorized: Invalid API Key
+srv    operator(): unauthorized: Invalid API Key
+srv    operator(): unauthorized: Invalid API Key
+srv    operator(): unauthorized: Invalid API Key
+srv    operator(): unauthorized: Invalid API Key
+srv          init: The UI is disabled
+srv          init: Use --ui/--no-ui (or deprecated --webui/--no-webui) to enable/disable
+srv          init: The UI is disabled
+srv          init: Use --ui/--no-ui (or deprecated --webui/--no-webui) to enable/disable
+srv          init: The UI is disabled
+srv          init: Use --ui/--no-ui (or deprecated --webui/--no-webui) to enable/disable
+PASS: direct shipped guard/routes, 142 matrix cases plus metadata-driven canonical
+PASS: pinned loopback HTTP serialization, 142 matrix cases; auth/readiness/OPTIONS order and exact stock 404
+PASS: router/child/both modes bypass all 426 cases and router-valid child-unknown alias
+PASS: D3P focused native tests (fake downstream, no model loaded)
