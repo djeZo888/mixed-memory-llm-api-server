@@ -34,7 +34,7 @@ label `ubuntu-slim` is not used.
 | Check | Actual result |
 | --- | --- |
 | OS / architecture | Ubuntu 24.04.5 LTS, x86_64 / dpkg amd64 |
-| Kernel / VM | 6.17.0-1022-azure; systemd-detect-virt: microsoft; container gate refused containers |
+| Kernel / VM | 6.17.0-1022-azure; systemd-detect-virt: microsoft; container check: not a container |
 | Privilege / resources | UID 0 inside disposable VM; 4 CPUs; 16,372,440 KiB RAM |
 | systemd / cgroup | PID 1 systemd; systemd 255.4-1ubuntu8.17; cgroup v2 |
 | Controllers | cpuset, cpu, io, memory, hugetlb, pids, rdma, misc, dmem |
