@@ -565,11 +565,29 @@ def check_native_parser_template(repo):
                     "native_no_thinking_tool_continuation_template_failed")
 
 
-def run_cache_probe(repo):
+def cache_probe_module(repo):
     probe_spec = importlib.util.spec_from_file_location("q38b_actual_cache_probe",
         repo / "tests/lifecycle/sglang38_fixture/cache_probe.py")
     cache_probe = importlib.util.module_from_spec(probe_spec)
     probe_spec.loader.exec_module(cache_probe)
+    return cache_probe
+
+
+def cache_failure_metadata(error):
+    """Revalidate the failure-only child hint before the final JSON boundary."""
+    if (type(error) is not FixtureFailure or len(error.args) != 1
+            or type(error.args[0]) is not str or error.args[0] != "cache_probe_child_failed"):
+        return None
+    try:
+        probe = cache_probe_module(Path(__file__).resolve().parents[3])
+        return probe.validate_failure(error.__dict__.get("cache_failure"))
+    except Exception:
+        # Missing/unavailable diagnostics must leave the original failure intact.
+        return None
+
+
+def run_cache_probe(repo):
+    cache_probe = cache_probe_module(repo)
     # Native imports cache platform/architecture discovery. Isolate no-device
     # resolver discovery so it cannot contaminate the auth fixture's later
     # explicitly stubbed hardware setup in this interpreter.
@@ -577,8 +595,13 @@ def run_cache_probe(repo):
         str(repo / "tests/lifecycle/sglang38_fixture/cache_probe.py"),
         "--actual-image", "--repo", str(repo)], stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120, check=False)
-    require(child.returncode == 0 and child.stderr == b"" and len(child.stdout) <= 131072,
-            "cache_probe_child_failed")
+    try:
+        require(child.returncode == 0 and child.stderr == b"" and len(child.stdout) <= 131072,
+                "cache_probe_child_failed")
+    except FixtureFailure as error:
+        if child.stderr == b"" and len(child.stdout) <= 131072:
+            error.cache_failure = cache_probe.failure_metadata(child.stdout)
+        raise
     result = json.loads(child.stdout)
     cache_probe.validate_result(result)
     return result
@@ -826,8 +849,12 @@ def main(argv=None):
         # Deliberate abort children terminate via os._exit after one fixed marker.
         # An ordinary exception in those children must be distinguishable from
         # that success condition without emitting any captured backend data.
-        print(json.dumps({"status": "FAIL", "code": "actual_image_fixture_failed",
-                          "failure_origin": failure_origin(error)}, sort_keys=True))
+        failure = {"status": "FAIL", "code": "actual_image_fixture_failed",
+                   "failure_origin": failure_origin(error)}
+        cache_failure = cache_failure_metadata(error)
+        if cache_failure is not None:
+            failure["cache_failure"] = cache_failure
+        print(json.dumps(failure, sort_keys=True))
         return 2
 
 

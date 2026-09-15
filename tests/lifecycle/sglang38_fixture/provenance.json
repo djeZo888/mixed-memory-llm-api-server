@@ -2,10 +2,10 @@
   "actual_image_execution": "NOT_TESTED",
   "fixture_sha256": {
     "auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
-    "cache_probe.py": "83197614bd963f54a275d9f01ec8955325b3ea4791387dd5235df189f67e7c99",
+    "cache_probe.py": "1983823892cf28f9b0ecfffa54c31442774d86e5851cb4d5337dc9537f7c8983",
     "chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
-    "run_fixture.py": "9757a9b097c601c2201c78052bd05e81c1db6c97d140befba26b4895b1496653",
-    "run_pinned_image.py": "185ac9c1faf663c619ef64da84f1ac7ff1bfc4530a50a2947909ade2b14a4118"
+    "run_fixture.py": "954ba40800eed06e3d515d118f24a55ae5755ad8c9632326a8dc4cfd15b2c7ac",
+    "run_pinned_image.py": "b7ab0b200a73267d05e615afef0eaf0e3c277537e7002b1e9c12da853551e643"
   },
   "image_id": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
   "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
