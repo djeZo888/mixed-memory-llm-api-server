@@ -1,0 +1,22 @@
+{
+  "worker": "mac-worker1.local",
+  "base": "dad2d58b57ab2367dee254cff1a885567b0c76f4",
+  "verification": "actual operator execution and report consistency; no product test suite",
+  "operator_syntax": "PASS",
+  "exact_one_start_dispatch": "PASS",
+  "sample_indices_1_through_58_complete": "PASS",
+  "pss_absent_in_all_load_rows": "PASS",
+  "registered_full_guards_admission_final": "PASS",
+  "source_77_hashes_modes": "PASS",
+  "key_exact_bytes_metadata": "PASS",
+  "final_stopped_identity_and_free_lifecycle_lease": "PASS",
+  "existing_worker_request_lock_free": "PASS",
+  "root_warning_below_6gib": true,
+  "root_stop_below_4gib": false,
+  "rejected_row_not_emitted_or_retained": true,
+  "cause_of_sample_delay": "NOT_OBSERVED",
+  "performance_or_occupied_acceptance": "NOT_TESTED",
+  "capacity_sanity_acceptance": "FAILED",
+  "generations": 0,
+  "no_vm_calls_after": "2026-09-15T05:15:48.351825+00:00"
+}

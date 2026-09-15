@@ -1,0 +1,510 @@
+{
+  "actual_capacity": "NOT_ESTABLISHED",
+  "all_77_source_hashes_modes_unchanged": true,
+  "allocation_attempts": 1,
+  "containers": {
+    "d1_rollback": {
+      "Args": [
+        "--model",
+        "/models/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "30002",
+        "--alias",
+        "glm-5.3",
+        "--api-key-file",
+        "/run/secrets/llm-api-key",
+        "--ctx-size",
+        "32768",
+        "--parallel",
+        "1",
+        "--cpu-moe",
+        "--jinja",
+        "--no-webui",
+        "--n-gpu-layers",
+        "999",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--load-mode",
+        "none",
+        "--device",
+        "CUDA0,CUDA1",
+        "--chat-template-kwargs",
+        "{\"clear_thinking\":true}"
+      ],
+      "Id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+      "Image": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+      "LogPath": "/data/docker/containers/bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55/bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55-json.log",
+      "NetworkSettings": {
+        "Ports": {}
+      },
+      "RestartCount": 0,
+      "RestartPolicy": {
+        "MaximumRetryCount": 0,
+        "Name": "no"
+      },
+      "State": {
+        "Dead": false,
+        "Error": "",
+        "ExitCode": 0,
+        "FinishedAt": "2026-09-15T04:09:17.719694176Z",
+        "OOMKilled": false,
+        "Paused": false,
+        "Pid": 0,
+        "Restarting": false,
+        "Running": false,
+        "StartedAt": "2026-09-15T00:48:45.235739944Z",
+        "Status": "exited"
+      }
+    },
+    "n76_32k": {
+      "Args": [
+        "--model",
+        "/models/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "30002",
+        "--alias",
+        "glm-5.3",
+        "--api-key-file",
+        "/run/secrets/llm-api-key",
+        "--ctx-size",
+        "32768",
+        "--parallel",
+        "1",
+        "--n-cpu-moe",
+        "76",
+        "--jinja",
+        "--no-webui",
+        "--n-gpu-layers",
+        "999",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--load-mode",
+        "none",
+        "--device",
+        "CUDA0,CUDA1",
+        "--chat-template-kwargs",
+        "{\"clear_thinking\":true}"
+      ],
+      "Id": "7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78",
+      "Image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+      "LogPath": "/data/docker/containers/7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78/7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78-json.log",
+      "NetworkSettings": {
+        "Ports": {}
+      },
+      "RestartCount": 0,
+      "RestartPolicy": {
+        "MaximumRetryCount": 0,
+        "Name": "no"
+      },
+      "State": {
+        "Dead": false,
+        "Error": "",
+        "ExitCode": 0,
+        "FinishedAt": "2026-09-15T05:09:28.901542194Z",
+        "OOMKilled": false,
+        "Paused": false,
+        "Pid": 0,
+        "Restarting": false,
+        "Running": false,
+        "StartedAt": "2026-09-15T04:09:20.746242473Z",
+        "Status": "exited"
+      }
+    },
+    "native1m": {
+      "Args": [
+        "--model",
+        "/models/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "30002",
+        "--alias",
+        "glm-5.3",
+        "--api-key-file",
+        "/run/secrets/llm-api-key",
+        "--ctx-size",
+        "1048576",
+        "--parallel",
+        "1",
+        "--n-cpu-moe",
+        "76",
+        "--jinja",
+        "--no-webui",
+        "--n-gpu-layers",
+        "999",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--load-mode",
+        "none",
+        "--device",
+        "CUDA0,CUDA1",
+        "--chat-template-kwargs",
+        "{\"clear_thinking\":true}"
+      ],
+      "Id": "3108f42bfaab08010164340b2c3e709e03c4aebeb36374e6b87d8bac226296fb",
+      "Image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+      "LogPath": "/data/docker/containers/3108f42bfaab08010164340b2c3e709e03c4aebeb36374e6b87d8bac226296fb/3108f42bfaab08010164340b2c3e709e03c4aebeb36374e6b87d8bac226296fb-json.log",
+      "NetworkSettings": {
+        "Ports": {}
+      },
+      "RestartCount": 0,
+      "RestartPolicy": {
+        "MaximumRetryCount": 0,
+        "Name": "no"
+      },
+      "State": {
+        "Dead": false,
+        "Error": "",
+        "ExitCode": 137,
+        "FinishedAt": "2026-09-15T05:13:06.781397186Z",
+        "OOMKilled": false,
+        "Paused": false,
+        "Pid": 0,
+        "Restarting": false,
+        "Running": false,
+        "StartedAt": "2026-09-15T05:09:31.919565878Z",
+        "Status": "exited"
+      }
+    }
+  },
+  "control": [
+    "MainPID=0",
+    "ActiveState=inactive",
+    "SubState=dead",
+    "UnitFileState=disabled"
+  ],
+  "final_pss": "NOT_AVAILABLE_TARGET_STOPPING_OR_ZOMBIE_NO_IDLE_READINESS",
+  "first_failure": {
+    "allocation_attempts": 1,
+    "elapsed_seconds": 92.19226025100215,
+    "error": "d3cap2_cheap_safety_stop",
+    "monitor_failure": [
+      "sample_gap"
+    ],
+    "phase": "first_transition_failure",
+    "state": {
+      "boot_policy": "manual",
+      "container": {
+        "deployment": "glm-5.3-ud-q4-k-xl-n76-native1m",
+        "id": "3108f42bfaab08010164340b2c3e709e03c4aebeb36374e6b87d8bac226296fb",
+        "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+        "instance": "ai-vm-d0b",
+        "legacy": false,
+        "name": "llmctl-glm-5.3-n76-native1m",
+        "owner": "mixed-memory-llm-api-server"
+      },
+      "container_running": true,
+      "desired": "running",
+      "failure": "d3cap2_cheap_safety_stop",
+      "last_selected": "glm-5.3-ud-q4-k-xl-n76-32k",
+      "observed": "failed",
+      "schema_version": 2,
+      "selected": "glm-5.3-ud-q4-k-xl-n76-native1m",
+      "state_persisted": true,
+      "updated_at": 1789449032154804525
+    },
+    "utc": "2026-09-15T05:10:32.271835+00:00"
+  },
+  "first_native_error": null,
+  "generation_attempts": 0,
+  "gpu_memory_mib": [
+    "0, 97887, 97249",
+    "1, 97887, 97217"
+  ],
+  "guards": [
+    {
+      "capacity": {
+        "data_available_bytes": 1337941159936,
+        "model_available_bytes": 2590890246144,
+        "root_available_bytes": 5208707072,
+        "shared_model_filesystem": false
+      },
+      "data": {
+        "device": "8:17",
+        "fstype": "ext4",
+        "mount": "/data",
+        "parents": [
+          "/dev/sdb",
+          "/dev/sdb1"
+        ],
+        "path": "/data",
+        "source": "/dev/sdb1",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+      },
+      "models": {
+        "device": "8:33",
+        "fstype": "ext4",
+        "mount": "/data/models-large",
+        "parents": [
+          "/dev/sdc",
+          "/dev/sdc1"
+        ],
+        "path": "/data/models-large",
+        "source": "/dev/sdc1",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+      },
+      "roots": {
+        "backups": "/data/backups",
+        "build": "/data/build",
+        "containerd": "/data/containerd",
+        "docker": "/data/docker",
+        "hf_cache": "/data/hf-cache",
+        "logs": "/data/logs",
+        "models": "/data/models-large",
+        "secrets": "/data/services/secrets",
+        "services": "/data/services",
+        "state": "/data/services/installer"
+      },
+      "schema_version": 1,
+      "storage_mode": "existing",
+      "verified_roles": [
+        "data",
+        "models"
+      ],
+      "warnings": [
+        "root filesystem has less than 6 GiB free"
+      ]
+    },
+    {
+      "capacity": {
+        "data_available_bytes": 1337941159936,
+        "model_available_bytes": 2590890246144,
+        "root_available_bytes": 5208707072,
+        "shared_model_filesystem": false
+      },
+      "data": {
+        "device": "8:17",
+        "fstype": "ext4",
+        "mount": "/data",
+        "parents": [
+          "/dev/sdb",
+          "/dev/sdb1"
+        ],
+        "path": "/data",
+        "source": "/dev/sdb1",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+      },
+      "models": {
+        "device": "8:33",
+        "fstype": "ext4",
+        "mount": "/data/models-large",
+        "parents": [
+          "/dev/sdc",
+          "/dev/sdc1"
+        ],
+        "path": "/data/models-large",
+        "source": "/dev/sdc1",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+      },
+      "root_payload_scan": {
+        "files_inspected": 4273,
+        "large_payload_threshold_bytes": 134217728,
+        "status": "pass"
+      },
+      "roots": {
+        "backups": "/data/backups",
+        "build": "/data/build",
+        "containerd": "/data/containerd",
+        "docker": "/data/docker",
+        "hf_cache": "/data/hf-cache",
+        "logs": "/data/logs",
+        "models": "/data/models-large",
+        "secrets": "/data/services/secrets",
+        "services": "/data/services",
+        "state": "/data/services/installer"
+      },
+      "schema_version": 1,
+      "storage_mode": "existing",
+      "verified_roles": [
+        "data",
+        "models"
+      ],
+      "warnings": [
+        "root filesystem has less than 6 GiB free"
+      ]
+    }
+  ],
+  "host_kib": {
+    "MemAvailable": 910409756,
+    "MemTotal": 924616132,
+    "SwapFree": 3056636,
+    "SwapTotal": 3083260
+  },
+  "instance_registry_network_control_manifest_unchanged": true,
+  "kernel_error_counts": {
+    "cuda": 0,
+    "fusion_fallback": 0,
+    "oom": 0,
+    "runtime": 0,
+    "storage": 0
+  },
+  "key_exact_bytes_metadata_unchanged": true,
+  "lifecycle_lease_free_verified": true,
+  "log_bytes": 7479,
+  "log_sha256": "e0cd37475002dd04190469c4e251b8c2bf7ebcda30dad15cb6af16da39837a6f",
+  "native_connections": {
+    "established_api_connections": 0
+  },
+  "native_numeric": {
+    "errors": {
+      "cuda": 0,
+      "fusion_fallback": 0,
+      "oom": 0,
+      "runtime": 0,
+      "storage": 0
+    },
+    "log_lines": 45,
+    "n_threads": 112,
+    "native": {
+      "cache_bytes": {
+        "CUDA0": 51539607552,
+        "CUDA1": 48318382080
+      },
+      "cache_log_lines": {
+        "CUDA0": 38,
+        "CUDA1": 39
+      },
+      "compute_bytes": {
+        "CUDA0": 5104543744,
+        "CUDA1": 4680849408
+      },
+      "compute_log_lines": {
+        "CUDA0": 35,
+        "CUDA1": 36
+      },
+      "end_log_line": 40,
+      "fa_nodes": 78,
+      "flash_attn": 1,
+      "fused_lid": 1,
+      "graph_log_line": 34,
+      "lid_nodes": 21,
+      "n_batch": 2048,
+      "n_ctx": 1048576,
+      "n_ctx_seq": 1048576,
+      "n_seq_max": 1,
+      "n_ubatch": 512,
+      "no_alloc": 0
+    },
+    "native_group_open": false,
+    "native_pending": {
+      "cache_bytes": {
+        "CUDA0": 51539607552,
+        "CUDA1": 48318382080
+      },
+      "cache_log_lines": {
+        "CUDA0": 38,
+        "CUDA1": 39
+      },
+      "compute_bytes": {
+        "CUDA0": 5104543744,
+        "CUDA1": 4680849408
+      },
+      "compute_log_lines": {
+        "CUDA0": 35,
+        "CUDA1": 36
+      },
+      "end_log_line": 40,
+      "fa_nodes": 78,
+      "flash_attn": 1,
+      "fused_lid": 1,
+      "graph_log_line": 34,
+      "lid_nodes": 21,
+      "n_batch": 2048,
+      "n_ctx": 1048576,
+      "n_ctx_seq": 1048576,
+      "n_seq_max": 1,
+      "n_ubatch": 512,
+      "no_alloc": 0
+    },
+    "native_phase": "cache",
+    "slot_context": 1048576,
+    "slot_count": 1
+  },
+  "occupied_near_1m": "NOT_TESTED",
+  "owned_pids_absent": {
+    "243279": true,
+    "270294": true,
+    "273833": true
+  },
+  "owner_pid": 281366,
+  "q38_fixture_pids": [],
+  "rollback": "NOT_INVOKED",
+  "selected_backend_logs": [
+    {
+      "message": "2.09.608.392 W D3T_NATIVE_V1 kind=graph n_ctx=1048576 n_ctx_seq=1048576 n_seq_max=1 n_batch=2048 n_ubatch=512 flash_attn=1 fused_lid=1 lid_nodes=21 fa_nodes=78 no_alloc=0",
+      "utc": "2026-09-15T05:11:41.679838367Z"
+    },
+    {
+      "message": "2.09.608.416 W D3T_NATIVE_V1 kind=compute backend=CUDA0 bytes=5104543744",
+      "utc": "2026-09-15T05:11:41.679887321Z"
+    },
+    {
+      "message": "2.09.608.422 W D3T_NATIVE_V1 kind=compute backend=CUDA1 bytes=4680849408",
+      "utc": "2026-09-15T05:11:41.679890786Z"
+    },
+    {
+      "message": "2.09.608.423 W D3T_NATIVE_V1 kind=compute backend=CUDA_Host bytes=2172727328",
+      "utc": "2026-09-15T05:11:41.679892739Z"
+    },
+    {
+      "message": "2.09.608.426 W D3T_NATIVE_V1 kind=cache backend=CUDA0 bytes=51539607552",
+      "utc": "2026-09-15T05:11:41.679894461Z"
+    },
+    {
+      "message": "2.09.608.426 W D3T_NATIVE_V1 kind=cache backend=CUDA1 bytes=48318382080",
+      "utc": "2026-09-15T05:11:41.679895964Z"
+    },
+    {
+      "message": "2.09.608.427 W D3T_NATIVE_V1 kind=end",
+      "utc": "2026-09-15T05:11:41.679897526Z"
+    },
+    {
+      "message": "2.09.608.569 I cmn          init: llama threadpool init, n_threads = 112",
+      "utc": "2026-09-15T05:11:41.679898988Z"
+    }
+  ],
+  "smoke": "NOT_RUN",
+  "state": {
+    "boot_policy": "manual",
+    "container": {
+      "deployment": "glm-5.3-ud-q4-k-xl-n76-native1m",
+      "id": "3108f42bfaab08010164340b2c3e709e03c4aebeb36374e6b87d8bac226296fb",
+      "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+      "instance": "ai-vm-d0b",
+      "legacy": false,
+      "name": "llmctl-glm-5.3-n76-native1m",
+      "owner": "mixed-memory-llm-api-server"
+    },
+    "container_running": true,
+    "desired": "stopped",
+    "failure": "stop_failed_container_may_be_running",
+    "last_selected": "glm-5.3-ud-q4-k-xl-n76-32k",
+    "observed": "failed",
+    "schema_version": 2,
+    "selected": "glm-5.3-ud-q4-k-xl-n76-native1m",
+    "state_persisted": true,
+    "updated_at": 1789449164666890077
+  },
+  "status": "STOP_MONITOR_CADENCE_CONTAINER_STOP_UNRESOLVED",
+  "target_process": null,
+  "vmstat": {
+    "oom_kill": 0,
+    "pswpin": 19058,
+    "pswpout": 38936
+  },
+  "vmstat_delta": {
+    "oom_kill": 0,
+    "pswpin": 13,
+    "pswpout": 3114
+  }
+}
