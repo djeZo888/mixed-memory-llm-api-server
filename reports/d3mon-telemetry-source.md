@@ -16,12 +16,14 @@ logs and retains all existing resource floors and runtime checks. Process start
 ticks/state, paused/restarting/dead state, restart count and host swap consistency
 are also checked, following Worker1's supplied cheap sampler strategy.
 
-One fixed stdin command requests the terminal full checkpoint; queued cheap
+After successful transport and complete JSON/SSE response validation, one fixed
+stdin command requests the terminal full checkpoint; queued cheap
 samples remain checked. A failed/missing post checkpoint cannot publish PASS or
 advance highest_proven_window. Original available response bytes/hash/transport
 status survive a later guard failure, with credential redaction retained. Failure
-first cancels its owned socket and makes a bounded checkpoint attempt; missing
-evidence remains explicit and the original failure is preserved. No extra API
+first cancels its owned socket and closes its exact sampler without a PSS request.
+Unconfirmed backend completion explicitly leaves the terminal checkpoint
+UNAVAILABLE; missing evidence and the original failure remain preserved. No extra API
 request, retry, fallback, deadline extension or state/lock ownership change.
 
 Worker1 supplied sanitized D3PERFVM source and evidence outside Git. Its unchanged
@@ -36,10 +38,28 @@ acceptance. Those historical measurements do not test this implementation.
 
 ## Focused verification
 
-**PASS: 81 bounded synthetic source tests** on macOS/Python3.14.7, including
+Initial `b436aee4` verification: **81 bounded synthetic source tests PASS** on macOS/Python3.14.7, including
 the retained64 D3TC checks and17 telemetry/evidence regressions. Python3.10
 grammar, whitespace and exact unchanged native body/accounting/request helpers
-also pass. Independent source review has no open blocking findings.
+also passed. Root/architecture subsequently found the failure-path blocker below;
+that initial review did not establish final source acceptance.
+
+### Root-review correction
+
+Client cancellation can leave backend prefill running. The follow-up moves the
+existing successful response parser ahead of any full-checkpoint command and
+removes all failure-cleanup PSS requests. `done=True`, transport error, partial
+JSON EOF or incomplete SSE finish/[DONE] cannot earn a checkpoint or PASS.
+`transfer_done` and `backend_response_complete` now identify separate evidence.
+Available response bytes/hash/status are preserved again after bounded owned
+sampler closing, without a PSS read, idle query, backend wait or new request.
+Normal successful completed responses still require one full checkpoint before
+PASS/window advancement. Guards and snapshot schema are unchanged by this fix.
+**Correction: 82 bounded synthetic checks PASS**, including explicit continuing
+backend cancellation/error fixtures and zero terminal commands for partial
+JSON/SSE. Independent correction review reports no blocking findings.
+Initial bundle/checks are retained under external `initial-b436aee4/`; corrected
+focused, committed and bundle verification results are in external `final.md`.
 
 Synthetic tests execute the collector against controlled proc/CLI/log fixtures,
 checking actual smaps read paths rather than only source strings. They cover

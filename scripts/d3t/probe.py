@@ -496,9 +496,10 @@ def memory_checkpoint(sample):
     return {key: sample[key] for key in ('timestamp', 'sample_elapsed_seconds', 'process_kib')}
 
 
-def retain_operation(run, name, transfer, key):
+def retain_operation(run, name, transfer, key, backend_response_complete=False):
     """Save available original operation evidence before a post guard can fail."""
-    evidence = {'transfer_complete': transfer.done.is_set(), 'http_status': transfer.status,
+    evidence = {'transfer_done': transfer.done.is_set(), 'http_status': transfer.status,
+                'backend_response_complete': backend_response_complete,
                 'transport_failed': transfer.error is not None,
                 'original_raw_sha256': None, 'raw_available': transfer.raw is not None}
     if transfer.raw is not None:
@@ -514,6 +515,7 @@ def worker(run, transport=Transfer, sampler_factory=None):
     with lock(run, 'request.lock'):
         transfer, sampler, log = None, None, None
         post_attempted, post_error, evidence_error = False, None, None
+        backend_response_complete = False
         previous = None
         started = time.monotonic()
 
@@ -536,22 +538,22 @@ def worker(run, transport=Transfer, sampler_factory=None):
                 extrema['mem_available_min_kib'] = available if old is None else min(old, available)
             previous = sample
 
-        def post_checkpoint(cleanup=False):
+        def post_checkpoint():
             nonlocal post_attempted, post_error
             deadline = time.monotonic() + 30
             try:
+                require(backend_response_complete, 'backend_response_completion_unconfirmed')
                 if not post_attempted:
                     post_attempted = True
                     sampler.request_full_checkpoint()
                 while True:
                     remaining = deadline - time.monotonic()
                     require(remaining > 0, 'post_checkpoint_timeout')
-                    if not cleanup:
-                        with lock(run):
-                            latest = read_json(run / 'state.json')
-                        require(not latest['cancel_requested'], 'owner_cancelled')
-                        require(time.time() <= s['request_deadline'], 'stage_timeout')
-                        remaining = min(remaining, max(.001, s['request_deadline'] - time.time()))
+                    with lock(run):
+                        latest = read_json(run / 'state.json')
+                    require(not latest['cancel_requested'], 'owner_cancelled')
+                    require(time.time() <= s['request_deadline'], 'stage_timeout')
+                    remaining = min(remaining, max(.001, s['request_deadline'] - time.time()))
                     try:
                         sample = sampler.next(timeout=min(1, remaining))
                     except guards.Error as exc:
@@ -616,9 +618,15 @@ def worker(run, transport=Transfer, sampler_factory=None):
                         'unexpected_full_inflight_sample')
                 record_sample(sample)
             retain_operation(run, s['request_name'], transfer, key)
-            require(transfer.error is None and transfer.raw is not None, 'transport_failed')
-            post = post_checkpoint()
+            require(transfer.done.is_set() and transfer.error is None
+                    and transfer.status == 200 and transfer.raw is not None, 'transport_failed')
+            # A cancelled socket may yield EOF and done=True while the backend
+            # continues prefill. Require the existing complete JSON/SSE protocol
+            # proof (including finish_reason and stream [DONE]) before full PSS.
             parsed = parse_response(transfer.raw, body['stream'], 'glm-5.3')
+            backend_response_complete = True
+            retain_operation(run, s['request_name'], transfer, key, backend_response_complete)
+            post = post_checkpoint()
             safe_parsed = redact(parsed, key)
             if safe_parsed != parsed:
                 write_json(run / (s['request_name'] + '.redacted-response.json'),
@@ -658,19 +666,32 @@ def worker(run, transport=Transfer, sampler_factory=None):
             if transfer:
                 transfer.cancel()
                 try:
-                    retain_operation(run, s['request_name'], transfer, key)
+                    retain_operation(run, s['request_name'], transfer, key, backend_response_complete)
                 except Exception as evidence_exc:
                     evidence_error = failure_code(evidence_exc)
-                if not post_attempted or post_error in ('owner_cancelled', 'stage_timeout', 'state_lock_timeout'):
-                    # Cancel first. This is evidence collection after a stopped
-                    # operation, not an extension of its generation deadline.
-                    with contextlib.suppress(Exception):
-                        post_checkpoint(cleanup=True)
+                if not post_attempted:
+                    # Socket cancellation is not backend completion. Never ask
+                    # for expensive PSS from failure cleanup or infer completion
+                    # from done/error/late bytes. Root must reconcile the backend.
+                    post_error = ('backend_response_completion_unconfirmed' if not backend_response_complete
+                                  else 'post_checkpoint_not_requested')
+                    try:
+                        write_json(run / (s['request_name'] + '.post-request.json'),
+                                   {'status': 'UNAVAILABLE', 'reason': post_error,
+                                    'full_checkpoint_requested': False,
+                                    'backend_response_complete': backend_response_complete})
+                    except Exception as evidence_exc:
+                        evidence_error = failure_code(evidence_exc)
+                if sampler:
+                    owned_sampler, sampler = sampler, None
+                    try:
+                        owned_sampler.close()
+                    except Exception as evidence_exc:
+                        evidence_error = failure_code(evidence_exc)
                 try:
-                    # Socket closure and its transfer thread can settle while
-                    # the checkpoint is collected. Preserve newly available
-                    # bytes/status too; do not wait for or restart the request.
-                    retain_operation(run, s['request_name'], transfer, key)
+                    # Preserve any bytes/status that settled during bounded
+                    # owned-sampler closing. No PSS, idle query or backend wait.
+                    retain_operation(run, s['request_name'], transfer, key, backend_response_complete)
                 except Exception as evidence_exc:
                     evidence_error = failure_code(evidence_exc)
             with lock(run):

@@ -208,13 +208,18 @@ window (250ms future clock tolerance). No stale measurement is substituted.
 
 Actual `smaps_rollup` Rss/Pss/Swap is required at admission, immediately before
 each request and after each request. The request's single sampler starts with a
-full checkpoint, then emits cheap samples. After completion, a fixed stdin command
+full checkpoint, then emits cheap samples. After successful HTTP transport and
+complete response validation by the existing JSON/SSE parser, a fixed stdin command
 asks that same sampler for one terminal full checkpoint; queued cheap rows are
 still checked. Full checkpoints allow up to30s collection/read time and retain
 their own timestamps/durations; they are explicitly outside the1Hz cadence.
-Request deadlines/cancellation still gate acceptance. Failure first cancels the
-owned transfer, then makes one bounded post-checkpoint attempt (or drains an
-already requested checkpoint); this never extends generation or redispatches.
+Request deadlines/cancellation still gate acceptance. Failure cancels the owned
+client socket and closes its exact sampler; it never requests full PSS. A done
+event, transport error or cancelled partial EOF does not prove backend completion.
+Without successful response protocol proof, `*.post-request.json` explicitly
+records UNAVAILABLE with `backend_response_completion_unconfirmed` and no full
+checkpoint command. Cleanup retains available raw bytes/hash/status again after
+bounded sampler closing; late bytes do not retroactively establish completion.
 Unavailable/malformed post data bars PASS and occupied-window advancement.
 Socket cancellation does not prove backend completion; reconciliation remains
 required. A sampler that has stopped/refused/exhausted its cap cannot manufacture
@@ -252,6 +257,8 @@ collection durations. There is no `pss_max_kib` field or1Hz PSS maximum claim.
 rejected rows. `*.samples.jsonl` retains rejected periodic rows too. Completed
 operation bytes are saved with existing credential redaction before post checks;
 `*.operation.json` retains their original hash, availability and transport status.
+`transfer_done` describes only the client event; `backend_response_complete`
+separately records successful transport and complete protocol validation.
 The primary failure is preserved alongside any `post_checkpoint_failure` or
 `operation_evidence_failure`; missing evidence cannot turn a failure into PASS.
 
