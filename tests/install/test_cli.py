@@ -55,7 +55,15 @@ class CliTests(unittest.TestCase):
         with patch.object(main, "make_plan", return_value={}), patch.object(main, "run_boundary") as action:
             code, _, error = self.invoke(["apply", *FLAGS, "--yes"])
             self.assertEqual(code, 78)
-            self.assertIn("required_deployment_stages_not_implemented_i1b", error)
+            self.assertIn("required_deployment_stages_not_implemented_i1c", error)
+            action.assert_not_called()
+
+    def test_bounded_package_apply_waits_for_reviewed_i1r_l1_before_mutation(self):
+        with patch.object(main, "make_plan", return_value={}), patch.object(main, "run_boundary") as action:
+            for through in ("base", "driver", "container", "runtime", "acquisition"):
+                code, _, error = self.invoke(["apply", *FLAGS, "--yes", "--through", through])
+                self.assertEqual(code, 78)
+                self.assertIn("reviewed_i1r_l1_package_integration_required", error)
             action.assert_not_called()
 
     def test_unsupported_host_and_small_root_rejected(self):

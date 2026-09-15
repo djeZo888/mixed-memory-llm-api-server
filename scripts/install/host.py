@@ -73,7 +73,7 @@ def model_plan(config, repo):
 def budget(config, models, storage):
     model_bytes = sum(x["download_bytes"] for x in models)
     # Conservative disk reservations only. Never interpret as RAM/VRAM minima.
-    runtime_reserve = 100 * GIB if any(x["selection"] == "glm" for x in models) else 40 * GIB
+    runtime_reserve = sum(100 if x["selection"] == "glm" else 40 for x in models) * GIB
     reserve = 20 * GIB
     capacity = storage.get("capacity", {})
     shared = capacity.get("shared_model_filesystem", True)
@@ -85,4 +85,4 @@ def budget(config, models, storage):
             "data_required_bytes": data_required, "model_required_bytes": model_required,
             "space_status": "unverified" if any(x is None for x in available) else
                 ("sufficient_for_full_artifact_reservation" if available[0] >= data_required and available[1] >= model_required else "insufficient"),
-            "note": "Fresh full-download reservation; no duplicate weight cache. Resume acquisition must budget actual remaining bytes under one owner in I1b."}
+            "note": "Fresh full-download reservation; no duplicate weight cache. Acquisition remeasures remaining bytes under one owner and counts completed runtime storage in actual free space."}

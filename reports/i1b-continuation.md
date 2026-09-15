@@ -1,5 +1,11 @@
 # Required I1b continuation — full installer incomplete
 
+Historical I1 handoff. I1b's bounded source implementation is recorded in
+[I1b report](i1b-runtime-acquisition.md). Current required continuation is the
+[I1c checklist](i1c-installer-checklist.md), with blank-disk work assigned to I1S
+and package execution pending reviewed I1R/L1 ownership integration. The original
+I1 scope/evidence below is retained for provenance.
+
 I1 deliberately finishes the preflight/storage/prerequisites/driver source
 boundary. It is **not** the user's requested complete fresh-machine installer.
 No READY summary is possible in this revision. Do not remove the full-apply

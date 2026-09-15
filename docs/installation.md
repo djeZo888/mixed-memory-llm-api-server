@@ -1,27 +1,30 @@
 # Fresh Linux installation
 
-## Delivery status: I1 prerequisites boundary; I1b required
+## Delivery status: bounded I1b source; complete installer still pending
 
-The full fresh-machine installer is **not complete**. This revision implements
-read-only planning, protected dedicated storage registration/adoption, pinned
-Ubuntu base packages, driver installation and an explicit reboot checkpoint.
-Full `apply`/`resume` refuses before mutation with exit **78** while required
-runtime/model/service/client/acceptance stages are missing. It never prints READY.
-See [I1 report](../reports/i1-installer-prerequisites.md) and
-[I1b continuation](../reports/i1b-continuation.md).
+This revision adds container/toolkit, pinned runtime-artifact and GLM/Qwen
+acquisition stages to I1's storage/prerequisite/driver graph. It **does not yet
+provide the complete fresh-machine installer**. `ready` is always false. Full
+`apply`/`resume` returns **78 before mutation** until I1c integrates and verifies
+service, authenticated control API, client and actual chosen-role acceptance.
 
-Supported target for this boundary: **Ubuntu 24.04 amd64**, system Python3,
-APT, CA certificates, Ubuntu archive keyring, util-linux and root or sudo. An existing mounted **ext4 or XFS** filesystem
-on a dedicated disk is supported. One data/model filesystem or two separately
-registered filesystems are supported. LVM, RAID, mapper devices, root/boot disk
-ancestry, ambiguous UUIDs, symlinked roots and a missing mount are refused.
-Other hosts are reported unsupported; a Mac cannot be used to apply this source.
-No Codex/cloud subscription or cloud API key is required.
+There is also a deliberate source integration checkpoint: package mutation
+through `base` or later returns `reviewed_i1r_l1_package_integration_required`
+until the reviewed I1R package transaction and L1 authorized lease-export/admission
+interfaces are integrated. Their developing source is owned separately; this
+checkout does not bypass them. Runtime parent-loss supervision must use the
+reviewed ownership contract too. See [I1b stage interfaces](orchestration/i1b-stage-api.md),
+[I1b report](../reports/i1b-runtime-acquisition.md) and
+[I1S disk handoff](orchestration/i1s-storage-handoff.md).
+
+Target: **Ubuntu 24.04 amd64**, system Python3, APT, CA certificates, Ubuntu
+archive keyring, util-linux and root or sudo. A Mac is a source/test worker,
+not a supported apply target. Source-only worker tests install no host packages,
+change no live VM, restart no live service and download no model weights.
 
 ## Read-only plan
 
-Use a reviewed checkout. Do not pipe a download into a shell. Inspect the config
-and preserve its identity for resume:
+From the exact reviewed checkout:
 
 ```sh
 ./install.sh --help
@@ -29,124 +32,138 @@ and preserve its identity for resume:
 ./install.sh plan --config scripts/install/server.example.json
 ```
 
-`--profile flagship-hybrid` selects GLM as the intended active model;
-`--profile fast-gpu` selects Qwen. `--model-set glm`, `qwen` or `glm,qwen` is
-mandatory for server/combined roles. There is no implicit smoke downgrade.
-The example explicitly selects both models; select only the desired artifacts.
+Server/combined roles require an explicit model set: `glm`, `qwen`, or `glm,qwen`.
+`flagship-hybrid` selects GLM as the eventual active model; `fast-gpu` selects
+Qwen. Only these reviewed acquisitions are supported. No implicit small-model
+fallback or additional model download is performed.
 
-The plan reports OS/kernel/RAM/GPU observations, exact package lock, model
-revision/manifest/download bytes, storage identity, disk reserves, selected
-stages and effects. A fixture is always labeled **SYNTHETIC_FIXTURE**. Expected
-weight sizes are 467289116837 bytes for GLM and 80407722953 bytes for Qwen;
-these are **disk** requirements. No measured RAM/VRAM minimum or full-model fit
-is published by I1. D1/F1A dual-96GB hardware observations do not prove model fit.
-Runtime build reservations (100GiB with GLM; otherwise40GiB) plus20GiB spare are
-conservative disk estimates. I1b acquisition must account for actual remaining
-bytes and shared filesystem reservations before downloading.
+The plan reports host support, exact packages/dependency hashes and bytes,
+immutable runtime/source/base-image identities, registry blob transfer sizes,
+model manifests/revisions/counts/bytes, dedicated storage and conservative
+capacity reservations. It lists daemon start/restart and disposable GPU probe
+effects. Image descriptor byte counts exclude Git/build package traffic; build
+space remains a separate reservation. Shared blob digests and package names can
+be deduplicated; the model filesystem receives no duplicate HF weight cache.
 
-Unavailable storage is reported unverified, not ready. `plan` does not refresh
-APT indexes, install packages, write state, initialize disks or query inference.
-Exact pin availability is checked by signed metadata before package installation;
-[package source evidence](../reports/i1-package-sources.md) records research.
+| Selection | Artifacts | Exact model bytes |
+| --- | ---: | ---: |
+| GLM-5.3 UD-Q4_K_XL | 11 | 467289116837 |
+| Qwen3-Coder-Next-FP8 | 48 | 80407722953 |
+| Both | 59 | 547696839790 |
 
-## Explicit partial prerequisite application
+Initial runtime/build reservations are 100 GiB for GLM and 40 GiB for Qwen,
+combined when both are selected, plus 20 GiB free reserve per distinct filesystem.
+These are disk budgets, **not measured RAM/VRAM fit requirements**. Acquisition
+remeasures actual remaining bytes under one owner. Verified completed runtimes
+already occupy filesystem space and are not reserved a second time during the
+acquisition stage. On a registered host, read-only plan also reports actual
+remaining model bytes; that size scan does not assert hash validity.
 
-These commands are for the reviewed prerequisite boundary on an authorized
-Linux test host. They **do not install a usable inference service**:
+Plan writes no state, refreshes no package indexes and starts no daemon. Synthetic
+host fixtures are labeled `SYNTHETIC_FIXTURE` and cannot enable apply/resume/verify.
+Unavailable or changed registered storage fails closed. Package availability and
+signed metadata are rechecked before installation; source research is not a
+promise that a remote package remains available forever.
+
+## Bounded stage interface
+
+After the reviewed I1R/L1 integration checkpoint is resolved, the intended
+bounded commands are:
 
 ```sh
-sudo ./install.sh apply --config scripts/install/server.example.json --through driver --yes
-sudo ./install.sh resume --through driver --yes
-sudo ./install.sh verify --through driver
+sudo ./install.sh apply --config scripts/install/server.example.json --through runtime --yes
+sudo ./install.sh resume --through acquisition --yes
+sudo ./install.sh verify --through acquisition
 sudo ./install.sh status
 ```
 
-`--through storage` and `--through base` are narrower boundaries. Normal
-`./install.sh apply --config ... --yes` returns78 until I1b completes.
-`--dry-run` redirects to read-only planning; a fixture can only be passed to
-`plan`, never mutation or verification commands.
+Boundaries: `storage`, `base`, `driver`, `container`, `runtime`, `acquisition`.
+`models` aliases `acquisition`. Runtime includes the separate GPU-container gate.
+Acquisition includes every selected manifest. The stages use the real dispatcher
+and recheck postconditions on resume; complete stage markers alone never pass.
+The commands above are **pending source integration**, not instructions to run
+this unreviewed worker source on a live host. `--through storage` retains I1's
+existing/mount boundary. `--dry-run` is read-only planning.
 
-Driver changes may return **75 / REBOOT_CHECKPOINT**. Read the protected
-`driver-checkpoint.json` for the target kernel and Secure Boot result. Reboot
-explicitly into the recorded signed kernel, then run the resume command above.
-The installer never reboots automatically. A same-boot retry does not pass;
-module/userspace versions and the expected distinct GPU count must agree.
-Firmware/signing or driver failure after reboot remains a failure needing
-external resolution. GPU-container execution belongs to I1b and is not implied
-by a driver query. Compatible loaded drivers are preserved; no host CUDA Toolkit
-or DKMS build is installed by this boundary.
+Driver installation may return **75 / REBOOT_CHECKPOINT**. No automatic reboot
+occurs. Resume requires matching loaded module/userspace and expected GPU count.
+GPU-container evidence is tied to actual boot, driver, pinned image and daemon
+configuration; fixture records never constitute production GPU proof.
 
-APT uses a private signed Ubuntu snapshot source, lists, archive cache, temporary
-files and logs on data; existing host sources remain unchanged. Missing pins,
-unlocked dependency changes, removals or downgrades stop. OS packages necessarily
-consume root space; the configured package budget and free-space reserve gate
-installation. Package service starts are temporarily inhibited with a saved
-policy restored after the transaction; interrupted policy state is recoverable.
-Read [package policy](../reports/i1-package-sources.md) before target testing.
+`status` distinguishes saved stage records from its current storage observation.
+It does not assert service health. `verify --through acquisition` hashes all
+expected model bytes again, which can take substantial time for 547.7 GB.
+Changed config, lock, source or storage identities fail closed. A release upgrade
+needs reviewed migration; deleting state or weakening hashes is not a migration.
 
-## Storage identity and persistence
+## Container/runtime behavior
 
-Default `--storage-mode existing` adopts the explicit exact mount. Supplying
-`--data-uuid` pins the expected UUID in advance; if omitted, the observed UUID is
-registered at adoption and becomes authoritative. `--model-dir` defaults to
-`<data-dir>/models`. A distinct mounted model filesystem may be registered with
-`--model-dir` and `--model-uuid`.
+The package lock includes Docker/containerd/toolkit dependency closure with exact
+primary URLs, bytes and SHA256, signed source/key identities and Ubuntu snapshot
+policy. Private APT sources, archives, temporary files and logs live on dedicated
+storage. OS package files necessarily consume the separately bounded root budget.
+Existing host repository configuration is preserved.
 
-`--storage-mode mount --data-uuid UUID` explicitly allows mounting an existing
-filesystem by UUID and adding a matching fstab entry. The target must be empty
-when unmounted. Existing config/data are preserved. A content-addressed fstab
-backup is on the verified data filesystem before fstab replacement. A conflicting
-entry or an already-mounted UUID at another target is refused.
+Before first daemon start the stage prepares registered Docker/containerd/cache
+roots, narrowly merges compatible config and installs mount-bound service
+settings. Conflicting roots, unreviewed overrides, root payload and active
+containers are refused. Existing compatible settings and data are preserved.
+Package autostart prevention includes policy restoration and temporary masks for
+Docker/containerd and NVIDIA CDI refresh units that bypass `policy-rc.d`.
+Interrupted/unknown package ownership must be reconciled by I1R before unmasking.
 
-Blank-disk **planning only** accepts `--storage-mode initialize
---initialize-empty-disk /dev/disk/by-id/ID --confirm-disk-id ID`. It checks stable
-serial/WWN/size, signatures, partitions, holders and root/boot ancestry. Actual
-initialization is pending I1b; this revision cannot partition or format a disk.
-NVMe partition topology is tested synthetically; no real device was exercised.
+GLM runtime uses the reviewed D1 Dockerfile, source commit, CUDA base digests,
+architecture/build settings and source ancestry. Completed images are inspected;
+CLI flags, source/CMake/compiler evidence and device enumeration are checked by
+actual bounded probes before a production runtime contract is issued. Qwen uses
+the exact reviewed SGLang registry digest and source/CLI capability contract.
+A matching mutable tag alone never establishes identity. These stages activate
+no model. SGLang native sentinel authentication remains a separate I1c/F1S gate.
 
-Tiny protected trust anchors:
+## Acquisition and protected storage
 
-- `/etc/local-ai-server/storage.json`: schema1 data/model roots, UUIDs and layout.
-- `/etc/local-ai-server/bootstrap.json`: schema1 config/source/lock hashes and
-  state locator; no credentials.
+Existing dedicated ext4/XFS filesystems may share data/models or use two exact
+registered mounts. Root/boot ancestry, LVM/RAID/mapper devices, ambiguous UUIDs,
+unsafe ancestry and symlinked/missing mounts are refused. `--storage-mode mount
+--data-uuid UUID` supports an explicit existing filesystem and narrowly backed-up
+fstab entry. Historical ai-vm UUIDs are never new-host defaults.
 
-Bulk state is under `<data-dir>`: `services/installer/state.json`, protected
-checkpoints, `cache/installer-apt`, `build`, `hf-cache`, `models`, `docker`,
-`containerd`, `logs`, `backups` and `services/secrets`. State/secrets directories
-are0700; JSON state is0600. Observed missing storage stops writes. Directory-FD anchored writes across a
-mount-detach race are still required in I1b; this boundary does not prove that
-race safe and is for reviewed disposable testing.
-The generic common guards use the fixed root-owned registry, ignore UUID/path
-environment overrides and refuse unsafe legacy test overrides when registered.
-Historical ai-vm UUIDs remain in legacy-only branches and never choose a fresh
-installer identity.
+Blank-disk plan uses explicit stable by-id and matching confirmation. Formatting
+remains unimplemented here; [I1S owns the concrete continuation](orchestration/i1s-storage-handoff.md).
+It must prove transaction ownership and safe interruption before that checkpoint
+can be removed. No live device is a formatting-test target.
 
-One `/run/llmctl/lifecycle.lock` lease covers a prerequisite transition. Atomic
-stage records include schema, installation ID, config/input/lock hashes,
-attempt/start/end/status and sanitized failures. Every resumed stage rechecks
-postconditions. An identical completed boundary runs verification without
-rewriting state, packages or credentials. Incompatible config/source/lock changes
-fail closed; source upgrades need an explicit reviewed migration in I1b.
-`status` labels saved state and storage observation separately; it does not
-claim current service health. `verify --through ...` proves only that boundary.
+Trust anchors are root-owned private `/etc/local-ai-server/storage.json` and
+`bootstrap.json`. Stage state is under `<data>/services/installer`. Directory-FD
+anchored I/O rechecks protected ancestry, inode/device, exact mount identity and
+registration around bounded writes, fsync and rename. The continuous guard reads
+mountinfo directly, avoiding a subprocess for every model-data chunk. Detachment
+cannot redirect held-descriptor writes to an underlying root directory.
 
-## Client and deployment integration still required
+Acquisition uses one aggregate pool of at most four workers, up to six network
+attempts per artifact, exact immutable URL/revision, valid Content-Range and
+content length, consistent response identity, and computed SHA256 before atomic
+promotion. Git assets also verify their pinned Git blob hash. Partial bytes survive
+interruption. A corrupt full partial is preserved with a `.rejected.<sha256>.<unique>`
+suffix; next resume retries that missing artifact without losing other shards.
+Oversize, ambiguous or corrupt final files are preserved and rejected for review.
 
-`--role server|client|combined` validates role-specific inputs. Client/combined
-require explicit ordinary `--client-user`, workspace/prefix, loopback API URL,
-model ID and protected key reference. Root is rejected as the client user.
-These are configuration interfaces only in I1. I1b must provision pinned Node/npm,
-consume [V0](client-install.md), provide the SSH tunnel helper, and run the real
-bounded OpenCode read/edit/test acceptance as the ordinary user. Server-only
-machines remain API-only and must not execute agent tools.
+Expected manifests remain unchanged. Protected schema1 completion contracts are
+`<roots.state>/acquisition/glm.complete.json` and/or `qwen.complete.json`. Each
+contains exact manifest identity, registered destination, computed artifact
+hashes and total verified bytes. Lifecycle must validate them through the reviewed
+I1c/L1 integration. Completion proves acquisition only, not load/auth/health/tool
+acceptance. API key bytes are never generated or rewritten by these stages.
 
-I1b must integrate L1 generic storage + single-owner lifecycle, safe F1S file auth
-and actual image sentinel gate, pinned D1 build/import, resumable per-file
-acquisition, API key preservation, systemd mount ordering/stopped intent,
-rollback, liveness/readiness/auth/generation/streaming/tool continuation and
-client acceptance. No unavailable gate may be labeled successful.
+## Remaining completion work and evidence limits
 
-## Worker checks and evidence limits
+I1c must consume reviewed I1S, L1, I1R, F1S, U1 and V0 interfaces: protected release
+source, keys/instances/boot/stopped intent, native SGLang auth sentinel proof,
+authenticated model catalog/switch over the existing Manager, ordinary-user staged
+OpenCode bootstrap, and actual chosen-role health/generation/streaming/tool/client
+edit-test acceptance. The server remains API-only. Client tools require an
+explicit ordinary user and trusted workspace; no browser UI or agent tools on
+the inference VM.
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/install -p 'test_*.py' -v
@@ -155,8 +172,8 @@ bash -n install.sh scripts/common/require-data-mounted.sh scripts/common/root-di
   --fixture-host tests/install/fixtures/ubuntu-host.json
 ```
 
-I1 tests use temporary files, fake command outputs and process-lock fixtures.
-They install no host packages, touch no VM disk, download no weights and activate
-no model. Ubuntu container/bootstrap, real loopback mounts, live adoption,
-GPU-container/model/client behavior and full fresh-host GPU/reboot acceptance
-are **NOT_TESTED** here. I2 must report each later evidence class separately.
+Evidence classes are separate: macOS filesystem/process/HTTP fixtures; primary
+HTTP package/registry verification; Linux namespace/process tests (skipped here);
+real Ubuntu package/systemd/GPU/model/client acceptance (**NOT_TESTED**). A full
+fresh-host GPU installation and reboot remains **NOT_TESTED**. See the I1b report
+for final counts and the exact handoff revision.
