@@ -95,6 +95,13 @@ class _BoundMountedGuard:
     def __call__(self):
         return self._snapshot(_mounted_call(self._mounted))
 
+    def check_path(self, path):
+        """Retain the writer's actual-path capability and this binding's checks."""
+        checker = getattr(self._mounted, "check_path", None)
+        if not callable(checker):
+            raise BindingError("mounted_storage_path_guard_required")
+        return self._snapshot(_mounted_call(checker, path))
+
     def verify_full(self):
         result = _mounted_call(self._mounted.verify_full)
         # The frozen API does not require verify_full to return a value. If it
@@ -167,7 +174,7 @@ class RegisteredStorageBinding:
     def verify(self, roles=("data", "models")):
         """Recheck protected registration and relevant actual mounts.
 
-        I1's provisional verifier has no role selection. Until I1b supplies it,
+        I1's provisional verifier has no role selection. Until I1c supplies it,
         data-only calls conservatively verify both roles. This may prevent state
         persistence when models are absent; callers must preserve volatile stop
         recovery and report state_persisted:false. It is never a safety bypass.
@@ -187,15 +194,15 @@ class RegisteredStorageBinding:
         """Wrap the real I1b mounted guard for an anchored-write transaction.
 
         ``with binding.mounted_guard(storage_io) as guard:`` yields a callable
-        snapshot guard for ``storage_io.AnchoredRoot(binding.path('data'), guard)``.
+        snapshot guard for ``storage_io.AnchoredRoot(binding.path('services'), guard)``.
         Full topology/capacity checks run before and after the body; each fast
         snapshot must retain this binding's captured stable identity. The real
         shared context owns all registry/mountinfo descriptors and their close.
 
-        Provisional MountedStorageGuard has no roles parameter, so data-only
-        operations remain conservatively full-guarded until I1b provides that
-        API. No local cache, guard replacement or duplicate writer closes that
-        integration gap. Injected tests establish interface behavior only.
+        Reviewed I1W forwards roles to Storage and requires explicit attestation
+        for reduced roles. Until I1c publishes that Storage API, the actual
+        data-only guard fails closed. Older full-role fixture constructors are
+        retained as an interface seam, never data-only integration evidence.
         """
         if isinstance(roles, str) or not roles or not set(roles) <= {"data", "models"}:
             raise BindingError("invalid_storage_roles")

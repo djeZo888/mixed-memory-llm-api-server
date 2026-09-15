@@ -26,6 +26,8 @@ class MountedGuardInterfaceTests(unittest.TestCase):
                 self.active = False
                 self.full_result = None
                 self.fail_full = False
+                self.path_result = None
+                self.fail_path = False
                 events.append("constructed")
                 instances.append(self)
 
@@ -49,6 +51,14 @@ class MountedGuardInterfaceTests(unittest.TestCase):
                 if self.fail_full:
                     raise RuntimeError("SENSITIVE-SHARED-ERROR")
                 return self.full_result
+
+            def check_path(self, path):
+                if not self.active:
+                    raise RuntimeError("fixture-closed")
+                events.append(("check_path", path))
+                if self.fail_path:
+                    raise RuntimeError("SENSITIVE-PATH-ERROR")
+                return self.snapshot if self.path_result is None else self.path_result
 
         self.guard_class = InjectedMountedStorageGuard
         self.io = SimpleNamespace(MountedStorageGuard=InjectedMountedStorageGuard)
@@ -80,6 +90,45 @@ class MountedGuardInterfaceTests(unittest.TestCase):
                 changed["roots"]["docker"] = "/unregistered"
                 self.instances[-1].full_result = changed
         self.assertFalse(self.instances[-1].active)
+
+    def test_actual_absolute_operation_path_forwarded_without_projection(self):
+        with self.binding.mounted_guard(self.io) as guard:
+            for path in ("/srv/ai/services/backend/new/state.json",
+                         Path("/srv/ai/services/backend/new/state.json")):
+                with self.subTest(path=path):
+                    before = self.events.count("snapshot")
+                    result = guard.check_path(path)
+                    self.assertEqual(self.events[-1], ("check_path", path))
+                    self.assertIs(self.events[-1][1], path)
+                    self.assertEqual(self.events.count("snapshot"), before)
+                    result["data"]["uuid"] = "caller-mutation"
+                    self.assertEqual(guard.check_path(path)["data"]["uuid"], "data-uuid")
+
+    def test_path_snapshot_identity_is_checked_even_when_fast_snapshot_is_original(self):
+        with self.binding.mounted_guard(self.io) as guard:
+            changed = copy.deepcopy(self.instances[-1].snapshot)
+            changed["roots"]["services"] = "/unregistered"
+            self.instances[-1].path_result = changed
+            with self.assertRaisesRegex(BindingError, "^mounted_storage_identity_changed$"):
+                guard.check_path("/srv/ai/services/state.json")
+            self.assertEqual(guard()["roots"]["services"], "/srv/ai/services")
+
+    def test_path_failure_is_sanitized_and_closed_guard_remains_unusable(self):
+        with self.binding.mounted_guard(self.io) as guard:
+            self.instances[-1].fail_path = True
+            with self.assertRaisesRegex(BindingError, "^mounted_storage_guard_failed$"):
+                guard.check_path("/srv/ai/services/state.json")
+        with self.assertRaisesRegex(BindingError, "^mounted_storage_guard_failed$"):
+            guard.check_path("/srv/ai/services/state.json")
+        self.assertFalse(self.instances[-1].active)
+
+    def test_missing_path_capability_fails_without_snapshot_fallback(self):
+        with self.binding.mounted_guard(self.io) as guard:
+            self.instances[-1].check_path = None
+            before = list(self.events)
+            with self.assertRaisesRegex(BindingError, "^mounted_storage_path_guard_required$"):
+                guard.check_path("/srv/ai/services/state.json")
+            self.assertEqual(self.events, before)
 
     def test_observed_device_renumbering_does_not_change_stable_identity(self):
         with self.binding.mounted_guard(self.io) as guard:

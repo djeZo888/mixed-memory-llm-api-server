@@ -59,6 +59,15 @@ class LocalStorageFixture:
 
         class StorageProbe(Storage):
             """Retain real registry/identity/ownership checks; inject discovery."""
+            def verify(self, registration=None):
+                # This older snapshot-discovery fixture exposes full verification
+                # only, including when run with I1c's role-aware implementation.
+                # Do not invent partial attestation for a synthetic snapshot.
+                # test_real_storage_roles uses inherited real role verification.
+                return super().verify(registration=registration)
+
+            guard = verify
+
             def _local(self, path):
                 return fixture.local(path)
 
@@ -158,7 +167,18 @@ class LocalStorageFixture:
     def anchored_root(self, path, guard):
         # No writer substitute: return the actual class, with the documented
         # uid seam. /data projection is limited to the historical fixture.
-        checked = (lambda: self.physical_snapshot(guard())) if self.historical else guard
+        fixture = self
+
+        class HistoricalPathGuard:
+            """Project fixture coordinates without erasing I1W path capability."""
+            def __call__(self):
+                return fixture.physical_snapshot(guard())
+
+            def check_path(self, actual_path):
+                logical = '/' + str(Path(actual_path).relative_to(fixture.base))
+                return fixture.physical_snapshot(guard.check_path(logical))
+
+        checked = HistoricalPathGuard() if self.historical else guard
         value = real_io.AnchoredRoot(str(self.local(path)), checked, uid=os.geteuid())
         self.anchors.append(value)
         return value
@@ -226,6 +246,29 @@ class RealStorageIntegrationTests(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in fixture.local(fixture.data).iterdir()), ['underlying-marker'])
         self.assertFalse(Path(target).exists())
         self.assert_closed(fixture)
+
+    def test_persistence_selects_registered_services_state_and_direct_logs_anchor(self):
+        fixture = self.fixture(layout='equal')
+        for role, suffix in (('services', 'llm-manager/active/active.json'),
+                             ('state', 'package-service-policy.json'),
+                             ('logs', 'llmctl-root-disk-guard.json')):
+            with self.subTest(role=role), fixture.lease():
+                target = fixture.binding.path(role, suffix)
+                fixture.manager.persistent_json(target, {'anchor': role})
+                self.assertEqual(fixture.anchors[-1].path, Path(fixture.binding.path(role)))
+                self.assertEqual(json.loads(Path(target).read_text()), {'anchor': role})
+        self.assert_closed(fixture)
+
+    def test_persistence_refuses_unsafe_suffix_and_nonservice_model_targets_before_writer(self):
+        fixture = self.fixture()
+        for target in (fixture.data + '/services//state.json',
+                       fixture.data + '/services/./state.json',
+                       fixture.data + '/services/../models/state.json',
+                       fixture.models + '/state.json', fixture.data + '/unregistered.json'):
+            with self.subTest(target=target), fixture.lease(), self.assertRaises((BindingError, LifecycleError)):
+                fixture.manager.persistent_json(target, {'must_not_write': True})
+        self.assertEqual(fixture.guards, [])
+        self.assertEqual(fixture.anchors, [])
 
     def test_atomic_commit_race_stays_on_old_fd_and_never_reports_success(self):
         fixture = self.fixture(layout='sibling')
@@ -306,27 +349,40 @@ class RealStorageIntegrationTests(unittest.TestCase):
         self.assertFalse(Path(target).exists())
 
     def test_new_same_device_descendant_mount_after_preflight_is_rejected(self):
-        """Required shared gap: actual guard currently checks only named roots.
-
-        This injects the kernel mountinfo observation, not a real Linux bind.
-        The guard must reject the newly observed bind before persistent success.
-        """
+        """Reach preflight, opened anchor and insertion before path refusal."""
         fixture = self.fixture()
         parent = fixture.binding.path('data', 'services/llm-manager')
-        Path(parent).mkdir(mode=0o700)
+        target = parent + '/active/active.json'
+        with fixture.lease():
+            fixture.manager.persistent_json(target, {'generation': 1})
+        self.assertEqual(json.loads(Path(target).read_text()), {'generation': 1})
+        phases = ['normal_write_passed']
         original_factory = fixture.api.AnchoredRoot
+        original_preflight = fixture.binding.validate_path
+
+        def preflight(role, path):
+            result = original_preflight(role, path)
+            phases.append('preflight_passed')
+            return result
 
         def insert_descendant_mount_after_anchor(path, guard):
             anchor = original_factory(path, guard)
+            self.assertIsNotNone(anchor._fd)
+            phases.append('anchor_opened')
             device = fixture.snapshot['data']['device']
             fixture.mountinfo += f'9 2 {device} /elsewhere {parent} rw - ext4 /dev/fixture-data rw\n'
+            phases.append('same_device_descendant_inserted')
             return anchor
 
         fixture.api.AnchoredRoot = insert_descendant_mount_after_anchor
-        target = parent + '/active/active.json'
+        fixture.binding.validate_path = preflight
         with fixture.lease(), self.assertRaisesRegex(LifecycleError, 'persistent_storage_io_failed'):
-            fixture.manager.persistent_json(target, {'generation': 1})
-        self.assertFalse(Path(target).exists())
+            fixture.manager.persistent_json(target, {'generation': 2})
+        phases.append('refused')
+        self.assertEqual(phases, ['normal_write_passed', 'preflight_passed', 'anchor_opened',
+                                  'same_device_descendant_inserted', 'refused'])
+        self.assertEqual(json.loads(Path(target).read_text()), {'generation': 1})
+        self.assert_closed(fixture)
 
     def test_trusted_stop_after_real_persistence_race_retains_volatile_truth(self):
         fixture = self.fixture()
