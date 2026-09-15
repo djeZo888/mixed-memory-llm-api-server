@@ -1,0 +1,146 @@
+{
+  "milestone": "I1W",
+  "status": "SOURCE_REVIEW_ONLY_INTEGRATION_GATED",
+  "base_commit": "c0e1a1dff0ac1647ed5207f05247ff63f72f7cc7",
+  "source_sha256": "5ba1b1356519bbb4922b563662a605459862a84b81ce4f521dfbce293d97302a",
+  "focused_tests_sha256": "c9fbc35867c60ccf00c82094eecd61dd1a21bdfb2004b33d50313ccb88482b99",
+  "platform": "Darwin arm64",
+  "python": "3.14.7",
+  "local_writer_suite": {
+    "tests": 67,
+    "passed": 66,
+    "skipped": 1,
+    "skip_reason": "Actual Linux mount namespace unavailable on Darwin"
+  },
+  "new_focused_tests": {
+    "tests": 29,
+    "passed": 29,
+    "skipped": 0,
+    "observation": "synthetic mountinfo with actual local descriptor operations"
+  },
+  "original_l1_snapshot": {
+    "sha256": "a7d6963d5a414a833d9a80b894d860ddfe64246a39fbeba79ada40ebf373cd2a",
+    "other_source_matches_archive": true,
+    "supplied_test_unchanged": true,
+    "baseline": {
+      "tests": 9,
+      "passed": 8,
+      "failed": 1,
+      "failure": "descendant mount inserted after anchor; LifecycleError not raised"
+    },
+    "candidate": {
+      "test_methods": 9,
+      "failure_records": 2,
+      "error_records": 8,
+      "status": "FAIL",
+      "warning": "Regression method reports ok only because missing check_path forwarding refuses before mount injection; NOT corrected integration evidence"
+    },
+    "mounted_guard_interface_suite": {
+      "tests": 8,
+      "passed": 8
+    }
+  },
+  "full_installer_suite": {
+    "source_sha256": "5ba1b1356519bbb4922b563662a605459862a84b81ce4f521dfbce293d97302a",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "tests_run": 270,
+    "failures": [
+      "test_container.ContainerTests.test_policy_and_runtime_masks_restore_after_failed_package",
+      "test_container.ContainerTests.test_unpinned_dependency_and_failed_postcondition_refuse",
+      "test_package_processes.PackageProcessOwnershipTests.test_watcher_then_cli_crash_cannot_admit_live_descendant_from_available_lease"
+    ],
+    "errors": [
+      "test_container.ContainerTests.test_effective_service_namespace_drift_cannot_reuse_completion",
+      "test_container.ContainerTests.test_existing_config_preserved_with_narrow_merge_and_backup",
+      "test_container.ContainerTests.test_gpu_command_requires_exact_host_image_and_boot_identity",
+      "test_container.ContainerTests.test_interrupted_runtime_mask_checkpoint_recovers",
+      "test_container.ContainerTests.test_matching_tag_different_digest_is_not_accepted",
+      "test_container.ContainerTests.test_mount_loss_after_package_download_keeps_masks_until_recovery",
+      "test_container.ContainerTests.test_original_backup_survives_interrupted_install_resume",
+      "test_container.ContainerTests.test_package_and_evidence_drift_force_revalidation",
+      "test_container.ContainerTests.test_real_stage_entrypoint_order_and_second_verified_noop",
+      "test_container.ContainerTests.test_semantically_complete_json_bytes_preserved",
+      "test_container.ContainerTests.test_verified_manifest_id_is_accepted_for_containerd_image_store",
+      "test_package_processes.PackageProcessOwnershipTests.test_watcher_then_cli_crash_cannot_admit_live_descendant_from_available_lease"
+    ],
+    "skipped": [
+      {
+        "test": "test_runtime.MonitoredProcessTest.test_real_child_guard_loss_stops_future_writes",
+        "reason": "Linux /proc FD subprocess integration only"
+      },
+      {
+        "test": "test_runtime.MonitoredProcessTest.test_real_child_timeout_kills_descendant_and_keeps_anchored_log",
+        "reason": "Linux /proc FD subprocess integration only"
+      },
+      {
+        "test": "test_runtime.MonitoredProcessTest.test_successful_parent_cannot_leave_background_writer",
+        "reason": "Linux /proc FD subprocess integration only"
+      },
+      {
+        "test": "test_storage_io.StorageIOTests.test_actual_linux_lazy_unmount_during_write",
+        "reason": "actual mount-loss NOT_TESTED: needs Linux and unshare/CAP_SYS_ADMIN"
+      }
+    ],
+    "successful": false
+  },
+  "baseline_container_comparison": {
+    "tests": 23,
+    "failures": [
+      "test_container.ContainerTests.test_policy_and_runtime_masks_restore_after_failed_package",
+      "test_container.ContainerTests.test_unpinned_dependency_and_failed_postcondition_refuse"
+    ],
+    "errors": [
+      "test_container.ContainerTests.test_effective_service_namespace_drift_cannot_reuse_completion",
+      "test_container.ContainerTests.test_existing_config_preserved_with_narrow_merge_and_backup",
+      "test_container.ContainerTests.test_gpu_command_requires_exact_host_image_and_boot_identity",
+      "test_container.ContainerTests.test_interrupted_runtime_mask_checkpoint_recovers",
+      "test_container.ContainerTests.test_matching_tag_different_digest_is_not_accepted",
+      "test_container.ContainerTests.test_mount_loss_after_package_download_keeps_masks_until_recovery",
+      "test_container.ContainerTests.test_original_backup_survives_interrupted_install_resume",
+      "test_container.ContainerTests.test_package_and_evidence_drift_force_revalidation",
+      "test_container.ContainerTests.test_real_stage_entrypoint_order_and_second_verified_noop",
+      "test_container.ContainerTests.test_semantically_complete_json_bytes_preserved",
+      "test_container.ContainerTests.test_verified_manifest_id_is_accepted_for_containerd_image_store"
+    ],
+    "source_sha256": "5ee61519424454f0113cc90f2467059bec398c4f73ab5c659796103f6739aa1d"
+  },
+  "gates": [
+    "L1 check_path forwarding and historical fixture path projection, then supplied actual writer fault-injection rerun",
+    "I2S actual Linux same-device bind, mount replacement/loss, no root fallthrough, unrelated mounts, legitimate model mount and fixed registry tamper",
+    "Root source review; installer stage/full apply remain gated"
+  ],
+  "package_process_recheck": {
+    "base_commit": "c0e1a1dff0ac1647ed5207f05247ff63f72f7cc7",
+    "method": "One isolated test run for current writer, then one with immutable baseline storage_io injected in memory before test import; no fixture or source edits.",
+    "original_broad_suite_observation": {
+      "cleanup_failure": "fixture supervisor exited unsuccessfully",
+      "error": "package_fixture_inspection_unavailable at scope.inspect",
+      "source_sha256": "5ba1b1356519bbb4922b563662a605459862a84b81ce4f521dfbce293d97302a"
+    },
+    "platform": "darwin",
+    "python": "3.14.7",
+    "runs": [
+      {
+        "errors": [],
+        "failures": [],
+        "mode": "current",
+        "skips": [],
+        "storage_io_sha256": "5ba1b1356519bbb4922b563662a605459862a84b81ce4f521dfbce293d97302a",
+        "successful": true,
+        "tests_run": 1
+      },
+      {
+        "errors": [],
+        "failures": [],
+        "mode": "baseline",
+        "skips": [],
+        "storage_io_sha256": "5ee61519424454f0113cc90f2467059bec398c4f73ab5c659796103f6739aa1d",
+        "successful": true,
+        "tests_run": 1
+      }
+    ],
+    "subprocess_scope": "Fixture children execute existing fixture/core/prerequisites source. Those files do not import or reference storage_io/AnchoredRoot/GuardedFile.",
+    "test_id": "test_package_processes.PackageProcessOwnershipTests.test_watcher_then_cli_crash_cannot_admit_live_descendant_from_available_lease"
+  }
+}

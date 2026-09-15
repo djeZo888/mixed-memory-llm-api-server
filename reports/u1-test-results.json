@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "session_id": "01a0a287-fa5f-7931-addf-034369af7105",
+  "base_commit": "412aaed08cfb0a1f8b79b595d8a101d9828ff22e",
+  "tested_at": "2026-09-15T01:06:42.568578+00:00",
+  "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_control*.py' -v",
+  "tests_run": 133,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "modules": {
+    "test_control_catalog": 20,
+    "test_control_core_guards": 28,
+    "test_control_http_transport": 31,
+    "test_control_integration": 24,
+    "test_control_journal": 19,
+    "test_control_receipts": 10,
+    "test_control_restart": 1
+  },
+  "real_http_transport": 31,
+  "real_http_application": 24,
+  "real_http_process_crash_restart": 1,
+  "canonical_lease_regression": {
+    "tests_run": 37,
+    "failures": 0,
+    "errors": 0,
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/lifecycle -p 'test_lease.py' -q"
+  },
+  "lifecycle_backend": "explicit_synthetic_protocol_fixture",
+  "production_adapter": "INCOMPLETE",
+  "installed_systemd_service": "NOT_TESTED",
+  "live_two_model_inference_opencode": "NOT_TESTED",
+  "live_inference_stream_interruption": "NOT_TESTED",
+  "boot_fresh_installer": "NOT_TESTED"
+}

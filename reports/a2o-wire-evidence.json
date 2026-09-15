@@ -1,0 +1,268 @@
+{
+  "status": "PASS",
+  "client_version": "1.18.31",
+  "claim": "actual_client_to_synthetic_server_only",
+  "live_llm_acceptance": false,
+  "nonstream": "NOT_SUPPORTED_BY_PINNED_CLI_AGENT_PATH",
+  "cases": [
+    {
+      "selection": "default",
+      "mode": "ordinary",
+      "status": "PASS",
+      "completed_read_events": 0,
+      "tool_rounds": 0,
+      "requests": [
+        {
+          "kind": "auxiliary",
+          "model": "glm-5.3",
+          "stream": true,
+          "reasoning_effort_present": false,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 0,
+          "tool_result_count": 0,
+          "assistant_call_count": 0,
+          "fixture_marker_seen": false
+        },
+        {
+          "kind": "ordinary",
+          "model": "glm-5.3",
+          "stream": true,
+          "reasoning_effort_present": false,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 6,
+          "tool_result_count": 0,
+          "assistant_call_count": 0,
+          "fixture_marker_seen": false
+        }
+      ]
+    },
+    {
+      "selection": "default",
+      "mode": "tool",
+      "status": "PASS",
+      "completed_read_events": 1,
+      "tool_rounds": 2,
+      "requests": [
+        {
+          "kind": "auxiliary",
+          "model": "glm-5.3",
+          "stream": true,
+          "reasoning_effort_present": false,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 0,
+          "tool_result_count": 0,
+          "assistant_call_count": 0,
+          "fixture_marker_seen": false
+        },
+        {
+          "kind": "tool",
+          "model": "glm-5.3",
+          "stream": true,
+          "reasoning_effort_present": false,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 6,
+          "tool_result_count": 0,
+          "assistant_call_count": 0,
+          "fixture_marker_seen": false
+        },
+        {
+          "kind": "continuation",
+          "model": "glm-5.3",
+          "stream": true,
+          "reasoning_effort_present": false,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 6,
+          "tool_result_count": 1,
+          "assistant_call_count": 1,
+          "fixture_marker_seen": true
+        }
+      ]
+    },
+    {
+      "selection": "low-glm",
+      "mode": "ordinary",
+      "status": "PASS",
+      "completed_read_events": 0,
+      "tool_rounds": 0,
+      "requests": [
+        {
+          "kind": "auxiliary",
+          "model": "glm-5.3",
+          "stream": true,
+          "reasoning_effort_present": true,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 0,
+          "tool_result_count": 0,
+          "assistant_call_count": 0,
+          "fixture_marker_seen": false,
+          "reasoning_effort": "low"
+        },
+        {
+          "kind": "ordinary",
+          "model": "glm-5.3",
+          "stream": true,
+          "reasoning_effort_present": true,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 6,
+          "tool_result_count": 0,
+          "assistant_call_count": 0,
+          "fixture_marker_seen": false,
+          "reasoning_effort": "low"
+        }
+      ]
+    },
+    {
+      "selection": "low-glm",
+      "mode": "tool",
+      "status": "PASS",
+      "completed_read_events": 1,
+      "tool_rounds": 2,
+      "requests": [
+        {
+          "kind": "auxiliary",
+          "model": "glm-5.3",
+          "stream": true,
+          "reasoning_effort_present": true,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 0,
+          "tool_result_count": 0,
+          "assistant_call_count": 0,
+          "fixture_marker_seen": false,
+          "reasoning_effort": "low"
+        },
+        {
+          "kind": "tool",
+          "model": "glm-5.3",
+          "stream": true,
+          "reasoning_effort_present": true,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 6,
+          "tool_result_count": 0,
+          "assistant_call_count": 0,
+          "fixture_marker_seen": false,
+          "reasoning_effort": "low"
+        },
+        {
+          "kind": "continuation",
+          "model": "glm-5.3",
+          "stream": true,
+          "reasoning_effort_present": true,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 6,
+          "tool_result_count": 1,
+          "assistant_call_count": 1,
+          "fixture_marker_seen": true,
+          "reasoning_effort": "low"
+        }
+      ]
+    },
+    {
+      "selection": "low-generic",
+      "mode": "ordinary",
+      "status": "PASS",
+      "completed_read_events": 0,
+      "tool_rounds": 0,
+      "requests": [
+        {
+          "kind": "auxiliary",
+          "model": "vendor/model:Q4_K_M",
+          "stream": true,
+          "reasoning_effort_present": true,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 0,
+          "tool_result_count": 0,
+          "assistant_call_count": 0,
+          "fixture_marker_seen": false,
+          "reasoning_effort": "low"
+        },
+        {
+          "kind": "ordinary",
+          "model": "vendor/model:Q4_K_M",
+          "stream": true,
+          "reasoning_effort_present": true,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 6,
+          "tool_result_count": 0,
+          "assistant_call_count": 0,
+          "fixture_marker_seen": false,
+          "reasoning_effort": "low"
+        }
+      ]
+    },
+    {
+      "selection": "low-generic",
+      "mode": "tool",
+      "status": "PASS",
+      "completed_read_events": 1,
+      "tool_rounds": 2,
+      "requests": [
+        {
+          "kind": "auxiliary",
+          "model": "vendor/model:Q4_K_M",
+          "stream": true,
+          "reasoning_effort_present": true,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 0,
+          "tool_result_count": 0,
+          "assistant_call_count": 0,
+          "fixture_marker_seen": false,
+          "reasoning_effort": "low"
+        },
+        {
+          "kind": "tool",
+          "model": "vendor/model:Q4_K_M",
+          "stream": true,
+          "reasoning_effort_present": true,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 6,
+          "tool_result_count": 0,
+          "assistant_call_count": 0,
+          "fixture_marker_seen": false,
+          "reasoning_effort": "low"
+        },
+        {
+          "kind": "continuation",
+          "model": "vendor/model:Q4_K_M",
+          "stream": true,
+          "reasoning_effort_present": true,
+          "max_tokens": 2048,
+          "authenticated": true,
+          "tool_schema_count": 6,
+          "tool_result_count": 1,
+          "assistant_call_count": 1,
+          "fixture_marker_seen": true,
+          "reasoning_effort": "low"
+        }
+      ]
+    }
+  ],
+  "credential_scan": "PASS",
+  "source_sha256": {
+    "scripts/client/bootstrap.py": "ccf94f52a48346f02105112d93ee41010a6dd034406272e8a4a54d02fc12ca12",
+    "scripts/client/client_common.py": "b6e1b4995a717067846c4cd3835c72f7c493c5aaac4d09d985f9a93d2383e1b0",
+    "scripts/client/launch.py": "bb47de96ba33d1088589337876b1ec340d0c7e3157c284217abb45a955338278",
+    "scripts/client/package.json": "a690baa19cd430ef35f12d5c6e2c0d429539dd3150055cf1b34f7b060fe3489f",
+    "scripts/client/package-lock.json": "eb4f16892e1e7d955fc8aa5e949f8c31b6c6d26d98acb3eb2f9be26d2673d3b7",
+    "scripts/client/tests/wire_fixture.py": "693090094b685b16c9299f18dc35232abb9a91e6544ca6ab9dd3d806a8d69133"
+  },
+  "platform": {
+    "os": "Darwin",
+    "machine": "arm64",
+    "python": "3.14.7"
+  },
+  "native_binary_sha256": "16c960ba77421da11b53e785f359b73f328a86118b48feb4af143db5d9afb198"
+}

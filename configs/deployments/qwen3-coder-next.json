@@ -14,52 +14,85 @@
   "container_port": 30003,
   "container_host": "0.0.0.0",
   "auth": {
-    "key_file": "/data/services/secrets/llm-api-key",
+    "key_file": {
+      "role": "data",
+      "suffix": "services/secrets/llm-api-key"
+    },
     "container_key_file": "/run/secrets/llm-api-key",
     "mode": "0600"
   },
   "paths": {
-    "model": "/data/models-large/qwen3-coder-next-fp8",
-    "cache": "/data/models-large/runtime-cache/sglang-qwen-next",
-    "logs": "/data/logs/llmctl/qwen3-coder-next",
-    "service": "/data/services/llm-manager/qwen3-coder-next"
+    "model": {
+      "role": "models",
+      "suffix": "qwen3-coder-next-fp8"
+    },
+    "cache": {
+      "role": "models",
+      "suffix": "runtime-cache/sglang-qwen-next"
+    },
+    "logs": {
+      "role": "data",
+      "suffix": "logs/llmctl/qwen3-coder-next"
+    },
+    "service": {
+      "role": "data",
+      "suffix": "services/llm-manager/qwen3-coder-next"
+    }
   },
   "mounts": [
     {
-      "source": "/data/models-large/qwen3-coder-next-fp8",
+      "source": {
+        "role": "models",
+        "suffix": "qwen3-coder-next-fp8"
+      },
       "target": "/models",
       "read_only": true,
-      "required_mount": "/data/models-large"
+      "required_role": "models"
     },
     {
-      "source": "/data/models-large/runtime-cache/sglang-qwen-next",
+      "source": {
+        "role": "models",
+        "suffix": "runtime-cache/sglang-qwen-next"
+      },
       "target": "/cache",
       "read_only": false,
-      "required_mount": "/data/models-large"
+      "required_role": "models"
     },
     {
-      "source": "/data/logs/llmctl/qwen3-coder-next",
+      "source": {
+        "role": "data",
+        "suffix": "logs/llmctl/qwen3-coder-next"
+      },
       "target": "/logs",
       "read_only": false,
-      "required_mount": "/data"
+      "required_role": "data"
     },
     {
-      "source": "/data/services/llm-manager/qwen3-coder-next",
+      "source": {
+        "role": "data",
+        "suffix": "services/llm-manager/qwen3-coder-next"
+      },
       "target": "/service",
       "read_only": false,
-      "required_mount": "/data"
+      "required_role": "data"
     },
     {
-      "source": "/data/services/secrets/llm-api-key",
+      "source": {
+        "role": "data",
+        "suffix": "services/secrets/llm-api-key"
+      },
       "target": "/run/secrets/llm-api-key",
       "read_only": true,
-      "required_mount": "/data"
+      "required_role": "data"
     },
     {
-      "source": "/data/services/llm-manager/adapters/sglang_file_auth.py",
+      "source": {
+        "role": "data",
+        "suffix": "services/llm-manager/adapters/sglang_file_auth.py"
+      },
       "target": "/opt/llmctl/sglang_file_auth.py",
       "read_only": true,
-      "required_mount": "/data"
+      "required_role": "data"
     }
   ],
   "launch": {

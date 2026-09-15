@@ -349,7 +349,10 @@
   ],
   "id": "qwen3-coder-next-fp8",
   "format": "huggingface-safetensors",
-  "model_root": "/data/models-large/qwen3-coder-next-fp8",
+  "model_root": {
+    "role": "models",
+    "suffix": "qwen3-coder-next-fp8"
+  },
   "load_entry": "config.json",
   "manifest_sha256": "022674d4daf63fa57c2798a30fea80c6dde7b1b2e73630ae3c3aa94e45debb9e",
   "metadata_evidence": "reports/f1s-contract-evidence/f1a-qwen-manifest.json",

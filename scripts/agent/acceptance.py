@@ -12,10 +12,10 @@ import time
 import uuid
 
 if __package__:
-    from .protocol import AgentError, APIError, Budget, Client, load_api_key, redact
+    from .protocol import AgentError, APIError, Budget, Client, CompletionError, REASONING_EFFORTS, load_api_key, redact, redact_diagnostic
     from .fixture import Fixture
 else:
-    from protocol import AgentError, APIError, Budget, Client, load_api_key, redact
+    from protocol import AgentError, APIError, Budget, Client, CompletionError, REASONING_EFFORTS, load_api_key, redact, redact_diagnostic
     from fixture import Fixture
 
 
@@ -71,6 +71,8 @@ def run_agent(client, report, *, max_rounds, max_tool_calls, workspace_parent,
     except (AgentError, OSError, ValueError) as exc:
         run["status"] = "FAIL"
         run["error"] = safe_error(exc)
+        if isinstance(exc, CompletionError):
+            run["diagnostics"] = exc.diagnostics
         if fixture is not None:
             # Evidence is captured before cleanup when possible (Fixture retains it).
             run["evidence"] = fixture.evidence()
@@ -99,8 +101,15 @@ def redact_report(value, key):
     """
     if isinstance(value, dict):
         result = {}
+        diagnostic = redact_diagnostic(value, key) if value.get("classification") == "token_budget_exhausted" else {}
         for name, item in value.items():
-            if name == "status" and isinstance(item, str) and item in {"PASS", "FAIL", "NOT_TESTED"}:
+            if name in diagnostic:
+                result[name] = diagnostic[name]
+            elif ((name == "status" and isinstance(item, str) and item in {"PASS", "FAIL", "NOT_TESTED"})
+                    or (name == "classification" and item == "token_budget_exhausted")
+                    or (name == "parsing_failure" and item == "invalid_assistant_message")
+                    or (name == "reasoning_effort" and isinstance(item, str) and item in REASONING_EFFORTS)
+                    or (name == "finish_reason" and isinstance(item, str) and item in {"stop", "tool_calls", "length"})):
                 result[name] = item
             elif name in {"usage", "reasoning"}:
                 result[name] = redact(item, key)
@@ -125,6 +134,7 @@ def run_acceptance(client, *, auth="disabled", max_rounds=12, max_tool_calls=32,
                    "request_timeout": client.request_timeout,
                    "overall_timeout": client.budget.overall_timeout,
                    "max_tokens": client.max_tokens,
+                   "reasoning_effort": client.reasoning_effort,
                    "max_response_bytes": client.max_response_bytes,
                    "stream_tools": stream_tools},
         "checks": {}, "opencode_e2e": "NOT_TESTED", "clean_linux_install": "NOT_TESTED",
@@ -138,6 +148,8 @@ def run_acceptance(client, *, auth="disabled", max_rounds=12, max_tool_calls=32,
             report["checks"][name] = {"status": "PASS", "detail": detail}
         except (AgentError, OSError, ValueError) as exc:
             report["checks"][name] = {"status": "FAIL", "error": safe_error(exc)}
+            if isinstance(exc, CompletionError):
+                report["checks"][name]["diagnostics"] = exc.diagnostics
         report["checks"][name]["elapsed_seconds"] = round(time.monotonic() - before, 6)
 
     def models():
@@ -236,6 +248,8 @@ def parser():
     p.add_argument("--max-rounds", type=bounded_int(1, 64), default=12)
     p.add_argument("--max-tool-calls", type=bounded_int(1, 128), default=32)
     p.add_argument("--max-tokens", type=bounded_int(1, 32768), default=2048)
+    p.add_argument("--reasoning-effort", choices=REASONING_EFFORTS, default=None,
+                   help="Optional top-level request effort; omitted by default. Backend/model support varies; reviewed GLM accepts low/high/max")
     p.add_argument("--max-output-bytes", type=bounded_int(1024, 1048576), default=16384)
     p.add_argument("--max-response-bytes", type=bounded_int(1024, 4194304), default=262144)
     p.add_argument("--workspace-parent", type=Path, help="Existing worker temp directory; a fresh child is always created")
@@ -253,7 +267,8 @@ def main(argv=None):
         client = Client(args.base_url, args.model, api_key=key,
                         request_timeout=args.request_timeout,
                         budget=Budget(args.overall_timeout),
-                        max_response_bytes=args.max_response_bytes, max_tokens=args.max_tokens)
+                        max_response_bytes=args.max_response_bytes, max_tokens=args.max_tokens,
+                        reasoning_effort=args.reasoning_effort)
         # Reserve report before inference so path failures do not waste model work.
         fd = os.open(args.report, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as stream:

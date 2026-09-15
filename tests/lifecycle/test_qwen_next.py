@@ -24,6 +24,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lifecycle.manager import Manager
 from lifecycle.runtime_io import LifecycleError
+from lifecycle.storage_binding import BindingError
 from lifecycle import qwen_next
 import test_manager as retained
 
@@ -59,7 +60,7 @@ class QwenSourceContractTests(unittest.TestCase):
         weights = [item for item in model["artifacts"] if item["role"] == "weight"]
         self.assertEqual(len(weights), 40)
         self.assertEqual(sum(item["size_bytes"] for item in weights), 80381394600)
-        self.assertEqual(model["model_root"], "/data/models-large/qwen3-coder-next-fp8")
+        self.assertEqual(model["model_root"], {"role": "models", "suffix": MODEL})
         self.assertNotEqual(expected.get("complete"), True)
 
     def test_instance_template_cannot_activate_source_only_auth_or_partial_weights(self):
@@ -70,7 +71,8 @@ class QwenSourceContractTests(unittest.TestCase):
         self.assertFalse(model["verified"])
         self.assertEqual(model["revision"], REVISION)
         self.assertEqual(model["manifest_sha256"], MANIFEST_SHA256)
-        self.assertTrue(all(m["uuid"] is None for m in template["required_mounts"]))
+        self.assertIsNone(template["storage_identity"])
+        self.assertNotIn("required_mounts", template)
 
     def test_explicit_sglang_profile_uses_protected_file_adapter_and_exact_bounds(self):
         runtime = read_profile("runtimes", RUNTIME)
@@ -96,7 +98,68 @@ class QwenSourceContractTests(unittest.TestCase):
         self.assertEqual(len(by_target), 6)
         for target in ("/models", "/run/secrets/llm-api-key", "/opt/llmctl/sglang_file_auth.py"):
             self.assertTrue(by_target[target]["read_only"])
-        self.assertEqual(by_target["/opt/llmctl/sglang_file_auth.py"]["source"], INSTALLED_LAUNCHER)
+        self.assertEqual(by_target["/opt/llmctl/sglang_file_auth.py"]["source"],
+                         {"role": "data", "suffix": qwen_next.LAUNCHER_SUFFIX})
+        self.assertEqual(by_target["/opt/llmctl/sglang_file_auth.py"]["required_role"], "data")
+
+
+class QwenBoundPathContractTests(unittest.TestCase):
+    """Pure adapter checks; registered mount validation is exercised separately."""
+
+    def deployment(self, data, models):
+        roots = {'data': Path(data), 'models': Path(models)}
+        binding = SimpleNamespace(path=lambda role, suffix: roots[role] / suffix,
+                                  validate_path=lambda role, path: Path(path))
+        d = read_profile('deployments', DEPLOYMENT)
+        d['_runtime'] = read_profile('runtimes', RUNTIME)
+        d['_model'] = read_profile('models', MODEL)
+        d['_storage_binding'] = binding
+        resolve = lambda value: str(binding.path(value['role'], value['suffix']))
+        d['paths'] = {key: resolve(value) for key, value in d['paths'].items()}
+        d['auth']['key_file'] = resolve(d['auth']['key_file'])
+        d['_model']['model_root'] = resolve(d['_model']['model_root'])
+        for mount in d['mounts']:
+            mount['source'] = resolve(mount['source'])
+        return d
+
+    def test_nondefault_single_nested_sibling_and_historical_paths(self):
+        for data, models in [('/srv/ai', '/srv/ai/models'), ('/srv/ai', '/srv/ai'),
+                             ('/srv/ai', '/srv/ai/models-large'), ('/srv/ai', '/mnt/weights'),
+                             ('/data', '/data/models-large')]:
+            with self.subTest(data=data, models=models):
+                d = self.deployment(data, models)
+                qwen_next.validate(d)
+                self.assertEqual(d['_model']['model_root'], models + '/' + MODEL)
+                self.assertEqual(d['mounts'][-1]['source'], data + '/' + qwen_next.LAUNCHER_SUFFIX)
+                self.assertEqual(qwen_next.command(d)[qwen_next.command(d).index('--model-path') + 1], '/models')
+                self.assertEqual(len(d['mounts']), 6)
+
+    def test_completion_root_is_concrete_bound_evidence_and_cannot_be_relocated(self):
+        d = self.deployment('/srv/ai', '/mnt/weights')
+        completion = {
+            'schema_version': 1, 'complete': True, 'repo_id': d['_model']['repo_id'],
+            'revision': REVISION, 'model_root': '/mnt/weights/' + MODEL,
+            'manifest_sha256': MANIFEST_SHA256, 'artifact_count': 48, 'total_bytes': 80407722953,
+            'artifacts': [{**a, 'verified': True} for a in d['_model']['artifacts']],
+        }
+        item = {'verified': True, 'revision': REVISION, 'manifest_sha256': MANIFEST_SHA256,
+                'evidence': 'synthetic fixture',
+                'completion_manifest': '/srv/ai/services/llm-manager/acquisition/' + MODEL + '.complete.json'}
+        instance = {'model_integrity': {MODEL: item}}
+        with patch.object(qwen_next, 'protected_bytes', side_effect=lambda path: json.dumps(completion).encode()) as read:
+            qwen_next.check_completion(d, instance)
+            self.assertEqual(str(read.call_args.args[0]), item['completion_manifest'])
+            completion['model_root'] = '/data/models-large/' + MODEL
+            with self.assertRaises(LifecycleError):
+                qwen_next.check_completion(d, instance)
+        for path in ['/data/services/llm-manager/acquisition/' + MODEL + '.complete.json',
+                     '/srv/ai/services/llm-manager/acquisition/../acquisition/' + MODEL + '.complete.json',
+                     {'role': 'data', 'suffix': 'services/llm-manager/acquisition/' + MODEL + '.complete.json'}]:
+            with self.subTest(path=path), patch.object(qwen_next, 'protected_bytes') as read:
+                item['completion_manifest'] = path
+                with self.assertRaises(LifecycleError):
+                    qwen_next.check_completion(d, instance)
+                read.assert_not_called()
 
 
 class QwenDocker(retained.FakeDocker):
@@ -220,6 +283,15 @@ class ProtectedSourceTests(unittest.TestCase):
         close.assert_called_once()
 
 
+class BoundQwenManager(retained.FixtureManager):
+    """Inject storage identity/writer/lease; retain all production F1S checks."""
+    host_guards = Manager.host_guards
+    check_mounts = Manager.check_mounts
+    check_artifacts = Manager.check_artifacts
+    image_evidence = Manager.image_evidence
+    prepare_start = Manager.prepare_start
+
+
 class QwenContractTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -248,7 +320,7 @@ class QwenContractTests(unittest.TestCase):
         self.clock = retained.FakeClock()
         self.probe_result = "ready"
         self.probe_calls = []
-        self.manager = Manager(
+        self.manager = BoundQwenManager(
             self.configs, self.instance, docker=self.docker, test_paths=True,
             run_fn=lambda *a, **kw: self.fail("unexpected worker subprocess"),
             probe_fn=self.probe, monotonic_fn=self.clock.monotonic, sleep_fn=self.clock.sleep,
@@ -287,6 +359,24 @@ class QwenContractTests(unittest.TestCase):
         if str(path) == COMPLETION:
             return json.dumps(self.completion).encode()
         self.fail("unexpected protected file read")
+
+    def test_completion_and_launcher_reject_hidden_mount_before_read_and_recheck_after(self):
+        evidence = self.instance['runtime_evidence'][RUNTIME]
+        for call, path in [(lambda: qwen_next.check_completion(self.original, self.instance), COMPLETION),
+                           (lambda: qwen_next.validate_launcher(self.original, evidence), INSTALLED_LAUNCHER)]:
+            with self.subTest(path=path, phase='before'), \
+                    patch.object(self.manager.binding, 'validate_path', side_effect=BindingError('hidden_mount')), \
+                    patch.object(qwen_next, 'protected_bytes') as read:
+                with self.assertRaisesRegex(LifecycleError, '^sglang_storage_path_invalid$'):
+                    call()
+                read.assert_not_called()
+            with self.subTest(path=path, phase='after'), \
+                    patch.object(self.manager.binding, 'validate_path', side_effect=[None, BindingError('mount_lost')]) as verify, \
+                    patch.object(qwen_next, 'protected_bytes', side_effect=self.protected_read) as read:
+                with self.assertRaisesRegex(LifecycleError, '^sglang_storage_path_invalid$'):
+                    call()
+                self.assertEqual([item.args for item in verify.call_args_list], [('data', path), ('data', path)])
+                read.assert_called_once()
 
     @contextmanager
     def host_files(self):

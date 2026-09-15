@@ -1,0 +1,198 @@
+{
+  "utc": "2026-09-15T00:53:02.383879+00:00",
+  "worker": "Mac-Worker1",
+  "endpoint": "http://127.0.0.1:30002/v1",
+  "key_handling": "protected VM file -> memory only; tunnel process cleaned up",
+  "cases": [
+    {
+      "name": "missing_auth_models",
+      "status": 401,
+      "wall_seconds": 0.017,
+      "response": {
+        "error": {
+          "message": "Invalid API Key",
+          "type": "authentication_error",
+          "code": 401
+        }
+      }
+    },
+    {
+      "name": "wrong_auth_models",
+      "status": 401,
+      "wall_seconds": 0.012,
+      "response": {
+        "error": {
+          "message": "Invalid API Key",
+          "type": "authentication_error",
+          "code": 401
+        }
+      }
+    },
+    {
+      "name": "correct_auth_models",
+      "status": 200,
+      "wall_seconds": 0.011,
+      "response": {
+        "models": [
+          {
+            "name": "glm-5.3",
+            "model": "glm-5.3",
+            "modified_at": "",
+            "size": "",
+            "digest": "",
+            "type": "model",
+            "description": "",
+            "tags": [
+              ""
+            ],
+            "capabilities": [
+              "completion"
+            ],
+            "parameters": "",
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "",
+              "families": [
+                ""
+              ],
+              "parameter_size": "",
+              "quantization_level": ""
+            }
+          }
+        ],
+        "object": "list",
+        "data": [
+          {
+            "id": "glm-5.3",
+            "aliases": [
+              "glm-5.3"
+            ],
+            "tags": [],
+            "object": "model",
+            "created": 1789433582,
+            "owned_by": "llamacpp",
+            "meta": {
+              "vocab_type": true,
+              "n_vocab": 154880,
+              "n_ctx": 32768,
+              "n_ctx_train": 1048576,
+              "n_embd": 6144,
+              "n_params": 753864139008,
+              "size": 467279569920,
+              "ftype": "Q4_K - Medium"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "first_prompt",
+      "request": {
+        "model": "glm-5.3",
+        "messages": [
+          {
+            "role": "user",
+            "content": "What is 2 + 2? Reply with the number only."
+          }
+        ],
+        "max_tokens": 256,
+        "temperature": 0,
+        "stream": false,
+        "reasoning_effort": "low"
+      },
+      "status": 200,
+      "wall_seconds": 1.534,
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "4"
+            }
+          }
+        ],
+        "created": 1789433584,
+        "model": "glm-5.3",
+        "system_fingerprint": "b62-b29c606",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 3,
+          "prompt_tokens": 26,
+          "total_tokens": 29,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-mQP0tLBpGJL9Jv5U1zfTwL4W4H3EHTdV",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 26,
+          "prompt_ms": 992.058,
+          "prompt_per_token_ms": 38.156076923076924,
+          "prompt_per_second": 26.20814508829121,
+          "predicted_n": 3,
+          "predicted_ms": 521.788,
+          "predicted_per_token_ms": 260.894,
+          "predicted_per_second": 3.832974311406165
+        }
+      }
+    },
+    {
+      "name": "warm_same_prompt",
+      "request": {
+        "model": "glm-5.3",
+        "messages": [
+          {
+            "role": "user",
+            "content": "What is 2 + 2? Reply with the number only."
+          }
+        ],
+        "max_tokens": 256,
+        "temperature": 0,
+        "stream": false,
+        "reasoning_effort": "low"
+      },
+      "status": 200,
+      "wall_seconds": 0.245,
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "4"
+            }
+          }
+        ],
+        "created": 1789433584,
+        "model": "glm-5.3",
+        "system_fingerprint": "b62-b29c606",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 3,
+          "prompt_tokens": 26,
+          "total_tokens": 29,
+          "prompt_tokens_details": {
+            "cached_tokens": 25
+          }
+        },
+        "id": "chatcmpl-1bMw1hdlk8tpggMpfsko3rIESQ5RjkA5",
+        "timings": {
+          "cache_n": 25,
+          "prompt_n": 1,
+          "prompt_ms": 74.427,
+          "prompt_per_token_ms": 74.427,
+          "prompt_per_second": 13.435984253026454,
+          "predicted_n": 3,
+          "predicted_ms": 147.063,
+          "predicted_per_token_ms": 73.5315,
+          "predicted_per_second": 13.599613770968906
+        }
+      }
+    }
+  ]
+}

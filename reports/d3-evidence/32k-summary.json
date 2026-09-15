@@ -1,0 +1,35 @@
+{
+  "result": "PASS_32K_MODEL_FIT_API_AND_INDEPENDENT_TOOL_CONTINUATION",
+  "overall_ready": false,
+  "model": "glm-5.3",
+  "deployment": "glm-5.3-ud-q4-k-xl-32k",
+  "context_size": 32768,
+  "slots": 1,
+  "load_seconds": 189.62,
+  "rss_gib": 411.99258041381836,
+  "pss_gib": 411.9925765991211,
+  "mem_available_gib": 450.02331924438477,
+  "vram_mib": [
+    16804,
+    12940
+  ],
+  "process_swap_kib": 0,
+  "root_available_gib": 4.869190216064453,
+  "request_reasoning_effort": "low",
+  "runtime_chat_template_kwargs": {
+    "clear_thinking": true
+  },
+  "reasoning_budget_override": null,
+  "parser_nonstream": "PASS",
+  "parser_sse": "PASS",
+  "local_read_fixture_continuation": "PASS",
+  "token_budget_exhausted": false,
+  "A1_full_harness": "NOT_TESTED_missing_reviewed_low_reasoning_knob",
+  "V1_actual_OpenCode": "NOT_TESTED_request_lease_handed_off",
+  "same_profile_restart": "NOT_TESTED",
+  "live_timeout_failure": "NOT_TESTED",
+  "Qwen_cross_backend_switch": "NOT_TESTED_SGLang_gate_pending",
+  "protected_boot_owner": "NOT_INSTALLED",
+  "reboot": "NOT_TESTED",
+  "tuning": "NOT_TESTED_root_deferred_until_baseline_V1"
+}

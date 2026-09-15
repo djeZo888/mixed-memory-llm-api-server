@@ -1,0 +1,7 @@
+{
+  "safe_context_lines": [
+    "3.00.386.091 I cmn          init: llama threadpool init, n_threads = 112",
+    "3.02.045.785 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 32768, kv_unified = 'false'"
+  ],
+  "key_present": false
+}

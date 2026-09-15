@@ -15,7 +15,7 @@ sys.dont_write_bytecode = True
 from client_common import (ClientError, VERSION, absolute_path, binary_path, config_for,
                            endpoint, isolated_env, json_bytes, key_env_name, model_id,
                            native_package, private_dir, refuse_managed_preferences,
-                           run_capture, runtime_dir, verify_install, write_new)
+                           reasoning_effort, run_capture, runtime_dir, verify_install, write_new)
 
 
 def parser():
@@ -29,6 +29,8 @@ def parser():
     auth.add_argument("--auth-disabled", action="store_true", help="Explicit unauthenticated localhost configuration")
     result.add_argument("--context-tokens", required=True, type=int, help="Operator-supplied model context limit")
     result.add_argument("--output-tokens", required=True, type=int, help="Operator-supplied output limit")
+    result.add_argument("--reasoning-effort", type=reasoning_effort,
+                        help="Optional literal low; omitted by default (new prefix required to change)")
     result.add_argument("--dry-run", "--plan", action="store_true", help="Validate and describe only; no writes/network/processes")
     return result
 
@@ -57,6 +59,8 @@ def bootstrap(args):
     settings = {"version": VERSION, "base_url": endpoint(args.base_url), "model": model_id(args.model),
                 "auth": auth, "context_tokens": args.context_tokens, "output_tokens": args.output_tokens,
                 "lock_sha256": hashlib.sha256(lock).hexdigest()}
+    if args.reasoning_effort is not None:
+        settings["reasoning_effort"] = reasoning_effort(args.reasoning_effort)
     native_package()
     refuse_managed_preferences()
     existed = prefix.exists()
@@ -77,6 +81,7 @@ def bootstrap(args):
         print(json.dumps({"action": "verify" if existed and any(prefix.iterdir()) else "install",
                           "version": VERSION, "prefix": str(prefix), "base_url": settings["base_url"],
                           "model": settings["model"], "auth_kind": auth["kind"],
+                          **({"reasoning_effort": settings["reasoning_effort"]} if "reasoning_effort" in settings else {}),
                           "lock_sha256": settings["lock_sha256"], "mutations": False}))
         return
     env = isolated_env(prefix)

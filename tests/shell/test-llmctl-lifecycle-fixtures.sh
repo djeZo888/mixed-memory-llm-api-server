@@ -18,37 +18,18 @@ for path in /data/services/llm-manager/active/active.json /data/services/llm-man
   [[ ! -e "$path" && ! -L "$path" ]] || fail "worker-only fixture requires absent lifecycle state"
 done
 
-for command in start restart; do
-  if "$LLMCTL" "$command" --instance "$INSTANCE" --dry-run >"$tmp/$command.out" 2>"$tmp/$command.err"; then
-    fail "$command unexpectedly selected a model from absent state"
+# Installed lifecycle plans also require the protected registration. In-process
+# tests inject registered fixtures; shell callers have no trust-anchor bypass.
+[[ ! -e /etc/local-ai-server && ! -L /etc/local-ai-server ]] || fail "worker-only fixture requires no installed registry"
+for command in start restart stop deactivate select; do
+  args=("$command")
+  if [[ "$command" == select ]]; then args+=(glm-5.3-ud-q4-k-xl-8k); fi
+  if LLMCTL_DATA_ROOT="$tmp" LLMCTL_INSTANCE="$INSTANCE" LLMCTL_SKIP_HOST_CHECKS=1 \
+      "$LLMCTL" "${args[@]}" --instance "$INSTANCE" --dry-run >"$tmp/$command.out" 2>"$tmp/$command.err"; then
+    fail "$command accepted an unregistered instance"
   fi
-  grep -q '^FAIL: no_deployment_selected_use_select$' "$tmp/$command.err" || fail "$command missing-selection refusal was not specific"
+  grep -q '^FAIL: invalid_configuration_or_io_failure$' "$tmp/$command.err" || fail "$command registration refusal was not sanitized"
   [[ ! -s "$tmp/$command.out" ]] || fail "$command emitted a misleading fallback plan"
-done
-
-for command in stop deactivate; do
-  "$LLMCTL" "$command" --instance "$INSTANCE" --dry-run >"$tmp/$command.json" || fail "$command dry-run failed"
-  python3 - "$tmp/$command.json" "$command" <<'PY_CHECK'
-import json
-import sys
-value = json.load(open(sys.argv[1]))
-assert value["dry_run"] is True and value["action"] == sys.argv[2]
-assert value["selected"] is None and value["writes"] is False
-assert value["model_file_deletion"] == value["image_deletion"] == "none"
-PY_CHECK
-done
-
-for deployment in glm-5.3-ud-q4-k-xl-8k glm-5.3-ud-q4-k-xl-32k qwen3-30b-a3b-instruct-2507 qwen3-0.6b-smoke; do
-  "$LLMCTL" select "$deployment" --instance "$INSTANCE" --dry-run >"$tmp/select.json" || fail "explicit select dry-run failed: $deployment"
-  python3 - "$tmp/select.json" "$deployment" <<'PY_CHECK'
-import json
-import sys
-value = json.load(open(sys.argv[1]))
-assert value["selected"] == sys.argv[2]
-assert value["dry_run"] is True and value["writes"] is False
-assert value["wait_for_readiness"] is True
-assert value["model_file_deletion"] == value["image_deletion"] == "none"
-PY_CHECK
 done
 
 # An unavailable observation never becomes healthy based on missing/stale state.
@@ -69,7 +50,7 @@ printf '%s\n' '{invalid-synthetic-fixture-content' >"$tmp/invalid-instance.json"
 if "$LLMCTL" select glm-5.3-ud-q4-k-xl-8k --instance "$tmp/invalid-instance.json" --dry-run >"$tmp/invalid.out" 2>"$tmp/invalid.err"; then
   fail "invalid instance passed"
 fi
-grep -q '^FAIL: invalid_or_missing_json$' "$tmp/invalid.err" || fail "invalid instance diagnostic was not sanitized"
+grep -q '^FAIL: invalid_configuration_or_io_failure$' "$tmp/invalid.err" || fail "invalid instance diagnostic was not sanitized"
 if grep -q 'invalid-synthetic-fixture-content' "$tmp/invalid.out" "$tmp/invalid.err"; then
   fail "invalid instance data leaked into output"
 fi

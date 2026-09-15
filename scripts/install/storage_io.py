@@ -69,12 +69,47 @@ def _registration_identity(snapshot):
         raise StorageIOError("invalid_storage_guard_snapshot") from None
 
 
+def _live_roles(snapshot):
+    roles = snapshot.get("verified_roles", ("data", "models"))
+    if (not isinstance(roles, (list, tuple)) or not roles
+            or any(role not in {"data", "models"} for role in roles)):
+        raise StorageIOError("invalid_storage_guard_roles")
+    return tuple(role for role in ("data", "models") if role in roles)
+
+
+def _path_role(snapshot, path):
+    # Distinct model subtrees cannot be reclassified by a nested service root.
+    model = snapshot["models"]["path"]
+    if model != snapshot["data"]["path"] and (path == model or path.startswith(model + "/")):
+        return "models"
+    # More-specific declared service roots win when models share the data root.
+    candidates = [(snapshot[role]["path"], role) for role in ("data", "models")]
+    candidates += [(root, "models" if key == "models" else "data")
+                   for key, root in snapshot["roots"].items()]
+    matches = [(len(root), role) for root, role in candidates
+               if path == root or path.startswith(root + "/")]
+    if not matches:
+        raise StorageIOError("storage_anchor_outside_registered_roots")
+    return max(matches)[1]
+
+
+def _absolute_path(path):
+    value = os.fspath(path)
+    if (not isinstance(value, str) or not value.startswith("/")
+            or "\x00" in value or str(Path(value)) != value
+            or ".." in Path(value).parts):
+        raise StorageIOError("unsafe_storage_anchor_path")
+    return value
+
+
 class MountedStorageGuard:
     """Fast continuous guard after one full trusted Storage.guard() check.
 
     Keeps the fixed registration file and its protected ancestry open, compares
     its exact bytes, and reads Linux mountinfo on *every* call. Every managed
-    root must still resolve to its captured exact mount ID/device/entry. There
+    root must still resolve to its captured exact mount ID/device/entry.
+    check_path() additionally validates every component of an operation path;
+    unrelated descendant mounts are allowed. There
     is no timer, cached success interval, shell command or environment override.
     Call verify_full() at stage boundaries for capacity and block-topology QA.
 
@@ -82,11 +117,12 @@ class MountedStorageGuard:
     it and uses only /proc/self/mountinfo in the installer's mount namespace.
     """
 
-    def __init__(self, storage, *, mountinfo_reader=None):
+    def __init__(self, storage, *, roles=("data", "models"), mountinfo_reader=None):
+        self.roles = _live_roles({"verified_roles": roles})
         self.storage = storage
         self.uid = storage.owner
         self._read_mountinfo = mountinfo_reader or self._linux_mountinfo
-        self._snapshot = copy.deepcopy(storage.guard())
+        self._snapshot = copy.deepcopy(self._full_snapshot())
         self._registration = _registration_identity(self._snapshot)
         self._lineage, self._fd, self._closed = [], None, False
         self._lock = threading.RLock()
@@ -108,10 +144,18 @@ class MountedStorageGuard:
                 raise StorageIOError("registered_storage_identity_changed")
             entries = self._mounts()
             self._expected_mounts = self._required_mounts(entries)
+            self._expected_role_mounts = self._role_mounts(entries)
             self()
         except BaseException:
             self.close()
             raise
+
+    def _full_snapshot(self):
+        snapshot = (self.storage.guard() if self.roles == ("data", "models")
+                    else self.storage.guard(roles=self.roles))
+        if _live_roles(snapshot) != self.roles:
+            raise StorageIOError("storage_guard_roles_changed")
+        return snapshot
 
     @staticmethod
     def _linux_mountinfo():
@@ -155,22 +199,31 @@ class MountedStorageGuard:
         result = {}
         paths = set(self._snapshot["roots"].values()) | {self._snapshot[key]["path"] for key in ("data", "models")}
         for path in sorted(paths):
-            model_path = self._snapshot["models"]["path"]
-            role = "models" if path == model_path or path.startswith(model_path + "/") else "data"
+            role = _path_role(self._snapshot, path)
+            if role not in self.roles:
+                continue
             expected = self._snapshot[role]
-            candidates = [entry for entry in entries
-                          if entry["mount"] == "/" or path == entry["mount"] or path.startswith(entry["mount"] + "/")]
-            if not candidates:
-                raise StorageIOError("registered_storage_mount_lost")
-            length = max(len(entry["mount"]) for entry in candidates)
-            matches = [entry for entry in candidates if len(entry["mount"]) == length]
-            if len(matches) != 1:
-                raise StorageIOError("registered_storage_mount_ambiguous")
-            current = matches[0]
-            if any(current[field] != expected[field] for field in ("mount", "device", "fstype")):
-                raise StorageIOError("registered_storage_mount_changed")
-            result[path] = current["entry"]
+            result[path] = self._mount_entry(entries, path, expected)
         return result
+
+    @staticmethod
+    def _mount_entry(entries, path, expected):
+        candidates = [entry for entry in entries
+                      if entry["mount"] == "/" or path == entry["mount"] or path.startswith(entry["mount"] + "/")]
+        if not candidates:
+            raise StorageIOError("registered_storage_mount_lost")
+        length = max(len(entry["mount"]) for entry in candidates)
+        matches = [entry for entry in candidates if len(entry["mount"]) == length]
+        if len(matches) != 1:
+            raise StorageIOError("registered_storage_mount_ambiguous")
+        current = matches[0]
+        if any(current[field] != expected[field] for field in ("mount", "device", "fstype")):
+            raise StorageIOError("registered_storage_mount_changed")
+        return current["entry"]
+
+    def _role_mounts(self, entries):
+        return {role: self._mount_entry(entries, self._snapshot[role]["mount"], self._snapshot[role])
+                for role in self.roles}
 
     def _check_registry_path(self):
         if self._closed:
@@ -205,21 +258,62 @@ class MountedStorageGuard:
         self._check_registry_path()
         return result
 
+    def _checked_mounts(self):
+        if self._registry_content() != self._registry_bytes:
+            raise StorageIOError("registered_storage_bytes_changed")
+        entries = self._mounts()
+        if (self._required_mounts(entries) != self._expected_mounts
+                or self._role_mounts(entries) != self._expected_role_mounts):
+            raise StorageIOError("registered_storage_mount_identity_changed")
+        return entries
+
     def __call__(self):
         with self._lock:
-            if self._registry_content() != self._registry_bytes:
-                raise StorageIOError("registered_storage_bytes_changed")
-            if self._required_mounts(self._mounts()) != self._expected_mounts:
-                raise StorageIOError("registered_storage_mount_identity_changed")
-            return copy.deepcopy(self._snapshot)
+            self._checked_mounts()
+            return self._writer_snapshot()
+
+    def _writer_snapshot(self):
+        # A wrapper must forward check_path; copying this dict must not silently
+        # turn a mounted guard into the legacy no-argument verifier contract.
+        return {**copy.deepcopy(self._snapshot), "path_validation_required": True}
+
+    def check_path(self, path):
+        """Validate each component, including an absent final operation name.
+
+        Check intermediate components even when a deeper registered mount row
+        still exists: a new ancestor bind can hide that deeper mount. Only
+        captured registered mounts may be crossed, never an arbitrary bind
+        with the same st_dev. The caller also checks its held FD ancestry.
+        """
+        path = _absolute_path(path)
+        with self._lock:
+            entries = self._checked_mounts()
+            if _path_role(self._snapshot, path) not in self.roles:
+                raise StorageIOError("storage_role_not_verified")
+            for component in [*reversed(Path(path).parents), Path(path)]:
+                current = str(component)
+                roles = [role for role in self.roles
+                         if current == self._snapshot[role]["mount"]
+                         or current.startswith(self._snapshot[role]["mount"].rstrip("/") + "/")]
+                if not roles:
+                    if any(current == self._snapshot[key]["mount"]
+                           or current.startswith(self._snapshot[key]["mount"].rstrip("/") + "/")
+                           for key in ("data", "models")):
+                        raise StorageIOError("storage_role_not_verified")
+                    continue  # Outside the registered mounts; FD ancestry is still checked.
+                role = max(roles, key=lambda key: len(self._snapshot[key]["mount"]))
+                observed = self._mount_entry(entries, current, self._snapshot[role])
+                if observed != self._expected_role_mounts[role]:
+                    raise StorageIOError("registered_storage_mount_identity_changed")
+            return self._writer_snapshot()
 
     def verify_full(self):
         with self._lock:
             self()
-            snapshot = self.storage.guard()
+            snapshot = self._full_snapshot()
             if _registration_identity(snapshot) != self._registration:
                 raise StorageIOError("registered_storage_identity_changed")
-            if any(snapshot[key]["device"] != self._snapshot[key]["device"] for key in ("data", "models")):
+            if any(snapshot[key]["device"] != self._snapshot[key]["device"] for key in self.roles):
                 raise StorageIOError("registered_storage_mount_changed")
             self._snapshot = copy.deepcopy(snapshot)
             return self()
@@ -252,20 +346,27 @@ class AnchoredRoot:
     """
 
     def __init__(self, path, guard, *, uid=0):
-        self.path = Path(path)
+        self.path = Path(_absolute_path(path))
         self.uid, self._verifier = uid, guard
+        # Preserve capability when callers pass the existing bound guard alias.
+        provider = getattr(guard, "__self__", guard)
+        self._path_verifier = getattr(provider, "check_path", None)
         self._lineage, self._closed = [], False
         self._lock = threading.RLock()
         if not self.path.is_absolute() or str(self.path) != os.fspath(path) or ".." in self.path.parts:
             raise StorageIOError("unsafe_storage_anchor_path")
         snapshot = guard()
+        if snapshot.get("path_validation_required") and not callable(self._path_verifier):
+            raise StorageIOError("storage_path_verifier_required")
         self._registration = _registration_identity(snapshot)
+        self._roles = _live_roles(snapshot)
         authorized = [root for root in [*snapshot["roots"].values(), snapshot["data"]["path"], snapshot["models"]["path"]]
                       if str(self.path) == root or str(self.path).startswith(root + "/")]
         if not authorized:
             raise StorageIOError("storage_anchor_outside_registered_roots")
-        model_path = snapshot["models"]["path"]
-        self._role = "models" if str(self.path) == model_path or str(self.path).startswith(model_path + "/") else "data"
+        self._role = _path_role(snapshot, str(self.path))
+        if self._role not in self._roles:
+            raise StorageIOError("storage_role_not_verified")
         try:
             fd = os.open("/", _DIR_FLAGS)
             info = os.fstat(fd)
@@ -311,13 +412,21 @@ class AnchoredRoot:
                     raise StorageIOError("storage_directory_detached_or_replaced")
             parent = fd
 
-    def check(self):
-        """Recheck registry, mounts, current FD device and every held ancestor."""
+    def check(self, relative=""):
+        """Recheck the actual operation path and all held anchor identities."""
         if self._closed:
             raise StorageIOError("storage_anchor_closed")
-        snapshot = self._verifier()
+        parts = _parts(relative) if relative else []
+        path = str(self.path.joinpath(*parts))
+        snapshot = self._path_verifier(path) if self._path_verifier is not None else self._verifier()
+        if snapshot.get("path_validation_required") and not callable(self._path_verifier):
+            raise StorageIOError("storage_path_verifier_required")
+        if _live_roles(snapshot) != self._roles:
+            raise StorageIOError("storage_guard_roles_changed")
         if _registration_identity(snapshot) != self._registration:
             raise StorageIOError("registered_storage_identity_changed")
+        if _path_role(snapshot, path) not in self._roles:
+            raise StorageIOError("storage_role_not_verified")
         try:
             major, minor = (int(value) for value in snapshot[self._role]["device"].split(":"))
             expected_device = os.makedev(major, minor)
@@ -331,6 +440,9 @@ class AnchoredRoot:
 
     guard = check
 
+    def _authorize(self, parts):
+        return self.check("/".join(parts))
+
     def fileno(self):
         self.check()
         return self._fd
@@ -341,11 +453,13 @@ class AnchoredRoot:
         Keep this root open until the child exits, and check it while the child
         runs. The caller may alternatively use pass_fds and /proc/self/fd/N.
         """
+        self._authorize(_parts(relative) if relative else [])
         suffix = "/" + "/".join(_parts(relative)) if relative else ""
         return f"/proc/{os.getpid()}/fd/{self.fileno()}" + suffix
 
     def directory(self, relative):
         parts = _parts(relative)
+        self._authorize(parts)
         self.check()
         return AnchoredRoot(str(self.path.joinpath(*parts)), self._verifier, uid=self.uid)
 
@@ -353,7 +467,7 @@ class AnchoredRoot:
         chain, parent = [], self._fd
         try:
             for part in parts:
-                self.check()
+                self._authorize(parts)
                 self._check_chain(chain)
                 if create:
                     try:
@@ -368,7 +482,7 @@ class AnchoredRoot:
                 if info.st_dev != self._device:
                     raise StorageIOError("storage_directory_crosses_filesystem")
                 parent = fd
-            self.check()
+            self._authorize(parts)
             self._check_chain(chain)
             return parent, chain
         except BaseException:
@@ -383,12 +497,13 @@ class AnchoredRoot:
 
     def mkdir(self, relative, *, mode=0o700, parents=True):
         parts = _parts(relative)
+        self._authorize(parts)
         if mode & ~0o777 or mode & 0o022:
             raise StorageIOError("unsafe_storage_create_mode")
         self.check()
         parent, chain = self._parents(parts[:-1], create=parents, mode=mode)
         try:
-            self.check()
+            self._authorize(parts)
             self._check_chain(chain)
             try:
                 os.mkdir(parts[-1], mode, dir_fd=parent)
@@ -399,13 +514,14 @@ class AnchoredRoot:
             if info.st_dev != self._device:
                 raise StorageIOError("storage_directory_crosses_filesystem")
             os.fsync(parent)
-            self.check()
+            self._authorize(parts)
             self._check_chain(chain)
         finally:
             self._close_chain(chain)
 
     def open(self, relative, flags=os.O_RDONLY, mode=0o600):
         parts = _parts(relative)
+        self._authorize(parts)
         allowed = (os.O_WRONLY | os.O_RDWR | os.O_APPEND | os.O_CREAT | os.O_EXCL
                    | os.O_TRUNC | os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK)
         if flags & ~allowed or mode & ~0o777 or mode & 0o022:
@@ -414,6 +530,8 @@ class AnchoredRoot:
         parent, chain = self._parents(parts[:-1])
         fd = None
         try:
+            self._authorize(parts)
+            self._check_chain(chain)
             # Delay truncation until regular-file, hardlink, owner/device and
             # descriptor checks have passed. NONBLOCK prevents FIFO-open hangs.
             fd = os.open(parts[-1], (flags & ~os.O_TRUNC) | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK,
@@ -431,12 +549,13 @@ class AnchoredRoot:
 
     def stat(self, relative, *, missing_ok=False):
         parts = _parts(relative)
+        self._authorize(parts)
         self.check()
         try:
             parent, chain = self._parents(parts[:-1])
         except FileNotFoundError:
             if missing_ok:
-                self.check()
+                self._authorize(parts)
                 return None
             raise
         try:
@@ -444,12 +563,14 @@ class AnchoredRoot:
                 info = os.stat(parts[-1], dir_fd=parent, follow_symlinks=False)
             except FileNotFoundError:
                 if missing_ok:
+                    self._authorize(parts)
+                    self._check_chain(chain)
                     return None
                 raise
             _protected(info, self.uid, directory=stat.S_ISDIR(info.st_mode))
             if info.st_dev != self._device:
                 raise StorageIOError("storage_file_crosses_filesystem")
-            self.check()
+            self._authorize(parts)
             self._check_chain(chain)
             return info
         finally:
@@ -486,6 +607,7 @@ class AnchoredRoot:
         through to another filesystem.
         """
         parts = _parts(relative)
+        self._authorize(parts)
         if not isinstance(value, dict):
             raise StorageIOError("invalid_storage_json")
         encoded = (json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + "\n").encode()
@@ -508,11 +630,13 @@ class AnchoredRoot:
     def replace(self, source, destination):
         """Atomically promote a validated regular file within this root."""
         destination_parts = _parts(destination)
+        self._authorize(destination_parts)
         with self._lock, self.open(source) as stream:
             destination_parent, chain = self._parents(destination_parts[:-1])
             try:
                 self.stat(destination, missing_ok=True)
                 stream.fsync()
+                self._authorize(destination_parts)
                 stream.check()
                 self._check_chain(chain)
                 os.replace(stream.name, destination_parts[-1], src_dir_fd=stream.parent,
@@ -520,7 +644,9 @@ class AnchoredRoot:
                 os.fsync(destination_parent)
                 if stream.parent != destination_parent:
                     os.fsync(stream.parent)
-                self.check()
+                self._authorize(destination_parts)
+                self.check(source)
+                self._check_chain(stream._chain)
                 self._check_chain(chain)
                 promoted = os.stat(destination_parts[-1], dir_fd=destination_parent, follow_symlinks=False)
                 if _identity(promoted) != stream.identity:
@@ -531,6 +657,7 @@ class AnchoredRoot:
 
     def unlink(self, relative, *, missing_ok=False):
         parts = _parts(relative)
+        self._authorize(parts)
         self.check()
         parent, chain = self._parents(parts[:-1])
         try:
@@ -538,11 +665,12 @@ class AnchoredRoot:
             if info is None:
                 return
             _protected(info, self.uid)
-            self.check()
+            self._authorize(parts)
             self._check_chain(chain)
             os.unlink(parts[-1], dir_fd=parent)
             os.fsync(parent)
-            self.check()
+            self._authorize(parts)
+            self._check_chain(chain)
         finally:
             self._close_chain(chain)
 
@@ -552,6 +680,7 @@ class GuardedFile:
 
     def __init__(self, root, name, fd, parent, chain):
         self.root, self.name, self._fd, self.parent, self._chain = root, name, fd, parent, chain
+        self._relative = "/".join([item[0] for item in chain] + [name])
         self.identity = _identity(os.fstat(fd))
         self._closed = False
 
@@ -565,7 +694,7 @@ class GuardedFile:
     def check(self):
         if self._closed:
             raise StorageIOError("storage_file_closed")
-        self.root.check()
+        self.root.check(self._relative)
         self.root._check_chain(self._chain)
         info = os.fstat(self._fd)
         _protected(info, self.root.uid)
