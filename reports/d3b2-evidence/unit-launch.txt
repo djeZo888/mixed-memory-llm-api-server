@@ -1,0 +1,14 @@
+Restart=no
+RuntimeMaxUSec=12h
+MainPID=214914
+Result=success
+ExecMainStartTimestamp=Tue 2026-09-15 03:27:13 UTC
+ExecMainStatus=0
+WorkingDirectory=/data/build/d3p-d3b2-20260915
+StandardOutput=append
+StandardError=append
+User=user
+Group=ai
+Id=d3b2-glm-cuda-build-20260915.service
+ActiveState=active
+SubState=running

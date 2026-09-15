@@ -1,0 +1,19 @@
+{
+  "observed_utc": "2026-09-15T03:34:08.920588+00:00",
+  "containers": [
+    {
+      "id": "5bb6346f141c1da5a0ae9dc46566007603c760063605b4c03f7a3b0a9e7995f2",
+      "state_before_removal": "exited",
+      "exit_code": 0,
+      "removed_exact_id_without_force": true,
+      "absence_verified": true
+    },
+    {
+      "id": "5bd35ddd67f811177482ab5d2f49ca6e2bbed086fc25b585589a50b67c67706e",
+      "state_before_removal": "exited",
+      "exit_code": 0,
+      "removed_exact_id_without_force": true,
+      "absence_verified": true
+    }
+  ]
+}
