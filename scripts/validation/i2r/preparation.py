@@ -109,15 +109,36 @@ def negative_commands(options):
     }.items():
         result[name] = ["apt-get", *options, *tail]
     result["dpkg_mutation"] = ["dpkg", "--install", "i2r-fixture.deb"]
-    result["apt_mutation"] = ["apt", "install", "i2r-fixture"]
     return result
 
 
+def check_source_only_negatives():
+    """Inspect unbound apt's parser decisions without invoking Runner.run.
+
+    Only apt-get/dpkg have approved fake bindings. Even a parser regression
+    must never reach an executable for this apt fixture. Actual Runner refusal
+    for unbound apt is deliberately NOT_TESTED in the hosted harness.
+    """
+    argv = ["apt", "install", "i2r-fixture"]
+    preparation = Runner._package_preparation(argv)
+    readonly = Runner._readonly(argv)
+    return {"apt_mutation": {
+        "status": "PASS" if not preparation and not readonly else "FAIL",
+        "verification": "actual_parser_source_only",
+        "preparation_parser_rejected": not preparation,
+        "readonly_parser_rejected": not readonly,
+        "runner_execution": {"status": "NOT_TESTED", "code": "unbound_apt_execution_omitted"},
+    }}
+
+
 def check_negatives(options):
-    """The hosted guardian must protect any execution if a boundary regresses."""
+    """Actual Runner refusals only for the two guardian-bound executables."""
     cases = {}
     runner = Runner(writable=True)
     for name, argv in negative_commands(options).items():
+        if argv[0] not in {"apt-get", "dpkg"}:
+            cases[name] = {"status": "FAIL", "code": "unbound_negative_executable_refused"}
+            continue
         # Never execute a shape already known to have regressed at the parser.
         if Runner._package_preparation(argv):
             cases[name] = {"status": "FAIL", "code": "unsafe_preparation_shape_accepted"}
@@ -202,13 +223,17 @@ def run(workdir: Path) -> dict:
                             result["code"] = "actual_container_options_rejected"
                         report["cases"][name] = result
                     report["negative_cases"] = check_negatives(options)
+                    report["source_only_negative_cases"] = check_source_only_negatives()
                 report["canonical_helper_refusals"] = capability_refusals(
                     lease, system_root=Path("/"), trusted_uid=0, wrong_root=Path(workdir))
             finally:
                 os.close(exported)  # before outer lease exit; never LOCK_UN
+        report["actual_runner_negative_count"] = len(report["negative_cases"])
         required = [*report["cases"].values(), *report["negative_cases"].values(),
+                    *report["source_only_negative_cases"].values(),
                     *report["canonical_helper_refusals"].values()]
-        if report["sandbox_exact_root"] and all(item["status"] == "PASS" for item in required):
+        if (report["sandbox_exact_root"] and report["actual_runner_negative_count"] == 12
+                and all(item["status"] == "PASS" for item in required)):
             report["status"] = "PASS"
     except Exception as exc:
         report["failure_code"] = _safe_code(exc)

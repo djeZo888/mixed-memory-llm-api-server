@@ -39,8 +39,33 @@ class PreparationBoundary(unittest.TestCase):
     def test_unsupported_sandbox_and_mode_overrides_refused_without_execution(self):
         with patch("install.core.subprocess.run", side_effect=AssertionError("package execution forbidden locally")) as execute:
             result = MODULE.check_negatives(self.options)
-        self.assertEqual(len(result), 13)
+        self.assertEqual(len(result), 12)
+        self.assertNotIn("apt_mutation", result)
         self.assertTrue(all(case["status"] == "PASS" for case in result.values()), result)
+        execute.assert_not_called()
+
+    def test_unbound_apt_is_source_only_even_if_its_parser_regresses(self):
+        for accepted in (False, True):
+            with self.subTest(parser_accepted=accepted), \
+                    patch.object(MODULE.Runner, "_package_preparation", return_value=accepted) as parser, \
+                    patch.object(MODULE.Runner, "run", side_effect=AssertionError("unbound apt Runner call forbidden")) as runner, \
+                    patch("install.core.subprocess.run", side_effect=AssertionError("unbound apt execution forbidden")) as execute:
+                result = MODULE.check_source_only_negatives()["apt_mutation"]
+                self.assertEqual(result["status"], "FAIL" if accepted else "PASS")
+                self.assertEqual(result["runner_execution"]["status"], "NOT_TESTED")
+                parser.assert_called_once_with(["apt", "install", "i2r-fixture"])
+                runner.assert_not_called()
+                execute.assert_not_called()
+
+    def test_actual_negative_driver_refuses_any_unbound_executable_before_runner(self):
+        with patch.object(MODULE, "negative_commands", return_value={"injected_apt": ["apt", "install", "i2r-fixture"]}), \
+                patch.object(MODULE.Runner, "_package_preparation", return_value=True) as parser, \
+                patch.object(MODULE.Runner, "run", side_effect=AssertionError("unbound Runner call forbidden")) as runner, \
+                patch("install.core.subprocess.run", side_effect=AssertionError("unbound execution forbidden")) as execute:
+            result = MODULE.check_negatives(self.options)
+        self.assertEqual(result["injected_apt"], {"status": "FAIL", "code": "unbound_negative_executable_refused"})
+        parser.assert_not_called()
+        runner.assert_not_called()
         execute.assert_not_called()
 
     def test_runner_calls_actual_argv_and_scrubs_environment_unit_only(self):
