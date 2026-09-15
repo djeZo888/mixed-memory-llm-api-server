@@ -145,6 +145,78 @@ def docker_command(repo, cache_environment, context, *, container_name=None, own
 OWNER_LABEL = "local-ai-server.q38b-fixture-owner"
 CLEANUP_TIMEOUT = 30
 CLI_DRAIN_TIMEOUT = 2
+FAILURE_CLASSES = frozenset((
+    "FixtureFailure", "AssertionError", "AttributeError", "ImportError", "ModuleNotFoundError",
+    "TypeError", "ValueError", "KeyError", "IndexError", "RuntimeError", "OSError",
+    "FileNotFoundError", "PermissionError", "TimeoutError", "TimeoutExpired", "JSONDecodeError",
+    "SystemExit", "KeyboardInterrupt", "MemoryError", "RecursionError", "OTHER",
+))
+
+
+def failure_metadata(stdout):
+    """Admit only the small, whole inner FAIL record; never search raw logs.
+
+    Bytes, duplicate keys, nesting, types and every retained field are bounded.
+    This untrusted hint is never native-exit proof or receipt acceptance input.
+    """
+    rejected = {"status": "REJECTED_OR_UNAVAILABLE"}
+    if type(stdout) is not bytes or not 0 < len(stdout) <= 4096:
+        return rejected
+
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError()
+            result[key] = value
+        return result
+
+    try:
+        value = json.loads(stdout.decode("utf-8"), object_pairs_hook=unique_object)
+        if (type(value) is not dict or set(value) not in (
+                {"status", "code"}, {"status", "code", "failure_origin"})
+                or value["status"] != "FAIL" or value["code"] != "actual_image_fixture_failed"):
+            return rejected
+        result = {"status": "FIXED_FAILURE_ONLY", "code": "actual_image_fixture_failed"}
+        if "failure_origin" not in value or value["failure_origin"] is None:
+            return result
+        origin = value["failure_origin"]
+        if (type(origin) is not dict or set(origin) != {"filename", "line", "exception_class"}
+                or origin["filename"] != "run_pinned_image.py"
+                or type(origin["line"]) is not int or not 1 <= origin["line"] <= 100000
+                or type(origin["exception_class"]) is not str
+                or origin["exception_class"] not in FAILURE_CLASSES):
+            return rejected
+        return {"status": "SAFE_ORIGIN", "code": "actual_image_fixture_failed",
+                "origin": {"filename": "run_pinned_image.py", "line": origin["line"],
+                           "exception_class": origin["exception_class"]}}
+    except (ValueError, TypeError, RecursionError):
+        return rejected
+
+
+def capture_diagnostic(stdout=None, stderr=None, returncode=None, *, complete=False):
+    """Lengths/hashes describe captured bytes only, never total child output."""
+    code = returncode if type(returncode) is int and -64 <= returncode <= 255 else None
+    def stream(value):
+        if type(value) not in (bytes, bytearray) or len(value) > 131072:
+            return {"capture": "UNAVAILABLE", "captured_bytes": None, "sha256": None}
+        return {"capture": "COMPLETE" if complete else "PREFIX",
+                "captured_bytes": len(value), "sha256": hashlib.sha256(value).hexdigest()}
+    return {"cli_returncode": code, "cli_signal": -code if code is not None and code < 0 else None,
+            "stdout": stream(stdout), "stderr": stream(stderr),
+            "failure_metadata": failure_metadata(stdout) if complete else {"status": "INCOMPLETE_CAPTURE"}}
+
+
+def attach_failure_kind(error):
+    if isinstance(error, subprocess.TimeoutExpired):
+        return "TIMEOUT"
+    if isinstance(error, (FixtureCancelled, KeyboardInterrupt)):
+        return "CANCELLED"
+    if type(error) is FixtureError and error.args == ("docker_cli_output_limit",):
+        return "OUTPUT_OVERFLOW"
+    if type(error) is FixtureError and error.args == ("container_fixture_exit_unverified",):
+        return "CONTAINER_EXIT_UNVERIFIED"
+    return "CLI_EXCEPTION"
 
 
 def verify_fixture_runtime(container, repo, cache_environment, context):
@@ -242,9 +314,9 @@ def docker_call(command, *, timeout):
     output_limit = 131072
     child = subprocess.Popen(command, stdin=subprocess.DEVNULL,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
+    captured = [bytearray(), bytearray()]
     try:
         deadline = time.monotonic() + timeout
-        captured = [bytearray(), bytearray()]
         total = 0
         with selectors.DefaultSelector() as reader:
             for index, stream in enumerate((child.stdout, child.stderr)):
@@ -263,16 +335,20 @@ def docker_call(command, *, timeout):
                         reader.unregister(key.fileobj)
                         key.fileobj.close()
                         continue
+                    captured[key.data].extend(block[:output_limit - total])
                     total += len(block)
                     require(total <= output_limit, "docker_cli_output_limit")
-                    captured[key.data].extend(block)
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             raise subprocess.TimeoutExpired(command, timeout)
         child.wait(timeout=remaining)
         return subprocess.CompletedProcess(command, child.returncode,
                                            bytes(captured[0]), bytes(captured[1]))
-    except BaseException:
+    except BaseException as error:
+        diagnostic = capture_diagnostic(*captured, child.poll())
+        diagnostic["failure_kind"] = attach_failure_kind(error)
+        diagnostic["cli_reap"] = "UNVERIFIED"
+        error.attach_capture = diagnostic
         # This reaps the CLI only. DisposableContainer independently stops and
         # verifies the actual container even if this CLI already died.
         with fixture_signals(cleaning=True):
@@ -282,13 +358,17 @@ def docker_call(command, *, timeout):
                 except ProcessLookupError:
                     pass
             # Inherited pipe writers cannot prolong drain or grow memory after
-            # failure. Raw partial output is intentionally discarded.
+            # failure. Only redacted prefix lengths/hashes survive this boundary.
             for stream in (child.stdout, child.stderr):
                 stream.close()
             try:
                 child.wait(timeout=CLI_DRAIN_TIMEOUT)
+                diagnostic["cli_reap"] = "VERIFIED"
             except subprocess.TimeoutExpired:
-                raise FixtureError("docker_cli_not_reaped") from None
+                diagnostic["cli_reap"] = "UNVERIFIED"
+                failure = FixtureError("docker_cli_not_reaped")
+                failure.attach_capture = diagnostic
+                raise failure from None
         raise
     finally:
         for stream in (child.stdout, child.stderr):
@@ -307,6 +387,7 @@ class DisposableContainer:
         self.create_attempted = False
         self.create_returned = False
         self.inspected = None
+        self.cleanup_initial_state = None
         self.deadline = None
         self.evidence = {"container_name": self.name, "container_id": None,
                          "outcome": "NOT_STARTED", "cleanup": "NOT_ATTEMPTED"}
@@ -365,6 +446,8 @@ class DisposableContainer:
             self.evidence["cleanup"] = "NO_CREATE_ATTEMPT"
             return
         state = self.inspect(allow_absent=True)
+        # Diagnostic snapshot only: the existing first inspect precedes stop.
+        self.cleanup_initial_state = state
         if state is None:
             # A create request interrupted before acknowledgement can still be
             # in flight at the daemon. Current absence cannot prove its drain.
@@ -405,6 +488,8 @@ def run_disposable_fixture(repo, cache_environment, context, *, image_id=IMAGE_I
     """
     owned = DisposableContainer(docker_call if docker is None else docker, image_id)
     child = None
+    attach_diagnostic = None
+    operation = "START_ATTACH"
     failed = False
     phase = "CREATE"
     with fixture_signals():
@@ -427,20 +512,38 @@ def run_disposable_fixture(repo, cache_environment, context, *, image_id=IMAGE_I
             phase = "ATTACH"
             child = owned.call(["start", "--attach", owned.container_id], timeout=timeout)
             require(child.returncode == 0, "container_fixture_cli_failed")
+            operation = "VERIFY_CONTAINER_EXIT"
             finished = owned.inspect()
             require(not finished["Running"] and not finished["Paused"]
                     and not finished["Restarting"] and finished["Pid"] == 0
                     and finished["Status"] == "exited" and finished["ExitCode"] == 0,
                     "container_fixture_exit_unverified")
             owned.evidence["outcome"] = "FIXTURE_EXITED"
-        except (FixtureCancelled, KeyboardInterrupt):
+        except (FixtureCancelled, KeyboardInterrupt) as error:
             owned.evidence["outcome"] = "CANCELLED"
+            if phase == "ATTACH":
+                attach_diagnostic = (capture_diagnostic(child.stdout, child.stderr, child.returncode, complete=True)
+                    if child is not None else getattr(error, "attach_capture", None) or capture_diagnostic())
+                attach_diagnostic.setdefault("failure_kind", "CANCELLED")
             failed = True
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as error:
             owned.evidence["outcome"] = phase + "_TIMEOUT"
+            if phase == "ATTACH":
+                attach_diagnostic = (capture_diagnostic(child.stdout, child.stderr, child.returncode, complete=True)
+                    if child is not None else getattr(error, "attach_capture", None) or capture_diagnostic())
+                attach_diagnostic.setdefault("failure_kind", "TIMEOUT")
             failed = True
-        except BaseException:
+        except BaseException as error:
             owned.evidence["outcome"] = phase + "_FAILED"
+            if phase == "ATTACH":
+                if child is not None:
+                    attach_diagnostic = capture_diagnostic(
+                        child.stdout, child.stderr, child.returncode, complete=True)
+                    attach_diagnostic["failure_kind"] = (
+                        "CLI_NONZERO_EXIT" if child.returncode != 0 else attach_failure_kind(error))
+                else:
+                    attach_diagnostic = getattr(error, "attach_capture", None) or capture_diagnostic()
+                    attach_diagnostic.setdefault("failure_kind", attach_failure_kind(error))
             failed = True
         finally:
             with fixture_signals(cleaning=True):
@@ -452,6 +555,22 @@ def run_disposable_fixture(repo, cache_environment, context, *, image_id=IMAGE_I
                     owned.evidence["cleanup"] = "FAILED_UNVERIFIED"
                     failed = True
     if failed:
+        if attach_diagnostic is None and phase == "ATTACH" and child is not None:
+            attach_diagnostic = capture_diagnostic(
+                child.stdout, child.stderr, child.returncode, complete=True)
+            attach_diagnostic["failure_kind"] = "CLEANUP_UNVERIFIED"
+            operation = "CLEANUP"
+        if attach_diagnostic is not None:
+            state = owned.cleanup_initial_state
+            exited = (state is not None and not state["Running"] and not state["Paused"]
+                      and not state["Restarting"] and state["Pid"] == 0 and state["Status"] == "exited")
+            code = state["ExitCode"] if exited else None
+            attach_diagnostic.update(schema_version=1, phase="ATTACH", operation=operation,
+                container_before_cleanup_stop={
+                    "status": "EXITED" if exited else "EXIT_NOT_OBSERVED",
+                    "exit_code": code if type(code) is int and 0 <= code <= 255 else None,
+                    "signal": None})
+            owned.evidence["attach_diagnostic"] = attach_diagnostic
         raise LifetimeFailure(owned.evidence)
     return child, owned.evidence
 
