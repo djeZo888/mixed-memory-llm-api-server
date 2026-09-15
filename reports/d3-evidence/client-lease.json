@@ -1,0 +1,14 @@
+{
+  "utc": "2026-09-15T00:56:19.740716+00:00",
+  "request_lease": "RELEASED_TO_ROOT_WORKER2_V1",
+  "d3_active_requests": 0,
+  "d3_owned_tunnels": "closed",
+  "deployment": "glm-5.3-ud-q4-k-xl-32k",
+  "served_model": "glm-5.3",
+  "port": 30002,
+  "desired": "running",
+  "boot_policy": "manual",
+  "d3_lifecycle_mutations": "held until explicit V1/root lease release",
+  "scoped_f1db_fixtures": "acknowledged; no GPU/network/real key/model/protected mutation",
+  "evidence": "v1-handoff.md"
+}

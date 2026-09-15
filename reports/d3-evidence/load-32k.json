@@ -1,0 +1,21 @@
+{
+  "owner": "D3",
+  "profile": "32k",
+  "start_utc": "2026-09-15T00:48:44.017659+00:00",
+  "supervisor_pid": 149087,
+  "release": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915",
+  "deadline_seconds": 7500,
+  "phase": "manager_ready",
+  "manager_pid": 149088,
+  "elapsed_seconds": 189.62,
+  "rss_kib": 431910756,
+  "mem_available_kib": 471639968,
+  "container_id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+  "container_pid": 149976,
+  "gpu_memory": [
+    "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97887, 16782, 0, 0",
+    "1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97887, 12918, 0, 0"
+  ],
+  "manager_exit": 0,
+  "end_utc": "2026-09-15T00:51:53.640608+00:00"
+}

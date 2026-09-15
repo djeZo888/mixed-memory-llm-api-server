@@ -1,0 +1,151 @@
+{
+  "utc": "2026-09-15T00:56:58.661585+00:00",
+  "name": "llmctl-glm-5.3-32k",
+  "root_available_bytes": 5228253184,
+  "host_kib": {
+    "MemTotal": 924616132,
+    "MemAvailable": 471883652,
+    "SwapTotal": 3083260,
+    "SwapFree": 3069436
+  },
+  "vmstat": {
+    "pswpin": 19045,
+    "pswpout": 35819,
+    "pgfault": 304443508,
+    "pgmajfault": 22965,
+    "oom_kill": 0
+  },
+  "container": {
+    "id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+    "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Pid": 149976,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "StartedAt": "2026-09-15T00:48:45.235739944Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "args": [
+      "--model",
+      "/models/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "30002",
+      "--alias",
+      "glm-5.3",
+      "--api-key-file",
+      "/run/secrets/llm-api-key",
+      "--ctx-size",
+      "32768",
+      "--parallel",
+      "1",
+      "--cpu-moe",
+      "--jinja",
+      "--no-webui",
+      "--n-gpu-layers",
+      "999",
+      "--split-mode",
+      "layer",
+      "--tensor-split",
+      "1,1",
+      "--load-mode",
+      "none",
+      "--device",
+      "CUDA0,CUDA1",
+      "--chat-template-kwargs",
+      "{\"clear_thinking\":true}"
+    ],
+    "entrypoint": [
+      "/opt/llama/llama-server"
+    ],
+    "port_bindings": {
+      "30002/tcp": [
+        {
+          "HostIp": "127.0.0.1",
+          "HostPort": "30002"
+        }
+      ]
+    },
+    "restart_policy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    }
+  },
+  "process_kib": {
+    "VmPeak": 552113048,
+    "VmSize": 552113048,
+    "VmHWM": 432005532,
+    "VmRSS": 432005532,
+    "RssAnon": 578160,
+    "RssFile": 247292,
+    "RssShmem": 431180080,
+    "VmSwap": 0,
+    "Threads": 233
+  },
+  "smaps_rollup_kib": {
+    "Rss": 432005532,
+    "Pss": 432005528,
+    "Pss_Anon": 578160,
+    "Pss_File": 247288,
+    "Pss_Shmem": 431180080,
+    "Private_Clean": 224256,
+    "Private_Dirty": 431781272,
+    "Anonymous": 578160,
+    "Swap": 0,
+    "SwapPss": 0,
+    "Locked": 0
+  },
+  "faults_ticks": {
+    "minflt": 108027209,
+    "majflt": 11,
+    "utime": 245109,
+    "stime": 11780
+  },
+  "cpu_allowed": "0-111",
+  "numa_resident_pages": {
+    "5": 31850975,
+    "4": 105419,
+    "0": 15155002,
+    "1": 6455681,
+    "2": 24126191,
+    "3": 16909,
+    "6": 30291205
+  },
+  "gpus": [
+    "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97887, 16804, 0, 0",
+    "1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97887, 12940, 0, 0"
+  ],
+  "gpu_processes": [
+    "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, 149976, 15970",
+    "GPU-69acfa26-8b60-61b5-702d-aee252c163cc, 149976, 12074"
+  ],
+  "key_present_in_log_sample": false,
+  "error_pattern_counts": {
+    "SIGBUS": 0,
+    "illegal instruction": 0,
+    "unsupported.*(kernel|arch)": 0,
+    "out of memory": 0,
+    "CUDA error": 0,
+    "GGML_ASSERT": 0,
+    "error:": 0,
+    "failed": 0
+  },
+  "phase_lines": [
+    "3.00.386.091 I cmn          init: llama threadpool init, n_threads = 112",
+    "4.18.909.968 I slot print_timing: id  0 | task 0 | prompt eval time =     992.06 ms /    26 tokens (   38.16 ms per token,    26.21 tokens per second)",
+    "4.18.909.975 I slot print_timing: id  0 | task 0 |        eval time =     521.79 ms /     3 tokens (  260.89 ms per token,     3.83 tokens per second)",
+    "4.19.154.634 I slot print_timing: id  0 | task 4 | prompt eval time =      74.43 ms /     1 tokens (   74.43 ms per token,    13.44 tokens per second)",
+    "4.19.154.643 I slot print_timing: id  0 | task 4 |        eval time =     147.06 ms /     3 tokens (   73.53 ms per token,    13.60 tokens per second)",
+    "6.04.385.835 I slot print_timing: id  0 | task 8 | prompt eval time =    7037.51 ms /   210 tokens (   33.51 ms per token,    29.84 tokens per second)",
+    "6.04.385.844 I slot print_timing: id  0 | task 8 |        eval time =    4451.94 ms /    13 tokens (  370.99 ms per token,     2.70 tokens per second)",
+    "6.10.785.147 I slot print_timing: id  0 | task 22 | prompt eval time =    2090.98 ms /    30 tokens (   69.70 ms per token,    14.35 tokens per second)",
+    "6.10.785.156 I slot print_timing: id  0 | task 22 |        eval time =    4275.52 ms /    26 tokens (  171.02 ms per token,     5.85 tokens per second)",
+    "6.12.373.807 I slot print_timing: id  0 | task 49 | prompt eval time =     331.10 ms /     1 tokens (  331.10 ms per token,     3.02 tokens per second)",
+    "6.12.373.843 I slot print_timing: id  0 | task 49 |        eval time =    1228.34 ms /    13 tokens (  102.36 ms per token,     9.77 tokens per second)",
+    "6.18.701.714 I slot print_timing: id  0 | task 63 | prompt eval time =    1254.09 ms /    30 tokens (   41.80 ms per token,    23.92 tokens per second)",
+    "6.18.701.756 I slot print_timing: id  0 | task 63 |        eval time =    5039.56 ms /    26 tokens (  201.58 ms per token,     4.96 tokens per second)"
+  ]
+}
