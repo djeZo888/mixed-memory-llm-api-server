@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "/usr/bin/python3",
+    "-B",
+    "/data/build/q38vr2-20260915/source/tests/lifecycle/sglang38_fixture/run_fixture.py",
+    "--repo",
+    "/data/build/q38vr2-20260915/source",
+    "--output",
+    "/data/logs/q38vr2-20260915/q38b-auth.json"
+  ],
+  "model_execution": "NOT_TESTED",
+  "started_utc": "2026-09-15T03:43:28.295562+00:00"
+}
