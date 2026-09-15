@@ -1,0 +1,107 @@
+{
+  "api_connections": 0,
+  "control": [
+    "MainPID=0",
+    "ActiveState=inactive",
+    "SubState=dead",
+    "UnitFileState=disabled"
+  ],
+  "file_hashes": {
+    "/data/services/llm-manager/active/active.json": "90757bf8175f23881d6cbde6b4513cf929bf9eeb5172838e640bd376332bee8f",
+    "/data/services/llm-manager/deployment-instance.json": "afd1e6e07db92f4e7b6d713752a33b9886f516d57ac3153971310e72688ba2e6",
+    "/etc/llm-server/control.json": "0a8b653b944e0e124d6bed90b4f488c91f0d5f2d8dcc0b57e041aae959ce5f53",
+    "/etc/llm-server/network.json": "095bbf0ea64c792efa49ddf16a78383ec74528abe605c86b54ba8ac01563cb60",
+    "/etc/local-ai-server/storage.json": "626db7130b644199f5f632b2ac3c04f86cdd382121573aa6f3825bbca8de9c27",
+    "/run/llmctl/recovery.json": "90757bf8175f23881d6cbde6b4513cf929bf9eeb5172838e640bd376332bee8f"
+  },
+  "guard": {
+    "capacity": {
+      "data_available_bytes": 1339520765952,
+      "model_available_bytes": 2590890250240,
+      "root_available_bytes": 5208338432,
+      "shared_model_filesystem": false
+    },
+    "data": {
+      "device": "8:17",
+      "fstype": "ext4",
+      "mount": "/data",
+      "parents": [
+        "/dev/sdb",
+        "/dev/sdb1"
+      ],
+      "path": "/data",
+      "source": "/dev/sdb1",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "models": {
+      "device": "8:33",
+      "fstype": "ext4",
+      "mount": "/data/models-large",
+      "parents": [
+        "/dev/sdc",
+        "/dev/sdc1"
+      ],
+      "path": "/data/models-large",
+      "source": "/dev/sdc1",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "root_payload_scan": {
+      "files_inspected": 4273,
+      "large_payload_threshold_bytes": 134217728,
+      "status": "pass"
+    },
+    "roots": {
+      "backups": "/data/backups",
+      "build": "/data/build",
+      "containerd": "/data/containerd",
+      "docker": "/data/docker",
+      "hf_cache": "/data/hf-cache",
+      "logs": "/data/logs",
+      "models": "/data/models-large",
+      "secrets": "/data/services/secrets",
+      "services": "/data/services",
+      "state": "/data/services/installer"
+    },
+    "schema_version": 1,
+    "storage_mode": "existing",
+    "verified_roles": [
+      "data",
+      "models"
+    ],
+    "warnings": [
+      "root filesystem has less than 6 GiB free"
+    ]
+  },
+  "identity": {
+    "args_sha256": "64c4ec488787da4703bc1505ff0c0955b71f05d4e1080d71b791547e669d3b95",
+    "id": "7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78",
+    "image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+    "pid": 243279,
+    "restart_count": 0,
+    "start_ticks": 2367582,
+    "started_at": "2026-09-15T04:09:20.746242473Z"
+  },
+  "key_root_0600_metadata_verified": true,
+  "last_idle_markers": [
+    {
+      "kind": "slot_release",
+      "utc": "2026-09-15T04:18:16.533841744Z"
+    },
+    {
+      "kind": "slot_release",
+      "utc": "2026-09-15T04:18:53.922886552Z"
+    },
+    {
+      "kind": "slot_release",
+      "utc": "2026-09-15T04:20:36.632935791Z"
+    }
+  ],
+  "legacy_sampler_pids": [],
+  "owned_remote_pid_absent": true,
+  "phase": "admission",
+  "registered_mounts": {
+    "/data": "8daf56f1-5649-4163-9d87-919c2d271875",
+    "/data/models-large": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+  },
+  "utc": 1789446706.1030502
+}

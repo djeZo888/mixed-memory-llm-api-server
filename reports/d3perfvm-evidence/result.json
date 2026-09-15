@@ -1,0 +1,39 @@
+{
+  "accounting": {
+    "add_special": true,
+    "body_sha256": "6682c1aaae6491aaa900da3297c05e17a63bc35adbceaef310bc8ded47b1f89d",
+    "configured_context": 32768,
+    "container_id": "7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78",
+    "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+    "input_tokens": 1370,
+    "parse_special": true,
+    "rendered_prompt_sha256": "9bcde19e00224e1f7d5892196e079ea3c4951f7c99760f52337f06a216742d5d",
+    "template_sha256": "347dc716e1e8a9917eb124503836943107686ace6a3848d16bf23ae50964bb49",
+    "tokens_sha256": "469dd72637c5825cf9cd3b936e7c7033ab0d99ed1dfb14ca94ce4db92bbe455c"
+  },
+  "counters": {
+    "cached_tokens": 173,
+    "cached_tokens_source": "usage.prompt_tokens_details.cached_tokens",
+    "completion_tokens": 64,
+    "decode_ms": 6607.434,
+    "decode_tokens": 64,
+    "elapsed_seconds": 27.48874812500435,
+    "evaluated_prompt_tokens": 1197,
+    "prompt_ms": 20857.048,
+    "prompt_tokens": 1370,
+    "total_tokens": 1434
+  },
+  "failure": null,
+  "finish_reason": "stop",
+  "full_sample_pass": false,
+  "highest_proven_window": null,
+  "http_status": 200,
+  "identity_unchanged": true,
+  "lease_released_utc": "2026-09-15T04:32:17.515611+00:00",
+  "owned_processes_zero": true,
+  "raw_sha256": "3fede0c3faa32351d452b3273f7be203206b18d1b4e485ab291ebc44f656d4a4",
+  "request_count": 1,
+  "request_start_utc": "2026-09-15T04:31:48.112009+00:00",
+  "response_complete_utc": "2026-09-15T04:32:15.601556+00:00",
+  "status": "COMPLETED_ONE_COMPARISON"
+}

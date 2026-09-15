@@ -1,0 +1,101 @@
+{
+  "container": {
+    "id": "7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78",
+    "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+    "oom_killed": false,
+    "pid": 243279,
+    "running": true,
+    "started_at": "2026-09-15T04:09:20.746242473Z"
+  },
+  "errors": {
+    "cuda": 0,
+    "fusion_fallback": 0,
+    "oom": 0,
+    "runtime": 0,
+    "storage": 0
+  },
+  "gpus": [
+    {
+      "free_bytes": 84356890624,
+      "index": 0,
+      "total_bytes": 102641958912
+    },
+    {
+      "free_bytes": 75892785152,
+      "index": 1,
+      "total_bytes": 102641958912
+    }
+  ],
+  "host_kib": {
+    "MemAvailable": 481922092,
+    "MemTotal": 924616132,
+    "SwapFree": 3069180,
+    "SwapTotal": 3083260
+  },
+  "host_swap_used_kib": 14080,
+  "log": {
+    "path": "/data/docker/containers/7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78/7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78-json.log",
+    "read_bytes": 14804,
+    "sha256": "228c15e2ad466f3dd5c1ad2a41fe40a3be2d05b3abed0d0bb38a48b225604523"
+  },
+  "mounts": {
+    "/data": "8daf56f1-5649-4163-9d87-919c2d271875",
+    "/data/models-large": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+  },
+  "n_threads": 112,
+  "native": {
+    "cache_bytes": {
+      "CUDA0": 1610612736,
+      "CUDA1": 1509949440
+    },
+    "cache_log_lines": {
+      "CUDA0": 38,
+      "CUDA1": 39
+    },
+    "compute_bytes": {
+      "CUDA0": 4467457152,
+      "CUDA1": 520099840
+    },
+    "compute_log_lines": {
+      "CUDA0": 35,
+      "CUDA1": 36
+    },
+    "end_log_line": 40,
+    "fa_nodes": 78,
+    "flash_attn": 1,
+    "fused_lid": 1,
+    "graph_log_line": 34,
+    "lid_nodes": 21,
+    "n_batch": 2048,
+    "n_ctx": 32768,
+    "n_ctx_seq": 32768,
+    "n_seq_max": 1,
+    "n_ubatch": 512,
+    "no_alloc": 0
+  },
+  "placement": "n_cpu_moe_76",
+  "process_kib": {
+    "Pss": 419918208,
+    "Rss": 419918212,
+    "Swap": 0,
+    "VmSwap": 0
+  },
+  "required_context": 32768,
+  "root_available_bytes": 5208326144,
+  "sample_elapsed_seconds": 0.7205084979977983,
+  "sampled_only": true,
+  "slot_context": 32768,
+  "slot_count": 1,
+  "status": "PASS",
+  "timestamp": 1789446737.677817,
+  "vmstat": {
+    "oom_kill": 0,
+    "pswpin": 19045,
+    "pswpout": 35822
+  },
+  "vmstat_delta": {
+    "oom_kill": 0,
+    "pswpin": 0,
+    "pswpout": 0
+  }
+}

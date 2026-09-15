@@ -1,0 +1,62 @@
+{
+  "active_cheap": {
+    "cadence_hz": 0.9989175788030991,
+    "duration_max_s": 0.06947541236877441,
+    "duration_mean_s": 0.04482953636734574,
+    "duration_median_s": 0.03921961784362793,
+    "duration_min_s": 0.036077022552490234,
+    "first_vm_utc": "2026-09-15T04:31:49.311884+00:00",
+    "last_vm_utc": "2026-09-15T04:32:15.340057+00:00",
+    "max_gap_s": 1.0291156768798828,
+    "mean_gap_s": 1.0010835941021259,
+    "samples": 27
+  },
+  "all_cheap": {
+    "cadence_hz": 1.00006807313797,
+    "duration_max_s": 0.06947541236877441,
+    "duration_mean_s": 0.044602106357442925,
+    "duration_median_s": 0.039325714111328125,
+    "duration_min_s": 0.036077022552490234,
+    "first_vm_utc": "2026-09-15T04:31:48.313053+00:00",
+    "last_vm_utc": "2026-09-15T04:32:16.311147+00:00",
+    "max_gap_s": 1.0291156768798828,
+    "mean_gap_s": 0.9999319314956665,
+    "samples": 29
+  },
+  "clock_note": "Request and release times are worker clock. Samples and native log times are VM clock; VM leads worker by about 0.20 s from paired receipts, without dedicated clock calibration. Sample roles use control-flow ownership, not cross-host timestamp boundary guesses.",
+  "prior_full_timestamp_window": {
+    "cadence_hz": 0.8495676395558954,
+    "duration_max_s": 1.3985623409971595,
+    "duration_mean_s": 1.0825583499846074,
+    "duration_median_s": 1.2451990160006972,
+    "duration_min_s": 0.7142511969977932,
+    "first_vm_utc": "2026-09-15T04:15:31.790893+00:00",
+    "last_vm_utc": "2026-09-15T04:18:04.809904+00:00",
+    "max_gap_s": 1.5358924865722656,
+    "mean_gap_s": 1.1770693155435414,
+    "samples": 131
+  },
+  "pss_absent_all_cheap_rows": true,
+  "row_roles": {
+    "during_active_transfer": 27,
+    "post_response_release": 1,
+    "pre_dispatch_seed": 1
+  },
+  "safety": {
+    "all_errors_swap_oom_deltas_zero": true,
+    "gpu_min_free_bytes": [
+      84356890624,
+      75892785152
+    ],
+    "host_swap_used_kib": [
+      14080
+    ],
+    "mem_available_min_kib": 481911572,
+    "root_min_bytes": 5208326144,
+    "rss_max_kib": 419918212,
+    "rss_min_kib": 419911552,
+    "target_vmswap_kib": [
+      0
+    ]
+  }
+}
