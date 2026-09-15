@@ -179,6 +179,8 @@ class PostWriteFailureTests(unittest.TestCase):
             binding = HistoricalBinding()
             binding.registry['data'].update(path=str(data), mount=str(data))
             binding.registry['models'].update(path=str(data / 'models'), mount=str(data))
+            binding.registry['roots'] = {role: str(data) + path[len('/data'):]
+                                         for role, path in binding.registry['roots'].items()}
             binding.identity = copy.deepcopy(binding.registry)
             available = [True]
             def verify(roles=('data', 'models')):
@@ -224,7 +226,7 @@ class PostWriteFailureTests(unittest.TestCase):
             self.assertTrue(primary['state_persisted'])
             self.assertFalse(journal['state_persisted'])
             self.assertEqual(primary['updated_at'], journal['updated_at'])
-            self.assertEqual(events, [('write', 'services/llm-manager/active/active.json'), ('check',)])
+            self.assertEqual(events, [('write', 'llm-manager/active/active.json'), ('check',)])
             available[0] = True  # Simulated restoration, not an actual remount.
             self.assertFalse(manager.read_state()['state_persisted'])
             self.assertEqual(manager.read_state()['updated_at'], 987654321)
@@ -244,6 +246,8 @@ class PackageAdmissionTests(unittest.TestCase):
         binding = HistoricalBinding()
         binding.registry['data'].update(path=str(self.data), mount=str(self.data))
         binding.registry['models'].update(path=str(self.data / 'models'), mount=str(self.data))
+        binding.registry['roots'] = {role: str(self.data) + path[len('/data'):]
+                                     for role, path in binding.registry['roots'].items()}
         binding.identity = copy.deepcopy(binding.registry)
         self.admission = 'pending_marker'
         self.events = []
@@ -252,8 +256,8 @@ class PackageAdmissionTests(unittest.TestCase):
         class AnchoredRoot:
             """Tiny worker stand-in; no descriptor anchoring or mount race claim."""
             def __init__(self, path, guard):
-                if path != str(outer.data):
-                    raise AssertionError('admission anchor outside registered data')
+                if path != str(outer.data / 'services'):
+                    raise AssertionError('persistence anchor outside registered services')
                 self.path, self.guard = Path(path), guard
                 outer.events.append(('open', path))
             def __enter__(self):
