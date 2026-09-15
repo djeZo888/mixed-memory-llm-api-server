@@ -1,0 +1,74 @@
+{
+  "container": {
+    "id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+    "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "oom_killed": false,
+    "pid": 149976,
+    "running": true,
+    "started_at": "2026-09-15T00:48:45.235739944Z"
+  },
+  "errors": {
+    "cuda": 0,
+    "fusion_fallback": 0,
+    "oom": 0,
+    "runtime": 0,
+    "storage": 0
+  },
+  "gpus": [
+    {
+      "free_bytes": 84300267520,
+      "index": 0,
+      "total_bytes": 102641958912,
+      "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+    },
+    {
+      "free_bytes": 88377131008,
+      "index": 1,
+      "total_bytes": 102641958912,
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+    }
+  ],
+  "host_kib": {
+    "MemAvailable": 469994908,
+    "MemTotal": 924616132,
+    "SwapFree": 3069180,
+    "SwapTotal": 3083260
+  },
+  "host_swap_used_kib": 14080,
+  "log": {
+    "path": "/data/docker/containers/bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55/bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55-json.log",
+    "read_bytes": 73115,
+    "sha256": "2abca594a6e049a8a52e3d11eda876c41d585a164d18729ebc677eba3290b476"
+  },
+  "mounts": {
+    "/data": "8daf56f1-5649-4163-9d87-919c2d271875",
+    "/data/models-large": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+  },
+  "n_threads": 112,
+  "native": null,
+  "placement": "all_cpu",
+  "process_kib": {
+    "Pss": 432996952,
+    "Rss": 432996956,
+    "Swap": 0,
+    "VmSwap": 0
+  },
+  "required_context": 32768,
+  "root_available_bytes": 5208965120,
+  "sample_elapsed_seconds": 0.748080970999581,
+  "sampled_only": true,
+  "slot_context": 32768,
+  "slot_count": 1,
+  "status": "PASS",
+  "timestamp": 1789444254.0655744,
+  "vmstat": {
+    "oom_kill": 0,
+    "pswpin": 19045,
+    "pswpout": 35822
+  },
+  "vmstat_delta": {
+    "oom_kill": 0,
+    "pswpin": 0,
+    "pswpout": 0
+  }
+}
