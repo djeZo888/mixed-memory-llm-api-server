@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "scope": "PUBLIC_BUILD_METADATA_FROM_ROOT_SUPPLIED_F1D_BLOCKER",
+  "recorded_at_utc": "2026-09-15T00:19:32.576013+00:00",
+  "reviewed_base": "e46c788534d5b71e988c2cdf188f37f6214f7514",
+  "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+  "public_build_metadata": {
+    "SGLANG_BUILD_COMMIT": "49e384ce9d304648e9959666ecb8ce8cd98d0deb",
+    "SGLANG_BUILD_URL": "https://github.com/sgl-project/sglang/actions/runs/28210048245",
+    "SGLANG_IMAGE_TAG": "lmsysorg/sglang:v0.5.14"
+  },
+  "source": {
+    "path_at_handoff": "../blocker.md",
+    "sha256": "3c65ff6a0678929b0eafc40ca68b73d7e87d60f5d351628eaa59577dc16ac4fc",
+    "title": "F1D Phase A \u2014 STOP before real key",
+    "reported_vm_evidence_path": "/data/build/f1d-qwen-20260915/evidence/image-environment-blocker.json",
+    "sanitized_exact_excerpt": "- `SGLANG_BUILD_COMMIT=49e384ce9d304648e9959666ecb8ce8cd98d0deb`\n- `SGLANG_BUILD_URL=https://github.com/sgl-project/sglang/actions/runs/28210048245`\n- `SGLANG_IMAGE_TAG=lmsysorg/sglang:v0.5.14`",
+    "verification": "Root-supplied F1D observation; F1E did not independently verify on VM"
+  },
+  "f1e_read_only_inspection_attempt": {
+    "command_argv": [
+      "ssh",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "-o",
+      "ConnectTimeout=10",
+      "ai-vm",
+      "docker image inspect --format '{{json .Id}}{{println}}{{range .Config.Env}}{{$name := index (split . \"=\") 0}}{{if or (eq $name \"SGLANG_BUILD_COMMIT\") (eq $name \"SGLANG_BUILD_URL\") (eq $name \"SGLANG_IMAGE_TAG\")}}{{json .}}{{println}}{{end}}{{end}}' sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3"
+    ],
+    "timeout_seconds": 30,
+    "ssh_attempts": 1,
+    "exit_code": 1,
+    "status": "FAILED_NO_USABLE_EVIDENCE_NO_RETRY",
+    "diagnostic": "Raw failure output was suppressed and not retained; cause not diagnosed",
+    "observed_image_id": null
+  },
+  "sanitization": "Metadata names/values copied only from the three approved blocker lines. SSH command projected only image Id and these names in Docker output. No arbitrary environment, container details, credentials or logs were captured.",
+  "metadata_semantics": "Exact value required when present. Absence remains allowed by launcher without default injection; empty and altered values fail. Manager separately enforces pinned image and inherited environment.",
+  "actual_image_auth_gate": "NOT_RUN_BY_F1E_PENDING_ROOT_REVIEW_MERGE_AND_F1D_F1Db"
+}
