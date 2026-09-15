@@ -1,0 +1,65 @@
+"""Bounded stopped-target admission; no allocation or old-process PSS."""
+admission_guards=guard()
+protected(REPORT.parent,directory=True)
+if not REPORT.exists():REPORT.mkdir(mode=0o700)
+protected(REPORT,directory=True);os.chmod(REPORT,0o700);assert stat.S_IMODE(REPORT.stat().st_mode)==0o700
+assert not list(REPORT.iterdir()),'preflight_parent_not_empty'
+source={}
+for rel,row in INVENTORY['files'].items():
+ p=protected(SRC/rel);digest=hashlib.sha256(p.read_bytes()).hexdigest()
+ assert digest==row['sha256'] and stat.S_IMODE(p.stat().st_mode)==int(row['mode'],8),'installed_source_hash_mode:'+rel
+ source[rel]=digest
+for rel,row in INVENTORY['rollback_only_files'].items():
+ p=protected(Path('/data/services/llm-manager/d3n32-20260915/rollback')/rel)
+ assert hashlib.sha256(p.read_bytes()).hexdigest()==row['sha256'],'rollback_hash'
+cid='3108f42bfaab08010164340b2c3e709e03c4aebeb36374e6b87d8bac226296fb'
+containers={}
+for role,ident in (('native1m',cid),('n76_32k',OLD),('d1',D1)):
+ c=inspect_container(ident)
+ assert c['Id']==ident and not c['State']['Running'] and c['State']['Pid']==0 and c['RestartPolicy']['Name']=='no','released_container_state'
+ if role!='d1':assert c['Image']==IMAGE
+ containers[role]=c
+assert containers['native1m']['State']['ExitCode']==137 and containers['native1m']['State']['OOMKilled'] is False
+q=quiet();control=control_state();key=key_state();files=stable_files()
+assert files['/data/services/llm-manager/deployment-instance.json']=='afd1e6e07db92f4e7b6d713752a33b9886f516d57ac3153971310e72688ba2e6'
+assert files['/usr/local/lib/llm-server/control-api.manifest.json']=='8fe8b5c32da9e212cae7e1d50751deec0d91c8aa1405a10e343fe21b33e712e0'
+prior_private=json.loads(protected('/data/logs/d3cap2-20260915/private-baseline.json').read_bytes())
+assert key==prior_private['key'] and files==prior_private['files'],'protected_identity_drift'
+processes=[];fixture=[]
+for p in Path('/proc').iterdir():
+ if not p.name.isdigit() or int(p.name)==os.getpid():continue
+ try:cmd=(p/'cmdline').read_bytes()
+ except (FileNotFoundError,PermissionError,ProcessLookupError):continue
+ if b'exec(json.loads(sys.stdin.readline()))' in cmd or b'd3perfvm' in cmd.lower() or b'llama-server' in cmd:processes.append(int(p.name))
+ if b'cache_probe.py' in cmd or b'run_pinned_image.py' in cmd:fixture.append(int(p.name))
+assert not processes,'prior_backend_request_sampler_process'
+assert all(not Path('/proc/'+str(pid)).exists() for pid in (273833,270294,243279))
+sys.path.insert(0,str(SRC/'scripts'))
+from common.lifecycle_lease import acquire_lease
+with acquire_lease(blocking=False) as lease:
+ m=manager();state=m.read_state()
+ assert state['selected']==TARGET and state['container']['id']==cid and state['boot_policy']=='manual' and state['desired']=='stopped' and state['observed']=='stopped' and state['failure'] is None
+ c=m.trusted_container(state['container']);target=m.deployment(TARGET)
+ m.validate_reused_contract(c,target)
+ scratch=[]
+ for name in ('cache','logs','service'):
+  p=protected(target['paths'][name],directory=True);assert stat.S_IMODE(p.stat().st_mode) in (0o700,0o2700)
+  scratch.append({'path':str(p),'dev':p.stat().st_dev,'ino':p.stat().st_ino,'mode':oct(stat.S_IMODE(p.stat().st_mode))})
+ m.prepare_start(target)
+ assert _reviewed_args(c['Args'],IMAGE,1048576)=='n_cpu_moe_76'
+ # No secret/environment values are returned. Only names of dtype overrides.
+ env=dict(x.split('=',1) for x in c['Config'].get('Env',[]) if '=' in x)
+ assert not any('CACHE_TYPE' in k or 'TYPE_K' in k or 'TYPE_V' in k for k in env),'cache_dtype_environment_override'
+ assert not any('cache-type' in x for x in c['Args']),'cache_dtype_argv_override'
+ current=json.loads((SRC/'configs/deployments'/str(ORIGINAL+'.json')).read_bytes());target_raw=json.loads((SRC/'configs/deployments'/str(TARGET+'.json')).read_bytes())
+ diff={k:{'before':current.get(k),'target':target_raw.get(k)} for k in current.keys()|target_raw.keys() if current.get(k)!=target_raw.get(k)}
+ emit('target_preflight_pass',container=cid,deadline_seconds=target['launch']['timeout_seconds'],root_available_bytes=admission_guards[-1]['capacity']['root_available_bytes'],all_backends_stopped=True,q38_fixture_pids=fixture,allocation_attempts=0)
+# Fresh baseline counters: D3CAP2 shutdown deltas remain historical, not waived.
+host=_metrics('/proc/meminfo',{'MemTotal','MemAvailable','SwapTotal','SwapFree'});vmstat=_metrics('/proc/vmstat',{'pswpin','pswpout','oom_kill'})
+gpus=[]
+for line in run(['nvidia-smi','--query-gpu=index,uuid,memory.total,memory.free','--format=csv,noheader,nounits'],3).splitlines():
+ index,uuid,total,free=[x.strip() for x in line.split(',')];gpus.append({'index':int(index),'uuid':uuid,'total_bytes':int(total)*1024**2,'free_bytes':int(free)*1024**2})
+assert len(gpus)==2 and all(g['free_bytes']>=16*GIB for g in gpus) and host['MemAvailable']>0
+baseline={'timestamp':time.time(),'vmstat':vmstat,'host_kib':host,'host_swap_used_kib':host['SwapTotal']-host['SwapFree'],'gpus':gpus,'pss_sampling':'NOT_APPLICABLE_NO_LIVE_BACKEND'}
+result={'guards':admission_guards,'containers':containers,'source_sha256':source,'file_hashes':files,'key_metadata':key['metadata'],'control':control,'quiescence':q,'prior_task_processes':processes,'q38_fixture_pids':fixture,'state':state,'target_diff':diff,'scratch_revalidated':scratch,'deadline_seconds':target['launch']['timeout_seconds'],'idle_full':baseline,'preflight_lease_released':True,'actual_args':c['Args'],'cache_dtype_environment_override_names':[]}
+write('private-baseline.json',{'key':key,'files':files});write('admission.json',result);write('preflight-final-guards.json',guard());emit('admission_complete',result=result)

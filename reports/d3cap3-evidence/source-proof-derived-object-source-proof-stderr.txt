@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "<stdin>", line 312, in <module>
+  File "/usr/lib/python3.12/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['git', '--no-optional-locks', '-C', '/data/build/d3p-d3b2-20260915/source', 'show', '0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e:common/common.h']' returned non-zero exit status 128.

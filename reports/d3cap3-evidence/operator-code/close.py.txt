@@ -1,0 +1,12 @@
+"""Final ownership closure; no backend/request/selection action."""
+prior=json.loads(protected(REPORT/'final-result.json').read_bytes());private=json.loads(protected(REPORT/'private-baseline.json').read_bytes())
+assert not Path('/proc/'+str(prior['owner_pid'])).exists(),'final_operator_still_alive'
+assert key_state()==private['key'] and stable_files()==private['files'];quiet();control_state()
+sys.path.insert(0,str(SRC/'scripts'))
+from common.lifecycle_lease import acquire_lease
+with acquire_lease(blocking=False) as lease:
+ m=manager();state=m.read_state();assert state==prior['state']
+ c=m.trusted_container(state['container']);assert c['State']['Pid']==0 and not c['State']['Running']
+g=guard()
+result={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'status':prior['status'],'allocation_attempts':1,'generation_attempts':0,'state':state,'exact_target_stopped':True,'preserved_n76_32k_and_d1_stopped':True,'canonical_lifecycle_lease_released':True,'sole_request_ownership_released':True,'owned_request_sampler_tunnel_processes':0,'native_api_established_connections':0,'final_operator_pid_absent':True,'guards':g,'key_exact_bytes_metadata_unchanged':True,'occupied_near_1m':'NOT_TESTED','actual_native1m_capacity':'NOT_ACCEPTED','actual_F16_allocation':'NOT_ESTABLISHED','read_only_report_transfer_is_only_remaining_vm_action':True}
+write('closure-result.json',result);write('closure-after-report-guards.json',guard());emit('ownership_release',result=result)
