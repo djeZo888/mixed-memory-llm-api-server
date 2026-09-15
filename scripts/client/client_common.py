@@ -7,7 +7,6 @@ import platform
 import re
 import stat
 import subprocess
-from urllib.parse import urlsplit
 
 VERSION = "1.18.31"
 PROVIDER = "local"
@@ -54,17 +53,59 @@ def json_bytes(value):
 
 
 def endpoint(value):
-    try:
-        url = urlsplit(value)
-        port = url.port
-    except ValueError:
-        raise ClientError("Invalid localhost API base URL") from None
-    if (url.scheme not in ("http", "https") or url.hostname not in ("127.0.0.1", "localhost", "::1")
-            or port is None or port < 1 or url.username is not None or url.password is not None
-            or url.query or url.fragment or url.path != "/v1"
-            or any(c.isspace() for c in value) or "{" in value or "}" in value):
-        raise ClientError("Require http(s)://localhost:<explicit-port>/v1 without credentials/query/fragment")
+    endpoint_kind(value)
     return value
+
+
+def endpoint_kind(value):
+    # Match the original text before any URL parser can strip whitespace or
+    # normalize an address alias. Keep the existing loopback spellings only.
+    message = ("Require http(s)://<loopback-or-canonical-RFC1918-IPv4>:<port-1..65535>/v1 "
+               "without credentials/query/fragment/whitespace")
+    if type(value) is not str:
+        raise ClientError(message)
+    match = re.fullmatch(r"(?ai:https?)://(?P<host>(?ai:localhost)|\[::1\]|[0-9]+(?:\.[0-9]+){3})"
+                         r":(?P<port>[0-9]+)/v1", value)
+    if match is None:
+        raise ClientError(message)
+    # Zero-padded ports were already accepted; IPv4 octets must be canonical.
+    port = match["port"].lstrip("0")
+    if not port or len(port) > 5 or int(port) > 65535:
+        raise ClientError(message)
+    host = match["host"]
+    if host.lower() in ("localhost", "127.0.0.1", "[::1]"):
+        return "loopback"
+    octets = host.split(".")
+    if any(len(part) > 3 or (len(part) > 1 and part[0] == "0") or int(part) > 255 for part in octets):
+        raise ClientError(message)
+    a, b, _, _ = map(int, octets)
+    # Explicit RFC1918 networks, never ipaddress.is_private's broader set.
+    if a == 10 or (a == 172 and 16 <= b <= 31) or (a == 192 and b == 168):
+        return "private"
+    raise ClientError(message)
+
+
+def validate_endpoint_auth(settings):
+    if type(settings) is not dict:
+        raise ClientError("Client settings must be an object")
+    kind = endpoint_kind(settings.get("base_url"))
+    auth = settings.get("auth")
+    if type(auth) is not dict:
+        raise ClientError("Client authentication must be a file/env reference or explicit loopback disabled mode")
+    auth_kind = auth.get("kind")
+    if auth_kind == "disabled" and set(auth) == {"kind"}:
+        if kind != "loopback":
+            raise ClientError("Private IPv4 endpoints require a protected API key file or environment reference")
+        return
+    if auth_kind not in ("file", "env") or set(auth) != {"kind", "reference"}:
+        raise ClientError("Client authentication must contain only kind and reference")
+    reference = auth["reference"]
+    if type(reference) is not str or not reference:
+        raise ClientError("Key reference must be a nonempty string, never a key value")
+    if auth_kind == "env":
+        key_env_name(reference)
+    elif not Path(reference).is_absolute() or any(ord(c) < 32 or ord(c) == 127 for c in reference):
+        raise ClientError("Key file reference must be absolute without control characters")
 
 
 def model_id(value):
@@ -156,6 +197,7 @@ def refuse_managed_preferences():
 
 
 def config_for(settings):
+    validate_endpoint_auth(settings)
     model = settings["model"]
     model_config = {"name": model, "limit": {
         "context": settings["context_tokens"], "output": settings["output_tokens"]}}
@@ -229,6 +271,7 @@ def verify_install(prefix):
     for name in ("bootstrap.json", "opencode.json", "models.json"):
         private_file(prefix / name)
     settings = json.loads((prefix / "bootstrap.json").read_text())
+    validate_endpoint_auth(settings)
     if settings["version"] != VERSION:
         raise ClientError("Installed pin differs from launcher; use a new prefix for upgrades")
     actual = json.loads((prefix / "opencode.json").read_text())
