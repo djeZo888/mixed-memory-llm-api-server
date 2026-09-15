@@ -119,7 +119,14 @@ def exclusive(path, *, uid=0):
 
 
 class Runner:
-    """No shell expansion or inherited cloud credentials; outputs never relayed."""
+    """No shell expansion or inherited cloud credentials; outputs never relayed.
+
+    The caller retains its canonically exported package_lease_fd duplicate for
+    this Runner's entire package-use scope, including post-READY validation and
+    later stages. Close it in finally before leaving the outer canonical lease;
+    never use LOCK_UN. A watcher independently retains its inherited duplicate
+    until package quiescence.
+    """
     def __init__(self, writable=False, *, package_lease_fd=None, package_scope=None):
         self.writable = writable
         self.package_lease_fd = package_lease_fd
@@ -178,7 +185,7 @@ class Runner:
                         "Dir::Log::History"}
         fixed_options = {"DPkg::Lock::Timeout": "0", "APT::Get::List-Cleanup": "false",
                          "Acquire::Retries": "3", "Acquire::https::Timeout": "30",
-                         "APT::Update::Error-Mode": "any"}
+                         "APT::Update::Error-Mode": "any", "APT::Sandbox::User": "root"}
         while args and args[0] == "-o":
             if len(args) < 2 or "=" not in args[1]:
                 return False

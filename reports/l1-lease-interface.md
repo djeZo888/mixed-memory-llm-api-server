@@ -16,9 +16,15 @@ Canonical import: `common.lifecycle_lease` with reviewed `scripts` on sys.path.
 - `_validate_borrowed_lease(lease, *, system_root=Path('/'), trusted_uid=0)` adds
   the expected caller scope check. Manager accepts only the active object.
 - `_export_package_watcher_fd(lease)` validates and returns `os.dup` of the same
-  open-file description. I1R owns/closes that duplicate after watcher handoff or
-  failure. The private owner descriptor is never exported. No raw FD can mint a
-  lease or authorize Manager borrowing.
+  open-file description. **I1R2 lifetime correction:** the caller retains that
+  duplicate through the Runner's entire package-use scope, including validation
+  after watcher READY and any later stages. Close it in `finally` before the
+  outer canonical lease context exits, on success or failure; never `LOCK_UN`.
+  The watcher independently owns its inherited duplicate until quiescence.
+  Earlier close-after-handoff guidance is superseded; see the corrected
+  [package caller example](i1r-package-process-ownership.md#exact-i1b-caller-api).
+  The private owner descriptor is never exported. No raw FD can mint a lease or
+  authorize Manager borrowing.
 - Context cleanup closes only, never LOCK_UN. A watcher retains the same lock
   after the parent context closes or the parent is killed, until its last
   inherited descriptor closes. `transition_in_progress()` observes without
