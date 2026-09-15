@@ -73,6 +73,98 @@ class ProbeError(Exception):
     """Only fixed codes may leave this probe."""
 
 
+# Diagnostic enums are deliberately finite; never derive them from child text.
+FAILURE_CODES = frozenset((
+    "q38b_cache_probe_failed", "cache_control_nodes_invalid", "cache_path_escape",
+    "cache_probe_hash_mismatch", "cache_resolved_path_mismatch",
+    "cache_resolver_source_mismatch", "cache_result_invalid", "cache_result_mismatch",
+    "cache_result_types_invalid", "cache_write_failed", "empty_model_and_secret_tmpfs_required",
+    "fixture_repository_required", "gpu_device_node_present", "gpu_visible", "home_changed",
+    "installed_package_missing", "installed_version_mismatch", "isolation_changed",
+    "launcher_source_hash_mismatch", "linux_pinned_image_required",
+    "no_gpu_runtime_environment_required", "private_directory_required", "private_tmpfs_required",
+    "readonly_container_root_required", "repository_package_substitution_refused",
+    "source_revision_mismatch",
+))
+FAILURE_TYPES = (
+    ProbeError, AssertionError, AttributeError, ImportError, ModuleNotFoundError,
+    TypeError, ValueError, KeyError, IndexError, RuntimeError, OSError,
+    FileNotFoundError, PermissionError, TimeoutError, json.JSONDecodeError,
+    MemoryError, RecursionError,
+)
+FAILURE_CLASSES = frozenset(kind.__name__ for kind in FAILURE_TYPES) | {"OTHER"}
+
+
+def failure_record(error):
+    """Emit only an exact code and a bounded, structurally owned callsite.
+
+    Do not format exceptions/tracebacks or inspect locals, causes or contexts.
+    Class identity prevents an unapproved class borrowing an approved name.
+    """
+    code = "q38b_cache_probe_failed"
+    if (type(error) is ProbeError and len(error.args) == 1
+            and type(error.args[0]) is str and error.args[0] in FAILURE_CODES):
+        code = error.args[0]
+    kind = next((known.__name__ for known in FAILURE_TYPES if type(error) is known), "OTHER")
+    origin = None
+    frame = BaseException.__traceback__.__get__(error)
+    for _ in range(64):
+        if frame is None:
+            break
+        frame_code = frame.tb_frame.f_code
+        if (any(frame_code is known for known in FAILURE_ORIGIN_CODES)
+                and frame.tb_frame.f_globals is globals() and frame_code.co_filename == __file__
+                and type(frame.tb_lineno) is int and 1 <= frame.tb_lineno <= 100000):
+            origin = {"filename": "cache_probe.py", "line": frame.tb_lineno,
+                      "exception_class": kind}
+        frame = frame.tb_next
+    else:
+        origin = None
+    return {"status": "FAIL", "code": code, "failure_origin": origin}
+
+
+def validate_failure(value):
+    """Copy only the exact diagnostic schema; never an acceptance record."""
+    if (type(value) is not dict or set(value) != {"status", "code", "failure_origin"}
+            or type(value["status"]) is not str or value["status"] != "FAIL"
+            or type(value["code"]) is not str or value["code"] not in FAILURE_CODES):
+        return None
+    origin = value["failure_origin"]
+    if origin is not None:
+        if (type(origin) is not dict or set(origin) != {"filename", "line", "exception_class"}
+                or type(origin["filename"]) is not str or origin["filename"] != "cache_probe.py"
+                or type(origin["line"]) is not int or not 1 <= origin["line"] <= 100000
+                or type(origin["exception_class"]) is not str
+                or origin["exception_class"] not in FAILURE_CLASSES):
+            return None
+        origin = {"filename": "cache_probe.py", "line": origin["line"],
+                  "exception_class": origin["exception_class"]}
+    return {"status": "FAIL", "code": value["code"], "failure_origin": origin}
+
+
+def failure_metadata(stdout):
+    """Parse one small whole FAIL document, with no duplicate or nonfinite JSON."""
+    if type(stdout) is not bytes or not 0 < len(stdout) <= 2048:
+        return None
+
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError()
+            result[key] = value
+        return result
+
+    def reject_constant(_value):
+        raise ValueError()
+
+    try:
+        return validate_failure(json.loads(stdout.decode("utf-8"),
+            object_pairs_hook=unique_object, parse_constant=reject_constant))
+    except (ValueError, TypeError, RecursionError):
+        return None
+
+
 def require(value, code):
     if not value:
         raise ProbeError(code)
@@ -278,9 +370,16 @@ def main(argv=None):
             result = run(options.repo)
         print(json.dumps(result, sort_keys=True))
         return 0
-    except Exception:
-        print(json.dumps({"status": "FAIL", "code": "q38b_cache_probe_failed"}))
+    except Exception as error:
+        print(json.dumps(failure_record(error), sort_keys=True))
         return 1
+
+
+# Freeze exact original function identities, excluding the generic require frame.
+FAILURE_ORIGIN_CODES = tuple(function.__code__ for function in (
+    check_mounts, check_device_names, verify_isolation, verify_sources,
+    resolve_paths, check_paths, prove_writable, run, result_record, validate_result, main,
+))
 
 
 if __name__ == "__main__":

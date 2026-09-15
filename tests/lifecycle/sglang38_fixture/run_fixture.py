@@ -171,13 +171,23 @@ def failure_metadata(stdout):
             result[key] = value
         return result
 
+    def reject_constant(_value):
+        raise ValueError()
+
     try:
-        value = json.loads(stdout.decode("utf-8"), object_pairs_hook=unique_object)
+        value = json.loads(stdout.decode("utf-8"), object_pairs_hook=unique_object,
+                           parse_constant=reject_constant)
         if (type(value) is not dict or set(value) not in (
-                {"status", "code"}, {"status", "code", "failure_origin"})
+                {"status", "code"}, {"status", "code", "failure_origin"},
+                {"status", "code", "failure_origin", "cache_failure"})
                 or value["status"] != "FAIL" or value["code"] != "actual_image_fixture_failed"):
             return rejected
         result = {"status": "FIXED_FAILURE_ONLY", "code": "actual_image_fixture_failed"}
+        if "cache_failure" in value:
+            cache_failure = CACHE.validate_failure(value["cache_failure"])
+            if cache_failure is None:
+                return rejected
+            result["cache_failure"] = cache_failure
         if "failure_origin" not in value or value["failure_origin"] is None:
             return result
         origin = value["failure_origin"]
@@ -187,9 +197,10 @@ def failure_metadata(stdout):
                 or type(origin["exception_class"]) is not str
                 or origin["exception_class"] not in FAILURE_CLASSES):
             return rejected
-        return {"status": "SAFE_ORIGIN", "code": "actual_image_fixture_failed",
-                "origin": {"filename": "run_pinned_image.py", "line": origin["line"],
-                           "exception_class": origin["exception_class"]}}
+        result.update(status="SAFE_ORIGIN",
+                      origin={"filename": "run_pinned_image.py", "line": origin["line"],
+                              "exception_class": origin["exception_class"]})
+        return result
     except (ValueError, TypeError, RecursionError):
         return rejected
 
