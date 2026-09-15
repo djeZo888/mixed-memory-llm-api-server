@@ -193,7 +193,10 @@ def check_device_names(names):
 
 def verify_isolation():
     require(sys.platform == "linux", "linux_pinned_image_required")
-    require(all(os.environ.get(name) == value for name, value in RUNTIME_ENVIRONMENT.items()),
+    # Q38ENV measured inherited inner "void"; host create/inspect still require "none".
+    require(os.environ.get("NVIDIA_VISIBLE_DEVICES") in ("none", "void")
+            and os.environ.get("NVIDIA_DRIVER_CAPABILITIES") == "compute,utility"
+            and os.environ.get("CUDA_VISIBLE_DEVICES") == "",
             "no_gpu_runtime_environment_required")
     check_mounts(Path("/proc/self/mountinfo").read_text())
     for target in (Path("/cache"), Path("/models"), Path("/run/secrets")):
