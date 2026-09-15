@@ -38,7 +38,7 @@ def fixture_container(repo, cache, context, *, name=None, token=None, image_id=N
                 **cache, "NVIDIA_VISIBLE_DEVICES": "none", "CUDA_VISIBLE_DEVICES": "",
                 "NVIDIA_DRIVER_CAPABILITIES": "compute,utility"}.items()],
             "Entrypoint": ["python3"], "User": "0:0", "WorkingDir": "/cache",
-            "Cmd": ["-B", "/fixture/tests/lifecycle/sglang38_fixture/run_pinned_image.py",
+            "Cmd": ["-X", "faulthandler", "-B", "/fixture/tests/lifecycle/sglang38_fixture/run_pinned_image.py",
                     "--actual-image", "--repo", "/fixture", "--context", str(context)],
         },
         "HostConfig": {
@@ -273,6 +273,11 @@ class Qwen38FixtureLifetimeTests(unittest.TestCase):
                 self.assert_policy_refused(
                     lambda container, field=field, value=value:
                     container["Config"].__setitem__(field, value))
+
+    def test_faulthandler_missing_or_altered_refused_before_start(self):
+        for prefix in (["-B"], ["-X", "dev", "-B"]):
+            self.assert_policy_refused(lambda container: container["Config"].__setitem__(
+                "Cmd", prefix + container["Config"]["Cmd"][3:]))
 
     def test_environment_gpu_enablement_void_and_duplicate_overrides_refused(self):
         for key, value in (("NVIDIA_VISIBLE_DEVICES", "all"),

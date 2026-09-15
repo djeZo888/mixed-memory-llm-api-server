@@ -591,7 +591,7 @@ def run_cache_probe(repo):
     # Native imports cache platform/architecture discovery. Isolate no-device
     # resolver discovery so it cannot contaminate the auth fixture's later
     # explicitly stubbed hardware setup in this interpreter.
-    child = subprocess.run([sys.executable, "-B",
+    child = subprocess.run([sys.executable, "-X", "faulthandler", "-B",
         str(repo / "tests/lifecycle/sglang38_fixture/cache_probe.py"),
         "--actual-image", "--repo", str(repo)], stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120, check=False)
@@ -599,6 +599,14 @@ def run_cache_probe(repo):
         require(child.returncode == 0 and child.stderr == b"" and len(child.stdout) <= 131072,
                 "cache_probe_child_failed")
     except FixtureFailure as error:
+        # This child runs before synthetic key/model files exist. Preserve a
+        # bounded native/faulthandler prefix on the original stderr FD for the
+        # worker-private capture; redirect_stderr(StringIO) must not swallow it.
+        if child.stderr:
+            try:
+                os.write(2, b"Q38FIX cache_probe stderr prefix (up to 16384 bytes):\n" + child.stderr[:16384])
+            except OSError:
+                pass  # A broken diagnostic FD must not replace the native failure.
         if child.stderr == b"" and len(child.stdout) <= 131072:
             error.cache_failure = cache_probe.failure_metadata(child.stdout)
         raise
@@ -790,10 +798,15 @@ def run_failure_children(repo, context=131072):
     # files after the child is gone, never accept a preexisting file.
     for scenario in SCENARIOS[1:]:
         require(not KEY_PATH.exists() and not CONFIG_PATH.exists(), "fixture_files_not_clean")
-        result = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--actual-image",
+        result = subprocess.run([sys.executable, "-X", "faulthandler", str(Path(__file__).resolve()), "--actual-image",
                                  "--repo", str(repo), "--context", str(context), "--internal-scenario", scenario],
                                 stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, timeout=180, check=False)
+        if result.stderr:
+            try:
+                os.write(2, b"Q38FIX failure fixture stderr prefix (up to 16384 bytes):\n" + result.stderr[:16384])
+            except OSError:
+                pass  # Preserve the original failed child outcome.
         require(result.returncode == 1 and result.stdout == FAULT_MARKER and result.stderr == b"",
                 "warmup_failure_subprocess_not_closed")
         # These files can exist only if the exclusive child created them. Do not

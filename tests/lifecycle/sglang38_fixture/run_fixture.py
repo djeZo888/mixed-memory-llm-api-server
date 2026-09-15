@@ -140,7 +140,7 @@ def docker_command(repo, cache_environment, context, *, container_name=None, own
     # No host environment is forwarded and HOME retains the image default.
     for name, value in sorted(cache_environment.items()):
         command += ["--env", f"{name}={value}"]
-    return command + [IMAGE_REFERENCE, "-B",
+    return command + [IMAGE_REFERENCE, "-X", "faulthandler", "-B",
         "/fixture/tests/lifecycle/sglang38_fixture/run_pinned_image.py", "--actual-image",
         "--repo", "/fixture", "--context", str(context)]
 
@@ -279,7 +279,7 @@ def verify_fixture_runtime(container, repo, cache_environment, context):
             and binds[0].get("RW") is False and binds[0].get("Propagation") in ("rprivate", ""),
             "fixture_mounts_invalid")
     require(config.get("Entrypoint") == ["python3"] and config.get("User") == "0:0"
-            and config.get("WorkingDir") == "/cache" and config.get("Cmd") == ["-B",
+            and config.get("WorkingDir") == "/cache" and config.get("Cmd") == ["-X", "faulthandler", "-B",
             "/fixture/tests/lifecycle/sglang38_fixture/run_pinned_image.py", "--actual-image",
             "--repo", "/fixture", "--context", str(context)], "fixture_process_invalid")
     return {"runtime": "nvidia", "visible_devices": "none", "driver_capabilities": "compute,utility",

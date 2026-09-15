@@ -53,6 +53,7 @@ class CacheFailureDiagnosticTests(unittest.TestCase):
         stdout, stderr = io.StringIO(), io.StringIO()
         with patch.object(inner, "verify_sources", return_value=ROOT / "unused.py"), \
                 patch.object(inner.subprocess, "run", return_value=child) as process, \
+                patch.object(inner.os, "write") as private_stderr, \
                 patch.object(inner, "run_failure_children") as later, \
                 redirect_stdout(stdout), redirect_stderr(stderr):
             code = inner.main(["--actual-image", "--repo", str(ROOT), "--context", "131072"])
@@ -60,7 +61,8 @@ class CacheFailureDiagnosticTests(unittest.TestCase):
         self.assertEqual(stderr.getvalue(), "")
         self.assertEqual(process.call_count, 1)
         command = process.call_args.args[0]
-        self.assertEqual(Path(command[2]).name, "cache_probe.py")
+        self.assertEqual(command[1:4], ["-X", "faulthandler", "-B"])
+        self.assertEqual(Path(command[4]).name, "cache_probe.py")
         self.assertEqual(process.call_args.kwargs["timeout"], 120)
         later.assert_not_called()
         self.assert_secret_absent(stdout.getvalue())
