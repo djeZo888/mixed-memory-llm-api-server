@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+  "image_index_sha256": "86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+  "platform_manifest_sha256": "384a22a0b15b9668b89e4ec46ed7363f2bb02e91d3344db102411288551ef62b",
+  "image_config_sha256": "89a1ea2575d8a5ea2c2debd618d420ac03194b1c2d54b85972a8ebff850f3938",
+  "image_tag": "local/llama-cpp:v0.4.1-b29c606-cu132-sm120-d3p-43e4aeb5b63d",
+  "repo_digests": [
+    "local/llama-cpp@sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9"
+  ],
+  "platform": "linux/amd64",
+  "entrypoint": [
+    "/opt/llama/llama-server"
+  ],
+  "oci_labels": {
+    "local.d1.cuda.architectures": "120a-real",
+    "local.d3p.source.derived-tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+    "local.d3p.source.kind": "upstream-plus-checked-patch",
+    "local.d3p.source.patch-sha256": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b",
+    "local.d3p.source.revision-kind": "git-tree",
+    "local.d3p.source.upstream-commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+    "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+    "org.opencontainers.image.revision": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+    "org.opencontainers.image.source": "https://github.com/ggml-org/llama.cpp",
+    "org.opencontainers.image.version": "v0.4.1+d3p"
+  },
+  "source_commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+  "source": {
+    "derived_commit": null,
+    "derived_tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+    "jinja_fix_ancestor": "ae9afff8d2c012ca760eb9c2adf41961cf6f6232",
+    "patch_file": "strict-model-chat.patch",
+    "patch_sha256": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b",
+    "schema_version": 1,
+    "source_state": "verified-patched",
+    "upstream_commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+    "upstream_repository": "https://github.com/ggml-org/llama.cpp",
+    "upstream_tree": "950999fe62b7fe55f44ab5b7394e3c8542f37f12"
+  },
+  "binary_sha256": "c81262fd063e9d2fc098d9e116d0ae742ca7ea37344ee3f4b56eb5d088206e0a",
+  "captured_utc": "2026-09-15T03:42:14.825136+00:00",
+  "source_release": "v0.4.1",
+  "upstream_source_clean": true,
+  "source_state": "verified-patched",
+  "derived_tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+  "derived_commit": null,
+  "upstream_tree": "950999fe62b7fe55f44ab5b7394e3c8542f37f12",
+  "patch_sha256": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b",
+  "build_source_commit": "c7155099e4d8d096b0e946352fbf01e3a9072ab9",
+  "build_status": "PASS_BUILD_CLI_ENUMERATION_ONLY",
+  "build_exit": 0,
+  "actual_build_attempts": 1,
+  "build_started_utc": "2026-09-15T03:27:14Z",
+  "build_finished_utc": "2026-09-15T03:30:27Z",
+  "input_proof": {
+    "original_path": "/data/build/d3p-d3b2-20260915/evidence/runtime-proof.json",
+    "sha256": "1d500eae56d6e777b944b2492071c8b3dd28ea350b04f5c72da5b7bd70d052c9"
+  },
+  "supported_flags": [
+    "--model",
+    "--host",
+    "--port",
+    "--alias",
+    "--api-key-file",
+    "--ctx-size",
+    "--parallel",
+    "--cpu-moe",
+    "--jinja",
+    "--no-webui",
+    "--n-gpu-layers",
+    "--split-mode",
+    "--tensor-split",
+    "--load-mode",
+    "--device",
+    "--chat-template-kwargs",
+    "--n-cpu-moe"
+  ],
+  "supported_load_modes": [
+    "auto",
+    "none",
+    "mmap",
+    "mlock",
+    "mmap+mlock",
+    "dio"
+  ],
+  "devices": [
+    "CUDA0",
+    "CUDA1"
+  ],
+  "version_stdout": "version: 0.4.1-dev (build 62, commit b29c606)\nbuilt with GNU 13.3.0 for Linux x86_64\n",
+  "devices_stdout": "Available devices:\n  CUDA0: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (97249 MiB, 79836 MiB free)\n  CUDA1: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (97249 MiB, 83724 MiB free)\n",
+  "compiler_stdout": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2026 NVIDIA Corporation\nBuilt on Thu_Mar_19_11:12:51_PM_PDT_2026\nCuda compilation tools, release 13.2, V13.2.78\nBuild cuda_13.2.r13.2/compiler.37668154_0\n",
+  "build_recipe_sha256": {
+    "containers/llama-cpp/Dockerfile.d3p": "704fe3dcbcddd4497147b2b12b09ac674cb1b7c2ce2b049197620691b6acd92a",
+    "containers/llama-cpp/Dockerfile.d3p.dockerignore": "875afccc85a373f21e7fc8197b2c91ffd6a8ae321aef56767a5099c7fe7d4761",
+    "containers/llama-cpp/prepare-d3p-source.py": "47be70ebc01f7f5ff6d790c510bc9bf1ef9cf604ed725449ec3e52548798138a",
+    "containers/llama-cpp/build-d3p-runtime.sh": "67c5124ff21ec4a0e56e8678b6e888300c11aa0aa33b2e05ffb80627e6bf3a9f",
+    "containers/llama-cpp/d3p-source.json": "a073747a339995e3dc6f1b509c7d977765d46f1959340ee4b2895230bf7c13c7",
+    "containers/llama-cpp/strict-model-chat.patch": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b"
+  },
+  "evidence_root": "/data/build/d3p-d3b2-20260915/evidence",
+  "evidence_sha256": {
+    "reports/d3rp-contract-evidence/CMakeCache.txt": "39e5fde134512560daf7aadfb086dcdc6963b990ff9332e7313b084ac839472b",
+    "reports/d3rp-contract-evidence/VM-GUARDS.json": "cc07a7d89e47412df1ec327a91c3f28e4bf9c1ff39dad4e737efbd1541d93a00",
+    "reports/d3rp-contract-evidence/build-packages.tsv": "71923fedc39f650bf1280b66cbeca141f981d64fa187a9107a3c53043d9984c4",
+    "reports/d3rp-contract-evidence/build-recipe-sha256.txt": "87b03d3c2ebd3b4369c6014ccd1ca7fcfb502747f7bee0b81036f7f99c9409bb",
+    "reports/d3rp-contract-evidence/d3b2-build-observation.json": "4c2d64e82812799ba8a728f5b14aea0421abedd96cd16c1d8bf9e751622dcdc3",
+    "reports/d3rp-contract-evidence/guard-close.json": "3b5e654b3215d5d297226e26b0cd2334fca2e7b0df060ce1a3d53bc31a03db07",
+    "reports/d3rp-contract-evidence/host-build-recipe-sha256.txt": "87b03d3c2ebd3b4369c6014ccd1ca7fcfb502747f7bee0b81036f7f99c9409bb",
+    "reports/d3rp-contract-evidence/image-amd64-manifest.json": "384a22a0b15b9668b89e4ec46ed7363f2bb02e91d3344db102411288551ef62b",
+    "reports/d3rp-contract-evidence/image-identity.json": "4bf85db0153f8e0d8184e48ed0601a6ad11c8fd39a6aa62b7defc441ce7fc16d",
+    "reports/d3rp-contract-evidence/image-index.json": "86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+    "reports/d3rp-contract-evidence/llama-server-help.txt": "a144e0605fbd0092e6e68cc51d1cdc3c3f8ea75bb63e2f53e4478ab2cde9e8a5",
+    "reports/d3rp-contract-evidence/llama-server-list-devices.txt": "a5ec45c7fca7431f3404106c7a3094a33a6475179b4d573ec0618faf45a08095",
+    "reports/d3rp-contract-evidence/llama-server-version.txt": "7a6fd8b560b5fb063561e2763bf3c2be1273d1e81bd1538f0528eb9321ec9005",
+    "reports/d3rp-contract-evidence/nvcc-version.txt": "253e71ac127eda861ab854400b5d1a121c923c0250fc211e9ba98774ef6b8bbd",
+    "reports/d3rp-contract-evidence/registered-build-after.json": "462ac50e8818f1fdcd74efa4d8c3f4a7a90c3712887341d2ab3cde2872155224",
+    "reports/d3rp-contract-evidence/registered-build-before.json": "c7428deecb0eb57d4ca6379747b8d27c8f0fbd4a53541d79bbe184f0e688bba7",
+    "reports/d3rp-contract-evidence/source-commit.txt": "d82648fc05e16c31240c75e48f54b4336d7c936fc0922464ed09aa1535827001",
+    "reports/d3rp-contract-evidence/source-preflight.json": "8105d6f70a6324f197feb1541bca7680689b83d4d4be548075241510bd45d4be",
+    "reports/d3rp-contract-evidence/source-provenance.json": "78dff11eb5911a4f792a7e9bd8e856f4379ad89c3e6d05300b9373be799d1765",
+    "reports/d3rp-contract-evidence/source-tree.txt": "f84522b781335726c60361231fa29b2b4fb6cf169ffb161769010ee0c25f8cab"
+  },
+  "original_evidence": {
+    "reports/d3rp-contract-evidence/image-identity.json": {
+      "delivered_source": "reports/d3b2-evidence/image-identity.json",
+      "sha256": "4bf85db0153f8e0d8184e48ed0601a6ad11c8fd39a6aa62b7defc441ce7fc16d"
+    },
+    "reports/d3rp-contract-evidence/image-index.json": {
+      "delivered_source": "reports/d3b2-evidence/image-index.json",
+      "sha256": "86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9"
+    },
+    "reports/d3rp-contract-evidence/image-amd64-manifest.json": {
+      "delivered_source": "reports/d3b2-evidence/image-amd64-manifest.json",
+      "sha256": "384a22a0b15b9668b89e4ec46ed7363f2bb02e91d3344db102411288551ef62b"
+    },
+    "reports/d3rp-contract-evidence/llama-server-version.txt": {
+      "delivered_source": "reports/d3b2-evidence/llama-server-version.txt",
+      "sha256": "7a6fd8b560b5fb063561e2763bf3c2be1273d1e81bd1538f0528eb9321ec9005"
+    },
+    "reports/d3rp-contract-evidence/llama-server-help.txt": {
+      "delivered_source": "reports/d3b2-evidence/llama-server-help.txt",
+      "sha256": "a144e0605fbd0092e6e68cc51d1cdc3c3f8ea75bb63e2f53e4478ab2cde9e8a5"
+    },
+    "reports/d3rp-contract-evidence/llama-server-list-devices.txt": {
+      "delivered_source": "reports/d3b2-evidence/llama-server-list-devices.txt",
+      "sha256": "a5ec45c7fca7431f3404106c7a3094a33a6475179b4d573ec0618faf45a08095"
+    },
+    "reports/d3rp-contract-evidence/source-preflight.json": {
+      "delivered_source": "reports/d3b2-evidence/source-preflight.json",
+      "sha256": "8105d6f70a6324f197feb1541bca7680689b83d4d4be548075241510bd45d4be",
+      "original_data_path": "/data/build/d3p-d3b2-20260915/evidence/source-preflight.json"
+    },
+    "reports/d3rp-contract-evidence/registered-build-before.json": {
+      "delivered_source": "reports/d3b2-evidence/registered-build-before.json",
+      "sha256": "c7428deecb0eb57d4ca6379747b8d27c8f0fbd4a53541d79bbe184f0e688bba7",
+      "guard_report_path": "/data/logs/d3p-d3b2-20260915/root-build-before.json"
+    },
+    "reports/d3rp-contract-evidence/registered-build-after.json": {
+      "delivered_source": "reports/d3b2-evidence/registered-build-after.json",
+      "sha256": "462ac50e8818f1fdcd74efa4d8c3f4a7a90c3712887341d2ab3cde2872155224",
+      "guard_report_path": "/data/logs/d3p-d3b2-20260915/root-build-after.json"
+    },
+    "reports/d3rp-contract-evidence/guard-close.json": {
+      "delivered_source": "reports/d3b2-evidence/guard-close.json",
+      "sha256": "3b5e654b3215d5d297226e26b0cd2334fca2e7b0df060ce1a3d53bc31a03db07"
+    },
+    "reports/d3rp-contract-evidence/VM-GUARDS.json": {
+      "delivered_source": "reports/d3b2-evidence/VM-GUARDS.json",
+      "sha256": "cc07a7d89e47412df1ec327a91c3f28e4bf9c1ff39dad4e737efbd1541d93a00"
+    },
+    "reports/d3rp-contract-evidence/host-build-recipe-sha256.txt": {
+      "delivered_source": "reports/d3b2-evidence/build-recipe-sha256.txt",
+      "sha256": "87b03d3c2ebd3b4369c6014ccd1ca7fcfb502747f7bee0b81036f7f99c9409bb",
+      "original_data_path": "/data/build/d3p-d3b2-20260915/evidence/build-recipe-sha256.txt"
+    },
+    "reports/d3rp-contract-evidence/CMakeCache.txt": {
+      "delivered_source": "reports/d3b2-evidence/image-files/CMakeCache.txt",
+      "sha256": "39e5fde134512560daf7aadfb086dcdc6963b990ff9332e7313b084ac839472b",
+      "image_path": "/opt/llama/CMakeCache.txt"
+    },
+    "reports/d3rp-contract-evidence/build-packages.tsv": {
+      "delivered_source": "reports/d3b2-evidence/image-files/build-packages.tsv",
+      "sha256": "71923fedc39f650bf1280b66cbeca141f981d64fa187a9107a3c53043d9984c4",
+      "image_path": "/opt/llama/build-packages.tsv"
+    },
+    "reports/d3rp-contract-evidence/build-recipe-sha256.txt": {
+      "delivered_source": "reports/d3b2-evidence/image-files/build-recipe-sha256.txt",
+      "sha256": "87b03d3c2ebd3b4369c6014ccd1ca7fcfb502747f7bee0b81036f7f99c9409bb",
+      "image_path": "/opt/llama/build-recipe-sha256.txt"
+    },
+    "reports/d3rp-contract-evidence/nvcc-version.txt": {
+      "delivered_source": "reports/d3b2-evidence/image-files/nvcc-version.txt",
+      "sha256": "253e71ac127eda861ab854400b5d1a121c923c0250fc211e9ba98774ef6b8bbd",
+      "image_path": "/opt/llama/nvcc-version.txt"
+    },
+    "reports/d3rp-contract-evidence/source-commit.txt": {
+      "delivered_source": "reports/d3b2-evidence/image-files/source-commit.txt",
+      "sha256": "d82648fc05e16c31240c75e48f54b4336d7c936fc0922464ed09aa1535827001",
+      "image_path": "/opt/llama/source-commit.txt"
+    },
+    "reports/d3rp-contract-evidence/source-provenance.json": {
+      "delivered_source": "reports/d3b2-evidence/image-files/source-provenance.json",
+      "sha256": "78dff11eb5911a4f792a7e9bd8e856f4379ad89c3e6d05300b9373be799d1765",
+      "image_path": "/opt/llama/source-provenance.json"
+    },
+    "reports/d3rp-contract-evidence/source-tree.txt": {
+      "delivered_source": "reports/d3b2-evidence/image-files/source-tree.txt",
+      "sha256": "f84522b781335726c60361231fa29b2b4fb6cf169ffb161769010ee0c25f8cab",
+      "image_path": "/opt/llama/source-tree.txt"
+    },
+    "reports/d3rp-contract-evidence/d3b2-build-observation.json": {
+      "original_path": "/data/build/d3p-d3b2-20260915/evidence/runtime-proof.json",
+      "sha256": "1d500eae56d6e777b944b2492071c8b3dd28ea350b04f5c72da5b7bd70d052c9",
+      "transformation": "Selected field projection; exact source/CLI/recipe outputs retained separately.",
+      "retained_sha256": "4c2d64e82812799ba8a728f5b14aea0421abedd96cd16c1d8bf9e751622dcdc3"
+    }
+  },
+  "final_guards": {
+    "status": "PASS_FINAL_AFTER_ENUMERATION_CLEANUP",
+    "evidence": [
+      "reports/d3rp-contract-evidence/registered-build-before.json",
+      "reports/d3rp-contract-evidence/registered-build-after.json",
+      "reports/d3rp-contract-evidence/guard-close.json"
+    ],
+    "warnings": [
+      "root filesystem has less than 6 GiB free"
+    ]
+  },
+  "glm_inference": "NOT_TESTED",
+  "tool_calls": "NOT_TESTED",
+  "occupied_context": "NOT_TESTED",
+  "fusion_and_workspace": "NOT_TESTED",
+  "service_activation": "NOT_PERFORMED",
+  "live_acceptance": "NOT_TESTED",
+  "limits": [
+    "Measurements were supplied by Worker1; D3RD performed source-only consistency checks on the delivered files.",
+    "Raw OCI index and platform manifest bytes are retained; the config and binary digest are measured references, without their payloads in this source bundle.",
+    "Source upstream commit and derived Git tree are separate; measured version text is preserved verbatim.",
+    "Manager uses protected operator attestation; it does not independently parse this proof or validate source/recipe derivation.",
+    "Build/CLI/device enumeration does not prove model load, native/occupied context, protocol, agents, fusion or allocated workspace."
+  ]
+}
