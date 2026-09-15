@@ -1,4 +1,4 @@
-"""Concrete ai-vm D3T telemetry: read-only SSH, bounded logs, 1 Hz samples.
+"""Concrete D3T telemetry: cheap 1 Hz reads and full memory checkpoints.
 
 Adapted from reports/d3-evidence/operator-code/snapshot-d3.py.txt. No observer,
 lease or external evidence adapters. The later live CLI owns its request and
@@ -89,25 +89,51 @@ def validate_snapshot(sample):
     try:
         if sample.get("status") == "STOP":
             raise Error("telemetry_collection_failed")
-        if not sample["container"]["running"] or sample["container"]["oom_killed"]:
+        if sample["schema_version"] != 2 or sample["sample_kind"] not in ("cheap", "full"):
+            raise Error("unknown_telemetry_schema")
+        full = sample["sample_kind"] == "full"
+        duration = sample["sample_elapsed_seconds"]
+        if type(duration) not in (int, float) or not 0 <= duration <= (30 if full else 2):
+            raise Error("snapshot_collection_too_slow_or_invalid")
+        container = sample["container"]
+        if (container["running"] is not True or any(container[key] is not False for key in
+                ("oom_killed", "paused", "restarting", "dead"))
+                or type(container["restart_count"]) is not int or container["restart_count"] < 0):
             raise Error("container_not_safe_running")
-        if sample["root_available_bytes"] < 4 * GIB:
+        if (type(sample["process_start_ticks"]) is not int or sample["process_start_ticks"] <= 0
+                or sample["process_state"] not in ("R", "S", "D", "I")):
+            raise Error("process_identity_or_state_invalid")
+        if type(sample["root_available_bytes"]) is not int or sample["root_available_bytes"] < 4 * GIB:
             raise Error("root_below_4gib")
         if sample["mounts"] != MOUNTS:
             raise Error("mount_uuid_mismatch")
-        if len(sample["gpus"]) != 2 or {g["index"] for g in sample["gpus"]} != {0, 1}:
+        if (len(sample["gpus"]) != 2 or {g["index"] for g in sample["gpus"]} != {0, 1}
+                or len({g["uuid"] for g in sample["gpus"]}) != 2):
             raise Error("requires_two_exact_gpus")
         for gpu in sample["gpus"]:
-            if gpu["free_bytes"] < 16 * GIB or gpu["free_bytes"] > gpu["total_bytes"]:
+            if (type(gpu["index"]) is not int or not isinstance(gpu["uuid"], str) or not gpu["uuid"]
+                    or type(gpu["free_bytes"]) is not int or type(gpu["total_bytes"]) is not int
+                    or gpu["free_bytes"] < 16 * GIB or gpu["free_bytes"] > gpu["total_bytes"]):
                 raise Error("gpu_below_16gib_or_invalid")
         host, process = sample["host_kib"], sample["process_kib"]
-        if host["MemAvailable"] <= 0 or process["Rss"] <= 0 or not 0 < process["Pss"] <= process["Rss"]:
+        names = {"VmRSS", "VmSwap"} | ({"Rss", "Pss", "Swap"} if full else set())
+        if set(process) != names or any(type(process[key]) is not int or process[key] < 0 for key in names):
             raise Error("missing_or_invalid_memory_measurement")
-        if process["Swap"] != 0 or process["VmSwap"] != 0:
+        if type(host["MemAvailable"]) is not int or host["MemAvailable"] <= 0 or process["VmRSS"] <= 0:
+            raise Error("missing_or_invalid_memory_measurement")
+        if full and not 0 < process["Pss"] <= process["Rss"]:
+            raise Error("missing_or_invalid_memory_measurement")
+        if process["VmSwap"] != 0 or full and process["Swap"] != 0:
             raise Error("target_process_swap_in_use")
-        if any(sample["vmstat_delta"][key] != 0 for key in ("pswpin", "pswpout", "oom_kill")):
+        if type(sample["host_swap_used_kib"]) is not int or sample["host_swap_used_kib"] < 0:
+            raise Error("missing_or_invalid_memory_measurement")
+        if any(type(sample["vmstat"][key]) is not int or sample["vmstat"][key] < 0
+               for key in ("pswpin", "pswpout", "oom_kill")):
+            raise Error("missing_or_invalid_telemetry")
+        if any(type(sample["vmstat_delta"][key]) is not int or sample["vmstat_delta"][key] != 0
+               for key in ("pswpin", "pswpout", "oom_kill")):
             raise Error("swap_or_oom_counter_increased")
-        if any(sample["errors"][key] != 0 for key in ERROR_PATTERNS):
+        if any(type(sample["errors"][key]) is not int or sample["errors"][key] != 0 for key in ERROR_PATTERNS):
             raise Error("runtime_cuda_oom_storage_or_fusion_error")
         if sample["slot_count"] != 1 or sample["slot_context"] != sample["required_context"]:
             raise Error("actual_slot_context_mismatch")
@@ -120,10 +146,10 @@ def validate_snapshot(sample):
             required = {"n_ctx": sample["required_context"], "n_ctx_seq": sample["required_context"], "n_seq_max": 1,
                         "n_batch": 2048, "n_ubatch": 512, "flash_attn": 1, "fused_lid": 1,
                         "lid_nodes": 21, "fa_nodes": 78, "no_alloc": 0}
-            if any(native[key] != value for key, value in required.items()):
+            if any(type(native[key]) is not int or native[key] != value for key, value in required.items()):
                 raise Error("native_graph_selection_mismatch")
             for kind in ("compute_bytes", "cache_bytes"):
-                if set(native[kind]) != {"CUDA0", "CUDA1"} or any(value <= 0 for value in native[kind].values()):
+                if set(native[kind]) != {"CUDA0", "CUDA1"} or any(type(value) is not int or value <= 0 for value in native[kind].values()):
                     raise Error("NOT_TESTED_native_allocated_buffers_required")
     except (KeyError, TypeError, ValueError):
         raise Error("missing_or_invalid_telemetry") from None
@@ -178,7 +204,7 @@ def _run(argv, limit=65536):
     return result.stdout.decode("utf-8", errors="strict")
 
 
-def _metrics(path, names):
+def _metrics(path, names, unit="kB"):
     raw = Path(path).read_bytes()
     if len(raw) > 131072:
         raise Error("proc_read_bound_exceeded")
@@ -186,13 +212,16 @@ def _metrics(path, names):
     for line in raw.decode().splitlines():
         parts = line.replace(":", " ").split()
         if parts and parts[0] in names:
+            if (parts[0] in result or len(parts) != (3 if unit else 2)
+                    or not re.fullmatch(r"[0-9]+", parts[1]) or unit and parts[2] != unit):
+                raise Error("required_proc_metric_malformed")
             result[parts[0]] = int(parts[1])
     if set(result) != set(names):
         raise Error("required_proc_metric_missing")
     return result
 
 
-def _local_snapshot(container_id, image_id, context, state):
+def _local_snapshot(container_id, image_id, context, state, full=True):
     """Runs fixed read-only telemetry in the ephemeral SSH Python process."""
     began = time.monotonic()
     container = json.loads(_run(["docker", "inspect", container_id], 262144))[0]
@@ -238,9 +267,18 @@ def _local_snapshot(container_id, image_id, context, state):
     kernel = _run(["dmesg", "--level", "err,crit,alert,emerg", "--since", status["StartedAt"][:19].replace("T", " ")])
     kernel_errors = {name: len(re.findall(pattern, kernel, re.I)) for name, pattern in ERROR_PATTERNS.items()}
     host = _metrics("/proc/meminfo", {"MemTotal", "MemAvailable", "SwapTotal", "SwapFree"})
-    process = _metrics("/proc/%d/smaps_rollup" % pid, {"Rss", "Pss", "Swap"})
-    process.update(_metrics("/proc/%d/status" % pid, {"VmSwap"}))
-    vmstat = _metrics("/proc/vmstat", {"pswpin", "pswpout", "oom_kill"})
+    process = _metrics("/proc/%d/status" % pid, {"VmRSS", "VmSwap"})
+    if full:
+        process.update(_metrics("/proc/%d/smaps_rollup" % pid, {"Rss", "Pss", "Swap"}))
+    proc_raw = Path("/proc/%d/stat" % pid).read_bytes()
+    if len(proc_raw) > 65536:
+        raise Error("proc_read_bound_exceeded")
+    proc = proc_raw.decode().rsplit(")", 1)[1].split()
+    start_ticks, process_state = int(proc[19]), proc[0]
+    if "process_start_ticks" in state and state["process_start_ticks"] != start_ticks:
+        raise Error("process_identity_changed")
+    state["process_start_ticks"] = start_ticks
+    vmstat = _metrics("/proc/vmstat", {"pswpin", "pswpout", "oom_kill"}, unit=None)
     if "vmstat_start" not in state:
         state["vmstat_start"] = vmstat.copy()
     gpu_raw = _run(["nvidia-smi", "--query-gpu=index,uuid,memory.total,memory.free", "--format=csv,noheader,nounits"])
@@ -254,11 +292,15 @@ def _local_snapshot(container_id, image_id, context, state):
         raise Error("gpu_identity_changed")
     state["gpu_ids"] = gpu_ids
     root = os.statvfs("/")
-    result = {"timestamp": time.time(), "sample_elapsed_seconds": time.monotonic() - began,
+    result = {"schema_version": 2, "sample_kind": "full" if full else "cheap",
+              "timestamp": time.time(), "sample_elapsed_seconds": time.monotonic() - began,
+              "process_start_ticks": start_ticks, "process_state": process_state,
               "sampled_only": True, "required_context": context,
               "container": {"id": container_id, "image_id": image_id, "pid": pid,
                             "started_at": status["StartedAt"], "running": status["Running"],
-                            "oom_killed": status["OOMKilled"]},
+                            "oom_killed": status["OOMKilled"], "paused": status["Paused"],
+                            "restarting": status["Restarting"], "dead": status["Dead"],
+                            "restart_count": container["RestartCount"]},
               "mounts": mounts, "root_available_bytes": root.f_bavail * root.f_frsize,
               "host_kib": host, "process_kib": process, "vmstat": vmstat,
               "host_swap_used_kib": host["SwapTotal"] - host["SwapFree"],
@@ -274,28 +316,35 @@ def _local_snapshot(container_id, image_id, context, state):
 def _remote_main(container_id, image_id, context, cap_seconds):
     state = {"log_lines": 0, "errors": {key: 0 for key in ERROR_PATTERNS}, "log_hash": hashlib.sha256()}
     start = time.monotonic()
-    next_sample = start
+    full, terminal = True, cap_seconds == 0
     while True:
         try:
-            sample = _local_snapshot(container_id, image_id, context, state)
+            sample = _local_snapshot(container_id, image_id, context, state, full=full)
             try:
                 validate_snapshot(sample)
                 sample["status"] = "PASS"
             except Error as exc:
                 sample.update({"status": "STOP", "error": str(exc)})
             print(json.dumps(sample, separators=(",", ":")), flush=True)
-            if sample["status"] == "STOP" or cap_seconds == 0:
+            if sample["status"] == "STOP" or terminal:
                 return
         except Exception:
             print(json.dumps({"status": "STOP", "error": "telemetry_collection_failed"}), flush=True)
             return
-        next_sample += 1.0
+        # Full PSS is deliberately outside the periodic cadence. Start a fresh
+        # one-second interval after the initial checkpoint; never catch up with
+        # expensive repeated rollup reads.
+        next_sample = time.monotonic() + max(0, 1.0 - (0 if full else sample["sample_elapsed_seconds"]))
+        full = False
         delay = min(next_sample, start + cap_seconds) - time.monotonic()
         if delay <= 0 and time.monotonic() >= start + cap_seconds:
             return
-        # Closing this exact SSH process's stdin ends only its ephemeral sampler.
+        # One fixed command requests a terminal full checkpoint. EOF/anything
+        # else closes this exact sampler; it cannot dispatch an API request.
         if select.select([sys.stdin], [], [], max(0, delay))[0]:
-            return
+            if sys.stdin.readline() != "full\n":
+                return
+            full, terminal = True, True
         if time.monotonic() >= start + cap_seconds:
             return
 
@@ -314,10 +363,11 @@ def _source(container_id, image_id, context, cap_seconds):
 
 
 def start_sampler(container_id, image_id, context, cap_seconds):
-    """Start one bounded SSH sampler; stdout is compact JSON lines at 1 Hz.
+    """Start one bounded SSH sampler: initial full, then cheap 1 Hz JSON rows.
 
     The caller drains stdout promptly and checks freshness/gaps <=2 seconds.
-    Close stdin then wait to stop this sampler; no remote persistent files/PIDs.
+    Send full + newline for a terminal checkpoint; close stdin to stop without
+    another read. No remote persistent files/PIDs.
     cap_seconds=0 is reserved for collect()'s single read-only observation.
     """
     source = _source(container_id, image_id, context, cap_seconds)
@@ -357,6 +407,8 @@ def collect(container_id, image_id, context):
     sampler = Sampler(container_id, image_id, context, 0)
     try:
         result = sampler.next(timeout=30)
+        if result.get("status") == "STOP":
+            return result  # Preserve missing-checkpoint evidence; bind still refuses.
         if result.get("container", {}).get("id") != container_id or result.get("container", {}).get("image_id") != image_id:
             raise Error("snapshot_identity_unavailable_or_changed")
         return result
@@ -369,14 +421,17 @@ def stable_identity(sample):
     try:
         container = sample["container"]
         return (container["id"], container["image_id"], container["pid"], container["started_at"],
+                sample["process_start_ticks"], container["restart_count"],
                 sample["required_context"], sample["slot_context"], sample["placement"],
                 tuple((gpu["index"], gpu["uuid"]) for gpu in sample["gpus"]))
     except (KeyError, TypeError):
         raise Error("runtime_identity_missing") from None
 
 
-def check_snapshot(sample, native=False, previous=None):
+def check_snapshot(sample, native=False, previous=None, require_full=False, checkpoint=False):
     validate_snapshot(sample)
+    if (require_full or checkpoint) and sample["sample_kind"] != "full":
+        raise Error("full_memory_checkpoint_required")
     if native and sample["required_context"] != NATIVE_CONTEXT:
         raise Error("native_capacity_required")
     timestamp = sample.get("timestamp")
@@ -387,10 +442,15 @@ def check_snapshot(sample, native=False, previous=None):
     if previous is not None:
         if stable_identity(sample) != stable_identity(previous):
             raise Error("runtime_changed_during_request")
-        if not 0 < timestamp - previous["timestamp"] <= 2:
+        gap = timestamp - previous["timestamp"]
+        if gap <= 0 or not checkpoint and gap > 2:
             raise Error("sample_gap_or_replay")
         if any(sample["vmstat"][key] != previous["vmstat"][key] for key in ("pswpin", "pswpout", "oom_kill")):
             raise Error("swap_or_oom_counter_changed")
+        if sample["host_swap_used_kib"] != previous["host_swap_used_kib"]:
+            raise Error("host_swap_usage_changed")
+        if sample.get("native") != previous.get("native"):
+            raise Error("native_diagnostic_changed")
     return sample
 
 
@@ -399,6 +459,18 @@ class Sampler:
     def __init__(self, container_id, image_id, context, cap_seconds):
         self.process = start_sampler(container_id, image_id, context, cap_seconds)
         self.pending = b""
+        self.full_requested = False
+
+    def request_full_checkpoint(self):
+        """Request exactly one terminal full read; next() still drains cheap rows."""
+        if self.full_requested:
+            raise Error("full_checkpoint_already_requested")
+        self.full_requested = True
+        try:
+            self.process.stdin.write("full\n")
+            self.process.stdin.flush()
+        except Exception:
+            raise Error("full_checkpoint_request_failed") from None
 
     def next(self, timeout=3):
         if not 0 < timeout <= 30:

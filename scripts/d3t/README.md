@@ -198,8 +198,35 @@ CUDA/OOM/storage errors, and RSS/PSS/MemAvailable. Historical host swap usage is
 reported separately, not silently treated as current request swapping. Live owner
 runs the existing common storage/root guards before and after lifecycle changes.
 
-A bounded1Hz sampler retains private rows. Samples and sampled extrema establish
-only sampled values, never instantaneous peak proof. Stale samples, identity drift,
+A bounded1Hz sampler retains private **cheap** rows: fresh `VmRSS`/`VmSwap`
+from `/proc/PID/status`, process start ticks/state, container state/identity,
+MemAvailable, GPU identity/free memory, exact ext4 mounts/root space, swap/OOM
+counters and the existing complete bounded native graph/cache/runtime/error log
+checks. Cheap rows never read `smaps_rollup` and reject PSS/rollup Swap fields.
+Measurements, freshness and gaps must each fit the existing two-second cheap
+window (250ms future clock tolerance). No stale measurement is substituted.
+
+Actual `smaps_rollup` Rss/Pss/Swap is required at admission, immediately before
+each request and after each request. The request's single sampler starts with a
+full checkpoint, then emits cheap samples. After successful HTTP transport and
+complete response validation by the existing JSON/SSE parser, a fixed stdin command
+asks that same sampler for one terminal full checkpoint; queued cheap rows are
+still checked. Full checkpoints allow up to30s collection/read time and retain
+their own timestamps/durations; they are explicitly outside the1Hz cadence.
+Request deadlines/cancellation still gate acceptance. Failure cancels the owned
+client socket and closes its exact sampler; it never requests full PSS. A done
+event, transport error or cancelled partial EOF does not prove backend completion.
+Without successful response protocol proof, `*.post-request.json` explicitly
+records UNAVAILABLE with `backend_response_completion_unconfirmed` and no full
+checkpoint command. Cleanup retains available raw bytes/hash/status again after
+bounded sampler closing; late bytes do not retroactively establish completion.
+Unavailable/malformed post data bars PASS and occupied-window advancement.
+Socket cancellation does not prove backend completion; reconciliation remains
+required. A sampler that has stopped/refused/exhausted its cap cannot manufacture
+missing post evidence.
+
+Samples and sampled extrema establish only sampled values, never instantaneous
+peak proof. Stale samples, identity drift,
 threshold/error violations, accounting mismatch or missing required reuse counts
 stop advancement. The first64K retrieval may have a nullable cached count;
 evaluated counts stay nullable throughout and exact prompt counts remain
@@ -213,9 +240,29 @@ build. Selected reserved graph + actual allocation logs and later sanity establi
 the accepted evidence boundary; they do not claim every kernel was profiled.
 Unfused64GiB score path is outside budget and blocks occupancy.
 
-## Private checkpoint/result schema v1
+## Private checkpoint/result schema
 
-`state.json`: stage/step/status, durable start/deadline, frozen body SHA256,
+Telemetry snapshots are schema2 with `sample_kind: cheap|full`. Every snapshot
+has `process_kib.VmRSS/VmSwap`; full snapshots alone add measured `Rss/Pss/Swap`.
+Old schema1 admission files are not silently upgraded or accepted as fresh
+checkpoints. Existing historical run artifacts remain unchanged.
+
+Result `sampled_extrema` contains cheap `rss_max_kib` (VmRSS source),
+`mem_available_min_kib` and per-GPU minimum free bytes; `cheap_sample_count` is
+separate from total `sample_count`. If an operation ends before a cheap sample,
+its cheap extrema remain null/empty. `memory_checkpoints` separately records
+`admission`, `pre_request` and `post_request` process metrics, timestamps and
+collection durations. There is no `pss_max_kib` field or1Hz PSS maximum claim.
+`*.pre-request.json` and `*.post-request.json` preserve full rows, including
+rejected rows. `*.samples.jsonl` retains rejected periodic rows too. Completed
+operation bytes are saved with existing credential redaction before post checks;
+`*.operation.json` retains their original hash, availability and transport status.
+`transfer_done` describes only the client event; `backend_response_complete`
+separately records successful transport and complete protocol validation.
+The primary failure is preserved alongside any `post_checkpoint_failure` or
+`operation_evidence_failure`; missing evidence cannot turn a failure into PASS.
+
+`state.json` remains schema1: stage/step/status, durable start/deadline, frozen body SHA256,
 actual input/render/token hashes, exact common-prefix count, completed result
 records and highest_proven_window. `native_configured_capacity` is separate.
 `highest_proven_window` stays null through baseline/candidate short comparisons;
@@ -230,6 +277,10 @@ retrieval/tool checks and sampled evidence location/count. Missing metrics are
 null and are never reconstructed from differences. Native raw timings/usage stay
 in private `*.response.json`; request bodies, token IDs and raw output stay in
 private0600 files. Public status contains only safe hashes/counts/state.
+Worker `elapsed_seconds` (also in counters) includes pre/post telemetry and
+verification, and is still charged conservatively to the comparison elapsed
+budget. Use the separately reported native prompt/decode timing for those phases;
+worker elapsed is not pure inference time.
 The actual worker-local tool reuses A1's exact read_file schema and executes one
 real deterministic calc.py read with its native ID preserved in continuation.
 Reasoning is parsed separately and never replayed. Credential echoes are

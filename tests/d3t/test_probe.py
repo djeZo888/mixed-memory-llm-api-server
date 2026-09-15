@@ -28,14 +28,22 @@ from d3t.accounting import wire_body, canonical, sha256
 class SyntheticSampler:
     def __init__(self, *args):
         self.args, self.closed = args, False
+        self.reads = 0
+        self.full_requested = False
+        self.full_request_count = 0
 
     def next(self, timeout):
         container, image, context, _ = self.args
         gib = 1024 ** 3
-        return {
-            'timestamp': time.time(),
+        full = self.reads == 0 or self.full_requested
+        self.reads += 1
+        sample = {
+            'schema_version': 2, 'sample_kind': 'full' if full else 'cheap',
+            'sample_elapsed_seconds': .04, 'timestamp': time.time(),
             'container': {'id': container, 'image_id': image, 'pid': 1234,
-                          'started_at': 'synthetic-start', 'running': True, 'oom_killed': False},
+                          'started_at': 'synthetic-start', 'running': True, 'oom_killed': False,
+                          'paused': False, 'restarting': False, 'dead': False, 'restart_count': 0},
+            'process_start_ticks': 1000, 'process_state': 'S',
             'required_context': context, 'slot_context': context, 'slot_count': 1, 'n_threads': 112,
             'placement': 'all_cpu' if image == probe.D1_IMAGE else 'n_cpu_moe_76',
             'mounts': dict(probe.guards.MOUNTS), 'root_available_bytes': 8 * gib,
@@ -44,14 +52,24 @@ class SyntheticSampler:
             'errors': {name: 0 for name in probe.guards.ERROR_PATTERNS},
             'gpus': [{'index': index, 'uuid': 'GPU-synthetic-' + str(index),
                       'free_bytes': 24 * gib, 'total_bytes': 96 * gib} for index in (0, 1)],
-            'host_kib': {'MemAvailable': 400 * 1024 ** 2},
-            'process_kib': {'Rss': 420 * 1024 ** 2, 'Pss': 412 * 1024 ** 2, 'Swap': 0, 'VmSwap': 0},
+            'host_kib': {'MemTotal': 900 * 1024 ** 2, 'MemAvailable': 400 * 1024 ** 2,
+                         'SwapTotal': 3000000, 'SwapFree': 2985920},
+            'host_swap_used_kib': 14080,
+            'process_kib': {'VmRSS': 420 * 1024 ** 2, 'VmSwap': 0},
             'native': {'n_ctx': context, 'n_ctx_seq': context, 'n_seq_max': 1,
                        'n_batch': 2048, 'n_ubatch': 512, 'flash_attn': 1, 'fused_lid': 1,
                        'lid_nodes': 21, 'fa_nodes': 78, 'no_alloc': 0,
                        'compute_bytes': {'CUDA0': gib, 'CUDA1': gib},
                        'cache_bytes': {'CUDA0': 48 * gib, 'CUDA1': 45 * gib}},
         }
+
+        if full:
+            sample['process_kib'].update(Rss=420 * 1024 ** 2, Pss=412 * 1024 ** 2, Swap=0)
+        return sample
+
+    def request_full_checkpoint(self):
+        self.full_request_count += 1
+        self.full_requested = True
 
     def close(self):
         self.closed = True
@@ -154,6 +172,26 @@ class DriverTests(unittest.TestCase):
         probe.worker(self.run, transport=transport or self.transport,
                      sampler_factory=sampler or SyntheticSampler)
 
+    def assert_unconfirmed_post(self, sampler, *, transfer_done):
+        state = self.state()
+        self.assertEqual(state['status'], 'PENDING_RECONCILIATION')
+        self.assertEqual(state['post_checkpoint_failure'], 'backend_response_completion_unconfirmed')
+        self.assertEqual(sampler.full_request_count, 0)
+        self.assertTrue(sampler.closed)
+        post = probe.read_json(self.run / (state['request_name'] + '.post-request.json'))
+        self.assertEqual(post['status'], 'UNAVAILABLE')
+        self.assertEqual(post['reason'], 'backend_response_completion_unconfirmed')
+        self.assertIs(post['full_checkpoint_requested'], False)
+        self.assertIs(post['backend_response_complete'], False)
+        self.assertNotIn('process_kib', post)
+        operation = probe.read_json(self.run / (state['request_name'] + '.operation.json'))
+        self.assertIs(operation['transfer_done'], transfer_done)
+        self.assertIs(operation['backend_response_complete'], False)
+        self.assertNotIn('transfer_complete', operation)
+        self.assertIsNone(state['highest_proven_window'])
+        with self.assertRaises(AgentError): probe.launch(self.run)
+        return operation
+
     def finish_stage(self, stage):
         for step in probe.steps(stage):
             probe.prepare(self.run, stage, accountant=self.accountant)
@@ -173,9 +211,14 @@ class DriverTests(unittest.TestCase):
         self.finish_stage('candidate')
         self.assertEqual(len(self.transfers), 8)
         extrema = self.state()['stages']['candidate']['results'][-1]['sampled_extrema']
-        self.assertEqual(extrema['rss_max_kib'], 420 * 1024 ** 2)
-        self.assertEqual(extrema['pss_max_kib'], 412 * 1024 ** 2)
-        self.assertEqual(extrema['mem_available_min_kib'], 400 * 1024 ** 2)
+        self.assertIsNone(extrema['rss_max_kib'])
+        self.assertNotIn('pss_max_kib', extrema)
+        checkpoints = self.state()['stages']['candidate']['results'][-1]['memory_checkpoints']
+        self.assertEqual(set(checkpoints), {'admission', 'pre_request', 'post_request'})
+        for checkpoint in checkpoints.values():
+            self.assertEqual(checkpoint['process_kib']['Pss'], 412 * 1024 ** 2)
+        self.assertIsNone(extrema['mem_available_min_kib'])
+        self.assertEqual(extrema['gpu_min_free_bytes'], {})
         for stage in ('baseline', 'candidate'):
             cold = probe.private_read(self.run / (stage + '.cold.body.json'))
             warm = probe.private_read(self.run / (stage + '.warm.body.json'))
@@ -343,7 +386,10 @@ class DriverTests(unittest.TestCase):
         state = self.state()
         state['deadline'] = now + 1.25
         probe.write_json(self.run / 'state.json', state)
+        samplers = []
         class AdvancingSampler(SyntheticSampler):
+            def __init__(inner, *args):
+                super().__init__(*args); samplers.append(inner)
             def next(self, timeout):
                 clock[0] += .5
                 return super().next(timeout)
@@ -351,6 +397,8 @@ class DriverTests(unittest.TestCase):
             self.dispatch(transport=expired_transport, sampler=AdvancingSampler)
         self.assertEqual(self.state()['status'], 'PENDING_RECONCILIATION')
         self.assertEqual(self.state()['failure_class'], 'stage_timeout')
+        self.assert_unconfirmed_post(samplers[0], transfer_done=False)
+        self.assertEqual(len(self.transfers), 1)
         self.transfers[-1].cancel.assert_called()
         with self.assertRaises(AgentError):
             probe.prepare(self.run, 'candidate', accountant=self.accountant)
@@ -439,16 +487,225 @@ class DriverTests(unittest.TestCase):
 
     def test_cooperative_cancel_only_cancels_owned_transfer_and_blocks_retry(self):
         probe.prepare(self.run, 'baseline', accountant=self.accountant)
+        samplers = []
+        backend = {'running': True, 'socket_closed': False}
+        class ObservedSampler(SyntheticSampler):
+            def __init__(inner, *args):
+                super().__init__(*args); samplers.append(inner)
         def cancellation(*args):
             transfer = self.transport(*args)
+            transfer.done.clear()
+            transfer.raw = None
+            # Closing the client socket does not establish server termination.
+            transfer.cancel.side_effect = lambda: backend.update(socket_closed=True)
             probe.cancel(self.run)
             return transfer
-        self.dispatch(transport=cancellation)
-        self.assertEqual(self.state()['status'], 'PENDING_RECONCILIATION')
+        self.dispatch(transport=cancellation, sampler=ObservedSampler)
         self.assertEqual(self.state()['failure_class'], 'owner_cancelled')
+        self.assert_unconfirmed_post(samplers[0], transfer_done=False)
+        self.assertTrue(backend['running'])
+        self.assertTrue(backend['socket_closed'])
+        self.assertEqual(len(self.transfers), 1)
         self.transfers[-1].cancel.assert_called()
-        with self.assertRaises(AgentError):
-            probe.launch(self.run)
+
+    def test_inflight_samples_stay_cheap_and_post_checkpoint_is_requested_once(self):
+        probe.prepare(self.run, 'baseline', accountant=self.accountant)
+        samplers, rows = [], []
+        owner = self
+        class ObservedSampler(SyntheticSampler):
+            def __init__(inner, *args):
+                super().__init__(*args)
+                inner.buffered_cheap = True
+                samplers.append(inner)
+            def next(inner, timeout):
+                if inner.full_requested and inner.buffered_cheap:
+                    # A cheap row already in transport stdout must be drained;
+                    # requesting post PSS does not relabel this row as full.
+                    inner.full_requested = False
+                    sample = super().next(timeout)
+                    inner.full_requested = True
+                    inner.buffered_cheap = False
+                else:
+                    sample = super().next(timeout)
+                rows.append(copy.deepcopy(sample))
+                if inner.reads >= 5 and owner.transfers:
+                    owner.transfers[-1].done.set()
+                return sample
+        def active(*args):
+            transfer = self.transport(*args)
+            transfer.done.clear()
+            return transfer
+        self.dispatch(transport=active, sampler=ObservedSampler)
+        self.assertEqual(self.state()['status'], 'STEP_PASS', self.state().get('failure_class'))
+        self.assertEqual(len(self.transfers), 1)
+        self.assertEqual(samplers[0].full_request_count, 1)
+        self.assertTrue(samplers[0].closed)
+        self.assertEqual(rows[0]['sample_kind'], 'full')
+        self.assertEqual(rows[-1]['sample_kind'], 'full')
+        self.assertGreaterEqual(len(rows[1:-1]), 4)
+        self.assertTrue(all(row['sample_kind'] == 'cheap' for row in rows[1:-1]))
+        self.assertTrue(all(set(row['process_kib']) == {'VmRSS', 'VmSwap'} for row in rows[1:-1]))
+        result = self.state()['stages']['baseline']['results'][0]
+        self.assertNotIn('pss_max_kib', result['sampled_extrema'])
+        self.assertEqual(set(result['memory_checkpoints']), {'admission', 'pre_request', 'post_request'})
+        self.assertEqual(result['memory_checkpoints']['post_request']['process_kib']['Pss'], 412 * 1024 ** 2)
+        operation = probe.read_json(self.run / 'baseline.cold.operation.json')
+        self.assertIs(operation['transfer_done'], True)
+        self.assertIs(operation['backend_response_complete'], True)
+        self.assertEqual(operation['http_status'], 200)
+
+    def test_missing_pre_request_pss_stops_before_dispatch(self):
+        probe.prepare(self.run, 'baseline', accountant=self.accountant)
+        class MissingPre(SyntheticSampler):
+            def next(inner, timeout):
+                sample = super().next(timeout)
+                if inner.reads == 1:
+                    sample['process_kib'].pop('Pss')
+                return sample
+        transport = Mock()
+        self.dispatch(transport=transport, sampler=MissingPre)
+        transport.assert_not_called()
+        self.assertEqual(self.state()['status'], 'NOT_TESTED')
+        self.assertEqual(self.state()['stages']['baseline']['results'], [])
+        with self.assertRaises(AgentError): probe.launch(self.run)
+
+    def test_failed_post_pss_cannot_publish_native_pass_or_highest_and_keeps_original_response(self):
+        self.seed_comparison_pass()
+        for step in ('cold', 'tool'):
+            probe.prepare(self.run, '64k', accountant=self.accountant)
+            self.assertEqual(self.state()['step'], step)
+            self.dispatch()
+            self.assertEqual(self.state()['status'], 'STEP_PASS')
+        probe.prepare(self.run, '64k', accountant=self.accountant)
+        self.assertEqual(self.state()['step'], 'continuation')
+        original_body = probe.private_read(self.run / '64k.continuation.body.json')
+        original_response = self.response()
+        samplers = []
+        class MissingPost(SyntheticSampler):
+            def __init__(inner, *args):
+                super().__init__(*args); samplers.append(inner)
+            def next(inner, timeout):
+                sample = super().next(timeout)
+                if inner.full_requested:
+                    sample['process_kib'].pop('Pss')
+                return sample
+        self.dispatch(sampler=MissingPost)
+        state = self.state()
+        self.assertEqual(state['status'], 'PENDING_RECONCILIATION')
+        self.assertIsNone(state['highest_proven_window'])
+        self.assertNotEqual(state['stages']['64k']['status'], 'PASS')
+        self.assertEqual(len(state['stages']['64k']['results']), 2)
+        self.assertEqual(len(self.transfers), 3)
+        self.assertEqual(samplers[0].full_request_count, 1)
+        self.assertEqual(probe.private_read(self.run / '64k.continuation.body.json'), original_body)
+        self.assertEqual(probe.private_read(self.run / '64k.continuation.raw'), original_response)
+        self.assertEqual(probe.status(self.run)['stage_status']['128k'], 'PENDING_NOT_TESTED')
+        with self.assertRaises(AgentError): probe.launch(self.run)
+        with self.assertRaises(AgentError): probe.prepare(self.run, '128k', accountant=self.accountant)
+        self.assertEqual(len(self.transfers), 3)
+
+    def test_response_settling_during_failed_request_sampler_close_is_retained_without_pss(self):
+        probe.prepare(self.run, 'baseline', accountant=self.accountant)
+        original_response = self.response()
+        owner, samplers = self, []
+        class SettlingClose(SyntheticSampler):
+            def __init__(inner, *args):
+                super().__init__(*args); samplers.append(inner)
+            def next(inner, timeout):
+                sample = super().next(timeout)
+                if inner.reads > 1:
+                    sample['process_kib']['VmRSS'] = 0
+                return sample
+            def close(inner):
+                super().close()
+                owner.transfers[-1].raw = original_response
+                owner.transfers[-1].done.set()
+        def unsettled(*args):
+            transfer = self.transport(*args)
+            transfer.raw = None
+            transfer.done.clear()
+            return transfer
+        self.dispatch(transport=unsettled, sampler=SettlingClose)
+        state = self.state()
+        self.assertEqual(state['failure_class'], 'missing_or_invalid_memory_measurement')
+        self.assertEqual(state['stages']['baseline']['results'], [])
+        self.assertEqual(len(self.transfers), 1)
+        self.assertEqual(probe.private_read(self.run / 'baseline.cold.raw'), original_response)
+        operation = self.assert_unconfirmed_post(samplers[0], transfer_done=True)
+        self.assertTrue(operation['raw_available'])
+        self.assertEqual(operation['original_raw_sha256'], probe.digest(original_response))
+
+    def test_done_transport_error_preserves_failure_without_post_pss(self):
+        probe.prepare(self.run, 'baseline', accountant=self.accountant)
+        samplers = []
+        backend = {'running': True, 'socket_closed': False}
+        class ObservedSampler(SyntheticSampler):
+            def __init__(inner, *args):
+                super().__init__(*args); samplers.append(inner)
+        def failed_transport(*args):
+            transfer = self.transport(*args)
+            transfer.error = 'transport_failed'
+            transfer.cancel.side_effect = lambda: backend.update(socket_closed=True)
+            return transfer
+        self.dispatch(transport=failed_transport, sampler=ObservedSampler)
+        self.assertEqual(self.state()['failure_class'], 'transport_failed')
+        self.assertEqual(self.state()['stages']['baseline']['results'], [])
+        self.assertEqual(len(self.transfers), 1)
+        operation = self.assert_unconfirmed_post(samplers[0], transfer_done=True)
+        self.assertTrue(operation['transport_failed'])
+        self.assertTrue(backend['running'])
+        self.assertTrue(backend['socket_closed'])
+        self.assertEqual(probe.private_read(self.run / 'baseline.cold.raw'), self.transfers[0].raw)
+
+    def test_done_non200_missing_raw_or_partial_json_sse_never_requests_post_pss(self):
+        modes = ('non200', 'missing_raw', 'json_eof', 'json_missing_finish',
+                 'sse_missing_done', 'sse_missing_finish')
+        for index, mode in enumerate(modes):
+            with self.subTest(mode=mode):
+                if index:
+                    self.setUp()  # Each fault gets a new private run, never a retry.
+                if mode.startswith('sse'):
+                    # Reach the genuine streamed tool body via its required
+                    # synthetic predecessors; the faulting dispatch occurs once.
+                    for _ in range(2):
+                        probe.prepare(self.run, 'baseline', accountant=self.accountant)
+                        self.dispatch()
+                        self.assertEqual(self.state()['status'], 'STEP_PASS')
+                probe.prepare(self.run, 'baseline', accountant=self.accountant)
+                before = len(self.transfers)
+                original_body = probe.private_read(self.run / (self.state()['request_name'] + '.body.json'))
+                samplers = []
+                class ObservedSampler(SyntheticSampler):
+                    def __init__(inner, *args):
+                        super().__init__(*args); samplers.append(inner)
+                def incomplete(*args):
+                    transfer = self.transport(*args)
+                    if mode == 'non200':
+                        transfer.status = 503
+                    elif mode == 'missing_raw':
+                        transfer.raw = None
+                    elif mode == 'json_eof':
+                        transfer.raw = transfer.raw[:-1]
+                    elif mode == 'json_missing_finish':
+                        response = json.loads(transfer.raw)
+                        response['choices'][0].pop('finish_reason')
+                        transfer.raw = canonical(response)
+                    elif mode == 'sse_missing_done':
+                        transfer.raw = transfer.raw.replace(b'data: [DONE]\n\n', b'')
+                    else:
+                        events = transfer.raw.split(b'\n\n')
+                        transfer.raw = b'\n\n'.join(event for event in events if b'"finish_reason":"tool_calls"' not in event)
+                    return transfer
+                self.dispatch(transport=incomplete, sampler=ObservedSampler)
+                self.assert_unconfirmed_post(samplers[0], transfer_done=True)
+                self.assertEqual(len(self.transfers), before + 1)
+                self.assertEqual(len(self.state()['stages']['baseline']['results']), before)
+                name = self.state()['request_name']
+                self.assertEqual(probe.private_read(self.run / (name + '.body.json')), original_body)
+                if mode != 'missing_raw':
+                    self.assertEqual(probe.private_read(self.run / (name + '.raw')), self.transfers[-1].raw)
+                else:
+                    self.assertFalse((self.run / (name + '.raw')).exists())
 
     def test_private_path_parent_components_symlinks_and_public_files_refuse(self):
         with self.assertRaisesRegex(AgentError, 'parent_path_refused'):

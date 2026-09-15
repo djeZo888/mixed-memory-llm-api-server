@@ -170,14 +170,39 @@ class NativeCapacityTests(unittest.TestCase):
             lambda s: s.update(root_available_bytes=0),
             lambda s: s['process_kib'].update(Swap=1),
             lambda s: s['gpus'][0].update(free_bytes=0),
+            lambda s: s['process_kib'].pop('Pss'),
+            lambda s: s.update(sample_kind='cheap', process_kib={'VmRSS': 420 * 1024 ** 2, 'VmSwap': 0}),
         )
-        before = self.files()
         for index, mutate in enumerate(changes):
+            if index:
+                self.new_run('invalid-admission-%d' % index)
+            before = self.files()
             sample = fixtures.SyntheticSampler('e' * 64, self.image, 1048576, 1).next(timeout=1)
             mutate(sample)
             with self.subTest(index=index), self.assertRaises(probe.guards.Error):
                 self.bind(sample=sample)
-            self.assertEqual(self.files(), before)
+            after = self.files()
+            rejected = after.pop('native.admission.json')
+            self.assertEqual(json.loads(rejected), sample)
+            self.assertEqual(after, before)
+
+    def test_unavailable_admission_stop_is_preserved_without_binding_or_dispatch(self):
+        before = self.files()
+        stopped = {'status': 'STOP', 'error': 'telemetry_collection_failed'}
+        sampler = Mock()
+        sampler.next.return_value = stopped
+        with patch.object(probe.guards, 'Sampler', return_value=sampler) as factory:
+            with self.assertRaisesRegex(probe.guards.Error, 'telemetry_collection_failed'):
+                probe.bind(self.run, 'native', 'e' * 64, self.image)
+        factory.assert_called_once_with('e' * 64, self.image, 1048576, 0)
+        sampler.next.assert_called_once_with(timeout=30)
+        sampler.close.assert_called_once_with()
+        after = self.files()
+        self.assertEqual(json.loads(after.pop('native.admission.json')), stopped)
+        self.assertEqual(after, before)
+        self.assertEqual(self.f.transfers, [])
+        self.assertIsNone(self.f.state()['highest_proven_window'])
+        self.assertIsNone(self.f.state()['native_configured_capacity'])
 
     def test_legacy_default_and_absent_field_keep_binding_chain_and_cold_rule(self):
         for absent in (False, True):
