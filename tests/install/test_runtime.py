@@ -175,6 +175,18 @@ class RuntimeTest(unittest.TestCase):
         pulls=[a for a,_ in self.runner.calls if a[:2]==['docker','pull']]
         self.assertEqual(pulls[0][-1],self.stage.pins['qwen']['repo_digest'])
 
+    def test_qwen_classic_image_store_config_id_is_exact_known_identity(self):
+        self.stage.selected=['qwen']
+        self.runner.install('qwen')
+        original=self.runner.images[self.stage.pins['qwen']['repo_digest']]
+        config_id=self.stage.pins['qwen']['registry_artifacts'][0]['config_digest']
+        original['Id']=config_id
+        self.runner.images[config_id]=original
+        self.stage.apply()
+        self.assertTrue(self.stage.check())
+        self.runner.images[config_id]['RepoDigests']=[]
+        self.assertFalse(self.stage.check())
+
     def test_image_platform_and_repo_digest_drift_rejected(self):
         self.runner.install('glm'); self.runner.install('qwen'); self.stage.apply()
         self.runner.images[self.stage.pins['qwen']['image_id']]['RepoDigests']=[]

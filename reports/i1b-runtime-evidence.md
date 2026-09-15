@@ -27,8 +27,9 @@ and exact lock entries for the selected GLM/Qwen runtimes.
   mutable image tag fails without overwriting it.
 - SGLang pull selects the exact F1A repository digest
   `lmsysorg/sglang@sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3`.
-  A matching mutable tag is insufficient. Inspection checks the locked image ID,
-  repository digest, Linux and amd64; sandboxed probes verify the four installed
+  A matching mutable tag is insufficient. Inspection checks the locked image ID or verified same-image platform/config
+  descriptor ID (Docker containerd/classic stores), repository digest, Linux and
+  amd64; sandboxed probes verify the four installed
   package versions, 14 source hashes/sizes and the exact F1A argument contract.
 - The lock records 100GiB GLM / 40GiB Qwen minimum free build reservations.
   Read-only primary registry manifest verification recorded exact compressed
@@ -98,7 +99,7 @@ Command:
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/install -p test_runtime.py -v
 ```
 
-macOS synthetic fixtures: **18 PASS**, covering exact source/recipe/lock checks,
+macOS synthetic fixtures: **19 PASS**, covering exact source/recipe/lock checks,
 pinned image reuse/pull, mutable-tag/platform/digest refusal, dirty source,
 build-without-image refusal, CLI/source/capability failures, daemon root mismatch,
 interruption/resume with preserved logs, evidence hash drift, false markers and

@@ -224,7 +224,16 @@ class RuntimeStage:
             return False
         pin = self.pins[name]
         if name == "qwen":
-            return image["Id"] == pin["image_id"] and pin["repo_digest"] in image.get("RepoDigests", [])
+            # Docker classic and containerd image stores expose different Id
+            # domains. Every allowed ID is a verified immutable descriptor of
+            # the same pinned repository image, never a matching mutable tag.
+            identities = {pin["image_id"]}
+            for artifact in pin.get("registry_artifacts", []):
+                if (artifact.get("reference") == pin["repo_digest"]
+                        and artifact.get("status") == "VERIFIED_PRIMARY_REGISTRY_MANIFEST"
+                        and artifact.get("platform") == "linux/amd64"):
+                    identities.update(artifact[k] for k in ("platform_manifest_digest", "config_digest"))
+            return image["Id"] in identities and pin["repo_digest"] in image.get("RepoDigests", [])
         config = image.get("Config") or {}
         labels = config.get("Labels") or {}
         return (config.get("Entrypoint") == ["/opt/llama/llama-server"]
