@@ -31,6 +31,7 @@ from d3t import guards
 from agent.fixture import Fixture
 
 STAGES = ('baseline', 'candidate', '64k', '128k', '256k', '512k', 'near1m')
+TRIAL_MODES = ('comparison', 'native-capacity')
 WINDOWS = dict(zip(STAGES, (32768, 32768, 65536, 131072, 262144, 524288, 1048576)))
 CAPS = dict(zip(STAGES, (2400, 2400, 7200, 14400, 28800, 43200, 86400)))
 MAX_BODY = 32 * 1024 * 1024
@@ -203,13 +204,37 @@ def steps(stage):
     return ('cold', 'warm', 'tool', 'continuation') if stage in ('baseline', 'candidate') else ('cold', 'tool', 'continuation')
 
 
-def init_run(run, base_url, key_file):
+def trial_mode(config):
+    mode = config.get('trial_mode', 'comparison')
+    require(mode in TRIAL_MODES, 'unknown_trial_mode')
+    return mode
+
+
+def eligible_stages(config):
+    return STAGES[2:] if trial_mode(config) == 'native-capacity' else STAGES
+
+
+def validate_prepare(s, c, stage):
+    eligible = eligible_stages(c)
+    require(stage in eligible, 'stage_not_in_trial')
+    require(s['status'] in ('READY', 'STEP_PASS', 'STAGE_PASS', 'PREPARING'), 'previous_step_not_complete')
+    require(s['status'] != 'PREPARING' or s.get('stage') == stage, 'different_stage_preparing')
+    idx = eligible.index(stage)
+    require(all(s['stages'].get(x, {}).get('status') == 'PASS' for x in eligible[:idx]), 'previous_stage_not_passed')
+    require(not any(x in s['stages'] for x in eligible[idx + 1:]), 'cannot_revisit_stage')
+    require(s['stages'].get(stage, {}).get('status') != 'PASS', 'stage_already_passed')
+    require(phase_for(stage) in c['phases'], 'phase_not_bound')
+
+
+def init_run(run, base_url, key_file, trial_mode='comparison'):
+    require(trial_mode in TRIAL_MODES, 'unknown_trial_mode')
     u = urlsplit(base_url)
     require(u.scheme == 'http' and u.hostname == '127.0.0.1' and u.port is not None
             and u.path == '/v1' and not any((u.username, u.password, u.query, u.fragment)), 'loopback_v1_required')
     require(Path(key_file).is_absolute(), 'protected_key_file_path_required')
     run = private_dir(run, create=True)
-    write_json(run / 'config.json', {'base_url': base_url, 'api_key_file': key_file, 'phases': {}})
+    write_json(run / 'config.json', {'base_url': base_url, 'api_key_file': key_file,
+                                   'trial_mode': trial_mode, 'phases': {}})
     write_json(run / 'state.json', {'schema_version': 1, 'status': 'READY', 'stages': {},
                'generation_seconds_32k': 0, 'highest_proven_window': None,
                'native_configured_capacity': None})
@@ -219,14 +244,27 @@ def bind(run, phase, container_id, image_id):
     """Pin the container separately loaded by live owner; never load/reload here."""
     with lock(run):
         s, c = read_json(run / 'state.json'), read_json(run / 'config.json')
+        mode = trial_mode(c)
         require(s['status'] in ('READY', 'STAGE_PASS'), 'bind_only_between_successful_stages')
         require(phase not in c['phases'], 'phase_already_bound_no_reloads')
-        require(phase == ('baseline', 'candidate', 'native')[len(c['phases'])], 'phase_order')
-        if phase != 'baseline':
-            prev = 'baseline' if phase == 'candidate' else 'candidate'
-            require(s['stages'].get(prev, {}).get('status') == 'PASS', 'comparison_must_pass_before_next_load')
+        if mode == 'native-capacity':
+            require(phase == 'native', 'native_capacity_binding_only')
+            require(s['status'] == 'READY' and not c['phases'] and not s['stages']
+                    and s['highest_proven_window'] is None and s['native_configured_capacity'] is None,
+                    'native_capacity_fresh_binding_required')
+            # One reviewed source file, not an operator-supplied proof/import path.
+            runtime = strict_json_loads((REPO / 'configs/runtimes/llama-cpp-v0.4.1-d3br.json').read_bytes())
+            require(runtime['validation']['status'] == 'PASS_BUILD_CLI_ENUMERATION_ONLY'
+                    and image_id == runtime['validation']['image_id'] and image_id != D1_IMAGE,
+                    'measured_d3rd_image_required')
+        else:
+            order = ('baseline', 'candidate', 'native')
+            require(len(c['phases']) < len(order) and phase == order[len(c['phases'])], 'phase_order')
+            if phase != 'baseline':
+                prev = 'baseline' if phase == 'candidate' else 'candidate'
+                require(s['stages'].get(prev, {}).get('status') == 'PASS', 'comparison_must_pass_before_next_load')
         require((image_id == D1_IMAGE) == (phase == 'baseline'), 'd1_baseline_only')
-        if phase == 'native':
+        if phase == 'native' and mode == 'comparison':
             require(image_id == c['phases']['candidate']['image_id']
                     and container_id != c['phases']['candidate']['container_id'], 'one_native_patched_image_load')
         context = 1048576 if phase == 'native' else 32768
@@ -295,13 +333,10 @@ def prepare(run, stage, accountant=native_account):
     """Freeze body, actual native template/token accounting, and prefix state."""
     with lock(run, 'request.lock'):
         s, c = read_json(run / 'state.json'), read_json(run / 'config.json')
-        require(s['status'] in ('READY', 'STEP_PASS', 'STAGE_PASS', 'PREPARING'), 'previous_step_not_complete')
+        validate_prepare(s, c, stage)
         idx = STAGES.index(stage)
-        require(all(s['stages'].get(x, {}).get('status') == 'PASS' for x in STAGES[:idx]), 'previous_stage_not_passed')
-        require(not any(x in s['stages'] for x in STAGES[idx + 1:]), 'cannot_revisit_stage')
         phase = c['phases'][phase_for(stage)]
         rec = s['stages'].setdefault(stage, {'status': 'PENDING', 'results': [], 'started_at': None})
-        require(rec['status'] != 'PASS', 'stage_already_passed')
         if rec['started_at'] is None:
             rec['started_at'] = time.time()
         deadline = rec['started_at'] + CAPS[stage]
@@ -391,7 +426,8 @@ def prepare(run, stage, accountant=native_account):
 def launch_prepare(run, stage):
     # Native token fitting may take minutes; coordinator only observes this child.
     with lock(run):
-        s = read_json(run / 'state.json')
+        s, c = read_json(run / 'state.json'), read_json(run / 'config.json')
+        validate_prepare(s, c, stage)
         require(s['status'] in ('READY', 'STEP_PASS', 'STAGE_PASS'), 'previous_step_not_complete')
         s.update(status='PREPARING', stage=stage)
         write_json(run / 'state.json', s)
@@ -405,7 +441,8 @@ def launch_prepare(run, stage):
 
 def launch(run):
     with lock(run):
-        s = read_json(run / 'state.json')
+        s, c = read_json(run / 'state.json'), read_json(run / 'config.json')
+        require(s.get('stage') in eligible_stages(c), 'stage_not_in_trial')
         require(s['status'] == 'PREPARED', 'dispatch_already_attempted_or_not_prepared')
         now = time.time()
         deadline = s['deadline']
@@ -457,6 +494,7 @@ def worker(run, transport=Transfer, sampler_factory=None):
         try:
             with lock(run):
                 s, c = read_json(run / 'state.json'), read_json(run / 'config.json')
+                require(s.get('stage') in eligible_stages(c), 'stage_not_in_trial')
                 require(s['status'] == 'STARTING' and not s['cancel_requested'], 'worker_start_state')
                 phase = c['phases'][phase_for(s['stage'])]
                 key = load_api_key(path=c['api_key_file'])
@@ -561,7 +599,9 @@ def worker(run, transport=Transfer, sampler_factory=None):
 
 def status(run):
     with lock(run):
-        s = read_json(run / 'state.json')
+        s, c = read_json(run / 'state.json'), read_json(run / 'config.json')
+        mode = trial_mode(c)
+        eligible = eligible_stages(c)
     apparent = s['status']
     if apparent in ('STARTING', 'IN_FLIGHT', 'PREPARING'):
         try:
@@ -569,10 +609,13 @@ def status(run):
                 apparent = 'PREPARATION_UNKNOWN' if apparent == 'PREPARING' else 'IN_FLIGHT_UNKNOWN'
         except AgentError:
             pass
-    return {'schema_version': 1, 'status': apparent, 'stage': s.get('stage'), 'step': s.get('step'),
+    return {'schema_version': 1, 'trial_mode': mode,
+            'comparison_status': 'NOT_RUN_IN_THIS_TRIAL' if mode == 'native-capacity' else
+                {stage: s['stages'].get(stage, {}).get('status', 'PENDING_NOT_TESTED') for stage in STAGES[:2]},
+            'status': apparent, 'stage': s.get('stage'), 'step': s.get('step'),
             'body_sha256': s.get('body_sha256'), 'deadline': s.get('request_deadline', s.get('deadline')),
             'highest_proven_window': s['highest_proven_window'], 'native_configured_capacity': s['native_configured_capacity'],
-            'stage_status': {stage: s['stages'].get(stage, {}).get('status', 'PENDING_NOT_TESTED') for stage in STAGES},
+            'stage_status': {stage: s['stages'].get(stage, {}).get('status', 'PENDING_NOT_TESTED') for stage in eligible},
             'accounting': s.get('accounting'), 'failure_class': s.get('failure_class'),
             'monitor_again_within_seconds': 60}
 
@@ -595,6 +638,7 @@ def main(argv=None):
         if name == 'init':
             a.add_argument('--base-url', required=True)
             a.add_argument('--key-file', required=True)
+            a.add_argument('--trial-mode', choices=TRIAL_MODES, default='comparison')
         if name == 'bind':
             a.add_argument('--phase', choices=('baseline', 'candidate', 'native'), required=True)
             a.add_argument('--container-id', required=True)
@@ -604,7 +648,7 @@ def main(argv=None):
     a = p.parse_args(argv)
     try:
         if a.command == 'init':
-            init_run(a.run, a.base_url, a.key_file)
+            init_run(a.run, a.base_url, a.key_file, a.trial_mode)
         else:
             run = private_dir(a.run)
             if a.command == 'bind':
@@ -624,10 +668,19 @@ def main(argv=None):
         return 0
     except Exception:
         if a.command == '_prepare':
-            with lock(private_dir(a.run)):
-                state = read_json(Path(a.run) / 'state.json')
-                state.update(status='NOT_TESTED', failure_class='native_preparation_stopped', later_stages='PENDING_NOT_TESTED')
-                write_json(Path(a.run) / 'state.json', state)
+            # Failure publication cannot steal an active preparation's lock.
+            # If either bounded lock refuses, retain the durable unknown state.
+            with contextlib.suppress(Exception):
+                run = private_dir(a.run)
+                with lock(run, 'request.lock'), lock(run):
+                    state = read_json(run / 'state.json')
+                    # Refused invocations cannot overwrite dispatched/failed
+                    # checkpoints or another stage's durable preparation.
+                    if state['status'] == 'PREPARING' and state.get('stage') == a.stage:
+                        config = read_json(run / 'config.json')
+                        if config.get('trial_mode', 'comparison') in TRIAL_MODES and a.stage in eligible_stages(config):
+                            state.update(status='NOT_TESTED', failure_class='native_preparation_stopped', later_stages='PENDING_NOT_TESTED')
+                            write_json(run / 'state.json', state)
         print(json.dumps({'status': 'REFUSED', 'reason': 'inspect_phase_contract_and_private_checkpoint'}))
         return 2
 
