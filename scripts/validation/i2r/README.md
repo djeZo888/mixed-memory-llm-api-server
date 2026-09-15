@@ -18,8 +18,8 @@ git diff --check
 ```
 
 These checks are worker-safe source/refusal tests and cannot establish actual
-Linux integration PASS. The exact APT sandbox-option correction must be
-integrated from its source owner before positive preparation tests pass.
+Linux integration PASS. The exact APT sandbox-option correction was integrated
+from reviewed I1R2 commit `18644f3df91f38e23bbf19889f5c03302b898047`.
 
 ## Hosted launch and collection
 
@@ -65,9 +65,10 @@ actual unit/cgroup/process identities supply evidence; fixture-only flock
 tests do not establish the integration result.
 
 Fixture policy and storage paths, deterministic fake audit results and trace
-pauses at shipped Python call boundaries are explicit test injection. I1c
+pauses at shipped Python call boundaries are explicit test injection. I1O owns
 scope-owned source/key/cache/log/temp survival and anchored gate/marker writes
-under mount loss remain **NOT_TESTED**. The shipped Manager API must separately
+under mount loss, which remain **NOT_TESTED**; I1c owns final caller/stage glue.
+Older evidence fields label these gaps I1c. The shipped Manager API must separately
 support canonical borrowing before that integration can be claimed. Real apt
 compatibility, reboot, GPU installation, Docker daemon ownership and agent
 readiness remain **NOT_TESTED**.

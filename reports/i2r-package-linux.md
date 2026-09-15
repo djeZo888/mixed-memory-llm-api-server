@@ -5,6 +5,23 @@ Status: **source harness delivered; actual hosted execution NOT_TESTED**.
 Reviewed base: `6920fa445bd9ea8d41f59e7f052a83e7322497bf`.
 Owned branch: `milestone/i2r-package-linux`.
 
+## Reviewed dependency integrated
+
+Coordinator Revision3 supplied and approved I1R2
+`18644f3df91f38e23bbf19889f5c03302b898047`, merged at
+`a833afeff52768b453e214f6aebade4137f96b0e` without modifying its source.
+The only executable production change accepts the exact sandbox option.
+All **51 I2R methods PASS**, plus **4 affected package preparation** and
+**4 canonical export retention** tests PASS. The initial source-base failures
+below are resolved by that reviewed dependency; actual hosted execution remains
+pending and is not inferred from these checks.
+
+Current ownership: **I1O** owns scope storage/source/key/cache/log/temp and
+gate/marker lifetime conversion; **I1c** owns final caller/stage integration.
+Older I2R evidence field names containing I1c refer to the same unresolved work,
+not evidence that it passes. Public installer/Manager caller integration remains
+separate from the harness's real canonical module use.
+
 The new [I2R harness](../scripts/validation/i2r/README.md) runs shipped package
 ownership code with the real system manager/cgroup v2 and canonical lifecycle
 lease on a fixed disposable GitHub-hosted Ubuntu 24.04 runner. Coordinator
@@ -16,19 +33,19 @@ No worker host installation, ai-vm access or production operation is performed.
 
 | Area | Status |
 | --- | --- |
-| Worker safety/source tests | 49 of 51 test methods PASS; pending source correction causes 3 failed subtests and 1 error |
+| Worker safety/source tests | 51 I2R + 8 affected dependency methods PASS |
 | Actual systemd, canonical export, package matrix | NOT_TESTED pending hosted run |
-| I1b exact sandbox option | Source correction awaits I1R2 delivery |
+| I1b exact sandbox option | Reviewed I1R2 integrated; local preparation tests PASS; hosted pending |
 | Manager borrowed-lease integration | NOT_TESTED: base dispatch lacks lease keyword |
 | Public installer canonical export | NOT_TESTED: base main still calls raw-FD exclusive context |
-| I1c scope-owned anchored storage and mount-loss gate/marker writes | NOT_TESTED: implementation unfinished |
+| I1O scope-owned anchored storage and mount-loss gate/marker writes | NOT_TESTED: implementation unfinished |
 | Real package compatibility, fresh GPU install, reboot | NOT_TESTED |
 | Docker daemon ownership, agent readiness | NOT_TESTED |
 
 The source harness and final evidence report are separate deliveries. A source
 commit or mocked/portable unit result cannot establish actual Ubuntu PASS.
 
-Checks run: dedicated `test_i2r*.py` discovery (51 methods), Python syntax,
+Initial base checks: dedicated `test_i2r*.py` discovery (51 methods), Python syntax,
 run/guardian/matrix dry-run, help, whitespace, owned-file scope and filename-only
 grep secret scan. Guardian 23, matrix 14 and orchestration 6 tests pass; six of
 eight preparation methods pass. The two failing preparation methods exercise
@@ -39,8 +56,8 @@ No failure is marked xfail, skipped or promoted to PASS. Source review corrected
 the new harness cleanup ordering before any hosted execution; production source
 is unchanged.
 
-Next action: integrate the bounded source-owner APT correction, finish local
-review, then execute the approved workflow at the exact published source SHA.
+Next action: publish this reviewed integration and execute the approved workflow
+at the exact published source SHA, then append actual evidence and cleanup status.
 
 The new harness checks `cgroup.kill` on non-root owned cgroups; this matches the
 [kernel cgroup v2 interface](https://docs.kernel.org/6.7/admin-guide/cgroup-v2.html).
