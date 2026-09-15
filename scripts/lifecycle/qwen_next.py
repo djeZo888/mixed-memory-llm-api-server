@@ -27,6 +27,9 @@ ENVIRONMENT = {
     'HF_HUB_OFFLINE': '1', 'TRANSFORMERS_OFFLINE': '1', 'HF_HOME': '/cache/huggingface',
     'XDG_CACHE_HOME': '/cache', 'TRITON_CACHE_DIR': '/cache/triton',
     'TORCHINDUCTOR_CACHE_DIR': '/cache/torchinductor',
+    'SGLANG_DG_CACHE_DIR': '/cache/deep_gemm', 'SGLANG_CACHE_DIR': '/cache/sglang',
+    'FLASHINFER_WORKSPACE_BASE': '/cache/flashinfer', 'CUDA_CACHE_PATH': '/cache/cuda',
+    'TORCH_EXTENSIONS_DIR': '/cache/torch_extensions',
 }
 
 
