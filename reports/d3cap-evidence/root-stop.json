@@ -1,0 +1,8 @@
+{
+  "utc": "2026-09-15T04:41:05.270493+00:00",
+  "root_available_bytes": 3632226304,
+  "root_stop_bytes": 4294967296,
+  "registered_guard_exit": 1,
+  "registered_guard_message": "STOP: registered storage identity, ownership, layout or capacity guard failed",
+  "recent_large_file_metadata": []
+}
