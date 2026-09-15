@@ -28,6 +28,77 @@ class APIError(AgentError):
         super().__init__(f"API returned HTTP {status}; response body omitted")
 
 
+class CompletionError(AgentError):
+    """Incomplete completion with bounded metadata, never response/tool text."""
+
+    def __init__(self, diagnostics):
+        self.diagnostics = diagnostics
+        super().__init__("token_budget_exhausted: completion ended with length"
+                         + ("; assistant message validation failed" if diagnostics.get("parsing_failure") else ""))
+
+
+REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
+
+
+def _reasoning_effort(value):
+    if value is not None and (type(value) is not str or value not in REASONING_EFFORTS):
+        raise AgentError("reasoning_effort must be None or one of: " + ", ".join(REASONING_EFFORTS))
+    return value
+
+
+def _usage_diagnostic(value):
+    """Only known, nonnegative token counters fit in termination diagnostics."""
+    if not isinstance(value, dict):
+        return None
+
+    def counts(mapping, names):
+        return {name: mapping[name] for name in names
+                if type(mapping.get(name)) is int and 0 <= mapping[name] <= 2**63 - 1}
+
+    result = counts(value, ("prompt_tokens", "completion_tokens", "total_tokens"))
+    for field, names in (
+        ("prompt_tokens_details", ("cached_tokens", "audio_tokens")),
+        ("completion_tokens_details", ("reasoning_tokens", "audio_tokens",
+                                       "accepted_prediction_tokens", "rejected_prediction_tokens")),
+    ):
+        if isinstance(value.get(field), dict):
+            nested = counts(value[field], names)
+            if nested:
+                result[field] = nested
+    return result or None
+
+
+def _length_diagnostic(model, usage, stream_done, parsing_failure=False):
+    # Also enforce this after credential redaction, which can expand text.
+    safe_model = model if (isinstance(model, str) and 0 < len(model) <= 1024
+                           and all(32 <= ord(c) < 127 for c in model)) else None
+    result = {"classification": "token_budget_exhausted", "finish_reason": "length",
+              "model": safe_model, "usage": _usage_diagnostic(usage), "stream_done": stream_done}
+    if parsing_failure:
+        result["parsing_failure"] = "invalid_assistant_message"
+    return result
+
+
+def redact_diagnostic(diagnostic, key):
+    """Rebuild the allowlist without redacting trusted enums or counter names."""
+    return _length_diagnostic(redact(diagnostic.get("model"), key), diagnostic.get("usage"),
+                              diagnostic.get("stream_done") is True,
+                              diagnostic.get("parsing_failure") == "invalid_assistant_message")
+
+
+def _checked_assistant(message, finish, model, usage, stream_done):
+    try:
+        parsed = _assistant(message)
+    except AgentError:
+        if finish == "length":
+            raise CompletionError(_length_diagnostic(model, usage, stream_done, True)) from None
+        raise
+    if finish == "length":
+        raise CompletionError(_length_diagnostic(model, usage, stream_done))
+    _finish(finish, parsed[0])
+    return parsed
+
+
 class Budget:
     def __init__(self, overall_timeout: float):
         if not isinstance(overall_timeout, (int, float)) or not math.isfinite(overall_timeout) or overall_timeout <= 0:
@@ -225,8 +296,8 @@ def _completion(payload):
     if not isinstance(choices, list) or len(choices) != 1 or not isinstance(choices[0], dict) or choices[0].get("index", 0) != 0:
         raise AgentError("expected exactly one completion choice with index zero")
     choice = choices[0]
-    message, reasoning = _assistant(choice.get("message"))
-    _finish(choice.get("finish_reason"), message)
+    message, reasoning = _checked_assistant(choice.get("message"), choice.get("finish_reason"),
+                                            model, payload.get("usage"), False)
     return {"message": message, "model": model, "finish_reason": choice["finish_reason"], "usage": payload.get("usage"), "reasoning": reasoning, "stream_done": False}
 
 
@@ -328,9 +399,10 @@ def _stream(payload):
     if calls:
         if sorted(calls) != list(range(len(calls))):
             raise AgentError("stream tool call indexes must be contiguous from zero")
-        message["tool_calls"] = _calls([calls[index] for index in sorted(calls)])
-    _finish(finish, message)
-    return {"message": message, "model": _model(model), "finish_reason": finish, "usage": usage, "reasoning": reasoning, "stream_done": True}
+        message["tool_calls"] = [calls[index] for index in sorted(calls)]
+    model = _model(model)
+    message, _ = _checked_assistant(message, finish, model, usage, True)
+    return {"message": message, "model": model, "finish_reason": finish, "usage": usage, "reasoning": reasoning, "stream_done": True}
 
 
 _DEFAULT_KEY = object()
@@ -339,7 +411,8 @@ _DEFAULT_KEY = object()
 class Client:
     """One-request-at-a-time HTTP client, bounded to 128 requests per instance."""
 
-    def __init__(self, base_url, model, api_key=None, request_timeout=60, budget=None, max_response_bytes=262144, max_tokens=1024):
+    def __init__(self, base_url, model, api_key=None, request_timeout=60, budget=None, max_response_bytes=262144, max_tokens=1024, reasoning_effort=None):
+        self.reasoning_effort = _reasoning_effort(reasoning_effort)
         try:
             url = urlsplit(base_url)
             port = url.port
@@ -488,7 +561,12 @@ class Client:
                 if len(identities) != len(set(identities)):
                     raise AgentError("model list contains duplicate identities")
             else:
-                parsed = _stream(data) if stream else _completion(strict_json_loads(data))
+                try:
+                    parsed = _stream(data) if stream else _completion(strict_json_loads(data))
+                except CompletionError as exc:
+                    diagnostic = redact_diagnostic(redact_diagnostic(exc.diagnostics, key), self.api_key)
+                    record.update(diagnostic)
+                    raise CompletionError(diagnostic) from None
                 parsed["elapsed_seconds"] = round(time.monotonic() - started, 6)
                 record.update({"model": parsed["model"], "usage": parsed["usage"], "finish_reason": parsed["finish_reason"]})
             self.budget.check()
@@ -502,6 +580,8 @@ class Client:
                 # Fixed schema keys and status/termination enums are trusted;
                 # only external values can echo a credential.
                 for field in ("requested_model", "model", "usage"):
+                    if field in {"model", "usage"} and record.get("classification") == "token_budget_exhausted":
+                        continue  # Already bounded and redacted; diagnostic keys are trusted.
                     if field in record:
                         record[field] = redact(redact(record[field], key), self.api_key)
                 self.requests.append(record)
@@ -511,8 +591,11 @@ class Client:
         return self._request("/models", api_key=api_key)
 
     def chat(self, messages, tools=None, stream=False, model=None, api_key=_DEFAULT_KEY):
+        effort = _reasoning_effort(self.reasoning_effort)
         _validate_messages(messages)
         payload = {"model": self.model if model is None else _model(model), "messages": messages, "stream": bool(stream), "max_tokens": self.max_tokens}
+        if effort is not None:
+            payload["reasoning_effort"] = effort
         if tools is not None:
             if not isinstance(tools, list) or not 1 <= len(tools) <= 32:
                 raise AgentError("tools must contain between 1 and 32 definitions")

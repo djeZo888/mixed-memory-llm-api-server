@@ -4,8 +4,9 @@ A1 supplies a Python 3.10+ standard-library Chat Completions client and a bounde
 acceptance harness. Tools execute on the client worker. The inference VM serves
 only the model API; install no agent, browser, or OpenCode on `ai-vm`.
 
-**A1 synthetic regression results are separate from live acceptance.** No live
-inference, key retrieval, or OpenCode installation is part of A1. Coordinate V1
+**A1/A2A synthetic regression results are separate from live acceptance.** No live
+inference, key retrieval, or OpenCode installation is part of A1/A2A. V1 must wait
+for the reviewed A2A source bundle before using the new effort option. Coordinate V1
 with Worker1 after it publishes the endpoint, exact API model ID, context and
 output limits, reasoning/tool-parser settings, and authentication policy. Older
 30B deployment claims in the handoff are stale. The GLM flagship and Qwen fast
@@ -17,7 +18,7 @@ Run from the repository root on the client worker:
 
 ```sh
 python3 scripts/agent/acceptance.py --help
-python3 -m unittest discover -s tests -p 'test_agent*.py' -v
+PYTHONDONTWRITEBYTECODE=1 python3 -W error::ResourceWarning -m unittest discover -s tests -p 'test_agent*.py' -v
 python3 -m json.tool scripts/agent/opencode.template.json >/dev/null
 git diff --check
 ```
@@ -25,6 +26,39 @@ git diff --check
 The regression suite uses deterministic HTTP fixtures bound to loopback and
 fresh temporary workspaces. It does not contact the inference VM. No pip
 packages, GPU stack, or backend installation is required.
+
+## Optional reasoning effort
+
+`--reasoning-effort VALUE` and the Python `Client(..., reasoning_effort=None)`
+argument select an optional request field. The default is `None`: the client
+**omits** `reasoning_effort` from JSON, preserving the endpoint's existing
+default. An explicit selection is sent as the top-level `reasoning_effort` on
+every Chat Completions request: ordinary and authenticated probes, missing/wrong
+credential probes, the invalid-model probe, nonstream and streaming requests,
+initial tool requests, and every tool-result continuation. It is not placed in
+`chat_template_kwargs`. There is no arbitrary request-body injection option.
+The report records the selection at `limits.reasoning_effort` (`null` when
+omitted).
+
+The client validates this exact generic enum before any HTTP request:
+`none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. Other values and
+non-string values other than `None` fail locally. This list spans possible
+backend conventions; it does **not** mean every backend or model accepts every
+value. Use only a value confirmed by the runtime/model owner.
+
+For the reviewed D3 GLM run, use exactly `--reasoning-effort low`. Its reviewed
+template accepts only `low`, `high`, and `max`; absent or unsupported template
+values can default to `max`. The pinned runtime handles `none` separately to
+disable thinking, so `none` is not equivalent to `low`. D3's source evidence is
+the [pinned runtime handling](https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/server-common.cpp#L1327)
+and [pinned GLM artifact card](https://huggingface.co/unsloth/GLM-5.3-GGUF/blob/346b3591c7f28d1a23716f97a065ecf12ec14771/README.md).
+
+Keep the reviewed `clear_thinking=true` setting configured server-side. The
+client still excludes returned reasoning from replayed assistant messages;
+the effort option adds no preserved/interleaved-reasoning compatibility claim.
+There is no client reasoning-budget option. Keep `--max-tokens 2048` for the
+initial coordinated D3 verification and review actual termination evidence
+before changing budgets.
 
 Reproduce a synthetic acceptance report, including authenticated mock requests,
 streamed tool calls and real fixture tests, in a fresh worker directory:
@@ -43,7 +77,8 @@ temporary paths vary. Synthetic evidence proves the harness, not a live model.
 
 ## Live run after the Worker1 handoff
 
-These commands are for coordinated V1, **not execution during A1**. Set the
+These commands are for coordinated V1 after bundle review, **not execution
+during A1/A2A**. Set the
 following to the actual values Worker1 publishes; do not infer them from old
 profiles. Use a separate terminal for the tunnel and keep it open:
 
@@ -111,6 +146,9 @@ python3 scripts/agent/acceptance.py \
 This checks missing, deliberately wrong, and correct credentials. The wrong
 credential is generated locally; it is not read from another account or file.
 Rejection must be an authentication error, not a transport failure.
+For D3's reviewed GLM command, add `--reasoning-effort low` after review of the
+A2A bundle. Omit the option for other endpoints unless their owner confirms the
+appropriate effort value.
 
 If Worker1 explicitly publishes a backend with authentication disabled behind
 the loopback SSH tunnel, use:
@@ -134,6 +172,11 @@ disposable fixture under the protected run directory; it does not permit the
 model to access an existing project. The harness removes its fixture after
 capturing evidence. Preserve the report separately before removing the run
 directory or credential file.
+
+Both separate runs are required for D3 continuation evidence: one without
+`--stream-tools` and one with it, each with `--reasoning-effort low`, unchanged
+initial token limits, and a fresh report path. A single run exercises only one
+tool mode even though the standalone streaming probe always runs.
 
 `--max-output-bytes` bounds tool arguments and results; `--max-response-bytes`
 bounds HTTP bodies and accumulated request conversations. `--max-tokens` is
@@ -168,6 +211,38 @@ sequence. V1 must check the published runtime/parser mode against this
 continuation contract; this harness does not establish compatibility with
 preserved-thinking modes. [Z.AI thinking mode](https://docs.z.ai/guides/capabilities/thinking-mode)
 
+### Token exhaustion and malformed responses
+
+A valid completion envelope, or complete SSE stream ending in `[DONE]`, with
+`finish_reason="length"` remains **FAIL/incomplete**. The protocol raises
+`CompletionError` before returning a message for tool execution. Its diagnostic
+records `classification="token_budget_exhausted"`, `finish_reason="length"`,
+returned model identity, returned usage, and `stream_done` (`false` for
+nonstream, `true` for complete SSE). The same fields are retained in the failed
+request record, and the failed probe or agent run includes a `diagnostics`
+object. This records observed exhaustion; it does not establish that increasing
+the limit would make acceptance pass.
+
+Diagnostics contain only bounded allowlisted fields. Model identity is at most
+1024 printable ASCII characters; control/non-ASCII text is omitted as `null`.
+Usage includes only nonnegative integer counts up to `2**63 - 1`:
+`prompt_tokens`, `completion_tokens`, `total_tokens`,
+`prompt_tokens_details.{cached_tokens,audio_tokens}`, and
+`completion_tokens_details.{reasoning_tokens,audio_tokens,accepted_prediction_tokens,rejected_prediction_tokens}`.
+Unavailable or unusable usage is `null`, not zero. Unknown provider fields,
+response text, reasoning text, and tool arguments are excluded from termination
+diagnostics and exception messages. Provider diagnostic values are redacted at
+the report boundary; the configured credential is never diagnostic evidence.
+
+If a length-terminated response also contains incomplete tool-argument JSON or
+another invalid reconstructed assistant message, the length metadata survives
+and `parsing_failure="invalid_assistant_message"` records the separate
+validation failure. No partial call executes. Strict ID, duplicate-key, and
+tool-argument validation still apply. A malformed response without observed
+length retains its ordinary safe validation error. A missing `[DONE]` or
+unfinished SSE event retains its incomplete-stream error, even if a length
+finish was seen; it does not establish a complete token-exhaustion response.
+
 Only `read_file`, `write_file`, and `run_tests` are available. Reads are limited
 to `calc.py` and immutable `test_calc.py`; only `calc.py` may be written. The
 fixed command is `python3 -I -B test_calc.py`, using the client's Python
@@ -197,6 +272,10 @@ the documented configuration and ships
 [`opencode.template.json`](../scripts/agent/opencode.template.json); **OpenCode
 E2E remains NOT_TESTED until V1 runs the actual CLI against the published
 endpoint**. Harness success does not establish OpenCode compatibility.
+The generic A2A effort option does not configure OpenCode. A2O owns the separate
+`scripts/client` integration; V1 must use its reviewed source and validate the
+actual outgoing effort field. Do not hand-edit an installed generated OpenCode
+config to add this setting.
 
 Official documentation retrieved **2026-09-15** specifies
 `@ai-sdk/openai-compatible` for Chat Completions custom providers, with
