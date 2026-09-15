@@ -73,6 +73,13 @@ def model_id(value):
     return value
 
 
+def reasoning_effort(value):
+    # Deliberately expose only the wire-verified opt-in, not every SDK string.
+    if type(value) is not str or value != "low":
+        raise ClientError("reasoning-effort must be the literal string low; omit it for the default")
+    return value
+
+
 def key_env_name(value):
     if not re.fullmatch(r"[A-Z][A-Z0-9_]{0,127}", value):
         raise ClientError("Key environment reference must be an uppercase variable name")
@@ -150,6 +157,12 @@ def refuse_managed_preferences():
 
 def config_for(settings):
     model = settings["model"]
+    model_config = {"name": model, "limit": {
+        "context": settings["context_tokens"], "output": settings["output_tokens"]}}
+    if "reasoning_effort" in settings:
+        # OpenCode 1.18.31 -> bundled openai-compatible 2.0.41 -> top-level
+        # reasoning_effort. Keep absence byte-for-byte compatible with V0.
+        model_config["options"] = {"reasoningEffort": reasoning_effort(settings["reasoning_effort"])}
     options = {"baseURL": settings["base_url"]}
     if settings["auth"]["kind"] != "disabled":
         options["apiKey"] = "{env:" + KEY_ENV + "}"
@@ -159,8 +172,7 @@ def config_for(settings):
         "enabled_providers": [PROVIDER],
         "provider": {PROVIDER: {
             "npm": "@ai-sdk/openai-compatible", "name": "Local model API", "options": options,
-            "models": {model: {"name": model, "limit": {
-                "context": settings["context_tokens"], "output": settings["output_tokens"]}}},
+            "models": {model: model_config},
         }},
         "autoupdate": False, "share": "disabled", "snapshot": False, "shell": "/bin/sh",
         "plugin": [], "mcp": {}, "lsp": False, "formatter": False,
