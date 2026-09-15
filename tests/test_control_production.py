@@ -32,7 +32,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tests'))
 sys.path.insert(0, str(ROOT / 'tests/lifecycle'))
 sys.path.insert(0, str(ROOT / 'scripts'))
-from common.lifecycle_lease import acquire_lease, transition_in_progress
+from common.lifecycle_lease import acquire_lease, transition_in_progress, LeaseBusy
 from control.adapter import ProductionBackend, ManagerJournalStore
 from control.core import Application
 from control.http import make_server
@@ -488,6 +488,7 @@ class ProductionHTTPTests(unittest.TestCase):
         self.assertTrue(receipt['state_persisted'])
         operation = self.finish(receipt)
         self.assertEqual(operation['status'], 'succeeded', operation)
+        self.assertEqual(self.fixture.load().read_state()['boot_policy'], 'manual')
         self.assertTrue(receipts_at_stop)
         self.assertEqual(self.fixture.docker.max_running, 1)
         self.assertEqual([item for item in self.mutations() if item[0] == 'stop'], [('stop', self.old_identity)])
@@ -554,8 +555,27 @@ with acquire_lease(system_root=Path(sys.argv[2]),trusted_uid=os.geteuid()):
         status, receipt = self.request('POST', '/control/v1/stop', body, 'durable-stop')
         self.assertEqual(status, 202, receipt)
         self.assertEqual(self.finish(receipt)['status'], 'succeeded')
+        directory = self.fixture.base / 'run/llmctl'
+        lock = directory / 'lifecycle.lock'
+        recovery = directory / 'recovery.json'
+        identity = lambda path: (path.stat().st_dev, path.stat().st_ino)
+        before = (identity(directory), identity(lock), identity(recovery), recovery.read_bytes())
+        durable = self.store.read()
         self.close_service()
-        self.start_service()
+        with self.fixture.lease() as lease:
+            for _ in range(2):
+                # Existing lease acquisition provisions fixed directories via
+                # mkdir/FileExistsError. Real worker flock/paths, NOT tmpfiles.
+                with self.assertRaises(LeaseBusy):
+                    with acquire_lease(blocking=False, system_root=self.fixture.base,
+                                       trusted_uid=os.geteuid()):
+                        self.fail('provisioning bypassed the existing locked inode')
+                lease.validate()
+            self.start_service()
+            lease.validate()
+            self.assertEqual((identity(directory), identity(lock), identity(recovery),
+                              recovery.read_bytes()), before)
+            self.assertEqual(self.store.read(), durable)
         status, replay = self.request('POST', '/control/v1/stop', body, 'durable-stop')
         self.assertEqual(status, 202, replay)
         self.assertTrue(replay['replayed'])

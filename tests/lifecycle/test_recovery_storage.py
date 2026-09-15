@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common.lifecycle_lease import acquire_lease, transition_in_progress
-from lifecycle.manager import Manager, atomic_json, empty_state
+from lifecycle.manager import Manager, LABEL, atomic_json, empty_state
 from lifecycle.runtime_io import LifecycleError
 from lifecycle.storage_binding import BindingError
 from install.prerequisites import PrerequisiteError
@@ -107,7 +107,19 @@ class RecoveryWithoutStorageTests(unittest.TestCase):
         self.no_fallback()
 
     def test_stop_without_registry_data_models_config_or_key(self):
-        self.stop_and_assert('stop')
+        records = copy.deepcopy(self.docker.records)
+        # Existing profile names are identity labels only. No final context,
+        # image or acceptance claim, and neither model's profiles are read.
+        for deployment in (retained.PROOF, 'qwen38-27b-128k'):
+            with self.subTest(deployment=deployment):
+                self.identity['deployment'] = deployment
+                state = copy.deepcopy(self.started)
+                state.update(selected=deployment, container=copy.deepcopy(self.identity))
+                self.docker.records = copy.deepcopy(records)
+                self.docker.records[0]['Config']['Labels'][LABEL + 'deployment'] = deployment
+                self.docker.calls.clear()
+                atomic_json(self.journal, state, system_root=self.root, trusted_uid=os.geteuid())
+                self.stop_and_assert('stop')
 
     def test_recover_stop_without_registry_data_models_config_or_key(self):
         self.stop_and_assert('recover-stop')

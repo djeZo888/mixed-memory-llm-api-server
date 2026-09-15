@@ -84,7 +84,12 @@ class BootSourceTests(unittest.TestCase):
     def test_boot_stop_code_and_workdir_remain_available_after_data_loss(self):
         fixture, binding, source, instance = self.fixture()
         text = render_boot_unit(binding, source, instance)
+        self.assertIn("systemd-tmpfiles-setup.service",
+                      " ".join(parse_unit(text)["Unit"]["After"]).split())
+        self.assertEqual((ROOT / "scripts/lifecycle/llmctl.conf").read_bytes(),
+                         b"d /run/llmctl 0700 root root -\n")
         service = parse_unit(text)["Service"]
+        self.assertNotIn("RuntimeDirectory", service)
         self.assertEqual(service["Type"], ["oneshot"])
         self.assertEqual(service["RemainAfterExit"], ["yes"])
         self.assertNotIn("Restart", service)
@@ -179,6 +184,7 @@ class BootSourceTests(unittest.TestCase):
                         render_boot_unit(binding, source, instance)
 
     def test_recovery_snapshot_contains_actual_isolated_cli_import_closure(self):
+        self.assertEqual(len(RECOVERY_FILES), 11)
         fixture, binding, source, instance = self.fixture()
         for relative in RECOVERY_FILES:
             value = (ROOT / relative).read_bytes()

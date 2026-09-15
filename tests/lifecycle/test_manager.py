@@ -26,6 +26,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fixture_storage import HistoricalBinding, FixtureWriter
 
+from common.lifecycle_lease import acquire_lease
 from lifecycle.manager import Manager, cli, process_lock  # noqa: E402
 from lifecycle.runtime_io import LifecycleError  # noqa: E402
 
@@ -286,6 +287,9 @@ class ManagerTests(unittest.TestCase):
                 {"create", "start_enter", "start_exit", "stop", "remove"}]
 
     def test_missing_selection_refuses_start_without_docker(self):
+        result = self.manager.dispatch("boot-start")
+        self.assertIsNone(result["selected"])
+        self.assertEqual(self.mutations(), [])
         with self.assertRaises(LifecycleError):
             self.manager.dispatch("start")
         self.assertEqual(self.mutations(), [])
@@ -589,7 +593,13 @@ class ManagerTests(unittest.TestCase):
         self.manager.dispatch("start")
         self.manager.dispatch("boot-stop")
         self.assertEqual(self.state()["desired"], "running")
-        self.manager.dispatch("boot-start")
+        self.docker.calls.clear()
+        with acquire_lease(system_root=self.root, trusted_uid=os.geteuid()) as lease:
+            with patch("lifecycle.manager.acquire_lease", side_effect=AssertionError("reacquired lease")):
+                self.manager.dispatch("boot-start", lease=lease)
+                self.manager.dispatch("boot-start", lease=lease)
+            lease.validate()
+        self.assertEqual(sum(call[0] == "start_enter" for call in self.mutations()), 1)
         self.assertEqual(self.state()["observed"], "ready")
 
     def test_explicit_stop_disables_resume_even_with_resume_policy(self):
