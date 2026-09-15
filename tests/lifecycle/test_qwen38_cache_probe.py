@@ -47,7 +47,9 @@ def synthetic_isolation(*, mounts=None, metadata=None, contents=None, devices=()
 
     def lstat(path):
         if str(path) in probe.CONTROL_NODES:
-            major, minor = probe.CONTROL_DEVICES[str(path)]
+            observed = {"/dev/nvidia-modeset": (195, 254), "/dev/nvidiactl": (195, 255),
+                        "/dev/nvidia-uvm": (511, 0), "/dev/nvidia-uvm-tools": (511, 1)}
+            major, minor = observed[str(path)]
             return metadata.get(str(path), SimpleNamespace(st_mode=stat.S_IFCHR | 0o666,
                                                            st_rdev=(major, minor)))
         assert str(path) in ("/cache", "/models", "/run/secrets")
@@ -199,6 +201,7 @@ class CacheProbeTests(unittest.TestCase):
     def test_control_names_cannot_hide_gpu_numbers_symlinks_or_directories(self):
         for name in probe.CONTROL_NODES:
             for mode, device in ((stat.S_IFCHR, (195, 0)), (stat.S_IFCHR, (195, 1)),
+                                 (stat.S_IFCHR, (226, 0)), (stat.S_IFCHR, (226, 128)),
                                  (stat.S_IFLNK, (0, 0)), (stat.S_IFDIR, (0, 0)),
                                  (stat.S_IFREG, (0, 0)), (stat.S_IFBLK, (195, 254))):
                 meta = SimpleNamespace(st_mode=mode | 0o666, st_rdev=device)
@@ -207,6 +210,15 @@ class CacheProbeTests(unittest.TestCase):
                         synthetic_isolation(devices=[name], metadata={name: meta}), \
                         self.assertRaisesRegex(probe.ProbeError, "cache_control_nodes_invalid"):
                     probe.verify_isolation()
+
+    def test_uvm_character_nodes_allow_dynamic_majors(self):
+        for major in (234, 510, 511):
+            metadata = {name: SimpleNamespace(st_mode=stat.S_IFCHR | 0o666,
+                                             st_rdev=(major, minor))
+                        for name, minor in (("/dev/nvidia-uvm", 0), ("/dev/nvidia-uvm-tools", 1))}
+            with self.subTest(major=major), patch.dict(os.environ, runtime_environment(), clear=True), \
+                    synthetic_isolation(devices=probe.CONTROL_NODES, metadata=metadata):
+                self.assertEqual(probe.verify_isolation(), sorted(probe.CONTROL_NODES))
 
     def test_accelerator_roots_rejected_without_traversal_or_symlink_following(self):
         for name in ("/dev/dri", "/dev/nvidia-caps", "/dev/kfd", "/dev/dxg"):

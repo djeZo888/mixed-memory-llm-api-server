@@ -66,13 +66,12 @@ EXPECTED_PATHS = {
     "flashinfer_generated": "/cache/flashinfer/.cache/flashinfer/0.6.18/generated",
     "cuda_configured": "/cache/cuda",
 }
-# Q38DEV observed these exact character devices; NVIDIA toolkit 1.19.1's
+# Q38DEV observed these character devices; NVIDIA toolkit 1.19.1's
 # controlDeviceNodeDiscoverer lists all four as global controls, not per-GPU nodes.
-CONTROL_DEVICES = {
+STATIC_CONTROL_DEVICES = {
     "/dev/nvidia-modeset": (195, 254), "/dev/nvidiactl": (195, 255),
-    "/dev/nvidia-uvm": (511, 0), "/dev/nvidia-uvm-tools": (511, 1),
 }
-CONTROL_NODES = frozenset(CONTROL_DEVICES)
+CONTROL_NODES = frozenset({*STATIC_CONTROL_DEVICES, "/dev/nvidia-uvm", "/dev/nvidia-uvm-tools"})
 
 
 class ProbeError(Exception):
@@ -216,9 +215,14 @@ def verify_isolation():
     controls = check_device_names([str(path) for path in Path("/dev").iterdir()])
     for name in controls:
         meta = Path(name).lstat()
-        require(stat.S_ISCHR(meta.st_mode)
-                and (os.major(meta.st_rdev), os.minor(meta.st_rdev)) == CONTROL_DEVICES[name],
-                "cache_control_nodes_invalid")
+        require(stat.S_ISCHR(meta.st_mode), "cache_control_nodes_invalid")
+        if name in STATIC_CONTROL_DEVICES:
+            require((os.major(meta.st_rdev), os.minor(meta.st_rdev)) == STATIC_CONTROL_DEVICES[name],
+                    "cache_control_nodes_invalid")
+        else:
+            # UVM allocates its major dynamically. Do not pin a current-boot
+            # number; still refuse renamed NVIDIA/DRI accelerator devices.
+            require(os.major(meta.st_rdev) not in (195, 226), "cache_control_nodes_invalid")
     return controls
 
 
