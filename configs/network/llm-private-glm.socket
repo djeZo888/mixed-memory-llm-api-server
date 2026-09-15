@@ -1,0 +1,22 @@
+# N1S owned transport: edits require source/policy review.
+[Unit]
+Description=Private IPv4 TCP transport for glm
+# Late network ordering must not inherit Before=sockets.target.
+DefaultDependencies=no
+Requires=sysinit.target
+Wants=network-online.target
+After=sysinit.target network-online.target
+Before=shutdown.target
+Conflicts=shutdown.target
+
+[Socket]
+ListenStream=10.156.100.60:30002
+Accept=no
+FreeBind=no
+BindToDevice=enp6s18
+Service=llm-private-glm.service
+ExecStartPre=/usr/bin/python3 -I -B /usr/local/lib/llm-server/private-network/private_network.py apply
+ExecStartPre=/usr/bin/python3 -I -B /usr/local/lib/llm-server/private-network/private_network.py check
+
+[Install]
+WantedBy=multi-user.target
