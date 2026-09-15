@@ -246,6 +246,25 @@ class InstallationValidationTests(unittest.TestCase):
 
 
 class EntrypointAndClosureTests(unittest.TestCase):
+    def test_unit_orders_shared_tmpfiles_without_coupling_recovery_to_model_boot(self):
+        from tests.lifecycle.test_boot import parse_unit
+        text = (ROOT / 'scripts/control/llm-control.service.in').read_text()
+        unit = parse_unit(text.replace('@REGISTERED_DATA_ROOT@', '/srv/ai'))
+        self.assertEqual(unit['Unit']['After'],
+                         ['local-fs.target docker.service systemd-tmpfiles-setup.service'])
+        self.assertEqual(unit['Unit']['Wants'], ['docker.service'])
+        for directive in ('Requires', 'RequiresMountsFor', 'BindsTo', 'ConditionPathIsMountPoint'):
+            self.assertNotIn(directive, unit['Unit'])
+        self.assertNotIn('llmctl-boot.service', text)
+        service = unit['Service']
+        self.assertNotIn('RuntimeDirectory', service)
+        self.assertEqual(service['ReadWritePaths'], ['-/srv/ai /run/llmctl'])
+        self.assertEqual(service['LoadCredential'],
+                         ['control-api-key:/etc/llm-server/control-api-key'])
+        self.assertEqual(service['ExecStart'],
+                         ['/usr/bin/python3 -I -B /usr/local/lib/llm-server/control-api/scripts/control/serve.py'])
+        self.assertEqual(service['Restart'], ['no'])
+
     def test_fresh_normal_closure_q38_source_proof_and_drift_checks(self):
         """Only copied manifest files and four Q38 profile declarations exist.
 
