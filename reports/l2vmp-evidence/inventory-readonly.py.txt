@@ -1,0 +1,52 @@
+"""Bounded read-only ai-vm inventory. Stream via SSH; never installed remotely."""
+import datetime, hashlib, json, os, pathlib, stat, subprocess
+P=pathlib.Path
+CID='bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55'
+REL='/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915'
+def run(argv):
+    p=subprocess.run(argv,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True,timeout=30)
+    if p.returncode: return {'returncode':p.returncode}
+    return p.stdout
+
+def meta(path, digest=False):
+    p=P(path)
+    try: s=p.lstat()
+    except FileNotFoundError: return {'present':False}
+    v={'present':True,'uid':s.st_uid,'gid':s.st_gid,'mode':format(stat.S_IMODE(s.st_mode),'04o'),'type':'symlink' if stat.S_ISLNK(s.st_mode) else 'directory' if stat.S_ISDIR(s.st_mode) else 'regular' if stat.S_ISREG(s.st_mode) else 'other','device':s.st_dev,'inode':s.st_ino,'nlink':s.st_nlink}
+    if stat.S_ISREG(s.st_mode): v.update(size=s.st_size,mtime_ns=s.st_mtime_ns,ctime_ns=s.st_ctime_ns)
+    if digest and stat.S_ISREG(s.st_mode) and s.st_size<1048576: v['sha256']=hashlib.sha256(p.read_bytes()).hexdigest()
+    return v
+
+def document(path,fields):
+    v=meta(path,True)
+    if v.get('type')=='regular' and v['size']<1048576:
+        data=json.loads(P(path).read_text())
+        v['selected']={k:data[k] for k in fields if k in data}
+        v['omitted_field_names']=sorted(set(data)-set(fields))
+    return v
+
+out={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'scope':'read-only, selected nonsecret fields; no key reads, endpoint probes, lifecycle calls or model payload reads'}
+out['mounts']={p:json.loads(run(['findmnt','--json','--output','TARGET,SOURCE,UUID,FSTYPE,OPTIONS,MAJ:MIN,FSROOT','--target',p])) for p in ['/','/boot','/boot/efi','/data','/data/models-large']}
+out['block_topology']=json.loads(run(['lsblk','--json','--bytes','--paths','--output','NAME,PATH,TYPE,PKNAME,MOUNTPOINTS,FSTYPE,UUID,RO,MAJ:MIN']))
+out['available_bytes']={p:os.statvfs(p).f_bavail*os.statvfs(p).f_frsize for p in ['/','/data','/data/models-large']}
+paths=['/','/etc','/etc/local-ai-server','/etc/local-ai-server/storage.json','/etc/llm-server','/etc/llm-server/control.json','/etc/llm-server/control-api-key','/etc/llm-server/network.json','/usr','/usr/local','/usr/local/lib','/usr/local/lib/llm-server','/usr/local/lib/llm-server/control-api','/usr/local/lib/llm-server/private-network','/run/llmctl','/run/llmctl/lifecycle.lock','/run/llm-control','/run/llm-control/operations.json','/run/credentials/llm-control.service/control-api-key','/data','/data/models-large','/data/hf-cache','/data/docker','/data/containerd','/data/build','/data/logs','/data/backups','/data/services','/data/services/installer','/data/services/secrets','/data/services/secrets/llm-api-key','/data/services/llm-manager','/data/services/llm-manager/active','/data/services/llm-manager/state','/data/services/llm-manager/acquisition','/data/services/llm-manager/evidence','/data/services/releases',REL,'/etc/systemd/system/llm-control.service','/etc/systemd/system/llmctl-boot.service','/etc/systemd/system/m6b-post-reboot-verify.service','/data/models-large/glm-5.3-ud-q4-k-xl','/data/models-large/glm-5.3-ud-q4-k-xl/UD-Q4_K_XL','/data/models-large/qwen3.8-27b-fp8']
+out['metadata']={p:meta(p) for p in paths}
+out['instance']=document('/data/services/llm-manager/deployment-instance.json',['schema_version','id','required_mounts','paths','runtime_evidence','model_integrity','obsolete_boot_owner_disabled','obsolete_boot_owner_evidence','storage_identity','historical_import'])
+statefields=['schema_version','instance_id','storage_identity','selected','last_selected','desired','observed','boot_policy','container','failure','state_persisted','updated_at']
+out['states']={p:document(p,statefields) for p in ['/data/services/llm-manager/active/active.json','/data/services/llm-manager/state/active.json','/run/llmctl/recovery.json']}
+out['glm_receipt']=document('/data/services/llm-manager/acquisition/glm-5.3-ud-q4-k-xl.complete.json',['schema_version','complete','repo_id','revision','model_root','manifest_sha256','artifact_count','total_bytes','acquisition_status_sha256','hash_scope'])
+out['release_files']={s:meta(REL+'/'+s,True) for s in ['scripts/lifecycle/manager.py','scripts/common/root-disk-guard.sh','configs/deployments/glm-5.3-ud-q4-k-xl-32k.json','configs/models/glm-5.3-ud-q4-k-xl.json','configs/runtimes/llama-cpp-v0.4.1-d1.json']}
+fmt='{"id":{{json .Id}},"name":{{json .Name}},"image_id":{{json .Image}},"image_reference":{{json .Config.Image}},"running":{{json .State.Running}},"status":{{json .State.Status}},"started_at":{{json .State.StartedAt}},"path":{{json .Path}},"args":{{json .Args}},"entrypoint":{{json .Config.Entrypoint}},"port_bindings":{{json .HostConfig.PortBindings}},"restart_policy":{{json .HostConfig.RestartPolicy}},"network_mode":{{json .HostConfig.NetworkMode}},"mounts":{{json .Mounts}},"owner":{{json (index .Config.Labels "io.llmctl.owner")}},"instance":{{json (index .Config.Labels "io.llmctl.instance")}},"deployment":{{json (index .Config.Labels "io.llmctl.deployment")}},"profile":{{json (index .Config.Labels "io.llmctl.profile")}}}'
+v=json.loads(run(['docker','inspect','--format',fmt,CID]))
+allowed={'--model','--host','--port','--alias','--api-key-file','--ctx-size','--parallel','--n-gpu-layers','--split-mode','--tensor-split','--load-mode','--device','--chat-template-kwargs'}
+flags={'--cpu-moe','--jinja','--no-webui'}
+a=v['args']; clean=[]; i=0
+while i<len(a):
+    f=a[i]
+    if f in flags: clean.append(f); i+=1
+    elif f in allowed and i+1<len(a): clean.extend([f,a[i+1]]); i+=2
+    else: clean.append('[UNEXPECTED_ARGUMENT_REDACTED]'); i+=1
+v['args']=clean
+out['glm_container']=v
+out['units']={u:run(['systemctl','show',u,'--property=Id,LoadState,ActiveState,SubState,UnitFileState,FragmentPath,DropInPaths,MainPID']) for u in ['m6b-post-reboot-verify.service','llmctl-boot.service','llm-control.service','llm-private-control.socket','llm-private-glm.socket','llm-private-qwen38.socket']}
+print(json.dumps(out,indent=2,sort_keys=True))

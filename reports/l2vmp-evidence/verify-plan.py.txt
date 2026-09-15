@@ -1,0 +1,28 @@
+"""Worker-only proposal/schema/identity checks; no host actions."""
+import hashlib,json,pathlib,sys
+P=pathlib.Path; task=P(__file__).resolve().parent; repo=task/'repo'
+sys.path.insert(0,str(repo/'scripts'))
+from lifecycle.storage_binding import stable_identity
+from install.storage import Storage
+r=json.loads((task/'proposed/storage.proposed.json').read_text()); identity=json.loads((task/'proposed/storage-identity.proposed.json').read_text())
+assert stable_identity(r)==identity
+assert r['storage_mode']=='existing'
+assert r['roots']==Storage({'data_dir':'/data','model_dir':'/data/models-large'},None)._roots()
+h=json.loads((task/'host-inventory.json').read_text())
+for role,p in [('data','/data'),('models','/data/models-large')]:
+ m=h['mounts'][p]['filesystems'][0]
+ assert r[role]['path']==r[role]['mount']==m['target']==p
+ assert m['fsroot']=='/' and m['fstype']==r[role]['fstype']=='ext4'
+ assert r[role]['uuid']==m['uuid'] and r[role]['device']==m['maj:min'] and r[role]['source']==m['source']
+assert h['available_bytes']['/']>=4*1024**3
+add=json.loads((task/'proposed/instance-additions.proposed.json').read_text()); assert set(add)=={'storage_identity','historical_import'} and add['historical_import'] is True and add['storage_identity']==identity
+conf=json.loads((task/'proposed/control.proposed.json').read_text()); assert conf=={'schema_version':1,'advertised_endpoint_policy':'private_network'}
+unit=(repo/'scripts/control/llm-control.service.in').read_text(); assert (task/'proposed/llm-control.service.proposed').read_text()==unit.replace('@REGISTERED_DATA_ROOT@','/data')
+assert unit.count('@REGISTERED_DATA_ROOT@')==1
+manifest=json.loads((repo/'reports/q38s-acquisition-manifest.json').read_text())
+assert len(manifest['artifacts'])==81 and len({x['path'] for x in manifest['artifacts']})==81
+assert sum(x['size_bytes'] for x in manifest['artifacts'])==30890049597
+assert hashlib.sha256((repo/'reports/q38s-acquisition-manifest.json').read_bytes()).hexdigest()=='726012378a40f648a104230d3f5ed5d6bc505cbd09b32918fc29aa81c0f075f2'
+for path in (task/'proposed').glob('*.json'): json.loads(path.read_text())
+result={'status':'PASS','scope':'worker-only schema/path/immutable manifest comparison, no host or actual L2 application','checks':['proposal JSON parsed','stable identity exact','all10 current roots exact','observed whole-volume mount values exact','root snapshot above4GiB','instance only2 additions','frozen L2 config exact','unit sole data-root substitution','Q38 manifest81 exact unique rows and bytes/hash'], 'not_performed':['final L2 source verification','registration write','instance write','actual storage-role mounted writer integration','Q38 computed acquisition hashes/seal verification','control credential read/startup','systemd Linux sandbox','model readiness/boot/generation']}
+print(json.dumps(result,indent=2,sort_keys=True))
