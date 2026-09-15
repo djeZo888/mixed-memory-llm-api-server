@@ -1,0 +1,236 @@
+{
+  "actual_build_attempts": 1,
+  "authorized_build_attempts": 1,
+  "build_finished": "2026-09-15T02:58:50Z",
+  "build_started": "2026-09-15T02:58:39Z",
+  "canonical_after_status": "PASS",
+  "canonical_before_status": "PASS",
+  "dual_mount_after": {
+    "data": {
+      "fstype": "ext4",
+      "options": "rw,relatime",
+      "source": "/dev/sdb1",
+      "target": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "models_large": {
+      "fstype": "ext4",
+      "options": "rw,relatime",
+      "source": "/dev/sdc1",
+      "target": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "root_free_bytes": 5210308608
+  },
+  "excluded_qualification": [
+    "model protocol gate",
+    "diagnostic graph allocation",
+    "GPU runtime/kernel execution",
+    "model load/generation",
+    "public exposure"
+  ],
+  "failure": {
+    "category": "worktree_index_mismatch",
+    "cuda_compiler_started": false,
+    "diagnosis": "Git index stat-cache mismatch is a hypothesis for this container; independently reproduced with identical bytes in worker fixture",
+    "log_line_numbers": [
+      191,
+      192
+    ],
+    "operation": "indexed apply phase, prepare-d3p-source.py lines 146-147; stderr does not distinguish the two apply calls",
+    "paths": [
+      "src/llama-context.cpp",
+      "tools/server/server.cpp"
+    ],
+    "stage": "build 7/7"
+  },
+  "files": {
+    "build.exit": {
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "build.finished": {
+      "bytes": 21,
+      "sha256": "bd17315dc5e13a289746879e080f1aedf64ac94aadc9fdd8b57ec5400f4b725b"
+    },
+    "build.log": {
+      "bytes": 21747,
+      "sha256": "5d4d1867c1d40b5d1964d89832fd700f543f8c31b91fd910e32d4a71604f0616"
+    },
+    "build.started": {
+      "bytes": 21,
+      "sha256": "8c689eb9bb346f8efddd1c40fe4302695deb565c6a9575214689ac48ce12fb64"
+    },
+    "build.state": {
+      "bytes": 24,
+      "sha256": "fb72eac59393f0af472103500ffec50903ebe1c3b3873b71048187adb9af755e"
+    },
+    "evidence/build-command.txt": {
+      "bytes": 105,
+      "sha256": "66f7a0dbf1647a1eb2e61e126e4851f8452c57ea715c2259acc6783033d68203"
+    },
+    "evidence/build-recipe-sha256.txt": {
+      "bytes": 522,
+      "sha256": "5161d5ef682a33243e270004583e272d056250ef0a92f31f2628b32751904aaa"
+    },
+    "evidence/canonical-after.md": {
+      "bytes": 4825,
+      "sha256": "cd5e82a50590ccefa2a35076644848fb59e52e8641baa14cd840afa983791c49"
+    },
+    "evidence/canonical-before.md": {
+      "bytes": 4826,
+      "sha256": "40f85eba6317641825e20b8156932479fa2b0cc19653f8bfb9491c77de65b117"
+    },
+    "evidence/canonical-mount-after.txt": {
+      "bytes": 199,
+      "sha256": "fb496425d4453877d2c25cda3c7a59a947162e739ad7dcdb08de9ec9cbfabed4"
+    },
+    "evidence/dual-mount-after.json": {
+      "bytes": 397,
+      "sha256": "98b617cda5b70b816c32478b53a16db75fa744fb6824c68aefd2e467704cfd74"
+    },
+    "evidence/original-runtime-after.txt": {
+      "bytes": 176,
+      "sha256": "8d7bc5a6e51a27fabc31acfbec489603a6fac2c16d1423e6e414ad4b97072018"
+    },
+    "evidence/postfailure-source.json": {
+      "bytes": 544,
+      "sha256": "8105d6f70a6324f197feb1541bca7680689b83d4d4be548075241510bd45d4be"
+    },
+    "evidence/prelaunch-recipe-sha256.txt": {
+      "bytes": 522,
+      "sha256": "5161d5ef682a33243e270004583e272d056250ef0a92f31f2628b32751904aaa"
+    },
+    "evidence/prelaunch-source.json": {
+      "bytes": 544,
+      "sha256": "8105d6f70a6324f197feb1541bca7680689b83d4d4be548075241510bd45d4be"
+    },
+    "evidence/registry-parent-absent-before-launch.txt": {
+      "bytes": 21,
+      "sha256": "d06539cdcc79c9740980c536abfd28f50313ec316fa02cad6c8ac8c7487c6104"
+    },
+    "evidence/root-build-after.md": {
+      "bytes": 4826,
+      "sha256": "7f8cd3de04a4dbf5c089eeee5dee68d06aa22cd5f021d3898438bd3646e10656"
+    },
+    "evidence/root-build-before.md": {
+      "bytes": 4827,
+      "sha256": "2769096c546228a99d91b9cfed961fab9f61bff655976b11168b3f3197ee1dbd"
+    },
+    "evidence/source-preflight.json": {
+      "bytes": 544,
+      "sha256": "8105d6f70a6324f197feb1541bca7680689b83d4d4be548075241510bd45d4be"
+    },
+    "evidence/tag-state.txt": {
+      "bytes": 7,
+      "sha256": "ede4663fa9a5e8031704705268edde90aae07273f42b7b7274db7b317a40b001"
+    },
+    "evidence/unit-final.txt": {
+      "bytes": 249,
+      "sha256": "f7d0a070041a11e0371aa7a4debbec52a71e466b861aa39139bc2c23b05a4f2a"
+    },
+    "evidence/unit-launch.txt": {
+      "bytes": 171,
+      "sha256": "d0e46f21815dd886ccfbcd669e5fdb0b245f61f00d003db75f17b99047ddc1d2"
+    },
+    "job.exit": {
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "job.finished": {
+      "bytes": 21,
+      "sha256": "bd17315dc5e13a289746879e080f1aedf64ac94aadc9fdd8b57ec5400f4b725b"
+    },
+    "job.pid": {
+      "bytes": 7,
+      "sha256": "58e2eff22a177e82962d6b0c1ecba572d0800d9a9b92b78e0f67030e4987e004"
+    },
+    "repository.bundle": {
+      "bytes": 1699198,
+      "sha256": "590fa30d2efb786d9ab4da0442935a6b94f42f2066986c8f5551c5a14dbe0980"
+    }
+  },
+  "guards": {
+    "require-data-mounted.sh": {
+      "exact_realpath": true,
+      "gid": 0,
+      "mode": "0o700",
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/require-data-mounted.sh",
+      "sha256": "5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f",
+      "uid": 0
+    },
+    "root-disk-guard.sh": {
+      "exact_realpath": true,
+      "gid": 0,
+      "mode": "0o700",
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/root-disk-guard.sh",
+      "sha256": "2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813",
+      "uid": 0
+    }
+  },
+  "historical_observed_pids": {
+    "buildx": 202651,
+    "docker": 202548,
+    "main": 202062,
+    "runner": 202064,
+    "sudo": 202547
+  },
+  "image": {
+    "binary_hash": null,
+    "iid_file_exists": false,
+    "measured_iid": null,
+    "measured_labels": null,
+    "proposed_tag": "local/llama-cpp:v0.4.1-b29c606-cu132-sm120-d3p-43e4aeb5b63d",
+    "sm120_compile_proved": false,
+    "supported_flags": null,
+    "tag_state": "ABSENT",
+    "version": null
+  },
+  "job_exit": 1,
+  "measured_at": "2026-09-15T03:01:56.274690+00:00",
+  "owner_repository_commit": "48a982420561ad6d0189a710a228beb1e2838de7",
+  "pid_metadata_correction": {
+    "corrected_from": "evidence/unit-launch.txt",
+    "historical_main_pid": 202062,
+    "job_restarted": false,
+    "original_value": "$"
+  },
+  "registry_parent_present_at_measurement": false,
+  "retry_performed": false,
+  "root_free_before_bytes": 5210423296,
+  "run": "/data/build/d3p-d3b-20260915",
+  "runner_after_status": "PASS",
+  "runner_before_status": "PASS",
+  "runner_exit": 1,
+  "runner_state": "FAILED_BUILD_OR_STORAGE",
+  "runtime_after": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55 sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62 running 2026-09-15T00:48:45.235739944Z",
+  "schema_version": 1,
+  "source": {
+    "derived_commit": null,
+    "derived_tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+    "jinja_fix_ancestor": "ae9afff8d2c012ca760eb9c2adf41961cf6f6232",
+    "patch_file": "strict-model-chat.patch",
+    "patch_sha256": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b",
+    "schema_version": 1,
+    "source_state": "verified-upstream",
+    "upstream_commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+    "upstream_repository": "https://github.com/ggml-org/llama.cpp",
+    "upstream_tree": "950999fe62b7fe55f44ab5b7394e3c8542f37f12"
+  },
+  "source_bundle_sha256": "590fa30d2efb786d9ab4da0442935a6b94f42f2066986c8f5551c5a14dbe0980",
+  "status": "FAILED_PRECOMPILE_SOURCE_INDEX_CHECK",
+  "task": "D3B-20260915",
+  "top_level_ownership": "RELEASED; no further direct children required in /data/build,/data/hf-cache,/data/backups,/data/logs",
+  "unit": {
+    "ActiveState": "failed",
+    "ExecMainExitTimestamp": "Tue 2026-09-15 02:58:50 UTC",
+    "ExecMainStartTimestamp": "Tue 2026-09-15 02:58:36 UTC",
+    "ExecMainStatus": "1",
+    "Id": "d3b-glm-cuda-build-20260915.service",
+    "MainPID": "0",
+    "Restart": "no",
+    "Result": "exit-code",
+    "RuntimeMaxUSec": "12h",
+    "SubState": "failed"
+  }
+}

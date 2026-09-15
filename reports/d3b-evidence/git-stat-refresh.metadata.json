@@ -1,0 +1,171 @@
+{
+  "fixture": "tiny local Git repository copied with Python shutil.copytree(copy_function=shutil.copyfile); no upstream content and no VM access",
+  "environment": {
+    "GIT_OPTIONAL_LOCKS": "0",
+    "GIT_NO_REPLACE_OBJECTS": "1"
+  },
+  "tracked_file_sha256_before_and_after_refresh": "4fdbc441ea7b546100e086ac1e4fc5ae6749b7314311c99db05be450eca12996",
+  "tree_before": "e26e5583dceac055805b40755df8a5c22c9dfb28",
+  "tree_after": "e26e5583dceac055805b40755df8a5c22c9dfb28",
+  "index_sha256_before": "75a81c5d9594a8b83c8c0f4fbc26d542bc1a9af7216618c55664e551102b64b2",
+  "index_sha256_after": "af48020a440d5467c05aea757c8aa7cfeb60e5e1b50d101187fa243aec7fd22a",
+  "changed_worktree_control": "explicit refresh refuses with exit 1; index apply still refuses with exit 1",
+  "steps": [
+    {
+      "argv": [
+        "git",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "core.untrackedCache=false",
+        "-C",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/exact-helper-git-env",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all",
+        "--ignored=matching"
+      ],
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "git",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "core.untrackedCache=false",
+        "-C",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/exact-helper-git-env",
+        "diff-index",
+        "--cached",
+        "--quiet",
+        "HEAD",
+        "--"
+      ],
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "git",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "core.untrackedCache=false",
+        "-C",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/exact-helper-git-env",
+        "write-tree"
+      ],
+      "exit": 0,
+      "stdout_sha256": "50cae8676c47bf68850b0807d94c048c9bbd75e75ffc2400581debbd51b7c2fb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "git",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "core.untrackedCache=false",
+        "-C",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/exact-helper-git-env",
+        "apply",
+        "--check",
+        "--index",
+        "--whitespace=error-all",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/tiny.patch"
+      ],
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "32f3be1a24204b7f3b1bbe120e04bccd8fe7079452fb22743c2e4321f8157190"
+    },
+    {
+      "argv": [
+        "git",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "core.untrackedCache=false",
+        "-C",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/exact-helper-git-env",
+        "update-index",
+        "--refresh"
+      ],
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "git",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "core.untrackedCache=false",
+        "-C",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/exact-helper-git-env",
+        "write-tree"
+      ],
+      "exit": 0,
+      "stdout_sha256": "50cae8676c47bf68850b0807d94c048c9bbd75e75ffc2400581debbd51b7c2fb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "git",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "core.untrackedCache=false",
+        "-C",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/exact-helper-git-env",
+        "apply",
+        "--check",
+        "--index",
+        "--whitespace=error-all",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/tiny.patch"
+      ],
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "git",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "core.untrackedCache=false",
+        "-C",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/dirty-control",
+        "update-index",
+        "--refresh"
+      ],
+      "exit": 1,
+      "stdout_sha256": "543ad4544cc0c37a1d78cee31cc501e5d9d5c472e721638b600c44487f21d66f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "git",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "core.untrackedCache=false",
+        "-C",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/dirty-control",
+        "apply",
+        "--check",
+        "--index",
+        "--whitespace=error-all",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/tiny.patch"
+      ],
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "32f3be1a24204b7f3b1bbe120e04bccd8fe7079452fb22743c2e4321f8157190"
+    }
+  ]
+}

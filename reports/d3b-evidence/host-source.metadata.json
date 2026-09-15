@@ -1,0 +1,55 @@
+{
+  "files": {
+    "src/llama-context.cpp": {
+      "host_ctime_ns": 1789441059910402956,
+      "host_device": 2065,
+      "host_inode": 44306079,
+      "host_mtime_ns": 1789441059910402956,
+      "index_content_sha256": "6429ebec7c926945987e6fe037317af0f99265490bc14b0606d9487a62a76453",
+      "index_entry": "100644 6334f3ccab304749bbf7b51362dee7c9348771d7 0\tsrc/llama-context.cpp",
+      "matches_index_bytes": true,
+      "mode": "0o664",
+      "sha256": "6429ebec7c926945987e6fe037317af0f99265490bc14b0606d9487a62a76453",
+      "size": 154466
+    },
+    "tools/server/server.cpp": {
+      "host_ctime_ns": 1789441059932403091,
+      "host_device": 2065,
+      "host_inode": 44306586,
+      "host_mtime_ns": 1789441059932403091,
+      "index_content_sha256": "a0b400372a697182fb552c946579f74e81a845aa6d37e4b40b978ff4be5e016c",
+      "index_entry": "100644 22378b38c5ef1fa70d82c3b32a8907a658dd151a 0\ttools/server/server.cpp",
+      "matches_index_bytes": true,
+      "mode": "0o664",
+      "sha256": "a0b400372a697182fb552c946579f74e81a845aa6d37e4b40b978ff4be5e016c",
+      "size": 23501
+    }
+  },
+  "git_version": "git version 2.43.0",
+  "guard_warnings": {
+    "canonical-after.md": [
+      "- /home/user/codex-bootstrap exists and is small",
+      "- /data.pre-mount-root-20260702-083425 exists and is small",
+      "- root free space is 5 GiB, below warning threshold 6 GiB"
+    ],
+    "canonical-before.md": [
+      "- /home/user/codex-bootstrap exists and is small",
+      "- /data.pre-mount-root-20260702-083425 exists and is small",
+      "- root free space is 5 GiB, below warning threshold 6 GiB"
+    ],
+    "root-build-after.md": [
+      "- /home/user/codex-bootstrap exists and is small",
+      "- /data.pre-mount-root-20260702-083425 exists and is small",
+      "- root free space is 5 GiB, below warning threshold 6 GiB"
+    ],
+    "root-build-before.md": [
+      "- /home/user/codex-bootstrap exists and is small",
+      "- /data.pre-mount-root-20260702-083425 exists and is small",
+      "- root free space is 5 GiB, below warning threshold 6 GiB"
+    ]
+  },
+  "head": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+  "index_tree": "950999fe62b7fe55f44ab5b7394e3c8542f37f12",
+  "scope": "host clean source after failed Docker build; failed-layer stat tuples unavailable",
+  "status_clean_including_ignored": true
+}
