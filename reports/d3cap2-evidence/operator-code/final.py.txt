@@ -1,0 +1,57 @@
+"""Final read-only failure reconciliation; no retry, rollback or requests."""
+before=json.loads(protected(REPORT/'admission.json').read_bytes())
+private=json.loads(protected(REPORT/'private-baseline.json').read_bytes())
+first=json.loads(protected(REPORT/'first-transition-failure.json').read_bytes())
+cid=first['state']['container']['id']
+assert cid=='3108f42bfaab08010164340b2c3e709e03c4aebeb36374e6b87d8bac226296fb'
+final_guards=guard();quiet();control=control_state()
+containers={}
+for name,ident in (('native1m',cid),('n76_32k',OLD),('d1_rollback',D1)):
+    c=inspect_container(ident)
+    assert c['Id']==ident and c['RestartPolicy']['Name']=='no'
+    if name!='native1m':assert not c['State']['Running'] and c['State']['Pid']==0
+    containers[name]=c
+assert containers['native1m']['Image']==IMAGE and containers['n76_32k']['Image']==IMAGE
+sys.path.insert(0,str(SRC/'scripts'))
+from common.lifecycle_lease import acquire_lease
+with acquire_lease(blocking=False) as lease:
+    m=manager();state=m.read_state()
+    assert state['selected']==TARGET and state['container']['id']==cid and state['desired']=='stopped' and state['boot_policy']=='manual'
+    m.trusted_container(state['container'])
+    for rel,digest in before['source_sha256'].items():
+        p=protected(SRC/rel);assert hashlib.sha256(p.read_bytes()).hexdigest()==digest,'final_source_hash'
+        assert stat.S_IMODE(p.stat().st_mode)==int(INVENTORY['files'][rel]['mode'],8),'final_source_mode'
+    assert key_state()==private['key'] and stable_files()==private['files']
+    for role in ('native1m','n76_32k'):
+        assert _reviewed_args(containers[role]['Args'],IMAGE,1048576 if role=='native1m' else 32768)=='n_cpu_moe_76'
+native=state_new();selected=[];first_error=None
+c=containers['native1m'];log=Path(c['LogPath'])
+assert str(log).startswith('/data/docker/containers/'+cid+'/') and log.stat().st_size<524288
+raw=log.read_bytes()
+for line in raw.splitlines():
+    r=json.loads(line);msg=r['log'];parse_log_line(msg,native)
+    if re.search(r'D3T_NATIVE_V1|(?:KV|[ck]ache|compute).*buffer size|K \(f16\)|V \(f16\)|type_[kv]|offloaded \d+/\d+|n_ctx\s*=|n_seq_max\s*=|n_threads\s*=|n_cpu_moe|signal|exiting',msg,re.I):selected.append({'utc':r['time'],'message':msg.strip()})
+    if first_error is None and any(re.search(pattern,msg,re.I) for pattern in ERROR_PATTERNS.values()):first_error={'utc':r['time'],'message':msg.strip()[:1000]}
+kernel=run(['dmesg','--level','err,crit,alert,emerg','--since',c['State']['StartedAt'][:19].replace('T',' ')])
+kernel_counts={key:len(re.findall(pattern,kernel,re.I)) for key,pattern in ERROR_PATTERNS.items()}
+host=_metrics('/proc/meminfo',{'MemTotal','MemAvailable','SwapTotal','SwapFree'})
+vmstat=_metrics('/proc/vmstat',{'pswpin','pswpout','oom_kill'})
+gpus=run(['nvidia-smi','--query-gpu=index,memory.total,memory.free','--format=csv,noheader,nounits']).splitlines()
+owned_absent={str(pid):not Path('/proc/'+str(pid)).exists() for pid in (270294,273833,243279)}
+assert owned_absent['270294'] and owned_absent['243279'],'operator_or_old_process_alive'
+target_proc=None
+if not owned_absent['273833']:
+    p=Path('/proc/273833');target_proc={'status':[x for x in (p/'status').read_text().splitlines() if x.split(':')[0] in ('Name','State','Pid','PPid','VmRSS','VmSwap')],'wchan':(p/'wchan').read_text()}
+    parent=int([x for x in target_proc['status'] if x.startswith('PPid:')][0].split()[1]);p=Path('/proc/'+str(parent))
+    target_proc['parent_status']=[x for x in (p/'status').read_text().splitlines() if x.split(':')[0] in ('Name','State','Pid','PPid','VmRSS','VmSwap')]
+    target_proc['parent_wchan']=(p/'wchan').read_text()
+fixture=[]
+for p in Path('/proc').iterdir():
+    if not p.name.isdigit() or int(p.name)==os.getpid():continue
+    try:cmd=(p/'cmdline').read_bytes()
+    except (FileNotFoundError,PermissionError,ProcessLookupError):continue
+    if b'cache_probe.py' in cmd or b'run_pinned_image.py' in cmd:fixture.append(int(p.name))
+result={'status':'STOP_MONITOR_CADENCE_CONTAINER_STOP_UNRESOLVED','allocation_attempts':1,'generation_attempts':0,'first_failure':first,'guards':final_guards,'containers':containers,'state':state,'control':control,'all_77_source_hashes_modes_unchanged':True,'key_exact_bytes_metadata_unchanged':True,'instance_registry_network_control_manifest_unchanged':True,'native_numeric':{k:v for k,v in native.items() if k not in ('log_hash',)},'selected_backend_logs':selected,'first_native_error':first_error,'kernel_error_counts':kernel_counts,'log_bytes':len(raw),'log_sha256':hashlib.sha256(raw).hexdigest(),'host_kib':host,'vmstat':vmstat,'vmstat_delta':{k:vmstat[k]-before['idle_full']['vmstat'][k] for k in vmstat},'gpu_memory_mib':gpus,'owned_pids_absent':owned_absent,'target_process':target_proc,'q38_fixture_pids':fixture,'native_connections':quiet(),'lifecycle_lease_free_verified':True,'final_pss':'NOT_AVAILABLE_TARGET_STOPPING_OR_ZOMBIE_NO_IDLE_READINESS','actual_capacity':'NOT_ESTABLISHED','occupied_near_1m':'NOT_TESTED','smoke':'NOT_RUN','rollback':'NOT_INVOKED','owner_pid':os.getpid()}
+write('final-result.json',result)
+write('final-after-report-guards.json',guard())
+emit('final_failure_result',result=result)

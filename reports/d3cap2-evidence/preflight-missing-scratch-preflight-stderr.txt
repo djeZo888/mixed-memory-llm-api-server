@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "<stdin>", line 348, in <module>
+  File "/usr/local/lib/llm-server/control-api/scripts/lifecycle/manager.py", line 770, in prepare_start
+    require(source.resolve() == source and source.exists(), "mount_source_missing_or_symlink")
+  File "/usr/local/lib/llm-server/control-api/scripts/lifecycle/manager.py", line 54, in require
+    raise LifecycleError(code)
+lifecycle.runtime_io.LifecycleError: mount_source_missing_or_symlink

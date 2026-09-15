@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "<stdin>", line 357, in <module>
+  File "/usr/local/lib/llm-server/control-api/scripts/lifecycle/manager.py", line 1076, in dispatch
+    self._start()
+  File "/usr/local/lib/llm-server/control-api/scripts/lifecycle/manager.py", line 942, in _start
+    self.sleep(min(d["launch"]["poll_seconds"], max(0, deadline - self.monotonic())))
+  File "<stdin>", line 315, in abort
+lifecycle.runtime_io.LifecycleError: d3cap2_cheap_safety_stop
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<stdin>", line 386, in <module>
+  File "/usr/local/lib/llm-server/control-api/scripts/lifecycle/manager.py", line 1081, in dispatch
+    self._stop(preserve_intent=action == "boot-stop")
+  File "/usr/local/lib/llm-server/control-api/scripts/lifecycle/manager.py", line 979, in _stop
+    self.docker.stop(identity["id"], timeout=120)
+  File "/usr/local/lib/llm-server/control-api/scripts/lifecycle/runtime_io.py", line 111, in stop
+    self.run(["container", "stop", "--time", str(timeout), identity], timeout=timeout + 30)
+  File "/usr/local/lib/llm-server/control-api/scripts/lifecycle/runtime_io.py", line 62, in run
+    return run(self.prefix + args, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/llm-server/control-api/scripts/lifecycle/runtime_io.py", line 46, in run
+    raise LifecycleError("command_failed")
+lifecycle.runtime_io.LifecycleError: command_failed

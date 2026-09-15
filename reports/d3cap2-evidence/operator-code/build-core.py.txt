@@ -1,0 +1,10 @@
+import importlib.util,json,sys
+from pathlib import Path
+root=Path(__file__).resolve().parent
+sys.path.insert(0,str(root/'repo/scripts'))
+spec=importlib.util.spec_from_file_location('cheap',root.parent/'D3PERFVM-20260915/cheap.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+from d3t import guards
+s=m.source({'registered_mounts':guards.MOUNTS},{'vmstat':{},'host_swap_used_kib':0,'gpus':[],'native':None}).split('\nsignal.alarm(720)')[0]
+assert 'smaps' not in s and '"Pss"' not in s
+(root/'cheap-core.py').write_text(s)
+(root/'inputs.py').write_text('CFG='+repr(json.loads((root/'VM-GUARDS.json').read_text()))+'\nINVENTORY='+repr(json.loads((root.parent/'D3N32-20260915/trial/source-inventory.json').read_text()))+'\n')
