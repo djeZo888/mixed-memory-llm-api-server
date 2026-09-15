@@ -190,6 +190,43 @@ class Qwen38LaunchDiagnosticTests(unittest.TestCase):
         self.assertEqual(host.failure_metadata(json.dumps(record).encode())["launch_failure"],
                          record["launch_failure"])
 
+    def test_private_rendering_baseexception_preserves_original_failure_and_cli_two(self):
+        for diagnostic_error in (SystemExit(0), KeyboardInterrupt()):
+            with self.subTest(diagnostic_error=type(diagnostic_error).__name__):
+                class DiagnosticHostileError(RuntimeError):
+                    def __str__(self):
+                        raise diagnostic_error
+
+                def action(launcher, _argv):
+                    try:
+                        raise DiagnosticHostileError()
+                    except RuntimeError:
+                        launcher.LOGGER.error("sglang38_file_auth_launch_failed")
+                    return 1
+
+                launcher = self.launcher(action)
+                record, private = self.main_output(
+                    lambda *_args: inner.checked_launch(launcher, [], [], [None], SYNTHETIC_SENTINEL))
+                private.assert_not_called()
+                # The original unallowlisted native subclass maps to OTHER;
+                # the diagnostic SystemExit/KeyboardInterrupt must not replace it.
+                self.assertEqual(record["launch_failure"], {
+                    "result": 1, "captured": 0, "engine_calls": 1,
+                    "first_exception_class": "OTHER"})
+                self.assertEqual(record["failure_origin"]["exception_class"], "FixtureFailure")
+
+    def test_private_write_baseexception_preserves_cli_two_and_safe_operands(self):
+        for diagnostic_error in (SystemExit(0), KeyboardInterrupt()):
+            with self.subTest(diagnostic_error=type(diagnostic_error).__name__):
+                launcher = self.launcher(lambda _launcher, _argv: 1)
+                record, private = self.main_output(
+                    lambda *_args: inner.checked_launch(launcher, [], [], [None], SYNTHETIC_SENTINEL),
+                    diagnostic_failure=diagnostic_error)
+                self.assertEqual(private.call_count, 1)
+                self.assertEqual(record["launch_failure"], {
+                    "result": 1, "captured": 0, "engine_calls": 1,
+                    "first_exception_class": None})
+
     def test_broken_metadata_import_cannot_escape_cli_two_or_structured_failure(self):
         launcher = self.launcher(lambda _launcher, _argv: 1)
         with patch.object(inner.importlib.util, "spec_from_file_location",
@@ -207,6 +244,50 @@ class Qwen38LaunchDiagnosticTests(unittest.TestCase):
             record, _ = self.main_output(
                 lambda *_args: inner.checked_launch(launcher, [], [], [], SYNTHETIC_SENTINEL))
         self.assertNotIn("launch_failure", record)
+
+    def test_metadata_import_baseexception_preserves_cli_two_and_structured_failure(self):
+        for diagnostic_error in (SystemExit(0), KeyboardInterrupt()):
+            with self.subTest(diagnostic_error=type(diagnostic_error).__name__):
+                launcher = self.launcher(lambda _launcher, _argv: 1)
+                with patch.object(inner.importlib.util, "spec_from_file_location",
+                                  side_effect=diagnostic_error):
+                    record, _ = self.main_output(
+                        lambda *_args: inner.checked_launch(launcher, [], [], [], SYNTHETIC_SENTINEL))
+                self.assertNotIn("launch_failure", record)
+                self.assertEqual(record["failure_origin"]["exception_class"], "FixtureFailure")
+
+    def test_metadata_parser_baseexception_preserves_cli_two_and_structured_failure(self):
+        for diagnostic_error in (SystemExit(0), KeyboardInterrupt()):
+            with self.subTest(diagnostic_error=type(diagnostic_error).__name__):
+                launcher = self.launcher(lambda _launcher, _argv: 1)
+                broken_host = SimpleNamespace(failure_metadata=Mock(side_effect=diagnostic_error))
+                with patch.object(inner.importlib.util, "module_from_spec", return_value=broken_host), \
+                        patch.object(inner.importlib.util, "spec_from_file_location",
+                                     return_value=SimpleNamespace(loader=SimpleNamespace(exec_module=Mock()))):
+                    record, _ = self.main_output(
+                        lambda *_args: inner.checked_launch(launcher, [], [], [], SYNTHETIC_SENTINEL))
+                self.assertNotIn("launch_failure", record)
+                self.assertEqual(record["failure_origin"]["exception_class"], "FixtureFailure")
+
+    def test_normal_help_exits_zero_before_launch_without_failure_diagnostic(self):
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with patch.object(inner, "run_actual") as launch, \
+                patch.object(inner.os, "write") as private, \
+                redirect_stdout(stdout), redirect_stderr(stderr):
+            code = inner.main(["--help"])
+        self.assertEqual(code, 0)
+        self.assertIn("--actual-image", stdout.getvalue())
+        self.assertNotIn('"status": "FAIL"', stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+        launch.assert_not_called()
+        private.assert_not_called()
+
+    def test_unexpected_launch_system_exit_zero_is_structured_cli_two_failure(self):
+        record, private = self.main_output(SystemExit(0))
+        self.assertNotIn("launch_failure", record)
+        private.assert_not_called()
+        self.assertEqual(record["failure_origin"]["exception_class"], "SystemExit")
+        self.assertEqual(record["failure_origin"]["filename"], "run_pinned_image.py")
 
     def test_host_accepts_closed_safe_operands_without_treating_them_as_success(self):
         for result, captured, engines, kind in ((None, 0, 0, None), (0, 1, 1, None),

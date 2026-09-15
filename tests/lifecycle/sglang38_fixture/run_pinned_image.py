@@ -154,7 +154,7 @@ def checked_launch(launcher, argv, captured, engine_calls, sentinel):
                            if first_error is not None else None}
             raw = json.dumps(private, sort_keys=True).replace(sentinel, "<synthetic-key-redacted>").encode()
             os.write(2, raw[:16383] + b"\n")
-        except Exception:
+        except BaseException:
             pass  # Diagnostic failure must retain the original CLI failure.
         error = FixtureFailure("actual_native_launch_setup_failed")
         error.launch_failure = failure
@@ -921,7 +921,7 @@ def main(argv=None):
         print(json.dumps(result, sort_keys=True))
         return 0
     except BaseException as error:
-        if isinstance(error, SystemExit) and error.code == 0:
+        if isinstance(error, SystemExit) and error.code == 0 and options is None:
             return 0
         # Deliberate abort children terminate via os._exit after one fixed marker.
         # An ordinary exception in those children must be distinguishable from
@@ -941,7 +941,7 @@ def main(argv=None):
                 candidate = {**failure, "launch_failure": error.__dict__.get("launch_failure")}
                 if "launch_failure" in host.failure_metadata(json.dumps(candidate).encode()):
                     failure = candidate
-            except Exception:
+            except BaseException:
                 pass  # Metadata availability cannot replace the original FAIL.
         print(json.dumps(failure, sort_keys=True))
         return 2

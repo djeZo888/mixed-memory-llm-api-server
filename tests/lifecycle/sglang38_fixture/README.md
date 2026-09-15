@@ -91,3 +91,31 @@ python3 tests/lifecycle/sglang38_fixture/run_fixture.py --help
 python3 tests/lifecycle/sglang38_fixture/run_pinned_image.py --help
 python3 tests/lifecycle/verify_qwen38_git_source.py --commit HEAD
 ```
+
+### Q38NEXT launch failure capture and independent scenarios
+
+The fixture retains `launcher.main`'s exact result, captured-Uvicorn count and
+completed-engine-hook count when launch setup fails. Its existing safe-log hook
+records the first swallowed exception before a later cleanup error can replace
+it. Public failure JSON contains only bounded operands and an allowlisted class;
+the original stderr carries a bounded, source-hash-bound private exception/frame
+record with synthetic-key redaction. Worker1 must retain raw streams privately
+(directory0700/files0600), outside Git and reports. Diagnostic capture or parser
+failure still returns CLI2 and cannot publish a receipt.
+
+Native resolution changes environment variables, including
+`SGLANG_MAMBA_SSM_DTYPE`. Each fixture launcher call keeps those real changes
+during execution, then restores its entry environment before the independent
+injection-negative case and failure children. Production environment validation
+is unchanged.
+
+Additional source-worker regressions require an explicit external copy of the
+exact pinned upstream files; they validate hashes before exercising selected
+native definitions with synthetic collaborators. This test-only extraction is
+never an actual-fixture fallback or native acceptance proof:
+
+```bash
+Q38NEXT_UPSTREAM_ROOT=/path/to/pinned/python/sglang python3 -B -m unittest \
+  tests.lifecycle.test_qwen38_native_launch \
+  tests.lifecycle.test_qwen38_launch_diagnostics -v
+```
