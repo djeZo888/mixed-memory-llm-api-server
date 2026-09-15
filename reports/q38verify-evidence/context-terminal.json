@@ -1,0 +1,243 @@
+{
+  "apport_after": {
+    "/var/crash": {
+      "entries": {},
+      "identity": [
+        64512,
+        263740
+      ]
+    },
+    "/var/lib/apport/coredump": {
+      "entries": {},
+      "identity": [
+        64512,
+        263913
+      ]
+    }
+  },
+  "apport_before": {
+    "/var/crash": {
+      "entries": {},
+      "identity": [
+        64512,
+        263740
+      ]
+    },
+    "/var/lib/apport/coredump": {
+      "entries": {},
+      "identity": [
+        64512,
+        263913
+      ]
+    }
+  },
+  "apport_comparison": {
+    "new_or_changed": [],
+    "removed": [],
+    "status": "PASS_NO_NEW_OR_CHANGED_APPORT"
+  },
+  "attempt": 1,
+  "commit": "1e95cfef94f86f9396fd35f6c1026d61025cbb34",
+  "context": 131072,
+  "finished_utc": "2026-09-15T05:42:27.548368+00:00",
+  "independent_absence": {
+    "container_id": "1d4f7266122cee91eba3ce9f72855fc3d683bbf18b6c2eff79d81fbb70bef5c7",
+    "container_name": "q38b-fixture-511c3b32921bd637aaa5958e39311071",
+    "id_and_name_absent": true,
+    "status": "PASS"
+  },
+  "lifetime": {
+    "attach_diagnostic": {
+      "cli_returncode": 2,
+      "cli_signal": null,
+      "container_before_cleanup_stop": {
+        "exit_code": 2,
+        "signal": null,
+        "status": "EXITED"
+      },
+      "failure_kind": "CLI_NONZERO_EXIT",
+      "failure_metadata": {
+        "code": "actual_image_fixture_failed",
+        "launch_failure": {
+          "captured": 0,
+          "engine_calls": 0,
+          "first_exception_class": "LaunchError",
+          "result": 1
+        },
+        "origin": {
+          "exception_class": "FixtureFailure",
+          "filename": "run_pinned_image.py",
+          "line": 161
+        },
+        "status": "SAFE_ORIGIN"
+      },
+      "operation": "START_ATTACH",
+      "phase": "ATTACH",
+      "schema_version": 1,
+      "stderr": {
+        "capture": "COMPLETE",
+        "captured_bytes": 605,
+        "sha256": "210309547fce3dfed09d0bacda5a040c1b1b198495dcdf7614b93190cb78abbb"
+      },
+      "stdout": {
+        "capture": "COMPLETE",
+        "captured_bytes": 270,
+        "sha256": "e4c6a7f9cf5013a6f644493ec3930a1453f07c4367bce683f5f0a785e5e2ddce"
+      }
+    },
+    "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+    "container_id": "1d4f7266122cee91eba3ce9f72855fc3d683bbf18b6c2eff79d81fbb70bef5c7",
+    "container_name": "q38b-fixture-511c3b32921bd637aaa5958e39311071",
+    "outcome": "ATTACH_FAILED",
+    "runtime_inspect": {
+      "context": 131072,
+      "device_requests": [],
+      "driver_capabilities": "compute,utility",
+      "entrypoint": [
+        "python3"
+      ],
+      "host_devices": [],
+      "model_and_secret_mounts": "EMPTY_PRIVATE_TMPFS",
+      "network": "none",
+      "root_readonly": true,
+      "runtime": "nvidia",
+      "status": "PASS_HOST_INSPECT",
+      "visible_devices": "none"
+    }
+  },
+  "model_execution": "NOT_TESTED",
+  "post_guards": {
+    "registered": {
+      "data": {
+        "capacity": {
+          "data_available_bytes": 1337940377600,
+          "model_available_bytes": 2590890246144,
+          "root_available_bytes": 5209915392,
+          "shared_model_filesystem": false
+        },
+        "data": {
+          "device": "8:17",
+          "fstype": "ext4",
+          "mount": "/data",
+          "parents": [
+            "/dev/sdb",
+            "/dev/sdb1"
+          ],
+          "path": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        "models": {
+          "device": "8:33",
+          "fstype": "ext4",
+          "mount": "/data/models-large",
+          "parents": [
+            "/dev/sdc",
+            "/dev/sdc1"
+          ],
+          "path": "/data/models-large",
+          "source": "/dev/sdc1",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        },
+        "roots": {
+          "backups": "/data/backups",
+          "build": "/data/build",
+          "containerd": "/data/containerd",
+          "docker": "/data/docker",
+          "hf_cache": "/data/hf-cache",
+          "logs": "/data/logs",
+          "models": "/data/models-large",
+          "secrets": "/data/services/secrets",
+          "services": "/data/services",
+          "state": "/data/services/installer"
+        },
+        "schema_version": 1,
+        "storage_mode": "existing",
+        "verified_roles": [
+          "data",
+          "models"
+        ],
+        "warnings": [
+          "root filesystem has less than 6 GiB free"
+        ]
+      },
+      "root": {
+        "capacity": {
+          "data_available_bytes": 1337940377600,
+          "model_available_bytes": 2590890246144,
+          "root_available_bytes": 5209915392,
+          "shared_model_filesystem": false
+        },
+        "data": {
+          "device": "8:17",
+          "fstype": "ext4",
+          "mount": "/data",
+          "parents": [
+            "/dev/sdb",
+            "/dev/sdb1"
+          ],
+          "path": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        "models": {
+          "device": "8:33",
+          "fstype": "ext4",
+          "mount": "/data/models-large",
+          "parents": [
+            "/dev/sdc",
+            "/dev/sdc1"
+          ],
+          "path": "/data/models-large",
+          "source": "/dev/sdc1",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        },
+        "root_payload_scan": {
+          "files_inspected": 4273,
+          "large_payload_threshold_bytes": 134217728,
+          "status": "pass"
+        },
+        "roots": {
+          "backups": "/data/backups",
+          "build": "/data/build",
+          "containerd": "/data/containerd",
+          "docker": "/data/docker",
+          "hf_cache": "/data/hf-cache",
+          "logs": "/data/logs",
+          "models": "/data/models-large",
+          "secrets": "/data/services/secrets",
+          "services": "/data/services",
+          "state": "/data/services/installer"
+        },
+        "schema_version": 1,
+        "storage_mode": "existing",
+        "verified_roles": [
+          "data",
+          "models"
+        ],
+        "warnings": [
+          "root filesystem has less than 6 GiB free"
+        ]
+      }
+    },
+    "status": "PASS",
+    "utc": "2026-09-15T05:42:27.759920+00:00"
+  },
+  "post_source_hashes_match": true,
+  "root_available_bytes_after_guard": 5209915392,
+  "root_available_bytes_after_native": 5209915392,
+  "root_available_bytes_before": 5210374144,
+  "root_available_bytes_delta": -458752,
+  "source_sha256": {
+    "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+    "scripts/runtime/sglang38_file_auth.py": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+    "tests/lifecycle/sglang38_fixture/auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+    "tests/lifecycle/sglang38_fixture/cache_probe.py": "11e09615725d9588fd082fbbf8f4776a77d5a20f6dde09022a14df3e828bff73",
+    "tests/lifecycle/sglang38_fixture/chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+    "tests/lifecycle/sglang38_fixture/provenance.json": "fe05e17f99657913c16427755df841b0d22d8e0350cbf372c310d4b4e9426270",
+    "tests/lifecycle/sglang38_fixture/run_fixture.py": "0dcdcbaf598529cc92b1503e4c148dfac288c8d8adf821b139d0c68010c8dfc7",
+    "tests/lifecycle/sglang38_fixture/run_pinned_image.py": "b7a49011fdbc5fa02f4dc8cf218e31bfd2a9f52c9ed5dd1058df51ed5941bda8"
+  },
+  "started_utc": "2026-09-15T05:42:02.161901+00:00",
+  "status": "FAIL"
+}
