@@ -12,13 +12,14 @@ from pathlib import Path
 import stat
 
 from .runtime_io import LifecycleError
+from .storage_binding import BindingError
 
 IMAGE = 'sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3'
 MANIFEST_SHA256 = '022674d4daf63fa57c2798a30fea80c6dde7b1b2e73630ae3c3aa94e45debb9e'
 MODEL = 'qwen3-coder-next-fp8'
 RUNTIME = 'sglang-qwen-next-0.5.14'
 LAUNCHER_TARGET = '/opt/llmctl/sglang_file_auth.py'
-LAUNCHER_SOURCE = '/data/services/llm-manager/adapters/sglang_file_auth.py'
+LAUNCHER_SUFFIX = 'services/llm-manager/adapters/sglang_file_auth.py'
 FLAGS = ['--model-path', '--served-model-name', '--host', '--port', '--context-length',
          '--tp-size', '--tokenizer-worker-num', '--tool-call-parser',
          '--mem-fraction-static', '--max-running-requests', '--load-format']
@@ -44,6 +45,7 @@ def expected_manifest():
 
 def validate(d):
     rt, model, launch = d['_runtime'], d['_model'], d['launch']
+    binding = d['_storage_binding']
     require(d['runtime'] == RUNTIME and d['model'] == MODEL and d['id'] == 'qwen3-coder-next', 'sglang_profile_identity_mismatch')
     require(rt.get('image_id') == IMAGE and rt.get('image_tag') == 'lmsysorg/sglang:v0.5.14-cu130'
             and rt.get('entrypoint') == ['python3'], 'sglang_image_contract_mismatch')
@@ -55,7 +57,7 @@ def validate(d):
     expected = expected_manifest()
     require(all(model.get(k) == v for k, v in expected.items()), 'sglang_artifact_profile_mismatch')
     require(model.get('manifest_sha256') == MANIFEST_SHA256
-            and model['model_root'] == '/data/models-large/qwen3-coder-next-fp8', 'sglang_manifest_identity_mismatch')
+            and model['model_root'] == str(binding.path('models', MODEL)), 'sglang_manifest_identity_mismatch')
     exact = {'context_size': 32768, 'gpus': ['0', '1'], 'tp_size': 2,
              'tokenizer_worker_num': 1, 'tool_call_parser': 'qwen3_coder',
              'max_running_requests': 1, 'mem_fraction_static': 0.75,
@@ -65,11 +67,11 @@ def validate(d):
     require(launch['timeout_seconds'] == 7200, 'sglang_startup_deadline_mismatch')
     by_target = {m['target']: m for m in d['mounts']}
     adapter = by_target.get(LAUNCHER_TARGET, {})
-    require(adapter == {'source': LAUNCHER_SOURCE, 'target': LAUNCHER_TARGET,
-                        'read_only': True, 'required_mount': '/data'}, 'sglang_launcher_mount_mismatch')
-    require(d['paths']['cache'] == '/data/models-large/runtime-cache/sglang-qwen-next'
-            and d['paths']['logs'] == '/data/logs/llmctl/qwen3-coder-next'
-            and d['paths']['service'] == '/data/services/llm-manager/qwen3-coder-next', 'sglang_paths_mismatch')
+    require(adapter == {'source': str(binding.path('data', LAUNCHER_SUFFIX)), 'target': LAUNCHER_TARGET,
+                        'read_only': True, 'required_role': 'data'}, 'sglang_launcher_mount_mismatch')
+    require(d['paths']['cache'] == str(binding.path('models', 'runtime-cache/sglang-qwen-next'))
+            and d['paths']['logs'] == str(binding.path('data', 'logs/llmctl/qwen3-coder-next'))
+            and d['paths']['service'] == str(binding.path('data', 'services/llm-manager/qwen3-coder-next')), 'sglang_paths_mismatch')
     # Do not accept arbitrary argv/config/plugin extensions even if ignored by rendering.
     require(not any(k in d or k in rt for k in ('legacy', 'args', 'command', 'extra_args', 'config', 'plugins', 'tool_server', 'env')),
             'sglang_unsupported_extension')
@@ -119,9 +121,19 @@ def protected_bytes(path, limit=1024 * 1024):
 
 def validate_launcher(d, e):
     source = next(m['source'] for m in d['mounts'] if m['target'] == LAUNCHER_TARGET)
+    validate_host_path(d, 'data', source)
     raw = protected_bytes(source)
     require(stat.S_IMODE(Path(source).stat().st_mode) == 0o644, 'sglang_launcher_mode_invalid')
+    validate_host_path(d, 'data', source)
     require(hashlib.sha256(raw).hexdigest() == e['launcher_sha256'] == launcher_hash(), 'sglang_installed_launcher_mismatch')
+
+
+def validate_host_path(d, role, path):
+    """Small protected evidence files must remain on their registered filesystem."""
+    try:
+        d['_storage_binding'].validate_path(role, str(path))
+    except BindingError:
+        raise LifecycleError('sglang_storage_path_invalid') from None
 
 
 def check_completion(d, instance):
@@ -132,10 +144,14 @@ def check_completion(d, instance):
             'sglang_acquisition_incomplete')
     require(isinstance(item.get('completion_manifest'), str), 'sglang_completion_path_invalid')
     path = Path(item['completion_manifest'])
-    require(path.is_relative_to('/data/services/llm-manager/acquisition')
-            and path.parent == Path('/data/services/llm-manager/acquisition'), 'sglang_completion_path_invalid')
+    completion_root = d['_storage_binding'].path('data', 'services/llm-manager/acquisition')
+    require(path.is_absolute() and '..' not in path.parts and path.parent == Path(completion_root),
+            'sglang_completion_path_invalid')
     try:
-        complete = json.loads(protected_bytes(path))
+        validate_host_path(d, 'data', path)
+        raw = protected_bytes(path)
+        validate_host_path(d, 'data', path)
+        complete = json.loads(raw)
         require(isinstance(complete, dict), 'sglang_acquisition_incomplete')
         for k, v in {'schema_version': 1, 'complete': True, 'repo_id': d['_model']['repo_id'],
                      'revision': d['_model']['revision'], 'model_root': d['_model']['model_root'],

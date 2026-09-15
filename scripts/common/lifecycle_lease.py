@@ -256,8 +256,10 @@ def _validate_borrowed_lease(lease, *, system_root=Path("/"), trusted_uid=0):
 def _export_package_watcher_fd(lease) -> int:
     """Transfer a same-description duplicate for I1R's subprocess pass_fds only.
 
-    The caller owns this duplicate and MUST close it after watcher handoff or
-    failure. It must never LOCK_UN. The private lease descriptor is not exported;
+    The caller retains this duplicate for the entire Runner/package-use scope,
+    then MUST close it in finally before the outer lease exits, including failure.
+    Watcher children close their inherited copies independently at quiescence.
+    It must never LOCK_UN. The private lease descriptor is not exported;
     closing/reusing the export cannot invalidate or counterfeit the active lease.
     Exported descriptors do not authorize Manager borrowing or mint a lease.
     """

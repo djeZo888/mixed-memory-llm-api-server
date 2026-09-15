@@ -1,21 +1,12 @@
 {
   "schema_version": 1,
   "id": "REPLACE_WITH_DEPLOYMENT_INSTANCE_ID",
-  "description": "Fresh-host template; the operator supplies exact verified mount identities and reviewed runtime/artifact evidence",
-  "required_mounts": [
-    {
-      "target": "/data",
-      "uuid": null,
-      "filesystem": "ext4"
-    },
-    {
-      "target": "/data/models-large",
-      "uuid": null,
-      "filesystem": "ext4"
-    }
-  ],
+  "description": "Fresh-host evidence template: installer binds storage_identity to the verified protected registration; all host paths derive from registered data/models roles.",
   "paths": {
-    "state": "/data/services/llm-manager/active",
+    "state": {
+      "role": "data",
+      "suffix": "services/llm-manager/active"
+    },
     "lock": "/run/llmctl/lifecycle.lock",
     "recovery": "/run/llmctl/recovery.json"
   },
@@ -32,16 +23,21 @@
     "glm-5.3-ud-q4-k-xl": {
       "verified": false,
       "revision": "346b3591c7f28d1a23716f97a065ecf12ec14771",
-      "evidence": null
+      "evidence": null,
+      "completion_manifest": {
+        "role": "data",
+        "suffix": "services/llm-manager/acquisition/glm-5.3-ud-q4-k-xl.complete.json"
+      }
     }
   },
   "obsolete_boot_owner_disabled": false,
   "obsolete_boot_owner_evidence": null,
   "notes": [
-    "No mount identity is implied. Inspect the intended mounts and supply exact filesystem UUIDs before any lifecycle start.",
+    "storage_identity must exactly equal the protected registration stable identity (schema, role path/mount/uuid/fstype, and derived roots). Null is intentionally incomplete; no host root or mount identity is implied.",
     "Supply this fresh host's locally verified image ID, supported flags, selected supported load mode and build evidence; a source proof for another host is not an automatic local attestation.",
     "Complete artifact verification for the pinned model revision and record evidence before start.",
     "Set obsolete_boot_owner_disabled only after establishing there is one reviewed lifecycle/boot owner and recording evidence.",
     "D3/I1 must provision exact API token bytes with no trailing newline, mode0600, without printing or recording its value."
-  ]
+  ],
+  "storage_identity": null
 }

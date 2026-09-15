@@ -5,7 +5,10 @@
   "revision": "346b3591c7f28d1a23716f97a065ecf12ec14771",
   "quantization": "UD-Q4_K_XL",
   "provenance": "Community quantization of Z.ai GLM-5.3; not official Z.ai quantized weights",
-  "model_root": "/data/models-large/glm-5.3-ud-q4-k-xl",
+  "model_root": {
+    "role": "models",
+    "suffix": "glm-5.3-ud-q4-k-xl"
+  },
   "load_entry": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf",
   "artifact_count": 11,
   "total_bytes": 467289116837,

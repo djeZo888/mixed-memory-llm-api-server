@@ -1,21 +1,12 @@
 {
   "schema_version": 1,
   "id": "REPLACE_WITH_DEPLOYMENT_INSTANCE_ID",
-  "description": "Additive F1S template: merge the new evidence fields into a reviewed host instance, preserving existing GLM evidence, mount UUIDs and lifecycle paths",
-  "required_mounts": [
-    {
-      "target": "/data",
-      "uuid": null,
-      "filesystem": "ext4"
-    },
-    {
-      "target": "/data/models-large",
-      "uuid": null,
-      "filesystem": "ext4"
-    }
-  ],
+  "description": "Fresh-host evidence template: installer binds storage_identity to the verified protected registration; all host paths derive from registered data/models roles.",
   "paths": {
-    "state": "/data/services/llm-manager/active",
+    "state": {
+      "role": "data",
+      "suffix": "services/llm-manager/active"
+    },
     "lock": "/run/llmctl/lifecycle.lock",
     "recovery": "/run/llmctl/recovery.json"
   },
@@ -36,18 +27,22 @@
       "revision": "da6e2ed27304dd39abadd9c82ef50e8de67bdd4c",
       "evidence": null,
       "manifest_sha256": "022674d4daf63fa57c2798a30fea80c6dde7b1b2e73630ae3c3aa94e45debb9e",
-      "completion_manifest": "/data/services/llm-manager/acquisition/qwen3-coder-next-fp8.complete.json"
+      "completion_manifest": {
+        "role": "data",
+        "suffix": "services/llm-manager/acquisition/qwen3-coder-next-fp8.complete.json"
+      }
     }
   },
   "obsolete_boot_owner_disabled": false,
   "obsolete_boot_owner_evidence": null,
   "notes": [
+    "storage_identity must exactly equal the protected registration stable identity (schema, role path/mount/uuid/fstype, and derived roots). Null is intentionally incomplete; no host root or mount identity is implied.",
     "No acquisition or live authentication completion is asserted; incomplete evidence must fail start before Docker activation.",
-    "Merge into the existing protected instance; never replace its identity, mount UUIDs, GLM evidence or state/lock/recovery paths blindly.",
-    "Supply exact independently verified mount UUIDs and the local inspected pinned image and flag evidence.",
     "Record launcher_sha256 only after installation from reviewed merged source; the manager compares installed bytes, source bytes and this evidence.",
     "Set auth_gate_passed only after F1D actual pinned-image sentinel launch/setup tests, including final auth layers, diagnostics and failed warmup cleanup; synthetic source tests alone do not qualify.",
     "Write the separate completion manifest only after all 48 pinned artifacts pass SHA256 verification and index/config consistency checks. Never edit the immutable expected F1A manifest to indicate completion.",
-    "Keep the existing mode0600 regular nonsymlink API key unchanged; exact 1..4096 printable ASCII bytes with no whitespace or newline."
-  ]
+    "Keep the existing mode0600 regular nonsymlink API key unchanged; exact 1..4096 printable ASCII bytes with no whitespace or newline.",
+    "The completion path is a provisioning placeholder only. A verified instance records its concrete registered path, and immutable completion model_root must match the derived per-model root."
+  ],
+  "storage_identity": null
 }

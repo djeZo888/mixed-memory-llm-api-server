@@ -16,8 +16,10 @@ Canonical import: `common.lifecycle_lease` with reviewed `scripts` on sys.path.
 - `_validate_borrowed_lease(lease, *, system_root=Path('/'), trusted_uid=0)` adds
   the expected caller scope check. Manager accepts only the active object.
 - `_export_package_watcher_fd(lease)` validates and returns `os.dup` of the same
-  open-file description. I1R owns/closes that duplicate after watcher handoff or
-  failure. The private owner descriptor is never exported. No raw FD can mint a
+  open-file description. I1R retains the duplicate for the entire Runner/package-use
+  scope and closes it in finally before outer lease exit, including failure.
+  The watcher closes its inherited copy independently at quiescence (root revision8).
+  The private owner descriptor is never exported. No raw FD can mint a
   lease or authorize Manager borrowing.
 - Context cleanup closes only, never LOCK_UN. A watcher retains the same lock
   after the parent context closes or the parent is killed, until its last

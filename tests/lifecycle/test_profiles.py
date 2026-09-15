@@ -9,11 +9,16 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest.mock import Mock
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lifecycle.manager import Manager
 from lifecycle.runtime_io import LifecycleError
+from lifecycle.storage_binding import BindingError
+import test_manager as retained
+from fixture_storage import HistoricalBinding
 
 MODEL = 'glm-5.3-ud-q4-k-xl'
 RUNTIME = 'llama-cpp-v0.4.1-d1'
@@ -45,7 +50,7 @@ class SourceContractTests(unittest.TestCase):
             self.assertEqual(artifact['path'], f'UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-{index:05d}-of-00011.gguf')
             self.assertRegex(artifact['sha256'], r'^[0-9a-f]{64}$')
         self.assertEqual(model['load_entry'], model['artifacts'][0]['path'])
-        self.assertEqual(model['model_root'], '/data/models-large/glm-5.3-ud-q4-k-xl')
+        self.assertEqual(model['model_root'], {'role': 'models', 'suffix': MODEL})
 
     def test_runtime_pin_and_final_build_scope_remain_explicit(self):
         runtime = read(f'configs/runtimes/{RUNTIME}.json')
@@ -88,7 +93,9 @@ class SourceContractTests(unittest.TestCase):
         expected = {'/data': '8daf56f1-5649-4163-9d87-919c2d271875',
                     '/data/models-large': 'a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a'}
         self.assertEqual({m['target']: m['uuid'] for m in host['required_mounts']}, expected)
-        self.assertTrue(all(m['uuid'] is None for m in template['required_mounts']))
+        self.assertIsNone(template['storage_identity'])
+        self.assertNotIn('required_mounts', template)
+        self.assertEqual(template['paths']['state'], {'role': 'data', 'suffix': 'services/llm-manager/active'})
         for path in [ROOT / f'configs/models/{MODEL}.json', ROOT / f'configs/runtimes/{RUNTIME}.json',
                      *list((ROOT / 'configs/deployments').glob('*.json')),
                      *list((ROOT / 'scripts/lifecycle').glob('*.py'))]:
@@ -123,7 +130,10 @@ class SourceContractTests(unittest.TestCase):
                 self.assertEqual(launch['timeout_seconds'], 7200)
                 self.assertEqual(deployment['docker_restart_policy'], 'no')
                 self.assertEqual(deployment['boot_policy'], 'manual')
-                self.assertTrue(deployment['paths']['cache'].startswith('/data/models-large/'))
+                self.assertEqual(deployment['paths']['cache'], {'role': 'models',
+                    'suffix': 'runtime-cache/' + RUNTIME, 'historical_suffix': 'runtime-cache/llama-cpp'})
+                self.assertEqual(deployment['paths']['logs']['suffix'], 'logs/llmctl/' + deployment['id'])
+                self.assertEqual(deployment['paths']['service']['suffix'], 'services/llm-manager/' + deployment['id'])
                 self.assertEqual(deployment['auth']['mode'], '0600')
                 self.assertTrue(next(m for m in deployment['mounts'] if m['source'] ==
                                      deployment['auth']['key_file'])['read_only'])
@@ -136,6 +146,15 @@ class ImageMetadataOnlyDocker:
         raise AssertionError('Unexpected Docker I/O in source profile fixture')
 
 
+class BoundProfileManager(retained.FixtureManager):
+    """Inject only storage/lease fixture I/O; preserve production profile checks."""
+    host_guards = Manager.host_guards
+    check_mounts = Manager.check_mounts
+    check_artifacts = Manager.check_artifacts
+    image_evidence = Manager.image_evidence
+    prepare_start = Manager.prepare_start
+
+
 class ProfileValidationTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -144,19 +163,50 @@ class ProfileValidationTests(unittest.TestCase):
         self.configs = self.root / 'configs'
         shutil.copytree(ROOT / 'configs', self.configs)
         self.instance = read('configs/deployments/instances/ai-vm-d0b.json')
-        self.instance['paths'] = {'state': str(self.root / 'state'), 'lock': str(self.root / 'lock'),
-                                  'recovery': str(self.root / 'recovery.json')}
+        self.instance['paths'] = {'state': str(self.root / 'state'), 'lock': str(self.root / 'run/llmctl/lifecycle.lock'),
+                                  'recovery': str(self.root / 'run/llmctl/recovery.json')}
         runtime = read(f'configs/runtimes/{RUNTIME}.json')
         self.instance['runtime_evidence'][RUNTIME] = {
             'image_id': IMAGE, 'flags_verified': True, 'supported_flags': runtime['required_cli_flags'],
             'load_mode': 'none', 'evidence': 'Synthetic worker fixture using D1 supported no-special-mode selection'}
-        self.manager = Manager(self.configs, self.instance, docker=ImageMetadataOnlyDocker(), test_paths=True)
+        self.manager = BoundProfileManager(self.configs, self.instance, docker=ImageMetadataOnlyDocker(), test_paths=True)
         self.original = self.manager.deployment(PROOF)
 
     def assertRejected(self, deployment):
         with self.assertRaises(LifecycleError):
             self.manager.validate_deployment(deployment)
             self.manager.create_args(deployment)
+
+    def test_fresh_registered_profiles_use_runtime_and_deployment_ids(self):
+        for data, models in [('/srv/ai', '/srv/ai/models'), ('/srv/ai', '/srv/ai'),
+                             ('/srv/ai', '/srv/ai/models-large'), ('/srv/ai', '/mnt/weights')]:
+            with self.subTest(data=data, models=models):
+                binding = HistoricalBinding()
+                binding.registry['data'].update(path=data, mount=data)
+                binding.registry['models'].update(path=models, mount=models)
+                binding.registry['roots'] = {name: data + value[len('/data'):] for name, value in binding.registry['roots'].items()}
+                binding.registry['roots']['models'] = models
+                binding.identity = copy.deepcopy(binding.registry)
+                instance = copy.deepcopy(self.instance)
+                instance['paths']['state'] = {'role': 'data', 'suffix': 'services/llm-manager/active'}
+                instance['storage_identity'] = binding.identity
+                instance.pop('historical_import', None)
+                manager = Manager(self.configs, instance, docker=ImageMetadataOnlyDocker(),
+                                  binding=binding, test_paths=True)
+                d = manager.deployment(PROOF)
+                self.assertEqual(d['paths'], {
+                    'model': models + '/' + MODEL,
+                    'cache': models + '/runtime-cache/' + RUNTIME,
+                    'logs': data + '/logs/llmctl/' + PROOF,
+                    'service': data + '/services/llm-manager/' + PROOF,
+                })
+                self.assertEqual(d['auth']['key_file'], data + '/services/secrets/llm-api-key')
+                by_target = {m['target']: m['source'] for m in d['mounts']}
+                self.assertEqual(by_target['/models'], d['paths']['model'])
+                self.assertEqual(by_target['/cache'], d['paths']['cache'])
+                self.assertEqual(by_target['/logs'], d['paths']['logs'])
+                self.assertEqual(by_target['/service'], d['paths']['service'])
+                self.assertIn('/models/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf', manager.create_args(d))
 
     def test_render_is_local_pinned_key_file_only_and_has_no_download_or_restart_owner(self):
         args = self.manager.create_args(self.original)
@@ -183,7 +233,7 @@ class ProfileValidationTests(unittest.TestCase):
             with self.subTest(change=list(change)):
                 altered = copy.deepcopy(self.instance)
                 altered['runtime_evidence'][RUNTIME].update(change)
-                manager = Manager(self.configs, altered, docker=ImageMetadataOnlyDocker(), test_paths=True)
+                manager = BoundProfileManager(self.configs, altered, docker=ImageMetadataOnlyDocker(), test_paths=True)
                 with self.assertRaises(LifecycleError):
                     manager.create_args(self.original)
 
@@ -225,7 +275,7 @@ class ProfileValidationTests(unittest.TestCase):
             bad = copy.deepcopy(self.original)
             bad['paths'][role] = '/data/services/secrets'
             mount = next(m for m in bad['mounts'] if m['target'] == target)
-            mount.update(source='/data/services/secrets', required_mount='/data')
+            mount.update(source='/data/services/secrets', required_role='data')
             with self.subTest(role=role):
                 self.assertRejected(bad)
 
@@ -253,6 +303,104 @@ class ProfileValidationTests(unittest.TestCase):
         bad['auth']['container_key_file'] = '/opt/llama/llama-server'
         bad['mounts'][-1]['target'] = '/opt/llama/llama-server'
         self.assertRejected(bad)
+
+
+class GlmCompletionTests(unittest.TestCase):
+    """Receipt metadata validation only; protected storage reads are injected."""
+    def setUp(self):
+        binding = HistoricalBinding()
+        binding.registry['data'].update(path='/srv/ai', mount='/srv/ai')
+        binding.registry['models'].update(path='/mnt/weights', mount='/mnt/weights')
+        binding.identity = copy.deepcopy(binding.registry)
+        instance = read('configs/deployments/instances/instance.template.json')
+        instance.update(id='fresh-glm-fixture', storage_identity=binding.identity)
+        self.path = '/srv/ai/services/llm-manager/acquisition/' + MODEL + '.complete.json'
+        instance['model_integrity'][MODEL].update(
+            verified=True, evidence=['synthetic-completed-acquisition'], completion_manifest=self.path)
+        self.manager = Manager(ROOT / 'configs', instance, binding=binding, test_paths=True)
+        self.d = self.manager.deployment(PROOF)
+        self.model = self.d['_model']
+        self.receipt = {
+            'schema_version': 1, 'complete': True, 'repo_id': self.model['repo_id'],
+            'revision': self.model['revision'], 'model_root': '/mnt/weights/' + MODEL,
+            'artifact_count': self.model['artifact_count'], 'total_bytes': self.model['total_bytes'],
+            'artifacts': [{**a, 'verified': True} for a in self.model['artifacts']],
+        }
+        self.reader = Mock(side_effect=lambda *a, **kw: copy.deepcopy(self.receipt))
+        binding.read_json = self.reader
+
+    def test_fresh_receipt_reads_only_protected_data_acquisition_and_exact_model_root(self):
+        before = copy.deepcopy(self.manager.instance)
+        self.manager.check_completion(self.d)
+        self.reader.assert_called_once_with('data', self.path)
+        self.assertEqual(self.manager.instance, before)
+        self.assertEqual(self.receipt['model_root'], self.manager.binding.path('models', MODEL))
+        self.receipt['artifacts'].reverse()
+        self.manager.check_completion(self.d)
+
+    def test_missing_or_unsafe_completion_never_falls_back_to_attestation(self):
+        item = self.manager.instance['model_integrity'][MODEL]
+        for path in [None, '/data/services/llm-manager/acquisition/' + MODEL + '.complete.json',
+                     '/srv/ai/services/llm-manager/acquisition/../receipt.json',
+                     {'role': 'data', 'suffix': 'services/llm-manager/acquisition/' + MODEL + '.complete.json'}]:
+            with self.subTest(path=path):
+                item['completion_manifest'] = path
+                with self.assertRaisesRegex(LifecycleError, 'acquisition_completion_required'):
+                    self.manager.check_completion(self.d)
+        self.reader.assert_not_called()
+        item['completion_manifest'] = self.path
+        self.reader.side_effect = BindingError('missing_or_unprotected_receipt')
+        with self.assertRaises(BindingError):
+            self.manager.check_completion(self.d)
+
+    def test_receipt_identity_fields_and_actual_root_must_match_exactly(self):
+        mutations = [('schema_version', True), ('complete', False), ('repo_id', 'other/model'),
+                     ('revision', '0' * 40), ('model_root', '/data/models-large/' + MODEL),
+                     ('model_root', '/mnt/weights/other-model'), ('model_root', '/models'),
+                     ('artifact_count', 10), ('total_bytes', self.receipt['total_bytes'] + 1)]
+        for field, value in mutations:
+            saved = self.receipt[field]
+            with self.subTest(field=field, value=value):
+                self.receipt[field] = value
+                with self.assertRaisesRegex(LifecycleError, 'acquisition_completion_identity_mismatch'):
+                    self.manager.check_completion(self.d)
+            self.receipt[field] = saved
+
+    def test_partial_unverified_duplicate_or_wrong_artifact_metadata_refuses(self):
+        original = copy.deepcopy(self.receipt['artifacts'])
+        for mutation in [lambda files: files.pop(),
+                         lambda files: files[0].update(verified=False),
+                         lambda files: files[0].update(sha256='0' * 64),
+                         lambda files: files[0].update(size_bytes=files[0]['size_bytes'] + 1),
+                         lambda files: files[0].update(path='unexpected.gguf'),
+                         lambda files: files.__setitem__(1, copy.deepcopy(files[0]))]:
+            self.receipt['artifacts'] = copy.deepcopy(original)
+            mutation(self.receipt['artifacts'])
+            with self.assertRaises(LifecycleError):
+                self.manager.check_completion(self.d)
+
+    def test_explicit_historical_d1_attestation_without_receipt_is_preserved(self):
+        binding = HistoricalBinding()
+        instance = copy.deepcopy(self.manager.instance)
+        instance.update(storage_identity=binding.identity, historical_import=True)
+        manager = Manager(ROOT / 'configs', instance, binding=binding, test_paths=True)
+        d = manager.deployment(PROOF)
+        binding.read_json = self.reader
+        self.assertEqual(d['paths']['model'], '/data/models-large/' + MODEL)
+        item = manager.instance['model_integrity'][MODEL]
+        item.pop('completion_manifest')
+        before = copy.deepcopy(manager.instance)
+        manager.check_completion(d)
+        self.reader.assert_not_called()
+        self.assertEqual(manager.instance, before)
+        item['verified'] = False
+        with self.assertRaisesRegex(LifecycleError, 'd1_integrity_evidence_required'):
+            manager.check_completion(d)
+        item['verified'] = True
+        item['completion_manifest'] = '/data/services/llm-manager/acquisition/' + MODEL + '.complete.json'
+        self.receipt['model_root'] = '/mnt/weights/another-model'
+        with self.assertRaisesRegex(LifecycleError, 'acquisition_completion_identity_mismatch'):
+            manager.check_completion(d)
 
 
 if __name__ == '__main__':
