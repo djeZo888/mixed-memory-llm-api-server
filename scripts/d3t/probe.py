@@ -269,9 +269,9 @@ def bind(run, phase, container_id, image_id):
                     and container_id != c['phases']['candidate']['container_id'], 'one_native_patched_image_load')
         context = 1048576 if phase == 'native' else 32768
         observed = guards.collect(container_id, image_id, context)
-        guards.check_snapshot(observed, native=phase == 'native')
-        c['phases'][phase] = {'container_id': container_id, 'image_id': image_id, 'context': context}
         write_json(run / (phase + '.admission.json'), observed)
+        guards.check_snapshot(observed, native=phase == 'native', require_full=True)
+        c['phases'][phase] = {'container_id': container_id, 'image_id': image_id, 'context': context}
         write_json(run / 'config.json', c)
         if phase == 'native':
             s['native_configured_capacity'] = context
@@ -486,11 +486,88 @@ def check_cache(s, parsed):
                 and max(1, common - 256) <= cached <= actual, 'useful_prefix_reuse_NOT_TESTED')
 
 
+def failure_code(exc):
+    # Only constant task codes, never raw backend/socket exception text.
+    safe = str(exc) if isinstance(exc, AgentError) else ''
+    return safe if safe.replace('_', '').isalnum() and len(safe) <= 96 else 'bounded_stage_stopped'
+
+
+def memory_checkpoint(sample):
+    return {key: sample[key] for key in ('timestamp', 'sample_elapsed_seconds', 'process_kib')}
+
+
+def retain_operation(run, name, transfer, key):
+    """Save available original operation evidence before a post guard can fail."""
+    evidence = {'transfer_complete': transfer.done.is_set(), 'http_status': transfer.status,
+                'transport_failed': transfer.error is not None,
+                'original_raw_sha256': None, 'raw_available': transfer.raw is not None}
+    if transfer.raw is not None:
+        evidence['original_raw_sha256'] = digest(transfer.raw)
+        safe = redact(transfer.raw.decode('utf-8', errors='replace'), key).encode()
+        evidence['raw_redacted_or_invalid_utf8'] = safe != transfer.raw
+        write_bytes(run / (name + '.raw'), safe)
+    write_json(run / (name + '.operation.json'), evidence)
+
+
 def worker(run, transport=Transfer, sampler_factory=None):
     """One durable worker process, one request, cooperative socket-only cancel."""
     with lock(run, 'request.lock'):
-        transfer, sampler = None, None
+        transfer, sampler, log = None, None, None
+        post_attempted, post_error, evidence_error = False, None, None
+        previous = None
         started = time.monotonic()
+
+        def record_sample(sample, checkpoint=False):
+            nonlocal previous, count
+            # Retain even a rejected row, without counting it as accepted evidence.
+            log.write(json.dumps(sample, separators=(',', ':')).encode() + b'\n')
+            log.flush()
+            guards.check_snapshot(sample, native=phase_for(s['stage']) == 'native',
+                                  previous=previous, checkpoint=checkpoint)
+            count += 1
+            if sample['sample_kind'] == 'cheap':
+                for gpu in sample['gpus']:
+                    old = extrema['gpu_min_free_bytes'].get(gpu['uuid'], gpu['free_bytes'])
+                    extrema['gpu_min_free_bytes'][gpu['uuid']] = min(old, gpu['free_bytes'])
+                rss = sample['process_kib']['VmRSS']
+                extrema['rss_max_kib'] = rss if extrema['rss_max_kib'] is None else max(extrema['rss_max_kib'], rss)
+                available = sample['host_kib']['MemAvailable']
+                old = extrema['mem_available_min_kib']
+                extrema['mem_available_min_kib'] = available if old is None else min(old, available)
+            previous = sample
+
+        def post_checkpoint(cleanup=False):
+            nonlocal post_attempted, post_error
+            deadline = time.monotonic() + 30
+            try:
+                if not post_attempted:
+                    post_attempted = True
+                    sampler.request_full_checkpoint()
+                while True:
+                    remaining = deadline - time.monotonic()
+                    require(remaining > 0, 'post_checkpoint_timeout')
+                    if not cleanup:
+                        with lock(run):
+                            latest = read_json(run / 'state.json')
+                        require(not latest['cancel_requested'], 'owner_cancelled')
+                        require(time.time() <= s['request_deadline'], 'stage_timeout')
+                        remaining = min(remaining, max(.001, s['request_deadline'] - time.time()))
+                    try:
+                        sample = sampler.next(timeout=min(1, remaining))
+                    except guards.Error as exc:
+                        if str(exc) == 'snapshot_timeout':
+                            continue  # Wait for this one PSS read, never retry collection.
+                        raise
+                    full = sample.get('sample_kind') == 'full'
+                    if full or sample.get('status') == 'STOP':
+                        write_json(run / (s['request_name'] + '.post-request.json'), sample)
+                    record_sample(sample, checkpoint=full)
+                    if full:
+                        return sample
+            except Exception as exc:
+                post_error = failure_code(exc)
+                raise
+
         try:
             with lock(run):
                 s, c = read_json(run / 'state.json'), read_json(run / 'config.json')
@@ -504,11 +581,21 @@ def worker(run, transport=Transfer, sampler_factory=None):
             body = strict_json_loads(raw)
             sampler = (sampler_factory or guards.Sampler)(phase['container_id'], phase['image_id'], phase['context'],
                          min(86400, max(1, int(s['request_deadline'] - time.time()) + 1)))
-            first = sampler.next(timeout=15)
-            guards.check_snapshot(first, native=phase_for(s['stage']) == 'native')
+            first = sampler.next(timeout=min(30, max(.001, s['request_deadline'] - time.time())))
+            write_json(run / (s['request_name'] + '.pre-request.json'), first)
+            guards.check_snapshot(first, native=phase_for(s['stage']) == 'native', require_full=True)
             admission = read_json(run / (phase_for(s['stage']) + '.admission.json'))
+            guards.validate_snapshot(admission)
+            require(admission['sample_kind'] == 'full', 'full_memory_admission_required')
             require(guards.stable_identity(first) == guards.stable_identity(admission), 'bound_runtime_restarted_or_changed')
             require(first['vmstat'] == admission['vmstat'], 'swap_or_oom_since_admission')
+            guards.check_snapshot(first, native=phase_for(s['stage']) == 'native',
+                                  previous=admission, checkpoint=True)
+            count = 0
+            extrema = {'gpu_min_free_bytes': {}, 'rss_max_kib': None, 'mem_available_min_kib': None}
+            log = open(run / (s['request_name'] + '.samples.jsonl'), 'xb',
+                       opener=lambda p, flags: os.open(p, flags | os.O_NOFOLLOW, 0o600))
+            record_sample(first)
             with lock(run):
                 latest = read_json(run / 'state.json')
                 require(not latest['cancel_requested'], 'cancel_before_dispatch')
@@ -516,35 +603,21 @@ def worker(run, transport=Transfer, sampler_factory=None):
                 s.update(status='IN_FLIGHT', dispatched_at=time.time())
                 write_json(run / 'state.json', s)
             transfer = transport(c['base_url'], key, raw, body['stream'], max(.001, s['request_deadline'] - time.time()))
-            count, previous = 0, None
-            extrema = {'gpu_min_free_bytes': {}, 'rss_max_kib': None, 'pss_max_kib': None, 'mem_available_min_kib': None}
-            sample = first
-            completion_seen = False
-            with open(run / (s['request_name'] + '.samples.jsonl'), 'xb', opener=lambda p, flags: os.open(p, flags | os.O_NOFOLLOW, 0o600)) as log:
-                while True:
-                    guards.check_snapshot(sample, native=phase_for(s['stage']) == 'native', previous=previous)
-                    log.write(json.dumps(sample, separators=(',', ':')).encode() + b'\n')
-                    log.flush()
-                    count += 1
-                    for gpu in sample['gpus']:
-                        old = extrema['gpu_min_free_bytes'].get(gpu['uuid'], gpu['free_bytes'])
-                        extrema['gpu_min_free_bytes'][gpu['uuid']] = min(old, gpu['free_bytes'])
-                    for dest, value in (('rss_max_kib', sample['process_kib']['Rss']), ('pss_max_kib', sample['process_kib']['Pss'])):
-                        extrema[dest] = value if extrema[dest] is None else max(extrema[dest], value)
-                    available = sample['host_kib']['MemAvailable']
-                    extrema['mem_available_min_kib'] = available if extrema['mem_available_min_kib'] is None else min(extrema['mem_available_min_kib'], available)
-                    previous = sample
-                    require(time.time() <= s['request_deadline'], 'stage_timeout')
-                    with lock(run):
-                        latest = read_json(run / 'state.json')
-                    require(not latest['cancel_requested'], 'owner_cancelled')
-                    require(time.time() <= s['request_deadline'], 'stage_timeout')
-                    if transfer.done.is_set():
-                        if completion_seen:
-                            break
-                        completion_seen = True
-                    sample = sampler.next(timeout=min(3, max(.001, s['request_deadline'] - time.time())))
+            while True:
+                require(time.time() <= s['request_deadline'], 'stage_timeout')
+                with lock(run):
+                    latest = read_json(run / 'state.json')
+                require(not latest['cancel_requested'], 'owner_cancelled')
+                require(time.time() <= s['request_deadline'], 'stage_timeout')
+                if transfer.done.is_set():
+                    break
+                sample = sampler.next(timeout=min(3, max(.001, s['request_deadline'] - time.time())))
+                require(sample.get('sample_kind') == 'cheap' or sample.get('status') == 'STOP',
+                        'unexpected_full_inflight_sample')
+                record_sample(sample)
+            retain_operation(run, s['request_name'], transfer, key)
             require(transfer.error is None and transfer.raw is not None, 'transport_failed')
+            post = post_checkpoint()
             parsed = parse_response(transfer.raw, body['stream'], 'glm-5.3')
             safe_parsed = redact(parsed, key)
             if safe_parsed != parsed:
@@ -563,7 +636,10 @@ def worker(run, transport=Transfer, sampler_factory=None):
                       'raw_sha256': digest(transfer.raw), 'elapsed_seconds': elapsed,
                       'accounting': s['accounting'], 'counters': parsed['counters'],
                       'checks': checks, 'sample_count': count, 'sampled_extrema': extrema,
-                      'resource_evidence': 'bounded_1Hz_samples_not_instantaneous_peaks'}
+                      'cheap_sample_count': count - 2,
+                      'memory_checkpoints': {'admission': memory_checkpoint(admission),
+                          'pre_request': memory_checkpoint(first), 'post_request': memory_checkpoint(post)},
+                      'resource_evidence': 'bounded_1Hz_cheap_samples_and_full_PSS_checkpoints_not_peaks'}
             with lock(run):
                 s = read_json(run / 'state.json')
                 require(not s['cancel_requested'], 'owner_cancelled')
@@ -581,16 +657,34 @@ def worker(run, transport=Transfer, sampler_factory=None):
         except Exception as exc:
             if transfer:
                 transfer.cancel()
+                try:
+                    retain_operation(run, s['request_name'], transfer, key)
+                except Exception as evidence_exc:
+                    evidence_error = failure_code(evidence_exc)
+                if not post_attempted or post_error in ('owner_cancelled', 'stage_timeout', 'state_lock_timeout'):
+                    # Cancel first. This is evidence collection after a stopped
+                    # operation, not an extension of its generation deadline.
+                    with contextlib.suppress(Exception):
+                        post_checkpoint(cleanup=True)
+                try:
+                    # Socket closure and its transfer thread can settle while
+                    # the checkpoint is collected. Preserve newly available
+                    # bytes/status too; do not wait for or restart the request.
+                    retain_operation(run, s['request_name'], transfer, key)
+                except Exception as evidence_exc:
+                    evidence_error = failure_code(evidence_exc)
             with lock(run):
                 s = read_json(run / 'state.json')
                 s['status'] = 'PENDING_RECONCILIATION' if s.get('dispatched_at') else 'NOT_TESTED'
-                # Only constant task codes, never raw backend/socket exception text.
-                safe = str(exc) if isinstance(exc, AgentError) else ''
-                s['failure_class'] = safe if safe.replace('_', '').isalnum() and len(safe) <= 96 else 'bounded_stage_stopped'
+                s['failure_class'] = failure_code(exc)
+                s['post_checkpoint_failure'] = post_error
+                s['operation_evidence_failure'] = evidence_error
                 s['elapsed_seconds'] = time.monotonic() - started
                 s['later_stages'] = 'PENDING_NOT_TESTED'
                 write_json(run / 'state.json', s)
         finally:
+            if log:
+                log.close()
             if transfer:
                 transfer.cancel()
             if sampler:
