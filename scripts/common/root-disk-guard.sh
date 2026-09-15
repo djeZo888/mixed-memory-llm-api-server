@@ -246,7 +246,7 @@ check_mounts() {
     return
   fi
 
-  if ! "$SCRIPT_DIR/require-data-mounted.sh" >"${TMPDIR:-/tmp}/root-disk-guard-require-data-mounted.out" 2>"${TMPDIR:-/tmp}/root-disk-guard-require-data-mounted.err"; then
+  if ! "$SCRIPT_DIR/require-data-mounted.sh" >/dev/null 2>&1; then
     add_stop "require-data-mounted.sh failed; /data is missing, not mounted, or not ready"
     return
   fi
