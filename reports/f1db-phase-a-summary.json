@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "status": "CACHE_PASS_AUTH_FAIL",
+  "coordination_revision": 2,
+  "coordination_revision2_sha256": "3753d64c7f54739bb1ae28c295a3c696ce1bf319c2fde3b4b4c2712660a4b35f",
+  "source_identity": {
+    "source_head": "c0e1a1dff0ac1647ed5207f05247ff63f72f7cc7",
+    "files": {
+      "tests/lifecycle/sglang_fixture/check_cache_paths.py": "6ca8ed2ffdf98e6f4e33271204f42abcf1140ee8f8a3421b3e8d216c2f973749",
+      "tests/lifecycle/sglang_fixture/run_pinned_image.py": "c08ae64da3b04abcebdf241920adb40fbfaf8a93daa075dffd64d5f86013cfc7",
+      "scripts/lifecycle/sglang_file_auth.py": "93ddd96d6a3d346b3e62b0eec08d6666c70c1ebc7b2cc727d02c191c9d50a5b2",
+      "configs/runtimes/sglang-qwen-next-0.5.14.json": "54a276babcd2518125aabd8338b68beaae571d8b3e5b1270be00afec78d0decc",
+      "reports/f1c-cache-source-evidence.json": "57b1629f8b868a2aec14df9d52935433939717df12c0a40799eb8fee0e00c178",
+      "reports/f1c-cache-helper-provenance.json": "c65d2c1385c522e11ff5760fc89ff92084ad3309385808577e20447fe35e5105",
+      "tests/lifecycle/sglang_fixture/provenance.json": "042075b2a6e4a403f6f2bafd6a236a488f5cf193f1dc7cb24c3610d14beed58d",
+      "reports/f1s-contract-evidence/launcher-provenance.json": "490aceabd1dbd6f6604ef4d64a904a9ecc972750785a0079606b2acb7803d31d"
+    },
+    "coordination_sha256": "3eb53f5a45f715537b165104bd5b4208dfc45b0c904b7f1dc28e7b65d2102297",
+    "d3_ack_sha256": "26307699dce9184157c3bdd0ff6f960594608f8ba1c54befcd4ef25cfbd3bda2"
+  },
+  "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+  "cache": {
+    "elapsed_seconds": 9.509,
+    "exit_code": 0,
+    "helper_result": {
+      "expected_image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+      "gpu_driver_jit_cache": "NOT_TESTED",
+      "home_unchanged": true,
+      "installed_source_hashes": {
+        "flashinfer.compilation_context": "e55c7f58a83810590e18686954527cc62735a6e91c3fa67286a5e7f00afc9be5",
+        "flashinfer.jit.core": "836f04a87bca0a36e86c04219aac2aabbe28d87c91a577584e81f8c59e4c7a7c",
+        "flashinfer.jit.env": "09d2e6d6d03770d765acb8d89db2b58cd9600babacf6fbaad9dde0002a7d2cb9",
+        "sglang.srt.environ": "f8a56f1f4b56332b54bee2aaaa81237018e09e208ecd49dc0f59e15f95cdb743",
+        "torch.utils.cpp_extension": "1517eb2ac276065210d7c861becc5bf3a5404796da16d35af9b9466667fef904"
+      },
+      "model_cache_behavior": "NOT_TESTED",
+      "resolved_directories": {
+        "CUDA_CACHE_PATH": "/cache/cuda",
+        "FLASHINFER_CACHE_DIR": "/cache/flashinfer/.cache/flashinfer",
+        "FLASHINFER_GEN_SRC_DIR": "/cache/flashinfer/.cache/flashinfer/0.6.12/generated",
+        "FLASHINFER_JIT_DIR": "/cache/flashinfer/.cache/flashinfer/0.6.12/cached_ops",
+        "FLASHINFER_WORKSPACE_BASE": "/cache/flashinfer",
+        "FLASHINFER_WORKSPACE_DIR": "/cache/flashinfer/.cache/flashinfer/0.6.12",
+        "HF_HOME": "/cache/huggingface",
+        "SGLANG_CACHE_DIR": "/cache/sglang",
+        "SGLANG_DG_CACHE_DIR": "/cache/deep_gemm",
+        "TORCHINDUCTOR_CACHE_DIR": "/cache/torchinductor",
+        "TORCH_EXTENSIONS_DIR": "/cache/torch_extensions",
+        "TORCH_EXTENSION_BUILD": "/cache/torch_extensions/f1c_cache_probe",
+        "TRITON_CACHE_DIR": "/cache/triton",
+        "XDG_CACHE_HOME": "/cache"
+      },
+      "status": "PASS_RESOLVERS_AND_FILESYSTEM_ONLY"
+    },
+    "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+    "kind": "cache",
+    "source_head": "c0e1a1dff0ac1647ed5207f05247ff63f72f7cc7",
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_sha256": "179d254f01198052fe3832046e921efc79de4c9f827b4c5dcb03776f977d72d1"
+  },
+  "auth": {
+    "elapsed_seconds": 8.597,
+    "exit_code": 2,
+    "helper_result": {
+      "code": "actual_image_fixture_failed",
+      "status": "FAIL"
+    },
+    "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+    "kind": "auth",
+    "source_head": "c0e1a1dff0ac1647ed5207f05247ff63f72f7cc7",
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_sha256": "7d0072fbcf9652fa6f5814cb62521e663405180055e11c783bf3eb59266f90cb"
+  },
+  "source_preflight": {
+    "exit_code": 0,
+    "result": {
+      "entries": 437,
+      "helper_execution": false,
+      "native_imports": false,
+      "source_head": "c0e1a1dff0ac1647ed5207f05247ff63f72f7cc7",
+      "status": "PASS_COMPLETE_TRACKED_SOURCE_READABILITY_AND_HASHES",
+      "uid": 0
+    },
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_sha256": "5935785d9b0ad76360a0d8c83de3a522f4eb094da23a846190a3d969862ca8e9"
+  },
+  "historical_failures": {
+    "cache-launch1-result.json": {
+      "elapsed_seconds": 0.217,
+      "exit_code": 2,
+      "helper_result": {
+        "code": "unexpected_helper_output_not_relayed",
+        "status": "FAIL"
+      },
+      "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+      "kind": "cache",
+      "source_head": "c0e1a1dff0ac1647ed5207f05247ff63f72f7cc7",
+      "stderr_bytes": 118,
+      "stderr_sha256": "23a375d75561eb9d301730fe2b944500d3f938839cf680b05fe9b219c8e0eef9",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cache-result.json": {
+      "elapsed_seconds": 0.247,
+      "exit_code": 2,
+      "helper_result": {
+        "code": "actual_cache_fixture_failed",
+        "status": "FAIL"
+      },
+      "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+      "kind": "cache",
+      "source_head": "c0e1a1dff0ac1647ed5207f05247ff63f72f7cc7",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "50cf152b44a197ea132c716092f3883751d20136354f9c78d3f5ca490b5361f7"
+    },
+    "auth-result.json": {
+      "elapsed_seconds": 0.27,
+      "exit_code": 2,
+      "helper_result": {
+        "code": "actual_image_fixture_failed",
+        "status": "FAIL"
+      },
+      "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+      "kind": "auth",
+      "source_head": "c0e1a1dff0ac1647ed5207f05247ff63f72f7cc7",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "7d0072fbcf9652fa6f5814cb62521e663405180055e11c783bf3eb59266f90cb"
+    },
+    "source-access-inspection.json": {
+      "exit_code": 0,
+      "inspection": {
+        "errno": 13,
+        "exception": "PermissionError",
+        "filename": "/fixture/scripts/lifecycle/sglang_file_auth.py",
+        "gid": 0,
+        "helper_executed": false,
+        "read": "FAIL",
+        "scope": "one exact source read only",
+        "uid": 0
+      },
+      "stdout_sha256": "07bc0115a5e320a927bb2f65beb0f9742ca7ae07d6d19f7f96dd837e88723617"
+    }
+  },
+  "installed_package_and_source_byte_inspection": "PASS_INDEPENDENT_READ_ONLY_INSPECTION",
+  "native_resolver_filesystem_proof": "PASS_RESOLVERS_AND_FILESYSTEM_ONLY",
+  "cuda_driver_jit_cache_use": "NOT_TESTED",
+  "native_auth_cases": "NOT_PROVEN_AGGREGATE_FAIL_ONLY",
+  "wrong_owner_case": "NOT_PROVEN_NO_CAPABILITY_SKIP_RESULT_EMITTED",
+  "protected_host_key_ownership": "NOT_TESTED_SEPARATE_LATER_GATE",
+  "actual_sigint_child_cleanup": "NOT_PROVEN",
+  "full_native_cuda_model_lifespan": "NOT_TESTED",
+  "real_sigterm": "NOT_TESTED",
+  "production_auth_gate_updated": false,
+  "auth_gate_passed": false,
+  "source_or_helper_changes": false,
+  "final_audit": {
+    "status": "PASS_FINAL_SCOPE_AND_CLEANUP_AUDIT",
+    "source_head": "c0e1a1dff0ac1647ed5207f05247ff63f72f7cc7",
+    "all_437_tracked_entries_verified": true,
+    "source_file_bytes_unchanged": true,
+    "data_uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+    "root_available_bytes": 5227986944,
+    "root_minimum_bytes": 4294967296,
+    "container_count": 8,
+    "containers": [
+      {
+        "container_id": "8b5d00bdc2d4f1fcb8fe39f5a7f37848ce37bdac7d27579f589dfe8ae42d45e6",
+        "status": "REMOVED",
+        "receipt": "auth-cleanup.json"
+      },
+      {
+        "container_id": "dca58e89657b2e5c2aef56efaf8f05ca31e070030c894a0c145fabcaf2237bb9",
+        "status": "REMOVED",
+        "receipt": "cache-cleanup.json"
+      },
+      {
+        "container_id": "d99f08313b1de266253f4e81337cb4c49ec20b1607a85ba6049fb9dbfa4b3bed",
+        "status": "REMOVED",
+        "receipt": "cache-launch1-cleanup.json"
+      },
+      {
+        "container_id": "c295dcbc7f11bc3dfe9da9cac58588fe98ac24ea7a7d86900d5d0ed22204b9a0",
+        "status": "REMOVED",
+        "receipt": "inspection-cleanup.json"
+      },
+      {
+        "container_id": "5f2489cd50d4e60b8f60bee87cec056cc09f8a17eba19756083cb41c6ea61b9d",
+        "status": "REMOVED",
+        "receipt": "revision2/auth-cleanup.json"
+      },
+      {
+        "container_id": "3a78923f685582ae6703f0a2bbf878de9ca757bce90f1881e19e9a7ef57ed8fe",
+        "status": "REMOVED",
+        "receipt": "revision2/cache-cleanup.json"
+      },
+      {
+        "container_id": "75065ede55269688bc4acc008fecd5ca97c91f7fb55ac168f38260c900d3e8c9",
+        "status": "REMOVED",
+        "receipt": "revision2/preflight-cleanup.json"
+      },
+      {
+        "container_id": "bfde9fa392ef2732a1ca4f8f0ea0701d290e756485a56c618b6e3801c679ceac",
+        "status": "REMOVED",
+        "receipt": "source-access-cleanup.json"
+      }
+    ],
+    "unrelated_container_inspection": false,
+    "real_key_access": false,
+    "production_state_mutations": false
+  },
+  "diagnostic_proposal": "reports/f1db-auth-diagnostic-proposal.md; NOT_APPLIED_NOT_EXECUTED",
+  "next_action": "Root review narrow bounded auth diagnostic source proposal before any separately authorized rerun; preserve cache PASS receipt. Phase B/live Qwen still requires auth proof and D3/client ownership release."
+}
