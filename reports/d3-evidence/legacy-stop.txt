@@ -1,0 +1,34 @@
+{
+  "action": "stop",
+  "dry_run": true,
+  "image_deletion": "none",
+  "model_file_deletion": "none",
+  "selected": "qwen3-30b-a3b-instruct-2507",
+  "wait_for_readiness": true,
+  "writes": false
+}
+{
+  "boot_policy": "manual",
+  "container": {
+    "deployment": "qwen3-30b-a3b-instruct-2507",
+    "id": "321ee2110e2e0130739ca51fe192b23d746ecefca76e746c9e2df3fd8a799153",
+    "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+    "instance": "ai-vm-d0b",
+    "legacy": true,
+    "name": "sglang-qwen3-30b-a3b-instruct-2507",
+    "owner": "mixed-memory-llm-api-server"
+  },
+  "container_running": false,
+  "desired": "stopped",
+  "failure": null,
+  "migrated_from": {
+    "endpoint": "http://127.0.0.1:30001/v1",
+    "model_profile": "qwen3-30b-a3b-instruct-2507",
+    "runtime_profile": "sglang"
+  },
+  "observed": "stopped",
+  "schema_version": 2,
+  "selected": "qwen3-30b-a3b-instruct-2507",
+  "state_persisted": true,
+  "updated_at": 1789432684624820181
+}

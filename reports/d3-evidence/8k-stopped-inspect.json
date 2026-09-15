@@ -1,0 +1,16 @@
+{
+  "id": "c25aacfaf71d3fe640ef9cf12fd95ae44cc81b67879b140139b5e020c12bf9b5",
+  "state": {
+    "Status": "exited",
+    "Running": false,
+    "ExitCode": 0,
+    "OOMKilled": false,
+    "StartedAt": "2026-09-15T00:40:36.122289554Z",
+    "FinishedAt": "2026-09-15T00:48:41.659796007Z"
+  },
+  "shutdown_markers": [
+    "5.53.338.712 I slot      release: id  0 | task 0 | stop processing: n_tokens = 28, truncated = 0",
+    "5.54.308.121 I slot      release: id  0 | task 4 | stop processing: n_tokens = 28, truncated = 0",
+    "7.37.661.587 I srv    operator(): operator(): cleaning up before exit..."
+  ]
+}

@@ -1,0 +1,269 @@
+{
+  "result": "PASS_SEALED_PREPARED",
+  "hash_scope": "validated acquisition-computed SHA256; no independent payload reread",
+  "status_sha256": "016265905a10ba18084f93aec1b0b004c5cfb4bc9549f00a3664ceb293695c05",
+  "archive_sha256": "b42a32bf2a96c3d8e2f31dbdb6b187dedaf7bbba8b5f0c4f45d9cd872f8f1545",
+  "before": {
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607172,
+      "size": 9428677,
+      "mtime_ns": 1789425833906591478,
+      "ctime_ns": 1789425833945591695,
+      "uid": 1000,
+      "gid": 1001,
+      "mode": 420,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00002-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607173,
+      "size": 49433942336,
+      "mtime_ns": 1789426459364881180,
+      "ctime_ns": 1789426511254143189,
+      "uid": 1000,
+      "gid": 1001,
+      "mode": 420,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00003-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607174,
+      "size": 48566415136,
+      "mtime_ns": 1789428351758818749,
+      "ctime_ns": 1789428398525199670,
+      "uid": 1000,
+      "gid": 1001,
+      "mode": 420,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00004-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607175,
+      "size": 48566415136,
+      "mtime_ns": 1789428879077724293,
+      "ctime_ns": 1789428930935075464,
+      "uid": 1000,
+      "gid": 1001,
+      "mode": 420,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00005-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607176,
+      "size": 48566415136,
+      "mtime_ns": 1789428874763694896,
+      "ctime_ns": 1789428926525045752,
+      "uid": 1000,
+      "gid": 1001,
+      "mode": 420,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00006-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607177,
+      "size": 48566415136,
+      "mtime_ns": 1789429517740856489,
+      "ctime_ns": 1789429568310171708,
+      "uid": 1000,
+      "gid": 1001,
+      "mode": 420,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00007-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607178,
+      "size": 48566415136,
+      "mtime_ns": 1789430870490558205,
+      "ctime_ns": 1789430921080874393,
+      "uid": 1000,
+      "gid": 1001,
+      "mode": 420,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00008-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607179,
+      "size": 48566415136,
+      "mtime_ns": 1789431170622426494,
+      "ctime_ns": 1789431221580742222,
+      "uid": 1000,
+      "gid": 1001,
+      "mode": 420,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00009-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607180,
+      "size": 48566415136,
+      "mtime_ns": 1789431198063596557,
+      "ctime_ns": 1789431249246913494,
+      "uid": 1000,
+      "gid": 1001,
+      "mode": 420,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00010-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607181,
+      "size": 48566415136,
+      "mtime_ns": 1789431406121883078,
+      "ctime_ns": 1789431456602194577,
+      "uid": 1000,
+      "gid": 1001,
+      "mode": 420,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00011-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607182,
+      "size": 29314424736,
+      "mtime_ns": 1789431547555755340,
+      "ctime_ns": 1789431578315944842,
+      "uid": 1000,
+      "gid": 1001,
+      "mode": 420,
+      "nlink": 1
+    }
+  },
+  "source_commit": "75a6bf915f30a1582348071eb733d05c33e10eb7",
+  "receipt": "/data/services/llm-manager/acquisition/glm-5.3-ud-q4-k-xl.complete.json",
+  "receipt_sha256": "bcd8d9f85baa9bd1fe54dc65b9022487307190cf11583580ab66af845b53f48b",
+  "instance_sha256": "8a5f7787c00319f093656d4fe0b6953c79ae31669b4da7690e6f7386ecad839a",
+  "after": {
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607172,
+      "size": 9428677,
+      "mtime_ns": 1789425833906591478,
+      "ctime_ns": 1789432284490083320,
+      "uid": 0,
+      "gid": 0,
+      "mode": 292,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00002-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607173,
+      "size": 49433942336,
+      "mtime_ns": 1789426459364881180,
+      "ctime_ns": 1789432284490083320,
+      "uid": 0,
+      "gid": 0,
+      "mode": 292,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00003-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607174,
+      "size": 48566415136,
+      "mtime_ns": 1789428351758818749,
+      "ctime_ns": 1789432284490083320,
+      "uid": 0,
+      "gid": 0,
+      "mode": 292,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00004-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607175,
+      "size": 48566415136,
+      "mtime_ns": 1789428879077724293,
+      "ctime_ns": 1789432284490083320,
+      "uid": 0,
+      "gid": 0,
+      "mode": 292,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00005-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607176,
+      "size": 48566415136,
+      "mtime_ns": 1789428874763694896,
+      "ctime_ns": 1789432284490083320,
+      "uid": 0,
+      "gid": 0,
+      "mode": 292,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00006-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607177,
+      "size": 48566415136,
+      "mtime_ns": 1789429517740856489,
+      "ctime_ns": 1789432284490083320,
+      "uid": 0,
+      "gid": 0,
+      "mode": 292,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00007-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607178,
+      "size": 48566415136,
+      "mtime_ns": 1789430870490558205,
+      "ctime_ns": 1789432284490083320,
+      "uid": 0,
+      "gid": 0,
+      "mode": 292,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00008-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607179,
+      "size": 48566415136,
+      "mtime_ns": 1789431170622426494,
+      "ctime_ns": 1789432284490083320,
+      "uid": 0,
+      "gid": 0,
+      "mode": 292,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00009-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607180,
+      "size": 48566415136,
+      "mtime_ns": 1789431198063596557,
+      "ctime_ns": 1789432284490083320,
+      "uid": 0,
+      "gid": 0,
+      "mode": 292,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00010-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607181,
+      "size": 48566415136,
+      "mtime_ns": 1789431406121883078,
+      "ctime_ns": 1789432284490083320,
+      "uid": 0,
+      "gid": 0,
+      "mode": 292,
+      "nlink": 1
+    },
+    "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00011-of-00011.gguf": {
+      "device": 2081,
+      "inode": 169607182,
+      "size": 29314424736,
+      "mtime_ns": 1789431547555755340,
+      "ctime_ns": 1789432284490083320,
+      "uid": 0,
+      "gid": 0,
+      "mode": 292,
+      "nlink": 1
+    }
+  },
+  "key_metadata": {
+    "device": 2065,
+    "inode": 67635075,
+    "size": 64,
+    "mtime_ns": 1789432284490083320,
+    "ctime_ns": 1789432284490083320,
+    "uid": 0,
+    "gid": 0,
+    "mode": 384,
+    "nlink": 1
+  },
+  "release": "/data/services/releases/75a6bf915f30a1582348071eb733d05c33e10eb7-d3-20260915",
+  "legacy_backup_sha256": "bd34931c6ed9cc0c887795dcefaebd65b4ceec95f061374938b09443a5c47a78"
+}

@@ -1,0 +1,519 @@
+{
+  "utc": "2026-09-15T00:54:37.679804+00:00",
+  "diagnostic": "Independent D3 probe; does not establish reviewed A1 harness PASS",
+  "worker": "Mac-Worker1",
+  "ssh_alias": "ai-vm",
+  "remote_endpoint": "http://127.0.0.1:30002/v1",
+  "parser_provenance": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3-20260915/repo/scripts/agent/protocol.py",
+    "sha256": "e94a7e102afe46b90325ee0d2de547d73d3115d19a49d340610447d8a75644d9",
+    "reuse": "Unmodified _completion, _stream, strict_json_loads, redact; Client not used"
+  },
+  "request_policy": {
+    "maximum_requests": 4,
+    "max_tokens": 512,
+    "reasoning_effort": "low",
+    "overall_timeout_seconds": 600.0,
+    "expected_runtime_clear_thinking": true,
+    "reasoning_replayed": false,
+    "runtime_arguments_changed": false
+  },
+  "fixture": {
+    "source": "def add(a, b):\n    return a - b\n",
+    "sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+    "execution": "Local read_file(calc.py) only; no writes/tests/VM tools",
+    "removed": true
+  },
+  "key_handling": "Protected VM key -> worker memory only; never persisted or printed",
+  "cases": [
+    {
+      "name": "nonstream_tool_call",
+      "request": {
+        "model": "glm-5.3",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Call read_file once with path calc.py, then use its result to describe what the function actually does in one short sentence. Do not guess its contents. After the tool result, give the final description without more tool calls."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "read_file",
+              "description": "Read the client-side calc.py fixture. No other path is allowed.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "enum": [
+                      "calc.py"
+                    ]
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ],
+        "max_tokens": 512,
+        "temperature": 0,
+        "stream": false,
+        "reasoning_effort": "low"
+      },
+      "classification": "valid_response",
+      "http_status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "observed": {
+        "finish_reasons": [
+          "tool_calls"
+        ],
+        "usage": [
+          {
+            "completion_tokens": 13,
+            "prompt_tokens": 219,
+            "total_tokens": 232,
+            "prompt_tokens_details": {
+              "cached_tokens": 9
+            }
+          }
+        ],
+        "timings": [
+          {
+            "cache_n": 9,
+            "prompt_n": 210,
+            "prompt_ms": 7037.51,
+            "prompt_per_token_ms": 33.51195238095238,
+            "prompt_per_second": 29.84009969435212,
+            "predicted_n": 13,
+            "predicted_ms": 4451.938,
+            "predicted_per_token_ms": 370.99483333333336,
+            "predicted_per_second": 2.695455327544993
+          }
+        ],
+        "models": [
+          "glm-5.3"
+        ],
+        "sse_done": false,
+        "metadata_errors": [],
+        "token_budget_exhausted": false
+      },
+      "response_utf8": "{\"choices\":[{\"finish_reason\":\"tool_calls\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"tool_calls\":[{\"type\":\"function\",\"function\":{\"name\":\"read_file\",\"arguments\":\"{\\\"path\\\":\\\"calc.py\\\"}\"},\"id\":\"BTIelK04Ri0tlLvSForWHevl1U9ZcZVe\"}]}}],\"created\":1789433689,\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":13,\"prompt_tokens\":219,\"total_tokens\":232,\"prompt_tokens_details\":{\"cached_tokens\":9}},\"id\":\"chatcmpl-e3ucPbCzdBYrFey9DmrvhvQ7Jrb2Cfjs\",\"timings\":{\"cache_n\":9,\"prompt_n\":210,\"prompt_ms\":7037.51,\"prompt_per_token_ms\":33.51195238095238,\"prompt_per_second\":29.84009969435212,\"predicted_n\":13,\"predicted_ms\":4451.938,\"predicted_per_token_ms\":370.99483333333336,\"predicted_per_second\":2.695455327544993}}",
+      "parsed": {
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "BTIelK04Ri0tlLvSForWHevl1U9ZcZVe",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"calc.py\"}"
+              }
+            }
+          ]
+        },
+        "model": "glm-5.3",
+        "finish_reason": "tool_calls",
+        "usage": {
+          "completion_tokens": 13,
+          "prompt_tokens": 219,
+          "total_tokens": 232,
+          "prompt_tokens_details": {
+            "cached_tokens": 9
+          }
+        },
+        "reasoning": {},
+        "stream_done": false
+      },
+      "wall_seconds": 11.581092
+    },
+    {
+      "name": "nonstream_continuation",
+      "request": {
+        "model": "glm-5.3",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Call read_file once with path calc.py, then use its result to describe what the function actually does in one short sentence. Do not guess its contents. After the tool result, give the final description without more tool calls."
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+              {
+                "id": "BTIelK04Ri0tlLvSForWHevl1U9ZcZVe",
+                "type": "function",
+                "function": {
+                  "name": "read_file",
+                  "arguments": "{\"path\":\"calc.py\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "BTIelK04Ri0tlLvSForWHevl1U9ZcZVe",
+            "content": "{\"path\": \"calc.py\", \"content\": \"def add(a, b):\\n    return a - b\\n\"}"
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "read_file",
+              "description": "Read the client-side calc.py fixture. No other path is allowed.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "enum": [
+                      "calc.py"
+                    ]
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ],
+        "max_tokens": 512,
+        "temperature": 0,
+        "stream": false,
+        "reasoning_effort": "low"
+      },
+      "classification": "valid_response",
+      "http_status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "observed": {
+        "finish_reasons": [
+          "stop"
+        ],
+        "usage": [
+          {
+            "completion_tokens": 26,
+            "prompt_tokens": 261,
+            "total_tokens": 287,
+            "prompt_tokens_details": {
+              "cached_tokens": 231
+            }
+          }
+        ],
+        "timings": [
+          {
+            "cache_n": 231,
+            "prompt_n": 30,
+            "prompt_ms": 2090.982,
+            "prompt_per_token_ms": 69.6994,
+            "prompt_per_second": 14.347325801943775,
+            "predicted_n": 26,
+            "predicted_ms": 4275.517,
+            "predicted_per_token_ms": 171.02068,
+            "predicted_per_second": 5.847246075737742
+          }
+        ],
+        "models": [
+          "glm-5.3"
+        ],
+        "sse_done": false,
+        "metadata_errors": [],
+        "token_budget_exhausted": false
+      },
+      "response_utf8": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Despite its name, the `add` function actually subtracts its second argument from its first (`return a - b`).\"}}],\"created\":1789433696,\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":26,\"prompt_tokens\":261,\"total_tokens\":287,\"prompt_tokens_details\":{\"cached_tokens\":231}},\"id\":\"chatcmpl-S7oJNVfaxY8KvXEanndXa9qvrKLJG7je\",\"timings\":{\"cache_n\":231,\"prompt_n\":30,\"prompt_ms\":2090.982,\"prompt_per_token_ms\":69.6994,\"prompt_per_second\":14.347325801943775,\"predicted_n\":26,\"predicted_ms\":4275.517,\"predicted_per_token_ms\":171.02068,\"predicted_per_second\":5.847246075737742}}",
+      "parsed": {
+        "message": {
+          "role": "assistant",
+          "content": "Despite its name, the `add` function actually subtracts its second argument from its first (`return a - b`)."
+        },
+        "model": "glm-5.3",
+        "finish_reason": "stop",
+        "usage": {
+          "completion_tokens": 26,
+          "prompt_tokens": 261,
+          "total_tokens": 287,
+          "prompt_tokens_details": {
+            "cached_tokens": 231
+          }
+        },
+        "reasoning": {},
+        "stream_done": false
+      },
+      "wall_seconds": 6.393878
+    },
+    {
+      "name": "sse_tool_call",
+      "request": {
+        "model": "glm-5.3",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Call read_file once with path calc.py, then use its result to describe what the function actually does in one short sentence. Do not guess its contents. After the tool result, give the final description without more tool calls."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "read_file",
+              "description": "Read the client-side calc.py fixture. No other path is allowed.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "enum": [
+                      "calc.py"
+                    ]
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ],
+        "max_tokens": 512,
+        "temperature": 0,
+        "stream": true,
+        "reasoning_effort": "low",
+        "stream_options": {
+          "include_usage": true
+        }
+      },
+      "classification": "valid_response",
+      "http_status": 200,
+      "content_type": "text/event-stream",
+      "observed": {
+        "finish_reasons": [
+          "tool_calls"
+        ],
+        "usage": [
+          {
+            "completion_tokens": 13,
+            "prompt_tokens": 219,
+            "total_tokens": 232,
+            "prompt_tokens_details": {
+              "cached_tokens": 218
+            }
+          }
+        ],
+        "timings": [
+          {
+            "cache_n": 218,
+            "prompt_n": 1,
+            "prompt_ms": 331.098,
+            "prompt_per_token_ms": 331.098,
+            "prompt_per_second": 3.020253822131212,
+            "predicted_n": 13,
+            "predicted_ms": 1228.344,
+            "predicted_per_token_ms": 102.36200000000001,
+            "predicted_per_second": 9.769250307731383
+          }
+        ],
+        "models": [
+          "glm-5.3"
+        ],
+        "sse_done": true,
+        "metadata_errors": [],
+        "token_budget_exhausted": false
+      },
+      "response_utf8": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null}}],\"created\":1789433696,\"id\":\"chatcmpl-jBq3pszqQUCdrsL9Sp2lMGukqXk0T96E\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"WY0IxDgY839xzSld6Uki1S0kaKb1fK8E\",\"type\":\"function\",\"function\":{\"name\":\"read_file\",\"arguments\":\"{\"}}]}}],\"created\":1789433696,\"id\":\"chatcmpl-jBq3pszqQUCdrsL9Sp2lMGukqXk0T96E\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"path\\\":\"}}]}}],\"created\":1789433697,\"id\":\"chatcmpl-jBq3pszqQUCdrsL9Sp2lMGukqXk0T96E\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"\"}}]}}],\"created\":1789433697,\"id\":\"chatcmpl-jBq3pszqQUCdrsL9Sp2lMGukqXk0T96E\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"calc\"}}]}}],\"created\":1789433697,\"id\":\"chatcmpl-jBq3pszqQUCdrsL9Sp2lMGukqXk0T96E\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\".py\"}}]}}],\"created\":1789433697,\"id\":\"chatcmpl-jBq3pszqQUCdrsL9Sp2lMGukqXk0T96E\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"\"}}]}}],\"created\":1789433697,\"id\":\"chatcmpl-jBq3pszqQUCdrsL9Sp2lMGukqXk0T96E\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"}\"}}]}}],\"created\":1789433697,\"id\":\"chatcmpl-jBq3pszqQUCdrsL9Sp2lMGukqXk0T96E\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":\"tool_calls\",\"index\":0,\"delta\":{}}],\"created\":1789433697,\"id\":\"chatcmpl-jBq3pszqQUCdrsL9Sp2lMGukqXk0T96E\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[],\"created\":1789433697,\"id\":\"chatcmpl-jBq3pszqQUCdrsL9Sp2lMGukqXk0T96E\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\",\"usage\":{\"completion_tokens\":13,\"prompt_tokens\":219,\"total_tokens\":232,\"prompt_tokens_details\":{\"cached_tokens\":218}},\"timings\":{\"cache_n\":218,\"prompt_n\":1,\"prompt_ms\":331.098,\"prompt_per_token_ms\":331.098,\"prompt_per_second\":3.020253822131212,\"predicted_n\":13,\"predicted_ms\":1228.344,\"predicted_per_token_ms\":102.36200000000001,\"predicted_per_second\":9.769250307731383}}\n\ndata: [DONE]\n\n",
+      "parsed": {
+        "message": {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "WY0IxDgY839xzSld6Uki1S0kaKb1fK8E",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"calc.py\"}"
+              }
+            }
+          ]
+        },
+        "model": "glm-5.3",
+        "finish_reason": "tool_calls",
+        "usage": {
+          "completion_tokens": 13,
+          "prompt_tokens": 219,
+          "total_tokens": 232,
+          "prompt_tokens_details": {
+            "cached_tokens": 218
+          }
+        },
+        "reasoning": {},
+        "stream_done": true
+      },
+      "wall_seconds": 1.585984
+    },
+    {
+      "name": "sse_continuation",
+      "request": {
+        "model": "glm-5.3",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Call read_file once with path calc.py, then use its result to describe what the function actually does in one short sentence. Do not guess its contents. After the tool result, give the final description without more tool calls."
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "WY0IxDgY839xzSld6Uki1S0kaKb1fK8E",
+                "type": "function",
+                "function": {
+                  "name": "read_file",
+                  "arguments": "{\"path\":\"calc.py\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "WY0IxDgY839xzSld6Uki1S0kaKb1fK8E",
+            "content": "{\"path\": \"calc.py\", \"content\": \"def add(a, b):\\n    return a - b\\n\"}"
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "read_file",
+              "description": "Read the client-side calc.py fixture. No other path is allowed.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "enum": [
+                      "calc.py"
+                    ]
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ],
+        "max_tokens": 512,
+        "temperature": 0,
+        "stream": true,
+        "reasoning_effort": "low",
+        "stream_options": {
+          "include_usage": true
+        }
+      },
+      "classification": "valid_response",
+      "http_status": 200,
+      "content_type": "text/event-stream",
+      "observed": {
+        "finish_reasons": [
+          "stop"
+        ],
+        "usage": [
+          {
+            "completion_tokens": 26,
+            "prompt_tokens": 261,
+            "total_tokens": 287,
+            "prompt_tokens_details": {
+              "cached_tokens": 231
+            }
+          }
+        ],
+        "timings": [
+          {
+            "cache_n": 231,
+            "prompt_n": 30,
+            "prompt_ms": 1254.094,
+            "prompt_per_token_ms": 41.803133333333335,
+            "prompt_per_second": 23.921651806004974,
+            "predicted_n": 26,
+            "predicted_ms": 5039.563,
+            "predicted_per_token_ms": 201.58252000000002,
+            "predicted_per_second": 4.960747588630205
+          }
+        ],
+        "models": [
+          "glm-5.3"
+        ],
+        "sse_done": true,
+        "metadata_errors": [],
+        "token_budget_exhausted": false
+      },
+      "response_utf8": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null}}],\"created\":1789433699,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"Despite\"}}],\"created\":1789433699,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" its\"}}],\"created\":1789433699,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" name\"}}],\"created\":1789433699,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\",\"}}],\"created\":1789433700,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" the\"}}],\"created\":1789433700,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" `\"}}],\"created\":1789433700,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"add\"}}],\"created\":1789433700,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"`\"}}],\"created\":1789433701,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" function\"}}],\"created\":1789433701,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" actually\"}}],\"created\":1789433701,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" subtract\"}}],\"created\":1789433702,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"s\"}}],\"created\":1789433702,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" its\"}}],\"created\":1789433702,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" second\"}}],\"created\":1789433702,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" argument\"}}],\"created\":1789433703,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" from\"}}],\"created\":1789433703,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" its\"}}],\"created\":1789433703,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" first\"}}],\"created\":1789433703,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" (`\"}}],\"created\":1789433703,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"return\"}}],\"created\":1789433703,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" a\"}}],\"created\":1789433703,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" -\"}}],\"created\":1789433703,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" b\"}}],\"created\":1789433703,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"`).\"}}],\"created\":1789433704,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"delta\":{}}],\"created\":1789433704,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[],\"created\":1789433704,\"id\":\"chatcmpl-fATsQ9ySYwtyfjNyJ62jzcurLv4XyuPW\",\"model\":\"glm-5.3\",\"system_fingerprint\":\"b62-b29c606\",\"object\":\"chat.completion.chunk\",\"usage\":{\"completion_tokens\":26,\"prompt_tokens\":261,\"total_tokens\":287,\"prompt_tokens_details\":{\"cached_tokens\":231}},\"timings\":{\"cache_n\":231,\"prompt_n\":30,\"prompt_ms\":1254.094,\"prompt_per_token_ms\":41.803133333333335,\"prompt_per_second\":23.921651806004974,\"predicted_n\":26,\"predicted_ms\":5039.563,\"predicted_per_token_ms\":201.58252000000002,\"predicted_per_second\":4.960747588630205}}\n\ndata: [DONE]\n\n",
+      "parsed": {
+        "message": {
+          "role": "assistant",
+          "content": "Despite its name, the `add` function actually subtracts its second argument from its first (`return a - b`)."
+        },
+        "model": "glm-5.3",
+        "finish_reason": "stop",
+        "usage": {
+          "completion_tokens": 26,
+          "prompt_tokens": 261,
+          "total_tokens": 287,
+          "prompt_tokens_details": {
+            "cached_tokens": 231
+          }
+        },
+        "reasoning": {},
+        "stream_done": true
+      },
+      "wall_seconds": 6.323893
+    }
+  ],
+  "modes": {
+    "nonstream": {
+      "status": "PASS",
+      "tool_id": "BTIelK04Ri0tlLvSForWHevl1U9ZcZVe",
+      "strict_arguments": {
+        "path": "calc.py"
+      },
+      "local_result": {
+        "path": "calc.py",
+        "content": "def add(a, b):\n    return a - b\n"
+      },
+      "continuation": "PASS",
+      "final_content": "Despite its name, the `add` function actually subtracts its second argument from its first (`return a - b`).",
+      "subtraction_description_marker": true,
+      "reasoning_replayed": false
+    },
+    "sse": {
+      "status": "PASS",
+      "tool_id": "WY0IxDgY839xzSld6Uki1S0kaKb1fK8E",
+      "strict_arguments": {
+        "path": "calc.py"
+      },
+      "local_result": {
+        "path": "calc.py",
+        "content": "def add(a, b):\n    return a - b\n"
+      },
+      "continuation": "PASS",
+      "final_content": "Despite its name, the `add` function actually subtracts its second argument from its first (`return a - b`).",
+      "subtraction_description_marker": true,
+      "reasoning_replayed": false
+    }
+  },
+  "status": "PASS",
+  "tunnel_cleaned_up": true,
+  "owned_tunnel_pid": 57905,
+  "local_tunnel_port": 61028,
+  "wall_seconds": 26.299413
+}
