@@ -1,0 +1,22 @@
+{
+  "command": [
+    "docker",
+    "container",
+    "ls",
+    "--all",
+    "--no-trunc",
+    "--filter",
+    "name=^/q38env-20260915-",
+    "--format",
+    "{{.ID}}"
+  ],
+  "container_id": null,
+  "create_attempts": 0,
+  "exit_code": 0,
+  "owned_id_check": "NOT_APPLICABLE_NO_ID_ALLOCATED",
+  "status": "TASK_PREFIX_ABSENCE_VERIFIED",
+  "stderr_bytes": 0,
+  "stdout_bytes": 0,
+  "task_prefix": "q38env-20260915-",
+  "verified_utc": "2026-09-15T03:56:19.639767+00:00"
+}
