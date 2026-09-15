@@ -75,7 +75,14 @@ non-root owners, hardlinked/nonordinary source files and unexpected tree entries
 Use `lstat`/`namei`, Linux `stat` and `findmnt --target` to verify the *files*, not
 just their top directory. Both root source trees and source key must have the
 same `st_dev` as `/`; directories root-owned and not group/other writable,
-source/unit/rule files root:root 0644 single-link, key root:root 0600 single-link.
+source/unit/rule files root:root single-link, key root:root 0600 single-link.
+Preserve the final reviewed source's per-file Git modes: Python/JSON read files
+tracked as `100644` remain `0644`; declared executable entrypoints tracked as
+`100755` retain `0755`. Unit and tmpfiles rule files remain `0644`. In the already
+declared file sets, this includes `0755` for `scripts/common/require-data-mounted.sh`,
+`scripts/common/root-disk-guard.sh`, `scripts/common/registered-storage.py` and
+`scripts/llmctl`. Do not flatten source modes to `0644`: directly invoked shell
+guards require executable permission. This does not expand any source closure.
 The instance stays protected root0600 on its exact registered services path.
 `render_boot_unit` checks protection/byte equality but does not prove root-device
 placement. Recheck the final launch timeout is below the rendered 3h budget.
