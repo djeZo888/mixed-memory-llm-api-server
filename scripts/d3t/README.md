@@ -1,11 +1,29 @@
-# D3T: one bounded GLM trial
+# D3T: bounded GLM comparison or native-capacity trial
 
-**Source prepared; generation, N76 load, native-capacity load and occupied-context
-acceptance NOT_TESTED.** Root separately reviews D3P's measured patched image and
-this source before the live owner runs the commands below. Final roster is
-GLM5.3 + Qwen3.8; this runner probes GLM only. No installer integration.
+**Source/mock checks are not live capacity proof.** D3TC changes only the probe's
+fresh-run mode. It authorizes no VM request, load, profile/runtime change or
+installer work. D3N32 proceeds independently; root reviews this source and that
+separate 32K sanity result before scheduling a later native load and occupied
+trial under exclusive ownership. Final roster is GLM5.3 + Qwen3.8; this runner
+probes GLM only.
 
-## Fixed trial
+## Trial modes
+
+`init` defaults to `--trial-mode comparison`; old `config.json` files without
+`trial_mode` also retain comparison behavior. Explicit
+`--trial-mode native-capacity` selects independent occupied qualification for a
+**new private run directory only**. The selected mode is persisted at creation.
+Unknown modes and existing-run reuse refuse. No command changes the mode,
+imports results, converts a failed run, marks a stage passed or skips a request.
+
+Native-capacity permits one `native` binding and only
+`64k → 128k → 256k → 512k → near1m`, in order. Baseline/candidate are excluded:
+they are neither required nor executed, and receive no files or synthetic PASS
+records. `status` reports `trial_mode`,
+`comparison_status: NOT_RUN_IN_THIS_TRIAL`, the eligible native stages and actual
+`highest_proven_window`. A later failure preserves the last occupied proof.
+
+### Default comparison trial
 
 Preserve old D1 all-CPU32K rollback. Compare four32K requests on that baseline
 and four on N76: ordinary cold/warm (256 output each), streamed tool call and
@@ -16,8 +34,14 @@ D1 and D3P are different images, so this is a comparison of complete configurati
 a timing difference cannot be attributed solely to expert placement.
 
 Then root loads ONE native1048576 container with the same N76 patched image.
-Preserve that container through occupied65536/131072/262144/524288/1048576 windows.
-Each stage has cold retrieval128, streamed tool256, streamed continuation256
+Native-capacity instead starts with its separately reviewed native container;
+it does not execute this comparison chain.
+
+### Shared occupied stages and accounting
+
+Preserve the bound native container through occupied
+65536/131072/262144/524288/1048576 windows. Each stage has initial occupied
+retrieval128, streamed tool256, streamed continuation256
 output caps. Each initial prompt is within256 tokens of window-8192; output,
 tool result and continuation consume the reserved8192. Stage elapsed caps are
 2/4/8/12/24h including preparation, prefill and continuation. Comparison requests
@@ -31,6 +55,12 @@ token-fit search per stage. This is input construction, with no generation or
 runtime parameter search. Each request is independently accounted and token IDs
 are checkpointed privately. Actual usage must subsequently agree with the native
 count. Matching token prefixes alone do not prove backend cache reuse.
+The internal native step name `.cold` means **initial occupied retrieval**, not
+a zero-cache benchmark. The first64K retrieval retains its actual observed cache
+condition; later native requests still require useful-prefix reuse, including
+the initial retrieval of each larger stage. Only baseline/candidate cold
+steps require an exposed cached count of zero. Cache/evaluated counts stay
+nullable and are never inferred by subtraction.
 
 ## Source preparation and profile output
 
@@ -47,7 +77,7 @@ native headroom fallback exist. Client ownership permits no fallback or reload.
 The old all-CPU32K source is unchanged. Manager accepts only bounded reviewed
 placement/context combinations; Q38 dispatch/imports remain unchanged.
 
-## Later live owner commands
+## Later root-reviewed live owner commands
 
 Use an ordinary worker account, exclusive root-coordinated ownership and a
 private0700 directory outside the repository. Keep the existing authenticated
@@ -57,6 +87,66 @@ A1 protected-file workflow; the key value never appears on argv or in outputs.
 Native accounting and telemetry use fixed `ssh ai-vm` stdin Python adapters;
 the key for native routes is read only in the remote process memory. No VM
 scripts, service state or keys are installed by these adapters.
+
+### Fresh native-capacity run
+
+Root must first coordinate completion/reconciliation and ownership release from
+the prior work, review D3N32 and this source, then authorize the separate native
+load and trial. A fresh directory is organizational separation, **not evidence
+that an old server request ended** and not permission to overlap D3N32. Keep the
+original failed D3BASE directory, response, bodies, hashes and counts unchanged;
+its failure is not reconciled or promoted to PASS by this new run. Existing
+completion and lease-release evidence belongs to the root ownership handoff.
+
+The native binding must match the measured `validation.image_id` in the fixed
+reviewed source file `configs/runtimes/llama-cpp-v0.4.1-d3br.json`, distinct from
+D1. It must be the exact separately loaded native1048576 container with complete
+native admission diagnostics. A 32K container, arbitrary patched image or later
+replacement cannot substitute. This fixed lookup does not import another run's
+proof. The bind pins its container/image/PID/start identity and admission sample.
+
+After that separate review and ownership handoff, substitute the exact approved
+container ID below and verify the image against the fixed source file. The run
+path must not exist; its parent and protected key file must already exist.
+
+```sh
+python3 -B scripts/d3t/probe.py init --run /private/task/d3tc-native-run \
+  --trial-mode native-capacity \
+  --base-url http://127.0.0.1:30002/v1 --key-file /private/task/api-key
+python3 -B scripts/d3t/probe.py bind --run /private/task/d3tc-native-run \
+  --phase native --container-id EXACT_REVIEWED_NATIVE_CONTAINER_ID \
+  --image-id sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9
+python3 -B scripts/d3t/probe.py prepare --run /private/task/d3tc-native-run --stage 64k
+python3 -B scripts/d3t/probe.py status --run /private/task/d3tc-native-run
+# Only after status is PREPARED: initial occupied retrieval (internal 64k.cold).
+python3 -B scripts/d3t/probe.py start --run /private/task/d3tc-native-run
+python3 -B scripts/d3t/probe.py status --run /private/task/d3tc-native-run
+# Only after STEP_PASS: prepare the tool step, then wait for PREPARED.
+python3 -B scripts/d3t/probe.py prepare --run /private/task/d3tc-native-run --stage 64k
+python3 -B scripts/d3t/probe.py status --run /private/task/d3tc-native-run
+# Only after PREPARED:
+python3 -B scripts/d3t/probe.py start --run /private/task/d3tc-native-run
+python3 -B scripts/d3t/probe.py status --run /private/task/d3tc-native-run
+# Only after STEP_PASS: prepare the continuation, then wait for PREPARED.
+python3 -B scripts/d3t/probe.py prepare --run /private/task/d3tc-native-run --stage 64k
+python3 -B scripts/d3t/probe.py status --run /private/task/d3tc-native-run
+# Only after PREPARED:
+python3 -B scripts/d3t/probe.py start --run /private/task/d3tc-native-run
+python3 -B scripts/d3t/probe.py status --run /private/task/d3tc-native-run
+# Only after 64k STAGE_PASS: retain the same binding and begin 128k.
+python3 -B scripts/d3t/probe.py prepare --run /private/task/d3tc-native-run --stage 128k
+python3 -B scripts/d3t/probe.py status --run /private/task/d3tc-native-run
+```
+
+Run commands individually after checking their stated gate; this is not a batch
+script or an automatic retry loop. Follow the same three-step sequence for 128k,
+then 256k, 512k and near1m only after each predecessor has STAGE_PASS. Skipped,
+revisited and comparison stages refuse before preparation or dispatch. Binding a
+second time refuses. Configured1048576 and a separate 32K sanity PASS do not prove
+occupied64K or any larger window; `highest_proven_window` stays null until all
+three actual64K requests satisfy accounting, correctness, reuse and telemetry.
+
+### Default comparison run
 
 ```sh
 python3 -B scripts/d3t/probe.py init --run /private/task/d3t-run \
@@ -74,8 +164,10 @@ python3 -B scripts/d3t/probe.py status --run /private/task/d3t-run
 `status` at least every60s in a NEW CLI session as needed. After STEP_PASS, repeat
 prepare/start for that stage's next step. After STAGE_PASS, the root-owned
 lifecycle task may release ownership and load the reviewed next configuration;
-this runner performs no lifecycle operation. Bind `candidate` only after baseline
-PASS and `native` only after candidate PASS. Native binding cannot be replaced.
+this applies to comparison phase transitions only; a native-capacity trial
+retains its one native binding. This runner performs no lifecycle operation.
+In comparison mode bind `candidate` only after baseline PASS and `native` only
+after candidate PASS. Native binding cannot be replaced in either mode.
 Run stages64k,128k,256k,512k,near1m in order, three steps each, with the same binding.
 Do not run multiple stage commands concurrently. Per-run locks prevent duplicate
 dispatch from this run; the existing root-coordinated exclusive client lease is
@@ -108,8 +200,10 @@ runs the existing common storage/root guards before and after lifecycle changes.
 
 A bounded1Hz sampler retains private rows. Samples and sampled extrema establish
 only sampled values, never instantaneous peak proof. Stale samples, identity drift,
-threshold/error violations, accounting mismatch or missing exact cache counts stop
-advancement. No extra profiling toolchain is involved.
+threshold/error violations, accounting mismatch or missing required reuse counts
+stop advancement. The first64K retrieval may have a nullable cached count;
+evaluated counts stay nullable throughout and exact prompt counts remain
+mandatory. No extra profiling toolchain is involved.
 
 Native admission requires actual context, one slot, fused_lid/indexer and FA graph
 selection plus positive exact compute/cache allocations on both cards. Current
@@ -125,7 +219,8 @@ Unfused64GiB score path is outside budget and blocks occupancy.
 actual input/render/token hashes, exact common-prefix count, completed result
 records and highest_proven_window. `native_configured_capacity` is separate.
 `highest_proven_window` stays null through baseline/candidate short comparisons;
-their PASS records remain under `stages` as comparison evidence. Only a complete
+their PASS records remain under `stages` as comparison evidence in comparison
+mode. Native-capacity creates no comparison records. Only a complete
 native occupancy stage, after its initial actual-count lower bound and successful
 retrieval/tool/continuation sequence, advances occupied proof. Later failures
 preserve the last proven value. Source-test fixture values are not live evidence.
