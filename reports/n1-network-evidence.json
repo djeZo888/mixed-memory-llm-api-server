@@ -1,0 +1,171 @@
+{
+  "task": "N1",
+  "format": "compact normalized observations, not a raw system dump",
+  "source_base": "6cffccbf1927ff610c21cfc6a0bea3b2f14bd85a",
+  "session_id": "01a0a2cb-6d20-7af0-aa31-71f0509faebf",
+  "inventory_utc": "2026-09-15T02:01:58.513157+00:00",
+  "scope": {
+    "vm_read_only": true,
+    "secret_values_read": false,
+    "api_requests": 0,
+    "model_requests": 0,
+    "test_suites_run": 0,
+    "containers_started": 0,
+    "agents_spawned": 0
+  },
+  "commands": [
+    "ssh -o BatchMode=yes -o ConnectTimeout=8 ai-vm: bounded Python subprocess inventory",
+    "ip -j address show (only host-interface addresses retained); ip -j route show default; ip -j -6 route show default; ip -j route get SSH client IPv4",
+    "sudo -n true; sudo -n ss -lntp (only ports22,30000..30005 retained)",
+    "docker ps -aq --filter name=llmctl; docker inspect --format with only name/running/PID/network mode/port bindings/effective ports",
+    "docker version --format Server.Version; network inspect bridge with driver/internal/IPv6/options only",
+    "daemon.json: allowlisted network keys only; later /proc dockerd command line: allowlisted network flags only",
+    "sudo -n nft -j list ruleset: base-chain policies, counts and inference/control matches only; ufw status verbose summary; iptables/ip6tables filter and nat -S policies and relevant rules",
+    "sysctl -n net.ipv4.ip_forward",
+    "worker route -n get 10.156.100.60; ipconfig getifaddr en0; ipconfig getoption en0 subnet_mask",
+    "worker Python TCP connect-only to22,30000,30002,30004 (tool discrepancy); native /usr/bin/nc -z -v -G 2 10.156.100.60 on same four ports",
+    "metadata-only lstat of /etc/llm-server/control-api-key and /usr/local/lib/llm-server/control-api; no file contents",
+    "final bounded comparison: systemctl --version; executable path checks for nginx/caddy; systemd-socket-proxyd --version (no listener)"
+  ],
+  "private_path": {
+    "vm_interface": "enp6s18",
+    "vm_ipv4": "10.156.100.60/24",
+    "vm_default_gateway": "10.156.100.1",
+    "vm_default_route_protocol": "dhcp",
+    "worker_interface": "en0",
+    "worker_ipv4": "10.156.100.120/24",
+    "ssh_source": "10.156.100.120",
+    "ssh_destination": "10.156.100.60",
+    "worker_to_vm": "on-link en0; HOST LLINFO route",
+    "vm_to_worker": "on-link enp6s18, prefsrc10.156.100.60"
+  },
+  "vm_ipv6": {
+    "global": "2a00:ee2:2700:2c00:be24:11ff:feb5:6dda/64",
+    "link_local": "fe80::be24:11ff:feb5:6dda/64",
+    "default_gateway": "fe80::a89c:6cff:fe90:ec69",
+    "default_interface": "enp6s18",
+    "protocol": "ra"
+  },
+  "listeners": {
+    "inference": "127.0.0.1:30002 docker-proxy PID150263",
+    "ssh": [
+      "0.0.0.0:22",
+      "[::]:22"
+    ],
+    "absent_relevant_ports": [
+      30000,
+      30001,
+      30003,
+      30004,
+      30005
+    ]
+  },
+  "docker": {
+    "version": "29.6.1",
+    "active": {
+      "name": "llmctl-glm-5.3-32k",
+      "running": true,
+      "pid": 149976,
+      "network_mode": "bridge",
+      "configured_and_effective_publication": "127.0.0.1:30002:30002/tcp"
+    },
+    "retained": {
+      "name": "llmctl-glm-5.3-8k",
+      "running": false,
+      "pid": 0,
+      "configured_publication": "127.0.0.1:30002:30002/tcp",
+      "effective_ports": {}
+    },
+    "bridge": {
+      "internal": false,
+      "ipv6": false,
+      "ip_masquerade": true,
+      "host_binding_ipv4_default": "0.0.0.0",
+      "interface": "docker0"
+    },
+    "allowlisted_daemon_json_network_overrides": {},
+    "allowlisted_daemon_cli_network_overrides": [],
+    "ip_forward": 1
+  },
+  "firewall": {
+    "sudo_n": true,
+    "available": [
+      "nft",
+      "ufw",
+      "iptables",
+      "ip6tables"
+    ],
+    "ufw": "inactive",
+    "ipv4_filter_policy": {
+      "INPUT": "ACCEPT",
+      "FORWARD": "DROP",
+      "OUTPUT": "ACCEPT"
+    },
+    "ipv6_filter_policy": {
+      "INPUT": "ACCEPT",
+      "FORWARD": "ACCEPT",
+      "OUTPUT": "ACCEPT"
+    },
+    "docker_user_rules": [],
+    "ipv4_forward_order": [
+      "DOCKER-USER",
+      "DOCKER-FORWARD"
+    ],
+    "nft_rule_count": 28,
+    "iptables_filter_rule_count": 14,
+    "iptables_nat_rule_count": 5,
+    "ip6tables_filter_rule_count": 5,
+    "ip6tables_nat_rule_count": 2,
+    "relevant_rules": [
+      "nat DOCKER: -d 127.0.0.1/32 ! -i docker0 -p tcp --dport 30002 -j DNAT --to-destination 172.17.0.2:30002",
+      "filter DOCKER: -d 172.17.0.2/32 ! -i docker0 -o docker0 -p tcp --dport 30002 -j ACCEPT",
+      "raw PREROUTING: IPv4 destination127.0.0.1, ingress not lo, TCP destination30002: DROP"
+    ]
+  },
+  "worker_tcp": {
+    "application_bytes_sent": 0,
+    "native_nc": {
+      "22": "connected",
+      "30000": "connection refused",
+      "30002": "connection refused",
+      "30004": "connection refused"
+    },
+    "python": {
+      "all_four_ports": "errno65 No route to host",
+      "interpretation": "unexplained tool-specific discrepancy; not evidence of missing route or firewall denial"
+    }
+  },
+  "control_metadata_follow_up": {
+    "/etc/llm-server/control-api-key": {
+      "exists": false
+    },
+    "/usr/local/lib/llm-server/control-api": {
+      "exists": false
+    }
+  },
+  "unknowns": [
+    "frontend VM address/route",
+    "DHCP address reservation and long-term endpoint permanence",
+    "LAN confidentiality/trust and upstream NAT/ingress/public reachability",
+    "public IPv6 reachability despite global address/default route",
+    "non-allowlisted separate-host negative validation",
+    "newer U1B/Q38B/I1c receipt source beyond reviewed base and later deployment state"
+  ],
+  "transport_availability": {
+    "systemd": "255 (255.4-1ubuntu8.16)",
+    "systemd_socket_proxyd": {
+      "path": "/usr/lib/systemd/systemd-socket-proxyd",
+      "realpath": "/usr/lib/systemd/systemd-socket-proxyd",
+      "version": "255 (255.4-1ubuntu8.16)"
+    },
+    "nginx": {
+      "path_command_found": false,
+      "standard_binary_found": false
+    },
+    "caddy": {
+      "path_command_found": false,
+      "standard_binary_found": false
+    },
+    "bpf_source_filter_enforcement": "not verified; not selected"
+  }
+}
