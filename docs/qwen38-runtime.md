@@ -100,18 +100,23 @@ Source evidence: [native HTTP setup](https://github.com/sgl-project/sglang/blob/
 The actual architecture is `Qwen3_5ForConditionalGeneration`. Pinned 0.5.19
 registers `qwen3_coder` structured tools and `qwen3` reasoning. The checkpoint's
 pinned template supports assistant tool calls, tool results and absent
-`reasoning_content`. For this source task select:
+`reasoning_content`. Q38C's observed pinned client wire selects:
 
 ```json
-{"reasoning_effort":"none","chat_template_kwargs":{"enable_thinking":false}}
+{"reasoning_effort":"none"}
 ```
 
+The request omits `chat_template_kwargs`. Pinned native request normalization
+inserts `thinking:false` and `enable_thinking:false` for `none` before the
+reviewed false server default is merged. The declarations' false template
+setting remains unchanged; no additional client field is required.
 The server default is `enable_thinking:false`. Native per-request effort can
 override defaults: top-level `xhigh` or `low` can enable thinking. The explicit
 preset must be present in actual fast-agent requests; source defaults alone do
 not bound an existing client that sends `xhigh`. The pinned template otherwise
-defaults omitted effort to xhigh. The new actual-image fixture renders synthetic
-no-thinking tool history, parses structured calls in whole/fragmented form and
+defaults omitted effort to xhigh. The actual-image fixture checks the exact
+ordinary and tool-continuation wire shape through native request normalization
+and prompt preparation, renders synthetic no-thinking history, parses structured calls in whole/fragmented form and
 checks empty-think stripping. It does **not** establish model or client continuation.
 [Pinned template](https://huggingface.co/Qwen/Qwen3.8-27B-FP8/blob/017b9c7af6b5689d5dd426a76e0bc077eb5ca20a/chat_template.jinja),
 [request normalization](https://github.com/sgl-project/sglang/blob/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/entrypoints/openai/protocol.py),
@@ -138,7 +143,7 @@ The public adapter is `lifecycle.qwen38`:
 | `evidence(d, instance)` | Protected actual-image receipt with exact source/image/launcher/fixture identity |
 | `validate_launcher(d, evidence)` | Root-owned mode0644 installed launcher, exact reviewed bytes |
 | `image_environment(image, d)` | Actual Docker inspect of exact digest/config-image/platform/source/env |
-| `verify_runtime_image(image, d, evidence)` | Exact observed OCI identity block agrees with protected auth/installer evidence |
+| `verify_runtime_image(image, d, evidence)` | Exact observed OCI identity block agrees with protected auth/runtime binding evidence |
 | `validate_reused(container, d, evidence, image)` | Exact command/context/GPU/mount/cache/security/network identity |
 | `probe(endpoint, alias, key_file, ...)` | Existing SGLang health-Up + authenticated alias + missing/wrong-key denial |
 
@@ -174,7 +179,7 @@ manifest, matching normal-file constants and focused protection/import tests.
 Recovery stays minimal; normal Q38 dependencies are protected before imports.
 The reserved D3T llama validation and command bodies remain unchanged.
 
-## Generic I1c acquisition / evidence publication
+## Protected acquisition / L2 runtime evidence publication
 
 See [exact acquisition mapping](../reports/q38s-i1c-mapping.md). The new normalized
 manifest SHA256 is `726012378a40f648a104230d3f5ed5d6bc505cbd09b32918fc29aa81c0f075f2`.
@@ -188,7 +193,7 @@ Lifecycle completion is a separate protected seal at
 `binding.path('data','services/llm-manager/acquisition/qwen38-27b-fp8.complete.json')`.
 Runtime auth proof is at
 `binding.path('data','services/llm-manager/evidence/sglang-qwen38-0.5.19.auth.json')`.
-I1c publishes receipts/instance evidence with its anchored writer under the same
+L2 runtime binding publishes receipts/instance evidence with its anchored writer under the same
 lease after validating exact acquired files or exact actual-image results.
 Source/mock test success must never set `verified`, `auth_gate_passed`, installed
 or ready flags in a real instance.
@@ -199,7 +204,7 @@ After source review and separately authorized exact-image acquisition, worker1
 runs from a protected reviewed checkout. `Q38_AUTH_OUTPUT` below is a **new** file
 in a protected directory validated against registered data by the L1 caller;
 it is not a launcher environment override. The helper refuses root-filesystem
-output, symlink/unprotected parents and replacement files. I1c validates and
+output, symlink/unprotected parents and replacement files. L2 validates and
 publishes the resulting receipt using its registered anchored writer.
 
 ```sh
