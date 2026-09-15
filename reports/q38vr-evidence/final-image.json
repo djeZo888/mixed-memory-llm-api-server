@@ -1,0 +1,20 @@
+{
+  "image": {
+    "architecture": "amd64",
+    "config_digest": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
+    "image_default_entrypoint": [
+      "/opt/nvidia/nvidia_entrypoint.sh"
+    ],
+    "image_default_workdir": "/sgl-workspace/sglang",
+    "image_id": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "image_id_domain": "oci_platform_manifest",
+    "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "os": "linux",
+    "platform_manifest_digest": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "source_repository": "https://github.com/sgl-project/sglang",
+    "source_revision": "0bcd822377da7b5718e674eaf9c870d349424dd1"
+  },
+  "pull_performed": false,
+  "status": "PASS",
+  "unchanged_from_prelaunch": true
+}
