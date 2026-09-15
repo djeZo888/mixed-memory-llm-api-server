@@ -1,0 +1,25 @@
+test_checked_in_manifest_and_patch (__main__.CheckedInRecipeTests.test_checked_in_manifest_and_patch) ... ok
+test_cli_help_and_shell_syntax_without_host_actions (__main__.CheckedInRecipeTests.test_cli_help_and_shell_syntax_without_host_actions) ... ok
+test_d1_pins_and_package_layer_are_preserved (__main__.CheckedInRecipeTests.test_d1_pins_and_package_layer_are_preserved) ... ok
+test_ambient_git_environment_cannot_redirect_source_or_index (__main__.SourceTests.test_ambient_git_environment_cannot_redirect_source_or_index) ... ok
+test_check_only_preserves_every_checkout_and_git_file (__main__.SourceTests.test_check_only_preserves_every_checkout_and_git_file) ... ok
+test_exact_apply_records_tree_without_fabricating_commit (__main__.SourceTests.test_exact_apply_records_tree_without_fabricating_commit) ... ok
+test_external_git_object_store_rejected (__main__.SourceTests.test_external_git_object_store_rejected) ... ok
+test_filemode_config_cannot_hide_executable_change (__main__.SourceTests.test_filemode_config_cannot_hide_executable_change) ... ok
+test_fixed_manifest_identities_cannot_retarget (__main__.SourceTests.test_fixed_manifest_identities_cannot_retarget) ... ok
+test_index_flags_cannot_hide_changes (__main__.SourceTests.test_index_flags_cannot_hide_changes) ... ok
+test_manifest_schema_and_digest_shapes (__main__.SourceTests.test_manifest_schema_and_digest_shapes) ... ok
+test_nonancestor_jinja_is_rejected (__main__.SourceTests.test_nonancestor_jinja_is_rejected) ... ok
+test_patch_digest_tampering (__main__.SourceTests.test_patch_digest_tampering) ... ok
+test_source_and_recipe_symlinks_rejected (__main__.SourceTests.test_source_and_recipe_symlinks_rejected) ... ok
+test_tracked_worktree_and_index_dirt (__main__.SourceTests.test_tracked_worktree_and_index_dirt) ... ok
+test_unapplicable_patch_does_not_modify_checkout (__main__.SourceTests.test_unapplicable_patch_does_not_modify_checkout) ... ok
+test_untracked_and_ignored_files_are_rejected (__main__.SourceTests.test_untracked_and_ignored_files_are_rejected) ... ok
+test_wrong_base_commit (__main__.SourceTests.test_wrong_base_commit) ... ok
+test_wrong_derived_tree_fails_before_source_changes (__main__.SourceTests.test_wrong_derived_tree_fails_before_source_changes) ... ok
+test_wrong_upstream_tree (__main__.SourceTests.test_wrong_upstream_tree) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 3.103s
+
+OK

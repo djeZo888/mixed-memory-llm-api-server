@@ -1,0 +1,20 @@
+if(NOT TARGET llama-server-impl)
+    message(FATAL_ERROR "D3P tests require upstream LLAMA_BUILD_COMMON, LLAMA_BUILD_TOOLS and LLAMA_BUILD_SERVER")
+endif()
+if(GGML_METAL OR GGML_CUDA OR GGML_VULKAN OR GGML_SYCL OR GGML_HIP OR GGML_RPC)
+    message(FATAL_ERROR "D3P worker tests require a CPU-only configuration")
+endif()
+if(LLAMA_BUILD_UI OR LLAMA_USE_PREBUILT_UI)
+    message(FATAL_ERROR "D3P worker tests require UI build and prebuilt UI downloads disabled")
+endif()
+
+add_executable(d3p-test-strict-model-chat "${CMAKE_CURRENT_LIST_DIR}/test-strict-model-chat.cpp")
+target_compile_features(d3p-test-strict-model-chat PRIVATE cxx_std_17)
+target_link_libraries(d3p-test-strict-model-chat PRIVATE llama-server-impl)
+add_test(NAME d3p-strict-model-chat COMMAND d3p-test-strict-model-chat)
+set_tests_properties(d3p-strict-model-chat PROPERTIES TIMEOUT 60)
+
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+add_test(NAME d3p-source-integration
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_LIST_DIR}/test-source-integration.py" "${CMAKE_SOURCE_DIR}")
+set_tests_properties(d3p-source-integration PROPERTIES TIMEOUT 30)

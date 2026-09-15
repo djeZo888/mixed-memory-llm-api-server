@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "status": "PASS_SOURCE_AND_FOCUSED_WORKER_TESTS",
+  "project_base_commit": "6cffccbf1927ff610c21cfc6a0bea3b2f14bd85a",
+  "source": {
+    "schema_version": 1,
+    "upstream_repository": "https://github.com/ggml-org/llama.cpp",
+    "upstream_commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+    "upstream_tree": "950999fe62b7fe55f44ab5b7394e3c8542f37f12",
+    "jinja_fix_ancestor": "ae9afff8d2c012ca760eb9c2adf41961cf6f6232",
+    "patch_file": "strict-model-chat.patch",
+    "patch_sha256": "f803f6fe8cd91aaff232f1ca2ebb9ec2ed30269ab524637f744f5fe454558a78",
+    "derived_tree": "aa029cce1a5648ac3673c872518414169a505666"
+  },
+  "build_recipe_sha256": {
+    "containers/llama-cpp/Dockerfile.d3p": "704fe3dcbcddd4497147b2b12b09ac674cb1b7c2ce2b049197620691b6acd92a",
+    "containers/llama-cpp/Dockerfile.d3p.dockerignore": "875afccc85a373f21e7fc8197b2c91ffd6a8ae321aef56767a5099c7fe7d4761",
+    "containers/llama-cpp/build-d3p-runtime.sh": "1ef9df9cacd64a0b5ef10589e36ce0a7a774eacf6ec28dfb11cdd20b204b249b",
+    "containers/llama-cpp/d3p-source.json": "b0a5ff3277a3c9cc3bf8192355797e10e0cf471d696c3ac970ee75c461a0e5b7",
+    "containers/llama-cpp/prepare-d3p-source.py": "e465b44113a097502c7cffb763c251095986a10fdcd5f130c2d362c2a8c03664",
+    "containers/llama-cpp/strict-model-chat.patch": "f803f6fe8cd91aaff232f1ca2ebb9ec2ed30269ab524637f744f5fe454558a78"
+  },
+  "focused_test_sha256": {
+    "containers/llama-cpp/test_d3p_source.py": "b6721c2305dfa6e236e3c55c367e6dac5ceee1b82f391c3f0e0499978405c3fb",
+    "containers/llama-cpp/tests/CMakeLists.txt": "75634264726f517ad91b9ecc8ec5adb2258f912bcb678d44fd1cd4ed6a5b126f",
+    "containers/llama-cpp/tests/README.md": "12e955615665886dedd8846a56fa211a183892fb59c4e9960fcdc9f6d9672d20",
+    "containers/llama-cpp/tests/register-tests.cmake": "0b95d9902c588c55812aad94da0e6d3260a305665ab8d0724a71a1b0ce53f938",
+    "containers/llama-cpp/tests/test-source-integration.py": "d33bf165a514e45a7db05e34602dce3904440e6783f30305e3a4a427edbd9e00",
+    "containers/llama-cpp/tests/test-strict-model-chat.cpp": "c1b7b546589c66c6eeb3594d007bb17b23b016cda76b4636f7876c9dbcd1cc0a"
+  },
+  "evidence_sha256": {
+    "reports/d3p-evidence/ctest.txt": "8a132424ac1dcea5d0ba45091555fa0a541fcd4da24b7b2e2185350f8de219cb",
+    "reports/d3p-evidence/final-checks.txt": "a52d7ab22d587bc9ffb9ead275a21581496833cbee97c2d00c9715fcacaeb399",
+    "reports/d3p-evidence/native-tests.txt": "5d4457d5710b6d131ec8cc6af6b77d13ce5d66f8a45d13ce98e4ef9739f50eeb",
+    "reports/d3p-evidence/recipe-tests.txt": "3ae51d3ee947d57c4a46ec587e69cd65b3d7f668a285240d28af8ad303989f53",
+    "reports/d3p-evidence/source-applied.json": "92e9dbd38902c4936f8b48f888a80fbbb4c4c2ebc42f3c9b08a4e4d4821dbc7b",
+    "reports/d3p-evidence/source-check-only.json": "f3cecfad5a188779d07171197cc083bfb27f9adf1d6b1e6f8a0a87b651c71bd3",
+    "reports/d3p-evidence/source-integration.txt": "826dae6d3fea615e68188dc875936d2415a7a007250a7049198f3836eb863fa7",
+    "reports/d3p-evidence/worker-version.txt": "d51d95aa9d2ca249de3e88f997cfda37e6dbbd7b8a821ee00eb119aa169f3216"
+  },
+  "rollback_unchanged_sha256": {
+    "containers/llama-cpp/Dockerfile": "c79e2e63ab7085a6f0835d9810b855e58f4a57745912c819b2142116ec68d8a9",
+    "containers/llama-cpp/Dockerfile.dockerignore": "50628099759da59c4faa5452f63173533f31bfa39b89d64de35ee08910abd5dc",
+    "scripts/d1/build-runtime.sh": "c42d38be16aef3579dc081d691f09d7a1f6414a498c5ca580c0dc3d78d2976c0",
+    "reports/d1-runtime-proof.json": "93f5ac6c302e10eef8408350d27090c917e150879702d9bfbad1adb803abb760",
+    "configs/runtimes/llama-cpp-v0.4.1-d1.json": "cf313fe24894cc640c91b77fa8432cf31224e69fad17050ea58d1ae73139e4bd"
+  },
+  "policy_inputs": {
+    "d3c_attachment_sha256": "8cdf900ce5ad77d92c00f174a74614b9a89b8a171cd30d0eb8c07be8542387dc",
+    "coordination_revision": 2,
+    "coordination_input_sha256": "ee94fa8fafd8cdbcc3f26de6a164c3c61a7ca6f4fd5be1b30a0ce66d85ea3d77"
+  },
+  "worker": {
+    "os": "macOS 26.6.2 (25G83)",
+    "architecture": "arm64",
+    "compiler": "AppleClang 21.0.0.21000334",
+    "cmake": "4.4.3",
+    "ninja": "1.13.2",
+    "build": "Release CPU; CUDA/Metal/Vulkan/BLAS/Accelerate/OpenSSL/UI disabled",
+    "full_native_target": "llama-server",
+    "focused_ctest": "2/2 PASS",
+    "recipe_tests": "20/20 PASS",
+    "version": "0.4.1-dev (build 10964, commit b29c606e2)"
+  },
+  "local_full_build_evidence_not_bundled": {
+    "../native-configure.log": "7e43b7ff64fd9da25a6931ea04493b5e98c5f17feec325b773244032c2e4839d",
+    "../native-build.log": "8237a48c1bad0365ae1a05a07a46eb0620e7afac6f5f80fe3ab4dad1e7ac12d7",
+    "../native-build/CMakeCache.txt": "4081bfd46b8113c5db364d716ea9ce1410d5d3347bfb802cd8a40eae13bf578a"
+  },
+  "later_build_deploy": {
+    "status": "NOT_PERFORMED",
+    "new_image_id": "NOT_MEASURED",
+    "source_manifest_scope": "strict-model-chat patch only; reviewed combined tree required if D3T patch is later stacked"
+  },
+  "portability": "CPU arm64 plain loopback HTTP/fake downstream tested. New optional Linux runner is legacy ai-vm only; registered hosts refused. Docker/CUDA/TLS/real models/processes not exercised."
+}
