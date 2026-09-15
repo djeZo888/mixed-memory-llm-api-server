@@ -1,0 +1,362 @@
+{
+  "cleanup": {
+    "additional_cleanup_mutations": 0,
+    "created": 1,
+    "independent_exact_id_absence": "PASS",
+    "remaining": 0,
+    "removed": 1,
+    "shipped": "QUIESCENT_REMOVAL_VERIFIED"
+  },
+  "current_source_hashes": {
+    "scripts/lifecycle/qwen38.py": "29f10ad5dab7f7835611c35b552dfaa1e5cafb929416a56b2cf4923f5a2c6276",
+    "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+    "scripts/runtime/sglang38_file_auth.py": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+    "tests/lifecycle/sglang38_fixture/README.md": "45c30af72faf8234dea0216653c5fdf0a8a0fc30195d39fc3ea0f03de37b33ac",
+    "tests/lifecycle/sglang38_fixture/auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+    "tests/lifecycle/sglang38_fixture/cache_probe.py": "f7fcdb1f81fe5f2e1a5be91e8274b1918e64cc622703fd3fb5d2d88cbd26b1c3",
+    "tests/lifecycle/sglang38_fixture/chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+    "tests/lifecycle/sglang38_fixture/provenance.json": "82d8cdfa209fcc914c18394d260ca978d970ff423e87545a9f69f97a8a583987",
+    "tests/lifecycle/sglang38_fixture/run_fixture.py": "954ba40800eed06e3d515d118f24a55ae5755ad8c9632326a8dc4cfd15b2c7ac",
+    "tests/lifecycle/sglang38_fixture/run_pinned_image.py": "b7ab0b200a73267d05e615afef0eaf0e3c277537e7002b1e9c12da853551e643"
+  },
+  "final_guard": {
+    "capacity": {
+      "data_available_bytes": 1339522088960,
+      "model_available_bytes": 2590890250240,
+      "root_available_bytes": 5208526848,
+      "shared_model_filesystem": false
+    },
+    "data": {
+      "device": "8:17",
+      "fstype": "ext4",
+      "mount": "/data",
+      "parents": [
+        "/dev/sdb",
+        "/dev/sdb1"
+      ],
+      "path": "/data",
+      "source": "/dev/sdb1",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "models": {
+      "device": "8:33",
+      "fstype": "ext4",
+      "mount": "/data/models-large",
+      "parents": [
+        "/dev/sdc",
+        "/dev/sdc1"
+      ],
+      "path": "/data/models-large",
+      "source": "/dev/sdc1",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "root_payload_scan": {
+      "files_inspected": 4273,
+      "large_payload_threshold_bytes": 134217728,
+      "status": "pass"
+    },
+    "roots": {
+      "backups": "/data/backups",
+      "build": "/data/build",
+      "containerd": "/data/containerd",
+      "docker": "/data/docker",
+      "hf_cache": "/data/hf-cache",
+      "logs": "/data/logs",
+      "models": "/data/models-large",
+      "secrets": "/data/services/secrets",
+      "services": "/data/services",
+      "state": "/data/services/installer"
+    },
+    "schema_version": 1,
+    "storage_mode": "existing",
+    "verified_roles": [
+      "data",
+      "models"
+    ],
+    "warnings": [
+      "root filesystem has less than 6 GiB free"
+    ]
+  },
+  "guard_authority": "REGISTERED_ONLY",
+  "guards": {
+    "registered-data": {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+        "--json"
+      ],
+      "exit": 0,
+      "result": {
+        "capacity": {
+          "data_available_bytes": 1339522088960,
+          "model_available_bytes": 2590890250240,
+          "root_available_bytes": 5208526848,
+          "shared_model_filesystem": false
+        },
+        "data": {
+          "device": "8:17",
+          "fstype": "ext4",
+          "mount": "/data",
+          "parents": [
+            "/dev/sdb",
+            "/dev/sdb1"
+          ],
+          "path": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        "models": {
+          "device": "8:33",
+          "fstype": "ext4",
+          "mount": "/data/models-large",
+          "parents": [
+            "/dev/sdc",
+            "/dev/sdc1"
+          ],
+          "path": "/data/models-large",
+          "source": "/dev/sdc1",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        },
+        "roots": {
+          "backups": "/data/backups",
+          "build": "/data/build",
+          "containerd": "/data/containerd",
+          "docker": "/data/docker",
+          "hf_cache": "/data/hf-cache",
+          "logs": "/data/logs",
+          "models": "/data/models-large",
+          "secrets": "/data/services/secrets",
+          "services": "/data/services",
+          "state": "/data/services/installer"
+        },
+        "schema_version": 1,
+        "storage_mode": "existing",
+        "verified_roles": [
+          "data",
+          "models"
+        ],
+        "warnings": [
+          "root filesystem has less than 6 GiB free"
+        ]
+      }
+    },
+    "registered-root": {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+        "--root-guard",
+        "--json"
+      ],
+      "exit": 0,
+      "result": {
+        "capacity": {
+          "data_available_bytes": 1339522088960,
+          "model_available_bytes": 2590890250240,
+          "root_available_bytes": 5208526848,
+          "shared_model_filesystem": false
+        },
+        "data": {
+          "device": "8:17",
+          "fstype": "ext4",
+          "mount": "/data",
+          "parents": [
+            "/dev/sdb",
+            "/dev/sdb1"
+          ],
+          "path": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        "models": {
+          "device": "8:33",
+          "fstype": "ext4",
+          "mount": "/data/models-large",
+          "parents": [
+            "/dev/sdc",
+            "/dev/sdc1"
+          ],
+          "path": "/data/models-large",
+          "source": "/dev/sdc1",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        },
+        "root_payload_scan": {
+          "files_inspected": 4273,
+          "large_payload_threshold_bytes": 134217728,
+          "status": "pass"
+        },
+        "roots": {
+          "backups": "/data/backups",
+          "build": "/data/build",
+          "containerd": "/data/containerd",
+          "docker": "/data/docker",
+          "hf_cache": "/data/hf-cache",
+          "logs": "/data/logs",
+          "models": "/data/models-large",
+          "secrets": "/data/services/secrets",
+          "services": "/data/services",
+          "state": "/data/services/installer"
+        },
+        "schema_version": 1,
+        "storage_mode": "existing",
+        "verified_roles": [
+          "data",
+          "models"
+        ],
+        "warnings": [
+          "root filesystem has less than 6 GiB free"
+        ]
+      }
+    }
+  },
+  "historical_D3_baseline": {
+    "require-data-mounted.sh": {
+      "dev": 2065,
+      "execution": "NOT_RUN_REGISTERED_AUTHORITY",
+      "gid": 0,
+      "ino": 67635300,
+      "mode": "0700",
+      "nlink": 1,
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/require-data-mounted.sh",
+      "sha256": "5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f",
+      "uid": 0
+    },
+    "root-disk-guard.sh": {
+      "dev": 2065,
+      "execution": "NOT_RUN_REGISTERED_AUTHORITY",
+      "gid": 0,
+      "ino": 67635301,
+      "mode": "0700",
+      "nlink": 1,
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/root-disk-guard.sh",
+      "sha256": "2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813",
+      "uid": 0
+    }
+  },
+  "installed_closure": {
+    "scripts/common/registered-storage.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833684,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d",
+      "uid": 0
+    },
+    "scripts/install/storage.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833703,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505",
+      "uid": 0
+    }
+  },
+  "mounts": {
+    "/data": {
+      "fsroot": "/",
+      "fstype": "ext4",
+      "maj:min": "8:17",
+      "options": "rw,relatime",
+      "source": "/dev/sdb1",
+      "target": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "/data/models-large": {
+      "fsroot": "/",
+      "fstype": "ext4",
+      "maj:min": "8:33",
+      "options": "rw,relatime",
+      "source": "/dev/sdc1",
+      "target": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    }
+  },
+  "owned_absence": {
+    "id=216f7d148354dd85bc5c1c2225c5b3021d10d9645eedb86d16a002b29e29e44d": {
+      "argv": [
+        "/usr/bin/docker",
+        "container",
+        "ls",
+        "--all",
+        "--no-trunc",
+        "--filter",
+        "id=216f7d148354dd85bc5c1c2225c5b3021d10d9645eedb86d16a002b29e29e44d",
+        "--format",
+        "{{.ID}}"
+      ],
+      "exit": 0,
+      "status": "PASS",
+      "stderr_bytes": 0,
+      "stdout_bytes": 0
+    },
+    "name=^/q38b-fixture-2b459dcbf992ee743e37a5d1602b6ac5$": {
+      "argv": [
+        "/usr/bin/docker",
+        "container",
+        "ls",
+        "--all",
+        "--no-trunc",
+        "--filter",
+        "name=^/q38b-fixture-2b459dcbf992ee743e37a5d1602b6ac5$",
+        "--format",
+        "{{.ID}}"
+      ],
+      "exit": 0,
+      "status": "PASS",
+      "stderr_bytes": 0,
+      "stdout_bytes": 0
+    }
+  },
+  "parents": {
+    "/data": {
+      "dev": 2065,
+      "gid": 0,
+      "ino": 2,
+      "mode": "0755",
+      "nlink": 13,
+      "uid": 0
+    },
+    "/data/build": {
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 21757953,
+      "mode": "2755",
+      "nlink": 19,
+      "uid": 0
+    },
+    "/data/logs": {
+      "dev": 2065,
+      "gid": 1000,
+      "ino": 47972353,
+      "mode": "2755",
+      "nlink": 14,
+      "uid": 0
+    },
+    "/etc/local-ai-server": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 266588,
+      "mode": "0700",
+      "nlink": 2,
+      "uid": 0
+    }
+  },
+  "receipt": "NOT_PRODUCED",
+  "registry": {
+    "dev": 64512,
+    "gid": 0,
+    "ino": 266631,
+    "mode": "0600",
+    "nlink": 1,
+    "sha256": "626db7130b644199f5f632b2ac3c04f86cdd382121573aa6f3825bbca8de9c27",
+    "uid": 0
+  },
+  "status": "PASS_FINAL_CHECKS_FIXTURE_FAIL",
+  "transport": "Worker1 SSH ai-vm",
+  "utc": "2026-09-15T04:18:56.445731+00:00"
+}

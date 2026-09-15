@@ -1,0 +1,21 @@
+{
+  "author_and_committer_required": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>",
+  "checks": {
+    "VM_final_report_guard": "NOT_WRITTEN_OPTIONAL_MIRROR_STOP_SOURCE_MODE_CHANGED",
+    "immediate_postfixture_guards": "PASS",
+    "independent_report_review": "PASS_PRIMARY_RESULT_REPORT_BEFORE_PACKAGING_NOTE",
+    "later_readonly_registered_root_guard": "PASS",
+    "manifest_result_cleanup_consistency": "PASS",
+    "optional_VM_report_mirror": "STOP_BEFORE_WRITE",
+    "scope": "REPORTS_ONLY",
+    "secret_scan": "PASS_NO_MATCHES",
+    "whitespace": "PASS"
+  },
+  "context262144": "NOT_RUN",
+  "executed_source_commit": "56aae9ea64a15bb582f89cd20a770985e8d70eac",
+  "native_fixture": "FAIL131072",
+  "push": "NOT_REQUESTED_NOT_PERFORMED",
+  "receipt": "NONE",
+  "source_tests": "NOT_RERUN_ROOT_REVIEW_FINAL",
+  "status": "PASS_REPORT_ONLY_PRECOMMIT"
+}
