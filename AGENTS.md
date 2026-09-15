@@ -68,3 +68,21 @@ These instructions are durable project rules for agents and operators working in
 3. Qwen/Qwen3.5-122B-A10B.
 4. Qwen/Qwen3.5-397B-A17B.
 5. zai-org/GLM-5.2.
+
+## Fresh installer completion authorization and source ownership
+
+- The reviewed fresh-installer completion authorization supersedes historical
+  per-milestone approval gates for its selected work. A source-only task still
+  authorizes no host installation, service activation, disk mutation or reboot.
+- Fresh hosts use the fixed root-owned `/etc/local-ai-server/storage.json`
+  registration. The historical ai-vm UUID/disk names above are not defaults for
+  another machine. Generic guards verify exact registered data/model mounts;
+  never use environment overrides to bypass installed identities.
+- I1 is a prerequisites boundary, not a complete installer. Full apply must stay
+  fail-closed until I1b integrates every selected required stage and acceptance.
+  Preserve the honest status in `docs/installation.md` and I1 reports.
+- Reuse reviewed lifecycle and V0 client modules. L1 owns lifecycle portability;
+  F1S owns SGLang file auth/runtime profiles. Record an integration gap rather
+  than bypass their contracts or editing concurrently owned source.
+- Server role remains API-only. Client tools run as an explicitly selected
+  ordinary user in an explicit trusted workspace, never installer root.
