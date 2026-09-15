@@ -38,7 +38,7 @@ PROFILE_HASHES = {'reports/q38s-acquisition-manifest.json': '726012378a40f648a10
  'configs/runtimes/sglang-qwen38-0.5.19.json': '09aaddc21fd39b1a4029a75309ac2f87e39d8c191a35dc2fd6fd98db79b26d93',
  'configs/deployments/qwen38-27b-128k.json': 'cee5253c28bd8ff36f33630f27642cc9cdd3857eaa108bd177488efd6a0d133f',
  'configs/deployments/qwen38-27b-256k.json': '462ed5792940890eaa410c3c6dd4996c6723157eee5fb7021ee210ed2f78523a',
- 'tests/lifecycle/sglang38_fixture/provenance.json': '1210f1006a557aba43bf20117b56246ef01c64b89ff4ddc597c40ff1c6d26d2d'}
+ 'tests/lifecycle/sglang38_fixture/provenance.json': 'e82d8e9e83972599594aacc35193290d5ffad096641c6e6c35878fd140ba3910'}
 Q38R_SHA256 = '3df6f2a0a46a33b2b48f62609235ff209e50403d679bd8ee120b941445a87ed0'
 AUTH_CHECKS = (
     'native_routes_and_final_chain', 'native_prepare_and_normalization',
