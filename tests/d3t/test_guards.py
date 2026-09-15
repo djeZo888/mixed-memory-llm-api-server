@@ -62,7 +62,8 @@ def snapshot(context=32768, candidate=False, *, full=True):
             'gpus': [{'index': i, 'uuid': 'GPU-synthetic-%d' % i, 'free_bytes': 16 * guards.GIB,
                       'total_bytes': 96 * guards.GIB} for i in (0, 1)],
             'host_kib': {'MemTotal': 900000000, 'MemAvailable': 400000000, 'SwapTotal': 3000000, 'SwapFree': 2985920},
-            'host_swap_used_kib': 14080, 'process_kib': {'VmRSS': 420000000, 'VmSwap': 0},
+            'host_swap_used_kib': 14080, 'cgroup_swap_current_bytes': 0,
+            'process_kib': {'VmRSS': 420000000, 'VmSwap': 0},
             'vmstat': {'pswpin': 19045, 'pswpout': 35821, 'oom_kill': 0},
             'vmstat_delta': {'pswpin': 0, 'pswpout': 0, 'oom_kill': 0},
             'errors': state['errors'], 'slot_count': state['slot_count'], 'slot_context': state['slot_context'],
@@ -141,7 +142,7 @@ class TelemetryTests(unittest.TestCase):
         modifications = [lambda s: s.update(root_available_bytes=4 * guards.GIB - 1),
                          lambda s: s['gpus'][1].update(free_bytes=16 * guards.GIB - 1),
                          lambda s: s['process_kib'].update(Swap=1),
-                         lambda s: s['vmstat_delta'].update(pswpout=1),
+                         lambda s: s['vmstat_delta'].update(oom_kill=1),
                          lambda s: s['errors'].update(storage=1),
                          lambda s: s['errors'].update(cuda=1),
                          lambda s: s['container'].update(oom_killed=True)]
@@ -167,11 +168,30 @@ class TelemetryTests(unittest.TestCase):
         with self.assertRaisesRegex(guards.Error, 'sample_gap'):
             guards.check_snapshot(sample, previous=previous)
 
-    def test_counter_increase_between_individually_successful_collects_stops(self):
-        previous = snapshot(); previous['timestamp'] -= 1
-        sample = snapshot(); sample['vmstat']['pswpin'] += 1
-        with self.assertRaisesRegex(guards.Error, 'counter_changed'):
-            guards.check_snapshot(sample, previous=previous)
+    def test_host_only_swap_activity_remains_diagnostic_with_owned_zero_swap(self):
+        for full in (False, True):
+            for swapin, swapout, used in ((1, 98, 14081), (0, 3072, 26368), (0, 0, 0)):
+                previous = snapshot(); previous['timestamp'] -= 1
+                sample = snapshot(full=full)
+                sample['vmstat']['pswpin'] += swapin
+                sample['vmstat']['pswpout'] += swapout
+                sample['vmstat_delta'].update(pswpin=swapin, pswpout=swapout)
+                sample['host_kib']['SwapFree'] = sample['host_kib']['SwapTotal'] - used
+                sample['host_swap_used_kib'] = used
+                sample['host_kib']['MemAvailable'] = 64 * guards.GIB // 1024
+                expected = copy.deepcopy(sample)
+                with self.subTest(full=full, swapin=swapin, swapout=swapout, used=used):
+                    self.assertIs(guards.check_snapshot(sample, previous=previous), sample)
+                    self.assertEqual(sample, expected)
+                    self.assertEqual(sample['process_kib']['VmSwap'], 0)
+                    self.assertEqual(sample['cgroup_swap_current_bytes'], 0)
+
+    def test_oom_counter_change_between_individually_successful_collects_stops(self):
+        for full in (False, True):
+            previous = snapshot(); previous['timestamp'] -= 1
+            sample = snapshot(full=full); sample['vmstat']['oom_kill'] += 1
+            with self.subTest(full=full), self.assertRaisesRegex(guards.Error, 'counter_changed'):
+                guards.check_snapshot(sample, previous=previous)
 
     def test_freshness_allows_measured_tiny_clock_skew_but_not_stale_samples(self):
         sample = snapshot()
@@ -273,8 +293,7 @@ class CheckpointSchemaTests(unittest.TestCase):
             'mount': lambda s: s['mounts'].update({'/data': 'wrong'}),
             'gpu': lambda s: s['gpus'][0].update(free_bytes=16 * guards.GIB - 1),
             'target_swap': lambda s: s['process_kib'].update(VmSwap=1),
-            'swapin': lambda s: s['vmstat_delta'].update(pswpin=1),
-            'swapout': lambda s: s['vmstat_delta'].update(pswpout=1),
+            'owned_cgroup_swap': lambda s: s.update(cgroup_swap_current_bytes=1),
             'oom': lambda s: s['vmstat_delta'].update(oom_kill=1),
             'process_stopped': lambda s: s.update(process_state='T'),
             'paused': lambda s: s['container'].update(paused=True),
@@ -291,16 +310,80 @@ class CheckpointSchemaTests(unittest.TestCase):
             with self.subTest(name=name), self.assertRaises(guards.Error):
                 guards.check_snapshot(sample, native=True)
 
-    def test_identity_and_absolute_host_swap_changes_refuse_on_cheap_samples(self):
+    def test_identity_changes_refuse_on_cheap_samples(self):
         for mutate in (lambda s: s.update(process_start_ticks=1001),
                        lambda s: s['container'].update(restart_count=1),
                        lambda s: s['gpus'][0].update(uuid='GPU-other'),
-                       lambda s: s['container'].update(pid=12346),
-                       lambda s: s.update(host_swap_used_kib=14081)):
+                       lambda s: s['container'].update(pid=12346)):
             previous = snapshot(); previous['timestamp'] -= 1
             sample = snapshot(full=False); mutate(sample)
             with self.assertRaises(guards.Error):
                 guards.check_snapshot(sample, previous=previous)
+
+    def test_both_modes_require_fresh_zero_process_and_owned_cgroup_swap(self):
+        missing = object()
+        for full in (False, True):
+            for field in ('VmSwap', 'cgroup_swap_current_bytes'):
+                for value in (missing, None, True, False, '0', 0.0, 1.0, [], {}, -1, 1, 4096, float('nan')):
+                    sample = snapshot(full=full)
+                    parent = sample['process_kib'] if field == 'VmSwap' else sample
+                    if value is missing:
+                        parent.pop(field)
+                    else:
+                        parent[field] = value
+                    with self.subTest(full=full, field=field, value=value), self.assertRaises(guards.Error):
+                        guards.check_snapshot(sample)
+            sample = snapshot(full=full)
+            self.assertIs(guards.check_snapshot(sample), sample)
+
+    def test_host_available_memory_64gib_boundary_is_kib_in_both_modes(self):
+        minimum_kib = 67108864
+        for full in (False, True):
+            for value in (minimum_kib, minimum_kib + 1):
+                sample = snapshot(full=full); sample['host_kib']['MemAvailable'] = value
+                with self.subTest(full=full, accepts=value):
+                    guards.check_snapshot(sample)
+            missing = object()
+            for value in (missing, None, True, False, '67108864', float(minimum_kib), [], {},
+                          -1, 0, minimum_kib - 1, float('nan'), float('inf')):
+                sample = snapshot(full=full)
+                if value is missing:
+                    sample['host_kib'].pop('MemAvailable')
+                else:
+                    sample['host_kib']['MemAvailable'] = value
+                with self.subTest(full=full, refuses=value), self.assertRaises(guards.Error):
+                    guards.check_snapshot(sample)
+
+    def test_host_swap_telemetry_remains_required_nonnegative_integer_diagnostics(self):
+        missing = object()
+        fields = [('host_swap_used_kib', None)] + [(group, key) for group in ('vmstat', 'vmstat_delta')
+                                                  for key in ('pswpin', 'pswpout', 'oom_kill')]
+        for full in (False, True):
+            for group, key in fields:
+                for value in (missing, None, True, False, '0', 0.0, [], {}, -1, float('nan')):
+                    sample = snapshot(full=full)
+                    parent, field = (sample[group], key) if key else (sample, group)
+                    if value is missing:
+                        parent.pop(field)
+                    else:
+                        parent[field] = value
+                    with self.subTest(full=full, group=group, key=key, value=value), self.assertRaises(guards.Error):
+                        guards.check_snapshot(sample)
+
+    def test_host_swap_telemetry_consistency_and_counter_regression_refuse(self):
+        for full in (False, True):
+            for mutate in (lambda s: s.update(host_swap_used_kib=14081),
+                           lambda s: s['host_kib'].update(SwapFree=3000001),
+                           lambda s: s['host_kib'].update(MemTotal=s['host_kib']['MemAvailable'] - 1),
+                           lambda s: s['vmstat_delta'].update(pswpin=s['vmstat']['pswpin'] + 1)):
+                sample = snapshot(full=full); mutate(sample)
+                with self.subTest(full=full, mutate=mutate), self.assertRaises(guards.Error):
+                    guards.check_snapshot(sample)
+            for key in ('pswpin', 'pswpout'):
+                previous = snapshot(); previous['timestamp'] -= 1
+                sample = snapshot(full=full); sample['vmstat'][key] -= 1
+                with self.subTest(full=full, regresses=key), self.assertRaises(guards.Error):
+                    guards.check_snapshot(sample, previous=previous)
 
     def test_checkpoint_gap_is_explicit_and_does_not_widen_cheap_freshness(self):
         previous = snapshot(full=False); previous['timestamp'] -= 5
@@ -375,6 +458,219 @@ class CheckpointSchemaTests(unittest.TestCase):
                     guards._metrics(path, {'VmRSS', 'VmSwap'})
 
 
+class OwnedCgroupPathTests(unittest.TestCase):
+    """Only the exact owned Docker PID may select a unified nonroot cgroup."""
+    def test_actual_shape_systemd_and_cgroupfs_paths_accept_exact_full_container_id(self):
+        for path in ('/system.slice/docker-' + CID + '.scope', '/docker/' + CID):
+            with self.subTest(path=path), mock.patch.object(Path, 'read_bytes', autospec=True,
+                                                         return_value=('0::' + path + '\n').encode()) as read:
+                self.assertEqual(guards._owned_cgroup_path(12345, CID), path)
+                self.assertEqual(str(read.call_args.args[0]), '/proc/12345/cgroup')
+                read.assert_called_once()
+
+    def test_missing_malformed_escaped_root_or_unowned_paths_refuse(self):
+        owned = '/system.slice/docker-' + CID + '.scope'
+        other = 'b' * 64
+        paths = ('', '/', '.', '..', owned[1:], '/sys/fs/cgroup' + owned,
+                 owned + '/', owned + '/child', '/system.slice//docker-' + CID + '.scope',
+                 '/system.slice/../system.slice/docker-' + CID + '.scope',
+                 '/system.slice/./docker-' + CID + '.scope',
+                 '/system.slice/docker-' + other + '.scope',
+                 '/docker/' + other, '/user.slice/docker-' + CID + '.scope',
+                 '/system.slice/docker-' + CID[:12] + '.scope',
+                 '/system.slice/docker-' + CID.upper() + '.scope',
+                 '/docker/' + CID + '/../../', '/docker/' + CID + '\x00')
+        raw_values = [b'', b'\xff', b'0::\n', b'0::/\n', b'\n',
+                      ('1:memory:' + owned + '\n').encode(),
+                      ('0:memory:' + owned + '\n').encode(),
+                      ('0::' + owned + '\n0::' + owned + '\n').encode(),
+                      ('0::' + owned + '\n1:memory:' + owned + '\n').encode(),
+                      ('0::' + owned + ' trailing\n').encode(), b'0::/' + b'x' * 131073]
+        raw_values.extend(('0::' + path + '\n').encode() for path in paths)
+        for raw in raw_values:
+            with self.subTest(raw=raw[:140]), mock.patch.object(Path, 'read_bytes', return_value=raw), \
+                    self.assertRaises(guards.Error):
+                guards._owned_cgroup_path(12345, CID)
+        with mock.patch.object(Path, 'read_bytes', side_effect=FileNotFoundError), self.assertRaises(guards.Error):
+            guards._owned_cgroup_path(12345, CID)
+
+    def test_invalid_pid_and_container_identity_cannot_select_a_path(self):
+        raw = ('0::/system.slice/docker-' + CID + '.scope\n').encode()
+        for pid in (None, True, False, '12345', 12345.0, 0, -1, [], {}):
+            with self.subTest(pid=pid), mock.patch.object(Path, 'read_bytes', return_value=raw), \
+                    self.assertRaises(guards.Error):
+                guards._owned_cgroup_path(pid, CID)
+        for container_id in (None, True, '', CID[:12], CID.upper(), 'b' * 64,
+                             CID + '/..', '/docker/' + CID, [], {}):
+            with self.subTest(container_id=container_id), mock.patch.object(Path, 'read_bytes', return_value=raw), \
+                    self.assertRaises(guards.Error):
+                guards._owned_cgroup_path(12345, container_id)
+
+
+class OwnedCgroupReadTests(unittest.TestCase):
+    """Exercise real anchored open/read logic using a temporary synthetic tree."""
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.path = '/system.slice/docker-' + CID + '.scope'
+        self.leaf = self.root / 'sys/fs/cgroup' / self.path.lstrip('/')
+        self.leaf.mkdir(parents=True)
+        (self.leaf / 'cgroup.procs').write_bytes(b'12345\n12346\n')
+        (self.leaf / 'memory.swap.current').write_bytes(b'0\n')
+        self.mountinfo = b'38 29 0:33 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime - cgroup2 cgroup rw\n'
+        self.mnt_id = 38
+        self.metadata_changes = {}
+        self.fd_mount_ids = {}
+        self.before_open = None
+
+    def collect(self, helper=None):
+        real_open, real_fstat = os.open, os.fstat
+        descriptors = {}
+        def opened(path, flags, *, dir_fd=None):
+            self.assertTrue(flags & os.O_NOFOLLOW)
+            self.assertTrue(flags & os.O_CLOEXEC)
+            if path == '/':
+                self.assertIsNone(dir_fd)
+                actual, logical = str(self.root), '/'
+            else:
+                self.assertIn(dir_fd, descriptors)
+                self.assertNotIn('/', path)
+                actual = path
+                logical = descriptors[dir_fd].rstrip('/') + '/' + path
+            if self.before_open is not None:
+                self.before_open(logical)
+            fd = real_open(actual, flags, dir_fd=dir_fd)
+            descriptors[fd] = logical
+            return fd
+        def metadata(fd):
+            actual = real_fstat(fd)
+            result = dict(st_uid=0, st_mode=actual.st_mode, st_dev=actual.st_dev, st_ino=actual.st_ino)
+            result.update(self.metadata_changes.get(descriptors[fd], {}))
+            return SimpleNamespace(**result)
+        def proc(path):
+            name = str(path)
+            if name == '/proc/12345/cgroup':
+                return ('0::' + self.path + '\n').encode()
+            if name == '/proc/self/mountinfo':
+                return self.mountinfo
+            if name.startswith('/proc/self/fdinfo/'):
+                fd = int(name.rsplit('/', 1)[1])
+                return ('mnt_id:\t%d\n' % self.fd_mount_ids.get(descriptors[fd], self.mnt_id)).encode()
+            raise AssertionError('unexpected synthetic proc read ' + name)
+        with mock.patch.object(guards.os, 'open', side_effect=opened), \
+                mock.patch.object(guards.os, 'fstat', side_effect=metadata), \
+                mock.patch.object(Path, 'read_bytes', autospec=True, side_effect=proc):
+            return (helper or guards._cgroup_swap)(12345, CID)
+
+    def test_actual_shape_anchored_owned_cgroup_reads_bytes_and_stable_identity(self):
+        for raw, expected in ((b'0\n', 0), (b'0', 0), (b'4096\n', 4096)):
+            (self.leaf / 'memory.swap.current').write_bytes(raw)
+            value, identity = self.collect()
+            self.assertEqual(value, expected)
+            self.assertEqual(identity, (self.path, 38,
+                                       ((self.root / 'sys/fs/cgroup').stat().st_dev,
+                                        (self.root / 'sys/fs/cgroup').stat().st_ino),
+                                       (self.leaf.stat().st_dev, self.leaf.stat().st_ino)))
+            sample = snapshot(); sample['cgroup_swap_current_bytes'] = value
+            if expected:
+                with self.assertRaises(guards.Error): guards.check_snapshot(sample)
+            else:
+                guards.check_snapshot(sample)
+
+    def test_cgroupfs_actual_shape_accepts_under_same_protected_v2_root(self):
+        self.path = '/docker/' + CID
+        self.leaf = self.root / 'sys/fs/cgroup' / self.path.lstrip('/')
+        self.leaf.mkdir(parents=True)
+        (self.leaf / 'cgroup.procs').write_bytes(b'12345\n')
+        (self.leaf / 'memory.swap.current').write_bytes(b'0\n')
+        value, identity = self.collect()
+        self.assertEqual(value, 0)
+        self.assertEqual(identity[0], self.path)
+
+    def test_shipped_payload_executes_owned_cgroup_dependency_closure_without_dispatch(self):
+        source = guards._source(CID, PATCHED, 1048576, 600)
+        definitions, invocation = source.rsplit('\n_remote_main(', 1)
+        self.assertTrue(invocation.startswith(repr(CID)))
+        namespace = {}
+        exec(compile(definitions, '<synthetic-d3swap-payload>', 'exec'), namespace)
+        self.assertEqual(self.collect(helper=namespace['_cgroup_swap']), self.collect())
+
+    def test_missing_malformed_and_oversized_current_never_become_zero(self):
+        for raw in (b'', b'\n', b'-1\n', b'0.0\n', b'false\n', b'null\n', b'0 0\n',
+                    b'0\n0\n', b'0 kB\n', b' 0\n', b'0\r\n', b'\xff', b'0' * 65537):
+            (self.leaf / 'memory.swap.current').write_bytes(raw)
+            with self.subTest(raw=raw[:100]), self.assertRaises(guards.Error):
+                self.collect()
+        (self.leaf / 'memory.swap.current').unlink()
+        with self.assertRaises(guards.Error): self.collect()
+
+    def test_only_whole_root_cgroup2_mount_and_exact_fd_mount_identity_accept(self):
+        actual = self.mountinfo
+        for raw in (b'', b'bad\n', actual + actual, actual.replace(b' - cgroup2 ', b' - cgroup '),
+                    actual.replace(b' / /sys/fs/cgroup ', b' /docker /sys/fs/cgroup '),
+                    actual.replace(b'38 ', b'x ', 1), actual.replace(b' /sys/fs/cgroup ', b' /sys/fs/other '),
+                    actual.replace(b' - ', b' : '), b'x' * 131073, b'\xff'):
+            self.mountinfo = raw
+            with self.subTest(raw=raw[:100]), self.assertRaises(guards.Error): self.collect()
+        self.mountinfo = actual
+        for path in ('/sys/fs/cgroup', '/sys/fs/cgroup/system.slice',
+                     '/sys/fs/cgroup' + self.path, '/sys/fs/cgroup' + self.path + '/memory.swap.current'):
+            self.fd_mount_ids = {path: 39}
+            with self.subTest(fd_path=path), self.assertRaises(guards.Error): self.collect()
+
+    def test_unprotected_ancestry_or_file_identity_refuses(self):
+        paths = ('/', '/sys', '/sys/fs', '/sys/fs/cgroup', '/sys/fs/cgroup/system.slice',
+                 '/sys/fs/cgroup' + self.path,
+                 '/sys/fs/cgroup' + self.path + '/memory.swap.current',
+                 '/sys/fs/cgroup' + self.path + '/cgroup.procs')
+        for path in paths:
+            for change in ({'st_uid': 1000}, {'st_mode': 0o40777}):
+                self.metadata_changes = {path: change}
+                with self.subTest(path=path, change=change), self.assertRaises(guards.Error): self.collect()
+        self.metadata_changes = {'/sys/fs/cgroup' + self.path + '/memory.swap.current': {'st_dev': -1}}
+        with self.assertRaises(guards.Error): self.collect()
+
+    def test_missing_invalid_or_changed_owned_pid_membership_refuses(self):
+        for raw in (b'', b'1\n', b'123450\n', b'12345', b'012345\n', b'12345\ninvalid\n', b'12345 1\n'):
+            (self.leaf / 'cgroup.procs').write_bytes(raw)
+            with self.subTest(raw=raw), self.assertRaises(guards.Error): self.collect()
+        (self.leaf / 'cgroup.procs').write_bytes(b'12345\n')
+        calls = [0]
+        def move_after_counter(path):
+            if path.endswith('/cgroup.procs'):
+                calls[0] += 1
+                if calls[0] == 2:
+                    (self.leaf / 'cgroup.procs').write_bytes(b'12346\n')
+        self.before_open = move_after_counter
+        with self.assertRaises(guards.Error): self.collect()
+        self.assertEqual(calls[0], 2)
+
+    def test_symlink_metric_or_ancestor_cannot_escape_anchored_root(self):
+        outside = self.root / 'unrelated-zero'
+        outside.write_bytes(b'0\n')
+        metric = self.leaf / 'memory.swap.current'
+        metric.unlink(); metric.symlink_to(outside)
+        with self.assertRaises(guards.Error): self.collect()
+        metric.unlink(); metric.write_bytes(b'0\n')
+        ancestor = self.root / 'sys/fs/cgroup/system.slice'
+        moved = ancestor.with_name('unrelated.slice')
+        ancestor.rename(moved); ancestor.symlink_to(moved, target_is_directory=True)
+        with self.assertRaises(guards.Error): self.collect()
+
+    def test_replaced_cgroup_inode_during_sample_cannot_accept_old_open_directory(self):
+        calls = [0]
+        def replace_after_counter(path):
+            if path.endswith('/cgroup.procs'):
+                calls[0] += 1
+                if calls[0] == 2:
+                    self.leaf.rename(self.leaf.with_name('unrelated-old-group'))
+                    self.leaf.mkdir()
+        self.before_open = replace_after_counter
+        with self.assertRaisesRegex(guards.Error, 'owned_cgroup_changed'): self.collect()
+        self.assertEqual(calls[0], 2)
+
+
 class CollectorTests(unittest.TestCase):
     """Run real collection/parsing logic against explicit synthetic proc/CLI IO."""
     def setUp(self):
@@ -386,6 +682,12 @@ class CollectorTests(unittest.TestCase):
         self.uuid = guards.MOUNTS['/data']
         self.filesystem = 'ext4'
         self.kernel = ''
+        self.cgroup_swap = 0
+        self.cgroup_identity = ('/system.slice/docker-' + CID + '.scope', 38, (10, 20), (10, 21))
+        self.host_swap_free = 2985920
+        self.swapin = 19045
+        self.swapout = 35821
+        self.oom_kill = 0
         self.log_path = '/data/docker/containers/' + CID + '/synthetic-json.log'
         lines = ['llama threadpool init, n_threads = 112',
                  'initializing, n_slots = 1, n_ctx_slot = 32768', *diagnostic(32768)]
@@ -413,6 +715,7 @@ class CollectorTests(unittest.TestCase):
             def read_text(self, *args, **kwargs): return self.read_bytes().decode()
         for patcher in (mock.patch.object(guards, 'Path', VirtualPath),
                         mock.patch.object(guards, '_run', side_effect=self.command),
+                        mock.patch.object(guards, '_cgroup_swap', side_effect=self.owned_cgroup, create=True),
                         mock.patch.object(guards.os, 'statvfs', return_value=SimpleNamespace(
                             f_bavail=8 * guards.GIB // 4096, f_frsize=4096))):
             patcher.start(); self.addCleanup(patcher.stop)
@@ -426,15 +729,22 @@ class CollectorTests(unittest.TestCase):
             self.status_reads += 1
             return ('Name:\tllama-server\nVmRSS: %d kB\nVmSwap: 0 kB\n'
                     % (420000000 + self.status_reads)).encode()
+        if path == '/proc/12345/cgroup':
+            return ('0::' + self.cgroup_identity[0] + '\n').encode()
         if path == '/proc/12345/smaps_rollup':
             self.rollup_reads += 1
             return ('Rss: 420000000 kB\nPss: %d kB\nSwap: 0 kB\n'
                     % (412000000 + self.rollup_reads)).encode()
         if path == '/proc/meminfo':
-            return b'MemTotal: 900000000 kB\nMemAvailable: 400000000 kB\nSwapTotal: 3000000 kB\nSwapFree: 2985920 kB\n'
+            return ('MemTotal: 900000000 kB\nMemAvailable: 400000000 kB\nSwapTotal: 3000000 kB\nSwapFree: %d kB\n'
+                    % self.host_swap_free).encode()
         if path == '/proc/vmstat':
-            return b'pswpin 19045\npswpout 35821\noom_kill 0\n'
+            return ('pswpin %d\npswpout %d\noom_kill %d\n' % (self.swapin, self.swapout, self.oom_kill)).encode()
         raise AssertionError('unanticipated synthetic proc path ' + path)
+
+    def owned_cgroup(self, pid, container_id):
+        self.assertEqual((pid, container_id), (12345, CID))
+        return self.cgroup_swap, self.cgroup_identity
 
     def command(self, argv, limit=65536):
         if argv[0] == 'docker':
@@ -471,6 +781,88 @@ class CollectorTests(unittest.TestCase):
             self.assertEqual(sample['sample_kind'], 'cheap')
             self.assertEqual(set(sample['process_kib']), {'VmRSS', 'VmSwap'})
             self.assertEqual(sample['native'], admission['native'])
+            self.assertEqual(sample['cgroup_swap_current_bytes'], 0)
+
+    def test_collector_preserves_fresh_host_swap_counters_usage_and_deltas(self):
+        first = self.collect(True)
+        self.swapin += 1
+        self.swapout += 98
+        self.host_swap_free -= 392
+        cheap = self.collect(False)
+        self.assertEqual(cheap['vmstat'], {'pswpin': 19046, 'pswpout': 35919, 'oom_kill': 0})
+        self.assertEqual(cheap['vmstat_delta'], {'pswpin': 1, 'pswpout': 98, 'oom_kill': 0})
+        self.assertEqual(cheap['host_swap_used_kib'], first['host_swap_used_kib'] + 392)
+        self.assertEqual(cheap['process_kib']['VmSwap'], 0)
+        self.assertEqual(cheap['cgroup_swap_current_bytes'], 0)
+        self.assertEqual(self.rollup_reads, 1)
+
+    def test_new_owned_cgroup_swap_refuses_in_both_modes(self):
+        self.collect(True)
+        self.cgroup_swap = 4096
+        for full in (False, True):
+            with self.subTest(full=full), self.assertRaises(guards.Error):
+                self.collect(full)
+        self.assertEqual(self.rollup_reads, 1)
+        self.assertEqual(self.status_reads, 1)
+
+    def test_final_cgroup_read_retains_actual_nonzero_and_refuses_in_both_modes(self):
+        for full in (False, True):
+            with self.subTest(full=full), mock.patch.object(guards, '_cgroup_swap', side_effect=[
+                    (0, self.cgroup_identity), (4096, self.cgroup_identity)]) as reads:
+                sample = guards._local_snapshot(CID, PATCHED, 32768, self.state, full=full)
+                self.assertEqual(reads.call_count, 2)
+                self.assertEqual(sample['cgroup_swap_current_bytes'], 4096)
+                with self.assertRaisesRegex(guards.Error, 'owned_cgroup_swap_in_use'):
+                    guards.validate_snapshot(sample)
+
+    def test_same_path_leaf_or_mount_replacement_during_whole_sample_refuses(self):
+        original = self.cgroup_identity
+        changed = ((original[0], 39, original[2], original[3]),
+                   (original[0], 38, (10, 200), original[3]),
+                   (original[0], 38, original[2], (10, 210)))
+        for full in (False, True):
+            for identity in changed:
+                with self.subTest(full=full, identity=identity), mock.patch.object(guards, '_cgroup_swap',
+                        side_effect=[(0, original), (0, identity)]) as reads, \
+                        self.assertRaisesRegex(guards.Error, 'owned_cgroup_changed'):
+                    self.collect(full)
+                self.assertEqual(reads.call_count, 2)
+
+    def test_owned_cgroup_identity_change_between_samples_refuses(self):
+        self.collect(True)
+        self.cgroup_identity = (*self.cgroup_identity[:3], (10, 22))
+        with self.assertRaises(guards.Error):
+            self.collect(False)
+
+    def test_owned_cgroup_path_change_during_sample_refuses(self):
+        for full in (False, True):
+            with self.subTest(full=full), mock.patch.object(guards, '_owned_cgroup_path',
+                    return_value='/docker/' + CID), self.assertRaises(guards.Error):
+                self.collect(full)
+
+    def test_pid_reuse_during_sampling_refuses_even_with_unchanged_container_pid(self):
+        for full in (False, True):
+            with self.subTest(full=full), mock.patch.object(guards, '_process_identity',
+                    side_effect=[(1000, 'S'), (1001, 'S')]), self.assertRaises(guards.Error):
+                self.collect(full)
+
+    def test_inspected_container_pid_or_identity_change_during_sample_refuses(self):
+        for field, value in (('Id', 'b' * 64), ('Image', guards.BASELINE_IMAGE),
+                             ('Pid', 12346), ('StartedAt', '2026-09-15T03:00:00Z'), ('RestartCount', 1)):
+            inspected = [0]
+            def command(argv, limit=65536):
+                if argv[0] != 'docker':
+                    return self.command(argv, limit)
+                inspected[0] += 1
+                container = copy.deepcopy(self.container)
+                if inspected[0] > 1:
+                    target = container['State'] if field in ('Pid', 'StartedAt') else container
+                    target[field] = value
+                return json.dumps([container])
+            with self.subTest(field=field), mock.patch.object(guards, '_run', side_effect=command), \
+                    self.assertRaises(guards.Error):
+                self.collect(False)
+            self.assertEqual(inspected[0], 2)
 
     def test_cheap_keeps_exact_mount_process_and_incremental_native_log_refusals(self):
         self.collect(True)

@@ -193,18 +193,34 @@ cannot prove server cancellation; retain ownership until root reconciles it.
 ## Resource and native selection evidence
 
 The concrete adapter verifies exact current-D3 ext4 mount UUIDs and root free>=4GiB,
-both GPU free>=16GiB, target process swap0, no new host swap activity, no new
-CUDA/OOM/storage errors, and RSS/PSS/MemAvailable. Historical host swap usage is
-reported separately, not silently treated as current request swapping. Live owner
+both GPU free>=16GiB, host MemAvailable>=64GiB (67,108,864KiB), fresh target
+process VmSwap0 and owned Docker cgroup-v2 memory.swap.current0, no new
+CUDA/OOM/storage errors, and RSS/PSS. Full checkpoints also require measured Swap0.
+Host swap usage and page counters/deltas remain fresh measured diagnostics;
+host-only usage or activity does not independently abort or establish model
+causation. Missing/invalid counters or counter regression still refuse. Live owner
 runs the existing common storage/root guards before and after lifecycle changes.
 
 A bounded1Hz sampler retains private **cheap** rows: fresh `VmRSS`/`VmSwap`
 from `/proc/PID/status`, process start ticks/state, container state/identity,
 MemAvailable, GPU identity/free memory, exact ext4 mounts/root space, swap/OOM
 counters and the existing complete bounded native graph/cache/runtime/error log
-checks. Cheap rows never read `smaps_rollup` and reject PSS/rollup Swap fields.
+checks. Every row also reads the owned cgroup's `memory.swap.current` in bytes.
+Cheap rows never read `smaps_rollup` and reject PSS/rollup Swap fields.
 Measurements, freshness and gaps must each fit the existing two-second cheap
 window (250ms future clock tolerance). No stale measurement is substituted.
+
+The cgroup comes only from the exact Docker-inspected model PID's single unified
+`/proc/PID/cgroup` entry. Accepted whole-host paths are
+`/system.slice/docker-<full-container-id>.scope` and `/docker/<full-container-id>`.
+Root/other/escaped/nested paths, missing v2 evidence and caller overrides refuse.
+Anchored no-symlink directory traversal below protected `/sys/fs/cgroup` verifies
+root ownership, whole-root cgroup2 mount identity, open-file mount IDs and stable
+directory device/inode identity. The exact PID must appear in `cgroup.procs`
+before/after the counter read. PID start identity and Docker identity/state are
+checked before/after sampling, and the cgroup identity remains bound across rows.
+Any missing, malformed or nonzero owned swap measurement stops. These are sampled
+observations; they do not establish absence of transient swap between samples.
 
 Actual `smaps_rollup` Rss/Pss/Swap is required at admission, immediately before
 each request and after each request. The request's single sampler starts with a
@@ -244,6 +260,14 @@ Unfused64GiB score path is outside budget and blocks occupancy.
 
 Telemetry snapshots are schema2 with `sample_kind: cheap|full`. Every snapshot
 has `process_kib.VmRSS/VmSwap`; full snapshots alone add measured `Rss/Pss/Swap`.
+Both kinds additionally require `cgroup_swap_current_bytes`, a fresh JSON integer
+byte count equal to0; bool/float/string/null/missing values refuse. This is the
+only added field. Host `vmstat.pswpin/pswpout` and matching `vmstat_delta` remain
+nonnegative integer page counts; `host_swap_used_kib` equals the current
+`host_kib.SwapTotal - host_kib.SwapFree` in KiB. OOM delta must remain0 and its
+absolute counter must remain unchanged from admission through post checkpoint.
+Older schema2 rows without the new mandatory cgroup measurement also refuse;
+historical rows are not filled with inferred zeroes.
 Old schema1 admission files are not silently upgraded or accepted as fresh
 checkpoints. Existing historical run artifacts remain unchanged.
 

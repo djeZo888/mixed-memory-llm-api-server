@@ -590,7 +590,7 @@ def worker(run, transport=Transfer, sampler_factory=None):
             guards.validate_snapshot(admission)
             require(admission['sample_kind'] == 'full', 'full_memory_admission_required')
             require(guards.stable_identity(first) == guards.stable_identity(admission), 'bound_runtime_restarted_or_changed')
-            require(first['vmstat'] == admission['vmstat'], 'swap_or_oom_since_admission')
+            require(first['vmstat']['oom_kill'] == admission['vmstat']['oom_kill'], 'oom_since_admission')
             guards.check_snapshot(first, native=phase_for(s['stage']) == 'native',
                                   previous=admission, checkpoint=True)
             count = 0

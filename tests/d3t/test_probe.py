@@ -55,6 +55,7 @@ class SyntheticSampler:
             'host_kib': {'MemTotal': 900 * 1024 ** 2, 'MemAvailable': 400 * 1024 ** 2,
                          'SwapTotal': 3000000, 'SwapFree': 2985920},
             'host_swap_used_kib': 14080,
+            'cgroup_swap_current_bytes': 0,
             'process_kib': {'VmRSS': 420 * 1024 ** 2, 'VmSwap': 0},
             'native': {'n_ctx': context, 'n_ctx_seq': context, 'n_seq_max': 1,
                        'n_batch': 2048, 'n_ubatch': 512, 'flash_attn': 1, 'fused_lid': 1,
@@ -508,7 +509,7 @@ class DriverTests(unittest.TestCase):
         self.assertEqual(len(self.transfers), 1)
         self.transfers[-1].cancel.assert_called()
 
-    def test_inflight_samples_stay_cheap_and_post_checkpoint_is_requested_once(self):
+    def test_host_only_swap_since_admission_and_inflight_stays_diagnostic_with_one_post(self):
         probe.prepare(self.run, 'baseline', accountant=self.accountant)
         samplers, rows = [], []
         owner = self
@@ -527,6 +528,12 @@ class DriverTests(unittest.TestCase):
                     inner.buffered_cheap = False
                 else:
                     sample = super().next(timeout)
+                # Admission is 0/0 host page counters. The fresh pre-request,
+                # cheap and post rows all carry real-shaped unrelated activity.
+                sample['vmstat'].update(pswpin=inner.reads, pswpout=98 * inner.reads)
+                sample['vmstat_delta'].update(pswpin=inner.reads - 1, pswpout=98 * (inner.reads - 1))
+                sample['host_swap_used_kib'] += inner.reads
+                sample['host_kib']['SwapFree'] -= inner.reads
                 rows.append(copy.deepcopy(sample))
                 if inner.reads >= 5 and owner.transfers:
                     owner.transfers[-1].done.set()
@@ -545,6 +552,10 @@ class DriverTests(unittest.TestCase):
         self.assertGreaterEqual(len(rows[1:-1]), 4)
         self.assertTrue(all(row['sample_kind'] == 'cheap' for row in rows[1:-1]))
         self.assertTrue(all(set(row['process_kib']) == {'VmRSS', 'VmSwap'} for row in rows[1:-1]))
+        self.assertTrue(all(row['cgroup_swap_current_bytes'] == 0 for row in rows))
+        saved = [json.loads(line) for line in probe.private_read(self.run / 'baseline.cold.samples.jsonl').splitlines()]
+        self.assertEqual([row['vmstat'] for row in saved], [row['vmstat'] for row in rows])
+        self.assertEqual([row['host_swap_used_kib'] for row in saved], [row['host_swap_used_kib'] for row in rows])
         result = self.state()['stages']['baseline']['results'][0]
         self.assertNotIn('pss_max_kib', result['sampled_extrema'])
         self.assertEqual(set(result['memory_checkpoints']), {'admission', 'pre_request', 'post_request'})
@@ -553,6 +564,51 @@ class DriverTests(unittest.TestCase):
         self.assertIs(operation['transfer_done'], True)
         self.assertIs(operation['backend_response_complete'], True)
         self.assertEqual(operation['http_status'], 200)
+
+    def test_owned_cgroup_swap_before_dispatch_refuses_one_attempt(self):
+        probe.prepare(self.run, 'baseline', accountant=self.accountant)
+        class SwappedPre(SyntheticSampler):
+            def next(inner, timeout):
+                sample = super().next(timeout)
+                sample['cgroup_swap_current_bytes'] = 1
+                return sample
+        transport = Mock()
+        self.dispatch(transport=transport, sampler=SwappedPre)
+        transport.assert_not_called()
+        self.assertEqual(self.state()['failure_class'], 'owned_cgroup_swap_in_use')
+        self.assertIsNone(self.state()['highest_proven_window'])
+        with self.assertRaises(AgentError):
+            probe.launch(self.run)
+
+    def test_oom_since_admission_still_refuses_dispatch(self):
+        probe.prepare(self.run, 'baseline', accountant=self.accountant)
+        class OomPre(SyntheticSampler):
+            def next(inner, timeout):
+                sample = super().next(timeout)
+                # A new sampler resets its local delta; admission still binds OOM.
+                sample['vmstat']['oom_kill'] = 1
+                return sample
+        transport = Mock()
+        self.dispatch(transport=transport, sampler=OomPre)
+        transport.assert_not_called()
+        self.assertEqual(self.state()['failure_class'], 'oom_since_admission')
+
+    def test_missing_owned_cgroup_post_refuses_pass_and_retains_complete_response(self):
+        probe.prepare(self.run, 'baseline', accountant=self.accountant)
+        class MissingPost(SyntheticSampler):
+            def next(inner, timeout):
+                sample = super().next(timeout)
+                if inner.full_requested:
+                    sample.pop('cgroup_swap_current_bytes')
+                return sample
+        self.dispatch(sampler=MissingPost)
+        self.assertEqual(len(self.transfers), 1)
+        self.assertEqual(self.state()['status'], 'PENDING_RECONCILIATION')
+        self.assertIsNone(self.state()['highest_proven_window'])
+        self.assertEqual(self.state()['stages']['baseline']['results'], [])
+        operation = probe.read_json(self.run / 'baseline.cold.operation.json')
+        self.assertIs(operation['backend_response_complete'], True)
+        self.assertTrue(operation['raw_available'])
 
     def test_missing_pre_request_pss_stops_before_dispatch(self):
         probe.prepare(self.run, 'baseline', accountant=self.accountant)

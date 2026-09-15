@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import select
+import stat
 import subprocess
 import sys
 import time
@@ -119,20 +120,32 @@ def validate_snapshot(sample):
         names = {"VmRSS", "VmSwap"} | ({"Rss", "Pss", "Swap"} if full else set())
         if set(process) != names or any(type(process[key]) is not int or process[key] < 0 for key in names):
             raise Error("missing_or_invalid_memory_measurement")
-        if type(host["MemAvailable"]) is not int or host["MemAvailable"] <= 0 or process["VmRSS"] <= 0:
+        if (any(type(host[key]) is not int or host[key] < 0 for key in
+                ("MemTotal", "MemAvailable", "SwapTotal", "SwapFree"))
+                or host["MemAvailable"] > host["MemTotal"] or host["SwapFree"] > host["SwapTotal"]
+                or process["VmRSS"] <= 0):
             raise Error("missing_or_invalid_memory_measurement")
+        if host["MemAvailable"] < 64 * GIB // 1024:
+            raise Error("host_below_64gib_available")
         if full and not 0 < process["Pss"] <= process["Rss"]:
             raise Error("missing_or_invalid_memory_measurement")
         if process["VmSwap"] != 0 or full and process["Swap"] != 0:
             raise Error("target_process_swap_in_use")
-        if type(sample["host_swap_used_kib"]) is not int or sample["host_swap_used_kib"] < 0:
+        if type(sample["cgroup_swap_current_bytes"]) is not int or sample["cgroup_swap_current_bytes"] < 0:
+            raise Error("missing_or_invalid_cgroup_swap")
+        if sample["cgroup_swap_current_bytes"] != 0:
+            raise Error("owned_cgroup_swap_in_use")
+        if (type(sample["host_swap_used_kib"]) is not int
+                or sample["host_swap_used_kib"] != host["SwapTotal"] - host["SwapFree"]):
             raise Error("missing_or_invalid_memory_measurement")
         if any(type(sample["vmstat"][key]) is not int or sample["vmstat"][key] < 0
                for key in ("pswpin", "pswpout", "oom_kill")):
             raise Error("missing_or_invalid_telemetry")
-        if any(type(sample["vmstat_delta"][key]) is not int or sample["vmstat_delta"][key] != 0
+        if any(type(sample["vmstat_delta"][key]) is not int or not 0 <= sample["vmstat_delta"][key] <= sample["vmstat"][key]
                for key in ("pswpin", "pswpout", "oom_kill")):
-            raise Error("swap_or_oom_counter_increased")
+            raise Error("missing_or_invalid_telemetry")
+        if sample["vmstat_delta"]["oom_kill"] != 0:
+            raise Error("oom_counter_increased")
         if any(type(sample["errors"][key]) is not int or sample["errors"][key] != 0 for key in ERROR_PATTERNS):
             raise Error("runtime_cuda_oom_storage_or_fusion_error")
         if sample["slot_count"] != 1 or sample["slot_context"] != sample["required_context"]:
@@ -221,6 +234,117 @@ def _metrics(path, names, unit="kB"):
     return result
 
 
+def _process_identity(pid):
+    raw = Path("/proc/%d/stat" % pid).read_bytes()
+    if len(raw) > 65536:
+        raise Error("proc_read_bound_exceeded")
+    prefix, sep, tail = raw.decode().rpartition(") ")
+    fields = tail.split()
+    if (not sep or not prefix.startswith(str(pid) + " (") or len(fields) < 20
+            or fields[0] not in ("R", "S", "D", "I")
+            or not re.fullmatch(r"[0-9]+", fields[19]) or int(fields[19]) <= 0):
+        raise Error("process_identity_or_state_invalid")
+    return int(fields[19]), fields[0]
+
+
+def _owned_cgroup_path(pid, container_id):
+    """Accept only canonical whole-host Docker v2 groups for the exact PID/ID."""
+    if (type(pid) is not int or pid <= 0 or not isinstance(container_id, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", container_id)):
+        raise Error("owned_cgroup_identity_invalid")
+    try:
+        raw = Path("/proc/%d/cgroup" % pid).read_bytes()
+    except OSError:
+        raise Error("owned_cgroup_unavailable_or_invalid") from None
+    if len(raw) > 4096:
+        raise Error("owned_cgroup_path_invalid")
+    allowed = ("/system.slice/docker-" + container_id + ".scope", "/docker/" + container_id)
+    for path in allowed:
+        if raw in (("0::" + path + "\n").encode(), ("0::" + path).encode()):
+            return path
+    raise Error("owned_cgroup_path_invalid")
+
+
+def _cgroup_swap(pid, container_id):
+    """Read only the owned group's v2 byte counter through protected dir fds."""
+    path = _owned_cgroup_path(pid, container_id)
+    descriptors = []
+    identities = []
+    components = ["sys", "fs", "cgroup"] + path.lstrip("/").split("/")
+    try:
+        fd = os.open("/", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        descriptors.append(fd)
+        metadata = os.fstat(fd)
+        if metadata.st_uid != 0 or metadata.st_mode & 0o022:
+            raise Error("cgroup_ancestry_unprotected")
+        for component in components:
+            parent = fd
+            fd = os.open(component, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                         dir_fd=parent)
+            descriptors.append(fd)
+            metadata = os.fstat(fd)
+            if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != 0 or metadata.st_mode & 0o022:
+                raise Error("cgroup_ancestry_unprotected")
+            identities.append((metadata.st_dev, metadata.st_ino))
+        root_fd, leaf_fd = descriptors[3], descriptors[-1]
+        raw = Path("/proc/self/mountinfo").read_bytes()
+        if len(raw) > 131072:
+            raise Error("cgroup_mount_identity_invalid")
+        mounts = [line.split() for line in raw.decode().splitlines()]
+        matches = [row for row in mounts if len(row) >= 10 and row[4] == "/sys/fs/cgroup"]
+        if len(matches) != 1:
+            raise Error("cgroup_mount_identity_invalid")
+        mount = matches[0]
+        separator = mount.index("-")
+        if (separator < 6 or len(mount) < separator + 4
+                or mount[3] != "/" or mount[separator + 1] != "cgroup2"
+                or not re.fullmatch(r"[0-9]+", mount[0])):
+            raise Error("cgroup_mount_identity_invalid")
+        mount_id = int(mount[0])
+        # fdinfo binds the opened directories to this exact whole-root v2 mount,
+        # including refusal of bind-mounted descendants or a replaced root.
+        for current in descriptors[3:]:
+            if _metrics("/proc/self/fdinfo/%d" % current, {"mnt_id"}, unit=None)["mnt_id"] != mount_id:
+                raise Error("cgroup_mount_identity_invalid")
+
+        def read_owned(name):
+            opened = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK, dir_fd=leaf_fd)
+            with os.fdopen(opened, "rb") as handle:
+                metadata = os.fstat(handle.fileno())
+                if (not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != 0
+                        or metadata.st_mode & 0o022 or metadata.st_dev != os.fstat(root_fd).st_dev
+                        or _metrics("/proc/self/fdinfo/%d" % handle.fileno(), {"mnt_id"}, unit=None)["mnt_id"] != mount_id):
+                    raise Error("cgroup_file_identity_invalid")
+                data = handle.read(65537)
+                if len(data) > 65536:
+                    raise Error("cgroup_read_bound_exceeded")
+                return data
+
+        def member():
+            raw = read_owned("cgroup.procs")
+            if not re.fullmatch(rb"(?:[1-9][0-9]*\n)+", raw) or str(pid).encode() not in raw.splitlines():
+                raise Error("owned_pid_not_in_cgroup")
+
+        member()
+        raw = read_owned("memory.swap.current")
+        if not re.fullmatch(rb"[0-9]+\n?", raw):
+            raise Error("cgroup_swap_metric_invalid")
+        value = int(raw)
+        member()
+        if _owned_cgroup_path(pid, container_id) != path:
+            raise Error("owned_cgroup_changed")
+        for index, component in enumerate(components):
+            metadata = os.stat(component, dir_fd=descriptors[index], follow_symlinks=False)
+            if (metadata.st_dev, metadata.st_ino) != identities[index]:
+                raise Error("owned_cgroup_changed")
+        return value, (path, mount_id, identities[2], identities[-1])
+    except (OSError, ValueError, IndexError, UnicodeError):
+        raise Error("owned_cgroup_unavailable_or_invalid") from None
+    finally:
+        for fd in reversed(descriptors):
+            os.close(fd)
+
+
 def _local_snapshot(container_id, image_id, context, state, full=True):
     """Runs fixed read-only telemetry in the ephemeral SSH Python process."""
     began = time.monotonic()
@@ -236,8 +360,18 @@ def _local_snapshot(container_id, image_id, context, state, full=True):
     if "process_identity" in state and state["process_identity"] != identity:
         raise Error("container_process_restarted")
     state["process_identity"] = identity
-    if not status["Running"] or status["OOMKilled"] or not isinstance(pid, int) or pid <= 0:
+    if not status["Running"] or status["OOMKilled"] or type(pid) is not int or pid <= 0:
         raise Error("container_not_safe_running")
+    start_ticks, process_state = _process_identity(pid)
+    if "process_start_ticks" in state and state["process_start_ticks"] != start_ticks:
+        raise Error("process_identity_changed")
+    state["process_start_ticks"] = start_ticks
+    initial_swap, initial_cgroup = _cgroup_swap(pid, container_id)
+    if initial_swap != 0:
+        raise Error("owned_cgroup_swap_in_use")
+    if "cgroup_identity" in state and state["cgroup_identity"] != initial_cgroup:
+        raise Error("owned_cgroup_changed")
+    state["cgroup_identity"] = initial_cgroup
     mounts = {}
     for target, uuid in MOUNTS.items():
         entry = json.loads(_run(["findmnt", "-J", "-o", "TARGET,UUID,FSTYPE", "--target", target]))["filesystems"][0]
@@ -270,14 +404,6 @@ def _local_snapshot(container_id, image_id, context, state, full=True):
     process = _metrics("/proc/%d/status" % pid, {"VmRSS", "VmSwap"})
     if full:
         process.update(_metrics("/proc/%d/smaps_rollup" % pid, {"Rss", "Pss", "Swap"}))
-    proc_raw = Path("/proc/%d/stat" % pid).read_bytes()
-    if len(proc_raw) > 65536:
-        raise Error("proc_read_bound_exceeded")
-    proc = proc_raw.decode().rsplit(")", 1)[1].split()
-    start_ticks, process_state = int(proc[19]), proc[0]
-    if "process_start_ticks" in state and state["process_start_ticks"] != start_ticks:
-        raise Error("process_identity_changed")
-    state["process_start_ticks"] = start_ticks
     vmstat = _metrics("/proc/vmstat", {"pswpin", "pswpout", "oom_kill"}, unit=None)
     if "vmstat_start" not in state:
         state["vmstat_start"] = vmstat.copy()
@@ -292,6 +418,18 @@ def _local_snapshot(container_id, image_id, context, state, full=True):
         raise Error("gpu_identity_changed")
     state["gpu_ids"] = gpu_ids
     root = os.statvfs("/")
+    cgroup_swap, cgroup_identity = _cgroup_swap(pid, container_id)
+    if cgroup_identity != initial_cgroup:
+        raise Error("owned_cgroup_changed")
+    after = json.loads(_run(["docker", "inspect", container_id], 262144))[0]
+    if (any(after[key] != container[key] for key in ("Id", "Image", "Args", "LogPath", "RestartCount"))
+            or any(after["State"][key] != status[key] for key in
+                   ("Pid", "StartedAt", "Running", "OOMKilled", "Paused", "Restarting", "Dead"))
+            or after["NetworkSettings"]["Ports"] != container["NetworkSettings"]["Ports"]):
+        raise Error("container_identity_changed_during_sample")
+    final_ticks, process_state = _process_identity(pid)
+    if final_ticks != start_ticks or _owned_cgroup_path(pid, container_id) != cgroup_identity[0]:
+        raise Error("process_or_cgroup_changed_during_sample")
     result = {"schema_version": 2, "sample_kind": "full" if full else "cheap",
               "timestamp": time.time(), "sample_elapsed_seconds": time.monotonic() - began,
               "process_start_ticks": start_ticks, "process_state": process_state,
@@ -303,6 +441,7 @@ def _local_snapshot(container_id, image_id, context, state, full=True):
                             "restart_count": container["RestartCount"]},
               "mounts": mounts, "root_available_bytes": root.f_bavail * root.f_frsize,
               "host_kib": host, "process_kib": process, "vmstat": vmstat,
+              "cgroup_swap_current_bytes": cgroup_swap,
               "host_swap_used_kib": host["SwapTotal"] - host["SwapFree"],
               "vmstat_delta": {key: vmstat[key] - state["vmstat_start"][key] for key in vmstat},
               "gpus": gpus, "errors": {key: state["errors"][key] + kernel_errors[key] for key in ERROR_PATTERNS},
@@ -356,9 +495,10 @@ def _source(container_id, image_id, context, cap_seconds):
         raise Error("only_reviewed_32k_or_native_capacity")
     if type(cap_seconds) is not int or not 0 <= cap_seconds <= 86400:
         raise Error("bounded_sampler_cap_required")
-    imports = "import hashlib,json,os,re,select,subprocess,sys,time\nfrom pathlib import Path\nAgentError=RuntimeError\n"
+    imports = "import hashlib,json,os,re,select,stat,subprocess,sys,time\nfrom pathlib import Path\nAgentError=RuntimeError\n"
     constants = "GIB=%r\nNATIVE_CONTEXT=%r\nBASELINE_IMAGE=%r\nMOUNTS=%r\nERROR_PATTERNS=%r\n" % (GIB, NATIVE_CONTEXT, BASELINE_IMAGE, MOUNTS, ERROR_PATTERNS)
-    helpers = (Error, parse_log_line, validate_snapshot, _reviewed_args, _run, _metrics, _local_snapshot, _remote_main)
+    helpers = (Error, parse_log_line, validate_snapshot, _reviewed_args, _run, _metrics,
+               _process_identity, _owned_cgroup_path, _cgroup_swap, _local_snapshot, _remote_main)
     return imports + constants + "\n".join(inspect.getsource(helper) for helper in helpers) + "\n_remote_main(%r,%r,%r,%r)\n" % (container_id, image_id, context, cap_seconds)
 
 
@@ -445,10 +585,10 @@ def check_snapshot(sample, native=False, previous=None, require_full=False, chec
         gap = timestamp - previous["timestamp"]
         if gap <= 0 or not checkpoint and gap > 2:
             raise Error("sample_gap_or_replay")
-        if any(sample["vmstat"][key] != previous["vmstat"][key] for key in ("pswpin", "pswpout", "oom_kill")):
-            raise Error("swap_or_oom_counter_changed")
-        if sample["host_swap_used_kib"] != previous["host_swap_used_kib"]:
-            raise Error("host_swap_usage_changed")
+        if sample["vmstat"]["oom_kill"] != previous["vmstat"]["oom_kill"]:
+            raise Error("oom_counter_changed")
+        if any(sample["vmstat"][key] < previous["vmstat"][key] for key in ("pswpin", "pswpout")):
+            raise Error("host_swap_counter_regressed")
         if sample.get("native") != previous.get("native"):
             raise Error("native_diagnostic_changed")
     return sample
