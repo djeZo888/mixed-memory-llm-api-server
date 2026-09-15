@@ -391,7 +391,7 @@ class AuthTests(unittest.TestCase):
     def test_exact_build_metadata_absence_and_subsets_do_not_inject_defaults(self):
         for count in range(4):
             for names in itertools.combinations(PUBLIC_BUILD_METADATA, count):
-                env = {"DISABLE_OPENAPI_DOC": "1", **{
+                env = {**launcher.FIXED_CACHE_ENVIRONMENT, "DISABLE_OPENAPI_DOC": "1", **{
                     name: PUBLIC_BUILD_METADATA[name] for name in names}}
                 with self.subTest(names=names), mock.patch.dict(os.environ, env, clear=True), \
                      mock.patch.object(launcher.importlib.metadata, "version", return_value="0.5.14") as version, \
@@ -401,7 +401,7 @@ class AuthTests(unittest.TestCase):
                     self.assertEqual(dict(os.environ), env)
 
     def invalid_build_environments(self):
-        base = {"DISABLE_OPENAPI_DOC": "1", **PUBLIC_BUILD_METADATA}
+        base = {**launcher.FIXED_CACHE_ENVIRONMENT, "DISABLE_OPENAPI_DOC": "1", **PUBLIC_BUILD_METADATA}
         for name, expected in PUBLIC_BUILD_METADATA.items():
             for kind, changed in (("empty", ""), ("modified", expected + "-altered"),
                                   ("leading_space", " " + expected), ("newline", expected + "\n"),
@@ -446,7 +446,7 @@ class AuthTests(unittest.TestCase):
         self.assertEqual(set(self.logs.getvalue().splitlines()), {"sglang_file_auth_launch_failed"})
 
     def test_build_metadata_does_not_bypass_documentation_version_or_plugin_checks(self):
-        env = {"DISABLE_OPENAPI_DOC": "1", **PUBLIC_BUILD_METADATA}
+        env = {**launcher.FIXED_CACHE_ENVIRONMENT, "DISABLE_OPENAPI_DOC": "1", **PUBLIC_BUILD_METADATA}
         with mock.patch.dict(os.environ, env, clear=True), \
              mock.patch.object(launcher.importlib.metadata, "version", return_value="0.5.14") as version, \
              mock.patch.object(launcher.importlib.metadata, "entry_points", return_value={}) as points:
@@ -642,7 +642,7 @@ class AuthTests(unittest.TestCase):
             "sglang.srt.utils": types.SimpleNamespace(kill_process_tree=cleanup),
         }
         with mock.patch.dict(sys.modules, modules), \
-             mock.patch.dict(os.environ, {"DISABLE_OPENAPI_DOC": "1", **PUBLIC_BUILD_METADATA}, clear=True), \
+             mock.patch.dict(os.environ, {**launcher.FIXED_CACHE_ENVIRONMENT, "DISABLE_OPENAPI_DOC": "1", **PUBLIC_BUILD_METADATA}, clear=True), \
              mock.patch.object(launcher.importlib.metadata, "version", return_value="0.5.14"), \
              mock.patch.object(launcher.importlib.metadata, "entry_points", return_value={}), \
              mock.patch.object(launcher, "read_key", return_value=launcher._PrivateKey(self.sentinel)):

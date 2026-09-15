@@ -32,6 +32,20 @@ BUILD_METADATA = {
     "SGLANG_BUILD_URL": "https://github.com/sgl-project/sglang/actions/runs/28210048245",
     "SGLANG_IMAGE_TAG": "lmsysorg/sglang:v0.5.14",
 }
+# Fixed cache contract, required before native imports or key access. Agreement
+# with the runtime profile and qwen_next.ENVIRONMENT is tested independently.
+# Resolver/version/source evidence: reports/f1c-cache-source-evidence.json.
+FIXED_CACHE_ENVIRONMENT = {
+    "HF_HOME": "/cache/huggingface",
+    "XDG_CACHE_HOME": "/cache",
+    "TRITON_CACHE_DIR": "/cache/triton",
+    "TORCHINDUCTOR_CACHE_DIR": "/cache/torchinductor",
+    "SGLANG_DG_CACHE_DIR": "/cache/deep_gemm",
+    "SGLANG_CACHE_DIR": "/cache/sglang",
+    "FLASHINFER_WORKSPACE_BASE": "/cache/flashinfer",
+    "CUDA_CACHE_PATH": "/cache/cuda",
+    "TORCH_EXTENSIONS_DIR": "/cache/torch_extensions",
+}
 FIXED_FLAGS = {
     "--model-path": "/models",
     "--served-model-name": "qwen3-coder-next",
@@ -103,8 +117,14 @@ def read_key(path):
 def validate_environment():
     # The pinned image supplies all libraries. Runtime environment switches must
     # not open a second gRPC listener or activate plugin/alternate launch paths.
+    allowed_sglang = {**BUILD_METADATA, **{
+        name: value for name, value in FIXED_CACHE_ENVIRONMENT.items()
+        if name.startswith("SGLANG_")}}
+    if any(os.environ.get(name) != value
+           for name, value in FIXED_CACHE_ENVIRONMENT.items()):
+        raise LaunchError("launch_environment_invalid")
     if any(name.startswith("SGLANG_")
-           and (name not in BUILD_METADATA or value != BUILD_METADATA[name])
+           and (name not in allowed_sglang or value != allowed_sglang[name])
            for name, value in os.environ.items()):
         raise LaunchError("launch_environment_invalid")
     if os.environ.get("DISABLE_OPENAPI_DOC") != "1":

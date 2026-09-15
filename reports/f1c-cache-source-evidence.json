@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+  "reviewed_base": "516e4cb52aa2672cf140b687d237b8fa832f6899",
+  "packages": {
+    "sglang": "0.5.14",
+    "torch": "2.11.0+cu130",
+    "transformers": "5.8.1",
+    "flashinfer-python": "0.6.12"
+  },
+  "resolver_sources": [
+    {
+      "module": "sglang.srt.environ",
+      "relative_path": "sglang/srt/environ.py",
+      "installed_path": "/sgl-workspace/sglang/python/sglang/srt/environ.py",
+      "sha256": "f8a56f1f4b56332b54bee2aaaa81237018e09e208ecd49dc0f59e15f95cdb743",
+      "bytes": 46120,
+      "evidence_kind": "retained F1A actual installed source; SHA256 reverified on Worker1",
+      "retained_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/F1A-20260915/runtime-inspection-evidence/sources/srt__environ.py",
+      "declaration_lines": [
+        557,
+        894
+      ],
+      "get_resolver_lines": [
+        53,
+        71,
+        115,
+        117
+      ]
+    },
+    {
+      "module": "flashinfer.jit.env",
+      "relative_path": "flashinfer/jit/env.py",
+      "distribution": "flashinfer-python",
+      "installed_version_from_f1a": "0.6.12",
+      "upstream_version": "v0.6.12",
+      "sha256": "09d2e6d6d03770d765acb8d89db2b58cd9600babacf6fbaad9dde0002a7d2cb9",
+      "bytes": 6142,
+      "url": "https://raw.githubusercontent.com/flashinfer-ai/flashinfer/v0.6.12/flashinfer/jit/env.py",
+      "immutable_url": "https://raw.githubusercontent.com/flashinfer-ai/flashinfer/d768c14e7cf5dd5df45a8a1de78ae815879f108a/flashinfer/jit/env.py",
+      "upstream_commit": "d768c14e7cf5dd5df45a8a1de78ae815879f108a",
+      "local_file": "flashinfer-v0.6.12-jit-env.py",
+      "evidence_kind": "primary pinned upstream; installed-image byte agreement NOT_TESTED"
+    },
+    {
+      "module": "flashinfer.compilation_context",
+      "relative_path": "flashinfer/compilation_context.py",
+      "distribution": "flashinfer-python",
+      "installed_version_from_f1a": "0.6.12",
+      "upstream_version": "v0.6.12",
+      "sha256": "e55c7f58a83810590e18686954527cc62735a6e91c3fa67286a5e7f00afc9be5",
+      "bytes": 3909,
+      "url": "https://raw.githubusercontent.com/flashinfer-ai/flashinfer/v0.6.12/flashinfer/compilation_context.py",
+      "immutable_url": "https://raw.githubusercontent.com/flashinfer-ai/flashinfer/d768c14e7cf5dd5df45a8a1de78ae815879f108a/flashinfer/compilation_context.py",
+      "upstream_commit": "d768c14e7cf5dd5df45a8a1de78ae815879f108a",
+      "local_file": "flashinfer-v0.6.12-compilation_context.py",
+      "evidence_kind": "primary pinned upstream; installed-image byte agreement NOT_TESTED"
+    },
+    {
+      "module": "flashinfer.jit.core",
+      "relative_path": "flashinfer/jit/core.py",
+      "distribution": "flashinfer-python",
+      "installed_version_from_f1a": "0.6.12",
+      "upstream_version": "v0.6.12",
+      "sha256": "836f04a87bca0a36e86c04219aac2aabbe28d87c91a577584e81f8c59e4c7a7c",
+      "bytes": 17174,
+      "url": "https://raw.githubusercontent.com/flashinfer-ai/flashinfer/v0.6.12/flashinfer/jit/core.py",
+      "immutable_url": "https://raw.githubusercontent.com/flashinfer-ai/flashinfer/d768c14e7cf5dd5df45a8a1de78ae815879f108a/flashinfer/jit/core.py",
+      "upstream_commit": "d768c14e7cf5dd5df45a8a1de78ae815879f108a",
+      "local_file": "flashinfer-v0.6.12-jit-core.py",
+      "evidence_kind": "primary pinned upstream; installed-image byte agreement NOT_TESTED"
+    },
+    {
+      "module": "torch.utils.cpp_extension",
+      "relative_path": "torch/utils/cpp_extension.py",
+      "distribution": "torch",
+      "installed_version_from_f1a": "2.11.0+cu130",
+      "upstream_version": "v2.11.0",
+      "sha256": "1517eb2ac276065210d7c861becc5bf3a5404796da16d35af9b9466667fef904",
+      "bytes": 141604,
+      "url": "https://raw.githubusercontent.com/pytorch/pytorch/v2.11.0/torch/utils/cpp_extension.py",
+      "immutable_url": "https://raw.githubusercontent.com/pytorch/pytorch/70d99e998b4955e0049d13a98d77ae1b14db1f45/torch/utils/cpp_extension.py",
+      "upstream_commit": "70d99e998b4955e0049d13a98d77ae1b14db1f45",
+      "local_file": "torch-v2.11.0-cpp_extension.py",
+      "evidence_kind": "primary pinned upstream; installed-image byte agreement NOT_TESTED"
+    }
+  ],
+  "cuda_cache_path": {
+    "version": "CUDA 13.0.0",
+    "url": "https://docs.nvidia.com/cuda/archive/13.0.0/cuda-c-programming-guide/index.html#cuda-environment-variables",
+    "section": "22, table 30",
+    "html_sha256": "b176ad74b8a634da6eb824f34ee7bfa02f7d7103e4a3a5de5197bb7640b16bdf",
+    "html_bytes": 3921458,
+    "meaning": "CUDA_CACHE_PATH selects JIT binary cache folder; environment/filesystem checks do not prove driver use"
+  },
+  "required_cache_environment": {
+    "HF_HOME": "/cache/huggingface",
+    "XDG_CACHE_HOME": "/cache",
+    "TRITON_CACHE_DIR": "/cache/triton",
+    "TORCHINDUCTOR_CACHE_DIR": "/cache/torchinductor",
+    "SGLANG_DG_CACHE_DIR": "/cache/deep_gemm",
+    "SGLANG_CACHE_DIR": "/cache/sglang",
+    "FLASHINFER_WORKSPACE_BASE": "/cache/flashinfer",
+    "CUDA_CACHE_PATH": "/cache/cuda",
+    "TORCH_EXTENSIONS_DIR": "/cache/torch_extensions"
+  },
+  "actual_image_cache_fixture": "NOT_TESTED",
+  "actual_image_upstream_byte_agreement": "NOT_TESTED for FlashInfer and Torch; deferred helper must refuse a mismatch",
+  "actual_cuda_driver_cache_behavior": "NOT_TESTED",
+  "vm_operations": "NONE"
+}

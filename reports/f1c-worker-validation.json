@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "status": "PASS_SOURCE",
+  "recorded_at_utc": "2026-09-15T00:50:02.476686+00:00",
+  "reviewed_base": "516e4cb52aa2672cf140b687d237b8fa832f6899",
+  "worker_platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "python_version": "3.14.7",
+  "checks": [
+    {
+      "command": "python3 -m unittest discover -s tests/lifecycle -p 'test_*.py' -q",
+      "status": "PASS",
+      "tests": 223,
+      "elapsed_seconds": 6.294
+    },
+    {
+      "command": "python3 -m unittest tests.lifecycle.test_sglang_cache_fixture tests.lifecycle.test_sglang_cache_paths",
+      "status": "PASS",
+      "tests": 22,
+      "owner": "cache test subagent"
+    },
+    {
+      "command": "python3 -m unittest discover -s tests/lifecycle -p 'test_sglang_file_auth.py' -q",
+      "status": "PASS",
+      "tests": 21,
+      "elapsed_seconds": 0.606
+    },
+    {
+      "command": "bash tests/shell/test-llmctl-lifecycle-static.sh",
+      "status": "PASS"
+    },
+    {
+      "command": "bash tests/shell/test-llmctl-lifecycle-fixtures.sh",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 tests/lifecycle/sglang_fixture/check_cache_paths.py --help",
+      "status": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS"
+    },
+    {
+      "check": "qwen_next non-ENVIRONMENT AST and runtime non-environment JSON equal base; auth helper/manager byte-equal base",
+      "status": "PASS"
+    },
+    {
+      "check": "launcher/helper provenance bytes and deferred command bash/Python syntax only",
+      "status": "PASS"
+    },
+    {
+      "check": "independent primary-source/provenance/scope review",
+      "status": "PASS_NO_CONFIRMED_ISSUES"
+    }
+  ],
+  "file_sha256": {
+    "scripts/lifecycle/sglang_file_auth.py": "93ddd96d6a3d346b3e62b0eec08d6666c70c1ebc7b2cc727d02c191c9d50a5b2",
+    "scripts/lifecycle/qwen_next.py": "dc01439b23f094fe7f1b42e9f1a48244d1c6ec6e530a2ade8941200f5341f1ab",
+    "configs/runtimes/sglang-qwen-next-0.5.14.json": "54a276babcd2518125aabd8338b68beaae571d8b3e5b1270be00afec78d0decc",
+    "tests/lifecycle/sglang_fixture/check_cache_paths.py": "6ca8ed2ffdf98e6f4e33271204f42abcf1140ee8f8a3421b3e8d216c2f973749",
+    "tests/lifecycle/test_sglang_cache_paths.py": "997b2846f49a57ac43ddabdb03a68d5ec95643618bf9dd416b22b3fce4c448e3",
+    "tests/lifecycle/test_sglang_cache_fixture.py": "ee5e0c384f4909a03877e2fe6ce8bdb225665d4781342b16d26eb61ea06e4e31",
+    "tests/lifecycle/test_sglang_file_auth.py": "5c2504581a72601bb68105f0cc1a683bacc242c9ab003f8f5f1550d0e3816d6d",
+    "reports/f1c-cache-source-evidence.json": "57b1629f8b868a2aec14df9d52935433939717df12c0a40799eb8fee0e00c178",
+    "reports/f1c-cache-helper-provenance.json": "c65d2c1385c522e11ff5760fc89ff92084ad3309385808577e20447fe35e5105"
+  },
+  "warnings": [
+    "Initial suite during test authoring failed on one missing synthetic module-version attribute; test mock corrected, final complete suite passed. No production bypass was added.",
+    "FlashInfer/Torch installed-image byte agreement NOT_TESTED; actual helper must fail on mismatch.",
+    "Actual cache/auth fixtures and CUDA driver/kernel/model behavior NOT_TESTED.",
+    "No SSH, VM containers, services, model/key access or VM cache writes occurred.",
+    "Git attribution, grep-based secret scan and bundle verification recorded after packaging in ../handoff.md."
+  ],
+  "next_action": "Root review/merge with independent F1E2 runtime-env caller/auth coverage, then root/D3 coordinated actual-image gates. No activation authorized."
+}
