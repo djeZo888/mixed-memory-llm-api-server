@@ -1,0 +1,25 @@
+{
+  "checks": [
+    "proposal JSON parsed",
+    "stable identity exact",
+    "all10 current roots exact",
+    "observed whole-volume mount values exact",
+    "root snapshot above4GiB",
+    "instance only2 additions",
+    "frozen L2 config exact",
+    "unit sole data-root substitution",
+    "Q38 manifest81 exact unique rows and bytes/hash"
+  ],
+  "not_performed": [
+    "final L2 source verification",
+    "registration write",
+    "instance write",
+    "actual storage-role mounted writer integration",
+    "Q38 computed acquisition hashes/seal verification",
+    "control credential read/startup",
+    "systemd Linux sandbox",
+    "model readiness/boot/generation"
+  ],
+  "scope": "worker-only schema/path/immutable manifest comparison, no host or actual L2 application",
+  "status": "PASS"
+}

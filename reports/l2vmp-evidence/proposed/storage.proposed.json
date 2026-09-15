@@ -1,0 +1,40 @@
+{
+  "data": {
+    "device": "8:17",
+    "fstype": "ext4",
+    "mount": "/data",
+    "parents": [
+      "/dev/sdb",
+      "/dev/sdb1"
+    ],
+    "path": "/data",
+    "source": "/dev/sdb1",
+    "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+  },
+  "models": {
+    "device": "8:33",
+    "fstype": "ext4",
+    "mount": "/data/models-large",
+    "parents": [
+      "/dev/sdc",
+      "/dev/sdc1"
+    ],
+    "path": "/data/models-large",
+    "source": "/dev/sdc1",
+    "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+  },
+  "roots": {
+    "backups": "/data/backups",
+    "build": "/data/build",
+    "containerd": "/data/containerd",
+    "docker": "/data/docker",
+    "hf_cache": "/data/hf-cache",
+    "logs": "/data/logs",
+    "models": "/data/models-large",
+    "secrets": "/data/services/secrets",
+    "services": "/data/services",
+    "state": "/data/services/installer"
+  },
+  "schema_version": 1,
+  "storage_mode": "existing"
+}

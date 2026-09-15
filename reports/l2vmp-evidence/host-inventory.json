@@ -1,0 +1,911 @@
+{
+  "available_bytes": {
+    "/": 5219024896,
+    "/data": 1341879791616,
+    "/data/models-large": 2590890254336
+  },
+  "block_topology": {
+    "blockdevices": [
+      {
+        "children": [
+          {
+            "fstype": "vfat",
+            "maj:min": "8:1",
+            "mountpoints": [
+              "/boot/efi"
+            ],
+            "name": "/dev/sda1",
+            "path": "/dev/sda1",
+            "pkname": "/dev/sda",
+            "ro": false,
+            "type": "part",
+            "uuid": "BBE0-E924"
+          },
+          {
+            "fstype": "ext4",
+            "maj:min": "8:2",
+            "mountpoints": [
+              "/boot"
+            ],
+            "name": "/dev/sda2",
+            "path": "/dev/sda2",
+            "pkname": "/dev/sda",
+            "ro": false,
+            "type": "part",
+            "uuid": "1e35ddc8-6f3c-4eec-9650-6ef93d252b3b"
+          },
+          {
+            "children": [
+              {
+                "fstype": "ext4",
+                "maj:min": "252:0",
+                "mountpoints": [
+                  "/"
+                ],
+                "name": "/dev/mapper/ubuntu--vg-ubuntu--lv",
+                "path": "/dev/mapper/ubuntu--vg-ubuntu--lv",
+                "pkname": "/dev/sda3",
+                "ro": false,
+                "type": "lvm",
+                "uuid": "bc752bce-bb3f-4802-8adf-69c45a88689d"
+              }
+            ],
+            "fstype": "LVM2_member",
+            "maj:min": "8:3",
+            "mountpoints": [
+              null
+            ],
+            "name": "/dev/sda3",
+            "path": "/dev/sda3",
+            "pkname": "/dev/sda",
+            "ro": false,
+            "type": "part",
+            "uuid": "2PRJo6-giqY-jfyu-CBsX-1A7g-qwn3-6Vlfwp"
+          }
+        ],
+        "fstype": null,
+        "maj:min": "8:0",
+        "mountpoints": [
+          null
+        ],
+        "name": "/dev/sda",
+        "path": "/dev/sda",
+        "pkname": null,
+        "ro": false,
+        "type": "disk",
+        "uuid": null
+      },
+      {
+        "children": [
+          {
+            "fstype": "ext4",
+            "maj:min": "8:17",
+            "mountpoints": [
+              "/data"
+            ],
+            "name": "/dev/sdb1",
+            "path": "/dev/sdb1",
+            "pkname": "/dev/sdb",
+            "ro": false,
+            "type": "part",
+            "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+          }
+        ],
+        "fstype": null,
+        "maj:min": "8:16",
+        "mountpoints": [
+          null
+        ],
+        "name": "/dev/sdb",
+        "path": "/dev/sdb",
+        "pkname": null,
+        "ro": false,
+        "type": "disk",
+        "uuid": null
+      },
+      {
+        "children": [
+          {
+            "fstype": "ext4",
+            "maj:min": "8:33",
+            "mountpoints": [
+              "/data/models-large"
+            ],
+            "name": "/dev/sdc1",
+            "path": "/dev/sdc1",
+            "pkname": "/dev/sdc",
+            "ro": false,
+            "type": "part",
+            "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+          }
+        ],
+        "fstype": null,
+        "maj:min": "8:32",
+        "mountpoints": [
+          null
+        ],
+        "name": "/dev/sdc",
+        "path": "/dev/sdc",
+        "pkname": null,
+        "ro": false,
+        "type": "disk",
+        "uuid": null
+      }
+    ]
+  },
+  "glm_container": {
+    "args": [
+      "--model",
+      "/models/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "30002",
+      "--alias",
+      "glm-5.3",
+      "--api-key-file",
+      "/run/secrets/llm-api-key",
+      "--ctx-size",
+      "32768",
+      "--parallel",
+      "1",
+      "--cpu-moe",
+      "--jinja",
+      "--no-webui",
+      "--n-gpu-layers",
+      "999",
+      "--split-mode",
+      "layer",
+      "--tensor-split",
+      "1,1",
+      "--load-mode",
+      "none",
+      "--device",
+      "CUDA0,CUDA1",
+      "--chat-template-kwargs",
+      "{\"clear_thinking\":true}"
+    ],
+    "deployment": "glm-5.3-ud-q4-k-xl-32k",
+    "entrypoint": [
+      "/opt/llama/llama-server"
+    ],
+    "id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+    "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "image_reference": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "instance": "ai-vm-d0b",
+    "mounts": [
+      {
+        "Destination": "/models",
+        "Mode": "",
+        "Propagation": "rprivate",
+        "RW": false,
+        "Source": "/data/models-large/glm-5.3-ud-q4-k-xl",
+        "Type": "bind"
+      },
+      {
+        "Destination": "/cache",
+        "Mode": "",
+        "Propagation": "rprivate",
+        "RW": true,
+        "Source": "/data/models-large/runtime-cache/llama-cpp",
+        "Type": "bind"
+      },
+      {
+        "Destination": "/logs",
+        "Mode": "",
+        "Propagation": "rprivate",
+        "RW": true,
+        "Source": "/data/logs/llmctl/glm-5.3",
+        "Type": "bind"
+      },
+      {
+        "Destination": "/service",
+        "Mode": "",
+        "Propagation": "rprivate",
+        "RW": true,
+        "Source": "/data/services/llm-manager/glm-5.3",
+        "Type": "bind"
+      },
+      {
+        "Destination": "/run/secrets/llm-api-key",
+        "Mode": "",
+        "Propagation": "rprivate",
+        "RW": false,
+        "Source": "/data/services/secrets/llm-api-key",
+        "Type": "bind"
+      }
+    ],
+    "name": "/llmctl-glm-5.3-32k",
+    "network_mode": "bridge",
+    "owner": "mixed-memory-llm-api-server",
+    "path": "/opt/llama/llama-server",
+    "port_bindings": {
+      "30002/tcp": [
+        {
+          "HostIp": "127.0.0.1",
+          "HostPort": "30002"
+        }
+      ]
+    },
+    "profile": null,
+    "restart_policy": {
+      "MaximumRetryCount": 0,
+      "Name": "no"
+    },
+    "running": true,
+    "started_at": "2026-09-15T00:48:45.235739944Z",
+    "status": "running"
+  },
+  "glm_receipt": {
+    "ctime_ns": 1789432284496083378,
+    "device": 2065,
+    "gid": 0,
+    "inode": 67635076,
+    "mode": "0600",
+    "mtime_ns": 1789432284496083378,
+    "nlink": 1,
+    "omitted_field_names": [
+      "artifacts"
+    ],
+    "present": true,
+    "selected": {
+      "acquisition_status_sha256": "016265905a10ba18084f93aec1b0b004c5cfb4bc9549f00a3664ceb293695c05",
+      "artifact_count": 11,
+      "complete": true,
+      "hash_scope": "validated acquisition-computed SHA256; no independent payload reread",
+      "manifest_sha256": "8e7cb419a9dea83f1978f936455cedace1b964cbbb3580f7be191998f6a999d3",
+      "model_root": "/data/models-large/glm-5.3-ud-q4-k-xl",
+      "repo_id": "unsloth/GLM-5.3-GGUF",
+      "revision": "346b3591c7f28d1a23716f97a065ecf12ec14771",
+      "schema_version": 1,
+      "total_bytes": 467289116837
+    },
+    "sha256": "bcd8d9f85baa9bd1fe54dc65b9022487307190cf11583580ab66af845b53f48b",
+    "size": 5943,
+    "type": "regular",
+    "uid": 0
+  },
+  "instance": {
+    "ctime_ns": 1789432284496083378,
+    "device": 2065,
+    "gid": 1001,
+    "inode": 67635078,
+    "mode": "0600",
+    "mtime_ns": 1789432284496083378,
+    "nlink": 1,
+    "omitted_field_names": [
+      "description",
+      "notes"
+    ],
+    "present": true,
+    "selected": {
+      "id": "ai-vm-d0b",
+      "model_integrity": {
+        "glm-5.3-ud-q4-k-xl": {
+          "completion_manifest": "/data/services/llm-manager/acquisition/glm-5.3-ud-q4-k-xl.complete.json",
+          "evidence": [
+            "/data/services/llm-manager/acquisition/glm-5.3-ud-q4-k-xl.complete.json",
+            "/data/services/llm-manager/acquisition/glm-5.3-downloader-status.json"
+          ],
+          "revision": "346b3591c7f28d1a23716f97a065ecf12ec14771",
+          "verified": true
+        }
+      },
+      "obsolete_boot_owner_disabled": true,
+      "obsolete_boot_owner_evidence": [
+        "/data/build/f1d-qwen-20260915/evidence/m6b-unit-after.txt",
+        "D3 independently verified disabled; active(exited) historical oneshot; no daemon changes; new boot owner not installed"
+      ],
+      "paths": {
+        "lock": "/run/llmctl/lifecycle.lock",
+        "recovery": "/run/llmctl/recovery.json",
+        "state": "/data/services/llm-manager/active"
+      },
+      "required_mounts": [
+        {
+          "filesystem": "ext4",
+          "target": "/data",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        {
+          "filesystem": "ext4",
+          "target": "/data/models-large",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        }
+      ],
+      "runtime_evidence": {
+        "llama-cpp-v0.4.1-d1": {
+          "devices": [
+            "CUDA0",
+            "CUDA1"
+          ],
+          "evidence": [
+            "reports/d2-contract-evidence/d1-runtime-proof.json",
+            "reports/d2-contract-evidence/d1-cli-selected.txt",
+            "reports/d2-contract-evidence/D1-CONTRACT.md"
+          ],
+          "flags_verified": true,
+          "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+          "load_mode": "none",
+          "supported_flags": [
+            "--model",
+            "--host",
+            "--port",
+            "--alias",
+            "--api-key-file",
+            "--ctx-size",
+            "--parallel",
+            "--cpu-moe",
+            "--jinja",
+            "--no-webui",
+            "--n-gpu-layers",
+            "--split-mode",
+            "--tensor-split",
+            "--load-mode",
+            "--device",
+            "--chat-template-kwargs"
+          ],
+          "validation_scope": "PASS_BUILD_CUDA_CLI_ONLY; GLM inference, tool calls and service activation NOT_TESTED"
+        }
+      },
+      "schema_version": 1
+    },
+    "sha256": "8a5f7787c00319f093656d4fe0b6953c79ae31669b4da7690e6f7386ecad839a",
+    "size": 3101,
+    "type": "regular",
+    "uid": 0
+  },
+  "metadata": {
+    "/": {
+      "device": 64512,
+      "gid": 0,
+      "inode": 2,
+      "mode": "0755",
+      "nlink": 25,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data": {
+      "device": 2065,
+      "gid": 0,
+      "inode": 2,
+      "mode": "0755",
+      "nlink": 12,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/backups": {
+      "device": 2065,
+      "gid": 1001,
+      "inode": 14417921,
+      "mode": "2775",
+      "nlink": 2,
+      "present": true,
+      "type": "directory",
+      "uid": 1000
+    },
+    "/data/build": {
+      "device": 2065,
+      "gid": 1001,
+      "inode": 21757953,
+      "mode": "2775",
+      "nlink": 13,
+      "present": true,
+      "type": "directory",
+      "uid": 1000
+    },
+    "/data/containerd": {
+      "device": 2065,
+      "gid": 0,
+      "inode": 87293953,
+      "mode": "0711",
+      "nlink": 3,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/docker": {
+      "device": 2065,
+      "gid": 0,
+      "inode": 73662465,
+      "mode": "0710",
+      "nlink": 12,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/hf-cache": {
+      "device": 2065,
+      "gid": 1001,
+      "inode": 16777217,
+      "mode": "2775",
+      "nlink": 10,
+      "present": true,
+      "type": "directory",
+      "uid": 1000
+    },
+    "/data/logs": {
+      "device": 2065,
+      "gid": 1000,
+      "inode": 47972353,
+      "mode": "2755",
+      "nlink": 8,
+      "present": true,
+      "type": "directory",
+      "uid": 1000
+    },
+    "/data/models-large": {
+      "device": 2081,
+      "gid": 1001,
+      "inode": 2,
+      "mode": "2755",
+      "nlink": 8,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/models-large/glm-5.3-ud-q4-k-xl": {
+      "device": 2081,
+      "gid": 0,
+      "inode": 169607169,
+      "mode": "0555",
+      "nlink": 3,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/models-large/glm-5.3-ud-q4-k-xl/UD-Q4_K_XL": {
+      "device": 2081,
+      "gid": 0,
+      "inode": 169607171,
+      "mode": "0555",
+      "nlink": 2,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/models-large/qwen3.8-27b-fp8": {
+      "present": false
+    },
+    "/data/services": {
+      "device": 2065,
+      "gid": 1001,
+      "inode": 67633153,
+      "mode": "2755",
+      "nlink": 12,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/services/installer": {
+      "present": false
+    },
+    "/data/services/llm-manager": {
+      "device": 2065,
+      "gid": 1001,
+      "inode": 67633936,
+      "mode": "2755",
+      "nlink": 8,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/services/llm-manager/acquisition": {
+      "device": 2065,
+      "gid": 0,
+      "inode": 67634754,
+      "mode": "2700",
+      "nlink": 2,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/services/llm-manager/active": {
+      "device": 2065,
+      "gid": 0,
+      "inode": 67634001,
+      "mode": "0700",
+      "nlink": 2,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/services/llm-manager/evidence": {
+      "present": false
+    },
+    "/data/services/llm-manager/state": {
+      "present": false
+    },
+    "/data/services/releases": {
+      "device": 2065,
+      "gid": 0,
+      "inode": 67634266,
+      "mode": "2755",
+      "nlink": 5,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915": {
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635083,
+      "mode": "2700",
+      "nlink": 9,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/services/secrets": {
+      "device": 2065,
+      "gid": 0,
+      "inode": 67633154,
+      "mode": "0700",
+      "nlink": 2,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/data/services/secrets/llm-api-key": {
+      "ctime_ns": 1789432284490083320,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635075,
+      "mode": "0600",
+      "mtime_ns": 1789432284490083320,
+      "nlink": 1,
+      "present": true,
+      "size": 64,
+      "type": "regular",
+      "uid": 0
+    },
+    "/etc": {
+      "device": 64512,
+      "gid": 0,
+      "inode": 262145,
+      "mode": "0755",
+      "nlink": 122,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/etc/llm-server": {
+      "present": false
+    },
+    "/etc/llm-server/control-api-key": {
+      "present": false
+    },
+    "/etc/llm-server/control.json": {
+      "present": false
+    },
+    "/etc/llm-server/network.json": {
+      "present": false
+    },
+    "/etc/local-ai-server": {
+      "present": false
+    },
+    "/etc/local-ai-server/storage.json": {
+      "present": false
+    },
+    "/etc/systemd/system/llm-control.service": {
+      "present": false
+    },
+    "/etc/systemd/system/llmctl-boot.service": {
+      "present": false
+    },
+    "/etc/systemd/system/m6b-post-reboot-verify.service": {
+      "ctime_ns": 1783095910086569168,
+      "device": 64512,
+      "gid": 0,
+      "inode": 262768,
+      "mode": "0644",
+      "mtime_ns": 1783095910086569168,
+      "nlink": 1,
+      "present": true,
+      "size": 378,
+      "type": "regular",
+      "uid": 0
+    },
+    "/run/credentials/llm-control.service/control-api-key": {
+      "present": false
+    },
+    "/run/llm-control": {
+      "present": false
+    },
+    "/run/llm-control/operations.json": {
+      "present": false
+    },
+    "/run/llmctl": {
+      "device": 26,
+      "gid": 0,
+      "inode": 6916,
+      "mode": "0700",
+      "nlink": 2,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/run/llmctl/lifecycle.lock": {
+      "ctime_ns": 1789432684503637451,
+      "device": 26,
+      "gid": 0,
+      "inode": 7086,
+      "mode": "0600",
+      "mtime_ns": 1789432684503637451,
+      "nlink": 1,
+      "present": true,
+      "size": 0,
+      "type": "regular",
+      "uid": 0
+    },
+    "/usr": {
+      "device": 64512,
+      "gid": 0,
+      "inode": 655363,
+      "mode": "0755",
+      "nlink": 12,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/usr/local": {
+      "device": 64512,
+      "gid": 0,
+      "inode": 655385,
+      "mode": "0755",
+      "nlink": 10,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/usr/local/lib": {
+      "device": 64512,
+      "gid": 0,
+      "inode": 672033,
+      "mode": "0755",
+      "nlink": 3,
+      "present": true,
+      "type": "directory",
+      "uid": 0
+    },
+    "/usr/local/lib/llm-server": {
+      "present": false
+    },
+    "/usr/local/lib/llm-server/control-api": {
+      "present": false
+    },
+    "/usr/local/lib/llm-server/private-network": {
+      "present": false
+    }
+  },
+  "mounts": {
+    "/": {
+      "filesystems": [
+        {
+          "fsroot": "/",
+          "fstype": "ext4",
+          "maj:min": "252:0",
+          "options": "rw,relatime",
+          "source": "/dev/mapper/ubuntu--vg-ubuntu--lv",
+          "target": "/",
+          "uuid": "bc752bce-bb3f-4802-8adf-69c45a88689d"
+        }
+      ]
+    },
+    "/boot": {
+      "filesystems": [
+        {
+          "fsroot": "/",
+          "fstype": "ext4",
+          "maj:min": "8:2",
+          "options": "rw,relatime",
+          "source": "/dev/sda2",
+          "target": "/boot",
+          "uuid": "1e35ddc8-6f3c-4eec-9650-6ef93d252b3b"
+        }
+      ]
+    },
+    "/boot/efi": {
+      "filesystems": [
+        {
+          "fsroot": "/",
+          "fstype": "vfat",
+          "maj:min": "8:1",
+          "options": "rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro",
+          "source": "/dev/sda1",
+          "target": "/boot/efi",
+          "uuid": "BBE0-E924"
+        }
+      ]
+    },
+    "/data": {
+      "filesystems": [
+        {
+          "fsroot": "/",
+          "fstype": "ext4",
+          "maj:min": "8:17",
+          "options": "rw,relatime",
+          "source": "/dev/sdb1",
+          "target": "/data",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        }
+      ]
+    },
+    "/data/models-large": {
+      "filesystems": [
+        {
+          "fsroot": "/",
+          "fstype": "ext4",
+          "maj:min": "8:33",
+          "options": "rw,relatime",
+          "source": "/dev/sdc1",
+          "target": "/data/models-large",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        }
+      ]
+    }
+  },
+  "release_files": {
+    "configs/deployments/glm-5.3-ud-q4-k-xl-32k.json": {
+      "ctime_ns": 1789432817607707402,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635112,
+      "mode": "0600",
+      "mtime_ns": 1789432665000000000,
+      "nlink": 1,
+      "present": true,
+      "sha256": "7c5c929f8e3e2ba68efbd349ac01d994d1107472bf01bf48cf2c0058abc9096f",
+      "size": 2978,
+      "type": "regular",
+      "uid": 0
+    },
+    "configs/models/glm-5.3-ud-q4-k-xl.json": {
+      "ctime_ns": 1789432817607707402,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635129,
+      "mode": "0600",
+      "mtime_ns": 1789432665000000000,
+      "nlink": 1,
+      "present": true,
+      "sha256": "425d1d92bd069499633b9bc030debe452ef6e82f2fdd5b1d3a872ba9e112fd38",
+      "size": 3102,
+      "type": "regular",
+      "uid": 0
+    },
+    "configs/runtimes/llama-cpp-v0.4.1-d1.json": {
+      "ctime_ns": 1789432817607707402,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635142,
+      "mode": "0600",
+      "mtime_ns": 1789432665000000000,
+      "nlink": 1,
+      "present": true,
+      "sha256": "cf313fe24894cc640c91b77fa8432cf31224e69fad17050ea58d1ae73139e4bd",
+      "size": 3097,
+      "type": "regular",
+      "uid": 0
+    },
+    "scripts/common/root-disk-guard.sh": {
+      "ctime_ns": 1789432817610707426,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635301,
+      "mode": "0700",
+      "mtime_ns": 1789432665000000000,
+      "nlink": 1,
+      "present": true,
+      "sha256": "2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813",
+      "size": 19958,
+      "type": "regular",
+      "uid": 0
+    },
+    "scripts/lifecycle/manager.py": {
+      "ctime_ns": 1789432817610707426,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67635329,
+      "mode": "0600",
+      "mtime_ns": 1789432665000000000,
+      "nlink": 1,
+      "present": true,
+      "sha256": "400e04449f1f50cca7c571ed3439f546d43b2901766ce53bff545911b55df785",
+      "size": 49832,
+      "type": "regular",
+      "uid": 0
+    }
+  },
+  "scope": "read-only, selected nonsecret fields; no key reads, endpoint probes, lifecycle calls or model payload reads",
+  "states": {
+    "/data/services/llm-manager/active/active.json": {
+      "ctime_ns": 1789433513609876739,
+      "device": 2065,
+      "gid": 0,
+      "inode": 67633848,
+      "mode": "0600",
+      "mtime_ns": 1789433513604876703,
+      "nlink": 1,
+      "omitted_field_names": [
+        "container_running"
+      ],
+      "present": true,
+      "selected": {
+        "boot_policy": "manual",
+        "container": {
+          "deployment": "glm-5.3-ud-q4-k-xl-32k",
+          "id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+          "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+          "instance": "ai-vm-d0b",
+          "legacy": false,
+          "name": "llmctl-glm-5.3-32k",
+          "owner": "mixed-memory-llm-api-server"
+        },
+        "desired": "running",
+        "failure": null,
+        "last_selected": "glm-5.3-ud-q4-k-xl-8k",
+        "observed": "ready",
+        "schema_version": 2,
+        "selected": "glm-5.3-ud-q4-k-xl-32k",
+        "state_persisted": true,
+        "updated_at": 1789433513604541997
+      },
+      "sha256": "c63de9b1a77aa4d62496880c7dad8cb6a22a10de9736c5305545e3579d576f1f",
+      "size": 658,
+      "type": "regular",
+      "uid": 0
+    },
+    "/data/services/llm-manager/state/active.json": {
+      "present": false
+    },
+    "/run/llmctl/recovery.json": {
+      "ctime_ns": 1789433513611876753,
+      "device": 26,
+      "gid": 0,
+      "inode": 7673,
+      "mode": "0600",
+      "mtime_ns": 1789433513611876753,
+      "nlink": 1,
+      "omitted_field_names": [
+        "container_running"
+      ],
+      "present": true,
+      "selected": {
+        "boot_policy": "manual",
+        "container": {
+          "deployment": "glm-5.3-ud-q4-k-xl-32k",
+          "id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+          "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+          "instance": "ai-vm-d0b",
+          "legacy": false,
+          "name": "llmctl-glm-5.3-32k",
+          "owner": "mixed-memory-llm-api-server"
+        },
+        "desired": "running",
+        "failure": null,
+        "last_selected": "glm-5.3-ud-q4-k-xl-8k",
+        "observed": "ready",
+        "schema_version": 2,
+        "selected": "glm-5.3-ud-q4-k-xl-32k",
+        "state_persisted": true,
+        "updated_at": 1789433513604541997
+      },
+      "sha256": "c63de9b1a77aa4d62496880c7dad8cb6a22a10de9736c5305545e3579d576f1f",
+      "size": 658,
+      "type": "regular",
+      "uid": 0
+    }
+  },
+  "units": {
+    "llm-control.service": "MainPID=0\nId=llm-control.service\nLoadState=not-found\nActiveState=inactive\nSubState=dead\nFragmentPath=\nDropInPaths=\nUnitFileState=\n",
+    "llm-private-control.socket": "Id=llm-private-control.socket\nLoadState=not-found\nActiveState=inactive\nSubState=dead\nFragmentPath=\nDropInPaths=\nUnitFileState=\n",
+    "llm-private-glm.socket": "Id=llm-private-glm.socket\nLoadState=not-found\nActiveState=inactive\nSubState=dead\nFragmentPath=\nDropInPaths=\nUnitFileState=\n",
+    "llm-private-qwen38.socket": "Id=llm-private-qwen38.socket\nLoadState=not-found\nActiveState=inactive\nSubState=dead\nFragmentPath=\nDropInPaths=\nUnitFileState=\n",
+    "llmctl-boot.service": "MainPID=0\nId=llmctl-boot.service\nLoadState=not-found\nActiveState=inactive\nSubState=dead\nFragmentPath=\nDropInPaths=\nUnitFileState=\n",
+    "m6b-post-reboot-verify.service": "MainPID=0\nId=m6b-post-reboot-verify.service\nLoadState=loaded\nActiveState=active\nSubState=exited\nFragmentPath=/etc/systemd/system/m6b-post-reboot-verify.service\nDropInPaths=\nUnitFileState=disabled\n"
+  },
+  "utc": "2026-09-15T02:30:47.866533+00:00"
+}

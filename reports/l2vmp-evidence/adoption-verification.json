@@ -1,0 +1,34 @@
+{
+  "checks": {
+    "context_drift_refused": "container_launch_contract_mismatch",
+    "durable_and_recovery_container_running": true,
+    "trusted_container_selected_fields": "PASS",
+    "validate_identity": "PASS",
+    "validate_reused_contract": "PASS"
+  },
+  "container_id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+  "excluded": [
+    "actual storage verification",
+    "protected source installation",
+    "full Docker environment",
+    "full network policy",
+    "key access",
+    "API readiness or generation",
+    "lifecycle dispatch or state persistence",
+    "live L2 integrated source"
+  ],
+  "input_sha256": {
+    "host-contract-followup.json": "28debef3b78ad770bc29490d59785e0108c1d37ddddb2abc18a6efce281a2773",
+    "host-inventory.json": "48ad1f435ed0455ad1a2fbe36fdb0fe77fa9f93444d8e53acbd6438bc636dffd"
+  },
+  "scope": "worker-only actual Manager validators against sanitized selected host facts",
+  "source_sha256": {
+    "configs/deployments/glm-5.3-ud-q4-k-xl-32k.json": "4f6fe98cb5ed84ece066ac6e544d4764d04c8019f8640353ec6da1ff86c50ef5",
+    "configs/models/glm-5.3-ud-q4-k-xl.json": "857924551fa83c546bb99f7b524b35c8d79d0cb9ba0a666e0c139bbace0e7e0d",
+    "configs/runtimes/llama-cpp-v0.4.1-d1.json": "cf313fe24894cc640c91b77fa8432cf31224e69fad17050ea58d1ae73139e4bd",
+    "scripts/lifecycle/manager.py": "39c3956404f3ef95925faf64dc00dbac0e804dbefba272f378b0a1c21817d652",
+    "scripts/lifecycle/runtime_io.py": "94423ce9ef15a500674cafcde403912efdd56a88f4c998da63490b609399c843",
+    "scripts/lifecycle/storage_binding.py": "69e61ce6685c310ce83449de75d45b209e63c6454c175f03d42bdad3daea7fbf"
+  },
+  "status": "PASS"
+}

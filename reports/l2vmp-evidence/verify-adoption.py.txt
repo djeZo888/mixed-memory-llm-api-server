@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+"""Worker-only comparison of sanitized host fields to reviewed lifecycle source.
+
+Run: python3 -B ../verify-adoption.py
+No host/SSH/Docker/storage verification, key access or lifecycle dispatch occurs.
+The tiny fixture binding constructs path strings only; this is contract evidence.
+"""
+import copy
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+TASK = Path(__file__).resolve().parent
+REPO = TASK / 'repo'
+sys.path.insert(0, str(REPO / 'scripts'))
+from lifecycle.manager import Manager
+from lifecycle.runtime_io import LifecycleError
+from lifecycle.storage_binding import RegisteredStorageBinding
+
+facts_path = TASK / 'host-inventory.json'
+followup_path = TASK / 'host-contract-followup.json'
+facts = json.loads(facts_path.read_text())
+followup = json.loads(followup_path.read_text())
+raw = facts['glm_container']
+assert raw['id'] == followup['id']
+registry = {'schema_version': 1, 'roots': {
+    name: '/data/' + suffix for name, suffix in {
+        'hf_cache': 'hf-cache', 'docker': 'docker', 'containerd': 'containerd',
+        'build': 'build', 'logs': 'logs', 'backups': 'backups', 'services': 'services',
+        'secrets': 'services/secrets', 'state': 'services/installer',
+        'models': 'models-large'}.items()}}
+for role, path in [('data', '/data'), ('models', '/data/models-large')]:
+    mount = facts['mounts'][path]['filesystems']
+    assert len(mount) == 1 and mount[0]['target'] == path and mount[0]['fsroot'] == '/'
+    registry[role] = {'path': path, 'mount': path, 'uuid': mount[0]['uuid'], 'fstype': mount[0]['fstype']}
+# No storage access is implemented or used by this path-construction fixture.
+binding = RegisteredStorageBinding(None, registry)
+instance = copy.deepcopy(facts['instance']['selected'])
+assert instance.get('storage_identity') is None
+instance.update(storage_identity=binding.identity, historical_import=True)
+container = {
+    'Id': raw['id'], 'Name': raw['name'], 'Image': raw['image_id'],
+    'Config': {
+        'Entrypoint': raw['entrypoint'], 'Cmd': raw['args'],
+        'Env': followup['required_env'],
+        'Labels': {'io.llmctl.' + name: raw[name] for name in ('owner', 'instance', 'deployment')},
+    },
+    'Mounts': raw['mounts'],
+    'HostConfig': {'LogConfig': followup['log_config'], 'DeviceRequests': followup['device_requests']},
+    'State': {'Running': raw['running'], 'Status': raw['status'], 'StartedAt': raw['started_at']},
+}
+
+class CapturedDocker:
+    def inspect(self, identifier):
+        assert identifier == raw['id']
+        return copy.deepcopy(container)
+    def __getattr__(self, name):
+        raise AssertionError('No Docker operation is available: ' + name)
+
+manager = Manager(REPO / 'configs', instance, binding=binding,
+                  docker=CapturedDocker(), test_paths=True)
+deployment = manager.deployment(raw['deployment'])
+state_path = '/data/services/llm-manager/active/active.json'
+state = copy.deepcopy(facts['states'][state_path]['selected'])
+for path, record in facts['states'].items():
+    if not record['present']:
+        continue
+    assert record['sha256'] == followup['state_container_running'][path]['sha256']
+    assert followup['state_container_running'][path]['container_running'] is True
+manager.validate_identity(state['container'])
+assert manager.trusted_container(state['container'])['Id'] == raw['id']
+manager.validate_reused_contract(container, deployment)
+negative = copy.deepcopy(container)
+negative['Config']['Cmd'][negative['Config']['Cmd'].index('--ctx-size') + 1] = '8192'
+try:
+    manager.validate_reused_contract(negative, deployment)
+except LifecycleError as exc:
+    assert str(exc) == 'container_launch_contract_mismatch'
+    drift_check = str(exc)
+else:
+    raise AssertionError('Context drift unexpectedly accepted')
+
+inputs = [facts_path, followup_path]
+sources = [REPO / path for path in [
+    'scripts/lifecycle/manager.py', 'scripts/lifecycle/runtime_io.py',
+    'scripts/lifecycle/storage_binding.py',
+    'configs/deployments/glm-5.3-ud-q4-k-xl-32k.json',
+    'configs/models/glm-5.3-ud-q4-k-xl.json',
+    'configs/runtimes/llama-cpp-v0.4.1-d1.json']]
+result = {
+    'status': 'PASS',
+    'scope': 'worker-only actual Manager validators against sanitized selected host facts',
+    'container_id': raw['id'],
+    'checks': {'validate_identity': 'PASS', 'trusted_container_selected_fields': 'PASS',
+               'validate_reused_contract': 'PASS', 'context_drift_refused': drift_check,
+               'durable_and_recovery_container_running': True},
+    'excluded': ['actual storage verification', 'protected source installation',
+                 'full Docker environment', 'full network policy', 'key access',
+                 'API readiness or generation', 'lifecycle dispatch or state persistence',
+                 'live L2 integrated source'],
+    'input_sha256': {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in inputs},
+    'source_sha256': {str(path.relative_to(REPO)): hashlib.sha256(path.read_bytes()).hexdigest() for path in sources},
+}
+print(json.dumps(result, indent=2, sort_keys=True))
