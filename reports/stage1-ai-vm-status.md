@@ -1,11 +1,13 @@
-# Stage-one ai-vm status — draft, 2026-09-17
+# Stage-one ai-vm status — qualified acceptance, 2026-09-17
 
-**Completion PENDING.** ai-vm has demonstrated Qwen inference/tool serving and
-an authenticated private control API. Final acceptance is still running under
-root coordination. This draft is based on source
-`ab6daa475cc2f1c04956d862f460f9f01c4ee952`, published evidence below, and explicitly
-identified coordinated results awaiting durable report links. It is not a live
-host observation or a completion certificate.
+**Core stage-one API/model/switch/reboot/independent LAN acceptance PASS.
+Cleanup PENDING; qualifications remain explicit.** The evidence cutoff is
+2026-09-17T08:06:22.492747Z. The [independent acceptance report](apiaccept-lan-acceptance.md)
+and [sanitized summary](apiaccept-evidence/summary.json) document the completed
+requests; [alias publication](aliasdeploy-proof-publication.md) binds the
+corrected deployed source `ab6daa475cc2f1c04956d862f460f9f01c4ee952`. This status
+does not claim overall project completion, full occupied context or swap-free
+GLM qualification. It is not a fresh host query.
 
 The deliverable is an API-only server with one active backend: **GLM5.3
 UD-Q4_K_XL** for flagship work or **Qwen3.8-27B FP8** for fast work. Ordinary
@@ -19,18 +21,32 @@ protected credentials, discovery, switch/poll and client examples.
 
 | Capability | Evidence and boundary |
 | --- | --- |
-| Qwen serving at the selected TP2/BF16-KV/official-1,000,000 profile | [Q38RETRY](q38retry-tp2-1m.md) records READY, exact alias, missing/wrong-key 401, authenticated chat/SSE ending with DONE, actual `read_file` as ordinary UID 1000 and correct semantic continuation. The small continuation used fenced JSON, so this is not strict bare-JSON acceptance. |
-| Private control and exact two-model discovery | [APIDEPLOY](apideploy-control-ready.md) records authenticated fresh/persisted status with current generation and the GLM/Qwen catalog; missing/wrong keys returned 401. Qwen was ready, selected, desired-running with resume intent at release. GLM was available/stopped. This is a dated state, not a claim about every subsequent moment. |
-| Qwen occupied-context agent retrieval | **Coordinated result; durable APIACCEPT report link PENDING.** Root reports the actual selected Qwen profile completed a 144,244-token retrieval task with tool execution and strict retrieval JSON, PASS. It does not establish occupied 1,000,000 tokens. |
-| Independent OpenCode read/edit/test | **Coordinated result; durable APIACCEPT report link PENDING.** Actual file reads, edit and test execution completed correctly; all eight verifier checks passed after replay of the already-saved original events with CLIENTTEXT. No inference rerun. The [source correction report](clienttext-stream-verifier.md) alone proves neither that replay nor live acceptance. |
-| GLM native 1,048,576 configuration/allocation | [D3CAP4](d3cap4-native1m.md) records one allocated slot and a tiny HTTP 200 response (19 prompt/3 completion tokens). [HOSTRECOVER](hostrecover-20260917/final.md) later recorded readiness after recovery, then a task-wrapper-triggered stop and zero inference requests. Final GLM API/client/context acceptance remains PENDING. |
-| Qwen unknown-model rejection | Reviewed source `705ddd75aa0305b121dbfa3e4942fa8a6c6e6c39`, integrated at this base, adds exact alias validation to both native chat and completion validators. Root reports 60 focused source checks and inventory PASS. New native-pair/extension proofs, one Qwen restart and live alias rejection are **PENDING**. |
+| Qwen API and real tools | Authentication, exact models, chat/SSE and real read/edit/test passed. The original A1 suite remains FAIL because unknown alias returned 200; later corrected-source rejection and valid continuation passed separately. [Q38RETRY](q38retry-tp2-1m.md) retains the smaller UID-1000 tool case and its fenced-JSON limitation. |
+| Qwen occupied-context retrieval | PASS: 144,244 input tokens initially, 144,026 on genuine tool-result continuation, with `read_file`, beginning/middle/end retrieval and strict JSON; 47.611 s total. Largest completed retrieval input is 144,244, not 1,000,000. |
+| Qwen real OpenCode read/edit/test | All eight original functional/integrity checks PASS; saved-event replay with CLIENTTEXT `4173d339` passed without an inference rerun. The original blank-fragment verifier failure remains preserved. |
+| GLM API, client and retrieval | A1 all 11 checks PASS in 52.764 s; real OpenCode all eight PASS in 128.042 s. Retrieval/tool/strict JSON PASS: 4,154 initial input, 4,196 continuation, 74.827 s total. The 4,196 maximum is specific to retrieval; OpenCode input+cache counters reached 5,791, without independent native pre-count. Configured context remains 1,048,576. |
+| Control, catalog and switching | Dedicated authentication, exact two-model catalog/status, stale-generation 409 without transition and identical body/key replay PASS. Qwen → GLM succeeded in 308.041 s (generation 3); GLM → Qwen in 88.192 s (generation 5). Durations cover whole operations, not isolated loading; every 202 was followed to terminal success and rediscovery. |
+| Corrected Qwen alias contract | New genuine native 128K/256K and 1M extension proofs PASS; exact ab6 source published at 07:22:01.997357Z without GLM reload. After switchback, unknown alias returned native HTTP 400, top-level `BadRequestError`. Offline interpretation corrected a nested-envelope verifier false negative, with no retry/runtime change. Two valid streamed calls then passed real `read_file`, continuation, correct interpretation and strict JSON. |
+| Default and reboot | Fast Qwen is selected/default with resume intent. One actual normal reboot succeeded at 07:57:22 UTC. Exactly four independent postboot LAN requests passed by 08:06:22.492747Z: control READY at generation 6, no-native-key 401, exact authenticated model and one short streamed expected completion. No rich agent/context suite was rerun after boot. |
+
+All acceptance rows above use the independent report linked at the top, except
+the explicitly linked earlier Q38RETRY record and Worker1 alias/reboot handoffs.
+Rich Qwen agent/context results belong to the **predecessor launcher**. Corrected
+ab6 has new exact-source proofs, the narrow three-call regression and postboot
+smoke, with the same weights/TP2/BF16-KV/official-1M profile. These are separate
+evidence scopes, not an assertion that old receipts cover changed bytes.
+
+The [new receipt publication](aliasdeploy-proof-publication.md) records native
+SHA256 `95178ab3a9bcd9ffad79e2496bbfb7a3014a8195dfe0e097949e845487c3514f`
+and extension SHA256
+`ec628c0ef48efa583a4c06ba6f5ccfa07214b0b8489b16a7b1812bc9aa9a2b44`.
 
 The control catalog provides configured context, installed profile identity and
 fresh readiness observations. It has no structured occupied-context receipt;
 `context.verified_occupied_tokens` therefore remains `null`. A model-list entry,
 source test, proof fixture, startup allocation and completed agent task are
-different evidence. Neither full occupied maximum has been established.
+different evidence. Neither full occupied maximum has been established;
+near-cap tasks were NOT_TESTED, not silently passed.
 
 ## Placement, capacity and timing
 
@@ -51,12 +67,44 @@ current installed guards. Root-resident control credentials/recovery code are
 deliberate; model/cache/log payloads do not belong on root. Historical guard
 identities in reports are not current execution instructions.
 
-The published Qwen short response used **34 prompt / 87 completion tokens in
+The earlier published Qwen short response used **34 prompt / 87 completion tokens in
 3.533211 seconds**, or **24.623494 completion tokens per elapsed second**,
 including prefill and transport. It is neither steady decode throughput nor an
 occupied-context rate. GLM's historical **9.686 tokens/s** observation was a
 [single 32K-configured decode comparison](d3perfvm-n76-cheap-monitor.md), not a
-current 1M benchmark. No comparable final-profile sustained benchmark is claimed.
+current 1M benchmark.
+
+Current-profile GLM timing comes from the already-saved retrieval responses;
+no benchmark was rerun:
+
+| GLM request | Input / output | Cached / evaluated input | Wall seconds | Native prompt tokens/s | Native decode tokens/s | Completion tokens / elapsed second |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Initial tool request | 4,154 / 13 | 50 / 4,104 | 67.408 | 69.299 | 1.507 | 0.193 |
+| Continuation | 4,196 / 45 | 4,166 / 30 | 7.271 | 34.703 | 6.906 | 6.189 |
+
+Native decode uses the server's `(predicted_n - 1) / seconds` convention.
+These tiny outputs and warm-cache-sensitive observations are not sustained
+benchmarks. Qwen retrieval requests took 23.285 and 24.181 s; native timing
+counters were unavailable. Do not compare those wall observations to GLM native
+decode or infer an apples-to-apples model speed ranking.
+
+**Separate user-supplied observation:** the user's own SSH heredoc completed a
+74,987-input / 52-output-token demonstration in 10.49 s with all three checkpoint
+values correct. The response used a Markdown JSON fence. This corroborates
+manual retrieval but is not the controlled 144K acceptance case, strict bare-JSON
+acceptance or live execution of the repository example. Whole-request elapsed
+time does not isolate native prefill or decode; no derived rate is claimed here.
+
+**Memory qualification:** GLM semantic/API/agent results passed, but strict
+zero-swap is **NOT_PASS_NONZERO_CGROUP_SWAP**. Model cgroup swap was **32 KiB**
+during the case versus **248 KiB** immediately before; host swap was **16.75 MiB**.
+Individual PID VmSwap was **NOT_MEASURED**. No swap growth or OOM was observed;
+these numbers do not establish a cause or explain the measured rates. Qwen's
+46 in-window samples recorded host/cgroup swap 0 and OOM delta 0, but its sampler
+ended 1.7859 s before the case terminal after broad cancel-text matching.
+Post-case replacement samples are excluded. Resource maxima are sampled,
+not continuous coverage or absolute-peak proof. See the
+[telemetry qualifications](apiaccept-lan-acceptance.md).
 
 ## Obstacles and what resolved them
 
@@ -112,8 +160,8 @@ historical test as current acceptance.
   caused `native_empty_text` despite correct read/edit/test evidence and a later
   nonempty final answer. [CLIENTTEXT](clienttext-stream-verifier.md) ignores blank
   fragments but still requires valid ordering and nonempty final text after the
-  passing test. Root's reported original-event replay PASS awaits its durable
-  link; it did not rerun inference.
+  passing test. The independent report now records original-event replay PASS;
+  it did not rerun inference or rewrite the original failure.
 - **Control reads — service budget defect.** Root's coordinated complete-read
   diagnostic measured **5.6126 seconds against a 2-second budget**, with repeated
   protected storage/profile checks. CONTROLREAD reuses the selected deployment
@@ -126,39 +174,44 @@ historical test as current acceptance.
 - **Missing SGLang model-alias validation — runtime API gap.** The
   [reviewed launcher source](../scripts/runtime/sglang38_file_auth.py) now checks
   the request model against the active served name in both native validators.
-  Source checks are complete; installed rejection is not yet accepted. Earlier
-  Q38RETRY proof receipts bind different launcher/fixture bytes and cannot cover
-  this change.
+  New exact-source native/extension proofs and live HTTP 400 rejection now pass.
+  A later task-local checker falsely expected a nested error instead of native
+  top-level `BadRequestError`; the retained response was interpreted offline
+  without retry or runtime change. Both the original runtime defect and later
+  verifier false negative remain recorded. Earlier Q38RETRY receipts still bind
+  their predecessor bytes, not this correction.
+- **Delayed directive pickup — orchestration overhead.** Some time was lost
+  because active remote CLI sessions did not promptly consume incoming-file
+  directives. Source-only checkpoints and direct same-session resume made
+  handoffs immediate. This was coordination overhead, separate from model or
+  runtime failure; no new workflow implementation is part of this report.
 
 The older successful native pair and extension receipts remain valid historical
 evidence for their exact sources. They do not transfer to changed source merely
 because the model, image or profile is unchanged.
 
-## Remaining ai-vm completion plan
+## Remaining completion work and retained qualifications
 
-1. Finish the new exact-source Qwen native 131,072 → 262,144 pair and separate
-   extension proof, then the coordinated Qwen restart/live alias-rejection
-   checks. Preserve valid-alias inference and authentication evidence with the
-   new source identities; retain rollback and historical receipts.
-2. Attach durable APIACCEPT reports for the 144,244-token Qwen retrieval and
-   original-event OpenCode replay. Keep actual tool/JSON evidence and measured
-   occupied tokens distinct from configured maxima.
-3. Complete **Qwen → GLM → Qwen** through the real control API from the assigned
-   independent client: 202 receipts, completion polling, fresh discovery and
-   authenticated inference after each transition. Final GLM API/SSE, ordinary
-   agent-client work and occupied-context evidence remain **PENDING**, as does
-   the switchback. Record the achieved context instead of assuming full 1M.
-4. Leave fast **Qwen selected as default after acceptance**. Complete the
-   selected-model reboot/resume and postboot private API/client checks under
-   existing ownership, storage and lifecycle rules; earlier host recovery is
-   not a substitute. Reboot acceptance remains **PENDING**.
-5. Finish only root-reviewed exact obsolete-path cleanup after replacement
-   acceptance and refreshed identity/in-use checks, retaining D1 rollback and
-   recovery evidence. Cleanup remains **PENDING**. Publish the final evidence
-   links and precise remaining limits before changing this draft to complete.
+The required model/API/switch/reboot sequence is complete. Accepted idle handoff
+before reboot was 07:51:04.325268Z; independent postboot request ownership ended
+at 08:06:22.492747Z with no active/inflight requests. Qwen remains the accepted
+default. No additional acceptance or benchmark run is initiated by this report.
+
+Cleanup remains **PENDING** until its separate completion report arrives. Finish
+only reviewed exact obsolete paths after refreshed identity/in-use checks,
+retaining D1 rollback and recovery evidence, then attach the actual cleanup
+report. A dry-run or this documentation update is not cleanup completion.
+Keep near-cap NOT_TESTED, GLM nonzero-swap qualification, sampled telemetry
+limits and predecessor/corrected-source boundaries in the final closeout.
+
+The user-requested [standalone Qwen context example](../examples/qwen-context-test.py)
+is **NOT_LIVE_EXECUTED** and not an acceptance gate. It has in-memory syntax/basic
+offline helper checks only. Its published-console command must use the exact
+full revision confirmed after publication; this task did not fetch or run it.
 
 No frontend, installer, extra-model or co-residency work is part of this plan.
-This STAGE1DOCS task changed only README, the operator guide and this report.
-Validation was limited to documentation diff/whitespace, relative links and
-source-contract reading; no tests, builds, downloads, VM access, model/control
-requests or host mutations were performed.
+This follow-up owns only README, the operator guide, this report and the example;
+independently owned evidence was read without modification. Validation was
+limited to documentation diff/whitespace, relative links, source-contract reading
+and the example's basic offline checks. No formal/broad test suite, build,
+download, VM access, model/control request or host mutation was performed.

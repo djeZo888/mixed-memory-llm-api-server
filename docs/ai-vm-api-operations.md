@@ -4,13 +4,14 @@ Discover and load a model through the control API, then use its separate
 OpenAI-compatible inference endpoint. Exactly **GLM5.3 UD-Q4_K_XL** and
 **Qwen3.8-27B FP8** are in scope, with one active backend at a time.
 
-**Status draft, 2026-09-17; final acceptance PENDING.** Published evidence covers
-[small Qwen API/tool tasks](../reports/q38retry-tp2-1m.md) and
-[working private control/catalog](../reports/apideploy-control-ready.md).
-The [stage-one report](../reports/stage1-ai-vm-status.md) separates those results
-from coordinated Qwen retrieval/OpenCode results awaiting durable links, new
-alias-proof gates and outstanding GLM/switch/reboot acceptance. This guide is an
-operator contract, not a fresh observation of the active backend.
+**Core API acceptance PASS, 2026-09-17; cleanup PENDING.** Both models, ordinary
+agent work, two-way switching and independent postboot LAN access passed.
+Qwen is the default selected model and automatically resumed after the accepted
+reboot. GLM functionality passed but strict swap-free qualification did not;
+full occupied-million-token tasks remain untested. See the
+[acceptance evidence](../reports/apiaccept-lan-acceptance.md) and
+[stage-one qualifications](../reports/stage1-ai-vm-status.md). Always refresh
+status before use; this document is not a live health observation.
 
 ## Endpoints and credentials
 
@@ -56,21 +57,20 @@ model identities or choices in the published two-entry catalog. Refresh catalog
 and status before use; source profiles alone do not prove installation. The
 [selection handoff](l2-live-snapshot.md#exact-selected-source) records profile pins.
 
-GLM uses fast system RAM and both GPUs with 1,048,576 declared/configured tokens.
-[D3CAP4 (2026-09-15)](../reports/d3cap4-native1m.md) proved one slot allocated at
-that capacity and one HTTP 200 response using 19 prompt and 3 completion tokens.
-It did not prove occupied 1M context, tools, switching, private-client access or
-boot, and is not current health evidence.
+GLM uses system RAM and both GPUs with 1,048,576 configured tokens. Its completed
+retrieval task used 4,154 input tokens, then 4,196 on continuation; these are
+retrieval counts, not maxima across all agent prompts. Qwen uses both GPUs/TP2,
+FP8 weights, BF16 compute/KV and official factor-4 YaRN for 1,000,000 configured
+and allocated tokens. Its largest completed retrieval input was 144,244 tokens.
+Both retrieval tasks included tools and strict JSON; neither proves full
+occupied 1M. [Detailed evidence](../reports/apiaccept-lan-acceptance.md) separates
+the earlier rich Qwen tasks from the later corrected-launcher regression.
 
-Qwen uses both GPUs (TP2), FP8 weights, BF16 compute/KV and official factor-4
-YaRN settings. [Q38RETRY](../reports/q38retry-tp2-1m.md) establishes 1,000,000
-configured/allocated tokens and small-task serving. Root reports a completed
-144,244-token retrieval task with tools and strict JSON; its durable link is
-pending. No full occupied 1M claim follows. Catalog `context_limit` and
-`context.configured_tokens` describe configuration; its structured
-`context.verified_occupied_tokens` remains `null` with provenance `"unknown"`.
-Neither startup allocation nor a 2048-token test output budget establishes
-occupied capacity or a product limit.
+Catalog `context_limit` and `context.configured_tokens` describe configuration.
+Its structured `context.verified_occupied_tokens` remains `null` with provenance
+`"unknown"` because there is no corresponding catalog receipt. Neither startup
+allocation nor a 2048-token test output budget establishes occupied capacity or
+a product limit.
 
 Models live on registered `/data/models-large`; cache, Docker/containerd,
 builds, logs and service data use the registered `/data` roots. The protected
@@ -167,10 +167,11 @@ can change. Do not infer through port 30000 or treat `model` as a load request.
 
 At the discovered inference base URL, `GET /models` is `/v1/models` and
 `POST /chat/completions` is `/v1/chat/completions`; `stream:true` requests SSE.
-Use the exact served alias. Unknown-model rejection in the changed Qwen launcher
-still needs fresh native/extension proofs and a restart/live check; the earlier
-successful requests do not establish this new behavior. Reviewed client effort
-settings are GLM `"low"` and Qwen `"none"`.
+Use the exact served alias. Corrected Qwen unknown-model rejection returned
+native HTTP 400 with a top-level `BadRequestError` object; do not assume every
+backend nests its error under `error`. Valid streamed tool continuation also
+passed on the corrected launcher. Reviewed client effort settings are GLM
+`"low"` and Qwen `"none"`.
 
 ## Protected-file request examples
 
@@ -245,6 +246,49 @@ For GLM, use its freshly discovered endpoint/alias and `reasoning_effort:"low"`.
 The 128-token example budget is not a serving limit. For real agents, use the
 [reviewed client](client-install.md) with a protected `--api-key-file` reference.
 Provision client limits from the current handoff, not this short example.
+
+## Manual Qwen context example
+
+[qwen-context-test.py](../examples/qwen-context-test.py) runs one synthetic
+archive retrieval in an existing ai-vm console while Qwen is already selected.
+It uses only Python's standard library and `127.0.0.1:30004`, reads the existing
+protected inference key under sudo, and creates no files or configuration.
+It does not switch models or execute tools. Local use from a reviewed checkout:
+
+```sh
+sudo python3 examples/qwen-context-test.py
+```
+
+For a console without a checkout, use the following **only after the release
+publisher confirms this exact revision is available**. It pins the compact
+script commit `f93c6db5e826c05557687d008d30880a4401e57d`, an ancestor of the
+documentation bundle. Local existence does not establish public availability.
+`sudo -v` handles the password prompt before the pipe; the script and key need
+no temporary files. This task did not fetch or execute the command.
+
+```sh
+sudo -v && (set -o pipefail; curl --fail --silent --show-error --location 'https://raw.githubusercontent.com/djeZo888/mixed-memory-llm-api-server/f93c6db5e826c05557687d008d30880a4401e57d/examples/qwen-context-test.py' | sudo -n python3 -)
+```
+
+The script targets roughly 75,000 input tokens with at most three native
+`/v1/tokenize` calls. It validates `count` and the integer token list and refuses
+generation unless the final actual count is 50,000–100,000. Generation reuses
+the identical model/messages/effort projection, adds streaming and usage, and
+reserves at most 2,048 output tokens. Tokenizer `max_model_len` metadata is not
+used to override the accepted 1,000,000-token runtime configuration.
+
+Counts appear separately from streamed model content; usage, elapsed time and
+expected START/MIDDLE/END values follow for human comparison. HTTP timeouts are
+180 seconds for counting and 1,200 seconds for generation; failures stop without
+a generation retry. Ctrl-C closes the connection. This example is
+**NOT_LIVE_EXECUTED**, checked only for syntax and basic offline helper behavior.
+It is not a new benchmark or acceptance gate.
+
+Separately, the user reported a successful SSH heredoc demonstration with
+74,987 input tokens and 52 output tokens in 10.49 seconds, all three checkpoints
+correct. Its response used a Markdown JSON fence. This is user-supplied
+corroboration, not execution of this source example, the controlled 144K task,
+or strict bare-JSON acceptance. The elapsed time is not native prefill/decode.
 
 ## External agents and future frontend
 
