@@ -100,6 +100,7 @@ def container(d):
         'HostConfig': {'ReadonlyRootfs': True, 'ShmSize': 8 * 1024**3,
             'Tmpfs': {'/tmp': 'rw,nosuid,nodev,size=1g'}, 'CapDrop': ['ALL'],
             'SecurityOpt': ['no-new-privileges:true'],
+            'Ulimits': [{'Name': 'core', 'Soft': 1, 'Hard': 1}],
             'LogConfig': {'Type': 'json-file', 'Config': {'max-size': '20m', 'max-file': '3'}},
             'DeviceRequests': [{'Driver': 'nvidia', 'Count': 0, 'DeviceIDs': ['0'], 'Capabilities': [['gpu']]}],
             'RestartPolicy': {'Name': 'no', 'MaximumRetryCount': 0}, 'NetworkMode': 'bridge',

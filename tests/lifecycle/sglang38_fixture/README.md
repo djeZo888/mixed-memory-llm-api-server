@@ -104,10 +104,16 @@ record with synthetic-key redaction. Worker1 must retain raw streams privately
 failure still returns CLI2 and cannot publish a receipt.
 
 Native resolution changes environment variables, including
-`SGLANG_MAMBA_SSM_DTYPE`. Each fixture launcher call keeps those real changes
-during execution, then restores its entry environment before the independent
-injection-negative case and failure children. Production environment validation
-is unchanged.
+`SGLANG_MAMBA_SSM_DTYPE`. Q38FIN captures the entry environment immediately after
+strict validation, before genuine imports. Pinned FlashInfer's import-time
+Blackwell patch can add `TRITON_PTXAS_BLACKWELL_PATH` for CUDA13; revalidating that
+post-import state does not match production's validate-before-import order.
+Both launcher calls reenter the validated snapshot and keep subsequent real
+resolution changes during execution. The outer scenario restores its entry
+environment before independent failure children. Production launcher validation
+and native imports are unchanged. Import-cached fixture execution is auth/source
+proof only, never model/compiler acceptance. The pinned mutation is reproduced
+synthetically; the historical Q38VERIFY offending name remains unconfirmed.
 
 Additional source-worker regressions require an explicit external copy of the
 exact pinned upstream files; they validate hashes before exercising selected
@@ -115,7 +121,8 @@ native definitions with synthetic collaborators. This test-only extraction is
 never an actual-fixture fallback or native acceptance proof:
 
 ```bash
-Q38NEXT_UPSTREAM_ROOT=/path/to/pinned/python/sglang python3 -B -m unittest \
+Q38NEXT_UPSTREAM_ROOT=/path/to/pinned/python/sglang \
+Q38FIN_FLASHINFER_ROOT=/path/to/flashinfer-69ff11fc/flashinfer python3 -B -m unittest \
   tests.lifecycle.test_qwen38_native_launch \
   tests.lifecycle.test_qwen38_launch_diagnostics -v
 ```

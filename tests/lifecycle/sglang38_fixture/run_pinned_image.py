@@ -97,7 +97,7 @@ def failure_origin(error):
     return None
 
 
-def checked_launch(launcher, argv, captured, engine_calls, sentinel):
+def checked_launch(launcher, argv, captured, engine_calls, sentinel, launch_environment):
     """Keep the first swallowed exception at the launcher's existing log seam.
 
     Only the failure operands/class leave via JSON. A bounded, sentinel-redacted
@@ -119,10 +119,12 @@ def checked_launch(launcher, argv, captured, engine_calls, sentinel):
     result = None
     escaped = None
     try:
-        # Native resolution sets SGLANG_MAMBA_SSM_DTYPE. Keep that real change
-        # throughout this launch, then restore the pre-launch environment for
-        # the independent injection-failure case and child fixture processes.
-        with patch.dict(os.environ), patch.object(launcher.LOGGER, "error", side_effect=remember_error):
+        # Re-enter the strictly validated pre-import environment. In the pinned
+        # CUDA13 image, importing FlashInfer can add TRITON_PTXAS_BLACKWELL_PATH;
+        # production validates BEFORE importing it. Resolution's later real
+        # SGLANG_MAMBA_SSM_DTYPE change stays visible throughout this launch.
+        with patch.dict(os.environ, launch_environment, clear=True), \
+                patch.object(launcher.LOGGER, "error", side_effect=remember_error):
             result = launcher.main(argv)
     except BaseException as error:
         escaped = error
@@ -689,6 +691,7 @@ def run_actual(repo, scenario, captured_logs, context=131072):
     launcher = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(launcher)
     launcher.validate_environment()
+    launch_environment = dict(os.environ)
     import torch
     with cuda_discovery_fixture(torch):
         from transformers import AutoConfig
@@ -819,7 +822,7 @@ def run_actual(repo, scenario, captured_logs, context=131072):
                 if scenario == "warmup-timeout":
                     # Fault injection only: same watchdog/abort path, short deadline.
                     stack.enter_context(patch.object(launcher, "STARTUP_TIMEOUT", 0.4))
-                checked_launch(launcher, argv, captured, engine_calls, sentinel)
+                checked_launch(launcher, argv, captured, engine_calls, sentinel, launch_environment)
             no_secret(captured_logs.getvalue(), sentinel)
             require(KEY_PATH.read_bytes() == sentinel.encode(), "existing_fixture_key_changed")
 
@@ -831,7 +834,7 @@ def run_actual(repo, scenario, captured_logs, context=131072):
                                      stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                      stderr=subprocess.DEVNULL)
             try:
-                with patch.dict(os.environ), \
+                with patch.dict(os.environ, launch_environment, clear=True), \
                      patch.object(auth, "add_api_key_middleware", return_value=None), \
                      patch.object(server.Engine, "_launch_subprocesses") as workers, \
                      patch.object(server.uvicorn, "run") as uvicorn:
@@ -895,7 +898,9 @@ def main(argv=None):
     handler = logging.StreamHandler(log_capture)
     try:
         options = parse_options(sys.argv[1:] if argv is None else argv)
-        with redirect_stdout(log_capture), redirect_stderr(log_capture):
+        # Genuine import side effects must not become inherited launch inputs
+        # for the independent failure children after this scenario returns.
+        with redirect_stdout(log_capture), redirect_stderr(log_capture), patch.dict(os.environ):
             logging.getLogger().addHandler(handler)
             try:
                 result = run_actual(options.repo, options.internal_scenario, log_capture, options.context)

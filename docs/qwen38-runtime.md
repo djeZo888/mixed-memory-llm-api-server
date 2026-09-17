@@ -179,6 +179,16 @@ manifest, matching normal-file constants and focused protection/import tests.
 Recovery stays minimal; normal Q38 dependencies are protected before imports.
 The reserved D3T llama validation and command bodies remain unchanged.
 
+Managed Qwen3.8 containers add exactly one Docker `--ulimit core=1:1` option.
+Reuse requires one inspected `HostConfig.Ulimits` core entry with exact integer
+`Soft: 1` and `Hard: 1`; absent, duplicate or different core limits refuse before
+start. Unrelated daemon-default ulimits remain allowed. The reviewed Linux 6.8
+piped-core behavior makes limit 1 the bounded containment choice for the observed
+fixture crash/root-fill hazard; this changes no global host core policy or GLM/
+deferred backend argv. Source tests verify creation and reuse for both native
+Qwen profiles. Actual production container inspection and crash containment
+remain Worker1 live gates, not established by these synthetic tests.
+
 ## Protected acquisition / L2 runtime evidence publication
 
 See [exact acquisition mapping](../reports/q38s-i1c-mapping.md). The new normalized
