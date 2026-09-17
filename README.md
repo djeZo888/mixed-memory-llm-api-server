@@ -5,11 +5,12 @@ An API-only local AI server for **GLM5.3 UD-Q4_K_XL** (flagship) and
 separate authenticated control API for catalog, status and model switching.
 Select/load the model before inference: **one backend is active at a time**.
 
-**Core stage-one API acceptance: PASS, with qualifications (2026-09-17).**
+**Stage one COMPLETE, with qualifications (2026-09-17).**
 [Independent LAN acceptance](reports/apiaccept-lan-acceptance.md) covers both
 models, real agent work, Qwen → GLM → Qwen switching and postboot access.
-Fast Qwen is selected by default and resumes after reboot. **Cleanup remains
-PENDING.** GLM functional checks passed, but strict swap-free qualification did
+Fast Qwen is selected by default and resumes after reboot.
+[Final cleanup is COMPLETE](reports/finalops-reboot-cleanup.md).
+GLM functional checks passed, but strict swap-free qualification did
 not; neither model has demonstrated its full occupied context maximum. The
 [stage-one status report](reports/stage1-ai-vm-status.md) preserves the exact
 evidence, source boundaries and remaining qualifications.

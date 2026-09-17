@@ -1,7 +1,7 @@
 # Stage-one ai-vm status — qualified acceptance, 2026-09-17
 
-**Core stage-one API/model/switch/reboot/independent LAN acceptance PASS.
-Cleanup PENDING; qualifications remain explicit.** The evidence cutoff is
+**Stage one COMPLETE: API/model/switch/reboot/independent LAN acceptance PASS;
+cleanup COMPLETE. Qualifications remain explicit.** The API evidence cutoff is
 2026-09-17T08:06:22.492747Z. The [independent acceptance report](apiaccept-lan-acceptance.md)
 and [sanitized summary](apiaccept-evidence/summary.json) document the completed
 requests; [alias publication](aliasdeploy-proof-publication.md) binds the
@@ -185,24 +185,37 @@ historical test as current acceptance.
   directives. Source-only checkpoints and direct same-session resume made
   handoffs immediate. This was coordination overhead, separate from model or
   runtime failure; no new workflow implementation is part of this report.
+- **Cleanup delay — orchestration/validation issues.** Legacy ownership, a
+  generic download-timer false positive, assertions protecting historical
+  references and Docker `Mounts` list order differing despite full multiset
+  equality prolonged cleanup. These were validation/coordination issues, not
+  an actual wrong-model state.
 
 The older successful native pair and extension receipts remain valid historical
 evidence for their exact sources. They do not transfer to changed source merely
 because the model, image or profile is unchanged.
 
-## Remaining completion work and retained qualifications
+## Completed cleanup and retained qualifications
 
 The required model/API/switch/reboot sequence is complete. Accepted idle handoff
 before reboot was 07:51:04.325268Z; independent postboot request ownership ended
 at 08:06:22.492747Z with no active/inflight requests. Qwen remains the accepted
 default. No additional acceptance or benchmark run is initiated by this report.
 
-Cleanup remains **PENDING** until its separate completion report arrives. Finish
-only reviewed exact obsolete paths after refreshed identity/in-use checks,
-retaining D1 rollback and recovery evidence, then attach the actual cleanup
-report. A dry-run or this documentation update is not cleanup completion.
-Keep near-cap NOT_TESTED, GLM nonzero-swap qualification, sampled telemetry
-limits and predecessor/corrected-source boundaries in the final closeout.
+C1 cleanup completed operationally at **2026-09-17T08:36:18.365933Z**, per the
+coordinator's final handoff; no more VM work remains. All four exact obsolete
+model trees are absent: **586,788,376,576 allocated bytes** (about 586.8 GB /
+546.5 GiB) removed. Three exact old containers and four privately backed
+operational references were retired. F1A/F1D provenance, images/cache, retained
+model trees and rollback evidence were preserved. `/data/models` ownership and
+mode were restored to **uid 1000 : gid 1001 / 02775**. Qwen PID 11259 and
+generation 6 remained unchanged; guards/preservation passed and the lifecycle
+lease was released. See the [final operations report](finalops-reboot-cleanup.md)
+and [sanitized summary](finalops-evidence/summary.json). Removed allocated bytes
+are not a claim about net filesystem free-space change.
+
+Near-cap NOT_TESTED, GLM nonzero-swap qualification, sampled telemetry limits
+and predecessor/corrected-source boundaries remain part of this closeout.
 
 The user-requested [standalone Qwen context example](../examples/qwen-context-test.py)
 is **NOT_LIVE_EXECUTED** and not an acceptance gate. It has in-memory syntax/basic
