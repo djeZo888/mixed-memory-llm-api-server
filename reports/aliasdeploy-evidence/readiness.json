@@ -1,0 +1,87 @@
+{
+  "boot_restart": false,
+  "boot_unit_sha256": "b08cca9b90f5fe24e20d9ebe58ef713c7bf1e0a36fba0fb11396470374e7dffc",
+  "canonical_lease": "RELEASED",
+  "canonical_lease_inode": 2207,
+  "catalog": [
+    {
+      "backend": "llama_cpp",
+      "context_limit": 1048576,
+      "deployment_id": "glm-5.3-ud-q4-k-xl-n76-native1m",
+      "quantization": "UD-Q4_K_XL",
+      "runtime": "llama-cpp-v0.4.1-d3br",
+      "state": "ready"
+    },
+    {
+      "backend": "sglang_qwen38",
+      "context_limit": 1000000,
+      "deployment_id": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+      "quantization": "fp8",
+      "runtime": "sglang-qwen38-0.5.19",
+      "state": "available"
+    }
+  ],
+  "catalog_seconds": 1.4897009870001057,
+  "control": {
+    "active_identity": "ed7be275319b8200cdd4a6719959fdb963de5b45b946c7fdfbcc296d7f8e3ccc",
+    "current_operation": null,
+    "desired": "running",
+    "freshness": "fresh",
+    "generation": 3,
+    "generation_current": true,
+    "http": {
+      "authenticated_catalog": 200,
+      "authenticated_status": 200,
+      "missing_key": 401,
+      "wrong_key": 401
+    },
+    "observed": "ready",
+    "selected": "glm-5.3-ud-q4-k-xl-n76-native1m",
+    "state_persisted": true
+  },
+  "control_restart_only": true,
+  "glm_context_tokens": 1048576,
+  "glm_image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+  "glm_inference": false,
+  "guard_dependency_mode": "0644",
+  "guard_mode": "0755",
+  "instance_sha256": "bbe28400adde2adb35fd8d926d4cde62ff13c229b94d61795596a59d72cf43e9",
+  "live_corrected_alias_acceptance": "PENDING_WORKER2",
+  "model_reload": false,
+  "no_active_requests": true,
+  "no_inflight_command": true,
+  "no_more_vm_operations": true,
+  "normal_release": "/data/services/releases/ab6daa475cc2f1c04956d862f460f9f01c4ee952-aliasdeploy-20260917",
+  "occupied_context": "NOT_MEASURED",
+  "postguards": "PASS",
+  "qwen_replacement": "NOT_NEEDED_NEW_SOURCE_FULL_REUSE_PASS",
+  "qwen_stopped_container": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+  "receipts": {
+    "/data/services/llm-manager/evidence/sglang-qwen38-0.5.19.auth.json": {
+      "mode": "0600",
+      "sha256": "95178ab3a9bcd9ffad79e2496bbfb7a3014a8195dfe0e097949e845487c3514f"
+    },
+    "/data/services/llm-manager/evidence/sglang-qwen38-0.5.19.q38max.auth.json": {
+      "mode": "0600",
+      "sha256": "ec628c0ef48efa583a4c06ba6f5ccfa07214b0b8489b16a7b1812bc9aa9a2b44"
+    }
+  },
+  "request_ownership": "RELEASED_TO_ROOT_FOR_WORKER2",
+  "rollback_private": "/data/services/llm-manager/aliasdeploy-20260917",
+  "running_container": "3108f42bfaab08010164340b2c3e709e03c4aebeb36374e6b87d8bac226296fb",
+  "runtime_identity": {
+    "Pid": 243984,
+    "Restarting": false,
+    "Running": true,
+    "StartedAt": "2026-09-17T07:02:26.987992173Z",
+    "Status": "running"
+  },
+  "session_id": "01a0ae27-970e-7a43-af76-a1cc9441a189",
+  "source_commit": "ab6daa475cc2f1c04956d862f460f9f01c4ee952",
+  "source_manifest_path": "/usr/local/lib/llm-server/control-api.manifest.json",
+  "source_manifest_sha256": "aed8d162ace8a4ea6cf3cc0e1d8a72b63c23ca13efe5bf19bac1790615fbd524",
+  "status_seconds": 0.5683646369998314,
+  "transport_exit": 0,
+  "utc": "2026-09-17T07:22:01.997357+00:00",
+  "worker_request_lock": "RELEASED"
+}
