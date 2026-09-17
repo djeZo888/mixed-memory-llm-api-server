@@ -36,7 +36,8 @@ def fixture_container(repo, cache, context, *, name=None, token=None, image_id=N
             "Image": host.IMAGE_REFERENCE, "Labels": {host.OWNER_LABEL: token},
             "Env": [key + "=" + value for key, value in {
                 **cache, "NVIDIA_VISIBLE_DEVICES": "none", "CUDA_VISIBLE_DEVICES": "",
-                "NVIDIA_DRIVER_CAPABILITIES": "compute,utility", "OPENBLAS_NUM_THREADS": "1"}.items()],
+                "NVIDIA_DRIVER_CAPABILITIES": "compute,utility", "OPENBLAS_NUM_THREADS": "1",
+                "RAYON_NUM_THREADS": "1"}.items()],
             "Entrypoint": ["python3"], "User": "0:0", "WorkingDir": "/cache",
             "Cmd": ["-X", "faulthandler", "-B", "/fixture/tests/lifecycle/sglang38_fixture/run_pinned_image.py",
                     "--actual-image", "--repo", "/fixture", "--context", str(context)],
@@ -206,6 +207,33 @@ class Qwen38FixtureLifetimeTests(unittest.TestCase):
         self.assertFalse(daemon.attached, "policy failure must precede native execution")
         self.assertNotIn(OWN_ID, daemon.objects)
         self.assert_sentinel(daemon)
+
+    def test_rayon_threads_all_contexts_and_inspect_refuses_missing_wrong_or_duplicate(self):
+        for context in (131072, 262144, 1000000):
+            daemon = DockerDaemon()
+            _, evidence = host.run_disposable_fixture(Path("/reviewed"), {}, context, docker=daemon)
+            create = next(command for command, _ in daemon.calls if command[1] == "create")
+            self.assertEqual([value for value in create if value.startswith("RAYON_NUM_THREADS=")],
+                             ["RAYON_NUM_THREADS=1"])
+            self.assertEqual(evidence["cleanup"], "QUIESCENT_REMOVAL_VERIFIED")
+            self.assert_sentinel(daemon)
+            for value in (None, "", "0", "64", " 1", "1 ", "1.0", "duplicate"):
+                def mutate(container, value=value):
+                    entries = container["Config"]["Env"]
+                    if value == "duplicate":
+                        entries.append("RAYON_NUM_THREADS=1")
+                    else:
+                        entries[:] = [entry for entry in entries if not entry.startswith("RAYON_NUM_THREADS=")]
+                        if value is not None:
+                            entries.append("RAYON_NUM_THREADS=" + value)
+                daemon = DockerDaemon(policy_mutator=mutate)
+                with self.subTest(context=context, value=value), self.assertRaises(host.LifetimeFailure) as caught:
+                    host.run_disposable_fixture(Path("/reviewed"), {}, context, docker=daemon)
+                self.assertEqual(caught.exception.evidence["outcome"], "CREATE_FAILED")
+                self.assertEqual(caught.exception.evidence["cleanup"], "QUIESCENT_REMOVAL_VERIFIED")
+                self.assertFalse(daemon.attached)
+                self.assertNotIn(OWN_ID, daemon.objects)
+                self.assert_sentinel(daemon)
 
     def test_runtime_device_privilege_and_network_drift_refused_before_start(self):
         drifts = {

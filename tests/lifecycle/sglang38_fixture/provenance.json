@@ -2,11 +2,11 @@
   "actual_image_execution": "NOT_TESTED",
   "fixture_sha256": {
     "auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
-    "cache_probe.py": "be1411601ae6609d6889be8e174e565ba8a41f97b496bc33c13404619369a65b",
+    "cache_probe.py": "b99853c1509c894359fdab894d974abcef02e0572adb510923eb9e62759b8fd0",
     "chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
     "qwen38_config.json": "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc",
-    "run_fixture.py": "78a0842a25affbcc56f5e7f64df1dd2bae7c2d2d58dbe2aa239d44a6a4b91a38",
-    "run_pinned_image.py": "8b109e02bca5d9b4233a21677aff582b8334df52c77b468cb5869f2aa9a36fcd"
+    "run_fixture.py": "f7491d5b4134c311478b6a4c9a3a5f02d6af08806496aaeefb56e1b08787d204",
+    "run_pinned_image.py": "7717ae2c49ce7d798459067669f0227d41e0e63e947a2c3850e4c93e5db7fd18"
   },
   "image_id": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
   "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
