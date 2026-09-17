@@ -1,0 +1,15 @@
+APIDEPLOY CONTROL READY — release 2026-09-17T06:39:36.264257+00:00.
+
+No active request, no inflight command, canonical lifecycle lease RELEASED; request ownership RELEASED TO ROOT FOR WORKER2. No more VM calls. Healthy Qwen container 5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9, PID 132068, start 2026-09-17T06:01:20.210982756Z unchanged. Desired running / resume; boot/proxies not restarted.
+
+Authenticated control status READY / fresh / persisted / generation 1 current; status 7.872330s, catalog 8.581904s. Missing and wrong key 401. Exact catalog: glm-5.3-ud-q4-k-xl-n76-native1m, context 1048576, available/stopped; qwen38-27b-1000000-yarn4-tp2-bf16kv, context 1000000, ready. Active identity a4ad1c6cf22268e163ccf3fa1ed9cad29a160be62a3d4914f8dca18aa3e1c96c.
+
+Endpoints: control http://10.156.100.60:30000/control/v1; GLM http://10.156.100.60:30002/v1; Qwen http://10.156.100.60:30004/v1. Protected key locations: /etc/llm-server/control-api-key; /data/services/secrets/llm-api-key. No values copied.
+
+Exact reviewed source b7fe0816813848393570b629a11249b94629f6ed; normal release /data/services/releases/b7fe0816813848393570b629a11249b94629f6ed-apideploy-20260917; fixed control /usr/local/lib/llm-server/control-api; boot /usr/local/lib/local-ai-server. Source manifest be44758994ee2b2faa18dfab7eb9be127b8f95611fb54717344f64fbe797bffc. Boot unit 8ec234bdcfbd4a2bef55442f2c8a5b7c9d602d7c3debf6127b4ae8d64aaccbd3 now binds the new normal release; no boot restart. Instance unchanged 972b627a5be31674ca6c7b490d46a10d484c913c8ed54fe8992c08bdba60db6e. Native/extension receipt hashes and modes unchanged in control-fix-ready.json. Guard 0755 / dependency 0644; keys/registry/NETPATCH/profile/runtime/fixture bytes and rollback retained. Only control service restarted; postguards PASS.
+
+Earlier control deadline blocker is resolved by reviewed b7fe source. No inference generation, switch, occupied-context test or reboot was performed here. Worker2 acceptance can proceed immediately; report packaging is no gate.
+
+Validation used the exact reviewed b7fe081 source. Fixed control files match the protected normal release; the exact 11-file boot stop copy remains byte-identical. The rendered boot unit differs only in its normal-release path and passed systemd verification with the two existing generated mount units. Control credential binding passed after the sole control-service restart. Both actual authenticated API responses were semantically checked for fresh READY, persisted state, matching opaque active identity and current generation1; catalog IDs and context limits were checked exactly. No source tests, native proof rerun or model weight hashing were needed for this report-only publication.
+
+The earlier APIDEPLOY blocked report and initial two-second timing failure remain historical. This live result resolves that control blocker; it does not claim Worker2 client, switching, occupied-context or reboot acceptance. Complete diagnostic measurements remain in task-root control-complete-timing.json.
