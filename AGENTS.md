@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Current guidance for agents and operators. Read the
-[current scope and ownership checkpoint](docs/orchestration/2026-09-15-status.md)
+[current scope and ownership checkpoint](docs/orchestration/2026-09-17-handoff.md)
 and the relevant task handoff before work; preserve their evidence boundaries.
 
 ## Authorized sequence and ownership
