@@ -5,9 +5,11 @@ exercise retained transaction behavior; these checks cover the new dispatch.
 """
 import copy
 from contextlib import contextmanager
+import hashlib
 import json
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
@@ -15,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 from lifecycle.manager import Manager
 from lifecycle import qwen38 as q
+from lifecycle import qwen_next
 from lifecycle import runtime_io
 from lifecycle.runtime_io import LifecycleError
 from runtime import qwen38_oci as oci
@@ -131,6 +134,88 @@ class ManagerDispatch(unittest.TestCase):
         self.assertEqual(command[command.index("--base-gpu-id") + 1], "0")
         self.assertEqual(command, q.command(d))
         self.assertNotIn("--speculative-algorithm", command)
+
+    def test_both_native_profiles_create_exact_core_limit_before_image(self):
+        for identifier in q.VARIANTS:
+            with self.subTest(identifier=identifier):
+                d = self.manager.deployment(identifier)
+                argv = self.manager.create_args(d)
+                self.assertEqual(argv.count("--ulimit"), 1)
+                self.assertEqual(argv.count("core=1:1"), 1)
+                option = argv.index("--ulimit")
+                self.assertEqual(argv[option + 1], "core=1:1")
+                self.assertLess(option + 1, argv.index(q.IMAGE_REFERENCE))
+
+    def test_both_native_profiles_reuse_core_with_unrelated_daemon_limits(self):
+        for identifier in q.VARIANTS:
+            d = self.manager.deployment(identifier)
+            for unrelated in ([], [{"Name": "nofile", "Soft": 1024, "Hard": 65536},
+                                   {"Name": "memlock", "Soft": -1, "Hard": -1}]):
+                with self.subTest(identifier=identifier, unrelated=unrelated):
+                    c = container(d)
+                    c["HostConfig"]["Ulimits"] += unrelated
+                    before = copy.deepcopy(c["HostConfig"]["Ulimits"])
+                    self.manager.validate_reused_contract(c, d)
+                    self.assertEqual(c["HostConfig"]["Ulimits"], before)
+
+    def test_both_native_profiles_refuse_invalid_core_before_start(self):
+        exact = {"Name": "core", "Soft": 1, "Hard": 1}
+        missing = object()
+        invalid = [missing, None, [], {}, "core=1:1", [None],
+                   [{"Name": "nofile", "Soft": 1024, "Hard": 65536}],
+                   [exact, dict(exact)], [exact, {"Name": "core", "Soft": 0, "Hard": 0}]]
+        for field in ("Soft", "Hard"):
+            for value in (0, -1, 2, True, False, "1", 1.0, None, [], {}):
+                invalid.append([dict(exact, **{field: value})])
+            absent = dict(exact)
+            absent.pop(field)
+            invalid.append([absent])
+        self.docker.start = Mock(side_effect=AssertionError("start before core validation"))
+        for identifier in q.VARIANTS:
+            d = self.manager.deployment(identifier)
+            for limits in invalid:
+                with self.subTest(identifier=identifier, limits=limits):
+                    c = container(d)
+                    if limits is missing:
+                        c["HostConfig"].pop("Ulimits")
+                    else:
+                        c["HostConfig"]["Ulimits"] = copy.deepcopy(limits)
+                    self.manager.state.update(selected=identifier, container={"deployment": identifier})
+                    with patch.object(self.manager, "prepare_start"), \
+                            patch.object(self.manager, "trusted_container", return_value=c):
+                        with self.assertRaisesRegex(LifecycleError, "qwen38_reused_core_limit_mismatch"):
+                            self.manager._start()
+        self.docker.start.assert_not_called()
+
+    def test_representative_glm_and_deferred_argv_bytes_unchanged(self):
+        # NUL-separated argv snapshots captured from the authorized base before
+        # Q38CORE edits. Host I/O is synthetic; production argv/validation run.
+        expected = {
+            "glm-5.3-ud-q4-k-xl-8k": "17983c7e1c181d89a407451a2106fe8f4e5c8ff3c8e3bb8f46a1fa7613a340f9",
+            "qwen3-coder-next": "dd316e9e9d53f16a085ba6692331b6469e678b1653b5ef2a9a400fe8b789a9a5",
+        }
+        for identifier, digest in expected.items():
+            with self.subTest(identifier=identifier):
+                d = self.manager.deployment(identifier)
+                rt = d["_runtime"]
+                image_id = rt.get("image_id") or "sha256:" + "b" * 64
+                self.manager.instance["runtime_evidence"][d["runtime"]] = {
+                    "image_id": image_id, "flags_verified": True,
+                    "supported_flags": rt["required_cli_flags"], "load_mode": "none",
+                    "evidence": "SYNTHETIC unchanged argv regression",
+                    "launcher_sha256": qwen_next.launcher_hash(), "auth_gate_passed": True,
+                    "auth_gate_evidence": "SYNTHETIC unchanged argv regression"}
+                image = {"Id": image_id, "Config": {"Entrypoint": rt["entrypoint"]}}
+                installed = self.binding.path("data", qwen_next.LAUNCHER_SUFFIX)
+                real_stat = Path.stat
+                with patch.object(self.docker, "capture", return_value=json.dumps([image])), \
+                        patch.object(qwen_next, "protected_bytes", return_value=
+                                     (ROOT / "scripts/lifecycle/sglang_file_auth.py").read_bytes()), \
+                        patch.object(Path, "stat", lambda p, *a, **kw: SimpleNamespace(st_mode=0o100644)
+                                     if str(p) == installed else real_stat(p, *a, **kw)):
+                    argv = self.manager.create_args(d)
+                self.assertEqual(hashlib.sha256("\0".join(argv).encode()).hexdigest(), digest)
+                self.assertNotIn("--ulimit", argv)
 
     def test_prepare_auth_gate_precedes_key_metadata_and_any_docker_inspection(self):
         self.binding.documents.clear()

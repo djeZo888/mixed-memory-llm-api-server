@@ -41,7 +41,7 @@ PROFILE_HASHES = {'reports/q38s-acquisition-manifest.json': '726012378a40f648a10
  'configs/runtimes/sglang-qwen38-0.5.19.json': '17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11',
  'configs/deployments/qwen38-27b-128k.json': 'cee5253c28bd8ff36f33630f27642cc9cdd3857eaa108bd177488efd6a0d133f',
  'configs/deployments/qwen38-27b-256k.json': '462ed5792940890eaa410c3c6dd4996c6723157eee5fb7021ee210ed2f78523a',
- 'tests/lifecycle/sglang38_fixture/provenance.json': '19e8deec11155173c25b010999f6f5a30d1a20f3d70f652e581fdbbaa2b4b3fd'}
+ 'tests/lifecycle/sglang38_fixture/provenance.json': '6b3849e72d8b1ac8580003fd441af3d1b470c372e54a8643cf6a966ed3a524c9'}
 Q38R_SHA256 = '3df6f2a0a46a33b2b48f62609235ff209e50403d679bd8ee120b941445a87ed0'
 AUTH_CHECKS = (
     'native_routes_and_final_chain', 'native_prepare_and_normalization',
@@ -382,6 +382,13 @@ def validate_reused(c, d, e, image):
             and host.get('Tmpfs') == {'/tmp': 'rw,nosuid,nodev,size=1g'}, 'qwen38_reused_storage_mismatch')
     require(host.get('CapDrop') == ['ALL'] and not host.get('CapAdd') and not host.get('Privileged')
             and host.get('SecurityOpt') == ['no-new-privileges:true'], 'qwen38_reused_security_mismatch')
+    ulimits = host.get('Ulimits')
+    require(isinstance(ulimits, list) and all(isinstance(limit, dict) for limit in ulimits),
+            'qwen38_reused_core_limit_mismatch')
+    core = [limit for limit in ulimits if limit.get('Name') == 'core']
+    require(len(core) == 1 and type(core[0].get('Soft')) is int and core[0]['Soft'] == 1
+            and type(core[0].get('Hard')) is int and core[0]['Hard'] == 1,
+            'qwen38_reused_core_limit_mismatch')
     require(host.get('LogConfig') == {'Type': 'json-file', 'Config': {'max-size': '20m', 'max-file': '3'}},
             'qwen38_reused_logging_mismatch')
     requests = host.get('DeviceRequests', [])

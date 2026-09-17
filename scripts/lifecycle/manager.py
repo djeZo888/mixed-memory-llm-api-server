@@ -816,7 +816,7 @@ class Manager:
         for key, value in rt.get("environment", {}).items():
             args += ["--env", key + "=" + value]
         if backend == "sglang_qwen38":
-            args += ["--pull=never", adapter.IMAGE_REFERENCE]
+            args += ["--ulimit", "core=1:1", "--pull=never", adapter.IMAGE_REFERENCE]
         else:
             args += [e["image_id"]]
         args += self.launch_command(d, e)

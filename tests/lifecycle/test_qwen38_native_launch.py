@@ -1,7 +1,8 @@
 """Synthetic worker contracts against hash-verified pinned SGLang source.
 
 Set Q38NEXT_UPSTREAM_ROOT to a separate checkout/download of the primary
-files below (paths are relative to python/sglang). Existing files use the
+files below (paths are relative to python/sglang), and Q38FIN_FLASHINFER_ROOT to
+the pinned FlashInfer package directory. Existing files use the
 committed provenance; the additional serving hook has an explicit source pin.
 Only the selected Python definitions run, with explicit synthetic dependencies.
 No installed SGLang, native library, listener, process, model or key is used.
@@ -19,6 +20,7 @@ import logging
 import os
 from pathlib import Path
 import pickle
+import re
 import sys
 from types import SimpleNamespace
 import unittest
@@ -27,6 +29,7 @@ from unittest.mock import Mock, patch
 from tests.lifecycle.test_sglang38_file_auth import (
     App, args_fixture, cli, launcher, synthetic_dependencies,
 )
+from tests.lifecycle.test_qwen38_image_fixture import inner
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -84,6 +87,89 @@ class PinnedNativeLaunchContracts(unittest.TestCase):
                 raise AssertionError("pinned primary source identity mismatch: " + name)
             cls.trees[name] = ast.parse(content, filename=name)
         cls.fixture_tree = ast.parse(FIXTURE.read_text())
+        flashinfer_root = os.environ.get("Q38FIN_FLASHINFER_ROOT")
+        if flashinfer_root is None:
+            raise AssertionError("source-worker contracts require Q38FIN_FLASHINFER_ROOT")
+        content = (Path(flashinfer_root) / "triton/__init__.py").read_bytes()
+        # FlashInfer 69ff11fc4954396d98326656dc85debd2223f637, version 0.6.18.
+        if hashlib.sha256(content).hexdigest() != "ae0d97f7ca56c142787f0bfd127e2bdb45d21613c033beea2ab0c70dd14ed4b2":
+            raise AssertionError("pinned FlashInfer import source identity mismatch")
+        cls.flashinfer_tree = ast.parse(content, filename="flashinfer/triton/__init__.py")
+
+    def flashinfer_import_hook(self, release=13):
+        """Exact pinned function and import-time call; ptxas I/O is synthetic."""
+        name = "_patch_triton_ptxas_blackwell"
+        calls = [node for node in self.flashinfer_tree.body if isinstance(node, ast.Expr)
+                 and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name)
+                 and node.value.func.id == name]
+        self.assertEqual(len(calls), 1)
+        namespace = {"os": os, "re": re,
+            "shutil": SimpleNamespace(which=Mock(return_value="/synthetic/cuda/bin/ptxas")),
+            "subprocess": SimpleNamespace(STDOUT=-2, CalledProcessError=RuntimeError,
+                check_output=Mock(return_value=f"ptxas: release {release}.0".encode()))}
+        def invoke():
+            execute_definitions([definition(self.flashinfer_tree, name), copy.deepcopy(calls[0])],
+                                namespace, "pinned/flashinfer/triton/__init__.py")
+        return invoke
+
+    def test_pinned_flashinfer_import_reproduces_cache_prefix_preflight_failure(self):
+        for release in (12, 13):
+            with self.subTest(synthetic_cuda_release=release), \
+                    patch.dict(os.environ, launcher.CACHE_ENVIRONMENT, clear=True), \
+                    patch.object(launcher.importlib.metadata, "version", return_value="0.5.19"), \
+                    patch.object(launcher.importlib.metadata, "entry_points", return_value={}):
+                launcher.validate_environment()
+                before = dict(os.environ)
+                self.flashinfer_import_hook(release)()
+                self.assertEqual(set(os.environ) - set(before),
+                    {"TRITON_PTXAS_BLACKWELL_PATH"} if release == 13 else set())
+                if release == 13:
+                    # This is exactly the refused-prefix branch, not SGLANG.
+                    with self.assertRaisesRegex(launcher.LaunchError, "^launch_environment_invalid$"):
+                        launcher.validate_environment()
+                else:
+                    launcher.validate_environment()
+
+    def test_explicit_invalid_launch_snapshot_still_fails_with_independent_operands(self):
+        for name in ("TRITON_PTXAS_BLACKWELL_PATH", "HF_TOKEN", "SGLANG_UNREVIEWED"):
+            with self.subTest(name=name), \
+                    patch.dict(os.environ, launcher.CACHE_ENVIRONMENT, clear=True), \
+                    patch.object(launcher.importlib.metadata, "version", return_value="0.5.19"), \
+                    patch.object(launcher.importlib.metadata, "entry_points", return_value={}), \
+                    patch.object(inner.os, "write"), patch.object(launcher.LOGGER, "error"):
+                invalid = {**os.environ, name: "synthetic-unreviewed"}
+                with self.assertRaises(inner.FixtureFailure) as caught:
+                    inner.checked_launch(launcher, cli(), [], [], "synthetic-contract-key", invalid)
+                self.assertEqual(caught.exception.launch_failure, {
+                    "result": 1, "captured": 0, "engine_calls": 0,
+                    "first_exception_class": "LaunchError"})
+                self.assertEqual(dict(os.environ), launcher.CACHE_ENVIRONMENT)
+
+    def test_actual_scenario_validates_entry_before_first_native_import(self):
+        real_import = __import__
+        class NativeBoundary(Exception):
+            pass
+        for inherited_override in (False, True):
+            env = dict(launcher.CACHE_ENVIRONMENT)
+            if inherited_override:
+                env["TRITON_PTXAS_BLACKWELL_PATH"] = "/synthetic/unreviewed/ptxas"
+            reached = []
+            def stop_at_native(name, *args, **kwargs):
+                if name == "torch":
+                    reached.append(name)
+                    raise NativeBoundary("synthetic_stop_before_native_import")
+                return real_import(name, *args, **kwargs)
+            with self.subTest(inherited_override=inherited_override), \
+                    patch.dict(os.environ, env, clear=True), \
+                    patch.object(inner, "verify_sources", return_value=Path(launcher.__file__)), \
+                    patch.object(inner, "run_cache_probe", return_value={}), \
+                    patch.object(launcher.importlib.metadata, "version", return_value="0.5.19"), \
+                    patch.object(launcher.importlib.metadata, "entry_points", return_value={}), \
+                    patch("builtins.__import__", side_effect=stop_at_native):
+                expected = "launch_environment_invalid" if inherited_override else "synthetic_stop_before_native_import"
+                with self.assertRaisesRegex(Exception, "^" + expected + "$"):
+                    inner.run_actual(ROOT, "all", None)
+                self.assertEqual(reached, [] if inherited_override else ["torch"])
 
     def port_args_type(self):
         namespace = {"dataclasses": dataclasses, "__name__": __name__}
@@ -355,6 +441,8 @@ class PinnedNativeLaunchContracts(unittest.TestCase):
                     patch.object(launcher.importlib.metadata, "entry_points", return_value={}), \
                     patch.object(fixture.os, "write"):
                 before = dict(os.environ)
+                self.flashinfer_import_hook()()
+                imported_environment = dict(os.environ)
                 observed = []
 
                 def invoke(_argv):
@@ -367,30 +455,42 @@ class PinnedNativeLaunchContracts(unittest.TestCase):
                                                       __file__=launcher.__file__)
                 if result == 0:
                     self.assertEqual(fixture.checked_launch(synthetic_launcher, [], [object()],
-                        [object()], "synthetic-contract-key"), 0)
+                        [object()], "synthetic-contract-key", before), 0)
                 else:
                     with self.assertRaises(fixture.FixtureFailure) as caught:
                         fixture.checked_launch(synthetic_launcher, [], [object()],
-                            [object()], "synthetic-contract-key")
+                            [object()], "synthetic-contract-key", before)
                     self.assertEqual(caught.exception.launch_failure["result"], 1)
                 self.assertEqual(observed, ["float32"])
-                self.assertEqual(dict(os.environ), before)
-                launcher.validate_environment()
+                self.assertEqual(dict(os.environ), imported_environment)
 
                 # The next independent injection-negative case reaches cleanup;
                 # native imports/key reading and process cleanup are synthetic.
                 cleanup = Mock(name="synthetic_cleanup")
+                server = SimpleNamespace(Engine=SimpleNamespace(_launch_subprocesses=Mock()),
+                                         uvicorn=SimpleNamespace(run=Mock()))
+                auth = SimpleNamespace(add_api_key_middleware=Mock())
+                negative = next(node for node in ast.walk(definition(self.fixture_tree, "run_actual"))
+                    if isinstance(node, ast.With)
+                    and any(ast.unparse(item.context_expr).startswith("patch.dict(os.environ,")
+                            for item in node.items)
+                    and any(isinstance(item, ast.Constant)
+                        and item.value == "no_op_injection_not_refused" for item in ast.walk(node)))
                 with patch.dict(sys.modules, {
                     "sglang.srt.server_args": SimpleNamespace(prepare_server_args=lambda argv: args_fixture()),
-                    "sglang.srt.entrypoints": SimpleNamespace(http_server=SimpleNamespace()),
+                    "sglang.srt.entrypoints": SimpleNamespace(http_server=server),
                     "sglang.srt.arg_groups.overrides": SimpleNamespace(resolving_view=lambda value: value),
                     "sglang.srt.utils": SimpleNamespace(kill_process_tree=cleanup),
-                    "sglang.srt.utils.auth": SimpleNamespace(add_api_key_middleware=Mock()),
+                    "sglang.srt.utils.auth": auth,
                 }), patch.object(launcher, "read_key", return_value=launcher._PrivateKey("synthetic-contract-key")), \
                         patch.object(launcher, "install_auth", side_effect=launcher.LaunchError("auth_installation_invalid")), \
                         patch.object(launcher.LOGGER, "error"):
-                    self.assertEqual(launcher.main(cli()), 1)
+                    execute_definitions([copy.deepcopy(negative)], {
+                        "patch": patch, "os": os, "launch_environment": before,
+                        "auth": auth, "server": server, "launcher": launcher,
+                        "argv": cli(), "require": fixture.require}, "fixture-auth-negative.py")
                 cleanup.assert_called_once_with(os.getpid(), include_parent=False)
+                self.assertEqual(dict(os.environ), imported_environment)
 
 
 if __name__ == "__main__":

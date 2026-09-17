@@ -5,7 +5,7 @@
     "cache_probe.py": "11e09615725d9588fd082fbbf8f4776a77d5a20f6dde09022a14df3e828bff73",
     "chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
     "run_fixture.py": "0dcdcbaf598529cc92b1503e4c148dfac288c8d8adf821b139d0c68010c8dfc7",
-    "run_pinned_image.py": "eac0626118069a322952e7605bd9474f0f96365ae5cf6ba8479ef602a4b29ea7"
+    "run_pinned_image.py": "738fbee448d95822eca85496e1003c3e54f9abb8b9ad9f0c0d0530f3cbc79bb9"
   },
   "image_id": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
   "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
