@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Current guidance for agents and operators. Read the
-[current scope and ownership checkpoint](docs/orchestration/2026-09-17-handoff.md)
+[current scope and ownership checkpoint](docs/orchestration/2026-09-17-resumed.md)
 and the relevant task handoff before work; preserve their evidence boundaries.
 
 ## Authorized sequence and ownership
@@ -29,8 +29,9 @@ and the relevant task handoff before work; preserve their evidence boundaries.
 
 ## VM role, models and evidence
 
-- ai-vm is API-only, with an OpenAI-compatible inference contract and one active
-  model/backend at a time. Tools, browsing, scraping, browser automation and
+- ai-vm is API-only, with an OpenAI-compatible inference contract. The user now
+  prefers both selected models resident and API-accessible simultaneously when
+  feasible, with large contexts; predominantly single-user sequential requests. Tools, browsing, scraping, browser automation and
   agents run on clients as an explicit ordinary user in a trusted workspace;
   human chat UI belongs on the separate frontend VM.
 - Exactly two current model identities: **GLM5.3 UD-Q4_K_XL** flagship and
