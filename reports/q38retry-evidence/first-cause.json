@@ -1,0 +1,12 @@
+{
+  "code": "actual_image_fixture_failed",
+  "context": 131072,
+  "exit_code": 2,
+  "origin": {
+    "exception_class": "FixtureFailure",
+    "filename": "run_pinned_image.py",
+    "line": 933
+  },
+  "phase": "FIRST_NATIVE_FAILURE",
+  "status": "SAFE_ORIGIN"
+}
