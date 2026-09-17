@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import http.client
 import importlib.metadata
+import inspect
 import json
 import logging
 import os
@@ -344,6 +345,35 @@ def install_auth(http_server, add_api_key_middleware, key):
         raise LaunchError("auth_installation_invalid")
 
 
+def install_model_validation():
+    """Wrap the two pinned synchronous validators once, before serving starts."""
+    from sglang.srt.entrypoints.openai.serving_chat import OpenAIServingChat
+    from sglang.srt.entrypoints.openai.serving_completions import OpenAIServingCompletion
+
+    def guarded(original):
+        def validate_model(self, request):
+            if request.model != self.tokenizer_manager.served_model_name:
+                return "Requested model does not match the active served model."
+            return original(self, request)
+        return validate_model
+
+    handlers = (OpenAIServingChat, OpenAIServingCompletion)
+    originals = tuple(handler._validate_request for handler in handlers)
+    # Check both before changing either. A second/partial installation is refused,
+    # not skipped via a mutable marker or an exposed original-validator attribute.
+    for handler, original in zip(handlers, originals):
+        if (not inspect.isfunction(original) or inspect.iscoroutinefunction(original)
+                or original.__module__ != handler.__module__
+                or original.__qualname__ != handler.__name__ + "._validate_request"
+                or tuple(inspect.signature(original).parameters) != ("self", "request")
+                or any(p.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD
+                       or p.default is not inspect.Parameter.empty
+                       for p in inspect.signature(original).parameters.values())):
+            raise LaunchError("model_validation_installation_invalid")
+    for handler, original in zip(handlers, originals):
+        handler._validate_request = guarded(original)
+
+
 def _request(port, method, path, key, deadline, body=None):
     """Bound total response time/size; no proxies, redirects or diagnostic bodies."""
     remaining = deadline - time.monotonic()
@@ -442,6 +472,7 @@ def main(argv=None):
         validate_resolved_server_args(server_args)
         key = read_key(options.key_file)
         install_auth(http_server, add_api_key_middleware, key)
+        install_model_validation()
 
         def abort():
             # Called from the warmup/watchdog thread: returning would leave an

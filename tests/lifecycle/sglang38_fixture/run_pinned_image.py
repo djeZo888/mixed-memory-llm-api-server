@@ -523,6 +523,90 @@ def check_routes(server, app, tokenizer, sentinel, wrong):
     asyncio.run(checks())
 
 
+def check_native_model_validation(app, handlers, originals, sentinel, wrong):
+    """Exercise installed validators and inherited dispatch, without generation."""
+    from sglang.srt.entrypoints.openai import serving_base
+    from sglang.srt.entrypoints.openai.protocol import ChatCompletionRequest, CompletionRequest
+
+    cases = (
+        (handlers[0], ChatCompletionRequest, "/v1/chat/completions", "openai_serving_chat",
+         {"messages": [{"role": "user", "content": "fixture"}]},
+         {"messages": []}, "Messages cannot be empty."),
+        (handlers[1], CompletionRequest, "/v1/completions", "openai_serving_completion",
+         {"prompt": "fixture"}, {"prompt": ""}, "Prompt cannot be empty"),
+    )
+    mismatches = ("__fixture_invalid_model", ALIAS.upper(), ALIAS + " ", "/models", ALIAS + ":adapter")
+    mismatch_message = "Requested model does not match the active served model."
+    for handler, request_type, _path, _state_name, valid, invalid, native_message in cases:
+        require(handler.handle_request.__func__ is serving_base.OpenAIServingBase.handle_request,
+                "native_inherited_request_dispatch_replaced")
+        original = originals[type(handler)]
+        require(type(handler)._validate_request is not original,
+                "native_model_validator_not_installed")
+        for fields, expected in ((valid, None), (invalid, native_message)):
+            request = request_type(model=ALIAS, **fields)
+            require(original(handler, request) == expected
+                    and handler._validate_request(request) == expected,
+                    "native_valid_alias_validation_changed")
+        for model in mismatches:
+            # Only model is available: entering either original native validator
+            # would fail on messages/prompt, proving rejection runs first.
+            require(handler._validate_request(SimpleNamespace(model=model)) == mismatch_message,
+                    "native_wrong_alias_validation_failed")
+        with patch.object(handler.tokenizer_manager, "served_model_name", "fixture-current-model"):
+            require(handler._validate_request(SimpleNamespace(model=ALIAS)) == mismatch_message
+                    and handler._validate_request(request_type(model="fixture-current-model", **valid)) is None,
+                    "native_current_served_alias_not_used")
+
+    async def checks():
+        for handler, request_type, path, state_name, valid, invalid, native_message in cases:
+            with ExitStack() as stack:
+                stack.enter_context(patch.object(app.state, state_name, handler, create=True))
+                validator = stack.enter_context(patch.object(handler, "_validate_request",
+                                                             wraps=handler._validate_request))
+                tripwires = [stack.enter_context(patch.object(handler, name,
+                    side_effect=FixtureFailure("rejected_model_reached_generation_dispatch")))
+                    for name in ("_convert_to_internal_request", "_handle_streaming_request",
+                                 "_handle_non_streaming_request")]
+                tripwires.append(stack.enter_context(patch.object(handler.tokenizer_manager,
+                    "generate_request", create=True,
+                    side_effect=FixtureFailure("rejected_model_reached_generation"))))
+                tripwires.append(stack.enter_context(patch.object(serving_base, "StreamingResponse",
+                    side_effect=FixtureFailure("rejected_model_created_streaming_response"))))
+                for stream in (False, True):
+                    for token in (None, wrong):
+                        before = validator.call_count
+                        status, payload, messages = await asgi_request(app, path, token, method="POST",
+                            body={"model": mismatches[0], "stream": stream, **valid})
+                        require(status == 401 and validator.call_count == before,
+                                "native_alias_validation_preceded_auth")
+                        no_secret(payload, sentinel)
+                        no_secret(messages, sentinel)
+                    for fields, model, expected in (
+                        *((valid, model, mismatch_message) for model in mismatches),
+                        (invalid, ALIAS, native_message),
+                    ):
+                        before = validator.call_count
+                        status, payload, messages = await asgi_request(app, path, sentinel, method="POST",
+                            body={"model": model, "stream": stream, **fields})
+                        data = json.loads(payload)
+                        require(status == 400 and validator.call_count == before + 1
+                                and data == {"object": "error", "message": expected,
+                                             "type": "BadRequestError", "param": None, "code": 400},
+                                "native_alias_error_response_changed")
+                        start = next(message for message in messages
+                                     if message["type"] == "http.response.start")
+                        require(b"text/event-stream" not in dict(start["headers"]).get(b"content-type", b"")
+                                and not payload.startswith(b"data:"),
+                                "native_alias_rejection_started_sse")
+                        no_secret(payload, sentinel)
+                        no_secret(messages, sentinel)
+                require(not any(tripwire.called for tripwire in tripwires),
+                        "native_alias_rejection_reached_conversion_or_generation")
+
+    asyncio.run(checks())
+
+
 def check_native_parser_template(repo):
     """Actual installed parser/template execution with synthetic text, no model.
 
@@ -532,6 +616,7 @@ def check_native_parser_template(repo):
     from transformers import PreTrainedTokenizerFast
     from sglang.srt.entrypoints.openai.protocol import ChatCompletionRequest, Tool
     from sglang.srt.entrypoints.openai.serving_chat import OpenAIServingChat
+    from sglang.srt.entrypoints.openai.serving_completions import OpenAIServingCompletion
     from sglang.srt.parser.template_manager import TemplateManager
     from sglang.srt.function_call.function_call_parser import FunctionCallParser
     from sglang.srt.parser.reasoning_parser import ReasoningParser
@@ -587,8 +672,10 @@ def check_native_parser_template(repo):
     configuration = {"tool_call_parser": "qwen3_coder", "reasoning_parser": "qwen3"}
     manager = SimpleNamespace(tokenizer=tokenizer, processor=None,
         served_model_name=ALIAS, model_path="/models", config_value=configuration.__getitem__,
-        server_args=SimpleNamespace(default_chat_template_kwargs={"enable_thinking": False}),
+        server_args=SimpleNamespace(default_chat_template_kwargs={"enable_thinking": False},
+                                   context_length=262144, allow_auto_truncate=False),
         model_config=SimpleNamespace(get_default_sampling_params=lambda: {},
+            is_multimodal=False,
             hf_config=SimpleNamespace(model_type="qwen3_5",
                 architectures=["Qwen3_5ForConditionalGeneration"])))
     template_manager = TemplateManager()
@@ -632,6 +719,7 @@ def check_native_parser_template(repo):
             require("<function=read_fixture>" in rendered
                     and "<tool_response>\nfixture read\n</tool_response>" in rendered,
                     "native_no_thinking_tool_continuation_template_failed")
+    return serving, OpenAIServingCompletion(manager, template_manager)
 
 
 def cache_probe_module(repo):
@@ -760,7 +848,9 @@ def run_actual(repo, scenario, captured_logs, context=131072):
         require(server.app.__class__.__module__.startswith("fastapi"), "actual_fastapi_required")
         require(dataclasses.is_dataclass(ServerArgs), "actual_server_args_required")
         with fixture_files(config_bytes) as sentinel:
-            check_native_parser_template(repo)
+            native_handlers = check_native_parser_template(repo)
+            native_validators = {type(handler): type(handler)._validate_request
+                                 for handler in native_handlers}
             wrong = secrets.token_urlsafe(32)
             require(wrong != sentinel, "fixture_randomness_failure")
             argv = ["--key-file", str(KEY_PATH), "--warmup-timeout", "600"] + launcher.backend_argv(context)
@@ -859,6 +949,7 @@ def run_actual(repo, scenario, captured_logs, context=131072):
                     require(not callbacks and engine_calls[-1][1].server_status == server.ServerStatus.Starting,
                             "native_failed_warmup_advertised_ready")
                     check_routes(server, app, engine_calls[-1][1], sentinel, wrong)
+                    check_native_model_validation(app, native_handlers, native_validators, sentinel, wrong)
                 mode = {"all": "success", "warmup-auth-failure": "auth-failure",
                         "warmup-timeout": "timeout"}[scenario]
                 with warmup_http_server(sentinel, mode) as calls:
@@ -874,6 +965,11 @@ def run_actual(repo, scenario, captured_logs, context=131072):
                 no_secret(payload, sentinel)
 
             with ExitStack() as stack:
+                # Independent fixture launches share an interpreter. Restore
+                # genuine validators afterwards; production still refuses a
+                # second installation rather than accepting an idempotent retry.
+                for handler_type, validator in native_validators.items():
+                    stack.enter_context(patch.object(handler_type, "_validate_request", validator))
                 stack.enter_context(patch.object(server.Engine, "_launch_subprocesses", side_effect=engine_start))
                 stack.enter_context(patch.object(server.uvicorn, "run", side_effect=capture_uvicorn))
                 if scenario == "warmup-timeout":
@@ -912,6 +1008,7 @@ def run_actual(repo, scenario, captured_logs, context=131072):
             "server_info_sentinel_absence": "PASS", "websocket_denial": "PASS",
             "native_false_warmup_not_ready": "PASS",
             "native_parser_template_synthetic": "PASS",
+            "native_strict_model_validation": "PASS",
             "native_freeze_gc_has_no_key": "PASS", "actual_cache_resolvers": "PASS",
             "no_gpu_driver_libraries": "PASS", "cache_probe": cache_result, **extension_proof}
 

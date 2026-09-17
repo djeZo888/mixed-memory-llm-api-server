@@ -432,10 +432,11 @@ class Q38LauncherSourceTests(unittest.TestCase):
             "sglang.srt.utils": types.SimpleNamespace(kill_process_tree=cleanup),
             "sglang.srt.utils.auth": native,
         }
-        with synthetic_dependencies(), mock.patch.dict(sys.modules, modules), mock.patch.object(launcher, "validate_environment", side_effect=lambda: order.append("environment")), mock.patch.object(launcher, "validate_server_args", side_effect=lambda args: order.append("raw")), mock.patch.object(launcher, "validate_resolved_server_args", side_effect=lambda args: order.append("resolved")), mock.patch.object(launcher, "read_key", side_effect=lambda path: (order.append("key"), self.key)[1]):
+        with synthetic_dependencies(), mock.patch.dict(sys.modules, modules), mock.patch.object(launcher, "validate_environment", side_effect=lambda: order.append("environment")), mock.patch.object(launcher, "validate_server_args", side_effect=lambda args: order.append("raw")), mock.patch.object(launcher, "validate_resolved_server_args", side_effect=lambda args: order.append("resolved")), mock.patch.object(launcher, "read_key", side_effect=lambda path: (order.append("key"), self.key)[1]), mock.patch.object(launcher, "install_model_validation", side_effect=lambda: order.append("model-validation")):
             self.assertEqual(launcher.main(cli()), 0)
         self.assertEqual(order[:5], ["environment", "prepare", "raw", "resolved", "key"])
-        self.assertIs(order[5][1], raw)
+        self.assertEqual(order[5], "model-validation")
+        self.assertIs(order[6][1], raw)
         self.assertIs(server.app, server.app.user_middleware[-1].kwargs["fastapi_app"])
         self.assertNotIn(str(self.key), repr(raw))
         self.assertNotIn(str(self.key), repr(dataclasses.asdict(raw)))
@@ -471,7 +472,7 @@ class Q38LauncherSourceTests(unittest.TestCase):
             "sglang.srt.utils": types.SimpleNamespace(kill_process_tree=cleanup),
             "sglang.srt.utils.auth": native,
         }
-        with synthetic_dependencies(), mock.patch.dict(sys.modules, modules), mock.patch.object(launcher, "validate_environment"), mock.patch.object(launcher, "validate_resolved_server_args"), mock.patch.object(launcher, "read_key", return_value=self.key), mock.patch.object(launcher.threading, "Timer", Timer), mock.patch.object(launcher.os, "_exit", side_effect=SimulatedExit) as stopped:
+        with synthetic_dependencies(), mock.patch.dict(sys.modules, modules), mock.patch.object(launcher, "validate_environment"), mock.patch.object(launcher, "validate_resolved_server_args"), mock.patch.object(launcher, "read_key", return_value=self.key), mock.patch.object(launcher, "install_model_validation"), mock.patch.object(launcher.threading, "Timer", Timer), mock.patch.object(launcher.os, "_exit", side_effect=SimulatedExit) as stopped:
             with self.assertRaises(SimulatedExit):
                 launcher.main(cli())
         self.assertEqual(timers[0].seconds, 7200)

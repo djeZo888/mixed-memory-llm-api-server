@@ -407,6 +407,8 @@ class AuthEvidence(unittest.TestCase):
         for mutate in (lambda p: p['native_results'].pop(),
                        lambda p: p['native_results'][1].update(configured_context=131072),
                        lambda p: p['native_results'][0].update(ordinary_http_auth='FAIL'),
+                       lambda p: p['native_results'][0].pop('native_strict_model_validation'),
+                       lambda p: p['native_results'][0].update(native_strict_model_validation='FAIL'),
                        lambda p: p.update(model_execution='PASS')):
             d = bound(); proof, instance = auth_receipt(d); mutate(proof)
             with self.assertRaises(LifecycleError): q.evidence(d, instance)
