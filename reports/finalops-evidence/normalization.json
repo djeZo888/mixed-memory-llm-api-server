@@ -1,0 +1,119 @@
+{
+  "baseline_path": "/data/logs/finalops-20260917/cleanup-corrected-dry-run.json",
+  "baseline_public_events_utc": "2026-09-17T08:25:23.893247+00:00 through 08:25:23.893364+00:00",
+  "current_assertion_pass_utc": "2026-09-17T08:34:19.302776+00:00",
+  "complete_record_multisets_equal": true,
+  "normalization": "JSON deep copy and sort complete Mounts records; all fields and duplicate multiplicities retained; no other normalization",
+  "no_other_running_state_differences": true,
+  "lifecycle_contract_validated": true,
+  "pid": 11259,
+  "generation": 6,
+  "proof": "Runtime full normalized state equality assertion completed before C1_PREAPPLY_VERIFIED; original refusal preserved in 083143 capture",
+  "executed_source_sha256": "7019f2c52c47b4753e400152c466c9913647dcbbe9304546b58cd351a240a0e5",
+  "original_refusal": "accepted_running_state_drift at 2026-09-17T08:32:04.197256+00:00",
+  "diagnostic": "18 positional Mounts leaf differences only at 08:33:32.728642+00:00",
+  "original_diagnosis": {
+    "container_id": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+    "differences": [
+      {
+        "field": "running/container/Mounts/0/Destination",
+        "new_type": "str",
+        "old_type": "str"
+      },
+      {
+        "field": "running/container/Mounts/0/RW",
+        "new_type": "bool",
+        "old_type": "bool"
+      },
+      {
+        "field": "running/container/Mounts/0/Source",
+        "new_type": "str",
+        "old_type": "str"
+      },
+      {
+        "field": "running/container/Mounts/1/Destination",
+        "new_type": "str",
+        "old_type": "str"
+      },
+      {
+        "field": "running/container/Mounts/1/RW",
+        "new_type": "bool",
+        "old_type": "bool"
+      },
+      {
+        "field": "running/container/Mounts/1/Source",
+        "new_type": "str",
+        "old_type": "str"
+      },
+      {
+        "field": "running/container/Mounts/2/Destination",
+        "new_type": "str",
+        "old_type": "str"
+      },
+      {
+        "field": "running/container/Mounts/2/RW",
+        "new_type": "bool",
+        "old_type": "bool"
+      },
+      {
+        "field": "running/container/Mounts/2/Source",
+        "new_type": "str",
+        "old_type": "str"
+      },
+      {
+        "field": "running/container/Mounts/3/Destination",
+        "new_type": "str",
+        "old_type": "str"
+      },
+      {
+        "field": "running/container/Mounts/3/RW",
+        "new_type": "bool",
+        "old_type": "bool"
+      },
+      {
+        "field": "running/container/Mounts/3/Source",
+        "new_type": "str",
+        "old_type": "str"
+      },
+      {
+        "field": "running/container/Mounts/4/Destination",
+        "new_type": "str",
+        "old_type": "str"
+      },
+      {
+        "field": "running/container/Mounts/4/RW",
+        "new_type": "bool",
+        "old_type": "bool"
+      },
+      {
+        "field": "running/container/Mounts/4/Source",
+        "new_type": "str",
+        "old_type": "str"
+      },
+      {
+        "field": "running/container/Mounts/5/Destination",
+        "new_type": "str",
+        "old_type": "str"
+      },
+      {
+        "field": "running/container/Mounts/5/RW",
+        "new_type": "bool",
+        "old_type": "bool"
+      },
+      {
+        "field": "running/container/Mounts/5/Source",
+        "new_type": "str",
+        "old_type": "str"
+      }
+    ],
+    "generation": 6,
+    "mutation": false,
+    "phase": "C1_PREAPPLY_STATE_DIAGNOSIS",
+    "pid": 11259,
+    "utc": "2026-09-17T08:33:32.728642+00:00"
+  },
+  "original_diagnosis_capture": "worker-private-cleanup_apply_diagnose-20260917T083313Z",
+  "successful_apply_capture": "worker-private-cleanup_apply-20260917T083350Z",
+  "baseline_capture": "worker-private-cleanup_dry_run-20260917T082502Z",
+  "evidence_limit": "Full live comparator operands stayed in memory; the exact equality predicate and successful execution event are retained. Diagnostic capture lists differing field paths, not raw values."
+}
