@@ -488,6 +488,66 @@ class ProtocolTests(unittest.TestCase):
         self.assertIsNone(result["message"]["content"])
         self.assertEqual(result["reasoning"], {"reasoning_content": "do not mix with args"})
 
+    def test_stream_nullable_metadata_fragmented_read_file(self):
+        # Synthetic structural regression only; no captured wire data or tool execution.
+        call_id = "call_" + "a" * 24
+        usage = {"prompt_tokens": 354, "completion_tokens": 26, "total_tokens": 380}
+        self.backend.content_type = "text/event-stream"
+        self.backend.response = sse([
+            chunk({"role": "assistant", "content": ""}),
+            chunk({"role": None, "content": None, "tool_calls": [
+                {"index": 0, **call(call_id, arguments="")}
+            ]}),
+            chunk({"role": None, "tool_calls": [{"index": 0, "id": None,
+                "function": {"name": None, "arguments": '{"path"'}}]}),
+            chunk({"role": None, "tool_calls": [{"index": 0, "id": None,
+                "function": {"name": None, "arguments": ':"calc'}}]}),
+            chunk({"role": None, "tool_calls": [{"index": 0, "id": None,
+                "function": {"name": None, "arguments": '.py"}'}}]}),
+            chunk({"role": None, "content": None}, "tool_calls"),
+            {"model": "served-alias", "choices": [], "usage": usage},
+        ])
+        result = self.client.chat(self.messages, stream=True)
+        self.assertEqual(result["message"]["tool_calls"], [call(call_id, arguments='{"path":"calc.py"}')])
+        self.assertEqual(result["model"], "served-alias")
+        self.assertEqual(result["usage"], usage)
+        self.assertEqual(result["finish_reason"], "tool_calls")
+        self.assertTrue(result["stream_done"])
+        self.assertEqual(len(self.backend.requests), 1)
+
+    def test_stream_optional_nulls_preserve_id_name_and_argument_fragments(self):
+        self.backend.content_type = "text/event-stream"
+        self.backend.response = sse([
+            chunk({"role": None, "content": None, "tool_calls": None, "function_call": None}),
+            chunk({"tool_calls": [{"index": 0, "id": None, "type": None, "function": None}]}),
+            chunk({"tool_calls": [{"index": 0, "id": "call_", "type": "function",
+                "function": {"name": "read_", "arguments": None}}]}),
+            chunk({"tool_calls": [{"index": 0, "id": None, "type": None,
+                "function": {"name": None, "arguments": '{"path":'}}]}),
+            chunk({"tool_calls": [{"index": 0, "id": "1",
+                "function": {"name": "file", "arguments": '"implementation.py"}'}}]}),
+            chunk({}, "tool_calls"),
+        ])
+        result = self.client.chat(self.messages, stream=True)
+        self.assertEqual(result["message"], {"role": "assistant", "content": None, "tool_calls": [call()]})
+
+    def test_stream_nonnull_metadata_validation_is_preserved(self):
+        self.backend.content_type = "text/event-stream"
+        deltas = [{"role": role} for role in ("user", "tool", 0, False, [], {})]
+        deltas += [{"function_call": value} for value in ({}, False)]
+        deltas += [{"content": []}, {"tool_calls": {}}]
+        parts = [dict(call(), index=0, id=42), dict(call(), index=0, type=False),
+                 dict(call(), index=0, type="custom"), dict(call(), index=0, function=[]),
+                 {"index": 0, **call(name=42)}, {"index": 0, **call(arguments={})},
+                 dict(call(), index=0, extra=None),
+                 {"index": 0, **call(), "function": {"name": "read_file", "arguments": "{}", "extra": None}}]
+        deltas += [{"tool_calls": [part]} for part in parts]
+        for delta in deltas:
+            with self.subTest(delta=delta):
+                self.backend.response = sse([chunk(delta), chunk({}, "tool_calls" if "tool_calls" in delta else "stop")])
+                with self.assertRaises(AgentError):
+                    self.client.chat(self.messages, stream=True)
+
     def test_stream_done_finishes_without_waiting_for_http_eof(self):
         self.backend.content_type = "text/event-stream"
         self.backend.keep_open_after_body = True
@@ -511,8 +571,14 @@ class ProtocolTests(unittest.TestCase):
         variants = [
             [{"index": 2, **call()}],
             [{"index": True, **call()}],
+            [{"index": None, **call()}],
             [{"index": 0, **call()}, {"index": 1, **call()}],
             [{"index": 0, "function": {"name": "read_file", "arguments": "{}"}}],
+            [{"index": 0, **call(None)}],
+            [{"index": 0, **call(name=None)}],
+            [{"index": 0, **call(), "function": {"arguments": "{}"}}],
+            [{"index": 0, **call(arguments=None)}],
+            [{"index": 0, **call(), "function": {"name": "read_file"}}],
             [{"index": 0, **call(arguments="{")}],
             [call()],
         ]

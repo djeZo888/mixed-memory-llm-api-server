@@ -346,9 +346,10 @@ def _stream(payload):
             raise AgentError("stream delta must be an object")
         if finish is not None:
             raise AgentError("stream contains a choice after finish_reason")
-        if delta.get("role", "assistant") != "assistant":
+        # Optional delta fields may be null; assembled messages remain strict.
+        if delta.get("role") is not None and delta["role"] != "assistant":
             raise AgentError("stream delta has an invalid role")
-        if "function_call" in delta:
+        if delta.get("function_call") is not None:
             raise AgentError("legacy function_call is unsupported; configure native tool_calls")
         if delta.get("content") is not None:
             if not isinstance(delta["content"], str):
@@ -375,17 +376,19 @@ def _stream(payload):
                 if type(index) is not int or not 0 <= index < 32:
                     raise AgentError("stream tool call index is missing or invalid")
                 call = calls.setdefault(index, {"id": "", "type": "function", "function": {"name": "", "arguments": ""}})
-                if "type" in part and part["type"] != "function":
+                if part.get("type") is not None and part["type"] != "function":
                     raise AgentError("stream tool call type must be function")
-                if "id" in part:
+                if part.get("id") is not None:
                     if not isinstance(part["id"], str):
                         raise AgentError("stream tool call ID must be text")
                     call["id"] += part["id"]
-                if "function" in part:
+                if part.get("function") is not None:
                     fn = part["function"]
                     if not isinstance(fn, dict) or set(fn) - {"name", "arguments"}:
                         raise AgentError("malformed streaming function schema")
                     for field, value in fn.items():
+                        if value is None:
+                            continue
                         if not isinstance(value, str):
                             raise AgentError("stream function fields must be text")
                         call["function"][field] += value
