@@ -1,64 +1,103 @@
 # L2 current ai-vm profile and evidence handoff
 
-**Source selection only. Final GLM runtime, deployment and patched-image
-proof/recipe closure are pending D3PD/D3T.** No installation,
-host access, native execution, acquisition receipt or service activation is
-performed or authorized by these files. Worker1 owns separately authorized L2VM
-publication and live acceptance. Installer work remains stopped.
+**APISELECT: anticipated source selection only, 2026-09-17.** Based on
+`357358ab12914df209d54c895a59c94a41c84580`. Qwen candidate acceptance is **PENDING**;
+APIDEPLOY waits for root-reviewed live profile acceptance. No installation,
+host access, native execution, receipt creation or service activation occurs
+here. Historical evidence retains its original scope. Frontend and installer
+work remain outside this task; installer work is paused.
 
 ## Exact selected source
 
-[The manifest](../configs/control/ai-vm-live-snapshot.json) pins five profile files
-by SHA256 and names pending owner-approved GLM composition inputs. It is an operator
-instruction, not an additional runtime loader. The installed source root is
-`/usr/local/lib/llm-server/control-api`; relative paths remain unchanged.
+[The snapshot](../configs/control/ai-vm-live-snapshot.json) pins exactly six
+selected declarations (two deployments, two models, two runtimes), the existing
+GLM image proof/recipe closure and the unchanged source-closure manifest.
+Control/boot source hashes belong to the
+[canonical inventory](../reports/l2-source-closure-sha256.json); the snapshot
+references its path without duplicating or hashing that inventory. This is an
+operator handoff, not a runtime loader. Source hashes establish no new live
+acceptance. Later owner changes, including Q38MAX fixture changes, require
+canonical inventory review and receipt compatibility review before composition;
+APISELECT does not edit those sources or inventories.
 
-| Offered model | Runtime | Selected deployments |
+| Offered model | Runtime | Sole selected deployment / declared context |
 | --- | --- | --- |
-| GLM5.3, `unsloth/GLM-5.3-GGUF`, UD-Q4_K_XL | Final measured patched runtime pending D3PD/D3T | One final practical-context profile from D3T; source path and SHA256 explicitly pending |
-| `Qwen/Qwen3.8-27B-FP8` | `sglang-qwen38-0.5.19` | `qwen38-27b-128k`, `qwen38-27b-256k`; both declared only |
+| GLM5.3, `unsloth/GLM-5.3-GGUF`, UD-Q4_K_XL | `llama-cpp-v0.4.1-d3br` | `glm-5.3-ud-q4-k-xl-n76-native1m` / 1,048,576 |
+| `Qwen/Qwen3.8-27B-FP8` | `sglang-qwen38-0.5.19` | `qwen38-27b-1000000-yarn4-tp2-bf16kv` / 1,000,000 |
 
-At final owner-approved composition, record exact source commits, runtime and
-deployment paths, IDs and byte SHA256s; the measured patched image ID and actual
-image proof; and every required proof/recipe/import dependency path and SHA256.
-Bind the manifest's null GLM fields to those approved inputs together. Confirm
-the final deployment uses the selected model and final runtime, with endpoint
-port 30002. D3P's strict-alias patch requires a newly built and measured image;
-the old D1 runtime/image remains baseline and rollback only. Include required
-D3T-owned lifecycle source in the reviewed composition; a profile cannot bypass
-its validation. No placeholder profile or fabricated image identity is enabled.
-Any owner change to a fixed profile requires explicit reviewed repinning. Until
-then this is an incomplete publication selection, not a deployable final
-snapshot. Existing `glm-5.3-ud-q4-k-xl-32k.json` is only a source-test reference;
-neither its context nor any test output budget is a product limit.
+Worker1 stages only those two JSON files directly under each active
+`configs/deployments`, with the four selected model/runtime files at their
+unchanged relative paths. Do not recursively copy profile directories.
+[`discovery._deployment_ids`](../scripts/control/discovery.py) enumerates every
+top-level `.json` name; the snapshot supplies no roster filter. Both the data
+release and fixed control copy must expose exactly these two choices. Keep
+native Qwen 128K/256K, older GLM profiles and D1 runtime/image/recovery copies
+outside active discovery in protected rollback storage; do not delete them.
+No preemptive fallback256 selection: root assigns that adjustment if needed.
 
-Worker1 copies exactly the five pinned profile files and final owner-approved
-GLM profiles into their relative `configs/{models,runtimes,deployments}` locations.
-GLM proof/recipe/import dependencies retain their separately reviewed relative
-source-closure paths; they do not belong in profile directories. All installed profile
-files and directories must be root-owned, nonsymlink, and not group/other
-writable; use root0644 files and root0755 directories on the root filesystem.
-Do not recursively copy those source directories. Actual discovery enumerates
-every `*.json` directly under installed `configs/deployments`; there is no
-runtime roster filter. Verify the destination directory contains only the two
-Q38 deployment files and the one final GLM deployment. Historical Coder-Next,
-GLM8K/32K test profiles, research profiles and instance templates remain in the
-repository, excluded from this installed profile snapshot.
+**Dependency finding at this base:** excluding native deployment JSONs does not
+break the selected Qwen path. `scripts/lifecycle/qwen38.py::validate` calls
+`declared_profile(d['id'])`, whose `_pinned_json` reads only that deployment,
+its model/runtime and acquisition/research manifests. `evidence` validates the
+native receipt first, then the separate extension receipt through
+`_validate_auth_proof`. Native proof validation uses the fixed context pair and
+fixture/support hashes; it does not open native deployment JSONs. Extension
+validation calls `run_fixture.py::extension_identity`, which opens the selected
+extension deployment, launcher and `qwen38_config.json`. Thus preserve all
+listed fixture files, provenance, launcher, OCI support and manifests at their
+original relative paths in both normal source trees. Hash constants for native
+profiles alone do not require those files in the active catalog. No adapter,
+receipt validator or source-closure bypass is added.
 
-Copy the exact reviewed root source closure from
-[`source-closure.json`](../scripts/control/source-closure.json) separately.
-Normal Q38 closure includes its pinned manifests, fixture provenance and support
-files: profile copying alone is insufficient. Preserve recovery code on root,
-independent of data/models mounts. The two-model choice applies to this host's
-snapshot; generic catalog discovery still supports future reviewed models.
-One model/backend may run at a time; Q38 variants share port and served alias.
+## Final source composition (Worker1, after live profile review)
+
+Follow [B1S staging](lifecycle/b1s-current-vm-staging.md),
+[`boot_unit.py`](../scripts/lifecycle/boot_unit.py),
+[`llmctl.conf`](../scripts/lifecycle/llmctl.conf), [control API](control-api.md)
+and [private network](private-network.md). Refresh the current root-reviewed
+installed guard/source identities and registered mounts; run registered-storage
+and root-disk guards before/after authorized writes, recording under protected
+registered logs. Use the canonical lifecycle lease and coordinated idle slot.
+
+| Destination | Composition contract |
+| --- | --- |
+| Protected release under the registered data services root | Final reviewed normal lifecycle/control source, six selected declarations and exact proof/adapter/receipt dependencies; freeze its actual path/commit with Worker1. Preserve the protected instance and saved intent. |
+| `/usr/local/lib/llm-server/control-api` | Same reviewed Manager/profile/dependency bytes, including the existing `scripts/control/source-closure.json` recovery and normal files, plus the snapshot's GLM proof/recipe closure. Preserve relative paths; root copy remains independent of data mounts for recovery. |
+| `/usr/local/lib/local-ai-server` | Exactly the 11 paths in `boot_unit.RECOVERY_FILES`, byte-equal to the data release. No profile, fixture or manifest additions to this boot-stop tree. |
+
+Use protected nonsymlink, single-link files/ancestry, root-owned directories
+without group/other write, and preserve Git executable modes. Verify both root
+copies actually reside on the root filesystem. Follow B1S's isolated boot-stop
+import, rendered unit/drop-in and control credential-binding checks; this task
+runs none of those host checks. Existing imported `scripts/install` modules
+remain runtime dependencies, not authorization for installer work.
+
+Preserve `/etc/llm-server/control.json`, separate root control key and systemd
+credential binding, registered inference key, acquisition receipts, actual GLM
+patched-image evidence and Qwen native/extension proof receipts. Qwen requires
+both `sglang-qwen38-0.5.19.auth.json` and
+`sglang-qwen38-0.5.19.q38max.auth.json` under the existing evidence directory,
+with `auth_gate_evidence` and `extension_auth_gate_evidence` instance bindings.
+Do not regenerate evidence or credentials from this snapshot.
+
+Retain NETPATCH's helper, six network units, protected ownership receipt and
+reviewed firewall/TLS policy. Its helper SHA256 belongs to the canonical
+inventory, not the selection snapshot. Worker1 must reconcile installed source
+signatures/inventory and the existing
+receipt migration with current reviewed evidence, never overwrite it using an
+older signature or bypass its checks. Native listeners stay authenticated IPv4
+loopback; direct private transport is subject to that existing policy. Enable
+control/Qwen sockets only after native authentication acceptance. Publication
+and all three destination updates remain separate APIDEPLOY work.
 
 ## Canonical registered storage input
 
-The supplied launch handoff reports `/etc/local-ai-server/storage.json` absent;
-this source task has not checked the host. L2VM must independently verify exact
-mounts and publish the reviewed canonical registration through its own bounded
-authorization. No installer workflow or mutation helper is added here.
+The original L2 launch handoff reported `/etc/local-ai-server/storage.json`
+absent; that is historical, not a current observation. APISELECT has not checked
+the host. Worker1 must preserve and verify the current protected registration
+and exact mounts against its latest reviewed handoff. The following schema and
+historical supplied identities are contract references, not permission to
+recreate registration. No installer workflow or mutation helper is added here.
 
 Registration is a root-owned mode0600 single-link regular file, at most 16384
 bytes, with protected nonsymlink parents. Its required stable schema1 fields
@@ -182,19 +221,48 @@ comes from that profile. Internal endpoints and listeners stay loopback;
 missing/invalid policy retains local tunnel DTO and cannot disable local
 authenticated control or trusted recovery. Policy does not prove reachability.
 
-Configured context is declared; `verified_occupied_tokens` remains null and
-occupied provenance unknown. Q38 128K/256K source declarations, successful
-short probes and GLM test budgets do not supply occupied-context evidence.
-L2VM still owes actual Linux mount loss, local authenticated control service,
-CAS/idempotency/interrupt/safe-stop, exact two-model catalog, direct LAN auth
-through all applicable fixed ports, and real model stream/tool continuation
-acceptance. These live requirements remain **NOT_TESTED** in L2.
+Configured context is declared; `verified_occupied_tokens` remains null. New
+live profile, allocation, occupied-context, speed, private authentication,
+stream/tool, OpenCode, switch and reboot acceptance remain **PENDING/NOT_TESTED**
+here. Historical readiness, fixture passes and short probes retain their own
+boundaries and do not prove current serving or occupied capacity.
+
+The planned order is current accepted **Qwen → GLM → Qwen**, then one reboot
+with selected fast Qwen and **resume**. Worker1 uses existing
+`scripts/llmctl select "$DEPLOYMENT" --boot-policy resume --yes` during a planned
+stopped selection, avoiding a reload solely for policy. The current control
+adapter preserves saved boot policy across switches (the older B1S manual-only
+statement is historical). Release Worker1's lifecycle lease before Worker2 API
+switching; keep one request owner, then explicitly return ownership for reboot.
+Check exact two-choice catalog/status, wrong key, stale generation, idempotent
+replay, both switch directions via returned operation polling, ordinary clients
+once per selected model, and post-reboot LAN readiness. End on fast Qwen/resume.
+
+Private client preparation uses only existing `scripts/client/bootstrap.py`
+and pinned OpenCode 1.18.31 dependencies, with these anticipated settings:
+
+| Alias | Direct endpoint | Context | Effort |
+| --- | --- | --- | --- |
+| `glm-5.3` | `http://10.156.100.60:30002/v1` | 1048576 | `low` |
+| `qwen3.8-27b` | `http://10.156.100.60:30004/v1` | 1000000 | `none` |
+
+Use existing protected key provisioning and new private prefixes when settings
+change; no key disclosure/rotation. Dependency/key/prefix locations are not
+established by this source handoff. Record the required settings for the next
+owner rather than search broadly, replay bootstrap or download dependencies.
+The 2048 output-token acceptance budget is separate from context capacity.
+Later APIACCEPT uses existing `scripts/agent/acceptance.py` and
+`scripts/client/verify.py`; neither runs here. Follow the supplied final
+acceptance plan for bounded GLM 32K / Qwen 128K occupied cases with 8192 reserved,
+actual rendered counts and real tool continuation. Allocation and declared
+capacity remain separate from completed occupied-context evidence.
 
 ## Focused source verification
 
-Run `python3 -m unittest tests.test_l2_live_snapshot -v`. The suite copies only
-the manifest selection into a temporary config root, binds actual Manager
-profiles and exercises real discovery/protected synthetic receipt reads.
-The GLM32K and old D1 runtime test sources are included only inside temporary fixtures. No model
-payload, Docker, key, service or host is used; incomplete source publication and
-missing evidence are tested as unavailable. This is not installer qualification.
+APISELECT performs one bounded local check: parse JSON; require the exact two
+model/deployment mappings; verify selected declarations and dependency SHA256s;
+and check actual discovery's directory enumeration against the two-file staged
+catalog. Check proof pins by reading source only, without executing fixtures,
+loading receipts or making host/model/control/network requests. Record results
+outside Git in the task's `checks.txt`; no broad suite or historical bootstrap
+replay. These checks establish source identity only.
