@@ -102,7 +102,8 @@ separate N1VM assignment. No packages are installed by these commands.
    dpkg-query --show --showformat='${Version}\n' systemd
    ```
 
-   Required version: `255.4-1ubuntu8.16`; helper enforces it. Confirm native
+   Required package family: canonical `255.4-1ubuntu8.N`, decimal `N >= 16`;
+   the helper enforces this security-update allowlist. Confirm native
    control/model authentication gates with their owners before enabling their
    transport. Keep key bytes, containers and native endpoints unchanged.
    Confirm the address reservation with the network owner; no DHCP changes here.
@@ -214,5 +215,24 @@ Official semantics checked against [systemd v255 socket documentation](https://r
 [proxyd manual](https://raw.githubusercontent.com/systemd/systemd/v255/man/systemd-socket-proxyd.xml),
 [proxyd source](https://raw.githubusercontent.com/systemd/systemd/v255/src/socket-proxy/socket-proxyd.c),
 and [Ubuntu systemd.service command prefixes](https://manpages.ubuntu.com/manpages/noble/man5/systemd.service.5.html).
-These establish configuration/source semantics, not runtime proof for installed
-Ubuntu `255.4-1ubuntu8.16`; current online Noble manuals may describe a later patch.
+These establish configuration/source semantics, not runtime proof for an installed
+Ubuntu package; current online Noble manuals may describe a later patch.
+
+## NETPATCH security-update compatibility — 2026-09-17
+
+Worker1 reported that an unattended Ubuntu security update from
+`255.4-1ubuntu8.16` to `255.4-1ubuntu8.17` blocked socket-proxy startup at the old
+exact-equality check. The helper now allowlists only canonical `255.4-1ubuntu8.N`
+with ASCII decimal `N >= 16`. Whitespace, leading-zero patches, downgrades,
+different upstream/distro/Ubuntu bases, epochs and extra suffixes are refused.
+The raw package query, fixed proxyd binary path, exact six units, protected
+source/policy files, ownership receipt and firewall checks are unchanged.
+
+The installed-source fixtures exercise `_installation()` for `.16`, `.17` and
+synthetic future patches, plus rejected boundary and malformed versions. This
+is a bounded supported-family policy, not evidence that future patches have
+been live-tested. Actual updated-host startup and private API behavior remain
+pending Worker1 acceptance; NETPATCH performed no host access or mutation.
+The helper digest changes: final composition must refresh the separately owned
+source inventory and review the existing ownership receipt; NETPATCH does not
+modify shared inventories or bypass source-signature drift checks.
