@@ -46,13 +46,25 @@ def synthetic_isolation(*, mounts=None, metadata=None, contents=None, devices=()
         assert path == Path("/proc/self/mountinfo")
         return mountinfo() if mounts is None else mounts
 
+    caps_present = probe.CAPS_DIRECTORY in metadata or probe.CAPS_DIRECTORY in contents or any(
+        name == probe.CAPS_DIRECTORY or name.startswith(probe.CAPS_DIRECTORY + "/") for name in devices)
+    caps_meta = SimpleNamespace(st_mode=stat.S_IFDIR | 0o755, st_uid=0, st_gid=0, st_dev=1, st_ino=42, st_mtime_ns=100, st_ctime_ns=100)
+    caps_fd = 9472
+
     def lstat(path):
+        if str(path) == probe.CAPS_DIRECTORY:
+            if not caps_present:
+                raise FileNotFoundError()
+            return metadata.get(str(path), caps_meta)
         if str(path) in probe.CONTROL_NODES:
             observed = {"/dev/nvidia-modeset": (195, 254), "/dev/nvidiactl": (195, 255),
                         "/dev/nvidia-uvm": (511, 0), "/dev/nvidia-uvm-tools": (511, 1)}
             major, minor = observed[str(path)]
             return metadata.get(str(path), SimpleNamespace(st_mode=stat.S_IFCHR | 0o666,
                                                            st_rdev=(major, minor)))
+        if str(path).startswith("/dev/"):
+            return metadata.get(str(path), SimpleNamespace(st_mode=stat.S_IFCHR | 0o666,
+                                                           st_uid=0, st_gid=0, st_rdev=(195, 0)))
         assert str(path) in ("/cache", "/models", "/run/secrets")
         return metadata.get(str(path), SimpleNamespace(st_mode=stat.S_IFDIR | 0o700, st_uid=1000))
 
@@ -62,6 +74,24 @@ def synthetic_isolation(*, mounts=None, metadata=None, contents=None, devices=()
                                 for name in devices}))
         assert str(path) in ("/models", "/run/secrets")
         return iter(contents.get(str(path), ()))
+
+    def opened(path, flags):
+        assert str(path) == probe.CAPS_DIRECTORY
+        assert flags == probe.os.O_RDONLY | probe.os.O_DIRECTORY | probe.os.O_NOFOLLOW
+        return caps_fd
+
+    def closed(fd):
+        assert fd == caps_fd
+
+    def fstat(fd):
+        assert fd == caps_fd
+        return lstat(Path(probe.CAPS_DIRECTORY))
+
+    @contextmanager
+    def scandir(fd):
+        assert fd == caps_fd
+        inferred = [object() for name in devices if name.startswith(probe.CAPS_DIRECTORY + "/")]
+        yield iter(contents.get(probe.CAPS_DIRECTORY, inferred))
 
     def glob(path, pattern):
         assert (str(path), pattern) in (("/dev", "nvidia*"), ("/dev/dri", "*"))
@@ -76,6 +106,10 @@ def synthetic_isolation(*, mounts=None, metadata=None, contents=None, devices=()
         stack.enter_context(patch.object(probe.sys, "platform", "linux"))
         stack.enter_context(patch.object(probe.resource, "getrlimit", return_value=(1, 1)))
         stack.enter_context(patch.object(probe.os, "geteuid", return_value=1000))
+        stack.enter_context(patch.object(probe.os, "open", side_effect=opened))
+        stack.enter_context(patch.object(probe.os, "fstat", side_effect=fstat))
+        stack.enter_context(patch.object(probe.os, "scandir", side_effect=scandir))
+        stack.enter_context(patch.object(probe.os, "close", side_effect=closed))
         # Linux dev_t observations, independent of the macOS host encoding.
         stack.enter_context(patch.object(probe.os, "major", side_effect=lambda value: value[0]))
         stack.enter_context(patch.object(probe.os, "minor", side_effect=lambda value: value[1]))
@@ -189,7 +223,7 @@ class CacheProbeTests(unittest.TestCase):
         for target in ("/models", "/run/secrets"):
             cases.append(({"contents": {target: [Path(target) / "unexpected"]}},
                           "empty_model_and_secret_tmpfs_required"))
-        for device in ("/dev/nvidia0", "/dev/nvidia1", "/dev/nvidia-caps", "/dev/nvidia-caps/child",
+        for device in ("/dev/nvidia0", "/dev/nvidia1", "/dev/nvidia-caps/child",
                        "/dev/dri/renderD128", "/dev/dri/card0", "/dev/kfd", "/dev/dxg"):
             cases.append(({"devices": [device]}, "gpu_device_node_present"))
         for visible in ("none", "void"):
@@ -253,11 +287,99 @@ class CacheProbeTests(unittest.TestCase):
                 self.assertEqual(probe.verify_isolation(), sorted(probe.CONTROL_NODES))
 
     def test_accelerator_roots_rejected_without_traversal_or_symlink_following(self):
-        for name in ("/dev/dri", "/dev/nvidia-caps", "/dev/kfd", "/dev/dxg"):
+        for name in ("/dev/dri", "/dev/kfd", "/dev/dxg"):
             with self.subTest(name=name), patch.dict(os.environ, runtime_environment(), clear=True), \
                     synthetic_isolation(devices=[name]), \
                     self.assertRaisesRegex(probe.ProbeError, "gpu_device_node_present"):
                 probe.verify_isolation()
+
+    def test_caps_absent_or_exact_empty_root_directory_does_not_change_control_identity(self):
+        for devices in (probe.CONTROL_NODES, {*probe.CONTROL_NODES, probe.CAPS_DIRECTORY}):
+            with self.subTest(caps_present=probe.CAPS_DIRECTORY in devices), \
+                    patch.dict(os.environ, runtime_environment(), clear=True), \
+                    synthetic_isolation(devices=devices), \
+                    patch.object(probe.Path, "resolve", side_effect=AssertionError("symlink follow")):
+                controls = probe.verify_isolation()
+                self.assertEqual(controls, sorted(probe.CONTROL_NODES))
+                self.assertNotIn(probe.CAPS_DIRECTORY, controls)
+                self.assertEqual(probe.verify_isolation(), controls)
+                result = probe.result_record(dict(probe.EXPECTED_PATHS), controls)
+                probe.validate_result(result)
+                self.assertNotIn(probe.CAPS_DIRECTORY, str(result))
+
+    def test_caps_type_owner_mode_or_any_child_is_refused_without_descendant_access(self):
+        for mode in (stat.S_IFLNK | 0o755, stat.S_IFREG | 0o755, stat.S_IFCHR | 0o755,
+                     stat.S_IFBLK | 0o755, stat.S_IFIFO | 0o755, stat.S_IFSOCK | 0o755,
+                     stat.S_IFDIR | 0o700, stat.S_IFDIR | 0o775, stat.S_IFDIR | 0o1755):
+            meta = SimpleNamespace(st_mode=mode, st_uid=0, st_gid=0, st_dev=1, st_ino=42, st_mtime_ns=100, st_ctime_ns=100)
+            with self.subTest(mode=mode), patch.dict(os.environ, runtime_environment(), clear=True), \
+                    synthetic_isolation(devices=[probe.CAPS_DIRECTORY], metadata={probe.CAPS_DIRECTORY: meta}), \
+                    patch.object(probe.os, "open", side_effect=AssertionError("invalid caps opened")), \
+                    self.assertRaisesRegex(probe.ProbeError, "gpu_device_node_present"):
+                probe.verify_isolation()
+        for uid, gid in ((1, 0), (0, 1), (1000, 1000)):
+            meta = SimpleNamespace(st_mode=stat.S_IFDIR | 0o755, st_uid=uid, st_gid=gid, st_dev=1, st_ino=42, st_mtime_ns=100, st_ctime_ns=100)
+            with self.subTest(uid=uid, gid=gid), patch.dict(os.environ, runtime_environment(), clear=True), \
+                    synthetic_isolation(devices=[probe.CAPS_DIRECTORY], metadata={probe.CAPS_DIRECTORY: meta}), \
+                    self.assertRaisesRegex(probe.ProbeError, "gpu_device_node_present"):
+                probe.verify_isolation()
+        class UnreadableEntry:
+            def __getattribute__(self, name):
+                raise AssertionError("descendant metadata/name accessed")
+        for kind in ("symlink", "directory", "character", "regular", "dangling"):
+            with self.subTest(kind=kind), patch.dict(os.environ, runtime_environment(), clear=True), \
+                    synthetic_isolation(devices=[probe.CAPS_DIRECTORY],
+                        contents={probe.CAPS_DIRECTORY: [UnreadableEntry()]}), \
+                    self.assertRaisesRegex(probe.ProbeError, "gpu_device_node_present") as caught:
+                probe.verify_isolation()
+            self.assertTrue(caught.exception.device_failure["has_entries"])
+
+    def test_caps_scan_is_bounded_and_nofollow_identity_swaps_fail_closed(self):
+        initial = SimpleNamespace(st_mode=stat.S_IFDIR | 0o755, st_uid=0, st_gid=0, st_dev=1, st_ino=42, st_mtime_ns=100, st_ctime_ns=100)
+        changed = SimpleNamespace(**(vars(initial) | {"st_ino": 43}))
+        symlink = SimpleNamespace(**(vars(initial) | {"st_mode": stat.S_IFLNK | 0o755}))
+        mutated = SimpleNamespace(**(vars(initial) | {"st_mtime_ns": 101, "st_ctime_ns": 101}))
+        for stage, replacement in (("open", changed), ("after_scan", mutated),
+                                   ("after", changed), ("after", symlink), ("after", mutated)):
+            snapshots = [initial, replacement] if stage == "after" else [initial]
+            with self.subTest(stage=stage, replacement=replacement.st_mode), \
+                    patch.object(probe.Path, "lstat", side_effect=snapshots), \
+                    patch.object(probe.os, "open", return_value=91) as opened, \
+                    patch.object(probe.os, "fstat", side_effect=[replacement] if stage == "open" else
+                        [initial, replacement if stage == "after_scan" else initial]), \
+                    patch.object(probe.os, "scandir") as scanned, patch.object(probe.os, "close") as closed:
+                scanned.return_value.__enter__.return_value = iter(())
+                with self.assertRaisesRegex(probe.ProbeError, "gpu_device_node_present"):
+                    probe.check_caps_directory()
+                self.assertEqual(opened.call_args.args[1], probe.os.O_RDONLY | probe.os.O_DIRECTORY | probe.os.O_NOFOLLOW)
+                if stage == "open":
+                    scanned.assert_not_called()
+                closed.assert_called_once_with(91)
+        def entries():
+            yield object()
+            raise AssertionError("scanned beyond first entry")
+        with patch.object(probe.Path, "lstat", return_value=initial), \
+                patch.object(probe.os, "open", return_value=91), \
+                patch.object(probe.os, "fstat", return_value=initial), \
+                patch.object(probe.os, "scandir") as scanned, patch.object(probe.os, "close"):
+            scanned.return_value.__enter__.return_value = entries()
+            with self.assertRaisesRegex(probe.ProbeError, "gpu_device_node_present"):
+                probe.check_caps_directory()
+
+    def test_caps_emptiness_is_rechecked_at_existing_exit_boundary(self):
+        contents = {probe.CAPS_DIRECTORY: []}
+        torch = SimpleNamespace(cuda=SimpleNamespace(device_count=lambda: 0, is_available=lambda: False))
+        def appear(_paths):
+            contents[probe.CAPS_DIRECTORY].append(object())
+        with patch.dict(os.environ, runtime_environment(), clear=True), \
+                synthetic_isolation(devices=[probe.CAPS_DIRECTORY], contents=contents), \
+                patch.object(probe, "verify_sources"), patch.object(probe.ctypes, "CDLL"), \
+                patch.object(probe.importlib, "import_module", return_value=torch), \
+                patch.object(probe, "resolve_paths", return_value=dict(probe.EXPECTED_PATHS)), \
+                patch.object(probe, "check_paths"), patch.object(probe, "prove_writable", side_effect=appear), \
+                self.assertRaisesRegex(probe.ProbeError, "gpu_device_node_present") as caught:
+            probe.run(Path("/fixture"))
+        self.assertTrue(caught.exception.device_failure["has_entries"])
 
     def test_exact_paths_reject_drift_before_any_writes(self):
         probe.check_paths(probe.EXPECTED_PATHS)

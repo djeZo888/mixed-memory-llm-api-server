@@ -172,7 +172,61 @@ FAILURE_CLASSES = frozenset((
 ))
 
 
-def failure_metadata(stdout):
+def validate_warmup_child_failure(value):
+    """Closed failure operands for the two existing warmup abort children."""
+    if (type(value) is not dict or set(value) != {
+            "scenario", "returncode", "stdout_bytes", "stderr_bytes", "marker_exact",
+            "marker_count", "child_failure"}
+            or type(value["scenario"]) is not str
+            or value["scenario"] not in ("warmup-auth-failure", "warmup-timeout")
+            or not (value["returncode"] is None or type(value["returncode"]) is int
+                    and -255 <= value["returncode"] <= 255)
+            or any(not (value[name] is None or type(value[name]) is int
+                        and 0 <= value[name] <= 2**63 - 1)
+                   for name in ("stdout_bytes", "stderr_bytes", "marker_count"))
+            or not (value["marker_exact"] is None or type(value["marker_exact"]) is bool)):
+        return None
+    length, count, exact = value["stdout_bytes"], value["marker_count"], value["marker_exact"]
+    marker_length = len(b"Q38S_AUTHENTICATED_WARMUP_FAULT_REACHED\n")
+    if length is None:
+        if count is not None or exact is not None:
+            return None
+    elif (count is None or exact is None or count > length // marker_length
+            or exact != (length == marker_length and count == 1)):
+        return None
+    if value["returncode"] == 1 and exact is True and value["stderr_bytes"] == 0:
+        return None  # Never attach a success-shaped diagnostic to a FAIL.
+    child = value["child_failure"]
+    if type(child) is not dict:
+        return None
+    if child != {"status": "REJECTED_OR_UNAVAILABLE"}:
+        # Reconstitute only the known parser projection, then reuse its checks.
+        # Nested warmup children are deliberately outside this finite surface.
+        keys = {"status", "code"}
+        if child.get("status") == "SAFE_ORIGIN":
+            keys.add("origin")
+        elif child.get("status") != "FIXED_FAILURE_ONLY":
+            return None
+        optional = set(child) - keys
+        if optional not in (set(), {"cache_failure"}, {"launch_failure"}) or not keys <= set(child):
+            return None
+        raw = {"status": "FAIL", "code": child["code"]}
+        if "origin" in child:
+            raw["failure_origin"] = child["origin"]
+        elif optional:
+            raw["failure_origin"] = None
+        raw.update({name: child[name] for name in optional})
+        try:
+            checked = failure_metadata(json.dumps(raw, allow_nan=False).encode(), allow_warmup_child=False)
+        except (ValueError, TypeError, RecursionError):
+            return None
+        if checked != child or checked["status"] == "REJECTED_OR_UNAVAILABLE":
+            return None
+        child = checked
+    return {**value, "child_failure": dict(child)}
+
+
+def failure_metadata(stdout, *, allow_warmup_child=True):
     """Admit only the small, whole inner FAIL record; never search raw logs.
 
     Bytes, duplicate keys, nesting, types and every retained field are bounded.
@@ -196,13 +250,21 @@ def failure_metadata(stdout):
     try:
         value = json.loads(stdout.decode("utf-8"), object_pairs_hook=unique_object,
                            parse_constant=reject_constant)
-        if (type(value) is not dict or set(value) not in (
+        shapes = (
                 {"status", "code"}, {"status", "code", "failure_origin"},
                 {"status", "code", "failure_origin", "cache_failure"},
                 {"status", "code", "failure_origin", "launch_failure"})
+        if allow_warmup_child:
+            shapes += ({"status", "code", "failure_origin", "warmup_child_failure"},)
+        if (type(value) is not dict or set(value) not in shapes
                 or value["status"] != "FAIL" or value["code"] != "actual_image_fixture_failed"):
             return rejected
         result = {"status": "FIXED_FAILURE_ONLY", "code": "actual_image_fixture_failed"}
+        if "warmup_child_failure" in value:
+            warmup = validate_warmup_child_failure(value["warmup_child_failure"])
+            if warmup is None:
+                return rejected
+            result["warmup_child_failure"] = warmup
         if "launch_failure" in value:
             launch = value["launch_failure"]
             if (type(launch) is not dict or set(launch) != {
