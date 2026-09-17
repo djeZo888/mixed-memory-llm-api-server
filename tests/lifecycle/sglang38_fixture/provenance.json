@@ -4,16 +4,17 @@
     "auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
     "cache_probe.py": "11e09615725d9588fd082fbbf8f4776a77d5a20f6dde09022a14df3e828bff73",
     "chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
-    "run_fixture.py": "0dcdcbaf598529cc92b1503e4c148dfac288c8d8adf821b139d0c68010c8dfc7",
-    "run_pinned_image.py": "738fbee448d95822eca85496e1003c3e54f9abb8b9ad9f0c0d0530f3cbc79bb9"
+    "qwen38_config.json": "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc",
+    "run_fixture.py": "8464259e02be237d8fa5e60122842bdf19f8782a964afdf3e5515d0da72f07e4",
+    "run_pinned_image.py": "2cd6be0fd106d687c9160456df35d945d2b6a7779189f4ff1f10410c67da7569"
   },
   "image_id": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
   "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
   "launcher_path": "scripts/runtime/sglang38_file_auth.py",
-  "launcher_sha256": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+  "launcher_sha256": "31889213cf96e3a059d52f07bc6581b9d3b7e1e070a8fa54c494028efb54128b",
   "model_execution": "NOT_TESTED",
   "schema_version": 1,
-  "scope": "Q38B source-only native auth/cache fixture; exact OCI relationship, bounded container lifetime; actual image NOT_TESTED",
+  "scope": "Q38MAX source-only native auth/cache fixture plus explicit TP2 BF16-KV YaRN extension ModelConfig gate; exact OCI relationship and bounded container lifetime; actual image NOT_TESTED",
   "source_revision": "0bcd822377da7b5718e674eaf9c870d349424dd1",
   "sources": {
     "kernels/ops/quantization/fp8_kernel.py": {

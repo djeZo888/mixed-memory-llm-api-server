@@ -7,6 +7,7 @@ The separate actual-image fixture must repeat the gate with native dependencies.
 import asyncio
 import copy
 import dataclasses
+import hashlib
 import importlib.util
 import io
 import json
@@ -41,7 +42,7 @@ def cli(context=131072):
     return ["--key-file", "/run/secrets/llm-api-key", "--warmup-timeout", "600"] + launcher.backend_argv(context)
 
 
-def args_fixture(context=131072):
+def args_fixture(context=131072, *, resolved=False):
     values = {
         "api_key": None, "admin_api_key": None, "tokenizer_worker_num": 1,
         "host": "0.0.0.0", "port": 30004, "model_path": "/models",
@@ -61,6 +62,8 @@ def args_fixture(context=131072):
         "json_model_override_args": "{}", "cuda_graph_backend_decode": "disabled",
         "cuda_graph_backend_prefill": "disabled", "tokenizer_path": "/models",
     }
+    if context == launcher.EXTENSION_CONTEXT:
+        values.update(tp_size=2, json_model_override_args=launcher.EXTENSION_OVERRIDE_JSON)
     for name in (
         "use_ray grpc_mode smg_grpc_mode grpc_port grpc_worker_threads sidecar sidecar_args "
         "encoder_only enable_http2 enable_ssl_refresh ssl_certfile ssl_keyfile ssl_ca_certs "
@@ -73,12 +76,21 @@ def args_fixture(context=131072):
         "enable_lora lora_paths forward_hooks"
     ).split():
         values[name] = None
+    if resolved:
+        values["grpc_worker_threads"] = 4
     values["cuda_graph_config"] = types.SimpleNamespace(
         decode=types.SimpleNamespace(backend="disabled"), prefill=types.SimpleNamespace(backend="disabled"))
     cls = dataclasses.make_dataclass("SyntheticServerArgs", [(key, object) for key in values])
     cls.resolve_once = lambda self: None
     cls.resolved_dict = lambda self: dataclasses.asdict(self)
     return cls(**values)
+
+
+def resolved_args_fixture(raw):
+    """Synthetic pinned HTTP-only normalization; not native runtime evidence."""
+    projected = copy.deepcopy(raw)
+    projected.grpc_worker_threads = 4
+    return projected
 
 
 class App:
@@ -254,7 +266,7 @@ class Q38LauncherSourceTests(unittest.TestCase):
             launcher.validate_server_args(args)
 
     def test_resolved_graphs_validated_separately(self):
-        args = args_fixture()
+        args = args_fixture(resolved=True)
         launcher.validate_server_args(args, resolved=True)
         for phase in ("decode", "prefill"):
             bad = copy.deepcopy(args)
@@ -265,11 +277,11 @@ class Q38LauncherSourceTests(unittest.TestCase):
     def test_resolution_cannot_introduce_key_or_change_identity(self):
         raw = args_fixture()
         for field, value in (("api_key", self.key), ("admin_api_key", self.key), ("context_length", 262144), ("grpc_port", 30005)):
-            projected = copy.deepcopy(raw)
+            projected = resolved_args_fixture(raw)
             setattr(projected, field, value)
             with self.subTest(field=field), mock.patch.dict(sys.modules, {"sglang.srt.arg_groups.overrides": types.SimpleNamespace(resolving_view=lambda args: projected)}), self.assertRaises(launcher.LaunchError):
                 launcher.validate_resolved_server_args(raw)
-        projected = copy.deepcopy(raw)
+        projected = resolved_args_fixture(raw)
         raw.resolved_dict = lambda: {"api_key": self.key, "admin_api_key": None}
         with mock.patch.dict(sys.modules, {"sglang.srt.arg_groups.overrides": types.SimpleNamespace(resolving_view=lambda args: projected)}), self.assertRaises(launcher.LaunchError):
             launcher.validate_resolved_server_args(raw)
@@ -472,6 +484,156 @@ class Q38LauncherSourceTests(unittest.TestCase):
             self.assertEqual(launcher.main(cli()), 1)
         self.assertNotIn(str(self.key), repr(logs.output))
         self.assertEqual(logs.output, ["ERROR:llmctl.sglang38_file_auth:sglang38_file_auth_launch_failed"])
+
+
+class Q38MaximumContextLauncherTests(unittest.TestCase):
+    """Closed extension tuple only; synthetic records are not native acceptance."""
+
+    def test_native_argv_environment_and_default_pair_preserve_frozen_bytes(self):
+        # Independent snapshots from exact 636f847 source, not regenerated pins.
+        digests = {
+            131072: "2769486efcb9ac1846494b08974c9f435510d34e9e7d9e0fddcd4e7af620c1b5",
+            262144: "426053bc5c2f545250528d78f5445b5629c0b0f64a4b0a86394817bbb632f8bd",
+        }
+        self.assertEqual(launcher.CONTEXTS, (131072, 262144))
+        for context, expected in digests.items():
+            actual = json.dumps(launcher.backend_argv(context), separators=(",", ":")).encode()
+            self.assertEqual(hashlib.sha256(actual).hexdigest(), expected)
+            launcher.parse_options(cli(context))
+        environment = json.dumps(launcher.CACHE_ENVIRONMENT, sort_keys=True, separators=(",", ":")).encode()
+        self.assertEqual(hashlib.sha256(environment).hexdigest(),
+            "eee43b88dc38d794f878ca893922ab8d0fe858eacd2ec36dc8253891793916ae")
+
+    def test_exact_extension_argv_and_raw_resolved_tuple_accepted(self):
+        options, argv = launcher.parse_options(cli(1000000))
+        self.assertEqual(options.tp_size, "2")
+        self.assertEqual(options.context_length, "1000000")
+        self.assertEqual(options.max_total_tokens, "1000000")
+        self.assertEqual(options.dtype, "bfloat16")
+        self.assertEqual(options.kv_cache_dtype, "bfloat16")
+        self.assertEqual(options.base_gpu_id, "0")
+        self.assertEqual(options.gpu_id_step, "1")
+        official = ('{"text_config":{"rope_parameters":{"mrope_interleaved":true,'
+            '"mrope_section":[11,11,10],"rope_type":"yarn","rope_theta":10000000,'
+            '"partial_rotary_factor":0.25,"factor":4.0,"original_max_position_embeddings":262144}}}')
+        self.assertEqual(options.json_model_override_args, official)
+        self.assertEqual(argv[argv.index("--json-model-override-args") + 1], official)
+        raw = args_fixture(1000000)
+        projected = resolved_args_fixture(raw)
+        with mock.patch.dict(sys.modules, {"sglang.srt.arg_groups.overrides": types.SimpleNamespace(resolving_view=lambda args: projected)}):
+            launcher.validate_resolved_server_args(raw)
+
+    def test_extension_tuple_parts_cannot_be_mixed_or_replaced(self):
+        mutations = {
+            "--context-length": "262144", "--max-total-tokens": "1048576",
+            "--tp-size": "1", "--base-gpu-id": "1", "--gpu-id-step": "2",
+            "--dtype": "float16", "--kv-cache-dtype": "fp8_e4m3",
+            "--json-model-override-args": "{}",
+        }
+        for flag, value in mutations.items():
+            argv = cli(1000000)
+            argv[argv.index(flag) + 1] = value
+            with self.subTest(flag=flag), self.assertRaises(launcher.LaunchError):
+                launcher.parse_options(argv)
+        for context in (999999, 1000001, 1048576, "1000000", True):
+            with self.subTest(context=context), self.assertRaises(launcher.LaunchError):
+                launcher.backend_argv(context)
+
+    def test_override_is_exact_extension_only_and_has_no_json_escape(self):
+        official = json.loads(launcher.EXTENSION_OVERRIDE_JSON)
+        variants = ["{}", "not-json", json.dumps(official), launcher.EXTENSION_OVERRIDE_JSON + " "]
+        for name, value in (("factor", 8.0), ("original_max_position_embeddings", 131072),
+                            ("rope_type", "linear"), ("mrope_section", [10, 11, 11])):
+            changed = copy.deepcopy(official)
+            changed["text_config"]["rope_parameters"][name] = value
+            variants.append(json.dumps(changed, separators=(",", ":")))
+        for value in variants:
+            argv = cli(1000000)
+            argv[argv.index("--json-model-override-args") + 1] = value
+            with self.subTest(value=value), self.assertRaises(launcher.LaunchError):
+                launcher.parse_options(argv)
+        argv = cli(1000000)
+        index = argv.index("--json-model-override-args")
+        del argv[index:index + 2]
+        with self.assertRaises(launcher.LaunchError):
+            launcher.parse_options(argv)
+        for context in launcher.CONTEXTS:
+            for value in ("{}", launcher.EXTENSION_OVERRIDE_JSON):
+                with self.subTest(context=context, value=value), self.assertRaises(launcher.LaunchError):
+                    launcher.parse_options(cli(context) + ["--json-model-override-args", value])
+
+    def test_extension_environment_requires_exact_selection_and_value(self):
+        environment = {**launcher.CACHE_ENVIRONMENT, **launcher.EXTENSION_ENVIRONMENT}
+        with mock.patch.dict(os.environ, environment, clear=True), mock.patch.object(launcher.importlib.metadata, "version", return_value="0.5.19"), mock.patch.object(launcher.importlib.metadata, "entry_points", return_value={}):
+            launcher.validate_environment(1000000)
+            self.assertEqual(dict(os.environ), environment)
+            for context in (None, *launcher.CONTEXTS):
+                with self.subTest(context=context), self.assertRaises(launcher.LaunchError):
+                    launcher.validate_environment(context)
+        for value in (None, "0", "true", "2", "01"):
+            environment = dict(launcher.CACHE_ENVIRONMENT)
+            if value is not None:
+                environment["SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN"] = value
+            with self.subTest(value=value), mock.patch.dict(os.environ, environment, clear=True), self.assertRaises(launcher.LaunchError):
+                launcher.validate_environment(1000000)
+
+    def test_extension_keeps_runtime_environment_isolation(self):
+        for name in ("SGLANG_MAMBA_SSM_DTYPE", "TRITON_PTXAS_BLACKWELL_PATH", "SGLANG_UNREVIEWED", "HF_TOKEN", "API_KEY"):
+            environment = {**launcher.CACHE_ENVIRONMENT, **launcher.EXTENSION_ENVIRONMENT, name: "synthetic"}
+            with self.subTest(name=name), mock.patch.dict(os.environ, environment, clear=True), self.assertRaises(launcher.LaunchError):
+                launcher.validate_environment(1000000)
+
+    def test_raw_and_resolved_extension_fields_refuse_drift(self):
+        for resolved in (False, True):
+            for name, value in (("tp_size", 1), ("base_gpu_id", 1), ("gpu_id_step", 2),
+                    ("dtype", "float16"), ("kv_cache_dtype", "fp8_e4m3"),
+                    ("json_model_override_args", "{}"), ("max_total_tokens", 1048576)):
+                args = args_fixture(1000000, resolved=resolved)
+                setattr(args, name, value)
+                with self.subTest(resolved=resolved, name=name), self.assertRaises(launcher.LaunchError):
+                    launcher.validate_server_args(args, resolved=resolved)
+
+    def test_resolution_cannot_switch_to_another_complete_approved_tuple(self):
+        for raw_context, projected_context in ((131072, 262144), (1000000, 262144), (262144, 1000000)):
+            for mutate_raw in (False, True):
+                raw = args_fixture(raw_context)
+                projected = args_fixture(projected_context, resolved=True)
+                if mutate_raw:
+                    def resolve():
+                        for field in ("context_length", "max_total_tokens", "tp_size", "json_model_override_args"):
+                            setattr(raw, field, getattr(projected, field))
+                    raw.resolve_once = resolve
+                with self.subTest(raw=raw_context, resolved=projected_context, mutate_raw=mutate_raw), mock.patch.dict(sys.modules, {"sglang.srt.arg_groups.overrides": types.SimpleNamespace(resolving_view=lambda args: projected)}), self.assertRaises(launcher.LaunchError):
+                    launcher.validate_resolved_server_args(raw)
+
+    def test_extension_environment_checked_before_native_import_or_key(self):
+        with mock.patch.dict(os.environ, launcher.CACHE_ENVIRONMENT, clear=True), mock.patch.object(launcher, "read_key") as key, self.assertLogs(launcher.LOGGER, logging.ERROR):
+            self.assertEqual(launcher.main(cli(1000000)), 1)
+        key.assert_not_called()
+
+    def test_pinned_http_only_grpc_worker_default_is_resolved_only_and_exact(self):
+        for context in launcher.ACCEPTED_CONTEXTS:
+            raw = args_fixture(context)
+            projected = resolved_args_fixture(raw)
+            with self.subTest(context=context), mock.patch.dict(sys.modules, {"sglang.srt.arg_groups.overrides": types.SimpleNamespace(resolving_view=lambda args: projected)}):
+                launcher.validate_resolved_server_args(raw)
+                self.assertIsNone(raw.grpc_worker_threads)
+            for resolved in (False, True):
+                invalid = (None, False, True, 0, 1, 8, 4.0, "4") if resolved else (False, True, 0, 4, 4.0, "4")
+                for value in invalid:
+                    args = args_fixture(context, resolved=resolved)
+                    args.grpc_worker_threads = value
+                    with self.subTest(context=context, resolved=resolved, value=value), self.assertRaisesRegex(launcher.LaunchError, "^server_mode_unsupported$"):
+                        launcher.validate_server_args(args, resolved=resolved)
+                args = args_fixture(context, resolved=resolved)
+                del args.grpc_worker_threads
+                with self.subTest(context=context, resolved=resolved, missing=True), self.assertRaisesRegex(launcher.LaunchError, "^server_mode_unsupported$"):
+                    launcher.validate_server_args(args, resolved=resolved)
+                for name, value in (("grpc_mode", True), ("smg_grpc_mode", True), ("grpc_port", 30005)):
+                    args = args_fixture(context, resolved=resolved)
+                    setattr(args, name, value)
+                    with self.subTest(context=context, resolved=resolved, enabled=name), self.assertRaisesRegex(launcher.LaunchError, "^server_mode_unsupported$"):
+                        launcher.validate_server_args(args, resolved=resolved)
 
 
 if __name__ == "__main__":

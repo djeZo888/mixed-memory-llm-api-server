@@ -813,7 +813,8 @@ class Manager:
         else:
             args += ["--read-only", "--tmpfs", "/tmp:rw,nosuid,nodev,size=1g", "--shm-size", "8g",
                      "--workdir", "/service", "--no-healthcheck", "--user", "0"]
-        for key, value in rt.get("environment", {}).items():
+        environment = adapter.launch_environment(d) if backend == "sglang_qwen38" else rt.get("environment", {})
+        for key, value in environment.items():
             args += ["--env", key + "=" + value]
         if backend == "sglang_qwen38":
             args += ["--ulimit", "core=1:1", "--pull=never", adapter.IMAGE_REFERENCE]

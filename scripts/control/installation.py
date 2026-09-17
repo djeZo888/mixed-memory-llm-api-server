@@ -43,6 +43,7 @@ NORMAL_FILES = (
     'tests/lifecycle/sglang38_fixture/auth_native.py',
     'tests/lifecycle/sglang38_fixture/chat_template.jinja',
     'tests/lifecycle/sglang38_fixture/cache_probe.py',
+    'tests/lifecycle/sglang38_fixture/qwen38_config.json',
 )
 
 

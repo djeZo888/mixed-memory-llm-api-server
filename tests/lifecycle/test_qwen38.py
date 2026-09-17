@@ -132,12 +132,12 @@ def auth_receipt(d):
 
 class Profiles(unittest.TestCase):
     def test_two_native_variants_have_distinct_deployment_identity(self):
-        a, b = [bound(k) for k in q.VARIANTS]
+        a, b = [bound(k) for k in q.NATIVE_VARIANTS]
         self.assertNotEqual(a['container_name'], b['container_name'])
         for d in (a, b):
             q.validate(d)
-            self.assertEqual(d['launch']['context_size'], q.VARIANTS[d['id']])
-            self.assertEqual(d['launch']['max_total_tokens'], q.VARIANTS[d['id']])
+            self.assertEqual(d['launch']['context_size'], q.NATIVE_VARIANTS[d['id']])
+            self.assertEqual(d['launch']['max_total_tokens'], q.NATIVE_VARIANTS[d['id']])
             self.assertEqual(d['launch']['gpus'], ['0'])
         self.assertEqual(a['_model'], b['_model'])
         self.assertEqual(a['_runtime'], b['_runtime'])
@@ -164,7 +164,7 @@ class Profiles(unittest.TestCase):
         path = 'configs/models/' + q.MODEL + '.json'
         with patch.dict(q.PROFILE_HASHES, {path: 'f' * 64}):
             with self.assertRaises(LifecycleError):
-                q.declared_profile(next(iter(q.VARIANTS)))
+                q.declared_profile(next(iter(q.NATIVE_VARIANTS)))
 
     def test_model_and_runtime_immutable_pins(self):
         d = bound()
@@ -209,7 +209,7 @@ class Profiles(unittest.TestCase):
         self.assertEqual(d['_runtime']['required_cli_flags'],
                          [*launcher.FIXED_FLAGS, '--context-length', '--max-total-tokens', *launcher.BOOLEAN_FLAGS])
         self.assertEqual(d['_runtime']['environment'], launcher.CACHE_ENVIRONMENT)
-        for context in q.VARIANTS.values():
+        for context in q.NATIVE_VARIANTS.values():
             argv = launcher.backend_argv(context)
             options, rendered = launcher.parse_options(['--key-file', '/run/secrets/llm-api-key', '--warmup-timeout', '600', *argv])
             self.assertEqual(rendered, argv)
@@ -223,7 +223,7 @@ class Profiles(unittest.TestCase):
         self.assertIn('NOT_TESTED', d['client_preset']['continuation_contract'])
 
     def test_handoff_contains_no_runtime_activation_capability(self):
-        d = q.declared_profile(next(iter(q.VARIANTS)))
+        d = q.declared_profile(next(iter(q.NATIVE_VARIANTS)))
         self.assertEqual(d['_runtime']['validation']['actual_image'], 'NOT_TESTED')
         with self.assertRaises(LifecycleError):
             q.validate(d)
@@ -311,7 +311,7 @@ class Reuse(unittest.TestCase):
         d = bound(); self.check(container(d), d)
 
     def test_same_alias_different_context_cannot_be_reused(self):
-        a, b = [bound(k) for k in q.VARIANTS]
+        a, b = [bound(k) for k in q.NATIVE_VARIANTS]
         with self.assertRaises(LifecycleError):
             self.check(container(a), b)
 

@@ -16,6 +16,7 @@ class FinalSource(unittest.TestCase):
                 ('tests/lifecycle/sglang38_fixture/run_fixture.py', 'qwen38_auth_fixture_changed'),
                 ('tests/lifecycle/sglang38_fixture/run_pinned_image.py', 'qwen38_auth_fixture_changed'),
                 ('tests/lifecycle/sglang38_fixture/cache_probe.py', 'qwen38_auth_fixture_changed'),
+                ('tests/lifecycle/sglang38_fixture/qwen38_config.json', 'qwen38_auth_fixture_changed'),
                 ('scripts/runtime/qwen38_oci.py', 'qwen38_support_source_changed')):
             with self.subTest(relative=relative), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)

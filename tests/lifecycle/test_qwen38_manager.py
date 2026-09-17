@@ -86,7 +86,7 @@ class ManagerDispatch(unittest.TestCase):
             yield
 
     def test_both_exact_profile_variants_bind_through_manager(self):
-        for identifier, context in q.VARIANTS.items():
+        for identifier, context in q.NATIVE_VARIANTS.items():
             d = self.manager.deployment(identifier)
             self.assertEqual(Manager.backend(d), "sglang_qwen38")
             self.assertIs(Manager.sglang_adapter(d), q)
@@ -136,7 +136,7 @@ class ManagerDispatch(unittest.TestCase):
         self.assertNotIn("--speculative-algorithm", command)
 
     def test_both_native_profiles_create_exact_core_limit_before_image(self):
-        for identifier in q.VARIANTS:
+        for identifier in q.NATIVE_VARIANTS:
             with self.subTest(identifier=identifier):
                 d = self.manager.deployment(identifier)
                 argv = self.manager.create_args(d)
@@ -147,7 +147,7 @@ class ManagerDispatch(unittest.TestCase):
                 self.assertLess(option + 1, argv.index(q.IMAGE_REFERENCE))
 
     def test_both_native_profiles_reuse_core_with_unrelated_daemon_limits(self):
-        for identifier in q.VARIANTS:
+        for identifier in q.NATIVE_VARIANTS:
             d = self.manager.deployment(identifier)
             for unrelated in ([], [{"Name": "nofile", "Soft": 1024, "Hard": 65536},
                                    {"Name": "memlock", "Soft": -1, "Hard": -1}]):
@@ -171,7 +171,7 @@ class ManagerDispatch(unittest.TestCase):
             absent.pop(field)
             invalid.append([absent])
         self.docker.start = Mock(side_effect=AssertionError("start before core validation"))
-        for identifier in q.VARIANTS:
+        for identifier in q.NATIVE_VARIANTS:
             d = self.manager.deployment(identifier)
             for limits in invalid:
                 with self.subTest(identifier=identifier, limits=limits):
