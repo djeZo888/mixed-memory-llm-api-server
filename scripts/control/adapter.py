@@ -165,12 +165,14 @@ class ManagerSession:
             raw['ready_proof'] = {}
             raw['endpoint'] = None
             raw['model_id'] = None
+            selected_deployment = None
             if not recovery and state.get('selected'):
                 try:
                     selected = manager.deployment(state['selected'])
                     if not selected.get('legacy') and selected['endpoint']['port'] != 30000:
                         raw['endpoint'] = {**selected['endpoint'], 'authentication_required': True}
                         raw['model_id'] = selected['_model']['repo_id']
+                    selected_deployment = selected
                 except Exception:
                     pass
             if identity:
@@ -184,7 +186,10 @@ class ManagerSession:
                     (identity['image_id'] + '\0' + (started or 'absent')).encode()).hexdigest()
             if not recovery and running:
                 try:
-                    deployment = manager.deployment(identity['deployment'])
+                    # Reuse only this observation's successful resolution.
+                    deployment = (selected_deployment if selected_deployment is not None
+                                  and state['selected'] == identity['deployment']
+                                  else manager.deployment(identity['deployment']))
                     self._separate_key(deployment)
                     manager.network_check(container, deployment)
                     if not deployment.get('legacy'):

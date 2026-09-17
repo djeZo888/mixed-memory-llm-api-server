@@ -26,7 +26,7 @@ import sys
 import threading
 import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tests'))
@@ -320,6 +320,114 @@ class ActualWriterIntegrationTests(unittest.TestCase):
                                     {'schema_version': 1, 'synthetic': True})
             lease.validate()
         self.assertTrue((Path(fixture.storage.data) / 'logs/control-l1b-seam.json').is_file())
+
+
+class ManagerObservationReuseTests(unittest.TestCase):
+    """Read-only observations over the existing synthetic Manager resources."""
+    def setUp(self):
+        self.fixture = ActualManagerFixture()
+        self.addCleanup(self.fixture.close)
+        with patch.object(prerequisites, 'assert_package_admission',
+                          side_effect=partial(REAL_ADMISSION, policy_path=self.fixture.policy)):
+            manager = self.fixture.load()
+            with self.fixture.lease() as lease:
+                manager.dispatch('select', OLD, boot_policy='resume', lease=lease)
+                manager.dispatch('start', lease=lease)
+        self.session = ProductionBackend(
+            self.fixture.configs, manager_loader=self.fixture.load,
+            control_key=b'inert-disposable-control-fixture-credential').open()
+        self.fixture.docker.calls.clear()
+
+    def test_equal_id_reuses_success_only_within_each_observation(self):
+        manager = self.session.manager
+        with (patch.object(manager, 'deployment', wraps=manager.deployment) as resolve,
+              patch.object(manager, 'validate_deployment', wraps=manager.validate_deployment) as validate,
+              patch.object(manager, 'check_mounts', wraps=manager.check_mounts) as mounts,
+              patch.object(manager, 'trusted_container', wraps=manager.trusted_container) as identity,
+              patch.object(self.session, '_separate_key', wraps=self.session._separate_key) as keys,
+              patch.object(manager, 'network_check', wraps=manager.network_check) as network,
+              patch.object(manager, 'validate_reused_contract', wraps=manager.validate_reused_contract) as contract,
+              patch.object(manager, 'probe_deployment', wraps=manager.probe_deployment) as probe):
+            ready = self.session.observe(Deadline.after(5))
+            self.assertEqual(ready['observed'], 'ready')
+            self.assertEqual(ready['ready_proof'], dict.fromkeys((
+                'trusted_identity', 'safe_network', 'authenticated_model', 'runtime_health'), True))
+            self.fixture.probe_result = 'not_ready'
+            current = self.session.observe(Deadline.after(5))
+            self.assertEqual(current['observed'], 'unhealthy')
+            self.assertFalse(any(current['ready_proof'].values()))
+        self.assertEqual(resolve.call_args_list, [call(OLD), call(OLD)])
+        # Contract validation is still separate and repeated on every read.
+        self.assertEqual(validate.call_count, 4)
+        self.assertEqual((mounts.call_count, identity.call_count), (6, 4))
+        self.assertEqual((keys.call_count, network.call_count, contract.call_count, probe.call_count), (2, 2, 2, 2))
+        for index in range(2):
+            deployment = keys.call_args_list[index].args[0]
+            self.assertIs(network.call_args_list[index].args[1], deployment)
+            self.assertIs(contract.call_args_list[index].args[1], deployment)
+            self.assertIs(probe.call_args_list[index].args[0], deployment)
+        self.assertIsNot(keys.call_args_list[0].args[0], keys.call_args_list[1].args[0])
+        self.assertTrue(all(probe[2]['require_auth'] for probe in self.fixture.probes))
+        self.assertFalse(any(event[0] in {'stop', 'remove', 'create', 'start_enter'}
+                             for event in self.fixture.docker.calls))
+
+    def test_different_selected_id_resolves_active_deployment_separately(self):
+        manager = self.session.manager
+        state = manager.read_state()
+        # L1 rejects mismatched persisted state; exercise this adapter branch
+        # through an explicit in-process observation seam only.
+        with (patch.object(manager, 'read_state', return_value=dict(state, selected=TARGET)),
+              patch.object(manager, 'deployment', wraps=manager.deployment) as resolve,
+              patch.object(manager, 'probe_deployment', wraps=manager.probe_deployment) as probe):
+            observation = self.session.observe(Deadline.after(5))
+        self.assertEqual(resolve.call_args_list, [call(TARGET), call(OLD)])
+        self.assertEqual(observation['observed'], 'ready')
+        self.assertEqual(observation['endpoint']['served_model'], TARGET + '-alias')
+        self.assertEqual(probe.call_args.args[0]['id'], OLD)
+
+    def test_failed_selected_resolution_preserves_active_retry_and_error(self):
+        manager = self.session.manager
+        original = manager.deployment
+        for retry_succeeds in (True, False):
+            with self.subTest(retry_succeeds=retry_succeeds):
+                attempts = []
+                def resolve(identifier):
+                    attempts.append(identifier)
+                    if len(attempts) == 1 or not retry_succeeds:
+                        raise LifecycleError('synthetic_selected_unavailable')
+                    return original(identifier)
+                with patch.object(manager, 'deployment', side_effect=resolve):
+                    observation = self.session.observe(Deadline.after(5))
+                self.assertEqual(attempts, [OLD, OLD])
+                self.assertEqual(observation['observed'], 'ready' if retry_succeeds else 'unhealthy')
+                self.assertIsNone(observation['endpoint'])
+                self.assertIsNone(observation['model_id'])
+                self.assertEqual(bool(observation['ready_proof']), retry_succeeds)
+
+    def test_equal_id_still_rechecks_storage_identity_and_health_after_probe(self):
+        baseline = copy.deepcopy(self.fixture.docker.records)
+        original = self.session.manager.probe_deployment
+        for change in ('storage', 'generation', 'health'):
+            with self.subTest(change=change):
+                self.fixture.docker.records = copy.deepcopy(baseline)
+                self.fixture.storage.lost = False
+                def probe(deployment, timeout):
+                    result = original(deployment, timeout)
+                    if change == 'storage':
+                        self.fixture.storage.lost = True
+                    elif change == 'generation':
+                        self.fixture.docker.records[0]['State']['StartedAt'] = '2026-09-17T00:00:00Z'
+                    else:
+                        self.fixture.docker.records[0]['State']['Health'] = {'Status': 'unhealthy'}
+                    return result
+                with patch.object(self.session.manager, 'probe_deployment', side_effect=probe):
+                    if change == 'storage':
+                        with self.assertRaises(StorageUnavailable):
+                            self.session.observe(Deadline.after(5))
+                    else:
+                        observation = self.session.observe(Deadline.after(5))
+                        self.assertEqual(observation['observed'], 'unhealthy')
+                        self.assertFalse(any(observation['ready_proof'].values()))
 
 
 class ProductionHTTPTests(unittest.TestCase):
