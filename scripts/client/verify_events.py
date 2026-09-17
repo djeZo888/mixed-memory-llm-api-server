@@ -154,9 +154,10 @@ separate caller checks. Native token counters are never called provider usage.
             fail("native_step_order")
         if kind == "text":
             text = part.get("text")
-            if not isinstance(text, str) or not text.strip():
+            if not isinstance(text, str):
                 fail("native_empty_text")
-            else:
+            elif text.strip():
+                # Blank stream fragments contribute no final-response evidence.
                 step_text = True
                 if passed_at > 0:
                     final_at = sequence

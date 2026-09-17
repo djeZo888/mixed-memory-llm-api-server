@@ -139,6 +139,61 @@ class NativeEventTests(unittest.TestCase):
     def test_final_prose_alone_does_not_establish_success(self):
         self.rejected("native_final_before_passing_test", [self.events[10], self.events[11], self.events[12]])
 
+    def test_empty_and_whitespace_fragments_preserve_later_nonempty_final(self):
+        for text in ("", " \t\r\n"):
+            for position in (1, 3, 8, 9, 11, 12):
+                with self.subTest(text=repr(text), position=position):
+                    events = copy.deepcopy(self.events)
+                    events.insert(position, native("text", {"text": text}))
+                    result = self.parse(events)
+                    self.assertEqual(result["failures"], [])
+                    self.assertEqual(result["result"], "pass")
+                    self.assertTrue(all(result["checks"].values()))
+                    self.assertEqual(result["event_counts"]["text"], 2)
+
+    def test_nonstring_or_missing_text_is_rejected_despite_valid_final(self):
+        for part in ({}, {"text": None}, {"text": False}, {"text": 0},
+                     {"text": []}, {"text": {}}):
+            with self.subTest(part=part):
+                events = copy.deepcopy(self.events)
+                events.insert(1, native("text", part))
+                self.rejected("native_empty_text", events)
+
+    def test_missing_or_blank_final_text_is_not_a_final_response(self):
+        for text in (None, "", " \t\r\n"):
+            with self.subTest(text=text):
+                events = copy.deepcopy(self.events)
+                if text is None:
+                    del events[11]
+                else:
+                    events[11]["part"]["text"] = text
+                result = self.rejected("native_missing_final_response", events)
+                self.assertFalse(result["checks"]["final_response"])
+                self.assertIn("native_final_before_passing_test", result["failures"])
+
+    def test_blank_text_after_pass_cannot_promote_earlier_nonempty_text(self):
+        for text in ("", " \t\r\n"):
+            with self.subTest(text=repr(text)):
+                events = copy.deepcopy(self.events)
+                early_text = events.pop(11)
+                events.insert(8, early_text)
+                events.insert(-1, native("text", {"text": text}))
+                result = self.rejected("native_missing_final_response", events)
+                self.assertTrue(result["checks"]["passing_tool_result"])
+                self.assertFalse(result["checks"]["final_response"])
+
+    def test_blank_text_still_obeys_step_and_terminal_order(self):
+        for text in ("", " \t\r\n"):
+            for position, message, code in (
+                    (0, "message-1", "native_step_order"),
+                    (4, "message-1", "native_step_order"),
+                    (1, "other-message", "native_step_order"),
+                    (len(self.events), "message-1", "native_event_after_stop")):
+                with self.subTest(text=repr(text), position=position, message=message):
+                    events = copy.deepcopy(self.events)
+                    events.insert(position, native("text", {"text": text}, message=message))
+                    self.rejected(code, events)
+
     def test_zero_exit_without_actual_unittest_result_is_failure(self):
         self.events[8]["part"]["state"]["output"] = "The tests passed. OK."
         self.rejected("native_missing_passing_tool_result")
