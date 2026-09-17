@@ -75,8 +75,17 @@ class ExtensionFixtureControls(unittest.TestCase):
         with self.assertRaisesRegex(host.FixtureError, 'extension_identity_mismatch'):
             host.check_native_result(result, provenance, 1000000, repo=ROOT)
         result['extension_identity'] = host.extension_identity(ROOT, provenance)
-        result['model_config_resolution'] = host.expected_extension_resolution(provenance)
+        # Exact installed resolution observed by Worker1; raw override stays unchanged.
+        result['model_config_resolution'] = {
+            'status': 'PASS_INSTALLED_MODELCONFIG',
+            'source_sha256': 'da8db3fd906bc4fdf412cd8cd2ea1787a3385a948bea41cbc66c6fd75664d6b7',
+            'context_len': 1000000, 'hf_context_len': 1000000,
+            'max_position_embeddings': 262144, 'dtype': 'torch.bfloat16',
+            'rope_parameters': {'mrope_interleaved': True, 'mrope_section': [11, 11, 10],
+                'rope_type': 'yarn', 'rope_theta': 10000000, 'partial_rotary_factor': 0.25,
+                'factor': 4.0, 'original_max_position_embeddings': 262144, 'type': 'yarn'}}
         host.check_native_result(result, provenance, 1000000, repo=ROOT)
+        self.assertNotIn('type', host.EXTENSION_ROPE_PARAMETERS)
         for path, wrong in (
                 (('extension_identity', 'profile_id'), 'qwen38-27b-256k'),
                 (('extension_identity', 'profile_sha256'), '0' * 64),
@@ -92,11 +101,31 @@ class ExtensionFixtureControls(unittest.TestCase):
             bad[path[0]][path[1]] = wrong
             with self.subTest(path=path), self.assertRaises(host.FixtureError):
                 host.check_native_result(bad, provenance, 1000000, repo=ROOT)
-        for wrong in (1, 'true'):
+        for key, wrong in (('type', 'default'), ('type', True), ('type', None),
+                ('rope_type', 'default'), ('rope_type', True), ('unexpected', 'yarn'),
+                ('mrope_interleaved', 1), ('mrope_interleaved', 'true'),
+                ('mrope_section', [11.0, 11, 10]), ('rope_theta', 10000000.0),
+                ('partial_rotary_factor', '0.25'), ('factor', 4),
+                ('original_max_position_embeddings', 262144.0)):
             bad = copy.deepcopy(result)
-            bad['model_config_resolution']['rope_parameters']['mrope_interleaved'] = wrong
-            with self.assertRaises(host.FixtureError):
+            bad['model_config_resolution']['rope_parameters'][key] = wrong
+            with self.subTest(key=key, wrong=wrong), self.assertRaises(host.FixtureError):
                 host.check_native_result(bad, provenance, 1000000, repo=ROOT)
+        bad = copy.deepcopy(result)
+        del bad['model_config_resolution']['rope_parameters']['type']
+        with self.assertRaises(host.FixtureError):
+            host.check_native_result(bad, provenance, 1000000, repo=ROOT)
+        for key in ('context_len', 'hf_context_len', 'max_position_embeddings'):
+            bad = copy.deepcopy(result)
+            bad['model_config_resolution'][key] = float(bad['model_config_resolution'][key])
+            with self.subTest(key=key), self.assertRaises(host.FixtureError):
+                host.check_native_result(bad, provenance, 1000000, repo=ROOT)
+        for context in (131072, 262144, 1000000):
+            bad = copy.deepcopy(result if context == 1000000 else native_result(provenance, context))
+            bad['fixture_sha256']['run_fixture.py'] = '0' * 64
+            with self.subTest(stale_fixture_context=context), self.assertRaisesRegex(
+                    host.FixtureError, 'native_provenance_mismatch'):
+                host.check_native_result(bad, provenance, context, repo=ROOT)
         with self.assertRaisesRegex(host.FixtureError, 'extension_repository_required'):
             host.check_native_result(result, provenance, 1000000)
 

@@ -720,7 +720,7 @@ def expected_extension_resolution(provenance):
             "source_sha256": provenance["sources"]["srt/configs/model_config.py"]["sha256"],
             "context_len": EXTENSION_CONTEXT, "hf_context_len": EXTENSION_CONTEXT,
             "max_position_embeddings": 262144,
-            "rope_parameters": EXTENSION_ROPE_PARAMETERS, "dtype": "torch.bfloat16"}
+            "rope_parameters": {**EXTENSION_ROPE_PARAMETERS, "type": "yarn"}, "dtype": "torch.bfloat16"}
 
 
 def check_extension_result(result, provenance, repo):
