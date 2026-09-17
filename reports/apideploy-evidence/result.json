@@ -1,0 +1,391 @@
+{
+  "boot_source": "/usr/local/lib/local-ai-server",
+  "boot_unit_sha256": "42669b974ea744d1890181c48dbb70468e8e7c78bcc16d63229a8c91f476de77",
+  "canonical_lease": "RELEASED",
+  "catalog": {
+    "active_identity": null,
+    "container_running": null,
+    "current_operation": null,
+    "desired": "unknown",
+    "endpoint": null,
+    "entries": [],
+    "failure_code": "deadline_exceeded",
+    "freshness": "unavailable",
+    "generation": 0,
+    "generation_current": false,
+    "last_operation": null,
+    "observation_available": false,
+    "observed": "unknown",
+    "observed_at": 1789625752.8612533,
+    "observed_deployment": null,
+    "schema_version": 1,
+    "selected": null,
+    "state_persisted": false,
+    "storage_available": false,
+    "switch_effect": "interrupts_inference"
+  },
+  "control_key_path": "/etc/llm-server/control-api-key",
+  "control_source": "/usr/local/lib/llm-server/control-api",
+  "control_status": {
+    "active_identity": null,
+    "container_running": null,
+    "current_operation": null,
+    "desired": "unknown",
+    "endpoint": null,
+    "failure_code": "deadline_exceeded",
+    "freshness": "unavailable",
+    "generation": 0,
+    "generation_current": false,
+    "last_operation": null,
+    "observation_available": false,
+    "observed": "unknown",
+    "observed_at": 1789625756.8627112,
+    "observed_deployment": null,
+    "schema_version": 1,
+    "selected": null,
+    "state_persisted": false,
+    "storage_available": false,
+    "switch_effect": "interrupts_inference"
+  },
+  "control_unit_sha256": "7dcb0a831ecc9d628b44d34ffcddb10661e465c70df57c5e9c1e11645324cf9c",
+  "endpoints": {
+    "control": "http://10.156.100.60:30000/control/v1",
+    "glm": "http://10.156.100.60:30002/v1",
+    "qwen": "http://10.156.100.60:30004/v1"
+  },
+  "extension_receipt": {
+    "mode": "0600",
+    "path": "/data/services/llm-manager/evidence/sglang-qwen38-0.5.19.q38max.auth.json",
+    "sha256": "353289244d02525120b3cfbeededdcdb0cc6aefdbd5879d060ee22186a51dde1"
+  },
+  "independent_worker2_acceptance": "PENDING",
+  "inference_key_path": "/data/services/secrets/llm-api-key",
+  "instance_path": "/data/services/llm-manager/deployment-instance.json",
+  "instance_sha256": "972b627a5be31674ca6c7b490d46a10d484c913c8ed54fe8992c08bdba60db6e",
+  "native_receipt": {
+    "mode": "0600",
+    "path": "/data/services/llm-manager/evidence/sglang-qwen38-0.5.19.auth.json",
+    "sha256": "b29cc6433009232067cf096e3a2ab7531023df57b1faa0d67c088e0a55739554"
+  },
+  "no_active_requests": true,
+  "no_inflight_command": true,
+  "no_more_vm_operations": true,
+  "normal_release": "/data/services/releases/0eb91c0ad9c92743afacdf0cefdc955dfe614e2c-apideploy-20260917",
+  "occupied_context": "NOT_TESTED_HERE",
+  "phase": "APIDEPLOY_FINAL_BLOCKED",
+  "postguards": "PASS",
+  "reboot": "NOT_PERFORMED",
+  "request_connections": 0,
+  "request_ownership": "RELEASED_TO_ROOT_NOT_APIACCEPT",
+  "runtime_identity": {
+    "Pid": 132068,
+    "Restarting": false,
+    "Running": true,
+    "StartedAt": "2026-09-17T06:01:20.210982756Z",
+    "Status": "running"
+  },
+  "source_commit": "0eb91c0ad9c92743afacdf0cefdc955dfe614e2c",
+  "source_manifest_path": "/usr/local/lib/llm-server/control-api.manifest.json",
+  "source_manifest_sha256": "8b578491f8d3da19ff6e3f8525f47fa3e1ef06d8960db4562cb36944c5309688",
+  "state": {
+    "boot_policy": "resume",
+    "container": {
+      "deployment": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+      "id": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+      "image_id": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "instance": "ai-vm-d0b",
+      "legacy": false,
+      "name": "llmctl-qwen38-27b-1000000-yarn4-tp2-bf16kv",
+      "owner": "mixed-memory-llm-api-server"
+    },
+    "container_running": true,
+    "desired": "running",
+    "failure": null,
+    "last_selected": "qwen38-27b-256k",
+    "observed": "ready",
+    "schema_version": 2,
+    "selected": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+    "state_persisted": true,
+    "updated_at": 1789625743869142903
+  },
+  "status": "BLOCKED_CONTROL_DEADLINE",
+  "utc": "2026-09-17T06:16:01.043680+00:00",
+  "supersedes": "Erroneous API_READY_RELEASE event in activate-final-vm; raw retained",
+  "catalog_acceptance": "FAIL_DEADLINE_EXCEEDED",
+  "control_status_acceptance": "FAIL_DEADLINE_EXCEEDED",
+  "diagnostic": {
+    "exceptions": [
+      {
+        "clause": "deadline_exceeded",
+        "exception": "ControlError",
+        "file": "control/protocol.py",
+        "function": "remaining",
+        "line": 42
+      },
+      {
+        "clause": "deadline_exceeded",
+        "exception": "ControlError",
+        "file": "control/adapter.py",
+        "function": "call",
+        "line": 96
+      },
+      {
+        "clause": "deadline_exceeded",
+        "exception": "ControlError",
+        "file": "install/storage.py",
+        "function": "_run",
+        "line": 87
+      },
+      {
+        "clause": "registered_storage_verification_failed",
+        "exception": "BindingError",
+        "file": "lifecycle/storage_binding.py",
+        "function": "wrapped",
+        "line": 37
+      },
+      {
+        "clause": "registered_storage_verification_failed",
+        "exception": "BindingError",
+        "file": "lifecycle/storage_binding.py",
+        "function": "validate_path",
+        "line": 274
+      },
+      {
+        "clause": "registered_storage_verification_failed",
+        "exception": "BindingError",
+        "file": "lifecycle/storage_binding.py",
+        "function": "wrapped",
+        "line": 33
+      },
+      {
+        "clause": "registered_storage_verification_failed",
+        "exception": "BindingError",
+        "file": "lifecycle/qwen38.py",
+        "function": "validate",
+        "line": 152
+      },
+      {
+        "clause": "registered_storage_verification_failed",
+        "exception": "BindingError",
+        "file": "lifecycle/qwen38.py",
+        "function": "wrapped",
+        "line": 70
+      },
+      {
+        "clause": "qwen38_contract_invalid",
+        "exception": "LifecycleError",
+        "file": "lifecycle/qwen38.py",
+        "function": "wrapped",
+        "line": 75
+      },
+      {
+        "clause": "qwen38_contract_invalid",
+        "exception": "LifecycleError",
+        "file": "lifecycle/manager.py",
+        "function": "validate_deployment",
+        "line": 401
+      },
+      {
+        "clause": "qwen38_contract_invalid",
+        "exception": "LifecycleError",
+        "file": "lifecycle/manager.py",
+        "function": "deployment",
+        "line": 335
+      },
+      {
+        "clause": "qwen38_contract_invalid",
+        "exception": "LifecycleError",
+        "file": "control/adapter.py",
+        "function": "observe",
+        "line": 170
+      },
+      {
+        "clause": "deadline_exceeded",
+        "exception": "ControlError",
+        "file": "control/protocol.py",
+        "function": "remaining",
+        "line": 42
+      },
+      {
+        "clause": "deadline_exceeded",
+        "exception": "ControlError",
+        "file": "control/adapter.py",
+        "function": "call",
+        "line": 96
+      },
+      {
+        "clause": "deadline_exceeded",
+        "exception": "ControlError",
+        "file": "install/storage.py",
+        "function": "_run",
+        "line": 87
+      },
+      {
+        "clause": "registered_storage_verification_failed",
+        "exception": "BindingError",
+        "file": "lifecycle/storage_binding.py",
+        "function": "wrapped",
+        "line": 37
+      },
+      {
+        "clause": "registered_storage_verification_failed",
+        "exception": "BindingError",
+        "file": "lifecycle/qwen38.py",
+        "function": "validate",
+        "line": 150
+      },
+      {
+        "clause": "registered_storage_verification_failed",
+        "exception": "BindingError",
+        "file": "lifecycle/qwen38.py",
+        "function": "wrapped",
+        "line": 70
+      },
+      {
+        "clause": "qwen38_contract_invalid",
+        "exception": "LifecycleError",
+        "file": "lifecycle/qwen38.py",
+        "function": "wrapped",
+        "line": 75
+      },
+      {
+        "clause": "qwen38_contract_invalid",
+        "exception": "LifecycleError",
+        "file": "lifecycle/manager.py",
+        "function": "validate_deployment",
+        "line": 401
+      },
+      {
+        "clause": "qwen38_contract_invalid",
+        "exception": "LifecycleError",
+        "file": "lifecycle/manager.py",
+        "function": "deployment",
+        "line": 335
+      },
+      {
+        "clause": "qwen38_contract_invalid",
+        "exception": "LifecycleError",
+        "file": "control/adapter.py",
+        "function": "observe",
+        "line": 187
+      },
+      {
+        "clause": "deadline_exceeded",
+        "exception": "ControlError",
+        "file": "control/protocol.py",
+        "function": "remaining",
+        "line": 42
+      },
+      {
+        "clause": "deadline_exceeded",
+        "exception": "ControlError",
+        "file": "control/adapter.py",
+        "function": "_bounded",
+        "line": 118
+      },
+      {
+        "clause": "deadline_exceeded",
+        "exception": "ControlError",
+        "file": "control/adapter.py",
+        "function": "observe",
+        "line": 143
+      }
+    ],
+    "model_requests": "Only existing observe authenticated health/model probe if reached",
+    "outcome": {
+      "clause": "deadline_exceeded",
+      "elapsed_seconds": 2.190813817000162,
+      "exception": "ControlError",
+      "open_seconds": 0.5007190349988377
+    },
+    "phase": "CONTROL_EXACT_2S_DIAGNOSTIC",
+    "production_deadline_seconds": 2,
+    "source_unchanged": true,
+    "timings": {
+      "control/adapter.py:load": {
+        "calls": 1,
+        "seconds": 0.37135925400070846
+      },
+      "control/adapter.py:observe": {
+        "calls": 1,
+        "seconds": 1.6900376949997735
+      },
+      "control/adapter.py:open": {
+        "calls": 1,
+        "seconds": 0.4988913239994872
+      },
+      "install/storage.py:verify": {
+        "calls": 19,
+        "seconds": 1.4476229479987524
+      },
+      "lifecycle/manager.py:check_mounts": {
+        "calls": 3,
+        "seconds": 0.3612805800021306
+      },
+      "lifecycle/manager.py:deployment": {
+        "calls": 2,
+        "seconds": 1.1663424010002927
+      },
+      "lifecycle/manager.py:load_manager": {
+        "calls": 1,
+        "seconds": 0.37134205700021994
+      },
+      "lifecycle/manager.py:run": {
+        "calls": 261,
+        "seconds": 0.8014179130150296
+      },
+      "lifecycle/manager.py:validate_deployment": {
+        "calls": 2,
+        "seconds": 1.0651829630005523
+      },
+      "lifecycle/qwen38.py:validate": {
+        "calls": 2,
+        "seconds": 1.0164931530016474
+      },
+      "lifecycle/runtime_io.py:run": {
+        "calls": 265,
+        "seconds": 0.9067852859989216
+      },
+      "lifecycle/storage_binding.py:load": {
+        "calls": 1,
+        "seconds": 0.12123991799853684
+      },
+      "lifecycle/storage_binding.py:read_json": {
+        "calls": 2,
+        "seconds": 0.4512832839991461
+      },
+      "lifecycle/storage_binding.py:validate_path": {
+        "calls": 13,
+        "seconds": 1.119108483000673
+      },
+      "lifecycle/storage_binding.py:verify": {
+        "calls": 19,
+        "seconds": 1.6028840790004324
+      }
+    }
+  },
+  "release_after": "2026-09-17T06:18:26.477351+00:00",
+  "needs": "Root-reviewed source correction for repeated verification within2s control read budget. Frozen serving/proof/model/runtime/profile/launcher bytes remain unchanged.",
+  "final_release": {
+    "boot_policy": "resume",
+    "canonical_lease": "RELEASED",
+    "no_active_requests": true,
+    "no_inflight_command": true,
+    "no_more_vm_operations": true,
+    "phase": "FINAL_CORRECTED_RELEASE",
+    "public_catalog": "EMPTY_DEADLINE_EXCEEDED_NOT_ACCEPTED",
+    "request_ownership": "RELEASED_TO_ROOT_NOT_APIACCEPT",
+    "result_sha256": "f2ca9d78f5065d965ca070186ab5f5ce2f82bd271ddf7c5d17bbefcf50032eee",
+    "running_container": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+    "status": "BLOCKED_CONTROL_DEADLINE",
+    "utc": "2026-09-17T06:19:31.376096+00:00",
+    "vm_result": "/data/logs/apideploy-20260917/result.json"
+  },
+  "proof_limits": [
+    "Existing Q38RETRY generation/stream/tool proof preserved; this task used read-only GET probes only.",
+    "Control HTTP200 unauthenticated errors are not readiness; exact deadline failure retained.",
+    "Diagnostic used profiling/tracing and has observer overhead; not service-sandbox timing.",
+    "Runtime helper source suppresses some child stderr; all task-owned command stdout/stderr and complete HTTP response bodies retained privately.",
+    "No occupied context, independent clients, switching, or reboot accepted here."
+  ]
+}

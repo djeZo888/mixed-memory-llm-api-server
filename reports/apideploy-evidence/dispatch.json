@@ -1,0 +1,39 @@
+{
+  "source_head": "0eb91c0ad9c92743afacdf0cefdc955dfe614e2c",
+  "advertised_ref": "refs/heads/milestone/server-completion-20260915",
+  "bundle_sha256": "72bf37f84a032436d0db88a847fb10dbd096d5f8080c52899aed9b4577d1a3e0",
+  "q38retry_release": {
+    "scope_release_utc": "2026-09-17T06:04:30.911821+00:00",
+    "lease_and_request_ownership": "RELEASED",
+    "receipts": {
+      "native": {
+        "path": "/data/services/llm-manager/evidence/sglang-qwen38-0.5.19.auth.json",
+        "sha256": "b29cc6433009232067cf096e3a2ab7531023df57b1faa0d67c088e0a55739554",
+        "proof": "GENUINE_FINAL_SOURCE_NATIVE_PAIR_PASS",
+        "mode": "0600"
+      },
+      "extension": {
+        "path": "/data/services/llm-manager/evidence/sglang-qwen38-0.5.19.q38max.auth.json",
+        "sha256": "353289244d02525120b3cfbeededdcdb0cc6aefdbd5879d060ee22186a51dde1",
+        "proof": "GENUINE_FINAL_SOURCE_EXTENSION_PASS",
+        "mode": "0600"
+      }
+    },
+    "source_paths": {
+      "normal_release": "/data/services/releases/91e962abb9dc7f8bcd2d8ba522b541cdd5f12f66-q38retry-20260917",
+      "control": "/usr/local/lib/llm-server/control-api",
+      "boot": "/usr/local/lib/local-ai-server",
+      "manifest": "/usr/local/lib/llm-server/control-api.manifest.json",
+      "instance": "/data/services/llm-manager/deployment-instance.json"
+    },
+    "source_manifest_sha256": "43e30d84e60c09162e5f3e8a5fe323b662cc1c137ea1aa7c7fec7940a59e473a",
+    "instance_sha256": "972b627a5be31674ca6c7b490d46a10d484c913c8ed54fe8992c08bdba60db6e"
+  },
+  "running_profile": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+  "running_container": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+  "intent": {
+    "desired": "running",
+    "boot_policy": "resume"
+  },
+  "owner": "APIDEPLOY Worker1; no Worker2 requests until explicit release"
+}

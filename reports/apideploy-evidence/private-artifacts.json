@@ -1,0 +1,1160 @@
+{
+  "private_raw_not_committed": true,
+  "artifacts": [
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/response-013.bin",
+      "bytes": 24,
+      "sha256": "3be5b8e53fdc8b0a2996590589456db33504977f3d1ce9bb75016c8a707e1a71"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/response-014.bin",
+      "bytes": 24,
+      "sha256": "3be5b8e53fdc8b0a2996590589456db33504977f3d1ce9bb75016c8a707e1a71"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/response-015.bin",
+      "bytes": 164,
+      "sha256": "bdf9d6fd6d57763398620af4b6e8bbd56081aac6a60c6fcc496c2dcfd799697d"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/response-050.bin",
+      "bytes": 33,
+      "sha256": "1ea0ca13adaba22808e95a6c823fbedc67904880f1bd9f6f52376a8669928833"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/response-051.bin",
+      "bytes": 33,
+      "sha256": "1ea0ca13adaba22808e95a6c823fbedc67904880f1bd9f6f52376a8669928833"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/response-052.bin",
+      "bytes": 470,
+      "sha256": "709fd39b2d7efb7bcc7b544cb36a1563c98b83b10d2ffca03d2f273e94336fd2"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/response-053.bin",
+      "bytes": 24,
+      "sha256": "3be5b8e53fdc8b0a2996590589456db33504977f3d1ce9bb75016c8a707e1a71"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/response-054.bin",
+      "bytes": 24,
+      "sha256": "3be5b8e53fdc8b0a2996590589456db33504977f3d1ce9bb75016c8a707e1a71"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/response-055.bin",
+      "bytes": 164,
+      "sha256": "5d2353e28d4914742e2dc9d1b66bee13b9d41a581a8df0d35056b25b536bdf26"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/response-056.bin",
+      "bytes": 483,
+      "sha256": "05b02e6c2a5f2bf2ffb83cdd83166944e294e55f8903d5c4ae0c915eccc8b7a5"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/response-057.bin",
+      "bytes": 470,
+      "sha256": "6353107976f2d78ff22806a6ccbab43f07db00f602833cd666ad09f0269720c4"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-001.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-003.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-005.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-007.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-009.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-011.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-016.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-018.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-020.bin",
+      "bytes": 522,
+      "sha256": "2ddbb33cb55eba8bfb6cb1d8f8cbe5d8d37475781716bc95b05767446c666c7b"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-022.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-024.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-026.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-028.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-030.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-032.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-034.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-036.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-038.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-040.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-042.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-044.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-046.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-048.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-058.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-060.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-062.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-064.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-066.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-068.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-070.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-072.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-074.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-076.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-078.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stderr-080.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout",
+      "bytes": 42534,
+      "sha256": "411e696e93f90eb4d54c3604fccabd17d18f10a5e8c6ee76d0666bf7b85a81f3"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-002.bin",
+      "bytes": 1028,
+      "sha256": "dec31382ea6fb677afbbeaad4e9a821332aca97ba1a410b58edb903db54bead8"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-004.bin",
+      "bytes": 1138,
+      "sha256": "5cca1f0f7160d9c149e68fec8cd5f80457913aecda7f3cdc09ba6236b142fdee"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-006.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-008.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-010.bin",
+      "bytes": 219,
+      "sha256": "d1269cd38a2c4277f552eefe25524db42819d8439e041dac901e944709abf7db"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-012.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-017.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-019.bin",
+      "bytes": 1607,
+      "sha256": "435363d22a31641e23063e02ffec0cf2eba34323d011e39d11000b11fb9f7668"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-021.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-023.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-025.bin",
+      "bytes": 219,
+      "sha256": "d1269cd38a2c4277f552eefe25524db42819d8439e041dac901e944709abf7db"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-027.bin",
+      "bytes": 1028,
+      "sha256": "a13119691863e381a30d10d21338f928b2bb1f85b0c1253959f78022dfd2a4fe"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-029.bin",
+      "bytes": 1138,
+      "sha256": "bc3264ddcc8ba5b9462c482369f02d9abaa5aaa76fae8548375a2661622c6322"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-031.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-033.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-035.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-037.bin",
+      "bytes": 107,
+      "sha256": "bcfdd7113a428679baa5a349db8a02b09d71d2c3ba207bc188e74d37eba911f9"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-039.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-041.bin",
+      "bytes": 81,
+      "sha256": "7509bff0245df52c94a13dd1581cc8d6d34ed229917377044d8fd29d5484dc12"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-043.bin",
+      "bytes": 1028,
+      "sha256": "02770a951195751bb8a244ef3459bd9bfa3e2ebdba0f5340346ab9174a4a93ad"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-045.bin",
+      "bytes": 1138,
+      "sha256": "f28320735b0922d392068807c9fd56e23baa1c2e8ccf489cd0bcff89e38a3b46"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-047.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-049.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-059.bin",
+      "bytes": 219,
+      "sha256": "d1269cd38a2c4277f552eefe25524db42819d8439e041dac901e944709abf7db"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-061.bin",
+      "bytes": 1270,
+      "sha256": "d2f519173518d5af974b96f367336f3f5048cbf8636c62fc9284a87be5175aa2"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-063.bin",
+      "bytes": 104,
+      "sha256": "b659a3fd053ee53a7d8c56cd02442943d48c0070b270c73c80b27093199d49f9"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-065.bin",
+      "bytes": 449,
+      "sha256": "296474d36573a360618992636c2631145ab59ea5d9fb132045c5b3a42380bee9"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-067.bin",
+      "bytes": 1028,
+      "sha256": "6bc5cd2d40117ecc7af825f30e1626529b50453afcb300aaacbfe420cc8791d3"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-069.bin",
+      "bytes": 1138,
+      "sha256": "b7585c5de63f565bd92008d29967efe7373b42ebf3585bba2a86898deb53fc53"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-071.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-073.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-075.bin",
+      "bytes": 1028,
+      "sha256": "cae58e6f1d4356953764260709a14da57a740a98cf0815c95259808cfcd85380"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-077.bin",
+      "bytes": 1138,
+      "sha256": "99234bf8bd9f2b3f01da5c07dad465ef1d45bbaff71514071872cee1bbcf735b"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-079.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-final-vm/stdout-081.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stderr-001.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stderr-003.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stderr-005.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stderr-007.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stderr-009.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stderr-011.bin",
+      "bytes": 176,
+      "sha256": "bb556136ec045343826863f0e9347c492d1fa83bf77d40fbef9ac2acf2715686"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stdout",
+      "bytes": 5348,
+      "sha256": "4a032fb6d8674f7a042bb91eeb61dc206d10ecd72fc6471031520c2f38031787"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stdout-002.bin",
+      "bytes": 1028,
+      "sha256": "a9d5a01121ed34f8fb9515232bdc1a586b0d114bdddbe718fca23d2e9b5d9bde"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stdout-004.bin",
+      "bytes": 1138,
+      "sha256": "febbf06b58568845f28c7fe0ca96d74bdfda9dcdac0e2473cca5094a221e9257"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stdout-006.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stdout-008.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stdout-010.bin",
+      "bytes": 219,
+      "sha256": "d1269cd38a2c4277f552eefe25524db42819d8439e041dac901e944709abf7db"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/stdout-012.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-activate-vm/traceback-013.bin",
+      "bytes": 247,
+      "sha256": "36d4627a2001a9a010238a893b4263e87b958e649e75fb3dccb4c2103f91cf38"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stderr-001.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stderr-003.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stderr-005.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stderr-007.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stderr-009.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stderr-011.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stderr-013.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stderr-015.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stderr-017.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stderr-019.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stderr-021.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stdout",
+      "bytes": 20986,
+      "sha256": "e9e5db6e9087df558bb62b78b79ab1253d9931a6e33cd770089431209a2b4006"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stdout-002.bin",
+      "bytes": 1028,
+      "sha256": "7bb2b40f3dc23d9ef7de1737a2591858419f72c6887b22eaba1a92a169e21231"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stdout-004.bin",
+      "bytes": 1138,
+      "sha256": "5c654b0f1c0c8600c2e9ed19df3c3a2836fa6555b2afa552b5e183d9fbaea44a"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stdout-006.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stdout-008.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stdout-010.bin",
+      "bytes": 4402,
+      "sha256": "e0b7982ebd9d7f20bf11c8c501d2a063585acb766c3b41529f26aad53c0c0ce2"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stdout-012.bin",
+      "bytes": 414,
+      "sha256": "ca9736a2ee6f495033433f239202cc2383188d922b1192777736af240e05c6e1"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stdout-014.bin",
+      "bytes": 581,
+      "sha256": "278a698e00f83376b4051c53076fa92096271a1fc31488577ff57fccca3f1185"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stdout-016.bin",
+      "bytes": 1028,
+      "sha256": "7bb2b40f3dc23d9ef7de1737a2591858419f72c6887b22eaba1a92a169e21231"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stdout-018.bin",
+      "bytes": 1138,
+      "sha256": "5c654b0f1c0c8600c2e9ed19df3c3a2836fa6555b2afa552b5e183d9fbaea44a"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stdout-020.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-boot-diag-vm/stdout-022.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-001.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-003.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-005.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-007.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-009.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-011.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-013.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-015.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-017.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-019.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-021.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-023.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-025.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-027.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stderr-029.bin",
+      "bytes": 108,
+      "sha256": "c6ef19c67e99b2e6ec4d4e9b8f9e5859566adcf18754546cff2e43fa785accd1"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout",
+      "bytes": 9534,
+      "sha256": "8e4278273441593fe56850320b042065a82727d1c94efc2d2fd3314227d6ffa3"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-002.bin",
+      "bytes": 1028,
+      "sha256": "f57534591d0440da7a76123278ae59d865cdb915b47064e8873b93c8046857e0"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-004.bin",
+      "bytes": 1138,
+      "sha256": "9d07445c88c0fba0e1b0cc3a4a600d617b7e5b9f1c7104dbd6c396fbbe503423"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-006.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-008.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-010.bin",
+      "bytes": 9,
+      "sha256": "cb6f82a52d11c260ee6936511d22d5a7db55f8e7c5afe9f03ea847350ce860c5"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-012.bin",
+      "bytes": 65,
+      "sha256": "f7d30f764ed976c6c277836de5d687307a24e6426688a8e89c11b59b59771c8e"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-014.bin",
+      "bytes": 104,
+      "sha256": "161dade63907f1fd0b6860309993d93ebe4ba548490e30987a0d2e5ff6f80385"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-016.bin",
+      "bytes": 81,
+      "sha256": "7509bff0245df52c94a13dd1581cc8d6d34ed229917377044d8fd29d5484dc12"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-018.bin",
+      "bytes": 1047,
+      "sha256": "42669b974ea744d1890181c48dbb70468e8e7c78bcc16d63229a8c91f476de77"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-020.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-022.bin",
+      "bytes": 21,
+      "sha256": "114939b31e818de6a59cdaf8974b04353afa32d11eab67aee42f26b1ecdc8192"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-024.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-026.bin",
+      "bytes": 21,
+      "sha256": "114939b31e818de6a59cdaf8974b04353afa32d11eab67aee42f26b1ecdc8192"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-028.bin",
+      "bytes": 178,
+      "sha256": "d486366ddd3ee8e907bbd4cd0e5e36f3a8a51b69e4a564faf8d4ca8e632002e2"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/stdout-030.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-compose-vm/traceback-031.bin",
+      "bytes": 288,
+      "sha256": "9695e14fa214b55668648c8966440715b123c923241939383797d87c191f0676"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stderr-001.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stderr-003.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stderr-005.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stderr-007.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stderr-009.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stderr-011.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stderr-013.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stderr-015.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stderr-017.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stdout",
+      "bytes": 13093,
+      "sha256": "466b25f3a0ea86e01e050a821ada374f9f527a9581114cdc26338a0b5092aa53"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stdout-002.bin",
+      "bytes": 1028,
+      "sha256": "43c29e726a654e12e817bed450316c92c3fc6c0422c7d3f4ff63929def61e978"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stdout-004.bin",
+      "bytes": 1138,
+      "sha256": "23e82e4cda050249cc7aec79ccb75dc6f199ff571434ac360555609026f0314f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stdout-006.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stdout-008.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stdout-010.bin",
+      "bytes": 104,
+      "sha256": "94abf8db5437bea49991d4a9348f4ba60f134ba89fa6606b1746c55edd401bee"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stdout-012.bin",
+      "bytes": 1028,
+      "sha256": "43c29e726a654e12e817bed450316c92c3fc6c0422c7d3f4ff63929def61e978"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stdout-014.bin",
+      "bytes": 1138,
+      "sha256": "23e82e4cda050249cc7aec79ccb75dc6f199ff571434ac360555609026f0314f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stdout-016.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-timing-vm/stdout-018.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stderr-001.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stderr-003.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stderr-005.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stderr-007.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stderr-009.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stderr-011.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stderr-013.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stderr-015.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stderr-017.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stdout",
+      "bytes": 8461,
+      "sha256": "e3972f03977cccde659cbf38eea31773fed4084ee62d045bb626ba55bbaad3f4"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stdout-002.bin",
+      "bytes": 1028,
+      "sha256": "43c29e726a654e12e817bed450316c92c3fc6c0422c7d3f4ff63929def61e978"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stdout-004.bin",
+      "bytes": 1138,
+      "sha256": "23e82e4cda050249cc7aec79ccb75dc6f199ff571434ac360555609026f0314f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stdout-006.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stdout-008.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stdout-010.bin",
+      "bytes": 104,
+      "sha256": "5783f3199c70ca3dcde3c188ec946da8e1795b59c390faeab1863ab603d84847"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stdout-012.bin",
+      "bytes": 1028,
+      "sha256": "45017bc2954d564dc87f2791349fb18081e4c2ab2cab2806ae54a054c93a185d"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stdout-014.bin",
+      "bytes": 1138,
+      "sha256": "6410ca4b7cc66408a4d8996682d0e50c01fd9c2fd569e127c51d08ff332810ff"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stdout-016.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-corrected-release-vm/stdout-018.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stderr-001.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stderr-003.bin",
+      "bytes": 40,
+      "sha256": "62d6d278abb280ca695a6e6de49bd5eccd7f19ac7a3c0d43e32d67e4494638af"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stderr-005.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stderr-007.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stderr-009.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stderr-011.bin",
+      "bytes": 252,
+      "sha256": "dfc26eb8c71c8978c86332b7450db139fa9e6721cb82f7138e56f82dd478dff1"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stdout",
+      "bytes": 23721,
+      "sha256": "6b91b389a3928a861004b9dbc4d3a1bbaa400ca865568c79c03d9d193be1f080"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stdout-002.bin",
+      "bytes": 1086,
+      "sha256": "95cb87706624aede31e9f6ab58f93251e44796938801b47d6a42eb51f5491092"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stdout-004.bin",
+      "bytes": 1200,
+      "sha256": "cfa224330c877bdd9a4f113afc683185a9d1b3b1b1ddf2584399f012394f7fe3"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stdout-006.bin",
+      "bytes": 882,
+      "sha256": "f0a0719947a51dfff81a00ffd50556ae769db34dbbd95def546abbbb0e2d9661"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stdout-008.bin",
+      "bytes": 104,
+      "sha256": "007505a4bb1c134389ba5a0ab2923b15bdbe1c10b289a7797a8b749d98fea6da"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stdout-010.bin",
+      "bytes": 1021,
+      "sha256": "75f4ed1afd701eb738eb92a8df42c4259f773607d2bac07c50dffcb59a2d9b22"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-inventory-vm/stdout-012.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stderr-001.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stderr-003.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stderr-005.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stderr-007.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stderr-009.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stderr-011.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stderr-013.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stderr-015.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stderr-017.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stderr-019.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stdout",
+      "bytes": 9118,
+      "sha256": "b292eb2b56681c37eb4bb70b8d10bbcf8a798583758b0908d8440cd97a8b16e3"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stdout-002.bin",
+      "bytes": 1028,
+      "sha256": "dec31382ea6fb677afbbeaad4e9a821332aca97ba1a410b58edb903db54bead8"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stdout-004.bin",
+      "bytes": 1138,
+      "sha256": "5cca1f0f7160d9c149e68fec8cd5f80457913aecda7f3cdc09ba6236b142fdee"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stdout-006.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stdout-008.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stdout-010.bin",
+      "bytes": 311,
+      "sha256": "7249fdf6aa1ae313a410e04efbad0f952414ca74894a4861659e837cca30b2a0"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stdout-012.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stdout-014.bin",
+      "bytes": 1028,
+      "sha256": "dec31382ea6fb677afbbeaad4e9a821332aca97ba1a410b58edb903db54bead8"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stdout-016.bin",
+      "bytes": 1138,
+      "sha256": "5cca1f0f7160d9c149e68fec8cd5f80457913aecda7f3cdc09ba6236b142fdee"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stdout-018.bin",
+      "bytes": 180,
+      "sha256": "082ee242e5ad84bd46a62703864550f2cbbbe4221d6753ac0bac88d6f83b09ce"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-verify-mount-vm/stdout-020.bin",
+      "bytes": 193,
+      "sha256": "a4eebbd08904d7acba79d0c304bf49290e129aee1130432621018c5bf3a7f96f"
+    }
+  ]
+}
