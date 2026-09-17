@@ -1,0 +1,50 @@
+{
+  "actual_native256k": "NOT_RUN",
+  "actual_tp2_1000000": "NOT_RUN",
+  "all_backends_stopped": true,
+  "auth_receipt": false,
+  "authenticated_model_generation": "NOT_TESTED",
+  "cache_probe_entry_or_exit_gate": "UNKNOWN",
+  "canonical_release_utc": "2026-09-17T04:29:00.915998+00:00",
+  "cleanup": "BOTH_OWNED_CONTAINERS_REMOVAL_VERIFIED",
+  "data_paths": [
+    "/data/build/q38retry-20260917/attempt-1/source",
+    "/data/logs/q38retry-20260917/attempt-1",
+    "/data/build/q38retry-20260917/warmup-observation/source",
+    "/data/logs/q38retry-20260917/warmup-observation"
+  ],
+  "device_name_type_creator": "UNKNOWN",
+  "diagnostic_observations": 1,
+  "diagnostic_result": "timeout child cache_probe gpu_device_node_present before launcher/watchdog",
+  "extension_fixture": "NOT_RUN",
+  "input_bundle": {
+    "ref": "refs/heads/milestone/server-completion-20260915",
+    "sha256": "cbdfb2c60215636908db4dc2a6d67158b60f24023964b86462c1ae3ae7c2c858"
+  },
+  "local_operator_hashes": {
+    "attempt-1-vm.py": "6e02965e1bd95d70b54bc7058c17505e5a911b5b04722bcd859530ac2558df4a",
+    "capture-attempt.py": "63583746d0b316e9cec5835b9fe5a56ecc72ead9a815d5c34d60ad97365768ef",
+    "capture-warmup.py": "a303813050682936be8b2041f060d4bd7b496c7f225e61ea4dd52dbd2ba35322",
+    "warmup-diagnostic-vm.py": "45981a890d922fd818818a8b73e7c2ee0d338ed10201e43c3990238ab4886632"
+  },
+  "model_stream_termination": "NOT_TESTED",
+  "model_tool_continuation": "NOT_TESTED",
+  "native_131072": "FAIL",
+  "native_262144": "NOT_RUN",
+  "occupied_context": "NOT_TESTED",
+  "ownership": "RELEASED",
+  "postguards": "PASS",
+  "private_capture_paths": [
+    "worker-private-attempt-1",
+    "worker-private-warmup-observation"
+  ],
+  "production_publication": "NOT_RUN",
+  "root_available_after_native_pair_bytes": 5562449920,
+  "root_stop_threshold_bytes": 4294967296,
+  "root_warning": "below 6 GiB; unchanged 4 GiB STOP passes",
+  "session_id": "01a0ad96-8f65-7da3-8128-b16c20c262c1",
+  "source_commit": "357358ab12914df209d54c895a59c94a41c84580",
+  "status": "BLOCKED_NATIVE_FIXTURE_FAILED",
+  "task": "Q38RETRY-20260917",
+  "throughput": "NOT_TESTED"
+}

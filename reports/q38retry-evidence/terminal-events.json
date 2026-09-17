@@ -1,0 +1,239 @@
+[
+  {
+    "capture": "worker-private-attempt-1",
+    "phase": "MINIMAL_PREFLIGHT",
+    "root_available_bytes": 5562454016,
+    "status": "PASS",
+    "utc": "2026-09-17T04:20:50.108176+00:00"
+  },
+  {
+    "attempt": 1,
+    "capture": "worker-private-attempt-1",
+    "commit": "357358ab12914df209d54c895a59c94a41c84580",
+    "context": 131072,
+    "phase": "CONTEXT_START",
+    "utc": "2026-09-17T04:20:50.626793+00:00"
+  },
+  {
+    "attempt": 1,
+    "capture": "worker-private-attempt-1",
+    "code": null,
+    "commit": "357358ab12914df209d54c895a59c94a41c84580",
+    "context": 131072,
+    "finished_utc": "2026-09-17T04:21:17.611836+00:00",
+    "independent_absence": {
+      "container_id": "878e8cd6aee80dc5d3968395311f68d7b8b0536553c63f8d7b8595ef37e72eae",
+      "container_name": "q38b-fixture-c64c3f5a32749c145997cffbf3da65ba",
+      "id_and_name_absent": true,
+      "status": "PASS"
+    },
+    "lifetime": {
+      "attach_diagnostic": {
+        "cli_returncode": 2,
+        "cli_signal": null,
+        "container_before_cleanup_stop": {
+          "exit_code": 2,
+          "signal": null,
+          "status": "EXITED"
+        },
+        "failure_kind": "CLI_NONZERO_EXIT",
+        "failure_metadata": {
+          "code": "actual_image_fixture_failed",
+          "origin": {
+            "exception_class": "FixtureFailure",
+            "filename": "run_pinned_image.py",
+            "line": 933
+          },
+          "status": "SAFE_ORIGIN"
+        },
+        "operation": "START_ATTACH",
+        "phase": "ATTACH",
+        "schema_version": 1,
+        "stderr": {
+          "capture": "COMPLETE",
+          "captured_bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "capture": "COMPLETE",
+          "captured_bytes": 163,
+          "sha256": "1242a34e635aec9ec0bd4c356b5a2fee097203a0a53079276d66970924739828"
+        }
+      },
+      "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+      "container_id": "878e8cd6aee80dc5d3968395311f68d7b8b0536553c63f8d7b8595ef37e72eae",
+      "container_name": "q38b-fixture-c64c3f5a32749c145997cffbf3da65ba",
+      "outcome": "ATTACH_FAILED",
+      "runtime_inspect": {
+        "context": 131072,
+        "device_requests": [],
+        "driver_capabilities": "compute,utility",
+        "entrypoint": [
+          "python3"
+        ],
+        "host_devices": [],
+        "model_and_secret_mounts": "EMPTY_PRIVATE_TMPFS",
+        "network": "none",
+        "root_readonly": true,
+        "runtime": "nvidia",
+        "status": "PASS_HOST_INSPECT",
+        "visible_devices": "none"
+      }
+    },
+    "phase": "CONTEXT_NATIVE_TERMINAL",
+    "post_guards": "PENDING",
+    "source_sha256": {
+      "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+      "scripts/runtime/sglang38_file_auth.py": "31889213cf96e3a059d52f07bc6581b9d3b7e1e070a8fa54c494028efb54128b",
+      "tests/lifecycle/sglang38_fixture/auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+      "tests/lifecycle/sglang38_fixture/cache_probe.py": "11e09615725d9588fd082fbbf8f4776a77d5a20f6dde09022a14df3e828bff73",
+      "tests/lifecycle/sglang38_fixture/chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+      "tests/lifecycle/sglang38_fixture/provenance.json": "e01f5578e76de5d657c0ed77e1016f578aec5e3f58adfa3f94b49bc32d543e2a",
+      "tests/lifecycle/sglang38_fixture/qwen38_config.json": "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc",
+      "tests/lifecycle/sglang38_fixture/run_fixture.py": "8464259e02be237d8fa5e60122842bdf19f8782a964afdf3e5515d0da72f07e4",
+      "tests/lifecycle/sglang38_fixture/run_pinned_image.py": "2cd6be0fd106d687c9160456df35d945d2b6a7779189f4ff1f10410c67da7569"
+    },
+    "started_utc": "2026-09-17T04:20:50.624424+00:00",
+    "status": "FAIL"
+  },
+  {
+    "apport_comparison": {
+      "new_or_changed": [],
+      "removed": [],
+      "status": "PASS_NO_NEW_OR_CHANGED_APPORT"
+    },
+    "apport_metadata": {
+      "/var/crash": {
+        "entries": {},
+        "identity": [
+          64512,
+          263740
+        ]
+      },
+      "/var/lib/apport/coredump": {
+        "entries": {},
+        "identity": [
+          64512,
+          263913
+        ]
+      }
+    },
+    "attempt": 1,
+    "capture": "worker-private-attempt-1",
+    "context": 131072,
+    "phase": "CONTEXT_POST_OBSERVATION",
+    "root_available_bytes_after_native": 5562449920,
+    "root_available_bytes_before": 5562454016,
+    "root_available_bytes_delta": -4096
+  },
+  {
+    "attempt": 1,
+    "capture": "worker-private-attempt-1",
+    "context": 131072,
+    "phase": "CONTEXT_GUARD_OBSERVATION",
+    "post_guards": "PASS",
+    "root_available_bytes_after_guard": 5562449920,
+    "root_available_bytes_before": 5562454016,
+    "root_available_bytes_delta": -4096
+  },
+  {
+    "attempt": 1,
+    "capture": "worker-private-attempt-1",
+    "context": 131072,
+    "phase": "CONTEXT_TERMINAL",
+    "post_guards": "PASS",
+    "post_source_hashes_match": true,
+    "status": "FAIL"
+  },
+  {
+    "attempt": 1,
+    "capture": "worker-private-attempt-1",
+    "code": "q38s_image_fixture_failed",
+    "commit": "357358ab12914df209d54c895a59c94a41c84580",
+    "contexts": [
+      {
+        "context": 131072,
+        "finished_utc": "2026-09-17T04:21:17.611836+00:00",
+        "independent_absence": {
+          "container_id": "878e8cd6aee80dc5d3968395311f68d7b8b0536553c63f8d7b8595ef37e72eae",
+          "container_name": "q38b-fixture-c64c3f5a32749c145997cffbf3da65ba",
+          "id_and_name_absent": true,
+          "status": "PASS"
+        },
+        "started_utc": "2026-09-17T04:20:50.624424+00:00",
+        "status": "FAIL"
+      }
+    ],
+    "phase": "PAIR_TERMINAL",
+    "post_guards": "PASS",
+    "receipt_sha256": null,
+    "source_hashes_match": true,
+    "status": "FAIL",
+    "utc": "2026-09-17T04:21:17.819929+00:00"
+  },
+  {
+    "capture": "worker-private-attempt-1",
+    "phase": "LIFECYCLE_SCOPE_TERMINAL",
+    "utc": "2026-09-17T04:21:18.027110+00:00"
+  },
+  {
+    "attempt": 1,
+    "capture": "worker-private-warmup-observation",
+    "context": 131072,
+    "phase": "TARGETED_CHILD_OBSERVATION_START",
+    "utc": "2026-09-17T04:28:37.115634+00:00"
+  },
+  {
+    "capture": "worker-private-warmup-observation",
+    "independent_absence": {
+      "container_id": "9bfa6cfc7be3c0a7b987823f9348ec8301d0317ece024caf3630a818e7ed1f78",
+      "container_name": "q38b-fixture-9bea1568b717d6216605de90138e840b",
+      "id_and_name_absent": true,
+      "status": "PASS"
+    },
+    "lifetime": {
+      "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+      "container_id": "9bfa6cfc7be3c0a7b987823f9348ec8301d0317ece024caf3630a818e7ed1f78",
+      "container_name": "q38b-fixture-9bea1568b717d6216605de90138e840b",
+      "outcome": "FIXTURE_EXITED",
+      "runtime_inspect": {
+        "context": 131072,
+        "device_requests": [],
+        "driver_capabilities": "compute,utility",
+        "entrypoint": [
+          "python3"
+        ],
+        "host_devices": [],
+        "model_and_secret_mounts": "EMPTY_PRIVATE_TMPFS",
+        "network": "none",
+        "root_readonly": true,
+        "runtime": "nvidia",
+        "status": "PASS_HOST_INSPECT",
+        "visible_devices": "none"
+      }
+    },
+    "phase": "DIAGNOSTIC_NATIVE_TERMINAL",
+    "post_guards": "PENDING",
+    "status": "OBSERVATION_COMPLETE",
+    "utc": "2026-09-17T04:29:00.460296+00:00"
+  },
+  {
+    "capture": "worker-private-warmup-observation",
+    "independent_absence": {
+      "container_id": "9bfa6cfc7be3c0a7b987823f9348ec8301d0317ece024caf3630a818e7ed1f78",
+      "container_name": "q38b-fixture-9bea1568b717d6216605de90138e840b",
+      "id_and_name_absent": true,
+      "status": "PASS"
+    },
+    "phase": "DIAGNOSTIC_FINAL",
+    "post_guards": "PASS",
+    "status": "OBSERVATION_COMPLETE",
+    "utc": "2026-09-17T04:29:00.915857+00:00"
+  },
+  {
+    "capture": "worker-private-warmup-observation",
+    "phase": "CANONICAL_LEASE_RELEASED",
+    "status": "QUIESCENT",
+    "utc": "2026-09-17T04:29:00.915998+00:00"
+  }
+]

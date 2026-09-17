@@ -1,0 +1,143 @@
+{
+  "auth_receipt": false,
+  "exit_code": 0,
+  "observations": [
+    {
+      "auth_receipt": false,
+      "baseline_predicate_unchanged": true,
+      "clauses": {
+        "returncode_is_one": true,
+        "stderr_empty": true,
+        "stdout_exact_marker": true
+      },
+      "marker": "Q38RETRY_WARMUP_CHILD_OPERANDS",
+      "phase_observation": {
+        "auth_receipt": false,
+        "deadline_monotonic": 10497.888684518,
+        "events": [
+          {
+            "monotonic_ns": 3297888719120,
+            "phase": "make_warmup_before_watchdog_start"
+          },
+          {
+            "monotonic_ns": 3297888926974,
+            "phase": "engine_start_entered"
+          },
+          {
+            "monotonic_ns": 3297900391574,
+            "phase": "engine_start_returning"
+          },
+          {
+            "monotonic_ns": 3297900460438,
+            "phase": "capture_uvicorn_entered"
+          },
+          {
+            "monotonic_ns": 3297900666247,
+            "phase": "synthetic_http_bound"
+          },
+          {
+            "monotonic_ns": 3297900810865,
+            "phase": "authenticated_warmup_entered"
+          },
+          {
+            "monotonic_ns": 3297901649548,
+            "phase": "authorized_http_model_info"
+          },
+          {
+            "monotonic_ns": 3297901666724,
+            "phase": "fault_marker_written"
+          }
+        ],
+        "exit_code": 1,
+        "exit_on_main_thread": true,
+        "scenario": "warmup-auth-failure",
+        "terminal": "os_exit",
+        "terminal_monotonic": 3297.902495672
+      },
+      "returncode": 1,
+      "scenario": "warmup-auth-failure",
+      "signal": null,
+      "stderr": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 40,
+        "classification": "exact_fault_marker",
+        "fault_marker_count": 1,
+        "safe_failure_metadata": null,
+        "sha256": "95696c2f88c8ba69b74900ec0c76dc71ae269edffad2de5d9dd08c5de1910613"
+      },
+      "timeouts_seconds": {
+        "child_process": 180,
+        "startup_watchdog": 7200,
+        "warmup_request": 600
+      }
+    },
+    {
+      "auth_receipt": false,
+      "baseline_predicate_unchanged": true,
+      "clauses": {
+        "returncode_is_one": false,
+        "stderr_empty": true,
+        "stdout_exact_marker": false
+      },
+      "marker": "Q38RETRY_WARMUP_CHILD_OPERANDS",
+      "phase_observation": {
+        "auth_receipt": false,
+        "deadline_monotonic": null,
+        "events": [],
+        "exit_code": null,
+        "exit_on_main_thread": true,
+        "failure_origin": {
+          "exception_class": "FixtureFailure",
+          "filename": "run_pinned_image.py",
+          "line": 672
+        },
+        "fixed_fixture_code": "cache_probe_child_failed",
+        "scenario": "warmup-timeout",
+        "terminal": "ordinary_exception",
+        "terminal_monotonic": 3298.025304057
+      },
+      "returncode": 2,
+      "scenario": "warmup-timeout",
+      "signal": null,
+      "stderr": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 331,
+        "classification": "safe_failure_json",
+        "fault_marker_count": 0,
+        "safe_failure_metadata": {
+          "cache_failure": {
+            "code": "gpu_device_node_present",
+            "failure_origin": {
+              "exception_class": "ProbeError",
+              "filename": "cache_probe.py",
+              "line": 198
+            },
+            "status": "FAIL"
+          },
+          "code": "actual_image_fixture_failed",
+          "origin": {
+            "exception_class": "FixtureFailure",
+            "filename": "run_pinned_image.py",
+            "line": 672
+          },
+          "status": "SAFE_ORIGIN"
+        },
+        "sha256": "23e9389bffe77f20be93e7a2ee94fd1a92d6a4130e615df2d2c842514a6df364"
+      },
+      "timeouts_seconds": {
+        "child_process": 180,
+        "startup_watchdog": 0.4,
+        "warmup_request": 600
+      }
+    }
+  ],
+  "original_fail_preserved": true,
+  "status": "OBSERVATION_COMPLETE",
+  "utc": "2026-09-17T04:29:00.354966+00:00"
+}
