@@ -1,0 +1,29 @@
+{
+  "phase": "FIRST_NATIVE_FAILURE",
+  "context": 131072,
+  "exit_code": 2,
+  "status": "SAFE_ORIGIN",
+  "code": "actual_image_fixture_failed",
+  "warmup_child_failure": {
+    "child_failure": {
+      "status": "SAFE_ORIGIN",
+      "code": "actual_image_fixture_failed",
+      "origin": {
+        "filename": "run_pinned_image.py",
+        "line": 596,
+        "exception_class": "OTHER"
+      }
+    },
+    "marker_count": 0,
+    "marker_exact": false,
+    "returncode": 2,
+    "scenario": "warmup-auth-failure",
+    "stderr_bytes": 386,
+    "stdout_bytes": 154
+  },
+  "origin": {
+    "filename": "run_pinned_image.py",
+    "line": 962,
+    "exception_class": "FixtureFailure"
+  }
+}

@@ -1,0 +1,188 @@
+[
+  {
+    "phase": "MINIMAL_PREFLIGHT",
+    "root_available_bytes": 5562257408,
+    "status": "PASS",
+    "utc": "2026-09-17T05:02:33.228569+00:00"
+  },
+  {
+    "attempt": 2,
+    "commit": "aafbfdd5a3d318105506e5f0517866aac20d7755",
+    "context": 131072,
+    "phase": "CONTEXT_START",
+    "utc": "2026-09-17T05:02:33.773916+00:00"
+  },
+  {
+    "attempt": 2,
+    "code": null,
+    "commit": "aafbfdd5a3d318105506e5f0517866aac20d7755",
+    "context": 131072,
+    "finished_utc": "2026-09-17T05:03:24.854594+00:00",
+    "independent_absence": {
+      "container_id": "3cb56e987acd8b646d8778970b29b6abf8f0fb25fc35d176c317f5daf003d4b1",
+      "container_name": "q38b-fixture-4eb86f86e2ca60569e26afbcbf946355",
+      "id_and_name_absent": true,
+      "status": "PASS"
+    },
+    "lifetime": {
+      "attach_diagnostic": {
+        "cli_returncode": 2,
+        "cli_signal": null,
+        "container_before_cleanup_stop": {
+          "exit_code": 2,
+          "signal": null,
+          "status": "EXITED"
+        },
+        "failure_kind": "CLI_NONZERO_EXIT",
+        "failure_metadata": {
+          "code": "actual_image_fixture_failed",
+          "origin": {
+            "exception_class": "FixtureFailure",
+            "filename": "run_pinned_image.py",
+            "line": 962
+          },
+          "status": "SAFE_ORIGIN",
+          "warmup_child_failure": {
+            "child_failure": {
+              "code": "actual_image_fixture_failed",
+              "origin": {
+                "exception_class": "OTHER",
+                "filename": "run_pinned_image.py",
+                "line": 596
+              },
+              "status": "SAFE_ORIGIN"
+            },
+            "marker_count": 0,
+            "marker_exact": false,
+            "returncode": 2,
+            "scenario": "warmup-auth-failure",
+            "stderr_bytes": 386,
+            "stdout_bytes": 154
+          }
+        },
+        "operation": "START_ATTACH",
+        "phase": "ATTACH",
+        "schema_version": 1,
+        "stderr": {
+          "capture": "COMPLETE",
+          "captured_bytes": 444,
+          "sha256": "38844e08530e5101c624d08c25a4eafb71698d1d7044775a70aafcf680de4340"
+        },
+        "stdout": {
+          "capture": "COMPLETE",
+          "captured_bytes": 496,
+          "sha256": "a67e4299baffdf4d9b57c5b73a46cc2632d4ad3ae50f9958a8ce0d58c08b9110"
+        }
+      },
+      "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+      "container_id": "3cb56e987acd8b646d8778970b29b6abf8f0fb25fc35d176c317f5daf003d4b1",
+      "container_name": "q38b-fixture-4eb86f86e2ca60569e26afbcbf946355",
+      "outcome": "ATTACH_FAILED",
+      "runtime_inspect": {
+        "context": 131072,
+        "device_requests": [],
+        "driver_capabilities": "compute,utility",
+        "entrypoint": [
+          "python3"
+        ],
+        "host_devices": [],
+        "model_and_secret_mounts": "EMPTY_PRIVATE_TMPFS",
+        "network": "none",
+        "root_readonly": true,
+        "runtime": "nvidia",
+        "status": "PASS_HOST_INSPECT",
+        "visible_devices": "none"
+      }
+    },
+    "phase": "CONTEXT_NATIVE_TERMINAL",
+    "post_guards": "PENDING",
+    "source_sha256": {
+      "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+      "scripts/runtime/sglang38_file_auth.py": "31889213cf96e3a059d52f07bc6581b9d3b7e1e070a8fa54c494028efb54128b",
+      "tests/lifecycle/sglang38_fixture/auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+      "tests/lifecycle/sglang38_fixture/cache_probe.py": "be1411601ae6609d6889be8e174e565ba8a41f97b496bc33c13404619369a65b",
+      "tests/lifecycle/sglang38_fixture/chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+      "tests/lifecycle/sglang38_fixture/provenance.json": "ea0fb2090f659657b34c4731e3a61046d1216dfa9e13f10f19af1aadda6958d9",
+      "tests/lifecycle/sglang38_fixture/qwen38_config.json": "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc",
+      "tests/lifecycle/sglang38_fixture/run_fixture.py": "78a0842a25affbcc56f5e7f64df1dd2bae7c2d2d58dbe2aa239d44a6a4b91a38",
+      "tests/lifecycle/sglang38_fixture/run_pinned_image.py": "8b109e02bca5d9b4233a21677aff582b8334df52c77b468cb5869f2aa9a36fcd"
+    },
+    "started_utc": "2026-09-17T05:02:33.771374+00:00",
+    "status": "FAIL"
+  },
+  {
+    "apport_comparison": {
+      "new_or_changed": [],
+      "removed": [],
+      "status": "PASS_NO_NEW_OR_CHANGED_APPORT"
+    },
+    "apport_metadata": {
+      "/var/crash": {
+        "entries": {},
+        "identity": [
+          64512,
+          263740
+        ]
+      },
+      "/var/lib/apport/coredump": {
+        "entries": {},
+        "identity": [
+          64512,
+          263913
+        ]
+      }
+    },
+    "attempt": 2,
+    "context": 131072,
+    "phase": "CONTEXT_POST_OBSERVATION",
+    "root_available_bytes_after_native": 5562257408,
+    "root_available_bytes_before": 5562257408,
+    "root_available_bytes_delta": 0
+  },
+  {
+    "attempt": 2,
+    "context": 131072,
+    "phase": "CONTEXT_GUARD_OBSERVATION",
+    "post_guards": "PASS",
+    "root_available_bytes_after_guard": 5562257408,
+    "root_available_bytes_before": 5562257408,
+    "root_available_bytes_delta": 0
+  },
+  {
+    "attempt": 2,
+    "context": 131072,
+    "phase": "CONTEXT_TERMINAL",
+    "post_guards": "PASS",
+    "post_source_hashes_match": true,
+    "status": "FAIL"
+  },
+  {
+    "attempt": 2,
+    "code": "q38s_image_fixture_failed",
+    "commit": "aafbfdd5a3d318105506e5f0517866aac20d7755",
+    "contexts": [
+      {
+        "context": 131072,
+        "finished_utc": "2026-09-17T05:03:24.854594+00:00",
+        "independent_absence": {
+          "container_id": "3cb56e987acd8b646d8778970b29b6abf8f0fb25fc35d176c317f5daf003d4b1",
+          "container_name": "q38b-fixture-4eb86f86e2ca60569e26afbcbf946355",
+          "id_and_name_absent": true,
+          "status": "PASS"
+        },
+        "started_utc": "2026-09-17T05:02:33.771374+00:00",
+        "status": "FAIL"
+      }
+    ],
+    "phase": "PAIR_TERMINAL",
+    "post_guards": "PASS",
+    "receipt_sha256": null,
+    "source_hashes_match": true,
+    "status": "FAIL",
+    "utc": "2026-09-17T05:03:25.064310+00:00"
+  },
+  {
+    "phase": "LIFECYCLE_SCOPE_TERMINAL",
+    "utc": "2026-09-17T05:03:25.272542+00:00"
+  }
+]

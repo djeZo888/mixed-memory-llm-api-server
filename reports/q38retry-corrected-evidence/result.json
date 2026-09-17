@@ -1,0 +1,23 @@
+{
+  "bundle_sha256": "77dd6a4c267a3a54339f133fa0de75c789f8a420cce6612db8e0462d488fbe3c",
+  "cause": "Rayon ThreadPoolBuildError IOError WouldBlock errno11",
+  "cleanup": "EXACT_ID_AND_NAME_ABSENT",
+  "marker_count": 0,
+  "native256_extension_publication_models": "NOT_RUN",
+  "operator_sha256": "cf62894223b33fe65f1d5df9b02f8d129e703220dc1371ca43e6c208fdbdd180",
+  "ownership": "RELEASED",
+  "postguards": "PASS",
+  "private_capture": "worker-private-attempt-2",
+  "python_exception_class": "NOT_EXPOSED_OTHER",
+  "receipt": false,
+  "resource_limit_occupancy": "NOT_CAPTURED",
+  "returncode": 2,
+  "scenario": "warmup-auth-failure",
+  "scope_terminal_utc": "2026-09-17T05:03:25.272542+00:00",
+  "source_commit": "aafbfdd5a3d318105506e5f0517866aac20d7755",
+  "source_stage": "/data/build/q38retry-20260917/attempt-2/source",
+  "status": "NATIVE_131072_FAIL",
+  "stderr_bytes": 386,
+  "stdout_bytes": 154,
+  "vm_evidence": "/data/logs/q38retry-20260917/attempt-2"
+}
