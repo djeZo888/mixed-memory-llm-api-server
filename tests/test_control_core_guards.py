@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -150,6 +150,67 @@ class RequestGuards(unittest.TestCase):
         self.assertEqual(digest(["switch", parsed]), digest(["switch", reversed_parsed]))
         self.assertNotEqual(digest(["switch", parsed]), digest(["stop", parsed]))
         self.assertNotEqual(digest(["switch", parsed]), digest(["switch", {**parsed, "allow_interrupt": True}]))
+
+
+class DeadlineBudgetGuards(unittest.TestCase):
+    def application(self):
+        backend, journal = Mock(), Mock()
+        journal.read.return_value = {"schema": 1, "generation": 0,
+                                     "fingerprint": None, "entries": {}}
+        backend.open.return_value.observe.return_value = ready_raw()
+        backend.open.return_value.catalog.return_value = []
+        with patch("control.core.threading.Thread"):
+            return Application(backend, journal)
+
+    def test_default_read_and_catalog_share_one_ten_second_deadline(self):
+        app = self.application()
+        session = app.backend.open.return_value
+        with patch.object(app, "_try_refresh"), \
+                patch("control.protocol.time.monotonic", return_value=100):
+            status, snapshot = app._read(catalog=True)
+        self.assertEqual(status, 200)
+        self.assertEqual(snapshot["observed"], "ready")
+        deadline = session.observe.call_args.args[0]
+        self.assertEqual(deadline.end, 110)
+        session.catalog.assert_called_once_with(deadline)
+
+    def test_default_admission_wait_is_ten_seconds(self):
+        app = self.application()
+        with patch.object(app, "_replay", return_value=None), \
+                patch("control.core._Ticket") as ticket_type:
+            app._submit("stop", valid_request("stop"), "opaque-request")
+        ticket_type.return_value.wait.assert_called_once_with(10)
+        self.assertEqual(app.transition_seconds, 8000)
+
+    def test_admission_check_keeps_ticket_remaining_deadline(self):
+        app = self.application()
+        session = app.backend.open.return_value
+        session.check_admission.side_effect = ControlError("deadline_exceeded")
+        lease = object()
+        for expires_at, expected_end in ((None, 110), (103, 103)):
+            with self.subTest(expires_at=expires_at), \
+                    patch.object(app, "_get_session", return_value=(session, False)), \
+                    patch("control.protocol.time.monotonic", return_value=100):
+                with self.assertRaises(ControlError):
+                    app._transition(Mock(kind="switch", expires_at=expires_at), lease)
+                checked_lease, deadline = session.check_admission.call_args.args
+                self.assertIs(checked_lease, lease)
+                self.assertEqual(deadline.end, expected_end)
+        session.observe.assert_not_called()
+        session.preflight.assert_not_called()
+        session.stop.assert_not_called()
+        session.select.assert_not_called()
+        session.start.assert_not_called()
+
+    def test_read_and_admission_caps_reject_invalid_before_backend_or_journal(self):
+        backend, journal = Mock(), Mock()
+        for field in ("read_seconds", "admission_seconds"):
+            for value in (0, -1, 10.001, float("nan"), float("inf"), -float("inf")):
+                with self.subTest(field=field, value=value):
+                    with self.assertRaisesRegex(ValueError, "^invalid_deadlines$"):
+                        Application(backend, journal, **{field: value})
+        self.assertEqual(backend.mock_calls, [])
+        self.assertEqual(journal.mock_calls, [])
 
 
 class ObservationGuards(unittest.TestCase):

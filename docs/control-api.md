@@ -40,7 +40,7 @@ numbers and nesting beyond the fixed limit. No CORS headers are generated.
 Request line: 2,048 bytes; headers: 8,192 bytes and 32 fields; body: 4,096 bytes;
 response: 256 KiB. One request per connection. At most 16 connection workers
 plus one deadline supervisor and one transition executor. Socket lifetime is
-five seconds; expired application calls retain their worker slot until return.
+30 seconds; expired application calls retain their worker slot until return.
 The transport closes excess connections. It writes no access/body/error logs.
 Responses and journal fields use explicit allowlists; exception text is never
 returned. Malformed framing can be rejected before authentication is parseable.
@@ -139,7 +139,7 @@ preemptive cancellation or force-kill route exists. The source service template'
 process termination and reboot behavior require later live acceptance.
 
 Deadlines are finite (default operation 8,000 seconds, maximum 14,400; reads and
-admission 2 seconds, maximum 5). The explicit test port must honor each supplied
+admission 10 seconds, maximum 10). The explicit test port must honor each supplied
 monotonic deadline. The executor checks before/after bounded calls and retains
 ownership while a call is outstanding. It never releases a live lease to admit
 another model because a timer elapsed. Session Docker, probe, host-guard and Storage-runner subprocess calls are capped
