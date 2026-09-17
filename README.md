@@ -1,54 +1,56 @@
 # mixed-memory-llm-api-server
 
-`mixed-memory-llm-api-server` is an open-source deployment framework for running large local LLMs on mixed system-RAM plus NVIDIA-VRAM workstations and exposing an authenticated OpenAI-compatible API.
+An API-only local AI server for **GLM5.3 UD-Q4_K_XL** (flagship) and
+**Qwen3.8-27B FP8** (fast model). It provides OpenAI-compatible inference and a
+separate authenticated control API for catalog, status and model switching.
+Select/load the model before inference: **one backend is active at a time**.
 
-## Intended Hardware Class
+**Completion status: PENDING (2026-09-17).** The anticipated deployment
+selection is source-only, awaiting live acceptance; it is not an accepted or
+active default. Coordinated Worker1 result at **2026-09-17 05:18:10 UTC** on exact source
+`821df4a561173c078ed35c9286a07b82867b7953` reports the genuine native no-GPU
+fixture pair at **128K and 256K PASS** (report not yet committed; no model
+allocation or inference PASS), while actual Qwen model loading/inference,
+1M extension acceptance and final live API/switch/network/boot/client
+acceptance remain **PENDING**.
+See the [current scope](docs/orchestration/2026-09-17-resumed.md) and
+[profile/evidence handoff](docs/l2-live-snapshot.md).
 
-The target host class is a headless Linux workstation or VM with large system RAM, many CPU cores, and one or more NVIDIA GPUs with substantial VRAM. The initial deployment target is a mixed-memory workstation where models may use both system RAM and GPU VRAM.
+## Models and capacity
 
-## Scope
+| Model | Placement and context scope |
+| --- | --- |
+| GLM5.3 UD-Q4_K_XL | Fast system RAM plus both GPUs; declared/configured context 1,048,576 tokens. [Historical allocation and tiny-response evidence](reports/d3cap4-native1m.md) does not prove occupied 1M context. |
+| Qwen3.8-27B FP8 | GPU-resident native baseline, declared 256K (262,144 tokens). The chosen source candidate uses the same weights, both GPUs/TP2 and BF16 KV with official factor-4 YaRN settings for 1,000,000 tokens; acceptance is **PENDING**. |
 
-This repository is API-only. It is intended to run inference backends, expose model inference APIs, and provide repeatable operational checks. It does not implement web browsing, scraping, browser automation, or a human chat UI.
+Configured capacity, allocation and successfully occupied context are separate
+claims. The catalog's `context.verified_occupied_tokens` remains `null`; historical 32K
+and 2048-output-token checks are not product limits.
 
-## Current installer status
+## Start here
 
-The fresh-Linux installer is **incomplete: final integration required**. I1/I1b
-provide storage/prerequisite, container/toolkit, pinned runtime and GLM/Qwen
-acquisition source stages. Package execution remains pending the reviewed
-I1R/L1 ownership interface; blank-disk provisioning is handed to I1S. Full
-`apply` refuses before mutation until I1c service/control/client/acceptance passes.
-This revision does not leave a fresh machine ready for inference.
+- [API operations guide](docs/ai-vm-api-operations.md): endpoint/key separation,
+  aliases, catalog, asynchronous switch/poll and inference flow.
+- [Control API contract](docs/control-api.md): exact fields, concurrency,
+  idempotency, interruption and recovery behavior.
+- [Direct client networking](docs/direct-client-network.md): approved private
+  transport and authentication; [network policy](docs/private-network.md).
+- [Agent client contract](docs/agent-client.md), [reviewed OpenCode client](docs/client-install.md)
+  and [ordinary-client verification](docs/client-verification.md).
 
-```sh
-./install.sh --help
-./install.sh plan --profile flagship-hybrid --model-set glm --data-dir /data
-```
+Real file reads, edits, test execution, browsing and other tools require an
+external agent client running as an ordinary user in a trusted workspace.
+The model API does not execute tools. A separate frontend VM is future work;
+there is no completed human chat UI here. Finish ai-vm first, frontend next,
+installer last. **All installer work and tests are paused.**
 
-See [installation and partial-boundary commands](docs/installation.md),
-[I1b test evidence](reports/i1b-runtime-acquisition.md), and
-[remaining integration checklist](reports/i1c-installer-checklist.md). Ubuntu24.04 amd64 is the supported
-source target. Full fresh GPU installation/reboot is **NOT_TESTED**.
+## Historical references
 
-The roadmap below is historical. Current D1/D1b/F1A artifact acquisition,
-D2 lifecycle and V0 client interfaces are separate reviewed components;
-their reports do not establish whole-installer or live-model acceptance.
-
-## High-Level Install Roadmap
-
-1. M0 repository bootstrap.
-2. M1 VM preflight.
-3. M2 data disk dry-run and `/data` preparation.
-4. M3 root-disk guard.
-5. M4 Docker/containerd storage.
-6. M5 NVIDIA host driver.
-7. M6 NVIDIA Container Toolkit.
-8. M7 backend runtime abstraction.
-9. M8 small model API smoke service.
-10. M9 fast technical/coding model.
-11. M10 larger model benchmarks.
-12. M11 authenticated API exposure.
-13. M12 observability and operations.
+The [installer record](docs/installation.md), [roadmap](ROADMAP.md) and
+[reports](reports/) preserve earlier work and its evidence limits. They do not
+establish a complete fresh-machine installation or current serving readiness.
 
 ## License
 
-Apache-2.0 is intended. The full license text is not added in M0 unless a trusted local copy is available. See `LICENSE.todo.md`.
+Apache-2.0 is intended; the full license text remains outstanding.
+See [LICENSE.todo.md](LICENSE.todo.md).
