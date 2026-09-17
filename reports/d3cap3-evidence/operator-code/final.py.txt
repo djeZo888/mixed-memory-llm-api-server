@@ -1,0 +1,45 @@
+"""Bounded failure boundary/reconciliation and release; no retry or requests."""
+before=json.loads(protected(REPORT/'admission.json').read_bytes());private=json.loads(protected(REPORT/'private-baseline.json').read_bytes());first=json.loads(protected(REPORT/'first-transition-failure.json').read_bytes())
+cid=before['containers']['native1m']['Id'];guard_before=guard();quiet();control=control_state()
+c=inspect_container(cid);assert c['Id']==cid and c['Image']==IMAGE
+assert not c['State']['Running'] and c['State']['Pid']==0,'exact_target_not_stopped_release_not_allowed'
+sys.path.insert(0,str(SRC/'scripts'))
+from common.lifecycle_lease import acquire_lease
+with acquire_lease(blocking=False) as lease:
+ m=manager();state=m.read_state();assert state['selected']==TARGET and state['container']['id']==cid and state['boot_policy']=='manual'
+ m.validate_reused_contract(m.trusted_container(state['container']),m.deployment(TARGET))
+ prior_state=state
+ if state['observed']!='stopped' or state['failure'] is not None:
+  # Exact already-exited object only: reconcile durable state without a signal.
+  assert not m.trusted_container(state['container'])['State']['Running']
+  state=m.dispatch('stop',lease=lease)
+ assert state['desired']=='stopped' and state['observed']=='stopped' and state['container_running'] is False and state['failure'] is None
+ for rel,digest in before['source_sha256'].items():
+  p=protected(SRC/rel);assert hashlib.sha256(p.read_bytes()).hexdigest()==digest and stat.S_IMODE(p.stat().st_mode)==int(INVENTORY['files'][rel]['mode'],8),'installed_source_changed'
+containers={}
+for role,ident in (('native1m',cid),('n76_32k',OLD),('d1',D1)):
+ v=inspect_container(ident);assert v['Id']==ident and not v['State']['Running'] and v['State']['Pid']==0 and v['RestartPolicy']['Name']=='no';containers[role]=v
+assert key_state()==private['key'] and stable_files()==private['files'];control_state();quiet()
+log=Path(c['LogPath']);assert str(log).startswith('/data/docker/containers/'+cid+'/') and log.stat().st_size<1048576
+raw=log.read_bytes();native=state_new();selected=[];first_error=None;current_rows=0
+for line in raw.splitlines():
+ row=json.loads(line)
+ if row['time']<c['State']['StartedAt']:continue
+ current_rows+=1;msg=row['log'];parse_log_line(msg,native)
+ if re.search(r'D3T_NATIVE_V1|(?:KV|[ck]ache|compute).*buffer size|K \(f16\)|V \(f16\)|type_[kv]|offloaded \d+/\d+|n_ctx\s*=|n_seq_max\s*=|n_threads\s*=|n_cpu_moe|signal|exiting|initializing, n_slots',msg,re.I):selected.append({'utc':row['time'],'message':msg.strip()})
+ if first_error is None and any(re.search(p,msg,re.I) for p in ERROR_PATTERNS.values()):first_error={'utc':row['time'],'message':msg.strip()[:1000]}
+kernel=run(['dmesg','--level','err,crit,alert,emerg','--since',c['State']['StartedAt'][:19].replace('T',' ')],5);kernel_counts={k:len(re.findall(p,kernel,re.I)) for k,p in ERROR_PATTERNS.items()}
+host=_metrics('/proc/meminfo',{'MemTotal','MemAvailable','SwapTotal','SwapFree'});vmstat=_metrics('/proc/vmstat',{'pswpin','pswpout','oom_kill'})
+gpus=run(['nvidia-smi','--query-gpu=index,memory.total,memory.free','--format=csv,noheader,nounits'],5).splitlines()
+owned_absent={str(pid):not Path('/proc/'+str(pid)).exists() for pid in (286271,288305,270294,273833,243279)};assert all(owned_absent.values()),'owned_or_prior_process_present'
+fixture=[];samplers=[]
+for p in Path('/proc').iterdir():
+ if not p.name.isdigit() or int(p.name)==os.getpid():continue
+ try:cmd=(p/'cmdline').read_bytes()
+ except (FileNotFoundError,PermissionError,ProcessLookupError):continue
+ if b'cache_probe.py' in cmd or b'run_pinned_image.py' in cmd:fixture.append(int(p.name))
+ if b'exec(json.loads(sys.stdin.readline()))' in cmd or b'llama-server' in cmd:samplers.append(int(p.name))
+assert not samplers,'backend_or_prior_sampler_present'
+result={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'status':'FAIL_NEW_HOST_SWAP_DURING_LOADING','allocation_attempts':1,'generation_attempts':0,'first_failure':first,'guards_before':guard_before,'containers':containers,'state_before_final_reconciliation':prior_state,'state':state,'control':control,'all_77_source_hashes_modes_unchanged':True,'key_exact_bytes_metadata_unchanged':True,'instance_registry_network_control_manifest_unchanged':True,'native_numeric':{k:v for k,v in native.items() if k!='log_hash'},'current_lifetime_log_rows':current_rows,'selected_backend_logs':selected,'first_native_error':first_error,'kernel_error_counts':kernel_counts,'log_bytes_all_lifetimes':len(raw),'log_sha256_all_lifetimes':hashlib.sha256(raw).hexdigest(),'host_kib':host,'vmstat':vmstat,'vmstat_delta_from_cap3_admission':{k:vmstat[k]-before['idle_full']['vmstat'][k] for k in vmstat},'gpu_memory_mib':gpus,'owned_pids_absent':owned_absent,'q38_fixture_pids':fixture,'native_connections':quiet(),'canonical_lifecycle_lease_free_verified':True,'request_sampler_tunnel_processes':0,'pss':'NOT_MEASURED_NO_ACCEPTED_IDLE_READINESS','capacity_acceptance':'FAIL','actual_effective_f16_acceptance':'NOT_ESTABLISHED_NO_ACCEPTED_FRESH_ALLOCATION_AND_NO_PID_LAUNCH_CHECK_AT_READY','f16_source_default_and_stopped_contract':'VERIFIED_NO_CACHE_TYPE_OVERRIDE','occupied_near_1m':'NOT_TESTED','smoke':'NOT_RUN','rollback':'NOT_INVOKED','cause_of_host_swap_activity':'UNKNOWN_NO_MODEL_OOM_CLAIM','owner_pid':os.getpid()}
+write('final-result.json',result);g=guard();write('final-after-report-guards.json',g)
+emit('final_failure_reconciled',utc_result=result['utc'],status=result['status'],state=state,exit_code=c['State']['ExitCode'],oom_killed=c['State']['OOMKilled'],vmstat=vmstat,vmstat_delta=result['vmstat_delta_from_cap3_admission'],native=native.get('native'),slot_context=native.get('slot_context'),owned_pids_absent=owned_absent,root_available_bytes=g[-1]['capacity']['root_available_bytes'],request_count=0,all_backends_stopped=True,canonical_lifecycle_lease_released=True)
