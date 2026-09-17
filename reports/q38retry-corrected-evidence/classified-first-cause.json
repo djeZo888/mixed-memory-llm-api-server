@@ -1,0 +1,47 @@
+{
+  "code": "actual_image_fixture_failed",
+  "context": 131072,
+  "exit_code": 2,
+  "origin": {
+    "exception_class": "FixtureFailure",
+    "filename": "run_pinned_image.py",
+    "line": 962
+  },
+  "phase": "FIRST_NATIVE_FAILURE",
+  "private_stderr_classification": {
+    "component": "rayon-core",
+    "errno": 11,
+    "error": "ThreadPoolBuildError",
+    "exception_class_from_closed_child": "OTHER",
+    "global_thread_pool_not_initialized": true,
+    "io_kind": "WouldBlock",
+    "message_class": "Resource temporarily unavailable",
+    "native_error_kind": "IOError",
+    "openblas_threads": 1,
+    "pid_limit": 128,
+    "python_exception_class": "NOT_EXPOSED_CLOSED_METADATA_OTHER",
+    "rayon_default_thread_count": "NOT_CAPTURED",
+    "rust_panic_report_present": true,
+    "source": "src/registry.rs:171:10",
+    "thread_count_and_pid_limit_occupancy": "NOT_CAPTURED",
+    "version": "1.13.0"
+  },
+  "status": "SAFE_ORIGIN",
+  "warmup_child_failure": {
+    "child_failure": {
+      "code": "actual_image_fixture_failed",
+      "origin": {
+        "exception_class": "OTHER",
+        "filename": "run_pinned_image.py",
+        "line": 596
+      },
+      "status": "SAFE_ORIGIN"
+    },
+    "marker_count": 0,
+    "marker_exact": false,
+    "returncode": 2,
+    "scenario": "warmup-auth-failure",
+    "stderr_bytes": 386,
+    "stdout_bytes": 154
+  }
+}
