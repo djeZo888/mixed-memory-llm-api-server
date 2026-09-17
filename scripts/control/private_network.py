@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import stat
 import subprocess
@@ -221,8 +222,10 @@ def _installation():
                 _require(not path.exists() and not path.is_symlink(), 'unit drop-in or dependency directory present')
         blobs[name] = raw
     _require(Path(PROXYD).is_file() and os.access(PROXYD, os.X_OK), 'proxyd unavailable')
-    _require(_run(['/usr/bin/dpkg-query', '--show', '--showformat=${Version}', 'systemd'])
-             == '255.4-1ubuntu8.16', 'systemd package differs from approved version')
+    # Allow only canonical Ubuntu 8 security-update patches: 16-19, 20-99, 100+.
+    _require(re.fullmatch(r'255\.4-1ubuntu8\.(?:1[6-9]|[2-9][0-9]|[1-9][0-9]{2,})',
+                         _run(['/usr/bin/dpkg-query', '--show', '--showformat=${Version}', 'systemd']))
+             is not None, 'systemd package outside approved security-update family')
     return {key: hashlib.sha256(raw).hexdigest() for key, raw in blobs.items()}
 
 

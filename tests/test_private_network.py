@@ -294,9 +294,15 @@ class InstallationDriftTests(unittest.TestCase):
         return self.package
 
     def test_matching_installation_returns_all_source_hashes(self):
-        signature = network._installation()
-        self.assertEqual(set(signature), {'helper', 'policy', *self.units})
-        self.assertTrue(all(len(value) == 64 for value in signature.values()))
+        # Old/current packages and synthetic future family patches, not live proof.
+        for package in ('255.4-1ubuntu8.16', '255.4-1ubuntu8.17', '255.4-1ubuntu8.18',
+                        '255.4-1ubuntu8.19', '255.4-1ubuntu8.20', '255.4-1ubuntu8.99',
+                        '255.4-1ubuntu8.100'):
+            with self.subTest(package=package):
+                self.package = package
+                signature = network._installation()
+                self.assertEqual(set(signature), {'helper', 'policy', *self.units})
+                self.assertTrue(all(len(value) == 64 for value in signature.values()))
 
     def test_modified_unit_bytes_refused(self):
         for name in self.units:
@@ -324,9 +330,28 @@ class InstallationDriftTests(unittest.TestCase):
                     network._installation()
 
     def test_unreviewed_systemd_package_refused(self):
-        self.package = '255.4-1ubuntu8.17'
-        with self.assertRaisesRegex(network.PrivateNetworkError, 'approved version'):
-            network._installation()
+        packages = (
+            '255.4-1ubuntu8.0', '255.4-1ubuntu8.9', '255.4-1ubuntu8.15',
+            '254.4-1ubuntu8.17', '255.5-1ubuntu8.17', '256.4-1ubuntu8.17',
+            '255.4-1debian8.17', '255.4-1ubuntu7.17', '255.4-1ubuntu9.17',
+            '255.4-2ubuntu8.17', '255.4-1ubuntu8', '255.4-1ubuntu8.',
+            '255.4-1ubuntu8.016', '255.4-1ubuntu8.017', '255.4-1ubuntu8.0100',
+            '255.4-1ubuntu8.+17', '255.4-1ubuntu8.-17', '255.4-1ubuntu8.1e2',
+            '255.4-1ubuntu8.\u0661\u0667', '255.4-1ubuntu8.1\u0667',
+            '255.4-1ubuntu8.100\u0660', '255x4-1ubuntu8.17', '255.4-1ubuntu8x17',
+            '255.4-1ubuntu8.17.1', '255.4-1ubuntu8.17~test',
+            '255.4-1ubuntu8.17+esm1', '255.4-1ubuntu8.17ubuntu1',
+            '1:255.4-1ubuntu8.17', 'systemd 255.4-1ubuntu8.17',
+            ' 255.4-1ubuntu8.17', '255.4-1ubuntu8.17 ', '255.4-1ubuntu8. 17',
+            '\t255.4-1ubuntu8.17', '255.4-1ubuntu8.17\n',
+            '255.4-1ubuntu8.17\r\n', '255.4-1ubuntu8.17\x00', '',
+        )
+        for package in packages:
+            with self.subTest(package=package):
+                self.package = package
+                with self.assertRaisesRegex(network.PrivateNetworkError,
+                                            'approved security-update family'):
+                    network._installation()
 
 
 class SourceUnitsTests(unittest.TestCase):
