@@ -1,0 +1,61 @@
+{
+  "commit": "aafbfdd5a3d318105506e5f0517866aac20d7755",
+  "tree": "02a1f58ee5464484c91d1882fd04325181640c51",
+  "attempt": 2,
+  "files": {
+    "tests/lifecycle/sglang38_fixture/auth_native.py": {
+      "sha256": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+      "bytes": 7289,
+      "git_blob": "e7ef0767f12279da0411fc51ba9530d80d11c07c",
+      "mode": "0444"
+    },
+    "tests/lifecycle/sglang38_fixture/cache_probe.py": {
+      "sha256": "be1411601ae6609d6889be8e174e565ba8a41f97b496bc33c13404619369a65b",
+      "bytes": 24971,
+      "git_blob": "6c009c3dc1bb182474d6cef0c1f335774583de83",
+      "mode": "0444"
+    },
+    "tests/lifecycle/sglang38_fixture/chat_template.jinja": {
+      "sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+      "bytes": 8952,
+      "git_blob": "c0c686f9c38d70d179fb7b5f5aa7530bc913dda3",
+      "mode": "0444"
+    },
+    "tests/lifecycle/sglang38_fixture/qwen38_config.json": {
+      "sha256": "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc",
+      "bytes": 51350,
+      "git_blob": "e66d0dcb2d8066e724407f0ded85b6c3c5cb213a",
+      "mode": "0444"
+    },
+    "tests/lifecycle/sglang38_fixture/run_fixture.py": {
+      "sha256": "78a0842a25affbcc56f5e7f64df1dd2bae7c2d2d58dbe2aa239d44a6a4b91a38",
+      "bytes": 44985,
+      "git_blob": "c4bea6f2b7e741c07b452d6bd1fcc7a16fc973d4",
+      "mode": "0444"
+    },
+    "tests/lifecycle/sglang38_fixture/run_pinned_image.py": {
+      "sha256": "8b109e02bca5d9b4233a21677aff582b8334df52c77b468cb5869f2aa9a36fcd",
+      "bytes": 57253,
+      "git_blob": "94fce39a36cf130400b4dc719aae8a349afd224e",
+      "mode": "0444"
+    },
+    "scripts/runtime/qwen38_oci.py": {
+      "sha256": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+      "bytes": 7121,
+      "git_blob": "0d576756001b85bb674d25966713b483adea7c06",
+      "mode": "0444"
+    },
+    "scripts/runtime/sglang38_file_auth.py": {
+      "sha256": "31889213cf96e3a059d52f07bc6581b9d3b7e1e070a8fa54c494028efb54128b",
+      "bytes": 22909,
+      "git_blob": "0d54a134f4aa7ba2ce45e76a3a68752fe9cf45c8",
+      "mode": "0444"
+    },
+    "tests/lifecycle/sglang38_fixture/provenance.json": {
+      "sha256": "ea0fb2090f659657b34c4731e3a61046d1216dfa9e13f10f19af1aadda6958d9",
+      "bytes": 18046,
+      "git_blob": "0b4dcc39bb2cec645ce71f1580fa26ba731234ff",
+      "mode": "0444"
+    }
+  }
+}

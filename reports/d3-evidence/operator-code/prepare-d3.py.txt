@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""D3 bounded sealing and protected release preparation. Default is dry run."""
+import argparse, datetime, fcntl, hashlib, json, os, pathlib, secrets, shutil, stat, subprocess, tarfile
+P=pathlib.Path
+RUN=P('/data/build/d3-glm53-20260915')
+REL=P('/data/services/releases/75a6bf915f30a1582348071eb733d05c33e10eb7-d3-20260915')
+MODEL=P('/data/models-large/glm-5.3-ud-q4-k-xl')
+MAN=P('/data/services/llm-manager')
+OLD=P('/data/services/releases/e46c788534d5b71e988c2cdf188f37f6214f7514-f1d-20260915')
+STATUS=P('/data/build/d1-glm53-20260915/evidence/acquisition-status.json')
+def cmd(a): return subprocess.check_output(a,text=True).strip()
+def digest(p): return hashlib.sha256(p.read_bytes()).hexdigest()
+def meta(p):
+ s=p.lstat(); return dict(device=s.st_dev,inode=s.st_ino,size=s.st_size,mtime_ns=s.st_mtime_ns,ctime_ns=s.st_ctime_ns,uid=s.st_uid,gid=s.st_gid,mode=stat.S_IMODE(s.st_mode),nlink=s.st_nlink)
+def guard():
+ for t,u in [('/data','8daf56f1-5649-4163-9d87-919c2d271875'),('/data/models-large','a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a')]:
+  m=json.loads(cmd(['findmnt','-J','-o','TARGET,UUID,FSTYPE','--target',t]))['filesystems'][0]
+  assert m==dict(target=t,uuid=u,fstype='ext4'),m
+ assert os.statvfs('/').f_bavail*os.statvfs('/').f_frsize>=4*1024**3
+ subprocess.run([str(OLD/'scripts/common/require-data-mounted.sh')],check=True,stdout=subprocess.DEVNULL)
+ subprocess.run([str(OLD/'scripts/common/root-disk-guard.sh'),'--report','/data/logs/d3-prepare-root-guard.md'],env={**os.environ,'TMPDIR':str(RUN/'tmp')},check=True,stdout=subprocess.DEVNULL)
+def protected(p):
+ for x in [p,*p.parents]:
+  s=x.lstat(); assert not stat.S_ISLNK(s.st_mode) and s.st_uid==0 and not s.st_mode&0o022,(str(x),meta(x))
+def write(p,obj):
+ with p.open('x') as f: json.dump(obj,f,indent=2); f.write('\n')
+ os.chmod(p,0o600)
+def main():
+ a=argparse.ArgumentParser(description=__doc__); a.add_argument('--apply',action='store_true'); a.add_argument('--dry-run',action='store_true'); args=a.parse_args(); assert not(args.apply and args.dry_run)
+ assert os.geteuid()==0
+ guard()
+ assert cmd(['systemctl','show','d1-glm53-acquire-20260915-d1b-p4.service','-p','ActiveState','--value'])=='inactive'
+ assert not cmd(['docker','ps','-q'])
+ assert cmd(['systemctl','show','m6b-post-reboot-verify.service','-p','UnitFileState','--value'])=='disabled'
+ lock=os.open(MODEL/'.d1-acquisition.lock',os.O_RDWR|os.O_NOFOLLOW)
+ fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+ status=json.loads(STATUS.read_text()); proof=json.loads((RUN/'inputs/glm-completion-proof.json').read_text())
+ assert digest(STATUS)==digest(RUN/'inputs/glm-completion-status.json')==proof['status_source_sha256']
+ with tarfile.open(RUN/'inputs/reviewed-source.tar') as tar:
+  for m in tar.getmembers(): assert not m.issym() and not m.islnk() and not P(m.name).is_absolute() and '..' not in P(m.name).parts
+  r2raw=tar.extractfile('reports/r2-flagship-artifact.json').read(); r2=json.loads(r2raw)
+  assert hashlib.sha256(r2raw).hexdigest()==status['manifest_sha256']=='8e7cb419a9dea83f1978f936455cedace1b964cbbb3580f7be191998f6a999d3'
+  model=json.load(tar.extractfile('configs/models/glm-5.3-ud-q4-k-xl.json'))
+  assert model['artifacts']==r2['artifacts'] and model['repo_id']==status['repo_id']==r2['repo_id'] and model['revision']==status['revision']==r2['revision']
+  assert status['status']=='PASS_ALL_11_COMPUTED_SHA256' and status['verified_shards']==11 and status['verified_bytes']==model['total_bytes']==467289116837
+  assert set(status['files'])=={a['path'] for a in model['artifacts']}
+  assert {str(p.relative_to(MODEL)) for p in MODEL.rglob('*')}=={a['path'] for a in model['artifacts']}|{'UD-Q4_K_XL','.d1-acquisition.lock'}
+  before={}; rows=[]; identities=set()
+  for a in model['artifacts']:
+   p=MODEL/a['path']; s=p.lstat(); q=next(r['filesystem_identity'] for r in proof['alignment'] if r['path']==a['path'])
+   assert p.resolve()==p and stat.S_ISREG(s.st_mode) and s.st_nlink==1 and s.st_size==a['size_bytes']
+   assert (s.st_dev,s.st_ino,s.st_mtime_ns,s.st_ctime_ns)==(q['device'],q['inode'],q['mtime_ns'],q['ctime_ns'])
+   v=status['files'][a['path']]; assert v['status']=='VERIFIED' and v['sha256_verified'] is True and v['computed_sha256']==a['sha256'] and v['bytes_present']==a['size_bytes']
+   assert (s.st_dev,s.st_ino) not in identities; identities.add((s.st_dev,s.st_ino)); before[a['path']]=meta(p); rows.append({**a,'verified':True})
+  assert not REL.exists() and not (MAN/'deployment-instance.json').exists() and not (P('/data/services/secrets')/'llm-api-key').exists()
+  out={'result':'PASS_DRY_RUN','hash_scope':'validated acquisition-computed SHA256; no independent payload reread','status_sha256':digest(STATUS),'archive_sha256':digest(RUN/'inputs/reviewed-source.tar'),'before':before,'source_commit':'75a6bf915f30a1582348071eb733d05c33e10eb7'}
+  if not args.apply: write(RUN/'evidence/prepare-dry-run.json',out); print(json.dumps({'result':out['result'],'shards':11,'total_bytes':model['total_bytes']})); return
+  assert (RUN/'evidence/prepare-dry-run.json').exists()
+  write(RUN/'backups/glm-metadata-before.json',before)
+  shutil.copy2(MAN/'active/active.json',RUN/'backups/legacy-active.json')
+  write(RUN/'backups/control-metadata-before.json',{str(p):meta(p) for p in [MAN/'active',MAN/'active/active.json',P('/data/services/secrets')]})
+  REL.mkdir(mode=0o700); tar.extractall(REL)
+  for p in sorted(REL.rglob('*')):
+   os.chown(p,0,0); os.chmod(p,0o700 if p.is_dir() or p.stat().st_mode&0o111 else 0o600)
+  os.chown(REL,0,0); os.chmod(REL,0o700)
+  for m in tar.getmembers():
+   if m.isfile(): assert (REL/m.name).read_bytes()==tar.extractfile(m).read()
+  for p in [MODEL,MODEL/'UD-Q4_K_XL']:
+   os.chown(p,0,0); os.chmod(p,0o555)
+  for a in rows:
+   p=MODEL/a['path']; os.chown(p,0,0); os.chmod(p,0o444); protected(p)
+   aft=meta(p); bef=before[a['path']]; assert all(aft[k]==bef[k] for k in ['device','inode','size','mtime_ns','nlink']); a['sealed_stat']=aft
+  os.fchown(lock,0,0); os.fchmod(lock,0o600)
+  for p in [MAN/'active',P('/data/services/secrets'),P('/run/llmctl')]:
+   p.mkdir(exist_ok=True); os.chown(p,0,0); os.chmod(p,0o700); protected(p)
+  os.chown(MAN/'active/active.json',0,0); os.chmod(MAN/'active/active.json',0o600)
+  key=P('/data/services/secrets/llm-api-key'); fd=os.open(key,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+  with os.fdopen(fd,'wb') as f: f.write(secrets.token_hex(32).encode()); f.flush(); os.fsync(f.fileno())
+  protected(key)
+  receipt=MAN/'acquisition/glm-5.3-ud-q4-k-xl.complete.json'
+  write(receipt,dict(schema_version=1,complete=True,repo_id=model['repo_id'],revision=model['revision'],model_root=str(MODEL),manifest_sha256=status['manifest_sha256'],artifact_count=11,total_bytes=model['total_bytes'],artifacts=rows,acquisition_status_sha256=digest(STATUS),hash_scope=out['hash_scope']))
+  shutil.copy2(STATUS,MAN/'acquisition/glm-5.3-downloader-status.json'); os.chmod(MAN/'acquisition/glm-5.3-downloader-status.json',0o600)
+  instance=json.loads((REL/'configs/deployments/instances/ai-vm-d0b.json').read_text())
+  instance['model_integrity'][model['id']].update(verified=True,evidence=[str(receipt),str(MAN/'acquisition/glm-5.3-downloader-status.json')],completion_manifest=str(receipt))
+  instance['obsolete_boot_owner_disabled']=True
+  instance['obsolete_boot_owner_evidence']=['/data/build/f1d-qwen-20260915/evidence/m6b-unit-after.txt','D3 independently verified disabled; active(exited) historical oneshot; no daemon changes; new boot owner not installed']
+  write(MAN/'deployment-instance.json',instance)
+  for path in ['/data/models-large/runtime-cache/llama-cpp','/data/logs/llmctl/glm-5.3','/data/services/llm-manager/glm-5.3']:
+   p=P(path); p.mkdir(parents=True,exist_ok=True); os.chown(p,0,0); os.chmod(p,0o700)
+  protected(REL/'scripts/lifecycle/manager.py'); protected(MAN/'deployment-instance.json'); protected(receipt)
+  out.update(result='PASS_SEALED_PREPARED',receipt=str(receipt),receipt_sha256=digest(receipt),instance_sha256=digest(MAN/'deployment-instance.json'),after={a['path']:a['sealed_stat'] for a in rows},key_metadata=meta(key),release=str(REL),legacy_backup_sha256=digest(RUN/'backups/legacy-active.json'))
+  write(RUN/'evidence/prepare-result.json',out)
+ guard(); print(json.dumps({k:out[k] for k in ['result','receipt','receipt_sha256','release']}))
+if __name__=='__main__': main()

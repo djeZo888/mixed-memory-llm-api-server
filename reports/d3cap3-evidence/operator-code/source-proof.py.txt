@@ -1,0 +1,18 @@
+"""Read only pinned cache construction and log policy; no diagnostic changes."""
+guards=guard();root=Path('/data/build/d3p-d3b2-20260915/source');assert root.resolve()==root
+derived='0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e'
+spans={'common/common.h':[(532,535),(583,589)],'common/arg.cpp':[(2433,2458)],'common/common.cpp':[(390,397),(1747,1755)],'common/log.cpp':[(529,546)],'common/log.h':[(20,27)],'src/llama-context.cpp':[(378,400),(680,698),(3695,3706)],'src/llama-model.cpp':[(2294,2349)],'src/llama-kv-cache-dsa.cpp':[(14,54),(98,104)],'src/llama-kv-cache.cpp':[(157,165),(229,238),(271,306),(685,702)]}
+patch=protected(SRC/'containers/llama-cpp/strict-model-chat.patch').read_bytes()
+assert hashlib.sha256(patch).hexdigest()=='43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b'
+files={}
+for rel,ranges in spans.items():
+ p=root/rel;assert p.resolve()==p;raw=p.read_bytes()
+ expected=subprocess.check_output(['git','--no-optional-locks','-C',str(root),'show','b29c606e28a01b1bc8c1351026a0fa6e616bf6c4:'+rel],stderr=subprocess.DEVNULL,timeout=5)
+ assert raw==expected,'upstream_source_file_mismatch:'+rel
+ lines=raw.decode().splitlines()
+ files[rel]={'sha256':hashlib.sha256(raw).hexdigest(),'upstream_blob_match':True,'snippets':[{'first_line':a,'last_line':b,'text':'\n'.join(lines[a-1:b])} for a,b in ranges]}
+image=json.loads(run(['docker','image','inspect','--format','{"Id":{{json .Id}},"Labels":{{json .Config.Labels}}}',IMAGE]))
+assert image['Id']==IMAGE and image['Labels']['local.d3p.source.derived-tree']==derived
+assert image['Labels']['local.d3p.source.upstream-commit']=='b29c606e28a01b1bc8c1351026a0fa6e616bf6c4'
+result={'source_root':str(root),'source_root_is_clean_upstream':True,'patch_sha256':hashlib.sha256(patch).hexdigest(),'patch_scope':'Only adds context allocation diagnostics and server model validation; cache construction/defaults unchanged','derived_tree':derived,'source_files':files,'image_binding':image,'expected_cache_bytes':{'CUDA0':51539607552,'CUDA1':48318382080},'proof_method':'F16 defaults plus exact launch without dtype override plus fresh real allocation; no independent V cache; direct dtype INFO summary suppressed by default log policy','guards':guards}
+write('f16-source-proof.json',result);write('f16-source-proof-final-guards.json',guard());emit('f16_source_verified',files={k:v['sha256'] for k,v in files.items()},image=IMAGE,derived_tree=derived,proof_method=result['proof_method'])

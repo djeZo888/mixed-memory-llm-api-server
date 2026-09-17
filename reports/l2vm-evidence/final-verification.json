@@ -1,0 +1,109 @@
+{
+  "active_and_recovery_sha256": "c63de9b1a77aa4d62496880c7dad8cb6a22a10de9736c5305545e3579d576f1f",
+  "closure": {
+    "directories": 17,
+    "directory_metadata": "root:root0755 root filesystem",
+    "exact_directory_membership": true,
+    "files": 46,
+    "manifest_sha256": "bb0176749bd35deace1643d1a70c42be92a9f0b7bc629d41663c594678365f55",
+    "source_commit": "5e713441d9ea164b81860ee795c5ef35972ee8e3"
+  },
+  "container_all_allowlisted_fields_unchanged": true,
+  "control": "STOPPED_DISABLED",
+  "control_key_action": "created once root0600; metadata-only evidence",
+  "final_glm_inputs": "PENDING_OWNER_MEASURED_INPUTS",
+  "final_instance_sha256": "55a1516385441e58c47e410a387afd71cfc20e58cb251ca9f495d9606e79a3ab",
+  "four_roots": {
+    "/data/backups": {
+      "additional_direct_children_by_other_owners": [],
+      "after": {
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 14417921,
+        "mode": "2755",
+        "uid": 0
+      },
+      "all_original_direct_children_identity_owner_mode_preserved": true,
+      "before": {
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 14417921,
+        "mode": "2775",
+        "uid": 1000
+      }
+    },
+    "/data/build": {
+      "additional_direct_children_by_other_owners": [],
+      "after": {
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 21757953,
+        "mode": "2755",
+        "uid": 0
+      },
+      "all_original_direct_children_identity_owner_mode_preserved": true,
+      "before": {
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 21757953,
+        "mode": "2775",
+        "uid": 1000
+      }
+    },
+    "/data/hf-cache": {
+      "additional_direct_children_by_other_owners": [],
+      "after": {
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 16777217,
+        "mode": "2755",
+        "uid": 0
+      },
+      "all_original_direct_children_identity_owner_mode_preserved": true,
+      "before": {
+        "dev": 2065,
+        "gid": 1001,
+        "ino": 16777217,
+        "mode": "2775",
+        "uid": 1000
+      }
+    },
+    "/data/logs": {
+      "additional_direct_children_by_other_owners": [],
+      "after": {
+        "dev": 2065,
+        "gid": 1000,
+        "ino": 47972353,
+        "mode": "2755",
+        "uid": 0
+      },
+      "all_original_direct_children_identity_owner_mode_preserved": true,
+      "before": {
+        "dev": 2065,
+        "gid": 1000,
+        "ino": 47972353,
+        "mode": "2755",
+        "uid": 1000
+      }
+    }
+  },
+  "listeners": "LISTEN 0      4096               127.0.0.1:30002 0.0.0.0:*\nLISTEN 0      4096   10.156.100.60%enp6s18:30002 0.0.0.0:*",
+  "mounts_comparison": "order-independent exact full tuples",
+  "native_key_and_lifecycle_lock_metadata_unchanged": true,
+  "native_key_bytes_private_comparison": "PASS in initial apply and Q38 publication",
+  "q38_receipt_sha256": "2020e3d4b19a3d4a7221dfbf37a4f558ed98dcbd73e302b716ab95fb04e17dce",
+  "q38_runtime_auth_receipt": "NOT_PUBLISHED",
+  "registration_ready_handoff": "DELIVERED before bookkeeping; coordinator acknowledged",
+  "root_available_bytes": 5209284608,
+  "status": "PASS_BOUNDED_STAGE_AND_ACQUISITION_RECEIPT",
+  "systemd_verify": "exit=0\n",
+  "unchanged_files_with_exact_sha_stat": [
+    "/data/services/llm-manager/active/active.json",
+    "/run/llmctl/recovery.json",
+    "/data/services/llm-manager/acquisition/glm-5.3-ud-q4-k-xl.complete.json",
+    "/etc/fstab",
+    "/etc/llm-server/network.json",
+    "/usr/local/lib/llm-server/private-network/private_network.py",
+    "/etc/systemd/system/m6b-post-reboot-verify.service"
+  ]
+}

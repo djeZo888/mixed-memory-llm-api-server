@@ -1,0 +1,31 @@
+import os,json,subprocess,datetime,hashlib,shlex
+from pathlib import Path
+BASE=Path('/data/services/n1vm-20260915');os.umask(0o077);os.environ['TMPDIR']=str(BASE/'tmp')
+assert os.statvfs('/').f_bavail*os.statvfs('/').f_frsize>=4*1024**3
+helper=['/usr/bin/python3','-I','-B','/usr/local/lib/llm-server/private-network/private_network.py']
+def run(cmd):
+ r=subprocess.run(cmd,capture_output=True,text=True,timeout=60)
+ print(json.dumps({'command':cmd,'rc':r.returncode,'stdout':r.stdout,'stderr':r.stderr}),flush=True)
+ assert r.returncode==0,'STOP command failed'
+ return r.stdout
+run(['systemctl','daemon-reload'])
+run(helper+['preflight'])
+run(helper+['apply','--dry-run'])
+# All transport units must still be inactive; no socket is allowed to bind before ingress.
+for role in ('control','glm','qwen38'):
+ for suffix in ('socket','service'):
+  info=run(['systemctl','show','llm-private-'+role+'.'+suffix,'--property=ActiveState,UnitFileState'])
+  assert 'ActiveState=inactive\n' in info
+  assert ('UnitFileState=disabled\n' if suffix=='socket' else 'UnitFileState=static\n') in info
+run(helper+['apply'])
+run(helper+['check'])
+raw=subprocess.check_output(['/usr/sbin/iptables','-w','5','-t','filter','-S'],text=True)
+rows=raw.splitlines()
+foreign='\n'.join(row for row in rows if 'llm-private-n1s-v1' not in row and row!='-N LLM-PRIVATE-IN')+'\n'
+assert foreign==(BASE/'filter-before.txt').read_text(),'STOP unrelated filter drift'
+receipt=json.loads(Path('/etc/llm-server/private-network-state.json').read_text())
+assert receipt['before_filter']==(BASE/'filter-before.txt').read_text(),'STOP receipt baseline mismatch'
+owned=[row for row in rows if 'llm-private-n1s-v1' in row or row=='-N LLM-PRIVATE-IN']
+fd=os.open(BASE/'ingress-after.json',os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+with os.fdopen(fd,'w') as f: json.dump({'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'owned_rules':owned,'unrelated_filter_unchanged':True,'receipt_original_filter_matches':True,'receipt_sha256':hashlib.sha256(Path('/etc/llm-server/private-network-state.json').read_bytes()).hexdigest()},f,indent=2)
+print(json.dumps({'effective_ingress':'PASS','owned_rules':owned,'unrelated_filter_unchanged':True}),flush=True)

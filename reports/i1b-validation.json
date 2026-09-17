@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "evidence_class": "MACOS_SOURCE_FILESYSTEM_PROCESS_HTTP_FIXTURES",
+  "checked_at_utc": "2026-09-15T00:26:33.214317+00:00",
+  "platform": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "python": "3.14.7"
+  },
+  "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/install -p 'test_*.py' -v",
+  "tests_run": 197,
+  "passed": 193,
+  "skipped": [
+    {
+      "test": "test_real_child_guard_loss_stops_future_writes (test_runtime.MonitoredProcessTest.test_real_child_guard_loss_stops_future_writes)",
+      "reason": "Linux /proc FD subprocess integration only"
+    },
+    {
+      "test": "test_real_child_timeout_kills_descendant_and_keeps_anchored_log (test_runtime.MonitoredProcessTest.test_real_child_timeout_kills_descendant_and_keeps_anchored_log)",
+      "reason": "Linux /proc FD subprocess integration only"
+    },
+    {
+      "test": "test_successful_parent_cannot_leave_background_writer (test_runtime.MonitoredProcessTest.test_successful_parent_cannot_leave_background_writer)",
+      "reason": "Linux /proc FD subprocess integration only"
+    },
+    {
+      "test": "test_actual_linux_lazy_unmount_during_write (test_storage_io.StorageIOTests.test_actual_linux_lazy_unmount_during_write)",
+      "reason": "actual mount-loss NOT_TESTED: needs Linux and unshare/CAP_SYS_ADMIN"
+    }
+  ],
+  "failures": 0,
+  "errors": 0,
+  "successful": true,
+  "source_identity": "5be4a052a778581b6eeace07ab57ec1fa3ab61d6c3cf209bb8ec05b4f768a172",
+  "lock_sha256": "cabb01a6a892d35d9ee8e095818059313dafc508884bafe86aced41acec2416d",
+  "base_commit": "722050fdcb6de4a9f56a5488b705998a1d82ce85",
+  "actual_linux_packages_systemd": "NOT_TESTED",
+  "actual_gpu": "NOT_TESTED",
+  "full_fresh_gpu_install_reboot": "NOT_TESTED",
+  "whole_installer_ready": false
+}

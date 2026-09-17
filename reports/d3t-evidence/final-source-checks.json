@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "staged_files": 19,
+  "grep_secret_matches": 0,
+  "credential_free_remotes": true,
+  "manager_changed_functions": [
+    [
+      "Manager",
+      "validate_deployment"
+    ],
+    [
+      "Manager",
+      "launch_command"
+    ]
+  ],
+  "imports_unchanged": true,
+  "push_performed": false
+}

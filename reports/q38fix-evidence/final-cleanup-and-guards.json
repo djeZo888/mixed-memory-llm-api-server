@@ -1,0 +1,326 @@
+{
+  "apport_metadata": {
+    "/var/crash": {
+      "entries": {},
+      "identity": [
+        64512,
+        263740
+      ]
+    },
+    "/var/lib/apport/coredump": {
+      "entries": {},
+      "identity": [
+        64512,
+        263913
+      ]
+    }
+  },
+  "attempts": {
+    "1": {
+      "commit": "ea4a02e7135db05f192402a74669210ce07c01be",
+      "receipt_exists": false,
+      "source_sha256": {
+        "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+        "scripts/runtime/sglang38_file_auth.py": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+        "tests/lifecycle/sglang38_fixture/auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+        "tests/lifecycle/sglang38_fixture/cache_probe.py": "676ec23f86fa5f4c15ac4a77eaaa7fdb52845d9db223acd67a0b50a204262b6d",
+        "tests/lifecycle/sglang38_fixture/chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+        "tests/lifecycle/sglang38_fixture/provenance.json": "0084ec3c92c5eebefc9a068d3faf59afe8f4669a56d0293336b531c5416a07db",
+        "tests/lifecycle/sglang38_fixture/run_fixture.py": "954ba40800eed06e3d515d118f24a55ae5755ad8c9632326a8dc4cfd15b2c7ac",
+        "tests/lifecycle/sglang38_fixture/run_pinned_image.py": "b7ab0b200a73267d05e615afef0eaf0e3c277537e7002b1e9c12da853551e643"
+      }
+    },
+    "2": {
+      "commit": "a27948661c3f295dcb74a8ffbdf515c2d9990d22",
+      "receipt_exists": false,
+      "source_sha256": {
+        "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+        "scripts/runtime/sglang38_file_auth.py": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+        "tests/lifecycle/sglang38_fixture/auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+        "tests/lifecycle/sglang38_fixture/cache_probe.py": "d331a1230a495d78eec19fcc79de9a1652fe6143b85fec7f545bf66931851e38",
+        "tests/lifecycle/sglang38_fixture/chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+        "tests/lifecycle/sglang38_fixture/provenance.json": "5d48794316e7dd5aac247ff68b5e34dc83408848b5f4e6139714a8395ac5c1bd",
+        "tests/lifecycle/sglang38_fixture/run_fixture.py": "9e3d070521bf314405049dcf146b647e10796eb23d42388486a8e43a0fcbabdb",
+        "tests/lifecycle/sglang38_fixture/run_pinned_image.py": "a5c8061a9dd11bba06740600e0b029fdfcf4377113eddb15dad7d3605db2b63c"
+      }
+    },
+    "3": {
+      "commit": "a0d70509759927a1acde8f12d1149eeac4e4a034",
+      "receipt_exists": false,
+      "source_sha256": {
+        "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+        "scripts/runtime/sglang38_file_auth.py": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+        "tests/lifecycle/sglang38_fixture/auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+        "tests/lifecycle/sglang38_fixture/cache_probe.py": "11e09615725d9588fd082fbbf8f4776a77d5a20f6dde09022a14df3e828bff73",
+        "tests/lifecycle/sglang38_fixture/chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+        "tests/lifecycle/sglang38_fixture/provenance.json": "4f8ac18cab3ea1fb58ec625c7a0cb77f22105bac1761ce196a3eb05f91b3809e",
+        "tests/lifecycle/sglang38_fixture/run_fixture.py": "7d23dfc941edf127815bbd3d5699316910d989eb5a363cd734c64b838536f08b",
+        "tests/lifecycle/sglang38_fixture/run_pinned_image.py": "a5c8061a9dd11bba06740600e0b029fdfcf4377113eddb15dad7d3605db2b63c"
+      }
+    }
+  },
+  "exact_absence": [
+    {
+      "container_id": "d86f3ddad58dd6e493f60f468fa0f00a6db2ba6058244c15718a9aa040d6ab17",
+      "container_name": "q38b-fixture-2c5f9e3a88e1d146ac9fe89e57cf0143",
+      "id_and_name_absent": true,
+      "status": "PASS"
+    },
+    {
+      "container_id": "22afd44e221287fe021bae86434725302a8f124f20b3d19b85d36791c61b6644",
+      "container_name": "q38b-fixture-30a1e748824f1241d8df80b79da3d67d",
+      "id_and_name_absent": true,
+      "status": "PASS"
+    },
+    {
+      "container_id": "b77fa0d3d77d354eceba7e675f6ec33c103f1664ba2de2cc668190a1b858d4de",
+      "container_name": "q38b-fixture-ea438543bae8e03170eb515b6fc68369",
+      "id_and_name_absent": true,
+      "status": "PASS"
+    }
+  ],
+  "guard_identities_enforced": {
+    "dependency": {
+      "expected_mode": "0644",
+      "owner_uid": 0,
+      "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+      "sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505"
+    },
+    "guard": {
+      "expected_mode": "0755",
+      "owner_uid": 0,
+      "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+      "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d"
+    },
+    "registration": "/etc/local-ai-server/storage.json"
+  },
+  "post_guards": {
+    "registered": {
+      "data": {
+        "capacity": {
+          "data_available_bytes": 1337940885504,
+          "model_available_bytes": 2590890246144,
+          "root_available_bytes": 5208211456,
+          "shared_model_filesystem": false
+        },
+        "data": {
+          "device": "8:17",
+          "fstype": "ext4",
+          "mount": "/data",
+          "parents": [
+            "/dev/sdb",
+            "/dev/sdb1"
+          ],
+          "path": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        "models": {
+          "device": "8:33",
+          "fstype": "ext4",
+          "mount": "/data/models-large",
+          "parents": [
+            "/dev/sdc",
+            "/dev/sdc1"
+          ],
+          "path": "/data/models-large",
+          "source": "/dev/sdc1",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        },
+        "roots": {
+          "backups": "/data/backups",
+          "build": "/data/build",
+          "containerd": "/data/containerd",
+          "docker": "/data/docker",
+          "hf_cache": "/data/hf-cache",
+          "logs": "/data/logs",
+          "models": "/data/models-large",
+          "secrets": "/data/services/secrets",
+          "services": "/data/services",
+          "state": "/data/services/installer"
+        },
+        "schema_version": 1,
+        "storage_mode": "existing",
+        "verified_roles": [
+          "data",
+          "models"
+        ],
+        "warnings": [
+          "root filesystem has less than 6 GiB free"
+        ]
+      },
+      "root": {
+        "capacity": {
+          "data_available_bytes": 1337940885504,
+          "model_available_bytes": 2590890246144,
+          "root_available_bytes": 5208211456,
+          "shared_model_filesystem": false
+        },
+        "data": {
+          "device": "8:17",
+          "fstype": "ext4",
+          "mount": "/data",
+          "parents": [
+            "/dev/sdb",
+            "/dev/sdb1"
+          ],
+          "path": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        "models": {
+          "device": "8:33",
+          "fstype": "ext4",
+          "mount": "/data/models-large",
+          "parents": [
+            "/dev/sdc",
+            "/dev/sdc1"
+          ],
+          "path": "/data/models-large",
+          "source": "/dev/sdc1",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        },
+        "roots": {
+          "backups": "/data/backups",
+          "build": "/data/build",
+          "containerd": "/data/containerd",
+          "docker": "/data/docker",
+          "hf_cache": "/data/hf-cache",
+          "logs": "/data/logs",
+          "models": "/data/models-large",
+          "secrets": "/data/services/secrets",
+          "services": "/data/services",
+          "state": "/data/services/installer"
+        },
+        "schema_version": 1,
+        "storage_mode": "existing",
+        "verified_roles": [
+          "data",
+          "models"
+        ],
+        "warnings": [
+          "root filesystem has less than 6 GiB free"
+        ]
+      }
+    },
+    "status": "PASS",
+    "utc": "2026-09-15T05:17:10.912428+00:00"
+  },
+  "pre_guards": {
+    "registered": {
+      "data": {
+        "capacity": {
+          "data_available_bytes": 1337940885504,
+          "model_available_bytes": 2590890246144,
+          "root_available_bytes": 5208211456,
+          "shared_model_filesystem": false
+        },
+        "data": {
+          "device": "8:17",
+          "fstype": "ext4",
+          "mount": "/data",
+          "parents": [
+            "/dev/sdb",
+            "/dev/sdb1"
+          ],
+          "path": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        "models": {
+          "device": "8:33",
+          "fstype": "ext4",
+          "mount": "/data/models-large",
+          "parents": [
+            "/dev/sdc",
+            "/dev/sdc1"
+          ],
+          "path": "/data/models-large",
+          "source": "/dev/sdc1",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        },
+        "roots": {
+          "backups": "/data/backups",
+          "build": "/data/build",
+          "containerd": "/data/containerd",
+          "docker": "/data/docker",
+          "hf_cache": "/data/hf-cache",
+          "logs": "/data/logs",
+          "models": "/data/models-large",
+          "secrets": "/data/services/secrets",
+          "services": "/data/services",
+          "state": "/data/services/installer"
+        },
+        "schema_version": 1,
+        "storage_mode": "existing",
+        "verified_roles": [
+          "data",
+          "models"
+        ],
+        "warnings": [
+          "root filesystem has less than 6 GiB free"
+        ]
+      },
+      "root": {
+        "capacity": {
+          "data_available_bytes": 1337940885504,
+          "model_available_bytes": 2590890246144,
+          "root_available_bytes": 5208211456,
+          "shared_model_filesystem": false
+        },
+        "data": {
+          "device": "8:17",
+          "fstype": "ext4",
+          "mount": "/data",
+          "parents": [
+            "/dev/sdb",
+            "/dev/sdb1"
+          ],
+          "path": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        "models": {
+          "device": "8:33",
+          "fstype": "ext4",
+          "mount": "/data/models-large",
+          "parents": [
+            "/dev/sdc",
+            "/dev/sdc1"
+          ],
+          "path": "/data/models-large",
+          "source": "/dev/sdc1",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        },
+        "roots": {
+          "backups": "/data/backups",
+          "build": "/data/build",
+          "containerd": "/data/containerd",
+          "docker": "/data/docker",
+          "hf_cache": "/data/hf-cache",
+          "logs": "/data/logs",
+          "models": "/data/models-large",
+          "secrets": "/data/services/secrets",
+          "services": "/data/services",
+          "state": "/data/services/installer"
+        },
+        "schema_version": 1,
+        "storage_mode": "existing",
+        "verified_roles": [
+          "data",
+          "models"
+        ],
+        "warnings": [
+          "root filesystem has less than 6 GiB free"
+        ]
+      }
+    },
+    "status": "PASS",
+    "utc": "2026-09-15T05:17:10.629094+00:00"
+  },
+  "source_artifact_sha256": "32f9b320828530dd1cf98d52f0c5db754d398b1a52c55eea0892e973efc1c5bd",
+  "status": "PASS_ALL_THREE_EXACT_ABSENCE_SOURCE_AND_GUARDS",
+  "verification_job_sha256": "1f7b2a219dccb21bdaf79405e2ed40aad48ac11565d6f461a4842d1dac1c595c",
+  "verified_utc_finish": "2026-09-15T05:17:10.912442+00:00",
+  "verified_utc_start": "2026-09-15T05:17:10.434465+00:00"
+}

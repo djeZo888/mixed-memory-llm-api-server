@@ -1,0 +1,12 @@
+{
+  "derived_commit": null,
+  "derived_tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+  "jinja_fix_ancestor": "ae9afff8d2c012ca760eb9c2adf41961cf6f6232",
+  "patch_file": "strict-model-chat.patch",
+  "patch_sha256": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b",
+  "schema_version": 1,
+  "source_state": "verified-patched",
+  "upstream_commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+  "upstream_repository": "https://github.com/ggml-org/llama.cpp",
+  "upstream_tree": "950999fe62b7fe55f44ab5b7394e3c8542f37f12"
+}

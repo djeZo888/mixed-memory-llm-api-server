@@ -1,0 +1,58 @@
+import os,stat,json,hashlib,subprocess,http.client,datetime
+from pathlib import Path
+BASE=Path('/data/services/n1vm-20260915');os.umask(0o077)
+keypath=Path('/data/services/secrets/llm-api-key')
+fd=os.open('/',os.O_RDONLY|os.O_DIRECTORY)
+try:
+ for part in keypath.parts[1:-1]:
+  child=os.open(part,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=fd);os.close(fd);fd=child
+  m=os.fstat(fd);assert m.st_uid==0 and not m.st_mode&0o022,'unsafe key parent'
+ keyfd=os.open(keypath.name,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=fd)
+ try:
+  before=os.fstat(keyfd)
+  assert stat.S_ISREG(before.st_mode) and before.st_uid==0 and before.st_gid==0 and before.st_nlink==1 and stat.S_IMODE(before.st_mode)==0o600 and 0<before.st_size<=4096,'unsafe key file'
+  raw=os.read(keyfd,4097);after=os.fstat(keyfd)
+  signature=lambda m:(m.st_dev,m.st_ino,m.st_mode,m.st_uid,m.st_gid,m.st_nlink,m.st_size,m.st_mtime_ns,m.st_ctime_ns)
+  assert len(raw)==before.st_size and signature(before)==signature(after)==signature(os.stat(keypath.name,dir_fd=fd,follow_symlinks=False)),'key drift'
+  key=raw.decode('ascii').strip();assert key and '\n' not in key and '\r' not in key
+ finally: os.close(keyfd)
+finally: os.close(fd)
+def get(path,bearer):
+ c=http.client.HTTPConnection('127.0.0.1',30002,timeout=10)
+ try:
+  c.connect();client=c.sock.getsockname()[0]
+  headers={} if bearer is None else {'Authorization':'Bearer '+bearer}
+  c.request('GET',path,headers=headers)
+  response=c.getresponse();body=response.read(131073)
+  assert len(body)<=131072,'response too large'
+  return response.status,body,client
+ finally: c.close()
+results=[]
+for name,bearer,expected in [('missing',None,401),('wrong','n1vm-deliberately-invalid',401),('correct',key,200)]:
+ status,body,source=get('/v1/models',bearer)
+ assert status==expected,'native models auth '+name+' unexpected status '+str(status)
+ item={'path':'/v1/models','auth':name,'status':status,'client_source':source}
+ if name=='correct':
+  data=json.loads(body);assert len(data['data'])==1
+  model=data['data'][0];assert model['id']=='glm-5.3','served identity mismatch'
+  item['model_id']=model['id']
+  # The native llama.cpp models response carries n_ctx under meta.
+  ctx=model.get('meta',{}).get('n_ctx')
+  assert ctx==32768,'served context mismatch'
+  item['n_ctx']=ctx
+ results.append(item)
+status,body,source=get('/health',key)
+assert status==200,'native health unexpected status '+str(status)
+health=json.loads(body);assert health.get('status')=='ok','native health not ok'
+results.append({'path':'/health','auth':'correct','status':status,'health':'ok','client_source':source})
+x=json.loads(subprocess.check_output(['docker','inspect','bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55'],text=True))[0]
+command={'Path':x['Path'],'Args':x['Args'],'Entrypoint':x['Config']['Entrypoint'],'Cmd':x['Config']['Cmd']}
+identity={'id':x['Id'],'image':x['Image'],'name':x['Name'],'started_at':x['State']['StartedAt'],'pid':x['State']['Pid'],'restart_count':x['RestartCount'],'running':x['State']['Running'],'command_sha256':hashlib.sha256(json.dumps(command,sort_keys=True).encode()).hexdigest(),'network_mode':x['HostConfig']['NetworkMode']}
+assert identity==json.loads((BASE/'inventory-before.json').read_text())['model'],'running model drift'
+ports=x['HostConfig']['PortBindings'];assert ports=={'30002/tcp':[{'HostIp':'127.0.0.1','HostPort':'30002'}]},'native loopback publication drift'
+assert x['HostConfig']['RestartPolicy']['Name']=='no','model boot policy drift'
+assert signature(before)==signature(keypath.lstat()),'key metadata changed'
+out={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'result':'PASS','probes':results,'model_unchanged':True,'model':identity,'native_publication':ports,'model_restart_policy':'no','key_protection':'PASS root0600 via no-follow descriptor','key_metadata_unchanged':True,'generation_requests':0}
+fd=os.open(BASE/'native-auth.json',os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+with os.fdopen(fd,'w') as f:json.dump(out,f,indent=2)
+print(json.dumps(out,indent=2))

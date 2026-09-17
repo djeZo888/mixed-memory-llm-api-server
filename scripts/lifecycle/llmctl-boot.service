@@ -1,0 +1,7 @@
+# Renderer contract only; this file is deliberately not an installable unit.
+# I1b calls lifecycle.boot_unit.render_boot_unit(binding, source_root, instance_path)
+# after installing the protected source snapshot and registry-bound instance.
+# It installs the returned unit as the sole boot owner, after removing the
+# obsolete boot writer. The renderer derives exact unique registered mounts,
+# validates source/instance trust, and preserves Docker restart=no.
+# See docs/lifecycle/l1-storage-lease.md for source/integration boundaries.

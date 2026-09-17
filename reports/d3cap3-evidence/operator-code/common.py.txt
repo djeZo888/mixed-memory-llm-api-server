@@ -1,0 +1,118 @@
+"""Fixed D3CAP3 operator transcript; no product-source changes."""
+import datetime,stat,threading,urllib.request,urllib.error
+SRC=Path('/usr/local/lib/llm-server/control-api')
+REPORT=Path('/data/logs/d3cap3-20260915')
+OLD='7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78'
+D1='bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55'
+IMAGE='sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9'
+TARGET='glm-5.3-ud-q4-k-xl-n76-native1m'
+ORIGINAL='glm-5.3-ud-q4-k-xl-n76-32k'
+FMT='{"Id":{{json .Id}},"Image":{{json .Image}},"Args":{{json .Args}},"State":{{json .State}},"LogPath":{{json .LogPath}},"RestartCount":{{json .RestartCount}},"NetworkSettings":{"Ports":{{json .NetworkSettings.Ports}}},"RestartPolicy":{{json .HostConfig.RestartPolicy}}}'
+began=time.monotonic()
+def emit(phase,**kw):
+    row={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'phase':phase,'elapsed_seconds':time.monotonic()-began,**kw}
+    print(json.dumps(row,sort_keys=True),flush=True)
+    return row
+def run(args,timeout=30):
+    return subprocess.check_output(args,stderr=subprocess.DEVNULL,text=True,timeout=timeout)
+def protected(p,directory=False):
+    p=Path(p)
+    for a in (p,*p.parents):
+        st=a.lstat();assert not a.is_symlink() and st.st_uid==0 and not st.st_mode&0o022,'unprotected_path'
+    assert p.is_dir() if directory else p.is_file() and p.stat().st_nlink==1
+    return p
+def guard():
+    for row in (CFG['registered_host']['guard'],CFG['registered_host']['dependency']):
+        p=protected(row['path']);assert hashlib.sha256(p.read_bytes()).hexdigest()==row['sha256'],'guard_hash'
+        assert stat.S_IMODE(p.stat().st_mode)==int(row['expected_mode'],8),'guard_mode'
+    protected('/etc/local-ai-server/storage.json')
+    results=[]
+    for extra in ([],['--root-guard']):
+        results.append(json.loads(run(['/usr/bin/python3','-I','-B',CFG['registered_host']['guard']['path'],*extra,'--json'],60)))
+    assert results[-1]['capacity']['root_available_bytes']>=4*GIB
+    return results
+def write(name,value):
+    protected(REPORT,directory=True)
+    with (REPORT/name).open('x') as f:
+        os.chmod(f.name,0o600);json.dump(value,f,sort_keys=True);f.flush();os.fsync(f.fileno())
+def inspect_container(cid,timeout=10):
+    return json.loads(run(['docker','inspect','--format',FMT,cid],timeout))
+def identity(c):
+    p=Path('/proc/%d/stat'%c['State']['Pid']).read_text().rsplit(')',1)[1].split()
+    assert p[0] not in ('T','t','Z','X','x')
+    return {'id':c['Id'],'image':c['Image'],'pid':c['State']['Pid'],'started_at':c['State']['StartedAt'],'start_ticks':int(p[19]),'restart_count':c['RestartCount']}
+def quiet():
+    connections=[x for x in run(['ss','-tnH','state','established']).splitlines() if any(':'+str(p) in x for p in (30002,30000,30004))]
+    assert not connections,'api_connections_present'
+    return {'established_api_connections':0}
+def stable_files():
+    names=['/etc/local-ai-server/storage.json','/etc/llm-server/control.json','/etc/llm-server/network.json','/data/services/llm-manager/deployment-instance.json','/usr/local/lib/llm-server/control-api.manifest.json']
+    return {n:hashlib.sha256(protected(n).read_bytes()).hexdigest() for n in names}
+def key_state():
+    p=protected('/data/services/secrets/llm-api-key');s=p.stat();assert stat.S_IMODE(s.st_mode)==0o600
+    return {'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'metadata':{k:getattr(s,'st_'+k) for k in ('dev','ino','uid','gid','mode','size','mtime_ns','ctime_ns')}}
+def control_state():
+    c=run(['systemctl','show','llm-control.service','--property=ActiveState,SubState,UnitFileState,MainPID']).splitlines()
+    assert all(x in c for x in ('ActiveState=inactive','SubState=dead','UnitFileState=disabled','MainPID=0'))
+    return c
+def state_new(vmstat=None):
+    s={'log_lines':0,'errors':{key:0 for key in ERROR_PATTERNS},'log_hash':hashlib.sha256()}
+    if vmstat is not None:s['vmstat_start']=vmstat.copy()
+    return s
+def cheap_sample(cid,context,state,expected=None,baseline=None,ready=False):
+    s=_local_snapshot(cid,IMAGE,context,state)
+    proc=Path('/proc/%d/stat'%s['container']['pid']).read_text().rsplit(')',1)[1].split()
+    s.update(process_start_ticks=int(proc[19]),process_state=proc[0],pss_sampling='absent_during_load_or_request')
+    state['last_sample']=s
+    c=s['container']
+    if expected is not None:
+        assert (c['id'],c['image_id'],c['pid'],c['started_at'],s['process_start_ticks'])==(expected['id'],expected['image'],expected['pid'],expected['started_at'],expected['start_ticks']),'identity'
+    assert c['running'] and not c['oom_killed'] and not c['paused'] and not c['restarting'] and c['restart_count']==0 and proc[0] not in ('T','t','Z','X','x'),'running_state'
+    assert s['root_available_bytes']>=4*GIB and s['mounts']==MOUNTS,'storage'
+    assert s['host_kib']['MemAvailable']>0 and s['process_kib']['Rss']>0 and s['process_kib']['VmSwap']==0,'memory'
+    assert not any(s['vmstat_delta'].values()),'swap_oom'
+    assert len(s['gpus'])==2 and all(16*GIB<=g['free_bytes']<=g['total_bytes'] for g in s['gpus']),'gpu_free'
+    if baseline is not None:
+        assert s['host_swap_used_kib']==baseline['host_swap_used_kib'],'host_swap'
+        assert [(g['index'],g['uuid']) for g in s['gpus']]==[(g['index'],g['uuid']) for g in baseline['gpus']],'gpu_identity'
+    assert not any(s['errors'].values()),'numeric_error_counter'
+    assert s['placement']=='n_cpu_moe_76','placement'
+    if ready:
+        assert s['slot_count']==1 and s['slot_context']==context and s['n_threads']==112,'configuration'
+        n=s['native'];assert n is not None,'native_block_missing'
+        required={'n_ctx':context,'n_ctx_seq':context,'n_seq_max':1,'n_batch':2048,'n_ubatch':512,'flash_attn':1,'fused_lid':1,'lid_nodes':21,'fa_nodes':78,'no_alloc':0}
+        assert all(n[k]==v for k,v in required.items()),'native_graph'
+        for kind in ('compute_bytes','cache_bytes'):
+            assert set(n[kind])=={'CUDA0','CUDA1'} and all(v>0 for v in n[kind].values()),'allocated_buffers'
+    s['status']='PASS_CHEAP_ONLY'
+    return s
+def full_idle(cid,context,baseline=None):
+    quiet();s=cheap_sample(cid,context,state_new(baseline['vmstat'] if baseline else None),baseline=baseline,ready=True)
+    begin=time.monotonic();p=_metrics('/proc/%d/smaps_rollup'%s['container']['pid'],{'Rss','Pss','Swap'})
+    assert p['Swap']==0 and 0<p['Pss']<=p['Rss'],'idle_pss'
+    s['process_kib'].update(p);s['pss_elapsed_seconds']=time.monotonic()-begin;s['pss_sampling']='once_at_idle_boundary'
+    quiet();return s
+def manager():
+    sys.path.insert(0,str(SRC/'scripts'))
+    from lifecycle.manager import Manager,StorageRunner
+    from lifecycle.storage_binding import RegisteredStorageBinding
+    b=RegisteredStorageBinding.load(StorageRunner())
+    i=b.read_json('data',b.path('data','services/llm-manager/deployment-instance.json'))
+    return Manager(SRC/'configs',i,binding=b)
+
+LOADING_FRESHNESS_SECONDS=10.0
+SLOW_SAMPLE_SECONDS=2.0
+def actual_launch_f16(cid,expected):
+    m=manager();st=m.read_state();assert st['container']['id']==cid; c=m.trusted_container(st['container'])
+    m.validate_reused_contract(c,m.deployment(TARGET))
+    assert identity(inspect_container(cid))==expected
+    args=Path('/proc/%d/cmdline'%expected['pid']).read_bytes().split(b'\0');args=[x.decode() for x in args if x]
+    assert args[1:]==c['Args'],'actual_pid_argv_differs'
+    assert args[0]=='/opt/llama/llama-server','actual_entrypoint'
+    names=[x.split(b'=',1)[0].decode() for x in Path('/proc/%d/environ'%expected['pid']).read_bytes().split(b'\0') if x]
+    overrides=[x for x in names if 'CACHE_TYPE' in x or 'TYPE_K' in x or 'TYPE_V' in x]
+    assert not overrides,'actual_pid_cache_type_environment_override'
+    assert _reviewed_args(args[1:],IMAGE,1048576)=='n_cpu_moe_76'
+    binary=hashlib.sha256(Path('/proc/%d/exe'%expected['pid']).read_bytes()).hexdigest()
+    assert binary=='c81262fd063e9d2fc098d9e116d0ae742ca7ea37344ee3f4b56eb5d088206e0a','actual_binary_hash'
+    return {'pid_argv_matches_protected_contract':True,'entrypoint':args[0],'args':args[1:],'cache_dtype_environment_overrides':overrides,'binary_sha256':binary,'effective_cache_type':'F16_FROM_PINNED_DEFAULT_AND_NO_OVERRIDE','independent_v_allocation':'NOT_APPLICABLE_MLA_SHARED_STORAGE'}

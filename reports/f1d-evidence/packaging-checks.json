@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "evidence_class": "local_evidence_packaging_checks_not_inference",
+  "checks": [
+    "JSON files parsed",
+    "Shell recipes bash -n and --help passed",
+    "Python recipes AST parsed",
+    "Copied protected Qwen receipt/proof SHA256 match VM",
+    "Gate result preserved as FAIL and auth_gate_passed remains false"
+  ],
+  "vm_mutation": false,
+  "grep_based_value_shaped_secret_scan": "PASS_NO_MATCHES",
+  "remote_credential_check": "PASS",
+  "effective_author": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>",
+  "effective_committer": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>",
+  "secret_scan_command": "rg -l --pcre2 [credential/private-key/Bearer value-shaped patterns] reports/f1d-qwen-live-acceptance.md reports/f1d-evidence"
+}

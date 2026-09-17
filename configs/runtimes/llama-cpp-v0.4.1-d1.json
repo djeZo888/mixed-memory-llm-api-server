@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "id": "llama-cpp-v0.4.1-d1",
+  "kind": "docker",
+  "image_tag": "local/llama-cpp:v0.4.1-b29c606-cu132-sm120-d1",
+  "source_repository": "https://github.com/ggml-org/llama.cpp",
+  "source_release": "v0.4.1",
+  "source_revision": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+  "entrypoint": [
+    "/opt/llama/llama-server"
+  ],
+  "network_mode": "bridge",
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/llama",
+    "LLAMA_ARG_HOST": "0.0.0.0",
+    "XDG_CACHE_HOME": "/cache"
+  },
+  "required_cli_flags": [
+    "--model",
+    "--host",
+    "--port",
+    "--alias",
+    "--api-key-file",
+    "--ctx-size",
+    "--parallel",
+    "--cpu-moe",
+    "--jinja",
+    "--no-webui",
+    "--n-gpu-layers",
+    "--split-mode",
+    "--tensor-split",
+    "--load-mode",
+    "--device",
+    "--chat-template-kwargs"
+  ],
+  "build_contract": {
+    "cuda": "13.2.1",
+    "ubuntu": "24.04",
+    "architecture": "amd64",
+    "cmake_cuda_architectures": "120a-real",
+    "ubuntu_snapshot": "20260914T000000Z",
+    "devel_base_digest": "sha256:0e1f7b8e96fa9ec5e36d4709a38c62df7b5665977446081811c12b8234d874bf",
+    "runtime_base_digest": "sha256:285c50be684df76df5cd0e3162687e74b7b67add47134ff55075e3a9cfa94044"
+  },
+  "validation": {
+    "status": "PASS_BUILD_CUDA_CLI_ONLY",
+    "evidence_owner": "D1 final build and pinned-source/server-help report; exact CLI bytes preserved in D2 verbatim JSON",
+    "evidence": [
+      "reports/d2-contract-evidence/d1-runtime-proof.json",
+      "reports/d2-contract-evidence/d1-cli-selected.txt",
+      "reports/d2-contract-evidence/D1-CONTRACT.md",
+      "reports/d2-contract-evidence/d1-cli-verbatim.json"
+    ],
+    "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "supported_flags": [
+      "--model",
+      "--host",
+      "--port",
+      "--alias",
+      "--api-key-file",
+      "--ctx-size",
+      "--parallel",
+      "--cpu-moe",
+      "--jinja",
+      "--no-webui",
+      "--n-gpu-layers",
+      "--split-mode",
+      "--tensor-split",
+      "--load-mode",
+      "--device",
+      "--chat-template-kwargs"
+    ],
+    "supported_load_modes": [
+      "auto",
+      "none",
+      "mmap",
+      "mlock",
+      "mmap+mlock",
+      "dio"
+    ],
+    "devices": [
+      "CUDA0",
+      "CUDA1"
+    ],
+    "glm_inference": "NOT_TESTED",
+    "tool_calls": "NOT_TESTED",
+    "service_activation": "NOT_PERFORMED",
+    "notes": [
+      "D1 built the exact pinned source and listed both Blackwell CUDA devices; this proves build/CUDA/CLI availability only.",
+      "--load-mode none selects no special loading mode and avoids implicit mmap; CPU MoE placement still requires live D3 resource validation.",
+      "--device CUDA0,CUDA1 explicitly selects both visible devices; Docker GPU exposure separately selects host device IDs 0 and 1.",
+      "GLM clear_thinking=true is an explicit D3 live-test preset; accepted template kwargs syntax does not prove model-specific semantics or tool behavior.",
+      "Final llama.cpp image ID is distinct from its pinned CUDA base digests."
+    ]
+  },
+  "backend": "llama_cpp"
+}

@@ -1,0 +1,41 @@
+{
+  "device_requests": [
+    {
+      "Capabilities": [
+        [
+          "gpu"
+        ]
+      ],
+      "Count": 0,
+      "DeviceIDs": [
+        "0",
+        "1"
+      ],
+      "Driver": "",
+      "Options": {}
+    }
+  ],
+  "id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+  "log_config": {
+    "Config": {
+      "max-file": "3",
+      "max-size": "20m"
+    },
+    "Type": "json-file"
+  },
+  "required_env": [
+    "LD_LIBRARY_PATH=/opt/llama",
+    "LLAMA_ARG_HOST=0.0.0.0",
+    "XDG_CACHE_HOME=/cache"
+  ],
+  "state_container_running": {
+    "/data/services/llm-manager/active/active.json": {
+      "container_running": true,
+      "sha256": "c63de9b1a77aa4d62496880c7dad8cb6a22a10de9736c5305545e3579d576f1f"
+    },
+    "/run/llmctl/recovery.json": {
+      "container_running": true,
+      "sha256": "c63de9b1a77aa4d62496880c7dad8cb6a22a10de9736c5305545e3579d576f1f"
+    }
+  }
+}

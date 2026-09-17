@@ -1,0 +1,457 @@
+{
+  "actual_backend": {
+    "boot_policy": "manual",
+    "compute_dtype": "bfloat16",
+    "container_id": "fc28d69da60dd8c55247127a3bd1bcc11ec2d44add7cacfd594392879f75db9d",
+    "core_hard": 1,
+    "core_soft": 1,
+    "desired": "running",
+    "gpu_indices": [
+      0
+    ],
+    "kv_cache_dtype": "bfloat16",
+    "model": "Qwen3.8-27B FP8",
+    "profile": "qwen38-27b-256k",
+    "published_host": "127.0.0.1",
+    "published_port": 30004,
+    "ready_elapsed_seconds": 130.237,
+    "ready_utc": "2026-09-17T05:37:06.265938+00:00",
+    "served_model": "qwen3.8-27b",
+    "server_facts": {
+      "chunked_prefill_size": 2048,
+      "context_length": 262144,
+      "dtype": "bfloat16",
+      "internal_states.0.chunked_prefill_size": 2048,
+      "internal_states.0.context_length": 262144,
+      "internal_states.0.dtype": "bfloat16",
+      "internal_states.0.kv_cache_dtype": "bfloat16",
+      "internal_states.0.max_mamba_cache_size": 1,
+      "internal_states.0.max_running_requests": 1,
+      "internal_states.0.max_total_tokens": 262144,
+      "internal_states.0.mem_fraction_static": 0.8,
+      "internal_states.0.quantization": "fp8",
+      "internal_states.0.tp_size": 1,
+      "kv_cache_dtype": "bfloat16",
+      "max_mamba_cache_size": 1,
+      "max_req_input_len": 262138,
+      "max_running_requests": 1,
+      "max_total_num_tokens": 262144,
+      "max_total_tokens": 262144,
+      "mem_fraction_static": 0.8,
+      "quantization": "fp8",
+      "tp_size": 1
+    },
+    "single_active_backend": true,
+    "started_observation_utc": "2026-09-17T05:35:07.850008+00:00",
+    "status": "READY",
+    "tp_size": 1,
+    "weights": "fp8"
+  },
+  "allocation_log_facts": [
+    {
+      "available_gb_log_label": 94.23,
+      "line_ordinal": 36,
+      "phase": "weights_begin"
+    },
+    {
+      "available_gb_log_label": 65.77,
+      "line_ordinal": 109,
+      "memory_usage_gb_log_label": 28.47,
+      "phase": "weights_end"
+    },
+    {
+      "line_ordinal": 111,
+      "phase": "mamba_pool"
+    },
+    {
+      "cache_tokens": 262144,
+      "k_size_gb_log_label": 8.0,
+      "line_ordinal": 112,
+      "phase": "kv_allocated",
+      "v_size_gb_log_label": 8.0
+    },
+    {
+      "available_gb_log_label": 49.36,
+      "line_ordinal": 113,
+      "phase": "memory_pool_end"
+    },
+    {
+      "available_gpu_mem_gb_log_label": 48.91,
+      "chunked_prefill_size": 2048,
+      "context_len": 262144,
+      "line_ordinal": 118,
+      "max_prefill_tokens": 16384,
+      "max_running_requests": 1,
+      "max_total_num_tokens": 262144,
+      "phase": "capacity"
+    }
+  ],
+  "as_of_utc": "2026-09-17T05:43:41.634934Z",
+  "closeout_addendum": {
+    "actual_continuation": {
+      "finish_reason": "stop",
+      "formatting": {
+        "bare_json_case_status": "FAIL_PRESERVED",
+        "bare_json_requested": true,
+        "fenced_object_matches_expected": true,
+        "markdown_json_fence": true,
+        "response_format_requested": false
+      },
+      "new_initial_tool_requests": 0,
+      "original_format_error": "malformed JSON response or tool arguments",
+      "original_task_runner_status": "FAIL",
+      "post_guards": "PASS",
+      "request_lease_release_utc": "2026-09-17T05:53:48.096825Z",
+      "requests": [
+        {
+          "elapsed_seconds": 0.348522,
+          "path": "/chat/completions",
+          "status": 200,
+          "stream": true,
+          "success": true
+        }
+      ],
+      "semantic_acceptance": "PASS_ROOT_ACCEPTED",
+      "semantic_answer": "subtract",
+      "stream_done": true,
+      "usage": {
+        "completion_tokens": 12,
+        "prompt_tokens": 136,
+        "total_tokens": 148
+      }
+    },
+    "as_of_utc": "2026-09-17T05:55:42.448478+00:00",
+    "boundaries": [
+      "Earlier dated failures and 821 serving evidence remain unchanged",
+      "New noGPU proofs do not establish 1M model readiness",
+      "1M live outcomes and final API activation belong to separate handoff evidence"
+    ],
+    "captured_tool_replay": {
+      "finish_reason": "tool_calls",
+      "request_repeated": false,
+      "status": "PASS",
+      "stream_done": true,
+      "usage": {
+        "completion_tokens": 26,
+        "prompt_tokens": 354,
+        "total_tokens": 380
+      }
+    },
+    "ordinary_tool_execution": {
+      "count": 1,
+      "fixture_source_unchanged": true,
+      "ordinary_uid": 1000,
+      "path": "calc.py",
+      "tool": "read_file"
+    },
+    "planned_native_stop": {
+      "container_id": "fc28d69da60dd8c55247127a3bd1bcc11ec2d44add7cacfd594392879f75db9d",
+      "desired": "stopped",
+      "lifecycle_scope_terminal_utc": "2026-09-17T05:55:42.448478+00:00",
+      "observed": "stopped",
+      "post_guards": "PASS",
+      "reason": "ROOT_AUTHORIZED_NATIVE256_TO_1M_TRANSITION",
+      "report_triggered_cleanup": false,
+      "running": false,
+      "stopped_utc": "2026-09-17T05:55:42.448427+00:00"
+    },
+    "reviewed_client_source": "228732320a1919479283c602e678b35df28da7bc",
+    "reviewed_integration": "0eb91c0ad9c92743afacdf0cefdc955dfe614e2c",
+    "reviewed_protocol_sha256": "7424bf62ac7d5dc50cbaa96df5412a5a0ae87462e24f2cd523772bdb0bc3def3",
+    "reviewed_source_proofs": [
+      {
+        "attempt": 6,
+        "contexts": [
+          {
+            "context": 131072,
+            "exact_cleanup": "PASS",
+            "status": "PASS"
+          },
+          {
+            "context": 262144,
+            "exact_cleanup": "PASS",
+            "status": "PASS"
+          }
+        ],
+        "finished_utc": "2026-09-17T05:50:08.529946+00:00",
+        "kind": "NATIVE_PAIR",
+        "post_guards": "PASS",
+        "receipt_sha256": "b29cc6433009232067cf096e3a2ab7531023df57b1faa0d67c088e0a55739554",
+        "source_commit": "91e962abb9dc7f8bcd2d8ba522b541cdd5f12f66",
+        "source_hashes_match": true,
+        "status": "PASS"
+      },
+      {
+        "attempt": 7,
+        "contexts": [
+          {
+            "context": 1000000,
+            "exact_cleanup": "PASS",
+            "status": "PASS"
+          }
+        ],
+        "finished_utc": "2026-09-17T05:52:18.495835+00:00",
+        "kind": "EXTENSION",
+        "post_guards": "PASS",
+        "receipt_sha256": "353289244d02525120b3cfbeededdcdb0cc6aefdbd5879d060ee22186a51dde1",
+        "source_commit": "91e962abb9dc7f8bcd2d8ba522b541cdd5f12f66",
+        "source_hashes_match": true,
+        "status": "PASS"
+      }
+    ],
+    "status": "NATIVE256_BASELINE_PASS_PLANNED_TRANSITION_STOPPED"
+  },
+  "current_as_of_utc": "2026-09-17T05:55:42.448478+00:00",
+  "current_status": "NATIVE256_BASELINE_PASS_PLANNED_TRANSITION_STOPPED",
+  "memory": {
+    "after_initial_requests": {
+      "gpu": [
+        {
+          "free_mib": 49182,
+          "index": 0,
+          "total_mib": 97887,
+          "used_mib": 48068,
+          "utilization_percent": 0
+        },
+        {
+          "free_mib": 97217,
+          "index": 1,
+          "total_mib": 97887,
+          "used_mib": 34,
+          "utilization_percent": 0
+        }
+      ],
+      "host": {
+        "MemAvailable": 930054901760,
+        "MemTotal": 946806915072,
+        "SwapFree": 3157258240,
+        "SwapTotal": 3157258240
+      }
+    },
+    "baseline": {
+      "gpu": [
+        {
+          "free_mib": 97249,
+          "index": 0,
+          "total_mib": 97887,
+          "used_mib": 2,
+          "utilization_percent": 0
+        },
+        {
+          "free_mib": 97217,
+          "index": 1,
+          "total_mib": 97887,
+          "used_mib": 34,
+          "utilization_percent": 0
+        }
+      ],
+      "host": {
+        "MemAvailable": 937047814144,
+        "MemTotal": 946806915072,
+        "SwapFree": 3157258240,
+        "SwapTotal": 3157258240
+      }
+    },
+    "cgroup_memory_current_bytes": 36188073984,
+    "cgroup_memory_events": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0
+    },
+    "cgroup_swap_current_bytes": 0,
+    "gpu_units": "MiB",
+    "host_units": "bytes",
+    "main_process_rss_bytes": 1665224704,
+    "main_process_swap_bytes": 0,
+    "post_request_sample_utc": "2026-09-17T05:39:54.630774+00:00",
+    "pss_sampled": false,
+    "ready": {
+      "gpu": [
+        {
+          "free_mib": 49788,
+          "index": 0,
+          "total_mib": 97887,
+          "used_mib": 47462,
+          "utilization_percent": 0
+        },
+        {
+          "free_mib": 97217,
+          "index": 1,
+          "total_mib": 97887,
+          "used_mib": 34,
+          "utilization_percent": 0
+        }
+      ],
+      "host": {
+        "MemAvailable": 930518499328,
+        "MemTotal": 946806915072,
+        "SwapFree": 3157258240,
+        "SwapTotal": 3157258240
+      }
+    }
+  },
+  "native_fixture_pair": {
+    "attempt": 3,
+    "contexts": [
+      {
+        "context": 131072,
+        "exact_cleanup": "PASS",
+        "finished_utc": "2026-09-17T05:16:58.072185+00:00",
+        "status": "PASS"
+      },
+      {
+        "context": 262144,
+        "exact_cleanup": "PASS",
+        "finished_utc": "2026-09-17T05:18:10.184235+00:00",
+        "status": "PASS"
+      }
+    ],
+    "model_execution": "NOT_PROVED_BY_FIXTURE",
+    "post_guards": "PASS",
+    "receipt_sha256": "60a55cf6c3efc5d5e47f4ffbbed0a96f51f9f788e81e615b91725be15b745f13",
+    "source_hashes_match": true,
+    "status": "PASS"
+  },
+  "ownership": {
+    "backend": "LEFT_HEALTHY_RUNNING",
+    "canonical_lease": "RELEASED",
+    "post_guards": "PASS",
+    "released_utc": "2026-09-17T05:43:41.634934Z",
+    "report_error_triggered_stop_or_reload": false,
+    "request_lock": "RELEASED"
+  },
+  "pending": {
+    "actual_tp2_1m": "NOT_RUN_CONDITIONAL",
+    "client_null_metadata_fix": "ROOT_AND_WORKER2_REVIEW",
+    "control_boot_activation": "DEFERRED",
+    "new_native_and_extension_proof": "AUTHORIZED_PENDING_RESULT",
+    "occupied_context": "SEPARATE_FINAL_ACCEPTANCE",
+    "proof_may_preserve_healthy_native256": true,
+    "reviewed_source": "91e962abb9dc7f8bcd2d8ba522b541cdd5f12f66"
+  },
+  "publication": {
+    "boot_control_activation": "DEFERRED",
+    "boot_files": 11,
+    "dependency_mode": "0644_UNCHANGED",
+    "extension": "UNAVAILABLE_VALIDATOR_REFUSED",
+    "guard_mode": "0755_UNCHANGED",
+    "keys_registry_netpatch_rollback_state": "PRESERVED",
+    "post_guards": "PASS",
+    "release": "/data/services/releases/821df4a561173c078ed35c9286a07b82867b7953-q38retry-20260917",
+    "source_commit": "821df4a561173c078ed35c9286a07b82867b7953",
+    "source_files": 80,
+    "status": "PASS",
+    "utc": "2026-09-17T05:30:00.264246+00:00"
+  },
+  "publication_corrections": {
+    "extension_admission": "REFUSED_MISSING_PROOF",
+    "native_admission": "PASS",
+    "native_receipt_mode_after": "0600",
+    "native_receipt_mode_before": "0644",
+    "scope": "TASK_LOCAL_VERIFIER_AND_RECEIPT_MODE",
+    "validator_bypass": false
+  },
+  "requests": {
+    "initial": [
+      {
+        "elapsed_seconds": 0.002946,
+        "path": "/models",
+        "status": 401,
+        "stream": false,
+        "success": false
+      },
+      {
+        "elapsed_seconds": 0.001073,
+        "path": "/models",
+        "status": 401,
+        "stream": false,
+        "success": false
+      },
+      {
+        "elapsed_seconds": 0.001204,
+        "path": "/models",
+        "status": 200,
+        "stream": false,
+        "success": true
+      },
+      {
+        "elapsed_seconds": 6.094174,
+        "path": "/chat/completions",
+        "status": 200,
+        "stream": true,
+        "success": true
+      },
+      {
+        "elapsed_seconds": 1.007567,
+        "path": "/chat/completions",
+        "status": 200,
+        "stream": true,
+        "success": false
+      }
+    ],
+    "initial_checks": {
+      "authenticated_generation_stream": {
+        "elapsed_seconds": 6.094163,
+        "finish_reason": "stop",
+        "model": "qwen3.8-27b",
+        "status": "PASS",
+        "stream_done": true,
+        "usage": {
+          "completion_tokens": 87,
+          "prompt_tokens": 34,
+          "total_tokens": 121
+        }
+      },
+      "authenticated_models": {
+        "model": "qwen3.8-27b",
+        "status": "PASS"
+      },
+      "missing_key": {
+        "http_status": 401,
+        "status": "PASS"
+      },
+      "wrong_key": {
+        "http_status": 401,
+        "status": "PASS"
+      }
+    },
+    "raw_request_response_retention": "PRIVATE_OUTSIDE_GIT",
+    "real_tool_execution": "NOT_REACHED",
+    "tool_continuation": "NOT_REACHED",
+    "tool_diagnostic": [
+      {
+        "elapsed_seconds": 0.735681,
+        "path": "/chat/completions",
+        "status": 200,
+        "stream": true,
+        "success": false
+      }
+    ]
+  },
+  "schema_version": 1,
+  "short_timing": {
+    "completion_tokens_per_total_elapsed_second": 14.275956,
+    "content_event_count": 86,
+    "elapsed_seconds": 6.094163,
+    "first_to_last_content_seconds": 5.44980182099971,
+    "prompt_to_first_content_seconds": 0.616903275000368,
+    "timing_capture_incomplete": false,
+    "usage": {
+      "completion_tokens": 87,
+      "prompt_tokens": 34,
+      "total_tokens": 121
+    }
+  },
+  "source_commit": "821df4a561173c078ed35c9286a07b82867b7953",
+  "speed_limits": [
+    "One short prompt only; no repeated benchmark",
+    "Client arrival timing includes scheduling and transport",
+    "SSE events are not tokens",
+    "No separately measured server prefill or steady-state decode rate",
+    "No occupied-context workload"
+  ],
+  "status": "NATIVE256_READY_AUTH_GENERATION_STREAM_PASS_TOOL_CONTINUATION_PENDING"
+}

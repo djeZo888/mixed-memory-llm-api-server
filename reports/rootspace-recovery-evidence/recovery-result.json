@@ -1,0 +1,1470 @@
+{
+  "task": "ROOTSPACE",
+  "started_utc": "2026-09-15T05:00:09.419578+00:00",
+  "archive_directory": "/data/logs/rootspace-recovery-20260915-archive",
+  "copies": [
+    {
+      "source_before": {
+        "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+        "dev": 64512,
+        "inode": 266791,
+        "uid": 0,
+        "gid": 0,
+        "mode": 256,
+        "nlink": 1,
+        "size": 970436608,
+        "allocated_bytes": 970440704,
+        "mtime_ns": 1789446869471533227,
+        "ctime_ns": 1789446869681534442,
+        "atime_ns": 1789446866852518081
+      },
+      "source_after_copy": {
+        "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+        "dev": 64512,
+        "inode": 266791,
+        "uid": 0,
+        "gid": 0,
+        "mode": 256,
+        "nlink": 1,
+        "size": 970436608,
+        "allocated_bytes": 970440704,
+        "mtime_ns": 1789446869471533227,
+        "ctime_ns": 1789446869681534442,
+        "atime_ns": 1789446866852518081
+      },
+      "archive": {
+        "path": "/data/logs/rootspace-recovery-20260915-archive/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+        "dev": 2065,
+        "inode": 47972641,
+        "uid": 0,
+        "gid": 0,
+        "mode": 256,
+        "nlink": 1,
+        "size": 970436608,
+        "allocated_bytes": 970440704,
+        "mtime_ns": 1789446869471533227,
+        "ctime_ns": 1789448410146594221,
+        "atime_ns": 1789446866852518081
+      },
+      "sha256_source_copy_stream": "36dd457ac3e3589945da2aa2e5f67c0827d4f8d0399848112cfb7ee85d34b3a5",
+      "sha256_source_reread": "36dd457ac3e3589945da2aa2e5f67c0827d4f8d0399848112cfb7ee85d34b3a5",
+      "sha256_archive_independent_reread": "36dd457ac3e3589945da2aa2e5f67c0827d4f8d0399848112cfb7ee85d34b3a5",
+      "verified_bytes": 970436608,
+      "archive_fsync_complete": true
+    },
+    {
+      "source_before": {
+        "path": "/var/crash/_usr_bin_python3.12.0.crash",
+        "dev": 64512,
+        "inode": 266790,
+        "uid": 0,
+        "gid": 0,
+        "mode": 416,
+        "nlink": 1,
+        "size": 608314664,
+        "allocated_bytes": 608321536,
+        "mtime_ns": 1789446866852518081,
+        "ctime_ns": 1789446866852518081,
+        "atime_ns": 1789446866853518087
+      },
+      "source_after_copy": {
+        "path": "/var/crash/_usr_bin_python3.12.0.crash",
+        "dev": 64512,
+        "inode": 266790,
+        "uid": 0,
+        "gid": 0,
+        "mode": 416,
+        "nlink": 1,
+        "size": 608314664,
+        "allocated_bytes": 608321536,
+        "mtime_ns": 1789446866852518081,
+        "ctime_ns": 1789446866852518081,
+        "atime_ns": 1789446866853518087
+      },
+      "archive": {
+        "path": "/data/logs/rootspace-recovery-20260915-archive/_usr_bin_python3.12.0.crash",
+        "dev": 2065,
+        "inode": 47972642,
+        "uid": 0,
+        "gid": 0,
+        "mode": 256,
+        "nlink": 1,
+        "size": 608314664,
+        "allocated_bytes": 608321536,
+        "mtime_ns": 1789446866852518081,
+        "ctime_ns": 1789448411660607457,
+        "atime_ns": 1789446866853518087
+      },
+      "sha256_source_copy_stream": "08b8ac574c1e92f59a221e9c435a4bf2e13403003514dcb8691d7be0a3e0e5a9",
+      "sha256_source_reread": "08b8ac574c1e92f59a221e9c435a4bf2e13403003514dcb8691d7be0a3e0e5a9",
+      "sha256_archive_independent_reread": "08b8ac574c1e92f59a221e9c435a4bf2e13403003514dcb8691d7be0a3e0e5a9",
+      "verified_bytes": 608314664,
+      "archive_fsync_complete": true
+    }
+  ],
+  "deletions": [
+    {
+      "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+      "utc": "2026-09-15T05:00:12.586655+00:00",
+      "source_revalidated_before_unlink": {
+        "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+        "dev": 64512,
+        "inode": 266791,
+        "uid": 0,
+        "gid": 0,
+        "mode": 256,
+        "nlink": 1,
+        "size": 970436608,
+        "allocated_bytes": 970440704,
+        "mtime_ns": 1789446869471533227,
+        "ctime_ns": 1789446869681534442,
+        "atime_ns": 1789446866852518081
+      },
+      "in_use_before_unlink": {
+        "checked_processes": 1108,
+        "references": [
+          {
+            "pid": 267486,
+            "uid": 0,
+            "comm": "python3",
+            "start_ticks": 2672445,
+            "fd": 6,
+            "dev": 64512,
+            "inode": 266791,
+            "size": 970436608
+          },
+          {
+            "pid": 267486,
+            "uid": 0,
+            "comm": "python3",
+            "start_ticks": 2672445,
+            "fd": 8,
+            "dev": 64512,
+            "inode": 266790,
+            "size": 608314664
+          }
+        ],
+        "errors": [],
+        "crash_handlers": []
+      },
+      "only_own_read_FDs_allowed": true,
+      "original_absent": true,
+      "own_source_fd_closed": true,
+      "root_capacity_after_close": {
+        "available_bytes": 4599902208,
+        "free_including_reserved_bytes": 5393674240,
+        "total_bytes": 15186501632
+      }
+    },
+    {
+      "path": "/var/crash/_usr_bin_python3.12.0.crash",
+      "utc": "2026-09-15T05:00:12.676336+00:00",
+      "source_revalidated_before_unlink": {
+        "path": "/var/crash/_usr_bin_python3.12.0.crash",
+        "dev": 64512,
+        "inode": 266790,
+        "uid": 0,
+        "gid": 0,
+        "mode": 416,
+        "nlink": 1,
+        "size": 608314664,
+        "allocated_bytes": 608321536,
+        "mtime_ns": 1789446866852518081,
+        "ctime_ns": 1789446866852518081,
+        "atime_ns": 1789446866853518087
+      },
+      "in_use_before_unlink": {
+        "checked_processes": 1108,
+        "references": [
+          {
+            "pid": 267486,
+            "uid": 0,
+            "comm": "python3",
+            "start_ticks": 2672445,
+            "fd": 8,
+            "dev": 64512,
+            "inode": 266790,
+            "size": 608314664
+          }
+        ],
+        "errors": [],
+        "crash_handlers": []
+      },
+      "only_own_read_FDs_allowed": true,
+      "original_absent": true,
+      "own_source_fd_closed": true,
+      "root_capacity_after_close": {
+        "available_bytes": 5208223744,
+        "free_including_reserved_bytes": 6001995776,
+        "total_bytes": 15186501632
+      }
+    }
+  ],
+  "vm_mutations_scope": "two authorized raw crash archives only",
+  "identity_before": {
+    "guard_sources": [
+      {
+        "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+        "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d",
+        "ancestry": [
+          {
+            "path": "/",
+            "dev": 64512,
+            "inode": 2,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 25,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789447870251214254,
+            "ctime_ns": 1789447870251214254,
+            "atime_ns": 1789447869703211173
+          },
+          {
+            "path": "/usr",
+            "dev": 64512,
+            "inode": 655363,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 12,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1770682617000000000,
+            "ctime_ns": 1782852545999705574,
+            "atime_ns": 1789421203067000000
+          },
+          {
+            "path": "/usr/local",
+            "dev": 64512,
+            "inode": 655385,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 10,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1770682617000000000,
+            "ctime_ns": 1782852554803714303,
+            "atime_ns": 1789421203067000000
+          },
+          {
+            "path": "/usr/local/lib",
+            "dev": 64512,
+            "inode": 672033,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 4,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789440210247617878,
+            "ctime_ns": 1789440210247617878,
+            "atime_ns": 1789440410567133609
+          },
+          {
+            "path": "/usr/local/lib/llm-server",
+            "dev": 64512,
+            "inode": 833471,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 4,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789445208184223219,
+            "ctime_ns": 1789445208184223219,
+            "atime_ns": 1789447702868272682
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api",
+            "dev": 64512,
+            "inode": 833479,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 7,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789445207175217930,
+            "ctime_ns": 1789445207175217930,
+            "atime_ns": 1789446072243874719
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts",
+            "dev": 64512,
+            "inode": 833681,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 7,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823933941870,
+            "ctime_ns": 1789441823933941870,
+            "atime_ns": 1789441824046942527
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts/common",
+            "dev": 64512,
+            "inode": 833682,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 2,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823695940486,
+            "ctime_ns": 1789441823695940486,
+            "atime_ns": 1789441824046942527
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+            "dev": 64512,
+            "inode": 833684,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 1,
+            "size": 3378,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823675940369,
+            "ctime_ns": 1789446141962255978,
+            "atime_ns": 1789446151747309523
+          }
+        ]
+      },
+      {
+        "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+        "sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505",
+        "ancestry": [
+          {
+            "path": "/",
+            "dev": 64512,
+            "inode": 2,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 25,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789447870251214254,
+            "ctime_ns": 1789447870251214254,
+            "atime_ns": 1789447869703211173
+          },
+          {
+            "path": "/usr",
+            "dev": 64512,
+            "inode": 655363,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 12,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1770682617000000000,
+            "ctime_ns": 1782852545999705574,
+            "atime_ns": 1789421203067000000
+          },
+          {
+            "path": "/usr/local",
+            "dev": 64512,
+            "inode": 655385,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 10,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1770682617000000000,
+            "ctime_ns": 1782852554803714303,
+            "atime_ns": 1789421203067000000
+          },
+          {
+            "path": "/usr/local/lib",
+            "dev": 64512,
+            "inode": 672033,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 4,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789440210247617878,
+            "ctime_ns": 1789440210247617878,
+            "atime_ns": 1789440410567133609
+          },
+          {
+            "path": "/usr/local/lib/llm-server",
+            "dev": 64512,
+            "inode": 833471,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 4,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789445208184223219,
+            "ctime_ns": 1789445208184223219,
+            "atime_ns": 1789447702868272682
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api",
+            "dev": 64512,
+            "inode": 833479,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 7,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789445207175217930,
+            "ctime_ns": 1789445207175217930,
+            "atime_ns": 1789446072243874719
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts",
+            "dev": 64512,
+            "inode": 833681,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 7,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823933941870,
+            "ctime_ns": 1789441823933941870,
+            "atime_ns": 1789441824046942527
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts/install",
+            "dev": 64512,
+            "inode": 833700,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 2,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823850941387,
+            "ctime_ns": 1789441823850941387,
+            "atime_ns": 1789441824063942626
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+            "dev": 64512,
+            "inode": 833703,
+            "uid": 0,
+            "gid": 0,
+            "mode": 420,
+            "nlink": 1,
+            "size": 28916,
+            "allocated_bytes": 32768,
+            "mtime_ns": 1789441823839941323,
+            "ctime_ns": 1789441823841941335,
+            "atime_ns": 1789441824063942626
+          }
+        ]
+      }
+    ],
+    "registered_identity_only": {
+      "schema_version": 1,
+      "roots": {
+        "backups": "/data/backups",
+        "build": "/data/build",
+        "containerd": "/data/containerd",
+        "docker": "/data/docker",
+        "hf_cache": "/data/hf-cache",
+        "logs": "/data/logs",
+        "models": "/data/models-large",
+        "secrets": "/data/services/secrets",
+        "services": "/data/services",
+        "state": "/data/services/installer"
+      },
+      "data": {
+        "path": "/data",
+        "mount": "/data",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+        "fstype": "ext4",
+        "source": "/dev/sdb1",
+        "device": "8:17",
+        "parents": [
+          "/dev/sdb",
+          "/dev/sdb1"
+        ]
+      },
+      "models": {
+        "path": "/data/models-large",
+        "mount": "/data/models-large",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+        "fstype": "ext4",
+        "source": "/dev/sdc1",
+        "device": "8:33",
+        "parents": [
+          "/dev/sdc",
+          "/dev/sdc1"
+        ]
+      },
+      "storage_mode": "existing",
+      "verified_roles": [
+        "data",
+        "models"
+      ]
+    },
+    "root_mount": {
+      "target": "/",
+      "source": "/dev/mapper/ubuntu--vg-ubuntu--lv",
+      "fstype": "ext4",
+      "uuid": "bc752bce-bb3f-4802-8adf-69c45a88689d",
+      "maj:min": "252:0"
+    },
+    "logs_ancestry": [
+      {
+        "path": "/",
+        "dev": 64512,
+        "inode": 2,
+        "uid": 0,
+        "gid": 0,
+        "mode": 493,
+        "nlink": 25,
+        "size": 4096,
+        "allocated_bytes": 4096,
+        "mtime_ns": 1789447870251214254,
+        "ctime_ns": 1789447870251214254,
+        "atime_ns": 1789447869703211173
+      },
+      {
+        "path": "/data",
+        "dev": 2065,
+        "inode": 2,
+        "uid": 0,
+        "gid": 0,
+        "mode": 493,
+        "nlink": 13,
+        "size": 4096,
+        "allocated_bytes": 4096,
+        "mtime_ns": 1789439649114270885,
+        "ctime_ns": 1789439649114270885,
+        "atime_ns": 1783173265812576007
+      },
+      {
+        "path": "/data/logs",
+        "dev": 2065,
+        "inode": 47972353,
+        "uid": 0,
+        "gid": 1000,
+        "mode": 1517,
+        "nlink": 17,
+        "size": 4096,
+        "allocated_bytes": 4096,
+        "mtime_ns": 1789446837524348295,
+        "ctime_ns": 1789446837524348295,
+        "atime_ns": 1789441863174169951
+      }
+    ]
+  },
+  "root_before": {
+    "available_bytes": 3629461504,
+    "free_including_reserved_bytes": 4423233536,
+    "total_bytes": 15186501632
+  },
+  "data_before": {
+    "available_bytes": 1339520516096,
+    "free_including_reserved_bytes": 1449488351232,
+    "total_bytes": 2163348520960
+  },
+  "backend_before": {
+    "container": {
+      "exit_code": 0,
+      "stdout": "\"7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78\" \"sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9\" 243279 \"running\" \"2026-09-15T04:09:20.746242473Z\" 0\n",
+      "stderr": ""
+    },
+    "process": {
+      "pid": 243279,
+      "uid": 0,
+      "comm": "llama-server",
+      "start_ticks": 2367582
+    }
+  },
+  "quiescence_before": {
+    "utc": "2026-09-15T05:00:09.474277+00:00",
+    "established_api_connections": 0,
+    "request_sent": false,
+    "last_slot_event_in_tail": {
+      "event": "slot_stopped_processing",
+      "timestamp": "2026-09-15T04:32:15.806020433Z"
+    },
+    "pass": true
+  },
+  "source_reference_before": {
+    "checked_processes": 1108,
+    "references": [],
+    "errors": [],
+    "crash_handlers": []
+  },
+  "archive_directory_initial": {
+    "path": "/data/logs/rootspace-recovery-20260915-archive",
+    "dev": 2065,
+    "inode": 47972640,
+    "uid": 0,
+    "gid": 0,
+    "mode": 448,
+    "nlink": 2,
+    "size": 4096,
+    "allocated_bytes": 4096,
+    "mtime_ns": 1789448409538588902,
+    "ctime_ns": 1789448409538588902,
+    "atime_ns": 1789448409538588902
+  },
+  "identity_after_copy": {
+    "guard_sources": [
+      {
+        "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+        "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d",
+        "ancestry": [
+          {
+            "path": "/",
+            "dev": 64512,
+            "inode": 2,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 25,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789447870251214254,
+            "ctime_ns": 1789447870251214254,
+            "atime_ns": 1789447869703211173
+          },
+          {
+            "path": "/usr",
+            "dev": 64512,
+            "inode": 655363,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 12,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1770682617000000000,
+            "ctime_ns": 1782852545999705574,
+            "atime_ns": 1789421203067000000
+          },
+          {
+            "path": "/usr/local",
+            "dev": 64512,
+            "inode": 655385,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 10,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1770682617000000000,
+            "ctime_ns": 1782852554803714303,
+            "atime_ns": 1789421203067000000
+          },
+          {
+            "path": "/usr/local/lib",
+            "dev": 64512,
+            "inode": 672033,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 4,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789440210247617878,
+            "ctime_ns": 1789440210247617878,
+            "atime_ns": 1789440410567133609
+          },
+          {
+            "path": "/usr/local/lib/llm-server",
+            "dev": 64512,
+            "inode": 833471,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 4,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789445208184223219,
+            "ctime_ns": 1789445208184223219,
+            "atime_ns": 1789447702868272682
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api",
+            "dev": 64512,
+            "inode": 833479,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 7,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789445207175217930,
+            "ctime_ns": 1789445207175217930,
+            "atime_ns": 1789446072243874719
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts",
+            "dev": 64512,
+            "inode": 833681,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 7,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823933941870,
+            "ctime_ns": 1789441823933941870,
+            "atime_ns": 1789441824046942527
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts/common",
+            "dev": 64512,
+            "inode": 833682,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 2,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823695940486,
+            "ctime_ns": 1789441823695940486,
+            "atime_ns": 1789441824046942527
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+            "dev": 64512,
+            "inode": 833684,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 1,
+            "size": 3378,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823675940369,
+            "ctime_ns": 1789446141962255978,
+            "atime_ns": 1789446151747309523
+          }
+        ]
+      },
+      {
+        "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+        "sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505",
+        "ancestry": [
+          {
+            "path": "/",
+            "dev": 64512,
+            "inode": 2,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 25,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789447870251214254,
+            "ctime_ns": 1789447870251214254,
+            "atime_ns": 1789447869703211173
+          },
+          {
+            "path": "/usr",
+            "dev": 64512,
+            "inode": 655363,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 12,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1770682617000000000,
+            "ctime_ns": 1782852545999705574,
+            "atime_ns": 1789421203067000000
+          },
+          {
+            "path": "/usr/local",
+            "dev": 64512,
+            "inode": 655385,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 10,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1770682617000000000,
+            "ctime_ns": 1782852554803714303,
+            "atime_ns": 1789421203067000000
+          },
+          {
+            "path": "/usr/local/lib",
+            "dev": 64512,
+            "inode": 672033,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 4,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789440210247617878,
+            "ctime_ns": 1789440210247617878,
+            "atime_ns": 1789440410567133609
+          },
+          {
+            "path": "/usr/local/lib/llm-server",
+            "dev": 64512,
+            "inode": 833471,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 4,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789445208184223219,
+            "ctime_ns": 1789445208184223219,
+            "atime_ns": 1789447702868272682
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api",
+            "dev": 64512,
+            "inode": 833479,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 7,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789445207175217930,
+            "ctime_ns": 1789445207175217930,
+            "atime_ns": 1789446072243874719
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts",
+            "dev": 64512,
+            "inode": 833681,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 7,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823933941870,
+            "ctime_ns": 1789441823933941870,
+            "atime_ns": 1789441824046942527
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts/install",
+            "dev": 64512,
+            "inode": 833700,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 2,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823850941387,
+            "ctime_ns": 1789441823850941387,
+            "atime_ns": 1789441824063942626
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+            "dev": 64512,
+            "inode": 833703,
+            "uid": 0,
+            "gid": 0,
+            "mode": 420,
+            "nlink": 1,
+            "size": 28916,
+            "allocated_bytes": 32768,
+            "mtime_ns": 1789441823839941323,
+            "ctime_ns": 1789441823841941335,
+            "atime_ns": 1789441824063942626
+          }
+        ]
+      }
+    ],
+    "registered_identity_only": {
+      "schema_version": 1,
+      "roots": {
+        "backups": "/data/backups",
+        "build": "/data/build",
+        "containerd": "/data/containerd",
+        "docker": "/data/docker",
+        "hf_cache": "/data/hf-cache",
+        "logs": "/data/logs",
+        "models": "/data/models-large",
+        "secrets": "/data/services/secrets",
+        "services": "/data/services",
+        "state": "/data/services/installer"
+      },
+      "data": {
+        "path": "/data",
+        "mount": "/data",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+        "fstype": "ext4",
+        "source": "/dev/sdb1",
+        "device": "8:17",
+        "parents": [
+          "/dev/sdb",
+          "/dev/sdb1"
+        ]
+      },
+      "models": {
+        "path": "/data/models-large",
+        "mount": "/data/models-large",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+        "fstype": "ext4",
+        "source": "/dev/sdc1",
+        "device": "8:33",
+        "parents": [
+          "/dev/sdc",
+          "/dev/sdc1"
+        ]
+      },
+      "storage_mode": "existing",
+      "verified_roles": [
+        "data",
+        "models"
+      ]
+    },
+    "root_mount": {
+      "target": "/",
+      "source": "/dev/mapper/ubuntu--vg-ubuntu--lv",
+      "fstype": "ext4",
+      "uuid": "bc752bce-bb3f-4802-8adf-69c45a88689d",
+      "maj:min": "252:0"
+    },
+    "logs_ancestry": [
+      {
+        "path": "/",
+        "dev": 64512,
+        "inode": 2,
+        "uid": 0,
+        "gid": 0,
+        "mode": 493,
+        "nlink": 25,
+        "size": 4096,
+        "allocated_bytes": 4096,
+        "mtime_ns": 1789447870251214254,
+        "ctime_ns": 1789447870251214254,
+        "atime_ns": 1789447869703211173
+      },
+      {
+        "path": "/data",
+        "dev": 2065,
+        "inode": 2,
+        "uid": 0,
+        "gid": 0,
+        "mode": 493,
+        "nlink": 13,
+        "size": 4096,
+        "allocated_bytes": 4096,
+        "mtime_ns": 1789439649114270885,
+        "ctime_ns": 1789439649114270885,
+        "atime_ns": 1783173265812576007
+      },
+      {
+        "path": "/data/logs",
+        "dev": 2065,
+        "inode": 47972353,
+        "uid": 0,
+        "gid": 1000,
+        "mode": 1517,
+        "nlink": 18,
+        "size": 4096,
+        "allocated_bytes": 4096,
+        "mtime_ns": 1789448409538588902,
+        "ctime_ns": 1789448409538588902,
+        "atime_ns": 1789441863174169951
+      }
+    ]
+  },
+  "backend_before_unlink": {
+    "container": {
+      "exit_code": 0,
+      "stdout": "\"7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78\" \"sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9\" 243279 \"running\" \"2026-09-15T04:09:20.746242473Z\" 0\n",
+      "stderr": ""
+    },
+    "process": {
+      "pid": 243279,
+      "uid": 0,
+      "comm": "llama-server",
+      "start_ticks": 2367582
+    }
+  },
+  "quiescence_before_unlink": {
+    "utc": "2026-09-15T05:00:12.451363+00:00",
+    "established_api_connections": 0,
+    "request_sent": false,
+    "last_slot_event_in_tail": {
+      "event": "slot_stopped_processing",
+      "timestamp": "2026-09-15T04:32:15.806020433Z"
+    },
+    "pass": true
+  },
+  "archive_directory_final": {
+    "path": "/data/logs/rootspace-recovery-20260915-archive",
+    "dev": 2065,
+    "inode": 47972640,
+    "uid": 0,
+    "gid": 0,
+    "mode": 448,
+    "nlink": 2,
+    "size": 4096,
+    "allocated_bytes": 4096,
+    "mtime_ns": 1789448411291604232,
+    "ctime_ns": 1789448411291604232,
+    "atime_ns": 1789448409538588902
+  },
+  "archives_final": [
+    {
+      "path": "/data/logs/rootspace-recovery-20260915-archive/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+      "dev": 2065,
+      "inode": 47972641,
+      "uid": 0,
+      "gid": 0,
+      "mode": 256,
+      "nlink": 1,
+      "size": 970436608,
+      "allocated_bytes": 970440704,
+      "mtime_ns": 1789446869471533227,
+      "ctime_ns": 1789448410146594221,
+      "atime_ns": 1789446866852518081
+    },
+    {
+      "path": "/data/logs/rootspace-recovery-20260915-archive/_usr_bin_python3.12.0.crash",
+      "dev": 2065,
+      "inode": 47972642,
+      "uid": 0,
+      "gid": 0,
+      "mode": 256,
+      "nlink": 1,
+      "size": 608314664,
+      "allocated_bytes": 608321536,
+      "mtime_ns": 1789446866852518081,
+      "ctime_ns": 1789448411660607457,
+      "atime_ns": 1789446866853518087
+    }
+  ],
+  "identity_final": {
+    "guard_sources": [
+      {
+        "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+        "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d",
+        "ancestry": [
+          {
+            "path": "/",
+            "dev": 64512,
+            "inode": 2,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 25,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789447870251214254,
+            "ctime_ns": 1789447870251214254,
+            "atime_ns": 1789447869703211173
+          },
+          {
+            "path": "/usr",
+            "dev": 64512,
+            "inode": 655363,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 12,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1770682617000000000,
+            "ctime_ns": 1782852545999705574,
+            "atime_ns": 1789421203067000000
+          },
+          {
+            "path": "/usr/local",
+            "dev": 64512,
+            "inode": 655385,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 10,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1770682617000000000,
+            "ctime_ns": 1782852554803714303,
+            "atime_ns": 1789421203067000000
+          },
+          {
+            "path": "/usr/local/lib",
+            "dev": 64512,
+            "inode": 672033,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 4,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789440210247617878,
+            "ctime_ns": 1789440210247617878,
+            "atime_ns": 1789440410567133609
+          },
+          {
+            "path": "/usr/local/lib/llm-server",
+            "dev": 64512,
+            "inode": 833471,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 4,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789445208184223219,
+            "ctime_ns": 1789445208184223219,
+            "atime_ns": 1789447702868272682
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api",
+            "dev": 64512,
+            "inode": 833479,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 7,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789445207175217930,
+            "ctime_ns": 1789445207175217930,
+            "atime_ns": 1789446072243874719
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts",
+            "dev": 64512,
+            "inode": 833681,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 7,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823933941870,
+            "ctime_ns": 1789441823933941870,
+            "atime_ns": 1789441824046942527
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts/common",
+            "dev": 64512,
+            "inode": 833682,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 2,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823695940486,
+            "ctime_ns": 1789441823695940486,
+            "atime_ns": 1789441824046942527
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+            "dev": 64512,
+            "inode": 833684,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 1,
+            "size": 3378,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823675940369,
+            "ctime_ns": 1789446141962255978,
+            "atime_ns": 1789446151747309523
+          }
+        ]
+      },
+      {
+        "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+        "sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505",
+        "ancestry": [
+          {
+            "path": "/",
+            "dev": 64512,
+            "inode": 2,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 25,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789447870251214254,
+            "ctime_ns": 1789447870251214254,
+            "atime_ns": 1789447869703211173
+          },
+          {
+            "path": "/usr",
+            "dev": 64512,
+            "inode": 655363,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 12,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1770682617000000000,
+            "ctime_ns": 1782852545999705574,
+            "atime_ns": 1789421203067000000
+          },
+          {
+            "path": "/usr/local",
+            "dev": 64512,
+            "inode": 655385,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 10,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1770682617000000000,
+            "ctime_ns": 1782852554803714303,
+            "atime_ns": 1789421203067000000
+          },
+          {
+            "path": "/usr/local/lib",
+            "dev": 64512,
+            "inode": 672033,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 4,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789440210247617878,
+            "ctime_ns": 1789440210247617878,
+            "atime_ns": 1789440410567133609
+          },
+          {
+            "path": "/usr/local/lib/llm-server",
+            "dev": 64512,
+            "inode": 833471,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 4,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789445208184223219,
+            "ctime_ns": 1789445208184223219,
+            "atime_ns": 1789447702868272682
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api",
+            "dev": 64512,
+            "inode": 833479,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 7,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789445207175217930,
+            "ctime_ns": 1789445207175217930,
+            "atime_ns": 1789446072243874719
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts",
+            "dev": 64512,
+            "inode": 833681,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 7,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823933941870,
+            "ctime_ns": 1789441823933941870,
+            "atime_ns": 1789441824046942527
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts/install",
+            "dev": 64512,
+            "inode": 833700,
+            "uid": 0,
+            "gid": 0,
+            "mode": 493,
+            "nlink": 2,
+            "size": 4096,
+            "allocated_bytes": 4096,
+            "mtime_ns": 1789441823850941387,
+            "ctime_ns": 1789441823850941387,
+            "atime_ns": 1789441824063942626
+          },
+          {
+            "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+            "dev": 64512,
+            "inode": 833703,
+            "uid": 0,
+            "gid": 0,
+            "mode": 420,
+            "nlink": 1,
+            "size": 28916,
+            "allocated_bytes": 32768,
+            "mtime_ns": 1789441823839941323,
+            "ctime_ns": 1789441823841941335,
+            "atime_ns": 1789441824063942626
+          }
+        ]
+      }
+    ],
+    "registered_identity_only": {
+      "schema_version": 1,
+      "roots": {
+        "backups": "/data/backups",
+        "build": "/data/build",
+        "containerd": "/data/containerd",
+        "docker": "/data/docker",
+        "hf_cache": "/data/hf-cache",
+        "logs": "/data/logs",
+        "models": "/data/models-large",
+        "secrets": "/data/services/secrets",
+        "services": "/data/services",
+        "state": "/data/services/installer"
+      },
+      "data": {
+        "path": "/data",
+        "mount": "/data",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+        "fstype": "ext4",
+        "source": "/dev/sdb1",
+        "device": "8:17",
+        "parents": [
+          "/dev/sdb",
+          "/dev/sdb1"
+        ]
+      },
+      "models": {
+        "path": "/data/models-large",
+        "mount": "/data/models-large",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+        "fstype": "ext4",
+        "source": "/dev/sdc1",
+        "device": "8:33",
+        "parents": [
+          "/dev/sdc",
+          "/dev/sdc1"
+        ]
+      },
+      "storage_mode": "existing",
+      "verified_roles": [
+        "data",
+        "models"
+      ]
+    },
+    "root_mount": {
+      "target": "/",
+      "source": "/dev/mapper/ubuntu--vg-ubuntu--lv",
+      "fstype": "ext4",
+      "uuid": "bc752bce-bb3f-4802-8adf-69c45a88689d",
+      "maj:min": "252:0"
+    },
+    "logs_ancestry": [
+      {
+        "path": "/",
+        "dev": 64512,
+        "inode": 2,
+        "uid": 0,
+        "gid": 0,
+        "mode": 493,
+        "nlink": 25,
+        "size": 4096,
+        "allocated_bytes": 4096,
+        "mtime_ns": 1789447870251214254,
+        "ctime_ns": 1789447870251214254,
+        "atime_ns": 1789447869703211173
+      },
+      {
+        "path": "/data",
+        "dev": 2065,
+        "inode": 2,
+        "uid": 0,
+        "gid": 0,
+        "mode": 493,
+        "nlink": 13,
+        "size": 4096,
+        "allocated_bytes": 4096,
+        "mtime_ns": 1789439649114270885,
+        "ctime_ns": 1789439649114270885,
+        "atime_ns": 1783173265812576007
+      },
+      {
+        "path": "/data/logs",
+        "dev": 2065,
+        "inode": 47972353,
+        "uid": 0,
+        "gid": 1000,
+        "mode": 1517,
+        "nlink": 18,
+        "size": 4096,
+        "allocated_bytes": 4096,
+        "mtime_ns": 1789448409538588902,
+        "ctime_ns": 1789448409538588902,
+        "atime_ns": 1789441863174169951
+      }
+    ]
+  },
+  "root_after": {
+    "available_bytes": 5208223744,
+    "free_including_reserved_bytes": 6001995776,
+    "total_bytes": 15186501632
+  },
+  "data_after": {
+    "available_bytes": 1337941749760,
+    "free_including_reserved_bytes": 1447909584896,
+    "total_bytes": 2163348520960
+  },
+  "full_registered_guard": {
+    "exit_code": 0,
+    "stdout": "{\"capacity\": {\"data_available_bytes\": 1337941749760, \"model_available_bytes\": 2590890250240, \"root_available_bytes\": 5208223744, \"shared_model_filesystem\": false}, \"data\": {\"device\": \"8:17\", \"fstype\": \"ext4\", \"mount\": \"/data\", \"parents\": [\"/dev/sdb\", \"/dev/sdb1\"], \"path\": \"/data\", \"source\": \"/dev/sdb1\", \"uuid\": \"8daf56f1-5649-4163-9d87-919c2d271875\"}, \"models\": {\"device\": \"8:33\", \"fstype\": \"ext4\", \"mount\": \"/data/models-large\", \"parents\": [\"/dev/sdc\", \"/dev/sdc1\"], \"path\": \"/data/models-large\", \"source\": \"/dev/sdc1\", \"uuid\": \"a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a\"}, \"roots\": {\"backups\": \"/data/backups\", \"build\": \"/data/build\", \"containerd\": \"/data/containerd\", \"docker\": \"/data/docker\", \"hf_cache\": \"/data/hf-cache\", \"logs\": \"/data/logs\", \"models\": \"/data/models-large\", \"secrets\": \"/data/services/secrets\", \"services\": \"/data/services\", \"state\": \"/data/services/installer\"}, \"schema_version\": 1, \"storage_mode\": \"existing\", \"verified_roles\": [\"data\", \"models\"], \"warnings\": [\"root filesystem has less than 6 GiB free\"]}\n",
+    "stderr": ""
+  },
+  "full_registered_root_guard": {
+    "exit_code": 0,
+    "stdout": "{\"capacity\": {\"data_available_bytes\": 1337941749760, \"model_available_bytes\": 2590890250240, \"root_available_bytes\": 5208223744, \"shared_model_filesystem\": false}, \"data\": {\"device\": \"8:17\", \"fstype\": \"ext4\", \"mount\": \"/data\", \"parents\": [\"/dev/sdb\", \"/dev/sdb1\"], \"path\": \"/data\", \"source\": \"/dev/sdb1\", \"uuid\": \"8daf56f1-5649-4163-9d87-919c2d271875\"}, \"models\": {\"device\": \"8:33\", \"fstype\": \"ext4\", \"mount\": \"/data/models-large\", \"parents\": [\"/dev/sdc\", \"/dev/sdc1\"], \"path\": \"/data/models-large\", \"source\": \"/dev/sdc1\", \"uuid\": \"a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a\"}, \"root_payload_scan\": {\"files_inspected\": 4273, \"large_payload_threshold_bytes\": 134217728, \"status\": \"pass\"}, \"roots\": {\"backups\": \"/data/backups\", \"build\": \"/data/build\", \"containerd\": \"/data/containerd\", \"docker\": \"/data/docker\", \"hf_cache\": \"/data/hf-cache\", \"logs\": \"/data/logs\", \"models\": \"/data/models-large\", \"secrets\": \"/data/services/secrets\", \"services\": \"/data/services\", \"state\": \"/data/services/installer\"}, \"schema_version\": 1, \"storage_mode\": \"existing\", \"verified_roles\": [\"data\", \"models\"], \"warnings\": [\"root filesystem has less than 6 GiB free\"]}\n",
+    "stderr": ""
+  },
+  "backend_final": {
+    "container": {
+      "exit_code": 0,
+      "stdout": "\"7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78\" \"sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9\" 243279 \"running\" \"2026-09-15T04:09:20.746242473Z\" 0\n",
+      "stderr": ""
+    },
+    "process": {
+      "pid": 243279,
+      "uid": 0,
+      "comm": "llama-server",
+      "start_ticks": 2367582
+    }
+  },
+  "quiescence_final": {
+    "utc": "2026-09-15T05:00:12.921023+00:00",
+    "established_api_connections": 0,
+    "request_sent": false,
+    "last_slot_event_in_tail": {
+      "event": "slot_stopped_processing",
+      "timestamp": "2026-09-15T04:32:15.806020433Z"
+    },
+    "pass": true
+  },
+  "candidate_references_final": {
+    "checked_processes": 1108,
+    "references": [],
+    "errors": [],
+    "crash_handlers": []
+  },
+  "originals_absent": true,
+  "source_allocated_bytes_released": 1578762240,
+  "observed_available_increase_bytes": 1578762240,
+  "completed_utc": "2026-09-15T05:00:12.981924+00:00",
+  "healthy": true,
+  "vm_recovery_ownership": "RELEASED",
+  "released_utc": "2026-09-15T05:00:12.981933+00:00",
+  "no_further_vm_calls_scheduled": true
+}

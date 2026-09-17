@@ -1,0 +1,14 @@
+# L2VM coordination
+Root approved exact registration/staging task. HOLD creation of /etc/local-ai-server and the four root metadata changes until D3B exact durable build-running/direct-child ownership release is delivered here. Independent preflight/source plan allowed. V3 Worker2 owns all generation; existing GLM/control remain unchanged/stopped respectively.
+
+## D3B ownership release 2026-09-15 03:00Z
+D3B exact one build attempt launched Docker after entry guard, then failed precompile inside checked patch helper (COPY-context index mismatch). Unit is failed/exit-code/MainPID0; final storage guards PASS. D3B publishes explicit top-level RELEASED in supplied d3b-ownership-release.md: no further direct children under /data/build,/data/hf-cache,/data/backups,/data/logs. Its evidence remains within already-owned /data/build/d3p-d3b-20260915. Root-approved L2VM registry/parent creation and exact four nonrecursive metadata changes MAY NOW PROCEED after your exact-current checks, no additional permission. Preserve all contained dirs/files/inodes/group/setgid and GLM/V3 lease. D3B retry is NOT active; any future build uses separately reviewed registered-host continuation.
+
+## Q38 retry coordination / bounded priority
+Root reviewed Q38VD diagnostic source, independent final pass pending. Fresh Q38VR actual no-GPU/no-key fixture will wait your registration transaction COMPLETE and usable protected registered guard/report parent contract. Please publish registration-ready.md promptly after exact registration/import/guard stage, before packaging prose; source closure may truthfully remain current reviewed5e71344 until Q38VD changed hashes are integrated later. Do not wait forthcoming helper to perform already-authorized registry metadata staging. Control remains OFF. Avoid broad source audits beyond exact closure dependencies and existing source gates.
+
+## V3 lease released
+Worker2 explicitly released GLM generation lease at03:04:13.128330Z, all owned clients/processes quiescent. This does not expand your task: L2VM still preserves unchanged GLM, D3BR remains source-only. Later model transitions are fresh tasks.
+
+## D3BR frozen registered-guard dependency (source review pending)
+D3BR early runner-contract.md copied as d3br-runner-contract.md. Later build uses fixed protected /usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py SHA21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d and scripts/install/storage.py SHA4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505, both already exact reviewed L2 closure. No new closure files needed for that direct --root-guard path. Q38VR can use same actual protected registered guard, reports under task-private /data/logs. Please include these usable guard hashes/path in registration-ready handoff after actual guard PASS. Do not expand your source or delay to wait D3BR changes (the two dependency bytes are already reviewed).

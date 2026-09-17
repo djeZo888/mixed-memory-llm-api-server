@@ -1,0 +1,13 @@
+{
+  "quiet_grep_secret_scan": "PASS_NO_MATCHES",
+  "first_scan_correction": "Added -- before leading-dash regex; first invocation was command syntax error, not a match",
+  "remote_urls_credential_free": true,
+  "all_evidence_json_parse": "PASS",
+  "monitor_offline_checks": 5,
+  "independent_local_report_review": "PASS_AFTER_LIFECYCLE_WRITE_WORDING_CORRECTION",
+  "production_source_changed": false,
+  "installer_work": "NOT_PERFORMED",
+  "no_vm_calls_after_final_report_transfer": true,
+  "raw_key_body_prompt_environment_not_packaged": true,
+  "report_copy_whitespace": "One trailing empty EOF line removed from cheap-core report copy only; exact task-local source preserved. Diff uses zero context to avoid blank context whitespace."
+}

@@ -1,0 +1,26 @@
+"""Offline bounded loading-gap and duration negatives; no VM calls."""
+import ast, pathlib, threading, time, json
+root=pathlib.Path(__file__).resolve().parent
+text=(root/'transition.py').read_text();tree=ast.parse(text)
+fn=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='monitor_load')
+core=(root/'cheap-core.py').read_text()
+assert 'smaps' not in core and '"Pss"' not in core
+assert 'if row["time"] >= status["StartedAt"]:' in core
+assert 'timeout=max(.001,deadline-begin)' in core
+assert all(x not in (root/'run-operator.py').read_text() for x in ('probe_deployment','inspect_container','urlopen','sleep('))
+results=[]
+for gap,duration,expected in [(1,.1,None),(2.637,.1,None),(9.9,.1,None),(10.01,.1,'true_producer_gap_over_10_seconds'),(1,10.01,'true_sample_duration_over_10_seconds')]:
+ obs=[];events=[];errors=[]
+ class Event:
+  stopped=False
+  def is_set(self):return self.stopped
+  def wait(self,t):
+   if len(obs)>=2:self.stopped=True
+ event=Event()
+ def sample(*args):return {'sample_end_monotonic':100+(gap if len(obs) else 0),'sample_elapsed_seconds':duration}
+ env={'state_new':lambda v:{},'admission':{'idle_full':{'vmstat':{}},'containers':{'native1m':{'Id':'test'}}},'sample_state':{},'time':time,'stop_monitor':event,'inspect_container':lambda c,t:{'State':{'Running':True}},'new_identity':[{'id':'test'}],'cheap_sample':sample,'LOADING_FRESHNESS_SECONDS':10.,'SLOW_SAMPLE_SECONDS':2.,'observations':obs,'emit':lambda p,**kw:events.append({'phase':p,**kw}),'heartbeat':[0],'Error':RuntimeError,'monitor_fail':lambda reason,**kw:errors.append(reason)}
+ exec(compile(ast.Module(body=[fn],type_ignores=[]),'monitor-function','exec'),env);env['monitor_load']()
+ assert errors==([] if expected is None else [expected]),(gap,duration,errors)
+ if gap>2 and gap<=10 and duration<10:assert any(e['phase']=='slow_loading_sample' for e in events)
+ results.append({'producer_gap_seconds':gap,'duration_seconds':duration,'expected_failure':expected,'actual_failure':errors,'pass':True})
+(root/'trial/monitor-offline-checks.json').write_text(json.dumps({'checks':results,'cheap_pss_absent':True,'controller_pure_drain':True,'fresh_startedat_log_filter':True},indent=2));print('5 loading bound/slow-sample checks PASS; no VM calls')

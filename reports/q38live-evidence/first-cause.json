@@ -1,0 +1,33 @@
+{
+  "phase": "FIRST_NATIVE_FAILURE",
+  "context": 131072,
+  "exit_code": 2,
+  "status": "SAFE_ORIGIN",
+  "code": "actual_image_fixture_failed",
+  "launch_failure": {
+    "captured": 0,
+    "engine_calls": 0,
+    "first_exception_class": "LaunchError",
+    "result": 1
+  },
+  "origin": {
+    "filename": "run_pinned_image.py",
+    "line": 163,
+    "exception_class": "FixtureFailure"
+  },
+  "first_existing_failure_code": "server_mode_unsupported",
+  "frames": [
+    {
+      "filename": "sglang38_file_auth.py",
+      "line": 404
+    },
+    {
+      "filename": "sglang38_file_auth.py",
+      "line": 258
+    },
+    {
+      "filename": "sglang38_file_auth.py",
+      "line": 241
+    }
+  ]
+}

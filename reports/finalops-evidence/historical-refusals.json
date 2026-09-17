@@ -1,0 +1,26 @@
+[
+  {
+    "capture_directory": "worker-private-reboot-20260917T075629Z",
+    "error_type": "AssertionError",
+    "healthy_backend_stop_attempted": false,
+    "phase": "FINALOPS_BLOCKED",
+    "reason": "report_parent_mode",
+    "utc": "2026-09-17T07:56:49.170700+00:00"
+  },
+  {
+    "capture_directory": "worker-private-cleanup_dry_run-20260917T080826Z",
+    "error_type": "JSONDecodeError",
+    "healthy_backend_stop_attempted": false,
+    "phase": "FINALOPS_BLOCKED",
+    "reason": "operation_failed_private_stderr",
+    "utc": "2026-09-17T08:08:46.981008+00:00"
+  },
+  {
+    "capture_directory": "worker-private-cleanup_apply-20260917T083143Z",
+    "error_type": "AssertionError",
+    "healthy_backend_stop_attempted": false,
+    "phase": "FINALOPS_BLOCKED",
+    "reason": "accepted_running_state_drift",
+    "utc": "2026-09-17T08:32:04.197256+00:00"
+  }
+]

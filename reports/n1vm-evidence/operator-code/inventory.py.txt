@@ -1,0 +1,74 @@
+import os,stat,json,hashlib,subprocess,datetime
+from pathlib import Path
+BASE=Path('/data/services/n1vm-20260915')
+D3=Path('/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common')
+GUARDS={'.gitkeep':'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855','require-data-mounted.sh':'5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f','root-disk-guard.sh':'2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813'}
+def run(args): return subprocess.check_output(args,text=True,timeout=60)
+def meta(p):
+ m=p.lstat(); return {'uid':m.st_uid,'gid':m.st_gid,'mode':oct(stat.S_IMODE(m.st_mode)),'inode':m.st_ino,'device':m.st_dev,'nlink':m.st_nlink,'size':m.st_size,'mtime_ns':m.st_mtime_ns,'ctime_ns':m.st_ctime_ns}
+def protect(p):
+ for q in [*reversed(p.parents),p]:
+  m=q.lstat(); assert stat.S_ISDIR(m.st_mode) and m.st_uid==0 and not m.st_mode&0o022, str(q)
+def write(name,obj):
+ raw=(json.dumps(obj,indent=2,sort_keys=True)+'\n').encode() if not isinstance(obj,str) else obj.encode()
+ fd=os.open(BASE/name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+ with os.fdopen(fd,'wb') as f: f.write(raw); f.flush(); os.fsync(f.fileno())
+guard_metadata={}
+for name,sha in GUARDS.items():
+ p=D3/name; protect(p.parent); m=p.lstat()
+ assert stat.S_ISREG(m.st_mode) and m.st_uid==0 and m.st_nlink==1 and not m.st_mode&0o022
+ assert hashlib.sha256(p.read_bytes()).hexdigest()==sha
+ for q in [*reversed(p.parents),p]: guard_metadata[str(q)]=meta(q)
+ guard_metadata[str(p)]['sha256']=sha
+mounts=[]
+for target,uuid in [('/data','8daf56f1-5649-4163-9d87-919c2d271875'),('/data/models-large','a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a')]:
+ rows=json.loads(run(['findmnt','-J','--mountpoint',target,'-o','TARGET,SOURCE,UUID,FSTYPE']))['filesystems']
+ assert len(rows)==1 and rows[0]['target']==target and rows[0]['uuid']==uuid and rows[0]['fstype']=='ext4'
+ mounts+=rows
+free=os.statvfs('/').f_bavail*os.statvfs('/').f_frsize
+assert free>=4*1024**3,'STOP root free below 4GiB'
+print(run([str(D3/'require-data-mounted.sh')]),end='')
+protect(BASE.parent); assert not os.path.lexists(BASE), 'preexisting task evidence path'
+BASE.mkdir(mode=0o700); os.chown(BASE,0,0); os.chmod(BASE,0o700)
+(BASE/'tmp').mkdir(mode=0o700)
+os.environ['TMPDIR']=str(BASE/'tmp'); os.umask(0o077)
+print(run([str(D3/'root-disk-guard.sh'),'--report',str(BASE/'root-guard-before.md')]),end='')
+write('guard-identity-before.json',{'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'mounts':mounts,'root_available_bytes':free,'metadata':guard_metadata})
+units=['llm-private-'+role+'.'+suffix for role in ('control','glm','qwen38') for suffix in ('socket','service')]
+destinations=['/usr/local/lib/llm-server/private-network/private_network.py','/etc/llm-server/network.json']+['/etc/systemd/system/'+u for u in units]
+parents={}; missing_dirs=set()
+for d in destinations:
+ p=Path(d); assert not os.path.lexists(p),'preexisting destination '+d
+ for q in reversed(p.parents):
+  if not os.path.lexists(q): missing_dirs.add(str(q)); continue
+  protect(q); parents[str(q)]=meta(q)
+for p in ['/etc/llm-server/private-network-state.json','/run/llm-private-network.lock','/etc/systemd/system/multi-user.target.wants/llm-private-glm.socket']:
+ assert not os.path.lexists(p),'preexisting owned side effect '+p
+unitpaths=run(['systemd-analyze','unit-paths']).splitlines()
+unitpaths+=['/etc/systemd/system','/run/systemd/system','/usr/local/lib/systemd/system','/usr/lib/systemd/system','/lib/systemd/system','/run/systemd/generator','/run/systemd/generator.early','/run/systemd/generator.late','/run/systemd/transient','/etc/systemd/system.control','/run/systemd/system.control']
+for base in set(unitpaths):
+ for u in units:
+  suffix=u.rsplit('.',1)[1]
+  for name in [u,u+'.d',u+'.wants',u+'.requires',u+'.upholds',suffix+'.d','llm-.'+suffix+'.d','llm-private-.'+suffix+'.d']:
+   p=Path(base)/name; assert not os.path.lexists(p),'preexisting unit/override '+str(p)
+  if Path(base).is_dir():
+   for p in Path(base).glob('*.'+'*'+'/'+u): assert not os.path.lexists(p),'preexisting dependency '+str(p)
+unit_before={}
+for u in units:
+ s=run(['systemctl','show',u,'--property=LoadState,ActiveState,SubState,UnitFileState,FragmentPath,DropInPaths'])
+ fields=dict(l.split('=',1) for l in s.splitlines() if '=' in l)
+ assert fields['LoadState']=='not-found' and fields['ActiveState']=='inactive', (u,fields)
+ unit_before[u]=fields
+rules=run(['/usr/sbin/iptables','-w','5','-t','filter','-S'])
+assert 'LLM-PRIVATE-IN' not in rules and 'llm-private-n1s-v1' not in rules,'preexisting chain/tag'
+listeners=run(['ss','-H','-lntp'])
+selected=[s for s in listeners.splitlines() if any(':'+str(p)+' ' in s for p in (30000,30002,30004))]
+assert len(selected)==1 and '127.0.0.1:30002 ' in selected[0], selected
+container_id='bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55'
+x=json.loads(run(['docker','inspect',container_id]))[0]
+assert x['State']['Running'] and x['Image']=='sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62'
+command={'Path':x['Path'],'Args':x['Args'],'Entrypoint':x['Config']['Entrypoint'],'Cmd':x['Config']['Cmd']}
+identity={'id':x['Id'],'image':x['Image'],'name':x['Name'],'started_at':x['State']['StartedAt'],'pid':x['State']['Pid'],'restart_count':x['RestartCount'],'running':x['State']['Running'],'command_sha256':hashlib.sha256(json.dumps(command,sort_keys=True).encode()).hexdigest(),'network_mode':x['HostConfig']['NetworkMode']}
+write('inventory-before.json',{'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'absent_destinations':destinations,'new_parentdirs':sorted(missing_dirs),'existing_parents':parents,'unit_search_paths':sorted(set(unitpaths)),'units':unit_before,'listeners':selected,'model':identity,'systemd_version':run(['dpkg-query','--show','--showformat=${Version}','systemd']),'filter_sha256':hashlib.sha256(rules.encode()).hexdigest()})
+write('filter-before.txt',rules)
+print(json.dumps({'inventory':'PASS','evidence_root':str(BASE),'root_available_bytes':free,'new_parentdirs':sorted(missing_dirs),'systemd_version':run(['dpkg-query','--show','--showformat=${Version}','systemd']),'listeners':selected,'model':identity},indent=2))

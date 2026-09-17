@@ -1,0 +1,357 @@
+{
+  "result": "PASS_DRY_RUN",
+  "mutation_plan": [
+    {
+      "path": "/data/models-large",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o2755"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o2755"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/.f1a-acquisition.lock",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/chat_template.jinja",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/config.json",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/generation_config.json",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/merges.txt",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00001-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00002-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00003-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00004-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00005-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00006-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00007-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00008-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00009-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00010-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00011-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00012-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00013-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00014-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00015-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00016-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00017-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00018-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00019-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00020-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00021-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00022-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00023-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00024-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00025-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00026-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00027-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00028-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00029-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00030-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00031-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00032-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00033-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00034-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00035-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00036-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00037-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00038-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00039-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model-00040-of-00040.safetensors",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/model.safetensors.index.json",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/tokenizer.json",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/tokenizer_config.json",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    },
+    {
+      "path": "/data/models-large/qwen3-coder-next-fp8/vocab.json",
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644"
+    }
+  ],
+  "before_guard": {
+    "mounts": {
+      "/data": {
+        "target": "/data",
+        "source": "/dev/sdb1",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+        "fstype": "ext4",
+        "options": "rw,relatime"
+      },
+      "/data/models-large": {
+        "target": "/data/models-large",
+        "source": "/dev/sdc1",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+        "fstype": "ext4",
+        "options": "rw,relatime"
+      },
+      "root_available_bytes": 5228740608,
+      "root_warning_below_6_gib": true
+    },
+    "report": "/data/build/f1d-qwen-20260915/evidence/root-qwen-seal-dryrun-before-127166.md",
+    "sha256": "7800d59f2d13d71d10f4711bb36e7beb2dc47cffdec161e0ac1a2e2b20061f36"
+  },
+  "after_guard": {
+    "mounts": {
+      "/data": {
+        "target": "/data",
+        "source": "/dev/sdb1",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+        "fstype": "ext4",
+        "options": "rw,relatime"
+      },
+      "/data/models-large": {
+        "target": "/data/models-large",
+        "source": "/dev/sdc1",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+        "fstype": "ext4",
+        "options": "rw,relatime"
+      },
+      "root_available_bytes": 5228740608,
+      "root_warning_below_6_gib": true
+    },
+    "report": "/data/build/f1d-qwen-20260915/evidence/root-qwen-seal-dryrun-after-127166.md",
+    "sha256": "33b609f7b3aaaaee306d795a67b16adc3deba4873df9065e6ec751e203f87441"
+  },
+  "independently_reread_all_weight_bytes": false,
+  "independent_small_assets_hashed": 8
+}

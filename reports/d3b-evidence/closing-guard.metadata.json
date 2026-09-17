@@ -1,0 +1,24 @@
+{
+  "canonical_guards": "PASS",
+  "canonical_report_path": "/data/build/d3p-d3b-20260915/evidence/canonical-closing.md",
+  "canonical_report_sha256": "7a8ab0eaa86fe2c30d7a8a4228ec94169ac73d3a3b6495b31bbfdc3c5e431511",
+  "exact_uuid_checks": "PASS",
+  "measured_at": "2026-09-15T03:06:34.405744+00:00",
+  "mounts": [
+    {
+      "fstype": "ext4",
+      "options": "rw,relatime",
+      "target": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    {
+      "fstype": "ext4",
+      "options": "rw,relatime",
+      "target": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    }
+  ],
+  "registry_parent_present": false,
+  "root_free_bytes": 5210214400,
+  "root_stop_below_bytes": 4294967296
+}

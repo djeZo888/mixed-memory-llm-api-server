@@ -1,0 +1,23 @@
+{
+  "released_at": "2026-09-15T03:58:45.033307+00:00",
+  "owned_request_process_count": 0,
+  "owned_prepare_process_count": 0,
+  "owned_sampler_process_count": 0,
+  "owned_accounting_ssh_children": 0,
+  "remote_sampler_process_count": 0,
+  "request_lock_free": true,
+  "server_complete_response_finish_reason": "stop",
+  "native_slot_release_timestamp": "2026-09-15T03:54:24.963157913Z",
+  "native_port_established_socket_rows": 0,
+  "owned_tunnel_pid": 31379,
+  "tunnel_cleanup": "EXITED_AND_ABSENT",
+  "local_port": 54597,
+  "local_listener_count": 0,
+  "control_path_removed": true,
+  "protected_key_exactbytes_unchanged": true,
+  "private_checkpoint_preserved": true,
+  "checkpoint_status": "PENDING_RECONCILIATION",
+  "failure_class": "cold_cache_NOT_TESTED",
+  "lease": "RELEASED",
+  "highest_proven_window": null
+}

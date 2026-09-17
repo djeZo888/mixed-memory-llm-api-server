@@ -1,0 +1,46 @@
+{
+  "checks": [
+    {
+      "producer_gap_seconds": 1,
+      "duration_seconds": 0.1,
+      "expected_failure": null,
+      "actual_failure": [],
+      "pass": true
+    },
+    {
+      "producer_gap_seconds": 2.637,
+      "duration_seconds": 0.1,
+      "expected_failure": null,
+      "actual_failure": [],
+      "pass": true
+    },
+    {
+      "producer_gap_seconds": 9.9,
+      "duration_seconds": 0.1,
+      "expected_failure": null,
+      "actual_failure": [],
+      "pass": true
+    },
+    {
+      "producer_gap_seconds": 10.01,
+      "duration_seconds": 0.1,
+      "expected_failure": "true_producer_gap_over_10_seconds",
+      "actual_failure": [
+        "true_producer_gap_over_10_seconds"
+      ],
+      "pass": true
+    },
+    {
+      "producer_gap_seconds": 1,
+      "duration_seconds": 10.01,
+      "expected_failure": "true_sample_duration_over_10_seconds",
+      "actual_failure": [
+        "true_sample_duration_over_10_seconds"
+      ],
+      "pass": true
+    }
+  ],
+  "cheap_pss_absent": true,
+  "controller_pure_drain": true,
+  "fresh_startedat_log_filter": true
+}

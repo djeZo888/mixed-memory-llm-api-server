@@ -1,0 +1,68 @@
+{
+  "packages": {
+    "sglang": "0.5.14",
+    "torch": "2.11.0+cu130",
+    "transformers": "5.8.1",
+    "flashinfer-python": "0.6.12"
+  },
+  "source_root": "/sgl-workspace/sglang/python/sglang",
+  "source_files": {
+    "launch_server.py": {
+      "sha256": "00cee4f587a9cdf03e12f013a74b004cb3946c8fc142403f1e6abe462b8d7344",
+      "bytes": 2236
+    },
+    "srt/server_args.py": {
+      "sha256": "e1eebd7fa8e5b0c7cb31371e24b4700dd2cdfe6c4b6edd0e417c6a71fade48b8",
+      "bytes": 327177
+    },
+    "srt/server_args_config_parser.py": {
+      "sha256": "3966b1206230239aa81def9fd0008d0eab68e5ce11b7bc39f369f5570287a1e6",
+      "bytes": 6655
+    },
+    "srt/utils/auth.py": {
+      "sha256": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+      "bytes": 7289
+    },
+    "srt/utils/common.py": {
+      "sha256": "edc951a16ab2f64e24e444a90d5372016a8379492a381ccaaad423ee58278426",
+      "bytes": 140210
+    },
+    "srt/entrypoints/engine.py": {
+      "sha256": "6017fb6065df0af3d3ec2dede0b38287f1cabf78f47a2509b72e419fdad5ffa1",
+      "bytes": 55653
+    },
+    "srt/entrypoints/http_server.py": {
+      "sha256": "7854f5bec953d0b69874d4220f4982249d24017f2a1225ddd9ea3e5b7ada1d23",
+      "bytes": 90480
+    },
+    "srt/models/qwen3_next.py": {
+      "sha256": "60d0803a40b52127cf107b62894e31a2ba3f4e84868c3193d563cb595ce4e3d0",
+      "bytes": 48118
+    },
+    "srt/function_call/function_call_parser.py": {
+      "sha256": "5daea0c687ca503921289d891a6ec5721612d5df3a1e69f2296da81aa9cbe7d7",
+      "bytes": 11071
+    },
+    "srt/function_call/qwen3_coder_detector.py": {
+      "sha256": "642294f642f563fadd52bff2ee3a204e30fe26f33c7e5306d47e4609ef15f129",
+      "bytes": 19931
+    },
+    "srt/layers/quantization/fp8.py": {
+      "sha256": "9c70651e86645c00b4bc8a42391be9ed13f34ca8b33a569eff3a167fa473152b",
+      "bytes": 91125
+    },
+    "srt/layers/quantization/fp8_kernel.py": {
+      "sha256": "a33479707adde550f5e95222c23c73e8f95dbf5860dad415e6d5722a890d030f",
+      "bytes": 70451
+    },
+    "srt/layers/quantization/fp8_utils.py": {
+      "sha256": "3fd8442f6f9a90418cfb98e62b99d2951060e1f69e21a40f3c1c54c33b48b578",
+      "bytes": 64815
+    },
+    "srt/environ.py": {
+      "sha256": "f8a56f1f4b56332b54bee2aaaa81237018e09e208ecd49dc0f59e15f95cdb743",
+      "bytes": 46120
+    }
+  },
+  "limits": "Installed source inspection only; no model, GPU or service started."
+}

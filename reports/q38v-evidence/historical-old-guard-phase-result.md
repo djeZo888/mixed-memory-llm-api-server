@@ -1,0 +1,13 @@
+# Q38V phase result — FAIL / STOP before fixture launch
+
+- Phase: `PRE_LAUNCH_CURRENT_ROOT_DISK_GUARD`.
+- Earliest concrete failure: `GUARD_FIXED_TMP_OUTPUT_PERMISSION_DENIED`. Installed `/data/services/mixed-memory-llm-api-server/scripts/common/root-disk-guard.sh`, line 249, attempted its fixed `/tmp/root-disk-guard-require-data-mounted.out` redirection and received permission denied before its nested data guard executed. Root guard exit 1 / STOP; direct data guard exit 0.
+- Installed failing guard SHA256: `13ea9adb021c3027fd6484c74e92c0dba19ec8abca779be45687b43df895ee0d`.
+- Source: `f17ec2c37d4c706752dd3fbe1978519983578b71`; tree `a667371eac8b46642ab87ff8e1d1be26ab501ca4`. Provenance `1f0a49bcbfb0b499d0432b9d4b4b387f6fe5338e084e9e0f7c9578e6f77b1acd`; launcher `380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be`; fixture driver `9cdea022e21f1859e097be51094b9d2822dfc1387f8756448dd7b14d8a251d2c`. All fixture/support hashes: `source-identities.json`.
+- Exact data UUID `8daf56f1-5649-4163-9d87-919c2d271875` and model-volume UUID `a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a` verified pre/post. Root free bytes: 5,219,024,896 pre; 5,218,979,840 post (above 4 GiB). Guard warns below 6 GiB.
+- Fixture launches: 0. Containers created / removed / remaining: 0 / 0 / 0. No unknown helper-owned identities. Source staging did not begin; `/data/build/q38v-20260915` was not created. Both contexts remain NOT_TESTED.
+- Actual image identity/domain: NOT_INSPECTED in Q38V because the storage gate stopped first. Expected repository/platform manifest `lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262`, config `sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813`, linux/amd64. Prior Q38A acquisition is supplied context, not this task's independent verification.
+- Private root-owned evidence: ai-vm `/data/q38v-20260915/`; sanitized category: `/data/q38v-20260915/sanitized-failure.json`. No auth receipt or READY flag exists from Q38V. Raw evidence stays on ai-vm.
+- No retry, cleanup workaround, source fix, model activation or other runtime diagnosis. The current guard's attempted `/tmp` output conflicts with the requested all-data temporary-file policy; it was refused by the host. Existing `/tmp` paths were not altered or deleted by a follow-up action.
+- Published 2026-09-15T02:35:56.770088+00:00; elapsed from worker task launcher timestamp: 232.8 seconds. Actual fixture elapsed: 0 seconds.
+- Next action: separate bounded guard-source/launch-contract diagnosis and renewed reviewed gate execution. Q38V does not authorize a workaround or model activation. GLM32K, Q38A and D3T were not operated on.

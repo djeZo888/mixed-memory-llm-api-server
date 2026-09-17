@@ -1,0 +1,15 @@
+{
+  "boot_policy": "resume",
+  "canonical_lease": "RELEASED",
+  "no_active_requests": true,
+  "no_inflight_command": true,
+  "no_more_vm_operations": true,
+  "phase": "FINAL_CORRECTED_RELEASE",
+  "public_catalog": "EMPTY_DEADLINE_EXCEEDED_NOT_ACCEPTED",
+  "request_ownership": "RELEASED_TO_ROOT_NOT_APIACCEPT",
+  "result_sha256": "f2ca9d78f5065d965ca070186ab5f5ce2f82bd271ddf7c5d17bbefcf50032eee",
+  "running_container": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+  "status": "BLOCKED_CONTROL_DEADLINE",
+  "utc": "2026-09-17T06:19:31.376096+00:00",
+  "vm_result": "/data/logs/apideploy-20260917/result.json"
+}

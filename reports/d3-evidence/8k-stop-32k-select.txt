@@ -1,0 +1,52 @@
+{
+  "action": "stop",
+  "dry_run": true,
+  "image_deletion": "none",
+  "model_file_deletion": "none",
+  "selected": "glm-5.3-ud-q4-k-xl-8k",
+  "wait_for_readiness": true,
+  "writes": false
+}
+{
+  "boot_policy": "manual",
+  "container": {
+    "deployment": "glm-5.3-ud-q4-k-xl-8k",
+    "id": "c25aacfaf71d3fe640ef9cf12fd95ae44cc81b67879b140139b5e020c12bf9b5",
+    "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "instance": "ai-vm-d0b",
+    "legacy": false,
+    "name": "llmctl-glm-5.3-8k",
+    "owner": "mixed-memory-llm-api-server"
+  },
+  "container_running": false,
+  "desired": "stopped",
+  "failure": null,
+  "last_selected": "qwen3-30b-a3b-instruct-2507",
+  "observed": "stopped",
+  "schema_version": 2,
+  "selected": "glm-5.3-ud-q4-k-xl-8k",
+  "state_persisted": true,
+  "updated_at": 1789433321882761399
+}
+{
+  "boot_policy": "manual",
+  "container": null,
+  "container_running": false,
+  "desired": "stopped",
+  "failure": null,
+  "last_selected": "glm-5.3-ud-q4-k-xl-8k",
+  "observed": "stopped",
+  "schema_version": 2,
+  "selected": "glm-5.3-ud-q4-k-xl-32k",
+  "state_persisted": true,
+  "updated_at": 1789433322927532851
+}
+{
+  "action": "start",
+  "dry_run": true,
+  "image_deletion": "none",
+  "model_file_deletion": "none",
+  "selected": "glm-5.3-ud-q4-k-xl-32k",
+  "wait_for_readiness": true,
+  "writes": false
+}

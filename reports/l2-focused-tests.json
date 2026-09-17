@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "scope": "focused source fixtures only; no installer suite or native runtime",
+  "status": "PASS",
+  "total_tests": 255,
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_l2_advertised_endpoints.py",
+        "-v"
+      ],
+      "file_sha256": "e9051b6990ba3f2aa4b6f2e04fbd8b262cc62d65fc899fac2183ed70513ff409",
+      "status": "PASS",
+      "count": 6,
+      "exit_code": 0,
+      "output_sha256": "eaceee08878850a923958831539f051540b1a289b01853af69616b7dc3f7cd85"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_l2_live_snapshot.py",
+        "-v"
+      ],
+      "file_sha256": "ffdb2bddb40c35bdcf1bb15b21695b51671dc91f7c09cf5e4f1a1bf0bf1ccf7d",
+      "status": "PASS",
+      "count": 5,
+      "exit_code": 0,
+      "output_sha256": "31a77721ac17cde6782172bc86e4c37d357e96ba31cba513d69f6547cc7111b9"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_l2_control_runtime.py",
+        "-v"
+      ],
+      "file_sha256": "adf6269c3f4531be271a4bc8a1f799329160096835dd8979113ff849a617e67a",
+      "status": "PASS",
+      "count": 7,
+      "exit_code": 0,
+      "output_sha256": "f4f8afc9d7867cd8daa427ff0b28d8f88e0235e34e6dd9154c1149f70f3e5534"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_control_catalog.py",
+        "-v"
+      ],
+      "file_sha256": "db1d29d91c6a45590f39079bcd4ab9157f8b65fea6962d8194cdbf700b13b97a",
+      "status": "PASS",
+      "count": 22,
+      "exit_code": 0,
+      "output_sha256": "e975ed4254b11e6bf115b3182fe20ec25fd1d5873ff55e1fabc45984797b7aa2"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_control_core_guards.py",
+        "-v"
+      ],
+      "file_sha256": "5927a92c9b982351f86f10246f7bad7b8f0725506a6bc0200ada10fdedd5f4cd",
+      "status": "PASS",
+      "count": 28,
+      "exit_code": 0,
+      "output_sha256": "6bcc49c81bcd8838a6f002ac88e5ecd286810d88da858f8b25a88205fb29bdf4"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_control_discovery.py",
+        "-v"
+      ],
+      "file_sha256": "d06595bdb4deafb048a570823734ee4258f0407bcd909cf9ee035af8f5a19fbc",
+      "status": "PASS",
+      "count": 13,
+      "exit_code": 0,
+      "output_sha256": "979ba9def004351a10b926a815b9fd7ee93663b6bb5b416f69f1aaca4ab6a293"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_control_installation.py",
+        "-v"
+      ],
+      "file_sha256": "f76e7bb6da51e20a08fd4fda09cb92067f1c6e49b5099f8b608b8fc092d91534",
+      "status": "PASS",
+      "count": 17,
+      "exit_code": 0,
+      "output_sha256": "55f376b9b5fab5fb1cd4d813a7fc96c32c93e51f628320f30297c7749c475b96"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_control_production.py",
+        "-v"
+      ],
+      "file_sha256": "cd1c255db3546eb38cb45a38b6f6776eeea16841a3454a47ca48d1e378e5b057",
+      "status": "PASS",
+      "count": 16,
+      "exit_code": 0,
+      "output_sha256": "5039c0b6801c040fa725e3d92c8724942163b798e2909f25540fc377ce6aefcc"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_control_integration.py",
+        "-v"
+      ],
+      "file_sha256": "10a54aa6f3be20e70a264430afcd5009a7366ae30f625c0fee64f60528e04d86",
+      "status": "PASS",
+      "count": 24,
+      "exit_code": 0,
+      "output_sha256": "70c144acfa2e76ba362a4f4acc90d62e068d6cf1ca3f818dce45b17d339e4ad6"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_control_receipts.py",
+        "-v"
+      ],
+      "file_sha256": "601a3126168d0eefe598498b048ce4eb61eb04941b4741e77408e7718686b429",
+      "status": "PASS",
+      "count": 11,
+      "exit_code": 0,
+      "output_sha256": "81facca0ef99f194b475f595599432f00c0a32f740a5c45207702a3d9cd34861"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_control_restart.py",
+        "-v"
+      ],
+      "file_sha256": "06660207465d0f2c686cf4d58e553062b08e00cefde772b8d4bbd504d85ffd67",
+      "status": "PASS",
+      "count": 1,
+      "exit_code": 0,
+      "output_sha256": "a333ba567794dfbaccd138b12fef315729bb3f72f82ded9898a99f99c280aa66"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_control_http_transport.py",
+        "-v"
+      ],
+      "file_sha256": "f3c2bd243ed495840701e2e08229e8d06b070b839c4475f2dd9bca91cacdc738",
+      "status": "PASS",
+      "count": 31,
+      "exit_code": 0,
+      "output_sha256": "5fb4a84a1c836dbb2217fdfa634ec9fce7fb853fe3e19066cb961536813aa666"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/test_control_journal.py",
+        "-v"
+      ],
+      "file_sha256": "9ce60f4cbb51eb1a7e78b0ef7724c529e14934d7eb2442a0cfc00811e0444cb7",
+      "status": "PASS",
+      "count": 19,
+      "exit_code": 0,
+      "output_sha256": "bde95f15c7d292f5aba841cb541a62b683a1be78555670a06de25852c2110a08"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/lifecycle/test_real_storage_roles.py",
+        "-v"
+      ],
+      "file_sha256": "b9f1f11928c2b13eec10ceeea8a92412190f65e950a319ddc1882aecb22a3271",
+      "status": "PASS",
+      "count": 12,
+      "exit_code": 0,
+      "output_sha256": "cab691d1960facb5ede7576b31746e029898dedb4aa2f53ef183bb2d3f676e95"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/install/test_storage_io_paths.py",
+        "-v"
+      ],
+      "file_sha256": "c9fbc35867c60ccf00c82094eecd61dd1a21bdfb2004b33d50313ccb88482b99",
+      "status": "PASS",
+      "count": 29,
+      "exit_code": 0,
+      "output_sha256": "b4959076b91336514fb3f011ea583595c8bff5e156d9e3bb4615e5cfad00b929"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "tests/lifecycle/test_storage_binding.py",
+        "-v"
+      ],
+      "file_sha256": "c6f0cb871b63b1fb24511d68756ca7edfcfeefdf033d2cb66b6222924bf310ca",
+      "status": "PASS",
+      "count": 14,
+      "exit_code": 0,
+      "output_sha256": "7551135d1e7c14829d0fe535246826d41df115686623486ea352b10e219dfd5f"
+    }
+  ],
+  "actual_linux_mount_loss": "NOT_TESTED",
+  "deployed_control_service": "NOT_TESTED",
+  "native_inference_and_private_network": "NOT_TESTED"
+}

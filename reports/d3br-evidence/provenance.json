@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "status": "PASS_SOURCE_AND_FOCUSED_WORKER_CHECKS",
+  "project_base_commit": "ec747134615f4f1d86cf455016aadc166d44be50",
+  "branch": "milestone/d3br-checked-build-corrections",
+  "source": {
+    "schema_version": 1,
+    "upstream_repository": "https://github.com/ggml-org/llama.cpp",
+    "upstream_commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+    "upstream_tree": "950999fe62b7fe55f44ab5b7394e3c8542f37f12",
+    "jinja_fix_ancestor": "ae9afff8d2c012ca760eb9c2adf41961cf6f6232",
+    "patch_file": "strict-model-chat.patch",
+    "patch_sha256": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b",
+    "derived_tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e"
+  },
+  "native_patch_and_manifest_byte_identical_to_base": true,
+  "derived_tree_verification": "unchanged declared tree from historical D3PD; this task recomputes fixture trees only",
+  "build_recipe_sha256": {
+    "containers/llama-cpp/Dockerfile.d3p": "704fe3dcbcddd4497147b2b12b09ac674cb1b7c2ce2b049197620691b6acd92a",
+    "containers/llama-cpp/Dockerfile.d3p.dockerignore": "875afccc85a373f21e7fc8197b2c91ffd6a8ae321aef56767a5099c7fe7d4761",
+    "containers/llama-cpp/prepare-d3p-source.py": "47be70ebc01f7f5ff6d790c510bc9bf1ef9cf604ed725449ec3e52548798138a",
+    "containers/llama-cpp/build-d3p-runtime.sh": "67c5124ff21ec4a0e56e8678b6e888300c11aa0aa33b2e05ffb80627e6bf3a9f",
+    "containers/llama-cpp/d3p-source.json": "a073747a339995e3dc6f1b509c7d977765d46f1959340ee4b2895230bf7c13c7",
+    "containers/llama-cpp/strict-model-chat.patch": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b"
+  },
+  "focused_test_sha256": {
+    "containers/llama-cpp/test_d3p_source.py": "fc26f99c3ed0f92f5262b0942052fe55fc1bce3e6339c99991fdcb29486ceacd",
+    "containers/llama-cpp/test_d3p_runner.py": "da9b5902b48083c1c425f1e958fd16aa4a20ee7386c54d96f8807262503d19dd"
+  },
+  "protected_guard_source": {
+    "installed_root": "/usr/local/lib/llm-server/control-api",
+    "source_sha256": {
+      "scripts/common/registered-storage.py": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d",
+      "scripts/install/storage.py": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505"
+    },
+    "installed_verification": "NOT_TESTED",
+    "additional_closure_dependency": null,
+    "registration": "/etc/local-ai-server/storage.json",
+    "registered_reports": "/data/logs/<run basename>/root-build-{before,after}.json",
+    "later_task_report_directory": "pre-created by authorized VM owner, root-owned mode 0700"
+  },
+  "historical_evidence_unchanged_sha256": {
+    "reports/d3pd-evidence/provenance.json": "1d3ca76e407a2f0bf553c916e18941373e2114baf6f1f6e21b1e7aa8469ad331",
+    "reports/d3pd-native-startup-diagnostic.md": "3b43f64f7c499845a77564859a8d7d4c694e34dd9940a10dabb9da2bb510d2c1",
+    "reports/d3p-evidence/provenance.json": "10bb70ac38be163bbc6fe7fecf7338d1e7d845df5365499db3fc0807559f4ee6",
+    "reports/d1-runtime-proof.json": "93f5ac6c302e10eef8408350d27090c917e150879702d9bfbad1adb803abb760"
+  },
+  "checks": {
+    "unmodified_baseline_helper": "PASS: two expected real index mismatch failures captured",
+    "helper_tests": "26/26 PASS",
+    "runner_tests": "26/26 PASS: 22 shell fixtures plus 4 mocked Storage writer-interface tests",
+    "exact_docker_command_and_native_patch_preservation": "PASS",
+    "author_and_committer": "CodexAIagent <133749519+djeZo888@users.noreply.github.com>",
+    "secret_scan_and_diff_check": "PASS"
+  },
+  "worker": {
+    "system": "Darwin",
+    "architecture": "arm64",
+    "python": "3.14.7",
+    "git": "git version 2.54.0 (Apple Git-157)"
+  },
+  "later_linux_build": {
+    "status": "NOT_TESTED",
+    "image_id": null,
+    "required_next": "Root review before ONE separately authorized actual build retry; bind revised recipe hashes"
+  },
+  "limits": [
+    "Copied/stat-invalidated fixture mechanism reproduced; actual Docker failure cause remains a candidate, not proven.",
+    "No VM access, Docker recipe build, native/CUDA compile, model operation, service action, installer flow or installer suite.",
+    "Runner metadata, sudo, Docker and registry are faked; actual Storage/mount verification is not executed.",
+    "Existing registered guard has a within-invocation concurrent registration removal limitation, documented for its owner; no external source edited."
+  ],
+  "evidence_sha256": {
+    "reports/d3br-build-source-corrections.md": "e3e293a1f809776452e2d2852b05fa80b370e24471417c1cc234e3dadf728691",
+    "reports/d3br-evidence/baseline-reproduction.txt": "0da85bb200292f2ff17e4990aedec466d1f4ecc0024518288334ce54cbbda389",
+    "reports/d3br-evidence/canonical-external-guards.json": "81c2b964a056cf8c974d75560070068d840adad4a5c33e88048b03e1fbe2254a",
+    "reports/d3br-evidence/coordination-input-final.md": "0d95e1e1abc15b330a55a49d3fd055b0d42109b10cfc3f8714ec89e412fe6c7d",
+    "reports/d3br-evidence/d3b-build-contract.md": "82f21cb3a225569f0b9bfc6e92f9ed7c3d409b3925fc077dca6c3cf1b3dab7fb",
+    "reports/d3br-evidence/d3b-ownership-release.md": "827c78d1050bd18c36a227dbf5e9dd009d6075b850b1ddb46412a53902ee3c3f",
+    "reports/d3br-evidence/helper-tests.txt": "30cae4513711d08f4fdd3c76e551981f6451778a38cb146112901a1e962f9243",
+    "reports/d3br-evidence/preservation.txt": "a30d86070526b5747bb549d17fa3d9aa2278f3bf4fa062fdb2b655c26dee082b",
+    "reports/d3br-evidence/repository-checks.txt": "0f6f8c8a7aa347af23e4176a4a37bedf50c42ab1e90b2ae8b719ffaf54906220",
+    "reports/d3br-evidence/runner-contract.md": "f45f09ffb2e3e5cf95bff192eb0f53165e2223ed92be23d512c34c8963f862e3",
+    "reports/d3br-evidence/runner-tests.txt": "3f025c938a2912d01f3b22f3c9667c1fa50685c584745bae852a1a0e2fbb403a"
+  }
+}

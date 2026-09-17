@@ -1,0 +1,9 @@
+{
+  "result": "PASS_EXACT_SOURCE",
+  "commit": "7b541017c3e1b2bda80676bcd31bc87d0a4507bc",
+  "root_approved_delta": [
+    "scripts/common/root-disk-guard.sh"
+  ],
+  "release": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915",
+  "guard_sha256": "2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813"
+}

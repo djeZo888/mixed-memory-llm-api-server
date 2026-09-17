@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "status": "PASS_BUILD_CLI_ENUMERATION_ONLY",
+  "runtime_id": "llama-cpp-v0.4.1-d3br",
+  "observed_utc": "2026-09-15T03:42:14.825136+00:00",
+  "run": "/data/build/d3p-d3b2-20260915",
+  "owner_commit": "c7155099e4d8d096b0e946352fbf01e3a9072ab9",
+  "actual_build_attempts": 1,
+  "build_started_utc": "2026-09-15T03:27:14Z",
+  "build_finished_utc": "2026-09-15T03:30:27Z",
+  "build_exit": 0,
+  "job_exit": 0,
+  "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+  "image_index_sha256": "86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+  "platform_manifest_sha256": "384a22a0b15b9668b89e4ec46ed7363f2bb02e91d3344db102411288551ef62b",
+  "image_config_sha256": "89a1ea2575d8a5ea2c2debd618d420ac03194b1c2d54b85972a8ebff850f3938",
+  "image_tag": "local/llama-cpp:v0.4.1-b29c606-cu132-sm120-d3p-43e4aeb5b63d",
+  "repo_digests": [
+    "local/llama-cpp@sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9"
+  ],
+  "platform": "linux/amd64",
+  "entrypoint": [
+    "/opt/llama/llama-server"
+  ],
+  "oci_labels": {
+    "local.d1.cuda.architectures": "120a-real",
+    "local.d3p.source.derived-tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+    "local.d3p.source.kind": "upstream-plus-checked-patch",
+    "local.d3p.source.patch-sha256": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b",
+    "local.d3p.source.revision-kind": "git-tree",
+    "local.d3p.source.upstream-commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+    "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+    "org.opencontainers.image.revision": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+    "org.opencontainers.image.source": "https://github.com/ggml-org/llama.cpp",
+    "org.opencontainers.image.version": "v0.4.1+d3p"
+  },
+  "source_revision": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+  "source_commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+  "source": {
+    "derived_commit": null,
+    "derived_tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+    "jinja_fix_ancestor": "ae9afff8d2c012ca760eb9c2adf41961cf6f6232",
+    "patch_file": "strict-model-chat.patch",
+    "patch_sha256": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b",
+    "schema_version": 1,
+    "source_state": "verified-patched",
+    "upstream_commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+    "upstream_repository": "https://github.com/ggml-org/llama.cpp",
+    "upstream_tree": "950999fe62b7fe55f44ab5b7394e3c8542f37f12"
+  },
+  "binary_sha256": "c81262fd063e9d2fc098d9e116d0ae742ca7ea37344ee3f4b56eb5d088206e0a",
+  "host_recipe_manifest_sha256": "87b03d3c2ebd3b4369c6014ccd1ca7fcfb502747f7bee0b81036f7f99c9409bb",
+  "image_recipe_manifest_sha256": "87b03d3c2ebd3b4369c6014ccd1ca7fcfb502747f7bee0b81036f7f99c9409bb",
+  "recipe_sha256": {
+    "Dockerfile.d3p": "704fe3dcbcddd4497147b2b12b09ac674cb1b7c2ce2b049197620691b6acd92a",
+    "Dockerfile.d3p.dockerignore": "875afccc85a373f21e7fc8197b2c91ffd6a8ae321aef56767a5099c7fe7d4761",
+    "prepare-d3p-source.py": "47be70ebc01f7f5ff6d790c510bc9bf1ef9cf604ed725449ec3e52548798138a",
+    "build-d3p-runtime.sh": "67c5124ff21ec4a0e56e8678b6e888300c11aa0aa33b2e05ffb80627e6bf3a9f",
+    "d3p-source.json": "a073747a339995e3dc6f1b509c7d977765d46f1959340ee4b2895230bf7c13c7",
+    "strict-model-chat.patch": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b"
+  },
+  "input_proof": {
+    "original_path": "/data/build/d3p-d3b2-20260915/evidence/runtime-proof.json",
+    "sha256": "1d500eae56d6e777b944b2492071c8b3dd28ea350b04f5c72da5b7bd70d052c9",
+    "projection": "Selected nonsecret build/source/CLI fields; device UUIDs, process samples and transient host identifiers omitted."
+  },
+  "cli": {
+    "status": "PASS_BUILD_HELP_VERSION_ONLY",
+    "cmake": {
+      "CMAKE_BUILD_TYPE:STRING": "Release",
+      "CMAKE_CUDA_ARCHITECTURES:UNINITIALIZED": "120a-real",
+      "CMAKE_CUDA_COMPILER:FILEPATH": "/usr/local/cuda/bin/nvcc",
+      "GGML_BACKEND_DL:BOOL": "ON",
+      "GGML_CPU_ALL_VARIANTS:BOOL": "ON",
+      "GGML_CUDA:BOOL": "ON",
+      "GGML_NATIVE:BOOL": "OFF",
+      "LLAMA_BUILD_APP:BOOL": "OFF",
+      "LLAMA_BUILD_EXAMPLES:BOOL": "OFF",
+      "LLAMA_BUILD_TESTS:BOOL": "OFF",
+      "LLAMA_BUILD_UI:BOOL": "OFF",
+      "LLAMA_USE_PREBUILT_UI:BOOL": "OFF"
+    },
+    "nvcc_version": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2026 NVIDIA Corporation\nBuilt on Thu_Mar_19_11:12:51_PM_PDT_2026\nCuda compilation tools, release 13.2, V13.2.78\nBuild cuda_13.2.r13.2/compiler.37668154_0\n",
+    "server_version": "version: 0.4.1-dev (build 62, commit b29c606)\nbuilt with GNU 13.3.0 for Linux x86_64\n",
+    "binary_sha256": "c81262fd063e9d2fc098d9e116d0ae742ca7ea37344ee3f4b56eb5d088206e0a",
+    "in_image_artifact_sha256": {
+      "CMakeCache.txt": "39e5fde134512560daf7aadfb086dcdc6963b990ff9332e7313b084ac839472b",
+      "source-provenance.json": "78dff11eb5911a4f792a7e9bd8e856f4379ad89c3e6d05300b9373be799d1765",
+      "nvcc-version.txt": "253e71ac127eda861ab854400b5d1a121c923c0250fc211e9ba98774ef6b8bbd",
+      "source-commit.txt": "d82648fc05e16c31240c75e48f54b4336d7c936fc0922464ed09aa1535827001",
+      "build-recipe-sha256.txt": "87b03d3c2ebd3b4369c6014ccd1ca7fcfb502747f7bee0b81036f7f99c9409bb",
+      "llama-server": "c81262fd063e9d2fc098d9e116d0ae742ca7ea37344ee3f4b56eb5d088206e0a",
+      "source-tree.txt": "f84522b781335726c60361231fa29b2b4fb6cf169ffb161769010ee0c25f8cab",
+      "build-packages.tsv": "71923fedc39f650bf1280b66cbeca141f981d64fa187a9107a3c53043d9984c4"
+    },
+    "source_provenance": {
+      "derived_commit": null,
+      "derived_tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+      "jinja_fix_ancestor": "ae9afff8d2c012ca760eb9c2adf41961cf6f6232",
+      "patch_file": "strict-model-chat.patch",
+      "patch_sha256": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b",
+      "schema_version": 1,
+      "source_state": "verified-patched",
+      "upstream_commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+      "upstream_repository": "https://github.com/ggml-org/llama.cpp",
+      "upstream_tree": "950999fe62b7fe55f44ab5b7394e3c8542f37f12"
+    },
+    "required_cli_flags": [
+      "--model",
+      "--host",
+      "--port",
+      "--alias",
+      "--api-key-file",
+      "--ctx-size",
+      "--parallel",
+      "--cpu-moe",
+      "--jinja",
+      "--no-webui",
+      "--n-gpu-layers",
+      "--split-mode",
+      "--tensor-split",
+      "--load-mode",
+      "--device",
+      "--chat-template-kwargs"
+    ],
+    "supported_cli_flags": [
+      "--model",
+      "--host",
+      "--port",
+      "--alias",
+      "--api-key-file",
+      "--ctx-size",
+      "--parallel",
+      "--cpu-moe",
+      "--jinja",
+      "--no-webui",
+      "--n-gpu-layers",
+      "--split-mode",
+      "--tensor-split",
+      "--load-mode",
+      "--device",
+      "--chat-template-kwargs"
+    ],
+    "additional_verified_cli_flags": [
+      "--n-cpu-moe"
+    ],
+    "supported_flags_for_d3rd": [
+      "--model",
+      "--host",
+      "--port",
+      "--alias",
+      "--api-key-file",
+      "--ctx-size",
+      "--parallel",
+      "--cpu-moe",
+      "--jinja",
+      "--no-webui",
+      "--n-gpu-layers",
+      "--split-mode",
+      "--tensor-split",
+      "--load-mode",
+      "--device",
+      "--chat-template-kwargs",
+      "--n-cpu-moe"
+    ],
+    "supported_load_modes": [
+      "auto",
+      "none",
+      "mmap",
+      "mlock",
+      "mmap+mlock",
+      "dio"
+    ],
+    "containers": [
+      {
+        "kind": "version",
+        "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+        "status": "exited",
+        "exit_code": 0,
+        "cli_sha256": "7a6fd8b560b5fb063561e2763bf3c2be1273d1e81bd1538f0528eb9321ec9005"
+      },
+      {
+        "kind": "help",
+        "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+        "status": "exited",
+        "exit_code": 0,
+        "cli_sha256": "a144e0605fbd0092e6e68cc51d1cdc3c3f8ea75bb63e2f53e4478ab2cde9e8a5"
+      }
+    ]
+  },
+  "device_enumeration": {
+    "status": "PASS_ENUMERATION_ONLY",
+    "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+    "exit_code": 0,
+    "devices": [
+      "CUDA0",
+      "CUDA1"
+    ],
+    "exact_device_lines": [
+      "CUDA0: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (97249 MiB, 79836 MiB free)",
+      "CUDA1: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (97249 MiB, 83724 MiB free)"
+    ],
+    "output_sha256": "a5ec45c7fca7431f3404106c7a3094a33a6475179b4d573ec0618faf45a08095"
+  }
+}

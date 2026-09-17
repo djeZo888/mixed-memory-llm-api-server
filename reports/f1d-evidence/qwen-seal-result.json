@@ -1,0 +1,33 @@
+{
+  "result": "PASS_SEALED",
+  "completion_manifest": "/data/services/llm-manager/acquisition/qwen3-coder-next-fp8.complete.json",
+  "completion_sha256": "5cd9737ba138962f05a83745ea646debd04adfd41dcbc40780269406df915471",
+  "seal_evidence": "/data/services/llm-manager/acquisition/f1d-qwen-seal-evidence.json",
+  "seal_evidence_sha256": "0d6cfcd28abe2094b7b6cfd7188bb3b79b71a73e835eb3f9bbc7efee5883aa16",
+  "backup": "/data/build/f1d-qwen-20260915/backups/qwen-metadata-pre.json",
+  "final_guard": {
+    "mounts": {
+      "/data": {
+        "target": "/data",
+        "source": "/dev/sdb1",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+        "fstype": "ext4",
+        "options": "rw,relatime"
+      },
+      "/data/models-large": {
+        "target": "/data/models-large",
+        "source": "/dev/sdc1",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+        "fstype": "ext4",
+        "options": "rw,relatime"
+      },
+      "root_available_bytes": 5228740608,
+      "root_warning_below_6_gib": true
+    },
+    "report": "/data/build/f1d-qwen-20260915/evidence/root-qwen-seal-final-128150.md",
+    "sha256": "72deb9e6c5c3aa444afea8fc7c01f160eb5ed2b940c7e795fcf339ed70fcafcf"
+  },
+  "independently_reread_all_weight_bytes": false,
+  "auth_gate_passed": false,
+  "inference": "NOT_TESTED"
+}

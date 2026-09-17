@@ -1,0 +1,10 @@
+{
+  "name": "local-opencode-client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Reviewed V0 client runtime pin; update with its lock and isolation verification",
+  "dependencies": {
+    "@opencode-ai/plugin": "1.18.31",
+    "opencode-ai": "1.18.31"
+  }
+}

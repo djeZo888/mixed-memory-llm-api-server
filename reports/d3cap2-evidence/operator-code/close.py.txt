@@ -1,0 +1,21 @@
+"""Reconcile already-exited owned container through Manager; no start/signal."""
+prior=json.loads(protected(REPORT/'final-result.json').read_bytes())
+cid=prior['containers']['native1m']['Id']
+private=json.loads(protected(REPORT/'private-baseline.json').read_bytes())
+before_guard=guard();quiet()
+sys.path.insert(0,str(SRC/'scripts'))
+from common.lifecycle_lease import acquire_lease
+with acquire_lease(blocking=False) as lease:
+    m=manager();before=m.read_state();assert before['container']['id']==cid and before['selected']==TARGET
+    c=m.trusted_container(before['container'])
+    assert c['Id']==cid and not c['State']['Running'] and c['State']['Pid']==0,'owned_container_not_exited'
+    after=m.dispatch('stop',lease=lease)
+    assert after['observed']=='stopped' and after['desired']=='stopped' and after['container_running'] is False and after['failure'] is None
+    assert after['boot_policy']=='manual' and after['container']['id']==cid
+assert key_state()==private['key'] and stable_files()==private['files']
+quiet();control_state();g=guard()
+assert not Path('/proc/273833').exists() and not Path('/proc/270294').exists()
+result={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'status':'STOP_CAPACITY_ALLOCATION_OBSERVED_ACCEPTANCE_FAILED','allocation_attempts':1,'generation_attempts':0,'actual_native_context_diagnostic':1048576,'actual_native_slot_context':1048576,'actual_native_slots':1,'actual_f16_kv_types':'NOT_ESTABLISHED_NATIVE_LOG_HAS_NO_DTYPE_RECORD','ready_health_models':'NOT_ACCEPTED_MONITOR_STOP_PRECEDED_STARTUP_COMPLETE','idle_native1m_pss':'NOT_MEASURED_NO_ACCEPTED_IDLE_READINESS','first_failure':'sample_gap_over_inherited_2_second_threshold','later_shutdown_host_swap_delta':prior['vmstat_delta'],'target_container_stopped':True,'target_container_exit_code':prior['containers']['native1m']['State']['ExitCode'],'target_oom_killed':False,'stale_state_reconciled_through_existing_Manager_stop':True,'state_before':before,'state_after':after,'guards_before':before_guard,'guards_final':g,'key_exact_bytes_metadata_unchanged':True,'instance_registry_network_control_manifest_unchanged':True,'allocation_assets_retained':True,'rollback':'NOT_INVOKED','occupied_near_1m':'NOT_TESTED','tiny_smoke':'NOT_RUN','canonical_lifecycle_lease_released':True,'sole_request_ownership_released':True,'owned_request_sampler_tunnel_processes':0,'owned_transition_pid_absent':True,'target_pid_absent':True,'native_api_established_connections':0,'no_further_vm_calls_after_report_transfer':True}
+write('closure-result.json',result)
+write('closure-after-report-guards.json',guard())
+emit('ownership_release',result=result)

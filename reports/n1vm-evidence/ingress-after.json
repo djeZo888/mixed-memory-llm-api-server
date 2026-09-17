@@ -1,0 +1,13 @@
+{
+  "utc": "2026-09-15T02:44:06.919852+00:00",
+  "owned_rules": [
+    "-N LLM-PRIVATE-IN",
+    "-A INPUT -d 10.156.100.60/32 -p tcp -m multiport --dports 30000,30002,30004 -m comment --comment llm-private-n1s-v1 -j LLM-PRIVATE-IN",
+    "-A LLM-PRIVATE-IN -i lo -m comment --comment \"llm-private-n1s-v1:loopback\" -j ACCEPT",
+    "-A LLM-PRIVATE-IN -s 10.156.100.0/24 -i enp6s18 -m comment --comment \"llm-private-n1s-v1:lan\" -j ACCEPT",
+    "-A LLM-PRIVATE-IN -m comment --comment \"llm-private-n1s-v1:deny\" -j DROP"
+  ],
+  "unrelated_filter_unchanged": true,
+  "receipt_original_filter_matches": true,
+  "receipt_sha256": "38969d24cf79aec51c821743cd4a035689b0b248b04c0f38080322bf8c9185a7"
+}

@@ -1,0 +1,20 @@
+{
+  "reviewed_head": "b7fe0816813848393570b629a11249b94629f6ed",
+  "bundle": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/control-fix.bundle",
+  "bundle_sha256": "4590bc46857c0d43043305ce8d31e7403af066d3aa52df2c1c9458715528ec14",
+  "advertised_ref": "refs/heads/milestone/server-completion-20260915",
+  "worker2_request_release": "2026-09-17T06:35:19Z",
+  "control_files": 77,
+  "data_files": 80,
+  "boot_files": 11,
+  "changed": {
+    "reports/l2-source-closure-sha256.json": "c3eb5943238f78b3aba23d8bc3e4edacda411baa129b09b3ec542d06c30b4491",
+    "scripts/control/adapter.py": "5b488c3c3916d80c33fdeed82da3f81792a279a17d70b479b6472b19f2744e0d",
+    "scripts/control/core.py": "b7f3f0b589abcbbc8fc0de65cbd610422ce6b56d63f6db2131b530f963f5eaac",
+    "scripts/control/http.py": "c8b186030b1d9006b6df8bec31ef627b47d5862c779a04af87c738525a967a1b"
+  },
+  "serving_profile_runtime_launcher_fixture_bytes": "UNCHANGED",
+  "private_capture": "/Users/agent/CodexProjects/llm-orchestration/tasks/APIDEPLOY-20260917/worker-private-control-fix-vm",
+  "request_and_response_keys": "NEVER_LOGGED",
+  "previous_blocker": "retained reports/apideploy-evidence/result.json is historical and superseded for control readiness by control-fix-ready.json"
+}

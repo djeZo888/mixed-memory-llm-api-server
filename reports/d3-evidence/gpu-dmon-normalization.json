@@ -1,0 +1,6 @@
+{
+  "source": "8k-generation-gpu-dmon.txt",
+  "operation": "removed trailing ASCII whitespace only; all headers and numeric observations retained",
+  "original_sha256": "9231abf5fdb48e425b97427bd98c84d4f044107ceaf36913055c3f11b79e9ebc",
+  "normalized_sha256": "683a006b5e02ad00cb2c2303e79f856f041b9d1557caa69b1210e8fb50f64de1"
+}

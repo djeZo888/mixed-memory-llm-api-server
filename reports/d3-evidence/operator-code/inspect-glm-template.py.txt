@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+"""Read only GGUF metadata, without importing or loading inference software."""
+import argparse, hashlib, json, pathlib, re, struct
+p=argparse.ArgumentParser(description=__doc__); p.add_argument('--output',required=True,type=pathlib.Path); a=p.parse_args()
+path=pathlib.Path('/data/models-large/glm-5.3-ud-q4-k-xl/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf')
+f=path.open('rb'); assert f.read(4)==b'GGUF'
+def scalar(t):
+ sizes={0:'B',1:'b',2:'H',3:'h',4:'I',5:'i',6:'f',7:'?',10:'Q',11:'q',12:'d'}
+ if t==8: return f.read(scalar(10)).decode('utf-8')
+ if t==9:
+  typ=scalar(4); count=scalar(10); assert count<10000000
+  return [scalar(typ) for _ in range(count)]
+ s=sizes[t]; return struct.unpack('<'+s,f.read(struct.calcsize(s)))[0]
+version=scalar(4); nt=scalar(10); nk=scalar(10); values={}
+for _ in range(nk):
+ k=scalar(8); t=scalar(4); v=scalar(t)
+ if k in {'general.architecture','general.name','tokenizer.chat_template'} or k.endswith(('.context_length','.expert_count','.expert_used_count','.block_count')): values[k]=v
+text=values.pop('tokenizer.chat_template'); snippets=[]
+for line in text.splitlines():
+ if any(s in line for s in ['clear_thinking','reasoning_effort','<think>','</think>','tool_call_id']): snippets.append(line[:400])
+out={'gguf_version':version,'tensor_count_first_shard':nt,'metadata_count':nk,'identity':values,'template_sha256':hashlib.sha256(text.encode()).hexdigest(),'template_bytes':len(text.encode()),'selected_template_lines':snippets[:30],'scope':'metadata read only; no model loading'}
+a.output.write_text(json.dumps(out,indent=2)+'\n'); print(json.dumps(out,indent=2))

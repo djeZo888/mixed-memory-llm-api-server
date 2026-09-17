@@ -1,0 +1,18 @@
+import datetime,json,os,stat,subprocess,time
+from pathlib import Path
+s=os.statvfs('/')
+r=subprocess.run(['/usr/bin/python3','-I','-B','/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py','--root-guard','--json'],capture_output=True,text=True,timeout=45)
+rows=[]
+for root in ('/var/lib/systemd/coredump','/var/tmp','/tmp','/var/log'):
+    count=0
+    for parent,dirs,files in os.walk(root,followlinks=False):
+        dirs[:]=[d for d in dirs if not (Path(parent)/d).is_symlink()]
+        for name in files:
+            p=Path(parent)/name
+            try: st=p.lstat()
+            except OSError: continue
+            count+=1
+            if count>20000: raise RuntimeError('metadata_inventory_bound')
+            if stat.S_ISREG(st.st_mode) and st.st_size>=64*1024**2 and st.st_mtime>=time.time()-7200:
+                rows.append({'path':str(p),'size_bytes':st.st_size,'allocated_bytes':st.st_blocks*512,'mtime_utc':datetime.datetime.fromtimestamp(st.st_mtime,datetime.timezone.utc).isoformat(),'uid':st.st_uid,'gid':st.st_gid,'mode':oct(stat.S_IMODE(st.st_mode)),'dev':st.st_dev,'ino':st.st_ino})
+print(json.dumps({'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'root_available_bytes':s.f_bavail*s.f_frsize,'root_stop_bytes':4*1024**3,'registered_guard_exit':r.returncode,'registered_guard_message':r.stderr.strip(),'recent_large_file_metadata':sorted(rows,key=lambda x:x['allocated_bytes'],reverse=True)},indent=2))

@@ -1,0 +1,1287 @@
+{
+  "auth_receipt": false,
+  "cleanup_and_release": [
+    {
+      "independent_absence": {
+        "container_id": "2c3bc0dee123999b84eaf03bdc554bec40e7a12c773fca8470be2146b7fb9da1",
+        "container_name": "q38b-fixture-1949194761d85717ecb995adf34736e7",
+        "id_and_name_absent": true,
+        "status": "PASS"
+      },
+      "lifetime": {
+        "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+        "container_id": "2c3bc0dee123999b84eaf03bdc554bec40e7a12c773fca8470be2146b7fb9da1",
+        "container_name": "q38b-fixture-1949194761d85717ecb995adf34736e7",
+        "outcome": "FIXTURE_EXITED",
+        "runtime_inspect": {
+          "context": 131072,
+          "device_requests": [],
+          "driver_capabilities": "compute,utility",
+          "entrypoint": [
+            "python3"
+          ],
+          "host_devices": [],
+          "model_and_secret_mounts": "EMPTY_PRIVATE_TMPFS",
+          "network": "none",
+          "root_readonly": true,
+          "runtime": "nvidia",
+          "status": "PASS_HOST_INSPECT",
+          "visible_devices": "none"
+        }
+      },
+      "phase": "DIAGNOSTIC_NATIVE_TERMINAL",
+      "post_guards": "PENDING",
+      "status": "OBSERVATION_COMPLETE",
+      "utc": "2026-09-17T04:38:06.938131+00:00"
+    },
+    {
+      "independent_absence": {
+        "container_id": "2c3bc0dee123999b84eaf03bdc554bec40e7a12c773fca8470be2146b7fb9da1",
+        "container_name": "q38b-fixture-1949194761d85717ecb995adf34736e7",
+        "id_and_name_absent": true,
+        "status": "PASS"
+      },
+      "phase": "DIAGNOSTIC_FINAL",
+      "post_guards": "PASS",
+      "status": "OBSERVATION_COMPLETE",
+      "utc": "2026-09-17T04:38:07.406027+00:00"
+    },
+    {
+      "phase": "CANONICAL_LEASE_RELEASED",
+      "status": "QUIESCENT",
+      "utc": "2026-09-17T04:38:07.406178+00:00"
+    }
+  ],
+  "device_snapshots": [
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3821807327851,
+      "phase": "initial_container",
+      "pid": 1,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": []
+    },
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3821865756557,
+      "phase": "runner_before_cache_probe",
+      "pid": 45,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": []
+    },
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3821898846945,
+      "phase": "cache_verify_entry",
+      "pid": 46,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": []
+    },
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3830342033378,
+      "phase": "cache_verify_exit",
+      "pid": 46,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": []
+    },
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3831508793115,
+      "phase": "runner_after_cache_probe",
+      "pid": 45,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": []
+    },
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3832915984117,
+      "phase": "runner_after_torch_import",
+      "pid": 45,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": []
+    },
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3836416367093,
+      "phase": "runner_after_model_config_import",
+      "pid": 45,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": []
+    },
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3844203849924,
+      "phase": "runner_after_serving_imports",
+      "pid": 45,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": []
+    },
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3844229585669,
+      "phase": "runner_after_parser_template",
+      "pid": 45,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": []
+    },
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": false,
+          "gid": 0,
+          "major": 0,
+          "minor": 0,
+          "mode": "0755",
+          "path": "/dev/nvidia-caps",
+          "rdev": 0,
+          "st_mode": 16877,
+          "type": "directory",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3844413315469,
+      "phase": "parent_after_warmup-auth-failure",
+      "pid": 1,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-caps",
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": [
+        "/dev/nvidia-caps"
+      ]
+    },
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": false,
+          "gid": 0,
+          "major": 0,
+          "minor": 0,
+          "mode": "0755",
+          "path": "/dev/nvidia-caps",
+          "rdev": 0,
+          "st_mode": 16877,
+          "type": "directory",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3844472691041,
+      "phase": "runner_before_cache_probe",
+      "pid": 174,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-caps",
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": [
+        "/dev/nvidia-caps"
+      ]
+    },
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": false,
+          "gid": 0,
+          "major": 0,
+          "minor": 0,
+          "mode": "0755",
+          "path": "/dev/nvidia-caps",
+          "rdev": 0,
+          "st_mode": 16877,
+          "type": "directory",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3844506203896,
+      "phase": "cache_verify_entry",
+      "pid": 175,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-caps",
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": [
+        "/dev/nvidia-caps"
+      ]
+    },
+    {
+      "allowed_names": [
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "auth_receipt": false,
+      "entries": [
+        {
+          "allowed": false,
+          "gid": 0,
+          "major": 0,
+          "minor": 0,
+          "mode": "0755",
+          "path": "/dev/nvidia-caps",
+          "rdev": 0,
+          "st_mode": 16877,
+          "type": "directory",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 254,
+          "mode": "0666",
+          "path": "/dev/nvidia-modeset",
+          "rdev": 50174,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 0,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm",
+          "rdev": 130816,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 511,
+          "minor": 1,
+          "mode": "0666",
+          "path": "/dev/nvidia-uvm-tools",
+          "rdev": 130817,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        },
+        {
+          "allowed": true,
+          "gid": 0,
+          "major": 195,
+          "minor": 255,
+          "mode": "0666",
+          "path": "/dev/nvidiactl",
+          "rdev": 50175,
+          "st_mode": 8630,
+          "type": "character",
+          "uid": 0
+        }
+      ],
+      "marker": "Q38RETRY_DEVICE_SNAPSHOT",
+      "monotonic_ns": 3844521893296,
+      "phase": "parent_after_warmup-timeout",
+      "pid": 1,
+      "predicate_unchanged": true,
+      "relevant_names": [
+        "/dev/nvidia-caps",
+        "/dev/nvidia-modeset",
+        "/dev/nvidia-uvm",
+        "/dev/nvidia-uvm-tools",
+        "/dev/nvidiactl"
+      ],
+      "runtime_environment": {
+        "cuda_visible_devices_empty": true,
+        "driver_capabilities_exact_compute_utility": true,
+        "nvidia_visibility": "void",
+        "openblas_threads_one": true
+      },
+      "violating_names": [
+        "/dev/nvidia-caps"
+      ]
+    }
+  ],
+  "exit_code": 0,
+  "host_no_gpu_policy": {
+    "container_id": "2c3bc0dee123999b84eaf03bdc554bec40e7a12c773fca8470be2146b7fb9da1",
+    "phase": "NO_GPU_POLICY",
+    "policy": {
+      "CapDrop": [
+        "ALL"
+      ],
+      "DeviceCgroupRules": null,
+      "DeviceRequests": null,
+      "Devices": [],
+      "Memory": 8589934592,
+      "NetworkMode": "none",
+      "PidsLimit": 128,
+      "Privileged": false,
+      "ReadonlyRootfs": true,
+      "Runtime": "nvidia",
+      "SecurityOpt": [
+        "no-new-privileges"
+      ],
+      "Ulimits": [
+        {
+          "Hard": 1,
+          "Name": "core",
+          "Soft": 1
+        }
+      ]
+    },
+    "utc": "2026-09-17T04:37:43.657396+00:00"
+  },
+  "observations": [
+    {
+      "auth_receipt": false,
+      "baseline_predicate_unchanged": true,
+      "clauses": {
+        "returncode_is_one": true,
+        "stderr_empty": true,
+        "stdout_exact_marker": true
+      },
+      "marker": "Q38RETRY_WARMUP_CHILD_OPERANDS",
+      "phase_observation": {
+        "auth_receipt": false,
+        "deadline_monotonic": 11044.372776947,
+        "events": [
+          {
+            "monotonic_ns": 3844372811150,
+            "phase": "make_warmup_before_watchdog_start"
+          },
+          {
+            "monotonic_ns": 3844373030299,
+            "phase": "engine_start_entered"
+          },
+          {
+            "monotonic_ns": 3844384496502,
+            "phase": "engine_start_returning"
+          },
+          {
+            "monotonic_ns": 3844384563432,
+            "phase": "capture_uvicorn_entered"
+          },
+          {
+            "monotonic_ns": 3844384773630,
+            "phase": "synthetic_http_bound"
+          },
+          {
+            "monotonic_ns": 3844385157728,
+            "phase": "authenticated_warmup_entered"
+          },
+          {
+            "monotonic_ns": 3844386033155,
+            "phase": "authorized_http_model_info"
+          },
+          {
+            "monotonic_ns": 3844386045945,
+            "phase": "fault_marker_written"
+          }
+        ],
+        "exit_code": 1,
+        "exit_on_main_thread": true,
+        "scenario": "warmup-auth-failure",
+        "terminal": "os_exit",
+        "terminal_monotonic": 3844.386853851
+      },
+      "returncode": 1,
+      "scenario": "warmup-auth-failure",
+      "signal": null,
+      "stderr": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 40,
+        "classification": "exact_fault_marker",
+        "fault_marker_count": 1,
+        "safe_failure_metadata": null,
+        "sha256": "95696c2f88c8ba69b74900ec0c76dc71ae269edffad2de5d9dd08c5de1910613"
+      },
+      "timeouts_seconds": {
+        "child_process": 180,
+        "startup_watchdog": 7200,
+        "warmup_request": 600
+      }
+    },
+    {
+      "auth_receipt": false,
+      "baseline_predicate_unchanged": true,
+      "clauses": {
+        "returncode_is_one": false,
+        "stderr_empty": true,
+        "stdout_exact_marker": false
+      },
+      "marker": "Q38RETRY_WARMUP_CHILD_OPERANDS",
+      "phase_observation": {
+        "auth_receipt": false,
+        "deadline_monotonic": null,
+        "events": [],
+        "exit_code": null,
+        "exit_on_main_thread": true,
+        "failure_origin": {
+          "exception_class": "FixtureFailure",
+          "filename": "run_pinned_image.py",
+          "line": 673
+        },
+        "fixed_fixture_code": "cache_probe_child_failed",
+        "scenario": "warmup-timeout",
+        "terminal": "ordinary_exception",
+        "terminal_monotonic": 3844.511616113
+      },
+      "returncode": 2,
+      "scenario": "warmup-timeout",
+      "signal": null,
+      "stderr": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 331,
+        "classification": "safe_failure_json",
+        "fault_marker_count": 0,
+        "safe_failure_metadata": {
+          "cache_failure": {
+            "code": "gpu_device_node_present",
+            "failure_origin": {
+              "exception_class": "ProbeError",
+              "filename": "cache_probe.py",
+              "line": 199
+            },
+            "status": "FAIL"
+          },
+          "code": "actual_image_fixture_failed",
+          "origin": {
+            "exception_class": "FixtureFailure",
+            "filename": "run_pinned_image.py",
+            "line": 673
+          },
+          "status": "SAFE_ORIGIN"
+        },
+        "sha256": "ebbba9a422834739468d48bed149af34236c4fca2f523ec95bacf3deef7aa712"
+      },
+      "timeouts_seconds": {
+        "child_process": 180,
+        "startup_watchdog": 0.4,
+        "warmup_request": 600
+      }
+    }
+  ],
+  "original_fail_preserved": true,
+  "status": "OBSERVATION_COMPLETE",
+  "utc": "2026-09-17T04:38:06.837507+00:00"
+}

@@ -1,0 +1,52 @@
+{
+  "commit": "357358ab12914df209d54c895a59c94a41c84580",
+  "attempt": 1,
+  "diagnostic_only": true,
+  "files": {
+    "tests/lifecycle/sglang38_fixture/auth_native.py": {
+      "sha256": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+      "bytes": 7289,
+      "mode": "0444"
+    },
+    "tests/lifecycle/sglang38_fixture/cache_probe.py": {
+      "sha256": "7c942993329a9096b0de3712ff8bbd463407710802ae6285279f73e9c1a24725",
+      "bytes": 22895,
+      "mode": "0444"
+    },
+    "tests/lifecycle/sglang38_fixture/chat_template.jinja": {
+      "sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+      "bytes": 8952,
+      "mode": "0444"
+    },
+    "tests/lifecycle/sglang38_fixture/qwen38_config.json": {
+      "sha256": "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc",
+      "bytes": 51350,
+      "mode": "0444"
+    },
+    "tests/lifecycle/sglang38_fixture/run_fixture.py": {
+      "sha256": "8464259e02be237d8fa5e60122842bdf19f8782a964afdf3e5515d0da72f07e4",
+      "bytes": 41787,
+      "mode": "0444"
+    },
+    "tests/lifecycle/sglang38_fixture/run_pinned_image.py": {
+      "sha256": "bab26c22a99901ec17aa11790940800d080933e8b3d6e79230995b1b0b699620",
+      "bytes": 70341,
+      "mode": "0444"
+    },
+    "scripts/runtime/qwen38_oci.py": {
+      "sha256": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+      "bytes": 7121,
+      "mode": "0444"
+    },
+    "scripts/runtime/sglang38_file_auth.py": {
+      "sha256": "31889213cf96e3a059d52f07bc6581b9d3b7e1e070a8fa54c494028efb54128b",
+      "bytes": 22909,
+      "mode": "0444"
+    },
+    "tests/lifecycle/sglang38_fixture/provenance.json": {
+      "sha256": "6cb8c7667c75909c6b994e9138392cda095b006bfd47ba3709b63808669eaea8",
+      "bytes": 18162,
+      "mode": "0444"
+    }
+  }
+}

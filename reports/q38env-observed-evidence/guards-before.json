@@ -1,0 +1,151 @@
+{
+  "protected_hashes": [
+    {
+      "gid": 0,
+      "mode": "0o700",
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/root-disk-guard.sh",
+      "sha256": "2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813",
+      "uid": 0
+    },
+    {
+      "gid": 0,
+      "mode": "0o700",
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/require-data-mounted.sh",
+      "sha256": "5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f",
+      "uid": 0
+    },
+    {
+      "gid": 0,
+      "mode": "0o644",
+      "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+      "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d",
+      "uid": 0
+    },
+    {
+      "gid": 0,
+      "mode": "0o644",
+      "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+      "sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505",
+      "uid": 0
+    }
+  ],
+  "registered_mount_guard": {
+    "capacity": {
+      "data_available_bytes": 1339547529216,
+      "model_available_bytes": 2590890254336,
+      "root_available_bytes": 5208907776,
+      "shared_model_filesystem": false
+    },
+    "data": {
+      "device": "8:17",
+      "fstype": "ext4",
+      "mount": "/data",
+      "parents": [
+        "/dev/sdb",
+        "/dev/sdb1"
+      ],
+      "path": "/data",
+      "source": "/dev/sdb1",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "models": {
+      "device": "8:33",
+      "fstype": "ext4",
+      "mount": "/data/models-large",
+      "parents": [
+        "/dev/sdc",
+        "/dev/sdc1"
+      ],
+      "path": "/data/models-large",
+      "source": "/dev/sdc1",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "roots": {
+      "backups": "/data/backups",
+      "build": "/data/build",
+      "containerd": "/data/containerd",
+      "docker": "/data/docker",
+      "hf_cache": "/data/hf-cache",
+      "logs": "/data/logs",
+      "models": "/data/models-large",
+      "secrets": "/data/services/secrets",
+      "services": "/data/services",
+      "state": "/data/services/installer"
+    },
+    "schema_version": 1,
+    "storage_mode": "existing",
+    "verified_roles": [
+      "data",
+      "models"
+    ],
+    "warnings": [
+      "root filesystem has less than 6 GiB free"
+    ]
+  },
+  "registered_root_guard": {
+    "capacity": {
+      "data_available_bytes": 1339547529216,
+      "model_available_bytes": 2590890254336,
+      "root_available_bytes": 5208907776,
+      "shared_model_filesystem": false
+    },
+    "data": {
+      "device": "8:17",
+      "fstype": "ext4",
+      "mount": "/data",
+      "parents": [
+        "/dev/sdb",
+        "/dev/sdb1"
+      ],
+      "path": "/data",
+      "source": "/dev/sdb1",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "models": {
+      "device": "8:33",
+      "fstype": "ext4",
+      "mount": "/data/models-large",
+      "parents": [
+        "/dev/sdc",
+        "/dev/sdc1"
+      ],
+      "path": "/data/models-large",
+      "source": "/dev/sdc1",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "root_payload_scan": {
+      "files_inspected": 4273,
+      "large_payload_threshold_bytes": 134217728,
+      "status": "pass"
+    },
+    "roots": {
+      "backups": "/data/backups",
+      "build": "/data/build",
+      "containerd": "/data/containerd",
+      "docker": "/data/docker",
+      "hf_cache": "/data/hf-cache",
+      "logs": "/data/logs",
+      "models": "/data/models-large",
+      "secrets": "/data/services/secrets",
+      "services": "/data/services",
+      "state": "/data/services/installer"
+    },
+    "schema_version": 1,
+    "storage_mode": "existing",
+    "verified_roles": [
+      "data",
+      "models"
+    ],
+    "warnings": [
+      "root filesystem has less than 6 GiB free"
+    ]
+  },
+  "registration_metadata": {
+    "gid": 0,
+    "mode": "0o600",
+    "path": "/etc/local-ai-server/storage.json",
+    "uid": 0
+  },
+  "root_stop_below_bytes": 4294967296,
+  "status": "PASS"
+}

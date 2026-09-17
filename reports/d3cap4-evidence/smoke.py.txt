@@ -1,0 +1,87 @@
+"""ONE tiny ordinary authenticated request; raw input supplied privately."""
+capacity=json.loads(protected(REPORT/'capacity-result.json').read_bytes())
+private=json.loads(protected(REPORT/'private-baseline.json').read_bytes())
+assert capacity['status']=='PASS_CAPACITY_ALLOCATION_ONLY'
+assert key_state()==private['key'] and stable_files()==private['files']
+assert not (REPORT/'smoke-dispatch.json').exists(),'tiny_request_already_attempted'
+assert BODY['model']=='glm-5.3' and BODY['reasoning_effort']=='low' and BODY['max_tokens']==128 and BODY['temperature']==0 and len(BODY['messages'])==1
+initial_guard=guard();quiet();control_state()
+cid=capacity['identity']['id'];expected=capacity['identity'];baseline=capacity['idle_full']
+assert identity(inspect_container(cid))==expected
+sys.path.insert(0,str(SRC/'scripts'))
+from common.lifecycle_lease import acquire_lease
+from lifecycle.runtime_io import LifecycleError
+samples=[];failure=[];done=threading.Event();response={};started=None
+headers={'Authorization':'Bearer '+Path('/data/services/secrets/llm-api-key').read_text(),'Content-Type':'application/json'}
+def request_once():
+    try:
+        req=urllib.request.Request('http://127.0.0.1:30002/v1/chat/completions',data=json.dumps(BODY).encode(),headers=headers,method='POST')
+        with urllib.request.urlopen(req,timeout=600) as r:
+            raw=r.read(1048577);assert len(raw)<=1048576,'response_bound'
+            response.update(status=r.status,data=json.loads(raw),raw_sha256=hashlib.sha256(raw).hexdigest(),complete_utc=time.time(),elapsed_seconds=time.monotonic()-started)
+    except Exception as exc:failure.append(type(exc).__name__)
+    finally:done.set()
+with acquire_lease(blocking=False) as lease:
+    m=manager();st=m.read_state();assert st==capacity['state']
+    m.validate_reused_contract(m.trusted_container(st['container']),m.deployment(TARGET))
+    # Manager already established health/models readiness in this exact lifetime.
+    # Root drain directive: no additional acceptance calls before the one smoke.
+    quiet()
+    state=state_new(baseline['vmstat'])
+    first=cheap_sample(cid,1048576,state,expected,baseline,True);samples.append(first)
+    assert first['native']==baseline['native'],'native_diagnostic_changed'
+    write('smoke-dispatch.json',{'utc':time.time(),'owner_pid':os.getpid(),'request_count':1,'model':'glm-5.3','reasoning_effort':'low','max_tokens':128,'temperature':0,'deadline_seconds':600})
+    emit('tiny_request_dispatch',request_count=1,model='glm-5.3',reasoning_effort='low',max_tokens=128,temperature=0,deadline_seconds=600,owner_pid=os.getpid())
+    started=time.monotonic();thread=threading.Thread(target=request_once,name='d3cap4-tiny-request');thread.start()
+    next_sample=started;previous=None
+    try:
+        while not done.is_set():
+            assert time.monotonic()-started<600,'request_deadline'
+            globals()['TELEMETRY_DEADLINE']=(time.monotonic()+2 if previous is None else previous_monotonic+2)
+            globals()['TELEMETRY_CALLS']=[]
+            s=cheap_sample(cid,1048576,state,expected,baseline,True)
+            s['metric_calls']=globals().pop('TELEMETRY_CALLS');globals().pop('TELEMETRY_DEADLINE')
+            s['producer_gap_seconds']=None if previous is None else s['timestamp']-previous
+            assert s['native']==baseline['native'],'native_diagnostic_changed'
+            assert s['sample_elapsed_seconds']<2,'sample_duration'
+            if previous is not None:assert 0<s['timestamp']-previous<=2,'sample_gap'
+            previous=s['timestamp'];previous_monotonic=s['sample_end_monotonic'];samples.append(s)
+            emit('sample',stage='request',sample_index=len(samples)-1,sample=s)
+            next_sample+=1;done.wait(max(0,next_sample-time.monotonic()))
+        thread.join(2);assert not thread.is_alive() and not failure,'request_failed'
+        assert response['status']==200,'http_status'
+        data=response['data'];assert data['model']=='glm-5.3','response_model'
+        usage=data['usage'];choice=data['choices'][0];content=choice['message'].get('content')
+        assert isinstance(content,str) and content.strip(),'empty_content'
+        assert 0<usage['prompt_tokens']<1024 and 0<usage['completion_tokens']<=128,'tiny_usage'
+        assert choice['finish_reason']=='stop','sanity_not_complete'
+        # Allow only bounded native-idle reconciliation after completed HTTP.
+        for _ in range(20):
+            try:quiet();break
+            except AssertionError:time.sleep(.1)
+        else:raise LifecycleError('native_connections_not_quiescent')
+        c=inspect_container(cid);log=Path(c['LogPath']);assert log.stat().st_size<1048576
+        releases=[]
+        for line in log.read_bytes().splitlines():
+            row=json.loads(line)
+            if re.search(r'\brelease\b.*stop processing|all slots are idle',row['log'],re.I):releases.append(row['time'])
+        assert releases and datetime.datetime.fromisoformat(releases[-1].replace('Z','+00:00')).timestamp()>=response['complete_utc']-2,'post_request_slot_release_missing'
+        globals().pop('TELEMETRY_DEADLINE',None);globals().pop('TELEMETRY_CALLS',None)
+        final_full=full_idle(cid,1048576,baseline)
+        assert identity(inspect_container(cid))==expected and key_state()==private['key'] and stable_files()==private['files']
+        final_guard=guard();control_state()
+        result={'status':'PASS_TINY_SANITY_ONLY','input':BODY,'output':choice['message'],'request_count':1,'http_status':response['status'],'response_model':data['model'],'usage':usage,'finish_reason':choice['finish_reason'],'nonempty_content':True,'expected_single_word_matches':content.strip()=='READY','raw_response_sha256':response['raw_sha256'],'elapsed_seconds':response['elapsed_seconds'],'response_complete_utc':response['complete_utc'],'timings':data.get('timings'),'last_slot_release':releases[-1],'request_thread_joined':True,'identity':expected,'guards':final_guard,'post_request_full':final_full,'key_exact_bytes_metadata_unchanged':True,'occupied_near_1m':'NOT_TESTED','highest_proven_window':None}
+        write('smoke-result.json',result);write('request-samples.json',samples)
+        emit('tiny_sanity_result',result={k:v for k,v in result.items() if k not in ('guards','post_request_full')})
+    except BaseException as exc:
+        # Stop only the exact Manager-owned container if a live request is unsafe.
+        reason=str(exc) if isinstance(exc,(AssertionError,LifecycleError,Error)) else type(exc).__name__
+        globals().pop('TELEMETRY_DEADLINE',None)
+        rejected={'error':reason,'last_sample':state.get('last_sample'),'last_cgroup_read':state.get('last_cgroup_read'),'metric_calls':globals().pop('TELEMETRY_CALLS',[]),'rejected_observation_utc':time.time()}
+        write('first-smoke-failure.json',rejected)
+        emit('tiny_request_failure',error=reason,request_count=1,primary_monitor_evidence=rejected)
+        m.dispatch('stop',lease=lease)
+        thread.join(15)
+        write('smoke-failure.json',{'error':reason,'request_count':1,'request_thread_alive':thread.is_alive(),'state':m.read_state(),'samples':samples,'guards':guard()})
+        raise SystemExit(1)
+emit('smoke_lifecycle_lease_released',request_thread_joined=True,monitor_threads=0)

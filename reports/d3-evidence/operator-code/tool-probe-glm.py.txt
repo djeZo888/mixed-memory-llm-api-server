@@ -1,0 +1,359 @@
+#!/usr/bin/env python3
+"""Independent Worker1 GLM tool diagnostic; not the reviewed A1 harness.
+
+At most four chat requests: tool call and result continuation in nonstream and
+SSE modes. Only read_file(calc.py) executes, locally. No model-selected command,
+write, test, or VM tool executes. Run only after the coordinator grants a lease.
+"""
+
+from __future__ import annotations
+
+import argparse
+import datetime
+import hashlib
+import http.client
+import importlib.util
+import json
+import math
+import os
+from pathlib import Path
+import re
+import shlex
+import signal
+import socket
+import stat
+import subprocess
+import tempfile
+import time
+
+
+SOURCE = "def add(a, b):\n    return a - b\n"
+MAX_RESPONSE = 2 * 1024 * 1024
+TOOLS = [{"type": "function", "function": {
+    "name": "read_file",
+    "description": "Read the client-side calc.py fixture. No other path is allowed.",
+    "parameters": {"type": "object", "properties": {
+        "path": {"type": "string", "enum": ["calc.py"]}},
+        "required": ["path"], "additionalProperties": False}}}]
+
+
+class ProbeError(Exception):
+    """An intentionally nonsecret diagnostic error."""
+
+
+class ProbeTimeout(ProbeError):
+    pass
+
+
+def load_protocol():
+    path = Path(__file__).resolve().parent / "repo/scripts/agent/protocol.py"
+    spec = importlib.util.spec_from_file_location("d3_reviewed_protocol", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module, {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                    "reuse": "Unmodified _completion, _stream, strict_json_loads, redact; Client not used"}
+
+
+def options():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, required=True,
+                        help="New private local JSON evidence file; refuses overwrite")
+    parser.add_argument("--model", default="glm-5.3")
+    parser.add_argument("--ssh-host", default="ai-vm", help="Worker SSH alias (default: ai-vm)")
+    parser.add_argument("--remote-port", type=int, default=30002)
+    parser.add_argument("--key-file", default="/data/services/secrets/llm-api-key",
+                        help="Protected VM key path; value is read only into worker memory")
+    parser.add_argument("--max-tokens", type=int, default=512, help="1..512 per request (default: 512)")
+    parser.add_argument("--timeout", type=float, default=600,
+                        help="Overall wall-clock budget in seconds, including setup; 1..600")
+    args = parser.parse_args()
+    if not 1 <= args.max_tokens <= 512 or not 1 <= args.remote_port <= 65535:
+        parser.error("max-tokens must be 1..512 and remote-port must be 1..65535")
+    if not math.isfinite(args.timeout) or not 1 <= args.timeout <= 600:
+        parser.error("timeout must be finite and 1..600")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", args.ssh_host):
+        parser.error("ssh-host must be a plain configured SSH alias")
+    key_path = Path(args.key_file)
+    if key_path.parent != Path("/data/services/secrets") or key_path.name in {"", ".", ".."}:
+        parser.error("key-file must be directly inside /data/services/secrets")
+    if not args.model or len(args.model) > 1024:
+        parser.error("model must be a nonempty bounded identifier")
+    if not args.output.parent.is_dir():
+        parser.error("output parent must already exist")
+    return args
+
+
+def observe_metadata(raw, streaming, protocol):
+    """Capture termination/usage even when reviewed strict parsing rejects it."""
+    observed = {"finish_reasons": [], "usage": [], "timings": [], "models": [],
+                "sse_done": False, "metadata_errors": []}
+    text = raw.decode("utf-8", errors="replace")
+    if streaming:
+        events = text.replace("\r\n", "\n").replace("\r", "\n").split("\n\n")
+        bodies = []
+        for event in events:
+            body = "\n".join(line[5:].lstrip(" ") for line in event.split("\n")
+                             if line.startswith("data:"))
+            if body == "[DONE]":
+                observed["sse_done"] = True
+            elif body:
+                bodies.append(body)
+    else:
+        bodies = [text]
+    for body in bodies:
+        try:
+            item = protocol.strict_json_loads(body)
+            if not isinstance(item, dict):
+                raise ProbeError("response metadata envelope is not an object")
+            for field in ("usage", "timings"):
+                if item.get(field) is not None:
+                    observed[field].append(item[field])
+            if item.get("model") is not None and item["model"] not in observed["models"]:
+                observed["models"].append(item["model"])
+            for choice in item.get("choices", []):
+                if isinstance(choice, dict) and choice.get("finish_reason") is not None:
+                    observed["finish_reasons"].append(choice["finish_reason"])
+        except (protocol.AgentError, ProbeError, TypeError):
+            observed["metadata_errors"].append("invalid_metadata_envelope")
+    observed["token_budget_exhausted"] = "length" in observed["finish_reasons"]
+    return observed
+
+
+def parse_response(case, raw, protocol, model):
+    case["observed"] = observe_metadata(raw, case["request"]["stream"], protocol)
+    # Preserve the bounded wire response including timing extensions and reasoning.
+    case["response_utf8"] = raw.decode("utf-8", errors="replace")
+    try:
+        parsed = (protocol._stream(raw) if case["request"]["stream"] else
+                  protocol._completion(protocol.strict_json_loads(raw)))
+        case["parsed"] = parsed
+        if parsed["model"] != model:
+            case["classification"] = "model_identity_mismatch"
+            return None
+        if case["http_status"] != 200:
+            case["classification"] = "http_error"
+            return None
+        case["classification"] = "valid_response"
+        return parsed["message"]
+    except protocol.AgentError as exc:
+        case["parser_issue"] = str(exc)
+        case["classification"] = ("token_budget_exhausted" if
+            case["observed"]["token_budget_exhausted"] else
+            "http_error" if case["http_status"] != 200 else "parser_or_termination_failure")
+        return None
+
+
+def read_fixture(message, fixture, identity, protocol):
+    calls = message.get("tool_calls")
+    if not isinstance(calls, list) or len(calls) != 1:
+        raise ProbeError("exactly one read_file call required")
+    call = calls[0]
+    if set(call) != {"id", "type", "function"} or call["type"] != "function":
+        raise ProbeError("invalid tool call shape")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}", call["id"]):
+        raise ProbeError("tool ID violates the reviewed fixture ID contract")
+    fn = call["function"]
+    if set(fn) != {"name", "arguments"} or fn["name"] != "read_file":
+        raise ProbeError("only read_file is executable")
+    if protocol.strict_json_loads(fn["arguments"]) != {"path": "calc.py"}:
+        raise ProbeError("read_file requires exactly path=calc.py")
+    fd = os.open(fixture, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    try:
+        info = os.fstat(fd)
+        if (info.st_dev, info.st_ino) != identity or not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise ProbeError("fixture identity changed")
+        content = os.read(fd, 8193).decode("utf-8")
+    finally:
+        os.close(fd)
+    if content != SOURCE:
+        raise ProbeError("fixture content changed")
+    result = {"path": "calc.py", "content": content}
+    return {"role": "tool", "tool_call_id": call["id"], "content": json.dumps(result)}, result
+
+
+def main():
+    args = options()
+    protocol, provenance = load_protocol()
+    started = time.monotonic()
+    deadline = started + args.timeout
+    key = None
+    tunnel = None
+    report = {"utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "diagnostic": "Independent D3 probe; does not establish reviewed A1 harness PASS",
+              "worker": "Mac-Worker1", "ssh_alias": args.ssh_host,
+              "remote_endpoint": f"http://127.0.0.1:{args.remote_port}/v1",
+              "parser_provenance": provenance,
+              "request_policy": {"maximum_requests": 4, "max_tokens": args.max_tokens,
+                                 "reasoning_effort": "low", "overall_timeout_seconds": args.timeout,
+                                 "expected_runtime_clear_thinking": True, "reasoning_replayed": False,
+                                 "runtime_arguments_changed": False},
+              "fixture": {"source": SOURCE, "sha256": hashlib.sha256(SOURCE.encode()).hexdigest(),
+                          "execution": "Local read_file(calc.py) only; no writes/tests/VM tools"},
+              "key_handling": "Protected VM key -> worker memory only; never persisted or printed",
+              "cases": [], "modes": {}, "status": "RUNNING", "tunnel_cleaned_up": False}
+    fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as output:
+        def save():
+            rendered = json.dumps(protocol.redact(report, key), indent=2, ensure_ascii=True) + "\n"
+            output.seek(0)
+            output.write(rendered)
+            output.truncate()
+            output.flush()
+            os.fsync(output.fileno())
+
+        def remaining():
+            value = deadline - time.monotonic()
+            if value <= 0:
+                raise ProbeTimeout("overall_timeout")
+            return value
+
+        def alarm_handler(*_):
+            raise ProbeTimeout("overall_timeout")
+
+        def request(name, body):
+            if len(report["cases"]) >= 4:
+                raise ProbeError("four-request limit reached")
+            protocol._validate_messages(body["messages"])
+            case = {"name": name, "request": body, "classification": "request_started"}
+            report["cases"].append(case)
+            save()
+            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=remaining())
+            request_started = time.monotonic()
+            try:
+                conn.request("POST", "/v1/chat/completions", body=json.dumps(body),
+                             headers={"Content-Type": "application/json", "Authorization": "Bearer " + key})
+                response = conn.getresponse()
+                case["http_status"] = response.status
+                case["content_type"] = response.getheader("Content-Type")
+                raw = response.read(MAX_RESPONSE + 1)
+                if len(raw) > MAX_RESPONSE:
+                    case["classification"] = "response_byte_budget_exhausted"
+                    return None
+                return parse_response(case, raw, protocol, args.model)
+            except (OSError, http.client.HTTPException, ProbeTimeout) as exc:
+                case["classification"] = "timeout" if isinstance(exc, (TimeoutError, ProbeTimeout)) else "transport_failure"
+                case["error_type"] = type(exc).__name__
+                if isinstance(exc, ProbeTimeout):
+                    raise
+                return None
+            finally:
+                conn.close()
+                case["wall_seconds"] = round(time.monotonic() - request_started, 6)
+                save()
+
+        previous_handler = signal.signal(signal.SIGALRM, alarm_handler)
+        signal.setitimer(signal.ITIMER_REAL, args.timeout)
+        ssh = ["ssh", "-T", "-S", "none", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
+               "-o", "ControlMaster=no", "-o", "ControlPath=none", "-o", "ControlPersist=no"]
+        try:
+            save()
+            result = subprocess.run(ssh + ["-o", "ClearAllForwardings=yes", args.ssh_host,
+                "sudo -n cat -- " + shlex.quote(args.key_file)], stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL, timeout=min(20, remaining()), check=False)
+            if result.returncode or not 1 <= len(result.stdout) <= 8192:
+                raise ProbeError("protected_key_read_failed")
+            try:
+                key = result.stdout.decode("ascii")
+            except UnicodeError:
+                raise ProbeError("protected_key_is_not_ascii") from None
+            del result
+            if any(not 33 <= ord(char) <= 126 for char in key):
+                raise ProbeError("protected_key_has_invalid_whitespace_or_bytes")
+            with socket.socket() as listener:
+                listener.bind(("127.0.0.1", 0))
+                port = listener.getsockname()[1]
+            tunnel = subprocess.Popen(ssh + ["-N", "-o", "ExitOnForwardFailure=yes",
+                "-o", "ServerAliveInterval=30", "-o", "ServerAliveCountMax=2", "-L",
+                f"127.0.0.1:{port}:127.0.0.1:{args.remote_port}", args.ssh_host],
+                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            report["owned_tunnel_pid"] = tunnel.pid
+            report["local_tunnel_port"] = port
+            tunnel_deadline = min(deadline, time.monotonic() + 15)
+            while time.monotonic() < tunnel_deadline:
+                if tunnel.poll() is not None:
+                    raise ProbeError("owned_tunnel_failed")
+                try:
+                    with socket.create_connection(("127.0.0.1", port), timeout=min(0.2, remaining())):
+                        break
+                except OSError:
+                    time.sleep(0.1)
+            else:
+                raise ProbeError("owned_tunnel_not_ready")
+            with tempfile.TemporaryDirectory(prefix="d3-tool-read-", dir=args.output.parent.resolve()) as directory:
+                fixture = Path(directory) / "calc.py"
+                fixture.write_text(SOURCE, encoding="utf-8")
+                fixture.chmod(0o400)
+                info = fixture.stat()
+                identity = (info.st_dev, info.st_ino)
+                for mode, streaming in (("nonstream", False), ("sse", True)):
+                    messages = [{"role": "user", "content":
+                        "Call read_file once with path calc.py, then use its result to describe what "
+                        "the function actually does in one short sentence. Do not guess its contents. "
+                        "After the tool result, give the final description without more tool calls."}]
+                    body = {"model": args.model, "messages": messages, "tools": TOOLS,
+                            "max_tokens": args.max_tokens, "temperature": 0, "stream": streaming,
+                            "reasoning_effort": "low"}
+                    if streaming:
+                        body["stream_options"] = {"include_usage": True}
+                    message = request(mode + "_tool_call", body)
+                    if message is None:
+                        report["modes"][mode] = {"status": "FAIL", "continuation": "NOT_TESTED"}
+                        save()
+                        continue
+                    try:
+                        tool_message, local_result = read_fixture(message, fixture, identity, protocol)
+                    except (ProbeError, protocol.AgentError) as exc:
+                        report["modes"][mode] = {"status": "FAIL", "classification": "fixture_call_rejected",
+                                                 "detail": str(exc), "continuation": "NOT_TESTED"}
+                        save()
+                        continue
+                    report["modes"][mode] = {"status": "RUNNING", "tool_id": tool_message["tool_call_id"],
+                                             "strict_arguments": {"path": "calc.py"}, "local_result": local_result}
+                    # Reviewed parser returns only role/content/tool_calls; reasoning stays in evidence.
+                    replay = {key_: message[key_] for key_ in ("role", "content", "tool_calls") if key_ in message}
+                    continuation = dict(body, messages=messages + [replay, tool_message])
+                    final = request(mode + "_continuation", continuation)
+                    text = final.get("content") if final else None
+                    describes_subtraction = (isinstance(text, str) and bool(re.search(
+                        r"subtract|\ba\s*[-\u2212]\s*b\b|difference", text, re.IGNORECASE)))
+                    passed = bool(final and not final.get("tool_calls") and describes_subtraction)
+                    report["modes"][mode].update({"status": "PASS" if passed else "FAIL",
+                        "continuation": "PASS" if passed else "FAIL", "final_content": text,
+                        "subtraction_description_marker": describes_subtraction,
+                        "reasoning_replayed": False})
+                    save()
+            report["fixture"]["removed"] = True
+            report["status"] = "PASS" if all(report["modes"].get(mode, {}).get("status") == "PASS"
+                                               for mode in ("nonstream", "sse")) else "FAIL"
+        except (ProbeError, OSError, subprocess.SubprocessError, protocol.AgentError) as exc:
+            report["status"] = "FAIL"
+            report["fatal_error_type"] = type(exc).__name__
+            report["fatal_error"] = str(exc) if isinstance(exc, (ProbeError, protocol.AgentError)) else "setup_or_local_io_failure"
+        finally:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            signal.signal(signal.SIGALRM, previous_handler)
+            if tunnel is not None:
+                tunnel.terminate()
+                try:
+                    tunnel.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    tunnel.kill()
+                    tunnel.wait(timeout=5)
+                report["tunnel_cleaned_up"] = tunnel.poll() is not None
+            else:
+                report["tunnel_cleaned_up"] = True
+            report["wall_seconds"] = round(time.monotonic() - started, 6)
+            save()
+        for case in report["cases"]:
+            summary = {"case": case["name"], "classification": case["classification"],
+                       "http_status": case.get("http_status"), "wall_seconds": case.get("wall_seconds"),
+                       "observed": case.get("observed"), "parser_issue": case.get("parser_issue")}
+            print(json.dumps(protocol.redact(summary, key), ensure_ascii=True))
+        print(json.dumps(protocol.redact({"status": report["status"], "modes": report["modes"],
+              "requests": len(report["cases"]), "tunnel_cleaned_up": report["tunnel_cleaned_up"],
+              "output": str(args.output)}, key), ensure_ascii=True))
+    return 0 if report["status"] == "PASS" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

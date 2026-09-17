@@ -1,0 +1,4 @@
+PASS: exact final derived tree and raw source bytes after CPU build
+PASS: original D3P guard patch suffix, all original guard/native/recipe tests and recipe logic unchanged
+PASS: all original D1 rollback recipe/proof/profile hashes unchanged
+PASS: no installer, Manager, configuration or AGENTS edits

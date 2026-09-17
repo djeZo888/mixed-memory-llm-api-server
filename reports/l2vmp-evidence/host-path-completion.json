@@ -1,0 +1,22 @@
+{
+  "/data/models-large/qwen38-27b-fp8": {
+    "gid": 0,
+    "mode": "0555",
+    "nlink": 2,
+    "present": true,
+    "type": "directory",
+    "uid": 0
+  },
+  "/data/services/llm-control": {
+    "present": false
+  },
+  "/data/services/llm-control/operations.json": {
+    "present": false
+  },
+  "/etc/tmpfiles.d/llmctl.conf": {
+    "present": false
+  },
+  "/usr/local/lib/local-ai-server": {
+    "present": false
+  }
+}

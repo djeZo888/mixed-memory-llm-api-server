@@ -1,0 +1,789 @@
+{
+  "closure_manifest": {
+    "dev": 64512,
+    "gid": 0,
+    "ino": 833726,
+    "mode": "0644",
+    "nlink": 1,
+    "sha256": "bb0176749bd35deace1643d1a70c42be92a9f0b7bc629d41663c594678365f55",
+    "uid": 0
+  },
+  "guard_authority": "REGISTERED_ONLY",
+  "guards": {
+    "registered-data": {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+        "--json"
+      ],
+      "exit": 0,
+      "result": {
+        "capacity": {
+          "data_available_bytes": 1341156925440,
+          "model_available_bytes": 2590890254336,
+          "root_available_bytes": 5209206784,
+          "shared_model_filesystem": false
+        },
+        "data": {
+          "device": "8:17",
+          "fstype": "ext4",
+          "mount": "/data",
+          "parents": [
+            "/dev/sdb",
+            "/dev/sdb1"
+          ],
+          "path": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        "models": {
+          "device": "8:33",
+          "fstype": "ext4",
+          "mount": "/data/models-large",
+          "parents": [
+            "/dev/sdc",
+            "/dev/sdc1"
+          ],
+          "path": "/data/models-large",
+          "source": "/dev/sdc1",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        },
+        "roots": {
+          "backups": "/data/backups",
+          "build": "/data/build",
+          "containerd": "/data/containerd",
+          "docker": "/data/docker",
+          "hf_cache": "/data/hf-cache",
+          "logs": "/data/logs",
+          "models": "/data/models-large",
+          "secrets": "/data/services/secrets",
+          "services": "/data/services",
+          "state": "/data/services/installer"
+        },
+        "schema_version": 1,
+        "storage_mode": "existing",
+        "verified_roles": [
+          "data",
+          "models"
+        ],
+        "warnings": [
+          "root filesystem has less than 6 GiB free"
+        ]
+      }
+    },
+    "registered-root": {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+        "--root-guard",
+        "--json"
+      ],
+      "exit": 0,
+      "result": {
+        "capacity": {
+          "data_available_bytes": 1341156925440,
+          "model_available_bytes": 2590890254336,
+          "root_available_bytes": 5209206784,
+          "shared_model_filesystem": false
+        },
+        "data": {
+          "device": "8:17",
+          "fstype": "ext4",
+          "mount": "/data",
+          "parents": [
+            "/dev/sdb",
+            "/dev/sdb1"
+          ],
+          "path": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        "models": {
+          "device": "8:33",
+          "fstype": "ext4",
+          "mount": "/data/models-large",
+          "parents": [
+            "/dev/sdc",
+            "/dev/sdc1"
+          ],
+          "path": "/data/models-large",
+          "source": "/dev/sdc1",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        },
+        "root_payload_scan": {
+          "files_inspected": 4273,
+          "large_payload_threshold_bytes": 134217728,
+          "status": "pass"
+        },
+        "roots": {
+          "backups": "/data/backups",
+          "build": "/data/build",
+          "containerd": "/data/containerd",
+          "docker": "/data/docker",
+          "hf_cache": "/data/hf-cache",
+          "logs": "/data/logs",
+          "models": "/data/models-large",
+          "secrets": "/data/services/secrets",
+          "services": "/data/services",
+          "state": "/data/services/installer"
+        },
+        "schema_version": 1,
+        "storage_mode": "existing",
+        "verified_roles": [
+          "data",
+          "models"
+        ],
+        "warnings": [
+          "root filesystem has less than 6 GiB free"
+        ]
+      }
+    }
+  },
+  "historical_D3_baseline": {
+    "require-data-mounted.sh": {
+      "dev": 2065,
+      "execution": "NOT_RUN_REGISTERED_AUTHORITY",
+      "gid": 0,
+      "ino": 67635300,
+      "mode": "0700",
+      "nlink": 1,
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/require-data-mounted.sh",
+      "sha256": "5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f",
+      "uid": 0
+    },
+    "root-disk-guard.sh": {
+      "dev": 2065,
+      "execution": "NOT_RUN_REGISTERED_AUTHORITY",
+      "gid": 0,
+      "ino": 67635301,
+      "mode": "0700",
+      "nlink": 1,
+      "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/root-disk-guard.sh",
+      "sha256": "2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813",
+      "uid": 0
+    }
+  },
+  "image": {
+    "architecture": "amd64",
+    "config_digest": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
+    "image_default_entrypoint": [
+      "/opt/nvidia/nvidia_entrypoint.sh"
+    ],
+    "image_default_workdir": "/sgl-workspace/sglang",
+    "image_id": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "image_id_domain": "oci_platform_manifest",
+    "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "os": "linux",
+    "platform_manifest_digest": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "source_repository": "https://github.com/sgl-project/sglang",
+    "source_revision": "0bcd822377da7b5718e674eaf9c870d349424dd1"
+  },
+  "installed_closure": {
+    "configs/control/ai-vm-live-snapshot.json": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833492,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "96716daee7bd063f740dda2e13fc7829ae3ec339a074a7a43581855472cd5176",
+      "uid": 0
+    },
+    "configs/deployments/qwen38-27b-128k.json": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833498,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "cee5253c28bd8ff36f33630f27642cc9cdd3857eaa108bd177488efd6a0d133f",
+      "uid": 0
+    },
+    "configs/deployments/qwen38-27b-256k.json": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833500,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "462ed5792940890eaa410c3c6dd4996c6723157eee5fb7021ee210ed2f78523a",
+      "uid": 0
+    },
+    "configs/models/glm-5.3-ud-q4-k-xl.json": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833671,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "857924551fa83c546bb99f7b524b35c8d79d0cb9ba0a666e0c139bbace0e7e0d",
+      "uid": 0
+    },
+    "configs/models/qwen38-27b-fp8.json": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833672,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "fb62b2689a4c57aa1265b1262830c8d0e3983061c9674640ec9704ce603a44be",
+      "uid": 0
+    },
+    "configs/runtimes/sglang-qwen38-0.5.19.json": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833674,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11",
+      "uid": 0
+    },
+    "reports/f1s-contract-evidence/f1a-qwen-manifest.json": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833677,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "022674d4daf63fa57c2798a30fea80c6dde7b1b2e73630ae3c3aa94e45debb9e",
+      "uid": 0
+    },
+    "reports/l2-source-closure-sha256.json": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833678,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "d4206f5c889ac60f58484e3560251f8530727b61f962429301f4e41621ac1af6",
+      "uid": 0
+    },
+    "reports/q38r-source-weight-manifest.json": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833679,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "3df6f2a0a46a33b2b48f62609235ff209e50403d679bd8ee120b941445a87ed0",
+      "uid": 0
+    },
+    "reports/q38s-acquisition-manifest.json": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833680,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "726012378a40f648a104230d3f5ed5d6bc505cbd09b32918fc29aa81c0f075f2",
+      "uid": 0
+    },
+    "scripts/common/lifecycle_lease.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833683,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "483ba038c62a8b4633449cef9c0f9a6664c00276662498abc748b58c8be644e0",
+      "uid": 0
+    },
+    "scripts/common/registered-storage.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833684,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d",
+      "uid": 0
+    },
+    "scripts/common/require-data-mounted.sh": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833685,
+      "mode": "0755",
+      "nlink": 1,
+      "sha256": "189f2213ed2531e3fafba173d1419c9c424dcbbfa9187e4f5c8fea824974facb",
+      "uid": 0
+    },
+    "scripts/common/root-disk-guard.sh": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833686,
+      "mode": "0755",
+      "nlink": 1,
+      "sha256": "08ec44c796015d734d91270fc8278a78630b3dea992ee17e08ec7ce3f10df807",
+      "uid": 0
+    },
+    "scripts/control/__init__.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833688,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "09994eed14b3742e621b51ba4ec25972f2ad05a33ffc924973893b4c40be4287",
+      "uid": 0
+    },
+    "scripts/control/adapter.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833689,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "3ec236a5fa7cc515a5bd9017826234b2b8843d3fe91885cda01ce98f2b30a994",
+      "uid": 0
+    },
+    "scripts/control/catalog.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833690,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "a42970329453cd2fc123d674cc4e943a89f78f4032f2fc0cb4ca41483963cf9d",
+      "uid": 0
+    },
+    "scripts/control/core.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833691,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "87320fe0fd6285e8cab290e94a19e7bf3aff4f16d7fa23944577c9c4615b4c31",
+      "uid": 0
+    },
+    "scripts/control/discovery.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833692,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "879ef3fd0c3456e6b3d0e959824cf749f69e20bb8182b36a28c4b7f6ab4e6330",
+      "uid": 0
+    },
+    "scripts/control/http.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833693,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "bfef44a942d21792ca37c8daec6657b257fed26bdab38e2027ecc2851ae7fff9",
+      "uid": 0
+    },
+    "scripts/control/installation.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833694,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "6bf85921d140e12df329ba42a0eb1b25889d891c0acf4ebec1d48f5cd436bc42",
+      "uid": 0
+    },
+    "scripts/control/journal.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833695,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "4a1de7a441c3f385b47683d98601074aa0b6e2550ca745f0806633b48e4d1347",
+      "uid": 0
+    },
+    "scripts/control/private_network.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833696,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "ad0c48db68ce47213f292abb74aebc9b321b41baefc3385785bb7322e7e78ddc",
+      "uid": 0
+    },
+    "scripts/control/protocol.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833697,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "ce2fc0a49a9b47ead5816703e35c88d1c915504f1768a3da7082a7ff77994e55",
+      "uid": 0
+    },
+    "scripts/control/serve.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833698,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "70494341d79ed5be2e9d15fb61e8e9599fcea855d3d305a0e3ba5d8e91b1475f",
+      "uid": 0
+    },
+    "scripts/control/source-closure.json": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833699,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "6efab717c546dd67aa169a46ba3ef9e63d045c534b05e8249af6c77e139d553c",
+      "uid": 0
+    },
+    "scripts/install/__init__.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833701,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "9b4509b1ab13bca6990ca4c4411897218d876d14a1fb7f4fe9e96ba8c8d86d71",
+      "uid": 0
+    },
+    "scripts/install/prerequisites.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833702,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "e2ed5fec6e0175cd19af5d301b13bac98bca16d7ff4ac96c5f7200333168ca0b",
+      "uid": 0
+    },
+    "scripts/install/storage.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833703,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505",
+      "uid": 0
+    },
+    "scripts/install/storage_io.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833704,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "5ba1b1356519bbb4922b563662a605459862a84b81ce4f521dfbce293d97302a",
+      "uid": 0
+    },
+    "scripts/lifecycle/__init__.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833706,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "065e332d86c27b0ed3e071825e93265fa57e043d1cd97b7d8ca92af6ecdddfeb",
+      "uid": 0
+    },
+    "scripts/lifecycle/instance_binding.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833707,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "4cd8db413531ad264a94cd65bebe5f3565e161a8c4fa22816733ba905ce64145",
+      "uid": 0
+    },
+    "scripts/lifecycle/manager.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833708,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "a6a47fd3af722d9354f4699ab2b150f0906cb2fd5442b222dc30b2cdc347337e",
+      "uid": 0
+    },
+    "scripts/lifecycle/qwen38.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833709,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "84b7b1bf48a472a9b2058a3431d5aa8f254b34350ff3b0a3e8768e90e55ec762",
+      "uid": 0
+    },
+    "scripts/lifecycle/qwen_next.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833710,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "d4686a29a771b2a7f9926e35ef37b26919a68e69f4383cd958b851d69f7f524c",
+      "uid": 0
+    },
+    "scripts/lifecycle/runtime_io.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833711,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "94423ce9ef15a500674cafcde403912efdd56a88f4c998da63490b609399c843",
+      "uid": 0
+    },
+    "scripts/lifecycle/sglang_file_auth.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833712,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "93ddd96d6a3d346b3e62b0eec08d6666c70c1ebc7b2cc727d02c191c9d50a5b2",
+      "uid": 0
+    },
+    "scripts/lifecycle/storage_binding.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833713,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "69e61ce6685c310ce83449de75d45b209e63c6454c175f03d42bdad3daea7fbf",
+      "uid": 0
+    },
+    "scripts/runtime/qwen38_oci.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833715,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+      "uid": 0
+    },
+    "scripts/runtime/sglang38_file_auth.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833716,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+      "uid": 0
+    },
+    "tests/lifecycle/sglang38_fixture/auth_native.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833720,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+      "uid": 0
+    },
+    "tests/lifecycle/sglang38_fixture/cache_probe.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833721,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "83197614bd963f54a275d9f01ec8955325b3ea4791387dd5235df189f67e7c99",
+      "uid": 0
+    },
+    "tests/lifecycle/sglang38_fixture/chat_template.jinja": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833722,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+      "uid": 0
+    },
+    "tests/lifecycle/sglang38_fixture/provenance.json": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833723,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "1f0a49bcbfb0b499d0432b9d4b4b387f6fe5338e084e9e0f7c9578e6f77b1acd",
+      "uid": 0
+    },
+    "tests/lifecycle/sglang38_fixture/run_fixture.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833724,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "9cdea022e21f1859e097be51094b9d2822dfc1387f8756448dd7b14d8a251d2c",
+      "uid": 0
+    },
+    "tests/lifecycle/sglang38_fixture/run_pinned_image.py": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 833725,
+      "mode": "0644",
+      "nlink": 1,
+      "sha256": "16a1e0b726295e0f0a9f046b5d496dae70f83677f5145ffdb52bfee01671b454",
+      "uid": 0
+    }
+  },
+  "mounts": {
+    "/data": {
+      "fsroot": "/",
+      "fstype": "ext4",
+      "maj:min": "8:17",
+      "options": "rw,relatime",
+      "source": "/dev/sdb1",
+      "target": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "/data/models-large": {
+      "fsroot": "/",
+      "fstype": "ext4",
+      "maj:min": "8:33",
+      "options": "rw,relatime",
+      "source": "/dev/sdc1",
+      "target": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    }
+  },
+  "parents": {
+    "/data": {
+      "dev": 2065,
+      "gid": 0,
+      "ino": 2,
+      "mode": "0755",
+      "nlink": 13,
+      "uid": 0
+    },
+    "/data/build": {
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 21757953,
+      "mode": "2755",
+      "nlink": 15,
+      "uid": 0
+    },
+    "/data/logs": {
+      "dev": 2065,
+      "gid": 1000,
+      "ino": 47972353,
+      "mode": "2755",
+      "nlink": 8,
+      "uid": 0
+    },
+    "/etc/local-ai-server": {
+      "dev": 64512,
+      "gid": 0,
+      "ino": 266588,
+      "mode": "0700",
+      "nlink": 2,
+      "uid": 0
+    }
+  },
+  "provenance_sha256": "407eae14b0433b5017ef0b66c772eb78f5d7b25ec951672d4d94e2ecfb823ee2",
+  "registry": {
+    "dev": 64512,
+    "gid": 0,
+    "ino": 266631,
+    "mode": "0600",
+    "nlink": 1,
+    "sha256": "626db7130b644199f5f632b2ac3c04f86cdd382121573aa6f3825bbca8de9c27",
+    "uid": 0
+  },
+  "source": {
+    "archive_sha256": "632d093f25e1c6fa1541e5169d3052cc231152bbaeeb3ffa7df9be6260d42b6f",
+    "commit": "cb2e49c2bea670a3d72f9cce08f8c51c194b6c67",
+    "file_count": 764,
+    "manifest_sha256": "4a4dcd9bebb000f71fcd74143b9a433a4d49aa4c2451676ae1d2f3249a074b2d",
+    "path": "/data/build/q38vr-20260915/source",
+    "source_root": {
+      "dev": 2065,
+      "gid": 0,
+      "ino": 44307638,
+      "mode": "0555",
+      "nlink": 9,
+      "uid": 0
+    },
+    "tree": "dae3d3cfc3acc9c35e81ee2d9d1918533f355114",
+    "verification": "PASS"
+  },
+  "stage_after_guard": {
+    "capacity": {
+      "data_available_bytes": 1341138378752,
+      "model_available_bytes": 2590890254336,
+      "root_available_bytes": 5209206784,
+      "shared_model_filesystem": false
+    },
+    "data": {
+      "device": "8:17",
+      "fstype": "ext4",
+      "mount": "/data",
+      "parents": [
+        "/dev/sdb",
+        "/dev/sdb1"
+      ],
+      "path": "/data",
+      "source": "/dev/sdb1",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "models": {
+      "device": "8:33",
+      "fstype": "ext4",
+      "mount": "/data/models-large",
+      "parents": [
+        "/dev/sdc",
+        "/dev/sdc1"
+      ],
+      "path": "/data/models-large",
+      "source": "/dev/sdc1",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "root_payload_scan": {
+      "files_inspected": 4273,
+      "large_payload_threshold_bytes": 134217728,
+      "status": "pass"
+    },
+    "roots": {
+      "backups": "/data/backups",
+      "build": "/data/build",
+      "containerd": "/data/containerd",
+      "docker": "/data/docker",
+      "hf_cache": "/data/hf-cache",
+      "logs": "/data/logs",
+      "models": "/data/models-large",
+      "secrets": "/data/services/secrets",
+      "services": "/data/services",
+      "state": "/data/services/installer"
+    },
+    "schema_version": 1,
+    "storage_mode": "existing",
+    "verified_roles": [
+      "data",
+      "models"
+    ],
+    "warnings": [
+      "root filesystem has less than 6 GiB free"
+    ]
+  },
+  "status": "PASS_SOURCE_STAGED_FIXTURE_NOT_RUN",
+  "task_paths": {
+    "/data/build/q38vr-20260915": true,
+    "/data/logs/q38vr-20260915": true
+  },
+  "task_private_paths": {
+    "/data/build/q38vr-20260915": {
+      "dev": 2065,
+      "gid": 0,
+      "ino": 44307637,
+      "mode": "0700",
+      "nlink": 3,
+      "uid": 0
+    },
+    "/data/build/q38vr-20260915/source": {
+      "dev": 2065,
+      "gid": 0,
+      "ino": 44307638,
+      "mode": "0555",
+      "nlink": 9,
+      "uid": 0
+    },
+    "/data/logs/q38vr-20260915": {
+      "dev": 2065,
+      "gid": 0,
+      "ino": 47972490,
+      "mode": "0700",
+      "nlink": 4,
+      "uid": 0
+    },
+    "/data/logs/q38vr-20260915/evidence": {
+      "dev": 2065,
+      "gid": 0,
+      "ino": 47972491,
+      "mode": "0700",
+      "nlink": 2,
+      "uid": 0
+    },
+    "/data/logs/q38vr-20260915/tmp": {
+      "dev": 2065,
+      "gid": 0,
+      "ino": 47972492,
+      "mode": "0700",
+      "nlink": 2,
+      "uid": 0
+    }
+  },
+  "transport": "Worker1 SSH ai-vm",
+  "utc": "2026-09-15T03:18:18.295272+00:00"
+}

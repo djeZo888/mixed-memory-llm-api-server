@@ -1,0 +1,54 @@
+Baseline helper: ec747134615f4f1d86cf455016aadc166d44be50:containers/llama-cpp/prepare-d3p-source.py
+SHA256: e465b44113a097502c7cffb763c251095986a10fdcd5f130c2d362c2a8c03664
+Current copied-checkout and mtime-invalidated regression tests run against the unmodified baseline helper in a temporary source copy.
+Expected failing exit: 1
+
+test_copied_checkout_reproduces_original_index_failure_then_applies (__main__.SourceTests.test_copied_checkout_reproduces_original_index_failure_then_applies) ... ERROR
+test_stat_invalidated_checkout_reproduces_original_index_failure_then_applies (__main__.SourceTests.test_stat_invalidated_checkout_reproduces_original_index_failure_then_applies) ... ERROR
+
+======================================================================
+ERROR: test_copied_checkout_reproduces_original_index_failure_then_applies (__main__.SourceTests.test_copied_checkout_reproduces_original_index_failure_then_applies)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<temporary-source-copy>/test_d3p_source.py", line 121, in test_copied_checkout_reproduces_original_index_failure_then_applies
+    self.assert_original_index_failure_then_corrected_apply()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "<temporary-source-copy>/test_d3p_source.py", line 115, in assert_original_index_failure_then_corrected_apply
+    self.assertEqual(self.prepare()["source_state"], "verified-patched")
+                     ~~~~~~~~~~~~^^
+  File "<temporary-source-copy>/test_d3p_source.py", line 78, in prepare
+    return source_helper.prepare(self.source, self.recipe, check_only)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private<temporary-source-copy>/prepare-d3p-source.py", line 146, in prepare
+    git(source, "apply", "--check", "--index", "--whitespace=error-all", str(patch))
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private<temporary-source-copy>/prepare-d3p-source.py", line 41, in git
+    raise RuntimeError("git " + args[0] + " failed: " +
+                       result.stderr.decode(errors="replace").strip())
+RuntimeError: git apply failed: error: sample.txt: does not match index
+
+======================================================================
+ERROR: test_stat_invalidated_checkout_reproduces_original_index_failure_then_applies (__main__.SourceTests.test_stat_invalidated_checkout_reproduces_original_index_failure_then_applies)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<temporary-source-copy>/test_d3p_source.py", line 128, in test_stat_invalidated_checkout_reproduces_original_index_failure_then_applies
+    self.assert_original_index_failure_then_corrected_apply()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "<temporary-source-copy>/test_d3p_source.py", line 115, in assert_original_index_failure_then_corrected_apply
+    self.assertEqual(self.prepare()["source_state"], "verified-patched")
+                     ~~~~~~~~~~~~^^
+  File "<temporary-source-copy>/test_d3p_source.py", line 78, in prepare
+    return source_helper.prepare(self.source, self.recipe, check_only)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private<temporary-source-copy>/prepare-d3p-source.py", line 146, in prepare
+    git(source, "apply", "--check", "--index", "--whitespace=error-all", str(patch))
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private<temporary-source-copy>/prepare-d3p-source.py", line 41, in git
+    raise RuntimeError("git " + args[0] + " failed: " +
+                       result.stderr.decode(errors="replace").strip())
+RuntimeError: git apply failed: error: sample.txt: does not match index
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.650s
+
+FAILED (errors=2)

@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "finished_utc": "2026-09-15T03:04:13.128330+00:00",
+  "owned_clients_quiescent": true,
+  "observed_native_pid_absent": true,
+  "observed_verifier_pid_absent": true,
+  "native_process_tree_reaped": true,
+  "owned_inference_requests_active": 0,
+  "ssh_tunnels_created": 0,
+  "owned_tunnels_remaining": 0,
+  "owned_listeners_created": 0,
+  "owned_listeners_remaining": 0,
+  "owned_key_copy_removed": true,
+  "owned_curl_configs_removed": true,
+  "credential_scan": {
+    "status": "PASS",
+    "method": "in-memory exact key, JSON escaped, reviewed OpenCode interpolation escaped; no matches printed",
+    "published_files_checked": 662,
+    "private_task_scan": "Only expected key file and protected correct curl config contained actual key; both removed"
+  },
+  "a1_fixture_removed": true,
+  "ordinary_fixture": "Retained private outside Git; no processes/listeners",
+  "other_clients_or_vm_containers_touched": false
+}

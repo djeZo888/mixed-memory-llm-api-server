@@ -1,0 +1,68 @@
+"""Exact target final boundary and last sanitized transfer; no new request/retry."""
+before=json.loads(protected(REPORT/'admission.json').read_bytes());private=json.loads(protected(REPORT/'private-baseline.json').read_bytes())
+cid=before['containers']['native1m']['Id'];guards_before=guard();quiet();control=control_state()
+success=(REPORT/'smoke-result.json').exists()
+capacity=json.loads(protected(REPORT/'capacity-result.json').read_bytes()) if (REPORT/'capacity-result.json').exists() else None
+smoke=json.loads(protected(REPORT/'smoke-result.json').read_bytes()) if success else None
+attempt=json.loads(protected(REPORT/'allocation-attempt.json').read_bytes())
+assert not Path('/proc/'+str(attempt['owner_pid'])).exists(),'transition_operator_not_released'
+if (REPORT/'smoke-dispatch.json').exists():
+ dispatch=json.loads(protected(REPORT/'smoke-dispatch.json').read_bytes())
+ assert not Path('/proc/'+str(dispatch['owner_pid'])).exists(),'smoke_operator_not_released'
+sys.path.insert(0,str(SRC/'scripts'))
+from common.lifecycle_lease import acquire_lease
+with acquire_lease(blocking=False) as lease:
+ m=manager();state=m.read_state();assert state['selected']==TARGET and state['container']['id']==cid and state['boot_policy']=='manual'
+ c=m.trusted_container(state['container']);m.validate_reused_contract(c,m.deployment(TARGET))
+ if success:
+  assert state['desired']=='running' and state['observed']=='ready' and state['failure'] is None
+  assert identity(inspect_container(cid))==capacity['identity']
+  final_sample=cheap_sample(cid,1048576,state_new(before['idle_full']['vmstat']),capacity['identity'],before['idle_full'],True)
+ else:
+  # A previous safety stop must have exited the exact object. Only reconcile
+  # durable stopped state here; never signal an unknown or running object.
+  assert not c['State']['Running'] and c['State']['Pid']==0,'exact_target_not_stopped_release_refused'
+  if state['observed']!='stopped' or state['failure'] is not None or state['desired']!='stopped':
+   state=m.dispatch('stop',lease=lease)
+  assert state['desired']=='stopped' and state['observed']=='stopped' and state['failure'] is None
+  final_sample=None
+ for rel,digest in before['source_sha256'].items():
+  p=protected(SRC/rel);assert hashlib.sha256(p.read_bytes()).hexdigest()==digest and stat.S_IMODE(p.stat().st_mode)==int(INVENTORY['files'][rel]['mode'],8),'installed_source_changed'
+ assert key_state()==private['key'] and stable_files()==private['files']
+ containers={}
+ for role,ident in (('native1m',cid),('n76_32k',OLD),('d1',D1)):
+  v=inspect_container(ident);assert v['Id']==ident and v['RestartPolicy']['Name']=='no'
+  if role!='native1m' or not success:assert not v['State']['Running'] and v['State']['Pid']==0
+  containers[role]=v
+ control_state();quiet()
+ log=Path(containers['native1m']['LogPath']);assert str(log).startswith('/data/docker/containers/'+cid+'/') and log.stat().st_size<1048576
+ raw=log.read_bytes();native=state_new();selected=[];first_error=None
+ for line in raw.splitlines():
+  row=json.loads(line)
+  if row['time']<containers['native1m']['State']['StartedAt']:continue
+  msg=row['log'];parse_log_line(msg,native)
+  if re.search(r'D3T_NATIVE_V1|(?:KV|[ck]ache|compute).*buffer size|offloaded \d+/\d+|n_ctx\s*=|n_seq_max\s*=|n_threads\s*=|n_cpu_moe|signal|exiting|initializing, n_slots|prompt eval time|eval time|stop processing|all slots are idle',msg,re.I):selected.append({'utc':row['time'],'message':msg.strip()})
+  if first_error is None and any(re.search(p,msg,re.I) for p in ERROR_PATTERNS.values()):first_error={'utc':row['time'],'message':msg.strip()[:1000]}
+ host=_metrics('/proc/meminfo',{'MemTotal','MemAvailable','SwapTotal','SwapFree'});vmstat=_metrics('/proc/vmstat',{'pswpin','pswpout','oom_kill'})
+ assert vmstat['oom_kill']==before['idle_full']['vmstat']['oom_kill']
+ owned_absent={str(pid):not Path('/proc/'+str(pid)).exists() for pid in (286271,288305,270294,273833,243279,attempt['owner_pid'])};assert all(owned_absent.values())
+ fixture=[];samplers=[]
+ for p in Path('/proc').iterdir():
+  if not p.name.isdigit() or int(p.name)==os.getpid() or (success and int(p.name)==capacity['identity']['pid']):continue
+  try:cmd=(p/'cmdline').read_bytes()
+  except (FileNotFoundError,PermissionError,ProcessLookupError):continue
+  if b'cache_probe.py' in cmd or b'run_pinned_image.py' in cmd:fixture.append(int(p.name))
+  if b'exec(json.loads(sys.stdin.readline()))' in cmd or b'llama-server' in cmd:samplers.append(int(p.name))
+ assert not samplers,'unowned_backend_or_prior_sampler_present'
+ result={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'status':'PASS_NATIVE1M_ALLOCATION_AND_TINY_SANITY' if success else 'FAIL_SINGLE_ATTEMPT_RECONCILED_STOPPED','allocation_attempts':1,'generation_attempts':int((REPORT/'smoke-dispatch.json').exists()),'guards_before':guards_before,'containers':containers,'state':state,'control':control,'all_77_source_hashes_modes_unchanged':True,'key_exact_bytes_metadata_unchanged':True,'instance_registry_network_control_manifest_unchanged':True,'native_numeric':{k:v for k,v in native.items() if k!='log_hash'},'selected_backend_logs':selected,'first_native_error':first_error,'log_bytes_all_lifetimes':len(raw),'log_sha256_all_lifetimes':hashlib.sha256(raw).hexdigest(),'host_kib':host,'host_swap_used_kib':host['SwapTotal']-host['SwapFree'],'vmstat':vmstat,'vmstat_delta_from_cap4_admission':{k:vmstat[k]-before['idle_full']['vmstat'][k] for k in vmstat},'final_cheap':final_sample,'owned_pids_absent':owned_absent,'q38_fixture_pids':fixture,'native_connections':quiet(),'canonical_lifecycle_lease_free_verified':True,'request_sampler_tunnel_processes':0,'occupied_near_1m':'NOT_TESTED','highest_proven_window':None,'rollback':'NOT_INVOKED','owner_pid':os.getpid()}
+ write('final-result.json',result);g=guard();write('final-after-report-guards.json',g)
+# Lease is now closed. Transfer only named sanitized reports in this same last call.
+names=['admission.json','preflight-final-guards.json','f16-source-proof.json','allocation-attempt.json','load-samples.json','capacity-result.json','transition-final-guards.json','first-transition-failure.json','failure-reconciliation.json','smoke-dispatch.json','request-samples.json','smoke-result.json','first-smoke-failure.json','smoke-failure.json','final-result.json','final-after-report-guards.json']
+transfer={}
+for name in names:
+ p=REPORT/name
+ if not p.exists():continue
+ protected(p);assert p.stat().st_size<8388608
+ raw=p.read_bytes();transfer[name]={'sha256':hashlib.sha256(raw).hexdigest(),'text':raw.decode()}
+emit('report_transfer',files=transfer)
+emit('ownership_release',status=result['status'],state=state,allocation_attempts=1,generation_attempts=result['generation_attempts'],target_pid=containers['native1m']['State']['Pid'],canonical_lifecycle_lease_released=True,quiescent=True,control_off=True,manual=True,root_available_bytes=g[-1]['capacity']['root_available_bytes'],all_77_source_hashes_modes_unchanged=True,key_exact_bytes_metadata_unchanged=True,no_further_vm_calls_scheduled=True)

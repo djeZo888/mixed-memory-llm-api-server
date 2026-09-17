@@ -1,0 +1,66 @@
+{
+  "backend_retained": "READY",
+  "continuation_requested": false,
+  "diagnostic_only": true,
+  "first_failure": {
+    "actual_role": null,
+    "class": "AgentError",
+    "event": 1,
+    "line": 350,
+    "message": "stream delta has an invalid role",
+    "predicate": "delta.get(\"role\", \"assistant\") != \"assistant\"",
+    "source": "scripts/agent/protocol.py"
+  },
+  "http_status": 200,
+  "independent_server_log_note": {
+    "endpoint": "/freeze_gc",
+    "exception_class": "requests.exceptions.HTTPError",
+    "http_status": 401,
+    "phase": "STARTUP_WARMUP",
+    "tool_failure_causality": "NOT_ESTABLISHED"
+  },
+  "original_parser_unchanged": true,
+  "original_payload_unchanged": true,
+  "ownership_release_utc": "2026-09-17T05:43:41.634934Z",
+  "raw_capture": {
+    "request_bytes": 868,
+    "response_bytes": 2359,
+    "retained": "PRIVATE_OUTSIDE_GIT"
+  },
+  "related_operands": {
+    "events": [
+      2,
+      3,
+      4
+    ],
+    "function_name": null,
+    "observed_in_one_capture": true,
+    "role": null,
+    "tool_call_id": null
+  },
+  "schema_version": 1,
+  "source_commit": "821df4a561173c078ed35c9286a07b82867b7953",
+  "stream": {
+    "argument_fragment_lengths": [
+      0,
+      1,
+      17,
+      1
+    ],
+    "arguments_exact_calc_path": true,
+    "done_count": 1,
+    "events": 8,
+    "finish_reason": "tool_calls",
+    "incomplete_trailing_data_event": false,
+    "tool_call_count": 1,
+    "tool_indexes_contiguous": true,
+    "tool_name_exact_read_file": true,
+    "usage": {
+      "completion_tokens": 26,
+      "prompt_tokens": 354,
+      "total_tokens": 380
+    },
+    "valid_utf8": true
+  },
+  "tool_executed": false
+}

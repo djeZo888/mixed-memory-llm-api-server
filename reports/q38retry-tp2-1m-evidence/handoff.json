@@ -1,0 +1,478 @@
+{
+  "status": "READY_FOR_FRESH_APIDEPLOY",
+  "no_more_vm_operations_from_q38retry": true,
+  "lease_and_request_ownership": "RELEASED",
+  "scope_release_utc": "2026-09-17T06:04:30.911821+00:00",
+  "request_connections_at_release": 0,
+  "postguards": "PASS",
+  "vm_source_commit": "91e962abb9dc7f8bcd2d8ba522b541cdd5f12f66",
+  "reviewed_integration_with_client": "0eb91c0ad9c92743afacdf0cefdc955dfe614e2c",
+  "client_protocol_sha256": "7424bf62ac7d5dc50cbaa96df5412a5a0ae87462e24f2cd523772bdb0bc3def3",
+  "source_paths": {
+    "normal_release": "/data/services/releases/91e962abb9dc7f8bcd2d8ba522b541cdd5f12f66-q38retry-20260917",
+    "control": "/usr/local/lib/llm-server/control-api",
+    "boot": "/usr/local/lib/local-ai-server",
+    "manifest": "/usr/local/lib/llm-server/control-api.manifest.json",
+    "instance": "/data/services/llm-manager/deployment-instance.json"
+  },
+  "source_manifest_sha256": "43e30d84e60c09162e5f3e8a5fe323b662cc1c137ea1aa7c7fec7940a59e473a",
+  "instance_sha256": "972b627a5be31674ca6c7b490d46a10d484c913c8ed54fe8992c08bdba60db6e",
+  "receipts": {
+    "native": {
+      "path": "/data/services/llm-manager/evidence/sglang-qwen38-0.5.19.auth.json",
+      "sha256": "b29cc6433009232067cf096e3a2ab7531023df57b1faa0d67c088e0a55739554",
+      "proof": "GENUINE_FINAL_SOURCE_NATIVE_PAIR_PASS",
+      "mode": "0600"
+    },
+    "extension": {
+      "path": "/data/services/llm-manager/evidence/sglang-qwen38-0.5.19.q38max.auth.json",
+      "sha256": "353289244d02525120b3cfbeededdcdb0cc6aefdbd5879d060ee22186a51dde1",
+      "proof": "GENUINE_FINAL_SOURCE_EXTENSION_PASS",
+      "mode": "0600"
+    }
+  },
+  "running": {
+    "active_model_connections": 0,
+    "actual_image": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "container_id": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+    "core": [
+      {
+        "Hard": 1,
+        "Name": "core",
+        "Soft": 1
+      }
+    ],
+    "device_requests": [
+      {
+        "Capabilities": [
+          [
+            "gpu"
+          ]
+        ],
+        "Count": 0,
+        "DeviceIDs": [
+          "0",
+          "1"
+        ],
+        "Driver": "",
+        "Options": {}
+      }
+    ],
+    "memory": {
+      "gpu": [
+        {
+          "free_mib": 48734,
+          "index": 0,
+          "total_mib": 97887,
+          "used_mib": 48516,
+          "utilization_percent": 0
+        },
+        {
+          "free_mib": 48702,
+          "index": 1,
+          "total_mib": 97887,
+          "used_mib": 48548,
+          "utilization_percent": 0
+        }
+      ],
+      "host": {
+        "MemAvailable": 929102589952,
+        "MemTotal": 946806915072,
+        "SwapFree": 3157258240,
+        "SwapTotal": 3157258240
+      }
+    },
+    "phase": "FINAL_READY_HANDOFF_STATE",
+    "state": {
+      "boot_policy": "resume",
+      "container": {
+        "deployment": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+        "id": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+        "image_id": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+        "instance": "ai-vm-d0b",
+        "legacy": false,
+        "name": "llmctl-qwen38-27b-1000000-yarn4-tp2-bf16kv",
+        "owner": "mixed-memory-llm-api-server"
+      },
+      "container_running": true,
+      "desired": "running",
+      "failure": null,
+      "last_selected": "qwen38-27b-256k",
+      "observed": "ready",
+      "schema_version": 2,
+      "selected": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+      "state_persisted": true,
+      "updated_at": 1789624927506768065
+    },
+    "utc": "2026-09-17T06:04:30.911768+00:00"
+  },
+  "readiness_seconds": 59.664,
+  "runtime_facts": {
+    "chunked_prefill_size": 2048,
+    "context_length": 1000000,
+    "dtype": "bfloat16",
+    "internal_states.0.chunked_prefill_size": 2048,
+    "internal_states.0.context_length": 1000000,
+    "internal_states.0.dtype": "bfloat16",
+    "internal_states.0.kv_cache_dtype": "bfloat16",
+    "internal_states.0.max_mamba_cache_size": 1,
+    "internal_states.0.max_running_requests": 1,
+    "internal_states.0.max_total_tokens": 1000000,
+    "internal_states.0.mem_fraction_static": 0.8,
+    "internal_states.0.quantization": "fp8",
+    "internal_states.0.tp_size": 2,
+    "kv_cache_dtype": "bfloat16",
+    "max_mamba_cache_size": 1,
+    "max_req_input_len": 999994,
+    "max_running_requests": 1,
+    "max_total_num_tokens": 1000000,
+    "max_total_tokens": 1000000,
+    "mem_fraction_static": 0.8,
+    "quantization": "fp8",
+    "tp_size": 2
+  },
+  "protocol": {
+    "approved_integration": "0eb91c0ad9c92743afacdf0cefdc955dfe614e2c",
+    "checks": {
+      "authenticated_generation_stream": {
+        "elapsed_seconds": 3.533211,
+        "finish_reason": "stop",
+        "model": "qwen3.8-27b",
+        "status": "PASS",
+        "stream_done": true,
+        "usage": {
+          "completion_tokens": 87,
+          "prompt_tokens": 34,
+          "total_tokens": 121
+        }
+      },
+      "authenticated_models": {
+        "model": "qwen3.8-27b",
+        "status": "PASS"
+      },
+      "missing_key": {
+        "http_status": 401,
+        "status": "PASS"
+      },
+      "real_read_file_continuation": {
+        "call": {
+          "elapsed_seconds": 0.868233,
+          "finish_reason": "tool_calls",
+          "model": "qwen3.8-27b",
+          "stream_done": true,
+          "usage": {
+            "completion_tokens": 26,
+            "prompt_tokens": 354,
+            "total_tokens": 380
+          }
+        },
+        "continuation": {
+          "elapsed_seconds": 0.383467,
+          "finish_reason": "stop",
+          "model": "qwen3.8-27b",
+          "stream_done": true,
+          "usage": {
+            "completion_tokens": 12,
+            "prompt_tokens": 136,
+            "total_tokens": 148
+          }
+        },
+        "fixture_setup_test": "EXPECTED_FAILURE_ONLY_NOT_AGENT_EDIT_TEST_ACCEPTANCE",
+        "formatting": {
+          "bare_json_format_met": false,
+          "bare_json_requested": true,
+          "format": "FENCED_JSON",
+          "formatting_limitation": "BARE_JSON_FORMAT_NOT_MET",
+          "subtraction_identified": true
+        },
+        "ordinary_uid": 1000,
+        "path": "calc.py",
+        "status": "PASS",
+        "tool": "read_file",
+        "tool_calls_executed": 1
+      },
+      "wrong_key": {
+        "http_status": 401,
+        "status": "PASS"
+      }
+    },
+    "client_protocol_sha256": "7424bf62ac7d5dc50cbaa96df5412a5a0ae87462e24f2cd523772bdb0bc3def3",
+    "continuation_semantics": {
+      "bare_json_format_met": false,
+      "bare_json_requested": true,
+      "format": "FENCED_JSON",
+      "formatting_limitation": "BARE_JSON_FORMAT_NOT_MET",
+      "subtraction_identified": true
+    },
+    "declared_context": 1000000,
+    "elapsed_seconds": 4.859910860999662,
+    "maximum_requests": 6,
+    "occupied_context": "NOT_TESTED",
+    "ordinary_uid_required": 1000,
+    "profile": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+    "profile_allocation": "SEPARATE_PARENT_EVIDENCE",
+    "request_count": 6,
+    "requests": [
+      {
+        "elapsed_seconds": 0.002349,
+        "path": "/models",
+        "status": 401,
+        "stream": false,
+        "success": false
+      },
+      {
+        "elapsed_seconds": 0.000923,
+        "path": "/models",
+        "status": 401,
+        "stream": false,
+        "success": false
+      },
+      {
+        "elapsed_seconds": 0.000993,
+        "path": "/models",
+        "status": 200,
+        "stream": false,
+        "success": true
+      },
+      {
+        "elapsed_seconds": 3.533217,
+        "path": "/chat/completions",
+        "status": 200,
+        "stream": true,
+        "success": true
+      },
+      {
+        "elapsed_seconds": 0.868246,
+        "path": "/chat/completions",
+        "status": 200,
+        "stream": true,
+        "success": true
+      },
+      {
+        "elapsed_seconds": 0.383477,
+        "path": "/chat/completions",
+        "status": 200,
+        "stream": true,
+        "success": true
+      }
+    ],
+    "retry": false,
+    "short_timing": {
+      "content_event_count": 86,
+      "elapsed_seconds": 3.533211,
+      "first_to_last_content_seconds": 2.917164184000285,
+      "measurement": "One short client arrival observation; events are not tokens; no repeated benchmark",
+      "prompt_to_first_content_seconds": 0.5838998670005822,
+      "server_prefill_decode_rates": "NOT_MEASURED_HERE_USE_MATCHING_SERVER_LOG",
+      "timing_capture_incomplete": false,
+      "usage": {
+        "completion_tokens": 87,
+        "prompt_tokens": 34,
+        "total_tokens": 121
+      }
+    },
+    "status": "PASS_SMALL_PROTOCOL_ONLY",
+    "tool_executed": {
+      "count": 1,
+      "ordinary_uid": 1000,
+      "path": "calc.py",
+      "tool": "read_file"
+    },
+    "wire_capture": [
+      {
+        "body_truncated": false,
+        "eof_observed": true,
+        "http_status": 401,
+        "ordinal": 1,
+        "path": "/models",
+        "request_bytes": 0,
+        "response_bytes": 24,
+        "stream": false
+      },
+      {
+        "body_truncated": false,
+        "eof_observed": true,
+        "http_status": 401,
+        "ordinal": 2,
+        "path": "/models",
+        "request_bytes": 0,
+        "response_bytes": 24,
+        "stream": false
+      },
+      {
+        "body_truncated": false,
+        "eof_observed": true,
+        "http_status": 200,
+        "ordinal": 3,
+        "path": "/models",
+        "request_bytes": 0,
+        "response_bytes": 164,
+        "stream": false
+      },
+      {
+        "body_truncated": false,
+        "http_status": 200,
+        "ordinal": 4,
+        "path": "/chat/completions",
+        "request_bytes": 339,
+        "response_bytes": 22721,
+        "response_reached_parser": true,
+        "stream": true,
+        "stream_bytes_equal_wire_capture": true,
+        "structure_summary": {
+          "bytes": 22721,
+          "done_count": 1,
+          "finish_seen": true,
+          "incomplete_trailing_data_event": false,
+          "sha256": "cf483d16728183cb302ea30aa3d1185c53827a5deb76f62d21d17bf608414843",
+          "tool_indexes_contiguous": true,
+          "valid_utf8": true
+        }
+      },
+      {
+        "body_truncated": false,
+        "http_status": 200,
+        "ordinal": 5,
+        "path": "/chat/completions",
+        "request_bytes": 868,
+        "response_bytes": 2359,
+        "response_reached_parser": true,
+        "stream": true,
+        "stream_bytes_equal_wire_capture": true,
+        "structure_summary": {
+          "bytes": 2359,
+          "done_count": 1,
+          "finish_seen": true,
+          "incomplete_trailing_data_event": false,
+          "sha256": "81272c31bb0093f354dd8b07f91cd26fbc7951bc46c3ca39cf390a85294cb845",
+          "tool_indexes_contiguous": true,
+          "valid_utf8": true
+        }
+      },
+      {
+        "body_truncated": false,
+        "http_status": 200,
+        "ordinal": 6,
+        "path": "/chat/completions",
+        "request_bytes": 885,
+        "response_bytes": 3629,
+        "response_reached_parser": true,
+        "stream": true,
+        "stream_bytes_equal_wire_capture": true,
+        "structure_summary": {
+          "bytes": 3629,
+          "done_count": 1,
+          "finish_seen": true,
+          "incomplete_trailing_data_event": false,
+          "sha256": "ce1608c11399e7c60c5b8bf2a0f78a29db39c8c5bd419949629a568f8a5a1932",
+          "tool_indexes_contiguous": true,
+          "valid_utf8": true
+        }
+      }
+    ]
+  },
+  "allocation_facts": {
+    "captured_bytes": 29753,
+    "capture_sha256": "b3508f182a295ab909283a8d1feeceb95cb49fed8cf0cb96c0cef05660ba9b95",
+    "numeric_events": [
+      {
+        "phase": "weights_begin",
+        "line_ordinal": 32,
+        "available_gb_log_label": 93.92,
+        "tp_rank": 1
+      },
+      {
+        "phase": "weights_begin",
+        "line_ordinal": 33,
+        "available_gb_log_label": 93.95,
+        "tp_rank": 0
+      },
+      {
+        "phase": "weights_end",
+        "line_ordinal": 60,
+        "available_gb_log_label": 79.29,
+        "memory_usage_gb_log_label": 14.66,
+        "tp_rank": 0
+      },
+      {
+        "phase": "weights_end",
+        "line_ordinal": 61,
+        "available_gb_log_label": 79.26,
+        "memory_usage_gb_log_label": 14.66,
+        "tp_rank": 1
+      },
+      {
+        "phase": "mamba_pool",
+        "line_ordinal": 64,
+        "tp_rank": 1
+      },
+      {
+        "phase": "mamba_pool",
+        "line_ordinal": 65,
+        "tp_rank": 0
+      },
+      {
+        "phase": "kv_allocated",
+        "line_ordinal": 66,
+        "cache_tokens": 1000000,
+        "k_size_gb_log_label": 15.26,
+        "v_size_gb_log_label": 15.26,
+        "tp_rank": 0
+      },
+      {
+        "phase": "memory_pool_end",
+        "line_ordinal": 67,
+        "available_gb_log_label": 48.44,
+        "tp_rank": 0
+      },
+      {
+        "phase": "kv_allocated",
+        "line_ordinal": 68,
+        "cache_tokens": 1000000,
+        "k_size_gb_log_label": 15.26,
+        "v_size_gb_log_label": 15.26,
+        "tp_rank": 1
+      },
+      {
+        "phase": "memory_pool_end",
+        "line_ordinal": 69,
+        "available_gb_log_label": 48.4,
+        "tp_rank": 1
+      },
+      {
+        "phase": "capacity",
+        "line_ordinal": 77,
+        "max_total_num_tokens": 1000000,
+        "context_len": 1000000,
+        "chunked_prefill_size": 2048,
+        "max_running_requests": 1,
+        "max_prefill_tokens": 16384,
+        "available_gpu_mem_gb_log_label": 47.94,
+        "tp_rank": 0
+      }
+    ],
+    "event_count": 11,
+    "event_history_truncated": false,
+    "log_gb_units_not_converted": true,
+    "raw_text_returned": false
+  },
+  "retained_limits": [
+    "Occupied context not tested; FINAL-ACCEPTANCE governs later workload.",
+    "Bare JSON requested; response contained correct subtraction in a Markdown JSON fence.",
+    "Short arrival timing only; no steady-state throughput or occupied-load claim.",
+    "Final control/private socket/catalog/boot activation deferred to fresh APIDEPLOY."
+  ],
+  "next_task": "APIDEPLOY against approved0eb91c0; orchestration/tasks/API-FINAL/plan.md section2; Worker2 requests only after explicit coordinated release",
+  "preserved": [
+    "registered guard exactbytes/root0755",
+    "dependency exactbytes/root0644",
+    "keys",
+    "registry",
+    "NETPATCH helper and ownership receipt",
+    "GLM native1M N76 placement",
+    "D1 rollback",
+    "all prior Q38RETRY failures/private raw captures"
+  ],
+  "handoff_written_utc": "2026-09-17T06:06:38.205335+00:00",
+  "request_lock_release_evidence": "Operational runner exited0 after remote scope terminal; local request lock released before this handoff"
+}

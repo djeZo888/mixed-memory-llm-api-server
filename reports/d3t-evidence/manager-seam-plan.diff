@@ -1,0 +1,49 @@
+--- a/scripts/lifecycle/manager.py
++++ b/scripts/lifecycle/manager.py
+@@ -378,12 +378,24 @@
+             return
+         require(d["_runtime"].get("environment") == {"LD_LIBRARY_PATH": "/opt/llama", "LLAMA_ARG_HOST": "0.0.0.0", "XDG_CACHE_HOME": "/cache"}, "unsafe_runtime_environment")
+         launch = d.get("launch", {})
+-        for key, low, high in (("context_size", 512, 131072), ("parallel", 1, 1),
++        context = launch.get("context_size")
++        require(type(context) is int and (512 <= context <= 131072
++                or (d["model"] == "glm-5.3-ud-q4-k-xl" and context == 1048576)),
++                "invalid_launch_limit")
++        cpu_all = launch.get("cpu_moe") is True and "n_cpu_moe" not in launch
++        cpu_76 = ("cpu_moe" not in launch and type(launch.get("n_cpu_moe")) is int
++                  and launch["n_cpu_moe"] == 76 and d["model"] == "glm-5.3-ud-q4-k-xl"
++                  and context in {32768, 1048576})
++        if cpu_76 or context == 1048576:
++            require(launch.get("tensor_split") == "1,1" and launch.get("n_gpu_layers") == 999,
++                    "invalid_glm_d3t_baseline")
++            require(d["runtime"] != "llama-cpp-v0.4.1-d1", "d3t_patched_runtime_required")
++        for key, low, high in (("parallel", 1, 1),
+                                ("timeout_seconds", 1, 14400), ("poll_seconds", 1, 30),
+                                ("request_timeout_seconds", 1, 30), ("stop_timeout_seconds", 1, 120),
+                                ("n_gpu_layers", 1, 999)):
+             require(type(launch.get(key)) is int and low <= launch[key] <= high, "invalid_launch_limit")
+-        require(launch.get("cpu_moe") is True and launch.get("jinja") is True
++        require((cpu_all or cpu_76) and launch.get("jinja") is True
+                 and launch.get("no_webui") is True, "invalid_launch_safety")
+         require(launch.get("split_mode") == "layer" and re.fullmatch(r"[0-9]+(?:\.[0-9]+)?,[0-9]+(?:\.[0-9]+)?", launch.get("tensor_split", "")), "invalid_gpu_split")
+         require(launch.get("devices") == ["CUDA0", "CUDA1"], "invalid_runtime_devices")
+@@ -772,11 +784,18 @@
+             qwen_next.validate(d)
+             return qwen_next.command(d)
+         launch = d["launch"]
++        if "n_cpu_moe" in launch or launch["context_size"] == 1048576:
++            measured = d["_runtime"].get("validation", {}).get("image_id")
++            require(bool(DIGEST_RE.fullmatch(str(measured))) and e.get("image_id") == measured
++                    and measured != "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
++                    "d3t_patched_image_required")
++        moe = (["--cpu-moe"] if launch.get("cpu_moe") is True
++               else ["--n-cpu-moe", str(launch["n_cpu_moe"])])
+         return ["--model", "/models/" + d["_model"]["load_entry"],
+                  "--host", d["container_host"], "--port", str(d["container_port"]),
+                  "--alias", d["endpoint"]["served_model"], "--api-key-file", d["auth"]["container_key_file"],
+                  "--ctx-size", str(launch["context_size"]), "--parallel", str(launch["parallel"]),
+-                 "--cpu-moe", "--jinja", "--no-webui", "--n-gpu-layers", str(launch["n_gpu_layers"]),
++                 *moe, "--jinja", "--no-webui", "--n-gpu-layers", str(launch["n_gpu_layers"]),
+                  "--split-mode", launch["split_mode"], "--tensor-split", launch["tensor_split"],
+                  "--load-mode", e["load_mode"], "--device", ",".join(launch["devices"]),
+                  "--chat-template-kwargs", json.dumps(launch["chat_template_kwargs"], sort_keys=True, separators=(",", ":"))]

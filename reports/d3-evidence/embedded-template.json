@@ -1,0 +1,30 @@
+{
+  "gguf_version": 3,
+  "tensor_count_first_shard": 0,
+  "metadata_count": 64,
+  "identity": {
+    "general.architecture": "glm-dsa",
+    "general.name": "Glm-5.3",
+    "glm-dsa.block_count": 79,
+    "glm-dsa.context_length": 1048576,
+    "glm-dsa.expert_count": 256,
+    "glm-dsa.expert_used_count": 8
+  },
+  "template_sha256": "15d2a7176beb599de0a59af8314b4869011e416cff7f65748b314940d3379b0e",
+  "template_bytes": 10505,
+  "selected_template_lines": [
+    "{%- set effective_reasoning_effort = reasoning_effort if reasoning_effort is defined and reasoning_effort in ['low', 'high'] else 'max' -%}",
+    "{%- if effective_reasoning_effort is not none -%}<|system|>Reasoning Effort: {{ effective_reasoning_effort | capitalize }}{%- endif -%}",
+    "{%- set clear_thinking = clear_thinking if clear_thinking is defined else false -%}",
+    "    {%- if obj.tool_call_id -%}",
+    "        {{- obj.tool_call_id -}}",
+    "{%- elif '</think>' in content %}",
+    "    {%- set reasoning_content = content.split('</think>')[0].split('<think>')[-1] %}",
+    "    {%- set content = content.split('</think>')[-1] %}",
+    "{%- if (not clear_thinking or loop.index0 > ns.last_user_index) and reasoning_content is defined -%}",
+    "{{ '<think>' + reasoning_content +  '</think>'}}",
+    "{{ '<think></think>' }}",
+    "    <|assistant|>{{- '<think>' -}}"
+  ],
+  "scope": "metadata read only; no model loading"
+}

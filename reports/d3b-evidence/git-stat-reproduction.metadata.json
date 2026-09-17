@@ -1,0 +1,69 @@
+{
+  "root": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro",
+  "git_version": "git version 2.54.0 (Apple Git-157)",
+  "original_sha256": "4fdbc441ea7b546100e086ac1e4fc5ae6749b7314311c99db05be450eca12996",
+  "copied_sha256": "4fdbc441ea7b546100e086ac1e4fc5ae6749b7314311c99db05be450eca12996",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all",
+        "--ignored=matching"
+      ],
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "git",
+        "diff-index",
+        "--cached",
+        "--quiet",
+        "HEAD",
+        "--"
+      ],
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "git",
+        "apply",
+        "--check",
+        "--index",
+        "--whitespace=error-all",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/tiny.patch"
+      ],
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "32f3be1a24204b7f3b1bbe120e04bccd8fe7079452fb22743c2e4321f8157190"
+    },
+    {
+      "argv": [
+        "git",
+        "update-index",
+        "--refresh"
+      ],
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "git",
+        "apply",
+        "--check",
+        "--index",
+        "--whitespace=error-all",
+        "/Users/agent/CodexProjects/llm-orchestration/tasks/D3B-20260915/d3b-git-stat-repro/tiny.patch"
+      ],
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

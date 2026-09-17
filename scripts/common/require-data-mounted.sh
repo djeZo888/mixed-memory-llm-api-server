@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Fresh-host registration is authoritative when present. Never select UUIDs
+# through environment variables or fall back to historical identity on failure.
+if [[ "${1:-}" != "--help" && ( -e /etc/local-ai-server || -L /etc/local-ai-server ) ]]; then
+  COMMON_INSTALL_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+  exec /usr/bin/python3 -I -B "$COMMON_INSTALL_DIR/registered-storage.py" "$@"
+fi
+
 EXPECTED_LABEL="AI_DATA"
 EXPECTED_UUID="8daf56f1-5649-4163-9d87-919c2d271875"
 DATA_PATH="/data"

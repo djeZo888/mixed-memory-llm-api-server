@@ -1,0 +1,16 @@
+{
+  "sha256": {
+    "archive-accepted.json": "9cef79b296757119811b25d4541a240d1da7e586e95b2ce9deb400ec0f500a72",
+    "final-audit.json": "86058eb3960e8c8b265d7d2d1a651b97376574f8c48f6eec4db4da5574d4684c",
+    "journal-unlink-evidence.json": "5f647e82d0da4b8c17cd1e0c85084b61e03cd940e877be83ff88668da50c1eca",
+    "netpatch-result.json": "569d65e6ea2a7754dc5e074f3d88a7f1d45d6c348b9a7124079dc9109b8d353e",
+    "post-apt-guard.json": "48f4edd5ef0f5931bd5a1b3205174c26af9a9c77cbdc7caad0593e1f8c72494d",
+    "post-journal-guard.json": "376f943039d75916b21fecab8fee120a9f38dc50831cc985e519bceaf85cdd6c",
+    "postboot.json": "83c7ca5e886e340618528a94a1d4953154820fcd47c78c3ebe6a8a508440ed5f",
+    "prevention-result.json": "ecb1a2562f9b17f4630da508ae36f60094ff5f2f2bdfcc0d20ef0967dab9e660",
+    "restore-failure.json": "6be68c1e42b7537e9506574c4497fc98a1a1546952954dff0760e832df987853",
+    "restore-result.json": "3f926d77a58a3b930f2edb480959a5d387200c284a97e776334c177bd35c7e50"
+  },
+  "vm_parent": "/data/logs/hostrecover-20260917",
+  "worker_private_copies": "/Users/agent/CodexProjects/llm-orchestration/tasks/HOSTRECOVER-20260917/private/remote"
+}

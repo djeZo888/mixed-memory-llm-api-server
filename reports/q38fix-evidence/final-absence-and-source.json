@@ -1,0 +1,34 @@
+{
+  "checks": [
+    {
+      "absent": true,
+      "exit": 0,
+      "selector": "id=d86f3ddad58dd6e493f60f468fa0f00a6db2ba6058244c15718a9aa040d6ab17",
+      "stderr_bytes": 0,
+      "stdout_bytes": 0
+    },
+    {
+      "absent": true,
+      "exit": 0,
+      "selector": "name=^/q38b-fixture-2c5f9e3a88e1d146ac9fe89e57cf0143$",
+      "stderr_bytes": 0,
+      "stdout_bytes": 0
+    }
+  ],
+  "container_id": "d86f3ddad58dd6e493f60f468fa0f00a6db2ba6058244c15718a9aa040d6ab17",
+  "container_name": "q38b-fixture-2c5f9e3a88e1d146ac9fe89e57cf0143",
+  "receipt_exists": false,
+  "source_hashes_match": true,
+  "source_sha256": {
+    "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+    "scripts/runtime/sglang38_file_auth.py": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+    "tests/lifecycle/sglang38_fixture/auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+    "tests/lifecycle/sglang38_fixture/cache_probe.py": "676ec23f86fa5f4c15ac4a77eaaa7fdb52845d9db223acd67a0b50a204262b6d",
+    "tests/lifecycle/sglang38_fixture/chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+    "tests/lifecycle/sglang38_fixture/provenance.json": "0084ec3c92c5eebefc9a068d3faf59afe8f4669a56d0293336b531c5416a07db",
+    "tests/lifecycle/sglang38_fixture/run_fixture.py": "954ba40800eed06e3d515d118f24a55ae5755ad8c9632326a8dc4cfd15b2c7ac",
+    "tests/lifecycle/sglang38_fixture/run_pinned_image.py": "b7ab0b200a73267d05e615afef0eaf0e3c277537e7002b1e9c12da853551e643"
+  },
+  "status": "PASS_EXACT_ABSENCE_AND_SOURCE",
+  "utc": "2026-09-15T04:36:13.567420+00:00"
+}

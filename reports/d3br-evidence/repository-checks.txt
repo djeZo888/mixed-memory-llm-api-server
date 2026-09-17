@@ -1,0 +1,6 @@
+PASS: staged source paths restricted to helper, runner, focused tests and D3BR reports.
+PASS: staged diff whitespace check.
+PASS: local rg-based secret scan and sensitive-filename check; no matches.
+PASS: git remote credential check without printing remote values; no push performed.
+PASS: local author AND committer resolve to CodexAIagent <133749519+djeZo888@users.noreply.github.com>.
+PASS: coordination reread before staging; Root runner contract approval preserved.

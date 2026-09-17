@@ -1,0 +1,455 @@
+{
+  "targets": [
+    {
+      "apply_authorized": false,
+      "blockers": [],
+      "containers": {
+        "approved_stopped_container": {
+          "compose": "/data/services/llm-manager/compose/minimax-m3-poc.compose.yml",
+          "id": "634daeb70a3ae9aa7403ec8d2256984de9cfe8b5521b839de16a1707164f7522",
+          "identity_match": true,
+          "image": "sha256:362917ee2a4188bdb827c5b97d0f9a8a5c5dd1663b2ea43ad1ef6daa55a0a768",
+          "mounts": [
+            [
+              "/data/hf-cache",
+              "/data/hf-cache",
+              true
+            ],
+            [
+              "/data/logs",
+              "/data/logs",
+              true
+            ],
+            [
+              "/data/models",
+              "/data/models",
+              false
+            ]
+          ],
+          "pid": 0,
+          "restart": {
+            "MaximumRetryCount": 0,
+            "Name": "no"
+          },
+          "state": "exited"
+        },
+        "blockers": [],
+        "other_references": [],
+        "planned_retirement_dependencies": [
+          {
+            "id": "321ee2110e2e0130739ca51fe192b23d746ecefca76e746c9e2df3fd8a799153",
+            "running": false,
+            "source": "/data/models"
+          },
+          {
+            "id": "6cfa91273417ad7f5ae23a471aaf7b2f5be47bfab74550df93b71587fb3fb71f",
+            "running": false,
+            "source": "/data/models"
+          }
+        ]
+      },
+      "phase": "C1_TARGET_DRY_RUN",
+      "process_hits": [],
+      "process_visibility_unknown": 0,
+      "references": [
+        {
+          "bytes": 2346,
+          "classification": "PROPOSED_OBSOLETE_OPERATIONAL_COMPOSE_RETIREMENT",
+          "metadata": {
+            "blocks": 8,
+            "ctime_ns": 1783542551521783431,
+            "dev": 2065,
+            "gid": 1001,
+            "ino": 67634176,
+            "mode": 33204,
+            "mtime_ns": 1783542551521783431,
+            "nlink": 1,
+            "size": 2346,
+            "uid": 1000
+          },
+          "path": "/data/services/llm-manager/compose/minimax-m3-poc.compose.yml",
+          "sha256": "b28767cf49321fc7ca294f05d1400e66a6ade88abb81a836e3b0f4269afde9e2"
+        }
+      ],
+      "root": "/data/models/minimax-m3-mxfp8",
+      "snapshot": {
+        "allocated_bytes": 443776548864,
+        "apparent_file_bytes": 443776023939,
+        "directories": 7,
+        "files": 159,
+        "mount": {
+          "device": "8:17",
+          "fsroot": "/",
+          "fstype": "ext4",
+          "id": "50",
+          "parent": "31",
+          "path": "/data",
+          "source": "/dev/sdb1"
+        },
+        "root": "/data/models/minimax-m3-mxfp8",
+        "root_identity": {
+          "blocks": 8,
+          "ctime_ns": 1783393444085021200,
+          "dev": 2065,
+          "gid": 1001,
+          "ino": 12320800,
+          "mode": 17917,
+          "mtime_ns": 1783393444085021200,
+          "nlink": 4,
+          "size": 4096,
+          "uid": 1000
+        },
+        "tree_metadata_sha256": "e6477e1b8d0b3e13f93e02a15d201eb6cf1e650eaedce0102fe50d1359e12893"
+      },
+      "status": "READY_FOR_ROOT_REFERENCE_AND_APPLY_REVIEW",
+      "utc": "2026-09-17T08:25:23.893247+00:00"
+    },
+    {
+      "apply_authorized": false,
+      "blockers": [],
+      "containers": {
+        "approved_stopped_container": {
+          "compose": "/data/services/llm-manager/compose/sglang-qwen3-30b.compose.yml",
+          "id": "321ee2110e2e0130739ca51fe192b23d746ecefca76e746c9e2df3fd8a799153",
+          "identity_match": true,
+          "image": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+          "mounts": [
+            [
+              "/data/hf-cache",
+              "/data/hf-cache",
+              true
+            ],
+            [
+              "/data/logs",
+              "/data/logs",
+              true
+            ],
+            [
+              "/data/models",
+              "/data/models",
+              false
+            ]
+          ],
+          "pid": 0,
+          "restart": {
+            "MaximumRetryCount": 0,
+            "Name": "no"
+          },
+          "state": "exited"
+        },
+        "blockers": [],
+        "other_references": [],
+        "planned_retirement_dependencies": [
+          {
+            "id": "634daeb70a3ae9aa7403ec8d2256984de9cfe8b5521b839de16a1707164f7522",
+            "running": false,
+            "source": "/data/models"
+          },
+          {
+            "id": "6cfa91273417ad7f5ae23a471aaf7b2f5be47bfab74550df93b71587fb3fb71f",
+            "running": false,
+            "source": "/data/models"
+          }
+        ]
+      },
+      "phase": "C1_TARGET_DRY_RUN",
+      "process_hits": [],
+      "process_visibility_unknown": 0,
+      "references": [
+        {
+          "bytes": 1465,
+          "classification": "PROPOSED_OBSOLETE_OPERATIONAL_COMPOSE_RETIREMENT",
+          "metadata": {
+            "blocks": 8,
+            "ctime_ns": 1783264536181457623,
+            "dev": 2065,
+            "gid": 1001,
+            "ino": 67634000,
+            "mode": 33204,
+            "mtime_ns": 1783264536173457571,
+            "nlink": 1,
+            "size": 1465,
+            "uid": 1000
+          },
+          "path": "/data/services/llm-manager/compose/sglang-qwen3-30b.compose.yml",
+          "sha256": "1e18f9a575a57657dee24ce643fd1d3a6cdd3c6aa0d6de7b7266b409f0f56bfd"
+        }
+      ],
+      "root": "/data/models/qwen3-30b-a3b-instruct-2507",
+      "snapshot": {
+        "allocated_bytes": 61084520448,
+        "apparent_file_bytes": 61084266282,
+        "directories": 4,
+        "files": 56,
+        "mount": {
+          "device": "8:17",
+          "fsroot": "/",
+          "fstype": "ext4",
+          "id": "50",
+          "parent": "31",
+          "path": "/data",
+          "source": "/dev/sdb1"
+        },
+        "root": "/data/models/qwen3-30b-a3b-instruct-2507",
+        "root_identity": {
+          "blocks": 8,
+          "ctime_ns": 1783264400754551322,
+          "dev": 2065,
+          "gid": 1001,
+          "ino": 12320782,
+          "mode": 17917,
+          "mtime_ns": 1783264400754551322,
+          "nlink": 3,
+          "size": 4096,
+          "uid": 1000
+        },
+        "tree_metadata_sha256": "fb3d1c02ac11ef62c56f68e233fb8c70ecdd25b00d600aed09c087e25ca878b3"
+      },
+      "status": "READY_FOR_ROOT_REFERENCE_AND_APPLY_REVIEW",
+      "utc": "2026-09-17T08:25:23.893308+00:00"
+    },
+    {
+      "apply_authorized": false,
+      "blockers": [],
+      "containers": {
+        "approved_stopped_container": {
+          "compose": "/data/services/llm-manager/compose/sglang-smoke.compose.yml",
+          "id": "6cfa91273417ad7f5ae23a471aaf7b2f5be47bfab74550df93b71587fb3fb71f",
+          "identity_match": true,
+          "image": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+          "mounts": [
+            [
+              "/data/hf-cache",
+              "/data/hf-cache",
+              true
+            ],
+            [
+              "/data/logs",
+              "/data/logs",
+              true
+            ],
+            [
+              "/data/models",
+              "/data/models",
+              false
+            ]
+          ],
+          "pid": 0,
+          "restart": {
+            "MaximumRetryCount": 0,
+            "Name": "no"
+          },
+          "state": "exited"
+        },
+        "blockers": [],
+        "other_references": [],
+        "planned_retirement_dependencies": [
+          {
+            "id": "634daeb70a3ae9aa7403ec8d2256984de9cfe8b5521b839de16a1707164f7522",
+            "running": false,
+            "source": "/data/models"
+          },
+          {
+            "id": "321ee2110e2e0130739ca51fe192b23d746ecefca76e746c9e2df3fd8a799153",
+            "running": false,
+            "source": "/data/models"
+          }
+        ]
+      },
+      "phase": "C1_TARGET_DRY_RUN",
+      "process_hits": [],
+      "process_visibility_unknown": 0,
+      "references": [
+        {
+          "bytes": 1312,
+          "classification": "PROPOSED_OBSOLETE_OPERATIONAL_COMPOSE_RETIREMENT",
+          "metadata": {
+            "blocks": 8,
+            "ctime_ns": 1783263857679653477,
+            "dev": 2065,
+            "gid": 1001,
+            "ino": 67634003,
+            "mode": 33204,
+            "mtime_ns": 1783196595675455043,
+            "nlink": 1,
+            "size": 1312,
+            "uid": 1000
+          },
+          "path": "/data/services/llm-manager/compose/sglang-smoke.compose.yml",
+          "sha256": "e550f0c00f0d08d0445b45b8e7eed683449eacb15c1c241385feb8dfb0dd5050"
+        }
+      ],
+      "root": "/data/models/qwen3-0.6b-smoke",
+      "snapshot": {
+        "allocated_bytes": 1519300608,
+        "apparent_file_bytes": 1519210490,
+        "directories": 4,
+        "files": 22,
+        "mount": {
+          "device": "8:17",
+          "fsroot": "/",
+          "fstype": "ext4",
+          "id": "50",
+          "parent": "31",
+          "path": "/data",
+          "source": "/dev/sdb1"
+        },
+        "root": "/data/models/qwen3-0.6b-smoke",
+        "root_identity": {
+          "blocks": 8,
+          "ctime_ns": 1783185208366789437,
+          "dev": 2065,
+          "gid": 1001,
+          "ino": 12320770,
+          "mode": 17917,
+          "mtime_ns": 1783185208366789437,
+          "nlink": 3,
+          "size": 4096,
+          "uid": 1000
+        },
+        "tree_metadata_sha256": "5ed0b8450470be964a0e44b55d32bb6bd8b9f99376811f0b621ac05c8bf3ce3f"
+      },
+      "status": "READY_FOR_ROOT_REFERENCE_AND_APPLY_REVIEW",
+      "utc": "2026-09-17T08:25:23.893345+00:00"
+    },
+    {
+      "apply_authorized": false,
+      "blockers": [],
+      "containers": {
+        "approved_stopped_container": null,
+        "blockers": [],
+        "other_references": [],
+        "planned_retirement_dependencies": []
+      },
+      "phase": "C1_TARGET_DRY_RUN",
+      "process_hits": [],
+      "process_visibility_unknown": 0,
+      "references": [
+        {
+          "bytes": 23688,
+          "classification": "PRESERVE_HISTORICAL_PROVENANCE",
+          "metadata": {
+            "blocks": 48,
+            "ctime_ns": 1789430442617850628,
+            "dev": 2065,
+            "gid": 1001,
+            "ino": 41418930,
+            "mode": 33188,
+            "mtime_ns": 1789430442613850603,
+            "nlink": 1,
+            "size": 23688,
+            "uid": 1000
+          },
+          "path": "/data/build/f1a-qwen-20260915/evidence/acquisition-status.json",
+          "sha256": "37cec46972a9073aea39d225c4275236231791294ebc4f81f79cab191f6b310c"
+        },
+        {
+          "bytes": 17175,
+          "classification": "PRESERVE_HISTORICAL_PROVENANCE",
+          "metadata": {
+            "blocks": 40,
+            "ctime_ns": 1789428222030709322,
+            "dev": 2065,
+            "gid": 1001,
+            "ino": 41418928,
+            "mode": 33204,
+            "mtime_ns": 1789428222030709322,
+            "nlink": 1,
+            "size": 17175,
+            "uid": 1000
+          },
+          "path": "/data/build/f1a-qwen-20260915/evidence/handoff-snapshot.json",
+          "sha256": "8f8b9db6e6bf8d3a18604906f8a38c5bdeb371435ee8e84624d1f25581bf3301"
+        },
+        {
+          "bytes": 57205,
+          "classification": "PRESERVE_HISTORICAL_PROVENANCE",
+          "metadata": {
+            "blocks": 112,
+            "ctime_ns": 1789431410750911651,
+            "dev": 2065,
+            "gid": 0,
+            "ino": 67634429,
+            "mode": 33188,
+            "mtime_ns": 1789431410747911633,
+            "nlink": 1,
+            "size": 57205,
+            "uid": 0
+          },
+          "path": "/data/services/llm-manager/acquisition/f1d-qwen-seal-evidence.json",
+          "sha256": "0d6cfcd28abe2094b7b6cfd7188bb3b79b71a73e835eb3f9bbc7efee5883aa16"
+        },
+        {
+          "bytes": 10132,
+          "classification": "PROPOSED_OBSOLETE_COMPLETION_RECEIPT_RETIREMENT",
+          "metadata": {
+            "blocks": 24,
+            "ctime_ns": 1789431410754911676,
+            "dev": 2065,
+            "gid": 0,
+            "ino": 67634758,
+            "mode": 33188,
+            "mtime_ns": 1789431410752911663,
+            "nlink": 1,
+            "size": 10132,
+            "uid": 0
+          },
+          "path": "/data/services/llm-manager/acquisition/qwen3-coder-next-fp8.complete.json",
+          "sha256": "5cd9737ba138962f05a83745ea646debd04adfd41dcbc40780269406df915471"
+        }
+      ],
+      "root": "/data/models-large/qwen3-coder-next-fp8",
+      "snapshot": {
+        "allocated_bytes": 80408006656,
+        "apparent_file_bytes": 80407722953,
+        "directories": 1,
+        "files": 49,
+        "mount": {
+          "device": "8:33",
+          "fsroot": "/",
+          "fstype": "ext4",
+          "id": "52",
+          "parent": "50",
+          "path": "/data/models-large",
+          "source": "/dev/sdc1"
+        },
+        "root": "/data/models-large/qwen3-coder-next-fp8",
+        "root_identity": {
+          "blocks": 8,
+          "ctime_ns": 1789431409824905935,
+          "dev": 2081,
+          "gid": 1001,
+          "ino": 119275521,
+          "mode": 17901,
+          "mtime_ns": 1789430441599844089,
+          "nlink": 2,
+          "size": 4096,
+          "uid": 0
+        },
+        "tree_metadata_sha256": "73cbabfda2a8665a037fe39d2c5f81e7ec1fd6b4dd3251ba68422eb45b74e5b7"
+      },
+      "status": "READY_FOR_ROOT_REFERENCE_AND_APPLY_REVIEW",
+      "utc": "2026-09-17T08:25:23.893364+00:00"
+    }
+  ],
+  "allocated_bytes": 586788376576,
+  "parent_restoration": {
+    "dev": 2065,
+    "gid": 1001,
+    "inode": 12320769,
+    "mode": "02775",
+    "path": "/data/models",
+    "phase": "C1_TEMPORARY_PARENT_RESTORED",
+    "recursive": false,
+    "uid": 1000,
+    "utc": "2026-09-17T08:25:23.896995+00:00"
+  },
+  "release": {
+    "awaiting": "ROOT_FRESH_REPORT_REVIEW_NO_DELETION",
+    "canonical_lease": "RELEASED",
+    "model_running": true,
+    "phase": "C1_DRY_RUN_RELEASED",
+    "utc": "2026-09-17T08:25:24.093756+00:00"
+  },
+  "source_commit": "ab6daa475cc2f1c04956d862f460f9f01c4ee952"
+}

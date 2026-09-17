@@ -1,0 +1,85 @@
+{
+  "attach_streams": {
+    "exit_code": 0,
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 247,
+    "stdout_sha256": "2fa33a8fccbc0ae1219b83b4f9ccf06bb260768bfd54ff51c9bd0d0ed0cae068"
+  },
+  "auth_receipt_created": false,
+  "container_before_cleanup": {
+    "ExitCode": 0,
+    "Paused": false,
+    "Pid": 0,
+    "Restarting": false,
+    "Running": false,
+    "Status": "exited"
+  },
+  "container_lifetime": {
+    "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+    "container_id": "a88d34f603cdebdcf3e34a578dcb5412239c862e2895ac0c7b84657c6782bf87",
+    "container_name": "q38env-20260915-5ea22171e82ac28bf3247ec8c794f4bb",
+    "outcome": "DIAGNOSTIC_EXITED"
+  },
+  "expected": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "NVIDIA_DRIVER_CAPABILITIES": "compute,utility",
+    "NVIDIA_VISIBLE_DEVICES": "none"
+  },
+  "failed_equalities": {
+    "child": [
+      "NVIDIA_VISIBLE_DEVICES"
+    ],
+    "parent": [
+      "NVIDIA_VISIBLE_DEVICES"
+    ]
+  },
+  "host_policy": "VERIFIED_BEFORE_START",
+  "native_result": "NOT_TESTED_DIAGNOSTIC_CANNOT_AUTHORIZE",
+  "observed_utc": "2026-09-15T04:02:10.380393+00:00",
+  "origin": {
+    "child": "os.environ.get for only the same three names in directly spawned sys.executable -B -c; inherited environment, no env argument",
+    "host": "exact owned-container Docker Config.Env projection before start",
+    "parent": "os.environ.get for only the three allowlisted names in python3 -B -c"
+  },
+  "q38vr2_boundary": "This separate observation cannot establish an unobserved Q38VR2 value or a cause. No additional probe or fix authorized here.",
+  "schema_version": 1,
+  "started_utc": "2026-09-15T04:02:09.849210+00:00",
+  "status": "OBSERVED",
+  "task": "Q38ENV-20260915",
+  "variables": {
+    "CUDA_VISIBLE_DEVICES": {
+      "child": "",
+      "child_matches_expected": true,
+      "expected": "",
+      "host_config_env_occurrences": [
+        ""
+      ],
+      "parent": "",
+      "parent_equals_child": true,
+      "parent_matches_expected": true
+    },
+    "NVIDIA_DRIVER_CAPABILITIES": {
+      "child": "compute,utility",
+      "child_matches_expected": true,
+      "expected": "compute,utility",
+      "host_config_env_occurrences": [
+        "compute,utility"
+      ],
+      "parent": "compute,utility",
+      "parent_equals_child": true,
+      "parent_matches_expected": true
+    },
+    "NVIDIA_VISIBLE_DEVICES": {
+      "child": "void",
+      "child_matches_expected": false,
+      "expected": "none",
+      "host_config_env_occurrences": [
+        "none"
+      ],
+      "parent": "void",
+      "parent_equals_child": true,
+      "parent_matches_expected": false
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "utc": 1789445415.163746,
+  "phase": "loading",
+  "load_elapsed_seconds": 54.4175,
+  "container": "7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78",
+  "image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+  "rss_kib": 365172192,
+  "pss_kib": null,
+  "vm_swap_kib": 0,
+  "mem_available_kib": 542624124,
+  "host_swap_used_kib": 14080,
+  "vmstat": {
+    "pswpin": 19045,
+    "pswpout": 35822,
+    "oom_kill": 0
+  },
+  "gpu_free_mib": [
+    87269,
+    75321
+  ],
+  "gpu_allocated_mib": [
+    9982,
+    21930
+  ],
+  "collection_limitation": "existing d3t.guards.collect snapshot_timeout30s; owned sampler closed; full PSS/diagnostic sample unavailable"
+}

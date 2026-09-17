@@ -1,0 +1,50 @@
+import os,stat,json,hashlib,subprocess,datetime
+from pathlib import Path
+BASE=Path('/data/services/n1vm-20260915')
+assert os.geteuid()==0
+os.umask(0o077)
+os.environ['TMPDIR']=str(BASE/'tmp')
+def protect(p):
+ for q in [*reversed(p.parents),p]:
+  m=q.lstat();assert stat.S_ISDIR(m.st_mode) and m.st_uid==0 and not m.st_mode&0o022,str(q)
+def exclusive(p,raw,mode):
+ protect(p.parent)
+ fd=os.open(p,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,mode)
+ with os.fdopen(fd,'wb') as f:
+  os.fchown(f.fileno(),0,0);os.fchmod(f.fileno(),mode);f.write(raw);f.flush();os.fsync(f.fileno())
+ assert p.read_bytes()==raw,str(p)
+ m=p.lstat();assert m.st_uid==0 and m.st_gid==0 and stat.S_IMODE(m.st_mode)==mode and m.st_nlink==1
+ return {'path':str(p),'sha256':hashlib.sha256(raw).hexdigest(),'uid':m.st_uid,'gid':m.st_gid,'mode':oct(mode),'inode':m.st_ino,'device':m.st_dev}
+protect(BASE)
+inv=json.loads((BASE/'inventory-before.json').read_text())
+for p in PAYLOAD:
+ assert not os.path.lexists(p['destination']), 'destination appeared'
+ assert hashlib.sha256(p['content'].encode()).hexdigest()==p['sha256']
+for q in inv['new_parentdirs']: assert not os.path.lexists(q),'parent appeared'
+assert os.statvfs('/').f_bavail*os.statvfs('/').f_frsize>=4*1024**3
+exclusive(BASE/'apply-plan.md',PLAN.encode(),0o600)
+exclusive(BASE/'deploy-manifest-planned.json',json.dumps([{k:v for k,v in p.items() if k!='content'} for p in PAYLOAD],indent=2).encode(),0o600)
+created_fd=os.open(BASE/'created-resources.jsonl',os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+def record(row):
+ os.write(created_fd,(json.dumps(row,sort_keys=True)+'\n').encode());os.fsync(created_fd)
+try:
+ for name in sorted(inv['new_parentdirs'],key=lambda x:len(Path(x).parts)):
+  p=Path(name);protect(p.parent);p.mkdir(mode=0o755);os.chown(p,0,0);os.chmod(p,0o755);record({'directory':name,'new':True,'mode':'0755','uid':0,'gid':0})
+ stage=BASE/'source';stage.mkdir(mode=0o700);record({'directory':str(stage),'new':True,'evidence':True})
+ for rel in ('scripts','scripts/control','configs','configs/network'): (stage/rel).mkdir(mode=0o700)
+ for row in PAYLOAD:
+  raw=row['content'].encode()
+  exclusive(stage/row['source'],raw,0o600)
+  rec=exclusive(Path(row['destination']),raw,int(row['mode'],8));rec['new']=True;record(rec)
+finally: os.close(created_fd)
+units=[p['destination'] for p in PAYLOAD if p['destination'].startswith('/etc/systemd/system/')]
+cmd=['systemd-analyze','verify','--man=no',*units]
+r=subprocess.run(cmd,text=True,capture_output=True,timeout=60)
+result={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'command':cmd,'returncode':r.returncode,'stdout':r.stdout,'stderr':r.stderr}
+exclusive(BASE/'systemd-verify.json',json.dumps(result,indent=2).encode(),0o600)
+print(json.dumps(result,indent=2))
+assert r.returncode==0,'STOP actual Linux unit verification failed; staged state preserved'
+assert not r.stdout.strip() and not r.stderr.strip(),'STOP Linux unit verification diagnostics require review'
+r=subprocess.run(['/usr/bin/python3','-I','-B',str(stage/'scripts/control/private_network.py'),'source-check'],text=True,capture_output=True,timeout=15)
+exclusive(BASE/'source-check.txt',(r.stdout+r.stderr).encode(),0o600)
+print(r.stdout,end='');assert r.returncode==0,'STOP helper source-check'

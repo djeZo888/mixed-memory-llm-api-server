@@ -1,39 +1,63 @@
 # mixed-memory-llm-api-server
 
-`mixed-memory-llm-api-server` is an open-source deployment framework for running large local LLMs on mixed system-RAM plus NVIDIA-VRAM workstations and exposing an authenticated OpenAI-compatible API.
+An API-only local AI server for **GLM5.3 UD-Q4_K_XL** (flagship) and
+**Qwen3.8-27B FP8** (fast model). It provides OpenAI-compatible inference and a
+separate authenticated control API for catalog, status and model switching.
+Select/load the model before inference: **one backend is active at a time**.
 
-## Intended Hardware Class
+**Stage one COMPLETE, with qualifications (2026-09-17).**
+[Independent LAN acceptance](reports/apiaccept-lan-acceptance.md) covers both
+models, real agent work, Qwen → GLM → Qwen switching and postboot access.
+Fast Qwen is selected by default and resumes after reboot.
+[Final cleanup is COMPLETE](reports/finalops-reboot-cleanup.md).
+GLM functional checks passed, but strict swap-free qualification did
+not; neither model has demonstrated its full occupied context maximum. The
+[stage-one status report](reports/stage1-ai-vm-status.md) preserves the exact
+evidence, source boundaries and remaining qualifications.
 
-The target host class is a headless Linux workstation or VM with large system RAM, many CPU cores, and one or more NVIDIA GPUs with substantial VRAM. The initial deployment target is a mixed-memory workstation where models may use both system RAM and GPU VRAM.
+## Models and capacity
 
-## Scope
+| Model | Placement and context scope |
+| --- | --- |
+| GLM5.3 UD-Q4_K_XL | System RAM plus both GPUs; configured context 1,048,576 tokens. Agent and strict-JSON retrieval PASS; retrieval inputs 4,154 then 4,196 tokens. Larger OpenCode input counters are recorded separately. |
+| Qwen3.8-27B FP8 | Both GPUs/TP2, FP8 weights, BF16 KV and official factor-4 YaRN; configured/allocated context 1,000,000 tokens. Largest completed retrieval input 144,244 tokens, with real tool use and strict JSON. |
 
-This repository is API-only. It is intended to run inference backends, expose model inference APIs, and provide repeatable operational checks. It does not implement web browsing, scraping, browser automation, or a human chat UI.
+Configured capacity, allocation and successfully occupied context are separate
+claims. Neither full occupied maximum is established. The catalog's
+`context.verified_occupied_tokens` remains `null` because it has no structured
+occupied-context receipt; historical 32K and 2048-output-token checks are not
+product limits. Near-cap occupied-context tasks remain NOT_TESTED.
 
-## Current Status
+## Start here
 
-Early bootstrap. M0 creates repository structure, durable project instructions, documentation placeholders, CI metadata, issue templates, and a milestone report.
+- [API operations guide](docs/ai-vm-api-operations.md): endpoint/key separation,
+  protected-file examples, aliases, catalog, asynchronous switch/poll and inference.
+- [Control API contract](docs/control-api.md): exact fields, concurrency,
+  idempotency, interruption and recovery behavior.
+- [Direct client networking](docs/direct-client-network.md): approved private
+  transport and authentication; [network policy](docs/private-network.md).
+- [Agent client contract](docs/agent-client.md), [reviewed OpenCode client](docs/client-install.md)
+  and [ordinary-client verification](docs/client-verification.md).
+- [Manual Qwen 50–100K context example](examples/qwen-context-test.py) and
+  [console instructions](docs/ai-vm-api-operations.md#manual-qwen-context-example):
+  one counted retrieval request; offline-checked, NOT_LIVE_EXECUTED.
 
-M0 does not install or configure the server. It does not initialize disks, mount `/data`, configure Docker, configure NVIDIA drivers, run systemd services, expose APIs, or download models.
+Real file reads, edits, test execution, browsing and other tools require an
+external agent client running as an ordinary user in a trusted workspace.
+The model API does not execute tools. A separate frontend VM is future work;
+there is no completed human chat UI here. Finish ai-vm first, frontend next,
+installer last. **All installer work and tests are paused.**
+The [current scope](docs/orchestration/2026-09-17-resumed.md) and
+[profile handoff](docs/l2-live-snapshot.md) preserve coordination and source
+details; their older pending statements must be read with the dated status report.
 
-Do not download models until `/data` is mounted and verified during later milestones.
+## Historical references
 
-## High-Level Install Roadmap
-
-1. M0 repository bootstrap.
-2. M1 VM preflight.
-3. M2 data disk dry-run and `/data` preparation.
-4. M3 root-disk guard.
-5. M4 Docker/containerd storage.
-6. M5 NVIDIA host driver.
-7. M6 NVIDIA Container Toolkit.
-8. M7 backend runtime abstraction.
-9. M8 small model API smoke service.
-10. M9 fast technical/coding model.
-11. M10 larger model benchmarks.
-12. M11 authenticated API exposure.
-13. M12 observability and operations.
+The [installer record](docs/installation.md), [roadmap](ROADMAP.md) and
+[reports](reports/) preserve earlier work and its evidence limits. They do not
+establish a complete fresh-machine installation or current serving readiness.
 
 ## License
 
-Apache-2.0 is intended. The full license text is not added in M0 unless a trusted local copy is available. See `LICENSE.todo.md`.
+Apache-2.0 is intended; the full license text remains outstanding.
+See [LICENSE.todo.md](LICENSE.todo.md).

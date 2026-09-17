@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "glm-5.3-ud-q4-k-xl",
+  "repo_id": "unsloth/GLM-5.3-GGUF",
+  "revision": "346b3591c7f28d1a23716f97a065ecf12ec14771",
+  "quantization": "UD-Q4_K_XL",
+  "provenance": "Community quantization of Z.ai GLM-5.3; not official Z.ai quantized weights",
+  "model_root": {
+    "role": "models",
+    "suffix": "glm-5.3-ud-q4-k-xl"
+  },
+  "load_entry": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf",
+  "artifact_count": 11,
+  "total_bytes": 467289116837,
+  "artifacts": [
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf",
+      "size_bytes": 9428677,
+      "sha256": "02a3e367e8b5f5ee3341d556211faa2cc956c3e77ad0e298c6805323bfaeb02d"
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00002-of-00011.gguf",
+      "size_bytes": 49433942336,
+      "sha256": "374daff9e093b362a12ca89904fd0511df38b2a9794029e272c8639587a13402"
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00003-of-00011.gguf",
+      "size_bytes": 48566415136,
+      "sha256": "9a13948a0c7747e374766ab32272e8bf5ee2ac260ed581419cc980c00df1bb9c"
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00004-of-00011.gguf",
+      "size_bytes": 48566415136,
+      "sha256": "1fee29db6ab247f97e42cc7dd4132ce35f15f41fb42ba9110b73c25471171f9b"
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00005-of-00011.gguf",
+      "size_bytes": 48566415136,
+      "sha256": "7d38557e09934a3f6cf4eb7aa7ea8c04929bf2d40db8ba8494529d51be04bb4e"
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00006-of-00011.gguf",
+      "size_bytes": 48566415136,
+      "sha256": "3f6c47e4e32f7b1f9b844124622cc8d506facdb58e3304b9b4429b6c3af4f53d"
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00007-of-00011.gguf",
+      "size_bytes": 48566415136,
+      "sha256": "03114618ca505e4dbd63e0c8fb478cb54db86ff32ddd3681160589d8a958db8e"
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00008-of-00011.gguf",
+      "size_bytes": 48566415136,
+      "sha256": "e202e8679571572ae5ab490d021e3f0d0ada4794521464e6735e62516bedff96"
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00009-of-00011.gguf",
+      "size_bytes": 48566415136,
+      "sha256": "05d81908bc8ffd1e2ff6bb6a4e7a347c455ce87d7d6c473415d37f1749f0a337"
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00010-of-00011.gguf",
+      "size_bytes": 48566415136,
+      "sha256": "252eac782187e63ffdbf0650eb79538a53626991f7dfd06106cfbbd5eb1a0bb3"
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00011-of-00011.gguf",
+      "size_bytes": 29314424736,
+      "sha256": "d69bc418b2a08103d1b42340e803e1a98582d3766e4593c4a490475ac5bb811b"
+    }
+  ],
+  "metadata_source": "https://huggingface.co/api/models/unsloth/GLM-5.3-GGUF/tree/346b3591c7f28d1a23716f97a065ecf12ec14771/UD-Q4_K_XL",
+  "metadata_evidence": "reports/r2-flagship-artifact.json",
+  "integrity_owner": "D1 acquisition verification; D2 checks required regular files and exact sizes before start, without hashing model contents during status",
+  "capability_status": "Live CUDA, capacity, authentication, model readiness and tool parsing NOT_TESTED by D2"
+}

@@ -1,0 +1,23 @@
+{
+  "task": "D3CAP2",
+  "worker": "mac-worker1.local",
+  "base": "dad2d58b57ab2367dee254cff1a885567b0c76f4",
+  "installed_closure_source_commit": "e8d8bbad3f2f6345295d440b25f084fed83dc734",
+  "allocation_attempts": 1,
+  "generations": 0,
+  "report_normalization": "GPU UUID fields removed; all source paths, timestamps, counters and diagnostics retained",
+  "operator_inputs": "inputs.py embeds exact supplied VM-GUARDS and D3N32 source inventory; retained privately, hashes below; no secret input is required by transition",
+  "private_input_sha256": {
+    "inputs.py": "7aa2e3a251f1973b6114128fb4b9a68657b53105072936c515bc2e3f6fd028ea"
+  },
+  "operator_code_notes": [
+    "cheap-core.py contains the exact D3PERFVM generated cheap collector functions; its 32768/PID243279 remote loop was replaced by task-local monitor_load with actual new identity/context.",
+    "D3PERFVM reference files retain old constants and are historical input only.",
+    "preflight.py.txt is the successful scratch-preparation revision; first inherited-setgid assertion and missing-scratch failure are separately retained.",
+    "final.py.txt is an intermediate read-only observation: late native allocation was found, but its conservative status/actual_capacity strings and stale Manager state are superseded by closure-result.json and this report.",
+    "No smoke program or raw private request input is included: the prepared conditional request was never dispatched.",
+    "The committed cheap-core.py.txt normalizes only its surplus final blank line for diff whitespace checks. The exact emitted private core SHA256 is 9377b48e84ba0039694c53c26d1e226e75feda0574d1ffce20f4608f5d9728e3."
+  ],
+  "no_new_production_source": true,
+  "no_installer_tests": true
+}

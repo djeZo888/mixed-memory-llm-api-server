@@ -1,0 +1,112 @@
+{
+  "trial_directory": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial",
+  "trial_mode": "0o700",
+  "run_directory": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run",
+  "run_mode": "0o700",
+  "artifacts": [
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/api-key",
+      "mode": "0o600",
+      "uid": 502,
+      "key_hash": "INTENTIONALLY_OMITTED"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/endpoint.json",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 749,
+      "sha256": "dab1a5866eb1e6375e666cc90cb2b7e151789560d6677e50457423f3029469af"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/postflight.json",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 8565,
+      "sha256": "d7087159af0f5cf8b5863a2dbfdeb4fadc658d0f01a23a5c848380361db7bcd4"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/preflight-guards.json",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 7220,
+      "sha256": "a86e5d0570ad424bfed3236b9de4a00847c88762049783e7093cfdfb37ea1575"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/preflight-identity.json",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 2408,
+      "sha256": "28d467b546e28c95d287f118489a9b6133d5965cf2560e59e0a5f0c0cb055fd5"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run/baseline.admission.json",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 1525,
+      "sha256": "8d13cd3eebfb8b7808ab20cf95b4f4bb6499c2aad7ab872a2b2601933cff856a"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run/baseline.cold.body.json",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 2621,
+      "sha256": "6682c1aaae6491aaa900da3297c05e17a63bc35adbceaef310bc8ded47b1f89d"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run/baseline.cold.raw",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 818,
+      "sha256": "6291a2bb8814c37018862ec0a580c0c078a7921e896d2db6519cacf1e1cca445"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run/baseline.cold.response.json",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 1410,
+      "sha256": "4ed3ef5761f4320e5c35eb844b2c613a9e43d07850cab363e39eb6da0afef132"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run/baseline.cold.samples.jsonl",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 170960,
+      "sha256": "13f3a453a386d2d280f46ba7390e2f6d013a9bb87caf26ec3cf3727835ecf41a"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run/baseline.cold.tokens.json",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 6645,
+      "sha256": "a05ab8c64de441aa04068fd148d78ba5e43421cd4bd41fb89f03fd99bcbbde2c"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run/config.json",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 430,
+      "sha256": "39463ef002145646558bc80bcf75c503d832c0865093f27f58dc4a4dfca7b4e2"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run/request.lock",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run/state.json",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 1042,
+      "sha256": "1c02577fd8a247bab21ab7b6ad6aea7e79f28e9553931ff97c89bddfd620dc30"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run/state.lock",
+      "mode": "0o600",
+      "uid": 502,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "action": "select",
+  "dry_run": true,
+  "image_deletion": "none",
+  "model_file_deletion": "none",
+  "selected": "glm-5.3-ud-q4-k-xl-8k",
+  "wait_for_readiness": true,
+  "writes": false
+}
+{
+  "boot_policy": "manual",
+  "container": null,
+  "container_running": false,
+  "desired": "stopped",
+  "failure": null,
+  "last_selected": "qwen3-30b-a3b-instruct-2507",
+  "observed": "stopped",
+  "schema_version": 2,
+  "selected": "glm-5.3-ud-q4-k-xl-8k",
+  "state_persisted": true,
+  "updated_at": 1789432818845536841
+}
+{
+  "action": "start",
+  "dry_run": true,
+  "image_deletion": "none",
+  "model_file_deletion": "none",
+  "selected": "glm-5.3-ud-q4-k-xl-8k",
+  "wait_for_readiness": true,
+  "writes": false
+}

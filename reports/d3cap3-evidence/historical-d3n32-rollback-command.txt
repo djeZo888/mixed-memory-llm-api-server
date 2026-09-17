@@ -1,0 +1,37 @@
+```sh
+sudo -n /usr/bin/python3 -I -B - <<'PY'
+import json
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+source = Path('/usr/local/lib/llm-server/control-api')
+sys.path.insert(0, str(source / 'scripts'))
+from common.lifecycle_lease import acquire_lease
+from lifecycle.manager import load_manager, Manager
+
+old_id = 'bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55'
+new_id = '7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78'
+old_profile = 'glm-5.3-ud-q4-k-xl-32k'
+rollback_configs = Path('/data/services/llm-manager/d3n32-20260915/rollback/configs')
+with acquire_lease(blocking=False) as lease:
+    current = load_manager(SimpleNamespace(instance=None), source / 'configs')
+    assert current.instance['id'] == 'ai-vm-d0b'
+    state = current.read_state()
+    assert state['container']['id'] == new_id
+    assert state['selected'] == 'glm-5.3-ud-q4-k-xl-n76-32k'
+    current.trusted_container(state['container'])
+    rollback = Manager(rollback_configs, current.instance, binding=current.binding)
+    deployment = rollback.deployment(old_profile)
+    rollback.prepare_start(deployment)
+    old = rollback.docker.inspect(old_id)
+    assert old and old['Id'] == old_id and not rollback.running(old)
+    rollback.trusted_container(rollback.identity(old, deployment))
+    rollback.validate_reused_contract(old, deployment)
+    rollback.network_check(old, deployment)
+    current.dispatch('stop', lease=lease)
+    rollback.dispatch('select', deployment_id=old_profile,
+                      boot_policy='manual', lease=lease)
+    print(json.dumps(rollback.dispatch('start', lease=lease), sort_keys=True))
+PY
+```

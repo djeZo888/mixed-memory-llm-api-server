@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+"""Own one bounded manager start and periodic nonsecret load snapshots."""
+import argparse, datetime, importlib.util, json, os, pathlib, signal, subprocess, time
+P=pathlib.Path; RUN=P('/data/build/d3-glm53-20260915')
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('--release',type=P,required=True);p.add_argument('--profile',choices=['8k','32k'],required=True);a=p.parse_args()
+assert a.release.resolve()==a.release and str(a.release).startswith('/data/services/releases/')
+llm=[ '/usr/bin/python3',str(a.release/'scripts/llmctl') ];inst=['--instance','/data/services/llm-manager/deployment-instance.json']
+env={**os.environ,'PYTHONDONTWRITEBYTECODE':'1','TMPDIR':str(RUN/'tmp')}
+spec=importlib.util.spec_from_file_location('d3snap',P('/data/services/llm-manager/d3-ops/snapshot-d3.py'));mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod)
+name='llmctl-glm-5.3-'+a.profile; dest=RUN/'evidence';started=time.monotonic(); state={'owner':'D3','profile':a.profile,'start_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'supervisor_pid':os.getpid(),'release':str(a.release),'deadline_seconds':7500,'phase':'starting'}
+def save():
+ tmp=dest/('load-'+a.profile+'.json.tmp');tmp.write_text(json.dumps(state,indent=2)+'\n');os.chmod(tmp,0o600);tmp.replace(dest/('load-'+a.profile+'.json'))
+with (dest/('manager-start-'+a.profile+'.json')).open('x') as log:
+ proc=subprocess.Popen(llm+['start','--yes']+inst,stdout=log,stderr=subprocess.STDOUT,env=env)
+ state['manager_pid']=proc.pid;save()
+ try:
+  while proc.poll() is None:
+   elapsed=time.monotonic()-started;state['elapsed_seconds']=round(elapsed,2)
+   try:
+    d=mod.snapshot(name);(dest/('snapshot-'+a.profile+'-latest.json')).write_text(json.dumps(d,indent=2)+'\n')
+    with (dest/('metrics-'+a.profile+'.jsonl')).open('a') as f:
+     f.write(json.dumps({k:v for k,v in d.items() if k not in ['container','phase_lines']})+'\n')
+    state['rss_kib']=d.get('process_kib',{}).get('VmRSS');state['mem_available_kib']=d['host_kib']['MemAvailable'];state['container_id']=d['container']['id'];state['container_pid']=d['container']['state']['Pid'];state['gpu_memory']=d['gpus']
+    if d['root_available_bytes']<4*1024**3 or d['host_kib']['MemAvailable']<16*1024**2:
+     state['phase']='resource_stop_required';save();proc.terminate();proc.wait(timeout=30)
+     subprocess.run(llm+['stop','--yes']+inst,stdout=log,stderr=subprocess.STDOUT,env=env,timeout=180);break
+   except subprocess.CalledProcessError: pass
+   save()
+   if elapsed>7500:
+    state['phase']='supervisor_deadline';proc.terminate();proc.wait(timeout=30);break
+   try: proc.wait(timeout=30)
+   except subprocess.TimeoutExpired: pass
+ finally:
+  if proc.poll() is None: proc.terminate();proc.wait(timeout=30)
+ state.update(manager_exit=proc.returncode,elapsed_seconds=round(time.monotonic()-started,2),end_utc=datetime.datetime.now(datetime.timezone.utc).isoformat())
+ if state['phase']=='starting': state['phase']='manager_ready' if proc.returncode==0 else 'manager_failed'
+ try:
+  d=mod.snapshot(name);(dest/('snapshot-'+a.profile+'-final.json')).write_text(json.dumps(d,indent=2)+'\n');state['container_id']=d['container']['id'];state['container_pid']=d['container']['state']['Pid']
+ except Exception: state['final_snapshot']='unavailable'
+ save()
+raise SystemExit(0 if state['phase']=='manager_ready' else 1)

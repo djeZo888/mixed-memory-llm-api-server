@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+"""Worker-only bounded GLM proof; localhost SSH tunnel and in-memory key."""
+import argparse, datetime, http.client, json, pathlib, socket, subprocess, time
+p=argparse.ArgumentParser(description=__doc__); p.add_argument('--output',required=True,type=pathlib.Path); p.add_argument('--max-tokens',type=int,default=256); p.add_argument('--reasoning-effort',choices=['low','high','max'],default='low'); p.add_argument('--reasoning-budget-tokens',type=int); a=p.parse_args()
+assert 1<=a.max_tokens<=2048 and (a.reasoning_budget_tokens is None or 0<=a.reasoning_budget_tokens<=512)
+key=subprocess.check_output(['ssh','-o','BatchMode=yes','ai-vm','sudo -n cat /data/services/secrets/llm-api-key'],stderr=subprocess.DEVNULL).decode('ascii'); assert key and all(33<=ord(c)<=126 for c in key)
+sock=socket.socket(); sock.bind(('127.0.0.1',0)); port=sock.getsockname()[1]; sock.close()
+tunnel=subprocess.Popen(['ssh','-N','-o','BatchMode=yes','-o','ExitOnForwardFailure=yes','-L',f'127.0.0.1:{port}:127.0.0.1:30002','ai-vm'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+out={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'worker':'Mac-Worker1','endpoint':'http://127.0.0.1:30002/v1','key_handling':'protected VM file -> memory only; tunnel process cleaned up','cases':[]}
+def request(method,path,auth=None,body=None):
+ c=http.client.HTTPConnection('127.0.0.1',port,timeout=600); headers={'Content-Type':'application/json'}
+ if auth: headers['Authorization']='Bearer '+auth
+ start=time.monotonic(); c.request(method,path,body=json.dumps(body) if body else None,headers=headers); r=c.getresponse(); data=r.read(8*1024*1024); elapsed=time.monotonic()-start;c.close()
+ try: parsed=json.loads(data)
+ except ValueError: parsed={'non_json_bytes':len(data)}
+ return {'status':r.status,'wall_seconds':round(elapsed,3),'response':parsed}
+try:
+ for _ in range(100):
+  assert tunnel.poll() is None,'tunnel_failed'
+  try:
+   with socket.create_connection(('127.0.0.1',port),timeout=.1): break
+  except OSError: time.sleep(.1)
+ else: raise RuntimeError('tunnel_not_ready')
+ for name,k in [('missing',None),('wrong','D3-DELIBERATELY-WRONG'),('correct',key)]: out['cases'].append({'name':name+'_auth_models',**request('GET','/v1/models',k)})
+ body={'model':'glm-5.3','messages':[{'role':'user','content':'What is 2 + 2? Reply with the number only.'}],'max_tokens':a.max_tokens,'temperature':0,'stream':False,'reasoning_effort':a.reasoning_effort}
+ if a.reasoning_budget_tokens is not None: body['reasoning_budget_tokens']=a.reasoning_budget_tokens
+ for kind in ['first_prompt','warm_same_prompt']:
+  result=request('POST','/v1/chat/completions',key,body)
+  out['cases'].append({'name':kind,'request':body,**result})
+  encoded=json.dumps(out,indent=2); assert key not in encoded; a.output.write_text(encoded+'\n')
+finally:
+ tunnel.terminate()
+ try: tunnel.wait(timeout=10)
+ except subprocess.TimeoutExpired: tunnel.kill();tunnel.wait()
+encoded=json.dumps(out,indent=2); assert key not in encoded;a.output.write_text(encoded+'\n')
+for c in out['cases']:
+ r=c['response']; print(json.dumps({'case':c['name'],'http':c['status'],'wall_seconds':c['wall_seconds'],'usage':r.get('usage'),'timings':r.get('timings'),'choices':r.get('choices')}))

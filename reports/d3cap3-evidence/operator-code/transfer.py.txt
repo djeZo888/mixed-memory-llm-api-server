@@ -1,0 +1,24 @@
+"""One final read-only transfer of explicit sanitized task reports."""
+from pathlib import Path
+import json,hashlib,subprocess,datetime,os,sys
+r=Path(__file__).resolve().parent
+names=['admission.json','preflight-final-guards.json','f16-source-proof.json','f16-source-proof-final-guards.json','allocation-attempt.json','first-transition-failure.json','load-samples.json','final-result.json','final-after-report-guards.json','closure-result.json','closure-after-report-guards.json']
+code='\n'.join((r/n).read_text() for n in ('cheap-core.py','inputs.py','common.py'))+'\n'
+code+='''guard();quiet();result={}
+for name in NAMES:
+ p=protected(REPORT/name);assert p.stat().st_size<2097152
+ raw=p.read_bytes();result[name]={'sha256':hashlib.sha256(raw).hexdigest(),'text':raw.decode()}
+print(json.dumps(result),flush=True)
+'''.replace('NAMES',repr(names))
+p=subprocess.run(['ssh','-o','BatchMode=yes','ai-vm','sudo','-n','/usr/bin/python3','-I','-B','-'],input=code,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=30)
+assert p.returncode==0,'report_transfer_failed'
+data=json.loads(p.stdout);assert sorted(data)==sorted(names)
+out=r/'trial/remote';out.mkdir(mode=0o700)
+manifest={}
+for n,row in data.items():
+ raw=row['text'].encode();assert hashlib.sha256(raw).hexdigest()==row['sha256'];q=out/n;q.write_bytes(raw);q.chmod(0o600);manifest[n]=row['sha256']
+sys.path.insert(0,str(r/'repo/scripts'));from d3t.probe import lock
+with lock(r.parent/'D3BASE-20260915/trial/run','request.lock'):pass
+result={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'files':manifest,'worker_request_lock_free':True,'remote_exit_code':0,'no_further_vm_calls_scheduled':True}
+(r/'trial/report-transfer.json').write_text(json.dumps(result,indent=2))
+print(json.dumps({'files_transferred':len(manifest),'worker_request_lock_free':True,'no_further_vm_calls_scheduled':True,'utc':result['utc']}))

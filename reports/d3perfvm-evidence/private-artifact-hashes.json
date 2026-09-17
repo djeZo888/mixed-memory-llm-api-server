@@ -1,0 +1,13 @@
+{
+  "body_source": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run/baseline.cold.body.json",
+  "private_trial": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3PERFVM-20260915/trial",
+  "secret_artifacts_excluded": true,
+  "sha256": {
+    "accounting-private.json": "f1fec4ea4c67468a28120132255ab14a303b20fa70ab206261db2c6ec8e19cba",
+    "boundary.py": "2cd2ef9c446d2f6cc2f57e39fd847049cdd52fb4a5fa2e17ef409650203c9018",
+    "cheap-emitted.py": "1d0cd8d8a6da0ab00a72281f0ab6072a2cf6555e1f17e8f96a654df0a25bf9b4",
+    "cheap.py": "a5c71120a41d27885e20bd08b1f0372c1c5e041397df1364e2adc7e275733b15",
+    "measure.py": "d487361463e5d00a847f48e3eb4f76320884f6342718c2ca0797d8c6d9cc1f36",
+    "response.raw": "3fede0c3faa32351d452b3273f7be203206b18d1b4e485ab291ebc44f656d4a4"
+  }
+}

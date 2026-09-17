@@ -1,0 +1,144 @@
+{
+  "utc": "2026-09-15T04:50:17.984093+00:00",
+  "candidate_metadata": [
+    {
+      "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+      "dev": 64512,
+      "inode": 266791,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o400",
+      "nlink": 1,
+      "size": 970436608,
+      "allocated_bytes": 970440704,
+      "mtime_ns": 1789446869471533227,
+      "ctime_ns": 1789446869681534442,
+      "atime_ns": 1789446866852518081,
+      "mtime": "2026-09-15T04:34:29.471533+00:00",
+      "ctime": "2026-09-15T04:34:29.681535+00:00",
+      "atime": "2026-09-15T04:34:26.852518+00:00"
+    },
+    {
+      "path": "/var/crash/_usr_bin_python3.12.0.crash",
+      "dev": 64512,
+      "inode": 266790,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o640",
+      "nlink": 1,
+      "size": 608314664,
+      "allocated_bytes": 608321536,
+      "mtime_ns": 1789446866852518081,
+      "ctime_ns": 1789446866852518081,
+      "atime_ns": 1789446866853518087,
+      "mtime": "2026-09-15T04:34:26.852518+00:00",
+      "ctime": "2026-09-15T04:34:26.852518+00:00",
+      "atime": "2026-09-15T04:34:26.853518+00:00"
+    }
+  ],
+  "first_attachment": {
+    "field": "CoreDump",
+    "encoding": "base64",
+    "offset": 244790
+  },
+  "header_metadata_bytes_examined": 244790,
+  "allowed_crash_metadata": {
+    "ProblemType": "Crash",
+    "Date": "Tue Sep 15 04:34:05 2026",
+    "ExecutablePath": "/usr/bin/python3.12",
+    "Signal": "11"
+  },
+  "metadata_field_names_before_attachment": [
+    "ProblemType",
+    "Architecture",
+    "Date",
+    "Dependencies",
+    "DistroRelease",
+    "ExecutablePath",
+    "ExecutableTimestamp",
+    "Package",
+    "PackageArchitecture",
+    "ProcAttrCurrent",
+    "ProcCmdline",
+    "ProcCwd",
+    "ProcEnviron",
+    "ProcMaps",
+    "ProcStatus",
+    "Signal",
+    "SignalName",
+    "SourcePackage",
+    "Uname",
+    "UserGroups",
+    "_HooksRun",
+    "CoreDump"
+  ],
+  "internal_identity_comparison": {
+    "cmdline_mentions_cache_probe": true,
+    "cmdline_mentions_run_fixture": false,
+    "cmdline_mentions_auth_native": false,
+    "cmdline_mentions_q38_fixture": true,
+    "cwd_mentions_q38fix": false,
+    "cgroup_matches_exact_failed_container": false,
+    "identity_fields_present": {
+      "ProcCmdline": true,
+      "ProcCwd": true,
+      "ProcCgroup": false,
+      "ProcStat": false
+    }
+  },
+  "crashed_process_metadata": {
+    "Name": "python3",
+    "Pid": "265467",
+    "PPid": "265408",
+    "Uid": "0\t0\t0\t0",
+    "NSpid": "265467\t43"
+  },
+  "core_filename_process_identity": {
+    "pid": 265467,
+    "start_ticks": 2515351,
+    "boot_id_matches_current": true,
+    "process_pid_exists": false
+  },
+  "active_reference_scan": {
+    "checked_processes": 1112,
+    "exact_candidate_fd_references": [],
+    "crash_handler_processes": [],
+    "errors": []
+  },
+  "candidate_metadata_after": [
+    {
+      "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+      "dev": 64512,
+      "inode": 266791,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o400",
+      "nlink": 1,
+      "size": 970436608,
+      "allocated_bytes": 970440704,
+      "mtime_ns": 1789446869471533227,
+      "ctime_ns": 1789446869681534442,
+      "atime_ns": 1789446866852518081,
+      "mtime": "2026-09-15T04:34:29.471533+00:00",
+      "ctime": "2026-09-15T04:34:29.681535+00:00",
+      "atime": "2026-09-15T04:34:26.852518+00:00"
+    },
+    {
+      "path": "/var/crash/_usr_bin_python3.12.0.crash",
+      "dev": 64512,
+      "inode": 266790,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o640",
+      "nlink": 1,
+      "size": 608314664,
+      "allocated_bytes": 608321536,
+      "mtime_ns": 1789446866852518081,
+      "ctime_ns": 1789446866852518081,
+      "atime_ns": 1789446866853518087,
+      "mtime": "2026-09-15T04:34:26.852518+00:00",
+      "ctime": "2026-09-15T04:34:26.852518+00:00",
+      "atime": "2026-09-15T04:34:26.853518+00:00"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "source_sha": "5e713441d9ea164b81860ee795c5ef35972ee8e3",
+  "started_utc": "2026-09-15T02:57:37.914834+00:00",
+  "finished_utc": "2026-09-15T02:57:38.179850+00:00",
+  "worker": "mac-worker2",
+  "client_uid": 502,
+  "transport": "native /usr/bin/curl; direct RFC1918 HTTP; no SSH tunnel; proxy bypass",
+  "endpoint": "http://10.156.100.60:30002/v1",
+  "configured_model": "glm-5.3",
+  "configured_context_tokens": 32768,
+  "results": [
+    {
+      "auth": "missing",
+      "started_utc": "2026-09-15T02:57:38.086828+00:00",
+      "curl_exit": 0,
+      "http_status": "401",
+      "remote_ip": "10.156.100.60",
+      "local_ip": "10.156.100.182",
+      "connect_seconds": "0.006295",
+      "total_seconds": "0.010516"
+    },
+    {
+      "auth": "wrong",
+      "started_utc": "2026-09-15T02:57:38.115705+00:00",
+      "curl_exit": 0,
+      "http_status": "401",
+      "remote_ip": "10.156.100.60",
+      "local_ip": "10.156.100.182",
+      "connect_seconds": "0.004600",
+      "total_seconds": "0.008188"
+    },
+    {
+      "auth": "correct",
+      "started_utc": "2026-09-15T02:57:38.137960+00:00",
+      "curl_exit": 0,
+      "http_status": "200",
+      "remote_ip": "10.156.100.60",
+      "local_ip": "10.156.100.182",
+      "connect_seconds": "0.004620",
+      "total_seconds": "0.008495",
+      "models": [
+        {
+          "id": "glm-5.3",
+          "object": "model",
+          "owned_by": "llamacpp"
+        }
+      ],
+      "context_metadata": [
+        {
+          "id": "glm-5.3",
+          "n_ctx_train": 1048576
+        }
+      ]
+    }
+  ],
+  "status": "PASS",
+  "credential_transfer": "Authorized SSH sudo read of existing key; new owned 0700 task directory and 0600 key/configs outside Git; secret never in argv",
+  "context_caveat": "32768 is configured slot context from Worker1 handoff; n_ctx_train=1048576 is API training metadata, not occupied context or a hardware/server capacity measurement."
+}

@@ -1,0 +1,86 @@
+"""ONE canonical native1M start. No automatic retry or rollback."""
+admission=json.loads(protected(REPORT/'admission.json').read_bytes())
+private=json.loads(protected(REPORT/'private-baseline.json').read_bytes())
+assert key_state()==private['key'] and stable_files()==private['files']
+assert not (REPORT/'allocation-attempt.json').exists(),'allocation_allowance_consumed'
+initial=guard();quiet();control_state()
+sys.path.insert(0,str(SRC/'scripts'))
+from common.lifecycle_lease import acquire_lease
+from lifecycle.runtime_io import LifecycleError
+stop_monitor=threading.Event();monitor_failure=[];observations=[];new_identity=[]
+def abort(signum,frame):raise LifecycleError('d3cap2_cheap_safety_stop')
+signal.signal(signal.SIGUSR1,abort)
+signal.signal(signal.SIGTERM,abort)
+signal.signal(signal.SIGINT,abort)
+def monitor_load():
+    state=state_new(admission['idle_full']['vmstat']);next_sample=time.monotonic();previous=None
+    try:
+        while not stop_monitor.is_set():
+            owned=m.state.get('container')
+            if owned and m.state.get('selected')==TARGET:
+                c=inspect_container(owned['id'])
+                if c['State']['Running']:
+                    if not new_identity:
+                        ident=identity(c);assert ident['image']==IMAGE
+                        new_identity.append(ident)
+                        emit('target_started',identity=ident,allocation_attempts=1)
+                    s=cheap_sample(new_identity[0]['id'],1048576,state,new_identity[0],admission['idle_full'])
+                    assert s['sample_elapsed_seconds']<2,'sample_duration'
+                    if previous is not None:assert 0<s['timestamp']-previous<=2,'sample_gap'
+                    previous=s['timestamp'];observations.append(s)
+                    emit('sample',stage='load',sample_index=len(observations),sample=s)
+            next_sample+=1
+            stop_monitor.wait(max(0,next_sample-time.monotonic()))
+    except Exception as exc:
+        reason=str(exc) if isinstance(exc,(AssertionError,Error)) else type(exc).__name__
+        monitor_failure.append(reason);emit('first_load_safety_failure',error=reason,samples=len(observations))
+        os.kill(os.getpid(),signal.SIGUSR1)
+with acquire_lease(blocking=False) as lease:
+    m=manager();current=m.read_state()
+    assert current==admission['state'],'state_changed_since_admission'
+    assert identity(inspect_container(OLD))==admission['identity']
+    target=m.deployment(TARGET);m.prepare_start(target)
+    emit('target_preflight_revalidated',owner_pid=os.getpid(),deadline_seconds=target['launch']['timeout_seconds'],allocation_attempts=0)
+    thread=None
+    try:
+        m.dispatch('stop',lease=lease)
+        assert not inspect_container(OLD)['State']['Running']
+        emit('old_n76_32k_stopped',container=OLD)
+        m.dispatch('select',TARGET,boot_policy='manual',lease=lease)
+        write('allocation-attempt.json',{'utc':time.time(),'target':TARGET,'attempt':1,'owner_pid':os.getpid(),'deadline_seconds':target['launch']['timeout_seconds']})
+        emit('target_start_dispatch',profile=TARGET,image=IMAGE,allocation_attempts=1,owner_pid=os.getpid())
+        thread=threading.Thread(target=monitor_load,name='d3cap2-load-cheap');thread.start()
+        result=m.dispatch('start',lease=lease)
+        stop_monitor.set();thread.join(20);assert not thread.is_alive(),'monitor_join_failed'
+        assert not monitor_failure and observations,'monitor_no_safe_samples'
+        ready_guard=guard();quiet()
+        full=full_idle(new_identity[0]['id'],1048576,admission['idle_full'])
+        c=inspect_container(new_identity[0]['id']);assert identity(c)==new_identity[0]
+        raw=Path(c['LogPath']);assert raw.stat().st_size<524288
+        selected=[]
+        for line in raw.read_bytes().splitlines():
+            row=json.loads(line);msg=row['log'].strip()
+            if re.search(r'D3T_NATIVE_V1|(?:KV|[ck]ache|compute).*buffer size|K \(f16\)|V \(f16\)|type_[kv]|offloaded \d+/\d+|n_ctx\s*=|n_seq_max\s*=|n_threads\s*=|n_cpu_moe',msg,re.I):
+                selected.append({'utc':row['time'],'message':msg})
+        f16=[x for x in selected if 'K (f16)' in x['message'] and 'V (f16)' in x['message']]
+        assert f16,'actual_f16_kv_types_missing'
+        assert key_state()==private['key'] and stable_files()==private['files']
+        assert result['boot_policy']=='manual' and result['desired']=='running' and result['observed']=='ready'
+        assert c['RestartPolicy']['Name']=='no';control_state()
+        capacity={'status':'PASS_CAPACITY_ALLOCATION_ONLY','identity':new_identity[0],'state':result,'actual_capacity':1048576,'actual_slots':1,'native':full['native'],'idle_full':full,'selected_backend_logs':selected,'guards':ready_guard,'key_exact_bytes_metadata_unchanged':True,'occupied_near_1m':'NOT_TESTED','allocation_attempts':1,'generation_attempts':0,'load_samples':len(observations)}
+        write('capacity-result.json',capacity)
+        emit('actual_capacity_result',status=capacity['status'],identity=new_identity[0],actual_capacity=1048576,native=full['native'],idle_rss_gib=full['process_kib']['Rss']/1048576,idle_pss_gib=full['process_kib']['Pss']/1048576,memavailable_gib=full['host_kib']['MemAvailable']/1048576,gpu_free_gib=[g['free_bytes']/GIB for g in full['gpus']],f16_kv_verified=True,occupied_near_1m='NOT_TESTED')
+        write('load-samples.json',observations)
+        write('transition-final-guards.json',guard())
+    except BaseException as exc:
+        stop_monitor.set()
+        if thread is not None:thread.join(20)
+        reason=str(exc) if isinstance(exc,(LifecycleError,AssertionError,Error)) else type(exc).__name__
+        failure=emit('first_transition_failure',error=reason,state=m.state,monitor_failure=monitor_failure,allocation_attempts=int((REPORT/'allocation-attempt.json').exists()))
+        write('first-transition-failure.json',failure)
+        # Reconcile only Manager's durable immutable owned container. No retry.
+        stopped=m.dispatch('stop',lease=lease)
+        emit('owned_target_reconciled_stopped',state=stopped)
+        write('failure-reconciliation.json',{'state':stopped,'guards':guard(),'samples':observations})
+        raise SystemExit(1)
+emit('transition_lifecycle_lease_released',generation_ownership='retained_for_one_conditional_tiny_smoke')
