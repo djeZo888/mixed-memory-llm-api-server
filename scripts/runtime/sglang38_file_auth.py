@@ -27,6 +27,12 @@ SOURCE_COMMIT = "0bcd822377da7b5718e674eaf9c870d349424dd1"
 IMAGE_REFERENCE = "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262"
 IMAGE_CONFIG_ID = "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813"
 CONTEXTS = (131072, 262144)
+EXTENSION_CONTEXT = 1000000
+ACCEPTED_CONTEXTS = (*CONTEXTS, EXTENSION_CONTEXT)
+EXTENSION_OVERRIDE_JSON = ('{"text_config":{"rope_parameters":{"mrope_interleaved":true,'
+    '"mrope_section":[11,11,10],"rope_type":"yarn","rope_theta":10000000,'
+    '"partial_rotary_factor":0.25,"factor":4.0,"original_max_position_embeddings":262144}}}')
+EXTENSION_ENVIRONMENT = {"SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN": "1"}
 # Public OCI metadata, independently bound to IMAGE_REFERENCE in Q38 provenance.
 # Absence is tolerated here for source harnesses; production reuse checks the
 # complete exact inherited image environment in the lifecycle adapter.
@@ -84,10 +90,14 @@ BOOLEAN_FLAGS = ("--disable-radix-cache", "--disable-overlap-schedule")
 
 
 def backend_argv(context):
-    """The only two accepted configurations; no arbitrary backend CLI escape."""
-    if type(context) is not int or context not in CONTEXTS:
+    """The three closed tuples; native defaults retain their exact argv."""
+    if type(context) is not int or context not in ACCEPTED_CONTEXTS:
         raise LaunchError("launch_context_invalid")
-    return ([piece for pair in FIXED_FLAGS.items() for piece in pair]
+    flags = dict(FIXED_FLAGS)
+    if context == EXTENSION_CONTEXT:
+        flags["--tp-size"] = "2"
+        flags["--json-model-override-args"] = EXTENSION_OVERRIDE_JSON
+    return ([piece for pair in flags.items() for piece in pair]
             + ["--context-length", str(context), "--max-total-tokens", str(context)]
             + list(BOOLEAN_FLAGS))
 
@@ -112,6 +122,7 @@ def parse_options(argv):
     parser.add_argument("--warmup-timeout", required=True)
     for flag in (*FIXED_FLAGS, "--context-length", "--max-total-tokens"):
         parser.add_argument(flag, required=True)
+    parser.add_argument("--json-model-override-args")
     for flag in BOOLEAN_FLAGS:
         parser.add_argument(flag, action="store_true", required=True)
     if argv not in (["--help"], ["-h"]):
@@ -122,19 +133,23 @@ def parse_options(argv):
         while i < len(argv):
             flag = argv[i]
             if flag in seen or flag not in (*FIXED_FLAGS, *BOOLEAN_FLAGS,
-                    "--key-file", "--warmup-timeout", "--context-length", "--max-total-tokens"):
+                    "--key-file", "--warmup-timeout", "--context-length", "--max-total-tokens",
+                    "--json-model-override-args"):
                 raise LaunchError("launch_arguments_invalid")
             seen.add(flag)
             i += 1 if flag in BOOLEAN_FLAGS else 2
         if i != len(argv):
             raise LaunchError("launch_arguments_invalid")
     options = parser.parse_args(argv)
+    extension = options.context_length == str(EXTENSION_CONTEXT)
+    expected_flags = {**FIXED_FLAGS, "--tp-size": "2" if extension else "1"}
     if (options.key_file != "/run/secrets/llm-api-key"
             or options.warmup_timeout != "600"
-            or options.context_length not in tuple(str(value) for value in CONTEXTS)
+            or options.context_length not in tuple(str(value) for value in ACCEPTED_CONTEXTS)
             or options.max_total_tokens != options.context_length
+            or options.json_model_override_args != (EXTENSION_OVERRIDE_JSON if extension else None)
             or any(getattr(options, flag[2:].replace("-", "_")) != value
-                   for flag, value in FIXED_FLAGS.items())):
+                   for flag, value in expected_flags.items())):
         raise LaunchError("launch_arguments_invalid")
     return options, backend_argv(int(options.context_length))
 
@@ -160,12 +175,15 @@ def read_key(path):
             os.close(fd)
 
 
-def validate_environment():
+def validate_environment(context=None):
     # Image metadata is not a runtime switch. Every other SGLANG name, plugin
     # group and cache/token override is refused before importing serving code.
+    if context is not None and (type(context) is not int or context not in ACCEPTED_CONTEXTS):
+        raise LaunchError("launch_context_invalid")
+    extension = EXTENSION_ENVIRONMENT if context == EXTENSION_CONTEXT else {}
     for name, value in os.environ.items():
         if (name.startswith("SGLANG_") and BUILD_METADATA.get(name) != value
-                and CACHE_ENVIRONMENT.get(name) != value):
+                and CACHE_ENVIRONMENT.get(name) != value and extension.get(name) != value):
             raise LaunchError("launch_environment_invalid")
         if (name.startswith(("HF_", "HUGGINGFACE_", "TRANSFORMERS_", "TRITON_",
                              "TORCHINDUCTOR_", "XDG_"))
@@ -182,6 +200,8 @@ def validate_environment():
             raise LaunchError("launch_environment_invalid")
     if any(os.environ.get(name) != value for name, value in CACHE_ENVIRONMENT.items()):
         raise LaunchError("launch_environment_invalid")
+    if any(os.environ.get(name) != value for name, value in extension.items()):
+        raise LaunchError("launch_environment_invalid")
     try:
         if importlib.metadata.version("sglang") != "0.5.19":
             raise LaunchError("launch_version_invalid")
@@ -195,11 +215,16 @@ def validate_environment():
 
 def validate_server_args(args, *, resolved=False):
     """Check raw input and independently check the exact resolved serving view."""
+    context = getattr(args, "context_length", None)
+    if (type(context) is not int or context not in ACCEPTED_CONTEXTS
+            or getattr(args, "max_total_tokens", None) != context):
+        raise LaunchError("server_arguments_invalid")
+    extension = context == EXTENSION_CONTEXT
     required = {
         "api_key": None, "admin_api_key": None,
         "tokenizer_worker_num": 1, "host": "0.0.0.0", "port": 30004,
         "model_path": "/models", "served_model_name": "qwen3.8-27b",
-        "tp_size": 1, "tool_call_parser": "qwen3_coder", "reasoning_parser": "qwen3",
+        "tp_size": 2 if extension else 1, "tool_call_parser": "qwen3_coder", "reasoning_parser": "qwen3",
         "default_chat_template_kwargs": {"enable_thinking": False},
         "mem_fraction_static": 0.80, "max_running_requests": 1,
         "load_format": "safetensors", "quantization": "fp8", "dtype": "bfloat16",
@@ -211,21 +236,18 @@ def validate_server_args(args, *, resolved=False):
         "download_dir": "/cache/downloads", "file_storage_path": "/cache/storage",
         "dp_size": 1, "pp_size": 1, "nnodes": 1, "node_rank": 0,
         "base_gpu_id": 0, "gpu_id_step": 1, "disaggregation_mode": "null",
-        "model_loader_extra_config": "{}", "json_model_override_args": "{}",
+        "model_loader_extra_config": "{}",
+        "json_model_override_args": EXTENSION_OVERRIDE_JSON if extension else "{}",
     }
     if not resolved:
         required.update(cuda_graph_backend_decode="disabled", cuda_graph_backend_prefill="disabled")
     missing = object()
     if any(getattr(args, field, missing) != value for field, value in required.items()):
         raise LaunchError("server_arguments_invalid")
-    context = getattr(args, "context_length", None)
-    if (type(context) is not int or context not in CONTEXTS
-            or getattr(args, "max_total_tokens", None) != context):
-        raise LaunchError("server_arguments_invalid")
     # Required presence prevents a differently shaped/patched build silently
     # treating an unsupported launch mode as a default.
     disabled = (
-        "use_ray", "grpc_mode", "smg_grpc_mode", "grpc_port", "grpc_worker_threads",
+        "use_ray", "grpc_mode", "smg_grpc_mode", "grpc_port",
         "sidecar", "sidecar_args", "encoder_only", "enable_http2", "enable_ssl_refresh",
         "ssl_certfile", "ssl_keyfile", "ssl_ca_certs", "ssl_keyfile_password",
         "tool_server", "warmups", "skip_server_warmup", "skip_tokenizer_init",
@@ -238,6 +260,12 @@ def validate_server_args(args, *, resolved=False):
         "enable_unified_memory", "enable_lora", "lora_paths", "forward_hooks",
     )
     if any(getattr(args, field, missing) is missing or getattr(args, field) for field in disabled):
+        raise LaunchError("server_mode_unsupported")
+    # Pinned serving_hook always resolves the env-only worker count to 4,
+    # including HTTP-only launches. It does not enable a gRPC mode or port.
+    grpc_threads = getattr(args, "grpc_worker_threads", missing)
+    if ((resolved and (type(grpc_threads) is not int or grpc_threads != 4))
+            or (not resolved and grpc_threads is not None)):
         raise LaunchError("server_mode_unsupported")
     if getattr(args, "tokenizer_path", None) not in (None, "/models"):
         raise LaunchError("server_arguments_invalid")
@@ -253,9 +281,16 @@ def validate_resolved_server_args(args):
     # record before OR after resolution: _raw_input, declarations, worker pickle,
     # dataclasses.asdict and /server_info's resolved_dict all retain configuration.
     from sglang.srt.arg_groups.overrides import resolving_view
+    tuple_fields = ("context_length", "max_total_tokens", "tp_size", "base_gpu_id",
+                    "gpu_id_step", "dtype", "kv_cache_dtype", "json_model_override_args")
+    selected_tuple = tuple(getattr(args, field, None) for field in tuple_fields)
     args.resolve_once()
     validate_server_args(args)
-    validate_server_args(resolving_view(args), resolved=True)
+    resolved = resolving_view(args)
+    validate_server_args(resolved, resolved=True)
+    if any(tuple(getattr(view, field, None) for field in tuple_fields) != selected_tuple
+           for view in (args, resolved)):
+        raise LaunchError("server_arguments_invalid")
     projected = args.resolved_dict()
     if not isinstance(projected, dict) or any(projected.get(name, "missing") is not None
             for name in ("api_key", "admin_api_key")):
@@ -392,7 +427,10 @@ def main(argv=None):
     watchdog = None
     try:
         options, backend_argv = parse_options(sys.argv[1:] if argv is None else argv)
-        validate_environment()
+        if int(options.context_length) == EXTENSION_CONTEXT:
+            validate_environment(EXTENSION_CONTEXT)
+        else:
+            validate_environment()
         from sglang.srt.server_args import prepare_server_args
         from sglang.srt.entrypoints import http_server
         from sglang.srt.utils import kill_process_tree

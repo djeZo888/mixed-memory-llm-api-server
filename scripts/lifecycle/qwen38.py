@@ -1,6 +1,6 @@
 """Q38 source adapter; Manager owns leases, storage registration and transitions.
 
-Only the two reviewed declarations are accepted. This module never installs,
+Only the three reviewed declarations are accepted. This module never installs,
 downloads, executes Docker, reads an inference key or changes active state.
 Manager dispatch was composed after the explicit frozen L1B handoff. Installation
 and runtime proof remain separate gates. See docs/qwen38-runtime.md.
@@ -29,19 +29,23 @@ SOURCE_REVISION = '0bcd822377da7b5718e674eaf9c870d349424dd1'
 MANIFEST_DIGEST = 'sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262'
 IMAGE_REFERENCE = 'lmsysorg/sglang@' + MANIFEST_DIGEST
 IMAGE_ID = 'sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813'
-VARIANTS = {'qwen38-27b-128k': 131072, 'qwen38-27b-256k': 262144}
+NATIVE_VARIANTS = {'qwen38-27b-128k': 131072, 'qwen38-27b-256k': 262144}
+EXTENSION_PROFILE = 'qwen38-27b-1000000-yarn4-tp2-bf16kv'
+VARIANTS = {**NATIVE_VARIANTS, EXTENSION_PROFILE: 1000000}
 LAUNCHER_TARGET = '/opt/llmctl/sglang38_file_auth.py'
 LAUNCHER_SUFFIX = 'services/llm-manager/adapters/sglang38_file_auth.py'
 COMPLETION_SUFFIX = 'services/llm-manager/acquisition/' + MODEL + '.complete.json'
 PROOF_SUFFIX = 'services/llm-manager/evidence/' + RUNTIME + '.auth.json'
+EXTENSION_PROOF_SUFFIX = 'services/llm-manager/evidence/' + RUNTIME + '.q38max.auth.json'
 # Whole-file pins are intentionally explicit: adding a context/flag/path/profile
 # is a source review, never an operator-supplied command or plugin extension.
-PROFILE_HASHES = {'reports/q38s-acquisition-manifest.json': '726012378a40f648a104230d3f5ed5d6bc505cbd09b32918fc29aa81c0f075f2',
+PROFILE_HASHES = {'configs/deployments/qwen38-27b-1000000-yarn4-tp2-bf16kv.json': 'c66895907d9f3a8a8ad9f02b4b3b9f88726c752b4d251534a232fb72b7094edf',
+ 'reports/q38s-acquisition-manifest.json': '726012378a40f648a104230d3f5ed5d6bc505cbd09b32918fc29aa81c0f075f2',
  'configs/models/qwen38-27b-fp8.json': 'fb62b2689a4c57aa1265b1262830c8d0e3983061c9674640ec9704ce603a44be',
  'configs/runtimes/sglang-qwen38-0.5.19.json': '17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11',
  'configs/deployments/qwen38-27b-128k.json': 'cee5253c28bd8ff36f33630f27642cc9cdd3857eaa108bd177488efd6a0d133f',
  'configs/deployments/qwen38-27b-256k.json': '462ed5792940890eaa410c3c6dd4996c6723157eee5fb7021ee210ed2f78523a',
- 'tests/lifecycle/sglang38_fixture/provenance.json': '6b3849e72d8b1ac8580003fd441af3d1b470c372e54a8643cf6a966ed3a524c9'}
+ 'tests/lifecycle/sglang38_fixture/provenance.json': 'e01f5578e76de5d657c0ed77e1016f578aec5e3f58adfa3f94b49bc32d543e2a'}
 Q38R_SHA256 = '3df6f2a0a46a33b2b48f62609235ff209e50403d679bd8ee120b941445a87ed0'
 AUTH_CHECKS = (
     'native_routes_and_final_chain', 'native_prepare_and_normalization',
@@ -253,15 +257,23 @@ def evidence(d, instance):
     _validate_auth_proof(proof, identity)
     require(same(e.get('docker_inspect'), proof['docker_inspect']),
             'qwen38_installer_observed_identity_mismatch')
+    if d['id'] == EXTENSION_PROFILE:
+        extension_path = binding.path('data', EXTENSION_PROOF_SUFFIX)
+        require(e.get('extension_auth_gate_evidence') == extension_path,
+                'qwen38_extension_auth_evidence_required')
+        extension = binding.read_json('data', extension_path, maximum=1024 * 1024)
+        _validate_auth_proof(extension, identity, extension=True)
+        require(same(extension['docker_inspect'], proof['docker_inspect']),
+                'qwen38_extension_observed_identity_mismatch')
     binding.verify(roles=('data', 'models'))
     return e
 
 
-def _validate_auth_proof(proof, identity):
+def _validate_auth_proof(proof, identity, *, extension=False):
     provenance = _pinned_json('tests/lifecycle/sglang38_fixture/provenance.json')
     require(provenance['launcher_sha256'] == launcher_hash(), 'qwen38_auth_fixture_launcher_changed')
     fixtures = provenance['fixture_sha256']
-    require(set(fixtures) == {'run_fixture.py', 'run_pinned_image.py', 'auth_native.py', 'chat_template.jinja', 'cache_probe.py'},
+    require(set(fixtures) == {'run_fixture.py', 'run_pinned_image.py', 'auth_native.py', 'chat_template.jinja', 'cache_probe.py', 'qwen38_config.json'},
             'qwen38_auth_fixture_invalid')
     for name, digest in fixtures.items():
         require(hashlib.sha256((ROOT / 'tests/lifecycle/sglang38_fixture' / name).read_bytes()).hexdigest() == digest,
@@ -271,11 +283,23 @@ def _validate_auth_proof(proof, identity):
     for name, digest in support.items():
         require(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest,
                 'qwen38_support_source_changed')
+    contexts = (1000000,) if extension else (131072, 262144)
+    extension_fields = {}
+    if extension:
+        spec = importlib.util.spec_from_file_location('q38max_receipt_fixture',
+            ROOT / 'tests/lifecycle/sglang38_fixture/run_fixture.py')
+        fixture = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(fixture)
+        extension_fields = {
+            'extension_identity': fixture.extension_identity(ROOT, provenance),
+            'model_config_resolution': fixture.expected_extension_resolution(provenance),
+        }
     inspected = oci.validate_evidence(proof.get('docker_inspect'))
     source_hashes = {name: item['sha256'] for name, item in provenance['sources'].items()}
-    expected = dict(identity, schema_version=2, kind='q38b_actual_image_auth', status='PASS',
+    expected = dict(identity, schema_version=2,
+                    kind='q38max_actual_image_auth' if extension else 'q38b_actual_image_auth', status='PASS',
                     fixture_sha256=fixtures, support_sha256=support, source_hashes=source_hashes,
-                    checks={name: 'PASS' for name in AUTH_CHECKS}, contexts=[131072, 262144],
+                    checks={name: 'PASS' for name in AUTH_CHECKS}, contexts=list(contexts), **extension_fields,
                     image_identity_verification='HOST_DOCKER_INSPECT_AND_PINNED_RUN',
                     docker_inspect=inspected,
                     model_execution='NOT_TESTED', native_lifespan='NOT_TESTED',
@@ -288,8 +312,8 @@ def _validate_auth_proof(proof, identity):
         ROOT / 'tests/lifecycle/sglang38_fixture/cache_probe.py')
     cache = importlib.util.module_from_spec(cache_spec)
     cache_spec.loader.exec_module(cache)
-    require(isinstance(results, list) and len(results) == 2, 'qwen38_actual_image_context_proof_missing')
-    for context, result in zip((131072, 262144), results):
+    require(isinstance(results, list) and len(results) == len(contexts), 'qwen38_actual_image_context_proof_missing')
+    for context, result in zip(contexts, results):
         native = {
             'status': 'PASS_ACTUAL_INSTALLED_SOURCE_FIXTURE',
             'image_identity_verification': 'HOST_DOCKER_INSPECT_REQUIRED',
@@ -300,15 +324,15 @@ def _validate_auth_proof(proof, identity):
             'model_loading': 'STUBBED_NOT_TESTED', 'gpu_execution': 'NOT_TESTED',
             'native_lifespan_model_serving_initialization': 'NOT_TESTED',
             'live_inference_and_agent_acceptance': 'NOT_TESTED',
-            **{name: 'PASS' for name in AUTH_CHECKS},
+            **{name: 'PASS' for name in AUTH_CHECKS}, **extension_fields,
         }
         require(isinstance(result, dict) and all(same(result.get(k), v) for k, v in native.items()),
                 'qwen38_actual_image_context_proof_mismatch')
         cache.validate_result(result.get('cache_probe'))
     lifetimes = proof['container_lifetimes']
-    require(isinstance(lifetimes, list) and len(lifetimes) == 2, 'qwen38_container_lifetime_proof_missing')
+    require(isinstance(lifetimes, list) and len(lifetimes) == len(contexts), 'qwen38_container_lifetime_proof_missing')
     ids, names = set(), set()
-    for context, lifetime in zip((131072, 262144), lifetimes):
+    for context, lifetime in zip(contexts, lifetimes):
         require(isinstance(lifetime, dict) and set(lifetime) == {
             'container_name', 'container_id', 'outcome', 'cleanup', 'runtime_inspect'},
             'qwen38_container_lifetime_proof_invalid')
@@ -329,6 +353,16 @@ def _validate_auth_proof(proof, identity):
 
 
 @safe_errors
+def launch_environment(d):
+    """Pinned deployment selects the sole extension; no arbitrary env input."""
+    validate(d)
+    env = dict(d['_runtime']['environment'])
+    if d['id'] == EXTENSION_PROFILE:
+        env.update(d['launch_environment'])
+    return env
+
+
+@safe_errors
 def image_environment(image, d):
     validate(d)
     oci.verify_image(image)
@@ -340,7 +374,7 @@ def image_environment(image, d):
             'qwen38_image_environment_mismatch')
     require(image.get('Config', {}).get('Labels', {}).get('org.opencontainers.image.revision') == SOURCE_REVISION,
             'qwen38_image_source_mismatch')
-    env.update(d['_runtime']['environment'])
+    env.update(launch_environment(d))
     return env
 
 
@@ -393,7 +427,7 @@ def validate_reused(c, d, e, image):
             'qwen38_reused_logging_mismatch')
     requests = host.get('DeviceRequests', [])
     require(isinstance(requests, list) and len(requests) == 1 and requests[0].get('Driver', '') in ('', 'nvidia')
-            and type(requests[0].get('Count')) is int and requests[0].get('Count') == 0 and requests[0].get('DeviceIDs') == ['0']
+            and type(requests[0].get('Count')) is int and requests[0].get('Count') == 0 and requests[0].get('DeviceIDs') == d['launch']['gpus']
             and requests[0].get('Capabilities') == [['gpu']] and not requests[0].get('Options'),
             'qwen38_reused_gpu_mismatch')
     require(not any(host.get(k) for k in ('Devices', 'DeviceCgroupRules', 'VolumesFrom', 'Binds', 'PidMode', 'UTSMode'))

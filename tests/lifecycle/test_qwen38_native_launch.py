@@ -27,7 +27,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from tests.lifecycle.test_sglang38_file_auth import (
-    App, args_fixture, cli, launcher, synthetic_dependencies,
+    App, args_fixture, cli, launcher, resolved_args_fixture, synthetic_dependencies,
 )
 from tests.lifecycle.test_qwen38_image_fixture import inner
 
@@ -371,7 +371,7 @@ class PinnedNativeLaunchContracts(unittest.TestCase):
         server["Engine"]._launch_subprocesses = namespace["engine_start"]
         from tests.lifecycle.test_sglang38_file_auth import native
         with synthetic_dependencies(), patch.dict(sys.modules, {
-            "sglang.srt.arg_groups.overrides": SimpleNamespace(resolving_view=lambda value: value),
+            "sglang.srt.arg_groups.overrides": SimpleNamespace(resolving_view=resolved_args_fixture),
             "sglang.srt.runtime_context": SimpleNamespace(publish=publish_namespace["publish"]),
             "sglang.srt.utils": SimpleNamespace(MultiprocessingSerializer=SimpleNamespace(
                 serialize=pickle.dumps)),
@@ -479,7 +479,7 @@ class PinnedNativeLaunchContracts(unittest.TestCase):
                 with patch.dict(sys.modules, {
                     "sglang.srt.server_args": SimpleNamespace(prepare_server_args=lambda argv: args_fixture()),
                     "sglang.srt.entrypoints": SimpleNamespace(http_server=server),
-                    "sglang.srt.arg_groups.overrides": SimpleNamespace(resolving_view=lambda value: value),
+                    "sglang.srt.arg_groups.overrides": SimpleNamespace(resolving_view=resolved_args_fixture),
                     "sglang.srt.utils": SimpleNamespace(kill_process_tree=cleanup),
                     "sglang.srt.utils.auth": auth,
                 }), patch.object(launcher, "read_key", return_value=launcher._PrivateKey("synthetic-contract-key")), \

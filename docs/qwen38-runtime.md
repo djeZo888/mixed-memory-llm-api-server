@@ -1,6 +1,9 @@
 # Qwen3.8 bounded runtime source contract
 
 Q38B corrects the Q38S adapter and two declarative native-context variants.
+Q38MAX adds one source-only `qwen38-27b-1000000-yarn4-tp2-bf16kv` candidate;
+the native pair remains the default and all live extension work requires native
+success and separate Worker1 authorization. See [Q38MAX report](../reports/q38max-source.md).
 **Actual-image execution, acquisition, model load, live generation, client tool
 continuation and occupied-context performance are NOT_TESTED.** The narrow
 Manager dispatch seam uses frozen L1B `9cb93959105468ea0e140598b51493ee0d13ce9e`,
@@ -17,7 +20,7 @@ GLM5.3 and Qwen3.8-27B FP8. Historical Coder-Next source remains deferred.
 | Repository / revision | `Qwen/Qwen3.8-27B-FP8@017b9c7af6b5689d5dd426a76e0bc077eb5ca20a` |
 | Runtime ID | `sglang-qwen38-0.5.19` |
 | Backend dispatch identity | `sglang_qwen38` |
-| Deployments | `qwen38-27b-128k`, `qwen38-27b-256k` |
+| Deployments | `qwen38-27b-128k`, `qwen38-27b-256k`, `qwen38-27b-1000000-yarn4-tp2-bf16kv` |
 | Served alias / host API | `qwen3.8-27b`, `http://127.0.0.1:30004/v1` |
 | SGLang source | `0bcd822377da7b5718e674eaf9c870d349424dd1`, release `v0.5.19` |
 | Human-readable image tag | `lmsysorg/sglang:v0.5.19-cu130` |
@@ -35,12 +38,15 @@ No layer was fetched.
 See [source provenance](../reports/q38s-provenance.json) and
 [reviewed research](../reports/q38r-qwen38-evaluation.md).
 
-Both deployments use TP1/GPU0, one request, native BF16 KV, FP32 linear state,
+Both native deployments use TP1/GPU0, one request, native BF16 KV, FP32 linear state,
 max Mamba cache 1, `no_buffer`, disabled radix retention and overlap scheduling,
 disabled decode/prefill CUDA graphs, chunked prefill 2048, memory fraction 0.80,
 FlashInfer attention, Triton linear attention and CUTLASS FP8 GEMM. Context and
 max-total-tokens are respectively 131072 or 262144. No remote code, MTP,
-speculation, ReplaySSM, RoPE extension or million-token option is exposed.
+speculation or ReplaySSM is exposed. The separately selected Q38MAX tuple uses
+TP2/GPU0+1, BF16 compute/KV and exactly 1,000,000 context/max-total-tokens with
+the official factor4 YaRN JSON and `SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1`.
+Every other combination and external launch/environment/JSON override is refused.
 These conservative settings are a test configuration, not measured memory fit.
 
 The pinned release moved graph controls to `--cuda-graph-backend-decode disabled`
@@ -271,3 +277,21 @@ Unverifiable cleanup fails closed and returns bounded safe failure evidence.
 Source checks are documented in the [Q38B report](../reports/q38b-runtime-gates.md).
 The [original pin finalization trace](../reports/q38b-pin-finalization.md)
 distinguishes historical Q38S test claims from its final committed-source defect.
+
+## Q38MAX extension evidence
+
+The existing fixture driver defaults to the unchanged native 131072/262144 pair.
+Only `--profile qwen38-27b-1000000-yarn4-tp2-bf16kv` selects the extension gate.
+It uses the same no-GPU disposable lifetime, native authentication, cleanup and
+diagnostic paths, plus genuine installed `ModelConfig.from_server_args()` against
+the exact checkpoint config fixture to check YaRN and context resolution. Model
+loading remains stubbed: this cannot prove GPU fit, occupied context or quality.
+
+Manager requires the current-source native receipt first, and additionally an
+independent extension receipt at registered data suffix
+`services/llm-manager/evidence/sglang-qwen38-0.5.19.q38max.auth.json`, named by
+`runtime_evidence["sglang-qwen38-0.5.19"]["extension_auth_gate_evidence"]`.
+The extension receipt binds exact profile/config/argv/environment plus launcher,
+fixture and installed source hashes. A native receipt cannot accept the extension.
+Changes to shared launcher/fixture bytes require fresh native proof; historical
+receipts and failures retain their original identities and NOT_TESTED boundaries.

@@ -51,6 +51,8 @@ IMAGE_REFERENCE = "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e
 KEY_PATH = Path("/run/secrets/llm-api-key")
 CONFIG_PATH = Path("/models/config.json")
 ALIAS = "qwen3.8-27b"
+EXTENSION_CONTEXT = 1000000
+CONFIG_SHA256 = "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc"
 HARDWARE_STUBS = (
     "is_available", "device_count", "current_device", "get_device_capability",
     "get_device_properties", "get_device_name", "mem_get_info",
@@ -173,7 +175,7 @@ def parse_options(argv):
     parser = Parser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--actual-image", action="store_true", required=True)
     parser.add_argument("--repo", type=Path, required=True)
-    parser.add_argument("--context", type=int, choices=(131072, 262144), default=131072)
+    parser.add_argument("--context", type=int, choices=(131072, 262144, EXTENSION_CONTEXT), default=131072)
     parser.add_argument("--internal-scenario", choices=SCENARIOS, default="all",
                         help=argparse.SUPPRESS)
     return parser.parse_args(argv)
@@ -271,7 +273,7 @@ def fixture_files(config_bytes):
 
 
 @contextmanager
-def cuda_discovery_fixture(torch):
+def cuda_discovery_fixture(torch, context=131072):
     """Discovery-only fake devices; any real CUDA initialization is forbidden.
 
     This preserves native argument parsing and the full native resolution pipeline.
@@ -280,7 +282,7 @@ def cuda_discovery_fixture(torch):
     """
     properties = SimpleNamespace(name="Q38S synthetic device", total_memory=96 * 2**30,
                                  major=12, minor=0, multi_processor_count=1)
-    values = {"is_available": True, "device_count": 1, "current_device": 0,
+    values = {"is_available": True, "device_count": 2 if context == EXTENSION_CONTEXT else 1, "current_device": 0,
               "get_device_capability": (12, 0), "get_device_properties": properties,
               "get_device_name": properties.name, "mem_get_info": (90 * 2**30, 96 * 2**30)}
     with ExitStack() as stack:
@@ -682,24 +684,74 @@ def run_cache_probe(repo):
     return result
 
 
+def fixture_contract(repo):
+    spec = importlib.util.spec_from_file_location("q38max_fixture_contract",
+        repo / "tests/lifecycle/sglang38_fixture/run_fixture.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def resolve_extension_model_config(args, provenance, contract):
+    """Use the genuine installed class and real metadata; never assign its context.
+
+    The surrounding discovery/engine collaborators remain synthetic. Neither
+    configuration resolution nor this record proves model allocation/inference.
+    """
+    from sglang.srt.configs import model_config as installed
+    source_hash = hashlib.sha256(Path(installed.__file__).read_bytes()).hexdigest()
+    require(source_hash == provenance["sources"]["srt/configs/model_config.py"]["sha256"],
+            "extension_model_config_source_mismatch")
+    config = installed.ModelConfig.from_server_args(args)
+    proof = {"status": "PASS_INSTALLED_MODELCONFIG", "source_sha256": source_hash,
+             "context_len": config.context_len, "hf_context_len": config.hf_config.context_len,
+             "max_position_embeddings": config.hf_text_config.max_position_embeddings,
+             "rope_parameters": config.hf_text_config.rope_parameters, "dtype": str(config.dtype)}
+    require(contract.same_json(proof, contract.expected_extension_resolution(provenance)),
+            "extension_model_config_resolution_mismatch")
+    return config, proof
+
+
 def run_actual(repo, scenario, captured_logs, context=131072):
     launcher_path = verify_sources(repo)
     # Genuine resolver/device/library checks precede synthetic model/key files
     # and every hardware discovery stub used by the native auth fixture.
-    cache_result = run_cache_probe(repo)
+    extension = context == EXTENSION_CONTEXT
+    if not extension:
+        cache_result = run_cache_probe(repo)
     spec = importlib.util.spec_from_file_location("q38s_actual_image_launcher", launcher_path)
     launcher = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(launcher)
-    launcher.validate_environment()
+    if extension:
+        launcher.validate_environment(context)
+    else:
+        launcher.validate_environment()
     launch_environment = dict(os.environ)
+    extension_proof = {}
+    if extension:
+        # The independent cache probe retains its native-only environment
+        # contract. Restore the approved extension input before serving imports.
+        cache_environment = dict(launch_environment)
+        for name in launcher.EXTENSION_ENVIRONMENT:
+            del cache_environment[name]
+        with patch.dict(os.environ, cache_environment, clear=True):
+            cache_result = run_cache_probe(repo)
+        provenance = json.loads((repo / "tests/lifecycle/sglang38_fixture/provenance.json").read_text())
+        contract = fixture_contract(repo)
+        extension_proof["extension_identity"] = contract.extension_identity(repo, provenance)
     import torch
-    with cuda_discovery_fixture(torch):
-        from transformers import AutoConfig
-        # Native model-config parsing is real. These deliberately tiny metadata
-        # values are synthetic and are never mistaken for acquired model files.
-        model_config = AutoConfig.for_model("qwen3_5", architectures=["Qwen3_5ForConditionalGeneration"],
-            text_config={"model_type": "qwen3_5_text", "max_position_embeddings": 262144})
-        config_bytes = model_config.to_json_string().encode()
+    with cuda_discovery_fixture(torch, context):
+        if extension:
+            config_bytes = (repo / "tests/lifecycle/sglang38_fixture/qwen38_config.json").read_bytes()
+            require(hashlib.sha256(config_bytes).hexdigest() == CONFIG_SHA256,
+                    "extension_config_identity_mismatch")
+        else:
+            from transformers import AutoConfig
+            # Native model-config parsing is real. These deliberately tiny metadata
+            # values are synthetic and are never mistaken for acquired model files.
+            model_config = AutoConfig.for_model("qwen3_5", architectures=["Qwen3_5ForConditionalGeneration"],
+                text_config={"model_type": "qwen3_5_text", "max_position_embeddings": 262144})
+            config_bytes = model_config.to_json_string().encode()
         from sglang.srt.entrypoints import http_server as server
         from sglang.srt.server_args import PortArgs, ServerArgs, prepare_server_args
         from sglang.srt.utils import auth
@@ -780,6 +832,10 @@ def run_actual(repo, scenario, captured_logs, context=131072):
                 from sglang.srt.runtime_context import publish
                 publish(args, role="tokenizer")
                 tokenizer = SyntheticTokenizer(args, server, context)
+                if context == EXTENSION_CONTEXT:
+                    resolved_config, resolution = resolve_extension_model_config(args, provenance, contract)
+                    tokenizer.model_config = resolved_config
+                    extension_proof["model_config_resolution"] = resolution
                 engine_calls.append((args, tokenizer))
                 return tokenizer, SimpleNamespace(), ports, SimpleNamespace(scheduler_infos=[{}]), None, []
 
@@ -856,7 +912,7 @@ def run_actual(repo, scenario, captured_logs, context=131072):
             "native_false_warmup_not_ready": "PASS",
             "native_parser_template_synthetic": "PASS",
             "native_freeze_gc_has_no_key": "PASS", "actual_cache_resolvers": "PASS",
-            "no_gpu_driver_libraries": "PASS", "cache_probe": cache_result}
+            "no_gpu_driver_libraries": "PASS", "cache_probe": cache_result, **extension_proof}
 
 
 def run_failure_children(repo, context=131072):

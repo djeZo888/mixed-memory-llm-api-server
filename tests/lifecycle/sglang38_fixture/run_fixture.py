@@ -29,6 +29,16 @@ import time
 IMAGE_ID = "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813"
 IMAGE_REFERENCE = "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262"
 SOURCE_REVISION = "0bcd822377da7b5718e674eaf9c870d349424dd1"
+NATIVE_CONTEXTS = (131072, 262144)
+EXTENSION_CONTEXT = 1000000
+EXTENSION_PROFILE = "qwen38-27b-1000000-yarn4-tp2-bf16kv"
+EXTENSION_ENVIRONMENT = {"SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN": "1"}
+CONFIG_SHA256 = "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc"
+EXTENSION_ROPE_PARAMETERS = {
+    "mrope_interleaved": True, "mrope_section": [11, 11, 10], "rope_type": "yarn",
+    "rope_theta": 10000000, "partial_rotary_factor": 0.25, "factor": 4.0,
+    "original_max_position_embeddings": 262144,
+}
 CHECKS = (
     "native_routes_and_final_chain", "native_prepare_and_normalization",
     "health_starting_503_up_200", "sentinel_absence", "injection_failure_child_cleanup",
@@ -69,6 +79,8 @@ def parse_options(argv):
     parser = Parser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--repo", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--profile", choices=("native-pair", EXTENSION_PROFILE), default="native-pair",
+                        help="Default: the two native profiles; extension requires explicit selection")
     return parser.parse_args(argv)
 
 
@@ -89,7 +101,7 @@ def read_provenance(repo):
     launcher_path = repo / expected["launcher_path"]
     require(hashlib.sha256(launcher_path.read_bytes()).hexdigest() == expected["launcher_sha256"],
             "launcher_hash_mismatch")
-    require(set(expected["fixture_sha256"]) == {"run_fixture.py", "run_pinned_image.py", "auth_native.py", "chat_template.jinja", "cache_probe.py"},
+    require(set(expected["fixture_sha256"]) == {"run_fixture.py", "run_pinned_image.py", "auth_native.py", "chat_template.jinja", "cache_probe.py", "qwen38_config.json"},
             "fixture_manifest_invalid")
     for name, identity in expected["fixture_sha256"].items():
         require(hashlib.sha256((root / name).read_bytes()).hexdigest() == identity,
@@ -112,7 +124,7 @@ def verify_image(inspected):
 
 
 def docker_command(repo, cache_environment, context, *, container_name=None, ownership_token=None):
-    require(context in (131072, 262144), "context_invalid")
+    require(type(context) is int and context in (*NATIVE_CONTEXTS, EXTENSION_CONTEXT), "context_invalid")
     require(re.fullmatch(r"/[A-Za-z0-9_./ -]+", str(repo)) is not None,
             "repository_mount_syntax_invalid")
     if container_name is None and ownership_token is None:
@@ -141,6 +153,9 @@ def docker_command(repo, cache_environment, context, *, container_name=None, own
     # No host environment is forwarded and HOME retains the image default.
     for name, value in sorted(cache_environment.items()):
         command += ["--env", f"{name}={value}"]
+    if context == EXTENSION_CONTEXT:
+        for name, value in EXTENSION_ENVIRONMENT.items():
+            command += ["--env", f"{name}={value}"]
     return command + [IMAGE_REFERENCE, "-X", "faulthandler", "-B",
         "/fixture/tests/lifecycle/sglang38_fixture/run_pinned_image.py", "--actual-image",
         "--repo", "/fixture", "--context", str(context)]
@@ -257,6 +272,8 @@ def verify_fixture_runtime(container, repo, cache_environment, context):
     env = dict(v.split("=", 1) for v in entries)
     require(len(env) == len(entries) and all(env.get(k) == v for k, v in
             {**cache_environment, **CACHE.RUNTIME_ENVIRONMENT}.items()), "fixture_environment_invalid")
+    require(all((env.get(name) == value if context == EXTENSION_CONTEXT else name not in env)
+                for name, value in EXTENSION_ENVIRONMENT.items()), "fixture_environment_invalid")
     require(host.get("Runtime") == "nvidia" and not host.get("DeviceRequests")
             and not host.get("Devices") and not host.get("DeviceCgroupRules")
             and not host.get("Privileged") and not host.get("CapAdd")
@@ -610,9 +627,50 @@ def run_disposable_fixture(repo, cache_environment, context, *, image_id=IMAGE_I
     return child, owned.evidence
 
 
-def check_native_result(result, provenance, context):
+def same_json(left, right):
+    """JSON types are part of proof identity (True must not compare equal to 1)."""
+    return json.dumps(left, sort_keys=True, separators=(",", ":"), allow_nan=False) == json.dumps(
+        right, sort_keys=True, separators=(",", ":"), allow_nan=False)
+
+
+def extension_identity(repo, provenance):
+    """Bind the single explicit candidate to reviewed local bytes and exact argv."""
+    config = repo / "tests/lifecycle/sglang38_fixture/qwen38_config.json"
+    require(hashlib.sha256(config.read_bytes()).hexdigest() == CONFIG_SHA256
+            and provenance["fixture_sha256"].get(config.name) == CONFIG_SHA256,
+            "extension_config_identity_mismatch")
+    launcher_path = repo / "scripts/runtime/sglang38_file_auth.py"
+    require(hashlib.sha256(launcher_path.read_bytes()).hexdigest() == provenance["launcher_sha256"],
+            "launcher_hash_mismatch")
+    launcher = source_module("q38max_fixture_launcher_identity", launcher_path)
+    argv = json.dumps(launcher.backend_argv(EXTENSION_CONTEXT), separators=(",", ":")).encode()
+    profile = repo / "configs/deployments" / (EXTENSION_PROFILE + ".json")
+    return {"profile_id": EXTENSION_PROFILE,
+            "profile_sha256": hashlib.sha256(profile.read_bytes()).hexdigest(),
+            "config_sha256": CONFIG_SHA256,
+            "backend_argv_sha256": hashlib.sha256(argv).hexdigest(),
+            "extension_environment": dict(EXTENSION_ENVIRONMENT)}
+
+
+def expected_extension_resolution(provenance):
+    return {"status": "PASS_INSTALLED_MODELCONFIG",
+            "source_sha256": provenance["sources"]["srt/configs/model_config.py"]["sha256"],
+            "context_len": EXTENSION_CONTEXT, "hf_context_len": EXTENSION_CONTEXT,
+            "max_position_embeddings": 262144,
+            "rope_parameters": EXTENSION_ROPE_PARAMETERS, "dtype": "torch.bfloat16"}
+
+
+def check_extension_result(result, provenance, repo):
+    require(same_json(result.get("extension_identity"), extension_identity(repo, provenance)),
+            "extension_identity_mismatch")
+    require(same_json(result.get("model_config_resolution"), expected_extension_resolution(provenance)),
+            "extension_model_config_resolution_mismatch")
+
+
+def check_native_result(result, provenance, context, *, repo=None):
     require(result.get("status") == "PASS_ACTUAL_INSTALLED_SOURCE_FIXTURE"
             and result.get("image_identity_verification") == "HOST_DOCKER_INSPECT_REQUIRED"
+            and type(result.get("configured_context")) is int
             and result.get("configured_context") == context, "native_fixture_did_not_pass")
     require(result.get("image_id_pin") == IMAGE_ID
             and result.get("image_reference") == IMAGE_REFERENCE
@@ -633,6 +691,9 @@ def check_native_result(result, provenance, context):
             and result.get("native_lifespan_model_serving_initialization") == "NOT_TESTED"
             and result.get("live_inference_and_agent_acceptance") == "NOT_TESTED",
             "native_evidence_boundary_missing")
+    if context == EXTENSION_CONTEXT:
+        require(repo is not None, "extension_repository_required")
+        check_extension_result(result, provenance, repo)
 
 
 def validate_output_path(path):
@@ -691,7 +752,9 @@ def write_receipt(output, receipt):
         os.close(directory)
 
 
-def run(repo, output):
+def run(repo, output, profile="native-pair"):
+    require(profile in ("native-pair", EXTENSION_PROFILE), "profile_invalid")
+    contexts = NATIVE_CONTEXTS if profile == "native-pair" else (EXTENSION_CONTEXT,)
     validate_output_path(output)
     provenance, cache_environment = read_provenance(repo)
     inspected = subprocess.run(["docker", "image", "inspect", IMAGE_REFERENCE],
@@ -701,12 +764,12 @@ def run(repo, output):
     image = verify_image(json.loads(inspected.stdout))
     results = []
     lifetimes = []
-    for context in (131072, 262144):
+    for context in contexts:
         child, lifetime = run_disposable_fixture(repo, cache_environment, context, image_id=image["image_id"])
         require(child.returncode == 0 and len(child.stdout) <= 131072
                 and child.stderr == b"", "actual_image_fixture_failed")
         result = json.loads(child.stdout)
-        check_native_result(result, provenance, context)
+        check_native_result(result, provenance, context, repo=repo)
         results.append(result)
         lifetimes.append(lifetime)
     receipt = {"schema_version": 2, "kind": "q38b_actual_image_auth", "status": "PASS",
@@ -715,11 +778,15 @@ def run(repo, output):
         "fixture_sha256": provenance["fixture_sha256"],
         "support_sha256": provenance["support_sha256"],
         "source_hashes": {name: item["sha256"] for name, item in provenance["sources"].items()},
-        "checks": {check: "PASS" for check in CHECKS}, "contexts": [131072, 262144],
+        "checks": {check: "PASS" for check in CHECKS}, "contexts": list(contexts),
         "image_identity_verification": "HOST_DOCKER_INSPECT_AND_PINNED_RUN",
         "docker_inspect": image, "native_results": results, "container_lifetimes": lifetimes,
         "model_execution": "NOT_TESTED", "native_lifespan": "NOT_TESTED",
         "live_inference_and_agent_acceptance": "NOT_TESTED"}
+    if profile == EXTENSION_PROFILE:
+        receipt.update(kind="q38max_actual_image_auth",
+                       extension_identity=results[0]["extension_identity"],
+                       model_config_resolution=results[0]["model_config_resolution"])
     write_receipt(output, receipt)
     return receipt
 
@@ -727,7 +794,7 @@ def run(repo, output):
 def main(argv=None):
     try:
         options = parse_options(sys.argv[1:] if argv is None else argv)
-        receipt = run(options.repo, options.output)
+        receipt = run(options.repo, options.output, options.profile)
         print(json.dumps({"status": receipt["status"], "kind": receipt["kind"],
                           "model_execution": "NOT_TESTED"}, sort_keys=True))
         return 0
