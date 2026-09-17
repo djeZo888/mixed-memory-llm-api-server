@@ -1,0 +1,47 @@
+"""Worker1 SSH only. Private fixed source is streamed, never installed."""
+import datetime,json,os,subprocess,sys
+from pathlib import Path
+root=Path(__file__).resolve().parent
+assert len(sys.argv)==2 and sys.argv[1] in ('preflight','transition','smoke','final','close','source-proof')
+phase=sys.argv[1]
+request_lease=None
+if phase in ('preflight','transition','smoke','final'):
+    sys.path.insert(0,str(root/'repo/scripts'))
+    from d3t.probe import lock
+    request_lease=lock(root.parent/'D3BASE-20260915/trial/run','request.lock');request_lease.__enter__()
+code='\n'.join((root/name).read_text() for name in ('cheap-core.py','swap-addition.py','inputs.py','common.py'))+'\n'
+if phase=='smoke':code+=(root/'smoke-private-input.py').read_text()+'\n'
+code+=(root/(phase+'.py')).read_text()
+compile(code,phase+'.py','exec')
+p=subprocess.Popen(['ssh','-o','BatchMode=yes','ai-vm','sudo','-n','/usr/bin/python3','-I','-B','-'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=(root/'trial'/str(phase+'-stderr.txt')).open('w'),text=True)
+p.stdin.write(code);p.stdin.close()
+with (root/'trial'/str(phase+'-events.jsonl')).open('x') as out:
+    for line in p.stdout:
+        out.write(line);out.flush()
+        v=json.loads(line);v['controller_receipt_utc']=datetime.datetime.now(datetime.timezone.utc).isoformat();out.write(json.dumps({'controller_receipt_utc':v['controller_receipt_utc'],'producer_utc':v.get('utc'),'phase_received':v.get('phase')})+'\n');out.flush()
+        if v['phase']=='report_transfer':
+            remote=root/'trial/remote';remote.mkdir(mode=0o700)
+            import hashlib
+            manifest={}
+            for name,row in v['files'].items():
+                assert '/' not in name and name.endswith('.json')
+                raw=row['text'].encode();assert hashlib.sha256(raw).hexdigest()==row['sha256']
+                dest=remote/name;dest.write_bytes(raw);dest.chmod(0o600);manifest[name]=row['sha256']
+            (root/'trial/report-transfer.json').write_text(json.dumps({'files':manifest,'utc':v['utc']},indent=2))
+            brief={'phase':'report_transfer_complete','files':len(manifest),'utc':v['utc']}
+        elif v['phase']=='sample':
+            n=v['sample'];idx=v['sample_index']
+            if idx!=1 and idx%30:continue
+            brief={'utc':v['utc'],'phase':v['stage']+'_sample','sample_index':idx,'elapsed_seconds':v['elapsed_seconds'],'rss_gib':n['process_kib']['Rss']/1048576,'memavailable_gib':n['host_kib']['MemAvailable']/1048576,'gpu_free_gib':[g['free_bytes']/2**30 for g in n['gpus']],'root_available_gib':n['root_available_bytes']/2**30,'errors':n['errors'],'actual_context':n['slot_context'],'vmswap_kib':n['process_kib']['VmSwap'],'cgroup_swap_current_bytes':n['cgroup_swap_current_bytes'],'cgroup_path':n['cgroup_identity']['binding']['path'],'host_swap_used_kib':n['host_swap_used_kib'],'vmstat_delta':n['vmstat_delta'],'producer_gap_seconds':n.get('producer_gap_seconds')}
+        elif v['phase']=='admission_complete':
+            (root/'trial/admission.json').write_text(json.dumps(v['result'],indent=2))
+            brief={k:v[k] for k in ('utc','phase','elapsed_seconds')}
+            brief['baseline']=v['result']['idle_full'];brief['pss']='NOT_APPLICABLE_ALL_BACKENDS_STOPPED'
+        else:brief=v
+        with (root/'live-status.md').open('a') as live:
+            live.write('\n```json\n'+json.dumps(brief,indent=2,sort_keys=True)+'\n```\n');live.flush()
+        print(json.dumps(brief,sort_keys=True),flush=True)
+rc=p.wait()
+if request_lease is not None:request_lease.__exit__(None,None,None)
+print('operator_exit='+str(rc),flush=True)
+raise SystemExit(rc)

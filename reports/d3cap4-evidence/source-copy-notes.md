@@ -1,0 +1,3 @@
+# Task-local source copies
+
+These text copies document the small task-local operator; none are installed production source. The cheap-core text copy removes only excess blank lines at EOF for repository whitespace checks. Original exact task source SHA256: `222016efd9bb98999d9c6c33c1bb286c226a069774eb686c206082f92ab0b3ff`. The unchanged raw task file and reconstructed exact transition/smoke streams remain in the task directory; their hashes are recorded in executed-source-identities.json. Other copied source file contents are unchanged. Preflight source is shown with the final cgroup helper; that helper is not invoked before a live target exists.
