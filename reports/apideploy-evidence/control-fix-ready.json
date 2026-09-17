@@ -1,0 +1,243 @@
+{
+  "boot_binding": "ExecStart={ path=/usr/bin/python3 ; argv[]=/usr/bin/python3 -I -B /data/services/releases/b7fe0816813848393570b629a11249b94629f6ed-apideploy-20260917/scripts/llmctl boot-start --yes --instance /data/services/llm-manager/deployment-instance.json ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nExecStop={ path=/usr/bin/python3 ; argv[]=/usr/bin/python3 -I -B /usr/local/lib/local-ai-server/scripts/llmctl boot-stop --yes --instance /data/services/llm-manager/deployment-instance.json ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\n",
+  "boot_policy": "resume",
+  "boot_restarted": false,
+  "boot_source": "/usr/local/lib/local-ai-server",
+  "boot_unit_sha256": "8ec234bdcfbd4a2bef55442f2c8a5b7c9d602d7c3debf6127b4ae8d64aaccbd3",
+  "canonical_lease": "RELEASED",
+  "catalog": {
+    "active_identity": "a4ad1c6cf22268e163ccf3fa1ed9cad29a160be62a3d4914f8dca18aa3e1c96c",
+    "container_running": true,
+    "current_operation": null,
+    "desired": "running",
+    "endpoint": {
+      "address_scope": "private_network",
+      "authentication_required": true,
+      "base_url": "http://10.156.100.60:30004/v1",
+      "ready": true,
+      "served_model": "qwen3.8-27b",
+      "server_relative": false
+    },
+    "entries": [
+      {
+        "backend": "llama_cpp",
+        "capabilities": {
+          "json_output": {
+            "evidence": [],
+            "status": "unknown"
+          },
+          "reasoning": {
+            "evidence": [],
+            "status": "unknown"
+          },
+          "streaming": {
+            "evidence": [],
+            "status": "unknown"
+          },
+          "tool_calling": {
+            "evidence": [],
+            "status": "unknown"
+          },
+          "vision": {
+            "evidence": [],
+            "status": "unknown"
+          }
+        },
+        "context": {
+          "configured_provenance": "declared",
+          "configured_tokens": 1048576,
+          "evidence": [],
+          "verified_occupied_provenance": "unknown",
+          "verified_occupied_tokens": null
+        },
+        "context_limit": 1048576,
+        "deployment_id": "glm-5.3-ud-q4-k-xl-n76-native1m",
+        "display_name": "glm-5.3-ud-q4-k-xl",
+        "endpoint": {
+          "address_scope": "private_network",
+          "authentication_required": true,
+          "base_url": "http://10.156.100.60:30002/v1",
+          "ready": false,
+          "served_model": "glm-5.3",
+          "server_relative": false
+        },
+        "installed_bytes": 467289116837,
+        "installed_verified_at": "2026-09-17T06:39:34.905572Z",
+        "model_id": "unsloth/GLM-5.3-GGUF",
+        "observed_at": 1789627174.8673136,
+        "quantization": "UD-Q4_K_XL",
+        "requirements": {
+          "gpu_bytes": {
+            "bytes": null,
+            "evidence": [],
+            "provenance": "unknown"
+          },
+          "ram_bytes": {
+            "bytes": null,
+            "evidence": [],
+            "provenance": "unknown"
+          }
+        },
+        "revision": "346b3591c7f28d1a23716f97a065ecf12ec14771",
+        "runtime": "llama-cpp-v0.4.1-d3br",
+        "start_revalidation_required": true,
+        "state": "available",
+        "switch_effect": "interrupts_inference"
+      },
+      {
+        "backend": "sglang_qwen38",
+        "capabilities": {
+          "json_output": {
+            "evidence": [],
+            "status": "unknown"
+          },
+          "reasoning": {
+            "evidence": [],
+            "status": "unknown"
+          },
+          "streaming": {
+            "evidence": [],
+            "status": "unknown"
+          },
+          "tool_calling": {
+            "evidence": [],
+            "status": "unknown"
+          },
+          "vision": {
+            "evidence": [],
+            "status": "unknown"
+          }
+        },
+        "context": {
+          "configured_provenance": "declared",
+          "configured_tokens": 1000000,
+          "evidence": [],
+          "verified_occupied_provenance": "unknown",
+          "verified_occupied_tokens": null
+        },
+        "context_limit": 1000000,
+        "deployment_id": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+        "display_name": "Qwen3.8-27B FP8",
+        "endpoint": {
+          "address_scope": "private_network",
+          "authentication_required": true,
+          "base_url": "http://10.156.100.60:30004/v1",
+          "ready": true,
+          "served_model": "qwen3.8-27b",
+          "server_relative": false
+        },
+        "installed_bytes": 30890049597,
+        "installed_verified_at": "2026-09-17T06:39:35.289597Z",
+        "model_id": "Qwen/Qwen3.8-27B-FP8",
+        "observed_at": 1789627174.8673136,
+        "quantization": "fp8",
+        "requirements": {
+          "gpu_bytes": {
+            "bytes": null,
+            "evidence": [],
+            "provenance": "unknown"
+          },
+          "ram_bytes": {
+            "bytes": null,
+            "evidence": [],
+            "provenance": "unknown"
+          }
+        },
+        "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+        "runtime": "sglang-qwen38-0.5.19",
+        "start_revalidation_required": true,
+        "state": "ready",
+        "switch_effect": "interrupts_inference"
+      }
+    ],
+    "failure_code": null,
+    "freshness": "fresh",
+    "generation": 1,
+    "generation_current": true,
+    "last_operation": null,
+    "observation_available": true,
+    "observed": "ready",
+    "observed_at": 1789627174.8673136,
+    "observed_deployment": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+    "schema_version": 1,
+    "selected": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+    "state_persisted": true,
+    "storage_available": true,
+    "switch_effect": "interrupts_inference"
+  },
+  "catalog_seconds": 8.581903821999731,
+  "control_source": "/usr/local/lib/llm-server/control-api",
+  "control_status": {
+    "active_identity": "a4ad1c6cf22268e163ccf3fa1ed9cad29a160be62a3d4914f8dca18aa3e1c96c",
+    "container_running": true,
+    "current_operation": null,
+    "desired": "running",
+    "endpoint": {
+      "address_scope": "private_network",
+      "authentication_required": true,
+      "base_url": "http://10.156.100.60:30004/v1",
+      "ready": true,
+      "served_model": "qwen3.8-27b",
+      "server_relative": false
+    },
+    "failure_code": null,
+    "freshness": "fresh",
+    "generation": 1,
+    "generation_current": true,
+    "last_operation": null,
+    "observation_available": true,
+    "observed": "ready",
+    "observed_at": 1789627167.168375,
+    "observed_deployment": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+    "schema_version": 1,
+    "selected": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+    "state_persisted": true,
+    "storage_available": true,
+    "switch_effect": "interrupts_inference"
+  },
+  "instance_path": "/data/services/llm-manager/deployment-instance.json",
+  "instance_sha256": "972b627a5be31674ca6c7b490d46a10d484c913c8ed54fe8992c08bdba60db6e",
+  "keys": {
+    "control": "/etc/llm-server/control-api-key",
+    "inference": "/data/services/secrets/llm-api-key"
+  },
+  "model_inference": "NOT_PERFORMED",
+  "model_reloaded": false,
+  "no_active_requests": true,
+  "no_inflight_command": true,
+  "no_more_vm_operations": true,
+  "normal_release": "/data/services/releases/b7fe0816813848393570b629a11249b94629f6ed-apideploy-20260917",
+  "phase": "CONTROL_FIX_READY_RELEASE",
+  "postguards": "PASS",
+  "proxy_restarted": false,
+  "reboot": "NOT_PERFORMED",
+  "receipts": {
+    "/data/services/llm-manager/evidence/sglang-qwen38-0.5.19.auth.json": {
+      "mode": "0600",
+      "sha256": "b29cc6433009232067cf096e3a2ab7531023df57b1faa0d67c088e0a55739554"
+    },
+    "/data/services/llm-manager/evidence/sglang-qwen38-0.5.19.q38max.auth.json": {
+      "mode": "0600",
+      "sha256": "353289244d02525120b3cfbeededdcdb0cc6aefdbd5879d060ee22186a51dde1"
+    }
+  },
+  "request_ownership": "RELEASED_TO_ROOT_FOR_WORKER2",
+  "running_container": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+  "runtime_identity": {
+    "Pid": 132068,
+    "Restarting": false,
+    "Running": true,
+    "StartedAt": "2026-09-17T06:01:20.210982756Z",
+    "Status": "running"
+  },
+  "source_commit": "b7fe0816813848393570b629a11249b94629f6ed",
+  "source_dependency_mode": "0644",
+  "source_guard_mode": "0755",
+  "source_manifest_path": "/usr/local/lib/llm-server/control-api.manifest.json",
+  "source_manifest_sha256": "be44758994ee2b2faa18dfab7eb9be127b8f95611fb54717344f64fbe797bffc",
+  "status": "PASS_CONTROL_STATUS_CATALOG",
+  "status_seconds": 7.872329638999872,
+  "switching": "NOT_PERFORMED",
+  "units": "MainPID=185196\nId=llm-control.service\nActiveState=active\nSubState=running\nUnitFileState=enabled\n\nMainPID=0\nId=llmctl-boot.service\nActiveState=active\nSubState=exited\nUnitFileState=enabled\n\nId=llm-private-control.socket\nActiveState=active\nSubState=running\nUnitFileState=enabled\n\nId=llm-private-glm.socket\nActiveState=active\nSubState=running\nUnitFileState=enabled\n\nId=llm-private-qwen38.socket\nActiveState=active\nSubState=running\nUnitFileState=enabled\n",
+  "utc": "2026-09-17T06:39:36.264257+00:00"
+}
