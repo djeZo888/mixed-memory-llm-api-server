@@ -103,9 +103,9 @@ class ExtensionFixtureControls(unittest.TestCase):
     def test_extension_environment_revalidated_before_cache_or_native_import(self):
         launcher = host.source_module('q38max_fixture_preflight_launcher',
                                       ROOT / 'scripts/runtime/sglang38_file_auth.py')
-        for env in ({**launcher.CACHE_ENVIRONMENT},
+        for env in ({**launcher.CACHE_ENVIRONMENT, 'RAYON_NUM_THREADS': '1'},
                     {**launcher.CACHE_ENVIRONMENT, **launcher.EXTENSION_ENVIRONMENT,
-                     'SGLANG_UNREVIEWED': '1'}):
+                     'RAYON_NUM_THREADS': '1', 'SGLANG_UNREVIEWED': '1'}):
             with patch.dict(os.environ, env, clear=True), \
                     patch.object(inner, 'verify_sources', return_value=Path(launcher.__file__)), \
                     patch.object(inner, 'run_cache_probe') as cache, \
@@ -118,7 +118,7 @@ class ExtensionFixtureControls(unittest.TestCase):
     def test_extension_cache_probe_has_native_environment_then_restores_extension(self):
         launcher = host.source_module('q38max_fixture_cache_launcher',
                                       ROOT / 'scripts/runtime/sglang38_file_auth.py')
-        env = {**launcher.CACHE_ENVIRONMENT, **launcher.EXTENSION_ENVIRONMENT}
+        env = {**launcher.CACHE_ENVIRONMENT, **launcher.EXTENSION_ENVIRONMENT, 'RAYON_NUM_THREADS': '1'}
         cache_env = []
         original = __import__
         def stop_at_torch(name, *args, **kwargs):
@@ -138,7 +138,7 @@ class ExtensionFixtureControls(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, '^synthetic_stop_before_native_import$'):
                 inner.run_actual(ROOT, 'all', None, 1000000)
             self.assertEqual(dict(os.environ), env)
-        self.assertEqual(cache_env, [launcher.CACHE_ENVIRONMENT])
+        self.assertEqual(cache_env, [{**launcher.CACHE_ENVIRONMENT, 'RAYON_NUM_THREADS': '1'}])
 
 
 class PinnedExtensionModelConfig(unittest.TestCase):

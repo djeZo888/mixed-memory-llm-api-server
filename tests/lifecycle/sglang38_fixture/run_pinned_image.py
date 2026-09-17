@@ -713,6 +713,7 @@ def resolve_extension_model_config(args, provenance, contract):
 
 
 def run_actual(repo, scenario, captured_logs, context=131072):
+    require(os.environ.get("RAYON_NUM_THREADS") == "1", "fixture_rayon_threads_required")
     launcher_path = verify_sources(repo)
     # Genuine resolver/device/library checks precede synthetic model/key files
     # and every hardware discovery stub used by the native auth fixture.

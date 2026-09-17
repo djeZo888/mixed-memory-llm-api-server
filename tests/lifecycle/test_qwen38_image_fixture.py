@@ -3,6 +3,7 @@
 These tests exercise refusal/evidence/I/O controls with explicit synthetic
 collaborators. Only the separate pinned-image command can mint its auth receipt.
 """
+import ast
 import asyncio
 from contextlib import redirect_stderr, redirect_stdout
 import copy
@@ -70,6 +71,74 @@ def lifetime(context):
 
 
 class Qwen38ImageFixtureTests(unittest.TestCase):
+    def test_rayon_threads_required_before_fixture_source_or_native_imports(self):
+        for context in (131072, 262144, 1000000):
+            for value in (None, "", "0", "64", " 1", "1 ", "1.0", "1"):
+                env = {"UNRELATED_ENVIRONMENT": "retained"}
+                if value is not None:
+                    env["RAYON_NUM_THREADS"] = value
+                with self.subTest(context=context, value=value), patch.dict(os.environ, env, clear=True), \
+                        patch.object(inner, "verify_sources", side_effect=RuntimeError("synthetic_source_boundary")) as source, \
+                        patch.object(inner, "run_cache_probe") as cache:
+                    expected = "synthetic_source_boundary" if value == "1" else "fixture_rayon_threads_required"
+                    with self.assertRaisesRegex(Exception, "^" + expected + "$"):
+                        inner.run_actual(ROOT, "all", None, context)
+                    self.assertEqual(source.call_count, 1 if value == "1" else 0)
+                    cache.assert_not_called()
+                    self.assertEqual(dict(os.environ), env)
+
+    def test_rayon_inherited_by_existing_children_spawn_and_launch_snapshot(self):
+        launcher = host.source_module("rayon_fixture_launcher", ROOT / "scripts/runtime/sglang38_file_auth.py")
+        env = {**launcher.CACHE_ENVIRONMENT, "RAYON_NUM_THREADS": "1", "UNRELATED_ENVIRONMENT": "retained"}
+        expected = host.CACHE.result_record(dict(host.CACHE.EXPECTED_PATHS), [])
+        observed = []
+        def child(command, **kwargs):
+            inherited = os.environ if kwargs.get("env") is None else kwargs["env"]
+            self.assertEqual(dict(inherited), env)
+            if "--internal-scenario" in command:
+                observed.append(command[command.index("--internal-scenario") + 1])
+                return SimpleNamespace(returncode=1, stdout=inner.FAULT_MARKER, stderr=b"")
+            observed.append("cache")
+            return SimpleNamespace(returncode=0, stdout=json.dumps(expected).encode(), stderr=b"")
+        with patch.dict(os.environ, env, clear=True), \
+                patch.object(inner.subprocess, "run", side_effect=child), \
+                patch.object(inner.Path, "exists", return_value=False), \
+                patch.object(inner.Path, "lstat", return_value=SimpleNamespace(
+                    st_mode=stat.S_IFREG | 0o600, st_uid=os.geteuid())), \
+                patch.object(inner.Path, "unlink"), patch.object(inner.socket, "socket") as socket:
+            socket.return_value.connect_ex.return_value = 1
+            self.assertEqual(inner.run_cache_probe(ROOT), expected)
+            inner.run_failure_children(ROOT)
+            self.assertEqual(dict(os.environ), env)
+        self.assertEqual(observed, ["cache", "warmup-auth-failure", "warmup-timeout"])
+        # The sole cleanup child has no environment override. This inspects its
+        # existing statement only; no process or replacement framework executes.
+        tree = ast.parse(Path(inner.__file__).read_text())
+        cleanup = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name)
+            and (node.func.value.id, node.func.attr) == ("subprocess", "Popen")]
+        self.assertEqual(len(cleanup), 1)
+        self.assertNotIn("env", [keyword.arg for keyword in cleanup[0].keywords])
+        with patch.dict(os.environ, env, clear=True), \
+                patch.object(inner.os, "open", side_effect=AssertionError("spawn read key")):
+            imported = inner.runpy.run_path(launcher.__file__, run_name="__mp_main__")
+            self.assertIn("main", imported)
+            self.assertEqual(dict(os.environ), env)
+        captured, engines = [], []
+        def launch(_argv):
+            launcher.validate_environment()
+            self.assertEqual(dict(os.environ), env)
+            captured.append(object())
+            engines.append(object())
+            return 0
+        imported_env = {**env, "TRITON_PTXAS_BLACKWELL_PATH": "/synthetic/import-side-effect"}
+        with patch.dict(os.environ, imported_env, clear=True), patch.object(launcher, "main", side_effect=launch), \
+                patch.object(launcher.importlib.metadata, "version", return_value="0.5.19"), \
+                patch.object(launcher.importlib.metadata, "entry_points", return_value={}):
+            self.assertEqual(inner.checked_launch(launcher, [], captured, engines,
+                "synthetic-fixture-key", env), 0)
+            self.assertEqual(dict(os.environ), imported_env)
+
     def test_native_cache_probe_uses_fresh_child_and_validates_result(self):
         expected = host.CACHE.result_record(dict(host.CACHE.EXPECTED_PATHS), [])
         child = SimpleNamespace(returncode=0, stdout=json.dumps(expected).encode(), stderr=b'')
@@ -198,6 +267,8 @@ class Qwen38ImageFixtureTests(unittest.TestCase):
         self.assertIn("CUDA_VISIBLE_DEVICES=", command)
         self.assertEqual([value for value in command if value.startswith("OPENBLAS_NUM_THREADS=")],
                          ["OPENBLAS_NUM_THREADS=1"])
+        self.assertEqual([value for value in command if value.startswith("RAYON_NUM_THREADS=")],
+                         ["RAYON_NUM_THREADS=1"])
         self.assertEqual(command.count("--mount"), 1)
         self.assertEqual(command[command.index("--mount") + 1],
                          "type=bind,src=/reviewed,dst=/fixture,readonly")

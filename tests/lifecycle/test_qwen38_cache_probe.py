@@ -34,7 +34,7 @@ def record():
 def runtime_environment(visible="none"):
     return {"NVIDIA_VISIBLE_DEVICES": visible,
             "NVIDIA_DRIVER_CAPABILITIES": "compute,utility", "CUDA_VISIBLE_DEVICES": "",
-            "OPENBLAS_NUM_THREADS": "1"}
+            "OPENBLAS_NUM_THREADS": "1", "RAYON_NUM_THREADS": "1"}
 
 
 @contextmanager
@@ -121,22 +121,25 @@ def synthetic_isolation(*, mounts=None, metadata=None, contents=None, devices=()
 
 class CacheProbeTests(unittest.TestCase):
     def test_blas_thread_demand_is_bounded_before_native_or_filesystem_access(self):
-        for value in (None, "", "0", "64", " 1", "1 "):
-            env = runtime_environment()
-            if value is None:
-                del env["OPENBLAS_NUM_THREADS"]
-            else:
-                env["OPENBLAS_NUM_THREADS"] = value
-            with self.subTest(value=value), patch.object(probe.sys, "platform", "linux"), \
-                    patch.dict(os.environ, env, clear=True), \
-                    patch.object(probe.resource, "getrlimit") as limits, \
-                    patch.object(probe.Path, "read_text") as read, \
-                    patch.object(probe.importlib, "import_module") as native:
-                with self.assertRaisesRegex(probe.ProbeError, "fixture_blas_threads_required"):
-                    probe.verify_isolation()
-                limits.assert_not_called()
-                read.assert_not_called()
-                native.assert_not_called()
+        for name, code in (("OPENBLAS_NUM_THREADS", "fixture_blas_threads_required"),
+                           ("RAYON_NUM_THREADS", "fixture_rayon_threads_required")):
+            for value in (None, "", "0", "64", " 1", "1 ", "1.0"):
+                env = runtime_environment()
+                if value is None:
+                    del env[name]
+                else:
+                    env[name] = value
+                with self.subTest(name=name, value=value), patch.object(probe.sys, "platform", "linux"), \
+                        patch.dict(os.environ, env, clear=True), \
+                        patch.object(probe.resource, "getrlimit") as limits, \
+                        patch.object(probe.Path, "read_text") as read, \
+                        patch.object(probe.importlib, "import_module") as native:
+                    with self.assertRaisesRegex(probe.ProbeError, code) as caught:
+                        probe.verify_isolation()
+                    self.assertEqual(probe.failure_record(caught.exception)["code"], code)
+                    limits.assert_not_called()
+                    read.assert_not_called()
+                    native.assert_not_called()
 
     def test_help_is_available_without_native_import(self):
         with patch.object(probe.importlib, "import_module", side_effect=AssertionError), \
