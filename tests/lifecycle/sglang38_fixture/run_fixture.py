@@ -46,6 +46,7 @@ CHECKS = (
     "native_sse_disconnect", "ordinary_http_auth", "server_info_sentinel_absence",
     "websocket_denial", "native_freeze_gc_has_no_key", "warmup_failure_and_timeout_cleanup",
     "native_false_warmup_not_ready", "native_parser_template_synthetic",
+    "native_strict_model_validation",
     "actual_cache_resolvers", "no_gpu_driver_libraries",
 )
 

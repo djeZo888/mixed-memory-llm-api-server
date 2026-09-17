@@ -45,7 +45,7 @@ PROFILE_HASHES = {'configs/deployments/qwen38-27b-1000000-yarn4-tp2-bf16kv.json'
  'configs/runtimes/sglang-qwen38-0.5.19.json': '17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11',
  'configs/deployments/qwen38-27b-128k.json': 'cee5253c28bd8ff36f33630f27642cc9cdd3857eaa108bd177488efd6a0d133f',
  'configs/deployments/qwen38-27b-256k.json': '462ed5792940890eaa410c3c6dd4996c6723157eee5fb7021ee210ed2f78523a',
- 'tests/lifecycle/sglang38_fixture/provenance.json': '1c1dd939c4375c7fa49e34499fffa80e39d6167f2bfd32505186a7cf5d843303'}
+ 'tests/lifecycle/sglang38_fixture/provenance.json': 'c1eeed16d7807f6fbd301d38bb0a0b47e58a70dc75ce091cce7ba68bec3b3c72'}
 Q38R_SHA256 = '3df6f2a0a46a33b2b48f62609235ff209e50403d679bd8ee120b941445a87ed0'
 AUTH_CHECKS = (
     'native_routes_and_final_chain', 'native_prepare_and_normalization',
@@ -54,6 +54,7 @@ AUTH_CHECKS = (
     'native_sse_disconnect', 'ordinary_http_auth', 'server_info_sentinel_absence',
     'websocket_denial', 'native_freeze_gc_has_no_key', 'warmup_failure_and_timeout_cleanup',
     'native_false_warmup_not_ready', 'native_parser_template_synthetic',
+    'native_strict_model_validation',
     'actual_cache_resolvers', 'no_gpu_driver_libraries',
 )
 
