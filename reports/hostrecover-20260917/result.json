@@ -1,0 +1,353 @@
+{
+  "additional_start": "NOT_AUTHORIZED_NOT_ATTEMPTED",
+  "artifact_paths": {
+    "vm_evidence": "/data/logs/hostrecover-20260917",
+    "vm_journal_archive": "/data/logs/hostrecover-20260917/june-july-journals",
+    "worker_private_evidence": "/Users/agent/CodexProjects/llm-orchestration/tasks/HOSTRECOVER-20260917/private",
+    "worker_task": "/Users/agent/CodexProjects/llm-orchestration/tasks/HOSTRECOVER-20260917"
+  },
+  "base": "adb1fd60ab15759c6e0959b660b1de504eada0a8",
+  "cleanup": {
+    "apt_allocated_bytes": 115494912,
+    "apt_exact_paths": [
+      "/var/cache/apt/pkgcache.bin",
+      "/var/cache/apt/srcpkgcache.bin"
+    ],
+    "apt_unlinked": 2,
+    "archive": "/data/logs/hostrecover-20260917/june-july-journals",
+    "archive_atime": "Preserved at copy; subsequent independent verification accessed copies",
+    "archive_independent_sha256_count": 56,
+    "archive_preserved_metadata": [
+      "uid",
+      "gid",
+      "mode",
+      "mtime",
+      "xattrs"
+    ],
+    "final_original_absence_verified": true,
+    "guard": "PASS",
+    "journal_allocated_bytes": 305139712,
+    "journal_archived_independently_rehashed_and_unlinked": 56,
+    "root_available_bytes": 4651282432
+  },
+  "final": {
+    "exact_three_prevention_configs_verified": true,
+    "native_listener": "ABSENT_GLM_STOPPED",
+    "new_helper_and_receipt_verified": true,
+    "no_running_backends": true,
+    "private_transport": "ACTIVE_UPSTREAM_STOPPED",
+    "protected_source77_registry_key_identity_unchanged": true,
+    "rollback_containers": {
+      "7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78": {
+        "Id": "7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78",
+        "Image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+        "Ports": {},
+        "RestartPolicy": {
+          "MaximumRetryCount": 0,
+          "Name": "no"
+        },
+        "State": {
+          "Dead": false,
+          "Error": "",
+          "ExitCode": 0,
+          "FinishedAt": "2026-09-15T05:09:28.901542194Z",
+          "OOMKilled": false,
+          "Paused": false,
+          "Pid": 0,
+          "Restarting": false,
+          "Running": false,
+          "StartedAt": "2026-09-15T04:09:20.746242473Z",
+          "Status": "exited"
+        }
+      },
+      "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55": {
+        "Id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+        "Image": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+        "Ports": {},
+        "RestartPolicy": {
+          "MaximumRetryCount": 0,
+          "Name": "no"
+        },
+        "State": {
+          "Dead": false,
+          "Error": "",
+          "ExitCode": 0,
+          "FinishedAt": "2026-09-15T04:09:17.719694176Z",
+          "OOMKilled": false,
+          "Paused": false,
+          "Pid": 0,
+          "Restarting": false,
+          "Running": false,
+          "StartedAt": "2026-09-15T00:48:45.235739944Z",
+          "Status": "exited"
+        }
+      }
+    },
+    "root_available_bytes": 5562286080,
+    "root_available_gib": 5.1802825927734375,
+    "root_warning_below6gib": true
+  },
+  "final_root_available_bytes": 5562286080,
+  "finished_vm_utc": "2026-09-17T03:51:39.100469+00:00",
+  "glm": {
+    "additional_start_count": 0,
+    "authorized_start_count": 1,
+    "cheap_load_sample_count": 442,
+    "current_api": "NOT_SERVING",
+    "dense_first_load_sample_array": "NOT_PERSISTED; final sample and sparse worker events retained",
+    "final_container": {
+      "Id": "3108f42bfaab08010164340b2c3e709e03c4aebeb36374e6b87d8bac226296fb",
+      "Image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+      "Ports": {},
+      "RestartPolicy": {
+        "MaximumRetryCount": 0,
+        "Name": "no"
+      },
+      "State": {
+        "Dead": false,
+        "Error": "",
+        "ExitCode": 0,
+        "FinishedAt": "2026-09-17T03:43:41.083551531Z",
+        "OOMKilled": false,
+        "Paused": false,
+        "Pid": 0,
+        "Restarting": false,
+        "Running": false,
+        "StartedAt": "2026-09-17T03:37:35.8643437Z",
+        "Status": "exited"
+      }
+    },
+    "final_state": {
+      "boot_policy": "manual",
+      "container": {
+        "deployment": "glm-5.3-ud-q4-k-xl-n76-native1m",
+        "id": "3108f42bfaab08010164340b2c3e709e03c4aebeb36374e6b87d8bac226296fb",
+        "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+        "instance": "ai-vm-d0b",
+        "legacy": false,
+        "name": "llmctl-glm-5.3-n76-native1m",
+        "owner": "mixed-memory-llm-api-server"
+      },
+      "container_running": false,
+      "desired": "running",
+      "failure": null,
+      "last_selected": "glm-5.3-ud-q4-k-xl-n76-32k",
+      "observed": "stopped",
+      "schema_version": 2,
+      "selected": "glm-5.3-ud-q4-k-xl-n76-native1m",
+      "state_persisted": true,
+      "updated_at": 1789616621299124652
+    },
+    "first_ready_updated_at_ns": 1789616597646153295,
+    "last_sample_error_counters": {
+      "cuda": 0,
+      "fusion_fallback": 0,
+      "oom": 0,
+      "runtime": 0,
+      "storage": 0
+    },
+    "monitor_failures": [],
+    "native_capacity": 1048576,
+    "occupied_1m": "NOT_TESTED",
+    "post_readiness_stop_by_wrapper": true,
+    "profile": "glm-5.3-ud-q4-k-xl-n76-native1m",
+    "ready_identity": {
+      "id": "3108f42bfaab08010164340b2c3e709e03c4aebeb36374e6b87d8bac226296fb",
+      "image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+      "pid": 6064,
+      "restart_count": 0,
+      "start_ticks": 21369,
+      "started_at": "2026-09-17T03:37:35.8643437Z"
+    },
+    "reported_failure": "StorageIOError caused by passing a list to AnchoredRoot.atomic_json; its contract requires a dict",
+    "request_count": 0
+  },
+  "glm_current_api": "NOT_SERVING",
+  "limits": [
+    "No local inference request or private client acceptance in HOSTRECOVER.",
+    "First GLM readiness was followed by task-wrapper-induced stop; current GLM API is not serving.",
+    "No occupied 1M context, benchmark, Qwen load, model switch, frontend or installer acceptance.",
+    "Full control/network source closure awaits root composition; narrow NETPATCH helper/receipt maintenance only.",
+    "Original in-memory pre-prevention apt snapshot was not persisted; exact current settings and unchanged-file scope are verified, not historical byte equality.",
+    "First dense load sample array was not persisted due the wrapper error; final sample and sparse summaries are retained."
+  ],
+  "ownership": {
+    "canonical_released_utc": "2026-09-17T03:51:39.202105+00:00",
+    "next_owner": "ROOT_APPROVED_Q38LIVE_FINAL636f847",
+    "no_further_hostrecover_vm_operations": true,
+    "owned_requests": 0,
+    "released_utc": "2026-09-17T03:52:13.056286+00:00",
+    "worker_request_lock_free_verified": true
+  },
+  "postboot": {
+    "boot_id": "f059feb9-8fc1-41f2-a64d-38cc3516ed44",
+    "docker_root": "/data/docker",
+    "full_guard": "PASS",
+    "gpus": 2,
+    "kernel": "6.8.0-139-generic",
+    "manual_backend_stopped": true,
+    "nvidia_installed": "595.84",
+    "nvidia_loaded": "595.84",
+    "ram_available_bytes": 941514600448,
+    "root_available_bytes": 5563207680,
+    "source_keys_registry_unchanged": true
+  },
+  "prevention": {
+    "apt_binary_caches_disabled": true,
+    "binary_specific_cache_filename_override": false,
+    "blacklist_patterns": [
+      "^libnvidia-(cfg1|common|compute|decode|encode|extra|fbc1|gl)(-|$)",
+      "^nvidia-(compute-utils|dkms|driver|firmware|headless|kernel-common|kernel-source|utils|open)(-|$)",
+      "^xserver-xorg-video-nvidia(-|$)",
+      "^linux-(modules|objects|signatures)-nvidia(-|$)"
+    ],
+    "config_files_reinstalled_or_removed": false,
+    "configs": [
+      {
+        "gid": 0,
+        "mode": "0644",
+        "path": "/etc/apt/apt.conf.d/99-hostrecover-no-binary-cache",
+        "sha256": "81d6312767c3949c48dcd61d135f92f13f4a20ab505dc239368ed77c811fc24a",
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "mode": "0644",
+        "path": "/etc/systemd/journald.conf.d/90-hostrecover-root-space.conf",
+        "sha256": "939c8849be6f449e19d87ec343f70afa0bd37ef560e2388b6c1f71c9e795e7a9",
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "mode": "0644",
+        "path": "/etc/apt/apt.conf.d/99-hostrecover-nvidia-manual-upgrades",
+        "sha256": "dc5ae701c4430ca2aee61026679756138edf0cb983c53d84846e4a09c42066d1",
+        "uid": 0
+      }
+    ],
+    "current_origin_entry_count": 4,
+    "current_periodic_global_enabled": true,
+    "current_periodic_package_lists_enabled": true,
+    "current_periodic_unattended_upgrade_enabled": true,
+    "current_security_origin_configured": true,
+    "effective_blacklist_exact_approved_patterns": true,
+    "excluded_packages_not_matched": [
+      "nvidia-prime",
+      "nvidia-settings",
+      "libnvidia-egl-wayland1",
+      "libnvidia-container-tools",
+      "libnvidia-container1",
+      "nvidia-container-toolkit",
+      "nvidia-container-toolkit-base",
+      "systemd",
+      "libc6",
+      "openssh-server",
+      "apt",
+      "dpkg",
+      "dkms",
+      "linux-image-6.8.0-139-generic",
+      "linux-headers-6.8.0-139-generic",
+      "cuda-toolkit",
+      "nvidia-cuda-toolkit"
+    ],
+    "historical_before_after_configuration_equality": "NOT_REESTABLISHED; original process snapshot was not persisted",
+    "installed_matching_packages": [
+      "libnvidia-cfg1-595",
+      "libnvidia-common-595",
+      "libnvidia-compute-595",
+      "libnvidia-decode-595",
+      "libnvidia-encode-595",
+      "libnvidia-extra-595",
+      "libnvidia-fbc1-595",
+      "libnvidia-gl-595",
+      "nvidia-compute-utils-595",
+      "nvidia-dkms-595-open",
+      "nvidia-driver-595-open",
+      "nvidia-firmware-595-595.84",
+      "nvidia-kernel-common-595",
+      "nvidia-kernel-source-595-open",
+      "nvidia-utils-595",
+      "xserver-xorg-video-nvidia-595"
+    ],
+    "journald_active": true,
+    "journald_effective": {
+      "SystemKeepFree": "4404M",
+      "SystemMaxFileSize": "16M",
+      "SystemMaxUse": "128M"
+    },
+    "journald_pid_after": 60576,
+    "journald_pid_before": 1373,
+    "journald_restart_attempts_this_task": 1,
+    "journald_restart_completed": true,
+    "limits": [
+      "Current apt policy checks are not a historical before/after equality proof.",
+      "Configured security origins and periodic settings do not establish successful future updates.",
+      "Journal size/free-space targets remain best effort; registered guard is authoritative."
+    ],
+    "package_transaction_performed": false,
+    "parse_warning_detected": false,
+    "prior_blacklist": "worker_reported_absent; original in-memory snapshot unavailable",
+    "reviewed_driver_packages_all_matched": true,
+    "root_available_bytes": 5562318848,
+    "verified_utc": "2026-09-17T03:44:57.197555+00:00"
+  },
+  "prevention_limit": "Historical in-memory apt before snapshot unavailable; current exact files, security origins/periodic settings,16 driver matches and exclusions verified.",
+  "reboot": {
+    "boot_id": "f059feb9-8fc1-41f2-a64d-38cc3516ed44",
+    "both_gpus_healthy": true,
+    "count": 1,
+    "docker_root": "/data/docker",
+    "installed_nvidia": "595.84",
+    "kernel": "6.8.0-139-generic",
+    "loaded_nvidia": "595.84",
+    "postboot_ram_bytes": {
+      "MemAvailable": 941514600448,
+      "MemTotal": 946806915072,
+      "SwapFree": 3157258240,
+      "SwapTotal": 3157258240
+    },
+    "registered_mounts_and_full_guard": "PASS"
+  },
+  "request_attempts": 0,
+  "schema_version": 1,
+  "scope": "Bounded host recovery; no frontend, installer, Qwen load or current serving acceptance",
+  "smoke": "NOT_ATTEMPTED_ROOT_CLOSEOUT",
+  "source_checks": {
+    "installer_tests": "NOT_RUN_PAUSED",
+    "netpatch_source": "37 Worker2 focused checks and root review supplied; live installed checks passed",
+    "repository_diff_check": "PASS",
+    "task_configs": "three exact template bytes verified on host",
+    "wrapper_continuation": "corrected source syntax/AST checks only; never executed"
+  },
+  "status": "CLOSED_HOST_RECOVERED_GLM_STOPPED_PER_ROOT",
+  "task": "HOSTRECOVER-20260917",
+  "transport": {
+    "check": "effective ingress and transport configuration passed; upstream readiness unknown",
+    "full_control_manifest_recomposition": "PENDING_ROOT_LATER",
+    "new_helper_sha256": "9ca8ca4b86dbf04988bfe2f8f0a7b3748bbe5d1922c0543f081616f37ec1a6af",
+    "new_receipt_sha256": "f17b33637bbc88c3fcb65d2016a73aa1c071fd383571e1452c01cef677c01eeb",
+    "old_helper_sha256": "ad0c48db68ce47213f292abb74aebc9b321b41baefc3385785bb7322e7e78ddc",
+    "old_receipt_sha256": "38969d24cf79aec51c821743cd4a035689b0b248b04c0f38080322bf8c9185a7",
+    "only_signature_helper_changed": true,
+    "owner_and_before_filter_preserved": true,
+    "policy_and_six_unit_hashes_preserved": true,
+    "root_available_bytes": 5562298368,
+    "rules_after": "complete",
+    "rules_before": "absent",
+    "service": [
+      "Id=llm-private-glm.socket",
+      "ActiveState=active",
+      "SubState=running",
+      "UnitFileState=enabled",
+      "",
+      "Id=llm-private-glm.service",
+      "ActiveState=active",
+      "SubState=running",
+      "UnitFileState=static"
+    ],
+    "source_commit": "a12c8618f3b58000a914dd0369528ec2b88283cc",
+    "systemd": "255.4-1ubuntu8.17"
+  },
+  "updated_utc": "2026-09-17T03:52:13.056286+00:00",
+  "worker": "mac-worker1"
+}
