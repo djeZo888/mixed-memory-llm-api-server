@@ -4,7 +4,7 @@ These tests exercise refusal/evidence/I/O controls with explicit synthetic
 collaborators. Only the separate pinned-image command can mint its auth receipt.
 """
 import asyncio
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 import copy
 import hashlib
 import importlib.util
@@ -133,10 +133,14 @@ class Qwen38ImageFixtureTests(unittest.TestCase):
         with patch.object(inner.subprocess, 'run', return_value=child), \
                 patch.object(inner.Path, 'exists', return_value=False), \
                 patch.object(inner.os, 'write') as original_fd, \
-                self.assertRaisesRegex(inner.FixtureFailure, 'warmup_failure_subprocess_not_closed'):
+                self.assertRaisesRegex(inner.FixtureFailure, 'warmup_failure_subprocess_not_closed') as caught:
             inner.run_failure_children(ROOT)
         original_fd.assert_called_once_with(
             2, b'Q38FIX failure fixture stderr prefix (up to 16384 bytes):\n' + child.stderr[:16384])
+        self.assertEqual(caught.exception.warmup_child_failure, {
+            "scenario": "warmup-auth-failure", "returncode": -11,
+            "stdout_bytes": 0, "stderr_bytes": 20000, "marker_exact": False,
+            "marker_count": 0, "child_failure": {"status": "REJECTED_OR_UNAVAILABLE"}})
 
     def test_inner_requires_explicit_actual_mode_and_exact_contexts(self):
         for argv in (["--repo", "/fixture"], ["--actual-image", "--repo", "/fixture", "--fallback"],
@@ -446,6 +450,121 @@ class Qwen38ImageFixtureTests(unittest.TestCase):
         self.assertEqual(content, b"data: first\n\ndata: [DONE]\n\n")
         self.assertEqual(json.loads(events[0]["body"]), {"fixture": True})
         self.assertEqual(events[1], {"type": "http.disconnect"})
+
+
+class Qwen38WarmupChildFailureTests(unittest.TestCase):
+    """Failure-only records under synthetic child/process collaborators."""
+
+    def record(self, child, *, second=False):
+        stdout, stderr = io.StringIO(), io.StringIO()
+        success = SimpleNamespace(returncode=1, stdout=inner.FAULT_MARKER, stderr=b"")
+        with patch.object(inner, "run_actual", return_value={}), \
+                patch.object(inner.subprocess, "run", side_effect=([success, child] if second else [child])) as process, \
+                patch.object(inner.Path, "exists", return_value=False), \
+                patch.object(inner.Path, "lstat", return_value=SimpleNamespace(
+                    st_mode=stat.S_IFREG | 0o600, st_uid=os.geteuid())), \
+                patch.object(inner.Path, "unlink"), patch.object(inner.socket, "socket") as socket, \
+                patch.object(inner.os, "write") as raw_write, redirect_stdout(stdout), redirect_stderr(stderr):
+            socket.return_value.connect_ex.return_value = 1
+            code = inner.main(["--actual-image", "--repo", str(ROOT)])
+        self.assertEqual(code, 2)
+        self.assertEqual(stderr.getvalue(), "")
+        if not isinstance(child, BaseException) and child.stderr:
+            raw_write.assert_called_once_with(
+                2, b"Q38FIX failure fixture stderr prefix (up to 16384 bytes):\n" + child.stderr[:16384])
+        else:
+            raw_write.assert_not_called()
+        self.assertEqual(process.call_count, 2 if second else 1)
+        self.assertTrue(all(call.kwargs["timeout"] == 180 for call in process.call_args_list))
+        result = json.loads(stdout.getvalue())
+        self.assertEqual(result["status"], "FAIL")
+        self.assertEqual(result["code"], "actual_image_fixture_failed")
+        parsed = host.failure_metadata(stdout.getvalue().encode())
+        self.assertEqual(parsed["status"], "SAFE_ORIGIN")
+        self.assertEqual(parsed["warmup_child_failure"], result["warmup_child_failure"])
+        return result
+
+    def test_failed_abort_predicate_reports_each_operand_and_finite_scenario(self):
+        secret = "SYNTHETIC_CHILD_SECRET_MUST_NOT_LEAVE"
+        for code, stdout, stderr in ((2, b"", b""), (1, b"", b""),
+                (1, inner.FAULT_MARKER * 2, b""), (-11, secret.encode(), secret.encode()),
+                (1, inner.FAULT_MARKER, secret.encode())):
+            for second in (False, True):
+                with self.subTest(code=code, length=len(stdout), second=second):
+                    result = self.record(SimpleNamespace(returncode=code, stdout=stdout, stderr=stderr), second=second)
+                    self.assertNotIn(secret, json.dumps(result))
+                    self.assertEqual(result["warmup_child_failure"], {
+                        "scenario": "warmup-timeout" if second else "warmup-auth-failure",
+                        "returncode": code, "stdout_bytes": len(stdout), "stderr_bytes": len(stderr),
+                        "marker_exact": stdout == inner.FAULT_MARKER,
+                        "marker_count": stdout.count(inner.FAULT_MARKER),
+                        "child_failure": {"status": "REJECTED_OR_UNAVAILABLE"}})
+
+    def test_valid_child_cache_failure_survives_one_closed_layer(self):
+        cache = {"status": "FAIL", "code": "gpu_device_node_present", "failure_origin": None,
+            "device_failure": {"path": "/dev/nvidia-caps", "type": "DIRECTORY", "uid_root": True,
+                "gid_root": True, "mode_0755": True, "has_entries": True}}
+        child = {"status": "FAIL", "code": "actual_image_fixture_failed", "failure_origin": {
+            "filename": "run_pinned_image.py", "line": 678, "exception_class": "FixtureFailure"},
+            "cache_failure": cache}
+        result = self.record(SimpleNamespace(returncode=2, stdout=json.dumps(child).encode(), stderr=b""), second=True)
+        nested = result["warmup_child_failure"]["child_failure"]
+        self.assertEqual(nested["status"], "SAFE_ORIGIN")
+        self.assertEqual(nested["origin"], child["failure_origin"])
+        self.assertEqual(nested["cache_failure"], cache)
+
+    def test_timeout_retains_known_partial_operands_without_child_text(self):
+        secret = b"SYNTHETIC_TIMEOUT_PRIVATE_OUTPUT"
+        error = inner.subprocess.TimeoutExpired(["private-command"], 180, output=secret,
+                                                stderr=secret)
+        result = self.record(error, second=True)
+        self.assertNotIn(secret.decode(), json.dumps(result))
+        self.assertNotIn("private-command", json.dumps(result))
+        self.assertEqual(result["warmup_child_failure"], {
+            "scenario": "warmup-timeout", "returncode": None, "stdout_bytes": len(secret),
+            "stderr_bytes": len(secret), "marker_exact": False, "marker_count": 0,
+            "child_failure": {"status": "REJECTED_OR_UNAVAILABLE"}})
+
+    def test_malformed_child_hints_are_rejected_without_replacing_original_failure(self):
+        fixed = b'{"status":"FAIL","code":"actual_image_fixture_failed"}'
+        for stdout in (b'prefix ' + fixed, fixed + b' trailing', fixed * 2,
+                b'{"status":"FAIL","status":"FAIL","code":"actual_image_fixture_failed"}',
+                b'{"status":"FAIL","code":"actual_image_fixture_failed","private":"secret"}',
+                fixed + b' ' * 4096, b'{"status":NaN}'):
+            with self.subTest(length=len(stdout)):
+                result = self.record(SimpleNamespace(returncode=2, stdout=stdout, stderr=b""))
+                self.assertEqual(result["warmup_child_failure"]["child_failure"],
+                                 {"status": "REJECTED_OR_UNAVAILABLE"})
+
+    def test_host_refuses_malformed_recursive_or_success_shaped_child_diagnostics(self):
+        good = {"scenario": "warmup-timeout", "returncode": 2, "stdout_bytes": 0,
+            "stderr_bytes": 0, "marker_exact": False, "marker_count": 0,
+            "child_failure": {"status": "REJECTED_OR_UNAVAILABLE"}}
+        rejected = []
+        for field, value in (("scenario", "all"), ("returncode", True), ("returncode", 256),
+                ("stdout_bytes", True), ("stderr_bytes", -1), ("marker_exact", 0),
+                ("marker_count", True), ("marker_count", 1), ("stdout_bytes", None),
+                ("child_failure", {"status": "REJECTED_OR_UNAVAILABLE", "private": "secret"})):
+            rejected.append({**good, field: value})
+        for field in good:
+            changed = dict(good)
+            del changed[field]
+            rejected.append(changed)
+        rejected.append({**good, "returncode": 1, "stdout_bytes": len(inner.FAULT_MARKER),
+                         "marker_exact": True, "marker_count": 1})
+        rejected.append({**good, "child_failure": {"status": "SAFE_ORIGIN",
+            "code": "actual_image_fixture_failed", "origin": {"filename": "run_pinned_image.py",
+                "line": 1, "exception_class": "FixtureFailure"}, "warmup_child_failure": good}})
+        for value in rejected:
+            with self.subTest(fields=list(value)):
+                self.assertIsNone(host.validate_warmup_child_failure(value))
+                outer = {"status": "FAIL", "code": "actual_image_fixture_failed",
+                         "failure_origin": None, "warmup_child_failure": value}
+                self.assertEqual(host.failure_metadata(json.dumps(outer).encode()),
+                                 {"status": "REJECTED_OR_UNAVAILABLE"})
+        unknown = {**good, "stdout_bytes": None, "stderr_bytes": None,
+                   "marker_exact": None, "marker_count": None, "returncode": None}
+        self.assertEqual(host.validate_warmup_child_failure(unknown), unknown)
 
 
 if __name__ == "__main__":

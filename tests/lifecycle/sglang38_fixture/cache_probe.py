@@ -19,6 +19,7 @@ import json
 import os
 from pathlib import Path
 import resource
+import re
 import stat
 import sys
 
@@ -74,6 +75,10 @@ STATIC_CONTROL_DEVICES = {
     "/dev/nvidia-modeset": (195, 254), "/dev/nvidiactl": (195, 255),
 }
 CONTROL_NODES = frozenset({*STATIC_CONTROL_DEVICES, "/dev/nvidia-uvm", "/dev/nvidia-uvm-tools"})
+CAPS_DIRECTORY = "/dev/nvidia-caps"
+DEVICE_TYPES = frozenset(("DIRECTORY", "SYMLINK", "CHARACTER", "BLOCK", "REGULAR",
+                          "FIFO", "SOCKET", "OTHER", "UNAVAILABLE"))
+DEVICE_FAILURE_CODES = frozenset(("gpu_device_node_present", "cache_control_nodes_invalid"))
 
 
 class ProbeError(Exception):
@@ -128,12 +133,58 @@ def failure_record(error):
         frame = frame.tb_next
     else:
         origin = None
-    return {"status": "FAIL", "code": code, "failure_origin": origin}
+    result = {"status": "FAIL", "code": code, "failure_origin": origin}
+    if type(error) is ProbeError and code in DEVICE_FAILURE_CODES:
+        facts = validate_device_failure(getattr(error, "device_failure", None))
+        if facts is not None:
+            result["device_failure"] = facts
+    return result
+
+
+def safe_device_path(name):
+    if (name in {*CONTROL_NODES, CAPS_DIRECTORY, "/dev/dri", "/dev/kfd", "/dev/dxg"}
+            or re.fullmatch(r"/dev/(?:nvidia[0-9]{1,5}|dri/(?:card|renderD)[0-9]{1,5})", name)):
+        return name
+    return "OTHER_ACCELERATOR_PATH"
+
+
+def validate_device_failure(value):
+    fields = {"path", "type", "uid_root", "gid_root", "mode_0755", "has_entries"}
+    if (type(value) is not dict or set(value) != fields
+            or type(value["path"]) is not str or len(value["path"]) > 64
+            or (safe_device_path(value["path"]) != value["path"]
+                and value["path"] != "OTHER_ACCELERATOR_PATH")
+            or type(value["type"]) is not str or value["type"] not in DEVICE_TYPES
+            or any(value[name] is not None and type(value[name]) is not bool
+                   for name in ("uid_root", "gid_root", "mode_0755", "has_entries"))):
+        return None
+    return {name: value[name] for name in fields}
+
+
+def device_facts(name, meta=None, has_entries=None):
+    kind = "UNAVAILABLE"
+    if meta is not None:
+        kind = {stat.S_IFDIR: "DIRECTORY", stat.S_IFLNK: "SYMLINK", stat.S_IFCHR: "CHARACTER",
+                stat.S_IFBLK: "BLOCK", stat.S_IFREG: "REGULAR", stat.S_IFIFO: "FIFO",
+                stat.S_IFSOCK: "SOCKET"}.get(stat.S_IFMT(meta.st_mode), "OTHER")
+    return {"path": safe_device_path(name), "type": kind,
+            "uid_root": getattr(meta, "st_uid", None) == 0 if hasattr(meta, "st_uid") else None,
+            "gid_root": getattr(meta, "st_gid", None) == 0 if hasattr(meta, "st_gid") else None,
+            "mode_0755": stat.S_IMODE(meta.st_mode) == 0o755 if meta is not None else None,
+            "has_entries": has_entries}
+
+
+def reject_device(code, name, meta=None, has_entries=None):
+    error = ProbeError(code)
+    error.device_failure = device_facts(name, meta, has_entries)
+    raise error
 
 
 def validate_failure(value):
     """Copy only the exact diagnostic schema; never an acceptance record."""
-    if (type(value) is not dict or set(value) != {"status", "code", "failure_origin"}
+    if (type(value) is not dict or set(value) not in (
+                {"status", "code", "failure_origin"},
+                {"status", "code", "failure_origin", "device_failure"})
             or type(value["status"]) is not str or value["status"] != "FAIL"
             or type(value["code"]) is not str or value["code"] not in FAILURE_CODES):
         return None
@@ -147,7 +198,13 @@ def validate_failure(value):
             return None
         origin = {"filename": "cache_probe.py", "line": origin["line"],
                   "exception_class": origin["exception_class"]}
-    return {"status": "FAIL", "code": value["code"], "failure_origin": origin}
+    result = {"status": "FAIL", "code": value["code"], "failure_origin": origin}
+    if "device_failure" in value:
+        facts = validate_device_failure(value["device_failure"])
+        if value["code"] not in DEVICE_FAILURE_CODES or facts is None:
+            return None
+        result["device_failure"] = facts
+    return result
 
 
 def failure_metadata(stdout):
@@ -195,8 +252,59 @@ def check_mounts(mountinfo):
 def check_device_names(names):
     relevant = {name for name in names if name.startswith(("/dev/nvidia", "/dev/dri/"))
                 or name in ("/dev/dri", "/dev/kfd", "/dev/dxg")}
-    require(relevant <= CONTROL_NODES, "gpu_device_node_present")
+    if not relevant <= CONTROL_NODES:
+        name = sorted(relevant - CONTROL_NODES)[0]
+        meta = None
+        # Actual enumeration supplies only top-level /dev entries. Never follow
+        # accelerator directories to obtain diagnostics about supplied descendants.
+        if Path(name).parent == Path("/dev"):
+            try:
+                meta = Path(name).lstat()
+            except OSError:
+                pass
+        reject_device("gpu_device_node_present", name, meta)
     return sorted(relevant)
+
+
+def check_caps_directory():
+    """Allow only absence or the exact empty root-owned caps directory.
+
+    No descendant name is retained. Opening with NOFOLLOW and comparing inode
+    identity prevents a swapped symlink/directory from borrowing the lstat proof.
+    """
+    path = Path(CAPS_DIRECTORY)
+    meta = None
+    has_entries = None
+    fd = None
+    try:
+        try:
+            meta = path.lstat()
+        except FileNotFoundError:
+            return
+        if not (stat.S_ISDIR(meta.st_mode) and meta.st_uid == 0 and meta.st_gid == 0
+                and stat.S_IMODE(meta.st_mode) == 0o755):
+            reject_device("gpu_device_node_present", CAPS_DIRECTORY, meta)
+        fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        opened = os.fstat(fd)
+        identity = lambda value: (value.st_dev, value.st_ino, value.st_mode, value.st_uid, value.st_gid,
+                                  value.st_mtime_ns, value.st_ctime_ns)
+        if identity(opened) != identity(meta):
+            reject_device("gpu_device_node_present", CAPS_DIRECTORY, opened)
+        with os.scandir(fd) as entries:
+            has_entries = next(entries, None) is not None
+        if has_entries:
+            reject_device("gpu_device_node_present", CAPS_DIRECTORY, opened, True)
+        finished = os.fstat(fd)
+        if identity(finished) != identity(opened):
+            reject_device("gpu_device_node_present", CAPS_DIRECTORY, finished)
+        after = path.lstat()
+        if identity(after) != identity(finished):
+            reject_device("gpu_device_node_present", CAPS_DIRECTORY, after)
+    except OSError:
+        reject_device("gpu_device_node_present", CAPS_DIRECTORY, meta, has_entries)
+    finally:
+        if fd is not None:
+            os.close(fd)
 
 
 def verify_isolation():
@@ -219,19 +327,23 @@ def verify_isolation():
                 and stat.S_IMODE(meta.st_mode) == 0o700, "private_directory_required")
         if target != Path("/cache"):
             require(not any(target.iterdir()), "empty_model_and_secret_tmpfs_required")
-    # Enumerate names without following symlinks. Refuse accelerator directories
-    # outright, so neither descendants nor dangling symlinks can evade the gate.
-    controls = check_device_names([str(path) for path in Path("/dev").iterdir()])
+    # Enumerate without following symlinks. The caps directory is a separate
+    # exact emptiness check, never a control node or part of success identity.
+    names = [str(path) for path in Path("/dev").iterdir()]
+    check_caps_directory()
+    controls = check_device_names([name for name in names if name != CAPS_DIRECTORY])
     for name in controls:
         meta = Path(name).lstat()
-        require(stat.S_ISCHR(meta.st_mode), "cache_control_nodes_invalid")
+        if not stat.S_ISCHR(meta.st_mode):
+            reject_device("cache_control_nodes_invalid", name, meta)
         if name in STATIC_CONTROL_DEVICES:
-            require((os.major(meta.st_rdev), os.minor(meta.st_rdev)) == STATIC_CONTROL_DEVICES[name],
-                    "cache_control_nodes_invalid")
+            if (os.major(meta.st_rdev), os.minor(meta.st_rdev)) != STATIC_CONTROL_DEVICES[name]:
+                reject_device("cache_control_nodes_invalid", name, meta)
         else:
             # UVM allocates its major dynamically. Do not pin a current-boot
             # number; still refuse renamed NVIDIA/DRI accelerator devices.
-            require(os.major(meta.st_rdev) not in (195, 226), "cache_control_nodes_invalid")
+            if os.major(meta.st_rdev) in (195, 226):
+                reject_device("cache_control_nodes_invalid", name, meta)
     return controls
 
 
@@ -404,7 +516,7 @@ def main(argv=None):
 
 # Freeze exact original function identities, excluding the generic require frame.
 FAILURE_ORIGIN_CODES = tuple(function.__code__ for function in (
-    check_mounts, check_device_names, verify_isolation, verify_sources,
+    check_mounts, check_device_names, check_caps_directory, verify_isolation, verify_sources,
     resolve_paths, check_paths, prove_writable, run, result_record, validate_result, main,
 ))
 

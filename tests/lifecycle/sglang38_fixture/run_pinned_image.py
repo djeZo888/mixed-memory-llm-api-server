@@ -915,23 +915,56 @@ def run_actual(repo, scenario, captured_logs, context=131072):
             "no_gpu_driver_libraries": "PASS", "cache_probe": cache_result, **extension_proof}
 
 
+def attach_warmup_child_failure(error, scenario, *, returncode=None, stdout=None, stderr=None):
+    """Retain safe operands only; diagnostics never replace the original failure."""
+    try:
+        host = fixture_contract(Path(__file__).resolve().parents[3])
+        known_stdout = type(stdout) is bytes and len(stdout) <= 2**63 - 1
+        known_stderr = type(stderr) is bytes and len(stderr) <= 2**63 - 1
+        value = {
+            "scenario": scenario,
+            "returncode": returncode if type(returncode) is int and -255 <= returncode <= 255 else None,
+            "stdout_bytes": len(stdout) if known_stdout else None,
+            "stderr_bytes": len(stderr) if known_stderr else None,
+            "marker_exact": stdout == FAULT_MARKER if known_stdout else None,
+            "marker_count": stdout.count(FAULT_MARKER) if known_stdout else None,
+            "child_failure": host.failure_metadata(stdout, allow_warmup_child=False),
+        }
+        checked = host.validate_warmup_child_failure(value)
+        if checked is not None:
+            error.warmup_child_failure = checked
+    except BaseException:
+        pass
+
+
 def run_failure_children(repo, context=131072):
     # Each case has an independent exclusively created synthetic key/config.
     # os._exit in the real launcher skips finally; remove only owned fixture
     # files after the child is gone, never accept a preexisting file.
     for scenario in SCENARIOS[1:]:
         require(not KEY_PATH.exists() and not CONFIG_PATH.exists(), "fixture_files_not_clean")
-        result = subprocess.run([sys.executable, "-X", "faulthandler", str(Path(__file__).resolve()), "--actual-image",
-                                 "--repo", str(repo), "--context", str(context), "--internal-scenario", scenario],
-                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, timeout=180, check=False)
+        try:
+            result = subprocess.run([sys.executable, "-X", "faulthandler", str(Path(__file__).resolve()), "--actual-image",
+                                     "--repo", str(repo), "--context", str(context), "--internal-scenario", scenario],
+                                    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE, timeout=180, check=False)
+        except (subprocess.TimeoutExpired, OSError) as error:
+            attach_warmup_child_failure(error, scenario,
+                stdout=error.stdout if isinstance(error, subprocess.TimeoutExpired) else None,
+                stderr=error.stderr if isinstance(error, subprocess.TimeoutExpired) else None)
+            raise
         if result.stderr:
             try:
                 os.write(2, b"Q38FIX failure fixture stderr prefix (up to 16384 bytes):\n" + result.stderr[:16384])
             except OSError:
                 pass  # Preserve the original failed child outcome.
-        require(result.returncode == 1 and result.stdout == FAULT_MARKER and result.stderr == b"",
-                "warmup_failure_subprocess_not_closed")
+        try:
+            require(result.returncode == 1 and result.stdout == FAULT_MARKER and result.stderr == b"",
+                    "warmup_failure_subprocess_not_closed")
+        except FixtureFailure as error:
+            attach_warmup_child_failure(error, scenario, returncode=result.returncode,
+                                        stdout=result.stdout, stderr=result.stderr)
+            raise
         # These files can exist only if the exclusive child created them. Do not
         # use this cleanup for an ordinary helper invocation with existing files.
         for path in (KEY_PATH, CONFIG_PATH):
@@ -992,6 +1025,17 @@ def main(argv=None):
         cache_failure = cache_failure_metadata(error)
         if cache_failure is not None:
             failure["cache_failure"] = cache_failure
+        if ((type(error) is FixtureFailure and error.args == ("warmup_failure_subprocess_not_closed",))
+                or isinstance(error, (subprocess.TimeoutExpired, OSError))):
+            try:
+                host = fixture_contract(Path(__file__).resolve().parents[3])
+                warmup = host.validate_warmup_child_failure(error.__dict__.get("warmup_child_failure"))
+                if warmup is not None:
+                    candidate = {**failure, "warmup_child_failure": warmup}
+                    if "warmup_child_failure" in host.failure_metadata(json.dumps(candidate).encode()):
+                        failure = candidate
+            except BaseException:
+                pass
         if type(error) is FixtureFailure and error.args == ("actual_native_launch_setup_failed",):
             # Reuse the host's closed failure parser before exposing metadata.
             try:

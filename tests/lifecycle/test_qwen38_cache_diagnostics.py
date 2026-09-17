@@ -3,13 +3,16 @@ import copy
 from contextlib import redirect_stderr, redirect_stdout
 import io
 import json
+import os
 from pathlib import Path
 import tempfile
 from types import FunctionType
 import unittest
 from unittest.mock import patch
 
-from tests.lifecycle.test_qwen38_cache_probe import probe, record as cache_result
+from tests.lifecycle.test_qwen38_cache_probe import (
+    probe, record as cache_result, synthetic_isolation, runtime_environment,
+)
 from tests.lifecycle.test_qwen38_fixture_lifetime import (
     DockerDaemon, OWN_ID, SENTINEL_ID, host, response,
 )
@@ -46,7 +49,8 @@ class CacheFailureDiagnosticTests(unittest.TestCase):
         self.assert_secret_absent(stdout.getvalue())
         result = json.loads(stdout.getvalue())
         self.assertEqual(result["status"], "FAIL")
-        self.assertEqual(set(result), {"status", "code", "failure_origin"})
+        self.assertIn(set(result), ({"status", "code", "failure_origin"},
+                                    {"status", "code", "failure_origin", "device_failure"}))
         return response([], code, stdout.getvalue().encode(), stderr.getvalue().encode())
 
     def inner_output(self, child):
@@ -153,6 +157,73 @@ class CacheFailureDiagnosticTests(unittest.TestCase):
         self.assertEqual(metadata["cache_failure"], record)
         self.assertEqual(metadata["status"], "SAFE_ORIGIN")
         self.assertEqual(metadata["origin"], emitted["failure_origin"])
+
+    def test_caps_failure_safe_facts_survive_existing_boundaries_without_child_names(self):
+        with patch.dict(os.environ, runtime_environment(), clear=True), \
+                synthetic_isolation(devices=[probe.CAPS_DIRECTORY],
+                    contents={probe.CAPS_DIRECTORY: [SENTINEL]}):
+            child = self.probe_output(lambda _repo: probe.verify_isolation())
+        record = json.loads(child.stdout)
+        self.assertEqual(record["code"], "gpu_device_node_present")
+        self.assertEqual(record["device_failure"], {
+            "path": "/dev/nvidia-caps", "type": "DIRECTORY", "uid_root": True,
+            "gid_root": True, "mode_0755": True, "has_entries": True})
+        emitted, metadata = self.pipeline(child)
+        self.assertEqual(emitted["cache_failure"], record)
+        self.assertEqual(metadata["cache_failure"], record)
+        self.assertEqual(metadata["status"], "SAFE_ORIGIN")
+
+    def test_device_diagnostics_mask_unknown_names_and_never_follow_descendants(self):
+        for name, expected in (("/dev/nvidia0", "/dev/nvidia0"),
+                               ("/dev/dri/renderD128", "/dev/dri/renderD128"),
+                               ("/dev/nvidia-" + SENTINEL, "OTHER_ACCELERATOR_PATH"),
+                               ("/dev/nvidia-caps/" + SENTINEL, "OTHER_ACCELERATOR_PATH")):
+            with self.subTest(expected=expected), patch.object(probe.Path, "lstat",
+                    side_effect=FileNotFoundError()) as checked:
+                child = self.probe_output(lambda _repo: probe.check_device_names([name]))
+                if Path(name).parent != Path("/dev"):
+                    checked.assert_not_called()
+            record = json.loads(child.stdout)
+            self.assertEqual(record["device_failure"]["path"], expected)
+            self.assertEqual(record["device_failure"]["type"], "UNAVAILABLE")
+            self.assertIsNone(record["device_failure"]["has_entries"])
+            self.assert_secret_absent(record)
+
+    def test_device_failure_parser_refuses_extra_paths_types_counts_or_success_claims(self):
+        facts = {"path": "/dev/nvidia-caps", "type": "DIRECTORY", "uid_root": True,
+                 "gid_root": True, "mode_0755": True, "has_entries": True}
+        valid = safe_record(code="gpu_device_node_present", device_failure=facts)
+        accepted = probe.validate_failure(valid)
+        self.assertEqual(accepted, valid)
+        self.assertIsNot(accepted["device_failure"], facts)
+        self.assertEqual(probe.failure_metadata(json.dumps(valid).encode()), valid)
+        invalid = [safe_record(device_failure=facts),
+                   safe_record(code="gpu_device_node_present", status="PASS", device_failure=facts)]
+        for field, values in {
+            "path": (SENTINEL, "/dev/nvidia-caps/child", "/dev/nvidia" + "1" * 64,
+                     "/dev/dri/../secret", True, None),
+            "type": (SENTINEL, "EMPTY", "PASS", True, None),
+            "uid_root": (0, 1, "true", [], {}),
+            "gid_root": (0, 1, "true", [], {}),
+            "mode_0755": (755, "0755", 1),
+            "has_entries": (0, 1, "empty", [], {}, SENTINEL),
+        }.items():
+            for value in values:
+                bad = copy.deepcopy(valid)
+                bad["device_failure"][field] = value
+                invalid.append(bad)
+        bad = copy.deepcopy(valid)
+        bad["device_failure"]["filename"] = SENTINEL
+        invalid.append(bad)
+        for index, value in enumerate(invalid):
+            with self.subTest(index=index):
+                self.assertIsNone(probe.validate_failure(value))
+                self.assertIsNone(probe.failure_metadata(json.dumps(value).encode()))
+        raw = json.dumps(valid).encode()
+        self.assertIsNone(probe.failure_metadata(raw.replace(b'"has_entries": true',
+            b'"has_entries": true, "has_entries": true')))
+        self.assertIsNone(probe.failure_metadata(raw + b" " * 2048))
+        self.assertNotIn("device_failure", cache_result())
 
     def test_unknown_error_and_hostile_text_class_or_code_remain_generic_failures(self):
         errors = [RuntimeError(SENTINEL), probe.ProbeError(SENTINEL),
