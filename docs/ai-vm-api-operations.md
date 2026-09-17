@@ -4,14 +4,18 @@ Discover and load a model through the control API, then use its separate
 OpenAI-compatible inference endpoint. Exactly **GLM5.3 UD-Q4_K_XL** and
 **Qwen3.8-27B FP8** are in scope, with one active backend at a time.
 
-**Core API acceptance PASS, 2026-09-17; cleanup PENDING.** Both models, ordinary
-agent work, two-way switching and independent postboot LAN access passed.
+**Stage one COMPLETE, 2026-09-17; core API acceptance PASS and cleanup COMPLETE.**
+Both models, ordinary agent work, two-way switching and independent postboot LAN
+access passed.
 Qwen is the default selected model and automatically resumed after the accepted
 reboot. GLM functionality passed but strict swap-free qualification did not;
 full occupied-million-token tasks remain untested. See the
 [acceptance evidence](../reports/apiaccept-lan-acceptance.md) and
 [stage-one qualifications](../reports/stage1-ai-vm-status.md). Always refresh
 status before use; this document is not a live health observation.
+The [final operations report](../reports/finalops-reboot-cleanup.md) and
+[cleanup summary](../reports/finalops-evidence/summary.json) record the completed
+cleanup; frontend and installer work remain deferred.
 
 ## Endpoints and credentials
 
