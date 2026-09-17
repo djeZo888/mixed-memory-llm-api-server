@@ -1,0 +1,244 @@
+{
+  "actual_attempts": 1,
+  "actual_qwen_context": null,
+  "actual_qwen_memory": null,
+  "artifact_paths": {
+    "handoff": "quiescent-handoff.md",
+    "live_status": "live-status.md",
+    "private_native_streams": "worker-private-attempt-1",
+    "report": "repo/reports/q38live-native-serving.md",
+    "vm_evidence": "/data/logs/q38live-20260917/attempt-1",
+    "vm_fixture_source": "/data/build/q38live-20260917/attempt-1/source"
+  },
+  "auth": "NOT_ACCEPTED_FIXTURE_FAILED_BEFORE_KEY_READ",
+  "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+  "codex_session_id": "01a0ad7f-2315-7d63-bacb-d20a13d1d6ad",
+  "container_id": "98ba9c05a41236787a70be8ca8383db51aeb754ce58ab342ae7ae570f1250d11",
+  "container_name": "q38b-fixture-3a6a926fb4944b3d2184ec56a37dbcf3",
+  "context_131072": "FAIL_EXIT_2",
+  "context_262144": "NOT_RUN",
+  "diagnostic_observation": "NOT_EXECUTED_TRANSFERRED_TO_Q38MODE",
+  "failure_clause": {
+    "condition": "any disabled field missing or truthy in resolving_view(args)",
+    "disabled_field_count": 39,
+    "exact_field": "UNKNOWN_NOT_CAPTURED",
+    "file": "scripts/runtime/sglang38_file_auth.py",
+    "line": 240,
+    "raw_validation": "PASSED_BEFORE_RESOLVED_CHECK"
+  },
+  "final_audit": {
+    "exact_id_name_absent": true,
+    "fixture_container_id": "98ba9c05a41236787a70be8ca8383db51aeb754ce58ab342ae7ae570f1250d11",
+    "fixture_container_name": "q38b-fixture-3a6a926fb4944b3d2184ec56a37dbcf3",
+    "glm_stopped": true,
+    "guard": {
+      "capacity": {
+        "data_available_bytes": 1337419202560,
+        "model_available_bytes": 2590890246144,
+        "root_available_bytes": 5562400768,
+        "shared_model_filesystem": false
+      },
+      "data": {
+        "device": "8:17",
+        "fstype": "ext4",
+        "mount": "/data",
+        "parents": [
+          "/dev/sdb",
+          "/dev/sdb1"
+        ],
+        "path": "/data",
+        "source": "/dev/sdb1",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+      },
+      "models": {
+        "device": "8:33",
+        "fstype": "ext4",
+        "mount": "/data/models-large",
+        "parents": [
+          "/dev/sdc",
+          "/dev/sdc1"
+        ],
+        "path": "/data/models-large",
+        "source": "/dev/sdc1",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+      },
+      "root_payload_scan": {
+        "files_inspected": 4285,
+        "large_payload_threshold_bytes": 134217728,
+        "status": "pass"
+      },
+      "roots": {
+        "backups": "/data/backups",
+        "build": "/data/build",
+        "containerd": "/data/containerd",
+        "docker": "/data/docker",
+        "hf_cache": "/data/hf-cache",
+        "logs": "/data/logs",
+        "models": "/data/models-large",
+        "secrets": "/data/services/secrets",
+        "services": "/data/services",
+        "state": "/data/services/installer"
+      },
+      "schema_version": 1,
+      "storage_mode": "existing",
+      "verified_roles": [
+        "data",
+        "models"
+      ],
+      "warnings": [
+        "root filesystem has less than 6 GiB free"
+      ]
+    },
+    "owned_requests": 0,
+    "owned_running_containers": 0,
+    "owned_samplers": 0,
+    "owned_tunnels": 0,
+    "phase": "FINAL_QUIESCENT_AUDIT_PASS",
+    "receipt_exists": false,
+    "source_commit": "636f847fa2729238db9974c0a7b570960e6974d5",
+    "source_files": 8,
+    "utc": "2026-09-17T03:59:46.189632+00:00"
+  },
+  "final_profile": "glm-5.3-ud-q4-k-xl-n76-native1m",
+  "final_profile_state": "STOPPED",
+  "first_cause": {
+    "code": "actual_image_fixture_failed",
+    "context": 131072,
+    "exit_code": 2,
+    "first_existing_failure_code": "server_mode_unsupported",
+    "frames": [
+      {
+        "filename": "sglang38_file_auth.py",
+        "line": 404
+      },
+      {
+        "filename": "sglang38_file_auth.py",
+        "line": 258
+      },
+      {
+        "filename": "sglang38_file_auth.py",
+        "line": 241
+      }
+    ],
+    "launch_failure": {
+      "captured": 0,
+      "engine_calls": 0,
+      "first_exception_class": "LaunchError",
+      "result": 1
+    },
+    "origin": {
+      "exception_class": "FixtureFailure",
+      "filename": "run_pinned_image.py",
+      "line": 163
+    },
+    "phase": "FIRST_NATIVE_FAILURE",
+    "status": "SAFE_ORIGIN"
+  },
+  "glm": "STOPPED_PER_ROOT_NO_Q38LIVE_MUTATION",
+  "guard_identities": {
+    "dependency": {
+      "expected_mode": "0644",
+      "owner_uid": 0,
+      "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+      "sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505"
+    },
+    "evidence": "tasks/L2VM/registration-ready.md",
+    "guard": {
+      "expected_mode": "0755",
+      "owner_uid": 0,
+      "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+      "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d"
+    },
+    "invocation": [
+      "sudo",
+      "-n",
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+      "--root-guard",
+      "--json"
+    ],
+    "metadata_evidence": {
+      "exact_chmod_timestamp": "not recorded; after04:20:37.752Z request release and before final verification",
+      "final_verification": "tasks/D3N32/final-verification.json",
+      "mode_completion": "tasks/D3N32/source-mode-completion.json",
+      "protection": "root-owned; group/other nonwritable source and ancestry; guard bytes/inode unchanged",
+      "report_commit": "79e9491be57052518bf4b3b04fa161567cc2effe",
+      "task": "D3N32",
+      "verified_utc": "2026-09-15T04:22:32.291304Z"
+    },
+    "publication_commit": "e8d8bbad3f2f6345295d440b25f084fed83dc734",
+    "registration": "/etc/local-ai-server/storage.json",
+    "report_rule": "Only below root-owned protected existing task parent beneath registered /data/logs. Never fall back to legacy when registry parent exists, is partial/invalid, or disappears after observed.",
+    "source_commit": "5e713441d9ea164b81860ee795c5ef35972ee8e3"
+  },
+  "image_identity": {
+    "architecture": "amd64",
+    "config_digest": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
+    "image_default_entrypoint": [
+      "/opt/nvidia/nvidia_entrypoint.sh"
+    ],
+    "image_default_workdir": "/sgl-workspace/sglang",
+    "image_id": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "image_id_domain": "oci_platform_manifest",
+    "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "os": "linux",
+    "platform_manifest_digest": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "source_repository": "https://github.com/sgl-project/sglang",
+    "source_revision": "0bcd822377da7b5718e674eaf9c870d349424dd1"
+  },
+  "independent_absence": {
+    "container_id": "98ba9c05a41236787a70be8ca8383db51aeb754ce58ab342ae7ae570f1250d11",
+    "container_name": "q38b-fixture-3a6a926fb4944b3d2184ec56a37dbcf3",
+    "id_and_name_absent": true,
+    "status": "PASS"
+  },
+  "next_action": "Q38MODE owns root-authorized one native resolved-field observation; Q38MAX owns launcher source fix; no further Q38LIVE VM work",
+  "ownership": {
+    "canonical_released_utc": "2026-09-17T03:59:46.190198+00:00",
+    "no_further_vm_operations": true,
+    "owned_containers": 0,
+    "owned_requests": 0,
+    "owned_samplers": 0,
+    "owned_tunnels": 0,
+    "status": "RELEASED",
+    "worker_request_lock_free_verified": true
+  },
+  "postguards": "PASS",
+  "prompt_decode_timings": "NOT_TESTED",
+  "real_qwen128k": "NOT_ATTEMPTED",
+  "real_qwen256k": "NOT_ATTEMPTED",
+  "receipt_created": false,
+  "source_commit": "636f847fa2729238db9974c0a7b570960e6974d5",
+  "source_identities": {
+    "executed_commit": "636f847fa2729238db9974c0a7b570960e6974d5",
+    "fixture_manifest_sha256": "c80928c7cdd2fa85024081d1f180f2552f85b41790674f71552b029f3c122b18",
+    "input_bundle_sha256": "53144606d2d9b15b8613db5bf2c3e969e4bc11a8237486397f18194f363fd41a",
+    "installed_source_commit": "e8d8bbad3f2f6345295d440b25f084fed83dc734",
+    "installed_source_files": 77,
+    "installed_source_manifest_sha256": "8fe8b5c32da9e212cae7e1d50751deec0d91c8aa1405a10e343fe21b33e712e0",
+    "job_sha256": "7e9655a61b3a1c643af21adf115e093db99abd533c47ebaa09073f05da340270",
+    "native_auth_receipt": null,
+    "netpatch_helper_sha256": "9ca8ca4b86dbf04988bfe2f8f0a7b3748bbe5d1922c0543f081616f37ec1a6af",
+    "netpatch_receipt_sha256": "f17b33637bbc88c3fcb65d2016a73aa1c071fd383571e1452c01cef677c01eeb"
+  },
+  "source_publication": "NOT_ATTEMPTED",
+  "status": "STOP_FIRST_ACTUAL_FIXTURE_FAILURE",
+  "stream": "NOT_TESTED",
+  "task": "Q38LIVE-20260917",
+  "tested_limits": {
+    "actual_context_occupancy": "NOT_TESTED",
+    "configured_fixture_memory_bytes": 8589934592,
+    "configured_fixture_pids": 128,
+    "fixture_context": 131072,
+    "fixture_core_ulimit": "1:1",
+    "fixture_gpu": "NONE",
+    "fixture_network": "NONE",
+    "fixture_real_key": "NONE",
+    "fixture_real_model": "NONE",
+    "production_core_ulimit": "NOT_TESTED"
+  },
+  "tool_and_continuation": "NOT_TESTED",
+  "updated_utc": "2026-09-17T04:00:37.524537+00:00"
+}

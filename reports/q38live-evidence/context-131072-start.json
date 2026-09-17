@@ -1,0 +1,35 @@
+{
+  "apport_before": {
+    "/var/crash": {
+      "entries": {},
+      "identity": [
+        64512,
+        263740
+      ]
+    },
+    "/var/lib/apport/coredump": {
+      "entries": {},
+      "identity": [
+        64512,
+        263913
+      ]
+    }
+  },
+  "attempt": 1,
+  "commit": "636f847fa2729238db9974c0a7b570960e6974d5",
+  "context": 131072,
+  "model_execution": "NOT_TESTED",
+  "root_available_bytes_before": 5562408960,
+  "source_sha256": {
+    "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+    "scripts/runtime/sglang38_file_auth.py": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+    "tests/lifecycle/sglang38_fixture/auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+    "tests/lifecycle/sglang38_fixture/cache_probe.py": "11e09615725d9588fd082fbbf8f4776a77d5a20f6dde09022a14df3e828bff73",
+    "tests/lifecycle/sglang38_fixture/chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+    "tests/lifecycle/sglang38_fixture/provenance.json": "6b3849e72d8b1ac8580003fd441af3d1b470c372e54a8643cf6a966ed3a524c9",
+    "tests/lifecycle/sglang38_fixture/run_fixture.py": "0dcdcbaf598529cc92b1503e4c148dfac288c8d8adf821b139d0c68010c8dfc7",
+    "tests/lifecycle/sglang38_fixture/run_pinned_image.py": "738fbee448d95822eca85496e1003c3e54f9abb8b9ad9f0c0d0530f3cbc79bb9"
+  },
+  "started_utc": "2026-09-17T03:57:13.088377+00:00",
+  "status": "FAIL"
+}
