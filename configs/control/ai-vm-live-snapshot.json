@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "reviewed_source_selection",
-  "status": "SOURCE_BOUND_LIVE_ACCEPTANCE_NOT_TESTED",
+  "status": "ANTICIPATED_SOURCE_ONLY_LIVE_ACCEPTANCE_PENDING",
   "source_root": "/usr/local/lib/llm-server/control-api",
   "config_root": "/usr/local/lib/llm-server/control-api/configs",
   "source_closure_manifest": "scripts/control/source-closure.json",
@@ -27,34 +27,76 @@
         "containers/llama-cpp/d3p-source.json": "a073747a339995e3dc6f1b509c7d977765d46f1959340ee4b2895230bf7c13c7",
         "containers/llama-cpp/strict-model-chat.patch": "43e4aeb5b63dbb82d7457526000391ba52d49a408040ec736fb302092e734f3b"
       },
-      "deployment_source": "configs/deployments/glm-5.3-ud-q4-k-xl-n76-32k.json",
-      "deployment_sha256": "3d4e9124ccc9dcc3a2864040bedb5dcc43332166a1a1586ce0b98a78acfb279d",
+      "deployment_source": "configs/deployments/glm-5.3-ud-q4-k-xl-n76-native1m.json",
+      "deployment_sha256": "a15c41c0532f565720c0ead787e0b5ca0908b467e691d3bfad937c839243b47d",
       "deployment_sources": {
-        "configs/deployments/glm-5.3-ud-q4-k-xl-n76-32k.json": "3d4e9124ccc9dcc3a2864040bedb5dcc43332166a1a1586ce0b98a78acfb279d",
         "configs/deployments/glm-5.3-ud-q4-k-xl-n76-native1m.json": "a15c41c0532f565720c0ead787e0b5ca0908b467e691d3bfad937c839243b47d"
       },
       "context_evidence": "declared_only",
-      "capability_status": "NOT_TESTED"
+      "capability_status": "NOT_TESTED",
+      "deployment_id": "glm-5.3-ud-q4-k-xl-n76-native1m",
+      "model_source": "configs/models/glm-5.3-ud-q4-k-xl.json",
+      "context_tokens": 1048576,
+      "served_alias": "glm-5.3",
+      "reasoning_effort": "low",
+      "private_endpoint": "http://10.156.100.60:30002/v1",
+      "selection_status": "ANTICIPATED_SOURCE_ONLY",
+      "live_profile_acceptance": "PENDING",
+      "verified_occupied_tokens": null
     },
     {
       "id": "qwen38-27b-fp8",
       "model_id": "Qwen/Qwen3.8-27B-FP8",
       "runtime": "sglang-qwen38-0.5.19",
       "network_role": "qwen38",
-      "deployment_sources": [
-        "configs/deployments/qwen38-27b-128k.json",
-        "configs/deployments/qwen38-27b-256k.json"
-      ],
-      "context_evidence": "declared_only"
+      "deployment_sources": {
+        "configs/deployments/qwen38-27b-1000000-yarn4-tp2-bf16kv.json": "c66895907d9f3a8a8ad9f02b4b3b9f88726c752b4d251534a232fb72b7094edf"
+      },
+      "context_evidence": "declared_only",
+      "deployment_id": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+      "deployment_source": "configs/deployments/qwen38-27b-1000000-yarn4-tp2-bf16kv.json",
+      "deployment_sha256": "c66895907d9f3a8a8ad9f02b4b3b9f88726c752b4d251534a232fb72b7094edf",
+      "model_source": "configs/models/qwen38-27b-fp8.json",
+      "runtime_source": "configs/runtimes/sglang-qwen38-0.5.19.json",
+      "context_tokens": 1000000,
+      "served_alias": "qwen3.8-27b",
+      "reasoning_effort": "none",
+      "private_endpoint": "http://10.156.100.60:30004/v1",
+      "selection_status": "ANTICIPATED_SOURCE_ONLY",
+      "live_profile_acceptance": "PENDING",
+      "verified_occupied_tokens": null,
+      "capability_status": "NOT_TESTED",
+      "runtime_sha256": "17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11"
     }
   ],
   "fixed_profile_sha256": {
+    "configs/deployments/glm-5.3-ud-q4-k-xl-n76-native1m.json": "a15c41c0532f565720c0ead787e0b5ca0908b467e691d3bfad937c839243b47d",
+    "configs/deployments/qwen38-27b-1000000-yarn4-tp2-bf16kv.json": "c66895907d9f3a8a8ad9f02b4b3b9f88726c752b4d251534a232fb72b7094edf",
     "configs/models/glm-5.3-ud-q4-k-xl.json": "857924551fa83c546bb99f7b524b35c8d79d0cb9ba0a666e0c139bbace0e7e0d",
     "configs/models/qwen38-27b-fp8.json": "fb62b2689a4c57aa1265b1262830c8d0e3983061c9674640ec9704ce603a44be",
-    "configs/runtimes/sglang-qwen38-0.5.19.json": "17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11",
-    "configs/deployments/qwen38-27b-128k.json": "cee5253c28bd8ff36f33630f27642cc9cdd3857eaa108bd177488efd6a0d133f",
-    "configs/deployments/qwen38-27b-256k.json": "462ed5792940890eaa410c3c6dd4996c6723157eee5fb7021ee210ed2f78523a"
+    "configs/runtimes/llama-cpp-v0.4.1-d3br.json": "d073105a70540df73cef325df7fdcfa32651f5a6aa8387b584708fb51b802d50",
+    "configs/runtimes/sglang-qwen38-0.5.19.json": "17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11"
   },
-  "publication_rule": "Copy exactly the fixed profiles plus the separately owner-reviewed GLM runtime, deployment, measured patched image proof and recipe dependency closure; do not copy profile directories recursively. Old D1 runtime is baseline/rollback only, not selected. This file is an operator handoff, not a runtime configuration loader or an installation receipt.",
-  "live_acceptance": "NOT_TESTED"
+  "publication_rule": "Anticipated operator handoff only, not a runtime loader or deployment receipt. APIDEPLOY waits for root-reviewed live profile acceptance. Stage exactly the two deployment_source files plus selected model/runtime declarations and pinned dependencies; never recursively copy configs/deployments. Preserve native fallback and D1 rollback outside active discovery. Compose protected data release, fixed root control copy and exact 11-file boot-stop copy from the same reviewed source. Any later owner dependency change requires reviewed repinning and receipt compatibility review.",
+  "live_acceptance": "NOT_TESTED",
+  "source_base": "357358ab12914df209d54c895a59c94a41c84580",
+  "source_closure_sha256": "7c17a5334562ff2817e0fac0b82319524f9dcb67be31f27eac896dc441679284",
+  "source_hash_inventory": "reports/l2-source-closure-sha256.json",
+  "qwen_runtime_receipts": {
+    "native": "/data/services/llm-manager/evidence/sglang-qwen38-0.5.19.auth.json",
+    "extension": "/data/services/llm-manager/evidence/sglang-qwen38-0.5.19.q38max.auth.json",
+    "status": "PENDING_CURRENT_EXACT_SOURCE_REVIEW",
+    "rule": "Preserve actual native and extension receipts and instance bindings; source hashes do not mint proof or establish serving."
+  },
+  "pending_acceptance": {
+    "qwen_candidate_selection": "PENDING",
+    "current_source_receipts": "PENDING",
+    "deployed_source_and_credential_binding": "PENDING",
+    "exact_two_choice_catalog": "PENDING",
+    "private_auth_stream_tools": "PENDING",
+    "opencode_read_edit_test": "PENDING",
+    "occupied_context_and_speed": "PENDING",
+    "qwen_glm_qwen_switch_cas_idempotency": "PENDING",
+    "selected_qwen_resume_reboot": "PENDING"
+  }
 }
