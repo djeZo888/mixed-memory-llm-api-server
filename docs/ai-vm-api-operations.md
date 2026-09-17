@@ -4,15 +4,13 @@ Discover and load a model through the control API, then use its separate
 OpenAI-compatible inference endpoint. Exactly **GLM5.3 UD-Q4_K_XL** and
 **Qwen3.8-27B FP8** are in scope, with one active backend at a time.
 
-**PENDING — source guide frozen 2026-09-17.** The
-[anticipated selection](l2-live-snapshot.md) is not an accepted deployment or
-active default. Coordinated Worker1 result at **2026-09-17 05:18:10 UTC** on exact source
-`821df4a561173c078ed35c9286a07b82867b7953` reports the genuine native no-GPU
-fixture pair at **128K and 256K PASS** (report not yet committed; no model
-allocation or inference PASS), while actual Qwen model loading/inference,
-1M extension acceptance and final live API/switch/network/boot/client
-acceptance remain **PENDING**. These are reviewed source contracts, not fresh
-observations of serving state.
+**Status draft, 2026-09-17; final acceptance PENDING.** Published evidence covers
+[small Qwen API/tool tasks](../reports/q38retry-tp2-1m.md) and
+[working private control/catalog](../reports/apideploy-control-ready.md).
+The [stage-one report](../reports/stage1-ai-vm-status.md) separates those results
+from coordinated Qwen retrieval/OpenCode results awaiting durable links, new
+alias-proof gates and outstanding GLM/switch/reboot acceptance. This guide is an
+operator contract, not a fresh observation of the active backend.
 
 ## Endpoints and credentials
 
@@ -46,16 +44,17 @@ or logs; avoid shell tracing and HTTP debug output. See
 
 ## Aliases, deployment IDs and capacity
 
-| Model | Inference `model` / `endpoint.served_model` | Anticipated switch `deployment_id` |
+| Model | Inference `model` / `endpoint.served_model` | Published catalog `deployment_id` |
 | --- | --- | --- |
 | GLM5.3 UD-Q4_K_XL | `glm-5.3` | `glm-5.3-ud-q4-k-xl-n76-native1m` |
-| Qwen3.8-27B FP8 | `qwen3.8-27b` | `qwen38-27b-1000000-yarn4-tp2-bf16kv` (**PENDING**) |
+| Qwen3.8-27B FP8 | `qwen3.8-27b` | `qwen38-27b-1000000-yarn4-tp2-bf16kv` |
 
 Switch with an ID returned in catalog `entries`; infer with the discovered
-alias. Repository profiles do not prove an installed catalog entry. Native Qwen
-128K/256K profiles are retained validation baselines, not additional model
-identities or extra choices in the anticipated two-entry catalog. Exact pins:
-[selection handoff](l2-live-snapshot.md#exact-selected-source).
+alias: it names the already loaded model and does not load or switch one.
+Native Qwen 128K/256K profiles are retained validation baselines, not additional
+model identities or choices in the published two-entry catalog. Refresh catalog
+and status before use; source profiles alone do not prove installation. The
+[selection handoff](l2-live-snapshot.md#exact-selected-source) records profile pins.
 
 GLM uses fast system RAM and both GPUs with 1,048,576 declared/configured tokens.
 [D3CAP4 (2026-09-15)](../reports/d3cap4-native1m.md) proved one slot allocated at
@@ -63,20 +62,29 @@ that capacity and one HTTP 200 response using 19 prompt and 3 completion tokens.
 It did not prove occupied 1M context, tools, switching, private-client access or
 boot, and is not current health evidence.
 
-Qwen's GPU-resident native baseline declares 256K (262,144). The source candidate
-retains FP8 weights and uses both GPUs (TP2), BF16 KV and official factor-4 YaRN
-settings for 1,000,000 tokens; acceptance is **PENDING**. See
-[Q38MAX scope](../reports/q38max-source.md). Catalog `context_limit` and
-`context.configured_tokens` describe configuration;
-`context.verified_occupied_tokens` is `null` and
-`context.verified_occupied_provenance` is `"unknown"`. Neither a short response
-nor a 2048-token output budget measures usable context capacity.
+Qwen uses both GPUs (TP2), FP8 weights, BF16 compute/KV and official factor-4
+YaRN settings. [Q38RETRY](../reports/q38retry-tp2-1m.md) establishes 1,000,000
+configured/allocated tokens and small-task serving. Root reports a completed
+144,244-token retrieval task with tools and strict JSON; its durable link is
+pending. No full occupied 1M claim follows. Catalog `context_limit` and
+`context.configured_tokens` describe configuration; its structured
+`context.verified_occupied_tokens` remains `null` with provenance `"unknown"`.
+Neither startup allocation nor a 2048-token test output budget establishes
+occupied capacity or a product limit.
+
+Models live on registered `/data/models-large`; cache, Docker/containerd,
+builds, logs and service data use the registered `/data` roots. The protected
+`/etc/local-ai-server/storage.json` is authoritative, not directory existence.
+Operators use current registered-storage/root guards and the canonical
+`/run/llmctl/lifecycle.lock` for authorized lifecycle work. Clients need neither
+host filesystem access nor Docker privileges; see the
+[storage contract](l2-live-snapshot.md#canonical-registered-storage-input).
 
 ## Discover, switch, poll, then infer
 
-After root-reviewed activation, use this sequence. All control requests use
-the control credential; inference uses the native key. Examples contain no
-credentials and are not live acceptance results.
+Use this sequence with the current coordinated endpoint. All control requests
+use the control credential; inference uses the native key. Examples are not
+live acceptance results.
 
 1. **Discover:** authenticated `GET /control/v1/catalog` returns a status
    snapshot plus `entries`. Read each entry's `deployment_id`, `state`, `context`
@@ -86,7 +94,8 @@ credentials and are not live acceptance results.
    `desired`, `observed`, `observed_deployment`, `active_identity`, `generation`,
    `generation_current`, `freshness`, `current_operation`, `last_operation` and
    `endpoint`. Use a fresh observation with `generation_current:true` before
-   requesting a change; it may be false while another owner is busy.
+   requesting a change; it may be false while another owner is busy. HTTP 200
+   alone is insufficient: inspect `freshness`, `failure_code` and `observed`.
 3. **Switch/load:** `POST /control/v1/switch` requires exactly `deployment_id`,
    `expected_active`, `expected_generation`, `allow_interrupt`. Copy
    `active_identity` into `expected_active` (opaque 64-character lowercase
@@ -112,6 +121,10 @@ the switch body is:
 {"deployment_id":"glm-5.3-ud-q4-k-xl-n76-native1m","expected_active":null,"expected_generation":1,"allow_interrupt":false}
 ```
 
+The identity/generation pair is compare-and-swap (CAS): it protects against
+acting on a backend that changed after discovery. Never hard-code this example's
+null identity or generation into a client.
+
 Send `Content-Type: application/json` and a new `Idempotency-Key` identifying
 the intended mutation (1–128 ASCII letters/digits or `_.:-`). Retry an uncertain
 submission with the **same key and identical payload** to retrieve its operation;
@@ -120,6 +133,12 @@ expire together 24 hours after completion. For a changed intention, refresh
 status and use a new key. Stale state or a busy owner also returns 409; do not
 blindly resubmit. Missing/wrong control credentials return 401; unavailable
 trusted state/storage can return 503.
+
+Current source allows 10 seconds each for read/admission work and a 30-second
+HTTP lifetime. A client should allow more than 30 seconds per control request;
+model loading continues asynchronously, with a default operation deadline of
+8,000 seconds. Do not use a two-second HTTP timeout or equate it with a failed
+switch. Poll the existing operation and refresh status instead.
 
 There is no switch queue, inference drain guarantee or session reservation.
 `switch_effect` is `"interrupts_inference"`: a switch can interrupt responses,
@@ -147,16 +166,85 @@ validated private policy it can instead report `server_relative:false`,
 can change. Do not infer through port 30000 or treat `model` as a load request.
 
 At the discovered inference base URL, `GET /models` is `/v1/models` and
-`POST /chat/completions` is `/v1/chat/completions`. After GLM is ready, this
-compact request follows the historical tiny-smoke body:
+`POST /chat/completions` is `/v1/chat/completions`; `stream:true` requests SSE.
+Use the exact served alias. Unknown-model rejection in the changed Qwen launcher
+still needs fresh native/extension proofs and a restart/live check; the earlier
+successful requests do not establish this new behavior. Reviewed client effort
+settings are GLM `"low"` and Qwen `"none"`.
 
-```json
-{"model":"glm-5.3","messages":[{"role":"user","content":"Reply with the single word READY."}],"reasoning_effort":"low","temperature":0,"max_tokens":128}
+## Protected-file request examples
+
+Use an ordinary client user with separately provisioned control and inference
+files, each owned by that user, mode 0600, in a mode-0700 directory outside Git.
+The following Python example uses the existing protected-file loader from a
+reviewed checkout; it makes no installation or credential copy. It decodes that
+loader's OpenCode JSON escaping before constructing an HTTP header. Run without
+shell tracing or HTTP debugging. `http.client` uses no ambient proxy or redirect.
+
+```python
+import http.client
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, "scripts/client")  # Run from the reviewed checkout root.
+from client_common import load_key
+
+key_dir = Path.home() / ".config/ai-vm-keys"  # Already provisioned; outside Git.
+
+def api(port, path, key_name, body=None, idempotency_key=None):
+    encoded = load_key({"kind": "file", "reference": str(key_dir / key_name)})
+    headers = {"Authorization": "Bearer " + json.loads('"' + encoded + '"')}
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+    if idempotency_key is not None:
+        headers["Idempotency-Key"] = idempotency_key
+    conn = http.client.HTTPConnection("10.156.100.60", port, timeout=60)
+    try:
+        conn.request("GET" if body is None else "POST", path,
+                     body=None if body is None else json.dumps(body), headers=headers)
+        response = conn.getresponse()
+        return response.status, json.loads(response.read())
+    finally:
+        conn.close()
+
+code, catalog = api(30000, "/control/v1/catalog", "control-api-key")
+code, status = api(30000, "/control/v1/status", "control-api-key")
+print(code, status["selected"], status["observed"], status["freshness"])
 ```
 
-Reviewed settings are GLM `reasoning_effort:"low"` and the anticipated Qwen
-fast-client preset `reasoning_effort:"none"`; Qwen continuation remains pending.
-Token budgets and client limits come from the accepted operator handoff.
+For an intended switch, supply a catalog deployment ID and a fresh current
+status. This example acknowledges interruption of the running backend:
+
+```python
+body = {"deployment_id": "glm-5.3-ud-q4-k-xl-n76-native1m",
+        "expected_active": status["active_identity"],
+        "expected_generation": status["generation"], "allow_interrupt": True}
+code, receipt = api(30000, "/control/v1/switch", "control-api-key", body,
+                    idempotency_key="operator-switch-001")
+```
+
+Choose a new idempotency key for each intention and retain it with the body
+privately before sending; reuse both after an uncertain submission. On 202,
+poll with `api(30000, receipt["operation"]["poll_url"], "control-api-key")`
+until terminal, then rediscover. These are control calls, not inference calls.
+
+Only after fresh status confirms the published Qwen endpoint is ready, this
+additional call makes one small inference request using the separate key:
+
+```python
+code, reply = api(30004, "/v1/chat/completions", "llm-api-key", {
+    "model": "qwen3.8-27b",
+    "messages": [{"role": "user", "content": "Reply with the single word READY."}],
+    "reasoning_effort": "none", "temperature": 0, "max_tokens": 128,
+})
+print(code, reply.get("choices", [{}])[0].get("message", {}).get("content"))
+```
+
+For GLM, use its freshly discovered endpoint/alias and `reasoning_effort:"low"`.
+The 128-token example budget is not a serving limit. For real agents, use the
+[reviewed client](client-install.md) with a protected `--api-key-file` reference.
+Provision client limits from the current handoff, not this short example.
 
 ## External agents and future frontend
 
@@ -171,4 +259,6 @@ evidence; a reply claiming an edit or passing test proves neither.
 A future separate frontend can use catalog/status, switch/poll and inference
 endpoint discovery. No frontend is delivered or accepted here. The control API
 rejects browser Origin/fetch context and provides no CORS; future browser access
-needs reviewed integration. Installer work and tests remain paused.
+needs a trusted server-side integration that keeps control credentials out of
+browser code. No such integration is implemented here. Installer work and tests
+remain paused.

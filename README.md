@@ -5,32 +5,34 @@ An API-only local AI server for **GLM5.3 UD-Q4_K_XL** (flagship) and
 separate authenticated control API for catalog, status and model switching.
 Select/load the model before inference: **one backend is active at a time**.
 
-**Completion status: PENDING (2026-09-17).** The anticipated deployment
-selection is source-only, awaiting live acceptance; it is not an accepted or
-active default. Coordinated Worker1 result at **2026-09-17 05:18:10 UTC** on exact source
-`821df4a561173c078ed35c9286a07b82867b7953` reports the genuine native no-GPU
-fixture pair at **128K and 256K PASS** (report not yet committed; no model
-allocation or inference PASS), while actual Qwen model loading/inference,
-1M extension acceptance and final live API/switch/network/boot/client
-acceptance remain **PENDING**.
-See the [current scope](docs/orchestration/2026-09-17-resumed.md) and
-[profile/evidence handoff](docs/l2-live-snapshot.md).
+**Stage one status: DRAFT / completion PENDING (2026-09-17).** Published evidence
+establishes [Qwen authentication, chat, streaming and real tool continuation](reports/q38retry-tp2-1m.md)
+and the [private control API with the exact two-model catalog](reports/apideploy-control-ready.md).
+Root also reports a Qwen 144,244-token agent retrieval PASS and independent
+OpenCode read/edit/test PASS after replaying saved events with the corrected
+verifier; durable report links are pending. The new Qwen alias guard still needs
+fresh native/extension proofs and live rejection checks. Final GLM, switching,
+reboot and cleanup acceptance remain pending. See the
+[stage-one status draft](reports/stage1-ai-vm-status.md) for evidence boundaries
+and the remaining plan.
 
 ## Models and capacity
 
 | Model | Placement and context scope |
 | --- | --- |
 | GLM5.3 UD-Q4_K_XL | Fast system RAM plus both GPUs; declared/configured context 1,048,576 tokens. [Historical allocation and tiny-response evidence](reports/d3cap4-native1m.md) does not prove occupied 1M context. |
-| Qwen3.8-27B FP8 | GPU-resident native baseline, declared 256K (262,144 tokens). The chosen source candidate uses the same weights, both GPUs/TP2 and BF16 KV with official factor-4 YaRN settings for 1,000,000 tokens; acceptance is **PENDING**. |
+| Qwen3.8-27B FP8 | Selected profile uses both GPUs/TP2, FP8 weights and BF16 KV with official factor-4 YaRN settings; configured and allocated context 1,000,000 tokens. Published small-task PASS; coordinated 144,244-token retrieval PASS awaits its report link. |
 
 Configured capacity, allocation and successfully occupied context are separate
-claims. The catalog's `context.verified_occupied_tokens` remains `null`; historical 32K
-and 2048-output-token checks are not product limits.
+claims. Neither full occupied maximum is established. The catalog's
+`context.verified_occupied_tokens` remains `null` because it has no structured
+occupied-context receipt; historical 32K and 2048-output-token checks are not
+product limits. Fast Qwen is the intended default after final acceptance.
 
 ## Start here
 
 - [API operations guide](docs/ai-vm-api-operations.md): endpoint/key separation,
-  aliases, catalog, asynchronous switch/poll and inference flow.
+  protected-file examples, aliases, catalog, asynchronous switch/poll and inference.
 - [Control API contract](docs/control-api.md): exact fields, concurrency,
   idempotency, interruption and recovery behavior.
 - [Direct client networking](docs/direct-client-network.md): approved private
@@ -43,6 +45,9 @@ external agent client running as an ordinary user in a trusted workspace.
 The model API does not execute tools. A separate frontend VM is future work;
 there is no completed human chat UI here. Finish ai-vm first, frontend next,
 installer last. **All installer work and tests are paused.**
+The [current scope](docs/orchestration/2026-09-17-resumed.md) and
+[profile handoff](docs/l2-live-snapshot.md) preserve coordination and source
+details; their older pending statements must be read with the dated status draft.
 
 ## Historical references
 
