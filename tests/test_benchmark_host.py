@@ -16,7 +16,7 @@ from unittest.mock import Mock, patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from benchmark.host import LinuxHost, HostBudget, serve, command, _COMMAND_DEADLINE
-from benchmark.lifecycle import CONTROL_UNIT, BOOT_UNIT
+from benchmark.lifecycle import CONTROL_UNIT, BOOT_UNIT, validate_snapshot
 from install.storage_io import AnchoredRoot, GuardedFile
 from benchmark.owner import WorkerVerificationPending
 from tests.test_benchmark_owner import Fixture
@@ -64,6 +64,31 @@ class HostTests(unittest.TestCase):
         self.assertEqual([call.args[0] for call in run.call_args_list],
                          [['/usr/bin/systemctl', 'stop', 'llm-control.service'],
                           ['/usr/bin/systemctl', 'start', 'llm-control.service']])
+
+    def test_units_accepts_omitted_control_execstop_and_keeps_boot_contract(self):
+        # Actual systemctl show shape: an empty ExecStop array is omitted,
+        # including with --all; required state/path properties are present.
+        control = (b'ActiveState=active\nSubState=running\n'
+                   b'FragmentPath=/etc/systemd/system/llm-control.service\n'
+                   b'DropInPaths=\nUnitFileState=enabled\n')
+        boot = (b'ExecStop={ path=/usr/bin/python3 ; argv[]=/usr/bin/python3 '
+                b'-I -B /usr/local/lib/local-ai-server/scripts/llmctl boot-stop '
+                b'--yes --instance /data/services/llm-manager/deployment-instance.json ; }\n'
+                b'ActiveState=active\nSubState=exited\n'
+                b'FragmentPath=/etc/systemd/system/llmctl-boot.service\n'
+                b'DropInPaths=\nUnitFileState=enabled\n')
+        with patch('benchmark.host.command', side_effect=[
+                SimpleNamespace(stdout=control), SimpleNamespace(stdout=boot)]), \
+                patch('benchmark.host.protected', return_value=(b'unit bytes', {})):
+            services = self.bare().units()
+        self.assertFalse(services[CONTROL_UNIT]['exec_stop_uses_lifecycle'])
+        self.assertTrue(services[BOOT_UNIT]['exec_stop_uses_lifecycle'])
+        original = snapshot()
+        original['services'] = services
+        validate_snapshot(original)
+        original['services'][BOOT_UNIT]['exec_stop_uses_lifecycle'] = False
+        with self.assertRaisesRegex(ValueError, 'service_stop_contract_changed'):
+            validate_snapshot(original)
 
     def test_request_admission_top_level_rpc_and_timeout(self):
         host = self.bare()

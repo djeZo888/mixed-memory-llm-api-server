@@ -238,7 +238,7 @@ class LinuxHost:
             result[name] = {'active': fields['ActiveState'], 'substate': fields['SubState'],
                 'enabled': fields['UnitFileState'], 'masked': fields['UnitFileState'].startswith('masked'),
                 'unit_sha256': hashlib.sha256(unit_raw).hexdigest(),
-                'exec_stop_uses_lifecycle': 'boot-stop' in fields['ExecStop']}
+                'exec_stop_uses_lifecycle': 'boot-stop' in fields.get('ExecStop', '')}
         return result
 
     def jobs(self):
