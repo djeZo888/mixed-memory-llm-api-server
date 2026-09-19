@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 import math
+from fractions import Fraction
 from pathlib import Path
 import sys
 
@@ -71,6 +72,7 @@ def main():
     ap.add_argument("--output", required=True, type=Path)
     args = ap.parse_args()
     q1, q2 = [args.tasks / x for x in ("BENCHQ1-20260919", "BENCHRUN-20260919")]
+    q256 = args.tasks / "BENCHQ256-20260919"
     evidence = {}
 
     def evidence_file(path, expected=None):
@@ -79,7 +81,7 @@ def main():
         if expected:
             check(digest == expected, "saved file digest mismatch: " + path.name)
         evidence[str(path.relative_to(args.tasks))] = {"sha256": digest, "bytes": len(raw)}
-        return read(path)
+        return read(path) if path.suffix == ".json" else None
 
     status = evidence_file(q1 / "status.json")
     outcome = evidence_file(q1 / "completion/outcome.json")
@@ -125,9 +127,52 @@ def main():
         raw = path.read_bytes()
         check(sha(raw) == item["sha256"], "prior evidence changed")
         evidence[str(path.relative_to(args.tasks))] = {"sha256": sha(raw), "bytes": len(raw)}
-    arms = {label: evidence_file(task / "campaign-arm/arm.json") for label, task in (("Q1", q1), ("Q2", q2))}
+    status256 = evidence_file(q256 / "status.json")
+    outcome256 = evidence_file(q256 / "completion/outcome.json")
+    check(status256["phase"] == "RESTORED" and status256["restoration_state"] == "VERIFIED"
+          and not status256["campaign_alive"] and status256["task_complete"], "Q256 not terminal/restored")
+    evidence_file(q256 / "exit-code")
+    check((q256 / "exit-code").read_text().strip() == "0", "Q256 CLI not terminal success")
+    check(outcome256["measurement_process_exit"]["phase"] == "RESTORED"
+          and outcome256["measurement_process_exit"]["exit_code"] == 1, "Q256 immutable measurement exit changed")
+    for item in evidence_file(q256 / "completion/artifact-index.json").values():
+        evidence_file(Path(item["path"]), item["raw_file_sha256"])
+    evidence_file(q256 / "completion/replay-semantic.py")
+    host256, numeric256 = [read(q256 / "completion" / name) for name in ("private/host-receipts.json", "numeric-receipts.json")]
+    for item in list(host256["receipts"].values()) + [a[k] for a in host256["allocations"] for k in ("load", "allocation")]:
+        check(sha((json.dumps(item["value"], sort_keys=True, indent=2) + "\n").encode()) == item["sha256"], "Q256 embedded receipt hash")
+    owner256 = host256["receipts"]["owner.json"]["value"]
+    lan256 = host256["receipts"]["worker-restoration-verification.json"]["value"]
+    challenge256 = host256["receipts"]["restoration-challenge.json"]["value"]
+    check(owner256["phase"] == "RESTORED" and not owner256["errors"]
+          and all(r["state"] == "REMOVED" for r in owner256["resources"]), "Q256 owner not restored")
+    check(lan256["nonce"] == challenge256["nonce"] and lan256["original_sha256"] == sha(canonical(owner256["original"])), "Q256 LAN binding")
+    check(lan256["checks"]["worker_lan_control_authenticated"] and lan256["checks"]["worker_lan_inference_authenticated"], "Q256 LAN authentication")
+    check(host256["receipts"]["owner.json"]["sha256"] == outcome256["owner_receipt_sha256"]
+          and host256["receipts"]["worker-restoration-verification.json"]["sha256"] == outcome256["authenticated_worker_lan_receipt"]["sha256"], "Q256 outcome receipts")
+    check(all(host256[k] for k in ("no_owned_containers", "no_campaign_host", "no_benchmark_listeners")) and not host256["canonical_lease_held"], "Q256 resources not released")
+    for key in ("selected", "desired", "boot_policy"):
+        check(owner256["original"]["manager"][key] == original["manager"][key], "Q256 original intent differs")
+    for name, service in owner256["original"]["services"].items():
+        for old, new in (("active", "ActiveState"), ("substate", "SubState"), ("enabled", "UnitFileState")):
+            check(service[old] == host256["services"][name][new], "Q256 service state differs")
+    for item in evidence_file(q256 / "prior-evidence.json")["paths"].values():
+        path = Path(item["path"])
+        evidence_file(path, item["sha256"])
+        check(path.stat().st_size == item["bytes"], "Q256 prior evidence size")
+    check(outcome256["first_epoch"] == outcome["first_epoch"] and outcome256["deadline"] == outcome["deadline"], "Q256 budget reset")
+    check((q256/"campaign-arm/execution.json").read_bytes() == (q1/"campaign-arm/execution.json").read_bytes(), "Q256 execution changed")
+    arms = {label: evidence_file(task / "campaign-arm/arm.json") for label, task in (("Q1", q1), ("Q2", q2), ("Q256", q256))}
     arm_hashes = {k: sha(canonical(v)) for k, v in arms.items()}
     check(arm_hashes["Q1"] == outcome["canonical_arm_sha256"], "Q1 arm changed")
+    check(arm_hashes["Q256"] == outcome256["canonical_arm_sha256"] == "328830179bfcd4488a1f7ecf23083126b472ef41d7f883a1174f177f65497af1", "Q256 arm differs")
+    check(outcome256["source_head"] == "b750bb37dd3107cf5b1e7aaabe6237ebc435085c", "Q256 source differs")
+    for name, expected in arms["Q256"]["source_files"].items():
+        check(sha((q256/"repo"/name).read_bytes()) == expected, "Q256 accepted source bytes differ")
+    manifest64, manifest256 = arms["Q1"]["manifests"][-1], arms["Q256"]["manifests"][0]
+    for key in ("model", "image", "gpu_uuids", "guest_cpu_count", "guest_cpuset"):
+        check(manifest64[key] == manifest256[key], "Q256 placement/model policy changed")
+    check(["262144" if x == "65536" else x for x in manifest64["native_argv"]] == manifest256["native_argv"], "Q256 native policy changed beyond capacity")
     for name, expected in arms["Q1"]["source_files"].items():
         check(sha((ROOT/name).read_bytes()) == expected, "reviewed source differs: " + name)
     go = evidence_file(q1 / "GO.json")
@@ -148,11 +193,13 @@ def main():
         check(sha((q1/name).read_bytes()[:receipt["preserved_bytes"]]) == receipt["sha256"], "journal prefix changed")
 
     all_rows, fixtures, trials, parsed = {}, {}, [], {}
-    for label, task in (("Q1", q1), ("Q2", q2)):
+    for label, task in (("Q1", q1), ("Q2", q2), ("Q256", q256)):
         path = task / "campaign-arm/results.jsonl"
         raw = path.read_bytes()
         evidence[str(path.relative_to(args.tasks))] = {"sha256": sha(raw), "bytes": len(raw)}
         rows = [json.loads(s) for s in raw.splitlines()]
+        if label == "Q256":
+            check(sum(r["type"] == "trial" for r in rows) == 1 and sum(r["type"] == "warm_idle" for r in rows) == 1, "Q256 repeated case/warmup")
         all_rows[label] = rows
         fixtures[label] = evidence_file(task / "campaign-arm/private/fixtures.json")
         for fixture in fixtures[label].values():
@@ -162,6 +209,7 @@ def main():
             if r["kind"] == "tool":
                 continue  # separately verify immutable diagnosis below; never execute a tool
             count, sample = r["count"], r["sample"]
+            check(sample["response_retained_complete"] and sample["retry_attempts"] == 0, "incomplete or retried measurement")
             raw_request = (task / "campaign-arm/private" / (r["id"] + ".request.json")).read_bytes()
             response = task / "campaign-arm/private" / (r["id"] + ".response.sse")
             check(sha(raw_request) == sample["request_sha256"] == count["body_sha256"], "request hash")
@@ -203,9 +251,12 @@ def main():
                 "template_sha256": count["template_sha256"], "token_ids_sha256": count["token_ids_sha256"],
                 "row_canonical_sha256": sha(canonical(r)), "request_sha256": sample["request_sha256"], "response_sha256": sample["response_sha256"],
                 "telemetry": cov, "request_gpu": gpu, "request_cgroup_sampled_peaks": request_groups,
+                "request_min_host_available_bytes": min(s["host"]["available_bytes"] for s in window),
                 "native_prefill_decode_cached_evaluated_counters": None})
     check(sha((q1/"campaign-arm/results.jsonl").read_bytes()) == numeric["provenance"]["results_file_sha256"], "numeric results binding")
     check(all(fixtures["Q1"][k] == v for k,v in fixtures["Q2"].items()), "original frozen entries changed")
+    check(all(fixtures["Q256"][k] == v for k,v in fixtures["Q1"].items()), "Q256 changed prior frozen entries")
+    check(sha((q256/"campaign-arm/results.jsonl").read_bytes()) == numeric256["provenance"]["results_file_sha256"], "Q256 numeric results binding")
     semantic = evidence_file(q1 / "generation-failure/semantic-disposition.json", outcome["semantic_disposition_file_sha256"])
     gen = next(r for r in trials if r["id"] == "Q1-16384-generation")
     check(gen["status"] == "HARNESS_FAILURE" and gen["row_canonical_sha256"] == semantic["original_row_canonical_sha256"], "generation row relabeled")
@@ -218,6 +269,20 @@ def main():
     answer = json.loads(normalized)
     check(bool(answer.pop("commentary")) and answer == fixtures["Q1"]["bench-qwen3.8-27b-16384-generation"]["scorer"]["retrieval"], "semantic answer differs")
     check(arms["Q1"]["q1_generation_framing"]["failed_row_sha256"] == gen["row_canonical_sha256"] and arms["Q1"]["q1_generation_framing"]["semantic_disposition_sha256"] == outcome["semantic_disposition_file_sha256"], "arm semantic binding")
+    semantic256 = evidence_file(q256 / "completion/semantic-disposition.json", "f5d247b7ea6b7150cfa2ca8acbbc8849a2abee030f7b4e170b7f2a5b5a6ccd31")
+    trial256 = next(r for r in trials if r["id"] == "Q1-262144-retrieval")
+    check(trial256["status"] == "HARNESS_FAILURE" and trial256["row_canonical_sha256"] == semantic256["original_row_canonical_sha256"] == "0e28306969447642459452e17fcb7395dbdd1c0f8387d6ce25d66e49b176664f", "Q256 strict row changed")
+    check(trial256["response_sha256"] == semantic256["raw_response_sha256"] == "c58d5e6db1e05f1fc3f9d0ef25a937a7054d18f9c8bfcbf2da196fa54b55c61d", "Q256 response changed")
+    content256 = parsed[trial256["id"]]
+    check(content256.startswith("```json\n") and content256.endswith("\n```"), "Q256 one enclosing fence")
+    normalized256 = content256[len("```json\n"):-len("\n```")]
+    check("```" not in normalized256 and content256 == semantic256["original_content"] and normalized256 == semantic256["normalized_content"], "Q256 normalization differs")
+    check(json.loads(normalized256) == fixtures["Q256"]["bench-qwen3.8-27b-262144-retrieval"]["scorer"]["retrieval"], "Q256 exact semantic answer")
+    check(sha(content256.encode()) == semantic256["original_content_sha256"] and sha(normalized256.encode()) == semantic256["normalized_content_sha256"], "Q256 content hashes")
+    check(semantic256["normalized_score"]["status"] == "PASS" and semantic256["original_score"]["status"] == "HARNESS_FAILURE", "Q256 disposition status")
+    evidence_file(q256 / "completion/semantic-authority.md", semantic256["authority_sha256"])
+    for name, expected in semantic256["immutable_state_sha256"].items():
+        evidence_file(q256 / "campaign-arm" / name, expected)
     diag = read(q2 / "tool-failure/diagnosis.json")
     for group in (diag["failed_tool_evidence"], *[x["raw"] for x in diag["successful_cases_preserved"].values()]):
         for name, pin in group.items():
@@ -231,8 +296,10 @@ def main():
 
     memory = []
     used_uuid = arms["Q1"]["manifests"][0]["gpu_uuids"][0]
-    q1samples = [r for r in all_rows["Q1"] if r["type"] == "telemetry"]
-    for allocation, saved in zip(host["allocations"], numeric["allocations"]):
+    q1samples = [r for label in ("Q1", "Q256") for r in all_rows[label] if r["type"] == "telemetry"]
+    allocation_sets = [(a, n, "Q1") for a, n in zip(host["allocations"], numeric["allocations"])]
+    allocation_sets += [(a, n, "Q256") for a, n in zip(host256["allocations"], numeric256["allocations"])]
+    for allocation, saved, label in allocation_sets:
         cap, cid = allocation["capacity"], allocation["container_id"]
         value = allocation["allocation"]["value"]
         manifest = allocation["load"]["value"]["manifest"]
@@ -240,18 +307,20 @@ def main():
         check(value["observed"]["model"] == manifest["model"] and value["observed"]["image_ref"] == manifest["image"], "observed model/runtime differs")
         check(value["observed"]["cuda_uuid_order"] == value["observed"]["device_request_uuids"] == manifest["gpu_uuids"], "GPU placement differs")
         check(value["parsed"] == saved["native_allocation"], "numeric allocation differs")
-        check(value["parsed"]["actual_pool_tokens"] == cap, "pool differs")
+        check(all(value["parsed"][k] == cap for k in ("actual_pool_tokens", "configured_context", "configured_pool_tokens")), "pool differs")
         samples = [r["sample"] for r in q1samples if r["container"] == cid]
         gs = [g for s in samples for g in s["gpus"] if g["uuid"] == used_uuid]
         peak, free = max(g["used_bytes"] for g in gs), min(g["free_bytes"] for g in gs)
         check(peak == saved["lifecycle_gpu_sampled_peaks"][used_uuid]["sampled_peak_used_bytes"], "numeric GPU peak")
-        load = next(r for r in all_rows["Q1"] if r["type"] == "load" and r["capacity"] == cap)
-        warm = next(r for r in all_rows["Q1"] if r["type"] == "warm_idle" and r["container"] == cid)
+        load = next(r for r in all_rows[label] if r["type"] == "load" and r["capacity"] == cap)
+        warm = next(r for r in all_rows[label] if r["type"] == "warm_idle" and r["container"] == cid)
+        check(load["allocation"]["status"] == "ALLOCATION_PROOF_ACCEPTED" and warm["warmup_timing"] == "discarded"
+              and warm["prefill_proof"]["prefill_tokens"] >= 2048, "allocation/warmup proof failed")
         load_samples = [s for s in samples if s["host_timestamp_monotonic_s"] <= load["readiness"]["telemetry"]["timestamp_monotonic_s"]]
         for key, point in (("readiness", load["readiness"]), ("warm_idle", warm["checkpoint"])):
             check(point["pss_bytes"] == saved["checkpoints"][key]["quiescent_process_tree_pss_bytes"], "numeric PSS")
-        def group_peaks():
-            return {k: max((s["cgroups"][cid][k] for s in samples if s["cgroups"][cid].get(k) is not None), default=None)
+        def group_peaks(series):
+            return {k: max((s["cgroups"][cid][k] for s in series if s["cgroups"][cid].get(k) is not None), default=None)
                     for k in ("current_bytes", "peak_since_cgroup_creation_bytes", "anon_bytes", "file_bytes", "kernel_bytes", "swap_bytes")}
         warm_g = next(g for g in warm["checkpoint"]["telemetry"]["gpus"] if g["uuid"] == used_uuid)
         memory.append({"capacity": cap, "container_id": cid, "allocation_receipt_sha256": allocation["allocation"]["sha256"],
@@ -261,10 +330,11 @@ def main():
             "load_before_readiness_sample_count": len(load_samples),
             "load_before_readiness_gpu_sampled_peak_used_bytes": max(g["used_bytes"] for s in load_samples for g in s["gpus"] if g["uuid"] == used_uuid),
             "gpu_sampled_peak_used_bytes": peak, "gpu_sampled_min_free_bytes": free,
-            "gpu_warm_used_bytes": warm_g["used_bytes"], "gpu_readiness_used_bytes": next(g["used_bytes"] for g in load["readiness"]["telemetry"]["gpus"] if g["uuid"] == used_uuid),
+            "gpu_warm_used_bytes": warm_g["used_bytes"], "gpu_warm_free_bytes": warm_g["free_bytes"], "gpu_readiness_used_bytes": next(g["used_bytes"] for g in load["readiness"]["telemetry"]["gpus"] if g["uuid"] == used_uuid),
             "fixed_used_minus_hypothesized_kv_bytes": peak-cap*65536, "load_client_s": load["client_load_seconds"],
             "readiness_pss_bytes": load["readiness"]["pss_bytes"], "warm_pss_bytes": warm["checkpoint"]["pss_bytes"],
-            "warm_cgroup": warm["checkpoint"]["telemetry"]["cgroups"][cid], "lifecycle_cgroup_peaks": group_peaks(),
+            "warm_cgroup": warm["checkpoint"]["telemetry"]["cgroups"][cid], "lifecycle_cgroup_peaks": group_peaks(samples),
+            "load_cgroup_sampled_peaks": group_peaks(load_samples),
             "warm_required_host_demand_bytes": warm["checkpoint"]["telemetry"]["required_host_demand"].get("required_bytes"),
             "warmup_native_input_tokens": warm["count"]["input_tokens"], "warmup_prefill_proof": warm["prefill_proof"]["source"]})
     q2memory = []
@@ -285,20 +355,33 @@ def main():
         check(d["required_bytes"] == sum(d[k] for k in ("anon_bytes", "kernel_bytes", "required_file_backed_bytes", "workspace_extra_bytes")), "host demand sum")
     peak_row = max(demands, key=lambda r: r["sample"]["required_host_demand"]["required_bytes"])
     peak_demand = peak_row["sample"]["required_host_demand"]
-    last = memory[-1]
+    at64, last = memory[-2:]
     totals = {g["total_bytes"] for r in q1samples for g in r["sample"]["gpus"] if g["uuid"] == used_uuid}
-    check(totals == {102641958912} and last["gpu_sampled_peak_used_bytes"] == 37476106240 and last["gpu_sampled_min_free_bytes"] == 64497909760, "64K memory values differ")
-    total, used, free = totals.pop(), last["gpu_sampled_peak_used_bytes"], last["gpu_sampled_min_free_bytes"]
+    check(totals == {102641958912} and at64["gpu_sampled_peak_used_bytes"] == 37476106240 and at64["gpu_sampled_min_free_bytes"] == 64497909760, "64K memory values differ")
+    total = totals.pop()
+    used, free = [trial256["request_gpu"][used_uuid][k] for k in ("sampled_peak_used_bytes", "sampled_min_free_bytes")]
     check(any((g["total_bytes"],g["used_bytes"],g["free_bytes"]) == (total,used,free)
               for r in q1samples if r["container"] == last["container_id"]
-              for g in r["sample"]["gpus"] if g["uuid"] == used_uuid), "64K values must share a saved sample")
-    gap, kv, base, reserve = total-used-free, 65536, 65536, 16*2**30
-    ceiling_reserve = base+(free-reserve)//kv
-    ceiling_static = base+math.floor((free-total*.2)/kv)
-    projections = [{"context_tokens": n, "kv_bytes": n*kv, "fixed_observed_residual_bytes": used-base*kv,
-        "estimated_used_bytes": used+(n-base)*kv, "estimated_free_bytes": free-(n-base)*kv,
-        "free_above_16GiB_bytes": free-(n-base)*kv-reserve, "tested": False}
-        for n in (131072, 262144, 524288, 720896)]
+              for g in r["sample"]["gpus"] if g["uuid"] == used_uuid), "256K values must share a saved sample")
+    check((used, free) == (50400854016, 51573161984), "256K request memory differs")
+    gap, kv, base, reserve = total-used-free, 65536, 262144, Fraction(total, 10)
+    observed_slope = Fraction(last["gpu_warm_used_bytes"]-at64["gpu_warm_used_bytes"], base-at64["capacity"])
+    overhead_growth = last["gpu_warm_used_bytes"]-at64["gpu_warm_used_bytes"]-(base-at64["capacity"])*kv
+    projections = []
+    anchors = {"request_peak":(used,free), "warm":(last["gpu_warm_used_bytes"],last["gpu_warm_free_bytes"]),
+               "lifecycle_peak":(last["gpu_sampled_peak_used_bytes"],last["gpu_sampled_min_free_bytes"])}
+    for anchor, (u,f) in anchors.items():
+        for basis, slope in (("observed_64K_to_256K", observed_slope), ("cache_only", Fraction(kv))):
+            check(total-u-f == gap == 667942912, "device gap differs across anchors")
+            projections.append({"anchor":anchor,"slope_basis":basis,"anchor_used_bytes":u,"anchor_free_bytes":f,
+                "slope_bytes_per_token":float(slope),"projected_512K_used_bytes":float(u+base*slope),
+                "projected_512K_free_bytes":float(f-base*slope),"physical_max_tokens":base+math.floor((f-reserve)/slope),
+                "physical_max_with_extra_4GiB_workspace_tokens":base+math.floor((f-reserve-4*2**30)/slope),
+                "policy_0_8_occupancy_proxy_max_tokens":base+math.floor((f-Fraction(total,5))/slope),"tested":False})
+    native_projection = numeric256["physical_memory_projection"]
+    warm_observed = next(p for p in projections if p["anchor"] == "warm" and p["slope_basis"] == "observed_64K_to_256K")
+    check(warm_observed["physical_max_tokens"] == native_projection["approximate_physical_maximum_tokens"]
+          and math.isclose(warm_observed["projected_512K_used_bytes"],native_projection["projected_524288_warm_used_bytes"]), "native handoff slope reconciliation")
     pairs, variability = [], {}
     byid = {r["id"]: r for r in trials}
     for suffix in ("4096-retrieval", "16384-retrieval", "16384-anchor", "16384-generation"):
@@ -312,27 +395,36 @@ def main():
         variability[label] = {k:{"min": min(a[k],b[k]), "max": max(a[k],b[k]), "range_over_mean_percent": 100*abs(a[k]-b[k])/((a[k]+b[k])/2)} for k in ("ttft_s", "output_delivery_tokens_s", "request_latency_s")}
     runtime = read(ROOT/"configs/runtimes/sglang-qwen38-0.5.19.json")
     identities = {label:{"arm_canonical_sha256": arm_hashes[label], **{k:m[k] for k in ("model", "image", "expected_image_ids", "gpu_uuids", "guest_cpu_count", "guest_cpuset")}}
-                  for label in ("Q1","Q2") for m in [next(x for x in arms[label]["manifests"] if x["placement"] == label)]}
+                  for label in ("Q1","Q2","Q256") for m in [next(x for x in arms[label]["manifests"] if x["placement"] == ("Q1" if label == "Q256" else label))]}
     result = {"schema": 1, "task": "BENCHQ1VERIFY", "session_id": (ROOT.parent/"session-id").read_text().strip(),
         "scope": "Worker1 saved evidence only; no VM contact or new measurements",
         "reviewed_source_head": outcome["source_head"], "Q1_initial_successful_source_head": review["base_source_head"], "Q2_source_head": prior["source_head"],
+        "Q256_accepted_source_head":outcome256["source_head"], "interim_report_commit":"80e50f0535428c4be99951ad887b59079adb5ae3",
         "identities": identities, "runtime": {k:runtime[k] for k in ("id","source_commit","image_ref","image_id")},
         "common_policy": {"weights":"FP8", "KV":"BF16", "radix_cache":False, "mem_fraction_static":0.8, "yarn_factor":4, "native_context":262144},
-        "restoration": {"status":"VERIFIED_FROM_SAVED_RECEIPTS", "terminal_time_utc": outcome["restoration_finalization_exit"]["ended_utc"],
+        "restoration":{"status":"VERIFIED_FROM_SAVED_RECEIPTS","task":"BENCHQ256","restored_measurement_end_utc":outcome256["measurement_process_exit"]["ended_utc"],
+            "CLI_exit":0,"measurement_process_exit":1,"automatic_restoration_passed":True,"recovery_retry":False,
+            "selected":owner256["original"]["manager"]["selected"],"desired":owner256["original"]["manager"]["desired"],"boot_policy":owner256["original"]["manager"]["boot_policy"],
+            "services":host256["services"],"canonical_lease_held":False,"owned_resources_absent":True,
+            "proof_scope":"formal RESTORED owner plus original-snapshot and nonce-bound authenticated Worker1 LAN receipt; no new live check",
+            "owner_sha256":outcome256["owner_receipt_sha256"],"LAN_receipt_sha256":outcome256["authenticated_worker_lan_receipt"]["sha256"]},
+        "prior_Q1_restoration": {"status":"VERIFIED_FROM_SAVED_RECEIPTS", "terminal_time_utc": outcome["restoration_finalization_exit"]["ended_utc"],
             "automatic_restore_exit":1, "fresh_process_restore_exit":1, "finalization_exit":0, "production_restart_during_finalization":False,
             "selected":original["manager"]["selected"], "desired":original["manager"]["desired"], "boot_policy":original["manager"]["boot_policy"],
             "unchanged_fields":equal_fields, "services":host["services"], "canonical_lease_held":False, "owned_resources_absent":True,
             "owner_sha256":host["receipts"]["owner.json"]["sha256"], "LAN_receipt_sha256":host["receipts"]["worker-restoration-verification.json"]["sha256"]},
         "budget":{"first_epoch":outcome["first_epoch"],"deadline":outcome["deadline"],"seconds":21600,"execution_unchanged":True},
-        "formulas":{"output_delivery_tokens_s":"(completion_tokens-1)/(last_output_s-ttft_s)","effective_input_tokens_per_client_ttft_s":"input_tokens/ttft_s; NOT native prefill", "request_latency_s":"transport drain minus dispatch; separate from trial orchestration", "GPU_used_projection":"37476106240+(context-65536)*65536", "GPU_free_projection":"64497909760-(context-65536)*65536", "host_required":"anon+kernel+retained_file+workspace_extra; no PSS/RSS addition", "GiB":"bytes/1073741824", "GB":"bytes/1000000000"},
+        "formulas":{"output_delivery_tokens_s":"(completion_tokens-1)/(last_output_s-ttft_s)","effective_input_tokens_per_client_ttft_s":"input_tokens/ttft_s; NOT native prefill", "request_latency_s":"transport drain minus dispatch; separate from trial orchestration", "GPU_used_projection":"anchor_used+(context-262144)*specified_slope", "GPU_free_projection":"anchor_direct_free-(context-262144)*specified_slope", "physical_max":"262144+floor((anchor_direct_free-0.1*actual_total-extra_workspace)/specified_slope)", "policy_occupancy_proxy":"262144+floor((anchor_direct_free-0.2*actual_total)/specified_slope); not verified SGLang allocator formula", "host_required":"anon+kernel+retained_file+workspace_extra; no PSS/RSS addition", "GiB":"bytes/1073741824", "GB":"bytes/1000000000"},
         "trials":trials,"matched_pairs":pairs,"anchor_variability_two_samples_only":variability,
         "generation_disposition":{k:semantic[k] for k in ("case","recorded_status","normalization","semantic_status","original_row_canonical_sha256","raw_response_sha256","original_content_sha256","normalized_content_sha256")},
-        "Q2_tool":{"immutable_status":"HARNESS_FAILURE","diagnosis":"genuine output-contract failure: unoffered write_file envelope after read_file, missing retrieval answers", "row_canonical_sha256":diag["failed_record_sha256"], "continuation_response_sha256":diag["failed_tool_evidence"]["campaign-arm/private/Q2-16384-tool-continuation.response.sse"]["sha256"], "retested":False},
+        "Q256_disposition":{k:semantic256[k] for k in ("case","recorded_status","normalization","semantic_status","original_row_canonical_sha256","raw_response_sha256","original_content_sha256","normalized_content_sha256","authority_sha256")},
+        "Q2_tool":{"immutable_status":"HARNESS_FAILURE","diagnosis":"genuine output-contract failure: literal write_file markup after read_file, not a structured API tool call; missing retrieval answers", "write_file_executed":False,"row_canonical_sha256":diag["failed_record_sha256"], "continuation_response_sha256":diag["failed_tool_evidence"]["campaign-arm/private/Q2-16384-tool-continuation.response.sse"]["sha256"], "retested":False},
         "memory":memory, "Q2_memory":q2memory,
-        "observed_GPU_used_slopes_bytes_per_token":[{"from":a["capacity"],"to":b["capacity"],"slope":(b["gpu_sampled_peak_used_bytes"]-a["gpu_sampled_peak_used_bytes"])/(b["capacity"]-a["capacity"])} for a,b in zip(memory,memory[1:])],
+        "observed_GPU_used_slopes_bytes_per_token":[{"from":a["capacity"],"to":b["capacity"],"scope":"lifecycle_peak","slope":(b["gpu_sampled_peak_used_bytes"]-a["gpu_sampled_peak_used_bytes"])/(b["capacity"]-a["capacity"])} for a,b in zip(memory[:3],memory[1:3])],
+        "observed_GPU_warm_slopes_bytes_per_token":[{"from":a["capacity"],"to":b["capacity"],"slope":(b["gpu_warm_used_bytes"]-a["gpu_warm_used_bytes"])/(b["capacity"]-a["capacity"])} for a,b in zip(memory,memory[1:])],
         "host_load_peak":{"container_id":peak_row["container"],"row_canonical_sha256":sha(canonical(peak_row)),"belongs_to_failed_initial_4K_startup":True, **{k:peak_demand[k] for k in ("required_bytes","anon_bytes","kernel_bytes","required_file_backed_bytes","reclaimable_file_bytes","load_phase_sample_count","load_phase_observed_span_s")}},
-        "GPU_projection":{"total_bytes":total,"used_at_64K_bytes":used,"free_at_64K_bytes":free,"unavailable_reserved_gap_bytes":gap,"BF16_KV_hypothesis_bytes_per_token":kv,"reserve_bytes":reserve,"reserve_only_upper_tokens":ceiling_reserve,"static_0_8_screen_upper_tokens":ceiling_static,"static_screen":"free>=0.2*total; conservative screen, not allocator acceptance", "estimates":projections},
-        "limitations":["No tested Q1 capacity above 65536; largest actual input 65019, output 83", "Q2 64K absent; no code-analysis coverage; no Q1 tool retest", "No simultaneous GLM/Qwen feasibility", "Native prefill/decode timing, evaluated/cached counters and standalone workspace are unavailable", "Successful-load raw native logs remain remote hash references; local numeric receipts rehashed, not raw-log reparsed", "Native GB labels retained without exact byte conversion", "13.288GB sampled load peak belongs to failed initial container; cold-load and whole-VM RAM requirement unknown", "16K/64K required-host-demand unavailable; reclaimable file cache and shared process RSS are not unique required RAM", "Telemetry is sampled, with gaps; lifetime cgroup peaks are not request peaks; client event timing includes transport/chunk overhead", "CPU allocation and source revisions differ; no causal GPU-only speed claim"],
+        "GPU_projection":{"total_bytes":total,"request_used_at_256K_bytes":used,"request_free_at_256K_bytes":free,"unavailable_reserved_gap_bytes":gap,"BF16_KV_hypothesis_bytes_per_token":kv,"observed_64K_to_256K_slope_bytes_per_token":float(observed_slope),"64K_to_256K_growth_beyond_cache_only_bytes":overhead_growth,"reserve_fraction":0.1,"reserve_bytes":float(reserve),"historical_live_gate_reserve_bytes":16*2**30,"policy_proxy":"0.8*total occupancy including device gap; NOT a verified SGLang allocator formula or accepted maximum", "estimates":projections},
+        "limitations":["No tested Q1 capacity above 262144; actual 261525 input/89 output; strict HARNESS_FAILURE plus separate root-approved semantic PASS", "Q2 64K/256K absent; no code-analysis coverage; no Q1 tool retest", "Single GPU benchmarked, not deployed; original Qwen 1M TP2 production restored; no simultaneous GLM/Qwen feasibility", "Native prefill/decode timing, evaluated/cached counters and standalone workspace are unavailable", "Successful-load raw native logs remain remote hash references; local numeric receipts rehashed, not raw-log reparsed", "Native GB labels retained without exact byte conversion", "13.288GB sampled load peak belongs to failed initial container; cold-load and whole-VM RAM requirement unknown", "16K/64K/256K required-host-demand unavailable; reclaimable file cache and shared process RSS are not unique required RAM", "Telemetry is sampled, with gaps; lifetime cgroup peaks are not request peaks; client event timing includes transport/chunk overhead", "CPU allocation and source revisions differ; no causal GPU-only speed claim", "512K and all maximum projections untested for allocation/speed/quality; observed slope, cache-only slope and policy proxy are separate"],
         "evidence_files":evidence}
     args.output.write_text(json.dumps(result,sort_keys=True,separators=(",",":"),ensure_ascii=False)+"\n")
     print(json.dumps({"verification":"PASS", "rows":len(trials), "evidence_files":len(evidence), "output":str(args.output)}))
