@@ -224,7 +224,13 @@ class Campaign:
                     if any(type(events.get(k)) is int and type(old.get(k)) is int and events[k] > old[k] for k in ("oom", "oom_kill", "oom_group_kill")):
                         verdict = "STOP_OOM"
                     resource_stop = verdict if verdict.startswith("STOP_") else None
-                    if not set(self.active[cid]["manifest"]["gpu_uuids"]).issubset({g.get("uuid") for g in row.get("gpus", [])}):
+                    # A known timed-out GPU query during loading is an observation
+                    # gap, not measured low reserve. Keep the raw sample; require
+                    # fresh complete resource proof before warmup below.
+                    loading_gpu_timeout = (self.armed.get("scope") == "g1-only"
+                        and self.active[cid].get("phase") == "loading"
+                        and row.get("errors") == ["gpu_TimeoutExpired"] and row.get("gpus") == [])
+                    if not loading_gpu_timeout and not set(self.active[cid]["manifest"]["gpu_uuids"]).issubset({g.get("uuid") for g in row.get("gpus", [])}):
                         verdict = "SKIP_UNSAFE_PLACEMENT"
                     if any(g.get("uuid") in self.active[cid]["manifest"]["gpu_uuids"] and (g.get("free_bytes") is None or g["free_bytes"] < 16 * 1024**3) for g in row.get("gpus", [])):
                         verdict = "SKIP_UNSAFE_PLACEMENT"
@@ -302,6 +308,16 @@ class Campaign:
         if proof.get("allocation", {}).get("status") != "ALLOCATION_PROOF_ACCEPTED":
             raise RuntimeError("STOP_ALLOCATION_PROOF")
         ready = self.host.call("quiescent", id=cid, point="readiness")
+        if self.armed.get("scope") == "g1-only":
+            current = ready.get("telemetry") or {}
+            available = current.get("host", {}).get("available_bytes")
+            free = {g.get("uuid"): g.get("free_bytes") for g in current.get("gpus", [])}
+            with self.lock:
+                if self.active[cid].get("abort_reason"):
+                    raise RuntimeError(self.active[cid]["abort_reason"])
+                if not (type(available) is int and available >= 16 * 1024**3 and
+                        all(type(free.get(u)) is int and free[u] >= 16 * 1024**3 for u in manifest["gpu_uuids"])):
+                    raise RuntimeError("SKIP_UNSAFE_PLACEMENT")
         self.active[cid].update(template_sha256=proof.get("template_sha256"), phase="ready")
         self.emit({"type": "load", "placement": manifest["placement"], "capacity": manifest["configured_capacity"],
                    "client_load_seconds": self.clock() - begin, "readiness": ready, "allocation": proof["allocation"]})

@@ -26,6 +26,13 @@ class G1Scope(unittest.TestCase):
         c.armed = armed
         transport = c.transport_factory
         c.transport_factory = lambda url, key, **options: transport(url, key)
+        original_call = host.call
+        def call(op, **args):
+            row = original_call(op, **args)
+            if op == 'quiescent':
+                row['telemetry'] = original_call('telemetry', id=args['id'])
+            return row
+        host.call = call
         host.budget.clock = lambda: q1.EPOCH
         host.budget.start('maintenance')
         host.budget.clock = lambda: q1.EPOCH + 600
@@ -259,6 +266,90 @@ class G1Scope(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, 'g1_container_cap_host_reserve_unproved'): host.create(manifest)
             host.mkdir_paths.assert_not_called()
             self.assertTrue(all(call.args[0][1:3] == ['image', 'inspect'] for call in command.call_args_list))
+
+    def test_loading_gpu_timeout_then_fresh_complete_proof_admits_and_keeps_sample(self):
+        with tempfile.TemporaryDirectory() as directory:
+            c, host, requests, _ = self.setup_case(Path(directory))
+            original = host.call; injected = []
+            def call(op, **args):
+                row = original(op, **args)
+                if op == 'telemetry' and c.active and not injected:
+                    row.update(errors=['gpu_TimeoutExpired'], gpus=[])
+                    injected.append(True)
+                return row
+            host.call = call
+            with patch.object(c, 'monitor'): c.run(resume=True)
+            self.assertEqual(len(requests), 8)
+            self.assertEqual(list(c.progress['completed']), CASES)
+            rows = [json.loads(line) for line in (Path(directory)/'results.jsonl').read_text().splitlines()]
+            gaps = [r for r in rows if r.get('type') == 'telemetry' and r['sample'].get('errors') == ['gpu_TimeoutExpired']]
+            self.assertEqual(len(gaps), 1)
+            self.assertEqual(gaps[0]['sample']['gpus'], [])
+            self.assertEqual(host.events[-1][0], 'restore')
+
+    def test_loading_timeout_cannot_replace_fresh_resource_or_native_proof(self):
+        for missing in ('gpu', 'gpu_free', 'gpu_low', 'host', 'host_low', 'native'):
+            with self.subTest(missing=missing), tempfile.TemporaryDirectory() as directory:
+                c, host, requests, _ = self.setup_case(Path(directory)); original = host.call
+                def call(op, **args):
+                    row = original(op, **args)
+                    if op == 'telemetry' and c.active:
+                        row.update(errors=['gpu_TimeoutExpired'], gpus=[])
+                    if op == 'readiness' and missing == 'native': row['allocation']['status'] = 'STOP_ALLOCATION_PROOF'
+                    if op == 'quiescent':
+                        if missing == 'gpu': row['telemetry']['gpus'] = []
+                        if missing == 'gpu_free': row['telemetry']['gpus'][0]['free_bytes'] = None
+                        if missing == 'gpu_low': row['telemetry']['gpus'][0]['free_bytes'] = 16*1024**3 - 1
+                        if missing == 'host': row['telemetry']['host']['available_bytes'] = None
+                        if missing == 'host_low': row['telemetry']['host']['available_bytes'] = 16*1024**3 - 1
+                    return row
+                host.call = call
+                with patch.object(c, 'monitor'):
+                    with self.assertRaisesRegex(RuntimeError, 'SKIP_UNSAFE_PLACEMENT|STOP_ALLOCATION_PROOF'): c.run(resume=True)
+                self.assertEqual(requests, [])
+                self.assertEqual(c.progress['completed'], {})
+                self.assertEqual(host.events[-1][0], 'restore')
+
+    def test_loading_timeout_does_not_mask_real_stops_or_other_missing_proof(self):
+        for violation in ('oom', 'swap', 'gpu_low', 'host_low', 'host_missing', 'unknown_gap', 'partial_gpu'):
+            with self.subTest(violation=violation), tempfile.TemporaryDirectory() as directory:
+                c, host, requests, _ = self.setup_case(Path(directory)); original = host.call
+                def call(op, **args):
+                    row = original(op, **args)
+                    if op == 'telemetry' and c.active:
+                        cid = next(iter(c.active))
+                        row.update(errors=['gpu_TimeoutExpired'], gpus=[])
+                        if violation == 'oom': row['cgroups'][cid]['events']['oom'] = 1
+                        if violation == 'swap': row['cgroups'][cid]['swap_bytes'] = 4096
+                        if violation == 'gpu_low': row['gpus'] = [{'uuid': c.active[cid]['manifest']['gpu_uuids'][0], 'free_bytes': 0}]
+                        if violation == 'host_low': row['host']['available_bytes'] = 0
+                        if violation == 'host_missing': row['host']['available_bytes'] = None
+                        if violation == 'unknown_gap': row['errors'] = ['gpu_ValueError']
+                        if violation == 'partial_gpu': row['gpus'] = [{'uuid': 'GPU-unexpected', 'free_bytes': 40*1024**3}]
+                    if op == 'readiness' and violation == 'swap':
+                        c.collect(); c.collect()  # Three consecutive owned growth samples.
+                    return row
+                host.call = call
+                with patch.object(c, 'monitor'):
+                    with self.assertRaisesRegex(RuntimeError, 'STOP_OOM|STOP_SUSTAINED_MODEL_SWAP_GROWTH|SKIP_UNSAFE_PLACEMENT'): c.run(resume=True)
+                self.assertEqual(requests, [])
+                self.assertEqual(host.events[-1][0], 'restore')
+                if violation in ('oom', 'swap', 'gpu_low', 'host_low'):
+                    expected = {'oom':'STOP_OOM', 'swap':'STOP_SUSTAINED_MODEL_SWAP_GROWTH'}.get(violation, 'SKIP_UNSAFE_PLACEMENT')
+                    self.assertEqual(c.progress['stop_reason'], expected)
+
+    def test_gpu_timeout_after_loading_still_latches_existing_admission_rule(self):
+        with tempfile.TemporaryDirectory() as directory:
+            c, host, requests, _ = self.setup_case(Path(directory));host.call('begin')
+            cid = c.loaded(c.armed['manifests'][0]);original = host.call
+            def call(op, **args):
+                row = original(op, **args)
+                if op == 'telemetry': row.update(errors=['gpu_TimeoutExpired'], gpus=[])
+                return row
+            host.call = call;c.collect()
+            self.assertEqual(c.safety[cid], 'SKIP_UNSAFE_PLACEMENT')
+            self.assertFalse(c.active[cid]['cancel_event'].is_set())
+            with self.assertRaisesRegex(RuntimeError, 'SKIP_UNSAFE_PLACEMENT'): c.admission(cid)
 
     def test_already_set_event_refuses_http_dispatch(self):
         cancel=threading.Event();cancel.set()
