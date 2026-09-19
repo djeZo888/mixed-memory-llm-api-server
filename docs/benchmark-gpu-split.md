@@ -1,5 +1,37 @@
 # Temporary GPU split benchmark — BENCHPREP authority
 
+## BENCHG1 source preparation — 2026-09-19
+
+`arm --scope g1-only` continues the original campaign with the unchanged G1
+manifests at 4096, 16384 and 65536: first GPU UUID, 96 guest CPUs, N76, F16,
+load-mode none, fit off, fixed batch/reasoning/runtime. Exactly three discarded
+warmups and five measured cases: 256-output retrieval at each capacity, plus
+16K anchor repeat and separate 512-output generation. No tool, mixed, Qwen,
+G2 or larger-context dispatch. Prior fixture entries and outcomes stay immutable;
+only new GLM fixtures are fitted. Explicit `--resume` retains epoch
+1789826207.34127 and deadline 1789847807.34127; restoration is outside budget.
+
+The existing GLM offload gate remains active. G1-only additionally requires
+native CUDA0 cache bytes to equal 95232 times configured capacity and 78 main /
+21 indexer graph nodes. Saved historical GLM timing fields support native warmup
+proof; missing current evaluated/cache proof still refuses warmup. No Qwen
+cache-policy derivation is applied to GLM. Fresh recovery captures the current
+canonical lock before restoration callbacks check the preserved witness.
+
+During G1 requests, proven OOM, sustained owned-model swap growth, or numeric
+GPU/host reserve violations set a cancellation event. The HTTP transport closes
+the socket within its 250 ms polling interval after the event, retains received
+partial bytes, then releases request admission before the existing owned stop
+and restoration path. Detection latency also includes the approximately 1 s
+telemetry interval and collection delay. Missing telemetry or parser/reporting
+errors do not cancel a healthy request; they prevent subsequent admission.
+No immediate kernel-level cancellation or complete response is claimed.
+
+Source preparation is offline; root reviews the exact source, arm and guarded
+old-to-new staging package before VM contact. GLM memory-only projections retain
+at least 16 GiB GPU reserve and 25% host-demand reserve, with verified measured
+components/slopes required; untested speed/quality remain unknown.
+
 ## BENCHQ256 source preparation — 2026-09-19
 
 The fresh BENCHQ256 task adds only `arm --scope q1-256k`: one single-GPU Q1

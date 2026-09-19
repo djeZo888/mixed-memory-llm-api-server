@@ -91,6 +91,7 @@ class WarmupProof(unittest.TestCase):
                     if isinstance(part, str) and "target=/models" in part)
         cid = "a" * 64
         host = LinuxHost.__new__(LinuxHost)
+        host.scope = "full"
         host.assert_idle = Mock()
         host.identity = Mock(return_value=({"Config": {"Image": manifest["image"]},
             "HostConfig": {"DeviceRequests": [{"DeviceIDs": manifest["gpu_uuids"]}]},

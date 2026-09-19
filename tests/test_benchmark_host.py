@@ -285,6 +285,56 @@ class HostTests(unittest.TestCase):
                 host.control.assert_not_called()
                 command_mock.assert_not_called()
 
+    def test_fresh_recovery_captures_lock_before_witness_callback_and_rejects_drift(self):
+        import hashlib
+        for drift in (False, True):
+            with self.subTest(drift=drift), tempfile.TemporaryDirectory(prefix='fresh-recovery-') as directory:
+                root = Path(directory).resolve()
+                with acquire_lease(blocking=False, system_root=root, trusted_uid=os.geteuid()):
+                    pass
+                lock = root / 'run/llmctl/lifecycle.lock'
+                info = lock.stat()
+                identity = [info.st_dev, info.st_ino]
+                host = self.bare()
+                host.owner.phase = 'NEW'
+                original = snapshot()
+                ledger = {'campaign': host.campaign, 'evidence_kind': 'live', 'phase': 'RECOVERY_REQUIRED',
+                          'original': original, 'resources': [], 'pending_create': None}
+                witness = {'credential_sha256': {k: hashlib.sha256(b'synthetic-key').hexdigest() for k in ('control','inference')},
+                           'lease_identity': [identity[0], identity[1] + int(drift)]}
+                host.read_json = Mock(side_effect=lambda name, **kw: ledger if name == 'owner.json' else witness)
+                host.baseline_lock_identity = host.original_secrets = None
+                host.config = {'lease': str(lock), 'installed_source_identities': {
+                    'scripts/common/registered-storage.py': {'sha256': 'a'*64},
+                    'scripts/install/storage.py': {'sha256': 'b'*64}}}
+                host.guards = Mock(return_value={})
+                host.manager = Mock(); host.manager.status.return_value = original['manager']
+                host.jobs = Mock(return_value=[]);host.units = Mock(return_value=original['services'])
+                host.budget.data = {'phase': 'RESTORING'}
+                def restore_callback():
+                    self.assertEqual(host.baseline_lock_identity, identity)
+                    host.credentials()  # Existing restoration witness check, unchanged.
+                    return {'restored': False}
+                host.owner.restore = Mock(side_effect=restore_callback)
+                @contextmanager
+                def lease_factory(*, blocking):
+                    with acquire_lease(blocking=blocking, system_root=root, trusted_uid=os.geteuid()) as lease:
+                        yield lease
+                with patch('common.lifecycle_lease.acquire_lease', lease_factory), \
+                     patch('benchmark.host.protected', return_value=(b'synthetic-key', {})), \
+                     patch('control.journal.Journal.read', return_value={'entries': {}}):
+                    try:
+                        if drift:
+                            with self.assertRaisesRegex(ValueError, 'recovery_lease_inode_changed'): host.recover()
+                            host.owner.restore.assert_not_called()
+                        else:
+                            self.assertEqual(host.recover(), {'restored': False})
+                            host.owner.restore.assert_called_once()
+                            self.assertEqual(host.original_secrets, witness['credential_sha256'])
+                    finally:
+                        if host.owner.lease_context:
+                            host.owner.lease_context.__exit__(None, None, None)
+
     def test_budget_preserves_earlier_stage_epoch(self):
         host = self.bare()
         host.start_epoch = 1000

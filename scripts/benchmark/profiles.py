@@ -11,12 +11,14 @@ from .qwen_launcher import pinned_base, variant
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/benchmarks/gpu-split-20260919.json"
-ARM_SCOPES = ("full", "q1-only", "q1-256k")
+ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only")
 
 
 def scope_placements(scope):
     if scope not in ARM_SCOPES:
         raise ValueError("unknown_benchmark_arm_scope")
+    if scope == "g1-only":
+        return ("G1",)
     return ("Q1",) if scope != "full" else ("Q2", "Q1", "G2", "G1")
 
 
@@ -26,7 +28,7 @@ def scope_capacities(scope):
 
 
 def validate_arm_scope(armed):
-    """Legacy arms retain full scope; narrowed arms bind the exact Q1 plan."""
+    """Legacy arms retain full scope; narrowed arms bind their exact placement and plan."""
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
     if scope != "full":

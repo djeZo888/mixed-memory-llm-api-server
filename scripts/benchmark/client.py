@@ -251,7 +251,7 @@ def run_request(raw_body, transport, *, sample_id, private_dir, summary_path,
             "private_request_path": str(request_path), "private_response_path": str(raw_path)}
 
 
-def http_transport(base_url, api_key, *, clock=time.monotonic):
+def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None):
     """Explicit authenticated loopback/private-IPv4 HTTP transport factory.
 
     BENCHRUN establishes its reviewed private SSH transport/proxy/firewall policy
@@ -292,10 +292,22 @@ def http_transport(base_url, api_key, *, clock=time.monotonic):
                     sock.shutdown(socket.SHUT_RDWR)
                 except OSError:
                     pass
+        finished = threading.Event()
+        def cancel_watch():
+            # Only an explicitly supplied resource-safety event may interrupt.
+            # Observer/parser failures never set this event.
+            while not finished.wait(0.25):
+                if cancel_event.is_set():
+                    expire()
+        watcher = threading.Thread(target=cancel_watch, daemon=True) if cancel_event is not None else None
+        if watcher is not None:
+            watcher.start()
         timer = threading.Timer(timeout, expire)
         timer.daemon = True
         timer.start()
         try:
+            if cancel_event is not None and cancel_event.is_set():
+                raise HarnessError("resource safety cancellation")
             connection.request("POST", "/v1/chat/completions", body=body,
                                headers={"Authorization": "Bearer " + api_key,
                                         "Content-Type": "application/json", "Accept": "text/event-stream",
@@ -307,6 +319,8 @@ def http_transport(base_url, api_key, *, clock=time.monotonic):
             if sock is None:
                 raise HarnessError("cannot enforce request deadline")
             while True:
+                if cancel_event is not None and cancel_event.is_set():
+                    raise HarnessError("resource safety cancellation")
                 remaining = deadline - clock()
                 if remaining <= 0:
                     raise HarnessError("request deadline exhausted")
@@ -316,6 +330,9 @@ def http_transport(base_url, api_key, *, clock=time.monotonic):
                     break
                 yield chunk
         finally:
+            finished.set()
+            if watcher is not None:
+                watcher.join(timeout=1)
             timer.cancel()
             if response is not None:
                 response.close()

@@ -151,7 +151,7 @@ class LinuxHost:
         data = json.loads(raw)
         values = data.get('commands', data.get('manifests', [])) if isinstance(data, dict) else data
         self.scope = validate_arm_scope(data)
-        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1}[self.scope]
+        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3}[self.scope]
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
         self.start_epoch = data.get('start_epoch', data.get('runtime', {}).get('start_epoch')) if isinstance(data, dict) else None
         if self.scope != 'full':
@@ -657,7 +657,7 @@ class LinuxHost:
                     'native_argv': native, 'device_request_uuids': device_ids, 'cuda_uuid_order': cuda,
                     'gpu_free_bytes': {g['uuid']: g['free_bytes'] for g in sample['gpus']},
                     'raw_log_sha256': hashlib.sha256(raw).hexdigest()}
-        gate = allocation_gate(manifest, parsed, observed)
+        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope == 'g1-only')
         result = {'allocation': gate, 'parsed': parsed, 'observed': observed, 'server_facts': facts,
                   'raw_log_path': self.log_root + '/loads/' + cid + '-allocation.log'}
         if gate['status'] == 'ALLOCATION_PROOF_ACCEPTED':
@@ -793,9 +793,11 @@ class LinuxHost:
         self.owner.budget_started = self.budget.data is not None
         self.owner.restoration_started = bool(self.budget.data and self.budget.data['phase'] != 'MEASURING')
         self.owner.phase = 'RECOVERY_REQUIRED'
+        # Fresh-process recovery must bind the canonical lock before any
+        # restoration callback consults the persisted credential/lease witness.
+        current = self.capture(self.owner.lease)
         if ledger['phase'] in {'POST_RELEASE_LAN_VERIFICATION_PENDING', 'RESTORED'}:
             # Recheck a locally restored campaign without another model cycle.
-            current = self.capture(self.owner.lease)
             for key in ('manager', 'services', 'source', 'storage', 'credentials'):
                 require(current[key] == self.owner.original[key], 'restored_recovery_state_changed')
             require(not self.campaign_containers(), 'recovery_benchmark_container_remaining')

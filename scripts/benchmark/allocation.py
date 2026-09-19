@@ -147,7 +147,7 @@ def parse_qwen_log_facts(events: list[dict], server_facts: dict) -> dict:
             "scope": "current-load numeric extraction and native server facts; caller must bind current container/load"}
 
 
-def allocation_gate(manifest: dict, parsed: dict, observed: dict) -> dict:
+def allocation_gate(manifest: dict, parsed: dict, observed: dict, *, strict_g1=False) -> dict:
     """Pure admission decision; missing current proof refuses, never becomes zero.
 
     observed must be produced by root-reviewed protected inspection: image_ref,
@@ -186,6 +186,12 @@ def allocation_gate(manifest: dict, parsed: dict, observed: dict) -> dict:
             values = native.get(kind + "_bytes") or {}
             need(set(values) == devices and all(type(v) is int and v > 0 for v in values.values()),
                  "native_" + kind + "_allocation_unproved")
+        if strict_g1:
+            need(manifest["placement"] == "G1" and devices == {"CUDA0"}, "g1_single_device_required")
+            need(native.get("cache_bytes") == {"CUDA0": 95232 * capacity},
+                 "g1_f16_cache_bytes_mismatch")
+            need(native.get("fa_nodes") == 78 and native.get("lid_nodes") == 21,
+                 "g1_main_indexer_graph_mismatch")
         weights = parsed.get("weights_mib_log_label") or {}
         need(devices <= weights.keys() and any(k.startswith("CPU") for k in weights), "cpu_gpu_weight_allocation_unproved")
         expected = manifest.get("glm_offload_expectation") or {}

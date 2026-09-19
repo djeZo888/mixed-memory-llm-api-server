@@ -223,6 +223,7 @@ class Campaign:
                     events, old = group.get("events", {}), base.get("events", {})
                     if any(type(events.get(k)) is int and type(old.get(k)) is int and events[k] > old[k] for k in ("oom", "oom_kill", "oom_group_kill")):
                         verdict = "STOP_OOM"
+                    resource_stop = verdict if verdict.startswith("STOP_") else None
                     if not set(self.active[cid]["manifest"]["gpu_uuids"]).issubset({g.get("uuid") for g in row.get("gpus", [])}):
                         verdict = "SKIP_UNSAFE_PLACEMENT"
                     if any(g.get("uuid") in self.active[cid]["manifest"]["gpu_uuids"] and (g.get("free_bytes") is None or g["free_bytes"] < 16 * 1024**3) for g in row.get("gpus", [])):
@@ -231,6 +232,17 @@ class Campaign:
                         verdict = "SKIP_UNSAFE_PLACEMENT"
                     if verdict.startswith(("STOP_", "SKIP_")):
                         self.safety[cid] = verdict
+                    if self.armed.get("scope") == "g1-only":
+                        # Cancel only proven resource violations, never missing
+                        # telemetry or a reporting/parser failure. Existing stop
+                        # paths run after the transport closes and saves raw data.
+                        gpu_low = any(g.get("uuid") in self.active[cid]["manifest"]["gpu_uuids"]
+                                      and type(g.get("free_bytes")) is int and g["free_bytes"] < 16 * 1024**3
+                                      for g in row.get("gpus", []))
+                        available = row.get("host", {}).get("available_bytes")
+                        if resource_stop or gpu_low or (type(available) is int and available < 16 * 1024**3):
+                            self.active[cid].setdefault("abort_reason", resource_stop or "SKIP_UNSAFE_PLACEMENT")
+                            self.active[cid]["cancel_event"].set()
                     evidence = row.get("required_host_demand") or {}
                     demand = evidence.get("required_bytes")
                     if type(demand) is int:
@@ -263,7 +275,7 @@ class Campaign:
         groups = row.get("cgroups", {})
         baseline = groups.get(cid, next(iter(groups.values()), {}))
         self.active[cid] = {"manifest": manifest, "baseline": baseline,
-                            "template_sha256": None, "phase": "loading"}
+                            "template_sha256": None, "phase": "loading", "cancel_event": threading.Event()}
         self.samples[cid] = []
         self.collect()
         self.record()
@@ -321,9 +333,17 @@ class Campaign:
         manifest = self.active[cid]["manifest"]
         url = "http://127.0.0.1:" + str(manifest["transport"]["port"])
         try:
-            return client.run_request(raw, self.transport_factory(url, self.key), sample_id=identifier,
+            options = {"cancel_event": self.active[cid]["cancel_event"]} if self.armed.get("scope") == "g1-only" else {}
+            result = client.run_request(raw, self.transport_factory(url, self.key, **options), sample_id=identifier,
                                       private_dir=self.private, summary_path=self.state / ("samples.jsonl" if timed else "warmups.jsonl"), timeout=timeout,
                                       clock=self.clock)
+            if self.active[cid].get("abort_reason"):
+                reason = self.active[cid]["abort_reason"]
+                self.emit({"type": "request_resource_stop", "container": cid, "status": reason,
+                           "sample_id": identifier, "raw_summary": result["summary"],
+                           "semantics": "resource event cancels HTTP; partial response saved; owned stop/restoration follows request_end"})
+                raise RuntimeError(reason)
+            return result
         finally:
             self.host.call("request_end", id=cid)
 
@@ -586,7 +606,7 @@ def main(argv=None):
     parser.add_argument("action", choices=("arm", "run", "restore", "status"))
     parser.add_argument("--state", required=True, type=Path)
     parser.add_argument("--campaign", default="benchrun-20260919")
-    parser.add_argument("--scope", choices=profiles.ARM_SCOPES, help="arm only; default full; Q1 scopes retain an existing execution epoch")
+    parser.add_argument("--scope", choices=profiles.ARM_SCOPES, help="arm only; default full; continuation scopes retain an existing execution epoch")
     parser.add_argument("--reviewed-arm-sha256")
     parser.add_argument("--inference-key-file", type=Path)
     parser.add_argument("--control-key-file", type=Path)
@@ -601,7 +621,7 @@ def main(argv=None):
     armed = load_arm(args.state, args.reviewed_arm_sha256)
     if args.action == "run":
         if armed.get("scope", "full") != "full" and not args.resume:
-            parser.error("Q1 scopes require --resume within the original campaign budget")
+            parser.error("continuation scopes require --resume within the original campaign budget")
         run_preflight(armed.get("scope", "full"))
     if os.geteuid() == 0:
         parser.error("worker runner must execute as ordinary user")
