@@ -45,17 +45,19 @@ def source_files():
     return {str(p.relative_to(profiles.ROOT)): p.read_bytes() for p in sorted(paths)}
 
 
-def arm(state, campaign):
+def arm(state, campaign, scope="full"):
     state = Path(state)
     if not re.fullmatch(r"benchrun-[a-z0-9-]{1,32}", campaign):
         raise ValueError("invalid_campaign")
     if (state / "arm.json").exists():
         raise ValueError("arm_exists_preserve_existing_campaign")
     files = source_files()
-    manifests = [profiles.command_manifest(p, n, campaign=campaign) for p in ("Q2", "Q1", "G2", "G1") for n in (4096, 16384, 65536)]
+    manifests = [profiles.command_manifest(p, n, campaign=campaign) for p in profiles.scope_placements(scope) for n in (4096, 16384, 65536)]
     value = {"schema": 1, "campaign": campaign, "source_files": {p: hashlib.sha256(b).hexdigest() for p, b in files.items()},
-             "manifests": manifests, "trial_plan": profiles.trial_order(),
+             "manifests": manifests, "trial_plan": profiles.trial_order(scope),
              "phase": "ARMED_OFFLINE_NOT_STARTED", "host": "ai-vm", "private_lan": "10.156.100.60"}
+    if scope != "full":
+        value.update(scope=scope, continuation_execution=json.loads((state / "execution.json").read_bytes()))
     save(state / "arm.json", value)
     save(state / "progress.json", {"phase": "ARMED", "completed": {}, "inflight": {}, "errors": []})
     return fixtures.digest(fixtures.canonical(value))
@@ -67,11 +69,16 @@ def load_arm(state, reviewed):
         raise ValueError("root_reviewed_arm_hash_mismatch")
     if {p: hashlib.sha256(b).hexdigest() for p, b in source_files().items()} != value["source_files"]:
         raise ValueError("armed_source_changed")
+    if profiles.validate_arm_scope(value) == "q1-only":
+        if json.loads((Path(state) / "execution.json").read_bytes()) != value.get("continuation_execution"):
+            raise ValueError("q1_continuation_epoch_changed")
     return value
 
 
-def run_preflight():
+def run_preflight(scope="full"):
     """Offline source-evidence gate, before key reads, staging or ownership."""
+    if scope == "q1-only":
+        return
     expected = profiles.read_config().get("glm_offload_expectation", {})
     if (expected.get("evidence_status") != "REVIEWED_LOG_COUNT_SEMANTICS"
             or not expected.get("provenance")
@@ -337,6 +344,8 @@ class Campaign:
         counter = self.counter(cid)
         with self.lock:
             frozen = self.fixture_cache.get(key)
+        if self.armed.get("scope") == "q1-only" and capacity in (4096, 16384) and not frozen:
+            raise RuntimeError("q1_requires_saved_matched_fixture")
         if frozen:
             sample, counted = fixtures.matched_sample(frozen, nonce, counter, capacity)
         else:
@@ -435,7 +444,19 @@ class Campaign:
             self.record()
         return result
 
+    def cases(self, manifest):
+        p, n = manifest["placement"], manifest["configured_capacity"]
+        cases = [(f"{p}-{n}-retrieval", "retrieval", 256)]
+        if n == 16384:
+            cases += [(f"{p}-{n}-anchor", "retrieval", 256), (f"{p}-{n}-generation", "generation", 512)]
+            if self.armed.get("scope", "full") == "full":
+                cases += [(f"{p}-{n}-tool", "tool", 256)]
+        return cases
+
     def run(self, *, resume=False):
+        scope = profiles.validate_arm_scope(self.armed)
+        if scope == "q1-only" and not resume:
+            raise RuntimeError("q1_requires_explicit_resume")
         if self.progress["inflight"]:
             raise RuntimeError("inflight_samples_require_restore_and_explicit_review")
         completed = self.progress["completed"]
@@ -451,10 +472,7 @@ class Campaign:
         watcher.start()
         try:
             for manifest in self.armed["manifests"]:
-                p, n = manifest["placement"], manifest["configured_capacity"]
-                trials = [(f"{p}-{n}-retrieval", "retrieval", 256)]
-                if n == 16384:
-                    trials += [(f"{p}-{n}-anchor", "retrieval", 256), (f"{p}-{n}-generation", "generation", 512), (f"{p}-{n}-tool", "tool", 256)]
+                trials = self.cases(manifest)
                 if all(t[0] in self.progress["completed"] for t in trials):
                     continue
                 cid = self.loaded(manifest)
@@ -463,7 +481,8 @@ class Campaign:
                     if result["status"] not in ("PASS", "OUTPUT_LIMIT"):
                         raise RuntimeError("campaign_stopped_for_review")
                 self.retire_all()
-            self.mixed()
+            if scope == "full":
+                self.mixed()
             self.record("MEASUREMENTS_COMPLETE")
         except Exception as error:
             code = str(error)
@@ -471,14 +490,12 @@ class Campaign:
             reason = code if code in allowed else "STOPPED_REVIEW_REQUIRED"
             pending = []
             for manifest in self.armed["manifests"]:
-                p, n = manifest["placement"], manifest["configured_capacity"]
-                for case in (["retrieval", "anchor", "generation", "tool"] if n == 16384 else ["retrieval"]):
-                    identity = f"{p}-{n}-{case}"
+                for identity, _, _ in self.cases(manifest):
                     if identity not in self.progress["completed"]:
                         pending.append(identity)
             self.progress["stop_reason"] = reason
             self.progress["skipped_after_stop"] = pending
-            self.emit({"type": "stop", "status": reason, "skipped_trial_ids": pending, "mixed_pending": [x for x in ("mixed-A", "mixed-B") if x not in self.progress["completed"]]})
+            self.emit({"type": "stop", "status": reason, "skipped_trial_ids": pending, "mixed_pending": [x for x in ("mixed-A", "mixed-B") if x not in self.progress["completed"]] if scope == "full" else []})
             self.record("STOPPED_REVIEW_REQUIRED")
             raise
         finally:
@@ -492,6 +509,8 @@ class Campaign:
                 raise
 
     def mixed(self):
+        if self.armed.get("scope", "full") != "full":
+            raise RuntimeError("mixed_excluded_by_arm_scope")
         plan = self.armed["trial_plan"]["mixed_jobs"]
         for mode in ("A", "B"):
             identity = "mixed-" + mode
@@ -550,18 +569,23 @@ def main(argv=None):
     parser.add_argument("action", choices=("arm", "run", "restore", "status"))
     parser.add_argument("--state", required=True, type=Path)
     parser.add_argument("--campaign", default="benchrun-20260919")
+    parser.add_argument("--scope", choices=profiles.ARM_SCOPES, help="arm only; default full; q1-only retains an existing execution epoch")
     parser.add_argument("--reviewed-arm-sha256")
     parser.add_argument("--inference-key-file", type=Path)
     parser.add_argument("--control-key-file", type=Path)
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args(argv)
     if args.action == "arm":
-        print(json.dumps({"arm_sha256": arm(args.state, args.campaign), "run_started": False}));return 0
+        print(json.dumps({"arm_sha256": arm(args.state, args.campaign, args.scope or "full"), "run_started": False}));return 0
+    if args.scope is not None:
+        parser.error("--scope is arm-only; run uses the reviewed arm scope")
     if args.action == "status":
         print((args.state / "progress.json").read_text());return 0
     armed = load_arm(args.state, args.reviewed_arm_sha256)
     if args.action == "run":
-        run_preflight()
+        if armed.get("scope") == "q1-only" and not args.resume:
+            parser.error("q1-only requires --resume within the original campaign budget")
+        run_preflight(armed.get("scope", "full"))
     if os.geteuid() == 0:
         parser.error("worker runner must execute as ordinary user")
     if args.inference_key_file is None or args.control_key_file is None:

@@ -26,7 +26,7 @@ import urllib.request
 from .lifecycle import CONTROL_UNIT, BOOT_UNIT, PlanError, digest, require, validate_restored
 from .owner import CampaignOwner, HostCallbacks, WorkerVerificationPending
 from .campaign import CampaignBudget
-from .profiles import read_config, command_manifest, split_resources
+from .profiles import read_config, command_manifest, split_resources, validate_arm_scope
 from .telemetry import collect_sample, required_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
@@ -146,8 +146,13 @@ class LinuxHost:
         raw, _ = protected(manifest_file, private=True)
         data = json.loads(raw)
         values = data.get('commands', data.get('manifests', [])) if isinstance(data, dict) else data
-        require(isinstance(values, list) and len(values) == 12, 'twelve_reviewed_manifests_required')
+        self.scope = validate_arm_scope(data)
+        manifest_count = 3 if self.scope == 'q1-only' else 12
+        require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
         self.start_epoch = data.get('start_epoch', data.get('runtime', {}).get('start_epoch')) if isinstance(data, dict) else None
+        if self.scope == 'q1-only':
+            require(data.get('runtime') == data.get('continuation_execution') and self.start_epoch is not None,
+                    'q1_continuation_epoch_changed')
         source_root = Path(__file__).resolve().parents[2]
         require(isinstance(data, dict) and data.get('campaign') == campaign and isinstance(data.get('source_files'), dict),
                 'protected_arm_source_manifest_required')
@@ -160,7 +165,7 @@ class LinuxHost:
             expected = command_manifest(value['placement'], value['configured_capacity'], campaign=campaign)
             require(value == expected, 'manifest_not_current_generated_source')
             self.manifests[digest(value)] = value
-        require(len(self.manifests) == 12, 'duplicate_reviewed_manifest')
+        require(len(self.manifests) == manifest_count, 'duplicate_reviewed_manifest')
         self.mapping_helpers_verified = False
         self.allocation_proofs = {}
         self.original_secrets = None
@@ -323,7 +328,7 @@ class LinuxHost:
     def verify_mapping_helpers(self, lease):
         """No-GPU exact-image probes before production stop; no model or key mounts.
 
-        Both probes are tracked in the existing owner ledger and removed by full
+        Included model probes are tracked in the existing owner ledger and removed by full
         ID. Failure leaves production running and the normal owner restores only
         its control service; no Python is assumed in the GLM runtime.
         """
@@ -331,7 +336,7 @@ class LinuxHost:
             return
         lease.validate()
         candidates = {kind: next(m for m in self.manifests.values() if m['placement'].startswith(kind))
-                      for kind in ('G', 'Q')}
+                      for kind in ('G', 'Q') if any(m['placement'].startswith(kind) for m in self.manifests.values())}
         for kind, manifest in candidates.items():
             name = self.campaign + '-mapping-helper-' + kind.lower()
             probe = ['/usr/bin/docker', 'create', '--name', name, '--network', 'none', '--read-only',
@@ -857,6 +862,7 @@ class LinuxHost:
             self.write_json('requests.json', self.requests)
             return {'request_ended': args['id']}
         if op == 'admit_mixed':
+            require(self.scope == 'full', 'mixed_excluded_by_arm_scope')
             measurements = dict(self.measured)
             require(not self.campaign_containers() and
                     all(row['state'] == 'REMOVED' for row in self.owner.resources), 'retire_prior_allocations_before_mixed_caps')

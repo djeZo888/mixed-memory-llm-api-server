@@ -11,6 +11,25 @@ from .qwen_launcher import pinned_base, variant
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/benchmarks/gpu-split-20260919.json"
+ARM_SCOPES = ("full", "q1-only")
+
+
+def scope_placements(scope):
+    if scope not in ARM_SCOPES:
+        raise ValueError("unknown_benchmark_arm_scope")
+    return ("Q1",) if scope == "q1-only" else ("Q2", "Q1", "G2", "G1")
+
+
+def validate_arm_scope(armed):
+    """Legacy arms retain full scope; narrowed arms bind the exact Q1 plan."""
+    scope = armed.get("scope", "full")
+    placements = scope_placements(scope)
+    if scope == "q1-only":
+        expected = [command_manifest(p, n, campaign=armed["campaign"])
+                    for p in placements for n in (4096, 16384, 65536)]
+        if armed.get("manifests") != expected or armed.get("trial_plan") != trial_order(scope):
+            raise ValueError("q1_only_arm_scope_mismatch")
+    return scope
 
 
 def read_config():
@@ -157,21 +176,22 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
             "live_allocation": "NOT_TESTED", "gpu_index_is_not_placement_proof": True}
 
 
-def trial_order():
+def trial_order(scope="full"):
     rows = []
-    for p in ("Q2", "Q1", "G2", "G1"):
+    for p in scope_placements(scope):
         for capacity in (4096, 16384, 65536):
             rows += [{"placement": p, "capacity": capacity, "case": "load_warmup", "timing": "discard"},
                      {"placement": p, "capacity": capacity, "case": "retrieval", "output_cap": 256}]
             if capacity == 16384:
                 rows += [{"placement": p, "capacity": capacity, "case": case, "output_cap": cap}
-                         for case, cap in [("retrieval_anchor_repeat", 256), ("generation", 512), ("tool_call_and_continuation", 256)]]
+                         for case, cap in [("retrieval_anchor_repeat", 256), ("generation", 512), ("tool_call_and_continuation", 256)]
+                         if scope == "full" or case != "tool_call_and_continuation"]
     jobs = [{"id": "glm64k", "model": "glm", "capacity": 65536, "arrival_s": 0,
              "seed": "mixed-glm-v1", "output_cap": 256}] + [
         {"id": f"qwen16k-{i}", "model": "qwen", "capacity": 16384, "arrival_s": 0,
          "seed": f"mixed-qwen-v1-{i}", "output_cap": 256} for i in range(4)]
-    return {"trials": rows, "then": ["mixed_A", "mixed_B_if_reserve_and_measured_caps_safe"],
-            "mixed_jobs": jobs, "mixed_matching": "freeze native-fitted fixture_sha256/record count per job across A and B; fresh nonce only",
+    return {"trials": rows, "then": ["mixed_A", "mixed_B_if_reserve_and_measured_caps_safe"] if scope == "full" else [],
+            "mixed_jobs": jobs if scope == "full" else [], "mixed_matching": "freeze native-fitted fixture_sha256/record count per job across A and B; fresh nonce only",
             "measurement_budget_seconds": 21600, "maximum_request_seconds": 7200,
             "budget_start": "before first maintenance/model trial; persist once", "restoration_outside_budget": True,
             "budget_estimate": "Unknown before load/rate measurements; skip remaining trials explicitly at budget boundary; no blind retries",

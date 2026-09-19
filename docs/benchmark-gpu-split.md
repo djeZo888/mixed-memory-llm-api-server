@@ -1,5 +1,26 @@
 # Temporary GPU split benchmark — BENCHPREP authority
 
+## BENCHQ1 source preparation — 2026-09-19
+
+The fresh BENCHQ1 task narrows continuation to `arm --scope q1-only`: Q1 at
+4096/16384/65536, retrieval at each capacity, repeated 16K retrieval and separate
+16K generation with a 512-token output cap. Each load retains discarded warmup.
+The runner and host validate exactly three unchanged Q1 manifests; no tool,
+mixed, Q2 or GLM dispatch is included. Omitted scope retains historical full
+behavior. Q1 requires the existing execution epoch and explicit `run --resume`;
+failed/inflight measurements still stop and require review.
+
+Keep campaign `benchrun-20260919`, first epoch `1789826207.34127` and deadline
+`1789847807.34127`. Reuse the supplied frozen 4K/16K fixtures with fresh prefixes
+and native recount; only 64K is newly fitted. Saved Q2 64K is unavailable.
+Archive-commentary generation does not establish code-analysis coverage.
+Prior Q2 PASS rows and the terminal tool failure remain immutable in BENCHRUN;
+BENCHQ1 has separate truthful progress referencing that evidence. Root reviews
+the source, candidate arm and guarded stage-update proposal before live work.
+Source/offline checks establish no new allocation, inference or restoration proof.
+
+## Historical full-campaign authority
+
 The user explicitly approved this experiment on 2026-09-19. The task authority
 is `../APPROVED-PLAN.md` and `../CURRENT-HANDOFF.md` in task
 `BENCHPREP-20260919`; source baseline is

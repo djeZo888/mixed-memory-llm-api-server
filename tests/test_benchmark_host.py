@@ -27,6 +27,7 @@ from common.lifecycle_lease import acquire_lease, transition_in_progress
 class HostTests(unittest.TestCase):
     def bare(self):
         host = LinuxHost.__new__(LinuxHost)
+        host.scope = 'full'
         host.campaign = 'benchrun-offline'
         host.log_root = '/data/logs/benchrun-offline'
         host.owner = SimpleNamespace(phase='ACTIVE', lease=Mock(), resources=[], original={})
