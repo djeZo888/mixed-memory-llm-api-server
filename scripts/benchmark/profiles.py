@@ -11,6 +11,7 @@ from .qwen_launcher import pinned_base, variant
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/benchmarks/gpu-split-20260919.json"
+G1_RAM_CAP_BYTES = 640 * 1024**3  # Root-reviewed validation cap; not minimum model RAM.
 ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only")
 
 
@@ -32,7 +33,7 @@ def validate_arm_scope(armed):
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
     if scope != "full":
-        expected = [command_manifest(p, n, campaign=armed["campaign"], log_verbosity=4 if scope == "g1-only" else None)
+        expected = [command_manifest(p, n, campaign=armed["campaign"], ram_cap=G1_RAM_CAP_BYTES if scope == "g1-only" else None, log_verbosity=4 if scope == "g1-only" else None)
                     for p in placements for n in scope_capacities(scope)]
         if armed.get("manifests") != expected or armed.get("trial_plan") != trial_order(scope):
             raise ValueError("q1_only_arm_scope_mismatch")

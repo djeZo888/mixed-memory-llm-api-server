@@ -43,9 +43,12 @@ class G1Scope(unittest.TestCase):
             loads = [host.manifests[a['manifest_sha256']] for op, a in host.events if op == 'load']
             self.assertEqual([(m['placement'], m['configured_capacity']) for m in loads],
                              [('G1', 4096), ('G1', 16384), ('G1', 65536)])
-            original = [profiles.command_manifest('G1', n, log_verbosity=4) for n in (4096, 16384, 65536)]
+            original = [profiles.command_manifest('G1', n, ram_cap=profiles.G1_RAM_CAP_BYTES, log_verbosity=4) for n in (4096, 16384, 65536)]
             self.assertEqual(loads, original)
             for m in loads:
+                self.assertEqual(m['ram_cap_bytes'], 687194767360)
+                for flag in ('--memory', '--memory-swap'):
+                    self.assertEqual(m['create_argv'][m['create_argv'].index(flag)+1], '687194767360')
                 self.assertEqual(m['gpu_uuids'], [profiles.read_config()['gpu_uuids'][0]])
                 self.assertEqual((m['guest_cpuset'], m['guest_cpu_count']), ('0-95', 96))
                 for flag, value in [('--n-cpu-moe','76'),('--cache-type-k','f16'),('--cache-type-v','f16'),('--fit','off')]:
@@ -182,6 +185,80 @@ class G1Scope(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError,'STOP_|SKIP_'): c.request(cid,raw,'safety-stop')
                 self.assertEqual(host.events[-1][0],'request_end')
                 self.assertEqual((Path(directory)/'private/safety-stop.response.sse').read_bytes(),b'data: {"partial":true}\n\n')
+
+    def test_loading_resource_latch_stops_before_or_after_probe_and_restores(self):
+        for phase in ('before', 'during'):
+            with self.subTest(phase=phase), tempfile.TemporaryDirectory() as directory:
+                c, host, requests, _ = self.setup_case(Path(directory))
+                original = host.call
+                def call(op, **args):
+                    row = original(op, **args)
+                    if (phase == 'before' and op == 'telemetry' and c.active) or (phase == 'during' and op == 'readiness'):
+                        cid = next(iter(c.active))
+                        c.active[cid]['abort_reason'] = 'STOP_SUSTAINED_MODEL_SWAP_GROWTH'
+                        c.active[cid]['cancel_event'].set()
+                    return row
+                host.call = call
+                with self.assertRaisesRegex(RuntimeError, '^STOP_SUSTAINED_MODEL_SWAP_GROWTH$'):
+                    c.run(resume=True)
+                self.assertEqual(requests, [])
+                self.assertEqual(c.progress['completed'], {})
+                self.assertEqual(host.events[-1][0], 'restore')
+                self.assertEqual(sum(op == 'load' for op, _ in host.events), 1)
+                if phase == 'before':
+                    self.assertNotIn('readiness', [op for op, _ in host.events])
+
+    def test_saved_cuda_host_weights_are_host_ram_with_strict_proof(self):
+        raw = (profiles.ROOT/'tests/fixtures/benchg1-cuda-host-allocation.log').read_text()
+        parsed = allocation.parse_glm_log(raw)
+        self.assertEqual(parsed['host_weights_mib_log_label'], {'CUDA_Host': 409012.22})
+        self.assertEqual(parsed['device_weights_mib_log_label'], {'CUDA0': 30754.20})
+        self.assertEqual(parsed['weights_mib_log_label'], {'CUDA_Host': 409012.22, 'CUDA0': 30754.20})
+        self.assertAlmostEqual(409012.22, 428880396288 / 1024**2, places=2)
+        m = profiles.command_manifest('G1',4096,ram_cap=profiles.G1_RAM_CAP_BYTES,log_verbosity=4)
+        observed = alloc.Allocation().observed(m)
+        self.assertEqual(allocation.allocation_gate(m, parsed, observed, strict_g1=True)['status'], 'ALLOCATION_PROOF_ACCEPTED')
+        for text in (raw.replace('CUDA_Host model', 'Unknown_Host model'), raw + '\nload_tensors: CUDA_Host model buffer size = 409012.22 MiB'):
+            self.assertEqual(allocation.allocation_gate(m, allocation.parse_glm_log(text), observed, strict_g1=True)['status'], 'STOP_ALLOCATION_PROOF')
+        for before, after in [('offloaded 80/80', 'offloaded 79/80'), ('lid_nodes=21', 'lid_nodes=78'), ('bytes=390070272', 'bytes=195035136')]:
+            self.assertEqual(allocation.allocation_gate(m, allocation.parse_glm_log(raw.replace(before, after)), observed, strict_g1=True)['status'], 'STOP_ALLOCATION_PROOF')
+
+    def test_actual_container_and_cgroup_no_swap_limits_required(self):
+        from benchmark.host import LinuxHost
+        with tempfile.TemporaryDirectory() as directory:
+            group = Path(directory)
+            cap = profiles.G1_RAM_CAP_BYTES
+            container = {'HostConfig': {'Memory': cap, 'MemorySwap': cap}}
+            (group/'memory.max').write_text(str(cap))
+            (group/'memory.swap.max').write_text('0')
+            proof = LinuxHost.g1_memory_limits(container, group)
+            self.assertEqual(proof['cgroup_memory_swap_max'], '0')
+            for field in ('Memory', 'MemorySwap'):
+                bad = copy.deepcopy(container); bad['HostConfig'][field] = 0
+                with self.assertRaisesRegex(ValueError, 'g1_effective_no_swap_limit_unproved'):
+                    LinuxHost.g1_memory_limits(bad, group)
+            for field, bad in [('memory.max','max'), ('memory.swap.max','1')]:
+                original = (group/field).read_text(); (group/field).write_text(bad)
+                with self.assertRaisesRegex(ValueError, 'g1_effective_no_swap_limit_unproved'):
+                    LinuxHost.g1_memory_limits(container, group)
+                (group/field).write_text(original)
+            (group/'memory.swap.max').unlink()
+            with self.assertRaises(FileNotFoundError): LinuxHost.g1_memory_limits(container, group)
+
+    def test_create_requires_fresh_host_capacity_before_writes(self):
+        from benchmark import host as host_module
+        from types import SimpleNamespace
+        host = q1.host_tests.HostTests().bare(); host.scope = 'g1-only'
+        manifest = profiles.command_manifest('G1',4096,ram_cap=profiles.G1_RAM_CAP_BYTES,log_verbosity=4)
+        host.manifests = {host_module.digest(manifest): manifest}
+        host.manager = Mock(); host.mkdir_paths = Mock()
+        image = SimpleNamespace(stdout=json.dumps([{'Id': manifest['image']}]).encode())
+        with patch('benchmark.host.command', return_value=image) as command:
+            for available in (None, profiles.G1_RAM_CAP_BYTES + 16*1024**3 - 1):
+                with patch('benchmark.host.collect_sample', return_value={'host': {'available_bytes': available}}):
+                    with self.assertRaisesRegex(ValueError, 'g1_container_cap_host_reserve_unproved'): host.create(manifest)
+            host.mkdir_paths.assert_not_called()
+            self.assertTrue(all(call.args[0][1:3] == ['image', 'inspect'] for call in command.call_args_list))
 
     def test_already_set_event_refuses_http_dispatch(self):
         cancel=threading.Event();cancel.set()

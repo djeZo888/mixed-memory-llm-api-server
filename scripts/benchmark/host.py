@@ -26,7 +26,7 @@ import urllib.request
 from .lifecycle import CONTROL_UNIT, BOOT_UNIT, PlanError, digest, require, validate_restored
 from .owner import CampaignOwner, HostCallbacks, WorkerVerificationPending
 from .campaign import CampaignBudget
-from .profiles import read_config, command_manifest, split_resources, validate_arm_scope
+from .profiles import read_config, command_manifest, split_resources, validate_arm_scope, G1_RAM_CAP_BYTES
 from .telemetry import collect_sample, required_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
@@ -167,6 +167,7 @@ class LinuxHost:
         self.manifests = {}
         for value in values:
             expected = command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
+                                        ram_cap=G1_RAM_CAP_BYTES if self.scope == 'g1-only' else None,
                                         log_verbosity=4 if self.scope == 'g1-only' else None)
             require(value == expected, 'manifest_not_current_generated_source')
             self.manifests[digest(value)] = value
@@ -462,11 +463,19 @@ class LinuxHost:
         if manifest['placement'].startswith('Q'):
             from runtime.qwen38_oci import verify_image
             verify_image(image)
+        if self.scope == 'g1-only':
+            available = collect_sample({})['host']['available_bytes']
+            require(type(available) is int and available >= G1_RAM_CAP_BYTES + 16 * 1024**3,
+                    'g1_container_cap_host_reserve_unproved')
         self.mkdir_paths(manifest)
         argv = ['/usr/bin/docker', *manifest['create_argv'][1:]]
         created = command(argv, 120).stdout.decode().strip()
         require(bool(CID.fullmatch(created)), 'invalid_created_container_id')
         container = self.docker_inspect(created)
+        if self.scope == 'g1-only':
+            require(container['HostConfig'].get('Memory') == G1_RAM_CAP_BYTES and
+                    container['HostConfig'].get('MemorySwap') == G1_RAM_CAP_BYTES,
+                    'g1_container_no_swap_limit_unproved')
         self.load_manifests[created] = manifest
         self.write_json('loads/' + created + '.json', {'manifest': manifest, 'created_at': time.time()})
         return self.resource(container)
@@ -549,11 +558,11 @@ class LinuxHost:
                 if placement == 'G1' and parsed is not None:
                     argv = manifest['native_argv']
                     require('--load-mode' in argv and argv[argv.index('--load-mode') + 1] == 'none' and
-                            'CPU' in (parsed.get('weights_mib_log_label') or {}) and
+                            bool({'CPU', 'CUDA_Host'} & (parsed.get('weights_mib_log_label') or {}).keys()) and
                             'CPU_Mapped' not in (parsed.get('weights_mib_log_label') or {}),
                             'glm_required_resident_weight_basis_unavailable')
                     file_required = 0
-                    basis = 'verified_native_load_mode_none_and_nonmapped_CPU_weights; mapped_file_and_shmem_retained'
+                    basis = 'verified_native_load_mode_none_and_nonmapped_host_weights; mapped_file_and_shmem_retained'
                 else:
                     file_required = min(group['file_bytes'], group['file_mapped_bytes'] + group['shmem_bytes'])
                     basis = 'load_and_runtime_mapped_file_and_shmem_retained_conservatively; unmapped_file_cache_separate'
@@ -609,6 +618,18 @@ class LinuxHost:
         self.write_json('loads/' + cid + '-' + point + '.json', result)
         return result
 
+    @staticmethod
+    def g1_memory_limits(container, cgroup):
+        limits = {'docker_memory_bytes': container['HostConfig'].get('Memory'),
+                  'docker_memory_swap_bytes': container['HostConfig'].get('MemorySwap'),
+                  'cgroup_memory_max': (cgroup / 'memory.max').read_text().strip(),
+                  'cgroup_memory_swap_max': (cgroup / 'memory.swap.max').read_text().strip()}
+        require(limits == {'docker_memory_bytes': G1_RAM_CAP_BYTES,
+                           'docker_memory_swap_bytes': G1_RAM_CAP_BYTES,
+                           'cgroup_memory_max': str(G1_RAM_CAP_BYTES), 'cgroup_memory_swap_max': '0'},
+                'g1_effective_no_swap_limit_unproved')
+        return limits
+
     def allocation(self, cid):
         self.assert_idle()
         container, cgroup, pids = self.identity(cid)
@@ -658,6 +679,8 @@ class LinuxHost:
                     'native_argv': native, 'device_request_uuids': device_ids, 'cuda_uuid_order': cuda,
                     'gpu_free_bytes': {g['uuid']: g['free_bytes'] for g in sample['gpus']},
                     'raw_log_sha256': hashlib.sha256(raw).hexdigest()}
+        if self.scope == 'g1-only':
+            observed['container_memory_limits'] = self.g1_memory_limits(container, cgroup)
         gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope == 'g1-only')
         result = {'allocation': gate, 'parsed': parsed, 'observed': observed, 'server_facts': facts,
                   'raw_log_path': self.log_root + '/loads/' + cid + '-allocation.log'}

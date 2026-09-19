@@ -61,7 +61,7 @@ def arm(state, campaign, scope="full"):
     if (state / "arm.json").exists():
         raise ValueError("arm_exists_preserve_existing_campaign")
     files = source_files()
-    manifests = [profiles.command_manifest(p, n, campaign=campaign, log_verbosity=4 if scope == "g1-only" else None) for p in profiles.scope_placements(scope) for n in profiles.scope_capacities(scope)]
+    manifests = [profiles.command_manifest(p, n, campaign=campaign, ram_cap=profiles.G1_RAM_CAP_BYTES if scope == "g1-only" else None, log_verbosity=4 if scope == "g1-only" else None) for p in profiles.scope_placements(scope) for n in profiles.scope_capacities(scope)]
     value = {"schema": 1, "campaign": campaign, "source_files": {p: hashlib.sha256(b).hexdigest() for p, b in files.items()},
              "manifests": manifests, "trial_plan": profiles.trial_order(scope),
              "phase": "ARMED_OFFLINE_NOT_STARTED", "host": "ai-vm", "private_lan": "10.156.100.60"}
@@ -280,10 +280,16 @@ class Campaign:
         self.collect()
         self.record()
         while True:
+            with self.lock:
+                if self.armed.get("scope") == "g1-only" and self.active[cid].get("abort_reason"):
+                    raise RuntimeError(self.active[cid]["abort_reason"])
             remaining = min(deadline - self.clock(), self.host.call("budget").get("remaining_s", 0))
             if remaining <= 0:
                 raise RuntimeError("STOP_BUDGET")
             proof = self.host.call("readiness", id=cid, timeout_s=remaining)
+            with self.lock:
+                if self.armed.get("scope") == "g1-only" and self.active[cid].get("abort_reason"):
+                    raise RuntimeError(self.active[cid]["abort_reason"])
             if self.clock() >= deadline:
                 raise RuntimeError("STOP_BUDGET")
             if proof.get("ready"):

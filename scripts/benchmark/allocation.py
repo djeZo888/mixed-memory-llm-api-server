@@ -41,7 +41,7 @@ def parse_glm_log(text: str) -> dict:
             host_pending[backend] = int(count)
         if record == "D3T_NATIVE_V1 kind=end":
             host_compute = dict(host_pending)
-        match = re.search(r"load_tensors:\s+(CPU(?:_Mapped)?|CUDA\d+) model buffer size\s*=\s*([0-9]+\.[0-9]+) MiB", line)
+        match = re.search(r"load_tensors:\s+(CPU(?:_Mapped)?|CUDA_Host|CUDA\d+) model buffer size\s*=\s*([0-9]+\.[0-9]+) MiB", line)
         if match:
             backend, value = match.groups()
             if backend in buffers:
@@ -59,6 +59,8 @@ def parse_glm_log(text: str) -> dict:
     return {"kind": "glm", "parser_status": "HARNESS_FAILURE" if malformed else "PARSED",
             "configured_context": native.get("n_ctx") if native else None,
             "native": native, "weights_mib_log_label": buffers or None,
+            "host_weights_mib_log_label": {k: v for k, v in buffers.items() if k in {"CPU", "CPU_Mapped", "CUDA_Host"}} or None,
+            "device_weights_mib_log_label": {k: v for k, v in buffers.items() if re.fullmatch(r"CUDA\d+", k)} or None,
             "host_compute_bytes": host_compute or None,
             "host_workspace_bytes": sum(host_compute.values()) if host_compute else None,
             "host_workspace_scope": "native RAM compute buffers; separate from CUDA device workspace, commonly included in cgroup anon",
@@ -193,7 +195,7 @@ def allocation_gate(manifest: dict, parsed: dict, observed: dict, *, strict_g1=F
             need(native.get("fa_nodes") == 78 and native.get("lid_nodes") == 21,
                  "g1_main_indexer_graph_mismatch")
         weights = parsed.get("weights_mib_log_label") or {}
-        need(devices <= weights.keys() and any(k.startswith("CPU") for k in weights), "cpu_gpu_weight_allocation_unproved")
+        need(devices <= weights.keys() and any(k in {"CPU", "CPU_Mapped", "CUDA_Host"} for k in weights), "cpu_gpu_weight_allocation_unproved")
         expected = manifest.get("glm_offload_expectation") or {}
         counts = (expected.get("offloaded_layers"), expected.get("total_layers"))
         reviewed = (all(type(value) is int and value > 0 for value in counts)
