@@ -26,7 +26,8 @@ class ExactG1(unittest.TestCase):
                 sample_id='raw', private_dir=directory, summary_path=Path(directory)/'summary.jsonl', timeout=1)
             self.assertEqual(Path(result['private_response_path']).read_bytes(), response)
             comparison = g.provenance_comparison(result)
-            self.assertEqual(comparison['generated_token_ids'], [5, 6, 7])
+            self.assertEqual(comparison['generated_tokens'], {'count': 3, 'sha256': fixtures.digest(fixtures.canonical([5, 6, 7]))})
+            self.assertNotIn('generated_token_ids', comparison)
             self.assertEqual(len(comparison['native_text']['think_close_offsets']), 2)
         for key, value in [('stream', True), ('verbose', False), ('max_tokens', 512), ('tools', [])]:
             bad = {**changed, key: value}
@@ -62,6 +63,8 @@ class ExactG1(unittest.TestCase):
                 d.loaded.assert_called_once()
                 self.assertEqual(seen[0], (raw, 'exact-stream'))
                 self.assertEqual(len(seen), 2 if duplicate else 1)
+                self.assertEqual([call.args[1] for call in d.boundary.call_args_list],
+                    ['before_stream', 'after_stream'] + (['before_nonstream', 'after_nonstream'] if duplicate else []))
                 self.assertTrue(Path(directory, 'first-result.json').exists())
 
 if __name__ == '__main__': unittest.main()

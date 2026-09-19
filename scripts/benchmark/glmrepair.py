@@ -170,7 +170,8 @@ def provenance_comparison(result):
             "raw_response_retained_complete": result["summary"]["response_retained_complete"],
             "native_text": text_identity(native.get("content")), "content": text_identity(content),
             "reasoning": text_identity(reasoning),
-            "generated_token_ids": tokens if isinstance(tokens, list) and all(type(x) is int for x in tokens) else None,
+            "generated_tokens": {"count": len(tokens), "sha256": fixtures.digest(fixtures.canonical(tokens))}
+                if isinstance(tokens, list) and all(type(x) is int for x in tokens) else None,
             "output_modified": False, "missing_fields_are_unavailable": True}
 
 
@@ -285,7 +286,8 @@ class Diagnostic(runner.Campaign):
             raise RuntimeError("historical_native_input_changed")
         runner.save(self.private / "baseline-count.json", counted)
         for name, request in (("exact-stream", raw), ("raw-nonstream", provenance_body(raw))):
-            self.boundary(cid, "before_" + name)
+            point = "stream" if name == "exact-stream" else "nonstream"
+            self.boundary(cid, "before_" + point)
             self.progress["inflight"][name] = {"container": cid}
             self.record("EXACT_G1_" + name.upper())
             result = self.request(cid, request, name)
@@ -303,7 +305,7 @@ class Diagnostic(runner.Campaign):
             del self.progress["inflight"][name]
             runner.save(self.state / ("first-result.json" if name == "exact-stream" else "provenance-result.json"), outcome)
             self.record()
-            self.boundary(cid, "after_" + name)
+            self.boundary(cid, "after_" + point)
             if not result["parsed"] or summary["status"] not in {"COMPLETE", "OUTPUT_LIMIT"}:
                 raise RuntimeError("native_transport_or_parse_failure")
             if summary["counters"].get("cached_tokens") != 0:
