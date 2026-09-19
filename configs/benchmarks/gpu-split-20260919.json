@@ -79,7 +79,7 @@
     }
   },
   "installed_source_root": "/usr/local/lib/llm-server/control-api",
-  "installed_source_commit": "ab6daa475cc2f1c04956d862f460f9f01c4ee952",
+  "installed_source_commit": "d0b793ed2eed6bea5070f087460b9749cbc8eab1",
   "installed_source_identities": {
     "scripts/common/lifecycle_lease.py": {
       "path": "/usr/local/lib/llm-server/control-api/scripts/common/lifecycle_lease.py",
@@ -103,7 +103,7 @@
     },
     "scripts/lifecycle/manager.py": {
       "path": "/usr/local/lib/llm-server/control-api/scripts/lifecycle/manager.py",
-      "sha256": "3ac840c7a70b6136b540af261d5fe4eb3efcda2ced88a3fa9c73eaaba1c1bef1",
+      "sha256": "72498cc75fba5a204ffae0adb0da337adb88b9d608463ae6df5d1c1907e99c51",
       "mode": "0o644"
     },
     "scripts/lifecycle/qwen38.py": {
