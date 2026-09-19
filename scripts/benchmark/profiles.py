@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 from pathlib import Path
 import re
 import shlex
@@ -35,13 +34,26 @@ def cpu_set(value):
     return result
 
 
-def split_resources(measured_glm, measured_qwen, host_available_bytes):
-    """Caps for B are measured total cgroup demand * 1.25, never invented here."""
-    values = (measured_glm, measured_qwen, host_available_bytes)
-    if any(type(v) is not int or v <= 0 for v in values):
-        raise ValueError("measured_ram_required")
-    caps = {"G1": math.ceil(measured_glm * 1.25), "Q1": math.ceil(measured_qwen * 1.25)}
-    if sum(caps.values()) > host_available_bytes - 16 * 1024**3:
+def split_resources(measured_glm, measured_qwen, host_usable_bytes):
+    """B caps use measured required components, not cgroup current/file cache.
+
+    Host usable bytes must be freshly sampled AFTER prior benchmark containers
+    retire; the caller proves that lifecycle condition. No loaded-model current
+    is added blindly to MemAvailable because reclaimable pages may overlap it.
+    """
+    if type(host_usable_bytes) is not int or host_usable_bytes <= 0:
+        raise ValueError("usable_host_after_retirement_required")
+    caps = {}
+    for placement, evidence in (("G1", measured_glm), ("Q1", measured_qwen)):
+        if (not isinstance(evidence, dict) or evidence.get("schema") != 1
+                or evidence.get("evidence_status") != "MEASURED_COMPONENTS"
+                or type(evidence.get("required_bytes")) is not int or evidence["required_bytes"] <= 0):
+            raise ValueError("measured_required_ram_components_required")
+        components = [evidence.get(k) for k in ("anon_bytes", "kernel_bytes", "required_file_backed_bytes", "workspace_extra_bytes")]
+        if any(type(value) is not int or value < 0 for value in components) or sum(components) != evidence["required_bytes"]:
+            raise ValueError("measured_required_ram_components_inconsistent")
+        caps[placement] = (evidence["required_bytes"] * 5 + 3) // 4
+    if sum(caps.values()) > host_usable_bytes - 16 * 1024**3:
         raise ValueError("split_ram_reserve_unsafe")
     c = read_config()["guest_cpus"]
     g, q = cpu_set(c["glm_mixed"]), cpu_set(c["qwen_mixed"])
@@ -99,7 +111,7 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
             raise ValueError("invalid_ram_cap")
         args += ["--memory", str(ram_cap), "--memory-swap", str(ram_cap)]
     if glm:
-        env = runtime["environment"]
+        env = {**runtime["environment"], "CUDA_VISIBLE_DEVICES": ",".join(uuids)}
         command = ["--model", "/models/" + model["load_entry"], "--host", "0.0.0.0",
                    "--port", str(p["port"]), "--alias", "bench-glm-5.3",
                    "--api-key-file", "/run/secrets/llm-api-key", "--ctx-size", str(capacity),
@@ -131,6 +143,7 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
             "model": {"repo_id": model["repo_id"], "revision": model["revision"], "quantization": model["quantization"]},
             "gpu_uuids": uuids, "guest_cpuset": cpus, "guest_cpu_count": cpu_count, "ram_cap_bytes": ram_cap,
             "cpu_comparison": "two-GPU baseline 112; isolated and mixed one-GPU GLM 96 / Qwen 16",
+            "glm_offload_expectation": c.get("glm_offload_expectation") if glm else None,
             "mixed": mixed, "registered_paths": roots, "create_argv": args,
             "create_shell": shlex.join(args), "start_argv": ["docker", "start", identifier],
             "native_argv": command if glm else variant(base, capacity, p["tp_size"]),

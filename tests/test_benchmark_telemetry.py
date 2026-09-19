@@ -34,6 +34,33 @@ class TelemetryTests(unittest.TestCase):
         self.assertEqual(got["events"]["oom"], 0)
         self.assertIsNone(got["events"]["max"])
 
+    def test_required_ram_separates_reclaimable_file_and_workspace(self):
+        gib = 1024**3
+        group = {"current_bytes": 803*gib, "anon_bytes": 400*gib, "kernel_bytes": 3*gib,
+                 "file_bytes": 400*gib, "file_mapped_bytes": 0, "shmem_bytes": 0}
+        demand = t.required_host_demand(group, required_file_backed_bytes=0,
+            host_workspace_bytes=2*gib, workspace_in_anon=True, file_basis="synthetic verified load-mode none")
+        self.assertEqual(demand["required_bytes"], 403*gib)
+        self.assertEqual(demand["reclaimable_file_bytes"], 400*gib)
+        self.assertEqual(demand["host_workspace_bytes"], 2*gib)
+        self.assertEqual(demand["workspace_extra_bytes"], 0)
+        group.update(file_mapped_bytes=30*gib, shmem_bytes=2*gib)
+        demand = t.required_host_demand(group, required_file_backed_bytes=0,
+            host_workspace_bytes=None, file_basis="synthetic native workspace unavailable; all runtime anon counted")
+        self.assertEqual(demand["required_file_backed_bytes"], 32*gib)
+        self.assertEqual(demand["reclaimable_file_bytes"], 368*gib)
+        self.assertIsNone(demand["host_workspace_bytes"])
+        self.assertEqual(demand["required_bytes"], 435*gib)
+        retained = t.required_host_demand(group, required_file_backed_bytes=100*gib,
+            host_workspace_bytes=2*gib, workspace_in_anon=False, file_basis="synthetic measured resident weights")
+        self.assertEqual(retained["required_bytes"], 505*gib)
+        with self.assertRaisesRegex(ValueError, "unaccounted_host_workspace"):
+            t.required_host_demand(group, required_file_backed_bytes=0, workspace_in_anon=False, file_basis="synthetic")
+        with self.assertRaisesRegex(ValueError, "unavailable"):
+            t.required_host_demand({}, required_file_backed_bytes=0, file_basis="synthetic")
+        with self.assertRaisesRegex(ValueError, "inconsistent"):
+            t.required_host_demand(group, required_file_backed_bytes=401*gib, file_basis="synthetic")
+
     def test_gpu_per_uuid_and_unavailable_not_zero(self):
         rows = t.parse_gpu_csv("GPU-A, 98304, 16384, 81920, 0, 55.25\nGPU-B, 98304, N/A, 1000, [Not Supported], N/A\n")
         self.assertEqual(rows[0]["used_bytes"], 16384 * 1024 ** 2)

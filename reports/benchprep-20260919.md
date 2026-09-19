@@ -17,11 +17,15 @@ staging, durable results and recovery, original-intent worker verification,
 112/96/16 CPU matching, tokenizer-metadata distinction, shared budget locking,
 and complete capped-tool continuation handling. Source review mapping is retained
 in task-root root-review-response.md. The first 88-test snapshot was preliminary;
-this report supersedes its readiness claim.
+this report supersedes its readiness claim. The intentional SIGINT checkpoint
+was an orchestration boundary, not a failed source test.
 Production profiles/auth sources, weights, runtime images and installer are unchanged.
 
-Scoped synthetic/offline validation: **123 tests PASS** on worker Python 3.14.7.
-Source compile, preparation CLI generation and whitespace checks passed.
+Scoped synthetic/offline validation: **46 final focused tests PASS** on worker Python 3.14.7.
+The final scope is allocation/runner/transport (21) and concrete-host contracts (25);
+unchanged previously passing fixture/profile/telemetry checks were preserved rather
+than repeated. Two affected cap-synchronization paths were rechecked after their
+small final change. Source compile, preparation CLI and whitespace checks passed.
 No installer or unrelated suites. Twelve exact command manifests and six
 serialized private fixture samples generated; native token fit remains NOT_TESTED.
 Malformed fixture/response/parser output remains HARNESS_FAILURE, not a model regression.
@@ -40,7 +44,8 @@ Installed source/guard hashes matched protected installed manifest. Registered
 storage/root guards PASS; root free 5,533,716,480 bytes (existing below-6-GiB
 warning, above 4-GiB floor). Exact registered ext4 UUIDs and protected source
 hashes are retained in the [benchmark declaration](../configs/benchmarks/gpu-split-20260919.json).
-No observed canonical lease holder at baseline; no acquisition attempted.
+Observed canonical lease inode **2132**, with no holder at baseline; no acquisition
+attempted. The earlier2207 receipt was incorrect; RUN must capture fresh identity.
 
 Two RTX PRO 6000 Blackwell GPUs, driver 595.84, each 97887 MiB. Guest topology:
 112 vCPUs across seven guest nodes of 16, not a claim about host NUMA. Host swap
@@ -72,3 +77,19 @@ Mixed RAM caps depend on measured demand and are not invented during PREP.
 GPU workload, live inference, new model/runtime/image installation, key reads,
 key rotation, push or GitHub write occurred in BENCHPREP.** All live performance,
 occupied context, mixed interference and restoration acceptance remain NOT_TESTED.
+
+
+Final focused review: exact GLM offload formatter was read via bounded worker SSH
+from `/data/build/d3p-d3b2-20260915/source/src/llama-model.cpp`; bytes matched pinned
+b29c606 and the retained source hash. Its explicit formula yields required80/80
+for79 blocks and ngl999. See `benchprep-glm-offload-source.json`; this is source
+evidence, not live allocation. No source evidence blocker remains.
+
+Load-phase cheap sampling precedes readiness; durable required-demand peaks
+include transient loader memory and separate reclaimable file cache. Warm-only
+B caps are refused. Mixed fixture counting precedes arrival clocks. Native-counted
+warmups prove at least2048 evaluated prompt tokens. GLM mapping uses native
+`--list-devices` plus explicit UUID visibility, without Python/image changes.
+Exact host budget/anchored-file contracts and immediate exited/OOM diagnostics
+have offline regression coverage. Readiness/load deadlines obey remaining budget;
+restoration and independent worker verification remain explicit outside it.

@@ -15,7 +15,9 @@ from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
-from benchmark.host import LinuxHost, HostBudget, serve, command
+from benchmark.host import LinuxHost, HostBudget, serve, command, _COMMAND_DEADLINE
+from benchmark.lifecycle import CONTROL_UNIT, BOOT_UNIT
+from install.storage_io import AnchoredRoot, GuardedFile
 from benchmark.owner import WorkerVerificationPending
 from tests.test_benchmark_owner import Fixture
 from tests.test_benchmark_lifecycle import snapshot
@@ -29,10 +31,12 @@ class HostTests(unittest.TestCase):
         host.log_root = '/data/logs/benchrun-offline'
         host.owner = SimpleNamespace(phase='ACTIVE', lease=Mock(), resources=[], original={})
         host.requests, host.manifests, host.samples = {}, {}, {}
+        host.load_manifests, host.allocation_proofs, host.measured = {}, {}, {}
         host.write_json = Mock()
         host.identity = Mock()
         host.budget = Mock()
         host.budget.request_timeout.return_value = 43
+        host.budget.checkpoint.return_value = 43
         host.budget.data = {'phase': 'MEASURING'}
         return host
 
@@ -211,6 +215,218 @@ class HostTests(unittest.TestCase):
         self.assertEqual(budget.data['started_at'], 1000)
         self.assertEqual(budget.data['last_seen_at'], 1020)
         host.write_json.assert_called_once_with('budget.json', budget.data)
+
+    def test_actual_budget_constructor_reload_and_inherited_mutex_methods(self):
+        host = self.bare()
+        host.start_epoch = None
+        host.read_json = Mock(return_value=None)
+        budget = HostBudget(host)
+        with patch('benchmark.host.time.time', return_value=1000):
+            budget.start('maintenance')
+        original = budget.data
+        original['phase'] = 'invalid_detached_edit'
+        self.assertEqual(budget.data['phase'], 'MEASURING')
+        host.read_json.return_value = budget.data
+        reloaded = HostBudget(host)
+        reloaded.clock = lambda: 1007
+        self.assertEqual(reloaded.checkpoint(), 21593)
+        self.assertEqual(reloaded.request_timeout(7200), 7200)
+        reloaded.begin_restoration()
+        reloaded.finish_restoration(True)
+        self.assertEqual(reloaded.data['phase'], 'RESTORED')
+        host.read_json.return_value = {'schema': 0}
+        with self.assertRaisesRegex(ValueError, 'invalid_budget_ledger'):
+            HostBudget(host)
+
+    def test_actual_anchored_writer_chunking_and_fsync_contract(self):
+        host = self.bare()
+        host.guards = Mock()
+        with tempfile.TemporaryDirectory(prefix='host-writer-', dir=ROOT) as directory:
+            root = Path(directory).resolve()
+            root.chmod(0o700)
+            device = str(os.major(root.stat().st_dev)) + ':' + str(os.minor(root.stat().st_dev))
+            registration = {'schema_version': 1, 'roots': {'logs': str(root)},
+                'data': {'path': str(root), 'mount': str(root), 'uuid': 'synthetic-data', 'fstype': 'synthetic', 'device': device},
+                'models': {'path': str(root), 'mount': str(root), 'uuid': 'synthetic-models', 'fstype': 'synthetic', 'device': device}}
+            @contextmanager
+            def mounted_guard(*args, **kwargs):
+                yield lambda: registration
+            host.binding = SimpleNamespace(path=lambda role: str(root), mounted_guard=mounted_guard)
+            host.storage_io = SimpleNamespace(AnchoredRoot=lambda path, guard: AnchoredRoot(path, guard, uid=os.geteuid()))
+            raw = b'synthetic-private-evidence\n' * 50000
+            actual_fsync = GuardedFile.fsync
+            calls = []
+            def fsync(handle):
+                calls.append(handle.name)
+                return actual_fsync(handle)
+            with patch.object(GuardedFile, 'fsync', fsync):
+                host.write_bytes('loads/synthetic.log', raw)
+            target = root / host.campaign / 'loads/synthetic.log'
+            self.assertEqual(target.read_bytes(), raw)
+            self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(calls, ['synthetic.log'])
+            self.assertFalse(hasattr(GuardedFile, 'flush'))
+            self.assertEqual(host.guards.call_count, 2)
+
+    def test_glm_mapping_native_only_explicit_uuid_order(self):
+        host = self.bare()
+        manifest = {'placement': 'G2', 'gpu_uuids': ['GPU-B', 'GPU-A']}
+        container = {'Config': {'Env': ['CUDA_VISIBLE_DEVICES=GPU-B,GPU-A']}}
+        replies = [SimpleNamespace(stdout=b'Available devices:\n  CUDA0: GPU\n  CUDA1: GPU\n'),
+                   SimpleNamespace(stdout=b'GPU-A\nGPU-B\n')]
+        with patch('benchmark.host.command', side_effect=replies) as run:
+            self.assertEqual(host.cuda_mapping('1'*64, manifest, container), ['GPU-B', 'GPU-A'])
+        self.assertEqual(run.call_args_list[0].args[0][-2:], ['/opt/llama/llama-server', '--list-devices'])
+        self.assertNotIn('python', str(run.call_args_list))
+        container['Config']['Env'] = ['CUDA_VISIBLE_DEVICES=0,1']
+        with patch('benchmark.host.command') as run, self.assertRaisesRegex(ValueError, 'uuid_visibility'):
+            host.cuda_mapping('1'*64, manifest, container)
+        run.assert_not_called()
+
+    def test_helper_gate_precedes_production_stop_and_restore_clears_deadline(self):
+        host = self.bare()
+        host.pin_sources, host.jobs, host.assert_idle = Mock(), Mock(), Mock()
+        units = {BOOT_UNIT: {'active': 'active'}, CONTROL_UNIT: {'active': 'inactive'}}
+        host.units = Mock(return_value=units)
+        host.verify_mapping_helpers = Mock()
+        original = {'services': units}
+        host.gate('control_frozen', host.owner.lease, original, [])
+        host.verify_mapping_helpers.assert_called_once_with(host.owner.lease)
+        token = _COMMAND_DEADLINE.set(0)
+        try:
+            host.gate('restore', host.owner.lease, original, [])
+            self.assertIsNone(_COMMAND_DEADLINE.get())
+        finally:
+            _COMMAND_DEADLINE.reset(token)
+
+    def test_load_timeout_clamps_commands_and_clears_before_auto_restore(self):
+        host = self.bare()
+        host.budget.checkpoint.return_value = 2
+        host.manifests = {'reviewed': {'placement': 'G1'}}
+        host.pin_sources, host.jobs, host.assert_idle = Mock(), Mock(), Mock()
+        units = {BOOT_UNIT: {'active': 'active'}, CONTROL_UNIT: {'active': 'inactive'}}
+        host.units = Mock(return_value=units)
+        def launch(manifest):
+            command(['/synthetic/docker', 'create'], 120)
+            host.gate('restore', host.owner.lease, {'services': units}, [])
+            command(['/synthetic/systemctl', 'start'], 120)
+            return {'synthetic': True}
+        host.owner.launch = launch
+        with patch('benchmark.host.subprocess.run', return_value=SimpleNamespace(returncode=0)) as run:
+            host.dispatch({'op': 'load', 'manifest_sha256': 'reviewed'})
+        self.assertGreater(run.call_args_list[0].kwargs['timeout'], 0)
+        self.assertLessEqual(run.call_args_list[0].kwargs['timeout'], 2)
+        self.assertEqual(run.call_args_list[1].kwargs['timeout'], 120)
+        self.assertIsNone(_COMMAND_DEADLINE.get())
+
+    def test_exited_dead_and_oom_fail_before_http_sanitized(self):
+        for state in ({'Running': False, 'Status': 'exited', 'ExitCode': 1},
+                      {'Running': True, 'Status': 'dead', 'Dead': True},
+                      {'Running': False, 'Status': 'exited', 'OOMKilled': True}):
+            with self.subTest(state=state):
+                host = self.bare()
+                cid = '1'*64
+                container = {'Id': cid, 'Name': '/benchrun-offline-g1', 'Image': 'sha256:'+'2'*64,
+                    'Config': {'Labels': {'benchmark.campaign': host.campaign, 'benchmark.owner': 'llm-benchmark'}},
+                    'HostConfig': {'RestartPolicy': {'Name': 'no'}}, 'State': {**state, 'Error': 'synthetic-sensitive'}}
+                resource = {k: v for k, v in host.resource(container).items() if k != 'running'}
+                host.owner.resources = [{'resource': resource, 'state': 'RUNNING'}]
+                host.docker_inspect = Mock(return_value=container)
+                host.write_bytes = Mock()
+                with patch('benchmark.host.http_json') as http, patch('benchmark.host.command',
+                          return_value=SimpleNamespace(returncode=0, stdout=b'synthetic-private-log', stderr=b'')):
+                    result = host.readiness(cid, 5)
+                self.assertTrue(result['failed'])
+                self.assertFalse(result['ready'])
+                self.assertEqual(result['state'], 'STOP_OOM' if state.get('OOMKilled') else 'STOP_BACKEND_EXITED')
+                self.assertNotIn('sensitive', json.dumps(result))
+                self.assertNotIn('synthetic-private-log', json.dumps(result))
+                http.assert_not_called()
+                host.write_bytes.assert_called_once()
+
+    def test_load_demand_precedes_allocation_proof_and_retains_transient_peak(self):
+        host = self.bare()
+        cid = '1'*64
+        host.identity.return_value = ({}, Path('/synthetic/cgroup'), [123])
+        host.load_manifests[cid] = {'placement': 'Q1'}
+        group = {'current_bytes': 10000, 'anon_bytes': 1000, 'kernel_bytes': 100,
+                 'file_bytes': 8900, 'file_mapped_bytes': 200, 'shmem_bytes': 50}
+        with patch('benchmark.host.collect_sample', side_effect=lambda *a, **k: {'cgroups': {cid: dict(group)}}):
+            first = host.telemetry(cid)
+            group['anon_bytes'] = 500
+            host.allocation_proofs[cid] = {}  # synthetic accepted Qwen readiness proof
+            second = host.telemetry(cid)
+        self.assertEqual(first['required_host_demand']['required_bytes'], 1350)
+        self.assertEqual(first['required_host_demand']['reclaimable_file_bytes'], 8650)
+        self.assertEqual(second['required_host_demand']['required_bytes'], 850)
+        self.assertEqual(host.measured['Q1']['required_bytes'], 1350)
+        self.assertEqual(host.measured['Q1']['sample_phase'], 'pre_readiness_load')
+        self.assertEqual(host.measured['Q1']['load_phase_sample_count'], 1)
+        self.assertEqual(host.measured['Q1']['load_phase_peak_required_bytes'], 1350)
+        self.assertTrue(host.measured['Q1']['sampled_peak_not_absolute'])
+        host.write_json.assert_not_called()
+
+        # Real owner persistence callback preserves the transient loader peak.
+        host.write({'phase': 'ACTIVE'})
+        persisted = json.loads(json.dumps(host.write_json.call_args.args[1]))
+        resumed = self.bare()
+        resumed.measured = {**persisted, 'G1': copy.deepcopy(persisted['Q1'])}
+        resumed.campaign_containers, resumed.assert_idle = Mock(return_value=[]), Mock()
+        with patch('benchmark.host.collect_sample', return_value={'host': {'available_bytes': 32 * 1024**3}}):
+            admitted = resumed.dispatch({'op': 'admit_mixed', 'measured_glm': 1350, 'measured_qwen': 850})
+        self.assertEqual(admitted['caps'], {'G1': 1688, 'Q1': 1688})
+        self.assertEqual(admitted['measured_required_demand']['Q1']['required_bytes'], 1350)
+        self.assertEqual(admitted['usable_host_bytes_after_retirement'], 32 * 1024**3)
+        self.assertTrue(admitted['private_receipt'].endswith('/mixed-manifests.json'))
+        self.assertEqual([m['ram_cap_bytes'] for m in admitted['manifests']], [1688, 1688])
+        self.assertEqual(resumed.write_json.call_args.args[1]['measured']['Q1']['load_phase_sample_count'], 1)
+
+    def test_start_and_readiness_sample_before_return_and_http(self):
+        host, events = self.bare(), []
+        cid = '1' * 64
+        host._exact = Mock()
+        host.readiness_failure = Mock(return_value=None)
+        host.telemetry = Mock(side_effect=lambda actual: events.append(('sample', actual)))
+        with patch('benchmark.host.command', side_effect=lambda argv, *a: events.append(('start', argv[-1]))):
+            host.start({'id': cid})
+        self.assertEqual(events, [('start', cid), ('sample', cid)])
+        events.clear()
+        host.readiness_failure = Mock(return_value=None)
+        host._readiness = Mock(side_effect=lambda actual: events.append(('http', actual)) or {'ready': False})
+        self.assertEqual(host.readiness(cid, 5), {'ready': False})
+        self.assertEqual(events, [('sample', cid), ('http', cid)])
+
+    def test_terminal_immediately_after_start_persists_diagnosis_before_sampling(self):
+        for oom in (False, True):
+            with self.subTest(oom=oom):
+                host = self.bare()
+                cid = '1' * 64
+                container = {'Id': cid, 'Name': '/benchrun-offline-g1', 'Image': 'sha256:'+'2'*64,
+                    'Config': {'Labels': {'benchmark.campaign': host.campaign, 'benchmark.owner': 'llm-benchmark'}},
+                    'HostConfig': {'RestartPolicy': {'Name': 'no'}},
+                    'State': {'Running': False, 'Status': 'exited', 'OOMKilled': oom, 'ExitCode': 137 if oom else 1}}
+                resource = {k: v for k, v in host.resource(container).items() if k != 'running'}
+                host.owner.resources = [{'resource': resource, 'state': 'CREATED'}]
+                host.docker_inspect = Mock(return_value=container)
+                host._exact, host.telemetry, host.write_bytes = Mock(), Mock(), Mock()
+                with patch('benchmark.host.command', return_value=SimpleNamespace(returncode=0, stdout=b'synthetic', stderr=b'')):
+                    with self.assertRaisesRegex(ValueError, 'STOP_OOM' if oom else 'STOP_BACKEND_EXITED'):
+                        host.start(resource)
+                host.telemetry.assert_not_called()
+                host.write_bytes.assert_called_once()
+                saved = host.write_json.call_args
+                self.assertEqual(saved.args[0], 'loads/' + cid + '-failure.json')
+                self.assertEqual(saved.args[1]['state'], 'STOP_OOM' if oom else 'STOP_BACKEND_EXITED')
+
+    def test_mixed_refuses_warm_only_evidence_even_with_required_components(self):
+        host = self.bare()
+        host.campaign_containers, host.assert_idle = Mock(return_value=[]), Mock()
+        host.measured = {p: {'evidence_status': 'MEASURED_COMPONENTS', 'required_bytes': 100}
+                         for p in ('G1', 'Q1')}
+        with patch('benchmark.host.collect_sample') as collect:
+            with self.assertRaisesRegex(ValueError, 'mixed_load_demand_evidence_unavailable'):
+                host.dispatch({'op': 'admit_mixed', 'measured_glm': 100, 'measured_qwen': 100})
+        collect.assert_not_called()
 
 
 if __name__ == '__main__':

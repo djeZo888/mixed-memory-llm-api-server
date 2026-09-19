@@ -112,6 +112,39 @@ class FixtureTests(unittest.TestCase):
             self.assertEqual(len(calls), 1)
             self.assertEqual(first, original)
 
+    def test_warmup_exact_count_covers_2048_batch_at_all_ladder_capacities(self):
+        for model in ("bench-glm-5.3", "bench-qwen3.8-27b"):
+            for capacity in (4096, 16384, 65536):
+                with self.subTest(model=model, capacity=capacity):
+                    counter = lambda raw: synthetic_count(raw, capacity)
+                    sample, counted = f.warmup_sample(model, capacity, "warmup-fresh-0001", counter, synthetic=True)
+                    raw = f.serialize_validate(sample)
+                    actual = counter(raw)["input_tokens"]
+                    self.assertEqual(actual, counted["input_tokens"])
+                    self.assertGreaterEqual(actual, 2304)
+                    self.assertLessEqual(actual, 2432)
+                    self.assertLessEqual(actual, capacity - sample["body"]["max_tokens"] - 256)
+                    self.assertEqual(counted["body_sha256"], f.digest(raw))
+                    self.assertEqual(counted["timing"], "discarded")
+                    self.assertEqual(counted["minimum_prefill_tokens"], 2048)
+                    self.assertEqual(counted["cache_template_allowance_tokens"], 256)
+                    self.assertTrue(sample["body"]["messages"][0]["content"].startswith("trial-prefix=warmup-fresh-0001"))
+
+    def test_warmup_fresh_prefix_separate_seed_and_no_estimated_count(self):
+        first, _ = f.warmup_sample("bench-glm-5.3", 4096, "warmup-fresh-0001", synthetic_count, synthetic=True)
+        second, _ = f.warmup_sample("bench-glm-5.3", 4096, "warmup-fresh-0002", synthetic_count, synthetic=True)
+        self.assertNotEqual(f.serialize_validate(first), f.serialize_validate(second))
+        self.assertEqual(first["seed"], "warmup-only-seed")
+        self.assertNotEqual(first["seed"], "testseed0001")
+        with self.assertRaises(f.HarnessError):
+            f.warmup_sample("bench-glm-5.3", 4096, "trial-measured-0001", synthetic_count, synthetic=True)
+        with self.assertRaises(f.HarnessError):
+            f.warmup_sample("bench-glm-5.3", 4096, "warmup-fresh-0003", synthetic_count)
+        def insufficient(raw):
+            return {**synthetic_count(raw), "input_tokens": 2303}
+        with self.assertRaises(f.HarnessError):
+            f.warmup_sample("bench-glm-5.3", 4096, "warmup-fresh-0003", insufficient, synthetic=True)
+
     def test_real_file_tool_call_continuation_and_recount(self):
         s = sample(kind="tool")
         call = {"role": "assistant", "content": None, "tool_calls": [{"id": "model-returned-id", "type": "function",

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import copy
+import contextvars
 import hashlib
 import json
 import os
@@ -26,16 +27,22 @@ from .lifecycle import CONTROL_UNIT, BOOT_UNIT, digest, require, validate_restor
 from .owner import CampaignOwner, HostCallbacks, WorkerVerificationPending
 from .campaign import CampaignBudget
 from .profiles import read_config, command_manifest, split_resources
-from .telemetry import collect_sample
+from .telemetry import collect_sample, required_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
 INSTALL = Path('/usr/local/lib/llm-server/control-api')
 KEYS = {'inference': Path('/data/services/secrets/llm-api-key'), 'control': Path('/etc/llm-server/control-api-key')}
 ENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'LC_ALL': 'C'}
 CID = re.compile(r'[a-f0-9]{64}\Z')
+_COMMAND_DEADLINE = contextvars.ContextVar('benchmark_command_deadline', default=None)
 
 
 def command(argv, timeout=30, *, allow_missing=False):
+    deadline = _COMMAND_DEADLINE.get()
+    if deadline is not None:
+        remaining = deadline - time.monotonic()
+        require(remaining > 0, 'host_operation_deadline')
+        timeout = min(timeout, remaining)
     result = subprocess.run(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, timeout=timeout, env=ENV, check=False)
     if result.returncode and not allow_missing:
@@ -80,6 +87,10 @@ def http_json(port, route, payload=None, timeout_s=30, *, control=False):
     allowed = (30000,) if control else (30002, 30004, 31002, 31004)
     require(port in allowed and isinstance(route, str) and route.startswith('/') and
             not route.startswith('//') and '\n' not in route and timeout_s <= 7200, 'unsafe_http_route')
+    deadline = _COMMAND_DEADLINE.get()
+    if deadline is not None:
+        require(deadline > time.monotonic(), 'host_operation_deadline')
+        timeout_s = min(timeout_s, deadline - time.monotonic())
     key, _ = protected(KEYS['control' if control else 'inference'], private=True, maximum=4096)
     token = key.decode().strip()
     require(token and not any(c.isspace() for c in token), 'invalid_protected_key')
@@ -150,6 +161,8 @@ class LinuxHost:
             require(value == expected, 'manifest_not_current_generated_source')
             self.manifests[digest(value)] = value
         require(len(self.manifests) == 12, 'duplicate_reviewed_manifest')
+        self.mapping_helpers_verified = False
+        self.allocation_proofs = {}
         self.original_secrets = None
         self.requests, self.load_manifests, self.samples = {}, {}, {}
         self.measured = self.read_json('measured-demand.json', missing=True) or {}
@@ -284,6 +297,10 @@ class LinuxHost:
         require(not any(re.search(r':(?:30002|30004|31002|31004)\b', line) for line in lines), 'inference_connection_active')
 
     def gate(self, stage, lease, original, resources):
+        if stage == 'restore':
+            # Owner.launch also invokes this on failure; restoration is outside
+            # the measurement deadline even when admission/load just expired.
+            _COMMAND_DEADLINE.set(None)
         lease.validate()
         self.pin_sources()
         self.jobs()
@@ -293,6 +310,8 @@ class LinuxHost:
             require(units[CONTROL_UNIT]['active'] == 'inactive', 'control_not_frozen')
         if stage in {'admission', 'production_stop', 'restore', 'retire', 'stop', 'remove', 'pre_release'}:
             self.assert_idle()
+        if stage == 'control_frozen':
+            self.verify_mapping_helpers(lease)
         if stage in {'production_stopped', 'launch'}:
             state = self.manager.read_state()
             container = self.manager.trusted_container(state['container']) if state.get('container') else None
@@ -300,6 +319,89 @@ class LinuxHost:
         if stage in {'benchmarks_absent', 'pre_release'}:
             require(not self.campaign_containers(), 'benchmark_containers_remain')
             self.credentials()
+
+    def verify_mapping_helpers(self, lease):
+        """No-GPU exact-image probes before production stop; no model or key mounts.
+
+        Both probes are tracked in the existing owner ledger and removed by full
+        ID. Failure leaves production running and the normal owner restores only
+        its control service; no Python is assumed in the GLM runtime.
+        """
+        if self.mapping_helpers_verified:
+            return
+        lease.validate()
+        candidates = {kind: next(m for m in self.manifests.values() if m['placement'].startswith(kind))
+                      for kind in ('G', 'Q')}
+        for kind, manifest in candidates.items():
+            name = self.campaign + '-mapping-helper-' + kind.lower()
+            probe = ['/usr/bin/docker', 'create', '--name', name, '--network', 'none', '--read-only',
+                     '--restart', 'no', '--log-driver', 'none', '--runtime', 'nvidia',
+                     '--env', 'NVIDIA_VISIBLE_DEVICES=none', '--env', 'NVIDIA_DRIVER_CAPABILITIES=compute,utility',
+                     '--label', 'benchmark.campaign=' + self.campaign, '--label', 'benchmark.owner=llm-benchmark',
+                     '--pull=never', '--entrypoint', '/bin/sh', manifest['image'], '-ec']
+            check = ('test -x /opt/llama/llama-server; command -v nvidia-smi >/dev/null; /opt/llama/llama-server --help'
+                     if kind == 'G' else "command -v python3 >/dev/null; python3 -c 'import ctypes,json,uuid; ctypes.CDLL(\"libcuda.so.1\")'")
+            self.write_json('mapping-helper-' + kind.lower() + '.json',
+                            {'phase': 'PLANNED', 'name': name, 'image': manifest['image'], 'no_gpu': True})
+            self.guards(lease)
+            cid = command([*probe, check], 60).stdout.decode().strip()
+            require(bool(CID.fullmatch(cid)), 'mapping_helper_create_identity_invalid')
+            container = self.docker_inspect(cid)
+            resource = self.owner._resource(self.resource(container))
+            require(resource['name'] == name and resource['image_id'] in manifest['expected_image_ids'],
+                    'mapping_helper_image_changed')
+            row = {'resource': resource, 'state': 'CREATED'}
+            self.owner.resources.append(row)
+            self.owner._save()
+            try:
+                self.guards(lease)
+                completed = command(['/usr/bin/docker', 'start', '--attach', cid], 60)
+                self.guards(lease)
+                observed = self._exact(resource)
+                require(not observed['State']['Running'] and observed['State'].get('ExitCode') == 0,
+                        'mapping_helper_unavailable')
+                if kind == 'G':
+                    require(b'--list-devices' in completed.stdout + completed.stderr, 'native_enumeration_helper_unavailable')
+                self.write_json('mapping-helper-' + kind.lower() + '.json',
+                    {'phase': 'VERIFIED', 'name': name, 'id': cid, 'image_id': resource['image_id'],
+                     'no_gpu': True, 'stdout_sha256': hashlib.sha256(completed.stdout).hexdigest()})
+            finally:
+                # Only this exact probe may be retired here, never production.
+                self.guards(lease)
+                current = self._exact(resource)
+                if current['State']['Running']:
+                    command(['/usr/bin/docker', 'stop', '--time', '2', cid], 10)
+                require(not self._exact(resource)['State']['Running'], 'mapping_helper_still_running')
+                command(['/usr/bin/docker', 'rm', cid], 30)
+                require(self.docker_inspect(cid) is None, 'mapping_helper_removal_failed')
+                row['state'] = 'REMOVED'
+                self.owner._save()
+                self.guards(lease)
+        self.mapping_helpers_verified = True
+
+    def cuda_mapping(self, cid, manifest, container, timeout_s=30):
+        expected = manifest['gpu_uuids']
+        if manifest['placement'].startswith('G'):
+            # CUDA_VISIBLE_DEVICES is an explicit UUID-ordered launch contract,
+            # verified on the actual container; management indices are not used
+            # to infer CUDA order. Native enumeration proves available ordinals.
+            values = [v.split('=', 1)[1] for v in container['Config'].get('Env', [])
+                      if v.startswith('CUDA_VISIBLE_DEVICES=')]
+            require(values == [','.join(expected)], 'glm_cuda_uuid_visibility_unproved')
+            native = command(['/usr/bin/docker', 'exec', cid, '/opt/llama/llama-server', '--list-devices'], timeout_s)
+            ordinals = re.findall(r'^\s*CUDA(\d+):', native.stdout.decode('utf-8', 'replace'), re.M)
+            require(ordinals == [str(i) for i in range(len(expected))], 'glm_native_device_enumeration_mismatch')
+            visible = command(['/usr/bin/docker', 'exec', cid, 'nvidia-smi', '--query-gpu=uuid',
+                               '--format=csv,noheader,nounits'], timeout_s).stdout.decode().splitlines()
+            visible = [line.strip() for line in visible if line.strip()]
+            require(len(visible) == len(expected) and set(visible) == set(expected), 'glm_mounted_gpu_visibility_mismatch')
+            return list(expected)
+        query = ('import ctypes,json,uuid; c=ctypes.CDLL("libcuda.so.1"); '
+                 'assert c.cuInit(0)==0; n=ctypes.c_int(); assert c.cuDeviceGetCount(ctypes.byref(n))==0; '
+                 'out=[]\nfor i in range(n.value):\n b=(ctypes.c_ubyte*16)(); '
+                 'assert c.cuDeviceGetUuid(b,i)==0; out.append("GPU-"+str(uuid.UUID(bytes=bytes(b))))\n'
+                 'print(json.dumps(out))')
+        return json.loads(command(['/usr/bin/docker', 'exec', cid, 'python3', '-c', query], timeout_s).stdout)
 
     def control(self, action):
         require(action in {'start', 'stop'}, 'invalid_control_action')
@@ -368,6 +470,12 @@ class LinuxHost:
     def start(self, resource):
         self._exact(resource)
         command(['/usr/bin/docker', 'start', resource['id']], 120)
+        failure = self.readiness_failure(resource['id'])
+        require(failure is None, failure['state'] if failure else 'backend_failed_after_start')
+        # Capture loader anon/kernel/mapped-file demand before launch returns.
+        # The owner's following save persists this evidence; no heavy write is
+        # added to the cheap sampling path itself.
+        self.telemetry(resource['id'])
 
     def stop(self, resource):
         self.assert_idle()
@@ -421,10 +529,53 @@ class LinuxHost:
         # Do not run heavy root-payload guards or write at 1 Hz. Worker persists
         # telemetry privately; host retains bounded summary samples in memory.
         self.samples[cid] = self.samples[cid][-21610:]
-        placement = self.load_manifests.get(cid, {}).get('placement')
-        demand = row['cgroups'][cid]['current_bytes']
-        if placement in {'G1', 'Q1'} and type(demand) is int:
-            self.measured[placement] = max(self.measured.get(placement, 0), demand)
+        manifest = self.load_manifests.get(cid, {})
+        placement = manifest.get('placement')
+        parsed = self.allocation_proofs.get(cid)
+        row['required_host_demand'] = {'evidence_status': 'UNAVAILABLE', 'required_bytes': None}
+        if placement in {'G1', 'Q1'}:
+            group = row['cgroups'][cid]
+            try:
+                if placement == 'G1' and parsed is not None:
+                    argv = manifest['native_argv']
+                    require('--load-mode' in argv and argv[argv.index('--load-mode') + 1] == 'none' and
+                            'CPU' in (parsed.get('weights_mib_log_label') or {}) and
+                            'CPU_Mapped' not in (parsed.get('weights_mib_log_label') or {}),
+                            'glm_required_resident_weight_basis_unavailable')
+                    file_required = 0
+                    basis = 'verified_native_load_mode_none_and_nonmapped_CPU_weights; mapped_file_and_shmem_retained'
+                else:
+                    file_required = min(group['file_bytes'], group['file_mapped_bytes'] + group['shmem_bytes'])
+                    basis = 'load_and_runtime_mapped_file_and_shmem_retained_conservatively; unmapped_file_cache_separate'
+                evidence = required_host_demand(group, required_file_backed_bytes=file_required,
+                    host_workspace_bytes=(parsed or {}).get('host_workspace_bytes'), workspace_in_anon=True, file_basis=basis)
+                evidence.update(container_id=cid, manifest_sha256=digest(manifest),
+                    sample_timestamp_monotonic_s=row.get('timestamp_monotonic_s'),
+                    sample_observed_at=time.time(), allocation_proof_available=parsed is not None,
+                    sample_phase='pre_readiness_load' if parsed is None else 'ready_runtime',
+                    sampled_peak_not_absolute=True)
+                previous = self.measured.get(placement, {})
+                previous = previous if isinstance(previous, dict) else {}
+                coverage = {key: previous.get(key, default) for key, default in (
+                    ('load_phase_sample_count', 0), ('load_phase_peak_required_bytes', 0),
+                    ('load_phase_observed_span_s', 0.0), ('load_phase_last_sample', None))}
+                if parsed is None:
+                    coverage['load_phase_sample_count'] += 1
+                    coverage['load_phase_peak_required_bytes'] = max(
+                        coverage['load_phase_peak_required_bytes'], evidence['required_bytes'])
+                    last = coverage['load_phase_last_sample']
+                    if last and last['container_id'] == cid:
+                        coverage['load_phase_observed_span_s'] += max(
+                            0, evidence['sample_observed_at'] - last['observed_at'])
+                    coverage['load_phase_last_sample'] = {'container_id': cid,
+                                                          'observed_at': evidence['sample_observed_at']}
+                evidence.update(coverage)
+                row['required_host_demand'] = evidence
+                peak = evidence if evidence['required_bytes'] >= previous.get('required_bytes', 0) else previous
+                self.measured[placement] = {**copy.deepcopy(peak), **copy.deepcopy(coverage)}
+            except (TypeError, ValueError, KeyError):
+                pass  # unavailable is explicit; never substitute raw current or zero
+
         return row
 
     def quiescent(self, cid, point):
@@ -476,14 +627,7 @@ class LinuxHost:
             native = receipts[0] if len(receipts) == 1 else None
         else:
             parsed, native = parse_glm_log(text), container['Config']['Cmd']
-        # Driver API establishes the visible CUDA ordinal order inside this
-        # exact container. It performs no model load or tensor computation.
-        query = ('import ctypes,json,uuid; c=ctypes.CDLL("libcuda.so.1"); '
-                 'assert c.cuInit(0)==0; n=ctypes.c_int(); assert c.cuDeviceGetCount(ctypes.byref(n))==0; '
-                 'out=[]\nfor i in range(n.value):\n b=(ctypes.c_ubyte*16)(); '
-                 'assert c.cuDeviceGetUuid(b,i)==0; out.append("GPU-"+str(uuid.UUID(bytes=bytes(b))))\n'
-                 'print(json.dumps(out))')
-        cuda = json.loads(command(['/usr/bin/docker', 'exec', cid, 'python3', '-c', query], 30).stdout)
+        cuda = self.cuda_mapping(cid, manifest, container)
         device_requests = container['HostConfig'].get('DeviceRequests') or []
         device_ids = [uuid for request in device_requests for uuid in request.get('DeviceIDs', [])]
         sample = self.telemetry(cid)
@@ -503,6 +647,8 @@ class LinuxHost:
         gate = allocation_gate(manifest, parsed, observed)
         result = {'allocation': gate, 'parsed': parsed, 'observed': observed, 'server_facts': facts,
                   'raw_log_path': self.log_root + '/loads/' + cid + '-allocation.log'}
+        if gate['status'] == 'ALLOCATION_PROOF_ACCEPTED':
+            self.allocation_proofs[cid] = parsed
         self.write_json('loads/' + cid + '-allocation.json', result)
         return result
 
@@ -512,20 +658,66 @@ class LinuxHost:
             request = urllib.request.Request(f'http://127.0.0.1:{port}/v1/models', headers=headers)
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
             try:
-                with opener.open(request, timeout=5):
+                deadline = _COMMAND_DEADLINE.get()
+                timeout = 5 if deadline is None else min(5, deadline - time.monotonic())
+                require(timeout > 0, 'host_operation_deadline')
+                with opener.open(request, timeout=timeout):
                     raise ValueError('native_auth_missing_or_wrong_key_accepted')
             except urllib.error.HTTPError as error:
                 require(error.code == 401, 'native_auth_failure_status_unverified')
         return {'missing_key': 401, 'wrong_key': 401, 'protected_valid_key': 200}
 
-    def readiness(self, cid):
+    def readiness_failure(self, cid):
+        rows = [row['resource'] for row in self.owner.resources
+                if row['resource']['id'] == cid and row['state'] != 'REMOVED']
+        require(len(rows) == 1, 'unowned_container_id')
+        container = self.docker_inspect(cid)
+        if container is not None:
+            require({k: v for k, v in self.resource(container).items() if k != 'running'} == rows[0],
+                    'owned_container_identity_changed')
+            state = container['State']
+        else:
+            state = {'Status': 'missing', 'Running': False}
+        failed = not state.get('Running') or state.get('Dead') or state.get('OOMKilled') or state.get('Restarting')
+        if not failed:
+            return None
+        diagnosis = {key: state.get(key) for key in ('Status', 'Running', 'Dead', 'OOMKilled', 'Restarting', 'ExitCode')}
+        result = {'ready': False, 'failed': True,
+                  'state': 'STOP_OOM' if state.get('OOMKilled') else 'STOP_BACKEND_EXITED',
+                  'container_id': cid, 'diagnostics': diagnosis}
+        if container is not None:
+            logs = command(['/usr/bin/docker', 'logs', '--tail', '2000', cid], 20, allow_missing=True)
+            if logs.returncode == 0:
+                raw = logs.stdout + logs.stderr
+                self.write_bytes('loads/' + cid + '-failed.log', raw[:1024 * 1024])
+                result['private_log_sha256'] = hashlib.sha256(raw[:1024 * 1024]).hexdigest()
+                result['private_log_truncated'] = len(raw) > 1024 * 1024
+        self.write_json('loads/' + cid + '-failure.json', result)
+        return result
+
+    def readiness(self, cid, timeout_s=120):
+        require(type(timeout_s) in (int, float) and 0 < timeout_s <= 7200, 'invalid_readiness_deadline')
+        remaining = self.budget.checkpoint()
+        require(remaining > 0, 'STOP_BUDGET')
+        token = _COMMAND_DEADLINE.set(time.monotonic() + min(timeout_s, remaining))
+        try:
+            failure = self.readiness_failure(cid)
+            if failure is not None:
+                return failure
+            self.telemetry(cid)  # cheap load sample before a possibly blocking readiness HTTP probe
+            return self._readiness(cid)
+        finally:
+            _COMMAND_DEADLINE.reset(token)
+
+    def _readiness(self, cid):
         manifest = self.load_manifests.get(cid) or self.read_json('loads/' + cid + '.json')['manifest']
         try:
             models = http_json(manifest['transport']['port'], '/v1/models', timeout_s=5)
             alias = 'bench-glm-5.3' if manifest['placement'].startswith('G') else 'bench-qwen3.8-27b'
             require(any(row.get('id') == alias for row in models.get('data', [])), 'served_alias_mismatch')
         except Exception:
-            return {'ready': False, 'state': 'NOT_READY'}
+            terminal = self.readiness_failure(cid)
+            return terminal if terminal is not None else {'ready': False, 'failed': False, 'state': 'NOT_READY'}
         auth = self.auth_probe(manifest['transport']['port'])
         proof = self.allocation(cid)
         template_hash = None
@@ -632,13 +824,21 @@ class LinuxHost:
             self.owner.begin()
             return {'phase': self.owner.phase, 'budget': self.budget.data, 'log_root': self.log_root}
         if op == 'load':
+            remaining = self.budget.checkpoint()
+            require(remaining > 0, 'STOP_BUDGET')
             manifest = self.manifests.get(args.get('manifest_sha256'))
             require(manifest is not None, 'unknown_manifest')
-            return self.owner.launch(manifest)
+            token = _COMMAND_DEADLINE.set(time.monotonic() + min(7200, remaining))
+            try:
+                return self.owner.launch(manifest)
+            finally:
+                _COMMAND_DEADLINE.reset(token)
         if op == 'retire':
             self.owner.retire(args['id'])
             return {'retired': args['id']}
-        if op in {'telemetry', 'allocation', 'readiness'}:
+        if op == 'readiness':
+            return self.readiness(args['id'], args.get('timeout_s', 120))
+        if op in {'telemetry', 'allocation'}:
             return getattr(self, op)(args['id'])
         if op == 'quiescent':
             return self.quiescent(args['id'], args['point'])
@@ -657,9 +857,20 @@ class LinuxHost:
             return {'request_ended': args['id']}
         if op == 'admit_mixed':
             measurements = dict(self.measured)
+            require(not self.campaign_containers() and
+                    all(row['state'] == 'REMOVED' for row in self.owner.resources), 'retire_prior_allocations_before_mixed_caps')
+            self.assert_idle()
+            require(all(isinstance(measurements.get(p), dict) and
+                        measurements[p].get('evidence_status') == 'MEASURED_COMPONENTS' for p in ('G1', 'Q1')),
+                    'mixed_required_demand_evidence_unavailable')
+            require(all(type(measurements[p].get('load_phase_sample_count')) is int and
+                        measurements[p]['load_phase_sample_count'] > 0 and
+                        type(measurements[p].get('load_phase_peak_required_bytes')) is int and
+                        0 < measurements[p]['load_phase_peak_required_bytes'] <= measurements[p]['required_bytes']
+                        for p in ('G1', 'Q1')), 'mixed_load_demand_evidence_unavailable')
             require(type(args.get('measured_glm')) is int and type(args.get('measured_qwen')) is int and
-                    measurements.get('G1', 0) >= args['measured_glm'] > 0 and
-                    measurements.get('Q1', 0) >= args['measured_qwen'] > 0, 'mixed_demand_not_measured')
+                    measurements['G1']['required_bytes'] >= args['measured_glm'] > 0 and
+                    measurements['Q1']['required_bytes'] >= args['measured_qwen'] > 0, 'mixed_demand_not_measured')
             sample = collect_sample({})
             available = sample['host']['available_bytes']
             require(type(available) is int, 'mixed_host_capacity_unproved')
@@ -671,11 +882,17 @@ class LinuxHost:
                 self.manifests[digest(manifest)] = manifest
             self.owner.reviewed = frozenset(self.manifests)
             self.write_json('mixed-manifests.json', {'commands': manifests, 'measured': measurements})
-            return {'manifests': manifests, 'caps': caps}
+            return {'manifests': manifests, 'caps': caps, 'measured_required_demand': measurements,
+                    'usable_host_bytes_after_retirement': requested_available,
+                    'private_receipt': self.log_root + '/mixed-manifests.json'}
         if op in {'restore', 'recover'}:
             if self.owner.phase == 'POST_RELEASE_LAN_VERIFICATION_PENDING':
                 return {'phase': self.owner.phase, 'worker_nonce': self.worker_nonce, 'restored_at': self.restored_at, 'local_restoration': 'VERIFIED', 'restored': False}
-            result = self.owner.restore() if op == 'restore' else self.recover()
+            token = _COMMAND_DEADLINE.set(None)
+            try:
+                result = self.owner.restore() if op == 'restore' else self.recover()
+            finally:
+                _COMMAND_DEADLINE.reset(token)
             return {**result, 'phase': self.owner.phase, 'worker_nonce': self.worker_nonce, 'restored_at': self.restored_at}
         if op in {'finalize', 'verify_restoration'}:
             return self.finalize(args.get('receipt', args))

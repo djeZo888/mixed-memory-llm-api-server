@@ -70,6 +70,15 @@ def load_arm(state, reviewed):
     return value
 
 
+def run_preflight():
+    """Offline source-evidence gate, before key reads, staging or ownership."""
+    expected = profiles.read_config().get("glm_offload_expectation", {})
+    if (expected.get("evidence_status") != "REVIEWED_LOG_COUNT_SEMANTICS"
+            or not expected.get("provenance")
+            or any(type(expected.get(k)) is not int or expected[k] <= 0 for k in ("offloaded_layers", "total_layers"))):
+        raise RuntimeError("BLOCKED_GLM_OFFLOAD_LOG_COUNT_EVIDENCE")
+
+
 # Source staging is a reviewed operation in RUN only. Files are a closed hash
 # inventory, not arbitrary tar extraction. All writes use the installed anchored
 # writer and are guarded before/after. No installation or production file edits.
@@ -158,6 +167,7 @@ class Campaign:
         self.progress = json.loads((self.state / "progress.json").read_bytes())
         self.active, self.samples, self.safety = {}, {}, {}
         self.demand = dict(self.progress.get("measured_demand_bytes", {}))
+        self.demand_evidence = dict(self.progress.get("measured_demand_evidence", {}))
         self.stop = threading.Event()
         self.private = self.state / "private"
         self.private.mkdir(mode=0o700, exist_ok=True)
@@ -170,6 +180,7 @@ class Campaign:
             if phase:
                 self.progress["phase"] = phase
             self.progress["measured_demand_bytes"] = dict(self.demand)
+            self.progress["measured_demand_evidence"] = dict(self.demand_evidence)
             save(self.state / "progress.json", self.progress)
 
     def emit(self, record):
@@ -204,10 +215,13 @@ class Campaign:
                         verdict = "SKIP_UNSAFE_PLACEMENT"
                     if verdict.startswith(("STOP_", "SKIP_")):
                         self.safety[cid] = verdict
-                    demand = group.get("current_bytes")
+                    evidence = row.get("required_host_demand") or {}
+                    demand = evidence.get("required_bytes")
                     if type(demand) is int:
                         p = self.active[cid]["manifest"]["placement"]
-                        self.demand[p] = max(self.demand.get(p, 0), demand)
+                        if demand >= self.demand.get(p, 0):
+                            self.demand[p] = demand
+                            self.demand_evidence[p] = evidence
                 self.emit({"type": "telemetry", "container": cid, "sample": row})
             except Exception:
                 with self.lock:
@@ -221,35 +235,58 @@ class Campaign:
 
     def loaded(self, manifest):
         begin = self.clock()
+        remaining = self.host.call("budget").get("remaining_s", 0)
+        if remaining <= 0:
+            raise RuntimeError("STOP_BUDGET")
+        deadline = begin + min(7200, remaining)
         resource = self.host.call("load", manifest_sha256=fixtures.digest(fixtures.canonical(manifest)))
         cid = resource["id"]
-        while True:
-            proof = self.host.call("readiness", id=cid)
-            if proof.get("ready"):
-                break
-            if proof.get("failed") or self.clock() - begin >= 7200:
-                raise RuntimeError("STOP_ALLOCATION_FAILURE")
-            budget = self.host.call("budget")
-            if budget.get("remaining_s", 0) <= 0:
-                raise RuntimeError("STOP_BUDGET")
-            self.sleep(2)
-        if proof.get("allocation", {}).get("status") != "ALLOCATION_PROOF_ACCEPTED":
-            raise RuntimeError("STOP_ALLOCATION_PROOF")
-        ready = self.host.call("quiescent", id=cid, point="readiness")
+        # Observe loader demand before readiness. Host also samples immediately
+        # after start, so a fast-ready model cannot produce warm-only caps.
         row = self.host.call("telemetry", id=cid)
         groups = row.get("cgroups", {})
         baseline = groups.get(cid, next(iter(groups.values()), {}))
-        self.active[cid] = {"manifest": manifest, "baseline": baseline, "template_sha256": proof.get("template_sha256")}
+        self.active[cid] = {"manifest": manifest, "baseline": baseline,
+                            "template_sha256": None, "phase": "loading"}
         self.samples[cid] = []
+        self.collect()
+        self.record()
+        while True:
+            remaining = min(deadline - self.clock(), self.host.call("budget").get("remaining_s", 0))
+            if remaining <= 0:
+                raise RuntimeError("STOP_BUDGET")
+            proof = self.host.call("readiness", id=cid, timeout_s=remaining)
+            if self.clock() >= deadline:
+                raise RuntimeError("STOP_BUDGET")
+            if proof.get("ready"):
+                break
+            if proof.get("failed"):
+                raise RuntimeError("STOP_OOM" if proof.get("status", proof.get("state")) == "STOP_OOM" else "STOP_ALLOCATION_FAILURE")
+            self.collect()
+            self.record()
+            self.sleep(min(1, max(0, deadline - self.clock())))
+        if proof.get("allocation", {}).get("status") != "ALLOCATION_PROOF_ACCEPTED":
+            raise RuntimeError("STOP_ALLOCATION_PROOF")
+        ready = self.host.call("quiescent", id=cid, point="readiness")
+        self.active[cid].update(template_sha256=proof.get("template_sha256"), phase="ready")
         self.emit({"type": "load", "placement": manifest["placement"], "capacity": manifest["configured_capacity"],
                    "client_load_seconds": self.clock() - begin, "readiness": ready, "allocation": proof["allocation"]})
         # Warmup has a different seed AND prefix from every measured fixture.
-        warm = fixtures.build_sample("bench-glm-5.3" if manifest["placement"].startswith("G") else "bench-qwen3.8-27b",
-                                     12, "warmup-only-seed", "warmup-prefix-" + str(time.time_ns()))
+        warm, counted = fixtures.warmup_sample("bench-glm-5.3" if manifest["placement"].startswith("G") else "bench-qwen3.8-27b",
+                                              manifest["configured_capacity"], "warmup-prefix-" + str(time.time_ns()), self.counter(cid))
         warmed = self.request(cid, fixtures.serialize_validate(warm), "warmup-" + str(time.time_ns()), timed=False)
         if not warmed.get("parsed") or warmed["parsed"]["status"] not in ("COMPLETE", "OUTPUT_LIMIT") or warmed["summary"]["status"] not in ("COMPLETE", "OUTPUT_LIMIT"):
             raise RuntimeError("HARNESS_FAILURE_WARMUP")
-        self.emit({"type": "warm_idle", "container": cid, "checkpoint": self.host.call("quiescent", id=cid, point="warm_idle"), "warmup_timing": "discarded"})
+        counters = warmed["parsed"]["counters"]
+        evaluated = counters.get("evaluated_prompt_tokens")
+        if evaluated is None and type(counters.get("prompt_tokens")) is int and type(counters.get("cached_tokens")) is int:
+            evaluated = counters["prompt_tokens"] - counters["cached_tokens"]
+        if type(evaluated) is not int or evaluated < 2048 or not counters.get("completion_tokens"):
+            raise RuntimeError("HARNESS_FAILURE_WARMUP_PREFILL_UNPROVED")
+        self.emit({"type": "warm_idle", "container": cid, "count": counted, "evaluated_prompt_tokens": evaluated,
+                   "checkpoint": self.host.call("quiescent", id=cid, point="warm_idle"), "warmup_timing": "discarded"})
+        self.collect()
+        self.record()
         return cid
 
     def retire_all(self):
@@ -289,7 +326,35 @@ class Campaign:
         return accounting.native_counter(model, manifest["configured_capacity"], call,
                                          qwen_template_sha256=self.active[cid]["template_sha256"])
 
-    def trial(self, cid, identifier, kind="retrieval", output_cap=256, fixture_key=None):
+    def prepare_trial(self, cid, identifier, kind="retrieval", output_cap=256, fixture_key=None):
+        """Count/freeze exact bytes separately, before mixed arrival clocks start."""
+        started = self.clock()
+        manifest = self.active[cid]["manifest"]
+        model = "bench-glm-5.3" if manifest["placement"].startswith("G") else "bench-qwen3.8-27b"
+        capacity = manifest["configured_capacity"]
+        key = fixture_key or f"{model}-{capacity}-{kind}"
+        seed = hashlib.sha256(key.encode()).hexdigest()[:24]
+        nonce = "trial-" + hashlib.sha256((identifier + str(time.time_ns())).encode()).hexdigest()[:28]
+        counter = self.counter(cid)
+        with self.lock:
+            frozen = self.fixture_cache.get(key)
+        if frozen:
+            sample, counted = fixtures.matched_sample(frozen, nonce, counter, capacity)
+        else:
+            sample, counted = fixtures.fit_sample(model, capacity, seed, nonce, counter, kind=kind, output_cap=output_cap)
+            with self.lock:
+                self.fixture_cache[key] = sample
+                save(self.private / "fixtures.json", self.fixture_cache)
+        raw = fixtures.serialize_validate(sample)
+        prepared = {"sample": sample, "count": counted, "raw": raw, "placement": manifest["placement"],
+                    "capacity": capacity, "template_sha256": self.active[cid]["template_sha256"],
+                    "preparation_seconds": self.clock() - started}
+        self.emit({"type": "fixture_preparation", "id": identifier, "count": counted,
+                   "fixture_sha256": sample["fixture_sha256"], "preparation_seconds": prepared["preparation_seconds"],
+                   "included_in_mixed_schedule": False})
+        return prepared
+
+    def trial(self, cid, identifier, kind="retrieval", output_cap=256, fixture_key=None, prepared=None):
         with self.lock:
             if identifier in self.progress["completed"]:
                 return self.progress["completed"][identifier]
@@ -299,25 +364,20 @@ class Campaign:
             self.record()
         started = self.clock()
         manifest = self.active[cid]["manifest"]
-        model = "bench-glm-5.3" if manifest["placement"].startswith("G") else "bench-qwen3.8-27b"
         capacity = manifest["configured_capacity"]
-        key = fixture_key or f"{model}-{capacity}-{kind}"
-        seed = hashlib.sha256(key.encode()).hexdigest()[:24]
-        nonce = "trial-" + hashlib.sha256((identifier + str(time.time_ns())).encode()).hexdigest()[:28]
-        counter = self.counter(cid)
         result = {"type": "trial", "id": identifier, "placement": manifest["placement"], "capacity": capacity, "kind": kind}
         try:
-            with self.lock:
-                frozen = self.fixture_cache.get(key)
-            if frozen:
-                sample, counted = fixtures.matched_sample(frozen, nonce, counter, capacity)
-            else:
-                sample, counted = fixtures.fit_sample(model, capacity, seed, nonce, counter, kind=kind, output_cap=output_cap)
-                with self.lock:
-                    self.fixture_cache[key] = sample
-                    save(self.private / "fixtures.json", self.fixture_cache)
-            result.update(fixture_sha256=sample["fixture_sha256"], count=counted)
-            response = self.request(cid, fixtures.serialize_validate(sample), identifier)
+            prepared = prepared or self.prepare_trial(cid, identifier, kind, output_cap, fixture_key)
+            if prepared["placement"] != manifest["placement"] or prepared["capacity"] != capacity or prepared["template_sha256"] != self.active[cid]["template_sha256"]:
+                raise RuntimeError("prepared_runtime_identity_changed")
+            sample, counted = prepared["sample"], prepared["count"]
+            # Exact serialization was validated before schedule; bind the frozen
+            # bytes without a fresh tokenize request in the timed dispatcher.
+            if fixtures.digest(prepared["raw"]) != counted["body_sha256"]:
+                raise RuntimeError("prepared_body_changed")
+            result.update(fixture_sha256=sample["fixture_sha256"], count=counted,
+                          fixture_preparation_seconds=prepared["preparation_seconds"])
+            response = self.request(cid, prepared["raw"], identifier)
             result["sample"] = response["summary"]
             parsed = response["parsed"]
             if not parsed or response["summary"]["status"] not in ("COMPLETE", "OUTPUT_LIMIT"):
@@ -326,7 +386,7 @@ class Campaign:
                 workspace = self.private / (identifier + "-tool")
                 workspace.mkdir(mode=0o700)
                 body, tool = fixtures.execute_tool(sample, parsed["message"], workspace)
-                raw, continued_count = fixtures.validate_continuation(body, counter, capacity)
+                raw, continued_count = fixtures.validate_continuation(body, self.counter(cid), capacity)
                 second = self.request(cid, raw, identifier + "-continuation")
                 result.update(tool=tool, continuation_count=continued_count, continuation=second["summary"])
                 if second["summary"]["status"] not in ("COMPLETE", "OUTPUT_LIMIT"):
@@ -366,6 +426,8 @@ class Campaign:
             raise RuntimeError("failed_measurement_requires_review_no_automatic_resume")
         if any(mode not in completed and any(key.startswith(mode + "-") for key in completed) for mode in ("mixed-A", "mixed-B")):
             raise RuntimeError("partial_mixed_timing_requires_new_reviewed_campaign")
+        if any(group.get("state") != "COMPLETE" for group in self.progress.get("groups", {}).values()):
+            raise RuntimeError("interrupted_or_failed_group_is_missing_measurement")
         self.host.call("begin", resume=resume)
         self.record("RUNNING")
         watcher = threading.Thread(target=self.monitor, daemon=True)
@@ -388,7 +450,7 @@ class Campaign:
             self.record("MEASUREMENTS_COMPLETE")
         except Exception as error:
             code = str(error)
-            allowed = {"STOP_BUDGET", "STOP_OOM", "STOP_ALLOCATION_FAILURE", "STOP_ALLOCATION_PROOF", "STOP_SUSTAINED_MODEL_SWAP_GROWTH", "SKIP_UNSAFE_PLACEMENT", "HARNESS_FAILURE_WARMUP"}
+            allowed = {"STOP_BUDGET", "STOP_OOM", "STOP_ALLOCATION_FAILURE", "STOP_ALLOCATION_PROOF", "STOP_SUSTAINED_MODEL_SWAP_GROWTH", "SKIP_UNSAFE_PLACEMENT", "HARNESS_FAILURE_WARMUP", "HARNESS_FAILURE_WARMUP_PREFILL_UNPROVED"}
             reason = code if code in allowed else "STOPPED_REVIEW_REQUIRED"
             pending = []
             for manifest in self.armed["manifests"]:
@@ -404,7 +466,13 @@ class Campaign:
             raise
         finally:
             self.stop.set();watcher.join(timeout=10)
-            self.restore()
+            try:
+                self.restore()
+            except Exception as error:
+                self.emit({"type": "restoration_failure", "error_class": type(error).__name__,
+                           "measurement_status": self.progress.get("stop_reason", self.progress["phase"])})
+                self.record("RECOVERY_REQUIRED")
+                raise
 
     def mixed(self):
         plan = self.armed["trial_plan"]["mixed_jobs"]
@@ -412,23 +480,43 @@ class Campaign:
             identity = "mixed-" + mode
             if identity in self.progress["completed"]:
                 continue
+            self.progress.setdefault("groups", {})[identity] = {"state": "PREPARING", "measurement": "MISSING"}
+            self.record()
             self.retire_all()
+            prepared = {}
             if mode == "A":
                 qmanifest = next(m for m in self.armed["manifests"] if m["placement"] == "Q2" and m["configured_capacity"] == 16384)
                 gmanifest = next(m for m in self.armed["manifests"] if m["placement"] == "G2" and m["configured_capacity"] == 65536)
+                # Fit/freeze the later GLM job before the arrival clock starts.
+                # Retire it, then prepare Qwen and begin A with Qwen ready.
+                ids = {"glm": self.loaded(gmanifest)}
+                for job in plan:
+                    if job["model"] == "glm":
+                        prepared[job["id"]] = self.prepare_trial(ids["glm"], identity + "-" + job["id"], fixture_key=job["seed"])
+                self.retire_all()
                 ids = {"qwen": self.loaded(qmanifest)}
             else:
                 admitted = self.host.call("admit_mixed", measured_glm=self.demand.get("G1"), measured_qwen=self.demand.get("Q1"))
+                self.emit({"type": "mixed_admission", "group": identity, **admitted})
                 gmanifest, qmanifest = admitted["manifests"]
                 ids = {"glm": self.loaded(gmanifest), "qwen": self.loaded(qmanifest)}
+            for job in plan:
+                if job["id"] not in prepared:
+                    prepared[job["id"]] = self.prepare_trial(ids[job["model"]], identity + "-" + job["id"], fixture_key=job["seed"])
             def switch():
+                # Reload/warmup contributes to the separately reported switch;
+                # frozen workload fixture fitting/counting is already complete.
                 self.retire_all();ids["glm"] = self.loaded(gmanifest)
-            jobs = [{**j, "fixture_sha256": hashlib.sha256(j["seed"].encode()).hexdigest()} for j in plan]
-            # The dispatcher identities above bind the deterministic source seeds;
-            # actual fitted archive hashes are in each incremental trial record.
-            result = workload.execute_mixed(jobs, mode, lambda j: self.trial(ids[j["model"]], identity + "-" + j["id"], fixture_key=j["seed"]), switch)
+            jobs = [{**j, "fixture_sha256": prepared[j["id"]]["sample"]["fixture_sha256"]} for j in plan]
+            self.progress["groups"][identity] = {"state": "DISPATCHING", "measurement": "MISSING", "fixture_hashes": {j["id"]: j["fixture_sha256"] for j in jobs}}
+            self.record()
+            result = workload.execute_mixed(jobs, mode, lambda j: self.trial(ids[j["model"]], identity + "-" + j["id"], prepared=prepared[j["id"]]), switch)
+            result["fixture_preparation_seconds"] = sum(p["preparation_seconds"] for p in prepared.values())
+            result["timing_basis"] = "client_dispatch_and_drain; workload_fixture_fitting_counting_excluded; A_switch_includes_reload_and_discarded_warmup"
             self.emit({"type": "mixed", **result})
-            self.progress["completed"][identity] = result;self.record()
+            self.progress["completed"][identity] = result
+            self.progress["groups"][identity].update(state="COMPLETE" if result["status"] == "COMPLETE" else "FAILED", measurement="COMPLETE" if result["status"] == "COMPLETE" else "MISSING")
+            self.record()
             if result["status"] != "COMPLETE":
                 raise RuntimeError("mixed_incomplete")
 
@@ -455,6 +543,8 @@ def main(argv=None):
     if args.action == "status":
         print((args.state / "progress.json").read_text());return 0
     armed = load_arm(args.state, args.reviewed_arm_sha256)
+    if args.action == "run":
+        run_preflight()
     if os.geteuid() == 0:
         parser.error("worker runner must execute as ordinary user")
     if args.inference_key_file is None or args.control_key_file is None:
@@ -485,8 +575,14 @@ def main(argv=None):
             campaign.record("RESTORED_PENDING_WORKER_VERIFICATION")
         # Concrete independent worker-LAN proof is required before finalization.
         from .worker_verify import verify
-        receipt = verify(host.call("status"), key, control_key)
-        result = host.call("verify_restoration", receipt=receipt)
+        try:
+            receipt = verify(host.call("status"), key, control_key)
+            result = host.call("verify_restoration", receipt=receipt)
+        except Exception as error:
+            campaign.emit({"type": "worker_restoration_verification_failure", "error_class": type(error).__name__,
+                           "measurement_error_class": measurement_error, "local_restoration": "PENDING_INDEPENDENT_VERIFICATION"})
+            campaign.record("RESTORATION_VERIFICATION_FAILED")
+            raise
         campaign.emit({"type": "worker_restoration_verification", "result": result})
         campaign.record("RESTORED")
         if measurement_error:

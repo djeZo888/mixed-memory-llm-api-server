@@ -202,6 +202,37 @@ def matched_sample(sample, nonce, count, capacity, *, margin=256, tolerance=128,
                      "matched_fixture_sha256": sample["fixture_sha256"]}
 
 
+def warmup_sample(model, capacity, nonce, count, *, synthetic=False, optional_131072=False):
+    """Fit a distinct native-counted warmup covering the fixed 2048-token batch.
+
+    Warmup prompts use a separate seed/prefix, target 2304..2432 actual template
+    tokens (2048 batch plus 256 shared-prefix allowance), and keep at least 256
+    output plus 256 extra headroom. Reuse the same
+    bounded native fitting/serialization contract; no generation happens here.
+    The caller must require successful inference and discard its timing.
+    """
+    if not isinstance(nonce, str) or not nonce.startswith("warmup-"):
+        raise HarnessError("warmup requires its separate fresh prefix namespace")
+    if type(capacity) is not int or capacity not in CAPACITIES:
+        raise HarnessError("capacity is outside reviewed ladder")
+    minimum, tolerance, output_cap, prefix_allowance = 2048, 128, 256, 256
+    minimum_input = minimum + prefix_allowance
+    ceiling = minimum_input + tolerance
+    extra_margin = capacity - output_cap - ceiling
+    if extra_margin < 256:
+        raise HarnessError("capacity cannot safely exercise configured prefill batch")
+    sample, counted = fit_sample(model, capacity, "warmup-only-seed", nonce, count,
+                                 output_cap=output_cap, margin=extra_margin,
+                                 tolerance=tolerance, synthetic=synthetic,
+                                 optional_131072=optional_131072)
+    if not minimum_input <= counted["input_tokens"] <= min(ceiling, capacity - output_cap - 256):
+        raise HarnessError("warmup actual prompt does not cover configured prefill batch")
+    serialize_validate(sample)
+    return sample, {**counted, "purpose": "warmup", "timing": "discarded",
+                     "minimum_prefill_tokens": minimum, "minimum_input_tokens": minimum_input,
+                     "cache_template_allowance_tokens": prefix_allowance}
+
+
 def score_retrieval(sample, message):
     """Only schema-valid complete output receives a model correctness verdict."""
     serialize_validate(sample)

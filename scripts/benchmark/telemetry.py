@@ -60,7 +60,7 @@ def parse_cgroup(files: Mapping[str, str | None]) -> dict:
     # cgroup-v2 anon is NOT process RSS. There is no portable cgroup-v2 RSS
     # counter; expose null instead of relabeling anon/current as RSS.
     return {"current_bytes": scalar("memory.current"), "anon_bytes": stats.get("anon"),
-            "file_bytes": stats.get("file"), "rss_bytes": None,
+            "file_bytes": stats.get("file"), "file_mapped_bytes": stats.get("file_mapped"), "rss_bytes": None,
             "rss_unavailable_reason": "cgroup_v2_has_no_rss_counter",
             "kernel_bytes": stats.get("kernel"), "shmem_bytes": stats.get("shmem"),
             "peak_since_cgroup_creation_bytes": scalar("memory.peak"),
@@ -68,6 +68,52 @@ def parse_cgroup(files: Mapping[str, str | None]) -> dict:
             "pgfault": stats.get("pgfault"), "pgmajfault": stats.get("pgmajfault"),
             "events": {key: events.get(key) for key in ("low", "high", "max", "oom", "oom_kill", "oom_group_kill")},
             "allocator_workspace_bytes": None}
+
+
+def required_host_demand(cgroup: dict, *, required_file_backed_bytes: int,
+                         host_workspace_bytes: int | None = None,
+                         workspace_in_anon: bool = True, file_basis: str) -> dict:
+    """Measured required components, separating reclaimable file cache.
+
+    Retain all mapped file pages and shmem conservatively, or a larger reviewed
+    necessary resident file-weight amount. Never subtract all file pages blindly.
+    Native CUDA_Host workspace usually already contributes to cgroup anon; record
+    it separately without double counting. Unknown native workspace is allowed
+    only when the measured anon total includes runtime workspace.
+    """
+    required_keys = ("anon_bytes", "kernel_bytes", "file_bytes", "file_mapped_bytes", "shmem_bytes")
+    if not isinstance(cgroup, dict) or any(type(cgroup.get(k)) is not int or cgroup[k] < 0 for k in required_keys):
+        raise ValueError("host_demand_components_unavailable")
+    if (type(required_file_backed_bytes) is not int or required_file_backed_bytes < 0
+            or not isinstance(file_basis, str) or not file_basis or len(file_basis) > 512
+            or type(workspace_in_anon) is not bool):
+        raise ValueError("required_file_or_workspace_basis_unavailable")
+    if host_workspace_bytes is not None and (type(host_workspace_bytes) is not int or host_workspace_bytes < 0):
+        raise ValueError("native_workspace_invalid")
+    if not workspace_in_anon and host_workspace_bytes is None:
+        raise ValueError("unaccounted_host_workspace")
+    if workspace_in_anon and host_workspace_bytes is not None and host_workspace_bytes > cgroup["anon_bytes"]:
+        raise ValueError("native_workspace_exceeds_measured_anon")
+    file_total = cgroup["file_bytes"]
+    if any(cgroup[k] > file_total for k in ("file_mapped_bytes", "shmem_bytes")) or required_file_backed_bytes > file_total:
+        raise ValueError("required_file_accounting_inconsistent")
+    # mapped and shmem may overlap; their sum, capped by all charged file pages,
+    # is conservative and keeps both out of the reclaimable-cache deduction.
+    retained_file = max(required_file_backed_bytes,
+                        min(file_total, cgroup["file_mapped_bytes"] + cgroup["shmem_bytes"]))
+    extra_workspace = 0 if workspace_in_anon else host_workspace_bytes
+    required = cgroup["anon_bytes"] + cgroup["kernel_bytes"] + retained_file + extra_workspace
+    if required <= 0:
+        raise ValueError("measured_host_demand_empty")
+    return {"schema": 1, "evidence_status": "MEASURED_COMPONENTS", "required_bytes": required,
+            "anon_bytes": cgroup["anon_bytes"], "kernel_bytes": cgroup["kernel_bytes"],
+            "file_bytes": file_total, "file_mapped_bytes": cgroup["file_mapped_bytes"],
+            "shmem_bytes": cgroup["shmem_bytes"], "required_file_backed_bytes": retained_file,
+            "reclaimable_file_bytes": file_total - retained_file, "file_basis": file_basis,
+            "host_workspace_bytes": host_workspace_bytes, "workspace_extra_bytes": extra_workspace,
+            "workspace_accounting": "included_in_measured_anon" if workspace_in_anon else "additional_to_measured_anon",
+            "cgroup_current_bytes": cgroup.get("current_bytes"),
+            "measurement_scope": "sampled_required_components; verify proposed cap during actual future load"}
 
 
 def parse_process_status(text: str) -> dict:

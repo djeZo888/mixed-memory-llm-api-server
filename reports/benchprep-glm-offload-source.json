@@ -1,0 +1,127 @@
+{
+  "evidence": "READ_ONLY_PINNED_SOURCE_NO_RUNTIME_PROCESS",
+  "captured_at": "2026-09-19T13:26:29.651251+00:00",
+  "source_path": "/data/build/d3p-d3b2-20260915/source/src/llama-model.cpp",
+  "source_pin": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+  "checkout_head": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+  "sha256": "dc852c79709927631135ff9482e7fa7597d9b975a1867eb49003c14f93594ad3",
+  "pinned_git_blob_sha256": "dc852c79709927631135ff9482e7fa7597d9b975a1867eb49003c14f93594ad3",
+  "matches_pinned_blob": true,
+  "stat": {
+    "uid": 1000,
+    "gid": 1001,
+    "mode": "0o660",
+    "size": 153436,
+    "dev": 2065,
+    "inode": 44311903,
+    "mtime_ns": 1789442759821852298
+  },
+  "excerpts": [
+    {
+      "line": 1808,
+      "text": "    if (llama_supports_gpu_offload()) {"
+    },
+    {
+      "line": 1809,
+      "text": "        const int n_gpu = std::min(n_gpu_layers, n_layer_all);"
+    },
+    {
+      "line": 1810,
+      "text": ""
+    },
+    {
+      "line": 1811,
+      "text": "        int n_repeating = n_gpu;"
+    },
+    {
+      "line": 1812,
+      "text": "        if (n_repeating > 0) {"
+    },
+    {
+      "line": 1813,
+      "text": "            LLAMA_LOG_INFO(\"%s: offloading output layer to GPU\\n\", __func__);"
+    },
+    {
+      "line": 1814,
+      "text": "            n_repeating--;"
+    },
+    {
+      "line": 1815,
+      "text": "        }"
+    },
+    {
+      "line": 1816,
+      "text": "        LLAMA_LOG_INFO(\"%s: offloading %d repeating layers to GPU\\n\", __func__, n_repeating);"
+    },
+    {
+      "line": 1817,
+      "text": ""
+    },
+    {
+      "line": 1818,
+      "text": "        const int max_backend_supported_layers = n_layer_all + 1;"
+    },
+    {
+      "line": 1819,
+      "text": "        const int max_offloadable_layers       = n_layer_all + 1;"
+    },
+    {
+      "line": 1820,
+      "text": ""
+    },
+    {
+      "line": 1821,
+      "text": "        LLAMA_LOG_INFO(\"%s: offloaded %d/%d layers to GPU\\n\", __func__, std::min(n_gpu_layers, max_offloadable_layers), max_backend_supported_layers);"
+    },
+    {
+      "line": 1822,
+      "text": "    }"
+    },
+    {
+      "line": 1823,
+      "text": ""
+    },
+    {
+      "line": 1824,
+      "text": "    // print memory requirements per buffer type"
+    },
+    {
+      "line": 1825,
+      "text": "    for (auto & [_, bufs] : pimpl->ctxs_bufs) {"
+    },
+    {
+      "line": 1826,
+      "text": "        for (auto & buf: bufs) {"
+    },
+    {
+      "line": 1827,
+      "text": "            LLAMA_LOG_INFO(\"%s: %12s model buffer size = %8.2f MiB\\n\","
+    },
+    {
+      "line": 1828,
+      "text": "                __func__, ggml_backend_buffer_name(buf.get()), ggml_backend_buffer_get_size(buf.get()) / 1024.0 / 1024.0);"
+    }
+  ],
+  "definitions": [
+    {
+      "line": 1412,
+      "text": "    const int n_layer_all = hparams.n_layer_all;"
+    },
+    {
+      "line": 1413,
+      "text": "    const int n_gpu_layers = this->n_gpu_layers();"
+    }
+  ],
+  "derivation": {
+    "model_n_layer_all": 79,
+    "n_gpu_layers_argument": 999,
+    "max_backend_supported_layers": "n_layer_all + 1 = 80",
+    "max_offloadable_layers": "n_layer_all + 1 = 80",
+    "logged_offloaded": "min(999, 80) = 80",
+    "logged_total": 80,
+    "evidence_class": "SOURCE_DERIVED_EXPECTATION_NOT_LIVE_ALLOCATION",
+    "metadata_provenance": "reports/d3m-metadata.json: shards[0].metadata[glm-dsa.block_count]",
+    "metadata_sha256": "a2a66ef2db8f2050633bc431f8288c61547164bca5a1889e363a17bdab2ae639"
+  },
+  "identity_limit": "Build source is uid1000/gid1001 mode0660, not claimed immutable/root-owned. Exact bytes match pinned Git blob and independently retained reviewed source SHA256 dc852c79709927631135ff9482e7fa7597d9b975a1867eb49003c14f93594ad3."
+}

@@ -6,10 +6,18 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from benchmark import fixtures, profiles, runner
+from benchmark import fixtures, profiles, runner, telemetry
 from benchmark.campaign import CampaignBudget
+
+
+def synthetic_demand():
+    return telemetry.required_host_demand({"anon_bytes": 48 * 1024**3, "kernel_bytes": 1 * 1024**3,
+        "file_bytes": 200 * 1024**3, "file_mapped_bytes": 1 * 1024**3, "shmem_bytes": 0,
+        "current_bytes": 249 * 1024**3}, required_file_backed_bytes=1 * 1024**3,
+        host_workspace_bytes=1024, file_basis="synthetic_offline_mapped_weights")
 
 
 class Host:
@@ -36,17 +44,20 @@ class Host:
             cid = args["id"]
             return {"timestamp_monotonic_s": time.monotonic(), "collection_duration_s": .001,
                     "host": {"available_bytes": 800 * 1024**3}, "vmstat": {},
+                    "required_host_demand": synthetic_demand(),
                     "cgroups": {cid: {"swap_bytes": 0, "current_bytes": 50 * 1024**3,
                                      "events": {"oom": 0, "oom_kill": 0, "oom_group_kill": 0}}},
                     "gpus": [{"uuid": u, "free_bytes": 40 * 1024**3} for u in profiles.read_config()["gpu_uuids"]]}
         if op == "request_begin":
             return {"timeout_s": self.budget.request_timeout(args["timeout_s"])}
-        if op in ("request_end", "budget", "status"):
+        if op == "budget":
+            return {"remaining_s": self.budget.checkpoint()}
+        if op in ("request_end", "status"):
             return {}
         if op == "retire":
             del self.active[args["id"]];return {}
         if op == "admit_mixed":
-            caps = profiles.split_resources(50 * 1024**3, 50 * 1024**3, 800 * 1024**3)
+            caps = profiles.split_resources(synthetic_demand(), synthetic_demand(), 800 * 1024**3)
             manifests = [profiles.command_manifest(p, n, mixed=True, ram_cap=caps[p]) for p, n in (("G1", 65536), ("Q1", 16384))]
             for m in manifests:
                 self.manifests[fixtures.digest(fixtures.canonical(m))] = m
@@ -167,6 +178,96 @@ class IntegratedRunner(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     c.run(resume=True)
                 self.assertEqual(host.events, [])
+
+    def test_mixed_prefits_all_jobs_outside_schedule_and_freezes_matching_archives(self):
+        with tempfile.TemporaryDirectory() as directory:
+            c, host, requests = self.setup_case(Path(directory))
+            host.call("begin")
+            executing = [False]
+            original_prepare, original_dispatch = c.prepare_trial, runner.workload.execute_mixed
+            prepared_ids, group_hashes = [], {}
+            def prepare(*args, **kwargs):
+                self.assertFalse(executing[0], "fixture fitting/counting inside arrival schedule")
+                result = original_prepare(*args, **kwargs)
+                prepared_ids.append(args[1]);return result
+            def dispatch(jobs, mode, run, switch):
+                self.assertEqual(len([x for x in prepared_ids if x.startswith("mixed-" + mode + "-")]), 5)
+                group_hashes[mode] = {j["id"]: j["fixture_sha256"] for j in jobs}
+                executing[0] = True
+                try: return original_dispatch(jobs, mode, run, switch)
+                finally: executing[0] = False
+            c.prepare_trial = prepare
+            with patch.object(runner.workload, "execute_mixed", side_effect=dispatch):
+                c.mixed()
+            self.assertEqual(group_hashes["A"], group_hashes["B"])
+            records = [json.loads(line) for line in (Path(directory) / "results.jsonl").read_text().splitlines()]
+            self.assertEqual(len([row for row in records if row["type"] == "mixed_admission"]), 1)
+            for mode in ("A", "B"):
+                self.assertEqual(c.progress["groups"]["mixed-" + mode]["measurement"], "COMPLETE")
+            c.restore()
+
+    def test_load_samples_register_before_readiness_and_survive_warm_idle(self):
+        with tempfile.TemporaryDirectory() as directory:
+            c, host, requests = self.setup_case(Path(directory));host.call("begin")
+            original = host.call
+            ready_calls = []
+            def call(op, **args):
+                if op == "readiness":
+                    cid = args["id"]
+                    self.assertIn(cid, c.active)
+                    self.assertEqual(c.active[cid]["phase"], "loading")
+                    self.assertTrue(c.samples[cid])
+                    ready_calls.append(cid)
+                return original(op, **args)
+            host.call = call
+            cid = c.loaded(c.armed["manifests"][0])
+            self.assertEqual(ready_calls, [cid])
+            self.assertEqual(c.active[cid]["phase"], "ready")
+            self.assertGreaterEqual(len(c.samples[cid]), 2)
+            c.restore()
+
+    def test_load_readiness_deadline_uses_remaining_budget_and_prompt_failure(self):
+        for scenario in ("empty", "load_overrun", "readiness_overrun", "oom"):
+            with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as directory:
+                c, host, requests = self.setup_case(Path(directory));host.call("begin")
+                now = [100.0];c.clock = lambda: now[0]
+                original = host.call
+                def call(op, **args):
+                    if op == "budget": return {"remaining_s": 0 if scenario == "empty" else 2}
+                    if op == "load" and scenario == "load_overrun": now[0] += 3
+                    if op == "readiness":
+                        self.assertLessEqual(args["timeout_s"], 2)
+                        if scenario == "readiness_overrun": now[0] += 3
+                        if scenario == "oom": return {"ready": False, "failed": True, "status": "STOP_OOM"}
+                    return original(op, **args)
+                host.call = call
+                with self.assertRaisesRegex(RuntimeError, "STOP_OOM" if scenario == "oom" else "STOP_BUDGET"):
+                    c.loaded(c.armed["manifests"][0])
+                self.assertFalse(requests)
+                self.assertLessEqual(len([op for op, _ in host.events if op == "readiness"]), 1)
+
+    def test_warmup_evaluated_prefill_and_output_required(self):
+        with tempfile.TemporaryDirectory() as directory:
+            c, host, requests = self.setup_case(Path(directory));host.call("begin")
+            original = c.request
+            def insufficient(*args, **kwargs):
+                response = original(*args, **kwargs)
+                response["parsed"]["counters"]["evaluated_prompt_tokens"] = 1024
+                return response
+            c.request = insufficient
+            with self.assertRaisesRegex(RuntimeError, "WARMUP_PREFILL_UNPROVED"):
+                c.loaded(c.armed["manifests"][0])
+            self.assertEqual(len(requests), 1)
+            self.assertTrue(requests[0]["messages"][0]["content"].startswith("trial-prefix=warmup-"))
+
+    def test_preparing_group_interruption_is_missing_and_not_replayed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            c, host, requests = self.setup_case(Path(directory))
+            c.progress["groups"] = {"mixed-A": {"state": "PREPARING", "measurement": "MISSING"}}
+            c.record()
+            with self.assertRaisesRegex(RuntimeError, "missing_measurement"):
+                c.run(resume=True)
+            self.assertFalse(host.events)
 
     def test_sample_safety_oom_blocks_next_admission_without_stopping_healthy_request(self):
         with tempfile.TemporaryDirectory() as directory:

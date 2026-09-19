@@ -43,9 +43,29 @@ class Transport(unittest.TestCase):
     def test_failed_campaign_still_finishes_worker_verification(self):
         host = SimpleNamespace(call=lambda op, **kwargs: {'phase': 'POST_RELEASE_LAN_VERIFICATION_PENDING'}, close=lambda: None)
         campaign = SimpleNamespace(run=lambda **kwargs: (_ for _ in ()).throw(RuntimeError('synthetic stop')), emit=lambda x: None, record=lambda x: None)
-        with tempfile.TemporaryDirectory() as directory, patch.object(runner, 'load_arm', return_value={}), patch.object(runner.os, 'geteuid', return_value=501), patch('runtime.sglang38_file_auth.read_key', return_value='synthetic'), patch.object(runner, 'SSHHost', return_value=host), patch.object(runner, 'Campaign', return_value=campaign), patch('benchmark.worker_verify.verify', return_value={'checks': {}}) as verify:
+        with tempfile.TemporaryDirectory() as directory, patch.object(runner, 'load_arm', return_value={}), patch.object(runner, 'run_preflight'), patch.object(runner.os, 'geteuid', return_value=501), patch('runtime.sglang38_file_auth.read_key', return_value='synthetic'), patch.object(runner, 'SSHHost', return_value=host), patch.object(runner, 'Campaign', return_value=campaign), patch('benchmark.worker_verify.verify', return_value={'checks': {}}) as verify:
             result = runner.main(['run', '--state', directory, '--reviewed-arm-sha256', 'synthetic', '--inference-key-file', 'synthetic', '--control-key-file', 'synthetic'])
             self.assertEqual(result, 1)
             verify.assert_called_once()
+
+    def test_handled_stop_reports_independent_restoration_verification_failure(self):
+        emitted, phases = [], []
+        host = SimpleNamespace(call=lambda op, **kwargs: {'phase': 'POST_RELEASE_LAN_VERIFICATION_PENDING'}, close=lambda: None)
+        campaign = SimpleNamespace(run=lambda **kwargs: (_ for _ in ()).throw(RuntimeError('synthetic stop')),
+                                   emit=emitted.append, record=phases.append)
+        with tempfile.TemporaryDirectory() as directory, patch.object(runner, 'load_arm', return_value={}), patch.object(runner, 'run_preflight'), patch.object(runner.os, 'geteuid', return_value=501), patch('runtime.sglang38_file_auth.read_key', return_value='synthetic'), patch.object(runner, 'SSHHost', return_value=host), patch.object(runner, 'Campaign', return_value=campaign), patch('benchmark.worker_verify.verify', side_effect=ValueError('synthetic verification refusal')):
+            with self.assertRaises(ValueError):
+                runner.main(['run', '--state', directory, '--reviewed-arm-sha256', 'synthetic', '--inference-key-file', 'synthetic', '--control-key-file', 'synthetic'])
+        self.assertEqual(phases, ['RESTORATION_VERIFICATION_FAILED'])
+        self.assertEqual(emitted[-1]['type'], 'worker_restoration_verification_failure')
+        self.assertEqual(emitted[-1]['measurement_error_class'], 'RuntimeError')
+        self.assertEqual(emitted[-1]['error_class'], 'ValueError')
+
+    def test_missing_reviewed_offload_counts_stops_before_keys_or_ssh(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(runner, 'load_arm', return_value={}), patch.object(runner.profiles, 'read_config', return_value={"glm_offload_expectation": {"evidence_status": "HOLD_LOG_COUNT_SEMANTICS"}}), patch('runtime.sglang38_file_auth.read_key') as read, patch.object(runner, 'SSHHost') as ssh:
+            with self.assertRaisesRegex(RuntimeError, 'BLOCKED_GLM_OFFLOAD'):
+                runner.main(['run', '--state', directory, '--reviewed-arm-sha256', 'synthetic', '--inference-key-file', 'synthetic', '--control-key-file', 'synthetic'])
+            read.assert_not_called();ssh.assert_not_called()
+            self.assertFalse((Path(directory) / 'execution.json').exists())
 
 if __name__ == '__main__': unittest.main()

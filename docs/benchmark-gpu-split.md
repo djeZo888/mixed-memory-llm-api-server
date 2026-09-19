@@ -110,7 +110,12 @@ extra headroom (tool rounds also reserve 1024). Tool continuation preserves the
 actual call ID, reads a real fixed-path file in an ordinary-user trusted
 workspace, appends its result and recounts the complete continuation body.
 
-Warm every new loaded configuration and discard warmup timing. Run the 256
+Warm every new loaded configuration with a distinct prefix and native-counted
+2304–2432 input tokens. Require a successful parsed inference with positive
+output and at least2048 evaluated prompt tokens (native evaluated count, or
+prompt minus explicitly reported cached tokens); discard warmup timing. Missing
+evaluation proof stops the harness. This exercises the configured2048-token
+prefill chunk/batch. Run the 256
 output-cap retrieval ladder, repeat the 16K anchor, and separately run 16K
 512-output generation and real tool continuation. Length termination is an
 output-budget observation, not a correctness regression; malformed framing is
@@ -153,6 +158,11 @@ no restoration time inside the budget. Larger-case repeats only resolve an
 instability or close ranking. Allocation-only checks are optional and separately
 labeled; do not extrapolate speed or quality.
 
+Before starting either arrival clock, fit/freeze and native-count all five exact
+workload fixtures. A prepares GLM first, retires it, then prepares Qwen; its
+subsequent switch reloads/warms GLM and verifies the same template identity. B
+prepares both ready models before dispatch. Fitting/counting durations are
+reported separately; A switch includes reload plus discarded warmup, as labeled.
 Use identical arrivals and fixtures in A/B: initially all five arrivals at t=0,
 one approximately 64K GLM request and four approximately 16K Qwen requests.
 `workload.execute_mixed` actually dispatches A's four serial Qwen jobs followed
@@ -166,8 +176,15 @@ production is timed separately. Never sum unlike models' token rates.
 Mixed B exposes disjoint UUIDs and guest CPU sets GLM 0-95 (96), Qwen 96-111
 (16), respecting the observed seven guest NUMA nodes of 16 CPUs. This is not
 evidence about host NUMA. Generate B manifests only after measured isolated
-cgroup demand is known; `split_resources` applies 25% headroom and checks host
-headroom. Set memory and memory-swap equal to cap to prevent new container swap.
+required RAM components are known; `split_resources` applies 25% headroom to
+measured anon + kernel + necessary resident file-backed weights/pages + any
+workspace not already in anon. CUDA_Host workspace is reported separately and
+not double-counted. Mapped file pages/shmem remain conservatively retained;
+unmapped reclaimable model-file cache is separate. GLM nonmapped CPU weight
+allocation and load-mode none are required to justify its anonymous weight basis.
+Raw memory.current/peak is never multiplied blindly. Fresh MemAvailable is
+sampled only after previous owned containers retire; proposed caps still need
+actual future load validation. Set memory and memory-swap equal to cap to prevent new container swap.
 Do not invent caps from weight file sizes. Memory projections separate weights,
 cache, runtime, workspace and GPU reserve. GLM 95232 and Qwen 65536 aggregate
 bytes/configured token are hypotheses; compare actual allocations before using
@@ -264,6 +281,15 @@ caps and restoration challenge live under `/data/logs/benchrun-20260919/`.
 Sources are separate under the registered service root; nothing goes to root-disk
 AI output. The source manifest is shareable; raw artifacts remain private.
 
+GLM CUDA mapping uses the existing native `llama-server --list-devices`, explicit
+ordered CUDA_VISIBLE_DEVICES UUIDs and container-visible nvidia-smi UUIDs. It
+does not invoke Python inside the GLM image. Exact-image no-GPU helper probes
+under canonical ownership establish helper availability before production stop;
+no installation or image change. Qwen retains its existing Python driver query.
+Exited/dead/OOM containers fail promptly with bounded private diagnostics. Load
+and readiness subprocess/HTTP deadlines are bounded by the remaining campaign
+budget; restoration stays outside those deadlines.
+
 On a trial/report/pressure failure, complete healthy registered requests, stop
 new admission, and restore the exact captured original intent outside the
 budget. Local restoration ends in POST_RELEASE_LAN_VERIFICATION_PENDING; the
@@ -282,3 +308,41 @@ remain evidence; root must decide whether a separate newly armed campaign is
 needed. The runner never resets the budget or blindly repeats failed trials.
 All installed Linux command/native-image/allocation and recovery behavior still
 requires the fresh RUN session; mocked tests establish source behavior only.
+
+
+## Final receipt correction and resolved source expectation
+
+Historical baseline lease inode is **2132**, as recorded in task-root
+`baseline.json` and `baseline-summary.md`; earlier2207 text was incorrect.
+Future RUN establishes fresh identity under the canonical lease.
+
+Bounded read-only pinned-source inspection resolved the exact GLM log semantics.
+`src/llama-model.cpp` at b29c606e28a01b1bc8c1351026a0fa6e616bf6c4,
+SHA256 dc852c79709927631135ff9482e7fa7597d9b975a1867eb49003c14f93594ad3,
+lines1412 and1818–1821 defines denominator n_layer_all+1 and numerator
+min(n_gpu_layers,n_layer_all+1). Retained model metadata has79 blocks; the
+reviewed argument is999, so the required log is **80/80**. This is derived from
+the exact formatter, not inferred from placement slots. Sanitized source/identity
+receipt: `reports/benchprep-glm-offload-source.json`. Current build-source bytes
+match the pinned blob and previously retained source hash; the receipt records
+that the build checkout is user-owned, not an immutable production authority.
+RUN still requires actual current-load 80/80, N76 arguments, CPU/GPU buffers,
+cache/context/UUID/reserve proof. Source arithmetic establishes no live allocation.
+The preflight refuses missing or unreviewed count evidence before staging.
+
+Cheap memory sampling begins immediately after Docker start and before readiness
+HTTP, then continues through load/warmup/timed work. The durable host peak includes
+transient loader anon/kernel/mapped-file demand. Load sample count/span and
+sampled-peak limitations remain explicit; this is not an absolute transient peak.
+Mixed admission rejects missing load-phase evidence, includes required demand
+plus25%, and samples usable host capacity after prior owned instances retire.
+Its generated commands, component evidence and usable capacity are also emitted
+to worker `results.jsonl` for root synchronization. No proposed cap is called
+accepted until the future capped load succeeds.
+
+Root monitors/synchronizes only worker-local `campaign-arm/progress.json`,
+`results.jsonl`, `samples.jsonl` and `warmups.jsonl`; private raw evidence stays
+on the worker. The future RUN session remains attached until an actual handled
+failure/completion checkpoint. Progress includes group PREPARING/DISPATCHING,
+explicit MISSING measurements on interruption, terminal outcome and required
+RAM evidence. No automatic replay of failed or interrupted groups is allowed.

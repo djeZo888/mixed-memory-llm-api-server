@@ -23,11 +23,24 @@ def parse_glm_log(text: str) -> dict:
     """
     state = {"log_lines": 0, "errors": {key: 0 for key in guards.ERROR_PATTERNS}}
     buffers, offloaded, malformed = {}, None, False
+    host_pending, host_compute = {}, None
     for line in text.splitlines():
         try:
             guards.parse_log_line(line, state)
         except guards.Error:
             malformed = True
+        marker = line.find("D3T_NATIVE_V1")
+        record = line[marker:].rstrip("\r\n") if marker >= 0 else ""
+        if record.startswith("D3T_NATIVE_V1 kind=graph "):
+            host_pending = {}
+        host = re.fullmatch(r"D3T_NATIVE_V1 kind=compute backend=(CPU|CUDA_Host) bytes=(\d+)", record)
+        if host:
+            backend, count = host.groups()
+            if backend in host_pending:
+                malformed = True
+            host_pending[backend] = int(count)
+        if record == "D3T_NATIVE_V1 kind=end":
+            host_compute = dict(host_pending)
         match = re.search(r"load_tensors:\s+(CPU(?:_Mapped)?|CUDA\d+) model buffer size\s*=\s*([0-9]+\.[0-9]+) MiB", line)
         if match:
             backend, value = match.groups()
@@ -46,6 +59,9 @@ def parse_glm_log(text: str) -> dict:
     return {"kind": "glm", "parser_status": "HARNESS_FAILURE" if malformed else "PARSED",
             "configured_context": native.get("n_ctx") if native else None,
             "native": native, "weights_mib_log_label": buffers or None,
+            "host_compute_bytes": host_compute or None,
+            "host_workspace_bytes": sum(host_compute.values()) if host_compute else None,
+            "host_workspace_scope": "native RAM compute buffers; separate from CUDA device workspace, commonly included in cgroup anon",
             "offloaded_layers": offloaded[0] if offloaded else None,
             "total_layers": offloaded[1] if offloaded else None,
             "slot_count": state.get("slot_count"), "slot_context": state.get("slot_context"),
@@ -172,7 +188,14 @@ def allocation_gate(manifest: dict, parsed: dict, observed: dict) -> dict:
                  "native_" + kind + "_allocation_unproved")
         weights = parsed.get("weights_mib_log_label") or {}
         need(devices <= weights.keys() and any(k.startswith("CPU") for k in weights), "cpu_gpu_weight_allocation_unproved")
-        need(type(parsed.get("offloaded_layers")) is int and parsed["offloaded_layers"] > 0, "actual_gpu_offload_unproved")
+        expected = manifest.get("glm_offload_expectation") or {}
+        counts = (expected.get("offloaded_layers"), expected.get("total_layers"))
+        reviewed = (all(type(value) is int and value > 0 for value in counts)
+                    and counts[0] <= counts[1] and expected.get("evidence_status") == "REVIEWED_LOG_COUNT_SEMANTICS"
+                    and isinstance(expected.get("provenance"), str) and bool(expected["provenance"]))
+        need(reviewed, "reviewed_exact_offload_counts_missing")
+        need(reviewed and (parsed.get("offloaded_layers"), parsed.get("total_layers")) == counts,
+             "actual_gpu_offload_counts_mismatch")
         need(parsed.get("slot_count") == 1 and parsed.get("slot_context") == capacity, "runtime_slot_context_unproved")
         need(all(v == 0 for v in parsed.get("runtime_errors", {}).values()) and bool(parsed.get("runtime_errors")), "runtime_error_or_missing_diagnostics")
     else:

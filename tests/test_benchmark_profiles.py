@@ -6,6 +6,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from benchmark import profiles, qwen_launcher as launch
+from benchmark.telemetry import required_host_demand
 
 
 class DefaultNone(SimpleNamespace):
@@ -35,6 +36,12 @@ def synthetic_native_args(base, context, tp):
     args.disaggregation_mode = "null"
     args.model_loader_extra_config = "{}"
     return args
+
+
+def demand(gib):
+    return required_host_demand({"anon_bytes": gib * 1024**3, "kernel_bytes": 0,
+        "file_bytes": 0, "file_mapped_bytes": 0, "shmem_bytes": 0},
+        required_file_backed_bytes=0, file_basis="synthetic component test")
 
 
 class Profiles(unittest.TestCase):
@@ -78,14 +85,14 @@ class Profiles(unittest.TestCase):
     def test_mixed_requires_measured_caps_and_disjoint_resources(self):
         with self.assertRaises(ValueError):
             profiles.command_manifest("G1", 65536, mixed=True)
-        caps = profiles.split_resources(400 * 1024**3, 40 * 1024**3, 860 * 1024**3)
+        caps = profiles.split_resources(demand(400), demand(40), 860 * 1024**3)
         g = profiles.command_manifest("G1", 65536, mixed=True, ram_cap=caps["G1"])
         q = profiles.command_manifest("Q1", 16384, mixed=True, ram_cap=caps["Q1"])
         self.assertFalse(set(g["gpu_uuids"]) & set(q["gpu_uuids"]))
         gc, qc = profiles.cpu_set(g["guest_cpuset"]), profiles.cpu_set(q["guest_cpuset"])
         self.assertEqual((len(gc), len(qc), len(gc & qc)), (96, 16, 0))
         with self.assertRaisesRegex(ValueError, "reserve"):
-            profiles.split_resources(700 * 1024**3, 100 * 1024**3, 860 * 1024**3)
+            profiles.split_resources(demand(700), demand(100), 860 * 1024**3)
 
     def test_cpu_baselines_and_matched_isolated_mixed_controls(self):
         for placement, count, cpuset in (("G2", 112, "0-111"), ("Q2", 112, "0-111"),
@@ -100,9 +107,18 @@ class Profiles(unittest.TestCase):
                     self.assertEqual(manifest["guest_cpuset"], cpuset)
                     self.assertEqual(manifest["guest_cpu_count"], count)
                     if placement.startswith("G"):
+                        self.assertIn("CUDA_VISIBLE_DEVICES=" + ",".join(manifest["gpu_uuids"]), argv)
                         native = manifest["native_argv"]
                         for flag in ("--threads", "--threads-batch"):
                             self.assertEqual(native[native.index(flag) + 1], str(count))
+
+    def test_split_rejects_raw_current_bytes_and_inconsistent_components(self):
+        with self.assertRaisesRegex(ValueError, "components_required"):
+            profiles.split_resources(800 * 1024**3, demand(40), 860 * 1024**3)
+        broken = demand(400)
+        broken["required_bytes"] += 1
+        with self.assertRaisesRegex(ValueError, "inconsistent"):
+            profiles.split_resources(broken, demand(40), 860 * 1024**3)
 
     def test_unreviewed_optional_and_injected_identity_refused(self):
         for n in (131072, True, 1000000):
