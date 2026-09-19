@@ -1,4 +1,4 @@
-"""One reviewed G2 4K diagnostic run; no ladder, fix, resume or automatic retry.
+"""One reviewed G1 exact-body 4K diagnostic run; no ladder, fix, resume or automatic retry.
 
 Worker-local entry point: python3 -m benchmark.glmrepair --help (PYTHONPATH=scripts).
 Only explicit run plus a source/session-bound root GO permits network or staging.
@@ -21,9 +21,10 @@ from agent import protocol
 from . import client, fixtures, profiles, runner, worker_verify
 from .warmup import prefill_proof
 
-TASK = "GLMREPAIR-RUN-20260919"
-CAMPAIGN = "benchrun-glmrepair2-20260919"
-BASE = "48f0f38fcd42b081c2deca351cdfb7a943465449"
+TASK = "GLMREPAIR-G1-20260919"
+CAMPAIGN = "benchrun-glmrepair-g1-20260919"
+BASE = "8381316f9a3a1363ce0c91916749713445974854"
+BODY_SHA256 = "c0508f667126bc4cce29384b81c7d9cc8900548538e9ed4d616983cee855af9c"
 MODEL = "bench-glm-5.3"
 FIXTURE_KEY = MODEL + "-4096-retrieval"
 PROBE_TEXT = 'Return exactly one JSON object {"ok":true} as your final answer. No other final-answer text.'
@@ -50,6 +51,21 @@ def checkpoint(task):
 
 def continuation_execution(task):
     """One authorized continuation after the verified pre-generation restoration."""
+    if task.name == TASK:
+        previous = task.parent / "GLMREPAIR-RUN-20260919" / "attempt2"
+        status = json.loads((previous / "status.json").read_bytes())
+        receipt = json.loads((previous / "restoration-receipt.json").read_bytes())
+        execution = json.loads((previous / "execution.json").read_bytes())
+        verified = any(row.get("type") == "worker_restoration_verified" and row.get("result", {}).get("restored") is True
+                       for row in receipt.get("restoration_events", []))
+        if (status.get("campaign") != "benchrun-glmrepair2-20260919" or status.get("phase") != "RESTORED"
+                or status.get("host_session_closed") is not True or status.get("inflight") != {} or not verified
+                or receipt.get("owner_phase") != "RESTORED" or receipt.get("pending_create") is not None
+                or any(state != "REMOVED" for state in receipt.get("owned_resource_states", []))
+                or execution.get("start_epoch") != 1789850405.174489
+                or execution.get("deadline_epoch") != 1789854005.174489 or execution.get("budget_seconds") != 3600):
+            raise ValueError("verified_G2_restoration_and_original_clock_required")
+        return execution
     previous = task.parent
     status = json.loads((previous / "status.json").read_bytes())
     progress = json.loads((previous / "progress.json").read_bytes())
@@ -104,6 +120,58 @@ def load_frozen(task, profile):
             raise ValueError("frozen_G1_fixture_changed")
     runner.save(task / "private" / "fixtures.json", {FIXTURE_KEY: sample})
     return sample
+
+
+def exact_body(task, sample):
+    raw = (task / "private" / "original.request.json").read_bytes()
+    body = protocol.strict_json_loads(raw)
+    canonical = fixtures.canonical(body)
+    if fixtures.digest(raw) != BODY_SHA256 or fixtures.digest(canonical) != BODY_SHA256:
+        raise ValueError("historical_exact_body_hash_changed")
+    if fixtures.serialize_validate(sample) != canonical:
+        raise ValueError("historical_body_fixture_binding_failed")
+    return raw, sample
+
+
+def provenance_body(raw):
+    body = protocol.strict_json_loads(raw)
+    body["stream"] = False
+    body.pop("stream_options", None)
+    body.update(return_tokens=True, verbose=True)
+    return fixtures.canonical(body)
+
+
+def duplicate_json(content):
+    decoder = json.JSONDecoder()
+    try:
+        first, end = decoder.raw_decode(content.lstrip())
+        tail = content.lstrip()[end:].strip()
+        if tail.startswith("</think>"):
+            tail = tail[len("</think>"):].strip()
+        second, end = decoder.raw_decode(tail)
+        return isinstance(first, dict) and first == second and not tail[end:].strip()
+    except (ValueError, TypeError):
+        return False
+
+
+def provenance_comparison(result):
+    value = protocol.strict_json_loads(Path(result["private_response_path"]).read_bytes())
+    verbose = value.get("__verbose")
+    message = value["choices"][0]["message"]
+    def text_identity(value):
+        if not isinstance(value, str):
+            return None
+        return {"sha256": fixtures.digest(value.encode()), "characters": len(value),
+                "think_close_offsets": [i for i in range(len(value)) if value.startswith("</think>", i)]}
+    native = verbose if isinstance(verbose, dict) else {}
+    content, reasoning = message.get("content"), message.get("reasoning_content")
+    tokens = native.get("tokens")
+    return {"verbose_present": isinstance(verbose, dict), "verbose_sha256": fixtures.digest(fixtures.canonical(verbose)),
+            "raw_response_retained_complete": result["summary"]["response_retained_complete"],
+            "native_text": text_identity(native.get("content")), "content": text_identity(content),
+            "reasoning": text_identity(reasoning),
+            "generated_token_ids": tokens if isinstance(tokens, list) and all(type(x) is int for x in tokens) else None,
+            "output_modified": False, "missing_fields_are_unavailable": True}
 
 
 class DiagnosticSSHHost(runner.SSHHost):
@@ -167,7 +235,7 @@ class Diagnostic(runner.Campaign):
 
     def request(self, cid, raw, identifier, *, timed=True):
         body = protocol.strict_json_loads(raw)
-        if body["max_tokens"] == 256:
+        if body["max_tokens"] == 256 and body["stream"]:
             return self.persistence_check(super().request(cid, raw, identifier, timed=timed))
         timeout = self.admission(cid)
         try:
@@ -207,7 +275,47 @@ class Diagnostic(runner.Campaign):
                    "checkpoint": self.host.call("quiescent", id=cid, point="warm_idle")})
         self.boundary(cid, "after_warmup")
 
+    def exact_g1_sequence(self):
+        self.host.call("begin")
+        cid = self.loaded(self.armed["manifests"][0])
+        sample = self.fixture_cache[FIXTURE_KEY]
+        raw, sample = exact_body(self.state, sample)
+        counted = fixtures.validate_count(self.counter(cid)(raw), raw, 4096)
+        if counted["input_tokens"] != 3546:
+            raise RuntimeError("historical_native_input_changed")
+        runner.save(self.private / "baseline-count.json", counted)
+        for name, request in (("exact-stream", raw), ("raw-nonstream", provenance_body(raw))):
+            self.boundary(cid, "before_" + name)
+            self.progress["inflight"][name] = {"container": cid}
+            self.record("EXACT_G1_" + name.upper())
+            result = self.request(cid, request, name)
+            message = (result.get("parsed") or {}).get("message", {})
+            content = message.get("content") or ""
+            outcome = {"summary": result["summary"], "format": format_outcome(result, sample),
+                       "duplicate_json": duplicate_json(content), "output_modified": False}
+            if name == "raw-nonstream" and result["summary"]["response_retained_complete"]:
+                outcome["provenance"] = provenance_comparison(result)
+            summary = result["summary"]
+            outcome["telemetry"] = self.telemetry_window(cid, summary.get("request_started_monotonic_s"),
+                summary.get("request_ended_monotonic_s"), "inference_transport_dispatch_to_drain")
+            self.emit({"type": "exact_G1_disposition", "id": name, **outcome})
+            self.progress["completed"][name] = outcome
+            del self.progress["inflight"][name]
+            runner.save(self.state / ("first-result.json" if name == "exact-stream" else "provenance-result.json"), outcome)
+            self.record()
+            self.boundary(cid, "after_" + name)
+            if not result["parsed"] or summary["status"] not in {"COMPLETE", "OUTPUT_LIMIT"}:
+                raise RuntimeError("native_transport_or_parse_failure")
+            if summary["counters"].get("cached_tokens") != 0:
+                raise RuntimeError("native_zero_cache_required")
+            if name == "exact-stream" and not ("</think>" in content or outcome["duplicate_json"]):
+                self.emit({"type": "provenance_skipped", "reason": "known_format_failure_not_reproduced_root_decision"})
+                break
+        self.record("MEASUREMENT_COMPLETE")
+
     def sequence(self):
+        if self.armed.get("campaign") == CAMPAIGN:
+            return self.exact_g1_sequence()
         self.host.call("begin")
         cid = self.loaded(self.armed["manifests"][0])  # exactly one load + warmup
         for stream, name in ((True, "stream"), (False, "nonstream")):
@@ -269,14 +377,17 @@ def prepare(task, session_id):
     if git("status", "--porcelain"):
         raise ValueError("commit_reviewed_source_before_preparing")
     profile = json.loads((task / "accepted-profile.json").read_bytes())
-    if profile["manifest"] != profiles.glmrepair_manifest():
+    if profile["manifest"] != profiles.glmrepair_manifest(CAMPAIGN):
         raise ValueError("accepted_profile_differs")
     task.joinpath("private").mkdir(mode=0o700, exist_ok=True)
-    load_frozen(task, profile)
+    sample = load_frozen(task, profile)
+    raw, sample = exact_body(task, sample)
+    runner.save(task / "body-identity.json", {"raw_sha256": fixtures.digest(raw), "canonical_sha256": fixtures.digest(fixtures.canonical(sample["body"])), "fixture_sha256": sample["fixture_sha256"], "bytes": len(raw)})
     files = runner.source_files()
     armed = {"schema": 1, "campaign": CAMPAIGN, "scope": "glmrepair", "session_id": session_id,
              "source_commit": git("rev-parse", "HEAD"), "manifests": [profile["manifest"]],
-             "trial_plan": profiles.trial_order("glmrepair"), "runtime": continuation_execution(task),
+             "exact_body_sha256": BODY_SHA256, "fixture_sha256": sample["fixture_sha256"],
+             "trial_plan": profiles.trial_order("glmrepair", campaign=CAMPAIGN), "runtime": continuation_execution(task),
              "source_files": {p: hashlib.sha256(b).hexdigest() for p, b in files.items()}}
     profiles.validate_arm_scope(armed)
     runner.save(task / "arm.json", armed)
@@ -291,6 +402,7 @@ def run(task, go_path, session_id, *, restore_only=False):
     armed = json.loads((task / "arm.json").read_bytes())
     go = json.loads(go_path.read_bytes())
     if (go.get("decision") != "GO" or go.get("source_commit") != armed["source_commit"]
+            or go.get("arm_sha256") != fixtures.digest((task / "arm.json").read_bytes())
             or go.get("session_id") != session_id or armed["session_id"] != session_id
             or go.get("campaign") != CAMPAIGN or git("rev-parse", "HEAD") != armed["source_commit"]
             or git("status", "--porcelain")):
@@ -305,7 +417,7 @@ def run(task, go_path, session_id, *, restore_only=False):
     if not restore_only:
         checkpoint(task)
     from runtime.sglang38_file_auth import read_key
-    credentials = task.parent.parent / "BENCHRUN-20260919/private-credentials"
+    credentials = (task.parent if task.name == TASK else task.parent.parent) / "BENCHRUN-20260919/private-credentials"
     metadata = credentials.lstat()
     if credentials.is_symlink() or not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.geteuid() or stat.S_IMODE(metadata.st_mode) != 0o700:
         raise ValueError("protected_credential_directory_required")

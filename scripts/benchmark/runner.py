@@ -51,6 +51,7 @@ def source_files():
     paths.add(profiles.ROOT / "scripts/bench/benchmark-host.py")
     paths.add(profiles.CONFIG)
     paths.add(profiles.ROOT / "configs/benchmarks/glmrepair-g2-20260919.json")
+    paths.add(profiles.ROOT / "configs/benchmarks/glmrepair-g1-20260919.json")
     paths.update(profiles.ROOT / name for name in profiles.read_config()["source_pins"])
     return {str(p.relative_to(profiles.ROOT)): p.read_bytes() for p in sorted(paths)}
 

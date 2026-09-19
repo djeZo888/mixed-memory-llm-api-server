@@ -181,7 +181,7 @@ class LinuxHost:
             require(hashlib.sha256(source_raw).hexdigest() == sha, 'staged_source_pin_changed')
         self.manifests = {}
         for value in values:
-            expected = glmrepair_manifest() if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
+            expected = glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
                                         ram_cap=G1_RAM_CAP_BYTES if self.scope == 'g1-only' else None,
                                         log_verbosity=4 if self.scope == 'g1-only' else None)
             require(value == expected, 'manifest_not_current_generated_source')

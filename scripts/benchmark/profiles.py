@@ -14,11 +14,16 @@ CONFIG = ROOT / "configs/benchmarks/gpu-split-20260919.json"
 G1_RAM_CAP_BYTES = 640 * 1024**3  # Root-reviewed validation cap; not minimum model RAM.
 ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair")
 GLMREPAIR_CAMPAIGN = "benchrun-glmrepair2-20260919"
+GLMREPAIR_G1_CAMPAIGN = "benchrun-glmrepair-g1-20260919"
 
 
-def glmrepair_manifest():
-    """Frozen root-reviewed G2 control, independent of the historical 112-CPU preset."""
-    return json.loads((ROOT / "configs/benchmarks/glmrepair-g2-20260919.json").read_text())
+def glmrepair_manifest(campaign=GLMREPAIR_CAMPAIGN):
+    """Frozen reviewed G2 control or exact saved G1 profile; no tuning."""
+    names = {GLMREPAIR_CAMPAIGN: "glmrepair-g2-20260919.json",
+             GLMREPAIR_G1_CAMPAIGN: "glmrepair-g1-20260919.json"}
+    if campaign not in names:
+        raise ValueError("glmrepair_exact_arm_scope_mismatch")
+    return json.loads((ROOT / "configs/benchmarks" / names[campaign]).read_text())
 
 
 def scope_placements(scope):
@@ -43,8 +48,9 @@ def validate_arm_scope(armed):
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
     if scope == "glmrepair":
-        if (armed.get("campaign") != GLMREPAIR_CAMPAIGN or armed.get("manifests") != [glmrepair_manifest()]
-                or armed.get("trial_plan") != trial_order(scope)):
+        if (armed.get("campaign") not in (GLMREPAIR_CAMPAIGN, GLMREPAIR_G1_CAMPAIGN)
+                or armed.get("manifests") != [glmrepair_manifest(armed["campaign"])]
+                or armed.get("trial_plan") != trial_order(scope, campaign=armed["campaign"])):
             raise ValueError("glmrepair_exact_arm_scope_mismatch")
         return scope
     if scope != "full":
@@ -205,7 +211,16 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
             "live_allocation": "NOT_TESTED", "gpu_index_is_not_placement_proof": True}
 
 
-def trial_order(scope="full"):
+def trial_order(scope="full", campaign=GLMREPAIR_CAMPAIGN):
+    if scope == "glmrepair" and campaign == GLMREPAIR_G1_CAMPAIGN:
+        return {"trials": [
+            {"placement": "G1", "capacity": 4096, "case": "load_warmup", "output_cap": 32, "timing": "discard"},
+            {"placement": "G1", "capacity": 4096, "case": "exact_stream", "output_cap": 256, "diagnostic": True},
+            {"placement": "G1", "capacity": 4096, "case": "raw_nonstream", "output_cap": 256,
+             "diagnostic": True, "conditional": "duplicate_json_or_literal_think"}],
+            "then": [], "mixed_jobs": [], "measurement_budget_seconds": 3600,
+            "maximum_request_seconds": 7200, "restoration_outside_budget": True,
+            "format_failure_policy": "record strict failure; optional exact-body nonstream provenance only"}
     if scope == "glmrepair":
         return {"trials": [
             {"placement": "G2", "capacity": 4096, "case": "load_warmup", "output_cap": 32, "timing": "discard"},

@@ -182,11 +182,14 @@ def run_request(raw_body, transport, *, sample_id, private_dir, summary_path,
 def run_diagnostic_request(raw_body, transport, **kwargs):
     """GLMREPAIR-only short probes; historical benchmark contract stays fixed."""
     request = protocol.strict_json_loads(raw_body)
-    if (request.get("model") != "bench-glm-5.3" or request.get("max_tokens") not in (32, 128)
+    provenance = (request.get("max_tokens") == 256 and request.get("stream") is False
+                  and request.get("return_tokens") is True and request.get("verbose") is True
+                  and "stream_options" not in request)
+    if (request.get("model") != "bench-glm-5.3" or (request.get("max_tokens") not in (32, 128) and not provenance)
             or type(request.get("stream")) is not bool or request.get("temperature") != 0
             or request.get("reasoning_effort") != "low"
             or set(request) - {"model", "messages", "stream", "stream_options", "max_tokens",
-                               "temperature", "reasoning_effort"}):
+                               "temperature", "reasoning_effort", *({"return_tokens", "verbose"} if provenance else set())}):
         raise HarnessError("invalid bounded GLM diagnostic request")
     return _capture_request(raw_body, transport, **kwargs)
 

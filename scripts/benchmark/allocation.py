@@ -188,15 +188,16 @@ def allocation_gate(manifest: dict, parsed: dict, observed: dict, *, strict_g1=F
             values = native.get(kind + "_bytes") or {}
             need(set(values) == devices and all(type(v) is int and v > 0 for v in values.values()),
                  "native_" + kind + "_allocation_unproved")
-        if strict_g1:
+        if strict_g1 or strict_glmrepair and manifest["placement"] == "G1":
             need(manifest["placement"] == "G1" and devices == {"CUDA0"}, "g1_single_device_required")
             need(native.get("cache_bytes") == {"CUDA0": 95232 * capacity},
                  "g1_f16_cache_bytes_mismatch")
             need(native.get("fa_nodes") == 78 and native.get("lid_nodes") == 21,
                  "g1_main_indexer_graph_mismatch")
         if strict_glmrepair:
-            need(manifest["placement"] == "G2" and capacity == 4096 and devices == {"CUDA0", "CUDA1"},
-                 "glmrepair_matched_dual_gpu_required")
+            need(capacity == 4096 and ((manifest["placement"] == "G2" and devices == {"CUDA0", "CUDA1"})
+                                      or (manifest["placement"] == "G1" and devices == {"CUDA0"})),
+                 "glmrepair_matched_gpu_placement_required")
             cache = native.get("cache_bytes") or {}
             need(all(type(v) is int for v in cache.values()) and sum(cache.values()) == 95232 * capacity,
                  "glmrepair_f16_cache_total_mismatch")
