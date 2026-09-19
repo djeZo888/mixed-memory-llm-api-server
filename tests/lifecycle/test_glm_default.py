@@ -28,4 +28,3 @@ class Default(unittest.TestCase):
         with patch.object(client,'_request',return_value={}) as request:
             client.chat([{'role':'user','content':'hi'}])
             self.assertEqual(request.call_args.args[1]['reasoning_effort'],'high')
-

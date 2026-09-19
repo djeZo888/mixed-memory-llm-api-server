@@ -115,7 +115,7 @@ class HostBudget(CampaignBudget):
     def __init__(self, host):
         self._mutex = threading.RLock()
         self.host, self.path, self.clock = host, Path(host.log_root) / 'budget.json', time.time
-        self.budget_seconds = (2700 if getattr(host, 'campaign', None) == 'benchrun-glmrepair-fix-20260919' else 3600) if getattr(host, 'scope', None) == 'glmrepair' else 21600
+        self.budget_seconds = (1200 if getattr(host, 'campaign', None) == 'benchrun-glmrepair-g1fix-20260919' else 2700 if getattr(host, 'campaign', None) == 'benchrun-glmrepair-fix-20260919' else 3600) if getattr(host, 'scope', None) == 'glmrepair' else 21600
         self._data = host.read_json('budget.json', missing=True)
         if self._data is not None:
             self._validate()
@@ -204,7 +204,7 @@ class LinuxHost:
     def glmrepair_clock(armed):
         runtime = armed.get('runtime') or {}
         start, deadline = runtime.get('start_epoch'), runtime.get('deadline_epoch')
-        seconds = 2700 if armed.get('campaign') == 'benchrun-glmrepair-fix-20260919' else 3600
+        seconds = 1200 if armed.get('campaign') == 'benchrun-glmrepair-g1fix-20260919' else 2700 if armed.get('campaign') == 'benchrun-glmrepair-fix-20260919' else 3600
         require('continuation_execution' not in armed and 'start_epoch' not in armed and
                 type(start) in (int, float) and type(deadline) in (int, float) and
                 math.isfinite(start) and math.isfinite(deadline) and start > 0 and

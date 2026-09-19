@@ -21,6 +21,9 @@ from agent import protocol
 from . import client, fixtures, profiles, runner, worker_verify
 from .warmup import prefill_proof
 
+G1FIX_TASK = "GLMREPAIR-G1FIX-20260919"
+G1FIX_CAMPAIGN = profiles.GLMREPAIR_G1FIX_CAMPAIGN
+SCHEMA_SHA256 = "aa5abdcc46f53f622ee7735d4d5182e7b2d8af9f3ab32ed17f3ba88e9c552867"
 FIX_TASK = "GLMREPAIR-FIX-20260919"
 FIX_CAMPAIGN = profiles.GLMREPAIR_FIX_CAMPAIGN
 POLL_TASK = "GLMREPAIR-POLL-20260919"
@@ -56,6 +59,19 @@ def checkpoint(task):
 
 def continuation_execution(task):
     """One authorized continuation after the verified pre-generation restoration."""
+    if task.name == G1FIX_TASK:
+        previous = task.parent / FIX_TASK
+        status = json.loads((previous / "manual-final-phase.json").read_bytes())
+        receipt = json.loads((previous / "final-restoration-receipt.json").read_bytes())
+        if (status.get("phase") != "RESTORED" or status.get("authenticated_LAN") is not True
+                or status.get("host_tunnel_closed") is not True or receipt.get("status") != "PASS"
+                or receipt.get("benchmark_owned_resources") != 0 or receipt.get("benchmark_listeners") != 0
+                or receipt.get("canonical_lease") != "ACQUIRED_AND_RELEASED"):
+            raise ValueError("accepted_D_restoration_required")
+        clock = json.loads((task / "stage-clock.json").read_bytes())
+        if clock.get("budget_seconds") != 1200 or clock.get("deadline_epoch") != clock.get("start_epoch", 0) + 1200:
+            raise ValueError("fresh_dispatch_20minute_clock_required")
+        return clock
     if task.name == FIX_TASK:
         previous = task.parent / POLL_TASK
         status = json.loads((previous / "status.json").read_bytes())
@@ -159,6 +175,17 @@ def exact_body(task, sample):
     if fixtures.serialize_validate(sample) != canonical:
         raise ValueError("historical_body_fixture_binding_failed")
     return raw, sample
+
+
+def schema_body(task):
+    raw = (task / "private" / "D-native-schema.request.json").read_bytes()
+    if fixtures.digest(raw) != SCHEMA_SHA256:
+        raise ValueError("accepted_D_schema_bytes_changed")
+    body = protocol.strict_json_loads(raw)
+    if body["model"] != "glm-5.3":
+        raise ValueError("accepted_D_alias_changed")
+    body["model"] = MODEL
+    return fixtures.canonical(body)
 
 
 def sampling_body(raw, seed):
@@ -363,6 +390,35 @@ class Diagnostic(runner.Campaign):
                    "checkpoint": self.host.call("quiescent", id=cid, point="warm_idle")})
         self.boundary(cid, "after_warmup")
 
+    def schema_sequence(self):
+        self.host.call("begin")
+        cid = self.loaded(self.armed["manifests"][0])
+        sample = self.fixture_cache[FIXTURE_KEY]
+        exact_body(self.state, sample)  # Preserve historical fixture binding.
+        raw = schema_body(self.state)
+        counted = fixtures.validate_count(self.counter(cid)(raw), raw, 4096)
+        if counted["input_tokens"] != 3546:
+            raise RuntimeError("historical_native_input_changed")
+        self.boundary(cid, "before_stream")
+        self.progress["inflight"]["native-schema"] = {"container": cid}
+        self.record("NATIVE_SCHEMA")
+        result = self.request(cid, raw, "native-schema")
+        summary = result["summary"]
+        outcome = {"summary": summary, "format": format_outcome(result, sample),
+                   "body_sha256": fixtures.digest(raw), "D_body_sha256": SCHEMA_SHA256,
+                   "changed_fields": {"model": {"from": "glm-5.3", "to": MODEL}},
+                   "count": counted, "output_modified": False, "instrumented": False}
+        outcome["telemetry"] = self.telemetry_window(cid, summary.get("request_started_monotonic_s"),
+            summary.get("request_ended_monotonic_s"), "inference_transport_dispatch_to_drain")
+        runner.save(self.state / "schema-result.json", outcome)
+        self.emit({"type": "schema_result", **outcome})
+        self.progress["completed"]["native-schema"] = outcome
+        del self.progress["inflight"]["native-schema"]
+        self.record("MEASUREMENT_COMPLETE")
+        self.boundary(cid, "after_stream")
+        if not result["parsed"] or summary.get("counters", {}).get("cached_tokens") != 0:
+            raise RuntimeError("native_transport_or_uncached_proof_failure")
+
     def repair_sequence(self):
         self.host.call("begin")
         cid = self.loaded(self.armed["manifests"][0])
@@ -469,6 +525,8 @@ class Diagnostic(runner.Campaign):
             raise RuntimeError("native_transport_or_uncached_proof_failure")
 
     def sequence(self):
+        if self.armed.get("campaign") == G1FIX_CAMPAIGN:
+            return self.schema_sequence()
         if self.armed.get("campaign") == FIX_CAMPAIGN:
             return self.repair_sequence()
         if self.armed.get("campaign") == POLL_CAMPAIGN:
@@ -531,7 +589,7 @@ class Diagnostic(runner.Campaign):
 
 
 def prepare(task, session_id):
-    campaign = FIX_CAMPAIGN if task.name == FIX_TASK else POLL_CAMPAIGN if task.name == POLL_TASK else CAMPAIGN
+    campaign = G1FIX_CAMPAIGN if task.name == G1FIX_TASK else FIX_CAMPAIGN if task.name == FIX_TASK else POLL_CAMPAIGN if task.name == POLL_TASK else CAMPAIGN
     if (task / "arm.json").exists():
         raise ValueError("preparation_exists_preserve_it")
     if git("status", "--porcelain"):
@@ -543,6 +601,11 @@ def prepare(task, session_id):
     sample = load_frozen(task, profile)
     raw, sample = exact_body(task, sample)
     runner.save(task / "body-identity.json", {"raw_sha256": fixtures.digest(raw), "canonical_sha256": fixtures.digest(fixtures.canonical(sample["body"])), "fixture_sha256": sample["fixture_sha256"], "bytes": len(raw)})
+    if campaign == G1FIX_CAMPAIGN:
+        schema_raw = schema_body(task)
+        runner.save(task / "schema-body-identity.json", {"D_raw_sha256": SCHEMA_SHA256,
+            "normalized_sha256": fixtures.digest(schema_raw), "bytes": len(schema_raw),
+            "field_diff": {"model": {"from": "glm-5.3", "to": MODEL}}})
     if campaign == POLL_CAMPAIGN:
         exact_control(task)
     files = runner.source_files()
@@ -561,7 +624,7 @@ def prepare(task, session_id):
 
 
 def run(task, go_path, session_id, *, restore_only=False):
-    campaign = FIX_CAMPAIGN if task.name == FIX_TASK else POLL_CAMPAIGN if task.name == POLL_TASK else CAMPAIGN
+    campaign = G1FIX_CAMPAIGN if task.name == G1FIX_TASK else FIX_CAMPAIGN if task.name == FIX_TASK else POLL_CAMPAIGN if task.name == POLL_TASK else CAMPAIGN
     armed = json.loads((task / "arm.json").read_bytes())
     go = json.loads(go_path.read_bytes())
     if (go.get("decision") != "GO" or go.get("source_commit") != armed["source_commit"]
@@ -580,7 +643,7 @@ def run(task, go_path, session_id, *, restore_only=False):
     if not restore_only:
         checkpoint(task)
     from runtime.sglang38_file_auth import read_key
-    credentials = (task.parent if task.name in {TASK, POLL_TASK, FIX_TASK} else task.parent.parent) / "BENCHRUN-20260919/private-credentials"
+    credentials = (task.parent if task.name in {TASK, POLL_TASK, FIX_TASK, G1FIX_TASK} else task.parent.parent) / "BENCHRUN-20260919/private-credentials"
     metadata = credentials.lstat()
     if credentials.is_symlink() or not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.geteuid() or stat.S_IMODE(metadata.st_mode) != 0o700:
         raise ValueError("protected_credential_directory_required")
