@@ -226,8 +226,6 @@ class Catalog:
                 "capabilities": _capabilities(record.get("capabilities")),
                 "requirements": _requirements(record.get("requirements")),
                 "endpoint": _endpoint(record.get("endpoint")),
-                **({"request_defaults": {"reasoning_effort": "low"}}
-                   if record.get("model_id") == "unsloth/GLM-5.3-GGUF" else {}),
                 "start_revalidation_required": True,
             }
 

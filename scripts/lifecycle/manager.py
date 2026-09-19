@@ -423,7 +423,10 @@ class Manager:
                 and launch.get("no_webui") is True, "invalid_launch_safety")
         require(launch.get("split_mode") == "layer" and re.fullmatch(r"[0-9]+(?:\.[0-9]+)?,[0-9]+(?:\.[0-9]+)?", launch.get("tensor_split", "")), "invalid_gpu_split")
         require(launch.get("devices") == ["CUDA0", "CUDA1"], "invalid_runtime_devices")
-        require(launch.get("chat_template_kwargs") == {"clear_thinking": True}, "invalid_template_parameters")
+        expected_kwargs = {"clear_thinking": True}
+        if d["id"] == "glm-5.3-ud-q4-k-xl-n76-native1m":
+            expected_kwargs["reasoning_effort"] = "low"
+        require(launch.get("chat_template_kwargs") == expected_kwargs, "invalid_template_parameters")
         require(len(launch.get("gpus", [])) == 2 and len(set(launch["gpus"])) == 2
                 and all(re.fullmatch(r"[0-9]+", g) for g in launch["gpus"]), "invalid_gpu_devices")
         require(d.get("logs", {}) == {"driver": "json-file", "max_size": "20m", "max_file": 3}, "unbounded_logs")

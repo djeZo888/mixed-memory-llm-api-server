@@ -127,7 +127,7 @@
   },
   "run_status": "NOT_TESTED",
   "source_pins": {
-    "configs/deployments/glm-5.3-ud-q4-k-xl-n76-native1m.json": "a15c41c0532f565720c0ead787e0b5ca0908b467e691d3bfad937c839243b47d",
+    "configs/deployments/glm-5.3-ud-q4-k-xl-n76-native1m.json": "2b931a50b17c7da546dc219e092ee0e3dd0410925963c1138a4386617571f2b5",
     "configs/deployments/qwen38-27b-1000000-yarn4-tp2-bf16kv.json": "c66895907d9f3a8a8ad9f02b4b3b9f88726c752b4d251534a232fb72b7094edf",
     "configs/models/glm-5.3-ud-q4-k-xl.json": "857924551fa83c546bb99f7b524b35c8d79d0cb9ba0a666e0c139bbace0e7e0d",
     "configs/models/qwen38-27b-fp8.json": "fb62b2689a4c57aa1265b1262830c8d0e3983061c9674640ec9704ce603a44be",
