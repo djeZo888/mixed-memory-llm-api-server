@@ -10,6 +10,32 @@ from benchmark import glmrepair as g, profiles, fixtures
 from benchmark.host import LinuxHost
 
 class Fix(unittest.TestCase):
+    def test_repair_sequence_uses_actual_host_allowed_boundary_names(self):
+        from types import SimpleNamespace
+        class ReachedIdle(Exception): pass
+        def idle(): raise ReachedIdle()
+        host = SimpleNamespace(scope='glmrepair', owner=SimpleNamespace(phase='ACTIVE'), assert_idle=idle)
+        points=[]
+        def boundary(cid, point):
+            with self.assertRaises(ReachedIdle):
+                LinuxHost.diagnostic_snapshot(host,cid,point)
+            points.append(point)
+        fake=SimpleNamespace(host=SimpleNamespace(call=lambda *a,**kw:None),
+            armed={'manifests':[{}]},loaded=lambda manifest:'cid',
+            fixture_cache={g.FIXTURE_KEY:{}},state=Path('/unused'),
+            counter=lambda cid:lambda raw:{'input_tokens':3546},boundary=boundary,
+            progress={'completed':{},'inflight':{}},record=lambda *a:None,
+            request=lambda *a:{'parsed':{'message':{}},'summary':{'counters':{'cached_tokens':0}}},
+            telemetry_window=lambda *a:{},emit=lambda row:None)
+        with patch.object(g,'exact_body',return_value=(b'{}',{})), \
+             patch.object(g,'sampling_body',return_value=b'{}'), \
+             patch.object(fixtures,'validate_count',return_value={'input_tokens':3546}), \
+             patch.object(g,'format_outcome',return_value={'status':'PASS'}), \
+             patch.object(g.runner,'save'):
+            g.Diagnostic.repair_sequence(fake)
+        self.assertEqual(points,['before_stream','after_stream','before_nonstream','after_nonstream'])
+        self.assertEqual(set(fake.progress['completed']),{'sampling1729','sampling2718'})
+
     def test_fixed_profile_and_clock(self):
         actual = profiles.glmrepair_manifest(g.FIX_CAMPAIGN)
         prior = profiles.glmrepair_manifest(g.CAMPAIGN)

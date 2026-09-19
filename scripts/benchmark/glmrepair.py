@@ -374,7 +374,8 @@ class Diagnostic(runner.Campaign):
             if counted["input_tokens"] != 3546:
                 raise RuntimeError("historical_native_input_changed")
             name = "sampling" + str(seed)
-            self.boundary(cid, "before_" + name)
+            point = "stream" if seed == 1729 else "nonstream"
+            self.boundary(cid, "before_" + point)
             self.progress["inflight"][name] = {"container": cid}
             self.record(name.upper())
             result = self.request(cid, raw, name)
@@ -389,7 +390,7 @@ class Diagnostic(runner.Campaign):
             self.progress["completed"][name] = outcome
             del self.progress["inflight"][name]
             self.record()
-            self.boundary(cid, "after_" + name)
+            self.boundary(cid, "after_" + point)
             if not result["parsed"] or summary.get("counters", {}).get("cached_tokens") != 0:
                 raise RuntimeError("native_transport_or_uncached_proof_failure")
             if outcome["format"]["status"] != "PASS":
