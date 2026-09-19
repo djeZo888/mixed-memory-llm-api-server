@@ -11,6 +11,7 @@ import copy
 import contextvars
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -26,7 +27,8 @@ import urllib.request
 from .lifecycle import CONTROL_UNIT, BOOT_UNIT, PlanError, digest, require, validate_restored
 from .owner import CampaignOwner, HostCallbacks, WorkerVerificationPending
 from .campaign import CampaignBudget
-from .profiles import read_config, command_manifest, split_resources, validate_arm_scope, G1_RAM_CAP_BYTES
+from .profiles import (read_config, command_manifest, split_resources, validate_arm_scope,
+                       G1_RAM_CAP_BYTES, glmrepair_manifest, cpu_set)
 from .telemetry import collect_sample, required_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
@@ -113,17 +115,28 @@ class HostBudget(CampaignBudget):
     def __init__(self, host):
         self._mutex = threading.RLock()
         self.host, self.path, self.clock = host, Path(host.log_root) / 'budget.json', time.time
+        self.budget_seconds = 3600 if getattr(host, 'scope', None) == 'glmrepair' else 21600
         self._data = host.read_json('budget.json', missing=True)
         if self._data is not None:
             self._validate()
+
+    def _validate(self):
+        super()._validate()
+        if self.budget_seconds == 3600:
+            require(self._data.get('start_epoch') == self.host.start_epoch == self._data['started_at'] and
+                    self._data.get('deadline_epoch') == self.host.deadline_epoch == self.host.start_epoch + 3600,
+                    'glmrepair_immutable_clock_changed')
 
     def start(self, kind):
         require(self.data is None and kind in {'maintenance', 'model_trial'}, 'budget_already_started')
         now = time.time()
         start = self.host.start_epoch if self.host.start_epoch is not None else now
-        require(type(start) in (int, float) and 0 < start <= now and now - start < 21600, 'invalid_stage_start_epoch')
-        self._data = {'schema': 1, 'budget_seconds': 21600, 'phase': 'MEASURING', 'start_kind': kind,
+        require(type(start) in (int, float) and 0 < start <= now and now - start < self.budget_seconds, 'invalid_stage_start_epoch')
+        self._data = {'schema': 1, 'budget_seconds': self.budget_seconds, 'phase': 'MEASURING', 'start_kind': kind,
                      'started_at': start, 'last_seen_at': now, 'restoration_started_at': None}
+        if self.budget_seconds == 3600:
+            self._data.update(start_epoch=start, deadline_epoch=self.host.deadline_epoch)
+            self._validate()
         self._save()
         return dict(self.data)
 
@@ -151,10 +164,12 @@ class LinuxHost:
         data = json.loads(raw)
         values = data.get('commands', data.get('manifests', [])) if isinstance(data, dict) else data
         self.scope = validate_arm_scope(data)
-        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3}[self.scope]
+        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1}[self.scope]
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
         self.start_epoch = data.get('start_epoch', data.get('runtime', {}).get('start_epoch')) if isinstance(data, dict) else None
-        if self.scope != 'full':
+        if self.scope == 'glmrepair':
+            self.start_epoch, self.deadline_epoch = self.glmrepair_clock(data)
+        elif self.scope != 'full':
             require(data.get('runtime') == data.get('continuation_execution') and self.start_epoch is not None,
                     'q1_continuation_epoch_changed')
         source_root = Path(__file__).resolve().parents[2]
@@ -166,7 +181,7 @@ class LinuxHost:
             require(hashlib.sha256(source_raw).hexdigest() == sha, 'staged_source_pin_changed')
         self.manifests = {}
         for value in values:
-            expected = command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
+            expected = glmrepair_manifest() if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
                                         ram_cap=G1_RAM_CAP_BYTES if self.scope == 'g1-only' else None,
                                         log_verbosity=4 if self.scope == 'g1-only' else None)
             require(value == expected, 'manifest_not_current_generated_source')
@@ -184,6 +199,17 @@ class LinuxHost:
         callbacks = HostCallbacks(**{name: getattr(self, name) for name in HostCallbacks.__dataclass_fields__})
         self.owner = CampaignOwner(campaign, self.manager, callbacks, self.budget,
                                   reviewed_manifest_hashes=self.manifests, lease_factory=lifecycle_lease.acquire_lease)
+
+    @staticmethod
+    def glmrepair_clock(armed):
+        runtime = armed.get('runtime') or {}
+        start, deadline = runtime.get('start_epoch'), runtime.get('deadline_epoch')
+        require('continuation_execution' not in armed and 'start_epoch' not in armed and
+                type(start) in (int, float) and type(deadline) in (int, float) and
+                math.isfinite(start) and math.isfinite(deadline) and start > 0 and
+                deadline == start + 3600 and runtime.get('budget_seconds') == 3600,
+                'glmrepair_new_immutable_clock_required')
+        return start, deadline
 
     def pin_sources(self):
         for entry in self.config['installed_source_identities'].values():
@@ -463,7 +489,7 @@ class LinuxHost:
         if manifest['placement'].startswith('Q'):
             from runtime.qwen38_oci import verify_image
             verify_image(image)
-        if self.scope == 'g1-only':
+        if self.scope in {'g1-only', 'glmrepair'}:
             available = collect_sample({})['host']['available_bytes']
             require(type(available) is int and available >= G1_RAM_CAP_BYTES + 16 * 1024**3,
                     'g1_container_cap_host_reserve_unproved')
@@ -472,7 +498,7 @@ class LinuxHost:
         created = command(argv, 120).stdout.decode().strip()
         require(bool(CID.fullmatch(created)), 'invalid_created_container_id')
         container = self.docker_inspect(created)
-        if self.scope == 'g1-only':
+        if self.scope in {'g1-only', 'glmrepair'}:
             require(container['HostConfig'].get('Memory') == G1_RAM_CAP_BYTES and
                     container['HostConfig'].get('MemorySwap') == G1_RAM_CAP_BYTES,
                     'g1_container_no_swap_limit_unproved')
@@ -552,10 +578,10 @@ class LinuxHost:
         placement = manifest.get('placement')
         parsed = self.allocation_proofs.get(cid)
         row['required_host_demand'] = {'evidence_status': 'UNAVAILABLE', 'required_bytes': None}
-        if placement in {'G1', 'Q1'}:
+        if placement in {'G1', 'Q1'} or self.scope == 'glmrepair' and placement == 'G2':
             group = row['cgroups'][cid]
             try:
-                if placement == 'G1' and parsed is not None:
+                if placement.startswith('G') and parsed is not None:
                     argv = manifest['native_argv']
                     require('--load-mode' in argv and argv[argv.index('--load-mode') + 1] == 'none' and
                             bool({'CPU', 'CUDA_Host'} & (parsed.get('weights_mib_log_label') or {}).keys()) and
@@ -630,6 +656,94 @@ class LinuxHost:
                 'g1_effective_no_swap_limit_unproved')
         return limits
 
+    @staticmethod
+    def glmrepair_cpu_limits(container, cgroup):
+        config = container['HostConfig']
+        limits = {'docker_cpuset_cpus': config.get('CpusetCpus'),
+                  'docker_nano_cpus': config.get('NanoCpus'),
+                  'docker_cpu_quota': config.get('CpuQuota'),
+                  'docker_cpu_period': config.get('CpuPeriod'),
+                  'cgroup_cpuset_cpus_effective': (cgroup / 'cpuset.cpus.effective').read_text().strip(),
+                  'cgroup_cpu_max': (cgroup / 'cpu.max').read_text().strip()}
+        quota = limits['cgroup_cpu_max'].split()
+        require(limits['docker_cpuset_cpus'] == '0-95' and
+                all(limits[key] == 0 for key in ('docker_nano_cpus', 'docker_cpu_quota', 'docker_cpu_period')) and
+                cpu_set(limits['cgroup_cpuset_cpus_effective']) == set(range(96)) and
+                len(quota) == 2 and quota[0] == 'max' and quota[1].isdigit() and int(quota[1]) > 0,
+                'glmrepair_effective_cpu_limits_unproved')
+        return limits
+
+    def diagnostic_snapshot(self, cid, point):
+        """Cheap quiescent counters plus a bounded private native-log receipt; no sampler."""
+        require(self.scope == 'glmrepair' and self.owner.phase == 'ACTIVE', 'glmrepair_diagnostic_scope_required')
+        require(point in {'readiness', 'before_warmup', 'after_warmup', 'before_stream', 'after_stream',
+                          'before_nonstream', 'after_nonstream', 'before_baseline', 'after_baseline'},
+                'invalid_diagnostic_point')
+        self.assert_idle()
+        container, cgroup, pids = self.identity(cid)
+        require(0 < len(pids) <= 512, 'diagnostic_process_bound')
+        cpus = self.glmrepair_cpu_limits(container, cgroup)
+        memory = self.g1_memory_limits(container, cgroup)
+        observed_at = time.time()
+        def bounded_text(path, maximum=4 * 1024 * 1024):
+            with path.open() as handle:
+                value = handle.read(maximum + 1)
+            require(len(value) <= maximum, 'diagnostic_file_bound')
+            return value
+        def counters(path):
+            rows = [line.split() for line in bounded_text(path).splitlines()]
+            require(all(len(row) == 2 and row[1].isdigit() for row in rows), 'diagnostic_counters_invalid')
+            return {key: int(value) for key, value in rows}
+        processes = []
+        for pid in pids:
+            proc = Path('/proc') / str(pid)
+            fields = bounded_text(proc / 'stat').rsplit(') ', 1)[1].split()
+            status = dict(line.split(':', 1) for line in bounded_text(proc / 'status').splitlines() if ':' in line)
+            numa = bounded_text(proc / 'numa_maps')
+            nodes = {}
+            for node, pages in re.findall(r'\bN(\d+)=(\d+)\b', numa):
+                nodes[node] = nodes.get(node, 0) + int(pages)
+            generation = bounded_text(proc / 'stat').rsplit(') ', 1)[1].split()[19]
+            require(generation == fields[19], 'diagnostic_process_generation_changed')
+            allowed = status.get('Cpus_allowed_list', '').strip()
+            require(cpu_set(allowed) == set(range(96)), 'glmrepair_process_cpuset_unproved')
+            processes.append({'pid': pid, 'start_ticks': int(fields[19]),
+                              'minor_faults': int(fields[7]), 'major_faults': int(fields[9]),
+                              'user_ticks': int(fields[11]), 'system_ticks': int(fields[12]),
+                              'thread_count': int(fields[17]), 'cpu_allowed_list': allowed,
+                              'mems_allowed_list': status.get('Mems_allowed_list', '').strip(),
+                              'numa_pages_by_node': nodes,
+                              'numa_scope': 'guest page distribution; physical placement unmeasured'})
+        started = container['State']['StartedAt']
+        cpu_stat = counters(cgroup / 'cpu.stat')
+        ancestors = []
+        for parent in (cgroup, *cgroup.parents):
+            if parent == Path('/sys/fs/cgroup'):
+                break
+            require(len(ancestors) < 32 and Path('/sys/fs/cgroup') in parent.parents,
+                    'diagnostic_cgroup_ancestry_invalid')
+            cpu_max = parent / 'cpu.max'
+            if cpu_max.exists():
+                ancestors.append({'path': str(parent), 'cpu_max': bounded_text(cpu_max).strip()})
+        logs = command(['/usr/bin/docker', 'logs', '--timestamps', '--since', started, '--tail', '20000', cid], 60)
+        raw = logs.stdout + logs.stderr
+        require(len(raw) <= 16 * 1024 * 1024, 'diagnostic_log_too_large')
+        suffix = 'diagnostics/' + cid + '-' + point
+        self.write_bytes(suffix + '.log', raw)
+        lines = raw.splitlines()
+        row = {'schema': 1, 'point': point, 'container_id': cid, 'observed_at': observed_at,
+               'cpu_limits': cpus, 'memory_limits': memory, 'cpu_stat': cpu_stat,
+               'ancestor_cpu_limits': ancestors,
+               'processes': processes, 'clock_ticks_per_second': os.sysconf('SC_CLK_TCK'),
+               'cpu_utilization_basis': 'difference process user+system ticks / ticks_per_second / elapsed_seconds; 100% is one guest CPU',
+               'log': {'path': self.log_root + '/' + suffix + '.log', 'sha256': hashlib.sha256(raw).hexdigest(),
+                       'bytes': len(raw), 'lines': len(lines), 'tail_limit_lines': 20000,
+                       'capture_scope': 'cumulative current-container log tail; counters are not full-log totals',
+                       'marker_line_counts': {marker: sum(marker.encode() in line for line in lines)
+                                              for marker in ('process_token', 'print_timings', 'D3T_NATIVE_V1', 'thinking', 'reasoning')}}}
+        self.write_json(suffix + '.json', row)
+        return row
+
     def allocation(self, cid):
         self.assert_idle()
         container, cgroup, pids = self.identity(cid)
@@ -679,9 +793,12 @@ class LinuxHost:
                     'native_argv': native, 'device_request_uuids': device_ids, 'cuda_uuid_order': cuda,
                     'gpu_free_bytes': {g['uuid']: g['free_bytes'] for g in sample['gpus']},
                     'raw_log_sha256': hashlib.sha256(raw).hexdigest()}
-        if self.scope == 'g1-only':
+        if self.scope in {'g1-only', 'glmrepair'}:
             observed['container_memory_limits'] = self.g1_memory_limits(container, cgroup)
-        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope == 'g1-only')
+        if self.scope == 'glmrepair':
+            observed['container_cpu_limits'] = self.glmrepair_cpu_limits(container, cgroup)
+        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope == 'g1-only',
+                               strict_glmrepair=self.scope == 'glmrepair')
         result = {'allocation': gate, 'parsed': parsed, 'observed': observed, 'server_facts': facts,
                   'raw_log_path': self.log_root + '/loads/' + cid + '-allocation.log'}
         if gate['status'] == 'ALLOCATION_PROOF_ACCEPTED':
@@ -857,6 +974,7 @@ class LinuxHost:
         require(isinstance(args, dict), 'invalid_rpc_args')
         if op == 'begin':
             if args.get('resume'):
+                require(self.scope != 'glmrepair', 'glmrepair_resume_forbidden_restore_only')
                 ledger = self.read_json('owner.json')
                 require(ledger['phase'] == 'RESTORED' and self.budget.data['phase'] == 'RESTORED', 'resume_requires_verified_restoration')
                 require(time.time() - self.budget.data['started_at'] < 21600, 'STOP_BUDGET')
@@ -887,6 +1005,8 @@ class LinuxHost:
             return getattr(self, op)(args['id'])
         if op == 'quiescent':
             return self.quiescent(args['id'], args['point'])
+        if op == 'diagnostic_snapshot':
+            return self.diagnostic_snapshot(args['id'], args['point'])
         if op == 'request_begin':
             require(self.owner.phase == 'ACTIVE', 'owner_not_active')
             self.identity(args['id'])
@@ -956,7 +1076,7 @@ class LinuxHost:
 
 
 RPC_OPERATIONS = frozenset({'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation',
-    'quiescent', 'request_begin', 'request_end', 'admit_mixed', 'restore', 'recover',
+    'quiescent', 'diagnostic_snapshot', 'request_begin', 'request_end', 'admit_mixed', 'restore', 'recover',
     'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'})
 RPC_SAFE_REQUIRE_CODES = frozenset({'native_server_args_unavailable',
     'allocation_log_too_large', 'current_model_mount_changed',

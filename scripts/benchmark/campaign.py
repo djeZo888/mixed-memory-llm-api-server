@@ -47,6 +47,8 @@ class CampaignBudget:
     lifecycle/file lock. A backwards wall clock fails closed. Restoration is a terminal
     phase and does not consume or reopen measurement budget.
     """
+    budget_seconds = BUDGET_SECONDS
+
     def __init__(self, path: Path, *, before_write: Callable, after_write: Callable,
                  clock: Callable[[], float] = time.time,
                  read: Callable[[Path], bytes | None] | None = None,
@@ -80,7 +82,7 @@ class CampaignBudget:
 
     def _validate(self):
         d = self._data
-        if (not isinstance(d, dict) or d.get("schema") != 1 or d.get("budget_seconds") != BUDGET_SECONDS
+        if (not isinstance(d, dict) or d.get("schema") != 1 or d.get("budget_seconds") != self.budget_seconds
                 or d.get("phase") not in {"MEASURING", "RESTORING", "RESTORED", "RESTORE_FAILED"}
                 or d.get("start_kind") not in {"maintenance", "model_trial"}
                 or type(d.get("started_at")) not in (int, float)
@@ -128,7 +130,7 @@ class CampaignBudget:
         now = self.clock()
         if not math.isfinite(now) or now < 0:
             raise ValueError("invalid_clock")
-        self._data = {"schema": 1, "budget_seconds": BUDGET_SECONDS, "phase": "MEASURING",
+        self._data = {"schema": 1, "budget_seconds": self.budget_seconds, "phase": "MEASURING",
                      "start_kind": kind, "started_at": now, "last_seen_at": now,
                      "restoration_started_at": None}
         self._save()
@@ -144,7 +146,7 @@ class CampaignBudget:
         self._data["last_seen_at"] = now
         self._save()
         boundary = self._data["restoration_started_at"] if self._data["phase"] != "MEASURING" else now
-        return max(0, BUDGET_SECONDS - (boundary - self._data["started_at"]))
+        return max(0, self.budget_seconds - (boundary - self._data["started_at"]))
 
     @_budget_serialized
     def request_timeout(self, requested_s: float = MAX_REQUEST_SECONDS) -> float:

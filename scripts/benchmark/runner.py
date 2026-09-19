@@ -50,6 +50,7 @@ def source_files():
         paths.update(profiles.ROOT.joinpath(group).glob("*.py"))
     paths.add(profiles.ROOT / "scripts/bench/benchmark-host.py")
     paths.add(profiles.CONFIG)
+    paths.add(profiles.ROOT / "configs/benchmarks/glmrepair-g2-20260919.json")
     paths.update(profiles.ROOT / name for name in profiles.read_config()["source_pins"])
     return {str(p.relative_to(profiles.ROOT)): p.read_bytes() for p in sorted(paths)}
 
@@ -227,7 +228,7 @@ class Campaign:
                     # A known timed-out GPU query during loading is an observation
                     # gap, not measured low reserve. Keep the raw sample; require
                     # fresh complete resource proof before warmup below.
-                    loading_gpu_timeout = (self.armed.get("scope") == "g1-only"
+                    loading_gpu_timeout = (self.armed.get("scope") in {"g1-only", "glmrepair"}
                         and self.active[cid].get("phase") == "loading"
                         and row.get("errors") == ["gpu_TimeoutExpired"] and row.get("gpus") == [])
                     if not loading_gpu_timeout and not set(self.active[cid]["manifest"]["gpu_uuids"]).issubset({g.get("uuid") for g in row.get("gpus", [])}):
@@ -238,7 +239,7 @@ class Campaign:
                         verdict = "SKIP_UNSAFE_PLACEMENT"
                     if verdict.startswith(("STOP_", "SKIP_")):
                         self.safety[cid] = verdict
-                    if self.armed.get("scope") == "g1-only":
+                    if self.armed.get("scope") in {"g1-only", "glmrepair"}:
                         # Cancel only proven resource violations, never missing
                         # telemetry or a reporting/parser failure. Existing stop
                         # paths run after the transport closes and saves raw data.
@@ -287,14 +288,14 @@ class Campaign:
         self.record()
         while True:
             with self.lock:
-                if self.armed.get("scope") == "g1-only" and self.active[cid].get("abort_reason"):
+                if self.armed.get("scope") in {"g1-only", "glmrepair"} and self.active[cid].get("abort_reason"):
                     raise RuntimeError(self.active[cid]["abort_reason"])
             remaining = min(deadline - self.clock(), self.host.call("budget").get("remaining_s", 0))
             if remaining <= 0:
                 raise RuntimeError("STOP_BUDGET")
             proof = self.host.call("readiness", id=cid, timeout_s=remaining)
             with self.lock:
-                if self.armed.get("scope") == "g1-only" and self.active[cid].get("abort_reason"):
+                if self.armed.get("scope") in {"g1-only", "glmrepair"} and self.active[cid].get("abort_reason"):
                     raise RuntimeError(self.active[cid]["abort_reason"])
             if self.clock() >= deadline:
                 raise RuntimeError("STOP_BUDGET")
@@ -308,7 +309,7 @@ class Campaign:
         if proof.get("allocation", {}).get("status") != "ALLOCATION_PROOF_ACCEPTED":
             raise RuntimeError("STOP_ALLOCATION_PROOF")
         ready = self.host.call("quiescent", id=cid, point="readiness")
-        if self.armed.get("scope") == "g1-only":
+        if self.armed.get("scope") in {"g1-only", "glmrepair"}:
             current = ready.get("telemetry") or {}
             available = current.get("host", {}).get("available_bytes")
             free = {g.get("uuid"): g.get("free_bytes") for g in current.get("gpus", [])}
@@ -321,6 +322,10 @@ class Campaign:
         self.active[cid].update(template_sha256=proof.get("template_sha256"), phase="ready")
         self.emit({"type": "load", "placement": manifest["placement"], "capacity": manifest["configured_capacity"],
                    "client_load_seconds": self.clock() - begin, "readiness": ready, "allocation": proof["allocation"]})
+        self.warm(cid, manifest, proof)
+        return cid
+
+    def warm(self, cid, manifest, proof):
         # Warmup has a different seed AND prefix from every measured fixture.
         warm, counted = fixtures.warmup_sample("bench-glm-5.3" if manifest["placement"].startswith("G") else "bench-qwen3.8-27b",
                                               manifest["configured_capacity"], "warmup-prefix-" + str(time.time_ns()), self.counter(cid))
@@ -335,7 +340,6 @@ class Campaign:
                    "checkpoint": self.host.call("quiescent", id=cid, point="warm_idle"), "warmup_timing": "discarded"})
         self.collect()
         self.record()
-        return cid
 
     def retire_all(self):
         for cid in list(self.active):
@@ -355,7 +359,7 @@ class Campaign:
         manifest = self.active[cid]["manifest"]
         url = "http://127.0.0.1:" + str(manifest["transport"]["port"])
         try:
-            options = {"cancel_event": self.active[cid]["cancel_event"]} if self.armed.get("scope") == "g1-only" else {}
+            options = {"cancel_event": self.active[cid]["cancel_event"]} if self.armed.get("scope") in {"g1-only", "glmrepair"} else {}
             result = client.run_request(raw, self.transport_factory(url, self.key, **options), sample_id=identifier,
                                       private_dir=self.private, summary_path=self.state / ("samples.jsonl" if timed else "warmups.jsonl"), timeout=timeout,
                                       clock=self.clock)

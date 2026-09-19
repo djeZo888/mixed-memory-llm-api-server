@@ -12,7 +12,13 @@ from .qwen_launcher import pinned_base, variant
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/benchmarks/gpu-split-20260919.json"
 G1_RAM_CAP_BYTES = 640 * 1024**3  # Root-reviewed validation cap; not minimum model RAM.
-ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only")
+ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair")
+GLMREPAIR_CAMPAIGN = "benchrun-glmrepair-20260919"
+
+
+def glmrepair_manifest():
+    """Frozen root-reviewed G2 control, independent of the historical 112-CPU preset."""
+    return json.loads((ROOT / "configs/benchmarks/glmrepair-g2-20260919.json").read_text())
 
 
 def scope_placements(scope):
@@ -20,11 +26,15 @@ def scope_placements(scope):
         raise ValueError("unknown_benchmark_arm_scope")
     if scope == "g1-only":
         return ("G1",)
+    if scope == "glmrepair":
+        return ("G2",)
     return ("Q1",) if scope != "full" else ("Q2", "Q1", "G2", "G1")
 
 
 def scope_capacities(scope):
     scope_placements(scope)  # Reject unknown scopes before selecting capacities.
+    if scope == "glmrepair":
+        return (4096,)
     return (262144,) if scope == "q1-256k" else (4096, 16384, 65536)
 
 
@@ -32,6 +42,11 @@ def validate_arm_scope(armed):
     """Legacy arms retain full scope; narrowed arms bind their exact placement and plan."""
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
+    if scope == "glmrepair":
+        if (armed.get("campaign") != GLMREPAIR_CAMPAIGN or armed.get("manifests") != [glmrepair_manifest()]
+                or armed.get("trial_plan") != trial_order(scope)):
+            raise ValueError("glmrepair_exact_arm_scope_mismatch")
+        return scope
     if scope != "full":
         expected = [command_manifest(p, n, campaign=armed["campaign"], ram_cap=G1_RAM_CAP_BYTES if scope == "g1-only" else None, log_verbosity=4 if scope == "g1-only" else None)
                     for p in placements for n in scope_capacities(scope)]
@@ -191,6 +206,15 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
 
 
 def trial_order(scope="full"):
+    if scope == "glmrepair":
+        return {"trials": [
+            {"placement": "G2", "capacity": 4096, "case": "load_warmup", "output_cap": 32, "timing": "discard"},
+            {"placement": "G2", "capacity": 4096, "case": "plain_stream", "output_cap": 128, "diagnostic": True},
+            {"placement": "G2", "capacity": 4096, "case": "plain_nonstream", "output_cap": 128, "diagnostic": True},
+            {"placement": "G2", "capacity": 4096, "case": "retrieval", "output_cap": 256}],
+            "then": [], "mixed_jobs": [], "measurement_budget_seconds": 3600,
+            "maximum_request_seconds": 7200, "restoration_outside_budget": True,
+            "format_failure_policy": "record strict failure and continue reviewed baseline while resource health is valid"}
     rows = []
     for p in scope_placements(scope):
         for capacity in scope_capacities(scope):

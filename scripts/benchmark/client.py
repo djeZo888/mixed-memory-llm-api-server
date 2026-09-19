@@ -174,6 +174,54 @@ def run_request(raw_body, transport, *, sample_id, private_dir, summary_path,
     request = protocol.strict_json_loads(raw_body)
     if request.get("max_tokens") not in (256, 512) or request.get("stream") is not True:
         raise HarnessError("benchmark request requires streaming and 256/512 cap")
+    return _capture_request(raw_body, transport, sample_id=sample_id, private_dir=private_dir,
+                            summary_path=summary_path, timeout=timeout, clock=clock,
+                            redact=redact, observer_factory=observer_factory)
+
+
+def run_diagnostic_request(raw_body, transport, **kwargs):
+    """GLMREPAIR-only short probes; historical benchmark contract stays fixed."""
+    request = protocol.strict_json_loads(raw_body)
+    if (request.get("model") != "bench-glm-5.3" or request.get("max_tokens") not in (32, 128)
+            or type(request.get("stream")) is not bool or request.get("temperature") != 0
+            or request.get("reasoning_effort") != "low"
+            or set(request) - {"model", "messages", "stream", "stream_options", "max_tokens",
+                               "temperature", "reasoning_effort"}):
+        raise HarnessError("invalid bounded GLM diagnostic request")
+    return _capture_request(raw_body, transport, **kwargs)
+
+
+def parse_nonstream(raw, model):
+    value = protocol.strict_json_loads(raw)
+    choices = value.get("choices")
+    if value.get("model") != model or not isinstance(choices, list) or len(choices) != 1:
+        raise HarnessError("invalid native nonstream identity/choices")
+    finish = choices[0].get("finish_reason")
+    if finish != "length":
+        parsed = accounting.parse_response(raw, False, model)
+        return {"status": "COMPLETE", "message": parsed["message"], "model": model,
+                "finish_reason": parsed["finish_reason"], "counters": parsed["counters"]}
+    # Keep the actual LENGTH finish and exact message. No response rewriting.
+    message, _ = protocol._assistant(choices[0].get("message"))
+    usage, timing = value.get("usage") or {}, value.get("timings") or {}
+    counter = accounting._counter
+    counters = {k: counter(usage, k) for k in ("prompt_tokens", "completion_tokens", "total_tokens")}
+    counters.update(cached_tokens=counter(timing, "cache_n"),
+                    evaluated_prompt_tokens=counter(timing, "prompt_n"),
+                    decode_tokens=counter(timing, "predicted_n"),
+                    prompt_ms=counter(timing, "prompt_ms", False),
+                    decode_ms=counter(timing, "predicted_ms", False))
+    return {"status": "OUTPUT_LIMIT", "message": message, "model": model,
+            "finish_reason": finish, "counters": counters}
+
+
+def _capture_request(raw_body, transport, *, sample_id, private_dir, summary_path,
+                     timeout=7200, clock=time.monotonic, redact=None,
+                     observer_factory=StreamObserver):
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,96}", sample_id) or type(timeout) not in (int, float) or not 0 < timeout <= 7200:
+        raise HarnessError("invalid request identity or timeout")
+    request = protocol.strict_json_loads(raw_body)
+    streaming = request["stream"]
     protocol._validate_messages(request.get("messages"))
     if redact is None:
         redact = getattr(transport, "redact", lambda data: data)
@@ -185,6 +233,7 @@ def run_request(raw_body, transport, *, sample_id, private_dir, summary_path,
     started = clock()
     observer = observer_factory(started)
     chunks, total, transport_error, oversized = [], 0, False, False
+    interrupted = None
     try:
         for chunk in transport(raw_body, timeout):
             if not isinstance(chunk, bytes):
@@ -196,16 +245,19 @@ def run_request(raw_body, transport, *, sample_id, private_dir, summary_path,
             else:
                 oversized = True
             try:
-                observer.feed(chunk, clock())
+                if streaming:
+                    observer.feed(chunk, clock())
             except Exception:
                 # Even an unexpected observer implementation bug cannot abort
                 # healthy inference. The transport still drains to completion.
                 observer.error = True
-    except Exception:
+    except BaseException as error:
         transport_error = True
+        if not isinstance(error, Exception):
+            interrupted = error
     ended = clock()
     raw = b"".join(chunks)
-    raw_path = root / (sample_id + ".response.sse")
+    raw_path = root / (sample_id + (".response.sse" if streaming else ".response.json"))
     report_errors = []
     try:
         _write_private(raw_path, redact(raw))
@@ -215,7 +267,7 @@ def run_request(raw_body, transport, *, sample_id, private_dir, summary_path,
     status = "TRANSPORT_FAILURE" if transport_error else "HARNESS_FAILURE" if oversized else "COMPLETE"
     if status == "COMPLETE":
         try:
-            parsed = parse_response(raw, request["model"])
+            parsed = (parse_response if streaming else parse_nonstream)(raw, request["model"])
             status = parsed["status"]
         except Exception:
             status = "HARNESS_FAILURE"
@@ -224,13 +276,14 @@ def run_request(raw_body, transport, *, sample_id, private_dir, summary_path,
         if status == "COMPLETE":
             status = "HARNESS_FAILURE"
     try:
-        client_timing = observer.summary()
+        client_timing = observer.summary() if streaming else {"source": "nonstream_dispatch_to_drain", "done_observed": None}
     except Exception:
         client_timing = {"observer_status": "HARNESS_FAILURE", "source": "client_event_arrival"}
         report_errors.append("stream_timing_summary_failed")
     summary = {"sample_id": sample_id, "status": status, "request_sha256": digest(raw_body),
                "response_sha256": digest(raw), "response_bytes": total,
-               "response_retained_complete": not oversized,
+               "response_retained_complete": not oversized and not transport_error and "private_response_write_failed" not in report_errors,
+               "transport_stream": streaming,
                "client_elapsed_seconds": ended - started,
                "request_started_monotonic_s": started, "request_ended_monotonic_s": ended,
                "request_interval_source": "worker_monotonic_transport_dispatch_to_drain",
@@ -247,11 +300,13 @@ def run_request(raw_body, transport, *, sample_id, private_dir, summary_path,
             os.fsync(handle.fileno())
     except Exception:
         report_errors.append("summary_write_failed")
+    if interrupted is not None:
+        raise interrupted
     return {"summary": summary, "parsed": parsed,
             "private_request_path": str(request_path), "private_response_path": str(raw_path)}
 
 
-def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None):
+def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None, stream=True, deadline_epoch=None):
     """Explicit authenticated loopback/private-IPv4 HTTP transport factory.
 
     BENCHRUN establishes its reviewed private SSH transport/proxy/firewall policy
@@ -265,6 +320,9 @@ def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None
     import threading
     from urllib.parse import urlsplit
 
+    if type(stream) is not bool:
+        raise HarnessError("invalid response transport mode")
+    media_type = "text/event-stream" if stream else "application/json"
     url = urlsplit(base_url)
     try:
         address = ipaddress.ip_address(url.hostname)
@@ -279,6 +337,10 @@ def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None
     def send(body, timeout):
         if type(timeout) not in (int, float) or not 0 < timeout <= 7200:
             raise HarnessError("invalid absolute request deadline")
+        if deadline_epoch is not None:
+            timeout = min(timeout, deadline_epoch - time.time())
+            if timeout <= 0:
+                raise HarnessError("campaign deadline exhausted")
         deadline = clock() + timeout
         connection = http.client.HTTPConnection(url.hostname, url.port, timeout=timeout)
         response = None
@@ -310,10 +372,10 @@ def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None
                 raise HarnessError("resource safety cancellation")
             connection.request("POST", "/v1/chat/completions", body=body,
                                headers={"Authorization": "Bearer " + api_key,
-                                        "Content-Type": "application/json", "Accept": "text/event-stream",
+                                        "Content-Type": "application/json", "Accept": media_type,
                                         "Accept-Encoding": "identity"})
             response = connection.getresponse()
-            if response.status != 200 or response.getheader("Content-Type", "").split(";")[0] != "text/event-stream":
+            if response.status != 200 or response.getheader("Content-Type", "").split(";")[0] != media_type:
                 raise HarnessError("HTTP status/content type failed")
             sock = connection.sock or getattr(getattr(response.fp, "raw", None), "_sock", None)
             if sock is None:

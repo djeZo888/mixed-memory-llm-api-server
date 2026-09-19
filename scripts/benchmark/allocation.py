@@ -149,7 +149,7 @@ def parse_qwen_log_facts(events: list[dict], server_facts: dict) -> dict:
             "scope": "current-load numeric extraction and native server facts; caller must bind current container/load"}
 
 
-def allocation_gate(manifest: dict, parsed: dict, observed: dict, *, strict_g1=False) -> dict:
+def allocation_gate(manifest: dict, parsed: dict, observed: dict, *, strict_g1=False, strict_glmrepair=False) -> dict:
     """Pure admission decision; missing current proof refuses, never becomes zero.
 
     observed must be produced by root-reviewed protected inspection: image_ref,
@@ -194,6 +194,23 @@ def allocation_gate(manifest: dict, parsed: dict, observed: dict, *, strict_g1=F
                  "g1_f16_cache_bytes_mismatch")
             need(native.get("fa_nodes") == 78 and native.get("lid_nodes") == 21,
                  "g1_main_indexer_graph_mismatch")
+        if strict_glmrepair:
+            need(manifest["placement"] == "G2" and capacity == 4096 and devices == {"CUDA0", "CUDA1"},
+                 "glmrepair_matched_dual_gpu_required")
+            cache = native.get("cache_bytes") or {}
+            need(all(type(v) is int for v in cache.values()) and sum(cache.values()) == 95232 * capacity,
+                 "glmrepair_f16_cache_total_mismatch")
+            need(native.get("fa_nodes") == 78 and native.get("lid_nodes") == 21,
+                 "glmrepair_main_indexer_graph_mismatch")
+            limits = observed.get("container_memory_limits") or {}
+            need(limits == {"docker_memory_bytes": 640 * GIB, "docker_memory_swap_bytes": 640 * GIB,
+                            "cgroup_memory_max": str(640 * GIB), "cgroup_memory_swap_max": "0"},
+                 "glmrepair_effective_memory_limits_unproved")
+            cpu = observed.get("container_cpu_limits") or {}
+            need(cpu.get("docker_cpuset_cpus") == "0-95" and cpu.get("cgroup_cpuset_cpus_effective") == "0-95" and
+                 all(cpu.get(k) == 0 for k in ("docker_nano_cpus", "docker_cpu_quota", "docker_cpu_period")) and
+                 bool(re.fullmatch(r"max [1-9][0-9]*", cpu.get("cgroup_cpu_max", ""))),
+                 "glmrepair_effective_cpu_limits_unproved")
         weights = parsed.get("weights_mib_log_label") or {}
         need(devices <= weights.keys() and any(k in {"CPU", "CPU_Mapped", "CUDA_Host"} for k in weights), "cpu_gpu_weight_allocation_unproved")
         expected = manifest.get("glm_offload_expectation") or {}
