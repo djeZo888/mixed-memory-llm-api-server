@@ -150,10 +150,13 @@ def fit_sample(model, capacity, seed, nonce, count, *, kind="retrieval", output_
         raise HarnessError("invalid fitting headroom/tolerance")
     ceiling = capacity - output_cap - margin - (1024 if kind == "tool" else 0)
     low, high, best = 12, min(200000, capacity), None
-    for _ in range(20):
+    records, bracketed = low, False
+    # Bracket with actual native counts before binary fitting. Starting at half
+    # the record ceiling can exceed the native token-ID bound even for warmup.
+    # 32 calls cover doubling and binary search over the reviewed record bounds.
+    for _ in range(32):
         if low > high:
             break
-        records = (low + high) // 2
         sample = build_sample(model, records, seed, nonce, kind=kind, output_cap=output_cap)
         raw = serialize_validate(sample)
         measured = validate_count(count(raw), raw, capacity, synthetic=synthetic)
@@ -163,8 +166,13 @@ def fit_sample(model, capacity, seed, nonce, count, *, kind="retrieval", output_
             if ceiling - actual <= tolerance:
                 break
             low = records + 1
+            if not bracketed:
+                records = min(high, records * 2)
+                continue
         else:
             high = records - 1
+            bracketed = True
+        records = (low + high) // 2
     if best is None or ceiling - best[1]["input_tokens"] > tolerance:
         raise HarnessError("cannot fit native-counted sample inside target tolerance")
     return best[0], {**best[1], "input_ceiling_tokens": ceiling,

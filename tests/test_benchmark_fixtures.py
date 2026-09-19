@@ -80,6 +80,40 @@ class FixtureTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(f.HarnessError):
                 f.validate_count({**count, **change}, raw, 4096, synthetic=True)
 
+    def test_64k_native_bound_warmup_fit_and_matched_fixture_invariance(self):
+        calls = []
+        def tokenize(path, payload):
+            self.assertEqual(path, "/v1/tokenize")
+            records = payload["messages"][0]["content"].count("record=")
+            calls.append(records)
+            # Synthetic native response with the observed approximately 40
+            # tokens/record: the former 32774-record first probe exceeds the
+            # real accounting adapter's token-ID limit, before any inference.
+            tokens = [7] * (records * 40 + 100)
+            return {"tokens": tokens, "count": len(tokens), "max_model_len": 262144}
+        count = native_counter("bench-qwen3.8-27b", 65536, tokenize, qwen_template_sha256="e" * 64)
+        for warmup in (True, False):
+            calls.clear()
+            if warmup:
+                first, evidence = f.warmup_sample("bench-qwen3.8-27b", 65536, "warmup-fresh-0064", count)
+                self.assertTrue(2304 <= evidence["input_tokens"] <= 2432)
+            else:
+                first, evidence = f.fit_sample("bench-qwen3.8-27b", 65536, "testseed0064", "nonce000064", count)
+                self.assertTrue(64896 <= evidence["input_tokens"] <= 65024)
+            self.assertEqual(calls[0], 12)
+            self.assertLessEqual(len(calls), 32)
+            self.assertLess(max(calls) * 40 + 100, 1048576)
+            f.validate_count(evidence, f.serialize_validate(first), 65536)
+            original = copy.deepcopy(first)
+            calls.clear()
+            matched, matched_count = f.matched_sample(first, "matched-fresh-0064", count, 65536,
+                                                     margin=evidence["margin_tokens"])
+            self.assertEqual(calls, [first["records"]])
+            self.assertEqual(first, original)
+            self.assertEqual(matched["fixture_sha256"], first["fixture_sha256"])
+            self.assertEqual(matched["scorer"], first["scorer"])
+            self.assertEqual(matched_count["input_tokens"], evidence["input_tokens"])
+
     def test_matched_placement_freezes_workload_and_only_refreshes_nonce(self):
         first, _ = f.fit_sample("bench-glm-5.3", 4096, "testseed0001", "nonce000001",
                                 synthetic_count, synthetic=True)
