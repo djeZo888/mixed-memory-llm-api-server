@@ -23,7 +23,12 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None):
 
     def count(raw):
         body = protocol.strict_json_loads(raw)
-        count_transport = {}
+        # Count-only routes do not stream. Preserve every template/sampling field
+        # and bind both the final inference body and normalized counting body.
+        count_body = {k: v for k, v in body.items() if k not in ("stream", "stream_options")}
+        count_transport = {"count_body_sha256": digest(canonical(count_body)),
+                           "count_transport_normalization": {
+                               "removed_fields": [k for k in ("stream", "stream_options") if k in body]}}
         if body.get("model") != model:
             raise HarnessError("accounting model differs from request")
         if model.removeprefix("bench-") == "glm-5.3":
@@ -36,7 +41,7 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None):
                         if body.get("tools") else props.get("chat_template"))
             if not isinstance(template, str) or not template:
                 raise HarnessError("loaded native template missing")
-            rendered = call("/apply-template", body)
+            rendered = call("/apply-template", count_body)
             if not isinstance(rendered, dict) or not isinstance(rendered.get("prompt"), str):
                 raise HarnessError("native rendering missing")
             reply = call("/tokenize", {"content": rendered["prompt"], "add_special": True,
@@ -45,10 +50,6 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None):
         else:
             # Native tokenization has no streaming implementation. Preserve all
             # template inputs; only generation transport fields are omitted.
-            count_body = {k: v for k, v in body.items() if k not in ("stream", "stream_options")}
-            count_transport = {"count_body_sha256": digest(canonical(count_body)),
-                               "count_transport_normalization": {
-                                   "removed_fields": [k for k in ("stream", "stream_options") if k in body]}}
             reply = call("/v1/tokenize", count_body)
             # Pinned route exposes tokenizer metadata, not the allocation/window
             # accepted by this server. Keep it visible without treating it as a

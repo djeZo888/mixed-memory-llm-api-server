@@ -12,7 +12,8 @@ from .qwen_launcher import pinned_base, variant
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/benchmarks/gpu-split-20260919.json"
 G1_RAM_CAP_BYTES = 640 * 1024**3  # Root-reviewed validation cap; not minimum model RAM.
-ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair")
+ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair", "g1-ladder")
+G1_LADDER_CAMPAIGN = "benchrun-glm-g1-ladder-20260920"
 GLMREPAIR_CAMPAIGN = "benchrun-glmrepair2-20260919"
 GLMREPAIR_POLL_CAMPAIGN = "benchrun-glmrepair-poll-20260919"
 GLMREPAIR_G1FIX_CAMPAIGN = "benchrun-glmrepair-g1fix-20260919"
@@ -37,10 +38,25 @@ def glmrepair_manifest(campaign=GLMREPAIR_CAMPAIGN):
     return json.loads((ROOT / "configs/benchmarks" / names[campaign]).read_text())
 
 
+def g1_ladder_manifest(capacity):
+    """Two scoped loads of the frozen G1 profile; only native context changes."""
+    if type(capacity) is not int or capacity not in (16384, 65536):
+        raise ValueError("g1_ladder_capacity_outside_scope")
+    base = glmrepair_manifest(GLMREPAIR_G1_CAMPAIGN)
+    name = f"{G1_LADDER_CAMPAIGN}-g1-{capacity}"
+    manifest = json.loads(json.dumps(base).replace(base["container_name"], name)
+                          .replace(GLMREPAIR_G1_CAMPAIGN, G1_LADDER_CAMPAIGN))
+    manifest["configured_capacity"] = capacity
+    for key in ("native_argv", "create_argv"):
+        manifest[key][manifest[key].index("--ctx-size") + 1] = str(capacity)
+    manifest["create_shell"] = shlex.join(manifest["create_argv"])
+    return manifest
+
+
 def scope_placements(scope):
     if scope not in ARM_SCOPES:
         raise ValueError("unknown_benchmark_arm_scope")
-    if scope == "g1-only":
+    if scope in {"g1-only", "g1-ladder"}:
         return ("G1",)
     if scope == "glmrepair":
         return ("G2",)
@@ -51,6 +67,8 @@ def scope_capacities(scope):
     scope_placements(scope)  # Reject unknown scopes before selecting capacities.
     if scope == "glmrepair":
         return (4096,)
+    if scope == "g1-ladder":
+        return (16384, 65536)
     return (262144,) if scope == "q1-256k" else (4096, 16384, 65536)
 
 
@@ -58,6 +76,12 @@ def validate_arm_scope(armed):
     """Legacy arms retain full scope; narrowed arms bind their exact placement and plan."""
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
+    if scope == "g1-ladder":
+        if (armed.get("campaign") != G1_LADDER_CAMPAIGN
+                or armed.get("manifests") != [g1_ladder_manifest(n) for n in (16384, 65536)]
+                or armed.get("trial_plan") != trial_order(scope)):
+            raise ValueError("g1_ladder_exact_arm_scope_mismatch")
+        return scope
     if scope == "glmrepair":
         if (armed.get("campaign") not in (GLMREPAIR_CAMPAIGN, GLMREPAIR_G1_CAMPAIGN, GLMREPAIR_POLL_CAMPAIGN, GLMREPAIR_FIX_CAMPAIGN, GLMREPAIR_G1FIX_CAMPAIGN)
                 or armed.get("manifests") != [glmrepair_manifest(armed["campaign"])]
@@ -223,6 +247,19 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
 
 
 def trial_order(scope="full", campaign=GLMREPAIR_CAMPAIGN):
+    if scope == "g1-ladder":
+        return {"trials": [
+            {"placement": "G1", "capacity": 16384, "case": "load_warmup", "output_cap": 32, "timing": "discard"},
+            {"placement": "G1", "capacity": 16384, "case": "primary", "output_cap": 256},
+            {"placement": "G1", "capacity": 16384, "case": "repeat_anchor", "output_cap": 256,
+             "conditional": "primary_strict_PASS_uncached_memory_safe"},
+            {"placement": "G1", "capacity": 65536, "case": "load_warmup", "output_cap": 32, "timing": "discard",
+             "conditional": "both_16k_strict_PASS_uncached_memory_safe"},
+            {"placement": "G1", "capacity": 65536, "case": "primary", "output_cap": 256}],
+            "then": [], "mixed_jobs": [], "measurement_budget_seconds": 10800,
+            "maximum_request_seconds": 7200, "clock_includes_preparation": True,
+            "restoration_outside_budget": True, "format_failure_policy": "stop on first strict failure; no retries",
+            "repeat_matching": "same fixture, records and expected values; fresh prefix and exact native recount"}
     if scope == "glmrepair" and campaign == GLMREPAIR_G1FIX_CAMPAIGN:
         return {"trials": [
             {"placement": "G1", "capacity": 4096, "case": "load_warmup", "output_cap": 32, "timing": "discard"},

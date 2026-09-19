@@ -28,7 +28,7 @@ from .lifecycle import CONTROL_UNIT, BOOT_UNIT, PlanError, digest, require, vali
 from .owner import CampaignOwner, HostCallbacks, WorkerVerificationPending
 from .campaign import CampaignBudget
 from .profiles import (read_config, command_manifest, split_resources, validate_arm_scope,
-                       G1_RAM_CAP_BYTES, glmrepair_manifest, cpu_set)
+                       G1_RAM_CAP_BYTES, glmrepair_manifest, g1_ladder_manifest, cpu_set)
 from .telemetry import collect_sample, required_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
@@ -116,13 +116,15 @@ class HostBudget(CampaignBudget):
         self._mutex = threading.RLock()
         self.host, self.path, self.clock = host, Path(host.log_root) / 'budget.json', time.time
         self.budget_seconds = (1200 if getattr(host, 'campaign', None) == 'benchrun-glmrepair-g1fix-20260919' else 2700 if getattr(host, 'campaign', None) == 'benchrun-glmrepair-fix-20260919' else 3600) if getattr(host, 'scope', None) == 'glmrepair' else 21600
+        if getattr(host, 'scope', None) == 'g1-ladder':
+            self.budget_seconds = 10800
         self._data = host.read_json('budget.json', missing=True)
         if self._data is not None:
             self._validate()
 
     def _validate(self):
         super()._validate()
-        if getattr(self.host, 'scope', None) == 'glmrepair':
+        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder'}:
             require(self._data.get('start_epoch') == self.host.start_epoch == self._data['started_at'] and
                     self._data.get('deadline_epoch') == self.host.deadline_epoch == self.host.start_epoch + self.budget_seconds,
                     'glmrepair_immutable_clock_changed')
@@ -134,7 +136,7 @@ class HostBudget(CampaignBudget):
         require(type(start) in (int, float) and 0 < start <= now and now - start < self.budget_seconds, 'invalid_stage_start_epoch')
         self._data = {'schema': 1, 'budget_seconds': self.budget_seconds, 'phase': 'MEASURING', 'start_kind': kind,
                      'started_at': start, 'last_seen_at': now, 'restoration_started_at': None}
-        if getattr(self.host, 'scope', None) == 'glmrepair':
+        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder'}:
             self._data.update(start_epoch=start, deadline_epoch=self.host.deadline_epoch)
             self._validate()
         self._save()
@@ -164,11 +166,13 @@ class LinuxHost:
         data = json.loads(raw)
         values = data.get('commands', data.get('manifests', [])) if isinstance(data, dict) else data
         self.scope = validate_arm_scope(data)
-        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1}[self.scope]
+        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2}[self.scope]
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
         self.start_epoch = data.get('start_epoch', data.get('runtime', {}).get('start_epoch')) if isinstance(data, dict) else None
         if self.scope == 'glmrepair':
             self.start_epoch, self.deadline_epoch = self.glmrepair_clock(data)
+        elif self.scope == 'g1-ladder':
+            self.start_epoch, self.deadline_epoch = self.ladder_clock(data)
         elif self.scope != 'full':
             require(data.get('runtime') == data.get('continuation_execution') and self.start_epoch is not None,
                     'q1_continuation_epoch_changed')
@@ -181,7 +185,7 @@ class LinuxHost:
             require(hashlib.sha256(source_raw).hexdigest() == sha, 'staged_source_pin_changed')
         self.manifests = {}
         for value in values:
-            expected = glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
+            expected = g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
                                         ram_cap=G1_RAM_CAP_BYTES if self.scope == 'g1-only' else None,
                                         log_verbosity=4 if self.scope == 'g1-only' else None)
             require(value == expected, 'manifest_not_current_generated_source')
@@ -199,6 +203,18 @@ class LinuxHost:
         callbacks = HostCallbacks(**{name: getattr(self, name) for name in HostCallbacks.__dataclass_fields__})
         self.owner = CampaignOwner(campaign, self.manager, callbacks, self.budget,
                                   reviewed_manifest_hashes=self.manifests, lease_factory=lifecycle_lease.acquire_lease)
+
+    @staticmethod
+    def ladder_clock(armed):
+        runtime = armed.get('runtime') or {}
+        start, deadline = runtime.get('start_epoch'), runtime.get('deadline_epoch')
+        require('continuation_execution' not in armed and 'start_epoch' not in armed and
+                type(start) in (int, float) and type(deadline) in (int, float) and
+                math.isfinite(start) and math.isfinite(deadline) and start > 0 and
+                deadline == start + 10800 and runtime.get('budget_seconds') == 10800 and
+                runtime.get('clock_includes_preparation') is True and runtime.get('restoration_outside_budget') is True,
+                'g1_ladder_fresh_immutable_clock_required')
+        return start, deadline
 
     @staticmethod
     def glmrepair_clock(armed):
@@ -490,7 +506,7 @@ class LinuxHost:
         if manifest['placement'].startswith('Q'):
             from runtime.qwen38_oci import verify_image
             verify_image(image)
-        if self.scope in {'g1-only', 'glmrepair'}:
+        if self.scope in {'g1-only', 'glmrepair', 'g1-ladder'}:
             available = collect_sample({})['host']['available_bytes']
             require(type(available) is int and available >= G1_RAM_CAP_BYTES + 16 * 1024**3,
                     'g1_container_cap_host_reserve_unproved')
@@ -499,7 +515,7 @@ class LinuxHost:
         created = command(argv, 120).stdout.decode().strip()
         require(bool(CID.fullmatch(created)), 'invalid_created_container_id')
         container = self.docker_inspect(created)
-        if self.scope in {'g1-only', 'glmrepair'}:
+        if self.scope in {'g1-only', 'glmrepair', 'g1-ladder'}:
             require(container['HostConfig'].get('Memory') == G1_RAM_CAP_BYTES and
                     container['HostConfig'].get('MemorySwap') == G1_RAM_CAP_BYTES,
                     'g1_container_no_swap_limit_unproved')
@@ -794,11 +810,11 @@ class LinuxHost:
                     'native_argv': native, 'device_request_uuids': device_ids, 'cuda_uuid_order': cuda,
                     'gpu_free_bytes': {g['uuid']: g['free_bytes'] for g in sample['gpus']},
                     'raw_log_sha256': hashlib.sha256(raw).hexdigest()}
-        if self.scope in {'g1-only', 'glmrepair'}:
+        if self.scope in {'g1-only', 'glmrepair', 'g1-ladder'}:
             observed['container_memory_limits'] = self.g1_memory_limits(container, cgroup)
-        if self.scope == 'glmrepair':
+        if self.scope in {'glmrepair', 'g1-ladder'}:
             observed['container_cpu_limits'] = self.glmrepair_cpu_limits(container, cgroup)
-        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope == 'g1-only',
+        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope in {'g1-only', 'g1-ladder'},
                                strict_glmrepair=self.scope == 'glmrepair')
         result = {'allocation': gate, 'parsed': parsed, 'observed': observed, 'server_facts': facts,
                   'raw_log_path': self.log_root + '/loads/' + cid + '-allocation.log'}
@@ -975,7 +991,7 @@ class LinuxHost:
         require(isinstance(args, dict), 'invalid_rpc_args')
         if op == 'begin':
             if args.get('resume'):
-                require(self.scope != 'glmrepair', 'glmrepair_resume_forbidden_restore_only')
+                require(self.scope not in {'glmrepair', 'g1-ladder'}, 'glmrepair_resume_forbidden_restore_only')
                 ledger = self.read_json('owner.json')
                 require(ledger['phase'] == 'RESTORED' and self.budget.data['phase'] == 'RESTORED', 'resume_requires_verified_restoration')
                 require(time.time() - self.budget.data['started_at'] < 21600, 'STOP_BUDGET')

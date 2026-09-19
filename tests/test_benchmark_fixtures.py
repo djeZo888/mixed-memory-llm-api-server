@@ -221,7 +221,10 @@ class NativeAccountingTests(unittest.TestCase):
                     "/tokenize": {"tokens": [1, 2, 3]}}[path]
         result = native_counter("bench-glm-5.3", 4096, call)(raw)
         f.validate_count(result, raw, 4096)
-        self.assertEqual(calls[1], ("/apply-template", json.loads(raw)))
+        normalized = {k: v for k, v in json.loads(raw).items() if k not in ("stream", "stream_options")}
+        self.assertEqual(calls[1], ("/apply-template", normalized))
+        self.assertEqual(result["count_body_sha256"], f.digest(f.canonical(normalized)))
+        self.assertEqual(result["count_transport_normalization"]["removed_fields"], ["stream", "stream_options"])
         self.assertEqual(calls[2][1], {"content": "synthetic rendered exact template", "add_special": True,
                                       "parse_special": True, "with_pieces": False})
         self.assertEqual(result["input_tokens"], 3)
