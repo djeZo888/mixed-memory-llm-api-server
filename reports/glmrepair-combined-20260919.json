@@ -1167,5 +1167,27 @@
     "ordinary_chat_scope": "greeting_only_omitted_effort",
     "schema_request_sha256": "aa5abdcc46f53f622ee7735d4d5182e7b2d8af9f3ab32ed17f3ba88e9c552867"
   },
-  "comparison_limit": "D schema232 output/cached3545 versus G1 schema145 output/cached0: no direct input-speed comparison or pure placement ratio."
+  "comparison_limit": "D schema232 output/cached3545 versus G1 schema145 output/cached0: no direct input-speed comparison or pure placement ratio.",
+  "warmed_4K_comparison": {
+    "historical_G2": {
+      "configured_context": 4096,
+      "input_tokens": 3547,
+      "output_tokens": 55,
+      "native_input_tokens_per_second": 68.159,
+      "native_n_minus_one_decode_tokens_per_second": 10.430566
+    },
+    "current_G1_schema": {
+      "configured_context": 4096,
+      "input_tokens": 3546,
+      "output_tokens": 145,
+      "native_input_tokens_per_second": 68.52065736469436,
+      "native_n_minus_one_decode_tokens_per_second": 12.64139155033587
+    },
+    "limits": "Different schema/sampling/output composition; no causal GPU-placement speed ranking. Separate production G2 exacttemp0 configured1M decoded about11.566tok/s.",
+    "source": "saved predecessor historical comparison and current native counters; root reviewed comparison figures"
+  },
+  "production_change_scope": {
+    "D": "native low-default patch deployed",
+    "G1FIX": "no production source/configuration change"
+  }
 }

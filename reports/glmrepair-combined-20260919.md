@@ -1,6 +1,6 @@
 # GLM repair: structured output passes; slow-decode cause unproved
 
-Current G1 schema output measured **12.64 tokens/s**; the historical 0.45–1.49 tokens/s behavior was not reproduced. The unchanged schema-free warmup was also fast. The cause is not proven. Original Qwen production service is restored.
+Current G1 schema output measured **12.64 tokens/s**; the historical 0.45–1.49 tokens/s behavior was not reproduced. The schema-free warmup using the same launch settings was also fast. The cause is not proven. Original Qwen production service is restored.
 
 ## Structured and unconstrained outcomes
 
@@ -14,6 +14,13 @@ G1 completed the exact accepted D schema request with only `model` changed from 
 Main native decode was 12.641 tokens/s using `(n - 1) / decode_seconds`; native prefill was 68.521 tokens/s. Configured capacity was 4,096; measured occupied context was 3,691 tokens. This establishes neither occupied 1M context nor unconstrained correctness. The earlier duplicate-JSON/literal-close defect remains unresolved, and temperature 1 is not a demonstrated fix. Historical strict `HARNESS_FAILURE` labels denoted invalid final-answer JSON, not necessarily transport failure.
 
 Production D on both GPUs also passed this schema contract, with 3,546 input / 232 output tokens, 3,545 cached input tokens and native prefill/decode times of 0.244 / 18.266 seconds. Different cache use and output lengths prevent a direct input-speed or pure placement comparison. The original unconstrained case produced the same malformed 206-character final content on both GPU counts. Temperature 1 / seed 1729 was not a remedy. D greeting-only stream/nonstream checks passed; arithmetic-reasoning acceptance remains NOT_TESTED. A real `read_file` call with matching tool-result ID and semantic continuation passed; a full coding task was not tested.
+
+The saved warmed 4K results are observational and use different schema/sampling settings and output lengths; they do **not** establish that G1 is faster than G2. Production G2 exact temperature-zero decode at approximately 11.566 tokens/s is a separate configured 1M API case.
+
+| Saved warmed case | Configured context | Input / output | Native input tokens/s | Native `(n−1)` decode tokens/s |
+|---|---:|---:|---:|---:|
+| Historical G2 | 4,096 | 3,547 / 55 | 68.159 | 10.430566 |
+| Current G1 schema | 4,096 | 3,546 / 145 | 68.521 | 12.641392 |
 
 ## Using the tested native schema envelope
 
@@ -46,6 +53,6 @@ Named Q4/Q5/Q6 dot-product kernels account for 51.90% of displayed samples; majo
 
 The original Qwen 1M TP2 selection is restored ready with running intent and resume boot policy. Original control/boot service state, authenticated LAN inference/control, released canonical lease, absent benchmark resources/listeners and closed worker tunnel ports are verified. A transient pending-systemd-job check interrupted the final status snapshot after local restoration; the existing fresh-process restore-only path completed verification without another model cycle or inference.
 
-Production source/configuration was unchanged. The predecessor's deployed GLM native low default remains: saved D checks establish omitted effort equals low, request kwargs high changes rendering, and explicit top-level low overrides kwargs. That default correction is separate from schema-scoped correctness; no generic client schema injection or A1 expansion occurred.
+Production source/configuration was unchanged during this final G1 stage. The preceding D stage did deploy the selected GLM native low-default patch, which remains active: saved D checks establish omitted effort equals low, request kwargs high changes rendering, and explicit top-level low overrides kwargs. That default correction is separate from schema-scoped correctness; no generic client schema injection or A1 expansion occurred.
 
 Runtime source `594ca4ad836caf6d2bed0b92bafca9fe9c95a31a`, session `01a0bbc7-8f81-7881-a29a-a6f8db8dba16`, exact arm/profile/body identities, the immutable 20-minute dispatch clock and restoration receipt are in the companion JSON. Preparation took 260 seconds; measurements finished before the original 22:46:52.900 UTC deadline. Restoration is outside the measurement budget. Forty-seven focused checks and saved-data consistency checks passed.
