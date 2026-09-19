@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/benchmarks/gpu-split-20260919.json"
 G1_RAM_CAP_BYTES = 640 * 1024**3  # Root-reviewed validation cap; not minimum model RAM.
 ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair")
-GLMREPAIR_CAMPAIGN = "benchrun-glmrepair-20260919"
+GLMREPAIR_CAMPAIGN = "benchrun-glmrepair2-20260919"
 
 
 def glmrepair_manifest():

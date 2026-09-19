@@ -1,13 +1,13 @@
 {
-  "campaign": "benchrun-glmrepair-20260919",
+  "campaign": "benchrun-glmrepair2-20260919",
   "configured_capacity": 4096,
-  "container_name": "benchrun-glmrepair-20260919-g2-4096",
+  "container_name": "benchrun-glmrepair2-20260919-g2-4096",
   "cpu_comparison": "Matched to saved G1: 96 threads/threads-batch, cpuset 0-95, N76; only GPU visibility and layer split change.",
   "create_argv": [
     "docker",
     "create",
     "--name",
-    "benchrun-glmrepair-20260919-g2-4096",
+    "benchrun-glmrepair2-20260919-g2-4096",
     "--network",
     "bridge",
     "--restart",
@@ -19,7 +19,7 @@
     "--cpuset-cpus",
     "0-95",
     "--label",
-    "benchmark.campaign=benchrun-glmrepair-20260919",
+    "benchmark.campaign=benchrun-glmrepair2-20260919",
     "--label",
     "benchmark.placement=G2",
     "--label",
@@ -44,11 +44,11 @@
     "--mount",
     "type=bind,source=/data/models-large/glm-5.3-ud-q4-k-xl,target=/models,readonly",
     "--mount",
-    "type=bind,source=/data/models-large/runtime-cache/benchrun-glmrepair-20260919/g2,target=/cache",
+    "type=bind,source=/data/models-large/runtime-cache/benchrun-glmrepair2-20260919/g2,target=/cache",
     "--mount",
-    "type=bind,source=/data/logs/benchrun-glmrepair-20260919/benchrun-glmrepair-20260919-g2-4096,target=/logs",
+    "type=bind,source=/data/logs/benchrun-glmrepair2-20260919/benchrun-glmrepair2-20260919-g2-4096,target=/logs",
     "--mount",
-    "type=bind,source=/data/services/benchrun-glmrepair-20260919/benchrun-glmrepair-20260919-g2-4096,target=/service",
+    "type=bind,source=/data/services/benchrun-glmrepair2-20260919/benchrun-glmrepair2-20260919-g2-4096,target=/service",
     "--mount",
     "type=bind,source=/data/services/secrets/llm-api-key,target=/run/secrets/llm-api-key,readonly",
     "--env",
@@ -110,7 +110,7 @@
     "--log-verbosity",
     "4"
   ],
-  "create_shell": "docker create --name benchrun-glmrepair-20260919-g2-4096 --network bridge --restart no --publish 127.0.0.1:31002:31002/tcp --gpus '\"device=GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237,GPU-69acfa26-8b60-61b5-702d-aee252c163cc\"' --cpuset-cpus 0-95 --label benchmark.campaign=benchrun-glmrepair-20260919 --label benchmark.placement=G2 --label benchmark.owner=llm-benchmark --log-driver json-file --log-opt max-size=20m --log-opt max-file=3 --security-opt no-new-privileges:true --cap-drop ALL --pull=never --memory 687194767360 --memory-swap 687194767360 --entrypoint /opt/llama/llama-server --mount type=bind,source=/data/models-large/glm-5.3-ud-q4-k-xl,target=/models,readonly --mount type=bind,source=/data/models-large/runtime-cache/benchrun-glmrepair-20260919/g2,target=/cache --mount type=bind,source=/data/logs/benchrun-glmrepair-20260919/benchrun-glmrepair-20260919-g2-4096,target=/logs --mount type=bind,source=/data/services/benchrun-glmrepair-20260919/benchrun-glmrepair-20260919-g2-4096,target=/service --mount type=bind,source=/data/services/secrets/llm-api-key,target=/run/secrets/llm-api-key,readonly --env LD_LIBRARY_PATH=/opt/llama --env LLAMA_ARG_HOST=0.0.0.0 --env XDG_CACHE_HOME=/cache --env CUDA_VISIBLE_DEVICES=GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237,GPU-69acfa26-8b60-61b5-702d-aee252c163cc sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9 --model /models/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf --host 0.0.0.0 --port 31002 --alias bench-glm-5.3 --api-key-file /run/secrets/llm-api-key --ctx-size 4096 --parallel 1 --n-cpu-moe 76 --n-gpu-layers 999 --split-mode layer --tensor-split 1,1 --main-gpu 0 --device CUDA0,CUDA1 --load-mode none --cache-type-k f16 --cache-type-v f16 --fit off --batch-size 2048 --ubatch-size 512 --threads 96 --threads-batch 96 --jinja --no-webui --no-cache-prompt --chat-template-kwargs '{\"clear_thinking\":true}' --log-verbosity 4",
+  "create_shell": "docker create --name benchrun-glmrepair2-20260919-g2-4096 --network bridge --restart no --publish 127.0.0.1:31002:31002/tcp --gpus '\"device=GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237,GPU-69acfa26-8b60-61b5-702d-aee252c163cc\"' --cpuset-cpus 0-95 --label benchmark.campaign=benchrun-glmrepair2-20260919 --label benchmark.placement=G2 --label benchmark.owner=llm-benchmark --log-driver json-file --log-opt max-size=20m --log-opt max-file=3 --security-opt no-new-privileges:true --cap-drop ALL --pull=never --memory 687194767360 --memory-swap 687194767360 --entrypoint /opt/llama/llama-server --mount type=bind,source=/data/models-large/glm-5.3-ud-q4-k-xl,target=/models,readonly --mount type=bind,source=/data/models-large/runtime-cache/benchrun-glmrepair2-20260919/g2,target=/cache --mount type=bind,source=/data/logs/benchrun-glmrepair2-20260919/benchrun-glmrepair2-20260919-g2-4096,target=/logs --mount type=bind,source=/data/services/benchrun-glmrepair2-20260919/benchrun-glmrepair2-20260919-g2-4096,target=/service --mount type=bind,source=/data/services/secrets/llm-api-key,target=/run/secrets/llm-api-key,readonly --env LD_LIBRARY_PATH=/opt/llama --env LLAMA_ARG_HOST=0.0.0.0 --env XDG_CACHE_HOME=/cache --env CUDA_VISIBLE_DEVICES=GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237,GPU-69acfa26-8b60-61b5-702d-aee252c163cc sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9 --model /models/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf --host 0.0.0.0 --port 31002 --alias bench-glm-5.3 --api-key-file /run/secrets/llm-api-key --ctx-size 4096 --parallel 1 --n-cpu-moe 76 --n-gpu-layers 999 --split-mode layer --tensor-split 1,1 --main-gpu 0 --device CUDA0,CUDA1 --load-mode none --cache-type-k f16 --cache-type-v f16 --fit off --batch-size 2048 --ubatch-size 512 --threads 96 --threads-batch 96 --jinja --no-webui --no-cache-prompt --chat-template-kwargs '{\"clear_thinking\":true}' --log-verbosity 4",
   "expected_image_ids": [
     "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9"
   ],
@@ -203,15 +203,15 @@
   "placement": "G2",
   "ram_cap_bytes": 687194767360,
   "registered_paths": {
-    "cache": "/data/models-large/runtime-cache/benchrun-glmrepair-20260919/g2",
-    "logs": "/data/logs/benchrun-glmrepair-20260919/benchrun-glmrepair-20260919-g2-4096",
-    "service": "/data/services/benchrun-glmrepair-20260919/benchrun-glmrepair-20260919-g2-4096",
-    "source": "/data/services/benchrun-glmrepair-20260919/source"
+    "cache": "/data/models-large/runtime-cache/benchrun-glmrepair2-20260919/g2",
+    "logs": "/data/logs/benchrun-glmrepair2-20260919/benchrun-glmrepair2-20260919-g2-4096",
+    "service": "/data/services/benchrun-glmrepair2-20260919/benchrun-glmrepair2-20260919-g2-4096",
+    "source": "/data/services/benchrun-glmrepair2-20260919/source"
   },
   "start_argv": [
     "docker",
     "start",
-    "benchrun-glmrepair-20260919-g2-4096"
+    "benchrun-glmrepair2-20260919-g2-4096"
   ],
   "status": "PROPOSED_NOT_ARMED_REQUIRES_NARROW_SCOPE_PREPARATION",
   "transport": {

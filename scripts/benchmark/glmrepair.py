@@ -22,7 +22,7 @@ from . import client, fixtures, profiles, runner, worker_verify
 from .warmup import prefill_proof
 
 TASK = "GLMREPAIR-RUN-20260919"
-CAMPAIGN = "benchrun-glmrepair-20260919"
+CAMPAIGN = "benchrun-glmrepair2-20260919"
 BASE = "48f0f38fcd42b081c2deca351cdfb7a943465449"
 MODEL = "bench-glm-5.3"
 FIXTURE_KEY = MODEL + "-4096-retrieval"
@@ -34,16 +34,33 @@ def git(*args):
 
 
 def checkpoint(task):
-    """Record incoming root steering at boundaries, never during healthy requests."""
-    path = task / "incoming-latest.md"
+    """Record notes; only exact control-file actions can stop at this boundary."""
+    coordination = task.parent if task.name == "attempt2" else task
+    path = coordination / "incoming-latest.md"
     if path.exists():
-        raw = path.read_bytes()
-        runner.save(task / "incoming-observed.json", {"sha256": fixtures.digest(raw), "observed_epoch": time.time()})
-        # A new instruction requires the owning Codex session to inspect it;
-        # pause only at a quiescent boundary, with restoration in the outer finally.
-        approved = task / "incoming-reviewed.sha256"
-        if not approved.exists() or approved.read_text().strip() != fixtures.digest(raw):
-            raise RuntimeError("ROOT_STEERING_REVIEW_REQUIRED")
+        runner.save(task / "incoming-observed.json", {
+            "sha256": fixtures.digest(path.read_bytes()), "observed_epoch": time.time()})
+    control = coordination / "run-control.json"
+    action = protocol.strict_json_loads(control.read_bytes()) if control.exists() else {"action": "CONTINUE"}
+    if not isinstance(action, dict) or set(action) != {"action"} or action["action"] not in {"CONTINUE", "STOP", "PAUSE"}:
+        raise RuntimeError("ROOT_CONTROL_INVALID")
+    if action["action"] in {"STOP", "PAUSE"}:
+        raise RuntimeError("ROOT_CONTROL_" + action["action"])
+
+
+def continuation_execution(task):
+    """One authorized continuation after the verified pre-generation restoration."""
+    previous = task.parent
+    status = json.loads((previous / "status.json").read_bytes())
+    progress = json.loads((previous / "progress.json").read_bytes())
+    execution = json.loads((previous / "execution.json").read_bytes())
+    if (status.get("campaign") != "benchrun-glmrepair-20260919" or status.get("phase") != "RESTORED"
+            or status.get("host_session_closed") is not True or status.get("completed") != []
+            or status.get("inflight") != {} or progress.get("phase") != "RESTORED" or progress.get("completed") != {}
+            or progress.get("inflight") != {} or execution.get("start_epoch") != 1789850405.174489
+            or execution.get("deadline_epoch") != 1789854005.174489 or execution.get("budget_seconds") != 3600):
+        raise ValueError("verified_pre_generation_restoration_and_original_clock_required")
+    return execution
 
 
 def probe_body(stream):
@@ -259,14 +276,14 @@ def prepare(task, session_id):
     files = runner.source_files()
     armed = {"schema": 1, "campaign": CAMPAIGN, "scope": "glmrepair", "session_id": session_id,
              "source_commit": git("rev-parse", "HEAD"), "manifests": [profile["manifest"]],
-             "trial_plan": profiles.trial_order("glmrepair"),
+             "trial_plan": profiles.trial_order("glmrepair"), "runtime": continuation_execution(task),
              "source_files": {p: hashlib.sha256(b).hexdigest() for p, b in files.items()}}
     profiles.validate_arm_scope(armed)
     runner.save(task / "arm.json", armed)
     runner.save(task / "progress.json", {"phase": "CODE_READY", "completed": {}, "inflight": {}, "errors": []})
     runner.save(task / "status.json", {"schema_version": 1, "task": TASK, "phase": "CODE_READY",
         "session_id": session_id, "source_commit": armed["source_commit"], "base_commit": BASE,
-        "campaign": CAMPAIGN, "live_inference_authorized": False, "clock": None,
+        "campaign": CAMPAIGN, "live_inference_authorized": False, "clock": armed["runtime"],
         "next_action": "Root CODE REVIEW/GO; same RUN session executes"})
 
 
@@ -288,7 +305,7 @@ def run(task, go_path, session_id, *, restore_only=False):
     if not restore_only:
         checkpoint(task)
     from runtime.sglang38_file_auth import read_key
-    credentials = task.parent / "BENCHRUN-20260919/private-credentials"
+    credentials = task.parent.parent / "BENCHRUN-20260919/private-credentials"
     metadata = credentials.lstat()
     if credentials.is_symlink() or not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.geteuid() or stat.S_IMODE(metadata.st_mode) != 0o700:
         raise ValueError("protected_credential_directory_required")
@@ -297,9 +314,11 @@ def run(task, go_path, session_id, *, restore_only=False):
     if restore_only:
         execution = json.loads((task / "execution.json").read_bytes())
     else:
-        now = time.time()
-        execution = {"start_epoch": now, "deadline_epoch": now + 3600, "budget_seconds": 3600,
-                     "clock": "UTC_wall_seconds_first_staging_maintenance", "restoration_outside_budget": True}
+        execution = continuation_execution(task)
+        if execution != armed["runtime"]:
+            raise ValueError("reviewed_continuation_clock_changed")
+        if time.time() >= execution["deadline_epoch"]:
+            raise ValueError("STOP_BUDGET")
         runner.save(task / "execution.json", execution)
     armed = {**armed, "runtime": execution}
     host = DiagnosticSSHHost(armed, stage=not restore_only)
