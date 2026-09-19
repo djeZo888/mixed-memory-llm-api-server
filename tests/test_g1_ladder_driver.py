@@ -225,6 +225,8 @@ class LadderSequenceTests(unittest.TestCase):
             counters = {'prompt_tokens': counted['input_tokens'], 'cached_tokens': cached,
                         'evaluated_prompt_tokens': evaluated, 'completion_tokens': 17,
                         'decode_tokens': 17, 'prompt_ms': 500, 'decode_ms': 100}
+            if failure == 'missing_usage_repeat' and identifier.endswith('-repeat'):
+                counters.update(prompt_tokens=None, completion_tokens=None)
             return {'summary': {'status': 'COMPLETE', 'counters': counters,
                                 'response_retained_complete': True},
                     'parsed': {'finish_reason': 'stop', 'counters': counters,
@@ -291,6 +293,20 @@ class LadderSequenceTests(unittest.TestCase):
                         self.assertEqual(row['score']['status'], 'HARNESS_FAILURE')
                     elif failure == 'wrong_repeat':
                         self.assertEqual(row['score']['status'], 'MODEL_INCORRECT')
+
+    def test_missing_usage_persists_null_occupancy_failure_then_stops_and_restores(self):
+        with tempfile.TemporaryDirectory() as directory:
+            job, events = self.create(directory, 'missing_usage_repeat')
+            with patch.object(ladder, 'checkpoint'), self.assertRaisesRegex(RuntimeError, 'STOP_REQUEST_GATE'):
+                job.execute()
+            row = json.loads(Path(directory, 'G1-16384-repeat-result.json').read_bytes())
+            self.assertIsNone(row['occupied_window_tokens'])
+            self.assertFalse(row['strict_native_uncached_gate'])
+            self.assertEqual(row['status'], 'STOP_REQUEST_GATE')
+            self.assertIn('G1-16384-repeat', job.progress['completed'])
+            self.assertNotIn('load-65536', events)
+            self.assertEqual(events[-1], 'restore')
+            job.restore.assert_called_once()
 
     def test_warmup32_schema_uses_shared_capture_retains_raw_and_always_ends_owner(self):
         for interrupted in (False, True):

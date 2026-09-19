@@ -176,7 +176,8 @@ class Ladder(glmrepair.Diagnostic):
             "score": score, "strict_native_uncached_gate": bool(native_ok), "count": counted,
             "summary": summary, "fixture_sha256": sample["fixture_sha256"], "records": sample["records"],
             "native_n_minus_1_decode_tokens_per_second": (n - 1) * 1000 / ms if type(n) is int and n > 1 and type(ms) in (int, float) and ms > 0 else None,
-            "occupied_window_tokens": (counters.get("prompt_tokens") or 0) + (counters.get("completion_tokens") or 0),
+            "occupied_window_tokens": (counters["prompt_tokens"] + counters["completion_tokens"]
+                if all(type(counters.get(k)) is int for k in ("prompt_tokens", "completion_tokens")) else None),
             "output_composition": glmrepair.format_outcome(result, sample),
             "finish_reason": parsed.get("finish_reason") if parsed else None,
             "fixture_preparation_seconds": preparation, "output_modified": False,
