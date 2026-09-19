@@ -37,6 +37,10 @@ CID = re.compile(r'[a-f0-9]{64}\Z')
 _COMMAND_DEADLINE = contextvars.ContextVar('benchmark_command_deadline', default=None)
 
 
+class NativeInfoPending(Exception):
+    """Only a startup timeout from Qwen's native-info GET; not proof acceptance."""
+
+
 def command(argv, timeout=30, *, allow_missing=False):
     deadline = _COMMAND_DEADLINE.get()
     if deadline is not None:
@@ -617,7 +621,10 @@ class LinuxHost:
         port = manifest['transport']['port']
         facts = {}
         if manifest['placement'].startswith('Q'):
-            info = http_json(port, '/get_server_info')
+            try:
+                info = http_json(port, '/get_server_info')
+            except TimeoutError as error:
+                raise NativeInfoPending from error
             args = info.get('server_args', info)
             require(isinstance(args, dict), 'native_server_args_unavailable')
             facts = {key: args.get(key, info.get(key)) for key in
@@ -725,7 +732,13 @@ class LinuxHost:
             terminal = self.readiness_failure(cid)
             return terminal if terminal is not None else {'ready': False, 'failed': False, 'state': 'NOT_READY'}
         auth = self.auth_probe(manifest['transport']['port'])
-        proof = self.allocation(cid)
+        try:
+            proof = self.allocation(cid)
+        except NativeInfoPending:
+            # API routes can listen before native scheduler startup finishes.
+            # Recheck terminal state; the caller retains the original deadline.
+            terminal = self.readiness_failure(cid)
+            return terminal if terminal is not None else {'ready': False, 'failed': False, 'state': 'NATIVE_INFO_NOT_READY'}
         template_hash = None
         if manifest['placement'].startswith('Q'):
             model_root = next(part.split('source=', 1)[1].split(',', 1)[0] for part in manifest['create_argv'] if 'target=/models' in part)

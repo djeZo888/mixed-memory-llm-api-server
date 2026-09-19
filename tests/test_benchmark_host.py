@@ -15,7 +15,7 @@ from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
-from benchmark.host import LinuxHost, HostBudget, serve, command, _COMMAND_DEADLINE
+from benchmark.host import LinuxHost, HostBudget, NativeInfoPending, serve, command, _COMMAND_DEADLINE
 from benchmark.lifecycle import CONTROL_UNIT, BOOT_UNIT, PlanError, validate_snapshot
 from install.storage_io import AnchoredRoot, GuardedFile
 from benchmark.owner import WorkerVerificationPending
@@ -507,6 +507,69 @@ class HostTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'mixed_load_demand_evidence_unavailable'):
                 host.dispatch({'op': 'admit_mixed', 'measured_glm': 100, 'measured_qwen': 100})
         collect.assert_not_called()
+
+    def test_only_native_info_timeout_becomes_startup_pending(self):
+        host = self.bare(); cid = '1' * 64
+        host.assert_idle, host.write_bytes = Mock(), Mock()
+        host.identity.return_value = ({}, None, [])
+        host.load_manifests[cid] = {'placement':'Q1', 'transport':{'port':31004}}
+        for error in (TimeoutError(), ValueError('malformed native info')):
+            with self.subTest(error=type(error).__name__), \
+                    patch('benchmark.host.command', return_value=SimpleNamespace(stdout=b'',stderr=b'')), \
+                    patch('benchmark.host.http_json', side_effect=error) as http:
+                expected = NativeInfoPending if type(error) is TimeoutError else ValueError
+                with self.assertRaises(expected):
+                    host.allocation(cid)
+                http.assert_called_once_with(31004, '/get_server_info')
+        # A timeout outside that GET is not converted or hidden.
+        with patch('benchmark.host.command', side_effect=TimeoutError()), \
+                patch('benchmark.host.http_json') as http:
+            with self.assertRaises(TimeoutError):
+                host.allocation(cid)
+            http.assert_not_called()
+        host.write_json.assert_not_called()
+        self.assertEqual(host.allocation_proofs, {})
+
+    def test_native_info_pending_then_eventual_allocation_proof_within_deadline(self):
+        host = self.bare(); cid = '1' * 64
+        host.readiness_failure = Mock(return_value=None)
+        host.telemetry = Mock()
+        host.auth_probe = Mock(return_value={'missing_key':401,'wrong_key':401,'protected_valid_key':200})
+        host.binding = Mock()
+        proof = {'allocation':{'status':'ALLOCATION_PROOF_ACCEPTED'}}
+        host.allocation = Mock(side_effect=[NativeInfoPending(), proof])
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory,'tokenizer_config.json').write_text(json.dumps({'chat_template':'synthetic'}))
+            host.load_manifests[cid] = {'placement':'Q1','transport':{'port':31004},
+                'create_argv':['type=bind,source='+directory+',target=/models']}
+            with patch('benchmark.host.http_json', return_value={'data':[{'id':'bench-qwen3.8-27b'}]}):
+                pending = host.readiness(cid, 2)
+                self.assertEqual(pending, {'ready':False,'failed':False,'state':'NATIVE_INFO_NOT_READY'})
+                self.assertNotIn('allocation', pending)
+                ready = host.readiness(cid, 2)
+                self.assertTrue(ready['ready'])
+                self.assertEqual(ready['allocation'], proof['allocation'])
+        self.assertEqual(host.readiness_failure.call_count, 3)  # Before each probe plus after timeout.
+        self.assertEqual(host.budget.checkpoint.call_count, 2)
+        self.assertIsNone(_COMMAND_DEADLINE.get())
+        host.write_json.assert_not_called()
+
+    def test_native_info_timeout_rechecks_terminal_failure_and_other_errors_escape(self):
+        for state in ('STOP_OOM','STOP_BACKEND_EXITED'):
+            host = self.bare(); cid = '1' * 64
+            terminal = {'ready':False,'failed':True,'state':state}
+            host.readiness_failure = Mock(side_effect=[None, terminal])
+            host.telemetry, host.auth_probe = Mock(), Mock()
+            host.load_manifests[cid] = {'placement':'Q1','transport':{'port':31004}}
+            host.allocation = Mock(side_effect=NativeInfoPending())
+            with patch('benchmark.host.http_json', return_value={'data':[{'id':'bench-qwen3.8-27b'}]}):
+                self.assertEqual(host.readiness(cid, 2), terminal)
+                host.allocation.side_effect = ValueError('invalid allocation proof')
+                host.readiness_failure.side_effect = None
+                host.readiness_failure.return_value = None
+                with self.assertRaisesRegex(ValueError, 'invalid allocation proof'):
+                    host.readiness(cid, 2)
+            self.assertIsNone(_COMMAND_DEADLINE.get())
 
 
 if __name__ == '__main__':
