@@ -112,8 +112,9 @@ workspace, appends its result and recounts the complete continuation body.
 
 Warm every new loaded configuration with a distinct prefix and native-counted
 2304–2432 input tokens. Require a successful parsed inference with positive
-output and at least2048 evaluated prompt tokens (native evaluated count, or
-prompt minus explicitly reported cached tokens); discard warmup timing. Missing
+output and at least2048 proven prefill tokens (native evaluated count, prompt
+minus explicitly reported cache, or the validated Qwen cache-disabled derivation
+described below); discard warmup timing. Missing
 evaluation proof stops the harness. This exercises the configured2048-token
 prefill chunk/batch. Run the 256
 output-cap retrieval ladder, repeat the 16K anchor, and separately run 16K
@@ -346,3 +347,26 @@ on the worker. The future RUN session remains attached until an actual handled
 failure/completion checkpoint. Progress includes group PREPARING/DISPATCHING,
 explicit MISSING measurements on interruption, terminal outcome and required
 RAM evidence. No automatic replay of failed or interrupted groups is allowed.
+
+
+## Final warmup and request-window correction
+
+Pinned Qwen source emits `usage.prompt_tokens_details: null` when cache reporting
+is disabled; its benchmark wrapper does not enable that report. Warmup accepts
+an explicit `derived_cache_disabled_prompt_tokens` proof only with successful
+positive-output inference, >=2048 native prompt tokens, accepted current allocation,
+exact observed native argv including `--disable-radix-cache`, and current server
+args confirming that flag is true. Fresh warmup prefixes remain required. Native
+cached/evaluated counters stay null when absent; the separate `prefill_proof`
+records the derivation and argv hash. Missing runtime policy evidence fails the
+harness. Source path/hash receipt: `reports/benchprep-qwen-warmup-source.json`.
+This proves source semantics, not a live warmup result.
+
+Each sample persists worker-monotonic transport dispatch/drain boundaries before
+post-drain parsing and reporting. Trial telemetry uses only that interval for
+sampled request memory peaks, fault deltas and coverage. Tool continuation has
+its own interval and telemetry; fitting/counting telemetry is recorded separately
+under fixture preparation. `client_total_seconds` retains its explicit trial
+orchestration scope. Cgroup lifetime peak counters remain labeled lifetime, never
+an absolute request peak. Load/readiness/warm-idle sampling, mixed fixture fitting
+before arrival timing, and healthy-stream drain on parser/report errors remain.

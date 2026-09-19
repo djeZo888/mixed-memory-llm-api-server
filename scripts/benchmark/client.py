@@ -232,6 +232,8 @@ def run_request(raw_body, transport, *, sample_id, private_dir, summary_path,
                "response_sha256": digest(raw), "response_bytes": total,
                "response_retained_complete": not oversized,
                "client_elapsed_seconds": ended - started,
+               "request_started_monotonic_s": started, "request_ended_monotonic_s": ended,
+               "request_interval_source": "worker_monotonic_transport_dispatch_to_drain",
                "client_timing": client_timing, "counters": parsed["counters"] if parsed else {},
                "counter_source": "native_response_fields", "report_errors": report_errors,
                "retry_attempts": 0, "lifecycle_actions": 0}

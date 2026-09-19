@@ -277,13 +277,11 @@ class Campaign:
         warmed = self.request(cid, fixtures.serialize_validate(warm), "warmup-" + str(time.time_ns()), timed=False)
         if not warmed.get("parsed") or warmed["parsed"]["status"] not in ("COMPLETE", "OUTPUT_LIMIT") or warmed["summary"]["status"] not in ("COMPLETE", "OUTPUT_LIMIT"):
             raise RuntimeError("HARNESS_FAILURE_WARMUP")
+        from .warmup import prefill_proof
         counters = warmed["parsed"]["counters"]
-        evaluated = counters.get("evaluated_prompt_tokens")
-        if evaluated is None and type(counters.get("prompt_tokens")) is int and type(counters.get("cached_tokens")) is int:
-            evaluated = counters["prompt_tokens"] - counters["cached_tokens"]
-        if type(evaluated) is not int or evaluated < 2048 or not counters.get("completion_tokens"):
-            raise RuntimeError("HARNESS_FAILURE_WARMUP_PREFILL_UNPROVED")
-        self.emit({"type": "warm_idle", "container": cid, "count": counted, "evaluated_prompt_tokens": evaluated,
+        prefill = prefill_proof(counters, manifest, proof)
+        self.emit({"type": "warm_idle", "container": cid, "count": counted,
+                   "evaluated_prompt_tokens": counters.get("evaluated_prompt_tokens"), "prefill_proof": prefill,
                    "checkpoint": self.host.call("quiescent", id=cid, point="warm_idle"), "warmup_timing": "discarded"})
         self.collect()
         self.record()
@@ -308,7 +306,8 @@ class Campaign:
         url = "http://127.0.0.1:" + str(manifest["transport"]["port"])
         try:
             return client.run_request(raw, self.transport_factory(url, self.key), sample_id=identifier,
-                                      private_dir=self.private, summary_path=self.state / ("samples.jsonl" if timed else "warmups.jsonl"), timeout=timeout)
+                                      private_dir=self.private, summary_path=self.state / ("samples.jsonl" if timed else "warmups.jsonl"), timeout=timeout,
+                                      clock=self.clock)
         finally:
             self.host.call("request_end", id=cid)
 
@@ -346,13 +345,27 @@ class Campaign:
                 self.fixture_cache[key] = sample
                 save(self.private / "fixtures.json", self.fixture_cache)
         raw = fixtures.serialize_validate(sample)
+        ended = self.clock()
         prepared = {"sample": sample, "count": counted, "raw": raw, "placement": manifest["placement"],
                     "capacity": capacity, "template_sha256": self.active[cid]["template_sha256"],
-                    "preparation_seconds": self.clock() - started}
+                    "preparation_seconds": ended - started,
+                    "preparation_telemetry": self.telemetry_window(cid, started, ended, "fixture_fitting_counting")}
         self.emit({"type": "fixture_preparation", "id": identifier, "count": counted,
                    "fixture_sha256": sample["fixture_sha256"], "preparation_seconds": prepared["preparation_seconds"],
+                   "telemetry": prepared["preparation_telemetry"],
                    "included_in_mixed_schedule": False})
         return prepared
+
+    def telemetry_window(self, cid, started, ended, scope):
+        """Same worker clock as the client; never replace a missing interval."""
+        window = {"scope": scope, "started_monotonic_s": started, "ended_monotonic_s": ended,
+                  "clock": "worker_monotonic"}
+        if type(started) not in (int, float) or type(ended) not in (int, float) or ended <= started:
+            return {**window, "status": "UNAVAILABLE", "reason": "missing_or_nonpositive_interval"}
+        with self.lock:
+            rows = list(self.samples.get(cid, []))
+        return {**telemetry.summarize_samples(rows, started, ended), **window,
+                "status": "SAMPLED" if any(started <= row["timestamp_monotonic_s"] <= ended for row in rows) else "UNAVAILABLE"}
 
     def trial(self, cid, identifier, kind="retrieval", output_cap=256, fixture_key=None, prepared=None):
         with self.lock:
@@ -376,7 +389,8 @@ class Campaign:
             if fixtures.digest(prepared["raw"]) != counted["body_sha256"]:
                 raise RuntimeError("prepared_body_changed")
             result.update(fixture_sha256=sample["fixture_sha256"], count=counted,
-                          fixture_preparation_seconds=prepared["preparation_seconds"])
+                          fixture_preparation_seconds=prepared["preparation_seconds"],
+                          fixture_preparation_telemetry=prepared.get("preparation_telemetry"))
             response = self.request(cid, prepared["raw"], identifier)
             result["sample"] = response["summary"]
             parsed = response["parsed"]
@@ -404,10 +418,13 @@ class Campaign:
             safe = code if code in {"STOP_BUDGET", "STOP_OOM", "STOP_SUSTAINED_MODEL_SWAP_GROWTH", "SKIP_UNSAFE_PLACEMENT"} else "HARNESS_FAILURE"
             result["status"] = self.safety.get(cid, safe)
         result["client_total_seconds"] = self.clock() - started
-        with self.lock:
-            rows = list(self.samples.get(cid, []))
-        if rows and result["client_total_seconds"] > 0:
-            result["telemetry"] = telemetry.summarize_samples(rows, started, self.clock())
+        result["client_total_scope"] = "trial_orchestration_including_any_fixture_preparation_and_reporting"
+        for field, output in (("sample", "telemetry"), ("continuation", "continuation_telemetry")):
+            summary = result.get(field, {})
+            if summary:
+                result[output] = self.telemetry_window(cid, summary.get("request_started_monotonic_s"),
+                                                      summary.get("request_ended_monotonic_s"),
+                                                      "inference_transport_dispatch_to_drain")
         if cid in self.safety:
             result["safety_status"] = self.safety[cid]
             result["status"] = self.safety[cid]

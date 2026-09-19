@@ -21,7 +21,7 @@ this report supersedes its readiness claim. The intentional SIGINT checkpoint
 was an orchestration boundary, not a failed source test.
 Production profiles/auth sources, weights, runtime images and installer are unchanged.
 
-Scoped synthetic/offline validation: **46 final focused tests PASS** on worker Python 3.14.7.
+Prior accepted synthetic/offline validation: **46 focused tests PASS** on worker Python 3.14.7.
 The final scope is allocation/runner/transport (21) and concrete-host contracts (25);
 unchanged previously passing fixture/profile/telemetry checks were preserved rather
 than repeated. Two affected cap-synchronization paths were rechecked after their
@@ -88,8 +88,20 @@ evidence, not live allocation. No source evidence blocker remains.
 Load-phase cheap sampling precedes readiness; durable required-demand peaks
 include transient loader memory and separate reclaimable file cache. Warm-only
 B caps are refused. Mixed fixture counting precedes arrival clocks. Native-counted
-warmups prove at least2048 evaluated prompt tokens. GLM mapping uses native
+warmups require at least2048 prefill tokens with explicit native/derived provenance. GLM mapping uses native
 `--list-devices` plus explicit UUID visibility, without Python/image changes.
 Exact host budget/anchored-file contracts and immediate exited/OOM diagnostics
 have offline regression coverage. Readiness/load deadlines obey remaining budget;
 restoration and independent worker verification remain explicit outside it.
+
+
+The final two launch/measurement corrections preserve unavailable Qwen cached and
+evaluated native counters as null. A separate cache-disabled derivation requires
+actual accepted allocation, exact observed argv and true current server flag;
+pinned source confirms null cache details are intentional. Request telemetry now
+uses persisted transport dispatch/drain boundaries, with separate fitting and tool
+continuation windows. Synthetic fitting/reporting peaks cannot enter request peak,
+fault-delta or coverage metrics. Ten current focused synthetic/offline checks PASS: five Qwen warmup/host
+contracts, four request-window/drain checks, and one complete mocked campaign
+loop. The receipt and exact final head, bundle and arm are in task-root `offline-validation.json` and `READY.md`.
+No live-only acceptance claim was added.

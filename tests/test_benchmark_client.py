@@ -127,6 +127,9 @@ class ClientTests(unittest.TestCase):
             self.assertNotIn("archive", summary_path.read_text())
             self.assertEqual(result["summary"]["lifecycle_actions"], 0)
             self.assertEqual(result["summary"]["retry_attempts"], 0)
+            self.assertEqual(result["summary"]["request_started_monotonic_s"], .125)
+            self.assertEqual(result["summary"]["request_ended_monotonic_s"], .5)
+            self.assertEqual(json.loads(summary_path.read_text())["request_ended_monotonic_s"], .5)
 
     def test_transport_failure_no_retry_and_valid_summary(self):
         called = []
@@ -161,6 +164,7 @@ class ClientTests(unittest.TestCase):
             self.assertEqual(len(seen), 2)
             self.assertEqual(result["parsed"]["message"]["content"], "ok")
             self.assertEqual(result["summary"]["status"], "HARNESS_FAILURE")
+            self.assertEqual(result["summary"]["request_ended_monotonic_s"], .5)
 
     def test_summary_error_does_not_destroy_success(self):
         raw = stream([event({"content": "ok"}, "stop")])

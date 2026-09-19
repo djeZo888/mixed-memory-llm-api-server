@@ -616,7 +616,8 @@ class LinuxHost:
             args = info.get('server_args', info)
             require(isinstance(args, dict), 'native_server_args_unavailable')
             facts = {key: args.get(key, info.get(key)) for key in
-                     ('tp_size', 'context_length', 'max_total_tokens', 'max_total_num_tokens', 'kv_cache_dtype', 'quantization')}
+                     ('tp_size', 'context_length', 'max_total_tokens', 'max_total_num_tokens', 'kv_cache_dtype', 'quantization',
+                      'disable_radix_cache')}
             if facts['max_total_num_tokens'] is None:
                 internal = info.get('internal_states', [])
                 if isinstance(internal, list) and len(internal) == 1 and isinstance(internal[0], dict):
