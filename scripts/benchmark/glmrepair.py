@@ -21,6 +21,9 @@ from agent import protocol
 from . import client, fixtures, profiles, runner, worker_verify
 from .warmup import prefill_proof
 
+POLL_TASK = "GLMREPAIR-POLL-20260919"
+POLL_CAMPAIGN = profiles.GLMREPAIR_POLL_CAMPAIGN
+CONTROL_SHA256 = "d45477a9ed601bc2fcdfbbd2cc9db3d478c2874f4b2fc37bd0cbae237fc75fe0"
 TASK = "GLMREPAIR-G1-20260919"
 CAMPAIGN = "benchrun-glmrepair-g1-20260919"
 BASE = "8381316f9a3a1363ce0c91916749713445974854"
@@ -51,6 +54,20 @@ def checkpoint(task):
 
 def continuation_execution(task):
     """One authorized continuation after the verified pre-generation restoration."""
+    if task.name == POLL_TASK:
+        previous = task.parent / TASK
+        status = json.loads((previous / "status.json").read_bytes())
+        progress = json.loads((previous / "progress.json").read_bytes())
+        execution = json.loads((previous / "execution.json").read_bytes())
+        verified = any(row.get("type") == "worker_restoration_verified" and row.get("result", {}).get("restored") is True
+                       for row in map(json.loads, (previous / "results.jsonl").read_text().splitlines()))
+        if (status.get("campaign") != CAMPAIGN or status.get("phase") != "RESTORED"
+                or status.get("host_session_closed") is not True or status.get("inflight") != {} or not verified
+                or progress.get("phase") != "RESTORED" or progress.get("inflight") != {}
+                or execution.get("start_epoch") != 1789850405.174489
+                or execution.get("deadline_epoch") != 1789854005.174489 or execution.get("budget_seconds") != 3600):
+            raise ValueError("verified_G1_restoration_and_original_clock_required")
+        return execution
     if task.name == TASK:
         previous = task.parent / "GLMREPAIR-RUN-20260919" / "attempt2"
         status = json.loads((previous / "status.json").read_bytes())
@@ -133,6 +150,25 @@ def exact_body(task, sample):
     return raw, sample
 
 
+def exact_control(task):
+    raw = (task / "private" / "control.request.json").read_bytes()
+    body = protocol.strict_json_loads(raw)
+    if fixtures.digest(raw) != CONTROL_SHA256 or body["max_tokens"] != 32:
+        raise ValueError("historical_control_bytes_changed")
+    return raw
+
+
+def poll_gate(summary, remaining):
+    counters = summary.get("counters", {})
+    n, ms = counters.get("decode_tokens"), counters.get("decode_ms")
+    return (summary.get("status") in {"COMPLETE", "OUTPUT_LIMIT"}
+            and summary.get("response_retained_complete") is True
+            and counters.get("cached_tokens") == 0 and counters.get("prompt_tokens") == 2388
+            and counters.get("evaluated_prompt_tokens") == 2388
+            and type(n) is int and n > 1 and type(ms) in (int, float) and ms > 0
+            and (n - 1) * 1000 / ms >= 5.0 and remaining >= 180)
+
+
 def provenance_body(raw):
     body = protocol.strict_json_loads(raw)
     body["stream"] = False
@@ -202,9 +238,9 @@ class Diagnostic(runner.Campaign):
     """Reuse owner admission, native recount, monitoring, placement and restore."""
     def record(self, phase=None):
         super().record(phase)
-        runner.save(self.state / "status.json", {"schema_version": 1, "task": TASK,
+        runner.save(self.state / "status.json", {"schema_version": 1, "task": self.state.name,
             "session_id": self.armed["session_id"], "source_commit": self.armed["source_commit"],
-            "phase": self.progress["phase"], "campaign": CAMPAIGN,
+            "phase": self.progress["phase"], "campaign": self.armed["campaign"],
             "clock": self.armed.get("runtime"), "completed": list(self.progress["completed"]),
             "inflight": self.progress["inflight"], "errors": self.progress["errors"],
             "updated_epoch": time.time(), "live_inference_authorized": True})
@@ -251,7 +287,39 @@ class Diagnostic(runner.Campaign):
         finally:
             self.host.call("request_end", id=cid)
 
+    def poll_control(self, cid, manifest, proof):
+        self.record("POLL_CONTROL")
+        self.boundary(cid, "before_warmup")
+        raw = exact_control(self.state)
+        counted = fixtures.validate_count(self.counter(cid)(raw), raw, 4096)
+        if counted["input_tokens"] != 2388:
+            raise RuntimeError("historical_control_native_input_changed")
+        runner.save(self.private / "control-count.json", counted)
+        self.progress["inflight"]["poll-control"] = {"container": cid}
+        self.record()
+        result = self.request(cid, raw, "poll-control")
+        summary = result["summary"]
+        counters = summary.get("counters", {})
+        n, ms = counters.get("decode_tokens"), counters.get("decode_ms")
+        outcome = {"summary": summary, "format": format_outcome(result), "timing": "MEASURED",
+                   "native_n_minus_one_tps": (n - 1) * 1000 / ms
+                       if type(n) is int and type(ms) in (int, float) and ms > 0 else None,
+                   "body_sha256": fixtures.digest(raw), "count": counted, "output_modified": False}
+        runner.save(self.state / "control-result.json", outcome)
+        self.emit({"type": "poll_control_result", **outcome})
+        self.progress["completed"]["poll-control"] = outcome
+        del self.progress["inflight"]["poll-control"]
+        self.record()
+        if not result["parsed"] or counters.get("cached_tokens") != 0 or counters.get("prompt_tokens") != 2388:
+            raise RuntimeError("control_native_uncached_proof_required")
+        prefill = prefill_proof(result["parsed"]["counters"], manifest, proof)
+        self.emit({"type": "poll_control_proof", "prefill_proof": prefill,
+                   "checkpoint": self.host.call("quiescent", id=cid, point="warm_idle")})
+        self.boundary(cid, "after_warmup")
+
     def warm(self, cid, manifest, proof):
+        if self.armed.get("campaign") == POLL_CAMPAIGN:
+            return self.poll_control(cid, manifest, proof)
         self.record("WARMUP")
         self.boundary(cid, "before_warmup")
         counter = self.counter(cid)
@@ -315,7 +383,40 @@ class Diagnostic(runner.Campaign):
                 break
         self.record("MEASUREMENT_COMPLETE")
 
+    def poll_sequence(self):
+        self.host.call("begin")
+        cid = self.loaded(self.armed["manifests"][0])  # one fresh load; warm hook is the measured control
+        summary = self.progress["completed"]["poll-control"]["summary"]
+        remaining = self.armed["runtime"]["deadline_epoch"] - time.time()
+        if not poll_gate(summary, remaining):
+            self.emit({"type": "optional_body_skipped", "reason": "deterministic_control_gate", "remaining_seconds": remaining})
+            return
+        raw, sample = exact_body(self.state, self.fixture_cache[FIXTURE_KEY])
+        counted = fixtures.validate_count(self.counter(cid)(raw), raw, 4096)
+        if counted["input_tokens"] != 3546:
+            raise RuntimeError("historical_native_input_changed")
+        self.boundary(cid, "before_stream")
+        # Recheck at dispatch, after recount and the cheap health boundary.
+        remaining = self.armed["runtime"]["deadline_epoch"] - time.time()
+        if not poll_gate(summary, remaining):
+            self.emit({"type": "optional_body_skipped", "reason": "dispatch_budget", "remaining_seconds": remaining})
+            return
+        self.progress["inflight"]["exact-stream"] = {"container": cid}
+        self.record("EXACT_STREAM")
+        result = self.request(cid, raw, "exact-stream")
+        outcome = {"summary": result["summary"], "format": format_outcome(result, sample), "output_modified": False}
+        runner.save(self.state / "first-result.json", outcome)
+        self.emit({"type": "exact_G1_disposition", "id": "exact-stream", **outcome})
+        self.progress["completed"]["exact-stream"] = outcome
+        del self.progress["inflight"]["exact-stream"]
+        self.record("MEASUREMENT_COMPLETE")
+        self.boundary(cid, "after_stream")
+        if not result["parsed"] or result["summary"].get("counters", {}).get("cached_tokens") != 0:
+            raise RuntimeError("native_transport_or_uncached_proof_failure")
+
     def sequence(self):
+        if self.armed.get("campaign") == POLL_CAMPAIGN:
+            return self.poll_sequence()
         if self.armed.get("campaign") == CAMPAIGN:
             return self.exact_g1_sequence()
         self.host.call("begin")
@@ -374,39 +475,43 @@ class Diagnostic(runner.Campaign):
 
 
 def prepare(task, session_id):
+    campaign = POLL_CAMPAIGN if task.name == POLL_TASK else CAMPAIGN
     if (task / "arm.json").exists():
         raise ValueError("preparation_exists_preserve_it")
     if git("status", "--porcelain"):
         raise ValueError("commit_reviewed_source_before_preparing")
     profile = json.loads((task / "accepted-profile.json").read_bytes())
-    if profile["manifest"] != profiles.glmrepair_manifest(CAMPAIGN):
+    if profile["manifest"] != profiles.glmrepair_manifest(campaign):
         raise ValueError("accepted_profile_differs")
     task.joinpath("private").mkdir(mode=0o700, exist_ok=True)
     sample = load_frozen(task, profile)
     raw, sample = exact_body(task, sample)
     runner.save(task / "body-identity.json", {"raw_sha256": fixtures.digest(raw), "canonical_sha256": fixtures.digest(fixtures.canonical(sample["body"])), "fixture_sha256": sample["fixture_sha256"], "bytes": len(raw)})
+    if campaign == POLL_CAMPAIGN:
+        exact_control(task)
     files = runner.source_files()
-    armed = {"schema": 1, "campaign": CAMPAIGN, "scope": "glmrepair", "session_id": session_id,
+    armed = {"schema": 1, "campaign": campaign, "scope": "glmrepair", "session_id": session_id,
              "source_commit": git("rev-parse", "HEAD"), "manifests": [profile["manifest"]],
              "exact_body_sha256": BODY_SHA256, "fixture_sha256": sample["fixture_sha256"],
-             "trial_plan": profiles.trial_order("glmrepair", campaign=CAMPAIGN), "runtime": continuation_execution(task),
+             "trial_plan": profiles.trial_order("glmrepair", campaign=campaign), "runtime": continuation_execution(task),
              "source_files": {p: hashlib.sha256(b).hexdigest() for p, b in files.items()}}
     profiles.validate_arm_scope(armed)
     runner.save(task / "arm.json", armed)
-    runner.save(task / "progress.json", {"phase": "CODE_READY", "completed": {}, "inflight": {}, "errors": []})
-    runner.save(task / "status.json", {"schema_version": 1, "task": TASK, "phase": "CODE_READY",
-        "session_id": session_id, "source_commit": armed["source_commit"], "base_commit": BASE,
-        "campaign": CAMPAIGN, "live_inference_authorized": False, "clock": armed["runtime"],
-        "next_action": "Root CODE REVIEW/GO; same RUN session executes"})
+    runner.save(task / "progress.json", {"phase": "AWAITING_ROOT_REVIEW", "completed": {}, "inflight": {}, "errors": []})
+    runner.save(task / "status.json", {"schema_version": 1, "task": task.name, "phase": "AWAITING_ROOT_REVIEW",
+        "session_id": session_id, "source_commit": armed["source_commit"], "base_commit": "5b88dfda39d4541e42679746ddcd6810b774b0f4" if task.name == POLL_TASK else BASE,
+        "campaign": campaign, "dispatch_gate": "ROOT_GO_REQUIRED", "clock": armed["runtime"],
+        "next_action": "Root compact review/conditional GO; same RUN session executes"})
 
 
 def run(task, go_path, session_id, *, restore_only=False):
+    campaign = POLL_CAMPAIGN if task.name == POLL_TASK else CAMPAIGN
     armed = json.loads((task / "arm.json").read_bytes())
     go = json.loads(go_path.read_bytes())
     if (go.get("decision") != "GO" or go.get("source_commit") != armed["source_commit"]
             or go.get("arm_sha256") != fixtures.digest((task / "arm.json").read_bytes())
             or go.get("session_id") != session_id or armed["session_id"] != session_id
-            or go.get("campaign") != CAMPAIGN or git("rev-parse", "HEAD") != armed["source_commit"]
+            or go.get("campaign") != campaign or git("rev-parse", "HEAD") != armed["source_commit"]
             or git("status", "--porcelain")):
         raise ValueError("root_source_session_GO_required")
     if os.geteuid() == 0:
@@ -419,7 +524,7 @@ def run(task, go_path, session_id, *, restore_only=False):
     if not restore_only:
         checkpoint(task)
     from runtime.sglang38_file_auth import read_key
-    credentials = (task.parent if task.name == TASK else task.parent.parent) / "BENCHRUN-20260919/private-credentials"
+    credentials = (task.parent if task.name in {TASK, POLL_TASK} else task.parent.parent) / "BENCHRUN-20260919/private-credentials"
     metadata = credentials.lstat()
     if credentials.is_symlink() or not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.geteuid() or stat.S_IMODE(metadata.st_mode) != 0o700:
         raise ValueError("protected_credential_directory_required")
