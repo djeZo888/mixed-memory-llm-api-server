@@ -67,6 +67,24 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(parsed["message"]["tool_calls"][0]["id"], "returned-1")
         self.assertEqual(json.loads(parsed["message"]["tool_calls"][0]["function"]["arguments"]), {"path": "result.json"})
 
+    def test_valid_complete_capped_tool_preserves_counters_and_real_continuation(self):
+        raw = stream([event({"role": "assistant", "tool_calls": [{"index": 0, "id": "capped-returned-1", "type": "function",
+                    "function": {"name": "read_file", "arguments": '{"path":'}}]}),
+                    event({"tool_calls": [{"index": 0, "function": {"arguments": '"result.json"}'}}]}, "length"),
+                    {"model": MODEL, "choices": [], "usage": {"prompt_tokens": 3500, "completion_tokens": 256,
+                     "prompt_tokens_details": {"cached_tokens": 12}}, "timings": {"prompt_n": 3488}}])
+        parsed = c.parse_response(raw, MODEL)
+        self.assertEqual((parsed["status"], parsed["finish_reason"]), ("OUTPUT_LIMIT", "length"))
+        self.assertEqual(parsed["counters"]["completion_tokens"], 256)
+        self.assertEqual(parsed["counters"]["cached_tokens"], 12)
+        self.assertEqual(parsed["counters"]["evaluated_prompt_tokens"], 3488)
+        sample = f.build_sample(MODEL, 20, "seed000001", "nonce00001", kind="tool")
+        with tempfile.TemporaryDirectory() as directory:
+            continued, _ = f.execute_tool(sample, parsed["message"], directory)
+            self.assertEqual(continued["messages"][-1]["tool_call_id"], "capped-returned-1")
+            final = {**sample["scorer"]["retrieval"], **json.loads(continued["messages"][-1]["content"])}
+            self.assertEqual(f.score_retrieval(sample, {"role": "assistant", "content": json.dumps(final)})["status"], "PASS")
+
     def test_truncation_alias_duplicate_json_and_bad_counter_are_harness_failures(self):
         cases = [stream([event({"content": "ok"}, "stop")], False),
                  stream([event({"content": "ok"}, "stop", usage={"prompt_tokens": -1})]),

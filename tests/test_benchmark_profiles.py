@@ -87,6 +87,23 @@ class Profiles(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "reserve"):
             profiles.split_resources(700 * 1024**3, 100 * 1024**3, 860 * 1024**3)
 
+    def test_cpu_baselines_and_matched_isolated_mixed_controls(self):
+        for placement, count, cpuset in (("G2", 112, "0-111"), ("Q2", 112, "0-111"),
+                                         ("G1", 96, "0-95"), ("Q1", 16, "96-111")):
+            for capacity in (4096, 16384, 65536):
+                modes = (False, True) if placement.endswith("1") else (False,)
+                for mixed in modes:
+                    manifest = profiles.command_manifest(placement, capacity, mixed=mixed,
+                                                         ram_cap=500 * 1024**3 if mixed else None)
+                    argv = manifest["create_argv"]
+                    self.assertEqual(argv[argv.index("--cpuset-cpus") + 1], cpuset)
+                    self.assertEqual(manifest["guest_cpuset"], cpuset)
+                    self.assertEqual(manifest["guest_cpu_count"], count)
+                    if placement.startswith("G"):
+                        native = manifest["native_argv"]
+                        for flag in ("--threads", "--threads-batch"):
+                            self.assertEqual(native[native.index(flag) + 1], str(count))
+
     def test_unreviewed_optional_and_injected_identity_refused(self):
         for n in (131072, True, 1000000):
             with self.assertRaises(ValueError):

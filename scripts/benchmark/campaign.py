@@ -5,10 +5,13 @@ Pure scheduling results are illustrative until populated from live timestamps.
 """
 from __future__ import annotations
 
+import copy
+from functools import wraps
 import json
 import math
 import os
 import time
+import threading
 from pathlib import Path
 from typing import Callable
 
@@ -21,6 +24,14 @@ STATES = {"READY", "PASS", "SKIP_UNSAFE_PLACEMENT", "STOP_ALLOCATION_FAILURE",
           "HARNESS_FAILURE", "STOP_BUDGET", "RESTORING", "RESTORED", "RESTORE_FAILED"}
 
 
+def _budget_serialized(method):
+    @wraps(method)
+    def call(self, *args, **kwargs):
+        with self._mutex:
+            return method(self, *args, **kwargs)
+    return call
+
+
 class CampaignBudget:
     """Durable six-hour wall budget; owner is the existing canonical lease holder.
 
@@ -30,8 +41,10 @@ class CampaignBudget:
     persist(path,bytes) adapters using the installed AnchoredRoot writer contract.
     The callbacks own protected ancestry, registered mount/path validation and
     atomic durable writes; before/after guards alone cannot replace anchoring.
-    Callback mode performs no direct filesystem operations. No separate lock is
-    created. A backwards wall clock fails closed. Restoration is a terminal
+    Callback mode performs no direct filesystem operations. Mixed lanes share
+    this one budget instance; its reentrant thread mutex serializes admission,
+    ledger writes, phase transitions and snapshot reads. This is no alternative
+    lifecycle/file lock. A backwards wall clock fails closed. Restoration is a terminal
     phase and does not consume or reopen measurement budget.
     """
     def __init__(self, path: Path, *, before_write: Callable, after_write: Callable,
@@ -39,6 +52,7 @@ class CampaignBudget:
                  read: Callable[[Path], bytes | None] | None = None,
                  persist: Callable[[Path, bytes], None] | None = None,
                  storage_scope: str = "worker-local"):
+        self._mutex = threading.RLock()
         self.path = Path(path)
         self.before_write, self.after_write, self.clock = before_write, after_write, clock
         if storage_scope not in {"worker-local", "ai-vm"}:
@@ -50,15 +64,22 @@ class CampaignBudget:
         if persist is None and (storage_scope == "ai-vm" or self.path == Path("/data") or Path("/data") in self.path.parents):
             raise ValueError("ai_vm_requires_anchored_persistence")
         self.read, self.persist = read, persist
-        raw = read(self.path) if read is not None else (self.path.read_bytes() if self.path.exists() else None)
-        if raw is not None and not isinstance(raw, bytes):
-            raise ValueError("budget_reader_must_return_bytes_or_none")
-        self.data = json.loads(raw) if raw is not None else None
-        if self.data is not None:
-            self._validate()
+        with self._mutex:
+            raw = read(self.path) if read is not None else (self.path.read_bytes() if self.path.exists() else None)
+            if raw is not None and not isinstance(raw, bytes):
+                raise ValueError("budget_reader_must_return_bytes_or_none")
+            self._data = json.loads(raw) if raw is not None else None
+            if self._data is not None:
+                self._validate()
+
+    @property
+    @_budget_serialized
+    def data(self):
+        """Consistent detached snapshot; callers cannot mutate shared state."""
+        return copy.deepcopy(self._data)
 
     def _validate(self):
-        d = self.data
+        d = self._data
         if (not isinstance(d, dict) or d.get("schema") != 1 or d.get("budget_seconds") != BUDGET_SECONDS
                 or d.get("phase") not in {"MEASURING", "RESTORING", "RESTORED", "RESTORE_FAILED"}
                 or d.get("start_kind") not in {"maintenance", "model_trial"}
@@ -72,7 +93,7 @@ class CampaignBudget:
             raise ValueError("invalid_restoration_budget_boundary")
 
     def _save(self):
-        payload = (json.dumps(self.data, sort_keys=True) + "\n").encode("utf-8")
+        payload = (json.dumps(self._data, sort_keys=True) + "\n").encode("utf-8")
         self.before_write()
         if self.persist is not None:
             self.persist(self.path, payload)
@@ -98,53 +119,58 @@ class CampaignBudget:
                 temporary.unlink()
         self.after_write()
 
+    @_budget_serialized
     def start(self, kind: str):
-        if self.data is not None:
+        if self._data is not None:
             raise ValueError("budget_already_started")
         if kind not in {"maintenance", "model_trial"}:
             raise ValueError("start_at_first_maintenance_or_model_trial")
         now = self.clock()
         if not math.isfinite(now) or now < 0:
             raise ValueError("invalid_clock")
-        self.data = {"schema": 1, "budget_seconds": BUDGET_SECONDS, "phase": "MEASURING",
+        self._data = {"schema": 1, "budget_seconds": BUDGET_SECONDS, "phase": "MEASURING",
                      "start_kind": kind, "started_at": now, "last_seen_at": now,
                      "restoration_started_at": None}
         self._save()
-        return dict(self.data)
+        return dict(self._data)
 
+    @_budget_serialized
     def checkpoint(self):
-        if self.data is None:
+        if self._data is None:
             raise ValueError("budget_not_started")
         now = self.clock()
-        if not math.isfinite(now) or now < self.data["last_seen_at"]:
+        if not math.isfinite(now) or now < self._data["last_seen_at"]:
             raise ValueError("wall_clock_regressed_stop_campaign")
-        self.data["last_seen_at"] = now
+        self._data["last_seen_at"] = now
         self._save()
-        boundary = self.data["restoration_started_at"] if self.data["phase"] != "MEASURING" else now
-        return max(0, BUDGET_SECONDS - (boundary - self.data["started_at"]))
+        boundary = self._data["restoration_started_at"] if self._data["phase"] != "MEASURING" else now
+        return max(0, BUDGET_SECONDS - (boundary - self._data["started_at"]))
 
+    @_budget_serialized
     def request_timeout(self, requested_s: float = MAX_REQUEST_SECONDS) -> float:
         if not math.isfinite(requested_s) or not 0 < requested_s <= MAX_REQUEST_SECONDS:
             raise ValueError("request_timeout_out_of_bounds")
         remaining = self.checkpoint()
-        if self.data["phase"] != "MEASURING" or remaining <= 0:
+        if self._data["phase"] != "MEASURING" or remaining <= 0:
             raise ValueError("STOP_BUDGET")
         # Shorten to remaining budget, never start a second unbounded timer.
         return min(requested_s, remaining)
 
+    @_budget_serialized
     def begin_restoration(self):
         self.checkpoint()
-        if self.data["phase"] != "MEASURING":
+        if self._data["phase"] != "MEASURING":
             raise ValueError("restoration_already_started")
-        self.data["phase"] = "RESTORING"
-        self.data["restoration_started_at"] = self.data["last_seen_at"]
+        self._data["phase"] = "RESTORING"
+        self._data["restoration_started_at"] = self._data["last_seen_at"]
         self._save()
 
+    @_budget_serialized
     def finish_restoration(self, verified: bool):
-        if self.data is None or self.data["phase"] != "RESTORING" or type(verified) is not bool:
+        if self._data is None or self._data["phase"] != "RESTORING" or type(verified) is not bool:
             raise ValueError("restoration_not_active")
         self.checkpoint()
-        self.data["phase"] = "RESTORED" if verified else "RESTORE_FAILED"
+        self._data["phase"] = "RESTORED" if verified else "RESTORE_FAILED"
         self._save()
 
 

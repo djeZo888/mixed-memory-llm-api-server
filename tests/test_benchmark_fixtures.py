@@ -165,14 +165,16 @@ class NativeAccountingTests(unittest.TestCase):
         calls = []
         def call(path, payload):
             calls.append((path, payload))
-            return {"tokens": [9, 8, 7, 6], "count": 4, "max_model_len": 16384}
+            return {"tokens": [9, 8, 7, 6], "count": 4, "max_model_len": 262144}
         result = native_counter("bench-qwen3.8-27b", 16384, call, qwen_template_sha256="e" * 64)(raw)
         self.assertEqual(calls, [("/v1/tokenize", json.loads(raw))])
         self.assertEqual(result["configured_context"], 16384)
+        self.assertEqual(result["tokenizer_max_model_len"], 262144)
+        self.assertEqual(result["configured_context_source"], "caller_verified_runtime_allocation")
         self.assertEqual(result["template_sha256"], "e" * 64)
         with self.assertRaises(f.HarnessError):
             native_counter("bench-qwen3.8-27b", 16384, call)
-        for limit in (True, 1000000, None):
+        for limit in (True, 0, None):
             with self.subTest(limit=limit), self.assertRaises(f.HarnessError):
                 native_counter("bench-qwen3.8-27b", 16384,
                                lambda *_: {"tokens": [1], "count": 1, "max_model_len": limit},

@@ -122,11 +122,6 @@ def parse_response(raw, model):
         capped = finishes == ["length"]
         parse_raw = raw
         if capped:
-            normalized = copy.deepcopy(events)
-            for event in normalized:
-                for choice in event.get("choices", []):
-                    if choice.get("finish_reason") == "length":
-                        choice["finish_reason"] = "stop"
             # Require the original framing and [DONE], using the existing parser
             # first. Its CompletionError proves length was the only completion
             # objection; malformed/truncated streams still fail here.
@@ -135,6 +130,16 @@ def parse_response(raw, model):
             except protocol.CompletionError as exc:
                 if exc.diagnostics.get("parsing_failure"):
                     raise HarnessError("capped stream also contains a schema/parser failure") from exc
+            # A complete capped tool call is structurally a tool_calls finish.
+            # Preserve the actual length status in the result, and only adapt
+            # the validation copy after original strict framing validation.
+            has_calls = any(choice.get("delta", {}).get("tool_calls")
+                            for event in events for choice in event.get("choices", []))
+            normalized = copy.deepcopy(events)
+            for event in normalized:
+                for choice in event.get("choices", []):
+                    if choice.get("finish_reason") == "length":
+                        choice["finish_reason"] = "tool_calls" if has_calls else "stop"
             parse_raw = b"".join(b"data: " + canonical(event) + b"\n\n" for event in normalized) + b"data: [DONE]\n\n"
         parsed = accounting.parse_response(parse_raw, True, model)
         return {"status": "OUTPUT_LIMIT" if capped else "COMPLETE",

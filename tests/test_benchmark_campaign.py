@@ -2,6 +2,9 @@
 import importlib.util
 import json
 import tempfile
+import sys
+import threading
+import time
 import unittest
 from unittest import mock
 from pathlib import Path
@@ -10,6 +13,8 @@ SOURCE = Path(__file__).resolve().parents[1] / "scripts/benchmark/campaign.py"
 spec = importlib.util.spec_from_file_location("benchmark_campaign", SOURCE)
 c = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(c)
+sys.path.insert(0, str(SOURCE.parents[1]))
+from benchmark.workload import execute_mixed
 
 
 class CampaignTests(unittest.TestCase):
@@ -110,6 +115,56 @@ class CampaignTests(unittest.TestCase):
                 c.CampaignBudget(path, storage_scope=scope, **guards)
         with self.assertRaisesRegex(ValueError, "paired_anchored"):
             c.CampaignBudget(Path("unused"), persist=lambda path, payload: None, **guards)
+
+    def test_concurrent_mixed_lanes_share_budget_without_pending_or_callback_races(self):
+        jobs = [{"id": "g", "model": "glm", "arrival_s": 0, "fixture_sha256": "a" * 64}]
+        jobs += [{"id": "q" + str(i), "model": "qwen", "arrival_s": 0, "fixture_sha256": str(i) * 64}
+                 for i in range(4)]
+        for anchored in (False, True):
+            with self.subTest(anchored=anchored), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "budget.json"
+                activity = {"current": 0, "peak": 0}
+                state_lock = threading.Lock()
+                stored = {}
+                barrier = threading.Barrier(2)
+                def before():
+                    with state_lock:
+                        activity["current"] += 1
+                        activity["peak"] = max(activity["peak"], activity["current"])
+                    # Extend the critical section enough to catch an unlocked
+                    # persistence path across the actual mixed executor lanes.
+                    time.sleep(0.001)
+                def after():
+                    with state_lock:
+                        activity["current"] -= 1
+                options = dict(before_write=before, after_write=after)
+                if anchored:
+                    options.update(read=lambda target: stored.get(target),
+                                   persist=lambda target, payload: stored.__setitem__(target, payload),
+                                   storage_scope="ai-vm")
+                budget = c.CampaignBudget(path, **options)
+                budget.start("maintenance")
+                def run_job(job):
+                    if job["id"] in ("g", "q0"):
+                        barrier.wait(timeout=2)
+                    for _ in range(8):
+                        self.assertGreater(budget.request_timeout(1), 0)
+                        self.assertGreater(budget.checkpoint(), 0)
+                        snapshot = budget.data
+                        snapshot["phase"] = "tampered_copy"
+                        self.assertEqual(budget.data["phase"], "MEASURING")
+                    return {"status": "PASS"}
+                result = execute_mixed(jobs, "B", run_job, lambda: self.fail("B must not switch"))
+                self.assertEqual(result["status"], "COMPLETE", result["errors"])
+                self.assertEqual(len(result["timeline"]), 5)
+                self.assertEqual(activity, {"current": 0, "peak": 1})
+                self.assertFalse(path.with_name(path.name + ".pending").exists())
+                budget.begin_restoration()
+                budget.finish_restoration(True)
+                raw = stored[path] if anchored else path.read_bytes()
+                self.assertEqual(json.loads(raw)["phase"], "RESTORED")
+                if anchored:
+                    self.assertFalse(path.exists())
 
     def test_mixed_schedule_same_jobs_queue_switch_and_restore_separate(self):
         jobs = [{"id": "g", "model": "glm", "arrival_s": 0, "fixture_sha256": "a" * 64}]

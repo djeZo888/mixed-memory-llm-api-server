@@ -66,7 +66,12 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
     uuids = [c["gpu_uuids"][i] for i in p["gpus"]]
     if len(set(uuids)) != len(uuids) or any(not re.fullmatch(r"GPU-[0-9a-f-]{36}", u) for u in uuids):
         raise ValueError("gpu_identity_invalid")
-    cpus = c["guest_cpus"]["glm_mixed" if glm else "qwen_mixed"] if mixed else c["guest_cpus"]["all"]
+    # Isolated one-GPU controls use exactly B's 96/16 partition. Two-GPU
+    # baselines retain all 112 guest CPUs; this is a disclosed CPU difference.
+    cpus = c["guest_cpus"]["glm_mixed" if glm else "qwen_mixed"] if placement.endswith("1") else c["guest_cpus"]["all"]
+    cpu_count = len(cpu_set(cpus))
+    if cpu_count != {"G2": 112, "Q2": 112, "G1": 96, "Q1": 16}[placement]:
+        raise ValueError("placement_cpu_contract_invalid")
     model_name = "glm-5.3-ud-q4-k-xl" if glm else "qwen38-27b-fp8"
     runtime_name = "llama-cpp-v0.4.1-d3br" if glm else "sglang-qwen38-0.5.19"
     model = json.loads((ROOT / f"configs/models/{model_name}.json").read_text())
@@ -103,7 +108,7 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
                    "--main-gpu", "0", "--device", ",".join(p["devices"]),
                    "--load-mode", "none", "--cache-type-k", "f16", "--cache-type-v", "f16",
                    "--fit", "off", "--batch-size", "2048", "--ubatch-size", "512",
-                   "--threads", "96", "--threads-batch", "96", "--jinja", "--no-webui",
+                   "--threads", str(cpu_count), "--threads-batch", str(cpu_count), "--jinja", "--no-webui",
                    "--no-cache-prompt", "--chat-template-kwargs", '{"clear_thinking":true}']
         args += ["--entrypoint", runtime["entrypoint"][0]]
     else:
@@ -124,7 +129,8 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
             "expected_image_ids": [image] if glm else [runtime["image_manifest_digest"], runtime["image_id"]],
             "image_identity_gate": "exact GLM image digest" if glm else "runtime.qwen38_oci.verify_image and validate_container_image; preserve manifest/config domains",
             "model": {"repo_id": model["repo_id"], "revision": model["revision"], "quantization": model["quantization"]},
-            "gpu_uuids": uuids, "guest_cpuset": cpus, "ram_cap_bytes": ram_cap,
+            "gpu_uuids": uuids, "guest_cpuset": cpus, "guest_cpu_count": cpu_count, "ram_cap_bytes": ram_cap,
+            "cpu_comparison": "two-GPU baseline 112; isolated and mixed one-GPU GLM 96 / Qwen 16",
             "mixed": mixed, "registered_paths": roots, "create_argv": args,
             "create_shell": shlex.join(args), "start_argv": ["docker", "start", identifier],
             "native_argv": command if glm else variant(base, capacity, p["tp_size"]),

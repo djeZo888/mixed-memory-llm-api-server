@@ -49,7 +49,10 @@ Context/pool capacities are 4096, 16384 and 65536. GLM changes `--ctx-size`;
 Qwen changes both `--context-length` and `--max-total-tokens`. Optional 131072
 is disabled in launch generation until a root decision and source review.
 N76 stays fixed. GLM uses observed production load-mode `none`, F16 cache,
-batch 2048/ubatch 512, threads 96 for prefill/decode and fit off. Explicit fixed
+batch 2048/ubatch 512, G2 threads/threads-batch 112 and G1 96, and fit off.
+G2/Q2 get all 112 guest CPUs; isolated G1 uses 0-95 and isolated Q1
+96-111, exactly matching mixed B. The CPU allocation differs between one-
+and two-GPU results and is recorded in every command manifest. Explicit fixed
 threads, no-cache-prompt and fit-off prevent varying placement or cache reuse
 from confounding the ladder; these explicit flags differ from production
 defaults and are recorded. Qwen retains FP8 weights, BF16 cache/compute,
@@ -62,7 +65,9 @@ unchanged production file-auth source hash. It validates each changed tuple
 auth, environment, alias and warmup checks. It mounts only in benchmark
 containers. Its Python synthetic tests are not actual-image acceptance:
 BENCHRUN must first verify this adapter through the pinned native preparation,
-resolution, middleware and spawn path without model loading, before live use.
+resolution, middleware and spawn path without model loading, before live use. The worker offline suite exercises the actual shipped wrapper
+main, native argv/environment, alias rejection, tuple/pool checks and middleware
+missing/wrong/correct authentication using synthetic native seams.
 No fallback to an unauthenticated stock launcher is permitted.
 
 All Docker host publications are IPv4 loopback: 31002 for GLM and 31004 for
@@ -97,7 +102,9 @@ reported cached tokens remain visible; do not relabel cached work as evaluated.
 `accounting.native_counter` uses GLM `/props`, `/apply-template`, `/tokenize`,
 or Qwen `/v1/tokenize` with full chat/tool options. Bind calls to protected
 current runtime identity. Qwen additionally needs the loaded template digest;
-the counting route does not prove that digest. Record body/template/token-ID
+the counting route does not prove that digest. Qwen max_model_len is retained
+as tokenizer metadata (representative pinned value 262144); it need not equal
+the smaller configured pool. Actual runtime allocation is the capacity gate. Record body/template/token-ID
 hashes and actual token counts. Fit near capacity minus output cap and 256-token
 extra headroom (tool rounds also reserve 1024). Tool continuation preserves the
 actual call ID, reads a real fixed-path file in an ordinary-user trusted
@@ -114,7 +121,7 @@ Client TTFT distinguishes content, reasoning and tool deltas; role-only chunks
 do not count. Native counters/timings retain their native provenance. Missing
 native prefill/decode/workspace information stays unavailable; no invented TPS.
 
-During timed requests use `telemetry.sample_series` at approximately one second:
+During timed requests the integrated runner samples at approximately one second:
 host MemAvailable/swap/page faults, cgroup current/peak/anon/file/swap/OOM and
 optional known-process VmRSS, per-GPU memory/utilization/power by UUID. Cgroup
 v2 has no true RSS metric: its absence is null; summed process RSS may double
@@ -170,13 +177,11 @@ unproven until observed. No extrapolated throughput/correctness.
 ## Exclusive ownership, maintenance and rollback
 
 Review `lifecycle.plan_campaign(snapshot, campaign)` plus exact command hashes
-before mutation. `owner.CampaignOwner` is an explicit same-process owner with
-injected host adapters; it is not an autonomous RUN command. Bind adapters to
-the current protected installed Manager/source and canonical lease module,
-guard, registered anchored writer, exact Docker IDs and authenticated worker
-clients. No no-op gates or synthetic evidence in RUN. `HostCallbacks` defines
-the narrow required host operations. RUN writes a reviewed task-local adapter;
-it must not replace production source or weaken production profile validators.
+before mutation. `scripts/bench/run-gpu-split.py` is the deterministic worker
+entry. Its persistent SSH endpoint `benchmark-host.py` uses `LinuxHost` and the
+protected installed Manager/lease in the same process, with registered anchored
+writers, exact container IDs, allocation checks and request admission. No adapter
+implementation is deferred to RUN. No production source is replaced.
 
 1. Acquire the existing `/run/llmctl/lifecycle.lock` nonblocking once. Capture a
    complete protected snapshot under that lease: original selected/desired/ready
@@ -227,3 +232,53 @@ All live placement, actual-image adapter, occupied-context, speed, mixed-run and
 restoration acceptance remains **NOT_TESTED in BENCHPREP**. The task-root READY
 handoff carries the exact commit, bundle digest, baseline, tests and next root
 review action; those are the preparation deliverables, not a live result.
+
+
+## Executable arm, run and explicit recovery
+
+The root-reviewed worker executes as an ordinary user. `arm` is offline and
+binds a closed source inventory plus twelve exact serialized manifests. It
+refuses overwriting an existing campaign. Root reviews its emitted SHA256.
+These are future BENCHRUN commands; PREP executes only arm/help/tests.
+
+```sh
+python3 scripts/bench/run-gpu-split.py arm --state ../campaign-arm --campaign benchrun-20260919
+python3 scripts/bench/run-gpu-split.py status --state ../campaign-arm
+python3 scripts/bench/run-gpu-split.py run --state ../campaign-arm --reviewed-arm-sha256 ARM_SHA256 --inference-key-file PROTECTED_WORKER_INFERENCE_KEY_PATH --control-key-file PROTECTED_WORKER_CONTROL_KEY_PATH
+python3 scripts/bench/run-gpu-split.py restore --state ../campaign-arm --reviewed-arm-sha256 ARM_SHA256 --inference-key-file PROTECTED_WORKER_INFERENCE_KEY_PATH --control-key-file PROTECTED_WORKER_CONTROL_KEY_PATH
+```
+
+The two key paths must be existing protected worker clients' files, supplied by
+root; key values never enter argv, environment, source or reports. `run` stages
+the reviewed source under `/data/services/benchrun-20260919/source` using installed
+anchored writers and the canonical lease, then starts the exclusive host owner.
+First-stage UTC epoch is durably saved before staging in `execution.json`; it
+bounds the six-hour campaign. Shared admission is serialized before each count,
+warmup, generation and continuation request. Per-request deadlines are <=7200s.
+
+Worker state automatically writes `progress.json`, `results.jsonl`, `samples.jsonl`,
+`warmups.jsonl`, `execution.json`; private raw requests/replies, frozen fixtures
+and ordinary-user tool workspaces live under `private/` (0700/0600). Host ownership,
+snapshot, first-epoch budget, allocation receipts/private logs, mixed measured
+caps and restoration challenge live under `/data/logs/benchrun-20260919/`.
+Sources are separate under the registered service root; nothing goes to root-disk
+AI output. The source manifest is shareable; raw artifacts remain private.
+
+On a trial/report/pressure failure, complete healthy registered requests, stop
+new admission, and restore the exact captured original intent outside the
+budget. Local restoration ends in POST_RELEASE_LAN_VERIFICATION_PENDING; the
+worker proves authenticated direct private-LAN control and inference (only if
+originally running), then submits the fresh challenge-bound receipt to finalize.
+A measurement error still runs these checks and exits nonzero after restoration.
+`restore` reacquires the canonical owner from its protected exact-ID ledger;
+it does no measurements. It refuses ambiguity and active inference. Never
+manually start production alongside an unresolved benchmark owner.
+
+Explicit `run --resume` is only allowed after verified restoration and within
+the original budget. Completed measurements are skipped; an inflight marker
+requires restoration/review and is never retried automatically. An interrupted
+mixed schedule is not a fresh comparable makespan: its partial per-job records
+remain evidence; root must decide whether a separate newly armed campaign is
+needed. The runner never resets the budget or blindly repeats failed trials.
+All installed Linux command/native-image/allocation and recovery behavior still
+requires the fresh RUN session; mocked tests establish source behavior only.

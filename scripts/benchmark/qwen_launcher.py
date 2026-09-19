@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -93,7 +94,12 @@ def main(argv=None):
     parser.add_argument("--tp", required=True, type=int, choices=(1, 2))
     options = parser.parse_args(argv)
     base = pinned_base("/opt/llmctl/sglang38_file_auth.py")
-    return base.main(bind_variant(base, options.context, options.tp))
+    args = bind_variant(base, options.context, options.tp)
+    # Safe launch receipt: native argv contains only the protected key FILE
+    # reference in the outer wrapper, never key bytes. Actual resolution/log
+    # allocation must additionally match before a benchmark request is admitted.
+    print("BENCHMARK_NATIVE_ARGV " + json.dumps({"argv": variant(base, options.context, options.tp)}, separators=(",", ":")), flush=True)
+    return base.main(args)
 
 
 if __name__ == "__main__":

@@ -16,6 +16,10 @@ from .lifecycle import (BOOT_UNIT, CONTROL_UNIT, PlanError, cleanup_commands, di
                         plan_campaign, require, validate_restored, validate_snapshot)
 
 
+class WorkerVerificationPending(Exception):
+    """Host restored locally; fresh worker LAN checks must finalize separately."""
+
+
 class OwnerError(RuntimeError):
     """Safe diagnostic code; retain private original exception outside reports."""
 
@@ -314,6 +318,11 @@ class CampaignOwner:
                 self.errors.append("restored_evidence_write_failed")
                 result["evidence_persistence"] = "FAILED_SERVICE_RESTORATION_VERIFIED"
             return result
+        except WorkerVerificationPending:
+            require(self.lease is None, "worker_verification_before_lease_release")
+            self.phase = "POST_RELEASE_LAN_VERIFICATION_PENDING"
+            self._save()
+            return {"restored": False, "local_restoration": "VERIFIED", "worker_lan_verification": "PENDING"}
         except BaseException:
             self.phase = "RECOVERY_REQUIRED" if self.lease is not None else "POST_RELEASE_VERIFICATION_FAILED"
             self._record_failure("restoration_failed")

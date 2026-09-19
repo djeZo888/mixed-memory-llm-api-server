@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from dataclasses import replace
 import copy
 import os
 from pathlib import Path
@@ -13,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from common.lifecycle_lease import acquire_lease, transition_in_progress
 from benchmark.lifecycle import BOOT_UNIT, CONTROL_UNIT, digest
-from benchmark.owner import CampaignOwner, HostCallbacks, OwnerError
+from benchmark.owner import CampaignOwner, HostCallbacks, OwnerError, WorkerVerificationPending
 from tests.test_benchmark_lifecycle import snapshot, checks
 
 
@@ -186,6 +187,18 @@ class OwnerTests(unittest.TestCase):
             ("manager", "boot-stop"), ("manager", "select"), ("manager", "start"),
             ("release",), ("control", "start"), ("budget_finish", True)])
         self.assertEqual(self.fixture.containers, {})
+
+    def test_worker_verification_pending_releases_without_false_restored_claim(self):
+        def pending(original, after):
+            raise WorkerVerificationPending()
+        self.owner.host = replace(self.owner.host, checks=pending)
+        self.owner.begin()
+        result = self.owner.restore()
+        self.assertFalse(result["restored"])
+        self.assertEqual(result["local_restoration"], "VERIFIED")
+        self.assertEqual(self.owner.phase, "POST_RELEASE_LAN_VERIFICATION_PENDING")
+        self.assertIsNone(self.owner.lease)
+        self.assertFalse(any(event[0] == "budget_finish" for event in self.fixture.events))
 
     def test_original_glm_restored_not_qwen_default(self):
         self.fixture.state = snapshot("glm-5.3-ud-q4-k-xl-n76-native1m")

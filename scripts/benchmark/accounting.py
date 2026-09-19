@@ -8,7 +8,8 @@ from benchmark.fixtures import HarnessError, MODELS, CAPACITIES, canonical, dige
 def native_counter(model, capacity, call, *, qwen_template_sha256=None):
     """Adapt existing native counting routes through an injected protected client.
 
-    call(path, payload) must enforce current runtime identity/storage/owner gates.
+    call(path, payload) must enforce current runtime identity/storage/owner gates
+    and verify the declared trial capacity from effective allocation/readiness.
     Qwen's template digest comes from BENCHRUN's verified loaded template evidence;
     its tokenize route alone does not expose that identity. No route is called
     until the returned counter is invoked; these are not generation endpoints.
@@ -41,8 +42,11 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None):
             source, template_hash = "native_apply_template_tokenize", digest(template.encode())
         else:
             reply = call("/v1/tokenize", body)
-            if type(reply.get("max_model_len")) is not int or reply["max_model_len"] != capacity:
-                raise HarnessError("native Qwen configured capacity differs from trial")
+            # Pinned route exposes tokenizer metadata, not the allocation/window
+            # accepted by this server. Keep it visible without treating it as a
+            # trial-capacity proof; RUN verifies actual args/allocation separately.
+            if not isinstance(reply, dict) or type(reply.get("max_model_len")) is not int or reply["max_model_len"] <= 0:
+                raise HarnessError("native Qwen tokenizer metadata is invalid")
             source, template_hash = "native_chat_tokenize", qwen_template_sha256
         tokens = reply.get("tokens") if isinstance(reply, dict) else None
         if (not isinstance(tokens, list) or not tokens or len(tokens) > 8 * max(CAPACITIES)
@@ -52,6 +56,8 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None):
             raise HarnessError("native Qwen count/token IDs disagree")
         return {"source": source, "input_tokens": len(tokens), "body_sha256": digest(raw),
                 "template_sha256": template_hash, "token_ids_sha256": digest(canonical(tokens)),
-                "configured_context": capacity}
+                "configured_context": capacity,
+                "configured_context_source": "native_props" if model.removeprefix("bench-") == "glm-5.3" else "caller_verified_runtime_allocation",
+                "tokenizer_max_model_len": reply.get("max_model_len") if model.removeprefix("bench-") == "qwen3.8-27b" else None}
 
     return count

@@ -11,10 +11,16 @@ Four placement/three capacity command generation, a separate pinned Qwen
 file-auth adapter, exact serialized retrieval/tool fixtures and genuine scoring,
 native counting adapters, drain-first streaming, private sample persistence,
 lightweight telemetry/allocation parsing, six-hour ledger, mixed dispatcher,
-and canonical-lease lifecycle planning/owner source are implemented.
+and concrete canonical-lease host/worker campaign integration are implemented.
+Root review corrections add explicit arm/run/status/restore commands, source-bound
+staging, durable results and recovery, original-intent worker verification,
+112/96/16 CPU matching, tokenizer-metadata distinction, shared budget locking,
+and complete capped-tool continuation handling. Source review mapping is retained
+in task-root root-review-response.md. The first 88-test snapshot was preliminary;
+this report supersedes its readiness claim.
 Production profiles/auth sources, weights, runtime images and installer are unchanged.
 
-Scoped synthetic/offline validation: **88 tests PASS** on worker Python 3.14.7.
+Scoped synthetic/offline validation: **123 tests PASS** on worker Python 3.14.7.
 Source compile, preparation CLI generation and whitespace checks passed.
 No installer or unrelated suites. Twelve exact command manifests and six
 serialized private fixture samples generated; native token fit remains NOT_TESTED.
@@ -55,7 +61,9 @@ Existing protected production evidence remains under `/data/logs/finalops-202609
 and `/data/services/llm-manager/evidence`; it is not copied here.
 
 Root reviews commit/bundle and manifests in task-root READY.md, then dispatches
-fresh BENCHRUN. RUN must wire protected host callbacks, refresh the complete
+fresh BENCHRUN. The concrete deterministic worker/host runner now supplies the protected host adapter,
+trial/count/warmup/continuation loop, telemetry gates and automatic restoration.
+RUN must refresh the complete
 under-lease snapshot, validate the benchmark Qwen adapter in the actual pinned
 native path, prove actual allocation/mapping/reserve and count exact fixtures.
 Mixed RAM caps depend on measured demand and are not invented during PREP.
