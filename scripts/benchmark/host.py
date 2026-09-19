@@ -23,7 +23,7 @@ from types import SimpleNamespace
 import urllib.error
 import urllib.request
 
-from .lifecycle import CONTROL_UNIT, BOOT_UNIT, digest, require, validate_restored
+from .lifecycle import CONTROL_UNIT, BOOT_UNIT, PlanError, digest, require, validate_restored
 from .owner import CampaignOwner, HostCallbacks, WorkerVerificationPending
 from .campaign import CampaignBudget
 from .profiles import read_config, command_manifest, split_resources
@@ -910,16 +910,57 @@ class LinuxHost:
         raise ValueError('unknown_rpc_operation')
 
 
+RPC_OPERATIONS = frozenset({'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation',
+    'quiescent', 'request_begin', 'request_end', 'admit_mixed', 'restore', 'recover',
+    'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'})
+RPC_SAFE_REQUIRE_CODES = frozenset({'native_server_args_unavailable',
+    'allocation_log_too_large', 'current_model_mount_changed',
+    'owned_container_identity_changed', 'installed_source_identity_changed',
+    'registered_storage_pin_changed', 'http_response_invalid',
+    'host_operation_deadline', 'STOP_BUDGET'})
+
+
+def rpc_diagnostic(operation, error):
+    """Only code identity; never format exception messages or inspect locals."""
+    code = (error.args[0] if type(error) is PlanError and len(error.args) == 1
+            and type(error.args[0]) is str and error.args[0] in RPC_SAFE_REQUIRE_CODES else None)
+    frames, tb = [], error.__traceback__
+    while tb is not None:
+        frames.append({'source': Path(tb.tb_frame.f_code.co_filename).name,
+                       'function': tb.tb_frame.f_code.co_name, 'line': tb.tb_lineno})
+        tb = tb.tb_next
+    return {'operation': operation, 'exception_class': type(error).__name__,
+            'require_code': code, 'frames': frames[-16:]}
+
+
 def serve(host, source, sink):
     """One serialized lifecycle thread. EOF does not implicitly stop inference."""
+    pending_diagnostics = []
     for line in source:
+        operation = 'unknown'
         try:
             require(len(line) <= 1024 * 1024, 'rpc_too_large')
-            value = host.dispatch(json.loads(line))
+            message = json.loads(line)
+            op = message.get('op') if isinstance(message, dict) else None
+            if type(op) is str and op in RPC_OPERATIONS:
+                operation = op
+            value = host.dispatch(message)
             reply = {'ok': True, 'result': value}
-        except Exception:
+        except Exception as error:
             # No command stderr, urllib exception, environment or secret enters
             # protocol errors. Durable owner state supplies recovery context.
             reply = {'ok': False, 'error': 'host_rpc_failed', 'phase': getattr(getattr(host, 'owner', None), 'phase', None)}
+            pending_diagnostics.append(rpc_diagnostic(operation, error))
+            pending_diagnostics = pending_diagnostics[-16:]
         sink.write(json.dumps(reply, separators=(',', ':')) + '\n')
         sink.flush()
+        # Reply first. Defer guarded I/O while any healthy request is registered;
+        # request_end can flush after drain. Evidence failure never changes owner
+        # state, stops inference, raises into recovery, or replaces the RPC error.
+        if not getattr(host, 'requests', {}):
+            pending, pending_diagnostics = pending_diagnostics, []
+            for diagnostic in pending:
+                try:
+                    host.write_json('rpc-errors/' + str(time.time_ns()) + '-' + secrets.token_hex(8) + '.json', diagnostic)
+                except Exception:
+                    pass

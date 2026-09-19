@@ -16,7 +16,7 @@ from unittest.mock import Mock, patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from benchmark.host import LinuxHost, HostBudget, serve, command, _COMMAND_DEADLINE
-from benchmark.lifecycle import CONTROL_UNIT, BOOT_UNIT, validate_snapshot
+from benchmark.lifecycle import CONTROL_UNIT, BOOT_UNIT, PlanError, validate_snapshot
 from install.storage_io import AnchoredRoot, GuardedFile
 from benchmark.owner import WorkerVerificationPending
 from tests.test_benchmark_owner import Fixture
@@ -189,6 +189,60 @@ class HostTests(unittest.TestCase):
         self.assertEqual(replies[1], {'ok': True, 'result': {'phase': 'ACTIVE'}})
         self.assertNotIn('sensitive', sink.getvalue())
         host.restore.assert_not_called()
+
+    def test_rpc_diagnostic_nonleak_defers_until_drain_and_writer_failure_is_nonfatal(self):
+        host = self.bare()
+        secret = 'SYNTHETIC_PRIVATE_HEADER_BODY_EXCEPTION_VALUE'
+        host.requests = {'healthy-inference': {'body': secret}}
+        sink, receipts = io.StringIO(), []
+
+        def collect_receipt(path, value):
+            self.assertFalse(host.requests)
+            self.assertTrue(path.startswith('rpc-errors/'))
+            self.assertTrue(path.endswith('.json'))
+            # The client already received its reply before guarded evidence I/O.
+            self.assertGreaterEqual(len(sink.getvalue().splitlines()), 2)
+            receipts.append(copy.deepcopy(value))
+            if len(receipts) == 1:
+                raise OSError(secret)
+
+        def dispatch(message):
+            if message['op'] == 'readiness':
+                credentials_in_locals = {'Authorization': secret}
+                return {}[credentials_in_locals['Authorization']]
+            if message['op'] == 'request_end':
+                host.write_json.assert_not_called()
+                host.requests.clear()
+                return {'drained': True}
+            if message['op'] == 'allocation':
+                raise PlanError('native_server_args_unavailable')
+            if message['op'] == 'restore':
+                return {'restored': True}
+            raise PlanError(secret)
+
+        host.dispatch = Mock(side_effect=dispatch)
+        host.write_json = Mock(side_effect=collect_receipt)
+        host.restore = Mock()
+        messages = [{'op': 'readiness', 'headers': secret, 'body': secret},
+                    {'op': 'request_end'}, {'op': 'allocation'},
+                    {'op': secret}, {'op': 'restore'}]
+        serve(host, io.StringIO(''.join(json.dumps(m) + '\n' for m in messages)), sink)
+        self.assertEqual([r['operation'] for r in receipts], ['readiness', 'allocation', 'unknown'])
+        self.assertEqual([r['exception_class'] for r in receipts], ['KeyError', 'PlanError', 'PlanError'])
+        self.assertEqual([r['require_code'] for r in receipts], [None, 'native_server_args_unavailable', None])
+        for receipt in receipts:
+            self.assertEqual(set(receipt), {'operation', 'exception_class', 'require_code', 'frames'})
+            self.assertTrue(receipt['frames'])
+            for frame in receipt['frames']:
+                self.assertEqual(set(frame), {'source', 'function', 'line'})
+                self.assertEqual(Path(frame['source']).name, frame['source'])
+                self.assertIsInstance(frame['line'], int)
+        self.assertNotIn(secret, json.dumps(receipts) + sink.getvalue())
+        replies = [json.loads(line) for line in sink.getvalue().splitlines()]
+        self.assertEqual(replies[0], {'ok': False, 'error': 'host_rpc_failed', 'phase': 'ACTIVE'})
+        self.assertEqual(replies[-1], {'ok': True, 'result': {'restored': True}})
+        host.restore.assert_not_called()
+        self.assertEqual(host.owner.phase, 'ACTIVE')
 
     def test_postrelease_recovery_reissues_nonce_without_control_or_model_mutation(self):
         for prior_phase in ('POST_RELEASE_LAN_VERIFICATION_PENDING', 'RESTORED'):
