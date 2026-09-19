@@ -22,6 +22,15 @@ import time
 
 from . import accounting, client, fixtures, profiles, telemetry, workload
 
+# One root-reviewed saved-response disposition, never a general failure bypass.
+Q1_GENERATION_FRAMING = {
+    "case": "Q1-16384-generation",
+    "failed_row_sha256": "539e3d713bb8d35a580c7b43d5e48dd6b6813e271124364f30dde0adfe907e3e",
+    "semantic_disposition_sha256": "33ad94d2e70546bc3929be66f5d7e68ae35251caf5dfd13a70ff54065c8b89e4",
+    "normalization": "remove_one_enclosing_json_fence",
+    "semantic_status": "PASS",
+}
+
 
 def save(path, value):
     path = Path(path)
@@ -453,6 +462,13 @@ class Campaign:
                 cases += [(f"{p}-{n}-tool", "tool", 256)]
         return cases
 
+    def reviewed_generation_framing(self, identity, row):
+        return (self.armed.get("scope") == "q1-only"
+                and self.armed.get("q1_generation_framing") == Q1_GENERATION_FRAMING
+                and identity == Q1_GENERATION_FRAMING["case"]
+                and row.get("status") == "HARNESS_FAILURE"
+                and fixtures.digest(fixtures.canonical(row)) == Q1_GENERATION_FRAMING["failed_row_sha256"])
+
     def run(self, *, resume=False):
         scope = profiles.validate_arm_scope(self.armed)
         if scope == "q1-only" and not resume:
@@ -460,7 +476,8 @@ class Campaign:
         if self.progress["inflight"]:
             raise RuntimeError("inflight_samples_require_restore_and_explicit_review")
         completed = self.progress["completed"]
-        if any(row.get("status") not in {"PASS", "OUTPUT_LIMIT", "COMPLETE"} for row in completed.values()):
+        if any(row.get("status") not in {"PASS", "OUTPUT_LIMIT", "COMPLETE"}
+               and not self.reviewed_generation_framing(identity, row) for identity, row in completed.items()):
             raise RuntimeError("failed_measurement_requires_review_no_automatic_resume")
         if any(mode not in completed and any(key.startswith(mode + "-") for key in completed) for mode in ("mixed-A", "mixed-B")):
             raise RuntimeError("partial_mixed_timing_requires_new_reviewed_campaign")

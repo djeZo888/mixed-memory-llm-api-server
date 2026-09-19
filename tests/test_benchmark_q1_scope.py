@@ -185,6 +185,35 @@ class Q1Scope(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "mixed_excluded"):
             host.dispatch({"op": "admit_mixed"})
 
+    def test_exact_reviewed_generation_disposition_skips_all_completed_and_runs_only_64k(self):
+        with tempfile.TemporaryDirectory() as directory:
+            c, host, requests, _ = self.setup_case(Path(directory))
+            completed = {identity: {"status":"PASS"} for identity in CASES[:3]}
+            completed[CASES[3]] = {"status":"HARNESS_FAILURE", "synthetic":"saved framing failure"}
+            c.progress["completed"] = copy.deepcopy(completed)
+            # Synthetic row pin replaces only the immutable real-row pin in this offline test.
+            approved = {**runner.Q1_GENERATION_FRAMING,
+                "failed_row_sha256":fixtures.digest(fixtures.canonical(completed[CASES[3]]))}
+            c.armed["q1_generation_framing"] = approved
+            with patch.object(runner, "Q1_GENERATION_FRAMING", approved):
+                c.run(resume=True)
+            self.assertEqual({k:c.progress["completed"][k] for k in completed}, completed)
+            self.assertEqual(c.progress["completed"][CASES[4]]["status"], "PASS")
+            loads = [host.manifests[a["manifest_sha256"]] for op,a in host.events if op == "load"]
+            self.assertEqual([(m["placement"],m["configured_capacity"]) for m in loads], [("Q1",65536)])
+            self.assertEqual(len(requests), 2)  # One discarded warmup and one retrieval; no generation retry.
+
+    def test_generation_disposition_missing_or_hash_mismatch_refuses_before_host(self):
+        with tempfile.TemporaryDirectory() as directory:
+            c, host, _, _ = self.setup_case(Path(directory))
+            c.progress["completed"] = {CASES[3]:{"status":"HARNESS_FAILURE"}}
+            for disposition in (None, runner.Q1_GENERATION_FRAMING,
+                    {**runner.Q1_GENERATION_FRAMING,"semantic_disposition_sha256":"0"*64}):
+                c.armed["q1_generation_framing"] = disposition
+                with self.assertRaisesRegex(RuntimeError, "failed_measurement"):
+                    c.run(resume=True)
+            self.assertEqual(host.events, [])
+
 
 if __name__ == "__main__":
     unittest.main()
