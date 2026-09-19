@@ -11,8 +11,9 @@ failure or output-limit event. No measured request was repeated.
 Q1 used one GPU and 16 guest CPUs; Q2 used two GPUs and 112 guest CPUs. On shared
 4K/16K fixtures, Q1 delivered output 8.5–16.9% faster but had 21.8–24.5% longer
 TTFT. The 256K request peaked at **46.939 GiB used / 48.031 GiB directly free**.
-An observed-slope projection gives roughly **62.99 GiB used / 31.98 GiB free at
-512K**, and approximately **890,500 tokens with a 10% physical-memory margin**.
+Using the request-window peak as the primary anchor, an observed-slope projection
+gives approximately **63 GiB used at 512K** and **890K tokens with a 10%
+physical-memory margin**; lifecycle peaks are recorded separately.
 Those larger capacities are untested for allocation, speed and quality; a
 separate 0.8-total occupancy proxy is stricter and is not an established SGLang
 allocator formula. Single-GPU serving was benchmarked, not deployed. Original
@@ -23,6 +24,9 @@ identities and evidence hashes. Retained verification session:
 `01a0ba93-cd61-7ad1-9829-c50d6c8a097e`; interim commit:
 `80e50f0535428c4be99951ad887b59079adb5ae3`. This follow-up read saved Worker1
 files only. No VM contact, source repair, inference, tool retest or 512K test.
+Publication integrates only the report/JSON/verifier onto reviewed benchmark
+source `b750bb37dd3107cf5b1e7aaabe6237ebc435085c`. That publication base and the
+historical tested sources below are distinct from the final report commit.
 
 **Measured performance.** Output delivery is
 `(completion_tokens − 1) / (last_output − first_output)`; effective input is
@@ -135,8 +139,8 @@ For each specified anchor and slope `s`, use
 
 | Projection basis / anchor | 512K used / free GiB | Physical maximum tokens, 10% margin | With another 4 GiB workspace allowance |
 |---|---:|---:|---:|
-| Observed slope / lifecycle peak — conservative planning | 62.991 / 31.980 | 890,493 | 825,159 |
-| Observed slope / request peak | 62.989 / 31.982 | 890,525 | 825,191 |
+| Observed slope / request peak — primary | 62.989 / 31.982 | 890,525 | 825,191 |
+| Observed slope / lifecycle peak — separate observation | 62.991 / 31.980 | 890,493 | 825,159 |
 | Observed slope / warm — native handoff | 62.987 / 31.984 | 890,557 | 825,223 |
 | Cache-only slope / request peak — root cross-check | 62.939 / 32.031 | 892,468 | 826,932 |
 
@@ -204,7 +208,9 @@ unchanged; only Q256's new fixture/measurement was added in its separate task.
 
 Reproduce the focused saved-data check with
 `python3 scripts/bench/verify-q1-saved.py --tasks TASKS --output OUTPUT.json`.
-The three saved Worker1 task folders must be present under `TASKS`; accepted
-Q256 source is read from its separate checkout. No benchmark source changed in
-this report checkout. No broad suite or new audit was run. Root reviews and
-publishes separately; this task stops at the final review-ready handoff.
+The three saved Worker1 task folders must be present under `TASKS`; historical
+Q1 and accepted Q256 source are read from their separate checkouts. No benchmark
+modules changed during report integration. Only the bounded saved-data verifier
+was rerun; no broad suite or live work. Root authorized feature-branch publication
+and a PR targeting `milestone/server-completion-20260915`; the task handoff records
+the final publication commit and PR separately from these historical measurements.

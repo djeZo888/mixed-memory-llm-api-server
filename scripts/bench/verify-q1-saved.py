@@ -174,7 +174,7 @@ def main():
         check(manifest64[key] == manifest256[key], "Q256 placement/model policy changed")
     check(["262144" if x == "65536" else x for x in manifest64["native_argv"]] == manifest256["native_argv"], "Q256 native policy changed beyond capacity")
     for name, expected in arms["Q1"]["source_files"].items():
-        check(sha((ROOT/name).read_bytes()) == expected, "reviewed source differs: " + name)
+        check(sha((q1/"repo"/name).read_bytes()) == expected, "historical Q1 source differs: " + name)
     go = evidence_file(q1 / "GO.json")
     review = evidence_file(q1 / "q1-64k-continuation/review.json")
     package = evidence_file(q1 / "q1-64k-continuation/update-package.json", outcome["update_package_sha256"])
@@ -400,6 +400,7 @@ def main():
         "scope": "Worker1 saved evidence only; no VM contact or new measurements",
         "reviewed_source_head": outcome["source_head"], "Q1_initial_successful_source_head": review["base_source_head"], "Q2_source_head": prior["source_head"],
         "Q256_accepted_source_head":outcome256["source_head"], "interim_report_commit":"80e50f0535428c4be99951ad887b59079adb5ae3",
+        "report_publication_base":"b750bb37dd3107cf5b1e7aaabe6237ebc435085c",
         "identities": identities, "runtime": {k:runtime[k] for k in ("id","source_commit","image_ref","image_id")},
         "common_policy": {"weights":"FP8", "KV":"BF16", "radix_cache":False, "mem_fraction_static":0.8, "yarn_factor":4, "native_context":262144},
         "restoration":{"status":"VERIFIED_FROM_SAVED_RECEIPTS","task":"BENCHQ256","restored_measurement_end_utc":outcome256["measurement_process_exit"]["ended_utc"],
@@ -423,7 +424,7 @@ def main():
         "observed_GPU_used_slopes_bytes_per_token":[{"from":a["capacity"],"to":b["capacity"],"scope":"lifecycle_peak","slope":(b["gpu_sampled_peak_used_bytes"]-a["gpu_sampled_peak_used_bytes"])/(b["capacity"]-a["capacity"])} for a,b in zip(memory[:3],memory[1:3])],
         "observed_GPU_warm_slopes_bytes_per_token":[{"from":a["capacity"],"to":b["capacity"],"slope":(b["gpu_warm_used_bytes"]-a["gpu_warm_used_bytes"])/(b["capacity"]-a["capacity"])} for a,b in zip(memory,memory[1:])],
         "host_load_peak":{"container_id":peak_row["container"],"row_canonical_sha256":sha(canonical(peak_row)),"belongs_to_failed_initial_4K_startup":True, **{k:peak_demand[k] for k in ("required_bytes","anon_bytes","kernel_bytes","required_file_backed_bytes","reclaimable_file_bytes","load_phase_sample_count","load_phase_observed_span_s")}},
-        "GPU_projection":{"total_bytes":total,"request_used_at_256K_bytes":used,"request_free_at_256K_bytes":free,"unavailable_reserved_gap_bytes":gap,"BF16_KV_hypothesis_bytes_per_token":kv,"observed_64K_to_256K_slope_bytes_per_token":float(observed_slope),"64K_to_256K_growth_beyond_cache_only_bytes":overhead_growth,"reserve_fraction":0.1,"reserve_bytes":float(reserve),"historical_live_gate_reserve_bytes":16*2**30,"policy_proxy":"0.8*total occupancy including device gap; NOT a verified SGLang allocator formula or accepted maximum", "estimates":projections},
+        "GPU_projection":{"primary_anchor":"request_peak","total_bytes":total,"request_used_at_256K_bytes":used,"request_free_at_256K_bytes":free,"unavailable_reserved_gap_bytes":gap,"BF16_KV_hypothesis_bytes_per_token":kv,"observed_64K_to_256K_slope_bytes_per_token":float(observed_slope),"64K_to_256K_growth_beyond_cache_only_bytes":overhead_growth,"reserve_fraction":0.1,"reserve_bytes":float(reserve),"historical_live_gate_reserve_bytes":16*2**30,"policy_proxy":"0.8*total occupancy including device gap; NOT a verified SGLang allocator formula or accepted maximum", "estimates":projections},
         "limitations":["No tested Q1 capacity above 262144; actual 261525 input/89 output; strict HARNESS_FAILURE plus separate root-approved semantic PASS", "Q2 64K/256K absent; no code-analysis coverage; no Q1 tool retest", "Single GPU benchmarked, not deployed; original Qwen 1M TP2 production restored; no simultaneous GLM/Qwen feasibility", "Native prefill/decode timing, evaluated/cached counters and standalone workspace are unavailable", "Successful-load raw native logs remain remote hash references; local numeric receipts rehashed, not raw-log reparsed", "Native GB labels retained without exact byte conversion", "13.288GB sampled load peak belongs to failed initial container; cold-load and whole-VM RAM requirement unknown", "16K/64K/256K required-host-demand unavailable; reclaimable file cache and shared process RSS are not unique required RAM", "Telemetry is sampled, with gaps; lifetime cgroup peaks are not request peaks; client event timing includes transport/chunk overhead", "CPU allocation and source revisions differ; no causal GPU-only speed claim", "512K and all maximum projections untested for allocation/speed/quality; observed slope, cache-only slope and policy proxy are separate"],
         "evidence_files":evidence}
     args.output.write_text(json.dumps(result,sort_keys=True,separators=(",",":"),ensure_ascii=False)+"\n")
