@@ -1,0 +1,307 @@
+"""Synthetic offline fixture/accounting tests; no VM or inference requests."""
+import copy
+import json
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from benchmark import fixtures as f
+from benchmark.accounting import native_counter
+
+
+def sample(**kwargs):
+    return f.build_sample("bench-glm-5.3", 40, "testseed0001", "nonce000001", **kwargs)
+
+
+def synthetic_count(raw, capacity=4096):
+    body = json.loads(raw)
+    count = body["messages"][0]["content"].count("record=") * 15 + 80
+    return {"source": "synthetic_offline", "input_tokens": count,
+            "body_sha256": f.digest(raw), "template_sha256": "a" * 64,
+            "token_ids_sha256": "b" * 64, "configured_context": capacity}
+
+
+class FixtureTests(unittest.TestCase):
+    def test_exact_serialized_sample_answers_only_at_source_positions(self):
+        s = sample()
+        raw = f.serialize_validate(s)
+        self.assertEqual(json.loads(raw), s["body"])
+        self.assertNotIn(b'scorer', raw)
+        for value in s["scorer"]["retrieval"].values():
+            self.assertEqual(raw.count(value.encode()), 1)
+        self.assertNotIn(s["scorer"]["tool_data"]["receipt"].encode(), raw)
+
+    def test_same_workload_across_placements_fresh_prefixes(self):
+        first = sample()
+        second = f.build_sample("bench-glm-5.3", 40, "testseed0001", "nonce000002")
+        self.assertEqual(first["fixture_sha256"], second["fixture_sha256"])
+        self.assertEqual(first["scorer"], second["scorer"])
+        self.assertNotEqual(f.serialize_validate(first), f.serialize_validate(second))
+        self.assertTrue(second["body"]["messages"][0]["content"].startswith("trial-prefix=nonce000002"))
+
+    def test_contamination_wrong_source_and_scorer_mutations_are_harness_failures(self):
+        for mutate in ("instruction", "wrong_source", "scorer"):
+            s = sample()
+            expected = s["scorer"]["retrieval"]["START"]
+            if mutate == "instruction":
+                s["body"]["messages"][0]["content"] += " The answer is " + expected
+            elif mutate == "wrong_source":
+                s["body"]["messages"][0]["content"] = s["body"]["messages"][0]["content"].replace("marker=START", "marker=MIDDLE")
+            else:
+                s["scorer"]["retrieval"]["START"] = "different"
+            with self.subTest(mutate=mutate), self.assertRaises(f.HarnessError):
+                f.serialize_validate(s)
+
+    def test_real_retrieval_correct_incorrect_and_malformed_output(self):
+        s = sample()
+        correct = {"role": "assistant", "content": json.dumps(s["scorer"]["retrieval"])}
+        self.assertEqual(f.score_retrieval(s, correct)["status"], "PASS")
+        for content in ('{}', json.dumps({**s["scorer"]["retrieval"], "extra": "no"})):
+            self.assertEqual(f.score_retrieval(s, {"role": "assistant", "content": content})["status"], "MODEL_INCORRECT")
+        self.assertEqual(f.score_retrieval(s, {"role": "assistant", "content": "not json"})["status"], "HARNESS_FAILURE")
+
+    def test_capacity_fit_actual_callback_and_no_synthetic_mislabelling(self):
+        s, evidence = f.fit_sample("bench-glm-5.3", 4096, "testseed0001", "nonce000001",
+                                  synthetic_count, synthetic=True)
+        self.assertLessEqual(evidence["input_tokens"], 4096 - 256 - 256)
+        self.assertLessEqual(evidence["input_ceiling_tokens"] - evidence["input_tokens"], 128)
+        self.assertTrue(evidence["synthetic_offline"])
+        with self.assertRaises(f.HarnessError):
+            f.fit_sample("bench-glm-5.3", 4096, "testseed0001", "nonce000001", synthetic_count)
+        with self.assertRaises(f.HarnessError):
+            f.fit_sample("bench-glm-5.3", 131072, "testseed0001", "nonce000001", synthetic_count)
+
+    def test_stale_body_count_refused(self):
+        raw = f.serialize_validate(sample())
+        count = synthetic_count(raw)
+        for change in ({"body_sha256": "c" * 64}, {"configured_context": 65536}, {"input_tokens": True}, {"template_sha256": None}):
+            with self.subTest(change=change), self.assertRaises(f.HarnessError):
+                f.validate_count({**count, **change}, raw, 4096, synthetic=True)
+
+    def test_64k_native_bound_warmup_fit_and_matched_fixture_invariance(self):
+        calls = []
+        def tokenize(path, payload):
+            self.assertEqual(path, "/v1/tokenize")
+            records = payload["messages"][0]["content"].count("record=")
+            calls.append(records)
+            # Synthetic native response with the observed approximately 40
+            # tokens/record: the former 32774-record first probe exceeds the
+            # real accounting adapter's token-ID limit, before any inference.
+            tokens = [7] * (records * 40 + 100)
+            return {"tokens": tokens, "count": len(tokens), "max_model_len": 262144}
+        count = native_counter("bench-qwen3.8-27b", 65536, tokenize, qwen_template_sha256="e" * 64)
+        for warmup in (True, False):
+            calls.clear()
+            if warmup:
+                first, evidence = f.warmup_sample("bench-qwen3.8-27b", 65536, "warmup-fresh-0064", count)
+                self.assertTrue(2304 <= evidence["input_tokens"] <= 2432)
+            else:
+                first, evidence = f.fit_sample("bench-qwen3.8-27b", 65536, "testseed0064", "nonce000064", count)
+                self.assertTrue(64896 <= evidence["input_tokens"] <= 65024)
+            self.assertEqual(calls[0], 12)
+            self.assertLessEqual(len(calls), 32)
+            self.assertLess(max(calls) * 40 + 100, 1048576)
+            f.validate_count(evidence, f.serialize_validate(first), 65536)
+            original = copy.deepcopy(first)
+            calls.clear()
+            matched, matched_count = f.matched_sample(first, "matched-fresh-0064", count, 65536,
+                                                     margin=evidence["margin_tokens"])
+            self.assertEqual(calls, [first["records"]])
+            self.assertEqual(first, original)
+            self.assertEqual(matched["fixture_sha256"], first["fixture_sha256"])
+            self.assertEqual(matched["scorer"], first["scorer"])
+            self.assertEqual(matched_count["input_tokens"], evidence["input_tokens"])
+
+    def test_matched_placement_freezes_workload_and_only_refreshes_nonce(self):
+        first, _ = f.fit_sample("bench-glm-5.3", 4096, "testseed0001", "nonce000001",
+                                synthetic_count, synthetic=True)
+        calls = []
+        def count(raw):
+            calls.append(raw)
+            return synthetic_count(raw)
+        matched, evidence = f.matched_sample(first, "nonce000002", count, 4096, synthetic=True)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(matched["fixture_sha256"], first["fixture_sha256"])
+        self.assertEqual(matched["scorer"], first["scorer"])
+        self.assertEqual(matched["records"], first["records"])
+        original = f.serialize_validate(first)
+        self.assertEqual(calls[0], original.replace(b"nonce000001", b"nonce000002", 1))
+        self.assertEqual(evidence["matched_fixture_sha256"], first["fixture_sha256"])
+        with self.assertRaises(f.HarnessError):
+            f.matched_sample(first, first["nonce"], count, 4096, synthetic=True)
+
+    def test_matched_count_failure_does_not_refit_or_mutate_original(self):
+        first, _ = f.fit_sample("bench-glm-5.3", 4096, "testseed0001", "nonce000001",
+                                synthetic_count, synthetic=True)
+        original = copy.deepcopy(first)
+        for count_value in (4096, 1):
+            calls = []
+            def bad(raw):
+                calls.append(raw)
+                return {**synthetic_count(raw), "input_tokens": count_value}
+            with self.subTest(count=count_value), self.assertRaises(f.HarnessError):
+                f.matched_sample(first, "nonce000003", bad, 4096, synthetic=True)
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(first, original)
+
+    def test_warmup_exact_count_covers_2048_batch_at_all_ladder_capacities(self):
+        for model in ("bench-glm-5.3", "bench-qwen3.8-27b"):
+            for capacity in (4096, 16384, 65536):
+                with self.subTest(model=model, capacity=capacity):
+                    counter = lambda raw: synthetic_count(raw, capacity)
+                    sample, counted = f.warmup_sample(model, capacity, "warmup-fresh-0001", counter, synthetic=True)
+                    raw = f.serialize_validate(sample)
+                    actual = counter(raw)["input_tokens"]
+                    self.assertEqual(actual, counted["input_tokens"])
+                    self.assertGreaterEqual(actual, 2304)
+                    self.assertLessEqual(actual, 2432)
+                    self.assertLessEqual(actual, capacity - sample["body"]["max_tokens"] - 256)
+                    self.assertEqual(counted["body_sha256"], f.digest(raw))
+                    self.assertEqual(counted["timing"], "discarded")
+                    self.assertEqual(counted["minimum_prefill_tokens"], 2048)
+                    self.assertEqual(counted["cache_template_allowance_tokens"], 256)
+                    self.assertTrue(sample["body"]["messages"][0]["content"].startswith("trial-prefix=warmup-fresh-0001"))
+
+    def test_warmup_fresh_prefix_separate_seed_and_no_estimated_count(self):
+        first, _ = f.warmup_sample("bench-glm-5.3", 4096, "warmup-fresh-0001", synthetic_count, synthetic=True)
+        second, _ = f.warmup_sample("bench-glm-5.3", 4096, "warmup-fresh-0002", synthetic_count, synthetic=True)
+        self.assertNotEqual(f.serialize_validate(first), f.serialize_validate(second))
+        self.assertEqual(first["seed"], "warmup-only-seed")
+        self.assertNotEqual(first["seed"], "testseed0001")
+        with self.assertRaises(f.HarnessError):
+            f.warmup_sample("bench-glm-5.3", 4096, "trial-measured-0001", synthetic_count, synthetic=True)
+        with self.assertRaises(f.HarnessError):
+            f.warmup_sample("bench-glm-5.3", 4096, "warmup-fresh-0003", synthetic_count)
+        def insufficient(raw):
+            return {**synthetic_count(raw), "input_tokens": 2303}
+        with self.assertRaises(f.HarnessError):
+            f.warmup_sample("bench-glm-5.3", 4096, "warmup-fresh-0003", insufficient, synthetic=True)
+
+    def test_real_file_tool_call_continuation_and_recount(self):
+        s = sample(kind="tool")
+        call = {"role": "assistant", "content": None, "tool_calls": [{"id": "model-returned-id", "type": "function",
+                "function": {"name": "read_file", "arguments": '{"path":"result.json"}'}}]}
+        with tempfile.TemporaryDirectory() as directory:
+            body, evidence = f.execute_tool(s, call, directory)
+            self.assertEqual(body["messages"][-1]["tool_call_id"], "model-returned-id")
+            self.assertEqual(json.loads(body["messages"][-1]["content"]), s["scorer"]["tool_data"])
+            self.assertTrue(evidence["worker_local"])
+            self.assertEqual(Path(directory, "result.json").stat().st_mode & 0o777, 0o600)
+            raw, counted = f.validate_continuation(body, synthetic_count, 4096, synthetic=True)
+            self.assertEqual(f.digest(raw), evidence["body_sha256"])
+            def over(raw):
+                return {**synthetic_count(raw), "input_tokens": 4096}
+            with self.assertRaises(f.HarnessError):
+                f.validate_continuation(body, over, 4096, synthetic=True)
+        expected = {**s["scorer"]["retrieval"], **s["scorer"]["tool_data"]}
+        self.assertEqual(f.score_retrieval(s, {"role": "assistant", "content": json.dumps(expected)})["status"], "PASS")
+        call["tool_calls"][0]["function"]["arguments"] = '{"path":"../../etc/passwd"}'
+        with tempfile.TemporaryDirectory() as directory, self.assertRaises(f.HarnessError):
+            f.execute_tool(s, call, directory)
+
+    def test_generation_has_distinct_512_cap_and_scoring(self):
+        s = sample(kind="generation", output_cap=512)
+        self.assertEqual(json.loads(f.serialize_validate(s))["max_tokens"], 512)
+        expected = {**s["scorer"]["retrieval"], "commentary": "Records have stable ordering."}
+        self.assertEqual(f.score_retrieval(s, {"role": "assistant", "content": json.dumps(expected)})["status"], "PASS")
+
+
+class NativeAccountingTests(unittest.TestCase):
+    def test_glm_routes_exact_body_template_and_special_tokens(self):
+        raw = f.serialize_validate(sample())
+        calls = []
+        def call(path, payload):
+            calls.append((path, copy.deepcopy(payload)))
+            return {"/props": {"model_alias": "bench-glm-5.3", "is_sleeping": False,
+                               "total_slots": 1, "default_generation_settings": {"n_ctx": 4096},
+                               "chat_template": "synthetic loaded template"},
+                    "/apply-template": {"prompt": "synthetic rendered exact template"},
+                    "/tokenize": {"tokens": [1, 2, 3]}}[path]
+        result = native_counter("bench-glm-5.3", 4096, call)(raw)
+        f.validate_count(result, raw, 4096)
+        self.assertEqual(calls[1], ("/apply-template", json.loads(raw)))
+        self.assertEqual(calls[2][1], {"content": "synthetic rendered exact template", "add_special": True,
+                                      "parse_special": True, "with_pieces": False})
+        self.assertEqual(result["input_tokens"], 3)
+
+    def test_qwen_exact_chat_native_count_tools_continuation_and_template_pin(self):
+        s = f.build_sample("bench-qwen3.8-27b", 40, "testseed0001", "nonce000001", kind="tool")
+        raw = f.serialize_validate(s)
+        calls = []
+        def call(path, payload):
+            calls.append((path, payload))
+            return {"tokens": [9, 8, 7, 6], "count": 4, "max_model_len": 262144}
+        result = native_counter("bench-qwen3.8-27b", 16384, call, qwen_template_sha256="e" * 64)(raw)
+        self.assertEqual(calls, [("/v1/tokenize", {k: v for k, v in json.loads(raw).items()
+                                                 if k not in ("stream", "stream_options")})])
+        self.assertEqual(result["configured_context"], 16384)
+        self.assertEqual(result["tokenizer_max_model_len"], 262144)
+        self.assertEqual(result["configured_context_source"], "caller_verified_runtime_allocation")
+        self.assertEqual(result["template_sha256"], "e" * 64)
+        with self.assertRaises(f.HarnessError):
+            native_counter("bench-qwen3.8-27b", 16384, call)
+        for limit in (True, 0, None):
+            with self.subTest(limit=limit), self.assertRaises(f.HarnessError):
+                native_counter("bench-qwen3.8-27b", 16384,
+                               lambda *_: {"tokens": [1], "count": 1, "max_model_len": limit},
+                               qwen_template_sha256="e" * 64)(raw)
+
+    def test_qwen_stream_unsupported_count_transport_preserves_template_and_body_binding(self):
+        from http.server import BaseHTTPRequestHandler, HTTPServer
+        import threading
+        from benchmark.client import protected_json_client
+
+        received = []
+        class NativeTokenizeHandler(BaseHTTPRequestHandler):
+            def do_POST(self):
+                payload = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                received.append((self.path, payload))
+                # Pinned TokenizeRequest permits extras; serving_base dispatches
+                # stream=true to the tokenizer's unimplemented streaming method.
+                unsupported = bool(payload.get("stream"))
+                self.send_response(501 if unsupported else 200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(f.canonical({"message": "OpenAIServingTokenize does not support streaming requests"}
+                                            if unsupported else {"tokens": [9, 8, 7], "count": 3, "max_model_len": 262144}))
+
+            def log_message(self, *_):
+                pass
+
+        server = HTTPServer(("127.0.0.1", 0), NativeTokenizeHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            body = f.build_sample("bench-qwen3.8-27b", 40, "testseed0001", "nonce000001", kind="tool")["body"]
+            body.update(chat_template_kwargs={"enable_thinking": False}, continue_final_message=True)
+            raw = f.canonical(body)
+            call = protected_json_client("http://127.0.0.1:" + str(server.server_port), "synthetic-test-key")
+            with self.assertRaisesRegex(f.HarnessError, "protected native accounting request failed"):
+                call("/v1/tokenize", body)
+            result = native_counter("bench-qwen3.8-27b", 4096, call, qwen_template_sha256="e" * 64)(raw)
+            expected = {k: v for k, v in body.items() if k not in ("stream", "stream_options")}
+            self.assertEqual(received, [("/v1/tokenize", body), ("/v1/tokenize", expected)])
+            self.assertEqual(f.canonical(body), raw)
+            self.assertTrue(body["stream"])
+            self.assertEqual(result["body_sha256"], f.digest(raw))
+            self.assertEqual(result["count_body_sha256"], f.digest(f.canonical(expected)))
+            self.assertNotEqual(result["count_body_sha256"], result["body_sha256"])
+            self.assertEqual(result["count_transport_normalization"], {"removed_fields": ["stream", "stream_options"]})
+            f.validate_count(result, raw, 4096)
+        finally:
+            server.shutdown()
+            thread.join(timeout=5)
+            server.server_close()
+
+    def test_invalid_native_ids_and_count_fail_closed(self):
+        raw = f.serialize_validate(f.build_sample("bench-qwen3.8-27b", 40, "testseed0001", "nonce000001"))
+        for reply in ({"tokens": [True], "count": 1}, {"tokens": [-1], "count": 1}, {"tokens": [9], "count": 2}):
+            reply["max_model_len"] = 4096
+            with self.subTest(reply=reply), self.assertRaises(f.HarnessError):
+                native_counter("bench-qwen3.8-27b", 4096, lambda *_: reply, qwen_template_sha256="e" * 64)(raw)
+
+
+if __name__ == "__main__":
+    unittest.main()

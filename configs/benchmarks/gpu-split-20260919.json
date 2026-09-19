@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "id": "gpu-split-20260919",
+  "authority": "BENCHPREP approved temporary experiment; BENCHRUN separately root-dispatched",
+  "production_mutation_in_prep": false,
+  "capacities": [
+    4096,
+    16384,
+    65536
+  ],
+  "optional_capacity": {
+    "tokens": 131072,
+    "enabled": false,
+    "requires": "root decision and reviewed source change"
+  },
+  "max_request_seconds": 7200,
+  "campaign_seconds": 21600,
+  "output_caps": {
+    "ladder": 256,
+    "generation_16k": 512
+  },
+  "gpu_uuids": [
+    "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+    "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+  ],
+  "guest_cpus": {
+    "all": "0-111",
+    "glm_mixed": "0-95",
+    "qwen_mixed": "96-111",
+    "numa_observation": "Seven guest nodes of 16 CPUs; not host topology"
+  },
+  "gpu_reserve_bytes": 17179869184,
+  "ram_headroom_multiplier": 1.25,
+  "placements": {
+    "G2": {
+      "model": "glm",
+      "gpus": [
+        0,
+        1
+      ],
+      "port": 31002,
+      "split_mode": "layer",
+      "tensor_split": "1,1",
+      "devices": [
+        "CUDA0",
+        "CUDA1"
+      ],
+      "n_cpu_moe": 76
+    },
+    "G1": {
+      "model": "glm",
+      "gpus": [
+        0
+      ],
+      "port": 31002,
+      "split_mode": "none",
+      "tensor_split": "1",
+      "devices": [
+        "CUDA0"
+      ],
+      "n_cpu_moe": 76
+    },
+    "Q2": {
+      "model": "qwen",
+      "gpus": [
+        0,
+        1
+      ],
+      "port": 31004,
+      "tp_size": 2
+    },
+    "Q1": {
+      "model": "qwen",
+      "gpus": [
+        1
+      ],
+      "port": 31004,
+      "tp_size": 1
+    }
+  },
+  "installed_source_root": "/usr/local/lib/llm-server/control-api",
+  "installed_source_commit": "ab6daa475cc2f1c04956d862f460f9f01c4ee952",
+  "installed_source_identities": {
+    "scripts/common/lifecycle_lease.py": {
+      "path": "/usr/local/lib/llm-server/control-api/scripts/common/lifecycle_lease.py",
+      "sha256": "483ba038c62a8b4633449cef9c0f9a6664c00276662498abc748b58c8be644e0",
+      "mode": "0o644"
+    },
+    "scripts/common/registered-storage.py": {
+      "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+      "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d",
+      "mode": "0o755"
+    },
+    "scripts/install/storage.py": {
+      "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+      "sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505",
+      "mode": "0o644"
+    },
+    "scripts/install/storage_io.py": {
+      "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage_io.py",
+      "sha256": "5ba1b1356519bbb4922b563662a605459862a84b81ce4f521dfbce293d97302a",
+      "mode": "0o644"
+    },
+    "scripts/lifecycle/manager.py": {
+      "path": "/usr/local/lib/llm-server/control-api/scripts/lifecycle/manager.py",
+      "sha256": "3ac840c7a70b6136b540af261d5fe4eb3efcda2ced88a3fa9c73eaaba1c1bef1",
+      "mode": "0o644"
+    },
+    "scripts/lifecycle/qwen38.py": {
+      "path": "/usr/local/lib/llm-server/control-api/scripts/lifecycle/qwen38.py",
+      "sha256": "caafcd0b178049dabf3da43cb1236ba880bcc26d4c0b7dddf529374af5dff8e8",
+      "mode": "0o644"
+    }
+  },
+  "storage": {
+    "data_root": "/data",
+    "model_root": "/data/models-large",
+    "data_uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+    "model_uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+    "fstype": "ext4",
+    "registry": "/etc/local-ai-server/storage.json"
+  },
+  "lease": "/run/llmctl/lifecycle.lock",
+  "cache_hypotheses_bytes_per_token": {
+    "glm": 95232,
+    "qwen": 65536
+  },
+  "run_status": "NOT_TESTED",
+  "source_pins": {
+    "configs/deployments/glm-5.3-ud-q4-k-xl-n76-native1m.json": "a15c41c0532f565720c0ead787e0b5ca0908b467e691d3bfad937c839243b47d",
+    "configs/deployments/qwen38-27b-1000000-yarn4-tp2-bf16kv.json": "c66895907d9f3a8a8ad9f02b4b3b9f88726c752b4d251534a232fb72b7094edf",
+    "configs/models/glm-5.3-ud-q4-k-xl.json": "857924551fa83c546bb99f7b524b35c8d79d0cb9ba0a666e0c139bbace0e7e0d",
+    "configs/models/qwen38-27b-fp8.json": "fb62b2689a4c57aa1265b1262830c8d0e3983061c9674640ec9704ce603a44be",
+    "configs/runtimes/llama-cpp-v0.4.1-d3br.json": "d073105a70540df73cef325df7fdcfa32651f5a6aa8387b584708fb51b802d50",
+    "configs/runtimes/sglang-qwen38-0.5.19.json": "17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11",
+    "scripts/runtime/sglang38_file_auth.py": "e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7da4",
+    "reports/benchprep-glm-offload-source.json": "929d348c84bf1c9531f878b2e991b279b6898d48926575053cf323982a42ee84"
+  },
+  "glm_offload_expectation": {
+    "offloaded_layers": 80,
+    "total_layers": 80,
+    "evidence_status": "REVIEWED_LOG_COUNT_SEMANTICS",
+    "evidence_class": "SOURCE_DERIVED_EXPECTATION_NOT_LIVE_ALLOCATION",
+    "provenance": "reports/benchprep-glm-offload-source.json: pinned src/llama-model.cpp lines1412,1818-1821; n_layer_all79, n_gpu_layers999; exact formatter min(999,79+1)/(79+1)",
+    "source_path": "/data/build/d3p-d3b2-20260915/source/src/llama-model.cpp",
+    "source_sha256": "dc852c79709927631135ff9482e7fa7597d9b975a1867eb49003c14f93594ad3",
+    "source_pin": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+    "source_provenance_sha256": "929d348c84bf1c9531f878b2e991b279b6898d48926575053cf323982a42ee84"
+  }
+}
