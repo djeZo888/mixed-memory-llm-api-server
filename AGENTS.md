@@ -4,6 +4,13 @@ Current guidance for agents and operators. Read the
 [current scope and ownership checkpoint](docs/orchestration/2026-09-17-resumed.md)
 and the relevant task handoff before work; preserve their evidence boundaries.
 
+Temporary exception, 2026-09-19: the user approved the bounded GPU split
+experiment in [BENCHPREP authority and RUN handoff](docs/benchmark-gpu-split.md).
+Its dual-backend benchmark overrides the historical one-active-backend scope
+only for that experiment. BENCHPREP is source/offline preparation plus read-only
+baseline inspection; root dispatches a fresh BENCHRUN after review. It does not
+authorize a production redesign, installer work, or launching RUN from PREP.
+
 ## Authorized sequence and ownership
 
 - Finish working **ai-vm first**: authenticated private-network inference and

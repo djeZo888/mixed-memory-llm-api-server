@@ -1,0 +1,66 @@
+# BENCHPREP — bounded preparation, 2026-09-19
+
+User-approved temporary experiment; production remains one selected backend.
+Authority and complete RUN instructions: [benchmark handoff](../docs/benchmark-gpu-split.md).
+Source baseline: `748e8657251de30662937cb4b5a294202ecb90b7`.
+Worker task session: `01a0b99c-40df-7f30-b726-5d2a2206fa4e`.
+
+## Preparation result
+
+Four placement/three capacity command generation, a separate pinned Qwen
+file-auth adapter, exact serialized retrieval/tool fixtures and genuine scoring,
+native counting adapters, drain-first streaming, private sample persistence,
+lightweight telemetry/allocation parsing, six-hour ledger, mixed dispatcher,
+and canonical-lease lifecycle planning/owner source are implemented.
+Production profiles/auth sources, weights, runtime images and installer are unchanged.
+
+Scoped synthetic/offline validation: **88 tests PASS** on worker Python 3.14.7.
+Source compile, preparation CLI generation and whitespace checks passed.
+No installer or unrelated suites. Twelve exact command manifests and six
+serialized private fixture samples generated; native token fit remains NOT_TESTED.
+Malformed fixture/response/parser output remains HARNESS_FAILURE, not a model regression.
+
+## Read-only baseline
+
+Captured 2026-09-19T12:23:16.677516+00:00; closing observation 2026-09-19T12:41:15.488529+00:00.
+Selected Qwen `qwen38-27b-1000000-yarn4-tp2-bf16kv`, desired running,
+recorded observed ready, boot resume. Same running container and PID 11259,
+unchanged start time `2026-09-17T07:59:22.812551896Z`; control enabled/active,
+boot unit enabled/active-exited. This is observed saved state/container health,
+not a fresh inference acceptance result.
+
+Installed serving source `ab6daa475cc2f1c04956d862f460f9f01c4ee952`.
+Installed source/guard hashes matched protected installed manifest. Registered
+storage/root guards PASS; root free 5,533,716,480 bytes (existing below-6-GiB
+warning, above 4-GiB floor). Exact registered ext4 UUIDs and protected source
+hashes are retained in the [benchmark declaration](../configs/benchmarks/gpu-split-20260919.json).
+No observed canonical lease holder at baseline; no acquisition attempted.
+
+Two RTX PRO 6000 Blackwell GPUs, driver 595.84, each 97887 MiB. Guest topology:
+112 vCPUs across seven guest nodes of 16, not a claim about host NUMA. Host swap
+used zero at capture; owned-model swap still needs a fresh cgroup baseline.
+Installed Qwen source and retained GLM exact-source CLI help inspected without
+running help, loading a model, creating a container or starting GPU work.
+
+## Evidence and next action
+
+Task-root sanitized artifacts: `status.json`, `baseline.json`,
+`baseline-summary.md`, `closing-observation.json`, `runtime-flags.json`,
+`tokenizer-inspection.json`, `allocation-source.json`, `production-launch-summary.json`,
+`command-manifest.json`, `trial-plan.json`, `fixture-manifest.json`,
+`lifecycle-dry-run.json`, `offline-validation.json`, `offline-tests.log`.
+The lifecycle dry-run snapshot is explicitly synthetic and cannot authorize RUN.
+Private exact fixtures/scorers stay in task-root `private-fixtures/`, outside Git.
+Existing protected production evidence remains under `/data/logs/finalops-20260917`
+and `/data/services/llm-manager/evidence`; it is not copied here.
+
+Root reviews commit/bundle and manifests in task-root READY.md, then dispatches
+fresh BENCHRUN. RUN must wire protected host callbacks, refresh the complete
+under-lease snapshot, validate the benchmark Qwen adapter in the actual pinned
+native path, prove actual allocation/mapping/reserve and count exact fixtures.
+Mixed RAM caps depend on measured demand and are not invented during PREP.
+
+**No production mutation, deployment, boot/config change, benchmark RUN,
+GPU workload, live inference, new model/runtime/image installation, key reads,
+key rotation, push or GitHub write occurred in BENCHPREP.** All live performance,
+occupied context, mixed interference and restoration acceptance remain NOT_TESTED.
