@@ -14,7 +14,8 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None):
     its tokenize route alone does not expose that identity. No route is called
     until the returned counter is invoked; these are not generation endpoints.
     """
-    if model not in MODELS or capacity not in CAPACITIES:
+    if (model not in MODELS or capacity not in CAPACITIES
+            or (capacity == 262144 and model != "bench-qwen3.8-27b")):
         raise HarnessError("invalid native counting configuration")
     if model.removeprefix("bench-") == "qwen3.8-27b" and (not isinstance(qwen_template_sha256, str)
                                      or not re.fullmatch(r"[0-9a-f]{64}", qwen_template_sha256)):
@@ -56,7 +57,7 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None):
                 raise HarnessError("native Qwen tokenizer metadata is invalid")
             source, template_hash = "native_chat_tokenize", qwen_template_sha256
         tokens = reply.get("tokens") if isinstance(reply, dict) else None
-        if (not isinstance(tokens, list) or not tokens or len(tokens) > 8 * max(CAPACITIES)
+        if (not isinstance(tokens, list) or not tokens or len(tokens) > 8 * max(131072, capacity)
                 or any(type(token) is not int or not 0 <= token < 2**31 for token in tokens)):
             raise HarnessError("native token IDs missing or invalid")
         if model.removeprefix("bench-") == "qwen3.8-27b" and (type(reply.get("count")) is not int or reply["count"] != len(tokens)):

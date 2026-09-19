@@ -22,7 +22,7 @@ class HarnessError(ValueError):
 
 MODELS = {"glm-5.3": "low", "qwen3.8-27b": "none",
           "bench-glm-5.3": "low", "bench-qwen3.8-27b": "none"}
-CAPACITIES = (4096, 16384, 65536, 131072)
+CAPACITIES = (4096, 16384, 65536, 131072, 262144)
 MARKERS = ("START", "MIDDLE", "END")
 TOOL = {"type": "function", "function": {
     "name": "read_file", "description": "Read a file in the benchmark workspace.",
@@ -148,6 +148,8 @@ def fit_sample(model, capacity, seed, nonce, count, *, kind="retrieval", output_
         raise HarnessError("capacity is outside reviewed ladder")
     if type(margin) is not int or margin < 128 or type(tolerance) is not int or not 1 <= tolerance <= 256:
         raise HarnessError("invalid fitting headroom/tolerance")
+    if capacity == 262144 and (model != "bench-qwen3.8-27b" or kind != "retrieval" or output_cap != 256):
+        raise HarnessError("262144 is Qwen retrieval-only with a 256-token cap")
     ceiling = capacity - output_cap - margin - (1024 if kind == "tool" else 0)
     low, high, best = 12, min(200000, capacity), None
     records, bracketed = low, False
@@ -194,6 +196,8 @@ def matched_sample(sample, nonce, count, capacity, *, margin=256, tolerance=128,
         raise HarnessError("capacity is outside reviewed ladder")
     if type(margin) is not int or margin < 128 or type(tolerance) is not int or not 1 <= tolerance <= 256:
         raise HarnessError("invalid matching headroom/tolerance")
+    if capacity == 262144 and (sample["body"]["model"] != "bench-qwen3.8-27b" or sample["kind"] != "retrieval" or sample["body"]["max_tokens"] != 256):
+        raise HarnessError("262144 is Qwen retrieval-only with a 256-token cap")
     matched = build_sample(sample["body"]["model"], sample["records"], sample["seed"], nonce,
                            kind=sample["kind"], output_cap=sample["body"]["max_tokens"])
     if matched["fixture_sha256"] != sample["fixture_sha256"] or matched["scorer"] != sample["scorer"]:

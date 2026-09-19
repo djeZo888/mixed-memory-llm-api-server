@@ -16,7 +16,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 PIN = "e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7da4"
-CAPACITIES = (4096, 16384, 65536)  # 131072 requires a later root source decision.
+CAPACITIES = (4096, 16384, 65536)  # Historical full/Q1 ladder remains unchanged.
+Q1_256K_CONTEXT = 262144  # Separately reviewed single-GPU tuple only.
 
 
 def pinned_base(path):
@@ -30,7 +31,8 @@ def pinned_base(path):
 
 
 def variant(base, context, tp):
-    if type(context) is not int or context not in CAPACITIES or type(tp) is not int or tp not in (1, 2):
+    if (type(context) is not int or type(tp) is not int or tp not in (1, 2)
+            or not (context in CAPACITIES or (context == Q1_256K_CONTEXT and tp == 1))):
         raise ValueError("benchmark_tuple_unreviewed")
     # Keep the production factor4 YaRN, cache and execution settings at every
     # rung/placement. Only context/pool, TP, alias and container port differ.
@@ -90,7 +92,7 @@ def bind_variant(base, context, tp):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
-    parser.add_argument("--context", required=True, type=int, choices=CAPACITIES)
+    parser.add_argument("--context", required=True, type=int, choices=(*CAPACITIES, Q1_256K_CONTEXT))
     parser.add_argument("--tp", required=True, type=int, choices=(1, 2))
     options = parser.parse_args(argv)
     base = pinned_base("/opt/llmctl/sglang38_file_auth.py")

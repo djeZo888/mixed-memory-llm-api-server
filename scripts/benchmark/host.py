@@ -151,10 +151,10 @@ class LinuxHost:
         data = json.loads(raw)
         values = data.get('commands', data.get('manifests', [])) if isinstance(data, dict) else data
         self.scope = validate_arm_scope(data)
-        manifest_count = 3 if self.scope == 'q1-only' else 12
+        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1}[self.scope]
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
         self.start_epoch = data.get('start_epoch', data.get('runtime', {}).get('start_epoch')) if isinstance(data, dict) else None
-        if self.scope == 'q1-only':
+        if self.scope != 'full':
             require(data.get('runtime') == data.get('continuation_execution') and self.start_epoch is not None,
                     'q1_continuation_epoch_changed')
         source_root = Path(__file__).resolve().parents[2]

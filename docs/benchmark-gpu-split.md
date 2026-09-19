@@ -1,5 +1,26 @@
 # Temporary GPU split benchmark — BENCHPREP authority
 
+## BENCHQ256 source preparation — 2026-09-19
+
+The fresh BENCHQ256 task adds only `arm --scope q1-256k`: one single-GPU Q1
+manifest with context and native pool both 262144, one discarded accepted warmup,
+and one early/middle/late archive retrieval with a 256-token output cap. Native
+fitting targets 261504–261632 actual input tokens; configured capacity is reported
+separately. The pinned FP8 weights, BF16 KV, YaRN factor 4, assigned GPU UUID,
+16 guest CPUs and `mem_fraction_static=0.8` remain unchanged. Historical `full`
+and `q1-only` plans remain unchanged; no 128K, 512K, Q2, GLM, tool, generation or
+mixed dispatch is added to this arm.
+
+Retain `benchrun-20260919`, epoch `1789826207.34127`, deadline `1789847807.34127`
+and explicit `run --resume`. Previous evidence stays immutable and separate;
+fit only the new 262144 fixture after exact root source/arm GO. No live contact
+is authorized during source preparation. Restoration uses the existing reviewed
+owner/witness/canonical-lease callbacks; fresh-process recovery first initializes
+its lock baseline through direct capture. Source tests prove no live result.
+A successful result may inform an untested physical-memory projection using a
+10% device reserve, separately from the unchanged 80% static allocator policy
+and existing live safety gates. No speed/quality claim follows at untested sizes.
+
 ## BENCHQ1 source preparation — 2026-09-19
 
 The fresh BENCHQ1 task narrows continuation to `arm --scope q1-only`: Q1 at

@@ -61,7 +61,7 @@ def arm(state, campaign, scope="full"):
     if (state / "arm.json").exists():
         raise ValueError("arm_exists_preserve_existing_campaign")
     files = source_files()
-    manifests = [profiles.command_manifest(p, n, campaign=campaign) for p in profiles.scope_placements(scope) for n in (4096, 16384, 65536)]
+    manifests = [profiles.command_manifest(p, n, campaign=campaign) for p in profiles.scope_placements(scope) for n in profiles.scope_capacities(scope)]
     value = {"schema": 1, "campaign": campaign, "source_files": {p: hashlib.sha256(b).hexdigest() for p, b in files.items()},
              "manifests": manifests, "trial_plan": profiles.trial_order(scope),
              "phase": "ARMED_OFFLINE_NOT_STARTED", "host": "ai-vm", "private_lan": "10.156.100.60"}
@@ -78,7 +78,7 @@ def load_arm(state, reviewed):
         raise ValueError("root_reviewed_arm_hash_mismatch")
     if {p: hashlib.sha256(b).hexdigest() for p, b in source_files().items()} != value["source_files"]:
         raise ValueError("armed_source_changed")
-    if profiles.validate_arm_scope(value) == "q1-only":
+    if profiles.validate_arm_scope(value) != "full":
         if json.loads((Path(state) / "execution.json").read_bytes()) != value.get("continuation_execution"):
             raise ValueError("q1_continuation_epoch_changed")
     return value
@@ -86,7 +86,7 @@ def load_arm(state, reviewed):
 
 def run_preflight(scope="full"):
     """Offline source-evidence gate, before key reads, staging or ownership."""
-    if scope == "q1-only":
+    if scope in ("q1-only", "q1-256k"):
         return
     expected = profiles.read_config().get("glm_offload_expectation", {})
     if (expected.get("evidence_status") != "REVIEWED_LOG_COUNT_SEMANTICS"
@@ -471,7 +471,7 @@ class Campaign:
 
     def run(self, *, resume=False):
         scope = profiles.validate_arm_scope(self.armed)
-        if scope == "q1-only" and not resume:
+        if scope != "full" and not resume:
             raise RuntimeError("q1_requires_explicit_resume")
         if self.progress["inflight"]:
             raise RuntimeError("inflight_samples_require_restore_and_explicit_review")
@@ -586,7 +586,7 @@ def main(argv=None):
     parser.add_argument("action", choices=("arm", "run", "restore", "status"))
     parser.add_argument("--state", required=True, type=Path)
     parser.add_argument("--campaign", default="benchrun-20260919")
-    parser.add_argument("--scope", choices=profiles.ARM_SCOPES, help="arm only; default full; q1-only retains an existing execution epoch")
+    parser.add_argument("--scope", choices=profiles.ARM_SCOPES, help="arm only; default full; Q1 scopes retain an existing execution epoch")
     parser.add_argument("--reviewed-arm-sha256")
     parser.add_argument("--inference-key-file", type=Path)
     parser.add_argument("--control-key-file", type=Path)
@@ -600,8 +600,8 @@ def main(argv=None):
         print((args.state / "progress.json").read_text());return 0
     armed = load_arm(args.state, args.reviewed_arm_sha256)
     if args.action == "run":
-        if armed.get("scope") == "q1-only" and not args.resume:
-            parser.error("q1-only requires --resume within the original campaign budget")
+        if armed.get("scope", "full") != "full" and not args.resume:
+            parser.error("Q1 scopes require --resume within the original campaign budget")
         run_preflight(armed.get("scope", "full"))
     if os.geteuid() == 0:
         parser.error("worker runner must execute as ordinary user")

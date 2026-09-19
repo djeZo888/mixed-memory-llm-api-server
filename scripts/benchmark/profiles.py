@@ -11,22 +11,27 @@ from .qwen_launcher import pinned_base, variant
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/benchmarks/gpu-split-20260919.json"
-ARM_SCOPES = ("full", "q1-only")
+ARM_SCOPES = ("full", "q1-only", "q1-256k")
 
 
 def scope_placements(scope):
     if scope not in ARM_SCOPES:
         raise ValueError("unknown_benchmark_arm_scope")
-    return ("Q1",) if scope == "q1-only" else ("Q2", "Q1", "G2", "G1")
+    return ("Q1",) if scope != "full" else ("Q2", "Q1", "G2", "G1")
+
+
+def scope_capacities(scope):
+    scope_placements(scope)  # Reject unknown scopes before selecting capacities.
+    return (262144,) if scope == "q1-256k" else (4096, 16384, 65536)
 
 
 def validate_arm_scope(armed):
     """Legacy arms retain full scope; narrowed arms bind the exact Q1 plan."""
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
-    if scope == "q1-only":
+    if scope != "full":
         expected = [command_manifest(p, n, campaign=armed["campaign"])
-                    for p in placements for n in (4096, 16384, 65536)]
+                    for p in placements for n in scope_capacities(scope)]
         if armed.get("manifests") != expected or armed.get("trial_plan") != trial_order(scope):
             raise ValueError("q1_only_arm_scope_mismatch")
     return scope
@@ -83,7 +88,8 @@ def split_resources(measured_glm, measured_qwen, host_usable_bytes):
 
 def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed=False, ram_cap=None):
     c = read_config()
-    if placement not in c["placements"] or type(capacity) is not int or capacity not in c["capacities"]:
+    q256 = placement == "Q1" and capacity == 262144 and not mixed and ram_cap is None
+    if placement not in c["placements"] or type(capacity) is not int or (capacity not in c["capacities"] and not q256):
         raise ValueError("unreviewed_placement_or_capacity")
     if not re.fullmatch(r"benchrun-[a-z0-9-]{1,48}", campaign):
         raise ValueError("invalid_campaign_identity")
@@ -179,7 +185,7 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
 def trial_order(scope="full"):
     rows = []
     for p in scope_placements(scope):
-        for capacity in (4096, 16384, 65536):
+        for capacity in scope_capacities(scope):
             rows += [{"placement": p, "capacity": capacity, "case": "load_warmup", "timing": "discard"},
                      {"placement": p, "capacity": capacity, "case": "retrieval", "output_cap": 256}]
             if capacity == 16384:
