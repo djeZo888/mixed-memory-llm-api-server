@@ -43,7 +43,7 @@ class G1Scope(unittest.TestCase):
             loads = [host.manifests[a['manifest_sha256']] for op, a in host.events if op == 'load']
             self.assertEqual([(m['placement'], m['configured_capacity']) for m in loads],
                              [('G1', 4096), ('G1', 16384), ('G1', 65536)])
-            original = [profiles.command_manifest('G1', n) for n in (4096, 16384, 65536)]
+            original = [profiles.command_manifest('G1', n, log_verbosity=4) for n in (4096, 16384, 65536)]
             self.assertEqual(loads, original)
             for m in loads:
                 self.assertEqual(m['gpu_uuids'], [profiles.read_config()['gpu_uuids'][0]])
@@ -63,6 +63,22 @@ class G1Scope(unittest.TestCase):
             self.assertEqual(host.budget.data['started_at'] + 21600, q1.DEADLINE)
             anchor = c.progress['completed'][CASES[2]]
             self.assertEqual(anchor['fixture_sha256'], c.progress['completed'][CASES[1]]['fixture_sha256'])
+
+    def test_logging_only_manifest_delta_and_historical_defaults_unchanged(self):
+        import shlex
+        for capacity in (4096,16384,65536):
+            base=profiles.command_manifest('G1',capacity)
+            logged=profiles.command_manifest('G1',capacity,log_verbosity=4)
+            self.assertEqual(logged['native_argv'],base['native_argv']+['--log-verbosity','4'])
+            self.assertEqual(logged['create_argv'],base['create_argv']+['--log-verbosity','4'])
+            normalized={**logged,'native_argv':logged['native_argv'][:-2],
+                        'create_argv':logged['create_argv'][:-2],
+                        'create_shell':shlex.join(logged['create_argv'][:-2])}
+            self.assertEqual(normalized,base)
+            self.assertNotIn('--log-verbosity',base['native_argv'])
+        for placement,verbosity in [('G2',4),('Q1',4),('G1',3),('G1',5),('G1',True)]:
+            with self.assertRaisesRegex(ValueError,'unreviewed_observational_logging'):
+                profiles.command_manifest(placement,4096,log_verbosity=verbosity)
 
     def test_scope_manifest_plan_and_resume_gates_before_host(self):
         with tempfile.TemporaryDirectory() as directory:

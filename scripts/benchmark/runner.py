@@ -61,7 +61,7 @@ def arm(state, campaign, scope="full"):
     if (state / "arm.json").exists():
         raise ValueError("arm_exists_preserve_existing_campaign")
     files = source_files()
-    manifests = [profiles.command_manifest(p, n, campaign=campaign) for p in profiles.scope_placements(scope) for n in profiles.scope_capacities(scope)]
+    manifests = [profiles.command_manifest(p, n, campaign=campaign, log_verbosity=4 if scope == "g1-only" else None) for p in profiles.scope_placements(scope) for n in profiles.scope_capacities(scope)]
     value = {"schema": 1, "campaign": campaign, "source_files": {p: hashlib.sha256(b).hexdigest() for p, b in files.items()},
              "manifests": manifests, "trial_plan": profiles.trial_order(scope),
              "phase": "ARMED_OFFLINE_NOT_STARTED", "host": "ai-vm", "private_lan": "10.156.100.60"}

@@ -1,5 +1,16 @@
 # Temporary GPU split benchmark — BENCHPREP authority
 
+## BENCHG1 observational logging repair — 2026-09-19
+
+The first4K attempt stopped before warmup because its native log omitted weight
+and offload records; its valid cache/graph allocation is not model failure.
+Original production restoration passed. The pinned callback maps library INFO
+to verbosity4 while default3 still prints server INFO. G1-only now adds exactly
+`--log-verbosity 4` at all three sizes; historical scopes/default manifests stay
+unchanged. See `reports/benchg1-logging-source.json`. No model, tensor/cache,
+image, reasoning/batch or gate changes. Root reviews exact repair source/arm
+before a new attempt; preserve failed journals and the original epoch/deadline.
+
 ## BENCHG1 source preparation — 2026-09-19
 
 `arm --scope g1-only` continues the original campaign with the unchanged G1

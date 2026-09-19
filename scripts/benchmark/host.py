@@ -166,7 +166,8 @@ class LinuxHost:
             require(hashlib.sha256(source_raw).hexdigest() == sha, 'staged_source_pin_changed')
         self.manifests = {}
         for value in values:
-            expected = command_manifest(value['placement'], value['configured_capacity'], campaign=campaign)
+            expected = command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
+                                        log_verbosity=4 if self.scope == 'g1-only' else None)
             require(value == expected, 'manifest_not_current_generated_source')
             self.manifests[digest(value)] = value
         require(len(self.manifests) == manifest_count, 'duplicate_reviewed_manifest')

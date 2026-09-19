@@ -1,0 +1,267 @@
+{
+  "evidence": "OFFLINE_SAVED_PINNED_SOURCE; no new runtime invocation",
+  "upstream_pin": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+  "source_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3PD-20260915/llama-upstream",
+  "files": {
+    "common/log.h": {
+      "sha256": "82aa52b47261d380a54a23f96276b64b08898a041c1c666a713e2cffb6d8e003",
+      "matches_pinned_git_blob": true,
+      "lines": [
+        {
+          "line": 23,
+          "text": ""
+        },
+        {
+          "line": 24,
+          "text": "#define LOG_LEVEL_DEBUG  5"
+        },
+        {
+          "line": 25,
+          "text": "#define LOG_LEVEL_TRACE  4"
+        },
+        {
+          "line": 26,
+          "text": "#define LOG_LEVEL_INFO   3"
+        },
+        {
+          "line": 27,
+          "text": "#define LOG_LEVEL_WARN   2"
+        },
+        {
+          "line": 28,
+          "text": "#define LOG_LEVEL_ERROR  1"
+        },
+        {
+          "line": 29,
+          "text": "#define LOG_LEVEL_OUTPUT 0 // output data from tools"
+        },
+        {
+          "line": 30,
+          "text": ""
+        },
+        {
+          "line": 31,
+          "text": "#define LOG_DEFAULT_DEBUG LOG_LEVEL_DEBUG"
+        },
+        {
+          "line": 32,
+          "text": "#define LOG_DEFAULT_LLAMA LOG_LEVEL_INFO"
+        },
+        {
+          "line": 33,
+          "text": ""
+        },
+        {
+          "line": 34,
+          "text": "enum log_colors {"
+        }
+      ]
+    },
+    "common/log.cpp": {
+      "sha256": "f4aceb372997848c94d6f2c304fec042d02a08bd55aa3016688c04915eab07b3",
+      "matches_pinned_git_blob": true,
+      "lines": [
+        {
+          "line": 529,
+          "text": "int common_log_get_verbosity(enum ggml_log_level level) {"
+        },
+        {
+          "line": 530,
+          "text": "    switch (level) {"
+        },
+        {
+          "line": 531,
+          "text": "        case GGML_LOG_LEVEL_DEBUG: return LOG_LEVEL_DEBUG;"
+        },
+        {
+          "line": 532,
+          "text": "        case GGML_LOG_LEVEL_INFO:  return LOG_LEVEL_TRACE;"
+        },
+        {
+          "line": 533,
+          "text": "        case GGML_LOG_LEVEL_WARN:  return LOG_LEVEL_WARN;"
+        },
+        {
+          "line": 534,
+          "text": "        case GGML_LOG_LEVEL_ERROR: return LOG_LEVEL_ERROR;"
+        },
+        {
+          "line": 535,
+          "text": "        case GGML_LOG_LEVEL_CONT:  return LOG_LEVEL_TRACE;"
+        },
+        {
+          "line": 536,
+          "text": "        case GGML_LOG_LEVEL_NONE:"
+        },
+        {
+          "line": 537,
+          "text": "        default:"
+        },
+        {
+          "line": 538,
+          "text": "            return LOG_LEVEL_OUTPUT;"
+        },
+        {
+          "line": 539,
+          "text": "    }"
+        },
+        {
+          "line": 540,
+          "text": "}"
+        },
+        {
+          "line": 541,
+          "text": ""
+        },
+        {
+          "line": 542,
+          "text": "void common_log_default_callback(enum ggml_log_level level, const char * text, void * /*user_data*/) {"
+        },
+        {
+          "line": 543,
+          "text": "    auto verbosity = common_log_get_verbosity(level);"
+        },
+        {
+          "line": 544,
+          "text": "    if (verbosity <= common_log_verbosity_thold) {"
+        },
+        {
+          "line": 545,
+          "text": "        common_log_add(common_log_main(), level, \"%s\", text);"
+        },
+        {
+          "line": 546,
+          "text": "    }"
+        },
+        {
+          "line": 547,
+          "text": "}"
+        }
+      ]
+    },
+    "common/arg.cpp": {
+      "sha256": "6e71ad4f63c79fee81fe218ab6755ed97813ba84d179e38ae02924be1556d46e",
+      "matches_pinned_git_blob": true,
+      "lines": [
+        {
+          "line": 3925,
+          "text": "    add_opt(common_arg("
+        },
+        {
+          "line": 3926,
+          "text": "        {\"-lv\", \"--verbosity\", \"--log-verbosity\"}, \"N\","
+        },
+        {
+          "line": 3927,
+          "text": "        string_format(\"Set the verbosity threshold. Messages with a higher verbosity will be ignored. Values:\\n\""
+        },
+        {
+          "line": 3928,
+          "text": "            \" - 0: generic output\\n\""
+        },
+        {
+          "line": 3929,
+          "text": "            \" - 1: error\\n\""
+        },
+        {
+          "line": 3930,
+          "text": "            \" - 2: warning\\n\""
+        },
+        {
+          "line": 3931,
+          "text": "            \" - 3: info\\n\""
+        },
+        {
+          "line": 3932,
+          "text": "            \" - 4: trace (more info)\\n\""
+        },
+        {
+          "line": 3933,
+          "text": "            \" - 5: debug\\n\""
+        },
+        {
+          "line": 3934,
+          "text": "            \"(default: %d)\\n\", params.verbosity),"
+        },
+        {
+          "line": 3935,
+          "text": "        [](common_params & params, int value) {"
+        },
+        {
+          "line": 3936,
+          "text": "            params.verbosity = value;"
+        },
+        {
+          "line": 3937,
+          "text": "            common_log_set_verbosity_thold(value);"
+        },
+        {
+          "line": 3938,
+          "text": "        }"
+        },
+        {
+          "line": 3939,
+          "text": "    ).set_env(\"LLAMA_ARG_LOG_VERBOSITY\"));"
+        },
+        {
+          "line": 3940,
+          "text": "    add_opt(common_arg("
+        },
+        {
+          "line": 3941,
+          "text": "        {\"--log-prefix\"},"
+        },
+        {
+          "line": 3942,
+          "text": "        {\"--no-log-prefix\"},"
+        }
+      ]
+    },
+    "common/common.cpp": {
+      "sha256": "e6eccdf376a80a3f534fc71ad7775fcac52eb6089367f1592ce1d293b147db66",
+      "matches_pinned_git_blob": true,
+      "lines": [
+        {
+          "line": 389,
+          "text": "#endif"
+        },
+        {
+          "line": 390,
+          "text": ""
+        },
+        {
+          "line": 391,
+          "text": "    common_log_set_prefix(common_log_main(), true);"
+        },
+        {
+          "line": 392,
+          "text": "    common_log_set_timestamps(common_log_main(), true);"
+        },
+        {
+          "line": 393,
+          "text": ""
+        },
+        {
+          "line": 394,
+          "text": "    llama_log_set(common_log_default_callback, NULL);"
+        },
+        {
+          "line": 395,
+          "text": "}"
+        },
+        {
+          "line": 396,
+          "text": ""
+        }
+      ]
+    }
+  },
+  "saved_help_path": "reports/d3rp-contract-evidence/llama-server-help.txt",
+  "saved_help_sha256": "a144e0605fbd0092e6e68cc51d1cdc3c3f8ea75bb63e2f53e4478ab2cde9e8a5",
+  "cause": "Library GGML_LOG_LEVEL_INFO is mapped to LOG_LEVEL_TRACE=4 by common_log_default_callback, above default threshold3; server INFO messages still appear. Existing weight/offload records use LLAMA_LOG_INFO.",
+  "minimal_setting": [
+    "--log-verbosity",
+    "4"
+  ],
+  "limits": "Source-derived logging expectation only; current native weight/offload proof still mandatory after root-reviewed retry."
+}

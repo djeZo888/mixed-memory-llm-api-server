@@ -32,7 +32,7 @@ def validate_arm_scope(armed):
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
     if scope != "full":
-        expected = [command_manifest(p, n, campaign=armed["campaign"])
+        expected = [command_manifest(p, n, campaign=armed["campaign"], log_verbosity=4 if scope == "g1-only" else None)
                     for p in placements for n in scope_capacities(scope)]
         if armed.get("manifests") != expected or armed.get("trial_plan") != trial_order(scope):
             raise ValueError("q1_only_arm_scope_mismatch")
@@ -88,11 +88,13 @@ def split_resources(measured_glm, measured_qwen, host_usable_bytes):
     return caps
 
 
-def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed=False, ram_cap=None):
+def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed=False, ram_cap=None, log_verbosity=None):
     c = read_config()
     q256 = placement == "Q1" and capacity == 262144 and not mixed and ram_cap is None
     if placement not in c["placements"] or type(capacity) is not int or (capacity not in c["capacities"] and not q256):
         raise ValueError("unreviewed_placement_or_capacity")
+    if log_verbosity is not None and (type(log_verbosity) is not int or log_verbosity != 4 or placement != "G1" or mixed):
+        raise ValueError("unreviewed_observational_logging")
     if not re.fullmatch(r"benchrun-[a-z0-9-]{1,48}", campaign):
         raise ValueError("invalid_campaign_identity")
     if mixed and placement not in ("G1", "Q1"):
@@ -149,6 +151,9 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
                    "--fit", "off", "--batch-size", "2048", "--ubatch-size", "512",
                    "--threads", str(cpu_count), "--threads-batch", str(cpu_count), "--jinja", "--no-webui",
                    "--no-cache-prompt", "--chat-template-kwargs", '{"clear_thinking":true}']
+        if log_verbosity is not None:
+            # Pinned library INFO maps to verbosity4; default3 hides weights/offload.
+            command += ["--log-verbosity", str(log_verbosity)]
         args += ["--entrypoint", runtime["entrypoint"][0]]
     else:
         base = pinned_base(ROOT / "scripts/runtime/sglang38_file_auth.py")
