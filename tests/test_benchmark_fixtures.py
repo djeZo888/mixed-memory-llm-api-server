@@ -200,7 +200,8 @@ class NativeAccountingTests(unittest.TestCase):
             calls.append((path, payload))
             return {"tokens": [9, 8, 7, 6], "count": 4, "max_model_len": 262144}
         result = native_counter("bench-qwen3.8-27b", 16384, call, qwen_template_sha256="e" * 64)(raw)
-        self.assertEqual(calls, [("/v1/tokenize", json.loads(raw))])
+        self.assertEqual(calls, [("/v1/tokenize", {k: v for k, v in json.loads(raw).items()
+                                                 if k not in ("stream", "stream_options")})])
         self.assertEqual(result["configured_context"], 16384)
         self.assertEqual(result["tokenizer_max_model_len"], 262144)
         self.assertEqual(result["configured_context_source"], "caller_verified_runtime_allocation")
@@ -212,6 +213,53 @@ class NativeAccountingTests(unittest.TestCase):
                 native_counter("bench-qwen3.8-27b", 16384,
                                lambda *_: {"tokens": [1], "count": 1, "max_model_len": limit},
                                qwen_template_sha256="e" * 64)(raw)
+
+    def test_qwen_stream_unsupported_count_transport_preserves_template_and_body_binding(self):
+        from http.server import BaseHTTPRequestHandler, HTTPServer
+        import threading
+        from benchmark.client import protected_json_client
+
+        received = []
+        class NativeTokenizeHandler(BaseHTTPRequestHandler):
+            def do_POST(self):
+                payload = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                received.append((self.path, payload))
+                # Pinned TokenizeRequest permits extras; serving_base dispatches
+                # stream=true to the tokenizer's unimplemented streaming method.
+                unsupported = bool(payload.get("stream"))
+                self.send_response(501 if unsupported else 200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(f.canonical({"message": "OpenAIServingTokenize does not support streaming requests"}
+                                            if unsupported else {"tokens": [9, 8, 7], "count": 3, "max_model_len": 262144}))
+
+            def log_message(self, *_):
+                pass
+
+        server = HTTPServer(("127.0.0.1", 0), NativeTokenizeHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            body = f.build_sample("bench-qwen3.8-27b", 40, "testseed0001", "nonce000001", kind="tool")["body"]
+            body.update(chat_template_kwargs={"enable_thinking": False}, continue_final_message=True)
+            raw = f.canonical(body)
+            call = protected_json_client("http://127.0.0.1:" + str(server.server_port), "synthetic-test-key")
+            with self.assertRaisesRegex(f.HarnessError, "protected native accounting request failed"):
+                call("/v1/tokenize", body)
+            result = native_counter("bench-qwen3.8-27b", 4096, call, qwen_template_sha256="e" * 64)(raw)
+            expected = {k: v for k, v in body.items() if k not in ("stream", "stream_options")}
+            self.assertEqual(received, [("/v1/tokenize", body), ("/v1/tokenize", expected)])
+            self.assertEqual(f.canonical(body), raw)
+            self.assertTrue(body["stream"])
+            self.assertEqual(result["body_sha256"], f.digest(raw))
+            self.assertEqual(result["count_body_sha256"], f.digest(f.canonical(expected)))
+            self.assertNotEqual(result["count_body_sha256"], result["body_sha256"])
+            self.assertEqual(result["count_transport_normalization"], {"removed_fields": ["stream", "stream_options"]})
+            f.validate_count(result, raw, 4096)
+        finally:
+            server.shutdown()
+            thread.join(timeout=5)
+            server.server_close()
 
     def test_invalid_native_ids_and_count_fail_closed(self):
         raw = f.serialize_validate(f.build_sample("bench-qwen3.8-27b", 40, "testseed0001", "nonce000001"))

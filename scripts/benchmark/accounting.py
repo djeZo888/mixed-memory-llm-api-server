@@ -22,6 +22,7 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None):
 
     def count(raw):
         body = protocol.strict_json_loads(raw)
+        count_transport = {}
         if body.get("model") != model:
             raise HarnessError("accounting model differs from request")
         if model.removeprefix("bench-") == "glm-5.3":
@@ -41,7 +42,13 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None):
                                        "parse_special": True, "with_pieces": False})
             source, template_hash = "native_apply_template_tokenize", digest(template.encode())
         else:
-            reply = call("/v1/tokenize", body)
+            # Native tokenization has no streaming implementation. Preserve all
+            # template inputs; only generation transport fields are omitted.
+            count_body = {k: v for k, v in body.items() if k not in ("stream", "stream_options")}
+            count_transport = {"count_body_sha256": digest(canonical(count_body)),
+                               "count_transport_normalization": {
+                                   "removed_fields": [k for k in ("stream", "stream_options") if k in body]}}
+            reply = call("/v1/tokenize", count_body)
             # Pinned route exposes tokenizer metadata, not the allocation/window
             # accepted by this server. Keep it visible without treating it as a
             # trial-capacity proof; RUN verifies actual args/allocation separately.
@@ -55,6 +62,7 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None):
         if model.removeprefix("bench-") == "qwen3.8-27b" and (type(reply.get("count")) is not int or reply["count"] != len(tokens)):
             raise HarnessError("native Qwen count/token IDs disagree")
         return {"source": source, "input_tokens": len(tokens), "body_sha256": digest(raw),
+                **count_transport,
                 "template_sha256": template_hash, "token_ids_sha256": digest(canonical(tokens)),
                 "configured_context": capacity,
                 "configured_context_source": "native_props" if model.removeprefix("bench-") == "glm-5.3" else "caller_verified_runtime_allocation",
