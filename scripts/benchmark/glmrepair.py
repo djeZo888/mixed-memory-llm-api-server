@@ -21,6 +21,8 @@ from agent import protocol
 from . import client, fixtures, profiles, runner, worker_verify
 from .warmup import prefill_proof
 
+FIX_TASK = "GLMREPAIR-FIX-20260919"
+FIX_CAMPAIGN = profiles.GLMREPAIR_FIX_CAMPAIGN
 POLL_TASK = "GLMREPAIR-POLL-20260919"
 POLL_CAMPAIGN = profiles.GLMREPAIR_POLL_CAMPAIGN
 CONTROL_SHA256 = "d45477a9ed601bc2fcdfbbd2cc9db3d478c2874f4b2fc37bd0cbae237fc75fe0"
@@ -54,6 +56,15 @@ def checkpoint(task):
 
 def continuation_execution(task):
     """One authorized continuation after the verified pre-generation restoration."""
+    if task.name == FIX_TASK:
+        previous = task.parent / POLL_TASK
+        status = json.loads((previous / "status.json").read_bytes())
+        if status.get("phase") != "RESTORED" or status.get("host_session_closed") is not True or status.get("inflight") != {}:
+            raise ValueError("verified_poll_restoration_required")
+        clock = json.loads((task / "stage-clock.json").read_bytes())
+        if clock.get("budget_seconds") != 2700 or clock.get("deadline_epoch") != clock.get("start_epoch", 0) + 2700:
+            raise ValueError("fresh_dispatch_45minute_clock_required")
+        return clock
     if task.name == POLL_TASK:
         previous = task.parent / TASK
         status = json.loads((previous / "status.json").read_bytes())
@@ -148,6 +159,14 @@ def exact_body(task, sample):
     if fixtures.serialize_validate(sample) != canonical:
         raise ValueError("historical_body_fixture_binding_failed")
     return raw, sample
+
+
+def sampling_body(raw, seed):
+    if fixtures.digest(raw) != BODY_SHA256 or seed not in (1729, 2718):
+        raise ValueError("exact_original_and_preselected_seed_required")
+    body = protocol.strict_json_loads(raw)
+    body.update(temperature=1.0, seed=seed)
+    return fixtures.canonical(body)
 
 
 def exact_control(task):
@@ -344,6 +363,40 @@ class Diagnostic(runner.Campaign):
                    "checkpoint": self.host.call("quiescent", id=cid, point="warm_idle")})
         self.boundary(cid, "after_warmup")
 
+    def repair_sequence(self):
+        self.host.call("begin")
+        cid = self.loaded(self.armed["manifests"][0])
+        sample = self.fixture_cache[FIXTURE_KEY]
+        original, sample = exact_body(self.state, sample)
+        for seed in (1729, 2718):
+            raw = sampling_body(original, seed)
+            counted = fixtures.validate_count(self.counter(cid)(raw), raw, 4096)
+            if counted["input_tokens"] != 3546:
+                raise RuntimeError("historical_native_input_changed")
+            name = "sampling" + str(seed)
+            self.boundary(cid, "before_" + name)
+            self.progress["inflight"][name] = {"container": cid}
+            self.record(name.upper())
+            result = self.request(cid, raw, name)
+            summary = result["summary"]
+            outcome = {"summary": summary, "format": format_outcome(result, sample),
+                       "body_sha256": fixtures.digest(raw), "changed_fields": {"temperature": 1.0, "seed": seed},
+                       "count": counted, "output_modified": False, "instrumented": False}
+            outcome["telemetry"] = self.telemetry_window(cid, summary.get("request_started_monotonic_s"),
+                summary.get("request_ended_monotonic_s"), "inference_transport_dispatch_to_drain")
+            runner.save(self.state / (name + "-result.json"), outcome)
+            self.emit({"type": "sampling_result", "id": name, **outcome})
+            self.progress["completed"][name] = outcome
+            del self.progress["inflight"][name]
+            self.record()
+            self.boundary(cid, "after_" + name)
+            if not result["parsed"] or summary.get("counters", {}).get("cached_tokens") != 0:
+                raise RuntimeError("native_transport_or_uncached_proof_failure")
+            if outcome["format"]["status"] != "PASS":
+                self.emit({"type": "repair_disposition", "status": "UNFIXED", "second_seed": "NOT_TESTED"})
+                break
+        self.record("MEASUREMENT_COMPLETE")
+
     def exact_g1_sequence(self):
         self.host.call("begin")
         cid = self.loaded(self.armed["manifests"][0])
@@ -415,6 +468,8 @@ class Diagnostic(runner.Campaign):
             raise RuntimeError("native_transport_or_uncached_proof_failure")
 
     def sequence(self):
+        if self.armed.get("campaign") == FIX_CAMPAIGN:
+            return self.repair_sequence()
         if self.armed.get("campaign") == POLL_CAMPAIGN:
             return self.poll_sequence()
         if self.armed.get("campaign") == CAMPAIGN:
@@ -475,7 +530,7 @@ class Diagnostic(runner.Campaign):
 
 
 def prepare(task, session_id):
-    campaign = POLL_CAMPAIGN if task.name == POLL_TASK else CAMPAIGN
+    campaign = FIX_CAMPAIGN if task.name == FIX_TASK else POLL_CAMPAIGN if task.name == POLL_TASK else CAMPAIGN
     if (task / "arm.json").exists():
         raise ValueError("preparation_exists_preserve_it")
     if git("status", "--porcelain"):
@@ -505,7 +560,7 @@ def prepare(task, session_id):
 
 
 def run(task, go_path, session_id, *, restore_only=False):
-    campaign = POLL_CAMPAIGN if task.name == POLL_TASK else CAMPAIGN
+    campaign = FIX_CAMPAIGN if task.name == FIX_TASK else POLL_CAMPAIGN if task.name == POLL_TASK else CAMPAIGN
     armed = json.loads((task / "arm.json").read_bytes())
     go = json.loads(go_path.read_bytes())
     if (go.get("decision") != "GO" or go.get("source_commit") != armed["source_commit"]
@@ -524,7 +579,7 @@ def run(task, go_path, session_id, *, restore_only=False):
     if not restore_only:
         checkpoint(task)
     from runtime.sglang38_file_auth import read_key
-    credentials = (task.parent if task.name in {TASK, POLL_TASK} else task.parent.parent) / "BENCHRUN-20260919/private-credentials"
+    credentials = (task.parent if task.name in {TASK, POLL_TASK, FIX_TASK} else task.parent.parent) / "BENCHRUN-20260919/private-credentials"
     metadata = credentials.lstat()
     if credentials.is_symlink() or not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.geteuid() or stat.S_IMODE(metadata.st_mode) != 0o700:
         raise ValueError("protected_credential_directory_required")

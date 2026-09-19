@@ -15,11 +15,14 @@ G1_RAM_CAP_BYTES = 640 * 1024**3  # Root-reviewed validation cap; not minimum mo
 ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair")
 GLMREPAIR_CAMPAIGN = "benchrun-glmrepair2-20260919"
 GLMREPAIR_POLL_CAMPAIGN = "benchrun-glmrepair-poll-20260919"
+GLMREPAIR_FIX_CAMPAIGN = "benchrun-glmrepair-fix-20260919"
 GLMREPAIR_G1_CAMPAIGN = "benchrun-glmrepair-g1-20260919"
 
 
 def glmrepair_manifest(campaign=GLMREPAIR_CAMPAIGN):
     """Frozen reviewed G2 control or exact saved G1 profile; no tuning."""
+    if campaign == GLMREPAIR_FIX_CAMPAIGN:
+        return json.loads(json.dumps(glmrepair_manifest(GLMREPAIR_G1_CAMPAIGN)).replace(GLMREPAIR_G1_CAMPAIGN, campaign))
     if campaign == GLMREPAIR_POLL_CAMPAIGN:
         manifest = json.loads(json.dumps(glmrepair_manifest(GLMREPAIR_G1_CAMPAIGN)).replace(GLMREPAIR_G1_CAMPAIGN, campaign))
         for key in ("native_argv", "create_argv"):
@@ -55,7 +58,7 @@ def validate_arm_scope(armed):
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
     if scope == "glmrepair":
-        if (armed.get("campaign") not in (GLMREPAIR_CAMPAIGN, GLMREPAIR_G1_CAMPAIGN, GLMREPAIR_POLL_CAMPAIGN)
+        if (armed.get("campaign") not in (GLMREPAIR_CAMPAIGN, GLMREPAIR_G1_CAMPAIGN, GLMREPAIR_POLL_CAMPAIGN, GLMREPAIR_FIX_CAMPAIGN)
                 or armed.get("manifests") != [glmrepair_manifest(armed["campaign"])]
                 or armed.get("trial_plan") != trial_order(scope, campaign=armed["campaign"])):
             raise ValueError("glmrepair_exact_arm_scope_mismatch")
@@ -219,6 +222,14 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
 
 
 def trial_order(scope="full", campaign=GLMREPAIR_CAMPAIGN):
+    if scope == "glmrepair" and campaign == GLMREPAIR_FIX_CAMPAIGN:
+        return {"trials": [
+            {"placement": "G1", "capacity": 4096, "case": "load_warmup", "output_cap": 32, "timing": "discard"},
+            {"placement": "G1", "capacity": 4096, "case": "sampling1729", "output_cap": 256},
+            {"placement": "G1", "capacity": 4096, "case": "sampling2718", "output_cap": 256, "conditional": "first_strict_PASS"}],
+            "then": [], "mixed_jobs": [], "measurement_budget_seconds": 2700,
+            "maximum_request_seconds": 7200, "restoration_outside_budget": True,
+            "format_failure_policy": "UNFIXED on first strict failure; no grid or schema substitution"}
     if scope == "glmrepair" and campaign == GLMREPAIR_POLL_CAMPAIGN:
         return {"trials": [
             {"placement": "G1", "capacity": 4096, "case": "poll_control", "output_cap": 32, "timing": "measured"},

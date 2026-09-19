@@ -415,7 +415,11 @@ class Client:
     """One-request-at-a-time HTTP client, bounded to 128 requests per instance."""
 
     def __init__(self, base_url, model, api_key=None, request_timeout=60, budget=None, max_response_bytes=262144, max_tokens=1024, reasoning_effort=None):
+        self._glm_default_effort = reasoning_effort is None and model == "glm-5.3"
         self.reasoning_effort = _reasoning_effort(reasoning_effort)
+        # Reviewed GLM agent default; explicit effort and other models are unchanged.
+        if self.reasoning_effort is None and model == "glm-5.3":
+            self.reasoning_effort = "low"
         try:
             url = urlsplit(base_url)
             port = url.port
@@ -595,6 +599,8 @@ class Client:
 
     def chat(self, messages, tools=None, stream=False, model=None, api_key=_DEFAULT_KEY):
         effort = _reasoning_effort(self.reasoning_effort)
+        if self._glm_default_effort and model not in (None, "glm-5.3"):
+            effort = None
         _validate_messages(messages)
         payload = {"model": self.model if model is None else _model(model), "messages": messages, "stream": bool(stream), "max_tokens": self.max_tokens}
         if effort is not None:

@@ -115,16 +115,16 @@ class HostBudget(CampaignBudget):
     def __init__(self, host):
         self._mutex = threading.RLock()
         self.host, self.path, self.clock = host, Path(host.log_root) / 'budget.json', time.time
-        self.budget_seconds = 3600 if getattr(host, 'scope', None) == 'glmrepair' else 21600
+        self.budget_seconds = (2700 if getattr(host, 'campaign', None) == 'benchrun-glmrepair-fix-20260919' else 3600) if getattr(host, 'scope', None) == 'glmrepair' else 21600
         self._data = host.read_json('budget.json', missing=True)
         if self._data is not None:
             self._validate()
 
     def _validate(self):
         super()._validate()
-        if self.budget_seconds == 3600:
+        if getattr(self.host, 'scope', None) == 'glmrepair':
             require(self._data.get('start_epoch') == self.host.start_epoch == self._data['started_at'] and
-                    self._data.get('deadline_epoch') == self.host.deadline_epoch == self.host.start_epoch + 3600,
+                    self._data.get('deadline_epoch') == self.host.deadline_epoch == self.host.start_epoch + self.budget_seconds,
                     'glmrepair_immutable_clock_changed')
 
     def start(self, kind):
@@ -134,7 +134,7 @@ class HostBudget(CampaignBudget):
         require(type(start) in (int, float) and 0 < start <= now and now - start < self.budget_seconds, 'invalid_stage_start_epoch')
         self._data = {'schema': 1, 'budget_seconds': self.budget_seconds, 'phase': 'MEASURING', 'start_kind': kind,
                      'started_at': start, 'last_seen_at': now, 'restoration_started_at': None}
-        if self.budget_seconds == 3600:
+        if getattr(self.host, 'scope', None) == 'glmrepair':
             self._data.update(start_epoch=start, deadline_epoch=self.host.deadline_epoch)
             self._validate()
         self._save()
@@ -204,10 +204,11 @@ class LinuxHost:
     def glmrepair_clock(armed):
         runtime = armed.get('runtime') or {}
         start, deadline = runtime.get('start_epoch'), runtime.get('deadline_epoch')
+        seconds = 2700 if armed.get('campaign') == 'benchrun-glmrepair-fix-20260919' else 3600
         require('continuation_execution' not in armed and 'start_epoch' not in armed and
                 type(start) in (int, float) and type(deadline) in (int, float) and
                 math.isfinite(start) and math.isfinite(deadline) and start > 0 and
-                deadline == start + 3600 and runtime.get('budget_seconds') == 3600,
+                deadline == start + seconds and runtime.get('budget_seconds') == seconds,
                 'glmrepair_new_immutable_clock_required')
         return start, deadline
 
