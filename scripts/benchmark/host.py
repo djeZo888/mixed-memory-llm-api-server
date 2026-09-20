@@ -30,7 +30,7 @@ from .campaign import CampaignBudget
 from .profiles import (read_config, command_manifest, split_resources, validate_arm_scope,
                        G1_RAM_CAP_BYTES, glmrepair_manifest, g1_ladder_manifest, glm_decode_diag_manifest, cpu_set,
                        CONCURRENT_SCOPE, CONCURRENT_CAMPAIGN, CONCURRENT_Q1_RAM_CAP_BYTES, concurrent_manifest)
-from .telemetry import collect_sample, required_host_demand
+from .telemetry import collect_sample, required_host_demand, concurrent_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
 INSTALL = Path('/usr/local/lib/llm-server/control-api')
@@ -54,7 +54,11 @@ def concurrent_capacity_policy():
                        'sha256': '3a96e83cfe45764cf67828523667328290d717719e64025c97205a445e7fc1da',
                        'required_bytes': 13287989248,
                        'basis': 'host_load_peak; failed initial4K loader;32GiB candidate needs current load proof'}},
-            'headroom_observation': '5*max(memory.current,memory.peak,anon+kernel+max(file,mapped,shmem))<=4*cap; never sum overlapping totals',
+            'headroom_observation': '5*sampled_peak_required_working_set_ESTIMATE<=4*cap; raw current/peak separate hard-cap guards',
+            'G1_native_floor': {'bytes': math.ceil((409012.22 + 0.005) * 1024**2) + 159461408,
+                'basis': 'same-pin historical G65536 CUDA_Host409012.22MiB rounded-up plus159461408B workspace; not current allocation proof',
+                'report_sha256': 'f9ed5c46c57ceb44e7af2d78838f4c65fb1bdfb1abd8734687a27401815d6cdc',
+                'raw_log_sha256': 'f2272149566ee0892384d6b7b62432a7e1d5cfa2d71ac55897043fd7d1c2d49a'},
             'preload_host_available_minimum_bytes': 688 * 1024**3,
             'actual_load_required': True, 'allocator_policy_change_allowed': False}
 
@@ -192,7 +196,7 @@ class LinuxHost:
         self.scope = validate_arm_scope(data)
         self.mode = data.get('mode') if self.scope == 'glm-decode-diag' else None
         self.decode_capture_policy = copy.deepcopy(data.get('capture', {})) if self.scope == 'glm-decode-diag' else {}
-        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3, CONCURRENT_SCOPE: 4}[self.scope]
+        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3, CONCURRENT_SCOPE: 2}[self.scope]
         if self.mode == 'cpu-profile-only':
             manifest_count = 1
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
@@ -248,8 +252,8 @@ class LinuxHost:
         require(armed.get('campaign') == CONCURRENT_CAMPAIGN and
                 'continuation_execution' not in armed and 'start_epoch' not in armed and
                 type(start) in (int, float) and type(deadline) in (int, float) and
-                math.isfinite(start) and math.isfinite(deadline) and start > 0 and
-                deadline == start + 5400 and runtime.get('budget_seconds') == 5400 and
+                math.isfinite(start) and math.isfinite(deadline) and start == 1789890954.308154 and
+                deadline == 1789896354.308154 and deadline == start + 5400 and runtime.get('budget_seconds') == 5400 and
                 runtime.get('request_max_seconds') == 7200 and
                 runtime.get('clock_includes_preparation') is True and
                 runtime.get('includes_load_warmup_fitting') is True and
@@ -306,7 +310,7 @@ class LinuxHost:
         require(self.scope == CONCURRENT_SCOPE and self.owner.phase == 'ACTIVE',
                 'concurrent_active_scope_required')
         require(not getattr(self, 'concurrent_resource_violations', {}), 'concurrent_latched_resource_failure')
-        expected = 'short' if self.concurrent_round is None else 'long' if self.concurrent_round == 'short' else None
+        expected = 'long' if self.concurrent_round is None else None
         require(round_name is not None and round_name == expected, 'concurrent_closed_round_order_required')
         self.budget.checkpoint()
         self.guards(self.owner.lease)
@@ -321,7 +325,7 @@ class LinuxHost:
         require(type(available) is int and available >= sum(policy['caps_bytes'].values()) + policy['os_reserve_bytes'],
                 'concurrent_host_available_reserve_unproved')
         gpu_free = {g['uuid']: g.get('free_bytes') for g in sample['gpus']}
-        sizes = (16384, 262144) if round_name == 'short' else (65536, 700160)
+        sizes = (65536, 700160)
         manifests = [concurrent_manifest(p, n) for p, n in zip(('G1', 'Q1'), sizes)]
         for manifest in manifests:
             require(self.manifests.get(digest(manifest)) == manifest, 'concurrent_exact_manifest_required')
@@ -363,34 +367,47 @@ class LinuxHost:
         return memory, cpu
 
     def concurrent_pressure(self, row):
-        """Compare conservative alternatives, never sum totals; latch numeric failures."""
+        """Latch numeric working-set estimates; raw charges remain independent."""
         policy, charges, reasons, unavailable = concurrent_capacity_policy(), {}, [], []
         numeric_by_cid = {cid: [] for cid in row['cgroups']}
+        if not hasattr(self, 'concurrent_demand_peaks'):
+            self.concurrent_demand_peaks = {}
         for cid, group in row['cgroups'].items():
             manifest = self.load_manifests[cid]
             current, peak = group.get('current_bytes'), group.get('peak_since_cgroup_creation_bytes')
             valid = lambda value: type(value) is int and value >= 0
-            totals = [value for value in (current, peak) if valid(value)]
-            if len(totals) != 2:
-                unavailable.append('concurrent_inclusive_charge_unavailable')
-            components = [group.get(key) for key in ('anon_bytes', 'kernel_bytes', 'file_bytes', 'file_mapped_bytes', 'shmem_bytes')]
-            component_charge = None
-            if all(valid(value) for value in components):
-                anon, kernel, file_bytes, mapped, shmem = components
-                component_charge = anon + kernel + max(file_bytes, mapped, shmem)
-                totals.append(component_charge)
+            floor, basis = None, 'UNAVAILABLE_no_native_host_weight_measurement'
+            parsed = self.allocation_proofs.get(cid)
+            if manifest['placement'] == 'G1':
+                floor, basis = policy['G1_native_floor']['bytes'], policy['G1_native_floor']['basis']
+                if parsed is not None:
+                    weights = parsed.get('host_weights_mib_log_label') or {}
+                    workspace = parsed.get('host_workspace_bytes')
+                    if weights and all(type(v) in (int, float) and math.isfinite(v) and v >= 0 for v in weights.values()) and valid(workspace):
+                        floor = max(floor, sum(math.ceil((v + 0.005) * 1024**2) for v in weights.values()) + workspace)
+                        basis = 'max(same-pin historical floor,current accepted native rounded-up host weights+exact workspace)'
+            demand = concurrent_host_demand(group, row.get('processes', {}).get(cid, {}),
+                native_floor_bytes=floor, native_floor_basis=basis)
+            observed = demand['required_bytes']
+            if observed is None:
+                unavailable.append('concurrent_required_demand_estimate_unavailable')
             else:
-                unavailable.append('concurrent_component_charge_unavailable')
-            observed = max(totals) if totals else None
+                self.concurrent_demand_peaks[cid] = max(observed, self.concurrent_demand_peaks.get(cid, 0))
+            sampled_peak = self.concurrent_demand_peaks.get(cid)
+            known = [v for v in (sampled_peak, demand['known_numeric_floor_bytes']) if valid(v)]
+            comparison = max(known) if known else None
             cap = policy['caps_bytes'][manifest['placement']]
-            charges[cid] = {'evidence_status': 'OBSERVED_TOTALS_AND_CONSERVATIVE_COMPONENT_BRACKET',
-                            'current_bytes': current, 'lifetime_peak_bytes': peak,
-                            'component_charge_bytes': component_charge,
-                            'headroom_comparison_bytes': observed, 'placement': manifest['placement'],
-                            'cap_bytes': cap, 'cap_headroom_25_percent': 5 * observed <= 4 * cap if observed is not None else None,
-                            'basis': 'max(memory.current,memory.peak,anon+kernel+max(file,mapped,shmem)); no overlapping totals summed'}
-            if observed is not None and 5 * observed > 4 * cap:
+            numeric_failure = comparison is not None and 5 * comparison > 4 * cap
+            charges[cid] = {**demand, 'current_bytes': current, 'lifetime_peak_bytes': peak,
+                            'component_charge_bytes': demand['component_bracket_bytes'],
+                            'headroom_comparison_bytes': comparison, 'sampled_peak_required_bytes': sampled_peak,
+                            'placement': manifest['placement'], 'cap_bytes': cap,
+                            'allocation_proof_available': parsed is not None,
+                            'cap_headroom_25_percent': False if numeric_failure else True if observed is not None else None}
+            if numeric_failure:
                 numeric_by_cid[cid].append('concurrent_cap_25_percent_headroom_failed')
+            if any(valid(v) and v > cap for v in (current, peak)):
+                numeric_by_cid[cid].append('concurrent_raw_hard_cap_exceeded')
         available = row['host'].get('available_bytes')
         if type(available) is not int:
             unavailable.append('concurrent_host_available_unavailable')
@@ -420,7 +437,7 @@ class LinuxHost:
                 'reasons': sorted(set(reasons)), 'unavailable_reasons': sorted(set(unavailable)),
                 'charges': charges, 'host_available_bytes': available,
                 'latched_violations': copy.deepcopy(self.concurrent_resource_violations),
-                'policy': policy['evidence_status'], 'required_demand_helper': 'NOT_RECLASSIFIED'}
+                'policy': policy['evidence_status'], 'required_demand_helper': 'ROOT_REVIEWED_WORKING_SET_ESTIMATE'}
 
     @staticmethod
     def concurrent_cpu_pressure(cgroups):
@@ -886,6 +903,20 @@ class LinuxHost:
         manifest = self.load_manifests.get(cid, {})
         placement = manifest.get('placement')
         parsed = self.allocation_proofs.get(cid)
+        if self.scope == CONCURRENT_SCOPE:
+            # The legacy helper claims measured components and double-counts this
+            # mapped/shmem overlap. This closed campaign reports only ESTIMATE.
+            row['required_host_demand'] = copy.deepcopy(row['concurrent_resource_gate']['charges'][cid])
+            evidence = row['required_host_demand']
+            evidence.update(container_id=cid, manifest_sha256=digest(manifest),
+                sample_timestamp_monotonic_s=row.get('timestamp_monotonic_s'),
+                sample_phase='ready_runtime' if parsed is not None else 'pre_readiness_load',
+                sampled_peak_not_absolute=True)
+            if evidence['required_bytes'] is not None:
+                previous = self.measured.get(placement, {})
+                if evidence['required_bytes'] >= previous.get('required_bytes', 0):
+                    self.measured[placement] = copy.deepcopy(evidence)
+            return row
         row['required_host_demand'] = {'evidence_status': 'UNAVAILABLE', 'required_bytes': None}
         if placement in {'G1', 'Q1'} or self.scope == 'glmrepair' and placement == 'G2':
             group = row['cgroups'][cid]

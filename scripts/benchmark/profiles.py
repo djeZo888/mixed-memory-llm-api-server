@@ -13,9 +13,9 @@ ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/benchmarks/gpu-split-20260919.json"
 G1_RAM_CAP_BYTES = 640 * 1024**3  # Root-reviewed validation cap; not minimum model RAM.
 CONCURRENT_SCOPE = "concurrent-g1q1"
-CONCURRENT_CAMPAIGN = "benchrun-concurrent-g1q1-cont1-20260920"
+CONCURRENT_CAMPAIGN = "benchrun-concurrent-g1q1-long-20260920"
 CONCURRENT_Q1_RAM_CAP_BYTES = 32 * 1024**3
-CONCURRENT_TUPLES = (("G1", 16384), ("Q1", 262144), ("G1", 65536), ("Q1", 700160))
+CONCURRENT_TUPLES = (("G1", 65536), ("Q1", 700160))
 ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", CONCURRENT_SCOPE)
 G1_LADDER_CAMPAIGN = "benchrun-glm-g1-ladder-20260920"
 GLM_DECODE_DIAG_CAMPAIGN = "benchrun-glm-decode-diag-20260920"
@@ -92,7 +92,7 @@ def scope_placements(scope):
 def scope_capacities(scope):
     scope_placements(scope)  # Reject unknown scopes before selecting capacities.
     if scope == CONCURRENT_SCOPE:
-        return (16384, 262144, 65536, 700160)
+        return (65536, 700160)
     if scope == "glmrepair":
         return (4096,)
     if scope == "g1-ladder":
@@ -203,7 +203,7 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
     if scope is not None and not concurrent:
         raise ValueError("unreviewed_manifest_scope")
     if concurrent and (campaign != CONCURRENT_CAMPAIGN or placement != "Q1"
-                       or type(capacity) is not int or capacity not in (262144, 700160)
+                       or type(capacity) is not int or capacity != 700160
                        or mixed is not True or ram_cap != CONCURRENT_Q1_RAM_CAP_BYTES
                        or log_verbosity is not None):
         raise ValueError("concurrent_qwen_manifest_tuple_invalid")
@@ -309,7 +309,7 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
 
 
 def concurrent_manifest(placement, capacity):
-    """Only the four frozen G1/Q1 tuples; no live allocator acceptance implied."""
+    """Only the two long-round frozen G1/Q1 tuples; no live allocator acceptance implied."""
     if type(capacity) is not int or (placement, capacity) not in CONCURRENT_TUPLES:
         raise ValueError("concurrent_manifest_tuple_invalid")
     if placement == "Q1":
@@ -336,20 +336,17 @@ def trial_order(scope="full", campaign=GLMREPAIR_CAMPAIGN):
     if scope == CONCURRENT_SCOPE:
         return {"trials": [], "mixed_jobs": [],
                 "rounds": [
-                    {"id": "short", "glm_capacity": 16384, "qwen_capacity": 262144,
-                     "glm_saved_input_tokens": 15831, "qwen_max_requests": 3,
-                     "qwen_first_target_capacity": 262144, "qwen_filler_target_capacity": 262144},
                     {"id": "long", "glm_capacity": 65536, "qwen_capacity": 700160,
                      "glm_saved_input_tokens": 65008, "qwen_max_requests": 8,
                      "qwen_first_target_capacity": 700160, "qwen_filler_target_capacity": 262144}],
                 "then": ["matched_large_qwen_glm_loaded_idle"],
                 "output_cap": 256, "maximum_request_seconds": 7200,
                 "measurement_budget_seconds": 5400, "clock_includes_preparation": True,
-                "budget_start": "fresh_RUN_dispatch_including_load_warmup_fitting",
+                "budget_start": "original_RUN_dispatch_1789890954.308154_deadline_1789896354.308154_no_reset",
                 "restoration_outside_budget": True,
                 "stop_qwen_admission": "when_GLM_finishes_drain_admitted_request",
                 "optional_decode_overlap": {"maximum_pairs": 1, "output_cap_each": 512,
-                    "trigger": "first_actual_GLM_output", "conditional": "main_rounds_do_not_prove_decode_overlap"},
+                    "trigger": "first_actual_GLM_output", "conditional": "long_round_does_not_prove_decode_overlap"},
                 "format_failure_policy": "retain_strict_and_optional_single_fence_semantic_retrieval_separately",
                 "slow_glm_policy": "record_notify_no_speed_stop_no_tuning"}
     if scope == "glm-decode-diag":

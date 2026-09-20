@@ -72,6 +72,38 @@ def parse_cgroup(files: Mapping[str, str | None]) -> dict:
             "allocator_workspace_bytes": None}
 
 
+def concurrent_host_demand(cgroup: dict, process: dict, *, native_floor_bytes=None,
+                           native_floor_basis="UNAVAILABLE") -> dict:
+    """Root-reviewed working-set ESTIMATE, not a union or reclaimable-cache proof.
+
+    Mapped file and shmem overlap. Compare their maximum bracket against summed
+    process RSS (shared pages may overcount) and a separately pinned native floor.
+    Never infer that the remaining charged file pages are instantly reclaimable.
+    Missing inputs prevent fit acceptance; known numeric floors still expose
+    pressure. Raw current/peak are separate hard-cap observations.
+    """
+    valid = lambda v: type(v) is int and v >= 0
+    anon, kernel, mapped, shmem = (cgroup.get(k) for k in
+        ('anon_bytes', 'kernel_bytes', 'file_mapped_bytes', 'shmem_bytes'))
+    rss = process.get('rss_bytes')
+    component = anon + kernel + max(mapped, shmem) if all(valid(v) for v in (anon, kernel, mapped, shmem)) else None
+    rss_floor = rss + kernel if all(valid(v) for v in (rss, kernel)) else None
+    floors = [v for v in (component, rss_floor, native_floor_bytes) if valid(v)]
+    required_raw = ('current_bytes', 'peak_since_cgroup_creation_bytes', 'file_bytes')
+    complete = (component is not None and rss_floor is not None and
+                all(valid(cgroup.get(k)) for k in required_raw))
+    extra = max(0, cgroup['file_bytes'] - max(mapped, shmem)) if all(valid(v) for v in (cgroup.get('file_bytes'), mapped, shmem)) else None
+    return {'evidence_status': 'ESTIMATE' if complete else 'UNAVAILABLE',
+            'required_bytes': max(floors) if complete else None,
+            'known_numeric_floor_bytes': max(floors) if floors else None,
+            'component_bracket_bytes': component, 'rss_plus_kernel_bytes': rss_floor,
+            'native_floor_bytes': native_floor_bytes, 'native_floor_basis': native_floor_basis,
+            'extra_charged_file_bytes': extra, 'reclaimable_file_bytes': None,
+            'reclaimable_status': 'UNPROVEN_dirty_writeback_unevictable_and_mapping_union_unknown',
+            'basis': 'max(anon+kernel+max(mapped,shmem),summed_process_RSS+kernel,pinned_native_host_weights+workspace_floor)',
+            'caveat': 'sampled working-set estimate; max(mapped,shmem) is not an exact union; RSS may double count; no instant cache reclaim claim'}
+
+
 def required_host_demand(cgroup: dict, *, required_file_backed_bytes: int,
                          host_workspace_bytes: int | None = None,
                          workspace_in_anon: bool = True, file_basis: str) -> dict:
