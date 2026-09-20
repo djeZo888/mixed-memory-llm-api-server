@@ -4,6 +4,7 @@ from __future__ import annotations
 import math
 from pathlib import Path
 import re
+import time
 
 from .lifecycle import require
 from .cpu_budget_profiles import CAPACITY, CPU_SCOPE, POSTRESTART_SCOPE, postrestart_manifest
@@ -103,8 +104,142 @@ def pre_retirement_admission(host, original):
             'policy': policy, 'production': production}
 
 
+class ProcLifetimeRace(Exception):
+    """Only a recognized per-process lifetime gap; never a generic I/O retry."""
+    def __init__(self, pid, reason):
+        super().__init__(reason)
+        self.pid, self.reason = pid, reason
+
+
+def _proc_text(proc_root, pid, name):
+    try:
+        with (proc_root / str(pid) / name).open('r') as source:
+            value = source.read(1024 * 1024 + 1)
+    except (FileNotFoundError, ProcessLookupError) as error:
+        raise ProcLifetimeRace(pid, 'proc_observation_missing') from error
+    except (OSError, UnicodeError):
+        require(False, 'postrestart_cpu_snapshot_read_failed')
+    require(len(value) <= 1024 * 1024, 'postrestart_cpu_snapshot_malformed')
+    return value.strip()
+
+
+def _proc_generation(proc_root, pid):
+    from .cpu_budget_telemetry import _strict_numa_stat
+    return _strict_numa_stat(_proc_text(proc_root, pid, 'stat'), pid)
+
+
+def postrestart_cpu_anchor(container, group, *, proc_root=Path('/proc')):
+    """Bind pre-log/native evidence to the same main generation and cgroup."""
+    state, info = container['State'], group.stat()
+    require(type(state['Pid']) is int and state['Pid'] > 0 and state['Running'] and
+            isinstance(state['StartedAt'], str) and state['StartedAt'],
+            'postrestart_cpu_snapshot_identity_changed')
+    try:
+        generation = _proc_generation(proc_root, state['Pid'])
+    except ProcLifetimeRace:
+        require(False, 'postrestart_cpu_snapshot_identity_changed')
+    return (container['Id'], state['Pid'], state['StartedAt'], str(group),
+            info.st_dev, info.st_ino, generation)
+
+
+def coherent_postrestart_cpu_proof(host, cid, manifest, *,
+                                  proc_root=Path('/proc'), sys_root=Path('/sys/devices/system'),
+                                  expected_anchor=None):
+    """At most three complete fresh cohorts, under the existing preparation clock.
+
+    Only child lifetime races may resample. Container, main process and cgroup
+    remain anchored across every attempt. No partial inventory can return PASS.
+    """
+    from .host import _COMMAND_DEADLINE
+    from .decode_telemetry import _validate_pids
+    require(host.scope == POSTRESTART_SCOPE, 'postrestart_cpu_snapshot_scope')
+    host.assert_idle()
+    deadline = _COMMAND_DEADLINE.get()
+    # Warm hold and measured admission policy are unchanged. During preparation
+    # this uses the original remaining budget, never a fresh preparation clock.
+    if host.budget.data['phase'] == 'PREPARING':
+        remaining = host.budget.checkpoint()
+        require(remaining > 0, 'STOP_BUDGET')
+        preparation_deadline = time.monotonic() + remaining
+        deadline = min(deadline, preparation_deadline) if deadline is not None else preparation_deadline
+    def check_deadline():
+        require(deadline is None or time.monotonic() < deadline, 'host_operation_deadline')
+    anchor = expected_anchor[:6] if expected_anchor is not None else None
+    main_generation = expected_anchor[6] if expected_anchor is not None else None
+    attempts = []
+    def identity():
+        check_deadline()
+        try:
+            container, group, pids = host.identity(cid)
+        except (FileNotFoundError, ProcessLookupError):
+            require(False, 'postrestart_cpu_snapshot_identity_changed')
+        _validate_pids({'owned': pids}, 2048)
+        state = container['State']
+        require(container['Id'] == cid and type(state['Pid']) is int and state['Pid'] in pids
+                and state['Running'] and isinstance(state['StartedAt'], str) and state['StartedAt'],
+                'postrestart_cpu_snapshot_identity_changed')
+        info = group.stat()
+        stamp = (container['Id'], state['Pid'], state['StartedAt'], str(group), info.st_dev, info.st_ino)
+        require(anchor is None or stamp == anchor, 'postrestart_cpu_snapshot_identity_changed')
+        return container, group, sorted(pids), stamp
+    def generation(pid):
+        check_deadline()
+        try:
+            value = _proc_generation(proc_root, pid)
+        except ProcLifetimeRace:
+            require(pid != anchor[1], 'postrestart_cpu_snapshot_identity_changed')
+            raise
+        require(pid != anchor[1] or main_generation is None or value == main_generation,
+                'postrestart_cpu_snapshot_identity_changed')
+        return value
+    def save():
+        host.write_json('loads/' + cid + '-cpu-snapshot.json',
+                        {'attempt_count': len(attempts), 'attempt_limit': 3, 'attempts': attempts})
+    for number in range(1, 4):
+        check_deadline()
+        container, group, pids, stamp = identity()
+        if anchor is None:
+            anchor = stamp
+        row = {'attempt': number, 'status': 'UNAVAILABLE', 'reason': None,
+               'cohort': {'pids': pids, 'generations': {}}}
+        attempts.append(row)
+        try:
+            current_main = generation(anchor[1])
+            if main_generation is None:
+                main_generation = current_main
+            for pid in pids:
+                row['cohort']['generations'][str(pid)] = generation(pid)
+            proof = postrestart_cpu_proof(manifest, container, group, pids,
+                    proc_root=proc_root, sys_root=sys_root, check_deadline=check_deadline)
+            for process in proof['processes']:
+                pid = process['pid']
+                if process['process_starttime_ticks'] != row['cohort']['generations'][str(pid)]:
+                    raise ProcLifetimeRace(pid, 'proc_generation_changed')
+            _, _, after_pids, _ = identity()
+            # Read all final generations even when a new member appeared; a
+            # removed member is explicit UNAVAILABLE, never silently omitted.
+            for pid in pids:
+                if generation(pid) != row['cohort']['generations'][str(pid)]:
+                    raise ProcLifetimeRace(pid, 'proc_generation_changed')
+            _, _, final_pids, _ = identity()
+            if pids != after_pids or pids != final_pids:
+                raise ProcLifetimeRace(None, 'proc_membership_changed')
+            check_deadline()
+        except ProcLifetimeRace as error:
+            require(error.pid != anchor[1], 'postrestart_cpu_snapshot_identity_changed')
+            row['reason'] = error.reason
+            row['race_pid'] = error.pid
+            save()
+            continue
+        row.update(status='PASS', reason='complete_stable_inventory')
+        save()
+        return {**proof, 'attempt_count': number, 'attempt_limit': 3, 'attempts': attempts}
+    require(False, 'postrestart_cpu_snapshot_unavailable')
+
+
 def postrestart_cpu_proof(manifest, container, cgroup, pids, *,
-                         proc_root=Path('/proc'), sys_root=Path('/sys/devices/system')):
+                         proc_root=Path('/proc'), sys_root=Path('/sys/devices/system'),
+                         check_deadline=lambda: None):
     """Quiescent actual72 affinity/node proof, without changing any affinity.
 
     This is guest topology and allowed-node evidence only. Supplied physical
@@ -112,12 +247,13 @@ def postrestart_cpu_proof(manifest, container, cgroup, pids, *,
     residency exclusivity or bandwidth claim is inferred here.
     """
     from .profiles import cpu_set
-    from .decode_telemetry import parse_stat, _validate_pids
+    from .decode_telemetry import _validate_pids
     from .cpu_budget_telemetry import numa_snapshot
     require(manifest == postrestart_manifest(manifest.get('placement')), 'postrestart_exact_manifest_required')
     _validate_pids({'owned': pids}, 2048)
     require(bool(pids), 'postrestart_owned_processes_required')
     def read(path):
+        check_deadline()
         with Path(path).open('r') as source:
             value = source.read(1024 * 1024 + 1)
         require(len(value) <= 1024 * 1024, 'postrestart_topology_read_limit')
@@ -148,21 +284,29 @@ def postrestart_cpu_proof(manifest, container, cgroup, pids, *,
             'postrestart_all_memory_nodes_required')
     processes = []
     for pid in pids:
-        base = proc_root / str(pid)
-        before = parse_stat(read(base / 'stat'))
-        fields = dict(line.split(':', 1) for line in read(base / 'status').splitlines() if ':' in line)
-        after = parse_stat(read(base / 'stat'))
-        require(before['starttime_ticks'] is not None and before['starttime_ticks'] == after['starttime_ticks'],
-                'postrestart_process_generation_changed')
+        check_deadline()
+        before = _proc_generation(proc_root, pid)
+        fields = dict(line.split(':', 1) for line in _proc_text(proc_root, pid, 'status').splitlines() if ':' in line)
+        after = _proc_generation(proc_root, pid)
+        if before != after:
+            raise ProcLifetimeRace(pid, 'proc_generation_changed')
         allowed, allowed_mems = fields.get('Cpus_allowed_list', '').strip(), fields.get('Mems_allowed_list', '').strip()
         require(cpu_set(allowed) == expected and cpu_set(allowed_mems) == set(range(8)),
                 'postrestart_process_allowed_scope_mismatch')
-        processes.append({'pid': pid, 'process_starttime_ticks': before['starttime_ticks'],
+        processes.append({'pid': pid, 'process_starttime_ticks': before,
                           'cpus_allowed_list': allowed, 'mems_allowed_list': allowed_mems})
-    numa = numa_snapshot({'owned': pids}, proc_root=proc_root)
-    require(all(row['status'] == 'AVAILABLE' and row['process_starttime_ticks'] == expected_row['process_starttime_ticks']
-                for row, expected_row in zip(numa['processes']['owned'], processes)),
-            'postrestart_quiescent_numa_unproved')
+    check_deadline()
+    numa = numa_snapshot({'owned': pids}, proc_root=proc_root, strict_lifetime=True, check_deadline=check_deadline)
+    rows = numa['processes']['owned']
+    require([row['pid'] for row in rows] == pids, 'postrestart_quiescent_numa_unproved')
+    for row, expected_row in zip(rows, processes):
+        if row['status'] == 'UNAVAILABLE' and row.get('reason') in {
+                'proc_observation_missing', 'proc_generation_changed'}:
+            raise ProcLifetimeRace(row['pid'], row['reason'])
+        require(row['status'] == 'AVAILABLE', 'postrestart_quiescent_numa_unproved')
+        if row['process_starttime_ticks'] != expected_row['process_starttime_ticks']:
+            raise ProcLifetimeRace(row['pid'], 'proc_generation_changed')
+    check_deadline()
     return {'status': 'PASS', 'guest_online_cpus': online, 'guest_online_nodes': nodes_online,
             'guest_nodes': nodes, 'guest_node_memory_total_bytes': sum(v['guest_mem_total_bytes'] for v in nodes.values()),
             'cgroup_cpus_effective': effective, 'cgroup_mems_effective': mems,

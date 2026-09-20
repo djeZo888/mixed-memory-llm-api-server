@@ -79,7 +79,8 @@ class LoadingAccountingGapTests(unittest.TestCase):
                      patch('benchmark.host.http_json', side_effect=native), \
                      patch('benchmark.host.parse_qwen_log', return_value={'ranks': {'0': {'k_gb_log_label': 1, 'v_gb_log_label': 1}}}), \
                      patch('benchmark.host.allocation_gate', return_value={'status': 'ALLOCATION_PROOF_ACCEPTED', 'reasons': []}), \
-                     patch('benchmark.cpu_budget_host.postrestart_cpu_proof', return_value={}), \
+                     patch('benchmark.cpu_budget_host.postrestart_cpu_anchor', return_value=None), \
+                     patch('benchmark.cpu_budget_host.coherent_postrestart_cpu_proof', return_value={}), \
                      patch.object(Path, 'read_bytes', return_value=b'{"chat_template":"offline"}'):
                     return host._readiness(args['id'])
             if op == 'quiescent': return {'telemetry': host.telemetry(args['id'])}

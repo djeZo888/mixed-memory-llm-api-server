@@ -1206,15 +1206,22 @@ class LinuxHost:
         require(point in {'readiness', 'warm_idle'}, 'pss_checkpoint_only')
         self.assert_idle()
         container, cgroup, pids = self.identity(cid)
+        if self.scope == POSTRESTART_SCOPE:
+            from .cpu_budget_host import postrestart_cpu_anchor
+            cpu_anchor = postrestart_cpu_anchor(container, cgroup)
         if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
             result = {'point': point, 'pss_bytes': None, 'pss_unavailable_reason': 'concurrent_no_profiling',
                       'container_id': cid, 'scope': 'cheap_quiescent_counters', 'telemetry': self.telemetry(cid)}
-            if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
+            if self.scope == CPU_SCOPE:
                 from .cpu_budget_telemetry import numa_snapshot
                 result['numa_pages'] = numa_snapshot({cid: pids})
             if self.scope == POSTRESTART_SCOPE:
-                from .cpu_budget_host import postrestart_cpu_proof
-                result['actual_cpu_scope'] = postrestart_cpu_proof(self.load_manifests[cid], container, cgroup, pids)
+                require(result['telemetry']['concurrent_resource_gate']['status'] != 'STOP_RESOURCE_GATE',
+                        'concurrent_current_resource_gate_failed')
+                from .cpu_budget_host import coherent_postrestart_cpu_proof
+                result['actual_cpu_scope'] = coherent_postrestart_cpu_proof(self, cid, self.load_manifests[cid], expected_anchor=cpu_anchor)
+                numa = result['actual_cpu_scope']['numa_pages']
+                result['numa_pages'] = {**numa, 'processes': {cid: numa['processes']['owned']}}
             self.write_json('loads/' + cid + '-' + point + '.json', result)
             return result
         start, values = time.monotonic(), []
@@ -1386,6 +1393,9 @@ class LinuxHost:
     def allocation(self, cid):
         self.assert_idle()
         container, cgroup, pids = self.identity(cid)
+        if self.scope == POSTRESTART_SCOPE:
+            from .cpu_budget_host import postrestart_cpu_anchor
+            cpu_anchor = postrestart_cpu_anchor(container, cgroup)
         if self.scope == CANDIDATE_SCOPE:
             from .concurrent_validate import identity_stamp
             allocation_identity = identity_stamp(self, cid)
@@ -1495,8 +1505,12 @@ class LinuxHost:
                 gate['status'] == 'STOP_ALLOCATION_PROOF' and pressure['status'] == 'UNAVAILABLE' and
                 not pressure['reasons'] and bool(gate['reasons']) and
                 set(gate['reasons']) <= missing_resource_reasons)
-            from .cpu_budget_host import postrestart_cpu_proof
-            result['observed']['actual_cpu_scope'] = postrestart_cpu_proof(manifest, container, cgroup, pids)
+            from .cpu_budget_host import coherent_postrestart_cpu_proof
+            if gate['status'] == 'ALLOCATION_PROOF_ACCEPTED' or result['resource_proof_unavailable_only']:
+                result['observed']['actual_cpu_scope'] = coherent_postrestart_cpu_proof(
+                    self, cid, manifest, expected_anchor=cpu_anchor)
+            else:
+                result['observed']['actual_cpu_scope'] = {'status': 'UNAVAILABLE', 'reason': 'allocation_refused'}
         if gate['status'] == 'ALLOCATION_PROOF_ACCEPTED':
             self.allocation_proofs[cid] = parsed
         self.write_json('loads/' + cid + '-allocation.json', result)
@@ -2120,7 +2134,14 @@ RPC_SAFE_REQUIRE_CODES = frozenset({'native_server_args_unavailable',
     'allocation_log_too_large', 'current_model_mount_changed',
     'owned_container_identity_changed', 'installed_source_identity_changed',
     'registered_storage_pin_changed', 'http_response_invalid',
-    'host_operation_deadline', 'STOP_BUDGET'})
+    'host_operation_deadline', 'STOP_BUDGET',
+    'postrestart_cpu_snapshot_unavailable', 'postrestart_cpu_snapshot_identity_changed',
+    'postrestart_cpu_snapshot_read_failed', 'postrestart_cpu_snapshot_malformed',
+    'postrestart_process_allowed_scope_mismatch', 'postrestart_effective_cpus_mismatch',
+    'postrestart_all_memory_nodes_required', 'postrestart_quiescent_numa_unproved',
+    'postrestart_numa_proc_read_failed', 'postrestart_numa_proc_read_limit',
+    'postrestart_numa_proc_encoding_invalid', 'postrestart_numa_proc_stat_malformed',
+    'postrestart_numa_maps_malformed', 'concurrent_current_resource_gate_failed'})
 
 
 def rpc_diagnostic(operation, error):

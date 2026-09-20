@@ -10,10 +10,12 @@ from __future__ import annotations
 import math
 import os
 from pathlib import Path
+import re
 import time
 
 from . import decode_telemetry as primitive
 from .cpu_budget_profiles import CPU_SCOPE, POSTRESTART_SCOPE
+from .lifecycle import require
 
 STATUS = 'UNAVAILABLE'
 CPU_KEYS = primitive.CPU_FIELDS[:8]  # guest/guest_nice are already in user/nice.
@@ -120,14 +122,93 @@ def collect_sample(cgroups, *, pids, proc_root=Path('/proc'), clock=time.monoton
         'scheduler_wait': {'status': STATUS, 'reason': 'per-thread schedstat deliberately not sampled'}}
 
 
-def numa_snapshot(pids, *, proc_root=Path('/proc'), clock=time.monotonic):
-    """Page-only quiescent snapshot; caller must keep outside timed requests."""
+def _strict_numa_read(path, maximum):
+    """Only a missing process observation is a resampleable lifetime race."""
+    failed = False
+    try:
+        with path.open('rb') as source:
+            data = source.read(maximum + 1)
+    except (FileNotFoundError, ProcessLookupError):
+        raise
+    except (OSError, ValueError):
+        failed = True
+    require(not failed, 'postrestart_numa_proc_read_failed')
+    require(len(data) <= maximum, 'postrestart_numa_proc_read_limit')
+    failed = False
+    try:
+        text = data.decode('utf-8', errors='strict')
+    except UnicodeError:
+        failed = True
+    require(not failed, 'postrestart_numa_proc_encoding_invalid')
+    return text
+
+
+def _strict_numa_stat(text, pid):
+    fields = text.rpartition(') ')[2].split()
+    require(text.startswith(str(pid) + ' (') and len(fields) > 36 and
+            fields[0] in {'R', 'S', 'D', 'Z', 'T', 't', 'W', 'X', 'x', 'K', 'P', 'I'} and
+            all(len(field) <= 64 and re.fullmatch(r'-?[0-9]+', field) for field in fields[1:]),
+            'postrestart_numa_proc_stat_malformed')
+    row = primitive.parse_stat(text)
+    require(all(value is not None for value in row.values()) and
+            row['starttime_ticks'] > 0,
+            'postrestart_numa_proc_stat_malformed')
+    return row['starttime_ticks']
+
+
+def _strict_numa_process(pid, base, missing, check_deadline):
+    before, raw, after = None, None, None
+    for name, maximum in (('stat', 262144), ('numa_maps', 16 * 1024 * 1024),
+                          ('stat_after', 262144)):
+        check_deadline()
+        try:
+            text = _strict_numa_read(base / ('stat' if name == 'stat_after' else name), maximum)
+        except (FileNotFoundError, ProcessLookupError):
+            missing.append(str(pid) + '.' + name)
+            return {'pid': pid, 'process_starttime_ticks': before,
+                    'generation_stable': False, 'status': STATUS, 'numa': None,
+                    'reason': 'proc_observation_missing'}
+        if name == 'stat':
+            before = _strict_numa_stat(text, pid)
+        elif name == 'stat_after':
+            after = _strict_numa_stat(text, pid)
+        else:
+            raw = text
+    stable = before == after
+    if stable:
+        # Establish lifetime coherence before interpreting the captured maps.
+        # Keep addresses, filenames and policy text out of the payload.
+        rows = [line.split() for line in raw.splitlines()]
+        require(bool(rows) and all(len(row) >= 2 and
+                re.fullmatch(r'[0-9a-fA-F]+', row[0]) and
+                re.fullmatch(r'[a-z_]+(?:=[a-z_]+)*(?::[0-9,-]+)?', row[1]) and
+                all(len(token) <= 64 and re.fullmatch(r'N[0-9]+=[0-9]+', token)
+                    for token in row[2:] if token.startswith('N')) for row in rows),
+                'postrestart_numa_maps_malformed')
+    row = {'pid': pid, 'process_starttime_ticks': before, 'generation_stable': stable,
+           'status': 'AVAILABLE' if stable else STATUS,
+           'numa': primitive.parse_numa_maps(raw) if stable else None}
+    if not stable:
+        row['reason'] = 'proc_generation_changed'
+    return row
+
+
+def numa_snapshot(pids, *, proc_root=Path('/proc'), clock=time.monotonic, strict_lifetime=False,
+                  check_deadline=lambda: None):
+    """Page-only quiescent snapshot; caller must keep outside timed requests.
+
+    REAL72's opt-in strict mode distinguishes only process lifetime races from
+    hard failures. It retains every PID row and leaves bounded retry to its owner.
+    """
     primitive._validate_pids(pids, 2048)
     started, missing, processes = clock(), [], {}
     for label, members in pids.items():
         processes[label] = []
         for pid in members:
             base = proc_root / str(pid)
+            if strict_lifetime:
+                processes[label].append(_strict_numa_process(pid, base, missing, check_deadline))
+                continue
             before = primitive.parse_stat(primitive._read(base / 'stat', missing, str(pid) + '.stat'))
             raw = primitive._read(base / 'numa_maps', missing, str(pid) + '.numa_maps', 16 * 1024 * 1024)
             after = primitive.parse_stat(primitive._read(base / 'stat', missing, str(pid) + '.stat_after'))
