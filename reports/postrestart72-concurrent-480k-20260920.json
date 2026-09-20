@@ -1576,7 +1576,16 @@
       "root_source_mapping": "pinned d257 host.py:782 require(not raw, pending_systemd_jobs); systemctl list-jobs nonempty",
       "mapping_evidence": "root incoming-latest source mapping; diagnostic retained frames and null require_code, not exception message",
       "systemd_job_identities": "UNKNOWN: not retained",
-      "interpretation": "lifecycle guard refusal; no demonstrated CPU/memory/model failure"
+      "interpretation": "lifecycle guard refusal; no demonstrated CPU/memory/model failure",
+      "journal_association": {
+        "candidate_unit": "sysstat-collect.service",
+        "candidate_job_id": 7640,
+        "start_utc": "2026-09-20T16:40:05.173460+00:00",
+        "finish_utc": "2026-09-20T16:40:05.180048+00:00",
+        "hold_diagnostic_utc": "2026-09-20T16:40:05.174066+00:00",
+        "interpretation": "Strong temporal association; original systemctl list-jobs output absent, so exact pending-list membership unproved",
+        "authority": "root incoming-latest and bounded INPUT-job-evidence.json"
+      }
     },
     "final_owner_status": "RESTORED_AFTER_HOLD_RPC_FAILURE",
     "final_owner_status_utc": "2026-09-20T16:41:56.471142+00:00",
@@ -1625,7 +1634,9 @@
     "tasks/POSTRESTART72-REPORT-20260920/inputs-final/report-incoming-final.md": "9db77e880ea3a51918330baf9a1649215629b2bacf505d7bb27a1d74cecae136",
     "tasks/POSTRESTART72-RUN-CONT3-20260920/native-exit.json": "01734921f38a82671f2ab85fec13382eb19d092f0818c47f9d213842f2c7f132",
     "tasks/POSTRESTART72-RUN-CONT3-20260920/native-closure-ready.json": "6b7d07c3fe1577cc42eca6f7c2d2fa99ce257b0b4bca6a350fd9bcea412cdd78",
-    "tasks/POSTRESTART72-REPORT-20260920/inputs-final/report-incoming-editorial.md": "ca6e025b307b7e5ae0aaa2385b87c15d1f933a635a3dd0639f670996c5f46455"
+    "tasks/POSTRESTART72-REPORT-20260920/inputs-final/report-incoming-editorial.md": "ca6e025b307b7e5ae0aaa2385b87c15d1f933a635a3dd0639f670996c5f46455",
+    "tasks/POSTRESTART72-REPORT-20260920/INPUT-job-evidence.json": "0129ae3d71fe4d3500c9335dec703bdfe1a2e49a92c378770d486b2aa159cabb",
+    "tasks/POSTRESTART72-REPORT-20260920/inputs-final/report-incoming-job.md": "b9a982a6cc08a96c9ff4b5c8c71e876194f7e4c40927dfc6053d6eca69170afb"
   },
   "pending": [
     "Systemd pending-job identities UNKNOWN/not retained; guard mapped by root from pinned source and saved diagnostic frames",
