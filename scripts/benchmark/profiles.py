@@ -2,10 +2,14 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
+import importlib.util
 import json
 from pathlib import Path
 import re
 import shlex
+import sys
+from types import ModuleType
 
 from .qwen_launcher import pinned_base, variant
 
@@ -16,7 +20,10 @@ CONCURRENT_SCOPE = "concurrent-g1q1"
 CONCURRENT_CAMPAIGN = "benchrun-concurrent-g1q1-cont1-20260920"
 CONCURRENT_Q1_RAM_CAP_BYTES = 32 * 1024**3
 CONCURRENT_TUPLES = (("G1", 16384), ("Q1", 262144), ("G1", 65536), ("Q1", 700160))
-ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", CONCURRENT_SCOPE)
+CANDIDATE_SCOPE = "candidate-pair-validation"
+CANDIDATE_CAMPAIGN = "benchrun-candidate-pair-20260920"
+CANDIDATE_TUPLES = (("G1", 480000), ("Q1", 700160))
+ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", CONCURRENT_SCOPE, CANDIDATE_SCOPE)
 G1_LADDER_CAMPAIGN = "benchrun-glm-g1-ladder-20260920"
 GLM_DECODE_DIAG_CAMPAIGN = "benchrun-glm-decode-diag-20260920"
 GLM_DECODE_PROFILE_CAMPAIGN = "benchrun-glm-decode-profile-20260920"
@@ -80,7 +87,7 @@ def glm_decode_diag_manifest(capacity, campaign=GLM_DECODE_DIAG_CAMPAIGN):
 def scope_placements(scope):
     if scope not in ARM_SCOPES:
         raise ValueError("unknown_benchmark_arm_scope")
-    if scope == CONCURRENT_SCOPE:
+    if scope in (CONCURRENT_SCOPE, CANDIDATE_SCOPE):
         return ("G1", "Q1")
     if scope in {"g1-only", "g1-ladder", "glm-decode-diag"}:
         return ("G1",)
@@ -91,6 +98,8 @@ def scope_placements(scope):
 
 def scope_capacities(scope):
     scope_placements(scope)  # Reject unknown scopes before selecting capacities.
+    if scope == CANDIDATE_SCOPE:
+        return (480000, 700160)
     if scope == CONCURRENT_SCOPE:
         return (16384, 262144, 65536, 700160)
     if scope == "glmrepair":
@@ -106,6 +115,12 @@ def validate_arm_scope(armed):
     """Legacy arms retain full scope; narrowed arms bind their exact placement and plan."""
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
+    if scope == CANDIDATE_SCOPE:
+        if (armed.get("campaign") != CANDIDATE_CAMPAIGN
+                or armed.get("manifests") != candidate_manifests()
+                or armed.get("trial_plan") != trial_order(scope)):
+            raise ValueError("candidate_exact_arm_scope_mismatch")
+        return scope
     if scope == CONCURRENT_SCOPE:
         if (armed.get("campaign") != CONCURRENT_CAMPAIGN
                 or armed.get("manifests") != concurrent_manifests()
@@ -332,7 +347,201 @@ def concurrent_manifests():
     return [concurrent_manifest(p, n) for p, n in CONCURRENT_TUPLES]
 
 
+def candidate_modules():
+    """Read the staged candidate declarations without replacing installed Manager.
+
+    benchmark-host puts the protected install first on sys.path. A private
+    package keeps its canonical lifecycle owner separate from candidate source.
+    Importing these modules performs no lifecycle, key, or Docker operation.
+    """
+    name = '_benchmark_candidate_lifecycle'
+    path = str(ROOT / 'scripts/lifecycle')
+    if name not in sys.modules:
+        package = ModuleType(name)
+        package.__path__ = [path]
+        package.__package__ = name
+        sys.modules[name] = package
+    if sys.modules[name].__path__ != [path]:
+        raise ValueError('candidate_source_package_mismatch')
+    return (importlib.import_module(name + '.concurrent_profiles'),
+            importlib.import_module(name + '.qwen38'))
+
+
+def candidate_profile(placement, binding):
+    """Bind only a pinned candidate through the caller's existing storage owner."""
+    pair, qwen = candidate_modules()
+    if placement not in ('G1', 'Q1') or binding is None:
+        raise ValueError('candidate_closed_profile_required')
+    identifier = pair.GLM_PROFILE if placement == 'G1' else pair.QWEN_PROFILE
+    profile, _ = qwen._bound_expected(pair.declared_profile(identifier), binding)
+    profile['_storage_binding'] = binding
+    pair.validate(profile)
+    return profile
+
+
+def candidate_pair_wrapper():
+    """Import exact staged production wrapper bytes, never the older install.
+
+    The host separately reads protected installed base and staged pair files,
+    comparing their SHA256 to PINS before Docker creation. The production pair
+    adapter need not already exist at its eventual canonical installed path:
+    this campaign's sole wrapper-path deviation is a read-only staged mount of
+    those identical bytes. This does not install or certify native-image auth.
+    """
+    pair, _ = candidate_modules()
+    relative = 'scripts/runtime/sglang38_pair_file_auth.py'
+    path = ROOT / relative
+    if hashlib.sha256(path.read_bytes()).hexdigest() != pair.PINS[relative]:
+        raise ValueError('candidate_pair_wrapper_pin_mismatch')
+    spec = importlib.util.spec_from_file_location('_benchmark_candidate_qwen_wrapper', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _candidate_source_profile(placement):
+    """Render declaration paths for review only; never synthesize a binding."""
+    pair, _ = candidate_modules()
+    if placement not in ('G1', 'Q1'):
+        raise ValueError('candidate_closed_profile_required')
+    d = pair.declared_profile(pair.GLM_PROFILE if placement == 'G1' else pair.QWEN_PROFILE)
+    roots = {'data': '/data', 'models': '/data/models-large'}
+    def resolve(ref):
+        if set(ref) != {'role', 'suffix'} or ref['role'] not in roots:
+            raise ValueError('candidate_source_path_invalid')
+        return roots[ref['role']] + '/' + ref['suffix']
+    d['paths'] = {key: resolve(ref) for key, ref in d['paths'].items()}
+    d['auth']['key_file'] = resolve(d['auth']['key_file'])
+    d['_model']['model_root'] = resolve(d['_model']['model_root'])
+    for mount in d['mounts']:
+        mount['source'] = resolve(mount['source'])
+    return d
+
+
+def _candidate_glm_source_argv(d):
+    """Offline rendering, compared to glm_command at the registered live seam."""
+    launch = d['launch']
+    values = [('model', '/models/' + d['_model']['load_entry']), ('host', d['container_host']),
+        ('port', d['container_port']), ('alias', d['endpoint']['served_model']),
+        ('api-key-file', d['auth']['container_key_file']), ('ctx-size', launch['context_size']),
+        ('parallel', launch['parallel']), ('n-cpu-moe', launch['n_cpu_moe']),
+        ('n-gpu-layers', launch['n_gpu_layers']), ('split-mode', launch['split_mode']),
+        ('tensor-split', launch['tensor_split']), ('main-gpu', launch['main_gpu']),
+        ('device', ','.join(launch['devices'])), ('load-mode', 'none'),
+        ('cache-type-k', launch['cache_type_k']), ('cache-type-v', launch['cache_type_v']),
+        ('fit', launch['fit']), ('batch-size', launch['batch_size']), ('ubatch-size', launch['ubatch_size']),
+        ('threads', launch['threads']), ('threads-batch', launch['threads_batch'])]
+    return [value for key, value in values for value in ('--' + key, str(value))] + [
+        '--jinja', '--no-webui', '--no-cache-prompt', '--chat-template-kwargs',
+        json.dumps(launch['chat_template_kwargs'], sort_keys=True, separators=(',', ':'))]
+
+
+def candidate_manifest(placement, binding=None):
+    """Exactly G480000/Q700160; no capacity/argv/resource overrides or receipt.
+
+    The no-binding form is inert source rendering. The live host must regenerate
+    using its registered binding and compare every byte with the reviewed arm.
+    Production cache/model/key paths and launch policy are unchanged. Only the
+    listed ownership/evidence/staged-wrapper path differences are permitted.
+    """
+    pair, qwen = candidate_modules()
+    d = _candidate_source_profile(placement) if binding is None else candidate_profile(placement, binding)
+    runtime, model, resource = d['_runtime'], d['_model'], d['concurrent_pair']
+    glm, capacity = placement == 'G1', d['launch']['context_size']
+    identifier = CANDIDATE_CAMPAIGN + '-' + placement.lower() + '-' + str(capacity)
+    data = '/data' if binding is None else binding.path('data')
+    roots = {'cache': d['paths']['cache'], 'logs': data + '/logs/' + CANDIDATE_CAMPAIGN + '/' + identifier,
+             'service': data + '/services/' + CANDIDATE_CAMPAIGN + '/' + identifier,
+             'source': data + '/services/' + CANDIDATE_CAMPAIGN + '/source'}
+    environment = {**runtime['environment'], **d['launch_environment']}
+    resources = ['--cpuset-cpus', resource['guest_cpuset'], '--memory', str(resource['memory_bytes']),
+                 '--memory-swap', str(resource['memory_swap_bytes'])]
+    if glm:
+        image = runtime['validation']['image_id']
+        native = command = _candidate_glm_source_argv(d)
+    else:
+        image = runtime['image_ref']
+        command = [qwen.PAIR_LAUNCHER_TARGET]
+        wrapper = candidate_pair_wrapper()
+        native = wrapper.backend_argv(wrapper.pinned_base(ROOT / 'scripts/runtime/sglang38_file_auth.py'))
+    if binding is not None:
+        actual_resources = pair.resource_args(d)
+        actual_environment = ({**runtime['environment'], **pair.launch_environment(d)} if glm
+                              else qwen.launch_environment(d))
+        actual_command = (pair.glm_command(d, {'image_id': image, 'load_mode': 'none'}) if glm
+                          else qwen.command(d))
+        if resources != actual_resources or environment != actual_environment or command != actual_command:
+            raise ValueError('candidate_production_launch_render_mismatch')
+        for name in ('logs', 'service', 'source'):
+            binding.validate_path('data', roots[name])
+    args = ['docker', 'create', '--name', identifier, '--network', 'bridge', '--restart', 'no',
+        '--publish', f"127.0.0.1:{d['endpoint']['port']}:{d['container_port']}/tcp",
+        '--gpus', '"device=' + ','.join(d['launch']['gpus']) + '"',
+        '--log-driver', 'json-file', '--log-opt', 'max-size=20m', '--log-opt', 'max-file=3',
+        '--security-opt', 'no-new-privileges:true', '--cap-drop', 'ALL',
+        '--entrypoint', runtime['entrypoint'][0], *resources,
+        '--label', 'benchmark.campaign=' + CANDIDATE_CAMPAIGN,
+        '--label', 'benchmark.placement=' + placement, '--label', 'benchmark.owner=llm-benchmark']
+    differences = {'container_name': {'production': d['container_name'], 'candidate': identifier},
+        'labels': 'benchmark campaign/placement/owner replace production owner/instance/deployment',
+        'paths': {}}
+    mounts = []
+    for mount in d['mounts']:
+        source = mount['source']
+        if mount['target'] in ('/logs', '/service'):
+            source = roots['logs' if mount['target'] == '/logs' else 'service']
+        if mount['target'] == qwen.PAIR_LAUNCHER_TARGET:
+            source = roots['source'] + '/scripts/runtime/sglang38_pair_file_auth.py'
+        if source != mount['source']:
+            differences['paths'][mount['target']] = {'production': mount['source'], 'candidate': source}
+        if binding is not None:
+            binding.validate_path(mount['required_role'], source)
+        mounts.append({'source': source, 'target': mount['target'], 'read_only': mount['read_only']})
+        args += ['--mount', 'type=bind,source=' + source + ',target=' + mount['target']
+                 + (',readonly' if mount['read_only'] else '')]
+    if not glm:
+        args += ['--read-only', '--tmpfs', '/tmp:rw,nosuid,nodev,size=1g', '--shm-size', '8g',
+                 '--workdir', '/service', '--no-healthcheck', '--user', '0']
+    for key, value in environment.items():
+        args += ['--env', key + '=' + value]
+    if not glm:
+        args += ['--ulimit', 'core=1:1', '--pull=never']
+    args += [image, *command]
+    return {'status': 'CANDIDATE_UNVALIDATED', 'scope': CANDIDATE_SCOPE, 'placement': placement,
+        'configured_capacity': capacity, 'campaign': CANDIDATE_CAMPAIGN, 'container_name': identifier,
+        'deployment': d['id'], 'served_model': d['endpoint']['served_model'], 'image': image,
+        'expected_image_ids': [image] if glm else [runtime['image_id']],
+        'image_identity_gate': 'immutable image ID plus pinned entrypoint/OCI contract',
+        'model': {key: model[key] for key in ('repo_id', 'revision', 'quantization')},
+        'gpu_uuids': d['launch']['gpus'], 'guest_cpuset': resource['guest_cpuset'],
+        'guest_cpu_count': resource['guest_cpu_count'], 'ram_cap_bytes': resource['memory_bytes'],
+        'cpu_comparison': 'fixed guest partition; physical CPU pinning unproved', 'mixed': True,
+        'glm_offload_expectation': read_config().get('glm_offload_expectation') if glm else None,
+        'registered_paths': roots, 'mounts': mounts, 'create_argv': args, 'create_shell': shlex.join(args),
+        'start_argv': ['docker', 'start', identifier], 'native_argv': native,
+        'native_auth': 'production protected key file and exact production wrapper bytes',
+        'transport': {'bind': '127.0.0.1', 'port': d['endpoint']['port'],
+                      'worker': 'reviewed SSH loopback tunnel; no new LAN listener/firewall policy'},
+        'production_differences': differences,
+        'profile_sha256': pair.PINS['configs/deployments/' + d['id'] + '.json'],
+        'wrapper_sha256': None if glm else {name: pair.PINS[name] for name in (
+            'scripts/runtime/sglang38_file_auth.py', 'scripts/runtime/sglang38_pair_file_auth.py')},
+        'storage_binding': 'REQUIRES_REGISTERED_LIVE_REGENERATION', 'live_allocation': 'NOT_TESTED',
+        'gpu_index_is_not_placement_proof': True}
+
+
+def candidate_manifests(binding=None):
+    if binding is not None:
+        pair, _ = candidate_modules()
+        pair.validate_pair(candidate_profile('G1', binding), candidate_profile('Q1', binding))
+    return [candidate_manifest(placement, binding) for placement, _ in CANDIDATE_TUPLES]
+
+
 def trial_order(scope="full", campaign=GLMREPAIR_CAMPAIGN):
+    if scope == CANDIDATE_SCOPE:
+        return {'trials': [], 'mixed_jobs': [], 'kind': 'short_candidate_checks',
+                'placements': ['G1', 'Q1'], 'warmup_records': 12, 'smoke_records': 12,
+                'tool_records': 12, 'output_cap': 256, 'no_near_capacity_fit': True}
     if scope == CONCURRENT_SCOPE:
         return {"trials": [], "mixed_jobs": [],
                 "rounds": [

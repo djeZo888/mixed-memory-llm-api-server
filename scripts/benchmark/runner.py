@@ -44,7 +44,7 @@ def save(path, value):
     os.replace(temp, path)
 
 
-def source_files():
+def source_files(scope=None):
     paths = set()
     for group in ("scripts/benchmark", "scripts/agent", "scripts/d3t", "scripts/runtime"):
         paths.update(profiles.ROOT.joinpath(group).glob("*.py"))
@@ -53,6 +53,14 @@ def source_files():
     paths.add(profiles.ROOT / "configs/benchmarks/glmrepair-g2-20260919.json")
     paths.add(profiles.ROOT / "configs/benchmarks/glmrepair-g1-20260919.json")
     paths.update(profiles.ROOT / name for name in profiles.read_config()["source_pins"])
+    if scope == "candidate-pair-validation":
+        cp, qwen = profiles.candidate_modules()
+        paths.update(profiles.ROOT / name for name in cp.source_identity())
+        paths.update(profiles.ROOT / name for name in qwen.PROFILE_HASHES)
+        paths.add(profiles.ROOT / "reports/q38r-source-weight-manifest.json")
+        paths.update((profiles.ROOT / "scripts/lifecycle").glob("*.py"))
+        paths.update(p for p in (profiles.ROOT / "tests/lifecycle/sglang38_fixture").iterdir()
+                     if p.is_file() and p.suffix in {".py", ".json", ".jinja"})
     return {str(p.relative_to(profiles.ROOT)): p.read_bytes() for p in sorted(paths)}
 
 
@@ -78,9 +86,9 @@ def load_arm(state, reviewed):
     value = json.loads((Path(state) / "arm.json").read_bytes())
     if fixtures.digest(fixtures.canonical(value)) != reviewed:
         raise ValueError("root_reviewed_arm_hash_mismatch")
-    if {p: hashlib.sha256(b).hexdigest() for p, b in source_files().items()} != value["source_files"]:
+    if {p: hashlib.sha256(b).hexdigest() for p, b in source_files(value.get("scope")).items()} != value["source_files"]:
         raise ValueError("armed_source_changed")
-    if profiles.validate_arm_scope(value) != "full":
+    if profiles.validate_arm_scope(value) not in {"full", "candidate-pair-validation"}:
         if json.loads((Path(state) / "execution.json").read_bytes()) != value.get("continuation_execution"):
             raise ValueError("q1_continuation_epoch_changed")
     return value
@@ -148,13 +156,14 @@ class SSHHost:
                         "--campaign", campaign, "--manifests", f"/data/services/{campaign}/manifests.json", "--serve"]
         if stage:
             payload = {"arm": armed, "config": profiles.read_config(),
-                       "files": {p: base64.b64encode(b).decode() for p, b in source_files().items()}}
+                       "files": {p: base64.b64encode(b).decode() for p, b in source_files(armed.get("scope")).items()}}
             result = run(["ssh", "-T", "-o", "BatchMode=yes", "ai-vm", shlex.join(["sudo", "-n", "python3", "-I", "-B", "-c", STAGE])],
                          input=fixtures.canonical(payload), stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
             if result.returncode or json.loads(result.stdout).get("staged") is not True:
                 raise ValueError("guarded_source_stage_failed")
+        target_ports = (30002, 30004) if armed.get("scope") == "candidate-pair-validation" else (31002, 31004)
         argv = ["ssh", "-T", "-o", "BatchMode=yes", "-o", "ExitOnForwardFailure=yes",
-                "-L", "127.0.0.1:31002:127.0.0.1:31002", "-L", "127.0.0.1:31004:127.0.0.1:31004",
+                "-L", f"127.0.0.1:31002:127.0.0.1:{target_ports[0]}", "-L", f"127.0.0.1:31004:127.0.0.1:{target_ports[1]}",
                 "ai-vm", shlex.join(self.command)]
         self.process = popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
 
@@ -229,10 +238,10 @@ class Campaign:
                     # A known timed-out GPU query during loading is an observation
                     # gap, not measured low reserve. Keep the raw sample; require
                     # fresh complete resource proof before warmup below.
-                    loading_gpu_timeout = (self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"}
+                    loading_gpu_timeout = (self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation"}
                         and self.active[cid].get("phase") == "loading"
                         and row.get("errors") == ["gpu_TimeoutExpired"] and row.get("gpus") == [])
-                    if self.armed.get("scope") == "concurrent-g1q1":
+                    if self.armed.get("scope") in {"concurrent-g1q1", "candidate-pair-validation"}:
                         gate = row.get("concurrent_resource_gate", {})
                         loading_gpu_gap = (loading_gpu_timeout and gate.get("status") == "UNAVAILABLE"
                             and gate.get("unavailable_reasons") == ["concurrent_gpu_free_unavailable"]
@@ -249,7 +258,7 @@ class Campaign:
                         verdict = "SKIP_UNSAFE_PLACEMENT"
                     if verdict.startswith(("STOP_", "SKIP_")):
                         self.safety[cid] = verdict
-                    if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"}:
+                    if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation"}:
                         # Cancel only proven resource violations, never missing
                         # telemetry or a reporting/parser failure. Existing stop
                         # paths run after the transport closes and saves raw data.
@@ -299,14 +308,14 @@ class Campaign:
         self.record()
         while True:
             with self.lock:
-                if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"} and self.active[cid].get("abort_reason"):
+                if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation"} and self.active[cid].get("abort_reason"):
                     raise RuntimeError(self.active[cid]["abort_reason"])
             remaining = min(deadline - self.clock(), self.host.call("budget").get("remaining_s", 0))
             if remaining <= 0:
                 raise RuntimeError("STOP_BUDGET")
             proof = self.host.call("readiness", id=cid, timeout_s=remaining)
             with self.lock:
-                if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"} and self.active[cid].get("abort_reason"):
+                if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation"} and self.active[cid].get("abort_reason"):
                     raise RuntimeError(self.active[cid]["abort_reason"])
             if self.clock() >= deadline:
                 raise RuntimeError("STOP_BUDGET")
@@ -320,7 +329,7 @@ class Campaign:
         if proof.get("allocation", {}).get("status") != "ALLOCATION_PROOF_ACCEPTED":
             raise RuntimeError("STOP_ALLOCATION_PROOF")
         ready = self.host.call("quiescent", id=cid, point="readiness")
-        if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"}:
+        if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation"}:
             current = ready.get("telemetry") or {}
             available = current.get("host", {}).get("available_bytes")
             free = {g.get("uuid"): g.get("free_bytes") for g in current.get("gpus", [])}
@@ -371,7 +380,7 @@ class Campaign:
         manifest = self.active[cid]["manifest"]
         url = "http://127.0.0.1:" + str(manifest["transport"]["port"])
         try:
-            options = {"cancel_event": self.active[cid]["cancel_event"]} if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"} else {}
+            options = {"cancel_event": self.active[cid]["cancel_event"]} if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation"} else {}
             result = client.run_request(raw, self.transport_factory(url, self.key, **options), sample_id=identifier,
                                       private_dir=self.private, summary_path=self.state / ("samples.jsonl" if timed else "warmups.jsonl"), timeout=timeout,
                                       clock=self.clock)
@@ -397,7 +406,7 @@ class Campaign:
             finally:
                 self.host.call("request_end", id=cid)
         return accounting.native_counter(model, manifest["configured_capacity"], call,
-                                         qwen_template_sha256=self.active[cid]["template_sha256"], scope=self.armed.get("scope") if self.armed.get("scope") in {"glm-decode-diag", "concurrent-g1q1"} else None)
+                                         qwen_template_sha256=self.active[cid]["template_sha256"], scope=self.armed.get("scope") if self.armed.get("scope") in {"glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation"} else None)
 
     def prepare_trial(self, cid, identifier, kind="retrieval", output_cap=256, fixture_key=None):
         """Count/freeze exact bytes separately, before mixed arrival clocks start."""

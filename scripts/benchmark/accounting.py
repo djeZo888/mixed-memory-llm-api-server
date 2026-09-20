@@ -18,7 +18,9 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None, scope=No
     """
     allowed_capacities = CAPACITIES
     if scope is not None:
-        if scope == CONCURRENT_SCOPE and model in CONCURRENT_CAPACITIES:
+        if scope == "candidate-pair-validation" and model in {"glm-5.3", "qwen3.8-27b"}:
+            allowed_capacities = (480000,) if model == "glm-5.3" else (700160,)
+        elif scope == CONCURRENT_SCOPE and model in CONCURRENT_CAPACITIES:
             allowed_capacities = CONCURRENT_CAPACITIES[model]
         elif scope == "glm-decode-diag" and model == "bench-glm-5.3":
             allowed_capacities = GLM_DECODE_DIAG_CAPACITIES

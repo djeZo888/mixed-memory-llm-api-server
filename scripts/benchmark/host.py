@@ -29,7 +29,8 @@ from .owner import CampaignOwner, HostCallbacks, WorkerVerificationPending
 from .campaign import CampaignBudget
 from .profiles import (read_config, command_manifest, split_resources, validate_arm_scope,
                        G1_RAM_CAP_BYTES, glmrepair_manifest, g1_ladder_manifest, glm_decode_diag_manifest, cpu_set,
-                       CONCURRENT_SCOPE, CONCURRENT_CAMPAIGN, CONCURRENT_Q1_RAM_CAP_BYTES, concurrent_manifest)
+                       CONCURRENT_SCOPE, CONCURRENT_CAMPAIGN, CONCURRENT_Q1_RAM_CAP_BYTES, concurrent_manifest,
+                       CANDIDATE_SCOPE, candidate_manifest, candidate_manifests, candidate_modules, candidate_profile)
 from .telemetry import collect_sample, required_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
@@ -63,12 +64,16 @@ class NativeInfoPending(Exception):
     """Only a startup timeout from Qwen's native-info GET; not proof acceptance."""
 
 
-def command(argv, timeout=30, *, allow_missing=False):
+def command(argv, timeout=30, *, allow_missing=False, candidate_owner=None):
     deadline = _COMMAND_DEADLINE.get()
     if deadline is not None:
         remaining = deadline - time.monotonic()
         require(remaining > 0, 'host_operation_deadline')
         timeout = min(timeout, remaining)
+    if candidate_owner is not None:
+        require(candidate_owner.scope == 'candidate-pair-validation' and argv[:2] == ['/usr/bin/docker', 'create'],
+                'candidate_dispatch_seam_requires_create')
+        candidate_owner.mark_create_dispatched()
     result = subprocess.run(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, timeout=timeout, env=ENV, check=False)
     if result.returncode and not allow_missing:
@@ -140,6 +145,8 @@ class HostBudget(CampaignBudget):
             self.budget_seconds = 14400 if host.scope == 'glm-decode-diag' else 10800
         if getattr(host, 'scope', None) == CONCURRENT_SCOPE:
             self.budget_seconds = 5400
+        if getattr(host, 'scope', None) == CANDIDATE_SCOPE:
+            self.budget_seconds = host.deadline_epoch - host.start_epoch
         if getattr(host, 'scope', None) == 'glm-decode-diag' and getattr(host, 'mode', None) == 'cpu-profile-only':
             self.budget_seconds = 1200
         self._data = host.read_json('budget.json', missing=True)
@@ -148,7 +155,7 @@ class HostBudget(CampaignBudget):
 
     def _validate(self):
         super()._validate()
-        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE}:
+        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE, CANDIDATE_SCOPE}:
             require(self._data.get('start_epoch') == self.host.start_epoch == self._data['started_at'] and
                     self._data.get('deadline_epoch') == self.host.deadline_epoch == self.host.start_epoch + self.budget_seconds,
                     'glmrepair_immutable_clock_changed')
@@ -160,7 +167,7 @@ class HostBudget(CampaignBudget):
         require(type(start) in (int, float) and 0 < start <= now and now - start < self.budget_seconds, 'invalid_stage_start_epoch')
         self._data = {'schema': 1, 'budget_seconds': self.budget_seconds, 'phase': 'MEASURING', 'start_kind': kind,
                      'started_at': start, 'last_seen_at': now, 'restoration_started_at': None}
-        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE}:
+        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE, CANDIDATE_SCOPE}:
             self._data.update(start_epoch=start, deadline_epoch=self.host.deadline_epoch)
             self._validate()
         self._save()
@@ -192,7 +199,7 @@ class LinuxHost:
         self.scope = validate_arm_scope(data)
         self.mode = data.get('mode') if self.scope == 'glm-decode-diag' else None
         self.decode_capture_policy = copy.deepcopy(data.get('capture', {})) if self.scope == 'glm-decode-diag' else {}
-        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3, CONCURRENT_SCOPE: 4}[self.scope]
+        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3, CONCURRENT_SCOPE: 4, CANDIDATE_SCOPE: 2}[self.scope]
         if self.mode == 'cpu-profile-only':
             manifest_count = 1
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
@@ -203,6 +210,21 @@ class LinuxHost:
             self.start_epoch, self.deadline_epoch = self.ladder_clock(data)
         elif self.scope == 'glm-decode-diag':
             self.start_epoch, self.deadline_epoch = self.decode_clock(data)
+        elif self.scope == CANDIDATE_SCOPE:
+            from .concurrent_validate import validate_clock, auth_fixture_module
+            self.start_epoch, self.deadline_epoch = validate_clock(data, data.get('runtime', {}))
+            auth_fixture_module().check_pair_receipt(data.get('actual_image_auth_proof', {}), Path(__file__).resolve().parents[2])
+            auth_ref = data.get('actual_image_auth_receipt', {})
+            auth_path = auth_ref.get('registered_path')
+            require(isinstance(auth_path, str) and auth_path.startswith(self.binding.path('logs') + '/'),
+                    'candidate_protected_auth_receipt_required')
+            self.binding.validate_path('logs', auth_path)
+            auth_raw, _ = protected(auth_path, private=True)
+            require(hashlib.sha256(auth_raw).hexdigest() == auth_ref.get('sha256') and
+                    json.loads(auth_raw) == data['actual_image_auth_proof'], 'candidate_protected_auth_receipt_changed')
+            self.candidate_auth = data['actual_image_auth_proof']
+            self.concurrent_resource_violations = {}
+            require(values == candidate_manifests(self.binding), 'candidate_registered_manifests_changed')
         elif self.scope == CONCURRENT_SCOPE:
             self.start_epoch, self.deadline_epoch = self.concurrent_clock(data)
             require(data.get('concurrent_capacity_policy') == concurrent_capacity_policy(),
@@ -222,7 +244,7 @@ class LinuxHost:
             require(hashlib.sha256(source_raw).hexdigest() == sha, 'staged_source_pin_changed')
         self.manifests = {}
         for value in values:
-            expected = concurrent_manifest(value['placement'], value['configured_capacity']) if self.scope == CONCURRENT_SCOPE else glm_decode_diag_manifest(value['configured_capacity'], campaign) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
+            expected = candidate_manifest(value['placement'], self.binding) if self.scope == CANDIDATE_SCOPE else concurrent_manifest(value['placement'], value['configured_capacity']) if self.scope == CONCURRENT_SCOPE else glm_decode_diag_manifest(value['configured_capacity'], campaign) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
                                         ram_cap=G1_RAM_CAP_BYTES if self.scope == 'g1-only' else None,
                                         log_verbosity=4 if self.scope == 'g1-only' else None)
             require(value == expected, 'manifest_not_current_generated_source')
@@ -239,7 +261,8 @@ class LinuxHost:
         self.budget = HostBudget(self)
         callbacks = HostCallbacks(**{name: getattr(self, name) for name in HostCallbacks.__dataclass_fields__})
         self.owner = CampaignOwner(campaign, self.manager, callbacks, self.budget,
-                                  reviewed_manifest_hashes=self.manifests, lease_factory=lifecycle_lease.acquire_lease)
+                                  reviewed_manifest_hashes=self.manifests, lease_factory=lifecycle_lease.acquire_lease,
+                                  scope=self.scope if self.scope == 'candidate-pair-validation' else None)
 
     @staticmethod
     def concurrent_clock(armed):
@@ -339,7 +362,7 @@ class LinuxHost:
     @staticmethod
     def concurrent_limits(manifest, container, cgroup):
         placement = manifest['placement']
-        expected = concurrent_manifest(placement, manifest['configured_capacity'])
+        expected = candidate_manifest(placement) if manifest.get('campaign') == 'benchrun-candidate-pair-20260920' else concurrent_manifest(placement, manifest['configured_capacity'])
         require(manifest == expected, 'concurrent_exact_manifest_required')
         cap = concurrent_capacity_policy()['caps_bytes'][placement]
         cpus = '0-95' if placement == 'G1' else '96-111'
@@ -421,6 +444,105 @@ class LinuxHost:
                 'charges': charges, 'host_available_bytes': available,
                 'latched_violations': copy.deepcopy(self.concurrent_resource_violations),
                 'policy': policy['evidence_status'], 'required_demand_helper': 'NOT_RECLASSIFIED'}
+
+    def candidate_container(self, manifest, container):
+        """Production launch policy with the reviewed campaign mount exceptions."""
+        cp, qwen = candidate_modules()
+        d = candidate_profile(manifest['placement'], self.binding)
+        cp.validate_reuse(container, d)
+        qwen.validate_container_network(container, d['endpoint']['port'], d['container_port'])
+        config = container['Config']
+        expected_cmd = manifest['native_argv'] if manifest['placement'] == 'G1' else [qwen.PAIR_LAUNCHER_TARGET]
+        require(config.get('Cmd') == expected_cmd and config.get('Entrypoint') == d['_runtime']['entrypoint']
+                and config.get('Image') == manifest['image'] and container['Image'] in manifest['expected_image_ids'],
+                'candidate_container_launch_changed')
+        qwen_slot = manifest['placement'] == 'Q1'
+        mounts = container.get('Mounts', [])
+        require(isinstance(mounts, list) and all(isinstance(m, dict) for m in mounts),
+                'candidate_container_mounts_changed')
+        tmpfs = [m for m in mounts if m.get('Type') == 'tmpfs']
+        require(len(tmpfs) <= (1 if qwen_slot else 0) and all(
+                m.get('Destination') == '/tmp' and m.get('Source', '') == '' and m.get('RW') is True
+                for m in tmpfs), 'candidate_container_mounts_changed')
+        binds = [m for m in mounts if m not in tmpfs]
+        expected = {(m['target'], m['source'], m['read_only']) for m in manifest['mounts']}
+        require(len(binds) == len(expected) and all(m.get('Type') == 'bind' and type(m.get('RW')) is bool
+                and m.get('Propagation') in ('rprivate', '') for m in binds) and
+                {(m.get('Destination'), m.get('Source'), not m['RW']) for m in binds} == expected,
+                'candidate_container_mounts_changed')
+        env = dict(item.split('=', 1) for item in config.get('Env', []))
+        if qwen_slot:
+            inherited = d['_runtime']['image_environment']
+        else:
+            # The GLM declaration pins its immutable image rather than an Env
+            # inventory. Read that exact image once; its ID cannot change bytes.
+            inherited = getattr(self, '_candidate_glm_image_environment', None)
+            if inherited is None:
+                images = json.loads(command(['/usr/bin/docker', 'image', 'inspect', manifest['image']]).stdout)
+                require(isinstance(images, list) and len(images) == 1 and images[0].get('Id') == manifest['image']
+                        and images[0].get('Config', {}).get('Entrypoint') == d['_runtime']['entrypoint'],
+                        'candidate_image_environment_unavailable')
+                entries = images[0]['Config'].get('Env', [])
+                require(isinstance(entries, list) and all(isinstance(item, str) and '=' in item for item in entries),
+                        'candidate_image_environment_unavailable')
+                inherited = dict(item.split('=', 1) for item in entries)
+                require(len(inherited) == len(entries), 'candidate_image_environment_unavailable')
+                self._candidate_glm_image_environment = inherited
+        expected_env = {**inherited, **d['_runtime']['environment'], **d['launch_environment']}
+        require(env == expected_env, 'candidate_runtime_environment_changed')
+        host = container['HostConfig']
+        require(host.get('CapDrop') == ['ALL'] and not host.get('CapAdd')
+                and host.get('SecurityOpt') == ['no-new-privileges:true']
+                and host.get('LogConfig') == {'Type': 'json-file', 'Config': {'max-size': '20m', 'max-file': '3'}}
+                and not any(host.get(key) for key in ('Devices', 'DeviceCgroupRules', 'VolumesFrom', 'Binds', 'PidMode', 'UTSMode'))
+                and host.get('IpcMode', 'private') == 'private', 'candidate_security_policy_changed')
+        if qwen_slot:
+            require(config.get('WorkingDir') == '/service' and config.get('User') == '0'
+                    and config.get('Healthcheck') == {'Test': ['NONE']}
+                    and host.get('ReadonlyRootfs') is True and host.get('ShmSize') == 8 * 1024**3
+                    and host.get('Tmpfs') == {'/tmp': 'rw,nosuid,nodev,size=1g'}, 'candidate_qwen_process_storage_changed')
+            limits = host.get('Ulimits')
+            require(isinstance(limits, list) and all(isinstance(limit, dict) for limit in limits),
+                    'candidate_qwen_core_limit_changed')
+            core = [limit for limit in limits if limit.get('Name') == 'core']
+            require(len(core) == 1 and type(core[0].get('Soft')) is int and core[0]['Soft'] == 1
+                    and type(core[0].get('Hard')) is int and core[0]['Hard'] == 1,
+                    'candidate_qwen_core_limit_changed')
+
+    def candidate_pressure(self, row):
+        """Root's superseding required-working-set helper must be integrated first.
+
+        Raw inclusive current/peak remain observations, not required working set.
+        This closed seam never falls back to the historical overinclusive gate.
+        """
+        from .concurrent_validate import memory_obligations
+        reasons = []
+        try:
+            obligations = memory_obligations(row, self.load_manifests)
+        except ValueError:
+            obligations = None
+            reasons.append('candidate_remaining_caps_host_reserve_failed')
+        # Numeric hard failures still stop immediately even with helper unavailable.
+        for cid, group in row['cgroups'].items():
+            cap = self.load_manifests[cid]['ram_cap_bytes']
+            if any(type(group.get(k)) is int and group[k] > cap for k in ('current_bytes', 'peak_since_cgroup_creation_bytes')):
+                reasons.append('candidate_hard_cap_failed')
+            if type(group.get('swap_bytes')) is int and group['swap_bytes'] > 0:
+                reasons.append('candidate_owned_swap_failed')
+            if any(type(group.get('events', {}).get(k)) is int and group['events'][k] > 0 for k in ('oom', 'oom_kill', 'oom_group_kill')):
+                reasons.append('candidate_oom_failed')
+        for gpu in row['gpus']:
+            if type(gpu.get('free_bytes')) is int and gpu['free_bytes'] < 16 * 1024**3:
+                reasons.append('candidate_gpu_reserve_failed')
+        if reasons:
+            prior = self.concurrent_resource_violations.setdefault('candidate', {'reasons': []})
+            prior['reasons'] = sorted(set(prior['reasons'] + reasons))
+        return {'status': 'STOP_RESOURCE_GATE' if self.concurrent_resource_violations else 'UNAVAILABLE',
+                'reasons': sorted(set(reasons)), 'unavailable_reasons': ['root_reviewed_required_working_set_helper_pending'],
+                'latched_violations': copy.deepcopy(self.concurrent_resource_violations),
+                'remaining_cap_obligations': obligations, 'required_demand_helper': 'UNAVAILABLE',
+                'raw_current_peak': {cid: {k: g.get(k) for k in ('current_bytes', 'peak_since_cgroup_creation_bytes', 'file_bytes',
+                    'file_mapped_bytes', 'shmem_bytes', 'anon_bytes', 'kernel_bytes')} for cid, g in row['cgroups'].items()}}
 
     @staticmethod
     def concurrent_cpu_pressure(cgroups):
@@ -618,6 +740,12 @@ class LinuxHost:
             require(units[CONTROL_UNIT]['active'] == 'inactive', 'control_not_frozen')
         if stage in {'admission', 'production_stop', 'restore', 'retire', 'stop', 'remove', 'pre_release'}:
             self.assert_idle()
+        if self.scope == CANDIDATE_SCOPE and stage == 'admission':
+            from .concurrent_validate import admission, preserve
+            require(original['manager']['selected'] == 'qwen38-27b-1000000-yarn4-tp2-bf16kv'
+                    and original['manager']['desired'] == 'running', 'candidate_original_singleton_required')
+            self.write_json('candidate-pre-retirement-admission.json', admission(self))
+            preserve(self)
         if stage == 'control_frozen':
             self.verify_mapping_helpers(lease)
         if stage in {'production_stopped', 'launch'}:
@@ -651,8 +779,15 @@ class LinuxHost:
                      if kind == 'G' else "command -v python3 >/dev/null; python3 -c 'import ctypes,json,uuid; ctypes.CDLL(\"libcuda.so.1\")'")
             self.write_json('mapping-helper-' + kind.lower() + '.json',
                             {'phase': 'PLANNED', 'name': name, 'image': manifest['image'], 'no_gpu': True})
+            if self.scope == 'candidate-pair-validation':
+                require(self.owner.pending_create is None, 'unresolved_create_intent')
+                self.owner.pending_create = {'manifest_sha256': digest(manifest), 'name': name,
+                    'image': manifest['image'], 'campaign': self.campaign,
+                    'dispatch': 'not_dispatched', 'kind': 'mapping_helper'}
+                self.owner._save()
             self.guards(lease)
-            cid = command([*probe, check], 60).stdout.decode().strip()
+            dispatch = {'candidate_owner': self.owner} if self.scope == 'candidate-pair-validation' else {}
+            cid = command([*probe, check], 60, **dispatch).stdout.decode().strip()
             require(bool(CID.fullmatch(cid)), 'mapping_helper_create_identity_invalid')
             container = self.docker_inspect(cid)
             resource = self.owner._resource(self.resource(container))
@@ -660,6 +795,8 @@ class LinuxHost:
                     'mapping_helper_image_changed')
             row = {'resource': resource, 'state': 'CREATED'}
             self.owner.resources.append(row)
+            if self.scope == 'candidate-pair-validation':
+                self.owner.pending_create = None
             self.owner._save()
             try:
                 self.guards(lease)
@@ -777,11 +914,29 @@ class LinuxHost:
             available = collect_sample({})['host']['available_bytes']
             require(type(available) is int and available >= remaining + policy['os_reserve_bytes'],
                     'concurrent_host_available_reserve_unproved')
+        if self.scope == CANDIDATE_SCOPE:
+            from .concurrent_validate import admission
+            require(not any(self.load_manifests.get(r['resource']['id'], {}).get('placement') == manifest['placement']
+                            for r in self.owner.resources if r['state'] != 'REMOVED'), 'candidate_duplicate_load')
+            require(manifest['placement'] == ('Q1' if self.load_manifests else 'G1'), 'candidate_fixed_load_order')
+            self.write_json('candidate-preload-' + manifest['placement'] + '.json', admission(self))
+            cp, qwen = candidate_modules()
+            d = candidate_profile(manifest['placement'], self.binding)
+            if manifest['placement'] == 'Q1':
+                # Same protected bytes as validate_launcher; the not-yet-installed
+                # pair wrapper is read only from the reviewed guarded source stage.
+                for rel, path in [('scripts/runtime/sglang38_file_auth.py', self.binding.path('data', qwen.LAUNCHER_SUFFIX)),
+                                  ('scripts/runtime/sglang38_pair_file_auth.py', manifest['registered_paths']['source'] + '/scripts/runtime/sglang38_pair_file_auth.py')]:
+                    raw, _ = protected(path)
+                    require(hashlib.sha256(raw).hexdigest() == cp.PINS[rel], 'candidate_protected_wrapper_changed')
         self.mkdir_paths(manifest)
         argv = ['/usr/bin/docker', *manifest['create_argv'][1:]]
-        created = command(argv, 120).stdout.decode().strip()
+        dispatch = {'candidate_owner': self.owner} if self.scope == CANDIDATE_SCOPE else {}
+        created = command(argv, 120, **dispatch).stdout.decode().strip()
         require(bool(CID.fullmatch(created)), 'invalid_created_container_id')
         container = self.docker_inspect(created)
+        if self.scope == CANDIDATE_SCOPE:
+            self.candidate_container(manifest, container)
         if self.scope in {'g1-only', 'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
             require(container['HostConfig'].get('Memory') == G1_RAM_CAP_BYTES and
                     container['HostConfig'].get('MemorySwap') == G1_RAM_CAP_BYTES,
@@ -842,6 +997,13 @@ class LinuxHost:
         rows = [r['resource'] for r in self.owner.resources if r['resource']['id'] == cid and r['state'] != 'REMOVED']
         require(len(rows) == 1, 'unowned_container_id')
         container = self._exact(rows[0])
+        if self.scope == CANDIDATE_SCOPE:
+            manifest = next((m for m in self.manifests.values() if m['container_name'] == container['Name'].removeprefix('/')), None)
+            if manifest is not None:
+                self.candidate_container(manifest, container)
+            else:
+                require(container['Name'].removeprefix('/') in {self.campaign + '-mapping-helper-g',
+                        self.campaign + '-mapping-helper-q'}, 'candidate_unreviewed_owned_identity')
         pid = container['State']['Pid']
         require(container['State']['Running'] and type(pid) is int and pid > 0, 'container_not_running')
         entries = Path(f'/proc/{pid}/cgroup').read_text().splitlines()
@@ -856,16 +1018,19 @@ class LinuxHost:
     def telemetry(self, cid):
         collection_started = time.monotonic()
         container, cgroup, pids = self.identity(cid)
+        if self.scope == CANDIDATE_SCOPE:
+            from .concurrent_validate import identity_stamp
+            before_identity = identity_stamp(self, cid)
         options = {'decode_diagnostic': True} if self.scope == 'glm-decode-diag' else {}
         groups, members = {cid: cgroup}, {cid: pids}
-        if self.scope == CONCURRENT_SCOPE:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE}:
             for resource in self.owner.resources:
                 peer = resource['resource']['id']
                 if resource['state'] == 'RUNNING' and peer != cid and peer in self.load_manifests:
                     _, groups[peer], members[peer] = self.identity(peer)
         row = collect_sample(groups, pids=members, **options)
-        if self.scope == CONCURRENT_SCOPE:
-            row['concurrent_resource_gate'] = self.concurrent_pressure(row)
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE}:
+            row['concurrent_resource_gate'] = self.candidate_pressure(row) if self.scope == CANDIDATE_SCOPE else self.concurrent_pressure(row)
             row['cpu_pressure'] = self.concurrent_cpu_pressure(groups)
         if self.scope == 'glm-decode-diag':
             previous = getattr(self, '_decode_last_sample', {}).get(cid, float('-inf'))
@@ -930,13 +1095,16 @@ class LinuxHost:
             except (TypeError, ValueError, KeyError):
                 pass  # unavailable is explicit; never substitute raw current or zero
 
+        if self.scope == CANDIDATE_SCOPE:
+            require(before_identity == identity_stamp(self, cid), 'candidate_sampling_identity_changed')
+            row['identity'] = before_identity
         return row
 
     def quiescent(self, cid, point):
         require(point in {'readiness', 'warm_idle'}, 'pss_checkpoint_only')
         self.assert_idle()
         container, cgroup, pids = self.identity(cid)
-        if self.scope == CONCURRENT_SCOPE:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE}:
             result = {'point': point, 'pss_bytes': None, 'pss_unavailable_reason': 'concurrent_no_profiling',
                       'container_id': cid, 'scope': 'cheap_quiescent_counters', 'telemetry': self.telemetry(cid)}
             self.write_json('loads/' + cid + '-' + point + '.json', result)
@@ -1110,6 +1278,9 @@ class LinuxHost:
     def allocation(self, cid):
         self.assert_idle()
         container, cgroup, pids = self.identity(cid)
+        if self.scope == CANDIDATE_SCOPE:
+            from .concurrent_validate import identity_stamp
+            allocation_identity = identity_stamp(self, cid)
         manifest = self.load_manifests.get(cid) or self.read_json('loads/' + cid + '.json')['manifest']
         result = command(['/usr/bin/docker', 'logs', '--tail', '20000', cid], 60)
         raw = result.stdout + result.stderr
@@ -1119,6 +1290,7 @@ class LinuxHost:
         text = raw.decode('utf-8', 'replace')
         port = manifest['transport']['port']
         facts = {}
+        native_capacity = None
         if manifest['placement'].startswith('Q'):
             try:
                 info = http_json(port, '/get_server_info')
@@ -1133,12 +1305,21 @@ class LinuxHost:
                 internal = info.get('internal_states', [])
                 if isinstance(internal, list) and len(internal) == 1 and isinstance(internal[0], dict):
                     facts['max_total_num_tokens'] = internal[0].get('max_total_num_tokens')
+            if self.scope == CANDIDATE_SCOPE:
+                from .concurrent_validate import native_proof
+                native_capacity = native_proof(self, cid, info)
+                facts['max_total_num_tokens'] = native_capacity['native_pool_tokens']
             parsed = parse_qwen_log(text, facts)
             receipts = [json.loads(line.split('BENCHMARK_NATIVE_ARGV ', 1)[1])['argv'] for line in text.splitlines()
                         if 'BENCHMARK_NATIVE_ARGV ' in line]
             native = receipts[0] if len(receipts) == 1 else None
+            if self.scope == CANDIDATE_SCOPE:
+                native = manifest['native_argv']  # resolving-view validation above, not argv-only proof
         else:
             parsed, native = parse_glm_log(text), container['Config']['Cmd']
+            if self.scope == CANDIDATE_SCOPE:
+                from .concurrent_validate import native_proof
+                native_capacity = native_proof(self, cid)
         cuda = self.cuda_mapping(cid, manifest, container)
         device_requests = container['HostConfig'].get('DeviceRequests') or []
         device_ids = [uuid for request in device_requests for uuid in request.get('DeviceIDs', [])]
@@ -1160,12 +1341,12 @@ class LinuxHost:
             observed['container_memory_limits'] = self.g1_memory_limits(container, cgroup)
         if self.scope in {'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
             observed['container_cpu_limits'] = self.glmrepair_cpu_limits(container, cgroup)
-        if self.scope == CONCURRENT_SCOPE:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE}:
             memory, cpu = self.concurrent_limits(manifest, container, cgroup)
             observed.update(container_memory_limits=memory, container_cpu_limits=cpu)
-        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope in {'g1-only', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE} and manifest['placement'] == 'G1',
+        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope in {'g1-only', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE, CANDIDATE_SCOPE} and manifest['placement'] == 'G1',
                                strict_glmrepair=self.scope == 'glmrepair')
-        if self.scope == CONCURRENT_SCOPE:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE}:
             pressure = sample['concurrent_resource_gate']
             if pressure['status'] != 'PASS':
                 gate['status'] = 'STOP_ALLOCATION_PROOF'
@@ -1176,6 +1357,11 @@ class LinuxHost:
                                         for rank in ranks.values() for key in ('k_gb_log_label', 'v_gb_log_label')):
                     gate['status'] = 'STOP_ALLOCATION_PROOF'
                     gate['reasons'].append('concurrent_positive_native_kv_allocation_required')
+        if self.scope == CANDIDATE_SCOPE:
+            from .concurrent_validate import identity_stamp
+            require(allocation_identity == native_capacity['identity'] == identity_stamp(self, cid), 'candidate_allocation_identity_changed')
+            observed['native_capacity'] = native_capacity
+            observed['evidence_status'] = 'CANDIDATE_OBSERVATION_NOT_ACCEPTANCE'
         result = {'allocation': gate, 'parsed': parsed, 'observed': observed, 'server_facts': facts,
                   'raw_log_path': self.log_root + '/loads/' + cid + '-allocation.log'}
         if gate['status'] == 'ALLOCATION_PROOF_ACCEPTED':
@@ -1244,7 +1430,7 @@ class LinuxHost:
         manifest = self.load_manifests.get(cid) or self.read_json('loads/' + cid + '.json')['manifest']
         try:
             models = http_json(manifest['transport']['port'], '/v1/models', timeout_s=5)
-            alias = 'bench-glm-5.3' if manifest['placement'].startswith('G') else 'bench-qwen3.8-27b'
+            alias = manifest['served_model'] if self.scope == CANDIDATE_SCOPE else 'bench-glm-5.3' if manifest['placement'].startswith('G') else 'bench-qwen3.8-27b'
             require(any(row.get('id') == alias for row in models.get('data', [])), 'served_alias_mismatch')
         except Exception:
             terminal = self.readiness_failure(cid)
@@ -1288,6 +1474,14 @@ class LinuxHost:
                   'worker_lan_inference_authenticated': supplied.get('worker_lan_inference_authenticated')}
         listeners = command(['/usr/bin/ss', '-Hltn']).stdout.decode()
         require(not re.search(r':(?:31002|31004)\b', listeners), 'benchmark_listener_remains')
+        if self.scope == CANDIDATE_SCOPE:
+            require(not re.search(r':30002\b', listeners), 'candidate_glm_listener_remains')
+            require(all(row['state'] == 'REMOVED' and self.docker_inspect(row['resource']['id']) is None
+                        for row in self.owner.resources) and self.owner.pending_create is None,
+                    'candidate_validation_identity_remains')
+            # Restored singleton Qwen legitimately owns production 30004.
+            require(after['manager']['selected'] == 'qwen38-27b-1000000-yarn4-tp2-bf16kv',
+                    'candidate_restored_qwen_identity_changed')
         from common.lifecycle_lease import transition_in_progress
         require(not transition_in_progress(), 'lifecycle_owner_remains')
         result = validate_restored(self.owner.original, after, checks)
@@ -1302,12 +1496,21 @@ class LinuxHost:
         from common.lifecycle_lease import acquire_lease
         ledger = self.read_json('owner.json')
         require(ledger.get('campaign') == self.campaign and ledger.get('evidence_kind') == 'live', 'invalid_recovery_ledger')
+        candidate = self.scope == 'candidate-pair-validation'
+        require(ledger.get('validation_scope') == ('candidate-pair-validation' if candidate else None),
+                'recovery_scope_changed')
+        if candidate:
+            require(type(ledger.get('production_touched')) is bool and type(ledger.get('control_touched')) is bool,
+                    'candidate_recovery_mutation_boundary_required')
         require(self.owner.phase == 'NEW', 'owner_already_active')
         self.owner.lease_context = acquire_lease(blocking=False)
         self.owner.lease = self.owner.lease_context.__enter__()
         self.owner.original = ledger['original']
         self.owner.resources, self.owner.pending_create = ledger['resources'], ledger['pending_create']
         self.owner.production_touched = self.owner.control_touched = True
+        if candidate:
+            self.owner.production_touched = ledger['production_touched']
+            self.owner.control_touched = ledger['control_touched']
         self.owner.budget_started = self.budget.data is not None
         self.owner.restoration_started = bool(self.budget.data and self.budget.data['phase'] != 'MEASURING')
         self.owner.phase = 'RECOVERY_REQUIRED'
@@ -1315,6 +1518,10 @@ class LinuxHost:
         # restoration callback consults the persisted credential/lease witness.
         current = self.capture(self.owner.lease)
         if ledger['phase'] in {'POST_RELEASE_LAN_VERIFICATION_PENDING', 'RESTORED'}:
+            if candidate:
+                require(self.owner.pending_create is None and
+                        all(row['state'] == 'REMOVED' for row in self.owner.resources),
+                        'candidate_restored_ownership_unresolved')
             # Recheck a locally restored campaign without another model cycle.
             for key in ('manager', 'services', 'source', 'storage', 'credentials'):
                 require(current[key] == self.owner.original[key], 'restored_recovery_state_changed')
@@ -1327,18 +1534,36 @@ class LinuxHost:
             except WorkerVerificationPending:
                 self.owner._save()
                 return {'restored': False, 'local_restoration': 'VERIFIED', 'worker_lan_verification': 'PENDING'}
-        # An interrupted create is reconciled only by its exact reviewed name,
-        # image and labels; absence is established against the complete list.
+        # Reconcile by exact reviewed name, image and labels. Historical scopes
+        # retain their inventory absence rule; candidate dispatch requires a
+        # positive immutable identity and never settles from an empty list.
         pending = self.owner.pending_create
         if pending:
             manifest = self.manifests.get(pending['manifest_sha256'])
-            require(manifest is not None and manifest['container_name'] == pending['name'], 'unreviewed_pending_create')
+            require(manifest is not None, 'unreviewed_pending_create')
+            if candidate:
+                require(pending.get('dispatch') in {'not_dispatched', 'uncertain'} and pending.get('kind') in {'model', 'mapping_helper'} and
+                        pending.get('campaign') == self.campaign and pending.get('image') == manifest['image'],
+                        'unreviewed_pending_create')
+                if pending['kind'] == 'mapping_helper':
+                    manifest = {**manifest, 'container_name': self.campaign + '-mapping-helper-' + manifest['placement'][0].lower()}
+            require(manifest['container_name'] == pending['name'], 'unreviewed_pending_create')
             ids = self.campaign_containers()
             matches = [self.docker_inspect(cid) for cid in ids]
             matches = [c for c in matches if c and c['Name'].removeprefix('/') == pending['name']]
             require(len(matches) <= 1, 'ambiguous_pending_create')
+            if candidate and not matches and pending['dispatch'] == 'uncertain':
+                # A timed-out create can complete in the daemon after this
+                # inventory. Keep the durable intent and lease; do not drain a
+                # healthy owned peer or restore production over unresolved work.
+                self.owner._record_failure('candidate_dispatched_create_unresolved')
+                require(False, 'candidate_dispatched_create_unresolved')
             if matches:
                 resource = self.owner._resource(self.resource(matches[0]), manifest)
+                if candidate:
+                    require(not any(row['state'] != 'REMOVED' and
+                                    (row['resource']['id'] == resource['id'] or row['resource']['name'] == resource['name'])
+                                    for row in self.owner.resources), 'candidate_pending_identity_already_owned')
                 self.owner.resources.append({'resource': resource, 'state': 'RUNNING' if matches[0]['State']['Running'] else 'CREATED'})
             self.owner.pending_create = None
             self.owner._save()
@@ -1349,9 +1574,14 @@ class LinuxHost:
         op = message.get('op')
         args = message.get('args', {k: v for k, v in message.items() if k != 'op'})
         require(isinstance(args, dict), 'invalid_rpc_args')
+        if self.scope == CANDIDATE_SCOPE:
+            require(op in {'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation', 'quiescent',
+                    'request_begin', 'request_end', 'candidate_denials', 'candidate_evidence', 'rpc_diagnostics',
+                    'restore', 'recover', 'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'},
+                    'candidate_operation_outside_scope')
         if op == 'begin':
             if args.get('resume'):
-                require(self.scope not in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE}, 'glmrepair_resume_forbidden_restore_only')
+                require(self.scope not in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE, CANDIDATE_SCOPE}, 'glmrepair_resume_forbidden_restore_only')
                 ledger = self.read_json('owner.json')
                 require(ledger['phase'] == 'RESTORED' and self.budget.data['phase'] == 'RESTORED', 'resume_requires_verified_restoration')
                 require(time.time() - self.budget.data['started_at'] < 21600, 'STOP_BUDGET')
@@ -1397,14 +1627,19 @@ class LinuxHost:
             return self.decode_cpu_capture_status(args['id'], args['capture_id'], args.get('client_after'))
         if op == 'request_begin':
             require(self.owner.phase == 'ACTIVE', 'owner_not_active')
-            container, cgroup, _ = self.identity(args['id']) if self.scope == CONCURRENT_SCOPE else (None, None, None)
-            if self.scope == CONCURRENT_SCOPE:
+            container, cgroup, _ = self.identity(args['id']) if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE} else (None, None, None)
+            if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE}:
                 require(args['id'] in self.allocation_proofs, 'concurrent_current_allocation_required')
                 self.concurrent_limits(self.load_manifests[args['id']], container, cgroup)
                 sample = self.telemetry(args['id'])
                 require(sample['concurrent_resource_gate']['status'] == 'PASS', 'concurrent_current_resource_gate_failed')
             else:
                 self.identity(args['id'])
+            if self.scope == CANDIDATE_SCOPE:
+                from .concurrent_validate import admission
+                require(len(self.allocation_proofs) == 2 and len(self.load_manifests) == 2,
+                        'candidate_both_resident_required')
+                admission(self)
             timeout = self.budget.request_timeout(args.get('timeout_s', 7200))
             require(args['id'] not in self.requests, 'request_already_active')
             self.requests[args['id']] = {'started_at': time.time(), 'timeout_s': timeout}
@@ -1418,6 +1653,37 @@ class LinuxHost:
             del self.requests[args['id']]
             self.write_json('requests.json', self.requests)
             return {'request_ended': args['id']}
+        if op == 'candidate_denials':
+            require(self.scope == CANDIDATE_SCOPE and len(self.allocation_proofs) == 2 and not self.requests,
+                    'candidate_both_resident_required')
+            from .concurrent_validate import admission
+            admission(self)
+            evidence = {}
+            for cid, manifest in self.load_manifests.items():
+                before = self.resource(self.identity(cid)[0])
+                try:
+                    http_json(manifest['transport']['port'], '/v1/chat/completions',
+                              {'model': 'candidate-deliberately-wrong-alias',
+                               'messages': [{'role': 'user', 'content': 'Reply OK.'}],
+                               'max_tokens': 1, 'stream': False}, timeout_s=min(5, self.budget.checkpoint()))
+                    raise ValueError('candidate_wrong_alias_accepted')
+                except urllib.error.HTTPError as error:
+                    require(error.code in (400, 404), 'candidate_alias_denial_unproved')
+                    evidence[manifest['placement']] = {'wrong_alias_status': error.code}
+                require(before == self.resource(self.identity(cid)[0]), 'candidate_denial_identity_changed')
+            self.write_json('candidate-alias-denials.json', evidence)
+            return evidence
+        if op == 'candidate_evidence':
+            require(self.scope == CANDIDATE_SCOPE and not self.requests, 'candidate_evidence_scope_required')
+            checks = args.get('checks', {})
+            require(set(checks) == {'G1-smoke', 'G1-tool', 'Q1-smoke', 'Q1-tool'}
+                    and all(v.get('status') == 'PASS' for v in checks.values()), 'candidate_checks_incomplete')
+            self.write_json('candidate-evidence.json', {'status': 'CANDIDATE_PASS',
+                'production_acceptance': 'NOT_GRANTED', 'checks': checks, 'actual_image_auth': self.candidate_auth,
+                'manifests': list(self.manifests.values()), 'measured_demand_helper': self.measured,
+                'allocation': {cid: self.read_json('loads/' + cid + '-allocation.json') for cid in self.load_manifests},
+                'alias_denials': self.read_json('candidate-alias-denials.json')})
+            return {'status': 'CANDIDATE_PASS', 'production_acceptance': 'NOT_GRANTED'}
         if op == 'admit_concurrent':
             return self.admit_concurrent(args.get('round'))
         if op == 'rpc_diagnostics':
@@ -1482,7 +1748,7 @@ class LinuxHost:
 
 RPC_OPERATIONS = frozenset({'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation',
     'quiescent', 'diagnostic_snapshot', 'decode_progress', 'decode_cpu_capture_start', 'decode_cpu_capture_status',
-    'request_begin', 'request_end', 'admit_mixed', 'admit_concurrent', 'rpc_diagnostics', 'restore', 'recover',
+    'candidate_denials', 'candidate_evidence', 'request_begin', 'request_end', 'admit_mixed', 'admit_concurrent', 'rpc_diagnostics', 'restore', 'recover',
     'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'})
 RPC_SAFE_REQUIRE_CODES = frozenset({'native_server_args_unavailable',
     'allocation_log_too_large', 'current_model_mount_changed',
