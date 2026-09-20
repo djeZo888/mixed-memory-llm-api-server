@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "host": "mac-worker1",
+  "session_id": "01a0bdbd-0467-7430-ae53-12cb90bc8a30",
+  "started_at": "2026-09-20T08:09:29.400628+00:00",
+  "base": "a2186a4a5417e980f9560807da942d7272e055d5",
+  "scope": "synthetic source regressions only; no live acceptance or installer tests",
+  "groups": {
+    "lifecycle": {
+      "modules": [
+        "tests.lifecycle.test_slots",
+        "tests.lifecycle.test_concurrent_profiles",
+        "tests.lifecycle.test_concurrent_capacity",
+        "tests.lifecycle.test_manager",
+        "tests.lifecycle.test_manager_lease",
+        "tests.lifecycle.test_boot",
+        "tests.lifecycle.test_recovery_storage",
+        "tests.lifecycle.test_profiles",
+        "tests.lifecycle.test_start_preflight",
+        "tests.lifecycle.test_glm_default",
+        "tests.lifecycle.test_qwen38",
+        "tests.lifecycle.test_qwen38_manager",
+        "tests.lifecycle.test_qwen38_max_context",
+        "tests.lifecycle.test_qwen_next",
+        "tests.lifecycle.test_runtime_io",
+        "tests.lifecycle.test_lease",
+        "tests.lifecycle.test_sglang_readiness",
+        "tests.lifecycle.test_qwen38_final_source"
+      ],
+      "tests": 368,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsed_seconds": 6.767,
+      "log": "lifecycle-final-source-tests.log",
+      "passed": true
+    },
+    "control": {
+      "modules": [
+        "test_control_catalog",
+        "test_control_core_guards",
+        "test_control_discovery",
+        "test_control_fixtures",
+        "test_control_http_transport",
+        "test_control_integration",
+        "test_control_journal",
+        "test_control_production",
+        "test_control_receipts",
+        "test_control_restart",
+        "test_control_slots",
+        "test_control_slots_manager",
+        "test_control_source_closure"
+      ],
+      "tests": 200,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsed_seconds": 8.255,
+      "log": "control-final-source-tests.log",
+      "passed": true
+    },
+    "benchmark_admission": {
+      "modules": [
+        "tests.test_benchmark_pair_admission",
+        "tests.test_benchmark_lifecycle",
+        "tests.test_benchmark_owner"
+      ],
+      "tests": 33,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsed_seconds": 0.091,
+      "log": "benchmark_admission-final-source-tests.log",
+      "passed": true
+    }
+  },
+  "passed": true,
+  "total_test_executions": 601,
+  "source_commit": "6ccc3b53c9da472b38bfafb836621bdcb44abdc1",
+  "source_tree": "a49c29e0cd95847745e2ed6d29e0215fdb3e4c93",
+  "completed_at": "2026-09-20T08:11:17.529558+00:00",
+  "warnings": [
+    "Retained multiprocessing fork deprecation warning on macOS Python 3.14; tests passed.",
+    "Auxiliary aggregate runner initially missed repository import path and multiprocessing main guard; corrected. Failed packaging-run logs retained. No source-test failure in the final run."
+  ],
+  "commands": [
+    "python3 ../run-source-checks.py"
+  ],
+  "live_acceptance": false
+}
