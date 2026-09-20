@@ -1,5 +1,10 @@
 # Concurrent production API — Worker1 source handoff
 
+Historical handoff at `862ea01`: its two-empty-inventory reconciliation and
+anon-only resident credit are superseded by the
+[final review correction receipt](concurrent-api-source-final-seams-20260920.md).
+The 601 checks below describe the prior implementation only.
+
 Status: **source candidate complete; activation unaccepted**. Tested implementation
 commit `6ccc3b53c9da472b38bfafb836621bdcb44abdc1`, based on `a2186a4a5417e980f9560807da942d7272e055d5`. Fresh native session
 `01a0bdbd-0467-7430-ae53-12cb90bc8a30` on **mac-worker1** in the isolated
