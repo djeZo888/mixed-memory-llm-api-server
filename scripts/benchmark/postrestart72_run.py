@@ -22,6 +22,7 @@ from .warmup import prefill_proof
 
 SCOPE = 'postrestart72-480k'
 BASE = '59aeef68640986082d6e6b431be3d86386e64168'
+WARM_ONLY_BASE = 'd257c2a6531eb29f47e210c98d64341d23a373ee'
 POLICY = {'budget_seconds': 21600, 'preparation_seconds': 7200, 'request_timeout_seconds': 7200,
           'clock_starts': 'FIRST_MEASURED_REQUEST_ADMISSION', 'clock_includes_preparation': False,
           'admission_deadline_refuses_new_only': True, 'request_clock_starts': 'HTTP_DISPATCH',
@@ -54,6 +55,11 @@ def validate_clock(armed, runtime):
 
 
 def bind_runtime(armed, go, session, now=None):
+    mode = armed.get('mode', profile.POSTRESTART_MEASURED_MODE)
+    if (mode == profile.POSTRESTART_WARM_ONLY_MODE or 'mode' in armed or 'mode' in go) and go.get('mode') != mode:
+        raise ValueError('postrestart_exact_arm_GO_mode_required')
+    if mode == profile.POSTRESTART_WARM_ONLY_MODE and go.get('campaign') != armed.get('campaign'):
+        raise ValueError('postrestart_exact_arm_GO_campaign_required')
     runtime = copy.deepcopy(go.get('runtime', {}))
     validate_clock(armed, runtime)
     if not session or session == armed.get('session_id') or go.get('run_session_id') != session:
@@ -108,6 +114,7 @@ class PostrestartRun(prior.ConcurrentRun):
         client.private_artifact_directory(Path(state) / 'private')
         super().__init__(state, *args, **kwargs)
         profile.validate_postrestart_arm_scope(self.armed)
+        self.mode = self.armed.get('mode', profile.POSTRESTART_MEASURED_MODE)
         cpu_run.verify_frozen(self.state, self.armed)
         self.pending_warmups = []
         self.release_requested = False
@@ -177,6 +184,9 @@ class PostrestartRun(prior.ConcurrentRun):
         raise EvidenceReview('CURRENT_RESOURCE_PROOF_UNAVAILABLE')
 
     def admission(self, cid, maximum=7200, *, measured=False, request_identity=None):
+        if self.mode == profile.POSTRESTART_WARM_ONLY_MODE and measured and (
+                not self.followup_sessions or request_identity is None):
+            raise ValueError('postrestart_warm_only_initial_measurement_forbidden')
         # Freeze this admission's identity. Only an explicit pre-registration
         # proof gap can repeat request_begin; HTTP inference is never retried.
         arguments = {'id': cid, 'timeout_s': maximum, 'measured': measured,
@@ -294,10 +304,12 @@ class PostrestartRun(prior.ConcurrentRun):
             raise RuntimeError('STOP_CPU_WARMUP_EVIDENCE_UNAVAILABLE')
 
     def prepare_job(self, cid, identifier):
+        if self.mode == profile.POSTRESTART_WARM_ONLY_MODE:
+            raise ValueError('postrestart_warm_only_initial_measurement_forbidden')
         self.boundary(); started = self.clock()
         manifest = self.active[cid]['manifest']
         expected = {'P-G4K': 'G1', 'P-G65008': 'G1', 'P-Qnear480K': 'Q1'}
-        if identifier not in expected or manifest != profile.postrestart_manifest(expected[identifier]):
+        if identifier not in expected or manifest != profile.postrestart_manifest(expected[identifier], self.armed['campaign']):
             raise ValueError('postrestart_exact_trial_tuple_required')
         nonce = 'fresh-' + str(time.time_ns())
         if identifier == 'P-G4K':
@@ -539,6 +551,10 @@ class PostrestartRun(prior.ConcurrentRun):
                 self.hold_ready = True
             self.boundary()
         self.emit({'type': 'preparation_complete', 'clock': self.host.call('budget')})
+        if self.mode == profile.POSTRESTART_WARM_ONLY_MODE:
+            self.record('WARM_ONLY_COMPLETE')
+            self.hold('complete')
+            return
         row = self.measure(self.prepare_job(ids['G1'], 'P-G4K'))
         if row['status'] != 'PASS':
             if row['sample']['status'] == 'TRANSPORT_FAILURE':
@@ -580,7 +596,8 @@ class PostrestartRun(prior.ConcurrentRun):
         self.hold('complete')
 
 
-def prepare(task, session):
+def prepare(task, session, *, mode=profile.POSTRESTART_MEASURED_MODE):
+    campaign = profile.postrestart_campaign(mode)
     task = Path(task).resolve()
     if (task / 'arm.json').exists() or not session or glmrepair.git('status', '--porcelain'):
         raise ValueError('postrestart_clean_source_fresh_arm_session_required')
@@ -607,10 +624,11 @@ def prepare(task, session):
         runner.save(task / 'run-control.json', {'action': 'CONTINUE'})
     from .host import concurrent_capacity_policy
     inputs = ['progress.json', 'evidence-index.json', 'protected-key-metadata.json', *frozen]
-    armed = {'schema': 1, 'scope': SCOPE, 'campaign': profile.POSTRESTART_CAMPAIGN, 'session_id': session,
-        'base_commit': BASE, 'source_commit': glmrepair.git('rev-parse', 'HEAD'), 'runtime_policy': POLICY,
-        'runtime_source_path': '/data/services/' + profile.POSTRESTART_CAMPAIGN + '/source',
-        'manifests': profile.postrestart_manifests(), 'trial_plan': profile.postrestart_trial_order(),
+    armed = {'schema': 1, 'scope': SCOPE, 'campaign': campaign, 'mode': mode, 'session_id': session,
+        'base_commit': WARM_ONLY_BASE if mode == profile.POSTRESTART_WARM_ONLY_MODE else BASE,
+        'source_commit': glmrepair.git('rev-parse', 'HEAD'), 'runtime_policy': POLICY,
+        'runtime_source_path': '/data/services/' + campaign + '/source',
+        'manifests': profile.postrestart_manifests(campaign), 'trial_plan': profile.postrestart_trial_order(mode),
         'concurrent_capacity_policy': concurrent_capacity_policy(SCOPE), 'frozen_inputs': frozen,
         'source_files': {p: fixtures.digest(b) for p, b in runner.source_files().items()},
         'required_package_files': ['arm.json', 'arm-receipt.json', 'GO.template.json', 'incoming-latest.md', 'run-control.json', *inputs],
@@ -619,7 +637,7 @@ def prepare(task, session):
         'production_acceptance': 'NOT_GRANTED', 'measurement_clock': 'NOT_STARTED_PREP_EXCLUDED'}
     profile.validate_postrestart_arm_scope(armed); runner.save(task / 'arm.json', armed)
     receipt = {'source_commit': armed['source_commit'], 'preparation_session_id': session,
-               'campaign': armed['campaign'], 'arm_sha256': fixtures.digest((task / 'arm.json').read_bytes())}
+               'campaign': armed['campaign'], 'mode': mode, 'arm_sha256': fixtures.digest((task / 'arm.json').read_bytes())}
     runner.save(task / 'arm-receipt.json', receipt)
     runner.save(task / 'GO.template.json', {**receipt, 'decision': 'NOT_AUTHORIZED', 'vm_writer_handoff': False,
                                           'run_session_id': 'FRESH_RUN_SESSION_REQUIRED', 'runtime': POLICY})
@@ -699,9 +717,11 @@ def run(task, go_path, session, *, restore_only=False):
             failed = True; errors.append({'phase': 'host_close', 'error_class': type(error).__name__})
         outcome = {'measurement_failed': failed, 'restored': restored, 'errors': errors,
             'source_commit': armed['source_commit'], 'session_id': session, 'clock_policy': POLICY,
-            'completed': list(job.progress['completed']), 'missing': [v for v in TRIAL_IDS if v not in job.progress['completed']],
+            'mode': job.mode, 'completed': list(job.progress['completed']),
+            'missing': [v['id'] for v in armed['trial_plan']['trials'] if v['id'] not in job.progress['completed']],
             'measurement_status': 'NOT_RUN_RECOVERY_ONLY' if restore_only else 'FAILED' if failed else
                 'QUALITY_REVIEW_REQUIRED' if job.quality_review else
+                'WARM_ONLY_RELEASED' if job.mode == profile.POSTRESTART_WARM_ONLY_MODE and not job.followup_sessions else
                 'COMPLETE' if all(v in job.progress['completed'] for v in TRIAL_IDS) else 'RELEASED_PARTIAL',
             'production_acceptance': 'NOT_GRANTED'}
         safe_save(task / ('recovery-outcome.json' if restore_only else 'run-outcome.json'), outcome)
@@ -714,9 +734,12 @@ def main(argv=None):
     parser.add_argument('action', choices=('prepare', 'run', 'restore'))
     parser.add_argument('--task-dir', type=Path, required=True); parser.add_argument('--session-id', required=True)
     parser.add_argument('--go', type=Path)
+    parser.add_argument('--mode', choices=(profile.POSTRESTART_MEASURED_MODE, profile.POSTRESTART_WARM_ONLY_MODE))
     args = parser.parse_args(argv)
     if args.action == 'prepare':
-        prepare(args.task_dir, args.session_id); return 0
+        prepare(args.task_dir, args.session_id, mode=args.mode or profile.POSTRESTART_MEASURED_MODE); return 0
+    if args.mode is not None:
+        parser.error('--mode is sealed by PREP arm and cannot override RUN or recovery')
     if args.go is None:
         parser.error('--go is required for RUN or recovery')
     return run(args.task_dir, args.go, args.session_id, restore_only=args.action == 'restore')

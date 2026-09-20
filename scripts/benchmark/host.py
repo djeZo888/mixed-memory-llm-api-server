@@ -32,7 +32,8 @@ from .profiles import (read_config, command_manifest, split_resources, validate_
                        CONCURRENT_SCOPE, CONCURRENT_CAMPAIGN, CONCURRENT_Q1_RAM_CAP_BYTES, concurrent_manifest,
                        CANDIDATE_SCOPE, candidate_manifest, candidate_manifests, candidate_modules, candidate_profile)
 from .cpu_budget_profiles import (CPU_SCOPE, CPU_CAMPAIGN, manifest as cpu_manifest,
-                                  POSTRESTART_SCOPE, POSTRESTART_CAMPAIGN, postrestart_manifest)
+                                  POSTRESTART_SCOPE, POSTRESTART_CAMPAIGNS,
+                                  POSTRESTART_WARM_CAMPAIGN, postrestart_manifest)
 from .telemetry import collect_sample, required_host_demand, concurrent_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
@@ -274,7 +275,7 @@ class LinuxHost:
             require(hashlib.sha256(source_raw).hexdigest() == sha, 'staged_source_pin_changed')
         self.manifests = {}
         for value in values:
-            expected = postrestart_manifest(value['placement']) if self.scope == POSTRESTART_SCOPE else cpu_manifest(value['layout'], value['placement']) if self.scope == CPU_SCOPE else candidate_manifest(value['placement'], self.binding) if self.scope == CANDIDATE_SCOPE else concurrent_manifest(value['placement'], value['configured_capacity']) if self.scope == CONCURRENT_SCOPE else glm_decode_diag_manifest(value['configured_capacity'], campaign) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
+            expected = postrestart_manifest(value['placement'], campaign=campaign) if self.scope == POSTRESTART_SCOPE else cpu_manifest(value['layout'], value['placement']) if self.scope == CPU_SCOPE else candidate_manifest(value['placement'], self.binding) if self.scope == CANDIDATE_SCOPE else concurrent_manifest(value['placement'], value['configured_capacity']) if self.scope == CONCURRENT_SCOPE else glm_decode_diag_manifest(value['configured_capacity'], campaign) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
                                         ram_cap=G1_RAM_CAP_BYTES if self.scope == 'g1-only' else None,
                                         log_verbosity=4 if self.scope == 'g1-only' else None)
             require(value == expected, 'manifest_not_current_generated_source')
@@ -376,7 +377,7 @@ class LinuxHost:
                 'concurrent_host_available_reserve_unproved')
         gpu_free = {g['uuid']: g.get('free_bytes') for g in sample['gpus']}
         sizes = (65536, 700160)
-        manifests = ([postrestart_manifest(p) for p in ('G1', 'Q1')] if self.scope == POSTRESTART_SCOPE else
+        manifests = ([postrestart_manifest(p, campaign=self.campaign) for p in ('G1', 'Q1')] if self.scope == POSTRESTART_SCOPE else
                      [cpu_manifest(round_name, p) for p in ('G1', 'Q1')] if self.scope == CPU_SCOPE else
                      [concurrent_manifest(p, n) for p, n in zip(('G1', 'Q1'), sizes)])
         for manifest in manifests:
@@ -395,7 +396,7 @@ class LinuxHost:
     @staticmethod
     def concurrent_limits(manifest, container, cgroup):
         placement = manifest['placement']
-        expected = postrestart_manifest(placement) if manifest.get('campaign') == POSTRESTART_CAMPAIGN else cpu_manifest(manifest.get('layout'), placement) if manifest.get('campaign') == CPU_CAMPAIGN else candidate_manifest(placement) if manifest.get('campaign') == 'benchrun-candidate-pair-20260920' else concurrent_manifest(placement, manifest['configured_capacity'])
+        expected = postrestart_manifest(placement, campaign=manifest['campaign']) if manifest.get('campaign') in POSTRESTART_CAMPAIGNS else cpu_manifest(manifest.get('layout'), placement) if manifest.get('campaign') == CPU_CAMPAIGN else candidate_manifest(placement) if manifest.get('campaign') == 'benchrun-candidate-pair-20260920' else concurrent_manifest(placement, manifest['configured_capacity'])
         require(manifest == expected, 'concurrent_exact_manifest_required')
         cap = concurrent_capacity_policy()['caps_bytes'][placement]
         cpus = expected['guest_cpuset']
@@ -416,7 +417,7 @@ class LinuxHost:
                 all(cpu[k] == 0 for k in ('docker_nano_cpus', 'docker_cpu_quota', 'docker_cpu_period')) and
                 bool(re.fullmatch(r'max [1-9][0-9]*', cpu['cgroup_cpu_max'])),
                 'concurrent_effective_cpu_limits_unproved')
-        if manifest.get('campaign') == POSTRESTART_CAMPAIGN:
+        if manifest.get('campaign') in POSTRESTART_CAMPAIGNS:
             cpu['docker_cpuset_mems'] = config.get('CpusetMems', '')
             cpu['cgroup_cpuset_mems_effective'] = (cgroup / 'cpuset.mems.effective').read_text().strip()
             require(cpu['docker_cpuset_mems'] in ('', '0-7') and
@@ -782,6 +783,160 @@ class LinuxHost:
         require(not raw, 'pending_systemd_jobs')
         return []
 
+    def held_jobs(self):
+        """REAL72 idle hold only: missing proof is review, actual relevant jobs are hazards.
+
+        An arbitrary service's side effects cannot be proved from its name. Only
+        passive target/timer jobs with a complete passive, disjoint unit relation
+        closure qualify as unrelated. All other jobs retain the pair for review.
+        """
+        require(self.scope == POSTRESTART_SCOPE, 'postrestart_hold_scope_or_phase')
+        relations = ('Requires', 'Requisite', 'Wants', 'BindsTo', 'PartOf', 'RequiredBy',
+                     'RequisiteOf', 'WantedBy', 'BoundBy', 'ConsistsOf', 'Conflicts',
+                     'ConflictedBy', 'Triggers', 'TriggeredBy', 'OnFailure', 'OnSuccess',
+                     'PropagatesStopTo', 'StopPropagatedFrom', 'Upholds', 'UpheldBy')
+        fields = ('Id', 'Names', 'LoadState') + relations
+        system_actions = {'shutdown.target', 'reboot.target', 'poweroff.target', 'halt.target', 'kexec.target',
+                          'soft-reboot.target', 'rescue.target', 'emergency.target',
+                          'umount.target', 'final.target', 'exit.target'}
+        system_actions.update('systemd-' + action + '.service' for action in
+                              ('reboot', 'poweroff', 'halt', 'kexec', 'soft-reboot', 'exit'))
+        protected_units = system_actions | {CONTROL_UNIT, BOOT_UNIT, 'docker.service', 'docker.socket',
+                                            'containerd.service', 'containerd.socket'}
+        def path_unit(path, suffix):
+            raw = path.strip('/').encode()
+            name = ''.join('-' if ch == 47 else chr(ch) if chr(ch) in
+                           'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:_.' and
+                           not (index == 0 and ch == 46) else '\\x%02x' % ch for index, ch in enumerate(raw))
+            return (name or '-') + suffix
+        storage = self.config['storage']
+        protected_units.update(path_unit(storage[key], suffix) for key in ('data_root', 'model_root')
+                               for suffix in ('.mount', '.automount'))
+        protected_units.update(path_unit('/dev/disk/by-uuid/' + storage[key], '.device')
+                               for key in ('data_uuid', 'model_uuid'))
+        owned = [r['resource'] for r in self.owner.resources if r['state'] != 'REMOVED']
+        protected_units.update('docker-' + r['id'] + '.scope' for r in owned)
+        protected_units.update(r['name'] + '.service' for r in owned if r.get('name'))
+        def hazard(unit):
+            return unit in protected_units
+        receipt = {'operation': 'warm_hold', 'captured_at': time.time(), 'jobs': [],
+                   'unit_evidence': {}, 'snapshots': [], 'unavailable_reasons': [], 'status': 'HELD'}
+        unavailable = receipt['unavailable_reasons']
+        previous = _COMMAND_DEADLINE.get()
+        token = _COMMAND_DEADLINE.set(min(previous, time.monotonic() + 20) if previous else time.monotonic() + 20)
+        try:
+            def listing(key):
+                result = command(['/usr/bin/systemctl', 'list-jobs', '--no-legend', '--no-pager', '--plain'], 5,
+                                 allow_missing=True)
+                raw = result.stdout.decode('utf-8', errors='replace')
+                receipt['snapshots'].append({'stdout': raw, 'stderr': result.stderr.decode('utf-8', errors='replace'),
+                                             'returncode': result.returncode})
+                require(result.returncode == 0 and len(raw) <= 262144, 'systemd_jobs_snapshot_unavailable')
+                rows, valid = [], True
+                receipt[key] = rows
+                for line in raw.splitlines():
+                    if not line.strip():
+                        continue
+                    parts = line.split()
+                    if not (len(parts) == 4 and parts[0].isdigit() and
+                            bool(re.fullmatch(r'[A-Za-z0-9:_.@\\-]+', parts[1])) and
+                            parts[3] in {'waiting', 'running'}):
+                        valid = False
+                        continue
+                    rows.append(dict(zip(('id', 'unit', 'operation', 'state'), parts)))
+                    if hazard(parts[1]):
+                        receipt['status'] = 'HAZARD'
+                require(valid and len({row['id'] for row in rows}) == len(rows), 'systemd_jobs_snapshot_ambiguous')
+                return rows
+            jobs = listing('jobs')
+            for job in jobs:
+                unit = job['unit']
+                if hazard(unit):
+                    job['classification'] = 'HAZARD'
+                    continue
+                queue, seen, passive, relevant = [(unit, True)], set(), True, False
+                while queue:
+                    name, causal = queue.pop()
+                    if (name, causal) in seen:
+                        continue
+                    seen.add((name, causal))
+                    if len(receipt['unit_evidence']) >= 32 and name not in receipt['unit_evidence']:
+                        passive = False
+                        break
+                    if name not in receipt['unit_evidence']:
+                        result = command(['/usr/bin/systemctl', 'show', name, '--no-pager', '--all',
+                                          '--property=' + ','.join(fields)], 5, allow_missing=True)
+                        raw = result.stdout.decode('utf-8', errors='replace')
+                        pairs = [line.split('=', 1) for line in raw.splitlines() if '=' in line]
+                        props = dict(pairs)
+                        receipt['unit_evidence'][name] = {'stdout': raw,
+                            'stderr': result.stderr.decode('utf-8', errors='replace'), 'returncode': result.returncode,
+                            'properties': props}
+                        if result.returncode or len(raw) > 262144 or len(pairs) != len(props) or set(props) != set(fields):
+                            passive = False
+                            break
+                    props = receipt['unit_evidence'][name]['properties']
+                    names = props.get('Names', '').split()
+                    if any(hazard(alias) for alias in names):
+                        passive = False
+                        if causal:
+                            relevant = True
+                            job['classification'] = receipt['status'] = 'HAZARD'
+                        break
+                    if set(props) != set(fields):
+                        passive = False
+                        break
+                    if (props.get('LoadState') != 'loaded' or props.get('Id') != name or name not in names or
+                            not name.endswith(('.target', '.timer'))):
+                        passive = False
+                        break
+                    for relation in relations:
+                        for related in props[relation].split():
+                            activates = (causal and job['operation'] in {'start', 'restart'} and relation in
+                                         {'Requires', 'Requisite', 'Wants', 'BindsTo', 'Upholds', 'Triggers'})
+                            stops = causal and job['operation'] in {'stop', 'restart'} and relation == 'PropagatesStopTo'
+                            if not re.fullmatch(r'[A-Za-z0-9:_.@\\-]+', related):
+                                passive = False
+                            elif hazard(related):
+                                # Conflicts=shutdown.target is a normal passive
+                                # unit dependency, not a requested shutdown.
+                                passive = False
+                                if activates or stops:
+                                    relevant = True
+                                    job['classification'] = receipt['status'] = 'HAZARD'
+                                if (causal and job['operation'] in {'start', 'restart'} and
+                                        relation == 'Conflicts' and related not in system_actions):
+                                    relevant = True
+                                    job['classification'] = receipt['status'] = 'HAZARD'
+                            else:
+                                queue.append((related, activates or stops))
+                job['classification'] = ('HAZARD' if relevant else 'UNRELATED_PASSIVE' if passive and
+                    job['operation'] in {'start', 'stop', 'restart', 'verify-active', 'nop'} else 'REVIEW_REQUIRED')
+            after = listing('rechecked_jobs')
+            # Every second-snapshot job is retained too; newly queued hazards
+            # must not disappear behind an otherwise benign first snapshot.
+            if any(hazard(row['unit']) for row in after):
+                receipt['status'] = 'HAZARD'
+            if [{k: row[k] for k in ('id', 'unit', 'operation', 'state')} for row in jobs] != after:
+                unavailable.append('systemd_jobs_snapshot_changed')
+            if any(row['classification'] == 'REVIEW_REQUIRED' for row in jobs):
+                unavailable.append('systemd_jobs_unrelated_unproved')
+        except (ValueError, OSError, subprocess.SubprocessError) as error:
+            unavailable.append('systemd_jobs_snapshot_unavailable')
+            receipt['read_error_type'] = type(error).__name__
+        finally:
+            _COMMAND_DEADLINE.reset(token)
+        if any(hazard(row['unit']) or row.get('classification') == 'HAZARD' for row in receipt['jobs']):
+            receipt['status'] = 'HAZARD'
+        elif receipt['status'] != 'HAZARD' and unavailable:
+            receipt['status'] = 'REVIEW_REQUIRED'
+        if receipt['jobs'] or unavailable or receipt['status'] == 'HAZARD':
+            self.hold_jobs_sequence = getattr(self, 'hold_jobs_sequence', 0) + 1
+            receipt['evidence_file'] = 'held-systemd-jobs/%06d.json' % self.hold_jobs_sequence
+            self.write_json(receipt['evidence_file'], receipt)
+        require(receipt['status'] != 'HAZARD', 'postrestart_held_systemd_job_hazard')
+        return receipt
+
     def credentials(self):
         values, private_hashes = {}, {}
         for role, path in KEYS.items():
@@ -839,7 +994,9 @@ class LinuxHost:
             _COMMAND_DEADLINE.set(None)
         lease.validate()
         self.pin_sources()
-        self.jobs()
+        held_jobs = self.held_jobs() if self.scope == POSTRESTART_SCOPE and stage == 'warm_hold' else None
+        if held_jobs is None:
+            self.jobs()
         units = self.units()
         require(units[BOOT_UNIT] == original['services'][BOOT_UNIT], 'boot_service_drift')
         if stage not in {'admission', 'freeze_control'}:
@@ -864,6 +1021,7 @@ class LinuxHost:
         if stage in {'benchmarks_absent', 'pre_release'}:
             require(not self.campaign_containers(), 'benchmark_containers_remain')
             self.credentials()
+        return held_jobs
 
     def verify_mapping_helpers(self, lease):
         """No-GPU exact-image probes before production stop; no model or key mounts.
@@ -1767,20 +1925,30 @@ class LinuxHost:
         return self.owner.restore()
 
     def postrestart_hold_proof(self):
+        previous = _COMMAND_DEADLINE.get()
+        deadline = time.monotonic() + 60
+        token = _COMMAND_DEADLINE.set(min(previous, deadline) if previous is not None else deadline)
+        try:
+            return self._postrestart_hold_proof()
+        finally:
+            _COMMAND_DEADLINE.reset(token)
+
+    def _postrestart_hold_proof(self):
         require(self.scope == POSTRESTART_SCOPE and self.owner.phase in {'ACTIVE', 'WARM_HOLD'},
                 'postrestart_hold_scope_or_phase')
         self.assert_idle()
-        self.owner._gate('warm_hold')
+        jobs = self.owner._gate('warm_hold')
         self.guards(self.owner.lease)
         require(not self.concurrent_resource_violations and self.owner.pending_create is None,
                 'postrestart_unsafe_hold_forbidden')
         live = [row['resource']['id'] for row in self.owner.resources if row['state'] != 'REMOVED']
         require(len(live) == 2 and set(live) == set(self.load_manifests) == set(self.allocation_proofs),
                 'postrestart_hold_requires_exact_resident_pair')
-        pair, review = {}, []
+        pair, review = {}, ([] if isinstance(jobs, dict) and jobs.get('status') == 'HELD' else
+                            ['systemd_jobs_current_proof_unavailable'])
         for cid in live:
             manifest = self.load_manifests[cid]
-            require(manifest == postrestart_manifest(manifest['placement']), 'postrestart_hold_manifest_changed')
+            require(manifest == postrestart_manifest(manifest['placement'], campaign=self.campaign), 'postrestart_hold_manifest_changed')
             proof = self._readiness(cid)
             if proof.get('ready') is not True:
                 unavailable_only = (proof.get('resource_proof_unavailable_only') is True and
@@ -1806,6 +1974,7 @@ class LinuxHost:
             'host_owner_pid': os.getpid(), 'canonical_lease_path': self.config['lease'],
             'canonical_lease_retained': True, 'no_active_inference': True,
             'pair': pair, 'captured_at': time.time(), 'budget': self.budget.data,
+            'systemd_jobs': jobs,
             'status': 'REVIEW_REQUIRED' if review else 'HELD',
             'unavailable_reasons': sorted(set(review)),
             'release_target': {'selected': self.owner.original['manager']['selected'],
@@ -1818,7 +1987,7 @@ class LinuxHost:
                 'postrestart_hold_scope_or_phase')
         token = _COMMAND_DEADLINE.set(time.monotonic() + 60)
         try:
-            self.owner._gate('warm_hold')  # actual PID-bound lease, control freeze, idle TCP/request registrations
+            jobs = self.owner._gate('warm_hold')  # actual PID-bound lease, control freeze, idle TCP/request registrations
             self.guards(self.owner.lease)
             self.credentials()
             require(self.owner.pending_create is None and not self.concurrent_resource_violations,
@@ -1826,7 +1995,8 @@ class LinuxHost:
             live = [row['resource']['id'] for row in self.owner.resources if row['state'] != 'REMOVED']
             require(len(live) == 2 and set(live) == set(self.load_manifests) == set(self.allocation_proofs),
                     'postrestart_hold_requires_exact_resident_pair')
-            groups, members, unavailable = {}, {}, []
+            groups, members, unavailable = {}, {}, ([] if isinstance(jobs, dict) and jobs.get('status') == 'HELD' else
+                                                    ['systemd_jobs_current_proof_unavailable'])
             for cid in live:
                 container, cgroup, pids = self.identity(cid)
                 manifest = self.load_manifests[cid]
@@ -1855,6 +2025,7 @@ class LinuxHost:
             self.guards(self.owner.lease)
             return {'phase': 'WARM_HOLD', 'status': 'REVIEW_REQUIRED' if unavailable else 'HELD',
                     'guarded': True, 'no_active_inference': True, 'canonical_lease_retained': True,
+                    'systemd_jobs': jobs,
                     'unavailable_reasons': sorted(set(unavailable)), 'checked_at': time.time(), 'budget': self.budget.data}
         finally:
             _COMMAND_DEADLINE.reset(token)
@@ -1866,15 +2037,21 @@ class LinuxHost:
         if reason == 'preliminary_review':
             require(preliminary_result_sha256 is not None, 'postrestart_preliminary_result_required')
         proof = self.postrestart_hold_proof()
-        self.owner.warm_hold(reason)
+        held = self.owner.warm_hold(reason)
+        current_jobs = held.get('hold_job_proof') if isinstance(held, dict) else None
+        if not isinstance(current_jobs, dict) or current_jobs.get('status') != 'HELD':
+            proof = {**proof, 'status': 'REVIEW_REQUIRED',
+                     'unavailable_reasons': sorted(set(proof['unavailable_reasons'] +
+                                                       ['systemd_jobs_current_proof_unavailable']))}
         receipt = {**proof, 'phase': 'WARM_HOLD', 'reason': reason,
+                   'entry_systemd_jobs': current_jobs,
                    'preliminary_result_sha256': preliminary_result_sha256}
         self.write_json('warm-hold.json', receipt)
         return receipt
 
     def resume_measurements(self, followup_session_id, source_commit, preliminary_result_sha256):
         require(self.scope == POSTRESTART_SCOPE and self.owner.phase == 'WARM_HOLD' and
-                self.owner.warm_hold_reason == 'preliminary_review' and not self.owner.warm_hold_resumed,
+                self.campaign != POSTRESTART_WARM_CAMPAIGN and self.owner.warm_hold_reason == 'preliminary_review' and not self.owner.warm_hold_resumed,
                 'postrestart_hold_resume_forbidden')
         saved = self.read_json('warm-hold.json')
         require(isinstance(followup_session_id, str) and bool(followup_session_id) and
@@ -1887,7 +2064,9 @@ class LinuxHost:
             return {'phase': 'WARM_HOLD', 'proof_pending': True, 'admitted': False, 'proof': proof}
         identity = {'session_id': followup_session_id, 'source_commit': source_commit,
                     'preliminary_result_sha256': preliminary_result_sha256}
-        self.owner.resume_measurements(identity)
+        grant = self.owner.resume_measurements(identity)
+        if grant.get('proof_pending') is True and grant.get('admitted') is False:
+            return grant
         self.followup_admitted = set()
         receipt = {'phase': self.owner.phase, 'resumed_from': 'preliminary_review', 'resumed_at': time.time(),
                    'retained_owner_session_id': self.run_session_id, 'followup_identity': identity, 'budget': self.budget.data}
@@ -1918,7 +2097,7 @@ class LinuxHost:
                 'postrestart_followup_clock_policy_changed')
         saved = self.read_json('warm-hold.json')
         require(go['warm_hold_receipt_sha256'] == hashlib.sha256(canonical(saved) + b'\n').hexdigest() and
-                go['manifest_sha256'] == digest(postrestart_manifest(go['placement'])),
+                go['manifest_sha256'] == digest(postrestart_manifest(go['placement'], campaign=self.campaign)),
                 'postrestart_additional_followup_identity_changed')
         previous = self.budget.data
         if 'followup_identity' in previous:
@@ -1930,7 +2109,9 @@ class LinuxHost:
         identity = {'session_id': go['followup_session_id'], 'source_commit': go['source_commit'],
                     **{k: go[k] for k in ('request_id', 'placement', 'manifest_sha256', 'request_sha256',
                                          'fixture_sha256', 'warm_hold_receipt_sha256')}}
-        self.owner.admit_followup(identity)
+        grant = self.owner.admit_followup(identity)
+        if grant.get('proof_pending') is True and grant.get('admitted') is False:
+            return grant
         self.followup_request, self.followup_admitted = copy.deepcopy(go), set()
         receipt = {'phase': 'ACTIVE', 'followup_identity': identity, 'budget': self.budget.data}
         self.write_json('additional-followup.json', receipt)
@@ -2008,6 +2189,9 @@ class LinuxHost:
             return self.decode_cpu_capture_status(args['id'], args['capture_id'], args.get('client_after'))
         if op == 'request_begin':
             require(self.owner.phase == 'ACTIVE', 'owner_not_active')
+            if (self.scope == POSTRESTART_SCOPE and getattr(self, 'campaign', None) == POSTRESTART_WARM_CAMPAIGN
+                    and args.get('measured') is True):
+                require(self.followup_request is not None, 'postrestart_warm_only_initial_measurement_forbidden')
             container, cgroup, _ = self.identity(args['id']) if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} else (None, None, None)
             if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
                 require(args['id'] in self.allocation_proofs, 'concurrent_current_allocation_required')
