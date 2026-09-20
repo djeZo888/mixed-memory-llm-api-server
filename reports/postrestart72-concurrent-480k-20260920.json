@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "title": "REAL72 concurrent480K saved-evidence report",
-  "status": "FINAL_SAVED_EVIDENCE_BENCHMARK_INCOMPLETE_WARM_RETENTION_FAILED",
+  "status": "BENCHMARK_INCOMPLETE_MODELS_WARM_RETAINED",
   "snapshot_utc": "2026-09-20T16:46:37.996789+00:00",
   "evidence_boundary": "Source/docs-only transcription and arithmetic from authoritative task-root summaries; no ai-vm/API contact, builds, tests, profilers, additional inference or raw/private reconstruction. No production migration. Local Worker1 read-only process handoff check is separately authorized; no new SSH or VM contact.",
   "run_identity": {
@@ -1742,6 +1742,8 @@
       "local_verification_1": "06f9220745ea889749773383fb5a8c1f23e39db31778b1b086c16d7201557752",
       "local_verification_2": "a7d45a72ae00a06b9fff1da630a033c9f1071ebad79c0ee4f9c91ca9251a0870",
       "coordinator_post_exit_verification": "db9e92ae47d282dd321b45a423c76a377926e9bc5c746a6dc96fe5d5ac8c2da7"
-    }
-  }
+    },
+    "owner_host_dependency": "mac-worker1 must remain online because it hosts the retained owner; loss requires RECOVERY_REQUIRED, not adoption."
+  },
+  "measured_campaign_status": "FINAL_SAVED_EVIDENCE_BENCHMARK_INCOMPLETE_WARM_RETENTION_FAILED"
 }
