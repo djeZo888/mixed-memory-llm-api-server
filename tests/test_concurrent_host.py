@@ -13,7 +13,7 @@ from benchmark.lifecycle import digest
 
 GIB = 1024**3
 ORIGINAL_START = 1789890954.308154
-ORIGINAL_DEADLINE = 1789896354.308154
+EXTENDED_DEADLINE = 1789898154.308154
 
 
 class ConcurrentHostTests(unittest.TestCase):
@@ -37,7 +37,7 @@ class ConcurrentHostTests(unittest.TestCase):
 
     def clock(self):
         return {'campaign': profiles.CONCURRENT_CAMPAIGN, 'runtime': {
-            'start_epoch': ORIGINAL_START, 'deadline_epoch': ORIGINAL_DEADLINE, 'budget_seconds': 5400,
+            'start_epoch': ORIGINAL_START, 'deadline_epoch': EXTENDED_DEADLINE, 'budget_seconds': 7200,
             'request_max_seconds': 7200, 'clock_includes_preparation': True,
             'includes_load_warmup_fitting': True, 'excludes_source_prep': True,
             'clock_starts': 'RUN_DISPATCH', 'restoration_outside_budget': True}}
@@ -45,7 +45,7 @@ class ConcurrentHostTests(unittest.TestCase):
     def test_long_identity_isolates_manifests_host_paths_and_preserves_original_clock(self):
         from benchmark import concurrent_run, runner
         previous = 'benchrun-concurrent-g1q1-cont1-20260920'
-        campaign = 'benchrun-concurrent-g1q1-long-20260920'
+        campaign = 'benchrun-concurrent-g1q1-long2-20260920'
         self.assertEqual(profiles.CONCURRENT_CAMPAIGN, campaign)
         current = profiles.concurrent_manifests()
         self.assertEqual([(m['placement'], m['configured_capacity']) for m in current],
@@ -61,7 +61,7 @@ class ConcurrentHostTests(unittest.TestCase):
         self.assertIn('/data/services/' + campaign + '/source/scripts/bench/benchmark-host.py', ssh.command)
         self.assertIn('/data/services/' + campaign + '/manifests.json', ssh.command)
         runtime = {**concurrent_run.POLICY, 'start_epoch': 1789890954.308154,
-                   'deadline_epoch': 1789896354.308154}
+                   'deadline_epoch': EXTENDED_DEADLINE}
         go = {'run_session_id': 'fresh-run', 'runtime': runtime}
         self.assertEqual(concurrent_run.bind_runtime(armed, go, 'fresh-run', runtime['start_epoch'] + 600), runtime)
         self.assertEqual(LinuxHost.concurrent_clock({**armed, 'runtime': runtime}),
@@ -84,9 +84,10 @@ class ConcurrentHostTests(unittest.TestCase):
                          [host.log_root + '/' + name for name in ('owner.json', 'measured-demand.json', 'budget.json')])
 
     def test_clock_bound_only_to_fresh_run_not_prep_or_old_campaign(self):
-        self.assertEqual(LinuxHost.concurrent_clock(self.clock()), (ORIGINAL_START, ORIGINAL_DEADLINE))
+        self.assertEqual(LinuxHost.concurrent_clock(self.clock()), (ORIGINAL_START, EXTENDED_DEADLINE))
         for key, value in [('start_epoch', True), ('start_epoch', float('nan')),
-                           ('start_epoch', ORIGINAL_START + 1), ('deadline_epoch', ORIGINAL_DEADLINE + 1),
+                           ('start_epoch', ORIGINAL_START + 1), ('deadline_epoch', EXTENDED_DEADLINE + 1),
+                           ('deadline_epoch', 1789896354.308154), ('budget_seconds', 5400),
                            ('budget_seconds', 21600),
                            ('request_max_seconds', 7201), ('clock_includes_preparation', False),
                            ('includes_load_warmup_fitting', False), ('excludes_source_prep', False),
@@ -103,16 +104,16 @@ class ConcurrentHostTests(unittest.TestCase):
 
     def test_budget_deadline_and_restore_outside_clock(self):
         host = SimpleNamespace(scope=profiles.CONCURRENT_SCOPE, log_root='/data/logs/offline',
-                               start_epoch=ORIGINAL_START, deadline_epoch=ORIGINAL_DEADLINE,
+                               start_epoch=ORIGINAL_START, deadline_epoch=EXTENDED_DEADLINE,
                                read_json=Mock(return_value=None), write_json=Mock())
         with patch('benchmark.host.time.time', return_value=ORIGINAL_START + 10):
             budget = HostBudget(host); budget.start('maintenance')
-        budget.clock = lambda: ORIGINAL_DEADLINE - 1
+        budget.clock = lambda: EXTENDED_DEADLINE - 1
         self.assertEqual(budget.request_timeout(7200), 1)
-        budget.clock = lambda: ORIGINAL_DEADLINE + 1
+        budget.clock = lambda: EXTENDED_DEADLINE + 1
         with self.assertRaises(ValueError): budget.request_timeout(7200)
         budget.begin_restoration(); budget.finish_restoration(True)
-        self.assertEqual(budget.data['deadline_epoch'], ORIGINAL_DEADLINE)
+        self.assertEqual(budget.data['deadline_epoch'], EXTENDED_DEADLINE)
 
     def test_admission_long_only_and_no_replay(self):
         host = self.bare()

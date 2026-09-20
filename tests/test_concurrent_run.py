@@ -253,7 +253,7 @@ class ConcurrentRecoveryTests(unittest.TestCase):
                                                   "inflight": {}, "errors": []})
             runner.save(task / "GO.json", {**receipt, "decision": "GO", "vm_writer_handoff": True,
                 "run_session_id": "fresh-run", "runtime": {**run.POLICY,
-                                                             "start_epoch": run.ORIGINAL_START, "deadline_epoch": run.ORIGINAL_DEADLINE}})
+                                                             "start_epoch": run.ORIGINAL_START, "deadline_epoch": run.EXTENDED_DEADLINE}})
             calls, observed_jobs = [], []
             phase = ["NEW"]
             def call(op, **kwargs):
@@ -405,9 +405,9 @@ class ConcurrentDecodePairTests(unittest.TestCase):
 
 
 class ConcurrentRuntimeTests(unittest.TestCase):
-    def test_original_clock_is_unchanged_and_fresh_owner_cannot_reset(self):
+    def test_original_epoch_explicit_extension_and_fresh_owner_cannot_reset(self):
         armed = {"runtime_policy": copy.deepcopy(run.POLICY), "session_id": "prep-session"}
-        start, end = run.ORIGINAL_START, run.ORIGINAL_DEADLINE
+        start, end = run.ORIGINAL_START, run.EXTENDED_DEADLINE
         go = {"run_session_id": "fresh-run", "runtime": {**run.POLICY,
               "start_epoch": start, "deadline_epoch": end}}
         original = copy.deepcopy(go)
@@ -419,7 +419,8 @@ class ConcurrentRuntimeTests(unittest.TestCase):
                                      ({"start_epoch": start+1, "deadline_epoch": end+1}, "fresh-run", start+1),
                                      ({"deadline_epoch": end+1}, "fresh-run", start),
                                      ({"request_max_seconds": 7201}, "fresh-run", start),
-                                     ({"budget_seconds": 7200}, "fresh-run", start),
+                                     ({"budget_seconds": 5400}, "fresh-run", start),
+                                     ({"deadline_epoch": run.ORIGINAL_DEADLINE}, "fresh-run", start),
                                      ({}, "prep-session", start), ({}, "fresh-run", start-1),
                                      ({}, "fresh-run", end)]:
             candidate = {**go, "runtime": {**go["runtime"], **changes}}
@@ -468,12 +469,16 @@ class ConcurrentPackageTests(unittest.TestCase):
             with patch.object(run.glmrepair, "git", return_value="a" * 40), \
                  patch.object(runner, "source_files", return_value={}):
                 armed = run.prepare(task, "offline-prep")
-            expected = {"arm.json", "arm-receipt.json", "progress.json", "predecessor-evidence.json",
+            expected = {"arm.json", "arm-receipt.json", "incoming-latest.md", "progress.json", "predecessor-evidence.json",
                         "private/G1-65536-saved-fixture.json"}
             self.assertEqual(set(armed["required_package_files"]), expected)
             self.assertEqual(set(armed["frozen_inputs"]), {"private/G1-65536-saved-fixture.json"})
             self.assertEqual(armed["runtime_source_path"],
-                             "/data/services/benchrun-concurrent-g1q1-long-20260920/source")
+                             "/data/services/benchrun-concurrent-g1q1-long2-20260920/source")
+            with self.assertRaisesRegex(ValueError, "required_package_file_missing"):
+                run.verify_initial_package(task, armed)
+            (task / "incoming-latest.md").write_text("Offline package review only.\n")
+            runner.save(task / "run-control.json", {"action": "CONTINUE"})
             run.verify_initial_package(task, armed)
             host = Mock()
             job = run.ConcurrentRun(task, armed, host, "offline-key")

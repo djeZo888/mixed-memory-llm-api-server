@@ -24,12 +24,13 @@ from . import accounting, client, fixtures, g1_ladder, glmrepair, profiles, runn
 from .warmup import prefill_proof
 
 SCOPE = "concurrent-g1q1"
-POLICY = {"budget_seconds": 5400, "request_max_seconds": 7200,
+POLICY = {"budget_seconds": 7200, "request_max_seconds": 7200,
           "clock_includes_preparation": True, "clock_starts": "RUN_DISPATCH",
           "restoration_outside_budget": True, "includes_load_warmup_fitting": True, "excludes_source_prep": True}
 SUCCESS = {"PASS", "TIMING_ONLY"}
 ORIGINAL_START = 1789890954.308154
 ORIGINAL_DEADLINE = 1789896354.308154
+EXTENDED_DEADLINE = 1789898154.308154
 PREDECESSOR_TASK = "CONCURRENT-G1Q1-RUN-CONT1B-20260920"
 SHORT_RESULT_IDS = ("short-G1", "short-Q1-0", "short-Q1-1", "short-Q1-2")
 
@@ -40,8 +41,8 @@ def bind_runtime(armed, go, session_id, now):
     start, end = value.get("start_epoch"), value.get("deadline_epoch")
     if (armed.get("runtime_policy") != POLICY or any(value.get(k) != v for k, v in POLICY.items())
             or any(type(v) not in (int, float) or not math.isfinite(v) for v in (start, end))
-            or (start, end) != (ORIGINAL_START, ORIGINAL_DEADLINE)
-            or not start <= now < end or end != start + 5400
+            or (start, end) != (ORIGINAL_START, EXTENDED_DEADLINE)
+            or not start <= now < end or end != start + 7200
             or go.get("run_session_id") != session_id or not session_id
             or session_id == armed.get("session_id")):
         raise ValueError("original_RUN_clock_and_fresh_session_required")
@@ -458,7 +459,7 @@ def prepare(task, session_id):
         "manifests":profiles.concurrent_manifests(),"trial_plan":profiles.trial_order(SCOPE),
         "concurrent_capacity_policy":concurrent_capacity_policy(),"frozen_inputs":frozen,
         "predecessor_evidence_sha256":fixtures.digest((task/"predecessor-evidence.json").read_bytes()),
-        "required_package_files":["arm.json","arm-receipt.json",*package_inputs],
+        "required_package_files":["arm.json","arm-receipt.json","incoming-latest.md",*package_inputs],
         "initial_package_sha256":{name:fixtures.digest((task/name).read_bytes()) for name in package_inputs},
         "optional_decode_pair":True,"source_files":{p:fixtures.digest(b) for p,b in runner.source_files().items()}}
     profiles.validate_arm_scope(value)

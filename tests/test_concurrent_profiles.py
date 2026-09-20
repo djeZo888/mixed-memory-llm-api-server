@@ -89,7 +89,7 @@ class ConcurrentProfiles(unittest.TestCase):
         self.assertEqual([(r["glm_capacity"], r["qwen_capacity"], r["qwen_max_requests"])
                           for r in plan["rounds"]], [(65536, 700160, 8)])
         self.assertEqual(plan["rounds"][0]["qwen_filler_target_capacity"], 262144)
-        self.assertEqual((plan["measurement_budget_seconds"], plan["maximum_request_seconds"]), (5400, 7200))
+        self.assertEqual((plan["measurement_budget_seconds"], plan["maximum_request_seconds"]), (7200, 7200))
         self.assertTrue(plan["clock_includes_preparation"])
         self.assertTrue(plan["restoration_outside_budget"])
 

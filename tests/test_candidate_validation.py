@@ -228,6 +228,32 @@ class CandidateValidation(unittest.TestCase):
         for session, now in (('prep', 1001), ('other', 1001), ('fresh', 999), ('fresh', 2200)):
             with self.subTest(session=session, now=now), self.assertRaises(ValueError):
                 candidate.bind_runtime(armed, go, session, now)
+        from benchmark.host import HostBudget
+        host = SimpleNamespace(scope=candidate.SCOPE, log_root='/offline',
+                               start_epoch=1000, deadline_epoch=2200,
+                               read_json=Mock(return_value=None), write_json=Mock())
+        with patch('benchmark.host.time.time', return_value=1001):
+            budget = HostBudget(host);budget.start('maintenance')
+        self.assertEqual(budget.budget_seconds, 1200)
+        self.assertEqual(budget.data['deadline_epoch'], 2200)
+
+    def test_worker_package_note_and_control_reach_candidate_boundary(self):
+        with tempfile.TemporaryDirectory() as directory:
+            job, host, requests = self.setup_job(directory)
+            note = b'Offline review only; no live authority.\n'
+            (job.state / 'incoming-latest.md').write_bytes(note)
+            runner.save(job.state / 'run-control.json', {'action': 'CONTINUE'})
+            job.collect = Mock()
+            job.boundary()
+            observed = json.loads((job.state / 'incoming-observed.json').read_bytes())
+            self.assertEqual(observed['sha256'], fixtures.digest(note))
+            job.collect.assert_called_once_with()
+            job.collect.reset_mock()
+            runner.save(job.state / 'run-control.json', {'action': 'STOP'})
+            with self.assertRaisesRegex(RuntimeError, '^ROOT_CONTROL_STOP$'):
+                job.boundary()
+            job.collect.assert_not_called()
+            self.assertEqual(requests, [])
 
     def test_remaining_caps_credit_only_disjoint_resident_anon_and_shmem(self):
         gib = candidate.GIB

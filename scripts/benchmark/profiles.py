@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/benchmarks/gpu-split-20260919.json"
 G1_RAM_CAP_BYTES = 640 * 1024**3  # Root-reviewed validation cap; not minimum model RAM.
 CONCURRENT_SCOPE = "concurrent-g1q1"
-CONCURRENT_CAMPAIGN = "benchrun-concurrent-g1q1-long-20260920"
+CONCURRENT_CAMPAIGN = "benchrun-concurrent-g1q1-long2-20260920"
 CONCURRENT_Q1_RAM_CAP_BYTES = 32 * 1024**3
 CONCURRENT_TUPLES = (("G1", 65536), ("Q1", 700160))
 CANDIDATE_SCOPE = "candidate-pair-validation"
@@ -550,8 +550,8 @@ def trial_order(scope="full", campaign=GLMREPAIR_CAMPAIGN):
                      "qwen_first_target_capacity": 700160, "qwen_filler_target_capacity": 262144}],
                 "then": ["matched_large_qwen_glm_loaded_idle"],
                 "output_cap": 256, "maximum_request_seconds": 7200,
-                "measurement_budget_seconds": 5400, "clock_includes_preparation": True,
-                "budget_start": "original_RUN_dispatch_1789890954.308154_deadline_1789896354.308154_no_reset",
+                "measurement_budget_seconds": 7200, "clock_includes_preparation": True,
+                "budget_start": "original_RUN_dispatch_1789890954.308154_deadline_1789898154.308154_explicit_120min_extension_no_reset",
                 "restoration_outside_budget": True,
                 "stop_qwen_admission": "when_GLM_finishes_drain_admitted_request",
                 "optional_decode_overlap": {"maximum_pairs": 1, "output_cap_each": 512,
