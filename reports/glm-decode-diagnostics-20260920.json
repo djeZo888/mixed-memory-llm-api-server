@@ -1,0 +1,1163 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-20",
+  "conclusion": {
+    "historical_native_decode_tokens_per_second_approx": 0.455,
+    "severe_slowdown_reproduced": false,
+    "sustained_late_slowdown_observed": false,
+    "cause_established": false,
+    "fix_claimed": false
+  },
+  "scope": "Saved-data report integration only; no VM or Proxmox access, inference, tests, builds or implementation changes. Historical reports and source commits preserved.",
+  "sources": {
+    "main_commit": "20c2b4fd8e01e2b5710c197de4dd2957f2898842",
+    "main_session_id": "01a0bcf9-70b5-76c1-9fc0-6e768876ec42",
+    "main_arm_sha256": "52ac8024dc1e4c5b2fbb2335c69aaa5a34ce3053c42a1102a5f135675746adab",
+    "profile_commit": "5dc72c83ab89af0a068b61821cc7bd130ace498a",
+    "profile_session_id": "01a0bd2b-7671-7dc0-bed7-2b45f9484757",
+    "profile_arm_sha256": "1ef18c24e2187fef0d2bdf0cb9319c8f8e7f116af661b2bd0da494e42608a518",
+    "prep_commit": "c1188ecc4bb9172f66aa49a0a0e6832df5900c0c",
+    "previously_published_commit": "1debd382d48729167afd73d8af1c67cc5049d0c8"
+  },
+  "rate_semantics": {
+    "aggregate_formula": "(native decode_tokens - 1) * 1000 / native decode_ms",
+    "artifact_native_tokens_per_second_formula": "native decode_tokens * 1000 / native decode_ms",
+    "windows_formula": "delta native cumulative token count * 1000 / delta native cumulative milliseconds",
+    "sse_events_are_tokens": false,
+    "arrival_timestamps": "event-arrival data, not native token execution timestamps",
+    "long_missing_native_point": {
+      "count": 17,
+      "observed_transition": [
+        16,
+        18
+      ],
+      "tokens_spanned": 2,
+      "sse_retention_complete": true,
+      "individual_adjacent_intervals_available": 4093,
+      "source": "measurement-evidence-review.md, 4096-token baseline section"
+    },
+    "timings_per_token": "Per-token statistics remain an instrumentation difference from historical requests; perturbation not measured.",
+    "input_formula": "evaluated_prompt_tokens * 1000 / native prompt_ms"
+  },
+  "baseline": {
+    "model": "GLM5.3 UD-Q4_K_XL",
+    "model_revision": "346b3591c7f28d1a23716f97a065ecf12ec14771",
+    "runtime_commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+    "image_digest": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+    "n_cpu_moe": 76,
+    "kv": "F16",
+    "gpu_count": 1,
+    "gpu_ordinal": 0,
+    "threads": 96,
+    "threads_batch": 96,
+    "guest_cpuset": "0-95",
+    "split_mode": "none",
+    "load_mode": "none",
+    "poll": 50,
+    "verbosity": 4,
+    "batch_requested": 2048,
+    "batch_native_1k": 1024,
+    "ubatch": 512,
+    "memory_and_memory_swap_gib": 640,
+    "free_gpu_reserve_gib": 16,
+    "temperature": 1,
+    "seed": 1729,
+    "reasoning_effort": "low",
+    "timings_per_token": true,
+    "loaded_cpu_backend_build_id": "00631f7fcabbf17fc2f92258069dd5cd6f7e9188",
+    "loaded_libgomp_build_id": "fa0c1b446610c4b7aca51e1183050acf5aa79503",
+    "omp_gomp_allowlisted_policy": "unset; effective default wait/spin policy not established",
+    "source": "arm.json manifests; results.jsonl load rows 67,211,358 /readiness/decode_quiescent; measurement-evidence-review.md",
+    "allocation_comparison_caveat": "32K versus64K is the cleaner batch-matched comparison; separate fresh prefixes/loads still differ.",
+    "guest_memory_nodes_allowance": "0-6"
+  },
+  "ordinary_samples": [
+    {
+      "id": "G1-1024-short",
+      "configured_context": 1024,
+      "input_tokens": 620,
+      "cached_tokens": 0,
+      "output_tokens": 128,
+      "occupied_tokens": 748,
+      "output_cap": 128,
+      "finish_reason": "length",
+      "timing_status": "AVAILABLE",
+      "native_prompt_ms": 13628.194,
+      "native_decode_ms": 9311.569,
+      "native_n_minus_1_tokens_per_second": 13.638947421213333,
+      "client_elapsed_s": 22.9828299159999,
+      "request_body_sha256": "f275506b332bc48cd4428c74bc9619042ac1e9b0dc1d24726660cbbad211e5ec",
+      "count_sha256": "c5b9ff96e7472cfdf6dcfd2167bc3e2da70dd85a90790130da3f4bc7eadf0cf9",
+      "response_sha256": "50012f48197e9cb468e24cfe797849becef356ab99a0e0d04e936b5c777237a0",
+      "source_file": "G1-1024-short-result.json",
+      "source_pointers": [
+        "/summary/counters",
+        "/summary/client_elapsed_seconds",
+        "/decode_windows/windows",
+        "/body_sha256",
+        "/count_sha256",
+        "/summary/response_sha256"
+      ],
+      "outcome": "TIMING_PASS_OUTPUT_LIMIT",
+      "native_decode_tokens": 128,
+      "native_tokens_per_second_stored_n_over_decode": 13.74634070799454,
+      "evaluated_prompt_tokens": 620,
+      "native_input_tokens_per_second": 45.49392237885666,
+      "instrumented_cpu_profile": false,
+      "native_windows": [
+        {
+          "part": "beginning",
+          "native_count_start": 1,
+          "native_count_end": 43,
+          "native_elapsed_ms": 3413.455,
+          "native_tokens_per_second": 12.304248920814835
+        },
+        {
+          "part": "middle",
+          "native_count_start": 43,
+          "native_count_end": 86,
+          "native_elapsed_ms": 2988.4449999999997,
+          "native_tokens_per_second": 14.388754017557627
+        },
+        {
+          "part": "end",
+          "native_count_start": 86,
+          "native_count_end": 128,
+          "native_elapsed_ms": 2909.6679999999997,
+          "native_tokens_per_second": 14.434636528978565
+        }
+      ]
+    },
+    {
+      "id": "G1-32768-short",
+      "configured_context": 32768,
+      "input_tokens": 620,
+      "cached_tokens": 0,
+      "output_tokens": 128,
+      "occupied_tokens": 748,
+      "output_cap": 128,
+      "finish_reason": "length",
+      "timing_status": "AVAILABLE",
+      "native_prompt_ms": 13604.152,
+      "native_decode_ms": 11187.089,
+      "native_n_minus_1_tokens_per_second": 11.352372364249538,
+      "client_elapsed_s": 24.868485707964282,
+      "request_body_sha256": "6577bbdfbb941a09328c03ddc4502461390642929af2b11fde6e74f5d8d02299",
+      "count_sha256": "86c43ef31733f5b692532e05f466370d639e6bf017f6e2122a195efe19324db2",
+      "response_sha256": "7b2e06f68a20d0009b224d6b2b695286644bbd0681c6e3de96db99905fbfd3ea",
+      "source_file": "G1-32768-short-result.json",
+      "source_pointers": [
+        "/summary/counters",
+        "/summary/client_elapsed_seconds",
+        "/decode_windows/windows",
+        "/body_sha256",
+        "/count_sha256",
+        "/summary/response_sha256"
+      ],
+      "outcome": "TIMING_PASS_OUTPUT_LIMIT",
+      "native_decode_tokens": 128,
+      "native_tokens_per_second_stored_n_over_decode": 11.441761123023156,
+      "evaluated_prompt_tokens": 620,
+      "native_input_tokens_per_second": 45.57432172178023,
+      "instrumented_cpu_profile": false,
+      "native_windows": [
+        {
+          "part": "beginning",
+          "native_count_start": 1,
+          "native_count_end": 43,
+          "native_elapsed_ms": 4877.923,
+          "native_tokens_per_second": 8.610222014574646
+        },
+        {
+          "part": "middle",
+          "native_count_start": 43,
+          "native_count_end": 86,
+          "native_elapsed_ms": 3127.702,
+          "native_tokens_per_second": 13.74811283172118
+        },
+        {
+          "part": "end",
+          "native_count_start": 86,
+          "native_count_end": 128,
+          "native_elapsed_ms": 3181.4629999999997,
+          "native_tokens_per_second": 13.201473661645602
+        }
+      ]
+    },
+    {
+      "id": "G1-65536-short",
+      "configured_context": 65536,
+      "input_tokens": 620,
+      "cached_tokens": 0,
+      "output_tokens": 128,
+      "occupied_tokens": 748,
+      "output_cap": 128,
+      "finish_reason": "length",
+      "timing_status": "AVAILABLE",
+      "native_prompt_ms": 13581.894,
+      "native_decode_ms": 13079.874,
+      "native_n_minus_1_tokens_per_second": 9.709573654914413,
+      "client_elapsed_s": 26.74043345899554,
+      "request_body_sha256": "77456f876eed3e11c119dcb847ffb071c57a9399aeb153cad974e5d8d749ee68",
+      "count_sha256": "47a4235fe23bbf4e8c4763d15b217ccf1c68ee9bb03c865f8b2f25f82e498852",
+      "response_sha256": "ad5ed3b87ca412b56014c4b77d230efd086814af3d3cf82abcf511d70b2c1cbd",
+      "source_file": "G1-65536-short-result.json",
+      "source_pointers": [
+        "/summary/counters",
+        "/summary/client_elapsed_seconds",
+        "/decode_windows/windows",
+        "/body_sha256",
+        "/count_sha256",
+        "/summary/response_sha256"
+      ],
+      "outcome": "TIMING_PASS_OUTPUT_LIMIT",
+      "native_decode_tokens": 128,
+      "native_tokens_per_second_stored_n_over_decode": 9.786026990779881,
+      "evaluated_prompt_tokens": 620,
+      "native_input_tokens_per_second": 45.649008893752224,
+      "instrumented_cpu_profile": false,
+      "native_windows": [
+        {
+          "part": "beginning",
+          "native_count_start": 1,
+          "native_count_end": 43,
+          "native_elapsed_ms": 4176.2519999999995,
+          "native_tokens_per_second": 10.05686438462047
+        },
+        {
+          "part": "middle",
+          "native_count_start": 43,
+          "native_count_end": 86,
+          "native_elapsed_ms": 5963.500000000001,
+          "native_tokens_per_second": 7.210530728598976
+        },
+        {
+          "part": "end",
+          "native_count_start": 86,
+          "native_count_end": 128,
+          "native_elapsed_ms": 2940.120999999999,
+          "native_tokens_per_second": 14.285126360445714
+        }
+      ]
+    },
+    {
+      "id": "G1-65536-replay",
+      "configured_context": 65536,
+      "input_tokens": 65008,
+      "cached_tokens": 0,
+      "output_tokens": 64,
+      "occupied_tokens": 65072,
+      "output_cap": 256,
+      "finish_reason": "stop",
+      "timing_status": "AVAILABLE",
+      "native_prompt_ms": 928605.185,
+      "native_decode_ms": 6146.922,
+      "native_n_minus_1_tokens_per_second": 10.249031954529439,
+      "client_elapsed_s": 934.818439833005,
+      "request_body_sha256": "2267d0ce3bb796e65f528aec5eccd32875eab59bae9e2c271bf955222b971dfc",
+      "count_sha256": "b1e5428875dbe3a5d3d191915c7fd0a69b85733b68ca86728c358e0053d5da01",
+      "response_sha256": "901ba7fd22235604560fc4a31b3640f03c77cca746d6c08dfdfca639031600f5",
+      "source_file": "G1-65536-replay-result.json",
+      "source_pointers": [
+        "/summary/counters",
+        "/summary/client_elapsed_seconds",
+        "/decode_windows/windows",
+        "/body_sha256",
+        "/count_sha256",
+        "/summary/response_sha256"
+      ],
+      "outcome": "PASS",
+      "native_decode_tokens": 64,
+      "native_tokens_per_second_stored_n_over_decode": 10.411715001426732,
+      "evaluated_prompt_tokens": 65008,
+      "native_input_tokens_per_second": 70.00607044855128,
+      "instrumented_cpu_profile": false,
+      "native_windows": [
+        {
+          "part": "beginning",
+          "native_count_start": 1,
+          "native_count_end": 22,
+          "native_elapsed_ms": 2912.346,
+          "native_tokens_per_second": 7.210681697847715
+        },
+        {
+          "part": "middle",
+          "native_count_start": 22,
+          "native_count_end": 43,
+          "native_elapsed_ms": 1573.8519999999994,
+          "native_tokens_per_second": 13.343058940739033
+        },
+        {
+          "part": "end",
+          "native_count_start": 43,
+          "native_count_end": 64,
+          "native_elapsed_ms": 1660.723,
+          "native_tokens_per_second": 12.64509493756635
+        }
+      ]
+    },
+    {
+      "id": "G1-65536-natural4096",
+      "configured_context": 65536,
+      "input_tokens": 65,
+      "cached_tokens": 0,
+      "output_tokens": 4096,
+      "occupied_tokens": 4161,
+      "output_cap": 4096,
+      "finish_reason": "length",
+      "timing_status": "AVAILABLE",
+      "native_prompt_ms": 4599.73,
+      "native_decode_ms": 301663.48,
+      "native_n_minus_1_tokens_per_second": 13.574729032496743,
+      "client_elapsed_s": 306.31348608405096,
+      "request_body_sha256": "adfc0b6c1225ac5dc1f7e8ddb5c8022911c9a4551e48fd201d2228bc3abe86fe",
+      "count_sha256": "ac6d85d56ac1c3ec596deca7d2bd09452a1940602f91a4bda4f3de0fb576ecb5",
+      "response_sha256": "74ca7da7721bcf0c7d1c4dc86a2ee2cb71a07f96e15d97c2045c8f1fa716778d",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_pointers": [
+        "/summary/counters",
+        "/summary/client_elapsed_seconds",
+        "/decode_windows/windows",
+        "/body_sha256",
+        "/count_sha256",
+        "/summary/response_sha256"
+      ],
+      "outcome": "OUTPUT_LIMIT",
+      "native_decode_tokens": 4096,
+      "native_tokens_per_second_stored_n_over_decode": 13.578043984641429,
+      "evaluated_prompt_tokens": 65,
+      "native_input_tokens_per_second": 14.131264226378507,
+      "instrumented_cpu_profile": false,
+      "native_windows": [
+        {
+          "part": "beginning",
+          "native_count_start": 1,
+          "native_count_end": 1366,
+          "native_elapsed_ms": 106037.64199999999,
+          "native_tokens_per_second": 12.87278719381557
+        },
+        {
+          "part": "middle",
+          "native_count_start": 1366,
+          "native_count_end": 2731,
+          "native_elapsed_ms": 98224.197,
+          "native_tokens_per_second": 13.896779425949392
+        },
+        {
+          "part": "end",
+          "native_count_start": 2731,
+          "native_count_end": 4096,
+          "native_elapsed_ms": 97401.63999999998,
+          "native_tokens_per_second": 14.014137749631322
+        }
+      ]
+    }
+  ],
+  "control_matching": "Same logical fixture and 620 input/128 output at all three capacities, fresh prefix and cache0; body and token hashes differ. Not byte/token-identical prompts. All short controls had 128 native completion tokens; their streams contained reasoning output but no visible final content. PASS is diagnostic timing acceptance only; no separate token-channel accounting is inferred.",
+  "warmups_separate": [
+    {
+      "id": "G1-1024-warmup",
+      "input_tokens": 614,
+      "output_tokens": 32,
+      "minimum_input": 512,
+      "status": "PASS",
+      "source_file": "G1-1024-warmup-result.json"
+    },
+    {
+      "id": "G1-32768-warmup",
+      "input_tokens": 2328,
+      "output_tokens": 32,
+      "minimum_input": 2048,
+      "status": "PASS",
+      "source_file": "G1-32768-warmup-result.json"
+    },
+    {
+      "id": "G1-65536-warmup",
+      "input_tokens": 2328,
+      "output_tokens": 32,
+      "minimum_input": 2048,
+      "status": "PASS",
+      "source_file": "G1-65536-warmup-result.json"
+    }
+  ],
+  "long_answer_quality": {
+    "completed_scientific_answer": false,
+    "response_sha256": "74ca7da7721bcf0c7d1c4dc86a2ee2cb71a07f96e15d97c2045c8f1fa716778d",
+    "visible_content_sha256": "bbc002a11fc63ab2bdccc61533cde203a3519f3d5cb13b64f8f84de692ab7921",
+    "reasoning_vs_visible_token_split": "UNAVAILABLE; 4096 is native total completion count, not separately measured visible-answer tokens.",
+    "disposition": "Useful coherent partial tutorial touching all requested topics, with practical-pitfall coverage cut off. Cap reached; not a completed scientific answer and not a repaired-model or causal-performance claim.",
+    "status": "COHERENT_BUT_TRUNCATED",
+    "coverage": {
+      "weak formulation": "SUBSTANTIAL",
+      "boundary conditions": "SUBSTANTIAL_WITH_CAVEATS",
+      "matrix assembly": "SUBSTANTIAL",
+      "worked one-dimensional example": "SUBSTANTIAL",
+      "error estimation": "SUBSTANTIAL_WITH_CAVEATS",
+      "practical numerical pitfalls": "PARTIAL_TRUNCATED"
+    },
+    "truncation_section": "7. Practical Numerical Pitfalls",
+    "truncation_item": "3. Boundary approximation",
+    "truncation_location": "Mid-sentence and open parenthesis immediately after introducing isoparametric treatment.",
+    "scientific_caveats": [
+      "Setting kappa=1 alone does not make the displayed sourced Poisson equation Laplace equation; f must also vanish.",
+      "Neumann data are natural rather than essential boundary conditions; the prose uses essential inconsistently.",
+      "The stated H1 stability bound omits dependence on nonzero Dirichlet data; the pure-Neumann discussion omits the load/flux compatibility condition.",
+      "The mixed-boundary residual-estimator presentation does not explicitly include a Neumann boundary residual. These caveats preclude treating this basic review as scientific correctness acceptance."
+    ],
+    "scope": "Basic visible-answer coherence/topic review, not full scientific acceptance; no raw reasoning or answer text copied.",
+    "basic_coherence": {
+      "status": "COHERENT_BUT_TRUNCATED",
+      "assessment": "Readable, on-topic tutorial progresses from the PDE and weak form through Galerkin spaces, assembly, a worked 1D example and error estimation to practical pitfalls. No obvious repetition loop, unrelated topic drift or gibberish in visible content."
+    },
+    "worked_1d_example": "Principal equations internally consistent by inspection; basic review only.",
+    "truncation_suffix": "use isoparametric (",
+    "character_count_caveat": "Character counts are not a reasoning/final token split.",
+    "source_artifacts": [
+      "MAIN-QUALITY.md",
+      "MAIN-QUALITY.json"
+    ]
+  },
+  "long_resource_observations": {
+    "process_rss_peak_bytes": {
+      "value": 436434747392,
+      "unit": "bytes",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "sampled_peak"
+    },
+    "cgroup_current_peak_bytes": {
+      "value": 438096814080,
+      "unit": "bytes",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "sampled_peak"
+    },
+    "gpu0_used_peak_bytes": {
+      "value": 43459280896,
+      "unit": "bytes",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "sampled_peak"
+    },
+    "gpu0_free_min_bytes": {
+      "value": 58515783680,
+      "unit": "bytes",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "sampled_minimum"
+    },
+    "guest_available_min_bytes": {
+      "value": 492299747328,
+      "unit": "bytes",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "sampled_minimum"
+    },
+    "process_swap_peak_bytes": {
+      "value": 0,
+      "unit": "bytes",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "sampled_peak"
+    },
+    "cgroup_swap_peak_bytes": {
+      "value": 0,
+      "unit": "bytes",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "sampled_peak"
+    },
+    "guest_oom_kill_delta": {
+      "value": 0,
+      "unit": "counter delta",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "observed_counter_delta"
+    },
+    "guest_pswpin_delta": {
+      "value": 51,
+      "unit": "counter delta",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "observed_counter_delta"
+    },
+    "guest_pswpout_delta": {
+      "value": 0,
+      "unit": "counter delta",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "observed_counter_delta"
+    },
+    "guest_pgmajfault_delta": {
+      "value": 56,
+      "unit": "counter delta",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "observed_counter_delta"
+    },
+    "cgroup_pgmajfault_delta": {
+      "value": 8,
+      "unit": "counter delta",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "observed_counter_delta"
+    },
+    "guest_swap_used_delta_bytes": {
+      "value": -786432,
+      "unit": "bytes",
+      "source_file": "G1-65536-natural4096-result.json",
+      "source_metric": "last-first"
+    }
+  },
+  "resource_interpretation": "Sampled values; process/container swap zero and OOM zero do not establish no guest-wide swap activity. Guest-wide deltas cannot be assigned to the model.",
+  "phase_measurements": {
+    "source": "measurement-evidence-review.md",
+    "short_output_interior_cpu_seconds_per_wall_second": {
+      "32768": 95.578,
+      "65536": 95.451,
+      "1024": null
+    },
+    "short_output_gpu_utilization_percent": {
+      "1024": [
+        2,
+        27
+      ],
+      "32768": [
+        1,
+        27
+      ],
+      "65536": [
+        1,
+        27
+      ]
+    },
+    "largest_short_native_gap_ms": {
+      "1024": 427.407,
+      "32768": 1196.238,
+      "65536": 2191.03
+    },
+    "short_native_median_interval_ms": {
+      "1024": 69.503,
+      "32768": 70.084,
+      "65536": 70.115
+    },
+    "scheduler_wait_runqueue": "UNAVAILABLE: kernel schedstats disabled; never measured zero",
+    "pci_throughput": "UNAVAILABLE",
+    "cpu_cost_classification": "UNAVAILABLE; high CPU use does not distinguish useful computation from spin/wait",
+    "long_request_sample_count": 275,
+    "long_output_arrival_sample_count": 270,
+    "long_maximum_gap_s": 1.2327099170070142,
+    "long_output_arrival_coverage_fraction_estimate": 0.8938249414669878,
+    "long_collection_wall_s": 26.949538292072248,
+    "coverage_caveat": "Arrival phase and native decode clocks are distinct; collection wall time is not measured inference slowdown.",
+    "sample_coverage": [
+      {
+        "id": "G1-1024-short",
+        "request_sample_count": 21,
+        "output_arrival_sample_count": 8,
+        "request_maximum_sample_gap_s": 1.1905399999814108,
+        "output_arrival_maximum_sample_gap_s": 1.1905399999814108,
+        "output_arrival_coverage_fraction_estimate": 0.8407787792405976,
+        "request_collection_wall_seconds": 1.4884993820160162
+      },
+      {
+        "id": "G1-32768-short",
+        "request_sample_count": 23,
+        "output_arrival_sample_count": 10,
+        "request_maximum_sample_gap_s": 1.1609316659742035,
+        "output_arrival_maximum_sample_gap_s": 1.1609316659742035,
+        "output_arrival_coverage_fraction_estimate": 0.8817697959628744,
+        "request_collection_wall_seconds": 1.6461834741057828
+      },
+      {
+        "id": "G1-65536-short",
+        "request_sample_count": 25,
+        "output_arrival_sample_count": 12,
+        "request_maximum_sample_gap_s": 1.1630625830148347,
+        "output_arrival_maximum_sample_gap_s": 1.1630625830148347,
+        "output_arrival_coverage_fraction_estimate": 0.9058989187051242,
+        "request_collection_wall_seconds": 1.7998162629664876
+      },
+      {
+        "id": "G1-65536-replay",
+        "request_sample_count": 867,
+        "output_arrival_sample_count": 4,
+        "request_maximum_sample_gap_s": 1.2418794579571113,
+        "output_arrival_maximum_sample_gap_s": 1.0855187920387834,
+        "output_arrival_coverage_fraction_estimate": 0.7794274223802423,
+        "request_collection_wall_seconds": 46.58028136906796
+      },
+      {
+        "id": "G1-65536-natural4096",
+        "request_sample_count": 275,
+        "output_arrival_sample_count": 270,
+        "request_maximum_sample_gap_s": 1.2327099170070142,
+        "output_arrival_maximum_sample_gap_s": 1.2327099170070142,
+        "output_arrival_coverage_fraction_estimate": 0.8938249414669878,
+        "request_collection_wall_seconds": 26.949538292072248
+      }
+    ],
+    "long_blocks_from_saved_review": {
+      "block_transitions_max": 256,
+      "block_count": 16,
+      "native_rate_range": [
+        10.631,
+        14.205
+      ],
+      "final_four_rate_range": [
+        13.871,
+        14.103
+      ],
+      "rate_formula": "delta native cumulative token count * 1000 / delta native cumulative milliseconds"
+    }
+  },
+  "profiling": {
+    "main_failed_capture": {
+      "source_commit": "20c2b4fd8e01e2b5710c197de4dd2957f2898842",
+      "session_id": "01a0bcf9-70b5-76c1-9fc0-6e768876ec42",
+      "status": "UNAVAILABLE",
+      "profiler_returncode": 249,
+      "trace_bytes": 16,
+      "exact_stderr_line": "Couldn't synthesize attrs.",
+      "event": "cpu-clock:u",
+      "frequency_hz": 49,
+      "requested_sample_seconds": 4.0,
+      "maximum_capture_seconds": 5.0,
+      "guest_monotonic_start_s": 247415.428194826,
+      "guest_monotonic_end_s": 247417.557894922,
+      "recorded_interval_seconds": 2.129700096003944,
+      "host_valid": false,
+      "client_valid": true,
+      "decode_contained": false,
+      "target_survived": true,
+      "same_slot_task_native_decoded_before_after": [
+        2,
+        25
+      ],
+      "symbol_resolution": "NOT_INSPECTED; no usable trace",
+      "failure_interpretation": "Supplied root source interpretation: pipe attribute event has u16 size with attached IDs; -E2BIG is consistent with this capture-format failure. Original error receipt records cause unresolved. No diagnosis of historical model slowdown.",
+      "source_files": [
+        "cpu-profiler-error-metadata.json",
+        "numa-adjunct-cpu-disposition.json"
+      ],
+      "instrumented_request": {
+        "id": "G1-65536-cpu",
+        "benchmark_timing": false,
+        "timing_disposition": "INSTRUMENTED diagnostic only; excluded from ordinary comparisons",
+        "input_tokens": 618,
+        "output_tokens": 256,
+        "output_cap": 256,
+        "finish_reason": "length",
+        "native_counters": {
+          "cached_tokens": 0,
+          "completion_tokens": 256,
+          "decode_ms": 21379.965,
+          "decode_tokens": 256,
+          "evaluated_prompt_tokens": 618,
+          "prompt_ms": 13678.169,
+          "prompt_tokens": 618,
+          "total_tokens": 874
+        },
+        "client_elapsed_seconds": 36.760062834015116,
+        "native_n_minus_1_tokens_per_second": 11.927054136898727,
+        "native_tokens_per_second_stored_n_over_decode": 11.9738268982199
+      }
+    },
+    "named_seekable_repair": {
+      "source_commit": "5dc72c83ab89af0a068b61821cc7bd130ace498a",
+      "session_id": "01a0bd2b-7671-7dc0-bed7-2b45f9484757",
+      "output_contract": "Guarded named seekable perf.data through inherited directory descriptor; same target generation and bounded leaf-symbol report.",
+      "capture_acceptance_requires": [
+        "full client/native decode containment",
+        "positive same-task decode progress",
+        "target survival",
+        "positive resolved leaf samples"
+      ],
+      "attribution_limits": "Empty, failed, all-unresolved or noncontained evidence is UNAVAILABLE; leaf categories cannot prove causality.",
+      "outcome": "BUDGET_BLOCKED_NO_REQUESTS",
+      "linux_live_validation": "NOT_TESTED",
+      "warmup_count": 0,
+      "request_count": 0,
+      "capture_count": 0,
+      "capture_interval": null,
+      "report_interval": null,
+      "decode_contained": null,
+      "target_survived_during_capture": null,
+      "symbol_resolution": "UNAVAILABLE; no capture/report",
+      "timing_disposition": "INSTRUMENTED diagnostic only; no timings obtained",
+      "budget_failure_is_benchmark_failure": false,
+      "reason": "MEASUREMENT_DEADLINE_REACHED_DURING_64K_LOAD_NO_MODEL_REQUEST_OR_CAPTURE_DISPATCHED",
+      "profile_status": "UNAVAILABLE",
+      "capture_status": "NOT_DISPATCHED"
+    },
+    "cuda": {
+      "status": "UNAVAILABLE",
+      "tools_staged": true,
+      "help_inspected": true,
+      "nonmodel_survival_check": "PASS; trace=none, sample=none, cpuctxsw=none",
+      "model_timeline_captured": false,
+      "requested_model_cuda_diagnostic_completed": false,
+      "container_launch_injection_stop_contract": "NOT_VALIDATED",
+      "source_files": [
+        "nsys-staging-receipt.json",
+        "nsys-installed-help.json",
+        "nsys-survival-receipt.json"
+      ]
+    }
+  },
+  "numa": {
+    "source_files": [
+      "numa-during-replay.json",
+      "numa-after-replay.json",
+      "measurement-evidence-review.md"
+    ],
+    "balancing_at_both_endpoints": 1,
+    "interval_seconds": 490.369056806,
+    "utc_start": "2026-09-20T04:34:02.953658Z",
+    "utc_end": "2026-09-20T04:42:13.322715Z",
+    "phase": "Mostly prefill plus decode and short post-request time, not decode-isolated",
+    "deltas": {
+      "numa_hint_faults": 1290606,
+      "numa_hint_faults_local": 1289230,
+      "numa_pages_migrated": 967,
+      "pgmigrate_success": 967,
+      "pgmigrate_fail": 0
+    },
+    "interpretation": "Guest-wide interval activity only; no per-stall causation, thread/model attribution or host residency proof"
+  },
+  "topology": {
+    "source_file": "proxmox-topology-user-20260920.txt",
+    "both_physical_gpus_host_numa_node": 6,
+    "gpu_local_host_cpus": "8-15,72-79",
+    "vm_global_cpu_affinity": "8-63,72-127",
+    "affinity_caveat": "Global VM CPU affinity is not per-vCPU pinning",
+    "guest_cpu_allowance": "0-95",
+    "guest_memory_nodes_allowance": "0-6",
+    "ram_policy": "preferred, not proof of actual host backing-page residency",
+    "host_access_or_changes": false,
+    "interpretation": "User-supplied host facts establish the GPUs’ host-NUMA6 relationship and extend the older guest-only review; they do not prove actual VM vCPU execution placement, host RAM residency or a performance cause.",
+    "host_socket_count": 1,
+    "host_physical_cores": 64,
+    "host_smt_threads": 128,
+    "host_numa_nodes": 8,
+    "host_cores_per_numa_node": 8,
+    "host_threads_per_numa_node": 16,
+    "gpu_pci_functions": [
+      "c1:00",
+      "e1:00"
+    ],
+    "vm_vcpus": 112,
+    "vm_presented_sockets": 7,
+    "vm_presented_cores_per_socket": 16,
+    "global_affinity_allowed_host_threads": 112,
+    "global_affinity_corresponding_physical_cores": 56,
+    "exclusive_host_cpu_reservation_proven": false,
+    "guest_ram_total_gib": 896,
+    "ballooning": false,
+    "guest_numa_preferences": [
+      {
+        "guest_node": 0,
+        "guest_vcpus": "0-15",
+        "ram_requested_gib": 128,
+        "preferred_host_node": 6
+      },
+      {
+        "guest_node": 1,
+        "guest_vcpus": "16-31",
+        "ram_requested_gib": 128,
+        "preferred_host_node": 2
+      },
+      {
+        "guest_node": 2,
+        "guest_vcpus": "32-47",
+        "ram_requested_gib": 128,
+        "preferred_host_node": 4
+      },
+      {
+        "guest_node": 3,
+        "guest_vcpus": "48-63",
+        "ram_requested_gib": 128,
+        "preferred_host_node": 1
+      },
+      {
+        "guest_node": 4,
+        "guest_vcpus": "64-79",
+        "ram_requested_gib": 128,
+        "preferred_host_node": 7
+      },
+      {
+        "guest_node": 5,
+        "guest_vcpus": "80-95",
+        "ram_requested_gib": 128,
+        "preferred_host_node": 3
+      },
+      {
+        "guest_node": 6,
+        "guest_vcpus": "96-111",
+        "ram_requested_gib": 128,
+        "preferred_host_node": 5
+      }
+    ],
+    "preferred_host_node_capacity_mib_range": [
+      128960,
+      129018
+    ],
+    "preferred_host_nodes_total_capacity_mib": 903023,
+    "preferred_host_nodes_total_capacity_gib": 881.8583984375,
+    "guest_request_exceeds_selected_capacity_gib": 14.1416015625,
+    "present_physical_residency_proven": false,
+    "spillover_measured": false,
+    "capacity_interpretation": "All 896 GiB cannot simultaneously be distinct resident pages exclusively on the seven selected nodes if fully populated; this does not prove current residency, preallocation or actual spillover.",
+    "host_distances": [
+      10,
+      11
+    ],
+    "older_guest_distances": [
+      10,
+      20
+    ],
+    "distance_caveat": "Topology descriptors, not measured latency or performance penalties.",
+    "concurrency_status": "UNTESTED; disjoint guest cpusets/shared RAM in the same VM are only a provisional future option, not physical-resource isolation. Separate VMs do not inherently remove node6 locality but cannot each own a separate GPU-local memory domain.",
+    "deployment_recommendation_as_proven_performance": false,
+    "review_sources": [
+      "proxmox-topology-review.md",
+      "topology-capacity-review.md"
+    ]
+  },
+  "upstream_limits": {
+    "source_file": "upstream-review.md",
+    "b10429_original_fix": "Already included in pinned runtime",
+    "poll0": "Historical negative result does not test OpenMP wait policy",
+    "causal_fix_established": false,
+    "variant_run": false,
+    "gomp_variant_performed": false
+  },
+  "restoration": {
+    "main": {
+      "epoch": 1789879925.249436,
+      "host_session_closed": true,
+      "local_tunnel_ports": {
+        "31002": "CLOSED",
+        "31004": "CLOSED"
+      },
+      "phase": "RESTORED",
+      "restoration_outside_budget": true,
+      "session_id": "01a0bcf9-70b5-76c1-9fc0-6e768876ec42",
+      "source_commit": "20c2b4fd8e01e2b5710c197de4dd2957f2898842",
+      "status": "PASS",
+      "verification": "canonical finalize plus authenticated Worker1 LAN control/inference",
+      "recorded_utc": "2026-09-20T04:52:05.249436Z",
+      "original_model_identity": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+      "original_desired": "running",
+      "original_model_source": "main results.jsonl line 1752 /result; worker_restoration_verified",
+      "evidence_boundary": "Recorded main-session restoration, not separate profile-session acceptance."
+    },
+    "profile": {
+      "epoch": 1789881705.519568,
+      "host_session_closed": true,
+      "local_tunnel_ports": {
+        "31002": "CLOSED",
+        "31004": "CLOSED"
+      },
+      "phase": "RESTORED",
+      "restoration_outside_budget": true,
+      "session_id": "01a0bd2b-7671-7dc0-bed7-2b45f9484757",
+      "source_commit": "5dc72c83ab89af0a068b61821cc7bd130ace498a",
+      "status": "PASS",
+      "verification": "canonical finalize plus authenticated Worker1 LAN control/inference",
+      "recorded_utc": "2026-09-20T05:21:45.519568+00:00",
+      "matching_final_receipt_present": true,
+      "original_model_identity": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+      "original_desired": "running",
+      "local_recovery": {
+        "recorded_epoch": 1789881632.2437932,
+        "recorded_utc": "2026-09-20T05:20:32.243793+00:00",
+        "manager": {
+          "boot_policy": "resume",
+          "container_running": true,
+          "desired": "running",
+          "observed": "ready",
+          "recovery_pending": false,
+          "selected": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+          "state_persisted": true
+        },
+        "control": {
+          "fresh": true,
+          "operation": null
+        },
+        "lifecycle_lease_held": false,
+        "campaign_resource_states": [
+          "REMOVED",
+          "REMOVED"
+        ],
+        "registered_storage_guard_passed": true,
+        "root_disk_guard_passed": true,
+        "warning": "Saved root headroom below 6 GiB; guard passes.",
+        "source_file": "profile-recovery-status.json"
+      },
+      "wrapper_errors": [
+        {
+          "code": "HARNESS_FAILURE",
+          "error_class": "RuntimeError"
+        },
+        {
+          "code": "HARNESS_FAILURE",
+          "error_class": "RuntimeError"
+        }
+      ],
+      "wrapper_error_cause": "UNRESOLVED; generic failures do not establish cause",
+      "run_exit_code": 1,
+      "first_restore_entrypoint_exit_code": 1,
+      "direct_canonical_recovery_exit_code": 0,
+      "final_restore_entrypoint_exit_code": 0,
+      "evidence_boundary": "Local recovery verified first; exact profile-session final receipt separately establishes authenticated Worker1 LAN control/inference and tunnel/host-session closure. No live checks repeated by report integration."
+    }
+  },
+  "clocks": {
+    "main": {
+      "stage": "GLM-DECODE-DIAG-20260920",
+      "start_epoch": 1789875152.139285,
+      "deadline_epoch": 1789889552.139285,
+      "budget_seconds": 14400,
+      "request_max_seconds": 7200,
+      "clock_includes_preparation": true,
+      "restoration_outside_budget": true
+    },
+    "profile": {
+      "stage": "GLM-DECODE-PROFILE-20260920",
+      "start_epoch": 1789880135.9566221,
+      "deadline_epoch": 1789881335.9566221,
+      "budget_seconds": 1200,
+      "includes_preparation": true,
+      "restoration_outside_budget": true
+    },
+    "main_utc": [
+      "2026-09-20T03:32:32.139285Z",
+      "2026-09-20T07:32:32.139285Z"
+    ],
+    "profile_utc": [
+      "2026-09-20T04:55:35.956622Z",
+      "2026-09-20T05:15:35.956622Z"
+    ],
+    "extension_seconds": 0,
+    "restoration_outside_budgets": true
+  },
+  "evidence_sha256": [
+    {
+      "input_set": "main",
+      "basename": "MAIN-REPORT.md",
+      "sha256": "d8655dfb605ab74a961ff8313cf81ac2e64f47ec6496a6413ceb9c3437e4413a"
+    },
+    {
+      "input_set": "main",
+      "basename": "MAIN-REPORT.json",
+      "sha256": "ab78ae6a39c003143187e43cf4abb40cf1f1d0e3da4690df0090b37fbf5ea8a0"
+    },
+    {
+      "input_set": "main",
+      "basename": "MAIN-QUALITY.md",
+      "sha256": "129894a64879f521ab0dafbf6e40d0d0211107053392c18cda0cf71bf654eaab"
+    },
+    {
+      "input_set": "main",
+      "basename": "MAIN-QUALITY.json",
+      "sha256": "83fc66541f0a047613c011d66627ce493adf77f4132060f90a4b10e951f96e01"
+    },
+    {
+      "input_set": "main",
+      "basename": "G1-1024-short-result.json",
+      "sha256": "55a36cd96ff7dad9948891bceeeb108f6c632c82effbd0929a0ba1152410bbcd"
+    },
+    {
+      "input_set": "main",
+      "basename": "G1-32768-short-result.json",
+      "sha256": "7a8a536e377ff45f676221a6dd61385baadc6abeaa5f476a02de032c8c1a903f"
+    },
+    {
+      "input_set": "main",
+      "basename": "G1-65536-short-result.json",
+      "sha256": "e727637785943cb0172b0e534f45c302b4ce1fbd262936838809e5fad2153e1b"
+    },
+    {
+      "input_set": "main",
+      "basename": "G1-65536-replay-result.json",
+      "sha256": "e7c06eaba0966a438819025fccd6e98fc9ab401651b7700b3bd9ac8ff2d34b6b"
+    },
+    {
+      "input_set": "main",
+      "basename": "G1-65536-natural4096-result.json",
+      "sha256": "3d0d59e86556626f819b8bca2f70310c73cd46013830fdf30e49409289d8b9c3"
+    },
+    {
+      "input_set": "main",
+      "basename": "G1-1024-warmup-result.json",
+      "sha256": "20656b13d617b80858d6ef62d375594ad1f2c88f2e5c1c1ec49eabf4e5da5220"
+    },
+    {
+      "input_set": "main",
+      "basename": "G1-32768-warmup-result.json",
+      "sha256": "184bd07346ef64a7a3a3cccb992274c41cbb1583734b19a2d439f2f7a0ebbba2"
+    },
+    {
+      "input_set": "main",
+      "basename": "G1-65536-warmup-result.json",
+      "sha256": "b5189ed6a5f06d6931f7e9cfd2b24606afee71c3079c578fb7f6988fe0ddebcb"
+    },
+    {
+      "input_set": "main",
+      "basename": "G1-65536-cpu-result.json",
+      "sha256": "b0954d4565158aef3cf82c929be7e4f8db1b984812d5fe5973650ffad4aaeabe"
+    },
+    {
+      "input_set": "main",
+      "basename": "arm.json",
+      "sha256": "52ac8024dc1e4c5b2fbb2335c69aaa5a34ce3053c42a1102a5f135675746adab"
+    },
+    {
+      "input_set": "main",
+      "basename": "arm-receipt.json",
+      "sha256": "295779da72b2af22eaa557ec686021c9324bfe749dfd4005fd081556bf626dde"
+    },
+    {
+      "input_set": "main",
+      "basename": "candidate-identities.json",
+      "sha256": "26c6d1ca4475ce672f10c5d50e50d946eec2b8d1b9da0333084a1b1f5a6a28a2"
+    },
+    {
+      "input_set": "main",
+      "basename": "stage-clock.json",
+      "sha256": "039b3d8adcd47c1799e5cc157bac91cd38dc77c680f1aad82cfbaf89e9383432"
+    },
+    {
+      "input_set": "main",
+      "basename": "final-restoration-receipt.json",
+      "sha256": "e8d9796ba9983662fe2e9cc253d9cb4a94dfbd981cb067b1b92386c1c7af818a"
+    },
+    {
+      "input_set": "main",
+      "basename": "results.jsonl",
+      "sha256": "04708a84234f088aa671d8cb085984d3ff5beccbff18aed34d7bac3b46e9acd7"
+    },
+    {
+      "input_set": "main",
+      "basename": "cpu-profiler-error-metadata.json",
+      "sha256": "58b8b9bb87a03f0bb83bd78ba5bf41ce63aade08d9ff38ddd7f6dcdcb02654bc"
+    },
+    {
+      "input_set": "main",
+      "basename": "numa-adjunct-cpu-disposition.json",
+      "sha256": "f7c0d37c900243dc82e1edc3aec82f4a736ae2dcc258b8a32bab8191c3004470"
+    },
+    {
+      "input_set": "main",
+      "basename": "numa-during-replay.json",
+      "sha256": "4f38b5c6f9b8c92b494fea1644a5bdc1f99e4dbf93b21313772d337b9b1294e9"
+    },
+    {
+      "input_set": "main",
+      "basename": "numa-after-replay.json",
+      "sha256": "ce4f3aa52c336b503d99d4df41d9e0b82d90094ea9812afad84616f3d3c2dff7"
+    },
+    {
+      "input_set": "main",
+      "basename": "nsys-staging-receipt.json",
+      "sha256": "1a37ffae40f9a7cf2625fdf83e7e8486a1e2ba0c8b203a4cc1c6cecd4dd5ea58"
+    },
+    {
+      "input_set": "main",
+      "basename": "nsys-installed-help.json",
+      "sha256": "8eabac05ca252a0544cdbac49885bf9caf336fdf09675d3f590716b2b3e06904"
+    },
+    {
+      "input_set": "main",
+      "basename": "nsys-survival-receipt.json",
+      "sha256": "6026935f81fb7ffccfd5f4fbc2e933484fa98fbb8d173fa0f2a8d69239caff04"
+    },
+    {
+      "input_set": "profile",
+      "basename": "HANDOFF.md",
+      "sha256": "ffd8d780e6598a9657fef555f2d092462be2562bc442f87a775172dbcbd38d6a"
+    },
+    {
+      "input_set": "profile",
+      "basename": "profile-review-identities.json",
+      "sha256": "94b14d285d8d59fea54a7dad6a16db6667306aa5c77ef6a9257f4c03479dd5be"
+    },
+    {
+      "input_set": "profile",
+      "basename": "profile-stage-clock.json",
+      "sha256": "74d24c1bd22d6fc5dfa48ec74d95749cce40494ff437b36468c87cbcfd2b8068"
+    },
+    {
+      "input_set": "profile",
+      "basename": "profile-compact-outcomes.json",
+      "sha256": "04888e878a12de9c62280935175d6a686eaa09dbc415d9cd247fc41feaa53faf"
+    },
+    {
+      "input_set": "profile",
+      "basename": "final-restoration-receipt.json",
+      "sha256": "78bc8f48a3e4bcfc68a419380072f11618262db772da59f46e0faf8744783990"
+    },
+    {
+      "input_set": "profile",
+      "basename": "status.json",
+      "sha256": "35508e72c07648e931bb9b53fd830bb04735e089cf1c53d6e21dc88c52e2f798"
+    },
+    {
+      "input_set": "profile",
+      "basename": "results.jsonl",
+      "sha256": "50a8cd2f2591a31bb4cf19d0ff59afc119cc5a6c2f1971c98f78b39a97c4bdeb"
+    },
+    {
+      "input_set": "reviews",
+      "basename": "measurement-evidence-review.md",
+      "sha256": "f4832eae8b62166c4db265f4197b3686f4c0e1a882bfc12dd2dba4fbf1c31978"
+    },
+    {
+      "input_set": "reviews",
+      "basename": "proxmox-topology-review.md",
+      "sha256": "b9b78ab8e89fdcaf97c266d306c7668d191215040b520820bd60a85e07ef7ab8"
+    },
+    {
+      "input_set": "reviews",
+      "basename": "proxmox-topology-user-20260920.txt",
+      "sha256": "aef3802a5031470b8c1121be6dc15ecd93f970024d4d484832aa55539f801bbd"
+    },
+    {
+      "input_set": "reviews",
+      "basename": "topology-capacity-review.md",
+      "sha256": "f2e02a24a7b2d77ed914ea18fa03d49762f1ed0288968e117afe00910abaff7e"
+    },
+    {
+      "input_set": "reviews",
+      "basename": "upstream-review.md",
+      "sha256": "7153ace036bd3f20c0feaf0735aff2969ce898b6c5210abfdd947d38bf6a4b7a"
+    },
+    {
+      "input_set": "profile",
+      "basename": "profile-final-outcome.json",
+      "sha256": "6854a5949d0affc493b3bd0f1d4a7b06bbeb8e2903e2775556b673cfb869cb09"
+    },
+    {
+      "input_set": "profile",
+      "basename": "profile-direct-recovery.json",
+      "sha256": "dae8174c25afdc2569812d854d4bb80d2322891a79b3d87be656f7ad88531382"
+    },
+    {
+      "input_set": "profile",
+      "basename": "profile-recovery-status.json",
+      "sha256": "d22486688dd85b7d84d654523248915b4eecc105f0d0de3576990e61dd776519"
+    },
+    {
+      "input_set": "profile",
+      "basename": "profile-run-exit.json",
+      "sha256": "3f4b7c3f712a4b88401237bea15359ae7bb75f5e4ab99f6af2f0d19bfebf82c1"
+    },
+    {
+      "input_set": "profile",
+      "basename": "profile-restore-exit.json",
+      "sha256": "ccc5eb298a19dbfaf6a50ca3d8888a3d477503c3633b4d48bc5e05e5e8d0075d"
+    }
+  ],
+  "primary_source_references": {
+    "scope": "Primary-source references carried forward from supplied reviewed material/root directions; no new web research. External documentation does not prove measured VM behavior.",
+    "perf_attribute_synthesis": "https://github.com/gregkh/linux/blob/v6.8.12/tools/perf/util/synthetic-events.c#L2146-L2172",
+    "perf_header_handling": "https://github.com/gregkh/linux/blob/v6.8.12/tools/perf/util/header.c#L3691",
+    "perf_record_setup": "https://github.com/gregkh/linux/blob/v6.8.12/tools/perf/builtin-record.c#L2041",
+    "perf_seekable_empty_file_behavior": "https://raw.githubusercontent.com/gregkh/linux/v6.8.12/tools/perf/util/data.c",
+    "proxmox_affinity": "https://github.com/proxmox/pve-docs/blob/master/qm.adoc#L434",
+    "qemu_numa": "https://github.com/qemu/qemu/blob/master/qemu-options.hx#L472",
+    "qemu_preferred_bind": "https://github.com/qemu/qemu/blob/master/qemu-options.hx#L5859",
+    "llama_fix_ancestry": "https://api.github.com/repos/ggml-org/llama.cpp/compare/22b8e310b921d568e013e4533002be5a8fe53f17...b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+    "llama_cpu_openmp_poll": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml-cpu/ggml-cpu.c#L3176",
+    "gnu_spin_policy": "https://gcc.gnu.org/onlinedocs/libgomp/GOMP_005fSPINCOUNT.html"
+  }
+}
