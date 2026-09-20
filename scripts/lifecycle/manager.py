@@ -766,9 +766,17 @@ class Manager:
 
     def probe_deployment(self, d: dict, timeout: float) -> str:
         check = self.sglang_probe if not d.get("legacy") and self.sglang_adapter(d) else self.probe
-        return check(self.endpoint(d), d["endpoint"]["served_model"],
+        started = self.monotonic()
+        code = check(self.endpoint(d), d["endpoint"]["served_model"],
                      d.get("auth", {}).get("key_file"), require_auth=not d.get("legacy", False),
                      timeout=timeout)
+        if code == 'ready' and not d.get('legacy'):
+            from . import concurrent_profiles as pair
+            if pair.is_pair(d):
+                remaining = timeout - (self.monotonic() - started)
+                require(remaining > 0, 'concurrent_native_capacity_unavailable')
+                pair.native_capacity(d, timeout=remaining)
+        return code
 
     def observe(self) -> dict:
         s = self.state
@@ -776,7 +784,7 @@ class Manager:
             try:
                 # Observation does not finalize or discard durable pending ownership.
                 identity = self.pending_identity(s)
-                s['container_running'] = self.running(self.trusted_container(identity))
+                s['container_running'] = self.running(self.trusted_container(identity)) if identity else False
             except (LifecycleError, OSError):
                 s['container_running'] = None
             s['observed'] = 'failed'
@@ -784,7 +792,7 @@ class Manager:
             return s
         if not s.get("container"):
             s["container_running"] = False
-            s["observed"] = "stopped"
+            s["observed"] = "failed" if s['desired'] == 'running' else "stopped"
             return s
         s["container_running"] = None
         try:
@@ -799,14 +807,18 @@ class Manager:
                 self.validate_reused_contract(c, d)
             health = c.get("State", {}).get("Health", {}).get("Status")
             code = self.probe_deployment(d, d["launch"]["request_timeout_seconds"])
+            if code == 'ready':
+                self.verify_pair_probe_identity(c, d)
             was_starting = s["observed"] == "starting"
             s["observed"] = "ready" if code == "ready" and health != "unhealthy" else "unhealthy"
             if code == "not_ready" and health != "unhealthy" and was_starting and transition_in_progress(self.lock_file):
                 s["observed"] = "starting"
             if s["desired"] == "stopped":
                 s["failure"] = "unexpected_running_container_stop_first"
-        except (LifecycleError, BindingError, LeaseError, OSError, ValueError, KeyError, TypeError):
+        except (LifecycleError, BindingError, LeaseError, OSError, ValueError, KeyError, TypeError) as exc:
             s["observed"] = "unhealthy"
+            if isinstance(exc, LifecycleError):
+                s['failure'] = str(exc)
             if "container_running" not in s:
                 s["container_running"] = None
         return s
@@ -991,6 +1003,41 @@ class Manager:
                     and image[0].get("Id") == expected_image_id, "runtime_image_id_mismatch")
             adapter.validate_reused(c, d, e, image[0])
 
+    def verify_pair_probe_identity(self, before, deployment):
+        if deployment.get('legacy'):
+            return
+        from . import concurrent_profiles as pair
+        if pair.is_pair(deployment):
+            after = self.trusted_container(self.identity(before, deployment))
+            state = before.get('State', {})
+            require(type(state.get('Pid')) is int and state['Pid'] > 0
+                    and isinstance(state.get('StartedAt'), str) and state['StartedAt']
+                    and self.running(after) and after['State'].get('Pid') == state['Pid']
+                    and after['State'].get('StartedAt') == state['StartedAt'],
+                    'concurrent_resident_identity_changed')
+
+    def current_pair_admission(self, deployment):
+        from . import concurrent_profiles as pair
+        if deployment.get('legacy') or not pair.is_pair(deployment):
+            return
+        require(self._slots_envelope is not None, 'pair_profile_requires_slot_migration')
+        residents = {}
+        for name, item in self._slots_envelope['slots'].items():
+            identity = item.get('container')
+            c = self.trusted_container(identity) if identity else None
+            if self.running(c):
+                d = self.deployment(identity['deployment'])
+                self.validate_reused_contract(c, d)
+                residents[name] = c
+        # This check occurs after any explicitly requested target stop, just
+        # before create/reuse. A saved receipt alone is never current admission.
+        pair.preflight_current(deployment, self.instance, self.run, residents=residents)
+        for name, before in residents.items():
+            after = self.trusted_container(self._slots_envelope['slots'][name]['container'])
+            require(self.running(after) and after['State'].get('Pid') == before['State'].get('Pid')
+                    and after['State'].get('StartedAt') == before['State'].get('StartedAt'),
+                    'concurrent_resident_identity_changed')
+
     def _start(self) -> None:
         require(self.state.get("selected") is not None, "no_deployment_selected_use_select")
         require(not self.state.get('pending_create'), 'pending_create_requires_recovery_stop')
@@ -1004,6 +1051,7 @@ class Manager:
         if c and not d.get("legacy"):
             self.validate_reused_contract(c, d)
         self.conflict_check(c["Id"] if c else None, d)
+        self.current_pair_admission(d)
         if c and self.running(c):
             self.network_check(c, d)
         self.state.update(desired="running", observed="starting", failure=None,
@@ -1072,6 +1120,7 @@ class Manager:
                 if last == "ready" and c.get("State", {}).get("Health", {}).get("Status") != "unhealthy":
                     self.host_guards()
                     self.check_mounts({"data"} if d.get("legacy") else None)
+                    self.verify_pair_probe_identity(c, d)
                     self.state.update(observed="ready", container_running=True, failure=None)
                     self.save()
                     return
@@ -1091,7 +1140,7 @@ class Manager:
             self.state["observed"] = "failed"
             self.state["failure"] = "start_failed_use_stop_before_retry"
             try:
-                self.state["container_running"] = self.running(self.trusted_container(self.state["container"])) if self.state.get("container") else False
+                self.state["container_running"] = self.running(self.trusted_container(self.state["container"])) if self.state.get("container") else (None if self.state.get("pending_create") else False)
             except Exception:
                 self.state["container_running"] = None
             self.save(emergency=True)
@@ -1103,7 +1152,10 @@ class Manager:
         # Stop never requires model/key/config parsing, disk capacity or start guards.
         if self.state.get('pending_create'):
             try:
-                self.state['container'] = self.pending_identity(self.state)
+                identity = self.pending_identity(self.state)
+                if identity is None:
+                    identity = self.pending_identity(self.state)  # recheck immediately under the same lease
+                self.state['container'] = identity
                 self.state['pending_create'] = None
             except BaseException:
                 self.state.update(observed='failed', failure='pending_create_unresolved_use_recovery', container_running=None)
@@ -1136,6 +1188,7 @@ class Manager:
         self.save(emergency=True)
 
     def _select(self, identifier: str, boot_policy: str | None) -> None:
+        require(not self.state.get('pending_create'), 'pending_create_requires_recovery_stop')
         d = self.deployment(identifier)
         if self._slots_envelope is not None:
             self.validate_slot_deployment(d, self._slot_target)
@@ -1172,9 +1225,13 @@ class Manager:
             return None
         self.validate_identity({**planned, 'id': '0' * 64})
         c = self.docker.inspect(planned['name'])
-        require(c is not None, 'pending_create_unresolved_use_recovery')
+        if c is None:
+            # Docker.inspect distinguishes successful exact-name absence from
+            # timeout, daemon/transport failure, and malformed inventory.
+            # Only the caller's canonical stop transaction may clear this intent.
+            return None
         identity = {**planned, 'id': c.get('Id'), 'legacy': False}
-        self.trusted_container(identity)
+        require(self.trusted_container(identity) is not None, 'pending_create_identity_changed')
         return identity
 
     @staticmethod
@@ -1277,7 +1334,10 @@ class Manager:
     def migrate_slots(self):
         if self.state.get('schema_version') == 3:
             backup = self.read_migration_backup()
-            require(slot_state.digest(backup) == self.state['migration']['backup_sha256'], 'slot_backup_mismatch')
+            require(slot_state.digest(backup) == self.state['migration']['backup_sha256']
+                    and backup.get('instance') == self.instance['id']
+                    and backup.get('storage_identity') == self.binding.identity, 'slot_backup_mismatch')
+            require(backup.get('prior_source') == self.migration_authority(), 'slot_rollback_source_mismatch')
             if self.state.get('state_persisted') is False:
                 self.migration_authority()
                 self.host_guards()

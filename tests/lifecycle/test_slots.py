@@ -19,6 +19,19 @@ GLM = 'glm-5.3-ud-q4-k-xl-fixture-slot'
 QWEN = 'qwen38-27b-fixture-slot'
 
 
+class SlotDocker(base.FakeDocker):
+    # Docker IDs are never reused after removal; retain that property in fixtures.
+    def __init__(self):
+        super().__init__()
+        self.serial = 0
+
+    def create(self, args):
+        super().create(args)
+        self.serial += 1
+        self.records[-1]['Id'] = f'{self.serial:064x}'
+        return self.records[-1]['Id']
+
+
 class SlotFixture(base.FixtureManager):
     def validate_slot_deployment(self, deployment, target):
         if deployment['id'] in {GLM, QWEN}:
@@ -49,7 +62,7 @@ class SlotTests(unittest.TestCase):
             'prior_boot_unit_sha256': 'c' * 64, 'approval_reference': 'synthetic-root-review',
             'prior_source_root': '/data/services/rollback-source',
             'prior_recovery_source_root': '/usr/local/lib/local-ai-server'}
-        self.docker = base.FakeDocker()
+        self.docker = SlotDocker()
         clock = base.FakeClock()
         self.manager = SlotFixture(self.config, self.instance, test_paths=True, docker=self.docker,
             run_fn=lambda *a, **k: self.fail('unexpected subprocess'),
@@ -245,16 +258,55 @@ class SlotTests(unittest.TestCase):
         self.assertEqual(stopped['container']['id'], self.docker.records[0]['Id'])
         self.assertFalse(stopped['container_running'])
 
-    def test_pending_create_absence_does_not_claim_stop_or_allow_retry(self):
+    def test_proven_precreate_absence_clears_only_owned_pending_and_allows_retry(self):
+        before = self.pair()
+        self.manager.dispatch('deactivate', target='glm')
+        self.manager.dispatch('select', GLM, target='glm')
+        self.docker.fail_create = True
+        with self.assertRaises(LifecycleError):
+            self.manager.dispatch('start', target='glm')
+        pending = self.manager.read_state()['slots']['glm']['pending_create']
+        self.assertIsNotNone(pending)
+        self.assertIsNone(self.docker.inspect(pending['name']))
+        result = self.manager.dispatch('stop', target='glm')
+        self.assertIsNone(result['slots']['glm']['pending_create'])
+        self.assertIsNone(result['slots']['glm']['container'])
+        self.assertFalse(result['slots']['glm']['container_running'])
+        self.assertEqual(result['slots']['qwen'], before['slots']['qwen'])
+        self.docker.fail_create = False
+        self.manager.dispatch('start', target='glm')
+        self.assertTrue(self.manager.status('qwen')['container_running'])
+
+    def test_uncertain_pending_inspection_retains_owner_and_blocks_selection_reset(self):
         self.migrate(); self.manager.dispatch('select', GLM, target='glm')
         self.docker.fail_create = True
         with self.assertRaises(LifecycleError):
             self.manager.dispatch('start', target='glm')
-        with self.assertRaisesRegex(LifecycleError, 'pending_create_unresolved_use_recovery'):
-            self.manager.dispatch('stop', target='glm')
-        self.assertIsNotNone(self.manager.read_state()['slots']['glm']['pending_create'])
-        with self.assertRaisesRegex(LifecycleError, 'pending_create_requires_recovery_stop'):
+        pending = self.manager.read_state()['slots']['glm']['pending_create']
+        with patch.object(self.docker, 'inspect', side_effect=LifecycleError('command_timeout')):
+            with self.assertRaises(LifecycleError):
+                self.manager.dispatch('stop', target='glm')
+        self.assertEqual(self.manager.read_state()['slots']['glm']['pending_create'], pending)
+        for deployment in (GLM, base.PROOF):
+            with self.subTest(deployment=deployment), self.assertRaisesRegex(LifecycleError, 'pending_create_requires_recovery_stop'):
+                self.manager.dispatch('select', deployment, target='glm')
+            self.assertEqual(self.manager.read_state()['slots']['glm']['pending_create'], pending)
+
+    def test_pending_name_identity_mismatch_never_clears_or_adopts(self):
+        self.migrate(); self.manager.dispatch('select', GLM, target='glm')
+        create = self.docker.create
+        def timeout(args):
+            result = create(args)
+            self.docker.records[0]['Image'] = 'sha256:' + 'f' * 64
+            raise LifecycleError('command_timeout')
+        with patch.object(self.docker, 'create', side_effect=timeout), self.assertRaises(LifecycleError):
             self.manager.dispatch('start', target='glm')
+        pending = self.manager.read_state()['slots']['glm']['pending_create']
+        self.docker.calls.clear()
+        with self.assertRaisesRegex(LifecycleError, 'container_identity_changed'):
+            self.manager.dispatch('stop', target='glm')
+        self.assertEqual(self.manager.read_state()['slots']['glm']['pending_create'], pending)
+        self.assertFalse(any(c[0] in {'stop', 'remove'} for c in self.docker.calls))
 
     def test_returned_create_id_retained_before_inspect_failure(self):
         self.migrate(); self.manager.dispatch('select', GLM, target='glm')

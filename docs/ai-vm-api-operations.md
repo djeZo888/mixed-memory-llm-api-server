@@ -324,7 +324,10 @@ See [operator/migration/rollback contract](concurrent-api.md),
 
 A create timeout keeps `pending_create` ownership (planned name, deployment,
 instance, image and owner labels). Stop/recover resolves that exact identity;
-unknown absence is not successful cleanup and blocks retry/rollback. A returned
+two successful exact-name Docker inventory absence checks under the canonical
+stop lease clear only
+that pending intent. Timeout, inspection error and identity mismatch retain it
+and block retry/rollback. Selection always refuses unresolved pending intent. A returned
 container ID is journaled before inspect. Do not erase this record or adopt an
 unrelated same-name container. Root must resolve any persistent pending-create
 ambiguity before activation continuation. Both slot identities survive emergency
