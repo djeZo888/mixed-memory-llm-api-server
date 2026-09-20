@@ -341,6 +341,50 @@ class CandidateDemandIntegration(unittest.TestCase):
         row['cgroups']['a']['anon_bytes'] = 222023680
         self.assertEqual(host.candidate_pressure(row)['status'], 'STOP_RESOURCE_GATE')
 
+    def test_missing_or_inconsistent_accounting_is_unavailable_without_numeric_latch(self):
+        for field in ('anon_bytes', 'shmem_bytes', 'file_bytes', 'swap_bytes', 'available_bytes', 'inconsistent_shmem',
+                      'negative_available', 'boolean_available', 'negative_swap', 'boolean_swap'):
+            with self.subTest(field=field):
+                host, good = self.sample()
+                row = copy.deepcopy(good)
+                if field == 'available_bytes':
+                    del row['host'][field]
+                elif field in ('negative_available', 'boolean_available'):
+                    row['host']['available_bytes'] = -1 if field == 'negative_available' else False
+                elif field in ('negative_swap', 'boolean_swap'):
+                    row['cgroups']['a']['swap_bytes'] = -1 if field == 'negative_swap' else False
+                elif field == 'inconsistent_shmem':
+                    row['cgroups']['a']['file_bytes'] = row['cgroups']['a']['shmem_bytes'] - 1
+                else:
+                    del row['cgroups']['a'][field]
+                result = host.candidate_pressure(row)
+                self.assertEqual(result['status'], 'UNAVAILABLE')
+                self.assertIsNone(result['remaining_cap_obligations'])
+                self.assertIn('candidate_remaining_caps_accounting_unavailable', result['unavailable_reasons'])
+                self.assertEqual(result['reasons'], [])
+                self.assertEqual(result['latched_violations'], {})
+                self.assertEqual(host.concurrent_resource_violations, {})
+                self.assertEqual(host.candidate_pressure(good)['status'], 'PASS')
+
+    def test_proven_low_remaining_reserve_latches_with_complete_accounting(self):
+        host, good = self.sample()
+        required = candidate.memory_obligations(good, host.load_manifests)['required_host_available_bytes']
+        row = copy.deepcopy(good)
+        row['host']['available_bytes'] = required - 1
+        self.assertGreater(row['host']['available_bytes'], 16 * GIB)
+        result = host.candidate_pressure(row)
+        self.assertEqual(result['status'], 'STOP_RESOURCE_GATE')
+        self.assertIn('candidate_remaining_caps_host_reserve_failed', result['reasons'])
+        self.assertNotIn('candidate_remaining_caps_accounting_unavailable', result['unavailable_reasons'])
+        self.assertIn('candidate_remaining_caps_host_reserve_failed',
+                      result['latched_violations']['candidate']['reasons'])
+        self.assertEqual(host.candidate_pressure(good)['status'], 'STOP_RESOURCE_GATE')
+        del good['cgroups']['a']['anon_bytes']
+        missing = host.candidate_pressure(good)
+        self.assertEqual(missing['status'], 'STOP_RESOURCE_GATE')
+        self.assertIn('candidate_remaining_caps_host_reserve_failed', missing['reasons'])
+        self.assertIn('candidate_remaining_caps_accounting_unavailable', missing['unavailable_reasons'])
+
     def test_qwen_margin_swap_oom_and_current_cap_failure_remain_stops(self):
         for variant in ('gpu', 'swap', 'oom', 'cap'):
             host, row = self.sample()
@@ -349,6 +393,16 @@ class CandidateDemandIntegration(unittest.TestCase):
             if variant == 'oom': row['cgroups']['b']['events']['oom'] = 1
             if variant == 'cap': row['cgroups']['b']['current_bytes'] = 32 * GIB + 1
             self.assertEqual(host.candidate_pressure(row)['status'], 'STOP_RESOURCE_GATE')
+            if variant != 'gpu':
+                host, row = self.sample()
+                del row['cgroups']['a']['anon_bytes']
+                if variant == 'swap': row['cgroups']['b']['swap_bytes'] = 1
+                if variant == 'oom': row['cgroups']['b']['events']['oom'] = 1
+                if variant == 'cap': row['cgroups']['b']['current_bytes'] = 32 * GIB + 1
+                result = host.candidate_pressure(row)
+                self.assertEqual(result['status'], 'STOP_RESOURCE_GATE')
+                self.assertNotIn('candidate_remaining_caps_host_reserve_failed', result['reasons'])
+                self.assertIn('candidate_remaining_caps_accounting_unavailable', result['unavailable_reasons'])
 
 
 class CandidateEvidence(unittest.TestCase):

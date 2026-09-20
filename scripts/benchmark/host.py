@@ -530,15 +530,25 @@ class LinuxHost:
     def candidate_pressure(self, row):
         """Same root-reviewed sampled ESTIMATE as LongPREP; stricter pair admission."""
         from .concurrent_validate import memory_obligations
-        result = self.concurrent_pressure(row)
+        available = row['host'].get('available_bytes')
+        # Preserve raw telemetry; invalid availability is no numeric comparison.
+        pressure_row = row if type(available) is int and available >= 0 else {
+            **row, 'host': {**row['host'], 'available_bytes': None}}
+        result = self.concurrent_pressure(pressure_row)
         extra, unavailable = [], []
         try:
             result['remaining_cap_obligations'] = memory_obligations(row, self.load_manifests)
-        except ValueError:
+        except ValueError as error:
             result['remaining_cap_obligations'] = None
-            extra.append('candidate_remaining_caps_host_reserve_failed')
+            # Only a complete comparison can establish insufficient reserve.
+            # Missing/inconsistent accounting blocks admission without claiming
+            # numeric pressure or cancelling a healthy admitted request.
+            if str(error) == 'candidate_remaining_caps_host_reserve_failed':
+                extra.append('candidate_remaining_caps_host_reserve_failed')
+            else:
+                unavailable.append('candidate_remaining_caps_accounting_unavailable')
         for group in row['cgroups'].values():
-            if type(group.get('swap_bytes')) is not int:
+            if type(group.get('swap_bytes')) is not int or group['swap_bytes'] < 0:
                 unavailable.append('candidate_owned_swap_unavailable')
             elif group['swap_bytes'] != 0:
                 extra.append('candidate_owned_swap_failed')

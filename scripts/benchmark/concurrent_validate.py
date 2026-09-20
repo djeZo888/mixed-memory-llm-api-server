@@ -99,7 +99,8 @@ def memory_obligations(sample, manifests):
         m = manifests[cid]
         anon, shmem, file = (group.get(k) for k in ('anon_bytes', 'shmem_bytes', 'file_bytes'))
         require(all(type(v) is int and v >= 0 for v in (anon, shmem, file)) and shmem <= file
-                and group.get('swap_bytes') == 0, 'candidate_resident_credit_unavailable')
+                and type(group.get('swap_bytes')) is int and group['swap_bytes'] == 0,
+                'candidate_resident_credit_unavailable')
         placement = m['placement']
         require(placement not in credits, 'candidate_duplicate_resident')
         cap = 640 * GIB if placement == 'G1' else 32 * GIB
@@ -107,7 +108,8 @@ def memory_obligations(sample, manifests):
         credits[placement] = anon + shmem
     required = 16 * GIB + sum(cap - credits.get(p, 0) for p, cap in [('G1', 640 * GIB), ('Q1', 32 * GIB)])
     available = sample['host'].get('available_bytes')
-    require(type(available) is int and available >= required, 'candidate_remaining_caps_host_reserve_failed')
+    require(type(available) is int and available >= 0, 'candidate_host_available_unavailable')
+    require(available >= required, 'candidate_remaining_caps_host_reserve_failed')
     return {'host_available_bytes': available, 'required_host_available_bytes': required,
             'resident_nonreclaimable_bytes': credits, 'basis': 'fixed_caps_minus_resident_anon_plus_shmem_once_plus_16GiB'}
 
