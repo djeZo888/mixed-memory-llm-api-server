@@ -40,6 +40,45 @@ class ConcurrentHostTests(unittest.TestCase):
             'includes_load_warmup_fitting': True, 'excludes_source_prep': True,
             'clock_starts': 'RUN_DISPATCH', 'restoration_outside_budget': True}}
 
+    def test_cont1_identity_isolates_manifests_host_paths_and_preserves_original_clock(self):
+        from benchmark import concurrent_run, runner
+        previous = 'benchrun-concurrent-g1q1-20260920'
+        campaign = 'benchrun-concurrent-g1q1-cont1-20260920'
+        self.assertEqual(profiles.CONCURRENT_CAMPAIGN, campaign)
+        current = profiles.concurrent_manifests()
+        with patch.object(profiles, 'CONCURRENT_CAMPAIGN', previous):
+            original = profiles.concurrent_manifests()
+        self.assertEqual(json.loads(json.dumps(current).replace(campaign, previous)), original)
+        armed = {'scope': profiles.CONCURRENT_SCOPE, 'campaign': campaign, 'manifests': current,
+                 'trial_plan': profiles.trial_order(profiles.CONCURRENT_SCOPE),
+                 'runtime_policy': concurrent_run.POLICY, 'session_id': 'prep'}
+        self.assertEqual(profiles.validate_arm_scope(armed), profiles.CONCURRENT_SCOPE)
+        ssh = runner.SSHHost(armed, popen=Mock())  # No process or connection.
+        self.assertIn('/data/services/' + campaign + '/source/scripts/bench/benchmark-host.py', ssh.command)
+        self.assertIn('/data/services/' + campaign + '/manifests.json', ssh.command)
+        runtime = {**concurrent_run.POLICY, 'start_epoch': 1789890954.308154,
+                   'deadline_epoch': 1789896354.308154}
+        go = {'run_session_id': 'fresh-run', 'runtime': runtime}
+        self.assertEqual(concurrent_run.bind_runtime(armed, go, 'fresh-run', runtime['start_epoch'] + 600), runtime)
+        self.assertEqual(LinuxHost.concurrent_clock({**armed, 'runtime': runtime}),
+                         (runtime['start_epoch'], runtime['deadline_epoch']))
+        host = self.bare()
+        host.log_root = '/data/logs/' + campaign
+        host.start_epoch, host.deadline_epoch = runtime['start_epoch'], runtime['deadline_epoch']
+        host.binding = Mock(); host.binding.path.side_effect = lambda role, suffix: '/data/' + role + '/' + suffix
+        host.manager, host.read_json = Mock(), Mock(return_value=None)
+        host.measured = {}
+        host.write_json = lambda suffix, value: LinuxHost.write_json(host, suffix, value)
+        host.write({'phase': 'NEW'})
+        budget = HostBudget(host)
+        self.assertEqual(str(budget.path), host.log_root + '/budget.json')
+        with patch('benchmark.host.time.time', return_value=runtime['start_epoch'] + 600):
+            budget.start('maintenance')
+        self.assertEqual(budget.data['started_at'], runtime['start_epoch'])
+        self.assertEqual(budget.data['deadline_epoch'], runtime['deadline_epoch'])
+        self.assertEqual([c.args[0] for c in host.manager.persistent_json.call_args_list],
+                         [host.log_root + '/' + name for name in ('owner.json', 'measured-demand.json', 'budget.json')])
+
     def test_clock_bound_only_to_fresh_run_not_prep_or_old_campaign(self):
         self.assertEqual(LinuxHost.concurrent_clock(self.clock()), (1000, 6400))
         for key, value in [('start_epoch', True), ('start_epoch', float('nan')),
