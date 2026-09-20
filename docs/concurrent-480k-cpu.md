@@ -1,7 +1,11 @@
 # Closed 480K CPU comparison — source handoff
 
-This is a new benchmark identity, `benchrun-concurrent-480k-cpu-20260920`,
-prepared from reviewed `46e7f29c6edd98c156006736b999e6c858a0c9ab`.
+This narrow source correction uses fixed identity `benchrun-concurrent-480k-cpu-cont1-20260920`,
+prepared from reviewed `be3a91fd7819f5de7a95deea07317e4451e5bee5`.
+The predecessor completed zero warmups and zero measurements: its private directory
+was extracted as0755 despite archived0700 and capture refused before HTTP.
+The same five cases and four warmups remain. The shared capture contract now
+checks owned0700/no-symlink private artifacts before host staging/ownership.
 PREP performs no VM contact, model operation, inference, profiling, deployment,
 source publication or measurement clock. Root reviews the source, arm and current
 ownership before dispatching a fresh Worker1 RUN. Production remains the original
@@ -72,10 +76,11 @@ comparison reports observed paired timing and incomplete CPU evidence honestly.
 The prior Q256K/700160-pool result is only a historical comparison; it cannot
 attribute all near700K slowdown to allocation size.
 
-Future runtime is4500 seconds from root-reviewed RUN dispatch, including loads,
-warmups and counting. Each request is bounded by min(7200 seconds, remaining
-window); restoration is outside it. No PREP epoch or old-clock continuation is
-created. Saved planning: two GLM requests at prior935.4s each about31–32min,
+Runtime retains the original4500-second window: start1789899296.052823
+(10:14:56.052823UTC), deadline1789903796.052823 (11:29:56.052823UTC),
+including loads, warmups and counting. A fresh RUN session gets a new owner, never
+the failed predecessor owner. Each request is bounded by min(7200 seconds, remaining
+window); restoration is outside it. No new clock, resume or reset is created. Saved planning: two GLM requests at prior935.4s each about31–32min,
 four loads about7min, common Q about1.5min (now may overlap GLM). Allow roughly
 40–55min with counting/overhead; changed pool/CPU effects are unmeasured.
 Budget exhaustion records missing cases, without resetting or repeating.

@@ -12,6 +12,7 @@ import math
 import os
 from pathlib import Path
 import re
+import stat
 import time
 
 from agent import protocol
@@ -263,6 +264,19 @@ def parse_nonstream(raw, model):
             "finish_reason": finish, "counters": counters}
 
 
+def private_artifact_directory(private_dir):
+    """Capture and CPU admission share the existing private-output contract."""
+    root = Path(private_dir)
+    try:
+        meta = root.lstat()
+    except OSError as error:
+        raise HarnessError("private artifact directory must exist with mode 0700 and current owner") from error
+    if (not stat.S_ISDIR(meta.st_mode) or stat.S_IMODE(meta.st_mode) != 0o700
+            or meta.st_uid != os.geteuid()):
+        raise HarnessError("private artifact directory must exist with mode 0700 and current owner")
+    return root
+
+
 def _capture_request(raw_body, transport, *, sample_id, private_dir, summary_path,
                      timeout=7200, clock=time.monotonic, redact=None,
                      observer_factory=StreamObserver, capture_events=False):
@@ -275,9 +289,7 @@ def _capture_request(raw_body, transport, *, sample_id, private_dir, summary_pat
     protocol._validate_messages(request.get("messages"))
     if redact is None:
         redact = getattr(transport, "redact", lambda data: data)
-    root = Path(private_dir)
-    if not root.is_dir() or root.is_symlink() or root.stat().st_mode & 0o077:
-        raise HarnessError("private artifact directory must exist with mode 0700")
+    root = private_artifact_directory(private_dir)
     request_path = root / (sample_id + ".request.json")
     _write_private(request_path, redact(raw_body))
     started = clock()

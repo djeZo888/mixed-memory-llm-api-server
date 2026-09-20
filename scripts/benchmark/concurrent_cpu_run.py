@@ -19,12 +19,14 @@ import time
 
 from agent import protocol
 from . import concurrent_run as prior, cpu_budget_profiles as profile
-from . import fixtures, g1_ladder, glmrepair, runner, worker_verify
+from . import client, fixtures, g1_ladder, glmrepair, runner, worker_verify
 from .warmup import prefill_proof
 
 SCOPE = profile.SCOPE
 POLICY = {**prior.POLICY, 'budget_seconds': 4500}
-BASE = '46e7f29c6edd98c156006736b999e6c858a0c9ab'
+BASE = 'be3a91fd7819f5de7a95deea07317e4451e5bee5'
+ORIGINAL_START = 1789899296.052823
+FINAL_DEADLINE = 1789903796.052823
 TEMPLATES = {'G1': '347dc716e1e8a9917eb124503836943107686ace6a3848d16bf23ae50964bb49',
              'Q1': 'c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041'}
 SAVED = {
@@ -40,8 +42,8 @@ def validate_clock(armed, runtime):
     if (armed.get('runtime_policy') != POLICY or set(runtime) != set(POLICY) | {'start_epoch', 'deadline_epoch'}
             or any(runtime.get(k) != v for k, v in POLICY.items())
             or any(type(v) not in (int, float) or not math.isfinite(v) for v in (start, end))
-            or start <= 0 or end != start + 4500 or 'continuation_execution' in armed or 'start_epoch' in armed):
-        raise ValueError('cpu_fresh_4500s_dispatch_clock_required')
+            or start != ORIGINAL_START or end != FINAL_DEADLINE or end != start + 4500 or 'continuation_execution' in armed or 'start_epoch' in armed):
+        raise ValueError('cpu_original_4500s_dispatch_clock_required')
     return start, end
 
 
@@ -102,8 +104,9 @@ def execute_pair(g, q, common, invoke, *, interrupted=None):
 
 
 class CPURun(prior.ConcurrentRun):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, state, *args, **kwargs):
+        client.private_artifact_directory(Path(state) / 'private')
+        super().__init__(state, *args, **kwargs)
         profile.validate_arm_scope(self.armed)
         verify_frozen(self.state, self.armed)
 
@@ -289,14 +292,14 @@ def prepare(task, session):
         'required_package_files': ['arm.json', 'arm-receipt.json', 'GO.template.json', 'incoming-latest.md', 'run-control.json', *inputs],
         'initial_package_sha256': {name: fixtures.digest((task / name).read_bytes()) for name in inputs},
         'authority_at_prepare_sha256': fixtures.digest((task / 'incoming-latest.md').read_bytes()),
-        'production_acceptance': 'NOT_GRANTED', 'measurement_clock': 'ROOT_DISPATCH_ONLY'}
+        'production_acceptance': 'NOT_GRANTED', 'measurement_clock': 'ORIGINAL_ROOT_DISPATCH_UNCHANGED'}
     profile.validate_arm_scope(armed)
     runner.save(task / 'arm.json', armed)
     receipt = {'source_commit': armed['source_commit'], 'preparation_session_id': session,
         'campaign': profile.CAMPAIGN, 'arm_sha256': fixtures.digest((task / 'arm.json').read_bytes())}
     runner.save(task / 'arm-receipt.json', receipt)
     runner.save(task / 'GO.template.json', {**receipt, 'decision': 'NOT_AUTHORIZED', 'vm_writer_handoff': False,
-        'run_session_id': None, 'runtime': {**POLICY, 'start_epoch': None, 'deadline_epoch': None}})
+        'run_session_id': None, 'runtime': {**POLICY, 'start_epoch': ORIGINAL_START, 'deadline_epoch': FINAL_DEADLINE}})
     return armed
 
 
@@ -354,6 +357,7 @@ def restore_once(host, executed, task, key, control, *, factory=glmrepair.Diagno
 
 def run(task, go_path, session, *, restore_only=False):
     task = Path(task).resolve()
+    client.private_artifact_directory(task / 'private')
     armed, receipt = [json.loads((task / name).read_bytes()) for name in ('arm.json', 'arm-receipt.json')]
     go = json.loads(Path(go_path).read_bytes())
     profile.validate_arm_scope(armed)

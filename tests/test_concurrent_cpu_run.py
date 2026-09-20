@@ -1,6 +1,7 @@
 """Offline scheduling, package and recovery checks; never VM/native acceptance."""
 import copy
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -123,21 +124,23 @@ class Scheduling(unittest.TestCase):
 
 
 class Clock(unittest.TestCase):
-    def test_fresh_75minute_clock_excludes_PREP_and_preserves_request_ceiling(self):
+    def test_original_clock_only_and_fresh_session_preserve_request_ceiling(self):
         arm = {'runtime_policy': copy.deepcopy(run.POLICY), 'session_id': 'prep'}
-        runtime = {**run.POLICY, 'start_epoch': 100., 'deadline_epoch': 4600.}
+        runtime = {**run.POLICY, 'start_epoch': run.ORIGINAL_START, 'deadline_epoch': run.FINAL_DEADLINE}
         go = {'run_session_id': 'run', 'runtime': runtime}
-        self.assertEqual(run.bind_runtime(arm, go, 'run', 101.), runtime)
+        self.assertEqual(run.bind_runtime(arm, go, 'run', run.ORIGINAL_START + 1), runtime)
         self.assertEqual(runtime['request_max_seconds'], 7200)
         self.assertTrue(runtime['excludes_source_prep'])
         self.assertTrue(runtime['restoration_outside_budget'])
-        for change in ({'deadline_epoch': 7300.}, {'budget_seconds': 7200},
+        for change in ({'start_epoch': run.ORIGINAL_START + 1, 'deadline_epoch': run.FINAL_DEADLINE + 1},
+                       {'deadline_epoch': 7300.}, {'budget_seconds': 7200},
                        {'start_epoch': float('nan')}, {'extra_clock': 1}):
             bad = {**runtime, **change}
             with self.assertRaises(ValueError): run.validate_clock(arm, bad)
         for extra in ({'continuation_execution': {}}, {'start_epoch': 100.}):
             with self.assertRaises(ValueError): run.validate_clock({**arm, **extra}, runtime)
-        for session, now in (('prep', 101.), ('run', 4600.), ('run', 99.), ('wrong', 101.)):
+        for session, now in (('prep', run.ORIGINAL_START + 1), ('run', run.FINAL_DEADLINE),
+                             ('run', run.ORIGINAL_START - 1), ('wrong', run.ORIGINAL_START + 1)):
             with self.assertRaises(ValueError): run.bind_runtime(arm, go, session, now)
         old = {**run.POLICY, 'start_epoch': run.prior.ORIGINAL_START, 'deadline_epoch': run.prior.EXTENDED_DEADLINE}
         with self.assertRaises(ValueError): run.validate_clock(arm, old)
@@ -164,7 +167,7 @@ class LocalPackage(unittest.TestCase):
                     'protected_key_metadata': {'mode': '0o700', 'bytes': 'NOT_READ'}})
         with patch.object(run, 'SAVED', self.saved): self.armed = run.prepare(self.task, 'prep-session')
         self.executed = {**self.armed, 'session_id': 'run-session',
-                         'runtime': {**run.POLICY, 'start_epoch': 100., 'deadline_epoch': 4600.}}
+                         'runtime': {**run.POLICY, 'start_epoch': run.ORIGINAL_START, 'deadline_epoch': run.FINAL_DEADLINE}}
 
     def job(self):
         host = Mock(); host.call.side_effect = AssertionError('unexpected host contact')
@@ -351,7 +354,7 @@ class LocalPackage(unittest.TestCase):
         go = {**receipt, 'decision': 'GO', 'vm_writer_handoff': True, 'run_session_id': 'run-session',
               'runtime': self.executed['runtime']}
         path = self.task / 'GO.json'; runner.save(path, go)
-        with patch.object(run.os, 'geteuid', return_value=501), patch.object(run, '_keys') as keys, \
+        with patch.object(run.os, 'geteuid', return_value=os.geteuid()), patch.object(run, '_keys') as keys, \
                 patch.object(run.glmrepair, 'DiagnosticSSHHost') as host:
             required = self.task / 'progress.json'; raw = required.read_bytes(); required.unlink()
             with self.assertRaisesRegex(ValueError, 'required_package_file_missing'):
@@ -421,6 +424,62 @@ class Recovery(unittest.TestCase):
             self.assertEqual(calls.count(('old', 'rpc_diagnostics')), 1)
             self.assertEqual(calls.count(('new', 'recover')), 1)
             factory.assert_called_once_with({}, stage=False)
+
+
+
+class PrivateArtifactContract(unittest.TestCase):
+    def test_actual_capture_with_owned_0700_and_mock_transport(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); private = root / 'private'; private.mkdir(mode=0o700)
+            raw = fixtures.canonical({'model': 'bench-glm-5.3', 'stream': True, 'max_tokens': 32,
+                'messages': [{'role': 'user', 'content': 'offline capture seam'}]})
+            event = {'model': 'bench-glm-5.3', 'choices': [{'index': 0,
+                'delta': {'role': 'assistant', 'content': 'ok'}, 'finish_reason': 'stop'}],
+                'usage': {'prompt_tokens': 4, 'completion_tokens': 1, 'total_tokens': 5}}
+            response = b'data: ' + fixtures.canonical(event) + b'\n\ndata: [DONE]\n\n'
+            transport = Mock(return_value=iter([response]))
+            with patch('socket.socket', side_effect=AssertionError('offline sockets forbidden')):
+                result = run.client._capture_request(raw, transport, sample_id='offline-capture',
+                    private_dir=private, summary_path=root / 'summary.jsonl', redact=lambda data: data)
+            transport.assert_called_once()
+            self.assertEqual(result['summary']['status'], 'COMPLETE')
+            self.assertEqual(Path(result['private_request_path']).read_bytes(), raw)
+            self.assertEqual(Path(result['private_response_path']).read_bytes(), response)
+            for path in private.iterdir():
+                self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+
+    def test_invalid_private_directory_fails_before_constructor_or_RUN_host_calls(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            task = Path(temporary); private = task / 'private'
+            target = task / 'target'; target.mkdir(mode=0o700)
+            for kind in ('missing', '0755', 'symlink', 'wrong-owner'):
+                with self.subTest(kind=kind):
+                    if kind == 'symlink': private.symlink_to(target, target_is_directory=True)
+                    elif kind != 'missing':
+                        private.mkdir(mode=0o700)
+                        private.chmod(0o755 if kind == '0755' else 0o700)
+                    uid = os.geteuid() + 1 if kind == 'wrong-owner' else os.geteuid()
+                    host = Mock()
+                    with patch.object(run.client.os, 'geteuid', return_value=uid), \
+                            patch.object(run.glmrepair, 'DiagnosticSSHHost') as factory, \
+                            patch.object(run, '_keys') as keys, \
+                            patch.object(run.prior.ConcurrentRun, '__init__') as parent, \
+                            patch('socket.socket', side_effect=AssertionError('offline sockets forbidden')):
+                        with self.assertRaisesRegex(run.client.HarnessError, 'private artifact directory'):
+                            run.run(task, task / 'absent-GO.json', 'fresh-run')
+                        with self.assertRaisesRegex(run.client.HarnessError, 'private artifact directory'):
+                            run.CPURun(task, {}, host, None)
+                        factory.assert_not_called(); keys.assert_not_called(); parent.assert_not_called()
+                        host.call.assert_not_called()
+                        transport = Mock()
+                        raw = fixtures.canonical({'model': 'bench-glm-5.3', 'stream': True,
+                            'messages': [{'role': 'user', 'content': 'offline'}]})
+                        with self.assertRaisesRegex(run.client.HarnessError, 'private artifact directory'):
+                            run.client._capture_request(raw, transport, sample_id='refused',
+                                private_dir=private, summary_path=task / 'summary.jsonl', redact=lambda data: data)
+                        transport.assert_not_called()
+                    if private.is_symlink(): private.unlink()
+                    elif private.exists(): private.rmdir()
 
 
 if __name__ == '__main__': unittest.main()

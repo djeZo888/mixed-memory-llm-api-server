@@ -12,7 +12,7 @@ import shlex
 from . import profiles, qwen_launcher
 
 SCOPE = CPU_SCOPE = "concurrent-480k-cpu"
-CAMPAIGN = CPU_CAMPAIGN = "benchrun-concurrent-480k-cpu-20260920"
+CAMPAIGN = CPU_CAMPAIGN = "benchrun-concurrent-480k-cpu-cont1-20260920"
 CAPACITY = 480000
 LAYOUTS = {
     "A": {"active_guest_vcpus": 112, "G1": {"cpuset": "0-95", "count": 96},
@@ -121,7 +121,7 @@ def trial_order():
                              "response_format": "schema", "max_tokens": 256},
             "maximum_request_seconds": 7200, "measurement_budget_seconds": 4500,
             "request_deadline": "min(7200s, remaining RUN window)",
-            "clock_includes_preparation": True, "budget_start": "new root-reviewed RUN dispatch; PREP excluded",
+            "clock_includes_preparation": True, "budget_start": "original root-reviewed RUN dispatch retained; PREP excluded",
             "restoration_outside_budget": True,
             "additional_cases": "none; no ladders, fillers, tools, profiling, output512, reruns or tuning",
             "format_failure_policy": "retain_strict_and_optional_single_fence_semantic_retrieval_separately",
