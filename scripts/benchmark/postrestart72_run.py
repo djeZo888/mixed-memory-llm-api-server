@@ -21,7 +21,7 @@ from . import fixtures, g1_ladder, glmrepair, runner
 from .warmup import prefill_proof
 
 SCOPE = 'postrestart72-480k'
-BASE = '4db2c7b888ac68e94f62a0275398a7d18c966af3'
+BASE = '95848420866e5bd780e665887cf1aeb14e59d445'
 POLICY = {'budget_seconds': 21600, 'preparation_seconds': 7200, 'request_timeout_seconds': 7200,
           'clock_starts': 'FIRST_MEASURED_REQUEST_ADMISSION', 'clock_includes_preparation': False,
           'admission_deadline_refuses_new_only': True, 'request_clock_starts': 'HTTP_DISPATCH',

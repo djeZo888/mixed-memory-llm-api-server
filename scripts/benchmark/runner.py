@@ -292,9 +292,44 @@ class Campaign:
                         loading_gpu_gap = (loading_gpu_timeout and gate.get("status") == "UNAVAILABLE"
                             and gate.get("unavailable_reasons") == gpu_gap_reasons
                             and gate.get("reasons") == [] and gate.get("latched_violations") == {})
+                        # REAL72: a missing process read before allocation
+                        # is recorded UNAVAILABLE, but must not poison later
+                        # readiness. A queried ready G may contain a loading Q
+                        # charge; validate every unavailable peer, not just cid.
+                        missing = ({peer: charge for peer, charge in gate.get("charges", {}).items()
+                                    if charge.get("required_bytes") is None or charge.get("evidence_status") == "UNAVAILABLE"}
+                                   if self.armed.get("scope") == "postrestart72-480k" else {})
+                        loading_demand_gap = (self.armed.get("scope") == "postrestart72-480k"
+                            and resource_stop is None and gate.get("status") == "UNAVAILABLE"
+                            and gate.get("unavailable_reasons") == ["concurrent_required_demand_estimate_unavailable"]
+                            and gate.get("reasons") == [] and gate.get("latched_violations") == {}
+                            and bool(row.get("errors")) and set(row["errors"]) == {"read_FileNotFoundError"}
+                            and all(type(row.get("vmstat", {}).get(k)) is int for k in
+                                ("pgfault", "pgmajfault", "pswpin", "pswpout", "oom_kill"))
+                            and set(gate.get("charges", {})) == set(groups) == set(row.get("processes", {}))
+                            and all(all(type(group.get(k)) is int and group[k] >= 0 for k in
+                                    ("current_bytes", "peak_since_cgroup_creation_bytes", "file_bytes",
+                                     "anon_bytes", "kernel_bytes", "file_mapped_bytes", "shmem_bytes", "swap_bytes"))
+                                and group["swap_bytes"] == 0
+                                and all(type(group.get("events", {}).get(k)) is int and group["events"][k] == 0
+                                    for k in ("oom", "oom_kill", "oom_group_kill"))
+                                for group in groups.values())
+                            and all(type(process.get(k)) is int for peer, process in row.get("processes", {}).items()
+                                if peer not in missing for k in ("rss_bytes", "swap_bytes"))
+                            and bool(missing) and all(
+                                self.active.get(peer, {}).get("phase") == "loading"
+                                and charge.get("allocation_proof_available") is False
+                                and charge.get("evidence_status") == "UNAVAILABLE"
+                                and charge.get("required_bytes") is None
+                                and charge.get("rss_plus_kernel_bytes") is None
+                                and row.get("processes", {}).get(peer, {}).get("rss_bytes") is None
+                                and type(charge.get("component_bracket_bytes")) is int
+                                for peer, charge in missing.items()))
+                        # Allocation readiness and every request_begin still
+                        # require fresh full PASS on the host; no zero/reset.
                         if gate.get("status") == "STOP_RESOURCE_GATE":
                             verdict = resource_stop = "STOP_RESOURCE_GATE"
-                        elif gate.get("status") != "PASS" and not loading_gpu_gap:
+                        elif gate.get("status") != "PASS" and not (loading_gpu_gap or loading_demand_gap):
                             verdict = "SKIP_UNSAFE_PLACEMENT"
                     if not loading_gpu_timeout and not set(self.active[cid]["manifest"]["gpu_uuids"]).issubset({g.get("uuid") for g in row.get("gpus", [])}):
                         verdict = "SKIP_UNSAFE_PLACEMENT"
