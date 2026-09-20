@@ -1,4 +1,5 @@
 """Closed CPU-layout profiles and count/fixture adapters; all offline."""
+import ast
 import copy
 import hashlib
 import json
@@ -8,7 +9,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from benchmark import accounting, cpu_budget_profiles as cpu, fixtures, profiles, qwen_launcher
+from benchmark import accounting, cpu_budget_profiles as cpu, fixtures, profiles, qwen_launcher, runner
 
 
 def flag(argv, name):
@@ -29,6 +30,18 @@ def counter(capacity):
 
 
 class CpuBudgetProfiles(unittest.TestCase):
+    def test_campaign_against_actual_shared_stage_contract(self):
+        contracts = [node for node in ast.walk(ast.parse(runner.STAGE))
+                     if isinstance(node, ast.Assert)
+                     and any(isinstance(part, ast.Name) and part.id == "campaign"
+                             for part in ast.walk(node))]
+        self.assertEqual(len(contracts), 1)
+        contract = compile(ast.Module(body=contracts, type_ignores=[]),
+                           "runner.STAGE campaign assertion", "exec")
+        with self.assertRaises(AssertionError):
+            exec(contract, {"campaign": "benchrun-concurrent-480k-cpu-cont1-20260920"})
+        exec(contract, {"campaign": cpu.CAMPAIGN})
+
     def test_only_four_manifests_with_fixed_pins_caps_and_affinity_subsets(self):
         manifests = cpu.manifests()
         self.assertEqual([(m["layout"], m["placement"], m["configured_capacity"]) for m in manifests],

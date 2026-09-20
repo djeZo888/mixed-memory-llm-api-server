@@ -12,7 +12,7 @@ import shlex
 from . import profiles, qwen_launcher
 
 SCOPE = CPU_SCOPE = "concurrent-480k-cpu"
-CAMPAIGN = CPU_CAMPAIGN = "benchrun-concurrent-480k-cpu-cont1-20260920"
+CAMPAIGN = CPU_CAMPAIGN = "benchrun-c480-cpu-cont1-20260920"
 CAPACITY = 480000
 LAYOUTS = {
     "A": {"active_guest_vcpus": 112, "G1": {"cpuset": "0-95", "count": 96},
