@@ -226,18 +226,21 @@ class Campaign:
                     if any(type(events.get(k)) is int and type(old.get(k)) is int and events[k] > old[k] for k in ("oom", "oom_kill", "oom_group_kill")):
                         verdict = "STOP_OOM"
                     resource_stop = verdict if verdict.startswith("STOP_") else None
-                    if self.armed.get("scope") == "concurrent-g1q1":
-                        gate = row.get("concurrent_resource_gate", {})
-                        if gate.get("status") == "STOP_RESOURCE_GATE":
-                            verdict = resource_stop = "STOP_RESOURCE_GATE"
-                        elif gate.get("status") != "PASS":
-                            verdict = "SKIP_UNSAFE_PLACEMENT"
                     # A known timed-out GPU query during loading is an observation
                     # gap, not measured low reserve. Keep the raw sample; require
                     # fresh complete resource proof before warmup below.
                     loading_gpu_timeout = (self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"}
                         and self.active[cid].get("phase") == "loading"
                         and row.get("errors") == ["gpu_TimeoutExpired"] and row.get("gpus") == [])
+                    if self.armed.get("scope") == "concurrent-g1q1":
+                        gate = row.get("concurrent_resource_gate", {})
+                        loading_gpu_gap = (loading_gpu_timeout and gate.get("status") == "UNAVAILABLE"
+                            and gate.get("unavailable_reasons") == ["concurrent_gpu_free_unavailable"]
+                            and gate.get("reasons") == [] and gate.get("latched_violations") == {})
+                        if gate.get("status") == "STOP_RESOURCE_GATE":
+                            verdict = resource_stop = "STOP_RESOURCE_GATE"
+                        elif gate.get("status") != "PASS" and not loading_gpu_gap:
+                            verdict = "SKIP_UNSAFE_PLACEMENT"
                     if not loading_gpu_timeout and not set(self.active[cid]["manifest"]["gpu_uuids"]).issubset({g.get("uuid") for g in row.get("gpus", [])}):
                         verdict = "SKIP_UNSAFE_PLACEMENT"
                     if any(g.get("uuid") in self.active[cid]["manifest"]["gpu_uuids"] and (g.get("free_bytes") is None or g["free_bytes"] < 16 * 1024**3) for g in row.get("gpus", [])):

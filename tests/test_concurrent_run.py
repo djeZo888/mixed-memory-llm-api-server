@@ -9,11 +9,13 @@ from pathlib import Path
 import sys
 import tempfile
 import threading
+from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from benchmark import concurrent_run as run, fixtures, profiles, runner
+from benchmark.host import LinuxHost
 
 
 def row(identifier="offline", *, status="PASS", started=1.0, ended=3.0,
@@ -431,6 +433,145 @@ class ConcurrentRuntimeTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "no_rerun_or_clock_reset"):
                     run.run(task, task / "GO.json", "fresh-run")
                 host.assert_not_called()
+
+
+class ConcurrentLoadingTelemetryTests(unittest.TestCase):
+    """Real worker load/collect/admission and Linux pressure/request gates; fake I/O."""
+    def setup_case(self):
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        state = Path(temp.name)
+        runner.save(state / "progress.json", {"phase": "OFFLINE", "completed": {}, "inflight": {}, "errors": []})
+        manifest = profiles.concurrent_manifest("G1", 16384)
+        gib = 1024**3
+        good = {"errors": [], "host": {"available_bytes": 300 * gib},
+                "gpus": [{"uuid": manifest["gpu_uuids"][0], "free_bytes": 64 * gib}],
+                "cgroups": {"g": {"current_bytes": 401 * gib, "peak_since_cgroup_creation_bytes": 402 * gib,
+                    "anon_bytes": 400 * gib, "kernel_bytes": gib, "file_bytes": 0,
+                    "file_mapped_bytes": 0, "shmem_bytes": 0, "swap_bytes": 0, "events": {"oom": 0}}}}
+        gap = {**copy.deepcopy(good), "errors": ["gpu_TimeoutExpired"], "gpus": []}
+        rows = {"current": good, "loading": gap, "ready": good,
+                "native": "ALLOCATION_PROOF_ACCEPTED"}
+        host = LinuxHost.__new__(LinuxHost)
+        host.scope = run.SCOPE
+        host.owner = SimpleNamespace(phase="ACTIVE")
+        host.load_manifests, host.allocation_proofs, host.requests = {"g": manifest}, {}, {}
+        host.budget = Mock(); host.budget.request_timeout.return_value = 17
+        host.identity = Mock(return_value=({}, Path("/not-read"), []))
+        host.concurrent_limits, host.write_json = Mock(), Mock()
+        def telemetry(cid):
+            sample = copy.deepcopy(rows["current"])
+            sample["concurrent_resource_gate"] = host.concurrent_pressure(sample)
+            return sample
+        host.telemetry = telemetry
+        def call(op, **args):
+            if op == "budget": return {"remaining_s": 100}
+            if op == "load": return {"id": "g"}
+            if op == "telemetry":
+                rows["current"] = rows["loading"] if job.active.get("g", {}).get("phase") == "loading" else rows["ready"]
+                return host.telemetry(args["id"])
+            if op == "readiness":
+                if rows["native"] == "ALLOCATION_PROOF_ACCEPTED": host.allocation_proofs["g"] = {"offline": True}
+                return {"ready": True, "allocation": {"status": rows["native"]}}
+            if op == "quiescent":
+                rows["current"] = rows["ready"]
+                return {"telemetry": host.telemetry(args["id"])}
+            return host.dispatch({"op": op, **args})
+        remote = Mock(); remote.call.side_effect = call
+        armed = {"scope": run.SCOPE, "session_id": "offline", "source_commit": "a" * 40,
+                 "runtime": {"deadline_epoch": 6400}}
+        job = run.ConcurrentRun(state, armed, remote, "offline-key")
+        job.warm = Mock(side_effect=lambda cid, *_: job.admission(cid, 120))
+        return job, host, rows, manifest
+
+    def activate(self, job, rows, manifest, phase="loading"):
+        job.active["g"] = {"manifest": manifest, "phase": phase,
+            "baseline": copy.deepcopy(rows["ready"]["cgroups"]["g"]), "cancel_event": threading.Event()}
+
+    def test_loading_timeout_then_fresh_ready_proof_allows_actual_admission(self):
+        job, host, rows, manifest = self.setup_case()
+        self.assertEqual(job.loaded(manifest), "g")
+        job.warm.assert_called_once()
+        self.assertIn("g", host.requests)
+        self.assertEqual(job.safety, {})
+        self.assertFalse(job.active["g"]["cancel_event"].is_set())
+        saved = [json.loads(line) for line in (job.state / "results.jsonl").read_text().splitlines()]
+        gap = next(row["sample"] for row in saved if row["type"] == "telemetry")
+        self.assertEqual(gap["errors"], ["gpu_TimeoutExpired"])
+        self.assertEqual(gap["gpus"], [])
+        self.assertEqual(gap["concurrent_resource_gate"]["status"], "UNAVAILABLE")
+        self.assertEqual(gap["concurrent_resource_gate"]["unavailable_reasons"], ["concurrent_gpu_free_unavailable"])
+        self.assertEqual(gap["concurrent_resource_gate"]["latched_violations"], {})
+
+    def test_loading_gap_still_requires_fresh_gpu_host_native_and_request_gate(self):
+        for missing in ("gpu", "host", "native", "components"):
+            with self.subTest(missing=missing):
+                job, host, rows, manifest = self.setup_case()
+                if missing == "gpu": rows["ready"]["gpus"] = []
+                if missing == "host": rows["ready"]["host"]["available_bytes"] = None
+                if missing == "native": rows["native"] = "STOP_ALLOCATION_PROOF"
+                if missing == "components": rows["ready"]["cgroups"]["g"]["anon_bytes"] = None
+                with self.assertRaisesRegex((RuntimeError, ValueError),
+                        "SKIP_UNSAFE_PLACEMENT|STOP_ALLOCATION_PROOF|concurrent_current_resource_gate_failed"):
+                    job.loaded(manifest)
+                self.assertEqual(host.requests, {})
+                if missing != "components": job.warm.assert_not_called()
+
+    def test_numeric_oom_swap_and_reserve_stops_remain_latched_after_valid_sample(self):
+        for violation in ("cap", "host", "gpu", "oom", "swap"):
+            with self.subTest(violation=violation):
+                job, host, rows, manifest = self.setup_case()
+                self.activate(job, rows, manifest)
+                group = rows["loading"]["cgroups"]["g"]
+                if violation == "cap": group["current_bytes"] = 513 * 1024**3
+                if violation == "host": rows["loading"]["host"]["available_bytes"] = 0
+                if violation == "gpu":
+                    rows["loading"]["gpus"] = [{"uuid": manifest["gpu_uuids"][0], "free_bytes": 0}]
+                if violation == "oom": group["events"]["oom"] = 1
+                if violation == "swap": group["swap_bytes"] = 4096
+                for _ in range(3 if violation == "swap" else 1): job.collect()
+                latched = dict(job.safety)
+                self.assertTrue(latched)
+                self.assertTrue(job.active["g"]["cancel_event"].is_set())
+                job.active["g"]["phase"] = "ready"
+                job.collect()
+                self.assertTrue(job.safety)
+                self.assertTrue(job.active["g"]["cancel_event"].is_set())
+                with self.assertRaises(RuntimeError): job.admission("g")
+                self.assertEqual(host.requests, {})
+                if violation in ("cap", "host", "gpu"):
+                    self.assertTrue(host.concurrent_resource_violations)
+                    self.assertEqual(job.samples["g"][-1]["concurrent_resource_gate"]["status"], "STOP_RESOURCE_GATE")
+                else:
+                    self.assertEqual(job.safety, latched)
+
+    def test_running_timeout_remains_blocked_after_complete_sample_without_cancellation(self):
+        job, host, rows, manifest = self.setup_case()
+        self.activate(job, rows, manifest, phase="ready")
+        good = rows["ready"]
+        rows["ready"] = rows["loading"]
+        job.collect()
+        rows["ready"] = good
+        job.collect()
+        self.assertEqual(job.safety, {"g": "SKIP_UNSAFE_PLACEMENT"})
+        self.assertFalse(job.active["g"]["cancel_event"].is_set())
+        with self.assertRaisesRegex(RuntimeError, "SKIP_UNSAFE_PLACEMENT"): job.admission("g")
+        self.assertEqual(host.requests, {})
+
+    def test_other_loading_gaps_are_not_forgiven(self):
+        for missing in ("error", "extra_error", "host", "components"):
+            with self.subTest(missing=missing):
+                job, host, rows, manifest = self.setup_case()
+                self.activate(job, rows, manifest)
+                if missing == "error": rows["loading"]["errors"] = ["gpu_ValueError"]
+                if missing == "extra_error": rows["loading"]["errors"].append("host_ValueError")
+                if missing == "host": rows["loading"]["host"]["available_bytes"] = None
+                if missing == "components": rows["loading"]["cgroups"]["g"]["anon_bytes"] = None
+                job.collect()
+                self.assertEqual(job.safety, {"g": "SKIP_UNSAFE_PLACEMENT"})
+                self.assertFalse(job.active["g"]["cancel_event"].is_set())
+                with self.assertRaisesRegex(RuntimeError, "SKIP_UNSAFE_PLACEMENT"): job.admission("g")
+                self.assertEqual(host.requests, {})
 
 
 class ConcurrentCallerTests(unittest.TestCase):
