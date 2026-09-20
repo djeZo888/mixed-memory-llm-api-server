@@ -1,15 +1,18 @@
 # Closed 480K CPU comparison — source handoff
 
-This narrow source correction uses fixed identity `benchrun-concurrent-480k-cpu-cont1-20260920`,
-prepared from reviewed `be3a91fd7819f5de7a95deea07317e4451e5bee5`.
-The predecessor completed zero warmups and zero measurements: its private directory
-was extracted as0755 despite archived0700 and capture refused before HTTP.
-The same five cases and four warmups remain. The shared capture contract now
-checks owned0700/no-symlink private artifacts before host staging/ownership.
+This narrow source correction uses fixed identity `benchrun-c480-cpu-cont2-20260920`,
+prepared from reviewed `0414f8fe`.
+The predecessor Q480 reached readiness but native proof failed; its on-wire
+response was not retained. A same-image restored-production safe-field receipt
+confirms flat top-level context_length, tp_size, pool/input and one internal state.
+Its1M/TP2 values are not failed-Q480 measurements. The same five cases and four
+warmups remain. The inherited IDFIX correction preserves the earlier0755-extraction
+failure provenance and checks owned0700/no-symlink private artifacts before host
+staging/ownership.
 PREP performs no VM contact, model operation, inference, profiling, deployment,
 source publication or measurement clock. Root reviews the source, arm and current
-ownership before dispatching a fresh Worker1 RUN. Production remains the original
-Qwen TP2/1M singleton; G480/Q700 validation and production activation are deferred.
+ownership before bound GO resumes this same retained Worker1 session/copy for RUN.
+Production remains the original Qwen TP2/1M singleton; G480/Q700 validation and production activation are deferred.
 
 Exactly four manifests configure both models at480000:
 
@@ -76,11 +79,15 @@ comparison reports observed paired timing and incomplete CPU evidence honestly.
 The prior Q256K/700160-pool result is only a historical comparison; it cannot
 attribute all near700K slowdown to allocation size.
 
-Runtime retains the original4500-second window: start1789899296.052823
-(10:14:56.052823UTC), deadline1789903796.052823 (11:29:56.052823UTC),
-including loads, warmups and counting. A fresh RUN session gets a new owner, never
-the failed predecessor owner. Each request is bounded by min(7200 seconds, remaining
-window); restoration is outside it. No new clock, resume or reset is created. Saved planning: two GLM requests at prior935.4s each about31–32min,
+Runtime retains original start1789899296.052823 (10:14:56.052823UTC). Root
+authorized ONE internal extension because harness faults consumed the self-imposed
+75-minute window before measurements: former4500 seconds / deadline1789903796.052823
+(11:29:56.052823UTC), FINAL7200 seconds total / deadline1789906496.052823
+(12:14:56.052823UTC). This is not user-requested, rolling or a reset. Loads, warmups
+and counting remain inside the fixed window; canonical restoration remains outside.
+Bound root GO names the same retained PREP/RUN session; the fresh campaign never
+reuses failed predecessor ownership. Each request remains bounded by min(7200 seconds,
+remaining window). Historical clocks, failures and ledgers are preserved. Saved planning: two GLM requests at prior935.4s each about31–32min,
 four loads about7min, common Q about1.5min (now may overlap GLM). Allow roughly
 40–55min with counting/overhead; changed pool/CPU effects are unmeasured.
 Budget exhaustion records missing cases, without resetting or repeating.
@@ -92,7 +99,7 @@ It preserves private frozen fixtures/proofs, INITIAL progress, control file,
 protected-key metadata, arm, receipt and a non-authorizing GO template. No key
 bytes are packaged. The exact full package is constructor/checkpoint/prepare-job
 checked against a non-network stub before handoff. RUN verifies every required
-file/hash, source commit, exact profiles/plan, fresh session and root GO before
+file/hash, source commit, exact profiles/plan, same retained session and root GO before
 staging. `run` and recovery-only `restore` take the same source-bound GO; there is
 no generic resume/reset. A recovery-only outcome never upgrades measurements.
 

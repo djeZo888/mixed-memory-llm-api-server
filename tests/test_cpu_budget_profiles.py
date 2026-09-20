@@ -40,6 +40,7 @@ class CpuBudgetProfiles(unittest.TestCase):
                            "runner.STAGE campaign assertion", "exec")
         with self.assertRaises(AssertionError):
             exec(contract, {"campaign": "benchrun-concurrent-480k-cpu-cont1-20260920"})
+        self.assertEqual(cpu.CAMPAIGN, "benchrun-c480-cpu-cont2-20260920")
         exec(contract, {"campaign": cpu.CAMPAIGN})
 
     def test_only_four_manifests_with_fixed_pins_caps_and_affinity_subsets(self):
@@ -116,7 +117,7 @@ class CpuBudgetProfiles(unittest.TestCase):
         self.assertEqual(p["common_input"]["after"], "A-Qnear480K-drained")
         self.assertFalse(p["common_input"]["wait_for_glm"])
         self.assertTrue(p["common_input"]["record_actual_peer_condition"])
-        self.assertEqual((p["measurement_budget_seconds"], p["maximum_request_seconds"]), (4500, 7200))
+        self.assertEqual((p["measurement_budget_seconds"], p["maximum_request_seconds"]), (7200, 7200))
         policy = cpu.resource_policy()
         self.assertEqual(policy["host_headroom_policy"], {"version": "sampled-required-working-set-15pct-v1",
                          "numerator": 23, "denominator": 20, "basis": "sampled_required_working_set_estimate_bytes"})

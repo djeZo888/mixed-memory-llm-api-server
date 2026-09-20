@@ -143,6 +143,40 @@ class CPUHost(unittest.TestCase):
             with self.subTest(info=list(bad)), self.assertRaises(ValueError):
                 proofs.qwen_native_proof(bad)
 
+    def test_native_Qwen_flat_saved_shape_and_wrong_numeric_rejection(self):
+        # Actual allowlisted projection from restored same-image production;
+        # failed Q480 on-wire data was not retained. This is not a raw capture.
+        path = Path(__file__).parent / 'fixtures/qwen-restored-production-flat-safe-fields.json'
+        receipt = json.loads(path.read_bytes())
+        self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),
+                         'bcf0f8214d1debc8b67a1658474760787a2e01f505fc06b2260eaab8fba9bb79')
+        self.assertFalse(receipt['raw_payload_retained'])
+        self.assertTrue(receipt['same_image_verified'])
+        fields = receipt['fields']
+        self.assertFalse(fields['$.server_args']['present'])
+        info = {name[2:]: row['value'] for name, row in fields.items()
+                if name.startswith('$.') and '[' not in name and row['present'] and 'value' in row}
+        info['internal_states'] = [{name.split('].', 1)[1]: row['value']
+            for name, row in fields.items() if name.startswith('$.internal_states[0].') and row['present']}]
+        with self.assertRaisesRegex(ValueError, 'cpu_native_context_mismatch'):
+            proofs.qwen_native_proof(info)  # Real 1M/TP2 values are not Q480 proof.
+        # Synthetic target values on the observed flat shape, not measured Q480.
+        info.update(context_length=480000, tp_size=1, max_total_num_tokens=480000, max_req_input_len=479994)
+        info['internal_states'][0].update(context_length=480000, tp_size=1)
+        result = proofs.qwen_native_proof(info)
+        self.assertEqual((result['native_pool_tokens'], result['native_input_limit'],
+                          result['native_request_limit']), (480000, 479994, None))
+        info['max_req_len'] = 479999
+        self.assertEqual(proofs.qwen_native_proof(info)['native_request_limit'], 479999)
+        for key in ('context_length', 'tp_size', 'max_total_num_tokens', 'max_req_input_len', 'max_req_len'):
+            for value in (info[key] + 1, float(info[key]), str(info[key]), True, None):
+                with self.subTest(field=key, value=value), self.assertRaises(ValueError):
+                    proofs.qwen_native_proof({**info, key: value})
+        for bad in ({**info, 'server_args': None},
+                    {**info, 'internal_states': [{}, {}]},
+                    {**info, 'internal_states': [{'max_total_num_tokens': 700160}]}):
+            with self.assertRaises(ValueError): proofs.qwen_native_proof(bad)
+
     def test_closed_operations_reject_profiler_extra_cases_and_resume(self):
         host = self.bare()
         with patch('benchmark.host.command', side_effect=AssertionError('no command')):

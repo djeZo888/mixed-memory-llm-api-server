@@ -124,24 +124,29 @@ class Scheduling(unittest.TestCase):
 
 
 class Clock(unittest.TestCase):
-    def test_original_clock_only_and_fresh_session_preserve_request_ceiling(self):
+    def test_original_start_final_extension_and_same_retained_session(self):
         arm = {'runtime_policy': copy.deepcopy(run.POLICY), 'session_id': 'prep'}
         runtime = {**run.POLICY, 'start_epoch': run.ORIGINAL_START, 'deadline_epoch': run.FINAL_DEADLINE}
-        go = {'run_session_id': 'run', 'runtime': runtime}
-        self.assertEqual(run.bind_runtime(arm, go, 'run', run.ORIGINAL_START + 1), runtime)
+        go = {'run_session_id': 'prep', 'runtime': runtime}
+        self.assertEqual(run.bind_runtime(arm, go, 'prep', run.ORIGINAL_START + 1), runtime)
+        self.assertEqual((run.ORIGINAL_START, run.FINAL_DEADLINE), (1789899296.052823, 1789906496.052823))
+        self.assertEqual(runtime['budget_seconds'], 7200)
         self.assertEqual(runtime['request_max_seconds'], 7200)
+        self.assertEqual(run.bind_runtime(arm, go, 'prep', 1789903796.052823 + 1), runtime)
         self.assertTrue(runtime['excludes_source_prep'])
         self.assertTrue(runtime['restoration_outside_budget'])
         for change in ({'start_epoch': run.ORIGINAL_START + 1, 'deadline_epoch': run.FINAL_DEADLINE + 1},
-                       {'deadline_epoch': 7300.}, {'budget_seconds': 7200},
+                       {'deadline_epoch': 1789903796.052823}, {'budget_seconds': 4500},
                        {'start_epoch': float('nan')}, {'extra_clock': 1}):
             bad = {**runtime, **change}
             with self.assertRaises(ValueError): run.validate_clock(arm, bad)
         for extra in ({'continuation_execution': {}}, {'start_epoch': 100.}):
             with self.assertRaises(ValueError): run.validate_clock({**arm, **extra}, runtime)
-        for session, now in (('prep', run.ORIGINAL_START + 1), ('run', run.FINAL_DEADLINE),
-                             ('run', run.ORIGINAL_START - 1), ('wrong', run.ORIGINAL_START + 1)):
+        for session, now in (('run', run.ORIGINAL_START + 1), ('prep', run.FINAL_DEADLINE),
+                             ('prep', run.ORIGINAL_START - 1), ('wrong', run.ORIGINAL_START + 1)):
             with self.assertRaises(ValueError): run.bind_runtime(arm, go, session, now)
+        with self.assertRaises(ValueError):
+            run.bind_runtime(arm, {**go, 'run_session_id': 'wrong'}, 'prep', run.ORIGINAL_START + 1)
         old = {**run.POLICY, 'start_epoch': run.prior.ORIGINAL_START, 'deadline_epoch': run.prior.EXTENDED_DEADLINE}
         with self.assertRaises(ValueError): run.validate_clock(arm, old)
 
@@ -166,7 +171,13 @@ class LocalPackage(unittest.TestCase):
         runner.save(self.task / 'evidence-index.json', {'refs': {'old-proof': {'path': str(proof), 'sha256': fixtures.digest(proof.read_bytes())}},
                     'protected_key_metadata': {'mode': '0o700', 'bytes': 'NOT_READ'}})
         with patch.object(run, 'SAVED', self.saved): self.armed = run.prepare(self.task, 'prep-session')
-        self.executed = {**self.armed, 'session_id': 'run-session',
+        template = json.loads((self.task / 'GO.template.json').read_bytes())
+        self.assertEqual(template['run_session_id'], 'prep-session')
+        self.assertEqual(template['runtime'], {**run.POLICY, 'start_epoch': run.ORIGINAL_START,
+                                               'deadline_epoch': run.FINAL_DEADLINE})
+        self.assertEqual(template['decision'], 'NOT_AUTHORIZED')
+        self.assertFalse(template['vm_writer_handoff'])
+        self.executed = {**self.armed, 'session_id': 'prep-session',
                          'runtime': {**run.POLICY, 'start_epoch': run.ORIGINAL_START, 'deadline_epoch': run.FINAL_DEADLINE}}
 
     def job(self):
@@ -351,18 +362,18 @@ class LocalPackage(unittest.TestCase):
 
     def test_RUN_missing_file_or_existing_execution_is_rejected_before_keys_or_host(self):
         receipt = json.loads((self.task / 'arm-receipt.json').read_bytes())
-        go = {**receipt, 'decision': 'GO', 'vm_writer_handoff': True, 'run_session_id': 'run-session',
+        go = {**receipt, 'decision': 'GO', 'vm_writer_handoff': True, 'run_session_id': 'prep-session',
               'runtime': self.executed['runtime']}
         path = self.task / 'GO.json'; runner.save(path, go)
         with patch.object(run.os, 'geteuid', return_value=os.geteuid()), patch.object(run, '_keys') as keys, \
                 patch.object(run.glmrepair, 'DiagnosticSSHHost') as host:
             required = self.task / 'progress.json'; raw = required.read_bytes(); required.unlink()
             with self.assertRaisesRegex(ValueError, 'required_package_file_missing'):
-                run.run(self.task, path, 'run-session')
+                run.run(self.task, path, 'prep-session')
             required.write_bytes(raw)
             runner.save(self.task / 'execution-arm.json', {})
             with self.assertRaisesRegex(ValueError, 'no_rerun_or_clock_reset'):
-                run.run(self.task, path, 'run-session')
+                run.run(self.task, path, 'prep-session')
             keys.assert_not_called(); host.assert_not_called()
 
 

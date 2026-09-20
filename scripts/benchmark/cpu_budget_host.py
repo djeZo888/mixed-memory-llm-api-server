@@ -12,7 +12,7 @@ def qwen_native_proof(info):
     Top-level and single internal-state values must agree; argv is never proof.
     """
     require(isinstance(info, dict), 'cpu_native_info_unavailable')
-    args = info.get('server_args', {})
+    args = info.get('server_args', info)
     require(isinstance(args, dict) and type(args.get('context_length')) is int and
             args['context_length'] == CAPACITY and type(args.get('tp_size')) is int and args['tp_size'] == 1,
             'cpu_native_context_mismatch')
