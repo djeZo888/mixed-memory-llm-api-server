@@ -175,6 +175,27 @@ class ManagerSlotTests(unittest.TestCase):
         self.assertEqual(result['slots']['glm']['pending_create'], pending)
         self.assertEqual(result['slots']['qwen'], saved['slots']['qwen'])
 
+    def test_native_capacity_failure_is_precise_and_healthy_peer_stays_ready(self):
+        from control.core import observation, safe_error
+        original = self.manager.probe_deployment
+        def probe(deployment, timeout):
+            if deployment['id'] == QWEN:
+                raise LifecycleError('concurrent_native_capacity_mismatch')
+            return original(deployment, timeout)
+        with patch.object(self.manager, 'probe_deployment', side_effect=probe):
+            public, _ = observation(self.session.observe(Deadline.after(5)))
+        self.assertEqual(public['slots']['qwen']['observed'], 'failed')
+        self.assertEqual(public['slots']['qwen']['failure_code'], 'concurrent_native_capacity_mismatch')
+        self.assertEqual(public['slots']['glm']['observed'], 'ready')
+        self.assertFalse(any(public['slots']['qwen']['ready_proof'].values()))
+        self.assertEqual(safe_error(LifecycleError('concurrent_native_metadata_auth_failed')),
+                         'concurrent_native_metadata_auth_failed')
+        self.assertEqual(safe_error(LifecycleError('private_unknown_failure')), 'transition_failed')
+        with patch.object(self.manager, 'prepare_start', side_effect=LifecycleError('concurrent_current_host_memory_insufficient')):
+            with self.lease() as lease, self.assertRaises(ControlError) as raised:
+                self.session.preflight(QWEN, lease, Deadline.after(5), slot='qwen')
+        self.assertEqual(raised.exception.code, 'concurrent_current_host_memory_insufficient')
+
     def test_failed_observation_is_scoped_and_never_saved_ready(self):
         state = self.manager.read_state()
         target_id = state['slots']['glm']['container']['id']

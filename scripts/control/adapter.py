@@ -14,9 +14,9 @@ from types import SimpleNamespace
 
 from common.lifecycle_lease import _validate_borrowed_lease
 from lifecycle.manager import load_manager, recovery_manager
-from lifecycle.runtime_io import Docker, _read_key
+from lifecycle.runtime_io import Docker, LifecycleError, _read_key
 from .discovery import discover_records
-from .core import Application, digest
+from .core import Application, digest, safe_error
 from .journal import Journal, JournalUnavailable, MAX_BYTES
 from .protocol import ControlError, PackageBlocked, StorageUnavailable
 
@@ -247,6 +247,9 @@ class ManagerSession:
                     raise
                 raw['observed'] = 'unhealthy'
                 raw['failure'] = exc.code
+            except LifecycleError as exc:
+                raw['observed'] = 'unhealthy'
+                raw['failure'] = safe_error(exc, None)
             except Exception:
                 raw['observed'] = 'unhealthy'
         # Recovery never opens deployments/config/keys or probes inference.
@@ -288,6 +291,8 @@ class ManagerSession:
                 # Required with base L1; also safe with L1B's repeated seam.
                 # Validate actual image ID/tag/entrypoint BEFORE the old stop.
                 self.manager.create_args(deployment)
+            except LifecycleError as exc:
+                raise ControlError(safe_error(exc, 'preflight_failed')) from None
             except Exception:
                 raise ControlError('preflight_failed') from None
 

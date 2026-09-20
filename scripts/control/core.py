@@ -37,6 +37,14 @@ SAFE_CODES = frozenset({
     "observation_unavailable", "preflight_failed", "stop_not_proven", "start_failed",
     "transition_failed", "deadline_exceeded", "service_interrupted",
     "recovery_identity_unavailable", "service_closed", "operation_unknown",
+    "concurrent_current_host_memory_unavailable", "concurrent_current_host_memory_insufficient",
+    "concurrent_current_gpu_memory_unavailable", "concurrent_current_gpu_memory_insufficient",
+    "concurrent_native_capacity_unavailable", "concurrent_native_capacity_mismatch",
+    "concurrent_native_metadata_unavailable", "concurrent_native_metadata_auth_failed",
+    "concurrent_memory_admission_timeout", "concurrent_resident_identity_invalid",
+    "concurrent_resident_cgroup_unavailable", "concurrent_resident_memory_unavailable",
+    "concurrent_resident_swap_detected", "concurrent_resident_cgroup_changed",
+    "concurrent_resident_identity_changed",
 })
 
 
