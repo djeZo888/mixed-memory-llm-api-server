@@ -328,6 +328,7 @@ class HostIntegrationTests(unittest.TestCase):
             'max_total_num_tokens': 480000, 'max_req_input_len': 479994}
         with patch('benchmark.host.command', return_value=SimpleNamespace(stdout=b'', stderr=b'')), \
              patch('benchmark.host.http_json', return_value=conflict), \
+             patch('benchmark.cpu_budget_host.postrestart_cpu_anchor', return_value=None), \
              patch('benchmark.host.allocation_gate') as gate:
             with self.assertRaisesRegex(ValueError, 'cpu_native_context_mismatch'):
                 LinuxHost.allocation(host, cid)

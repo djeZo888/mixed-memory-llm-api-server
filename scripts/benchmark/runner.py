@@ -231,6 +231,7 @@ class Campaign:
         self.lock = threading.RLock()
         self.progress = json.loads((self.state / "progress.json").read_bytes())
         self.active, self.samples, self.safety = {}, {}, {}
+        self.proof_pending = None  # REAL72 current observation only; safety is latched
         self.demand = dict(self.progress.get("measured_demand_bytes", {}))
         self.demand_evidence = dict(self.progress.get("measured_demand_evidence", {}))
         self.stop = threading.Event()
@@ -292,53 +293,38 @@ class Campaign:
                         loading_gpu_gap = (loading_gpu_timeout and gate.get("status") == "UNAVAILABLE"
                             and gate.get("unavailable_reasons") == gpu_gap_reasons
                             and gate.get("reasons") == [] and gate.get("latched_violations") == {})
-                        # REAL72: a missing process read before allocation
-                        # is recorded UNAVAILABLE, but must not poison later
-                        # readiness. A queried ready G may contain a loading Q
-                        # charge; validate every unavailable peer, not just cid.
-                        missing = ({peer: charge for peer, charge in gate.get("charges", {}).items()
-                                    if charge.get("required_bytes") is None or charge.get("evidence_status") == "UNAVAILABLE"}
-                                   if self.armed.get("scope") == "postrestart72-480k" else {})
-                        loading_demand_gap = (self.armed.get("scope") == "postrestart72-480k"
-                            and resource_stop is None and gate.get("status") == "UNAVAILABLE"
-                            and gate.get("unavailable_reasons") == ["concurrent_required_demand_estimate_unavailable"]
-                            and gate.get("reasons") == [] and gate.get("latched_violations") == {}
-                            and bool(row.get("errors")) and set(row["errors"]) == {"read_FileNotFoundError"}
-                            and all(type(row.get("vmstat", {}).get(k)) is int for k in
-                                ("pgfault", "pgmajfault", "pswpin", "pswpout", "oom_kill"))
-                            and set(gate.get("charges", {})) == set(groups) == set(row.get("processes", {}))
-                            and all(all(type(group.get(k)) is int and group[k] >= 0 for k in
-                                    ("current_bytes", "peak_since_cgroup_creation_bytes", "file_bytes",
-                                     "anon_bytes", "kernel_bytes", "file_mapped_bytes", "shmem_bytes", "swap_bytes"))
-                                and group["swap_bytes"] == 0
-                                and all(type(group.get("events", {}).get(k)) is int and group["events"][k] == 0
-                                    for k in ("oom", "oom_kill", "oom_group_kill"))
-                                for group in groups.values())
-                            and all(type(process.get(k)) is int for peer, process in row.get("processes", {}).items()
-                                if peer not in missing for k in ("rss_bytes", "swap_bytes"))
-                            and bool(missing) and all(
-                                self.active.get(peer, {}).get("phase") == "loading"
-                                and charge.get("allocation_proof_available") is False
-                                and charge.get("evidence_status") == "UNAVAILABLE"
-                                and charge.get("required_bytes") is None
-                                and charge.get("rss_plus_kernel_bytes") is None
-                                and row.get("processes", {}).get(peer, {}).get("rss_bytes") is None
-                                and type(charge.get("component_bracket_bytes")) is int
-                                for peer, charge in missing.items()))
                         # Allocation readiness and every request_begin still
                         # require fresh full PASS on the host; no zero/reset.
                         if gate.get("status") == "STOP_RESOURCE_GATE":
                             verdict = resource_stop = "STOP_RESOURCE_GATE"
-                        elif gate.get("status") != "PASS" and not (loading_gpu_gap or loading_demand_gap):
+                        elif gate.get("status") != "PASS" and not loading_gpu_gap:
                             verdict = "SKIP_UNSAFE_PLACEMENT"
-                    if not loading_gpu_timeout and not set(self.active[cid]["manifest"]["gpu_uuids"]).issubset({g.get("uuid") for g in row.get("gpus", [])}):
+                    if self.armed.get("scope") != "postrestart72-480k" and not loading_gpu_timeout and not set(self.active[cid]["manifest"]["gpu_uuids"]).issubset({g.get("uuid") for g in row.get("gpus", [])}):
                         verdict = "SKIP_UNSAFE_PLACEMENT"
-                    if any(g.get("uuid") in self.active[cid]["manifest"]["gpu_uuids"] and (g.get("free_bytes") is None or g["free_bytes"] < 16 * 1024**3) for g in row.get("gpus", [])):
+                    if self.armed.get("scope") != "postrestart72-480k" and any(g.get("uuid") in self.active[cid]["manifest"]["gpu_uuids"] and (g.get("free_bytes") is None or g["free_bytes"] < 16 * 1024**3) for g in row.get("gpus", [])):
                         verdict = "SKIP_UNSAFE_PLACEMENT"
-                    if row.get("host", {}).get("available_bytes") is None or row["host"]["available_bytes"] < 16 * 1024**3:
+                    if self.armed.get("scope") != "postrestart72-480k" and (row.get("host", {}).get("available_bytes") is None or row["host"]["available_bytes"] < 16 * 1024**3):
                         verdict = "SKIP_UNSAFE_PLACEMENT"
+                    if self.armed.get("scope") == "postrestart72-480k":
+                        # One host row covers the whole currently loaded pair.
+                        # New full proof replaces only the current gap, never a
+                        # fault, abort/cancel state or the append-only samples.
+                        gate = row.get("concurrent_resource_gate", {})
+                        if resource_stop or gate.get("reasons") or gate.get("latched_violations"):
+                            verdict = resource_stop = resource_stop or "STOP_RESOURCE_GATE"
+                        else:
+                            complete = (gate.get("status") == "PASS" and not row.get("errors")
+                                and set(self.active) <= set(gate.get("charges", {})))
+                            self.proof_pending = None if complete else {
+                                "status": "UNAVAILABLE", "container": cid,
+                                "host_timestamp_monotonic_s": row.get("host_timestamp_monotonic_s"),
+                                "unavailable_reasons": gate.get("unavailable_reasons", [])}
+                            verdict = "CURRENT_PROOF_PASS" if complete else "UNAVAILABLE"
                     if verdict.startswith(("STOP_", "SKIP_")):
-                        self.safety[cid] = verdict
+                        if self.armed.get("scope") == "postrestart72-480k":
+                            self.safety.setdefault(cid, verdict)
+                        else:
+                            self.safety[cid] = verdict
                     if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
                         # Cancel only proven resource violations, never missing
                         # telemetry or a reporting/parser failure. Existing stop
@@ -360,7 +346,10 @@ class Campaign:
                 self.emit({"type": "telemetry", "container": cid, "sample": row})
             except Exception:
                 with self.lock:
-                    self.safety[cid] = "HARNESS_FAILURE"
+                    if self.armed.get("scope") == "postrestart72-480k":
+                        self.safety.setdefault(cid, "HARNESS_FAILURE")
+                    else:
+                        self.safety[cid] = "HARNESS_FAILURE"
         return {"collection_duration_s": self.clock() - started}
 
     def monitor(self):

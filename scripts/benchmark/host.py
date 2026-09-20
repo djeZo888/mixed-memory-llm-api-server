@@ -428,12 +428,12 @@ class LinuxHost:
         """Latch numeric working-set estimates; raw charges remain independent."""
         policy, charges, reasons, unavailable = concurrent_capacity_policy(getattr(self, 'scope', None)), {}, [], []
         numeric_by_cid = {cid: [] for cid in row['cgroups']}
+        valid = lambda value: type(value) is int and value >= 0
         if not hasattr(self, 'concurrent_demand_peaks'):
             self.concurrent_demand_peaks = {}
         for cid, group in row['cgroups'].items():
             manifest = self.load_manifests[cid]
             current, peak = group.get('current_bytes'), group.get('peak_since_cgroup_creation_bytes')
-            valid = lambda value: type(value) is int and value >= 0
             floor, basis = None, 'UNAVAILABLE_no_native_host_weight_measurement'
             parsed = self.allocation_proofs.get(cid)
             if manifest['placement'] == 'G1':
@@ -494,6 +494,36 @@ class LinuxHost:
                         unavailable.append('cpu_qwen_ten_percent_unavailable')
                     elif remaining * 10 < total:
                         numeric_by_cid[cid].append('cpu_qwen_ten_percent_failed')
+        if getattr(self, 'scope', None) == POSTRESTART_SCOPE:
+            # Full *current* resource evidence, not a historical peak or a
+            # literal read-error exemption. Missing observations never become
+            # zeros; independently observed danger wins over incomplete proof.
+            observed_gpus = [g.get('uuid') for g in row['gpus']]
+            expected_gpus = set(self.config['gpu_uuids'])
+            if (any(isinstance(uuid, str) and uuid not in expected_gpus for uuid in observed_gpus)
+                    or len(observed_gpus) != len(set(observed_gpus))
+                    or set(row.get('processes', {})) - set(self.load_manifests)):
+                for faults in numeric_by_cid.values():
+                    faults.append('postrestart_observed_identity_changed')
+            if row.get('errors') != [] or not all(valid(row.get('vmstat', {}).get(k)) for k in
+                    ('pgfault', 'pgmajfault', 'pswpin', 'pswpout', 'oom_kill')):
+                unavailable.append('postrestart_sample_incomplete')
+            if (not row['cgroups'] or set(row['cgroups']) != set(self.load_manifests)
+                    or set(row['cgroups']) != set(row.get('processes', {}))):
+                unavailable.append('postrestart_process_inventory_incomplete')
+            for cid, group in row['cgroups'].items():
+                process = row.get('processes', {}).get(cid, {})
+                events = group.get('events', {})
+                if (not all(valid(group.get(k)) for k in ('current_bytes', 'peak_since_cgroup_creation_bytes',
+                        'file_bytes', 'anon_bytes', 'kernel_bytes', 'file_mapped_bytes', 'shmem_bytes', 'swap_bytes'))
+                        or not all(valid(events.get(k)) for k in ('oom', 'oom_kill', 'oom_group_kill'))
+                        or not all(valid(process.get(k)) for k in ('rss_bytes', 'swap_bytes'))
+                        or not valid(process.get('known_process_count')) or process['known_process_count'] == 0):
+                    unavailable.append('postrestart_owned_resource_incomplete')
+                if any(valid(events.get(k)) and events[k] > 0 for k in ('oom', 'oom_kill', 'oom_group_kill')):
+                    numeric_by_cid[cid].append('postrestart_owned_oom')
+                if any(valid(v) and v > 0 for v in (group.get('swap_bytes'), process.get('swap_bytes'))):
+                    numeric_by_cid[cid].append('postrestart_owned_swap')
         if not hasattr(self, 'concurrent_resource_violations'):
             self.concurrent_resource_violations = {}
         for cid, numeric in numeric_by_cid.items():
@@ -1569,7 +1599,21 @@ class LinuxHost:
             if failure is not None:
                 return failure
             self.telemetry(cid)  # cheap load sample before a possibly blocking readiness HTTP probe
-            return self._readiness(cid)
+            if self.scope != POSTRESTART_SCOPE:
+                return self._readiness(cid)
+            attempts = []
+            attempt_receipt = 'loads/' + cid + '-resource-readiness-' + secrets.token_hex(8) + '.json'
+            for attempt in range(3):
+                require(time.monotonic() < _COMMAND_DEADLINE.get(), 'host_operation_deadline')
+                proof = self._readiness(cid)
+                attempts.append({'attempt': attempt + 1, 'ready': proof.get('ready'),
+                    'resource_proof_unavailable_only': proof.get('resource_proof_unavailable_only'),
+                    'allocation': proof.get('allocation')})
+                if any(row['resource_proof_unavailable_only'] is True for row in attempts):
+                    self.write_json(attempt_receipt, {'attempt_limit': 3, 'attempts': attempts})
+                if proof.get('resource_proof_unavailable_only') is not True:
+                    return proof
+            return proof  # persistent missing proof still refuses readiness
         finally:
             _COMMAND_DEADLINE.reset(token)
 
@@ -1838,7 +1882,9 @@ class LinuxHost:
                 preliminary_result_sha256 == saved.get('preliminary_result_sha256') and
                 isinstance(preliminary_result_sha256, str) and bool(re.fullmatch(r'[0-9a-f]{64}', preliminary_result_sha256)),
                 'postrestart_followup_identity_required')
-        require(self.postrestart_hold_proof()['status'] == 'HELD', 'postrestart_followup_fresh_ready_required')
+        proof = self.postrestart_hold_proof()
+        if proof['status'] != 'HELD':
+            return {'phase': 'WARM_HOLD', 'proof_pending': True, 'admitted': False, 'proof': proof}
         identity = {'session_id': followup_session_id, 'source_commit': source_commit,
                     'preliminary_result_sha256': preliminary_result_sha256}
         self.owner.resume_measurements(identity)
@@ -1878,7 +1924,9 @@ class LinuxHost:
         if 'followup_identity' in previous:
             require(go['followup_session_id'] != previous['followup_identity']['session_id'],
                     'postrestart_fresh_followup_session_required')
-        require(self.postrestart_hold_proof()['status'] == 'HELD', 'postrestart_followup_fresh_ready_required')
+        proof = self.postrestart_hold_proof()
+        if proof['status'] != 'HELD':
+            return {'phase': 'WARM_HOLD', 'proof_pending': True, 'admitted': False, 'proof': proof}
         identity = {'session_id': go['followup_session_id'], 'source_commit': go['source_commit'],
                     **{k: go[k] for k in ('request_id', 'placement', 'manifest_sha256', 'request_sha256',
                                          'fixture_sha256', 'warm_hold_receipt_sha256')}}
@@ -1965,6 +2013,9 @@ class LinuxHost:
                 require(args['id'] in self.allocation_proofs, 'concurrent_current_allocation_required')
                 self.concurrent_limits(self.load_manifests[args['id']], container, cgroup)
                 sample = self.telemetry(args['id'])
+                if self.scope == POSTRESTART_SCOPE and sample['concurrent_resource_gate']['status'] == 'UNAVAILABLE':
+                    return {'proof_pending': True, 'admitted': False,
+                            'resource_gate': sample['concurrent_resource_gate'], 'sample': sample}
                 require(sample['concurrent_resource_gate']['status'] == 'PASS', 'concurrent_current_resource_gate_failed')
             else:
                 self.identity(args['id'])

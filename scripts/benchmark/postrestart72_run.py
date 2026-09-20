@@ -21,7 +21,7 @@ from . import fixtures, g1_ladder, glmrepair, runner
 from .warmup import prefill_proof
 
 SCOPE = 'postrestart72-480k'
-BASE = 'a94c04d8e0ea31ab413d43a68301366e87788af1'
+BASE = '59aeef68640986082d6e6b431be3d86386e64168'
 POLICY = {'budget_seconds': 21600, 'preparation_seconds': 7200, 'request_timeout_seconds': 7200,
           'clock_starts': 'FIRST_MEASURED_REQUEST_ADMISSION', 'clock_includes_preparation': False,
           'admission_deadline_refuses_new_only': True, 'request_clock_starts': 'HTTP_DISPATCH',
@@ -139,18 +139,62 @@ class PostrestartRun(prior.ConcurrentRun):
             self.hold_notice('root_control_report_or_input_UNAVAILABLE')
             paused = True
         if not self.in_hold:
-            self.collect()
-        if self.safety and not self.in_hold:
-            if self.hold_ready and not any(v.get('abort_reason') for v in self.active.values()):
-                raise EvidenceReview('CURRENT_PROOF_OR_REPORT_UNAVAILABLE')
-            raise RuntimeError(next(iter(self.safety.values())))
+            self.ensure_current_proof()
         if paused and not self.in_hold:
             raise AdmissionPaused('ROOT_STOP_PAUSE_HEALTHY_HOLD')
 
+    def require_no_faults(self):
+        with self.lock:
+            if self.safety:
+                raise RuntimeError(next(iter(self.safety.values())))
+            for entry in self.active.values():
+                if entry.get('abort_reason') or (entry.get('cancel_event') is not None and entry['cancel_event'].is_set()):
+                    raise RuntimeError(entry.get('abort_reason') or 'STOP_CANCELLED')
+
+    def ensure_current_proof(self):
+        """At most three fresh whole-pair observations; never retry inference."""
+        for attempt in range(3):
+            self.require_no_faults()
+            try:
+                remaining = self.host.call('budget').get('remaining_s', 0) if self.active else 1
+            except Exception as error:
+                self.safety.setdefault('host', 'HARNESS_FAILURE')
+                raise RuntimeError('HARNESS_FAILURE') from error
+            if remaining <= 0:
+                raise EvidenceReview('CURRENT_PROOF_PREPARATION_OR_ADMISSION_WINDOW_EXPIRED')
+            started = self.clock()
+            self.collect()
+            self.require_no_faults()
+            with self.lock:
+                if self.proof_pending is None:
+                    return
+            # Existing preparation/admission clock only; never reset it or
+            # shorten the independent deadline of an admitted HTTP request.
+            remaining -= self.clock() - started
+            if remaining <= 0 or attempt == 2:
+                break
+            self.sleep(min(0.1, remaining))
+        raise EvidenceReview('CURRENT_RESOURCE_PROOF_UNAVAILABLE')
+
     def admission(self, cid, maximum=7200, *, measured=False, request_identity=None):
+        if self.interrupted.is_set():
+            raise RuntimeError('ROOT_INTERRUPTED_DRAIN_AND_RESTORE')
         if self.root_paused():
             raise AdmissionPaused('ROOT_STOP_PAUSE_NO_NEW_REQUEST')
-        return super().admission(cid, maximum, measured=measured, request_identity=request_identity)
+        self.ensure_current_proof()
+        with self.lock:
+            self.require_no_faults()
+            try:
+                grant = self.host.call('request_begin', id=cid, timeout_s=maximum, measured=measured,
+                    **({'request_identity': request_identity} if request_identity is not None else {}))
+            except Exception:
+                self.safety.setdefault(cid, 'HARNESS_FAILURE')
+                raise  # registration/ownership may be uncertain; never benign
+            if grant.get('proof_pending') is True and grant.get('admitted') is False:
+                self.proof_pending = grant['resource_gate']
+                self.emit({'type': 'admission_proof_pending', 'container': cid, 'proof': grant})
+                raise EvidenceReview('CURRENT_RESOURCE_PROOF_UNAVAILABLE')
+            return grant.get('timeout_s', 0)
 
     def monitor(self):
         # A held runner has no timed phase: no unbounded worker interval arrays.
@@ -228,7 +272,6 @@ class PostrestartRun(prior.ConcurrentRun):
                    'checkpoint': self.host.call('quiescent', id=cid, point='warm_idle')})
         if cpu_proof['status'] != 'PASS':
             raise RuntimeError('STOP_CPU_WARMUP_EVIDENCE_UNAVAILABLE')
-        self.boundary()
 
     def prepare_job(self, cid, identifier):
         self.boundary(); started = self.clock()
@@ -275,7 +318,7 @@ class PostrestartRun(prior.ConcurrentRun):
     def measure(self, job, **kwargs):
         try:
             row = super().measure(job, **kwargs)
-        except AdmissionPaused:
+        except (AdmissionPaused, EvidenceReview):
             # admission() raises this before host registration/HTTP dispatch.
             # Remove only this undispatched request, never an admitted peer.
             with self.lock:
@@ -310,6 +353,7 @@ class PostrestartRun(prior.ConcurrentRun):
         """Keep the existing detached owner/lease alive; no request service."""
         if reason not in {'complete', 'preliminary_review', 'paused', 'quality_review'} or self.progress['inflight'] or not self.hold_ready:
             raise RuntimeError('postrestart_idle_closed_hold_required')
+        self.require_no_faults()
         self.in_hold = True
         receipt = self.host.call('warm_hold', reason=reason,
             **({'preliminary_result_sha256': row_sha} if reason == 'preliminary_review' else {}))
@@ -326,6 +370,7 @@ class PostrestartRun(prior.ConcurrentRun):
             'receipt_sha256': hold_sha, 'source_commit': self.armed['source_commit'],
             'session_id': self.armed['session_id'], 'original_restore_intent': 'STOPPED/manual', 'active_requests': 0})
         while True:
+            self.require_no_faults()
             self.boundary()  # resource danger/interruption still cleans up canonically
             proof = self.host.call('hold_checkpoint')
             self.hold_save(self.state / 'hold-current.json', proof)
@@ -359,11 +404,14 @@ class PostrestartRun(prior.ConcurrentRun):
                     continue
                 # STOP/PAUSE remains admission-stopping until explicit CONTINUE.
                 try:
-                    self.host.call('resume_measurements', followup_session_id=go['followup_session_id'],
+                    grant = self.host.call('resume_measurements', followup_session_id=go['followup_session_id'],
                                    source_commit=go['source_commit'], preliminary_result_sha256=row_sha)
-                except RuntimeError:
+                except Exception:
+                    self.safety.setdefault('host', 'HARNESS_FAILURE')
+                    raise
+                if grant.get('proof_pending') is True and grant.get('admitted') is False:
                     if not self.retained_refusal():
-                        raise
+                        raise RuntimeError('STOP_RETAINED_OWNER_UNAVAILABLE')
                     self.sleep(5)
                     continue
                 self.admission_paused = False
@@ -384,16 +432,18 @@ class PostrestartRun(prior.ConcurrentRun):
                     self.sleep(5)
                     continue
                 try:
-                    self.host.call('admit_followup', go=candidate['go'])
-                except RuntimeError:
+                    grant = self.host.call('admit_followup', go=candidate['go'])
+                except Exception:
+                    self.safety.setdefault('host', 'HARNESS_FAILURE')
+                    raise
+                if grant.get('proof_pending') is True and grant.get('admitted') is False:
                     if not self.retained_refusal():
-                        raise
+                        raise RuntimeError('STOP_RETAINED_OWNER_UNAVAILABLE')
                     self.sleep(5)
                     continue
                 self.followup_sessions.append(candidate['go']['followup_session_id'])
                 self.admission_paused = False
                 self.in_hold = False
-                self.safety.clear()  # current held proof passed; host numeric latches are preserved
                 cid = next(cid for cid, row in self.active.items()
                            if row['manifest']['placement'] == candidate['go']['placement'])
                 try:
@@ -461,9 +511,13 @@ class PostrestartRun(prior.ConcurrentRun):
         ids = {m['placement']: self.loaded(m) for m in admission['manifests']}
         if len(self.pending_warmups) != 2:
             raise RuntimeError('postrestart_exact_two_loads_required')
-        for args in self.pending_warmups:
+        for index, args in enumerate(self.pending_warmups):
             self.discarded_warmup(*args)
-        self.hold_ready = True
+            # Both validated discarded warmups precede retention readiness;
+            # current missing resource proof may now retain a guarded review.
+            if index == 1:
+                self.hold_ready = True
+            self.boundary()
         self.emit({'type': 'preparation_complete', 'clock': self.host.call('budget')})
         row = self.measure(self.prepare_job(ids['G1'], 'P-G4K'))
         if row['status'] != 'PASS':
@@ -487,6 +541,12 @@ class PostrestartRun(prior.ConcurrentRun):
                 # Requests not dispatched by STOP/PAUSE are not quality failures.
                 # Each healthy admitted peer has drained through execute_pair.
                 raise AdmissionPaused('ROOT_STOP_PAUSE_DRAINED')
+            if (any(v['error_class'] == 'EvidenceReview' for v in result['errors'])
+                    and all(v['error_class'] in {'EvidenceReview', 'AdmissionPaused'}
+                    for v in result['errors']) and all(v.get('sample', {}).get('status') != 'TRANSPORT_FAILURE'
+                    for v in completed)):
+                # execute_pair has joined every registered peer before review.
+                raise EvidenceReview('CURRENT_PROOF_UNAVAILABLE_PEER_DRAINED')
             rows = [v for v in [result['glm'], *result['qwen']] if v is not None]
             if not result['errors'] and all(v.get('sample', {}).get('status') != 'TRANSPORT_FAILURE' for v in rows):
                 self.quality_review = True

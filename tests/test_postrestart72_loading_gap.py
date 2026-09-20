@@ -26,6 +26,7 @@ class LoadingAccountingGapTests(unittest.TestCase):
         gap = saved['sample']
         host = LinuxHost.__new__(LinuxHost)
         host.scope = profiles.POSTRESTART_SCOPE
+        host.config = {'gpu_uuids': ['GPU-offline-0', 'GPU-offline-1']}
         host.load_manifests = {cid: profiles.postrestart_manifest(placement)
                                for cid, placement in (('g', 'G1'), ('q', 'Q1'))}
         for index, manifest in enumerate(host.load_manifests.values()):
@@ -128,6 +129,8 @@ class LoadingAccountingGapTests(unittest.TestCase):
         self.assertEqual(job.active['q']['phase'], 'ready')
         job.interrupted = threading.Event(); job.root_paused = Mock(return_value=False)
         job.in_hold, job.hold_ready = False, False
+        job.require_no_faults = lambda: postrestart72_run.PostrestartRun.require_no_faults(job)
+        job.ensure_current_proof = lambda: postrestart72_run.PostrestartRun.ensure_current_proof(job)
         postrestart72_run.PostrestartRun.boundary(job)
         self.assertEqual(job.safety, {})
         self.assertEqual(job.samples['q'][-1]['concurrent_resource_gate']['status'], 'PASS')
@@ -147,11 +150,12 @@ class LoadingAccountingGapTests(unittest.TestCase):
         # G already has native allocation; healthy numeric quiescence alone still
         # cannot admit it while the current pair accounting gate is unavailable.
         self.assertGreater(rows['gap']['host']['available_bytes'], 16 * GIB)
-        with self.assertRaisesRegex(ValueError, 'concurrent_current_resource_gate_failed'):
-            job.admission('g')
+        refusal = job.host.call('request_begin', id='g', timeout_s=7200)
+        self.assertIs(refusal['proof_pending'], True)
+        self.assertIs(refusal['admitted'], False)
         self.assertEqual(host.requests, {})
 
-    def test_ready_unrelated_and_unproved_origin_gaps_remain_sticky(self):
+    def test_all_nonnumeric_gaps_are_current_but_explicit_faults_remain_sticky(self):
         for variant in ('ready', 'unknown_peer', 'allocation', 'different_error', 'extra_error',
                         'no_errors', 'components', 'known_rss', 'known_required', 'peer_rss',
                         'vmstat', 'latched', 'reason', 'other_reason'):
@@ -174,16 +178,22 @@ class LoadingAccountingGapTests(unittest.TestCase):
                 if variant == 'other_reason': gap['concurrent_resource_gate']['unavailable_reasons'].append('other_missing')
                 job.host.call.side_effect = lambda op, **args: copy.deepcopy(gap)
                 job.collect()
-                self.assertTrue(job.safety)
-                with self.assertRaisesRegex(RuntimeError, 'SKIP_UNSAFE_PLACEMENT'):
-                    job.admission('g')
+                if variant in ('latched', 'reason'):
+                    self.assertTrue(job.safety)
+                    with self.assertRaisesRegex(RuntimeError, 'STOP_RESOURCE_GATE'):
+                        job.admission('g')
+                else:
+                    self.assertEqual(job.safety, {})
+                    self.assertTrue(job.proof_pending)
+                    self.assertFalse(any(v['cancel_event'].is_set() for v in job.active.values()))
 
-    def test_every_unavailable_charge_must_have_a_current_loading_peer(self):
+    def test_unavailable_ready_peer_charge_also_requires_fresh_proof(self):
         job, host, rows, _ = self.setup_case()
         rows['gap']['processes']['g']['rss_bytes'] = None
         job.collect()
         self.assertEqual(job.samples['g'][-1]['concurrent_resource_gate']['charges']['g']['required_bytes'], None)
-        self.assertTrue(job.safety)
+        self.assertEqual(job.safety, {})
+        self.assertTrue(job.proof_pending)
 
     def test_numeric_oom_swap_stops_survive_following_complete_sample(self):
         for violation in ('cap', 'host', 'gpu', 'oom', 'swap'):

@@ -15,7 +15,7 @@ SCOPE = CPU_SCOPE = "concurrent-480k-cpu"
 CAMPAIGN = CPU_CAMPAIGN = "benchrun-c480-cpu-cont3-20260920"
 CAPACITY = 480000
 POSTRESTART_SCOPE = "postrestart72-480k"
-POSTRESTART_CAMPAIGN = "benchrun-p72c2-20260920"
+POSTRESTART_CAMPAIGN = "benchrun-p72c3-20260920"
 LAYOUTS = {
     "A": {"active_guest_vcpus": 112, "G1": {"cpuset": "0-95", "count": 96},
           "Q1": {"cpuset": "96-111", "count": 16}},

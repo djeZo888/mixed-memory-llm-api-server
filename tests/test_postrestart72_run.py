@@ -266,7 +266,8 @@ class AdapterTests(unittest.TestCase):
         original_bytes = (self.state / 'P-G4K-result.json').read_bytes()
         manifest = profile.postrestart_manifest('G1')
         self.job.active['retained-g'] = {'manifest': manifest, 'cancel_event': threading.Event()}
-        self.job.boundary = Mock(); self.job.telemetry_window = Mock(return_value={'synthetic': True})
+        self.job.boundary = Mock(); self.job.ensure_current_proof = Mock()
+        self.job.telemetry_window = Mock(return_value={'synthetic': True})
         receipts = [{'phase': 'WARM_HOLD', 'status': 'HELD', 'guarded': True, 'ordinal': n} for n in (1, 2)]
         go = {'decision': 'GO', 'source_commit': run72.BASE,
             'owner_run_session_id': self.job.armed['session_id'],
@@ -416,6 +417,7 @@ class AdapterTests(unittest.TestCase):
         self.assertFalse((self.state / 'private/undispatched.request.json').exists())
 
     def test_drained_reporting_error_reaches_new_review_but_old_scope_still_refuses(self):
+        self.job.ensure_current_proof = Mock()  # Resource composition covered in evidence_policy.
         raw = fixtures.canonical({'max_tokens': 256, 'stream': True})
         manifest = profile.postrestart_manifest('G1')
         self.job.active['g'] = {'manifest': manifest, 'cancel_event': threading.Event()}
@@ -481,7 +483,7 @@ class ArchivedReadChainTests(unittest.TestCase):
         response = stream([event({'content': 'offline'}, 'stop')])
         factory = Mock(return_value=lambda raw, timeout: iter([response]))
         job = run72.PostrestartRun(self.state, arm, host, 'synthetic-offline-key', transport_factory=factory)
-        host.call.assert_not_called(); job.boundary = Mock()
+        host.call.assert_not_called(); job.boundary = Mock(); job.ensure_current_proof = Mock()
         for place in ('G1', 'Q1'):
             job.active[place] = {'manifest': profile.postrestart_manifest(place), 'cancel_event': threading.Event()}
         counts = {'P-G4K': 3546, 'P-G65008': 65008, 'P-Qnear480K': 479487}; requests = {}

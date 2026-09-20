@@ -199,7 +199,8 @@ class ConcurrentRun(runner.Campaign):
     def retire_all(self):
         with self.lock:
             super().retire_all()
-            self.safety.clear()
+            if self.armed.get("scope") != "postrestart72-480k":
+                self.safety.clear()
 
     def admission(self, cid, maximum=7200, *, measured=False, request_identity=None):
         if self.interrupted.is_set():
