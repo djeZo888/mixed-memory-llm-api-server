@@ -212,7 +212,7 @@ class LinuxHost:
         data = json.loads(raw)
         values = data.get('commands', data.get('manifests', [])) if isinstance(data, dict) else data
         self.scope = validate_arm_scope(data)
-        self.mode = data.get('mode') if self.scope == 'glm-decode-diag' else None
+        self.mode = data.get('mode') if self.scope in {'glm-decode-diag', POSTRESTART_SCOPE} else None
         self.decode_capture_policy = copy.deepcopy(data.get('capture', {})) if self.scope == 'glm-decode-diag' else {}
         manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3, CONCURRENT_SCOPE: 2, CANDIDATE_SCOPE: 2, CPU_SCOPE: 4, POSTRESTART_SCOPE: 2}[self.scope]
         if self.mode == 'cpu-profile-only':
@@ -247,8 +247,13 @@ class LinuxHost:
                 self.postrestart_measured_admissions = {'G1': 0, 'Q1': 0}
                 self.followup_request = None
                 self.followup_admitted = set()
+                self.batch_state = {'binding': None, 'case': 0, 'counts': {}, 'warmups': [],
+                                    'admitted': [], 'ended': []}
                 self.run_session_id = data.get('session_id')
                 self.run_source_commit = data.get('source_commit')
+                from .cpu_budget_profiles import POSTRESTART_BATCH_CAMPAIGN, POSTRESTART_BATCH_MODE
+                require((campaign == POSTRESTART_BATCH_CAMPAIGN) == (self.mode == POSTRESTART_BATCH_MODE),
+                        'postrestart_batch_mode_campaign_mismatch')
                 require(isinstance(self.run_source_commit, str) and bool(re.fullmatch(r'[0-9a-f]{40}', self.run_source_commit)),
                         'postrestart_source_commit_required')
                 require(isinstance(self.run_session_id, str) and bool(self.run_session_id), 'postrestart_run_session_required')
@@ -1437,8 +1442,12 @@ class LinuxHost:
 
     def decode_progress(self, cid):
         """Explicit bounded snapshot, never called by the periodic sampler."""
-        require(self.scope == 'glm-decode-diag' and self.owner.phase == 'ACTIVE', 'decode_scope_required')
+        require((self.scope == 'glm-decode-diag' or self.is_sealed_batch()) and
+                self.owner.phase == 'ACTIVE', 'decode_scope_required')
         require(cid in self.requests, 'decode_request_not_registered')
+        if self.is_sealed_batch():
+            require(self.load_manifests[cid]['placement'] == 'G1' and
+                    self.requests[cid]['request_identity']['purpose'] == 'measured', 'batch_decode_request_required')
         self.identity(cid)
         start = time.monotonic()
         slots = http_json(31002, '/slots', timeout_s=5)
@@ -2117,6 +2126,220 @@ class LinuxHost:
         self.write_json('additional-followup.json', receipt)
         return receipt
 
+    def is_sealed_batch(self):
+        from .cpu_budget_profiles import POSTRESTART_BATCH_CAMPAIGN, POSTRESTART_BATCH_MODE
+        return (self.scope == POSTRESTART_SCOPE and getattr(self, 'campaign', None) == POSTRESTART_BATCH_CAMPAIGN
+                and getattr(self, 'mode', None) == POSTRESTART_BATCH_MODE)
+
+    def batch_request_check(self, args):
+        """Count-route envelopes and inference share the existing durable ledger.
+
+        Count HTTP is the source-bound native_counter (three GLM routes, one
+        Qwen route), never an alternate inference admission. Raw bytes stay in
+        the private worker capture and are sealed by their exact digest.
+        """
+        from .postrestart72_batch import REQUEST_IDS, CASES
+        identity = args.get('request_identity')
+        fields = {'request_id', 'request_sha256', 'manifest_sha256', 'purpose'}
+        require(type(identity) is dict and set(identity) == fields and
+                identity['purpose'] in {'count', 'warmup', 'measured'} and
+                all(type(identity[k]) is str and re.fullmatch(r'[0-9a-f]{64}', identity[k])
+                    for k in ('request_sha256', 'manifest_sha256')), 'batch_request_identity_required')
+        identifier, purpose = identity['request_id'], identity['purpose']
+        warmups = ('P-G1-warmup', 'P-Q1-warmup')
+        require(identifier in REQUEST_IDS + warmups, 'batch_closed_request_required')
+        placement = 'Q1' if 'Q' in identifier else 'G1'
+        require(self.load_manifests[args['id']]['placement'] == placement and
+                identity['manifest_sha256'] == digest(self.load_manifests[args['id']]),
+                'batch_request_manifest_changed')
+        base = {k: identity[k] for k in fields - {'purpose'}}
+        state, count = self.batch_state, self.batch_state['counts'].get(identifier)
+        expected_counts = 3 if placement == 'G1' else 1
+        require(type(args.get('measured')) is bool and args['measured'] == (purpose == 'measured'),
+                'batch_measured_flag_mismatch')
+        if purpose == 'count':
+            require(state['binding'] is None and not state['admitted'] and
+                    (count is None or count['identity'] == base and
+                     count['started'] == count['ended'] < expected_counts) and
+                    args.get('timeout_s') == 120, 'batch_count_envelope_forbidden')
+        else:
+            require(count is not None and count['identity'] == base and
+                    count['started'] == count['ended'] == expected_counts and
+                    args.get('timeout_s') == 7200, 'batch_exact_counted_body_required')
+            if purpose == 'warmup':
+                require(identifier in warmups and state['binding'] is None and
+                        identifier not in state['warmups'], 'batch_two_discarded_warmups_only')
+            else:
+                require(state['binding'] is not None and 1 <= state['case'] <= len(CASES) and
+                        identifier in CASES[state['case'] - 1] and identifier not in state['admitted'],
+                        'batch_closed_case_admission_required')
+                row = next(row for row in state['binding']['requests'] if row['request_id'] == identifier)
+                require(all(row[k] == base[k] for k in base), 'batch_sealed_body_changed')
+        return copy.deepcopy(identity)
+
+    def batch_registered(self, identity):
+        identifier, purpose = identity['request_id'], identity['purpose']
+        if purpose == 'count':
+            row = self.batch_state['counts'].setdefault(identifier,
+                {'identity': {k: v for k, v in identity.items() if k != 'purpose'}, 'started': 0, 'ended': 0})
+            row['started'] += 1
+        elif purpose == 'warmup':
+            self.batch_state['warmups'].append(identifier)
+        else:
+            self.batch_state['admitted'].append(identifier)
+        self.write_json('sealed-batch.json', self.batch_state)
+
+    def seal_batch(self, binding):
+        from .postrestart72_batch import validate_binding, REQUEST_IDS
+        require(self.is_sealed_batch() and self.owner.phase == 'ACTIVE' and not self.requests and
+                self.batch_state['binding'] is None, 'batch_seal_once_fresh_owner_only')
+        value = validate_binding(binding, source_commit=self.run_source_commit, session_id=self.run_session_id)
+        require(set(self.batch_state['warmups']) == {'P-G1-warmup', 'P-Q1-warmup'} and
+                set(self.batch_state['ended']) == {'P-G1-warmup', 'P-Q1-warmup'},
+                'batch_two_warmups_must_be_drained')
+        require(set(self.batch_state['counts']) == set(REQUEST_IDS) | {'P-G1-warmup', 'P-Q1-warmup'},
+                'batch_exact_seven_counted_bodies')
+        for row in value['requests']:
+            count = self.batch_state['counts'][row['request_id']]
+            expected = 3 if row['placement'] == 'G1' else 1
+            require(count['started'] == count['ended'] == expected and
+                    all(row[k] == v for k, v in count['identity'].items()), 'batch_count_binding_changed')
+        self.batch_state['binding'] = value
+        self.write_json('sealed-batch.json', self.batch_state)
+        return {'sealed': True, 'batch_sha256': digest(value)}
+
+    def batch_case_begin(self, case):
+        from .postrestart72_batch import CASES
+        require(self.is_sealed_batch() and self.owner.phase == 'ACTIVE' and type(case) is int and
+                1 <= case <= len(CASES) and case == self.batch_state['case'] + 1 and
+                self.batch_state['binding'] is not None and not self.requests, 'batch_case_order_or_drain')
+        prior = [identifier for pair in CASES[:case - 1] for identifier in pair]
+        require(len(self.batch_state['admitted']) == len(prior) and set(self.batch_state['admitted']) == set(prior) and
+                set(self.batch_state['ended']) == set(prior) | {'P-G1-warmup', 'P-Q1-warmup'},
+                'batch_previous_case_not_drained')
+        require(self.budget.checkpoint() > 0, 'STOP_BUDGET')
+        proof = self.hold_checkpoint(entering=True)
+        if proof['status'] != 'HELD':
+            return {'admitted': False, 'proof_pending': True, 'proof': proof}
+        self.batch_state['case'] = case
+        self.write_json('sealed-batch.json', self.batch_state)
+        return {'admitted': True, 'case': case, 'proof': proof}
+
+    def batch_owned_idle(self, cid, *, native_pending=False):
+        """A socket close alone does not prove native GLM cancellation."""
+        self.identity(cid)
+        port = self.load_manifests[cid]['transport']['port']
+        lines = command(['/usr/bin/ss', '-Htn', 'state', 'established'], timeout=5).stdout.decode().splitlines()
+        if any(re.search(r':' + str(port) + r'\b', line) for line in lines):
+            return False
+        if self.load_manifests[cid]['placement'] == 'G1':
+            try:
+                slots = http_json(port, '/slots', timeout_s=5)
+                require(type(slots) is list and len(slots) == 1 and type(slots[0]) is dict and
+                        type(slots[0].get('is_processing')) is bool, 'batch_native_idle_unavailable')
+            except (TimeoutError, urllib.error.URLError, json.JSONDecodeError):
+                if not native_pending:
+                    raise
+                return False
+            except PlanError as error:
+                if not native_pending or str(error) != 'batch_native_idle_unavailable':
+                    raise
+                return False
+            return slots[0]['is_processing'] is False
+        return True  # Qwen normal completion additionally requires a drained HTTP response.
+
+    def batch_finish_request(self, cid, identity):
+        identifier, purpose = identity['request_id'], identity['purpose']
+        if purpose == 'count':
+            self.batch_state['counts'][identifier]['ended'] += 1
+        else:
+            self.batch_state['ended'].append(identifier)
+        del self.requests[cid]
+        self.write_json('requests.json', self.requests)
+        self.write_json('sealed-batch.json', self.batch_state)
+        return {'request_ended': cid, 'drained': True, 'status': 'VERIFIED_DRAIN'}
+
+    def batch_request_end(self, args):
+        cid, identity = args['id'], args.get('request_identity')
+        require(cid in self.requests and identity == self.requests[cid]['request_identity'],
+                'batch_end_identity_changed')
+        expected = 'COUNT_DRAINED' if identity['purpose'] == 'count' else 'DRAINED'
+        require(args.get('terminal_reason') == expected, 'batch_uncertain_transport_remains_registered')
+        if identity['purpose'] != 'count':
+            deadline = time.monotonic() + 10
+            token = _COMMAND_DEADLINE.set(deadline)
+            try:
+                while not self.batch_owned_idle(cid, native_pending=True):
+                    require(time.monotonic() < deadline, 'batch_owned_native_request_not_drained')
+                    time.sleep(min(0.25, max(0, deadline - time.monotonic())))
+            finally:
+                _COMMAND_DEADLINE.reset(token)
+        return self.batch_finish_request(cid, identity)
+
+    def batch_timeout_drain(self, cid, identity, clock):
+        """Only the science absolute deadline may become a retained partial case.
+
+        The source-bound transport already closed its exact owned connection.
+        Keep registration until singleton native idle AND fresh pair safety are
+        proved. No cancel route, process adoption, deadline retry or model action.
+        """
+        require(self.is_sealed_batch() and self.owner.phase == 'ACTIVE' and
+                set(self.requests) == {cid} and identity == self.requests[cid]['request_identity'] and
+                identity['request_id'] == 'B2-Gscience' and identity['purpose'] == 'measured',
+                'batch_timeout_exact_science_only')
+        numbers = ('dispatch_monotonic_s', 'deadline_monotonic_s', 'terminal_monotonic_s')
+        require(type(clock) is dict and all(type(clock.get(k)) in (int, float) and math.isfinite(clock[k])
+                for k in numbers) and clock.get('terminal_reason') == 'REQUEST_DEADLINE' and
+                clock.get('deadline_expired') is True and clock.get('basis') == 'HTTP_transport_dispatch' and
+                clock.get('timeout_seconds') == 7200 and
+                clock['deadline_monotonic_s'] == clock['dispatch_monotonic_s'] + 7200 and
+                clock['terminal_monotonic_s'] >= clock['deadline_monotonic_s'] and
+                time.monotonic() - self.requests[cid]['started_monotonic_s'] >= 7200,
+                'batch_full_timeout_proof_required')
+        deadline = time.monotonic() + 60
+        token = _COMMAND_DEADLINE.set(deadline)
+        try:
+            while time.monotonic() < deadline:
+                # Registration deliberately remains present throughout proof.
+                self.owner._lease_check()
+                self.guards(self.owner.lease)
+                self.credentials()
+                require(not self.concurrent_resource_violations and self.owner.pending_create is None,
+                        'postrestart_unsafe_hold_forbidden')
+                jobs = self.held_jobs()
+                units = self.units()
+                require(units[BOOT_UNIT] == self.owner.original['services'][BOOT_UNIT] and
+                        units[CONTROL_UNIT]['active'] == 'inactive', 'batch_control_identity_changed')
+                live = {row['resource']['id'] for row in self.owner.resources if row['state'] == 'RUNNING'}
+                require(len(live) == 2 and live == set(self.load_manifests) == set(self.allocation_proofs),
+                        'postrestart_hold_requires_exact_resident_pair')
+                for member in live:
+                    container, cgroup, _ = self.identity(member)
+                    self.concurrent_limits(self.load_manifests[member], container, cgroup)
+                sample = self.telemetry(cid)
+                gate = sample['concurrent_resource_gate']
+                require(gate['status'] != 'STOP_RESOURCE_GATE', 'postrestart_unsafe_hold_forbidden')
+                idle = all(self.batch_owned_idle(member, native_pending=True) for member in live)
+                if idle and gate['status'] == 'PASS' and jobs.get('status') == 'HELD':
+                    self.guards(self.owner.lease)
+                    proof = {'checked_at': time.time(), 'native_G_slot_idle': True,
+                             'owned_pair_connections_drained': True, 'canonical_lease_retained': True,
+                             'fresh_resource_status': 'PASS', 'systemd_jobs_status': 'HELD'}
+                    result = {**self.batch_finish_request(cid, identity),
+                              'drained': True, 'status': 'VERIFIED_TIMEOUT_DRAIN', 'proof': proof}
+                    self.write_json('science-timeout-drain.json', result)
+                    return result
+                time.sleep(min(1, max(0, deadline - time.monotonic())))
+        except (TimeoutError, urllib.error.URLError):
+            pass  # uncertainty is retained and never called a healthy timeout
+        except PlanError as error:
+            if str(error) not in {'host_operation_deadline', 'batch_native_idle_unavailable'}:
+                raise
+        finally:
+            _COMMAND_DEADLINE.reset(token)
+        return {'drained': False, 'status': 'UNRESOLVED_DRAIN', 'proof_pending': True,
+                'request_retained': cid}
+
     def dispatch(self, message):
         require(isinstance(message, dict), 'invalid_rpc')
         op = message.get('op')
@@ -2126,7 +2349,17 @@ class LinuxHost:
             require(op in {'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation', 'quiescent',
                 'request_begin', 'request_end', 'admit_concurrent', 'rpc_diagnostics', 'restore', 'recover',
                 'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'} |
-                ({'warm_hold', 'resume_measurements', 'hold_checkpoint', 'admit_followup'} if self.scope == POSTRESTART_SCOPE else set()), 'cpu_operation_outside_scope')
+                ({'warm_hold', 'resume_measurements', 'hold_checkpoint', 'admit_followup'} if self.scope == POSTRESTART_SCOPE else set()) |
+                ({'seal_batch', 'batch_case_begin', 'batch_timeout_drain', 'decode_progress'} if self.is_sealed_batch() else set()),
+                'cpu_operation_outside_scope')
+        if self.is_sealed_batch():
+            require(op not in {'resume_measurements', 'admit_followup'}, 'batch_no_extra_followup')
+        if op == 'seal_batch':
+            return self.seal_batch(args.get('binding'))
+        if op == 'batch_case_begin':
+            return self.batch_case_begin(args.get('case'))
+        if op == 'batch_timeout_drain':
+            return self.batch_timeout_drain(args.get('id'), args.get('request_identity'), args.get('request_clock'))
         if self.scope == CANDIDATE_SCOPE:
             require(op in {'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation', 'quiescent',
                     'request_begin', 'request_end', 'candidate_denials', 'candidate_evidence', 'rpc_diagnostics',
@@ -2189,6 +2422,7 @@ class LinuxHost:
             return self.decode_cpu_capture_status(args['id'], args['capture_id'], args.get('client_after'))
         if op == 'request_begin':
             require(self.owner.phase == 'ACTIVE', 'owner_not_active')
+            batch_identity = self.batch_request_check(args) if self.is_sealed_batch() else None
             if (self.scope == POSTRESTART_SCOPE and getattr(self, 'campaign', None) == POSTRESTART_WARM_CAMPAIGN
                     and args.get('measured') is True):
                 require(self.followup_request is not None, 'postrestart_warm_only_initial_measurement_forbidden')
@@ -2216,7 +2450,7 @@ class LinuxHost:
                 require(not self.followup_admitted and self.load_manifests[args['id']]['placement'] == go['placement'] and
                         args.get('request_identity') == {k: go[k] for k in ('request_id', 'request_sha256', 'manifest_sha256')},
                         'postrestart_only_bound_additional_request')
-            if self.scope == POSTRESTART_SCOPE and args.get('measured') is True and not self.owner.warm_hold_resumed and self.followup_request is None:
+            if self.scope == POSTRESTART_SCOPE and not self.is_sealed_batch() and args.get('measured') is True and not self.owner.warm_hold_resumed and self.followup_request is None:
                 placement = self.load_manifests[args['id']]['placement']
                 require(self.postrestart_measured_admissions[placement] < (2 if placement == 'G1' else 1),
                         'postrestart_initial_closed_three_measurements')
@@ -2228,13 +2462,18 @@ class LinuxHost:
             require(args['id'] not in self.requests, 'request_already_active')
             if self.scope == POSTRESTART_SCOPE and (self.owner.warm_hold_resumed or self.followup_request is not None) and args.get('measured') is True:
                 self.followup_admitted.add(args['id'])
-            if self.scope == POSTRESTART_SCOPE and args.get('measured') is True and not self.owner.warm_hold_resumed and self.followup_request is None:
+            if self.scope == POSTRESTART_SCOPE and not self.is_sealed_batch() and args.get('measured') is True and not self.owner.warm_hold_resumed and self.followup_request is None:
                 self.postrestart_measured_admissions[placement] += 1
             self.requests[args['id']] = {'started_at': time.time(), 'timeout_s': timeout}
+            if batch_identity is not None:
+                self.requests[args['id']].update(request_identity=batch_identity, started_monotonic_s=time.monotonic())
+                self.batch_registered(batch_identity)
             self.write_json('requests.json', self.requests)
             return {'timeout_s': timeout, 'budget': self.budget.data}
         if op == 'request_end':
             require(args['id'] in self.requests, 'request_not_active')
+            if self.is_sealed_batch():
+                return self.batch_request_end(args)
             if self.scope == 'glm-decode-diag':
                 from .decode_capture import stop_captures
                 stop_captures(self, args['id'])
@@ -2364,7 +2603,8 @@ class LinuxHost:
 RPC_OPERATIONS = frozenset({'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation',
     'quiescent', 'diagnostic_snapshot', 'decode_progress', 'decode_cpu_capture_start', 'decode_cpu_capture_status',
     'candidate_denials', 'candidate_evidence', 'request_begin', 'request_end', 'admit_mixed', 'admit_concurrent', 'rpc_diagnostics', 'restore', 'recover',
-    'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure', 'warm_hold', 'resume_measurements', 'hold_checkpoint', 'admit_followup'})
+    'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure', 'warm_hold', 'resume_measurements', 'hold_checkpoint', 'admit_followup',
+    'seal_batch', 'batch_case_begin', 'batch_timeout_drain'})
 RPC_SAFE_REQUIRE_CODES = frozenset({'native_server_args_unavailable',
     'allocation_log_too_large', 'current_model_mount_changed',
     'owned_container_identity_changed', 'installed_source_identity_changed',

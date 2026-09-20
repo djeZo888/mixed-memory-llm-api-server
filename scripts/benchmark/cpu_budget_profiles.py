@@ -17,9 +17,11 @@ CAPACITY = 480000
 POSTRESTART_SCOPE = "postrestart72-480k"
 POSTRESTART_CAMPAIGN = "benchrun-p72c3-20260920"
 POSTRESTART_WARM_CAMPAIGN = "benchrun-p72wh-20260920"
-POSTRESTART_CAMPAIGNS = (POSTRESTART_CAMPAIGN, POSTRESTART_WARM_CAMPAIGN)
+POSTRESTART_BATCH_CAMPAIGN = "benchrun-p72b-20260920"
+POSTRESTART_CAMPAIGNS = (POSTRESTART_CAMPAIGN, POSTRESTART_WARM_CAMPAIGN, POSTRESTART_BATCH_CAMPAIGN)
 POSTRESTART_MEASURED_MODE = "measured"
 POSTRESTART_WARM_ONLY_MODE = "warm_only"
+POSTRESTART_BATCH_MODE = "sealed_batch"
 
 
 def postrestart_campaign(mode):
@@ -27,6 +29,8 @@ def postrestart_campaign(mode):
         return POSTRESTART_CAMPAIGN
     if mode == POSTRESTART_WARM_ONLY_MODE:
         return POSTRESTART_WARM_CAMPAIGN
+    if mode == POSTRESTART_BATCH_MODE:
+        return POSTRESTART_BATCH_CAMPAIGN
     raise ValueError("postrestart_exact_mode_required")
 
 
@@ -190,6 +194,8 @@ def postrestart_manifest(placement, campaign=POSTRESTART_CAMPAIGN):
     ]
     if campaign == POSTRESTART_WARM_CAMPAIGN:
         value["mandatory_run_gates"][5] = "exactly two loads and two discarded32-output warmups; then retained hold; no initial measured requests"
+    if campaign == POSTRESTART_BATCH_CAMPAIGN:
+        value["mandatory_run_gates"][5] = "one fresh load pair; two discarded32-output warmups; sealed five requests in three cases; guarded warm hold"
     return value
 
 
@@ -199,6 +205,9 @@ def postrestart_manifests(campaign=POSTRESTART_CAMPAIGN):
 
 def postrestart_trial_order(mode=POSTRESTART_MEASURED_MODE):
     postrestart_campaign(mode)  # closed mode, including the unchanged measured plan
+    if mode == POSTRESTART_BATCH_MODE:
+        from .postrestart72_batch import trial_order
+        return trial_order()
     if mode == POSTRESTART_WARM_ONLY_MODE:
         return {"mode": mode, "trials": [], "mixed_jobs": [],
             "rounds": [{"id": "P", "layout": "P", "glm_capacity": CAPACITY, "qwen_capacity": CAPACITY,

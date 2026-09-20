@@ -368,7 +368,8 @@ def _capture_request(raw_body, transport, *, sample_id, private_dir, summary_pat
             "private_request_path": str(request_path), "private_response_path": str(raw_path)}
 
 
-def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None, stream=True, deadline_epoch=None):
+def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None, stream=True, deadline_epoch=None,
+                   admission_deadline_epoch=None):
     """Explicit authenticated loopback/private-IPv4 HTTP transport factory.
 
     BENCHRUN establishes its reviewed private SSH transport/proxy/firewall policy
@@ -399,6 +400,11 @@ def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None
     def send(body, timeout):
         if type(timeout) not in (int, float) or not 0 < timeout <= 7200:
             raise HarnessError("invalid absolute request deadline")
+        if admission_deadline_epoch is not None and time.time() >= admission_deadline_epoch:
+            send.request_clock = {"terminal_reason": "NOT_DISPATCHED_ADMISSION_EXPIRED",
+                                  "timeout_seconds": timeout, "http_dispatched": False,
+                                  "admission_deadline_epoch": admission_deadline_epoch}
+            raise HarnessError("measurement admission expired before HTTP dispatch")
         if deadline_epoch is not None:
             timeout = min(timeout, deadline_epoch - time.time())
             if timeout <= 0:
@@ -407,9 +413,10 @@ def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None
         deadline = dispatched + timeout
         send.request_clock = {"dispatch_monotonic_s": dispatched, "deadline_monotonic_s": deadline,
                               "timeout_seconds": timeout, "basis": "HTTP_transport_dispatch",
-                              "terminal_reason": "INFLIGHT"}
+                              "terminal_reason": "INFLIGHT", "http_dispatched": True}
         connection = http.client.HTTPConnection(url.hostname, url.port, timeout=timeout)
         response = None
+        deadline_expired = threading.Event()
         def expire():
             # An absolute deadline also covers servers that drip HTTP headers.
             sock = connection.sock
@@ -421,6 +428,9 @@ def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None
                 except OSError:
                     pass
         finished = threading.Event()
+        def deadline_expire():
+            deadline_expired.set()
+            expire()
         def cancel_watch():
             # Only an explicitly supplied resource-safety event may interrupt.
             # Observer/parser failures never set this event.
@@ -430,7 +440,7 @@ def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None
         watcher = threading.Thread(target=cancel_watch, daemon=True) if cancel_event is not None else None
         if watcher is not None:
             watcher.start()
-        timer = threading.Timer(timeout, expire)
+        timer = threading.Timer(timeout, deadline_expire)
         timer.daemon = True
         timer.start()
         try:
@@ -451,17 +461,26 @@ def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None
                     raise HarnessError("resource safety cancellation")
                 remaining = deadline - clock()
                 if remaining <= 0:
+                    deadline_expired.set()
                     raise HarnessError("request deadline exhausted")
                 sock.settimeout(remaining)
                 chunk = response.read1(65536)
                 if not chunk:
+                    if deadline_expired.is_set():
+                        raise HarnessError("request deadline exhausted")
                     send.request_clock["terminal_reason"] = "DRAINED"
                     break
                 yield chunk
+        except TimeoutError:
+            # A shorter connection timeout is not an exhausted request budget.
+            if clock() >= deadline:
+                deadline_expired.set()
+            raise
         finally:
             if send.request_clock["terminal_reason"] == "INFLIGHT":
                 send.request_clock["terminal_reason"] = ("RESOURCE_CANCEL" if cancel_event is not None and cancel_event.is_set()
-                    else "REQUEST_DEADLINE" if clock() >= deadline else "TRANSPORT_FAILURE")
+                    else "REQUEST_DEADLINE" if deadline_expired.is_set() else "TRANSPORT_FAILURE")
+            send.request_clock.update(terminal_monotonic_s=clock(), deadline_expired=deadline_expired.is_set())
             finished.set()
             if watcher is not None:
                 watcher.join(timeout=1)

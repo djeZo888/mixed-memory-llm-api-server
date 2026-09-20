@@ -23,6 +23,7 @@ from .warmup import prefill_proof
 SCOPE = 'postrestart72-480k'
 BASE = '59aeef68640986082d6e6b431be3d86386e64168'
 WARM_ONLY_BASE = 'd257c2a6531eb29f47e210c98d64341d23a373ee'
+BATCH_BASE = 'b88a358206f3bfedfa23f5a92ff2db2427207519'
 POLICY = {'budget_seconds': 21600, 'preparation_seconds': 7200, 'request_timeout_seconds': 7200,
           'clock_starts': 'FIRST_MEASURED_REQUEST_ADMISSION', 'clock_includes_preparation': False,
           'admission_deadline_refuses_new_only': True, 'request_clock_starts': 'HTTP_DISPATCH',
@@ -58,7 +59,7 @@ def bind_runtime(armed, go, session, now=None):
     mode = armed.get('mode', profile.POSTRESTART_MEASURED_MODE)
     if (mode == profile.POSTRESTART_WARM_ONLY_MODE or 'mode' in armed or 'mode' in go) and go.get('mode') != mode:
         raise ValueError('postrestart_exact_arm_GO_mode_required')
-    if mode == profile.POSTRESTART_WARM_ONLY_MODE and go.get('campaign') != armed.get('campaign'):
+    if mode in (profile.POSTRESTART_WARM_ONLY_MODE, profile.POSTRESTART_BATCH_MODE) and go.get('campaign') != armed.get('campaign'):
         raise ValueError('postrestart_exact_arm_GO_campaign_required')
     runtime = copy.deepcopy(go.get('runtime', {}))
     validate_clock(armed, runtime)
@@ -124,6 +125,8 @@ class PostrestartRun(prior.ConcurrentRun):
         self.quality_review = False
         self.hold_reporting_errors = []
         self.followup_sessions = []
+        self.batch_counted = {}
+        self.batch_admission_deadlines = {}
 
     def root_paused(self):
         try:
@@ -208,6 +211,11 @@ class PostrestartRun(prior.ConcurrentRun):
                         if (set(grant) - {'timeout_s', 'budget'} or type(timeout) not in (int, float)
                                 or not math.isfinite(timeout) or not 0 < timeout <= maximum):
                             raise RuntimeError('INVALID_ADMISSION_RESPONSE')
+                        if self.mode == profile.POSTRESTART_BATCH_MODE and measured:
+                            deadline = grant.get('budget', {}).get('deadline_epoch')
+                            if type(deadline) not in (int, float) or not math.isfinite(deadline):
+                                raise RuntimeError('BATCH_ADMISSION_DEADLINE_UNAVAILABLE')
+                            self.batch_admission_deadlines[cid] = deadline
                         return timeout
                     if (set(grant) != {'proof_pending', 'admitted', 'resource_gate', 'sample'}
                             or grant['proof_pending'] is not True or grant['admitted'] is not False
@@ -246,9 +254,43 @@ class PostrestartRun(prior.ConcurrentRun):
             'reason': code, 'updated_epoch': time.time(), 'model_disposition': 'retained_no_admission'})
 
     def request(self, cid, raw, identifier, **kwargs):
-        if protocol.strict_json_loads(raw).get('max_tokens') not in (32, 256):
+        if self.mode == profile.POSTRESTART_BATCH_MODE:
+            if kwargs.get('timed', True):
+                from .postrestart72_batch import validate_body
+                validate_body(identifier, raw)
+            elif (identifier not in {'P-G1-warmup', 'P-Q1-warmup'} or
+                  self.batch_counted.get(identifier) != fixtures.digest(raw) or
+                  protocol.strict_json_loads(raw).get('max_tokens') != 32):
+                raise ValueError('batch_exact_counted_warmup_required')
+        elif protocol.strict_json_loads(raw).get('max_tokens') not in (32, 256):
             raise ValueError('postrestart_closed_output_policy')
         return super().request(cid, raw, identifier, **kwargs)
+
+    def counter(self, cid, identifier=None):
+        if self.mode != profile.POSTRESTART_BATCH_MODE:
+            return super().counter(cid)
+        from . import accounting, postrestart72_batch as batch
+        if identifier not in (*batch.REQUEST_IDS, 'P-G1-warmup', 'P-Q1-warmup'):
+            raise ValueError('batch_closed_count_identifier_required')
+        manifest = self.active[cid]['manifest']
+        model = 'bench-glm-5.3' if manifest['placement'] == 'G1' else 'bench-qwen3.8-27b'
+        def count(raw):
+            if identifier in self.batch_counted:
+                raise ValueError('batch_native_recount_retry_forbidden')
+            identity = {'request_id': identifier, 'request_sha256': fixtures.digest(raw),
+                        'manifest_sha256': fixtures.digest(fixtures.canonical(manifest)), 'purpose': 'count'}
+            def call(route, body):
+                timeout = self.admission(cid, 120, request_identity=identity)
+                try:
+                    return self.json_factory('http://127.0.0.1:' + str(manifest['transport']['port']),
+                                             self.key, timeout=timeout)(route, body)
+                finally:
+                    self.host.call('request_end', id=cid, request_identity=identity, terminal_reason='COUNT_DRAINED')
+            result = accounting.native_counter(model, 480000, call,
+                qwen_template_sha256=self.active[cid]['template_sha256'], scope=SCOPE)(raw)
+            self.batch_counted[identifier] = fixtures.digest(raw)
+            return result
+        return count
 
     def short_sample(self, nonce):
         frozen = json.loads((self.private / 'G4K-original-fixtures.json').read_bytes())['bench-glm-5.3-4096-retrieval']
@@ -278,10 +320,11 @@ class PostrestartRun(prior.ConcurrentRun):
             body = copy.deepcopy(sample['body'])
         body['max_tokens'] = 32
         raw = fixtures.canonical(body)
-        count = fixtures.validate_count(self.counter(cid)(raw), raw, 480000)
+        identifier = 'P-' + manifest['placement'] + '-warmup'
+        counter = self.counter(cid, identifier) if self.mode == profile.POSTRESTART_BATCH_MODE else self.counter(cid)
+        count = fixtures.validate_count(counter(raw), raw, 480000)
         if not 2048 <= count['input_tokens'] <= 4096 or count['template_sha256'] != TEMPLATES[manifest['placement']]:
             raise ValueError('postrestart_warmup_native_count_or_template')
-        identifier = 'P-' + manifest['placement'] + '-warmup'
         runner.save(self.private / (identifier + '-count.json'), count)
         start = self.clock(); self.collect()
         response = self.request(cid, raw, identifier, timed=False)
@@ -304,6 +347,15 @@ class PostrestartRun(prior.ConcurrentRun):
             raise RuntimeError('STOP_CPU_WARMUP_EVIDENCE_UNAVAILABLE')
 
     def prepare_job(self, cid, identifier):
+        if self.mode == profile.POSTRESTART_BATCH_MODE:
+            from . import postrestart72_batch as batch
+            self.boundary()
+            sample, raw = batch.build_body(identifier, self.private, 'fresh-' + str(time.time_ns()))
+            job = batch.prepare_job(identifier, raw, sample, cid, self.counter(cid, identifier),
+                campaign=self.armed['campaign'], templates=TEMPLATES, session_id=self.armed['session_id'], clock=self.clock)
+            runner.save(self.private / (identifier + '-fixture.json'), job['sample'])
+            runner.save(self.private / (identifier + '-count.json'), job['count'])
+            return job
         if self.mode == profile.POSTRESTART_WARM_ONLY_MODE:
             raise ValueError('postrestart_warm_only_initial_measurement_forbidden')
         self.boundary(); started = self.clock()
@@ -366,6 +418,14 @@ class PostrestartRun(prior.ConcurrentRun):
                 row['status'] = 'REVIEW_EVIDENCE_UNAVAILABLE'
             if job['id'] == 'P-G4K':
                 row['preliminary_gate'] = preliminary(row)
+            if self.mode == profile.POSTRESTART_BATCH_MODE:
+                from .postrestart72_batch_evidence import augment
+                row['peer_condition_at_admission'] = ('Qwen_loaded_idle' if job['generation'] else 'barrier_pair')
+                if row['sample'].get('status') == 'TIMEOUT':
+                    row['status'] = 'TIMEOUT'
+                row['requested_output_cap'] = protocol.strict_json_loads(job['raw'])['max_tokens']
+                augment(row, list(self.samples.get(job['cid'], [])),
+                        output_cap=row['requested_output_cap'], placement=self.active[job['cid']]['manifest']['placement'])
             self.progress['completed'][job['id']] = row
             self.persist_measurement(row)
         return row
@@ -451,7 +511,8 @@ class PostrestartRun(prior.ConcurrentRun):
                 self.record('ROOT_APPROVED_LONG_PAIR')
                 return True
             followup_path = self.state / 'followup-GO.json'
-            if reason in {'complete', 'quality_review', 'paused'} and followup_path.exists() and not self.followup_sessions:
+            if (self.mode != profile.POSTRESTART_BATCH_MODE and reason in {'complete', 'quality_review', 'paused'}
+                    and followup_path.exists() and not self.followup_sessions):
                 from . import postrestart72_followup as followup
                 try:
                     candidate = followup.read_candidate(self.state, self.armed, hold_sha,
@@ -555,6 +616,9 @@ class PostrestartRun(prior.ConcurrentRun):
             self.record('WARM_ONLY_COMPLETE')
             self.hold('complete')
             return
+        if self.mode == profile.POSTRESTART_BATCH_MODE:
+            self.batch_sequence(ids)
+            return
         row = self.measure(self.prepare_job(ids['G1'], 'P-G4K'))
         if row['status'] != 'PASS':
             if row['sample']['status'] == 'TRANSPORT_FAILURE':
@@ -595,6 +659,60 @@ class PostrestartRun(prior.ConcurrentRun):
         self.record('MEASUREMENTS_COMPLETE')
         self.hold('complete')
 
+    def batch_sequence(self, ids):
+        """One sealed three-case campaign; quality and speed never add retries."""
+        from . import postrestart72_batch as batch
+        jobs = [self.prepare_job(ids[batch.REQUEST_PLACEMENTS[key]], key) for key in batch.REQUEST_IDS]
+        binding = batch.bind_jobs(jobs, source_commit=self.armed['source_commit'], session_id=self.armed['session_id'])
+        runner.save(self.state / 'batch-binding.json', binding)
+        if self.host.call('seal_batch', binding=binding).get('sealed') is not True:
+            raise EvidenceReview('BATCH_SEAL_UNAVAILABLE')
+        by_id = {job['id']: job for job in jobs}
+        for index, identifiers in enumerate(batch.CASES, 1):
+            self.boundary()
+            grant = self.host.call('batch_case_begin', case=index)
+            if grant.get('admitted') is not True:
+                raise EvidenceReview('BATCH_CASE_CURRENT_PROOF_UNAVAILABLE')
+            self.record('DISPATCHING_B' + str(index))
+            if len(identifiers) == 2:
+                result = cpu_run.execute_pair(by_id[identifiers[0]], by_id[identifiers[1]], None,
+                                              self.measure, interrupted=self.interrupted)
+                rows = [row for row in [result['glm'], *result['qwen']] if row is not None]
+                for overlap, qrow in zip(result['overlap']['pairs'], result['qwen']):
+                    g_interval, q_interval = prior._interval(result['glm'], 'request'), prior._interval(qrow, 'request')
+                    overlap['glm_tail_after_qwen_seconds'] = (max(0, g_interval[1] - q_interval[1])
+                                                              if g_interval and q_interval else None)
+            else:
+                try:
+                    row = self.measure(by_id[identifiers[0]])
+                    result = {'status': 'COMPLETE', 'glm': row, 'qwen': [], 'errors': [],
+                              'peer_condition': 'Qwen_loaded_idle'}
+                    rows = [row]
+                except BaseException as error:
+                    result = {'status': 'FAILED', 'glm': None, 'qwen': [],
+                              'errors': [{'id': identifiers[0], 'error_class': type(error).__name__}]}
+                    rows = []
+            result.update(case='B' + str(index), requested_ids=list(identifiers),
+                          entered_outcomes_preserved=True, automatic_retry=False)
+            runner.save(self.state / ('B' + str(index) + '-case.json'), result)
+            self.emit({'type': 'sealed_batch_case', **result})
+            self.require_no_faults()
+            if any(row.get('sample', {}).get('status') == 'ADMISSION_EXPIRED' for row in rows):
+                if all(row.get('sample', {}).get('owner_drain', {}).get('drained') is True for row in rows):
+                    raise EvidenceReview('BATCH_ADMISSION_EXPIRED_BEFORE_HTTP_PEERS_DRAINED')
+            completed = [row for row in rows if row['id'] not in {e['id'] for e in result['errors']}]
+            if (result['errors'] and all(e['error_class'] in {'EvidenceReview', 'AdmissionPaused'} for e in result['errors'])
+                    and all(row.get('sample', {}).get('owner_drain', {}).get('drained') is True for row in completed)):
+                raise EvidenceReview('BATCH_NONADMITTED_PROOF_GAP_PEERS_DRAINED')
+            if result['errors'] or len(rows) != len(identifiers) or any(
+                    row.get('sample', {}).get('owner_drain', {}).get('drained') is not True for row in rows):
+                raise RuntimeError('STOP_BATCH_UNRESOLVED_REQUEST_OR_DRAIN')
+            # Semantic/format/partial output outcomes stay durable but do not
+            # stop later authorized cases. Fresh admission proof remains required.
+            self.quality_review |= any(row['status'] not in {'PASS', 'TIMING_ONLY'} for row in rows)
+        self.record('MEASUREMENTS_COMPLETE')
+        self.hold('quality_review' if self.quality_review else 'complete')
+
 
 def prepare(task, session, *, mode=profile.POSTRESTART_MEASURED_MODE):
     campaign = profile.postrestart_campaign(mode)
@@ -625,7 +743,7 @@ def prepare(task, session, *, mode=profile.POSTRESTART_MEASURED_MODE):
     from .host import concurrent_capacity_policy
     inputs = ['progress.json', 'evidence-index.json', 'protected-key-metadata.json', *frozen]
     armed = {'schema': 1, 'scope': SCOPE, 'campaign': campaign, 'mode': mode, 'session_id': session,
-        'base_commit': WARM_ONLY_BASE if mode == profile.POSTRESTART_WARM_ONLY_MODE else BASE,
+        'base_commit': BATCH_BASE if mode == profile.POSTRESTART_BATCH_MODE else WARM_ONLY_BASE if mode == profile.POSTRESTART_WARM_ONLY_MODE else BASE,
         'source_commit': glmrepair.git('rev-parse', 'HEAD'), 'runtime_policy': POLICY,
         'runtime_source_path': '/data/services/' + campaign + '/source',
         'manifests': profile.postrestart_manifests(campaign), 'trial_plan': profile.postrestart_trial_order(mode),
@@ -722,7 +840,7 @@ def run(task, go_path, session, *, restore_only=False):
             'measurement_status': 'NOT_RUN_RECOVERY_ONLY' if restore_only else 'FAILED' if failed else
                 'QUALITY_REVIEW_REQUIRED' if job.quality_review else
                 'WARM_ONLY_RELEASED' if job.mode == profile.POSTRESTART_WARM_ONLY_MODE and not job.followup_sessions else
-                'COMPLETE' if all(v in job.progress['completed'] for v in TRIAL_IDS) else 'RELEASED_PARTIAL',
+                'COMPLETE' if all(v['id'] in job.progress['completed'] for v in armed['trial_plan']['trials']) else 'RELEASED_PARTIAL',
             'production_acceptance': 'NOT_GRANTED'}
         safe_save(task / ('recovery-outcome.json' if restore_only else 'run-outcome.json'), outcome)
         safe_save(task / 'status.json', {**outcome, 'phase': 'RESTORED' if restored else 'RECOVERY_REQUIRED'})
@@ -734,7 +852,7 @@ def main(argv=None):
     parser.add_argument('action', choices=('prepare', 'run', 'restore'))
     parser.add_argument('--task-dir', type=Path, required=True); parser.add_argument('--session-id', required=True)
     parser.add_argument('--go', type=Path)
-    parser.add_argument('--mode', choices=(profile.POSTRESTART_MEASURED_MODE, profile.POSTRESTART_WARM_ONLY_MODE))
+    parser.add_argument('--mode', choices=(profile.POSTRESTART_MEASURED_MODE, profile.POSTRESTART_WARM_ONLY_MODE, profile.POSTRESTART_BATCH_MODE))
     args = parser.parse_args(argv)
     if args.action == 'prepare':
         prepare(args.task_dir, args.session_id, mode=args.mode or profile.POSTRESTART_MEASURED_MODE); return 0

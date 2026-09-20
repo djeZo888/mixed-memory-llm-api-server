@@ -243,8 +243,17 @@ class ConcurrentRun(runner.Campaign):
     def request(self, cid, raw, identifier, *, timed=True, first_output=None, drained_event=None, stop_admission=None):
         if stop_admission is not None and stop_admission.is_set():
             raise PeerFinished()
+        from .cpu_budget_profiles import POSTRESTART_BATCH_CAMPAIGN, POSTRESTART_BATCH_MODE
+        batch = (self.armed.get("scope") == "postrestart72-480k" and
+                 self.armed.get("campaign") == POSTRESTART_BATCH_CAMPAIGN and
+                 self.armed.get("mode") == POSTRESTART_BATCH_MODE)
         identity = {"request_id": identifier, "request_sha256": hashlib.sha256(raw).hexdigest(),
                     "manifest_sha256": fixtures.digest(fixtures.canonical(self.active[cid]["manifest"]))}
+        if batch:
+            identity["purpose"] = "measured" if timed else "warmup"
+            if timed:
+                from .postrestart72_batch import validate_body
+                validate_body(identifier, raw)
         timeout = (self.admission(cid, measured=timed, request_identity=identity)
                    if self.armed.get("scope") == "postrestart72-480k" else self.admission(cid))
         if not 0 < timeout <= 7200:
@@ -259,10 +268,12 @@ class ConcurrentRun(runner.Campaign):
             if stop_admission is not None and stop_admission.is_set():
                 raise PeerFinished()
             body = protocol.strict_json_loads(raw)
-            if body.get("max_tokens") not in (32, 256, 512) or body.get("stream") is not True:
+            allowed = (32, 256, 4096) if batch else (32, 256, 512)
+            if body.get("max_tokens") not in allowed or body.get("stream") is not True:
                 raise ValueError("closed_request_output_policy")
             transport = self.transport_factory("http://127.0.0.1:" + str(manifest["transport"]["port"]), self.key,
-                cancel_event=self.active[cid]["cancel_event"], deadline_epoch=None if self.armed.get("scope") == "postrestart72-480k" else self.armed["runtime"]["deadline_epoch"])
+                cancel_event=self.active[cid]["cancel_event"], deadline_epoch=None if self.armed.get("scope") == "postrestart72-480k" else self.armed["runtime"]["deadline_epoch"],
+                **({'admission_deadline_epoch': self.batch_admission_deadlines.get(cid)} if batch and timed else {}))
             def observed_transport(body, seconds):
                 try:
                     yield from transport(body, seconds)
@@ -273,16 +284,50 @@ class ConcurrentRun(runner.Campaign):
                 observed_transport.redact = lambda data: data.replace(self.key.encode("ascii"), b"[REDACTED]")
             result = client._capture_request(raw, observed_transport, sample_id=identifier, private_dir=self.private,
                 summary_path=self.state / ("samples.jsonl" if timed else "warmups.jsonl"), timeout=timeout,
-                clock=self.clock, observer_factory=Observer)
+                clock=self.clock, observer_factory=Observer, **({"capture_events": True} if batch else {}))
             if self.armed.get("scope") == "postrestart72-480k":
                 result["summary"]["request_clock"] = getattr(transport, "request_clock", {
                     "status": "UNAVAILABLE", "timeout_seconds": timeout, "basis": "transport_did_not_expose_dispatch_clock"})
+            if batch:
+                summary = result["summary"]
+                summary["transport_capture_status"] = summary["status"]
+                summary["classification_scope"] = "owner_verified_terminal; samples.jsonl is preliminary transport capture"
+                request_clock = summary.get("request_clock", {})
+                terminal = request_clock.get("terminal_reason")
+                try:
+                    if terminal in {"DRAINED", "NOT_DISPATCHED_ADMISSION_EXPIRED"}:
+                        proof = self.host.call("request_end", id=cid, request_identity=identity,
+                                               terminal_reason="DRAINED")
+                        summary["owner_drain"] = proof
+                        if terminal == "NOT_DISPATCHED_ADMISSION_EXPIRED" and proof.get("drained") is True:
+                            summary["status"] = "ADMISSION_EXPIRED"
+                    elif (identifier == "B2-Gscience" and terminal == "REQUEST_DEADLINE"
+                          and request_clock.get("deadline_expired") is True):
+                        proof = self.host.call("batch_timeout_drain", id=cid,
+                            request_identity=identity, request_clock=request_clock)
+                        summary["owner_drain"] = proof
+                        if proof.get("drained") is True:
+                            summary["status"] = "TIMEOUT"
+                            summary["finish_reason"] = "TIMEOUT"
+                    else:
+                        summary["owner_drain"] = {"drained": False, "status": "UNRESOLVED_TRANSPORT"}
+                except Exception as error:
+                    # Preserve this entered request's partial outcome before the
+                    # batch refuses further admission and uses canonical recovery.
+                    summary["owner_drain"] = {"drained": False, "status": "UNRESOLVED_DRAIN",
+                                               "error_class": type(error).__name__}
+                self.emit({"type": "batch_request_terminal", "id": identifier,
+                           "status": summary["status"], "request_clock": request_clock,
+                           "owner_drain": summary.get("owner_drain"),
+                           "transport_capture_status": summary["transport_capture_status"],
+                           "capture_verdict_is_preliminary": True})
             if self.active[cid].get("abort_reason"):
                 self.emit({"type": "resource_cancel", "id": identifier, "sample": result["summary"]})
                 raise RuntimeError(self.active[cid]["abort_reason"])
             return result if self.armed.get("scope") == "postrestart72-480k" else glmrepair.Diagnostic.persistence_check(result)
         finally:
-            self.host.call("request_end", id=cid)
+            if not batch:
+                self.host.call("request_end", id=cid)
 
     def warm(self, cid, manifest, proof):
         identifier = manifest["placement"] + "-" + str(manifest["configured_capacity"]) + "-warmup"
