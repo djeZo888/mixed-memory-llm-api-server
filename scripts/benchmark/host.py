@@ -1925,6 +1925,15 @@ class LinuxHost:
         return self.owner.restore()
 
     def postrestart_hold_proof(self):
+        previous = _COMMAND_DEADLINE.get()
+        deadline = time.monotonic() + 60
+        token = _COMMAND_DEADLINE.set(min(previous, deadline) if previous is not None else deadline)
+        try:
+            return self._postrestart_hold_proof()
+        finally:
+            _COMMAND_DEADLINE.reset(token)
+
+    def _postrestart_hold_proof(self):
         require(self.scope == POSTRESTART_SCOPE and self.owner.phase in {'ACTIVE', 'WARM_HOLD'},
                 'postrestart_hold_scope_or_phase')
         self.assert_idle()

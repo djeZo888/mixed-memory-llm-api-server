@@ -145,7 +145,7 @@ def postrestart_cpu_anchor(container, group, *, proc_root=Path('/proc')):
 def coherent_postrestart_cpu_proof(host, cid, manifest, *,
                                   proc_root=Path('/proc'), sys_root=Path('/sys/devices/system'),
                                   expected_anchor=None):
-    """At most three complete fresh cohorts, under the existing preparation clock.
+    """At most three complete fresh cohorts, under preparation or held RPC clock.
 
     Only child lifetime races may resample. Container, main process and cgroup
     remain anchored across every attempt. No partial inventory can return PASS.
@@ -155,9 +155,18 @@ def coherent_postrestart_cpu_proof(host, cid, manifest, *,
     require(host.scope == POSTRESTART_SCOPE, 'postrestart_cpu_snapshot_scope')
     host.assert_idle()
     deadline = _COMMAND_DEADLINE.get()
-    # Warm hold and measured admission policy are unchanged. During preparation
-    # this uses the original remaining budget, never a fresh preparation clock.
-    if host.budget.data['phase'] == 'PREPARING':
+    held = getattr(getattr(host, 'owner', None), 'phase', None) == 'WARM_HOLD'
+    if held:
+        from .owner import CampaignOwner
+        from common.lifecycle_lease import LifecycleLease
+        require(isinstance(host.owner, CampaignOwner) and host.owner.scope == POSTRESTART_SCOPE and
+                type(host.owner.lease) is LifecycleLease, 'postrestart_held_cpu_owner_required')
+        host.owner.lease.validate()
+        require(type(deadline) in (int, float) and math.isfinite(deadline) and
+                0 < deadline - time.monotonic() <= 60, 'postrestart_held_cpu_bounded_rpc_required')
+    # Retained idle proof does not reopen/reset the expired preparation clock.
+    # ACTIVE preparation retains the original deadline without exception.
+    if host.budget.data['phase'] == 'PREPARING' and not held:
         remaining = host.budget.checkpoint()
         require(remaining > 0, 'STOP_BUDGET')
         preparation_deadline = time.monotonic() + remaining
@@ -249,7 +258,8 @@ def postrestart_cpu_proof(manifest, container, cgroup, pids, *,
     from .profiles import cpu_set
     from .decode_telemetry import _validate_pids
     from .cpu_budget_telemetry import numa_snapshot
-    require(manifest == postrestart_manifest(manifest.get('placement')), 'postrestart_exact_manifest_required')
+    require(manifest == postrestart_manifest(manifest.get('placement'), campaign=manifest.get('campaign')),
+            'postrestart_exact_manifest_required')
     _validate_pids({'owned': pids}, 2048)
     require(bool(pids), 'postrestart_owned_processes_required')
     def read(path):

@@ -27,9 +27,12 @@ def warm_arm():
 
 class WarmOnlyContractTests(unittest.TestCase):
     def test_actual_retained_host_owner_followup_from_never_measured_clock(self):
-        from benchmark.host import LinuxHost
+        from benchmark.host import LinuxHost, _COMMAND_DEADLINE
+        from benchmark import cpu_budget_host as cpu_proof
         from benchmark import postrestart72_followup as followup
         from tests.test_postrestart72_clocks import HoldTests
+        from tests.test_postrestart72_proc_snapshot import CoherentProcSnapshotTests
+        proc = CoherentProcSnapshotTests(); proc.setUp(); self.addCleanup(proc.doCleanups)
         with tempfile.TemporaryDirectory() as directory:
             fixture, owner, budget, now = HoldTests().owned_pair(directory, measured=False)
             lease = owner.lease
@@ -49,8 +52,23 @@ class WarmOnlyContractTests(unittest.TestCase):
                 host.load_manifests = dict(zip(ids, profile.postrestart_manifests(host.campaign)))
                 host.allocation_proofs = dict.fromkeys(ids, {})
                 host.assert_idle = Mock(); host.guards = fixture.guards
-                host._readiness = Mock(return_value={'ready': True,
-                    'allocation': {'status': 'ALLOCATION_PROOF_ACCEPTED'}, 'observed': {'synthetic_native_capacity': 480000}})
+                cpu_observations = []
+                def readiness(cid):
+                    manifest = host.load_manifests[cid]
+                    proc.cid = cid
+                    proc.container['Id'] = cid
+                    proc.container['HostConfig']['CpusetCpus'] = manifest['guest_cpuset']
+                    (proc.group / 'cpuset.cpus.effective').write_text(manifest['guest_cpuset'])
+                    for pid in (44, 45):
+                        (proc.proc / str(pid) / 'status').write_text(
+                            'Cpus_allowed_list:\t' + manifest['guest_cpuset'] + '\nMems_allowed_list:\t0-7\n')
+                    observed = cpu_proof.coherent_postrestart_cpu_proof(host, cid, manifest,
+                        proc_root=proc.proc, sys_root=proc.system)
+                    cpu_observations.append((owner.phase, budget.data['phase'], observed['status']))
+                    return {'ready': True, 'allocation': {'status': 'ALLOCATION_PROOF_ACCEPTED'},
+                            'observed': {'actual_cpu_scope': observed}}
+                host.identity = proc.host.identity
+                host._readiness = readiness
                 saved = {}
                 host.read_json = lambda name: copy.deepcopy(saved[name])
                 host.write_json = lambda name, value: saved.update({name: copy.deepcopy(value)})
@@ -63,6 +81,17 @@ class WarmOnlyContractTests(unittest.TestCase):
                 self.assertEqual(owner.phase, 'WARM_HOLD')
                 now[0] += 9000  # idle hold outlives the original preparation bound
                 budget.checkpoint(); original = budget.data
+                # Missing RPC bound cannot borrow idle retention as unbounded proof.
+                with self.assertRaisesRegex(ValueError, 'postrestart_held_cpu_bounded_rpc_required'):
+                    readiness(ids[0])
+                owner.lease = None
+                with self.assertRaisesRegex(ValueError, 'postrestart_held_cpu_owner_required'):
+                    readiness(ids[0])
+                owner.lease = lease
+                owner.phase = 'ACTIVE'
+                with self.assertRaisesRegex(ValueError, '^STOP_BUDGET$'):
+                    readiness(ids[0])
+                owner.phase = 'WARM_HOLD'
                 manifest = host.load_manifests[ids[0]]
                 go = {'decision': 'GO', 'source_commit': host.run_source_commit,
                     'owner_run_session_id': host.run_session_id, 'followup_session_id': 'fresh-warm-followup',
@@ -74,6 +103,8 @@ class WarmOnlyContractTests(unittest.TestCase):
                 arm = warm_arm(); arm.update(source_commit=host.run_source_commit, session_id=host.run_session_id)
                 followup.validate_go(go, arm, go['warm_hold_receipt_sha256'])
                 admitted = host.dispatch({'op': 'admit_followup', 'go': go})
+                self.assertEqual(cpu_observations[-2:], [('WARM_HOLD', 'PREPARING', 'PASS')] * 2)
+                self.assertIsNone(_COMMAND_DEADLINE.get())
                 self.assertEqual(admitted['phase'], 'ACTIVE')
                 self.assertEqual(budget.data['prior_segment'], original)
                 self.assertIsNone(budget.data['prior_segment']['started_at'])
