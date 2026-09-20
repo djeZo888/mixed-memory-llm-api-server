@@ -23,7 +23,7 @@ from .warmup import prefill_proof
 SCOPE = 'postrestart72-480k'
 BASE = '59aeef68640986082d6e6b431be3d86386e64168'
 WARM_ONLY_BASE = 'd257c2a6531eb29f47e210c98d64341d23a373ee'
-BATCH_BASE = 'b88a358206f3bfedfa23f5a92ff2db2427207519'
+BATCH_BASE = 'ad76a6435dd6af2c95f7c47bd3d4453f58b43c69'
 POLICY = {'budget_seconds': 21600, 'preparation_seconds': 7200, 'request_timeout_seconds': 7200,
           'clock_starts': 'FIRST_MEASURED_REQUEST_ADMISSION', 'clock_includes_preparation': False,
           'admission_deadline_refuses_new_only': True, 'request_clock_starts': 'HTTP_DISPATCH',
@@ -660,7 +660,7 @@ class PostrestartRun(prior.ConcurrentRun):
         self.hold('complete')
 
     def batch_sequence(self, ids):
-        """One sealed three-case campaign; quality and speed never add retries."""
+        """One sealed B3 pair campaign; quality and speed never add retries."""
         from . import postrestart72_batch as batch
         jobs = [self.prepare_job(ids[batch.REQUEST_PLACEMENTS[key]], key) for key in batch.REQUEST_IDS]
         binding = batch.bind_jobs(jobs, source_commit=self.armed['source_commit'], session_id=self.armed['session_id'])
@@ -669,11 +669,12 @@ class PostrestartRun(prior.ConcurrentRun):
             raise EvidenceReview('BATCH_SEAL_UNAVAILABLE')
         by_id = {job['id']: job for job in jobs}
         for index, identifiers in enumerate(batch.CASES, 1):
+            case_label = identifiers[0].split('-', 1)[0]
             self.boundary()
             grant = self.host.call('batch_case_begin', case=index)
             if grant.get('admitted') is not True:
                 raise EvidenceReview('BATCH_CASE_CURRENT_PROOF_UNAVAILABLE')
-            self.record('DISPATCHING_B' + str(index))
+            self.record('DISPATCHING_' + case_label)
             if len(identifiers) == 2:
                 result = cpu_run.execute_pair(by_id[identifiers[0]], by_id[identifiers[1]], None,
                                               self.measure, interrupted=self.interrupted)
@@ -692,9 +693,9 @@ class PostrestartRun(prior.ConcurrentRun):
                     result = {'status': 'FAILED', 'glm': None, 'qwen': [],
                               'errors': [{'id': identifiers[0], 'error_class': type(error).__name__}]}
                     rows = []
-            result.update(case='B' + str(index), requested_ids=list(identifiers),
+            result.update(case=case_label, requested_ids=list(identifiers),
                           entered_outcomes_preserved=True, automatic_retry=False)
-            runner.save(self.state / ('B' + str(index) + '-case.json'), result)
+            runner.save(self.state / (case_label + '-case.json'), result)
             self.emit({'type': 'sealed_batch_case', **result})
             self.require_no_faults()
             if any(row.get('sample', {}).get('status') == 'ADMISSION_EXPIRED' for row in rows):

@@ -17,7 +17,7 @@ CAPACITY = 480000
 POSTRESTART_SCOPE = "postrestart72-480k"
 POSTRESTART_CAMPAIGN = "benchrun-p72c3-20260920"
 POSTRESTART_WARM_CAMPAIGN = "benchrun-p72wh-20260920"
-POSTRESTART_BATCH_CAMPAIGN = "benchrun-p72b-20260920"
+POSTRESTART_BATCH_CAMPAIGN = "benchrun-p72b3-20260920"
 POSTRESTART_CAMPAIGNS = (POSTRESTART_CAMPAIGN, POSTRESTART_WARM_CAMPAIGN, POSTRESTART_BATCH_CAMPAIGN)
 POSTRESTART_MEASURED_MODE = "measured"
 POSTRESTART_WARM_ONLY_MODE = "warm_only"
@@ -195,7 +195,7 @@ def postrestart_manifest(placement, campaign=POSTRESTART_CAMPAIGN):
     if campaign == POSTRESTART_WARM_CAMPAIGN:
         value["mandatory_run_gates"][5] = "exactly two loads and two discarded32-output warmups; then retained hold; no initial measured requests"
     if campaign == POSTRESTART_BATCH_CAMPAIGN:
-        value["mandatory_run_gates"][5] = "one fresh load pair; two discarded32-output warmups; sealed five requests in three cases; guarded warm hold"
+        value["mandatory_run_gates"][5] = "one fresh load pair; two discarded32-output warmups; sealed B3 pair only; guarded warm hold"
     return value
 
 

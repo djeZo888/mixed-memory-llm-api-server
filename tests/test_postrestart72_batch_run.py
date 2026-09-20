@@ -1,5 +1,6 @@
 """Focused sealed-batch runner/transport composition; synthetic offline only."""
 import copy
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -10,7 +11,7 @@ from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 from benchmark import client, concurrent_run, cpu_budget_profiles as profile
-from benchmark import decode_diag, fixtures, postrestart72_batch as batch, postrestart72_run as run72, runner
+from benchmark import decode_diag, fixtures, g1_ladder, postrestart72_batch as batch, postrestart72_followup as followup, postrestart72_run as run72, runner
 
 
 def arm():
@@ -34,24 +35,52 @@ class BatchRunTests(unittest.TestCase):
         self.run.prepare_job = lambda cid, identifier: {'id':identifier,'cid':cid}
         self.host.call.side_effect = lambda op, **kw: {'sealed':True} if op == 'seal_batch' else {'admitted':True}
 
-    def test_exact_three_cases_quality_timeout_continue_to_end_hold_without_speedgate(self):
+    def test_exact_B3_pair_quality_outcome_holds_with_display_B3_and_host_ordinal_one(self):
         seen=[]; barrier=threading.Barrier(2)
         def measure(job):
-            seen.append(job['id'])
-            if job['id'] != batch.SCIENCE_ID: barrier.wait(timeout=2)
-            return {'id':job['id'], 'status':'TIMEOUT' if job['id']==batch.SCIENCE_ID else 'FAIL_FORMAT',
-                'sample':{'status':'TIMEOUT' if job['id']==batch.SCIENCE_ID else 'COMPLETE',
-                          'owner_drain':{'drained':True}}}
+            seen.append(job['id']); barrier.wait(timeout=2)
+            return {'id':job['id'], 'status':'FAIL_FORMAT',
+                'sample':{'status':'COMPLETE', 'owner_drain':{'drained':True}}}
         self.run.measure = measure
         with patch.object(batch, 'bind_jobs', return_value={'sealed':'synthetic'}):
             self.run.batch_sequence({'G1':'g','Q1':'q'})
-        self.assertEqual(set(seen[:2]), set(batch.CASES[0]))
-        self.assertEqual(seen[2], batch.SCIENCE_ID)
-        self.assertEqual(set(seen[3:]), set(batch.CASES[2]))
-        self.assertEqual(len(seen),5)
+        self.assertEqual(set(seen), set(batch.CASES[0]))
+        self.assertEqual(len(seen),2)
         self.run.hold.assert_called_once_with('quality_review')
-        self.assertEqual([x.kwargs['case'] for x in self.host.call.call_args_list if x.args[0]=='batch_case_begin'],[1,2,3])
-        self.assertTrue((self.state/'B2-case.json').exists())
+        self.assertEqual([x.kwargs['case'] for x in self.host.call.call_args_list if x.args[0]=='batch_case_begin'],[1])
+        self.run.record.assert_any_call('DISPATCHING_B3')
+        saved=json.loads((self.state/'B3-case.json').read_bytes())
+        self.assertEqual(saved['case'],'B3')
+        self.assertEqual(saved['requested_ids'],list(batch.REQUEST_IDS))
+        self.assertFalse(saved['automatic_retry'])
+        self.assertFalse((self.state/'B1-case.json').exists())
+        self.assertFalse((self.state/'B2-case.json').exists())
+        self.assertEqual([row.args[0]['case'] for row in self.run.emit.call_args_list
+                          if row.args[0].get('type')=='sealed_batch_case'],['B3'])
+
+    def test_existing_sequence_two_loads_two_discarded_warmups_two_measures_then_hold(self):
+        loaded=[]; warmed=[]; measured=[]; barrier=threading.Barrier(2)
+        def load(manifest):
+            cid=manifest['placement']; loaded.append(cid)
+            self.run.pending_warmups.append((cid,))
+            return cid
+        def measure(job):
+            self.assertEqual(warmed,['G1','Q1'])
+            measured.append(job['id']); barrier.wait(timeout=2)
+            return {'id':job['id'],'status':'PASS',
+                    'sample':{'status':'COMPLETE','owner_drain':{'drained':True}}}
+        self.run.loaded=load
+        self.run.discarded_warmup=lambda cid: warmed.append(cid)
+        self.run.measure=measure
+        self.host.call.side_effect=lambda op, **kw: (
+            {'manifests':arm()['manifests']} if op=='admit_concurrent' else
+            {'sealed':True} if op=='seal_batch' else {'admitted':True})
+        with patch.object(batch,'bind_jobs',return_value={}):
+            self.run.sequence()
+        self.assertEqual(loaded,['G1','Q1']);self.assertEqual(warmed,loaded)
+        self.assertEqual(sorted(measured),sorted(batch.REQUEST_IDS));self.assertEqual(len(measured),2)
+        self.assertTrue(self.run.hold_ready)
+        self.run.hold.assert_called_once_with('complete')
 
     def test_ambiguous_drain_or_numeric_fault_stops_later_case_and_preserves_entered_case(self):
         seen=[]
@@ -63,7 +92,7 @@ class BatchRunTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,'UNRESOLVED'):
                 self.run.batch_sequence({'G1':'g','Q1':'q'})
         self.assertEqual(set(seen),set(batch.CASES[0]));self.run.hold.assert_not_called()
-        self.assertTrue((self.state/'B1-case.json').exists())
+        self.assertTrue((self.state/'B3-case.json').exists())
         self.run.require_no_faults.side_effect=RuntimeError('STOP_RESOURCE_GATE')
         with patch.object(batch,'bind_jobs',return_value={}):
             with self.assertRaisesRegex(RuntimeError,'STOP_RESOURCE_GATE'):
@@ -73,6 +102,7 @@ class BatchRunTests(unittest.TestCase):
         armed=arm();armed['session_id']='prep-session'
         go={'mode':profile.POSTRESTART_BATCH_MODE,'campaign':profile.POSTRESTART_BATCH_CAMPAIGN,
             'run_session_id':'fresh-run-session','runtime':copy.deepcopy(run72.POLICY)}
+        self.assertEqual(run72.BATCH_BASE,'ad76a6435dd6af2c95f7c47bd3d4453f58b43c69')
         self.assertEqual(run72.bind_runtime(armed,go,'fresh-run-session'),run72.POLICY)
         for key in ('mode','campaign'):
             bad=copy.deepcopy(go);bad.pop(key)
@@ -81,27 +111,31 @@ class BatchRunTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'closed_output'):
             self.run.request('g',decode_diag.long_body(),batch.SCIENCE_ID)
 
-    def test_science_deadline_only_after_verified_owner_drain_becomes_TIMEOUT(self):
+    def test_B3_dispatch_keeps_full_timeout_and_science_is_not_admitted(self):
         self.run.active['g']={'manifest':arm()['manifests'][0],'cancel_event':threading.Event()}
         self.run.admission=Mock(return_value=7200)
         clock={'dispatch_monotonic_s':1,'deadline_monotonic_s':7201,'terminal_monotonic_s':7201,
-               'timeout_seconds':7200,'basis':'HTTP_transport_dispatch','terminal_reason':'REQUEST_DEADLINE',
-               'deadline_expired':True}
+               'timeout_seconds':7200,'basis':'HTTP_transport_dispatch','terminal_reason':'DRAINED',
+               'deadline_expired':False}
         transport=Mock();transport.request_clock=clock
         self.run.transport_factory=Mock(return_value=transport)
-        for terminal, verified, expected in [('REQUEST_DEADLINE',True,'TIMEOUT'),
-                                               ('REQUEST_DEADLINE',False,'TRANSPORT_FAILURE'),
-                                               ('TRANSPORT_FAILURE',True,'TRANSPORT_FAILURE')]:
-            clock['terminal_reason']=terminal
-            self.host.call.return_value={'drained':verified};self.host.call.side_effect=None
-            captured={'summary':{'status':'TRANSPORT_FAILURE','counters':{}},'parsed':None}
+        with self.assertRaisesRegex(ValueError,'batch_exact_request_required'):
+            self.run.request('g',decode_diag.long_body(),batch.SCIENCE_ID)
+        self.run.admission.assert_not_called();self.run.transport_factory.assert_not_called()
+        preset=followup.PRESETS['P-G65008']
+        raw=g1_ladder.body_bytes(fixtures.build_sample('bench-glm-5.3',preset['records'],preset['seed'],'fresh-dispatch-B3'))
+        self.host.call.side_effect=None;self.host.call.return_value={'drained':True}
+        for terminal, status in [('DRAINED','COMPLETE'),('REQUEST_DEADLINE','TRANSPORT_FAILURE')]:
+            clock.update(terminal_reason=terminal,deadline_expired=terminal=='REQUEST_DEADLINE')
+            captured={'summary':{'status':status,'counters':{}},'parsed':None}
             with patch.object(client,'_capture_request',return_value=captured) as capture:
-                result=self.run.request('g',decode_diag.long_body(),batch.SCIENCE_ID)
-            self.assertEqual(result['summary']['status'],expected)
+                result=self.run.request('g',raw,'B3-G65008')
+            self.assertEqual(result['summary']['status'],status)
             self.assertTrue(capture.call_args.kwargs['capture_events'])
             self.assertEqual(capture.call_args.kwargs['timeout'],7200)
             self.assertIsNone(self.run.transport_factory.call_args.kwargs['deadline_epoch'])
-        self.assertFalse(any(c.args[0]=='request_end' for c in self.host.call.call_args_list))
+        self.assertFalse(result['summary']['owner_drain']['drained'])
+        self.assertFalse(any(c.args[0]=='batch_timeout_drain' for c in self.host.call.call_args_list))
 
 
 class TransportDeadlineTests(unittest.TestCase):

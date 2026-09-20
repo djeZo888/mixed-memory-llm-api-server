@@ -1,5 +1,27 @@
 # Sealed REAL72 follow-up batch
 
+Current B3-only source preparation, 2026-09-20: campaign
+`benchrun-p72b3-20260920` derives from immutable five-request source
+`ad76a6435dd6af2c95f7c47bd3d4453f58b43c69`. The user cancelled B2 early;
+CONTROL owns its cancellation and canonical cleanup. This source-only PREP
+has no VM, endpoint, keeper, live control, inference or ownership authority.
+
+The new one-use recipe loads the existing pair once (two loads), performs the
+two existing discarded32-output warmups, then barrier-starts only
+`B3-G65008` and `B3-Qnear480K` (historical Q input479487). Both retrieval
+output caps are256; historical64 output was an observation. Display/files
+remain B3 while the host uses internal case ordinal1. Fresh prefixes and native
+counting preserve the exact logical fixtures. B1/B2 are excluded; no speed gate,
+retry or extra request. Existing profiles/resources, full7200s per HTTP dispatch,
+6h admission, pair join, proofs, recovery and guarded warm retention are unchanged.
+
+Fresh RUN requires CONTROL's canonical STOPPED/manual restoration and free lease,
+then root GO for the exact new source and arm. It loads once, runs only B3 and
+keeps both models warm after CLI exit. The old source/results remain historical
+and immutable; source checks and mock counts establish no live acceptance.
+
+## Historical five-request package at ad76a643
+
 Source-only preparation at b88a3582 adds mode `sealed_batch`, campaign `benchrun-p72b-20260920`, within the existing `postrestart72-480k` runner. It authorizes exactly two480000 loads, the existing two discarded32-output warmups, then five measured requests:
 
 1. Barrier-start G~4K retrieval256 and Qnear479487 retrieval256.

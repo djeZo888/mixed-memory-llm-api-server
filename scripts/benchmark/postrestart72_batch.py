@@ -1,8 +1,8 @@
-"""Closed REAL72 five-request contract; no transport, lifecycle or import I/O.
+"""Closed REAL72 B3-only two-request contract; no transport, lifecycle or import I/O.
 
 The fresh reviewed owner counts and registers every exact body. Historical
-retrieval and diagnostic validators remain unchanged; only this sealed mode
-admits the frozen scientific body at configured480000.
+retrieval and diagnostic validators remain unchanged; this sealed mode admits
+only the final concurrent B3 retrieval pair at configured480000.
 """
 from __future__ import annotations
 
@@ -15,9 +15,9 @@ from agent import protocol
 from . import cpu_budget_profiles as profile, decode_diag, fixtures, g1_ladder
 from . import postrestart72_followup as followup
 
-CASES = (("B1-G4K", "B1-Qnear480K"), ("B2-Gscience",), ("B3-G65008", "B3-Qnear480K"))
+CASES = (("B3-G65008", "B3-Qnear480K"),)
 REQUEST_IDS = tuple(identifier for case in CASES for identifier in case)
-REQUEST_PLACEMENTS = dict(zip(REQUEST_IDS, ("G1", "Q1", "G1", "G1", "Q1")))
+REQUEST_PLACEMENTS = dict(zip(REQUEST_IDS, ("G1", "Q1")))
 PRESETS = {"B1-G4K": "P-G4K", "B1-Qnear480K": "P-Qnear480K",
            "B3-G65008": "P-G65008", "B3-Qnear480K": "P-Qnear480K"}
 SCIENCE_ID = "B2-Gscience"
@@ -52,13 +52,13 @@ def trial_order():
                        input_policy="historical logical fixture, unique fresh leading prefix, exact native count, no refit")
         trials.append(row)
     return {"mode": profile.POSTRESTART_BATCH_MODE, "trials": trials, "mixed_jobs": [],
-            "cases": [{"id": "B" + str(index + 1), "request_ids": list(case),
+            "cases": [{"id": case[0].split("-", 1)[0], "request_ids": list(case),
                        "dispatch": "simultaneous" if len(case) == 2 else "single_Qwen_resident_idle",
                        "next_case": "only after all entered requests confirmed drained and fresh current proof"}
-                      for index, case in enumerate(CASES)],
+                      for case in CASES],
             "rounds": [{"id": "P", "layout": "P", "glm_capacity": 480000, "qwen_capacity": 480000,
-                        "pairs": 1, "qwen_max_requests": 2}],
-            "loads": 2, "initial_measured_requests": 5,
+                        "pairs": 1, "qwen_max_requests": 1}],
+            "loads": 2, "initial_measured_requests": 2,
             "warmup": {"per_model_per_load": 1, "output_cap": 32,
                        "glm_occupied_target": "approximately4K", "qwen_occupied_target": "approximately3251",
                        "timing": "discarded", "performance_gate": False},
@@ -72,7 +72,7 @@ def trial_order():
             "format_failure_policy": "retain correctness, strict format and completion separately; no retry or later-case speed gate",
             "slow_glm_policy": "finish authorized cases unless proven safety or identity danger or unresolvable undrained transport",
             "output_length": "caps include native reasoning; actual output and final answer length are outcomes",
-            "additional_cases": "none; exactly three GLM and two Qwen measured requests, no fillers or repeats",
+            "additional_cases": "none; exactly one GLM and one Qwen measured request in B3 only, no fillers or repeats",
             "restoration_outside_budget": True, "endstate": "safely drained complete or partial outcomes retain guarded_owned_WARM_HOLD"}
 
 
@@ -171,7 +171,7 @@ def prepare_job(identifier, raw, sample, cid, counter, *, campaign, templates, s
 
 def bind_jobs(jobs, *, source_commit, session_id):
     """Small public identity envelope; raw prompt/scorer bytes stay private."""
-    _require([job["id"] for job in jobs] == list(REQUEST_IDS), "batch_exact_five_jobs_required")
+    _require([job["id"] for job in jobs] == list(REQUEST_IDS), "batch_exact_two_jobs_required")
     prefixes = []
     requests = []
     for job in jobs:
@@ -184,7 +184,7 @@ def bind_jobs(jobs, *, source_commit, session_id):
         requests.append({"request_id": job["id"], "placement": REQUEST_PLACEMENTS[job["id"]],
                          "request_sha256": fixtures.digest(job["raw"]), "manifest_sha256": job["manifest_sha256"],
                          "count_sha256": fixtures.digest(fixtures.canonical(job["count"]))})
-    _require(len(prefixes) == len(set(prefixes)) == 4, "batch_unique_fresh_prefixes_required")
+    _require(len(prefixes) == len(set(prefixes)) == 2, "batch_unique_fresh_prefixes_required")
     value = {"version": 1, "campaign": profile.POSTRESTART_BATCH_CAMPAIGN,
              "source_commit": source_commit, "session_id": session_id,
              "batch_plan_sha256": BATCH_PLAN_SHA256, "requests": requests}
@@ -200,7 +200,7 @@ def validate_binding(value, *, source_commit, session_id):
              isinstance(session_id, str) and bool(re.fullmatch(r"[A-Za-z0-9_-]{8,96}", session_id)) and
              value["batch_plan_sha256"] == BATCH_PLAN_SHA256, "batch_exact_source_session_plan_required")
     rows = value["requests"]
-    _require(isinstance(rows, list) and len(rows) == 5, "batch_exact_five_requests_required")
+    _require(isinstance(rows, list) and len(rows) == 2, "batch_exact_two_requests_required")
     for identifier, row in zip(REQUEST_IDS, rows):
         _require(type(row) is dict and set(row) == {"request_id", "placement", "request_sha256", "manifest_sha256", "count_sha256"} and
                  row["request_id"] == identifier and row["placement"] == REQUEST_PLACEMENTS[identifier] and
@@ -210,5 +210,5 @@ def validate_binding(value, *, source_commit, session_id):
         _require(row["manifest_sha256"] == fixtures.digest(fixtures.canonical(manifest)), "batch_exact_manifest_required")
         if identifier == SCIENCE_ID:
             _require(row["request_sha256"] == SCIENCE_BODY_SHA256, "batch_exact_scientific_hash_required")
-    _require(len({row["request_sha256"] for row in rows}) == 5, "batch_distinct_bodies_required")
+    _require(len({row["request_sha256"] for row in rows}) == 2, "batch_distinct_bodies_required")
     return copy.deepcopy(value)

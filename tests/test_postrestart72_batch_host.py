@@ -41,7 +41,7 @@ class BatchHostTests(unittest.TestCase):
         resident = patch('benchmark.cpu_budget_host.resident_obligations')
         resident.start(); self.addCleanup(resident.stop)
         self.rows = [{'request_id': identifier, 'placement': batch.REQUEST_PLACEMENTS[identifier],
-            'request_sha256': batch.SCIENCE_BODY_SHA256 if identifier == batch.SCIENCE_ID else fixtures.digest(identifier.encode()),
+            'request_sha256': fixtures.digest(identifier.encode()),
             'manifest_sha256': fixtures.digest(fixtures.canonical(h.load_manifests[self.cid(identifier)])),
             'count_sha256': fixtures.digest(('count-' + identifier).encode())} for identifier in batch.REQUEST_IDS]
 
@@ -77,29 +77,7 @@ class BatchHostTests(unittest.TestCase):
     def case(self, case):
         return self.h.dispatch({'op': 'batch_case_begin', 'case': case})
 
-    def science(self):
-        self.prepare(); self.case(1)
-        # Reverse the simultaneous pair's registration/completion order.
-        for identifier in reversed(batch.CASES[0]):
-            self.begin(identifier, 'measured')
-        for identifier in batch.CASES[0]:
-            self.end(identifier, 'measured')
-        self.case(2); self.begin(batch.SCIENCE_ID, 'measured')
-
-    def timeout(self, *, native_idle=True, resource='PASS'):
-        self.h.requests['g']['started_monotonic_s'] = 0
-        tick = [7201.0]
-        self.h.batch_owned_idle.return_value = native_idle
-        self.h.telemetry.return_value = {'concurrent_resource_gate': {'status': resource}}
-        clock = {'dispatch_monotonic_s': 1.0, 'deadline_monotonic_s': 7201.0,
-            'terminal_monotonic_s': 7201.0, 'timeout_seconds': 7200, 'basis': 'HTTP_transport_dispatch',
-            'terminal_reason': 'REQUEST_DEADLINE', 'deadline_expired': True}
-        with patch('benchmark.host.time.monotonic', side_effect=lambda: tick[0]), \
-                patch('benchmark.host.time.sleep', side_effect=lambda duration: tick.__setitem__(0, tick[0] + duration)):
-            return self.h.dispatch({'op': 'batch_timeout_drain', 'id': 'g',
-                'request_identity': self.identity(batch.SCIENCE_ID, 'measured'), 'request_clock': clock})
-
-    def test_actual_dispatch_exact_five_and_peer_drain(self):
+    def test_actual_dispatch_exact_B3_pair_and_peer_drain(self):
         self.assertTrue(self.prepare()['sealed'])
         self.assertIsNone(self.h.budget.data['started_at'])
         for n, pair in enumerate(batch.CASES, 1):
@@ -113,6 +91,10 @@ class BatchHostTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.begin(pair[0], 'measured')
         self.assertEqual(set(self.h.batch_state['admitted']), set(batch.REQUEST_IDS))
+        self.assertEqual(len(self.h.batch_state['admitted']), 2)
+        self.assertEqual(self.h.batch_state['case'], 1)
+        with self.assertRaises(ValueError):
+            self.case(2)
         self.assertFalse(self.h.requests)
         self.assertEqual(self.h.owner.phase, 'ACTIVE')  # existing warm_hold owns the final transition
         self.h.hold_checkpoint.assert_called_with(entering=True)
@@ -121,63 +103,62 @@ class BatchHostTests(unittest.TestCase):
                 self.h.dispatch({'op': operation, 'go': {}})
 
     def test_bound_count_limit_flag_and_body_cannot_bypass(self):
-        identity = self.identity('B1-G4K', 'count')
+        identity = self.identity('B3-G65008', 'count')
         args = {'op': 'request_begin', 'id': 'g', 'measured': False, 'timeout_s': 120, 'request_identity': identity}
         self.h.dispatch(args)
-        self.end('B1-G4K', 'count')
+        self.end('B3-G65008', 'count')
         for edit in ({'request_sha256': 'f' * 64}, {'purpose': 'measured'}, {'request_id': 'extra'}):
             with self.assertRaises(ValueError):
                 self.h.dispatch({**args, 'request_identity': {**identity, **edit}})
         for _ in range(2):
-            self.begin('B1-G4K', 'count'); self.end('B1-G4K', 'count')
+            self.begin('B3-G65008', 'count'); self.end('B3-G65008', 'count')
         with self.assertRaises(ValueError):
-            self.begin('B1-G4K', 'count')
+            self.begin('B3-G65008', 'count')
         with self.assertRaises(ValueError):
-            self.begin('B1-G4K', 'measured')
+            self.begin('B3-G65008', 'measured')
 
     def test_admission_expiry_never_clips_inflight_full_timeout(self):
         self.prepare(); self.case(1)
-        self.assertEqual(self.begin('B1-G4K', 'measured')['timeout_s'], 7200)
+        self.assertEqual(self.begin('B3-G65008', 'measured')['timeout_s'], 7200)
         self.now[0] += 21600
         self.assertEqual(self.h.budget.checkpoint(), 0)
         with self.assertRaisesRegex(ValueError, 'STOP_BUDGET'):
-            self.begin('B1-Qnear480K', 'measured')
+            self.begin('B3-Qnear480K', 'measured')
         self.assertEqual(self.h.requests['g']['timeout_s'], 7200)
-        self.assertTrue(self.end('B1-G4K', 'measured')['drained'])
+        self.assertTrue(self.end('B3-G65008', 'measured')['drained'])
 
-    def test_science_timeout_must_prove_native_idle_before_next_case(self):
-        self.science()
-        self.assertEqual(self.timeout()['status'], 'VERIFIED_TIMEOUT_DRAIN')
+    def test_actual_shared_guard_rejects_B1_B2_before_count_or_measurement(self):
+        for identifier in ('B1-G4K','B1-Qnear480K','B2-Gscience'):
+            for purpose in ('count','measured'):
+                with self.subTest(identifier=identifier,purpose=purpose), self.assertRaisesRegex(ValueError,'batch_closed_request_required'):
+                    self.begin(identifier,purpose)
         self.assertFalse(self.h.requests)
-        self.assertTrue(self.case(3)['admitted'])
+        self.assertFalse(self.h.batch_state['counts'])
+        self.assertFalse(self.h.batch_state['admitted'])
 
-    def test_timeout_undrained_unknown_and_numeric_fault_keep_registration(self):
-        self.science()
-        for native_idle, resource in ((False, 'PASS'), (True, 'UNAVAILABLE')):
-            result = self.timeout(native_idle=native_idle, resource=resource)
-            self.assertFalse(result['drained']); self.assertIn('g', self.h.requests)
-            with self.assertRaises(ValueError):
-                self.case(3)
-        with self.assertRaisesRegex(ValueError, 'unsafe_hold'):
-            self.timeout(resource='STOP_RESOURCE_GATE')
-        self.assertIn('g', self.h.requests)
-        with self.assertRaisesRegex(ValueError, 'uncertain_transport'):
-            self.h.dispatch({'op': 'request_end', 'id': 'g', 'request_identity': self.identity(batch.SCIENCE_ID, 'measured'),
-                'terminal_reason': 'TRANSPORT_FAILURE'})
-        self.assertIn('g', self.h.requests)
+    def test_B3_transport_uncertainty_keeps_owned_registration_for_recovery(self):
+        self.prepare();self.case(1);self.begin('B3-G65008','measured')
+        with self.assertRaisesRegex(ValueError,'uncertain_transport'):
+            self.h.dispatch({'op':'request_end','id':'g',
+                'request_identity':self.identity('B3-G65008','measured'),'terminal_reason':'TRANSPORT_FAILURE'})
+        with self.assertRaisesRegex(ValueError,'batch_timeout_exact_science_only'):
+            self.h.dispatch({'op':'batch_timeout_drain','id':'g',
+                'request_identity':self.identity('B3-G65008','measured'),'request_clock':{}})
+        self.assertIn('g',self.h.requests)
+        with self.assertRaises(ValueError):self.case(2)
 
     def test_socket_absence_alone_does_not_prove_native_drain(self):
         with patch('benchmark.host.command', return_value=SimpleNamespace(stdout=b'')), \
                 patch('benchmark.host.http_json', return_value=[{'is_processing': True}]):
             self.assertFalse(LinuxHost.batch_owned_idle(self.h, 'g'))
 
-    def test_timeout_native_proof_gaps_retry_within_same_window(self):
-        self.science()
+    def test_native_drain_proof_gaps_retry_within_existing_window(self):
+        self.prepare();self.case(1);self.begin('B3-G65008','measured')
         self.h.batch_owned_idle.side_effect = lambda cid, **kwargs: LinuxHost.batch_owned_idle(self.h, cid, **kwargs)
         with patch('benchmark.host.command', return_value=SimpleNamespace(stdout=b'')), \
                 patch('benchmark.host.http_json', side_effect=[urllib.error.URLError('synthetic-gap'),
                     TimeoutError(), {'malformed': True}, [{'is_processing': False}]]) as native:
-            self.assertEqual(self.timeout()['status'], 'VERIFIED_TIMEOUT_DRAIN')
+            self.assertEqual(self.end('B3-G65008','measured')['status'], 'VERIFIED_DRAIN')
             self.assertEqual(native.call_count, 4)
         self.assertFalse(self.h.requests)
 
@@ -202,7 +183,7 @@ class BatchHostTests(unittest.TestCase):
                 return {'tokens': [1, 2], 'count': 2, 'max_model_len': 480000}
             return call
         runner.json_factory = factory
-        for cid, identifier, model in (('g', 'B1-G4K', 'bench-glm-5.3'), ('q', 'B1-Qnear480K', 'bench-qwen3.8-27b')):
+        for cid, identifier, model in (('g', 'B3-G65008', 'bench-glm-5.3'), ('q', 'B3-Qnear480K', 'bench-qwen3.8-27b')):
             raw = fixtures.canonical({'model': model, 'messages': [{'role': 'user', 'content': 'synthetic-count-only'}],
                 'max_tokens': 256, 'stream': True})
             self.assertEqual(runner.counter(cid, identifier)(raw)['body_sha256'], fixtures.digest(raw))
