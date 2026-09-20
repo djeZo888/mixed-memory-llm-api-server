@@ -195,6 +195,20 @@ def collect_sample(cgroups: Mapping[str, Path], *, pids: Mapping[str, list[int]]
     except (OSError, subprocess.SubprocessError, ValueError) as exc:
         errors.append("gpu_" + type(exc).__name__)
         gpus = []
+        if decode_diagnostic and gpu_reader is None:
+            # An unsupported optional clock/PCIe field must not erase the
+            # existing memory-reserve safety query. A failed base query still
+            # leaves reserve evidence unavailable and the safety gate closed.
+            try:
+                raw = subprocess.run(GPU_COMMAND, check=True, capture_output=True,
+                                     text=True, timeout=2).stdout
+                gpus = parse_gpu_csv(raw)
+                for row in gpus:
+                    row["decode_fields_status"] = "UNAVAILABLE"
+                    row["pcie_throughput"] = None
+                errors.append("optional_decode_gpu_fields_unavailable")
+            except (OSError, subprocess.SubprocessError, ValueError) as base_exc:
+                errors.append("base_gpu_" + type(base_exc).__name__)
     ended = clock()
     return {"sample_kind": "cheap", "timestamp_monotonic_s": started,
             "collection_finished_monotonic_s": ended, "collection_duration_s": ended - started,

@@ -2,6 +2,8 @@
 import importlib.util
 import tempfile
 import unittest
+from unittest.mock import patch
+from types import SimpleNamespace
 from pathlib import Path
 
 SOURCE = Path(__file__).resolve().parents[1] / "scripts/benchmark/telemetry.py"
@@ -11,6 +13,17 @@ spec.loader.exec_module(t)
 
 
 class TelemetryTests(unittest.TestCase):
+    def test_optional_gpu_query_failure_preserves_base_reserve_evidence(self):
+        failure = t.subprocess.CalledProcessError(1, ['nvidia-smi'])
+        with tempfile.TemporaryDirectory() as directory, patch.object(t.subprocess, 'run',
+                side_effect=[failure, SimpleNamespace(stdout='GPU-offline, 96000, 30000, 66000, 5, 100\n')]) as query:
+            row = t.collect_sample({}, proc_root=Path(directory), decode_diagnostic=True)
+        self.assertEqual(query.call_count, 2)
+        self.assertEqual(query.call_args.args[0], t.GPU_COMMAND)
+        self.assertEqual(row['gpus'][0]['free_bytes'], 66000 * t.MIB)
+        self.assertEqual(row['gpus'][0]['decode_fields_status'], 'UNAVAILABLE')
+        self.assertIn('optional_decode_gpu_fields_unavailable', row['errors'])
+
     def test_host_zero_unavailable_and_units(self):
         got = t.parse_meminfo("MemTotal: 8192 kB\nMemAvailable: 100 kB\nSwapTotal: 0 kB\nSwapFree: 0 kB\n")
         self.assertEqual(got["available_bytes"], 102400)

@@ -166,6 +166,7 @@ class LinuxHost:
         data = json.loads(raw)
         values = data.get('commands', data.get('manifests', [])) if isinstance(data, dict) else data
         self.scope = validate_arm_scope(data)
+        self.decode_capture_policy = copy.deepcopy(data.get('capture', {})) if self.scope == 'glm-decode-diag' else {}
         manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3}[self.scope]
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
         self.start_epoch = data.get('start_epoch', data.get('runtime', {}).get('start_epoch')) if isinstance(data, dict) else None
@@ -608,7 +609,7 @@ class LinuxHost:
                 from .decode_telemetry import collect_decode_sample
                 try:
                     row['decode_cpu'] = collect_decode_sample({cid: cgroup}, pids={cid: pids})
-                except (OSError, ValueError) as exc:
+                except Exception as exc:
                     row['decode_cpu'] = {'status': 'UNAVAILABLE', 'error_class': type(exc).__name__}
                 if not hasattr(self, '_decode_last_sample'):
                     self._decode_last_sample = {}
@@ -687,7 +688,10 @@ class LinuxHost:
                   'container_id': cid, 'scope': 'quiescent_process_tree_pss', 'telemetry': self.telemetry(cid)}
         if self.scope == 'glm-decode-diag':
             from .decode_telemetry import quiescent_snapshot
-            result['decode_quiescent'] = quiescent_snapshot({cid: pids})
+            try:
+                result['decode_quiescent'] = quiescent_snapshot({cid: pids})
+            except Exception as exc:
+                result['decode_quiescent'] = {'status': 'UNAVAILABLE', 'error_class': type(exc).__name__}
         self.write_json('loads/' + cid + '-' + point + '.json', result)
         return result
 
@@ -701,11 +705,38 @@ class LinuxHost:
         end = time.monotonic()
         require(isinstance(slots, list) and len(slots) == 1, 'native_single_slot_required')
         slot = slots[0]
-        next_token = slot.get('next_token', [])
-        count = next_token[0].get('n_decoded') if len(next_token) == 1 else None
-        return {'slot_id': slot.get('id'), 'task_id': slot.get('id_task'),
-                'is_processing': slot.get('is_processing'), 'n_decoded': count,
+        require(isinstance(slot, dict), 'native_slot_object_required')
+        # Retained b29c606 server-context.cpp:707 explicitly emits a singleton
+        # array. Accept the direct object shape defensively, without guessing
+        # counters from tokens, SSE events or any other fields.
+        next_token = slot.get('next_token')
+        if isinstance(next_token, list):
+            next_token = next_token[0] if len(next_token) == 1 else None
+        count = next_token.get('n_decoded') if isinstance(next_token, dict) else None
+        if type(count) is not int or count < 0:
+            count = None
+        return {'slot_id': slot.get('id') if type(slot.get('id')) is int else None,
+                'task_id': slot.get('id_task') if type(slot.get('id_task')) is int else None,
+                'is_processing': slot.get('is_processing') if type(slot.get('is_processing')) is bool else None,
+                'n_decoded': count,
+                'counter_status': 'AVAILABLE' if count is not None else 'UNAVAILABLE',
                 'host_started_monotonic_s': start, 'host_finished_monotonic_s': end}
+
+    def decode_cpu_capture_start(self, cid, client_before):
+        from .decode_capture import CpuCapture
+        require(self.scope == 'glm-decode-diag' and self.owner.phase == 'ACTIVE', 'decode_scope_required')
+        require(getattr(self, 'decode_capture_policy', {}).get('cpu') is True, 'decode_cpu_capture_not_armed')
+        require(cid in self.requests, 'decode_request_not_registered')
+        require(not getattr(self, '_decode_cpu_captures', {}), 'decode_cpu_single_sample_no_retry')
+        capture = CpuCapture(self, cid, client_before)
+        self._decode_cpu_captures = {capture.capture_id: capture}
+        return capture.start()
+
+    def decode_cpu_capture_status(self, cid, capture_id, client_after=None):
+        require(self.scope == 'glm-decode-diag', 'decode_scope_required')
+        capture = getattr(self, '_decode_cpu_captures', {}).get(capture_id)
+        require(capture is not None and capture.cid == cid, 'decode_capture_identity_mismatch')
+        return capture.status(client_after)
 
     @staticmethod
     def g1_memory_limits(container, cgroup):
@@ -1060,6 +1091,9 @@ class LinuxHost:
             finally:
                 _COMMAND_DEADLINE.reset(token)
         if op == 'retire':
+            if self.scope == 'glm-decode-diag':
+                from .decode_capture import stop_captures
+                stop_captures(self, args['id'])
             self.owner.retire(args['id'])
             return {'retired': args['id']}
         if op == 'readiness':
@@ -1072,6 +1106,10 @@ class LinuxHost:
             return self.diagnostic_snapshot(args['id'], args['point'])
         if op == 'decode_progress':
             return self.decode_progress(args['id'])
+        if op == 'decode_cpu_capture_start':
+            return self.decode_cpu_capture_start(args['id'], args.get('client_before'))
+        if op == 'decode_cpu_capture_status':
+            return self.decode_cpu_capture_status(args['id'], args['capture_id'], args.get('client_after'))
         if op == 'request_begin':
             require(self.owner.phase == 'ACTIVE', 'owner_not_active')
             self.identity(args['id'])
@@ -1082,6 +1120,9 @@ class LinuxHost:
             return {'timeout_s': timeout, 'budget': self.budget.data}
         if op == 'request_end':
             require(args['id'] in self.requests, 'request_not_active')
+            if self.scope == 'glm-decode-diag':
+                from .decode_capture import stop_captures
+                stop_captures(self, args['id'])
             del self.requests[args['id']]
             self.write_json('requests.json', self.requests)
             return {'request_ended': args['id']}
@@ -1117,6 +1158,9 @@ class LinuxHost:
                     'usable_host_bytes_after_retirement': requested_available,
                     'private_receipt': self.log_root + '/mixed-manifests.json'}
         if op in {'restore', 'recover'}:
+            if self.scope == 'glm-decode-diag':
+                from .decode_capture import stop_captures
+                stop_captures(self)
             if self.owner.phase == 'POST_RELEASE_LAN_VERIFICATION_PENDING':
                 return {'phase': self.owner.phase, 'worker_nonce': self.worker_nonce, 'restored_at': self.restored_at, 'local_restoration': 'VERIFIED', 'restored': False}
             token = _COMMAND_DEADLINE.set(None)
@@ -1141,7 +1185,8 @@ class LinuxHost:
 
 
 RPC_OPERATIONS = frozenset({'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation',
-    'quiescent', 'diagnostic_snapshot', 'decode_progress', 'request_begin', 'request_end', 'admit_mixed', 'restore', 'recover',
+    'quiescent', 'diagnostic_snapshot', 'decode_progress', 'decode_cpu_capture_start', 'decode_cpu_capture_status',
+    'request_begin', 'request_end', 'admit_mixed', 'restore', 'recover',
     'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'})
 RPC_SAFE_REQUIRE_CODES = frozenset({'native_server_args_unavailable',
     'allocation_log_too_large', 'current_model_mount_changed',
