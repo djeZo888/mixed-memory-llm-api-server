@@ -403,7 +403,11 @@ def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None
             timeout = min(timeout, deadline_epoch - time.time())
             if timeout <= 0:
                 raise HarnessError("campaign deadline exhausted")
-        deadline = clock() + timeout
+        dispatched = clock()
+        deadline = dispatched + timeout
+        send.request_clock = {"dispatch_monotonic_s": dispatched, "deadline_monotonic_s": deadline,
+                              "timeout_seconds": timeout, "basis": "HTTP_transport_dispatch",
+                              "terminal_reason": "INFLIGHT"}
         connection = http.client.HTTPConnection(url.hostname, url.port, timeout=timeout)
         response = None
         def expire():
@@ -451,9 +455,13 @@ def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None
                 sock.settimeout(remaining)
                 chunk = response.read1(65536)
                 if not chunk:
+                    send.request_clock["terminal_reason"] = "DRAINED"
                     break
                 yield chunk
         finally:
+            if send.request_clock["terminal_reason"] == "INFLIGHT":
+                send.request_clock["terminal_reason"] = ("RESOURCE_CANCEL" if cancel_event is not None and cancel_event.is_set()
+                    else "REQUEST_DEADLINE" if clock() >= deadline else "TRANSPORT_FAILURE")
             finished.set()
             if watcher is not None:
                 watcher.join(timeout=1)

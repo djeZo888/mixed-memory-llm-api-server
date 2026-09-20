@@ -24,7 +24,8 @@ CANDIDATE_SCOPE = "candidate-pair-validation"
 CANDIDATE_CAMPAIGN = "benchrun-candidate-pair-20260920"
 CANDIDATE_TUPLES = (("G1", 480000), ("Q1", 700160))
 CPU_SCOPE = "concurrent-480k-cpu"
-ARM_SCOPES = (CPU_SCOPE, "full", "q1-only", "q1-256k", "g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", CONCURRENT_SCOPE, CANDIDATE_SCOPE)
+POSTRESTART_SCOPE = "postrestart72-480k"
+ARM_SCOPES = (POSTRESTART_SCOPE, CPU_SCOPE, "full", "q1-only", "q1-256k", "g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", CONCURRENT_SCOPE, CANDIDATE_SCOPE)
 G1_LADDER_CAMPAIGN = "benchrun-glm-g1-ladder-20260920"
 GLM_DECODE_DIAG_CAMPAIGN = "benchrun-glm-decode-diag-20260920"
 GLM_DECODE_PROFILE_CAMPAIGN = "benchrun-glm-decode-profile-20260920"
@@ -88,7 +89,7 @@ def glm_decode_diag_manifest(capacity, campaign=GLM_DECODE_DIAG_CAMPAIGN):
 def scope_placements(scope):
     if scope not in ARM_SCOPES:
         raise ValueError("unknown_benchmark_arm_scope")
-    if scope in (CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE):
+    if scope in (CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE):
         return ("G1", "Q1")
     if scope in {"g1-only", "g1-ladder", "glm-decode-diag"}:
         return ("G1",)
@@ -99,7 +100,7 @@ def scope_placements(scope):
 
 def scope_capacities(scope):
     scope_placements(scope)  # Reject unknown scopes before selecting capacities.
-    if scope == CPU_SCOPE:
+    if scope in (CPU_SCOPE, POSTRESTART_SCOPE):
         return (480000,)
     if scope == CANDIDATE_SCOPE:
         return (480000, 700160)
@@ -118,6 +119,9 @@ def validate_arm_scope(armed):
     """Legacy arms retain full scope; narrowed arms bind their exact placement and plan."""
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
+    if scope == POSTRESTART_SCOPE:
+        from .cpu_budget_profiles import validate_postrestart_arm_scope
+        return validate_postrestart_arm_scope(armed)
     if scope == CPU_SCOPE:
         from .cpu_budget_profiles import validate_arm_scope as validate_cpu_arm
         return validate_cpu_arm(armed)
@@ -544,6 +548,9 @@ def candidate_manifests(binding=None):
 
 
 def trial_order(scope="full", campaign=GLMREPAIR_CAMPAIGN):
+    if scope == POSTRESTART_SCOPE:
+        from .cpu_budget_profiles import postrestart_trial_order
+        return postrestart_trial_order()
     if scope == CPU_SCOPE:
         from .cpu_budget_profiles import trial_order as cpu_trial_order
         return cpu_trial_order()

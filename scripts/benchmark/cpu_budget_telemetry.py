@@ -13,6 +13,7 @@ from pathlib import Path
 import time
 
 from . import decode_telemetry as primitive
+from .cpu_budget_profiles import CPU_SCOPE, POSTRESTART_SCOPE
 
 STATUS = 'UNAVAILABLE'
 CPU_KEYS = primitive.CPU_FIELDS[:8]  # guest/guest_nice are already in user/nice.
@@ -310,7 +311,7 @@ def summarize_phase(samples, started, ended, *, phase, time_key='client_observed
     return result
 
 
-def summarize_measurement(samples, sample_summary):
+def summarize_measurement(samples, sample_summary, *, scope=CPU_SCOPE):
     """Use request dispatch/drain and output arrival windows; native fields separate."""
     start, end = sample_summary.get('request_started_monotonic_s'), sample_summary.get('request_ended_monotonic_s')
     timing = sample_summary.get('client_timing') or {}
@@ -320,15 +321,22 @@ def summarize_measurement(samples, sample_summary):
     phases = {'request': summarize_phase(samples, start, end, phase='request_dispatch_to_drain'),
         'prefill_proxy': summarize_phase(samples, start, first, phase='dispatch_to_first_output_arrival'),
         'decode_proxy': summarize_phase(samples, first, last, phase='first_to_last_output_arrival')}
-    return {**phases, 'counter_evidence': _counter_evidence(phases),
+    return {**phases, 'counter_evidence': _counter_evidence(phases, scope=scope),
         'native_aggregate_timing': {key: (sample_summary.get('counters') or {}).get(key)
                                   for key in ('prompt_ms', 'decode_ms', 'prompt_tokens', 'decode_tokens')},
         'native_aggregate_is_not_cpu_phase_boundary': True}
 
 
-def _counter_evidence(phases):
+def _required_vcpus(scope):
+    if scope not in (CPU_SCOPE, POSTRESTART_SCOPE):
+        raise ValueError('closed_cpu_evidence_scope_required')
+    return 72 if scope == POSTRESTART_SCOPE else 112
+
+
+def _counter_evidence(phases, *, scope=CPU_SCOPE):
     """Require measured channels, without treating excluded global CPU full as zero."""
     missing = []
+    required_vcpus = _required_vcpus(scope)
     groups = sorted(phases['request'].get('cgroups', {}))
     if len(groups) != 2:
         missing.append('request.exact_two_owned_cgroups')
@@ -349,9 +357,9 @@ def _counter_evidence(phases):
         for process, value in summary.get('processes', {}).items():
             if value.get('status') != 'AVAILABLE':
                 missing.append('.'.join((phase, 'processes', process)))
-        expected_cpus = {'cpu'} | {'cpu' + str(i) for i in range(112)}
+        expected_cpus = {'cpu'} | {'cpu' + str(i) for i in range(required_vcpus)}
         if set(summary.get('guest_cpus', {})) != expected_cpus:
-            missing.append(phase + '.exact_112_guest_vcpus')
+            missing.append(phase + '.exact_' + str(required_vcpus) + '_guest_vcpus')
         for name in sorted(expected_cpus):
             value = summary.get('guest_cpus', {}).get(name, {})
             if value.get('status') != 'AVAILABLE' or not value.get('steal_time_s') or any(
@@ -366,7 +374,7 @@ def _counter_evidence(phases):
                     if summary.get('psi', {}).get(key, {}).get('status') != 'AVAILABLE':
                         missing.append('.'.join((phase, 'psi', key)))
     return {'status': 'COMPLETE' if not missing else 'INCOMPLETE',
-        'missing_or_partial': sorted(set(missing)), 'required_guest_vcpus': 112,
+        'missing_or_partial': sorted(set(missing)), 'required_guest_vcpus': required_vcpus,
         'explicit_exclusions': ['global cpu.full compatibility counters', 'per-thread scheduler-wait counters',
                                 'ancestor/inherited CPU quota; own cgroup cpu.max only'],
         'evidence_boundary': 'observed sampled intervals only; phase edge gaps, RPC lag, short decode p95 and overhead caveats remain',
@@ -438,14 +446,15 @@ def comparison_summary(completed):
         'acceptance_boundary': 'timed counter receipt only; NUMA, host safety, restoration and root review remain separate requirements'}
 
 
-def warmup_gate(samples, cid):
+def warmup_gate(samples, cid, *, scope=CPU_SCOPE):
     """Prove CPU collection during the existing warmup before long admission.
 
     Before/after snapshots may bound a short warmup. No sleep, extra inference,
     synthetic counters or telemetry retry is performed here. Isolated missing
     snapshots are retained as gaps while stable valid endpoints may span them.
     """
-    expected = {'cpu'} | {'cpu' + str(i) for i in range(112)}
+    required_vcpus = _required_vcpus(scope)
+    expected = {'cpu'} | {'cpu' + str(i) for i in range(required_vcpus)}
     gaps, intervals, previous = [], [], None
     observed_threads = {}
     for index, current in enumerate(samples):
@@ -473,7 +482,7 @@ def warmup_gate(samples, cid):
                 'status': process.get('runtime_thread_count_status', STATUS)}
         cpus = current.get('guest_cpus', {})
         if set(cpus) != expected:
-            causes.append('exact_112_guest_vcpu_inventory_unavailable')
+            causes.append('exact_' + str(required_vcpus) + '_guest_vcpu_inventory_unavailable')
         elif any(_delta(cpus[cpu], cpus[cpu], CPU_KEYS) is None for cpu in expected):
             causes.append('guest_vcpu_counter_unavailable')
         if causes:
@@ -507,7 +516,8 @@ def warmup_gate(samples, cid):
                 process_time = sum(sum(delta.values()) for delta in process_deltas) / hz
                 intervals.append({'before_sample_index': prior_index, 'after_sample_index': index,
                     'host_elapsed_s': elapsed, 'cgroup_cpu_time_s': cg['usage_usec'] / 1e6,
-                    'process_cpu_time_s': process_time, 'all_112_guest_vcpu_deltas_available': True,
+                    'process_cpu_time_s': process_time,
+                    'all_' + str(required_vcpus) + '_guest_vcpu_deltas_available': True,
                     'isolated_gap_count': index-prior_index-1})
         previous = current, index
     active = [row for row in intervals if row['cgroup_cpu_time_s'] > 0 and row['process_cpu_time_s'] > 0]

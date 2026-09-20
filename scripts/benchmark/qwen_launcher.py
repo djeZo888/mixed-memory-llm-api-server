@@ -21,6 +21,7 @@ Q1_256K_CONTEXT = 262144  # Separately reviewed single-GPU tuple only.
 CONCURRENT_SCOPE = "concurrent-g1q1"
 CONCURRENT_CONTEXTS = (262144, 700160)
 CPU_SCOPE = "concurrent-480k-cpu"
+POSTRESTART_SCOPE = "postrestart72-480k"
 CPU_CONTEXT = 480000
 
 
@@ -36,7 +37,7 @@ def pinned_base(path):
 
 def variant(base, context, tp, *, scope=None):
     concurrent = scope == CONCURRENT_SCOPE
-    cpu_budget = scope == CPU_SCOPE
+    cpu_budget = scope in (CPU_SCOPE, POSTRESTART_SCOPE)
     scoped = (concurrent and tp == 1 and context in CONCURRENT_CONTEXTS) or (cpu_budget and tp == 1 and context == CPU_CONTEXT)
     if scope is not None and not scoped:
         raise ValueError("benchmark_scope_tuple_unreviewed")
@@ -103,7 +104,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--context", required=True, type=int, choices=(*CAPACITIES, Q1_256K_CONTEXT, 700160, CPU_CONTEXT))
     parser.add_argument("--tp", required=True, type=int, choices=(1, 2))
-    parser.add_argument("--scope", choices=(CONCURRENT_SCOPE, CPU_SCOPE))
+    parser.add_argument("--scope", choices=(CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE))
     options = parser.parse_args(argv)
     base = pinned_base("/opt/llmctl/sglang38_file_auth.py")
     args = bind_variant(base, options.context, options.tp, scope=options.scope)

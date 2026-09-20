@@ -31,7 +31,8 @@ from .profiles import (read_config, command_manifest, split_resources, validate_
                        G1_RAM_CAP_BYTES, glmrepair_manifest, g1_ladder_manifest, glm_decode_diag_manifest, cpu_set,
                        CONCURRENT_SCOPE, CONCURRENT_CAMPAIGN, CONCURRENT_Q1_RAM_CAP_BYTES, concurrent_manifest,
                        CANDIDATE_SCOPE, candidate_manifest, candidate_manifests, candidate_modules, candidate_profile)
-from .cpu_budget_profiles import CPU_SCOPE, CPU_CAMPAIGN, manifest as cpu_manifest
+from .cpu_budget_profiles import (CPU_SCOPE, CPU_CAMPAIGN, manifest as cpu_manifest,
+                                  POSTRESTART_SCOPE, POSTRESTART_CAMPAIGN, postrestart_manifest)
 from .telemetry import collect_sample, required_host_demand, concurrent_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
@@ -63,7 +64,7 @@ def concurrent_capacity_policy(scope=None):
                 'raw_log_sha256': 'f2272149566ee0892384d6b7b62432a7e1d5cfa2d71ac55897043fd7d1c2d49a'},
             'preload_host_available_minimum_bytes': 688 * 1024**3,
             'actual_load_required': True, 'allocator_policy_change_allowed': False}
-    if scope == CPU_SCOPE:
+    if scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
         policy.update(host_headroom_numerator=23, host_headroom_denominator=20,
             host_headroom_policy={'version': 'sampled-required-working-set-15pct-v1',
                 'numerator': 23, 'denominator': 20,
@@ -84,7 +85,7 @@ def command(argv, timeout=30, *, allow_missing=False, candidate_owner=None):
         require(remaining > 0, 'host_operation_deadline')
         timeout = min(timeout, remaining)
     if candidate_owner is not None:
-        require(candidate_owner.scope in {'candidate-pair-validation', CPU_SCOPE} and argv[:2] == ['/usr/bin/docker', 'create'],
+        require(candidate_owner.scope in {'candidate-pair-validation', CPU_SCOPE, POSTRESTART_SCOPE} and argv[:2] == ['/usr/bin/docker', 'create'],
                 'candidate_dispatch_seam_requires_create')
         candidate_owner.mark_create_dispatched()
     result = subprocess.run(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -212,7 +213,7 @@ class LinuxHost:
         self.scope = validate_arm_scope(data)
         self.mode = data.get('mode') if self.scope == 'glm-decode-diag' else None
         self.decode_capture_policy = copy.deepcopy(data.get('capture', {})) if self.scope == 'glm-decode-diag' else {}
-        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3, CONCURRENT_SCOPE: 2, CANDIDATE_SCOPE: 2, CPU_SCOPE: 4}[self.scope]
+        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3, CONCURRENT_SCOPE: 2, CANDIDATE_SCOPE: 2, CPU_SCOPE: 4, POSTRESTART_SCOPE: 2}[self.scope]
         if self.mode == 'cpu-profile-only':
             manifest_count = 1
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
@@ -239,8 +240,19 @@ class LinuxHost:
             self.concurrent_resource_violations = {}
             require(data.get('candidate_capacity_policy') == concurrent_capacity_policy(), 'candidate_demand_policy_changed')
             require(values == candidate_manifests(self.binding), 'candidate_registered_manifests_changed')
-        elif self.scope in {CONCURRENT_SCOPE, CPU_SCOPE}:
-            if self.scope == CPU_SCOPE:
+        elif self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
+            if self.scope == POSTRESTART_SCOPE:
+                from .postrestart72_run import validate_clock
+                self.postrestart_measured_admissions = {'G1': 0, 'Q1': 0}
+                self.followup_request = None
+                self.followup_admitted = set()
+                self.run_session_id = data.get('session_id')
+                self.run_source_commit = data.get('source_commit')
+                require(isinstance(self.run_source_commit, str) and bool(re.fullmatch(r'[0-9a-f]{40}', self.run_source_commit)),
+                        'postrestart_source_commit_required')
+                require(isinstance(self.run_session_id, str) and bool(self.run_session_id), 'postrestart_run_session_required')
+                self.start_epoch, self.deadline_epoch = validate_clock(data, data.get('runtime', {}))
+            elif self.scope == CPU_SCOPE:
                 from .concurrent_cpu_run import validate_clock
                 self.start_epoch, self.deadline_epoch = validate_clock(data, data.get('runtime', {}))
             else:
@@ -262,7 +274,7 @@ class LinuxHost:
             require(hashlib.sha256(source_raw).hexdigest() == sha, 'staged_source_pin_changed')
         self.manifests = {}
         for value in values:
-            expected = cpu_manifest(value['layout'], value['placement']) if self.scope == CPU_SCOPE else candidate_manifest(value['placement'], self.binding) if self.scope == CANDIDATE_SCOPE else concurrent_manifest(value['placement'], value['configured_capacity']) if self.scope == CONCURRENT_SCOPE else glm_decode_diag_manifest(value['configured_capacity'], campaign) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
+            expected = postrestart_manifest(value['placement']) if self.scope == POSTRESTART_SCOPE else cpu_manifest(value['layout'], value['placement']) if self.scope == CPU_SCOPE else candidate_manifest(value['placement'], self.binding) if self.scope == CANDIDATE_SCOPE else concurrent_manifest(value['placement'], value['configured_capacity']) if self.scope == CONCURRENT_SCOPE else glm_decode_diag_manifest(value['configured_capacity'], campaign) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
                                         ram_cap=G1_RAM_CAP_BYTES if self.scope == 'g1-only' else None,
                                         log_verbosity=4 if self.scope == 'g1-only' else None)
             require(value == expected, 'manifest_not_current_generated_source')
@@ -276,11 +288,12 @@ class LinuxHost:
         self.worker_nonce, self.restored_at = None, None
         self.baseline_lock_identity = None
         self.owner = None
-        self.budget = HostBudget(self)
+        from .postrestart72_budget import PostrestartBudget
+        self.budget = PostrestartBudget(self) if self.scope == POSTRESTART_SCOPE else HostBudget(self)
         callbacks = HostCallbacks(**{name: getattr(self, name) for name in HostCallbacks.__dataclass_fields__})
         self.owner = CampaignOwner(campaign, self.manager, callbacks, self.budget,
                                   reviewed_manifest_hashes=self.manifests, lease_factory=lifecycle_lease.acquire_lease,
-                                  scope=self.scope if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE} else None)
+                                  scope=self.scope if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} else None)
 
     @staticmethod
     def concurrent_clock(armed):
@@ -344,10 +357,10 @@ class LinuxHost:
         return start, deadline
 
     def admit_concurrent(self, round_name):
-        require(self.scope in {CONCURRENT_SCOPE, CPU_SCOPE} and self.owner.phase == 'ACTIVE',
+        require(self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} and self.owner.phase == 'ACTIVE',
                 'concurrent_active_scope_required')
         require(not getattr(self, 'concurrent_resource_violations', {}), 'concurrent_latched_resource_failure')
-        expected = ('A' if self.concurrent_round is None else 'B' if self.concurrent_round == 'A' else None) if self.scope == CPU_SCOPE else ('long' if self.concurrent_round is None else None)
+        expected = ('P' if self.concurrent_round is None else None) if self.scope == POSTRESTART_SCOPE else ('A' if self.concurrent_round is None else 'B' if self.concurrent_round == 'A' else None) if self.scope == CPU_SCOPE else ('long' if self.concurrent_round is None else None)
         require(round_name is not None and round_name == expected, 'concurrent_closed_round_order_required')
         self.budget.checkpoint()
         self.guards(self.owner.lease)
@@ -363,7 +376,8 @@ class LinuxHost:
                 'concurrent_host_available_reserve_unproved')
         gpu_free = {g['uuid']: g.get('free_bytes') for g in sample['gpus']}
         sizes = (65536, 700160)
-        manifests = ([cpu_manifest(round_name, p) for p in ('G1', 'Q1')] if self.scope == CPU_SCOPE else
+        manifests = ([postrestart_manifest(p) for p in ('G1', 'Q1')] if self.scope == POSTRESTART_SCOPE else
+                     [cpu_manifest(round_name, p) for p in ('G1', 'Q1')] if self.scope == CPU_SCOPE else
                      [concurrent_manifest(p, n) for p, n in zip(('G1', 'Q1'), sizes)])
         for manifest in manifests:
             require(self.manifests.get(digest(manifest)) == manifest, 'concurrent_exact_manifest_required')
@@ -381,7 +395,7 @@ class LinuxHost:
     @staticmethod
     def concurrent_limits(manifest, container, cgroup):
         placement = manifest['placement']
-        expected = cpu_manifest(manifest.get('layout'), placement) if manifest.get('campaign') == CPU_CAMPAIGN else candidate_manifest(placement) if manifest.get('campaign') == 'benchrun-candidate-pair-20260920' else concurrent_manifest(placement, manifest['configured_capacity'])
+        expected = postrestart_manifest(placement) if manifest.get('campaign') == POSTRESTART_CAMPAIGN else cpu_manifest(manifest.get('layout'), placement) if manifest.get('campaign') == CPU_CAMPAIGN else candidate_manifest(placement) if manifest.get('campaign') == 'benchrun-candidate-pair-20260920' else concurrent_manifest(placement, manifest['configured_capacity'])
         require(manifest == expected, 'concurrent_exact_manifest_required')
         cap = concurrent_capacity_policy()['caps_bytes'][placement]
         cpus = expected['guest_cpuset']
@@ -402,6 +416,12 @@ class LinuxHost:
                 all(cpu[k] == 0 for k in ('docker_nano_cpus', 'docker_cpu_quota', 'docker_cpu_period')) and
                 bool(re.fullmatch(r'max [1-9][0-9]*', cpu['cgroup_cpu_max'])),
                 'concurrent_effective_cpu_limits_unproved')
+        if manifest.get('campaign') == POSTRESTART_CAMPAIGN:
+            cpu['docker_cpuset_mems'] = config.get('CpusetMems', '')
+            cpu['cgroup_cpuset_mems_effective'] = (cgroup / 'cpuset.mems.effective').read_text().strip()
+            require(cpu['docker_cpuset_mems'] in ('', '0-7') and
+                    cpu_set(cpu['cgroup_cpuset_mems_effective']) == set(range(8)),
+                    'postrestart_all_memory_nodes_required')
         return memory, cpu
 
     def concurrent_pressure(self, row):
@@ -441,14 +461,14 @@ class LinuxHost:
                             'headroom_comparison_bytes': comparison, 'sampled_peak_required_bytes': sampled_peak,
                             'placement': manifest['placement'], 'cap_bytes': cap,
                             'allocation_proof_available': parsed is not None,
-                            ('cap_headroom_15_percent' if getattr(self, 'scope', None) == CPU_SCOPE else 'cap_headroom_25_percent'): False if numeric_failure else True if observed is not None else None,
+                            ('cap_headroom_15_percent' if getattr(self, 'scope', None) in {CPU_SCOPE, POSTRESTART_SCOPE} else 'cap_headroom_25_percent'): False if numeric_failure else True if observed is not None else None,
                             'headroom_numerator': policy['host_headroom_numerator'], 'headroom_denominator': policy['host_headroom_denominator']}
-            if getattr(self, 'scope', None) == CPU_SCOPE:
+            if getattr(self, 'scope', None) in {CPU_SCOPE, POSTRESTART_SCOPE}:
                 charges[cid].update(sampled_required_working_set_estimate_bytes=comparison,
                     required_with_headroom_bytes=((comparison * 23 + 19) // 20 if comparison is not None else None),
                     host_headroom_policy=policy['host_headroom_policy'])
             if numeric_failure:
-                numeric_by_cid[cid].append('concurrent_cap_15_percent_headroom_failed' if getattr(self, 'scope', None) == CPU_SCOPE else 'concurrent_cap_25_percent_headroom_failed')
+                numeric_by_cid[cid].append('concurrent_cap_15_percent_headroom_failed' if getattr(self, 'scope', None) in {CPU_SCOPE, POSTRESTART_SCOPE} else 'concurrent_cap_25_percent_headroom_failed')
             if any(valid(v) and v > cap for v in (current, peak)):
                 numeric_by_cid[cid].append('concurrent_raw_hard_cap_exceeded')
         available = row['host'].get('available_bytes')
@@ -465,7 +485,7 @@ class LinuxHost:
                     unavailable.append('concurrent_gpu_free_unavailable')
                 elif free[uuid] < policy['gpu_reserve_bytes']:
                     numeric_by_cid[cid].append('concurrent_gpu_reserve_failed')
-        if getattr(self, 'scope', None) == CPU_SCOPE:
+        if getattr(self, 'scope', None) in {CPU_SCOPE, POSTRESTART_SCOPE}:
             for cid in row['cgroups']:
                 if self.load_manifests[cid]['placement'] == 'Q1':
                     gpu = next((g for g in row['gpus'] if g['uuid'] == self.load_manifests[cid]['gpu_uuids'][0]), {})
@@ -794,9 +814,9 @@ class LinuxHost:
         require(units[BOOT_UNIT] == original['services'][BOOT_UNIT], 'boot_service_drift')
         if stage not in {'admission', 'freeze_control'}:
             require(units[CONTROL_UNIT]['active'] == 'inactive', 'control_not_frozen')
-        if stage in {'admission', 'production_stop', 'restore', 'retire', 'stop', 'remove', 'pre_release'}:
+        if stage in {'admission', 'production_stop', 'restore', 'retire', 'stop', 'remove', 'pre_release', 'warm_hold'}:
             self.assert_idle()
-        if self.scope == CPU_SCOPE and stage == 'admission':
+        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE} and stage == 'admission':
             from .cpu_budget_host import pre_retirement_admission
             self.write_json('cpu-pre-retirement-admission.json', pre_retirement_admission(self, original))
         if self.scope == CANDIDATE_SCOPE and stage == 'admission':
@@ -838,14 +858,14 @@ class LinuxHost:
                      if kind == 'G' else "command -v python3 >/dev/null; python3 -c 'import ctypes,json,uuid; ctypes.CDLL(\"libcuda.so.1\")'")
             self.write_json('mapping-helper-' + kind.lower() + '.json',
                             {'phase': 'PLANNED', 'name': name, 'image': manifest['image'], 'no_gpu': True})
-            if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE}:
+            if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
                 require(self.owner.pending_create is None, 'unresolved_create_intent')
                 self.owner.pending_create = {'manifest_sha256': digest(manifest), 'name': name,
                     'image': manifest['image'], 'campaign': self.campaign,
                     'dispatch': 'not_dispatched', 'kind': 'mapping_helper'}
                 self.owner._save()
             self.guards(lease)
-            dispatch = {'candidate_owner': self.owner} if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE} else {}
+            dispatch = {'candidate_owner': self.owner} if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} else {}
             cid = command([*probe, check], 60, **dispatch).stdout.decode().strip()
             require(bool(CID.fullmatch(cid)), 'mapping_helper_create_identity_invalid')
             container = self.docker_inspect(cid)
@@ -854,7 +874,7 @@ class LinuxHost:
                     'mapping_helper_image_changed')
             row = {'resource': resource, 'state': 'CREATED'}
             self.owner.resources.append(row)
-            if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE}:
+            if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
                 self.owner.pending_create = None
             self.owner._save()
             try:
@@ -960,7 +980,7 @@ class LinuxHost:
             available = collect_sample({})['host']['available_bytes']
             require(type(available) is int and available >= G1_RAM_CAP_BYTES + 16 * 1024**3,
                     'g1_container_cap_host_reserve_unproved')
-        if self.scope in {CONCURRENT_SCOPE, CPU_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
             require(digest(manifest) in self.concurrent_admitted, 'concurrent_round_not_admitted')
             require(not getattr(self, 'concurrent_resource_violations', {}), 'concurrent_latched_resource_failure')
             active = [row['resource']['id'] for row in self.owner.resources if row['state'] != 'REMOVED'
@@ -973,7 +993,7 @@ class LinuxHost:
             available = collect_sample({})['host']['available_bytes']
             require(type(available) is int and available >= remaining + policy['os_reserve_bytes'],
                     'concurrent_host_available_reserve_unproved')
-        if self.scope == CPU_SCOPE:
+        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
             from .cpu_budget_host import resident_obligations
             self.write_json('cpu-preload-' + manifest['layout'] + '-' + manifest['placement'] + '.json', resident_obligations(self))
         if self.scope == CANDIDATE_SCOPE:
@@ -993,7 +1013,7 @@ class LinuxHost:
                     require(hashlib.sha256(raw).hexdigest() == cp.PINS[rel], 'candidate_protected_wrapper_changed')
         self.mkdir_paths(manifest)
         argv = ['/usr/bin/docker', *manifest['create_argv'][1:]]
-        dispatch = {'candidate_owner': self.owner} if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE} else {}
+        dispatch = {'candidate_owner': self.owner} if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} else {}
         created = command(argv, 120, **dispatch).stdout.decode().strip()
         require(bool(CID.fullmatch(created)), 'invalid_created_container_id')
         container = self.docker_inspect(created)
@@ -1003,7 +1023,7 @@ class LinuxHost:
             require(container['HostConfig'].get('Memory') == G1_RAM_CAP_BYTES and
                     container['HostConfig'].get('MemorySwap') == G1_RAM_CAP_BYTES,
                     'g1_container_no_swap_limit_unproved')
-        if self.scope in {CONCURRENT_SCOPE, CPU_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
             cap = concurrent_capacity_policy()['caps_bytes'][manifest['placement']]
             require(container['HostConfig'].get('Memory') == cap and container['HostConfig'].get('MemorySwap') == cap,
                     'concurrent_container_no_swap_limit_unproved')
@@ -1085,13 +1105,13 @@ class LinuxHost:
             before_identity = identity_stamp(self, cid)
         options = {'decode_diagnostic': True} if self.scope == 'glm-decode-diag' else {}
         groups, members = {cid: cgroup}, {cid: pids}
-        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
             for resource in self.owner.resources:
                 peer = resource['resource']['id']
                 if resource['state'] == 'RUNNING' and peer != cid and peer in self.load_manifests:
                     _, groups[peer], members[peer] = self.identity(peer)
         row = collect_sample(groups, pids=members, **options)
-        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
             row['concurrent_resource_gate'] = self.candidate_pressure(row) if self.scope == CANDIDATE_SCOPE else self.concurrent_pressure(row)
             row['cpu_pressure'] = self.concurrent_cpu_pressure(groups)
         if self.scope == 'glm-decode-diag':
@@ -1105,7 +1125,7 @@ class LinuxHost:
                 if not hasattr(self, '_decode_last_sample'):
                     self._decode_last_sample = {}
                 self._decode_last_sample[cid] = collection_started
-        if self.scope == CPU_SCOPE:
+        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
             from .cpu_budget_telemetry import collect_sample as collect_cpu
             row['cpu_budget'] = collect_cpu(groups, pids=members)
         row['collection_duration_s'] = time.monotonic() - collection_started
@@ -1116,7 +1136,7 @@ class LinuxHost:
         manifest = self.load_manifests.get(cid, {})
         placement = manifest.get('placement')
         parsed = self.allocation_proofs.get(cid)
-        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
             # The legacy helper claims measured components and double-counts this
             # mapped/shmem overlap. This closed campaign reports only ESTIMATE.
             row['required_host_demand'] = copy.deepcopy(row['concurrent_resource_gate']['charges'][cid])
@@ -1186,12 +1206,15 @@ class LinuxHost:
         require(point in {'readiness', 'warm_idle'}, 'pss_checkpoint_only')
         self.assert_idle()
         container, cgroup, pids = self.identity(cid)
-        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
             result = {'point': point, 'pss_bytes': None, 'pss_unavailable_reason': 'concurrent_no_profiling',
                       'container_id': cid, 'scope': 'cheap_quiescent_counters', 'telemetry': self.telemetry(cid)}
-            if self.scope == CPU_SCOPE:
+            if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
                 from .cpu_budget_telemetry import numa_snapshot
                 result['numa_pages'] = numa_snapshot({cid: pids})
+            if self.scope == POSTRESTART_SCOPE:
+                from .cpu_budget_host import postrestart_cpu_proof
+                result['actual_cpu_scope'] = postrestart_cpu_proof(self.load_manifests[cid], container, cgroup, pids)
             self.write_json('loads/' + cid + '-' + point + '.json', result)
             return result
         start, values = time.monotonic(), []
@@ -1381,10 +1404,14 @@ class LinuxHost:
                 info = http_json(port, '/get_server_info')
             except TimeoutError as error:
                 raise NativeInfoPending from error
-            if self.scope == CPU_SCOPE:
+            if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
                 from .cpu_budget_host import qwen_native_diagnostic
                 self.write_json('loads/' + cid + '-native-numeric-diagnostic.json', qwen_native_diagnostic(info))
-            args = info.get('server_args', info)
+            if self.scope == POSTRESTART_SCOPE:
+                from .cpu_budget_host import qwen_native_view
+                args = qwen_native_view(info)
+            else:
+                args = info.get('server_args', info)
             require(isinstance(args, dict), 'native_server_args_unavailable')
             facts = {key: args.get(key, info.get(key)) for key in
                      ('tp_size', 'context_length', 'max_total_tokens', 'max_total_num_tokens', 'kv_cache_dtype', 'quantization',
@@ -1397,9 +1424,9 @@ class LinuxHost:
                 from .concurrent_validate import native_proof
                 native_capacity = native_proof(self, cid, info)
                 facts['max_total_num_tokens'] = native_capacity['native_pool_tokens']
-            if self.scope == CPU_SCOPE:
+            if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
                 from .cpu_budget_host import qwen_native_proof
-                native_capacity = qwen_native_proof(info)
+                native_capacity = qwen_native_proof(info, **({'scope': POSTRESTART_SCOPE} if self.scope == POSTRESTART_SCOPE else {}))
                 facts['max_total_num_tokens'] = native_capacity['native_pool_tokens']
             parsed = parse_qwen_log(text, facts)
             receipts = [json.loads(line.split('BENCHMARK_NATIVE_ARGV ', 1)[1])['argv'] for line in text.splitlines()
@@ -1433,12 +1460,12 @@ class LinuxHost:
             observed['container_memory_limits'] = self.g1_memory_limits(container, cgroup)
         if self.scope in {'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
             observed['container_cpu_limits'] = self.glmrepair_cpu_limits(container, cgroup)
-        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
             memory, cpu = self.concurrent_limits(manifest, container, cgroup)
             observed.update(container_memory_limits=memory, container_cpu_limits=cpu)
-        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope in {'g1-only', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE} and manifest['placement'] == 'G1',
+        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope in {'g1-only', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} and manifest['placement'] == 'G1',
                                strict_glmrepair=self.scope == 'glmrepair')
-        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
             pressure = sample['concurrent_resource_gate']
             if pressure['status'] != 'PASS':
                 gate['status'] = 'STOP_ALLOCATION_PROOF'
@@ -1456,8 +1483,20 @@ class LinuxHost:
             observed['evidence_status'] = 'CANDIDATE_OBSERVATION_NOT_ACCEPTANCE'
         result = {'allocation': gate, 'parsed': parsed, 'observed': observed, 'server_facts': facts,
                   'raw_log_path': self.log_root + '/loads/' + cid + '-allocation.log'}
-        if self.scope == CPU_SCOPE and manifest['placement'] == 'Q1':
+        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE} and manifest['placement'] == 'Q1':
             result['observed']['native_capacity'] = native_capacity
+        if self.scope == POSTRESTART_SCOPE:
+            # Keep ordinary readiness/admission failed. Only retained hold may
+            # distinguish absent sampled resource proof from a proven fault.
+            missing_resource_reasons = set(pressure['unavailable_reasons']) | {
+                'gpu_reserve_unproved:' + uuid for uuid in manifest['gpu_uuids']
+                if type(observed['gpu_free_bytes'].get(uuid)) is not int}
+            result['resource_proof_unavailable_only'] = (
+                gate['status'] == 'STOP_ALLOCATION_PROOF' and pressure['status'] == 'UNAVAILABLE' and
+                not pressure['reasons'] and bool(gate['reasons']) and
+                set(gate['reasons']) <= missing_resource_reasons)
+            from .cpu_budget_host import postrestart_cpu_proof
+            result['observed']['actual_cpu_scope'] = postrestart_cpu_proof(manifest, container, cgroup, pids)
         if gate['status'] == 'ALLOCATION_PROOF_ACCEPTED':
             self.allocation_proofs[cid] = parsed
         self.write_json('loads/' + cid + '-allocation.json', result)
@@ -1590,7 +1629,7 @@ class LinuxHost:
         from common.lifecycle_lease import acquire_lease
         ledger = self.read_json('owner.json')
         require(ledger.get('campaign') == self.campaign and ledger.get('evidence_kind') == 'live', 'invalid_recovery_ledger')
-        candidate = self.scope in {CANDIDATE_SCOPE, CPU_SCOPE}
+        candidate = self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}
         require(ledger.get('validation_scope') == (self.scope if candidate else None),
                 'recovery_scope_changed')
         if candidate:
@@ -1605,8 +1644,14 @@ class LinuxHost:
         if candidate:
             self.owner.production_touched = ledger['production_touched']
             self.owner.control_touched = ledger['control_touched']
+        if self.scope == POSTRESTART_SCOPE:
+            require(ledger.get('warm_hold_reason') in {None, 'complete', 'preliminary_review', 'paused', 'quality_review'} and
+                    type(ledger.get('warm_hold_resumed')) is bool and type(ledger.get('additional_followup_used')) is bool, 'postrestart_recovery_hold_state_required')
+            self.owner.warm_hold_reason = ledger['warm_hold_reason']
+            self.owner.warm_hold_resumed = ledger['warm_hold_resumed']
+            self.owner.additional_followup_used = ledger['additional_followup_used']
         self.owner.budget_started = self.budget.data is not None
-        self.owner.restoration_started = bool(self.budget.data and self.budget.data['phase'] != 'MEASURING')
+        self.owner.restoration_started = bool(self.budget.data and self.budget.data['phase'] in {'RESTORING', 'RESTORED', 'RESTORE_FAILED'})
         self.owner.phase = 'RECOVERY_REQUIRED'
         # Fresh-process recovery must bind the canonical lock before any
         # restoration callback consults the persisted credential/lease witness.
@@ -1663,23 +1708,199 @@ class LinuxHost:
             self.owner._save()
         return self.owner.restore()
 
+    def postrestart_hold_proof(self):
+        require(self.scope == POSTRESTART_SCOPE and self.owner.phase in {'ACTIVE', 'WARM_HOLD'},
+                'postrestart_hold_scope_or_phase')
+        self.assert_idle()
+        self.owner._gate('warm_hold')
+        self.guards(self.owner.lease)
+        require(not self.concurrent_resource_violations and self.owner.pending_create is None,
+                'postrestart_unsafe_hold_forbidden')
+        live = [row['resource']['id'] for row in self.owner.resources if row['state'] != 'REMOVED']
+        require(len(live) == 2 and set(live) == set(self.load_manifests) == set(self.allocation_proofs),
+                'postrestart_hold_requires_exact_resident_pair')
+        pair, review = {}, []
+        for cid in live:
+            manifest = self.load_manifests[cid]
+            require(manifest == postrestart_manifest(manifest['placement']), 'postrestart_hold_manifest_changed')
+            proof = self._readiness(cid)
+            if proof.get('ready') is not True:
+                unavailable_only = (proof.get('resource_proof_unavailable_only') is True and
+                                    proof.get('state') == 'STOP_ALLOCATION_PROOF')
+                require(proof.get('failed') is not True or unavailable_only, 'postrestart_hold_native_ready_failed')
+                if unavailable_only:
+                    require(self.readiness_failure(cid) is None, 'postrestart_hold_native_ready_failed')
+                current = self.hold_checkpoint(entering=True)
+                review.extend(current['unavailable_reasons'] + [manifest['placement'] + '_fresh_allocation_proof_unavailable'])
+                container, cgroup, _ = self.identity(cid)
+                memory, cpu = self.concurrent_limits(manifest, container, cgroup)
+                observed = {'container_memory_limits': memory, 'container_cpu_limits': cpu,
+                            'native_capacity': 'PREVIOUS_ACCEPTED_ALLOCATION_ONLY_CURRENT_PROOF_UNAVAILABLE'}
+            else:
+                require(proof['allocation']['status'] == 'ALLOCATION_PROOF_ACCEPTED', 'postrestart_unsafe_hold_forbidden')
+                observed = proof['observed']
+            pair[manifest['placement']] = {'container_id': cid, 'manifest': manifest,
+                'manifest_sha256': digest(manifest), 'effective': observed,
+                'transport': manifest['transport']}
+        require(set(pair) == {'G1', 'Q1'}, 'postrestart_hold_pair_identity_changed')
+        self.guards(self.owner.lease)
+        return {'scope': self.scope, 'campaign': self.campaign, 'run_session_id': self.run_session_id,
+            'host_owner_pid': os.getpid(), 'canonical_lease_path': self.config['lease'],
+            'canonical_lease_retained': True, 'no_active_inference': True,
+            'pair': pair, 'captured_at': time.time(), 'budget': self.budget.data,
+            'status': 'REVIEW_REQUIRED' if review else 'HELD',
+            'unavailable_reasons': sorted(set(review)),
+            'release_target': {'selected': self.owner.original['manager']['selected'],
+                               'desired': 'stopped', 'boot_policy': 'manual'},
+            'crash_policy': 'EOF while idle hold attempts canonical restoration; hard kill requires fresh protected-ledger recovery'}
+
+    def hold_checkpoint(self, *, entering=False):
+        require(self.scope == POSTRESTART_SCOPE and (self.owner.phase == 'WARM_HOLD' or
+                entering is True and self.owner.phase == 'ACTIVE'),
+                'postrestart_hold_scope_or_phase')
+        token = _COMMAND_DEADLINE.set(time.monotonic() + 60)
+        try:
+            self.owner._gate('warm_hold')  # actual PID-bound lease, control freeze, idle TCP/request registrations
+            self.guards(self.owner.lease)
+            self.credentials()
+            require(self.owner.pending_create is None and not self.concurrent_resource_violations,
+                    'postrestart_unsafe_hold_forbidden')
+            live = [row['resource']['id'] for row in self.owner.resources if row['state'] != 'REMOVED']
+            require(len(live) == 2 and set(live) == set(self.load_manifests) == set(self.allocation_proofs),
+                    'postrestart_hold_requires_exact_resident_pair')
+            groups, members, unavailable = {}, {}, []
+            for cid in live:
+                container, cgroup, pids = self.identity(cid)
+                manifest = self.load_manifests[cid]
+                self.concurrent_limits(manifest, container, cgroup)
+                groups[cid], members[cid] = cgroup, pids
+                try:
+                    models = http_json(manifest['transport']['port'], '/v1/models', timeout_s=5)
+                    alias = 'bench-glm-5.3' if manifest['placement'] == 'G1' else 'bench-qwen3.8-27b'
+                    if not any(row.get('id') == alias for row in models.get('data', [])):
+                        unavailable.append(manifest['placement'] + '_native_ready_unproved')
+                    if manifest['placement'] == 'Q1':
+                        from .cpu_budget_host import qwen_native_proof
+                        qwen_native_proof(http_json(manifest['transport']['port'], '/get_server_info', timeout_s=5),
+                                          scope=POSTRESTART_SCOPE)
+                except (TimeoutError, urllib.error.URLError, json.JSONDecodeError):
+                    unavailable.append(manifest['placement'] + '_native_read_unavailable')
+            sample = collect_sample(groups, pids=members)
+            pressure = self.concurrent_pressure(sample)
+            require(pressure['status'] != 'STOP_RESOURCE_GATE', 'postrestart_unsafe_hold_forbidden')
+            for group in sample['cgroups'].values():
+                require(not any(type(group.get('events', {}).get(k)) is int and group['events'][k] > 0
+                                for k in ('oom', 'oom_kill', 'oom_group_kill')) and
+                        not (type(group.get('swap_bytes')) is int and group['swap_bytes'] > 0),
+                        'postrestart_unsafe_hold_forbidden')
+            unavailable.extend(pressure['unavailable_reasons'])
+            self.guards(self.owner.lease)
+            return {'phase': 'WARM_HOLD', 'status': 'REVIEW_REQUIRED' if unavailable else 'HELD',
+                    'guarded': True, 'no_active_inference': True, 'canonical_lease_retained': True,
+                    'unavailable_reasons': sorted(set(unavailable)), 'checked_at': time.time(), 'budget': self.budget.data}
+        finally:
+            _COMMAND_DEADLINE.reset(token)
+
+    def warm_hold(self, reason, preliminary_result_sha256=None):
+        require(reason in {'complete', 'preliminary_review', 'paused', 'quality_review'} and
+                (preliminary_result_sha256 is None or isinstance(preliminary_result_sha256, str) and
+                 bool(re.fullmatch(r'[0-9a-f]{64}', preliminary_result_sha256))), 'postrestart_hold_reason_invalid')
+        if reason == 'preliminary_review':
+            require(preliminary_result_sha256 is not None, 'postrestart_preliminary_result_required')
+        proof = self.postrestart_hold_proof()
+        self.owner.warm_hold(reason)
+        receipt = {**proof, 'phase': 'WARM_HOLD', 'reason': reason,
+                   'preliminary_result_sha256': preliminary_result_sha256}
+        self.write_json('warm-hold.json', receipt)
+        return receipt
+
+    def resume_measurements(self, followup_session_id, source_commit, preliminary_result_sha256):
+        require(self.scope == POSTRESTART_SCOPE and self.owner.phase == 'WARM_HOLD' and
+                self.owner.warm_hold_reason == 'preliminary_review' and not self.owner.warm_hold_resumed,
+                'postrestart_hold_resume_forbidden')
+        saved = self.read_json('warm-hold.json')
+        require(isinstance(followup_session_id, str) and bool(followup_session_id) and
+                followup_session_id != self.run_session_id and source_commit == self.run_source_commit and
+                preliminary_result_sha256 == saved.get('preliminary_result_sha256') and
+                isinstance(preliminary_result_sha256, str) and bool(re.fullmatch(r'[0-9a-f]{64}', preliminary_result_sha256)),
+                'postrestart_followup_identity_required')
+        require(self.postrestart_hold_proof()['status'] == 'HELD', 'postrestart_followup_fresh_ready_required')
+        identity = {'session_id': followup_session_id, 'source_commit': source_commit,
+                    'preliminary_result_sha256': preliminary_result_sha256}
+        self.owner.resume_measurements(identity)
+        self.followup_admitted = set()
+        receipt = {'phase': self.owner.phase, 'resumed_from': 'preliminary_review', 'resumed_at': time.time(),
+                   'retained_owner_session_id': self.run_session_id, 'followup_identity': identity, 'budget': self.budget.data}
+        self.write_json('warm-hold-resume.json', receipt)
+        return receipt
+
+    def admit_followup(self, go):
+        from .fixtures import canonical
+        require(self.scope == POSTRESTART_SCOPE and self.owner.phase == 'WARM_HOLD' and
+                self.owner.warm_hold_reason in {'complete', 'quality_review', 'paused'} and
+                not self.owner.additional_followup_used, 'postrestart_additional_followup_forbidden')
+        fields = {'decision', 'source_commit', 'owner_run_session_id', 'followup_session_id', 'campaign',
+                  'warm_hold_receipt_sha256', 'placement', 'manifest_sha256', 'request_sha256',
+                  'fixture_sha256', 'request_id', 'preset', 'policy'}
+        require(type(go) is dict and set(go) == fields and go['decision'] == 'GO' and
+                go['source_commit'] == self.run_source_commit and go['owner_run_session_id'] == self.run_session_id and
+                go['campaign'] == self.campaign and isinstance(go['followup_session_id'], str) and
+                bool(go['followup_session_id']) and go['followup_session_id'] != self.run_session_id and
+                go['preset'] in {'P-G4K', 'P-G65008', 'P-Qnear480K'} and
+                go['placement'] == {'P-G4K': 'G1', 'P-G65008': 'G1', 'P-Qnear480K': 'Q1'}[go['preset']] and
+                isinstance(go['request_id'], str) and
+                bool(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,95}', go['request_id'])) and
+                all(isinstance(go[k], str) and bool(re.fullmatch(r'[0-9a-f]{64}', go[k]))
+                    for k in ('warm_hold_receipt_sha256', 'manifest_sha256', 'request_sha256', 'fixture_sha256')),
+                'postrestart_additional_followup_binding_invalid')
+        require(go['policy'] == {'measurement_admission_seconds': 21600, 'request_timeout_seconds': 7200,
+                'request_clock_starts': 'HTTP_DISPATCH', 'admission_deadline_refuses_new_only': True},
+                'postrestart_followup_clock_policy_changed')
+        saved = self.read_json('warm-hold.json')
+        require(go['warm_hold_receipt_sha256'] == hashlib.sha256(canonical(saved) + b'\n').hexdigest() and
+                go['manifest_sha256'] == digest(postrestart_manifest(go['placement'])),
+                'postrestart_additional_followup_identity_changed')
+        previous = self.budget.data
+        if 'followup_identity' in previous:
+            require(go['followup_session_id'] != previous['followup_identity']['session_id'],
+                    'postrestart_fresh_followup_session_required')
+        require(self.postrestart_hold_proof()['status'] == 'HELD', 'postrestart_followup_fresh_ready_required')
+        identity = {'session_id': go['followup_session_id'], 'source_commit': go['source_commit'],
+                    **{k: go[k] for k in ('request_id', 'placement', 'manifest_sha256', 'request_sha256',
+                                         'fixture_sha256', 'warm_hold_receipt_sha256')}}
+        self.owner.admit_followup(identity)
+        self.followup_request, self.followup_admitted = copy.deepcopy(go), set()
+        receipt = {'phase': 'ACTIVE', 'followup_identity': identity, 'budget': self.budget.data}
+        self.write_json('additional-followup.json', receipt)
+        return receipt
+
     def dispatch(self, message):
         require(isinstance(message, dict), 'invalid_rpc')
         op = message.get('op')
         args = message.get('args', {k: v for k, v in message.items() if k != 'op'})
         require(isinstance(args, dict), 'invalid_rpc_args')
-        if self.scope == CPU_SCOPE:
+        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
             require(op in {'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation', 'quiescent',
                 'request_begin', 'request_end', 'admit_concurrent', 'rpc_diagnostics', 'restore', 'recover',
-                'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'}, 'cpu_operation_outside_scope')
+                'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'} |
+                ({'warm_hold', 'resume_measurements', 'hold_checkpoint', 'admit_followup'} if self.scope == POSTRESTART_SCOPE else set()), 'cpu_operation_outside_scope')
         if self.scope == CANDIDATE_SCOPE:
             require(op in {'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation', 'quiescent',
                     'request_begin', 'request_end', 'candidate_denials', 'candidate_evidence', 'rpc_diagnostics',
                     'restore', 'recover', 'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'},
                     'candidate_operation_outside_scope')
+        if op == 'admit_followup':
+            return self.admit_followup(args.get('go'))
+        if op == 'hold_checkpoint':
+            return self.hold_checkpoint()
+        if op == 'warm_hold':
+            return self.warm_hold(args.get('reason'), args.get('preliminary_result_sha256'))
+        if op == 'resume_measurements':
+            return self.resume_measurements(args.get('followup_session_id'), args.get('source_commit'),
+                                            args.get('preliminary_result_sha256'))
         if op == 'begin':
             if args.get('resume'):
-                require(self.scope not in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE}, 'glmrepair_resume_forbidden_restore_only')
+                require(self.scope not in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}, 'glmrepair_resume_forbidden_restore_only')
                 ledger = self.read_json('owner.json')
                 require(ledger['phase'] == 'RESTORED' and self.budget.data['phase'] == 'RESTORED', 'resume_requires_verified_restoration')
                 require(time.time() - self.budget.data['started_at'] < 21600, 'STOP_BUDGET')
@@ -1696,7 +1917,7 @@ class LinuxHost:
             require(remaining > 0, 'STOP_BUDGET')
             manifest = self.manifests.get(args.get('manifest_sha256'))
             require(manifest is not None, 'unknown_manifest')
-            if self.scope in {CONCURRENT_SCOPE, CPU_SCOPE}:
+            if self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
                 require(digest(manifest) in self.concurrent_admitted, 'concurrent_round_not_admitted')
             token = _COMMAND_DEADLINE.set(time.monotonic() + min(7200, remaining))
             try:
@@ -1725,15 +1946,15 @@ class LinuxHost:
             return self.decode_cpu_capture_status(args['id'], args['capture_id'], args.get('client_after'))
         if op == 'request_begin':
             require(self.owner.phase == 'ACTIVE', 'owner_not_active')
-            container, cgroup, _ = self.identity(args['id']) if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE} else (None, None, None)
-            if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE}:
+            container, cgroup, _ = self.identity(args['id']) if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} else (None, None, None)
+            if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
                 require(args['id'] in self.allocation_proofs, 'concurrent_current_allocation_required')
                 self.concurrent_limits(self.load_manifests[args['id']], container, cgroup)
                 sample = self.telemetry(args['id'])
                 require(sample['concurrent_resource_gate']['status'] == 'PASS', 'concurrent_current_resource_gate_failed')
             else:
                 self.identity(args['id'])
-            if self.scope == CPU_SCOPE:
+            if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
                 from .cpu_budget_host import resident_obligations
                 resident_obligations(self)
             if self.scope == CANDIDATE_SCOPE:
@@ -1741,8 +1962,25 @@ class LinuxHost:
                 require(len(self.allocation_proofs) == 2 and len(self.load_manifests) == 2,
                         'candidate_both_resident_required')
                 admission(self)
-            timeout = self.budget.request_timeout(args.get('timeout_s', 7200))
+            if self.scope == POSTRESTART_SCOPE and args.get('measured') is True and self.followup_request is not None:
+                go = self.followup_request
+                require(not self.followup_admitted and self.load_manifests[args['id']]['placement'] == go['placement'] and
+                        args.get('request_identity') == {k: go[k] for k in ('request_id', 'request_sha256', 'manifest_sha256')},
+                        'postrestart_only_bound_additional_request')
+            if self.scope == POSTRESTART_SCOPE and args.get('measured') is True and not self.owner.warm_hold_resumed and self.followup_request is None:
+                placement = self.load_manifests[args['id']]['placement']
+                require(self.postrestart_measured_admissions[placement] < (2 if placement == 'G1' else 1),
+                        'postrestart_initial_closed_three_measurements')
+            if self.scope == POSTRESTART_SCOPE and (self.owner.warm_hold_resumed or self.followup_request is not None) and args.get('measured') is True:
+                require(args['id'] not in self.followup_admitted and len(self.followup_admitted) < 2,
+                        'postrestart_followup_only_remaining_pair')
+            timeout = self.budget.request_timeout(args.get('timeout_s', 7200),
+                **({'measured': args.get('measured', False)} if self.scope == POSTRESTART_SCOPE else {}))
             require(args['id'] not in self.requests, 'request_already_active')
+            if self.scope == POSTRESTART_SCOPE and (self.owner.warm_hold_resumed or self.followup_request is not None) and args.get('measured') is True:
+                self.followup_admitted.add(args['id'])
+            if self.scope == POSTRESTART_SCOPE and args.get('measured') is True and not self.owner.warm_hold_resumed and self.followup_request is None:
+                self.postrestart_measured_admissions[placement] += 1
             self.requests[args['id']] = {'started_at': time.time(), 'timeout_s': timeout}
             self.write_json('requests.json', self.requests)
             return {'timeout_s': timeout, 'budget': self.budget.data}
@@ -1877,7 +2115,7 @@ class LinuxHost:
 RPC_OPERATIONS = frozenset({'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation',
     'quiescent', 'diagnostic_snapshot', 'decode_progress', 'decode_cpu_capture_start', 'decode_cpu_capture_status',
     'candidate_denials', 'candidate_evidence', 'request_begin', 'request_end', 'admit_mixed', 'admit_concurrent', 'rpc_diagnostics', 'restore', 'recover',
-    'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'})
+    'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure', 'warm_hold', 'resume_measurements', 'hold_checkpoint', 'admit_followup'})
 RPC_SAFE_REQUIRE_CODES = frozenset({'native_server_args_unavailable',
     'allocation_log_too_large', 'current_model_mount_changed',
     'owned_container_identity_changed', 'installed_source_identity_changed',
@@ -1899,6 +2137,17 @@ def rpc_diagnostic(operation, error):
 
 
 def serve(host, source, sink):
+    """Only idle actual72 WARM_HOLD has an EOF canonical-cleanup policy."""
+    try:
+        return _serve_lines(host, source, sink)
+    finally:
+        if (getattr(host, 'scope', None) == POSTRESTART_SCOPE and
+                getattr(getattr(host, 'owner', None), 'phase', None) == 'WARM_HOLD' and
+                not getattr(host, 'requests', {})):
+            host.owner.restore()
+
+
+def _serve_lines(host, source, sink):
     """One serialized lifecycle thread. EOF does not implicitly stop inference."""
     pending_diagnostics = []
     for line in source:

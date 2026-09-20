@@ -201,9 +201,15 @@ class ConcurrentRun(runner.Campaign):
             super().retire_all()
             self.safety.clear()
 
-    def admission(self, cid, maximum=7200):
+    def admission(self, cid, maximum=7200, *, measured=False, request_identity=None):
         if self.interrupted.is_set():
             raise RuntimeError("ROOT_INTERRUPTED_DRAIN_AND_RESTORE")
+        if self.armed.get("scope") == "postrestart72-480k":
+            with self.lock:
+                if cid in self.safety:
+                    raise RuntimeError(self.safety[cid])
+            return self.host.call("request_begin", id=cid, timeout_s=maximum, measured=measured,
+                **({"request_identity": request_identity} if request_identity is not None else {})).get("timeout_s", 0)
         return super().admission(cid, maximum)
 
     def record(self, phase=None):
@@ -236,7 +242,10 @@ class ConcurrentRun(runner.Campaign):
     def request(self, cid, raw, identifier, *, timed=True, first_output=None, drained_event=None, stop_admission=None):
         if stop_admission is not None and stop_admission.is_set():
             raise PeerFinished()
-        timeout = self.admission(cid)
+        identity = {"request_id": identifier, "request_sha256": hashlib.sha256(raw).hexdigest(),
+                    "manifest_sha256": fixtures.digest(fixtures.canonical(self.active[cid]["manifest"]))}
+        timeout = (self.admission(cid, measured=timed, request_identity=identity)
+                   if self.armed.get("scope") == "postrestart72-480k" else self.admission(cid))
         if not 0 < timeout <= 7200:
             raise RuntimeError("STOP_BUDGET")
         manifest = self.active[cid]["manifest"]
@@ -252,20 +261,25 @@ class ConcurrentRun(runner.Campaign):
             if body.get("max_tokens") not in (32, 256, 512) or body.get("stream") is not True:
                 raise ValueError("closed_request_output_policy")
             transport = self.transport_factory("http://127.0.0.1:" + str(manifest["transport"]["port"]), self.key,
-                cancel_event=self.active[cid]["cancel_event"], deadline_epoch=self.armed["runtime"]["deadline_epoch"])
+                cancel_event=self.active[cid]["cancel_event"], deadline_epoch=None if self.armed.get("scope") == "postrestart72-480k" else self.armed["runtime"]["deadline_epoch"])
             def observed_transport(body, seconds):
                 try:
                     yield from transport(body, seconds)
                 finally:
                     if drained_event is not None:
                         drained_event.set()
+            if self.armed.get("scope") == "postrestart72-480k":
+                observed_transport.redact = lambda data: data.replace(self.key.encode("ascii"), b"[REDACTED]")
             result = client._capture_request(raw, observed_transport, sample_id=identifier, private_dir=self.private,
                 summary_path=self.state / ("samples.jsonl" if timed else "warmups.jsonl"), timeout=timeout,
                 clock=self.clock, observer_factory=Observer)
+            if self.armed.get("scope") == "postrestart72-480k":
+                result["summary"]["request_clock"] = getattr(transport, "request_clock", {
+                    "status": "UNAVAILABLE", "timeout_seconds": timeout, "basis": "transport_did_not_expose_dispatch_clock"})
             if self.active[cid].get("abort_reason"):
                 self.emit({"type": "resource_cancel", "id": identifier, "sample": result["summary"]})
                 raise RuntimeError(self.active[cid]["abort_reason"])
-            return glmrepair.Diagnostic.persistence_check(result)
+            return result if self.armed.get("scope") == "postrestart72-480k" else glmrepair.Diagnostic.persistence_check(result)
         finally:
             self.host.call("request_end", id=cid)
 
@@ -374,8 +388,12 @@ class ConcurrentRun(runner.Campaign):
                 "root_notification": "observed_below_1_token_per_second", "stop_condition": False})
         with self.lock:
             self.progress["completed"][identifier] = row;del self.progress["inflight"][identifier]
-            runner.save(self.state / (identifier + "-result.json"), row);self.emit({"type": "trial", **row});self.record()
+            self.persist_measurement(row)
         return row
+
+    def persist_measurement(self, row):
+        runner.save(self.state / (row["id"] + "-result.json"), row)
+        self.emit({"type": "trial", **row}); self.record()
 
     def sequence(self):
         self.host.call("begin")

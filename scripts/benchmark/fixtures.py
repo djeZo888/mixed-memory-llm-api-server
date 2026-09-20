@@ -24,6 +24,7 @@ MODELS = {"glm-5.3": "low", "qwen3.8-27b": "none",
           "bench-glm-5.3": "low", "bench-qwen3.8-27b": "none"}
 CAPACITIES = (4096, 16384, 65536, 131072, 262144)
 CPU_SCOPE = "concurrent-480k-cpu"
+POSTRESTART_SCOPE = "postrestart72-480k"
 CPU_CAPACITIES = {"bench-glm-5.3": (480000,), "bench-qwen3.8-27b": (480000,)}
 CONCURRENT_SCOPE = "concurrent-g1q1"
 CONCURRENT_CAPACITIES = {"bench-glm-5.3": (16384, 65536),
@@ -146,6 +147,14 @@ def _fit_target(model, capacity, scope, target_capacity, kind, output_cap, optio
         if target_capacity is not None or capacity not in CAPACITIES or (capacity == 131072 and not optional_131072):
             raise HarnessError("capacity is outside reviewed ladder")
         return capacity
+    if scope == POSTRESTART_SCOPE:
+        target = capacity if target_capacity is None else target_capacity
+        if (type(capacity) is not int or capacity != 480000 or kind != "retrieval"
+                or output_cap != 256 or type(target) is not int
+                or target not in ({"bench-glm-5.3": (4096, 65536),
+                                   "bench-qwen3.8-27b": (480000,)}.get(model, ()))):
+            raise HarnessError("postrestart fixture tuple outside reviewed scope")
+        return target
     if scope == CPU_SCOPE:
         target = capacity if target_capacity is None else target_capacity
         if (type(capacity) is not int or capacity not in CPU_CAPACITIES.get(model, ())
@@ -174,6 +183,8 @@ def fit_sample(model, capacity, seed, nonce, count, *, kind="retrieval", output_
     rather than a replacement for template counting. Tool rounds reserve 1024
     additional tokens and must be recounted after actual tool execution.
     """
+    if scope == POSTRESTART_SCOPE:
+        raise HarnessError("postrestart requires frozen logical fixtures; refit is forbidden")
     target = _fit_target(model, capacity, scope, target_capacity, kind, output_cap, optional_131072)
     if type(margin) is not int or margin < 128 or type(tolerance) is not int or not 1 <= tolerance <= 256:
         raise HarnessError("invalid fitting headroom/tolerance")

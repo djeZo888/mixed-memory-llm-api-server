@@ -82,7 +82,7 @@ class CampaignOwner:
                  reviewed_manifest_hashes, lease_factory=acquire_lease,
                  synthetic_offline=False, scope=None):
         require(type(synthetic_offline) is bool, "invalid_offline_mode")
-        require(scope in {None, "candidate-pair-validation", "concurrent-480k-cpu"}, "invalid_owner_scope")
+        require(scope in {None, "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}, "invalid_owner_scope")
         self.scope = scope
         self.campaign, self.manager, self.host, self.budget = campaign, manager, host, budget
         self.reviewed = frozenset(reviewed_manifest_hashes)
@@ -95,6 +95,8 @@ class CampaignOwner:
         self.errors = []
         self.budget_started = False
         self.restoration_started = False
+        self.warm_hold_reason, self.warm_hold_resumed = None, False
+        self.additional_followup_used = False
 
     def _lease_check(self):
         require(type(self.lease) is LifecycleLease, "canonical_capability_required")
@@ -114,9 +116,12 @@ class CampaignOwner:
                 "evidence_kind": "synthetic_offline" if self.synthetic else "live",
                 "original": copy.deepcopy(self.original), "resources": copy.deepcopy(self.resources),
                 "pending_create": copy.deepcopy(self.pending_create), "errors": list(self.errors)}
-        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"}:
+        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
             ledger.update(validation_scope=self.scope, production_touched=self.production_touched,
                           control_touched=self.control_touched)
+        if self.scope == "postrestart72-480k":
+            ledger.update(warm_hold_reason=self.warm_hold_reason, warm_hold_resumed=self.warm_hold_resumed,
+                          additional_followup_used=self.additional_followup_used)
         return ledger
 
     def _save(self):
@@ -133,7 +138,7 @@ class CampaignOwner:
             self.errors.append("evidence_write_failed")
 
     def _mutate(self, stage, function):
-        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"}:
+        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
             require(self.pending_create is None, "unresolved_create_blocks_mutation")
         self._gate(stage)
         self._guard()
@@ -177,6 +182,45 @@ class CampaignOwner:
             self._recover_failure("maintenance_failed")
             raise OwnerError("maintenance_failed_inspect_owner_ledger") from None
 
+    def warm_hold(self, reason):
+        """Narrow actual72 hold; no release, request, production activation or reload."""
+        require(self.scope == "postrestart72-480k" and self.phase == "ACTIVE" and
+                reason in {"complete", "preliminary_review", "paused", "quality_review"}, "postrestart_hold_scope_or_phase")
+        require(self.pending_create is None, "unresolved_create_blocks_hold")
+        live = [row for row in self.resources if row["state"] != "REMOVED"]
+        require(len(live) == 2 and all(row["state"] == "RUNNING" for row in live),
+                "postrestart_hold_requires_owned_pair")
+        self._gate("warm_hold")
+        self._guard()
+        for row in live:
+            observed = self.host.inspect(copy.deepcopy(row["resource"]))
+            require(observed is not None and self._resource(observed) == row["resource"] and observed["running"],
+                    "postrestart_hold_identity_changed")
+        self.phase, self.warm_hold_reason = "WARM_HOLD", reason
+        self._save()
+        return self._ledger()
+
+    def resume_measurements(self, followup_identity):
+        """Only the single reviewed preliminary pause may resume its conditional pair."""
+        require(self.scope == "postrestart72-480k" and self.phase == "WARM_HOLD" and
+                self.warm_hold_reason == "preliminary_review" and not self.warm_hold_resumed,
+                "postrestart_hold_resume_forbidden")
+        self._gate("warm_hold")
+        self.budget.begin_followup(followup_identity)
+        self.phase, self.warm_hold_resumed = "ACTIVE", True
+        self._save()
+        return self._ledger()
+
+    def admit_followup(self, identity):
+        require(self.scope == "postrestart72-480k" and self.phase == "WARM_HOLD" and
+                self.warm_hold_reason in {"complete", "quality_review", "paused"} and not self.additional_followup_used,
+                "postrestart_additional_followup_forbidden")
+        self._gate("warm_hold")
+        self.budget.begin_followup(identity)
+        self.phase, self.additional_followup_used = "ACTIVE", True
+        self._save()
+        return self._ledger()
+
     def record_harness_failure(self):
         """Owner-thread report-worker notification; never restores or stops models."""
         self._record_failure("HARNESS_FAILURE")
@@ -203,14 +247,14 @@ class CampaignOwner:
             self._gate("launch")
             self.pending_create = {"manifest_sha256": digest(manifest), "name": manifest["container_name"],
                                    "image": manifest["image"], "campaign": self.campaign}
-            if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"}:
+            if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
                 # The host marks uncertainty at the actual Docker dispatch seam,
                 # after admission, source/image and registered-path checks.
                 self.pending_create.update(dispatch="not_dispatched", kind="model")
             self._save()  # interrupted create remains recoverable by exact planned identity
             self._guard()
             created = self.host.create(copy.deepcopy(manifest))
-            if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"}:
+            if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
                 require(self.pending_create["dispatch"] == "uncertain", "candidate_create_dispatch_unrecorded")
             resource = self._resource(created, manifest)
             require(created["running"] is False, "create_must_not_start")
@@ -231,7 +275,7 @@ class CampaignOwner:
 
     def mark_create_dispatched(self):
         """Candidate-only durable boundary immediately before the Docker call."""
-        require(self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"} and self.pending_create is not None and
+        require(self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"} and self.pending_create is not None and
                 self.pending_create.get("dispatch") == "not_dispatched", "candidate_create_not_planned")
         self.pending_create["dispatch"] = "uncertain"
         try:
@@ -247,7 +291,7 @@ class CampaignOwner:
             raise
 
     def _settle_undispatched(self):
-        if (self.scope not in {"candidate-pair-validation", "concurrent-480k-cpu"} or self.pending_create is None or
+        if (self.scope not in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"} or self.pending_create is None or
                 self.pending_create.get("dispatch") != "not_dispatched"):
             return
         pending, self.pending_create = self.pending_create, None
@@ -258,7 +302,7 @@ class CampaignOwner:
             self.errors.append("undispatched_settlement_write_failed")
 
     def _retire_row(self, row):
-        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"}:
+        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
             require(self.pending_create is None, "unresolved_create_blocks_cleanup")
         resource = row["resource"]
         if row["state"] == "REMOVED":
@@ -295,7 +339,7 @@ class CampaignOwner:
         if self.lease is None:
             self.phase = "FAILED_BEFORE_OWNERSHIP"
             return
-        candidate_work = self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"} and (self.pending_create is not None or
+        candidate_work = self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"} and (self.pending_create is not None or
                          any(row["state"] != "REMOVED" for row in self.resources))
         if self.original is None or not (self.production_touched or self.control_touched or candidate_work):
             self._release()
