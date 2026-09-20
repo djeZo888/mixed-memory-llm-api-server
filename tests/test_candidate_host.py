@@ -304,3 +304,100 @@ class CandidateContainer(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class CandidateDemandIntegration(unittest.TestCase):
+    def sample(self):
+        from tests.test_concurrent_host import ConcurrentHostTests
+        host, row = ConcurrentHostTests().pressure_sample()
+        host.scope = candidate.SCOPE
+        host.load_manifests = dict(zip(('a', 'b'), profiles.candidate_manifests()))
+        for group in row['cgroups'].values():
+            group.update(swap_bytes=0, events={'oom': 0, 'oom_kill': 0, 'oom_group_kill': 0})
+        for gpu in row['gpus']:
+            gpu['total_bytes'] = 96 * GIB
+        return host, row
+
+    def test_same_approved_estimate_raw_peak_separate_and_resident_obligations(self):
+        host, row = self.sample()
+        result = host.candidate_pressure(row)
+        self.assertEqual(result['status'], 'PASS')
+        g = result['charges']['a']
+        self.assertEqual(g['evidence_status'], 'ESTIMATE')
+        self.assertEqual(g['required_bytes'], max(222023680 + 2100539392 + 428890877952,
+            429220401152 + 2100539392, g['native_floor_bytes']))
+        self.assertEqual(g['lifetime_peak_bytes'], 549898883072)
+        self.assertIsNone(g['reclaimable_file_bytes'])
+        self.assertTrue(g['cap_headroom_25_percent'])
+        self.assertGreater(result['remaining_cap_obligations']['required_host_available_bytes'], 16 * GIB)
+
+    def test_missing_estimate_inputs_stay_unavailable_and_numeric_excess_latches(self):
+        host, row = self.sample()
+        row['processes']['a']['rss_bytes'] = None
+        self.assertEqual(host.candidate_pressure(row)['status'], 'UNAVAILABLE')
+        row['cgroups']['a']['anon_bytes'] = 200 * GIB
+        result = host.candidate_pressure(row)
+        self.assertEqual(result['status'], 'STOP_RESOURCE_GATE')
+        row['cgroups']['a']['anon_bytes'] = 222023680
+        self.assertEqual(host.candidate_pressure(row)['status'], 'STOP_RESOURCE_GATE')
+
+    def test_qwen_margin_swap_oom_and_current_cap_failure_remain_stops(self):
+        for variant in ('gpu', 'swap', 'oom', 'cap'):
+            host, row = self.sample()
+            if variant == 'gpu': row['gpus'][1].update(total_bytes=200 * GIB, free_bytes=16 * GIB)
+            if variant == 'swap': row['cgroups']['b']['swap_bytes'] = 1
+            if variant == 'oom': row['cgroups']['b']['events']['oom'] = 1
+            if variant == 'cap': row['cgroups']['b']['current_bytes'] = 32 * GIB + 1
+            self.assertEqual(host.candidate_pressure(row)['status'], 'STOP_RESOURCE_GATE')
+
+
+class CandidateEvidence(unittest.TestCase):
+    def bare(self):
+        from benchmark.host import LinuxHost
+        host = LinuxHost.__new__(LinuxHost)
+        host.scope, host.requests = candidate.SCOPE, {}
+        host.load_manifests = dict(zip(('a', 'b'), profiles.candidate_manifests()))
+        host.manifests = {str(i): m for i, m in enumerate(host.load_manifests.values())}
+        host.candidate_auth = {'evidence': 'synthetic_offline'}
+        host.measured = {'G1': {'evidence_status': 'ESTIMATE', 'required_bytes': 401 * GIB},
+                         'Q1': {'evidence_status': 'UNAVAILABLE', 'required_bytes': None}}
+        host.log_root = '/data/logs/synthetic'
+        host.write_json, host.read_json = Mock(), Mock(return_value={'evidence': 'synthetic_offline'})
+        host.samples = {cid: [{'gpus': [{'uuid': m['gpu_uuids'][0], 'free_bytes': 20 * GIB}]}]
+                        for cid, m in host.load_manifests.items()}
+        checks = {}
+        for placement in ('G1', 'Q1'):
+            for kind in ('smoke', 'tool'):
+                row = {'status': 'PASS', 'placement': placement,
+                       'sample': {'counters': {'prompt_tokens': 300, 'completion_tokens': 32}}}
+                if kind == 'tool':
+                    row['continuation'] = {'counters': {'prompt_tokens': 400, 'completion_tokens': 48}}
+                checks[placement + '-' + kind] = row
+        return host, checks
+
+    def test_configured_occupied_and_estimated_raw_evidence_remain_distinct(self):
+        host, checks = self.bare()
+        result = host.dispatch({'op': 'candidate_evidence', 'checks': checks})
+        self.assertEqual(result['production_acceptance'], 'NOT_GRANTED')
+        receipt = host.write_json.call_args.args[1]
+        self.assertEqual(receipt['slots']['G1']['configured_context'], 480000)
+        self.assertEqual(receipt['slots']['Q1']['configured_context'], 700160)
+        self.assertEqual(receipt['slots']['G1']['largest_occupied_context_in_checks'], 448)
+        self.assertEqual(receipt['slots']['G1']['host_demand']['evidence_status'], 'ESTIMATE')
+        self.assertEqual(receipt['slots']['Q1']['host_demand']['evidence_status'], 'UNAVAILABLE')
+        self.assertEqual(len(receipt['slots']['G1']['samples_sha256']), 64)
+        self.assertTrue(receipt['slots']['G1']['sampled_not_absolute'])
+
+    def test_incomplete_or_missing_native_counts_cannot_emit_candidate_pass(self):
+        host, checks = self.bare();del checks['Q1-tool']
+        with self.assertRaises(ValueError): host.dispatch({'op': 'candidate_evidence', 'checks': checks})
+        host.write_json.assert_not_called()
+        host, checks = self.bare();checks['G1-smoke']['sample']['counters'] = {}
+        with self.assertRaises(ValueError): host.dispatch({'op': 'candidate_evidence', 'checks': checks})
+        host.write_json.assert_not_called()
+
+    def test_candidate_scope_excludes_profiler_and_arbitrary_benchmark_rounds(self):
+        host, _ = self.bare()
+        for op in ('admit_mixed', 'admit_concurrent', 'diagnostic_snapshot', 'decode_cpu_capture_start'):
+            with self.assertRaisesRegex(ValueError, 'candidate_operation_outside_scope'):
+                host.dispatch({'op': op})

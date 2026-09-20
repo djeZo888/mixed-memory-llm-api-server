@@ -301,8 +301,10 @@ def prepare(task, session):
     task = Path(task).resolve()
     require(not (task / 'arm.json').exists(), 'candidate_arm_exists')
     require(isinstance(session, str) and session, 'candidate_preparation_session_required')
+    from .host import concurrent_capacity_policy
     armed = {'schema': 1, 'scope': SCOPE, 'campaign': CAMPAIGN, 'session_id': session,
              'source_commit': glmrepair.git('rev-parse', 'HEAD'), 'runtime_policy': POLICY,
+             'candidate_capacity_policy': concurrent_capacity_policy(),
              'manifests': profiles.candidate_manifests(), 'trial_plan': profiles.trial_order(SCOPE),
              'fixed_samples': fixed_samples(), 'source_files': {p: fixtures.digest(b) for p, b in runner.source_files(SCOPE).items()},
              'native_auth_fixture': {'status': 'REQUIRED_ACTUAL_IMAGE_NOT_RUN', 'profile': 'qwen38-27b-q1-700160-yarn4-bf16kv'}}
@@ -337,9 +339,14 @@ def candidate_outcome(*, restore_only, checks_complete, failed, restored, errors
 
 
 def live_preflight():
-    # Root's LongPREP source handoff is deliberately not guessed or duplicated.
-    # Replace this closed refusal only with that reviewed helper integration.
-    raise ValueError('candidate_required_working_set_helper_integration_pending')
+    # No I/O: exact reviewed helper policy must be present before credentials or staging.
+    from .host import concurrent_capacity_policy
+    policy = concurrent_capacity_policy()
+    require(policy['headroom_observation'] ==
+            '5*sampled_peak_required_working_set_ESTIMATE<=4*cap; raw current/peak separate hard-cap guards'
+            and policy['caps_bytes'] == {'G1': 640 * GIB, 'Q1': 32 * GIB},
+            'candidate_reviewed_working_set_policy_required')
+    runner.run_preflight(SCOPE)
 
 
 def run(task, go_path, session, *, restore_only=False):

@@ -1,6 +1,7 @@
-"""Closed two-round G1/Q1 experiment; preparation is offline, RUN needs fresh GO.
+"""Closed long-only G1/Q1 continuation; preparation is offline, RUN needs fresh GO.
 
 Reuse the benchmark owner, guarded staging, native counters and drain-first client.
+The four predecessor short PASS rows remain separate immutable evidence.
 No production installation, model tuning, old campaign resume or profiling.
 """
 from __future__ import annotations
@@ -27,18 +28,23 @@ POLICY = {"budget_seconds": 5400, "request_max_seconds": 7200,
           "clock_includes_preparation": True, "clock_starts": "RUN_DISPATCH",
           "restoration_outside_budget": True, "includes_load_warmup_fitting": True, "excludes_source_prep": True}
 SUCCESS = {"PASS", "TIMING_ONLY"}
+ORIGINAL_START = 1789890954.308154
+ORIGINAL_DEADLINE = 1789896354.308154
+PREDECESSOR_TASK = "CONCURRENT-G1Q1-RUN-CONT1B-20260920"
+SHORT_RESULT_IDS = ("short-G1", "short-Q1-0", "short-Q1-1", "short-Q1-2")
 
 
 def bind_runtime(armed, go, session_id, now):
-    """Root stamps a fresh RUN clock; PREP never invents an execution epoch."""
+    """A fresh owner inherits the original clock from GO, never a new budget."""
     value = go.get("runtime", {})
     start, end = value.get("start_epoch"), value.get("deadline_epoch")
     if (armed.get("runtime_policy") != POLICY or any(value.get(k) != v for k, v in POLICY.items())
             or any(type(v) not in (int, float) or not math.isfinite(v) for v in (start, end))
-            or not 0 < start <= now < end or end != start + 5400
+            or (start, end) != (ORIGINAL_START, ORIGINAL_DEADLINE)
+            or not start <= now < end or end != start + 5400
             or go.get("run_session_id") != session_id or not session_id
             or session_id == armed.get("session_id")):
-        raise ValueError("fresh_RUN_dispatch_clock_and_session_required")
+        raise ValueError("original_RUN_clock_and_fresh_session_required")
     return copy.deepcopy(value)
 
 
@@ -62,7 +68,7 @@ def drain_threads(threads):
 
 def execute_round(glm_job, qwen_jobs, invoke, *, clock=time.monotonic, stop_event=None):
     """One barrier-started GLM lane and a bounded serial Qwen lane; drain both."""
-    if len(qwen_jobs) not in (3, 8):
+    if len(qwen_jobs) != 8:
         raise ValueError("closed_round_job_count")
     barrier, done, failed = threading.Barrier(2), threading.Event(), threading.Event()
     result = {"glm": None, "qwen": [], "errors": [], "started_monotonic_s": clock()}
@@ -372,41 +378,37 @@ class ConcurrentRun(runner.Campaign):
 
     def sequence(self):
         self.host.call("begin")
-        for round_name, gc, qc, maximum in (("short",16384,262144,3),("long",65536,700160,8)):
-            self.boundary();self.record("PREPARING_" + round_name)
-            admission = self.host.call("admit_concurrent", round=round_name)
-            ids = {m["placement"]: self.loaded(m) for m in admission["manifests"]}
-            g = self.prepare_job(ids["G1"], round_name + "-G1")
-            first = self.prepare_job(ids["Q1"], round_name + "-Q1-0", target=qc)
-            q = [first];filler = None
-            for index in range(1,maximum):
-                prepared = self.prepare_job(ids["Q1"], round_name + "-Q1-" + str(index), target=262144,
-                    matched=first["sample"] if round_name == "short" else filler)
-                filler = prepared["sample"];q.append(prepared)
-            self.boundary();self.record("DISPATCHING_" + round_name)
-            result = execute_round(g,q,self.measure,clock=self.clock,stop_event=self.interrupted)
-            self.emit({"type": "concurrent_round", "round": round_name, **result})
-            runner.save(self.state / (round_name + "-round.json"), result)
-            if result["status"] != "COMPLETE":
-                raise RuntimeError("STOP_ROUND_GATE")
-            if round_name == "short":
-                self.retire_all()
-            else:
-                self.boundary()
-                baseline = self.prepare_job(ids["Q1"], "large-Q1-resident-idle-reference", target=qc, matched=first["sample"])
-                if self.measure(baseline)["status"] != "PASS":
-                    raise RuntimeError("STOP_REFERENCE_GATE")
-                decode_overlap = any((r.get("decode_decode_seconds") or 0)>0 for r in result["overlap"]["pairs"])
-                if not decode_overlap and self.armed["optional_decode_pair"]:
-                    self.boundary()
-                    g = self.prepare_job(ids["G1"], "decode-G1", generation=True)
-                    q = self.prepare_job(ids["Q1"], "decode-Q1", generation=True)
-                    pair = execute_decode_pair(g,q,self.measure)
-                    self.emit({"type": "optional_decode_pair", **pair});runner.save(self.state / "decode-pair.json",pair)
-                    if pair["status"] == "FAILED":
-                        raise RuntimeError("STOP_OPTIONAL_DECODE_GATE")
-                self.boundary()
-                self.record("MEASUREMENTS_COMPLETE")
+        self.boundary();self.record("PREPARING_long")
+        admission = self.host.call("admit_concurrent", round="long")
+        ids = {m["placement"]: self.loaded(m) for m in admission["manifests"]}
+        g = self.prepare_job(ids["G1"], "long-G1")
+        first = self.prepare_job(ids["Q1"], "long-Q1-0", target=700160)
+        q = [first];filler = None
+        for index in range(1, 8):
+            prepared = self.prepare_job(ids["Q1"], "long-Q1-" + str(index), target=262144,
+                matched=filler)
+            filler = prepared["sample"];q.append(prepared)
+        self.boundary();self.record("DISPATCHING_long")
+        result = execute_round(g,q,self.measure,clock=self.clock,stop_event=self.interrupted)
+        self.emit({"type": "concurrent_round", "round": "long", **result})
+        runner.save(self.state / "long-round.json", result)
+        if result["status"] != "COMPLETE":
+            raise RuntimeError("STOP_ROUND_GATE")
+        self.boundary()
+        baseline = self.prepare_job(ids["Q1"], "large-Q1-resident-idle-reference", target=700160, matched=first["sample"])
+        if self.measure(baseline)["status"] != "PASS":
+            raise RuntimeError("STOP_REFERENCE_GATE")
+        decode_overlap = any((r.get("decode_decode_seconds") or 0)>0 for r in result["overlap"]["pairs"])
+        if not decode_overlap and self.armed["optional_decode_pair"]:
+            self.boundary()
+            g = self.prepare_job(ids["G1"], "decode-G1", generation=True)
+            q = self.prepare_job(ids["Q1"], "decode-Q1", generation=True)
+            pair = execute_decode_pair(g,q,self.measure)
+            self.emit({"type": "optional_decode_pair", **pair});runner.save(self.state / "decode-pair.json",pair)
+            if pair["status"] == "FAILED":
+                raise RuntimeError("STOP_OPTIONAL_DECODE_GATE")
+        self.boundary()
+        self.record("MEASUREMENTS_COMPLETE")
 
     def execute(self):
         monitor = threading.Thread(target=self.monitor, daemon=True);monitor.start()
@@ -422,23 +424,57 @@ def prepare(task, session_id):
         raise ValueError("arm_exists_preserve_review")
     from .host import concurrent_capacity_policy
     private = task / "private";private.mkdir(mode=0o700,exist_ok=True)
-    frozen = {}
-    for capacity in (16384,65536):
-        source = task.parent / "GLM-G1-LADDER-20260920/private" / ("G1-"+str(capacity)+"-primary-fixture.json")
-        value = json.loads(source.read_bytes());fixtures.serialize_validate(value)
-        target = private / ("G1-"+str(capacity)+"-saved-fixture.json");runner.save(target,value)
-        frozen[str(target.relative_to(task))] = fixtures.digest(target.read_bytes())
+    source = task.parent / "GLM-G1-LADDER-20260920/private/G1-65536-primary-fixture.json"
+    fixture = json.loads(source.read_bytes());fixtures.serialize_validate(fixture)
+    target = private / "G1-65536-saved-fixture.json";runner.save(target,fixture)
+    frozen = {str(target.relative_to(task)): fixtures.digest(target.read_bytes())}
+    previous = task.parent / PREDECESSOR_TASK
+    names = [identifier + "-result.json" for identifier in SHORT_RESULT_IDS] + [
+        "short-round.json", "arm.json", "execution-arm.json", "initial-run-progress.json",
+        "initial-run-run-outcome.json", "initial-run-restoration-rpc-diagnostics.json",
+        "final-restoration-receipt.json"]
+    saved = {name: json.loads((previous / name).read_bytes()) for name in names}
+    if any(saved[identifier + "-result.json"].get("status") != "PASS" for identifier in SHORT_RESULT_IDS):
+        raise ValueError("predecessor_four_short_PASS_rows_required")
+    previous_clock = saved["execution-arm.json"]["runtime"]
+    if (previous_clock.get("start_epoch"), previous_clock.get("deadline_epoch")) != (ORIGINAL_START, ORIGINAL_DEADLINE):
+        raise ValueError("predecessor_original_clock_changed")
+    restoration = (previous / "restoration-ledger-state.json").read_bytes()
+    runner.save(task / "predecessor-evidence.json", {
+        "task": PREDECESSOR_TASK, "saved_source_path": str(previous),
+        "files_sha256": {name: fixtures.digest((previous / name).read_bytes()) for name in names},
+        "short_PASS_ids": list(SHORT_RESULT_IDS), "short_measurements_repeated": False,
+        "restoration_saved_snapshot": json.loads(restoration),
+        "final_restoration_receipt": saved["final-restoration-receipt.json"],
+        "restoration_saved_sha256": fixtures.digest(restoration),
+        "restoration_status": "SAVED_FINAL_RECEIPT_BOUND_ROOT_REVIEWS_BEFORE_GO",
+        "history_policy": "original failure, PASS rows, logs and restoration remain untouched in predecessor"})
+    runner.save(task/"progress.json",{"phase":"INITIAL","completed":{},"inflight":{},"errors":[],
+        "predecessor_evidence":"predecessor-evidence.json"})
+    package_inputs = ["progress.json", "predecessor-evidence.json", *frozen]
     value = {"schema":1,"scope":SCOPE,"campaign":profiles.CONCURRENT_CAMPAIGN,"session_id":session_id,
         "source_commit":glmrepair.git("rev-parse","HEAD"), "runtime_policy":POLICY,
+        "runtime_source_path":"/data/services/" + profiles.CONCURRENT_CAMPAIGN + "/source",
         "manifests":profiles.concurrent_manifests(),"trial_plan":profiles.trial_order(SCOPE),
         "concurrent_capacity_policy":concurrent_capacity_policy(),"frozen_inputs":frozen,
+        "predecessor_evidence_sha256":fixtures.digest((task/"predecessor-evidence.json").read_bytes()),
+        "required_package_files":["arm.json","arm-receipt.json",*package_inputs],
+        "initial_package_sha256":{name:fixtures.digest((task/name).read_bytes()) for name in package_inputs},
         "optional_decode_pair":True,"source_files":{p:fixtures.digest(b) for p,b in runner.source_files().items()}}
     profiles.validate_arm_scope(value)
     runner.save(task/"arm.json",value)
     runner.save(task/"arm-receipt.json",{"source_commit":value["source_commit"],"preparation_session_id":session_id,
         "campaign":value["campaign"],"arm_sha256":fixtures.digest((task/"arm.json").read_bytes())})
-    runner.save(task/"progress.json",{"phase":"SOURCE_READY_FOR_ROOT_REVIEW","completed":{},"inflight":{},"errors":[]})
     return value
+
+
+def verify_initial_package(task, armed):
+    for name in armed["required_package_files"]:
+        if not (task/name).is_file():
+            raise ValueError("required_package_file_missing")
+    for name, expected in armed["initial_package_sha256"].items():
+        if fixtures.digest((task/name).read_bytes()) != expected:
+            raise ValueError("initial_package_file_changed")
 
 
 def run(task, go_path, session_id, *, restore_only=False):
@@ -458,6 +494,7 @@ def run(task, go_path, session_id, *, restore_only=False):
         if executed.get("preparation_arm_sha256")!=receipt["arm_sha256"]:raise ValueError("recovery_arm_changed")
     else:
         if execution.exists():raise ValueError("no_rerun_or_clock_reset")
+        verify_initial_package(task, armed)
         executed={**armed,"runtime":bind_runtime(armed,go,session_id,time.time()),"session_id":session_id,
                   "preparation_arm_sha256":receipt["arm_sha256"]}
         runner.save(execution,executed)

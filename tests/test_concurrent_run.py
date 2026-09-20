@@ -28,6 +28,12 @@ def row(identifier="offline", *, status="PASS", started=1.0, ended=3.0,
 
 
 class ConcurrentSchedulingTests(unittest.TestCase):
+    def test_short_dispatch_count_is_rejected(self):
+        invoke = Mock()
+        with self.assertRaisesRegex(ValueError, "closed_round_job_count"):
+            run.execute_round({"id": "g"}, [{"id": "q" + str(i)} for i in range(3)], invoke)
+        invoke.assert_not_called()
+
     def test_first_pair_dispatches_both_even_if_glm_finishes_immediately(self):
         # This catches the race where glm_done incorrectly suppresses even the
         # first Qwen request. No delay is needed to make a short GLM legal.
@@ -38,13 +44,13 @@ class ConcurrentSchedulingTests(unittest.TestCase):
                 with lock:
                     calls.append(job["id"])
                 return row(job["id"])
-            result = run.execute_round({"id": "g"}, [{"id": "q" + str(i)} for i in range(3)], invoke)
+            result = run.execute_round({"id": "g"}, [{"id": "q" + str(i)} for i in range(8)], invoke)
             self.assertEqual(result["status"], "COMPLETE")
             self.assertEqual(calls.count("g"), 1)
             self.assertEqual(calls.count("q0"), 1)
 
     def test_first_pair_runs_concurrently_and_qwen_lane_is_serial_bounded(self):
-        for maximum in (3, 8):
+        for maximum in (8,):
             with self.subTest(maximum=maximum):
                 entered = threading.Barrier(2)
                 q_done = threading.Event()
@@ -85,7 +91,7 @@ class ConcurrentSchedulingTests(unittest.TestCase):
             return {**row("q", status="PASS"),
                     "strict_framing": {"status": "HARNESS_FAILURE"},
                     "semantic_retrieval": {"status": "PASS"}}
-        result = run.execute_round({"id": "g"}, [{"id": "q" + str(i)} for i in range(3)], invoke)
+        result = run.execute_round({"id": "g"}, [{"id": "q" + str(i)} for i in range(8)], invoke)
         self.assertEqual(result["status"], "COMPLETE")
         self.assertEqual(drained, ["g"])
 
@@ -99,7 +105,7 @@ class ConcurrentSchedulingTests(unittest.TestCase):
             return {**row(job["id"], status="TIMING_ONLY"),
                     "finish_reason": "length", "completion_tokens": 256,
                     "native_tokens_per_second": 0.001}
-        result = run.execute_round({"id": "g"}, [{"id": "q" + str(i)} for i in range(3)], invoke)
+        result = run.execute_round({"id": "g"}, [{"id": "q" + str(i)} for i in range(8)], invoke)
         self.assertEqual(result["status"], "COMPLETE")
         self.assertIn("g", calls)
         self.assertIn("q0", calls)
@@ -181,7 +187,7 @@ class ConcurrentSchedulingTests(unittest.TestCase):
         try:
             with patch.object(threading.Thread, "join", join):
                 with self.assertRaises(KeyboardInterrupt):
-                    run.execute_round({"id": "g"}, [{"id": "q" + str(i)} for i in range(3)], invoke)
+                    run.execute_round({"id": "g"}, [{"id": "q" + str(i)} for i in range(8)], invoke)
             at_propagation = list(drained)
             alive_at_propagation = [thread.is_alive() for thread in joined]
         finally:
@@ -247,7 +253,7 @@ class ConcurrentRecoveryTests(unittest.TestCase):
                                                   "inflight": {}, "errors": []})
             runner.save(task / "GO.json", {**receipt, "decision": "GO", "vm_writer_handoff": True,
                 "run_session_id": "fresh-run", "runtime": {**run.POLICY,
-                                                             "start_epoch": 1000, "deadline_epoch": 6400}})
+                                                             "start_epoch": run.ORIGINAL_START, "deadline_epoch": run.ORIGINAL_DEADLINE}})
             calls, observed_jobs = [], []
             phase = ["NEW"]
             def call(op, **kwargs):
@@ -296,11 +302,12 @@ class ConcurrentRecoveryTests(unittest.TestCase):
             with patch.object(runner, "source_files", return_value={}), \
                  patch.object(run.os, "geteuid", return_value=502), \
                  patch.object(Path, "lstat", lstat), \
-                 patch.object(run.time, "time", return_value=1000), \
+                 patch.object(run.time, "time", return_value=run.ORIGINAL_START), \
                  patch("runtime.sglang38_file_auth.read_key", return_value="offline-key"), \
                  patch.object(runner, "run_preflight"), \
                  patch.object(run.glmrepair, "DiagnosticSSHHost", return_value=host), \
                  patch.object(run.ConcurrentRun, "execute", failed_execute), \
+                 patch.object(run, "verify_initial_package"), \
                  patch.object(run.ConcurrentRun, "record", record), \
                  patch.object(run, "restore_and_finalize", side_effect=lambda h, k, c: canonical(h, k, c, verify=lan)), \
                  patch.object(run.socket, "socket", socket), \
@@ -398,21 +405,23 @@ class ConcurrentDecodePairTests(unittest.TestCase):
 
 
 class ConcurrentRuntimeTests(unittest.TestCase):
-    def test_fresh_dispatch_clock_is_exact_5400_with_7200_request_ceiling(self):
+    def test_original_clock_is_unchanged_and_fresh_owner_cannot_reset(self):
         armed = {"runtime_policy": copy.deepcopy(run.POLICY), "session_id": "prep-session"}
+        start, end = run.ORIGINAL_START, run.ORIGINAL_DEADLINE
         go = {"run_session_id": "fresh-run", "runtime": {**run.POLICY,
-              "start_epoch": 1000.0, "deadline_epoch": 6400.0}}
+              "start_epoch": start, "deadline_epoch": end}}
         original = copy.deepcopy(go)
-        self.assertEqual(run.bind_runtime(armed, go, "fresh-run", 1000), go["runtime"])
+        self.assertEqual(run.bind_runtime(armed, go, "fresh-run", start+100), go["runtime"])
         self.assertEqual(go, original)
-        for changes, session, now in [({"start_epoch": True}, "fresh-run", 1000),
-                                     ({"start_epoch": float("nan")}, "fresh-run", 1000),
-                                     ({"deadline_epoch": float("inf")}, "fresh-run", 1000),
-                                     ({"deadline_epoch": 6401}, "fresh-run", 1000),
-                                     ({"request_max_seconds": 7201}, "fresh-run", 1000),
-                                     ({"budget_seconds": 7200}, "fresh-run", 1000),
-                                     ({}, "prep-session", 1000), ({}, "fresh-run", 999),
-                                     ({}, "fresh-run", 6400)]:
+        for changes, session, now in [({"start_epoch": True}, "fresh-run", start),
+                                     ({"start_epoch": float("nan")}, "fresh-run", start),
+                                     ({"deadline_epoch": float("inf")}, "fresh-run", start),
+                                     ({"start_epoch": start+1, "deadline_epoch": end+1}, "fresh-run", start+1),
+                                     ({"deadline_epoch": end+1}, "fresh-run", start),
+                                     ({"request_max_seconds": 7201}, "fresh-run", start),
+                                     ({"budget_seconds": 7200}, "fresh-run", start),
+                                     ({}, "prep-session", start), ({}, "fresh-run", start-1),
+                                     ({}, "fresh-run", end)]:
             candidate = {**go, "runtime": {**go["runtime"], **changes}}
             with self.subTest(changes=changes, session=session, now=now), self.assertRaises(ValueError):
                 run.bind_runtime(armed, candidate, session, now)
@@ -435,6 +444,58 @@ class ConcurrentRuntimeTests(unittest.TestCase):
                 host.assert_not_called()
 
 
+class ConcurrentPackageTests(unittest.TestCase):
+    def test_prepare_manifests_initial_progress_fixture_and_immutable_predecessor(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            task = root / "LONG-PREP"
+            task.mkdir()
+            previous = root / run.PREDECESSOR_TASK
+            previous.mkdir()
+            for identifier in run.SHORT_RESULT_IDS:
+                runner.save(previous / (identifier + "-result.json"), {"id": identifier, "status": "PASS"})
+            for name in ("short-round.json", "arm.json", "initial-run-progress.json",
+                         "initial-run-run-outcome.json", "initial-run-restoration-rpc-diagnostics.json"):
+                runner.save(previous / name, {"offline_saved_evidence": name})
+            runner.save(previous / "execution-arm.json", {"runtime": {
+                "start_epoch": run.ORIGINAL_START, "deadline_epoch": run.ORIGINAL_DEADLINE}})
+            runner.save(previous / "restoration-ledger-state.json", {"phase": "RECOVERY_REQUIRED"})
+            runner.save(previous / "final-restoration-receipt.json", {"status": "PASS", "phase": "RESTORED",
+                "authenticated_worker_LAN": True, "local_tunnel_ports": {"31002": "CLOSED", "31004": "CLOSED"}})
+            fixture = fixtures.build_sample("bench-glm-5.3", 20, "offline-seed", "offline-saved-prefix")
+            runner.save(root / "GLM-G1-LADDER-20260920/private/G1-65536-primary-fixture.json", fixture)
+            original = {p.name:p.read_bytes() for p in previous.iterdir()}
+            with patch.object(run.glmrepair, "git", return_value="a" * 40), \
+                 patch.object(runner, "source_files", return_value={}):
+                armed = run.prepare(task, "offline-prep")
+            expected = {"arm.json", "arm-receipt.json", "progress.json", "predecessor-evidence.json",
+                        "private/G1-65536-saved-fixture.json"}
+            self.assertEqual(set(armed["required_package_files"]), expected)
+            self.assertEqual(set(armed["frozen_inputs"]), {"private/G1-65536-saved-fixture.json"})
+            self.assertEqual(armed["runtime_source_path"],
+                             "/data/services/benchrun-concurrent-g1q1-long-20260920/source")
+            run.verify_initial_package(task, armed)
+            host = Mock()
+            job = run.ConcurrentRun(task, armed, host, "offline-key")
+            self.assertEqual(job.progress["phase"], "INITIAL")
+            self.assertEqual(job.progress["completed"], {})
+            self.assertEqual(job.progress["inflight"], {})
+            self.assertEqual(job.progress["errors"], [])
+            host.call.assert_not_called()
+            self.assertEqual({p.name:p.read_bytes() for p in previous.iterdir()}, original)
+            evidence = json.loads((task / "predecessor-evidence.json").read_bytes())
+            self.assertEqual(evidence["short_PASS_ids"], list(run.SHORT_RESULT_IDS))
+            self.assertEqual(evidence["restoration_saved_snapshot"]["phase"], "RECOVERY_REQUIRED")
+            self.assertEqual(len(evidence["files_sha256"]), 11)
+            self.assertEqual(evidence["final_restoration_receipt"]["status"], "PASS")
+            (task / "progress.json").unlink()
+            with self.assertRaisesRegex(ValueError, "required_package_file_missing"):
+                run.verify_initial_package(task, armed)
+            runner.save(task / "progress.json", {"phase": "NOT_INITIAL"})
+            with self.assertRaisesRegex(ValueError, "initial_package_file_changed"):
+                run.verify_initial_package(task, armed)
+
+
 class ConcurrentLoadingTelemetryTests(unittest.TestCase):
     """Real worker load/collect/admission and Linux pressure/request gates; fake I/O."""
     def setup_case(self):
@@ -442,9 +503,10 @@ class ConcurrentLoadingTelemetryTests(unittest.TestCase):
         self.addCleanup(temp.cleanup)
         state = Path(temp.name)
         runner.save(state / "progress.json", {"phase": "OFFLINE", "completed": {}, "inflight": {}, "errors": []})
-        manifest = profiles.concurrent_manifest("G1", 16384)
+        manifest = profiles.concurrent_manifest("G1", 65536)
         gib = 1024**3
         good = {"errors": [], "host": {"available_bytes": 300 * gib},
+                "processes": {"g": {"rss_bytes": 400 * gib}},
                 "gpus": [{"uuid": manifest["gpu_uuids"][0], "free_bytes": 64 * gib}],
                 "cgroups": {"g": {"current_bytes": 401 * gib, "peak_since_cgroup_creation_bytes": 402 * gib,
                     "anon_bytes": 400 * gib, "kernel_bytes": gib, "file_bytes": 0,
@@ -523,7 +585,9 @@ class ConcurrentLoadingTelemetryTests(unittest.TestCase):
                 job, host, rows, manifest = self.setup_case()
                 self.activate(job, rows, manifest)
                 group = rows["loading"]["cgroups"]["g"]
-                if violation == "cap": group["current_bytes"] = 513 * 1024**3
+                if violation == "cap":
+                    group["anon_bytes"] = 512 * 1024**3
+                    group["current_bytes"] = group["peak_since_cgroup_creation_bytes"] = 513 * 1024**3
                 if violation == "host": rows["loading"]["host"]["available_bytes"] = 0
                 if violation == "gpu":
                     rows["loading"]["gpus"] = [{"uuid": manifest["gpu_uuids"][0], "free_bytes": 0}]
@@ -820,7 +884,7 @@ class ConcurrentCallerTests(unittest.TestCase):
                     self.assertEqual(prepared["sample"][field], saved[field])
                 self.assertNotEqual(prepared["sample"]["nonce"], saved["nonce"])
 
-    def test_exact_two_rounds_and_same_large_pool_fillers_then_matched_idle_reference(self):
+    def test_long_only_no_short_same_large_pool_fillers_then_matched_idle_reference(self):
         for observed_overlap, optional_status in ((True, "COMPLETE"), (False, "COMPLETE"), (False, "FAILED")):
             with self.subTest(observed_overlap=observed_overlap, optional_status=optional_status):
                 job = self.job()
@@ -832,7 +896,8 @@ class ConcurrentCallerTests(unittest.TestCase):
                         events.append("begin")
                         return {}
                     self.assertEqual(op, "admit_concurrent")
-                    pair = (16384, 262144) if kwargs["round"] == "short" else (65536, 700160)
+                    self.assertEqual(kwargs["round"], "long")
+                    pair = (65536, 700160)
                     return {"manifests": [{"placement": p, "configured_capacity": c}
                                           for p, c in zip(("G1", "Q1"), pair)]}
                 self.host.call.side_effect = call
@@ -869,12 +934,11 @@ class ConcurrentCallerTests(unittest.TestCase):
                             job.sequence()
                     else:
                         job.sequence()
-                self.assertEqual(events, ["begin", "load-G1-16384", "load-Q1-262144", "round-short-G1",
-                    "retire", "load-G1-65536", "load-Q1-700160", "round-long-G1",
+                self.assertEqual(events, ["begin", "load-G1-65536", "load-Q1-700160", "round-long-G1",
                     "large-Q1-resident-idle-reference"])
-                self.assertEqual([len(q) for _, q in rounds], [3, 8])
-                short, long = rounds[0][1], rounds[1][1]
-                self.assertEqual([p["options"]["target"] for p in short], [262144] * 3)
+                self.assertEqual([len(q) for _, q in rounds], [8])
+                long = rounds[0][1]
+                self.assertFalse(any(p["id"].startswith("short") for p in prepared_jobs))
                 self.assertEqual([p["options"]["target"] for p in long], [700160] + [262144] * 7)
                 self.assertTrue(all(p["cid"] == "Q1-700160" for p in long))
                 self.assertIsNone(long[1]["options"]["matched"])

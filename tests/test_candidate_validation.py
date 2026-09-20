@@ -279,7 +279,7 @@ class CandidateValidation(unittest.TestCase):
         self.assertEqual(candidate.candidate_outcome(restore_only=False, checks_complete=False,
             failed=False, restored=True, errors=[])['status'], 'CANDIDATE_FAIL')
 
-    def test_live_refuses_before_host_until_reviewed_demand_helper_arrives(self):
+    def test_live_refuses_before_host_without_actual_image_proof_after_helper_integration(self):
         with tempfile.TemporaryDirectory() as directory, \
              patch.object(candidate.glmrepair, 'git', return_value='a' * 40), \
              patch.object(runner, 'source_files', return_value={'synthetic.py': b'source'}), \
@@ -290,7 +290,7 @@ class CandidateValidation(unittest.TestCase):
             go = json.loads((task / 'GO.template.json').read_bytes())
             go.update(decision='GO', vm_writer_handoff=True, benchmark_restored=True)
             runner.save(task / 'synthetic-go.json', go)
-            with self.assertRaisesRegex(ValueError, 'candidate_required_working_set_helper_integration_pending'):
+            with self.assertRaisesRegex(ValueError, 'candidate_actual_image_auth_receipt_required'):
                 candidate.run(task, task / 'synthetic-go.json', 'fresh')
             ssh.assert_not_called()
             self.assertFalse((task / 'execution-arm.json').exists())

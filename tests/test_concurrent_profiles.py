@@ -25,10 +25,12 @@ def counter(capacity):
 
 
 class ConcurrentProfiles(unittest.TestCase):
-    def test_four_exact_tuples_and_fixed_resources(self):
+    def test_two_exact_long_tuples_and_fixed_resources(self):
         manifests = profiles.concurrent_manifests()
         self.assertEqual([(m["placement"], m["configured_capacity"]) for m in manifests],
-                         list(profiles.CONCURRENT_TUPLES))
+                         [("G1", 65536), ("Q1", 700160)])
+        self.assertEqual(profiles.CONCURRENT_CAMPAIGN, "benchrun-concurrent-g1q1-long-20260920")
+        self.assertEqual(profiles.scope_capacities(profiles.CONCURRENT_SCOPE), (65536, 700160))
         for m in manifests:
             glm = m["placement"] == "G1"
             args, native = m["create_argv"], m["native_argv"]
@@ -62,11 +64,11 @@ class ConcurrentProfiles(unittest.TestCase):
             bad = copy.deepcopy(armed)
             if kind == "capacity": bad["manifests"][-1]["configured_capacity"] = 700000
             if kind == "ram": bad["manifests"][1]["ram_cap_bytes"] += 1
-            if kind == "plan": bad["trial_plan"]["rounds"][1]["qwen_max_requests"] = 9
+            if kind == "plan": bad["trial_plan"]["rounds"][0]["qwen_max_requests"] = 9
             if kind == "campaign": bad["campaign"] = "benchrun-20260919"
             with self.subTest(kind=kind), self.assertRaises(ValueError):
                 profiles.validate_arm_scope(bad)
-        for placement, capacity in (("G2", 16384), ("G1", 262144), ("Q2", 700160), ("Q1", 700000)):
+        for placement, capacity in (("G2", 16384), ("G1", 262144), ("Q2", 700160), ("Q1", 700000), ("G1", 16384), ("Q1", 262144), ("G1", 480000)):
             with self.assertRaises(ValueError): profiles.concurrent_manifest(placement, capacity)
 
     def test_legacy_profile_behavior_and_new_launcher_scope_are_closed(self):
@@ -82,11 +84,11 @@ class ConcurrentProfiles(unittest.TestCase):
         with self.assertRaises(ValueError): profiles.command_manifest("Q1", 700160)
         with self.assertRaises(ValueError): profiles.command_manifest("Q1", 262144, mixed=True, ram_cap=32*1024**3)
 
-    def test_frozen_rounds_and_clock(self):
+    def test_frozen_long_only_round_and_clock(self):
         plan = profiles.trial_order(profiles.CONCURRENT_SCOPE)
         self.assertEqual([(r["glm_capacity"], r["qwen_capacity"], r["qwen_max_requests"])
-                          for r in plan["rounds"]], [(16384, 262144, 3), (65536, 700160, 8)])
-        self.assertEqual(plan["rounds"][1]["qwen_filler_target_capacity"], 262144)
+                          for r in plan["rounds"]], [(65536, 700160, 8)])
+        self.assertEqual(plan["rounds"][0]["qwen_filler_target_capacity"], 262144)
         self.assertEqual((plan["measurement_budget_seconds"], plan["maximum_request_seconds"]), (5400, 7200))
         self.assertTrue(plan["clock_includes_preparation"])
         self.assertTrue(plan["restoration_outside_budget"])

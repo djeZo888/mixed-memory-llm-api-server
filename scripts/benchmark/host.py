@@ -31,7 +31,7 @@ from .profiles import (read_config, command_manifest, split_resources, validate_
                        G1_RAM_CAP_BYTES, glmrepair_manifest, g1_ladder_manifest, glm_decode_diag_manifest, cpu_set,
                        CONCURRENT_SCOPE, CONCURRENT_CAMPAIGN, CONCURRENT_Q1_RAM_CAP_BYTES, concurrent_manifest,
                        CANDIDATE_SCOPE, candidate_manifest, candidate_manifests, candidate_modules, candidate_profile)
-from .telemetry import collect_sample, required_host_demand
+from .telemetry import collect_sample, required_host_demand, concurrent_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
 INSTALL = Path('/usr/local/lib/llm-server/control-api')
@@ -55,7 +55,11 @@ def concurrent_capacity_policy():
                        'sha256': '3a96e83cfe45764cf67828523667328290d717719e64025c97205a445e7fc1da',
                        'required_bytes': 13287989248,
                        'basis': 'host_load_peak; failed initial4K loader;32GiB candidate needs current load proof'}},
-            'headroom_observation': '5*max(memory.current,memory.peak,anon+kernel+max(file,mapped,shmem))<=4*cap; never sum overlapping totals',
+            'headroom_observation': '5*sampled_peak_required_working_set_ESTIMATE<=4*cap; raw current/peak separate hard-cap guards',
+            'G1_native_floor': {'bytes': math.ceil((409012.22 + 0.005) * 1024**2) + 159461408,
+                'basis': 'same-pin historical G65536 CUDA_Host409012.22MiB rounded-up plus159461408B workspace; not current allocation proof',
+                'report_sha256': 'f9ed5c46c57ceb44e7af2d78838f4c65fb1bdfb1abd8734687a27401815d6cdc',
+                'raw_log_sha256': 'f2272149566ee0892384d6b7b62432a7e1d5cfa2d71ac55897043fd7d1c2d49a'},
             'preload_host_available_minimum_bytes': 688 * 1024**3,
             'actual_load_required': True, 'allocator_policy_change_allowed': False}
 
@@ -199,7 +203,7 @@ class LinuxHost:
         self.scope = validate_arm_scope(data)
         self.mode = data.get('mode') if self.scope == 'glm-decode-diag' else None
         self.decode_capture_policy = copy.deepcopy(data.get('capture', {})) if self.scope == 'glm-decode-diag' else {}
-        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3, CONCURRENT_SCOPE: 4, CANDIDATE_SCOPE: 2}[self.scope]
+        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3, CONCURRENT_SCOPE: 2, CANDIDATE_SCOPE: 2}[self.scope]
         if self.mode == 'cpu-profile-only':
             manifest_count = 1
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
@@ -224,6 +228,7 @@ class LinuxHost:
                     json.loads(auth_raw) == data['actual_image_auth_proof'], 'candidate_protected_auth_receipt_changed')
             self.candidate_auth = data['actual_image_auth_proof']
             self.concurrent_resource_violations = {}
+            require(data.get('candidate_capacity_policy') == concurrent_capacity_policy(), 'candidate_demand_policy_changed')
             require(values == candidate_manifests(self.binding), 'candidate_registered_manifests_changed')
         elif self.scope == CONCURRENT_SCOPE:
             self.start_epoch, self.deadline_epoch = self.concurrent_clock(data)
@@ -271,8 +276,8 @@ class LinuxHost:
         require(armed.get('campaign') == CONCURRENT_CAMPAIGN and
                 'continuation_execution' not in armed and 'start_epoch' not in armed and
                 type(start) in (int, float) and type(deadline) in (int, float) and
-                math.isfinite(start) and math.isfinite(deadline) and start > 0 and
-                deadline == start + 5400 and runtime.get('budget_seconds') == 5400 and
+                math.isfinite(start) and math.isfinite(deadline) and start == 1789890954.308154 and
+                deadline == 1789896354.308154 and deadline == start + 5400 and runtime.get('budget_seconds') == 5400 and
                 runtime.get('request_max_seconds') == 7200 and
                 runtime.get('clock_includes_preparation') is True and
                 runtime.get('includes_load_warmup_fitting') is True and
@@ -329,7 +334,7 @@ class LinuxHost:
         require(self.scope == CONCURRENT_SCOPE and self.owner.phase == 'ACTIVE',
                 'concurrent_active_scope_required')
         require(not getattr(self, 'concurrent_resource_violations', {}), 'concurrent_latched_resource_failure')
-        expected = 'short' if self.concurrent_round is None else 'long' if self.concurrent_round == 'short' else None
+        expected = 'long' if self.concurrent_round is None else None
         require(round_name is not None and round_name == expected, 'concurrent_closed_round_order_required')
         self.budget.checkpoint()
         self.guards(self.owner.lease)
@@ -344,7 +349,7 @@ class LinuxHost:
         require(type(available) is int and available >= sum(policy['caps_bytes'].values()) + policy['os_reserve_bytes'],
                 'concurrent_host_available_reserve_unproved')
         gpu_free = {g['uuid']: g.get('free_bytes') for g in sample['gpus']}
-        sizes = (16384, 262144) if round_name == 'short' else (65536, 700160)
+        sizes = (65536, 700160)
         manifests = [concurrent_manifest(p, n) for p, n in zip(('G1', 'Q1'), sizes)]
         for manifest in manifests:
             require(self.manifests.get(digest(manifest)) == manifest, 'concurrent_exact_manifest_required')
@@ -386,34 +391,47 @@ class LinuxHost:
         return memory, cpu
 
     def concurrent_pressure(self, row):
-        """Compare conservative alternatives, never sum totals; latch numeric failures."""
+        """Latch numeric working-set estimates; raw charges remain independent."""
         policy, charges, reasons, unavailable = concurrent_capacity_policy(), {}, [], []
         numeric_by_cid = {cid: [] for cid in row['cgroups']}
+        if not hasattr(self, 'concurrent_demand_peaks'):
+            self.concurrent_demand_peaks = {}
         for cid, group in row['cgroups'].items():
             manifest = self.load_manifests[cid]
             current, peak = group.get('current_bytes'), group.get('peak_since_cgroup_creation_bytes')
             valid = lambda value: type(value) is int and value >= 0
-            totals = [value for value in (current, peak) if valid(value)]
-            if len(totals) != 2:
-                unavailable.append('concurrent_inclusive_charge_unavailable')
-            components = [group.get(key) for key in ('anon_bytes', 'kernel_bytes', 'file_bytes', 'file_mapped_bytes', 'shmem_bytes')]
-            component_charge = None
-            if all(valid(value) for value in components):
-                anon, kernel, file_bytes, mapped, shmem = components
-                component_charge = anon + kernel + max(file_bytes, mapped, shmem)
-                totals.append(component_charge)
+            floor, basis = None, 'UNAVAILABLE_no_native_host_weight_measurement'
+            parsed = self.allocation_proofs.get(cid)
+            if manifest['placement'] == 'G1':
+                floor, basis = policy['G1_native_floor']['bytes'], policy['G1_native_floor']['basis']
+                if parsed is not None:
+                    weights = parsed.get('host_weights_mib_log_label') or {}
+                    workspace = parsed.get('host_workspace_bytes')
+                    if weights and all(type(v) in (int, float) and math.isfinite(v) and v >= 0 for v in weights.values()) and valid(workspace):
+                        floor = max(floor, sum(math.ceil((v + 0.005) * 1024**2) for v in weights.values()) + workspace)
+                        basis = 'max(same-pin historical floor,current accepted native rounded-up host weights+exact workspace)'
+            demand = concurrent_host_demand(group, row.get('processes', {}).get(cid, {}),
+                native_floor_bytes=floor, native_floor_basis=basis)
+            observed = demand['required_bytes']
+            if observed is None:
+                unavailable.append('concurrent_required_demand_estimate_unavailable')
             else:
-                unavailable.append('concurrent_component_charge_unavailable')
-            observed = max(totals) if totals else None
+                self.concurrent_demand_peaks[cid] = max(observed, self.concurrent_demand_peaks.get(cid, 0))
+            sampled_peak = self.concurrent_demand_peaks.get(cid)
+            known = [v for v in (sampled_peak, demand['known_numeric_floor_bytes']) if valid(v)]
+            comparison = max(known) if known else None
             cap = policy['caps_bytes'][manifest['placement']]
-            charges[cid] = {'evidence_status': 'OBSERVED_TOTALS_AND_CONSERVATIVE_COMPONENT_BRACKET',
-                            'current_bytes': current, 'lifetime_peak_bytes': peak,
-                            'component_charge_bytes': component_charge,
-                            'headroom_comparison_bytes': observed, 'placement': manifest['placement'],
-                            'cap_bytes': cap, 'cap_headroom_25_percent': 5 * observed <= 4 * cap if observed is not None else None,
-                            'basis': 'max(memory.current,memory.peak,anon+kernel+max(file,mapped,shmem)); no overlapping totals summed'}
-            if observed is not None and 5 * observed > 4 * cap:
+            numeric_failure = comparison is not None and 5 * comparison > 4 * cap
+            charges[cid] = {**demand, 'current_bytes': current, 'lifetime_peak_bytes': peak,
+                            'component_charge_bytes': demand['component_bracket_bytes'],
+                            'headroom_comparison_bytes': comparison, 'sampled_peak_required_bytes': sampled_peak,
+                            'placement': manifest['placement'], 'cap_bytes': cap,
+                            'allocation_proof_available': parsed is not None,
+                            'cap_headroom_25_percent': False if numeric_failure else True if observed is not None else None}
+            if numeric_failure:
                 numeric_by_cid[cid].append('concurrent_cap_25_percent_headroom_failed')
+            if any(valid(v) and v > cap for v in (current, peak)):
+                numeric_by_cid[cid].append('concurrent_raw_hard_cap_exceeded')
         available = row['host'].get('available_bytes')
         if type(available) is not int:
             unavailable.append('concurrent_host_available_unavailable')
@@ -443,7 +461,7 @@ class LinuxHost:
                 'reasons': sorted(set(reasons)), 'unavailable_reasons': sorted(set(unavailable)),
                 'charges': charges, 'host_available_bytes': available,
                 'latched_violations': copy.deepcopy(self.concurrent_resource_violations),
-                'policy': policy['evidence_status'], 'required_demand_helper': 'NOT_RECLASSIFIED'}
+                'policy': policy['evidence_status'], 'required_demand_helper': 'ROOT_REVIEWED_WORKING_SET_ESTIMATE'}
 
     def candidate_container(self, manifest, container):
         """Production launch policy with the reviewed campaign mount exceptions."""
@@ -510,39 +528,39 @@ class LinuxHost:
                     'candidate_qwen_core_limit_changed')
 
     def candidate_pressure(self, row):
-        """Root's superseding required-working-set helper must be integrated first.
-
-        Raw inclusive current/peak remain observations, not required working set.
-        This closed seam never falls back to the historical overinclusive gate.
-        """
+        """Same root-reviewed sampled ESTIMATE as LongPREP; stricter pair admission."""
         from .concurrent_validate import memory_obligations
-        reasons = []
+        result = self.concurrent_pressure(row)
+        extra, unavailable = [], []
         try:
-            obligations = memory_obligations(row, self.load_manifests)
+            result['remaining_cap_obligations'] = memory_obligations(row, self.load_manifests)
         except ValueError:
-            obligations = None
-            reasons.append('candidate_remaining_caps_host_reserve_failed')
-        # Numeric hard failures still stop immediately even with helper unavailable.
-        for cid, group in row['cgroups'].items():
-            cap = self.load_manifests[cid]['ram_cap_bytes']
-            if any(type(group.get(k)) is int and group[k] > cap for k in ('current_bytes', 'peak_since_cgroup_creation_bytes')):
-                reasons.append('candidate_hard_cap_failed')
-            if type(group.get('swap_bytes')) is int and group['swap_bytes'] > 0:
-                reasons.append('candidate_owned_swap_failed')
-            if any(type(group.get('events', {}).get(k)) is int and group['events'][k] > 0 for k in ('oom', 'oom_kill', 'oom_group_kill')):
-                reasons.append('candidate_oom_failed')
-        for gpu in row['gpus']:
-            if type(gpu.get('free_bytes')) is int and gpu['free_bytes'] < 16 * 1024**3:
-                reasons.append('candidate_gpu_reserve_failed')
-        if reasons:
-            prior = self.concurrent_resource_violations.setdefault('candidate', {'reasons': []})
-            prior['reasons'] = sorted(set(prior['reasons'] + reasons))
-        return {'status': 'STOP_RESOURCE_GATE' if self.concurrent_resource_violations else 'UNAVAILABLE',
-                'reasons': sorted(set(reasons)), 'unavailable_reasons': ['root_reviewed_required_working_set_helper_pending'],
-                'latched_violations': copy.deepcopy(self.concurrent_resource_violations),
-                'remaining_cap_obligations': obligations, 'required_demand_helper': 'UNAVAILABLE',
-                'raw_current_peak': {cid: {k: g.get(k) for k in ('current_bytes', 'peak_since_cgroup_creation_bytes', 'file_bytes',
-                    'file_mapped_bytes', 'shmem_bytes', 'anon_bytes', 'kernel_bytes')} for cid, g in row['cgroups'].items()}}
+            result['remaining_cap_obligations'] = None
+            extra.append('candidate_remaining_caps_host_reserve_failed')
+        for group in row['cgroups'].values():
+            if type(group.get('swap_bytes')) is not int:
+                unavailable.append('candidate_owned_swap_unavailable')
+            elif group['swap_bytes'] != 0:
+                extra.append('candidate_owned_swap_failed')
+            if any(type(group.get('events', {}).get(k)) is int and group['events'][k] > 0
+                   for k in ('oom', 'oom_kill', 'oom_group_kill')):
+                extra.append('candidate_oom_failed')
+        qwen_uuid = candidate_modules()[0].GPU_UUIDS[1]
+        qwen = next((g for g in row['gpus'] if g['uuid'] == qwen_uuid), {})
+        total, free = qwen.get('total_bytes'), qwen.get('free_bytes')
+        if type(total) is not int or type(free) is not int:
+            unavailable.append('candidate_qwen_ten_percent_unavailable')
+        elif free * 10 < total:
+            extra.append('candidate_qwen_ten_percent_failed')
+        if extra:
+            previous = self.concurrent_resource_violations.setdefault('candidate', {'reasons': []})
+            previous['reasons'] = sorted(set(previous['reasons'] + extra))
+        latched = [r for v in self.concurrent_resource_violations.values() for r in v['reasons']]
+        result['reasons'] = sorted(set(result['reasons'] + latched))
+        result['unavailable_reasons'] = sorted(set(result['unavailable_reasons'] + unavailable))
+        result['latched_violations'] = copy.deepcopy(self.concurrent_resource_violations)
+        result['status'] = 'STOP_RESOURCE_GATE' if result['reasons'] else 'UNAVAILABLE' if result['unavailable_reasons'] else 'PASS'
+        return result
 
     @staticmethod
     def concurrent_cpu_pressure(cgroups):
@@ -1051,6 +1069,23 @@ class LinuxHost:
         manifest = self.load_manifests.get(cid, {})
         placement = manifest.get('placement')
         parsed = self.allocation_proofs.get(cid)
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE}:
+            # The legacy helper claims measured components and double-counts this
+            # mapped/shmem overlap. This closed campaign reports only ESTIMATE.
+            row['required_host_demand'] = copy.deepcopy(row['concurrent_resource_gate']['charges'][cid])
+            evidence = row['required_host_demand']
+            evidence.update(container_id=cid, manifest_sha256=digest(manifest),
+                sample_timestamp_monotonic_s=row.get('timestamp_monotonic_s'),
+                sample_phase='ready_runtime' if parsed is not None else 'pre_readiness_load',
+                sampled_peak_not_absolute=True)
+            if evidence['required_bytes'] is not None:
+                previous = self.measured.get(placement, {})
+                if evidence['required_bytes'] >= previous.get('required_bytes', 0):
+                    self.measured[placement] = copy.deepcopy(evidence)
+            if self.scope == CANDIDATE_SCOPE:
+                require(before_identity == identity_stamp(self, cid), 'candidate_sampling_identity_changed')
+                row['identity'] = before_identity
+            return row
         row['required_host_demand'] = {'evidence_status': 'UNAVAILABLE', 'required_bytes': None}
         if placement in {'G1', 'Q1'} or self.scope == 'glmrepair' and placement == 'G2':
             group = row['cgroups'][cid]
@@ -1678,7 +1713,34 @@ class LinuxHost:
             checks = args.get('checks', {})
             require(set(checks) == {'G1-smoke', 'G1-tool', 'Q1-smoke', 'Q1-tool'}
                     and all(v.get('status') == 'PASS' for v in checks.values()), 'candidate_checks_incomplete')
-            self.write_json('candidate-evidence.json', {'status': 'CANDIDATE_PASS',
+            slots = {}
+            for cid, manifest in self.load_manifests.items():
+                placement = manifest['placement']
+                occupied = []
+                for value in checks.values():
+                    if value.get('placement') != placement:
+                        continue
+                    for name in ('sample', 'continuation'):
+                        counters = value.get(name, {}).get('counters', {})
+                        prompt, completion = counters.get('prompt_tokens'), counters.get('completion_tokens')
+                        if name in value:
+                            require(type(prompt) is int and type(completion) is int and prompt > 0 and completion > 0,
+                                    'candidate_evidence_native_counts_missing')
+                            occupied.append(prompt + completion)
+                require(occupied, 'candidate_evidence_checks_missing')
+                samples = self.samples.get(cid, [])
+                self.write_json('loads/' + cid + '-samples.json', samples)
+                gpu = [g for sample in samples for g in sample['gpus'] if g['uuid'] in manifest['gpu_uuids']]
+                frees = [g['free_bytes'] for g in gpu if type(g.get('free_bytes')) is int]
+                require(frees, 'candidate_evidence_gpu_samples_missing')
+                slots[placement] = {'configured_context': manifest['configured_capacity'],
+                    'largest_occupied_context_in_checks': max(occupied),
+                    'minimum_free_gpu_bytes_sampled': min(frees),
+                    'host_demand': self.measured.get(placement, {'evidence_status': 'UNAVAILABLE'}),
+                    'samples_path': self.log_root + '/loads/' + cid + '-samples.json',
+                    'samples_sha256': digest(samples), 'sampled_not_absolute': True}
+            self.write_json('candidate-evidence.json', {'status': 'CANDIDATE_PASS', 'slots': slots,
+                'timing_scope': 'short checks at G480000 and Q700160; no occupied-capacity or G64-speed extrapolation',
                 'production_acceptance': 'NOT_GRANTED', 'checks': checks, 'actual_image_auth': self.candidate_auth,
                 'manifests': list(self.manifests.values()), 'measured_demand_helper': self.measured,
                 'allocation': {cid: self.read_json('loads/' + cid + '-allocation.json') for cid in self.load_manifests},
