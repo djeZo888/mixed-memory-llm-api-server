@@ -143,7 +143,7 @@ class HostBudget(CampaignBudget):
         if getattr(host, 'scope', None) in {'g1-ladder', 'glm-decode-diag'}:
             self.budget_seconds = 14400 if host.scope == 'glm-decode-diag' else 10800
         if getattr(host, 'scope', None) == CONCURRENT_SCOPE:
-            self.budget_seconds = 5400
+            self.budget_seconds = 7200
         if getattr(host, 'scope', None) == 'glm-decode-diag' and getattr(host, 'mode', None) == 'cpu-profile-only':
             self.budget_seconds = 1200
         self._data = host.read_json('budget.json', missing=True)
@@ -253,7 +253,7 @@ class LinuxHost:
                 'continuation_execution' not in armed and 'start_epoch' not in armed and
                 type(start) in (int, float) and type(deadline) in (int, float) and
                 math.isfinite(start) and math.isfinite(deadline) and start == 1789890954.308154 and
-                deadline == 1789896354.308154 and deadline == start + 5400 and runtime.get('budget_seconds') == 5400 and
+                deadline == 1789898154.308154 and deadline == start + 7200 and runtime.get('budget_seconds') == 7200 and
                 runtime.get('request_max_seconds') == 7200 and
                 runtime.get('clock_includes_preparation') is True and
                 runtime.get('includes_load_warmup_fitting') is True and
