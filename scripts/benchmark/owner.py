@@ -13,7 +13,8 @@ from typing import Callable
 
 from common.lifecycle_lease import LifecycleLease, acquire_lease
 from .lifecycle import (BOOT_UNIT, CONTROL_UNIT, PlanError, cleanup_commands, digest,
-                        plan_campaign, require, validate_restored, validate_snapshot)
+                        plan_campaign, require, require_singleton_manager_state,
+                        validate_restored, validate_snapshot)
 
 
 class WorkerVerificationPending(Exception):
@@ -138,6 +139,9 @@ class CampaignOwner:
             self.lease_context = self.lease_factory(blocking=False)
             self.lease = self.lease_context.__enter__()
             self._lease_check()
+            # capture() intentionally projects singleton fields; admission must
+            # check the full record before that projection can hide two slots.
+            require_singleton_manager_state(self.manager.read_state())
             before = self.host.capture(self.lease)
             self.original = validate_snapshot(before, for_run=not self.synthetic)
             require(before["lease"]["held"] and before["lease"]["owned_by_campaign"], "owner_snapshot_required")
@@ -158,7 +162,10 @@ class CampaignOwner:
             self.phase = "ACTIVE"
             self._save()
             return self
-        except BaseException:
+        except BaseException as error:
+            if isinstance(error, PlanError) and str(error) == "benchmark_pair_state_unsupported":
+                self._recover_failure("benchmark_pair_state_unsupported")
+                raise OwnerError("benchmark_pair_state_unsupported") from None
             self._recover_failure("maintenance_failed")
             raise OwnerError("maintenance_failed_inspect_owner_ledger") from None
 
@@ -274,6 +281,9 @@ class CampaignOwner:
     def restore(self):
         require(self.lease is not None and self.original is not None, "no_owned_campaign_to_restore")
         try:
+            # A fresh recovery owner must also refuse if production migrated
+            # while no campaign held the lease. Never restore just one slot.
+            require_singleton_manager_state(self.manager.read_state())
             self._gate("restore")  # refusals retain the lease; never stop healthy inference
             require(self.pending_create is None, "unresolved_create_requires_exact_identity_recovery")
             if self.phase != "RESTORING":
@@ -323,7 +333,8 @@ class CampaignOwner:
             self.phase = "POST_RELEASE_LAN_VERIFICATION_PENDING"
             self._save()
             return {"restored": False, "local_restoration": "VERIFIED", "worker_lan_verification": "PENDING"}
-        except BaseException:
+        except BaseException as error:
             self.phase = "RECOVERY_REQUIRED" if self.lease is not None else "POST_RELEASE_VERIFICATION_FAILED"
-            self._record_failure("restoration_failed")
+            self._record_failure("benchmark_pair_state_unsupported" if isinstance(error, PlanError)
+                                 and str(error) == "benchmark_pair_state_unsupported" else "restoration_failed")
             raise OwnerError("restoration_failed_preserve_owner_and_ledger") from None

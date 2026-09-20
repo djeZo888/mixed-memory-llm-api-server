@@ -44,6 +44,21 @@ def protected_path(value, prefix):
             str(path) == value and value.startswith(prefix + "/"), "invalid_protected_path")
 
 
+def require_singleton_manager_state(state, *, sanitized=False):
+    """This owner can preserve/restore only the original singleton contract.
+
+    Check the raw Manager record before capture projects its singleton fields.
+    Empty/stopped slots still require a pair-aware snapshot and recovery owner;
+    retaining legacy-looking fields must never allow that state through.
+    """
+    require(type(state) is dict, "invalid_benchmark_manager_state")
+    require("slots" not in state and state.get("schema_version") != 3,
+            "benchmark_pair_state_unsupported")
+    version = state.get("schema_version")
+    require((sanitized and version is None) or type(version) is int and version == 2,
+            "unsupported_benchmark_manager_state")
+
+
 def validate_snapshot(snapshot, *, for_run=False):
     """Validate sanitized observations; a baseline is not an under-lease snapshot.
 
@@ -58,6 +73,7 @@ def validate_snapshot(snapshot, *, for_run=False):
     require(isinstance(snapshot.get("captured_at"), str) and bool(snapshot["captured_at"]),
             "missing_capture_time")
     state = snapshot.get("manager", {})
+    require_singleton_manager_state(state, sanitized=True)
     selected = state.get("selected")
     require(selected is None or selected in DEPLOYMENTS, "unknown_original_deployment")
     require(state.get("desired") in {"running", "stopped"}, "ambiguous_original_intent")

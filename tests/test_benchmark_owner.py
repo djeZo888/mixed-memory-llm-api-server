@@ -65,6 +65,10 @@ class Fixture:
             self.assert_lease(lease)
         return value
 
+    def read_state(self):
+        self.assert_lease(self.owner.lease)
+        return copy.deepcopy({"schema_version": 2, **self.state["manager"]})
+
     def assert_lease(self, lease):
         assert lease is self.lease
         lease.validate()
