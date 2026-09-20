@@ -1665,5 +1665,83 @@
   "followup_scope": {
     "RETENTIONFIX": "separate source-only preparation for warm-only pair: two loads and discarded warmups, no measured reruns; NOT_EXECUTED/NOT_PROVEN"
   },
-  "performance_acceptance": "NOT_ESTABLISHED_FOR_FULL72_CONCURRENT_PAIR"
+  "performance_acceptance": "NOT_ESTABLISHED_FOR_FULL72_CONCURRENT_PAIR",
+  "current_warm_only_retention": {
+    "status": "HELD_VERIFIED_AFTER_NATIVE_CLI_EXIT",
+    "scope": "Current separate warm-only campaign; earlier RUN4 endstate/followup descriptions are historical. All original d257 measured result fields remain unchanged.",
+    "runtime_source_commit": "c0b20d3ebaee596cf140152c8b7bcf3d793906f9",
+    "integration_merge_commit": "139e9a9a6697ee894dc2afc736e73463311f5cfb",
+    "mode": "warm_only",
+    "loads_completed": 2,
+    "discarded_warmups": [
+      {
+        "model": "GLM",
+        "prompt_tokens": 3539,
+        "completion_tokens": 32,
+        "cached_tokens": 0,
+        "disposition": "DISCARDED_ONLY_NOT_MEASURED",
+        "status": "OUTPUT_LIMIT"
+      },
+      {
+        "model": "Qwen",
+        "prompt_tokens": 3251,
+        "completion_tokens": 32,
+        "cached_tokens": null,
+        "disposition": "DISCARDED_ONLY_NOT_MEASURED",
+        "status": "OUTPUT_LIMIT"
+      }
+    ],
+    "measured_request_count": 0,
+    "native_cli_exit_code": 0,
+    "native_cli_exit_utc": "2026-09-20T17:21:03.419808+00:00",
+    "post_exit_hold_checkpoints_utc": [
+      "2026-09-20T17:21:26.034773+00:00",
+      "2026-09-20T17:21:54.082761+00:00"
+    ],
+    "post_exit_current_statuses": [
+      "HELD",
+      "HELD"
+    ],
+    "keeper_and_existing_SSH_child_alive_same_start": true,
+    "same_saved_remote_owner_and_container_pair": true,
+    "canonical_lease_retained": true,
+    "zero_active_inference": true,
+    "pending_create": "NONE_REQUIRED_BY_EXISTING_HELD_CHECKPOINT",
+    "placement": {
+      "G1": {
+        "configured_context": 480000,
+        "allocation_status": "ALLOCATION_PROOF_ACCEPTED",
+        "CPUs": "0-71",
+        "Mems_allowed": "0-7",
+        "native_pool_tokens": null,
+        "native_pool_field_limit": "Explicit numeric native_pool field absent in saved GLM summary; current480000 allocation accepted separately."
+      },
+      "Q1": {
+        "configured_context": 480000,
+        "allocation_status": "ALLOCATION_PROOF_ACCEPTED",
+        "CPUs": "0-7",
+        "Mems_allowed": "0-7",
+        "native_pool_tokens": 480000,
+        "native_pool_field_limit": null
+      }
+    },
+    "evidence_boundary": "Two advancing actual keeper RPC hold checkpoints after CLI exit, coupled to local existing-process identity and saved exact owner/pair proof; no new SSHHost or VM/model query by report task. Timestamped evidence is not a perpetual live-lease claim.",
+    "future_benchmark": "Requires separately authorized fresh source/session/receipt/fixture-bound GO through retained owner; no reload or new begin.",
+    "release": "Explicit bound RELEASE through retained owner only; none submitted.",
+    "crash": "RECOVERY_REQUIRED; no stale-ledger adoption.",
+    "long_pair": "NOT_RUN",
+    "whole72_benchmark_acceptance": "NOT_ESTABLISHED",
+    "production_activation": "NOT_GRANTED",
+    "evidence_sha256": {
+      "warm_hold_receipt": "f47ed6b3ac622a63144f48518d12bbd091586128023ee59f8f5cfea4274f05bb",
+      "warmup_summary": "d8293af5aef5319bc98370889182bae0d74d2c8bc04e56ec360d744556b7a26a",
+      "ready_summary": "0a5d65237f94467896d9a3d8256f95d77d11a623ef06cc9749e60834bbeb5cdc",
+      "native_exit": "767373310381ae040c93a26ec0f75bc438f5af98a35ed1a99c4fc7a990afda58",
+      "post_exit_checkpoint_1": "6c8237c094ac4d12235898c9cc4447a2b7af92c6b30c00b12858ea6abc4455a9",
+      "post_exit_checkpoint_2": "9dadd1dc347f2f06a45b091719b23be452fbccb184e2941246ee9dbb628dbe40",
+      "local_verification_1": "06f9220745ea889749773383fb5a8c1f23e39db31778b1b086c16d7201557752",
+      "local_verification_2": "a7d45a72ae00a06b9fff1da630a033c9f1071ebad79c0ee4f9c91ca9251a0870",
+      "coordinator_post_exit_verification": "db9e92ae47d282dd321b45a423c76a377926e9bc5c746a6dc96fe5d5ac8c2da7"
+    }
+  }
 }
