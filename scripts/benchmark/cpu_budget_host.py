@@ -1,8 +1,31 @@
 """Narrow native and admission proofs for the closed 480K CPU comparison."""
 from __future__ import annotations
 
+import math
+
 from .lifecycle import require
 from .cpu_budget_profiles import CAPACITY, CPU_SCOPE
+
+
+def qwen_native_diagnostic(info):
+    """Safe field projection only; at most two states expose cardinality failure."""
+    names = ('context_length', 'tp_size', 'max_total_num_tokens', 'max_req_input_len', 'max_req_len')
+    types = {int: 'int', float: 'float', bool: 'bool', str: 'str',
+             dict: 'dict', list: 'list', type(None): 'NoneType'}
+    def fields(container):
+        result = {}
+        for name in names:
+            present = isinstance(container, dict) and name in container
+            value = container[name] if present else None
+            row = {'present': present, 'type': types.get(type(value), 'other') if present else None}
+            if type(value) is int or (type(value) is float and math.isfinite(value)):
+                row['value'] = value
+            result[name] = row
+        return result
+    root = info if isinstance(info, dict) else {}
+    states = root.get('internal_states')
+    return {'top_level': fields(root), 'server_args': fields(root.get('server_args')),
+            'internal_states': [fields(state) for state in states[:2]] if isinstance(states, list) else []}
 
 
 def qwen_native_proof(info):

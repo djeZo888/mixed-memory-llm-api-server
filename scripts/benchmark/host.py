@@ -1381,6 +1381,9 @@ class LinuxHost:
                 info = http_json(port, '/get_server_info')
             except TimeoutError as error:
                 raise NativeInfoPending from error
+            if self.scope == CPU_SCOPE:
+                from .cpu_budget_host import qwen_native_diagnostic
+                self.write_json('loads/' + cid + '-native-numeric-diagnostic.json', qwen_native_diagnostic(info))
             args = info.get('server_args', info)
             require(isinstance(args, dict), 'native_server_args_unavailable')
             facts = {key: args.get(key, info.get(key)) for key in

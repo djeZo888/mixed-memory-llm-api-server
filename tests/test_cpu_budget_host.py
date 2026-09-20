@@ -177,6 +177,57 @@ class CPUHost(unittest.TestCase):
                     {**info, 'internal_states': [{'max_total_num_tokens': 700160}]}):
             with self.assertRaises(ValueError): proofs.qwen_native_proof(bad)
 
+    def test_numeric_diagnostic_persists_before_failing_guard_without_secret_values(self):
+        # Synthetic malformed payload tests persistence/nonleak, not a live capture.
+        secret = 'INJECTED_SECRET_NEVER_PERSIST'
+        names = {'context_length', 'tp_size', 'max_total_num_tokens', 'max_req_input_len', 'max_req_len'}
+        info = {'context_length': 480000, 'tp_size': 1, 'max_total_num_tokens': 479744,
+                'max_req_input_len': 479994, 'max_req_len': 479999, 'api_key': secret,
+                'server_args': {'context_length': 480000, 'tp_size': 1,
+                    'max_total_num_tokens': {'api_key': secret}, 'max_req_input_len': True,
+                    'max_req_len': float('nan'), 'api_key': secret},
+                'internal_states': [{'context_length': 480000.0, 'tp_size': float('inf'),
+                    'max_total_num_tokens': secret, 'max_req_input_len': None,
+                    'max_req_len': 479999, 'api_key': secret}, {}, {'api_key': secret}]}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); host = self.bare(); cid = 'synthetic-q480'
+            host.load_manifests[cid] = cpu.manifest('A', 'Q1')
+            host.identity, host.write_bytes = Mock(return_value=({}, root, [])), Mock()
+            host.binding = SimpleNamespace(path=lambda role, relative: root / relative)
+            def persist(path, value):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(value, allow_nan=False))
+            host.manager = SimpleNamespace(persistent_json=persist)
+            host.write_json = LinuxHost.write_json.__get__(host)
+            saved = root / cpu.CAMPAIGN / 'loads' / (cid + '-native-numeric-diagnostic.json')
+            real_proof = proofs.qwen_native_proof
+            def guard(payload):
+                self.assertTrue(saved.is_file(), 'diagnostic must be durable before proof guard')
+                self.assertNotIn(secret, saved.read_text())
+                return real_proof(payload)
+            with patch('benchmark.host.command', return_value=SimpleNamespace(stdout=b'', stderr=b'')), \
+                    patch('benchmark.host.http_json', return_value=info), \
+                    patch('benchmark.cpu_budget_host.qwen_native_proof', side_effect=guard) as proof, \
+                    self.assertRaisesRegex(ValueError, 'cpu_native_states_invalid'):
+                host.allocation(cid)
+            proof.assert_called_once_with(info)
+            raw = saved.read_text(); row = json.loads(raw)
+            self.assertNotIn(secret, raw); self.assertNotIn('api_key', raw)
+            self.assertEqual(set(row), {'top_level', 'server_args', 'internal_states'})
+            self.assertEqual(len(row['internal_states']), 2)
+            for fields in [row['top_level'], row['server_args'], *row['internal_states']]:
+                self.assertEqual(set(fields), names)
+                for field in fields.values():
+                    self.assertLessEqual(set(field), {'present', 'type', 'value'})
+            self.assertEqual(row['top_level']['max_total_num_tokens']['value'], 479744)
+            self.assertEqual(row['internal_states'][0]['context_length']['value'], 480000.0)
+            for field in ('max_total_num_tokens', 'max_req_input_len', 'max_req_len'):
+                self.assertNotIn('value', row['server_args'][field])
+            self.assertNotIn('value', row['internal_states'][0]['tp_size'])
+            self.assertNotIn('value', row['internal_states'][0]['max_total_num_tokens'])
+            self.assertEqual(row['internal_states'][0]['max_req_input_len'], {'present': True, 'type': 'NoneType'})
+            self.assertEqual(row['internal_states'][1]['context_length'], {'present': False, 'type': None})
+
     def test_closed_operations_reject_profiler_extra_cases_and_resume(self):
         host = self.bare()
         with patch('benchmark.host.command', side_effect=AssertionError('no command')):
