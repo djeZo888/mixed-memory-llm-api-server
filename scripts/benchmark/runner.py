@@ -243,8 +243,10 @@ class Campaign:
                         and row.get("errors") == ["gpu_TimeoutExpired"] and row.get("gpus") == [])
                     if self.armed.get("scope") in {"concurrent-g1q1", "candidate-pair-validation"}:
                         gate = row.get("concurrent_resource_gate", {})
+                        gpu_gap_reasons = (["candidate_qwen_ten_percent_unavailable", "concurrent_gpu_free_unavailable"]
+                            if self.armed.get("scope") == "candidate-pair-validation" else ["concurrent_gpu_free_unavailable"])
                         loading_gpu_gap = (loading_gpu_timeout and gate.get("status") == "UNAVAILABLE"
-                            and gate.get("unavailable_reasons") == ["concurrent_gpu_free_unavailable"]
+                            and gate.get("unavailable_reasons") == gpu_gap_reasons
                             and gate.get("reasons") == [] and gate.get("latched_violations") == {})
                         if gate.get("status") == "STOP_RESOURCE_GATE":
                             verdict = resource_stop = "STOP_RESOURCE_GATE"

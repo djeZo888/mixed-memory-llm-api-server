@@ -86,6 +86,98 @@ class CandidateValidation(unittest.TestCase):
         job = candidate.Validation(task, armed, host, 'synthetic-key', transport_factory=transport, json_factory=native)
         return job, host, requests
 
+    def test_candidate_loading_gpu_timeout_requires_fresh_proof_without_forgiving_running_or_numeric_failure(self):
+        from tests.test_candidate_host import CandidateDemandIntegration
+        for variant in ('fresh', 'missing_ready_gpu', 'missing_native_proof', 'missing_ready_accounting',
+                        'running_timeout', 'numeric_loading'):
+            with self.subTest(variant=variant), tempfile.TemporaryDirectory() as directory:
+                job, _, _ = self.setup_job(directory)
+                host, good = CandidateDemandIntegration().sample()
+                good['errors'] = []
+                gap = {**copy.deepcopy(good), 'errors': ['gpu_TimeoutExpired'], 'gpus': []}
+                if variant == 'numeric_loading':
+                    gap['cgroups']['b']['current_bytes'] = 32 * candidate.GIB + 1
+                rows = {'current': gap, 'ready': copy.deepcopy(good)}
+                if variant == 'missing_ready_gpu':
+                    rows['ready']['gpus'] = []
+                if variant == 'missing_ready_accounting':
+                    rows['ready']['cgroups']['b']['anon_bytes'] = None
+                host.owner.resources = [{'state': 'RUNNING', 'resource': {'id': cid}} for cid in ('a', 'b')]
+                # The existing GLM lane is resident; Qwen is the loading lane.
+                host.allocation_proofs = {'a': {'synthetic_native_proof': True}}
+                host.identity = Mock(return_value=({}, Path('/synthetic/not-read'), []))
+                host.concurrent_limits = Mock()
+                host.budget.request_timeout.return_value = 17
+
+                def telemetry(cid):
+                    sample = copy.deepcopy(rows['current'])
+                    sample['concurrent_resource_gate'] = host.candidate_pressure(sample)
+                    return sample
+
+                host.telemetry = telemetry
+
+                def call(op, **args):
+                    if op == 'budget':
+                        return {'remaining_s': 100}
+                    if op == 'load':
+                        return {'id': 'b'}
+                    if op == 'telemetry':
+                        return host.telemetry(args['id'])
+                    if op == 'readiness':
+                        rows['current'] = rows['ready']
+                        status = 'STOP_ALLOCATION_PROOF' if variant == 'missing_native_proof' else 'ALLOCATION_PROOF_ACCEPTED'
+                        if status == 'ALLOCATION_PROOF_ACCEPTED':
+                            host.allocation_proofs['b'] = {'synthetic_native_proof': True}
+                        return {'ready': True, 'allocation': {'status': status}, 'template_sha256': 'a' * 64}
+                    if op == 'quiescent':
+                        return {'telemetry': host.telemetry(args['id'])}
+                    return host.dispatch({'op': op, **args})
+
+                job.host = SimpleNamespace(call=call)
+                uuids = profiles.candidate_modules()[0].GPU_UUIDS
+                inventory = SimpleNamespace(stdout=('0, ' + uuids[0] + '\n1, ' + uuids[1] + '\n').encode())
+                with patch('benchmark.host.command', return_value=inventory), \
+                     patch('benchmark.host.collect_sample', side_effect=lambda *a, **k: copy.deepcopy(rows['current'])), \
+                     patch.object(candidate, 'identity_stamp', side_effect=lambda h, cid: {'id': cid, 'pid': 123}):
+                    if variant in ('missing_ready_gpu', 'missing_native_proof', 'numeric_loading'):
+                        with self.assertRaisesRegex((RuntimeError, ValueError),
+                                'SKIP_UNSAFE_PLACEMENT|STOP_ALLOCATION_PROOF|STOP_RESOURCE_GATE'):
+                            job.loaded(host.load_manifests['b'])
+                        self.assertEqual(host.requests, {})
+                        if variant == 'numeric_loading':
+                            self.assertTrue(job.active['b']['cancel_event'].is_set())
+                            self.assertTrue(host.concurrent_resource_violations)
+                        continue
+                    self.assertEqual(job.loaded(host.load_manifests['b']), 'b')
+                    self.assertEqual(job.safety, {})
+                    self.assertFalse(job.active['b']['cancel_event'].is_set())
+                    saved = [json.loads(line) for line in (job.state / 'results.jsonl').read_text().splitlines()]
+                    observed = next(row['sample'] for row in saved if row['type'] == 'telemetry')
+                    self.assertEqual(observed['errors'], ['gpu_TimeoutExpired'])
+                    self.assertEqual(observed['gpus'], [])
+                    self.assertEqual(observed['concurrent_resource_gate']['status'], 'UNAVAILABLE')
+                    self.assertEqual(observed['concurrent_resource_gate']['unavailable_reasons'],
+                                     ['candidate_qwen_ten_percent_unavailable', 'concurrent_gpu_free_unavailable'])
+                    self.assertEqual(observed['concurrent_resource_gate']['latched_violations'], {})
+                    if variant == 'missing_ready_accounting':
+                        with self.assertRaisesRegex(ValueError, 'concurrent_current_resource_gate_failed'):
+                            job.admission('b')
+                        self.assertEqual(host.requests, {})
+                    elif variant == 'running_timeout':
+                        rows['current'] = gap
+                        job.collect()
+                        rows['current'] = good
+                        job.collect()
+                        self.assertEqual(job.safety, {'b': 'SKIP_UNSAFE_PLACEMENT'})
+                        self.assertFalse(job.active['b']['cancel_event'].is_set())
+                        with self.assertRaisesRegex(RuntimeError, 'SKIP_UNSAFE_PLACEMENT'):
+                            job.admission('b')
+                        self.assertEqual(host.requests, {})
+                    else:
+                        self.assertEqual(job.admission('b', 120), 17)
+                        self.assertIn('b', host.requests)
+                        host.dispatch({'op': 'request_end', 'id': 'b'})
+
     def test_fixed_small_bodies_only_exact_models_and_fresh_prefixes(self):
         samples = candidate.fixed_samples()
         self.assertEqual(set(samples), {p + '-' + k for p in ('G1', 'Q1') for k in ('warmup', 'smoke', 'tool')})
