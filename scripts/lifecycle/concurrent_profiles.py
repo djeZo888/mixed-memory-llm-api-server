@@ -11,6 +11,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import time
 
 from .runtime_io import LifecycleError
 
@@ -184,8 +185,10 @@ def source_identity():
     """Current critical shipped bytes that a reviewed acceptance must bind."""
     files = set(PINS) | {'scripts/lifecycle/concurrent_profiles.py', 'scripts/lifecycle/qwen38.py',
             'scripts/lifecycle/manager.py', 'scripts/lifecycle/boot_unit.py', 'scripts/lifecycle/slot_state.py',
+            'scripts/lifecycle/runtime_io.py',
             'scripts/control/core.py', 'scripts/control/adapter.py', 'scripts/control/catalog.py',
-            'scripts/control/journal.py', 'scripts/control/protocol.py', 'scripts/control/discovery.py'}
+            'scripts/control/journal.py', 'scripts/control/protocol.py', 'scripts/control/discovery.py',
+            'scripts/control/installation.py', 'scripts/control/source-closure.json'}
     return {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in sorted(files)}
 
 
@@ -262,3 +265,158 @@ def check_acceptance(d, instance):
             'concurrent_aggregate_host_margin_unaccepted')
     binding.verify(roles=('data', 'models'))
     return receipt
+
+
+def _host_available(text):
+    require(isinstance(text, str) and len(text) <= 65536, 'concurrent_current_host_memory_unavailable')
+    values = {}
+    for line in text.splitlines():
+        fields = line.split()
+        if fields and fields[0] in ('MemAvailable:', 'MemTotal:'):
+            require(len(fields) == 3 and fields[2] == 'kB' and fields[1].isdigit()
+                    and fields[0] not in values, 'concurrent_current_host_memory_unavailable')
+            values[fields[0]] = int(fields[1]) * 1024
+    require(set(values) == {'MemAvailable:', 'MemTotal:'}
+            and 0 < values['MemAvailable:'] <= values['MemTotal:'], 'concurrent_current_host_memory_unavailable')
+    return values['MemAvailable:']
+
+
+def _resident_anon(slot, container, instance, read):
+    """Credit only charged resident anonymous RAM, never RSS or file cache.
+
+    Manager supplies an already-trusted running identity and rechecks it around
+    this sample. PID/cgroup membership is independently tied to its exact ID.
+    File pages (including mapped weights) receive no credit: MemAvailable can
+    already include reclaimable cache, so crediting memory.current is unsafe.
+    """
+    require(isinstance(container, dict), 'concurrent_resident_identity_invalid')
+    cid, state = container.get('Id'), container.get('State', {})
+    labels = container.get('Config', {}).get('Labels', {})
+    pid = state.get('Pid')
+    require(isinstance(cid, str) and re.fullmatch(r'[0-9a-f]{64}', cid)
+            and state.get('Running') is True and type(pid) is int and pid > 0
+            and labels.get('io.llmctl.owner') == 'mixed-memory-llm-api-server'
+            and labels.get('io.llmctl.instance') == instance['id']
+            and labels.get('io.llmctl.deployment') == SLOTS[slot], 'concurrent_resident_identity_invalid')
+    membership = read(['/usr/bin/cat', f'/proc/{pid}/cgroup'])
+    lines = membership.splitlines()
+    require(len(lines) == 1 and lines[0] in ('0::/system.slice/docker-' + cid + '.scope',
+            '0::/docker/' + cid), 'concurrent_resident_cgroup_unavailable')
+    root = '/sys/fs/cgroup' + lines[0][3:]
+    members = read(['/usr/bin/cat', root + '/cgroup.procs']).split()
+    require(all(member.isdigit() for member in members) and str(pid) in members,
+            'concurrent_resident_cgroup_unavailable')
+    text = read(['/usr/bin/cat', root + '/memory.stat'])
+    require(len(text) <= 65536, 'concurrent_resident_memory_unavailable')
+    values = {}
+    for line in text.splitlines():
+        fields = line.split()
+        require(len(fields) == 2 and fields[1].isdigit() and fields[0] not in values,
+                'concurrent_resident_memory_unavailable')
+        values[fields[0]] = int(fields[1])
+    require('anon' in values, 'concurrent_resident_memory_unavailable')
+    require(read(['/usr/bin/cat', root + '/memory.swap.current']).strip() == '0',
+            'concurrent_resident_swap_detected')
+    require(read(['/usr/bin/cat', f'/proc/{pid}/cgroup']) == membership,
+            'concurrent_resident_cgroup_changed')
+    return values['anon']
+
+
+@safe
+def preflight_current(d, instance, run_fn, *, residents=None):
+    """Bounded current admission after any predecessor stop, before start/create.
+
+    ``residents`` is exactly the caller's trusted RUNNING glm/qwen inspect map.
+    Saved desired/observed fields must never populate it. We reserve each target
+    or resident peer's full reviewed cap, less only its current anonymous charge,
+    and retain the existing 16-GiB host headroom. Thus resident allocations are
+    not counted twice, reclaimable cache is not double-credited, and remaining
+    room up to each cap is retained even for an idle peer. This is a current
+    bounded sample, not an allocator reservation or benchmark recertification.
+    """
+    receipt = check_acceptance(d, instance)
+    residents = {} if residents is None else residents
+    require(type(residents) is dict and set(residents) <= set(SLOTS), 'concurrent_resident_identity_invalid')
+    target = slot_for_deployment(d['id'])
+    deadline = time.monotonic() + 10
+
+    def read(argv):
+        remaining = deadline - time.monotonic()
+        require(remaining > 0, 'concurrent_memory_admission_timeout')
+        result = run_fn(argv, timeout=min(5, remaining))
+        require(time.monotonic() < deadline and isinstance(result, str), 'concurrent_memory_admission_timeout')
+        return result
+
+    before = _host_available(read(['/usr/bin/cat', '/proc/meminfo']))
+    credit = {slot: _resident_anon(slot, container, instance, read) for slot, container in residents.items()}
+    host_available = min(before, _host_available(read(['/usr/bin/cat', '/proc/meminfo'])))
+    required = 16 * 1024**3
+    for slot in set(residents) | {target}:
+        required += max(0, receipt['slots'][slot]['memory_bytes'] - credit.get(slot, 0))
+    require(host_available >= required, 'concurrent_current_host_memory_insufficient')
+    text = read(['nvidia-smi', '--query-gpu=index,uuid,memory.total,memory.free', '--format=csv,noheader,nounits'])
+    require(len(text) <= 4096, 'concurrent_current_gpu_memory_unavailable')
+    rows = [tuple(value.strip() for value in line.split(',')) for line in text.splitlines() if line.strip()]
+    require(len(rows) == 2 and all(len(row) == 4 and row[2].isdigit() and row[3].isdigit() for row in rows),
+            'concurrent_current_gpu_memory_unavailable')
+    validate_gpu_inventory([(row[0], row[1]) for row in rows])
+    gpu_required = {}
+    for slot in set(residents) | {target}:
+        proof = receipt['slots'][slot]
+        index = 0 if slot == 'glm' else 1
+        total, free = (int(value) * 1024**2 for value in rows[index][2:])
+        require(total == proof['gpu_total_bytes'] and 0 <= free <= total,
+                'concurrent_current_gpu_memory_unavailable')
+        reserve = max(16 * 1024**3, (total + 9) // 10 if slot == 'qwen' else 0)
+        # Accepted measured occupied GPU bytes include model, allocated cache
+        # and workspace. A resident target has already paid that allocation.
+        needed = reserve + (0 if slot in residents else total - proof['minimum_free_gpu_bytes'])
+        require(free >= needed, 'concurrent_current_gpu_memory_insufficient')
+        gpu_required[slot] = needed
+    return {'host_available_bytes': host_available, 'required_host_available_bytes': required,
+            'resident_slots': sorted(residents), 'gpu_required_free_bytes': gpu_required}
+
+
+@safe
+def native_capacity(d, *, timeout=3):
+    """Actual resolved native capacity, independently of argv and saved receipt.
+
+    Caller must bind this response to the same trusted container/start identity
+    before and after the read, and retain ordinary auth/alias/health probing.
+    Native Qwen pool fields are read only from runtime top-level/internal state,
+    never ``server_args``. The known scheduler reserve is one request token plus
+    five input tokens, so native max_req_input_len must be configured minus six.
+    """
+    validate(d)
+    from .runtime_io import native_capacity_metadata
+    info = native_capacity_metadata(f"http://127.0.0.1:{d['endpoint']['port']}/v1",
+                                    d['auth']['key_file'], timeout=timeout)
+    expected = d['launch']['context_size']
+    if d['id'] == GLM_PROFILE:
+        actual = info.get('default_generation_settings', {}).get('n_ctx')
+        require(same(actual, expected) and same(info.get('total_slots'), 1)
+                and info.get('is_sleeping') is False and info.get('model_alias') == d['endpoint']['served_model'],
+                'concurrent_native_capacity_mismatch')
+        return {'configured_context': actual, 'native_pool_tokens': actual, 'native_request_limit': actual}
+    args = info.get('server_args', info)
+    require(isinstance(args, dict) and same(args.get('context_length'), expected)
+            and same(args.get('tp_size'), 1), 'concurrent_native_capacity_mismatch')
+    states = info.get('internal_states', [])
+    require(isinstance(states, list) and len(states) <= 1 and all(isinstance(item, dict) for item in states),
+            'concurrent_native_capacity_mismatch')
+
+    def actual_value(name, *, optional=False):
+        values = [mapping[name] for mapping in [info, *states] if name in mapping]
+        if not values and optional:
+            return None
+        require(values and all(type(value) is int and value > 0 and value == values[0] for value in values),
+                'concurrent_native_capacity_unavailable')
+        return values[0]
+
+    pool = actual_value('max_total_num_tokens')
+    request = actual_value('max_req_len', optional=True)
+    input_limit = actual_value('max_req_input_len')
+    require(pool == expected and input_limit == expected - 6
+            and (request is None or request == expected - 1), 'concurrent_native_capacity_mismatch')
+    return {'configured_context': expected, 'native_pool_tokens': pool,
+            'native_request_limit': request, 'native_input_limit': input_limit}

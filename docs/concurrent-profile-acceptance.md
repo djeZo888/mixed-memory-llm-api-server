@@ -83,12 +83,57 @@ Missing, malformed, mismatched or incomplete evidence refuses pair start/create.
 Actual host GPU inventory is rechecked at lifecycle admission; Docker create and
 reuse require the exact UUID, CPU, no-swap and visible-CUDA contract.
 
+## Current admission and actual native capacity
+
+The protected receipt is historical acceptance, not current free-memory proof.
+After any explicitly requested predecessor stop and immediately before target
+create/start/reuse, `preflight_current` samples current `/proc/meminfo` and
+`nvidia-smi` memory totals/free bytes. It receives only exact trusted running
+container identities from Manager, never saved intent. GPU UUID/order and total
+capacity must match the accepted hardware. A new allocation needs accepted peak
+GPU occupancy (total minus minimum free at acceptance) plus the current reserve;
+an already resident target or peer needs the reserve only. Both require 16 GiB
+free, with Qwen also retaining 10% of physical memory.
+
+Host admission reserves 16 GiB shared headroom plus each target/resident slot's
+full reviewed host cap minus its current resident anonymous charge. The latter
+is read from the exact container's PID/cgroup identity and checked for zero swap.
+Only anonymous memory is credited: `memory.current`, RSS and reclaimable file
+pages would overlap with memory already counted by `MemAvailable`. Remaining
+room up to an idle peer's cap is retained. No cap is counted again in full for
+an already resident process. Manager rechecks PID/start identity after sampling.
+Unknown cgroups, memory readings or ownership fail closed. The whole sample has
+a bounded ten-second budget. This is a point-in-time admission observation, not
+a reservation against unrelated host allocation or a repeated benchmark.
+
+Every prospective Ready observation—including status, control and running
+container reuse—also performs an authenticated native metadata read. GLM
+`/props` must identify the correct alias, one awake slot, and resolved
+`default_generation_settings.n_ctx` exactly matching the profile. Qwen
+`/get_server_info` must report the actual runtime `max_total_num_tokens` equal
+to 700,160 and `max_req_input_len` equal to 700,154. If native `max_req_len` is
+reported, it must equal 700,159. These preserve the pinned scheduler's one-token
+request and five additional input-token reserves. Pool/request values are
+accepted only from runtime top-level or singleton `internal_states` fields;
+`server_args` or command-line declarations alone cannot satisfy the check.
+Conflicting native fields fail closed.
+
+The new read uses existing protected key handling, fixed IPv4 loopback ports,
+no redirects/proxies, strict bounded JSON and an absolute socket deadline. It
+sends no inference. Caller identity checks bind the response to the same
+container start before/after observation. Ordinary auth, alias and health checks
+remain required. Status does not rerun memory admission or claim that an old
+allocation receipt describes current free memory.
+
 ## Tested and pending
 
 Focused synthetic tests cover closed profiles, source drift, incompatible peers,
 GPU UUID/remapping, resource reuse, missing/changed acceptance, allocation versus
 occupied capacity, raw/resolved Qwen auth constraints, and unchanged historical
-launcher bytes. They perform no model load, Docker operation, inference or VM
+launcher bytes. Additional synthetic tests cover fresh versus resident memory
+admission, resident-peer survival reserves, missing/wrong current readings,
+authenticated metadata transport, undersized native pools, and the real Manager
+Ready-probe integration. They perform no model load, Docker operation, inference or VM
 contact.
 
 Pending root decisions are favorable benchmark acceptance, final GLM allocation
