@@ -1622,14 +1622,16 @@
     "tasks/POSTRESTART72-RUN-CONT3-20260920/operator-status.json": "e051d8cc34fca1e5a2f9142004a28f4287cdbf77306beb825a560bc68dcbe0e6",
     "historical_initial_hold_current_snapshot_sha256": "e76a1942a04a95805a1156b7bb9349ba4e50cf31f57c969ef4a122857c8af4ed",
     "tasks/POSTRESTART72-RUN-CONT3-20260920/protected-rpc-diagnostics.json": "3adcabc748836760749a86b5d1f6d64a7a5cba9c9d3135319f1c64406385bf3a",
-    "tasks/POSTRESTART72-REPORT-20260920/inputs-final/report-incoming-final.md": "9db77e880ea3a51918330baf9a1649215629b2bacf505d7bb27a1d74cecae136"
+    "tasks/POSTRESTART72-REPORT-20260920/inputs-final/report-incoming-final.md": "9db77e880ea3a51918330baf9a1649215629b2bacf505d7bb27a1d74cecae136",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/native-exit.json": "01734921f38a82671f2ab85fec13382eb19d092f0818c47f9d213842f2c7f132",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/native-closure-ready.json": "6b7d07c3fe1577cc42eca6f7c2d2fa99ce257b0b4bca6a350fd9bcea412cdd78",
+    "tasks/POSTRESTART72-REPORT-20260920/inputs-final/report-incoming-editorial.md": "ca6e025b307b7e5ae0aaa2385b87c15d1f933a635a3dd0639f670996c5f46455"
   },
   "pending": [
     "Systemd pending-job identities UNKNOWN/not retained; guard mapped by root from pinned source and saved diagnostic frames",
-    "finish_reason/final-content character length/content-only hash absent; remain null, no raw reconstruction",
-    "Root exact GO before push/PR publication; no new inference; CLI-exit/keeper-continuity acceptance failed or unavailable"
+    "finish_reason/final-content character length/content-only hash absent; remain null, no raw reconstruction"
   ],
-  "next_action": "Root review of failed warm retention and incomplete benchmark; no further inference, retry, release/reload or production activation authorized.",
+  "next_action": "Long inference definitively withheld after preliminary review. Separate RETENTIONFIX source preparation is unexecuted and proves no warm retention.",
   "handoff_verification": {
     "status": "WARM_RETENTION_FAILED",
     "local_worker_process_check": "keeper absent/no current children; native wrapper still present",
@@ -1639,9 +1641,17 @@
     ],
     "saved_hold_proof_advancing": false,
     "current_held_proof": false,
-    "native_cli_exit_then_keeper_alive": "NOT_ESTABLISHED",
+    "native_cli_exit_then_keeper_alive": "FAILED: native CLI exited0 after keeper absent and canonical restoration; no pair retained",
     "specific_existing_SSH_child_identity": "UNAVAILABLE from saved receipts",
     "fresh_remote_pair_identity_and_live_lease": "NOT_ESTABLISHED; no VM contact",
-    "receipt_sha256": "ed2e8bb3c3d6522d2a319ca00a0cae795e84472e51963fb8db80e62b770d13b1"
+    "receipt_sha256": "ed2e8bb3c3d6522d2a319ca00a0cae795e84472e51963fb8db80e62b770d13b1",
+    "native_cli_exit": {
+      "exit_code": 0,
+      "finished_utc": "2026-09-20T16:47:03.157298+00:00"
+    },
+    "closure_ssh_child_alive": false
+  },
+  "followup_scope": {
+    "RETENTIONFIX": "separate source-only preparation for warm-only pair: two loads and discarded warmups, no measured reruns; NOT_EXECUTED/NOT_PROVEN"
   }
 }
