@@ -39,7 +39,7 @@ def body_bytes(sample, output_cap=256):
     return fixtures.canonical(body)
 
 
-def fit(capacity, nonce, counter, *, warmup=False, matched=None, synthetic=False):
+def fit(capacity, nonce, counter, *, warmup=False, matched=None, synthetic=False, body_builder=body_bytes):
     """Count FINAL bytes at every bracket; never estimate characters or refit repeat."""
     if capacity not in (16384, 65536) or (warmup and matched is not None):
         raise ValueError("ladder_capacity_or_matching")
@@ -53,7 +53,7 @@ def fit(capacity, nonce, counter, *, warmup=False, matched=None, synthetic=False
         records = matched["records"]
     for attempt in range(1 if matched is not None else 32):
         sample = fixtures.build_sample(MODEL, records, seed, nonce)
-        raw = body_bytes(sample, cap)
+        raw = body_builder(sample, cap)
         counted = fixtures.validate_count(counter(raw), raw, capacity, synthetic=synthetic)
         actual = counted["input_tokens"]
         if matched is not None:

@@ -16,6 +16,8 @@ from typing import Callable, Mapping
 
 MIB = 1024 ** 2
 GPU_COMMAND = ["nvidia-smi", "--query-gpu=uuid,memory.total,memory.used,memory.free,utilization.gpu,power.draw", "--format=csv,noheader,nounits"]
+DECODE_GPU_FIELDS = ('utilization.memory', 'clocks.current.sm', 'clocks.current.memory',
+                     'pcie.link.gen.current', 'pcie.link.width.current', 'power.limit')
 
 
 def _number(value: str, integer: bool = True):
@@ -122,14 +124,14 @@ def parse_process_status(text: str) -> dict:
             (("rss_bytes", "VmRSS"), ("swap_bytes", "VmSwap"), ("peak_rss_bytes", "VmHWM"))}
 
 
-def parse_gpu_csv(text: str) -> list[dict]:
+def parse_gpu_csv(text: str, *, decode_diagnostic=False) -> list[dict]:
     out = []
     seen = set()
     for cells in csv.reader(io.StringIO(text)):
         cells = [cell.strip() for cell in cells]
         if not cells:
             continue
-        if len(cells) != 6 or not cells[0].startswith("GPU-") or cells[0] in seen:
+        if len(cells) != (12 if decode_diagnostic else 6) or not cells[0].startswith("GPU-") or cells[0] in seen:
             raise ValueError("malformed_or_duplicate_gpu_row")
         seen.add(cells[0])
         values = [_number(cell, integer=False) for cell in cells[1:]]
@@ -138,6 +140,12 @@ def parse_gpu_csv(text: str) -> list[dict]:
                     "free_bytes": None if values[2] is None else int(values[2] * MIB),
                     "utilization_percent": values[3], "power_watts": values[4],
                     "allocator_workspace_bytes": None})
+        if decode_diagnostic:
+            names = ('memory_utilization_percent', 'sm_clock_mhz', 'memory_clock_mhz',
+                     'pcie_link_generation', 'pcie_link_width', 'power_limit_watts')
+            out[-1]['decode_fields'] = dict(zip(names, values[5:]))
+            out[-1]['decode_missing_fields'] = [name for name, value in out[-1]['decode_fields'].items() if value is None]
+            out[-1]['pcie_throughput'] = None  # Link state is not transfer throughput.
     return out
 
 
@@ -152,7 +160,7 @@ def _read(path: Path, errors: list[str]) -> str:
 
 def collect_sample(cgroups: Mapping[str, Path], *, pids: Mapping[str, list[int]] | None = None,
                    proc_root: Path = Path("/proc"), gpu_reader: Callable[[], str] | None = None,
-                   clock: Callable[[], float] = time.monotonic) -> dict:
+                   clock: Callable[[], float] = time.monotonic, decode_diagnostic=False) -> dict:
     """One cheap read. pids must include all known model worker processes.
 
     Root RUN must establish protected cgroup/container identity and process start
@@ -177,8 +185,11 @@ def collect_sample(cgroups: Mapping[str, Path], *, pids: Mapping[str, list[int]]
                              "rss_bytes": sum(r["rss_bytes"] for r in rows) if rows and all(r["rss_bytes"] is not None for r in rows) else None,
                              "swap_bytes": sum(r["swap_bytes"] for r in rows) if rows and all(r["swap_bytes"] is not None for r in rows) else None}
     try:
-        raw = gpu_reader() if gpu_reader else subprocess.run(GPU_COMMAND, check=True, capture_output=True, text=True, timeout=2).stdout
-        gpus = parse_gpu_csv(raw)
+        gpu_command = list(GPU_COMMAND)
+        if decode_diagnostic:
+            gpu_command[1] += ',' + ','.join(DECODE_GPU_FIELDS)
+        raw = gpu_reader() if gpu_reader else subprocess.run(gpu_command, check=True, capture_output=True, text=True, timeout=2).stdout
+        gpus = parse_gpu_csv(raw, decode_diagnostic=decode_diagnostic)
         if not gpus:
             errors.append("gpu_inventory_unavailable")
     except (OSError, subprocess.SubprocessError, ValueError) as exc:

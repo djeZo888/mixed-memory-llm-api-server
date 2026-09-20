@@ -3,9 +3,10 @@ from __future__ import annotations
 import re
 from agent import protocol
 from benchmark.fixtures import HarnessError, MODELS, CAPACITIES, canonical, digest
+from benchmark.profiles import GLM_DECODE_DIAG_CAPACITIES
 
 
-def native_counter(model, capacity, call, *, qwen_template_sha256=None):
+def native_counter(model, capacity, call, *, qwen_template_sha256=None, scope=None):
     """Adapt existing native counting routes through an injected protected client.
 
     call(path, payload) must enforce current runtime identity/storage/owner gates
@@ -14,7 +15,12 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None):
     its tokenize route alone does not expose that identity. No route is called
     until the returned counter is invoked; these are not generation endpoints.
     """
-    if (model not in MODELS or capacity not in CAPACITIES
+    allowed_capacities = CAPACITIES
+    if scope is not None:
+        if scope != "glm-decode-diag" or model != "bench-glm-5.3":
+            raise HarnessError("invalid native counting diagnostic scope")
+        allowed_capacities = GLM_DECODE_DIAG_CAPACITIES
+    if (model not in MODELS or type(capacity) is not int or capacity not in allowed_capacities
             or (capacity == 262144 and model != "bench-qwen3.8-27b")):
         raise HarnessError("invalid native counting configuration")
     if model.removeprefix("bench-") == "qwen3.8-27b" and (not isinstance(qwen_template_sha256, str)

@@ -28,7 +28,7 @@ from .lifecycle import CONTROL_UNIT, BOOT_UNIT, PlanError, digest, require, vali
 from .owner import CampaignOwner, HostCallbacks, WorkerVerificationPending
 from .campaign import CampaignBudget
 from .profiles import (read_config, command_manifest, split_resources, validate_arm_scope,
-                       G1_RAM_CAP_BYTES, glmrepair_manifest, g1_ladder_manifest, cpu_set)
+                       G1_RAM_CAP_BYTES, glmrepair_manifest, g1_ladder_manifest, glm_decode_diag_manifest, cpu_set)
 from .telemetry import collect_sample, required_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
@@ -116,15 +116,15 @@ class HostBudget(CampaignBudget):
         self._mutex = threading.RLock()
         self.host, self.path, self.clock = host, Path(host.log_root) / 'budget.json', time.time
         self.budget_seconds = (1200 if getattr(host, 'campaign', None) == 'benchrun-glmrepair-g1fix-20260919' else 2700 if getattr(host, 'campaign', None) == 'benchrun-glmrepair-fix-20260919' else 3600) if getattr(host, 'scope', None) == 'glmrepair' else 21600
-        if getattr(host, 'scope', None) == 'g1-ladder':
-            self.budget_seconds = 10800
+        if getattr(host, 'scope', None) in {'g1-ladder', 'glm-decode-diag'}:
+            self.budget_seconds = 14400 if host.scope == 'glm-decode-diag' else 10800
         self._data = host.read_json('budget.json', missing=True)
         if self._data is not None:
             self._validate()
 
     def _validate(self):
         super()._validate()
-        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder'}:
+        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
             require(self._data.get('start_epoch') == self.host.start_epoch == self._data['started_at'] and
                     self._data.get('deadline_epoch') == self.host.deadline_epoch == self.host.start_epoch + self.budget_seconds,
                     'glmrepair_immutable_clock_changed')
@@ -136,7 +136,7 @@ class HostBudget(CampaignBudget):
         require(type(start) in (int, float) and 0 < start <= now and now - start < self.budget_seconds, 'invalid_stage_start_epoch')
         self._data = {'schema': 1, 'budget_seconds': self.budget_seconds, 'phase': 'MEASURING', 'start_kind': kind,
                      'started_at': start, 'last_seen_at': now, 'restoration_started_at': None}
-        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder'}:
+        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
             self._data.update(start_epoch=start, deadline_epoch=self.host.deadline_epoch)
             self._validate()
         self._save()
@@ -166,13 +166,15 @@ class LinuxHost:
         data = json.loads(raw)
         values = data.get('commands', data.get('manifests', [])) if isinstance(data, dict) else data
         self.scope = validate_arm_scope(data)
-        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2}[self.scope]
+        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3}[self.scope]
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
         self.start_epoch = data.get('start_epoch', data.get('runtime', {}).get('start_epoch')) if isinstance(data, dict) else None
         if self.scope == 'glmrepair':
             self.start_epoch, self.deadline_epoch = self.glmrepair_clock(data)
         elif self.scope == 'g1-ladder':
             self.start_epoch, self.deadline_epoch = self.ladder_clock(data)
+        elif self.scope == 'glm-decode-diag':
+            self.start_epoch, self.deadline_epoch = self.decode_clock(data)
         elif self.scope != 'full':
             require(data.get('runtime') == data.get('continuation_execution') and self.start_epoch is not None,
                     'q1_continuation_epoch_changed')
@@ -185,7 +187,7 @@ class LinuxHost:
             require(hashlib.sha256(source_raw).hexdigest() == sha, 'staged_source_pin_changed')
         self.manifests = {}
         for value in values:
-            expected = g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
+            expected = glm_decode_diag_manifest(value['configured_capacity']) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
                                         ram_cap=G1_RAM_CAP_BYTES if self.scope == 'g1-only' else None,
                                         log_verbosity=4 if self.scope == 'g1-only' else None)
             require(value == expected, 'manifest_not_current_generated_source')
@@ -203,6 +205,19 @@ class LinuxHost:
         callbacks = HostCallbacks(**{name: getattr(self, name) for name in HostCallbacks.__dataclass_fields__})
         self.owner = CampaignOwner(campaign, self.manager, callbacks, self.budget,
                                   reviewed_manifest_hashes=self.manifests, lease_factory=lifecycle_lease.acquire_lease)
+
+    @staticmethod
+    def decode_clock(armed):
+        runtime = armed.get('runtime') or {}
+        start, deadline = runtime.get('start_epoch'), runtime.get('deadline_epoch')
+        require('continuation_execution' not in armed and 'start_epoch' not in armed and
+                type(start) in (int, float) and type(deadline) in (int, float) and
+                math.isfinite(start) and math.isfinite(deadline) and start > 0 and
+                deadline == start + 14400 and runtime.get('budget_seconds') == 14400 and
+                runtime.get('request_max_seconds') == 7200 and
+                runtime.get('clock_includes_preparation') is True and runtime.get('restoration_outside_budget') is True,
+                'decode_diagnostic_immutable_clock_required')
+        return start, deadline
 
     @staticmethod
     def ladder_clock(armed):
@@ -506,7 +521,7 @@ class LinuxHost:
         if manifest['placement'].startswith('Q'):
             from runtime.qwen38_oci import verify_image
             verify_image(image)
-        if self.scope in {'g1-only', 'glmrepair', 'g1-ladder'}:
+        if self.scope in {'g1-only', 'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
             available = collect_sample({})['host']['available_bytes']
             require(type(available) is int and available >= G1_RAM_CAP_BYTES + 16 * 1024**3,
                     'g1_container_cap_host_reserve_unproved')
@@ -515,7 +530,7 @@ class LinuxHost:
         created = command(argv, 120).stdout.decode().strip()
         require(bool(CID.fullmatch(created)), 'invalid_created_container_id')
         container = self.docker_inspect(created)
-        if self.scope in {'g1-only', 'glmrepair', 'g1-ladder'}:
+        if self.scope in {'g1-only', 'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
             require(container['HostConfig'].get('Memory') == G1_RAM_CAP_BYTES and
                     container['HostConfig'].get('MemorySwap') == G1_RAM_CAP_BYTES,
                     'g1_container_no_swap_limit_unproved')
@@ -585,7 +600,19 @@ class LinuxHost:
     def telemetry(self, cid):
         collection_started = time.monotonic()
         container, cgroup, pids = self.identity(cid)
-        row = collect_sample({cid: cgroup}, pids={cid: pids})
+        options = {'decode_diagnostic': True} if self.scope == 'glm-decode-diag' else {}
+        row = collect_sample({cid: cgroup}, pids={cid: pids}, **options)
+        if self.scope == 'glm-decode-diag':
+            previous = getattr(self, '_decode_last_sample', {}).get(cid, float('-inf'))
+            if collection_started - previous >= 5:
+                from .decode_telemetry import collect_decode_sample
+                try:
+                    row['decode_cpu'] = collect_decode_sample({cid: cgroup}, pids={cid: pids})
+                except (OSError, ValueError) as exc:
+                    row['decode_cpu'] = {'status': 'UNAVAILABLE', 'error_class': type(exc).__name__}
+                if not hasattr(self, '_decode_last_sample'):
+                    self._decode_last_sample = {}
+                self._decode_last_sample[cid] = collection_started
         row['collection_duration_s'] = time.monotonic() - collection_started
         self.samples.setdefault(cid, []).append(row)
         # Do not run heavy root-payload guards or write at 1 Hz. Worker persists
@@ -658,8 +685,27 @@ class LinuxHost:
         result = {'point': point, 'pss_bytes': sum(values) if values and all(v is not None for v in values) else None,
                   'process_count': len(pids), 'duration_s': time.monotonic() - start,
                   'container_id': cid, 'scope': 'quiescent_process_tree_pss', 'telemetry': self.telemetry(cid)}
+        if self.scope == 'glm-decode-diag':
+            from .decode_telemetry import quiescent_snapshot
+            result['decode_quiescent'] = quiescent_snapshot({cid: pids})
         self.write_json('loads/' + cid + '-' + point + '.json', result)
         return result
+
+    def decode_progress(self, cid):
+        """Explicit bounded snapshot, never called by the periodic sampler."""
+        require(self.scope == 'glm-decode-diag' and self.owner.phase == 'ACTIVE', 'decode_scope_required')
+        require(cid in self.requests, 'decode_request_not_registered')
+        self.identity(cid)
+        start = time.monotonic()
+        slots = http_json(31002, '/slots', timeout_s=5)
+        end = time.monotonic()
+        require(isinstance(slots, list) and len(slots) == 1, 'native_single_slot_required')
+        slot = slots[0]
+        next_token = slot.get('next_token', [])
+        count = next_token[0].get('n_decoded') if len(next_token) == 1 else None
+        return {'slot_id': slot.get('id'), 'task_id': slot.get('id_task'),
+                'is_processing': slot.get('is_processing'), 'n_decoded': count,
+                'host_started_monotonic_s': start, 'host_finished_monotonic_s': end}
 
     @staticmethod
     def g1_memory_limits(container, cgroup):
@@ -810,11 +856,11 @@ class LinuxHost:
                     'native_argv': native, 'device_request_uuids': device_ids, 'cuda_uuid_order': cuda,
                     'gpu_free_bytes': {g['uuid']: g['free_bytes'] for g in sample['gpus']},
                     'raw_log_sha256': hashlib.sha256(raw).hexdigest()}
-        if self.scope in {'g1-only', 'glmrepair', 'g1-ladder'}:
+        if self.scope in {'g1-only', 'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
             observed['container_memory_limits'] = self.g1_memory_limits(container, cgroup)
-        if self.scope in {'glmrepair', 'g1-ladder'}:
+        if self.scope in {'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
             observed['container_cpu_limits'] = self.glmrepair_cpu_limits(container, cgroup)
-        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope in {'g1-only', 'g1-ladder'},
+        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope in {'g1-only', 'g1-ladder', 'glm-decode-diag'},
                                strict_glmrepair=self.scope == 'glmrepair')
         result = {'allocation': gate, 'parsed': parsed, 'observed': observed, 'server_facts': facts,
                   'raw_log_path': self.log_root + '/loads/' + cid + '-allocation.log'}
@@ -991,7 +1037,7 @@ class LinuxHost:
         require(isinstance(args, dict), 'invalid_rpc_args')
         if op == 'begin':
             if args.get('resume'):
-                require(self.scope not in {'glmrepair', 'g1-ladder'}, 'glmrepair_resume_forbidden_restore_only')
+                require(self.scope not in {'glmrepair', 'g1-ladder', 'glm-decode-diag'}, 'glmrepair_resume_forbidden_restore_only')
                 ledger = self.read_json('owner.json')
                 require(ledger['phase'] == 'RESTORED' and self.budget.data['phase'] == 'RESTORED', 'resume_requires_verified_restoration')
                 require(time.time() - self.budget.data['started_at'] < 21600, 'STOP_BUDGET')
@@ -1024,6 +1070,8 @@ class LinuxHost:
             return self.quiescent(args['id'], args['point'])
         if op == 'diagnostic_snapshot':
             return self.diagnostic_snapshot(args['id'], args['point'])
+        if op == 'decode_progress':
+            return self.decode_progress(args['id'])
         if op == 'request_begin':
             require(self.owner.phase == 'ACTIVE', 'owner_not_active')
             self.identity(args['id'])
@@ -1093,7 +1141,7 @@ class LinuxHost:
 
 
 RPC_OPERATIONS = frozenset({'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation',
-    'quiescent', 'diagnostic_snapshot', 'request_begin', 'request_end', 'admit_mixed', 'restore', 'recover',
+    'quiescent', 'diagnostic_snapshot', 'decode_progress', 'request_begin', 'request_end', 'admit_mixed', 'restore', 'recover',
     'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'})
 RPC_SAFE_REQUIRE_CODES = frozenset({'native_server_args_unavailable',
     'allocation_log_too_large', 'current_model_mount_changed',

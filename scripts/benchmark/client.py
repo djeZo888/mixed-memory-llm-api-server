@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -19,6 +20,7 @@ from benchmark.fixtures import HarnessError, canonical, digest
 
 
 MAX_RESPONSE = 16 * 1024 * 1024
+MAX_EVENT_ARRIVALS = 16384
 
 
 class StreamObserver:
@@ -28,7 +30,9 @@ class StreamObserver:
     argument/name deltas are separately observed. Errors latch and parsing stops,
     while the caller continues draining the network response to healthy EOF.
     """
-    def __init__(self, started):
+    def __init__(self, started, *, capture_events=False):
+        if type(capture_events) is not bool:
+            raise HarnessError("invalid event capture option")
         self.started = started
         self.pending = b""
         self.first_content = self.first_reasoning = self.first_tool = None
@@ -36,6 +40,9 @@ class StreamObserver:
         self.done = False
         self.error = False
         self.events = 0
+        self.capture_events = capture_events
+        self.event_arrivals = []
+        self.dropped_event_arrivals = 0
 
     def feed(self, chunk, arrived):
         if self.error:
@@ -59,6 +66,8 @@ class StreamObserver:
                 if not isinstance(event, dict) or event.get("error") is not None:
                     raise HarnessError("invalid stream event")
                 self.events += 1
+                sizes = ({"content_bytes": 0, "reasoning_bytes": 0, "tool_bytes": 0}
+                         if self.capture_events and len(self.event_arrivals) < MAX_EVENT_ARRIVALS else None)
                 for choice in event.get("choices", []):
                     delta = choice.get("delta", {})
                     emitted = False
@@ -68,29 +77,65 @@ class StreamObserver:
                             raise HarnessError("invalid delta")
                         if value:
                             emitted = True
+                            if sizes is not None:
+                                sizes["content_bytes" if key == "content" else "reasoning_bytes"] += len(value.encode("utf-8"))
                             if getattr(self, field) is None:
                                 setattr(self, field, arrived - self.started)
                     for call in delta.get("tool_calls") or []:
                         function = call.get("function") or {}
                         if function.get("arguments") or function.get("name"):
                             emitted = True
+                            if sizes is not None:
+                                for key in ("arguments", "name"):
+                                    value = function.get(key)
+                                    if value is not None and not isinstance(value, str):
+                                        raise HarnessError("invalid tool delta")
+                                    sizes["tool_bytes"] += len((value or "").encode("utf-8"))
                             if self.first_tool is None:
                                 self.first_tool = arrived - self.started
                     if emitted:
                         if self.first_any is None:
                             self.first_any = arrived - self.started
                         self.last_any = arrived - self.started
+                if self.capture_events:
+                    if sizes is None:
+                        self.dropped_event_arrivals += 1
+                    else:
+                        # A coalesced read gives several events the same time;
+                        # a fragmented event gets its final chunk's arrival.
+                        # Never persist provider text, token IDs or tool IDs.
+                        timings = event.get("timings")
+                        native = None
+                        if isinstance(timings, dict):
+                            native = {}
+                            for key in ("predicted_n", "predicted_ms", "prompt_n", "prompt_ms"):
+                                if key in timings:
+                                    value = timings[key]
+                                    number = (type(value) is int or key.endswith("_ms") and type(value) is float)
+                                    native[key] = value if number and math.isfinite(value) and value >= 0 else None
+                        self.event_arrivals.append({"ordinal": self.events,
+                            "arrived_monotonic_s": arrived, "elapsed_s": arrived - self.started,
+                            "native_timings": native,
+                            **sizes, **{"has_" + kind: sizes[kind + "_bytes"] > 0
+                                        for kind in ("content", "reasoning", "tool")}})
         except Exception:
             # Do not echo parser exceptions (they may contain raw provider text).
             self.error = True
 
     def summary(self):
-        return {"source": "client_event_arrival", "ttft_content_seconds": self.first_content,
+        result = {"source": "client_event_arrival", "ttft_content_seconds": self.first_content,
                 "ttft_reasoning_seconds": self.first_reasoning, "ttft_tool_seconds": self.first_tool,
                 "ttft_any_output_seconds": self.first_any, "last_output_seconds": self.last_any,
                 "events": self.events, "done_observed": self.done,
                 "observer_status": "HARNESS_FAILURE" if self.error else "OK",
                 "timing_limit": "event-arrival timestamps; chunk batching and client overhead included"}
+        if self.capture_events:
+            result["event_arrivals"] = {"rows": self.event_arrivals,
+                "limit": MAX_EVENT_ARRIVALS, "dropped_events": self.dropped_event_arrivals,
+                "unit": "SSE JSON events, not native tokens; DONE excluded",
+                "byte_scope": "UTF-8 delta values; tool name and arguments only",
+                "complete": self.done and not self.error and self.dropped_event_arrivals == 0}
+        return result
 
 
 def _events(raw):
@@ -160,7 +205,7 @@ def _write_private(path, data):
 
 def run_request(raw_body, transport, *, sample_id, private_dir, summary_path,
                 timeout=7200, clock=time.monotonic, redact=None,
-                observer_factory=StreamObserver):
+                observer_factory=StreamObserver, capture_events=False):
     """One explicit future request, no retry or lifecycle operations.
 
     transport(bytes, timeout_seconds) yields byte chunks and owns protected auth,
@@ -176,7 +221,7 @@ def run_request(raw_body, transport, *, sample_id, private_dir, summary_path,
         raise HarnessError("benchmark request requires streaming and 256/512 cap")
     return _capture_request(raw_body, transport, sample_id=sample_id, private_dir=private_dir,
                             summary_path=summary_path, timeout=timeout, clock=clock,
-                            redact=redact, observer_factory=observer_factory)
+                            redact=redact, observer_factory=observer_factory, capture_events=capture_events)
 
 
 def run_diagnostic_request(raw_body, transport, **kwargs):
@@ -220,9 +265,11 @@ def parse_nonstream(raw, model):
 
 def _capture_request(raw_body, transport, *, sample_id, private_dir, summary_path,
                      timeout=7200, clock=time.monotonic, redact=None,
-                     observer_factory=StreamObserver):
+                     observer_factory=StreamObserver, capture_events=False):
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,96}", sample_id) or type(timeout) not in (int, float) or not 0 < timeout <= 7200:
         raise HarnessError("invalid request identity or timeout")
+    if type(capture_events) is not bool:
+        raise HarnessError("invalid event capture option")
     request = protocol.strict_json_loads(raw_body)
     streaming = request["stream"]
     protocol._validate_messages(request.get("messages"))
@@ -234,7 +281,7 @@ def _capture_request(raw_body, transport, *, sample_id, private_dir, summary_pat
     request_path = root / (sample_id + ".request.json")
     _write_private(request_path, redact(raw_body))
     started = clock()
-    observer = observer_factory(started)
+    observer = observer_factory(started, capture_events=True) if capture_events else observer_factory(started)
     chunks, total, transport_error, oversized = [], 0, False, False
     interrupted = None
     try:

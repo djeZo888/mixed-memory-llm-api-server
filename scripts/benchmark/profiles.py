@@ -12,8 +12,10 @@ from .qwen_launcher import pinned_base, variant
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/benchmarks/gpu-split-20260919.json"
 G1_RAM_CAP_BYTES = 640 * 1024**3  # Root-reviewed validation cap; not minimum model RAM.
-ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair", "g1-ladder")
+ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair", "g1-ladder", "glm-decode-diag")
 G1_LADDER_CAMPAIGN = "benchrun-glm-g1-ladder-20260920"
+GLM_DECODE_DIAG_CAMPAIGN = "benchrun-glm-decode-diag-20260920"
+GLM_DECODE_DIAG_CAPACITIES = (1024, 32768, 65536)
 GLMREPAIR_CAMPAIGN = "benchrun-glmrepair2-20260919"
 GLMREPAIR_POLL_CAMPAIGN = "benchrun-glmrepair-poll-20260919"
 GLMREPAIR_G1FIX_CAMPAIGN = "benchrun-glmrepair-g1fix-20260919"
@@ -53,10 +55,25 @@ def g1_ladder_manifest(capacity):
     return manifest
 
 
+def glm_decode_diag_manifest(capacity):
+    """Frozen G1 diagnostic loads: context and campaign paths/names only change."""
+    if type(capacity) is not int or capacity not in GLM_DECODE_DIAG_CAPACITIES:
+        raise ValueError("glm_decode_diag_capacity_outside_scope")
+    base = glmrepair_manifest(GLMREPAIR_G1_CAMPAIGN)
+    name = f"{GLM_DECODE_DIAG_CAMPAIGN}-g1-{capacity}"
+    manifest = json.loads(json.dumps(base).replace(base["container_name"], name)
+                          .replace(GLMREPAIR_G1_CAMPAIGN, GLM_DECODE_DIAG_CAMPAIGN))
+    manifest["configured_capacity"] = capacity
+    for key in ("native_argv", "create_argv"):
+        manifest[key][manifest[key].index("--ctx-size") + 1] = str(capacity)
+    manifest["create_shell"] = shlex.join(manifest["create_argv"])
+    return manifest
+
+
 def scope_placements(scope):
     if scope not in ARM_SCOPES:
         raise ValueError("unknown_benchmark_arm_scope")
-    if scope in {"g1-only", "g1-ladder"}:
+    if scope in {"g1-only", "g1-ladder", "glm-decode-diag"}:
         return ("G1",)
     if scope == "glmrepair":
         return ("G2",)
@@ -69,6 +86,8 @@ def scope_capacities(scope):
         return (4096,)
     if scope == "g1-ladder":
         return (16384, 65536)
+    if scope == "glm-decode-diag":
+        return GLM_DECODE_DIAG_CAPACITIES
     return (262144,) if scope == "q1-256k" else (4096, 16384, 65536)
 
 
@@ -76,6 +95,12 @@ def validate_arm_scope(armed):
     """Legacy arms retain full scope; narrowed arms bind their exact placement and plan."""
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
+    if scope == "glm-decode-diag":
+        if (armed.get("campaign") != GLM_DECODE_DIAG_CAMPAIGN
+                or armed.get("manifests") != [glm_decode_diag_manifest(n) for n in GLM_DECODE_DIAG_CAPACITIES]
+                or armed.get("trial_plan") != trial_order(scope)):
+            raise ValueError("glm_decode_diag_exact_arm_scope_mismatch")
+        return scope
     if scope == "g1-ladder":
         if (armed.get("campaign") != G1_LADDER_CAMPAIGN
                 or armed.get("manifests") != [g1_ladder_manifest(n) for n in (16384, 65536)]
@@ -247,6 +272,24 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
 
 
 def trial_order(scope="full", campaign=GLMREPAIR_CAMPAIGN):
+    if scope == "glm-decode-diag":
+        trials = []
+        for capacity in GLM_DECODE_DIAG_CAPACITIES:
+            trials += [
+                {"placement": "G1", "capacity": capacity, "case": "load_warmup", "output_cap": 32, "timing": "discard"},
+                {"placement": "G1", "capacity": capacity, "case": "short_control", "output_cap": 128}]
+        trials += [
+            {"placement": "G1", "capacity": 65536, "case": "near_full_replay", "output_cap": 256},
+            {"placement": "G1", "capacity": 65536, "case": "long_answer", "output_cap": 4096,
+             "conditional": "after_short_controls_profiles_and_any_separately_reviewed_causal_AB"}]
+        return {"trials": trials, "then": [], "mixed_jobs": [], "measurement_budget_seconds": 14400,
+                "maximum_request_seconds": 7200, "clock_includes_preparation": True,
+                "budget_start": "existing absolute stage clock; never reset for continuation or repair",
+                "restoration_outside_budget": True,
+                "short_matching": "same logical fixture and sampling; fresh leading prefix and exact native recount",
+                "output_policy": "natural stopping with fixed caps; no ignore_eos; report actual counts and finish reason",
+                "format_failure_policy": "preserve strict retrieval failures; no automatic retry",
+                "additional_trials": "CPU/CUDA samples and one evidence-led causal AB require separate root review"}
     if scope == "g1-ladder":
         return {"trials": [
             {"placement": "G1", "capacity": 16384, "case": "load_warmup", "output_cap": 32, "timing": "discard"},

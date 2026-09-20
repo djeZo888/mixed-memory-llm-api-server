@@ -11,6 +11,7 @@ import math
 import re
 
 from d3t import guards
+from benchmark.profiles import GLM_DECODE_DIAG_CAMPAIGN, GLM_DECODE_DIAG_CAPACITIES, glm_decode_diag_manifest
 
 GIB = 1024 ** 3
 
@@ -163,6 +164,11 @@ def allocation_gate(manifest: dict, parsed: dict, observed: dict, *, strict_g1=F
             reasons.append(reason)
     expected_uuids = manifest["gpu_uuids"]
     capacity = manifest["configured_capacity"]
+    decode_diag = manifest.get("campaign") == GLM_DECODE_DIAG_CAMPAIGN
+    exact_decode_diag = (decode_diag and type(capacity) is int and capacity in GLM_DECODE_DIAG_CAPACITIES
+                         and manifest == glm_decode_diag_manifest(capacity))
+    if decode_diag:
+        need(exact_decode_diag, "glm_decode_diag_exact_manifest_required")
     need(parsed.get("parser_status") == "PARSED", "allocation_parser_failure")
     need(observed.get("image_ref") == manifest["image"], "current_image_proof_missing_or_mismatched")
     need(observed.get("model") == manifest["model"], "current_weight_identity_proof_missing_or_mismatched")
@@ -181,14 +187,18 @@ def allocation_gate(manifest: dict, parsed: dict, observed: dict, *, strict_g1=F
         need(parsed.get("kind") == "glm", "wrong_allocation_parser")
         need(native.get("n_ctx_seq") == capacity and native.get("n_seq_max") == 1 and native.get("no_alloc") == 0,
              "native_allocation_context_or_slot_unproved")
-        need(native.get("n_batch") == 2048 and native.get("n_ubatch") == 512,
+        # Pinned b29c606 src/llama-context.cpp:245 clamps causal n_batch to
+        # n_ctx. Retain --batch-size 2048; admit the 1K clamp only for the exact
+        # frozen diagnostic manifest, never by capacity or a caller flag alone.
+        expected_batch = min(2048, capacity) if exact_decode_diag else 2048
+        need(native.get("n_batch") == expected_batch and native.get("n_ubatch") == 512,
              "native_batch_mismatch")
         need(native.get("flash_attn") == 1 and native.get("fused_lid") == 1, "native_fusion_unproved")
         for kind in ("cache", "compute"):
             values = native.get(kind + "_bytes") or {}
             need(set(values) == devices and all(type(v) is int and v > 0 for v in values.values()),
                  "native_" + kind + "_allocation_unproved")
-        if strict_g1 or strict_glmrepair and manifest["placement"] == "G1":
+        if strict_g1 or decode_diag or strict_glmrepair and manifest["placement"] == "G1":
             need(manifest["placement"] == "G1" and devices == {"CUDA0"}, "g1_single_device_required")
             need(native.get("cache_bytes") == {"CUDA0": 95232 * capacity},
                  "g1_f16_cache_bytes_mismatch")
@@ -203,6 +213,7 @@ def allocation_gate(manifest: dict, parsed: dict, observed: dict, *, strict_g1=F
                  "glmrepair_f16_cache_total_mismatch")
             need(native.get("fa_nodes") == 78 and native.get("lid_nodes") == 21,
                  "glmrepair_main_indexer_graph_mismatch")
+        if strict_glmrepair or decode_diag:
             limits = observed.get("container_memory_limits") or {}
             need(limits == {"docker_memory_bytes": 640 * GIB, "docker_memory_swap_bytes": 640 * GIB,
                             "cgroup_memory_max": str(640 * GIB), "cgroup_memory_swap_max": "0"},
