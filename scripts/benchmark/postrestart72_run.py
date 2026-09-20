@@ -177,24 +177,44 @@ class PostrestartRun(prior.ConcurrentRun):
         raise EvidenceReview('CURRENT_RESOURCE_PROOF_UNAVAILABLE')
 
     def admission(self, cid, maximum=7200, *, measured=False, request_identity=None):
-        if self.interrupted.is_set():
-            raise RuntimeError('ROOT_INTERRUPTED_DRAIN_AND_RESTORE')
-        if self.root_paused():
-            raise AdmissionPaused('ROOT_STOP_PAUSE_NO_NEW_REQUEST')
-        self.ensure_current_proof()
-        with self.lock:
-            self.require_no_faults()
-            try:
-                grant = self.host.call('request_begin', id=cid, timeout_s=maximum, measured=measured,
-                    **({'request_identity': request_identity} if request_identity is not None else {}))
-            except Exception:
-                self.safety.setdefault(cid, 'HARNESS_FAILURE')
-                raise  # registration/ownership may be uncertain; never benign
-            if grant.get('proof_pending') is True and grant.get('admitted') is False:
+        # Freeze this admission's identity. Only an explicit pre-registration
+        # proof gap can repeat request_begin; HTTP inference is never retried.
+        arguments = {'id': cid, 'timeout_s': maximum, 'measured': measured,
+            **({'request_identity': copy.deepcopy(request_identity)} if request_identity is not None else {})}
+        for attempt in range(3):
+            if self.interrupted.is_set():
+                raise RuntimeError('ROOT_INTERRUPTED_DRAIN_AND_RESTORE')
+            if self.root_paused():
+                raise AdmissionPaused('ROOT_STOP_PAUSE_NO_NEW_REQUEST')
+            self.ensure_current_proof()  # same existing preparation/admission clock
+            with self.lock:
+                self.require_no_faults()
+                try:
+                    grant = self.host.call('request_begin', **arguments)
+                    if type(grant) is not dict:
+                        raise RuntimeError('INVALID_ADMISSION_RESPONSE')
+                    if 'proof_pending' not in grant and 'admitted' not in grant:
+                        timeout = grant.get('timeout_s')
+                        if (set(grant) - {'timeout_s', 'budget'} or type(timeout) not in (int, float)
+                                or not math.isfinite(timeout) or not 0 < timeout <= maximum):
+                            raise RuntimeError('INVALID_ADMISSION_RESPONSE')
+                        return timeout
+                    if (set(grant) != {'proof_pending', 'admitted', 'resource_gate', 'sample'}
+                            or grant['proof_pending'] is not True or grant['admitted'] is not False
+                            or type(grant['resource_gate']) is not dict
+                            or grant['resource_gate'].get('status') != 'UNAVAILABLE'
+                            or grant['resource_gate'].get('reasons') != []
+                            or grant['resource_gate'].get('latched_violations') != {}
+                            or type(grant['sample']) is not dict
+                            or grant['sample'].get('concurrent_resource_gate') != grant['resource_gate']):
+                        raise RuntimeError('INVALID_ADMISSION_RESPONSE')
+                except Exception:
+                    self.safety.setdefault(cid, 'HARNESS_FAILURE')
+                    raise  # uncertain/admitted/malformed responses cannot retry
                 self.proof_pending = grant['resource_gate']
-                self.emit({'type': 'admission_proof_pending', 'container': cid, 'proof': grant})
-                raise EvidenceReview('CURRENT_RESOURCE_PROOF_UNAVAILABLE')
-            return grant.get('timeout_s', 0)
+                self.emit({'type': 'admission_proof_pending', 'container': cid, 'proof': grant,
+                           'attempt': attempt + 1, 'attempt_limit': 3})
+        raise EvidenceReview('CURRENT_RESOURCE_PROOF_UNAVAILABLE')
 
     def monitor(self):
         # A held runner has no timed phase: no unbounded worker interval arrays.

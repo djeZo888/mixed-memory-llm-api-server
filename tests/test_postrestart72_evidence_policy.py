@@ -281,6 +281,135 @@ class EvidencePolicyTests(unittest.TestCase):
         self.assertEqual(host.requests, {})
         self.assertEqual(rows['calls'].count('request_begin'), 1)
 
+    def test_final_host_pending_has_three_total_attempts_and_at_most_one_dispatch(self):
+        for pending_count in (1, 3):
+            with self.subTest(pending_count=pending_count):
+                job, host, rows, _ = self.setup_case()
+                rows['current'] = rows['good']
+                original = job.host.call.side_effect
+                attempts, replies, registrations = [], [], []
+                def write(name, value):
+                    if name == 'requests.json' and value:
+                        registrations.append(copy.deepcopy(value))
+                host.write_json.side_effect = write
+                def call(op, **args):
+                    if op != 'request_begin':
+                        return original(op, **args)
+                    attempts.append(copy.deepcopy(args))
+                    rows['current'] = rows['gap'] if len(attempts) <= pending_count else rows['good']
+                    try:
+                        reply = original(op, **args)
+                        replies.append(copy.deepcopy(reply))
+                        return reply
+                    finally:
+                        # A fresh coherent monitor sample can succeed while
+                        # the subsequent authoritative final gate races again.
+                        rows['current'] = rows['good']
+                job.host.call.side_effect = call
+                dispatched = []
+                def transport(body, seconds):
+                    dispatched.append((body, seconds))
+                    self.assertEqual(set(host.requests), {'g'})
+                    yield stream([event({'role': 'assistant', 'content': 'ok'}, 'stop')])
+                job.transport_factory = Mock(return_value=transport)
+                raw = fixtures.canonical({'model': 'bench-glm-5.3', 'messages': [{'role': 'user', 'content': 'offline'}],
+                                          'max_tokens': 32, 'stream': True})
+                if pending_count == 1:
+                    response = job.request('g', raw, 'offline-final-gate', timed=True)
+                    self.assertEqual(response['summary']['status'], 'COMPLETE')
+                else:
+                    with self.assertRaises(run72.EvidenceReview):
+                        job.request('g', raw, 'offline-final-gate', timed=True)
+                expected = {'id': 'g', 'timeout_s': 7200, 'measured': True,
+                    'request_identity': {'request_id': 'offline-final-gate', 'request_sha256': fixtures.digest(raw),
+                        'manifest_sha256': fixtures.digest(fixtures.canonical(job.active['g']['manifest']))}}
+                self.assertEqual(attempts, [expected] * (2 if pending_count == 1 else 3))
+                granted = int(pending_count == 1)
+                self.assertEqual(len(dispatched), granted)
+                self.assertEqual(len(registrations), granted)
+                self.assertEqual(job.transport_factory.call_count, granted)
+                self.assertEqual(host.budget.request_timeout.call_count, granted)
+                self.assertEqual(host.postrestart_measured_admissions['G1'], granted)
+                self.assertEqual(sum('timeout_s' in reply for reply in replies), granted)
+                self.assertEqual(rows['calls'].count('request_end'), granted)
+                self.assertEqual(host.requests, {})
+                self.assertEqual(job.safety, {})
+                journal = [json.loads(line) for line in (job.state / 'results.jsonl').read_bytes().splitlines()]
+                pending = [row for row in journal if row.get('type') == 'admission_proof_pending']
+                self.assertEqual(len(pending), pending_count)
+                self.assertTrue(all(row['proof']['sample']['errors'] == rows['gap']['errors'] for row in pending))
+
+    def test_final_gate_retry_freezes_caller_request_identity(self):
+        job, host, rows, _ = self.setup_case()
+        rows['current'] = rows['good']
+        identity = {'request_id': 'offline-bound', 'request_sha256': 'a' * 64,
+                    'manifest_sha256': 'b' * 64}
+        original_identity = copy.deepcopy(identity)
+        original = job.host.call.side_effect
+        attempts = []
+        def call(op, **args):
+            if op != 'request_begin':
+                return original(op, **args)
+            attempts.append(copy.deepcopy(args))
+            if len(attempts) == 1:
+                rows['current'] = rows['gap']
+                reply = original(op, **args)
+                identity['request_id'] = 'caller-changed-after-entry'
+                rows['current'] = rows['good']
+                return reply
+            return original(op, **args)
+        job.host.call.side_effect = call
+        self.assertEqual(job.admission('g', measured=True, request_identity=identity), 7200)
+        self.assertEqual([args['request_identity'] for args in attempts], [original_identity] * 2)
+        job.host.call('request_end', id='g')
+
+    def test_final_gate_nonpending_or_ambiguous_responses_never_retry(self):
+        variants = ('exception', 'none', 'list', 'empty', 'missing_sample', 'sample_not_object',
+                    'admitted', 'untyped_admitted', 'untyped_pending', 'wrong_status', 'timeout', 'budget',
+                    'extra_key', 'gate_sample_disagree', 'numeric_fault')
+        for variant in variants:
+            with self.subTest(variant=variant):
+                job, host, rows, _ = self.setup_case()
+                pending = job.host.call('request_begin', id='g', timeout_s=7200, measured=True)
+                rows['current'] = rows['good']; rows['calls'].clear()
+                response = copy.deepcopy(pending)
+                if variant == 'none': response = None
+                elif variant == 'list': response = []
+                elif variant == 'empty': response = {}
+                elif variant == 'missing_sample': response.pop('sample')
+                elif variant == 'sample_not_object': response['sample'] = None
+                elif variant == 'admitted': response['admitted'] = True
+                elif variant == 'untyped_admitted': response['admitted'] = 0
+                elif variant == 'untyped_pending': response['proof_pending'] = 1
+                elif variant == 'wrong_status': response['resource_gate']['status'] = 'PASS'
+                elif variant == 'timeout': response['timeout_s'] = 7200
+                elif variant == 'budget': response['budget'] = {}
+                elif variant == 'extra_key': response['unexpected'] = True
+                elif variant == 'gate_sample_disagree': response['sample']['concurrent_resource_gate'] = {}
+                elif variant == 'numeric_fault': response['resource_gate']['reasons'] = ['numeric_fault']
+                original = job.host.call.side_effect
+                attempts = []
+                def call(op, **args):
+                    if op == 'request_begin':
+                        attempts.append(copy.deepcopy(args))
+                        if variant == 'exception':
+                            raise RuntimeError('synthetic_final_rpc_failure')
+                        return response
+                    return original(op, **args)
+                job.host.call.side_effect = call
+                job.transport_factory = Mock()
+                raw = fixtures.canonical({'model': 'bench-glm-5.3', 'messages': [{'role': 'user', 'content': 'offline'}],
+                                          'max_tokens': 32, 'stream': True})
+                with self.assertRaises(RuntimeError) as raised:
+                    job.request('g', raw, 'offline-no-retry', timed=True)
+                self.assertNotIsInstance(raised.exception, run72.EvidenceReview)
+                self.assertEqual(len(attempts), 1)
+                self.assertTrue(job.safety)
+                job.transport_factory.assert_not_called()
+                host.budget.request_timeout.assert_not_called()
+                self.assertEqual(host.requests, {})
+                self.assertNotIn('request_end', rows['calls'])
+
     def test_undispatched_measurement_gap_removes_only_its_inflight_entry(self):
         job, host, rows, _ = self.setup_case()
         rows['current'] = rows['good']
