@@ -109,7 +109,7 @@ class CampaignOwner:
 
     def _gate(self, stage):
         self._lease_check()
-        self.host.gate(stage, self.lease, copy.deepcopy(self.original), copy.deepcopy(self.resources))
+        return self.host.gate(stage, self.lease, copy.deepcopy(self.original), copy.deepcopy(self.resources))
 
     def _ledger(self):
         ledger = {"schema_version": 1, "campaign": self.campaign, "phase": self.phase,
@@ -190,7 +190,7 @@ class CampaignOwner:
         live = [row for row in self.resources if row["state"] != "REMOVED"]
         require(len(live) == 2 and all(row["state"] == "RUNNING" for row in live),
                 "postrestart_hold_requires_owned_pair")
-        self._gate("warm_hold")
+        jobs = self._gate("warm_hold")
         self._guard()
         for row in live:
             observed = self.host.inspect(copy.deepcopy(row["resource"]))
@@ -198,14 +198,16 @@ class CampaignOwner:
                     "postrestart_hold_identity_changed")
         self.phase, self.warm_hold_reason = "WARM_HOLD", reason
         self._save()
-        return self._ledger()
+        return {**self._ledger(), "hold_job_proof": jobs}
 
     def resume_measurements(self, followup_identity):
         """Only the single reviewed preliminary pause may resume its conditional pair."""
         require(self.scope == "postrestart72-480k" and self.phase == "WARM_HOLD" and
                 self.warm_hold_reason == "preliminary_review" and not self.warm_hold_resumed,
                 "postrestart_hold_resume_forbidden")
-        self._gate("warm_hold")
+        gate = self._gate("warm_hold")
+        if not isinstance(gate, dict) or gate.get("status") != "HELD":
+            return {"phase": "WARM_HOLD", "proof_pending": True, "admitted": False, "proof": gate}
         self.budget.begin_followup(followup_identity)
         self.phase, self.warm_hold_resumed = "ACTIVE", True
         self._save()
@@ -215,7 +217,9 @@ class CampaignOwner:
         require(self.scope == "postrestart72-480k" and self.phase == "WARM_HOLD" and
                 self.warm_hold_reason in {"complete", "quality_review", "paused"} and not self.additional_followup_used,
                 "postrestart_additional_followup_forbidden")
-        self._gate("warm_hold")
+        gate = self._gate("warm_hold")
+        if not isinstance(gate, dict) or gate.get("status") != "HELD":
+            return {"phase": "WARM_HOLD", "proof_pending": True, "admitted": False, "proof": gate}
         self.budget.begin_followup(identity)
         self.phase, self.additional_followup_used = "ACTIVE", True
         self._save()

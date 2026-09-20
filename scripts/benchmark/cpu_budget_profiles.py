@@ -16,6 +16,20 @@ CAMPAIGN = CPU_CAMPAIGN = "benchrun-c480-cpu-cont3-20260920"
 CAPACITY = 480000
 POSTRESTART_SCOPE = "postrestart72-480k"
 POSTRESTART_CAMPAIGN = "benchrun-p72c3-20260920"
+POSTRESTART_WARM_CAMPAIGN = "benchrun-p72wh-20260920"
+POSTRESTART_CAMPAIGNS = (POSTRESTART_CAMPAIGN, POSTRESTART_WARM_CAMPAIGN)
+POSTRESTART_MEASURED_MODE = "measured"
+POSTRESTART_WARM_ONLY_MODE = "warm_only"
+
+
+def postrestart_campaign(mode):
+    if mode == POSTRESTART_MEASURED_MODE:
+        return POSTRESTART_CAMPAIGN
+    if mode == POSTRESTART_WARM_ONLY_MODE:
+        return POSTRESTART_WARM_CAMPAIGN
+    raise ValueError("postrestart_exact_mode_required")
+
+
 LAYOUTS = {
     "A": {"active_guest_vcpus": 112, "G1": {"cpuset": "0-95", "count": 96},
           "Q1": {"cpuset": "96-111", "count": 16}},
@@ -138,18 +152,20 @@ def validate_arm_scope(armed):
     return SCOPE
 
 
-def postrestart_manifest(placement):
+def postrestart_manifest(placement, campaign=POSTRESTART_CAMPAIGN):
     """One reviewed pair in the actual 72-vCPU guest; Q8 shares G72."""
     if placement not in ("G1", "Q1"):
         raise ValueError("postrestart_closed_placement_required")
+    if campaign not in POSTRESTART_CAMPAIGNS:
+        raise ValueError("postrestart_closed_campaign_required")
     previous = manifest("A", placement)
-    identifier = f"{POSTRESTART_CAMPAIGN}-p-{placement.lower()}-{CAPACITY}"
+    identifier = f"{campaign}-p-{placement.lower()}-{CAPACITY}"
     encoded = json.dumps(previous).replace(previous["container_name"], identifier)
-    encoded = encoded.replace(CAMPAIGN, POSTRESTART_CAMPAIGN)
-    encoded = encoded.replace(f"/{POSTRESTART_CAMPAIGN}/a/", f"/{POSTRESTART_CAMPAIGN}/p/")
+    encoded = encoded.replace(CAMPAIGN, campaign)
+    encoded = encoded.replace(f"/{campaign}/a/", f"/{campaign}/p/")
     value = json.loads(encoded)
     cpus, count = ("0-71", 72) if placement == "G1" else ("0-7", 8)
-    value.update(scope=POSTRESTART_SCOPE, campaign=POSTRESTART_CAMPAIGN, layout="P",
+    value.update(scope=POSTRESTART_SCOPE, campaign=campaign, layout="P",
                  container_name=identifier, guest_cpuset=cpus, guest_cpu_count=count,
                  guest_total_vcpus=72, active_guest_vcpus=72, guest_mems_allowed="0-7",
                  cpu_comparison="Actual72 guest CPUs; Q8 shares G72; guest NUMA mapping is not physical pinning or bandwidth proof")
@@ -172,14 +188,33 @@ def postrestart_manifest(placement):
         "one load pair; discarded warmups; measured G4K; root-reviewed conditional G65008/Q479487 pair only",
         "healthy completion/review pause retains exact owned WARM_HOLD; explicit release restores captured STOPPED/manual",
     ]
+    if campaign == POSTRESTART_WARM_CAMPAIGN:
+        value["mandatory_run_gates"][5] = "exactly two loads and two discarded32-output warmups; then retained hold; no initial measured requests"
     return value
 
 
-def postrestart_manifests():
-    return [postrestart_manifest(placement) for placement in ("G1", "Q1")]
+def postrestart_manifests(campaign=POSTRESTART_CAMPAIGN):
+    return [postrestart_manifest(placement, campaign) for placement in ("G1", "Q1")]
 
 
-def postrestart_trial_order():
+def postrestart_trial_order(mode=POSTRESTART_MEASURED_MODE):
+    postrestart_campaign(mode)  # closed mode, including the unchanged measured plan
+    if mode == POSTRESTART_WARM_ONLY_MODE:
+        return {"mode": mode, "trials": [], "mixed_jobs": [],
+            "rounds": [{"id": "P", "layout": "P", "glm_capacity": CAPACITY, "qwen_capacity": CAPACITY,
+                        "pairs": 1, "qwen_max_requests": 0}],
+            "loads": 2, "initial_measured_requests": 0,
+            "warmup": {"per_model_per_load": 1, "output_cap": 32,
+                "glm_occupied_target": "approximately4K", "qwen_occupied_target": "approximately3251",
+                "timing": "discarded", "performance_gate": False},
+            "maximum_request_seconds": 7200, "preparation_seconds": 7200,
+            "measurement_budget_seconds": 21600, "clock_includes_preparation": False,
+            "budget_start": "first_measurement_admission_only_under_separate_followup_GO",
+            "request_deadline": "immutable actual HTTP dispatch +7200s; never clipped by admission deadline",
+            "endstate": "guarded_owned_WARM_HOLD_after_two_discarded_warmups",
+            "followup": "existing one-use preset only under fresh source/session/body/profile-bound GO",
+            "restoration_outside_budget": True,
+            "additional_cases": "none initially; no G4K repeat, long pair, optional case or tuning"}
     return {"trials": [
         {"id": "P-G4K", "layout": "P", "placement": "G1", "configured_capacity": CAPACITY,
          "occupied_target_capacity": 4096, "saved_input_tokens": 3546, "output_cap": 256,
@@ -228,8 +263,10 @@ def postrestart_trial_order():
 
 
 def validate_postrestart_arm_scope(armed):
-    if (armed.get("scope") != POSTRESTART_SCOPE or armed.get("campaign") != POSTRESTART_CAMPAIGN
-            or armed.get("manifests") != postrestart_manifests()
-            or armed.get("trial_plan") != postrestart_trial_order()):
+    mode = armed.get("mode", POSTRESTART_MEASURED_MODE)
+    campaign = postrestart_campaign(mode)
+    if (armed.get("scope") != POSTRESTART_SCOPE or armed.get("campaign") != campaign
+            or armed.get("manifests") != postrestart_manifests(campaign)
+            or armed.get("trial_plan") != postrestart_trial_order(mode)):
         raise ValueError("postrestart_exact_arm_scope_mismatch")
     return POSTRESTART_SCOPE

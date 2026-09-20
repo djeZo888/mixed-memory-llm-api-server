@@ -204,7 +204,7 @@ class FollowupClockTests(unittest.TestCase):
 
 
 class HoldTests(unittest.TestCase):
-    def owned_pair(self, root):
+    def owned_pair(self, root, *, measured=True):
         fixture = Fixture(Path(root).resolve(), snapshot(None, False))
         budget_host, now = MemoryHost(), [1000.]
         budget = PostrestartBudget(budget_host, clock=lambda: now[0])
@@ -215,7 +215,8 @@ class HoldTests(unittest.TestCase):
         def gate(stage, *args):
             if stage == 'warm_hold' and fixture.requests_active:
                 raise ValueError('healthy_request_still_registered')
-            return original_gate(stage, *args)
+            result = original_gate(stage, *args)
+            return {'status': 'HELD', 'jobs': []} if stage == 'warm_hold' else result
         fixture.create, fixture.gate = create, gate
         second = {**fixture.manifest, 'container_name': 'benchrun-offline-q1-4096'}
         callbacks = HostCallbacks(**{name: getattr(fixture, name) for name in HostCallbacks.__dataclass_fields__})
@@ -224,7 +225,8 @@ class HoldTests(unittest.TestCase):
             synthetic_offline=True, scope=POSTRESTART_SCOPE)
         fixture.owner = owner
         owner.begin(); owner.launch(fixture.manifest); owner.launch(second)
-        budget.request_timeout(measured=True)
+        if measured:
+            budget.request_timeout(measured=True)
         return fixture, owner, budget, now
 
     def test_idle_owned_pair_hold_keeps_real_lease_and_explicit_release_restores_stopped(self):
@@ -340,7 +342,7 @@ class HostIntegrationTests(unittest.TestCase):
         from benchmark.host import LinuxHost
         host = LinuxHost.__new__(LinuxHost)
         host.scope, host.campaign = POSTRESTART_SCOPE, profile.POSTRESTART_CAMPAIGN
-        host.owner = SimpleNamespace(phase='WARM_HOLD', _gate=Mock(), lease=SimpleNamespace(validate=Mock()),
+        host.owner = SimpleNamespace(phase='WARM_HOLD', _gate=Mock(return_value={'status': 'HELD', 'jobs': []}), lease=SimpleNamespace(validate=Mock()),
                                      pending_create=None, resources=[{'resource': {'id': 'g'}, 'state': 'RUNNING'},
                                                                     {'resource': {'id': 'q'}, 'state': 'RUNNING'}])
         host.load_manifests = {'g': profile.postrestart_manifest('G1'), 'q': profile.postrestart_manifest('Q1')}

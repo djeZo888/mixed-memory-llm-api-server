@@ -48,7 +48,7 @@ def validate_go(value, armed, hold_sha, *, completed_ids=(), used_sessions=()):
     """Reject stale controls before the caller performs any native count/read."""
     _require(type(value) is dict and set(value) == FIELDS, 'followup_exact_GO_fields_required')
     _require(armed.get('scope') == profile.POSTRESTART_SCOPE and
-             armed.get('campaign') == profile.POSTRESTART_CAMPAIGN and
+             armed.get('campaign') == profile.postrestart_campaign(armed.get('mode', profile.POSTRESTART_MEASURED_MODE)) and
              value.get('decision') == 'GO' and value.get('source_commit') == armed.get('source_commit') and
              value.get('owner_run_session_id') == armed.get('session_id') and
              value.get('campaign') == armed.get('campaign') and
@@ -65,7 +65,7 @@ def validate_go(value, armed, hold_sha, *, completed_ids=(), used_sessions=()):
     _require(value.get('placement') in ('G1', 'Q1'), 'followup_closed_model_required')
     _require(isinstance(value.get('preset'), str) and value['preset'] in PRESETS and
              PRESETS[value['preset']]['placement'] == value['placement'], 'followup_closed_preset_required')
-    manifest = profile.postrestart_manifest(value['placement'])
+    manifest = profile.postrestart_manifest(value['placement'], armed['campaign'])
     _require(value.get('manifest_sha256') == fixtures.digest(fixtures.canonical(manifest)),
              'followup_exact_manifest_required')
     for name in ('warm_hold_receipt_sha256', 'manifest_sha256', 'request_sha256', 'fixture_sha256'):
@@ -143,7 +143,7 @@ def read_candidate(state, armed, hold_sha, *, completed_ids=(), used_sessions=()
         _require(not any(isinstance(message.get('content'), str) and message['content'].startswith(prefix)
                          for message in previous.get('messages', [])), 'followup_prefix_already_dispatched')
     return {'go': go, 'raw': raw, 'sample': sample, 'fixture_raw': fixture_raw,
-            'manifest': profile.postrestart_manifest(go['placement']),
+            'manifest': profile.postrestart_manifest(go['placement'], armed['campaign']),
             'validated_go_sha256': fixtures.digest(fixtures.canonical(go))}
 
 
@@ -153,7 +153,7 @@ def prepare_job(candidate, cid, counter, *, templates, clock=time.monotonic):
     go, raw, manifest = candidate['go'], candidate['raw'], candidate['manifest']
     _require(fixtures.digest(fixtures.canonical(go)) == candidate['validated_go_sha256'],
              'followup_GO_changed_before_count')
-    _require(manifest == profile.postrestart_manifest(go['placement']) and
+    _require(manifest == profile.postrestart_manifest(go['placement'], go['campaign']) and
              fixtures.digest(fixtures.canonical(manifest)) == go['manifest_sha256'],
              'followup_manifest_changed_before_count')
     sample = validate_payload(go, raw, candidate['fixture_raw'])
