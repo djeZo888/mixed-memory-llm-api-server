@@ -23,6 +23,33 @@ from .warmup import prefill_proof
 PREP_HEAD = "c1188ecc4bb9172f66aa49a0a0e6832df5900c0c"
 PREP_SESSION = "01a0bce0-04e7-7343-8a17-5a0dee734818"
 LONG_SHA = "adfc0b6c1225ac5dc1f7e8ddb5c8022911c9a4551e48fd201d2228bc3abe86fe"
+PROFILE_BASE = "20c2b4fd8e01e2b5710c197de4dd2957f2898842"
+CPU_BODY_SHA = "0c0d362183289d17b5bccf0b9206ee169deb714eff1d9586e3c5b6a36e656215"
+PROFILE_MODE = "cpu-profile-only"
+
+
+def profile_inputs(task):
+    """Bind the exact completed campaign CPU request; never regenerate its prefix."""
+    prior = task.parent / "GLM-DECODE-DIAG-RUN-20260920"
+    paths = list((prior / "private").glob("G1-65536-cpu-*/G1-65536-cpu.request.json"))
+    if len(paths) != 1:
+        raise ValueError("exact_saved_cpu_request_required")
+    paths += [prior / "private/G1-65536-cpu-fixture.json", prior / "private/G1-65536-cpu-count.json",
+              prior / "G1-65536-cpu-result.json", prior / "final-restoration-receipt.json"]
+    raw, sample_raw, count_raw, result_raw, receipt_raw = [p.read_bytes() for p in paths]
+    sample, counted, result, receipt = map(json.loads, (sample_raw, count_raw, result_raw, receipt_raw))
+    decode_request.validate_request(raw, counted, 65536, sample=sample)
+    if (fixtures.digest(raw) != CPU_BODY_SHA or counted['input_tokens'] != 618
+            or json.loads(raw)['max_tokens'] != 256 or result.get('status') != 'PASS'
+            or result.get('body_sha256') != CPU_BODY_SHA or result.get('strict_native_uncached_gate') is not True
+            or receipt.get('status') != 'PASS' or receipt.get('phase') != 'RESTORED'
+            or receipt.get('source_commit') != PROFILE_BASE or receipt.get('host_session_closed') is not True
+            or receipt.get('local_tunnel_ports') != {'31002': 'CLOSED', '31004': 'CLOSED'}):
+        raise ValueError('saved_cpu_and_completed_main_restoration_required')
+    identity = {'files': {str(p): fixtures.digest(p.read_bytes()) for p in paths},
+                'cpu_rawbody_sha256': CPU_BODY_SHA, 'native_input_tokens': 618, 'output_cap': 256,
+                'prior_count': counted, 'prior_session_id': receipt['session_id']}
+    return sample, raw, identity
 
 
 def frozen_inputs(task):
@@ -129,6 +156,7 @@ class DecodeRun(g1_ladder.Ladder):
             try:
                 if worker and worker.ident is not None:
                     worker.join()  # bounded host capture; no request_end while capture is outstanding
+                    self.last_cpu_capture = dict(capture)
                     self.emit({"type": "cpu_capture", "id": identifier, "receipt": capture,
                                "benchmark_timing": False})
             finally:
@@ -234,6 +262,28 @@ class DecodeRun(g1_ladder.Ladder):
 
     def sequence(self):
         g1_ladder.checkpoint(self.state)
+        if self.armed.get('mode') == PROFILE_MODE:
+            sample, raw, identity = profile_inputs(self.state)
+            if identity != self.armed['frozen_inputs']:
+                raise RuntimeError('ROOT_FROZEN_INPUTS_CHANGED')
+            self.host.call('begin')
+            manifest, = self.armed['manifests']
+            self.record('LOADING_65536')
+            cid = self.loaded(manifest)  # Existing warm() discards one 32-token warmup.
+            counted = fixtures.validate_count(self.counter(cid)(raw), raw, 65536)
+            prior_count = identity['prior_count']
+            if any(counted.get(k) != prior_count.get(k) for k in (
+                    'input_tokens', 'body_sha256', 'count_body_sha256', 'template_sha256', 'token_ids_sha256')):
+                raise RuntimeError('STOP_SAVED_CPU_NATIVE_RECOUNT_CHANGED')
+            self.prepared(cid, 'G1-65536-cpu', sample, raw, counted, kind='cpu_diagnostic', cpu=True)
+            receipt = getattr(self, 'last_cpu_capture', {})
+            usable = receipt.get('profile_usable') is True
+            self.emit({'type': 'profile_outcome', 'status': 'AVAILABLE' if usable else 'UNAVAILABLE',
+                       'benchmark_timing': False, 'receipt': receipt})
+            if not usable:
+                raise RuntimeError('STOP_PROFILE_UNAVAILABLE')
+            self.record('PROFILE_COMPLETE')
+            return
         prior, identity = frozen_inputs(self.state)
         if identity != self.armed["frozen_inputs"]:
             raise RuntimeError("ROOT_FROZEN_INPUTS_CHANGED")
@@ -266,12 +316,15 @@ class DecodeRun(g1_ladder.Ladder):
         self.record("DIAGNOSTIC_DECISION_COMPLETE")
 
 
-def prepare(task, session_id, *, cpu=True):
+def prepare(task, session_id, *, cpu=True, profile_only=False):
     if (task / "arm.json").exists() or glmrepair.git("status", "--porcelain"):
         raise ValueError("clean_new_candidate_required")
     if session_id == PREP_SESSION:
         raise ValueError("fresh_RUN_session_required")
-    _, frozen = frozen_inputs(task)
+    if profile_only and not cpu:
+        raise ValueError('profile_cpu_capture_required')
+    frozen = profile_inputs(task)[2] if profile_only else frozen_inputs(task)[1]
+    campaign = profiles.GLM_DECODE_PROFILE_CAMPAIGN if profile_only else profiles.GLM_DECODE_DIAG_CAMPAIGN
     armed = {"schema": 1, "scope": "glm-decode-diag", "campaign": profiles.GLM_DECODE_DIAG_CAMPAIGN,
         "session_id": session_id, "source_commit": glmrepair.git("rev-parse", "HEAD"), "base_commit": PREP_HEAD,
         "runtime": diag.stage_clock(task), "manifests": [profiles.glm_decode_diag_manifest(n) for n in diag.CAPACITIES],
@@ -279,6 +332,21 @@ def prepare(task, session_id, *, cpu=True):
         "capture": {"cpu": cpu, "cuda": False, "cpu_maximum_seconds": 5,
                     "cpu_sampling_seconds": 4, "cpu_file_limit_bytes": 1024**3},
         "source_files": {p: hashlib.sha256(b).hexdigest() for p, b in runner.source_files().items()}}
+    if profile_only:
+        armed.update(mode=PROFILE_MODE, campaign=campaign, base_commit=PROFILE_BASE,
+            runtime=diag.profile_stage_clock(task),
+            manifests=[profiles.glm_decode_diag_manifest(65536, campaign=campaign)],
+            trial_plan=profiles.trial_order('glm-decode-diag', campaign=campaign))
+        if time.time() >= armed['runtime']['deadline_epoch'] or session_id == frozen['prior_session_id']:
+            raise ValueError('fresh_unexpired_profile_session_required')
+        # The supplied restoration receipt belongs to the immutable main campaign.
+        # Keep its exact bytes separately before the new campaign writes its own.
+        prior_receipt = task / 'prior-final-restoration-receipt.json'
+        if not prior_receipt.exists():
+            raw = (task / 'final-restoration-receipt.json').read_bytes()
+            with prior_receipt.open('xb') as saved:
+                saved.write(raw)
+            prior_receipt.chmod(0o600)
     profiles.validate_arm_scope(armed)
     runner.save(task / "arm.json", armed)
     runner.save(task / "progress.json", {"phase": "AWAITING_ROOT_REVIEW", "completed": {}, "inflight": {}, "errors": []})
@@ -301,8 +369,10 @@ def run(task, go_path, session_id, *, restore_only=False):
     profiles.validate_arm_scope(armed)
     if {p: hashlib.sha256(b).hexdigest() for p, b in runner.source_files().items()} != armed["source_files"]:
         raise ValueError("reviewed_source_changed")
-    clock = diag.stage_clock(task)
-    if clock != armed["runtime"] or frozen_inputs(task)[1] != armed["frozen_inputs"]:
+    profile_only = armed.get('mode') == PROFILE_MODE
+    clock = diag.profile_stage_clock(task) if profile_only else diag.stage_clock(task)
+    frozen = profile_inputs(task)[2] if profile_only else frozen_inputs(task)[1]
+    if clock != armed["runtime"] or frozen != armed["frozen_inputs"]:
         raise ValueError("immutable_inputs_changed")
     if not restore_only and ((task / "execution.json").exists() or time.time() >= clock["deadline_epoch"]):
         raise ValueError("no_rerun_or_budget_reset")
@@ -363,14 +433,15 @@ def main(argv=None):
     parser.add_argument("--session-id", required=True)
     parser.add_argument("--go", type=Path)
     parser.add_argument("--no-cpu-capture", action="store_true")
+    parser.add_argument("--profile-only", action="store_true", help="prepare exact fresh 64K CPU-only campaign")
     args = parser.parse_args(argv)
     task = args.task_dir.resolve()
     if args.action == "prepare":
-        prepare(task, args.session_id, cpu=not args.no_cpu_capture)
+        prepare(task, args.session_id, cpu=not args.no_cpu_capture, profile_only=args.profile_only)
         return 0
     if args.go is None:
         parser.error("run/restore requires concrete root --go receipt")
-    if args.no_cpu_capture:
+    if args.no_cpu_capture or args.profile_only:
         parser.error("capture policy is immutable in the reviewed arm")
     def terminate(signum, frame):
         raise KeyboardInterrupt()

@@ -37,7 +37,39 @@ def request_timeout(clock, now):
     remaining = clock['deadline_epoch'] - now
     if remaining <= 0:
         raise RuntimeError('STOP_BUDGET')
-    return min(7200, remaining)
+    return min(clock.get('request_max_seconds', 7200), remaining)
+
+
+def validate_profile_clock(value):
+    """One fresh twenty-minute preparation plus measurement cap, never a reset."""
+    start, deadline = value.get('start_epoch'), value.get('deadline_epoch')
+    original = value.get('original_clock') or {}
+    old_start, old_deadline = original.get('start_epoch'), original.get('deadline_epoch')
+    if (value.get('stage') != 'GLM-DECODE-PROFILE-20260920'
+            or any(type(v) not in (int, float) or not math.isfinite(v) or v <= 0
+                   for v in (start, deadline, old_start, old_deadline))
+            or deadline != start + 1200 or value.get('budget_seconds') != 1200
+            or value.get('request_max_seconds') != 1200
+            or value.get('includes_preparation') is not True
+            or value.get('clock_includes_preparation') is not True
+            or value.get('restoration_outside_budget') is not True
+            or original.get('stage') != 'GLM-DECODE-DIAG-20260920'
+            or original.get('budget_seconds') != 14400 or old_deadline != old_start + 14400
+            or original.get('request_max_seconds') != 7200
+            or original.get('clock_includes_preparation') is not True
+            or original.get('restoration_outside_budget') is not True
+            or not old_start <= start < deadline <= old_deadline):
+        raise ValueError('immutable_profile_twenty_minute_clock_and_original_ceiling_required')
+    return start, deadline
+
+
+def profile_stage_clock(task):
+    value = json.loads((Path(task) / 'profile-stage-clock.json').read_bytes())
+    if value.get('original_clock') != stage_clock(task):
+        raise ValueError('original_campaign_clock_changed')
+    value = {**value, 'request_max_seconds': 1200, 'clock_includes_preparation': True}
+    validate_profile_clock(value)
+    return value
 
 
 def short_body(sample, output_cap=128):

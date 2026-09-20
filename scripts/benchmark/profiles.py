@@ -15,6 +15,7 @@ G1_RAM_CAP_BYTES = 640 * 1024**3  # Root-reviewed validation cap; not minimum mo
 ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair", "g1-ladder", "glm-decode-diag")
 G1_LADDER_CAMPAIGN = "benchrun-glm-g1-ladder-20260920"
 GLM_DECODE_DIAG_CAMPAIGN = "benchrun-glm-decode-diag-20260920"
+GLM_DECODE_PROFILE_CAMPAIGN = "benchrun-glm-decode-profile-20260920"
 GLM_DECODE_DIAG_CAPACITIES = (1024, 32768, 65536)
 GLMREPAIR_CAMPAIGN = "benchrun-glmrepair2-20260919"
 GLMREPAIR_POLL_CAMPAIGN = "benchrun-glmrepair-poll-20260919"
@@ -55,14 +56,16 @@ def g1_ladder_manifest(capacity):
     return manifest
 
 
-def glm_decode_diag_manifest(capacity):
+def glm_decode_diag_manifest(capacity, campaign=GLM_DECODE_DIAG_CAMPAIGN):
     """Frozen G1 diagnostic loads: context and campaign paths/names only change."""
-    if type(capacity) is not int or capacity not in GLM_DECODE_DIAG_CAPACITIES:
+    allowed = (65536,) if campaign == GLM_DECODE_PROFILE_CAMPAIGN else GLM_DECODE_DIAG_CAPACITIES
+    if (campaign not in (GLM_DECODE_DIAG_CAMPAIGN, GLM_DECODE_PROFILE_CAMPAIGN)
+            or type(capacity) is not int or capacity not in allowed):
         raise ValueError("glm_decode_diag_capacity_outside_scope")
     base = glmrepair_manifest(GLMREPAIR_G1_CAMPAIGN)
-    name = f"{GLM_DECODE_DIAG_CAMPAIGN}-g1-{capacity}"
+    name = f"{campaign}-g1-{capacity}"
     manifest = json.loads(json.dumps(base).replace(base["container_name"], name)
-                          .replace(GLMREPAIR_G1_CAMPAIGN, GLM_DECODE_DIAG_CAMPAIGN))
+                          .replace(GLMREPAIR_G1_CAMPAIGN, campaign))
     manifest["configured_capacity"] = capacity
     for key in ("native_argv", "create_argv"):
         manifest[key][manifest[key].index("--ctx-size") + 1] = str(capacity)
@@ -96,6 +99,16 @@ def validate_arm_scope(armed):
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
     if scope == "glm-decode-diag":
+        if armed.get("mode") == "cpu-profile-only":
+            if (armed.get("campaign") != GLM_DECODE_PROFILE_CAMPAIGN
+                    or armed.get("manifests") != [glm_decode_diag_manifest(65536, GLM_DECODE_PROFILE_CAMPAIGN)]
+                    or armed.get("trial_plan") != trial_order(scope, campaign=GLM_DECODE_PROFILE_CAMPAIGN)
+                    or armed.get("capture") != {"cpu": True, "cuda": False, "cpu_maximum_seconds": 5,
+                                               "cpu_sampling_seconds": 4, "cpu_file_limit_bytes": 1024**3}):
+                raise ValueError("glm_decode_profile_exact_arm_scope_mismatch")
+            return scope
+        if "mode" in armed:
+            raise ValueError("glm_decode_diag_unknown_mode")
         if (armed.get("campaign") != GLM_DECODE_DIAG_CAMPAIGN
                 or armed.get("manifests") != [glm_decode_diag_manifest(n) for n in GLM_DECODE_DIAG_CAPACITIES]
                 or armed.get("trial_plan") != trial_order(scope)):
@@ -273,6 +286,17 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
 
 def trial_order(scope="full", campaign=GLMREPAIR_CAMPAIGN):
     if scope == "glm-decode-diag":
+        if campaign == GLM_DECODE_PROFILE_CAMPAIGN:
+            return {"trials": [
+                {"placement": "G1", "capacity": 65536, "case": "load_warmup", "output_cap": 32, "timing": "discard"},
+                {"placement": "G1", "capacity": 65536, "case": "cpu_diagnostic", "output_cap": 256,
+                 "timing": "instrumented_diagnostic"}],
+                "then": [], "mixed_jobs": [], "measurement_budget_seconds": 1200,
+                "maximum_request_seconds": 1200, "clock_includes_preparation": True,
+                "budget_start": "profile-stage-clock; original campaign deadline remains an absolute ceiling",
+                "restoration_outside_budget": True,
+                "request_policy": "exact saved CPU body; native recount 618; cache0; no retry",
+                "additional_trials": "none"}
         trials = []
         for capacity in GLM_DECODE_DIAG_CAPACITIES:
             trials += [

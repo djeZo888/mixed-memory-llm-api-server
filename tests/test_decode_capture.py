@@ -129,7 +129,10 @@ class CaptureTests(unittest.TestCase):
                 host.decode_progress = Mock(side_effect=[self.native(3, 0), self.native(8, 1e20)])
                 sample = capture.CpuCapture(host, 'a', progress())
                 def spawn(argv, **kwargs):
-                    self.assertEqual(argv[-2:], ['-o', '-'])
+                    self.assertEqual(argv[-2], '-o')
+                    self.assertRegex(argv[-1], r'^/proc/self/fd/[0-9]+/perf.data$')
+                    self.assertNotIn('--per-thread', argv)
+                    self.assertEqual(len(kwargs['pass_fds']), 2)
                     self.assertIn('--no-buildid-cache', argv)
                     return actual_popen([sys.executable, '-c',
                         'import sys;sys.stderr.write("PRIVATE TOOL ERROR");sys.exit(2)'], **kwargs)
@@ -180,8 +183,14 @@ class CaptureTests(unittest.TestCase):
         after = {**progress(10, 30), 'capture_start_rpc_before_monotonic_s': 11,
                  'capture_complete_rpc_after_monotonic_s': 29}
         self.assertTrue(sample.status(after)['decode_contained'])
+        sample.result.update(symbol_resolution='LEAF_REPORT_SAVED_UNRESOLVED_ROWS_RETAINED',
+                             symbol_report_resolved_samples=0)
+        self.assertFalse(sample.status(after)['profile_usable'])
+        sample.result['symbol_report_resolved_samples'] = 1
+        self.assertTrue(sample.status(after)['profile_usable'])
         sample.result['host_valid'] = False
         self.assertFalse(sample.status(after)['decode_contained'])
+        self.assertFalse(sample.status(after)['profile_usable'])
 
     def test_successful_profiler_requires_real_interval_and_nonempty_artifact(self):
         actual_popen = subprocess.Popen
@@ -191,16 +200,104 @@ class CaptureTests(unittest.TestCase):
             def spawn(argv, **kwargs):
                 return actual_popen([sys.executable, '-c',
                     'import signal,time,os;signal.signal(signal.SIGINT,lambda *a:exit(0));'
-                    'os.write(1,b"synthetic perf bytes");time.sleep(30)'], **kwargs)
+                    'fd=os.open("perf.data",os.O_WRONLY,dir_fd=int(__import__("sys").argv[1]));'
+                    'os.write(fd,b"synthetic perf bytes");os.lseek(fd,0,os.SEEK_SET);'
+                    'os.write(fd,b"PERF");os.close(fd);time.sleep(30)', str(kwargs['pass_fds'][0])], **kwargs)
             with patch.object(capture, 'target_identity', return_value={'pid': 123, 'starttime_ticks': 5}), \
                  patch.object(capture.subprocess, 'Popen', side_effect=spawn), \
-                 patch.object(capture, 'SAMPLE_SECONDS', 0.2), patch.object(capture, 'MAX_CAPTURE_SECONDS', 0.5):
+                 patch.object(capture, 'SAMPLE_SECONDS', 0.2), patch.object(capture, 'MAX_CAPTURE_SECONDS', 0.5), \
+                 patch.object(capture, 'leaf_report') as report:
                 sample._run()
             row = sample.status()
             self.assertTrue(row['host_valid'], row)
             self.assertFalse(row['profiler_alive'])
             self.assertFalse(row['safety_stop_required'])
             self.assertEqual(host.decode_progress.call_count, 2)
+            report.assert_called_once()
+            self.assertEqual(next(root.rglob('perf.data')).read_bytes(), b'PERFhetic perf bytes')
+
+    def test_named_output_inherited_descriptors_seek_and_cleanup(self):
+        # Exercise the production launcher's exact private inode checks and a
+        # real exec boundary. macOS lacks prctl/procfs: only prctl is stubbed,
+        # and the child uses the identical dirfd-relative open there. Linux
+        # exercises the literal /proc/self/fd named path.
+        shim = 'import ctypes,types;ctypes.CDLL=lambda _:types.SimpleNamespace(prctl=lambda *a:0);'
+        child = ('import os,sys;d=int(sys.argv[1]);p=sys.argv[2];'
+                 'f=os.open(p,os.O_WRONLY) if os.path.isdir("/proc/self/fd") '
+                 'else os.open("perf.data",os.O_WRONLY,dir_fd=d);'
+                 'os.write(f,b"payload");os.lseek(f,0,os.SEEK_SET);os.write(f,b"HEADER!");os.close(f)')
+        with self.storage_host() as (host, root):
+            with host.binding.mounted_guard(None) as guard, \
+                 host.storage_io.AnchoredRoot(str(root), guard) as anchor:
+                anchor.mkdir('private', mode=0o700)
+                with anchor.directory('private') as directory, \
+                     directory.open('perf.data', os.O_RDWR | os.O_CREAT | os.O_EXCL, 0o600) as out:
+                    d, f = directory.fileno(), out.fileno()
+                    argv = capture.perf_argv(123, d, f)
+                    self.assertEqual(argv[-1], f'/proc/self/fd/{d}/perf.data')
+                    self.assertNotIn('--per-thread', argv)
+                    real = [sys.executable, '-c', shim + 'exec(' + repr(capture.LAUNCHER) + ')',
+                            str(capture.TRACE_LIMIT), str(d), str(f), sys.executable, '-c', child,
+                            str(d), argv[-1]]
+                    result = subprocess.run(real, pass_fds=(d, f), capture_output=True, timeout=5)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    out.seek(0)
+                    self.assertEqual(out.read(7), b'HEADER!')
+                for fd in (d, f):
+                    with self.assertRaises(OSError):
+                        os.fstat(fd)
+
+    def test_named_launcher_rejects_symlink_replacement(self):
+        shim = 'import ctypes,types;ctypes.CDLL=lambda _:types.SimpleNamespace(prctl=lambda *a:0);'
+        with self.storage_host() as (host, root):
+            with host.binding.mounted_guard(None) as guard, \
+                 host.storage_io.AnchoredRoot(str(root), guard) as anchor:
+                anchor.mkdir('private', mode=0o700)
+                with anchor.directory('private') as directory, \
+                     directory.open('perf.data', os.O_RDWR | os.O_CREAT | os.O_EXCL, 0o600) as out:
+                    d, f = directory.fileno(), out.fileno()
+                    (root / 'private/perf.data').unlink()
+                    (root / 'private/perf.data').symlink_to('/dev/null')
+                    result = subprocess.run([sys.executable, '-c',
+                        shim + 'exec(' + repr(capture.LAUNCHER) + ')', str(capture.TRACE_LIMIT),
+                        str(d), str(f), sys.executable, '-c', 'raise Exception("must not run")'],
+                        pass_fds=(d, f), capture_output=True, timeout=5)
+                    self.assertEqual(result.returncode, 125, result.stderr)
+
+    def test_leaf_report_retains_unknowns_and_requires_positive_samples(self):
+        actual_popen = subprocess.Popen
+        for report_text, expected in [('37.50\t3\tlibggml-cpu.so\t[.] ggml_vec_dot_q4_K_q8_K\n'
+            '12.50\t1\t[unknown]\t[.] 0x123\n'
+            '25.00\t2\tlibgomp.so.1\t[.] gomp_barrier_wait_end\n'
+            '25.00\t2\tllama-server\t[.] llama_decode\n', 8), ('# no samples\n', 0)]:
+            with self.subTest(expected=expected), self.storage_host() as (host, root):
+                with host.binding.mounted_guard(None) as guard, \
+                     host.storage_io.AnchoredRoot(str(root), guard) as anchor:
+                    anchor.mkdir('private', mode=0o700)
+                    with anchor.directory('private') as directory:
+                        with directory.open('perf.data', os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600):
+                            pass
+                        def spawn(argv, **kwargs):
+                            self.assertIn('--no-children', argv)
+                            self.assertIn('/proc/123/root', argv)
+                            self.assertEqual(kwargs['env']['DEBUGINFOD_URLS'], '')
+                            return actual_popen([sys.executable, '-c',
+                                'import sys;sys.stdout.write(' + repr(report_text) + ')'], **kwargs)
+                        result = {}
+                        identity = {'pid': 123, 'starttime_ticks': 5}
+                        with patch.object(capture, 'target_identity', return_value=identity), \
+                             patch.object(capture.subprocess, 'Popen', side_effect=spawn):
+                            capture.leaf_report(host, 'a', identity, directory, result)
+                        self.assertEqual(result['symbol_report_sample_count'], expected)
+                        self.assertEqual(result['symbol_resolution'],
+                            'LEAF_REPORT_SAVED_UNRESOLVED_ROWS_RETAINED' if expected else 'UNAVAILABLE')
+                        self.assertEqual((root / 'private/leaf-symbols.txt').read_text(), report_text)
+                        self.assertNotIn('ggml_vec_dot', json.dumps(result))
+                        if expected:
+                            self.assertEqual(result['symbol_report_unresolved_samples'], 1)
+                            self.assertEqual(result['symbol_report_resolved_samples'], 7)
+                            self.assertEqual(result['leaf_sample_categories'], dict(quant_kernel=3,
+                                resolved_libgomp=2, runtime_other=2, unresolved=1))
 
     def test_request_end_and_restore_stop_profiler_before_owner(self):
         host = self.host()

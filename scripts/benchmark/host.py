@@ -118,6 +118,8 @@ class HostBudget(CampaignBudget):
         self.budget_seconds = (1200 if getattr(host, 'campaign', None) == 'benchrun-glmrepair-g1fix-20260919' else 2700 if getattr(host, 'campaign', None) == 'benchrun-glmrepair-fix-20260919' else 3600) if getattr(host, 'scope', None) == 'glmrepair' else 21600
         if getattr(host, 'scope', None) in {'g1-ladder', 'glm-decode-diag'}:
             self.budget_seconds = 14400 if host.scope == 'glm-decode-diag' else 10800
+        if getattr(host, 'scope', None) == 'glm-decode-diag' and getattr(host, 'mode', None) == 'cpu-profile-only':
+            self.budget_seconds = 1200
         self._data = host.read_json('budget.json', missing=True)
         if self._data is not None:
             self._validate()
@@ -166,8 +168,11 @@ class LinuxHost:
         data = json.loads(raw)
         values = data.get('commands', data.get('manifests', [])) if isinstance(data, dict) else data
         self.scope = validate_arm_scope(data)
+        self.mode = data.get('mode') if self.scope == 'glm-decode-diag' else None
         self.decode_capture_policy = copy.deepcopy(data.get('capture', {})) if self.scope == 'glm-decode-diag' else {}
         manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3}[self.scope]
+        if self.mode == 'cpu-profile-only':
+            manifest_count = 1
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
         self.start_epoch = data.get('start_epoch', data.get('runtime', {}).get('start_epoch')) if isinstance(data, dict) else None
         if self.scope == 'glmrepair':
@@ -188,7 +193,7 @@ class LinuxHost:
             require(hashlib.sha256(source_raw).hexdigest() == sha, 'staged_source_pin_changed')
         self.manifests = {}
         for value in values:
-            expected = glm_decode_diag_manifest(value['configured_capacity']) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
+            expected = glm_decode_diag_manifest(value['configured_capacity'], campaign) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
                                         ram_cap=G1_RAM_CAP_BYTES if self.scope == 'g1-only' else None,
                                         log_verbosity=4 if self.scope == 'g1-only' else None)
             require(value == expected, 'manifest_not_current_generated_source')
@@ -210,6 +215,12 @@ class LinuxHost:
     @staticmethod
     def decode_clock(armed):
         runtime = armed.get('runtime') or {}
+        if armed.get('mode') == 'cpu-profile-only':
+            from .decode_diag import validate_profile_clock
+            require('continuation_execution' not in armed and 'start_epoch' not in armed,
+                    'decode_profile_immutable_clock_required')
+            validate_profile_clock(runtime)
+            return runtime['start_epoch'], runtime['deadline_epoch']
         start, deadline = runtime.get('start_epoch'), runtime.get('deadline_epoch')
         require('continuation_execution' not in armed and 'start_epoch' not in armed and
                 type(start) in (int, float) and type(deadline) in (int, float) and

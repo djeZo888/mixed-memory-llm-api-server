@@ -308,5 +308,51 @@ class DecodeRunTests(unittest.TestCase):
             host.assert_not_called()
         self.assertFalse((self.state / "arm.json").exists())
 
+    def test_profile_sequence_exact_saved_body_warm32_cpu256_and_restore_once(self):
+        for fail in (False, True):
+            with self.subTest(recount_failure=fail):
+                self.host = FakeHost()
+                raw = diag.short_body(self.sample, 256)
+                identity = {'prior_count': count(raw, 65536, 618)}
+                self.armed.update(mode=run.PROFILE_MODE, manifests=[{'configured_capacity': 65536}],
+                                  frozen_inputs=identity)
+                job = self.job()
+                job.active.clear()
+                job.monitor = Mock()
+                job.last_cpu_capture = {'profile_usable': True}
+                job.long_decision = Mock(side_effect=AssertionError('prohibited long decision'))
+                job.counter = lambda cid: lambda body: count(body, 65536, 619 if fail else 618)
+                seen = []
+                def prepared(cid, identifier, sample, body, counted, **kwargs):
+                    seen.append((kwargs['kind'], body, kwargs))
+                    return {'summary': {'counters': {}}}
+                job.prepared = Mock(side_effect=prepared)
+                def loaded(manifest):
+                    job.active[CID] = {'manifest': manifest}
+                    job.warm(CID, manifest, {})
+                    return CID
+                job.loaded = Mock(side_effect=loaded)
+                warm = diag.short_body(self.sample, 32)
+                with patch.object(run, 'profile_inputs', return_value=(self.sample, raw, identity)), \
+                     patch.object(run.g1_ladder, 'checkpoint'), \
+                     patch.object(diag, 'fit_warmup', return_value=(self.sample, warm, count(warm, 65536, 2304))), \
+                     patch.object(diag, 'fit_short', side_effect=AssertionError('prohibited control')), \
+                     patch.object(diag, 'fit_replay', side_effect=AssertionError('prohibited replay')), \
+                     patch.object(run, 'prefill_proof', return_value={}):
+                    if fail:
+                        with self.assertRaisesRegex(RuntimeError, 'STOP_SAVED_CPU_NATIVE_RECOUNT_CHANGED'):
+                            job.execute()
+                    else:
+                        job.execute()
+                self.assertEqual([v[0] for v in seen], ['load_warmup'] if fail else ['load_warmup', 'cpu_diagnostic'])
+                self.assertEqual(json.loads(seen[0][1])['max_tokens'], 32)
+                self.assertFalse(seen[0][2]['timed'])
+                if not fail:
+                    self.assertEqual(seen[1][1], raw)
+                    self.assertTrue(seen[1][2]['cpu'])
+                job.loaded.assert_called_once_with({'configured_capacity': 65536})
+                job.long_decision.assert_not_called()
+                self.assertEqual([op for op, _ in self.host.calls].count('restore'), 1)
+
 
 if __name__ == "__main__": unittest.main()

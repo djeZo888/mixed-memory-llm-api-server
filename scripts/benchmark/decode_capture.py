@@ -9,6 +9,7 @@ import copy
 import math
 import os
 from pathlib import Path
+import re
 import secrets
 import signal
 import subprocess
@@ -20,12 +21,31 @@ from .lifecycle import require
 
 TRACE_LIMIT = 1023 * 1024**2
 STDERR_LIMIT = 64 * 1024
+SYMBOL_REPORT_LIMIT = 256 * 1024
+SYMBOL_REPORT_SECONDS = 5.0
 MAX_CAPTURE_SECONDS = 5.0
 # Leave one second for SIGINT flush, then kill only the profiler if needed.
 SAMPLE_SECONDS = 4.0
 PERF = '/usr/bin/perf'
 ENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'LC_ALL': 'C'}
-LAUNCHER = '''import ctypes,os,resource,signal,sys
+LAUNCHER = '''import ctypes,os,resource,signal,stat,sys
+parent=os.getppid()
+resource.setrlimit(resource.RLIMIT_FSIZE,(int(sys.argv[1]),int(sys.argv[1])))
+if ctypes.CDLL(None).prctl(1,signal.SIGKILL,0,0,0) != 0 or os.getppid()!=parent:
+    sys.exit(125)
+d,f=map(int,sys.argv[2:4])
+directory=os.fstat(d); held=os.fstat(f)
+named=os.stat('perf.data',dir_fd=d,follow_symlinks=False)
+if (not stat.S_ISDIR(directory.st_mode) or stat.S_IMODE(directory.st_mode)!=0o700
+    or directory.st_uid!=os.geteuid() or not stat.S_ISREG(named.st_mode)
+    or stat.S_IMODE(named.st_mode)!=0o600 or named.st_uid!=os.geteuid()
+    or named.st_nlink!=1 or (held.st_dev,held.st_ino)!=(named.st_dev,named.st_ino)
+    or held.st_size!=0 or directory.st_dev!=held.st_dev):
+    sys.exit(125)
+os.lseek(f,0,os.SEEK_SET)
+os.execv(sys.argv[4],sys.argv[4:])
+'''
+REPORT_LAUNCHER = '''import ctypes,os,resource,signal,sys
 parent=os.getppid()
 resource.setrlimit(resource.RLIMIT_FSIZE,(int(sys.argv[1]),int(sys.argv[1])))
 if ctypes.CDLL(None).prctl(1,signal.SIGKILL,0,0,0) != 0 or os.getppid()!=parent:
@@ -81,11 +101,91 @@ def target_identity(host, cid):
     return matches[0]
 
 
-def perf_argv(pid):
+def perf_argv(pid, directory_fd, output_fd):
     require(type(pid) is int and pid > 0, 'decode_capture_pid_required')
-    return ['/usr/bin/python3', '-I', '-B', '-c', LAUNCHER, str(TRACE_LIMIT), PERF,
+    require(all(type(fd) is int and fd >= 0 for fd in (directory_fd, output_fd)),
+            'decode_capture_descriptors_required')
+    return ['/usr/bin/python3', '-I', '-B', '-c', LAUNCHER, str(TRACE_LIMIT),
+            str(directory_fd), str(output_fd), PERF,
             'record', '-e', 'cpu-clock:u', '-F', '49', '-p', str(pid),
-            '--clockid', 'mono', '--no-buildid-cache', '-o', '-']
+            '--clockid', 'mono', '--no-buildid-cache', '-o',
+            f'/proc/self/fd/{directory_fd}/perf.data']
+
+
+def leaf_report(host, cid, target, directory, result):
+    """Bounded private leaf attribution while the exact container PID is owned.
+
+    No call graph is collected. Unknown symbols remain in perf's report; a saved
+    report is evidence for review, not a claim that every sample was resolved.
+    """
+    host.owner.lease.validate()
+    require(target_identity(host, cid) == target, 'decode_report_target_changed')
+    directory.check('perf.data')
+    with directory.open('leaf-symbols.txt', os.O_RDWR | os.O_CREAT | os.O_EXCL, 0o600) as out, \
+         directory.open('leaf-symbols.stderr', os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600) as err:
+        directory_fd = directory.fileno()
+        argv = ['/usr/bin/python3', '-I', '-B', '-c', REPORT_LAUNCHER,
+                str(SYMBOL_REPORT_LIMIT), PERF, 'report', '--stdio', '--no-children',
+                '--sort', 'dso,symbol', '--show-nr-samples', '--percent-limit', '0',
+                '--field-separator', '\t',
+                '--stdio-color', 'never', '--symfs', f'/proc/{target["pid"]}/root',
+                '-i', f'/proc/self/fd/{directory_fd}/perf.data']
+        result['symbol_report_started_monotonic_s'] = time.monotonic()
+        try:
+            process = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=out.fileno(),
+                stderr=err.fileno(), pass_fds=(directory_fd,),
+                env={**ENV, 'DEBUGINFOD_URLS': ''}, start_new_session=True)
+        except OSError as exc:
+            result.update(symbol_resolution='UNAVAILABLE', symbol_report_error_class=type(exc).__name__)
+            out.fsync(); err.fsync()
+            return
+        try:
+            try:
+                process.wait(timeout=SYMBOL_REPORT_SECONDS)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=1)
+                result['symbol_report_timeout'] = True
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait(timeout=1)
+            result['symbol_report_ended_monotonic_s'] = time.monotonic()
+        host.owner.lease.validate()
+        require(target_identity(host, cid) == target, 'decode_report_target_changed')
+        require(out.check().st_size <= SYMBOL_REPORT_LIMIT and err.check().st_size <= SYMBOL_REPORT_LIMIT,
+                'decode_report_size_bound')
+        out.fsync(); err.fsync()
+        out.seek(0)
+        rows = []
+        for line in out.read(SYMBOL_REPORT_LIMIT).decode('utf-8', 'replace').splitlines():
+            fields = [field.strip() for field in line.split('\t')]
+            if len(fields) == 4 and fields[1].isdigit():
+                rows.append((int(fields[1]), fields[2], fields[3]))
+        categories = dict(quant_kernel=0, resolved_libgomp=0, runtime_other=0, unresolved=0)
+        for count, dso, symbol in rows:
+            leaf = symbol.removeprefix('[.] ').strip()
+            if ('[unknown]' in (dso + symbol) or leaf.startswith('0x') or
+                    re.fullmatch(r'[0-9a-fA-F]{8,}', leaf)):
+                category = 'unresolved'
+            elif 'libgomp' in Path(dso).name:
+                category = 'resolved_libgomp'
+            elif re.search(r'(?:ggml_(?:vec_dot|gemv|gemm)_[iq]*q\d|(?:de)?quantize_)', leaf):
+                category = 'quant_kernel'
+            else:
+                category = 'runtime_other'
+            categories[category] += count
+        total = sum(categories.values())
+        result.update(symbol_report_returncode=process.returncode,
+            symbol_report_bytes=out.check().st_size,
+            symbol_report_target_generation_verified=True,
+            symbol_report_sample_count=total,
+            symbol_report_unresolved_samples=categories['unresolved'],
+            symbol_report_resolved_samples=total - categories['unresolved'],
+            leaf_sample_categories=categories,
+            leaf_categories_are_name_based_not_causal=True,
+            symbol_resolution=('LEAF_REPORT_SAVED_UNRESOLVED_ROWS_RETAINED'
+                if process.returncode == 0 and total > 0 else 'UNAVAILABLE'))
 
 
 class CpuCapture:
@@ -116,6 +216,9 @@ class CpuCapture:
         result['client_valid'] = bool(result['capture_complete'] and
             client_bracket(self.client_before, client_progress(after)))
         result['decode_contained'] = bool(result['host_valid'] and result['client_valid'])
+        result['profile_usable'] = bool(result['decode_contained'] and result['target_alive'] and
+            result['symbol_resolution'] == 'LEAF_REPORT_SAVED_UNRESOLVED_ROWS_RETAINED' and
+            result.get('symbol_report_resolved_samples', 0) > 0)
         return result
 
     def stop(self):
@@ -139,59 +242,66 @@ class CpuCapture:
             with host.binding.mounted_guard(host.storage_io, roles=('data',)) as guard:
                 with host.storage_io.AnchoredRoot(host.binding.path('logs'), guard) as anchor:
                     anchor.mkdir(suffix, mode=0o700, parents=True)
-                    with anchor.open(suffix + '/perf.data', os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600) as out:
-                        stage = 'native_before'
-                        before = host.decode_progress(self.cid)
-                        result['before'] = before
-                        require(before.get('is_processing') is True and type(before.get('n_decoded')) is int
-                                and before['n_decoded'] > 0 and type(before.get('slot_id')) is int
-                                and type(before.get('task_id')) is int, 'decode_capture_native_progress_required')
-                        require(target_identity(host, self.cid) == target, 'decode_capture_target_changed')
-                        require(not self.cancel.is_set(), 'decode_capture_cancelled')
-                        stage = 'profiler'
-                        started = time.monotonic()
-                        process = subprocess.Popen(perf_argv(target['pid']), stdin=subprocess.DEVNULL,
-                            stdout=out.fileno(), stderr=subprocess.PIPE, env=ENV, start_new_session=True)
-                        def drain():
-                            while True:
-                                block = process.stderr.read(4096)
-                                if not block:
-                                    break
-                                if len(stderr) < STDERR_LIMIT:
-                                    stderr.extend(block[:STDERR_LIMIT - len(stderr)])
-                        reader = threading.Thread(target=drain, daemon=True)
-                        reader.start()
-                        interrupted = False
-                        while process.poll() is None:
-                            elapsed = time.monotonic() - started
-                            if (self.cancel.is_set() or elapsed >= SAMPLE_SECONDS) and not interrupted:
-                                process.send_signal(signal.SIGINT)
-                                interrupted = True
-                            if elapsed >= MAX_CAPTURE_SECONDS:
-                                process.kill()
-                                result['profiler_forced_stop'] = True
-                                break
-                            stage = 'storage'
-                            host.owner.lease.validate()
-                            require(out.check().st_size <= TRACE_LIMIT, 'decode_capture_trace_bound')
+                    with anchor.directory(suffix) as directory:
+                        with directory.open('perf.data', os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600) as out:
+                            stage = 'native_before'
+                            before = host.decode_progress(self.cid)
+                            result['before'] = before
+                            require(before.get('is_processing') is True and type(before.get('n_decoded')) is int
+                                    and before['n_decoded'] > 0 and type(before.get('slot_id')) is int
+                                    and type(before.get('task_id')) is int, 'decode_capture_native_progress_required')
+                            require(target_identity(host, self.cid) == target, 'decode_capture_target_changed')
+                            require(not self.cancel.is_set(), 'decode_capture_cancelled')
                             stage = 'profiler'
-                            time.sleep(0.1)
-                        process.wait(timeout=1)
-                        ended = time.monotonic()
-                        reader.join(timeout=1)
-                        result.update(profiler_returncode=process.returncode,
-                                      private_trace_relative_path=suffix + '/perf.data',
-                                      trace_bytes=out.check().st_size)
-                        stage = 'native_after'
-                        after = host.decode_progress(self.cid)
-                        result['after'] = after
-                        result['host_valid'] = (capture_is_decode(before, after, started, ended)
-                            and interrupted and ended - started >= SAMPLE_SECONDS and result['trace_bytes'] > 0
-                            and ended - started <= MAX_CAPTURE_SECONDS + 0.25
-                            and process.returncode in (0, -signal.SIGINT)
-                            and not self.cancel.is_set() and not result.get('profiler_forced_stop'))
-                        stage = 'storage'
-                        out.fsync()
+                            started = time.monotonic()
+                            directory_fd, output_fd = directory.fileno(), out.fileno()
+                            process = subprocess.Popen(perf_argv(target['pid'], directory_fd, output_fd),
+                                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                                pass_fds=(directory_fd, output_fd), env=ENV, start_new_session=True)
+                            def drain():
+                                while True:
+                                    block = process.stderr.read(4096)
+                                    if not block:
+                                        break
+                                    if len(stderr) < STDERR_LIMIT:
+                                        stderr.extend(block[:STDERR_LIMIT - len(stderr)])
+                            reader = threading.Thread(target=drain, daemon=True)
+                            reader.start()
+                            interrupted = False
+                            while process.poll() is None:
+                                elapsed = time.monotonic() - started
+                                if (self.cancel.is_set() or elapsed >= SAMPLE_SECONDS) and not interrupted:
+                                    process.send_signal(signal.SIGINT)
+                                    interrupted = True
+                                if elapsed >= MAX_CAPTURE_SECONDS:
+                                    process.kill()
+                                    result['profiler_forced_stop'] = True
+                                    break
+                                stage = 'storage'
+                                host.owner.lease.validate()
+                                require(out.check().st_size <= TRACE_LIMIT, 'decode_capture_trace_bound')
+                                stage = 'profiler'
+                                time.sleep(0.1)
+                            process.wait(timeout=1)
+                            ended = time.monotonic()
+                            reader.join(timeout=1)
+                            result.update(profiler_returncode=process.returncode,
+                                          private_trace_relative_path=suffix + '/perf.data',
+                                          trace_bytes=out.check().st_size)
+                            stage = 'native_after'
+                            after = host.decode_progress(self.cid)
+                            result['after'] = after
+                            result['host_valid'] = (capture_is_decode(before, after, started, ended)
+                                and interrupted and ended - started >= SAMPLE_SECONDS and result['trace_bytes'] > 0
+                                and ended - started <= MAX_CAPTURE_SECONDS + 0.25
+                                and process.returncode in (0, -signal.SIGINT)
+                                and not self.cancel.is_set() and not result.get('profiler_forced_stop'))
+                            stage = 'storage'
+                            out.fsync()
+                        if result['host_valid']:
+                            stage = 'storage'
+                            leaf_report(host, self.cid, target, directory, result)
+                            result['private_symbol_report_relative_path'] = suffix + '/leaf-symbols.txt'
                     stage = 'storage'
                     with anchor.open(suffix + '/perf.stderr', os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600) as err:
                         err.write(bytes(stderr)); err.fsync()

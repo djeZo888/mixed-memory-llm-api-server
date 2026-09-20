@@ -11,7 +11,7 @@ import math
 import re
 
 from d3t import guards
-from benchmark.profiles import GLM_DECODE_DIAG_CAMPAIGN, GLM_DECODE_DIAG_CAPACITIES, glm_decode_diag_manifest
+from benchmark.profiles import GLM_DECODE_DIAG_CAMPAIGN, GLM_DECODE_PROFILE_CAMPAIGN, GLM_DECODE_DIAG_CAPACITIES, glm_decode_diag_manifest
 
 GIB = 1024 ** 3
 
@@ -164,9 +164,10 @@ def allocation_gate(manifest: dict, parsed: dict, observed: dict, *, strict_g1=F
             reasons.append(reason)
     expected_uuids = manifest["gpu_uuids"]
     capacity = manifest["configured_capacity"]
-    decode_diag = manifest.get("campaign") == GLM_DECODE_DIAG_CAMPAIGN
+    decode_diag = manifest.get("campaign") in (GLM_DECODE_DIAG_CAMPAIGN, GLM_DECODE_PROFILE_CAMPAIGN)
     exact_decode_diag = (decode_diag and type(capacity) is int and capacity in GLM_DECODE_DIAG_CAPACITIES
-                         and manifest == glm_decode_diag_manifest(capacity))
+                         and (manifest.get("campaign") != GLM_DECODE_PROFILE_CAMPAIGN or capacity == 65536)
+                         and manifest == glm_decode_diag_manifest(capacity, campaign=manifest["campaign"]))
     if decode_diag:
         need(exact_decode_diag, "glm_decode_diag_exact_manifest_required")
     need(parsed.get("parser_status") == "PARSED", "allocation_parser_failure")
