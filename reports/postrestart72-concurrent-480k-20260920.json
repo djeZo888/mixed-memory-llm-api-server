@@ -502,7 +502,7 @@
       "finish_reason": null,
       "final_content_characters": null,
       "final_content_sha256": null,
-      "missing_content_metadata_status": "PENDING: authoritative saved summary omits finish_reason, content length and content hash; raw response hash is not content hash",
+      "missing_content_metadata_status": "UNAVAILABLE: authoritative saved summary omits finish_reason, content length and content hash; raw response hash is not content hash",
       "marker_retrieval": "START/MIDDLE/END exact object PASS; no fence removed",
       "schema_scope": "GLM only; temperature1/seed1729/reasoning_effort low/max256",
       "native_prompt_tokens_per_second": 67.39596414755678
@@ -1664,5 +1664,6 @@
   },
   "followup_scope": {
     "RETENTIONFIX": "separate source-only preparation for warm-only pair: two loads and discarded warmups, no measured reruns; NOT_EXECUTED/NOT_PROVEN"
-  }
+  },
+  "performance_acceptance": "NOT_ESTABLISHED_FOR_FULL72_CONCURRENT_PAIR"
 }
