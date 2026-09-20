@@ -281,13 +281,15 @@ def _host_available(text):
     return values['MemAvailable:']
 
 
-def _resident_anon(slot, container, instance, read):
-    """Credit only charged resident anonymous RAM, never RSS or file cache.
+def _resident_nonreclaimable(slot, container, instance, read):
+    """Credit disjoint resident anon and no-swap shmem, never total file cache.
 
     Manager supplies an already-trusted running identity and rechecks it around
     this sample. PID/cgroup membership is independently tied to its exact ID.
-    File pages (including mapped weights) receive no credit: MemAvailable can
-    already include reclaimable cache, so crediting memory.current is unsafe.
+    Cgroup shmem is included in file, not anon. With zero swap it is already
+    resident nonreclaimable RAM; credit it once, without adding file or THP
+    subsets. MemAvailable can already include other reclaimable file pages,
+    so crediting RSS, memory.current or the full file counter is unsafe.
     """
     require(isinstance(container, dict), 'concurrent_resident_identity_invalid')
     cid, state = container.get('Id'), container.get('State', {})
@@ -314,12 +316,13 @@ def _resident_anon(slot, container, instance, read):
         require(len(fields) == 2 and fields[1].isdigit() and fields[0] not in values,
                 'concurrent_resident_memory_unavailable')
         values[fields[0]] = int(fields[1])
-    require('anon' in values, 'concurrent_resident_memory_unavailable')
+    require({'anon', 'file', 'shmem'} <= set(values) and values['shmem'] <= values['file'],
+            'concurrent_resident_memory_unavailable')
     require(read(['/usr/bin/cat', root + '/memory.swap.current']).strip() == '0',
             'concurrent_resident_swap_detected')
     require(read(['/usr/bin/cat', f'/proc/{pid}/cgroup']) == membership,
             'concurrent_resident_cgroup_changed')
-    return values['anon']
+    return values['anon'] + values['shmem']
 
 
 @safe
@@ -328,7 +331,7 @@ def preflight_current(d, instance, run_fn, *, residents=None):
 
     ``residents`` is exactly the caller's trusted RUNNING glm/qwen inspect map.
     Saved desired/observed fields must never populate it. We reserve each target
-    or resident peer's full reviewed cap, less only its current anonymous charge,
+    or resident peer's full reviewed cap, less current anon plus no-swap shmem,
     and retain the existing 16-GiB host headroom. Thus resident allocations are
     not counted twice, reclaimable cache is not double-credited, and remaining
     room up to each cap is retained even for an idle peer. This is a current
@@ -348,7 +351,8 @@ def preflight_current(d, instance, run_fn, *, residents=None):
         return result
 
     before = _host_available(read(['/usr/bin/cat', '/proc/meminfo']))
-    credit = {slot: _resident_anon(slot, container, instance, read) for slot, container in residents.items()}
+    credit = {slot: _resident_nonreclaimable(slot, container, instance, read)
+              for slot, container in residents.items()}
     host_available = min(before, _host_available(read(['/usr/bin/cat', '/proc/meminfo'])))
     required = 16 * 1024**3
     for slot in set(residents) | {target}:

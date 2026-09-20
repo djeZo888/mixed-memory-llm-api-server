@@ -20,8 +20,9 @@ def resident(slot):
 
 
 class MemoryFixture:
-    def __init__(self, *, available=800, free=(95, 95), residents=None):
+    def __init__(self, *, available=800, free=(95, 95), residents=None, resident_stats=None):
         self.available, self.free, self.residents = available, free, residents or {}
+        self.resident_stats = resident_stats or {}
         self.calls, self.overrides = [], {}
 
     def run(self, argv, *, timeout):
@@ -38,9 +39,11 @@ class MemoryFixture:
         for slot, anon in self.residents.items():
             item = resident(slot); cid, pid = item['Id'], item['State']['Pid']
             root = '/sys/fs/cgroup/system.slice/docker-' + cid + '.scope'
+            stats = {'anon': anon * GIB, 'file': 300 * GIB, 'shmem': 0, 'kernel': GIB,
+                     **self.resident_stats.get(slot, {})}
             values = {f'/proc/{pid}/cgroup': '0::/system.slice/docker-' + cid + '.scope\n',
                       root + '/cgroup.procs': str(pid) + '\n', root + '/memory.swap.current': '0\n',
-                      root + '/memory.stat': f'anon {anon * GIB}\nfile {300 * GIB}\nkernel {GIB}\n'}
+                      root + '/memory.stat': ''.join(f'{name} {value}\n' for name, value in stats.items())}
             if argv[0] == '/usr/bin/cat' and argv[1] in values:
                 return values[argv[1]]
         raise AssertionError('unexpected command')
@@ -73,6 +76,49 @@ class CurrentMemory(unittest.TestCase):
         with self.assertRaisesRegex(LifecycleError, 'concurrent_current_host_memory_insufficient'):
             pair.preflight_current(d, self.instance, fixture.run, residents={'glm': resident('glm')})
 
+    def test_first_run_shmem_shape_admits_qwen_with_full_remaining_caps_and_os_reserve(self):
+        # Root-supplied first RUN shape, rounded as provided; synthetic replay,
+        # not a fresh VM observation or accepted capacity receipt.
+        d = bound(pair.QWEN_PROFILE, self.d['_storage_binding'])
+        anon, shmem = 9 * GIB // 10, 3996 * GIB // 10
+        fixture = MemoryFixture(available=463, free=(20, 95), residents={'glm': 0},
+            resident_stats={'glm': {'anon': anon, 'file': 500 * GIB, 'shmem': shmem,
+                                   'anon_thp': anon, 'shmem_thp': shmem}})
+        result = pair.preflight_current(d, self.instance, fixture.run, residents={'glm': resident('glm')})
+        # Old anon-only accounting required ~687.1 GiB. The disjoint credit
+        # leaves ~287.5 GiB required: GLM remainder + full Qwen cap + OS reserve.
+        required = (640 + 32 + 16) * GIB - anon - shmem
+        self.assertGreater((640 + 32 + 16) * GIB - anon, 463 * GIB)
+        self.assertEqual(result['required_host_available_bytes'], required)
+        fixture.overrides[('/usr/bin/cat', '/proc/meminfo')] = (
+            f'MemTotal: {900 * GIB // 1024} kB\nMemAvailable: {required // 1024} kB\n')
+        with self.assertRaisesRegex(LifecycleError, 'concurrent_current_host_memory_insufficient'):
+            pair.preflight_current(d, self.instance, fixture.run, residents={'glm': resident('glm')})
+
+    def test_shmem_is_not_added_again_as_file_thp_or_other_overlapping_charge(self):
+        d = bound(pair.QWEN_PROFILE, self.d['_storage_binding'])
+        fixture = MemoryFixture(available=288, free=(20, 95), residents={'glm': 1},
+            resident_stats={'glm': {'shmem': 399 * GIB, 'file': 600 * GIB,
+                'anon_thp': GIB, 'shmem_thp': 399 * GIB, 'file_mapped': 600 * GIB,
+                'kernel': 30 * GIB}})
+        result = pair.preflight_current(d, self.instance, fixture.run, residents={'glm': resident('glm')})
+        self.assertEqual(result['required_host_available_bytes'], 288 * GIB)
+        fixture.available = 287
+        with self.assertRaisesRegex(LifecycleError, 'concurrent_current_host_memory_insufficient'):
+            pair.preflight_current(d, self.instance, fixture.run, residents={'glm': resident('glm')})
+
+    def test_both_resident_slots_keep_their_remaining_cap_and_os_reserve(self):
+        d = bound(pair.QWEN_PROFILE, self.d['_storage_binding'])
+        fixture = MemoryFixture(available=278, free=(20, 20), residents={'glm': 1, 'qwen': 2},
+            resident_stats={'glm': {'shmem': 399 * GIB, 'file': 500 * GIB},
+                            'qwen': {'shmem': 8 * GIB}})
+        residents = {slot: resident(slot) for slot in ('glm', 'qwen')}
+        result = pair.preflight_current(d, self.instance, fixture.run, residents=residents)
+        self.assertEqual(result['required_host_available_bytes'], (640 - 400 + 32 - 10 + 16) * GIB)
+        fixture.available = 277
+        with self.assertRaisesRegex(LifecycleError, 'concurrent_current_host_memory_insufficient'):
+            pair.preflight_current(d, self.instance, fixture.run, residents=residents)
+
     def test_running_target_reuse_needs_reserve_not_a_second_gpu_allocation(self):
         fixture = MemoryFixture(available=300, free=(20, 95), residents={'glm': 400})
         result = pair.preflight_current(self.d, self.instance, fixture.run, residents={'glm': resident('glm')})
@@ -93,10 +139,14 @@ class CurrentMemory(unittest.TestCase):
         with self.assertRaisesRegex(LifecycleError, 'concurrent_resident_cgroup_unavailable'):
             pair.preflight_current(self.d, self.instance, fixture.run, residents={'glm': resident('glm')})
 
-    def test_swap_missing_anon_and_malformed_current_observations_refuse(self):
+    def test_swap_missing_or_inconsistent_counters_and_malformed_observations_refuse(self):
         root = '/sys/fs/cgroup/system.slice/docker-' + 'a' * 64 + '.scope'
         cases = [(['/usr/bin/cat', root + '/memory.swap.current'], '1', 'concurrent_resident_swap_detected'),
                  (['/usr/bin/cat', root + '/memory.stat'], 'file 100\n', 'concurrent_resident_memory_unavailable'),
+                 (['/usr/bin/cat', root + '/memory.stat'], 'anon 1\nfile 100\n', 'concurrent_resident_memory_unavailable'),
+                 (['/usr/bin/cat', root + '/memory.stat'], 'anon 1\nshmem 100\n', 'concurrent_resident_memory_unavailable'),
+                 (['/usr/bin/cat', root + '/memory.stat'], 'anon 1\nfile 100\nshmem 101\n', 'concurrent_resident_memory_unavailable'),
+                 (['/usr/bin/cat', root + '/memory.stat'], 'anon 1\nfile 100\nshmem -1\n', 'concurrent_resident_memory_unavailable'),
                  (['/usr/bin/cat', '/proc/meminfo'], 'MemAvailable: 100 bytes\n', 'concurrent_current_host_memory_unavailable'),
                  (GPU_QUERY, '0, unknown, 90000, 80000\n1, unknown, 90000, 80000', 'concurrent_gpu_inventory_mismatch'),
                  (GPU_QUERY, '0, unknown, N/A, N/A\n', 'concurrent_current_gpu_memory_unavailable')]

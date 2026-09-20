@@ -96,12 +96,15 @@ an already resident target or peer needs the reserve only. Both require 16 GiB
 free, with Qwen also retaining 10% of physical memory.
 
 Host admission reserves 16 GiB shared headroom plus each target/resident slot's
-full reviewed host cap minus its current resident anonymous charge. The latter
-is read from the exact container's PID/cgroup identity and checked for zero swap.
-Only anonymous memory is credited: `memory.current`, RSS and reclaimable file
-pages would overlap with memory already counted by `MemAvailable`. Remaining
-room up to an idle peer's cap is retained. No cap is counted again in full for
-an already resident process. Manager rechecks PID/start identity after sampling.
+full reviewed host cap minus its current resident `anon + shmem` charge. These
+disjoint counters are read from the exact container's PID/cgroup identity and
+checked for zero swap. `shmem` is a subset of `file`, not `anon`; without swap,
+resident shared memory is already nonreclaimable. It is credited once. The full
+`file` counter, THP subsets, `memory.current`, RSS and other reclaimable file pages
+are never added: they overlap with these counters or memory already counted by
+`MemAvailable`. Missing counters or `shmem > file` refuse admission. Remaining
+room up to an idle peer's cap and the full new target cap are retained. Manager
+rechecks PID/start identity after sampling.
 Unknown cgroups, memory readings or ownership fail closed. The whole sample has
 a bounded ten-second budget. This is a point-in-time admission observation, not
 a reservation against unrelated host allocation or a repeated benchmark.
@@ -135,6 +138,14 @@ admission, resident-peer survival reserves, missing/wrong current readings,
 authenticated metadata transport, undersized native pools, and the real Manager
 Ready-probe integration. They perform no model load, Docker operation, inference or VM
 contact.
+
+The resident-memory regression replays root's supplied first-RUN shape of about
+399.6 GiB GLM `shmem`, 0.9 GiB `anon` and 463 GiB host `MemAvailable`. Crediting
+both disjoint resident counters leaves about 287.5 GiB required to start Qwen,
+including the remainder to GLM's 640 GiB cap, Qwen's full 32 GiB cap and 16 GiB
+shared headroom. File cache and THP subsets receive no additional credit. This
+rounded synthetic replay is accounting evidence only, not a new live reading
+or capacity/performance acceptance.
 
 Pending root decisions are favorable benchmark acceptance, final GLM allocation
 capacity, final Qwen capacity/static allocation compatibility, measured Qwen host
