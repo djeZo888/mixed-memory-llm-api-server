@@ -140,8 +140,10 @@ def natural_outcome(result):
         'partial_response_preserved_by': 'existing private raw capture and bounded event receipts'}
 
 
-def decode_windows(rows, aggregate=None):
+def decode_windows(rows, aggregate=None, *, dropped_events=0):
     """Native count/time differences; event rate is never relabeled tokens/s."""
+    if dropped_events != 0:
+        return {'status':'UNAVAILABLE','reason':'event_receipt_truncated'}
     points = []
     for row in rows:
         native = row.get('native_timings') or {}
@@ -167,6 +169,8 @@ def decode_windows(rows, aggregate=None):
     windows=[]
     for name,a,b in zip(('beginning','middle','end'),indexes,indexes[1:]):
         left,right=points[a],points[b]; elapsed=right[1]-left[1]
+        if elapsed <= 0:
+            return {'status':'UNAVAILABLE','reason':'nonpositive_native_interval'}
         windows.append({'part':name,'native_count_start':left[0],'native_count_end':right[0],
             'native_elapsed_ms':elapsed,'native_tokens_per_second':(right[0]-left[0])*1000/elapsed if elapsed>0 else None,
             'client_arrival_start':left[2],'client_arrival_end':right[2]})

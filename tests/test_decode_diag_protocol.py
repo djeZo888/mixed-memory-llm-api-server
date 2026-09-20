@@ -91,6 +91,9 @@ class DecodeProtocol(unittest.TestCase):
         repeated=copy.deepcopy(rows[:2]);repeated.append({'native_timings':{'predicted_n':5,'predicted_ms':900}})
         repeated += rows[2:4]
         self.assertEqual(diag.decode_windows(repeated)['reason'],'same_count_native_time_changed')
+        self.assertEqual(diag.decode_windows(rows,dropped_events=1)['reason'],'event_receipt_truncated')
+        zero=[{'native_timings':{'predicted_n':n,'predicted_ms':0}} for n in (1,5,9,13)]
+        self.assertEqual(diag.decode_windows(zero)['reason'],'nonpositive_native_interval')
 
     def test_natural_answer_length_does_not_imply_quality_or_completion(self):
         for status,finish,n,complete,cap in [('COMPLETE','stop',300,True,False),
