@@ -28,7 +28,8 @@ from .lifecycle import CONTROL_UNIT, BOOT_UNIT, PlanError, digest, require, vali
 from .owner import CampaignOwner, HostCallbacks, WorkerVerificationPending
 from .campaign import CampaignBudget
 from .profiles import (read_config, command_manifest, split_resources, validate_arm_scope,
-                       G1_RAM_CAP_BYTES, glmrepair_manifest, g1_ladder_manifest, glm_decode_diag_manifest, cpu_set)
+                       G1_RAM_CAP_BYTES, glmrepair_manifest, g1_ladder_manifest, glm_decode_diag_manifest, cpu_set,
+                       CONCURRENT_SCOPE, CONCURRENT_CAMPAIGN, CONCURRENT_Q1_RAM_CAP_BYTES, concurrent_manifest)
 from .telemetry import collect_sample, required_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
@@ -37,6 +38,25 @@ KEYS = {'inference': Path('/data/services/secrets/llm-api-key'), 'control': Path
 ENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'LC_ALL': 'C'}
 CID = re.compile(r'[a-f0-9]{64}\Z')
 _COMMAND_DEADLINE = contextvars.ContextVar('benchmark_command_deadline', default=None)
+
+
+def concurrent_capacity_policy():
+    """Closed root-reviewed planning provision, never current measured components."""
+    return {'evidence_status': 'ROOT_REVIEWED_HISTORICAL_PROVISIONAL_NOT_CURRENT_MEASURED',
+            'caps_bytes': {'G1': G1_RAM_CAP_BYTES, 'Q1': CONCURRENT_Q1_RAM_CAP_BYTES},
+            'host_headroom_numerator': 5, 'host_headroom_denominator': 4,
+            'os_reserve_bytes': 16 * 1024**3, 'gpu_reserve_bytes': 16 * 1024**3,
+            'saved_provenance': {
+                'G1': {'path': 'reports/glm-g1-ladder-20260920.json',
+                       'sha256': 'f9ed5c46c57ceb44e7af2d78838f4c65fb1bdfb1abd8734687a27401815d6cdc',
+                       'basis': 'historical about592GiB already includes25percent; tested640GiB provision'},
+                'Q1': {'path': 'reports/benchq1-verified-20260919.json',
+                       'sha256': '3a96e83cfe45764cf67828523667328290d717719e64025c97205a445e7fc1da',
+                       'required_bytes': 13287989248,
+                       'basis': 'host_load_peak; failed initial4K loader;32GiB candidate needs current load proof'}},
+            'headroom_observation': '5*max(memory.current,memory.peak,anon+kernel+max(file,mapped,shmem))<=4*cap; never sum overlapping totals',
+            'preload_host_available_minimum_bytes': 688 * 1024**3,
+            'actual_load_required': True, 'allocator_policy_change_allowed': False}
 
 
 class NativeInfoPending(Exception):
@@ -118,6 +138,8 @@ class HostBudget(CampaignBudget):
         self.budget_seconds = (1200 if getattr(host, 'campaign', None) == 'benchrun-glmrepair-g1fix-20260919' else 2700 if getattr(host, 'campaign', None) == 'benchrun-glmrepair-fix-20260919' else 3600) if getattr(host, 'scope', None) == 'glmrepair' else 21600
         if getattr(host, 'scope', None) in {'g1-ladder', 'glm-decode-diag'}:
             self.budget_seconds = 14400 if host.scope == 'glm-decode-diag' else 10800
+        if getattr(host, 'scope', None) == CONCURRENT_SCOPE:
+            self.budget_seconds = 5400
         if getattr(host, 'scope', None) == 'glm-decode-diag' and getattr(host, 'mode', None) == 'cpu-profile-only':
             self.budget_seconds = 1200
         self._data = host.read_json('budget.json', missing=True)
@@ -126,7 +148,7 @@ class HostBudget(CampaignBudget):
 
     def _validate(self):
         super()._validate()
-        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
+        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE}:
             require(self._data.get('start_epoch') == self.host.start_epoch == self._data['started_at'] and
                     self._data.get('deadline_epoch') == self.host.deadline_epoch == self.host.start_epoch + self.budget_seconds,
                     'glmrepair_immutable_clock_changed')
@@ -138,7 +160,7 @@ class HostBudget(CampaignBudget):
         require(type(start) in (int, float) and 0 < start <= now and now - start < self.budget_seconds, 'invalid_stage_start_epoch')
         self._data = {'schema': 1, 'budget_seconds': self.budget_seconds, 'phase': 'MEASURING', 'start_kind': kind,
                      'started_at': start, 'last_seen_at': now, 'restoration_started_at': None}
-        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
+        if getattr(self.host, 'scope', None) in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE}:
             self._data.update(start_epoch=start, deadline_epoch=self.host.deadline_epoch)
             self._validate()
         self._save()
@@ -170,7 +192,7 @@ class LinuxHost:
         self.scope = validate_arm_scope(data)
         self.mode = data.get('mode') if self.scope == 'glm-decode-diag' else None
         self.decode_capture_policy = copy.deepcopy(data.get('capture', {})) if self.scope == 'glm-decode-diag' else {}
-        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3}[self.scope]
+        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3, CONCURRENT_SCOPE: 4}[self.scope]
         if self.mode == 'cpu-profile-only':
             manifest_count = 1
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
@@ -181,6 +203,13 @@ class LinuxHost:
             self.start_epoch, self.deadline_epoch = self.ladder_clock(data)
         elif self.scope == 'glm-decode-diag':
             self.start_epoch, self.deadline_epoch = self.decode_clock(data)
+        elif self.scope == CONCURRENT_SCOPE:
+            self.start_epoch, self.deadline_epoch = self.concurrent_clock(data)
+            require(data.get('concurrent_capacity_policy') == concurrent_capacity_policy(),
+                    'concurrent_saved_capacity_authority_changed')
+            self.concurrent_round = None
+            self.concurrent_admitted = set()
+            self.concurrent_resource_violations = {}
         elif self.scope != 'full':
             require(data.get('runtime') == data.get('continuation_execution') and self.start_epoch is not None,
                     'q1_continuation_epoch_changed')
@@ -193,7 +222,7 @@ class LinuxHost:
             require(hashlib.sha256(source_raw).hexdigest() == sha, 'staged_source_pin_changed')
         self.manifests = {}
         for value in values:
-            expected = glm_decode_diag_manifest(value['configured_capacity'], campaign) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
+            expected = concurrent_manifest(value['placement'], value['configured_capacity']) if self.scope == CONCURRENT_SCOPE else glm_decode_diag_manifest(value['configured_capacity'], campaign) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
                                         ram_cap=G1_RAM_CAP_BYTES if self.scope == 'g1-only' else None,
                                         log_verbosity=4 if self.scope == 'g1-only' else None)
             require(value == expected, 'manifest_not_current_generated_source')
@@ -211,6 +240,24 @@ class LinuxHost:
         callbacks = HostCallbacks(**{name: getattr(self, name) for name in HostCallbacks.__dataclass_fields__})
         self.owner = CampaignOwner(campaign, self.manager, callbacks, self.budget,
                                   reviewed_manifest_hashes=self.manifests, lease_factory=lifecycle_lease.acquire_lease)
+
+    @staticmethod
+    def concurrent_clock(armed):
+        runtime = armed.get('runtime') or {}
+        start, deadline = runtime.get('start_epoch'), runtime.get('deadline_epoch')
+        require(armed.get('campaign') == CONCURRENT_CAMPAIGN and
+                'continuation_execution' not in armed and 'start_epoch' not in armed and
+                type(start) in (int, float) and type(deadline) in (int, float) and
+                math.isfinite(start) and math.isfinite(deadline) and start > 0 and
+                deadline == start + 5400 and runtime.get('budget_seconds') == 5400 and
+                runtime.get('request_max_seconds') == 7200 and
+                runtime.get('clock_includes_preparation') is True and
+                runtime.get('includes_load_warmup_fitting') is True and
+                runtime.get('excludes_source_prep') is True and
+                runtime.get('clock_starts') == 'RUN_DISPATCH' and
+                runtime.get('restoration_outside_budget') is True,
+                'concurrent_fresh_dispatch_clock_required')
+        return start, deadline
 
     @staticmethod
     def decode_clock(armed):
@@ -254,6 +301,186 @@ class LinuxHost:
                 deadline == start + seconds and runtime.get('budget_seconds') == seconds,
                 'glmrepair_new_immutable_clock_required')
         return start, deadline
+
+    def admit_concurrent(self, round_name):
+        require(self.scope == CONCURRENT_SCOPE and self.owner.phase == 'ACTIVE',
+                'concurrent_active_scope_required')
+        require(not getattr(self, 'concurrent_resource_violations', {}), 'concurrent_latched_resource_failure')
+        expected = 'short' if self.concurrent_round is None else 'long' if self.concurrent_round == 'short' else None
+        require(round_name is not None and round_name == expected, 'concurrent_closed_round_order_required')
+        self.budget.checkpoint()
+        self.guards(self.owner.lease)
+        self.assert_idle()
+        require(not self.campaign_containers() and
+                all(row['state'] == 'REMOVED' for row in self.owner.resources),
+                'concurrent_retire_prior_round_required')
+        sample = collect_sample({})
+        available = sample['host']['available_bytes']
+        policy = concurrent_capacity_policy()
+        # Conservative capacity reservation, not a claim that caps equal demand.
+        require(type(available) is int and available >= sum(policy['caps_bytes'].values()) + policy['os_reserve_bytes'],
+                'concurrent_host_available_reserve_unproved')
+        gpu_free = {g['uuid']: g.get('free_bytes') for g in sample['gpus']}
+        sizes = (16384, 262144) if round_name == 'short' else (65536, 700160)
+        manifests = [concurrent_manifest(p, n) for p, n in zip(('G1', 'Q1'), sizes)]
+        for manifest in manifests:
+            require(self.manifests.get(digest(manifest)) == manifest, 'concurrent_exact_manifest_required')
+            for uuid in manifest['gpu_uuids']:
+                require(type(gpu_free.get(uuid)) is int and gpu_free[uuid] >= policy['gpu_reserve_bytes'],
+                        'concurrent_gpu_reserve_unproved')
+        receipt = {'round': round_name, 'manifests': manifests, 'capacity_policy': policy,
+                   'host_available_bytes': available, 'gpu_free_bytes': gpu_free,
+                   'actual_allocation': 'NOT_YET_PROVED', 'captured_at': time.time()}
+        self.write_json('concurrent-' + round_name + '-admission.json', receipt)
+        self.concurrent_round = round_name
+        self.concurrent_admitted = {digest(m) for m in manifests}
+        return receipt
+
+    @staticmethod
+    def concurrent_limits(manifest, container, cgroup):
+        placement = manifest['placement']
+        expected = concurrent_manifest(placement, manifest['configured_capacity'])
+        require(manifest == expected, 'concurrent_exact_manifest_required')
+        cap = concurrent_capacity_policy()['caps_bytes'][placement]
+        cpus = '0-95' if placement == 'G1' else '96-111'
+        config = container['HostConfig']
+        memory = {'docker_memory_bytes': config.get('Memory'),
+                  'docker_memory_swap_bytes': config.get('MemorySwap'),
+                  'cgroup_memory_max': (cgroup / 'memory.max').read_text().strip(),
+                  'cgroup_memory_swap_max': (cgroup / 'memory.swap.max').read_text().strip()}
+        require(memory == {'docker_memory_bytes': cap, 'docker_memory_swap_bytes': cap,
+                           'cgroup_memory_max': str(cap), 'cgroup_memory_swap_max': '0'},
+                'concurrent_effective_no_swap_limit_unproved')
+        cpu = {'docker_cpuset_cpus': config.get('CpusetCpus'),
+               'docker_nano_cpus': config.get('NanoCpus'), 'docker_cpu_quota': config.get('CpuQuota'),
+               'docker_cpu_period': config.get('CpuPeriod'),
+               'cgroup_cpuset_cpus_effective': (cgroup / 'cpuset.cpus.effective').read_text().strip(),
+               'cgroup_cpu_max': (cgroup / 'cpu.max').read_text().strip()}
+        require(cpu['docker_cpuset_cpus'] == cpus and cpu_set(cpu['cgroup_cpuset_cpus_effective']) == cpu_set(cpus) and
+                all(cpu[k] == 0 for k in ('docker_nano_cpus', 'docker_cpu_quota', 'docker_cpu_period')) and
+                bool(re.fullmatch(r'max [1-9][0-9]*', cpu['cgroup_cpu_max'])),
+                'concurrent_effective_cpu_limits_unproved')
+        return memory, cpu
+
+    def concurrent_pressure(self, row):
+        """Compare conservative alternatives, never sum totals; latch numeric failures."""
+        policy, charges, reasons, unavailable = concurrent_capacity_policy(), {}, [], []
+        numeric_by_cid = {cid: [] for cid in row['cgroups']}
+        for cid, group in row['cgroups'].items():
+            manifest = self.load_manifests[cid]
+            current, peak = group.get('current_bytes'), group.get('peak_since_cgroup_creation_bytes')
+            valid = lambda value: type(value) is int and value >= 0
+            totals = [value for value in (current, peak) if valid(value)]
+            if len(totals) != 2:
+                unavailable.append('concurrent_inclusive_charge_unavailable')
+            components = [group.get(key) for key in ('anon_bytes', 'kernel_bytes', 'file_bytes', 'file_mapped_bytes', 'shmem_bytes')]
+            component_charge = None
+            if all(valid(value) for value in components):
+                anon, kernel, file_bytes, mapped, shmem = components
+                component_charge = anon + kernel + max(file_bytes, mapped, shmem)
+                totals.append(component_charge)
+            else:
+                unavailable.append('concurrent_component_charge_unavailable')
+            observed = max(totals) if totals else None
+            cap = policy['caps_bytes'][manifest['placement']]
+            charges[cid] = {'evidence_status': 'OBSERVED_TOTALS_AND_CONSERVATIVE_COMPONENT_BRACKET',
+                            'current_bytes': current, 'lifetime_peak_bytes': peak,
+                            'component_charge_bytes': component_charge,
+                            'headroom_comparison_bytes': observed, 'placement': manifest['placement'],
+                            'cap_bytes': cap, 'cap_headroom_25_percent': 5 * observed <= 4 * cap if observed is not None else None,
+                            'basis': 'max(memory.current,memory.peak,anon+kernel+max(file,mapped,shmem)); no overlapping totals summed'}
+            if observed is not None and 5 * observed > 4 * cap:
+                numeric_by_cid[cid].append('concurrent_cap_25_percent_headroom_failed')
+        available = row['host'].get('available_bytes')
+        if type(available) is not int:
+            unavailable.append('concurrent_host_available_unavailable')
+        elif available < policy['os_reserve_bytes']:
+            reasons.append('concurrent_host_reserve_failed')
+            for numeric in numeric_by_cid.values():
+                numeric.append('concurrent_host_reserve_failed')
+        free = {g['uuid']: g.get('free_bytes') for g in row['gpus']}
+        for cid in row['cgroups']:
+            for uuid in self.load_manifests[cid]['gpu_uuids']:
+                if type(free.get(uuid)) is not int:
+                    unavailable.append('concurrent_gpu_free_unavailable')
+                elif free[uuid] < policy['gpu_reserve_bytes']:
+                    numeric_by_cid[cid].append('concurrent_gpu_reserve_failed')
+        if not hasattr(self, 'concurrent_resource_violations'):
+            self.concurrent_resource_violations = {}
+        for cid, numeric in numeric_by_cid.items():
+            if numeric:
+                prior = self.concurrent_resource_violations.setdefault(cid, {
+                    'reasons': [], 'first_sample_monotonic_s': row.get('timestamp_monotonic_s'),
+                    'first_charge': copy.deepcopy(charges.get(cid)), 'host_available_bytes': available,
+                    'gpu_free_bytes': copy.deepcopy(free)})
+                prior['reasons'] = sorted(set(prior['reasons'] + numeric))
+        for violation in self.concurrent_resource_violations.values():
+            reasons.extend(violation['reasons'])
+        return {'status': 'STOP_RESOURCE_GATE' if reasons else 'UNAVAILABLE' if unavailable else 'PASS',
+                'reasons': sorted(set(reasons)), 'unavailable_reasons': sorted(set(unavailable)),
+                'charges': charges, 'host_available_bytes': available,
+                'latched_violations': copy.deepcopy(self.concurrent_resource_violations),
+                'policy': policy['evidence_status'], 'required_demand_helper': 'NOT_RECLASSIFIED'}
+
+    @staticmethod
+    def concurrent_cpu_pressure(cgroups):
+        """Cheap counters/PSI only; no process maps or profiler activity."""
+        def read(path, kind):
+            try:
+                text = path.read_text()
+                require(len(text) <= 16384, 'concurrent_pressure_file_bound')
+                if kind == 'cpu':
+                    return {cells[0]: int(cells[1]) for line in text.splitlines()
+                            if len(cells := line.split()) == 2 and cells[0] in
+                            {'usage_usec', 'user_usec', 'system_usec', 'nr_periods', 'nr_throttled', 'throttled_usec'}
+                            and cells[1].isdigit()}
+                out = {}
+                for line in text.splitlines():
+                    cells = line.split()
+                    if cells and cells[0] in {'some', 'full'}:
+                        values = {}
+                        for cell in cells[1:]:
+                            key, value = cell.split('=', 1)
+                            if key in {'avg10', 'avg60', 'avg300', 'total'}:
+                                number = int(value) if key == 'total' else float(value)
+                                require(math.isfinite(number) and number >= 0, 'concurrent_pressure_value_invalid')
+                                values[key] = number
+                        out[cells[0]] = values
+                return out
+            except (OSError, ValueError):
+                return None
+        return {'host': {kind: read(Path('/proc/pressure') / kind, 'psi') for kind in ('cpu', 'memory')},
+                'cgroups': {cid: {'cpu_stat': read(path / 'cpu.stat', 'cpu'),
+                                 'cpu_pressure': read(path / 'cpu.pressure', 'psi'),
+                                 'memory_pressure': read(path / 'memory.pressure', 'psi')}
+                            for cid, path in cgroups.items()}}
+
+    def rpc_diagnostics(self):
+        """Read only existing bounded safe code/frame receipts; no raw exception text."""
+        path = self.binding.validate_path('logs', self.log_root + '/rpc-errors')
+        if not path.exists():
+            return {'diagnostics': [], 'missing': True}
+        rows = []
+        files = sorted(path.iterdir(), key=lambda p: p.name)
+        require(len(files) <= 256, 'rpc_diagnostic_inventory_bound')
+        for file in files[-16:]:
+            require(bool(re.fullmatch(r'[0-9]+-[a-f0-9]{16}\.json', file.name)), 'rpc_diagnostic_name_invalid')
+            data = self.read_json('rpc-errors/' + file.name)
+            frames = data.get('frames', [])
+            require(isinstance(frames, list) and len(frames) <= 16, 'rpc_diagnostic_frames_invalid')
+            projected = []
+            for frame in frames:
+                require(isinstance(frame, dict) and
+                        bool(re.fullmatch(r'[A-Za-z0-9_.-]{1,128}', frame.get('source', ''))) and
+                        bool(re.fullmatch(r'[A-Za-z0-9_<>]{1,128}', frame.get('function', ''))) and
+                        type(frame.get('line')) is int and frame['line'] > 0, 'rpc_diagnostic_frame_invalid')
+                projected.append({key: frame[key] for key in ('source', 'function', 'line')})
+            exception = data.get('exception_class', '')
+            require(bool(re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]{0,63}', exception)), 'rpc_diagnostic_class_invalid')
+            rows.append({'file': file.name, 'operation': data.get('operation') if data.get('operation') in RPC_OPERATIONS else 'unknown',
+                         'exception_class': exception, 'require_code': data.get('require_code') if data.get('require_code') in RPC_SAFE_REQUIRE_CODES else None,
+                         'frames': projected})
+        return {'diagnostics': rows, 'missing': False, 'scope': 'saved_safe_RPC_identity_only'}
 
     def pin_sources(self):
         for entry in self.config['installed_source_identities'].values():
@@ -537,6 +764,19 @@ class LinuxHost:
             available = collect_sample({})['host']['available_bytes']
             require(type(available) is int and available >= G1_RAM_CAP_BYTES + 16 * 1024**3,
                     'g1_container_cap_host_reserve_unproved')
+        if self.scope == CONCURRENT_SCOPE:
+            require(digest(manifest) in self.concurrent_admitted, 'concurrent_round_not_admitted')
+            require(not getattr(self, 'concurrent_resource_violations', {}), 'concurrent_latched_resource_failure')
+            active = [row['resource']['id'] for row in self.owner.resources if row['state'] != 'REMOVED'
+                      and row['resource']['id'] in self.load_manifests]
+            require(all(self.load_manifests[cid]['placement'] != manifest['placement'] for cid in active),
+                    'concurrent_duplicate_model_lane')
+            policy = concurrent_capacity_policy()
+            occupied = {self.load_manifests[cid]['placement'] for cid in active}
+            remaining = sum(cap for placement, cap in policy['caps_bytes'].items() if placement not in occupied)
+            available = collect_sample({})['host']['available_bytes']
+            require(type(available) is int and available >= remaining + policy['os_reserve_bytes'],
+                    'concurrent_host_available_reserve_unproved')
         self.mkdir_paths(manifest)
         argv = ['/usr/bin/docker', *manifest['create_argv'][1:]]
         created = command(argv, 120).stdout.decode().strip()
@@ -546,6 +786,10 @@ class LinuxHost:
             require(container['HostConfig'].get('Memory') == G1_RAM_CAP_BYTES and
                     container['HostConfig'].get('MemorySwap') == G1_RAM_CAP_BYTES,
                     'g1_container_no_swap_limit_unproved')
+        if self.scope == CONCURRENT_SCOPE:
+            cap = concurrent_capacity_policy()['caps_bytes'][manifest['placement']]
+            require(container['HostConfig'].get('Memory') == cap and container['HostConfig'].get('MemorySwap') == cap,
+                    'concurrent_container_no_swap_limit_unproved')
         self.load_manifests[created] = manifest
         self.write_json('loads/' + created + '.json', {'manifest': manifest, 'created_at': time.time()})
         return self.resource(container)
@@ -613,7 +857,16 @@ class LinuxHost:
         collection_started = time.monotonic()
         container, cgroup, pids = self.identity(cid)
         options = {'decode_diagnostic': True} if self.scope == 'glm-decode-diag' else {}
-        row = collect_sample({cid: cgroup}, pids={cid: pids}, **options)
+        groups, members = {cid: cgroup}, {cid: pids}
+        if self.scope == CONCURRENT_SCOPE:
+            for resource in self.owner.resources:
+                peer = resource['resource']['id']
+                if resource['state'] == 'RUNNING' and peer != cid and peer in self.load_manifests:
+                    _, groups[peer], members[peer] = self.identity(peer)
+        row = collect_sample(groups, pids=members, **options)
+        if self.scope == CONCURRENT_SCOPE:
+            row['concurrent_resource_gate'] = self.concurrent_pressure(row)
+            row['cpu_pressure'] = self.concurrent_cpu_pressure(groups)
         if self.scope == 'glm-decode-diag':
             previous = getattr(self, '_decode_last_sample', {}).get(cid, float('-inf'))
             if collection_started - previous >= 5:
@@ -683,6 +936,11 @@ class LinuxHost:
         require(point in {'readiness', 'warm_idle'}, 'pss_checkpoint_only')
         self.assert_idle()
         container, cgroup, pids = self.identity(cid)
+        if self.scope == CONCURRENT_SCOPE:
+            result = {'point': point, 'pss_bytes': None, 'pss_unavailable_reason': 'concurrent_no_profiling',
+                      'container_id': cid, 'scope': 'cheap_quiescent_counters', 'telemetry': self.telemetry(cid)}
+            self.write_json('loads/' + cid + '-' + point + '.json', result)
+            return result
         start, values = time.monotonic(), []
         for pid in pids:
             try:
@@ -902,8 +1160,22 @@ class LinuxHost:
             observed['container_memory_limits'] = self.g1_memory_limits(container, cgroup)
         if self.scope in {'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
             observed['container_cpu_limits'] = self.glmrepair_cpu_limits(container, cgroup)
-        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope in {'g1-only', 'g1-ladder', 'glm-decode-diag'},
+        if self.scope == CONCURRENT_SCOPE:
+            memory, cpu = self.concurrent_limits(manifest, container, cgroup)
+            observed.update(container_memory_limits=memory, container_cpu_limits=cpu)
+        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope in {'g1-only', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE} and manifest['placement'] == 'G1',
                                strict_glmrepair=self.scope == 'glmrepair')
+        if self.scope == CONCURRENT_SCOPE:
+            pressure = sample['concurrent_resource_gate']
+            if pressure['status'] != 'PASS':
+                gate['status'] = 'STOP_ALLOCATION_PROOF'
+                gate['reasons'].extend(pressure['reasons'] + pressure['unavailable_reasons'])
+            if manifest['placement'] == 'Q1':
+                ranks = parsed.get('ranks') or {}
+                if not ranks or not all(type(rank.get(key)) in (int, float) and rank[key] > 0
+                                        for rank in ranks.values() for key in ('k_gb_log_label', 'v_gb_log_label')):
+                    gate['status'] = 'STOP_ALLOCATION_PROOF'
+                    gate['reasons'].append('concurrent_positive_native_kv_allocation_required')
         result = {'allocation': gate, 'parsed': parsed, 'observed': observed, 'server_facts': facts,
                   'raw_log_path': self.log_root + '/loads/' + cid + '-allocation.log'}
         if gate['status'] == 'ALLOCATION_PROOF_ACCEPTED':
@@ -1079,7 +1351,7 @@ class LinuxHost:
         require(isinstance(args, dict), 'invalid_rpc_args')
         if op == 'begin':
             if args.get('resume'):
-                require(self.scope not in {'glmrepair', 'g1-ladder', 'glm-decode-diag'}, 'glmrepair_resume_forbidden_restore_only')
+                require(self.scope not in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE}, 'glmrepair_resume_forbidden_restore_only')
                 ledger = self.read_json('owner.json')
                 require(ledger['phase'] == 'RESTORED' and self.budget.data['phase'] == 'RESTORED', 'resume_requires_verified_restoration')
                 require(time.time() - self.budget.data['started_at'] < 21600, 'STOP_BUDGET')
@@ -1096,6 +1368,8 @@ class LinuxHost:
             require(remaining > 0, 'STOP_BUDGET')
             manifest = self.manifests.get(args.get('manifest_sha256'))
             require(manifest is not None, 'unknown_manifest')
+            if self.scope == CONCURRENT_SCOPE:
+                require(digest(manifest) in self.concurrent_admitted, 'concurrent_round_not_admitted')
             token = _COMMAND_DEADLINE.set(time.monotonic() + min(7200, remaining))
             try:
                 return self.owner.launch(manifest)
@@ -1123,7 +1397,14 @@ class LinuxHost:
             return self.decode_cpu_capture_status(args['id'], args['capture_id'], args.get('client_after'))
         if op == 'request_begin':
             require(self.owner.phase == 'ACTIVE', 'owner_not_active')
-            self.identity(args['id'])
+            container, cgroup, _ = self.identity(args['id']) if self.scope == CONCURRENT_SCOPE else (None, None, None)
+            if self.scope == CONCURRENT_SCOPE:
+                require(args['id'] in self.allocation_proofs, 'concurrent_current_allocation_required')
+                self.concurrent_limits(self.load_manifests[args['id']], container, cgroup)
+                sample = self.telemetry(args['id'])
+                require(sample['concurrent_resource_gate']['status'] == 'PASS', 'concurrent_current_resource_gate_failed')
+            else:
+                self.identity(args['id'])
             timeout = self.budget.request_timeout(args.get('timeout_s', 7200))
             require(args['id'] not in self.requests, 'request_already_active')
             self.requests[args['id']] = {'started_at': time.time(), 'timeout_s': timeout}
@@ -1137,6 +1418,10 @@ class LinuxHost:
             del self.requests[args['id']]
             self.write_json('requests.json', self.requests)
             return {'request_ended': args['id']}
+        if op == 'admit_concurrent':
+            return self.admit_concurrent(args.get('round'))
+        if op == 'rpc_diagnostics':
+            return self.rpc_diagnostics()
         if op == 'admit_mixed':
             require(self.scope == 'full', 'mixed_excluded_by_arm_scope')
             measurements = dict(self.measured)
@@ -1197,7 +1482,7 @@ class LinuxHost:
 
 RPC_OPERATIONS = frozenset({'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation',
     'quiescent', 'diagnostic_snapshot', 'decode_progress', 'decode_cpu_capture_start', 'decode_cpu_capture_status',
-    'request_begin', 'request_end', 'admit_mixed', 'restore', 'recover',
+    'request_begin', 'request_end', 'admit_mixed', 'admit_concurrent', 'rpc_diagnostics', 'restore', 'recover',
     'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'})
 RPC_SAFE_REQUIRE_CODES = frozenset({'native_server_args_unavailable',
     'allocation_log_too_large', 'current_model_mount_changed',

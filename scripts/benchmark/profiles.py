@@ -12,7 +12,11 @@ from .qwen_launcher import pinned_base, variant
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/benchmarks/gpu-split-20260919.json"
 G1_RAM_CAP_BYTES = 640 * 1024**3  # Root-reviewed validation cap; not minimum model RAM.
-ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair", "g1-ladder", "glm-decode-diag")
+CONCURRENT_SCOPE = "concurrent-g1q1"
+CONCURRENT_CAMPAIGN = "benchrun-concurrent-g1q1-cont1-20260920"
+CONCURRENT_Q1_RAM_CAP_BYTES = 32 * 1024**3
+CONCURRENT_TUPLES = (("G1", 16384), ("Q1", 262144), ("G1", 65536), ("Q1", 700160))
+ARM_SCOPES = ("full", "q1-only", "q1-256k", "g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", CONCURRENT_SCOPE)
 G1_LADDER_CAMPAIGN = "benchrun-glm-g1-ladder-20260920"
 GLM_DECODE_DIAG_CAMPAIGN = "benchrun-glm-decode-diag-20260920"
 GLM_DECODE_PROFILE_CAMPAIGN = "benchrun-glm-decode-profile-20260920"
@@ -76,6 +80,8 @@ def glm_decode_diag_manifest(capacity, campaign=GLM_DECODE_DIAG_CAMPAIGN):
 def scope_placements(scope):
     if scope not in ARM_SCOPES:
         raise ValueError("unknown_benchmark_arm_scope")
+    if scope == CONCURRENT_SCOPE:
+        return ("G1", "Q1")
     if scope in {"g1-only", "g1-ladder", "glm-decode-diag"}:
         return ("G1",)
     if scope == "glmrepair":
@@ -85,6 +91,8 @@ def scope_placements(scope):
 
 def scope_capacities(scope):
     scope_placements(scope)  # Reject unknown scopes before selecting capacities.
+    if scope == CONCURRENT_SCOPE:
+        return (16384, 262144, 65536, 700160)
     if scope == "glmrepair":
         return (4096,)
     if scope == "g1-ladder":
@@ -98,6 +106,12 @@ def validate_arm_scope(armed):
     """Legacy arms retain full scope; narrowed arms bind their exact placement and plan."""
     scope = armed.get("scope", "full")
     placements = scope_placements(scope)
+    if scope == CONCURRENT_SCOPE:
+        if (armed.get("campaign") != CONCURRENT_CAMPAIGN
+                or armed.get("manifests") != concurrent_manifests()
+                or armed.get("trial_plan") != trial_order(scope)):
+            raise ValueError("concurrent_exact_arm_scope_mismatch")
+        return scope
     if scope == "glm-decode-diag":
         if armed.get("mode") == "cpu-profile-only":
             if (armed.get("campaign") != GLM_DECODE_PROFILE_CAMPAIGN
@@ -183,10 +197,18 @@ def split_resources(measured_glm, measured_qwen, host_usable_bytes):
     return caps
 
 
-def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed=False, ram_cap=None, log_verbosity=None):
+def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed=False, ram_cap=None, log_verbosity=None, scope=None):
     c = read_config()
+    concurrent = scope == CONCURRENT_SCOPE
+    if scope is not None and not concurrent:
+        raise ValueError("unreviewed_manifest_scope")
+    if concurrent and (campaign != CONCURRENT_CAMPAIGN or placement != "Q1"
+                       or type(capacity) is not int or capacity not in (262144, 700160)
+                       or mixed is not True or ram_cap != CONCURRENT_Q1_RAM_CAP_BYTES
+                       or log_verbosity is not None):
+        raise ValueError("concurrent_qwen_manifest_tuple_invalid")
     q256 = placement == "Q1" and capacity == 262144 and not mixed and ram_cap is None
-    if placement not in c["placements"] or type(capacity) is not int or (capacity not in c["capacities"] and not q256):
+    if placement not in c["placements"] or type(capacity) is not int or (capacity not in c["capacities"] and not q256 and not concurrent):
         raise ValueError("unreviewed_placement_or_capacity")
     if log_verbosity is not None and (type(log_verbosity) is not int or log_verbosity != 4 or placement != "G1" or mixed):
         raise ValueError("unreviewed_observational_logging")
@@ -254,6 +276,8 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
         base = pinned_base(ROOT / "scripts/runtime/sglang38_file_auth.py")
         env = {**runtime["environment"], **base.EXTENSION_ENVIRONMENT}
         command = ["/opt/llmctl/benchmark_qwen_launcher.py", "--context", str(capacity), "--tp", str(p["tp_size"])]
+        if concurrent:
+            command += ["--scope", CONCURRENT_SCOPE]
         mounts += [("/data/services/llm-manager/adapters/sglang38_file_auth.py", "/opt/llmctl/sglang38_file_auth.py", True),
                    (roots["source"] + "/scripts/benchmark/qwen_launcher.py", "/opt/llmctl/benchmark_qwen_launcher.py", True)]
         args += ["--entrypoint", "python3", "--read-only", "--tmpfs", "/tmp:rw,nosuid,nodev,size=1g",
@@ -273,7 +297,7 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
             "glm_offload_expectation": c.get("glm_offload_expectation") if glm else None,
             "mixed": mixed, "registered_paths": roots, "create_argv": args,
             "create_shell": shlex.join(args), "start_argv": ["docker", "start", identifier],
-            "native_argv": command if glm else variant(base, capacity, p["tp_size"]),
+            "native_argv": command if glm else variant(base, capacity, p["tp_size"], scope=scope),
             "native_auth": "existing protected key file; key bytes never in command/environment",
             "transport": {"bind": "127.0.0.1", "port": p["port"], "worker": "reviewed SSH loopback tunnel; no new LAN listener/firewall policy"},
             "mandatory_run_gates": ["canonical lease held; production control frozen and production stopped",
@@ -284,7 +308,50 @@ def command_manifest(placement, capacity, *, campaign="benchrun-20260919", mixed
             "live_allocation": "NOT_TESTED", "gpu_index_is_not_placement_proof": True}
 
 
+def concurrent_manifest(placement, capacity):
+    """Only the four frozen G1/Q1 tuples; no live allocator acceptance implied."""
+    if type(capacity) is not int or (placement, capacity) not in CONCURRENT_TUPLES:
+        raise ValueError("concurrent_manifest_tuple_invalid")
+    if placement == "Q1":
+        return command_manifest(placement, capacity, campaign=CONCURRENT_CAMPAIGN,
+                                mixed=True, ram_cap=CONCURRENT_Q1_RAM_CAP_BYTES,
+                                scope=CONCURRENT_SCOPE)
+    base = glmrepair_manifest(GLMREPAIR_G1_CAMPAIGN)
+    name = f"{CONCURRENT_CAMPAIGN}-g1-{capacity}"
+    manifest = json.loads(json.dumps(base).replace(base["container_name"], name)
+                          .replace(GLMREPAIR_G1_CAMPAIGN, CONCURRENT_CAMPAIGN))
+    manifest["configured_capacity"] = capacity
+    manifest["mixed"] = True
+    for key in ("native_argv", "create_argv"):
+        manifest[key][manifest[key].index("--ctx-size") + 1] = str(capacity)
+    manifest["create_shell"] = shlex.join(manifest["create_argv"])
+    return manifest
+
+
+def concurrent_manifests():
+    return [concurrent_manifest(p, n) for p, n in CONCURRENT_TUPLES]
+
+
 def trial_order(scope="full", campaign=GLMREPAIR_CAMPAIGN):
+    if scope == CONCURRENT_SCOPE:
+        return {"trials": [], "mixed_jobs": [],
+                "rounds": [
+                    {"id": "short", "glm_capacity": 16384, "qwen_capacity": 262144,
+                     "glm_saved_input_tokens": 15831, "qwen_max_requests": 3,
+                     "qwen_first_target_capacity": 262144, "qwen_filler_target_capacity": 262144},
+                    {"id": "long", "glm_capacity": 65536, "qwen_capacity": 700160,
+                     "glm_saved_input_tokens": 65008, "qwen_max_requests": 8,
+                     "qwen_first_target_capacity": 700160, "qwen_filler_target_capacity": 262144}],
+                "then": ["matched_large_qwen_glm_loaded_idle"],
+                "output_cap": 256, "maximum_request_seconds": 7200,
+                "measurement_budget_seconds": 5400, "clock_includes_preparation": True,
+                "budget_start": "fresh_RUN_dispatch_including_load_warmup_fitting",
+                "restoration_outside_budget": True,
+                "stop_qwen_admission": "when_GLM_finishes_drain_admitted_request",
+                "optional_decode_overlap": {"maximum_pairs": 1, "output_cap_each": 512,
+                    "trigger": "first_actual_GLM_output", "conditional": "main_rounds_do_not_prove_decode_overlap"},
+                "format_failure_policy": "retain_strict_and_optional_single_fence_semantic_retrieval_separately",
+                "slow_glm_policy": "record_notify_no_speed_stop_no_tuning"}
     if scope == "glm-decode-diag":
         if campaign == GLM_DECODE_PROFILE_CAMPAIGN:
             return {"trials": [

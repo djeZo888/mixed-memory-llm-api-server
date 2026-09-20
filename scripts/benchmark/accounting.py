@@ -2,7 +2,8 @@
 from __future__ import annotations
 import re
 from agent import protocol
-from benchmark.fixtures import HarnessError, MODELS, CAPACITIES, canonical, digest
+from benchmark.fixtures import (HarnessError, MODELS, CAPACITIES, canonical, digest,
+                                CONCURRENT_SCOPE, CONCURRENT_CAPACITIES)
 from benchmark.profiles import GLM_DECODE_DIAG_CAPACITIES
 
 
@@ -17,9 +18,12 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None, scope=No
     """
     allowed_capacities = CAPACITIES
     if scope is not None:
-        if scope != "glm-decode-diag" or model != "bench-glm-5.3":
+        if scope == CONCURRENT_SCOPE and model in CONCURRENT_CAPACITIES:
+            allowed_capacities = CONCURRENT_CAPACITIES[model]
+        elif scope == "glm-decode-diag" and model == "bench-glm-5.3":
+            allowed_capacities = GLM_DECODE_DIAG_CAPACITIES
+        else:
             raise HarnessError("invalid native counting diagnostic scope")
-        allowed_capacities = GLM_DECODE_DIAG_CAPACITIES
     if (model not in MODELS or type(capacity) is not int or capacity not in allowed_capacities
             or (capacity == 262144 and model != "bench-qwen3.8-27b")):
         raise HarnessError("invalid native counting configuration")

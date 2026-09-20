@@ -23,6 +23,9 @@ class HarnessError(ValueError):
 MODELS = {"glm-5.3": "low", "qwen3.8-27b": "none",
           "bench-glm-5.3": "low", "bench-qwen3.8-27b": "none"}
 CAPACITIES = (4096, 16384, 65536, 131072, 262144)
+CONCURRENT_SCOPE = "concurrent-g1q1"
+CONCURRENT_CAPACITIES = {"bench-glm-5.3": (16384, 65536),
+                         "bench-qwen3.8-27b": (262144, 700160)}
 MARKERS = ("START", "MIDDLE", "END")
 TOOL = {"type": "function", "function": {
     "name": "read_file", "description": "Read a file in the benchmark workspace.",
@@ -136,21 +139,38 @@ def validate_count(count, raw, capacity, *, synthetic=False):
 
 
 
+def _fit_target(model, capacity, scope, target_capacity, kind, output_cap, optional_131072):
+    if scope is None:
+        if target_capacity is not None or capacity not in CAPACITIES or (capacity == 131072 and not optional_131072):
+            raise HarnessError("capacity is outside reviewed ladder")
+        return capacity
+    if (scope != CONCURRENT_SCOPE or type(capacity) is not int
+            or capacity not in CONCURRENT_CAPACITIES.get(model, ())
+            or kind != "retrieval" or output_cap != 256):
+        raise HarnessError("concurrent fixture tuple outside reviewed scope")
+    target = capacity if target_capacity is None else target_capacity
+    if (type(target) is not int or target not in CONCURRENT_CAPACITIES[model]
+            or target > capacity
+            or (model == "bench-glm-5.3" and target != capacity)):
+        raise HarnessError("concurrent fixture target outside reviewed scope")
+    return target
+
+
 def fit_sample(model, capacity, seed, nonce, count, *, kind="retrieval", output_cap=256,
-               margin=256, tolerance=128, synthetic=False, optional_131072=False):
+               margin=256, tolerance=128, synthetic=False, optional_131072=False,
+               scope=None, target_capacity=None):
     """Fit near configured capacity minus output/continuation/template allowance.
 
     The full rendered request is counted, so margin is extra conservative headroom
     rather than a replacement for template counting. Tool rounds reserve 1024
     additional tokens and must be recounted after actual tool execution.
     """
-    if capacity not in CAPACITIES or (capacity == 131072 and not optional_131072):
-        raise HarnessError("capacity is outside reviewed ladder")
+    target = _fit_target(model, capacity, scope, target_capacity, kind, output_cap, optional_131072)
     if type(margin) is not int or margin < 128 or type(tolerance) is not int or not 1 <= tolerance <= 256:
         raise HarnessError("invalid fitting headroom/tolerance")
     if capacity == 262144 and (model != "bench-qwen3.8-27b" or kind != "retrieval" or output_cap != 256):
         raise HarnessError("262144 is Qwen retrieval-only with a 256-token cap")
-    ceiling = capacity - output_cap - margin - (1024 if kind == "tool" else 0)
+    ceiling = target - output_cap - margin - (1024 if kind == "tool" else 0)
     low, high, best = 12, min(200000, capacity), None
     records, bracketed = low, False
     # Bracket with actual native counts before binary fitting. Starting at half
@@ -183,7 +203,7 @@ def fit_sample(model, capacity, seed, nonce, count, *, kind="retrieval", output_
 
 
 def matched_sample(sample, nonce, count, capacity, *, margin=256, tolerance=128,
-                   synthetic=False, optional_131072=False):
+                   synthetic=False, optional_131072=False, scope=None, target_capacity=None):
     """Reuse the frozen fixture across placements; change only its leading nonce.
 
     Count the exact new body once. Failure requires a harness decision, never
@@ -192,8 +212,8 @@ def matched_sample(sample, nonce, count, capacity, *, margin=256, tolerance=128,
     serialize_validate(sample)
     if nonce == sample["nonce"]:
         raise HarnessError("matched uncached trial requires a fresh prefix")
-    if capacity not in CAPACITIES or (capacity == 131072 and not optional_131072):
-        raise HarnessError("capacity is outside reviewed ladder")
+    target = _fit_target(sample["body"]["model"], capacity, scope, target_capacity,
+                         sample["kind"], sample["body"]["max_tokens"], optional_131072)
     if type(margin) is not int or margin < 128 or type(tolerance) is not int or not 1 <= tolerance <= 256:
         raise HarnessError("invalid matching headroom/tolerance")
     if capacity == 262144 and (sample["body"]["model"] != "bench-qwen3.8-27b" or sample["kind"] != "retrieval" or sample["body"]["max_tokens"] != 256):
@@ -205,7 +225,7 @@ def matched_sample(sample, nonce, count, capacity, *, margin=256, tolerance=128,
     raw = serialize_validate(matched)
     measured = validate_count(count(raw), raw, capacity, synthetic=synthetic)
     output_cap = matched["body"]["max_tokens"]
-    ceiling = capacity - output_cap - margin - (1024 if matched["kind"] == "tool" else 0)
+    ceiling = target - output_cap - margin - (1024 if matched["kind"] == "tool" else 0)
     if not ceiling - tolerance <= measured["input_tokens"] <= ceiling:
         raise HarnessError("frozen matched fixture is outside actual-count tolerance; no refit performed")
     return matched, {**measured, "input_ceiling_tokens": ceiling,
@@ -214,7 +234,7 @@ def matched_sample(sample, nonce, count, capacity, *, margin=256, tolerance=128,
                      "matched_fixture_sha256": sample["fixture_sha256"]}
 
 
-def warmup_sample(model, capacity, nonce, count, *, synthetic=False, optional_131072=False):
+def warmup_sample(model, capacity, nonce, count, *, synthetic=False, optional_131072=False, scope=None):
     """Fit a distinct native-counted warmup covering the fixed 2048-token batch.
 
     Warmup prompts use a separate seed/prefix, target 2304..2432 actual template
@@ -225,8 +245,9 @@ def warmup_sample(model, capacity, nonce, count, *, synthetic=False, optional_13
     """
     if not isinstance(nonce, str) or not nonce.startswith("warmup-"):
         raise HarnessError("warmup requires its separate fresh prefix namespace")
-    if type(capacity) is not int or capacity not in CAPACITIES:
+    if type(capacity) is not int:
         raise HarnessError("capacity is outside reviewed ladder")
+    _fit_target(model, capacity, scope, None, "retrieval", 256, optional_131072)
     minimum, tolerance, output_cap, prefix_allowance = 2048, 128, 256, 256
     minimum_input = minimum + prefix_allowance
     ceiling = minimum_input + tolerance
@@ -236,7 +257,7 @@ def warmup_sample(model, capacity, nonce, count, *, synthetic=False, optional_13
     sample, counted = fit_sample(model, capacity, "warmup-only-seed", nonce, count,
                                  output_cap=output_cap, margin=extra_margin,
                                  tolerance=tolerance, synthetic=synthetic,
-                                 optional_131072=optional_131072)
+                                 optional_131072=optional_131072, scope=scope)
     if not minimum_input <= counted["input_tokens"] <= min(ceiling, capacity - output_cap - 256):
         raise HarnessError("warmup actual prompt does not cover configured prefill batch")
     serialize_validate(sample)
@@ -268,6 +289,31 @@ def score_retrieval(sample, message):
     return {"status": "PASS" if passed else "MODEL_INCORRECT",
             "reason": "exact_match" if passed else "retrieval_mismatch",
             "expected_sha256": digest(canonical(expected))}
+
+
+def score_retrieval_semantic(sample, message):
+    """Separate retrieval-only score; strict scorer and original bytes stay intact.
+
+    Accept an exact JSON object, optionally in one outer JSON fence. No prose,
+    duplicate keys, extra fields or multiple fences are normalized away.
+    """
+    serialize_validate(sample)
+    if sample["kind"] != "retrieval":
+        raise HarnessError("semantic score is retrieval-only")
+    normalized = copy.deepcopy(message)
+    fenced = False
+    try:
+        parsed, _ = protocol._assistant(normalized)
+        content = parsed.get("content")
+        if isinstance(content, str):
+            match = re.fullmatch(r"\s*```(?:json)?[ \t]*\r?\n(.*?)\r?\n```\s*", content, flags=re.DOTALL)
+            if match and "```" not in match.group(1):
+                normalized["content"] = match.group(1)
+                fenced = True
+    except (protocol.AgentError, TypeError):
+        pass
+    return {**score_retrieval(sample, normalized), "score_policy": "semantic_exact_object_optional_one_json_fence",
+            "outer_json_fence_removed": fenced}
 
 
 def execute_tool(sample, message, workspace):

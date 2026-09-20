@@ -229,9 +229,18 @@ class Campaign:
                     # A known timed-out GPU query during loading is an observation
                     # gap, not measured low reserve. Keep the raw sample; require
                     # fresh complete resource proof before warmup below.
-                    loading_gpu_timeout = (self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag"}
+                    loading_gpu_timeout = (self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"}
                         and self.active[cid].get("phase") == "loading"
                         and row.get("errors") == ["gpu_TimeoutExpired"] and row.get("gpus") == [])
+                    if self.armed.get("scope") == "concurrent-g1q1":
+                        gate = row.get("concurrent_resource_gate", {})
+                        loading_gpu_gap = (loading_gpu_timeout and gate.get("status") == "UNAVAILABLE"
+                            and gate.get("unavailable_reasons") == ["concurrent_gpu_free_unavailable"]
+                            and gate.get("reasons") == [] and gate.get("latched_violations") == {})
+                        if gate.get("status") == "STOP_RESOURCE_GATE":
+                            verdict = resource_stop = "STOP_RESOURCE_GATE"
+                        elif gate.get("status") != "PASS" and not loading_gpu_gap:
+                            verdict = "SKIP_UNSAFE_PLACEMENT"
                     if not loading_gpu_timeout and not set(self.active[cid]["manifest"]["gpu_uuids"]).issubset({g.get("uuid") for g in row.get("gpus", [])}):
                         verdict = "SKIP_UNSAFE_PLACEMENT"
                     if any(g.get("uuid") in self.active[cid]["manifest"]["gpu_uuids"] and (g.get("free_bytes") is None or g["free_bytes"] < 16 * 1024**3) for g in row.get("gpus", [])):
@@ -240,7 +249,7 @@ class Campaign:
                         verdict = "SKIP_UNSAFE_PLACEMENT"
                     if verdict.startswith(("STOP_", "SKIP_")):
                         self.safety[cid] = verdict
-                    if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag"}:
+                    if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"}:
                         # Cancel only proven resource violations, never missing
                         # telemetry or a reporting/parser failure. Existing stop
                         # paths run after the transport closes and saves raw data.
@@ -282,21 +291,22 @@ class Campaign:
         row = self.host.call("telemetry", id=cid)
         groups = row.get("cgroups", {})
         baseline = groups.get(cid, next(iter(groups.values()), {}))
-        self.active[cid] = {"manifest": manifest, "baseline": baseline,
-                            "template_sha256": None, "phase": "loading", "cancel_event": threading.Event()}
-        self.samples[cid] = []
+        with self.lock:
+            self.active[cid] = {"manifest": manifest, "baseline": baseline,
+                                "template_sha256": None, "phase": "loading", "cancel_event": threading.Event()}
+            self.samples[cid] = []
         self.collect()
         self.record()
         while True:
             with self.lock:
-                if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag"} and self.active[cid].get("abort_reason"):
+                if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"} and self.active[cid].get("abort_reason"):
                     raise RuntimeError(self.active[cid]["abort_reason"])
             remaining = min(deadline - self.clock(), self.host.call("budget").get("remaining_s", 0))
             if remaining <= 0:
                 raise RuntimeError("STOP_BUDGET")
             proof = self.host.call("readiness", id=cid, timeout_s=remaining)
             with self.lock:
-                if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag"} and self.active[cid].get("abort_reason"):
+                if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"} and self.active[cid].get("abort_reason"):
                     raise RuntimeError(self.active[cid]["abort_reason"])
             if self.clock() >= deadline:
                 raise RuntimeError("STOP_BUDGET")
@@ -310,7 +320,7 @@ class Campaign:
         if proof.get("allocation", {}).get("status") != "ALLOCATION_PROOF_ACCEPTED":
             raise RuntimeError("STOP_ALLOCATION_PROOF")
         ready = self.host.call("quiescent", id=cid, point="readiness")
-        if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag"}:
+        if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"}:
             current = ready.get("telemetry") or {}
             available = current.get("host", {}).get("available_bytes")
             free = {g.get("uuid"): g.get("free_bytes") for g in current.get("gpus", [])}
@@ -320,7 +330,8 @@ class Campaign:
                 if not (type(available) is int and available >= 16 * 1024**3 and
                         all(type(free.get(u)) is int and free[u] >= 16 * 1024**3 for u in manifest["gpu_uuids"])):
                     raise RuntimeError("SKIP_UNSAFE_PLACEMENT")
-        self.active[cid].update(template_sha256=proof.get("template_sha256"), phase="ready")
+        with self.lock:
+            self.active[cid].update(template_sha256=proof.get("template_sha256"), phase="ready")
         self.emit({"type": "load", "placement": manifest["placement"], "capacity": manifest["configured_capacity"],
                    "client_load_seconds": self.clock() - begin, "readiness": ready, "allocation": proof["allocation"]})
         self.warm(cid, manifest, proof)
@@ -360,7 +371,7 @@ class Campaign:
         manifest = self.active[cid]["manifest"]
         url = "http://127.0.0.1:" + str(manifest["transport"]["port"])
         try:
-            options = {"cancel_event": self.active[cid]["cancel_event"]} if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag"} else {}
+            options = {"cancel_event": self.active[cid]["cancel_event"]} if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1"} else {}
             result = client.run_request(raw, self.transport_factory(url, self.key, **options), sample_id=identifier,
                                       private_dir=self.private, summary_path=self.state / ("samples.jsonl" if timed else "warmups.jsonl"), timeout=timeout,
                                       clock=self.clock)
@@ -386,7 +397,7 @@ class Campaign:
             finally:
                 self.host.call("request_end", id=cid)
         return accounting.native_counter(model, manifest["configured_capacity"], call,
-                                         qwen_template_sha256=self.active[cid]["template_sha256"], scope="glm-decode-diag" if self.armed.get("scope") == "glm-decode-diag" else None)
+                                         qwen_template_sha256=self.active[cid]["template_sha256"], scope=self.armed.get("scope") if self.armed.get("scope") in {"glm-decode-diag", "concurrent-g1q1"} else None)
 
     def prepare_trial(self, cid, identifier, kind="retrieval", output_cap=256, fixture_key=None):
         """Count/freeze exact bytes separately, before mixed arrival clocks start."""
