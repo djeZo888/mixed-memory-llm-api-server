@@ -130,7 +130,13 @@ def observation(raw):
         result["endpoint"]["ready"] = ready
     # Health or polling times do not change semantic generation. Immutable start
     # identity, saved selection/intent and actual running state do.
-    fingerprint = digest([selected, desired, container_id, running]) if fresh else None
+    identity_values = [selected, desired, container_id, running]
+    pending = raw.get('pending_create_fingerprint')
+    if pending is not None:
+        if type(pending) is not str or not IDENTITY.fullmatch(pending):
+            raise ControlError('observation_unavailable')
+        identity_values.append(pending)
+    fingerprint = digest(identity_values) if fresh else None
     return result, fingerprint
 
 
@@ -156,7 +162,13 @@ def trusted_recovery(snapshot, raw, target=None):
         private = raw['slots'][selected['slot']]
         # A stopped pending create still has an exactly inspected immutable
         # identity; the slot fingerprint binds it even though active is null.
-        return _identity(private.get('container')) is not None
+        return (_identity(private.get('container')) is not None
+                or (private.get('pending_absence_verified') is True
+                    and private.get('container') is None and selected['container_running'] is False
+                    and type(private.get('pending_create_fingerprint')) is str
+                    and IDENTITY.fullmatch(private['pending_create_fingerprint']) is not None
+                    and type(private.get('pending_create')) is dict
+                    and digest(private['pending_create']) == private['pending_create_fingerprint']))
     return selected['active_identity'] is not None
 
 

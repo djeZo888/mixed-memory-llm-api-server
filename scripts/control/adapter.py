@@ -16,7 +16,7 @@ from common.lifecycle_lease import _validate_borrowed_lease
 from lifecycle.manager import load_manager, recovery_manager
 from lifecycle.runtime_io import Docker, _read_key
 from .discovery import discover_records
-from .core import Application
+from .core import Application, digest
 from .journal import Journal, JournalUnavailable, MAX_BYTES
 from .protocol import ControlError, PackageBlocked, StorageUnavailable
 
@@ -158,7 +158,7 @@ class ManagerSession:
                 for slot in ('glm', 'qwen'):
                     item = dict(slots[slot], state_persisted=state.get('state_persisted', True))
                     try:
-                        raw['slots'][slot] = self._observe_slot(item, deadline, recovery)
+                        raw['slots'][slot] = self._observe_slot(item, deadline, recovery, slot=slot)
                     except StorageUnavailable:
                         raise
                     except ControlError:
@@ -172,14 +172,20 @@ class ManagerSession:
                 raise ControlError('recovery_identity_unavailable')
             return self._observe_slot(state, deadline, recovery)
 
-    def _observe_slot(self, state, deadline, recovery):
+    def _observe_slot(self, state, deadline, recovery, *, slot=None):
         manager = self.manager
         raw = copy.deepcopy(state)
         identity = state.get('container')
         if state.get('pending_create') is not None:
+            if slot not in {'glm', 'qwen'}:
+                raise ControlError('observation_unavailable')
             try:
                 identity = manager.pending_identity(state)
                 raw['container'] = copy.deepcopy(identity)
+                raw['pending_create_fingerprint'] = digest(state['pending_create'])
+                # This marker exists only after validated v3 pending ownership
+                # and successful exact-name inspection proving no object.
+                raw['pending_absence_verified'] = identity is None
             except Exception:
                 raise ControlError('recovery_identity_unavailable' if recovery else 'observation_unavailable') from None
         try:

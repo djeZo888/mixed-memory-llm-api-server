@@ -109,6 +109,72 @@ class ManagerSlotTests(unittest.TestCase):
         self.assertEqual(result['slots']['qwen'], peer)
         self.assertFalse(result['state_persisted'])
 
+    def test_absent_pending_storage_loss_stop_is_proven_and_peer_unchanged(self):
+        from lifecycle.manager import Manager
+        from control.core import observation, trusted_recovery
+        saved = self.manager.read_state()
+        identity = saved['slots']['glm']['container']
+        peer = deepcopy(saved['slots']['qwen'])
+        self.docker.stop(identity['id'])
+        self.docker.remove(identity['id'])
+        pending = {key: identity[key] for key in ('image_id', 'name', 'owner', 'instance', 'deployment')}
+        saved['slots']['glm'].update(container=None, container_running=None, pending_create=pending)
+        with self.lease():
+            self.manager.state = saved
+            self.manager.save()
+        recovery = Manager(self.root / 'absent-config', {'schema_version': 1, 'id': self.instance['id']},
+                           recovery_only=True, test_paths=True, lease_system_root=self.root, docker=self.docker)
+        session = ManagerSession(recovery, lambda *_: self.fail('recovery catalog access'))
+        raw = session.observe(Deadline.after(5))
+        public, fingerprint = observation(raw)
+        self.assertTrue(raw['slots']['glm']['pending_absence_verified'])
+        self.assertIsNone(public['slots']['glm']['active_identity'])
+        self.assertFalse(public['slots']['glm']['container_running'])
+        self.assertTrue(trusted_recovery(public, raw, 'glm'))
+        without_marker = deepcopy(raw)
+        without_marker['slots']['glm'].pop('pending_absence_verified')
+        self.assertFalse(trusted_recovery(public, without_marker, 'glm'))
+        self.docker.calls.clear()
+        with self.lease() as lease:
+            session.stop(lease, Deadline.after(5), slot='glm')
+        result = recovery.read_state(recovery=True)
+        self.assertIsNone(result['slots']['glm']['pending_create'])
+        self.assertIsNone(result['slots']['glm']['container'])
+        self.assertEqual(result['slots']['qwen'], peer)
+        self.assertFalse(result['state_persisted'])
+        self.assertFalse(any(event[0] in {'stop', 'remove', 'create', 'start_enter'} for event in self.docker.calls))
+        self.assertNotEqual(fingerprint['glm'], observation(session.observe(Deadline.after(5)))[1]['glm'])
+
+    def test_uncertain_pending_inspection_refuses_recovery_and_keeps_ownership(self):
+        from lifecycle.manager import Manager
+        from control.core import observation, trusted_recovery
+        saved = self.manager.read_state()
+        identity = saved['slots']['glm']['container']
+        pending = {key: identity[key] for key in ('image_id', 'name', 'owner', 'instance', 'deployment')}
+        saved['slots']['glm'].update(container=None, container_running=None, pending_create=pending)
+        with self.lease():
+            self.manager.state = saved
+            self.manager.save()
+        recovery = Manager(self.root / 'absent-config', {'schema_version': 1, 'id': self.instance['id']},
+                           recovery_only=True, test_paths=True, lease_system_root=self.root, docker=self.docker)
+        session = ManagerSession(recovery, lambda *_: self.fail('recovery catalog access'))
+        original = self.docker.inspect
+        def inspect(name):
+            if name == pending['name']:
+                raise LifecycleError('command_failed')
+            return original(name)
+        with patch.object(self.docker, 'inspect', side_effect=inspect):
+            raw = session.observe(Deadline.after(5))
+            public, _ = observation(raw)
+            self.assertNotIn('pending_absence_verified', raw['slots']['glm'])
+            self.assertFalse(trusted_recovery(public, raw, 'glm'))
+            self.assertFalse(public['slots']['glm']['observation_available'])
+            with self.lease() as lease, self.assertRaises(LifecycleError):
+                session.stop(lease, Deadline.after(5), slot='glm')
+        result = recovery.read_state(recovery=True)
+        self.assertEqual(result['slots']['glm']['pending_create'], pending)
+        self.assertEqual(result['slots']['qwen'], saved['slots']['qwen'])
+
     def test_failed_observation_is_scoped_and_never_saved_ready(self):
         state = self.manager.read_state()
         target_id = state['slots']['glm']['container']['id']
