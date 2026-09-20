@@ -23,15 +23,20 @@
       "conditional_single_gpu_tokens_with_16gib_reserve": 490474,
       "conditional_single_gpu_tokens_without_reserve": 667076,
       "model": "free-based anchor with measured cache and two-point compute slopes",
+      "practical_candidate_cushion_above_16gib_bytes": 9461301248,
+      "practical_conditional_candidate_tokens": 393216,
       "status": "PHYSICAL_MEMORY_ESTIMATE_NOT_SUPPORTED_CONTEXT_OR_PERFORMANCE_OR_CORRECTNESS_ACCEPTANCE"
     },
     "created_epoch": 1789863801.222574,
     "estimates": [
       {
         "configured_tokens_estimated": 131072,
+        "estimated_total_gpu_used_bytes_gap_held_fixed": 49832525824,
+        "estimated_used_limit": "Conditional used VRAM with observed total-used-free gap held fixed; not measured at this context.",
         "execution": "NOT_ALLOCATED_NOT_INFERRED",
         "gpu_16gib_reserve_condition_met": true,
         "gpu_conservative_predicted_free_bytes": 52142538752,
+        "gpu_cushion_above_16gib_bytes": 34962669568,
         "gpu_free_based_total_occupied_bytes": 50499420160,
         "gpu_native_components_plus_observed_residual_bytes_approx": 50499420160.0,
         "gpu_native_weight_cache_compute_total_bytes_approx": 48115243827.2,
@@ -55,9 +60,12 @@
       },
       {
         "configured_tokens_estimated": 262144,
+        "estimated_total_gpu_used_bytes_gap_held_fixed": 62583209984,
+        "estimated_used_limit": "Conditional used VRAM with observed total-used-free gap held fixed; not measured at this context.",
         "execution": "NOT_ALLOCATED_NOT_INFERRED",
         "gpu_16gib_reserve_condition_met": true,
         "gpu_conservative_predicted_free_bytes": 39391854592,
+        "gpu_cushion_above_16gib_bytes": 22211985408,
         "gpu_free_based_total_occupied_bytes": 63250104320,
         "gpu_native_components_plus_observed_residual_bytes_approx": 63250104320.0,
         "gpu_native_weight_cache_compute_total_bytes_approx": 60865927987.2,
@@ -80,10 +88,42 @@
         "native_kv_bytes": 24964497408
       },
       {
+        "configured_tokens_estimated": 393216,
+        "estimated_total_gpu_used_bytes_gap_held_fixed": 75333894144,
+        "estimated_used_limit": "Conditional used VRAM with observed total-used-free gap held fixed; not measured at this context.",
+        "execution": "NOT_ALLOCATED_NOT_INFERRED",
+        "gpu_16gib_reserve_condition_met": true,
+        "gpu_conservative_predicted_free_bytes": 26641170432,
+        "gpu_cushion_above_16gib_bytes": 9461301248,
+        "gpu_free_based_total_occupied_bytes": 76000788480,
+        "gpu_native_components_plus_observed_residual_bytes_approx": 76000788480.0,
+        "gpu_native_weight_cache_compute_total_bytes_approx": 73616612147.2,
+        "gpu_predicted_free_bytes_by_anchor": {
+          "16384": 26699890688,
+          "65536": 26641170432
+        },
+        "gpu_raw_physical_capacity_condition_met": true,
+        "gpu_reserve_bytes": 17179869184,
+        "host_component_demand_bytes_by_anchor": {
+          "16384": 434137374720,
+          "65536": 432716865536
+        },
+        "host_defensible_demand_bytes_linear": 434137374720,
+        "host_demand_plus_25_percent_bytes": 542671718400,
+        "host_demand_plus_25_percent_within_existing_640gib_cap": true,
+        "memory_screen": "CONDITIONAL_ESTIMATE_ONLY_RESERVE_FITS",
+        "native_device_compute_bytes_linear": 3921750016,
+        "native_host_workspace_bytes_linear": 830550048,
+        "native_kv_bytes": 37446746112
+      },
+      {
         "configured_tokens_estimated": 524288,
+        "estimated_total_gpu_used_bytes_gap_held_fixed": 88084578304,
+        "estimated_used_limit": "Conditional used VRAM with observed total-used-free gap held fixed; not measured at this context.",
         "execution": "NOT_ALLOCATED_NOT_INFERRED",
         "gpu_16gib_reserve_condition_met": false,
         "gpu_conservative_predicted_free_bytes": 13890486272,
+        "gpu_cushion_above_16gib_bytes": -3289382912,
         "gpu_free_based_total_occupied_bytes": 88751472640,
         "gpu_native_components_plus_observed_residual_bytes_approx": 88751472640.0,
         "gpu_native_weight_cache_compute_total_bytes_approx": 86367296307.2,
@@ -107,9 +147,12 @@
       },
       {
         "configured_tokens_estimated": 1048576,
+        "estimated_total_gpu_used_bytes_gap_held_fixed": 139087314944,
+        "estimated_used_limit": "Conditional used VRAM with observed total-used-free gap held fixed; not measured at this context.",
         "execution": "NOT_ALLOCATED_NOT_INFERRED",
         "gpu_16gib_reserve_condition_met": false,
         "gpu_conservative_predicted_free_bytes": -37112250368,
+        "gpu_cushion_above_16gib_bytes": -54292119552,
         "gpu_free_based_total_occupied_bytes": 139754209280,
         "gpu_native_components_plus_observed_residual_bytes_approx": 139754209280.0,
         "gpu_native_weight_cache_compute_total_bytes_approx": 137370032947.2,
@@ -135,6 +178,7 @@
     "evidence_kind": "SAVED_NATIVE_ALLOCATION_AND_SAMPLED_TELEMETRY_EXTRAPOLATION",
     "fixed_components": {
       "gpu_unattributed_residual_bytes_approx_conservative_max": 2384176332.800003,
+      "gpu_unavailable_unclassified_total_minus_used_minus_free_bytes": 666894336,
       "host_unattributed_residual_bytes_approx_conservative_max": 4426427073.280029,
       "native_gpu_weight_bytes_approx": 32248116019.2,
       "native_gpu_weight_mib_log_label": 30754.2,
@@ -165,7 +209,7 @@
       "128K,256K,512K,native1M are unallocated estimates; no performance, correctness or supported-context acceptance follows. Linear compute/workspace extrapolation remains unvalidated.",
       "No cause is established for historical speed variability."
     ],
-    "markdown": "Status: **CONDITIONAL_ESTIMATES_NOT_ACCEPTANCE**. Both 16K requests and the 64K request passed; their complete saved telemetry windows are included. These larger sizes were neither allocated nor inferred. Restoration is documented separately.\n\n| Configured tokens | Native KV (GiB) | Native GPU components* (GiB) | Conservative GPU free (GiB) | 16 GiB reserve | Host demand +25% (GiB) |\n|---:|---:|---:|---:|:---|---:|\n| 131,072 | 11.625 | 44.811 | 48.562 | Conditional fit | 504.777 |\n| 262,144 | 23.250 | 56.686 | 36.687 | Conditional fit | 505.090 |\n| 524,288 | 46.500 | 80.436 | 12.937 | FAIL | 505.715 |\n| 1,048,576 | 93.000 | 127.936 | -34.563 | FAIL | 506.965 |\n\n*Native GPU components are approximate rounded-log weights + exact/projection KV + projected native compute; unreported overhead is excluded from that column. The conservative free estimate retains the maximum observed free-based residual. Negative predicted free means physical overcapacity.\n\nThe observed GPU physical total is 95.592773 GiB. The conditional 16 GiB reserve ceiling is **490,474 configured tokens** under the two-point linear compute model; it is not a supported-context or performance/correctness limit.\n\nFormulas (C=configured tokens; c is either measured 16384 or 65536):\n\n- KV(C)=95,232\u00d7C bytes; measured 1,560,281,088B at 16K and 6,241,124,352B at 64K.\n- Device compute(C)=3,116,443,648+2,048\u00d7C bytes. Native host workspace(C)=25,243,680+2,048\u00d7C bytes. These are observed two-point slopes, unvalidated beyond 64K.\n- Conservative GPU free(C)=min_c[minimum observed free(c)\u221297,280\u00d7(C\u2212c)]. Require at least 16\u00d72^30 bytes free.\n- Retained host components per sample=anon+kernel+max(file,file_mapped,shmem). The overlapping file family is counted once. Compare this peak with same-sample RSS+kernel, quiescent PSS+kernel and native host weights+workspace; use the maximum as the anchor.\n- Host demand(C)=max_c[defensible anchor(c)+2,048\u00d7(C\u2212c)]. Add only projected workspace growth because the measured anchor already includes native workspace. Planning requirement=ceil(1.25\u00d7demand).\n\nNative rounded log weights are CUDA0=30754.2 MiB and CUDA_Host=409012.22 MiB at both loads. 1 MiB=2^20B; 1 GiB=2^30B; K = 1024 tokens; native 1M here is 1,048,576 tokens. Native cache/compute/workspace measurements are exact byte diagnostics; weight-label conversions remain approximate.\n\nThe existing host-demand helper remains UNAVAILABLE where mapped slightly exceeds file. This analysis preserves the maximum file-family value once; it does not alter the helper or imply all cache is reclaimable. Cgroup charge is not exact model RAM, and process/PSS alternatives are not added together.\n\nFinal defensible host anchors: 16K=403.603188 GiB; 64K=402.373985 GiB. Every projected 25% planning margin shown is below the existing 640 GiB container cap; this comparison is not independent host admission proof.\n\nSampled peaks are not absolute peaks. Larger contexts may require unobserved attention/tokenization/workspace demand or a different allocation graph. 128K/256K pass only the conditional memory screen; 512K fails the GPU reserve; native 1M exceeds physical capacity on the original single GPU. No larger-context correctness or speed is established, and historical performance variation remains unexplained.\n\nEvidence: component calculations and provenance in the companion JSON, complete results.jsonl prefix 3,671,024 bytes / 1,926 rows, SHA256 `f1760b0a858d956e1556825d723e50f690cbe055bdca22440ab5c6ae36a95079`. Individual native-log, allocation-row and completed-case hashes are recorded in the JSON.\n",
+    "markdown": "**Conditional memory estimates only; none of these larger sizes was allocated or inferred.**\n\n| Configured tokens | Native KV GiB | Estimated total used VRAM GiB | Projected free GiB | Cushion above 16 GiB | Current-ladder host demand +25% GiB |\n| ---: | ---: | ---: | ---: | ---: | ---: |\n| 131,072 | 11.625 | 46.410 | 48.562 | 32.562 | 504.777 |\n| 262,144 | 23.250 | 58.285 | 36.687 | 20.687 | 505.090 |\n| 393,216 | 34.875 | 70.160 | 24.812 | 8.812 | 505.402 |\n| 524,288 | 46.500 | 82.035 | 12.937 | -3.063 | 505.715 |\n| 1,048,576 | 93.000 | 129.535 | -34.563 | -50.563 | 506.965 |\n\nThe used-VRAM column is an estimate with the observed **0.621094 GiB unavailable/unclassified total \u2212 used \u2212 free gap held fixed**. That gap is excluded from estimated USED but remains unavailable. Do not substitute total minus free for reported USED. Native weight/cache/compute components and unreported residuals remain separate in JSON.\n\n**384K (393,216 total tokens)** is a practical conditional memory candidate, leaving **24.8115 GiB free**, or **8.8115 GiB above the 16 GiB reserve**. 256K offers more cushion. The algebraic ceiling of **490,474 tokens** (490,240 rounded down to 256) has essentially no uncertainty cushion and is not validated. 512K fails the reserve; native 1M exceeds this fixed single-GPU physical capacity.\n\nMeasured-basis formulas, with C in configured tokens:\n\n- KV(C) = 95,232 \u00d7 C bytes.\n- Native device compute(C) = 3,250,661,376 + 2,048 \u00d7 (C \u2212 65,536) bytes.\n- Native host workspace(C) = 159,461,408 + 2,048 \u00d7 (C \u2212 65,536) bytes.\n- Conditional free(C) = 58,517,880,832 \u2212 97,280 \u00d7 (C \u2212 65,536) bytes, less any unmodelled growth.\n- Current-ladder host anchor retains max(file, mapped, shmem) once plus anon/kernel, compares inclusive RSS/PSS/native alternatives without adding them together, projects only native workspace growth, then applies \u00d71.25.\n\nThe compute slopes are measured allocation relationships, not guaranteed peak bounds beyond 64K. Weights retain rounded native labels: GPU 30,754.20 MiB and host 409,012.22 MiB. Bytes and binary GiB are distinguished in JSON; native 1M is 1,048,576 tokens.\n\n**Historical host provision remains relevant.** The accepted 4K run had about **70.639 GiB additional charged file**, not extra weights or proved entirely reclaimable. Retaining those historical components gives about **590.708 GiB including 25% headroom**, or about **591.636 GiB projected to 384K**, before unrelated host demand and unmodelled growth. This is distinct from the current-ladder ~505 GiB conditional projections above. The existing **640 GiB tested container cap is a conservative planning provision, not a proved minimum VM allocation or verified future fit**; OS and other services also need capacity.\n\nThe live required-demand helper remains UNAVAILABLE where mapped slightly exceeds file. This descriptive conditional bound does not repair it into exact model RAM. Native host workspace is shown separately; its exact anon/file subdivision was not isolated, and it is not added again to inclusive cgroup totals. Sampled peaks are not absolute. Memory fit establishes neither speed nor retrieval correctness above 64K.\n",
     "measured_points": {
       "16384": {
         "capacity": 16384,
@@ -616,6 +660,15 @@
         }
       }
     },
+    "root_reviewed_historical_host_provision": {
+      "current_ladder_projection_GiB_approx": 505,
+      "extra_file_status": "Not extra weights or proved entirely reclaimable",
+      "historical_provision_projected_384k_GiB_approx": 591.636,
+      "native_host_workspace_subdivision": "Exact anon/file subdivision not isolated; do not add native workspace again to inclusive sampled totals",
+      "prior_4k_extra_charged_file_GiB": 70.638645,
+      "prior_4k_retained_host_components_plus_25_percent_GiB": 590.707874,
+      "provision": "Existing640GiB tested container cap is conservative planning provision, not a proved minimum VM allocation or future fit; account separately for OS/other services"
+    },
     "schema_version": 1,
     "scope": {
       "completed_cases_at_snapshot": [
@@ -673,6 +726,11 @@
         "sha256": "6d8e6ff07bae3842cbaec716382d10eaaabd1e4fbe5aea21b207ed0ae7f5487f"
       },
       "results_jsonl_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/GLM-G1-LADDER-20260920/results.jsonl",
+      "root_capacity_audit": {
+        "kind": "root independent saved-data audit; no new VM observations",
+        "path": "capacity-audit.md",
+        "sha256": "e92af5c3f217a01c3f476b5b1add7c291ac85913eb066ba2de1bb86f056f2a8e"
+      },
       "snapshot_row_count": 1926
     },
     "status": "CONDITIONAL_ESTIMATES_NOT_ACCEPTANCE",
@@ -3817,7 +3875,7 @@
     "updated_epoch": 1789863660.2798772
   },
   "evidence_kind": "SAVED_SANITIZED_DATA_ONLY_NO_NEW_INFERENCE",
-  "generated_utc": "2026-09-20T00:26:07.802789+00:00",
+  "generated_utc": "2026-09-20T00:29:27.150489+00:00",
   "identity": {
     "accepted_schema_source_sha256": "aa5abdcc46f53f622ee7735d4d5182e7b2d8af9f3ab32ed17f3ba88e9c552867",
     "base_commit": "327714f6cf1b3a2e834c7f79571ca322fb62f504",
@@ -6048,8 +6106,8 @@
       "sha256": "1e85f5753a3ef3b6e05c2cb5a90d2a8d1a7bff1092a638ea39c581d3bdee95c2"
     },
     "capacity-estimates.json": {
-      "bytes": 35307,
-      "sha256": "201b9c3437b639e259d8a14705ad777b9b0c6bc58f6c3addf0c9e6f9b1248a3a"
+      "bytes": 38426,
+      "sha256": "cbce01f37aeabebcd5565b13127a51c58ab14c1ea395d848712a2c5d4646b244"
     },
     "final-restoration-receipt.json": {
       "bytes": 1059,

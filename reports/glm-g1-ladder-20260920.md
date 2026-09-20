@@ -86,36 +86,33 @@ Coverage is an estimate from half-interval sample windows, not continuous observ
 
 ## Capacity estimates
 
-Status: **CONDITIONAL_ESTIMATES_NOT_ACCEPTANCE**. Both 16K requests and the 64K request passed; their complete saved telemetry windows are included. These larger sizes were neither allocated nor inferred. Restoration is documented separately.
+**Conditional memory estimates only; none of these larger sizes was allocated or inferred.**
 
-| Configured tokens | Native KV (GiB) | Native GPU components* (GiB) | Conservative GPU free (GiB) | 16 GiB reserve | Host demand +25% (GiB) |
-|---:|---:|---:|---:|:---|---:|
-| 131,072 | 11.625 | 44.811 | 48.562 | Conditional fit | 504.777 |
-| 262,144 | 23.250 | 56.686 | 36.687 | Conditional fit | 505.090 |
-| 524,288 | 46.500 | 80.436 | 12.937 | FAIL | 505.715 |
-| 1,048,576 | 93.000 | 127.936 | -34.563 | FAIL | 506.965 |
+| Configured tokens | Native KV GiB | Estimated total used VRAM GiB | Projected free GiB | Cushion above 16 GiB | Current-ladder host demand +25% GiB |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 131,072 | 11.625 | 46.410 | 48.562 | 32.562 | 504.777 |
+| 262,144 | 23.250 | 58.285 | 36.687 | 20.687 | 505.090 |
+| 393,216 | 34.875 | 70.160 | 24.812 | 8.812 | 505.402 |
+| 524,288 | 46.500 | 82.035 | 12.937 | -3.063 | 505.715 |
+| 1,048,576 | 93.000 | 129.535 | -34.563 | -50.563 | 506.965 |
 
-*Native GPU components are approximate rounded-log weights + exact/projection KV + projected native compute; unreported overhead is excluded from that column. The conservative free estimate retains the maximum observed free-based residual. Negative predicted free means physical overcapacity.
+The used-VRAM column is an estimate with the observed **0.621094 GiB unavailable/unclassified total − used − free gap held fixed**. That gap is excluded from estimated USED but remains unavailable. Do not substitute total minus free for reported USED. Native weight/cache/compute components and unreported residuals remain separate in JSON.
 
-The observed GPU physical total is 95.592773 GiB. The conditional 16 GiB reserve ceiling is **490,474 configured tokens** under the two-point linear compute model; it is not a supported-context or performance/correctness limit.
+**384K (393,216 total tokens)** is a practical conditional memory candidate, leaving **24.8115 GiB free**, or **8.8115 GiB above the 16 GiB reserve**. 256K offers more cushion. The algebraic ceiling of **490,474 tokens** (490,240 rounded down to 256) has essentially no uncertainty cushion and is not validated. 512K fails the reserve; native 1M exceeds this fixed single-GPU physical capacity.
 
-Formulas (C=configured tokens; c is either measured 16384 or 65536):
+Measured-basis formulas, with C in configured tokens:
 
-- KV(C)=95,232×C bytes; measured 1,560,281,088B at 16K and 6,241,124,352B at 64K.
-- Device compute(C)=3,116,443,648+2,048×C bytes. Native host workspace(C)=25,243,680+2,048×C bytes. These are observed two-point slopes, unvalidated beyond 64K.
-- Conservative GPU free(C)=min_c[minimum observed free(c)−97,280×(C−c)]. Require at least 16×2^30 bytes free.
-- Retained host components per sample=anon+kernel+max(file,file_mapped,shmem). The overlapping file family is counted once. Compare this peak with same-sample RSS+kernel, quiescent PSS+kernel and native host weights+workspace; use the maximum as the anchor.
-- Host demand(C)=max_c[defensible anchor(c)+2,048×(C−c)]. Add only projected workspace growth because the measured anchor already includes native workspace. Planning requirement=ceil(1.25×demand).
+- KV(C) = 95,232 × C bytes.
+- Native device compute(C) = 3,250,661,376 + 2,048 × (C − 65,536) bytes.
+- Native host workspace(C) = 159,461,408 + 2,048 × (C − 65,536) bytes.
+- Conditional free(C) = 58,517,880,832 − 97,280 × (C − 65,536) bytes, less any unmodelled growth.
+- Current-ladder host anchor retains max(file, mapped, shmem) once plus anon/kernel, compares inclusive RSS/PSS/native alternatives without adding them together, projects only native workspace growth, then applies ×1.25.
 
-Native rounded log weights are CUDA0=30754.2 MiB and CUDA_Host=409012.22 MiB at both loads. 1 MiB=2^20B; 1 GiB=2^30B; K = 1024 tokens; native 1M here is 1,048,576 tokens. Native cache/compute/workspace measurements are exact byte diagnostics; weight-label conversions remain approximate.
+The compute slopes are measured allocation relationships, not guaranteed peak bounds beyond 64K. Weights retain rounded native labels: GPU 30,754.20 MiB and host 409,012.22 MiB. Bytes and binary GiB are distinguished in JSON; native 1M is 1,048,576 tokens.
 
-The existing host-demand helper remains UNAVAILABLE where mapped slightly exceeds file. This analysis preserves the maximum file-family value once; it does not alter the helper or imply all cache is reclaimable. Cgroup charge is not exact model RAM, and process/PSS alternatives are not added together.
+**Historical host provision remains relevant.** The accepted 4K run had about **70.639 GiB additional charged file**, not extra weights or proved entirely reclaimable. Retaining those historical components gives about **590.708 GiB including 25% headroom**, or about **591.636 GiB projected to 384K**, before unrelated host demand and unmodelled growth. This is distinct from the current-ladder ~505 GiB conditional projections above. The existing **640 GiB tested container cap is a conservative planning provision, not a proved minimum VM allocation or verified future fit**; OS and other services also need capacity.
 
-Final defensible host anchors: 16K=403.603188 GiB; 64K=402.373985 GiB. Every projected 25% planning margin shown is below the existing 640 GiB container cap; this comparison is not independent host admission proof.
-
-Sampled peaks are not absolute peaks. Larger contexts may require unobserved attention/tokenization/workspace demand or a different allocation graph. 128K/256K pass only the conditional memory screen; 512K fails the GPU reserve; native 1M exceeds physical capacity on the original single GPU. No larger-context correctness or speed is established, and historical performance variation remains unexplained.
-
-Evidence: component calculations and provenance in the companion JSON, complete results.jsonl prefix 3,671,024 bytes / 1,926 rows, SHA256 `f1760b0a858d956e1556825d723e50f690cbe055bdca22440ab5c6ae36a95079`. Individual native-log, allocation-row and completed-case hashes are recorded in the JSON.
+The live required-demand helper remains UNAVAILABLE where mapped slightly exceeds file. This descriptive conditional bound does not repair it into exact model RAM. Native host workspace is shown separately; its exact anon/file subdivision was not isolated, and it is not added again to inclusive cgroup totals. Sampled peaks are not absolute. Memory fit establishes neither speed nor retrieval correctness above 64K.
 
 
 No context above 64K was allocated or inferred by this ladder. Capacity ceilings do not validate performance or correctness at 128K/256K/512K/native 1M. Any projection must preserve 16 GiB GPU reserve and 25% headroom above defensible host demand.
