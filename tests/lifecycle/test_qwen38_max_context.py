@@ -27,8 +27,8 @@ def extension_receipt(d):
 
 
 class ExtensionAdapter(unittest.TestCase):
-    def test_only_three_pinned_profiles_same_identity_and_native_bytes(self):
-        self.assertEqual(set(q.VARIANTS), set(q.NATIVE_VARIANTS) | {q.EXTENSION_PROFILE})
+    def test_closed_pinned_profiles_same_identity_and_native_bytes(self):
+        self.assertEqual(set(q.VARIANTS), set(q.NATIVE_VARIANTS) | {q.EXTENSION_PROFILE, q.PAIR_PROFILE})
         d = bound(q.EXTENSION_PROFILE)
         q.validate(d)
         self.assertEqual(d['_model'], bound()['_model'])
