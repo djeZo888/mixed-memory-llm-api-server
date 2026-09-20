@@ -20,6 +20,8 @@ CAPACITIES = (4096, 16384, 65536)  # Historical full/Q1 ladder remains unchanged
 Q1_256K_CONTEXT = 262144  # Separately reviewed single-GPU tuple only.
 CONCURRENT_SCOPE = "concurrent-g1q1"
 CONCURRENT_CONTEXTS = (262144, 700160)
+CPU_SCOPE = "concurrent-480k-cpu"
+CPU_CONTEXT = 480000
 
 
 def pinned_base(path):
@@ -34,10 +36,12 @@ def pinned_base(path):
 
 def variant(base, context, tp, *, scope=None):
     concurrent = scope == CONCURRENT_SCOPE
-    if scope is not None and (not concurrent or tp != 1 or context not in CONCURRENT_CONTEXTS):
+    cpu_budget = scope == CPU_SCOPE
+    scoped = (concurrent and tp == 1 and context in CONCURRENT_CONTEXTS) or (cpu_budget and tp == 1 and context == CPU_CONTEXT)
+    if scope is not None and not scoped:
         raise ValueError("benchmark_scope_tuple_unreviewed")
     if (type(context) is not int or type(tp) is not int or tp not in (1, 2)
-            or not (context in CAPACITIES or (context == Q1_256K_CONTEXT and tp == 1) or concurrent)):
+            or not (context in CAPACITIES or (context == Q1_256K_CONTEXT and tp == 1) or concurrent or cpu_budget)):
         raise ValueError("benchmark_tuple_unreviewed")
     # Keep the production factor4 YaRN, cache and execution settings at every
     # rung/placement. Only context/pool, TP, alias and container port differ.
@@ -97,9 +101,9 @@ def bind_variant(base, context, tp, *, scope=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
-    parser.add_argument("--context", required=True, type=int, choices=(*CAPACITIES, Q1_256K_CONTEXT, 700160))
+    parser.add_argument("--context", required=True, type=int, choices=(*CAPACITIES, Q1_256K_CONTEXT, 700160, CPU_CONTEXT))
     parser.add_argument("--tp", required=True, type=int, choices=(1, 2))
-    parser.add_argument("--scope", choices=(CONCURRENT_SCOPE,))
+    parser.add_argument("--scope", choices=(CONCURRENT_SCOPE, CPU_SCOPE))
     options = parser.parse_args(argv)
     base = pinned_base("/opt/llmctl/sglang38_file_auth.py")
     args = bind_variant(base, options.context, options.tp, scope=options.scope)

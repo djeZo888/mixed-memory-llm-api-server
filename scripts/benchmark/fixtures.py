@@ -23,6 +23,8 @@ class HarnessError(ValueError):
 MODELS = {"glm-5.3": "low", "qwen3.8-27b": "none",
           "bench-glm-5.3": "low", "bench-qwen3.8-27b": "none"}
 CAPACITIES = (4096, 16384, 65536, 131072, 262144)
+CPU_SCOPE = "concurrent-480k-cpu"
+CPU_CAPACITIES = {"bench-glm-5.3": (480000,), "bench-qwen3.8-27b": (480000,)}
 CONCURRENT_SCOPE = "concurrent-g1q1"
 CONCURRENT_CAPACITIES = {"bench-glm-5.3": (16384, 65536),
                          "bench-qwen3.8-27b": (262144, 700160)}
@@ -144,6 +146,13 @@ def _fit_target(model, capacity, scope, target_capacity, kind, output_cap, optio
         if target_capacity is not None or capacity not in CAPACITIES or (capacity == 131072 and not optional_131072):
             raise HarnessError("capacity is outside reviewed ladder")
         return capacity
+    if scope == CPU_SCOPE:
+        target = capacity if target_capacity is None else target_capacity
+        if (type(capacity) is not int or capacity not in CPU_CAPACITIES.get(model, ())
+                or kind != "retrieval" or output_cap != 256 or type(target) is not int
+                or target not in ((65536,) if model == "bench-glm-5.3" else (262144, 480000))):
+            raise HarnessError("cpu budget fixture tuple outside reviewed scope")
+        return target
     if (scope != CONCURRENT_SCOPE or type(capacity) is not int
             or capacity not in CONCURRENT_CAPACITIES.get(model, ())
             or kind != "retrieval" or output_cap != 256):

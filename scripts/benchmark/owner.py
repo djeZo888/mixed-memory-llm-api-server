@@ -82,7 +82,7 @@ class CampaignOwner:
                  reviewed_manifest_hashes, lease_factory=acquire_lease,
                  synthetic_offline=False, scope=None):
         require(type(synthetic_offline) is bool, "invalid_offline_mode")
-        require(scope in {None, "candidate-pair-validation"}, "invalid_owner_scope")
+        require(scope in {None, "candidate-pair-validation", "concurrent-480k-cpu"}, "invalid_owner_scope")
         self.scope = scope
         self.campaign, self.manager, self.host, self.budget = campaign, manager, host, budget
         self.reviewed = frozenset(reviewed_manifest_hashes)
@@ -114,7 +114,7 @@ class CampaignOwner:
                 "evidence_kind": "synthetic_offline" if self.synthetic else "live",
                 "original": copy.deepcopy(self.original), "resources": copy.deepcopy(self.resources),
                 "pending_create": copy.deepcopy(self.pending_create), "errors": list(self.errors)}
-        if self.scope == "candidate-pair-validation":
+        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"}:
             ledger.update(validation_scope=self.scope, production_touched=self.production_touched,
                           control_touched=self.control_touched)
         return ledger
@@ -133,7 +133,7 @@ class CampaignOwner:
             self.errors.append("evidence_write_failed")
 
     def _mutate(self, stage, function):
-        if self.scope == "candidate-pair-validation":
+        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"}:
             require(self.pending_create is None, "unresolved_create_blocks_mutation")
         self._gate(stage)
         self._guard()
@@ -203,14 +203,14 @@ class CampaignOwner:
             self._gate("launch")
             self.pending_create = {"manifest_sha256": digest(manifest), "name": manifest["container_name"],
                                    "image": manifest["image"], "campaign": self.campaign}
-            if self.scope == "candidate-pair-validation":
+            if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"}:
                 # The host marks uncertainty at the actual Docker dispatch seam,
                 # after admission, source/image and registered-path checks.
                 self.pending_create.update(dispatch="not_dispatched", kind="model")
             self._save()  # interrupted create remains recoverable by exact planned identity
             self._guard()
             created = self.host.create(copy.deepcopy(manifest))
-            if self.scope == "candidate-pair-validation":
+            if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"}:
                 require(self.pending_create["dispatch"] == "uncertain", "candidate_create_dispatch_unrecorded")
             resource = self._resource(created, manifest)
             require(created["running"] is False, "create_must_not_start")
@@ -231,7 +231,7 @@ class CampaignOwner:
 
     def mark_create_dispatched(self):
         """Candidate-only durable boundary immediately before the Docker call."""
-        require(self.scope == "candidate-pair-validation" and self.pending_create is not None and
+        require(self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"} and self.pending_create is not None and
                 self.pending_create.get("dispatch") == "not_dispatched", "candidate_create_not_planned")
         self.pending_create["dispatch"] = "uncertain"
         try:
@@ -247,7 +247,7 @@ class CampaignOwner:
             raise
 
     def _settle_undispatched(self):
-        if (self.scope != "candidate-pair-validation" or self.pending_create is None or
+        if (self.scope not in {"candidate-pair-validation", "concurrent-480k-cpu"} or self.pending_create is None or
                 self.pending_create.get("dispatch") != "not_dispatched"):
             return
         pending, self.pending_create = self.pending_create, None
@@ -258,7 +258,7 @@ class CampaignOwner:
             self.errors.append("undispatched_settlement_write_failed")
 
     def _retire_row(self, row):
-        if self.scope == "candidate-pair-validation":
+        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"}:
             require(self.pending_create is None, "unresolved_create_blocks_cleanup")
         resource = row["resource"]
         if row["state"] == "REMOVED":
@@ -295,7 +295,7 @@ class CampaignOwner:
         if self.lease is None:
             self.phase = "FAILED_BEFORE_OWNERSHIP"
             return
-        candidate_work = self.scope == "candidate-pair-validation" and (self.pending_create is not None or
+        candidate_work = self.scope in {"candidate-pair-validation", "concurrent-480k-cpu"} and (self.pending_create is not None or
                          any(row["state"] != "REMOVED" for row in self.resources))
         if self.original is None or not (self.production_touched or self.control_touched or candidate_work):
             self._release()

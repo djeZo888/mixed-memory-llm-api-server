@@ -22,6 +22,11 @@ SLOTS = {'glm': GLM_PROFILE, 'qwen': QWEN_PROFILE}
 GPU_UUIDS = ('GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',
             'GPU-69acfa26-8b60-61b5-702d-aee252c163cc')
 ACCEPTANCE_SUFFIX = 'services/llm-manager/evidence/concurrent-g1q1.accepted.json'
+HOST_HEADROOM_POLICY_15 = {
+    'version': 'sampled-required-working-set-15pct-v1',
+    'numerator': 23, 'denominator': 20,
+    'basis': 'sampled_required_working_set_estimate_bytes',
+}
 PINS = {
     'configs/deployments/glm-5.3-ud-q4-k-xl-g1-480000.json': '5c3864ad2f32c0eda4ca642daba66509af2b4cdfd7b97ac822846dffaf0920d1',
     'configs/deployments/qwen38-27b-q1-700160-yarn4-bf16kv.json': '7650e6ba3cc089ce3955c465a76bd0d97b832c5e1ef1d1ee37dfc56f13a1d401',
@@ -230,6 +235,12 @@ def check_acceptance(d, instance):
     validate_gpu_inventory(receipt.get('gpu_inventory'))
     slots = receipt.get('slots')
     require(isinstance(slots, dict) and set(slots) == set(SLOTS), 'concurrent_acceptance_slots_mismatch')
+    # An explicit root-reviewed policy selects the new estimate margin. Absent
+    # metadata retains the legacy 25% field semantics without reinterpretation.
+    estimate_policy = 'host_headroom_policy' in receipt
+    if estimate_policy:
+        require(same(receipt['host_headroom_policy'], HOST_HEADROOM_POLICY_15),
+                'concurrent_host_headroom_policy_unaccepted')
     total_caps = 0
     for slot, identifier in SLOTS.items():
         expected = declared_profile(identifier)
@@ -251,8 +262,18 @@ def check_acceptance(d, instance):
                 and type(proof.get('largest_occupied_context')) is int and 0 < proof['largest_occupied_context'] <= capacity,
                 'concurrent_capacity_evidence_mismatch')
         peak, free, total = (proof.get(key) for key in ('host_peak_bytes', 'minimum_free_gpu_bytes', 'gpu_total_bytes'))
+        if estimate_policy:
+            estimate = proof.get(HOST_HEADROOM_POLICY_15['basis'])
+            require(type(estimate) is int and estimate > 0
+                    and estimate * 23 <= resource['memory_bytes'] * 20,
+                    'concurrent_resource_margin_unaccepted')
+            # Raw cache/current/peak evidence remains separate. The hard cap
+            # still applies to raw peak; it is not the working-set estimate.
+            host_margin = type(peak) is int and 0 < peak <= resource['memory_bytes']
+        else:
+            host_margin = type(peak) is int and peak * 125 <= resource['memory_bytes'] * 100
         require(all(type(value) is int and value > 0 for value in (peak, free, total))
-                and peak * 125 <= resource['memory_bytes'] * 100 and free <= total
+                and host_margin and free <= total
                 and free >= resource['minimum_free_gpu_bytes']
                 and (slot != 'qwen' or free * 10 >= total), 'concurrent_resource_margin_unaccepted')
         if slot == 'qwen':
