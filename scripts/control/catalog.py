@@ -130,6 +130,24 @@ def _requirements(value: object) -> dict:
     return result
 
 
+def _context(context, acceptance):
+    result = {"configured_tokens": context,
+              "configured_provenance": "declared" if context is not None else "unknown",
+              "accepted_configured_tokens": None, "acceptance_status": "unvalidated",
+              "verified_occupied_tokens": None, "verified_occupied_provenance": "unknown", "evidence": []}
+    if acceptance is not None:
+        if type(acceptance) is not dict or set(acceptance) != {"accepted_configured_tokens", "verified_occupied_tokens", "evidence"}:
+            _bad()
+        accepted = _integer(acceptance['accepted_configured_tokens'], 2**31 - 1)
+        occupied = _integer(acceptance['verified_occupied_tokens'], 2**31 - 1)
+        evidence = _evidence(acceptance['evidence'])
+        if accepted is None or accepted != context or occupied is None or not 0 < occupied <= accepted or not evidence:
+            _bad()
+        result.update(accepted_configured_tokens=accepted, acceptance_status='reviewed',
+                      verified_occupied_tokens=occupied, verified_occupied_provenance='reviewed_receipt', evidence=evidence)
+    return result
+
+
 def _endpoint(value: object) -> dict | None:
     if value is None:
         return None
@@ -147,6 +165,10 @@ def _endpoint(value: object) -> dict | None:
     return {"base_url": f"http://127.0.0.1:{port}/v1", "served_model": alias,
             "authentication_required": True, "address_scope": "server_loopback",
             "server_relative": True, "ready": False}
+
+
+def model_slot(model_id):
+    return {'unsloth/GLM-5.3-GGUF': 'glm', 'Qwen/Qwen3.8-27B-FP8': 'qwen'}.get(model_id)
 
 
 def advertised_endpoint(endpoint: dict | None, model_id: str | None, policy: dict | None) -> dict | None:
@@ -204,21 +226,13 @@ class Catalog:
             self._records[identifier] = {
                 "deployment_id": identifier,
                 "model_id": _identifier(record.get("model_id"), _MODEL),
+                "slot": model_slot(record.get("model_id")),
                 "display_name": _label(record.get("display_name")),
                 "revision": revision,
                 "backend": _identifier(record.get("backend")),
                 "runtime": _identifier(record.get("runtime")),
                 "context_limit": context,
-                "context": {
-                    "configured_tokens": context,
-                    "configured_provenance": "declared" if context is not None else "unknown",
-                    # Installed lifecycle schemas currently provide no occupied
-                    # context acceptance receipt. A large configured limit or a
-                    # successful short probe cannot supply this proof.
-                    "verified_occupied_tokens": None,
-                    "verified_occupied_provenance": "unknown",
-                    "evidence": [],
-                },
+                "context": _context(context, record.get("context_acceptance")),
                 "quantization": None if quantization is None else _label(quantization, 64),
                 "installed_bytes": _integer(record.get("installed_bytes")),
                 "installed_verified_at": verified_at,
@@ -247,6 +261,12 @@ class Catalog:
         """
         if not isinstance(snapshot, dict):
             _bad()
+        if snapshot.get("mode") == "pair":
+            records = []
+            for slot in ('glm', 'qwen'):
+                entries = self.public(snapshot['slots'][slot], advertised_policy=advertised_policy)
+                records.extend(entry for entry in entries if entry['slot'] == slot)
+            return sorted(records, key=lambda entry: entry['deployment_id'])
         observed_at = _observation_time(snapshot.get("observed_at"))
         operation = snapshot.get("current_operation")
         if operation is None:
@@ -270,7 +290,7 @@ class Catalog:
                 state = "unknown"
             elif not checks:
                 state = "unavailable"
-            elif owned and operation_status == "running":
+            elif owned and operation_status == "running" and operation.get("kind") in (None, "switch", "start", "restart"):
                 state = "loading"
             elif owned and operation_status == "failed" and not (selected and snapshot.get("observed") == "ready"):
                 state = "failed"
@@ -289,7 +309,7 @@ class Catalog:
                     state = "unknown"
             record["state"] = state
             record["observed_at"] = observed_at
-            record["switch_effect"] = "interrupts_inference"
+            record["switch_effect"] = "interrupts_target_inference" if snapshot.get("slot") else "interrupts_inference"
             if record["endpoint"] is not None:
                 record["endpoint"]["ready"] = state == "ready"
             record["endpoint"] = advertised_endpoint(record["endpoint"], record["model_id"], advertised_policy)

@@ -15,6 +15,102 @@ The API is separate from inference: IPv4 `127.0.0.1:30000`, a dedicated control
 bearer key, JSON only. It serves no UI, inference proxy, agent tools or browser
 control. Worker1 owns later L2VM deployment; installer work remains stopped.
 
+## Fixed GLM/Qwen slots: concurrent source candidate, 2026-09-20
+
+Current scope authorizes two fixed production slots after favorable benchmark,
+reviewed allocation/capacity evidence and source review. This section supersedes
+singleton-only statements below when the lifecycle owner has explicitly migrated
+its protected v2 record to v3. The API never performs that migration implicitly.
+Singleton v2 operation remains supported; installer work remains paused.
+Source tests are synthetic and do not establish deployed concurrency, live stream
+survival, accepted 480,000/700,160 capacity, physical boot or LAN acceptance.
+
+The existing inference endpoints and exact aliases remain separate. Under the
+protected private endpoint policy, catalog records expose GLM
+`http://10.156.100.60:30002/v1` with `glm-5.3` and Qwen
+`http://10.156.100.60:30004/v1` with `qwen3.8-27b`. Each endpoint uses its existing
+inference key. The control key and loopback listener remain separate. There is
+no inference router; the control catalog discovers each endpoint and its current
+readiness. Without the protected private policy, the existing server-loopback
+DTO is returned. A URL advertisement is not transport acceptance.
+
+`GET /control/v1/status` in pair mode returns `schema_version:2`, `mode:"pair"`
+and exactly `slots.glm` and `slots.qwen`, with no singleton `selected` projection.
+Each slot contains selected/desired/observed, opaque `active_identity`, semantic
+`generation`, `generation_current`, endpoint, persistence/freshness and its own
+current/last operation. `GET /control/v1/status/glm` and
+`GET /control/v1/status/qwen` return the corresponding slot directly.
+`GET /control/v1/catalog` includes that pair status plus installed entries with
+`slot`, endpoint and independently observed readiness/capabilities.
+
+All mutation bodies are closed schemas with the existing content type and
+idempotency headers. `target` is exactly `glm` or `qwen`; generation and identity
+come from a fresh response for that same slot. The following bodies are exact;
+replace the sample CAS values with the target's current values:
+
+| POST route | Exact example body |
+| --- | --- |
+| `/control/v1/start` | `{"target":"glm","deployment_id":"glm-5.3-ud-q4-k-xl-g1-480000","expected_active":null,"expected_generation":1}` |
+| `/control/v1/switch` | `{"target":"qwen","deployment_id":"qwen38-27b-q1-700160-yarn4-bf16kv","expected_active":null,"expected_generation":1,"allow_interrupt":false}` |
+| `/control/v1/stop` | `{"target":"glm","expected_active":null,"expected_generation":1}` |
+| `/control/v1/restart` | `{"target":"qwen","expected_active":null,"expected_generation":1,"allow_interrupt":true}` |
+
+Start selects and starts the registered target, refusing a running target with
+`409 already_running`; it does not stop the peer. Switch preflights before any
+stop, then stops/selects/starts only its target. Restart preflights and
+stops/starts the same target selection while preserving its boot policy.
+Switch/restart of a running target require `allow_interrupt:true`; stop is itself
+an explicit interruption request. None interrupts, cancels, drains or reserves
+the other model's inference. Ordinary target interruption semantics remain:
+in-flight target requests may end; another lifecycle mutation returns busy while
+one transition owns the executor. There is no force-kill or preemptive-cancel API.
+
+The deployment must belong to the chosen fixed model slot. Unknown slots or
+extra fields return `400 invalid_request`; model/slot mismatch returns
+`409 target_mismatch`. Existing targetless singleton bodies remain valid. In a
+v3 record, targetless mutation is accepted only with exactly one selected slot;
+two selected slots (even if one is stopped), or no selected slot, return
+`409 target_required`. An explicit slot against unmigrated v2 state returns
+`409 target_unavailable`; use the root-reviewed migration procedure first.
+
+The same one executor, canonical lease and idempotency journal own every
+transition. Client generations are scoped control observation counters;
+Docker restart identity, desired/selected state and lifecycle slot generation
+all contribute. A peer-only transition cannot invalidate the target's CAS.
+The adapter separately passes the observed lifecycle slot generation to Manager
+before each dispatch. Global busy admission still serializes all mutations.
+Operation receipts add `slot` and retain deployment `target`, including for stop;
+matching idempotency replay never executes a second transition. Changing the
+slot under the same unexpired idempotency key is a content conflict.
+
+Schema1 operation journals remain readable. First pair reconciliation under the
+canonical lease records schema2 with exactly two scoped fingerprint/counter
+records, preserving existing entries and the legacy counter. Interrupted
+receipts reconcile against their own slot and never replay a mutation after
+service restart. Recovery stops retain the exact target identity, use the same
+/run-only trusted ownership path, and report `state_persisted:false` if storage
+is unavailable. Healthy peer observations stay separate from a failed target.
+Root rollback must drain control and preserve/restore its protected journal with
+the prior source, because old source does not read schema2 journals.
+
+Catalog `context.configured_tokens` and `context_limit` are declarations.
+`accepted_configured_tokens:null`, `acceptance_status:"unvalidated"`,
+`verified_occupied_tokens:null` and empty evidence remain explicit without a
+validated acceptance receipt. A protected receipt must pass the lifecycle
+`check_acceptance` source/profile/resource/instance/storage gates; only then
+`acceptance_status:"reviewed"` and its accepted configured and largest occupied
+values are exposed, with the receipt digest as an opaque evidence ID. Raw private
+paths and free-form evidence strings are never returned. Neither successful source tests, a loaded backend,
+a Ready probe nor saved intent proves large occupied-context acceptance. Profile
+availability does not bypass the lifecycle owner's exact approved-pair checks.
+
+Source validation includes `tests/test_control_slots.py` and
+`tests/test_control_slots_manager.py` for targeted
+CAS/idempotency, independent peer state, partial failures, interrupted receipts,
+loading/readiness and storage-loss stop. Real simultaneous inference and stream
+survival during target restart remain required in the separately authorized
+Worker1 activation session.
+
 ## Authentication and bounds
 
 Every route, including unknown routes and unsupported methods, requires
@@ -215,16 +311,12 @@ estimates/measurements with evidence, installed verification time and
 list cannot prove tool calling. Evidence references are bounded opaque IDs.
 
 `context_limit` remains the configured deployment limit. The accompanying
-`context` object contains `configured_tokens`, `configured_provenance` (`declared`
-when configured), `verified_occupied_tokens:null`,
-`verified_occupied_provenance:"unknown"`, and `evidence:[]`. Existing protected
-profiles provide no structured occupied-context acceptance receipt. A Ready
-backend or successful short prompt at a large configured limit supplies no such
-proof. The current GLM 32K context and 2048 output settings are baseline test
-limits; the eventual one-user/one-slot target is the highest practical native
-context up to 1,048,576 tokens with sequential prefix reuse, subject to D3M's
-measured progression and an approved final profile. U1 neither enforces these
-baseline values universally nor claims that the target has been demonstrated.
+`context` object separates declared configured tokens, root-reviewed accepted
+configured capacity, and largest occupied context. Legacy profiles without a
+structured receipt retain unknown accepted and occupied capacity. Pair profiles
+use the protected receipt validation described above; no Ready backend or short
+probe can supply that receipt. Historical 32K test limits, 2048 output budgets
+and TP2/1M declarations do not establish accepted pair capacities.
 
 Production discovery reads protected deployment/model/runtime profiles via the
 actual L1 `Manager.deployment`, validates the existing protected completion
@@ -232,8 +324,9 @@ receipt through `Manager.check_completion`, and checks registered source paths
 and runtime attestations. `installed_verified_at` is when that small receipt
 metadata was checked, not acquisition time or a fresh payload hash. Historical
 attestation without a completion receipt is insufficient for listing. Current
-source schemas contain no structured capability verification or GPU/RAM evidence;
-those fields stay unknown. Unsupported future profiles remain unavailable until
+source schemas contain no structured capability verification; capability fields
+stay unknown. Resource acceptance in the separate pair receipt does not by itself
+create catalog GPU/RAM measurement DTOs. Unsupported future profiles remain unavailable until
 the lifecycle owner accepts them; the catalog contains no per-model exception.
 
 Ready requires trusted immutable identity, matching deployment, safe network,

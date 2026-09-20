@@ -106,6 +106,8 @@ class CatalogTests(unittest.TestCase):
         loading = catalog.public(observation(current_operation={"target": "model-a", "status": "running"}))
         self.assertEqual(loading[0]["state"], "loading")
         self.assertFalse(loading[0]["endpoint"]["ready"])
+        stopping = catalog.public(ready(current_operation={"target": "model-a", "kind": "stop", "status": "running"}))
+        self.assertEqual(stopping[0]["state"], "ready")
         for operation in ({"target": "model-a", "status": "pending"},
                           {"target": "model-b", "status": "running"}):
             self.assertNotEqual(catalog.public(observation(current_operation=operation))[0]["state"], "loading")
@@ -131,6 +133,19 @@ class CatalogTests(unittest.TestCase):
         self.assertTrue(all(r["bytes"] is None and r["provenance"] == "unknown"
                             for r in entry["requirements"].values()))
 
+    def test_reviewed_receipt_dto_separates_configured_from_occupied(self):
+        accepted = {'accepted_configured_tokens': 480000, 'verified_occupied_tokens': 65008,
+                    'evidence': ['concurrent-' + 'a' * 64]}
+        entry = Catalog([record(context_limit=480000, context_acceptance=accepted)]).public(observation())[0]
+        self.assertEqual(entry['context']['acceptance_status'], 'reviewed')
+        self.assertEqual(entry['context']['accepted_configured_tokens'], 480000)
+        self.assertEqual(entry['context']['verified_occupied_tokens'], 65008)
+        self.assertEqual(entry['state'], 'available')
+        for change in ({'accepted_configured_tokens': 700160}, {'verified_occupied_tokens': True},
+                       {'verified_occupied_tokens': 480001}, {'evidence': []}, {'evidence': ['/private/path']}):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                Catalog([record(context_limit=480000, context_acceptance=dict(accepted, **change))])
+
     def test_configured_context_never_becomes_verified_occupied_context(self):
         for configured in (8192, 32768, 131072, 1048576):
             entry = Catalog([record(context_limit=configured, context={
@@ -140,6 +155,7 @@ class CatalogTests(unittest.TestCase):
             self.assertEqual(entry["context_limit"], configured)
             self.assertEqual(entry["context"], {
                 "configured_tokens": configured, "configured_provenance": "declared",
+                "accepted_configured_tokens": None, "acceptance_status": "unvalidated",
                 "verified_occupied_tokens": None, "verified_occupied_provenance": "unknown",
                 "evidence": [],
             })

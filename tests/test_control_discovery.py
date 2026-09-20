@@ -113,6 +113,29 @@ class DiscoveryTests(unittest.TestCase):
         self.assertTrue(all(e['context']['verified_occupied_provenance'] == 'unknown' for e in entries))
         self.assertFalse(Path(self.fixture.binding.path('models', 'first-model')).exists())
 
+    def test_pair_acceptance_uses_validator_and_returns_only_digest_evidence(self):
+        from lifecycle.runtime_io import LifecycleError
+        self.manager.instance['concurrent_pair_acceptance'] = {'sha256': 'a' * 64}
+        deployment = self.manager.deployment('first-8k')
+        receipt = {'slots': {'glm': {'configured_context': 8192, 'largest_occupied_context': 8000}},
+                   'evidence': ['/private/evidence/path', 'private descriptive text']}
+        with patch.object(self.manager, 'deployment', return_value=deployment), \
+                patch('lifecycle.concurrent_profiles.is_pair', return_value=True), \
+                patch('lifecycle.concurrent_profiles.slot_for_deployment', return_value='glm'), \
+                patch('lifecycle.concurrent_profiles.check_acceptance', return_value=receipt) as validate:
+            public = self.public()[0]
+        self.assertEqual(validate.call_count, 1)
+        self.assertEqual(public['context']['accepted_configured_tokens'], 8192)
+        self.assertEqual(public['context']['verified_occupied_tokens'], 8000)
+        self.assertEqual(public['context']['evidence'], ['concurrent-' + 'a' * 64])
+        self.assertNotIn('/private', json.dumps(public))
+        with patch.object(self.manager, 'deployment', return_value=deployment), \
+                patch('lifecycle.concurrent_profiles.is_pair', return_value=True), \
+                patch('lifecycle.concurrent_profiles.check_acceptance', side_effect=LifecycleError('concurrent_reviewed_acceptance_required')):
+            missing = self.public()[0]
+        self.assertEqual(missing['context']['acceptance_status'], 'unvalidated')
+        self.assertIsNone(missing['context']['accepted_configured_tokens'])
+
     def test_reads_no_model_key_state_docker_or_preflight(self):
         with patch.object(self.manager, 'check_artifacts', side_effect=AssertionError('artifact read')), \
                 patch.object(self.manager, 'prepare_start', side_effect=AssertionError('preflight')), \
