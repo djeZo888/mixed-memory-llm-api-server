@@ -1,0 +1,1647 @@
+{
+  "schema": 1,
+  "title": "REAL72 concurrent480K saved-evidence report",
+  "status": "FINAL_SAVED_EVIDENCE_BENCHMARK_INCOMPLETE_WARM_RETENTION_FAILED",
+  "snapshot_utc": "2026-09-20T16:46:37.996789+00:00",
+  "evidence_boundary": "Source/docs-only transcription and arithmetic from authoritative task-root summaries; no ai-vm/API contact, builds, tests, profilers, additional inference or raw/private reconstruction. No production migration. Local Worker1 read-only process handoff check is separately authorized; no new SSH or VM contact.",
+  "run_identity": {
+    "task": "POSTRESTART72-RUN-CONT3-20260920",
+    "source_commit": "d257c2a6531eb29f47e210c98d64341d23a373ee",
+    "campaign": "benchrun-p72c3-20260920",
+    "raw_arm_sha256": "c660728b6effee6ed75849f90e71ab433e81b26f16376a5f09e7e5244dc29558"
+  },
+  "topology": {
+    "guest_online_cpus": "0-71",
+    "guest_vcpus": 72,
+    "guest_online_numa_nodes": "0-7",
+    "configured_memory_GiB": 896,
+    "kernel_usable_memory_bytes": 946821140480,
+    "host_user_selected_logical_cpus": "0-63,72-79",
+    "host_physical_cores_covered": 64,
+    "host_logical_cpus_allowed": 72,
+    "placement_union_cpus": 72,
+    "placement_shared_cpus": "0-7",
+    "host_evidence": "user-supplied global affinity/QEMU configuration only; not per-vCPU pinning or physical RAM residency"
+  },
+  "profiles": [
+    {
+      "placement": "G1",
+      "model": {
+        "quantization": "UD-Q4_K_XL",
+        "repo_id": "unsloth/GLM-5.3-GGUF",
+        "revision": "346b3591c7f28d1a23716f97a065ecf12ec14771"
+      },
+      "image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+      "expected_image_ids": [
+        "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9"
+      ],
+      "configured_capacity": 480000,
+      "guest_cpuset": "0-71",
+      "guest_mems_allowed": "0-7",
+      "ram_cap_bytes": 687194767360,
+      "transport": {
+        "bind": "127.0.0.1",
+        "access": "authenticated existing SSH benchmark transport; ports and private IDs in task handoff"
+      },
+      "manifest_sha256": "0e4512712bdd7c3ea3768a5577ee4e57c6e4c759629e6728e8f21b2fc9acba34",
+      "effective_cpu_limits": {
+        "cgroup_cpu_max": "max 100000",
+        "cgroup_cpuset_cpus_effective": "0-71",
+        "cgroup_cpuset_mems_effective": "0-7",
+        "docker_cpu_period": 0,
+        "docker_cpu_quota": 0,
+        "docker_cpuset_cpus": "0-71",
+        "docker_cpuset_mems": "",
+        "docker_nano_cpus": 0
+      },
+      "effective_memory_limits": {
+        "cgroup_memory_max": "687194767360",
+        "cgroup_memory_swap_max": "0",
+        "docker_memory_bytes": 687194767360,
+        "docker_memory_swap_bytes": 687194767360
+      },
+      "native_allocation_status": "ALLOCATION_PROOF_ACCEPTED",
+      "native_capacity": {
+        "configured_context": 480000,
+        "native_pool_tokens": 480000,
+        "basis": "accepted load allocation; native_props count confirms configured context"
+      },
+      "quiescent_cpu_scope_status": "PASS",
+      "native_argv_sha256": "1b0eabe51291704cae07f63f200d4e3ef63bc270733f3d4d66894eef6840736f",
+      "raw_log_sha256": "25fd224a3db9190e8d25aafa784dba725e7aeca2863ac08543f0c42c6d7d0fab",
+      "runtime_settings": {
+        "threads": 72,
+        "threads_batch": 72,
+        "n_cpu_moe": 76,
+        "kv": "F16",
+        "batch": 2048,
+        "ubatch": 512,
+        "split": "none",
+        "gpu": 0
+      },
+      "quiescent_numa_pages_by_process": {
+        "process1": {
+          "0": 27617092,
+          "1": 28685059,
+          "2": 28639358,
+          "3": 19866548,
+          "4": 1033,
+          "5": 246301,
+          "6": 43725,
+          "7": 137204
+        }
+      },
+      "native_argv_hash_encoding": "sha256 of JSON sorted keys, compact separators; exact argv preserved privately"
+    },
+    {
+      "placement": "Q1",
+      "model": {
+        "quantization": "fp8",
+        "repo_id": "Qwen/Qwen3.8-27B-FP8",
+        "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+      },
+      "image": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "expected_image_ids": [
+        "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+        "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813"
+      ],
+      "configured_capacity": 480000,
+      "guest_cpuset": "0-7",
+      "guest_mems_allowed": "0-7",
+      "ram_cap_bytes": 34359738368,
+      "transport": {
+        "bind": "127.0.0.1",
+        "access": "authenticated existing SSH benchmark transport; ports and private IDs in task handoff"
+      },
+      "manifest_sha256": "4654b2236c647da6b72e03ce23faabef318a9c9b3f556ebdd01cc256cecb6abc",
+      "effective_cpu_limits": {
+        "cgroup_cpu_max": "max 100000",
+        "cgroup_cpuset_cpus_effective": "0-7",
+        "cgroup_cpuset_mems_effective": "0-7",
+        "docker_cpu_period": 0,
+        "docker_cpu_quota": 0,
+        "docker_cpuset_cpus": "0-7",
+        "docker_cpuset_mems": "",
+        "docker_nano_cpus": 0
+      },
+      "effective_memory_limits": {
+        "cgroup_memory_max": "34359738368",
+        "cgroup_memory_swap_max": "0",
+        "docker_memory_bytes": 34359738368,
+        "docker_memory_swap_bytes": 34359738368
+      },
+      "native_allocation_status": "ALLOCATION_PROOF_ACCEPTED",
+      "native_capacity": {
+        "basis": "actual_scheduler_top_level_or_single_internal_state",
+        "configured_context": 480000,
+        "native_input_limit": 479994,
+        "native_pool_tokens": 480000,
+        "native_request_limit": null
+      },
+      "quiescent_cpu_scope_status": "PASS",
+      "native_argv_sha256": "a0a6c7cd6c6b2e4f528ff1cd7b0395c8cea4f35988096d69e1bc8e5c14240415",
+      "raw_log_sha256": "6d6e2bdbc4c9da6d1a07ffed85e9d159d67a5a03a7cfa55dd0075944274a9ebe",
+      "runtime_settings": {
+        "allowed_cpu_count": 8,
+        "runtime_thread_count_is_not_8": true,
+        "tp": 1,
+        "kv": "BF16",
+        "compute": "BF16",
+        "yarn_factor": 4,
+        "chunked_prefill": 2048,
+        "static_memory_fraction": 0.8,
+        "radix_cache": false,
+        "cuda_graph_decode": false,
+        "cuda_graph_prefill": false,
+        "overlap_scheduler": false,
+        "gpu": 1
+      },
+      "quiescent_numa_pages_by_process": {
+        "process1": {
+          "0": 10399,
+          "1": 492,
+          "2": 331,
+          "3": 2209,
+          "4": 1232,
+          "5": 16953,
+          "6": 2770,
+          "7": 372345
+        },
+        "process2": {
+          "0": 1394,
+          "2": 72,
+          "3": 227,
+          "5": 8,
+          "6": 44,
+          "7": 1696
+        },
+        "process3": {
+          "0": 10481,
+          "1": 13,
+          "2": 235,
+          "3": 75929,
+          "4": 785,
+          "5": 20388,
+          "6": 25921,
+          "7": 614566
+        },
+        "process4": {
+          "0": 7353,
+          "1": 1,
+          "2": 1024,
+          "3": 642,
+          "4": 214,
+          "5": 10648,
+          "6": 3763,
+          "7": 364319
+        }
+      },
+      "native_argv_hash_encoding": "sha256 of JSON sorted keys, compact separators; exact argv preserved privately"
+    }
+  ],
+  "clock": {
+    "admission_deadline_refuses_new_only": true,
+    "budget_seconds": 21600,
+    "clock_includes_preparation": false,
+    "clock_starts": "FIRST_MEASURED_REQUEST_ADMISSION",
+    "preparation_seconds": 7200,
+    "request_clock_starts": "HTTP_DISPATCH",
+    "request_timeout_seconds": 7200,
+    "restoration_outside_budget": true
+  },
+  "load_seconds": {
+    "G1": 197.74161754199304,
+    "Q1": 112.92939362500329
+  },
+  "warmups": [
+    {
+      "id": "P-G1-warmup",
+      "disposition": "DISCARDED_NEVER_SPEED_GATE",
+      "count": {
+        "input_tokens": 3538,
+        "configured_context": 480000,
+        "source": "native_apply_template_tokenize",
+        "body_sha256": "293728c5416a00b3b26a9a57a3039d99db9b8f4daa7cf3c9745aaa59dea2dcfc",
+        "token_ids_sha256": "79ce5ec95074a2795a7975b893ff1fd291be540e22fa0c996cde7cf684bb0629"
+      },
+      "sample": {
+        "status": "OUTPUT_LIMIT",
+        "client_elapsed_seconds": 122.02501174999634,
+        "client_timing": {
+          "done_observed": true,
+          "last_output_seconds": 122.0219100000104,
+          "observer_status": "OK",
+          "source": "client_event_arrival",
+          "timing_limit": "event-arrival timestamps; chunk batching and client overhead included",
+          "ttft_any_output_seconds": 54.827004249964375,
+          "ttft_content_seconds": 54.827004249964375,
+          "ttft_reasoning_seconds": null,
+          "ttft_tool_seconds": null
+        },
+        "counters": {
+          "cached_tokens": 0,
+          "cached_tokens_source": "usage.prompt_tokens_details.cached_tokens",
+          "completion_tokens": 32,
+          "decode_ms": 69501.411,
+          "decode_tokens": 32,
+          "elapsed_seconds": null,
+          "evaluated_prompt_tokens": 3538,
+          "prompt_ms": 52483.609,
+          "prompt_tokens": 3538,
+          "total_tokens": 3570
+        },
+        "request_clock": {
+          "basis": "HTTP_transport_dispatch",
+          "deadline_monotonic_s": 396053.402121583,
+          "dispatch_monotonic_s": 388853.402121583,
+          "terminal_reason": "DRAINED",
+          "timeout_seconds": 7200
+        },
+        "request_sha256": "293728c5416a00b3b26a9a57a3039d99db9b8f4daa7cf3c9745aaa59dea2dcfc",
+        "response_sha256": "dd706fe518a08ae12ba7106a6a5a63f77566e3f9bb07d5c25f1e0832ae02a3a7",
+        "response_bytes": 8553,
+        "response_retained_complete": true
+      },
+      "prefill_proof": {
+        "cache_policy": null,
+        "evidence_scope": "warmup prefill proof; derived values are not native counters",
+        "minimum_required_tokens": 2048,
+        "native_cached_tokens": 0,
+        "native_evaluated_prompt_tokens": 3538,
+        "prefill_tokens": 3538,
+        "source": "native_evaluated_prompt_tokens"
+      },
+      "cpu_collection": {
+        "status": "PASS",
+        "sample_count": 108,
+        "valid_interval_count": 107,
+        "positive_model_cpu_interval_count": 105,
+        "isolated_gaps": []
+      }
+    },
+    {
+      "id": "P-Q1-warmup",
+      "disposition": "DISCARDED_NEVER_SPEED_GATE",
+      "count": {
+        "input_tokens": 3251,
+        "configured_context": 480000,
+        "source": "native_chat_tokenize",
+        "body_sha256": "2d201dc3323d157e59977369c2fc1144a58ac381d7ab0f1826383beff1c81650",
+        "token_ids_sha256": "8ca00bf4127d0f825d9343fedefce2ba82f038b14ce3bd160c7656fda0616c95"
+      },
+      "sample": {
+        "status": "OUTPUT_LIMIT",
+        "client_elapsed_seconds": 5.145580709038768,
+        "client_timing": {
+          "done_observed": true,
+          "last_output_seconds": 5.145151167002041,
+          "observer_status": "OK",
+          "source": "client_event_arrival",
+          "timing_limit": "event-arrival timestamps; chunk batching and client overhead included",
+          "ttft_any_output_seconds": 1.0790397920063697,
+          "ttft_content_seconds": 1.0790397920063697,
+          "ttft_reasoning_seconds": null,
+          "ttft_tool_seconds": null
+        },
+        "counters": {
+          "cached_tokens": null,
+          "cached_tokens_source": null,
+          "completion_tokens": 32,
+          "decode_ms": null,
+          "decode_tokens": null,
+          "elapsed_seconds": null,
+          "evaluated_prompt_tokens": null,
+          "prompt_ms": null,
+          "prompt_tokens": 3251,
+          "total_tokens": 3283
+        },
+        "request_clock": {
+          "basis": "HTTP_transport_dispatch",
+          "deadline_monotonic_s": 396183.827497166,
+          "dispatch_monotonic_s": 388983.827497166,
+          "terminal_reason": "DRAINED",
+          "timeout_seconds": 7200
+        },
+        "request_sha256": "2d201dc3323d157e59977369c2fc1144a58ac381d7ab0f1826383beff1c81650",
+        "response_sha256": "f23bad615f1db78b8b825af1b16a9ad30516f109356b1604239f0dc1195db0d8",
+        "response_bytes": 9190,
+        "response_retained_complete": true
+      },
+      "prefill_proof": {
+        "cache_policy": {
+          "disable_radix_cache": true,
+          "native_argv_sha256": "a0a6c7cd6c6b2e4f528ff1cd7b0395c8cea4f35988096d69e1bc8e5c14240415",
+          "source": "current_server_args_and_validated_native_argv"
+        },
+        "evidence_scope": "warmup prefill proof; derived values are not native counters",
+        "minimum_required_tokens": 2048,
+        "native_cached_tokens": null,
+        "native_evaluated_prompt_tokens": null,
+        "prefill_tokens": 3251,
+        "source": "derived_cache_disabled_prompt_tokens"
+      },
+      "cpu_collection": {
+        "status": "PASS",
+        "sample_count": 10,
+        "valid_interval_count": 5,
+        "positive_model_cpu_interval_count": 5,
+        "isolated_gaps": [
+          {
+            "causes": [
+              "owned_cgroup_or_process_identity_changed"
+            ],
+            "prior_sample_index": 3,
+            "sample_index": 4
+          },
+          {
+            "causes": [
+              "owned_cgroup_or_process_identity_changed",
+              "owned_cpu_counter_regression_or_unavailable"
+            ],
+            "prior_sample_index": 4,
+            "sample_index": 5
+          },
+          {
+            "causes": [
+              "owned_cgroup_or_process_identity_changed",
+              "owned_cpu_counter_regression_or_unavailable"
+            ],
+            "prior_sample_index": 5,
+            "sample_index": 6
+          },
+          {
+            "causes": [
+              "owned_cgroup_or_process_identity_changed",
+              "owned_cpu_counter_regression_or_unavailable"
+            ],
+            "prior_sample_index": 6,
+            "sample_index": 7
+          }
+        ]
+      }
+    }
+  ],
+  "cases": [
+    {
+      "id": "P-G4K",
+      "status": "OUTPUT_LIMIT",
+      "configured_capacity": 480000,
+      "count": {
+        "body_sha256": "5eb332267f157e0c39a8dcb49d8a09740ed45a1b5850aef6a516f694a1bb7235",
+        "configured_context": 480000,
+        "configured_context_source": "native_props",
+        "count_body_sha256": "9d3b8ac6491eb0a93e37c827e04ee6c206f1ef18d8356e3f2b920a3126f1835d",
+        "count_transport_normalization": {
+          "removed_fields": [
+            "stream",
+            "stream_options"
+          ]
+        },
+        "input_tokens": 3538,
+        "source": "native_apply_template_tokenize",
+        "template_sha256": "347dc716e1e8a9917eb124503836943107686ace6a3848d16bf23ae50964bb49",
+        "token_ids_sha256": "e9cf3f48110aad04f1e2aae005923c944617317b6c50483a89613fc6b66b725b",
+        "tokenizer_max_model_len": null
+      },
+      "occupied_tokens": 3794,
+      "native_count_valid": true,
+      "native_n_minus_one_decode_tps": 0.4441135958771406,
+      "strict": {
+        "expected_sha256": "6a5cef842b274c344e82fc6ca9c0f53a1e2d2126cc69766eee42dfe866dce97b",
+        "reason": "exact_match",
+        "status": "PASS"
+      },
+      "semantic": {
+        "expected_sha256": "6a5cef842b274c344e82fc6ca9c0f53a1e2d2126cc69766eee42dfe866dce97b",
+        "outer_json_fence_removed": false,
+        "reason": "exact_match",
+        "score_policy": "semantic_exact_object_optional_one_json_fence",
+        "status": "PASS"
+      },
+      "preliminary_gate": {
+        "automatic_speed_abort": false,
+        "confounds": [
+          "configured480000_vs4096",
+          "actual72_eightnodes_vs112_sevennodes",
+          "Qwen_resident_idle",
+          "single_ordered_sample_known_decode_variability"
+        ],
+        "decode_seconds": 574.177423,
+        "flags": [
+          "aggregate_decode_below_2_tps_at_least64_output"
+        ],
+        "historical": {
+          "cached": 0,
+          "decode_seconds": 11.391151,
+          "input": 3546,
+          "native_n_minus_one_decode_tps": 12.641392,
+          "output": 145,
+          "prompt_seconds": 51.750817,
+          "total_seconds": 63.22248
+        },
+        "long_admission": "strict_uncached_prefill35_total180_else_root_snapshot_bound_GO",
+        "long_preauthorized": false,
+        "native_n_minus_one_decode_tps": 0.4441135958771406,
+        "output_tokens": 256,
+        "prefill_tps": 67.39596414755678,
+        "prompt_seconds": 52.495725,
+        "status": "ROOT_REVIEW_REQUIRED",
+        "total_seconds": 626.9182324580033
+      },
+      "peer_condition_at_admission": "Qwen_resident_idle",
+      "fixture_sha256": "180b713b5cf87105155aab55503fe2fe71d18dee9eb87cc203ddcd38dc8aa785",
+      "fixture_preparation_seconds": 7.557393333001528,
+      "sample": {
+        "client_elapsed_seconds": 626.9182324580033,
+        "client_timing": {
+          "done_observed": true,
+          "events": 258,
+          "last_output_seconds": 626.9154751659953,
+          "observer_status": "OK",
+          "source": "client_event_arrival",
+          "timing_limit": "event-arrival timestamps; chunk batching and client overhead included",
+          "ttft_any_output_seconds": 52.73947874997975,
+          "ttft_content_seconds": 509.3219229579554,
+          "ttft_reasoning_seconds": 52.73947874997975,
+          "ttft_tool_seconds": null
+        },
+        "counter_source": "native_response_fields",
+        "counters": {
+          "cached_tokens": 0,
+          "cached_tokens_source": "usage.prompt_tokens_details.cached_tokens",
+          "completion_tokens": 256,
+          "decode_ms": 574177.423,
+          "decode_tokens": 256,
+          "elapsed_seconds": null,
+          "evaluated_prompt_tokens": 3538,
+          "prompt_ms": 52495.725,
+          "prompt_tokens": 3538,
+          "total_tokens": 3794
+        },
+        "lifecycle_actions": 0,
+        "report_errors": [],
+        "request_clock": {
+          "basis": "HTTP_transport_dispatch",
+          "deadline_monotonic_s": 396203.623129291,
+          "dispatch_monotonic_s": 389003.623129291,
+          "terminal_reason": "DRAINED",
+          "timeout_seconds": 7200
+        },
+        "request_ended_monotonic_s": 389630.541338708,
+        "request_interval_source": "worker_monotonic_transport_dispatch_to_drain",
+        "request_sha256": "5eb332267f157e0c39a8dcb49d8a09740ed45a1b5850aef6a516f694a1bb7235",
+        "request_started_monotonic_s": 389003.62310625,
+        "response_bytes": 64813,
+        "response_retained_complete": true,
+        "response_sha256": "3b3dfbd15680b02c5c3e7ba3b4210297c0b894fd694e0b3d7d5bac6d2da94fdb",
+        "retry_attempts": 0,
+        "sample_id": "P-G4K",
+        "status": "OUTPUT_LIMIT",
+        "transport_stream": true
+      },
+      "finish_reason": null,
+      "final_content_characters": null,
+      "final_content_sha256": null,
+      "missing_content_metadata_status": "PENDING: authoritative saved summary omits finish_reason, content length and content hash; raw response hash is not content hash",
+      "marker_retrieval": "START/MIDDLE/END exact object PASS; no fence removed",
+      "schema_scope": "GLM only; temperature1/seed1729/reasoning_effort low/max256",
+      "native_prompt_tokens_per_second": 67.39596414755678
+    },
+    {
+      "id": "P-G65008",
+      "status": "NOT_RUN",
+      "authorization": "NOT_AUTHORIZED_AFTER_ROOT_FINAL_NO_FURTHER_INFERENCE_DECISION",
+      "configured_capacity": 480000,
+      "target_input_tokens": 65008,
+      "max_output_tokens": 256,
+      "final_counts": null,
+      "native_timings": null,
+      "client_timings": null,
+      "strict": "UNSCORED",
+      "semantic": "UNSCORED"
+    },
+    {
+      "id": "P-Qnear480K",
+      "status": "NOT_RUN",
+      "authorization": "NOT_AUTHORIZED_AFTER_ROOT_FINAL_NO_FURTHER_INFERENCE_DECISION",
+      "configured_capacity": 480000,
+      "target_input_tokens": 479487,
+      "max_output_tokens": 256,
+      "final_counts": null,
+      "native_timings": null,
+      "client_timings": null,
+      "strict": "UNSCORED",
+      "semantic": "UNSCORED"
+    }
+  ],
+  "overlap": {
+    "status": "NOT_RUN",
+    "long_pair_overlap_seconds": null
+  },
+  "cpu_evidence": {
+    "counter_inventory": {
+      "cores_needed": "NOT_ESTABLISHED_BY_UTILIZATION",
+      "evidence_boundary": "observed sampled intervals only; phase edge gaps, RPC lag, short decode p95 and overhead caveats remain",
+      "explicit_exclusions": [
+        "global cpu.full compatibility counters",
+        "per-thread scheduler-wait counters",
+        "ancestor/inherited CPU quota; own cgroup cpu.max only"
+      ],
+      "missing_or_partial": [],
+      "quiescent_numa_and_host_safety": "SEPARATE_EVIDENCE_REQUIRED",
+      "required_guest_vcpus": 72,
+      "status": "COMPLETE"
+    },
+    "phases": {
+      "prefill_proxy": {
+        "status": "PARTIAL",
+        "phase": "dispatch_to_first_output_arrival",
+        "interval_count": 45,
+        "requested_window_s": 52.73947874997975,
+        "observed_interval_wall_s": 52.085778742499315,
+        "collection_overhead": {
+          "fraction_of_observed_span": 0.0006320498953835904,
+          "maximum_s": 0.0009477370003878605,
+          "sample_count": 46,
+          "scope": "non-atomic collector wall time only; existing monitor/RPC/storage overhead and measurement perturbation are separate",
+          "total_s": 0.032920811005169526
+        },
+        "observed_span_fraction": 0.9876051105741979,
+        "cgroups": {
+          "Q1": {
+            "status": "AVAILABLE",
+            "interval_count": 45,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 52.085778742499315,
+            "cpu_time_s": 52.265942,
+            "average_core_equivalents": 1.0034589721388514,
+            "p95_interval_core_equivalents": 1.004235815589708,
+            "ancestor_quota_status": "UNAVAILABLE",
+            "quota_status": "AVAILABLE",
+            "throttling": {
+              "available_interval_count": 45,
+              "delta_totals": {
+                "nr_periods": 0,
+                "nr_throttled": 0,
+                "throttled_usec": 0
+              },
+              "status": "AVAILABLE",
+              "unavailable_interval_count": 0
+            }
+          },
+          "G1": {
+            "status": "AVAILABLE",
+            "interval_count": 45,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 52.085778742499315,
+            "cpu_time_s": 52.109263,
+            "average_core_equivalents": 1.000450876574521,
+            "p95_interval_core_equivalents": 1.001025921597218,
+            "ancestor_quota_status": "UNAVAILABLE",
+            "quota_status": "AVAILABLE",
+            "throttling": {
+              "available_interval_count": 45,
+              "delta_totals": {
+                "nr_periods": 0,
+                "nr_throttled": 0,
+                "throttled_usec": 0
+              },
+              "status": "AVAILABLE",
+              "unavailable_interval_count": 0
+            }
+          }
+        },
+        "process_group_totals": {
+          "Q1": {
+            "status": "AVAILABLE",
+            "interval_count": 45,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 52.085778742499315,
+            "cpu_time_s": 52.269999999999996,
+            "average_core_equivalents": 1.003536882080835,
+            "p95_interval_core_equivalents": 1.013917956902473
+          },
+          "G1": {
+            "status": "AVAILABLE",
+            "interval_count": 45,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 52.085778742499315,
+            "cpu_time_s": 52.11,
+            "average_core_equivalents": 1.0004650263101649,
+            "p95_interval_core_equivalents": 1.0077561252501333
+          }
+        },
+        "guest": {
+          "status": "AVAILABLE",
+          "interval_count": 45,
+          "unavailable_interval_count": 0,
+          "observed_wall_s": 52.085778742499315,
+          "cpu_time_s": 182.54,
+          "average_core_equivalents": 3.5046034523634133,
+          "p95_interval_core_equivalents": 4.128558432575922,
+          "steal_cpu_seconds": 0.0,
+          "iowait_cpu_seconds": 0.05,
+          "aggregation": "sum of saved aggregate-guest interval counters; no per-CPU double count"
+        }
+      },
+      "decode_proxy": {
+        "status": "PARTIAL",
+        "phase": "first_to_last_output_arrival",
+        "interval_count": 481,
+        "requested_window_s": 574.1759964160156,
+        "observed_interval_wall_s": 573.3986844604988,
+        "collection_overhead": {
+          "fraction_of_observed_span": 0.0007973402318043252,
+          "maximum_s": 0.004295429000194417,
+          "sample_count": 482,
+          "scope": "non-atomic collector wall time only; existing monitor/RPC/storage overhead and measurement perturbation are separate",
+          "total_s": 0.4571938399840292
+        },
+        "observed_span_fraction": 0.9986462130768811,
+        "cgroups": {
+          "Q1": {
+            "status": "AVAILABLE",
+            "interval_count": 481,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 573.3986844604988,
+            "cpu_time_s": 574.636162,
+            "average_core_equivalents": 1.0021581450621317,
+            "p95_interval_core_equivalents": 1.0031739079965911,
+            "ancestor_quota_status": "UNAVAILABLE",
+            "quota_status": "AVAILABLE",
+            "throttling": {
+              "available_interval_count": 481,
+              "delta_totals": {
+                "nr_periods": 0,
+                "nr_throttled": 0,
+                "throttled_usec": 0
+              },
+              "status": "AVAILABLE",
+              "unavailable_interval_count": 0
+            }
+          },
+          "G1": {
+            "status": "AVAILABLE",
+            "interval_count": 481,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 573.3986844604988,
+            "cpu_time_s": 39006.892566,
+            "average_core_equivalents": 68.02752364648505,
+            "p95_interval_core_equivalents": 69.00964354262796,
+            "ancestor_quota_status": "UNAVAILABLE",
+            "quota_status": "AVAILABLE",
+            "throttling": {
+              "available_interval_count": 481,
+              "delta_totals": {
+                "nr_periods": 0,
+                "nr_throttled": 0,
+                "throttled_usec": 0
+              },
+              "status": "AVAILABLE",
+              "unavailable_interval_count": 0
+            }
+          }
+        },
+        "process_group_totals": {
+          "Q1": {
+            "status": "AVAILABLE",
+            "interval_count": 481,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 573.3986844604988,
+            "cpu_time_s": 574.64,
+            "average_core_equivalents": 1.0021648384852315,
+            "p95_interval_core_equivalents": 1.0105283479665348
+          },
+          "G1": {
+            "status": "AVAILABLE",
+            "interval_count": 481,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 573.3986844604988,
+            "cpu_time_s": 39006.84,
+            "average_core_equivalents": 68.02743197205079,
+            "p95_interval_core_equivalents": 69.0079085105559
+          }
+        },
+        "guest": {
+          "status": "AVAILABLE",
+          "interval_count": 481,
+          "unavailable_interval_count": 0,
+          "observed_wall_s": 573.3986844604988,
+          "cpu_time_s": 39869.92,
+          "average_core_equivalents": 69.53263249550866,
+          "p95_interval_core_equivalents": 71.95359939790104,
+          "steal_cpu_seconds": 914.49,
+          "iowait_cpu_seconds": 0.08,
+          "aggregation": "sum of saved aggregate-guest interval counters; no per-CPU double count"
+        }
+      },
+      "request": {
+        "status": "PARTIAL",
+        "phase": "request_dispatch_to_drain",
+        "interval_count": 527,
+        "requested_window_s": 626.9182324580033,
+        "observed_interval_wall_s": 626.6567820499986,
+        "collection_overhead": {
+          "fraction_of_observed_span": 0.0007821101838008901,
+          "maximum_s": 0.004295429000194417,
+          "sample_count": 528,
+          "scope": "non-atomic collector wall time only; existing monitor/RPC/storage overhead and measurement perturbation are separate",
+          "total_s": 0.4901146509891987
+        },
+        "observed_span_fraction": 0.9995829593167522,
+        "cgroups": {
+          "Q1": {
+            "status": "AVAILABLE",
+            "interval_count": 527,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 626.6567820499986,
+            "cpu_time_s": 628.080529,
+            "average_core_equivalents": 1.0022719724589013,
+            "p95_interval_core_equivalents": 1.003655190327213,
+            "ancestor_quota_status": "UNAVAILABLE",
+            "quota_status": "AVAILABLE",
+            "throttling": {
+              "available_interval_count": 527,
+              "delta_totals": {
+                "nr_periods": 0,
+                "nr_throttled": 0,
+                "throttled_usec": 0
+              },
+              "status": "AVAILABLE",
+              "unavailable_interval_count": 0
+            }
+          },
+          "G1": {
+            "status": "AVAILABLE",
+            "interval_count": 527,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 626.6567820499986,
+            "cpu_time_s": 39095.228239,
+            "average_core_equivalents": 62.386986559224276,
+            "p95_interval_core_equivalents": 68.90234133130323,
+            "ancestor_quota_status": "UNAVAILABLE",
+            "quota_status": "AVAILABLE",
+            "throttling": {
+              "available_interval_count": 527,
+              "delta_totals": {
+                "nr_periods": 0,
+                "nr_throttled": 0,
+                "throttled_usec": 0
+              },
+              "status": "AVAILABLE",
+              "unavailable_interval_count": 0
+            }
+          }
+        },
+        "process_group_totals": {
+          "Q1": {
+            "status": "AVAILABLE",
+            "interval_count": 527,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 626.6567820499986,
+            "cpu_time_s": 628.0899999999999,
+            "average_core_equivalents": 1.0022870859951645,
+            "p95_interval_core_equivalents": 1.010540443357394
+          },
+          "G1": {
+            "status": "AVAILABLE",
+            "interval_count": 527,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 626.6567820499986,
+            "cpu_time_s": 39095.23,
+            "average_core_equivalents": 62.386989369374994,
+            "p95_interval_core_equivalents": 68.9279818893528
+          }
+        },
+        "guest": {
+          "status": "AVAILABLE",
+          "interval_count": 527,
+          "unavailable_interval_count": 0,
+          "observed_wall_s": 626.6567820499986,
+          "cpu_time_s": 40089.92,
+          "average_core_equivalents": 63.97428568291051,
+          "p95_interval_core_equivalents": 71.94241284387297,
+          "steal_cpu_seconds": 916.88,
+          "iowait_cpu_seconds": 0.13,
+          "aggregation": "sum of saved aggregate-guest interval counters; no per-CPU double count"
+        },
+        "processes": {
+          "Q1.process1": {
+            "status": "AVAILABLE",
+            "interval_count": 527,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 626.6567820499986,
+            "cpu_time_s": 0.25,
+            "average_core_equivalents": 0.0003989424628616777,
+            "p95_interval_core_equivalents": 0.0,
+            "runtime_thread_counts": [
+              32
+            ],
+            "runtime_thread_count_status": "AVAILABLE"
+          },
+          "Q1.process2": {
+            "status": "AVAILABLE",
+            "interval_count": 527,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 626.6567820499986,
+            "cpu_time_s": 0.0,
+            "average_core_equivalents": 0.0,
+            "p95_interval_core_equivalents": 0.0,
+            "runtime_thread_counts": [
+              1
+            ],
+            "runtime_thread_count_status": "AVAILABLE"
+          },
+          "Q1.process3": {
+            "status": "AVAILABLE",
+            "interval_count": 527,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 626.6567820499986,
+            "cpu_time_s": 627.8399999999999,
+            "average_core_equivalents": 1.0018881435323028,
+            "p95_interval_core_equivalents": 1.0095358173379378,
+            "runtime_thread_counts": [
+              55
+            ],
+            "runtime_thread_count_status": "AVAILABLE"
+          },
+          "Q1.process4": {
+            "status": "AVAILABLE",
+            "interval_count": 527,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 626.6567820499986,
+            "cpu_time_s": 0.0,
+            "average_core_equivalents": 0.0,
+            "p95_interval_core_equivalents": 0.0,
+            "runtime_thread_counts": [
+              19
+            ],
+            "runtime_thread_count_status": "AVAILABLE"
+          },
+          "G1.process5": {
+            "status": "AVAILABLE",
+            "interval_count": 527,
+            "unavailable_interval_count": 0,
+            "observed_wall_s": 626.6567820499986,
+            "cpu_time_s": 39095.23,
+            "average_core_equivalents": 62.386989369374994,
+            "p95_interval_core_equivalents": 68.9279818893528,
+            "runtime_thread_counts": [
+              151
+            ],
+            "runtime_thread_count_status": "AVAILABLE"
+          }
+        },
+        "psi": {
+          "Q1:cpu:full": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.011473,
+            "average_stall_fraction": 1.8308267505648114e-05,
+            "p95_interval_stall_fraction": 3.5819266853534316e-05,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "Q1:cpu:some": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.013709,
+            "average_stall_fraction": 2.1876408893482958e-05,
+            "p95_interval_stall_fraction": 3.6814292540569504e-05,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "Q1:io:full": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.0,
+            "average_stall_fraction": 0.0,
+            "p95_interval_stall_fraction": 0.0,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "Q1:io:some": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.0,
+            "average_stall_fraction": 0.0,
+            "p95_interval_stall_fraction": 0.0,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "Q1:memory:full": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.0,
+            "average_stall_fraction": 0.0,
+            "p95_interval_stall_fraction": 0.0,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "Q1:memory:some": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.0,
+            "average_stall_fraction": 0.0,
+            "p95_interval_stall_fraction": 0.0,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "G1:cpu:full": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.664731,
+            "average_stall_fraction": 0.0010607576891220234,
+            "p95_interval_stall_fraction": 0.001856287133153177,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "G1:cpu:some": {
+            "status": "AVAILABLE",
+            "stall_time_s": 33.480811,
+            "average_stall_fraction": 0.0534276687957854,
+            "p95_interval_stall_fraction": 0.091054007981289,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "G1:io:full": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.000725,
+            "average_stall_fraction": 1.1569331422988652e-06,
+            "p95_interval_stall_fraction": 0.0,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "G1:io:some": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.00116,
+            "average_stall_fraction": 1.8510930276781845e-06,
+            "p95_interval_stall_fraction": 0.0,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "G1:memory:full": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.0,
+            "average_stall_fraction": 0.0,
+            "p95_interval_stall_fraction": 0.0,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "G1:memory:some": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.0,
+            "average_stall_fraction": 0.0,
+            "p95_interval_stall_fraction": 0.0,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "guest:cpu:full": {
+            "status": "UNAVAILABLE",
+            "stall_time_s": null,
+            "average_stall_fraction": null,
+            "p95_interval_stall_fraction": null,
+            "interval_count": 0,
+            "unavailable_interval_count": 527
+          },
+          "guest:cpu:some": {
+            "status": "AVAILABLE",
+            "stall_time_s": 32.337363,
+            "average_stall_fraction": 0.051602988950688364,
+            "p95_interval_stall_fraction": 0.08726209138231797,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "guest:io:full": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.000918,
+            "average_stall_fraction": 1.4649167236280804e-06,
+            "p95_interval_stall_fraction": 1.7157577066960259e-06,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "guest:io:some": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.008465,
+            "average_stall_fraction": 1.3508191792496407e-05,
+            "p95_interval_stall_fraction": 6.880847073215873e-05,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "guest:memory:full": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.0,
+            "average_stall_fraction": 0.0,
+            "p95_interval_stall_fraction": 0.0,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          },
+          "guest:memory:some": {
+            "status": "AVAILABLE",
+            "stall_time_s": 0.0,
+            "average_stall_fraction": 0.0,
+            "p95_interval_stall_fraction": 0.0,
+            "interval_count": 527,
+            "unavailable_interval_count": 0
+          }
+        }
+      }
+    },
+    "interim_observation": {
+      "source": "INPUT-G4K-inflight-cpu-observation.json",
+      "sha256": "4805ce517f0446be6b4d4d6612c1aca7d2f5e99a60bbb57c88a63ed93a3ba77a",
+      "duration_seconds": 20.50584604300093,
+      "G1_cgroup_core_equivalents": 68.62791118439766,
+      "Q1_cgroup_core_equivalents": 1.001882582992095,
+      "guest_busy_core_equivalents": 70.17218392172315,
+      "guest_steal_core_equivalents": 1.614661493632989,
+      "phase": "INTERIM_UNCONFIRMED_NATIVE_BOUNDARY",
+      "interpretation": "Completed native prompt52.496s/decode574.177s and output-proxy summary corroborate sustained high-CPU output, but do not exactly align these two host endpoints to native phase boundaries."
+    },
+    "phase_basis": "worker client-event/receipt proxy; not native phase timing",
+    "p95_method": "elapsed-time weighted nearest rank of sampled interval core-equivalents",
+    "p95_caveat": "short decode windows and fewer than 20 intervals give coarse, unstable p95; no instantaneous peak or cores-needed proof",
+    "clock_alignment": "client receipt selects phases; host midpoint deltas measure elapsed time; RPC lag uncorrected",
+    "sampling_precision": {
+      "cgroup_cpu_counter_unit": "microseconds",
+      "guest_cpu_counter_unit": "USER_HZ ticks",
+      "process_cpu_tick_seconds": [
+        0.01
+      ]
+    },
+    "memory_psi_interpretation": "Cumulative memory stall counter deltas0; host some/full avg300 retained0.02 historical pressure at start, falling to0."
+  },
+  "memory": {
+    "headroom_policy": "sampled required-working-set ESTIMATE times23/20 (15 percent); historical25 percent reports unchanged",
+    "basis": "max(anon+kernel+max(mapped,shmem), summed_process_RSS+kernel, pinned_native_host_weights+workspace_floor)",
+    "sample_scope": "G4K dispatch to drain; Q resident idle",
+    "models": {
+      "G1": {
+        "process_rss": {
+          "available_samples": 528,
+          "first": 430707449856,
+          "last": 431047880704,
+          "sampled_minimum": 430707449856,
+          "sampled_peak": 431047880704,
+          "total_samples": 528
+        },
+        "process_swap": {
+          "available_samples": 528,
+          "first": 0,
+          "last": 0,
+          "sampled_minimum": 0,
+          "sampled_peak": 0,
+          "total_samples": 528
+        },
+        "cgroup_current": {
+          "available_samples": 528,
+          "first": 438952464384,
+          "last": 439293304832,
+          "sampled_minimum": 438952464384,
+          "sampled_peak": 439295496192,
+          "total_samples": 528
+        },
+        "cgroup_lifetime_peak": {
+          "available_samples": 528,
+          "first": 439783563264,
+          "last": 439783563264,
+          "sampled_minimum": 439783563264,
+          "sampled_peak": 439783563264,
+          "total_samples": 528
+        },
+        "file": {
+          "available_samples": 528,
+          "first": 436500619264,
+          "last": 436500619264,
+          "sampled_minimum": 436500619264,
+          "sampled_peak": 436500619264,
+          "total_samples": 528
+        },
+        "file_mapped": {
+          "available_samples": 528,
+          "first": 429923897344,
+          "last": 429925859328,
+          "sampled_minimum": 429923278848,
+          "sampled_peak": 429925859328,
+          "total_samples": 528
+        },
+        "shmem": {
+          "available_samples": 528,
+          "first": 429901271040,
+          "last": 429901271040,
+          "sampled_minimum": 429901271040,
+          "sampled_peak": 429901271040,
+          "total_samples": 528
+        },
+        "anon": {
+          "available_samples": 528,
+          "first": 612745216,
+          "last": 953176064,
+          "sampled_minimum": 612745216,
+          "sampled_peak": 953176064,
+          "total_samples": 528
+        },
+        "kernel": {
+          "available_samples": 528,
+          "first": 1838841856,
+          "last": 1839509504,
+          "sampled_minimum": 1838841856,
+          "sampled_peak": 1839509504,
+          "total_samples": 528
+        },
+        "cgroup_swap": {
+          "available_samples": 528,
+          "first": 0,
+          "last": 0,
+          "sampled_minimum": 0,
+          "sampled_peak": 0,
+          "total_samples": 528
+        },
+        "oom": {
+          "available_samples": 528,
+          "counter_reset_or_insufficient_samples": false,
+          "first": 0,
+          "last": 0,
+          "observed_counter_delta": 0,
+          "sampled_minimum": 0,
+          "sampled_peak": 0,
+          "total_samples": 528
+        },
+        "oom_kill": {
+          "available_samples": 528,
+          "counter_reset_or_insufficient_samples": false,
+          "first": 0,
+          "last": 0,
+          "observed_counter_delta": 0,
+          "sampled_minimum": 0,
+          "sampled_peak": 0,
+          "total_samples": 528
+        },
+        "gpu_used": {
+          "available_samples": 528,
+          "first": 83720404992,
+          "last": 83720404992,
+          "sampled_minimum": 83720404992,
+          "sampled_peak": 83720404992,
+          "total_samples": 528
+        },
+        "gpu_free": {
+          "available_samples": 528,
+          "first": 18254659584,
+          "last": 18254659584,
+          "sampled_minimum": 18254659584,
+          "sampled_peak": 18254659584,
+          "total_samples": 528
+        },
+        "required_working_set_estimate": {
+          "available_samples": 528,
+          "first": 432546291712,
+          "last": 432887390208,
+          "sampled_minimum": 432546291712,
+          "sampled_peak": 432887390208,
+          "total_samples": 528
+        },
+        "required_with_15_percent": {
+          "available_samples": 528,
+          "first": 497428235469,
+          "last": 497820498740,
+          "sampled_minimum": 497428235469,
+          "sampled_peak": 497820498740,
+          "total_samples": 528
+        },
+        "native_host_floor": {
+          "available_samples": 528,
+          "first": 429888686522,
+          "last": 429888686522,
+          "sampled_minimum": 429888686522,
+          "sampled_peak": 429888686522,
+          "total_samples": 528
+        },
+        "unit": "bytes except oom counts",
+        "cap_bytes": 687194767360
+      },
+      "Q1": {
+        "process_rss": {
+          "available_samples": 528,
+          "first": 6334287872,
+          "last": 6334287872,
+          "sampled_minimum": 6334287872,
+          "sampled_peak": 6334287872,
+          "total_samples": 528
+        },
+        "process_swap": {
+          "available_samples": 528,
+          "first": 0,
+          "last": 0,
+          "sampled_minimum": 0,
+          "sampled_peak": 0,
+          "total_samples": 528
+        },
+        "cgroup_current": {
+          "available_samples": 528,
+          "first": 4658192384,
+          "last": 4658192384,
+          "sampled_minimum": 4658192384,
+          "sampled_peak": 4658970624,
+          "total_samples": 528
+        },
+        "cgroup_lifetime_peak": {
+          "available_samples": 528,
+          "first": 13485965312,
+          "last": 13485965312,
+          "sampled_minimum": 13485965312,
+          "sampled_peak": 13485965312,
+          "total_samples": 528
+        },
+        "file": {
+          "available_samples": 528,
+          "first": 260050944,
+          "last": 260050944,
+          "sampled_minimum": 260050944,
+          "sampled_peak": 260050944,
+          "total_samples": 528
+        },
+        "file_mapped": {
+          "available_samples": 528,
+          "first": 64737280,
+          "last": 64737280,
+          "sampled_minimum": 64737280,
+          "sampled_peak": 64737280,
+          "total_samples": 528
+        },
+        "shmem": {
+          "available_samples": 528,
+          "first": 55451648,
+          "last": 55451648,
+          "sampled_minimum": 55451648,
+          "sampled_peak": 55451648,
+          "total_samples": 528
+        },
+        "anon": {
+          "available_samples": 528,
+          "first": 4320718848,
+          "last": 4320718848,
+          "sampled_minimum": 4320718848,
+          "sampled_peak": 4320718848,
+          "total_samples": 528
+        },
+        "kernel": {
+          "available_samples": 528,
+          "first": 77209600,
+          "last": 77209600,
+          "sampled_minimum": 77209600,
+          "sampled_peak": 77217792,
+          "total_samples": 528
+        },
+        "cgroup_swap": {
+          "available_samples": 528,
+          "first": 0,
+          "last": 0,
+          "sampled_minimum": 0,
+          "sampled_peak": 0,
+          "total_samples": 528
+        },
+        "oom": {
+          "available_samples": 528,
+          "counter_reset_or_insufficient_samples": false,
+          "first": 0,
+          "last": 0,
+          "observed_counter_delta": 0,
+          "sampled_minimum": 0,
+          "sampled_peak": 0,
+          "total_samples": 528
+        },
+        "oom_kill": {
+          "available_samples": 528,
+          "counter_reset_or_insufficient_samples": false,
+          "first": 0,
+          "last": 0,
+          "observed_counter_delta": 0,
+          "sampled_minimum": 0,
+          "sampled_peak": 0,
+          "total_samples": 528
+        },
+        "gpu_used": {
+          "available_samples": 528,
+          "first": 64470646784,
+          "last": 64470646784,
+          "sampled_minimum": 64470646784,
+          "sampled_peak": 64470646784,
+          "total_samples": 528
+        },
+        "gpu_free": {
+          "available_samples": 528,
+          "first": 37503369216,
+          "last": 37503369216,
+          "sampled_minimum": 37503369216,
+          "sampled_peak": 37503369216,
+          "total_samples": 528
+        },
+        "required_working_set_estimate": {
+          "available_samples": 528,
+          "first": 8470130688,
+          "last": 8470130688,
+          "sampled_minimum": 8470130688,
+          "sampled_peak": 8470130688,
+          "total_samples": 528
+        },
+        "required_with_15_percent": {
+          "available_samples": 528,
+          "first": 9740650292,
+          "last": 9740650292,
+          "sampled_minimum": 9740650292,
+          "sampled_peak": 9740650292,
+          "total_samples": 528
+        },
+        "native_host_floor": {
+          "available_samples": 0,
+          "first": null,
+          "last": null,
+          "sampled_minimum": null,
+          "sampled_peak": null,
+          "total_samples": 528
+        },
+        "unit": "bytes except oom counts",
+        "cap_bytes": 34359738368
+      }
+    },
+    "host": {
+      "host.available_bytes": {
+        "available_samples": 528,
+        "first": 494371631104,
+        "last": 493349310464,
+        "sampled_minimum": 493239885824,
+        "sampled_peak": 494371631104,
+        "total_samples": 528
+      },
+      "host.swap_used_bytes": {
+        "available_samples": 528,
+        "first": 104333312,
+        "last": 104333312,
+        "sampled_minimum": 104333312,
+        "sampled_peak": 104333312,
+        "total_samples": 528
+      },
+      "vmstat.pswpin": {
+        "available_samples": 528,
+        "counter_reset_or_insufficient_samples": false,
+        "first": 21511,
+        "last": 21543,
+        "observed_counter_delta": 32,
+        "sampled_minimum": 21511,
+        "sampled_peak": 21543,
+        "total_samples": 528
+      },
+      "vmstat.pswpout": {
+        "available_samples": 528,
+        "counter_reset_or_insufficient_samples": false,
+        "first": 38302,
+        "last": 38302,
+        "observed_counter_delta": 0,
+        "sampled_minimum": 38302,
+        "sampled_peak": 38302,
+        "total_samples": 528
+      }
+    },
+    "coverage": {
+      "sample_count": 528,
+      "coverage_fraction_estimate": 0.8410378954296892,
+      "coverage_method": "union_of_half_interval_windows_not_continuous_observation",
+      "collection_overhead_fraction": 0.06572301419667706,
+      "collection_overhead_s": 41.20295589199304,
+      "peak_scope": "sampled; memory.peak covers cgroup lifetime, not request only"
+    },
+    "estimate_scope": "Retained sampled high-water used by guard; can include pre-request demand. Not the instantaneous demand or G4K-only maximum.",
+    "guest_swap_interpretation": "Unchanged swap-used bytes; pswpin delta32, pswpout delta0. Guest activity does not establish model swap."
+  },
+  "comparisons": {
+    "baselines": [
+      {
+        "id": "prior_G1_schema",
+        "report": "glmrepair-combined-20260919.json",
+        "configured_capacity": 4096,
+        "input_tokens": 3546,
+        "completion_tokens": 145,
+        "cached_tokens": 0,
+        "native_prompt_seconds": 51.750817,
+        "native_decode_seconds": 11.391151,
+        "client_ttft_any_seconds": 51.89570666698273,
+        "client_total_seconds": 63.222479666990694,
+        "native_decode_tokens_per_second": 12.64139155033587,
+        "strict": "PASS",
+        "semantic": "PASS"
+      },
+      {
+        "id": "A-G65008",
+        "report": "concurrent-480k-cpu-20260920.json",
+        "configured_capacity": 480000,
+        "input_tokens": 65008,
+        "completion_tokens": 64,
+        "cached_tokens": 0,
+        "native_prompt_seconds": 927.980198,
+        "native_decode_seconds": 13.718008,
+        "client_ttft_any_seconds": 930.4110445840051,
+        "client_total_seconds": 941.8190415840363,
+        "native_decode_tokens_per_second": 4.592503518003489,
+        "strict": "PASS",
+        "semantic": "PASS"
+      },
+      {
+        "id": "A-Qnear480K",
+        "report": "concurrent-480k-cpu-20260920.json",
+        "configured_capacity": 480000,
+        "input_tokens": 479487,
+        "completion_tokens": 87,
+        "cached_tokens": null,
+        "native_prompt_seconds": null,
+        "native_decode_seconds": null,
+        "client_ttft_any_seconds": 249.66522200003965,
+        "client_total_seconds": 253.1664609159925,
+        "client_decode_tokens_per_second_estimate": 24.85495855731992,
+        "strict": "HARNESS_FAILURE",
+        "semantic": "PASS",
+        "fence_removed": true
+      }
+    ],
+    "short_observed_total_ratio": 9.916065231230178,
+    "short_observed_native_decode_rate_change_percent": -96.48682983903508,
+    "old_A_placement": "G96/batch96 on0-95; Q16 allowed96-111; guest112",
+    "old_A_G_output_cpu_mean_p95": [
+      95.261,
+      95.981
+    ],
+    "old_A_G_whole_request_cpu_mean_p95": [
+      2.359,
+      1.001
+    ],
+    "interpretation": "Descriptive whole-configuration observation only; long comparison NOT_RUN.",
+    "old_112_cfg480000_discarded_G_warmups": [
+      {
+        "id": "A-G1-warmup",
+        "input_tokens": 2642,
+        "completion_tokens": 32,
+        "native_decode_seconds": 69.640722,
+        "native_n_minus_one_decode_tokens_per_second": 0.44514185249256893,
+        "formal_benchmark": false
+      },
+      {
+        "id": "B-G1-warmup",
+        "input_tokens": 2642,
+        "completion_tokens": 32,
+        "native_decode_seconds": 68.661045,
+        "native_n_minus_one_decode_tokens_per_second": 0.4514932739517728,
+        "formal_benchmark": false
+      }
+    ]
+  },
+  "failure_history": [
+    {
+      "source": "95848420866e5bd780e665887cf1aeb14e59d445",
+      "stage": "G/Q load and G warmup; pre-readiness missing process accounting latched",
+      "measured_rows": 0,
+      "restored": "STOPPED/manual"
+    },
+    {
+      "source": "a94c04d8e0ea31ab413d43a68301366e87788af1",
+      "stage": "G loaded; Q readiness FileNotFound in process proof, apparent stale/disappearing PID; exact cause unproven",
+      "warmups": 0,
+      "measured_rows": 0,
+      "restored": "STOPPED/manual"
+    },
+    {
+      "source": "59aeef68640986082d6e6b431be3d86386e64168",
+      "stage": "Both loads and both discarded warmups; post-readiness UNAVAILABLE latched before main",
+      "measured_rows": 0,
+      "restored": "STOPPED/manual"
+    }
+  ],
+  "policy_correction": "d257 separates pending whole-pair proof from latched numeric/identity/storage faults; fresh complete PASS replaces a current gap only within bounded attempts. Warmhold ordering and three explicit unadmitted final-grant attempts are harness fixes, not model-performance fixes. Failed samples remain failed.",
+  "warm_hold": {
+    "status": "FAILED",
+    "models_retained": false,
+    "historical_hold": {
+      "status": "HELD",
+      "phase": "WARM_HOLD",
+      "reason": "quality_review",
+      "captured_at": 1789922136.2197785,
+      "receipt_sha256": "86c3830cee8834feb5d39f2ff8d25ef254aef6c48c82bba369fe8cea5c111521",
+      "no_active_inference": true,
+      "canonical_lease_retained": true,
+      "preliminary_result_sha256": null
+    },
+    "historical_only": true,
+    "failure": {
+      "operation": "hold_checkpoint RPC",
+      "exception_class": "RuntimeError",
+      "runner_frame": "postrestart72_run.py:395",
+      "current_hold_checkpoint": {
+        "current_held_proof": false,
+        "phase": "RECOVERY_REQUIRED",
+        "reason": "RuntimeError",
+        "updated_epoch": 1789922405.0603461
+      },
+      "protected_exception_class": "PlanError",
+      "protected_require_code": null,
+      "protected_frames": [
+        {
+          "function": "_serve_lines",
+          "line": 2233,
+          "source": "host.py"
+        },
+        {
+          "function": "dispatch",
+          "line": 1957,
+          "source": "host.py"
+        },
+        {
+          "function": "hold_checkpoint",
+          "line": 1821,
+          "source": "host.py"
+        },
+        {
+          "function": "_gate",
+          "line": 112,
+          "source": "owner.py"
+        },
+        {
+          "function": "gate",
+          "line": 842,
+          "source": "host.py"
+        },
+        {
+          "function": "jobs",
+          "line": 782,
+          "source": "host.py"
+        },
+        {
+          "function": "require",
+          "line": 32,
+          "source": "lifecycle.py"
+        }
+      ],
+      "root_mapped_guard": "pending_systemd_jobs",
+      "root_source_mapping": "pinned d257 host.py:782 require(not raw, pending_systemd_jobs); systemctl list-jobs nonempty",
+      "mapping_evidence": "root incoming-latest source mapping; diagnostic retained frames and null require_code, not exception message",
+      "systemd_job_identities": "UNKNOWN: not retained",
+      "interpretation": "lifecycle guard refusal; no demonstrated CPU/memory/model failure"
+    },
+    "final_owner_status": "RESTORED_AFTER_HOLD_RPC_FAILURE",
+    "final_owner_status_utc": "2026-09-20T16:41:56.471142+00:00",
+    "restoration": {
+      "status": "RESTORED_WITH_MEASUREMENT_FAILURE",
+      "restored": true,
+      "original_endstate": "STOPPED/manual",
+      "authenticated_worker_LAN": true,
+      "both_local_tunnels": "CLOSED",
+      "source": "current CONT3 final-restoration-receipt.json, not predecessor receipt"
+    },
+    "followup": "NOT_AUTHORIZED; no retained owner proven for warm handoff; root review and fresh source-bound recovery/GO required",
+    "release": "Report submits no RELEASE. Runner canonically restored after hold failure; explicit-release control is historical, not executed here.",
+    "crash_limit": "RECOVERY_REQUIRED/stale ledger is not proof of live lease; no automatic warm adoption",
+    "private_handoff": "Exact native session/process/port/control identities preserved outside public reports in task-root evidence/handoff."
+  },
+  "limits": [
+    "Configured/native allocation480000 is not occupied480000 GLM acceptance; measured occupied3794 only.",
+    "Actual72/eight guest NUMA nodes/shared G72+Q8 differs from old112/seven nodes/disjoint G96+Q16.",
+    "Short baseline configured4096 versus current480000, fresh prefixes, different input/output lengths, Q resident idle, one ordered observation and known variability prevent a causal core-count or pool claim.",
+    "Old A long exposure also included Q256; new authorized sequence does not. Old B G88+Q8 is partial, not a valid completed96 comparison.",
+    "CPU phase proxies use client events with uncorrected host/worker alignment; native aggregate durations are not exact CPU boundaries. Process/cgroup/guest channels overlap.",
+    "Whole-request percentiles can hide short near-full-core decode; no minimum-core or physical-bandwidth inference.",
+    "Current/lifetime peak/file/mapped/shmem/RSS tiers are nonadditive; RSS can double count shared pages; reclaimability and Q native host-weight floor are unproven.",
+    "Earlier HELD is historical and superseded by RECOVERY_REQUIRED/restoration. Local read-only process check cannot substitute for protected live lease proof."
+  ],
+  "evidence_files": {
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/root-milestones.json": "9ae9fc7ea37e1028ae3d0bc2b1ef3b3ac2aebeb7cc47c4e43e86e04252e7e32c",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/status.json": "964e5c268596d25d3b92f5e0c76ed744aeaab356afbc9fc58ab29951a6fb1a42",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/P-G4K-result.json": "990764a8120c8c437184c93eaf52e68f11b389b56bf5c385314c0295bc44a580",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/load-warmup-root.json": "574ab1fb9a4a1d4b3b5a22ea03dc44b9c194ee1990142bc15536480c5bd824f3",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/warm-hold.json": "86c3830cee8834feb5d39f2ff8d25ef254aef6c48c82bba369fe8cea5c111521",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/hold-current.json": "ad52ada0a3500ed0becc25f8b2e76de72a4762d48b5c0c60c8439908215a2f63",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/incoming-latest.md": "c5af2afe8bcf98883a2bc763cdc8e2fc456459d8256309d426465864ea829425",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/run-binding-verification.json": "5ed80a06d8b045f85cf823125ff641230d888337355d4d8e2a61cd908be35ca0",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/deterministic-launch-receipt.json": "d822d7d1a0991e82877511f5315f9a2460df3ea842360f453f15b36f138f0cd8",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/predecessor-failure-evidence.json": "0e286ef916d5ce695a152dc56542878c50d08c56cad46ace16e7b3166c90a98e",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/predecessor-final-restoration-receipt.json": "b6da617db23378137045141248697af621033b907c757fb69ceff55a6d716665",
+    "reports/glmrepair-combined-20260919.json": "06314a7c2f704658b597713b99d2b0d2cd41cff7167e0716b4728a822ee9d452",
+    "reports/concurrent-480k-cpu-20260920.json": "3015170b0cb61111224cdf10cbd7aa20881939f8aa02aefd7c74321ae45144e6",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/run-outcome.json": "b4040d00c25f944a71cbca625a99fece7044ed10527191680bdfd7d502dbb1ce",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/final-restoration-receipt.json": "b6da617db23378137045141248697af621033b907c757fb69ceff55a6d716665",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/operator-status.json": "e051d8cc34fca1e5a2f9142004a28f4287cdbf77306beb825a560bc68dcbe0e6",
+    "historical_initial_hold_current_snapshot_sha256": "e76a1942a04a95805a1156b7bb9349ba4e50cf31f57c969ef4a122857c8af4ed",
+    "tasks/POSTRESTART72-RUN-CONT3-20260920/protected-rpc-diagnostics.json": "3adcabc748836760749a86b5d1f6d64a7a5cba9c9d3135319f1c64406385bf3a",
+    "tasks/POSTRESTART72-REPORT-20260920/inputs-final/report-incoming-final.md": "9db77e880ea3a51918330baf9a1649215629b2bacf505d7bb27a1d74cecae136"
+  },
+  "pending": [
+    "Systemd pending-job identities UNKNOWN/not retained; guard mapped by root from pinned source and saved diagnostic frames",
+    "finish_reason/final-content character length/content-only hash absent; remain null, no raw reconstruction",
+    "Root exact GO before push/PR publication; no new inference; CLI-exit/keeper-continuity acceptance failed or unavailable"
+  ],
+  "next_action": "Root review of failed warm retention and incomplete benchmark; no further inference, retry, release/reload or production activation authorized.",
+  "handoff_verification": {
+    "status": "WARM_RETENTION_FAILED",
+    "local_worker_process_check": "keeper absent/no current children; native wrapper still present",
+    "snapshot_times_utc": [
+      "2026-09-20T16:42:44.334779+00:00",
+      "2026-09-20T16:44:02.036168+00:00"
+    ],
+    "saved_hold_proof_advancing": false,
+    "current_held_proof": false,
+    "native_cli_exit_then_keeper_alive": "NOT_ESTABLISHED",
+    "specific_existing_SSH_child_identity": "UNAVAILABLE from saved receipts",
+    "fresh_remote_pair_identity_and_live_lease": "NOT_ESTABLISHED; no VM contact",
+    "receipt_sha256": "ed2e8bb3c3d6522d2a319ca00a0cae795e84472e51963fb8db80e62b770d13b1"
+  }
+}
