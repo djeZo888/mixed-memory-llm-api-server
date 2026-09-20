@@ -310,3 +310,28 @@ rejects browser Origin/fetch context and provides no CORS; future browser access
 needs a trusted server-side integration that keeps control credentials out of
 browser code. No such integration is implemented here. Installer work and tests
 remain paused.
+
+## Concurrent source candidate (2026-09-20)
+
+Source-only preparation adds explicit `llmctl migrate-slots --yes`, targeted
+`start|stop|restart|select|deactivate --target glm|qwen --expected-generation N`,
+and read-only `rollback-check --yes`. Migration is a root-reviewed activation
+step with protected pre-migration source/state/boot preservation, never a side
+effect of an API request. The API uses its own durable control generation and
+opaque active identity; these differ from the lifecycle generation used by CLI.
+See [operator/migration/rollback contract](concurrent-api.md),
+[targeted API bodies](control-api.md), and [evidence schema](concurrent-profile-acceptance.md).
+
+A create timeout keeps `pending_create` ownership (planned name, deployment,
+instance, image and owner labels). Stop/recover resolves that exact identity;
+unknown absence is not successful cleanup and blocks retry/rollback. A returned
+container ID is journaled before inspect. Do not erase this record or adopt an
+unrelated same-name container. Root must resolve any persistent pending-create
+ambiguity before activation continuation. Both slot identities survive emergency
+journal writes and partial stop failure; inspect every slot after a failure.
+
+One boot unit replays explicit resume intents in GLM, then Qwen order. Its source
+timeout is five hours to cover the two bounded starts; physical reboot and Linux
+unit acceptance remain pending. Docker restart remains disabled. Benchmarks with
+singleton restoration refuse any migrated slot state, even when only one slot
+is selected. No source receipt is live acceptance.

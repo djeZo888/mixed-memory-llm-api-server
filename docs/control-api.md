@@ -229,8 +229,9 @@ Unknown observation never becomes Ready based on saved state.
 
 A running backend requires `allow_interrupt:true` for a switch. Direct inference
 requests and agent sessions have no lifecycle lease, drain guarantee or session
-reservation. `switch_effect` is always `interrupts_inference`. Stop may terminate
-an in-flight response/stream. Stop during another transition returns 409; no
+reservation. `switch_effect` is `interrupts_inference` for singleton state and
+`interrupts_target_inference` for slot state. Stop may terminate the explicitly
+targeted model's in-flight response/stream. The peer is not stopped. Stop during another transition returns 409; no
 preemptive cancellation or force-kill route exists. The source service template's
 process termination and reboot behavior require later live acceptance.
 

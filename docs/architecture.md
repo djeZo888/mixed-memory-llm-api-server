@@ -1,5 +1,14 @@
 # Architecture
 
+The 2026-09-20 source candidate extends the existing lifecycle/control owner with
+exactly two fixed GLM/Qwen slots. See [concurrent API architecture](concurrent-api.md)
+and [closed candidate profiles and acceptance](concurrent-profile-acceptance.md).
+Migration and per-slot operations are covered by worker-only synthetic tests;
+production still requires root source review, favorable concurrent benchmark
+results and protected accepted-capacity evidence. Existing private authenticated
+inference endpoints and the sole lifecycle lease/boot owner are retained.
+Historical milestone descriptions below do not reopen paused installer work.
+
 ## Layers
 
 1. Host safety: preflight, disk dry-run, root-disk guard, and milestone reports.

@@ -11,6 +11,16 @@ only for that experiment. BENCHPREP is source/offline preparation plus read-only
 baseline inspection; root dispatches a fresh BENCHRUN after review. It does not
 authorize a production redesign, installer work, or launching RUN from PREP.
 
+Current bounded exception, 2026-09-20: concurrent production API source preparation
+is authorized in the isolated `CONCURRENT-API-SOURCE-20260920` Worker1 task while
+the separately owned benchmark runs. [Fixed-slot source contract](docs/concurrent-api.md)
+and [candidate evidence gate](docs/concurrent-profile-acceptance.md) supersede the
+historical singleton restriction for this task only. Exactly GLM/GPU0 and
+Qwen/GPU1 may be admitted by the reviewed fixed pair. Source preparation grants
+no ai-vm contact or activation; favorable benchmark results, accepted capacity
+evidence and root source review precede a fresh activation session. Installer,
+frontend and future ai-harness work remain outside this task.
+
 ## Authorized sequence and ownership
 
 - Finish working **ai-vm first**: authenticated private-network inference and

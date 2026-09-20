@@ -113,7 +113,8 @@ protected paths and canonical lifecycle owner:
    restores source/state, and it does not replace the separate control-operation
    drain or live source-byte verification.
 5. With the lease/maintenance ownership preserved, restore the protected prior
-   production and recovery source, the exact backed-up v2 state, and original
+   production and recovery source, the exact backed-up v2 state, the backed-up
+   singleton control journal (or its captured absence), and original
    boot intent/unit. Recheck source digests and registration. Use that reviewed
    canonical lifecycle to return the original
    `qwen38-27b-1000000-yarn4-tp2-bf16kv` deployment to its captured intent; never
@@ -184,3 +185,12 @@ streaming/schema/tool-result continuation, peer survival during targeted
 stop/restart, control-service restart persistence, deterministic boot replay and
 the exact manual rollback. Distinguish a simulated boot replay from an actual
 physical reboot. No source test closes those live acceptance steps.
+
+
+The protected migration backup also captures `prior_control_journal` (schema 1
+or `null` for a verified absent journal). Migration refuses nonterminal control
+operations or a non-singleton prior journal. Preserve this backup: the candidate
+control journal becomes schema 2 after slot reconciliation, and older control
+source cannot read it. Root drains control before rollback, archives the pair
+journal, and restores the captured singleton journal/absence with the old source.
+The read-only rollback check also refuses currently nonterminal operations.

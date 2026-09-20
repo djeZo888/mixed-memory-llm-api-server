@@ -18,6 +18,7 @@ RECOVERY_ROOT = "/usr/local/lib/local-ai-server"
 RECOVERY_FILES = (
     "scripts/llmctl", "scripts/lifecycle/__init__.py", "scripts/lifecycle/manager.py",
     "scripts/lifecycle/runtime_io.py", "scripts/lifecycle/qwen_next.py",
+    "scripts/lifecycle/slot_state.py",
     "scripts/lifecycle/storage_binding.py", "scripts/common/lifecycle_lease.py",
     "scripts/install/__init__.py", "scripts/install/storage.py", "scripts/install/storage_io.py",
     "scripts/install/prerequisites.py",
@@ -137,7 +138,7 @@ def render_boot_unit(binding, source_root, instance_path):
         "WorkingDirectory=/",
         "ExecStart=" + command + " boot-start --yes --instance " + instance_path,
         "ExecStop=" + stop_command + " boot-stop --yes --instance " + instance_path,
-        "TimeoutStartSec=3h", "TimeoutStopSec=5min", "UMask=0077",
+        "TimeoutStartSec=5h", "TimeoutStopSec=5min", "UMask=0077",
         "StandardOutput=null", "StandardError=null", "",
         "[Install]", "WantedBy=multi-user.target", "",
     ])

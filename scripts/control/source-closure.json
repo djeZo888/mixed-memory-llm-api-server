@@ -20,7 +20,8 @@
     "scripts/lifecycle/storage_binding.py",
     "scripts/lifecycle/qwen_next.py",
     "scripts/install/__init__.py",
-    "scripts/install/storage.py"
+    "scripts/install/storage.py",
+    "scripts/lifecycle/slot_state.py"
   ],
   "normal_files": [
     "scripts/install/storage_io.py",
@@ -40,7 +41,9 @@
     "tests/lifecycle/sglang38_fixture/auth_native.py",
     "tests/lifecycle/sglang38_fixture/chat_template.jinja",
     "tests/lifecycle/sglang38_fixture/cache_probe.py",
-    "tests/lifecycle/sglang38_fixture/qwen38_config.json"
+    "tests/lifecycle/sglang38_fixture/qwen38_config.json",
+    "scripts/lifecycle/concurrent_profiles.py",
+    "scripts/runtime/sglang38_pair_file_auth.py"
   ],
   "normal_profile_directories": [
     "configs/deployments",

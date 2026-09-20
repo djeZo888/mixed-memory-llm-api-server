@@ -22,7 +22,7 @@ from typing import Any
 from common.lifecycle_lease import (acquire_lease, LifecycleLease, LeaseError,
                                     _validate_borrowed_lease, transition_in_progress as lease_in_progress)
 from .storage_binding import RegisteredStorageBinding, BindingError, _entered_storage_context
-from . import qwen_next
+from . import qwen_next, slot_state
 from .runtime_io import (Docker, LifecycleError, probe, probe_sglang, run,
                          validate_container_network, validate_key_metadata,
                          validate_published)
@@ -206,6 +206,8 @@ class Manager:
             require(test_paths or paths.get('lock', str(self.lock_file)) == str(self.lock_file), "unsafe_lock_path")
             require(test_paths or paths.get('recovery', str(self.recovery_file)) == str(self.recovery_file), "unsafe_recovery_path")
         self.state = empty_state()
+        self._slots_envelope = None
+        self._slot_target = None
 
     def historical_imported(self):
         flag = self.instance.get('historical_import', False)
@@ -368,7 +370,9 @@ class Manager:
         require(auth.get("mode") == "0600", "unsafe_key_mode")
         require(auth.get("key_file") == self.binding.path("data", "services/secrets/llm-api-key"), "unsafe_key_path")
         mounts = d.get("mounts", [])
-        require(len(mounts) == (6 if adapter else 5), "invalid_mount_contract")
+        launcher_targets = (adapter.launcher_targets(d) if adapter and hasattr(adapter, 'launcher_targets')
+                            else {adapter.LAUNCHER_TARGET} if adapter else set())
+        require(len(mounts) == 5 + len(launcher_targets), "invalid_mount_contract")
         targets = set()
         for m in mounts:
             source, target = Path(m["source"]), Path(m["target"])
@@ -380,7 +384,7 @@ class Manager:
             require(str(target) not in targets and type(m["read_only"]) is bool, "duplicate_mount_target")
             targets.add(str(target))
         require(targets == {"/models", "/cache", "/logs", "/service", auth["container_key_file"]}
-                | ({adapter.LAUNCHER_TARGET} if adapter else set()), "invalid_mount_targets")
+                | launcher_targets, "invalid_mount_targets")
         by_target = {m["target"]: m for m in mounts}
         for role, target in (("model", "/models"), ("cache", "/cache"), ("logs", "/logs"), ("service", "/service")):
             require(d["paths"][role] == by_target[target]["source"], "path_mount_mismatch")
@@ -399,6 +403,10 @@ class Manager:
             require(type(value) is int and low <= value <= high, "invalid_launch_limit")
         if adapter:
             adapter.validate(d)
+            return
+        from . import concurrent_profiles as pair
+        if pair.is_pair(d):
+            pair.validate(d)
             return
         require(d["_runtime"].get("environment") == {"LD_LIBRARY_PATH": "/opt/llama", "LLAMA_ARG_HOST": "0.0.0.0", "XDG_CACHE_HOME": "/cache"}, "unsafe_runtime_environment")
         launch = d.get("launch", {})
@@ -551,6 +559,20 @@ class Manager:
                 return empty_state()
         s = (read_json(path) if self.test_paths else
              protected_json(path) if recovery or offline else self.binding.read_json('data', str(path)))
+        if s.get("schema_version") == 3:
+            s = slot_state.validate(s, self.validate_identity)
+            if not recovery and self.recovery_file.exists():
+                try:
+                    journal = self.read_state(recovery=True)
+                except (LifecycleError, BindingError, OSError):
+                    journal = {}
+                    s['failure'] = 'recovery_journal_invalid_primary_used'
+                if journal.get('updated_at', 0) >= s.get('updated_at', 0) and journal.get('state_persisted') is False:
+                    require(journal.get('schema_version') == 3, 'recovery_state_version_mismatch')
+                    return journal
+            return s
+        if s.get("schema_version") == 2:
+            require(type(s["schema_version"]) is int, "invalid_state_version")
         if s.get("schema_version") != 2:
             require(not recovery and s.get("schema_version") is None, "invalid_state_version")
             ident = s.get("model_profile")
@@ -598,6 +620,19 @@ class Manager:
         return {k: v for k, v in s.items() if k in allowed}
 
     def save(self, *, emergency=False) -> None:
+        if self._slots_envelope is not None:
+            envelope, target, selected = self._slots_envelope, self._slot_target, self.state
+            # Existing singleton helpers may replace self.state on selection.
+            selected = {k: v for k, v in selected.items() if k in set(slot_state.empty_slot()) | {'last_selected'}}
+            selected.setdefault('generation', envelope['slots'][target]['generation'])
+            selected.setdefault('pending_create', None)
+            envelope['slots'][target] = selected
+            self.state, self._slots_envelope = envelope, None
+            try:
+                self.save(emergency=emergency)
+            finally:
+                self._slots_envelope, self.state = envelope, envelope['slots'][target]
+            return
         self.state["updated_at"] = time.time_ns()
         self.state['state_persisted'] = False
         # A best-effort /run journal enables stop even when /data is unavailable.
@@ -668,15 +703,46 @@ class Manager:
         require(any(m.get("Destination") == "/data/models" and m.get("Source") == "/data/models"
                     and not m.get("RW", True) for m in c.get("Mounts", [])), "legacy_model_mount_mismatch")
 
-    def conflict_check(self, allowed_id=None) -> None:
-        names = {x["container_name"] for x in LEGACY.values()} | HISTORICAL_NAMES
-        for path in (self.config_root / "deployments").glob("*.json"):
-            names.add(self.profile_json(path).get("container_name"))
+    def conflict_check(self, allowed_id=None, deployment=None) -> None:
+        names = {x['container_name'] for x in LEGACY.values()} | HISTORICAL_NAMES
+        for path in (self.config_root / 'deployments').glob('*.json'):
+            names.add(self.profile_json(path).get('container_name'))
+        envelope = self._slots_envelope
+        peer_identity = None
+        if envelope is not None and deployment is not None:
+            from . import concurrent_profiles as pair
+            target = self._slot_target
+            peer = envelope['slots']['qwen' if target == 'glm' else 'glm']
+            if peer['selected'] is not None:
+                peer_d = self.deployment(peer['selected'])
+                # Reserved saved selections are incompatible even if stopped;
+                # explicit deactivation releases a TP2 selection.
+                pair.validate_pair(deployment, peer_d)
+                peer_identity = peer['container']
+                if peer_identity:
+                    c = self.trusted_container(peer_identity)
+                    if c:
+                        self.network_check(c, peer_d)
+                        self.validate_reused_contract(c, peer_d)
         for c in self.docker.inventory():
-            labels = c.get("Config", {}).get("Labels") or {}
-            owned = labels.get(LABEL + "owner") == OWNER or c.get("Name", "").lstrip("/") in names
-            if owned and c.get("Id") != allowed_id and self.running(c):
-                raise LifecycleError("conflicting_backend_stop_first")
+            labels = c.get('Config', {}).get('Labels') or {}
+            owned = labels.get(LABEL + 'owner') == OWNER or c.get('Name', '').lstrip('/') in names
+            if c.get('Id') == allowed_id:
+                continue
+            if peer_identity and c.get('Id') == peer_identity['id']:
+                self.trusted_container(peer_identity)
+                continue
+            # In pair mode, reject stopped orphan owners too: never guess a peer.
+            if owned and (self.running(c) or envelope is not None):
+                raise LifecycleError('conflicting_backend_stop_first')
+            if envelope is not None and self.running(c):
+                # Unknown GPU users/port owners cannot be admitted as a peer.
+                host = c.get('HostConfig', {})
+                requested = host.get('DeviceRequests') or []
+                bindings = host.get('PortBindings') or {}
+                ports = {str(v.get('HostPort')) for values in bindings.values() if isinstance(values, list) for v in values}
+                if requested or ports & {'30002', '30004'}:
+                    raise LifecycleError('untrusted_concurrent_peer')
 
     @staticmethod
     def running(c: dict | None) -> bool:
@@ -706,6 +772,16 @@ class Manager:
 
     def observe(self) -> dict:
         s = self.state
+        if not s.get('container') and s.get('pending_create'):
+            try:
+                # Observation does not finalize or discard durable pending ownership.
+                identity = self.pending_identity(s)
+                s['container_running'] = self.running(self.trusted_container(identity))
+            except (LifecycleError, OSError):
+                s['container_running'] = None
+            s['observed'] = 'failed'
+            s['failure'] = 'pending_create_requires_recovery_stop'
+            return s
         if not s.get("container"):
             s["container_running"] = False
             s["observed"] = "stopped"
@@ -738,6 +814,13 @@ class Manager:
     def offline_status(self) -> dict:
         """Read saved intent only. Never inspect Docker, API, key or model files."""
         saved = self.read_state(offline=True)
+        if saved.get('schema_version') == 3:
+            return {'schema_version': 3, 'configured': True,
+                    'slots': {name: {'selected': item['selected'], 'desired': item['desired'],
+                                     'boot_policy': item['boot_policy'], 'generation': item['generation'],
+                                     'recorded_observed': item['observed'], 'observed': None,
+                                     'container_running': None} for name, item in saved['slots'].items()},
+                    'observation': 'not_performed_offline', 'storage_observation': 'not_performed_offline'}
         return {"schema_version": 2, "configured": True,
                 "selected": saved["selected"], "desired": saved["desired"],
                 "boot_policy": saved["boot_policy"],
@@ -745,9 +828,20 @@ class Manager:
                 "container_running": None, "observation": "not_performed_offline",
                 "storage_observation": "not_performed_offline"}
 
-    def status(self) -> dict:
+    def status(self, target=None) -> dict:
         # Cheap status never reads/stat/hashes artifacts or invokes start guards.
         self.state = self.read_state()
+        if self.state.get('schema_version') == 3:
+            for name in slot_state.SLOTS:
+                with self.slot_context(name):
+                    self.observe()
+            if target is not None:
+                require(target in slot_state.SLOTS, 'invalid_slot_target')
+                return {**copy.deepcopy(self.state['slots'][target]), 'target': target,
+                        'state_persisted': self.state.get('state_persisted', True)}
+            return copy.deepcopy(self.state)
+        require(target is None or slot_state.deployment_slot(self.state.get('selected')) == target,
+                'slot_target_requires_migration')
         if self.state.get("migrated_from") and not self.state.get("container"):
             d = self.deployment(self.state["selected"])
             c = self.docker.inspect(d["container_name"])
@@ -759,6 +853,12 @@ class Manager:
     def prepare_start(self, d: dict) -> None:
         self.check_sources(d)
         self.host_guards()
+        if not d.get('legacy'):
+            from . import concurrent_profiles as pair
+            if pair.is_pair(d):
+                pair.check_acceptance(d, self.instance)
+                pair.validate_gpu_inventory(self.run(['nvidia-smi', '--query-gpu=index,uuid',
+                                                      '--format=csv,noheader'], timeout=30))
         require(self.instance.get("obsolete_boot_owner_disabled") is True
                 and bool(self.instance.get("obsolete_boot_owner_evidence")), "obsolete_boot_owner_removal_required")
         self.check_artifacts(d)
@@ -771,7 +871,9 @@ class Manager:
             for m in d["mounts"]:
                 source = Path(m["source"])
                 require(source.resolve() == source and source.exists(), "mount_source_missing_or_symlink")
-                file_targets = {d["auth"]["container_key_file"]} | ({adapter.LAUNCHER_TARGET} if adapter else set())
+                file_targets = {d["auth"]["container_key_file"]} | (
+                    adapter.launcher_targets(d) if adapter and hasattr(adapter, 'launcher_targets')
+                    else {adapter.LAUNCHER_TARGET} if adapter else set())
                 if m["target"] not in file_targets:
                     require(source.is_dir(), "mount_source_not_directory")
         require(self.docker.capture("info", "--format", "{{.DockerRootDir}}").strip() == self.binding.path('data', 'docker'), "docker_root_outside_data")
@@ -786,6 +888,9 @@ class Manager:
         backend = self.backend(d)
         adapter = self.sglang_adapter(d)
         e = self.image_evidence(d)
+        from . import concurrent_profiles as pair
+        if pair.is_pair(d):
+            pair.check_acceptance(d, self.instance)
         launch, rt = d["launch"], d["_runtime"]
         reference = adapter.IMAGE_REFERENCE if backend == "sglang_qwen38" else rt["image_tag"]
         image = json.loads(self.docker.capture("image", "inspect", reference))
@@ -807,6 +912,8 @@ class Manager:
                 "--log-driver", "json-file", "--log-opt", "max-size=20m", "--log-opt", "max-file=3",
                 "--security-opt", "no-new-privileges:true", "--cap-drop", "ALL",
                 "--entrypoint", rt["entrypoint"][0]]
+        if pair.is_pair(d):
+            args += pair.resource_args(d)
         for k, v in {"owner": OWNER, "instance": self.instance["id"], "deployment": d["id"]}.items():
             args += ["--label", LABEL + k + "=" + v]
         for m in d["mounts"]:
@@ -817,6 +924,8 @@ class Manager:
             args += ["--read-only", "--tmpfs", "/tmp:rw,nosuid,nodev,size=1g", "--shm-size", "8g",
                      "--workdir", "/service", "--no-healthcheck", "--user", "0"]
         environment = adapter.launch_environment(d) if backend == "sglang_qwen38" else rt.get("environment", {})
+        if backend == 'llama_cpp' and pair.is_pair(d):
+            environment = {**environment, **pair.launch_environment(d)}
         for key, value in environment.items():
             args += ["--env", key + "=" + value]
         if backend == "sglang_qwen38":
@@ -832,6 +941,9 @@ class Manager:
         if adapter:
             adapter.validate(d)
             return adapter.command(d)
+        from . import concurrent_profiles as pair
+        if pair.is_pair(d):
+            return pair.glm_command(d, e)
         launch = d["launch"]
         if "n_cpu_moe" in launch or launch["context_size"] == 1048576:
             measured = d["_runtime"].get("validation", {}).get("image_id")
@@ -867,6 +979,10 @@ class Manager:
         require(host.get("LogConfig") == {"Type": "json-file", "Config": {"max-size": "20m", "max-file": "3"}}, "container_log_contract_mismatch")
         requests = host.get("DeviceRequests", [])
         require(len(requests) == 1 and requests[0].get("DeviceIDs") == d["launch"]["gpus"], "container_gpu_contract_mismatch")
+        from . import concurrent_profiles as pair
+        if pair.is_pair(d):
+            pair.check_acceptance(d, self.instance)
+            pair.validate_reuse(c, d)
         adapter = self.sglang_adapter(d)
         if adapter:
             reference = adapter.IMAGE_REFERENCE if self.backend(d) == "sglang_qwen38" else e["image_id"]
@@ -877,14 +993,17 @@ class Manager:
 
     def _start(self) -> None:
         require(self.state.get("selected") is not None, "no_deployment_selected_use_select")
+        require(not self.state.get('pending_create'), 'pending_create_requires_recovery_stop')
         d = self.deployment(self.state["selected"])
+        if self._slots_envelope is not None:
+            self.validate_slot_deployment(d, self._slot_target)
         self.state.update(desired="running", container_running=None if self.state.get("container") else False)
         self.prepare_start(d)  # ALL mount checks before artifact stat or Docker inventory.
         identity = self.state.get("container")
         c = self.trusted_container(identity) if identity else None
         if c and not d.get("legacy"):
             self.validate_reused_contract(c, d)
-        self.conflict_check(c["Id"] if c else None)
+        self.conflict_check(c["Id"] if c else None, d)
         if c and self.running(c):
             self.network_check(c, d)
         self.state.update(desired="running", observed="starting", failure=None,
@@ -902,11 +1021,26 @@ class Manager:
                     require(existing is None, "container_name_in_use_select_or_recover_first")
                     args = self.create_args(d)
                     self.check_sources(d)
+                    if self._slots_envelope is not None:
+                        evidence = self.image_evidence(d)
+                        image_id = (evidence['docker_inspect']['image_id'] if self.backend(d) == 'sglang_qwen38'
+                                    else evidence['image_id'])
+                        self.state['pending_create'] = {'name': d['container_name'], 'image_id': image_id,
+                            'owner': OWNER, 'instance': self.instance['id'], 'deployment': d['id']}
+                        self.save()  # A timeout may create remotely before returning its ID.
                     new_id = self.docker.create(args)
-                    c = self.docker.inspect(new_id)
-                    require(c is not None, "created_container_missing")
-                    self.state["container"] = self.identity(c, d)
-                    self.trusted_container(self.state["container"])
+                    if self._slots_envelope is not None:
+                        self.state['container'] = {**self.state['pending_create'], 'id': new_id, 'legacy': False}
+                        self.validate_identity(self.state['container'])
+                        self.state['pending_create'] = None
+                        self.save()  # Capture returned immutable ID BEFORE inspection.
+                        c = self.trusted_container(self.state['container'])
+                    else:
+                        c = self.docker.inspect(new_id)
+                        require(c is not None, 'created_container_missing')
+                        self.state['container'] = self.identity(c, d)
+                        self.trusted_container(self.state['container'])
+                    require(c is not None, 'created_container_missing')
                 self.state["container_running"] = self.running(c)
                 self.save()  # immutable identity durable BEFORE Docker start.
             if d.get("legacy"):
@@ -967,6 +1101,14 @@ class Manager:
         if not preserve_intent:
             self.state["desired"] = "stopped"
         # Stop never requires model/key/config parsing, disk capacity or start guards.
+        if self.state.get('pending_create'):
+            try:
+                self.state['container'] = self.pending_identity(self.state)
+                self.state['pending_create'] = None
+            except BaseException:
+                self.state.update(observed='failed', failure='pending_create_unresolved_use_recovery', container_running=None)
+                self.save(emergency=True)
+                raise
         identity = self.state.get("container")
         if not identity and self.state.get("selected") in LEGACY:
             d = legacy_profile(self.state["selected"])
@@ -995,9 +1137,16 @@ class Manager:
 
     def _select(self, identifier: str, boot_policy: str | None) -> None:
         d = self.deployment(identifier)
+        if self._slots_envelope is not None:
+            self.validate_slot_deployment(d, self._slot_target)
         self.check_mounts({"data"})
         self.host_guards()
-        self.conflict_check()
+        old = self.state.get("container")
+        self.conflict_check(old['id'] if old else None, d)
+        # Selecting an alternative must not abandon a prior owned identity.
+        if self._slots_envelope is not None and old and old['deployment'] != identifier:
+            self.remove_stopped_slot_container()
+            old = None
         old = self.state.get("container")
         if old:
             require(not self.running(self.trusted_container(old)), "selected_container_running_stop_first")
@@ -1017,14 +1166,259 @@ class Manager:
         self.save()
         self.host_guards()
 
-    def dispatch(self, action: str, deployment_id=None, boot_policy=None, dry_run=False, *, lease=None) -> dict:
+    def pending_identity(self, state):
+        planned = state.get('pending_create')
+        if not planned:
+            return None
+        self.validate_identity({**planned, 'id': '0' * 64})
+        c = self.docker.inspect(planned['name'])
+        require(c is not None, 'pending_create_unresolved_use_recovery')
+        identity = {**planned, 'id': c.get('Id'), 'legacy': False}
+        self.trusted_container(identity)
+        return identity
+
+    @staticmethod
+    def has_identity(state):
+        if state.get('schema_version') == 3:
+            return any(item['container'] is not None or item.get('pending_create') is not None for item in state['slots'].values())
+        return state.get('container') is not None
+
+    @contextmanager
+    def slot_context(self, target):
+        """Reuse singleton transition code while every save owns the entire map."""
+        require(self._slots_envelope is None and self.state.get('schema_version') == 3,
+                'invalid_slot_context')
+        envelope = self.state
+        self._slots_envelope, self._slot_target = envelope, target
+        self.state = envelope['slots'][target]
+        try:
+            yield
+        finally:
+            allowed = set(slot_state.empty_slot()) | {'last_selected'}
+            item = {k: v for k, v in self.state.items() if k in allowed}
+            item.setdefault('generation', envelope['slots'][target]['generation'])
+            item.setdefault('pending_create', None)
+            envelope['slots'][target] = item
+            self.state, self._slots_envelope, self._slot_target = envelope, None, None
+
+    @staticmethod
+    def resolve_target(state, target, action):
+        if target is not None:
+            return target
+        if action in {'boot-start', 'boot-stop', 'recover-stop', 'rollback-check', 'migrate-slots'}:
+            return None
+        selected = [name for name, item in state['slots'].items() if item['selected'] is not None]
+        require(len(selected) == 1, 'ambiguous_slot_target_required')
+        return selected[0]
+
+    def validate_slot_deployment(self, deployment, target):
+        from . import concurrent_profiles as pair
+        require(pair.slot_for_deployment(deployment['id']) == target,
+                'unreviewed_slot_deployment')
+
+    def preflight_slot_admission(self, deployment, target):
+        # Caller holds the canonical lease; no writes or peer transitions.
+        self.state = self.read_state()
+        if self.state.get('schema_version') != 3:
+            require(target is None, 'slot_target_requires_migration')
+            from . import concurrent_profiles as pair
+            require(not pair.is_pair(deployment), 'pair_profile_requires_slot_migration')
+            return
+        target = self.resolve_target(self.state, target, 'select')
+        self.validate_slot_deployment(deployment, target)
+        with self.slot_context(target):
+            identity = self.state.get('container')
+            self.conflict_check(identity['id'] if identity else None, deployment)
+
+    def migration_backup(self):
+        require(self.state_file is not None and not self.recovery_only, 'registered_storage_unavailable')
+        return self.state_file.parent / 'pre-slots-v2.json'
+
+    def read_migration_backup(self):
+        path = self.migration_backup()
+        return read_json(path) if self.test_paths else self.binding.read_json('data', str(path))
+
+    def migration_authority(self):
+        authority = self.instance.get('slot_migration')
+        expected = {'prior_source_revision', 'prior_source_manifest_sha256', 'prior_boot_unit_sha256',
+                    'prior_source_root', 'prior_recovery_source_root', 'approval_reference'}
+        require(isinstance(authority, dict) and set(authority) == expected, 'slot_migration_authority_required')
+        require(re.fullmatch(r'[0-9a-f]{40}', str(authority['prior_source_revision']))
+                and slot_state.HEX.fullmatch(str(authority['prior_source_manifest_sha256']))
+                and slot_state.HEX.fullmatch(str(authority['prior_boot_unit_sha256']))
+                and ID_RE.fullmatch(str(authority['approval_reference']))
+                and authority['prior_recovery_source_root'] == '/usr/local/lib/local-ai-server',
+                'slot_migration_source_identity_invalid')
+        source = authority['prior_source_root']
+        require(isinstance(source, str) and Path(source).is_absolute()
+                and Path(source).is_relative_to(self.binding.path('services'))
+                and Path(source) != Path(self.binding.path('services')),
+                'slot_migration_source_path_invalid')
+        self.binding.validate_path('services', source)
+        return copy.deepcopy(authority)
+
+    def migration_control_journal(self, *, singleton=False):
+        """Read original journal without a second persistence mechanism."""
+        path = self.binding.path('data', 'services/llm-control/operations.json')
+        local = self.binding.validate_path('data', path)
+        if not local.exists():
+            return None
+        value = read_json(local) if self.test_paths else self.binding.read_json('data', path)
+        from control.journal import Journal, JournalInvalid, TERMINAL
+        try:
+            value = Journal(None)._validated(value)
+        except JournalInvalid:
+            raise LifecycleError('slot_migration_control_journal_invalid') from None
+        require(not singleton or value['schema'] == 1, 'slot_migration_singleton_control_journal_required')
+        require(all(entry['status'] in TERMINAL for entry in value['entries'].values()),
+                'slot_control_operations_must_be_drained')
+        return value
+
+    def migrate_slots(self):
+        if self.state.get('schema_version') == 3:
+            backup = self.read_migration_backup()
+            require(slot_state.digest(backup) == self.state['migration']['backup_sha256'], 'slot_backup_mismatch')
+            if self.state.get('state_persisted') is False:
+                self.migration_authority()
+                self.host_guards()
+                self.save()
+            return copy.deepcopy(self.state)
+        require(self.state['schema_version'] == 2 and self.state.get('state_persisted', True),
+                'durable_singleton_required_for_migration')
+        require(self.state.get('failure') != 'recovery_journal_invalid_primary_used', 'invalid_recovery_prevents_migration')
+        authority = self.migration_authority()
+        self.host_guards()
+        # No Docker/model mutation; root must preserve the protected source/boot
+        # artifacts named by this attestation before authorizing migration.
+        old = copy.deepcopy(self.state)
+        backup = {'schema_version': 1, 'instance': self.instance['id'],
+                  'storage_identity': self.binding.identity, 'prior_source': authority, 'state': old,
+                  'prior_control_journal': self.migration_control_journal(singleton=True)}
+        candidate = slot_state.migrate(old, slot_state.digest(backup))
+        slot_state.validate(candidate, self.validate_identity)
+        path = self.migration_backup()
+        if path.exists() or path.is_symlink():
+            require(self.read_migration_backup() == backup, 'pre_migration_backup_exists_mismatch')
+        else:
+            self.persistent_json(str(path), backup)
+        require(self.read_migration_backup() == backup, 'pre_migration_backup_not_verified')
+        self.state = candidate
+        self.save()
+        self.host_guards()
+        return copy.deepcopy(self.state)
+
+    def rollback_check(self):
+        """Read-only prerequisites; never stop/remove containers or restore state."""
+        require(self.state.get('schema_version') == 3, 'slot_state_required')
+        backup = self.read_migration_backup()
+        require(slot_state.digest(backup) == self.state['migration']['backup_sha256']
+                and backup.get('instance') == self.instance['id']
+                and backup.get('storage_identity') == self.binding.identity, 'slot_backup_mismatch')
+        require(backup.get('prior_source') == self.migration_authority(), 'slot_rollback_source_mismatch')
+        self.check_mounts()
+        self.migration_control_journal()
+        checked = []
+        retained = []
+        original = backup['state'].get('container')
+        for target, item in self.state['slots'].items():
+            require(not item.get('pending_create'), 'rollback_pending_create_unresolved')
+            require(item['desired'] == 'stopped', 'rollback_stop_intent_required')
+            identity = item['container']
+            if identity:
+                container = self.trusted_container(identity)
+                if identity == original and container is not None:
+                    require(not self.running(container), 'rollback_original_container_still_running')
+                    retained.append(copy.deepcopy(identity))
+                    continue
+                require(container is None, 'rollback_owned_container_must_be_absent')
+                checked.append({'target': target, 'container': copy.deepcopy(identity), 'generation': item['generation']})
+        for c in self.docker.inventory():
+            labels = c.get('Config', {}).get('Labels') or {}
+            require(labels.get(LABEL + 'owner') != OWNER or c.get('Id') in {i['id'] for i in retained},
+                    'rollback_untracked_owned_container')
+        return {'rollback_ready': True, 'writes': False, 'backup_sha256': slot_state.digest(backup),
+                'checked_absent': checked, 'retained_original_stopped': retained, 'prior_source': backup['prior_source'],
+                'prior_selected': backup['state']['selected'], 'prior_desired': backup['state']['desired'],
+                'prior_boot_policy': backup['state']['boot_policy'],
+                'prior_control_journal_present': backup.get('prior_control_journal') is not None,
+                'next_action': 'root_verify_control_drained_restore_protected_source_state_boot_then_canonical_start'}
+
+    def dispatch_slots(self, action, deployment_id, boot_policy, target, expected_generation):
+        target = self.resolve_target(self.state, target, action)
+        if target is not None and deployment_id is not None:
+            require(slot_state.deployment_slot(deployment_id) == target, 'slot_deployment_mismatch')
+        if expected_generation is not None:
+            require(target is not None and self.state['slots'][target]['generation'] == expected_generation,
+                    'stale_slot_generation')
+        if action == 'boot-start':
+            require(self.state.get('failure') != 'recovery_journal_invalid_primary_used', 'recovery_journal_invalid_no_boot_resume')
+        targets = [target] if target is not None else list(slot_state.SLOTS)
+        failures = []
+        for name in targets:
+            item = self.state['slots'][name]
+            if action == 'boot-start' and not (item['selected'] and item['desired'] == 'running' and item['boot_policy'] == 'resume'):
+                continue
+            if action in {'boot-stop', 'recover-stop'} and not item['selected']:
+                continue
+            item['generation'] += 1
+            with self.slot_context(name):
+                try:
+                    if action in {'select', 'activate'}:
+                        self._select(deployment_id, boot_policy)
+                    elif action in {'start', 'boot-start'}:
+                        self._start()
+                    elif action == 'restart':
+                        self._stop()
+                        self._start()
+                    elif action in {'stop', 'recover-stop', 'boot-stop'}:
+                        self._stop(preserve_intent=action == 'boot-stop')
+                    elif action == 'deactivate':
+                        self._stop()
+                        self.remove_stopped_slot_container()
+                        self.state.update(last_selected=self.state['selected'], selected=None,
+                                          desired='stopped', boot_policy='manual', container=None)
+                        self.save(emergency=True)
+                    else:
+                        raise LifecycleError('unsupported_lifecycle_action')
+                except (LifecycleError, BindingError, OSError) as exc:
+                    self.state.update(observed='failed', failure=str(exc) if isinstance(exc, LifecycleError)
+                                      else 'registered_storage_verification_failed')
+                    self.save(emergency=True)
+                    if target is not None:
+                        raise
+                    failures.append(name)
+                # KeyboardInterrupt/SystemExit deliberately propagate: target's
+                # _start/_stop retain its identity and never touch its peer.
+        if failures:
+            raise LifecycleError('partial_slot_transition_failed_use_status')
+        result = copy.deepcopy(self.state)
+        if result.get('state_persisted') is False:
+            result['warning'] = 'restore_registered_storage_and_repeat_stop_before_reboot'
+        return result
+
+    def remove_stopped_slot_container(self):
+        identity = self.state.get('container')
+        if identity:
+            c = self.trusted_container(identity)
+            require(not self.running(c), 'selected_container_running_stop_first')
+            if c:
+                self.check_sources(self.deployment(identity['deployment']))
+                self.docker.remove(identity['id'])
+            require(self.trusted_container(identity) is None, 'removed_slot_container_still_present')
+        # Caller only clears identity after exact absence; failed remove retains it.
+
+    def dispatch(self, action: str, deployment_id=None, boot_policy=None, dry_run=False, *, lease=None,
+                 target=None, expected_generation=None) -> dict:
         require(isinstance(action, str) and action in {
             'status', 'active', 'select', 'activate', 'start', 'restart',
-            'stop', 'recover-stop', 'boot-stop', 'deactivate', 'boot-start'},
+            'stop', 'recover-stop', 'boot-stop', 'deactivate', 'boot-start', 'migrate-slots', 'rollback-check'},
             'invalid_lifecycle_action')
         require(boot_policy is None or isinstance(boot_policy, str)
                 and boot_policy in {'manual', 'resume'}, 'invalid_boot_policy')
         require(type(dry_run) is bool, 'invalid_dry_run')
+        require(target is None or target in slot_state.SLOTS, 'invalid_slot_target')
+        require(expected_generation is None or type(expected_generation) is int and expected_generation >= 0,
+                'invalid_slot_generation')
         require(deployment_id is None or isinstance(deployment_id, str)
                 and bool(ID_RE.fullmatch(deployment_id)), 'invalid_deployment_id')
         if action in {'select', 'activate'}:
@@ -1035,14 +1429,18 @@ class Manager:
         if self.recovery_only:
             require(action in {'stop', 'recover-stop', 'boot-stop', 'status', 'active'}, 'recovery_stop_only')
         if action in {"status", "active"}:
-            return self.status()
+            return self.status(target)
         if dry_run:
             s = self.read_state()
-            target = deployment_id or s.get("selected")
+            if s.get('schema_version') == 3:
+                slot = self.resolve_target(s, target, action)
+                selected = deployment_id or (s['slots'][slot]['selected'] if slot else None)
+            else:
+                selected = deployment_id or s.get('selected')
             if action in {"select", "activate", "start", "restart"}:
-                require(target is not None, "no_deployment_selected_use_select")
-                self.deployment(target)
-            return {"dry_run": True, "action": action, "selected": target,
+                require(selected is not None, "no_deployment_selected_use_select")
+                self.deployment(selected)
+            return {"dry_run": True, "action": action, "selected": selected, 'target': target,
                     "model_file_deletion": "none", "image_deletion": "none",
                     "wait_for_readiness": True, "writes": False}
         with (nullcontext(lease) if lease is not None else acquire_lease(
@@ -1061,7 +1459,7 @@ class Manager:
             # Reading under lock is essential: another caller may have stopped/selected.
             if action == "recover-stop" or recovery_required:
                 self.state = self.read_state(recovery=True)
-                require(self.state.get("container") is not None, "no_recovery_identity")
+                require(self.has_identity(self.state), "no_recovery_identity")
             else:
                 self.check_mounts({"data"}) if action not in {"stop", "deactivate", "boot-stop"} else None
                 try:
@@ -1070,9 +1468,20 @@ class Manager:
                     if action not in {"stop", "boot-stop", "deactivate"}:
                         raise
                     self.state = self.read_state(recovery=True)
-                    require(self.state.get("container") is not None, "no_recovery_identity")
+                    require(self.has_identity(self.state), "no_recovery_identity")
             if self.recovery_only:
-                require(self.state.get('container') is not None, 'no_recovery_identity')
+                require(self.has_identity(self.state), 'no_recovery_identity')
+            if action == 'migrate-slots':
+                require(target is None and expected_generation is None, 'invalid_migration_target')
+                return self.migrate_slots()
+            if action == 'rollback-check':
+                return self.rollback_check()
+            if self.state.get('schema_version') == 3:
+                return self.dispatch_slots(action, deployment_id, boot_policy, target, expected_generation)
+            require(target is None and expected_generation is None, 'slot_target_requires_migration')
+            if deployment_id is not None and action in {'select', 'activate'}:
+                from . import concurrent_profiles as pair
+                require(not pair.is_pair(self.deployment(deployment_id)), 'pair_profile_requires_slot_migration')
             try:
                 if action in {"select", "activate"}:
                     self._select(deployment_id, boot_policy)
@@ -1108,9 +1517,12 @@ class Manager:
 
 def add_commands(subparsers) -> None:
     for name in ("select", "activate", "start", "stop", "restart", "deactivate", "status", "active",
-                 "boot-start", "boot-stop", "recover-stop", "list-deployments", "logs"):
+                 "boot-start", "boot-stop", "recover-stop", "migrate-slots", "rollback-check", "list-deployments", "logs"):
         p = subparsers.add_parser(name, help="D2 declarative lifecycle")
         p.add_argument("--instance", type=Path, default=None)
+        if name not in {'list-deployments', 'logs', 'migrate-slots', 'rollback-check', 'boot-start', 'boot-stop'}:
+            p.add_argument('--target', choices=slot_state.SLOTS)
+            p.add_argument('--expected-generation', type=int)
         if name == "status":
             p.add_argument("--offline", action="store_true", help="inspect saved intent only; no Docker, API or host checks")
         if name in {"select", "activate"}:
@@ -1139,10 +1551,20 @@ def recovery_manager(config=REPO / 'configs'):
     The canonical lease must already be held by a mutating caller.
     """
     journal = protected_json(Path('/run/llmctl/recovery.json'))
-    identity = journal.get('container')
+    if journal.get('schema_version') == 3:
+        identities = [s.get('container') or s.get('pending_create') for s in journal.get('slots', {}).values()
+                      if isinstance(s, dict) and (s.get('container') or s.get('pending_create'))]
+        require(bool(identities) and all(isinstance(i, dict) for i in identities), 'no_recovery_identity')
+        require(len({i.get('instance') for i in identities}) == 1, 'recovery_instance_mismatch')
+        identity = identities[0]
+    else:
+        identity = journal.get('container')
     require(isinstance(identity, dict), 'no_recovery_identity')
     manager = Manager(config, {'schema_version': 1, 'id': identity.get('instance')}, recovery_only=True)
-    manager.validate_identity(identity)
+    if 'id' in identity:
+        manager.validate_identity(identity)
+    else:
+        manager.validate_identity({**identity, 'id': '0' * 64})
     return manager
 
 
@@ -1185,7 +1607,7 @@ def cli(args: argparse.Namespace) -> int:
                 print(json.dumps({**empty_state(), "observed": "failed", "container_running": None,
                                   "failure": "instance_missing_observation_unavailable"}, indent=2))
                 return 1
-            result = manager.offline_status() if getattr(args, 'offline', False) else manager.status()
+            result = manager.offline_status() if getattr(args, 'offline', False) else manager.status(getattr(args, 'target', None))
         else:
             # The CLI owns exactly the same lease used by core.exclusive/Manager.
             # Read instance/transition state only after acquisition.
@@ -1199,7 +1621,9 @@ def cli(args: argparse.Namespace) -> int:
                 if getattr(args, 'runtime', None):
                     require(args.runtime == manager.deployment(args.deployment_id)['runtime'], 'runtime_profile_mismatch')
                 result = manager.dispatch(args.command, getattr(args, 'deployment_id', None),
-                                          getattr(args, 'boot_policy', None), args.dry_run, lease=lease)
+                                          getattr(args, 'boot_policy', None), args.dry_run, lease=lease,
+                                          target=getattr(args, 'target', None),
+                                          expected_generation=getattr(args, 'expected_generation', None))
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
     except KeyboardInterrupt:

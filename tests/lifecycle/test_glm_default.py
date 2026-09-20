@@ -7,7 +7,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"scripts"))
 from agent.protocol import Client
 
 class Default(unittest.TestCase):
-    def test_only_selected_production_profile_has_native_low_default(self):
+    def test_reviewed_production_profiles_preserve_native_low_default(self):
         from lifecycle.manager import Manager
         root=Path(__file__).resolve().parents[2]
         name='glm-5.3-ud-q4-k-xl-n76-native1m'
@@ -18,7 +18,10 @@ class Default(unittest.TestCase):
         kwargs=json.loads(command[command.index('--chat-template-kwargs')+1])
         self.assertEqual(kwargs, {'clear_thinking':True,'reasoning_effort':'low'})
         for other in root.joinpath('configs/deployments').glob('glm*.json'):
-            if other.stem != name:
+            if other.stem == 'glm-5.3-ud-q4-k-xl-g1-480000':
+                self.assertEqual(json.loads(other.read_text())['launch']['chat_template_kwargs'],
+                                 {'clear_thinking':True,'reasoning_effort':'low'})
+            elif other.stem != name:
                 self.assertEqual(json.loads(other.read_text())['launch']['chat_template_kwargs'],{'clear_thinking':True})
         client=Client('http://127.0.0.1:30002/v1','glm-5.3')
         with patch.object(client,'_request',return_value={}) as request:
