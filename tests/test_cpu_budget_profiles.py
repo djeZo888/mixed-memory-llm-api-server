@@ -40,7 +40,7 @@ class CpuBudgetProfiles(unittest.TestCase):
                            "runner.STAGE campaign assertion", "exec")
         with self.assertRaises(AssertionError):
             exec(contract, {"campaign": "benchrun-concurrent-480k-cpu-cont1-20260920"})
-        self.assertEqual(cpu.CAMPAIGN, "benchrun-c480-cpu-cont2-20260920")
+        self.assertEqual(cpu.CAMPAIGN, "benchrun-c480-cpu-cont3-20260920")
         exec(contract, {"campaign": cpu.CAMPAIGN})
 
     def test_only_four_manifests_with_fixed_pins_caps_and_affinity_subsets(self):
