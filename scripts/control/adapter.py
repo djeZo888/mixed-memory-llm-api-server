@@ -183,9 +183,9 @@ class ManagerSession:
                 identity = manager.pending_identity(state)
                 raw['container'] = copy.deepcopy(identity)
                 raw['pending_create_fingerprint'] = digest(state['pending_create'])
-                # This marker exists only after validated v3 pending ownership
-                # and successful exact-name inspection proving no object.
-                raw['pending_absence_verified'] = identity is None
+                # Empty inventory alone cannot settle a dispatched create.
+                raw['pending_absence_verified'] = (identity is None
+                    and state['pending_create'].get('dispatch') == 'not_dispatched')
             except Exception:
                 raise ControlError('recovery_identity_unavailable' if recovery else 'observation_unavailable') from None
         try:

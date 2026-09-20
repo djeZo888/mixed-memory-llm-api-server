@@ -1068,17 +1068,25 @@ class Manager:
                 else:
                     require(existing is None, "container_name_in_use_select_or_recover_first")
                     args = self.create_args(d)
-                    self.check_sources(d)
                     if self._slots_envelope is not None:
                         evidence = self.image_evidence(d)
                         image_id = (evidence['docker_inspect']['image_id'] if self.backend(d) == 'sglang_qwen38'
                                     else evidence['image_id'])
                         self.state['pending_create'] = {'name': d['container_name'], 'image_id': image_id,
-                            'owner': OWNER, 'instance': self.instance['id'], 'deployment': d['id']}
-                        self.save()  # A timeout may create remotely before returning its ID.
+                            'owner': OWNER, 'instance': self.instance['id'], 'deployment': d['id'],
+                            'dispatch': 'not_dispatched'}
+                        self.save()
+                    self.check_sources(d)
+                    if self._slots_envelope is not None:
+                        # Persist uncertainty BEFORE dispatch. CLI failure/timeout
+                        # cannot prove the daemon will never complete this create.
+                        self.state['pending_create']['dispatch'] = 'uncertain'
+                        self.save()
                     new_id = self.docker.create(args)
                     if self._slots_envelope is not None:
-                        self.state['container'] = {**self.state['pending_create'], 'id': new_id, 'legacy': False}
+                        self.state['container'] = {key: self.state['pending_create'][key]
+                                                  for key in slot_state.PENDING_IDENTITY_FIELDS}
+                        self.state['container'].update(id=new_id, legacy=False)
                         self.validate_identity(self.state['container'])
                         self.state['pending_create'] = None
                         self.save()  # Capture returned immutable ID BEFORE inspection.
@@ -1153,8 +1161,6 @@ class Manager:
         if self.state.get('pending_create'):
             try:
                 identity = self.pending_identity(self.state)
-                if identity is None:
-                    identity = self.pending_identity(self.state)  # recheck immediately under the same lease
                 self.state['container'] = identity
                 self.state['pending_create'] = None
             except BaseException:
@@ -1226,11 +1232,14 @@ class Manager:
         self.validate_identity({**planned, 'id': '0' * 64})
         c = self.docker.inspect(planned['name'])
         if c is None:
-            # Docker.inspect distinguishes successful exact-name absence from
-            # timeout, daemon/transport failure, and malformed inventory.
-            # Only the caller's canonical stop transaction may clear this intent.
+            # Empty inventories cannot settle a previously dispatched create:
+            # it may still finish later. Only durable pre-dispatch proof permits
+            # canonical stop to clear the intent without an immutable identity.
+            require(planned.get('dispatch', 'uncertain') == 'not_dispatched',
+                    'pending_create_unresolved_use_recovery')
             return None
-        identity = {**planned, 'id': c.get('Id'), 'legacy': False}
+        identity = {key: planned[key] for key in slot_state.PENDING_IDENTITY_FIELDS}
+        identity.update(id=c.get('Id'), legacy=False)
         require(self.trusted_container(identity) is not None, 'pending_create_identity_changed')
         return identity
 

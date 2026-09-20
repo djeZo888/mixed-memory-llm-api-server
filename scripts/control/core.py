@@ -176,6 +176,7 @@ def trusted_recovery(snapshot, raw, target=None):
                     and type(private.get('pending_create_fingerprint')) is str
                     and IDENTITY.fullmatch(private['pending_create_fingerprint']) is not None
                     and type(private.get('pending_create')) is dict
+                    and private['pending_create'].get('dispatch') == 'not_dispatched'
                     and digest(private['pending_create']) == private['pending_create_fingerprint']))
     return selected['active_identity'] is not None
 

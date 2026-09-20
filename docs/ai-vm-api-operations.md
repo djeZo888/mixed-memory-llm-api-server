@@ -323,11 +323,16 @@ See [operator/migration/rollback contract](concurrent-api.md),
 [targeted API bodies](control-api.md), and [evidence schema](concurrent-profile-acceptance.md).
 
 A create timeout keeps `pending_create` ownership (planned name, deployment,
-instance, image and owner labels). Stop/recover resolves that exact identity;
-two successful exact-name Docker inventory absence checks under the canonical
-stop lease clear only
-that pending intent. Timeout, inspection error and identity mismatch retain it
-and block retry/rollback. Selection always refuses unresolved pending intent. A returned
+instance, image and owner labels). Its `dispatch` field is durably changed from
+`not_dispatched` to `uncertain` before Docker create is invoked. Only a pending
+record still proven `not_dispatched`, followed by successful exact-name absence
+inspection under the canonical stop lease, may be cleared without a container.
+Empty inventories never settle `uncertain` creates: a dispatched daemon request
+can complete later. Older records without this field are also uncertain; generic
+CLI failures supply no settlement proof. Stop/recover can reconcile a later
+container only through its exact name, ID, image and labels. Inspection errors
+and identity mismatches retain ownership and block retry/rollback.
+Selection always refuses unresolved pending intent. A returned
 container ID is journaled before inspect. Do not erase this record or adopt an
 unrelated same-name container. Root must resolve any persistent pending-create
 ambiguity before activation continuation. Both slot identities survive emergency

@@ -13,6 +13,7 @@ from .runtime_io import LifecycleError
 SLOTS = ('glm', 'qwen')  # deterministic boot order
 HEX = re.compile(r'[0-9a-f]{64}\Z')
 ID = re.compile(r'[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}\Z')
+PENDING_IDENTITY_FIELDS = frozenset({'image_id', 'name', 'owner', 'instance', 'deployment'})
 
 
 def require(ok, code):
@@ -63,8 +64,13 @@ def validate_slot(slot, target, identity_validator):
                 and deployment_slot(slot['last_selected']) == target, 'slot_previous_deployment_mismatch')
     pending = slot.get('pending_create')
     if pending is not None:
-        require(isinstance(pending, dict) and set(pending) == {'image_id', 'name', 'owner', 'instance', 'deployment'},
+        require(isinstance(pending, dict) and PENDING_IDENTITY_FIELDS <= set(pending)
+                <= PENDING_IDENTITY_FIELDS | {'dispatch'},
                 'invalid_pending_create')
+        # Older records carry no dispatch proof and must remain uncertain.
+        require(type(pending.get('dispatch', 'uncertain')) is str
+                and pending.get('dispatch', 'uncertain') in {'not_dispatched', 'uncertain'},
+                'invalid_pending_create_dispatch')
         identity_validator({**pending, 'id': '0' * 64})
         require(pending['deployment'] == selected and slot['container'] is None, 'pending_create_identity_mismatch')
     identity = slot['container']

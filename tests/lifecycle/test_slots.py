@@ -252,6 +252,7 @@ class SlotTests(unittest.TestCase):
         saved = self.manager.read_state()['slots']['glm']
         self.assertIsNone(saved['container'])
         self.assertEqual(saved['pending_create']['name'], 'fixture-glm')
+        self.assertEqual(saved['pending_create']['dispatch'], 'uncertain')
         self.docker.start(self.docker.records[0]['Id'])
         stopped = self.manager.dispatch('stop', target='glm')['slots']['glm']
         self.assertIsNone(stopped['pending_create'])
@@ -262,18 +263,26 @@ class SlotTests(unittest.TestCase):
         before = self.pair()
         self.manager.dispatch('deactivate', target='glm')
         self.manager.dispatch('select', GLM, target='glm')
-        self.docker.fail_create = True
-        with self.assertRaises(LifecycleError):
+        check = self.manager.check_sources
+        def fail_before_dispatch(deployment):
+            if self.manager.state.get('pending_create'):
+                self.assertEqual(self.manager.read_state()['slots']['glm']['pending_create']['dispatch'],
+                                 'not_dispatched')
+                raise LifecycleError('source_changed_before_dispatch')
+            return check(deployment)
+        with patch.object(self.manager, 'check_sources', side_effect=fail_before_dispatch), \
+             patch.object(self.docker, 'create') as create, \
+             self.assertRaisesRegex(LifecycleError, 'source_changed_before_dispatch'):
             self.manager.dispatch('start', target='glm')
+        create.assert_not_called()
         pending = self.manager.read_state()['slots']['glm']['pending_create']
-        self.assertIsNotNone(pending)
+        self.assertEqual(pending['dispatch'], 'not_dispatched')
         self.assertIsNone(self.docker.inspect(pending['name']))
         result = self.manager.dispatch('stop', target='glm')
         self.assertIsNone(result['slots']['glm']['pending_create'])
         self.assertIsNone(result['slots']['glm']['container'])
         self.assertFalse(result['slots']['glm']['container_running'])
         self.assertEqual(result['slots']['qwen'], before['slots']['qwen'])
-        self.docker.fail_create = False
         self.manager.dispatch('start', target='glm')
         self.assertTrue(self.manager.status('qwen')['container_running'])
 
@@ -283,6 +292,12 @@ class SlotTests(unittest.TestCase):
         with self.assertRaises(LifecycleError):
             self.manager.dispatch('start', target='glm')
         pending = self.manager.read_state()['slots']['glm']['pending_create']
+        self.assertEqual(pending['dispatch'], 'uncertain')
+        # Even generic CLI failure followed by successful empty inventories
+        # cannot prove that the daemon did not accept the dispatched create.
+        for _ in range(2):
+            with self.assertRaisesRegex(LifecycleError, 'pending_create_unresolved_use_recovery'):
+                self.manager.dispatch('stop', target='glm')
         with patch.object(self.docker, 'inspect', side_effect=LifecycleError('command_timeout')):
             with self.assertRaises(LifecycleError):
                 self.manager.dispatch('stop', target='glm')
@@ -291,6 +306,63 @@ class SlotTests(unittest.TestCase):
             with self.subTest(deployment=deployment), self.assertRaisesRegex(LifecycleError, 'pending_create_requires_recovery_stop'):
                 self.manager.dispatch('select', deployment, target='glm')
             self.assertEqual(self.manager.read_state()['slots']['glm']['pending_create'], pending)
+
+    def test_delayed_create_after_empty_inventories_retains_owner_until_exact_recovery(self):
+        before = self.pair()
+        self.manager.dispatch('deactivate', target='glm')
+        self.manager.dispatch('select', GLM, target='glm')
+        deferred = []
+        create = self.docker.create
+        def timeout(args):
+            self.assertEqual(self.manager.read_state()['slots']['glm']['pending_create']['dispatch'], 'uncertain')
+            deferred.append(args)
+            raise LifecycleError('command_timeout')
+        with patch.object(self.docker, 'create', side_effect=timeout), self.assertRaises(LifecycleError):
+            self.manager.dispatch('start', target='glm')
+        pending = self.manager.read_state()['slots']['glm']['pending_create']
+        # A fresh recovery owner reads only the durable journal, not process memory.
+        recovery = Manager(self.root/'absent', {'schema_version': 1, 'id': self.instance['id']},
+                           recovery_only=True, test_paths=True, lease_system_root=self.root,
+                           docker=self.docker, run_fn=lambda *a, **k: self.fail('unexpected subprocess'))
+        for _ in range(3):
+            self.assertIsNone(self.docker.inspect(pending['name']))
+            with self.assertRaisesRegex(LifecycleError, 'pending_create_unresolved_use_recovery'):
+                recovery.dispatch('stop', target='glm')
+            saved = recovery.read_state(recovery=True)
+            self.assertEqual(saved['slots']['glm']['pending_create'], pending)
+            self.assertIsNone(saved['slots']['glm']['container_running'])
+            self.assertEqual(saved['slots']['qwen'], before['slots']['qwen'])
+        with self.assertRaisesRegex(LifecycleError, 'pending_create_requires_recovery_stop'):
+            self.manager.dispatch('start', target='glm')
+        with self.assertRaisesRegex(LifecycleError, 'pending_create_requires_recovery_stop'):
+            self.manager.dispatch('select', GLM, target='glm')
+        delayed_id = create(deferred[0])
+        self.docker.start(delayed_id)
+        self.docker.calls.clear()
+        result = recovery.dispatch('stop', target='glm')
+        self.assertEqual(result['slots']['glm']['container']['id'], delayed_id)
+        self.assertNotIn('dispatch', result['slots']['glm']['container'])
+        self.assertIsNone(result['slots']['glm']['pending_create'])
+        self.assertFalse(result['slots']['glm']['container_running'])
+        self.assertEqual(result['slots']['qwen'], before['slots']['qwen'])
+        self.assertEqual([call[1] for call in self.docker.calls if call[0] == 'stop'], [delayed_id])
+        self.assertTrue(self.manager.running(self.docker.inspect(before['slots']['qwen']['container']['id'])))
+
+    def test_markerless_pending_is_uncertain_and_invalid_dispatch_rejected(self):
+        state = self.pair()
+        item = state['slots']['glm']
+        self.docker.stop(item['container']['id'])
+        self.docker.remove(item['container']['id'])
+        pending = {key: item['container'][key] for key in slot_state.PENDING_IDENTITY_FIELDS}
+        item.update(container=None, pending_create=pending, container_running=None)
+        slot_state.validate(state, self.manager.validate_identity)
+        with self.assertRaisesRegex(LifecycleError, 'pending_create_unresolved_use_recovery'):
+            self.manager.pending_identity(item)
+        for bad in (None, False, {}, [], 'failed', 'absence_verified'):
+            with self.subTest(dispatch=bad):
+                pending['dispatch'] = bad
+                with self.assertRaisesRegex(LifecycleError, 'invalid_pending_create_dispatch'):
+                    slot_state.validate(state, self.manager.validate_identity)
 
     def test_pending_name_identity_mismatch_never_clears_or_adopts(self):
         self.migrate(); self.manager.dispatch('select', GLM, target='glm')

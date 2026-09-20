@@ -90,13 +90,16 @@ receipts reconcile against their own slot and never replay a mutation after
 service restart. Recovery stops retain the exact target identity, use the same
 /run-only trusted ownership path, and report `state_persisted:false` if storage
 is unavailable. Healthy peer observations stay separate from a failed target.
-For a failed pre-create transaction, a validated v3 pending ownership record
-may be observed as exactly absent. The adapter binds the planned identity digest
-to its slot fingerprint and marks absence only after successful exact-name
-inspection. A recovery stop still checks the client's target identity/generation
+For a transaction durably proven `dispatch:not_dispatched`, a validated v3
+pending ownership record may be observed as exactly absent. The adapter binds
+the complete pending record digest to its slot fingerprint and marks absence
+only with that proof and successful exact-name inspection. A recovery stop
+still checks the client's target identity/generation
 and rechecks exact absence under the canonical lease before clearing that pending
-intent. Timeout, inspection error or identity mismatch supplies no absence proof
-and retains pending ownership. This path neither invents a container identity nor
+intent. Dispatched (`uncertain`) and older markerless records retain ownership
+through any number of empty inventories; an eventual exact container can still
+be reconciled. CLI failure/timeout, inspection error or identity mismatch
+supplies no non-creation proof. This path neither invents a container identity nor
 clears the peer's intent.
 Root rollback must drain control and preserve/restore its protected journal with
 the prior source, because old source does not read schema2 journals.

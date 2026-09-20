@@ -109,7 +109,7 @@ class ManagerSlotTests(unittest.TestCase):
         self.assertEqual(result['slots']['qwen'], peer)
         self.assertFalse(result['state_persisted'])
 
-    def test_absent_pending_storage_loss_stop_is_proven_and_peer_unchanged(self):
+    def test_not_dispatched_absent_pending_storage_loss_stop_is_proven_and_peer_unchanged(self):
         from lifecycle.manager import Manager
         from control.core import observation, trusted_recovery
         saved = self.manager.read_state()
@@ -118,6 +118,7 @@ class ManagerSlotTests(unittest.TestCase):
         self.docker.stop(identity['id'])
         self.docker.remove(identity['id'])
         pending = {key: identity[key] for key in ('image_id', 'name', 'owner', 'instance', 'deployment')}
+        pending['dispatch'] = 'not_dispatched'
         saved['slots']['glm'].update(container=None, container_running=None, pending_create=pending)
         with self.lease():
             self.manager.state = saved
@@ -134,6 +135,16 @@ class ManagerSlotTests(unittest.TestCase):
         without_marker = deepcopy(raw)
         without_marker['slots']['glm'].pop('pending_absence_verified')
         self.assertFalse(trusted_recovery(public, without_marker, 'glm'))
+        from control.core import digest
+        for dispatch in ('uncertain', None):
+            unproven = deepcopy(raw)
+            private = unproven['slots']['glm']
+            if dispatch is None:
+                private['pending_create'].pop('dispatch')
+            else:
+                private['pending_create']['dispatch'] = dispatch
+            private['pending_create_fingerprint'] = digest(private['pending_create'])
+            self.assertFalse(trusted_recovery(public, unproven, 'glm'))
         self.docker.calls.clear()
         with self.lease() as lease:
             session.stop(lease, Deadline.after(5), slot='glm')
@@ -174,6 +185,39 @@ class ManagerSlotTests(unittest.TestCase):
         result = recovery.read_state(recovery=True)
         self.assertEqual(result['slots']['glm']['pending_create'], pending)
         self.assertEqual(result['slots']['qwen'], saved['slots']['qwen'])
+
+    def test_empty_inventory_does_not_verify_uncertain_absence_in_storage_loss(self):
+        from lifecycle.manager import Manager
+        from control.core import observation, trusted_recovery
+        saved = self.manager.read_state()
+        identity = saved['slots']['glm']['container']
+        self.docker.stop(identity['id'])
+        self.docker.remove(identity['id'])
+        pending = {key: identity[key] for key in ('image_id', 'name', 'owner', 'instance', 'deployment')}
+        for dispatch in (None, 'uncertain'):
+            with self.subTest(dispatch=dispatch):
+                if dispatch is not None:
+                    pending['dispatch'] = dispatch
+                saved['slots']['glm'].update(container=None, container_running=None, pending_create=deepcopy(pending))
+                with self.lease():
+                    self.manager.state = deepcopy(saved)
+                    self.manager.save()
+                recovery = Manager(self.root / 'absent-config', {'schema_version': 1, 'id': self.instance['id']},
+                                   recovery_only=True, test_paths=True, lease_system_root=self.root, docker=self.docker)
+                session = ManagerSession(recovery, lambda *_: self.fail('recovery catalog access'))
+                for _ in range(3):
+                    self.assertIsNone(self.docker.inspect(pending['name']))
+                    raw = session.observe(Deadline.after(5))
+                    public, _ = observation(raw)
+                    self.assertNotIn('pending_absence_verified', raw['slots']['glm'])
+                    self.assertFalse(public['slots']['glm']['observation_available'])
+                    self.assertIsNone(public['slots']['glm']['container_running'])
+                    self.assertFalse(trusted_recovery(public, raw, 'glm'))
+                    with self.lease() as lease, self.assertRaisesRegex(LifecycleError, 'pending_create_unresolved_use_recovery'):
+                        session.stop(lease, Deadline.after(5), slot='glm')
+                result = recovery.read_state(recovery=True)
+                self.assertEqual(result['slots']['glm']['pending_create'], pending)
+                self.assertEqual(result['slots']['qwen'], saved['slots']['qwen'])
 
     def test_native_capacity_failure_is_precise_and_healthy_peer_stays_ready(self):
         from control.core import observation, safe_error
