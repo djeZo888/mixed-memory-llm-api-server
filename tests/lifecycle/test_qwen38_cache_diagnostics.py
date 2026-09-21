@@ -55,7 +55,8 @@ class CacheFailureDiagnosticTests(unittest.TestCase):
 
     def inner_output(self, child):
         stdout, stderr = io.StringIO(), io.StringIO()
-        with patch.object(inner, "verify_sources", return_value=ROOT / "unused.py"), \
+        with patch.dict(inner.os.environ, runtime_environment(), clear=True), \
+                patch.object(inner, "verify_sources", return_value=ROOT / "unused.py"), \
                 patch.object(inner.subprocess, "run", return_value=child) as process, \
                 patch.object(inner.os, "write") as private_stderr, \
                 patch.object(inner, "run_failure_children") as later, \

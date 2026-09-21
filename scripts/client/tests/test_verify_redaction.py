@@ -18,7 +18,7 @@ from test_verify_events import encoded, passing_events
 
 class SerializedCredentialTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix="v2r-redaction-")
+        self.temp = tempfile.TemporaryDirectory(dir=Path.home().resolve(), prefix="v2r-redaction-")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         self.root.chmod(0o700)
@@ -86,6 +86,8 @@ class SerializedCredentialTests(unittest.TestCase):
             self.assertNotIn(verify.KEY_ENV, env)
             return dict(success)
 
+        # Serialization must retain current provenance, not the archived V2R snapshot.
+        expected_manifest = verify.source_manifest()
         with mock.patch.object(verify, "verify_client", return_value=(settings, {})), \
              mock.patch.object(verify, "versions", return_value={}), \
              mock.patch.object(verify, "observe_model", return_value="synthetic"), \
@@ -108,8 +110,7 @@ class SerializedCredentialTests(unittest.TestCase):
             self.assertEqual((output / name).stat().st_mode & 0o777, 0o600)
         report, raw = saved["report.json"], saved["raw-evidence.json"]
         self.assertEqual(report["status"], result["status"])
-        manifest = verify.SOURCE.parents[1] / "reports/v2r-source-manifest.json"
-        self.assertEqual(report["artifacts"], json.loads(manifest.read_bytes()))
+        self.assertEqual(report["artifacts"], expected_manifest)
         self.assertEqual(report["raw_evidence_sha256"],
                          hashlib.sha256((output / "raw-evidence.json").read_bytes()).hexdigest())
         lines = [json.loads(line) for line in raw["opencode"]["stdout"].splitlines()]

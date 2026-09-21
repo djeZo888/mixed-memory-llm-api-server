@@ -110,7 +110,7 @@ time.sleep(60)
                      "POSIX ordinary-user verifier cancellation contract")
 class CancellationTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix="v2r-cancellation-")
+        self.temp = tempfile.TemporaryDirectory(dir=Path.home().resolve(), prefix="v2r-cancellation-")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         self.root.chmod(0o700)
