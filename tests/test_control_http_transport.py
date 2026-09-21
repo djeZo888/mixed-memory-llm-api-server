@@ -106,7 +106,7 @@ class TransportTests(unittest.TestCase):
             with self.subTest(length=len(key)), self.assertRaises(ValueError):
                 transport.make_server(self.http.app, key, port=0)
         self.assertEqual(self.http.address[0], "127.0.0.1")
-        self.assertEqual(self.http.server.request_deadline, 30)
+        self.assertEqual(self.http.server.request_deadline, 130)
 
     def test_all_routes_authenticate_before_application(self):
         for method, path in (

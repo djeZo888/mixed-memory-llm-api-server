@@ -333,4 +333,5 @@ class ManagerSession:
 def production_application(config_root, control_key, *, advertised_policy=None):
     backend = ProductionBackend(config_root, control_key=control_key)
     return Application(backend, Journal(ManagerJournalStore(backend.load)),
+                       read_seconds=60, admission_seconds=60,
                        advertised_policy=advertised_policy)

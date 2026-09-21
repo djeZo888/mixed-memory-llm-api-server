@@ -229,7 +229,9 @@ class Application:
     def __init__(self, backend, journal, *, lease_factory=acquire_lease,
                  transition_seconds=8000, admission_seconds=10, read_seconds=10,
                  advertised_policy=None):
-        if not 0 < transition_seconds <= 14400 or not 0 < admission_seconds <= 10 or not 0 < read_seconds <= 10:
+        if (not 0 < transition_seconds <= 14400
+                or any(type(seconds) not in (int, float) or not 0 < seconds <= 60
+                       for seconds in (admission_seconds, read_seconds))):
             raise ValueError("invalid_deadlines")
         self.backend, self.journal, self.lease_factory = backend, journal, lease_factory
         self.advertised_policy = copy.deepcopy(advertised_policy)
