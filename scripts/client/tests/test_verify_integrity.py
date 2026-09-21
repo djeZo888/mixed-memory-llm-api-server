@@ -172,7 +172,8 @@ class IntegrityTests(unittest.TestCase):
                            ("unexpected", "synthetic-secret-never-shown")):
             original = dict(self.settings)
             self.settings[key] = value
-            self.save_settings()
+            # Tamper after valid setup; config_for correctly refuses invalid input.
+            self.write(self.prefix / "bootstrap.json", json.dumps(self.settings).encode())
             with self.subTest(field=key), self.assertRaises(common.ClientError) as result:
                 self.check()
             self.assertNotIn("synthetic-secret", str(result.exception))

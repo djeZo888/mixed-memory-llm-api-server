@@ -150,7 +150,7 @@ class PinnedNativeLaunchContracts(unittest.TestCase):
         class NativeBoundary(Exception):
             pass
         for inherited_override in (False, True):
-            env = dict(launcher.CACHE_ENVIRONMENT)
+            env = {**launcher.CACHE_ENVIRONMENT, "RAYON_NUM_THREADS": "1"}
             if inherited_override:
                 env["TRITON_PTXAS_BLACKWELL_PATH"] = "/synthetic/unreviewed/ptxas"
             reached = []

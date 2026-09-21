@@ -17,8 +17,31 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Source definitions only; existing tests verify provenance hashes before
+      # executing them with synthetic collaborators. No runtime installation.
+      - name: Check out pinned SGLang fixture source
+        uses: actions/checkout@v4
+        with:
+          repository: sgl-project/sglang
+          ref: 0bcd822377da7b5718e674eaf9c870d349424dd1
+          path: .ci-upstream/sglang
+          sparse-checkout: python/sglang
+          persist-credentials: false
+
+      - name: Check out pinned FlashInfer fixture source
+        uses: actions/checkout@v4
+        with:
+          repository: flashinfer-ai/flashinfer
+          ref: 69ff11fc4954396d98326656dc85debd2223f637
+          path: .ci-upstream/flashinfer
+          sparse-checkout: flashinfer/triton
+          persist-credentials: false
+
       - name: Run lifecycle state, security, profile and API fixtures
         shell: bash
+        env:
+          Q38NEXT_UPSTREAM_ROOT: ${{ github.workspace }}/.ci-upstream/sglang/python/sglang
+          Q38FIN_FLASHINFER_ROOT: ${{ github.workspace }}/.ci-upstream/flashinfer/flashinfer
         run: |
           set -euo pipefail
           python3 -m unittest discover -s tests/lifecycle -p 'test_*.py' -v

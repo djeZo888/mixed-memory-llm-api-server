@@ -40,13 +40,24 @@ class FixtureRunner:
         self.image_id = "sha256:" + "c" * 64
         self.after_download = None
 
-    # Explicit synthetic transaction capability seam; the reviewed I1R backend
-    # is absent in this checkout. These fixtures do not prove cgroup ownership.
-    def package_identity(self): pass
-    def prepare_package(self, *a, **k): pass
-    def hold_package_lease(self, *a, **k): pass
-    def run_package(self, *a, **k): pass
-    def inspect_package(self, *a, **k): pass
+    # Synthetic ownership adapter, matching test_prerequisites.FakeRunner.
+    # These fixtures do not prove actual process or cgroup ownership.
+    def package_identity(self):
+        return {"kind": "synthetic", "token": "owned-fixture"}
+
+    def prepare_package(self, identity, *, gate_path, timeout):
+        return identity
+
+    def hold_package_lease(self, identity):
+        pass
+
+    def inspect_package(self, identity):
+        if identity != self.package_identity():
+            raise RuntimeError("unknown fixture transaction")
+        return {"state": "quiescent", "successful": True}
+
+    def run_package(self, identity, argv, *, gate_path, timeout=120, env=None):
+        return self.run(argv, timeout=timeout, env=env)
 
     def run(self, argv, timeout=60, env=None):
         self.calls.append((argv, env))
@@ -54,6 +65,8 @@ class FixtureRunner:
             return "0"
         if argv[0] == "df":
             return "Avail\n" + str(100 * 1024 ** 3)
+        if argv == ["dpkg", "--audit"]:
+            return ""
         if argv[0] == "dpkg-query":
             version = self.installed.get(argv[-1])
             if not version:
