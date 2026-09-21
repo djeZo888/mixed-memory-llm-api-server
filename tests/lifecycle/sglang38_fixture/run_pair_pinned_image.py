@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Closed 700160 pair mode of the unchanged actual-image auth fixture.
+"""Closed480K two-slot pair mode of the unchanged actual-image auth fixture.
 
 The fixture-only seams select the production pair wrapper and one discovery
 GPU. The original auth/parser/cache/failure-child implementation is reused.
@@ -28,22 +28,42 @@ inner = load('q38pair_original_inner', HERE / 'run_pinned_image.py')
 contract = load('q38pair_actual_contract', HERE / 'run_pair_fixture.py')
 
 
+class _Contract:
+    def __init__(self, slot):
+        self.slot = slot
+
+    def __getattr__(self, name):
+        return getattr(contract, name)
+
+    def extension_identity(self, repo, provenance=None):
+        return contract.pair_identity(repo, provenance, slot=self.slot)
+
+
 def parse_options(argv):
     parser = inner.Parser(description=__doc__, allow_abbrev=False)
     parser.add_argument('--actual-image', action='store_true', required=True)
     parser.add_argument('--repo', type=Path, required=True)
+    parser.add_argument('--slot', choices=tuple(contract.PROFILES), required=True)
     parser.add_argument('--context', type=int, choices=(contract.CONTEXT,), required=True)
     parser.add_argument('--internal-scenario', choices=inner.SCENARIOS, default='all', help=argparse.SUPPRESS)
     return parser.parse_args(argv)
 
 
 def main(argv=None):
+    arguments = sys.argv[1:] if argv is None else argv
+    try:
+        options = parse_options(arguments)
+    except Exception:
+        print(json.dumps({'status': 'FAIL', 'code': 'pair_fixture_arguments_invalid'}))
+        return 2
+    slot = options.slot
+    variant = load('q38pair_slot_wrapper', ROOT / 'scripts/runtime/sglang38_pair_file_auth.py').SLOTS[slot]
     original_verify = inner.verify_sources
     original_discovery = inner.cuda_discovery_fixture
 
     def verify(repo):
         original_verify(repo)  # Every legacy/native source hash stays required.
-        contract.pair_identity(repo)
+        contract.pair_identity(repo, slot=slot)
         return repo / 'tests/lifecycle/sglang38_fixture/pair_launcher.py'
 
     def discovery(torch, context=contract.CONTEXT):
@@ -53,10 +73,12 @@ def main(argv=None):
     with ExitStack() as stack:
         for name, value in {
                 'EXTENSION_CONTEXT': contract.CONTEXT,
+                'ALIAS': variant['served_model_name'], 'PORT': variant['port'],
+                'FIXTURE_SLOT': slot, 'CHILD_ARGUMENTS': ('--slot', slot),
                 'parse_options': parse_options,
                 '__file__': __file__,  # Independent abort children use this same mode.
                 'verify_sources': verify,
-                'fixture_contract': lambda repo: contract,
+                'fixture_contract': lambda repo: _Contract(slot),
                 'cuda_discovery_fixture': discovery}.items():
             stack.enter_context(patch.object(inner, name, value))
         arguments = sys.argv[1:] if argv is None else argv

@@ -51,6 +51,9 @@ IMAGE_REFERENCE = "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e
 KEY_PATH = Path("/run/secrets/llm-api-key")
 CONFIG_PATH = Path("/models/config.json")
 ALIAS = "qwen3.8-27b"
+PORT = 30004
+FIXTURE_SLOT = None
+CHILD_ARGUMENTS = ()
 EXTENSION_CONTEXT = 1000000
 CONFIG_SHA256 = "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc"
 HARDWARE_STUBS = (
@@ -309,7 +312,7 @@ async def asgi_request(app, path, token=None, *, method="GET", body=None,
              "http_version": "1.1", "scheme": "ws" if websocket else "http",
              "method": method, "path": path, "raw_path": path.encode(),
              "root_path": "", "query_string": b"", "headers": headers,
-             "server": ("127.0.0.1", 30004), "client": ("127.0.0.1", 12345)}
+             "server": ("127.0.0.1", PORT), "client": ("127.0.0.1", 12345)}
     messages = []
     initial = True
     first_chunk = asyncio.Event()
@@ -423,7 +426,7 @@ def warmup_http_server(sentinel, mode):
         do_GET = respond
         do_POST = respond
 
-    server = ThreadingHTTPServer(("127.0.0.1", 30004), Handler)
+    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
     server.daemon_threads = True
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -696,7 +699,7 @@ def check_native_parser_template(repo):
     }
     for case, wire in wires.items():
         require("chat_template_kwargs" not in wire and wire["reasoning_effort"] == "none"
-                and wire["stream"] is True and wire["model"] == "qwen3.8-27b",
+                and wire["stream"] is True and wire["model"] == ALIAS,
                 "observed_q38c_wire_changed")
         request = ChatCompletionRequest.model_validate_json(json.dumps(wire))
         require(request.chat_template_kwargs == {"thinking": False, "enable_thinking": False},
@@ -811,6 +814,8 @@ def run_actual(repo, scenario, captured_logs, context=131072):
     spec = importlib.util.spec_from_file_location("q38s_actual_image_launcher", launcher_path)
     launcher = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(launcher)
+    if FIXTURE_SLOT is not None:
+        launcher.select_slot(FIXTURE_SLOT)
     if extension:
         launcher.validate_environment(context)
     else:
@@ -934,7 +939,7 @@ def run_actual(repo, scenario, captured_logs, context=131072):
                 captured.append(app)
                 require(app is server.app and app.server_args is engine_calls[-1][0],
                         "native_global_application_not_retained")
-                require(kwargs["host"] == launcher.FIXED_FLAGS["--host"] and kwargs["port"] == 30004
+                require(kwargs["host"] == launcher.FIXED_FLAGS["--host"] and kwargs["port"] == PORT
                         and "workers" not in kwargs, "unexpected_uvicorn_launch_mode")
                 layers = [m for m in app.user_middleware
                           if getattr(m.cls, "__name__", "") == "_ApiKeyASGIMiddleware"]
@@ -1043,7 +1048,7 @@ def run_failure_children(repo, context=131072):
         require(not KEY_PATH.exists() and not CONFIG_PATH.exists(), "fixture_files_not_clean")
         try:
             result = subprocess.run([sys.executable, "-X", "faulthandler", str(Path(__file__).resolve()), "--actual-image",
-                                     "--repo", str(repo), "--context", str(context), "--internal-scenario", scenario],
+                                     "--repo", str(repo), "--context", str(context), "--internal-scenario", scenario, *CHILD_ARGUMENTS],
                                     stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE, timeout=180, check=False)
         except (subprocess.TimeoutExpired, OSError) as error:
@@ -1073,7 +1078,7 @@ def run_failure_children(repo, context=131072):
         sock = socket.socket()
         try:
             sock.settimeout(1)
-            require(sock.connect_ex(("127.0.0.1", 30004)) != 0,
+            require(sock.connect_ex(("127.0.0.1", PORT)) != 0,
                     "warmup_failure_listener_survived")
         finally:
             sock.close()

@@ -20,7 +20,7 @@ class HarnessError(ValueError):
     """Fixture/count/parser failure; never evidence of model failure."""
 
 
-MODELS = {"glm-5.3": "low", "qwen3.8-27b": "none",
+MODELS = {"glm-5.3": "low", "qwen3.8-27b": "none", "bench-qwen3.8-27b-gpu0": "none",
           "bench-glm-5.3": "low", "bench-qwen3.8-27b": "none"}
 CAPACITIES = (4096, 16384, 65536, 131072, 262144)
 CPU_SCOPE = "concurrent-480k-cpu"

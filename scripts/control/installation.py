@@ -29,6 +29,7 @@ RECOVERY_FILES = (
 )
 
 NORMAL_FILES = (
+    'scripts/lifecycle/boot_unit.py', 'scripts/control/source-closure.json',
     'scripts/install/storage_io.py', 'scripts/install/prerequisites.py',
     'scripts/common/require-data-mounted.sh', 'scripts/common/registered-storage.py',
     'scripts/lifecycle/sglang_file_auth.py',
@@ -45,6 +46,9 @@ NORMAL_FILES = (
     'tests/lifecycle/sglang38_fixture/chat_template.jinja',
     'tests/lifecycle/sglang38_fixture/cache_probe.py',
     'tests/lifecycle/sglang38_fixture/qwen38_config.json',
+    'tests/lifecycle/sglang38_fixture/pair_launcher.py',
+    'tests/lifecycle/sglang38_fixture/run_pair_fixture.py',
+    'tests/lifecycle/sglang38_fixture/run_pair_pinned_image.py',
 )
 
 

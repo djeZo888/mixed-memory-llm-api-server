@@ -284,7 +284,7 @@ class ManagerSession:
                 self._separate_key(deployment)
                 if slot is not None:
                     from .catalog import model_slot
-                    if model_slot(deployment['_model']['repo_id']) != slot:
+                    if model_slot(deployment['_model']['repo_id'], deployment['id']) != slot:
                         raise ControlError('target_mismatch', 409)
                 self.manager.preflight_slot_admission(deployment, slot)
                 self.manager.prepare_start(deployment)

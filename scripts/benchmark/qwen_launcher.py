@@ -22,7 +22,18 @@ CONCURRENT_SCOPE = "concurrent-g1q1"
 CONCURRENT_CONTEXTS = (262144, 700160)
 CPU_SCOPE = "concurrent-480k-cpu"
 POSTRESTART_SCOPE = "postrestart72-480k"
+DUALQ_SCOPE = "dualq72-480k"
 CPU_CONTEXT = 480000
+
+
+def endpoint(scope, slot):
+    if scope == DUALQ_SCOPE:
+        if slot not in ("Q0", "Q1"):
+            raise ValueError("benchmark_dualq_physical_slot_required")
+        return (31002, "bench-qwen3.8-27b-gpu0") if slot == "Q0" else (31004, "bench-qwen3.8-27b")
+    if slot is not None:
+        raise ValueError("benchmark_slot_outside_dualq_scope")
+    return 31004, "bench-qwen3.8-27b"
 
 
 def pinned_base(path):
@@ -35,9 +46,10 @@ def pinned_base(path):
     return module
 
 
-def variant(base, context, tp, *, scope=None):
+def variant(base, context, tp, *, scope=None, slot=None):
+    port, alias = endpoint(scope, slot)
     concurrent = scope == CONCURRENT_SCOPE
-    cpu_budget = scope in (CPU_SCOPE, POSTRESTART_SCOPE)
+    cpu_budget = scope in (CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE)
     scoped = (concurrent and tp == 1 and context in CONCURRENT_CONTEXTS) or (cpu_budget and tp == 1 and context == CPU_CONTEXT)
     if scope is not None and not scoped:
         raise ValueError("benchmark_scope_tuple_unreviewed")
@@ -47,8 +59,8 @@ def variant(base, context, tp, *, scope=None):
     # Keep the production factor4 YaRN, cache and execution settings at every
     # rung/placement. Only context/pool, TP, alias and container port differ.
     flags = dict(base.FIXED_FLAGS)
-    flags.update({"--tp-size": str(tp), "--port": "31004",
-                  "--served-model-name": "bench-qwen3.8-27b",
+    flags.update({"--tp-size": str(tp), "--port": str(port),
+                  "--served-model-name": alias,
                   "--json-model-override-args": base.EXTENSION_OVERRIDE_JSON})
     return ([x for pair in flags.items() for x in pair]
             + ["--context-length", str(context), "--max-total-tokens", str(context)]
@@ -63,7 +75,7 @@ class _View:
         return self.overrides[name] if name in self.overrides else getattr(self.original, name)
 
 
-def bind_variant(base, context, tp, *, scope=None):
+def bind_variant(base, context, tp, *, scope=None, slot=None):
     """Bind one validated tuple in a fresh launcher module, before key access.
 
     Check each changed field exactly, then project those fields to the existing
@@ -71,12 +83,13 @@ def bind_variant(base, context, tp, *, scope=None):
     original resolving-view validator still compares raw/resolved tuple values.
     No change to native ServerArgs, credentials or serialization is made.
     """
-    argv = variant(base, context, tp, scope=scope)
+    argv = variant(base, context, tp, scope=scope, slot=slot)
+    port, alias = endpoint(scope, slot)
     original_validate = base.validate_server_args
     original_environment = base.validate_environment
     changed = {"context_length": context, "max_total_tokens": context,
-               "tp_size": tp, "port": 31004,
-               "served_model_name": "bench-qwen3.8-27b"}
+               "tp_size": tp, "port": port,
+               "served_model_name": alias}
     projection = {"context_length": base.EXTENSION_CONTEXT,
                   "max_total_tokens": base.EXTENSION_CONTEXT, "tp_size": 2,
                   "port": 30004, "served_model_name": "qwen3.8-27b"}
@@ -104,14 +117,15 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--context", required=True, type=int, choices=(*CAPACITIES, Q1_256K_CONTEXT, 700160, CPU_CONTEXT))
     parser.add_argument("--tp", required=True, type=int, choices=(1, 2))
-    parser.add_argument("--scope", choices=(CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE))
+    parser.add_argument("--scope", choices=(CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE))
+    parser.add_argument("--slot", choices=("Q0", "Q1"))
     options = parser.parse_args(argv)
     base = pinned_base("/opt/llmctl/sglang38_file_auth.py")
-    args = bind_variant(base, options.context, options.tp, scope=options.scope)
+    args = bind_variant(base, options.context, options.tp, scope=options.scope, slot=options.slot)
     # Safe launch receipt: native argv contains only the protected key FILE
     # reference in the outer wrapper, never key bytes. Actual resolution/log
     # allocation must additionally match before a benchmark request is admitted.
-    print("BENCHMARK_NATIVE_ARGV " + json.dumps({"argv": variant(base, options.context, options.tp, scope=options.scope)}, separators=(",", ":")), flush=True)
+    print("BENCHMARK_NATIVE_ARGV " + json.dumps({"argv": variant(base, options.context, options.tp, scope=options.scope, slot=options.slot)}, separators=(",", ":")), flush=True)
     return base.main(args)
 
 

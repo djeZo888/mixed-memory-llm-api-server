@@ -28,30 +28,36 @@ def bound(identifier, binding=None):
 def receipt(d):
     """In-memory schema fixture; this is not a live measurement or authority."""
     binding = d['_storage_binding']
-    value = {'schema_version': 1, 'kind': 'root-reviewed-concurrent-g1q1',
+    value = {'schema_version': 2, 'kind': 'root-reviewed-dualq-480k',
         'status': 'ACCEPTED_FOR_ACTIVATION', 'instance_id': 'synthetic-instance',
         'storage_identity': binding.identity, 'reviewed_source_commit': 'a' * 40,
         'source_sha256': pair.source_identity(), 'concurrency_performance_review': 'ACCEPTED',
         'evidence': ['SYNTHETIC in-memory unit fixture, not live evidence'],
-        'gpu_inventory': list(enumerate(pair.GPU_UUIDS)), 'slots': {}, 'host_usable_bytes': 800 * 1024**3}
-    for slot, identifier in pair.SLOTS.items():
-        expected = pair.declared_profile(identifier)
-        resource = expected['concurrent_pair']
-        value['slots'][slot] = {
-            'deployment': identifier, 'configured_context': expected['launch']['context_size'],
-            'profile_sha256': pair.PINS['configs/deployments/' + identifier + '.json'],
-            'runtime_image_id': expected['_runtime']['validation']['image_id'] if slot == 'glm' else expected['_runtime']['image_id'],
-            'model_revision': expected['_model']['revision'],
-            'visible_cuda_devices': {'CUDA0': expected['launch']['gpus'][0]},
-            'guest_cpu_count': resource['guest_cpu_count'], 'guest_cpuset': resource['guest_cpuset'],
-            'memory_bytes': resource['memory_bytes'], 'memory_swap_bytes': resource['memory_swap_bytes'],
-            'allocation': 'PASS', 'short_inference': 'PASS', 'correctness': 'PASS',
-            'largest_occupied_context': 65008 if slot == 'glm' else 699000,
-            'host_peak_bytes': resource['memory_bytes'] // 2, 'minimum_free_gpu_bytes': 20 * 1024**3,
-            'gpu_total_bytes': 96 * 1024**3}
-        if slot == 'qwen':
-            value['slots'][slot].update(pair_launcher_sha256=pair.PINS['scripts/runtime/sglang38_pair_file_auth.py'],
-                native_auth_checks={name: 'PASS' for name in q.AUTH_CHECKS})
+        'host_headroom_policy': copy.deepcopy(pair.HOST_HEADROOM_POLICY_15), 'guest_total_vcpus': 72,
+        'gpu_inventory': list(enumerate(pair.GPU_UUIDS)), 'modes': {}, 'host_usable_bytes': 800 * 1024**3}
+    for mode, selections in pair.MODES.items():
+        review = value['modes'][mode] = {'slots': {}, 'concurrency_performance_review': 'ACCEPTED',
+                                        'evidence': ['SYNTHETIC mode measurement']}
+        for slot, identifier in selections.items():
+            expected = pair.declared_profile(identifier)
+            resource = expected['concurrent_pair']
+            proof = review['slots'][slot] = {
+                'deployment': identifier, 'configured_context': expected['launch']['context_size'],
+                'profile_sha256': pair.PINS['configs/deployments/' + identifier + '.json'],
+                'runtime_image_id': expected['_runtime']['validation']['image_id'] if identifier == pair.GLM_PROFILE else expected['_runtime']['image_id'],
+                'model_revision': expected['_model']['revision'],
+                'visible_cuda_devices': {'CUDA0': expected['launch']['gpus'][0]},
+                'guest_cpu_count': resource['guest_cpu_count'], 'guest_cpuset': resource['guest_cpuset'],
+                'guest_cpu_sharing': resource['guest_cpu_sharing'],
+                'memory_bytes': resource['memory_bytes'], 'memory_swap_bytes': resource['memory_swap_bytes'],
+                'allocation': 'PASS', 'short_inference': 'PASS', 'correctness': 'PASS',
+                'largest_occupied_context': 65008 if identifier == pair.GLM_PROFILE else 479487,
+                'sampled_required_working_set_estimate_bytes': resource['memory_bytes'] // 2,
+                'host_peak_bytes': resource['memory_bytes'] // 2, 'minimum_free_gpu_bytes': 20 * 1024**3,
+                'gpu_total_bytes': 96 * 1024**3}
+            if identifier in pair.QWEN_PROFILES:
+                proof.update(pair_launcher_sha256=pair.PINS['scripts/runtime/sglang38_pair_file_auth.py'],
+                    native_auth_checks={name: 'PASS' for name in q.AUTH_CHECKS})
     path = binding.path('data', pair.ACCEPTANCE_SUFFIX)
     binding.documents[path] = value
     instance = {'id': 'synthetic-instance', 'concurrent_pair_acceptance': {
@@ -128,7 +134,7 @@ class Profiles(unittest.TestCase):
         d = bound(pair.GLM_PROFILE)
         e = {'image_id': d['_runtime']['validation']['image_id'], 'load_mode': 'none'}
         argv = pair.glm_command(d, e)
-        for flag, value in [('--ctx-size', '480000'), ('--threads', '96'), ('--threads-batch', '96'),
+        for flag, value in [('--ctx-size', '480000'), ('--threads', '72'), ('--threads-batch', '72'),
             ('--device', 'CUDA0'), ('--cache-type-k', 'f16'), ('--cache-type-v', 'f16'),
             ('--fit', 'off'), ('--batch-size', '2048'), ('--ubatch-size', '512'), ('--main-gpu', '0')]:
             self.assertEqual(argv[argv.index(flag) + 1], value)
@@ -137,7 +143,7 @@ class Profiles(unittest.TestCase):
             pair.glm_command(d, dict(e, load_mode='auto'))
 
     def test_exact_reuse_resource_and_cuda_contract(self):
-        for identifier in pair.SLOTS.values():
+        for identifier in pair.PROFILES:
             d = bound(identifier); c = inspect_fixture(d)
             pair.validate_reuse(c, d)
             changes = [lambda c: c['HostConfig'].update(MemorySwap=-1),
@@ -158,7 +164,7 @@ class Profiles(unittest.TestCase):
 
 class Acceptance(unittest.TestCase):
     def test_source_profile_never_implies_live_acceptance(self):
-        for identifier in pair.SLOTS.values():
+        for identifier in pair.PROFILES:
             with self.assertRaisesRegex(LifecycleError, 'concurrent_reviewed_acceptance_required'):
                 pair.check_acceptance(bound(identifier), {})
 
@@ -175,16 +181,16 @@ class Acceptance(unittest.TestCase):
         changes = [lambda p: p.update(status='UNVALIDATED'), lambda p: p.update(schema_version=True),
             lambda p: p.update(instance_id='another-host'), lambda p: p.update(source_sha256={}),
             lambda p: p.update(storage_identity={}), lambda p: p.update(host_usable_bytes=100),
-            lambda p: p.update(concurrency_performance_review='PENDING'), lambda p: p['slots'].pop('glm'),
-            lambda p: p['slots']['glm'].update(configured_context=500000),
-            lambda p: p['slots']['glm'].update(allocation='NOT_TESTED'),
-            lambda p: p['slots']['glm'].update(host_peak_bytes=640 * 1024**3),
-            lambda p: p['slots']['qwen'].update(minimum_free_gpu_bytes=15 * 1024**3),
-            lambda p: p['slots']['qwen'].update(gpu_total_bytes=300 * 1024**3),
-            lambda p: p['slots']['qwen'].update(visible_cuda_devices={'CUDA0': pair.GPU_UUIDS[0]}),
-            lambda p: p['slots']['qwen'].update(native_auth_checks={}),
-            lambda p: p['slots']['qwen'].update(pair_launcher_sha256='0' * 64),
-            lambda p: p['slots']['qwen'].update(largest_occupied_context=True)]
+            lambda p: p.update(concurrency_performance_review='PENDING'), lambda p: p['modes']['glm-qwen']['slots'].pop('glm'),
+            lambda p: p['modes']['glm-qwen']['slots']['glm'].update(configured_context=500000),
+            lambda p: p['modes']['glm-qwen']['slots']['glm'].update(allocation='NOT_TESTED'),
+            lambda p: p['modes']['glm-qwen']['slots']['glm'].update(host_peak_bytes=640 * 1024**3 + 1),
+            lambda p: p['modes']['glm-qwen']['slots']['qwen'].update(minimum_free_gpu_bytes=15 * 1024**3),
+            lambda p: p['modes']['glm-qwen']['slots']['qwen'].update(gpu_total_bytes=300 * 1024**3),
+            lambda p: p['modes']['glm-qwen']['slots']['qwen'].update(visible_cuda_devices={'CUDA0': pair.GPU_UUIDS[0]}),
+            lambda p: p['modes']['glm-qwen']['slots']['qwen'].update(native_auth_checks={}),
+            lambda p: p['modes']['glm-qwen']['slots']['qwen'].update(pair_launcher_sha256='0' * 64),
+            lambda p: p['modes']['glm-qwen']['slots']['qwen'].update(largest_occupied_context=True)]
         for change in changes:
             proof = copy.deepcopy(original); change(proof)
             d['_storage_binding'].documents[path] = proof
@@ -208,25 +214,25 @@ class QwenPairLauncher(unittest.TestCase):
 
     def test_closed_argv_retains_yarn4_tp1_defaults_and_container_cuda0(self):
         d = bound(pair.QWEN_PROFILE)
-        self.assertEqual(q.command(d), [q.PAIR_LAUNCHER_TARGET])
+        self.assertEqual(q.command(d), [q.PAIR_LAUNCHER_TARGET, '--slot', 'gpu1'])
         self.assertEqual(q.launcher_targets(d), {q.LAUNCHER_TARGET, q.PAIR_LAUNCHER_TARGET})
         self.assertEqual(q.launch_environment(d)['CUDA_VISIBLE_DEVICES'], pair.GPU_UUIDS[1])
-        argv = launcher.bind_variant(self.base)
-        self.assertEqual(self.base.parse_options(argv)[0].context_length, '700160')
-        for flag, value in [('--tp-size', '1'), ('--base-gpu-id', '0'), ('--max-total-tokens', '700160'),
+        argv = launcher.bind_variant(self.base, 'gpu1')
+        self.assertEqual(self.base.parse_options(argv)[0].context_length, '480000')
+        for flag, value in [('--tp-size', '1'), ('--base-gpu-id', '0'), ('--max-total-tokens', '480000'),
                             ('--json-model-override-args', self.base.EXTENSION_OVERRIDE_JSON)]:
             self.assertEqual(argv[argv.index(flag) + 1], value)
-        for invalid in (argv[::-1], argv + ['--context-length', '700160'], argv[:-1]):
+        for invalid in (argv[::-1], argv + ['--context-length', '480000'], argv[:-1]):
             with self.assertRaises(self.base.LaunchError):
                 self.base.parse_options(invalid)
 
     def test_raw_and_resolved_tuple_and_unchanged_auth_guards(self):
-        launcher.bind_variant(self.base)
+        launcher.bind_variant(self.base, 'gpu1')
         for resolved in (False, True):
             args = args_fixture(1000000, resolved=resolved)
-            args.context_length = args.max_total_tokens = 700160; args.tp_size = 1
+            args.context_length = args.max_total_tokens = 480000; args.tp_size = 1
             self.base.validate_server_args(args, resolved=resolved)
-            for field, value in [('context_length', 700161), ('max_total_tokens', True), ('tp_size', 2),
+            for field, value in [('context_length', 480001), ('max_total_tokens', True), ('tp_size', 2),
                 ('base_gpu_id', 1), ('api_key', 'synthetic-prohibited'), ('kv_cache_dtype', 'fp8'),
                 ('json_model_override_args', '{}'), ('served_model_name', 'bench-qwen3.8-27b')]:
                 bad = copy.deepcopy(args); setattr(bad, field, value)
@@ -235,7 +241,7 @@ class QwenPairLauncher(unittest.TestCase):
 
     def test_original_launcher_bytes_and_context_set_are_unchanged(self):
         with self.assertRaises(self.base.LaunchError):
-            self.base.backend_argv(700160)
+            self.base.backend_argv(480000)
         self.assertEqual(self.base.ACCEPTED_CONTEXTS, (131072, 262144, 1000000))
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'base.py'; path.write_text('raise AssertionError("must not import")')
@@ -269,11 +275,13 @@ class ManagerPairIntegration(unittest.TestCase):
         d = self.manager.deployment(identifier)
         _, instance = receipt(d)
         self.manager.instance.update(instance)
-        if identifier == pair.QWEN_PROFILE:
+        if identifier in pair.QWEN_PROFILES:
             _, runtime = auth_receipt(d)
             self.manager.instance.update(runtime)
             self.images[q.IMAGE_REFERENCE] = qimage(d)
             c = qcontainer(d)
+            c['HostConfig']['PortBindings'] = {str(d['container_port']) + '/tcp':
+                [{'HostIp': '127.0.0.1', 'HostPort': str(d['endpoint']['port'])}]}
         else:
             e = dict(d['_runtime']['validation'], flags_verified=True, load_mode='none',
                      evidence=['SYNTHETIC runtime evidence'])
@@ -291,13 +299,13 @@ class ManagerPairIntegration(unittest.TestCase):
         return d, c
 
     def test_real_manager_create_and_reuse_both_exact_candidates(self):
-        for identifier in pair.SLOTS.values():
+        for identifier in pair.PROFILES:
             d, c = self.prepare(identifier)
             args = self.manager.create_args(d)
             self.assertEqual(args[args.index('--gpus') + 1], '"device=' + d['launch']['gpus'][0] + '"')
             self.assertEqual(args[args.index('--cpuset-cpus') + 1], d['concurrent_pair']['guest_cpuset'])
             self.assertEqual(args[args.index('--memory-swap') + 1], str(d['concurrent_pair']['memory_bytes']))
-            self.assertEqual(args.count('--mount'), 7 if identifier == pair.QWEN_PROFILE else 5)
+            self.assertEqual(args.count('--mount'), 7 if identifier in pair.QWEN_PROFILES else 5)
             self.assertIn('CUDA_VISIBLE_DEVICES=' + d['launch']['gpus'][0], args)
             self.assertEqual(args[args.index('--publish') + 1],
                 '127.0.0.1:' + str(d['endpoint']['port']) + ':' + str(d['container_port']) + '/tcp')
@@ -311,7 +319,7 @@ class ManagerPairIntegration(unittest.TestCase):
                     self.manager.validate_reused_contract(bad, d)
 
     def test_create_and_reuse_need_acceptance_even_with_prior_native_runtime_proof(self):
-        for identifier in pair.SLOTS.values():
+        for identifier in pair.PROFILES:
             d, c = self.prepare(identifier)
             self.manager.instance.pop('concurrent_pair_acceptance')
             self.inspects.clear()

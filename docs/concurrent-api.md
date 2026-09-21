@@ -1,53 +1,78 @@
-# Fixed GLM + Qwen production slots — source candidate
+# Dual Qwen production slots — 2026-09-21 source candidate
 
-The 2026-09-20 concurrent-production authorization supersedes the older
-single-backend architecture limit for this bounded task. Production activation
-still depends on favorable benchmark results, root acceptance of the exact
-capacity/allocation evidence, and review of this source candidate. This source
-task runs on mac-worker1 only; it does not contact ai-vm, mutate a host, run
-inference, or modify the independently running benchmark checkout. Installer,
-frontend and future ai-harness work remain outside scope.
+Explicit user authority supersedes the historical singleton and G/Q-only scope.
+Default mode is `dual-qwen`; optional `glm-qwen` replaces only GPU0. PREP runs
+source and offline tests on mac-worker1. It does not release the retained
+benchmark owner, contact inference endpoints, install source or activate models.
+Root reviews exact source and lifecycle before a fresh native live session.
+Installer, frontend and future ai-harness implementation remain out of scope.
 
-## Fixed topology and evidence boundary
+## Fixed placements and discovery
 
-The existing lifecycle Manager gains exactly two slots, `glm` and `qwen`. Both
-use the existing global lifecycle lease, control mutation executor, operation
-journal, authentication, private transport, registered storage and source pins.
-There is no inference router or general placement framework. One slot's
-targeted transition preserves the healthy peer's container identity and stream.
-The sole boot owner replays saved intents in deterministic `glm`, then `qwen`
-order. Docker restart remains `no`.
+The existing Manager, canonical lifecycle lease, serialized control executor,
+identity journal and protected boot owner remain authoritative. Persisted v3
+keys `glm` and `qwen` mean GPU0 and GPU1 respectively; the first is a historical
+key, not a restriction to a GLM model. Public `placement` and unique deployment
+`instance_id` distinguish the two Qwen copies despite their identical model ID.
 
-| Slot | Candidate deployment | Guest resources | Configured candidate |
+| Mode / slot | Deployment | Native port / alias | CPU mask / hard host cap |
 | --- | --- | --- | --- |
-| `glm` | `glm-5.3-ud-q4-k-xl-g1-480000` | GPU0; CPUs 0–95; 96 threads; 640 GiB no-swap cap | 480,000 tokens; **UNVALIDATED** |
-| `qwen` | `qwen38-27b-q1-700160-yarn4-bf16kv` | GPU1; CPUs 96–111; 16 CPUs; provisional 32 GiB no-swap cap | 700,160 tokens; **UNVALIDATED** |
+| Default GPU0 Qwen | `qwen38-27b-q0-480000-yarn4-bf16kv` | 30002 / `qwen3.8-27b-gpu0` | 0–7 / 32 GiB |
+| Both modes GPU1 Qwen | `qwen38-27b-q1-480000-yarn4-bf16kv` | 30004 / `qwen3.8-27b` | 0–7 / 32 GiB |
+| Optional GPU0 GLM | `glm-5.3-ud-q4-k-xl-g1-480000` | 30002 / `glm-5.3` | 0–71 / 640 GiB |
 
-The exact profiles bind physical GPU UUIDs; each single-GPU container sees its
-assigned device as CUDA0. Guest CPU separation is not physical CPU pinning.
-The GLM N76/F16 and Qwen FP8/BF16 KV/YaRN4/chunk2048 settings, runtime and weight
-pins, cache policy, aliases and model defaults remain explicit. GLM defaults to
-low reasoning; Qwen defaults to no thinking. Existing TP2/1M profiles remain
-explicit mutually exclusive alternatives and cannot coexist with the pair.
-Unknown peers and conflicting identities/resources must be rejected.
+All three configure **480,000 tokens**. Qwen actual scheduler pool must equal
+480,000, input limit479,994 and optional request limit479,999. GLM `/props`
+resolved context must equal480,000. These checks do not establish occupied
+context/retrieval correctness. Qwen480K onGPU1 and G72/Q8 have earlier benchmark
+evidence; dual-Q performance/GPU0-Qwen/native wrapper/live API remain unaccepted.
 
-Source profile declarations are not live-readiness receipts. Neither candidate
-capacity is accepted merely because a profile parses or tests pass. Root must
-provide the exact reviewed allocation, GPU margin, host demand/reserve,
-occupied-context and inference evidence before activation. If evidence requires
-a different context or cap, review a correspondingly pinned profile; do not
-pass arbitrary launch arguments or manufacture an acceptance record.
+Masks are shared guest CPU affinity, not exclusive or physical CPU allocations.
+Q/Q shares the same8 guest CPUs; G/Q shares Qwen's8 with GLM's72. Online guest
+CPUs must remain0–71. Both caps are no-swap. Reuse exact runtime/image/model pins,
+BF16 Qwen KV/YaRN4/chunk2048/static0.8, GLM N76/F16/fit-off and existing cache
+policy. Separate writable cache/log/service paths and full container identities
+are mandatory. Stale700160/96+16 and TP2 profiles are not admitted as this pair.
 
-Clients continue using their separate protected base URL/model configurations.
-The reviewed private-network policy advertises GLM
-`http://10.156.100.60:30002/v1` with alias `glm-5.3`, and Qwen
-`http://10.156.100.60:30004/v1` with alias `qwen3.8-27b`. These are deployment
-policy values, not reachability claims from this source task. Native host
-listeners remain authenticated IPv4 loopback; preserve the existing private
-proxy/firewall/TLS policy and unchanged key bytes. Native `/v1/models` remains
-endpoint-local. Use the authenticated control catalog for per-model endpoint,
-readiness and capability discovery; see [control API](control-api.md) for exact
-targeted mutation bodies and asynchronous operation polling.
+No common inference router is added. Clients discover and explicitly address
+both Qwen instances; a concurrent pair uses distinct URLs and aliases. Native
+listeners remain authenticated IPv4 loopback. Existing protected private policy
+maps10.156.100.60:30002/30004 to those physical endpoints and control:30000.
+The historical proxy role `glm` names port30002 even while Qwen0 occupies it.
+Native `/v1/models` is endpoint-local. No wildcard/public/IPv6 exposure or key
+rotation is introduced. Installed network config was read-only verified in PREP.
+
+Authenticated control status/catalog expose `default_mode`, `current_mode`
+(basis:selected deployments), `available_modes`, configured/accepted/occupied
+capacity distinctions, readiness, degraded state, mutation busy and transition
+cost. Available modes are closed declarations, not admission receipts. Inference
+running/queued counts, freshness and external harness backlog stay **unknown**;
+Ready never means idle. Switching seconds are unmeasured. Earlier GLM G65008
+native decode was0.453261513tokens/s; it is historical workload evidence, not a
+switch-time estimate or a general throughput guarantee.
+
+## Acknowledged targeted replacement and durable ownership
+
+Retain expected generation/active identity, idempotency and operation polling.
+A switch/restart of ANY running target requires `allow_interrupt:true` even if
+it looks Ready or unhealthy. A single trusted future client pauses its dispatch
+and drains its own backlog before acknowledging replacement. There is **no
+atomic server drain guarantee**: direct inference endpoints bypass the lifecycle
+lease, so an idle sample cannot fence new requests. No gate/proxy framework is
+added. The server does not choose when Qwen failed, assess answer quality or
+implement escalation policy. G/Q reduces Qwen instances from2 to1.
+
+Only the target is stopped/replaced. GPU1 Qwen keeps its exact identity and
+stream. Failure must retain peer and recovery ownership, never silently restore
+or replace the peer. Return to Q/Q explicitly replaces GPU0 with Qwen0.
+
+The existing protected systemd boot-start/boot-stop owner replays `resume`
+intents GPU1 first, then GPU0; Docker restart remains `no`. Control/proxies use
+existing ai-vm services. Production has no Worker1/SSH/benchmark-keeper lifetime
+dependency. Activation must prove source closure, saved intents, service replay
+and private-client behavior; source tests are not physical reboot acceptance.
+Never adopt benchmark containers. Preserve the current keeper until root's
+exact release and verify canonical STOPPED/manual before fresh ownership.
 
 ## Explicit migration and recovery contract
 
@@ -139,7 +164,7 @@ The migration and rollback prerequisite helpers are source mechanisms, not
 evidence that installed protected snapshots, absence, restoration, or live
 acceptance have been observed on ai-vm.
 
-## Future benchmark admission
+## Benchmark ordering and pair-state boundary
 
 The existing benchmark owner captures/restores one production selection. This
 candidate intentionally does not extend that restoration owner to two slots.
@@ -176,9 +201,17 @@ records the exact tested commit and aggregate lifecycle/control coverage.
 Local fixture leases are not ai-vm leases; synthetic tests establish neither
 GPU admission on the host nor inference, boot or rollback acceptance.
 
-Before activation, root must resolve the final accepted GLM/Qwen context values,
-Qwen host cap and measured reserve, GPU allocation/margin, benchmark performance
-decision, and protected acceptance-receipt identity. A fresh bounded Worker1
+Before activation, root must review the new modes/profiles and exact protected
+acceptance receipt. The gate requires actual dual-Q performance, so exactly one
+temporary dual-Q near-max benchmark precedes production migration/admission.
+Reuse the canonical owner after authorized old-owner release, then scoped
+cleanup and production loading; do not fabricate an acceptance receipt to run
+the benchmark after activation. The frozen479487-token fixture plus512 maximum
+output fits480000; recheck native token/template accounting before dispatch.
+Warmups are discarded; two requests start together on distinct physical GPUs.
+Expected roughly five minutes is not a300s kill timer; allow normal completion.
+The new closed manifest/request helper is source preparation; live CampaignOwner
+wiring and exact source/fixture review remain a separate bounded RUN prerequisite. A fresh bounded Worker1
 activation session must verify installed source closure, guarded migration,
 both authenticated endpoints and aliases, missing/wrong-key rejection,
 streaming/schema/tool-result continuation, peer survival during targeted

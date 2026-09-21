@@ -16,6 +16,14 @@ class ConcurrentImportProtection(unittest.TestCase):
         self.assertEqual(set(manifest['recovery_files']), set(protection.RECOVERY_FILES))
         self.assertEqual(set(manifest['normal_files']), set(protection.NORMAL_FILES))
 
+    def test_acceptance_source_identity_is_available_in_normal_snapshot(self):
+        from lifecycle.concurrent_profiles import source_identity
+        manifest = json.loads((ROOT / 'scripts/control/source-closure.json').read_text())
+        files = set(manifest['normal_files']) | set(manifest['recovery_files'])
+        missing = [name for name in source_identity() if name not in files and
+                   not any(name.startswith(directory + '/') for directory in manifest['normal_profile_directories'])]
+        self.assertEqual(missing, [])
+
     def test_new_concurrent_imports_cannot_skip_startup_protected_file_validation(self):
         paths = ('scripts/lifecycle/slot_state.py', 'scripts/lifecycle/concurrent_profiles.py',
                  'scripts/runtime/sglang38_pair_file_auth.py')

@@ -16,9 +16,12 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None, scope=No
     its tokenize route alone does not expose that identity. No route is called
     until the returned counter is invoked; these are not generation endpoints.
     """
+    qwen = model in {"qwen3.8-27b", "bench-qwen3.8-27b", "bench-qwen3.8-27b-gpu0"}
     allowed_capacities = CAPACITIES
     if scope is not None:
-        if scope == "candidate-pair-validation" and model in {"glm-5.3", "qwen3.8-27b"}:
+        if scope == "dualq72-480k" and model in {"bench-qwen3.8-27b", "bench-qwen3.8-27b-gpu0"}:
+            allowed_capacities = (480000,)
+        elif scope == "candidate-pair-validation" and model in {"glm-5.3", "qwen3.8-27b"}:
             allowed_capacities = (480000,) if model == "glm-5.3" else (700160,)
         elif scope in (CPU_SCOPE, "postrestart72-480k") and model in CPU_CAPACITIES:
             allowed_capacities = CPU_CAPACITIES[model]
@@ -29,9 +32,10 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None, scope=No
         else:
             raise HarnessError("invalid native counting diagnostic scope")
     if (model not in MODELS or type(capacity) is not int or capacity not in allowed_capacities
+            or (model == "bench-qwen3.8-27b-gpu0" and scope != "dualq72-480k")
             or (capacity == 262144 and model != "bench-qwen3.8-27b")):
         raise HarnessError("invalid native counting configuration")
-    if model.removeprefix("bench-") == "qwen3.8-27b" and (not isinstance(qwen_template_sha256, str)
+    if qwen and (not isinstance(qwen_template_sha256, str)
                                      or not re.fullmatch(r"[0-9a-f]{64}", qwen_template_sha256)):
         raise HarnessError("verified Qwen template identity is required")
 
@@ -75,13 +79,13 @@ def native_counter(model, capacity, call, *, qwen_template_sha256=None, scope=No
         if (not isinstance(tokens, list) or not tokens or len(tokens) > 8 * max(131072, capacity)
                 or any(type(token) is not int or not 0 <= token < 2**31 for token in tokens)):
             raise HarnessError("native token IDs missing or invalid")
-        if model.removeprefix("bench-") == "qwen3.8-27b" and (type(reply.get("count")) is not int or reply["count"] != len(tokens)):
+        if qwen and (type(reply.get("count")) is not int or reply["count"] != len(tokens)):
             raise HarnessError("native Qwen count/token IDs disagree")
         return {"source": source, "input_tokens": len(tokens), "body_sha256": digest(raw),
                 **count_transport,
                 "template_sha256": template_hash, "token_ids_sha256": digest(canonical(tokens)),
                 "configured_context": capacity,
                 "configured_context_source": "native_props" if model.removeprefix("bench-") == "glm-5.3" else "caller_verified_runtime_allocation",
-                "tokenizer_max_model_len": reply.get("max_model_len") if model.removeprefix("bench-") == "qwen3.8-27b" else None}
+                "tokenizer_max_model_len": reply.get("max_model_len") if qwen else None}
 
     return count

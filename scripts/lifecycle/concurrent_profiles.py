@@ -1,7 +1,7 @@
-"""Closed G1/Q1 production declarations; never manufacture live acceptance.
+"""Closed Q/Q and G/Q production declarations; never manufacture live acceptance.
 
 Manager owns storage guards, the single lease, identities and all Docker calls.
-These two candidate declarations are UNVALIDATED until root publishes a protected
+These three candidate declarations are UNVALIDATED until root publishes a protected
 receipt at ACCEPTANCE_SUFFIX and binds its canonical SHA256 in the instance.
 Changing any capacity, resource, default, source or runtime pin is source review.
 """
@@ -17,25 +17,33 @@ from .runtime_io import LifecycleError
 
 ROOT = Path(__file__).resolve().parents[2]
 GLM_PROFILE = 'glm-5.3-ud-q4-k-xl-g1-480000'
-QWEN_PROFILE = 'qwen38-27b-q1-700160-yarn4-bf16kv'
+QWEN_PROFILE = 'qwen38-27b-q1-480000-yarn4-bf16kv'
+QWEN0_PROFILE = 'qwen38-27b-q0-480000-yarn4-bf16kv'
+QWEN_PROFILES = (QWEN0_PROFILE, QWEN_PROFILE)
+# Legacy persisted keys denote physical placement, not model identity.
 SLOTS = {'glm': GLM_PROFILE, 'qwen': QWEN_PROFILE}
+MODES = {'dual-qwen': {'glm': QWEN0_PROFILE, 'qwen': QWEN_PROFILE},
+         'glm-qwen': SLOTS}
+DEFAULT_MODE = 'dual-qwen'
+PROFILES = (GLM_PROFILE, *QWEN_PROFILES)
 GPU_UUIDS = ('GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',
             'GPU-69acfa26-8b60-61b5-702d-aee252c163cc')
-ACCEPTANCE_SUFFIX = 'services/llm-manager/evidence/concurrent-g1q1.accepted.json'
+ACCEPTANCE_SUFFIX = 'services/llm-manager/evidence/dualq-480k.accepted.json'
 HOST_HEADROOM_POLICY_15 = {
     'version': 'sampled-required-working-set-15pct-v1',
     'numerator': 23, 'denominator': 20,
     'basis': 'sampled_required_working_set_estimate_bytes',
 }
 PINS = {
-    'configs/deployments/glm-5.3-ud-q4-k-xl-g1-480000.json': '5c3864ad2f32c0eda4ca642daba66509af2b4cdfd7b97ac822846dffaf0920d1',
-    'configs/deployments/qwen38-27b-q1-700160-yarn4-bf16kv.json': '7650e6ba3cc089ce3955c465a76bd0d97b832c5e1ef1d1ee37dfc56f13a1d401',
+    'configs/deployments/qwen38-27b-q1-480000-yarn4-bf16kv.json': '6b4d6725010b58e53c784be781af968bf8b295cca402f0b6e4c91d2ea73077dd',
+    'configs/deployments/qwen38-27b-q0-480000-yarn4-bf16kv.json': '7c2587d74e8f4654574c74d8b6e955dac1db9a185fc1c0201bacee92b3ecffe4',
+    'configs/deployments/glm-5.3-ud-q4-k-xl-g1-480000.json': '1baa9913542a088a7dd40d1a902ef53605ff4a1c5eafc409814116df25d49899',
     'configs/models/glm-5.3-ud-q4-k-xl.json': '857924551fa83c546bb99f7b524b35c8d79d0cb9ba0a666e0c139bbace0e7e0d',
     'configs/models/qwen38-27b-fp8.json': 'fb62b2689a4c57aa1265b1262830c8d0e3983061c9674640ec9704ce603a44be',
     'configs/runtimes/llama-cpp-v0.4.1-d3br.json': 'd073105a70540df73cef325df7fdcfa32651f5a6aa8387b584708fb51b802d50',
     'configs/runtimes/sglang-qwen38-0.5.19.json': '17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11',
     'scripts/runtime/sglang38_file_auth.py': 'e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7da4',
-    'scripts/runtime/sglang38_pair_file_auth.py': '0f0f774ac39ef81b89b85f86bd9a898a0ba7099804763e396aa33a9c30a1c9b5',
+    'scripts/runtime/sglang38_pair_file_auth.py': '1c4cbe80cf39d2c907c7878550018383b68cf5fbefbfdf48b6159238aadf7f88',
 }
 
 
@@ -65,7 +73,7 @@ def slot_for_deployment(identifier):
     """Fixed model slot for both candidate and preserved singleton alternatives."""
     if not isinstance(identifier, str):
         return None
-    if identifier in {GLM_PROFILE, 'glm-5.3-ud-q4-k-xl-8k', 'glm-5.3-ud-q4-k-xl-32k',
+    if identifier in {QWEN0_PROFILE, GLM_PROFILE, 'glm-5.3-ud-q4-k-xl-8k', 'glm-5.3-ud-q4-k-xl-32k',
                       'glm-5.3-ud-q4-k-xl-n76-32k', 'glm-5.3-ud-q4-k-xl-n76-native1m'}:
         return 'glm'
     if identifier in {QWEN_PROFILE, 'qwen38-27b-128k', 'qwen38-27b-256k',
@@ -75,7 +83,7 @@ def slot_for_deployment(identifier):
 
 
 def is_pair(d):
-    return isinstance(d, dict) and d.get('id') in SLOTS.values()
+    return isinstance(d, dict) and d.get('id') in PROFILES
 
 
 def _pinned(relative):
@@ -86,7 +94,7 @@ def _pinned(relative):
 
 @safe
 def declared_profile(identifier):
-    require(identifier in SLOTS.values(), 'concurrent_profile_unreviewed')
+    require(identifier in PROFILES, 'concurrent_profile_unreviewed')
     d = json.loads(_pinned('configs/deployments/' + identifier + '.json'))
     d['_model'] = json.loads(_pinned('configs/models/' + d['model'] + '.json'))
     d['_runtime'] = json.loads(_pinned('configs/runtimes/' + d['runtime'] + '.json'))
@@ -131,7 +139,7 @@ def glm_command(d, e):
             '--parallel', '1', '--n-cpu-moe', '76', '--n-gpu-layers', '999',
             '--split-mode', 'none', '--tensor-split', '1', '--main-gpu', '0', '--device', 'CUDA0',
             '--load-mode', 'none', '--cache-type-k', 'f16', '--cache-type-v', 'f16', '--fit', 'off',
-            '--batch-size', '2048', '--ubatch-size', '512', '--threads', '96', '--threads-batch', '96',
+            '--batch-size', '2048', '--ubatch-size', '512', '--threads', '72', '--threads-batch', '72',
             '--jinja', '--no-webui', '--no-cache-prompt', '--chat-template-kwargs',
             json.dumps(launch['chat_template_kwargs'], sort_keys=True, separators=(',', ':'))]
 
@@ -141,7 +149,8 @@ def validate_pair(d, peer):
     """No unknown peers, alternatives or second copy can share pair admission."""
     validate(d)
     validate(peer)
-    require({d['id'], peer['id']} == set(SLOTS.values()), 'concurrent_peer_conflict')
+    require(any({d['id'], peer['id']} == set(mode.values()) for mode in MODES.values()),
+            'concurrent_peer_conflict')
     require(d['endpoint']['port'] != peer['endpoint']['port']
             and d['endpoint']['served_model'] != peer['endpoint']['served_model']
             and not set(d['launch']['gpus']) & set(peer['launch']['gpus']), 'concurrent_peer_conflict')
@@ -193,6 +202,11 @@ def source_identity():
             'scripts/lifecycle/runtime_io.py',
             'scripts/control/core.py', 'scripts/control/adapter.py', 'scripts/control/catalog.py',
             'scripts/control/journal.py', 'scripts/control/protocol.py', 'scripts/control/discovery.py',
+            'tests/lifecycle/sglang38_fixture/provenance.json',
+            'tests/lifecycle/sglang38_fixture/run_pinned_image.py',
+            'tests/lifecycle/sglang38_fixture/pair_launcher.py',
+            'tests/lifecycle/sglang38_fixture/run_pair_fixture.py',
+            'tests/lifecycle/sglang38_fixture/run_pair_pinned_image.py',
             'scripts/control/installation.py', 'scripts/control/source-closure.json'}
     return {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in sorted(files)}
 
@@ -202,7 +216,7 @@ def receipt_sha256(value):
 
 
 @safe
-def check_acceptance(d, instance):
+def check_acceptance(d, instance, *, mode=None):
     """Read, never create, root's protected reviewed capacity/allocation receipt.
 
     A receipt is operator evidence, not a synthetic test result. The instance
@@ -220,8 +234,8 @@ def check_acceptance(d, instance):
             'concurrent_reviewed_acceptance_required')
     receipt = binding.read_json('data', path, maximum=1024 * 1024)
     require(receipt_sha256(receipt) == reference['sha256'], 'concurrent_acceptance_digest_mismatch')
-    require(receipt.get('schema_version') == 1 and type(receipt.get('schema_version')) is int
-            and receipt.get('kind') == 'root-reviewed-concurrent-g1q1'
+    require(receipt.get('schema_version') == 2 and type(receipt.get('schema_version')) is int
+            and receipt.get('kind') == 'root-reviewed-dualq-480k'
             and receipt.get('status') == 'ACCEPTED_FOR_ACTIVATION'
             and isinstance(instance.get('id'), str) and bool(instance['id'])
             and receipt.get('instance_id') == instance['id']
@@ -233,28 +247,43 @@ def check_acceptance(d, instance):
             and all(isinstance(item, str) and item.strip() for item in receipt['evidence']),
             'concurrent_acceptance_identity_mismatch')
     validate_gpu_inventory(receipt.get('gpu_inventory'))
-    slots = receipt.get('slots')
+    modes = receipt.get('modes')
+    require(isinstance(modes, dict) and set(modes) == set(MODES), 'concurrent_acceptance_modes_mismatch')
+    require(same(receipt.get('host_headroom_policy'), HOST_HEADROOM_POLICY_15)
+            and same(receipt.get('guest_total_vcpus'), 72), 'concurrent_host_headroom_policy_unaccepted')
+    for name, selections in MODES.items():
+        review = modes[name]
+        require(isinstance(review, dict) and review.get('concurrency_performance_review') == 'ACCEPTED'
+                and isinstance(review.get('evidence'), list) and review['evidence']
+                and all(isinstance(item, str) and item.strip() for item in review['evidence']),
+                'concurrent_mode_evidence_required')
+        _check_mode_evidence(review.get('slots'), selections, receipt)
+    selected_mode = mode or ('dual-qwen' if d['id'] == QWEN0_PROFILE else 'glm-qwen')
+    require(selected_mode in MODES and d['id'] in MODES[selected_mode].values(),
+            'concurrent_acceptance_modes_mismatch')
+    binding.verify(roles=('data', 'models'))
+    # Projection preserves existing consumers while binding the entire protected
+    # receipt above; callers may not reinterpret a G/Q receipt as Q/Q evidence.
+    return {**receipt, 'accepted_mode': selected_mode, 'slots': modes[selected_mode]['slots']}
+
+
+def _check_mode_evidence(slots, selections, receipt):
     require(isinstance(slots, dict) and set(slots) == set(SLOTS), 'concurrent_acceptance_slots_mismatch')
-    # An explicit root-reviewed policy selects the new estimate margin. Absent
-    # metadata retains the legacy 25% field semantics without reinterpretation.
-    estimate_policy = 'host_headroom_policy' in receipt
-    if estimate_policy:
-        require(same(receipt['host_headroom_policy'], HOST_HEADROOM_POLICY_15),
-                'concurrent_host_headroom_policy_unaccepted')
     total_caps = 0
-    for slot, identifier in SLOTS.items():
+    for slot, identifier in selections.items():
         expected = declared_profile(identifier)
         proof, resource = slots[slot], expected['concurrent_pair']
         capacity = expected['launch']['context_size']
         require(isinstance(proof, dict) and proof.get('deployment') == identifier
                 and same(proof.get('configured_context'), capacity)
                 and proof.get('profile_sha256') == PINS['configs/deployments/' + identifier + '.json']
-                and proof.get('runtime_image_id') == (expected['_runtime']['validation']['image_id'] if slot == 'glm'
+                and proof.get('runtime_image_id') == (expected['_runtime']['validation']['image_id'] if identifier == GLM_PROFILE
                     else expected['_runtime']['image_id'])
                 and proof.get('model_revision') == expected['_model']['revision']
                 and proof.get('visible_cuda_devices') == {'CUDA0': expected['launch']['gpus'][0]}
                 and same(proof.get('guest_cpu_count'), resource['guest_cpu_count'])
                 and proof.get('guest_cpuset') == resource['guest_cpuset']
+                and proof.get('guest_cpu_sharing') == resource['guest_cpu_sharing'] == 'shared'
                 and same(proof.get('memory_bytes'), resource['memory_bytes'])
                 and same(proof.get('memory_swap_bytes'), resource['memory_swap_bytes'])
                 and proof.get('allocation') == 'PASS' and proof.get('short_inference') == 'PASS'
@@ -262,21 +291,17 @@ def check_acceptance(d, instance):
                 and type(proof.get('largest_occupied_context')) is int and 0 < proof['largest_occupied_context'] <= capacity,
                 'concurrent_capacity_evidence_mismatch')
         peak, free, total = (proof.get(key) for key in ('host_peak_bytes', 'minimum_free_gpu_bytes', 'gpu_total_bytes'))
-        if estimate_policy:
-            estimate = proof.get(HOST_HEADROOM_POLICY_15['basis'])
-            require(type(estimate) is int and estimate > 0
-                    and estimate * 23 <= resource['memory_bytes'] * 20,
-                    'concurrent_resource_margin_unaccepted')
-            # Raw cache/current/peak evidence remains separate. The hard cap
-            # still applies to raw peak; it is not the working-set estimate.
-            host_margin = type(peak) is int and 0 < peak <= resource['memory_bytes']
-        else:
-            host_margin = type(peak) is int and peak * 125 <= resource['memory_bytes'] * 100
+        estimate = proof.get(HOST_HEADROOM_POLICY_15['basis'])
+        require(type(estimate) is int and estimate > 0
+                and estimate * 23 <= resource['memory_bytes'] * 20,
+                'concurrent_resource_margin_unaccepted')
+        # Actual hard cap and sampled required working-set margin are distinct.
+        host_margin = type(peak) is int and 0 < peak <= resource['memory_bytes']
         require(all(type(value) is int and value > 0 for value in (peak, free, total))
                 and host_margin and free <= total
                 and free >= resource['minimum_free_gpu_bytes']
-                and (slot != 'qwen' or free * 10 >= total), 'concurrent_resource_margin_unaccepted')
-        if slot == 'qwen':
+                and (identifier not in QWEN_PROFILES or free * 10 >= total), 'concurrent_resource_margin_unaccepted')
+        if identifier in QWEN_PROFILES:
             from . import qwen38
             require(proof.get('pair_launcher_sha256') == PINS['scripts/runtime/sglang38_pair_file_auth.py']
                     and proof.get('native_auth_checks') == {name: 'PASS' for name in qwen38.AUTH_CHECKS},
@@ -284,8 +309,6 @@ def check_acceptance(d, instance):
         total_caps += resource['memory_bytes']
     require(type(receipt.get('host_usable_bytes')) is int and receipt['host_usable_bytes'] >= total_caps,
             'concurrent_aggregate_host_margin_unaccepted')
-    binding.verify(roles=('data', 'models'))
-    return receipt
 
 
 def _host_available(text):
@@ -302,7 +325,7 @@ def _host_available(text):
     return values['MemAvailable:']
 
 
-def _resident_nonreclaimable(slot, container, instance, read):
+def _resident_nonreclaimable(slot, container, instance, read, selections):
     """Credit disjoint resident anon and no-swap shmem, never total file cache.
 
     Manager supplies an already-trusted running identity and rechecks it around
@@ -320,7 +343,7 @@ def _resident_nonreclaimable(slot, container, instance, read):
             and state.get('Running') is True and type(pid) is int and pid > 0
             and labels.get('io.llmctl.owner') == 'mixed-memory-llm-api-server'
             and labels.get('io.llmctl.instance') == instance['id']
-            and labels.get('io.llmctl.deployment') == SLOTS[slot], 'concurrent_resident_identity_invalid')
+            and labels.get('io.llmctl.deployment') == selections[slot], 'concurrent_resident_identity_invalid')
     membership = read(['/usr/bin/cat', f'/proc/{pid}/cgroup'])
     lines = membership.splitlines()
     require(len(lines) == 1 and lines[0] in ('0::/system.slice/docker-' + cid + '.scope',
@@ -358,10 +381,18 @@ def preflight_current(d, instance, run_fn, *, residents=None):
     room up to each cap is retained even for an idle peer. This is a current
     bounded sample, not an allocator reservation or benchmark recertification.
     """
-    receipt = check_acceptance(d, instance)
     residents = {} if residents is None else residents
     require(type(residents) is dict and set(residents) <= set(SLOTS), 'concurrent_resident_identity_invalid')
     target = slot_for_deployment(d['id'])
+    selections = {slot: c.get('Config', {}).get('Labels', {}).get('io.llmctl.deployment')
+                  for slot, c in residents.items() if isinstance(c, dict)}
+    require(len(selections) == len(residents), 'concurrent_resident_identity_invalid')
+    require(target not in selections or selections[target] == d['id'], 'concurrent_resident_identity_invalid')
+    selections[target] = d['id']
+    mode = 'glm-qwen' if selections.get('glm') == GLM_PROFILE else DEFAULT_MODE
+    require(all(MODES[mode].get(slot) == identifier for slot, identifier in selections.items()),
+            'concurrent_resident_identity_invalid')
+    receipt = check_acceptance(d, instance, mode=mode)
     deadline = time.monotonic() + 10
 
     def read(argv):
@@ -371,8 +402,10 @@ def preflight_current(d, instance, run_fn, *, residents=None):
         require(time.monotonic() < deadline and isinstance(result, str), 'concurrent_memory_admission_timeout')
         return result
 
+    require(read(['/usr/bin/cat', '/sys/devices/system/cpu/online']).strip() == '0-71',
+            'concurrent_current_cpu_inventory_mismatch')
     before = _host_available(read(['/usr/bin/cat', '/proc/meminfo']))
-    credit = {slot: _resident_nonreclaimable(slot, container, instance, read)
+    credit = {slot: _resident_nonreclaimable(slot, container, instance, read, MODES[mode])
               for slot, container in residents.items()}
     host_available = min(before, _host_available(read(['/usr/bin/cat', '/proc/meminfo'])))
     required = 16 * 1024**3
@@ -392,7 +425,7 @@ def preflight_current(d, instance, run_fn, *, residents=None):
         total, free = (int(value) * 1024**2 for value in rows[index][2:])
         require(total == proof['gpu_total_bytes'] and 0 <= free <= total,
                 'concurrent_current_gpu_memory_unavailable')
-        reserve = max(16 * 1024**3, (total + 9) // 10 if slot == 'qwen' else 0)
+        reserve = max(16 * 1024**3, (total + 9) // 10 if proof['deployment'] in QWEN_PROFILES else 0)
         # Accepted measured occupied GPU bytes include model, allocated cache
         # and workspace. A resident target has already paid that allocation.
         needed = reserve + (0 if slot in residents else total - proof['minimum_free_gpu_bytes'])
@@ -415,7 +448,8 @@ def native_capacity(d, *, timeout=3):
     validate(d)
     from .runtime_io import native_capacity_metadata
     info = native_capacity_metadata(f"http://127.0.0.1:{d['endpoint']['port']}/v1",
-                                    d['auth']['key_file'], timeout=timeout)
+                                    d['auth']['key_file'], timeout=timeout,
+                                    backend='glm' if d['id'] == GLM_PROFILE else 'qwen')
     expected = d['launch']['context_size']
     if d['id'] == GLM_PROFILE:
         actual = info.get('default_generation_settings', {}).get('n_ctx')

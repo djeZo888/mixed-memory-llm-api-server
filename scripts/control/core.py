@@ -19,7 +19,8 @@ import time
 import uuid
 
 from common.lifecycle_lease import acquire_lease, LeaseBusy, LeaseError
-from .catalog import Catalog, _endpoint, advertised_endpoint
+from .catalog import (Catalog, _endpoint, advertised_endpoint, PRODUCTION_SLOTS,
+                      inference_busy, production_status, switch_cost)
 from .journal import JournalCorrupt, JournalUnavailable
 from .protocol import ControlError, Deadline, PackageBlocked, StorageUnavailable
 
@@ -485,12 +486,27 @@ class Application:
                 item["switch_effect"] = "interrupts_target_inference" if pair else "interrupts_inference"
                 item["schema_version"] = 2 if pair else 1
                 item["failure_code"] = item["failure_code"] or self._journal_error
+                item['instance_id'] = item['selected']
+                item['placement'] = {'glm': 'gpu0', 'qwen': 'gpu1'}.get(PRODUCTION_SLOTS.get(item['selected']))
+                item['configured_context'] = {
+                    'tokens': 480000 if item['selected'] in PRODUCTION_SLOTS else None,
+                    'provenance': 'declared' if item['selected'] in PRODUCTION_SLOTS else 'unknown'}
+                item['readiness'] = item['observed']
+                item['degraded'] = (None if not item['observation_available'] else
+                                    item['desired'] == 'running' and item['observed'] != 'ready')
+                item['inference_busy'] = inference_busy()
+                item['mutation_busy'] = op is not None and op['status'] in {'pending', 'running'}
+                item['switch_cost'] = switch_cost(pair=pair)
             snapshot["state_persisted"] = snapshot["state_persisted"] and self._persisted
+            snapshot['mutation_busy'] = self._admission.locked()
         if catalog:
             snapshot["entries"] = Catalog(records).public(snapshot, advertised_policy=self.advertised_policy)
+        if pair:
+            snapshot.update(production_status(snapshot, snapshot.get('entries')))
         for name, item in snapshot["slots"].items() if pair else [(None, snapshot)]:
             private = raw.get("slots", {}).get(name, {}) if pair else raw
-            item["endpoint"] = advertised_endpoint(item["endpoint"], private.get("model_id"), self.advertised_policy)
+            item["endpoint"] = advertised_endpoint(item["endpoint"], private.get("model_id"), self.advertised_policy,
+                                                   item['selected'])
             item.pop("ready_proof", None)
         return 200, scoped(snapshot, target) if target is not None else snapshot
 

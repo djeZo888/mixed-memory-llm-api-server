@@ -352,7 +352,8 @@ def probe_sglang(endpoint: str, expected_model: str, key_file: str | Path | None
                  timeout=timeout, check_wrong_key=True)
 
 
-def native_capacity_metadata(endpoint: str, key_file: str | Path, *, timeout: float = 3) -> dict:
+def native_capacity_metadata(endpoint: str, key_file: str | Path, *, timeout: float = 3,
+                             backend: str | None = None) -> dict:
     """Authenticated bounded native metadata for the two fixed private backends.
 
     No redirects, environment proxy, arbitrary URL/path or response diagnostics.
@@ -361,6 +362,12 @@ def native_capacity_metadata(endpoint: str, key_file: str | Path, *, timeout: fl
     """
     paths = {'http://127.0.0.1:30002/v1': '/props',
              'http://127.0.0.1:30004/v1': '/get_server_info'}
+    if backend == 'qwen':
+        paths['http://127.0.0.1:30002/v1'] = '/get_server_info'
+    elif backend not in (None, 'glm'):
+        raise LifecycleError('concurrent_native_metadata_unavailable')
+    if backend == 'glm' and endpoint != 'http://127.0.0.1:30002/v1':
+        raise LifecycleError('concurrent_native_metadata_unavailable')
     if endpoint not in paths or type(timeout) not in (int, float) or not 0 < timeout <= 30:
         raise LifecycleError('concurrent_native_metadata_unavailable')
     connection, timer = None, None

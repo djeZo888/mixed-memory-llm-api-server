@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Actual-image auth fixture for the one closed Qwen 700160 production pair.
+"""Actual-image auth fixture for the closed Qwen480K GPU0/GPU1 production tuples.
 
 Source-only tests cannot mint this receipt. Separately authorized Worker1 must
 run this command under the current registered-storage guards and ownership
 lease, using a new protected registered-data output. No pull/model/GPU/network.
-The old native-pair and TP2 fixture files and provenance stay byte-identical.
+Native/TP2 fixture defaults remain unchanged; slot fixtures select only closed port/alias tuples.
 """
 from __future__ import annotations
 
@@ -21,8 +21,10 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
-CONTEXT = 700160
-PROFILE = 'qwen38-27b-q1-700160-yarn4-bf16kv'
+CONTEXT = 480000
+PROFILES = {"gpu0": "qwen38-27b-q0-480000-yarn4-bf16kv",
+            "gpu1": "qwen38-27b-q1-480000-yarn4-bf16kv"}
+PROFILE = PROFILES["gpu1"]
 KIND = 'q38pair_actual_image_auth'
 INNER = '/fixture/tests/lifecycle/sglang38_fixture/run_pair_pinned_image.py'
 OLD_INNER = '/fixture/tests/lifecycle/sglang38_fixture/run_pinned_image.py'
@@ -32,7 +34,7 @@ PAIR_FILES = (
     'tests/lifecycle/sglang38_fixture/pair_launcher.py',
     'scripts/runtime/sglang38_pair_file_auth.py',
     'scripts/runtime/sglang38_file_auth.py',
-    'configs/deployments/' + PROFILE + '.json',
+    *("configs/deployments/" + value + ".json" for value in PROFILES.values()),
     'configs/models/qwen38-27b-fp8.json',
     'configs/runtimes/sglang-qwen38-0.5.19.json',
 )
@@ -47,17 +49,19 @@ def __getattr__(name):
     return getattr(host, name)
 
 
-def pair_identity(repo, provenance=None):
+def pair_identity(repo, provenance=None, *, slot="gpu1"):
+    host.require(slot in PROFILES, "pair_fixture_slot_invalid")
     provenance, _ = host.read_provenance(repo)
     pair = host.source_module('q38pair_identity_wrapper', repo / 'scripts/runtime/sglang38_pair_file_auth.py')
     base = pair.pinned_base(repo / 'scripts/runtime/sglang38_file_auth.py')
-    argv = pair.bind_variant(base)
+    argv = pair.bind_variant(base, slot)
     host.require(pair.CONTEXT == CONTEXT, 'pair_fixture_context_invalid')
-    profile = json.loads((repo / 'configs/deployments' / (PROFILE + '.json')).read_text())
-    host.require(profile['id'] == PROFILE and profile['launch']['context_size'] == CONTEXT
+    profile = json.loads((repo / 'configs/deployments' / (PROFILES[slot] + '.json')).read_text())
+    host.require(profile['id'] == PROFILES[slot] and profile['launch']['context_size'] == CONTEXT
                  and profile['launch']['max_total_tokens'] == CONTEXT
                  and profile['launch']['tp_size'] == 1, 'pair_fixture_profile_invalid')
-    return {'profile_id': PROFILE, 'configured_context': CONTEXT, 'tp_size': 1,
+    return {'profile_id': PROFILES[slot], 'slot': slot,
+            'native_endpoint': dict(pair.SLOTS[slot]), 'configured_context': CONTEXT, 'tp_size': 1,
             'source_sha256': {name: hashlib.sha256((repo / name).read_bytes()).hexdigest()
                               for name in PAIR_FILES},
             'base_launcher_sha256': provenance['launcher_sha256'],
@@ -67,7 +71,7 @@ def pair_identity(repo, provenance=None):
             'extension_environment': dict(host.EXTENSION_ENVIRONMENT),
             'wrapper_execution': 'PRODUCTION_PINNED_BASE_AND_BIND_VARIANT',
             'fixture_adaptations': ['base_source_location_in_readonly_checkout',
-                                    'one_gpu_discovery_stub', 'synthetic_engine_and_model']}
+                                    'one_gpu_discovery_stub', 'closed_slot_port_and_alias', 'synthetic_engine_and_model']}
 
 
 # Names consumed by the unchanged installed-ModelConfig fixture.
@@ -81,7 +85,8 @@ def expected_extension_resolution(provenance):
 
 
 @contextmanager
-def fixture_mode():
+def fixture_mode(slot="gpu1"):
+    host.require(slot in PROFILES, "pair_fixture_slot_invalid")
     """Select only the fixed wrapper/context; preserve every old implementation."""
     command, inspect = host.docker_command, host.verify_fixture_runtime
     resolution = host.expected_extension_resolution
@@ -90,15 +95,17 @@ def fixture_mode():
         host.require(type(context) is int and context == CONTEXT, 'pair_fixture_context_invalid')
         result = command(repo, cache, context, **kwargs)
         result[result.index(OLD_INNER)] = INNER
+        result += ["--slot", slot]
         return result
 
     def pair_inspect(container, repo, cache, context):
         observed = container.get('Config', {}).get('Cmd', [])
         host.require(observed == ['-X', 'faulthandler', '-B', INNER, '--actual-image',
-                                  '--repo', '/fixture', '--context', str(CONTEXT)],
+                                  '--repo', '/fixture', '--context', str(CONTEXT), '--slot', slot],
                      'pair_fixture_process_invalid')
         translated = copy.deepcopy(container)
         translated['Config']['Cmd'][3] = OLD_INNER
+        translated['Config']['Cmd'] = translated['Config']['Cmd'][:-2]
         return inspect(translated, repo, cache, context)
 
     def pair_resolution(provenance):
@@ -108,15 +115,15 @@ def fixture_mode():
 
     with ExitStack() as stack:
         for name, value in {
-                'EXTENSION_CONTEXT': CONTEXT, 'EXTENSION_PROFILE': PROFILE,
+                'EXTENSION_CONTEXT': CONTEXT, 'EXTENSION_PROFILE': PROFILES[slot],
                 'docker_command': pair_command, 'verify_fixture_runtime': pair_inspect,
-                'extension_identity': pair_identity,
+                'extension_identity': lambda repo, provenance=None: pair_identity(repo, provenance, slot=slot),
                 'expected_extension_resolution': pair_resolution}.items():
             stack.enter_context(patch.object(host, name, value))
         yield
 
 
-def check_pair_receipt(receipt, repo):
+def check_pair_receipt(receipt, repo, slot="gpu1"):
     """Validate an actual-image receipt, never manufacture proof or acceptance.
 
     The campaign must additionally bind the raw receipt SHA256 and protected
@@ -134,7 +141,7 @@ def check_pair_receipt(receipt, repo):
         'image_identity_verification': 'HOST_DOCKER_INSPECT_AND_PINNED_RUN',
         'docker_inspect': inspected, 'model_execution': 'NOT_TESTED', 'native_lifespan': 'NOT_TESTED',
         'live_inference_and_agent_acceptance': 'NOT_TESTED',
-        'extension_identity': pair_identity(repo),
+        'extension_identity': pair_identity(repo, slot=slot),
         'model_config_resolution': expected_extension_resolution(provenance)}
     host.require(type(receipt) is dict and set(receipt) == set(expected) | {'native_results', 'container_lifetimes'}
                  and all(host.same_json(receipt.get(k), v) for k, v in expected.items()),
@@ -143,7 +150,7 @@ def check_pair_receipt(receipt, repo):
     host.require(type(results) is list and len(results) == 1 and type(results[0]) is dict
                  and type(lifetimes) is list and len(lifetimes) == 1,
                  'pair_actual_image_observation_missing')
-    with fixture_mode():
+    with fixture_mode(slot):
         host.check_native_result(results[0], provenance, CONTEXT, repo=repo)
     life = lifetimes[0]
     host.require(type(life) is dict and set(life) == {
@@ -159,31 +166,31 @@ def check_pair_receipt(receipt, repo):
     return receipt
 
 
-def run(repo, output):
-    pair_identity(repo)
+def run(repo, output, slot="gpu1"):
+    pair_identity(repo, slot=slot)
     write = host.write_receipt
 
     def checked_write(path, receipt):
         receipt['kind'] = KIND
-        check_pair_receipt(receipt, repo)
+        check_pair_receipt(receipt, repo, slot=slot)
         write(path, receipt)
 
-    with fixture_mode(), patch.object(host, 'write_receipt', checked_write):
-        return host.run(repo, output, PROFILE)
+    with fixture_mode(slot), patch.object(host, 'write_receipt', checked_write):
+        return host.run(repo, output, PROFILES[slot])
 
 
 def parse_options(argv):
     parser = host.Parser(description=__doc__, allow_abbrev=False)
     parser.add_argument('--repo', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--profile', choices=(PROFILE,), default=PROFILE)
+    parser.add_argument('--slot', choices=tuple(PROFILES), required=True)
     return parser.parse_args(argv)
 
 
 def main(argv=None):
     try:
         options = parse_options(sys.argv[1:] if argv is None else argv)
-        receipt = run(options.repo, options.output)
+        receipt = run(options.repo, options.output, options.slot)
         print(json.dumps({'status': receipt['status'], 'kind': receipt['kind'], 'model_execution': 'NOT_TESTED'}))
         return 0
     except Exception as error:

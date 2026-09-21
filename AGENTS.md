@@ -21,6 +21,15 @@ no ai-vm contact or activation; favorable benchmark results, accepted capacity
 evidence and root source review precede a fresh activation session. Installer,
 frontend and future ai-harness work remain outside this task.
 
+Current explicit authority, 2026-09-21: [dual-Q production source](docs/concurrent-api.md)
+supersedes singleton/G-Q-only restrictions for DUALQ-PREP-20260921. Default Qwen
+per GPU, optional GLM on GPU0 retaining GPU1 Qwen; both480000, existing72-vCPU
+VM, shared Q8/G72 masks, pinned runtimes/weights and15% sampled working-set
+margin. This PREP is source/offline plus authorized read-only inspection only.
+No keeper release/deployment/inference/push/merge before root exact source review.
+Existing allow_interrupt for any running target remains required; no atomic
+drain claim, common router, frontend, ai-harness policy or installer work.
+
 ## Authorized sequence and ownership
 
 - Finish working **ai-vm first**: authenticated private-network inference and

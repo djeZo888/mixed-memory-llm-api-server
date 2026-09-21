@@ -18,6 +18,7 @@ import re
 import stat
 
 from .runtime_io import LifecycleError, probe_sglang, validate_container_network
+from .concurrent_profiles import QWEN_PROFILES
 from runtime import qwen38_oci as oci
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -31,8 +32,11 @@ IMAGE_REFERENCE = 'lmsysorg/sglang@' + MANIFEST_DIGEST
 IMAGE_ID = 'sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813'
 NATIVE_VARIANTS = {'qwen38-27b-128k': 131072, 'qwen38-27b-256k': 262144}
 EXTENSION_PROFILE = 'qwen38-27b-1000000-yarn4-tp2-bf16kv'
-PAIR_PROFILE = 'qwen38-27b-q1-700160-yarn4-bf16kv'
-VARIANTS = {**NATIVE_VARIANTS, EXTENSION_PROFILE: 1000000, PAIR_PROFILE: 700160}
+PAIR_PROFILES = frozenset(QWEN_PROFILES)
+# Kept as the GPU1 name for callers that already select the fixed Qwen slot.
+PAIR_PROFILE = 'qwen38-27b-q1-480000-yarn4-bf16kv'
+VARIANTS = {**NATIVE_VARIANTS, EXTENSION_PROFILE: 1000000,
+            **dict.fromkeys(PAIR_PROFILES, 480000)}
 LAUNCHER_TARGET = '/opt/llmctl/sglang38_file_auth.py'
 LAUNCHER_SUFFIX = 'services/llm-manager/adapters/sglang38_file_auth.py'
 PAIR_LAUNCHER_TARGET = '/opt/llmctl/sglang38_pair_file_auth.py'
@@ -48,7 +52,7 @@ PROFILE_HASHES = {'configs/deployments/qwen38-27b-1000000-yarn4-tp2-bf16kv.json'
  'configs/runtimes/sglang-qwen38-0.5.19.json': '17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11',
  'configs/deployments/qwen38-27b-128k.json': 'cee5253c28bd8ff36f33630f27642cc9cdd3857eaa108bd177488efd6a0d133f',
  'configs/deployments/qwen38-27b-256k.json': '462ed5792940890eaa410c3c6dd4996c6723157eee5fb7021ee210ed2f78523a',
- 'tests/lifecycle/sglang38_fixture/provenance.json': 'c1eeed16d7807f6fbd301d38bb0a0b47e58a70dc75ce091cce7ba68bec3b3c72'}
+ 'tests/lifecycle/sglang38_fixture/provenance.json': '9ae082ff314148fa51d42278d04dc64699b6270f2f668e486160f66f5a4d1232'}
 Q38R_SHA256 = '3df6f2a0a46a33b2b48f62609235ff209e50403d679bd8ee120b941445a87ed0'
 AUTH_CHECKS = (
     'native_routes_and_final_chain', 'native_prepare_and_normalization',
@@ -103,7 +107,7 @@ def expected_manifest():
 def declared_profile(identifier):
     """Return a fresh, unbound declaration for source review/catalog metadata."""
     require(identifier in VARIANTS, 'qwen38_deployment_identity_mismatch')
-    if identifier == PAIR_PROFILE:
+    if identifier in PAIR_PROFILES:
         from . import concurrent_profiles
         expected_manifest()
         return concurrent_profiles.declared_profile(identifier)
@@ -151,7 +155,7 @@ def validate(d):
     This function must run inside Manager's existing guarded lease transaction;
     passing an object here does not authorize a lifecycle operation.
     """
-    if d.get('id') == PAIR_PROFILE:
+    if d.get('id') in PAIR_PROFILES:
         from . import concurrent_profiles
         concurrent_profiles.validate(d)
         return
@@ -169,14 +173,14 @@ def launcher_hash():
 
 
 def launcher_targets(d):
-    return {LAUNCHER_TARGET, PAIR_LAUNCHER_TARGET} if d.get('id') == PAIR_PROFILE else {LAUNCHER_TARGET}
+    return {LAUNCHER_TARGET, PAIR_LAUNCHER_TARGET} if d.get('id') in PAIR_PROFILES else {LAUNCHER_TARGET}
 
 
 @safe_errors
 def command(d):
     validate(d)
-    if d['id'] == PAIR_PROFILE:
-        return [PAIR_LAUNCHER_TARGET]
+    if d['id'] in PAIR_PROFILES:
+        return [PAIR_LAUNCHER_TARGET, '--slot', 'gpu' + str(d['concurrent_pair']['guest_gpu_index'])]
     # Namespace import is safe: launcher main is guarded, imports stdlib only,
     # and neither reads a key nor imports SGLang at module import time.
     from runtime.sglang38_file_auth import backend_argv
@@ -217,7 +221,7 @@ def validate_launcher(d, e):
     raw = _protected_bytes(local)
     require(hashlib.sha256(raw).hexdigest() == e['launcher_sha256'] == launcher_hash(),
             'qwen38_installed_launcher_mismatch')
-    if d['id'] == PAIR_PROFILE:
+    if d['id'] in PAIR_PROFILES:
         from . import concurrent_profiles
         source = binding.path('data', PAIR_LAUNCHER_SUFFIX)
         raw = _protected_bytes(binding.validate_path('data', source))
@@ -289,7 +293,7 @@ def evidence(d, instance):
         _validate_auth_proof(extension, identity, extension=True)
         require(same(extension['docker_inspect'], proof['docker_inspect']),
                 'qwen38_extension_observed_identity_mismatch')
-    if d['id'] == PAIR_PROFILE:
+    if d['id'] in PAIR_PROFILES:
         from . import concurrent_profiles
         concurrent_profiles.check_acceptance(d, instance)
     binding.verify(roles=('data', 'models'))
@@ -384,7 +388,7 @@ def launch_environment(d):
     """Pinned deployment selects one closed extension; no arbitrary env input."""
     validate(d)
     env = dict(d['_runtime']['environment'])
-    if d['id'] in {EXTENSION_PROFILE, PAIR_PROFILE}:
+    if d['id'] == EXTENSION_PROFILE or d['id'] in PAIR_PROFILES:
         env.update(d['launch_environment'])
     return env
 
@@ -460,14 +464,16 @@ def validate_reused(c, d, e, image):
     require(not any(host.get(k) for k in ('Devices', 'DeviceCgroupRules', 'VolumesFrom', 'Binds', 'PidMode', 'UTSMode'))
             and host.get('IpcMode', 'private') == 'private' and host.get('RestartPolicy') == {'Name': 'no', 'MaximumRetryCount': 0},
             'qwen38_reused_namespace_mismatch')
-    validate_container_network(c, 30004, 30004)
-    if d['id'] == PAIR_PROFILE:
+    validate_container_network(c, d['endpoint']['port'], d['container_port'])
+    if d['id'] in PAIR_PROFILES:
         from . import concurrent_profiles
         concurrent_profiles.validate_reuse(c, d)
 
 
 def probe(endpoint, expected_model, key_file, require_auth=True, timeout=3):
     """Existing health-Up + exact alias + missing/wrong-key denial observation."""
-    require(endpoint == 'http://127.0.0.1:30004/v1' and expected_model == 'qwen3.8-27b',
+    require((endpoint, expected_model) in {
+                ('http://127.0.0.1:30002/v1', 'qwen3.8-27b-gpu0'),
+                ('http://127.0.0.1:30004/v1', 'qwen3.8-27b')},
             'qwen38_probe_identity_mismatch')
     return probe_sglang(endpoint, expected_model, key_file, require_auth=require_auth, timeout=timeout)

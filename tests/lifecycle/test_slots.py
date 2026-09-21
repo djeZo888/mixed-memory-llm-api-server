@@ -208,7 +208,7 @@ class SlotTests(unittest.TestCase):
         self.docker.calls.clear()
         self.manager.dispatch('boot-start')
         ids = [saved['slots'][n]['container']['id'] for n in ('glm', 'qwen')]
-        self.assertEqual([c[1] for c in self.docker.calls if c[0] == 'start_enter'], ids)
+        self.assertEqual([c[1] for c in self.docker.calls if c[0] == 'start_enter'], list(reversed(ids)))
         original = self.docker.stop
         def fail_first(identity, **kwargs):
             if identity == ids[0]:

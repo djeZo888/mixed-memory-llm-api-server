@@ -31,6 +31,8 @@ class MemoryFixture:
         self.calls.append(argv)
         if tuple(argv) in self.overrides:
             return self.overrides[tuple(argv)]
+        if argv == ['/usr/bin/cat', '/sys/devices/system/cpu/online']:
+            return '0-71\n'
         if argv == ['/usr/bin/cat', '/proc/meminfo']:
             return f'MemTotal: {900 * GIB // 1024} kB\nMemAvailable: {self.available * GIB // 1024} kB\n'
         if argv == GPU_QUERY:
@@ -169,7 +171,7 @@ class NativeCapacity(unittest.TestCase):
                  'default_generation_settings': {'n_ctx': 480000}}
         with patch.object(runtime_io, 'native_capacity_metadata', return_value=props) as read:
             self.assertEqual(pair.native_capacity(d)['native_pool_tokens'], 480000)
-            read.assert_called_once_with('http://127.0.0.1:30002/v1', d['auth']['key_file'], timeout=3)
+            read.assert_called_once_with('http://127.0.0.1:30002/v1', d['auth']['key_file'], timeout=3, backend='glm')
         for change in (lambda p: p.update(is_sleeping=True), lambda p: p.update(total_slots=True),
                        lambda p: p['default_generation_settings'].update(n_ctx=32768),
                        lambda p: p.update(default_generation_settings={}, n_ctx_train=480000)):
@@ -182,8 +184,8 @@ class NativeCapacity(unittest.TestCase):
         metadata = {
             pair.GLM_PROFILE: {'model_alias': 'glm-5.3', 'is_sleeping': False, 'total_slots': 1,
                               'default_generation_settings': {'n_ctx': 480000}},
-            pair.QWEN_PROFILE: {'context_length': 700160, 'tp_size': 1,
-                               'max_total_num_tokens': 700160, 'max_req_input_len': 700154}}
+            pair.QWEN_PROFILE: {'context_length': 480000, 'tp_size': 1,
+                               'max_total_num_tokens': 480000, 'max_req_input_len': 479994}}
         for identifier, info in metadata.items():
             d = bound(identifier); binding = d['_storage_binding']
             normal_probe = Mock(return_value='ready')
@@ -210,22 +212,22 @@ class NativeCapacity(unittest.TestCase):
 
     def test_qwen_actual_pool_and_native_request_limit_top_or_internal(self):
         d = bound(pair.QWEN_PROFILE)
-        actual = {'max_total_num_tokens': 700160, 'max_req_len': 700159, 'max_req_input_len': 700154}
-        for info in ({'context_length': 700160, 'tp_size': 1, **actual},
-                     {'server_args': {'context_length': 700160, 'tp_size': 1}, 'internal_states': [actual]}):
+        actual = {'max_total_num_tokens': 480000, 'max_req_len': 479999, 'max_req_input_len': 479994}
+        for info in ({'context_length': 480000, 'tp_size': 1, **actual},
+                     {'server_args': {'context_length': 480000, 'tp_size': 1}, 'internal_states': [actual]}):
             with patch.object(runtime_io, 'native_capacity_metadata', return_value=info):
                 result = pair.native_capacity(d)
-                self.assertEqual((result['native_pool_tokens'], result['native_input_limit']), (700160, 700154))
+                self.assertEqual((result['native_pool_tokens'], result['native_input_limit']), (480000, 479994))
 
     def test_qwen_argv_capacity_never_substitutes_for_allocated_pool(self):
         d = bound(pair.QWEN_PROFILE)
-        args = {'context_length': 700160, 'tp_size': 1, 'max_total_tokens': 700160,
-                'max_total_num_tokens': 700160, 'max_req_input_len': 700154}
+        args = {'context_length': 480000, 'tp_size': 1, 'max_total_tokens': 480000,
+                'max_total_num_tokens': 480000, 'max_req_input_len': 479994}
         cases = [{'server_args': args},
             {'server_args': args, 'max_total_num_tokens': 262144, 'max_req_input_len': 262138},
-            {'server_args': args, 'max_total_num_tokens': True, 'max_req_input_len': 700154},
-            {'server_args': args, 'max_total_num_tokens': 700160, 'max_req_input_len': 700000},
-            {'server_args': args, 'max_total_num_tokens': 700160, 'max_req_input_len': 700154,
+            {'server_args': args, 'max_total_num_tokens': True, 'max_req_input_len': 479994},
+            {'server_args': args, 'max_total_num_tokens': 480000, 'max_req_input_len': 700000},
+            {'server_args': args, 'max_total_num_tokens': 480000, 'max_req_input_len': 479994,
              'internal_states': [{'max_total_num_tokens': 262144}]},
             {'server_args': args, 'internal_states': [{}, {}]}]
         for info in cases:

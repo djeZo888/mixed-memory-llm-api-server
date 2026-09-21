@@ -52,14 +52,14 @@ def synthetic_receipt():
 
 class ClosedPairFixtureTests(unittest.TestCase):
     def test_only_exact_pair_mode_and_context(self):
-        options = pair.parse_options(['--repo', str(ROOT), '--output', '/synthetic/pair.json'])
-        self.assertEqual(options.profile, pair.PROFILE)
+        options = pair.parse_options(['--repo', str(ROOT), '--output', '/synthetic/pair.json', '--slot', 'gpu1'])
+        self.assertEqual(options.slot, 'gpu1')
         for bad in ('native-pair', '700161', pair.host.EXTENSION_PROFILE):
             with self.subTest(bad=bad), self.assertRaises(pair.host.FixtureError):
-                pair.parse_options(['--repo', str(ROOT), '--output', '/synthetic/pair.json', '--profile', bad])
+                pair.parse_options(['--repo', str(ROOT), '--output', '/synthetic/pair.json', '--slot', bad])
         for bad in ('131072', '262144', '1000000', '700161'):
             with self.subTest(bad=bad), redirect_stdout(io.StringIO()), patch.object(child.inner, 'run_actual') as native:
-                self.assertEqual(child.main(['--actual-image', '--repo', '/fixture', '--context', bad]), 2)
+                self.assertEqual(child.main(['--actual-image', '--repo', '/fixture', '--context', bad, '--slot', 'gpu1']), 2)
                 native.assert_not_called()
 
     def test_pair_mode_uses_exact_wrapper_argv_and_restores_legacy_defaults(self):
@@ -68,7 +68,7 @@ class ClosedPairFixtureTests(unittest.TestCase):
             cmd = pair.host.docker_command(ROOT, {}, pair.CONTEXT)
             self.assertIn(pair.INNER, cmd)
             self.assertNotIn(pair.OLD_INNER, cmd)
-            self.assertEqual(cmd[-2:], ['--context', '700160'])
+            self.assertEqual(cmd[-4:], ['--context', '480000', '--slot', 'gpu1'])
             self.assertIn('SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1', cmd)
             self.assertIn('NVIDIA_VISIBLE_DEVICES=none', cmd)
             self.assertNotIn('--gpus', cmd)
@@ -80,9 +80,9 @@ class ClosedPairFixtureTests(unittest.TestCase):
     def test_production_pinned_base_and_bind_variant_reused_without_launch(self):
         launcher = load('q38pair_facade_controls', 'pair_launcher.py')
         argv = launcher.backend_argv(pair.CONTEXT)
-        self.assertEqual(argv, launcher.pair.backend_argv(launcher.base))
-        self.assertEqual(argv[argv.index('--context-length') + 1], '700160')
-        self.assertEqual(argv[argv.index('--max-total-tokens') + 1], '700160')
+        self.assertEqual(argv, launcher.pair.backend_argv(launcher.base, "gpu1"))
+        self.assertEqual(argv[argv.index('--context-length') + 1], '480000')
+        self.assertEqual(argv[argv.index('--max-total-tokens') + 1], '480000')
         for invalid in (True, 1000000, 700161):
             with self.subTest(invalid=invalid), self.assertRaises(launcher.base.LaunchError):
                 launcher.backend_argv(invalid)
@@ -143,10 +143,21 @@ class ClosedPairFixtureTests(unittest.TestCase):
 
     def test_pair_reuses_existing_lifetime_and_exact_child_process_gate(self):
         from tests.lifecycle.test_qwen38_fixture_lifetime import DockerDaemon, OWN_ID, SENTINEL_ID
+        class SlotDaemon(DockerDaemon):
+            def __call__(self, command, *, timeout):
+                # The legacy synthetic daemon parses context from its final
+                # token. Production inspect still checks the full slot argv.
+                if command[1] == 'create':
+                    self_slot = command[-2:]
+                    if self_slot != ['--slot', 'gpu1']:
+                        raise AssertionError('closed fixture slot not passed')
+                    command = command[:-2]
+                return super().__call__(command, timeout=timeout)
         for mode in ('success', 'timeout'):
             def mode_process(container):
                 container['Config']['Cmd'][3] = pair.INNER
-            daemon = DockerDaemon(mode, policy_mutator=mode_process)
+                container['Config']['Cmd'] += ['--slot', 'gpu1']
+            daemon = SlotDaemon(mode, policy_mutator=mode_process)
             with self.subTest(mode=mode), pair.fixture_mode():
                 if mode == 'success':
                     _, evidence = pair.host.run_disposable_fixture(Path('/reviewed'), {}, pair.CONTEXT, docker=daemon)

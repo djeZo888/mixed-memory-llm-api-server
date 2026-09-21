@@ -1422,6 +1422,9 @@ class Manager:
         if action == 'boot-start':
             require(self.state.get('failure') != 'recovery_journal_invalid_primary_used', 'recovery_journal_invalid_no_boot_resume')
         targets = [target] if target is not None else list(slot_state.SLOTS)
+        if action == 'boot-start' and target is None:
+            # Keep the fixed Qwen peer available while GPU0's optional GLM loads.
+            targets = ['qwen', 'glm']
         failures = []
         for name in targets:
             item = self.state['slots'][name]

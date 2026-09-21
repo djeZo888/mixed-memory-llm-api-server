@@ -3,7 +3,7 @@
   "id": "glm-5.3-ud-q4-k-xl-g1-480000",
   "model": "glm-5.3-ud-q4-k-xl",
   "runtime": "llama-cpp-v0.4.1-d3br",
-  "purpose": "UNVALIDATED fixed concurrent production candidate; root-reviewed benchmark, allocation and capacity receipt required before activation",
+  "purpose": "UNVALIDATED optional mixed-mode production candidate; root-reviewed allocation, capacity and exact-source receipt required before activation",
   "container_name": "llmctl-glm-5.3-ud-q4-k-xl-g1-480000",
   "endpoint": {
     "host": "127.0.0.1",
@@ -115,8 +115,8 @@
     "fit": "off",
     "batch_size": 2048,
     "ubatch_size": 512,
-    "threads": 96,
-    "threads_batch": 96,
+    "threads": 72,
+    "threads_batch": 72,
     "no_cache_prompt": true
   },
   "logs": {
@@ -127,10 +127,10 @@
   "boot_policy": "manual",
   "docker_restart_policy": "no",
   "notes": [
-    "Fixed co-resident pair only; historical TP2/1M alternatives remain mutually exclusive.",
+    "Optional GPU0 GLM replaces GPU0 Qwen while GPU1 Qwen remains available. Historical TP2/1M alternatives remain mutually exclusive.",
     "Capacity and host limits are unvalidated source declarations; a protected root-reviewed receipt is mandatory before activation.",
     "Configured context is distinct from largest occupied context tested; no source test establishes live acceptance.",
-    "Exact UUID admission maps this physical GPU to container-visible CUDA0; guest CPU partitions do not establish physical pinning.",
+    "Exact UUID admission maps this physical GPU to container-visible CUDA0; guest CPUs 0-71 share CPUs 0-7 with GPU1 Qwen and are not exclusive physical cores.",
     "Docker restart remains disabled; canonical lifecycle owns boot and per-slot recovery."
   ],
   "capability_status": "UNVALIDATED",
@@ -144,13 +144,14 @@
     "visible_cuda_devices": [
       "CUDA0"
     ],
-    "guest_cpuset": "0-95",
-    "guest_cpu_count": 96,
+    "guest_cpuset": "0-71",
+    "guest_cpu_count": 72,
     "memory_bytes": 687194767360,
     "memory_swap_bytes": 687194767360,
     "minimum_free_gpu_bytes": 17179869184,
-    "host_demand_reserve_percent": 25,
+    "host_demand_reserve_percent": 15,
     "capacity_status": "UNVALIDATED",
-    "acceptance_suffix": "services/llm-manager/evidence/concurrent-g1q1.accepted.json"
+    "acceptance_suffix": "services/llm-manager/evidence/dualq-480k.accepted.json",
+    "guest_cpu_sharing": "shared"
   }
 }

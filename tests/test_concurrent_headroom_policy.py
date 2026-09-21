@@ -19,40 +19,35 @@ class HeadroomPolicy(unittest.TestCase):
 
     def use_estimate_policy(self):
         self.proof['host_headroom_policy'] = copy.deepcopy(pair.HOST_HEADROOM_POLICY_15)
-        for slot in self.proof['slots'].values():
+        for slot in self.proof['modes']['glm-qwen']['slots'].values():
             slot['sampled_required_working_set_estimate_bytes'] = slot['memory_bytes'] * 20 // 23
             slot['host_peak_bytes'] = slot['memory_bytes']
 
-    def test_historical_absent_policy_keeps_exact_25_percent_boundary(self):
-        for slot in self.proof['slots'].values():
-            slot['host_peak_bytes'] = slot['memory_bytes'] * 4 // 5
-            # A stray estimate never opts a historical receipt into 15%.
-            slot['sampled_required_working_set_estimate_bytes'] = 1
-        self.check()
-        self.proof['slots']['glm']['host_peak_bytes'] += 1
-        with self.assertRaisesRegex(LifecycleError, 'concurrent_resource_margin_unaccepted'):
+    def test_historical_absent_policy_cannot_accept_new_modes(self):
+        self.proof.pop('host_headroom_policy')
+        with self.assertRaisesRegex(LifecycleError, 'concurrent_host_headroom_policy_unaccepted'):
             self.check()
 
     def test_explicit_estimate_15_percent_boundary_is_separate_from_raw_peak(self):
         self.use_estimate_policy()
         self.check()
-        self.proof['slots']['glm']['sampled_required_working_set_estimate_bytes'] += 1
+        self.proof['modes']['glm-qwen']['slots']['glm']['sampled_required_working_set_estimate_bytes'] += 1
         with self.assertRaisesRegex(LifecycleError, 'concurrent_resource_margin_unaccepted'):
             self.check()
 
     def test_each_slot_requires_positive_integer_estimate(self):
         self.use_estimate_policy()
         for slot in ('glm', 'qwen'):
-            saved = self.proof['slots'][slot]['sampled_required_working_set_estimate_bytes']
+            saved = self.proof['modes']['glm-qwen']['slots'][slot]['sampled_required_working_set_estimate_bytes']
             for invalid in (None, False, 0, -1, float(saved)):
-                self.proof['slots'][slot]['sampled_required_working_set_estimate_bytes'] = invalid
+                self.proof['modes']['glm-qwen']['slots'][slot]['sampled_required_working_set_estimate_bytes'] = invalid
                 with self.subTest(slot=slot, invalid=invalid), self.assertRaisesRegex(
                         LifecycleError, 'concurrent_resource_margin_unaccepted'):
                     self.check()
-            self.proof['slots'][slot].pop('sampled_required_working_set_estimate_bytes')
+            self.proof['modes']['glm-qwen']['slots'][slot].pop('sampled_required_working_set_estimate_bytes')
             with self.assertRaisesRegex(LifecycleError, 'concurrent_resource_margin_unaccepted'):
                 self.check()
-            self.proof['slots'][slot]['sampled_required_working_set_estimate_bytes'] = saved
+            self.proof['modes']['glm-qwen']['slots'][slot]['sampled_required_working_set_estimate_bytes'] = saved
 
     def test_policy_is_exact_versioned_metadata_not_global_weakening(self):
         self.use_estimate_policy()
@@ -73,12 +68,12 @@ class HeadroomPolicy(unittest.TestCase):
                 ('glm', 'host_peak_bytes', None),
                 ('glm', 'minimum_free_gpu_bytes', 16 * 1024**3 - 1),
                 ('qwen', 'gpu_total_bytes', 300 * 1024**3)):
-            saved = self.proof['slots'][slot][key]
-            self.proof['slots'][slot][key] = value
+            saved = self.proof['modes']['glm-qwen']['slots'][slot][key]
+            self.proof['modes']['glm-qwen']['slots'][slot][key] = value
             with self.subTest(slot=slot, key=key), self.assertRaisesRegex(
                     LifecycleError, 'concurrent_resource_margin_unaccepted'):
                 self.check()
-            self.proof['slots'][slot][key] = saved
+            self.proof['modes']['glm-qwen']['slots'][slot][key] = saved
 
 
 if __name__ == '__main__':

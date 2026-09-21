@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""One production Qwen tuple, layered on the unchanged pinned auth launcher.
+"""Two closed Qwen slots, layered on the unchanged pinned auth launcher.
 
-No user context, TP, port, environment or native-argument surface is exposed.
+Only --slot gpu0 or --slot gpu1 is accepted. No user context, TP, port,
+environment or native-argument surface is exposed.
 The base retains key handling, native auth, resolving-view checks, cancellation,
 child cleanup and authenticated warmup. Import and --help are inert.
 """
@@ -14,7 +15,9 @@ from pathlib import Path
 from types import SimpleNamespace
 
 BASE_SHA256 = "e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7da4"
-CONTEXT = 700160
+CONTEXT = 480000
+SLOTS = {'gpu0': {'port': 30002, 'served_model_name': 'qwen3.8-27b-gpu0'},
+         'gpu1': {'port': 30004, 'served_model_name': 'qwen3.8-27b'}}
 
 
 def pinned_base(path):
@@ -27,8 +30,12 @@ def pinned_base(path):
     return module
 
 
-def backend_argv(base):
+def backend_argv(base, slot):
+    if not isinstance(slot, str) or slot not in SLOTS:
+        raise base.LaunchError("pair_slot_invalid")
     flags = dict(base.FIXED_FLAGS)
+    flags["--port"] = str(SLOTS[slot]['port'])
+    flags["--served-model-name"] = SLOTS[slot]['served_model_name']
     flags["--json-model-override-args"] = base.EXTENSION_OVERRIDE_JSON
     return ([value for item in flags.items() for value in item]
             + ["--context-length", str(CONTEXT), "--max-total-tokens", str(CONTEXT)]
@@ -43,13 +50,15 @@ class _View:
         return self.overrides[name] if name in self.overrides else getattr(self.original, name)
 
 
-def bind_variant(base):
+def bind_variant(base, slot):
     """Check the fixed changed fields, reusing every unchanged base check."""
-    argv = backend_argv(base)
+    argv = backend_argv(base, slot)
     original_validate, original_environment = base.validate_server_args, base.validate_environment
-    changed = {"context_length": CONTEXT, "max_total_tokens": CONTEXT, "tp_size": 1}
+    changed = {"context_length": CONTEXT, "max_total_tokens": CONTEXT, "tp_size": 1,
+               **SLOTS[slot]}
     projected = {"context_length": base.EXTENSION_CONTEXT,
-                 "max_total_tokens": base.EXTENSION_CONTEXT, "tp_size": 2}
+                 "max_total_tokens": base.EXTENSION_CONTEXT, "tp_size": 2,
+                 "port": 30004, "served_model_name": "qwen3.8-27b"}
 
     def validate(args, *, resolved=False):
         if any(type(getattr(args, key, None)) is not type(value) or getattr(args, key) != value
@@ -73,9 +82,14 @@ def bind_variant(base):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
-    parser.parse_args(argv)  # Only --help; every launch override is refused.
+    parser.add_argument('--slot', choices=tuple(SLOTS), required=True)
+    import sys
+    arguments = sys.argv[1:] if argv is None else argv
+    options = parser.parse_args(arguments)
+    if arguments != ['--slot', options.slot]:
+        parser.error('only one canonical --slot argument is accepted')
     base = pinned_base("/opt/llmctl/sglang38_file_auth.py")
-    return base.main(bind_variant(base))
+    return base.main(bind_variant(base, options.slot))
 
 
 if __name__ == "__main__":

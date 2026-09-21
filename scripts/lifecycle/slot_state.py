@@ -1,4 +1,4 @@
-"""Fixed GLM/Qwen state grammar. No I/O, placement, or runtime discovery.
+"""Fixed GPU0/GPU1 state grammar. No I/O or runtime discovery.
 
 Kept in the storage-loss recovery closure: validation never loads profiles.
 """
@@ -10,7 +10,7 @@ import json
 import re
 from .runtime_io import LifecycleError
 
-SLOTS = ('glm', 'qwen')  # deterministic boot order
+SLOTS = ('glm', 'qwen')  # Legacy keys: GPU0 flexible, GPU1 Qwen; deterministic boot order.
 HEX = re.compile(r'[0-9a-f]{64}\Z')
 ID = re.compile(r'[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}\Z')
 PENDING_IDENTITY_FIELDS = frozenset({'image_id', 'name', 'owner', 'instance', 'deployment'})
@@ -30,6 +30,8 @@ def deployment_slot(identifier):
     # State recovery must work without config/model mounts. Admission still loads
     # and validates exact profiles before any start/select, never this prefix.
     if isinstance(identifier, str):
+        if identifier == 'qwen38-27b-q0-480000-yarn4-bf16kv':
+            return 'glm'
         if identifier.startswith('glm-5.3-ud-q4-k-xl-'):
             return 'glm'
         if identifier.startswith('qwen38-27b-'):

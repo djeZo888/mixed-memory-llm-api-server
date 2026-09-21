@@ -15,6 +15,25 @@ The API is separate from inference: IPv4 `127.0.0.1:30000`, a dedicated control
 bearer key, JSON only. It serves no UI, inference proxy, agent tools or browser
 control. Worker1 owns later L2VM deployment; installer work remains stopped.
 
+## Dual Qwen / optional GLM source update, 2026-09-21
+
+[Current production contract](concurrent-api.md) supersedes the dated G/Q-only
+section below for the new candidate. Persisted/API target `glm` is physicalGPU0
+and can select exact Qwen0 or GLM; `qwen` is fixedGPU1 Qwen. Public placement,
+instance_id and endpoint distinguish identical Qwen model IDs. Default
+`dual-qwen` and optional `glm-qwen` configure480000 per slot. Control remains
+30000; GPU0 inference30002 (`qwen3.8-27b-gpu0` or `glm-5.3`), GPU1 inference30004
+(`qwen3.8-27b`). No common router or automatic fallback.
+
+Status/catalog add current/default/available modes, declared per-slot context,
+readiness/degraded, mutation_busy and inference_busy (unknown counts/freshness),
+external backlog unknown and cold-load switching cost with unmeasured seconds.
+Configured, accepted and occupied capacities remain distinct. Available mode
+metadata is not permission or fresh admission. Ready is not idle. Every running
+target switch/restart still requires explicit allow_interrupt plus expected
+identity/generation and operation polling. Trusted client pauses/drains its own
+dispatch first; there is no server atomic drain guarantee. Peer remains intact.
+
 ## Fixed GLM/Qwen slots: concurrent source candidate, 2026-09-20
 
 Current scope authorizes two fixed production slots after favorable benchmark,

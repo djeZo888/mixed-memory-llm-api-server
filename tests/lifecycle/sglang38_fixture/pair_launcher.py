@@ -12,7 +12,15 @@ spec = importlib.util.spec_from_file_location('q38pair_fixture_wrapper', ROOT / 
 pair = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(pair)
 base = pair.pinned_base(ROOT / 'scripts/runtime/sglang38_file_auth.py')
-EXPECTED = pair.bind_variant(base)
+SLOT = "gpu1"
+EXPECTED = pair.bind_variant(base, SLOT)
+
+
+def select_slot(slot):
+    global base, SLOT, EXPECTED
+    base = pair.pinned_base(ROOT / "scripts/runtime/sglang38_file_auth.py")
+    EXPECTED = pair.bind_variant(base, slot)
+    SLOT = slot
 
 
 def __getattr__(name):
@@ -22,7 +30,7 @@ def __getattr__(name):
 def backend_argv(context):
     if type(context) is not int or context != pair.CONTEXT:
         raise base.LaunchError('pair_fixture_context_invalid')
-    return pair.backend_argv(base)
+    return pair.backend_argv(base, SLOT)
 
 
 def main(argv):
