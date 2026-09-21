@@ -7,6 +7,7 @@ import re
 import time
 
 from .lifecycle import require
+from .qwen_launcher import DUALQ_SCOPE
 from .cpu_budget_profiles import CAPACITY, CPU_SCOPE, POSTRESTART_SCOPE, postrestart_manifest
 
 
@@ -58,9 +59,9 @@ def qwen_native_proof(info, *, scope=CPU_SCOPE):
     Same pinned scheduler reserve semantics as concurrent_profiles.native_capacity.
     Top-level and single internal-state values must agree; argv is never proof.
     """
-    require(scope in (CPU_SCOPE, POSTRESTART_SCOPE), 'cpu_native_scope_mismatch')
+    require(scope in (CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE), 'cpu_native_scope_mismatch')
     require(isinstance(info, dict), 'cpu_native_info_unavailable')
-    args = qwen_native_view(info) if scope == POSTRESTART_SCOPE else info.get('server_args', info)
+    args = qwen_native_view(info) if scope in (POSTRESTART_SCOPE, DUALQ_SCOPE) else info.get('server_args', info)
     require(isinstance(args, dict) and type(args.get('context_length')) is int and
             args['context_length'] == CAPACITY and type(args.get('tp_size')) is int and args['tp_size'] == 1,
             'cpu_native_context_mismatch')
@@ -74,7 +75,7 @@ def qwen_native_proof(info, *, scope=CPU_SCOPE):
         require(values and all(type(v) is int and v > 0 and v == values[0] for v in values),
                 'cpu_native_pool_or_input_unavailable')
         return values[0]
-    pool, limit, request = actual('max_total_num_tokens'), actual('max_req_input_len'), actual('max_req_len', True)
+    pool, limit, request = actual('max_total_num_tokens'), actual('max_req_input_len'), actual('max_req_len', scope != DUALQ_SCOPE)
     require(pool == CAPACITY and limit == CAPACITY - 6 and request in (None, CAPACITY - 1),
             'cpu_native_pool_or_input_mismatch')
     return {'configured_context': CAPACITY, 'native_pool_tokens': pool,
@@ -84,7 +85,7 @@ def qwen_native_proof(info, *, scope=CPU_SCOPE):
 
 def pre_retirement_admission(host, original):
     from .host import collect_sample, concurrent_capacity_policy
-    if host.scope == POSTRESTART_SCOPE:
+    if host.scope in {POSTRESTART_SCOPE, DUALQ_SCOPE}:
         state = original['manager']
         require(state.get('desired') == 'stopped' and state.get('observed') == 'stopped'
                 and state.get('container_running') is False and state.get('boot_policy') == 'manual',
@@ -152,7 +153,7 @@ def coherent_postrestart_cpu_proof(host, cid, manifest, *,
     """
     from .host import _COMMAND_DEADLINE
     from .decode_telemetry import _validate_pids
-    require(host.scope == POSTRESTART_SCOPE, 'postrestart_cpu_snapshot_scope')
+    require(host.scope in {POSTRESTART_SCOPE, DUALQ_SCOPE}, 'postrestart_cpu_snapshot_scope')
     host.assert_idle()
     deadline = _COMMAND_DEADLINE.get()
     held = getattr(getattr(host, 'owner', None), 'phase', None) == 'WARM_HOLD'
@@ -258,7 +259,9 @@ def postrestart_cpu_proof(manifest, container, cgroup, pids, *,
     from .profiles import cpu_set
     from .decode_telemetry import _validate_pids
     from .cpu_budget_telemetry import numa_snapshot
-    require(manifest == postrestart_manifest(manifest.get('placement'), campaign=manifest.get('campaign')),
+    from .dualq_480k import manifest as dualq_manifest
+    expected = dualq_manifest(manifest.get('placement')) if manifest.get('scope') == DUALQ_SCOPE else postrestart_manifest(manifest.get('placement'), campaign=manifest.get('campaign'))
+    require(manifest == expected,
             'postrestart_exact_manifest_required')
     _validate_pids({'owned': pids}, 2048)
     require(bool(pids), 'postrestart_owned_processes_required')
@@ -321,7 +324,9 @@ def postrestart_cpu_proof(manifest, container, cgroup, pids, *,
             'guest_nodes': nodes, 'guest_node_memory_total_bytes': sum(v['guest_mem_total_bytes'] for v in nodes.values()),
             'cgroup_cpus_effective': effective, 'cgroup_mems_effective': mems,
             'processes': processes, 'numa_pages': numa,
-            'shared_cpu_budget': 'G0-71 and Q0-7 share72 guest CPUs',
+            'shared_cpu_budget': ('Q0 and Q1 both allow0-7; shared8, union8, exclusive0 on72 guest CPUs'
+                                  if manifest.get('scope') == DUALQ_SCOPE else
+                                  'G0-71 and Q0-7 share72 guest CPUs'),
             'outside_timed_requests_required': True,
             'physical_host_mapping': 'separate user-supplied configuration; not observed by this guest proof',
             'evidence_boundary': 'no exclusive physical pinning, full bandwidth or physical RAM residency proof'}
@@ -338,7 +343,29 @@ def resident_obligations(host):
     sample = collect_sample({cid: row[1] for cid, row in identities.items()},
                             pids={cid: row[2] for cid, row in identities.items()})
     require(set(sample['cgroups']) == set(active), 'cpu_resident_inventory_changed')
-    result = memory_obligations(sample, host.load_manifests)
+    result = (dualq_memory_obligations(sample, host.load_manifests) if host.scope == DUALQ_SCOPE
+              else memory_obligations(sample, host.load_manifests))
     require(before == {cid: identity_stamp(host, cid) for cid in active}, 'cpu_resident_identity_changed')
     result['identities'] = before
     return result
+
+
+def dualq_memory_obligations(sample, manifests):
+    """The existing resident-credit formula with exactly two 32GiB Qwen caps."""
+    credits, cap = {}, 32 * 1024**3
+    for cid, group in sample['cgroups'].items():
+        slot = manifests[cid]['placement']
+        require(slot in {'Q0', 'Q1'} and slot not in credits, 'dualq_resident_identity_changed')
+        anon, shmem, file = (group.get(k) for k in ('anon_bytes', 'shmem_bytes', 'file_bytes'))
+        require(all(type(v) is int and v >= 0 for v in (anon, shmem, file)) and shmem <= file
+                and type(group.get('swap_bytes')) is int and group['swap_bytes'] == 0,
+                'candidate_resident_credit_unavailable')
+        require(anon + shmem <= cap, 'candidate_resident_credit_exceeds_cap')
+        credits[slot] = anon + shmem
+    required = 16 * 1024**3 + sum(cap - credits.get(slot, 0) for slot in ('Q0', 'Q1'))
+    available = sample['host'].get('available_bytes')
+    require(type(available) is int and available >= 0, 'candidate_host_available_unavailable')
+    require(available >= required, 'candidate_remaining_caps_host_reserve_failed')
+    return {'host_available_bytes': available, 'required_host_available_bytes': required,
+            'resident_nonreclaimable_bytes': credits,
+            'basis': 'fixed_Q0_Q1_32GiB_caps_minus_resident_anon_plus_shmem_once_plus_16GiB'}

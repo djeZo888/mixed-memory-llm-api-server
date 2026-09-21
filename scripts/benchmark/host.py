@@ -34,6 +34,7 @@ from .profiles import (read_config, command_manifest, split_resources, validate_
 from .cpu_budget_profiles import (CPU_SCOPE, CPU_CAMPAIGN, manifest as cpu_manifest,
                                   POSTRESTART_SCOPE, POSTRESTART_CAMPAIGNS,
                                   POSTRESTART_WARM_CAMPAIGN, postrestart_manifest)
+from .qwen_launcher import DUALQ_SCOPE
 from .telemetry import collect_sample, required_host_demand, concurrent_host_demand
 from .allocation import allocation_gate, parse_glm_log, parse_qwen_log
 
@@ -65,12 +66,17 @@ def concurrent_capacity_policy(scope=None):
                 'raw_log_sha256': 'f2272149566ee0892384d6b7b62432a7e1d5cfa2d71ac55897043fd7d1c2d49a'},
             'preload_host_available_minimum_bytes': 688 * 1024**3,
             'actual_load_required': True, 'allocator_policy_change_allowed': False}
-    if scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
+    if scope in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
         policy.update(host_headroom_numerator=23, host_headroom_denominator=20,
             host_headroom_policy={'version': 'sampled-required-working-set-15pct-v1',
                 'numerator': 23, 'denominator': 20,
                 'basis': 'sampled_required_working_set_estimate_bytes'},
             headroom_observation='sampled_peak_required_working_set_ESTIMATE*1.15<=cap; raw current/peak separate hard-cap guards')
+    if scope == DUALQ_SCOPE:
+        policy.update(caps_bytes={'Q0': 32 * 1024**3, 'Q1': 32 * 1024**3},
+                      preload_host_available_minimum_bytes=80 * 1024**3,
+                      saved_provenance={'Qwen_family': policy['saved_provenance']['Q1']})
+        del policy['G1_native_floor']
     return policy
 
 
@@ -86,7 +92,7 @@ def command(argv, timeout=30, *, allow_missing=False, candidate_owner=None):
         require(remaining > 0, 'host_operation_deadline')
         timeout = min(timeout, remaining)
     if candidate_owner is not None:
-        require(candidate_owner.scope in {'candidate-pair-validation', CPU_SCOPE, POSTRESTART_SCOPE} and argv[:2] == ['/usr/bin/docker', 'create'],
+        require(candidate_owner.scope in {'candidate-pair-validation', CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE} and argv[:2] == ['/usr/bin/docker', 'create'],
                 'candidate_dispatch_seam_requires_create')
         candidate_owner.mark_create_dispatched()
     result = subprocess.run(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -214,7 +220,7 @@ class LinuxHost:
         self.scope = validate_arm_scope(data)
         self.mode = data.get('mode') if self.scope in {'glm-decode-diag', POSTRESTART_SCOPE} else None
         self.decode_capture_policy = copy.deepcopy(data.get('capture', {})) if self.scope == 'glm-decode-diag' else {}
-        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3, CONCURRENT_SCOPE: 2, CANDIDATE_SCOPE: 2, CPU_SCOPE: 4, POSTRESTART_SCOPE: 2}[self.scope]
+        manifest_count = {'full': 12, 'q1-only': 3, 'q1-256k': 1, 'g1-only': 3, 'glmrepair': 1, 'g1-ladder': 2, 'glm-decode-diag': 3, CONCURRENT_SCOPE: 2, CANDIDATE_SCOPE: 2, CPU_SCOPE: 4, POSTRESTART_SCOPE: 2, DUALQ_SCOPE: 2}[self.scope]
         if self.mode == 'cpu-profile-only':
             manifest_count = 1
         require(isinstance(values, list) and len(values) == manifest_count, 'scope_reviewed_manifests_required')
@@ -241,8 +247,15 @@ class LinuxHost:
             self.concurrent_resource_violations = {}
             require(data.get('candidate_capacity_policy') == concurrent_capacity_policy(), 'candidate_demand_policy_changed')
             require(values == candidate_manifests(self.binding), 'candidate_registered_manifests_changed')
-        elif self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
-            if self.scope == POSTRESTART_SCOPE:
+        elif self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
+            if self.scope == DUALQ_SCOPE:
+                from .dualq_480k import validate_clock
+                self.start_epoch, self.deadline_epoch = validate_clock(data, data.get('runtime', {}))
+                self.run_session_id, self.run_source_commit = data.get('session_id'), data.get('source_commit')
+                require(isinstance(self.run_source_commit, str) and bool(re.fullmatch(r'[0-9a-f]{40}', self.run_source_commit))
+                        and isinstance(self.run_session_id, str) and bool(self.run_session_id), 'dualq_source_session_required')
+                self.dualq_state = {'binding': None, 'counts': {}, 'warmups': {}, 'admitted': [], 'ended': []}
+            elif self.scope == POSTRESTART_SCOPE:
                 from .postrestart72_run import validate_clock
                 self.postrestart_measured_admissions = {'G1': 0, 'Q1': 0}
                 self.followup_request = None
@@ -271,6 +284,7 @@ class LinuxHost:
         elif self.scope != 'full':
             require(data.get('runtime') == data.get('continuation_execution') and self.start_epoch is not None,
                     'q1_continuation_epoch_changed')
+        from .dualq_480k import manifest as dualq_manifest
         source_root = Path(__file__).resolve().parents[2]
         require(isinstance(data, dict) and data.get('campaign') == campaign and isinstance(data.get('source_files'), dict),
                 'protected_arm_source_manifest_required')
@@ -278,9 +292,11 @@ class LinuxHost:
             require(not Path(relative).is_absolute() and '..' not in Path(relative).parts, 'unsafe_source_manifest_path')
             source_raw, _ = protected(source_root / relative)
             require(hashlib.sha256(source_raw).hexdigest() == sha, 'staged_source_pin_changed')
+        if self.scope == DUALQ_SCOPE:
+            self.dualq_auth_receipts(data.get('actual_image_auth_receipts'))
         self.manifests = {}
         for value in values:
-            expected = postrestart_manifest(value['placement'], campaign=campaign) if self.scope == POSTRESTART_SCOPE else cpu_manifest(value['layout'], value['placement']) if self.scope == CPU_SCOPE else candidate_manifest(value['placement'], self.binding) if self.scope == CANDIDATE_SCOPE else concurrent_manifest(value['placement'], value['configured_capacity']) if self.scope == CONCURRENT_SCOPE else glm_decode_diag_manifest(value['configured_capacity'], campaign) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
+            expected = dualq_manifest(value['placement']) if self.scope == DUALQ_SCOPE else postrestart_manifest(value['placement'], campaign=campaign) if self.scope == POSTRESTART_SCOPE else cpu_manifest(value['layout'], value['placement']) if self.scope == CPU_SCOPE else candidate_manifest(value['placement'], self.binding) if self.scope == CANDIDATE_SCOPE else concurrent_manifest(value['placement'], value['configured_capacity']) if self.scope == CONCURRENT_SCOPE else glm_decode_diag_manifest(value['configured_capacity'], campaign) if self.scope == 'glm-decode-diag' else g1_ladder_manifest(value['configured_capacity']) if self.scope == 'g1-ladder' else glmrepair_manifest(campaign) if self.scope == 'glmrepair' else command_manifest(value['placement'], value['configured_capacity'], campaign=campaign,
                                         ram_cap=G1_RAM_CAP_BYTES if self.scope == 'g1-only' else None,
                                         log_verbosity=4 if self.scope == 'g1-only' else None)
             require(value == expected, 'manifest_not_current_generated_source')
@@ -295,11 +311,11 @@ class LinuxHost:
         self.baseline_lock_identity = None
         self.owner = None
         from .postrestart72_budget import PostrestartBudget
-        self.budget = PostrestartBudget(self) if self.scope == POSTRESTART_SCOPE else HostBudget(self)
+        self.budget = PostrestartBudget(self) if self.scope in {POSTRESTART_SCOPE, DUALQ_SCOPE} else HostBudget(self)
         callbacks = HostCallbacks(**{name: getattr(self, name) for name in HostCallbacks.__dataclass_fields__})
         self.owner = CampaignOwner(campaign, self.manager, callbacks, self.budget,
                                   reviewed_manifest_hashes=self.manifests, lease_factory=lifecycle_lease.acquire_lease,
-                                  scope=self.scope if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} else None)
+                                  scope=self.scope if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE} else None)
 
     @staticmethod
     def concurrent_clock(armed):
@@ -363,10 +379,10 @@ class LinuxHost:
         return start, deadline
 
     def admit_concurrent(self, round_name):
-        require(self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} and self.owner.phase == 'ACTIVE',
+        require(self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE} and self.owner.phase == 'ACTIVE',
                 'concurrent_active_scope_required')
         require(not getattr(self, 'concurrent_resource_violations', {}), 'concurrent_latched_resource_failure')
-        expected = ('P' if self.concurrent_round is None else None) if self.scope == POSTRESTART_SCOPE else ('A' if self.concurrent_round is None else 'B' if self.concurrent_round == 'A' else None) if self.scope == CPU_SCOPE else ('long' if self.concurrent_round is None else None)
+        expected = ('QQ' if self.concurrent_round is None else None) if self.scope == DUALQ_SCOPE else ('P' if self.concurrent_round is None else None) if self.scope == POSTRESTART_SCOPE else ('A' if self.concurrent_round is None else 'B' if self.concurrent_round == 'A' else None) if self.scope == CPU_SCOPE else ('long' if self.concurrent_round is None else None)
         require(round_name is not None and round_name == expected, 'concurrent_closed_round_order_required')
         self.budget.checkpoint()
         self.guards(self.owner.lease)
@@ -382,7 +398,9 @@ class LinuxHost:
                 'concurrent_host_available_reserve_unproved')
         gpu_free = {g['uuid']: g.get('free_bytes') for g in sample['gpus']}
         sizes = (65536, 700160)
-        manifests = ([postrestart_manifest(p, campaign=self.campaign) for p in ('G1', 'Q1')] if self.scope == POSTRESTART_SCOPE else
+        from .dualq_480k import manifest as dualq_manifest
+        manifests = ([dualq_manifest(p) for p in ('Q0', 'Q1')] if self.scope == DUALQ_SCOPE else
+                     [postrestart_manifest(p, campaign=self.campaign) for p in ('G1', 'Q1')] if self.scope == POSTRESTART_SCOPE else
                      [cpu_manifest(round_name, p) for p in ('G1', 'Q1')] if self.scope == CPU_SCOPE else
                      [concurrent_manifest(p, n) for p, n in zip(('G1', 'Q1'), sizes)])
         for manifest in manifests:
@@ -401,9 +419,10 @@ class LinuxHost:
     @staticmethod
     def concurrent_limits(manifest, container, cgroup):
         placement = manifest['placement']
-        expected = postrestart_manifest(placement, campaign=manifest['campaign']) if manifest.get('campaign') in POSTRESTART_CAMPAIGNS else cpu_manifest(manifest.get('layout'), placement) if manifest.get('campaign') == CPU_CAMPAIGN else candidate_manifest(placement) if manifest.get('campaign') == 'benchrun-candidate-pair-20260920' else concurrent_manifest(placement, manifest['configured_capacity'])
+        from .dualq_480k import manifest as dualq_manifest
+        expected = dualq_manifest(placement) if manifest.get('scope') == DUALQ_SCOPE else postrestart_manifest(placement, campaign=manifest['campaign']) if manifest.get('campaign') in POSTRESTART_CAMPAIGNS else cpu_manifest(manifest.get('layout'), placement) if manifest.get('campaign') == CPU_CAMPAIGN else candidate_manifest(placement) if manifest.get('campaign') == 'benchrun-candidate-pair-20260920' else concurrent_manifest(placement, manifest['configured_capacity'])
         require(manifest == expected, 'concurrent_exact_manifest_required')
-        cap = concurrent_capacity_policy()['caps_bytes'][placement]
+        cap = concurrent_capacity_policy(manifest.get('scope'))['caps_bytes'][placement]
         cpus = expected['guest_cpuset']
         config = container['HostConfig']
         memory = {'docker_memory_bytes': config.get('Memory'),
@@ -422,7 +441,7 @@ class LinuxHost:
                 all(cpu[k] == 0 for k in ('docker_nano_cpus', 'docker_cpu_quota', 'docker_cpu_period')) and
                 bool(re.fullmatch(r'max [1-9][0-9]*', cpu['cgroup_cpu_max'])),
                 'concurrent_effective_cpu_limits_unproved')
-        if manifest.get('campaign') in POSTRESTART_CAMPAIGNS:
+        if manifest.get('campaign') in POSTRESTART_CAMPAIGNS or manifest.get('scope') == DUALQ_SCOPE:
             cpu['docker_cpuset_mems'] = config.get('CpusetMems', '')
             cpu['cgroup_cpuset_mems_effective'] = (cgroup / 'cpuset.mems.effective').read_text().strip()
             require(cpu['docker_cpuset_mems'] in ('', '0-7') and
@@ -467,14 +486,14 @@ class LinuxHost:
                             'headroom_comparison_bytes': comparison, 'sampled_peak_required_bytes': sampled_peak,
                             'placement': manifest['placement'], 'cap_bytes': cap,
                             'allocation_proof_available': parsed is not None,
-                            ('cap_headroom_15_percent' if getattr(self, 'scope', None) in {CPU_SCOPE, POSTRESTART_SCOPE} else 'cap_headroom_25_percent'): False if numeric_failure else True if observed is not None else None,
+                            ('cap_headroom_15_percent' if getattr(self, 'scope', None) in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE} else 'cap_headroom_25_percent'): False if numeric_failure else True if observed is not None else None,
                             'headroom_numerator': policy['host_headroom_numerator'], 'headroom_denominator': policy['host_headroom_denominator']}
-            if getattr(self, 'scope', None) in {CPU_SCOPE, POSTRESTART_SCOPE}:
+            if getattr(self, 'scope', None) in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
                 charges[cid].update(sampled_required_working_set_estimate_bytes=comparison,
                     required_with_headroom_bytes=((comparison * 23 + 19) // 20 if comparison is not None else None),
                     host_headroom_policy=policy['host_headroom_policy'])
             if numeric_failure:
-                numeric_by_cid[cid].append('concurrent_cap_15_percent_headroom_failed' if getattr(self, 'scope', None) in {CPU_SCOPE, POSTRESTART_SCOPE} else 'concurrent_cap_25_percent_headroom_failed')
+                numeric_by_cid[cid].append('concurrent_cap_15_percent_headroom_failed' if getattr(self, 'scope', None) in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE} else 'concurrent_cap_25_percent_headroom_failed')
             if any(valid(v) and v > cap for v in (current, peak)):
                 numeric_by_cid[cid].append('concurrent_raw_hard_cap_exceeded')
         available = row['host'].get('available_bytes')
@@ -491,16 +510,16 @@ class LinuxHost:
                     unavailable.append('concurrent_gpu_free_unavailable')
                 elif free[uuid] < policy['gpu_reserve_bytes']:
                     numeric_by_cid[cid].append('concurrent_gpu_reserve_failed')
-        if getattr(self, 'scope', None) in {CPU_SCOPE, POSTRESTART_SCOPE}:
+        if getattr(self, 'scope', None) in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
             for cid in row['cgroups']:
-                if self.load_manifests[cid]['placement'] == 'Q1':
+                if self.load_manifests[cid]['placement'].startswith('Q'):
                     gpu = next((g for g in row['gpus'] if g['uuid'] == self.load_manifests[cid]['gpu_uuids'][0]), {})
                     total, remaining = gpu.get('total_bytes'), gpu.get('free_bytes')
                     if not (type(total) is int and total > 0 and type(remaining) is int):
                         unavailable.append('cpu_qwen_ten_percent_unavailable')
                     elif remaining * 10 < total:
                         numeric_by_cid[cid].append('cpu_qwen_ten_percent_failed')
-        if getattr(self, 'scope', None) == POSTRESTART_SCOPE:
+        if getattr(self, 'scope', None) in {POSTRESTART_SCOPE, DUALQ_SCOPE}:
             # Full *current* resource evidence, not a historical peak or a
             # literal read-error exemption. Missing observations never become
             # zeros; independently observed danger wins over incomplete proof.
@@ -988,7 +1007,11 @@ class LinuxHost:
                        'lease_semantics': 'same_process_capability'}, 'credentials': self.credentials()}
 
     def assert_idle(self):
-        require(not self.requests, 'healthy_request_still_registered')
+        # A closed Qwen transport has no reliable native idle counter. Retain
+        # failed registrations until canonical stop proves the process is gone.
+        unresolved_only = (self.scope == DUALQ_SCOPE and self.requests and
+                           all(r.get('terminal_unresolved') is True for r in self.requests.values()))
+        require(not self.requests or unresolved_only, 'healthy_request_still_registered')
         lines = command(['/usr/bin/ss', '-Htn', 'state', 'established']).stdout.decode().splitlines()
         require(not any(re.search(r':(?:30002|30004|31002|31004)\b', line) for line in lines), 'inference_connection_active')
 
@@ -1008,7 +1031,7 @@ class LinuxHost:
             require(units[CONTROL_UNIT]['active'] == 'inactive', 'control_not_frozen')
         if stage in {'admission', 'production_stop', 'restore', 'retire', 'stop', 'remove', 'pre_release', 'warm_hold'}:
             self.assert_idle()
-        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE} and stage == 'admission':
+        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE} and stage == 'admission':
             from .cpu_budget_host import pre_retirement_admission
             self.write_json('cpu-pre-retirement-admission.json', pre_retirement_admission(self, original))
         if self.scope == CANDIDATE_SCOPE and stage == 'admission':
@@ -1051,14 +1074,14 @@ class LinuxHost:
                      if kind == 'G' else "command -v python3 >/dev/null; python3 -c 'import ctypes,json,uuid; ctypes.CDLL(\"libcuda.so.1\")'")
             self.write_json('mapping-helper-' + kind.lower() + '.json',
                             {'phase': 'PLANNED', 'name': name, 'image': manifest['image'], 'no_gpu': True})
-            if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
+            if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
                 require(self.owner.pending_create is None, 'unresolved_create_intent')
                 self.owner.pending_create = {'manifest_sha256': digest(manifest), 'name': name,
                     'image': manifest['image'], 'campaign': self.campaign,
                     'dispatch': 'not_dispatched', 'kind': 'mapping_helper'}
                 self.owner._save()
             self.guards(lease)
-            dispatch = {'candidate_owner': self.owner} if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} else {}
+            dispatch = {'candidate_owner': self.owner} if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE} else {}
             cid = command([*probe, check], 60, **dispatch).stdout.decode().strip()
             require(bool(CID.fullmatch(cid)), 'mapping_helper_create_identity_invalid')
             container = self.docker_inspect(cid)
@@ -1067,7 +1090,7 @@ class LinuxHost:
                     'mapping_helper_image_changed')
             row = {'resource': resource, 'state': 'CREATED'}
             self.owner.resources.append(row)
-            if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
+            if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
                 self.owner.pending_create = None
             self.owner._save()
             try:
@@ -1162,6 +1185,9 @@ class LinuxHost:
 
     def create(self, manifest):
         require(digest(manifest) in self.manifests, 'unreviewed_manifest')
+        if self.scope == DUALQ_SCOPE:
+            require(not any(m['placement'] == manifest['placement'] for m in self.load_manifests.values()),
+                    'dualq_load_once_only')
         model_id = 'glm-5.3-ud-q4-k-xl-n76-native1m' if manifest['placement'].startswith('G') else 'qwen38-27b-1000000-yarn4-tp2-bf16kv'
         self.manager.check_artifacts(self.manager.deployment(model_id))
         image = json.loads(command(['/usr/bin/docker', 'image', 'inspect', manifest['image']]).stdout)[0]
@@ -1173,7 +1199,7 @@ class LinuxHost:
             available = collect_sample({})['host']['available_bytes']
             require(type(available) is int and available >= G1_RAM_CAP_BYTES + 16 * 1024**3,
                     'g1_container_cap_host_reserve_unproved')
-        if self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
             require(digest(manifest) in self.concurrent_admitted, 'concurrent_round_not_admitted')
             require(not getattr(self, 'concurrent_resource_violations', {}), 'concurrent_latched_resource_failure')
             active = [row['resource']['id'] for row in self.owner.resources if row['state'] != 'REMOVED'
@@ -1186,7 +1212,7 @@ class LinuxHost:
             available = collect_sample({})['host']['available_bytes']
             require(type(available) is int and available >= remaining + policy['os_reserve_bytes'],
                     'concurrent_host_available_reserve_unproved')
-        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
+        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
             from .cpu_budget_host import resident_obligations
             self.write_json('cpu-preload-' + manifest['layout'] + '-' + manifest['placement'] + '.json', resident_obligations(self))
         if self.scope == CANDIDATE_SCOPE:
@@ -1206,7 +1232,7 @@ class LinuxHost:
                     require(hashlib.sha256(raw).hexdigest() == cp.PINS[rel], 'candidate_protected_wrapper_changed')
         self.mkdir_paths(manifest)
         argv = ['/usr/bin/docker', *manifest['create_argv'][1:]]
-        dispatch = {'candidate_owner': self.owner} if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} else {}
+        dispatch = {'candidate_owner': self.owner} if self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE} else {}
         created = command(argv, 120, **dispatch).stdout.decode().strip()
         require(bool(CID.fullmatch(created)), 'invalid_created_container_id')
         container = self.docker_inspect(created)
@@ -1216,8 +1242,8 @@ class LinuxHost:
             require(container['HostConfig'].get('Memory') == G1_RAM_CAP_BYTES and
                     container['HostConfig'].get('MemorySwap') == G1_RAM_CAP_BYTES,
                     'g1_container_no_swap_limit_unproved')
-        if self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
-            cap = concurrent_capacity_policy()['caps_bytes'][manifest['placement']]
+        if self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
+            cap = concurrent_capacity_policy(self.scope)['caps_bytes'][manifest['placement']]
             require(container['HostConfig'].get('Memory') == cap and container['HostConfig'].get('MemorySwap') == cap,
                     'concurrent_container_no_swap_limit_unproved')
         self.load_manifests[created] = manifest
@@ -1256,6 +1282,15 @@ class LinuxHost:
             require(current != generation, 'owned_process_survived_stop')
         require(not cgroup.exists() or not any(file.read_text().strip() for file in cgroup.rglob('cgroup.procs')),
                 'owned_cgroup_not_empty_after_stop')
+        if self.scope == DUALQ_SCOPE and resource['id'] in self.requests:
+            require(self.requests[resource['id']].get('terminal_unresolved') is True,
+                    'healthy_request_still_registered')
+            require(not self._exact(resource)['State']['Running'], 'dualq_owned_container_still_running')
+            self.write_json('loads/' + resource['id'] + '-failed-request-stop.json',
+                            {'request': self.requests[resource['id']], 'owned_processes_gone': True,
+                             'native_request_completion': 'UNKNOWN', 'retry_allowed': False})
+            del self.requests[resource['id']]
+            self.write_json('requests.json', self.requests)
 
     def remove(self, resource):
         require(not self._exact(resource)['State']['Running'], 'remove_running_refused')
@@ -1298,13 +1333,13 @@ class LinuxHost:
             before_identity = identity_stamp(self, cid)
         options = {'decode_diagnostic': True} if self.scope == 'glm-decode-diag' else {}
         groups, members = {cid: cgroup}, {cid: pids}
-        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
             for resource in self.owner.resources:
                 peer = resource['resource']['id']
                 if resource['state'] == 'RUNNING' and peer != cid and peer in self.load_manifests:
                     _, groups[peer], members[peer] = self.identity(peer)
         row = collect_sample(groups, pids=members, **options)
-        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
             row['concurrent_resource_gate'] = self.candidate_pressure(row) if self.scope == CANDIDATE_SCOPE else self.concurrent_pressure(row)
             row['cpu_pressure'] = self.concurrent_cpu_pressure(groups)
         if self.scope == 'glm-decode-diag':
@@ -1318,7 +1353,7 @@ class LinuxHost:
                 if not hasattr(self, '_decode_last_sample'):
                     self._decode_last_sample = {}
                 self._decode_last_sample[cid] = collection_started
-        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
+        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
             from .cpu_budget_telemetry import collect_sample as collect_cpu
             row['cpu_budget'] = collect_cpu(groups, pids=members)
         row['collection_duration_s'] = time.monotonic() - collection_started
@@ -1329,7 +1364,7 @@ class LinuxHost:
         manifest = self.load_manifests.get(cid, {})
         placement = manifest.get('placement')
         parsed = self.allocation_proofs.get(cid)
-        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
             # The legacy helper claims measured components and double-counts this
             # mapped/shmem overlap. This closed campaign reports only ESTIMATE.
             row['required_host_demand'] = copy.deepcopy(row['concurrent_resource_gate']['charges'][cid])
@@ -1399,16 +1434,16 @@ class LinuxHost:
         require(point in {'readiness', 'warm_idle'}, 'pss_checkpoint_only')
         self.assert_idle()
         container, cgroup, pids = self.identity(cid)
-        if self.scope == POSTRESTART_SCOPE:
+        if self.scope in {POSTRESTART_SCOPE, DUALQ_SCOPE}:
             from .cpu_budget_host import postrestart_cpu_anchor
             cpu_anchor = postrestart_cpu_anchor(container, cgroup)
-        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
             result = {'point': point, 'pss_bytes': None, 'pss_unavailable_reason': 'concurrent_no_profiling',
                       'container_id': cid, 'scope': 'cheap_quiescent_counters', 'telemetry': self.telemetry(cid)}
             if self.scope == CPU_SCOPE:
                 from .cpu_budget_telemetry import numa_snapshot
                 result['numa_pages'] = numa_snapshot({cid: pids})
-            if self.scope == POSTRESTART_SCOPE:
+            if self.scope in {POSTRESTART_SCOPE, DUALQ_SCOPE}:
                 require(result['telemetry']['concurrent_resource_gate']['status'] != 'STOP_RESOURCE_GATE',
                         'concurrent_current_resource_gate_failed')
                 from .cpu_budget_host import coherent_postrestart_cpu_proof
@@ -1590,7 +1625,7 @@ class LinuxHost:
     def allocation(self, cid):
         self.assert_idle()
         container, cgroup, pids = self.identity(cid)
-        if self.scope == POSTRESTART_SCOPE:
+        if self.scope in {POSTRESTART_SCOPE, DUALQ_SCOPE}:
             from .cpu_budget_host import postrestart_cpu_anchor
             cpu_anchor = postrestart_cpu_anchor(container, cgroup)
         if self.scope == CANDIDATE_SCOPE:
@@ -1611,10 +1646,10 @@ class LinuxHost:
                 info = http_json(port, '/get_server_info')
             except TimeoutError as error:
                 raise NativeInfoPending from error
-            if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
+            if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
                 from .cpu_budget_host import qwen_native_diagnostic
                 self.write_json('loads/' + cid + '-native-numeric-diagnostic.json', qwen_native_diagnostic(info))
-            if self.scope == POSTRESTART_SCOPE:
+            if self.scope in {POSTRESTART_SCOPE, DUALQ_SCOPE}:
                 from .cpu_budget_host import qwen_native_view
                 args = qwen_native_view(info)
             else:
@@ -1631,9 +1666,10 @@ class LinuxHost:
                 from .concurrent_validate import native_proof
                 native_capacity = native_proof(self, cid, info)
                 facts['max_total_num_tokens'] = native_capacity['native_pool_tokens']
-            if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
+            if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
                 from .cpu_budget_host import qwen_native_proof
-                native_capacity = qwen_native_proof(info, **({'scope': POSTRESTART_SCOPE} if self.scope == POSTRESTART_SCOPE else {}))
+                native_capacity = qwen_native_proof(info, **({'scope': self.scope}
+                    if self.scope in {POSTRESTART_SCOPE, DUALQ_SCOPE} else {}))
                 facts['max_total_num_tokens'] = native_capacity['native_pool_tokens']
             parsed = parse_qwen_log(text, facts)
             receipts = [json.loads(line.split('BENCHMARK_NATIVE_ARGV ', 1)[1])['argv'] for line in text.splitlines()
@@ -1663,21 +1699,25 @@ class LinuxHost:
                     'native_argv': native, 'device_request_uuids': device_ids, 'cuda_uuid_order': cuda,
                     'gpu_free_bytes': {g['uuid']: g['free_bytes'] for g in sample['gpus']},
                     'raw_log_sha256': hashlib.sha256(raw).hexdigest()}
+        if self.scope == DUALQ_SCOPE:
+            observed.update(production_profile=manifest['production_profile'],
+                            production_profile_semantics='same pinned backend arguments except temporary alias/port',
+                            inference_family='qwen')
         if self.scope in {'g1-only', 'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
             observed['container_memory_limits'] = self.g1_memory_limits(container, cgroup)
         if self.scope in {'glmrepair', 'g1-ladder', 'glm-decode-diag'}:
             observed['container_cpu_limits'] = self.glmrepair_cpu_limits(container, cgroup)
-        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
             memory, cpu = self.concurrent_limits(manifest, container, cgroup)
             observed.update(container_memory_limits=memory, container_cpu_limits=cpu)
-        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope in {'g1-only', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} and manifest['placement'] == 'G1',
+        gate = allocation_gate(manifest, parsed, observed, strict_g1=self.scope in {'g1-only', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE} and manifest['placement'] == 'G1',
                                strict_glmrepair=self.scope == 'glmrepair')
-        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
+        if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
             pressure = sample['concurrent_resource_gate']
             if pressure['status'] != 'PASS':
                 gate['status'] = 'STOP_ALLOCATION_PROOF'
                 gate['reasons'].extend(pressure['reasons'] + pressure['unavailable_reasons'])
-            if manifest['placement'] == 'Q1':
+            if manifest['placement'].startswith('Q'):
                 ranks = parsed.get('ranks') or {}
                 if not ranks or not all(type(rank.get(key)) in (int, float) and rank[key] > 0
                                         for rank in ranks.values() for key in ('k_gb_log_label', 'v_gb_log_label')):
@@ -1690,9 +1730,9 @@ class LinuxHost:
             observed['evidence_status'] = 'CANDIDATE_OBSERVATION_NOT_ACCEPTANCE'
         result = {'allocation': gate, 'parsed': parsed, 'observed': observed, 'server_facts': facts,
                   'raw_log_path': self.log_root + '/loads/' + cid + '-allocation.log'}
-        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE} and manifest['placement'] == 'Q1':
+        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE} and manifest['placement'].startswith('Q'):
             result['observed']['native_capacity'] = native_capacity
-        if self.scope == POSTRESTART_SCOPE:
+        if self.scope in {POSTRESTART_SCOPE, DUALQ_SCOPE}:
             # Keep ordinary readiness/admission failed. Only retained hold may
             # distinguish absent sampled resource proof from a proven fault.
             missing_resource_reasons = set(pressure['unavailable_reasons']) | {
@@ -1788,7 +1828,7 @@ class LinuxHost:
         manifest = self.load_manifests.get(cid) or self.read_json('loads/' + cid + '.json')['manifest']
         try:
             models = http_json(manifest['transport']['port'], '/v1/models', timeout_s=5)
-            alias = manifest['served_model'] if self.scope == CANDIDATE_SCOPE else 'bench-glm-5.3' if manifest['placement'].startswith('G') else 'bench-qwen3.8-27b'
+            alias = manifest['transport']['model_alias'] if self.scope == DUALQ_SCOPE else manifest['served_model'] if self.scope == CANDIDATE_SCOPE else 'bench-glm-5.3' if manifest['placement'].startswith('G') else 'bench-qwen3.8-27b'
             require(any(row.get('id') == alias for row in models.get('data', [])), 'served_alias_mismatch')
         except Exception:
             terminal = self.readiness_failure(cid)
@@ -1854,9 +1894,12 @@ class LinuxHost:
         from common.lifecycle_lease import acquire_lease
         ledger = self.read_json('owner.json')
         require(ledger.get('campaign') == self.campaign and ledger.get('evidence_kind') == 'live', 'invalid_recovery_ledger')
-        candidate = self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}
+        candidate = self.scope in {CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}
         require(ledger.get('validation_scope') == (self.scope if candidate else None),
                 'recovery_scope_changed')
+        if self.scope == DUALQ_SCOPE:
+            self.requests = self.read_json('requests.json', missing=True) or {}
+            self.dualq_state = self.read_json('dualq-state.json', missing=True) or self.dualq_state
         if candidate:
             require(type(ledger.get('production_touched')) is bool and type(ledger.get('control_touched')) is bool,
                     'candidate_recovery_mutation_boundary_required')
@@ -2340,18 +2383,136 @@ class LinuxHost:
         return {'drained': False, 'status': 'UNRESOLVED_DRAIN', 'proof_pending': True,
                 'request_retained': cid}
 
+    def dualq_request_check(self, args):
+        """Finite count/warm/pair admissions; durable identities prevent replay."""
+        require(self.scope == DUALQ_SCOPE and not self.dualq_state.get('failed'), 'dualq_admission_closed')
+        manifest = self.load_manifests[args['id']]
+        slot, identity = manifest['placement'], args.get('request_identity')
+        require(slot in {'Q0', 'Q1'} and type(identity) is dict and
+                set(identity) == {'request_id', 'request_sha256', 'manifest_sha256', 'purpose'} and
+                identity['manifest_sha256'] == digest(manifest) and
+                isinstance(identity['request_sha256'], str) and
+                bool(re.fullmatch(r'[a-f0-9]{64}', identity['request_sha256'])), 'dualq_request_identity_required')
+        purpose, identifier = identity['purpose'], identity['request_id']
+        require(type(args.get('measured')) is bool and args['measured'] == (purpose == 'measured'),
+                'dualq_request_purpose_mismatch')
+        if purpose == 'count':
+            require(identifier in {slot + '-count-warmup', slot + '-count-measured'} and
+                    identifier not in self.dualq_state['counts'] and self.dualq_state['binding'] is None and
+                    args.get('timeout_s') == 120, 'dualq_exact_two_counts_per_role')
+        elif purpose == 'warmup':
+            counted = self.dualq_state['counts'].get(slot + '-count-warmup', {})
+            require(identifier == slot + '-warmup' and slot not in self.dualq_state['warmups'] and
+                    counted.get('ended') is True and counted['identity']['request_sha256'] == identity['request_sha256']
+                    and self.dualq_state['binding'] is None and args.get('timeout_s') == 7200,
+                    'dualq_exact_once_counted_warmup')
+        else:
+            require(purpose == 'measured' and self.dualq_state['binding'] is not None and
+                    {k: v for k, v in identity.items() if k != 'purpose'} == self.dualq_state['binding'].get(slot) and
+                    slot not in self.dualq_state['admitted'] and args.get('timeout_s') == 7200,
+                    'dualq_exact_once_sealed_measurement')
+        return copy.deepcopy(identity)
+
+    def dualq_auth_receipts(self, references):
+        """Consume real protected fixture results; PREP cannot manufacture them."""
+        from .concurrent_validate import auth_fixture_module
+        require(type(references) is dict and set(references) == {'base', 'Q0', 'Q1'},
+                'dualq_actual_image_receipts_required')
+        fixture, (_, qwen) = auth_fixture_module(), candidate_modules()
+        identities = set()
+        for role, reference in references.items():
+            require(type(reference) is dict and set(reference) == {'registered_path', 'sha256'} and
+                    isinstance(reference['registered_path'], str) and
+                    bool(re.fullmatch(r'/data/logs/llmctl/dualq-auth-20260921/[A-Za-z0-9_.-]+\.json', reference['registered_path'])) and
+                    isinstance(reference['sha256'], str) and bool(re.fullmatch(r'[a-f0-9]{64}', reference['sha256'])),
+                    'dualq_auth_receipt_reference_changed')
+            self.binding.validate_path('logs', reference['registered_path'])
+            raw, _ = protected(reference['registered_path'], private=True)
+            require(hashlib.sha256(raw).hexdigest() == reference['sha256'], 'dualq_auth_receipt_hash_changed')
+            receipt = json.loads(raw)
+            if role == 'base':
+                qwen._validate_auth_proof(receipt, {'image_id': qwen.IMAGE_ID,
+                    'image_reference': qwen.IMAGE_REFERENCE, 'source_revision': qwen.SOURCE_REVISION,
+                    'launcher_sha256': qwen.launcher_hash()})
+            else:
+                fixture.check_pair_receipt(receipt, Path(__file__).resolve().parents[2],
+                                           slot='gpu0' if role == 'Q0' else 'gpu1')
+            for lifetime in receipt['container_lifetimes']:
+                require(lifetime['container_id'] not in identities, 'dualq_auth_fixture_identity_reused')
+                identities.add(lifetime['container_id'])
+        return {'status': 'ACTUAL_IMAGE_AUTH_VALIDATED', 'model_inference': 'NOT_TESTED'}
+
+    def seal_dualq(self, binding):
+        require(self.scope == DUALQ_SCOPE and self.owner.phase == 'ACTIVE' and not self.requests and
+                self.dualq_state['binding'] is None and not self.dualq_state.get('failed') and
+                type(binding) is dict and set(binding) == {'Q0', 'Q1'}, 'dualq_closed_pair_binding_required')
+        require(len(self.load_manifests) == 2 and set(self.load_manifests) == set(self.allocation_proofs) and
+                {m['placement'] for m in self.load_manifests.values()} == {'Q0', 'Q1'} and
+                set(self.dualq_state['warmups']) == {'Q0', 'Q1'} and
+                all(row.get('ended') is True for row in self.dualq_state['warmups'].values()),
+                'dualq_both_allocated_and_warm_required')
+        for slot, row in binding.items():
+            count = self.dualq_state['counts'].get(slot + '-count-measured', {})
+            require(type(row) is dict and set(row) == {'request_id', 'request_sha256', 'manifest_sha256'} and
+                    row['request_id'] == slot + '-near480K' and count.get('ended') is True and
+                    all(row[k] == count['identity'][k] for k in ('request_sha256', 'manifest_sha256')),
+                    'dualq_counted_final_body_binding_required')
+        require(binding['Q0']['request_sha256'] != binding['Q1']['request_sha256'],
+                'dualq_distinct_final_bodies_required')
+        self.dualq_state['binding'] = copy.deepcopy(binding)
+        self.write_json('dualq-state.json', self.dualq_state)
+        return {'sealed': True, 'measured_requests': 2, 'measured_pairs': 1}
+
+    def dualq_registered(self, identity):
+        slot = identity['request_id'][:2]
+        if identity['purpose'] == 'count':
+            self.dualq_state['counts'][identity['request_id']] = {'identity': identity, 'ended': False}
+        elif identity['purpose'] == 'warmup':
+            self.dualq_state['warmups'][slot] = {'identity': identity, 'ended': False}
+        else:
+            self.dualq_state['admitted'].append(slot)
+        self.write_json('dualq-state.json', self.dualq_state)
+
+    def dualq_request_end(self, args):
+        cid, identity, terminal = args['id'], args.get('request_identity'), args.get('terminal_reason')
+        require(identity == self.requests[cid].get('request_identity'), 'dualq_end_identity_changed')
+        expected = 'COUNT_DRAINED' if identity['purpose'] == 'count' else 'DRAINED'
+        require(terminal in {expected, 'REQUEST_DEADLINE', 'CANCELLED', 'COUNT_FAILED', 'TRANSPORT_ERROR',
+                            'NOT_DISPATCHED', 'TRANSPORT_FAILED'}, 'dualq_transport_terminal_required')
+        if terminal != expected:
+            self.requests[cid].update(terminal_unresolved=True, terminal_reason=terminal)
+            self.dualq_state['failed'] = True
+            self.write_json('requests.json', self.requests)
+            self.write_json('dualq-state.json', self.dualq_state)
+            return {'request_retained': cid, 'drained': False, 'status': 'CANONICAL_STOP_REQUIRED'}
+        require(self.batch_owned_idle(cid), 'dualq_transport_not_drained')
+        if identity['purpose'] == 'count':
+            self.dualq_state['counts'][identity['request_id']]['ended'] = True
+        elif identity['purpose'] == 'warmup':
+            self.dualq_state['warmups'][identity['request_id'][:2]]['ended'] = True
+        else:
+            self.dualq_state['ended'].append(identity['request_id'][:2])
+        del self.requests[cid]
+        self.write_json('requests.json', self.requests)
+        self.write_json('dualq-state.json', self.dualq_state)
+        return {'request_ended': cid, 'drained': True, 'status': 'VERIFIED_TRANSPORT_DRAIN',
+                'native_Qwen_idle_counter': None}
+
     def dispatch(self, message):
         require(isinstance(message, dict), 'invalid_rpc')
         op = message.get('op')
         args = message.get('args', {k: v for k, v in message.items() if k != 'op'})
         require(isinstance(args, dict), 'invalid_rpc_args')
-        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
+        if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
             require(op in {'begin', 'load', 'retire', 'readiness', 'telemetry', 'allocation', 'quiescent',
                 'request_begin', 'request_end', 'admit_concurrent', 'rpc_diagnostics', 'restore', 'recover',
                 'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure'} |
                 ({'warm_hold', 'resume_measurements', 'hold_checkpoint', 'admit_followup'} if self.scope == POSTRESTART_SCOPE else set()) |
+                ({'seal_dualq'} if self.scope == DUALQ_SCOPE else set()) |
                 ({'seal_batch', 'batch_case_begin', 'batch_timeout_drain', 'decode_progress'} if self.is_sealed_batch() else set()),
                 'cpu_operation_outside_scope')
+        if op == 'seal_dualq':
+            return self.seal_dualq(args.get('binding'))
         if self.is_sealed_batch():
             require(op not in {'resume_measurements', 'admit_followup'}, 'batch_no_extra_followup')
         if op == 'seal_batch':
@@ -2375,8 +2536,11 @@ class LinuxHost:
             return self.resume_measurements(args.get('followup_session_id'), args.get('source_commit'),
                                             args.get('preliminary_result_sha256'))
         if op == 'begin':
+            if self.scope == DUALQ_SCOPE:
+                require(not args.get('resume') and self.read_json('owner.json', missing=True) is None,
+                        'dualq_fresh_owner_only_recover_for_cleanup')
             if args.get('resume'):
-                require(self.scope not in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}, 'glmrepair_resume_forbidden_restore_only')
+                require(self.scope not in {'glmrepair', 'g1-ladder', 'glm-decode-diag', CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}, 'glmrepair_resume_forbidden_restore_only')
                 ledger = self.read_json('owner.json')
                 require(ledger['phase'] == 'RESTORED' and self.budget.data['phase'] == 'RESTORED', 'resume_requires_verified_restoration')
                 require(time.time() - self.budget.data['started_at'] < 21600, 'STOP_BUDGET')
@@ -2393,7 +2557,7 @@ class LinuxHost:
             require(remaining > 0, 'STOP_BUDGET')
             manifest = self.manifests.get(args.get('manifest_sha256'))
             require(manifest is not None, 'unknown_manifest')
-            if self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
+            if self.scope in {CONCURRENT_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
                 require(digest(manifest) in self.concurrent_admitted, 'concurrent_round_not_admitted')
             token = _COMMAND_DEADLINE.set(time.monotonic() + min(7200, remaining))
             try:
@@ -2422,22 +2586,35 @@ class LinuxHost:
             return self.decode_cpu_capture_status(args['id'], args['capture_id'], args.get('client_after'))
         if op == 'request_begin':
             require(self.owner.phase == 'ACTIVE', 'owner_not_active')
+            dualq_identity = self.dualq_request_check(args) if self.scope == DUALQ_SCOPE else None
             batch_identity = self.batch_request_check(args) if self.is_sealed_batch() else None
             if (self.scope == POSTRESTART_SCOPE and getattr(self, 'campaign', None) == POSTRESTART_WARM_CAMPAIGN
                     and args.get('measured') is True):
                 require(self.followup_request is not None, 'postrestart_warm_only_initial_measurement_forbidden')
-            container, cgroup, _ = self.identity(args['id']) if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE} else (None, None, None)
-            if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE}:
+            container, cgroup, _ = self.identity(args['id']) if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE} else (None, None, None)
+            if self.scope in {CONCURRENT_SCOPE, CANDIDATE_SCOPE, CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
                 require(args['id'] in self.allocation_proofs, 'concurrent_current_allocation_required')
                 self.concurrent_limits(self.load_manifests[args['id']], container, cgroup)
                 sample = self.telemetry(args['id'])
-                if self.scope == POSTRESTART_SCOPE and sample['concurrent_resource_gate']['status'] == 'UNAVAILABLE':
+                if self.scope in {POSTRESTART_SCOPE, DUALQ_SCOPE} and sample['concurrent_resource_gate']['status'] == 'UNAVAILABLE':
                     return {'proof_pending': True, 'admitted': False,
                             'resource_gate': sample['concurrent_resource_gate'], 'sample': sample}
                 require(sample['concurrent_resource_gate']['status'] == 'PASS', 'concurrent_current_resource_gate_failed')
+                if self.scope == DUALQ_SCOPE:
+                    from .cpu_budget_host import qwen_native_proof
+                    manifest = self.load_manifests[args['id']]
+                    actual_uuids = self.cuda_mapping(args['id'], manifest, container)
+                    require(actual_uuids == manifest['gpu_uuids'],
+                            'dualq_current_GPU_UUID_unproved')
+                    native = qwen_native_proof(http_json(manifest['transport']['port'], '/get_server_info'), scope=DUALQ_SCOPE)
+                    self.auth_probe(manifest['transport']['port'])
+                    self.write_json('admission-' + dualq_identity['request_id'] + '-' + dualq_identity['purpose'] + '.json',
+                                    {'identity': dualq_identity, 'native_capacity': native, 'sample': sample,
+                                     'production_profile': manifest['production_profile'],
+                                     'actual_GPU_UUIDs': actual_uuids, 'inference_family': 'qwen'})
             else:
                 self.identity(args['id'])
-            if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE}:
+            if self.scope in {CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE}:
                 from .cpu_budget_host import resident_obligations
                 resident_obligations(self)
             if self.scope == CANDIDATE_SCOPE:
@@ -2458,13 +2635,16 @@ class LinuxHost:
                 require(args['id'] not in self.followup_admitted and len(self.followup_admitted) < 2,
                         'postrestart_followup_only_remaining_pair')
             timeout = self.budget.request_timeout(args.get('timeout_s', 7200),
-                **({'measured': args.get('measured', False)} if self.scope == POSTRESTART_SCOPE else {}))
+                **({'measured': args.get('measured', False)} if self.scope in {POSTRESTART_SCOPE, DUALQ_SCOPE} else {}))
             require(args['id'] not in self.requests, 'request_already_active')
             if self.scope == POSTRESTART_SCOPE and (self.owner.warm_hold_resumed or self.followup_request is not None) and args.get('measured') is True:
                 self.followup_admitted.add(args['id'])
             if self.scope == POSTRESTART_SCOPE and not self.is_sealed_batch() and args.get('measured') is True and not self.owner.warm_hold_resumed and self.followup_request is None:
                 self.postrestart_measured_admissions[placement] += 1
             self.requests[args['id']] = {'started_at': time.time(), 'timeout_s': timeout}
+            if dualq_identity is not None:
+                self.requests[args['id']]['request_identity'] = dualq_identity
+                self.dualq_registered(dualq_identity)
             if batch_identity is not None:
                 self.requests[args['id']].update(request_identity=batch_identity, started_monotonic_s=time.monotonic())
                 self.batch_registered(batch_identity)
@@ -2472,6 +2652,8 @@ class LinuxHost:
             return {'timeout_s': timeout, 'budget': self.budget.data}
         if op == 'request_end':
             require(args['id'] in self.requests, 'request_not_active')
+            if self.scope == DUALQ_SCOPE:
+                return self.dualq_request_end(args)
             if self.is_sealed_batch():
                 return self.batch_request_end(args)
             if self.scope == 'glm-decode-diag':
@@ -2604,7 +2786,7 @@ RPC_OPERATIONS = frozenset({'begin', 'load', 'retire', 'readiness', 'telemetry',
     'quiescent', 'diagnostic_snapshot', 'decode_progress', 'decode_cpu_capture_start', 'decode_cpu_capture_status',
     'candidate_denials', 'candidate_evidence', 'request_begin', 'request_end', 'admit_mixed', 'admit_concurrent', 'rpc_diagnostics', 'restore', 'recover',
     'finalize', 'verify_restoration', 'budget', 'status', 'harness_failure', 'warm_hold', 'resume_measurements', 'hold_checkpoint', 'admit_followup',
-    'seal_batch', 'batch_case_begin', 'batch_timeout_drain'})
+    'seal_batch', 'batch_case_begin', 'batch_timeout_drain', 'seal_dualq'})
 RPC_SAFE_REQUIRE_CODES = frozenset({'native_server_args_unavailable',
     'allocation_log_too_large', 'current_model_mount_changed',
     'owned_container_identity_changed', 'installed_source_identity_changed',

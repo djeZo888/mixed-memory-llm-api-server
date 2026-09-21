@@ -53,7 +53,7 @@ def source_files(scope=None):
     paths.add(profiles.ROOT / "configs/benchmarks/glmrepair-g2-20260919.json")
     paths.add(profiles.ROOT / "configs/benchmarks/glmrepair-g1-20260919.json")
     paths.update(profiles.ROOT / name for name in profiles.read_config()["source_pins"])
-    if scope == "candidate-pair-validation":
+    if scope in {"candidate-pair-validation", profiles.DUALQ_SCOPE}:
         cp, qwen = profiles.candidate_modules()
         paths.update(profiles.ROOT / name for name in cp.source_identity())
         paths.update(profiles.ROOT / name for name in qwen.PROFILE_HASHES)
@@ -61,6 +61,9 @@ def source_files(scope=None):
         paths.update((profiles.ROOT / "scripts/lifecycle").glob("*.py"))
         paths.update(p for p in (profiles.ROOT / "tests/lifecycle/sglang38_fixture").iterdir()
                      if p.is_file() and p.suffix in {".py", ".json", ".jinja"})
+    if scope == profiles.DUALQ_SCOPE:
+        paths.update(profiles.ROOT / name for name in (
+            "scripts/bench/run-gpu-split.py", "scripts/bench/prepare-gpu-split.py"))
     return {str(p.relative_to(profiles.ROOT)): p.read_bytes() for p in sorted(paths)}
 
 
@@ -96,7 +99,7 @@ def load_arm(state, reviewed):
 
 def run_preflight(scope="full"):
     """Offline source-evidence gate, before key reads, staging or ownership."""
-    if scope in ("q1-only", "q1-256k"):
+    if scope in ("q1-only", "q1-256k", profiles.DUALQ_SCOPE):
         return
     expected = profiles.read_config().get("glm_offload_expectation", {})
     if (expected.get("evidence_status") != "REVIEWED_LOG_COUNT_SEMANTICS"
@@ -165,14 +168,14 @@ class SSHHost:
         argv = ["ssh", "-T", "-o", "BatchMode=yes", "-o", "ExitOnForwardFailure=yes",
                 "-L", f"127.0.0.1:31002:127.0.0.1:{target_ports[0]}", "-L", f"127.0.0.1:31004:127.0.0.1:{target_ports[1]}",
                 "ai-vm", shlex.join(self.command)]
-        if armed.get("scope") == "postrestart72-480k":
+        if armed.get("scope") in {"postrestart72-480k", profiles.DUALQ_SCOPE}:
             argv[1:1] = ["-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=3"]
         self.rpc_unavailable = False
         self.process = popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
 
     def call(self, op, **args):
         with self.lock:
-            if self.armed.get("scope") == "postrestart72-480k":
+            if self.armed.get("scope") in {"postrestart72-480k", profiles.DUALQ_SCOPE}:
                 if self.rpc_unavailable:
                     raise RuntimeError("postrestart_RPC_unavailable_explicit_recovery_required")
                 # Read the entire line in a daemon: select/readline alone can
@@ -200,10 +203,10 @@ class SSHHost:
                 self.process.stdin.flush()
                 line = self.process.stdout.readline()
             if not line:
-                if self.armed.get("scope") == "postrestart72-480k":
+                if self.armed.get("scope") in {"postrestart72-480k", profiles.DUALQ_SCOPE}:
                     self.rpc_unavailable = True
                 raise RuntimeError("host_session_lost_explicit_recovery_required")
-            if self.armed.get("scope") == "postrestart72-480k":
+            if self.armed.get("scope") in {"postrestart72-480k", profiles.DUALQ_SCOPE}:
                 try:
                     result = json.loads(line)
                     if not line.endswith("\n") or not isinstance(result, dict):
@@ -279,15 +282,15 @@ class Campaign:
                     # A known timed-out GPU query during loading is an observation
                     # gap, not measured low reserve. Keep the raw sample; require
                     # fresh complete resource proof before warmup below.
-                    loading_gpu_timeout = (self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}
+                    loading_gpu_timeout = (self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", profiles.DUALQ_SCOPE}
                         and self.active[cid].get("phase") == "loading"
                         and row.get("errors") == ["gpu_TimeoutExpired"] and row.get("gpus") == [])
-                    if self.armed.get("scope") in {"concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
+                    if self.armed.get("scope") in {"concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", profiles.DUALQ_SCOPE}:
                         gate = row.get("concurrent_resource_gate", {})
                         gpu_gap_reasons = (["candidate_qwen_ten_percent_unavailable", "concurrent_gpu_free_unavailable"]
                             if self.armed.get("scope") == "candidate-pair-validation" else
                             ["concurrent_gpu_free_unavailable", "cpu_qwen_ten_percent_unavailable"]
-                            if self.armed.get("scope") in {"concurrent-480k-cpu", "postrestart72-480k"} and any(
+                            if self.armed.get("scope") in {"concurrent-480k-cpu", "postrestart72-480k", profiles.DUALQ_SCOPE} and any(
                                 m.get("placement") == "Q1" for m in [entry["manifest"] for entry in self.active.values()])
                             else ["concurrent_gpu_free_unavailable"])
                         loading_gpu_gap = (loading_gpu_timeout and gate.get("status") == "UNAVAILABLE"
@@ -299,13 +302,13 @@ class Campaign:
                             verdict = resource_stop = "STOP_RESOURCE_GATE"
                         elif gate.get("status") != "PASS" and not loading_gpu_gap:
                             verdict = "SKIP_UNSAFE_PLACEMENT"
-                    if self.armed.get("scope") != "postrestart72-480k" and not loading_gpu_timeout and not set(self.active[cid]["manifest"]["gpu_uuids"]).issubset({g.get("uuid") for g in row.get("gpus", [])}):
+                    if self.armed.get("scope") not in {"postrestart72-480k", profiles.DUALQ_SCOPE} and not loading_gpu_timeout and not set(self.active[cid]["manifest"]["gpu_uuids"]).issubset({g.get("uuid") for g in row.get("gpus", [])}):
                         verdict = "SKIP_UNSAFE_PLACEMENT"
-                    if self.armed.get("scope") != "postrestart72-480k" and any(g.get("uuid") in self.active[cid]["manifest"]["gpu_uuids"] and (g.get("free_bytes") is None or g["free_bytes"] < 16 * 1024**3) for g in row.get("gpus", [])):
+                    if self.armed.get("scope") not in {"postrestart72-480k", profiles.DUALQ_SCOPE} and any(g.get("uuid") in self.active[cid]["manifest"]["gpu_uuids"] and (g.get("free_bytes") is None or g["free_bytes"] < 16 * 1024**3) for g in row.get("gpus", [])):
                         verdict = "SKIP_UNSAFE_PLACEMENT"
-                    if self.armed.get("scope") != "postrestart72-480k" and (row.get("host", {}).get("available_bytes") is None or row["host"]["available_bytes"] < 16 * 1024**3):
+                    if self.armed.get("scope") not in {"postrestart72-480k", profiles.DUALQ_SCOPE} and (row.get("host", {}).get("available_bytes") is None or row["host"]["available_bytes"] < 16 * 1024**3):
                         verdict = "SKIP_UNSAFE_PLACEMENT"
-                    if self.armed.get("scope") == "postrestart72-480k":
+                    if self.armed.get("scope") in {"postrestart72-480k", profiles.DUALQ_SCOPE}:
                         # One host row covers the whole currently loaded pair.
                         # New full proof replaces only the current gap, never a
                         # fault, abort/cancel state or the append-only samples.
@@ -321,11 +324,11 @@ class Campaign:
                                 "unavailable_reasons": gate.get("unavailable_reasons", [])}
                             verdict = "CURRENT_PROOF_PASS" if complete else "UNAVAILABLE"
                     if verdict.startswith(("STOP_", "SKIP_")):
-                        if self.armed.get("scope") == "postrestart72-480k":
+                        if self.armed.get("scope") in {"postrestart72-480k", profiles.DUALQ_SCOPE}:
                             self.safety.setdefault(cid, verdict)
                         else:
                             self.safety[cid] = verdict
-                    if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
+                    if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", profiles.DUALQ_SCOPE}:
                         # Cancel only proven resource violations, never missing
                         # telemetry or a reporting/parser failure. Existing stop
                         # paths run after the transport closes and saves raw data.
@@ -346,7 +349,7 @@ class Campaign:
                 self.emit({"type": "telemetry", "container": cid, "sample": row})
             except Exception:
                 with self.lock:
-                    if self.armed.get("scope") == "postrestart72-480k":
+                    if self.armed.get("scope") in {"postrestart72-480k", profiles.DUALQ_SCOPE}:
                         self.safety.setdefault(cid, "HARNESS_FAILURE")
                     else:
                         self.safety[cid] = "HARNESS_FAILURE"
@@ -378,14 +381,14 @@ class Campaign:
         self.record()
         while True:
             with self.lock:
-                if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"} and self.active[cid].get("abort_reason"):
+                if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", profiles.DUALQ_SCOPE} and self.active[cid].get("abort_reason"):
                     raise RuntimeError(self.active[cid]["abort_reason"])
             remaining = min(deadline - self.clock(), self.host.call("budget").get("remaining_s", 0))
             if remaining <= 0:
                 raise RuntimeError("STOP_BUDGET")
             proof = self.host.call("readiness", id=cid, timeout_s=remaining)
             with self.lock:
-                if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"} and self.active[cid].get("abort_reason"):
+                if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", profiles.DUALQ_SCOPE} and self.active[cid].get("abort_reason"):
                     raise RuntimeError(self.active[cid]["abort_reason"])
             if self.clock() >= deadline:
                 raise RuntimeError("STOP_BUDGET")
@@ -399,7 +402,7 @@ class Campaign:
         if proof.get("allocation", {}).get("status") != "ALLOCATION_PROOF_ACCEPTED":
             raise RuntimeError("STOP_ALLOCATION_PROOF")
         ready = self.host.call("quiescent", id=cid, point="readiness")
-        if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
+        if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", profiles.DUALQ_SCOPE}:
             current = ready.get("telemetry") or {}
             available = current.get("host", {}).get("available_bytes")
             free = {g.get("uuid"): g.get("free_bytes") for g in current.get("gpus", [])}
@@ -450,7 +453,7 @@ class Campaign:
         manifest = self.active[cid]["manifest"]
         url = "http://127.0.0.1:" + str(manifest["transport"]["port"])
         try:
-            options = {"cancel_event": self.active[cid]["cancel_event"]} if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"} else {}
+            options = {"cancel_event": self.active[cid]["cancel_event"]} if self.armed.get("scope") in {"g1-only", "glmrepair", "g1-ladder", "glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", profiles.DUALQ_SCOPE} else {}
             result = client.run_request(raw, self.transport_factory(url, self.key, **options), sample_id=identifier,
                                       private_dir=self.private, summary_path=self.state / ("samples.jsonl" if timed else "warmups.jsonl"), timeout=timeout,
                                       clock=self.clock)
@@ -476,7 +479,7 @@ class Campaign:
             finally:
                 self.host.call("request_end", id=cid)
         return accounting.native_counter(model, manifest["configured_capacity"], call,
-                                         qwen_template_sha256=self.active[cid]["template_sha256"], scope=self.armed.get("scope") if self.armed.get("scope") in {"glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"} else None)
+                                         qwen_template_sha256=self.active[cid]["template_sha256"], scope=self.armed.get("scope") if self.armed.get("scope") in {"glm-decode-diag", "concurrent-g1q1", "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", profiles.DUALQ_SCOPE} else None)
 
     def prepare_trial(self, cid, identifier, kind="retrieval", output_cap=256, fixture_key=None):
         """Count/freeze exact bytes separately, before mixed arrival clocks start."""
@@ -728,7 +731,29 @@ def main(argv=None):
     parser.add_argument("--inference-key-file", type=Path)
     parser.add_argument("--control-key-file", type=Path)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--session-id", help="dual-Q fresh native PREP or RUN session identity")
+    parser.add_argument("--go", type=Path, help="dual-Q root source/arm/release GO receipt")
     args = parser.parse_args(argv)
+    if args.scope == profiles.DUALQ_SCOPE or (args.action != "arm" and (args.state / "arm.json").is_file()
+            and json.loads((args.state / "arm.json").read_bytes()).get("scope") == profiles.DUALQ_SCOPE):
+        from . import dualq_run
+        if args.resume or args.inference_key_file or args.control_key_file:
+            parser.error("dual-Q uses a fresh closed owner and existing protected credential location")
+        if args.action == "status":
+            print((args.state / "progress.json").read_text()); return 0
+        if not args.session_id:
+            parser.error("dual-Q requires --session-id")
+        if args.action == "arm":
+            if args.campaign not in {"benchrun-20260919", dualq_run.contract.CAMPAIGN}:
+                parser.error("dual-Q campaign is fixed")
+            value = dualq_run.prepare(args.state, args.session_id)
+            print(json.dumps({"arm_sha256": fixtures.digest((args.state / "arm.json").read_bytes()),
+                              "campaign": value["campaign"], "run_started": False})); return 0
+        if args.scope is not None or args.go is None:
+            parser.error("dual-Q RUN uses the reviewed arm and requires --go")
+        return dualq_run.run(args.state, args.go, args.session_id, restore_only=args.action == "restore")
+    if args.session_id or args.go:
+        parser.error("--session-id and --go are dual-Q only")
     if args.action == "arm":
         print(json.dumps({"arm_sha256": arm(args.state, args.campaign, args.scope or "full"), "run_started": False}));return 0
     if args.scope is not None:

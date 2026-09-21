@@ -15,7 +15,7 @@ def flag(args, name):
     return args[args.index(name) + 1]
 
 
-def count(raw, tokens=479487):
+def count(raw, tokens=479423):
     # Synthetic value in an injected callback, not a claimed native observation.
     return {"source": "native_chat_tokenize", "body_sha256": fixtures.digest(raw),
             "configured_context": 480000, "input_tokens": tokens,
@@ -24,7 +24,7 @@ def count(raw, tokens=479487):
 
 class DualQContract(unittest.TestCase):
     def jobs(self):
-        return [dual.prepare_job(slot, "fresh-offline-" + slot, count) for slot in dual.SLOTS]
+        return [dual.prepare_job(slot, dual.PREFIXES[slot], count) for slot in dual.SLOTS]
 
     def test_closed_manifests_distinguish_gpu_port_alias_and_writes(self):
         q0, q1 = [dual.manifest(slot) for slot in dual.SLOTS]
@@ -48,7 +48,7 @@ class DualQContract(unittest.TestCase):
         self.assertEqual(q0["registered_paths"]["source"], q1["registered_paths"]["source"])
         self.assertEqual(q0["model"], q1["model"])
         self.assertEqual(q0["image"], q1["image"])
-        self.assertNotIn(dual.SCOPE, profiles.ARM_SCOPES)
+        self.assertIn(dual.SCOPE, profiles.ARM_SCOPES)
         for bad in ("G1", "Q2", "qwen", None):
             with self.assertRaises(ValueError): dual.manifest(bad)
 
@@ -75,10 +75,10 @@ class DualQContract(unittest.TestCase):
         self.assertEqual(jobs[0]["sample"]["fixture_sha256"], jobs[1]["sample"]["fixture_sha256"])
         for job in jobs:
             self.assertEqual(job["sample"]["body"]["max_tokens"], 512)
-            self.assertEqual(job["count"]["input_tokens"] + 512, 479999)
+            self.assertEqual(job["count"]["input_tokens"] + 512, 479935)
         for tokens in (479488, 480000, 479359):
             with self.assertRaisesRegex(ValueError, "no_refit"):
-                dual.prepare_job("Q0", "fresh-offline-Q0", lambda raw: count(raw, tokens))
+                dual.prepare_job("Q0", dual.PREFIXES["Q0"], lambda raw: count(raw, tokens))
         with self.assertRaises(ValueError): dual.prepare_job("Q0", "old-prefix", count)
 
     def test_counter_preserves_alias_template_and_exact_body_binding(self):

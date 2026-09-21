@@ -12,6 +12,7 @@ import copy
 from typing import Callable
 
 from common.lifecycle_lease import LifecycleLease, acquire_lease
+from .profiles import DUALQ_SCOPE
 from .lifecycle import (BOOT_UNIT, CONTROL_UNIT, PlanError, cleanup_commands, digest,
                         plan_campaign, require, require_singleton_manager_state,
                         validate_restored, validate_snapshot)
@@ -82,7 +83,7 @@ class CampaignOwner:
                  reviewed_manifest_hashes, lease_factory=acquire_lease,
                  synthetic_offline=False, scope=None):
         require(type(synthetic_offline) is bool, "invalid_offline_mode")
-        require(scope in {None, "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}, "invalid_owner_scope")
+        require(scope in {None, "candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", DUALQ_SCOPE}, "invalid_owner_scope")
         self.scope = scope
         self.campaign, self.manager, self.host, self.budget = campaign, manager, host, budget
         self.reviewed = frozenset(reviewed_manifest_hashes)
@@ -116,7 +117,7 @@ class CampaignOwner:
                 "evidence_kind": "synthetic_offline" if self.synthetic else "live",
                 "original": copy.deepcopy(self.original), "resources": copy.deepcopy(self.resources),
                 "pending_create": copy.deepcopy(self.pending_create), "errors": list(self.errors)}
-        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
+        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", DUALQ_SCOPE}:
             ledger.update(validation_scope=self.scope, production_touched=self.production_touched,
                           control_touched=self.control_touched)
         if self.scope == "postrestart72-480k":
@@ -138,7 +139,7 @@ class CampaignOwner:
             self.errors.append("evidence_write_failed")
 
     def _mutate(self, stage, function):
-        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
+        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", DUALQ_SCOPE}:
             require(self.pending_create is None, "unresolved_create_blocks_mutation")
         self._gate(stage)
         self._guard()
@@ -159,6 +160,11 @@ class CampaignOwner:
             self.original = validate_snapshot(before, for_run=not self.synthetic)
             require(before["lease"]["held"] and before["lease"]["owned_by_campaign"], "owner_snapshot_required")
             require((before["evidence_kind"] == "synthetic_offline") == self.synthetic, "evidence_mode_mismatch")
+            if self.scope == DUALQ_SCOPE:
+                state = self.original["manager"]
+                require(state["desired"] == "stopped" and state["observed"] == "stopped"
+                        and state["boot_policy"] == "manual" and state["container_running"] is False,
+                        "dualq_fresh_stopped_manual_required")
             plan_campaign(self.original, self.campaign)  # same validated plan as review
             self._gate("admission")
             self.phase = "SNAPSHOTTED"
@@ -169,8 +175,9 @@ class CampaignOwner:
                 self.control_touched = True
                 self._mutate("freeze_control", lambda: self.host.control("stop"))
             self._gate("control_frozen")
-            self.production_touched = True
-            self._mutate("production_stop", lambda: self.manager.dispatch("boot-stop", lease=self.lease))
+            if self.scope != DUALQ_SCOPE:
+                self.production_touched = True
+                self._mutate("production_stop", lambda: self.manager.dispatch("boot-stop", lease=self.lease))
             self._gate("production_stopped")
             self.phase = "ACTIVE"
             self._save()
@@ -251,14 +258,14 @@ class CampaignOwner:
             self._gate("launch")
             self.pending_create = {"manifest_sha256": digest(manifest), "name": manifest["container_name"],
                                    "image": manifest["image"], "campaign": self.campaign}
-            if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
+            if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", DUALQ_SCOPE}:
                 # The host marks uncertainty at the actual Docker dispatch seam,
                 # after admission, source/image and registered-path checks.
                 self.pending_create.update(dispatch="not_dispatched", kind="model")
             self._save()  # interrupted create remains recoverable by exact planned identity
             self._guard()
             created = self.host.create(copy.deepcopy(manifest))
-            if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
+            if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", DUALQ_SCOPE}:
                 require(self.pending_create["dispatch"] == "uncertain", "candidate_create_dispatch_unrecorded")
             resource = self._resource(created, manifest)
             require(created["running"] is False, "create_must_not_start")
@@ -279,7 +286,7 @@ class CampaignOwner:
 
     def mark_create_dispatched(self):
         """Candidate-only durable boundary immediately before the Docker call."""
-        require(self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"} and self.pending_create is not None and
+        require(self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", DUALQ_SCOPE} and self.pending_create is not None and
                 self.pending_create.get("dispatch") == "not_dispatched", "candidate_create_not_planned")
         self.pending_create["dispatch"] = "uncertain"
         try:
@@ -295,7 +302,7 @@ class CampaignOwner:
             raise
 
     def _settle_undispatched(self):
-        if (self.scope not in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"} or self.pending_create is None or
+        if (self.scope not in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", DUALQ_SCOPE} or self.pending_create is None or
                 self.pending_create.get("dispatch") != "not_dispatched"):
             return
         pending, self.pending_create = self.pending_create, None
@@ -306,7 +313,7 @@ class CampaignOwner:
             self.errors.append("undispatched_settlement_write_failed")
 
     def _retire_row(self, row):
-        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"}:
+        if self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", DUALQ_SCOPE}:
             require(self.pending_create is None, "unresolved_create_blocks_cleanup")
         resource = row["resource"]
         if row["state"] == "REMOVED":
@@ -343,7 +350,7 @@ class CampaignOwner:
         if self.lease is None:
             self.phase = "FAILED_BEFORE_OWNERSHIP"
             return
-        candidate_work = self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k"} and (self.pending_create is not None or
+        candidate_work = self.scope in {"candidate-pair-validation", "concurrent-480k-cpu", "postrestart72-480k", DUALQ_SCOPE} and (self.pending_create is not None or
                          any(row["state"] != "REMOVED" for row in self.resources))
         if self.original is None or not (self.production_touched or self.control_touched or candidate_work):
             self._release()

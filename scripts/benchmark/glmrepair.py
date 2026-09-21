@@ -271,7 +271,15 @@ class DiagnosticSSHHost(runner.SSHHost):
             if pending and op == "request_begin":
                 # No HTTP request has been dispatched; undo successful admission
                 # before propagating cancellation into the restoration finally.
-                super().call("request_end", id=args["id"])
+                if getattr(self, "armed", {}).get("scope") == profiles.DUALQ_SCOPE:
+                    # Dual-Q retains an interrupted registration until canonical
+                    # stop; a pending proof never registered a request at all.
+                    if result.get("timeout_s", 0) > 0:
+                        super().call("request_end", id=args["id"],
+                                     request_identity=args["request_identity"],
+                                     terminal_reason="NOT_DISPATCHED")
+                else:
+                    super().call("request_end", id=args["id"])
         finally:
             for sig, handler in previous.items():
                 signal.signal(sig, handler)

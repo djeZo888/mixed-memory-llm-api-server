@@ -14,6 +14,7 @@ import re
 import time
 
 from . import decode_telemetry as primitive
+from .qwen_launcher import DUALQ_SCOPE
 from .cpu_budget_profiles import CPU_SCOPE, POSTRESTART_SCOPE
 from .lifecycle import require
 
@@ -409,9 +410,9 @@ def summarize_measurement(samples, sample_summary, *, scope=CPU_SCOPE):
 
 
 def _required_vcpus(scope):
-    if scope not in (CPU_SCOPE, POSTRESTART_SCOPE):
+    if scope not in (CPU_SCOPE, POSTRESTART_SCOPE, DUALQ_SCOPE):
         raise ValueError('closed_cpu_evidence_scope_required')
-    return 72 if scope == POSTRESTART_SCOPE else 112
+    return 72 if scope in (POSTRESTART_SCOPE, DUALQ_SCOPE) else 112
 
 
 def _counter_evidence(phases, *, scope=CPU_SCOPE):
