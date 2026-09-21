@@ -1,7 +1,7 @@
 # ai-vm API operations
 
 **Production activation acceptance is PENDING.** These instructions describe
-reviewed source `b0bd3c2eab52d8464eca5d360335f41b883671a0`. ACTIVATE owns all VM
+reviewed source `04143b18cca7aca724d9a4a4bcf943fe86c040db`. ACTIVATE owns all VM
 work. Installation and schema 3 migration do not establish serving, switching,
 service replay or independent client acceptance; the actual final receipt is
 still required. Examples below were not executed in this documentation task.
@@ -107,9 +107,20 @@ conflict. Missing/wrong credentials return 401; unavailable trusted state may
 return 503. Preserve failed operation/recovery evidence. See the full
 [control contract](control-api.md).
 
-Control HTTP lifetime is 30 s; use a longer client timeout. Loading is
-asynchronous with an 8,000 s default operation deadline. Switch cost is a cold
-model load with unmeasured duration (`seconds:null`), not a promised latency.
+Production control read and admission budgets are 60 s each; generic
+Application defaults remain 10 s, with configured values capped at 60 s.
+The absolute HTTP lifetime is 130 s; use a bounded 140 s control client timeout.
+A normal status/catalog read can spend 60 s refreshing under the lease, then
+60 s on fresh observation/catalog. Storage-loss recovery may need another
+60 s and can exceed the 130 s transport deadline; a 140 s client timeout does
+not guarantee that failure path completes. Expired application calls retain
+worker/lease ownership until return. Filesystem/loader work is cooperative,
+not forcibly preemptible; late admission cannot mutate after ticket expiry.
+A disconnect does not cancel an acknowledged transition: retain and poll its
+operation. Connection, header, body and authentication limits are unchanged.
+Loading remains asynchronous with an 8,000 s default operation deadline.
+Switch cost is a cold model load with unmeasured duration (`seconds:null`),
+not a promised latency. See [transport and recovery limits](control-api.md).
 
 ## Protected-file examples
 
@@ -136,7 +147,7 @@ def api(port, path, key_name, body=None, idempotency_key=None):
         headers["Content-Type"] = "application/json"
     if idempotency_key is not None:
         headers["Idempotency-Key"] = idempotency_key
-    conn = http.client.HTTPConnection("10.156.100.60", port, timeout=60)
+    conn = http.client.HTTPConnection("10.156.100.60", port, timeout=140)
     try:
         conn.request("GET" if body is None else "POST", path,
                      body=None if body is None else json.dumps(body), headers=headers)

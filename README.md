@@ -1,7 +1,7 @@
 # mixed-memory-llm-api-server
 
 An API-only local AI server for **Qwen3.8-27B FP8** and **GLM5.3 UD-Q4_K_XL**.
-Reviewed source `b0bd3c2eab52d8464eca5d360335f41b883671a0` defines **dual-qwen**
+Reviewed source `04143b18cca7aca724d9a4a4bcf943fe86c040db` defines **dual-qwen**
 as the default: one Qwen instance per GPU. Optional **glm-qwen** replaces only
 GPU0 with GLM; returning to dual-qwen replaces GPU0 with Qwen again.
 

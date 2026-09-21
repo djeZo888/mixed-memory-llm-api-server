@@ -1,7 +1,7 @@
 # ai-vm operations
 
 **Dual-Q production activation acceptance is PENDING.** This is the operating
-contract for reviewed source `b0bd3c2eab52d8464eca5d360335f41b883671a0`.
+contract for reviewed source `04143b18cca7aca724d9a4a4bcf943fe86c040db`.
 ACTIVATE remains the sole VM writer. Its final receipt must establish actual
 endpoint behavior, mode transitions, durable ownership and the precise boot
 verification performed. Source installation/schema 3 migration is not that receipt.

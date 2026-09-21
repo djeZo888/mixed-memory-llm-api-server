@@ -1,7 +1,7 @@
 # Inference API contract
 
 **Dual-Q production activation acceptance is PENDING.** This describes reviewed
-source `b0bd3c2eab52d8464eca5d360335f41b883671a0`; actual serving and client
+source `04143b18cca7aca724d9a4a4bcf943fe86c040db`; actual serving and client
 acceptance require the separate ACTIVATE final receipt.
 
 Default `dual-qwen` serves two Qwen instances. Optional `glm-qwen` replaces

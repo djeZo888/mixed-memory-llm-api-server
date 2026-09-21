@@ -1,7 +1,7 @@
 # Dual Qwen production slots — 2026-09-21 source candidate
 
 **Production activation acceptance is PENDING.** Reviewed source
-`b0bd3c2eab52d8464eca5d360335f41b883671a0` defines default `dual-qwen` and
+`04143b18cca7aca724d9a4a4bcf943fe86c040db` defines default `dual-qwen` and
 optional `glm-qwen`, replacing only GPU0. Root reviewed the
 [one-pair benchmark](../reports/dualq-480k-20260921.md); its canonical
 STOPPED/manual restoration is historical benchmark state. ACTIVATE separately

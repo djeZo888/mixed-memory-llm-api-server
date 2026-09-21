@@ -1,7 +1,7 @@
 # Current model and deployment matrix
 
 **Production activation acceptance is PENDING.** This matrix records reviewed
-source `b0bd3c2eab52d8464eca5d360335f41b883671a0` and saved benchmark evidence.
+source `04143b18cca7aca724d9a4a4bcf943fe86c040db` and saved benchmark evidence.
 It does not certify currently running containers, private endpoints or reboot.
 There are two model identities and three permitted deployment instances.
 
