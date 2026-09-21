@@ -1,9 +1,11 @@
 # Current model and deployment matrix
 
-**Production activation acceptance is PENDING.** This matrix records reviewed
-source `04143b18cca7aca724d9a4a4bcf943fe86c040db` and saved benchmark evidence.
-It does not certify currently running containers, private endpoints or reboot.
-There are two model identities and three permitted deployment instances.
+**Live production acceptance PASS — 2026-09-21, 03:21 UTC**, source
+`04143b18cca7aca724d9a4a4bcf943fe86c040db`. The [dated proof](../reports/dualq-480k-20260921.md#dated-production-acceptance--2026-09-21)
+records both Qwen instances warm/ready, running/resume, native 480,000 each,
+72 guest CPUs and shared 0–7 masks. There are two model identities and three
+reviewed pair deployment choices; catalog retains two historical native1M/TP2
+entries. Hardware boot, cold-boot replay and live full rollback remain NOT_TESTED.
 
 | Model / placement | Deployment ID = public `instance_id` | API target | Alias / port | Guest CPUs / RAM cap |
 | --- | --- | --- | --- | --- |
@@ -41,6 +43,9 @@ The [dual-Q report](../reports/dualq-480k-20260921.md) covers one measured pair,
 512-token output caps, separate actual outputs, sampled resources and no
 output-window overlap. [REAL72 B3](../reports/postrestart72-three-case-followup-20260920.md)
 is historical comparison evidence. Neither proves a general throughput limit.
+The later production GLM native 480K proof and one correct `42`/`stop` smoke
+(6.799028 s) are allocation/function evidence, not a new occupied-context
+benchmark. Q0 schema and Q1 real tool/result continuation also passed.
 
 Qwen admission requires native pool 480,000 and input limit 479,994. Optional
 native request limit must be 479,999 when present; absence remains unknown,

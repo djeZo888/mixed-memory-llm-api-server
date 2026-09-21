@@ -1,10 +1,11 @@
 # ai-vm operations
 
-**Dual-Q production activation acceptance is PENDING.** This is the operating
-contract for reviewed source `04143b18cca7aca724d9a4a4bcf943fe86c040db`.
-ACTIVATE remains the sole VM writer. Its final receipt must establish actual
-endpoint behavior, mode transitions, durable ownership and the precise boot
-verification performed. Source installation/schema 3 migration is not that receipt.
+**Live production acceptance PASS — 2026-09-21, 03:21 UTC**, installed source
+`04143b18cca7aca724d9a4a4bcf943fe86c040db`. The [saved receipt summary](../reports/dualq-480k-20260921.md#dated-production-acceptance--2026-09-21)
+records dual Qwen warm/ready, native 480,000 each and persisted running/resume
+intent on the 72-vCPU guest. Private API, GPU0 mode switching, preserved Q1,
+control restart and warm replay passed. This is a dated snapshot, not a new
+live observation by CLOSE.
 
 ## Modes and normal control
 
@@ -33,9 +34,11 @@ restart stays `no`; operators must not use it as a second boot owner.
 Canonical boot-start replays only selected slots with desired running and
 `boot_policy:"resume"`, GPU1 (`qwen`) first, then GPU0 (`glm`). Boot-stop
 preserves desired intent. Explicit API stop persists stopped intent; switching
-preserves the target's saved boot policy. Source profile default `manual` does
-not establish installed resume intent. Final ACTIVATE proof must record actual
-saved policies and service replay; distinguish replay from a physical reboot.
+preserves the target's saved boot policy. Final evidence records both installed
+policies as `resume`, all five units enabled/active, and control restart plus
+idempotent replay on the already-ready pair without container identity changes.
+Activation SSH exited before fresh clients received correct Q0/Q1 answers.
+**Hardware boot, cold-boot replay and live full rollback remain NOT_TESTED.**
 
 ## Storage and recovery
 
@@ -59,6 +62,15 @@ unrelated cleanup or benchmark-container adoption is allowed. Preserve the D1
 rollback runtime/image and recovery evidence.
 
 ## Evidence boundary
+
+GPU0 switch operations took 255.585590 s to GLM / 120.568066 s back to Qwen,
+excluding pre-admission/status overhead. Final status/catalog latency was
+20.994856 / 25.000605 s; these administrative reads inform polling cadence.
+The 60/60 s production budgets, generic 10 s defaults, HTTP 130 s and client
+140 s bounds remain as documented in the [API guide](ai-vm-api-operations.md).
+Routine exact stopped-container and writable-directory corrections plus the
+reviewed control-budget fix are retained in the activation receipt. No further
+VM changes or retests were needed for this closeout.
 
 The [dual-Q benchmark](../reports/dualq-480k-20260921.md) restored its captured
 STOPPED/manual state; this does not describe current production. Its singleton

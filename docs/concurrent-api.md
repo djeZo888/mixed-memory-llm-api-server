@@ -1,13 +1,12 @@
-# Dual Qwen production slots — 2026-09-21 source candidate
+# Dual Qwen production slots — 2026-09-21 live acceptance
 
-**Production activation acceptance is PENDING.** Reviewed source
-`04143b18cca7aca724d9a4a4bcf943fe86c040db` defines default `dual-qwen` and
-optional `glm-qwen`, replacing only GPU0. Root reviewed the
-[one-pair benchmark](../reports/dualq-480k-20260921.md); its canonical
-STOPPED/manual restoration is historical benchmark state. ACTIVATE separately
-owns all VM work. Installation and schema 3 migration do not establish live
-API, switching, durable service replay or physical reboot acceptance; the
-actual final receipt remains required. This CLOSE update is source-only.
+**Live production acceptance PASS — 2026-09-21, 03:21 UTC**, installed source
+`04143b18cca7aca724d9a4a4bcf943fe86c040db`, default `dual-qwen` and optional
+`glm-qwen` replacing only GPU0. The [dated proof](../reports/dualq-480k-20260921.md#dated-production-acceptance--2026-09-21)
+records both Qwen instances warm/ready with running/resume intent after the
+completed mode-switch sequence. Benchmark STOPPED/manual restoration remains
+historical. Hardware boot, cold-boot replay and live full rollback remain
+NOT_TESTED. CLOSE consumed saved files only, without VM work or retesting.
 Installer, frontend and future ai-harness implementation remain out of scope.
 
 ## Fixed placements and discovery
@@ -28,7 +27,8 @@ All three configure **480,000 tokens**. Qwen actual scheduler pool must equal
 resolved context must equal 480,000. These checks do not establish occupied
 context/retrieval correctness. Saved dual-Q benchmark evidence covers
 479,490 / 479,495 occupied tokens, with Q1 strict-format failure and semantic
-PASS. Production native wrapper/live API acceptance remains pending ACTIVATE.
+PASS. Subsequent production native allocation and bounded live API acceptance
+passed; no new near-max workload was run.
 
 Masks are shared guest CPU affinity, not exclusive or physical CPU allocations.
 Q/Q shares the same 8 guest CPUs; G/Q shares Qwen's 8 with GLM's 72. Online guest
@@ -51,7 +51,9 @@ Authenticated control status/catalog expose `default_mode`, `current_mode`
 capacity distinctions, readiness, degraded state, mutation busy and transition
 cost. Available modes are closed declarations, not admission receipts. Inference
 running/queued counts, freshness and external harness backlog stay **unknown**;
-Ready never means idle. Switching seconds are unmeasured. Earlier GLM G65008
+Ready never means idle. Catalog switch-cost seconds remain null; actual
+operations took 255.585590 s to GLM / 120.568066 s back Q0, excluding
+pre-admission/status overhead. Earlier GLM G65008
 native decode was 0.453261513 tokens/s; it is historical workload evidence, not a
 switch-time estimate or a general throughput guarantee.
 
@@ -73,8 +75,9 @@ or replace the peer. Return to Q/Q explicitly replaces GPU0 with Qwen0.
 The existing protected systemd boot-start/boot-stop owner replays `resume`
 intents GPU1 first, then GPU0; Docker restart remains `no`. Control/proxies use
 existing ai-vm services. Production has no Worker1/SSH/benchmark-keeper lifetime
-dependency. Activation must prove source closure, saved intents, service replay
-and private-client behavior; source tests are not physical reboot acceptance.
+dependency. Saved evidence confirms installed source, running/resume intents,
+control restart, warm idempotent replay and private clients after SSH exit.
+Hardware boot, cold-boot replay and live full rollback remain NOT_TESTED.
 Do not adopt benchmark containers. RUN2's saved receipt records canonical
 STOPPED/manual restoration; it does not establish current production state.
 
@@ -212,13 +215,12 @@ one discarded warmup per instance and exactly one measured pair: native input
 The report preserves strict/semantic scoring and sampled-resource boundaries.
 No benchmark is rerun by this documentation update.
 
-The separately owned ACTIVATE session must supply actual installed source,
-guarded migration, both authenticated endpoints/aliases, missing/wrong-key
-rejection, streaming/schema/tool-result continuation, peer survival during
-targeted changes, control-service restart persistence and durable boot-owner
-replay evidence. Distinguish replay from an actual physical reboot and retain
-the exact manual rollback prerequisites. No source test or documentation
-closes those operational acceptance steps.
+ACTIVATE's saved final proof supplies installed source and migration evidence,
+both authenticated endpoints/aliases, missing/wrong-key 401s, Qwen schema/tool
+continuation, peer streams during targeted mode switches, control restart and
+warm idempotent boot-owner replay. Exact Q1 identity survived both transitions.
+Hardware boot, cold-boot replay and live full rollback remain NOT_TESTED;
+preserve the exact manual rollback prerequisites.
 
 
 The protected migration backup also captures `prior_control_journal` (schema 1

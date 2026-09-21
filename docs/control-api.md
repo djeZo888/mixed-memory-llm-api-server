@@ -2,10 +2,11 @@
 
 ## Current source and acceptance status
 
-**Production activation acceptance is PENDING.** This contract describes
-reviewed source `04143b18cca7aca724d9a4a4bcf943fe86c040db`. ACTIVATE owns VM
-work; source installation and lifecycle schema 3 migration do not establish
-serving, switching, durable service replay or independent client acceptance.
+**Live production acceptance PASS — 2026-09-21, 03:21 UTC**, installed source
+`04143b18cca7aca724d9a4a4bcf943fe86c040db`. The [saved proof](../reports/dualq-480k-20260921.md#dated-production-acceptance--2026-09-21)
+covers private API behavior, both GPU0 mode switches with Q1 preserved, control
+restart, warm idempotent boot-intent replay and fresh clients after SSH exit.
+Hardware boot, cold-boot replay and live full rollback remain NOT_TESTED.
 The prior U1/L2 and singleton reports remain historical evidence.
 
 Control is separate from inference: authenticated IPv4 `127.0.0.1:30000`,
@@ -37,8 +38,11 @@ context, readiness/degraded state, mutation busy and switch cost. Current mode
 is based on selected deployments; it is not a readiness or activation receipt.
 `mutation_busy` describes lifecycle work. `inference_busy` has status `unknown`,
 with null running/queued counts, observation time and freshness. External
-backlog remains unknown and client-owned. Ready never means idle. Cold-load
-switch duration remains unmeasured (`seconds:null`).
+backlog remains unknown and client-owned. Ready never means idle. Catalog
+switch-cost metadata remains `seconds:null`. Dated operation durations were
+255.585590 s to GLM and 120.568066 s back Q0, excluding pre-admission/status
+overhead; these measurements are not a general latency guarantee. Final
+status/catalog reads took 20.994856 / 25.000605 s, relevant to client polling.
 
 Every running-target switch/restart requires `allow_interrupt:true` and fresh
 target-slot identity/generation. The future harness pauses dispatch and drains
@@ -143,9 +147,9 @@ availability does not bypass the lifecycle owner's exact approved-pair checks.
 Source validation includes `tests/test_control_slots.py` and
 `tests/test_control_slots_manager.py` for targeted
 CAS/idempotency, independent peer state, partial failures, interrupted receipts,
-loading/readiness and storage-loss stop. Real simultaneous inference and stream
-survival during target restart remain required in the separately authorized
-Worker1 activation session.
+loading/readiness and storage-loss stop. Saved live acceptance separately proves
+correct Q1 streams during both GPU0 mode switches and unchanged Q1 identity;
+it does not establish arbitrary-load concurrency or simultaneous native decode.
 
 ## Authentication and bounds
 
@@ -285,8 +289,8 @@ requests and agent sessions have no lifecycle lease, drain guarantee or session
 reservation. `switch_effect` is `interrupts_inference` for singleton state and
 `interrupts_target_inference` for slot state. Stop may terminate the explicitly
 targeted model's in-flight response/stream. The peer is not stopped. Stop during another transition returns 409; no
-preemptive cancellation or force-kill route exists. The source service template's
-process termination and reboot behavior require later live acceptance.
+preemptive cancellation or force-kill route exists. Hardware boot and cold-boot
+replay remain NOT_TESTED; saved warm replay and control restart passed.
 
 Deadlines are finite (default operation 8,000 seconds, maximum 14,400; production
 reads/admission 60 seconds, generic defaults 10, maximum 60). The explicit test

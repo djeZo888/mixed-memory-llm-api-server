@@ -5,10 +5,13 @@ Reviewed source `04143b18cca7aca724d9a4a4bcf943fe86c040db` defines **dual-qwen**
 as the default: one Qwen instance per GPU. Optional **glm-qwen** replaces only
 GPU0 with GLM; returning to dual-qwen replaces GPU0 with Qwen again.
 
-**Production activation acceptance is PENDING.** These are source-reviewed
-operating instructions, not a live readiness receipt. ACTIVATE separately owns
-installation and VM work; source installation and schema 3 migration alone do
-not prove serving, switching, boot replay or private-client acceptance.
+**Live production acceptance PASS — 2026-09-21, 03:21 UTC.** The saved
+[activation proof](reports/dualq-480k-20260921.md#dated-production-acceptance--2026-09-21)
+records both Qwen instances warm/ready with persisted running/resume intent.
+GPU0 Qwen → GLM → Qwen took 255.585590 / 120.568066 s per operation, excluding
+pre-admission/status overhead; GPU1 retained its identity through both switches.
+Qwen schema/tool continuation and GLM native 480K plus a correct smoke passed.
+Refresh status before use; this is a dated snapshot.
 
 | Placement / control target | Deployment ID and public instance ID | Inference alias / port |
 | --- | --- | --- |
@@ -50,10 +53,11 @@ owns its dispatch, backlog and drain before a targeted switch. Switching a
 running target requires `allow_interrupt:true`, fresh identity/generation and
 operation polling; the server provides no atomic drain guarantee.
 
-The production source assigns control, private transport and boot lifecycle to
-ai-vm services, with no Worker1, SSH or benchmark-keeper lifetime dependency.
-Final activation evidence must establish installed ownership and replay; this
-source contract does not claim a passed physical reboot.
+Enabled VM services own control, private transport and lifecycle, with no
+Worker1, SSH or benchmark-keeper lifetime dependency. Control restart and warm
+idempotent boot-intent replay passed; fresh clients still received correct
+answers after activation SSH exited. **Hardware boot, cold-boot replay and
+live full rollback remain NOT_TESTED.**
 
 Tools, browsing and file work run on ordinary external clients in trusted
 workspaces. A separate frontend VM is future work. **Installer implementation

@@ -1,8 +1,10 @@
 # Inference API contract
 
-**Dual-Q production activation acceptance is PENDING.** This describes reviewed
-source `04143b18cca7aca724d9a4a4bcf943fe86c040db`; actual serving and client
-acceptance require the separate ACTIVATE final receipt.
+**Live production acceptance PASS — 2026-09-21, 03:21 UTC.** Saved proof for
+source `04143b18cca7aca724d9a4a4bcf943fe86c040db` covers authenticated private
+serving, Qwen schema/tool continuation and both GPU0 mode switches with GPU1
+preserved. See the [dated proof and limits](../reports/dualq-480k-20260921.md#dated-production-acceptance--2026-09-21).
+Hardware boot, cold-boot replay and live full rollback remain NOT_TESTED.
 
 Default `dual-qwen` serves two Qwen instances. Optional `glm-qwen` replaces
 GPU0 only. Each configured context is 480,000 tokens on the 72-vCPU guest.
@@ -18,8 +20,9 @@ endpoint and served alias; an inference `model` field does not load a model.
 Each base exposes authenticated `GET /models` and `POST /chat/completions`;
 `stream:true` requests SSE. Model listing is endpoint-local, not a combined
 catalog. Missing/wrong inference keys must be rejected, invalid model names
-must return a client error, and streaming/tool-result continuation requires
-actual endpoint acceptance. Runtime health routes and unauthenticated Qwen
+must return a client error. Actual Qwen streaming/schema/tool-result continuation
+passed in the dated acceptance; this does not certify every task or future request.
+Runtime health routes and unauthenticated Qwen
 health/metrics exceptions are not model/API authentication proof.
 
 Use the separate native inference key; control on port 30000 has its own key

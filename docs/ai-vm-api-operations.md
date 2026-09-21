@@ -1,10 +1,11 @@
 # ai-vm API operations
 
-**Production activation acceptance is PENDING.** These instructions describe
-reviewed source `04143b18cca7aca724d9a4a4bcf943fe86c040db`. ACTIVATE owns all VM
-work. Installation and schema 3 migration do not establish serving, switching,
-service replay or independent client acceptance; the actual final receipt is
-still required. Examples below were not executed in this documentation task.
+**Live production acceptance PASS — 2026-09-21, 03:21 UTC**, installed source
+`04143b18cca7aca724d9a4a4bcf943fe86c040db`. The [saved proof](../reports/dualq-480k-20260921.md#dated-production-acceptance--2026-09-21)
+records both Qwen instances warm/ready with running/resume intent, successful
+GPU0 mode switching and fresh private clients after activation SSH exit.
+Hardware boot, cold-boot replay and live full rollback remain NOT_TESTED.
+Refresh discovery before use. Examples were not rerun by this documentation task.
 
 ## Modes, endpoints and identities
 
@@ -119,8 +120,12 @@ not forcibly preemptible; late admission cannot mutate after ticket expiry.
 A disconnect does not cancel an acknowledged transition: retain and poll its
 operation. Connection, header, body and authentication limits are unchanged.
 Loading remains asynchronous with an 8,000 s default operation deadline.
-Switch cost is a cold model load with unmeasured duration (`seconds:null`),
-not a promised latency. See [transport and recovery limits](control-api.md).
+The catalog still reports `switch_cost.seconds:null`; its metadata is not a
+latency promise. Actual operations took 255.585590 s to GLM and 120.568066 s
+back to Q0, excluding pre-admission/status overhead, with Q1 identity preserved.
+Final status/catalog reads took 20.994856 / 25.000605 s (initial repaired reads
+20.721609 / 24.604248 s); account for this administrative latency when polling.
+See [transport and recovery limits](control-api.md).
 
 ## Protected-file examples
 
@@ -157,7 +162,7 @@ def api(port, path, key_name, body=None, idempotency_key=None):
         conn.close()
 ```
 
-After separate activation acceptance, discover without changing model state:
+Discover without changing model state, using fresh responses:
 
 ```python
 code, catalog = api(30000, "/control/v1/catalog", "control-api-key")
@@ -197,16 +202,21 @@ code, reply = api(30004, "/v1/chat/completions", "llm-api-key", {
 GPU0 Qwen instead uses port 30002 and `qwen3.8-27b-gpu0`; optional GLM uses
 30002 and `glm-5.3` with reviewed effort `low`. Infer only through the discovered
 current alias. The example output budget is not a product limit. Use
-`stream:true` for SSE; actual streaming/tool continuation acceptance remains
-pending the final receipt. `/v1/models` lists only its own endpoint's model.
+`stream:true` for SSE; actual Qwen schema, tool call and real-result continuation
+passed. GLM's single correct `42`/`stop` smoke took 6.799028 s with native 480K
+confirmed. Post-SSH Q0/Q1 `42`/`stop` checks took 0.335060 / 0.309020 s.
+`/v1/models` lists only its own endpoint's model. The control catalog additionally
+retains historical native1M/TP2 entries outside the two reviewed modes.
 
 ## Ownership and historical examples
 
 ai-vm's protected control, private transport and canonical boot services own
 production. No Worker1/SSH/benchmark-keeper process must remain alive. The
 source boot owner replays desired running/resume slots GPU1 first, then GPU0;
-Docker restart stays `no`. Installed intents, service replay and any physical
-reboot claim still require final ACTIVATE evidence. See [operations](operations.md).
+Docker restart stays `no`. Saved running/resume intents, control restart and
+idempotent replay on the already-ready pair passed without changing container
+identities. Hardware boot, cold-boot replay and live full rollback remain
+NOT_TESTED. See [operations](operations.md).
 
 The retained [manual Qwen context script](../examples/qwen-context-test.py)
 and [prior singleton acceptance](../reports/apiaccept-lan-acceptance.md) have
