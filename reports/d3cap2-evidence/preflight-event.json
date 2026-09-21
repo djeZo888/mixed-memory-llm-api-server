@@ -1,0 +1,19 @@
+{
+  "allocation_attempts": 0,
+  "deadline_seconds": 7200,
+  "elapsed_seconds": 1.6831525890011108,
+  "identity": {
+    "id": "7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78",
+    "image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+    "pid": 243279,
+    "restart_count": 0,
+    "start_ticks": 2367582,
+    "started_at": "2026-09-15T04:09:20.746242473Z"
+  },
+  "phase": "target_preflight_pass",
+  "previous_requests_zero": true,
+  "previous_slot_release": "2026-09-15T04:32:15.806020433Z",
+  "q38_fixture_pids": [],
+  "root_available_bytes": 5208207360,
+  "utc": "2026-09-15T05:07:55.537675+00:00"
+}

@@ -1,0 +1,29 @@
+{
+  "host": {
+    "system": "Linux",
+    "architecture": "x86_64",
+    "kernel": "fixture-only",
+    "os_id": "ubuntu",
+    "os_version": "24.04",
+    "root_available_bytes": 10737418240,
+    "ram_bytes": 549755813888,
+    "cpu_flags": ["avx2"],
+    "gpus": [
+      {"index": "0", "name": "SYNTHETIC GPU", "memory_mib": 98304, "driver": "fixture"},
+      {"index": "1", "name": "SYNTHETIC GPU", "memory_mib": 98304, "driver": "fixture"}
+    ],
+    "dns": "fixture_not_performed",
+    "package_manager": "fixture_not_performed",
+    "listeners": "fixture_not_performed"
+  },
+  "storage": {
+    "status": "SYNTHETIC_ONLY",
+    "data": {"mount": "/data", "uuid": "11111111-2222-4333-8444-555555555555"},
+    "capacity": {
+      "root_available_bytes": 10737418240,
+      "data_available_bytes": 1099511627776,
+      "model_available_bytes": 1099511627776,
+      "shared_model_filesystem": true
+    }
+  }
+}

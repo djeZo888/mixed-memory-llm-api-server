@@ -1,0 +1,78 @@
+{
+  "status": "PASS_ENUMERATION_ONLY",
+  "container_id": "dddb77b939c541b488627717ef3427fbfa955419201458f1acd404563a9d7e43",
+  "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+  "name": "/d3b2-glm-list-devices-20260915",
+  "args": [
+    "--list-devices"
+  ],
+  "runtime": "nvidia",
+  "visible_devices": "0,1",
+  "driver_capabilities": "compute,utility",
+  "network": "none",
+  "mounts": [],
+  "ports": {},
+  "timeout_seconds": 30,
+  "timeout_kill_after_seconds": 5,
+  "exit_code": 0,
+  "devices": [
+    "CUDA0",
+    "CUDA1"
+  ],
+  "exact_device_lines": [
+    "CUDA0: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (97249 MiB, 79836 MiB free)",
+    "CUDA1: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (97249 MiB, 83724 MiB free)"
+  ],
+  "before_timestamp": "2026-09-15T03:38:46Z",
+  "after_timestamp": "2026-09-15T03:38:47Z",
+  "sampled_gpu_memory_mib": [
+    {
+      "index": "0",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "before": 16856,
+      "after": 16856,
+      "delta": 0
+    },
+    {
+      "index": "1",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "before": 12968,
+      "after": 12968,
+      "delta": 0
+    }
+  ],
+  "sampled_compute_processes_before": [
+    [
+      "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "149976",
+      "/opt/llama/llama-server",
+      "16022"
+    ],
+    [
+      "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "149976",
+      "/opt/llama/llama-server",
+      "12102"
+    ]
+  ],
+  "sampled_compute_processes_after": [
+    [
+      "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "149976",
+      "/opt/llama/llama-server",
+      "16022"
+    ],
+    [
+      "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "149976",
+      "/opt/llama/llama-server",
+      "12102"
+    ]
+  ],
+  "sampled_compute_process_rows_unchanged": true,
+  "context_limit": "nvidia-smi before/after compute-process samples are not continuous context tracking; transient contexts or CUDA initialization are not excluded.",
+  "original_glm_identity_start_unchanged": true,
+  "quiescent_exact_id_removed_without_force": true,
+  "independent_absence_verified": true,
+  "output_sha256": "a5ec45c7fca7431f3404106c7a3094a33a6475179b4d573ec0618faf45a08095"
+}

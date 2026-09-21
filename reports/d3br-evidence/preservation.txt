@@ -1,0 +1,4 @@
+PASS: exact Docker build command byte-identical to integration base.
+PASS: Dockerfile, dockerignore, combined native patch and source manifest byte-identical to base.
+PASS: both protected guard source hashes match reviewed L2 closure and runner literals.
+NOT_TESTED: installed Linux closure, registered runtime and actual Docker build.

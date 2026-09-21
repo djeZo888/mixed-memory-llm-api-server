@@ -1,0 +1,61 @@
+{
+  "attempt": 1,
+  "commit": "357358ab12914df209d54c895a59c94a41c84580",
+  "files": {
+    "scripts/runtime/qwen38_oci.py": {
+      "bytes": 7121,
+      "git_blob": "0d576756001b85bb674d25966713b483adea7c06",
+      "mode": "0444",
+      "sha256": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f"
+    },
+    "scripts/runtime/sglang38_file_auth.py": {
+      "bytes": 22909,
+      "git_blob": "0d54a134f4aa7ba2ce45e76a3a68752fe9cf45c8",
+      "mode": "0444",
+      "sha256": "31889213cf96e3a059d52f07bc6581b9d3b7e1e070a8fa54c494028efb54128b"
+    },
+    "tests/lifecycle/sglang38_fixture/auth_native.py": {
+      "bytes": 7289,
+      "git_blob": "e7ef0767f12279da0411fc51ba9530d80d11c07c",
+      "mode": "0444",
+      "sha256": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7"
+    },
+    "tests/lifecycle/sglang38_fixture/cache_probe.py": {
+      "bytes": 19812,
+      "git_blob": "1400ea99f8999122e75a4cb0ab5e87616cf4fa0a",
+      "mode": "0444",
+      "sha256": "11e09615725d9588fd082fbbf8f4776a77d5a20f6dde09022a14df3e828bff73"
+    },
+    "tests/lifecycle/sglang38_fixture/chat_template.jinja": {
+      "bytes": 8952,
+      "git_blob": "c0c686f9c38d70d179fb7b5f5aa7530bc913dda3",
+      "mode": "0444",
+      "sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041"
+    },
+    "tests/lifecycle/sglang38_fixture/provenance.json": {
+      "bytes": 18046,
+      "git_blob": "6abbc4178165e8d2196e4dba1a819e16b01018ec",
+      "mode": "0444",
+      "sha256": "e01f5578e76de5d657c0ed77e1016f578aec5e3f58adfa3f94b49bc32d543e2a"
+    },
+    "tests/lifecycle/sglang38_fixture/qwen38_config.json": {
+      "bytes": 51350,
+      "git_blob": "e66d0dcb2d8066e724407f0ded85b6c3c5cb213a",
+      "mode": "0444",
+      "sha256": "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc"
+    },
+    "tests/lifecycle/sglang38_fixture/run_fixture.py": {
+      "bytes": 41787,
+      "git_blob": "d7dbfbf242daf65e8351574cca78fe5dcf6baf8f",
+      "mode": "0444",
+      "sha256": "8464259e02be237d8fa5e60122842bdf19f8782a964afdf3e5515d0da72f07e4"
+    },
+    "tests/lifecycle/sglang38_fixture/run_pinned_image.py": {
+      "bytes": 54814,
+      "git_blob": "2169987dc97ca947f70cd7260bd90aaf2ff855c1",
+      "mode": "0444",
+      "sha256": "2cd6be0fd106d687c9160456df35d945d2b6a7779189f4ff1f10410c67da7569"
+    }
+  },
+  "tree": "bf2013a8d566dbf8705c8d826e3863062231dedc"
+}

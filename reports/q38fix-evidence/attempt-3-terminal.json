@@ -1,0 +1,153 @@
+[
+  {
+    "attempt": 3,
+    "code": null,
+    "commit": "a0d70509759927a1acde8f12d1149eeac4e4a034",
+    "context": 131072,
+    "finished_utc": "2026-09-15T05:15:17.354216+00:00",
+    "independent_absence": {
+      "container_id": "b77fa0d3d77d354eceba7e675f6ec33c103f1664ba2de2cc668190a1b858d4de",
+      "container_name": "q38b-fixture-ea438543bae8e03170eb515b6fc68369",
+      "id_and_name_absent": true,
+      "status": "PASS"
+    },
+    "lifetime": {
+      "attach_diagnostic": {
+        "cli_returncode": 2,
+        "cli_signal": null,
+        "container_before_cleanup_stop": {
+          "exit_code": 2,
+          "signal": null,
+          "status": "EXITED"
+        },
+        "failure_kind": "CLI_NONZERO_EXIT",
+        "failure_metadata": {
+          "code": "actual_image_fixture_failed",
+          "origin": {
+            "exception_class": "FixtureFailure",
+            "filename": "run_pinned_image.py",
+            "line": 758
+          },
+          "status": "SAFE_ORIGIN"
+        },
+        "operation": "START_ATTACH",
+        "phase": "ATTACH",
+        "schema_version": 1,
+        "stderr": {
+          "capture": "COMPLETE",
+          "captured_bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "capture": "COMPLETE",
+          "captured_bytes": 163,
+          "sha256": "20857a2d97ccc893fc453319cb0e87a1bfa7f08d97dce34a1aa624acdebeee99"
+        }
+      },
+      "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+      "container_id": "b77fa0d3d77d354eceba7e675f6ec33c103f1664ba2de2cc668190a1b858d4de",
+      "container_name": "q38b-fixture-ea438543bae8e03170eb515b6fc68369",
+      "outcome": "ATTACH_FAILED",
+      "runtime_inspect": {
+        "context": 131072,
+        "device_requests": [],
+        "driver_capabilities": "compute,utility",
+        "entrypoint": [
+          "python3"
+        ],
+        "host_devices": [],
+        "model_and_secret_mounts": "EMPTY_PRIVATE_TMPFS",
+        "network": "none",
+        "root_readonly": true,
+        "runtime": "nvidia",
+        "status": "PASS_HOST_INSPECT",
+        "visible_devices": "none"
+      }
+    },
+    "phase": "CONTEXT_NATIVE_TERMINAL",
+    "post_guards": "PENDING",
+    "source_sha256": {
+      "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+      "scripts/runtime/sglang38_file_auth.py": "380da6ca383804f0cb1cad8bf037c9342e69558354ec42d911fb706db716d1be",
+      "tests/lifecycle/sglang38_fixture/auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+      "tests/lifecycle/sglang38_fixture/cache_probe.py": "11e09615725d9588fd082fbbf8f4776a77d5a20f6dde09022a14df3e828bff73",
+      "tests/lifecycle/sglang38_fixture/chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+      "tests/lifecycle/sglang38_fixture/provenance.json": "4f8ac18cab3ea1fb58ec625c7a0cb77f22105bac1761ce196a3eb05f91b3809e",
+      "tests/lifecycle/sglang38_fixture/run_fixture.py": "7d23dfc941edf127815bbd3d5699316910d989eb5a363cd734c64b838536f08b",
+      "tests/lifecycle/sglang38_fixture/run_pinned_image.py": "a5c8061a9dd11bba06740600e0b029fdfcf4377113eddb15dad7d3605db2b63c"
+    },
+    "started_utc": "2026-09-15T05:14:51.785098+00:00",
+    "status": "FAIL"
+  },
+  {
+    "apport_comparison": {
+      "new_or_changed": [],
+      "removed": [],
+      "status": "PASS_NO_NEW_OR_CHANGED_APPORT"
+    },
+    "apport_metadata": {
+      "/var/crash": {
+        "entries": {},
+        "identity": [
+          64512,
+          263740
+        ]
+      },
+      "/var/lib/apport/coredump": {
+        "entries": {},
+        "identity": [
+          64512,
+          263913
+        ]
+      }
+    },
+    "attempt": 3,
+    "context": 131072,
+    "phase": "CONTEXT_POST_OBSERVATION",
+    "root_available_bytes_after_native": 5208211456,
+    "root_available_bytes_before": 5208211456,
+    "root_available_bytes_delta": 0
+  },
+  {
+    "attempt": 3,
+    "context": 131072,
+    "phase": "CONTEXT_GUARD_OBSERVATION",
+    "post_guards": "PASS",
+    "root_available_bytes_after_guard": 5208211456,
+    "root_available_bytes_before": 5208211456,
+    "root_available_bytes_delta": 0
+  },
+  {
+    "attempt": 3,
+    "context": 131072,
+    "phase": "CONTEXT_TERMINAL",
+    "post_guards": "PASS",
+    "post_source_hashes_match": true,
+    "status": "FAIL"
+  },
+  {
+    "attempt": 3,
+    "code": "q38s_image_fixture_failed",
+    "commit": "a0d70509759927a1acde8f12d1149eeac4e4a034",
+    "contexts": [
+      {
+        "context": 131072,
+        "finished_utc": "2026-09-15T05:15:17.354216+00:00",
+        "independent_absence": {
+          "container_id": "b77fa0d3d77d354eceba7e675f6ec33c103f1664ba2de2cc668190a1b858d4de",
+          "container_name": "q38b-fixture-ea438543bae8e03170eb515b6fc68369",
+          "id_and_name_absent": true,
+          "status": "PASS"
+        },
+        "started_utc": "2026-09-15T05:14:51.785098+00:00",
+        "status": "FAIL"
+      }
+    ],
+    "phase": "PAIR_TERMINAL",
+    "post_guards": "PASS",
+    "receipt_sha256": null,
+    "source_hashes_match": true,
+    "status": "FAIL",
+    "utc": "2026-09-15T05:15:17.563922+00:00"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "prepare-d3.py",
+    "sha256": "acf6a545ffced64433895a241d173671584195b32ed155b6448bfd060b7100fa",
+    "archived_source": "reports/d3-evidence/operator-code/prepare-d3.py.txt",
+    "role": "D3 operator evidence source; not production manager or profile"
+  },
+  {
+    "name": "inspect-glm-template.py",
+    "sha256": "b7897f1e4e6551df4ca17dcdafd3f0c5b6051bd5c6c9c9ed8c5547d0f31de9cb",
+    "archived_source": "reports/d3-evidence/operator-code/inspect-glm-template.py.txt",
+    "role": "D3 operator evidence source; not production manager or profile"
+  },
+  {
+    "name": "snapshot-d3.py",
+    "sha256": "3209362d07db65c76a82fd3f3a1b06ee8d35e1f2d3abb39654051a15775e7ff3",
+    "archived_source": "reports/d3-evidence/operator-code/snapshot-d3.py.txt",
+    "role": "D3 operator evidence source; not production manager or profile"
+  },
+  {
+    "name": "run-load-d3.py",
+    "sha256": "6f36c7aec88b2aa478464dc8d6eb27fdfe33a19e15708cd01f26ef32408e821d",
+    "archived_source": "reports/d3-evidence/operator-code/run-load-d3.py.txt",
+    "role": "D3 operator evidence source; not production manager or profile"
+  },
+  {
+    "name": "probe-glm.py",
+    "sha256": "9bb0a58a3fcb7e5b84965171770eba88d714349be5c1418ba473b2726792bb49",
+    "archived_source": "reports/d3-evidence/operator-code/probe-glm.py.txt",
+    "role": "D3 operator evidence source; not production manager or profile"
+  },
+  {
+    "name": "tool-probe-glm.py",
+    "sha256": "e0ea4d9be741a3e16e44b048e621e88648fb040298a64234d327fee28e9d958d",
+    "archived_source": "reports/d3-evidence/operator-code/tool-probe-glm.py.txt",
+    "role": "D3 operator evidence source; not production manager or profile"
+  }
+]

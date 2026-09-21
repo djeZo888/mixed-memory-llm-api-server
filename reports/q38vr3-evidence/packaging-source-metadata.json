@@ -1,0 +1,192 @@
+{
+  "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py": {
+    "ancestry": [
+      {
+        "gid": 0,
+        "inode": 2,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 25,
+        "path": "/",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 655363,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 12,
+        "path": "/usr",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 655385,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 10,
+        "path": "/usr/local",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 672033,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 4,
+        "path": "/usr/local/lib",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 833471,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 4,
+        "path": "/usr/local/lib/llm-server",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 833479,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 7,
+        "path": "/usr/local/lib/llm-server/control-api",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 833681,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 7,
+        "path": "/usr/local/lib/llm-server/control-api/scripts",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 833682,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 2,
+        "path": "/usr/local/lib/llm-server/control-api/scripts/common",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 833684,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 1,
+        "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+        "size_bytes": 3378,
+        "uid": 0
+      }
+    ],
+    "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d"
+  },
+  "/usr/local/lib/llm-server/control-api/scripts/install/storage.py": {
+    "ancestry": [
+      {
+        "gid": 0,
+        "inode": 2,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 25,
+        "path": "/",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 655363,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 12,
+        "path": "/usr",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 655385,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 10,
+        "path": "/usr/local",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 672033,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 4,
+        "path": "/usr/local/lib",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 833471,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 4,
+        "path": "/usr/local/lib/llm-server",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 833479,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 7,
+        "path": "/usr/local/lib/llm-server/control-api",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 833681,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 7,
+        "path": "/usr/local/lib/llm-server/control-api/scripts",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 833700,
+        "is_symlink": false,
+        "mode": "0755",
+        "nlink": 2,
+        "path": "/usr/local/lib/llm-server/control-api/scripts/install",
+        "size_bytes": null,
+        "uid": 0
+      },
+      {
+        "gid": 0,
+        "inode": 833703,
+        "is_symlink": false,
+        "mode": "0644",
+        "nlink": 1,
+        "path": "/usr/local/lib/llm-server/control-api/scripts/install/storage.py",
+        "size_bytes": 28916,
+        "uid": 0
+      }
+    ],
+    "sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505"
+  }
+}

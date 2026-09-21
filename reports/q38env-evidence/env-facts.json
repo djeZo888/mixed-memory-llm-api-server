@@ -1,0 +1,82 @@
+{
+  "auth_receipt_created": false,
+  "comparison": "NOT_POSSIBLE_NO_VALUES_OBSERVED",
+  "container_lifetime": {
+    "cleanup": "NO_CREATE_ATTEMPT_NO_MUTATION_NEEDED",
+    "container_id": null,
+    "container_name": null,
+    "create_attempts": 0,
+    "starts": 0
+  },
+  "failed_environment_equality": "UNKNOWN",
+  "failure": {
+    "acceptance_required": "returncode == 0 and stderr empty",
+    "fixed_code": "installed_image_inspect_failed",
+    "individual_failure_condition": "UNKNOWN",
+    "operation": "filtered docker image inspect of exact pinned reference",
+    "raw_stdout_stderr": "NOT_RECORDED_OR_PUBLISHED"
+  },
+  "generation_lease": "D3BASE_UNTOUCHED",
+  "image_identity": {
+    "mismatch": "NOT_ESTABLISHED",
+    "observed_docker_id": null,
+    "observed_docker_id_domain": null,
+    "status": "NOT_VERIFIED"
+  },
+  "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+  "installer": "STOPPED",
+  "native_result": "NOT_TESTED",
+  "recorded_utc": "2026-09-15T03:56:19.414936+00:00",
+  "retry": "NONE",
+  "schema_version": 1,
+  "source_fix": "NONE",
+  "status": "STOP_BEFORE_CONTAINER_CREATE",
+  "task": "Q38ENV-20260915",
+  "variables": {
+    "CUDA_VISIBLE_DEVICES": {
+      "child": {
+        "status": "NOT_OBSERVED",
+        "value": null
+      },
+      "expected": "",
+      "host_config_env": {
+        "occurrences": null,
+        "status": "NOT_OBSERVED"
+      },
+      "parent": {
+        "status": "NOT_OBSERVED",
+        "value": null
+      }
+    },
+    "NVIDIA_DRIVER_CAPABILITIES": {
+      "child": {
+        "status": "NOT_OBSERVED",
+        "value": null
+      },
+      "expected": "compute,utility",
+      "host_config_env": {
+        "occurrences": null,
+        "status": "NOT_OBSERVED"
+      },
+      "parent": {
+        "status": "NOT_OBSERVED",
+        "value": null
+      }
+    },
+    "NVIDIA_VISIBLE_DEVICES": {
+      "child": {
+        "status": "NOT_OBSERVED",
+        "value": null
+      },
+      "expected": "none",
+      "host_config_env": {
+        "occurrences": null,
+        "status": "NOT_OBSERVED"
+      },
+      "parent": {
+        "status": "NOT_OBSERVED",
+        "value": null
+      }
+    }
+  }
+}

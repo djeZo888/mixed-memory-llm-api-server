@@ -1,0 +1,27 @@
+# GLM repair stage — unconstrained output remains unfixed
+
+The selected production GLM profile now supplies native `reasoning_effort: low` when callers omit effort. Actual template checks verify omission equals explicit low, request kwargs high changes the rendered template, and explicit top-level low overrides those kwargs. Generic client, catalog, proxy, other model defaults, runtime and weights are unchanged. This repairs the separate default propagation gap; it does not repair the explicit-low failing request.
+
+Production G2 native1M reproduced the historical temperature-zero failure with exactly the same final-content SHA as G1:3546 input/231 output tokens,206 final characters, one literal closing-think delimiter and duplicate JSON. The temperature1/seed1729 candidate reached its256-token cap with invalid final JSON and a literal delimiter. It did not establish a fix; no second seed or sampling grid was attempted.
+
+| Production case | Disposition | Input/output | Cached input | Native prefill/decode seconds |
+|---|---|---:|---:|---:|
+| prod-exact-original | HARNESS_FAILURE | 3546/231 | 0 | 51.962928/19.885369 |
+| prod-sampling1729 | OUTPUT_LIMIT | 3546/256 | 3545 | 0.081064/18.371687 |
+| prod-default-nonstream | PASS | 18/6 | 10 | 0.641732/1.440645 |
+| prod-actual-tool-call | PASS | 203/13 | 9 | 6.823511/2.710570 |
+| prod-actual-tool-continuation | PASS | 245/26 | 215 | 0.729490/3.359366 |
+| prod-default-stream | PASS | 18/6 | 17 | 0.078653/0.361496 |
+| prod-native-schema | PASS | 3546/232 | 3545 | 0.243890/18.266077 |
+
+The actual tool case used the existing A1 `read_file` implementation on a fresh local calc.py fixture, sent the model-returned matching call ID with the real result, and received a completed answer that explicitly affirms subtraction. This is a read-tool continuation check, not the full A1 edit/run-tests coding task. Ordinary exposed API greeting chat completed in both modes with effort omitted. Reasoning-bearing arithmetic stream/nonstream cases are NOT_TESTED; no arithmetic coverage is claimed. Schema request SHA256 `aa5abdcc46f53f622ee7735d4d5182e7b2d8af9f3ab32ed17f3ba88e9c552867` is retained with exact private bytes for a separately authorized future task. The native JSON schema constrained only keys/types, with no expected-answer constants; its strict semantic PASS does not establish unconstrained correctness.
+
+Actual selected configuration and native allocation records prove1,048,576 configured tokens/one slot, CUDA cache51,539,607,552+48,318,382,080 bytes and positive compute allocations on both GPUs. Maximum observed total occupied tokens in these cases is3,802; occupied1M was not tested. Native model/runtime/launch contract and authenticated exposed requests were checked. Normal production verbosity omits human-readable offload counts; those counts remain unavailable, not a capacity failure.
+
+The new frozen G1 attempt passed load/allocation and its distinct32-token warmup, then failed before sampling because its boundary name was outside the host allowlist. Both G1 seeds are NOT_TESTED. The exact cause is retained in the RPC frame receipt; source now reuses existing allowed points, with an actual-host boundary regression. No G1 reload/retry occurred. Historical G2 warmed4K3547/55 strictPASS remains10.430566 tok/s; historical G1 exact4K3546/231 strictFAIL remains1.490008 tok/s for its streaming capture. The new production G2 exact replay decoded the same231-token composition at11.566293 tok/s, but its1M production settings differ from frozen G1. No pure placement ratio or completed new matched warmed4K comparison is claimed.
+
+Setup and operational failures are preserved: G1 boundary mismatch; deployment verification missing generated mount-unit arguments (exact rollback verified, corrected retry succeeded); and old production container kwargs mismatch followed by an overly strict human-log assertion. These were setup/helper failures, not new model failures. Root authorized retaining the old stopped GLM container by exact-ID rename; no container/image/model deletion occurred. The original release and all failed-attempt artifacts remain available. Optional CPU profiling was skipped before trace collection because the decode-counter helper encountered an unsupported response shape; measured timings are uninstrumented.
+
+All seven production requests and native precedence checks completed before the immutable22:25:43.579UTC deadline. The45-minute clock includes preparation; it was never reset. Restoration is outside that measurement budget. Original Qwen1M TP2 is restored READY with running intent and resume boot policy. Control/boot services are active/enabled, authenticated LAN passed, the owned tunnel/local port31012 is closed, benchmark resources/listeners are absent, registered/root guards passed, and the canonical lease was acquired and released for final verification. Both the old archived and new production GLM containers are stopped and retained; neither was deleted. Native default deployment source is d0b793e; the subsequent7325e72 boundary-only correction changes no deployed default bytes.
+
+Focused checks:45 repair-driver/profile/host tests and11 benchmark profile-pin tests PASS after the boundary correction;18 lifecycle profile and1 native default/request-construction regression PASS. No installer/frontend/Proxmox, new runtime/model acquisition, context ladder or public exposure work occurred. Publication awaits root final review; nothing has been pushed.

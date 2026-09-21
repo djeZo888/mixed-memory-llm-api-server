@@ -1,0 +1,131 @@
+{
+  "status": "PASS_EXACT_RETAINED_ARTIFACT_AUDIT",
+  "scope": "local checks of existing live evidence; no additional VM calls",
+  "load_samples": 141,
+  "request_samples_including_admission": 4,
+  "full_pss_boundaries": 2,
+  "load_max_duration_seconds": 1.2709682139975484,
+  "load_max_producer_gap_seconds": 2.2159518810003647,
+  "slow_load_samples": [
+    {
+      "timestamp": 1789450927.3358502,
+      "duration": 1.2528507939969131,
+      "gap": 2.1977278790000128
+    },
+    {
+      "timestamp": 1789450933.6211224,
+      "duration": 1.2709682139975484,
+      "gap": 2.2159518810003647
+    }
+  ],
+  "request_max_duration_seconds": 0.13104745000237017,
+  "request_max_gap_seconds": 1.075946569442749,
+  "min_host_MemAvailable_KiB": 480297156,
+  "min_gpu_free_bytes": [
+    33811333120,
+    24925700096
+  ],
+  "all_target_VmSwap_KiB_zero": true,
+  "all_target_cgroup_swap_bytes_zero": true,
+  "all_full_Swap_KiB_zero": true,
+  "stable_pid_startticks_cgroup_inode": true,
+  "all_error_and_oom_counters_zero": true,
+  "final_host_vmstat": {
+    "oom_kill": 0,
+    "pswpin": 19077,
+    "pswpout": 39034
+  },
+  "final_host_vmstat_delta": {
+    "oom_kill": 0,
+    "pswpin": 10,
+    "pswpout": 0
+  },
+  "final_host_swap_used_kib": 27136,
+  "pre_pss_kib": {
+    "Pss": 421804612,
+    "Rss": 421804616,
+    "Swap": 0,
+    "VmSwap": 0
+  },
+  "post_pss_kib": {
+    "Pss": 421867984,
+    "Rss": 421867988,
+    "Swap": 0,
+    "VmSwap": 0
+  },
+  "source_tree": "0075e6f2ca5b8a3f13c0725e35f60a0ceb2b2b5e",
+  "request": {
+    "input": {
+      "max_tokens": 128,
+      "messages": [
+        {
+          "content": "Reply with the single word READY.",
+          "role": "user"
+        }
+      ],
+      "model": "glm-5.3",
+      "reasoning_effort": "low",
+      "temperature": 0
+    },
+    "output": {
+      "content": "READY",
+      "role": "assistant"
+    },
+    "usage": {
+      "completion_tokens": 3,
+      "prompt_tokens": 19,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "total_tokens": 22
+    },
+    "timings": {
+      "cache_n": 0,
+      "predicted_ms": 1103.214,
+      "predicted_n": 3,
+      "predicted_per_second": 1.8128848981249333,
+      "predicted_per_token_ms": 551.607,
+      "prompt_ms": 1266.182,
+      "prompt_n": 19,
+      "prompt_per_second": 15.005741670628709,
+      "prompt_per_token_ms": 66.64115789473685
+    },
+    "elapsed_seconds": 2.3923177500000747,
+    "http_status": 200,
+    "finish_reason": "stop"
+  },
+  "native": {
+    "cache_bytes": {
+      "CUDA0": 51539607552,
+      "CUDA1": 48318382080
+    },
+    "cache_log_lines": {
+      "CUDA0": 38,
+      "CUDA1": 39
+    },
+    "compute_bytes": {
+      "CUDA0": 5104543744,
+      "CUDA1": 4680849408
+    },
+    "compute_log_lines": {
+      "CUDA0": 35,
+      "CUDA1": 36
+    },
+    "end_log_line": 40,
+    "fa_nodes": 78,
+    "flash_attn": 1,
+    "fused_lid": 1,
+    "graph_log_line": 34,
+    "lid_nodes": 21,
+    "n_batch": 2048,
+    "n_ctx": 1048576,
+    "n_ctx_seq": 1048576,
+    "n_seq_max": 1,
+    "n_ubatch": 512,
+    "no_alloc": 0
+  },
+  "capacity_configured_and_allocated": 1048576,
+  "occupied_prompt_tokens": 19,
+  "occupied_completion_tokens": 3,
+  "occupied_native1m": "NOT_TESTED"
+}

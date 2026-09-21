@@ -1,0 +1,7 @@
+{
+  "container_id": "a52cec602c81be1b3c62fed6ddd8854dc0fc396dfc02d2f42204a94c08fd69f3",
+  "container_name": "q38dev-20260915-f9346fc798fa7fcbda05939ec0b981b5",
+  "method": "successful exact-ID filtered docker container ls --all --no-trunc with empty stdout/stderr",
+  "status": "ABSENCE_VERIFIED",
+  "verified_utc": "2026-09-15T04:25:07.287967+00:00"
+}

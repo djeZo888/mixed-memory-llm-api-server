@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "mode": "socket_proxyd_private_ipv4",
+  "interface": "enp6s18",
+  "private_address": "10.156.100.60",
+  "prefix_length": 24,
+  "allowed_client_ipv4": ["10.156.100.0/24"],
+  "ports": {"control": 30000, "glm": 30002, "qwen38": 30004}
+}

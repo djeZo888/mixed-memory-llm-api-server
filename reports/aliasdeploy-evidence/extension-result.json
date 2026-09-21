@@ -1,0 +1,25 @@
+{
+  "attempt": 2,
+  "code": "shipped_pair_complete",
+  "commit": "ab6daa475cc2f1c04956d862f460f9f01c4ee952",
+  "contexts": [
+    {
+      "context": 1000000,
+      "finished_utc": "2026-09-17T07:21:26.688352+00:00",
+      "independent_absence": {
+        "container_id": "5d3a2789aa872119921a59a419aec132557421a66c7f55fa6493db41901201af",
+        "container_name": "q38b-fixture-0a5236f3457eadee8e89a4ccdf9e638c",
+        "id_and_name_absent": true,
+        "status": "PASS"
+      },
+      "started_utc": "2026-09-17T07:20:13.627630+00:00",
+      "status": "PASS"
+    }
+  ],
+  "model_execution": "NOT_TESTED_NO_GPU_FIXTURE",
+  "post_guards": "PASS",
+  "receipt_sha256": "ec628c0ef48efa583a4c06ba6f5ccfa07214b0b8489b16a7b1812bc9aa9a2b44",
+  "source_hashes_match": true,
+  "status": "PASS",
+  "utc": "2026-09-17T07:21:26.892852+00:00"
+}

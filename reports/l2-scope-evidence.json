@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "audit": "PASS",
+  "baseline": "77fbe989e99698603766d11dd008e10d8f3f37ef",
+  "storage_frozen_patch_sha256": "4a2ecd75e94d0724cd5428ed383ec2687a473f212f95192dd5be03f2de3e8148",
+  "storage_sha256": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505",
+  "changed_existing_storage_read_methods": [
+    "_capacity",
+    "_registered_mount",
+    "root_payload_guard",
+    "verify"
+  ],
+  "unchanged_storage_mutation_methods": [
+    "_uuid_mount_plan",
+    "_fstab_content",
+    "_disk_plan",
+    "plan",
+    "_atomic_write",
+    "adopt"
+  ],
+  "manager_sha256_unchanged_from_Q38B_freeze": "a6a47fd3af722d9354f4699ab2b150f0906cb2fd5442b222dc30b2cdc347337e",
+  "installer_workflows": "NOT_RUN",
+  "live_host": "NOT_ACCESSED"
+}

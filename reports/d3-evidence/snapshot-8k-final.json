@@ -1,0 +1,139 @@
+{
+  "utc": "2026-09-15T00:46:16.906883+00:00",
+  "name": "llmctl-glm-5.3-8k",
+  "root_available_bytes": 5228417024,
+  "host_kib": {
+    "MemTotal": 924616132,
+    "MemAvailable": 472216864,
+    "SwapTotal": 3083260,
+    "SwapFree": 3069436
+  },
+  "vmstat": {
+    "pswpin": 19045,
+    "pswpout": 35819,
+    "pgfault": 195134602,
+    "pgmajfault": 22872,
+    "oom_kill": 0
+  },
+  "container": {
+    "id": "c25aacfaf71d3fe640ef9cf12fd95ae44cc81b67879b140139b5e020c12bf9b5",
+    "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Pid": 140535,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "StartedAt": "2026-09-15T00:40:36.122289554Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "args": [
+      "--model",
+      "/models/UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "30002",
+      "--alias",
+      "glm-5.3",
+      "--api-key-file",
+      "/run/secrets/llm-api-key",
+      "--ctx-size",
+      "8192",
+      "--parallel",
+      "1",
+      "--cpu-moe",
+      "--jinja",
+      "--no-webui",
+      "--n-gpu-layers",
+      "999",
+      "--split-mode",
+      "layer",
+      "--tensor-split",
+      "1,1",
+      "--load-mode",
+      "none",
+      "--device",
+      "CUDA0,CUDA1",
+      "--chat-template-kwargs",
+      "{\"clear_thinking\":true}"
+    ],
+    "entrypoint": [
+      "/opt/llama/llama-server"
+    ],
+    "port_bindings": {
+      "30002/tcp": [
+        {
+          "HostIp": "127.0.0.1",
+          "HostPort": "30002"
+        }
+      ]
+    },
+    "restart_policy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    }
+  },
+  "process_kib": {
+    "VmPeak": 550724936,
+    "VmSize": 550724936,
+    "VmHWM": 431863388,
+    "VmRSS": 431863388,
+    "RssAnon": 492220,
+    "RssFile": 240240,
+    "RssShmem": 431130928,
+    "VmSwap": 0,
+    "Threads": 233
+  },
+  "smaps_rollup_kib": {
+    "Rss": 431863388,
+    "Pss": 431863384,
+    "Pss_Anon": 492220,
+    "Pss_File": 240236,
+    "Pss_Shmem": 431130928,
+    "Private_Clean": 221688,
+    "Private_Dirty": 431641696,
+    "Anonymous": 492220,
+    "Swap": 0,
+    "SwapPss": 0,
+    "Locked": 0
+  },
+  "faults_ticks": {
+    "minflt": 107952139,
+    "majflt": 47,
+    "utime": 11679,
+    "stime": 14669
+  },
+  "cpu_allowed": "0-111",
+  "numa_resident_pages": {
+    "4": 31763242,
+    "0": 13654447,
+    "1": 45519,
+    "2": 1357,
+    "3": 50077,
+    "5": 32090044,
+    "6": 30361160
+  },
+  "gpus": [
+    "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97887, 15630, 0, 0",
+    "1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97887, 11726, 0, 0"
+  ],
+  "gpu_processes": [
+    "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, 140535, 14796",
+    "GPU-69acfa26-8b60-61b5-702d-aee252c163cc, 140535, 10860"
+  ],
+  "key_present_in_log_sample": false,
+  "error_pattern_counts": {
+    "SIGBUS": 0,
+    "illegal instruction": 0,
+    "unsupported.*(kernel|arch)": 0,
+    "out of memory": 0,
+    "CUDA error": 0,
+    "GGML_ASSERT": 0,
+    "error:": 0,
+    "failed": 0
+  },
+  "phase_lines": [
+    "5.36.687.027 I cmn          init: llama threadpool init, n_threads = 112"
+  ]
+}

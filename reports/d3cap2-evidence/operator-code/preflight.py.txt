@@ -1,0 +1,68 @@
+"""One fixed read-only Manager preflight, plus guarded report output."""
+admission_guards=guard()
+protected(REPORT.parent,directory=True);REPORT.mkdir(mode=0o700,exist_ok=True)
+protected(REPORT,directory=True);os.chmod(REPORT,0o700);assert stat.S_IMODE(REPORT.stat().st_mode)==0o700
+source={}
+for rel,row in INVENTORY['files'].items():
+    p=protected(SRC/rel)
+    digest=hashlib.sha256(p.read_bytes()).hexdigest()
+    assert digest==row['sha256'],'installed_source_hash:'+rel
+    assert stat.S_IMODE(p.stat().st_mode)==int(row['mode'],8),'installed_source_mode:'+rel
+    source[rel]=digest
+for rel,row in INVENTORY['rollback_only_files'].items():
+    p=protected(Path('/data/services/llm-manager/d3n32-20260915/rollback')/rel)
+    assert hashlib.sha256(p.read_bytes()).hexdigest()==row['sha256'],'rollback_hash'
+c=inspect_container(OLD);i=identity(c)
+assert i=={'id':OLD,'image':IMAGE,'pid':243279,'started_at':'2026-09-15T04:09:20.746242473Z','start_ticks':2367582,'restart_count':0},'old_identity'
+assert c['State']['Running'] and not any(c['State'][k] for k in ('Paused','Restarting','OOMKilled','Dead'))
+assert c['RestartPolicy']['Name']=='no'
+d1=inspect_container(D1);assert not d1['State']['Running'] and d1['RestartPolicy']['Name']=='no'
+q=quiet();control=control_state();key=key_state();files=stable_files()
+assert files['/data/services/llm-manager/deployment-instance.json']=='afd1e6e07db92f4e7b6d713752a33b9886f516d57ac3153971310e72688ba2e6'
+assert files['/usr/local/lib/llm-server/control-api.manifest.json']=='8fe8b5c32da9e212cae7e1d50751deec0d91c8aa1405a10e343fe21b33e712e0'
+active=Path('/data/services/llm-manager/active/active.json')
+assert hashlib.sha256(protected(active).read_bytes()).hexdigest()=='90757bf8175f23881d6cbde6b4513cf929bf9eeb5172838e640bd376332bee8f'
+processes=[];fixture=[]
+for p in Path('/proc').iterdir():
+    if not p.name.isdigit() or int(p.name)==os.getpid():continue
+    try:cmd=(p/'cmdline').read_bytes()
+    except (FileNotFoundError,PermissionError,ProcessLookupError):continue
+    if b'exec(json.loads(sys.stdin.readline()))' in cmd or b'd3perfvm' in cmd.lower():processes.append(int(p.name))
+    if b'cache_probe.py' in cmd or b'run_pinned_image.py' in cmd:fixture.append(int(p.name))
+assert not processes,'prior_request_sampler_process'
+logs=Path(c['LogPath']);assert logs.stat().st_size<524288
+markers=[]
+for line in logs.read_bytes().splitlines():
+    row=json.loads(line)
+    if re.search(r'\brelease\b.*stop processing|all slots are idle',row['log'],re.I):markers.append(row['time'])
+assert markers and markers[-1]=='2026-09-15T04:32:15.806020433Z','latest_slot_quiescence'
+sys.path.insert(0,str(SRC/'scripts'))
+from common.lifecycle_lease import acquire_lease
+with acquire_lease(blocking=False) as lease:
+    m=manager();state=m.read_state();assert state['selected']==ORIGINAL and state['container']['id']==OLD and state['boot_policy']=='manual'
+    m.validate_reused_contract(m.trusted_container(state['container']),m.deployment(ORIGINAL))
+    target=m.deployment(TARGET)
+    from lifecycle.storage_binding import _entered_storage_context
+    from install import storage_io
+    created=[]
+    for name in ('cache','logs','service'):
+        p=Path(target['paths'][name]);assert not p.exists(),'scratch_unexpected_existing'
+        protected(p.parent,directory=True)
+        with m.binding.mounted_guard(storage_io) as mounted:
+            with _entered_storage_context(storage_io.AnchoredRoot(str(p.parent),mounted)) as anchor:
+                lease.validate();anchor.mkdir(p.name,mode=0o700,parents=False);anchor.check(p.name)
+        protected(p,directory=True);created.append(str(p))
+    write('scratch-preparation.json',{'created_exact_empty_directories':created,'allocation_attempts':0,'guards_after':guard()})
+    m.prepare_start(target)
+    assert m.docker.inspect(target['container_name']) is None,'target_container_already_exists'
+    current=json.loads((SRC/'configs/deployments'/str(ORIGINAL+'.json')).read_bytes())
+    target_raw=json.loads((SRC/'configs/deployments'/str(TARGET+'.json')).read_bytes())
+    diff={k:{'before':current.get(k),'target':target_raw.get(k)} for k in current.keys()|target_raw.keys() if current.get(k)!=target_raw.get(k)}
+    event=emit('target_preflight_pass',identity=i,deadline_seconds=target['launch']['timeout_seconds'],root_available_bytes=admission_guards[-1]['capacity']['root_available_bytes'],previous_requests_zero=True,previous_slot_release=markers[-1],q38_fixture_pids=fixture,allocation_attempts=0)
+    write('preflight-event.json',event)
+full=full_idle(OLD,32768)
+result={'guards':admission_guards,'identity':i,'source_sha256':source,'file_hashes':files,'key_metadata':key['metadata'],'control':control,'quiescence':q,'prior_task_processes':processes,'q38_fixture_pids':fixture,'last_slot_release':markers[-1],'state':state,'target_diff':diff,'deadline_seconds':target['launch']['timeout_seconds'],'idle_full':full,'preflight_lease_released':True}
+write('private-baseline.json',{'key':key,'files':files})
+write('admission.json',result)
+final_guard=guard();write('preflight-final-guards.json',final_guard)
+emit('admission_complete',result=result)

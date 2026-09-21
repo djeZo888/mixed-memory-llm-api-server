@@ -1,0 +1,19 @@
+PASS: /data is mounted and ready
+- root source: /dev/mapper/ubuntu--vg-ubuntu--lv
+- data source: /dev/sdb1
+- data fstype: ext4
+- data label: AI_DATA
+- data UUID: 8daf56f1-5649-4163-9d87-919c2d271875
+PASS: root disk guard passed
+Tue Sep 15 00:21:19 UTC 2026
+MainPID=0
+ActiveState=inactive
+SubState=dead
+InvocationID=
+## milestone/m6b-nvidia-container-toolkit-install...origin/milestone/m6b-nvidia-container-toolkit-install
+ M reports/m3-root-disk-guard.md
+ M reports/m4b-docker-containerd-install.md
+ M reports/m6b-nvidia-container-toolkit-install.md
+/data/services/mixed-memory-llm-api-server/reports/m3-root-disk-guard.md: OK
+/data/services/mixed-memory-llm-api-server/reports/m4b-docker-containerd-install.md: OK
+/data/services/mixed-memory-llm-api-server/reports/m6b-nvidia-container-toolkit-install.md: OK

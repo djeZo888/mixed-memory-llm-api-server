@@ -1,0 +1,4 @@
+Read-only followup after 2026-09-15T04:34:29.993296Z registered postguard stop.
+STOP: registered storage identity, ownership, layout or capacity guard failed
+Filesystem                          1B-blocks        Used  Available Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv 15186501632 10763182080 3629547520  75% /

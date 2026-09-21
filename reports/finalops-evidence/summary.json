@@ -1,0 +1,322 @@
+{
+  "task": "FINALOPS",
+  "worker": "Mac-Worker1",
+  "session_id": "01a0ae41-156a-7ee0-8b4e-b2b6a1dd77ad",
+  "runtime_source_commit": "ab6daa475cc2f1c04956d862f460f9f01c4ee952",
+  "result": "COMPLETE",
+  "completed_utc": "2026-09-17T08:36:18.365933+00:00",
+  "remaining_targets": [],
+  "reboot": {
+    "count": 1,
+    "dispatch_utc": "2026-09-17T07:57:22.475249Z",
+    "first_observed_ssh_new_boot_utc": "2026-09-17T08:02:03.693464Z",
+    "native_control_ready_utc": "2026-09-17T08:02:23.580691Z",
+    "worker2_lan_pass_utc": "2026-09-17T08:06:22.492747Z",
+    "old_boot_id": "f059feb9-8fc1-41f2-a64d-38cc3516ed44",
+    "new_boot_id": "a32f0280-3165-4b92-ac9c-776021439463",
+    "canonical_lease_released_before_dispatch": true,
+    "temporary_ssh_errors": [
+      "timeout",
+      "No route to host"
+    ],
+    "error_cause": "not established",
+    "dispatch_to_first_observed_ssh_seconds": 281.218215,
+    "dispatch_to_ready_seconds": 301.105442
+  },
+  "retained_backend": {
+    "profile": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+    "container_id": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+    "image": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "pid": 11259,
+    "started_at": "2026-09-17T07:59:22.812551896Z",
+    "generation": 6,
+    "active_identity": "ca6d3a9f31159aecb4f45d5859bd9cf4cdc304d2cc22ce7165fd3a53abe7abb1",
+    "selected_desired_boot": [
+      "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+      "running",
+      "resume"
+    ],
+    "catalog_entries": [
+      "glm-5.3-ud-q4-k-xl-n76-native1m",
+      "qwen38-27b-1000000-yarn4-tp2-bf16kv"
+    ],
+    "catalog_limit": "Exactly two retained entries; only selected Qwen is running/ready. No claim of simultaneous loaded models."
+  },
+  "registered_filesystems": {
+    "/data": {
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+      "fstype": "ext4"
+    },
+    "/data/models-large": {
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+      "fstype": "ext4"
+    }
+  },
+  "cleanup": {
+    "allocated_weight_bytes_removed": 586788376576,
+    "canonical_lease": "RELEASED",
+    "completed": [
+      {
+        "absence_verified": true,
+        "filesystem_free_delta": "measure_separately_in_runner",
+        "removed_inventory_allocated_bytes": 443776548864,
+        "root": "/data/models/minimax-m3-mxfp8"
+      },
+      {
+        "absence_verified": true,
+        "filesystem_free_delta": "measure_separately_in_runner",
+        "removed_inventory_allocated_bytes": 61084520448,
+        "root": "/data/models/qwen3-30b-a3b-instruct-2507"
+      },
+      {
+        "absence_verified": true,
+        "filesystem_free_delta": "measure_separately_in_runner",
+        "removed_inventory_allocated_bytes": 1519300608,
+        "root": "/data/models/qwen3-0.6b-smoke"
+      },
+      {
+        "absence_verified": true,
+        "filesystem_free_delta": "measure_separately_in_runner",
+        "removed_inventory_allocated_bytes": 80408006656,
+        "root": "/data/models-large/qwen3-coder-next-fp8"
+      }
+    ],
+    "concurrent_write_limitation": "Filesystem deltas include concurrent service/log writes and filesystem accounting; allocation removed is measured separately. Metadata backups do not restore weights.",
+    "free_after": {
+      "/": 5545844736,
+      "/data": 1844134727680,
+      "/data/models-large": 2671267291136
+    },
+    "free_before": {
+      "/": 5546250240,
+      "/data": 1337402023936,
+      "/data/models-large": 2590859284480
+    },
+    "free_delta": {
+      "/": -405504,
+      "/data": 506732703744,
+      "/data/models-large": 80408006656
+    },
+    "generation": 6,
+    "gpu": {
+      "gpus": [
+        "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 595.84, 97887, 48640",
+        "1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 595.84, 97887, 48608"
+      ],
+      "installed": "595.84",
+      "kernel": "6.8.0-139-generic",
+      "loaded": "595.84"
+    },
+    "guards": "PASS",
+    "metadata_backup_allocated_bytes": 28672,
+    "parent_restored": true,
+    "phase": "C1_APPLY_RELEASED",
+    "preservation": "PASS",
+    "qwen_pid": 11259,
+    "retired_containers": [
+      "634daeb70a3ae9aa7403ec8d2256984de9cfe8b5521b839de16a1707164f7522",
+      "321ee2110e2e0130739ca51fe192b23d746ecefca76e746c9e2df3fd8a799153",
+      "6cfa91273417ad7f5ae23a471aaf7b2f5be47bfab74550df93b71587fb3fb71f"
+    ],
+    "retired_metadata": [
+      {
+        "backup": "/data/logs/finalops-20260917/retired-metadata-qwen3-coder-next-fp8.complete.json.json",
+        "backup_allocated_bytes": 16384,
+        "backup_bytes": 14118,
+        "path": "/data/services/llm-manager/acquisition/qwen3-coder-next-fp8.complete.json",
+        "retired_allocated_bytes": 12288
+      },
+      {
+        "backup": "/data/logs/finalops-20260917/retired-metadata-minimax-m3-poc.compose.yml.json",
+        "backup_allocated_bytes": 4096,
+        "backup_bytes": 3726,
+        "path": "/data/services/llm-manager/compose/minimax-m3-poc.compose.yml",
+        "retired_allocated_bytes": 4096
+      },
+      {
+        "backup": "/data/logs/finalops-20260917/retired-metadata-sglang-smoke.compose.yml.json",
+        "backup_allocated_bytes": 4096,
+        "backup_bytes": 2348,
+        "path": "/data/services/llm-manager/compose/sglang-smoke.compose.yml",
+        "retired_allocated_bytes": 4096
+      },
+      {
+        "backup": "/data/logs/finalops-20260917/retired-metadata-sglang-qwen3-30b.compose.yml.json",
+        "backup_allocated_bytes": 4096,
+        "backup_bytes": 2556,
+        "path": "/data/services/llm-manager/compose/sglang-qwen3-30b.compose.yml",
+        "retired_allocated_bytes": 4096
+      }
+    ],
+    "retired_metadata_allocated_bytes": 24576,
+    "utc": "2026-09-17T08:36:18.365933+00:00"
+  },
+  "authorization": "Exact root incoming.md approval of corrected 08:25:23 snapshots, stopped IDs and four metadata references; later conditional order-only normalization approval",
+  "normalization": {
+    "baseline_path": "/data/logs/finalops-20260917/cleanup-corrected-dry-run.json",
+    "baseline_public_events_utc": "2026-09-17T08:25:23.893247+00:00 through 08:25:23.893364+00:00",
+    "current_assertion_pass_utc": "2026-09-17T08:34:19.302776+00:00",
+    "complete_record_multisets_equal": true,
+    "normalization": "JSON deep copy and sort complete Mounts records; all fields and duplicate multiplicities retained; no other normalization",
+    "no_other_running_state_differences": true,
+    "lifecycle_contract_validated": true,
+    "pid": 11259,
+    "generation": 6,
+    "proof": "Runtime full normalized state equality assertion completed before C1_PREAPPLY_VERIFIED; original refusal preserved in 083143 capture",
+    "executed_source_sha256": "7019f2c52c47b4753e400152c466c9913647dcbbe9304546b58cd351a240a0e5",
+    "original_refusal": "accepted_running_state_drift at 2026-09-17T08:32:04.197256+00:00",
+    "diagnostic": "18 positional Mounts leaf differences only at 08:33:32.728642+00:00",
+    "original_diagnosis": {
+      "container_id": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+      "differences": [
+        {
+          "field": "running/container/Mounts/0/Destination",
+          "new_type": "str",
+          "old_type": "str"
+        },
+        {
+          "field": "running/container/Mounts/0/RW",
+          "new_type": "bool",
+          "old_type": "bool"
+        },
+        {
+          "field": "running/container/Mounts/0/Source",
+          "new_type": "str",
+          "old_type": "str"
+        },
+        {
+          "field": "running/container/Mounts/1/Destination",
+          "new_type": "str",
+          "old_type": "str"
+        },
+        {
+          "field": "running/container/Mounts/1/RW",
+          "new_type": "bool",
+          "old_type": "bool"
+        },
+        {
+          "field": "running/container/Mounts/1/Source",
+          "new_type": "str",
+          "old_type": "str"
+        },
+        {
+          "field": "running/container/Mounts/2/Destination",
+          "new_type": "str",
+          "old_type": "str"
+        },
+        {
+          "field": "running/container/Mounts/2/RW",
+          "new_type": "bool",
+          "old_type": "bool"
+        },
+        {
+          "field": "running/container/Mounts/2/Source",
+          "new_type": "str",
+          "old_type": "str"
+        },
+        {
+          "field": "running/container/Mounts/3/Destination",
+          "new_type": "str",
+          "old_type": "str"
+        },
+        {
+          "field": "running/container/Mounts/3/RW",
+          "new_type": "bool",
+          "old_type": "bool"
+        },
+        {
+          "field": "running/container/Mounts/3/Source",
+          "new_type": "str",
+          "old_type": "str"
+        },
+        {
+          "field": "running/container/Mounts/4/Destination",
+          "new_type": "str",
+          "old_type": "str"
+        },
+        {
+          "field": "running/container/Mounts/4/RW",
+          "new_type": "bool",
+          "old_type": "bool"
+        },
+        {
+          "field": "running/container/Mounts/4/Source",
+          "new_type": "str",
+          "old_type": "str"
+        },
+        {
+          "field": "running/container/Mounts/5/Destination",
+          "new_type": "str",
+          "old_type": "str"
+        },
+        {
+          "field": "running/container/Mounts/5/RW",
+          "new_type": "bool",
+          "old_type": "bool"
+        },
+        {
+          "field": "running/container/Mounts/5/Source",
+          "new_type": "str",
+          "old_type": "str"
+        }
+      ],
+      "generation": 6,
+      "mutation": false,
+      "phase": "C1_PREAPPLY_STATE_DIAGNOSIS",
+      "pid": 11259,
+      "utc": "2026-09-17T08:33:32.728642+00:00"
+    },
+    "original_diagnosis_capture": "worker-private-cleanup_apply_diagnose-20260917T083313Z",
+    "successful_apply_capture": "worker-private-cleanup_apply-20260917T083350Z",
+    "baseline_capture": "worker-private-cleanup_dry_run-20260917T082502Z",
+    "evidence_limit": "Full live comparator operands stayed in memory; the exact equality predicate and successful execution event are retained. Diagnostic capture lists differing field paths, not raw values."
+  },
+  "task_source_sha256": {
+    "c1_scoped_cleanup.py": "c0270cda697ec29bdb71cd1e23e92a4e646bc610dc14e2715537158df353438e",
+    "finalops-common.py": "8e4fb4f5f69c450acf1752a51b259341e252a8415b922084f8ca48da993bd19b",
+    "finalops-boot.py": "8db00091dae90bcdbd9011d7c556ef38fc9a90d8b4907dcbe7992a2f0f7a65e9",
+    "finalops-cleanup.py": "9b1185f985b7ef1ccc19cf57ee40a6600248546270b99e929ca9b9b6f793ec5f",
+    "finalops-apply.py": "c51e59d5554effb1feb975be5620cc7df9f4e676747ce8dd3c9988f33d50f9d2",
+    "run-finalops.py": "a19db40427f22d8593bcbc379499386698cbf5f7a7de4d6d027183ab4ca6f192",
+    "test_c1_scoped_cleanup.py": "c7e4bddd5dd1800f7afc8aa3378b05c41a999608bd0b4bace97440211cc6a4ad"
+  },
+  "validation": {
+    "helper_synthetic_cases_previously_passed": 11,
+    "new_test_matrix_run": false,
+    "installed_guard_mode": "0755",
+    "installed_dependency_mode": "0644",
+    "registry_mode": "0600",
+    "root_floor_bytes": 4294967296,
+    "per_target_absence_retained_metadata_mount_guard_native_control_catalog_checks": "PASS",
+    "source_receipt_key_weight_image_preservation": "PASS",
+    "gpu_alignment": "PASS"
+  },
+  "private_evidence": "Raw captures, keys, HTTP streams, environments and small operational metadata contents are excluded. Protected VM evidence stays under /data/logs/finalops-20260917.",
+  "ownership": "Canonical lease and local request lock released; no active or inflight Worker1 VM command",
+  "original_refusals": [
+    {
+      "capture_directory": "worker-private-reboot-20260917T075629Z",
+      "error_type": "AssertionError",
+      "healthy_backend_stop_attempted": false,
+      "phase": "FINALOPS_BLOCKED",
+      "reason": "report_parent_mode",
+      "utc": "2026-09-17T07:56:49.170700+00:00"
+    },
+    {
+      "capture_directory": "worker-private-cleanup_dry_run-20260917T080826Z",
+      "error_type": "JSONDecodeError",
+      "healthy_backend_stop_attempted": false,
+      "phase": "FINALOPS_BLOCKED",
+      "reason": "operation_failed_private_stderr",
+      "utc": "2026-09-17T08:08:46.981008+00:00"
+    },
+    {
+      "capture_directory": "worker-private-cleanup_apply-20260917T083143Z",
+      "error_type": "AssertionError",
+      "healthy_backend_stop_attempted": false,
+      "phase": "FINALOPS_BLOCKED",
+      "reason": "accepted_running_state_drift",
+      "utc": "2026-09-17T08:32:04.197256+00:00"
+    }
+  ]
+}

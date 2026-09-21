@@ -1,0 +1,251 @@
+{
+  "exceptions": [
+    {
+      "clause": "deadline_exceeded",
+      "exception": "ControlError",
+      "file": "control/protocol.py",
+      "function": "remaining",
+      "line": 42
+    },
+    {
+      "clause": "deadline_exceeded",
+      "exception": "ControlError",
+      "file": "control/adapter.py",
+      "function": "call",
+      "line": 96
+    },
+    {
+      "clause": "deadline_exceeded",
+      "exception": "ControlError",
+      "file": "install/storage.py",
+      "function": "_run",
+      "line": 87
+    },
+    {
+      "clause": "registered_storage_verification_failed",
+      "exception": "BindingError",
+      "file": "lifecycle/storage_binding.py",
+      "function": "wrapped",
+      "line": 37
+    },
+    {
+      "clause": "registered_storage_verification_failed",
+      "exception": "BindingError",
+      "file": "lifecycle/storage_binding.py",
+      "function": "validate_path",
+      "line": 274
+    },
+    {
+      "clause": "registered_storage_verification_failed",
+      "exception": "BindingError",
+      "file": "lifecycle/storage_binding.py",
+      "function": "wrapped",
+      "line": 33
+    },
+    {
+      "clause": "registered_storage_verification_failed",
+      "exception": "BindingError",
+      "file": "lifecycle/qwen38.py",
+      "function": "validate",
+      "line": 152
+    },
+    {
+      "clause": "registered_storage_verification_failed",
+      "exception": "BindingError",
+      "file": "lifecycle/qwen38.py",
+      "function": "wrapped",
+      "line": 70
+    },
+    {
+      "clause": "qwen38_contract_invalid",
+      "exception": "LifecycleError",
+      "file": "lifecycle/qwen38.py",
+      "function": "wrapped",
+      "line": 75
+    },
+    {
+      "clause": "qwen38_contract_invalid",
+      "exception": "LifecycleError",
+      "file": "lifecycle/manager.py",
+      "function": "validate_deployment",
+      "line": 401
+    },
+    {
+      "clause": "qwen38_contract_invalid",
+      "exception": "LifecycleError",
+      "file": "lifecycle/manager.py",
+      "function": "deployment",
+      "line": 335
+    },
+    {
+      "clause": "qwen38_contract_invalid",
+      "exception": "LifecycleError",
+      "file": "control/adapter.py",
+      "function": "observe",
+      "line": 170
+    },
+    {
+      "clause": "deadline_exceeded",
+      "exception": "ControlError",
+      "file": "control/protocol.py",
+      "function": "remaining",
+      "line": 42
+    },
+    {
+      "clause": "deadline_exceeded",
+      "exception": "ControlError",
+      "file": "control/adapter.py",
+      "function": "call",
+      "line": 96
+    },
+    {
+      "clause": "deadline_exceeded",
+      "exception": "ControlError",
+      "file": "install/storage.py",
+      "function": "_run",
+      "line": 87
+    },
+    {
+      "clause": "registered_storage_verification_failed",
+      "exception": "BindingError",
+      "file": "lifecycle/storage_binding.py",
+      "function": "wrapped",
+      "line": 37
+    },
+    {
+      "clause": "registered_storage_verification_failed",
+      "exception": "BindingError",
+      "file": "lifecycle/qwen38.py",
+      "function": "validate",
+      "line": 150
+    },
+    {
+      "clause": "registered_storage_verification_failed",
+      "exception": "BindingError",
+      "file": "lifecycle/qwen38.py",
+      "function": "wrapped",
+      "line": 70
+    },
+    {
+      "clause": "qwen38_contract_invalid",
+      "exception": "LifecycleError",
+      "file": "lifecycle/qwen38.py",
+      "function": "wrapped",
+      "line": 75
+    },
+    {
+      "clause": "qwen38_contract_invalid",
+      "exception": "LifecycleError",
+      "file": "lifecycle/manager.py",
+      "function": "validate_deployment",
+      "line": 401
+    },
+    {
+      "clause": "qwen38_contract_invalid",
+      "exception": "LifecycleError",
+      "file": "lifecycle/manager.py",
+      "function": "deployment",
+      "line": 335
+    },
+    {
+      "clause": "qwen38_contract_invalid",
+      "exception": "LifecycleError",
+      "file": "control/adapter.py",
+      "function": "observe",
+      "line": 187
+    },
+    {
+      "clause": "deadline_exceeded",
+      "exception": "ControlError",
+      "file": "control/protocol.py",
+      "function": "remaining",
+      "line": 42
+    },
+    {
+      "clause": "deadline_exceeded",
+      "exception": "ControlError",
+      "file": "control/adapter.py",
+      "function": "_bounded",
+      "line": 118
+    },
+    {
+      "clause": "deadline_exceeded",
+      "exception": "ControlError",
+      "file": "control/adapter.py",
+      "function": "observe",
+      "line": 143
+    }
+  ],
+  "model_requests": "Only existing observe authenticated health/model probe if reached",
+  "outcome": {
+    "clause": "deadline_exceeded",
+    "elapsed_seconds": 2.190813817000162,
+    "exception": "ControlError",
+    "open_seconds": 0.5007190349988377
+  },
+  "phase": "CONTROL_EXACT_2S_DIAGNOSTIC",
+  "production_deadline_seconds": 2,
+  "source_unchanged": true,
+  "timings": {
+    "control/adapter.py:load": {
+      "calls": 1,
+      "seconds": 0.37135925400070846
+    },
+    "control/adapter.py:observe": {
+      "calls": 1,
+      "seconds": 1.6900376949997735
+    },
+    "control/adapter.py:open": {
+      "calls": 1,
+      "seconds": 0.4988913239994872
+    },
+    "install/storage.py:verify": {
+      "calls": 19,
+      "seconds": 1.4476229479987524
+    },
+    "lifecycle/manager.py:check_mounts": {
+      "calls": 3,
+      "seconds": 0.3612805800021306
+    },
+    "lifecycle/manager.py:deployment": {
+      "calls": 2,
+      "seconds": 1.1663424010002927
+    },
+    "lifecycle/manager.py:load_manager": {
+      "calls": 1,
+      "seconds": 0.37134205700021994
+    },
+    "lifecycle/manager.py:run": {
+      "calls": 261,
+      "seconds": 0.8014179130150296
+    },
+    "lifecycle/manager.py:validate_deployment": {
+      "calls": 2,
+      "seconds": 1.0651829630005523
+    },
+    "lifecycle/qwen38.py:validate": {
+      "calls": 2,
+      "seconds": 1.0164931530016474
+    },
+    "lifecycle/runtime_io.py:run": {
+      "calls": 265,
+      "seconds": 0.9067852859989216
+    },
+    "lifecycle/storage_binding.py:load": {
+      "calls": 1,
+      "seconds": 0.12123991799853684
+    },
+    "lifecycle/storage_binding.py:read_json": {
+      "calls": 2,
+      "seconds": 0.4512832839991461
+    },
+    "lifecycle/storage_binding.py:validate_path": {
+      "calls": 13,
+      "seconds": 1.119108483000673
+    },
+    "lifecycle/storage_binding.py:verify": {
+      "calls": 19,
+      "seconds": 1.6028840790004324
+    }
+  }
+}

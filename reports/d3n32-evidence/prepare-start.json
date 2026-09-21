@@ -1,0 +1,10 @@
+{
+  "deadline_seconds": 7200,
+  "immutable_image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+  "old_owner_contract": "PASS",
+  "old_still_running": true,
+  "phase": "prepared_before_old_stop",
+  "profile": "glm-5.3-ud-q4-k-xl-n76-32k",
+  "state_sha256": "c63de9b1a77aa4d62496880c7dad8cb6a22a10de9736c5305545e3579d576f1f",
+  "status": "PASS"
+}

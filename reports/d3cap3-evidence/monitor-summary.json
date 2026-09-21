@@ -1,0 +1,29 @@
+{
+  "retained_safe_samples": 15,
+  "rejected_samples_preserved": 1,
+  "target_hz": 1,
+  "loading_freshness_seconds": 10,
+  "slow_above_seconds": 2,
+  "producer_timestamp_first": 1789450041.271859,
+  "producer_timestamp_last": 1789450056.2536364,
+  "sample_span_seconds": 14.981777133001742,
+  "producer_gap_min_seconds": 0.9825149630014494,
+  "producer_gap_max_seconds": 1.0018347139994148,
+  "producer_gap_median_seconds": 0.9997963120003988,
+  "slow_gaps_over_2_seconds": 0,
+  "sample_duration_min_seconds": 0.034616476001247065,
+  "sample_duration_max_seconds": 0.050817872001061914,
+  "controller_receipt_gap_max_seconds": 1.102195,
+  "cross_host_clock_note": "Producer UTC and controller receipt UTC retained; clocks not calibrated, so their difference is not transport delay. Producer gaps use remote monotonic samples.",
+  "pss_during_loading_or_request": false,
+  "samples_include_metric_call_timings": true,
+  "rejected_call_timings_location": "first-transition-failure.json metric_calls",
+  "first_failure_reason": "host_new_swap_counters",
+  "first_failure_vmstat_delta": {
+    "oom_kill": 0,
+    "pswpin": 1,
+    "pswpout": 98
+  },
+  "first_failure_oom_killed": false,
+  "first_failure_target_vmswap_kib": 0
+}

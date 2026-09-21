@@ -1,0 +1,22 @@
+{
+  "reports/l2vm-finalize.py": {
+    "help": "PASS",
+    "syntax": "PASS"
+  },
+  "reports/l2vm-inventory.py": {
+    "help": "PASS",
+    "syntax": "PASS"
+  },
+  "reports/l2vm-publish-q38.py": {
+    "help": "PASS",
+    "syntax": "PASS"
+  },
+  "reports/l2vm-q38-check.py": {
+    "help": "PASS",
+    "syntax": "PASS"
+  },
+  "reports/l2vm-stage.py": {
+    "help": "PASS",
+    "syntax": "PASS"
+  }
+}

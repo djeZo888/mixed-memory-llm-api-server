@@ -1,0 +1,98 @@
+{
+  "conditions": [
+    "canonical guards PASS and both exact volume identities retained",
+    "control stopped/unenabled; state bytes/timestamps/container/native key match original",
+    "each owned target still equals recorded post hash/metadata; refuse drift",
+    "preserve N1VM files and D3B run/children"
+  ],
+  "guard_authority": {
+    "guards": {
+      "require-data-mounted.sh": {
+        "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/require-data-mounted.sh",
+        "sha256": "5bd86b1e3f84fe5ca76922ca896289edb723b09bc03b99044b7d1ec320215c4f"
+      },
+      "root-disk-guard.sh": {
+        "path": "/data/services/releases/7b541017c3e1b2bda80676bcd31bc87d0a4507bc-d3-20260915/scripts/common/root-disk-guard.sh",
+        "sha256": "2f798c28d905fd819b00c550c0fd3cd7ebdac95ebb32f38876bce952dcbaf813"
+      }
+    },
+    "reviewed_commit": "7b541017c3e1b2bda80676bcd31bc87d0a4507bc",
+    "rule": "Use exact protected corrected D3 release after source/ownership hash checks. Never historical dirty checkout guard. Preserve /tmp artifacts. STOP on real guard failure."
+  },
+  "lease": "/run/llmctl/lifecycle.lock",
+  "original_absences": [
+    "/data/services/llm-control/operations.json",
+    "/data/services/llm-manager/acquisition/qwen38-27b-fp8.complete.json",
+    "/etc/llm-server/control.json",
+    "/etc/local-ai-server/storage.json",
+    "/etc/systemd/system/llm-control.service",
+    "/etc/systemd/system/llmctl-boot.service",
+    "/etc/tmpfiles.d/llmctl.conf"
+  ],
+  "original_metadata": {
+    "/data/backups": {
+      "ctime_ns": 1782981398249591364,
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 14417921,
+      "mode": "2775",
+      "mtime_ns": 1782981398233591295,
+      "nlink": 2,
+      "size": 4096,
+      "type": "dir",
+      "uid": 1000
+    },
+    "/data/build": {
+      "ctime_ns": 1789441057584388661,
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 21757953,
+      "mode": "2775",
+      "mtime_ns": 1789441057584388661,
+      "nlink": 15,
+      "size": 4096,
+      "type": "dir",
+      "uid": 1000
+    },
+    "/data/hf-cache": {
+      "ctime_ns": 1783542564968848668,
+      "dev": 2065,
+      "gid": 1001,
+      "ino": 16777217,
+      "mode": "2775",
+      "mtime_ns": 1783542564968848668,
+      "nlink": 10,
+      "size": 4096,
+      "type": "dir",
+      "uid": 1000
+    },
+    "/data/logs": {
+      "ctime_ns": 1789433818433030191,
+      "dev": 2065,
+      "gid": 1000,
+      "ino": 47972353,
+      "mode": "2755",
+      "mtime_ns": 1789433818433030191,
+      "nlink": 8,
+      "size": 4096,
+      "type": "dir",
+      "uid": 1000
+    }
+  },
+  "schema_version": 1,
+  "scope": "conditional inverse only; no automatic rollback or state synthesis",
+  "shared_parent_reused": [
+    "/etc/llm-server",
+    "/usr/local/lib/llm-server"
+  ],
+  "source_original_absent": true,
+  "steps": [
+    "Restore deployment-instance.json from exact immediate preimport raw backup using reviewed anchored writer under lease, preserving original root:1001 mode0600; never restore active/recovery files.",
+    "Remove Q38 receipt only if separately published by this task and exact posthash matches; retain sealed acquisition proof/payload.",
+    "Remove only exact newly created control unit/config and absent-original dedicated control key (metadata only; do not read/hash key in inverse evidence). No native key action.",
+    "Remove exact46 manifested source files and sibling manifest if hashes match; rmdir only task-created empty source dirs, preserve private-network sibling/shared parents.",
+    "With registered guard still valid, remove empty llm-control/installer compatibility dirs only after no journal/service use; remove storage.json and empty local-ai-server parent as final registered step.",
+    "Restore four directory uid/gid/mode via retained no-follow FD, exact original inode/dev and no owner conflict, never recursive. Restore original setgid modes after chown.",
+    "Run canonical D3 guards after registry removal. Retain protected transaction backups and inverse evidence; no automatic reboot, filesystem, fstab, model or intent changes."
+  ]
+}

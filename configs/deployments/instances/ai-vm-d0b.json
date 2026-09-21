@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "id": "ai-vm-d0b",
+  "description": "Explicit current-host D0B identities from D1-CONTRACT.md; never selected automatically and not fresh-host defaults",
+  "required_mounts": [
+    {
+      "target": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+      "filesystem": "ext4"
+    },
+    {
+      "target": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+      "filesystem": "ext4"
+    }
+  ],
+  "paths": {
+    "state": "/data/services/llm-manager/active",
+    "lock": "/run/llmctl/lifecycle.lock",
+    "recovery": "/run/llmctl/recovery.json"
+  },
+  "runtime_evidence": {
+    "llama-cpp-v0.4.1-d1": {
+      "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+      "flags_verified": true,
+      "supported_flags": [
+        "--model",
+        "--host",
+        "--port",
+        "--alias",
+        "--api-key-file",
+        "--ctx-size",
+        "--parallel",
+        "--cpu-moe",
+        "--jinja",
+        "--no-webui",
+        "--n-gpu-layers",
+        "--split-mode",
+        "--tensor-split",
+        "--load-mode",
+        "--device",
+        "--chat-template-kwargs"
+      ],
+      "load_mode": "none",
+      "evidence": [
+        "reports/d2-contract-evidence/d1-runtime-proof.json",
+        "reports/d2-contract-evidence/d1-cli-selected.txt",
+        "reports/d2-contract-evidence/D1-CONTRACT.md"
+      ],
+      "validation_scope": "PASS_BUILD_CUDA_CLI_ONLY; GLM inference, tool calls and service activation NOT_TESTED",
+      "devices": [
+        "CUDA0",
+        "CUDA1"
+      ]
+    }
+  },
+  "model_integrity": {
+    "glm-5.3-ud-q4-k-xl": {
+      "verified": false,
+      "revision": "346b3591c7f28d1a23716f97a065ecf12ec14771",
+      "evidence": null
+    }
+  },
+  "obsolete_boot_owner_disabled": false,
+  "obsolete_boot_owner_evidence": null,
+  "notes": [
+    "D0B storage-ready PASS supplies exact mount identities; final D1 build/CUDA/CLI evidence is copied under reports/d2-contract-evidence/.",
+    "D3 must copy this file to an operator-owned instance path and add final D1 artifact integrity evidence and obsolete boot-owner removal evidence before start.",
+    "The supplied final D1 image ID and supported CLI are recorded explicitly for this host; --load-mode none and both CUDA devices are selected. Inference remains untested.",
+    "Set obsolete_boot_owner_disabled only after the R1 historical boot verifier is disabled and its branch-changing behavior removed as documented by D3.",
+    "D3/I1 must provision exact API token bytes with no trailing newline, mode0600, without printing or recording its value.",
+    "Historical import only: under the canonical lease, explicitly bind storage_identity to matching protected registration while preserving these concrete paths, mount identities, instance ID and all existing evidence. No implicit adoption or relocation."
+  ],
+  "storage_identity": null
+}

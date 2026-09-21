@@ -1,0 +1,10 @@
+{
+  "I1C-STORAGE-FROZEN.patch": "4a2ecd75e94d0724cd5428ed383ec2687a473f212f95192dd5be03f2de3e8148",
+  "L1B-CANDIDATE.patch": "937e90a9ecf4c2f41cbe47d06d828cb67393c882abcdcf2a470dc6921b1ab647",
+  "verification-committed-l1b.json": "9408cc61f14b416eb857d0179ed96e21f9a9cf4afb2dcd38c672dae2429de7b3",
+  "verification-control-all.log": "3e4c92bd021f9c640bdd24202f39a18ad3b98fa706e08bc22c9f71a8a8caff72",
+  "verification-fixtures.patch": "7976d69373800daf998cd33bf0f3c831c1bf3cd2a00d91b7efe90e2430ca57b9",
+  "verification-http.log": "bcca8d227b685c58d017bee182e8faec435f9ae81313f56e6163d37e82eeee0a",
+  "verification-input-sha256.json": "44bcc982f5d054768dfb39846eb230a816241fb959a1986fd75ace14157e9215",
+  "verification-real-roles.log": "08f81a3eb80480b7ace94f0bf0bf96ff8ffd510af9cad526b45b8ff5ecf8a036"
+}

@@ -1,0 +1,869 @@
+{
+  "source_pin": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+  "vm_source_root": "/data/build/d1-glm53-20260915/source",
+  "image_identity_supplied": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+  "access": "Read-only Worker1 SSH ai-vm: git rev-parse HEAD, scoped git diff HEAD, grep/nl/sed of pinned source and pre-existing captured help. No runtime, GPU helper, model metadata or tensor payload process invoked by this subtask; no VM writes.",
+  "verification": {
+    "live_head_equals_pin": true,
+    "scoped_diff_head_exit_code": 0,
+    "captured_help": "/data/build/d1-glm53-20260915/evidence/llama-server-help.txt:120-145",
+    "help_invoked": false
+  },
+  "candidate_review": {
+    "coordination_revision": 2,
+    "single_final_candidate": true,
+    "n_cpu_moe": 76,
+    "tensor_split": [
+      1,
+      1
+    ],
+    "tensor_split_changed": false,
+    "n_gpu_layers": 999,
+    "n_layer_all": 79,
+    "main_layers": 78,
+    "mtp_layers": 1,
+    "active_gpu_layer_slots": 80,
+    "normalized_split": [
+      0.5,
+      1.0
+    ],
+    "CUDA0": {
+      "assigned_blocks": [
+        0,
+        39
+      ],
+      "routed_gpu_expert_blocks": []
+    },
+    "CUDA1": {
+      "assigned_blocks": [
+        40,
+        78
+      ],
+      "routed_gpu_expert_blocks": [
+        76,
+        77
+      ],
+      "output_index": 79
+    },
+    "CPU_routed_expert_blocks": [
+      3,
+      75
+    ],
+    "skipped_mtp_block": 78,
+    "required_policy_change": "Replace --cpu-moe with --n-cpu-moe76 only for expert placement. Preserve tensor-split1,1. Plan native1,048,576 via sequential context progression after separate authorization; retainF16K/V, one slot and unchanged model/template/reasoning/NUMA contract.",
+    "expert_storage_GiB_from_parent_metadata": {
+      "CUDA0": 0.0,
+      "CUDA1": 11.671875
+    },
+    "native_conservative_budget_GiB": {
+      "each_card_total": 95.5927734375,
+      "baseline_sample_used": [
+        16.4140625,
+        12.63671875
+      ],
+      "subtract_already_allocated_32K_cache": [
+        1.5,
+        1.40625
+      ],
+      "add_native_F16_cache": [
+        48,
+        45
+      ],
+      "add_candidate_experts": [
+        0,
+        11.671875
+      ],
+      "each_card_additional_reserve": 24.0,
+      "reserve_components": {
+        "unknown_workspace_growth": 8.0,
+        "safety_floor": 16.0
+      },
+      "totals": [
+        86.9140625,
+        91.90234375
+      ],
+      "remaining_beyond_reserve": [
+        8.6787109375,
+        3.6904296875
+      ],
+      "status": "Fits selected explicit allowances; actual occupied-context runtime peak remains unproven."
+    }
+  },
+  "baseline_assignment": {
+    "tensor_split": [
+      1,
+      1
+    ],
+    "CUDA0": [
+      0,
+      39
+    ],
+    "CUDA1": [
+      40,
+      78
+    ],
+    "output_gpu": "CUDA1",
+    "routed_experts": "CPU under --cpu-moe"
+  },
+  "fit_caveats": [
+    "Exact tensor bytes plus exact cache bytes are permanent allocation inputs, not an observed candidate peak.",
+    "Current source supports GLM MLA576/512F16FA and fused lightning indexer128/32; acceptance must verify actual backend execution and no fallback.",
+    "No layer-boundary change: baseline andcandidate1,1 retain same nonexpert/shared/output placement, enabling exact per-card32K cache subtraction and native cache addition.",
+    "SkippedMTP78 routed weights excluded; tiny router bias remains a loaded exception.",
+    "Retain entire historical hostPSS as RAM baseline; do not assert expertGPU bytes guarantee equalPSS reduction.",
+    "The current source review supersedes its prior32K-oriented placement arithmetic; onlyN76/1,1 is the final candidate."
+  ],
+  "citations": [
+    {
+      "id": "n_cpu_moe",
+      "path": "common/arg.cpp",
+      "lines": [
+        2755,
+        2771
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/common/arg.cpp#L2755-L2771",
+      "finding": "--cpu-moe appends global expert CPU override; --n-cpu-moe validates nonnegative N and appends first-N layer overrides."
+    },
+    {
+      "id": "expert_regex",
+      "path": "common/common.h",
+      "lines": [
+        1131,
+        1149
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/common/common.h#L1131-L1149",
+      "finding": "Exact C++ regex string: \\\\.ffn_(up|down|gate|gate_up)_(ch|)exps; layer prefixes blk\\\\.%d; loops i=0..N-1. Shared shexp does not match."
+    },
+    {
+      "id": "tensor_split_parse",
+      "path": "common/arg.cpp",
+      "lines": [
+        2826,
+        2852
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/common/arg.cpp#L2826-L2852",
+      "finding": "--tensor-split accepts comma or slash separated float proportions and zero-fills remaining device entries."
+    },
+    {
+      "id": "split_assignment",
+      "path": "src/llama-model.cpp",
+      "lines": [
+        1463,
+        1521
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-model.cpp#L1463-L1521",
+      "finding": "Copies explicit proportions; cumulative sum then normalize; start=max(n_layer_all+1-ngl,0); active=min(ngl,n_layer_all+1); GPU is upper_bound(splits,float(il-start)/active). Input always CPU, output uses il=n_layer_all."
+    },
+    {
+      "id": "layer_buffer",
+      "path": "src/llama-model.cpp",
+      "lines": [
+        1097,
+        1126
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-model.cpp#L1097-L1126",
+      "finding": "Row mode alone requests split buffer; ordinary layer mode starts with the device default CUDA buffer."
+    },
+    {
+      "id": "fallback",
+      "path": "src/llama-model.cpp",
+      "lines": [
+        1449,
+        1455
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-model.cpp#L1449-L1455",
+      "finding": "GPU buffer candidate lists append CPU buffer candidates as fallback."
+    },
+    {
+      "id": "cpu_buffer_types",
+      "path": "src/llama-model.cpp",
+      "lines": [
+        1036,
+        1094
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-model.cpp#L1036-L1094",
+      "finding": "CPU override candidate lists can include accelerator, CUDA host, extra CPU/repack and ordinary CPU buffers; CPU designation does not imply an exact PSS reduction."
+    },
+    {
+      "id": "override_precedence",
+      "path": "src/llama-model-loader.cpp",
+      "lines": [
+        1225,
+        1259
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-model-loader.cpp#L1225-L1259",
+      "finding": "regex_search; first matching override wins; CPU override chooses first supported CPU-list buffer; otherwise choose first supported assigned-layer buffer."
+    },
+    {
+      "id": "compatible_buffer",
+      "path": "src/llama-model-loader.cpp",
+      "lines": [
+        1049,
+        1070
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-model-loader.cpp#L1049-L1070",
+      "finding": "Runtime tests supports_op with a zero-size dummy buffer and returns first compatible type; this inspection did not invoke that code."
+    },
+    {
+      "id": "layer_count",
+      "path": "src/llama-model.cpp",
+      "lines": [
+        1234,
+        1237
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-model.cpp#L1234-L1237",
+      "finding": "GGUF block count loads n_layer_all and NextN metadata loads n_layer_nextn."
+    },
+    {
+      "id": "main_layers",
+      "path": "src/llama-hparams.cpp",
+      "lines": [
+        347,
+        349
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-hparams.cpp#L347-L349",
+      "finding": "n_layer() returns n_layer_all minus n_layer_nextn."
+    },
+    {
+      "id": "mtp_flag",
+      "path": "common/common.cpp",
+      "lines": [
+        1710,
+        1713
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/common/common.cpp#L1710-L1713",
+      "finding": "load_mtp true only when speculative types include COMMON_SPECULATIVE_TYPE_DRAFT_MTP."
+    },
+    {
+      "id": "glm_mtp_skip",
+      "path": "src/models/glm-dsa.cpp",
+      "lines": [
+        78,
+        122
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/models/glm-dsa.cpp#L78-L122",
+      "finding": "When !load_mtp, mtp_flags includes TENSOR_SKIP; layers i>=main n_layer use mtp_flags."
+    },
+    {
+      "id": "skip_tensor",
+      "path": "src/llama-model-loader.cpp",
+      "lines": [
+        1170,
+        1178
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-model-loader.cpp#L1170-L1178",
+      "finding": "TENSOR_SKIP logs unused tensor, subtracts its bytes from size_data, increments n_created, returns no buffer."
+    },
+    {
+      "id": "glm_tensor_groups",
+      "path": "src/models/glm-dsa.cpp",
+      "lines": [
+        149,
+        184
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/models/glm-dsa.cpp#L149-L184",
+      "finding": "Leading dense FFNs differ from routed expert gate/up/down exps; shared gate/up/down shexp are separate ordinary layer tensors. MTP extra tensors are also under flags."
+    },
+    {
+      "id": "glm_input_output",
+      "path": "src/models/glm-dsa.cpp",
+      "lines": [
+        109,
+        117
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/models/glm-dsa.cpp#L109-L117",
+      "finding": "token_embd input; output_norm and output output; tied embedding duplication only if output.weight absent."
+    },
+    {
+      "id": "cuda_supported_expert_types",
+      "path": "ggml/src/ggml-cuda/ggml-cuda.cu",
+      "lines": [
+        5123,
+        5177
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml-cuda/ggml-cuda.cu#L5123-L5177",
+      "finding": "CUDA MUL_MAT and MUL_MAT_ID supports F32/F16/Q4_K/Q5_K/Q6_K/IQ4_XS among listed types for expected nonstrided layouts; actual load must still confirm no fallback."
+    },
+    {
+      "id": "cuda_weight_alloc",
+      "path": "ggml/src/ggml-cuda/ggml-cuda.cu",
+      "lines": [
+        902,
+        924
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml-cuda/ggml-cuda.cu#L902-L924",
+      "finding": "CUDA alignment128 bytes; ordinary weight allocation=ggml_nbytes plus a terminal quant-row pad only if ne0 modulo MATRIX_ROW_PADDING is nonzero."
+    },
+    {
+      "id": "cuda_row_padding",
+      "path": "ggml/src/ggml-cuda/common.cuh",
+      "lines": [
+        186,
+        186
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml-cuda/common.cuh#L186-L186",
+      "finding": "MATRIX_ROW_PADDING=512; expert row dimensions divisible512 add no quant-row pad."
+    },
+    {
+      "id": "glm_cache_filter",
+      "path": "src/llama-model.cpp",
+      "lines": [
+        2322,
+        2344
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-model.cpp#L2322-L2344",
+      "finding": "Main DSA cache excludes NextN and indexer cache retains only main full-indexer layers."
+    },
+    {
+      "id": "cache_assignment",
+      "path": "src/llama-kv-cache.cpp",
+      "lines": [
+        208,
+        234
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-kv-cache.cpp#L208-L234",
+      "finding": "KV buffer follows model.dev_layer(il) when offloaded; dimensions are embedding width by kv_size by streams; MLA uses K-only."
+    },
+    {
+      "id": "dsa_cache",
+      "path": "src/llama-kv-cache-dsa.cpp",
+      "lines": [
+        31,
+        53
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-kv-cache-dsa.cpp#L31-L53",
+      "finding": "Main MLA cache plus separate indexer key cache with one key head and indexer-head-size width."
+    },
+    {
+      "id": "quant_sizes",
+      "path": "gguf-py/gguf/constants.py",
+      "lines": [
+        5846,
+        5861
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/gguf-py/gguf/constants.py#L5846-L5861",
+      "finding": "Pinned GGUF (block elements, stored bytes): F32(1,4), Q8_0(32,34), Q4_K(256,144), Q5_K(256,176), Q6_K(256,210)."
+    },
+    {
+      "id": "c_f32_trait",
+      "path": "ggml/src/ggml.c",
+      "lines": [
+        663,
+        668
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml.c#L663-L668",
+      "finding": "F32 block1, type size sizeof(float)."
+    },
+    {
+      "id": "c_q8_trait",
+      "path": "ggml/src/ggml.c",
+      "lines": [
+        737,
+        744
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml.c#L737-L744",
+      "finding": "Q8_0 block QK8_0; type size sizeof(block_q8_0)."
+    },
+    {
+      "id": "c_k_traits",
+      "path": "ggml/src/ggml.c",
+      "lines": [
+        784,
+        807
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml.c#L784-L807",
+      "finding": "Q4_K/Q5_K/Q6_K use QK_K elements and sizeof corresponding packed C block."
+    },
+    {
+      "id": "c_q8_size",
+      "path": "ggml/src/ggml-common.h",
+      "lines": [
+        251,
+        256
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml-common.h#L251-L256",
+      "finding": "QK8_0=32; static assertion sizeof(block_q8_0)=sizeof(ggml_half)+QK8_0."
+    },
+    {
+      "id": "c_k45_sizes",
+      "path": "ggml/src/ggml-common.h",
+      "lines": [
+        330,
+        356
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml-common.h#L330-L356",
+      "finding": "C Q4_K/Q5_K block static assertions include scales and block payload, matching GGUF constants."
+    },
+    {
+      "id": "c_row_size",
+      "path": "ggml/src/ggml.c",
+      "lines": [
+        1339,
+        1344
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml.c#L1339-L1344",
+      "finding": "Row-size computation asserts row divisible by block size, then returns type_size*ne/block_size."
+    },
+    {
+      "id": "glm_indexer_key",
+      "path": "src/llama-arch.cpp",
+      "lines": [
+        289,
+        289
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-arch.cpp#L289-L289",
+      "finding": "Exact optional metadata key: glm-dsa.attention.indexer.types."
+    },
+    {
+      "id": "glm_native_indexer_defaults",
+      "path": "src/models/glm-dsa.cpp",
+      "lines": [
+        5,
+        27
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/models/glm-dsa.cpp#L5-L27",
+      "finding": "Default full indexer pattern starts1,1 then repeated1,0,0,0; among78 main blocks indices0,1,2,6,10,...,74 are full (21)."
+    },
+    {
+      "id": "glm_indexer_default_selection",
+      "path": "src/models/glm-dsa.cpp",
+      "lines": [
+        59,
+        66
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/models/glm-dsa.cpp#L59-L66",
+      "finding": "For n_ctx_train>=1048576 use GLM5.2 default indexer pattern; optional metadata key can override. Parent supplemental metadata read confirms absent."
+    },
+    {
+      "id": "default_cache_types",
+      "path": "common/common.h",
+      "lines": [
+        587,
+        588
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/common/common.h#L587-L588",
+      "finding": "Default cache_type_k and cache_type_v areF16."
+    },
+    {
+      "id": "default_batch_sizes",
+      "path": "common/common.h",
+      "lines": [
+        450,
+        452
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/common/common.h#L450-L452",
+      "finding": "Defaults n_batch2048 and physical n_ubatch512."
+    },
+    {
+      "id": "cache_type_flags",
+      "path": "common/arg.cpp",
+      "lines": [
+        2433,
+        2458
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/common/arg.cpp#L2433-L2458",
+      "finding": "Supported --cache-type-k/--cache-type-v with LLAMA_ARG_CACHE_TYPE_K/V environment variables. Parent scoped environment evidence reports neither override."
+    },
+    {
+      "id": "context_types_mla",
+      "path": "src/llama-context.cpp",
+      "lines": [
+        3699,
+        3735
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-context.cpp#L3699-L3735",
+      "finding": "MLA rejects unequal K/V types; quantized V forces FlashAttention when auto and rejects disabled FA; quantized head widths must be divisible by quant block sizes."
+    },
+    {
+      "id": "context_padding",
+      "path": "src/llama-context.cpp",
+      "lines": [
+        244,
+        247
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-context.cpp#L244-L247",
+      "finding": "Physical batch=min(n_batch,n_ubatch); at default settings512."
+    },
+    {
+      "id": "context_padding_native",
+      "path": "src/llama-context.cpp",
+      "lines": [
+        287,
+        327
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-context.cpp#L287-L327",
+      "finding": "Context and per-sequence capacity padded256; one slot means equal. Requested1048576 equals metadata native context; no extrapolation needed."
+    },
+    {
+      "id": "cache_streams",
+      "path": "src/llama-kv-cache.cpp",
+      "lines": [
+        83,
+        102
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-kv-cache.cpp#L83-L102",
+      "finding": "n_stream=unified?1:n_seq_max; one selected slot always one stream; cache size must divide n_pad."
+    },
+    {
+      "id": "cache_hparams_dims",
+      "path": "src/llama-hparams.cpp",
+      "lines": [
+        140,
+        165
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-hparams.cpp#L140-L165",
+      "finding": "Cache key width=per-head-key width times KV heads; values analogous but MLA does not allocate a separate V tensor."
+    },
+    {
+      "id": "cache_mla_flag",
+      "path": "src/llama-hparams.cpp",
+      "lines": [
+        297,
+        302
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-hparams.cpp#L297-L302",
+      "finding": "MLA true if both MLA head-size metadata fields are nonzero; indexer hparams copy retains this flag."
+    },
+    {
+      "id": "cache_no_swa_default",
+      "path": "src/llama-hparams.h",
+      "lines": [
+        171,
+        173
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-hparams.h#L171-L173",
+      "finding": "SWA defaults NONE and n_swa0; GLM-DSA loader does not select a sliding-window cache."
+    },
+    {
+      "id": "dsa_value_alias",
+      "path": "src/llama-graph.cpp",
+      "lines": [
+        3022,
+        3063
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-graph.cpp#L3022-L3063",
+      "finding": "DSA stores combined K width576; V is a width512 view of the same K tensor, not an additional allocation."
+    },
+    {
+      "id": "dsa_prefix_indices",
+      "path": "src/models/glm-dsa.cpp",
+      "lines": [
+        243,
+        264
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/models/glm-dsa.cpp#L243-L264",
+      "finding": "Full indexer layers compute top-k; later shared layers reuse prior top-k rather than allocating an indexer cache each layer."
+    },
+    {
+      "id": "fused_indexer_path",
+      "path": "src/models/glm-dsa.cpp",
+      "lines": [
+        295,
+        365
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/models/glm-dsa.cpp#L295-L365",
+      "finding": "Fused indexer gets all occupied cached keys and emits scores; nonfused path explicitly materializes32-head KQ scores. Top-k is at most2048 and reused by shared indexer blocks."
+    },
+    {
+      "id": "fused_indexer_default",
+      "path": "src/llama-context.cpp",
+      "lines": [
+        229,
+        237
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-context.cpp#L229-L237",
+      "finding": "Flash attention starts auto-enabled; fused lightning indexer=true, auto_flid=false."
+    },
+    {
+      "id": "dsa_masks",
+      "path": "src/llama-graph.cpp",
+      "lines": [
+        3299,
+        3316
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-graph.cpp#L3299-L3316",
+      "finding": "Creates separate MLA and indexer input masks; fused indexer requires F16 mask."
+    },
+    {
+      "id": "mask_shape",
+      "path": "src/llama-graph.cpp",
+      "lines": [
+        29,
+        43
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-graph.cpp#L29-L43",
+      "finding": "Mask type F16 underFA, otherwiseF32; shape[n_kv,n_tokens/n_stream,1,n_stream]."
+    },
+    {
+      "id": "fused_score_shape",
+      "path": "ggml/src/ggml.c",
+      "lines": [
+        6423,
+        6454
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml.c#L6423-L6454",
+      "finding": "Fused lightning-indexer output isF32[n_kv,n_ubatch,1,n_stream]; no indexer-head dimension in output."
+    },
+    {
+      "id": "top_k_output_shape",
+      "path": "ggml/src/ggml.c",
+      "lines": [
+        5459,
+        5469
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml.c#L5459-L5469",
+      "finding": "Top-k output isI32[k,n_tokens,...], k<=2048 in GLM-DSA."
+    },
+    {
+      "id": "top_k_workspace",
+      "path": "ggml/src/ggml-cuda/top-k.cu",
+      "lines": [
+        224,
+        269
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml-cuda/top-k.cu#L224-L269",
+      "finding": "CUDA top-k scratch depends on compiled CUB path; fallback can allocateI32[n_kv*nrows]. Do not assert full graph peak from tensor metadata."
+    },
+    {
+      "id": "cuda_fa_cache_types",
+      "path": "ggml/src/ggml-cuda/fattn.cu",
+      "lines": [
+        500,
+        514
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml-cuda/fattn.cu#L500-L514",
+      "finding": "CUDAFA acceptsF16,F32,BF16,Q4_0,Q4_1,Q5_0,Q5_1,Q8_0. Nonvector kernels convert supported nonF16 types toF16."
+    },
+    {
+      "id": "cuda_mla_fa_shape",
+      "path": "ggml/src/ggml-cuda/fattn.cu",
+      "lines": [
+        589,
+        603
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml-cuda/fattn.cu#L589-L603",
+      "finding": "CUDAFA supportsK576/V512 with GQA/mask/padding conditions and supported cache types."
+    },
+    {
+      "id": "cuda_glm_lid_dispatch",
+      "path": "ggml/src/ggml-cuda/lightning-indexer.cu",
+      "lines": [
+        490,
+        506
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml-cuda/lightning-indexer.cu#L490-L506",
+      "finding": "NVIDIA fused128-wide32-head lightning indexer dispatchesF16 and supported quantizedK, includingQ8_0."
+    },
+    {
+      "id": "cuda_glm_lid_support",
+      "path": "ggml/src/ggml-cuda/lightning-indexer.cu",
+      "lines": [
+        536,
+        587
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml-cuda/lightning-indexer.cu#L536-L587",
+      "finding": "Fused indexer supports width128,32/64heads, alignment checks, F16/Q8_0 and listed other types."
+    },
+    {
+      "id": "cuda_mla_f16_conversion",
+      "path": "ggml/src/ggml-cuda/fattn-common.cuh",
+      "lines": [
+        1026,
+        1060
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/ggml/src/ggml-cuda/fattn-common.cuh#L1026-L1060",
+      "finding": "When needed, nonF16K is converted toF16; V-as-K-view reuses that conversion. RetainingF16 avoids this quant-cache conversion requirement."
+    },
+    {
+      "id": "dsa_can_shift",
+      "path": "src/llama-kv-cache-dsa.cpp",
+      "lines": [
+        158,
+        161
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-kv-cache-dsa.cpp#L158-L161",
+      "finding": "DSA can_shift requires both component caches supporting shift and equal sizes; not unconditionally false."
+    },
+    {
+      "id": "base_can_shift",
+      "path": "src/llama-kv-cache.cpp",
+      "lines": [
+        1188,
+        1196
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/src/llama-kv-cache.cpp#L1188-L1196",
+      "finding": "Base cache rejects shift forSTEP35 or multiple positions per embedding; otherwise true."
+    },
+    {
+      "id": "context_shift_default",
+      "path": "common/common.h",
+      "lines": [
+        571,
+        571
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/common/common.h#L571-L571",
+      "finding": "Default ctx_shift=false."
+    },
+    {
+      "id": "prefix_cache_defaults",
+      "path": "common/common.h",
+      "lines": [
+        626,
+        627
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/common/common.h#L626-L627",
+      "finding": "Default n_cache_reuse=0 and cache_prompt=true."
+    },
+    {
+      "id": "ordinary_prefix_reuse",
+      "path": "tools/server/server-context.cpp",
+      "lines": [
+        3217,
+        3238
+      ],
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/server-context.cpp#L3217-L3238",
+      "finding": "Prompt cache reuses common prefix tokens independently; shifted arbitrary-chunk reuse requires memory_can_shift and positive n_cache_reuse."
+    }
+  ],
+  "quant_type_bytes": {
+    "F32": [
+      1,
+      4
+    ],
+    "Q8_0": [
+      32,
+      34
+    ],
+    "Q4_K": [
+      256,
+      144
+    ],
+    "Q5_K": [
+      256,
+      176
+    ],
+    "Q6_K": [
+      256,
+      210
+    ]
+  },
+  "native_context_review": {
+    "metadata_basis": "Parent raw metadata confirms n_ctx_train1048576,key_length576,value_length512,head_count_kv1,key_length_mla256,value_length_mla256,indexer_key_length128,indexer_head_count32,indexer_top_k2048; supplemental bounded metadata proves optional indexer.types absent. Parent scoped runtime environment has no selected overrides.",
+    "native_context_tokens": 1048576,
+    "full_indexer_layers": [
+      0,
+      1,
+      2,
+      6,
+      10,
+      14,
+      18,
+      22,
+      26,
+      30,
+      34,
+      38,
+      42,
+      46,
+      50,
+      54,
+      58,
+      62,
+      66,
+      70,
+      74
+    ],
+    "full_indexer_counts_per_device": [
+      12,
+      9
+    ],
+    "main_layers_per_device": [
+      40,
+      38
+    ],
+    "cache_type_k": "f16",
+    "cache_type_v": "f16",
+    "separate_V_allocation": false,
+    "cache_components_per_token_bytes": {
+      "each_main_layer_combined_MLA_K": 1152,
+      "each_full_indexer_layer_K": 256,
+      "CUDA0": 49152,
+      "CUDA1": 46080,
+      "total": 95232
+    },
+    "formula": "CUDA0 bytes=C*(40*576*2+12*128*2); CUDA1 bytes=C*(38*576*2+9*128*2). V512 is view of combinedK576; no78*512 extraV and no78 full indexer copies.",
+    "allocation_alignment": "F16 cache row sizes and all selected context sizes align128; contexts multiples256; no quant row pad. DSA passes n_pad1 and noSWA. One stream/one slot.",
+    "context_table": [
+      {
+        "context_tokens": 32768,
+        "CUDA0_cache_bytes": 1610612736,
+        "CUDA1_cache_bytes": 1509949440,
+        "total_cache_bytes": 3120562176,
+        "CUDA0_cache_GiB": 1.5,
+        "CUDA1_cache_GiB": 1.40625,
+        "fused_score_at_ubatch512_bytes": 67108864,
+        "each_F16_mask_at_ubatch512_bytes": 33554432
+      },
+      {
+        "context_tokens": 65536,
+        "CUDA0_cache_bytes": 3221225472,
+        "CUDA1_cache_bytes": 3019898880,
+        "total_cache_bytes": 6241124352,
+        "CUDA0_cache_GiB": 3.0,
+        "CUDA1_cache_GiB": 2.8125,
+        "fused_score_at_ubatch512_bytes": 134217728,
+        "each_F16_mask_at_ubatch512_bytes": 67108864
+      },
+      {
+        "context_tokens": 131072,
+        "CUDA0_cache_bytes": 6442450944,
+        "CUDA1_cache_bytes": 6039797760,
+        "total_cache_bytes": 12482248704,
+        "CUDA0_cache_GiB": 6.0,
+        "CUDA1_cache_GiB": 5.625,
+        "fused_score_at_ubatch512_bytes": 268435456,
+        "each_F16_mask_at_ubatch512_bytes": 134217728
+      },
+      {
+        "context_tokens": 262144,
+        "CUDA0_cache_bytes": 12884901888,
+        "CUDA1_cache_bytes": 12079595520,
+        "total_cache_bytes": 24964497408,
+        "CUDA0_cache_GiB": 12.0,
+        "CUDA1_cache_GiB": 11.25,
+        "fused_score_at_ubatch512_bytes": 536870912,
+        "each_F16_mask_at_ubatch512_bytes": 268435456
+      },
+      {
+        "context_tokens": 524288,
+        "CUDA0_cache_bytes": 25769803776,
+        "CUDA1_cache_bytes": 24159191040,
+        "total_cache_bytes": 49928994816,
+        "CUDA0_cache_GiB": 24.0,
+        "CUDA1_cache_GiB": 22.5,
+        "fused_score_at_ubatch512_bytes": 1073741824,
+        "each_F16_mask_at_ubatch512_bytes": 536870912
+      },
+      {
+        "context_tokens": 1048576,
+        "CUDA0_cache_bytes": 51539607552,
+        "CUDA1_cache_bytes": 48318382080,
+        "total_cache_bytes": 99857989632,
+        "CUDA0_cache_GiB": 48.0,
+        "CUDA1_cache_GiB": 45.0,
+        "fused_score_at_ubatch512_bytes": 2147483648,
+        "each_F16_mask_at_ubatch512_bytes": 1073741824
+      }
+    ],
+    "progression_tokens": [
+      65536,
+      131072,
+      262144,
+      524288,
+      1048576
+    ],
+    "quantized_cache_decision": "Do not select quantized cache: nativeF16 already fits N76 under chosen24GiB/card allowance. q8_0 on bothK/V is source-supported if separately reviewed later; mixed types rejected and quantization forcesFA. Its persistent cache total would be49.40625GiB but576/512FA can require temporaryF16K; no q8 candidate is proposed.",
+    "workspace_limit": "At occupiednative context and ubatch512: fused score2GiB; each inputF16mask1GiB (MLA andLID); sparse MLA mask fill/set/add adds further full-size mask tensors; topkI32output4MiB. CUDA topk scratch/graph allocator reuse/pools/pipeline copies prevent a complete static peak bound. Unfused32-head indexer KQ alone64GiB, so require fused128/32 indexer and CUDAFA placement at every acceptance stage, not a fallback assumption. The24GiB allowance is policy, not measured peak.",
+    "prefix_reuse": "Keep cache_prompt=true,n_cache_reuse0,ctx_shift=false. Preserve exact tokenized common prefixes across sequential turns; no arbitrary chunk shift. Input+generation+tool-continuation must fit native capacity; reserve output tokens inside requested context and explicitly measure occupied prompt tokens. Native allocation alone is not long-context proof."
+  }
+}

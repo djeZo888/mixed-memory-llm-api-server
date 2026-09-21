@@ -1,0 +1,7 @@
+{
+  "container_id": "a88d34f603cdebdcf3e34a578dcb5412239c862e2895ac0c7b84657c6782bf87",
+  "container_name": "q38env-20260915-5ea22171e82ac28bf3247ec8c794f4bb",
+  "method": "successful exact immutable-ID filtered docker container ls --all --no-trunc with empty stdout/stderr",
+  "status": "ABSENCE_VERIFIED",
+  "verified_utc": "2026-09-15T04:02:10.593539+00:00"
+}

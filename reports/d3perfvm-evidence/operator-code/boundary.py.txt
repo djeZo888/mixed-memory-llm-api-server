@@ -1,0 +1,65 @@
+"""D3PERFVM fixed admission/final reads; send via worker SSH ai-vm.
+--help is offline. Payload injected by the task controller. No generation.
+"""
+import hashlib,json,os,re,stat,subprocess,sys,time
+from pathlib import Path
+if '--help' in sys.argv: print(__doc__);sys.exit(0)
+def run(args,timeout=20):
+    return subprocess.check_output(args,stderr=subprocess.DEVNULL,text=True,timeout=timeout)
+def protected(p,directory=False):
+    p=Path(p)
+    for a in (p,*p.parents):
+        s=a.lstat();assert not a.is_symlink() and s.st_uid==0 and not s.st_mode&0o022,'unprotected_path'
+    if not directory: assert p.is_file() and p.stat().st_nlink==1
+    return p
+base=Path('/usr/local/lib/llm-server/control-api/scripts/common')
+for row in [CFG['registered_host']['guard'],CFG['registered_host']['dependency']]:
+    assert hashlib.sha256(protected(row['path']).read_bytes()).hexdigest()==row['sha256'],'registered_guard_hash'
+for name,digest in WRAPPERS.items():
+    assert hashlib.sha256(protected(base/name).read_bytes()).hexdigest()==digest,'wrapper_hash'
+protected('/etc/local-ai-server/storage.json')
+run([str(base/'require-data-mounted.sh')])
+guard=json.loads(run([str(base/'root-disk-guard.sh'),'--json']))
+registration=json.loads(Path('/etc/local-ai-server/storage.json').read_bytes())
+report=Path('/data/logs/d3perfvm-20260915')
+protected(report.parent,directory=True)
+if PHASE=='admission':
+    report.mkdir(mode=0o700,exist_ok=True)
+    protected(report,directory=True)
+    os.chmod(report,0o700)
+protected(report,directory=True);assert stat.S_IMODE(report.stat().st_mode)==0o700
+c=json.loads(run(['docker','inspect','--format','{"Id":{{json .Id}},"Image":{{json .Image}},"Args":{{json .Args}},"State":{{json .State}},"LogPath":{{json .LogPath}},"RestartCount":{{json .RestartCount}},"NetworkSettings":{"Ports":{{json .NetworkSettings.Ports}}}}',CID]))
+s=c['State'];assert c['Id']==CID and c['Image']==IMAGE and s['Pid']==243279 and s['StartedAt']=='2026-09-15T04:09:20.746242473Z'
+assert s['Running'] and not any(s[k] for k in ('Paused','Restarting','OOMKilled','Dead')) and c['RestartCount']==0
+assert c['NetworkSettings']['Ports']=={'30002/tcp':[{'HostIp':'127.0.0.1','HostPort':'30002'}]}
+proc=Path('/proc/243279/stat').read_text().rsplit(')',1)[1].split()
+assert proc[0] not in ('T','t','Z','X','x');ticks=int(proc[19])
+files={}
+for name in ['/etc/local-ai-server/storage.json','/etc/llm-server/control.json','/etc/llm-server/network.json','/data/services/llm-manager/active/active.json','/run/llmctl/recovery.json','/data/services/llm-manager/deployment-instance.json']:
+    files[name]=hashlib.sha256(protected(name).read_bytes()).hexdigest()
+assert files['/data/services/llm-manager/active/active.json']=='90757bf8175f23881d6cbde6b4513cf929bf9eeb5172838e640bd376332bee8f'
+key=protected('/data/services/secrets/llm-api-key').stat();assert stat.S_IMODE(key.st_mode)==0o600
+control=run(['systemctl','show','llm-control.service','--property=ActiveState,SubState,UnitFileState,MainPID']).splitlines()
+assert all(x in control for x in ['ActiveState=inactive','SubState=dead','UnitFileState=disabled','MainPID=0'])
+sockets=[x for x in run(['ss','-tnH','state','established']).splitlines() if any(':'+str(port) in x for port in (30002,30000,30004))]
+assert not sockets,'api_connection_present'
+legacy=[]
+for p in Path('/proc').iterdir():
+    if not p.name.isdigit():continue
+    try:cmd=(p/'cmdline').read_bytes()
+    except (FileNotFoundError,PermissionError,ProcessLookupError):continue
+    if b'exec(json.loads(sys.stdin.readline()))' in cmd:legacy.append(int(p.name))
+assert not legacy,'existing_sampler_present'
+log=Path(c['LogPath']);assert str(log).startswith('/data/docker/containers/'+CID+'/')
+assert log.stat().st_size<524288
+markers=[]
+for line in log.read_bytes().splitlines():
+    row=json.loads(line);msg=row['log']
+    for name,pattern in [('slot_release',r'\brelease\b.*stop processing'),('all_slots_idle',r'all slots are idle')]:
+        if re.search(pattern,msg,re.I):markers.append({'kind':name,'utc':row['time']})
+assert markers,'native_idle_marker_missing'
+result={'utc':time.time(),'phase':PHASE,'guard':guard,'registered_mounts':{registration[k]['path']:registration[k]['uuid'] for k in ('data','models')},'identity':{'id':CID,'image':IMAGE,'pid':243279,'started_at':s['StartedAt'],'start_ticks':ticks,'restart_count':c['RestartCount'],'args_sha256':hashlib.sha256(json.dumps(c['Args']).encode()).hexdigest()},'file_hashes':files,'key_metadata':{k:getattr(key,'st_'+k) for k in ('dev','ino','uid','gid','mode','size','mtime_ns','ctime_ns')},'control':control,'api_connections':len(sockets),'legacy_sampler_pids':legacy,'owned_remote_pid_absent':all(not Path('/proc/'+str(pid)).exists() for pid in OWNED_PIDS),'last_idle_markers':markers[-3:]}
+if PHASE=='final':
+    assert result['identity']==BEFORE['identity'] and result['file_hashes']==BEFORE['file_hashes'] and result['key_metadata']==BEFORE['key_metadata'] and result['owned_remote_pid_absent'],'final_identity_or_ownership'
+with (report/(PHASE+'.json')).open('x') as f:os.chmod(f.name,0o600);json.dump(result,f,sort_keys=True)
+print(json.dumps(result,sort_keys=True))

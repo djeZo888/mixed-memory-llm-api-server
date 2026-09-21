@@ -1,0 +1,76 @@
+{
+  "status": "PASS",
+  "captured_epoch": 1789902092.4297292,
+  "source": "one_authenticated_native_GET_/get_server_info",
+  "profile": "RESTORED_PRODUCTION_QWEN_TP2_1M_NOT_FAILED_Q480",
+  "same_image_verified": true,
+  "image_id": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+  "container_id": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+  "fields": {
+    "$.context_length": {
+      "present": true,
+      "type": "int",
+      "value": 1000000
+    },
+    "$.tp_size": {
+      "present": true,
+      "type": "int",
+      "value": 2
+    },
+    "$.max_total_num_tokens": {
+      "present": true,
+      "type": "int",
+      "value": 1000000
+    },
+    "$.max_req_input_len": {
+      "present": true,
+      "type": "int",
+      "value": 999994
+    },
+    "$.max_req_len": {
+      "present": false,
+      "type": null,
+      "value": null
+    },
+    "$.server_args": {
+      "present": false,
+      "type": null
+    },
+    "$.internal_states": {
+      "present": true,
+      "type": "list",
+      "length": 1
+    },
+    "$.internal_states[0].context_length": {
+      "present": true,
+      "type": "int",
+      "value": 1000000
+    },
+    "$.internal_states[0].tp_size": {
+      "present": true,
+      "type": "int",
+      "value": 2
+    },
+    "$.internal_states[0].max_total_num_tokens": {
+      "present": false,
+      "type": null,
+      "value": null
+    },
+    "$.internal_states[0].max_req_input_len": {
+      "present": false,
+      "type": null,
+      "value": null
+    },
+    "$.internal_states[0].max_req_len": {
+      "present": false,
+      "type": null,
+      "value": null
+    }
+  },
+  "inference_requests": 0,
+  "model_loads": 0,
+  "mutations": 0,
+  "raw_payload_retained": false,
+  "allowlisted_projection_only": true,
+  "prior_local_attempt": "Import failed before Docker or HTTP; corrected installed common module path; one HTTP GET total"
+}

@@ -1,0 +1,948 @@
+{
+  "report": "BENCHG1 verified saved-data report",
+  "date": "2026-09-19",
+  "scope": "Saved local evidence only; no VM/Worker2 contact, new inference, model load, runtime change, benchmark source edit, broad audit or new test",
+  "source_commit": "14764639915f427e01a74eab51004d5e6ead7ad1",
+  "reviewed_qwen_ancestor": "47a29cf391776a3806af2ac04123f2bf79caf831",
+  "outcome": {
+    "measured_case": "G1-4096-retrieval",
+    "strict_status": "HARNESS_FAILURE",
+    "strict_reason": "invalid_answer_json_unscored",
+    "transport_status": "COMPLETE",
+    "finish_reason": "stop",
+    "done_observed": true,
+    "warmups_accepted_and_discarded": 1,
+    "measured_requests_completed": 1,
+    "not_tested": {
+      "16384": "strict_response_contract_failure_stopped_ladder_not_deadline",
+      "65536": "strict_response_contract_failure_stopped_ladder_not_deadline"
+    },
+    "larger_contexts": "ALL_NOT_TESTED",
+    "no_reclassification": true
+  },
+  "measured": {
+    "configured_tokens": 4096,
+    "native_input_tokens": 3546,
+    "output_tokens": 231,
+    "output_cap_tokens": 256,
+    "cached_tokens": 0,
+    "native_sse_timings": {
+      "cache_n": 0,
+      "prompt_n": 3546,
+      "prompt_ms": 51954.221,
+      "prompt_per_token_ms": 14.651500564015791,
+      "prompt_per_second": 68.25239473805217,
+      "predicted_n": 231,
+      "predicted_ms": 505195.535,
+      "predicted_per_token_ms": 2196.5023260869566,
+      "predicted_per_second": 0.45526926519649463
+    },
+    "prefill_formula": "prompt_n / (prompt_ms / 1000)",
+    "native_decode_formula": "(predicted_n - 1) / (predicted_ms / 1000)",
+    "simple_completion_count_decode_tokens_per_second": 0.4572486967843056,
+    "simple_decode_formula": "completion_tokens / (decode_ms / 1000)",
+    "client_completion_tokens_per_second": 0.41452813766918994,
+    "client_elapsed_seconds": 557.2601206250256,
+    "client_timing": {
+      "done_observed": true,
+      "events": 231,
+      "last_output_seconds": 555.1094338750117,
+      "observer_status": "OK",
+      "source": "client_event_arrival",
+      "timing_limit": "event-arrival timestamps; chunk batching and client overhead included",
+      "ttft_any_output_seconds": 52.119384917023126,
+      "ttft_content_seconds": 320.34730762499385,
+      "ttft_reasoning_seconds": 52.119384917023126,
+      "ttft_tool_seconds": null
+    },
+    "input_occupancy_fraction": 0.86572265625,
+    "input_plus_output_occupancy_fraction": 0.922119140625,
+    "native_counters": {
+      "cached_tokens": 0,
+      "cached_tokens_source": "usage.prompt_tokens_details.cached_tokens",
+      "completion_tokens": 231,
+      "decode_ms": 505195.535,
+      "decode_tokens": 231,
+      "elapsed_seconds": null,
+      "evaluated_prompt_tokens": 3546,
+      "prompt_ms": 51954.221,
+      "prompt_tokens": 3546,
+      "total_tokens": 3777
+    },
+    "trial_orchestration_seconds": 597.8698272079928,
+    "fixture_preparation_seconds": 38.87349454098148,
+    "completion_accounting": "Includes reasoning; no visible-content-only rate",
+    "request_coverage": {
+      "scope": "request_dispatch_to_drain_worker_monotonic",
+      "start_monotonic_s": 312892.716608083,
+      "end_monotonic_s": 313449.976728708,
+      "sample_count": 516,
+      "results_first_line": 677,
+      "results_last_line": 1192,
+      "nominal_interval_s": 1.0,
+      "leading_gap_s": 0.059664957982022315,
+      "trailing_gap_s": 0.298994250013493,
+      "maximum_sample_gap_s": 1.1944793339935131,
+      "coverage_fraction_estimate": 0.9248080746025156,
+      "collection_overhead_s": 30.46761086845072,
+      "collection_overhead_fraction": 0.054673948019603666,
+      "collection_errors": 0,
+      "method": "union of centered half-interval windows clipped to request; not continuous observation"
+    },
+    "request_memory": {
+      "gpu_used_bytes": {
+        "available_samples": 516,
+        "first": 37423677440,
+        "last": 37423677440,
+        "minimum": 37423677440,
+        "peak": 37423677440
+      },
+      "gpu_free_bytes": {
+        "available_samples": 516,
+        "first": 64551387136,
+        "last": 64551387136,
+        "minimum": 64551387136,
+        "peak": 64551387136
+      },
+      "gpu_total_bytes": {
+        "available_samples": 516,
+        "first": 102641958912,
+        "last": 102641958912,
+        "minimum": 102641958912,
+        "peak": 102641958912
+      },
+      "cgroup_current_bytes": {
+        "available_samples": 516,
+        "first": 431324438528,
+        "last": 431576752128,
+        "minimum": 431324438528,
+        "peak": 431576752128
+      },
+      "cgroup_peak_since_cgroup_creation_bytes": {
+        "available_samples": 516,
+        "first": 431380439040,
+        "last": 431577014272,
+        "minimum": 431380439040,
+        "peak": 431577014272
+      },
+      "cgroup_anon_bytes": {
+        "available_samples": 516,
+        "first": 552665088,
+        "last": 803442688,
+        "minimum": 552665088,
+        "peak": 803442688
+      },
+      "cgroup_file_bytes": {
+        "available_samples": 516,
+        "first": 428934955008,
+        "last": 428934959104,
+        "minimum": 428934955008,
+        "peak": 428934959104
+      },
+      "cgroup_file_mapped_bytes": {
+        "available_samples": 516,
+        "first": 428934021120,
+        "last": 428934021120,
+        "minimum": 428932059136,
+        "peak": 428934021120
+      },
+      "cgroup_shmem_bytes": {
+        "available_samples": 516,
+        "first": 428926619648,
+        "last": 428926619648,
+        "minimum": 428926619648,
+        "peak": 428926619648
+      },
+      "cgroup_kernel_bytes": {
+        "available_samples": 516,
+        "first": 1836302336,
+        "last": 1836802048,
+        "minimum": 1836302336,
+        "peak": 1836802048
+      },
+      "cgroup_swap_bytes": {
+        "available_samples": 516,
+        "first": 0,
+        "last": 0,
+        "minimum": 0,
+        "peak": 0
+      },
+      "known_process_rss_bytes": {
+        "available_samples": 516,
+        "first": 429673144320,
+        "last": 429923647488,
+        "minimum": 429673144320,
+        "peak": 429923647488
+      },
+      "known_process_swap_bytes": {
+        "available_samples": 516,
+        "first": 0,
+        "last": 0,
+        "minimum": 0,
+        "peak": 0
+      },
+      "host_available_bytes": {
+        "available_samples": 516,
+        "first": 498752401408,
+        "last": 499070545920,
+        "minimum": 498330443776,
+        "peak": 499090640896
+      },
+      "host_total_bytes": {
+        "available_samples": 516,
+        "first": 946806915072,
+        "last": 946806915072,
+        "minimum": 946806915072,
+        "peak": 946806915072
+      },
+      "host_swap_used_bytes": {
+        "available_samples": 516,
+        "first": 81788928,
+        "last": 81788928,
+        "minimum": 81788928,
+        "peak": 81788928
+      },
+      "gpu_total_minus_free_minus_used_bytes": {
+        "available_samples": 516,
+        "first": 666894336,
+        "last": 666894336,
+        "minimum": 666894336,
+        "peak": 666894336
+      },
+      "cgroup_event_maxima": {
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0,
+        "high": 0,
+        "max": 0
+      },
+      "vmstat": {
+        "oom_kill": {
+          "available_samples": 516,
+          "first": 0,
+          "last": 0,
+          "minimum": 0,
+          "peak": 0
+        },
+        "pswpin": {
+          "available_samples": 516,
+          "first": 47223,
+          "last": 47230,
+          "minimum": 47223,
+          "peak": 47230
+        },
+        "pswpout": {
+          "available_samples": 516,
+          "first": 112764,
+          "last": 112764,
+          "minimum": 112764,
+          "peak": 112764
+        }
+      }
+    }
+  },
+  "discarded_warmup": {
+    "status": "COMPLETE",
+    "discard_from_measured_performance": true,
+    "native_sse_timings": {
+      "cache_n": 0,
+      "prompt_n": 2391,
+      "prompt_ms": 37179.551,
+      "prompt_per_token_ms": 15.549791300711,
+      "prompt_per_second": 64.30954478175381,
+      "predicted_n": 235,
+      "predicted_ms": 515282.635,
+      "predicted_per_token_ms": 2202.062542735043,
+      "predicted_per_second": 0.454119708497454
+    },
+    "prefill_formula": "prompt_n / (prompt_ms / 1000)",
+    "native_decode_formula": "(predicted_n - 1) / (predicted_ms / 1000)",
+    "simple_completion_count_decode_tokens_per_second": 0.45606039101240037,
+    "simple_decode_formula": "completion_tokens / (decode_ms / 1000)",
+    "client_completion_tokens_per_second": 0.4253261129561544,
+    "client_elapsed_seconds": 552.5172164170071,
+    "client_timing": {
+      "done_observed": true,
+      "events": 235,
+      "last_output_seconds": 550.305106209009,
+      "observer_status": "OK",
+      "source": "client_event_arrival",
+      "timing_limit": "event-arrival timestamps; chunk batching and client overhead included",
+      "ttft_any_output_seconds": 37.27378291700734,
+      "ttft_content_seconds": 297.454292083974,
+      "ttft_reasoning_seconds": 37.27378291700734,
+      "ttft_tool_seconds": null
+    },
+    "input_occupancy_fraction": 0.583740234375,
+    "input_plus_output_occupancy_fraction": 0.64111328125,
+    "native_counters": {
+      "cached_tokens": 0,
+      "cached_tokens_source": "usage.prompt_tokens_details.cached_tokens",
+      "completion_tokens": 235,
+      "decode_ms": 515282.635,
+      "decode_tokens": 235,
+      "elapsed_seconds": null,
+      "evaluated_prompt_tokens": 2391,
+      "prompt_ms": 37179.551,
+      "prompt_tokens": 2391,
+      "total_tokens": 2626
+    }
+  },
+  "response_contract": {
+    "actual_content_exact": "{\"START\":\"v-d969967d1906c6504706\",\"MIDDLE\":\"v-19f153f76f01a2f24cef\",\"END\":\"v-58a82bc687a5a9cdfdaf\"}</think>{\"START\":\"v-d969967d1906c6504706\",\"MIDDLE\":\"v-19f153f76f01a2f24cef\",\"END\":\"v-58a82bc687a5a9cdfdaf\"}",
+    "strict_json_error": {
+      "msg": "Extra data",
+      "pos": 99,
+      "lineno": 1,
+      "colno": 100
+    },
+    "expected_fields": {
+      "END": "v-58a82bc687a5a9cdfdaf",
+      "MIDDLE": "v-19f153f76f01a2f24cef",
+      "START": "v-d969967d1906c6504706"
+    },
+    "actual_leading_fields": {
+      "START": "v-d969967d1906c6504706",
+      "MIDDLE": "v-19f153f76f01a2f24cef",
+      "END": "v-58a82bc687a5a9cdfdaf"
+    },
+    "actual_suffix_fields": {
+      "START": "v-d969967d1906c6504706",
+      "MIDDLE": "v-19f153f76f01a2f24cef",
+      "END": "v-58a82bc687a5a9cdfdaf"
+    },
+    "separately_decoded_fields_match": true,
+    "strict_status": "HARNESS_FAILURE",
+    "reason": "invalid_answer_json_unscored",
+    "reclassification": false,
+    "reasoning_characters_not_published": 415,
+    "receipt_sha256": "49810789a703c84b17d13c961dd942173c2fc32966977b539aca069574aa1338",
+    "raw_response_sha256": "d908f746bee947f6e8bed4cd8172b2913084bfc5bf3c6bd67d083bf7db4b9482",
+    "raw_request_sha256": "c0508f667126bc4cce29384b81c7d9cc8900548538e9ed4d616983cee855af9c",
+    "content_sha256": "90b73a90dce0450cbe692b7fdff26f4c959d75bbaeec95d57a17b752cd02dae9",
+    "canonical_trial_row_sha256": "6fc126a65269228cf5282b31ffd3ad56eea3c6623fe0dfbf601ee2e960b0f5b1",
+    "canonical_sample_summary_sha256": "6acb4ed44cbd3964f4a4404a15739f66c7c2713420c08df7dbcc37df5ffbcb7c",
+    "fixture_sha256": "180b713b5cf87105155aab55503fe2fe71d18dee9eb87cc203ddcd38dc8aa785",
+    "saved_template_sha256": "347dc716e1e8a9917eb124503836943107686ace6a3848d16bf23ae50964bb49",
+    "source_only_note": "Reasoning/content boundary cause undetermined. Saved production template/parser metadata does not establish model generation versus parser responsibility; no live investigation or fix performed."
+  },
+  "placement": {
+    "model": {
+      "quantization": "UD-Q4_K_XL",
+      "repo_id": "unsloth/GLM-5.3-GGUF",
+      "revision": "346b3591c7f28d1a23716f97a065ecf12ec14771"
+    },
+    "image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+    "gpu_uuids": [
+      "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+    ],
+    "guest_cpuset": "0-95",
+    "guest_cpus": 96,
+    "n_cpu_moe": 76,
+    "N76_definition": "76 MoE expert layers placed in host RAM",
+    "cuda_device": "CUDA0 only",
+    "cache_dtype": "F16 K and V",
+    "slots": 1,
+    "batch": 2048,
+    "ubatch": 512,
+    "load_mode": "none",
+    "fit": "off",
+    "cache_prompt": false
+  },
+  "accepted_allocation_proofs": [
+    {
+      "attempt": "noswap_load_only",
+      "source_commit": "873d2d5fb40f5a29ec89f4b88dd987d8eb3485f0",
+      "receipt": "completion-noswap/first-allocation.json",
+      "receipt_sha256": "0649d8226ba56c63654518b1e01f5fc840628b859a17029f2b810e1f36f15cc8",
+      "client_load_seconds": 210.36373020795872,
+      "image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+      "gpu_uuids": [
+        "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+      ],
+      "weights_mib_rounded_log_labels": {
+        "CUDA0": 30754.2,
+        "CUDA_Host": 409012.22
+      },
+      "offload_layers": [
+        80,
+        80
+      ],
+      "cache_bytes": {
+        "CUDA0": 390070272
+      },
+      "device_compute_bytes": {
+        "CUDA0": 3124832256
+      },
+      "host_compute_bytes": {
+        "CUDA_Host": 33632288
+      },
+      "graph_nodes": {
+        "main": 78,
+        "indexer": 21
+      },
+      "actual_container_limits": {
+        "cgroup_memory_max": "687194767360",
+        "cgroup_memory_swap_max": "0",
+        "docker_memory_bytes": 687194767360,
+        "docker_memory_swap_bytes": 687194767360
+      }
+    },
+    {
+      "attempt": "final_telemetry",
+      "source_commit": "14764639915f427e01a74eab51004d5e6ead7ad1",
+      "receipt": "completion-telemetry/first-allocation.json",
+      "receipt_sha256": "e7a39d3d888b664f64092caa1f3daaf9a804b2cc06ac78cf6cdc3924039ccf00",
+      "client_load_seconds": 182.27609283302445,
+      "image": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+      "gpu_uuids": [
+        "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+      ],
+      "weights_mib_rounded_log_labels": {
+        "CUDA0": 30754.2,
+        "CUDA_Host": 409012.22
+      },
+      "offload_layers": [
+        80,
+        80
+      ],
+      "cache_bytes": {
+        "CUDA0": 390070272
+      },
+      "device_compute_bytes": {
+        "CUDA0": 3124832256
+      },
+      "host_compute_bytes": {
+        "CUDA_Host": 33632288
+      },
+      "graph_nodes": {
+        "main": 78,
+        "indexer": 21
+      },
+      "actual_container_limits": {
+        "cgroup_memory_max": "687194767360",
+        "cgroup_memory_swap_max": "0",
+        "docker_memory_bytes": 687194767360,
+        "docker_memory_swap_bytes": 687194767360
+      }
+    }
+  ],
+  "memory_other_scopes": {
+    "PSS_checkpoint_bytes": {
+      "load": 429581111296,
+      "warm_idle": 429665370112
+    },
+    "final_attempt_lifecycle": {
+      "scope": "all cheap samples in final results; not an isolated request",
+      "telemetry_samples": 1189,
+      "sampled_peaks_bytes": {
+        "gpu_used_bytes": 37423677440,
+        "cgroup_current_bytes": 431576752128,
+        "cgroup_peak_since_cgroup_creation_bytes": 431577014272,
+        "cgroup_anon_bytes": 803442688,
+        "cgroup_file_bytes": 428934959104,
+        "cgroup_file_mapped_bytes": 428934021120,
+        "cgroup_shmem_bytes": 428926619648,
+        "cgroup_kernel_bytes": 1836802048,
+        "cgroup_swap_bytes": 0,
+        "known_process_rss_bytes": 429923647488,
+        "known_process_swap_bytes": 0,
+        "host_swap_used_bytes": 82051072,
+        "gpu_total_minus_free_minus_used_bytes": 666894336
+      },
+      "minimum_gpu_free_bytes": 64551387136,
+      "gpu_observation_count": 1188,
+      "minimum_host_available_bytes": 498330443776,
+      "cgroup_event_maxima": {
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0,
+        "high": 0,
+        "max": 0
+      }
+    },
+    "final_attempt_loading": {
+      "scope": "cheap samples before saved load row; incomplete continuous coverage",
+      "telemetry_samples": 118,
+      "sampled_peaks_bytes": {
+        "gpu_used_bytes": 37396414464,
+        "cgroup_current_bytes": 431239643136,
+        "cgroup_peak_since_cgroup_creation_bytes": 431380439040,
+        "cgroup_anon_bytes": 467898368,
+        "cgroup_file_bytes": 428926660608,
+        "cgroup_file_mapped_bytes": 428928712704,
+        "cgroup_shmem_bytes": 428926619648,
+        "cgroup_kernel_bytes": 1835872256,
+        "cgroup_swap_bytes": 0,
+        "known_process_rss_bytes": 429581115392,
+        "known_process_swap_bytes": 0,
+        "host_swap_used_bytes": 82051072,
+        "gpu_total_minus_free_minus_used_bytes": 666894336
+      },
+      "minimum_gpu_free_bytes": 64578650112,
+      "gpu_observation_count": 117,
+      "minimum_host_available_bytes": 498600628224,
+      "cgroup_event_maxima": {
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0,
+        "high": 0,
+        "max": 0
+      }
+    },
+    "final_loading_gpu_gap": [
+      {
+        "results_line": 48,
+        "worker_monotonic_s": 312216.361112208,
+        "errors": [
+          "gpu_TimeoutExpired"
+        ],
+        "GPU_observation_available": false,
+        "collection_duration_s": 2.998888057016302,
+        "previous_GPU_observation_worker_monotonic_s": 312207.656537708,
+        "next_GPU_observation_worker_monotonic_s": 312216.98584025,
+        "surrounding_valid_GPU_sample_gap_s": 9.32930254196981
+      }
+    ],
+    "earlier_noswap_load_only": {
+      "receipt": "completion-noswap/numeric-receipts.json",
+      "samples": {
+        "samples": 197,
+        "span_s": 202.58687254198594,
+        "max_sample_gap_s": 6.296853624982759,
+        "missing_gpu_samples": 1,
+        "phase": "load_to_stop; no request",
+        "absolute_peak_claim": false
+      },
+      "sampled_cgroup_peaks": {
+        "current_bytes": 559686275072,
+        "anon_bytes": 468742144,
+        "file_bytes": 557078355968,
+        "file_mapped_bytes": 428938088448,
+        "shmem_bytes": 428926619648,
+        "kernel_bytes": 2128248832,
+        "peak_since_cgroup_creation_bytes": 559823044608,
+        "swap_bytes": 0
+      },
+      "readiness_pss_bytes": 429581561856
+    },
+    "limits": "RSS is known-process sum; PSS is checkpoint-only; cgroup memory.peak is lifetime. Conservative mapped+shmem demand can overlap and inherit prior attempts, not exact required RAM. File memory is not all reclaimable."
+  },
+  "memory_projection": {
+    "evidence_status": "Arithmetic only; all above 4K NOT_TESTED",
+    "fixed_allocation": {
+      "cache_slope_bytes_per_configured_token": 95232,
+      "4K_cache_bytes": 390070272,
+      "CUDA0_compute_bytes": 3124832256,
+      "CUDA0_compute_GiB": 2.910226821899414,
+      "host_weight_GiB_from_rounded_MiB_log": 399.42599609375,
+      "gpu_weight_GiB_from_rounded_MiB_log": 30.0333984375,
+      "GPU_total_GiB": 95.5927734375,
+      "unclassified_total_minus_free_minus_used_GiB": 0.62109375
+    },
+    "cache_slope_formula": "(78 * 576 + 21 * 128) * 2 = 95232 bytes per configured token",
+    "primary_formulas": {
+      "cache_delta_bytes": "95232 * (target_tokens - 4096)",
+      "used_bytes": "37423677440 + cache_delta_bytes",
+      "free_bytes": "64551387136 - cache_delta_bytes",
+      "reserve_headroom_bytes": "free_bytes - 17179869184"
+    },
+    "component_formula": "(30754.20 * 1048576) + (95232 * target_tokens) + 3124832256 + 17179869184",
+    "gpu_reserve_bytes": 17179869184,
+    "host_reserve_fraction": 0.25,
+    "unclassified_gpu_gap_bytes": 666894336,
+    "assumption": "Unchanged fixed placement, one slot and non-cache workspace. Measured-free baseline preserves driver/gap/observed 4K overhead; larger workspace growth unmeasured.",
+    "rows": [
+      {
+        "configured_tokens": 4096,
+        "status": "4K allocation measured; strict answer failure",
+        "cache_bytes": 390070272,
+        "projected_reported_used_bytes": 37423677440,
+        "projected_reported_free_bytes": 64551387136,
+        "headroom_after_16_GiB_free_reserve_bytes": 47371517952,
+        "weights_plus_cache_floor_bytes": 32638186291.2,
+        "component_plus_fixed_compute_and_reserve_bytes": 52942887731.2,
+        "component_only_remaining_capacity_bytes": 49699071180.8,
+        "cache_GiB": 0.36328125,
+        "projected_reported_used_GiB": 34.853515625,
+        "projected_reported_free_GiB": 60.1181640625,
+        "headroom_after_16_GiB_free_reserve_GiB": 44.1181640625,
+        "weights_plus_cache_floor_GiB": 30.3966796875,
+        "component_plus_fixed_compute_and_reserve_GiB": 49.30690650939941,
+        "component_only_remaining_capacity_GiB": 46.28586692810059,
+        "non_cache_workspace_assumption": "unchanged_from_measured_4K"
+      },
+      {
+        "configured_tokens": 16384,
+        "status": "NOT_TESTED_ARITHMETIC_ONLY",
+        "cache_bytes": 1560281088,
+        "projected_reported_used_bytes": 38593888256,
+        "projected_reported_free_bytes": 63381176320,
+        "headroom_after_16_GiB_free_reserve_bytes": 46201307136,
+        "weights_plus_cache_floor_bytes": 33808397107.2,
+        "component_plus_fixed_compute_and_reserve_bytes": 54113098547.2,
+        "component_only_remaining_capacity_bytes": 48528860364.8,
+        "cache_GiB": 1.453125,
+        "projected_reported_used_GiB": 35.943359375,
+        "projected_reported_free_GiB": 59.0283203125,
+        "headroom_after_16_GiB_free_reserve_GiB": 43.0283203125,
+        "weights_plus_cache_floor_GiB": 31.4865234375,
+        "component_plus_fixed_compute_and_reserve_GiB": 50.39675025939941,
+        "component_only_remaining_capacity_GiB": 45.19602317810059,
+        "non_cache_workspace_assumption": "unchanged_from_measured_4K"
+      },
+      {
+        "configured_tokens": 65536,
+        "status": "NOT_TESTED_ARITHMETIC_ONLY",
+        "cache_bytes": 6241124352,
+        "projected_reported_used_bytes": 43274731520,
+        "projected_reported_free_bytes": 58700333056,
+        "headroom_after_16_GiB_free_reserve_bytes": 41520463872,
+        "weights_plus_cache_floor_bytes": 38489240371.2,
+        "component_plus_fixed_compute_and_reserve_bytes": 58793941811.2,
+        "component_only_remaining_capacity_bytes": 43848017100.8,
+        "cache_GiB": 5.8125,
+        "projected_reported_used_GiB": 40.302734375,
+        "projected_reported_free_GiB": 54.6689453125,
+        "headroom_after_16_GiB_free_reserve_GiB": 38.6689453125,
+        "weights_plus_cache_floor_GiB": 35.8458984375,
+        "component_plus_fixed_compute_and_reserve_GiB": 54.75612525939941,
+        "component_only_remaining_capacity_GiB": 40.83664817810059,
+        "non_cache_workspace_assumption": "unchanged_from_measured_4K"
+      },
+      {
+        "configured_tokens": 131072,
+        "status": "NOT_TESTED_ARITHMETIC_ONLY",
+        "cache_bytes": 12482248704,
+        "projected_reported_used_bytes": 49515855872,
+        "projected_reported_free_bytes": 52459208704,
+        "headroom_after_16_GiB_free_reserve_bytes": 35279339520,
+        "weights_plus_cache_floor_bytes": 44730364723.2,
+        "component_plus_fixed_compute_and_reserve_bytes": 65035066163.2,
+        "component_only_remaining_capacity_bytes": 37606892748.8,
+        "cache_GiB": 11.625,
+        "projected_reported_used_GiB": 46.115234375,
+        "projected_reported_free_GiB": 48.8564453125,
+        "headroom_after_16_GiB_free_reserve_GiB": 32.8564453125,
+        "weights_plus_cache_floor_GiB": 41.6583984375,
+        "component_plus_fixed_compute_and_reserve_GiB": 60.56862525939941,
+        "component_only_remaining_capacity_GiB": 35.02414817810059,
+        "non_cache_workspace_assumption": "unchanged_from_measured_4K"
+      },
+      {
+        "configured_tokens": 262144,
+        "status": "NOT_TESTED_ARITHMETIC_ONLY",
+        "cache_bytes": 24964497408,
+        "projected_reported_used_bytes": 61998104576,
+        "projected_reported_free_bytes": 39976960000,
+        "headroom_after_16_GiB_free_reserve_bytes": 22797090816,
+        "weights_plus_cache_floor_bytes": 57212613427.2,
+        "component_plus_fixed_compute_and_reserve_bytes": 77517314867.2,
+        "component_only_remaining_capacity_bytes": 25124644044.800003,
+        "cache_GiB": 23.25,
+        "projected_reported_used_GiB": 57.740234375,
+        "projected_reported_free_GiB": 37.2314453125,
+        "headroom_after_16_GiB_free_reserve_GiB": 21.2314453125,
+        "weights_plus_cache_floor_GiB": 53.2833984375,
+        "component_plus_fixed_compute_and_reserve_GiB": 72.19362525939941,
+        "component_only_remaining_capacity_GiB": 23.39914817810059,
+        "non_cache_workspace_assumption": "unchanged_from_measured_4K"
+      },
+      {
+        "configured_tokens": 524288,
+        "status": "NOT_TESTED_ARITHMETIC_ONLY",
+        "cache_bytes": 49928994816,
+        "projected_reported_used_bytes": 86962601984,
+        "projected_reported_free_bytes": 15012462592,
+        "headroom_after_16_GiB_free_reserve_bytes": -2167406592,
+        "weights_plus_cache_floor_bytes": 82177110835.2,
+        "component_plus_fixed_compute_and_reserve_bytes": 102481812275.2,
+        "component_only_remaining_capacity_bytes": 160146636.80000305,
+        "cache_GiB": 46.5,
+        "projected_reported_used_GiB": 80.990234375,
+        "projected_reported_free_GiB": 13.9814453125,
+        "headroom_after_16_GiB_free_reserve_GiB": -2.0185546875,
+        "weights_plus_cache_floor_GiB": 76.5333984375,
+        "component_plus_fixed_compute_and_reserve_GiB": 95.44362525939941,
+        "component_only_remaining_capacity_GiB": 0.14914817810058878,
+        "non_cache_workspace_assumption": "unchanged_from_measured_4K"
+      },
+      {
+        "configured_tokens": 1048576,
+        "status": "NOT_TESTED_ARITHMETIC_ONLY",
+        "cache_bytes": 99857989632,
+        "projected_reported_used_bytes": 136891596800,
+        "projected_reported_free_bytes": -34916532224,
+        "headroom_after_16_GiB_free_reserve_bytes": -52096401408,
+        "weights_plus_cache_floor_bytes": 132106105651.2,
+        "component_plus_fixed_compute_and_reserve_bytes": 152410807091.2,
+        "component_only_remaining_capacity_bytes": -49768848179.2,
+        "cache_GiB": 93.0,
+        "projected_reported_used_GiB": 127.490234375,
+        "projected_reported_free_GiB": -32.5185546875,
+        "headroom_after_16_GiB_free_reserve_GiB": -48.5185546875,
+        "weights_plus_cache_floor_GiB": 123.0333984375,
+        "component_plus_fixed_compute_and_reserve_GiB": 141.94362525939943,
+        "component_only_remaining_capacity_GiB": -46.35085182189941,
+        "non_cache_workspace_assumption": "unchanged_from_measured_4K"
+      }
+    ],
+    "host": {
+      "margin_fraction": 0.25,
+      "formula": "observed demand basis * 1.25; margin is added to demand, not 25% free RAM",
+      "saved_cap_basis": [
+        {
+          "saved_attempt": 1,
+          "sample_count": 372,
+          "whole_host_unavailable_max_bytes": 448315559936,
+          "host_swap_max_bytes": 0,
+          "sum_of_sampled_maxima_bytes": 448315559936,
+          "with_25_percent_margin_bytes": 560394449920.0,
+          "with_25_percent_margin_GiB": 521.9080018997192
+        },
+        {
+          "saved_attempt": 2,
+          "sample_count": 276,
+          "whole_host_unavailable_max_bytes": 447677538304,
+          "host_swap_max_bytes": 304873472,
+          "sum_of_sampled_maxima_bytes": 447982411776,
+          "with_25_percent_margin_bytes": 559978014720.0,
+          "with_25_percent_margin_GiB": 521.5201663970947
+        }
+      ],
+      "actual_cap_bytes": 687194767360,
+      "actual_cap_GiB": 640.0,
+      "host_weights_only_with_25_percent_margin_GiB": 499.28249511718747,
+      "final_attempt_whole_host_unavailable_with_25_percent_margin_GiB": 522.0953273773193
+    },
+    "host_larger_context_limit": "Host weights fixed at approximately 399.426 GiB; weight-only plus 25% excludes workspace/OS/transient demand. 640 GiB is bounded validation cap, not minimum VM RAM. Larger-context total RAM is unknown.",
+    "conclusions": {
+      "16K_64K_128K_256K": "Conditional arithmetic headroom only, NOT_TESTED",
+      "512K": "Measured-free projection misses 16 GiB floor; component-only 0.149148 GiB headroom is tiny and not safe/validated",
+      "1M": "Weights plus fixed GPU cache exceed physical GPU capacity; more host RAM does not alter fixed GPU cache placement",
+      "performance": "No throughput, latency, occupied-context correctness or output-quality inference beyond 4K"
+    }
+  },
+  "attempt_history": [
+    {
+      "attempt": "first",
+      "source_head": "07ab026f55d8d67e2a5678ad235aef369ff7eddb",
+      "arm_sha256": "82e17b82916d3e589fafb65a0e524d6179df35419da358538fe36a4d7aa27867",
+      "terminal_phase": "RESTORED",
+      "ended_utc": "2026-09-19T18:11:30.009168+00:00",
+      "original_stop": "STOP_ALLOCATION_FAILURE",
+      "warmup_requests": 0,
+      "measured_outcomes": {},
+      "cause": "Default verbosity omitted native host/device weight and offload lines; strict allocation proof stopped.",
+      "restoration_receipt": "completion/private/host-receipts.json",
+      "restoration_receipt_sha256": "47022a1b09247e17ca74ea8cbd1761d810c8c360db39a73e39f45b6914efd404",
+      "progress_sha256": "8deca2c9fd9db11a9705f65dcb44259350d349deb401fbd2516370ce6c3bd075",
+      "results_sha256": "b0afd5e83478c895e1470667fa3af9770541205a72dda648151f2845778dae23"
+    },
+    {
+      "attempt": "logging",
+      "source_head": "8927a0b8c87a97d4e3347400854424c9a15cca45",
+      "arm_sha256": "22b91dcf870f7ed380e549a02d05d3a102986dd65a8c6fb427d573ca4680d20d",
+      "terminal_phase": "RESTORED",
+      "ended_utc": "2026-09-19T18:29:17.150354+00:00",
+      "original_stop": "STOP_ALLOCATION_FAILURE",
+      "warmup_requests": 0,
+      "measured_outcomes": {},
+      "cause": "CUDA_Host label was omitted by parser; separate saved telemetry also proves earlier sustained owned swap during loading. Original allocation-stop row retained.",
+      "restoration_receipt": "completion-logging/private/host-receipts.json",
+      "restoration_receipt_sha256": "b2e3c072d2bb44bb6a2d8ddf770668f0f678ed234610faecbef39bd7dd14cd66",
+      "progress_sha256": "8c36ff51f036441deb987a8eff95b7d21c3211a7406f5fae25e75b47b9267b81",
+      "results_sha256": "7ac02f84655cf3d3adc4d9e195ac82031252f1329cbee588829f470b151b980d"
+    },
+    {
+      "attempt": "noswap",
+      "source_head": "873d2d5fb40f5a29ec89f4b88dd987d8eb3485f0",
+      "arm_sha256": "694188c23529204c20c629fb0ad28d4235586e109b35241ae35e9a3ee1ffb3a9",
+      "terminal_phase": "RESTORED",
+      "ended_utc": "2026-09-19T18:52:25.076649+00:00",
+      "original_stop": "SKIP_UNSAFE_PLACEMENT",
+      "warmup_requests": 0,
+      "measured_outcomes": {},
+      "cause": "Allocation/cap proof passed; one GPU timeout permanently latched the pre-warmup admission stop.",
+      "restoration_receipt": "completion-noswap/private/host-receipts.json",
+      "restoration_receipt_sha256": "3df7bf839bda5d1d61f7b8e0dc55ba15c8252ba2199f18d508ae4f2a30132f47",
+      "progress_sha256": "b042d84757dacc2d569e9c2fdf8b1251ba179ce807d195d9015a5d82a6b78982",
+      "results_sha256": "c7c4d01864c6888a9f88d6ceee2c5fe850ade0f9f621cec0e57997b62ed0f912"
+    },
+    {
+      "attempt": "telemetry",
+      "source_head": "14764639915f427e01a74eab51004d5e6ead7ad1",
+      "arm_sha256": "9c3391a2e9309375f3764ab8868a41f1f5dce0a911159fb539326f3c51a04ab8",
+      "terminal_phase": "RESTORED",
+      "ended_utc": "2026-09-19T19:27:45.068002+00:00",
+      "original_stop": "STOPPED_REVIEW_REQUIRED",
+      "warmup_requests": 1,
+      "measured_outcomes": {
+        "G1-4096-retrieval": "HARNESS_FAILURE"
+      },
+      "cause": "Warmup and measured transport COMPLETE; strict measured answer invalid JSON from duplicate objects separated by literal </think>.",
+      "restoration_receipt": "completion-telemetry/private/host-receipts.json",
+      "restoration_receipt_sha256": "928fb2802f1fcff34defd8bb4af566b8ae7a20a626288a68a5827dfc9d330f8e",
+      "progress_sha256": "b6719f43cb0218a382354c10181605d889e8edd62b4008c27ced2478c2d6e403",
+      "results_sha256": "3c6800e6f07652a585962ce70cd7249d5cd32054adf82b36c30213ce7f0bf4a9"
+    }
+  ],
+  "final_settings_summary": [
+    "Native observer logging enabled",
+    "CUDA_Host recognized as host weights",
+    "Actual 640 GiB RAM cap with equal Docker memory-swap and cgroup swap max zero",
+    "Immediate loading resource stops retained",
+    "Only exact loading gpu_TimeoutExpired/empty-GPU observation is a gap; fresh complete reserve proof required before warmup"
+  ],
+  "campaign": {
+    "first_epoch": 1789826207.34127,
+    "deadline_epoch": 1789847807.34127,
+    "first_utc": "2026-09-19T13:56:47.341270+00:00",
+    "deadline_utc": "2026-09-19T19:56:47.341270+00:00",
+    "budget_reset": false,
+    "completed_request_repeated": false,
+    "restoration": {
+      "phase": "RESTORED",
+      "resource_states": [
+        "REMOVED",
+        "REMOVED"
+      ],
+      "checks": {
+        "transport": "private_lan",
+        "worker_lan_control_authenticated": true,
+        "worker_lan_inference_authenticated": true,
+        "worker_source": "mac-worker1"
+      },
+      "services": {
+        "llm-control.service": {
+          "ActiveState": "active",
+          "SubState": "running",
+          "UnitFileState": "enabled"
+        },
+        "llmctl-boot.service": {
+          "ActiveState": "active",
+          "SubState": "exited",
+          "UnitFileState": "enabled"
+        }
+      },
+      "no_owned_containers": true,
+      "no_campaign_host": true,
+      "no_benchmark_listeners": true,
+      "canonical_lease_held": false,
+      "worker_receipt_sha256": "12c8ca770044766167c2dba756ceb3359ef119b39a8a96a23d1be95c7ed65e9e"
+    },
+    "supervisor_exit_utc": "2026-09-19T19:27:45.068002+00:00",
+    "restoration_evidence_scope": "Saved original-production restoration and authenticated Worker1 LAN receipts; root independently confirmed 19:27:45 UTC; no live verification in this task"
+  },
+  "validation": {
+    "saved_arithmetic_result": "PASS_SAVED_DATA_RECALCULATION",
+    "saved_arithmetic_comparisons": 133,
+    "saved_identity_result": "PASS_SAVED_DATA_IDENTITY_AND_CONTENT_CHECKS",
+    "saved_identity_comparisons": 24,
+    "arm_source_hashes_matched": 34,
+    "rate_label_correction": [
+      "The owner numeric receipt native_decode_tokens_per_second is completion_tokens/decode_seconds, not the native SSE predicted_per_second. Both formulas are preserved here without changing the strict outcome."
+    ],
+    "new_tests_run": false
+  },
+  "provenance": {
+    "evidence_owner_task": "BENCHG1-20260919",
+    "evidence_paths_relative_to_owner": true,
+    "canonical_arm_sha256": "9c3391a2e9309375f3764ab8868a41f1f5dce0a911159fb539326f3c51a04ab8",
+    "canonical_json_hash_definition": "UTF-8 json.dumps(sort_keys=True,separators=(comma,colon)), no trailing newline",
+    "evidence_file_sha256": {
+      "READY.md": "486ae335655c7ba56d683f8fc8f40d03053c93b38a04a61257eb4af1b223135b",
+      "campaign-arm-logging/progress.json": "8c36ff51f036441deb987a8eff95b7d21c3211a7406f5fae25e75b47b9267b81",
+      "campaign-arm-logging/results.jsonl": "7ac02f84655cf3d3adc4d9e195ac82031252f1329cbee588829f470b151b980d",
+      "campaign-arm-noswap/progress.json": "b042d84757dacc2d569e9c2fdf8b1251ba179ce807d195d9015a5d82a6b78982",
+      "campaign-arm-noswap/results.jsonl": "c7c4d01864c6888a9f88d6ceee2c5fe850ade0f9f621cec0e57997b62ed0f912",
+      "campaign-arm-telemetry/arm.json": "0adea321c5dacd5d8cb3c8ed885ec630d537cccc3272b1feea4d1ccc6ca5dea3",
+      "campaign-arm-telemetry/execution.json": "138d26450342b0cf194230ca608f54daf3d9c1fe687d903b7be1ccfc1d1f5d54",
+      "campaign-arm-telemetry/private/G1-4096-retrieval.request.json": "c0508f667126bc4cce29384b81c7d9cc8900548538e9ed4d616983cee855af9c",
+      "campaign-arm-telemetry/private/G1-4096-retrieval.response.sse": "d908f746bee947f6e8bed4cd8172b2913084bfc5bf3c6bd67d083bf7db4b9482",
+      "campaign-arm-telemetry/progress.json": "b6719f43cb0218a382354c10181605d889e8edd62b4008c27ced2478c2d6e403",
+      "campaign-arm-telemetry/results.jsonl": "3c6800e6f07652a585962ce70cd7249d5cd32054adf82b36c30213ce7f0bf4a9",
+      "campaign-arm-telemetry/samples.jsonl": "bc2d459b51f5da68ef18e35afeae568a2f443717e8bc2a6710793bfdc5971f37",
+      "campaign-arm-telemetry/warmups.jsonl": "69665f90a72ff6aca17af057a55b1c15ebddcab27311a676473b7be5efbb2a91",
+      "campaign-arm/progress.json": "8deca2c9fd9db11a9705f65dcb44259350d349deb401fbd2516370ce6c3bd075",
+      "campaign-arm/results.jsonl": "b0afd5e83478c895e1470667fa3af9770541205a72dda648151f2845778dae23",
+      "completion-logging/native-log-excerpts.json": "c5bf8c9f0d3a5fbcb3a1098c4f6199ec65487e89d44d58ffff28e60d780715d9",
+      "completion-logging/private/host-receipts.json": "b2e3c072d2bb44bb6a2d8ddf770668f0f678ed234610faecbef39bd7dd14cd66",
+      "completion-logging/stop-diagnosis.json": "a7167bd611a873a612b6dc57954d05ce049b5c1936f6fc45171d8ac10e40da9d",
+      "completion-noswap/first-allocation.json": "0649d8226ba56c63654518b1e01f5fc840628b859a17029f2b810e1f36f15cc8",
+      "completion-noswap/numeric-receipts.json": "2759c585e5ac13f7c918f62e88372cc996474fe5021fb3ac184dbfe71013e47c",
+      "completion-noswap/private/host-receipts.json": "3df7bf839bda5d1d61f7b8e0dc55ba15c8252ba2199f18d508ae4f2a30132f47",
+      "completion-noswap/stop-diagnosis.json": "6a075b079cb04e5b90c04c74b588aa9e464fbff71f44d16f16880e167750f49a",
+      "completion-telemetry/READY.md": "486ae335655c7ba56d683f8fc8f40d03053c93b38a04a61257eb4af1b223135b",
+      "completion-telemetry/attempt-outcomes.json": "e649df1c4dd4be0710cb5b871672d5b0d3912bd2cac8c6699ef24519168ee5c8",
+      "completion-telemetry/first-allocation.json": "e7a39d3d888b664f64092caa1f3daaf9a804b2cc06ac78cf6cdc3924039ccf00",
+      "completion-telemetry/numeric-receipts.json": "640c5d21423acaa59cb8da2364e0f015f023962a2aa2cd452a4a2e465af58da3",
+      "completion-telemetry/outcome.json": "3ab65f92260d1bb1ec0cf8e62103bd6ff79e674dc41b7aad884ca604a3aa36f2",
+      "completion-telemetry/private/host-receipts.json": "928fb2802f1fcff34defd8bb4af566b8ae7a20a626288a68a5827dfc9d330f8e",
+      "completion-telemetry/saved-response-review.json": "49810789a703c84b17d13c961dd942173c2fc32966977b539aca069574aa1338",
+      "completion-telemetry/stop-diagnosis.json": "7987184119f416f27edbdf8f587ef2b1ac93d1d1d727e09fa54c7259bf957724",
+      "completion/private/host-receipts.json": "47022a1b09247e17ca74ea8cbd1761d810c8c360db39a73e39f45b6914efd404",
+      "completion/stop-diagnosis.json": "9c152aff58cb7eb607fdf210e0070d33967b77f8b2bf6144441193a6ba40638f",
+      "noswap-review/prior-attempt-diagnosis.json": "a68e6db9d6fb24504801c99bccb1a88ea42260406b11106c74db88045c3e6615",
+      "noswap-review/review.json": "4c559bb3c119db02228a890b9e08f9f6f498def86303b035337dabd388af2a26",
+      "status.json": "4cb5766d6d2ec27af27a1859db57a8c7a633e9a8447b0e882c4d862130a33328",
+      "telemetry-review/review.json": "16f08e9534b76af1ad016f6b75e0835228a52cf792ee5842fa39d0b41c32b447",
+      "telemetry-review/verification.json": "cc61481a3125ec0f84136877debab0623ef156c67a3b5dd0b3786f0b5070fd5b"
+    },
+    "arm_source_file_sha256": {
+      "configs/benchmarks/gpu-split-20260919.json": "274afe025d8a6c23826aa9057ffc7b1ac76f726e7fea5c1b31872f58c66094c9",
+      "configs/deployments/glm-5.3-ud-q4-k-xl-n76-native1m.json": "a15c41c0532f565720c0ead787e0b5ca0908b467e691d3bfad937c839243b47d",
+      "configs/deployments/qwen38-27b-1000000-yarn4-tp2-bf16kv.json": "c66895907d9f3a8a8ad9f02b4b3b9f88726c752b4d251534a232fb72b7094edf",
+      "configs/models/glm-5.3-ud-q4-k-xl.json": "857924551fa83c546bb99f7b524b35c8d79d0cb9ba0a666e0c139bbace0e7e0d",
+      "configs/models/qwen38-27b-fp8.json": "fb62b2689a4c57aa1265b1262830c8d0e3983061c9674640ec9704ce603a44be",
+      "configs/runtimes/llama-cpp-v0.4.1-d3br.json": "d073105a70540df73cef325df7fdcfa32651f5a6aa8387b584708fb51b802d50",
+      "configs/runtimes/sglang-qwen38-0.5.19.json": "17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11",
+      "reports/benchprep-glm-offload-source.json": "929d348c84bf1c9531f878b2e991b279b6898d48926575053cf323982a42ee84",
+      "scripts/agent/acceptance.py": "0eb52a12c9cfae2846c32b1780b08c714d8be2f273804ac50cf0b2874c2c9133",
+      "scripts/agent/fixture.py": "a92eb9dfad1ce156ce32e4b80ab3eb0c8bf5948d8a383f7f1dc5a0e22c4281dd",
+      "scripts/agent/protocol.py": "7424bf62ac7d5dc50cbaa96df5412a5a0ae87462e24f2cd523772bdb0bc3def3",
+      "scripts/bench/benchmark-host.py": "72a66cd846ffe449d8e4f24942a7ffe268882c8c911bc955e44f1c60359e8df6",
+      "scripts/benchmark/__init__.py": "4ff84dff7a010ad9a4f17103b4c2361c40589868104ef7c847d77a7ded771f9e",
+      "scripts/benchmark/accounting.py": "24d165f7931bb5e588c2060afb417d6e637a1d753e92724609edeb8973c2eb14",
+      "scripts/benchmark/allocation.py": "17a57bb3ad5b32af2490ebb87140a1abe81540c595c9a0969ee4f5e696818a7a",
+      "scripts/benchmark/campaign.py": "cc801e01ecbf7477f3c06dc8802b07b815de29f88d498a2095524d934af18399",
+      "scripts/benchmark/client.py": "921b503ccab4473d6f8c260a8f39ab0750ce3cb99229e7490c1ac6c4e9b097e8",
+      "scripts/benchmark/fixtures.py": "5f4d26a5abbef9a39141d0f104f122ca1401116743ee538ea0bd2579ffd56036",
+      "scripts/benchmark/host.py": "42983983b2df57e1d870dc19ba4dfe2205a35a2ab6adfd38831e845320bba28d",
+      "scripts/benchmark/lifecycle.py": "6629ee5a0ab78e06af4ca99cf6284bd39e511fa62b0dd1e1d487bf91e47239f9",
+      "scripts/benchmark/owner.py": "0bba2a7e344a969be177e0c6767b52202f5e71aa4d9522b821e6daf1be9c42b5",
+      "scripts/benchmark/profiles.py": "51ac2b79e5b2912004f5ec7df6f0c2825797d5474101e568ef32c38619fbe71f",
+      "scripts/benchmark/qwen_launcher.py": "dd5caeb951c69f87a8a48d0165d046aa405d69e33a7997a274da33066be09539",
+      "scripts/benchmark/runner.py": "f92966c1ba7c3517d11666c9b1efa76416f8e105504a9e4e2852040e39e0794f",
+      "scripts/benchmark/telemetry.py": "91a431a71f2f3ff99d612f3907de84b164112abd4eee1ae6f05f61acb49e17b1",
+      "scripts/benchmark/warmup.py": "5decb23bc5a838d00c7eef8ed7a0601848c5c1e337c621017a0da07db52a1f82",
+      "scripts/benchmark/worker_verify.py": "1c8d9b7a9d6705df73f17ec00ec8eab8c356ed6f6ee9e8fbabd90645fb43722c",
+      "scripts/benchmark/workload.py": "4a056d0e0ebaf9ad6f6d2e830c3655ac0f2e904cc6189e1885a63e1bcfc48433",
+      "scripts/d3t/accounting.py": "f0433bb7bad24b6767d204823bd515a8094db8d27ceb0707b5dd9184327eb98f",
+      "scripts/d3t/guards.py": "b4f4eb68e9549890f0ca86796aa1c490893a2df26726b16949a12915f953574d",
+      "scripts/d3t/probe.py": "71ecbdbde8751c7e3b6e68073fff7dd5c7bea03c462b7c9833c8855004fe31a5",
+      "scripts/d3t/profiles.py": "818da0fa18ae84217f4b2932781b7df326c5a92e2b5baa90ad22c52f37ac571a",
+      "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+      "scripts/runtime/sglang38_file_auth.py": "e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7da4"
+    },
+    "root_crosscheck_sha256": {
+      "VERIFY-BRIEF.md": "b0c5a9b1cd9f656ebc32249194f03f9bbc383a16295035a5e126abc1ef714837",
+      "capacity-projection.md": "f79cd4e60b61e69113544b7434e1bc7cfaaebefa8b71d533077a45759a7ffeca",
+      "measured-review.md": "458e0bf08c52f613d51ed22293f0c9ae3c64d2cfd16b0b6f821cee7f3a5e4b0a"
+    },
+    "verification_receipt_sha256": {
+      "saved-data-recalculation.json": "897f54414da5b9f421967267b2cc8229be45518ed1ff45e3fb32ac27e85530ac",
+      "report-provenance.json": "61aad775d9c8bf97946aa1950d7def30c9173ab85eb84d6503ffca4d12b0f98b"
+    },
+    "raw_artifacts": "Prompts, reasoning, keys and raw SSE are not included; only safe fixture answer content, numeric fields and hashes are published"
+  },
+  "limitations": [
+    "Sampling and window-union coverage do not establish continuous peaks; collection wall time is not causal performance overhead.",
+    "RSS is a known-process sum; PSS is measured only at separate quiescent checkpoints; cgroup memory.peak covers cgroup lifetime.",
+    "Whole-host unavailable includes unrelated demand and kernel estimates; adding independent swap peak is conservative. The 640 GiB cap is bounded validation, not minimum VM RAM.",
+    "Conservative required_host_demand mapped plus shmem can overlap and its load summary inherits prior attempts; not exact disjoint demand or exact required RAM.",
+    "Measured-free projection preserves the 0.62109375 GiB unclassified device gap and observed 4K overhead, while assuming unchanged non-cache allocations/workspace.",
+    "Weights are rounded native MiB logs. Component-only projection excludes driver/allocator overhead; 512K component headroom is tiny and its measured-free projection violates the 16 GiB reserve.",
+    "1M weights plus fixed-placement GPU cache exceed device capacity. All contexts above 4K are untested; no throughput or correctness projection."
+  ]
+}

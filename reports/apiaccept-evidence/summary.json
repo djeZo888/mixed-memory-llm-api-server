@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "status": "API_ACCEPTANCE_COMPLETE",
+  "completion_scope": "This API acceptance only; cleanup and overall project completion are outside scope",
+  "evidence_cutoff_utc": "2026-09-17T08:06:22.492747Z",
+  "postboot": {
+    "status": "PASS", "evidence_class": "INDEPENDENT_LIVE_LAN",
+    "finished_utc": "2026-09-17T08:06:22.492747Z", "request_count": 4,
+    "authenticated_control_qwen_ready": "PASS", "generation": 6,
+    "native_missing_key_http": 401, "authenticated_exact_model": "qwen3.8-27b",
+    "short_streamed_completion": "PASS", "expected_content_match": true,
+    "completion_uncertain": false,
+    "release": {"no_active_inflight_requests": true, "ownership_returned_to": "root/Worker1 C1", "no_further_apiaccept_requests_after_release": true, "terminal_record": "progress.md"},
+    "evidence": "private/cases/postboot-f_copxuw/postboot-result.json",
+    "worker1_reboot": {
+      "evidence_class": "SUPPLIED_WORKER1_HANDOFF", "normal_reboot_utc": "2026-09-17T07:57:22.475249Z",
+      "boot_identity_changed": true, "same_qwen_container_and_pinned_image": true,
+      "automatic_resume": "PASS", "new_process": true,
+      "guards_gpu_source_receipt_key_preservation": "PASS"
+    }
+  },
+  "provenance": {
+    "artifact_root": "APIACCEPT private sibling task directory",
+    "sources": ["result.md", "status.json", "progress.md", "telemetry-summary.md", "private/cases/postboot-f_copxuw/postboot-result.json"],
+    "basis": "Completed independent authenticated LAN observations; Worker1 native proofs and telemetry are supplied handoff evidence. Historical pending markers are superseded only by completed entries.",
+    "documentation_turn": {"network_requests": 0, "tests": 0, "host_mutations": 0},
+    "raw_private_evidence_included": false,
+    "independent_client_host": "Mac-Worker2",
+    "authenticated_private_lan_native_apis": {"glm": "PASS", "qwen": "PASS"},
+    "source_checks_are_live_acceptance": false
+  },
+  "control": {
+    "catalog_status": "PASS",
+    "catalog_count": 2,
+    "wrong_dedicated_key_http": 401,
+    "stale_generation": {"http": 409, "code": "stale_state", "selection_identity_generation_operations_unchanged": true},
+    "qwen_to_glm": {"status": "PASS", "operation_seconds": 308.0414478778839, "operation_polls": 17},
+    "idempotent_replay": {"status": "PASS", "replayed": true, "same_succeeded_operation": true, "identity_generation_unchanged": true},
+    "first_leg_counts": {"calls": 27, "operation_polls": 17, "new_loads": 1, "session_total": false},
+    "glm_to_qwen": {"status": "PASS", "operation_seconds": 88.192129611969, "operation_polls": 2},
+    "timing_scope": "Completed control operation including transitions/loading; not isolated weight-load time. HTTP 202 is admission only."
+  },
+  "models": {
+    "glm": {
+      "identity": "GLM5.3 UD-Q4_K_XL",
+      "alias": "glm-5.3",
+      "profile": "glm-5.3-ud-q4-k-xl-n76-native1m",
+      "configured_context_tokens": 1048576,
+      "allocation": "NOT_REMEASURED_BY_CLIENT",
+      "effort": "low",
+      "a1": {"status": "PASS", "checks_passed": 11, "suite_seconds": 52.764346},
+      "opencode": {"status": "PASS", "functional_integrity_checks_passed": 8, "agent_seconds": 128.041979, "wrapper_seconds": 132.773},
+      "largest_observed_client_prompt_tokens": 5791,
+      "largest_observed_client_prompt_basis": "OpenCode input plus cache-read counters; not independent native pre-count",
+      "retrieval": {
+        "status": "PASS", "request_count": 2, "order": ["tool", "continuation"],
+        "input_tokens": [4154, 4196], "output_tokens": [13, 45],
+        "cached_tokens": [50, 4166], "evaluated_prompt_tokens": [4104, 30],
+        "wall_seconds": [67.40762133299722, 7.270537875010632],
+        "native_prompt_tokens_per_second": [69.29926538219533, 34.70330410158351],
+        "native_decode_tokens_per_second": [1.5072684251632436, 6.906135881990462],
+        "native_decode_convention": "server (predicted_n-1)/seconds; not helper n/seconds",
+        "native_ttft": "UNAVAILABLE",
+        "case_seconds": 74.826995, "preparation_including_waits_seconds": 666.849662,
+        "initial_native_precount_matches_usage": true,
+        "maximum_input_scope": "Retrieval case only; ordinary agent inputs exceeded 4196"
+      }
+    },
+    "qwen": {
+      "identity": "Qwen3.8-27B FP8",
+      "alias": "qwen3.8-27b",
+      "profile": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+      "configured_context_tokens": 1000000,
+      "accepted_native_token_pool_tokens": 1000000,
+      "token_pool_basis": "Accepted Worker1 native/extension evidence, distinct from occupied proof",
+      "effort": "none",
+      "rich_client_context_launcher": "PREDECESSOR",
+      "original_a1": {"status": "FAIL_PRESERVED", "invalid_alias_http": 200, "auth_chat_sse_real_agent": "PASS", "agent_seconds": 6.952789, "suite_seconds": 8.085191},
+      "original_opencode": {"status": "FAIL_PRESERVED", "failure": "Whitespace-fragment verifier native_empty_text", "functional_integrity_checks_passed": 8, "agent_seconds": 11.970482, "wrapper_seconds": 16.694},
+      "opencode_replay": {"status": "PASS", "evidence_class": "OFFLINE_ORIGINAL_LIVE_EVENT_REPLAY", "original_real_checks_passed": 8, "agent_rerun": false, "original_evidence_preserved": true},
+      "retrieval": {
+        "status": "PASS", "request_count": 2, "order": ["tool", "continuation"],
+        "input_tokens": [144244, 144026], "output_tokens": [26, 54],
+        "wall_seconds": [23.284741959010717, 24.180752125015715],
+        "end_to_end_output_tokens_per_second": [1.116611042792275, 2.2331811566826896],
+        "native_prefill_decode": "UNAVAILABLE", "native_cache_timing": "UNAVAILABLE", "native_ttft": "UNAVAILABLE",
+        "case_seconds": 47.611365, "preparation_including_waits_seconds": 922.804868,
+        "initial_native_precount_matches_usage": true, "independent_continuation_precount": false
+      },
+      "corrected_launcher": {
+        "source": "ab6daa475cc2f1c04956d862f460f9f01c4ee952",
+        "worker1_genuine_native_pair_and_extension_proofs": "ACCEPTED_FROM_HANDOFF",
+        "invalid_alias": {"observed_http": 400, "native_error": "top-level BadRequestError", "task_local_nested_envelope_helper": "FAIL_PRESERVED", "contract": "PASS", "evidence_class": "OFFLINE_REVIEW_OF_ALREADY_CAPTURED_LIVE_RESPONSE", "retry": false, "runtime_change": false},
+        "valid_streamed_smoke": {"status": "PASS", "request_count": 2, "real_read_file": "PASS", "genuine_continuation_interpretation": "PASS", "strict_json": "PASS", "input_tokens": [406, 188], "output_tokens": [26, 17], "end_to_end_wall_seconds": [0.9006339159968775, 0.5227902079932392], "native_prefill_decode": "UNAVAILABLE"},
+        "rich_suite_or_context_rerun": false
+      }
+    }
+  },
+  "shared_limits": {
+    "retrieval_checks": ["real read_file", "genuine tool-result continuation", "early/middle/late retrieval", "strict JSON"],
+    "agent_checks": ["file reads", "implementation edit", "exact test command", "passing tool result", "final response", "immutable tests", "independent final check", "process cleanup"],
+    "retrieval_reserve_tokens": 8192,
+    "continuation_token_basis": "Returned usage",
+    "retrieval_retries": 0,
+    "near_cap_case": "NOT_TESTED",
+    "occupied_million_token_reasoning": "NOT_ESTABLISHED",
+    "a1_raw_wire": "UNAVAILABLE",
+    "context_raw_streams": "RETAINED_PRIVATELY",
+    "benchmark": false,
+    "timing": "Client wall and usage/elapsed rates are end-to-end. GLM continuation prompt rate covers only 30 evaluated tokens after cache reuse."
+  },
+  "telemetry": {
+    "provenance": "telemetry-summary.md; coordinator-supplied existing Worker1 observations; no new VM reads",
+    "sampled_peaks_are_absolute": false,
+    "continuous_coverage_claim": false,
+    "qwen": {
+      "case_utc": ["2026-09-17T06:50:47.210279Z", "2026-09-17T06:51:34.807923Z"],
+      "in_window_samples": 46, "maximum_interior_gap_seconds": 1.1365, "gaps_over_two_seconds": 0, "last_sample_before_terminal_seconds": 1.7859,
+      "sampler_stopped_utc": "2026-09-17T06:51:33.695Z",
+      "stop_limitation": "Accidental broad cancel-text matching; replacement samples occurred after case and are excluded",
+      "sampled_gpu_max_mib": [48518, 48550], "sampled_gpu_max_utilization_percent": [100, 100],
+      "minimum_mem_available_gib": 864.63, "maximum_model_cgroup_gib": 7.23,
+      "host_swap_bytes": 0, "cgroup_swap_bytes": 0, "observed_oom_delta": 0,
+      "support_release_utc": "2026-09-17T06:54:18.715Z",
+      "coordinator_artifacts": ["orchestration/tasks/API-SUPPORT/summary.json", "orchestration/tasks/API-SUPPORT/release.json"]
+    },
+    "glm": {
+      "case_utc": ["2026-09-17T07:37:52.121563Z", "2026-09-17T07:39:06.946931Z"],
+      "in_window_samples": 75, "maximum_interior_gap_seconds": 1.1715, "gaps_over_two_seconds": 0, "last_sample_before_terminal_seconds": 0.056,
+      "sampled_gpu_max_mib": [65032, 73488], "minimum_mem_available_gib": 460.50, "oom_counters": 0,
+      "semantic_context": "PASS", "strict_zero_swap": "NOT_PASS_NONZERO_CGROUP_SWAP",
+      "cgroup_swap_kib_during_case": 32, "cgroup_swap_kib_immediate_baseline": 248, "host_swap_mib": 16.75,
+      "individual_pid_vmswap": "NOT_MEASURED", "pressure_growth_observed": false, "new_swap_increase_observed": false, "cause_attribution": "NOT_CLAIMED",
+      "sampler_stop_and_operational_release_utc": "2026-09-17T07:40:40.741Z",
+      "coordinator_artifacts": ["orchestration/tasks/GLM-SUPPORT/summary.json"]
+    },
+    "qualification": "These sampling and swap limitations do not invalidate completed API/agent functional PASS. Coordinator artifact paths are relative to the coordinator workspace, not APIACCEPT."
+  },
+  "artifacts": {
+    "control_first_leg": "private/control-qwen-glm/summary.json",
+    "control_return": "status.json",
+    "qwen_original_a1": "private/cases/qwen-5vp8mfap/a1.json",
+    "qwen_original_opencode": "private/cases/qwen-5vp8mfap/opencode/report.json",
+    "qwen_offline_replay": "private/cases/qwen-5vp8mfap/opencode/replay-clienttext.json",
+    "qwen_retrieval": "private/cases/qwen-5vp8mfap/context/result.json",
+    "glm_a1": "private/cases/glm-3oqc2dd3/a1.json",
+    "glm_opencode": "private/cases/glm-3oqc2dd3/opencode/report.json",
+    "glm_retrieval": "private/cases/glm-3oqc2dd3/context/summary.json",
+    "corrected_qwen_helper_fail": "private/cases/final-qwen-gv_s3w5p/smoke/result.json",
+    "corrected_qwen_offline_alias_review": "private/cases/final-qwen-gv_s3w5p/smoke/1-offline-native-error-review.json",
+    "corrected_qwen_valid_smoke": "private/cases/final-qwen-gv_s3w5p/smoke/tool-continuation-result.json",
+    "accepted_preboot_idle_release": "private/cases/final-qwen-gv_s3w5p/smoke/accepted-idle-release.json",
+    "postboot_live_lan": "private/cases/postboot-f_copxuw/postboot-result.json"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "final_telemetry": {
+    "timestamp": 1789444681.2442675,
+    "sample_elapsed_seconds": 0.7606249629970989,
+    "sampled_only": true,
+    "required_context": 32768,
+    "container": {
+      "id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+      "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+      "pid": 149976,
+      "started_at": "2026-09-15T00:48:45.235739944Z",
+      "running": true,
+      "oom_killed": false
+    },
+    "mounts": {
+      "/data": "8daf56f1-5649-4163-9d87-919c2d271875",
+      "/data/models-large": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "root_available_bytes": 5208915968,
+    "host_kib": {
+      "MemTotal": 924616132,
+      "MemAvailable": 469485792,
+      "SwapTotal": 3083260,
+      "SwapFree": 3069180
+    },
+    "process_kib": {
+      "Rss": 433538784,
+      "Pss": 433538780,
+      "Swap": 0,
+      "VmSwap": 0
+    },
+    "vmstat": {
+      "pswpin": 19045,
+      "pswpout": 35822,
+      "oom_kill": 0
+    },
+    "host_swap_used_kib": 14080,
+    "vmstat_delta": {
+      "pswpin": 0,
+      "pswpout": 0,
+      "oom_kill": 0
+    },
+    "gpus": [
+      {
+        "index": 0,
+        "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+        "total_bytes": 102641958912,
+        "free_bytes": 84300267520
+      },
+      {
+        "index": 1,
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "total_bytes": 102641958912,
+        "free_bytes": 88377131008
+      }
+    ],
+    "errors": {
+      "cuda": 0,
+      "oom": 0,
+      "storage": 0,
+      "runtime": 0,
+      "fusion_fallback": 0
+    },
+    "slot_count": 1,
+    "slot_context": 32768,
+    "n_threads": 112,
+    "placement": "all_cpu",
+    "log": {
+      "path": "/data/docker/containers/bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55/bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55-json.log",
+      "read_bytes": 74394,
+      "sha256": "b5fc00508cb138d85091833cda5e35c3d10d10645bfe25e51173c30a11a15780"
+    },
+    "native": null,
+    "status": "PASS"
+  },
+  "correctness_checks": {
+    "early": true,
+    "middle": true,
+    "late": true
+  },
+  "native_usage_match": true,
+  "cold_cache_required": 0,
+  "cold_cache_observed": 50
+}

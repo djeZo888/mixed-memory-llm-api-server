@@ -1,0 +1,1 @@
+uid=0 gid=1000 mode=2755 inode=47972353 device=2065

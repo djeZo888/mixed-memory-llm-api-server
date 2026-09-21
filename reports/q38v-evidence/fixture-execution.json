@@ -1,0 +1,43 @@
+{
+  "argv": [
+    "python3",
+    "-B",
+    "/data/build/q38v-20260915/source/tests/lifecycle/sglang38_fixture/run_fixture.py",
+    "--repo",
+    "/data/build/q38v-20260915/source",
+    "--output",
+    "/data/q38v-20260915/q38b-auth.json"
+  ],
+  "started_at_utc": "2026-09-15T02:41:54.857551+00:00",
+  "finished_at_utc": "2026-09-15T02:41:55.566514+00:00",
+  "elapsed_seconds": 0.709,
+  "helper_exit": 1,
+  "receipt_exists": false,
+  "stdout_bytes": 613,
+  "stderr_bytes": 0,
+  "helper_result": {
+    "code": "q38s_image_fixture_failed",
+    "lifetime": {
+      "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+      "container_id": "3f7a9812c56c72d4f086fdcac29a4d9c6f2cf88d30bdb15ded019b708a76b1b8",
+      "container_name": "q38b-fixture-b41ec640a71922c3b0c10374744e5b4b",
+      "outcome": "ATTACH_FAILED",
+      "runtime_inspect": {
+        "context": 131072,
+        "device_requests": [],
+        "driver_capabilities": "compute,utility",
+        "entrypoint": [
+          "python3"
+        ],
+        "host_devices": [],
+        "model_and_secret_mounts": "EMPTY_PRIVATE_TMPFS",
+        "network": "none",
+        "root_readonly": true,
+        "runtime": "nvidia",
+        "status": "PASS_HOST_INSPECT",
+        "visible_devices": "none"
+      }
+    },
+    "status": "FAIL"
+  }
+}

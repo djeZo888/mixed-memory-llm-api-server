@@ -1,0 +1,75 @@
+{
+  "actual": {
+    "context_len": 1000000,
+    "dtype": "torch.bfloat16",
+    "hf_context_len": 1000000,
+    "max_position_embeddings": 262144,
+    "rope_parameters": {
+      "factor": 4.0,
+      "mrope_interleaved": true,
+      "mrope_section": [
+        11,
+        11,
+        10
+      ],
+      "original_max_position_embeddings": 262144,
+      "partial_rotary_factor": 0.25,
+      "rope_theta": 10000000,
+      "rope_type": "yarn",
+      "type": "yarn"
+    },
+    "source_sha256": "da8db3fd906bc4fdf412cd8cd2ea1787a3385a948bea41cbc66c6fd75664d6b7",
+    "status": "PASS_INSTALLED_MODELCONFIG"
+  },
+  "actual_model_allocation_or_inference": false,
+  "auth_receipt": false,
+  "diagnostic_attempt": 5,
+  "diagnostic_only": true,
+  "engine_calls": 0,
+  "exact_cleanup": "PASS",
+  "expected": {
+    "context_len": 1000000,
+    "dtype": "torch.bfloat16",
+    "hf_context_len": 1000000,
+    "max_position_embeddings": 262144,
+    "rope_parameters": {
+      "factor": 4.0,
+      "mrope_interleaved": true,
+      "mrope_section": [
+        11,
+        11,
+        10
+      ],
+      "original_max_position_embeddings": 262144,
+      "partial_rotary_factor": 0.25,
+      "rope_theta": 10000000,
+      "rope_type": "yarn"
+    },
+    "source_sha256": "da8db3fd906bc4fdf412cd8cd2ea1787a3385a948bea41cbc66c6fd75664d6b7",
+    "status": "PASS_INSTALLED_MODELCONFIG"
+  },
+  "first_code": "extension_model_config_resolution_mismatch",
+  "later_reviewed_source_proof": "PENDING_RESULT",
+  "matching_fields": [
+    "context_len",
+    "dtype",
+    "hf_context_len",
+    "max_position_embeddings",
+    "source_sha256",
+    "status"
+  ],
+  "original_attempt": 4,
+  "original_predicate_unchanged": true,
+  "original_status": "FAIL",
+  "post_guards": "PASS",
+  "predicate": "contract.same_json(proof, contract.expected_extension_resolution(provenance))",
+  "profile": "qwen38-27b-1000000-yarn4-tp2-bf16kv",
+  "schema_version": 1,
+  "sole_difference": {
+    "extra_actual_key": "type",
+    "extra_actual_value": "yarn",
+    "field": "rope_parameters",
+    "other_rope_values_equal": true
+  },
+  "source_commit": "821df4a561173c078ed35c9286a07b82867b7953"
+}

@@ -1,0 +1,290 @@
+[
+  {
+    "dev": 2065,
+    "gid": 1001,
+    "inode": 12320769,
+    "mode": "02755",
+    "path": "/data/models",
+    "phase": "C1_TEMPORARY_PARENT_PROTECTED",
+    "recursive": false,
+    "restore_on_exit": true,
+    "uid": 0,
+    "utc": "2026-09-17T08:34:07.492138+00:00"
+  },
+  {
+    "allocated_bytes": 586788376576,
+    "generation": 6,
+    "guards": "PASS",
+    "non_use": "PASS",
+    "phase": "C1_PREAPPLY_VERIFIED",
+    "qwen_pid": 11259,
+    "targets": 4,
+    "utc": "2026-09-17T08:34:19.302776+00:00"
+  },
+  {
+    "absence_verified": true,
+    "force": false,
+    "id": "634daeb70a3ae9aa7403ec8d2256984de9cfe8b5521b839de16a1707164f7522",
+    "phase": "C1_CONTAINER_RETIRED",
+    "utc": "2026-09-17T08:34:20.053366+00:00",
+    "volumes": false
+  },
+  {
+    "absence_verified": true,
+    "force": false,
+    "id": "321ee2110e2e0130739ca51fe192b23d746ecefca76e746c9e2df3fd8a799153",
+    "phase": "C1_CONTAINER_RETIRED",
+    "utc": "2026-09-17T08:34:20.943527+00:00",
+    "volumes": false
+  },
+  {
+    "absence_verified": true,
+    "force": false,
+    "id": "6cfa91273417ad7f5ae23a471aaf7b2f5be47bfab74550df93b71587fb3fb71f",
+    "phase": "C1_CONTAINER_RETIRED",
+    "utc": "2026-09-17T08:34:21.821975+00:00",
+    "volumes": false
+  },
+  {
+    "absence_verified": true,
+    "backup_allocated_bytes": 16384,
+    "backup_bytes": 14118,
+    "path": "/data/services/llm-manager/acquisition/qwen3-coder-next-fp8.complete.json",
+    "phase": "C1_METADATA_RETIRED",
+    "utc": "2026-09-17T08:34:22.778544+00:00",
+    "weights_backed_up": false
+  },
+  {
+    "absence_verified": true,
+    "backup_allocated_bytes": 4096,
+    "backup_bytes": 3726,
+    "path": "/data/services/llm-manager/compose/minimax-m3-poc.compose.yml",
+    "phase": "C1_METADATA_RETIRED",
+    "utc": "2026-09-17T08:34:23.516051+00:00",
+    "weights_backed_up": false
+  },
+  {
+    "absence_verified": true,
+    "backup_allocated_bytes": 4096,
+    "backup_bytes": 2348,
+    "path": "/data/services/llm-manager/compose/sglang-smoke.compose.yml",
+    "phase": "C1_METADATA_RETIRED",
+    "utc": "2026-09-17T08:34:24.256906+00:00",
+    "weights_backed_up": false
+  },
+  {
+    "absence_verified": true,
+    "backup_allocated_bytes": 4096,
+    "backup_bytes": 2556,
+    "path": "/data/services/llm-manager/compose/sglang-qwen3-30b.compose.yml",
+    "phase": "C1_METADATA_RETIRED",
+    "utc": "2026-09-17T08:34:24.996920+00:00",
+    "weights_backed_up": false
+  },
+  {
+    "phase": "C1_TARGET_APPLY_BEGIN",
+    "root": "/data/models/minimax-m3-mxfp8",
+    "utc": "2026-09-17T08:34:24.997006+00:00"
+  },
+  {
+    "absence_verified": true,
+    "filesystem_free_delta": "measure_separately_in_runner",
+    "phase": "C1_TARGET_ABSENCE",
+    "removed_inventory_allocated_bytes": 443776548864,
+    "root": "/data/models/minimax-m3-mxfp8",
+    "utc": "2026-09-17T08:34:36.955242+00:00"
+  },
+  {
+    "absence_verified": true,
+    "catalog": "TWO_RETAINED_MODELS_READY",
+    "generation": 6,
+    "mounts_guards": "PASS",
+    "phase": "C1_TARGET_VERIFIED",
+    "qwen_pid": 11259,
+    "retained_metadata": "UNCHANGED",
+    "root": "/data/models/minimax-m3-mxfp8",
+    "utc": "2026-09-17T08:34:48.736282+00:00"
+  },
+  {
+    "phase": "C1_TARGET_APPLY_BEGIN",
+    "root": "/data/models/qwen3-30b-a3b-instruct-2507",
+    "utc": "2026-09-17T08:34:48.736332+00:00"
+  },
+  {
+    "absence_verified": true,
+    "filesystem_free_delta": "measure_separately_in_runner",
+    "phase": "C1_TARGET_ABSENCE",
+    "removed_inventory_allocated_bytes": 61084520448,
+    "root": "/data/models/qwen3-30b-a3b-instruct-2507",
+    "utc": "2026-09-17T08:35:00.496550+00:00"
+  },
+  {
+    "absence_verified": true,
+    "catalog": "TWO_RETAINED_MODELS_READY",
+    "generation": 6,
+    "mounts_guards": "PASS",
+    "phase": "C1_TARGET_VERIFIED",
+    "qwen_pid": 11259,
+    "retained_metadata": "UNCHANGED",
+    "root": "/data/models/qwen3-30b-a3b-instruct-2507",
+    "utc": "2026-09-17T08:35:12.100296+00:00"
+  },
+  {
+    "phase": "C1_TARGET_APPLY_BEGIN",
+    "root": "/data/models/qwen3-0.6b-smoke",
+    "utc": "2026-09-17T08:35:12.100346+00:00"
+  },
+  {
+    "absence_verified": true,
+    "filesystem_free_delta": "measure_separately_in_runner",
+    "phase": "C1_TARGET_ABSENCE",
+    "removed_inventory_allocated_bytes": 1519300608,
+    "root": "/data/models/qwen3-0.6b-smoke",
+    "utc": "2026-09-17T08:35:23.807834+00:00"
+  },
+  {
+    "absence_verified": true,
+    "catalog": "TWO_RETAINED_MODELS_READY",
+    "generation": 6,
+    "mounts_guards": "PASS",
+    "phase": "C1_TARGET_VERIFIED",
+    "qwen_pid": 11259,
+    "retained_metadata": "UNCHANGED",
+    "root": "/data/models/qwen3-0.6b-smoke",
+    "utc": "2026-09-17T08:35:35.485862+00:00"
+  },
+  {
+    "phase": "C1_TARGET_APPLY_BEGIN",
+    "root": "/data/models-large/qwen3-coder-next-fp8",
+    "utc": "2026-09-17T08:35:35.485901+00:00"
+  },
+  {
+    "absence_verified": true,
+    "filesystem_free_delta": "measure_separately_in_runner",
+    "phase": "C1_TARGET_ABSENCE",
+    "removed_inventory_allocated_bytes": 80408006656,
+    "root": "/data/models-large/qwen3-coder-next-fp8",
+    "utc": "2026-09-17T08:35:47.355089+00:00"
+  },
+  {
+    "absence_verified": true,
+    "catalog": "TWO_RETAINED_MODELS_READY",
+    "generation": 6,
+    "mounts_guards": "PASS",
+    "phase": "C1_TARGET_VERIFIED",
+    "qwen_pid": 11259,
+    "retained_metadata": "UNCHANGED",
+    "root": "/data/models-large/qwen3-coder-next-fp8",
+    "utc": "2026-09-17T08:35:59.107195+00:00"
+  },
+  {
+    "dev": 2065,
+    "gid": 1001,
+    "inode": 12320769,
+    "mode": "02775",
+    "path": "/data/models",
+    "phase": "C1_TEMPORARY_PARENT_RESTORED",
+    "recursive": false,
+    "uid": 1000,
+    "utc": "2026-09-17T08:35:59.183369+00:00"
+  },
+  {
+    "allocated_weight_bytes_removed": 586788376576,
+    "canonical_lease": "RELEASED",
+    "completed": [
+      {
+        "absence_verified": true,
+        "filesystem_free_delta": "measure_separately_in_runner",
+        "removed_inventory_allocated_bytes": 443776548864,
+        "root": "/data/models/minimax-m3-mxfp8"
+      },
+      {
+        "absence_verified": true,
+        "filesystem_free_delta": "measure_separately_in_runner",
+        "removed_inventory_allocated_bytes": 61084520448,
+        "root": "/data/models/qwen3-30b-a3b-instruct-2507"
+      },
+      {
+        "absence_verified": true,
+        "filesystem_free_delta": "measure_separately_in_runner",
+        "removed_inventory_allocated_bytes": 1519300608,
+        "root": "/data/models/qwen3-0.6b-smoke"
+      },
+      {
+        "absence_verified": true,
+        "filesystem_free_delta": "measure_separately_in_runner",
+        "removed_inventory_allocated_bytes": 80408006656,
+        "root": "/data/models-large/qwen3-coder-next-fp8"
+      }
+    ],
+    "concurrent_write_limitation": "Filesystem deltas include concurrent service/log writes and filesystem accounting; allocation removed is measured separately. Metadata backups do not restore weights.",
+    "free_after": {
+      "/": 5545844736,
+      "/data": 1844134727680,
+      "/data/models-large": 2671267291136
+    },
+    "free_before": {
+      "/": 5546250240,
+      "/data": 1337402023936,
+      "/data/models-large": 2590859284480
+    },
+    "free_delta": {
+      "/": -405504,
+      "/data": 506732703744,
+      "/data/models-large": 80408006656
+    },
+    "generation": 6,
+    "gpu": {
+      "gpus": [
+        "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 595.84, 97887, 48640",
+        "1, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 595.84, 97887, 48608"
+      ],
+      "installed": "595.84",
+      "kernel": "6.8.0-139-generic",
+      "loaded": "595.84"
+    },
+    "guards": "PASS",
+    "metadata_backup_allocated_bytes": 28672,
+    "parent_restored": true,
+    "phase": "C1_APPLY_RELEASED",
+    "preservation": "PASS",
+    "qwen_pid": 11259,
+    "retired_containers": [
+      "634daeb70a3ae9aa7403ec8d2256984de9cfe8b5521b839de16a1707164f7522",
+      "321ee2110e2e0130739ca51fe192b23d746ecefca76e746c9e2df3fd8a799153",
+      "6cfa91273417ad7f5ae23a471aaf7b2f5be47bfab74550df93b71587fb3fb71f"
+    ],
+    "retired_metadata": [
+      {
+        "backup": "/data/logs/finalops-20260917/retired-metadata-qwen3-coder-next-fp8.complete.json.json",
+        "backup_allocated_bytes": 16384,
+        "backup_bytes": 14118,
+        "path": "/data/services/llm-manager/acquisition/qwen3-coder-next-fp8.complete.json",
+        "retired_allocated_bytes": 12288
+      },
+      {
+        "backup": "/data/logs/finalops-20260917/retired-metadata-minimax-m3-poc.compose.yml.json",
+        "backup_allocated_bytes": 4096,
+        "backup_bytes": 3726,
+        "path": "/data/services/llm-manager/compose/minimax-m3-poc.compose.yml",
+        "retired_allocated_bytes": 4096
+      },
+      {
+        "backup": "/data/logs/finalops-20260917/retired-metadata-sglang-smoke.compose.yml.json",
+        "backup_allocated_bytes": 4096,
+        "backup_bytes": 2348,
+        "path": "/data/services/llm-manager/compose/sglang-smoke.compose.yml",
+        "retired_allocated_bytes": 4096
+      },
+      {
+        "backup": "/data/logs/finalops-20260917/retired-metadata-sglang-qwen3-30b.compose.yml.json",
+        "backup_allocated_bytes": 4096,
+        "backup_bytes": 2556,
+        "path": "/data/services/llm-manager/compose/sglang-qwen3-30b.compose.yml",
+        "retired_allocated_bytes": 4096
+      }
+    ],
+    "retired_metadata_allocated_bytes": 24576,
+    "utc": "2026-09-17T08:36:18.365933+00:00"
+  }
+]

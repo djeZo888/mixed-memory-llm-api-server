@@ -1,0 +1,400 @@
+{
+  "schema_version": 1,
+  "scope": "Q38S source-only normalization and exact public OCI metadata; no layers, models, images, engines or VM access",
+  "access_date": "2026-09-15",
+  "reviewed_base": "2def0df81f4195659de380444f05c903c14aeb03",
+  "upstream_manifest": {
+    "path": "reports/q38r-source-weight-manifest.json",
+    "sha256": "3df6f2a0a46a33b2b48f62609235ff209e50403d679bd8ee120b941445a87ed0",
+    "reviewed_source_commit": "7109f1ce88c838bec5acc2ab7b84c3cbcdedbfe0"
+  },
+  "acquisition_manifest": {
+    "path": "reports/q38s-acquisition-manifest.json",
+    "sha256": "726012378a40f648a104230d3f5ed5d6bc505cbd09b32918fc29aa81c0f075f2",
+    "artifact_count": 81,
+    "weight_count": 66,
+    "total_bytes": 30890049597,
+    "weight_bytes": 30866866928,
+    "normalized_columns_preserve": [
+      "path",
+      "size_bytes",
+      "sha256",
+      "git_blob_sha1",
+      "metadata_identity",
+      "verification"
+    ],
+    "local_weight_bytes_read": 0,
+    "receipt_status": "NOT_ACQUIRED",
+    "column_mapping": {
+      "path": "path",
+      "size_bytes": "size_bytes",
+      "sha256": "sha256",
+      "git_blob_sha1": "git_blob_sha1 for Git payloads; lfs_pointer_git_blob_sha1 for LFS pointer provenance",
+      "metadata_identity": "metadata_identity",
+      "verification": "verification"
+    },
+    "generic_installer_followup": [
+      "Permit safe leading-dot artifact names such as .gitattributes without admitting dot/dotdot path components.",
+      "Permit size_bytes=0 with exact empty-payload SHA256; preserve the empty artifact and verify/create it through generic acquisition logic.",
+      "Registry selection must be declarative; current installer selection enum is glm/qwen only.",
+      "Seal generic acquisition status/destination/verified_bytes/computed_sha256 fields into separate protected lifecycle complete/model_root/total_bytes/sha256+verified receipt."
+    ]
+  },
+  "runtime": {
+    "id": "sglang-qwen38-0.5.19",
+    "source_commit": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+    "source_release": "v0.5.19",
+    "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "manifest": {
+      "url": "https://registry-1.docker.io/v2/lmsysorg/sglang/manifests/sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "digest": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "size_bytes": 13686,
+      "media_type": "application/vnd.oci.image.manifest.v1+json",
+      "verification": "FRESH_PUBLIC_BYTES_SHA256_MATCH"
+    },
+    "config": {
+      "url": "https://registry-1.docker.io/v2/lmsysorg/sglang/blobs/sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
+      "digest": "sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813",
+      "size_bytes": 65818,
+      "verification": "FRESH_PUBLIC_BYTES_SHA256_MATCH_DESCRIPTOR",
+      "meaning": "Expected Docker content-addressed image ID is the config digest, distinct from the OCI distribution manifest digest. Worker1 must independently verify actual installed .Id and RepoDigests."
+    },
+    "platform": {
+      "os": "linux",
+      "architecture": "amd64"
+    },
+    "labels": {
+      "ai.sglang.build.commit": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+      "ai.sglang.build.url": "https://github.com/sgl-project/sglang/actions/runs/33912440803",
+      "ai.sglang.image.tag": "lmsysorg/sglang:v0.5.19",
+      "com.nvidia.cudnn.version": "9.14.0.64-1",
+      "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+      "org.opencontainers.image.revision": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+      "org.opencontainers.image.source": "https://github.com/sgl-project/sglang",
+      "org.opencontainers.image.url": "https://github.com/sgl-project/sglang/actions/runs/33912440803",
+      "org.opencontainers.image.version": "lmsysorg/sglang:v0.5.19"
+    },
+    "image_environment": {
+      "PATH": "/root/.cargo/bin:/opt/sglang/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/nvidia/bin",
+      "NVARCH": "x86_64",
+      "NVIDIA_REQUIRE_CUDA": "cuda>=13.0 brand=unknown,driver>=535,driver<536 brand=grid,driver>=535,driver<536 brand=tesla,driver>=535,driver<536 brand=nvidia,driver>=535,driver<536 brand=quadro,driver>=535,driver<536 brand=quadrortx,driver>=535,driver<536 brand=nvidiartx,driver>=535,driver<536 brand=vapps,driver>=535,driver<536 brand=vpc,driver>=535,driver<536 brand=vcs,driver>=535,driver<536 brand=vws,driver>=535,driver<536 brand=cloudgaming,driver>=535,driver<536 brand=unknown,driver>=550,driver<551 brand=grid,driver>=550,driver<551 brand=tesla,driver>=550,driver<551 brand=nvidia,driver>=550,driver<551 brand=quadro,driver>=550,driver<551 brand=quadrortx,driver>=550,driver<551 brand=nvidiartx,driver>=550,driver<551 brand=vapps,driver>=550,driver<551 brand=vpc,driver>=550,driver<551 brand=vcs,driver>=550,driver<551 brand=vws,driver>=550,driver<551 brand=cloudgaming,driver>=550,driver<551 brand=unknown,driver>=565,driver<566 brand=grid,driver>=565,driver<566 brand=tesla,driver>=565,driver<566 brand=nvidia,driver>=565,driver<566 brand=quadro,driver>=565,driver<566 brand=quadrortx,driver>=565,driver<566 brand=nvidiartx,driver>=565,driver<566 brand=vapps,driver>=565,driver<566 brand=vpc,driver>=565,driver<566 brand=vcs,driver>=565,driver<566 brand=vws,driver>=565,driver<566 brand=cloudgaming,driver>=565,driver<566 brand=unknown,driver>=570,driver<571 brand=grid,driver>=570,driver<571 brand=tesla,driver>=570,driver<571 brand=nvidia,driver>=570,driver<571 brand=quadro,driver>=570,driver<571 brand=quadrortx,driver>=570,driver<571 brand=nvidiartx,driver>=570,driver<571 brand=vapps,driver>=570,driver<571 brand=vpc,driver>=570,driver<571 brand=vcs,driver>=570,driver<571 brand=vws,driver>=570,driver<571 brand=cloudgaming,driver>=570,driver<571 brand=unknown,driver>=575,driver<576 brand=grid,driver>=575,driver<576 brand=tesla,driver>=575,driver<576 brand=nvidia,driver>=575,driver<576 brand=quadro,driver>=575,driver<576 brand=quadrortx,driver>=575,driver<576 brand=nvidiartx,driver>=575,driver<576 brand=vapps,driver>=575,driver<576 brand=vpc,driver>=575,driver<576 brand=vcs,driver>=575,driver<576 brand=vws,driver>=575,driver<576 brand=cloudgaming,driver>=575,driver<576",
+      "NV_CUDA_CUDART_VERSION": "13.0.96-1",
+      "CUDA_VERSION": "13.0.3",
+      "LD_LIBRARY_PATH": "/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:/usr/local/nvidia/lib:/usr/local/nvidia/lib64",
+      "NVIDIA_VISIBLE_DEVICES": "all",
+      "NVIDIA_DRIVER_CAPABILITIES": "compute,utility",
+      "NV_CUDA_LIB_VERSION": "13.0.3-1",
+      "NV_NVTX_VERSION": "13.0.85-1",
+      "NV_LIBNPP_VERSION": "13.0.1.2-1",
+      "NV_LIBNPP_PACKAGE": "libnpp-13-0=13.0.1.2-1",
+      "NV_LIBCUSPARSE_VERSION": "12.6.3.3-1",
+      "NV_LIBCUBLAS_PACKAGE_NAME": "libcublas-13-0",
+      "NV_LIBCUBLAS_VERSION": "13.1.1.3-1",
+      "NV_LIBCUBLAS_PACKAGE": "libcublas-13-0=13.1.1.3-1",
+      "NV_LIBNCCL_PACKAGE_NAME": "libnccl2",
+      "NV_LIBNCCL_PACKAGE_VERSION": "2.28.3-1",
+      "NCCL_VERSION": "2.28.3-1",
+      "NV_LIBNCCL_PACKAGE": "libnccl2=2.28.3-1+cuda13.0",
+      "NVIDIA_PRODUCT_NAME": "CUDA",
+      "NV_CUDA_CUDART_DEV_VERSION": "13.0.96-1",
+      "NV_NVML_DEV_VERSION": "13.0.87-1",
+      "NV_LIBCUSPARSE_DEV_VERSION": "12.6.3.3-1",
+      "NV_LIBNPP_DEV_VERSION": "13.0.1.2-1",
+      "NV_LIBNPP_DEV_PACKAGE": "libnpp-dev-13-0=13.0.1.2-1",
+      "NV_LIBCUBLAS_DEV_VERSION": "13.1.1.3-1",
+      "NV_LIBCUBLAS_DEV_PACKAGE_NAME": "libcublas-dev-13-0",
+      "NV_LIBCUBLAS_DEV_PACKAGE": "libcublas-dev-13-0=13.1.1.3-1",
+      "NV_CUDA_NSIGHT_COMPUTE_VERSION": "13.0.3-1",
+      "NV_CUDA_NSIGHT_COMPUTE_DEV_PACKAGE": "cuda-nsight-compute-13-0=13.0.3-1",
+      "NV_LIBNCCL_DEV_PACKAGE_NAME": "libnccl-dev",
+      "NV_LIBNCCL_DEV_PACKAGE_VERSION": "2.28.3-1",
+      "NV_LIBNCCL_DEV_PACKAGE": "libnccl-dev=2.28.3-1+cuda13.0",
+      "LIBRARY_PATH": "/usr/local/cuda/lib64/stubs",
+      "NV_CUDNN_VERSION": "9.14.0.64-1",
+      "NV_CUDNN_PACKAGE_NAME": "libcudnn9-cuda-13",
+      "NV_CUDNN_PACKAGE": "libcudnn9-cuda-13=9.14.0.64-1",
+      "NV_CUDNN_PACKAGE_DEV": "libcudnn9-dev-cuda-13=9.14.0.64-1",
+      "NV_CUDNN_PACKAGE_DEV_HEADERS": "libcudnn9-headers-cuda-13=9.14.0.64-1",
+      "DEBIAN_FRONTEND": "noninteractive",
+      "CUDA_HOME": "/usr/local/cuda",
+      "GDRCOPY_HOME": "/usr/src/gdrdrv-2.5.1/",
+      "FLASHINFER_VERSION": "0.6.18",
+      "LANG": "en_US.UTF-8",
+      "LANGUAGE": "en_US:en",
+      "LC_ALL": "en_US.UTF-8",
+      "SGLANG_RUST_BUILD_MODE": "never",
+      "SGLANG_BUILD_COMMIT": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+      "SGLANG_BUILD_URL": "https://github.com/sgl-project/sglang/actions/runs/33912440803",
+      "SGLANG_IMAGE_TAG": "lmsysorg/sglang:v0.5.19"
+    },
+    "image_default_entrypoint": [
+      "/opt/nvidia/nvidia_entrypoint.sh"
+    ],
+    "image_default_workdir": "/sgl-workspace/sglang",
+    "layer_count": 70,
+    "layer_bytes_fetched": 0,
+    "source_files": [
+      {
+        "path": "python/sglang/launch_server.py",
+        "size_bytes": 2569,
+        "sha256": "1a3e02c4208e13242b9a47ce92e7bc3769c8e069f863849671b9b8cc8fabdbe7",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/launch_server.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/arg_groups/cuda_graph_hook.py",
+        "size_bytes": 22503,
+        "sha256": "a234ccf4f8f23328a18ed72ea4c7313286e6b205921d8bcea128e6fb0372defa",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/arg_groups/cuda_graph_hook.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/arg_groups/mamba_hook.py",
+        "size_bytes": 6500,
+        "sha256": "22e9edafc411b0007e3cd6dfac692021e615a89b3de67bdc1ad8b5a8f28d73d0",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/arg_groups/mamba_hook.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/arg_groups/overrides.py",
+        "size_bytes": 77022,
+        "sha256": "af4086d5c3bbfc8789d82b196240226785c104809c48cb1f9a24f6962cafe4ac",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/arg_groups/overrides.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/arg_groups/pipeline.py",
+        "size_bytes": 13457,
+        "sha256": "4c46d8a8966914e361ed9e5d18956025c1ffe64de928d25b3a6111ac3a0ee8c8",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/arg_groups/pipeline.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/entrypoints/engine.py",
+        "size_bytes": 75580,
+        "sha256": "7617f78e85c00643d0d16896770b5727be066ded5f18bcbc0786ff397825bc72",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/entrypoints/engine.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/entrypoints/http_server.py",
+        "size_bytes": 106024,
+        "sha256": "d8cc81f8d9866957dd4c0aa59917afa3d4d7d0e28eefaff0a9800157ed068a43",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/entrypoints/http_server.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/entrypoints/openai/chat_encoding.py",
+        "size_bytes": 7209,
+        "sha256": "c9e34556f895b74967070aeeba58dc57b2126c0c290617e156ab65ad1cd5a677",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/entrypoints/openai/chat_encoding.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/entrypoints/openai/protocol.py",
+        "size_bytes": 72715,
+        "sha256": "a7cf91c1db5d076b9ad647248351f10b0249153998b974ed4d00610306b01653",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/entrypoints/openai/protocol.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/entrypoints/openai/serving_chat.py",
+        "size_bytes": 114388,
+        "sha256": "7b05e6ab1d09a71ce253040c9cd62ea7c55a52020b44cf9b76d91c8df9e23240",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/entrypoints/openai/serving_chat.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/function_call/function_call_parser.py",
+        "size_bytes": 13707,
+        "sha256": "7433863decb5eefa92e0e227f723221e219a44d7f17c10c6654b9740f15558f3",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/function_call/function_call_parser.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/function_call/qwen3_coder_detector.py",
+        "size_bytes": 20210,
+        "sha256": "92eeaeaf02ac1c1e966a8b9bbd4393141353ca9177265044fe12e250c0e38089",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/function_call/qwen3_coder_detector.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/model_executor/cuda_graph_config.py",
+        "size_bytes": 10752,
+        "sha256": "9f9250e3c4f9a36e6bd95aea9b57e76068b780ef38a6317c3b6240c0fcd3916d",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/model_executor/cuda_graph_config.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/parser/reasoning_parser.py",
+        "size_bytes": 82490,
+        "sha256": "f608772b59a98eb62f1e7ee5ea1f17b16a0ca4e2c325c77cbed8ef4594ca15f4",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/parser/reasoning_parser.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/parser/template_manager.py",
+        "size_bytes": 15271,
+        "sha256": "2c7de852332f68d9ca5e535f42633372aa86e5bd69406ec8a102f43b17855b32",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/parser/template_manager.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/plugins//init/.py",
+        "size_bytes": 5037,
+        "sha256": "3a975a73f1a7887e68c81ea7a2530250597ac8ae978efc0b0f70f038a99a3164",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/plugins//init/.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/runtime_context.py",
+        "size_bytes": 86932,
+        "sha256": "dba849e17448a3a9c1a86e73128617e2039ff2bff396a25cf4ec3c2203396140",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/runtime_context.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/server_args.py",
+        "size_bytes": 187623,
+        "sha256": "204fe57ba81acc25b7badcabf3b4b741021767c91f1d64e0df949cb175464b7c",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/server_args.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/utils/auth.py",
+        "size_bytes": 7289,
+        "sha256": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/utils/auth.py",
+        "status": "SOURCE_ONLY"
+      },
+      {
+        "path": "python/sglang/srt/utils/log_utils.py",
+        "size_bytes": 2203,
+        "sha256": "aa0c540a2c171c54412ab07655705fd057feeef9c45e67b0fc5f30dcedb066f7",
+        "url": "https://raw.githubusercontent.com/sgl-project/sglang/0bcd822377da7b5718e674eaf9c870d349424dd1/python/sglang/srt/utils/log_utils.py",
+        "status": "SOURCE_ONLY"
+      }
+    ],
+    "installed_source_packages": "NOT_TESTED",
+    "actual_image_auth_fixture": "NOT_TESTED",
+    "gpu_model_inference": "NOT_TESTED"
+  },
+  "cache_provenance": {
+    "flashinfer_workspace": {
+      "repository": "https://github.com/flashinfer-ai/flashinfer",
+      "tag": "v0.6.18",
+      "commit": "69ff11fc4954396d98326656dc85debd2223f637",
+      "path": "flashinfer/jit/env.py",
+      "url": "https://raw.githubusercontent.com/flashinfer-ai/flashinfer/69ff11fc4954396d98326656dc85debd2223f637/flashinfer/jit/env.py",
+      "sha256": "c3955fd0b83154356942840c1217e7c64a3602766feddbd701f814bae25ff47e",
+      "size_bytes": 6759,
+      "lines": "58-62,155-164",
+      "mapping": "FLASHINFER_WORKSPACE_BASE=/cache/flashinfer causes generated/cache content below /cache/flashinfer/.cache/flashinfer; HOME unchanged"
+    },
+    "cuda_jit": {
+      "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/environment-variables.html",
+      "section": "5.2.2.2 CUDA_CACHE_PATH",
+      "mapping": "CUDA_CACHE_PATH=/cache/cuda redirects the CUDA driver JIT cache; HOME unchanged"
+    }
+  },
+  "parser_template": {
+    "checkpoint_template": {
+      "path": "chat_template.jinja",
+      "url": "https://huggingface.co/Qwen/Qwen3.8-27B-FP8/resolve/017b9c7af6b5689d5dd426a76e0bc077eb5ca20a/chat_template.jinja",
+      "sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+      "git_blob_sha1": "c0c686f9c38d70d179fb7b5f5aa7530bc913dda3",
+      "size_bytes": 8952,
+      "verification": "FRESH_CONTENT_SHA256_AND_GIT_BLOB_MATCH"
+    },
+    "tool_parser": "qwen3_coder",
+    "reasoning_parser": "qwen3",
+    "template_supported_efforts": [
+      "xhigh",
+      "medium",
+      "low"
+    ],
+    "omitted_effort_with_thinking": "xhigh",
+    "selected_server_default": {
+      "enable_thinking": false
+    },
+    "required_fast_client_request": {
+      "reasoning_effort": "none",
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "evidence": [
+      {
+        "path": "chat_template.jinja",
+        "lines": "46-56,110-145,163-170",
+        "finding": "No-thinking skips effort instructions and emits a closed empty think prefix. Missing assistant reasoning_content becomes an empty string; native tool-call and tool-result history still formats."
+      },
+      {
+        "path": "python/sglang/srt/entrypoints/openai/protocol.py",
+        "lines": "1025-1039",
+        "finding": "Top-level effort maps to enable_thinking before serving; non-none effort can enable thinking."
+      },
+      {
+        "path": "python/sglang/srt/entrypoints/openai/serving_chat.py",
+        "lines": "1104-1111",
+        "finding": "Server defaults use setdefault; per-request enable_thinking takes precedence."
+      },
+      {
+        "path": "python/sglang/srt/parser/reasoning_parser.py",
+        "lines": "355-400,1947",
+        "finding": "Qwen3 detector recognizes think delimiters, supports no-thinking and registers qwen3."
+      },
+      {
+        "path": "python/sglang/srt/function_call/qwen3_coder_detector.py",
+        "lines": "22-178",
+        "finding": "Native structured tool detector recognizes function/parameter tags and schema-based typed argument conversion with separate streaming state."
+      }
+    ],
+    "continuation_status": "SOURCE_COMPATIBLE_NO_THINKING_TEMPLATE_ONLY; actual pinned-image parser/tool loop and A1/OpenCode continuation NOT_TESTED",
+    "a1_followup": "No A1 edit in Q38S. Before live acceptance inspect emitted requests for explicit no-thinking. If thinking is later enabled, bounded separate change must preserve and replay assistant reasoning_content across tool continuation, including stream assembly; no source-only compatibility claim."
+  },
+  "checks": {
+    "immutable_manifest_normalization": "PASS_SOURCE",
+    "public_oci_manifest_and_config_hashes": "PASS_METADATA",
+    "small_template_and_tokenizer_config_hashes": "PASS_SOURCE",
+    "pinned_source_hashes": "PASS_SOURCE",
+    "actual_image_auth_fixture": "NOT_TESTED",
+    "model_load_generation": "NOT_TESTED",
+    "actual_client_continuation": "NOT_TESTED",
+    "occupied_128k_context": "NOT_TESTED",
+    "occupied_256k_context": "NOT_TESTED"
+  },
+  "next_action": "Review source and explicit L1/I1c handshake; worker1 runs exact-image sentinel fixture before real key/model, then separately sequenced acquisition, actual load/tool clients and tokenizer-measured occupied-context stress.",
+  "profiles": {
+    "model": "qwen38-27b-fp8",
+    "display_name": "Qwen3.8-27B FP8",
+    "runtime": "sglang-qwen38-0.5.19",
+    "deployments": [
+      "qwen38-27b-128k",
+      "qwen38-27b-256k"
+    ],
+    "served_alias": "qwen3.8-27b",
+    "endpoint": "http://127.0.0.1:30004/v1",
+    "mount_binding": "canonical L1 role+suffix refs; no hardcoded host data root"
+  },
+  "selected_runtime_settings": {
+    "mem_fraction_static": 0.8,
+    "dtype": "bfloat16",
+    "kv_cache_dtype": "bfloat16",
+    "mamba_ssm_dtype": "float32",
+    "max_mamba_cache_size": 1,
+    "disable_overlap_schedule": true,
+    "mamba_radix_cache_strategy": "no_buffer",
+    "disable_radix_cache": true,
+    "cuda_graph_backend_decode": "disabled",
+    "cuda_graph_backend_prefill": "disabled",
+    "tp_size": 1,
+    "gpus": [
+      "0"
+    ],
+    "max_running_requests": 1,
+    "chunked_prefill_size": 2048,
+    "max_total_tokens": "equal selected context 131072 or262144",
+    "reason": "Explicit BF16 KV/FP32 linear state, bounded non-overlapping one-request schedule and no retained prefix state/graphs; hardware allocation and speed NOT_TESTED"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "after_mode": "0755",
+  "before_mode": "0644",
+  "path": "/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py",
+  "reason": "Final exact-mode check found retained 0644 installed mode while frozen Git/source manifest specifies 0755. Completed only the reviewed source mode refresh; bytes and inode unchanged; original0644 rollback copy retained.",
+  "sha256": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d"
+}

@@ -1,0 +1,25 @@
+{
+  "acquisition_complete_sha256": "970b026bbb8a4d500f1aee146c3ffaf51f64ca7d0eb3c3a24237e6a51c35f8c5",
+  "artifact_count": 81,
+  "checks": [
+    "exact source evidence SHA256",
+    "exact full expected manifest equality",
+    "81 unique computed SHA256 and exact size tuples",
+    "root:root0444 single-link sealed stat records",
+    "canonical receipt exact field sets",
+    "no runtime/auth/readiness evidence added"
+  ],
+  "pending": [
+    "fresh protected evidence bytes hash/metadata",
+    "all81 live stats equal Q38A sealed records",
+    "root-reviewed composed receipt validator",
+    "canonical registered binding + lease + real anchored writer"
+  ],
+  "q38a_commit": "d42b885ecc25e092dfb0ea1bbc0247b8f91f0b89",
+  "receipt_proposed_sha256": "2020e3d4b19a3d4a7221dfbf37a4f558ed98dcbd73e302b716ab95fb04e17dce",
+  "scope": "Q38A committed protected-evidence copy; no live artifact/stat recheck by L2VMP, no receipt publication",
+  "sealed_evidence_path": "/data/models-large/.q38a-evidence-20260915/sealed-evidence.json",
+  "sealed_evidence_sha256": "a9b1ee9c80ca7030b79387b64f63d494159d0db7966f6510737e20c568584cfe",
+  "status": "PASS_WORKER_SEALED_EVIDENCE_MAPPING",
+  "total_bytes": 30890049597
+}

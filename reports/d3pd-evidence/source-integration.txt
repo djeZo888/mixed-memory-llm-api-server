@@ -1,0 +1,1 @@
+PASS: exact main guard call, cached metadata getter, exception wrapper, route position; HTTP, router, session and model internals unchanged

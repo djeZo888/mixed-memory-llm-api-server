@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "host": "mac-worker1",
+  "session_id": "01a0bdbd-0467-7430-ae53-12cb90bc8a30",
+  "started_at": "2026-09-20T08:21:47.245409+00:00",
+  "source_commit": "c06ee04adc906a82afbeea208531275dac96f06e",
+  "review_base": "862ea01309e5407a68a682c4f2aef8f2dc8747a6",
+  "scope": "two final review seams plus affected source regressions; synthetic, no live acceptance",
+  "installer_tests_run": false,
+  "full_601_suite_repeated": false,
+  "groups": {
+    "final-seams-focused": {
+      "modules": [
+        "tests.lifecycle.test_slots",
+        "tests.test_control_slots_manager",
+        "tests.lifecycle.test_concurrent_capacity.CurrentMemory",
+        "tests.lifecycle.test_concurrent_profiles"
+      ],
+      "tests": 60,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsed_seconds": 1.001,
+      "log": "final-seams-focused.log",
+      "passed": true,
+      "log_sha256": "3ffb2c62458f3b3dda0511beaab107fc55da33f5bd4f7a1b5e63d4dd18a62b33"
+    },
+    "final-seams-affected": {
+      "modules": [
+        "tests.lifecycle.test_manager",
+        "tests.lifecycle.test_manager_lease",
+        "tests.lifecycle.test_recovery_storage",
+        "tests.test_control_slots",
+        "tests.test_control_core_guards",
+        "tests.test_control_receipts",
+        "tests.test_control_restart"
+      ],
+      "tests": 151,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsed_seconds": 2.96,
+      "log": "final-seams-affected.log",
+      "passed": true,
+      "log_sha256": "80b05f4948dcc80fd72eb306bec692abee91591c71fb50f80332db587be8ee84"
+    }
+  },
+  "passed": true,
+  "total_test_executions": 211,
+  "source_sha256": {
+    "docs/ai-vm-api-operations.md": "db0f949dcf5e960a4f434691d59f1636e81ba7428f8e20606b38fc71ac892c42",
+    "docs/concurrent-profile-acceptance.md": "a3710e058030ea2f15fadf124e5142db5468674026f6e9714925011d18923d9a",
+    "docs/control-api.md": "2fc7d0f867a0b7d6849c364e80d8856e07fbb6eb7e56abf6e8f15a5d43a8977d",
+    "scripts/control/adapter.py": "465dcf021cea23ad71ce956cbd974afa8e7c674f95f040028a132b9d3929521a",
+    "scripts/control/core.py": "ea27bce06f8237bfbd0b14142679acf07ad90fdfe1084f902bb71d8cd087a62e",
+    "scripts/lifecycle/concurrent_profiles.py": "d5ccbc31cfb1411641172ba510a708959ff6f578797eb3c3623074617e83f396",
+    "scripts/lifecycle/manager.py": "9c6df563459d0623eec85e7948ef1009d624a03f00e98a6166dc756514700a7b",
+    "scripts/lifecycle/slot_state.py": "e4947ba960a5f58e78b65b78c01c8d9914f1c9c2a79d42e6e5e24d52d86319c1",
+    "tests/lifecycle/test_concurrent_capacity.py": "d4ba36ab1432a794bec6fb6d4efc9a4f5956e4b0b882fab88f1f60aa8bb60180",
+    "tests/lifecycle/test_slots.py": "2ce8f07d5410bca2baa369cf66f2110cb1f0faf88d24fd5afb4f76df36d87711",
+    "tests/test_control_slots_manager.py": "b77ebdd9a9b868b99b0372a7b18f77d2e60f928696d3307c0248a353e7512542"
+  },
+  "verification": {
+    "git_diff_check": "pass",
+    "read_only_pending_review": "no blocker",
+    "vm_contact": false,
+    "deploy": false,
+    "push": false,
+    "benchmark_checkout_changed": false
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "transition": {
+    "source_sha256": "808cd033bc6480fbd7abcf632de216531303d8a15e7f37fd50e567061743efa0",
+    "source_files": {
+      "cheap-core.py": "222016efd9bb98999d9c6c33c1bb286c226a069774eb686c206082f92ab0b3ff",
+      "swap-addition.py": "45612d9f1710c0f2f784570ff6aa82e8d619b249090326a692d19518ac264f98",
+      "inputs.py": "7aa2e3a251f1973b6114128fb4b9a68657b53105072936c515bc2e3f6fd028ea",
+      "common.py": "cff34e3b1a37fd67cc4ebcbdbbb1230b6afbf156aefa09191de94b9e957dbd12",
+      "transition.py": "79baac66f59b8c11efdd48ffe6ce9f4db56a28c8081998577c59285b6103d30f"
+    }
+  },
+  "smoke": {
+    "source_sha256": "406894e535c5a56515bb168fc4b865e003778a8a56b18e00525f9fcc0514fe82",
+    "source_files": {
+      "cheap-core.py": "222016efd9bb98999d9c6c33c1bb286c226a069774eb686c206082f92ab0b3ff",
+      "swap-addition.py": "45612d9f1710c0f2f784570ff6aa82e8d619b249090326a692d19518ac264f98",
+      "inputs.py": "7aa2e3a251f1973b6114128fb4b9a68657b53105072936c515bc2e3f6fd028ea",
+      "common.py": "cff34e3b1a37fd67cc4ebcbdbbb1230b6afbf156aefa09191de94b9e957dbd12",
+      "smoke-private-input.py": "2cad92e2a4bab75ff02db642073bb706e50825d3dc872308fa8ed0d48eae6a1d",
+      "smoke.py": "b23409698e9aae5b17ed28f099cc6dcd8dacd9fed1b6a4e5a48997ae04151ea8"
+    }
+  }
+}

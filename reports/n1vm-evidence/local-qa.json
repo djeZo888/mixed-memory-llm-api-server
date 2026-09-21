@@ -1,0 +1,15 @@
+{
+  "utc": "2026-09-15T02:52:18.887343+00:00",
+  "reviewed_base": "05cb7ae253f6b93d5d3e0f55c168960c73075bea",
+  "report_scope": "reports/n1vm-private-glm-exposure.md and reports/n1vm-evidence only",
+  "production_source_unchanged": true,
+  "all_eight_source_bytes_match_git_and_contract": true,
+  "git_diff_check": "PASS",
+  "grep_credential_pattern_scan": "PASS no matches",
+  "forbidden_filename_scan": "PASS no matches",
+  "remote_credential_check": "PASS URLs suppressed",
+  "independent_report_review": "PASS",
+  "focused_source_tests": "PASS 37 tests reported by independent local reviewer",
+  "vm_actions_complete": true,
+  "push": false
+}

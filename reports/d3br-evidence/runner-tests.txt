@@ -1,0 +1,31 @@
+test_missing_report_parent_refuses_before_writer (__main__.ExistingReportWriterTests.test_missing_report_parent_refuses_before_writer) ... ok
+test_outside_logs_and_logs_itself_refuse_before_writer (__main__.ExistingReportWriterTests.test_outside_logs_and_logs_itself_refuse_before_writer) ... ok
+test_protection_or_reverification_failure_never_writes (__main__.ExistingReportWriterTests.test_protection_or_reverification_failure_never_writes) ... ok
+test_writer_repeats_verification_before_existing_atomic_writer (__main__.ExistingReportWriterTests.test_writer_repeats_verification_before_existing_atomic_writer) ... ok
+test_hardlinked_closure_file_refuses (__main__.RunnerTests.test_hardlinked_closure_file_refuses) ... ok
+test_incomplete_verified_metadata_refuses (__main__.RunnerTests.test_incomplete_verified_metadata_refuses) ... ok
+test_legacy_branch_keeps_guards_and_report_placement (__main__.RunnerTests.test_legacy_branch_keeps_guards_and_report_placement) ... ok
+test_legacy_guard_failure_stops_before_docker_or_report (__main__.RunnerTests.test_legacy_guard_failure_stops_before_docker_or_report) ... ok
+test_malformed_registry_refuses (__main__.RunnerTests.test_malformed_registry_refuses) ... ok
+test_missing_closure_file_refuses (__main__.RunnerTests.test_missing_closure_file_refuses) ... ok
+test_missing_registered_report_directory_refuses_before_docker (__main__.RunnerTests.test_missing_registered_report_directory_refuses_before_docker) ... ok
+test_registered_dry_run_has_no_reports_docker_or_build_evidence (__main__.RunnerTests.test_registered_dry_run_has_no_reports_docker_or_build_evidence) ... ok
+test_registered_success_exact_docker_command_reports_and_home (__main__.RunnerTests.test_registered_success_exact_docker_command_reports_and_home) ... ok
+test_registration_appearance_uses_registered_final_guard (__main__.RunnerTests.test_registration_appearance_uses_registered_final_guard) ... ok
+test_registration_disappearance_never_falls_back (__main__.RunnerTests.test_registration_disappearance_never_falls_back) ... ok
+test_registration_parent_with_missing_registry_refuses (__main__.RunnerTests.test_registration_parent_with_missing_registry_refuses) ... ok
+test_symlink_closure_file_refuses (__main__.RunnerTests.test_symlink_closure_file_refuses) ... ok
+test_symlink_registered_report_directory_refuses_before_docker (__main__.RunnerTests.test_symlink_registered_report_directory_refuses_before_docker) ... ok
+test_symlink_registration_parent_refuses (__main__.RunnerTests.test_symlink_registration_parent_refuses) ... ok
+test_tampered_closure_bytes_refuse (__main__.RunnerTests.test_tampered_closure_bytes_refuse) ... ok
+test_unowned_closure_file_refuses (__main__.RunnerTests.test_unowned_closure_file_refuses) ... ok
+test_unsafe_registry_refuses (__main__.RunnerTests.test_unsafe_registry_refuses) ... ok
+test_writable_closure_ancestor_refuses (__main__.RunnerTests.test_writable_closure_ancestor_refuses) ... ok
+test_wrong_verified_data_path_refuses (__main__.RunnerTests.test_wrong_verified_data_path_refuses) ... ok
+test_wrong_verified_logs_root_refuses (__main__.RunnerTests.test_wrong_verified_logs_root_refuses) ... ok
+test_wrong_verified_model_mount_refuses (__main__.RunnerTests.test_wrong_verified_model_mount_refuses) ... ok
+
+----------------------------------------------------------------------
+Ran 26 tests in 52.155s
+
+OK

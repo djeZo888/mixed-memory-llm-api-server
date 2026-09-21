@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "evidence_class": "ordinary_client_verification",
+  "status": "PASS",
+  "run_id": "ecef3f61-b6ae-4c61-bf44-1735c68bba14",
+  "client_uid": 502,
+  "started": "2026-09-15T02:59:42.202277+00:00",
+  "checks": {
+    "file_reads": true,
+    "implementation_edit": true,
+    "exact_test_command": true,
+    "passing_tool_result": true,
+    "final_response": true,
+    "immutable_tests": true,
+    "independent_final_rerun": true,
+    "process_tree_reaped": true
+  },
+  "failures": [],
+  "protocol_acceptance": "NOT_ASSESSED",
+  "server_readiness": "NOT_ASSESSED",
+  "artifacts": {
+    "files": {
+      "scripts/client/bootstrap.py": "d86d7329a4b34eac59bcc61f39bd6d338b45677f6df5b34af5fc85f3667e1500",
+      "scripts/client/client_common.py": "3e0a938d0c35e88e350be88f7a79fbfb7bb45ba6a5d9fd9873cba1c8084ded5a",
+      "scripts/client/launch.py": "bb47de96ba33d1088589337876b1ec340d0c7e3157c284217abb45a955338278",
+      "scripts/client/package-lock.json": "eb4f16892e1e7d955fc8aa5e949f8c31b6c6d26d98acb3eb2f9be26d2673d3b7",
+      "scripts/client/package.json": "a690baa19cd430ef35f12d5c6e2c0d429539dd3150055cf1b34f7b060fe3489f",
+      "scripts/client/verifier_fixture/test_text_utils.py": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+      "scripts/client/verifier_fixture/text_utils.py": "8bff6135c956d931fa755b0cb4e25f19fc5dee661e88f51efbd3d7ec55dd4b44",
+      "scripts/client/verify.py": "62493c393d5cdee6f15cfd3d796b5318035ad015efafa1b50ba70e3fb9636117",
+      "scripts/client/verify_events.py": "dbb8eb6b2ee85ff11f42aa49571424e5165082b12c8eb4b55eb1d522c42bd9ca",
+      "scripts/client/verify_integrity.py": "91314866b28b8abd2ba26dbac145785369bc1530889d3e8fe0972fd98cf8eadd"
+    },
+    "source_sha256": "7b890b4e5bba2932236d30eb3b50e2d0f797d4958a7f59d4743af2c9c208c764",
+    "test_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+    "test_command_sha256": "d393af3c2be6b3f638d676c9acc0e4d11715a7d9dad0cd3a9cbe5d809bf457b0"
+  },
+  "phase": "complete",
+  "client_integrity": {
+    "status": "pass",
+    "method": "reviewed-source-and-offline-npm-sri",
+    "lock_sha256": "eb4f16892e1e7d955fc8aa5e949f8c31b6c6d26d98acb3eb2f9be26d2673d3b7",
+    "packages_verified": 29,
+    "files_verified": 3650,
+    "native_sha256": "16c960ba77421da11b53e785f359b73f328a86118b48feb4af143db5d9afb198"
+  },
+  "endpoint": "http://10.156.100.60:30002/v1",
+  "model": "glm-5.3",
+  "settings": {
+    "context_tokens": 32768,
+    "output_tokens": 2048,
+    "reasoning_effort": "low"
+  },
+  "tests_before_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+  "client_versions": {
+    "node_version": "v24.21.0",
+    "npm_version": "11.19.0",
+    "opencode_version": "1.18.31",
+    "plugin_version": "1.18.31"
+  },
+  "initial_test": {
+    "classification": "assertion_failure",
+    "assertion_failures": 5,
+    "import_errors": 0,
+    "exit_code": 1
+  },
+  "observed_model_before": "glm-5.3",
+  "process": {
+    "exit_code": 0,
+    "timed_out": false,
+    "output_limited": false,
+    "process_tree_reaped": true,
+    "elapsed_seconds": 121.747799
+  },
+  "native": {
+    "checks": {
+      "file_reads": true,
+      "implementation_edit": true,
+      "exact_test_command": true,
+      "passing_tool_result": true,
+      "final_response": true
+    },
+    "failures": [],
+    "result": "pass",
+    "event_counts": {
+      "step_start": 4,
+      "tool_use": 4,
+      "step_finish": 4,
+      "text": 1
+    },
+    "tools": [
+      {
+        "event_sequence": 2,
+        "tool": "read",
+        "call_id_sha256": "aeb7daeb3b30f9f87c2c715fc48fd518f39aa0b34da5766d9c4e7290cadc997e",
+        "status": "completed",
+        "file": "text_utils.py",
+        "path_within_workspace": true
+      },
+      {
+        "event_sequence": 3,
+        "tool": "read",
+        "call_id_sha256": "368f251a6c81ffe6148e89ef944fc26e6f5435c7dd00d5bf95c23aa8fc079b1f",
+        "status": "completed",
+        "file": "test_text_utils.py",
+        "path_within_workspace": true
+      },
+      {
+        "event_sequence": 6,
+        "tool": "edit",
+        "call_id_sha256": "1549003cb97abf82638ba20a1da8515e51bf7ff197b596e5c6b4720a2f5976f2",
+        "status": "completed",
+        "file": "text_utils.py",
+        "path_within_workspace": true
+      },
+      {
+        "event_sequence": 9,
+        "tool": "bash",
+        "call_id_sha256": "98cb8cfea18516464997970108700b1bec3dbfc9f00d6545003d01f6ffe4db5c",
+        "status": "completed",
+        "path_within_workspace": true,
+        "exact_test_command": true,
+        "exit_code": 0,
+        "test_output_passed": true
+      }
+    ],
+    "steps": [
+      {
+        "reason": "tool-calls",
+        "native_tokens": {
+          "total": 5159,
+          "input": 5062,
+          "output": 87,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 10
+          }
+        },
+        "native_cost": 0
+      },
+      {
+        "reason": "tool-calls",
+        "native_tokens": {
+          "total": 5698,
+          "input": 471,
+          "output": 69,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 5158
+          }
+        },
+        "native_cost": 0
+      },
+      {
+        "reason": "tool-calls",
+        "native_tokens": {
+          "total": 5763,
+          "input": 9,
+          "output": 57,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 5697
+          }
+        },
+        "native_cost": 0
+      },
+      {
+        "reason": "stop",
+        "native_tokens": {
+          "total": 5817,
+          "input": 21,
+          "output": 34,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 5762
+          }
+        },
+        "native_cost": 0
+      }
+    ],
+    "provider_usage": "NOT_REPORTED"
+  },
+  "tests_after_sha256": "b51a86da2ac6fbcf76b7b4b8cebadbdc5d28ab4c6bf833dbca11265dcb3e6c43",
+  "implementation_hashes": {
+    "before": "8bff6135c956d931fa755b0cb4e25f19fc5dee661e88f51efbd3d7ec55dd4b44",
+    "after": "3fd34f6eaad8377d745966c43047f1ac2c2914a6c731e69e0b281f98e77e45d1"
+  },
+  "final_test": {
+    "exit_code": 0,
+    "timed_out": false,
+    "output_limited": false,
+    "process_tree_reaped": true,
+    "elapsed_seconds": 0.133143
+  },
+  "observed_model_after": "glm-5.3",
+  "finished": "2026-09-15T03:01:48.478639+00:00",
+  "raw_evidence_sha256": "84f3f12bc887e16f12a4327e2e49f1b428e48651f6cc663c0db13074d7eda9aa",
+  "raw_evidence_file": "raw-evidence.json"
+}

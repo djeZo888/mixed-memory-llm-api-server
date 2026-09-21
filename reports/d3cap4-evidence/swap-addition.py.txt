@@ -1,0 +1,130 @@
+"""D3CAP4 fixed task-local cgroup addition; no callable path override."""
+import stat
+
+def _swap_int(value):
+    if type(value) is not int or value < 0:
+        raise Error('swap_metric_not_nonnegative_integer')
+    return value
+
+def _swap_bytes(raw):
+    if not re.fullmatch(rb'(?:0|[1-9][0-9]*)\n?', raw):
+        raise Error('malformed_cgroup_swap_current')
+    return int(raw)
+
+def _owned_cgroup_path(raw, cid):
+    if not re.fullmatch('[0-9a-f]{64}', cid):
+        raise Error('invalid_exact_container_id')
+    lines = raw.splitlines()
+    if len(lines) != 1 or not lines[0].startswith('0::'):
+        raise Error('not_exactly_one_unified_cgroup')
+    path = lines[0][3:]
+    if path not in ('/system.slice/docker-' + cid + '.scope', '/docker/' + cid):
+        raise Error('actual_host_cgroup_form_unaccepted_notify_coordinator')
+    return path
+
+def _pid_cgroup_binding(pid, cid):
+    if type(pid) is not int or pid <= 0:
+        raise Error('invalid_owned_pid')
+    raw = Path('/proc/%d/stat' % pid).read_text().rsplit(')', 1)[1].split()
+    if raw[0] in ('T', 't', 'Z', 'X', 'x'):
+        raise Error('owned_pid_unsafe_state')
+    ticks = int(raw[19])
+    raw_cgroup=Path('/proc/%d/cgroup' % pid).read_text()
+    if len(raw_cgroup)>4096:raise Error('cgroup_membership_read_bound')
+    try:path = _owned_cgroup_path(raw_cgroup, cid)
+    except Error:
+        globals()['CGROUP_REJECTED']={'pid':pid,'start_ticks':ticks,'membership_raw':raw_cgroup,'utc':time.time()}
+        raise
+    return {'pid': pid, 'start_ticks': ticks, 'path': path}
+
+def _same_binding(before, after):
+    if before != after:
+        raise Error('owned_pid_start_or_cgroup_changed')
+
+def _cgroup_mount():
+    rows = []
+    for line in Path('/proc/self/mountinfo').read_text().splitlines():
+        left, right = line.split(' - ', 1)
+        a, b = left.split(), right.split()
+        if a[4] == '/sys/fs/cgroup':
+            rows.append((a, b))
+    if len(rows) != 1:
+        raise Error('cgroup_mount_missing_or_ambiguous')
+    a, b = rows[0]
+    if a[3] != '/' or b[0] != 'cgroup2':
+        raise Error('cgroup_mount_not_whole_root_v2')
+    return {'mount_id': int(a[0]), 'device': a[2], 'root': a[3], 'target': a[4], 'fstype': b[0]}
+
+def _cg_protected(st, directory):
+    if st.st_uid != 0 or st.st_mode & 0o022 or not (stat.S_ISDIR(st.st_mode) if directory else stat.S_ISREG(st.st_mode)):
+        raise Error('unprotected_cgroup_ancestry_or_file')
+
+def _cg_read(fd, name, limit):
+    f = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=fd)
+    try:
+        st = os.fstat(f); _cg_protected(st, False)
+        data = os.read(f, limit + 1)
+        if len(data) > limit:
+            raise Error('cgroup_read_bound')
+        return data, {'dev': st.st_dev, 'ino': st.st_ino, 'mode': stat.S_IMODE(st.st_mode), 'uid': st.st_uid}
+    finally:
+        os.close(f)
+
+def _owned_cgroup_swap(container):
+    began = time.monotonic(); utc = time.time()
+    cid, pid = container['Id'], container['State']['Pid']
+    before = _pid_cgroup_binding(pid, cid)
+    mount = _cgroup_mount()
+    fds = []
+    try:
+        fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        fds.append(fd); _cg_protected(os.fstat(fd), True)
+        for name in ('sys', 'fs', 'cgroup'):
+            fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=fd)
+            fds.append(fd); _cg_protected(os.fstat(fd), True)
+        rootst = os.fstat(fd)
+        if '%d:%d' % (os.major(rootst.st_dev), os.minor(rootst.st_dev)) != mount['device']:
+            raise Error('cgroup_mount_device_changed')
+        controllers, _ = _cg_read(fd, 'cgroup.controllers', 4096)
+        if b'memory' not in controllers.split():
+            raise Error('cgroup_memory_controller_missing')
+        for name in before['path'].split('/')[1:]:
+            fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=fd)
+            fds.append(fd); st = os.fstat(fd); _cg_protected(st, True)
+            if st.st_dev != rootst.st_dev:
+                raise Error('cgroup_cross_mount')
+        st = os.fstat(fd)
+        procs, _ = _cg_read(fd, 'cgroup.procs', 65536)
+        if str(pid).encode() not in procs.splitlines():
+            raise Error('owned_pid_not_cgroup_member_before')
+        raw, file_identity = _cg_read(fd, 'memory.swap.current', 128)
+        value = _swap_bytes(raw)
+        procs_after, _ = _cg_read(fd, 'cgroup.procs', 65536)
+        if str(pid).encode() not in procs_after.splitlines():
+            raise Error('owned_pid_not_cgroup_member_after')
+        _same_binding(before, _pid_cgroup_binding(pid, cid))
+        if mount != _cgroup_mount():
+            raise Error('cgroup_mount_changed')
+        pathst = os.stat('/sys/fs/cgroup' + before['path'], follow_symlinks=False)
+        if (st.st_dev, st.st_ino) != (pathst.st_dev, pathst.st_ino):
+            raise Error('cgroup_path_identity_changed')
+        return value, {'binding': before, 'mount': mount, 'directory': {'dev': st.st_dev, 'ino': st.st_ino}, 'file': file_identity}, {'read_begin_utc': utc, 'read_end_utc': time.time(), 'elapsed_seconds': time.monotonic() - began, 'raw_ascii': raw.decode(), 'pid_membership_before_after': True}
+    finally:
+        for fd in reversed(fds):
+            os.close(fd)
+
+def _model_swap_gates(s, full=False):
+    if _swap_int(s['process_kib']['VmSwap']) != 0:
+        raise Error('target_process_vmswap_nonzero')
+    if _swap_int(s['cgroup_swap_current_bytes']) != 0:
+        raise Error('target_cgroup_swap_nonzero')
+    if full and _swap_int(s['process_kib']['Swap']) != 0:
+        raise Error('target_full_pss_swap_nonzero')
+    if _swap_int(s['host_kib']['MemAvailable']) < 67108864:
+        raise Error('memavailable_below_64gib')
+    for values in (s['vmstat'], s['vmstat_delta']):
+        for name in ('pswpin', 'pswpout', 'oom_kill'):
+            _swap_int(values[name])
+    _swap_int(s['host_swap_used_kib'])
+    if s['vmstat_delta']['oom_kill'] != 0:
+        raise Error('host_oom_kill_delta')

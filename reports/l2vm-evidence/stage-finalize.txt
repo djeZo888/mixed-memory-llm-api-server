@@ -1,0 +1,1 @@
+{"control": "STOPPED_DISABLED", "mounts_comparison": "exact tuples sorted by Destination; Docker inspect array order is not stable", "native_key_exactbytes": "initial apply private comparison passed before unrelated mount-order assertion; final metadata unchanged", "q38_receipt": "NOT_YET_PUBLISHED", "runtime_auth": "NOT_PUBLISHED", "status": "PASS_STAGED_ONLY"}

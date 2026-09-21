@@ -1,0 +1,19 @@
+{
+  "binds": [
+    "/usr/bin/apt-get",
+    "/usr/bin/dpkg"
+  ],
+  "canonical_lock": "/run/llmctl/lifecycle.lock",
+  "cleanup": "exact owned identities; retain fake mounts if scope quiescence unknown",
+  "not_tested": [
+    "real_package_installation",
+    "reboot",
+    "GPU_installation",
+    "Docker_daemon_ownership",
+    "agent_readiness",
+    "I1c_scope_storage_lifetime",
+    "I1c_mount_loss_gate_marker_writes"
+  ],
+  "readonly_binds": true,
+  "scope": "actual_systemd_canonical_lease_synthetic_package"
+}

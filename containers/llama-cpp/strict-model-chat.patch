@@ -1,0 +1,148 @@
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 6334f3ccab304749bbf7b51362dee7c9348771d7..6145db3edf82badc657a17ed21e8d6a8698095ae 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -682,12 +682,30 @@ void llama_context::sched_reserve() {
+         }
+     }
+
++    if (model.arch == LLM_ARCH_GLM_DSA) {
++        size_t lid_nodes = 0;
++        size_t fa_nodes = 0;
++        for (const auto & node : get_gf_res_reserve()->get_fused_nodes()) {
++            lid_nodes += node.op == LLM_FUSED_OP_LIGHTNING_INDEXER;
++            fa_nodes  += node.op == LLM_FUSED_OP_FLASH_ATTN;
++        }
++        LLAMA_LOG_WARN("D3T_NATIVE_V1 kind=graph n_ctx=%" PRIu32 " n_ctx_seq=%" PRIu32
++                " n_seq_max=%" PRIu32 " n_batch=%" PRIu32 " n_ubatch=%" PRIu32
++                " flash_attn=%d fused_lid=%d lid_nodes=%zu fa_nodes=%zu no_alloc=%d\n",
++                cparams.n_ctx, cparams.n_ctx_seq, cparams.n_seq_max, cparams.n_batch, cparams.n_ubatch,
++                int(cparams.flash_attn), int(cparams.fused_lid), lid_nodes, fa_nodes, int(model.hparams.no_alloc));
++    }
++
+     for (size_t i = 0; i < backend_ptrs.size(); ++i) {
+         ggml_backend_t             backend = backend_ptrs[i];
+         ggml_backend_buffer_type_t buft    = backend_buft[i];
+         if (!model.hparams.no_alloc) {
+             backend_buf_exp_size[i] = ggml_backend_sched_get_buffer_size(sched.get(), backend);
+         }
++        if (model.arch == LLM_ARCH_GLM_DSA) {
++            LLAMA_LOG_WARN("D3T_NATIVE_V1 kind=compute backend=%s bytes=%zu\n",
++                    ggml_backend_buft_name(buft), backend_buf_exp_size[i]);
++        }
+         if (backend_buf_exp_size[i] > 1) {
+             LLAMA_LOG_INFO("%s: %10s compute buffer size = %8.2f MiB\n", __func__,
+                     ggml_backend_buft_name(buft),
+@@ -695,6 +713,16 @@ void llama_context::sched_reserve() {
+         }
+     }
+
++    if (model.arch == LLM_ARCH_GLM_DSA) {
++        if (memory) {
++            for (const auto & buft_size : memory->memory_breakdown()) {
++                LLAMA_LOG_WARN("D3T_NATIVE_V1 kind=cache backend=%s bytes=%zu\n",
++                        ggml_backend_buft_name(buft_size.first), buft_size.second);
++            }
++        }
++        LLAMA_LOG_WARN("D3T_NATIVE_V1 kind=end\n");
++    }
++
+     if (n_nodes_pp == n_nodes_tg) {
+         LLAMA_LOG_INFO("%s: graph nodes  = %d\n", __func__, n_nodes_pp);
+     } else {
+diff --git a/tools/server/server-chat-model.h b/tools/server/server-chat-model.h
+new file mode 100644
+index 000000000..4b14a213d
+--- /dev/null
++++ b/tools/server/server-chat-model.h
+@@ -0,0 +1,67 @@
++#pragma once
++
++#include "json.h"
++#include "server-http.h"
++
++#include <utility>
++
++// Only standalone chat validates local names. A router forwards its original
++// body to children, whose canonical alias can differ from a router-valid alias.
++inline server_http_context::handler_t server_chat_model_guard(
++        server_http_context::handler_t handler,
++        bool is_router,
++        bool is_child,
++        std::function<common_json()> model_info) {
++    if (is_router || is_child) {
++        return handler;
++    }
++
++    return [handler = std::move(handler), model_info = std::move(model_info)](
++            const server_http_req & req) -> server_http_res_ptr {
++        const auto reject = [](const char * message, const char * param, const char * code) -> server_http_res_ptr {
++            auto res = std::make_unique<server_http_res>();
++            // HTTP status is independent of the OpenAI string/null error code.
++            // Avoid the generator's numeric-code formatter and HTTP's 404 rewrite.
++            res->status = 400;
++            res->data = common_json::object({{"error", common_json::object({
++                {"message", message},
++                {"type", "invalid_request_error"},
++                {"param", param},
++                {"code", code},
++            })}}).dump();
++            return res;
++        };
++
++        const auto body = common_json::parse_no_throw(req.body);
++        if (!body.is_object()) {
++            return reject("Request body must be a JSON object.", nullptr, nullptr);
++        }
++        if (!body.contains("model")) {
++            return handler(req);
++        }
++
++        const auto & model = body.at("model");
++        if (!model.is_string() || model.get<std::string>().empty()) {
++            return reject("Model must be a nonempty string.", "model", nullptr);
++        }
++
++        // Read cached public identity only, after HTTP readiness/auth middleware.
++        // Do not create a response generator: that can wake the model and set up
++        // templates, tasks or resumable stream sessions before validation.
++        const auto info = model_info();
++        if (model == info.at("id")) {
++            return handler(req);
++        }
++        for (const auto & alias : info.at("aliases")) {
++            if (model == alias) {
++                return handler(req);
++            }
++        }
++        return reject("Requested model is not served by this server.", "model", "model_not_found");
++    };
++}
++
++inline void server_chat_register_routes(server_http_context & http, const server_http_context::handler_t & handler) {
++    http.post("/chat/completions", handler);
++    http.post("/v1/chat/completions", handler);
++}
+diff --git a/tools/server/server.cpp b/tools/server/server.cpp
+index 22378b38c..bb409e674 100644
+--- a/tools/server/server.cpp
++++ b/tools/server/server.cpp
+@@ -1,5 +1,6 @@
+ #include "server-context.h"
+ #include "server-http.h"
++#include "server-chat-model.h"
+ #include "server-models.h"
+ #include "server-cors-proxy.h"
+ #include "server-stream.h"
+@@ -253,8 +254,9 @@ int llama_server(common_params & params, int argc, char ** argv) {
+     ctx_http.post("/completion",               ex_wrapper(routes.post_completions)); // legacy
+     ctx_http.post("/completions",              ex_wrapper(routes.post_completions));
+     ctx_http.post("/v1/completions",           ex_wrapper(routes.post_completions_oai));
+-    ctx_http.post("/chat/completions",         ex_wrapper(routes.post_chat_completions));
+-    ctx_http.post("/v1/chat/completions",      ex_wrapper(routes.post_chat_completions));
++    server_chat_register_routes(ctx_http, ex_wrapper(server_chat_model_guard(
++        routes.post_chat_completions, is_router_server, child.is_child(),
++        [&routes]() { return routes.get_model_info(); })));
+     ctx_http.post("/v1/chat/completions/control", ex_wrapper(routes.post_control));
+     ctx_http.post("/v1/responses",             ex_wrapper(routes.post_responses_oai));
+     ctx_http.post("/responses",                ex_wrapper(routes.post_responses_oai));

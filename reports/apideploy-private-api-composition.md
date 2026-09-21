@@ -1,0 +1,17 @@
+APIDEPLOY BLOCKED_CONTROL_DEADLINE — final release 2026-09-17T06:19:31.376096+00:00.
+
+No active request, no inflight command, canonical lifecycle lease RELEASED. VM/request ownership released to root; APIACCEPT is NOT ready/authorized. No more VM calls from this session.
+
+Qwen container 5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9 remains READY, selected qwen38-27b-1000000-yarn4-tp2-bf16kv, desired running / resume. PID 132068 and StartedAt 2026-09-17T06:01:20.210982756Z unchanged through boot reconciliation. Control/boot and all three existing private sockets enabled and active. Native/private Qwen auth missing/wrong 401 and valid models 200 / 1M pass. Control auth passes but status/catalog 200 report deadline_exceeded/unavailable / empty entries. Do not start Worker2 clients.
+
+Control http://10.156.100.60:30000/control/v1; Qwen http://10.156.100.60:30004/v1; stopped GLM http://10.156.100.60:30002/v1. Active source selection exactly GLM native1M N76 + Qwen1M. Inference key /data/services/secrets/llm-api-key; dedicated control key /etc/llm-server/control-api-key, values never included.
+
+Source 0eb91c0ad9c92743afacdf0cefdc955dfe614e2c; control 77 / data 80 / boot 11 byte-coherent. Normal release /data/services/releases/0eb91c0ad9c92743afacdf0cefdc955dfe614e2c-apideploy-20260917. Fixed control /usr/local/lib/llm-server/control-api; boot /usr/local/lib/local-ai-server. Source manifest 8b578491f8d3da19ff6e3f8525f47fa3e1ef06d8960db4562cb36944c5309688; instance unchanged 972b627a5be31674ca6c7b490d46a10d484c913c8ed54fe8992c08bdba60db6e. Native receipt b29cc6433009232067cf096e3a2ab7531023df57b1faa0d67c088e0a55739554; extension 353289244d02525120b3cfbeededdcdb0cc6aefdbd5879d060ee22186a51dde1, both 0600 at original paths in result.json. Guard 0755 / dependency 0644, registry/keys/acquisition/NETPATCH/stoppedGLM retained.
+
+New source blocker: default 2s read budget expires within repeated registered-storage verification in Qwen profile validation (diagnostic: 19 verify / 13 validate_path / 265 child calls; open 0.500719s, failure 2.190814s). No frozen source edits or timeout bypass. Root-reviewed correction required. Boot verifier resolved with exact existing generated mount paths as explicit operands; no storage changes.
+
+Protected corrected report /data/logs/apideploy-20260917/result.json sha256 f2ca9d78f5065d965ca070186ab5f5ce2f82bd271ddf7c5d17bbefcf50032eee. It supersedes /data/logs/apideploy-20260917/ready-pre-release.json and erroneous API_READY_RELEASE task-wrapper event, retained for audit. Reports/bundle are local follow-up, not an API client gate.
+
+Verification: registered guards passed before/after changes. systemd unit verification passed with explicit generated data/model mounts; boot-stop isolated help import passed; tmpfiles repeated twice preserved shared lock identity and competing canonical acquisition stayed busy. Source, instance, receipt, key, registry and NETPATCH preservation verified. No new test suite and no installer/frontend work. Parent source receipt/runtime bytes remain unchanged.
+
+The first offline systemd verification failed to resolve the generated model mount; --generators=yes also failed. Explicit existing generated mount paths resolved the verifier context. The later task wrapper omitted semantic status/catalog assertions and prematurely emitted PASS; this report and final-release.json explicitly reject that event. A fresh bounded task must fix the control deadline before any APIACCEPT handoff.

@@ -1,0 +1,90 @@
+{
+  "sample_utc": "2026-09-14T23:16:34Z",
+  "mounts": {
+    "data": {
+      "target": "/data",
+      "source": "/dev/sdb1",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+      "fstype": "ext4",
+      "options": "rw,relatime"
+    },
+    "root_free_bytes": 5197049856,
+    "models_large": {
+      "target": "/data/models-large",
+      "source": "/dev/sdc1",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+      "fstype": "ext4",
+      "options": "rw,relatime"
+    }
+  },
+  "free_bytes": {
+    "/": 5197049856,
+    "/data": 1394115362816,
+    "/data/models-large": 3023549222912
+  },
+  "glm_present_bytes": 145929140229,
+  "glm_remaining_bytes": 321359976608,
+  "qwen_remaining_bytes": 80407722953,
+  "margin_bytes": 21474836480,
+  "write_buffer_margin_bytes": 33554432,
+  "combined_required_bytes": 423276090473,
+  "headroom_after_requirement_bytes": 2600273132439,
+  "status": "PASS",
+  "glm_actual_files": [
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00001-of-00011.gguf",
+      "present_bytes": 9428677,
+      "expected_bytes": 9428677
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00002-of-00011.gguf",
+      "present_bytes": 49433942336,
+      "expected_bytes": 49433942336
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00003-of-00011.gguf",
+      "present_bytes": 32782680064,
+      "expected_bytes": 48566415136
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00004-of-00011.gguf",
+      "present_bytes": 23521656832,
+      "expected_bytes": 48566415136
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00005-of-00011.gguf",
+      "present_bytes": 23320330240,
+      "expected_bytes": 48566415136
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00006-of-00011.gguf",
+      "present_bytes": 16861102080,
+      "expected_bytes": 48566415136
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00007-of-00011.gguf",
+      "present_bytes": 0,
+      "expected_bytes": 48566415136
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00008-of-00011.gguf",
+      "present_bytes": 0,
+      "expected_bytes": 48566415136
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00009-of-00011.gguf",
+      "present_bytes": 0,
+      "expected_bytes": 48566415136
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00010-of-00011.gguf",
+      "present_bytes": 0,
+      "expected_bytes": 48566415136
+    },
+    {
+      "path": "UD-Q4_K_XL/GLM-5.3-UD-Q4_K_XL-00011-of-00011.gguf",
+      "present_bytes": 0,
+      "expected_bytes": 29314424736
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "image_id": "sha256:5027e95bf6ec536856b1b52a91d1f35ff5c564ab83e8a94758a169ff09bb8df3",
+  "architecture": "amd64",
+  "inherited_nonsecret_environment": {
+    "SGLANG_BUILD_COMMIT": "49e384ce9d304648e9959666ecb8ce8cd98d0deb",
+    "SGLANG_BUILD_URL": "https://github.com/sgl-project/sglang/actions/runs/28210048245",
+    "SGLANG_IMAGE_TAG": "lmsysorg/sglang:v0.5.14"
+  },
+  "validator": "scripts/lifecycle/sglang_file_auth.py:94-98",
+  "status": "BLOCKED_BEFORE_NATIVE_APP_AND_SENTINEL"
+}

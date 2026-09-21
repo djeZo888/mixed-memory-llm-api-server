@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "outcome": "PARTIALLY_CACHED_BASELINE",
+  "stage": "baseline",
+  "request_count": 1,
+  "successful_step_count": 0,
+  "checkpoint_status": "PENDING_RECONCILIATION",
+  "failure_class": "cold_cache_NOT_TESTED",
+  "highest_proven_window": null,
+  "native_configured_capacity": null,
+  "stage_started_at": 1789444276.9718888,
+  "dispatched_at": 1789444330.149903,
+  "request_deadline": 1789444929.163336,
+  "actual_worker_elapsed_seconds": 137.05595999999787,
+  "checkpoint_generation_seconds_32k": 0,
+  "checkpoint_generation_seconds_note": "Only successful result elapsed is accumulated by shipped source; this zero does not mean no request ran. Actual failed-step elapsed is recorded separately.",
+  "settings": {
+    "model": "glm-5.3",
+    "max_tokens": 256,
+    "temperature": 0,
+    "reasoning_effort": "low",
+    "stream": false
+  },
+  "output_caps_planned": [
+    256,
+    256,
+    512,
+    512
+  ],
+  "tool_schema_sha256": "2def4d49a74e9bb617f6c7551fb74a96a32e114b3a4ef441f1d4e40a112d3912",
+  "accounting": {
+    "input_tokens": 1370,
+    "tokens_sha256": "469dd72637c5825cf9cd3b936e7c7033ab0d99ed1dfb14ca94ce4db92bbe455c",
+    "rendered_prompt_sha256": "9bcde19e00224e1f7d5892196e079ea3c4951f7c99760f52337f06a216742d5d",
+    "body_sha256": "6682c1aaae6491aaa900da3297c05e17a63bc35adbceaef310bc8ded47b1f89d",
+    "template_sha256": "347dc716e1e8a9917eb124503836943107686ace6a3848d16bf23ae50964bb49",
+    "configured_context": 32768,
+    "add_special": true,
+    "parse_special": true
+  },
+  "common_prefix_tokens": null,
+  "cold_cached_tokens_required": 0,
+  "counters": {
+    "cached_tokens": 50,
+    "cached_tokens_source": "usage.prompt_tokens_details.cached_tokens",
+    "completion_tokens": 64,
+    "decode_ms": 112294.399,
+    "decode_tokens": 64,
+    "elapsed_seconds": 137.0549194579944,
+    "evaluated_prompt_tokens": 1320,
+    "prompt_ms": 22135.537,
+    "prompt_tokens": 1370,
+    "total_tokens": 1434
+  },
+  "derived_from_backend_counters": {
+    "prompt_tokens_per_second": 59.632616999533376,
+    "decode_tokens_per_second": 0.5699304735581692
+  },
+  "time_to_first_token_seconds": null,
+  "finish_reason": "stop",
+  "retrieval_checks": {
+    "early": true,
+    "middle": true,
+    "late": true
+  },
+  "resources": {
+    "gpu_min_free_bytes": {
+      "0": 84300267520,
+      "1": 88377131008
+    },
+    "rss_max_kib": 433538784,
+    "pss_max_kib": 433538780,
+    "mem_available_min_kib": 469281404,
+    "root_available_min_bytes": 5208956928,
+    "target_swap_max_kib": 0,
+    "target_vmswap_max_kib": 0,
+    "sample_count": 112,
+    "max_sample_gap_seconds": 1.51285719871521,
+    "sample_first": 1789444330.3083448,
+    "sample_last": 1789444466.4288764,
+    "sampled_only": true
+  },
+  "steps": {
+    "cold": "BLOCKED_CACHED_50_EXPECTED_0",
+    "warm": "PENDING_NOT_TESTED",
+    "tool": "PENDING_NOT_TESTED",
+    "continuation": "PENDING_NOT_TESTED"
+  },
+  "comparison_complete": false,
+  "lease": "RELEASED",
+  "endpoint": {
+    "base_url": "http://127.0.0.1:54597/v1",
+    "local_port": 54597,
+    "tunnel_pid": 31379,
+    "control_path": "/tmp/d3base-ssh-_8l6gtwi/ctl",
+    "key_file": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/api-key",
+    "run": "/Users/agent/CodexProjects/llm-orchestration/tasks/D3BASE-20260915/trial/run"
+  },
+  "concurrent_task_context": {
+    "reported_at_launch": "D3B2 build and one enumeration complete; before/after memory delta0 sampled. Q38VR2 independent noGPU/no-generation fixture failed early and packaging.",
+    "exact_d3b2_build_start": null,
+    "exact_d3b2_build_end": null,
+    "exact_d3b2_enumeration_time": null,
+    "exact_q38vr2_fixture_time": null,
+    "inference_concurrency": "none per coordinator sole lease",
+    "timing_attribution": "complete configurations old D1 versus later patched N76; cannot attribute solely to expert placement"
+  },
+  "coordinator_acceptance": "Completed cold request retained for later candidate comparison using identical body hashes/native timing with cache differences disclosed; no zero-cache retry, new harness or further request.",
+  "shipped_gate_status": "STOP_COLD_CACHE_QUALIFICATION",
+  "continuation_integration_gap": "Shipped candidate gate still requires baseline PASS and cannot advance stopped checkpoint. Later authorized owner must address contract reuse; current state and source remain unchanged."
+}

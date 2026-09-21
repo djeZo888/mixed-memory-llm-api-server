@@ -1,0 +1,167 @@
+{
+  "effective_ingress": "PASS",
+  "enabled_utc": "2026-09-15T02:46:50.260625+00:00",
+  "endpoint": "http://10.156.100.60:30002/v1",
+  "files": [
+    {
+      "gid": 0,
+      "mode": "0644",
+      "path": "/usr/local/lib/llm-server/private-network/private_network.py",
+      "sha256": "ad0c48db68ce47213f292abb74aebc9b321b41baefc3385785bb7322e7e78ddc",
+      "uid": 0
+    },
+    {
+      "gid": 0,
+      "mode": "0600",
+      "path": "/etc/llm-server/network.json",
+      "sha256": "095bbf0ea64c792efa49ddf16a78383ec74528abe605c86b54ba8ac01563cb60",
+      "uid": 0
+    },
+    {
+      "gid": 0,
+      "mode": "0644",
+      "path": "/etc/systemd/system/llm-private-control.socket",
+      "sha256": "9fc827cdb6b0819dd5c1d01e860bf44f230e174f5a27af02cdf3645a727e19fc",
+      "uid": 0
+    },
+    {
+      "gid": 0,
+      "mode": "0644",
+      "path": "/etc/systemd/system/llm-private-control.service",
+      "sha256": "8a2c5350d8fdffdf0a1fc154538d5210f40b09c0eb88cddf6368fa77d748ba24",
+      "uid": 0
+    },
+    {
+      "gid": 0,
+      "mode": "0644",
+      "path": "/etc/systemd/system/llm-private-glm.socket",
+      "sha256": "884d669f6cb05aab8460fe01c634370025eea366b151a70a888fb746a4967fee",
+      "uid": 0
+    },
+    {
+      "gid": 0,
+      "mode": "0644",
+      "path": "/etc/systemd/system/llm-private-glm.service",
+      "sha256": "329b70c762a866acc8f1547f8374d18d97c19f8e8caface17f77507517d108a8",
+      "uid": 0
+    },
+    {
+      "gid": 0,
+      "mode": "0644",
+      "path": "/etc/systemd/system/llm-private-qwen38.socket",
+      "sha256": "0c964858717fbf9b838fe2b0e606f19128ee9ef7dfba0ed6fb660d7dc1282ad7",
+      "uid": 0
+    },
+    {
+      "gid": 0,
+      "mode": "0644",
+      "path": "/etc/systemd/system/llm-private-qwen38.service",
+      "sha256": "a7cfd0d1a333a9a830d1ef63449dbdc5607978712ea0f616fa4bd9d67fffbff5",
+      "uid": 0
+    }
+  ],
+  "generation_requests": 0,
+  "guard_identity": "PASS exact D3 hashes and protected metadata",
+  "listeners": [
+    "LISTEN 0      4096               127.0.0.1:30002 0.0.0.0:* users:((\"docker-proxy\",pid=150263,fd=8))               ",
+    "LISTEN 0      4096   10.156.100.60%enp6s18:30002 0.0.0.0:* users:((\"systemd\",pid=1,fd=76))                        "
+  ],
+  "model": {
+    "command_sha256": "89510f6d1b0ede1ae1bba8a1f9097c42fa063f2196ee14c000e6c9810e7fae00",
+    "id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+    "image": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+    "name": "/llmctl-glm-5.3-32k",
+    "network_mode": "bridge",
+    "pid": 149976,
+    "restart_count": 0,
+    "running": true,
+    "started_at": "2026-09-15T00:48:45.235739944Z"
+  },
+  "model_restart_policy": "no",
+  "model_unchanged": true,
+  "mounts": [
+    {
+      "fstype": "ext4",
+      "source": "/dev/sdb1",
+      "target": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    {
+      "fstype": "ext4",
+      "source": "/dev/sdc1",
+      "target": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    }
+  ],
+  "native_auth": "PASS missing401 wrong401 correct200 glm-5.3 n_ctx32768 health200",
+  "new_enable_symlink": {
+    "gid": 0,
+    "path": "/etc/systemd/system/multi-user.target.wants/llm-private-glm.socket",
+    "target": "/etc/systemd/system/llm-private-glm.socket",
+    "uid": 0
+  },
+  "require_data_mounted": "PASS",
+  "root_available_bytes": 5210513408,
+  "root_available_gib": 4.852668762207031,
+  "root_disk_guard": "PASS",
+  "transport_gate": "PASS",
+  "units": {
+    "llm-private-control.service": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "/etc/systemd/system/llm-private-control.service",
+      "NeedDaemonReload": "no",
+      "SubState": "dead",
+      "UnitFileState": "static"
+    },
+    "llm-private-control.socket": {
+      "ActiveState": "inactive",
+      "BindToDevice": "enp6s18",
+      "DropInPaths": "",
+      "FragmentPath": "/etc/systemd/system/llm-private-control.socket",
+      "Listen": "10.156.100.60:30000 (Stream)",
+      "NeedDaemonReload": "no",
+      "SubState": "dead",
+      "UnitFileState": "disabled"
+    },
+    "llm-private-glm.service": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "/etc/systemd/system/llm-private-glm.service",
+      "NeedDaemonReload": "no",
+      "SubState": "dead",
+      "UnitFileState": "static"
+    },
+    "llm-private-glm.socket": {
+      "ActiveState": "active",
+      "BindToDevice": "enp6s18",
+      "DropInPaths": "",
+      "FragmentPath": "/etc/systemd/system/llm-private-glm.socket",
+      "Listen": "10.156.100.60:30002 (Stream)",
+      "NeedDaemonReload": "no",
+      "SubState": "listening",
+      "UnitFileState": "enabled"
+    },
+    "llm-private-qwen38.service": {
+      "ActiveState": "inactive",
+      "DropInPaths": "",
+      "FragmentPath": "/etc/systemd/system/llm-private-qwen38.service",
+      "NeedDaemonReload": "no",
+      "SubState": "dead",
+      "UnitFileState": "static"
+    },
+    "llm-private-qwen38.socket": {
+      "ActiveState": "inactive",
+      "BindToDevice": "enp6s18",
+      "DropInPaths": "",
+      "FragmentPath": "/etc/systemd/system/llm-private-qwen38.socket",
+      "Listen": "10.156.100.60:30004 (Stream)",
+      "NeedDaemonReload": "no",
+      "SubState": "dead",
+      "UnitFileState": "disabled"
+    }
+  },
+  "unrelated_ipv4_filter_unchanged": true,
+  "utc": "2026-09-15T02:46:51.244732+00:00",
+  "worker2_direct_auth_sse_agent": "PENDING_COORDINATOR_HANDSHAKE"
+}

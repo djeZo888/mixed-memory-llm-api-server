@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "scope": "Worker-side pinned primary source diagnosis; no native execution or VM access",
+  "repository": "https://github.com/ggml-org/llama.cpp",
+  "commit": "b29c606e28a01b1bc8c1351026a0fa6e616bf6c4",
+  "tree_sha": "950999fe62b7fe55f44ab5b7394e3c8542f37f12",
+  "method": "GitHub pinned commit/tree; every downloaded blob recomputed and matched tree Git SHA1",
+  "downloaded_file_count": 67,
+  "downloaded_bytes": 2421069,
+  "cited_files": [
+    {
+      "path": "common/arg.cpp",
+      "git_blob_sha1": "c4c4e143c987d73ee5aba191b8482d9764be5848",
+      "sha256": "6e71ad4f63c79fee81fe218ab6755ed97813ba84d179e38ae02924be1556d46e",
+      "bytes": 220177,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/common/arg.cpp"
+    },
+    {
+      "path": "common/common.h",
+      "git_blob_sha1": "63d0badd0f7465b804b62128b64c5cc8dd115862",
+      "sha256": "7cfcc6a57122702ea35d04ed20861aef162bd94f55cfbbf9fd23ee3127fe6cb4",
+      "bytes": 51088,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/common/common.h"
+    },
+    {
+      "path": "tools/server/README.md",
+      "git_blob_sha1": "ef9033404824f1a31dd60b8b39bbb8c38b944cae",
+      "sha256": "57e27013809e4976e71a76fe83a5930779634401d6dbdf2d941fd5432889eb9e",
+      "bytes": 106112,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/README.md"
+    },
+    {
+      "path": "tools/server/server-common.cpp",
+      "git_blob_sha1": "7bf1138c8a8eea52ade231b44230737f99e0986d",
+      "sha256": "de3a89422f67b97eb385041fae17e553dc677aac6b67f2e98e9f0beff672b4e0",
+      "bytes": 69693,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/server-common.cpp"
+    },
+    {
+      "path": "tools/server/server-context.cpp",
+      "git_blob_sha1": "b6835e43459e3e9f1ea951e9f96f9ade22074cba",
+      "sha256": "2f5d65ce6ef0504b5c8cf55a74c68d3959c49784ba380ef836566b7a7d5fa12b",
+      "bytes": 226101,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/server-context.cpp"
+    },
+    {
+      "path": "tools/server/server-context.h",
+      "git_blob_sha1": "0acbbffa9e103b8c4ef8fbb8b041a0966277cdb7",
+      "sha256": "8885184dc08bd35f7b96cdbec92efa440b0b4d4e2bd5fc81ab8cf0c408430b73",
+      "bytes": 7002,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/server-context.h"
+    },
+    {
+      "path": "tools/server/server-http.cpp",
+      "git_blob_sha1": "2ec137aa07863dc9667f4daa3a63b6830630c697",
+      "sha256": "fc9d307525d7db13fcee3d32e0d4587cbd2f3d93bcc70a86b2cedc16b336ce11",
+      "bytes": 33568,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/server-http.cpp"
+    },
+    {
+      "path": "tools/server/server-http.h",
+      "git_blob_sha1": "032b08d0d2103f109515b446df9cad295d754786",
+      "sha256": "822a22ab2e8072b3447aadda5c941e9968b7d21bf01277f817b5ab0fce8c5e41",
+      "bytes": 3124,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/server-http.h"
+    },
+    {
+      "path": "tools/server/server-models.cpp",
+      "git_blob_sha1": "3d134acf362116394f3db0c54391b7e8139728bf",
+      "sha256": "854db15a62e1d6e68670b36d38da7d750753ca2d0054288e2b2346e7c37bee8b",
+      "bytes": 99838,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/server-models.cpp"
+    },
+    {
+      "path": "tools/server/server-schema.cpp",
+      "git_blob_sha1": "27ecafb7a5952677a997c62f4b26a1b67f7a36d9",
+      "sha256": "0bab859883207554fb724774892e8756ec0c956252b7653424756a0ee582efa8",
+      "bytes": 33040,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/server-schema.cpp"
+    },
+    {
+      "path": "tools/server/server-stream.cpp",
+      "git_blob_sha1": "f6b9b8a9f4cc5139faa07d44453163e4205da6f0",
+      "sha256": "96cea95271afcb6e359fd5666c3de93e1dc9c94b35b7d961ca3e9d9854575b1a",
+      "bytes": 23182,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/server-stream.cpp"
+    },
+    {
+      "path": "tools/server/server-task.cpp",
+      "git_blob_sha1": "0d3beb313ceabbb903de57d185140a8e5a079e4b",
+      "sha256": "0fd5c8df2525e61214986e8abe3fc4edbb92f5dd652c9c2bfd1bc2712218a585",
+      "bytes": 67361,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/server-task.cpp"
+    },
+    {
+      "path": "tools/server/server.cpp",
+      "git_blob_sha1": "22378b38c5ef1fa70d82c3b32a8907a658dd151a",
+      "sha256": "a0b400372a697182fb552c946579f74e81a845aa6d37e4b40b978ff4be5e016c",
+      "bytes": 23501,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/server.cpp"
+    },
+    {
+      "path": "tools/server/tests/unit/test_chat_completion.py",
+      "git_blob_sha1": "0258b539ed870a7ed90ff4acc6bbd5ee233286aa",
+      "sha256": "32199bdf961bf3227667b1763456f3b981401cc67024be94ee986a92573f9622",
+      "bytes": 24925,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/tools/server/tests/unit/test_chat_completion.py"
+    },
+    {
+      "path": "vendor/cpp-httplib/httplib.cpp",
+      "git_blob_sha1": "c82ff1e71de81d67b65590ab2ed6822fd5cb3679",
+      "sha256": "e2e4845c2626afd5bb4186e5590160889a052d88e5145a0c73b2e232a5ba79f7",
+      "bytes": 616905,
+      "url": "https://github.com/ggml-org/llama.cpp/blob/b29c606e28a01b1bc8c1351026a0fa6e616bf6c4/vendor/cpp-httplib/httplib.cpp"
+    }
+  ],
+  "recorded_installed_help": {
+    "selected_file": "reports/d1-cli-selected.txt",
+    "selected_bytes": 8247,
+    "selected_sha256": "27faf41c4997b6341e59746114048b47c3ce0e6cba6556c365f079cc57661b51",
+    "verbatim_json_decoded_bytes": 8287,
+    "verbatim_json_decoded_sha256": "67b0e940d334cc3aa13db3b8ba48e476eef682b40bc3cfd1280585156eb86428",
+    "comparison": "Only difference is 40 spaces on otherwise blank line 13 in decoded JSON; normalized lines equal; not byte equal",
+    "full_help_bytes_recorded": 58136,
+    "full_help_sha256_recorded": "a144e0605fbd0092e6e68cc51d1cdc3c3f8ea75bb63e2f53e4478ab2cde9e8a5",
+    "full_help_bytes_recovered_in_d3c": false
+  },
+  "runtime_image_recorded": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+  "reviewed_repository_base": "4ab862f829a560e00ae3f40d9358456db0a4c0e9"
+}

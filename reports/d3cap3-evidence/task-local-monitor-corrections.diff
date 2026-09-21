@@ -1,0 +1,262 @@
+--- D3CAP2/cheap-core.py
++++ D3CAP3/cheap-core.py
+@@ -103,5 +103,13 @@
+-    result = subprocess.run(argv, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=10,
+-                            env=dict(os.environ, LC_ALL="C", TZ="UTC"))
+-    if result.returncode or len(result.stdout) > limit:
+-        raise Error("bounded_telemetry_command_failed")
+-    return result.stdout.decode("utf-8", errors="strict")
++    begin=time.monotonic();deadline=globals().get('TELEMETRY_DEADLINE',begin+10)
++    timing={'command':argv[0],'begin_monotonic':begin,'timeout_budget_seconds':max(.001,deadline-begin)}
++    try:
++        result=subprocess.run(argv,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=max(.001,deadline-begin),env=dict(os.environ,LC_ALL="C",TZ="UTC"))
++        timing['returncode']=result.returncode
++        if result.returncode or len(result.stdout)>limit:raise Error('bounded_telemetry_command_failed')
++        return result.stdout.decode('utf-8',errors='strict')
++    except subprocess.TimeoutExpired:
++        timing['timeout']=True
++        raise Error('true_telemetry_call_exhausted_remaining_10_second_freshness_budget')
++    finally:
++        timing['end_monotonic']=time.monotonic();timing['duration_seconds']=timing['end_monotonic']-begin
++        if 'TELEMETRY_CALLS' in globals():TELEMETRY_CALLS.append(timing)
+@@ -124 +132 @@
+-    began = time.monotonic()
++    began = time.monotonic(); sample_begin_utc = time.time()
+@@ -164 +172,3 @@
+-        parse_log_line(json.loads(raw)["log"], state)
++        row = json.loads(raw)
++        if row["time"] >= status["StartedAt"]:
++            parse_log_line(row["log"], state)
+@@ -184 +194 @@
+-    result = {"timestamp": time.time(), "sample_elapsed_seconds": time.monotonic() - began,
++    result = {"timestamp": time.time(), "sample_begin_utc": sample_begin_utc, "sample_begin_monotonic": began, "sample_end_monotonic": time.monotonic(), "sample_elapsed_seconds": time.monotonic() - began,
+--- D3CAP2/common.py
++++ D3CAP3/common.py
+@@ -1 +1 @@
+-"""Fixed D3CAP2 operator transcript; no product-source changes."""
++"""Fixed D3CAP3 operator transcript; no product-source changes."""
+@@ -4 +4 @@
+-REPORT=Path('/data/logs/d3cap2-20260915')
++REPORT=Path('/data/logs/d3cap3-20260915')
+@@ -38,2 +38,2 @@
+-def inspect_container(cid):
+-    return json.loads(run(['docker','inspect','--format',FMT,cid]))
++def inspect_container(cid,timeout=10):
++    return json.loads(run(['docker','inspect','--format',FMT,cid],timeout))
+@@ -65,0 +66 @@
++    state['last_sample']=s
+@@ -100,0 +102,17 @@
++
++LOADING_FRESHNESS_SECONDS=10.0
++SLOW_SAMPLE_SECONDS=2.0
++def actual_launch_f16(cid,expected):
++    m=manager();st=m.read_state();assert st['container']['id']==cid; c=m.trusted_container(st['container'])
++    m.validate_reused_contract(c,m.deployment(TARGET))
++    assert identity(inspect_container(cid))==expected
++    args=Path('/proc/%d/cmdline'%expected['pid']).read_bytes().split(b'\0');args=[x.decode() for x in args if x]
++    assert args[1:]==c['Args'],'actual_pid_argv_differs'
++    assert args[0]=='/opt/llama/llama-server','actual_entrypoint'
++    names=[x.split(b'=',1)[0].decode() for x in Path('/proc/%d/environ'%expected['pid']).read_bytes().split(b'\0') if x]
++    overrides=[x for x in names if 'CACHE_TYPE' in x or 'TYPE_K' in x or 'TYPE_V' in x]
++    assert not overrides,'actual_pid_cache_type_environment_override'
++    assert _reviewed_args(args[1:],IMAGE,1048576)=='n_cpu_moe_76'
++    binary=hashlib.sha256(Path('/proc/%d/exe'%expected['pid']).read_bytes()).hexdigest()
++    assert binary=='c81262fd063e9d2fc098d9e116d0ae742ca7ea37344ee3f4b56eb5d088206e0a','actual_binary_hash'
++    return {'pid_argv_matches_protected_contract':True,'entrypoint':args[0],'args':args[1:],'cache_dtype_environment_overrides':overrides,'binary_sha256':binary,'effective_cache_type':'F16_FROM_PINNED_DEFAULT_AND_NO_OVERRIDE','independent_v_allocation':'NOT_APPLICABLE_MLA_SHARED_STORAGE'}
+--- D3CAP2/transition.py
++++ D3CAP3/transition.py
+@@ -1,3 +1,3 @@
+-"""ONE canonical native1M start. No automatic retry or rollback."""
+-admission=json.loads(protected(REPORT/'admission.json').read_bytes())
+-private=json.loads(protected(REPORT/'private-baseline.json').read_bytes())
++"""ONE unchanged stopped-native1M restart via existing Manager; no retry."""
++admission=json.loads(protected(REPORT/'admission.json').read_bytes());private=json.loads(protected(REPORT/'private-baseline.json').read_bytes())
++f16_source=json.loads(protected(REPORT/'f16-source-proof.json').read_bytes())
+@@ -6,0 +7 @@
++assert _metrics('/proc/vmstat',{'pswpin','pswpout','oom_kill'})==admission['idle_full']['vmstat'],'new_swap_oom_since_admission'
+@@ -10,5 +11,12 @@
+-stop_monitor=threading.Event();monitor_failure=[];observations=[];new_identity=[]
+-def abort(signum,frame):raise LifecycleError('d3cap2_cheap_safety_stop')
+-signal.signal(signal.SIGUSR1,abort)
+-signal.signal(signal.SIGTERM,abort)
+-signal.signal(signal.SIGINT,abort)
++stop_monitor=threading.Event();monitor_failure=[];observations=[];new_identity=[];heartbeat=[time.monotonic()];sample_state={}
++def abort(signum,frame):raise LifecycleError('d3cap3_cheap_safety_stop')
++signal.signal(signal.SIGUSR1,abort);signal.signal(signal.SIGTERM,abort);signal.signal(signal.SIGINT,abort)
++def monitor_fail(reason,**extra):
++ if not monitor_failure and not stop_monitor.is_set():
++  monitor_failure.append(reason);emit('first_load_safety_failure',error=reason,samples=len(observations),**extra);os.kill(os.getpid(),signal.SIGUSR1)
++def watchdog():
++ while not stop_monitor.wait(.1):
++  age=time.monotonic()-heartbeat[0]
++  if age>LOADING_FRESHNESS_SECONDS:
++   monitor_fail('true_loading_telemetry_freshness_over_10_seconds',freshness_age_seconds=age);return
++
+@@ -16,22 +24,30 @@
+-    state=state_new(admission['idle_full']['vmstat']);next_sample=time.monotonic();previous=None
+-    try:
+-        while not stop_monitor.is_set():
+-            owned=m.state.get('container')
+-            if owned and m.state.get('selected')==TARGET:
+-                c=inspect_container(owned['id'])
+-                if c['State']['Running']:
+-                    if not new_identity:
+-                        ident=identity(c);assert ident['image']==IMAGE
+-                        new_identity.append(ident)
+-                        emit('target_started',identity=ident,allocation_attempts=1)
+-                    s=cheap_sample(new_identity[0]['id'],1048576,state,new_identity[0],admission['idle_full'])
+-                    assert s['sample_elapsed_seconds']<2,'sample_duration'
+-                    if previous is not None:assert 0<s['timestamp']-previous<=2,'sample_gap'
+-                    previous=s['timestamp'];observations.append(s)
+-                    emit('sample',stage='load',sample_index=len(observations),sample=s)
+-            next_sample+=1
+-            stop_monitor.wait(max(0,next_sample-time.monotonic()))
+-    except Exception as exc:
+-        reason=str(exc) if isinstance(exc,(AssertionError,Error)) else type(exc).__name__
+-        monitor_failure.append(reason);emit('first_load_safety_failure',error=reason,samples=len(observations))
+-        os.kill(os.getpid(),signal.SIGUSR1)
++ global TELEMETRY_DEADLINE,TELEMETRY_CALLS
++ state=state_new(admission['idle_full']['vmstat']);sample_state.update(state=state);next_sample=time.monotonic();previous=None
++ try:
++  while not stop_monitor.is_set():
++   cycle_begin=time.monotonic();TELEMETRY_DEADLINE=heartbeat[0]+LOADING_FRESHNESS_SECONDS;TELEMETRY_CALLS=[]
++   timing={'command':'docker inspect identity','begin_monotonic':cycle_begin,'timeout_budget_seconds':max(.001,TELEMETRY_DEADLINE-cycle_begin)}
++   try:c=inspect_container(admission['containers']['native1m']['Id'],timing['timeout_budget_seconds'])
++   finally:
++    timing['end_monotonic']=time.monotonic();timing['duration_seconds']=timing['end_monotonic']-cycle_begin;TELEMETRY_CALLS.append(timing)
++   if c['State']['Running']:
++    if not new_identity:
++     ident=identity(c);assert ident['image']==IMAGE and ident['started_at']!=admission['containers']['native1m']['State']['StartedAt']
++     new_identity.append(ident);emit('target_started',identity=ident,allocation_attempts=1)
++    s=cheap_sample(new_identity[0]['id'],1048576,state,new_identity[0],admission['idle_full'])
++    s['sample_cycle_duration_seconds']=time.monotonic()-cycle_begin;s['metric_calls']=TELEMETRY_CALLS.copy()
++    gap=None if previous is None else s['sample_end_monotonic']-previous
++    s['producer_gap_seconds']=gap;s['loading_freshness_ceiling_seconds']=LOADING_FRESHNESS_SECONDS
++    s['slow_sampling']=s['sample_elapsed_seconds']>SLOW_SAMPLE_SECONDS or (gap is not None and gap>SLOW_SAMPLE_SECONDS)
++    observations.append(s);emit('sample',stage='load',sample_index=len(observations),sample=s)
++    assert s['sample_elapsed_seconds']<=LOADING_FRESHNESS_SECONDS,'true_sample_duration_over_10_seconds'
++    if gap is not None:assert 0<gap<=LOADING_FRESHNESS_SECONDS,'true_producer_gap_over_10_seconds'
++    if s['slow_sampling']:emit('slow_loading_sample',producer_gap_seconds=gap,sample_duration_seconds=s['sample_elapsed_seconds'],classification='slow_sampling_only')
++    previous=s['sample_end_monotonic'];heartbeat[0]=previous
++   elif new_identity:raise Error('known_target_lifetime_ended')
++   next_sample=max(next_sample+1,time.monotonic())
++   stop_monitor.wait(max(0,next_sample-time.monotonic()))
++ except Exception as exc:
++  reason=str(exc) if isinstance(exc,(AssertionError,Error)) else type(exc).__name__
++  monitor_fail(reason,last_sample=state.get('last_sample'),rejected_observation_utc=time.time(),metric_calls=globals().get('TELEMETRY_CALLS',[]),true_freshness_age_seconds=time.monotonic()-heartbeat[0])
++
+@@ -39,47 +55,47 @@
+-    m=manager();current=m.read_state()
+-    assert current==admission['state'],'state_changed_since_admission'
+-    assert identity(inspect_container(OLD))==admission['identity']
+-    target=m.deployment(TARGET);m.prepare_start(target)
+-    emit('target_preflight_revalidated',owner_pid=os.getpid(),deadline_seconds=target['launch']['timeout_seconds'],allocation_attempts=0)
+-    thread=None
+-    try:
+-        m.dispatch('stop',lease=lease)
+-        assert not inspect_container(OLD)['State']['Running']
+-        emit('old_n76_32k_stopped',container=OLD)
+-        m.dispatch('select',TARGET,boot_policy='manual',lease=lease)
+-        write('allocation-attempt.json',{'utc':time.time(),'target':TARGET,'attempt':1,'owner_pid':os.getpid(),'deadline_seconds':target['launch']['timeout_seconds']})
+-        emit('target_start_dispatch',profile=TARGET,image=IMAGE,allocation_attempts=1,owner_pid=os.getpid())
+-        thread=threading.Thread(target=monitor_load,name='d3cap2-load-cheap');thread.start()
+-        result=m.dispatch('start',lease=lease)
+-        stop_monitor.set();thread.join(20);assert not thread.is_alive(),'monitor_join_failed'
+-        assert not monitor_failure and observations,'monitor_no_safe_samples'
+-        ready_guard=guard();quiet()
+-        full=full_idle(new_identity[0]['id'],1048576,admission['idle_full'])
+-        c=inspect_container(new_identity[0]['id']);assert identity(c)==new_identity[0]
+-        raw=Path(c['LogPath']);assert raw.stat().st_size<524288
+-        selected=[]
+-        for line in raw.read_bytes().splitlines():
+-            row=json.loads(line);msg=row['log'].strip()
+-            if re.search(r'D3T_NATIVE_V1|(?:KV|[ck]ache|compute).*buffer size|K \(f16\)|V \(f16\)|type_[kv]|offloaded \d+/\d+|n_ctx\s*=|n_seq_max\s*=|n_threads\s*=|n_cpu_moe',msg,re.I):
+-                selected.append({'utc':row['time'],'message':msg})
+-        f16=[x for x in selected if 'K (f16)' in x['message'] and 'V (f16)' in x['message']]
+-        assert f16,'actual_f16_kv_types_missing'
+-        assert key_state()==private['key'] and stable_files()==private['files']
+-        assert result['boot_policy']=='manual' and result['desired']=='running' and result['observed']=='ready'
+-        assert c['RestartPolicy']['Name']=='no';control_state()
+-        capacity={'status':'PASS_CAPACITY_ALLOCATION_ONLY','identity':new_identity[0],'state':result,'actual_capacity':1048576,'actual_slots':1,'native':full['native'],'idle_full':full,'selected_backend_logs':selected,'guards':ready_guard,'key_exact_bytes_metadata_unchanged':True,'occupied_near_1m':'NOT_TESTED','allocation_attempts':1,'generation_attempts':0,'load_samples':len(observations)}
+-        write('capacity-result.json',capacity)
+-        emit('actual_capacity_result',status=capacity['status'],identity=new_identity[0],actual_capacity=1048576,native=full['native'],idle_rss_gib=full['process_kib']['Rss']/1048576,idle_pss_gib=full['process_kib']['Pss']/1048576,memavailable_gib=full['host_kib']['MemAvailable']/1048576,gpu_free_gib=[g['free_bytes']/GIB for g in full['gpus']],f16_kv_verified=True,occupied_near_1m='NOT_TESTED')
+-        write('load-samples.json',observations)
+-        write('transition-final-guards.json',guard())
+-    except BaseException as exc:
+-        stop_monitor.set()
+-        if thread is not None:thread.join(20)
+-        reason=str(exc) if isinstance(exc,(LifecycleError,AssertionError,Error)) else type(exc).__name__
+-        failure=emit('first_transition_failure',error=reason,state=m.state,monitor_failure=monitor_failure,allocation_attempts=int((REPORT/'allocation-attempt.json').exists()))
+-        write('first-transition-failure.json',failure)
+-        # Reconcile only Manager's durable immutable owned container. No retry.
+-        stopped=m.dispatch('stop',lease=lease)
+-        emit('owned_target_reconciled_stopped',state=stopped)
+-        write('failure-reconciliation.json',{'state':stopped,'guards':guard(),'samples':observations})
+-        raise SystemExit(1)
++ m=manager();current=m.read_state();assert current==admission['state'],'state_changed_since_admission'
++ target=m.deployment(TARGET);c=m.trusted_container(current['container']);m.validate_reused_contract(c,target)
++ assert not c['State']['Running'] and c['State']['Pid']==0
++ m.prepare_start(target)
++ for cid in (OLD,D1):assert not inspect_container(cid)['State']['Running']
++ emit('target_preflight_revalidated',owner_pid=os.getpid(),deadline_seconds=target['launch']['timeout_seconds'],allocation_attempts=0)
++ thread=None;watch=None
++ try:
++  write('allocation-attempt.json',{'utc':time.time(),'target':TARGET,'attempt':1,'owner_pid':os.getpid(),'deadline_seconds':target['launch']['timeout_seconds'],'reuses_stopped_container':c['Id']})
++  emit('target_start_dispatch',profile=TARGET,image=IMAGE,allocation_attempts=1,owner_pid=os.getpid())
++  heartbeat[0]=time.monotonic()
++  thread=threading.Thread(target=monitor_load,name='d3cap3-load-cheap');thread.start()
++  watch=threading.Thread(target=watchdog,name='d3cap3-loading-freshness');watch.start()
++  result=m.dispatch('start',lease=lease)
++  stop_monitor.set();thread.join(12);watch.join(2);assert not thread.is_alive() and not watch.is_alive(),'monitor_join_failed'
++  globals().pop('TELEMETRY_DEADLINE',None);globals().pop('TELEMETRY_CALLS',None)
++  assert not monitor_failure and observations,'monitor_no_safe_samples'
++  emit('native_health_models_ready',identity=new_identity[0],actual_context=observations[-1]['slot_context'],load_samples=len(observations),pss='pending_idle_boundary')
++  ready_guard=guard();quiet();full=full_idle(new_identity[0]['id'],1048576,admission['idle_full'])
++  c=inspect_container(new_identity[0]['id']);assert identity(c)==new_identity[0]
++  raw=Path(c['LogPath']);assert raw.stat().st_size<1048576
++  selected=[]
++  for line in raw.read_bytes().splitlines():
++   row=json.loads(line);msg=row['log'].strip()
++   if row['time']>=c['State']['StartedAt'] and re.search(r'D3T_NATIVE_V1|(?:KV|[ck]ache|compute).*buffer size|K \(f16\)|V \(f16\)|type_[kv]|offloaded \d+/\d+|n_ctx\s*=|n_seq_max\s*=|n_threads\s*=|n_cpu_moe',msg,re.I):selected.append({'utc':row['time'],'message':msg})
++  launch=actual_launch_f16(c['Id'],new_identity[0])
++  assert full['native']['cache_bytes']==f16_source['expected_cache_bytes'],'F16_cache_allocation_crosscheck_gap'
++  assert key_state()==private['key'] and stable_files()==private['files']
++  assert result['boot_policy']=='manual' and result['desired']=='running' and result['observed']=='ready'
++  assert c['RestartPolicy']['Name']=='no';control_state()
++  capacity={'status':'PASS_CAPACITY_ALLOCATION_ONLY','identity':new_identity[0],'state':result,'actual_capacity':1048576,'actual_slots':1,'native':full['native'],'idle_full':full,'selected_backend_logs':selected,'actual_launch_f16':launch,'f16_proof_method':f16_source['proof_method'],'guards':ready_guard,'key_exact_bytes_metadata_unchanged':True,'occupied_near_1m':'NOT_TESTED','allocation_attempts':1,'generation_attempts':0,'load_samples':len(observations)}
++  write('capacity-result.json',capacity)
++  emit('actual_capacity_result',status=capacity['status'],identity=new_identity[0],actual_capacity=1048576,native=full['native'],idle_rss_gib=full['process_kib']['Rss']/1048576,idle_pss_gib=full['process_kib']['Pss']/1048576,memavailable_gib=full['host_kib']['MemAvailable']/1048576,gpu_free_gib=[g['free_bytes']/GIB for g in full['gpus']],f16_effective_verified=True,independent_v_cache='NOT_APPLICABLE',occupied_near_1m='NOT_TESTED')
++  write('load-samples.json',observations);write('transition-final-guards.json',guard())
++ except BaseException as exc:
++  stop_monitor.set()
++  if thread is not None:thread.join(12)
++  if watch is not None:watch.join(2)
++  reason=str(exc) if isinstance(exc,(LifecycleError,AssertionError,Error)) else type(exc).__name__
++  failure=emit('first_transition_failure',error=reason,state=m.state,monitor_failure=monitor_failure,last_sample=sample_state.get('state',{}).get('last_sample'),metric_calls=globals().get('TELEMETRY_CALLS',[]),rejected_observation_utc=time.time(),allocation_attempts=int((REPORT/'allocation-attempt.json').exists()))
++  write('first-transition-failure.json',failure);write('load-samples.json',observations)
++  try:
++   stopped=m.dispatch('stop',lease=lease);emit('owned_target_reconciled_stopped',state=stopped)
++   write('failure-reconciliation.json',{'state':stopped,'guards':guard()})
++  except BaseException as stop_exc:
++   emit('owned_stop_unresolved',error_type=type(stop_exc).__name__,container=admission['containers']['native1m']['Id'])
++  raise SystemExit(1)
+--- D3CAP2/run-operator.py
++++ D3CAP3/run-operator.py
+@@ -5 +5 @@
+-assert len(sys.argv)==2 and sys.argv[1] in ('preflight','transition','smoke','final','close')
++assert len(sys.argv)==2 and sys.argv[1] in ('preflight','transition','smoke','final','close','source-proof')
+@@ -6,0 +7,5 @@
++request_lease=None
++if phase=='smoke':
++    sys.path.insert(0,str(root/'repo/scripts'))
++    from d3t.probe import lock
++    request_lease=lock(root.parent/'D3BASE-20260915/trial/run','request.lock');request_lease.__enter__()
+@@ -16 +21 @@
+-        v=json.loads(line)
++        v=json.loads(line);v['controller_receipt_utc']=datetime.datetime.now(datetime.timezone.utc).isoformat();out.write(json.dumps({'controller_receipt_utc':v['controller_receipt_utc'],'producer_utc':v.get('utc'),'phase_received':v.get('phase')})+'\n');out.flush()
+@@ -24,2 +29 @@
+-            brief['idle_rss_gib']=v['result']['idle_full']['process_kib']['Rss']/1048576
+-            brief['idle_pss_gib']=v['result']['idle_full']['process_kib']['Pss']/1048576
++            brief['baseline']=v['result']['idle_full'];brief['pss']='NOT_APPLICABLE_ALL_BACKENDS_STOPPED'
+@@ -30,0 +35 @@
++if request_lease is not None:request_lease.__exit__(None,None,None)

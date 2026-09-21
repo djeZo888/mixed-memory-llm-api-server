@@ -1,0 +1,74 @@
+{
+  "/data": {
+    "uid": 0,
+    "gid": 0,
+    "mode": 493,
+    "device": 2065,
+    "inode": 2,
+    "mtime_ns": 1789425513688012172,
+    "ctime_ns": 1789425513688012172
+  },
+  "/data/services": {
+    "uid": 1000,
+    "gid": 1001,
+    "mode": 1533,
+    "device": 2065,
+    "inode": 67633153,
+    "mtime_ns": 1789425227202633240,
+    "ctime_ns": 1789425227202633240
+  },
+  "/data/services/llm-manager": {
+    "uid": 1000,
+    "gid": 1001,
+    "mode": 1533,
+    "device": 2065,
+    "inode": 67633936,
+    "mtime_ns": 1783185138794486483,
+    "ctime_ns": 1783263857682653492
+  },
+  "/data/services/llm-manager/active": {
+    "uid": 1000,
+    "gid": 1001,
+    "mode": 1533,
+    "device": 2065,
+    "inode": 67634001,
+    "mtime_ns": 1783542841428176646,
+    "ctime_ns": 1783542841428176646
+  },
+  "/data/services/secrets": {
+    "uid": 1000,
+    "gid": 1001,
+    "mode": 1528,
+    "device": 2065,
+    "inode": 67633154,
+    "mtime_ns": 1782981398232591291,
+    "ctime_ns": 1782981398256591394
+  },
+  "/data/models-large": {
+    "uid": 1000,
+    "gid": 1001,
+    "mode": 1533,
+    "device": 2081,
+    "inode": 2,
+    "mtime_ns": 1789428148338038408,
+    "ctime_ns": 1789428148338038408
+  },
+  "/data/models-large/glm-5.3-ud-q4-k-xl": {
+    "uid": 1000,
+    "gid": 1001,
+    "mode": 1517,
+    "device": 2081,
+    "inode": 169607169,
+    "mtime_ns": 1789425832767585145,
+    "ctime_ns": 1789425832767585145
+  },
+  "/data/services/mixed-memory-llm-api-server": {
+    "uid": 1000,
+    "gid": 1001,
+    "mode": 1533,
+    "device": 2065,
+    "inode": 67633155,
+    "mtime_ns": 1789421202717000000,
+    "ctime_ns": 1789421202717000000
+  }
+}

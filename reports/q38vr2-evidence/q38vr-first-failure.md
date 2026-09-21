@@ -1,0 +1,90 @@
+# Q38VR first actual fixture result
+
+```json
+{
+  "argv": [
+    "/usr/bin/python3",
+    "-B",
+    "/data/build/q38vr-20260915/source/tests/lifecycle/sglang38_fixture/run_fixture.py",
+    "--repo",
+    "/data/build/q38vr-20260915/source",
+    "--output",
+    "/data/logs/q38vr-20260915/q38b-auth.json"
+  ],
+  "elapsed_seconds": 0.667665,
+  "exit": 1,
+  "finished_utc": "2026-09-15T03:20:29.390420+00:00",
+  "model_execution": "NOT_TESTED",
+  "receipt_exists": false,
+  "result": {
+    "code": "q38s_image_fixture_failed",
+    "lifetime": {
+      "attach_diagnostic": {
+        "cli_returncode": 2,
+        "cli_signal": null,
+        "container_before_cleanup_stop": {
+          "exit_code": 2,
+          "signal": null,
+          "status": "EXITED"
+        },
+        "failure_kind": "CLI_NONZERO_EXIT",
+        "failure_metadata": {
+          "code": "actual_image_fixture_failed",
+          "origin": {
+            "exception_class": "FixtureFailure",
+            "filename": "run_pinned_image.py",
+            "line": 580
+          },
+          "status": "SAFE_ORIGIN"
+        },
+        "operation": "START_ATTACH",
+        "phase": "ATTACH",
+        "schema_version": 1,
+        "stderr": {
+          "capture": "COMPLETE",
+          "captured_bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "capture": "COMPLETE",
+          "captured_bytes": 163,
+          "sha256": "de15e3556c43867d2ef3b95dd412f208684f10ddb95573c39b9d0577bbd8fcd2"
+        }
+      },
+      "cleanup": "QUIESCENT_REMOVAL_VERIFIED",
+      "container_id": "411f949b60cd102390123cd75eddc6f2ca0abe186e1c6225bbfaa4a56d048e9a",
+      "container_name": "q38b-fixture-87b24617f0287ea276117a7ce380202a",
+      "outcome": "ATTACH_FAILED",
+      "runtime_inspect": {
+        "context": 131072,
+        "device_requests": [],
+        "driver_capabilities": "compute,utility",
+        "entrypoint": [
+          "python3"
+        ],
+        "host_devices": [],
+        "model_and_secret_mounts": "EMPTY_PRIVATE_TMPFS",
+        "network": "none",
+        "root_readonly": true,
+        "runtime": "nvidia",
+        "status": "PASS_HOST_INSPECT",
+        "visible_devices": "none"
+      }
+    },
+    "status": "FAIL"
+  },
+  "started_utc": "2026-09-15T03:20:28.720472+00:00",
+  "streams": {
+    "stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout": {
+      "bytes": 1322,
+      "sha256": "8fba3b6f739ef4dc9d3bc6ae3e47579deac1498832a1f7f76c8c1e2a7673d5f5"
+    }
+  }
+}
+```
+
+Independent postchecks pending. First failure stops dependent context/model activation. No live receipt publication.

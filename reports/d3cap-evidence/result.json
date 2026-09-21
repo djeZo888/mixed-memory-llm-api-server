@@ -1,0 +1,16 @@
+{
+  "task": "D3CAP",
+  "status": "STOP_ROOT_STORAGE_BEFORE_TARGET_PREFLIGHT",
+  "allocation_attempts": 0,
+  "generation_attempts": 0,
+  "lifecycle_lease_acquired": false,
+  "request_sampler_tunnel_processes_started": 0,
+  "sole_request_lifecycle_ownership": "RELEASED",
+  "root_available_bytes": 3632226304,
+  "root_stop_bytes": 4294967296,
+  "actual_native1m_capacity": "NOT_TESTED",
+  "near_1m_occupation": "NOT_TESTED",
+  "next_action": "Root owns storage diagnosis/remediation; fresh explicit release and passing registered guard required before dependent actions.",
+  "diagnosis_utc": "2026-09-15T04:41:05.270493+00:00",
+  "lease_released_utc": "2026-09-15T04:43:31.246982+00:00"
+}

@@ -1,0 +1,6 @@
+# Semantic addition only; preserve every existing field, including omitted notes/description.
+# Before raw SHA256 8a5f7787c00319f093656d4fe0b6953c79ae31669b4da7690e6f7386ecad839a
++ historical_import: true
++ storage_identity: exact storage-identity.proposed.json object
+# Do not apply this text as a patch; reviewed import_historical_instance is the writer.
+# active.json/recovery.json diff: EMPTY; both SHA256 c63de9b1a77aa4d62496880c7dad8cb6a22a10de9736c5305545e3579d576f1f

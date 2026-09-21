@@ -1,0 +1,34 @@
+{
+  "all_pass": true,
+  "comparison_attempts": 1,
+  "gpu_allocated_max_bytes": [
+    18282971136,
+    26749173760
+  ],
+  "gpu_free_min_bytes": [
+    84358987776,
+    75892785152
+  ],
+  "highest_proven_window": null,
+  "max_adjacent_timestamp_gap_seconds": 1.825214147567749,
+  "max_collection_seconds": 1.4673750199981441,
+  "mem_available_min_kib": 481900660,
+  "pss_max_kib": 419910764,
+  "request_generations": 4,
+  "rss_max_kib": 419910768,
+  "runtime_errors_all_zero": true,
+  "sampler_boundary": "original closed after completed tool request and local fixture; fresh sampler before continuation",
+  "samples": 259,
+  "target_swap_all_zero": true,
+  "vmstat_observed_values": {
+    "oom_kill": [
+      0
+    ],
+    "pswpin": [
+      19045
+    ],
+    "pswpout": [
+      35822
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "allocation_attempts": 1,
+  "elapsed_seconds": 92.19226025100215,
+  "error": "d3cap2_cheap_safety_stop",
+  "monitor_failure": [
+    "sample_gap"
+  ],
+  "phase": "first_transition_failure",
+  "state": {
+    "boot_policy": "manual",
+    "container": {
+      "deployment": "glm-5.3-ud-q4-k-xl-n76-native1m",
+      "id": "3108f42bfaab08010164340b2c3e709e03c4aebeb36374e6b87d8bac226296fb",
+      "image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+      "instance": "ai-vm-d0b",
+      "legacy": false,
+      "name": "llmctl-glm-5.3-n76-native1m",
+      "owner": "mixed-memory-llm-api-server"
+    },
+    "container_running": true,
+    "desired": "running",
+    "failure": "d3cap2_cheap_safety_stop",
+    "last_selected": "glm-5.3-ud-q4-k-xl-n76-32k",
+    "observed": "failed",
+    "schema_version": 2,
+    "selected": "glm-5.3-ud-q4-k-xl-n76-native1m",
+    "state_persisted": true,
+    "updated_at": 1789449032154804525
+  },
+  "utc": "2026-09-15T05:10:32.271835+00:00"
+}

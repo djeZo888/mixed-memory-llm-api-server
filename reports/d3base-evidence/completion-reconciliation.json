@@ -1,0 +1,14 @@
+{
+  "observed_at": 1789444580.037216,
+  "container_id": "bb77b764cb9677f3c04c1e60359d287a15abb304ba289f38703e58b5a6fc0d55",
+  "image_id": "sha256:6866856c573d69d504f82265321b182f631a7b3912a1ed1b4efbf893729d4e62",
+  "pid": 149976,
+  "started_at": "2026-09-15T00:48:45.235739944Z",
+  "bounded_log_bytes_read": 65536,
+  "bounded_log_sha256": "d8a9260811399806306756464a043a0501e84c7d78918eddaf88916f58ebd999",
+  "idle_timestamps_after_dispatch": [],
+  "stop_processing_timestamps_after_dispatch": [
+    "2026-09-15T03:54:24.963157913Z"
+  ],
+  "native_port_established_socket_rows": 0
+}

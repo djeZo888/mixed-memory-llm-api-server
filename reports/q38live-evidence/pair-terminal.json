@@ -1,0 +1,140 @@
+{
+  "attempt": 1,
+  "code": "q38s_image_fixture_failed",
+  "commit": "636f847fa2729238db9974c0a7b570960e6974d5",
+  "contexts": [
+    {
+      "context": 131072,
+      "finished_utc": "2026-09-17T03:57:41.891519+00:00",
+      "independent_absence": {
+        "container_id": "98ba9c05a41236787a70be8ca8383db51aeb754ce58ab342ae7ae570f1250d11",
+        "container_name": "q38b-fixture-3a6a926fb4944b3d2184ec56a37dbcf3",
+        "id_and_name_absent": true,
+        "status": "PASS"
+      },
+      "started_utc": "2026-09-17T03:57:13.088377+00:00",
+      "status": "FAIL"
+    }
+  ],
+  "post_guards": {
+    "registered": {
+      "data": {
+        "capacity": {
+          "data_available_bytes": 1337419206656,
+          "model_available_bytes": 2590890246144,
+          "root_available_bytes": 5562404864,
+          "shared_model_filesystem": false
+        },
+        "data": {
+          "device": "8:17",
+          "fstype": "ext4",
+          "mount": "/data",
+          "parents": [
+            "/dev/sdb",
+            "/dev/sdb1"
+          ],
+          "path": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        "models": {
+          "device": "8:33",
+          "fstype": "ext4",
+          "mount": "/data/models-large",
+          "parents": [
+            "/dev/sdc",
+            "/dev/sdc1"
+          ],
+          "path": "/data/models-large",
+          "source": "/dev/sdc1",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        },
+        "roots": {
+          "backups": "/data/backups",
+          "build": "/data/build",
+          "containerd": "/data/containerd",
+          "docker": "/data/docker",
+          "hf_cache": "/data/hf-cache",
+          "logs": "/data/logs",
+          "models": "/data/models-large",
+          "secrets": "/data/services/secrets",
+          "services": "/data/services",
+          "state": "/data/services/installer"
+        },
+        "schema_version": 1,
+        "storage_mode": "existing",
+        "verified_roles": [
+          "data",
+          "models"
+        ],
+        "warnings": [
+          "root filesystem has less than 6 GiB free"
+        ]
+      },
+      "root": {
+        "capacity": {
+          "data_available_bytes": 1337419206656,
+          "model_available_bytes": 2590890246144,
+          "root_available_bytes": 5562404864,
+          "shared_model_filesystem": false
+        },
+        "data": {
+          "device": "8:17",
+          "fstype": "ext4",
+          "mount": "/data",
+          "parents": [
+            "/dev/sdb",
+            "/dev/sdb1"
+          ],
+          "path": "/data",
+          "source": "/dev/sdb1",
+          "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+        },
+        "models": {
+          "device": "8:33",
+          "fstype": "ext4",
+          "mount": "/data/models-large",
+          "parents": [
+            "/dev/sdc",
+            "/dev/sdc1"
+          ],
+          "path": "/data/models-large",
+          "source": "/dev/sdc1",
+          "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+        },
+        "root_payload_scan": {
+          "files_inspected": 4285,
+          "large_payload_threshold_bytes": 134217728,
+          "status": "pass"
+        },
+        "roots": {
+          "backups": "/data/backups",
+          "build": "/data/build",
+          "containerd": "/data/containerd",
+          "docker": "/data/docker",
+          "hf_cache": "/data/hf-cache",
+          "logs": "/data/logs",
+          "models": "/data/models-large",
+          "secrets": "/data/services/secrets",
+          "services": "/data/services",
+          "state": "/data/services/installer"
+        },
+        "schema_version": 1,
+        "storage_mode": "existing",
+        "verified_roles": [
+          "data",
+          "models"
+        ],
+        "warnings": [
+          "root filesystem has less than 6 GiB free"
+        ]
+      }
+    },
+    "status": "PASS",
+    "utc": "2026-09-17T03:57:42.293913+00:00"
+  },
+  "receipt_sha256": null,
+  "source_hashes_match": true,
+  "status": "FAIL",
+  "utc": "2026-09-17T03:57:42.097399+00:00"
+}

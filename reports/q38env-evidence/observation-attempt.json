@@ -1,0 +1,31 @@
+{
+  "container_command_or_policy": "NOT_CREATED_OR_INSPECTED",
+  "controller_execution": "ephemeral Python over SSH stdin; no controller source installed on VM",
+  "coordination_input_read_before_launch": true,
+  "correction_or_retry": "NONE",
+  "diagnostic_runtime_attempts": 0,
+  "docker_create_attempts": 0,
+  "exact_failed_image_inspect_argv": [
+    "docker",
+    "image",
+    "inspect",
+    "--format",
+    "{\"Id\":{{json .Id}},\"RepoDigests\":{{json .RepoDigests}},\"Os\":{{json .Os}},\"Architecture\":{{json .Architecture}},\"Descriptor\":{{json .Descriptor}},\"Config\":{\"Entrypoint\":{{json .Config.Entrypoint}},\"Cmd\":{{json .Config.Cmd}},\"WorkingDir\":{{json .Config.WorkingDir}},\"Labels\":{\"org.opencontainers.image.revision\":{{json (index .Config.Labels \"org.opencontainers.image.revision\")}},\"org.opencontainers.image.source\":{{json (index .Config.Labels \"org.opencontainers.image.source\")}}}}",
+    "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262"
+  ],
+  "failed_gate_code": "installed_image_inspect_failed",
+  "failed_gate_definition": "Docker returncode == 0 and stderr empty",
+  "failure_location": "stdin host controller line 336; require helper line 46",
+  "host_controller_exit_code": 1,
+  "image_inspect_attempts": 1,
+  "image_inspect_cli_timeout_seconds": 10,
+  "individual_docker_returncode_and_streams": "NOT_RETAINED",
+  "owner_labels_or_id": "NOT_ALLOCATED",
+  "reviewed_source_sha256": {
+    "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+    "tests/lifecycle/sglang38_fixture/cache_probe.py": "1983823892cf28f9b0ecfffa54c31442774d86e5851cb4d5337dc9537f7c8983",
+    "tests/lifecycle/sglang38_fixture/run_fixture.py": "954ba40800eed06e3d515d118f24a55ae5755ad8c9632326a8dc4cfd15b2c7ac"
+  },
+  "source_base_commit": "1e65e17534ae6be3a23ec54bda800ad64fcee7d8",
+  "task": "Q38ENV-20260915"
+}

@@ -1,0 +1,7 @@
+# Narrow mode correction PREP — 2026-09-20
+
+Base be3a91fd7819f5de7a95deea07317e4451e5bee5. Source-only correction: share the existing capture private-directory contract and check it before host staging/ownership; pin literal cont1 campaign and retain original clock1789899296.052823–1789903796.052823. No model/runtime/CPU/capacity/workload/count or scoped15% policy changes. Exactly five measurements and four discarded warmups remain.
+
+Original archive private directories were0700 and files0600. Saved failure metadata records extracted0755 and capture refusal before HTTP; later0700 metadata records confidentiality repair, not successful extraction. Failed RUN01a0be4f-ceb3-7e03-b732-4574dc62a834 completed one GLM480 allocation, zero warmups, zero measured requests. Saved final restoration proof records RESTORED, authenticated LAN checks, three owned resources removed, no active requests/pending create, canonical lease absence and closed tunnels. These are saved predecessor evidence, not new live observations.
+
+Task-local COMPLETE package contains frozen predecessor receipts, exact source/arm/raw hash, bundle, INITIAL progress, control/incoming, private fixtures, safe extraction instructions, focused offline capture tests and full offline package read-chain receipt. Archive members are regular files/directories only,0700/0600. No credentials read or packaged, no sockets/VM contact, no failed RUN mutation, no deployment/publication. Fresh root-reviewed RUN remains separate; no196-test rerun. Task HANDOFF and final-receipt bind the exact final artifacts.

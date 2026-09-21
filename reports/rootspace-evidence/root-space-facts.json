@@ -1,0 +1,333 @@
+{
+  "task": "ROOTSPACE",
+  "status": "DIAGNOSED_RAW_FAILURE_EVIDENCE_RETAINED_ROOT_GUARD_FAIL",
+  "completed_utc": "2026-09-15T04:51:10.252179+00:00",
+  "cause": {
+    "observed": "Apport standalone core and .crash report total 1578762240 allocated bytes, generated during Q38FIX attempt 1. Crash metadata identifies fixture cache_probe.py process PID 265467, namespace PID 43, signal 11.",
+    "q38fix_available_loss_bytes": 1578770432,
+    "crash_allocated_bytes": 1578762240,
+    "difference_from_recorded_loss_bytes": 8192,
+    "attribution_limit": "Fixture marker, PID, boot identity and timestamps agree; crash header has no cgroup/exact Docker container binding. Exact native crashing function is unknown; payloads were not inspected.",
+    "evidence": "attribution.json"
+  },
+  "before": {
+    "total_bytes": 15186501632,
+    "free_including_reserved_bytes": 4423290880,
+    "available_bytes": 3629518848,
+    "reserved_unavailable_bytes": 793772032,
+    "used_bytes": 10763210752,
+    "block_size": 4096,
+    "inodes": 950272,
+    "free_inodes": 785371
+  },
+  "after": {
+    "total_bytes": 15186501632,
+    "free_including_reserved_bytes": 4423290880,
+    "available_bytes": 3629518848,
+    "reserved_unavailable_bytes": 793772032,
+    "used_bytes": 10763210752,
+    "block_size": 4096,
+    "inodes": 950272,
+    "free_inodes": 785375
+  },
+  "root_mount": {
+    "target": "/",
+    "source": "/dev/mapper/ubuntu--vg-ubuntu--lv",
+    "fstype": "ext4",
+    "uuid": "bc752bce-bb3f-4802-8adf-69c45a88689d",
+    "maj:min": "252:0",
+    "options": "rw,relatime"
+  },
+  "root_accounting": {
+    "walk_allocated_bytes": 10763063296,
+    "walk_apparent_bytes": 10723586890,
+    "statvfs_used_minus_walk_allocated_bytes": 147456,
+    "top_level_directories": [
+      {
+        "path": "/",
+        "allocated_bytes": 10763063296,
+        "apparent_bytes": 10723586890
+      },
+      {
+        "path": "/usr",
+        "allocated_bytes": 4746387456,
+        "apparent_bytes": 4503198560
+      },
+      {
+        "path": "/var",
+        "allocated_bytes": 2404970496,
+        "apparent_bytes": 2627702593
+      },
+      {
+        "path": "/home",
+        "allocated_bytes": 447287296,
+        "apparent_bytes": 431582366
+      },
+      {
+        "path": "/etc",
+        "allocated_bytes": 6881280,
+        "apparent_bytes": 3616946
+      },
+      {
+        "path": "/tmp",
+        "allocated_bytes": 98304,
+        "apparent_bytes": 92368
+      },
+      {
+        "path": "/root",
+        "allocated_bytes": 81920,
+        "apparent_bytes": 45126
+      },
+      {
+        "path": "/data.pre-mount-root-20260702-083425",
+        "allocated_bytes": 16384,
+        "apparent_bytes": 16384
+      },
+      {
+        "path": "/lost+found",
+        "allocated_bytes": 16384,
+        "apparent_bytes": 16384
+      },
+      {
+        "path": "/opt",
+        "allocated_bytes": 16384,
+        "apparent_bytes": 16384
+      },
+      {
+        "path": "/snap",
+        "allocated_bytes": 8192,
+        "apparent_bytes": 4644
+      },
+      {
+        "path": "/bin.usr-is-merged",
+        "allocated_bytes": 4096,
+        "apparent_bytes": 4096
+      },
+      {
+        "path": "/cdrom",
+        "allocated_bytes": 4096,
+        "apparent_bytes": 4096
+      },
+      {
+        "path": "/lib.usr-is-merged",
+        "allocated_bytes": 4096,
+        "apparent_bytes": 4096
+      },
+      {
+        "path": "/media",
+        "allocated_bytes": 4096,
+        "apparent_bytes": 4096
+      },
+      {
+        "path": "/mnt",
+        "allocated_bytes": 4096,
+        "apparent_bytes": 4096
+      },
+      {
+        "path": "/sbin.usr-is-merged",
+        "allocated_bytes": 4096,
+        "apparent_bytes": 4096
+      },
+      {
+        "path": "/srv",
+        "allocated_bytes": 4096,
+        "apparent_bytes": 4096
+      }
+    ],
+    "scan_counts": {
+      "entries": 164838,
+      "regular_files": 129079,
+      "duplicate_hardlinks": 13
+    },
+    "scan_errors": [],
+    "skipped_mounts": [
+      {
+        "path": "/boot",
+        "dev": 2050
+      },
+      {
+        "path": "/data",
+        "dev": 2065
+      },
+      {
+        "path": "/dev",
+        "dev": 5
+      },
+      {
+        "path": "/proc",
+        "dev": 24
+      },
+      {
+        "path": "/run",
+        "dev": 26
+      },
+      {
+        "path": "/sys",
+        "dev": 23
+      }
+    ],
+    "filesystem_superblock": {
+      "exit_code": 0,
+      "metadata": [
+        "Filesystem UUID:          bc752bce-bb3f-4802-8adf-69c45a88689d",
+        "Filesystem state:         clean",
+        "Block count:              3793920",
+        "Reserved block count:     189696",
+        "Overhead clusters:        86278",
+        "Free blocks:              1079912",
+        "Block size:               4096",
+        "Reserved blocks uid:      0 (user root)",
+        "Reserved blocks gid:      0 (group root)"
+      ]
+    }
+  },
+  "candidate_inventory": [
+    {
+      "path": "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+      "dev": 64512,
+      "inode": 266791,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o400",
+      "nlink": 1,
+      "size": 970436608,
+      "allocated_bytes": 970440704,
+      "mtime_ns": 1789446869471533227,
+      "ctime_ns": 1789446869681534442,
+      "atime_ns": 1789446866852518081,
+      "mtime": "2026-09-15T04:34:29.471533+00:00",
+      "ctime": "2026-09-15T04:34:29.681535+00:00",
+      "atime": "2026-09-15T04:34:26.852518+00:00"
+    },
+    {
+      "path": "/var/crash/_usr_bin_python3.12.0.crash",
+      "dev": 64512,
+      "inode": 266790,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o640",
+      "nlink": 1,
+      "size": 608314664,
+      "allocated_bytes": 608321536,
+      "mtime_ns": 1789446866852518081,
+      "ctime_ns": 1789446866852518081,
+      "atime_ns": 1789446866853518087,
+      "mtime": "2026-09-15T04:34:26.852518+00:00",
+      "ctime": "2026-09-15T04:34:26.852518+00:00",
+      "atime": "2026-09-15T04:34:26.853518+00:00"
+    }
+  ],
+  "candidate_active_reference_check": {
+    "checked_processes": 1112,
+    "exact_candidate_fd_references": [],
+    "crash_handler_processes": [],
+    "errors": []
+  },
+  "cleanup_dry_run": {
+    "eligible_paths": [],
+    "retained_paths": [
+      "/var/lib/apport/coredump/core._usr_bin_python3_12.0.9423b346-6186-4855-b1cf-f1725a853fe9.265467.2515351",
+      "/var/crash/_usr_bin_python3.12.0.crash"
+    ],
+    "decision": "Retain both as actual native failure evidence under explicit preservation instruction; no content-equivalence proof that a raw artifact is redundant. No plainly disposable task artifact of useful size established.",
+    "predicted_released_bytes": 0,
+    "counterfactual_both_crash_files_only_available_bytes": 5208281088,
+    "counterfactual_both_crash_files_below_6GiB": true
+  },
+  "cleanup": {
+    "deleted_paths": [],
+    "terminated_processes": [],
+    "released_bytes": 0,
+    "deleted_open_release_delay": "Not applicable: no deletion or deleted-open files."
+  },
+  "headroom": {
+    "available_bytes": 3629518848,
+    "available_GiB": 3.380253,
+    "stop_floor_bytes": 4294967296,
+    "target_bytes": 6442450944,
+    "short_of_floor_bytes": 665448448,
+    "short_of_target_bytes": 2812932096,
+    "target_met": false
+  },
+  "guards": {
+    "registered": {
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "STOP: registered storage identity, ownership, layout or capacity guard failed\n"
+    },
+    "registered_root": {
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "STOP: registered storage identity, ownership, layout or capacity guard failed\n"
+    },
+    "source_hash_mode_protected_ancestry_match": true,
+    "registry_identity_only_verified_not_guard_pass": {
+      "schema_version": 1,
+      "roots": {
+        "backups": "/data/backups",
+        "build": "/data/build",
+        "containerd": "/data/containerd",
+        "docker": "/data/docker",
+        "hf_cache": "/data/hf-cache",
+        "logs": "/data/logs",
+        "models": "/data/models-large",
+        "secrets": "/data/services/secrets",
+        "services": "/data/services",
+        "state": "/data/services/installer"
+      },
+      "data": {
+        "path": "/data",
+        "mount": "/data",
+        "uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+        "fstype": "ext4",
+        "source": "/dev/sdb1",
+        "device": "8:17",
+        "parents": [
+          "/dev/sdb",
+          "/dev/sdb1"
+        ]
+      },
+      "models": {
+        "path": "/data/models-large",
+        "mount": "/data/models-large",
+        "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+        "fstype": "ext4",
+        "source": "/dev/sdc1",
+        "device": "8:33",
+        "parents": [
+          "/dev/sdc",
+          "/dev/sdc1"
+        ]
+      },
+      "storage_mode": "existing",
+      "verified_roles": [
+        "data",
+        "models"
+      ]
+    }
+  },
+  "backend_unchanged": true,
+  "backend": {
+    "exit_code": 0,
+    "stdout": "\"7cde6a376f58a1dee7ad425fbd104bbd7337effa6d6943a5bfc0dbeed4bbee78\" \"sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9\" 243279 \"running\" \"2026-09-15T04:09:20.746242473Z\" 0\n",
+    "stderr": ""
+  },
+  "backend_process": {
+    "pid": 243279,
+    "comm": "llama-server",
+    "uid": 0,
+    "start_ticks": 2367582
+  },
+  "deleted_open_final": {
+    "processes_checked": 1113,
+    "files": [],
+    "errors": []
+  },
+  "vm_mutations": [],
+  "lifecycle_or_request_lease_acquired": false,
+  "vm_artifact_writes": false,
+  "new_codex_sessions_spawned": false,
+  "production_source_changes": false,
+  "dependent_operations_resumed": false,
+  "next_action": "Parent retains actual-operation ownership. ROOTSPACE scope is complete. Both guards remain FAIL; no D3CAP/Q38FIX actual resumption. Parent can use preserved raw crash evidence to diagnose cache-probe SIGSEGV and determine exact evidence disposition/storage recovery scope."
+}
