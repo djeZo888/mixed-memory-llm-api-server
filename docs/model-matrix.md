@@ -1,89 +1,60 @@
-# Model Matrix
+# Current model and deployment matrix
 
-Do not download models before the relevant milestone explicitly approves the download path, cache path, backend, and verification sequence. M9D is planning/dry-run only and does not approve large-model downloads or runtime installs.
+**Production activation acceptance is PENDING.** This matrix records reviewed
+source `b0bd3c2eab52d8464eca5d360335f41b883671a0` and saved benchmark evidence.
+It does not certify currently running containers, private endpoints or reboot.
+There are two model identities and three permitted deployment instances.
 
-## Hardware Profile
-
-`llmserver-vm120-2x-rtx-pro-6000-blackwell-96gb`
-
-- Current GPU inventory: 2 x NVIDIA RTX PRO 6000 Blackwell Workstation Edition.
-- Current VRAM: `97887 MiB` per GPU, about 192 GB total before overhead.
-- No RTX 6000 Ada is expected in this VM.
-- System RAM target: 1 TB.
-- `/data` is mounted and has the required model/cache/build/log/service roots.
-- Docker Root Dir is `/data/docker`.
-- containerd root is `/data/containerd/root`.
-- Host NVIDIA driver `595.71.05` works.
-- NVIDIA Container Toolkit works for Docker GPU containers.
-- Host CUDA Toolkit and `nvcc` remain absent.
-
-## Runtime Gate
-
-M7A produced `reports/m7a-model-runtime-research.md` as a source-cited shortlist. Its conclusion is PASS for research and STOP for downloads, backend installs, builds, service creation, Docker/containerd changes, and API exposure until human review approves M7B.
-
-KTransformers/KT-Kernel remains the most important heterogeneous RAM+VRAM path for very large MoE models, but SGLang is the recommended first backend to implement for the smoke and 30B-class API path because current model cards list SGLang support and OpenAI-compatible serving. vLLM is the main cross-check backend. ik_llama and llama.cpp are GGUF/quantized fallback paths.
-
-M7B adds a model/runtime manager abstraction. Model choices remain profile-based rather than final. Use `configs/models/catalog.yaml`, `configs/models/profiles/*.yaml`, `configs/runtimes/*.yaml`, and `scripts/llmctl` to validate and plan future activation. Only one model/backend should be active at a time.
-
-## Shortlist
-
-| Priority | Model | Role | First backend | Status | Gate |
-| --- | --- | --- | --- | --- | --- |
-| 0 | `Qwen/Qwen3-0.6B` | Small smoke-test model | SGLang first, vLLM optional | Recommended first download after M8 approval | M7B backend abstraction, M8 download approval, `/data/models` and `/data/hf-cache` guard checks |
-| 1 | `Qwen/Qwen3-30B-A3B-Instruct-2507` | First real fast technical/general model | SGLang first, vLLM cross-check | Recommended first real model after smoke | M7B runtime profile, M9 benchmark approval, reduced context first |
-| 2 | `Qwen/Qwen3.6-35B-A3B` | Higher-quality fast coding/agentic model | SGLang or vLLM text-only first | Top smaller/faster candidate | Use text-only mode first; prove runtime supports `qwen3_5_moe` on this VM |
-| 3 | `Qwen/Qwen3-30B-A3B-Thinking-2507` | Smaller reasoning model | SGLang first, vLLM cross-check | Top smaller/faster candidate | Limit output/context initially because thinking mode increases KV/cache pressure |
-| 4 | `Qwen/Qwen3-Coder-30B-A3B-Instruct` | Coding-specific alternate | vLLM or SGLang, ik_llama if GGUF chosen | Alternate | Use if M9 focuses on code repair/generation over general technical chat |
-| 5 | `Qwen/Qwen3-235B-A22B-Instruct-2507` | Large/high-quality general model | KTransformers or SGLang/vLLM after memory plan | Top large candidate | Native BF16 footprint is about 438 GiB; 1M context is not viable on this VM without far more GPU memory |
-| 6 | `MiniMaxAI/MiniMax-M3` | Large agentic/coding/multimodal model | KTransformers or SGLang/vLLM after license/runtime review | Top large candidate | Native footprint is about 796 GiB; review MiniMax Community license and custom-code/runtime path |
-| 7 | `zai-org/GLM-5.2` | Frontier large coding/agentic model | KTransformers or SGLang/vLLM after memory plan | Top large candidate | Native footprint is about 1403 GiB; not a first download |
-| 8 | `deepseek-ai/DeepSeek-V4-Flash` | Large feasibility comparator | SGLang or KTransformers after memory plan | Alternate/comparator | Official FP4+FP8 footprint is about 149 GiB; strongest first large-quality experiment if feasibility outranks top-list purity |
-
-
-
-## M9D Large-Model Feasibility Update
-
-M9D refreshes the large-model matrix using current Hugging Face metadata and current runtime docs. No model is downloaded and no runtime is installed in M9D.
-
-| Candidate | Current M9D status | Storage estimate | First-runtime view | Feasibility note |
+| Model / placement | Deployment ID = public `instance_id` | API target | Alias / port | Guest CPUs / RAM cap |
 | --- | --- | --- | --- | --- |
-| `Qwen/Qwen3-235B-A22B-Instruct-2507` | Defer native BF16 | 470.19 GB / 437.90 GiB | SGLang/vLLM/KTransformers references exist | Exceeds 2 x 96 GB VRAM; system RAM fit only with offload. |
-| `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` | Fallback after review | 236.43 GB / 220.19 GiB | SGLang/vLLM listed by model card | Still exceeds aggregate VRAM before KV/cache overhead; needs proven offload or a larger GPU plan. |
-| `zai-org/GLM-5.2` | Defer BF16; possible later FP8 KT path | 1506.67 GB / 1403.19 GiB BF16; FP8 metadata about 755.63 GB / 703.74 GiB | KTransformers/KT-Kernel plus SGLang tutorial exists | Too large for first download; high storage and RAM risk. |
-| `MiniMaxAI/MiniMax-M3` | Defer native BF16 | 854.18 GB / 795.51 GiB | SGLang/vLLM/KTransformers references exist | Use the MXFP8 variant first if MiniMax is selected. |
-| `MiniMaxAI/MiniMax-M3-MXFP8` | Recommended first M9E proof candidate | 443.75 GB / 413.27 GiB | KTransformers/KT-Kernel plus SGLang hybrid | Best current-source match for this 1 TB RAM plus 2 x 96 GB VRAM VM, but Blackwell workstation support must be proven. |
-| `nvidia/MiniMax-M3-NVFP4` | Relevant comparison only | 250.10 GB / 232.93 GiB | vLLM nightly per NVIDIA model card | Relevant for Blackwell, but current card points to nightly vLLM support and TP8, not a proven 2-GPU path. |
+| Qwen3.8-27B FP8 / GPU0 | `qwen38-27b-q0-480000-yarn4-bf16kv` | `glm` | `qwen3.8-27b-gpu0` / 30002 | 0–7 / 32 GiB |
+| Qwen3.8-27B FP8 / GPU1 | `qwen38-27b-q1-480000-yarn4-bf16kv` | `qwen` | `qwen3.8-27b` / 30004 | 0–7 / 32 GiB |
+| GLM5.3 UD-Q4_K_XL / GPU0 | `glm-5.3-ud-q4-k-xl-g1-480000` | `glm` | `glm-5.3` / 30002 | 0–71 / 640 GiB |
 
-M9D preliminary recommendation: use `MiniMaxAI/MiniMax-M3-MXFP8` through KTransformers/KT-Kernel plus SGLang for the first M9E proof-of-life, start with text-only prompts and 8192 tokens or less, and keep the current 30B model running until M9E human review. `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` is the fallback if human review prioritizes Apache-2.0 and a current offload path is proven. M10 API/front-door/auth remains deferred.
+Default `dual-qwen` selects both Qwen instances. Optional `glm-qwen` replaces
+GPU0 only; returning to default explicitly restores GPU0 Qwen. Target `glm`
+is a historical name for GPU0, not a requirement to run GLM. Public instance
+IDs identify deployment choices; they are not immutable container identities
+or the opaque `active_identity` used for mutation compare-and-swap.
 
-## M8A Smoke Path
+Every deployment configures **480,000 tokens**. The existing guest has **72
+vCPUs** and two GPUs. Q/Q shares CPUs 0–7: union 8, exclusive 0. G/Q shares
+Qwen's eight CPUs with GLM's 72. No physical host pinning or minimum-core claim
+follows from these masks. Caps permit no swap and retain the reviewed 15%
+sampled working-set margin policy.
 
-M8A keeps `Qwen/Qwen3-0.6B` as the first smoke-test model and SGLang as the first smoke runtime. The planned local model path is `/data/models/qwen3-0.6b-smoke`; M8B must download to that path before launch and must not rely on SGLang auto-downloading from Hugging Face.
+Qwen uses pinned `sglang-qwen38-0.5.19`, FP8 weights, TP1, BF16 KV, YaRN 4 and
+chunk size 2,048. GLM uses pinned `llama-cpp-v0.4.1-d3br`, one GPU plus system
+RAM, N76 CPU offload and F16 KV. Exact model/runtime/profile pins remain in
+[deployment profiles](../configs/deployments/) and the protected acceptance
+contract; this documentation changes none of them.
 
-The planned localhost endpoint is `http://127.0.0.1:30000/v1/chat/completions`. The host binding must remain `127.0.0.1:30000:30000`; public or LAN exposure is out of scope for M8.
+## Capacity evidence
 
-M8A proposes the pinned runtime image `lmsysorg/sglang:v0.5.14-cu130-runtime` for human review. M8A does not download the model, pull the image, start a backend, or select any final large model.
+| Saved workload | Configured tokens | Native input / actual output / occupied | Boundary |
+| --- | ---: | ---: | --- |
+| Dual-Q Q0 | 480,000 | 479,408 / 82 / 479,490 | Strict and semantic PASS |
+| Dual-Q Q1 | 480,000 | 479,408 / 87 / 479,495 | Strict outer-fence failure; semantic exact object PASS |
+| Historical REAL72 B3 GLM | 480,000 | 65,008 / 68 / 65,076 | Historical G/Q workload; not maximum occupied capacity |
 
-## Current Backend Notes
+The [dual-Q report](../reports/dualq-480k-20260921.md) covers one measured pair,
+512-token output caps, separate actual outputs, sampled resources and no
+output-window overlap. [REAL72 B3](../reports/postrestart72-three-case-followup-20260920.md)
+is historical comparison evidence. Neither proves a general throughput limit.
 
-- Recommended first M7B backend profile: pinned SGLang Docker profile, localhost-only, all model/cache/log/build mounts under `/data`.
-- Recommended cross-check backend: vLLM pinned version/profile for the same small and 30B-class models.
-- Recommended large-MoE experimental path: KTransformers/KT-Kernel after M7B proves Blackwell behavior on this host.
-- Recommended quantized/GGUF fallback: ik_llama first, llama.cpp as reference.
-- M7B manager state root: `/data/services/llm-manager/state`.
-- M7B is dry-run/planning only; real downloads and activation remain blocked.
-- Do not use `latest` images or unpinned commits in implementation milestones.
-- Do not attempt 1M context first on any model. Start at 4K/32K for smoke, then 128K, and only then 262K if memory is stable.
+Qwen admission requires native pool 480,000 and input limit 479,994. Optional
+native request limit must be 479,999 when present; absence remains unknown,
+with input plus output bounded by the pinned 479,999 policy. GLM resolved native
+context must equal 480,000. Allocation is distinct from occupied retrieval.
+Catalog configured, accepted and verified occupied capacities remain separate;
+a protected reviewed receipt is required for accepted values. A Ready probe,
+source test or model declaration cannot supply that receipt.
 
+## Historical alternatives
 
-## M9A First Real Fast-Model Plan
-
-M9A keeps `Qwen/Qwen3-30B-A3B-Instruct-2507` as the recommended first real fast model. Current Hugging Face metadata reports 16 safetensors totaling 61.07 GB decimal / 56.87 GiB. The model card lists Apache-2.0 license, 30.5B total parameters, 3.3B active parameters, 262,144 native context, non-thinking-only behavior, and SGLang/vLLM deployment guidance.
-
-`Qwen/Qwen3.6-35B-A3B` is now tracked as a higher-quality fast follow-up profile. It is Apache-2.0, 35B total / 3B active, about 71.90 GB decimal / 66.97 GiB safetensors, multimodal/hybrid GDN, and should be tested text-only first because SGLang docs require `sglang>=0.5.10` and recommend careful memory/context settings.
-
-`Qwen/Qwen3-30B-A3B-Thinking-2507` is now tracked as a reasoning follow-up profile. It shares the primary model footprint but is thinking-only, so M9B should not use it as the first low-risk real deployment.
-
-`Qwen/Qwen3-Coder-30B-A3B-Instruct` remains the coding-specific fallback candidate if human review decides coding quality is more important than the lowest-risk first real path.
-
-Planned M9B primary path: download `Qwen/Qwen3-30B-A3B-Instruct-2507` only to `/data/models/qwen3-30b-a3b-instruct-2507`, keep cache under `/data/hf-cache`, use the verified full SGLang image `lmsysorg/sglang:v0.5.14-cu130`, bind only to `127.0.0.1:30001`, start at 32K context and one running request, then scale context only after VRAM/RAM checks pass. M9A remains planning-only and does not approve downloads, image pulls, container starts, smoke stop, or API exposure.
+TP2/1M profiles, earlier 700160-token G/Q candidates, older models and research
+shortlists remain historical/deferred. They are not automatic download or
+activation choices for this pair. See the preserved
+[stage-one status](../reports/stage1-ai-vm-status.md) and
+[M7 research](../reports/m7a-model-runtime-research.md). Installer work is paused;
+this matrix authorizes no downloads or host changes.

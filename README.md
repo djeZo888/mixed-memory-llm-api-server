@@ -1,61 +1,72 @@
 # mixed-memory-llm-api-server
 
-An API-only local AI server for **GLM5.3 UD-Q4_K_XL** (flagship) and
-**Qwen3.8-27B FP8** (fast model). It provides OpenAI-compatible inference and a
-separate authenticated control API for catalog, status and model switching.
-Select/load the model before inference: **one backend is active at a time**.
+An API-only local AI server for **Qwen3.8-27B FP8** and **GLM5.3 UD-Q4_K_XL**.
+Reviewed source `b0bd3c2eab52d8464eca5d360335f41b883671a0` defines **dual-qwen**
+as the default: one Qwen instance per GPU. Optional **glm-qwen** replaces only
+GPU0 with GLM; returning to dual-qwen replaces GPU0 with Qwen again.
 
-**Stage one COMPLETE, with qualifications (2026-09-17).**
-[Independent LAN acceptance](reports/apiaccept-lan-acceptance.md) covers both
-models, real agent work, Qwen → GLM → Qwen switching and postboot access.
-Fast Qwen is selected by default and resumes after reboot.
-[Final cleanup is COMPLETE](reports/finalops-reboot-cleanup.md).
-GLM functional checks passed, but strict swap-free qualification did
-not; neither model has demonstrated its full occupied context maximum. The
-[stage-one status report](reports/stage1-ai-vm-status.md) preserves the exact
-evidence, source boundaries and remaining qualifications.
+**Production activation acceptance is PENDING.** These are source-reviewed
+operating instructions, not a live readiness receipt. ACTIVATE separately owns
+installation and VM work; source installation and schema 3 migration alone do
+not prove serving, switching, boot replay or private-client acceptance.
 
-## Models and capacity
+| Placement / control target | Deployment ID and public instance ID | Inference alias / port |
+| --- | --- | --- |
+| GPU0 / `glm`, default | `qwen38-27b-q0-480000-yarn4-bf16kv` | `qwen3.8-27b-gpu0` / 30002 |
+| GPU1 / `qwen`, both modes | `qwen38-27b-q1-480000-yarn4-bf16kv` | `qwen3.8-27b` / 30004 |
+| GPU0 / `glm`, optional | `glm-5.3-ud-q4-k-xl-g1-480000` | `glm-5.3` / 30002 |
 
-| Model | Placement and context scope |
-| --- | --- |
-| GLM5.3 UD-Q4_K_XL | System RAM plus both GPUs; configured context 1,048,576 tokens. Agent and strict-JSON retrieval PASS; retrieval inputs 4,154 then 4,196 tokens. Larger OpenCode input counters are recorded separately. |
-| Qwen3.8-27B FP8 | Both GPUs/TP2, FP8 weights, BF16 KV and official factor-4 YaRN; configured/allocated context 1,000,000 tokens. Largest completed retrieval input 144,244 tokens, with real tool use and strict JSON. |
+All three configure **480,000 tokens** on the existing **72-vCPU guest**.
+Both Qwen instances share guest CPUs 0–7 (union 8); optional GLM uses 0–71,
+sharing 0–7 with GPU1 Qwen. These are guest affinity masks, not exclusive cores
+or physical host pinning. [Model matrix](docs/model-matrix.md) records resources
+and the distinction between configured, accepted and measured occupied context.
 
-Configured capacity, allocation and successfully occupied context are separate
-claims. Neither full occupied maximum is established. The catalog's
-`context.verified_occupied_tokens` remains `null` because it has no structured
-occupied-context receipt; historical 32K and 2048-output-token checks are not
-product limits. Near-cap occupied-context tasks remain NOT_TESTED.
+The [one-pair dual-Q benchmark](reports/dualq-480k-20260921.md) completed in
+258.9091 s: occupied context 479,490 / 479,495. Both semantic checks passed;
+Q1's outer JSON fence failed strict formatting. Output windows did not overlap.
+Its STOPPED/manual restoration is historical benchmark state, not production
+state or activation acceptance.
 
-## Start here
+## Use the APIs
 
-- [API operations guide](docs/ai-vm-api-operations.md): endpoint/key separation,
-  protected-file examples, aliases, catalog, asynchronous switch/poll and inference.
-- [Control API contract](docs/control-api.md): exact fields, concurrency,
-  idempotency, interruption and recovery behavior.
-- [Direct client networking](docs/direct-client-network.md): approved private
-  transport and authentication; [network policy](docs/private-network.md).
-- [Agent client contract](docs/agent-client.md), [reviewed OpenCode client](docs/client-install.md)
-  and [ordinary-client verification](docs/client-verification.md).
-- [Manual Qwen 50–100K context example](examples/qwen-context-test.py) and
-  [console instructions](docs/ai-vm-api-operations.md#manual-qwen-context-example):
-  one counted retrieval request; offline-checked, NOT_LIVE_EXECUTED.
+Control uses `http://10.156.100.60:30000/control/v1/...`. Clients discover and
+explicitly address separate inference bases on ports 30002 and 30004, each
+with `/v1`; the aliases above identify the loaded instance. There is no common
+inference router or automatic fallback. Native listeners stay authenticated
+IPv4 loopback behind the reviewed private transport.
 
-Real file reads, edits, test execution, browsing and other tools require an
-external agent client running as an ordinary user in a trusted workspace.
-The model API does not execute tools. A separate frontend VM is future work;
-there is no completed human chat UI here. Finish ai-vm first, frontend next,
-installer last. **All installer work and tests are paused.**
-The [current scope](docs/orchestration/2026-09-17-resumed.md) and
-[profile handoff](docs/l2-live-snapshot.md) preserve coordination and source
-details; their older pending statements must be read with the dated status report.
+- [API operations and examples](docs/ai-vm-api-operations.md): discovery,
+  separate credentials, targeted switch/poll and inference.
+- [Control contract](docs/control-api.md) and [inference contract](docs/api-contract.md).
+- [Operations](docs/operations.md): durable VM ownership, guards and recovery.
+- [Mode, migration and rollback contract](docs/concurrent-api.md).
+- [Private client transport](docs/direct-client-network.md) and
+  [protected credentials](docs/agent-client.md#protected-key-file).
 
-## Historical references
+`mutation_busy` describes lifecycle work. Inference running/queued counts and
+external backlog remain unknown; Ready does not mean idle. A future harness
+owns its dispatch, backlog and drain before a targeted switch. Switching a
+running target requires `allow_interrupt:true`, fresh identity/generation and
+operation polling; the server provides no atomic drain guarantee.
 
-The [installer record](docs/installation.md), [roadmap](ROADMAP.md) and
-[reports](reports/) preserve earlier work and its evidence limits. They do not
-establish a complete fresh-machine installation or current serving readiness.
+The production source assigns control, private transport and boot lifecycle to
+ai-vm services, with no Worker1, SSH or benchmark-keeper lifetime dependency.
+Final activation evidence must establish installed ownership and replay; this
+source contract does not claim a passed physical reboot.
+
+Tools, browsing and file work run on ordinary external clients in trusted
+workspaces. A separate frontend VM is future work. **Installer implementation
+and tests remain paused.**
+
+## Historical evidence
+
+The prior [singleton acceptance](reports/apiaccept-lan-acceptance.md),
+[stage-one qualifications](reports/stage1-ai-vm-status.md),
+[cleanup report](reports/finalops-reboot-cleanup.md) and
+[installer record](docs/installation.md) retain their original scope. Earlier
+TP2/1M configurations and success statements do not establish current dual-Q
+acceptance. Historical reports are unchanged.
 
 ## License
 

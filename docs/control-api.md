@@ -1,57 +1,63 @@
-# U1 protected asynchronous control API
+# Protected asynchronous control API
 
-## Delivery status
+## Current source and acceptance status
 
-U1B binds the reviewed U1 core to actual L1 `load_manager`, package admission,
-canonical borrowed leases, preflight, dispatch and protected recovery APIs. The
-fixed production entrypoint validates installed source/config/credentials before
-opening a listener. There is no fixture fallback or runtime configuration input.
-L2 composes the reviewed lifecycle source and extracts the required Storage
-role-read contract. Focused actual writer/control checks and their limits are
-recorded in `reports/l2-runtime-control-binding.md`. The historical whole
-installer work is paused; source tests do not establish installed-host acceptance.
+**Production activation acceptance is PENDING.** This contract describes
+reviewed source `b0bd3c2eab52d8464eca5d360335f41b883671a0`. ACTIVATE owns VM
+work; source installation and lifecycle schema 3 migration do not establish
+serving, switching, durable service replay or independent client acceptance.
+The prior U1/L2 and singleton reports remain historical evidence.
 
-The API is separate from inference: IPv4 `127.0.0.1:30000`, a dedicated control
-bearer key, JSON only. It serves no UI, inference proxy, agent tools or browser
-control. Worker1 owns later L2VM deployment; installer work remains stopped.
+Control is separate from inference: authenticated IPv4 `127.0.0.1:30000`,
+a dedicated bearer key and JSON only. It serves no UI, inference router,
+agent tools or browser control. [API usage](ai-vm-api-operations.md) gives
+private endpoint and protected-key examples. Installer work remains paused.
 
-## Dual Qwen / optional GLM source update, 2026-09-21
+## Dual Qwen and optional GPU0 GLM
 
-[Current production contract](concurrent-api.md) supersedes the dated G/Q-only
-section below for the new candidate. Persisted/API target `glm` is physicalGPU0
-and can select exact Qwen0 or GLM; `qwen` is fixedGPU1 Qwen. Public placement,
-instance_id and endpoint distinguish identical Qwen model IDs. Default
-`dual-qwen` and optional `glm-qwen` configure480000 per slot. Control remains
-30000; GPU0 inference30002 (`qwen3.8-27b-gpu0` or `glm-5.3`), GPU1 inference30004
-(`qwen3.8-27b`). No common router or automatic fallback.
+Default `dual-qwen` selects Qwen on each GPU. Optional `glm-qwen` replaces only
+GPU0 with GLM; return explicitly to GPU0 Qwen. The [production contract](concurrent-api.md)
+uses persisted/API target `glm` for GPU0 and `qwen` for GPU1. Public
+`instance_id` equals the deployment ID; it is distinct from the opaque
+`active_identity` used for compare-and-swap.
 
-Status/catalog add current/default/available modes, declared per-slot context,
-readiness/degraded, mutation_busy and inference_busy (unknown counts/freshness),
-external backlog unknown and cold-load switching cost with unmeasured seconds.
-Configured, accepted and occupied capacities remain distinct. Available mode
-metadata is not permission or fresh admission. Ready is not idle. Every running
-target switch/restart still requires explicit allow_interrupt plus expected
-identity/generation and operation polling. Trusted client pauses/drains its own
-dispatch first; there is no server atomic drain guarantee. Peer remains intact.
+| Placement / target | Deployment and public instance ID | Alias / native port |
+| --- | --- | --- |
+| GPU0 / `glm`, default | `qwen38-27b-q0-480000-yarn4-bf16kv` | `qwen3.8-27b-gpu0` / 30002 |
+| GPU1 / `qwen`, both modes | `qwen38-27b-q1-480000-yarn4-bf16kv` | `qwen3.8-27b` / 30004 |
+| GPU0 / `glm`, optional | `glm-5.3-ud-q4-k-xl-g1-480000` | `glm-5.3` / 30002 |
 
-## Fixed GLM/Qwen slots: concurrent source candidate, 2026-09-20
+All configure 480,000 tokens on the existing 72-vCPU guest. Q/Q shares CPUs
+0–7; optional GLM uses 0–71. Affinity does not establish exclusive cores or
+physical host pinning. [Model matrix](model-matrix.md) separates configuration,
+protected accepted capacity and measured occupied context.
 
-Current scope authorizes two fixed production slots after favorable benchmark,
-reviewed allocation/capacity evidence and source review. This section supersedes
-singleton-only statements below when the lifecycle owner has explicitly migrated
-its protected v2 record to v3. The API never performs that migration implicitly.
-Singleton v2 operation remains supported; installer work remains paused.
-Source tests are synthetic and do not establish deployed concurrency, live stream
-survival, accepted 480,000/700,160 capacity, physical boot or LAN acceptance.
+Status/catalog expose current/default/available modes, declared per-slot
+context, readiness/degraded state, mutation busy and switch cost. Current mode
+is based on selected deployments; it is not a readiness or activation receipt.
+`mutation_busy` describes lifecycle work. `inference_busy` has status `unknown`,
+with null running/queued counts, observation time and freshness. External
+backlog remains unknown and client-owned. Ready never means idle. Cold-load
+switch duration remains unmeasured (`seconds:null`).
 
-The existing inference endpoints and exact aliases remain separate. Under the
-protected private endpoint policy, catalog records expose GLM
-`http://10.156.100.60:30002/v1` with `glm-5.3` and Qwen
-`http://10.156.100.60:30004/v1` with `qwen3.8-27b`. Each endpoint uses its existing
-inference key. The control key and loopback listener remain separate. There is
-no inference router; the control catalog discovers each endpoint and its current
-readiness. Without the protected private policy, the existing server-loopback
-DTO is returned. A URL advertisement is not transport acceptance.
+Every running-target switch/restart requires `allow_interrupt:true` and fresh
+target-slot identity/generation. The future harness pauses dispatch and drains
+its own backlog before acknowledging interruption. Direct inference bypasses
+the lifecycle lease, so the server provides no atomic drain guarantee or
+inference admission reservation. There is no automatic fallback policy.
+
+The protected private transport advertises `http://10.156.100.60:30002/v1`
+for GPU0 and `http://10.156.100.60:30004/v1` for GPU1. Native listeners remain
+loopback with their separate inference key; the catalog discovers endpoint
+and readiness independently. Endpoint-local `/v1/models` is not a combined
+catalog. A URL advertisement is not transport acceptance.
+
+## Pair status and mutations
+
+The lifecycle owner explicitly migrates protected v2 state to v3; the API never
+migrates implicitly. Singleton v2 support remains for preserved recovery paths.
+The following contract governs the reviewed pair; legacy singleton differences
+are identified below.
 
 `GET /control/v1/status` in pair mode returns `schema_version:2`, `mode:"pair"`
 and exactly `slots.glm` and `slots.qwen`, with no singleton `selected` projection.
@@ -70,7 +76,7 @@ replace the sample CAS values with the target's current values:
 | POST route | Exact example body |
 | --- | --- |
 | `/control/v1/start` | `{"target":"glm","deployment_id":"glm-5.3-ud-q4-k-xl-g1-480000","expected_active":null,"expected_generation":1}` |
-| `/control/v1/switch` | `{"target":"qwen","deployment_id":"qwen38-27b-q1-700160-yarn4-bf16kv","expected_active":null,"expected_generation":1,"allow_interrupt":false}` |
+| `/control/v1/switch` | `{"target":"qwen","deployment_id":"qwen38-27b-q1-480000-yarn4-bf16kv","expected_active":null,"expected_generation":1,"allow_interrupt":false}` |
 | `/control/v1/stop` | `{"target":"glm","expected_active":null,"expected_generation":1}` |
 | `/control/v1/restart` | `{"target":"qwen","expected_active":null,"expected_generation":1,"allow_interrupt":true}` |
 
@@ -84,7 +90,7 @@ the other model's inference. Ordinary target interruption semantics remain:
 in-flight target requests may end; another lifecycle mutation returns busy while
 one transition owns the executor. There is no force-kill or preemptive-cancel API.
 
-The deployment must belong to the chosen fixed model slot. Unknown slots or
+The deployment must belong to the chosen physical slot (GPU0 Qwen or GLM; GPU1 Qwen). Unknown slots or
 extra fields return `400 invalid_request`; model/slot mismatch returns
 `409 target_mismatch`. Existing targetless singleton bodies remain valid. In a
 v3 record, targetless mutation is accepted only with exactly one selected slot;
@@ -102,8 +108,8 @@ Operation receipts add `slot` and retain deployment `target`, including for stop
 matching idempotency replay never executes a second transition. Changing the
 slot under the same unexpired idempotency key is a content conflict.
 
-Schema1 operation journals remain readable. First pair reconciliation under the
-canonical lease records schema2 with exactly two scoped fingerprint/counter
+Schema 1 operation journals remain readable. First pair reconciliation under the
+canonical lease records schema 2 with exactly two scoped fingerprint/counter
 records, preserving existing entries and the legacy counter. Interrupted
 receipts reconcile against their own slot and never replay a mutation after
 service restart. Recovery stops retain the exact target identity, use the same
@@ -121,7 +127,7 @@ be reconciled. CLI failure/timeout, inspection error or identity mismatch
 supplies no non-creation proof. This path neither invents a container identity nor
 clears the peer's intent.
 Root rollback must drain control and preserve/restore its protected journal with
-the prior source, because old source does not read schema2 journals.
+the prior source, because old source does not read schema 2 journals.
 
 Catalog `context.configured_tokens` and `context_limit` are declarations.
 `accepted_configured_tokens:null`, `acceptance_status:"unvalidated"`,
@@ -171,15 +177,22 @@ The transport closes excess connections. It writes no access/body/error logs.
 Responses and journal fields use explicit allowlists; exception text is never
 returned. Malformed framing can be rejected before authentication is parseable.
 
-## Versioned routes
+## Versioned routes and response semantics
 
-| Method and path | Contract |
+| Method and path | Pair contract |
 | --- | --- |
-| GET `/control/v1/catalog` | Installed deployment records plus status, generation, observation and current operation. |
-| GET `/control/v1/status` | Selected/desired/observed deployment, opaque active identity, generation, server-relative endpoint and freshness, plus the last completed operation. |
-| POST `/control/v1/switch` | Exactly `deployment_id`, `expected_active`, `expected_generation`, `allow_interrupt`. |
-| POST `/control/v1/stop` | Exactly `expected_active`, `expected_generation`; explicit interruption of identified backend. |
-| GET `/control/v1/operations/{id}` | Original operation receipt, status, deadline, sanitized failure and outcome. |
+| GET `/control/v1/catalog` | Pair status and installed deployment entries with endpoints and context evidence. |
+| GET `/control/v1/status` | Both slots, modes, readiness, freshness and mutation state. |
+| GET `/control/v1/status/glm` or `/control/v1/status/qwen` | One target slot. |
+| POST `/control/v1/start` | `target`, `deployment_id`, `expected_active`, `expected_generation`. |
+| POST `/control/v1/switch` | Start fields plus `allow_interrupt`. |
+| POST `/control/v1/stop` | `target`, `expected_active`, `expected_generation`. |
+| POST `/control/v1/restart` | Stop fields plus `allow_interrupt`. |
+| GET `/control/v1/operations/{id}` | Operation receipt, status, deadline and sanitized failure/outcome. |
+
+There is no HTTP `/select` or mode-switch route. Use a targeted switch to select
+and start the desired deployment. Legacy singleton requests omit `target`;
+in pair mode follow the explicit target requirements above.
 
 Mutations require `Content-Type: application/json` and `Idempotency-Key`
 (1–128 ASCII letters/digits or `_.:-`). IDs are bounded registered deployment
@@ -189,10 +202,11 @@ An identity is a 64-character lowercase opaque SHA-256 value or null;
 generation is an integer, never a JSON boolean. Switch example:
 
 ```json
-{"deployment_id":"registered-example","expected_active":null,"expected_generation":1,"allow_interrupt":false}
+{"target":"glm","deployment_id":"qwen38-27b-q0-480000-yarn4-bf16kv","expected_active":null,"expected_generation":1,"allow_interrupt":false}
 ```
 
-Use values from a fresh status response. Acceptance returns 202 with `operation`
+The null identity/generation above is illustrative for a stopped target only.
+Use values from a fresh response for that same target. Acceptance returns 202 with `operation`
 (including `id` and `poll_url`), `replayed`, and `state_persisted`. Poll
 `operation.poll_url`. Operation statuses are `pending`, `running`, `succeeded`,
 `failed`, `interrupted`; times are epoch seconds. An operation's observed outcome
@@ -317,20 +331,17 @@ Port 30000 is reserved for control. An installed inference deployment configured
 on that port is unavailable and cannot be selected until its lifecycle owner
 assigns a nonconflicting inference port.
 
-The current approved published roster is exactly **GLM5.3 and Qwen3.8-27B FP8**.
-L2VM owns the protected installed `configs/deployments` snapshot and default
-selection. It must omit Coder-Next and other deferred deployments from that
-snapshot, even if their downloaded acquisition evidence remains. The catalog
-enumerates published deployment profiles only; saved state and instance evidence
-keys do not add entries. This is a current-host publication policy, not a permanent
-maximum of two or model-specific routing code. Historical source/tests may remain
-marked deferred. Q38 runtime/source and import-closure integration need their
-owners' combined review before activation.
+The reviewed roster has exactly two model identities, **GLM5.3** and
+**Qwen3.8-27B FP8**, and the three deployment instances listed above. ACTIVATE
+owns the protected installed snapshot and selected intent. The catalog lists
+installed published profiles; saved state or acquisition evidence alone does
+not add entries or prove live availability. Historical alternatives and extra
+models are outside this reviewed pair.
 
 The catalog consumes generic trusted registered model/deployment/runtime and
 small acquisition-evidence DTOs. Multiple deployments per model and a third
 future model require no routing code rewrite. Missing/uninstalled/historical or
-research-only entries (including research-only Q38) are excluded. An installed
+research-only entries are excluded. An installed
 record with failed current mount/profile checks is unavailable. Catalog/status
 never scan or hash large weights; full start preflight revalidates artifacts.
 
@@ -384,7 +395,7 @@ import list and normal-only resources are in `scripts/control/source-closure.jso
 The separate directory respects L1's existing exact boot-recovery file set.
 No model, instance, data directory or profile is required just to start the
 listener. Normal operations retain all full gates. L2VM must publish the reviewed
-closure, protect all ancestors, and provide `/run/llmctl` root0700 via boot
+closure, protect all ancestors, and provide `/run/llmctl` root-owned mode-0700 via boot
 tmpfiles without removing its shared recovery record on unit shutdown.
 
 Fixed config: `/etc/llm-server/control.json`, root:root 0600, defaults to
@@ -435,7 +446,7 @@ complete those checks after combined review.
 
 ## Current ai-vm advertised endpoints (L2 source contract)
 
-The protected root0600 `/etc/llm-server/control.json` may select the N1S policy:
+The protected root-owned mode-0600 `/etc/llm-server/control.json` may select the N1S policy:
 
 ```json
 {"schema_version":1,"advertised_endpoint_policy":"private_network"}
@@ -447,14 +458,12 @@ validation. Only the N1S fixed protected `/etc/llm-server/network.json` supplies
 `10.156.100.60` and role ports 30000/30002/30004. The control listener and every
 backend endpoint remain authenticated loopback. N1S owns the private transport.
 
-Public catalog/status DTOs map `unsloth/GLM-5.3-GGUF` to `glm` and
-`Qwen/Qwen3.8-27B-FP8` to `qwen38`. A DTO receives the private host only when its
-validated deployed profile port matches that role's protected policy port. Its
-served-model alias remains the actual profile alias. For example, an approved
-GLM deployment reports `http://10.156.100.60:30002/v1`,
-`address_scope: "private_network"`, `server_relative: false`. Generic future
-models and unmatched ports retain their existing tunnel DTOs. Header values
-(`Host`, `Forwarded`, `X-Forwarded-*`) never supply an advertised origin.
+Public catalog/status DTOs use validated profile placement and ports. GPU0
+Qwen uses the historical private network role `glm` on 30002; GPU1 Qwen uses
+`qwen38` on 30004. Optional GPU0 GLM also uses `glm` on 30002. The served alias
+remains the actual profile alias. An approved mapped endpoint reports
+`address_scope:"private_network"`, `server_relative:false`; unmatched ports
+retain their loopback/tunnel DTOs. Request headers never choose the origin.
 
 The optional policy is resolved at control startup. Missing or invalid N1S
 policy raises the safe `PrivateNetworkError` and falls back to the existing

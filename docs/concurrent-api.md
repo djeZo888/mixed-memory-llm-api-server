@@ -1,10 +1,13 @@
 # Dual Qwen production slots — 2026-09-21 source candidate
 
-Explicit user authority supersedes the historical singleton and G/Q-only scope.
-Default mode is `dual-qwen`; optional `glm-qwen` replaces only GPU0. PREP runs
-source and offline tests on mac-worker1. It does not release the retained
-benchmark owner, contact inference endpoints, install source or activate models.
-Root reviews exact source and lifecycle before a fresh native live session.
+**Production activation acceptance is PENDING.** Reviewed source
+`b0bd3c2eab52d8464eca5d360335f41b883671a0` defines default `dual-qwen` and
+optional `glm-qwen`, replacing only GPU0. Root reviewed the
+[one-pair benchmark](../reports/dualq-480k-20260921.md); its canonical
+STOPPED/manual restoration is historical benchmark state. ACTIVATE separately
+owns all VM work. Installation and schema 3 migration do not establish live
+API, switching, durable service replay or physical reboot acceptance; the
+actual final receipt remains required. This CLOSE update is source-only.
 Installer, frontend and future ai-harness implementation remain out of scope.
 
 ## Fixed placements and discovery
@@ -12,8 +15,7 @@ Installer, frontend and future ai-harness implementation remain out of scope.
 The existing Manager, canonical lifecycle lease, serialized control executor,
 identity journal and protected boot owner remain authoritative. Persisted v3
 keys `glm` and `qwen` mean GPU0 and GPU1 respectively; the first is a historical
-key, not a restriction to a GLM model. Public `placement` and unique deployment
-`instance_id` distinguish the two Qwen copies despite their identical model ID.
+key, not a restriction to a GLM model. Public `placement` and `instance_id` (equal to the deployment ID) distinguish the two Qwen copies despite their identical model ID.
 
 | Mode / slot | Deployment | Native port / alias | CPU mask / hard host cap |
 | --- | --- | --- | --- |
@@ -22,33 +24,35 @@ key, not a restriction to a GLM model. Public `placement` and unique deployment
 | Optional GPU0 GLM | `glm-5.3-ud-q4-k-xl-g1-480000` | 30002 / `glm-5.3` | 0–71 / 640 GiB |
 
 All three configure **480,000 tokens**. Qwen actual scheduler pool must equal
-480,000, input limit479,994 and optional request limit479,999. GLM `/props`
-resolved context must equal480,000. These checks do not establish occupied
-context/retrieval correctness. Qwen480K onGPU1 and G72/Q8 have earlier benchmark
-evidence; dual-Q performance/GPU0-Qwen/native wrapper/live API remain unaccepted.
+480,000, input limit 479,994 and optional request limit 479,999. GLM `/props`
+resolved context must equal 480,000. These checks do not establish occupied
+context/retrieval correctness. Saved dual-Q benchmark evidence covers
+479,490 / 479,495 occupied tokens, with Q1 strict-format failure and semantic
+PASS. Production native wrapper/live API acceptance remains pending ACTIVATE.
 
 Masks are shared guest CPU affinity, not exclusive or physical CPU allocations.
-Q/Q shares the same8 guest CPUs; G/Q shares Qwen's8 with GLM's72. Online guest
-CPUs must remain0–71. Both caps are no-swap. Reuse exact runtime/image/model pins,
-BF16 Qwen KV/YaRN4/chunk2048/static0.8, GLM N76/F16/fit-off and existing cache
+Q/Q shares the same 8 guest CPUs; G/Q shares Qwen's 8 with GLM's 72. Online guest
+CPUs must remain 0–71. Both caps are no-swap. Reuse exact runtime/image/model pins,
+Qwen BF16 KV, YaRN 4, chunk size 2,048, static memory fraction 0.8,
+GLM N76/F16/fit-off and existing cache
 policy. Separate writable cache/log/service paths and full container identities
-are mandatory. Stale700160/96+16 and TP2 profiles are not admitted as this pair.
+are mandatory. Historical 700160/96+16 and TP2 profiles are not admitted as this pair.
 
 No common inference router is added. Clients discover and explicitly address
 both Qwen instances; a concurrent pair uses distinct URLs and aliases. Native
 listeners remain authenticated IPv4 loopback. Existing protected private policy
-maps10.156.100.60:30002/30004 to those physical endpoints and control:30000.
-The historical proxy role `glm` names port30002 even while Qwen0 occupies it.
+maps 10.156.100.60:30002/30004 to those physical endpoints and control on 30000.
+The historical proxy role `glm` names port 30002 even while Qwen0 occupies it.
 Native `/v1/models` is endpoint-local. No wildcard/public/IPv6 exposure or key
 rotation is introduced. Installed network config was read-only verified in PREP.
 
 Authenticated control status/catalog expose `default_mode`, `current_mode`
-(basis:selected deployments), `available_modes`, configured/accepted/occupied
+(basis: selected deployments), `available_modes`, configured/accepted/occupied
 capacity distinctions, readiness, degraded state, mutation busy and transition
 cost. Available modes are closed declarations, not admission receipts. Inference
 running/queued counts, freshness and external harness backlog stay **unknown**;
 Ready never means idle. Switching seconds are unmeasured. Earlier GLM G65008
-native decode was0.453261513tokens/s; it is historical workload evidence, not a
+native decode was 0.453261513 tokens/s; it is historical workload evidence, not a
 switch-time estimate or a general throughput guarantee.
 
 ## Acknowledged targeted replacement and durable ownership
@@ -60,7 +64,7 @@ and drains its own backlog before acknowledging replacement. There is **no
 atomic server drain guarantee**: direct inference endpoints bypass the lifecycle
 lease, so an idle sample cannot fence new requests. No gate/proxy framework is
 added. The server does not choose when Qwen failed, assess answer quality or
-implement escalation policy. G/Q reduces Qwen instances from2 to1.
+implement escalation policy. G/Q reduces Qwen instances from 2 to 1.
 
 Only the target is stopped/replaced. GPU1 Qwen keeps its exact identity and
 stream. Failure must retain peer and recovery ownership, never silently restore
@@ -71,8 +75,8 @@ intents GPU1 first, then GPU0; Docker restart remains `no`. Control/proxies use
 existing ai-vm services. Production has no Worker1/SSH/benchmark-keeper lifetime
 dependency. Activation must prove source closure, saved intents, service replay
 and private-client behavior; source tests are not physical reboot acceptance.
-Never adopt benchmark containers. Preserve the current keeper until root's
-exact release and verify canonical STOPPED/manual before fresh ownership.
+Do not adopt benchmark containers. RUN2's saved receipt records canonical
+STOPPED/manual restoration; it does not establish current production state.
 
 ## Explicit migration and recovery contract
 
@@ -183,7 +187,7 @@ and reports failure. Running another benchmark after pair activation requires
 a separately reviewed owner that captures/restores both slots, or an explicitly
 reviewed full rollback to singleton production. No capability flag bypasses
 this check. These changes apply only to this isolated source candidate; the
-independently running benchmark checkout and its singleton restoration source
+separately owned benchmark checkout and its singleton restoration source
 are untouched.
 
 ## Verification and activation handoff
@@ -201,23 +205,20 @@ records the exact tested commit and aggregate lifecycle/control coverage.
 Local fixture leases are not ai-vm leases; synthetic tests establish neither
 GPU admission on the host nor inference, boot or rollback acceptance.
 
-Before activation, root must review the new modes/profiles and exact protected
-acceptance receipt. The gate requires actual dual-Q performance, so exactly one
-temporary dual-Q near-max benchmark precedes production migration/admission.
-Reuse the canonical owner after authorized old-owner release, then scoped
-cleanup and production loading; do not fabricate an acceptance receipt to run
-the benchmark after activation. The frozen479487-token fixture plus512 maximum
-output fits480000; recheck native token/template accounting before dispatch.
-Warmups are discarded; two requests start together on distinct physical GPUs.
-Expected roughly five minutes is not a300s kill timer; allow normal completion.
-The new closed manifest/request helper is source preparation; live CampaignOwner
-wiring and exact source/fixture review remain a separate bounded RUN prerequisite. A fresh bounded Worker1
-activation session must verify installed source closure, guarded migration,
-both authenticated endpoints and aliases, missing/wrong-key rejection,
-streaming/schema/tool-result continuation, peer survival during targeted
-stop/restart, control-service restart persistence, deterministic boot replay and
-the exact manual rollback. Distinguish a simulated boot replay from an actual
-physical reboot. No source test closes those live acceptance steps.
+Root reviewed the exact source and saved dual-Q benchmark report. RUN2 used
+one discarded warmup per instance and exactly one measured pair: native input
+479,408 each, output cap 512, actual output 82 / 87. The pair completed in
+258.9091 s without a five-minute cutoff; output windows did not overlap.
+The report preserves strict/semantic scoring and sampled-resource boundaries.
+No benchmark is rerun by this documentation update.
+
+The separately owned ACTIVATE session must supply actual installed source,
+guarded migration, both authenticated endpoints/aliases, missing/wrong-key
+rejection, streaming/schema/tool-result continuation, peer survival during
+targeted changes, control-service restart persistence and durable boot-owner
+replay evidence. Distinguish replay from an actual physical reboot and retain
+the exact manual rollback prerequisites. No source test or documentation
+closes those operational acceptance steps.
 
 
 The protected migration backup also captures `prior_control_journal` (schema 1
