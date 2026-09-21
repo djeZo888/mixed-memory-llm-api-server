@@ -80,7 +80,7 @@ def manifest(slot):
     value["production_profile"] = {"id": production["id"], "path": profile_path,
         "sha256": fixtures.digest(profile_raw), "base_commit": "f130ec46ebd9a27319d84e0d372746e0489a9972",
         "temporary_differences": ["benchmark_container_paths_names", "native_loopback_ports31002_31004", "benchmark_model_aliases"]}
-    from runtime import sglang38_pair_file_auth as pair
+    pair = profiles.candidate_pair_wrapper()
     expected_native = pair.backend_argv(base, "gpu" + str(SLOTS.index(slot)))
     for flag, replacement in (("--port", str(port)), ("--served-model-name", alias)):
         expected_native[expected_native.index(flag) + 1] = replacement

@@ -1,9 +1,12 @@
 """Closed dual-Q seams only; no host, image, model, HTTP or owner execution."""
 import copy
+import importlib
 from pathlib import Path
 import sys
+import tempfile
 import threading
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from benchmark import accounting, dualq_480k as dual, fixtures, profiles, qwen_launcher
@@ -25,6 +28,33 @@ def count(raw, tokens=479423):
 class DualQContract(unittest.TestCase):
     def jobs(self):
         return [dual.prepare_job(slot, dual.PREFIXES[slot], count) for slot in dual.SLOTS]
+
+    def test_manifest_uses_pinned_candidate_with_shadowed_installed_wrapper(self):
+        # Match benchmark-host's installed-source-first path without importing
+        # any host owner or replacing the real candidate wrapper loader.
+        with tempfile.TemporaryDirectory() as installed:
+            runtime = Path(installed) / "runtime"
+            runtime.mkdir()
+            wrapper = runtime / "sglang38_pair_file_auth.py"
+            wrapper.write_text("def backend_argv(*args):\n"
+                               "    raise AssertionError('older_installed_wrapper_used')\n")
+            with mock.patch.object(sys, "path", [installed, *sys.path]), mock.patch.dict(sys.modules):
+                for name in list(sys.modules):
+                    if name == "runtime" or name.startswith("runtime."):
+                        del sys.modules[name]
+                shadowed = importlib.import_module("runtime.sglang38_pair_file_auth")
+                self.assertEqual(Path(shadowed.__file__), wrapper)
+                for slot in dual.SLOTS:
+                    with self.subTest(slot=slot):
+                        value = dual.manifest(slot)
+                        self.assertEqual(value["placement"], slot)
+                        self.assertEqual(flag(value["native_argv"], "--context-length"), "480000")
+                candidate, _ = profiles.candidate_modules()
+                with mock.patch.dict(candidate.PINS, {"scripts/runtime/sglang38_pair_file_auth.py": "0" * 64}):
+                    for slot in dual.SLOTS:
+                        with self.subTest(slot=slot, staged_hash="mismatch"):
+                            with self.assertRaisesRegex(ValueError, "candidate_pair_wrapper_pin_mismatch"):
+                                dual.manifest(slot)
 
     def test_closed_manifests_distinguish_gpu_port_alias_and_writes(self):
         q0, q1 = [dual.manifest(slot) for slot in dual.SLOTS]
