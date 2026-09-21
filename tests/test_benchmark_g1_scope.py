@@ -1,0 +1,392 @@
+"""G1-only scope, native proof and safety regressions; synthetic offline I/O."""
+import copy
+import json
+from pathlib import Path
+import tempfile
+import threading
+import unittest
+from unittest.mock import Mock, patch
+
+from tests import test_benchmark_q1_scope as q1
+from tests import test_benchmark_allocation as alloc
+from tests import test_benchmark_client as wire
+from benchmark import allocation, client, warmup
+
+runner, profiles, fixtures = q1.runner, q1.profiles, q1.fixtures
+CASES = [name.replace('Q1-', 'G1-') for name in q1.CASES]
+
+
+class G1Scope(unittest.TestCase):
+    def setup_case(self, path):
+        runner.save(path / 'execution.json', q1.EXECUTION)
+        runner.save(path / 'private/fixtures.json', q1.saved_fixtures())
+        sha = runner.arm(path, 'benchrun-20260919', 'g1-only')
+        armed = runner.load_arm(path, sha)
+        c, host, requests = q1.integrated.IntegratedRunner().setup_case(path, armed['manifests'])
+        c.armed = armed
+        transport = c.transport_factory
+        c.transport_factory = lambda url, key, **options: transport(url, key)
+        original_call = host.call
+        def call(op, **args):
+            row = original_call(op, **args)
+            if op == 'quiescent':
+                row['telemetry'] = original_call('telemetry', id=args['id'])
+            return row
+        host.call = call
+        host.budget.clock = lambda: q1.EPOCH
+        host.budget.start('maintenance')
+        host.budget.clock = lambda: q1.EPOCH + 600
+        return c, host, requests, sha
+
+    def test_exact_ladder_three_warmups_five_cases_and_preserved_qwen_fixtures(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)
+            c, host, requests, _ = self.setup_case(path)
+            before = copy.deepcopy(c.fixture_cache)
+            with patch.object(c, 'mixed', side_effect=AssertionError('mixed forbidden')):
+                c.run(resume=True)
+            self.assertEqual(list(c.progress['completed']), CASES)
+            self.assertTrue(all(row['status'] == 'PASS' for row in c.progress['completed'].values()))
+            loads = [host.manifests[a['manifest_sha256']] for op, a in host.events if op == 'load']
+            self.assertEqual([(m['placement'], m['configured_capacity']) for m in loads],
+                             [('G1', 4096), ('G1', 16384), ('G1', 65536)])
+            original = [profiles.command_manifest('G1', n, ram_cap=profiles.G1_RAM_CAP_BYTES, log_verbosity=4) for n in (4096, 16384, 65536)]
+            self.assertEqual(loads, original)
+            for m in loads:
+                self.assertEqual(m['ram_cap_bytes'], 687194767360)
+                for flag in ('--memory', '--memory-swap'):
+                    self.assertEqual(m['create_argv'][m['create_argv'].index(flag)+1], '687194767360')
+                self.assertEqual(m['gpu_uuids'], [profiles.read_config()['gpu_uuids'][0]])
+                self.assertEqual((m['guest_cpuset'], m['guest_cpu_count']), ('0-95', 96))
+                for flag, value in [('--n-cpu-moe','76'),('--cache-type-k','f16'),('--cache-type-v','f16'),('--fit','off')]:
+                    self.assertEqual(m['native_argv'][m['native_argv'].index(flag)+1], value)
+            self.assertEqual(len(requests), 8)
+            self.assertEqual(sum('warmup-prefix-' in r['messages'][0]['content'] for r in requests), 3)
+            self.assertEqual(sum(r['max_tokens'] == 512 for r in requests), 1)
+            self.assertTrue(all(r['model'] == 'bench-glm-5.3' and not r.get('tools') and r['reasoning_effort'] == 'low' for r in requests))
+            self.assertNotIn('admit_mixed', [op for op, _ in host.events])
+            after = json.loads((path / 'private/fixtures.json').read_bytes())
+            self.assertEqual({k: after[k] for k in before}, before)
+            self.assertEqual(len(after) - len(before), 4)
+            self.assertTrue(all(k.startswith('bench-glm-5.3-') for k in after.keys() - before.keys()))
+            self.assertEqual(json.loads((path / 'execution.json').read_bytes()), q1.EXECUTION)
+            self.assertEqual(host.budget.data['started_at'] + 21600, q1.DEADLINE)
+            anchor = c.progress['completed'][CASES[2]]
+            self.assertEqual(anchor['fixture_sha256'], c.progress['completed'][CASES[1]]['fixture_sha256'])
+
+    def test_logging_only_manifest_delta_and_historical_defaults_unchanged(self):
+        import shlex
+        for capacity in (4096,16384,65536):
+            base=profiles.command_manifest('G1',capacity)
+            logged=profiles.command_manifest('G1',capacity,log_verbosity=4)
+            self.assertEqual(logged['native_argv'],base['native_argv']+['--log-verbosity','4'])
+            self.assertEqual(logged['create_argv'],base['create_argv']+['--log-verbosity','4'])
+            normalized={**logged,'native_argv':logged['native_argv'][:-2],
+                        'create_argv':logged['create_argv'][:-2],
+                        'create_shell':shlex.join(logged['create_argv'][:-2])}
+            self.assertEqual(normalized,base)
+            self.assertNotIn('--log-verbosity',base['native_argv'])
+        for placement,verbosity in [('G2',4),('Q1',4),('G1',3),('G1',5),('G1',True)]:
+            with self.assertRaisesRegex(ValueError,'unreviewed_observational_logging'):
+                profiles.command_manifest(placement,4096,log_verbosity=verbosity)
+
+    def test_scope_manifest_plan_and_resume_gates_before_host(self):
+        with tempfile.TemporaryDirectory() as directory:
+            c, host, _, _ = self.setup_case(Path(directory))
+            with self.assertRaisesRegex(RuntimeError, 'explicit_resume'): c.run()
+            original = copy.deepcopy(c.armed)
+            bad = []
+            for p,n in [('Q1',4096),('Q2',16384),('G2',65536)]:
+                bad.append({**original,'manifests':original['manifests']+[profiles.command_manifest(p,n)]})
+            bad.extend([{**original,'trial_plan':profiles.trial_order()},
+                        {**original,'manifests':list(reversed(original['manifests']))}])
+            for value in bad:
+                c.armed = value
+                with self.assertRaises(ValueError): c.run(resume=True)
+            self.assertEqual(host.events, [])
+            host = q1.host_tests.HostTests().bare(); host.scope = 'g1-only'
+            with self.assertRaisesRegex(ValueError, 'mixed_excluded'): host.dispatch({'op':'admit_mixed'})
+            with patch.object(profiles, 'read_config', return_value={}):
+                with self.assertRaisesRegex(RuntimeError, 'BLOCKED_GLM_OFFLOAD'): runner.run_preflight('g1-only')
+                runner.run_preflight('q1-only'); runner.run_preflight('q1-256k')
+            runner.run_preflight('g1-only')
+
+    def test_failure_stops_restores_without_retry_or_reclassification(self):
+        for verdict in ('MODEL_INCORRECT','HARNESS_FAILURE','STOP_OOM'):
+            with self.subTest(verdict=verdict), tempfile.TemporaryDirectory() as directory:
+                c, host, _, _ = self.setup_case(Path(directory))
+                with patch.object(c, 'trial', return_value={'status':verdict}):
+                    with self.assertRaisesRegex(RuntimeError, 'stopped_for_review'): c.run(resume=True)
+                self.assertEqual(sum(op == 'load' for op, _ in host.events), 1)
+                self.assertEqual(host.events[-1][0], 'restore')
+                self.assertEqual(c.progress['skipped_after_stop'], CASES)
+                c.progress['completed'][CASES[0]] = {'status':verdict}
+                host.events.clear()
+                with self.assertRaisesRegex(RuntimeError, 'failed_measurement'): c.run(resume=True)
+                self.assertEqual(host.events, [])
+
+    def test_exact_cache_and_graph_proof_at_each_g1_capacity(self):
+        f = alloc.Allocation()
+        for n in (4096,16384,65536):
+            m = profiles.command_manifest('G1',n)
+            log = f.glm_log().replace('4096',str(n)).replace('lid_nodes=78','lid_nodes=21').replace('bytes=195035136',f'bytes={95232*n}')
+            parsed = allocation.parse_glm_log(log)
+            self.assertEqual(allocation.allocation_gate(m,parsed,f.observed(m),strict_g1=True)['status'], 'ALLOCATION_PROOF_ACCEPTED')
+            for field,value,reason in [('cache_bytes',{'CUDA0':95232*n//2},'g1_f16_cache_bytes_mismatch'),
+                                       ('lid_nodes',78,'g1_main_indexer_graph_mismatch'),
+                                       ('fa_nodes',77,'g1_main_indexer_graph_mismatch')]:
+                bad = copy.deepcopy(parsed);bad['native'][field] = value
+                self.assertIn(reason,allocation.allocation_gate(m,bad,f.observed(m),strict_g1=True)['reasons'])
+        # Historical default acceptance remains unchanged; strict scope adds checks.
+        m=f.glm_manifest(); parsed=allocation.parse_glm_log(f.glm_log())
+        self.assertEqual(allocation.allocation_gate(m,parsed,f.observed(m))['status'],'ALLOCATION_PROOF_ACCEPTED')
+
+    def test_glm_native_timing_proof_and_missing_counter_refusal(self):
+        # Native GLM response shape retained in d3cap4 smoke-result.json.
+        saved=json.loads((profiles.ROOT/'reports/d3cap4-evidence/smoke-result.json').read_bytes())
+        raw=wire.stream([wire.event({'content':'ok'}),wire.event(finish='stop'),
+                         {'model':'bench-glm-5.3','choices':[], 'usage':saved['usage'],'timings':saved['timings']}])
+        counters=client.parse_response(raw,'bench-glm-5.3')['counters']
+        self.assertEqual(counters['evaluated_prompt_tokens'],saved['timings']['prompt_n'])
+        self.assertEqual(counters['cached_tokens'],saved['timings']['cache_n'])
+        self.assertEqual(counters['prompt_ms'],saved['timings']['prompt_ms'])
+        m=profiles.command_manifest('G1',4096)
+        self.assertEqual(saved['identity']['image'],m['image'])
+        with self.assertRaisesRegex(RuntimeError,'PREFILL_UNPROVED'): warmup.prefill_proof(counters,m,{})
+        synthetic={**counters,'evaluated_prompt_tokens':2340,'prompt_tokens':2340}
+        self.assertEqual(warmup.prefill_proof(synthetic,m,{})['source'],'native_evaluated_prompt_tokens')
+        synthetic.update(evaluated_prompt_tokens=None,cached_tokens=None)
+        with self.assertRaisesRegex(RuntimeError,'PREFILL_UNPROVED'):
+            warmup.prefill_proof(synthetic,m,{'server_facts':{'disable_radix_cache':True}})
+
+    def test_resource_latch_cancels_but_reporting_failure_does_not(self):
+        for violation in ('oom','swap','gpu','host','missing','reporting'):
+            with self.subTest(violation=violation), tempfile.TemporaryDirectory() as directory:
+                c, host, _, _=self.setup_case(Path(directory));host.call('begin')
+                cid=c.loaded(c.armed['manifests'][0]);original=host.call
+                def call(op, **args):
+                    row=original(op,**args)
+                    if op=='telemetry':
+                        if violation=='oom': row['cgroups'][cid]['events']['oom']=1
+                        if violation=='swap': row['cgroups'][cid]['swap_bytes']=4096
+                        if violation=='gpu': row['gpus'][0]['free_bytes']=0
+                        if violation=='host': row['host']['available_bytes']=0
+                        if violation=='missing': row['host']['available_bytes']=None
+                        if violation=='reporting': raise ValueError('synthetic observer failure')
+                    return row
+                host.call=call
+                for _ in range(3): c.collect()
+                self.assertEqual(c.active[cid]['cancel_event'].is_set(),violation not in ('missing','reporting'))
+                if violation in ('missing','reporting'): continue
+                # Replay a violation arriving after admission; raw partial remains
+                # saved before request_end and the outer restoration path.
+                c.safety.clear()
+                def transport(url,key,**options):
+                    self.assertTrue(options['cancel_event'].is_set())
+                    def send(raw,timeout):
+                        yield b'data: {"partial":true}\n\n'
+                        raise OSError('synthetic cancelled socket')
+                    return send
+                c.transport_factory=transport
+                raw=fixtures.serialize_validate(fixtures.build_sample('bench-glm-5.3',20,'safe-seed','safe-nonce'))
+                with self.assertRaisesRegex(RuntimeError,'STOP_|SKIP_'): c.request(cid,raw,'safety-stop')
+                self.assertEqual(host.events[-1][0],'request_end')
+                self.assertEqual((Path(directory)/'private/safety-stop.response.sse').read_bytes(),b'data: {"partial":true}\n\n')
+
+    def test_loading_resource_latch_stops_before_or_after_probe_and_restores(self):
+        for phase in ('before', 'during'):
+            with self.subTest(phase=phase), tempfile.TemporaryDirectory() as directory:
+                c, host, requests, _ = self.setup_case(Path(directory))
+                original = host.call
+                def call(op, **args):
+                    row = original(op, **args)
+                    if (phase == 'before' and op == 'telemetry' and c.active) or (phase == 'during' and op == 'readiness'):
+                        cid = next(iter(c.active))
+                        c.active[cid]['abort_reason'] = 'STOP_SUSTAINED_MODEL_SWAP_GROWTH'
+                        c.active[cid]['cancel_event'].set()
+                    return row
+                host.call = call
+                with self.assertRaisesRegex(RuntimeError, '^STOP_SUSTAINED_MODEL_SWAP_GROWTH$'):
+                    c.run(resume=True)
+                self.assertEqual(requests, [])
+                self.assertEqual(c.progress['completed'], {})
+                self.assertEqual(host.events[-1][0], 'restore')
+                self.assertEqual(sum(op == 'load' for op, _ in host.events), 1)
+                if phase == 'before':
+                    self.assertNotIn('readiness', [op for op, _ in host.events])
+
+    def test_saved_cuda_host_weights_are_host_ram_with_strict_proof(self):
+        raw = (profiles.ROOT/'tests/fixtures/benchg1-cuda-host-allocation.log').read_text()
+        parsed = allocation.parse_glm_log(raw)
+        self.assertEqual(parsed['host_weights_mib_log_label'], {'CUDA_Host': 409012.22})
+        self.assertEqual(parsed['device_weights_mib_log_label'], {'CUDA0': 30754.20})
+        self.assertEqual(parsed['weights_mib_log_label'], {'CUDA_Host': 409012.22, 'CUDA0': 30754.20})
+        self.assertAlmostEqual(409012.22, 428880396288 / 1024**2, places=2)
+        m = profiles.command_manifest('G1',4096,ram_cap=profiles.G1_RAM_CAP_BYTES,log_verbosity=4)
+        observed = alloc.Allocation().observed(m)
+        self.assertEqual(allocation.allocation_gate(m, parsed, observed, strict_g1=True)['status'], 'ALLOCATION_PROOF_ACCEPTED')
+        for text in (raw.replace('CUDA_Host model', 'Unknown_Host model'), raw + '\nload_tensors: CUDA_Host model buffer size = 409012.22 MiB'):
+            self.assertEqual(allocation.allocation_gate(m, allocation.parse_glm_log(text), observed, strict_g1=True)['status'], 'STOP_ALLOCATION_PROOF')
+        for before, after in [('offloaded 80/80', 'offloaded 79/80'), ('lid_nodes=21', 'lid_nodes=78'), ('bytes=390070272', 'bytes=195035136')]:
+            self.assertEqual(allocation.allocation_gate(m, allocation.parse_glm_log(raw.replace(before, after)), observed, strict_g1=True)['status'], 'STOP_ALLOCATION_PROOF')
+
+    def test_actual_container_and_cgroup_no_swap_limits_required(self):
+        from benchmark.host import LinuxHost
+        with tempfile.TemporaryDirectory() as directory:
+            group = Path(directory)
+            cap = profiles.G1_RAM_CAP_BYTES
+            container = {'HostConfig': {'Memory': cap, 'MemorySwap': cap}}
+            (group/'memory.max').write_text(str(cap))
+            (group/'memory.swap.max').write_text('0')
+            proof = LinuxHost.g1_memory_limits(container, group)
+            self.assertEqual(proof['cgroup_memory_swap_max'], '0')
+            for field in ('Memory', 'MemorySwap'):
+                bad = copy.deepcopy(container); bad['HostConfig'][field] = 0
+                with self.assertRaisesRegex(ValueError, 'g1_effective_no_swap_limit_unproved'):
+                    LinuxHost.g1_memory_limits(bad, group)
+            for field, bad in [('memory.max','max'), ('memory.swap.max','1')]:
+                original = (group/field).read_text(); (group/field).write_text(bad)
+                with self.assertRaisesRegex(ValueError, 'g1_effective_no_swap_limit_unproved'):
+                    LinuxHost.g1_memory_limits(container, group)
+                (group/field).write_text(original)
+            (group/'memory.swap.max').unlink()
+            with self.assertRaises(FileNotFoundError): LinuxHost.g1_memory_limits(container, group)
+
+    def test_create_requires_fresh_host_capacity_before_writes(self):
+        from benchmark import host as host_module
+        from types import SimpleNamespace
+        host = q1.host_tests.HostTests().bare(); host.scope = 'g1-only'
+        manifest = profiles.command_manifest('G1',4096,ram_cap=profiles.G1_RAM_CAP_BYTES,log_verbosity=4)
+        host.manifests = {host_module.digest(manifest): manifest}
+        host.manager = Mock(); host.mkdir_paths = Mock()
+        image = SimpleNamespace(stdout=json.dumps([{'Id': manifest['image']}]).encode())
+        with patch('benchmark.host.command', return_value=image) as command:
+            for available in (None, profiles.G1_RAM_CAP_BYTES + 16*1024**3 - 1):
+                with patch('benchmark.host.collect_sample', return_value={'host': {'available_bytes': available}}):
+                    with self.assertRaisesRegex(ValueError, 'g1_container_cap_host_reserve_unproved'): host.create(manifest)
+            host.mkdir_paths.assert_not_called()
+            self.assertTrue(all(call.args[0][1:3] == ['image', 'inspect'] for call in command.call_args_list))
+
+    def test_loading_gpu_timeout_then_fresh_complete_proof_admits_and_keeps_sample(self):
+        with tempfile.TemporaryDirectory() as directory:
+            c, host, requests, _ = self.setup_case(Path(directory))
+            original = host.call; injected = []
+            def call(op, **args):
+                row = original(op, **args)
+                if op == 'telemetry' and c.active and not injected:
+                    row.update(errors=['gpu_TimeoutExpired'], gpus=[])
+                    injected.append(True)
+                return row
+            host.call = call
+            with patch.object(c, 'monitor'): c.run(resume=True)
+            self.assertEqual(len(requests), 8)
+            self.assertEqual(list(c.progress['completed']), CASES)
+            rows = [json.loads(line) for line in (Path(directory)/'results.jsonl').read_text().splitlines()]
+            gaps = [r for r in rows if r.get('type') == 'telemetry' and r['sample'].get('errors') == ['gpu_TimeoutExpired']]
+            self.assertEqual(len(gaps), 1)
+            self.assertEqual(gaps[0]['sample']['gpus'], [])
+            self.assertEqual(host.events[-1][0], 'restore')
+
+    def test_loading_timeout_cannot_replace_fresh_resource_or_native_proof(self):
+        for missing in ('gpu', 'gpu_free', 'gpu_low', 'host', 'host_low', 'native'):
+            with self.subTest(missing=missing), tempfile.TemporaryDirectory() as directory:
+                c, host, requests, _ = self.setup_case(Path(directory)); original = host.call
+                def call(op, **args):
+                    row = original(op, **args)
+                    if op == 'telemetry' and c.active:
+                        row.update(errors=['gpu_TimeoutExpired'], gpus=[])
+                    if op == 'readiness' and missing == 'native': row['allocation']['status'] = 'STOP_ALLOCATION_PROOF'
+                    if op == 'quiescent':
+                        if missing == 'gpu': row['telemetry']['gpus'] = []
+                        if missing == 'gpu_free': row['telemetry']['gpus'][0]['free_bytes'] = None
+                        if missing == 'gpu_low': row['telemetry']['gpus'][0]['free_bytes'] = 16*1024**3 - 1
+                        if missing == 'host': row['telemetry']['host']['available_bytes'] = None
+                        if missing == 'host_low': row['telemetry']['host']['available_bytes'] = 16*1024**3 - 1
+                    return row
+                host.call = call
+                with patch.object(c, 'monitor'):
+                    with self.assertRaisesRegex(RuntimeError, 'SKIP_UNSAFE_PLACEMENT|STOP_ALLOCATION_PROOF'): c.run(resume=True)
+                self.assertEqual(requests, [])
+                self.assertEqual(c.progress['completed'], {})
+                self.assertEqual(host.events[-1][0], 'restore')
+
+    def test_loading_timeout_does_not_mask_real_stops_or_other_missing_proof(self):
+        for violation in ('oom', 'swap', 'gpu_low', 'host_low', 'host_missing', 'unknown_gap', 'partial_gpu'):
+            with self.subTest(violation=violation), tempfile.TemporaryDirectory() as directory:
+                c, host, requests, _ = self.setup_case(Path(directory)); original = host.call
+                def call(op, **args):
+                    row = original(op, **args)
+                    if op == 'telemetry' and c.active:
+                        cid = next(iter(c.active))
+                        row.update(errors=['gpu_TimeoutExpired'], gpus=[])
+                        if violation == 'oom': row['cgroups'][cid]['events']['oom'] = 1
+                        if violation == 'swap': row['cgroups'][cid]['swap_bytes'] = 4096
+                        if violation == 'gpu_low': row['gpus'] = [{'uuid': c.active[cid]['manifest']['gpu_uuids'][0], 'free_bytes': 0}]
+                        if violation == 'host_low': row['host']['available_bytes'] = 0
+                        if violation == 'host_missing': row['host']['available_bytes'] = None
+                        if violation == 'unknown_gap': row['errors'] = ['gpu_ValueError']
+                        if violation == 'partial_gpu': row['gpus'] = [{'uuid': 'GPU-unexpected', 'free_bytes': 40*1024**3}]
+                    if op == 'readiness' and violation == 'swap':
+                        c.collect(); c.collect()  # Three consecutive owned growth samples.
+                    return row
+                host.call = call
+                with patch.object(c, 'monitor'):
+                    with self.assertRaisesRegex(RuntimeError, 'STOP_OOM|STOP_SUSTAINED_MODEL_SWAP_GROWTH|SKIP_UNSAFE_PLACEMENT'): c.run(resume=True)
+                self.assertEqual(requests, [])
+                self.assertEqual(host.events[-1][0], 'restore')
+                if violation in ('oom', 'swap', 'gpu_low', 'host_low'):
+                    expected = {'oom':'STOP_OOM', 'swap':'STOP_SUSTAINED_MODEL_SWAP_GROWTH'}.get(violation, 'SKIP_UNSAFE_PLACEMENT')
+                    self.assertEqual(c.progress['stop_reason'], expected)
+
+    def test_gpu_timeout_after_loading_still_latches_existing_admission_rule(self):
+        with tempfile.TemporaryDirectory() as directory:
+            c, host, requests, _ = self.setup_case(Path(directory));host.call('begin')
+            cid = c.loaded(c.armed['manifests'][0]);original = host.call
+            def call(op, **args):
+                row = original(op, **args)
+                if op == 'telemetry': row.update(errors=['gpu_TimeoutExpired'], gpus=[])
+                return row
+            host.call = call;c.collect()
+            self.assertEqual(c.safety[cid], 'SKIP_UNSAFE_PLACEMENT')
+            self.assertFalse(c.active[cid]['cancel_event'].is_set())
+            with self.assertRaisesRegex(RuntimeError, 'SKIP_UNSAFE_PLACEMENT'): c.admission(cid)
+
+    def test_already_set_event_refuses_http_dispatch(self):
+        cancel=threading.Event();cancel.set()
+        with patch('http.client.HTTPConnection') as factory:
+            send=client.http_transport('http://127.0.0.1:31002','synthetic',cancel_event=cancel)
+            with self.assertRaisesRegex(fixtures.HarnessError,'resource safety cancellation'): list(send(b'{}',10))
+            factory.return_value.request.assert_not_called()
+            factory.return_value.close.assert_called_once()
+
+    def test_waiting_http_headers_are_closed_on_resource_event(self):
+        cancel=threading.Event();closed=threading.Event()
+        with patch('http.client.HTTPConnection') as factory:
+            connection=factory.return_value
+            connection.sock.shutdown.side_effect=lambda *_:closed.set()
+            def headers():
+                cancel.set()
+                self.assertTrue(closed.wait(2),'resource event must close a waiting header socket')
+                raise OSError('cancelled')
+            connection.getresponse.side_effect=headers
+            send=client.http_transport('http://127.0.0.1:31002','synthetic',cancel_event=cancel)
+            with self.assertRaises(OSError): list(send(b'{}',10))
+            connection.close.assert_called_once()
+
+    def test_blocked_http_read_is_closed_on_resource_event(self):
+        cancel=threading.Event();closed=threading.Event()
+        with patch('http.client.HTTPConnection') as factory:
+            connection=factory.return_value;response=connection.getresponse.return_value
+            response.status=200;response.getheader.return_value='text/event-stream'
+            connection.sock.shutdown.side_effect=lambda *_:closed.set()
+            def read(*_):
+                cancel.set()
+                self.assertTrue(closed.wait(2),'resource event must close a blocked read')
+                raise OSError('cancelled')
+            response.read1.side_effect=read
+            send=client.http_transport('http://127.0.0.1:31002','synthetic',cancel_event=cancel)
+            with self.assertRaises(OSError): list(send(b'{}',10))
+            connection.close.assert_called_once();response.close.assert_called_once()
+
+
+if __name__ == '__main__': unittest.main()

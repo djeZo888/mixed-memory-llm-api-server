@@ -19,7 +19,8 @@ import time
 import uuid
 
 from common.lifecycle_lease import acquire_lease, LeaseBusy, LeaseError
-from .catalog import Catalog, _endpoint, advertised_endpoint
+from .catalog import (Catalog, _endpoint, advertised_endpoint, PRODUCTION_SLOTS,
+                      inference_busy, production_status, switch_cost)
 from .journal import JournalCorrupt, JournalUnavailable
 from .protocol import ControlError, Deadline, PackageBlocked, StorageUnavailable
 
@@ -30,13 +31,21 @@ KEY = re.compile(r"[a-zA-Z0-9_.:-]{1,128}\Z")
 SAFE_CODES = frozenset({
     "catalog_unavailable", "credential_separation_unverified",
     "invalid_request", "unknown_route", "method_not_allowed", "unknown_deployment",
-    "target_unavailable", "lifecycle_busy", "stale_state", "interruption_ack_required",
+    "target_unavailable", "target_required", "target_mismatch", "already_running", "lifecycle_busy", "stale_state", "interruption_ack_required",
     "idempotency_conflict", "storage_unavailable", "owner_unavailable",
     "production_adapter_unavailable", "package_admission_unavailable",
     "journal_unavailable", "journal_corrupt", "journal_full", "admission_timeout",
     "observation_unavailable", "preflight_failed", "stop_not_proven", "start_failed",
     "transition_failed", "deadline_exceeded", "service_interrupted",
     "recovery_identity_unavailable", "service_closed", "operation_unknown",
+    "concurrent_current_host_memory_unavailable", "concurrent_current_host_memory_insufficient",
+    "concurrent_current_gpu_memory_unavailable", "concurrent_current_gpu_memory_insufficient",
+    "concurrent_native_capacity_unavailable", "concurrent_native_capacity_mismatch",
+    "concurrent_native_metadata_unavailable", "concurrent_native_metadata_auth_failed",
+    "concurrent_memory_admission_timeout", "concurrent_resident_identity_invalid",
+    "concurrent_resident_cgroup_unavailable", "concurrent_resident_memory_unavailable",
+    "concurrent_resident_swap_detected", "concurrent_resident_cgroup_changed",
+    "concurrent_resident_identity_changed",
 })
 
 
@@ -70,6 +79,25 @@ def observation(raw):
     """Project private lifecycle data; saved state and model-list-only never Ready."""
     if type(raw) is not dict:
         raise ControlError("observation_unavailable")
+    if raw.get("schema_version") == 3:
+        if type(raw["schema_version"]) is not int:
+            raise ControlError("observation_unavailable")
+        if type(raw.get("slots")) is not dict or set(raw["slots"]) != {"glm", "qwen"}:
+            raise ControlError("observation_unavailable")
+        slots, fingerprints = {}, {}
+        for target in ("glm", "qwen"):
+            slot = raw["slots"][target]
+            if type(slot) is not dict or type(slot.get("generation")) is not int or slot["generation"] < 0:
+                raise ControlError("observation_unavailable")
+            slots[target], fingerprints[target] = observation(slot)
+            slots[target]["slot"] = target
+            if fingerprints[target] is not None:
+                fingerprints[target] = digest([fingerprints[target], slot["generation"]])
+        return {"schema_version": 2, "mode": "pair", "slots": slots,
+                "storage_available": all(item["storage_available"] for item in slots.values()),
+                "state_persisted": all(item["state_persisted"] for item in slots.values()),
+                "observation_available": all(item["observation_available"] for item in slots.values()),
+                "observed_at": time.time(), "failure_code": None}, fingerprints
     fresh = raw.get("observation_available") is True
     running = raw.get("container_running") if type(raw.get("container_running")) is bool else None
     container_id = _identity(raw.get("container"))
@@ -111,8 +139,47 @@ def observation(raw):
         result["endpoint"]["ready"] = ready
     # Health or polling times do not change semantic generation. Immutable start
     # identity, saved selection/intent and actual running state do.
-    fingerprint = digest([selected, desired, container_id, running]) if fresh else None
+    identity_values = [selected, desired, container_id, running]
+    pending = raw.get('pending_create_fingerprint')
+    if pending is not None:
+        if type(pending) is not str or not IDENTITY.fullmatch(pending):
+            raise ControlError('observation_unavailable')
+        identity_values.append(pending)
+    fingerprint = digest(identity_values) if fresh else None
     return result, fingerprint
+
+
+def scoped(snapshot, target=None):
+    """Resolve a fixed slot; never silently choose one of two selections."""
+    if snapshot.get("mode") != "pair":
+        if target is not None:
+            raise ControlError("target_unavailable", 409)
+        return snapshot
+    if target is None:
+        selected = [name for name, item in snapshot["slots"].items() if item["selected"] is not None]
+        if len(selected) != 1:
+            raise ControlError("target_required", 409)
+        target = selected[0]
+    return snapshot["slots"][target]
+
+
+def trusted_recovery(snapshot, raw, target=None):
+    selected = scoped(snapshot, target)
+    if raw.get('recovery_trusted') is not True or not selected['observation_available']:
+        return False
+    if snapshot.get('mode') == 'pair':
+        private = raw['slots'][selected['slot']]
+        # A stopped pending create still has an exactly inspected immutable
+        # identity; the slot fingerprint binds it even though active is null.
+        return (_identity(private.get('container')) is not None
+                or (private.get('pending_absence_verified') is True
+                    and private.get('container') is None and selected['container_running'] is False
+                    and type(private.get('pending_create_fingerprint')) is str
+                    and IDENTITY.fullmatch(private['pending_create_fingerprint']) is not None
+                    and type(private.get('pending_create')) is dict
+                    and private['pending_create'].get('dispatch') == 'not_dispatched'
+                    and digest(private['pending_create']) == private['pending_create_fingerprint']))
+    return selected['active_identity'] is not None
 
 
 def public_outcome(snapshot):
@@ -124,6 +191,8 @@ def public_operation(op):
     result = {k: copy.deepcopy(op[k]) for k in ("id", "kind", "target", "status", "created_at",
             "updated_at", "deadline", "completed_at", "generation", "active_identity",
             "failure_code", "observed", "state_persisted", "poll_url")}
+    if "slot" in op:
+        result["slot"] = op["slot"]
     result["failure_code"] = op["failure_code"] if type(op["failure_code"]) is str and op["failure_code"] in SAFE_CODES else None
     result["observed"] = public_outcome(op["observed"]) if op["observed"] is not None else None
     return result
@@ -160,7 +229,9 @@ class Application:
     def __init__(self, backend, journal, *, lease_factory=acquire_lease,
                  transition_seconds=8000, admission_seconds=10, read_seconds=10,
                  advertised_policy=None):
-        if not 0 < transition_seconds <= 14400 or not 0 < admission_seconds <= 10 or not 0 < read_seconds <= 10:
+        if (not 0 < transition_seconds <= 14400
+                or any(type(seconds) not in (int, float) or not 0 < seconds <= 60
+                       for seconds in (admission_seconds, read_seconds))):
             raise ValueError("invalid_deadlines")
         self.backend, self.journal, self.lease_factory = backend, journal, lease_factory
         self.advertised_policy = copy.deepcopy(advertised_policy)
@@ -219,6 +290,7 @@ class Application:
                 # A failed startup read is not evidence of an empty journal.
                 # Reload it under canonical ownership before any durable write.
                 previous_generation = self._state["generation"]
+                previous_slots = copy.deepcopy(self._state.get("slots", {}))
                 try:
                     self._state = self.journal.read()
                 except (JournalCorrupt, JournalUnavailable) as exc:
@@ -230,19 +302,49 @@ class Application:
                     restored_generation = self._state["generation"]
                     self._state["generation"] = max(restored_generation, previous_generation)
                     self._persisted = restored_generation >= previous_generation
+                    if previous_slots:
+                        if self._state['schema'] == 1:
+                            self._state.update(schema=2, slots=previous_slots)
+                            self._persisted = False
+                        else:
+                            for name, item in previous_slots.items():
+                                if item['generation'] > self._state['slots'][name]['generation']:
+                                    self._state['slots'][name] = item
+                                    self._persisted = False
                     self._reconciled = False
-            changed = fingerprint != self._state["fingerprint"]
-            if changed:
+            pair = snapshot.get("mode") == "pair"
+            changed = False
+            if pair:
+                if self._state["schema"] == 1:
+                    self._state.update(schema=2, slots={name: {"generation": self._state["generation"], "fingerprint": None}
+                                                      for name in ("glm", "qwen")})
+                    changed = True
+                for name, item in snapshot["slots"].items():
+                    saved_slot = self._state["slots"][name]
+                    if fingerprint[name] is not None and saved_slot["fingerprint"] != fingerprint[name]:
+                        saved_slot["generation"] += 1
+                        saved_slot["fingerprint"] = fingerprint[name]
+                        changed = True
+                    item["generation"] = saved_slot["generation"]
+            else:
+                changed = fingerprint != self._state["fingerprint"]
+            if changed and not pair:
                 self._state["generation"] += 1
                 self._state["fingerprint"] = fingerprint
-            snapshot["generation"] = self._state["generation"]
+            if not pair:
+                snapshot["generation"] = self._state["generation"]
             pending = [op for op in self._state["entries"].values() if op["status"] in {"pending", "running"}]
             recovered = pending if not self._reconciled else []
             if not self._reconciled:
                 for op in pending:
+                    try:
+                        current = scoped(snapshot, op.get("slot"))
+                    except ControlError:
+                        current, _ = observation({"storage_available": False})
+                        current["generation"] = self._state["generation"]
                     op.update(status="interrupted", failure_code="service_interrupted", updated_at=time.time(),
-                              completed_at=time.time(), observed=public_outcome(snapshot),
-                              generation=snapshot["generation"], active_identity=snapshot["active_identity"],
+                              completed_at=time.time(), observed=public_outcome(current),
+                              generation=current["generation"], active_identity=current["active_identity"],
                               state_persisted=snapshot["state_persisted"] and not volatile)
                 self._reconciled = True
             if changed or (pending and self._current is None) or not self._persisted:
@@ -258,6 +360,9 @@ class Application:
             elif self._journal_error and not volatile:
                 raise ControlError(self._journal_error)
             snapshot["state_persisted"] = snapshot["state_persisted"] and self._persisted
+            if pair:
+                for item in snapshot["slots"].values():
+                    item["state_persisted"] = item["state_persisted"] and self._persisted
         return snapshot
 
     def _get_session(self, stop=False):
@@ -285,9 +390,9 @@ class Application:
     def _recover_stop(self, request, deadline):
         session = self.backend.open(recovery=True)
         (snapshot, fingerprint), raw = self._fresh(session, deadline)
-        if raw.get("recovery_trusted") is not True or snapshot["active_identity"] is None:
+        if not trusted_recovery(snapshot, raw, request.get("target")):
             raise ControlError("recovery_identity_unavailable")
-        snapshot = self._reconcile(snapshot, fingerprint, volatile=True)
+        snapshot = scoped(self._reconcile(snapshot, fingerprint, volatile=True), request.get("target"))
         if request["expected_active"] != snapshot["active_identity"] or request["expected_generation"] != snapshot["generation"]:
             raise ControlError("stale_state", 409)
         return session, snapshot
@@ -319,9 +424,12 @@ class Application:
             raise ControlError("recovery_identity_unavailable")
         snapshot["state_persisted"] = False
         snapshot["storage_available"] = False
-        if snapshot["container_running"] is not False:
-            snapshot["observed"] = "unavailable"
-            snapshot["ready_proof"] = {key: False for key in snapshot["ready_proof"]}
+        for item in snapshot["slots"].values() if snapshot.get("mode") == "pair" else [snapshot]:
+            item["state_persisted"] = False
+            item["storage_available"] = False
+            if item["container_running"] is not False:
+                item["observed"] = "unavailable"
+                item["ready_proof"] = {key: False for key in item["ready_proof"]}
         return snapshot, fingerprint
 
     def _try_refresh(self):
@@ -334,7 +442,7 @@ class Application:
         except ControlError:
             pass
 
-    def _read(self, catalog=False):
+    def _read(self, catalog=False, target=None):
         self._try_refresh()
         raw = {}
         try:
@@ -353,30 +461,56 @@ class Application:
                 snapshot, fingerprint = observation({"storage_available": False if isinstance(exc, StorageUnavailable) else None})
             snapshot["failure_code"] = safe_error(exc, "observation_unavailable")
             records = [] if catalog else None
+        pair = snapshot.get("mode") == "pair"
         with self._read_state():
-            snapshot["generation"] = self._state["generation"]
-            snapshot["generation_current"] = fingerprint is not None and fingerprint == self._state["fingerprint"]
+            operations = self._operations()
+            current = operations.get(self._current)
+            items = snapshot["slots"].items() if pair else [(None, snapshot)]
+            for name, item in items:
+                saved = self._state.get("slots", {}).get(name, {}) if pair else self._state
+                item["generation"] = saved.get("generation", 0)
+                fp = fingerprint.get(name) if pair else fingerprint
+                item["generation_current"] = fp is not None and fp == saved.get("fingerprint")
+                item["state_persisted"] = item["state_persisted"] and self._persisted
+                op = current if current and current.get("slot") == name else None
+                item["current_operation"] = public_operation(op) if op else None
+                finished = [entry for entry in operations.values() if entry.get("slot") == name
+                            and entry["completed_at"] is not None
+                            and time.time() - entry["completed_at"] < self.journal.retention_seconds]
+                previous = max(finished, key=lambda entry: entry["completed_at"]) if finished else None
+                item["last_operation"] = public_operation(previous) if previous else None
+                for field in ("current_operation", "last_operation"):
+                    if item[field] is not None:
+                        item[field]["state_persisted"] = item[field]["state_persisted"] and self._persisted
+                if op and op["status"] == "running" and op["kind"] in {"switch", "start", "restart"}:
+                    item["observed"] = "loading"
+                item["freshness"] = "fresh" if item["observation_available"] else "unavailable"
+                item["switch_effect"] = "interrupts_target_inference" if pair else "interrupts_inference"
+                item["schema_version"] = 2 if pair else 1
+                item["failure_code"] = item["failure_code"] or self._journal_error
+                item['instance_id'] = item['selected']
+                item['placement'] = {'glm': 'gpu0', 'qwen': 'gpu1'}.get(PRODUCTION_SLOTS.get(item['selected']))
+                item['configured_context'] = {
+                    'tokens': 480000 if item['selected'] in PRODUCTION_SLOTS else None,
+                    'provenance': 'declared' if item['selected'] in PRODUCTION_SLOTS else 'unknown'}
+                item['readiness'] = item['observed']
+                item['degraded'] = (None if not item['observation_available'] else
+                                    item['desired'] == 'running' and item['observed'] != 'ready')
+                item['inference_busy'] = inference_busy()
+                item['mutation_busy'] = op is not None and op['status'] in {'pending', 'running'}
+                item['switch_cost'] = switch_cost(pair=pair)
             snapshot["state_persisted"] = snapshot["state_persisted"] and self._persisted
-            op = self._operations().get(self._current)
-            snapshot["current_operation"] = public_operation(op) if op else None
-            finished = [item for item in self._operations().values() if item["completed_at"] is not None
-                        and time.time() - item["completed_at"] < self.journal.retention_seconds]
-            previous = max(finished, key=lambda item: item["completed_at"]) if finished else None
-            snapshot["last_operation"] = public_operation(previous) if previous else None
-            for field in ("current_operation", "last_operation"):
-                if snapshot[field] is not None:
-                    snapshot[field]["state_persisted"] = snapshot[field]["state_persisted"] and self._persisted
-            if op and op["status"] == "running" and op["kind"] == "switch":
-                snapshot["observed"] = "loading"
-            snapshot["freshness"] = "fresh" if snapshot["observation_available"] else "unavailable"
-            snapshot["switch_effect"] = "interrupts_inference"
-            snapshot["schema_version"] = 1
-            snapshot["failure_code"] = snapshot["failure_code"] or self._journal_error
+            snapshot['mutation_busy'] = self._admission.locked()
         if catalog:
             snapshot["entries"] = Catalog(records).public(snapshot, advertised_policy=self.advertised_policy)
-        snapshot["endpoint"] = advertised_endpoint(snapshot["endpoint"], raw.get("model_id"), self.advertised_policy)
-        snapshot.pop("ready_proof", None)
-        return 200, snapshot
+        if pair:
+            snapshot.update(production_status(snapshot, snapshot.get('entries')))
+        for name, item in snapshot["slots"].items() if pair else [(None, snapshot)]:
+            private = raw.get("slots", {}).get(name, {}) if pair else raw
+            item["endpoint"] = advertised_endpoint(item["endpoint"], private.get("model_id"), self.advertised_policy,
+                                                   item['selected'])
+            item.pop("ready_proof", None)
+        return 200, scoped(snapshot, target) if target is not None else snapshot
 
     @staticmethod
     def _request(kind, body, headers):
@@ -394,13 +528,19 @@ class Application:
                                  parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
         except (ValueError, UnicodeError, RecursionError):
             raise ControlError("invalid_request", 400) from None
-        fields = {"expected_active", "expected_generation"} | ({"deployment_id", "allow_interrupt"} if kind == "switch" else set())
-        if type(request) is not dict or set(request) != fields:
+        fields = {"expected_active", "expected_generation"}
+        if kind in {"switch", "start"}:
+            fields.add("deployment_id")
+        if kind in {"switch", "restart"}:
+            fields.add("allow_interrupt")
+        if type(request) is not dict or set(request) not in (fields, fields | {"target"}):
             raise ControlError("invalid_request", 400)
         active, generation = request["expected_active"], request["expected_generation"]
         if ((active is not None and (type(active) is not str or not IDENTITY.fullmatch(active)))
                 or type(generation) is not int or not 0 <= generation < 2**63
-                or (kind == "switch" and (identifier(request["deployment_id"]) is None or type(request["allow_interrupt"]) is not bool))):
+                or (kind in {"switch", "start"} and identifier(request["deployment_id"]) is None)
+                or (kind in {"switch", "restart"} and type(request["allow_interrupt"]) is not bool)
+                or ("target" in request and (type(request["target"]) is not str or request["target"] not in {"glm", "qwen"}))):
             raise ControlError("invalid_request", 400)
         key = headers.get("idempotency-key", "")
         if not KEY.fullmatch(key):
@@ -413,6 +553,8 @@ class Application:
                 raise ControlError("service_closed")
             if method == "GET" and path in {"/control/v1/catalog", "/control/v1/status"}:
                 return self._read(path.endswith("catalog"))
+            if method == "GET" and path in {"/control/v1/status/glm", "/control/v1/status/qwen"}:
+                return self._read(target=path.rsplit("/", 1)[1])
             if method == "GET" and path.startswith("/control/v1/operations/"):
                 opid = path.removeprefix("/control/v1/operations/")
                 if not OPID.fullmatch(opid):
@@ -427,7 +569,7 @@ class Application:
                         result.update(status="interrupted", failure_code="service_interrupted", state_persisted=False)
                     result["state_persisted"] = result["state_persisted"] and self._persisted
                     return 200, result
-            if method == "POST" and path in {"/control/v1/switch", "/control/v1/stop"}:
+            if method == "POST" and path in {"/control/v1/switch", "/control/v1/stop", "/control/v1/start", "/control/v1/restart"}:
                 kind = path.rsplit("/", 1)[1]
                 request, key = self._request(kind, body, headers)
                 return self._submit(kind, request, key)
@@ -522,7 +664,7 @@ class Application:
                 raise
             session, recovery = self.backend.open(recovery=True), True
         (snapshot, fingerprint), raw = self._fresh(session, deadline)
-        if recovery and (raw.get("recovery_trusted") is not True or snapshot["active_identity"] is None):
+        if recovery and not trusted_recovery(snapshot, raw, ticket.request.get("target")):
             raise ControlError("recovery_identity_unavailable")
         # Persistent receipts are mandatory for normal work. Their absence may
         # only redirect an explicit stop into the exact trusted recovery port.
@@ -537,10 +679,13 @@ class Application:
                 raise
             session, recovery = self.backend.open(recovery=True), True
             (snapshot, fingerprint), raw = self._fresh(session, deadline)
-            if raw.get("recovery_trusted") is not True or snapshot["active_identity"] is None:
+            if not trusted_recovery(snapshot, raw, ticket.request.get("target")):
                 raise ControlError("recovery_identity_unavailable")
             snapshot = self._reconcile(snapshot, fingerprint, volatile=True)
         request = ticket.request
+        snapshot = scoped(snapshot, request.get("target"))
+        slot = snapshot.get("slot")
+        kwargs = {"slot": slot} if slot is not None else {}
         with self._state_lock:
             replay = self._replay(ticket.kind, request, ticket.key)
             if replay:
@@ -550,26 +695,33 @@ class Application:
             raise ControlError("stale_state", 409)
         if snapshot["container_running"] is None or (snapshot["container_running"] and snapshot["active_identity"] is None):
             raise ControlError("observation_unavailable")
-        target = request.get("deployment_id")
-        if ticket.kind == "switch":
+        target = request.get("deployment_id") or snapshot["selected"]
+        if ticket.kind in {"switch", "start", "restart"}:
             if not snapshot["storage_available"]:
                 raise StorageUnavailable()
             try:
-                Catalog(session.catalog(deadline)).target(target)
+                record = Catalog(session.catalog(deadline)).target(target)
+                if slot is not None and record.get("slot") != slot:
+                    raise ControlError("target_mismatch", 409)
             except ValueError as exc:
                 code = str(exc)
                 raise ControlError(code if code in {"unknown_deployment", "target_unavailable"} else "target_unavailable",
                                    404 if code == "unknown_deployment" else 409) from None
-            if snapshot["active_identity"] is not None and not request["allow_interrupt"]:
+            if ticket.kind == "start" and snapshot["container_running"]:
+                raise ControlError("already_running", 409)
+            if snapshot["active_identity"] is not None and not request.get("allow_interrupt", False):
                 raise ControlError("interruption_ack_required", 409)
         now, opid = time.time(), uuid.uuid4().hex
-        operation = {"id": opid, "kind": ticket.kind, "target": target, "status": "pending",
+        operation = {"id": opid, "kind": ticket.kind,
+                     "target": target if slot is not None or ticket.kind != "stop" else None, "status": "pending",
                      "created_at": now, "updated_at": now, "deadline": now + transition_deadline.remaining(),
                      "completed_at": None, "request_digest": digest([ticket.kind, request]),
                      "idempotency_digest": digest(ticket.key), "generation": snapshot["generation"],
                      "active_identity": snapshot["active_identity"], "failure_code": None,
                      "observed": public_outcome(snapshot), "state_persisted": not recovery,
                      "poll_url": "/control/v1/operations/" + opid}
+        if slot is not None:
+            operation["slot"] = slot
         # Storage may block; never hold the receipt condition while persisting.
         # The waiter can expire independently, and reply atomically refuses an
         # expired receipt before any lifecycle mutation is attempted.
@@ -626,27 +778,28 @@ class Application:
                         session, snapshot = self._recover_stop(request, deadline)
                         recovery = True
                         self._make_volatile(operation)
-            if ticket.kind == "switch":
+            if ticket.kind in {"switch", "start", "restart"}:
                 deadline.remaining()
-                session.preflight(target, lease, deadline)
+                session.preflight(target, lease, deadline, **kwargs)
                 deadline.remaining()
             if snapshot["container_running"] or ticket.kind == "stop":
                 deadline.remaining()
-                session.stop(lease, deadline)
+                session.stop(lease, deadline, **kwargs)
                 deadline.remaining()
                 (stopped, stopped_fp), _ = self._fresh(session, deadline)
-                stopped = self._reconcile(stopped, stopped_fp, volatile=recovery)
+                stopped = scoped(self._reconcile(stopped, stopped_fp, volatile=recovery), slot)
                 if stopped["container_running"] is not False or stopped["active_identity"] is not None:
                     raise ControlError("stop_not_proven")
-            if ticket.kind == "switch":
+            if ticket.kind in {"switch", "start", "restart"}:
                 deadline.remaining()
-                session.select(target, lease, deadline)
-                deadline.remaining()
-                session.start(lease, deadline)
+                if ticket.kind != "restart":
+                    session.select(target, lease, deadline, **kwargs)
+                    deadline.remaining()
+                session.start(lease, deadline, **kwargs)
                 deadline.remaining()
             (outcome, final_fp), _ = self._fresh(session, deadline)
-            outcome = self._reconcile(outcome, final_fp, volatile=recovery)
-            if ticket.kind == "switch" and (outcome["observed"] != "ready" or outcome["selected"] != target):
+            outcome = scoped(self._reconcile(outcome, final_fp, volatile=recovery), slot)
+            if ticket.kind in {"switch", "start", "restart"} and (outcome["observed"] != "ready" or outcome["selected"] != target):
                 raise ControlError("start_failed")
             if ticket.kind == "stop" and outcome["container_running"] is not False:
                 raise ControlError("stop_not_proven")
@@ -655,10 +808,11 @@ class Application:
             status, failure = "failed", safe_error(exc)
             try:
                 (outcome, final_fp), _ = self._fresh(session)
-                outcome = self._reconcile(outcome, final_fp, volatile=True)
+                outcome = scoped(self._reconcile(outcome, final_fp, volatile=True), slot)
             except Exception:
                 outcome, _ = observation({"storage_available": False})
-                outcome["generation"] = self._state["generation"]
+                outcome["generation"] = (self._state.get("slots", {}).get(slot, {}).get("generation", 0)
+                                         if slot is not None else self._state["generation"])
                 outcome["state_persisted"] = False
         with self._state_lock:
             operation.update(status=status, failure_code=failure, updated_at=time.time(), completed_at=time.time(),

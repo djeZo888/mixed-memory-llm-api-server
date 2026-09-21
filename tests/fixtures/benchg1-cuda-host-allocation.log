@@ -1,0 +1,9 @@
+1.52.156.013 I load_tensors: offloaded 80/80 layers to GPU
+1.52.156.136 I load_tensors:        CUDA0 model buffer size = 30754.20 MiB
+1.52.156.137 I load_tensors:    CUDA_Host model buffer size = 409012.22 MiB
+4.43.441.477 W D3T_NATIVE_V1 kind=graph n_ctx=4096 n_ctx_seq=4096 n_seq_max=1 n_batch=2048 n_ubatch=512 flash_attn=1 fused_lid=1 lid_nodes=21 fa_nodes=78 no_alloc=0
+4.43.441.489 W D3T_NATIVE_V1 kind=compute backend=CUDA0 bytes=3124832256
+4.43.441.493 W D3T_NATIVE_V1 kind=compute backend=CUDA_Host bytes=33632288
+4.43.441.495 W D3T_NATIVE_V1 kind=cache backend=CUDA0 bytes=390070272
+4.43.441.496 W D3T_NATIVE_V1 kind=end
+4.48.268.714 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 4096, kv_unified = 'false'

@@ -350,3 +350,85 @@ def probe_sglang(endpoint: str, expected_model: str, key_file: str | Path | None
         return "auth_error"
     return probe(endpoint, expected_model, key_file, require_auth=True,
                  timeout=timeout, check_wrong_key=True)
+
+
+def native_capacity_metadata(endpoint: str, key_file: str | Path, *, timeout: float = 3,
+                             backend: str | None = None) -> dict:
+    """Authenticated bounded native metadata for the two fixed private backends.
+
+    No redirects, environment proxy, arbitrary URL/path or response diagnostics.
+    Callers validate the exact capacity fields and return only safe numeric facts.
+    This observes allocation metadata; it never sends an inference request.
+    """
+    paths = {'http://127.0.0.1:30002/v1': '/props',
+             'http://127.0.0.1:30004/v1': '/get_server_info'}
+    if backend == 'qwen':
+        paths['http://127.0.0.1:30002/v1'] = '/get_server_info'
+    elif backend not in (None, 'glm'):
+        raise LifecycleError('concurrent_native_metadata_unavailable')
+    if backend == 'glm' and endpoint != 'http://127.0.0.1:30002/v1':
+        raise LifecycleError('concurrent_native_metadata_unavailable')
+    if endpoint not in paths or type(timeout) not in (int, float) or not 0 < timeout <= 30:
+        raise LifecycleError('concurrent_native_metadata_unavailable')
+    connection, timer = None, None
+    try:
+        key = _read_key(key_file)
+        deadline = time.monotonic() + timeout
+        port = 30002 if endpoint.endswith('30002/v1') else 30004
+        connection = http.client.HTTPConnection('127.0.0.1', port, timeout=timeout)
+        connection.connect()
+        connected_socket = connection.sock
+
+        def expire():
+            try:
+                connected_socket.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+
+        timer = threading.Timer(max(0, deadline - time.monotonic()), expire)
+        timer.daemon = True
+        timer.start()
+        connection.request('GET', paths[endpoint], headers={'Accept': 'application/json',
+                           'Connection': 'close', 'Authorization': 'Bearer ' + key})
+        response = connection.getresponse()
+        if response.status in (401, 403):
+            raise LifecycleError('concurrent_native_metadata_auth_failed')
+        if response.status != 200:
+            raise LifecycleError('concurrent_native_metadata_unavailable')
+        payload = b''
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError
+            if connection.sock is not None:
+                connection.sock.settimeout(remaining)
+            piece = response.read1(min(65536, 1048577 - len(payload)))
+            if not piece:
+                break
+            payload += piece
+            if len(payload) > 1048576:
+                raise LifecycleError('concurrent_native_metadata_unavailable')
+
+        def pairs(items):
+            result = {}
+            for name, value in items:
+                if name in result:
+                    raise ValueError
+                result[name] = value
+            return result
+
+        value = json.loads(payload, object_pairs_hook=pairs,
+                           parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
+        if type(value) is not dict or time.monotonic() >= deadline:
+            raise LifecycleError('concurrent_native_metadata_unavailable')
+        return value
+    except LifecycleError:
+        raise
+    except (OSError, ValueError, TypeError, RecursionError, http.client.HTTPException):
+        raise LifecycleError('concurrent_native_metadata_unavailable') from None
+    finally:
+        if timer is not None:
+            timer.cancel()
+            timer.join()
+        if connection is not None:
+            connection.close()

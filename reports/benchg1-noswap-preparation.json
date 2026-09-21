@@ -1,0 +1,78 @@
+{
+  "scope": "OFFLINE_SOURCE_PREPARATION_NOT_NEW_LIVE_ACCEPTANCE",
+  "source_base": "8927a0b8c87a97d4e3347400854424c9a15cca45",
+  "first_epoch": 1789826207.34127,
+  "deadline": 1789847807.34127,
+  "previous_attempts": [
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/BENCHG1-20260919/campaign-arm/results.jsonl",
+      "sha256": "b0afd5e83478c895e1470667fa3af9770541205a72dda648151f2845778dae23",
+      "telemetry_samples": 372,
+      "sampled_whole_host_unavailable_max_bytes": 448315559936,
+      "host_swap_max_bytes": 0,
+      "unavailable_plus_host_swap_bound_bytes": 448315559936,
+      "bound_times_1_25_bytes": 560394449920.0,
+      "owned_swap_max_bytes": 0,
+      "original_runner_stop": "STOP_ALLOCATION_FAILURE",
+      "warmups": 0,
+      "measured_cases": 0
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/BENCHG1-20260919/campaign-arm-logging/results.jsonl",
+      "sha256": "7ac02f84655cf3d3adc4d9e195ac82031252f1329cbee588829f470b151b980d",
+      "telemetry_samples": 276,
+      "sampled_whole_host_unavailable_max_bytes": 447677538304,
+      "host_swap_max_bytes": 304873472,
+      "unavailable_plus_host_swap_bound_bytes": 447982411776,
+      "bound_times_1_25_bytes": 559978014720.0,
+      "owned_swap_max_bytes": 215244800,
+      "original_runner_stop": "STOP_ALLOCATION_FAILURE",
+      "warmups": 0,
+      "measured_cases": 0,
+      "first_positive_owned_swap": {
+        "sample_index": 8,
+        "swap_bytes": 4096,
+        "then_mem_available_bytes": 772835553280,
+        "seconds_after_first_sample": 20.63150791695807
+      },
+      "strict_swap_gate_replay": {
+        "sample_index": 10,
+        "reason": "STOP_SUSTAINED_MODEL_SWAP_GROWTH",
+        "swap_bytes": 4096,
+        "then_mem_available_bytes": 766960967680,
+        "seconds_after_first_sample": 21.698565166967455
+      }
+    }
+  ],
+  "previous_second_attempt_disposition": "Preserve original STOP_ALLOCATION_FAILURE row and parser failure; saved telemetry also proves earlier STOP_SUSTAINED_MODEL_SWAP_GROWTH that the loading loop failed to act on. Zero inference acceptance. Production restored and authenticated Worker1 LAN verified. No retry yet.",
+  "restoration_receipts_sha256": "b2e3c072d2bb44bb6a2d8ddf770668f0f678ed234610faecbef39bd7dd14cd66",
+  "saved_native_log_sha256": "13bcb93e649ac8ffccc1193dd80f701bdda19d26fea451a56c54d2d08b179aa0",
+  "saved_log_excerpt_sha256": "8555636939f0fa0995d29a4e0bbe82743aee521927cc4a3ae39df14880beb17a",
+  "host_weights": {
+    "native_backend": "CUDA_Host",
+    "memory_domain": "HOST_RAM",
+    "mib_rounded_log_label": 409012.22,
+    "source_expected_bytes": 428880396288,
+    "cuda0_device_weights_mib_log_label": 30754.2
+  },
+  "fixed_cap": {
+    "memory_bytes": 687194767360,
+    "docker_memory_swap_bytes": 687194767360,
+    "effective_cgroup_memory_swap_max_bytes": 0,
+    "capacities": [
+      4096,
+      16384,
+      65536
+    ],
+    "authority": "Root exact bounded parser/load-stop/no-swap preparation, 2026-09-19",
+    "basis": "640 GiB bounded validation cap, about 53% above saved maximum whole-host unavailable footprint; exceeds 25% margin on both saved bounds. Not exact model demand or minimum VM RAM.",
+    "verification": "Fresh available host RAM >= cap+16GiB before container create; actual Docker and cgroup limits verified before warmup."
+  },
+  "accounting_limitations": "Existing required_host_demand retains mapped+shmem conservatively although they can overlap; those receipts and formula remain unchanged. Do not interpret their sum as disjoint model demand or use it to justify this cap. Whole-host MemAvailable bounds include unrelated host demand and kernel estimates; peaks are sampled and may occur at different times. No speed/quality extrapolation or larger-context live check.",
+  "focused_tests": {
+    "count": 31,
+    "result": "PASS",
+    "log_sha256": "cf6a6a6785bb328a1b6cc113b8a409bc42f64e28102e20a8caab14fb5d0a5f09"
+  },
+  "no_vm_contact_during_preparation": true
+}

@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "id": "glm-5.3-ud-q4-k-xl-g1-480000",
+  "model": "glm-5.3-ud-q4-k-xl",
+  "runtime": "llama-cpp-v0.4.1-d3br",
+  "purpose": "UNVALIDATED optional mixed-mode production candidate; root-reviewed allocation, capacity and exact-source receipt required before activation",
+  "container_name": "llmctl-glm-5.3-ud-q4-k-xl-g1-480000",
+  "endpoint": {
+    "host": "127.0.0.1",
+    "port": 30002,
+    "api_prefix": "/v1",
+    "served_model": "glm-5.3"
+  },
+  "container_port": 30002,
+  "container_host": "0.0.0.0",
+  "auth": {
+    "key_file": {
+      "role": "data",
+      "suffix": "services/secrets/llm-api-key"
+    },
+    "container_key_file": "/run/secrets/llm-api-key",
+    "mode": "0600"
+  },
+  "paths": {
+    "model": {
+      "role": "models",
+      "suffix": "glm-5.3-ud-q4-k-xl"
+    },
+    "cache": {
+      "role": "models",
+      "suffix": "runtime-cache/glm-5.3-ud-q4-k-xl-g1-480000"
+    },
+    "logs": {
+      "role": "data",
+      "suffix": "logs/llmctl/glm-5.3-ud-q4-k-xl-g1-480000"
+    },
+    "service": {
+      "role": "data",
+      "suffix": "services/llm-manager/glm-5.3-ud-q4-k-xl-g1-480000"
+    }
+  },
+  "mounts": [
+    {
+      "source": {
+        "role": "models",
+        "suffix": "glm-5.3-ud-q4-k-xl"
+      },
+      "target": "/models",
+      "read_only": true,
+      "required_role": "models"
+    },
+    {
+      "source": {
+        "role": "models",
+        "suffix": "runtime-cache/glm-5.3-ud-q4-k-xl-g1-480000"
+      },
+      "target": "/cache",
+      "read_only": false,
+      "required_role": "models"
+    },
+    {
+      "source": {
+        "role": "data",
+        "suffix": "logs/llmctl/glm-5.3-ud-q4-k-xl-g1-480000"
+      },
+      "target": "/logs",
+      "read_only": false,
+      "required_role": "data"
+    },
+    {
+      "source": {
+        "role": "data",
+        "suffix": "services/llm-manager/glm-5.3-ud-q4-k-xl-g1-480000"
+      },
+      "target": "/service",
+      "read_only": false,
+      "required_role": "data"
+    },
+    {
+      "source": {
+        "role": "data",
+        "suffix": "services/secrets/llm-api-key"
+      },
+      "target": "/run/secrets/llm-api-key",
+      "read_only": true,
+      "required_role": "data"
+    }
+  ],
+  "launch": {
+    "context_size": 480000,
+    "parallel": 1,
+    "timeout_seconds": 7200,
+    "poll_seconds": 5,
+    "request_timeout_seconds": 5,
+    "stop_timeout_seconds": 60,
+    "gpus": [
+      "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+    ],
+    "jinja": true,
+    "no_webui": true,
+    "n_gpu_layers": 999,
+    "split_mode": "none",
+    "tensor_split": "1",
+    "devices": [
+      "CUDA0"
+    ],
+    "chat_template_kwargs": {
+      "clear_thinking": true,
+      "reasoning_effort": "low"
+    },
+    "n_cpu_moe": 76,
+    "main_gpu": 0,
+    "cache_type_k": "f16",
+    "cache_type_v": "f16",
+    "fit": "off",
+    "batch_size": 2048,
+    "ubatch_size": 512,
+    "threads": 72,
+    "threads_batch": 72,
+    "no_cache_prompt": true
+  },
+  "logs": {
+    "driver": "json-file",
+    "max_size": "20m",
+    "max_file": 3
+  },
+  "boot_policy": "manual",
+  "docker_restart_policy": "no",
+  "notes": [
+    "Optional GPU0 GLM replaces GPU0 Qwen while GPU1 Qwen remains available. Historical TP2/1M alternatives remain mutually exclusive.",
+    "Capacity and host limits are unvalidated source declarations; a protected root-reviewed receipt is mandatory before activation.",
+    "Configured context is distinct from largest occupied context tested; no source test establishes live acceptance.",
+    "Exact UUID admission maps this physical GPU to container-visible CUDA0; guest CPUs 0-71 share CPUs 0-7 with GPU1 Qwen and are not exclusive physical cores.",
+    "Docker restart remains disabled; canonical lifecycle owns boot and per-slot recovery."
+  ],
+  "capability_status": "UNVALIDATED",
+  "launch_environment": {
+    "CUDA_VISIBLE_DEVICES": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+  },
+  "concurrent_pair": {
+    "schema_version": 1,
+    "slot": "glm",
+    "guest_gpu_index": 0,
+    "visible_cuda_devices": [
+      "CUDA0"
+    ],
+    "guest_cpuset": "0-71",
+    "guest_cpu_count": 72,
+    "memory_bytes": 687194767360,
+    "memory_swap_bytes": 687194767360,
+    "minimum_free_gpu_bytes": 17179869184,
+    "host_demand_reserve_percent": 15,
+    "capacity_status": "UNVALIDATED",
+    "acceptance_suffix": "services/llm-manager/evidence/dualq-480k.accepted.json",
+    "guest_cpu_sharing": "shared"
+  }
+}

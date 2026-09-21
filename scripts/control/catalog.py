@@ -22,6 +22,14 @@ import re
 MAX_ENTRIES = 128
 MAX_EVIDENCE = 8
 CAPABILITIES = ("tool_calling", "vision", "reasoning", "json_output", "streaming")
+GLM_PROFILE = 'glm-5.3-ud-q4-k-xl-g1-480000'
+QWEN0_PROFILE = 'qwen38-27b-q0-480000-yarn4-bf16kv'
+QWEN1_PROFILE = 'qwen38-27b-q1-480000-yarn4-bf16kv'
+PRODUCTION_MODES = {
+    'dual-qwen': {'glm': QWEN0_PROFILE, 'qwen': QWEN1_PROFILE},
+    'glm-qwen': {'glm': GLM_PROFILE, 'qwen': QWEN1_PROFILE},
+}
+PRODUCTION_SLOTS = {GLM_PROFILE: 'glm', QWEN0_PROFILE: 'glm', QWEN1_PROFILE: 'qwen'}
 _ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}\Z")
 _DEPLOYMENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,95}\Z")
 _MODEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,95}(?:/[A-Za-z0-9][A-Za-z0-9_.-]{0,95})?\Z")
@@ -130,6 +138,24 @@ def _requirements(value: object) -> dict:
     return result
 
 
+def _context(context, acceptance):
+    result = {"configured_tokens": context,
+              "configured_provenance": "declared" if context is not None else "unknown",
+              "accepted_configured_tokens": None, "acceptance_status": "unvalidated",
+              "verified_occupied_tokens": None, "verified_occupied_provenance": "unknown", "evidence": []}
+    if acceptance is not None:
+        if type(acceptance) is not dict or set(acceptance) != {"accepted_configured_tokens", "verified_occupied_tokens", "evidence"}:
+            _bad()
+        accepted = _integer(acceptance['accepted_configured_tokens'], 2**31 - 1)
+        occupied = _integer(acceptance['verified_occupied_tokens'], 2**31 - 1)
+        evidence = _evidence(acceptance['evidence'])
+        if accepted is None or accepted != context or occupied is None or not 0 < occupied <= accepted or not evidence:
+            _bad()
+        result.update(accepted_configured_tokens=accepted, acceptance_status='reviewed',
+                      verified_occupied_tokens=occupied, verified_occupied_provenance='reviewed_receipt', evidence=evidence)
+    return result
+
+
 def _endpoint(value: object) -> dict | None:
     if value is None:
         return None
@@ -149,7 +175,14 @@ def _endpoint(value: object) -> dict | None:
             "server_relative": True, "ready": False}
 
 
-def advertised_endpoint(endpoint: dict | None, model_id: str | None, policy: dict | None) -> dict | None:
+def model_slot(model_id, deployment_id=None):
+    if deployment_id in PRODUCTION_SLOTS:
+        return PRODUCTION_SLOTS[deployment_id]
+    return {'unsloth/GLM-5.3-GGUF': 'glm', 'Qwen/Qwen3.8-27B-FP8': 'qwen'}.get(model_id)
+
+
+def advertised_endpoint(endpoint: dict | None, model_id: str | None, policy: dict | None,
+                        deployment_id: str | None = None) -> dict | None:
     """Project a sanitized loopback DTO using only a trusted N1S policy.
 
     Policy is the output of private_network.load_policy(), never request input.
@@ -158,12 +191,60 @@ def advertised_endpoint(endpoint: dict | None, model_id: str | None, policy: dic
     """
     result = deepcopy(endpoint)
     role = {"unsloth/GLM-5.3-GGUF": "glm", "Qwen/Qwen3.8-27B-FP8": "qwen38"}.get(model_id)
+    if deployment_id == QWEN0_PROFILE and model_id == 'Qwen/Qwen3.8-27B-FP8':
+        # The reviewed transport roles name ports, not immutable model types.
+        role = 'glm'
     if result is not None and policy is not None and role is not None:
         port = policy["ports"][role]
         if result["base_url"] == f"http://127.0.0.1:{port}/v1":
             result.update(base_url=f"http://{policy['private_address']}:{port}/v1",
                           address_scope="private_network", server_relative=False)
     return result
+
+
+def inference_busy():
+    """Neither readiness nor the lifecycle lease observes inference dispatch."""
+    return {'status': 'unknown', 'running_requests': None, 'queued_requests': None,
+            'observed_at': None, 'freshness': None}
+
+
+def switch_cost(*, pair=True):
+    return {'kind': 'cold_model_load', 'seconds': None, 'provenance': 'unmeasured',
+            'running_target_requires_allow_interrupt': True, 'atomic_drain_guarantee': False,
+            'peer_preserved': True if pair else None}
+
+
+def production_status(snapshot, entries=None):
+    """Closed mode metadata; selection is not readiness or activation acceptance."""
+    selections = {slot: item.get('selected') for slot, item in snapshot['slots'].items()}
+    current = next((name for name, mode in PRODUCTION_MODES.items() if mode == selections), None)
+    by_id = None if entries is None else {entry['deployment_id']: entry for entry in entries}
+    modes = []
+    for name, mode in PRODUCTION_MODES.items():
+        modes.append({'id': name, 'slots': deepcopy(mode),
+                      'configured_tokens_per_slot': 480000,
+                      'qwen_instances': 2 if name == 'dual-qwen' else 1,
+                      'qwen_capacity': 2 if name == 'dual-qwen' else 1,
+                      'performance_class': 'standard' if name == 'dual-qwen' else 'slow_fallback',
+                      'intended_use': 'default' if name == 'dual-qwen' else 'last_resort',
+                      'installed': None if by_id is None else all(d in by_id for d in mode.values()),
+                      'start_revalidation_required': True, 'switch_cost': switch_cost()})
+    states = list(snapshot['slots'].values())
+    ready_count = sum(item['observed'] == 'ready' for item in states)
+    if current is not None and ready_count == 2:
+        readiness = 'ready'
+    elif ready_count:
+        readiness = 'degraded'
+    elif all(item['observation_available'] for item in states):
+        readiness = 'unavailable'
+    else:
+        readiness = 'unknown'
+    return {'default_mode': 'dual-qwen', 'current_mode': current,
+            'current_mode_basis': 'selected_deployments', 'available_modes': modes,
+            'readiness': readiness, 'degraded': None if readiness == 'unknown' else readiness == 'degraded',
+            'external_backlog': {'status': 'unknown', 'requests': None, 'observed_at': None,
+                                 'owner': 'client'},
+            'switch_cost': switch_cost()}
 
 
 class Catalog:
@@ -204,21 +285,15 @@ class Catalog:
             self._records[identifier] = {
                 "deployment_id": identifier,
                 "model_id": _identifier(record.get("model_id"), _MODEL),
+                "slot": model_slot(record.get("model_id"), identifier),
+                "instance_id": identifier,
+                "placement": {'glm': 'gpu0', 'qwen': 'gpu1'}.get(PRODUCTION_SLOTS.get(identifier)),
                 "display_name": _label(record.get("display_name")),
                 "revision": revision,
                 "backend": _identifier(record.get("backend")),
                 "runtime": _identifier(record.get("runtime")),
                 "context_limit": context,
-                "context": {
-                    "configured_tokens": context,
-                    "configured_provenance": "declared" if context is not None else "unknown",
-                    # Installed lifecycle schemas currently provide no occupied
-                    # context acceptance receipt. A large configured limit or a
-                    # successful short probe cannot supply this proof.
-                    "verified_occupied_tokens": None,
-                    "verified_occupied_provenance": "unknown",
-                    "evidence": [],
-                },
+                "context": _context(context, record.get("context_acceptance")),
                 "quantization": None if quantization is None else _label(quantization, 64),
                 "installed_bytes": _integer(record.get("installed_bytes")),
                 "installed_verified_at": verified_at,
@@ -247,6 +322,12 @@ class Catalog:
         """
         if not isinstance(snapshot, dict):
             _bad()
+        if snapshot.get("mode") == "pair":
+            records = []
+            for slot in ('glm', 'qwen'):
+                entries = self.public(snapshot['slots'][slot], advertised_policy=advertised_policy)
+                records.extend(entry for entry in entries if entry['slot'] == slot)
+            return sorted(records, key=lambda entry: entry['deployment_id'])
         observed_at = _observation_time(snapshot.get("observed_at"))
         operation = snapshot.get("current_operation")
         if operation is None:
@@ -270,7 +351,7 @@ class Catalog:
                 state = "unknown"
             elif not checks:
                 state = "unavailable"
-            elif owned and operation_status == "running":
+            elif owned and operation_status == "running" and operation.get("kind") in (None, "switch", "start", "restart"):
                 state = "loading"
             elif owned and operation_status == "failed" and not (selected and snapshot.get("observed") == "ready"):
                 state = "failed"
@@ -288,11 +369,14 @@ class Catalog:
                 else:
                     state = "unknown"
             record["state"] = state
+            record['readiness'] = state
+            record['inference_busy'] = inference_busy()
+            record['switch_cost'] = switch_cost(pair=identifier in PRODUCTION_SLOTS)
             record["observed_at"] = observed_at
-            record["switch_effect"] = "interrupts_inference"
+            record["switch_effect"] = "interrupts_target_inference" if snapshot.get("slot") else "interrupts_inference"
             if record["endpoint"] is not None:
                 record["endpoint"]["ready"] = state == "ready"
-            record["endpoint"] = advertised_endpoint(record["endpoint"], record["model_id"], advertised_policy)
+            record["endpoint"] = advertised_endpoint(record["endpoint"], record["model_id"], advertised_policy, identifier)
             result.append(record)
         return result
 

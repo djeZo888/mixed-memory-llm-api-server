@@ -1,0 +1,237 @@
+{
+  "evidence": "READ_ONLY_INSTALLED_PINNED_IMAGE_SOURCE_NO_RUNTIME_PROCESS",
+  "captured_at": "2026-09-19T13:46:15.817154+00:00",
+  "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+  "source_commit_from_runtime_pin": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+  "baseline_container_id": "5ba104b9bcdb5c126df3d24ba1d63a987f5c72376047d12a0de7e9a7c6812ba9",
+  "baseline_process_id": 11259,
+  "evidence_limits": "Read-only file bytes through the baseline container process root; image/source pins come from reviewed runtime/baseline. No runtime process, help, inference, allocation test, lifecycle action or model load executed; BENCHRUN must verify the newly loaded configuration.",
+  "native_semantics": {
+    "null_details": "Plain-text streaming usage leaves prompt_tokens_details null when enable_cache_report is false; null is unavailable, not a server-reported zero.",
+    "disabled_prefix_cache": "The resolved disabled-radix-cache policy selects ChunkCache under configured chunked prefill. ChunkCache.match_prefix returns an empty match; insertion is a no-op.",
+    "derived_warmup_proof": "A successful fresh-prefix response with native prompt count >=2048 and positive native completion count may derive its prefill count only after accepted allocation, observed native argv exact-match including --disable-radix-cache, and current server_args.disable_radix_cache is exactly true. Native cached/evaluated fields stay null."
+  },
+  "files": {
+    "entrypoints/openai/serving_chat.py": {
+      "path": "/proc/11259/root/sgl-workspace/sglang/python/sglang/srt/entrypoints/openai/serving_chat.py",
+      "sha256": "7b05e6ab1d09a71ce253040c9cd62ea7c55a52020b44cf9b76d91c8df9e23240",
+      "excerpts": [
+        {
+          "line": 1785,
+          "text": "                    cached_tokens=cached_tokens,"
+        },
+        {
+          "line": 1786,
+          "text": "                    n_choices=request.n,"
+        },
+        {
+          "line": 1787,
+          "text": "                    enable_cache_report=self.tokenizer_manager.server_args.enable_cache_report,"
+        },
+        {
+          "line": 1792,
+          "text": "                usage_chunk = ChatCompletionStreamResponse("
+        }
+      ]
+    },
+    "entrypoints/openai/usage_processor.py": {
+      "path": "/proc/11259/root/sgl-workspace/sglang/python/sglang/srt/entrypoints/openai/usage_processor.py",
+      "sha256": "883c4c3ba95eb52fa57d5bf732d128063bac0b032f484776331220f61b7498a5",
+      "excerpts": [
+        {
+          "line": 64,
+          "text": "        enable_cache_report: bool = False,"
+        },
+        {
+          "line": 69,
+          "text": "        # index % n_choices == 0 marks the first choice of a prompt"
+        },
+        {
+          "line": 70,
+          "text": "        total_prompt_tokens = sum("
+        },
+        {
+          "line": 71,
+          "text": "            tok for idx, tok in prompt_tokens.items() if idx % n_choices == 0"
+        },
+        {
+          "line": 77,
+          "text": "            UsageProcessor._details_if_cached("
+        },
+        {
+          "line": 78,
+          "text": "                sum(tok for idx, tok in cached_tokens.items() if idx % n_choices == 0)"
+        },
+        {
+          "line": 79,
+          "text": "            )"
+        },
+        {
+          "line": 80,
+          "text": "            if enable_cache_report"
+        },
+        {
+          "line": 81,
+          "text": "            else None"
+        },
+        {
+          "line": 85,
+          "text": "            prompt_tokens=total_prompt_tokens,"
+        },
+        {
+          "line": 87,
+          "text": "            completion_tokens=total_completion_tokens,"
+        },
+        {
+          "line": 88,
+          "text": "            cached_tokens=cached_details,"
+        },
+        {
+          "line": 121,
+          "text": "            prompt_tokens=prompt_tokens,"
+        },
+        {
+          "line": 122,
+          "text": "            completion_tokens=completion_tokens,"
+        },
+        {
+          "line": 123,
+          "text": "            total_tokens=prompt_tokens + completion_tokens,"
+        },
+        {
+          "line": 124,
+          "text": "            prompt_tokens_details=details,"
+        }
+      ]
+    },
+    "entrypoints/openai/protocol.py": {
+      "path": "/proc/11259/root/sgl-workspace/sglang/python/sglang/srt/entrypoints/openai/protocol.py",
+      "sha256": "a7cf91c1db5d076b9ad647248351f10b0249153998b974ed4d00610306b01653",
+      "excerpts": [
+        {
+          "line": 205,
+          "text": "class UsageInfo(BaseModel):"
+        },
+        {
+          "line": 206,
+          "text": "    prompt_tokens: int = 0"
+        },
+        {
+          "line": 208,
+          "text": "    completion_tokens: Optional[int] = 0"
+        },
+        {
+          "line": 209,
+          "text": "    # Used to return cached tokens info when --enable-cache-report is set"
+        },
+        {
+          "line": 210,
+          "text": "    prompt_tokens_details: Optional[PromptTokensDetails] = None"
+        }
+      ]
+    },
+    "mem_cache/kv_cache_builder.py": {
+      "path": "/proc/11259/root/sgl-workspace/sglang/python/sglang/srt/mem_cache/kv_cache_builder.py",
+      "sha256": "196bd94df6123ab6752258fbac0783720549c4ea6082fe0b38bc8f581982c3c6",
+      "excerpts": [
+        {
+          "line": 239,
+          "text": "    disable_radix_cache = get_memory().disable_radix_cache or ("
+        },
+        {
+          "line": 290,
+          "text": "    params = CacheInitParams("
+        },
+        {
+          "line": 291,
+          "text": "        disable=disable_radix_cache,"
+        },
+        {
+          "line": 331,
+          "text": "            disable_radix_cache=disable_radix_cache,"
+        }
+      ]
+    },
+    "mem_cache/registry.py": {
+      "path": "/proc/11259/root/sgl-workspace/sglang/python/sglang/srt/mem_cache/registry.py",
+      "sha256": "5f8b12db038c15f1f54dbef3cdfe2ba0dd1acf6ca4e1a38704f66978dc948310",
+      "excerpts": [
+        {
+          "line": 91,
+          "text": "    if ctx.effective_chunked_prefill_size is not None and ctx.disable_radix_cache:"
+        },
+        {
+          "line": 92,
+          "text": "        if not ctx.is_hybrid_swa:"
+        },
+        {
+          "line": 93,
+          "text": "            from sglang.srt.mem_cache.chunk_cache import ChunkCache"
+        },
+        {
+          "line": 95,
+          "text": "            return ChunkCache(params)"
+        }
+      ]
+    },
+    "mem_cache/chunk_cache.py": {
+      "path": "/proc/11259/root/sgl-workspace/sglang/python/sglang/srt/mem_cache/chunk_cache.py",
+      "sha256": "1136b01435686d1e0044a775b779e22c1e91682771c1b66542eddf0db73b7919",
+      "excerpts": [
+        {
+          "line": 35,
+          "text": "class ChunkCache(BasePrefixCache):"
+        },
+        {
+          "line": 37,
+          "text": "    ChunkCache is used when radix cache is disabled."
+        },
+        {
+          "line": 67,
+          "text": "    def match_prefix(self, params: MatchPrefixParams) -> MatchResult:"
+        },
+        {
+          "line": 68,
+          "text": "        return MatchResult("
+        },
+        {
+          "line": 69,
+          "text": "            device_indices=torch.empty((0,), dtype=torch.int64),"
+        },
+        {
+          "line": 70,
+          "text": "            last_device_node=None,"
+        },
+        {
+          "line": 71,
+          "text": "            last_host_node=None,"
+        },
+        {
+          "line": 72,
+          "text": "            best_match_node=None,"
+        },
+        {
+          "line": 73,
+          "text": "        )"
+        },
+        {
+          "line": 75,
+          "text": "    def insert(self, params: InsertParams) -> InsertResult:"
+        },
+        {
+          "line": 76,
+          "text": "        # ChunkCache does not support prefix caching, so insert is a no-op"
+        },
+        {
+          "line": 77,
+          "text": "        return InsertResult(prefix_len=0)"
+        }
+      ]
+    }
+  },
+  "protected_launcher": {
+    "path": "scripts/runtime/sglang38_file_auth.py",
+    "sha256": "e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7da4",
+    "validation": "BOOLEAN_FLAGS includes --disable-radix-cache; validate_server_args requires disable_radix_cache True for raw and resolved views. The benchmark adapter reuses these exact checks."
+  }
+}

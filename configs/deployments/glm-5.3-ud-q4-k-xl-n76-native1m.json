@@ -107,7 +107,8 @@
       "CUDA1"
     ],
     "chat_template_kwargs": {
-      "clear_thinking": true
+      "clear_thinking": true,
+      "reasoning_effort": "low"
     },
     "n_cpu_moe": 76
   },

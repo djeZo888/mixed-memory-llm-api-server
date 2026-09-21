@@ -184,7 +184,7 @@ class BootSourceTests(unittest.TestCase):
                         render_boot_unit(binding, source, instance)
 
     def test_recovery_snapshot_contains_actual_isolated_cli_import_closure(self):
-        self.assertEqual(len(RECOVERY_FILES), 11)
+        self.assertEqual(len(RECOVERY_FILES), 12)
         fixture, binding, source, instance = self.fixture()
         for relative in RECOVERY_FILES:
             value = (ROOT / relative).read_bytes()

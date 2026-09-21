@@ -205,7 +205,8 @@ class DeadlineBudgetGuards(unittest.TestCase):
     def test_read_and_admission_caps_reject_invalid_before_backend_or_journal(self):
         backend, journal = Mock(), Mock()
         for field in ("read_seconds", "admission_seconds"):
-            for value in (0, -1, 10.001, float("nan"), float("inf"), -float("inf")):
+            for value in (0, -1, 60.001, float("nan"), float("inf"), -float("inf"),
+                          True, False, None, "60", [], {}):
                 with self.subTest(field=field, value=value):
                     with self.assertRaisesRegex(ValueError, "^invalid_deadlines$"):
                         Application(backend, journal, **{field: value})

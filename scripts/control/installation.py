@@ -23,18 +23,20 @@ RECOVERY_FILES = (
     'scripts/common/lifecycle_lease.py',
     'scripts/lifecycle/__init__.py', 'scripts/lifecycle/manager.py',
     'scripts/lifecycle/runtime_io.py', 'scripts/lifecycle/storage_binding.py',
-    'scripts/lifecycle/qwen_next.py', 'scripts/install/__init__.py',
+    'scripts/lifecycle/qwen_next.py', 'scripts/lifecycle/slot_state.py',
+    'scripts/install/__init__.py',
     'scripts/install/storage.py',
 )
 
 NORMAL_FILES = (
+    'scripts/lifecycle/boot_unit.py', 'scripts/control/source-closure.json',
     'scripts/install/storage_io.py', 'scripts/install/prerequisites.py',
     'scripts/common/require-data-mounted.sh', 'scripts/common/registered-storage.py',
     'scripts/lifecycle/sglang_file_auth.py',
     'reports/f1s-contract-evidence/f1a-qwen-manifest.json',
-    'scripts/lifecycle/qwen38.py',
+    'scripts/lifecycle/qwen38.py', 'scripts/lifecycle/concurrent_profiles.py',
     'scripts/runtime/qwen38_oci.py',
-    'scripts/runtime/sglang38_file_auth.py',
+    'scripts/runtime/sglang38_file_auth.py', 'scripts/runtime/sglang38_pair_file_auth.py',
     'reports/q38r-source-weight-manifest.json',
     'reports/q38s-acquisition-manifest.json',
     'tests/lifecycle/sglang38_fixture/provenance.json',
@@ -44,6 +46,9 @@ NORMAL_FILES = (
     'tests/lifecycle/sglang38_fixture/chat_template.jinja',
     'tests/lifecycle/sglang38_fixture/cache_probe.py',
     'tests/lifecycle/sglang38_fixture/qwen38_config.json',
+    'tests/lifecycle/sglang38_fixture/pair_launcher.py',
+    'tests/lifecycle/sglang38_fixture/run_pair_fixture.py',
+    'tests/lifecycle/sglang38_fixture/run_pair_pinned_image.py',
 )
 
 

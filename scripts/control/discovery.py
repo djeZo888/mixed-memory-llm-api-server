@@ -139,6 +139,20 @@ def discover_records(manager: Manager, deadline=None) -> list[dict]:
                 'endpoint': {name: endpoint[name] for name in ('host', 'port', 'api_prefix', 'served_model')},
             }
             record['endpoint']['authentication_required'] = True
+            from lifecycle import concurrent_profiles as pair
+            if pair.is_pair(deployment):
+                try:
+                    accepted = pair.check_acceptance(deployment, manager.instance)
+                    slot = pair.slot_for_deployment(identifier)
+                    capacity = accepted['slots'][slot]
+                    record['context_acceptance'] = {
+                        'accepted_configured_tokens': capacity['configured_context'],
+                        'verified_occupied_tokens': capacity['largest_occupied_context'],
+                        'evidence': ['concurrent-' + manager.instance['concurrent_pair_acceptance']['sha256']],
+                    }
+                except _EXPECTED_ERRORS:
+                    pass
+
             try:
                 manager.check_sources(deployment)
                 _check_deadline(deadline)

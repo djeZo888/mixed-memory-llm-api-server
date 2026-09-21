@@ -97,12 +97,13 @@ def _observed(value):
 def _entry(key, value):
     if not _match(key, _OPERATION_ID):
         return False
-    if type(value) is not dict or set(value) != _ENTRY_FIELDS:
+    if type(value) is not dict or set(value) not in (_ENTRY_FIELDS, _ENTRY_FIELDS | {"slot"}):
         return False
     terminal = value["status"] in TERMINAL
     return (
         value["id"] == key
-        and value["kind"] in ("switch", "stop")
+        and value["kind"] in ("switch", "stop", "start", "restart")
+        and ("slot" not in value or value["slot"] in ("glm", "qwen"))
         and _match(value["target"], _IDENTIFIER, nullable=True)
         and (value["kind"] != "switch" or value["target"] is not None)
         and value["status"] in ("pending", "running", "succeeded", "failed", "interrupted")
@@ -151,10 +152,20 @@ class Journal:
 
     def _validated(self, state):
         try:
-            if type(state) is not dict or set(state) != _STATE_FIELDS:
+            if type(state) is not dict or set(state) not in (_STATE_FIELDS, _STATE_FIELDS | {"slots"}):
                 raise ValueError()
-            if type(state["schema"]) is not int or state["schema"] != 1:
+            if type(state["schema"]) is not int or state["schema"] not in (1, 2):
                 raise ValueError()
+            if state["schema"] == 1 and "slots" in state:
+                raise ValueError()
+            if state["schema"] == 2:
+                slots = state.get("slots")
+                if (type(slots) is not dict or set(slots) != {"glm", "qwen"}
+                        or any(type(item) is not dict or set(item) != {"generation", "fingerprint"}
+                               or not _integer(item["generation"])
+                               or not _match(item["fingerprint"], _DIGEST, nullable=True)
+                               for item in slots.values())):
+                    raise ValueError()
             if not _integer(state["generation"]) or not _match(state["fingerprint"], _DIGEST, nullable=True):
                 raise ValueError()
             entries = state["entries"]

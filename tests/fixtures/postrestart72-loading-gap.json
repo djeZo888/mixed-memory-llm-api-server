@@ -1,0 +1,238 @@
+{
+  "_provenance": {
+    "line_1_based": 539,
+    "sanitized": "Container/GPU identities and monotonic timestamps replaced; CPU bulk and manifest hash omitted; accounting and resource fields retained.",
+    "source": "POSTRESTART72-RUN-20260920/results.jsonl",
+    "source_line_sha256": "0e877aba410d3711b3bd2f58cfe7ecbeeff4959aab6c2e0fe8cfe9ec15230cbb"
+  },
+  "container": "q",
+  "sample": {
+    "cgroups": {
+      "g": {
+        "allocator_workspace_bytes": null,
+        "anon_bytes": 515567616,
+        "current_bytes": 686996860928,
+        "events": {
+          "high": 0,
+          "low": 0,
+          "max": 3278,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "file_bytes": 683584983040,
+        "file_mapped_bytes": 429944012800,
+        "kernel_bytes": 2896310272,
+        "peak_since_cgroup_creation_bytes": 687194767360,
+        "pgfault": 105178539,
+        "pgmajfault": 484,
+        "rss_bytes": null,
+        "rss_unavailable_reason": "cgroup_v2_has_no_rss_counter",
+        "shmem_bytes": 429901271040,
+        "swap_bytes": 0
+      },
+      "q": {
+        "allocator_workspace_bytes": null,
+        "anon_bytes": 4289798144,
+        "current_bytes": 25506185216,
+        "events": {
+          "high": 0,
+          "low": 0,
+          "max": 2157,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "file_bytes": 20979445760,
+        "file_mapped_bytes": 770322432,
+        "kernel_bytes": 236933120,
+        "peak_since_cgroup_creation_bytes": 34359738368,
+        "pgfault": 7350203,
+        "pgmajfault": 8048,
+        "rss_bytes": null,
+        "rss_unavailable_reason": "cgroup_v2_has_no_rss_counter",
+        "shmem_bytes": 55451648,
+        "swap_bytes": 0
+      }
+    },
+    "collection_duration_s": 0.060086247000072035,
+    "collection_finished_monotonic_s": 0,
+    "concurrent_resource_gate": {
+      "charges": {
+        "g": {
+          "allocation_proof_available": true,
+          "basis": "max(anon+kernel+max(mapped,shmem),summed_process_RSS+kernel,pinned_native_host_weights+workspace_floor)",
+          "cap_bytes": 687194767360,
+          "cap_headroom_15_percent": true,
+          "caveat": "sampled working-set estimate; max(mapped,shmem) is not an exact union; RSS may double count; no instant cache reclaim claim",
+          "component_bracket_bytes": 433355890688,
+          "component_charge_bytes": 433355890688,
+          "current_bytes": 686996860928,
+          "evidence_status": "ESTIMATE",
+          "extra_charged_file_bytes": 253640970240,
+          "headroom_comparison_bytes": 433499504640,
+          "headroom_denominator": 20,
+          "headroom_numerator": 23,
+          "host_headroom_policy": {
+            "basis": "sampled_required_working_set_estimate_bytes",
+            "denominator": 20,
+            "numerator": 23,
+            "version": "sampled-required-working-set-15pct-v1"
+          },
+          "known_numeric_floor_bytes": 433499361280,
+          "lifetime_peak_bytes": 687194767360,
+          "native_floor_basis": "max(same-pin historical floor,current accepted native rounded-up host weights+exact workspace)",
+          "native_floor_bytes": 429888686522,
+          "placement": "G1",
+          "reclaimable_file_bytes": null,
+          "reclaimable_status": "UNPROVEN_dirty_writeback_unevictable_and_mapping_union_unknown",
+          "required_bytes": 433499361280,
+          "required_with_headroom_bytes": 498524430336,
+          "rss_plus_kernel_bytes": 433499361280,
+          "sampled_peak_required_bytes": 433499504640,
+          "sampled_required_working_set_estimate_bytes": 433499504640
+        },
+        "q": {
+          "allocation_proof_available": false,
+          "basis": "max(anon+kernel+max(mapped,shmem),summed_process_RSS+kernel,pinned_native_host_weights+workspace_floor)",
+          "cap_bytes": 34359738368,
+          "cap_headroom_15_percent": null,
+          "caveat": "sampled working-set estimate; max(mapped,shmem) is not an exact union; RSS may double count; no instant cache reclaim claim",
+          "component_bracket_bytes": 5297053696,
+          "component_charge_bytes": 5297053696,
+          "current_bytes": 25506185216,
+          "evidence_status": "UNAVAILABLE",
+          "extra_charged_file_bytes": 20209123328,
+          "headroom_comparison_bytes": 15050743808,
+          "headroom_denominator": 20,
+          "headroom_numerator": 23,
+          "host_headroom_policy": {
+            "basis": "sampled_required_working_set_estimate_bytes",
+            "denominator": 20,
+            "numerator": 23,
+            "version": "sampled-required-working-set-15pct-v1"
+          },
+          "known_numeric_floor_bytes": 5297053696,
+          "lifetime_peak_bytes": 34359738368,
+          "native_floor_basis": "UNAVAILABLE_no_native_host_weight_measurement",
+          "native_floor_bytes": null,
+          "placement": "Q1",
+          "reclaimable_file_bytes": null,
+          "reclaimable_status": "UNPROVEN_dirty_writeback_unevictable_and_mapping_union_unknown",
+          "required_bytes": null,
+          "required_with_headroom_bytes": 17308355380,
+          "rss_plus_kernel_bytes": null,
+          "sampled_peak_required_bytes": 15050743808,
+          "sampled_required_working_set_estimate_bytes": 15050743808
+        }
+      },
+      "host_available_bytes": 493888679936,
+      "latched_violations": {},
+      "policy": "ROOT_REVIEWED_HISTORICAL_PROVISIONAL_NOT_CURRENT_MEASURED",
+      "reasons": [],
+      "required_demand_helper": "ROOT_REVIEWED_WORKING_SET_ESTIMATE",
+      "status": "UNAVAILABLE",
+      "unavailable_reasons": [
+        "concurrent_required_demand_estimate_unavailable"
+      ]
+    },
+    "errors": [
+      "read_FileNotFoundError",
+      "read_FileNotFoundError",
+      "read_FileNotFoundError",
+      "read_FileNotFoundError",
+      "read_FileNotFoundError"
+    ],
+    "gpus": [
+      {
+        "allocator_workspace_bytes": null,
+        "free_bytes": 18281922560,
+        "power_watts": 15.48,
+        "total_bytes": 102641958912,
+        "used_bytes": 83693142016,
+        "utilization_percent": 0.0,
+        "uuid": "GPU-offline-0"
+      },
+      {
+        "allocator_workspace_bytes": null,
+        "free_bytes": 37715181568,
+        "power_watts": 86.91,
+        "total_bytes": 102641958912,
+        "used_bytes": 64258834432,
+        "utilization_percent": 0.0,
+        "uuid": "GPU-offline-1"
+      }
+    ],
+    "host": {
+      "available_bytes": 493888679936,
+      "swap_free_bytes": 3157258240,
+      "swap_total_bytes": 3157258240,
+      "swap_used_bytes": 0,
+      "total_bytes": 946821140480
+    },
+    "host_timestamp_monotonic_s": 0,
+    "processes": {
+      "g": {
+        "known_process_count": 1,
+        "rss_bytes": 430603051008,
+        "rss_scope": "sum_known_processes_may_double_count_shared_pages",
+        "swap_bytes": 0
+      },
+      "q": {
+        "known_process_count": 10,
+        "rss_bytes": null,
+        "rss_scope": "sum_known_processes_may_double_count_shared_pages",
+        "swap_bytes": null
+      }
+    },
+    "pss_bytes": null,
+    "pss_unavailable_reason": "quiescent_checkpoint_only",
+    "required_host_demand": {
+      "allocation_proof_available": false,
+      "basis": "max(anon+kernel+max(mapped,shmem),summed_process_RSS+kernel,pinned_native_host_weights+workspace_floor)",
+      "cap_bytes": 34359738368,
+      "cap_headroom_15_percent": null,
+      "caveat": "sampled working-set estimate; max(mapped,shmem) is not an exact union; RSS may double count; no instant cache reclaim claim",
+      "component_bracket_bytes": 5297053696,
+      "component_charge_bytes": 5297053696,
+      "container_id": "q",
+      "current_bytes": 25506185216,
+      "evidence_status": "UNAVAILABLE",
+      "extra_charged_file_bytes": 20209123328,
+      "headroom_comparison_bytes": 15050743808,
+      "headroom_denominator": 20,
+      "headroom_numerator": 23,
+      "host_headroom_policy": {
+        "basis": "sampled_required_working_set_estimate_bytes",
+        "denominator": 20,
+        "numerator": 23,
+        "version": "sampled-required-working-set-15pct-v1"
+      },
+      "known_numeric_floor_bytes": 5297053696,
+      "lifetime_peak_bytes": 34359738368,
+      "native_floor_basis": "UNAVAILABLE_no_native_host_weight_measurement",
+      "native_floor_bytes": null,
+      "placement": "Q1",
+      "reclaimable_file_bytes": null,
+      "reclaimable_status": "UNPROVEN_dirty_writeback_unevictable_and_mapping_union_unknown",
+      "required_bytes": null,
+      "required_with_headroom_bytes": 17308355380,
+      "rss_plus_kernel_bytes": null,
+      "sample_phase": "pre_readiness_load",
+      "sample_timestamp_monotonic_s": 0,
+      "sampled_peak_not_absolute": true,
+      "sampled_peak_required_bytes": 15050743808,
+      "sampled_required_working_set_estimate_bytes": 15050743808
+    },
+    "sample_kind": "cheap",
+    "timestamp_monotonic_s": 0,
+    "vmstat": {
+      "oom_kill": 0,
+      "pgfault": 133260757,
+      "pgmajfault": 16518,
+      "pswpin": 0,
+      "pswpout": 0
+    }
+  },
+  "type": "telemetry"
+}
