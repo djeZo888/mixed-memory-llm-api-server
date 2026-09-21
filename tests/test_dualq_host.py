@@ -16,6 +16,13 @@ from benchmark.postrestart72_budget import PostrestartBudget
 GIB = 1024**3
 NATIVE = {'context_length': 480000, 'tp_size': 1, 'max_total_num_tokens': 480000,
           'max_req_input_len': 479994, 'max_req_len': 479999}
+# Actual extracted numeric fields, replayed offline from the corrected RUN's
+# corrected-saved-diagnostics.json, native-numeric-diagnostic receipt SHA256
+# c063b9618a9fb8920d1725f5944ced3465bb3e3f3019eaf6c52bf0fc9f9a6246.
+# max_req_len was absent; no raw server_args, keys or synthetic target values.
+EXTRACTED_NATIVE = {'context_length': 480000, 'tp_size': 1,
+                    'max_total_num_tokens': 480000, 'max_req_input_len': 479994,
+                    'internal_states': [{'context_length': 480000, 'tp_size': 1}]}
 
 
 class DualQHostTests(unittest.TestCase):
@@ -105,14 +112,47 @@ class DualQHostTests(unittest.TestCase):
         for slot in dualq.SLOTS: self.end(slot, 'measured')
         self.assertFalse(self.h.requests)
 
-    def test_current_native_request_bound_required_for_both_Q_roles(self):
+    def test_extracted_native_shape_allows_absent_optional_request_limit(self):
+        proof = proofs.qwen_native_proof(EXTRACTED_NATIVE, scope=dualq.SCOPE)
+        self.assertEqual((proof['configured_context'], proof['native_pool_tokens'],
+                          proof['native_input_limit'], proof['native_request_limit']),
+                         (480000, 480000, 479994, None))
+        with patch('benchmark.host.http_json', return_value=EXTRACTED_NATIVE):
+            for slot in dualq.SLOTS:
+                self.begin(slot, 'count', 'warmup')
+                self.assertEqual(self.saved['admission-' + slot + '-count-warmup-count.json']['native_capacity'], proof)
+                self.end(slot, 'count', 'warmup')
+
+    def test_current_native_numeric_fields_required_for_both_Q_roles(self):
         for slot in dualq.SLOTS:
-            for key in ('max_total_num_tokens', 'max_req_input_len', 'max_req_len'):
+            for key in ('context_length', 'tp_size', 'max_total_num_tokens', 'max_req_input_len'):
                 bad = dict(NATIVE); del bad[key]
                 with patch('benchmark.host.http_json', return_value=bad), self.subTest(slot=slot, missing=key), self.assertRaises(ValueError):
                     self.begin(slot, 'count', 'warmup')
         self.assertFalse(self.h.requests)
         self.assertFalse(self.h.dualq_state['counts'])
+
+    def test_present_native_fields_remain_strict_and_conflicts_fail(self):
+        # Malformed variants are synthetic; only EXTRACTED_NATIVE is observed.
+        for key, expected in NATIVE.items():
+            for value in (expected + 1, expected - 1, float(expected), str(expected), True, None, 0):
+                bad = copy.deepcopy(EXTRACTED_NATIVE); bad[key] = value
+                with self.subTest(field=key, value=value), self.assertRaises(ValueError):
+                    proofs.qwen_native_proof(bad, scope=dualq.SCOPE)
+        for location in ('top', 'state'):
+            good = copy.deepcopy(EXTRACTED_NATIVE)
+            row = good if location == 'top' else good['internal_states'][0]
+            row['max_req_len'] = 479999
+            self.assertEqual(proofs.qwen_native_proof(good, scope=dualq.SCOPE)['native_request_limit'], 479999)
+            for value in (None, True, '479999', 479999.0, 0, 479998, 480000):
+                row['max_req_len'] = value
+                with self.subTest(location=location, value=value), self.assertRaises(ValueError):
+                    proofs.qwen_native_proof(good, scope=dualq.SCOPE)
+        for key, value in NATIVE.items():
+            bad = copy.deepcopy(EXTRACTED_NATIVE); bad[key] = value
+            bad['internal_states'][0][key] = value + 1
+            with self.subTest(conflict=key), self.assertRaises(ValueError):
+                proofs.qwen_native_proof(bad, scope=dualq.SCOPE)
 
     def test_original_stopped_manual_and_no_running_adoption(self):
         good = {'manager': {'desired': 'stopped', 'observed': 'stopped', 'container_running': False, 'boot_policy': 'manual'}}

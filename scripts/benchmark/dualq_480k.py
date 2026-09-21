@@ -22,7 +22,7 @@ from .postrestart72_followup import PRESETS
 from .concurrent_cpu_run import TEMPLATES
 
 SCOPE = qwen_launcher.DUALQ_SCOPE
-CAMPAIGN = "benchrun-dualq72-20260921"
+CAMPAIGN = "benchrun-dualq72c1-20260921"
 CAPACITY = 480000
 OUTPUT_CAP = 512
 SLOTS = ("Q0", "Q1")
@@ -96,7 +96,7 @@ def manifest(slot):
         "actual online CPUs0-71; two Q8 cpusets0-7 shared, union8 exclusive0; no cpuset-mems change",
         "fresh80GiB host available; each32GiB cap/no swap; sampled required working-set estimate*1.15<=cap",
         "each physical GPU UUID separately proven; >=16GiB and >=10pct free GPU reserve",
-        "each actual scheduler pool480000/input479994/request479999, current authenticated allocation/native-auth proof",
+        "each actual scheduler pool480000/input479994; optional request479999 when present; input+output<=pool-1; current authenticated allocation/native-auth proof",
         "one discarded32-output warmup per load; one exact native-counted512-output retrieval per physical GPU",
         "one barrier pair only; immutable dispatch+7200s deadline; actual overlap required; no retry/filler/300s cutoff",
         "canonical cleanup/restoration to STOPPED/manual before protected reviewed production acceptance and activation",

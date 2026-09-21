@@ -75,7 +75,7 @@ def qwen_native_proof(info, *, scope=CPU_SCOPE):
         require(values and all(type(v) is int and v > 0 and v == values[0] for v in values),
                 'cpu_native_pool_or_input_unavailable')
         return values[0]
-    pool, limit, request = actual('max_total_num_tokens'), actual('max_req_input_len'), actual('max_req_len', scope != DUALQ_SCOPE)
+    pool, limit, request = actual('max_total_num_tokens'), actual('max_req_input_len'), actual('max_req_len', optional=True)
     require(pool == CAPACITY and limit == CAPACITY - 6 and request in (None, CAPACITY - 1),
             'cpu_native_pool_or_input_mismatch')
     return {'configured_context': CAPACITY, 'native_pool_tokens': pool,

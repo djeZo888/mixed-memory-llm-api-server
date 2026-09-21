@@ -57,8 +57,12 @@ class DualQContract(unittest.TestCase):
                                 dual.manifest(slot)
 
     def test_closed_manifests_distinguish_gpu_port_alias_and_writes(self):
+        self.assertEqual(dual.CAMPAIGN, 'benchrun-dualq72c1-20260921')
         q0, q1 = [dual.manifest(slot) for slot in dual.SLOTS]
         for index, value in enumerate((q0, q1)):
+            self.assertEqual(value['campaign'], 'benchrun-dualq72c1-20260921')
+            self.assertTrue(value['container_name'].startswith('benchrun-dualq72c1-20260921-'))
+            self.assertNotIn('benchrun-dualq72-20260921', str(value))
             args = value["create_argv"]
             self.assertEqual(value["gpu_uuids"], [profiles.read_config()["gpu_uuids"][index]])
             self.assertEqual(value["guest_cpuset"], "0-7")
@@ -101,11 +105,23 @@ class DualQContract(unittest.TestCase):
             with self.assertRaises(ValueError): qwen_launcher.variant(base, context, tp, scope=scope, slot=slot)
 
     def test_final_body_native_recount_rejects_one_token_overflow(self):
+        from benchmark.cpu_budget_host import qwen_native_proof
+        from tests.test_dualq_host import EXTRACTED_NATIVE
         jobs = self.jobs()
         self.assertEqual(jobs[0]["sample"]["fixture_sha256"], jobs[1]["sample"]["fixture_sha256"])
         for job in jobs:
             self.assertEqual(job["sample"]["body"]["max_tokens"], 512)
             self.assertEqual(job["count"]["input_tokens"] + 512, 479935)
+        for optional in ({}, {'max_req_len': 479999}):
+            native = qwen_native_proof({**EXTRACTED_NATIVE, **optional}, scope=dual.SCOPE)
+            safe_bound = native['native_pool_tokens'] - 1
+            if native['native_request_limit'] is not None:
+                safe_bound = min(safe_bound, native['native_request_limit'])
+            self.assertEqual(safe_bound, 479999)
+            for slot in dual.SLOTS:
+                edge = dual.prepare_job(slot, dual.PREFIXES[slot], lambda raw: count(raw, 479487))
+                self.assertLessEqual(edge['count']['input_tokens'], native['native_input_limit'])
+                self.assertEqual(edge['count']['input_tokens'] + edge['sample']['body']['max_tokens'], safe_bound)
         for tokens in (479488, 480000, 479359):
             with self.assertRaisesRegex(ValueError, "no_refit"):
                 dual.prepare_job("Q0", dual.PREFIXES["Q0"], lambda raw: count(raw, tokens))

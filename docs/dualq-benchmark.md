@@ -29,6 +29,12 @@ Keys remain in their existing protected files outside the package and Git.
 The final task handoff supplies exact source/bundle/arm/package hashes. Its
 `GO.template.json` is `NOT_AUTHORIZED`; no actual-image receipt is preaccepted.
 
+The source-only metadata FIX freezes campaign `benchrun-dualq72c1-20260921`.
+The failed `benchrun-dualq72-20260921` ledger and source955ec8 remain preserved:
+that corrected run was canonically RESTORED with zero warmups/measurements.
+This fixed campaign needs a fresh exact-source/arm root GO; it cannot resume or
+reset the old ledger. Retained actual AUTH receipts bind only the future GO.
+
 Q0/GPU0 and Q1/GPU1 both use the actual Qwen family, pinned FP8 image/weights,
 BF16 KV, YaRN4, chunk2048 and configured480000. Each manifest hashes its frozen
 production480000 profile and compares native argv with the production pair
@@ -53,8 +59,11 @@ request bound479999. There is no exact479487 requirement or live fitter. Report
 actual input and the deliberate reduction separately from configured480000.
 
 Before every count/warmup/measurement admission, refresh actual GPU UUID,
-container/profile/auth identity, native pool480000, input479994 and request479999,
-and current resource proof. Missing observations block new admission without
+container/profile/auth identity, actual native pool480000/input479994, strict
+context480000/TP1 and current resource proof. `max_req_len` is optional, as in the
+production gate; when present it must be the integer479999. Absence stays null
+in proof. Every fixed input+output budget fits the known pinned pool-1 bound479999.
+Missing required observations block new admission without
 cancelling a healthy peer; numerical unsafe observations latch and cancel.
 Every admitted inference receives7200s starting at HTTP dispatch. The reused
 preparation/admission clock never clips an admitted request. Four to six minutes

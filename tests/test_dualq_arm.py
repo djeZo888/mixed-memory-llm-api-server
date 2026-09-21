@@ -67,6 +67,7 @@ class ArmTests(unittest.TestCase):
         return run.read_chain(self.task, self.go_path, 'run-session', **kwargs)
 
     def test_prepared_arm_closed_roles_policy_modes_and_private_files(self):
+        self.assertEqual(self.arm['campaign'], 'benchrun-dualq72c1-20260921')
         self.assertEqual(profiles.scope_placements(contract.SCOPE), ('Q0', 'Q1'))
         self.assertEqual(profiles.scope_capacities(contract.SCOPE), (480000,))
         self.assertEqual(profiles.validate_arm_scope(self.arm), contract.SCOPE)
@@ -131,7 +132,8 @@ class ArmTests(unittest.TestCase):
         for field, value in (('remote_owner_pid', 9), ('source_commit', 'd' * 40), ('keeper_pid', 1)):
             bad = predecessor(); bad[field] = value
             with self.assertRaises(ValueError): run.validate_predecessor(bad)
-        for field, value in (('mode', 'hold'), ('continuation_execution', {}), ('production_acceptance', 'ACCEPTED')):
+        for field, value in (('mode', 'hold'), ('continuation_execution', {}), ('production_acceptance', 'ACCEPTED'),
+                             ('campaign', 'benchrun-dualq72-20260921')):
             bad = copy.deepcopy(self.arm); bad[field] = value
             with self.assertRaises(ValueError): run.validate_arm(bad)
 
