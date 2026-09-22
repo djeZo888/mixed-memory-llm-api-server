@@ -186,6 +186,7 @@ export class Broker {
     let summary = "";
     let success = false;
     let cleanupConfirmed = false;
+    let promptRejectedDuringCancellation = false;
     let failureStatus: Status = "failed";
     const artifactJobs: Promise<unknown>[] = [];
     try {
@@ -308,12 +309,18 @@ export class Broker {
             run.kind === "handoff"
               ? "Create a factual handoff summary for a new chat continuing this project in the same workspace. Summarize the user goal, completed work, current files and validation, unresolved issues and constraints, and precise next steps. Do not perform new work or change files; reply with the summary only."
               : run.text;
-          const promptOutcome = await engine.prompt(
-            handoff
-              ? `Context from the prior chat (same workspace):\n${handoff.summary}\n\nCurrent user request:\n${requestText}`
-              : requestText,
-            attachments,
-          );
+          let promptOutcome: Awaited<ReturnType<Engine["prompt"]>>;
+          try {
+            promptOutcome = await engine.prompt(
+              handoff
+                ? `Context from the prior chat (same workspace):\n${handoff.summary}\n\nCurrent user request:\n${requestText}`
+                : requestText,
+              attachments,
+            );
+          } catch (error) {
+            promptRejectedDuringCancellation = active.cancelled;
+            throw error;
+          }
           if (promptOutcome === "cancelled") active.cancelled = true;
           if (handoff && !active.cancelled)
             this.store.db
@@ -372,7 +379,7 @@ export class Broker {
         error.code === "engine_settlement_unknown";
       failureStatus = backgroundUnknown ? "interrupted" : "failed";
       this.store.updateRun(run.id, failureStatus);
-      this.store.emit(
+      const emitFailure = () => this.store.emit(
         run.sessionId,
         "error",
         {
@@ -385,11 +392,19 @@ export class Broker {
         },
         run.id,
       );
+      // Capture Stop intent at the prompt failure, before cleanup can admit a
+      // later Stop for an unrelated failure. Defer only this cancellation race.
+      const cancellationRace = promptRejectedDuringCancellation;
+      if (!cancellationRace) emitFailure();
       try {
         cleanupConfirmed = await this.closeRunner(run.sessionId);
       } catch {
         cleanupConfirmed = false;
       }
+      // Exact launcher/container cleanup completes requested Stop even if the
+      // concurrent ACP cancel RPC rejects or times out. Unconfirmed cleanup
+      // retains the error and quarantine; gateway draining is independent.
+      if (cancellationRace && !cleanupConfirmed) emitFailure();
       if (cleanupConfirmed) {
         this.store.releaseQuarantineAfterVerifiedCleanup(run.workspaceId);
         if (active.cancelled) {

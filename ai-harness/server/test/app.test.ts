@@ -1285,7 +1285,7 @@ for (const outcome of ["unknown", "failed", "cancelled", "deleted"] as const)
           .some((event) => event.type === "handoff"),
         false,
       );
-      assert.ok(
+      assert.equal(
         h.store
           .allEvents(original.id)
           .some(
@@ -1296,9 +1296,122 @@ for (const outcome of ["unknown", "failed", "cancelled", "deleted"] as const)
                   ? "engine_failed"
                   : "engine_settlement_unknown"),
           ),
+        outcome === "unknown" || outcome === "failed",
+        "Stop/delete intent at prompt failure plus exact cleanup is cancellation",
       );
     },
   );
+
+for (const scenario of ["confirmed", "cancel-rejected", "cancel-pending", "cancel-timeout", "cleanup-unknown", "settlement-unknown", "unexpected", "late-stop", "post-prompt-failure"] as const)
+  test(`Stop prompt rejection race preserves proof boundaries: ${scenario}`, async (t) => {
+    let confirmCancel!: () => void;
+    let confirmCleanup!: () => void;
+    const cancelProof = new Promise<void>((resolve) => { confirmCancel = resolve; });
+    const cleanupProof = new Promise<void>((resolve) => { confirmCleanup = resolve; });
+    t.after(() => { confirmCancel(); confirmCleanup(); });
+    const fixture = engines(true), baseFactory = fixture.factory;
+    let closeStarted = false;
+    let logicalMs = 0;
+    const timeline: { event: string; at: number }[] = [];
+    const successfulStop = ["confirmed", "cancel-rejected", "cancel-pending", "cancel-timeout", "settlement-unknown"].includes(scenario);
+    fixture.factory = (options) => {
+      const engine = baseFactory(options);
+      return {
+        ...engine,
+        async prompt(text, attachments) {
+          await engine.prompt(text, attachments);
+          if (fixture.calls.length !== 1 || scenario === "post-prompt-failure") return;
+          if (scenario === "settlement-unknown")
+            throw Object.assign(new Error("Unknown native receipt"), { code: "engine_settlement_unknown" });
+          throw new Error("Prompt request rejected");
+        },
+        async cancel() {
+          await engine.cancel();
+          await cancelProof;
+          if (scenario === "cancel-timeout") {
+            timeline.push({ event: "cancel-timeout", at: logicalMs });
+            throw new Error("Engine cancellation settlement timed out");
+          }
+          if (scenario === "cancel-rejected") throw new Error("Cancellation not proven");
+        },
+        async close() {
+          closeStarted = true;
+          await cleanupProof;
+          if (scenario === "cleanup-unknown") throw new Error("Exact cleanup unconfirmed");
+          if (scenario === "cancel-timeout") timeline.push({ event: "cleanup-confirmed", at: logicalMs });
+          await engine.close();
+        },
+      };
+    };
+    const h = await setup(t, fixture), session = await h.session();
+    if (scenario === "post-prompt-failure") {
+      const discover = h.files.discover.bind(h.files);
+      let discoveries = 0;
+      h.files.discover = async (id) => {
+        if (++discoveries === 2) throw new Error("Unrelated artifact discovery failure");
+        return discover(id);
+      };
+    }
+    const request = await inject(h.app, {
+      method: "POST", url: `/api/sessions/${session.id}/messages`, payload: { text: "Bounded Stop fixture" },
+    });
+    await until(() => fixture.calls.length === 1);
+    fixture.calls[0]!.update({ type: "text", text: "Original partial response" });
+    if (scenario !== "unexpected" && scenario !== "late-stop")
+      await inject(h.app, { method: "POST", url: `/api/sessions/${session.id}/cancel`, payload: {} });
+    fixture.calls[0]!.resolve();
+    if (scenario === "post-prompt-failure") confirmCancel();
+    await until(() => closeStarted);
+    if (scenario === "late-stop") {
+      assert.ok(h.store.allEvents(session.id).some((event) =>
+        event.type === "error" && event.data.code === "engine_failed"));
+      await inject(h.app, { method: "POST", url: `/api/sessions/${session.id}/cancel`, payload: {} });
+    }
+    assert.equal(h.store.allEvents(session.id).some((event) => event.type === "done"), false);
+    assert.ok(h.store.isQuarantined(h.store.getSession(session.id).workspaceId));
+    if (successfulStop)
+      assert.equal(h.store.allEvents(session.id).some((event) => event.type === "error"), false,
+        "requested cancellation remains pending until exact cleanup is known");
+    // Controlled promises model a 30s cancel deadline and cleanup at 46s.
+    // No wall-clock timeout or 46-second sleep is used in this fixture.
+    if (scenario === "cancel-timeout") logicalMs = 30_000;
+    if (scenario !== "cancel-pending") confirmCancel();
+    await delay(0);
+    if (scenario === "cancel-timeout") {
+      assert.deepEqual(timeline, [{ event: "cancel-timeout", at: 30_000 }]);
+      assert.equal(h.store.allEvents(session.id).some((event) => event.type === "done"), false);
+      logicalMs = 46_000;
+    }
+    confirmCleanup();
+    await h.broker.idle();
+    const errors = h.store.allEvents(session.id).filter((event) => event.type === "error");
+    if (successfulStop) {
+      assert.deepEqual(errors, []);
+      if (scenario === "cancel-timeout")
+        assert.deepEqual(timeline, [
+          { event: "cancel-timeout", at: 30_000 },
+          { event: "cleanup-confirmed", at: 46_000 },
+        ]);
+      // Even a still-pending cancel RPC cannot veto independently proven cleanup.
+      confirmCancel();
+      assert.equal(h.store.db.prepare("SELECT status FROM runs WHERE id=?").get(request.json().runId)?.status, "cancelled");
+      assert.equal(h.store.getSession(session.id).status, "idle");
+      assert.equal(h.store.isQuarantined(h.store.getSession(session.id).workspaceId), false);
+      await inject(h.app, { method: "POST", url: `/api/sessions/${session.id}/messages`, payload: { text: "Explicit follow-up" } });
+      await until(() => fixture.calls.length === 2);
+      fixture.calls[1]!.resolve();
+      await h.broker.idle();
+      assert.deepEqual(h.store.messages(session.id).map((m) => m.content),
+        ["Bounded Stop fixture", "Original partial response", "Explicit follow-up"]);
+    } else {
+      assert.ok(errors.some((event) => event.data.code ===
+        (scenario === "settlement-unknown" ? "engine_settlement_unknown" : "engine_failed")));
+      if (scenario === "cleanup-unknown") {
+        assert.ok(errors.some((event) => event.data.code === "engine_cleanup_unknown"));
+        assert.ok(h.store.isQuarantined(h.store.getSession(session.id).workspaceId));
+      }
+    }
+  });
 
 test(
   "late native cancel rejection cannot quarantine a workspace after verified process cleanup admits its successor",
