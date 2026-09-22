@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync, mkdtempSync, mkdirSync, copyFileSync, rmSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, copyFileSync, rmSync, existsSync } from 'node:fs';
 import { stripTypeScriptTypes, createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { connect } from 'node:net';
@@ -25,6 +25,10 @@ let provider;
 try {
   assert.equal(sha(readFileSync(path.join(patches, 'SHA256SUMS'))), identity.patchSetSha256);
   for (const file of identity.files) {
+    if (file.originalSha256 === null) {
+      assert.equal(existsSync(path.join(source, file.path)), false, `Added source must be absent: ${file.path}`);
+      continue;
+    }
     assert.equal(sha(readFileSync(path.join(source, file.path))), file.originalSha256);
     mkdirSync(path.dirname(path.join(copied, file.path)), { recursive: true });
     copyFileSync(path.join(source, file.path), path.join(copied, file.path));

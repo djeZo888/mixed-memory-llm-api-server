@@ -77,7 +77,7 @@ class Smoke:
         self.report = {"started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                        "source_script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                        "launcher_sha256": hashlib.sha256(Path(args.launcher).read_bytes()).hexdigest(),
-                       "scope": "runtime-base only; no generation or inference", "checks": {}}
+                       "scope": "final reviewed runtime and tools; no generation or inference", "checks": {}}
         if self.security_options:
             self.report["scoped_seccomp_sha256"] = hashlib.sha256(profile.read_bytes()).hexdigest()
         self.env = {key: os.environ[key] for key in ("HOME", "USER", "LOGNAME", "PATH", "XDG_RUNTIME_DIR") if key in os.environ}
@@ -117,7 +117,7 @@ class Smoke:
             raise RuntimeError("reviewed image identity not established")
         container = self.prefix + "-" + name
         self.containers.add(container)
-        args = ["run", "--name", container, "--rm", "--pull=never",
+        args = ["run", "--init", "--init-path", "/usr/bin/catatonit", "--name", container, "--rm", "--pull=never",
                 "--userns", "keep-id", "--user", f"{os.getuid()}:{os.getgid()}",
                 "--network", "slirp4netns:allow_host_loopback=true",
                 "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
@@ -130,7 +130,7 @@ class Smoke:
                 "--volume", f"{self.workspace}:{self.workspace}:rw,rprivate",
                 "--workdir", str(self.workspace),
                 "--env", f"HOME={self.state}/home", "--env", f"MINIMAX_DATA_DIR={self.state}",
-                "--env", "PATH=/opt/ai-harness-python/bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin",
+                "--env", "PATH=/opt/ai-harness-python/bin:/opt/ai-harness/tools/runtime/node_modules/.bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin",
                 "--env", "TERM=dumb", "--env", "NO_COLOR=1", "--env", "MCODE_DISABLE_TELEMETRY=1",
                 "--env", "DO_NOT_TRACK=1", "--env", "MCODE_CHROME_PATH=/usr/bin/chromium",
                 "--env", "PYTHONDONTWRITEBYTECODE=1"]
@@ -182,11 +182,39 @@ assert any('MCODE_TOOLS_NOTICES' in p['path'] and p['bytes'] for p in result['no
 '''
         return json.loads(self.run_image("versions", ["python3", "-c", script], timeout=120))
 
+    def tooling(self):
+        script = Path(__file__).with_name("tooling-integration.py").read_text()
+        return json.loads(self.run_image("tooling", ["python", "-c", script], timeout=360))
+
+    def native_browser(self):
+        return json.loads(self.run_image("native-browser", ["node", "/opt/ai-harness/tests/native-integration.mjs", "browser"], timeout=120))
+
+    def native_roster(self):
+        output = self.run_image("native-roster", ["node", "/opt/ai-harness/tests/native-integration.mjs", "roster"], timeout=120)
+        return json.loads(re.sub(r"\x1b\[[0-9;]*m", "", output.strip().splitlines()[-1]))
+
+    def private_search(self):
+        script = r'''
+import {Client} from '/opt/ai-harness/tools/search/node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js';
+import {StdioClientTransport} from '/opt/ai-harness/tools/search/node_modules/@modelcontextprotocol/sdk/dist/esm/client/stdio.js';
+const client = new Client({name:'h001-private-route',version:'1.0.0'});
+const transport = new StdioClientTransport({command:'node',args:['/opt/ai-harness/tools/search/searxng-mcp.mjs'],env:{PATH:process.env.PATH,AI_HARNESS_SEARXNG_URL:'http://10.0.2.2:8082'},stderr:'pipe'});
+try {
+ await client.connect(transport);
+ const catalog = await client.listTools();
+ if(catalog.tools.length!==1 || catalog.tools[0].name!=='searxng_search')throw Error('unexpected MCP roster');
+ const result=await client.callTool({name:'searxng_search',arguments:{query:'Python official documentation',limit:2}});
+ if(result.isError)throw Error('private search returned tool error');
+ console.log(JSON.stringify({endpoint:'http://10.0.2.2:8082',tools:catalog.tools.map(t=>t.name),result}));
+}finally{await client.close();}
+'''
+        return json.loads(self.run_image("private-search", ["node", "--input-type=module", "-e", script], timeout=45))
+
     def browser(self):
         fixture = self.workspace / "browser-fixture.html"
         fixture.write_text('<!doctype html><meta charset="utf-8"><title>Local smoke</title><p id="result">pending</p><script>document.getElementById("result").textContent="dom-js-ok:"+(6*7)</script>')
         script = r'''
-const {chromium}=require('/usr/local/lib/node_modules/@playwright/test');
+const {chromium}=require('/opt/ai-harness/tools/runtime/node_modules/@playwright/test');
 (async()=>{
 if(process.getuid()===0)throw Error('root browser refused');
 const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,chromiumSandbox:true,args:['--disable-background-networking','--disable-component-update','--no-first-run']});
@@ -237,7 +265,9 @@ try {
             do_POST = do_PUT = do_PATCH = do_DELETE = do_HEAD = do_OPTIONS = reject
 
         class ExclusiveServer(http.server.ThreadingHTTPServer):
-            allow_reuse_address = False
+            # Permit rebinding our released TIME_WAIT socket, never a concurrent
+            # listener (SO_REUSEPORT is not enabled). No service is displaced.
+            allow_reuse_address = True
             daemon_threads = True
 
         # Bind fails if another owner has the port. Never stop another service.
@@ -325,6 +355,14 @@ try {
         session = request(2, "session/new", {"cwd": str(self.workspace), "mcpServers": []})
         if not isinstance(session, dict) or not isinstance(session.get("sessionId"), str) or not session["sessionId"]:
             raise RuntimeError("session/new did not return a native sessionId")
+        extensions = initialized.get("_meta", {}).get("minimax-code/extensions", {})
+        if "mcode/session/settlement/get" not in extensions.get("methods", []):
+            raise RuntimeError("native completion extension not advertised")
+        settlement = request(3, "mcode/session/settlement/get", {"sessionId": session["sessionId"]})
+        receipt = settlement.get("receipt", {}) if isinstance(settlement, dict) else {}
+        if (receipt.get("schemaVersion") != 1 or receipt.get("rootSessionId") != session["sessionId"] or
+                receipt.get("runId") is not None or receipt.get("state") != "unknown" or receipt.get("exhaustive") is not False):
+            raise RuntimeError("never-started native run must report explicit unknown, not settlement")
         container, pid = self.owned_launcher_container()
         self.launcher_container = container
         self.container_pid = pid
@@ -343,7 +381,8 @@ try {
             raise RuntimeError("could not record actual container and child host PID identities")
         return {"protocol_version": initialized["protocolVersion"], "session_created": True,
                 "container_id": container, "host_pid": pid, "host_process_count": len(pids),
-                "requests_sent": ["initialize", "session/new"], "generation_requests_sent": 0}
+                "native_session_id": session["sessionId"], "native_settlement": receipt,
+                "requests_sent": ["initialize", "session/new", "mcode/session/settlement/get"], "generation_requests_sent": 0}
 
     def termination(self):
         if self.process is None:
@@ -406,6 +445,8 @@ try {
 
     def run(self):
         for name, check in (("image", self.image), ("versions_notices", self.versions),
+                            ("locked_tooling", self.tooling), ("native_browser_downloads", self.native_browser),
+                            ("native_skill_roster", self.native_roster), ("private_searxng_mcp", self.private_search),
                             ("chromium_sandbox", self.browser), ("exclusive_host_fixture", self.fixture),
                             ("private_gateway_route", self.gateway), ("native_acp", self.acp),
                             ("real_termination", self.termination), ("owned_cleanup", self.cleanup)):

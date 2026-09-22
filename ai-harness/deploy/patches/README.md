@@ -37,16 +37,16 @@ The full Linux typecheck/build remains the acceptance gate.
 
 `0001` and `0002` remain byte-identical to PREP. `0001` through `0004` and all
 dependency-phase identities remain byte-identical after `0005` was added.
-`SHA256SUMS` pins all five patches;
+`SHA256SUMS` pins all seven patches;
 its SHA256 is the image/launcher admission identity:
-`00418190e3abae6ef9e44c60dedfda220d2a60fa9d64e364fa650d142362f8b7`.
-`source.SHA256SUMS` and `patched.SHA256SUMS` identify all six affected source files.
+`8d3575bc32df22794dea977a4daad75406f617f1a3a4787a739b0fbd651bb034`.
+`source.SHA256SUMS` and `patched.SHA256SUMS` identify all 42 affected source files.
 `identity.json` provides the same mapping and the transport/dependency pins.
 
 For reusable dependency layers, first COPY only `0003` and the `dependency-*`
 manifests, verify original hashes, apply `0003`, verify patched hashes, then run
 `pnpm install --frozen-lockfile`. COPY generic source patches later; verify
-`source-source.SHA256SUMS`, apply `0001`, `0002`, `0004`, `0005` **sequentially** with an
+`source-source.SHA256SUMS`, apply `0001`, `0002`, `0004`, `0005`, `0006`, `0007` **sequentially** with an
 individual `git apply --check` before each, then verify
 `source-patched.SHA256SUMS`. `0004` is based on the result of `0001`; `0005` follows `0004`. The complete
 set may also be applied sequentially before installation. Verify the complete
@@ -86,3 +86,35 @@ Node 24.21.0 source fixtures passed 7/7. The exact helper also passed a TypeScri
 importers and left the patched lock byte-identical. These are local source and
 transport checks; they do not establish Linux image, ACP, full TypeScript,
 live model, 151-minute occupied duration or real compaction acceptance.
+
+## Native browser download patch
+
+`0006` sets the native headless provider download root to canonical
+`process.cwd()/downloads/browser/<safeSessionId>`, validates each path component
+and destination against symlink/nonregular/hardlink escapes, and uses Chromium
+GUID filenames via `Browser.setDownloadBehavior(allowAndName)`. The compact native
+browser output exposes only completed, checked workspace-relative artifact paths.
+Session disposal retains workspace downloads. The sandbox flags are unchanged.
+Static containment tests do not claim atomic protection against concurrent
+same-user filesystem mutation; native browser and sandbox fixtures supply the
+Linux execution evidence separately. No browser MCP or extra mount is added.
+
+## Reviewed native completion bridge
+
+`0007` integrates root-reviewed native commit
+`4a70b28e9d038747ff130302c844ccb06367d03f` (original patch SHA256
+`e3cdb67ea41ef7e8ef6ee3bc014b79f83da3f5c23a7af25b0deccf96a1bbe10d`).
+Integration preserves the `0002` compaction notification in overlapping extension
+context and adds that preexisting notification to one initialize test expectation.
+No completion runtime behavior is invented or changed from the reviewed patch.
+The integrated patch and final source hashes are authoritative in `identity.json`.
+Five added paths have `originalSha256:null`; pristine SHA manifests omit those paths,
+and the sequential `git apply --check` requires that the new files do not exist.
+
+ACP advertises `mcode/session/settlement/get` only with the native bridge. Its
+schema1 receipt distinguishes running/settled/cancelled/unknown using process/run
+identities and native tree ownership. A new session with no run must remain
+unknown; initialize/session-new/receipt inspection is inference-free validation.
+Normal completion, continuation, cancellation, clean restart/rearm, and interrupted
+unknown behavior are tested by the reviewed synthetic native suites. Those tests
+are not live model inference or full end-to-end application acceptance.

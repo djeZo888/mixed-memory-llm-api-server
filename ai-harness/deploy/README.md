@@ -69,7 +69,7 @@ After rootless Podman is available and reviewed sources are staged, build as
 `user` with **`ai-harness/` as the context**, from that directory:
 
 ```sh
-podman build --format docker --layers --target runtime-base --file deploy/Containerfile \
+podman build --format docker --layers --target runtime --file deploy/Containerfile \
   --tag localhost/ai-harness-engine:0.0.1-ae65651df5f9 .
 podman image inspect localhost/ai-harness-engine:0.0.1-ae65651df5f9
 ```
@@ -82,13 +82,15 @@ host home. No automatic build or pull occurs inside `run-engine.sh`.
 `source-base` caches the pinned source/toolchain, `source-deps` installs the
 frozen workspace dependencies using only the pinned manifest/lock patch,
 `build` applies later source/ACP patches and typechecks/compiles MiniMax, and
-`runtime-deps` caches runtime packages. The named `runtime-base` retains that
-compile and provides the later reviewed integration point: add a stage
-`FROM runtime-base` and copy TOOLS assets into `/opt/ai-harness/tools` and curated
-skills into `/opt/ai-harness/skills`. Current source does not copy unfinished
-TOOLS/SERVER work. The later integration must reconcile supplemental Python
-pins with the reviewed TOOLS dependency contract. See
-[engine/README.md](engine/README.md) for source/artifact pins and limitations.
+`runtime-deps` preserves the costly OS/Chromium cache. `reviewed-tools` adds
+an official digest-pinned CPython 3.12 slim-bookworm interpreter and isolated
+venv, installs the reviewed Python hash locks and npm locks, independently of
+native source compilation. Final target `runtime` replaces the historical
+supplemental tools and copies the reviewed tools and five skills into
+`/opt/ai-harness/tools` and `/opt/ai-harness/skills`. The entrypoint seeds those
+skills into the mounted profile state; no additional mount is needed. Native
+acceptance probes are bundled separately from the exact patched build. See
+[engine/README.md](engine/README.md) for pins and validation boundaries.
 
 The backend invokes:
 
@@ -102,8 +104,7 @@ It supplies `AI_HARNESS_GATEWAY_TOKEN` (ephemeral inference-only),
 command/history or unit. Container HOME is profile/state/home; only that session
 profile and workspace are mounted, at their original absolute paths. No host
 SSH/Codex directories, service data root, credentials or management sockets are
-mounted. Reviewed skills/tools image integration remains with root's later task;
-the initial launcher has no arbitrary extra-mount escape hatch.
+mounted. The launcher has no arbitrary extra-mount escape hatch.
 
 The launcher uses `slirp4netns:allow_host_loopback=true` to reach the host gateway
 at127.0.0.1:8081 through10.0.2.2:8081 without publishing the gateway. It clears
@@ -181,3 +182,13 @@ instructions likewise live at `state/config.yaml` and `state/AGENTS.md`.
 The launcher refuses recognized legacy root-level profile files rather than
 hiding prior history. Existing profiles require an explicit reviewed migration;
 this task exercises new isolated profiles only.
+
+If `/usr/bin/catatonit` is absent, the bounded on-demand host prerequisite is
+`sudo apt-get install --no-install-recommends catatonit`; do not rerun the full
+bootstrap. The runtime launcher requires this executable (host package identity in
+`engine/pins.json`). Podman `--init --init-path /usr/bin/catatonit` supplies a small
+PID1 that reaps orphaned subprocesses. Its managed read-only executable bind is
+approved; the profile and workspace remain the only host data mounts. No privilege
+or capability is added. HOST `HOME` must remain the ordinary service user's home;
+only the container `HOME` is `<profileDir>/state/home`. The server-to-launcher
+acceptance fixture must exercise that distinction with a dummy ephemeral token.

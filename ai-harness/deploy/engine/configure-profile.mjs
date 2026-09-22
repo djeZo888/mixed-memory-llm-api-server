@@ -1,6 +1,10 @@
-import { lstatSync, mkdirSync, realpathSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
+import { constants, closeSync, fstatSync, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+export const CURATED_SKILLS = Object.freeze(['technical-research', 'code-investigation', 'calculations', 'technical-testing', 'pdf']);
+export const SKILLS_SOURCE = '/opt/ai-harness/skills';
+export const SEARXNG_URL = 'http://10.0.2.2:8082';
 
 export const MODEL = 'qwen3.8-27b';
 export const MODEL_REF = `custom_provider:harness/${MODEL}`;
@@ -42,11 +46,12 @@ export function localConfig(env) {
     agents: { default: {
       tools: ['read', 'write', 'edit', 'bash', 'task_query', 'task_output', 'task_stop', 'grep', 'glob', 'todowrite', 'web_fetch'],
       builtinTools: [],
-      skills: ['code-review', 'init'],
+      skills: ['code-review'],
       features: { delegation: true, webSearch: false, mavis: false },
     } },
-    // Native webSearch/media require managed services. Reviewed SearXNG MCP and
-    // local PDF skill are separate mounts supplied by the tools task.
+    // Keep the one reviewed MCP search tool directly exposed. Browser and
+    // delegation capabilities remain native feature-owned tools.
+    mcpToolSearch: { enabled: false },
     beta: { browserUseTooling: true, mcodeTools: false, codexOAuth: false, cuMode: false, asr: false },
     asr: { enabled: false },
     promptConfig: { autoUpdate: false },
@@ -59,7 +64,109 @@ export function localConfig(env) {
   };
 }
 
-export function configureProfile(env) {
+export function localMcpConfig() {
+  return { mcpServers: { searxng: {
+    command: 'node',
+    args: ['/opt/ai-harness/tools/search/searxng-mcp.mjs'],
+    // The profile MCP reader passes these strings literally; no ${VAR} expansion.
+    env: { AI_HARNESS_SEARXNG_URL: SEARXNG_URL },
+    timeout: 20000,
+  } } };
+}
+
+function statIfPresent(target) {
+  try { return lstatSync(target); }
+  catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+}
+
+function safeDirectory(target, owned = false) {
+  const stat = lstatSync(target);
+  if (!stat.isDirectory() || realpathSync(target) !== target ||
+      (owned && (stat.uid !== process.getuid() || (stat.mode & 0o022) !== 0))) {
+    throw new Error('Refusing an unsafe skills directory.');
+  }
+}
+
+function safeRead(target, owned = false) {
+  // O_NOFOLLOW closes the final-component symlink race between check and read.
+  const fd = openSync(target, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const stat = fstatSync(fd);
+    if (!stat.isFile() || stat.nlink !== 1 ||
+        (owned && (stat.uid !== process.getuid() || (stat.mode & 0o022) !== 0))) {
+      throw new Error('Refusing an unsafe skills file.');
+    }
+    return readFileSync(fd);
+  } finally { closeSync(fd); }
+}
+
+function skillTree(source, destination, copy) {
+  safeDirectory(source);
+  safeDirectory(destination, true);
+  const names = readdirSync(source).sort();
+  if (!copy && JSON.stringify(readdirSync(destination).sort()) !== JSON.stringify(names)) {
+    throw new Error('Existing skills do not match the reviewed image roster.');
+  }
+  for (const name of names) {
+    const original = path.join(source, name);
+    const target = path.join(destination, name);
+    const stat = lstatSync(original);
+    if (stat.isDirectory()) {
+      if (copy) mkdirSync(target, { mode: 0o700 });
+      skillTree(original, target, copy);
+    } else if (stat.isFile()) {
+      const content = safeRead(original);
+      if (copy) writeFileSync(target, content, { mode: 0o600, flag: 'wx' });
+      else if (!safeRead(target, true).equals(content)) {
+        throw new Error('Existing skills differ from the reviewed image contents.');
+      }
+    } else throw new Error('Refusing a non-regular reviewed skills entry.');
+  }
+}
+
+export function seedReviewedSkills(profile, source = SKILLS_SOURCE) {
+  if (!path.isAbsolute(source)) throw new Error('Reviewed skills source must be absolute.');
+  safeDirectory(source);
+  const expected = [...CURATED_SKILLS, 'LICENSE-MIT.txt'].sort();
+  if (JSON.stringify(readdirSync(source).sort()) !== JSON.stringify(expected)) {
+    throw new Error('Packaged skills must contain exactly the reviewed roster and license.');
+  }
+  for (const name of CURATED_SKILLS) {
+    safeDirectory(path.join(source, name));
+    safeRead(path.join(source, name, 'SKILL.md'));
+  }
+  safeRead(path.join(source, 'LICENSE-MIT.txt'));
+  const target = path.join(profile, 'skills');
+  if (statIfPresent(target)) {
+    skillTree(source, target, false);
+    return;
+  }
+  // Publish only a complete private copy. Interrupted partial staging is never
+  // a discoverable global skill root, and later starts validate instead of merge.
+  const staging = mkdtempSync(path.join(profile, '.skills-'));
+  try {
+    skillTree(source, staging, true);
+    if (statIfPresent(target)) throw new Error('Skills appeared during initialization.');
+    renameSync(staging, target);
+  } finally { rmSync(staging, { recursive: true, force: true }); }
+}
+
+function writePrivateJson(profile, name, value) {
+  const target = path.join(profile, name);
+  const existing = statIfPresent(target);
+  if (existing && (!existing.isFile() || existing.uid !== process.getuid() || existing.nlink !== 1)) {
+    throw new Error(`Refusing an unsafe ${name} target.`);
+  }
+  const temporary = path.join(profile, `.${name}-${process.pid}.tmp`);
+  try {
+    writeFileSync(temporary, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
+    renameSync(temporary, target);
+  } finally {
+    try { unlinkSync(temporary); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  }
+}
+
+export function configureProfile(env, skillsSource = SKILLS_SOURCE) {
   const profile = env.MINIMAX_DATA_DIR;
   if (!profile || !path.isAbsolute(profile) || profile === '/' || realpathSync(profile) !== profile) {
     throw new Error('MINIMAX_DATA_DIR must be a canonical isolated absolute directory.');
@@ -82,24 +189,11 @@ export function configureProfile(env) {
     if (error.code !== 'ENOENT') throw error;
     writeFileSync(instructions, SHARED_SLOT_INSTRUCTIONS, { mode: 0o600, flag: 'wx' });
   }
-  const target = path.join(profile, 'config.yaml');
-  try {
-    const existing = lstatSync(target);
-    if (!existing.isFile() || existing.uid !== process.getuid() || existing.nlink !== 1) {
-      throw new Error('Refusing an unsafe config.yaml target.');
-    }
-  } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
-  }
+  seedReviewedSkills(profile, skillsSource);
+  writePrivateJson(profile, 'mcp.json', localMcpConfig());
   // JSON is a YAML subset. Never print this ephemeral inference-only token.
   // Atomic replacement also makes every runner refresh a formerly expired token.
-  const temporary = path.join(profile, `.config-${process.pid}.tmp`);
-  try {
-    writeFileSync(temporary, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
-    renameSync(temporary, target);
-  } finally {
-    try { unlinkSync(temporary); } catch (error) { if (error.code !== 'ENOENT') throw error; }
-  }
+  writePrivateJson(profile, 'config.yaml', config);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

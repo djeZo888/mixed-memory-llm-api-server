@@ -167,6 +167,7 @@ else:
         self.assertEqual(argv[argv.index("--workdir") + 1], str(self.workspace))
         self.assertIn("--pull=never", argv)
         self.assertIn("--read-only", argv)
+        self.assertIn("--init", argv)
         self.assertIn("no-new-privileges", argv)
         self.assertIn("seccomp=" + str(LAUNCHER.parent / "security/chromium-seccomp.json"), argv)
         self.assertEqual(argv[argv.index("--cap-drop") + 1], "ALL")
@@ -177,7 +178,7 @@ else:
         container_env = [argv[index + 1] for index, item in enumerate(argv) if item == "--env"]
         self.assertCountEqual(container_env, [
             f"HOME={self.profile}/state/home", f"MINIMAX_DATA_DIR={self.profile}/state",
-            "PATH=/opt/ai-harness-python/bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin", "TERM=dumb", "NO_COLOR=1",
+            "PATH=/opt/ai-harness-python/bin:/opt/ai-harness/tools/runtime/node_modules/.bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin", "TERM=dumb", "NO_COLOR=1",
             "MCODE_DISABLE_TELEMETRY=1", "DO_NOT_TRACK=1", "MCODE_CHROME_PATH=/usr/bin/chromium", "PYTHONDONTWRITEBYTECODE=1",
             "AI_HARNESS_GATEWAY_URL", "AI_HARNESS_GATEWAY_TOKEN", "AI_HARNESS_SESSION_ID",
         ])

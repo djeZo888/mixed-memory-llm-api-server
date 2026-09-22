@@ -15,19 +15,26 @@
     "cliSha256": "e5a59ec5362e395b519317ad6fecd99f6e92308b9d985be44b64eb2f2b73a722"
   },
   "additionalNpm": {
-    "typescript": "5.9.3",
-    "@playwright/test": "1.56.1"
+    "typescript": "7.0.2",
+    "@playwright/test": "1.63.0",
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "4.6.5"
   },
   "additionalPython": {
-    "pypdf": "6.1.1",
-    "pdfplumber": "0.11.7",
-    "reportlab": "4.4.4"
+    "pytest": "9.1.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sympy": "1.14.0",
+    "matplotlib": "3.11.2",
+    "pypdf": "6.19.0",
+    "pdfplumber": "0.11.10",
+    "Markdown": "3.10.3"
   },
   "gatewayUrl": "http://10.0.2.2:8081/v1",
   "logicalModel": "qwen3.8-27b",
   "contextWindow": 480000,
   "maxOutputTokens": 65536,
-  "dependencyBoundary": "Base/source/mcode-tools and listed direct packages pinned. Apt repositories and supplemental transitive resolutions are not snapshot-pinned; image build emits package manifests. Retain final image ID and manifests for exact deployment identity.",
+  "dependencyBoundary": "Node/Python base images, native source/mcode-tools and supplemental npm/Python lockfiles pinned. Apt package snapshot inherits preserved base build; image emits package manifests. Retain exact final image ID and manifests.",
   "requestTimeoutMs": 9060000,
   "inputModalities": [
     "text",
@@ -51,7 +58,7 @@
     ],
     "identityBoundary": "These resulting hashes apply immediately after 0001; identity.json pins the final combined source."
   },
-  "patchSetSha256": "00418190e3abae6ef9e44c60dedfda220d2a60fa9d64e364fa650d142362f8b7",
+  "patchSetSha256": "8d3575bc32df22794dea977a4daad75406f617f1a3a4787a739b0fbd651bb034",
   "patchIdentity": "patches/identity.json",
   "transportPatch": {
     "patches": [
@@ -97,7 +104,7 @@
     ]
   },
   "buildContext": "ai-harness/",
-  "buildTarget": "runtime-base",
+  "buildTarget": "runtime",
   "buildFormat": "docker",
   "chromiumSeccomp": {
     "source": "ai-harness:/usr/share/containers/seccomp.json",
@@ -108,5 +115,55 @@
     "observedFailure": "Check failed: sys_chroot(\"/proc/self/fdinfo/\") == 0; Chromium zygote exits prematurely under stock Podman4.9.3 profile."
   },
   "profileDataSubdirectory": "state",
-  "profileHomeSubdirectory": "state/home"
+  "profileHomeSubdirectory": "state/home",
+  "python": {
+    "image": "docker.io/library/python:3.12-slim-bookworm@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e",
+    "index": "sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e",
+    "linuxAmd64Manifest": "sha256:1aaa65a85fda306ffb8b910824d4e93bdce61e212c7e87168123ea3073b41a1a",
+    "version": "3.12.14",
+    "config": "sha256:febd0be41adb897a0ab8f1f1c693d8912669ea60c4940e076e9946b60e210ef0"
+  },
+  "browserDownloads": {
+    "patch": "0006-browser-workspace-downloads.patch",
+    "sha256": "a7f39896847bec656665b30d17621928c6dab7e10771b713ed369140fccd96bf",
+    "files": [
+      {
+        "path": "packages/agent-tools/src/desktop/local-browser.ts",
+        "originalSha256": "ee9f680ae82f16f900d607e55009c35e6549b1565428004c1dcbe2794076dc52",
+        "patchedSha256": "d9e32a17514f055d093704b6c6dc18fd35fd3d6009790d869e9f6dc2542aa3a8"
+      },
+      {
+        "path": "packages/tui/src/runtime/browser/headless-chrome-provider.ts",
+        "originalSha256": "324f261ac24e9aa94d9a2299e8b4db1cf03e552f99757513bec9e4e733e54b96",
+        "patchedSha256": "218bbbd905900c9a472bf3653da2d560d2a6c4640e93b976ba4454d9b7591505"
+      },
+      {
+        "path": "packages/tui/src/runtime/browser/headless-chrome-transport.ts",
+        "originalSha256": "2d72e96d68f87d365b5a0670e5ca45addfb72d6d3e878b42b20d68b78ebb810e",
+        "patchedSha256": "92203c34dd98bc98380ff17593cfef189109cf8da803bea76f9c80aead3a163d"
+      }
+    ],
+    "root": "<canonical workspace>/downloads/browser/<safeSessionId>",
+    "filename": "Chromium download GUID",
+    "compactResult": "Completed checked workspace-relative filePath"
+  },
+  "hostInit": {
+    "path": "/usr/bin/catatonit",
+    "package": "catatonit",
+    "version": "0.1.7-1",
+    "binaryVersion": "0.1.7_catatonit",
+    "sha256": "43e9b836ca7631672f12d0610cd574875b62d236dfd62e3b86751f35862e5eba",
+    "purpose": "Podman managed read-only PID1 init executable bind; orphan reaping, no added data/admin mount"
+  },
+  "nativeCompletion": {
+    "approvedPatchSha256": "e3cdb67ea41ef7e8ef6ee3bc014b79f83da3f5c23a7af25b0deccf96a1bbe10d",
+    "approvedCommit": "4a70b28e9d038747ff130302c844ccb06367d03f",
+    "integrationPatchSha256": "882f4e01cd3e7be14690b7070118233aad59a72d7c76c2777aba286f5c834a5e",
+    "overlap": "0007 context preserves existing 0002 compaction notification; initialize test expected notifications adds exactly that preexisting notification. No runtime deviation from approved completion behavior. Five new paths use null originalSha256; git apply --check requires absence."
+  },
+  "reviewedTools": {
+    "baseCommit": "517e5dbeba3b7370d5485b6e012c7326adf458a8",
+    "pdfCorrectionCommit": "184e78082ce3c14b85a09795f23b506b330327f3",
+    "sourceLockPolicy": "Reviewed npm/Python locks unchanged; root-approved three-file PDF implementation correction imported separately."
+  }
 }

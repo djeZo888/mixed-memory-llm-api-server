@@ -4,14 +4,17 @@ Build with **`ai-harness/` as the context**, from that directory as the ordinary
 user after the reviewed host bootstrap:
 
 ```sh
-podman build --format docker --layers --target runtime-base --tag localhost/ai-harness-engine:0.0.1-ae65651df5f9 --file deploy/Containerfile .
+podman build --format docker --layers --target runtime --tag localhost/ai-harness-engine:0.0.1-ae65651df5f9 --file deploy/Containerfile .
 podman image inspect localhost/ai-harness-engine:0.0.1-ae65651df5f9 --format '{{.Id}}'
 ```
 
 The `.containerignore` excludes private runtime state and build scratch. The
-named `runtime-base` is the reusable base for a later reviewed tools/skills
-stage. Add its COPY steps after `FROM runtime-base` at `/opt/ai-harness/tools`
-and `/opt/ai-harness/skills`; no unfinished tools or server source is imported.
+final `runtime` stage embeds the reviewed tools and five skills, using a digest-pinned
+official Python 3.12 slim-bookworm interpreter copied into the same Debian suite.
+Its rebuilt venv excludes system-site-packages. Supplemental Python manifests
+install with `--require-hashes`; both Node tool lockfiles use
+`npm ci --omit=dev --ignore-scripts`. Historical venv/global tools are replaced
+in the active final filesystem while their expensive dependency layers stay cached.
 `source-base`, `source-deps`, `build`, and `runtime-deps` retain source/package
 layers. The isolated `source-deps` stage applies only the two manifest/lock
 hunks of pinned `0003`, verifies their original/resulting hashes and installs
@@ -21,7 +24,9 @@ posthashes separately, applies remaining hunks, checks full patched hashes,
 commits deterministically and typechecks/compiles/packages the source. A future
 ACP/source patch must rebuild compilation but cannot invalidate pnpm installation.
 Patch documentation does not enter either dependency or compilation inputs.
-Later tools/skills COPY steps leave the complete runtime-base cache reusable.
+The independent `reviewed-tools` dependency stage also stays cached when native
+patches change. Build `runtime-base` only for an explicitly incomplete base-cache check;
+all final validation and deployment use `runtime`.
 
 The build starts from official MiniMax source at
 `ae65651df5f97ae1085ab4e19964f4b78c769a4e`, applies the recorded identity-checked patches
@@ -45,8 +50,9 @@ SHA-256. It retains `embedded/mcode-tools/manifest.json` and
 The media integration is disabled, but its required build artifact and notices
 remain unchanged. No claim that this external artifact is source-built.
 
-The base/source and direct supplemental versions are pinned. Apt and additional
-transitive resolutions are not a reproducible snapshot. Preserve the built
+The base/source and supplemental Python/npm lockfiles are pinned. Apt packages
+inherit the preserved base build and are not a reproducible repository snapshot.
+The PSF license is retained at `/usr/local/share/licenses/python-3.12/LICENSE.txt`. Preserve the built
 image ID, `/opt/minimax/package-lock.json`, source pnpm lock, release receipt and
 `/usr/local/share/ai-harness-{dpkg.tsv,python.txt,npm.json}` with acceptance evidence.
 
@@ -86,9 +92,17 @@ Do not log into MiniMax within this local-only profile.
 
 The initial permission mode is `default`, external skill ingestion is disabled,
 and the supported profile `AGENTS.md` explains two shared inference slots,
-independent delegation and queued excess inference. Native delegation remains enabled. Curated PDF/search skills and SearXNG MCP
-will be embedded by root's subsequent integration task; no paid native-search
-fallback is enabled.
+independent delegation and queued excess inference. Native delegation remains enabled.
+At first initialization, `configure-profile.mjs` copies exactly the five reviewed
+skills and MIT license from `/opt/ai-harness/skills` into `${MINIMAX_DATA_DIR}/skills`
+through a private staging directory. Reuse requires matching reviewed contents,
+owned private directories/files, and no symlinks, hardlinks or additional entries.
+The standalone builtin whitelist is `[code-review]`; external skill ingestion is
+disabled, and no canonical `configSelection.skills` filter is introduced.
+`${MINIMAX_DATA_DIR}/mcp.json` registers only the embedded SearXNG stdio adapter,
+with literal `http://10.0.2.2:8082` (the profile loader does not expand environment
+strings). `mcpToolSearch.enabled=false` exposes the reviewed configured search tool
+directly. No paid native-search fallback is enabled.
 The two shared inference slots are admitted by the host gateway, not by the
 container. The profile sets `agentStop.maxActiveSpanMs=0`. The pinned config schema and
 parser document and accept zero as disabling its forced producer-active
@@ -103,7 +117,14 @@ by the browser capability and is not in that list. Likewise `task` and
 `task_append` are feature-owned (`features.delegation=true`), while
 `task_query`, `task_output`, `task_stop` are explicitly retained. The browser's
 capability-owned `control-in-app-browser` skill is retained independently of
-the standalone skill allowlist.
+the standalone skill allowlist. Native `skill` is also retained: it is not in
+`AGENT_BUILTIN_TOOL_IDS`, so it is not filtered by `agents.default.tools`.
+Adding `skill` would invalidate that whitelist: the strict native parser rejects
+it, while the tolerant settings parser discards the invalid tools list.
+This follows `packages/config/src/agent-capabilities.ts` and
+`packages/local-runtime-v2/src/service/turn-system/agent-host/assembly/local-turn-tool-catalog.ts`
+at `ae65651df5f97ae1085ab4e19964f4b78c769a4e`; actual native discovery remains
+part of final image validation.
 
 ## Request budget patch
 
@@ -242,3 +263,29 @@ A requested TERM/INT/HUP acknowledges cleanup with launcher exit0 only after
 exact owned-container absence is verified. Cleanup failure or uncertainty is125;
 unexpected engine failures retain their nonzero status. This transport cleanup
 acknowledgment is distinct from the ACP task result and emits no stdout marker.
+
+## Workspace browser downloads
+
+Patch `0006` directs native Chromium downloads into
+`<workspace>/downloads/browser/<safeSessionId>/<GUID>`. CDP `allowAndName`
+avoids collisions and does not trust suggested filenames. Directory components
+and destinations reject symlinks/nonregular or multiply linked files; completed
+results expose only checked workspace-relative paths in the native compact
+`browser` result. Downloads survive normal session disposal. These checks do not
+claim atomic protection against concurrent filesystem mutation by the same user.
+The native namespace/seccomp sandbox and launcher mount envelope are unchanged.
+
+`deploy/tests/runtime-smoke.py` runs final locked-tool fixtures, shared-library
+closure, the private SearXNG MCP route, native browser DOM/PDF downloads and sandbox,
+native skill discovery, and ACP initialize/session-new without a generation turn.
+Its `native-probes` bundle is built from the exact patched source with upstream
+external/module-resolution rules; it is acceptance tooling, not an added agent tool.
+Per-turn and delegated-role execution acceptance remains a later root-gated test.
+
+Podman's explicit `/usr/bin/catatonit` init reaps orphaned tool/browser descendants.
+Its host version and SHA256 are recorded in `pins.json`; the managed executable
+bind carries no host credentials or data. Native completion bridge `0007` preserves
+compaction notifications and exposes schema1 settlement receipts; the server must
+use the native contract and verified container cleanup rather than infer settlement
+from a prompt or cancel acknowledgement. No generation is needed for initialize,
+session-new and never-started settlement inspection.

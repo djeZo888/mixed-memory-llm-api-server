@@ -105,7 +105,7 @@ rootless=$("$podman_bin" --remote=false info --format '{{.Host.Security.Rootless
 
 image_tag=localhost/ai-harness-engine:0.0.1-ae65651df5f9
 revision=ae65651df5f97ae1085ab4e19964f4b78c769a4e
-patchset=00418190e3abae6ef9e44c60dedfda220d2a60fa9d64e364fa650d142362f8b7
+patchset=8d3575bc32df22794dea977a4daad75406f617f1a3a4787a739b0fbd651bb034
 image_metadata=$("$podman_bin" --remote=false image inspect --format '{{.Id}}|{{index .Labels "org.opencontainers.image.revision"}}|{{index .Labels "org.opencontainers.image.ai-harness.patchset"}}' "$image_tag" 2>/dev/null) || die 'reviewed engine image is absent; build it separately after bootstrap'
 image_id=${image_metadata%%|*}
 image_labels=${image_metadata#*|}
@@ -142,7 +142,7 @@ except OSError:
 sys.exit(0 if valid else 1)
 PY_SECCOMP
 exec "$python_bin" "$launcher_dir/engine/redact-acp.py" "$podman_bin" \
-  --remote=false run --rm --interactive --pull=never \
+  --remote=false run --init --init-path /usr/bin/catatonit --rm --interactive --pull=never \
   --userns keep-id --user "$host_uid:$host_gid" \
   --network slirp4netns:allow_host_loopback=true \
   --cap-drop ALL --security-opt no-new-privileges \
@@ -156,7 +156,7 @@ exec "$python_bin" "$launcher_dir/engine/redact-acp.py" "$podman_bin" \
   --volume "$workspace:$workspace:rw,rprivate" \
   --workdir "$workspace" \
   --env "HOME=$container_home" --env "MINIMAX_DATA_DIR=$container_data" \
-  --env PATH=/opt/ai-harness-python/bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin \
+  --env PATH=/opt/ai-harness-python/bin:/opt/ai-harness/tools/runtime/node_modules/.bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin \
   --env TERM=dumb --env NO_COLOR=1 \
   --env MCODE_DISABLE_TELEMETRY=1 --env DO_NOT_TRACK=1 \
   --env MCODE_CHROME_PATH=/usr/bin/chromium --env PYTHONDONTWRITEBYTECODE=1 \
