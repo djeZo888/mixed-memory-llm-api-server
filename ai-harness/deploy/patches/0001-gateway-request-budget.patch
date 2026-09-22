@@ -1,0 +1,60 @@
+diff --git a/packages/agent-core/src/pi-turn-runner/defaults.ts b/packages/agent-core/src/pi-turn-runner/defaults.ts
+--- a/packages/agent-core/src/pi-turn-runner/defaults.ts
++++ b/packages/agent-core/src/pi-turn-runner/defaults.ts
+@@ -12,13 +12,13 @@
+ 
+ /**
+  * Default per-call LLM HTTP timeout (ms) injected into every provider
+- * stream invocation via `wrapStreamFnWithTimeout`. 20 minutes is long
+- * enough for thinking turns without letting a wedged provider hang the
+- * agent loop indefinitely.
++ * stream invocation via `wrapStreamFnWithTimeout`. The local harness allows
++ * 120 minutes active generation + 30 minutes admission queue + 1 minute
++ * transport margin. The gateway owns the separate active/queue budgets.
+  *
+  * Per-call upstream wrappers that explicitly set `options.timeoutMs` win.
+  */
+-export const LLM_REQUEST_TIMEOUT_MS = 20 * 60 * 1000;
++export const LLM_REQUEST_TIMEOUT_MS = 151 * 60 * 1000;
+ 
+ export const defaultMessageIdAllocator: PiMessageIdAllocator = {
+   async allocateAssistantMessageId() {
+diff --git a/packages/local-runtime-v2/src/service/session-system/sessions/title/session-title-service.ts b/packages/local-runtime-v2/src/service/session-system/sessions/title/session-title-service.ts
+--- a/packages/local-runtime-v2/src/service/session-system/sessions/title/session-title-service.ts
++++ b/packages/local-runtime-v2/src/service/session-system/sessions/title/session-title-service.ts
+@@ -55,7 +55,8 @@
+ export const SESSION_TITLE_SYSTEM_PROMPT_KEY = 'desktop-task/session-title/system.md';
+ 
+ const TITLE_MAX_TOKENS = 1_000;
+-const TITLE_TIMEOUT_MS = 10_000;
++// Include the shared gateway queue and active-generation budgets.
++const TITLE_TIMEOUT_MS = 151 * 60 * 1000;
+ const TITLE_INPUT_LIMIT = 1_000;
+ const TITLE_INPUT_HEAD_LENGTH = 600;
+ const TITLE_INPUT_TRUNCATION_MARKER = '\n[…]\n';
+diff --git a/packages/local-runtime-v2/src/service/session-system/sessions/root/archived-root-title.ts b/packages/local-runtime-v2/src/service/session-system/sessions/root/archived-root-title.ts
+--- a/packages/local-runtime-v2/src/service/session-system/sessions/root/archived-root-title.ts
++++ b/packages/local-runtime-v2/src/service/session-system/sessions/root/archived-root-title.ts
+@@ -3,7 +3,8 @@
+ export const ARCHIVE_TITLE_RECENT_MESSAGE_LIMIT = 30;
+ export const ARCHIVE_TITLE_PER_MESSAGE_CHAR_CAP = 500;
+ export const ARCHIVE_TITLE_MAX_LEN = 12;
+-export const ARCHIVE_TITLE_TIMEOUT_MS = 15_000;
++// Include the shared gateway queue and active-generation budgets.
++export const ARCHIVE_TITLE_TIMEOUT_MS = 151 * 60 * 1000;
+ export const ARCHIVE_TITLE_MAX_TOKENS = 1_024;
+ 
+ const ARCHIVE_TITLE_SYSTEM_PROMPT_ZH =
+diff --git a/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts b/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
+--- a/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
++++ b/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
+@@ -151,7 +151,8 @@
+ 			}
+ 			const requestOptions = {
+ 				...(options?.signal ? { signal: options.signal } : {}),
+-				...(options?.timeoutMs !== undefined ? { timeout: options.timeoutMs } : {}),
++				// Direct streamSimple auxiliaries also need the full local gateway budget.
++				timeout: options?.timeoutMs ?? 151 * 60 * 1000,
+ 				maxRetries: options?.maxRetries ?? 0,
+ 			};
+ 			const { data: openaiStream, response } = await client.chat.completions

@@ -1,0 +1,46 @@
+{
+  "sourceRevision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+  "patchSetSha256": "256e6fc91a7b86fcc0073c3755bd0aab6be50bb4125827be36d9b99dc1b09d0c",
+  "patches": [
+    {
+      "path": "0001-gateway-request-budget.patch",
+      "sha256": "e8086c1a2b4da08b1a50af88044741f83c05ee1d400a5d5f4fb017310e32b75b"
+    },
+    {
+      "path": "0002-acp-compaction-notifications.patch",
+      "sha256": "ec56ccb5834dd75f7e4c9a9bff9599ebaf1da41c101c0cbde858c47f46cc8d2f"
+    }
+  ],
+  "files": [
+    {
+      "path": "packages/agent-core/src/pi-turn-runner/defaults.ts",
+      "originalSha256": "644698ef49486fd0a4030388a2d34497afd643116f54da5a829ca6166b1967ac",
+      "patchedSha256": "1977a0947a4a036adea9e1f5677c41984cea49bfd4f3a6b2a03782510ba074fc"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/service/session-system/sessions/root/archived-root-title.ts",
+      "originalSha256": "7bf6b8f74d85e69509e119042ef45c8a583236f5e957b1cdc34df51a29911e46",
+      "patchedSha256": "6828ff414976c55709c846a933b6a81207118e454fa47d1a88790149ac1ddca2"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/service/session-system/sessions/title/session-title-service.ts",
+      "originalSha256": "9d776489297e49e0d5f677fd172c7ee6556ef2ace2ceaeb03478aea17f156a8d",
+      "patchedSha256": "b93eec185327161e970be4aacc2190df044e2745ca4a7edf9814988c92fe1e4c"
+    },
+    {
+      "path": "packages/tui/src/acp/agent.ts",
+      "originalSha256": "f52c7031a0f22663c79cf33819e5df8f7b56c1352c2f087eb4c3d798c9728b79",
+      "patchedSha256": "3d78cf5b25cdee1f01ff81cd9f39de3d8b86173933fa2efea489603dc7f9c5ba"
+    },
+    {
+      "path": "packages/tui/src/acp/extensions.ts",
+      "originalSha256": "85ffe239d726d88106f15ce85835a6af810850954cf4a9eda54c61246c9f379a",
+      "patchedSha256": "5e747161117a8f713271dffe2f13665fac7686e1ba3c66ffefafeb72e49ae76d"
+    },
+    {
+      "path": "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts",
+      "originalSha256": "9271d59f34d58854af1e0a32a6d67e55fedd68673519f22c08eebce97ca8be21",
+      "patchedSha256": "73c3decbf8a78b5fa672bf4690bfec4ea717a04799dc400eff92654d79a0d01e"
+    }
+  ]
+}

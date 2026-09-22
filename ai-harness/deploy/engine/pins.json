@@ -1,0 +1,65 @@
+{
+  "reviewedAt": "2026-09-22",
+  "imageTag": "localhost/ai-harness-engine:0.0.1-ae65651df5f9",
+  "base": "docker.io/library/node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6",
+  "baseLinuxAmd64Manifest": "sha256:5cbc7caba8c2c0f0bca675d1b61b9f2857e1cf1853c6164ee9dd409501a936e7",
+  "node": "24.21.0",
+  "pnpm": "9.12.0",
+  "miniMaxRepository": "https://github.com/MiniMax-AI/minimax-code.git",
+  "miniMaxRevision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+  "miniMaxManifestVersion": "0.5.1",
+  "mcodeTools": {
+    "version": "0.0.4",
+    "archive": "https://registry.npmjs.org/@minimax-ai/code/-/code-0.3.11.tgz",
+    "archiveSha512Base64": "sBOd8yvQRVuQNoGvzCDwXKaj5rQxLI3gKnojWS4+0wnMU9IXtxObSqbfBxz30Lze/zitRtSG2v76iJGHOmHRUA==",
+    "cliSha256": "e5a59ec5362e395b519317ad6fecd99f6e92308b9d985be44b64eb2f2b73a722"
+  },
+  "additionalNpm": {
+    "typescript": "5.9.3",
+    "@playwright/test": "1.56.1"
+  },
+  "additionalPython": {
+    "pypdf": "6.1.1",
+    "pdfplumber": "0.11.7",
+    "reportlab": "4.4.4"
+  },
+  "gatewayUrl": "http://10.0.2.2:8081/v1",
+  "logicalModel": "qwen3.8-27b",
+  "contextWindow": 480000,
+  "maxOutputTokens": 65536,
+  "dependencyBoundary": "Base/source/mcode-tools and listed direct packages pinned. Apt repositories and supplemental transitive resolutions are not snapshot-pinned; image build emits package manifests. Retain final image ID and manifests for exact deployment identity.",
+  "requestTimeoutMs": 9060000,
+  "inputModalities": [
+    "text",
+    "image"
+  ],
+  "supportImage": true,
+  "requestBudgetPatch": {
+    "path": "patches/0001-gateway-request-budget.patch",
+    "sha256": "e8086c1a2b4da08b1a50af88044741f83c05ee1d400a5d5f4fb017310e32b75b",
+    "files": [
+      {
+        "path": "packages/agent-core/src/pi-turn-runner/defaults.ts",
+        "originalSha256": "644698ef49486fd0a4030388a2d34497afd643116f54da5a829ca6166b1967ac",
+        "patchedSha256": "1977a0947a4a036adea9e1f5677c41984cea49bfd4f3a6b2a03782510ba074fc"
+      },
+      {
+        "path": "packages/local-runtime-v2/src/service/session-system/sessions/title/session-title-service.ts",
+        "originalSha256": "9d776489297e49e0d5f677fd172c7ee6556ef2ace2ceaeb03478aea17f156a8d",
+        "patchedSha256": "b93eec185327161e970be4aacc2190df044e2745ca4a7edf9814988c92fe1e4c"
+      },
+      {
+        "path": "packages/local-runtime-v2/src/service/session-system/sessions/root/archived-root-title.ts",
+        "originalSha256": "7bf6b8f74d85e69509e119042ef45c8a583236f5e957b1cdc34df51a29911e46",
+        "patchedSha256": "6828ff414976c55709c846a933b6a81207118e454fa47d1a88790149ac1ddca2"
+      },
+      {
+        "path": "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts",
+        "originalSha256": "9271d59f34d58854af1e0a32a6d67e55fedd68673519f22c08eebce97ca8be21",
+        "patchedSha256": "73c3decbf8a78b5fa672bf4690bfec4ea717a04799dc400eff92654d79a0d01e"
+      }
+    ]
+  },
+  "patchSetSha256": "256e6fc91a7b86fcc0073c3755bd0aab6be50bb4125827be36d9b99dc1b09d0c",
+  "patchIdentity": "patches/identity.json"
+}
