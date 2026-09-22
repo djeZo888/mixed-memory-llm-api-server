@@ -1,0 +1,287 @@
+{
+  "sourceRevision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+  "patchSetSha256": "e764cdacb97998b7e7b514e9fabb0bc5d508e1d3e1ffd0a38443812a117d3aef",
+  "patches": [
+    {
+      "path": "0001-gateway-request-budget.patch",
+      "sha256": "28d00e116d47b355e6e2f249b18fdc5e9e48bb290f16bb512a8ab532f756b161",
+      "phase": "source"
+    },
+    {
+      "path": "0002-acp-compaction-notifications.patch",
+      "sha256": "ec56ccb5834dd75f7e4c9a9bff9599ebaf1da41c101c0cbde858c47f46cc8d2f",
+      "phase": "source"
+    },
+    {
+      "path": "0003-gateway-undici-dependency.patch",
+      "sha256": "f1db7f0c33096b818ed5eea9b8899c0845e81ab74917eb98aec028a168c62c08",
+      "phase": "dependency"
+    },
+    {
+      "path": "0004-gateway-fetch-timeouts.patch",
+      "sha256": "544f0c8bb830b9cbc8da9b700220b5dfc9ff9e270cd9949142618efd3dcb2569",
+      "phase": "source"
+    },
+    {
+      "path": "0005-gateway-dispatcher-type-bridge.patch",
+      "sha256": "5b4e758778aa81e7a3f99ee3296f3bfec37d7d07b80e380b208e20951dbee4bc",
+      "phase": "source"
+    },
+    {
+      "path": "0006-browser-workspace-downloads.patch",
+      "sha256": "a7f39896847bec656665b30d17621928c6dab7e10771b713ed369140fccd96bf",
+      "phase": "source"
+    },
+    {
+      "path": "0007-native-completion.patch",
+      "sha256": "882f4e01cd3e7be14690b7070118233aad59a72d7c76c2777aba286f5c834a5e",
+      "phase": "source"
+    },
+    {
+      "path": "0008-message-metadata-and-snapshots.patch",
+      "sha256": "fe7576ed96beb19202ad04f3b1d7b64cd16a39496bcf9d15500f903a0192bf65",
+      "phase": "source"
+    }
+  ],
+  "files": [
+    {
+      "path": "packages/agent-core/src/pi-turn-runner/defaults.ts",
+      "originalSha256": "644698ef49486fd0a4030388a2d34497afd643116f54da5a829ca6166b1967ac",
+      "patchedSha256": "1977a0947a4a036adea9e1f5677c41984cea49bfd4f3a6b2a03782510ba074fc"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "originalSha256": "5e4fd57322e3c9e630d7eb2d043a7b094f5f141380ce1f8173310d005ab65ce3",
+      "patchedSha256": "f6cc035d8b217f3ebacb416c8c212d4c01073e68a8c80de77d3a5ba1887d6102"
+    },
+    {
+      "path": "third_party/pi-mono/packages/ai/package.json",
+      "originalSha256": "82458b298e5d19fbc0c9d91a6fb0b472b18957faabd17d6b15e5f96c939c4587",
+      "patchedSha256": "40ecd2aa96637067e7ff2fdbd5b9e30994fe852556393ca8b76b2890d0a22fa9"
+    },
+    {
+      "path": "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts",
+      "originalSha256": "9271d59f34d58854af1e0a32a6d67e55fedd68673519f22c08eebce97ca8be21",
+      "patchedSha256": "ac725f4baa2a923a704b0250165b389f7745139231bf108f3ac3df3a0541e35a"
+    },
+    {
+      "path": "packages/agent-tools/src/desktop/local-browser.ts",
+      "originalSha256": "ee9f680ae82f16f900d607e55009c35e6549b1565428004c1dcbe2794076dc52",
+      "patchedSha256": "d9e32a17514f055d093704b6c6dc18fd35fd3d6009790d869e9f6dc2542aa3a8"
+    },
+    {
+      "path": "packages/tui/src/runtime/browser/headless-chrome-provider.ts",
+      "originalSha256": "324f261ac24e9aa94d9a2299e8b4db1cf03e552f99757513bec9e4e733e54b96",
+      "patchedSha256": "218bbbd905900c9a472bf3653da2d560d2a6c4640e93b976ba4454d9b7591505"
+    },
+    {
+      "path": "packages/tui/src/runtime/browser/headless-chrome-transport.ts",
+      "originalSha256": "2d72e96d68f87d365b5a0670e5ca45addfb72d6d3e878b42b20d68b78ebb810e",
+      "patchedSha256": "92203c34dd98bc98380ff17593cfef189109cf8da803bea76f9c80aead3a163d"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/application/conversation/conversation-application.ts",
+      "originalSha256": "ae1aa8d4a08387bc5f7baf814b205038284ac4cb81c5e4b231ccdfc07d703180",
+      "patchedSha256": "fa0560d4452e0691c3e4a1b9a60edc94af593af4a24a860305ecf62cf8b17149"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/application/session/native-run-settlement.ts",
+      "originalSha256": null,
+      "patchedSha256": "edef0a69c4b862f63817975f1995c85d654f62c5645296e8f028431209bdb9c2"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/application/session/process-local-application-contract.ts",
+      "originalSha256": "6e2bb3cd5077921c67b700070c3ddfc9874251d80e4ef827a6549184730c89f0",
+      "patchedSha256": "7991965bca31ccd93f04b03822d46dfc702402e5418acca0337c1f079a03e6b0"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/compat/v1/runtime.ts",
+      "originalSha256": "32ff317b94517460dc3a4fdb2cf785270ff5b0213ff6ed67a2c652d8d88d56a8",
+      "patchedSha256": "466ef7dc294c8dfada347145c6e1dd6af59ca886a6328bb795d6d1a81e8e608a"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/local/cli-service.ts",
+      "originalSha256": "ea1e3348293d9dc2fe761d6a0345f5246465750b061e0428512bce2ecedd8b88",
+      "patchedSha256": "6ed9e109c3b9369fe6d6ac2567528781446aa1bc97b364749b4e36e78b8f1e72"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/local/index.ts",
+      "originalSha256": "c71daeb4ff1868ab1726249b2aaa4906e692cab525f2b11cc0387f4ac6428c95",
+      "patchedSha256": "f757f49a9f6e803a3277745a1ae59d5ac0773082ad1326b7b6be8867395fc7b8"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/service/session-system/owner.ts",
+      "originalSha256": "07a927f314a4f8bd3d11521664698ecb614f82ad6deffaa9b63144baa3eccc08",
+      "patchedSha256": "759a0b65f29545ed208b40f0b2453ace381b503224643d018d2692621b62129b"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/service/session-system/stream/session-stream-service.ts",
+      "originalSha256": "a1977d2b136086d833c1f9412f1b2b3fce34c4813a0f165c7b7236640eb7fa31",
+      "patchedSha256": "5fe54ed50c50d8797c97838a95d838f553172eb3eb76b71b29f3fd0ef2b08072"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/service/turn-system/contracts.ts",
+      "originalSha256": "15e81ca6d2a97955ffe72094c66cdbbdb47533469e1d5fa87ee0c9e6f1f72ee9",
+      "patchedSha256": "f8cb5e2129dd544d04a1f4c9e887f862fd6757d65220aa08c896eeb0a2f487c7"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/service/turn-system/initialize.ts",
+      "originalSha256": "ae95f5754cb2cdad60e32a219a9ea446c2f3c240490698f37312cb58cb172691",
+      "patchedSha256": "169e9da25526f28055c864c02d70615ce2f447a60cabd1bae8f918da0a4c85e2"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/services.test.ts",
+      "originalSha256": "1ea170cc3e0651ab75555af39c3cdd550b50581513c3502c134bf0838f6d8aad",
+      "patchedSha256": "22afb2139b625ac8db51217e50bccbc5d4afd401a94a1bac323394bdae67166d"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/services.ts",
+      "originalSha256": "601b23cd2a5f7a707aff933bd12f615191253609b373fd1abdfe3f4f250c207a",
+      "patchedSha256": "6f91382873d3d4001509f4ae1e09582835bfa5763e1d59d283a02a28b5075757"
+    },
+    {
+      "path": "packages/local-runtime-v2/test/unit/session/native-run-settlement.test.ts",
+      "originalSha256": null,
+      "patchedSha256": "6932c29b4a4ab07b5e50cff1f5961ed238fdb1f1303fb94e3e360c81a00956d7"
+    },
+    {
+      "path": "packages/local-runtime-v2/test/unit/session/session-stream-turn-replay.test.ts",
+      "originalSha256": null,
+      "patchedSha256": "656cd768e22189adc9110a5289f232f802ad624972e45e01327ed42e83dfd440"
+    },
+    {
+      "path": "packages/local-runtime/src/background-task/bash-runner.ts",
+      "originalSha256": "8df37b86f4507980549e155f083d11eab7c0f83d8eea8c58b10d1169d4796f76",
+      "patchedSha256": "b96ece29dd26afe5b8da5f12a0f19bf13a8641482aa33c9a152375883cd011a6"
+    },
+    {
+      "path": "packages/local-runtime/src/background-task/conversation-delivery.ts",
+      "originalSha256": "ae001066084d762c51347f543ee0e5348d8ec7fae47f346f26a669738dc0af01",
+      "patchedSha256": "5cdbabd14dfa4c58e92adec98c861b3f9a765dfb199da06acfb3c1d83cef78a6"
+    },
+    {
+      "path": "packages/local-runtime/src/background-task/delivery.ts",
+      "originalSha256": "7d6d109304f93382717c8261128d36794fc4a9b58840cc252e4ac9ba4a1425d7",
+      "patchedSha256": "3a5bb45773f88e1340812866598256baed1eff38b1e62b972bad07169ab7b796"
+    },
+    {
+      "path": "packages/local-runtime/src/background-task/lifecycle.ts",
+      "originalSha256": "618b97ffaa0796deaaa0734c044645aedb5a2b684c0b92c47247abf3b99ae607",
+      "patchedSha256": "85e681edd5b60b38f36a1a7b6fdbe501978a27dd4021f9bde5b66cb0b38538cc"
+    },
+    {
+      "path": "packages/local-runtime/src/background-task/runner.ts",
+      "originalSha256": "4f77e7da8c5522bde324b52e768db7219c90d16d308011d626b25b43b1436027",
+      "patchedSha256": "53ab698b4826068f62d5025503a01710fe7705b172fef1e5f3bd2030854b2d52"
+    },
+    {
+      "path": "packages/local-runtime/src/background-task/store.ts",
+      "originalSha256": "bfc9aa74d568523889612b957edc8e83f101171aa3dd1870f2259e5dfc4bdab1",
+      "patchedSha256": "c420ba5c42a83564170669c8ba779734a29f136ecab6e866a7cfd7d21d107554"
+    },
+    {
+      "path": "packages/local-runtime/src/background-task/terminal.ts",
+      "originalSha256": "b6119204d4a78b404014cc15b2bdb2ba3ea63b3eaf106687f4e57a7673eb28b3",
+      "patchedSha256": "714d316fa1235c7a19a448589e392b728760bd7f430d0e4ce5d1cb0291e80b8e"
+    },
+    {
+      "path": "packages/local-runtime/src/index.ts",
+      "originalSha256": "272a57b0c5ce99932495bbee07e2cd78baaea75894479616cdeb8ec82a9db424",
+      "patchedSha256": "8ee2fe5ff8b82b5fe3b552d872be484ea71f21e199a3e47b54afbde8baa510b8"
+    },
+    {
+      "path": "packages/local-runtime/test/unit/background-task-settlement.test.ts",
+      "originalSha256": null,
+      "patchedSha256": "84f376490090eb330f56592caf37cc07fd21e6c9b83ad44d723760ff09221b95"
+    },
+    {
+      "path": "packages/protocol/src/local.ts",
+      "originalSha256": "bebbf262c51d463efb244f1da5a976781a6396dabfaa1d248360613a67dcdd1a",
+      "patchedSha256": "7ba58f7f3f10a25b7d335c05945297a463b6a56cd4c224506b124e3e6e37cedb"
+    },
+    {
+      "path": "packages/tui/src/acp/agent.ts",
+      "originalSha256": "f52c7031a0f22663c79cf33819e5df8f7b56c1352c2f087eb4c3d798c9728b79",
+      "patchedSha256": "dbaa935464ad31710b395de5b7acb18d50262eb13641712ce8469b933da48ffa"
+    },
+    {
+      "path": "packages/tui/src/acp/extensions.ts",
+      "originalSha256": "85ffe239d726d88106f15ce85835a6af810850954cf4a9eda54c61246c9f379a",
+      "patchedSha256": "0e87c65ba945153e099de602c587b7b8c1e4b7183e466f243bc14452f757478a"
+    },
+    {
+      "path": "packages/tui/src/acp/native-settlement.ts",
+      "originalSha256": null,
+      "patchedSha256": "5657f1afcaaea372013fb8c1ea4f56a055edfac9102705498341bfa88e70e320"
+    },
+    {
+      "path": "packages/tui/src/acp/runtime.ts",
+      "originalSha256": "4ba0e59191804dac419fb687d304427891fb758f7a1f8463ca0e11ccc75d36f6",
+      "patchedSha256": "75dcea1380d9b4ecd39bcec89300d6d79f01afb9be1d5ba09de61767757726cd"
+    },
+    {
+      "path": "packages/tui/src/runtime/adapter.ts",
+      "originalSha256": "1b99d5b21e27d6881fb1e587d7ac4a646ea87cab396dc1f255972aa38a3b783e",
+      "patchedSha256": "aa04d0d788cea83c4f40948dd4b742079a928c220d1eed511a04d9ebe45c194a"
+    },
+    {
+      "path": "packages/tui/src/runtime/port.ts",
+      "originalSha256": "b12b88ddb3ae873a8b641f35e20764c337fe0ee37c42b35a3bd8e8463ba91550",
+      "patchedSha256": "2f2d22c49a2ab01d7f1d9955ac77960d5de38f96640f1877acda24ed39e11e66"
+    },
+    {
+      "path": "packages/tui/test/unit/acp-agent.test.ts",
+      "originalSha256": "3705285660de3d8992263443ce13130817845e581d586788175f6dba8e91b154",
+      "patchedSha256": "74154e3f2333b93560aae82dc553de7347dc7a2a9b2c260c393ae7f1bd87ee8d"
+    },
+    {
+      "path": "packages/tui/test/unit/tui-runtime-adapter.test.ts",
+      "originalSha256": "a61617ca0a14ec26762f7a8272bb14d9861aecd6545f7c7e6a515f9f0d916f38",
+      "patchedSha256": "c21e65e6481821a4853479e046bfcc2e43516ccb12449942be6a80c7eca3fc01"
+    },
+    {
+      "path": "release/public-source.json",
+      "originalSha256": "a7ca3ea2cc52021604d203d1997d9d95196f0c4477c05d79cf5a2cea954ce7d2",
+      "patchedSha256": "0b044e02daee09f3b189fdaeef28e293bee93157dfa68fde72fc95e75360077a"
+    },
+    {
+      "path": "test/byok.test.mjs",
+      "originalSha256": "9afb5c0107046c1883aa46d2ae288f4cd6963c8a36c2f13c5bf5a626a54118a3",
+      "patchedSha256": "674b69765367b695653ae31d4256b06966c4c17db8723d707bb4f64bf8d8ed53"
+    },
+    {
+      "path": "test/vitest-suites.json",
+      "originalSha256": "ca694004c2a9f7b5e77995e38828511e9485ee2c2152c494bb197491e408ca80",
+      "patchedSha256": "9610b8fb643db2ec35881c154b0ca92bc5605b803b1f33a4f10daa8249faff73"
+    },
+    {
+      "path": "packages/tui/src/acp/updates.ts",
+      "originalSha256": "c974773228f6e16682987a33fdd0be844fdfa1a85d94bc4632da38860113d758",
+      "patchedSha256": "55856634a778a0ffa47d0a3042bc16640b44a80256fe553325d8455c6117f3be"
+    },
+    {
+      "path": "packages/tui/src/runtime/adapters/delegation-access.ts",
+      "originalSha256": "76e449f864da3c6199f1da12d84ed8d836ca72f9f60e19d40b3e3fffff9459ca",
+      "patchedSha256": "cca909428167b3e7df603e19d6a0579fb5238da17b47f6af945f563ebf99adeb"
+    }
+  ],
+  "transport": {
+    "gatewayOrigin": "http://10.0.2.2:8081",
+    "headersTimeoutMs": 9060000,
+    "bodyTimeoutMs": 9060000,
+    "undici": "7.29.1",
+    "undiciIntegrity": "sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q=="
+  },
+  "nativeCompletion": {
+    "approvedPatchSha256": "e3cdb67ea41ef7e8ef6ee3bc014b79f83da3f5c23a7af25b0deccf96a1bbe10d",
+    "approvedCommit": "4a70b28e9d038747ff130302c844ccb06367d03f",
+    "integrationPatchSha256": "882f4e01cd3e7be14690b7070118233aad59a72d7c76c2777aba286f5c834a5e",
+    "overlap": "0007 context preserves existing 0002 compaction notification; initialize test expected notifications adds exactly that preexisting notification. No runtime deviation from approved completion behavior. Five new paths use null originalSha256; git apply --check requires absence."
+  },
+  "h002Metadata": {
+    "base": "ae65651df5f97ae1085ab4e19964f4b78c769a4e + reviewed 0001..0007",
+    "patch": "0008-message-metadata-and-snapshots.patch",
+    "protocol": "mcode/session/message_update schemaVersion 1",
+    "scope": "Metadata-only native message bridge; per-channel full-message dedup; explicit delegation pagination completeness. No inference or lifecycle change."
+  }
+}
