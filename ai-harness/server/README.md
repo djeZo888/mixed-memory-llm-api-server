@@ -140,6 +140,11 @@ background root continuations and output drain, then supplies the versioned
 `minimax-code/settlement` receipt. The server strictly validates native instance,
 root session, initial run and ordered root-turn identities, exhaustive status,
 and a fresh get using the expected instance/run before releasing the workspace.
+An exhaustive cancelled receipt may have a unique non-null run ID and no root
+turn IDs only when Stop precedes initial native root-turn admission. This is
+cancellation, never successful settlement: settled receipts still require the
+first real root turn to equal the run ID. Fresh identity and stale-run checks
+also apply to early cancellation, allowing a later ordinary prompt safely.
 Children are progress only. Background-task presence alone does not quarantine a
 valid settled run. Missing/stale/foreign/malformed/non-exhaustive receipts, unknown
 state or pending projection cannot authorize success. No timer-idle inference is

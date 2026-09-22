@@ -100,6 +100,9 @@ const altered = (receipt, mode) => {
     return { ...receipt, runId: "foreign-run", rootTurnIds: ["foreign-run"] };
   if (mode === "duplicate")
     return { ...receipt, rootTurnIds: [receipt.runId, receipt.runId] };
+  if (mode === "empty-turns") return { ...receipt, rootTurnIds: [] };
+  if (mode === "wrong-first") return { ...receipt, rootTurnIds: ["other-turn"] };
+  if (mode === "null-run") return { ...receipt, runId: null, rootTurnIds: [] };
   if (mode === "nonexhaustive") return { ...receipt, exhaustive: false };
   if (mode === "reasons") return { ...receipt, reasons: ["pending_delivery"] };
   if (mode === "malformed") return { schemaVersion: 1 };
@@ -205,7 +208,8 @@ connection = new acp.AgentSideConnection(
     },
     async prompt(params) {
       await save({ method: "prompt", params });
-      runId = `run-${++runCount}`;
+      runCount++;
+      runId = `run-${config.repeatRunId ? 1 : runCount}`;
       rootTurnIds = [runId];
       state = "running";
       promptDelivered = false;
@@ -213,6 +217,12 @@ connection = new acp.AgentSideConnection(
         params.prompt
           .map((block) => (block.type === "text" ? block.text : ""))
           .at(-1) ?? "";
+      if (text === "early-stop") {
+        rootTurnIds = [];
+        const pending = new Promise((resolve) => { resolvePrompt = resolve; });
+        await save({ method: "before-root-admission", runId });
+        return await pending;
+      }
       if (text === "crash") {
         setTimeout(() => process.exit(12), 5);
         return await new Promise(() => {});
@@ -484,6 +494,10 @@ connection = new acp.AgentSideConnection(
       return promptResponse("end_turn");
     },
     async cancel(params) {
+      // Deterministic Stop-before-admission fixture: publish cancellation before
+      // yielding to the client's concurrent fresh settlement query.
+      if (runId !== null && rootTurnIds.length === 0 && !config.ignoreStop)
+        state = "cancelled";
       await save({ method: "cancel", params });
       if (config.ignoreStop) return;
       if (runId !== null) state = "cancelled";

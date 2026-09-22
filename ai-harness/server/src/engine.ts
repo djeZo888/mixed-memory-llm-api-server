@@ -104,9 +104,13 @@ function parseSettlement(value: unknown): SettlementReceipt {
       (reason) =>
         typeof reason === "string" && reason.length > 0 && reason.length <= 512,
     ) ||
+    // Stop can exhaustively cancel an allocated run before its first root turn
+    // is admitted. Successful settlement still requires the real initial turn.
     (value.runId === null
       ? value.rootTurnIds.length !== 0
-      : value.rootTurnIds[0] !== value.runId)
+      : value.rootTurnIds.length === 0
+        ? value.state !== "cancelled" || !value.exhaustive
+        : value.rootTurnIds[0] !== value.runId)
   )
     throw new EngineSettlementError();
   return value as unknown as SettlementReceipt;

@@ -194,6 +194,58 @@ test("cancellation sends real SDK cancel and requires fresh native settlement", 
   );
 });
 
+test("immediate Stop before root admission accepts only fresh exhaustive cancellation and permits a later ordinary prompt", async (t) => {
+  async function stopBeforeAdmission(
+    h: Awaited<ReturnType<typeof harness>>,
+    rejects = false,
+  ) {
+    const pending = h.engine.prompt("early-stop");
+    const outcome = rejects
+      ? assert.rejects(pending, EngineSettlementError)
+      : pending.then((value) => assert.equal(value, "cancelled"));
+    for (let i = 0; i < 100; i++) {
+      if ((await h.calls()).some((call) => call.method === "before-root-admission"))
+        break;
+      await delay(5);
+    }
+    assert.ok((await h.calls()).some((call) => call.method === "before-root-admission"));
+    // Invalid prompt/fresh receipts can also make cancel fail; neither path may
+    // transform an invalid terminal proof into successful completion.
+    if (rejects) await h.engine.cancel().catch((error) => assert.ok(error instanceof EngineSettlementError));
+    else await h.engine.cancel();
+    await outcome;
+  }
+
+  const h = await harness(t);
+  await h.engine.start();
+  await stopBeforeAdmission(h);
+  assert.deepEqual(h.updates, [], "no native root turn was admitted");
+  assert.equal(await h.engine.prompt("ordinary follow-up"), "completed");
+  const calls = await h.calls();
+  assert.equal(calls.filter((call) => call.method === "prompt").length, 2);
+  assert.ok(calls.some((call) => call.method === "cancel"));
+  for (const runId of ["run-1", "run-2"])
+    assert.ok(calls.some((call) => call.method === "mcode/session/settlement/get" && call.params.runId === runId && typeof call.params.instanceId === "string"));
+
+  for (const field of ["promptReceipt", "freshReceipt"])
+    for (const mode of ["unknown", "nonexhaustive", "null-run", "stale", "foreign", "wrong-first", "duplicate"])
+      await t.test(`${field} ${mode} stays rejected with no admitted turn`, async (st) => {
+        const invalid = await harness(st, { [field]: mode });
+        await invalid.engine.start();
+        await stopBeforeAdmission(invalid, true);
+      });
+
+  await t.test("fresh run mismatch and replay of an earlier cancelled run stay rejected", async (st) => {
+    const mismatch = await harness(st, { freshReceipt: "run" });
+    await mismatch.engine.start();
+    await stopBeforeAdmission(mismatch, true);
+    const replay = await harness(st, { repeatRunId: true });
+    await replay.engine.start();
+    await stopBeforeAdmission(replay);
+    await assert.rejects(replay.engine.prompt("ordinary follow-up"), EngineSettlementError);
+  });
+});
+
 test("parent prompt completion retains workspace ownership until native children settle", async (t) => {
   const h = await harness(t);
   await h.engine.start();
@@ -612,6 +664,9 @@ for (const mode of [
   "stale",
   "foreign",
   "duplicate",
+  "empty-turns",
+  "wrong-first",
+  "null-run",
   "nonexhaustive",
   "reasons",
   "malformed",
@@ -630,6 +685,9 @@ for (const mode of [
   "foreign",
   "run",
   "duplicate",
+  "empty-turns",
+  "wrong-first",
+  "null-run",
   "nonexhaustive",
   "reasons",
   "malformed",
