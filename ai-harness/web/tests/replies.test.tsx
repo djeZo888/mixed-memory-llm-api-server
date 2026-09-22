@@ -105,6 +105,212 @@ describe('reply-level conversation presentation', () => {
     expect(screen.getByText('The fixtures pass.')).toBeInTheDocument();
   });
 
+  it('hides the recorded settled whitespace tail and empty progress without discarding partial text or history', () => {
+    const runId = '65a3fe76-5d00-4041-8067-5be54b895c25';
+    const tailId = 'm_1704765b10334edf1c6e7a7c1c152c763961b5d568507e95d970d1ddcd075147';
+    const thread = replyThread({
+      messages: [
+        replyMessage(
+          'm_836fc402e6662753916074e38b210d93c3087357767e0a1891b3e0f98ddcddef',
+          'assistant',
+          'Completed answer',
+          {
+            runId,
+            phase: 'final',
+            streamState: 'completed',
+          },
+        ),
+        replyMessage(tailId, 'assistant', '\n', {
+          runId,
+          phase: 'unclassified',
+          streamState: 'streaming',
+        }),
+        replyMessage('empty-progress', 'assistant', ' \t\n', { runId, phase: 'intermediate' }),
+        replyMessage('empty-reply', 'assistant', ' ', { runId: 'empty-run', phase: 'thinking' }),
+      ],
+      runs: [replyRun(runId, { status: 'completed' })],
+    });
+    const { rerender } = render(<ConversationReplies thread={thread} />);
+    expect(screen.getByLabelText('Final answer')).toHaveTextContent('Completed answer');
+    expect(screen.queryByText('Assistant · responding')).not.toBeInTheDocument();
+    expect(screen.queryByText('Progress')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('article', { name: 'Assistant reply' })).toHaveLength(1);
+    expect(thread.messages.find((message) => message.id === tailId)?.content).toBe('\n');
+    expect(thread.messages).toHaveLength(4);
+    const partial = applyEvent(
+      thread,
+      runEvent(
+        600,
+        'assistant_delta',
+        {
+          messageId: tailId,
+          text: 'Still useful partial text',
+          phase: 'unclassified',
+        },
+        runId,
+      ),
+    );
+    rerender(<ConversationReplies thread={partial} />);
+    expect(screen.getByText('Still useful partial text')).toBeInTheDocument();
+    expect(screen.getByText('Assistant · responding')).toBeInTheDocument();
+  });
+
+  it('folds all 59 compatibility summaries while preserving real activity and native count updates', () => {
+    const runId = 'run/one';
+    const events = Array.from({ length: 59 }, (_, index) =>
+      runEvent(
+        index + 1,
+        'progress',
+        {
+          kind: 'subagent_summary',
+          label: `Compatibility summary ${index + 1}`,
+        },
+        runId,
+      ),
+    );
+    let thread = replyThread({
+      messages: [replyMessage('answer', 'assistant', 'Actual progress', { runId })],
+      runs: [replyRun(runId)],
+      activities: [replyActivity('child', { kind: 'subagent', name: 'worker', runId })],
+      events: [
+        ...events,
+        runEvent(60, 'progress', { kind: 'notice', label: 'Other actual event' }, runId),
+      ],
+    });
+    const { container, rerender } = render(
+      <>
+        <ConversationReplies thread={thread} />
+        <WorkingStatus thread={thread} />
+      </>,
+    );
+    const additional = screen.getByText('Additional activity (59)').closest('details')!;
+    expect(additional).not.toHaveAttribute('open');
+    expect(additional.querySelectorAll('li')).toHaveLength(59);
+    expect(container.querySelectorAll('.activity > ol > li')).toHaveLength(2);
+    expect(container.querySelector('.activity > summary')).toHaveTextContent('2 items');
+    expect(screen.getByText('Other actual event')).toBeInTheDocument();
+    thread = applyEvent(
+      thread,
+      runEvent(
+        61,
+        'subagents',
+        {
+          runId,
+          summary: { known: true, active: 1, completed: 0, failed: 0, cancelled: 0 },
+        },
+        runId,
+      ),
+    );
+    rerender(
+      <>
+        <ConversationReplies thread={thread} />
+        <WorkingStatus thread={thread} />
+      </>,
+    );
+    expect(screen.getByRole('status', { name: 'Run status' })).toHaveTextContent(
+      'Active subagents: 1',
+    );
+    expect(thread.activity.filter((item) => item.legacy)).toHaveLength(60);
+    expect(additional).toHaveTextContent('Compatibility summary 59');
+  });
+
+  it('ignores stale finishedAt across the recorded completed to in_progress child transition', () => {
+    const id = 'subagent:mvs_335f673e4cbe43378238cf1571a738fd';
+    const runId = '65a3fe76-5d00-4041-8067-5be54b895c25';
+    const startedAt = '2026-09-22T06:57:28.138Z';
+    let thread = replyThread({
+      messages: [replyMessage('answer', 'assistant', 'Child progress', { runId })],
+      activities: [
+        replyActivity(id, {
+          runId,
+          kind: 'subagent',
+          name: 'worker',
+          status: 'completed',
+          startedAt,
+          finishedAt: startedAt,
+          updatedAt: startedAt,
+        }),
+      ],
+    });
+    const { container, rerender } = render(<ConversationReplies thread={thread} />);
+    expect(screen.getByText(/0.0 s/)).toBeInTheDocument();
+    for (const [index, status] of (['in_progress', 'pending'] as const).entries()) {
+      thread = applyEvent(
+        thread,
+        runEvent(
+          119 + index,
+          'activity',
+          {
+            activity: replyActivity(id, {
+              runId,
+              kind: 'subagent',
+              name: 'worker',
+              status,
+              startedAt,
+              finishedAt: startedAt,
+              updatedAt: '2026-09-22T06:57:28.226Z',
+            }),
+          },
+          runId,
+        ),
+      );
+      rerender(<ConversationReplies thread={thread} />);
+      expect(screen.queryByText(/0.0 s/)).not.toBeInTheDocument();
+      expect(container.querySelector('.activity > ol time')).toHaveAttribute(
+        'datetime',
+        '2026-09-22T06:57:28.226Z',
+      );
+      expect(screen.getByText(`worker · ${status.replaceAll('_', ' ')}`)).toBeInTheDocument();
+    }
+    thread = applyEvent(
+      thread,
+      runEvent(
+        475,
+        'activity',
+        {
+          activity: replyActivity(id, {
+            runId,
+            kind: 'subagent',
+            name: 'worker',
+            status: 'completed',
+            startedAt,
+            finishedAt: '2026-09-22T06:59:38.129Z',
+            updatedAt: '2026-09-22T06:59:38.129Z',
+          }),
+        },
+        runId,
+      ),
+    );
+    rerender(<ConversationReplies thread={thread} />);
+    expect(screen.getByText(/130.0 s/)).toBeInTheDocument();
+    expect(container.querySelector('.activity > ol time')).toHaveAttribute(
+      'datetime',
+      '2026-09-22T06:59:38.129Z',
+    );
+  });
+
+  it('gives the recorded UTF-8 attachment an explicit download filename', () => {
+    const thread = replyThread({
+      messages: [
+        replyMessage('upload-user', 'user', 'Read the nonce', { attachmentIds: ['nonce'] }),
+      ],
+      attachments: [
+        {
+          id: 'nonce',
+          name: 'načrt.txt',
+          mimeType: 'text/plain',
+          size: 85,
+          downloadUrl: '/api/attachments/nonce/download',
+        },
+      ],
+    });
+    render(<ConversationReplies thread={thread} />);
+    expect(screen.getByRole('link', { name: 'načrt.txt' })).toHaveAttribute(
+      'download',
+      'načrt.txt',
+    );
+  });
+
   it('retains legacy assistant text without inventing a progress/final phase', () => {
     const thread = replyThread({
       messages: [
@@ -326,7 +532,7 @@ describe('reply-level conversation presentation', () => {
     const userMessage = screen.getByText('Read my notes').closest('article')!;
     const attachment = within(userMessage).getByRole('link', { name: /research-notes.txt/ });
     expect(attachment).toHaveAttribute('href', '/api/attachments/upload%2Fone/download');
-    expect(attachment).toHaveAttribute('download');
+    expect(attachment).toHaveAttribute('download', 'research-notes.txt');
     expect(
       within(screen.getByText('Read complete').closest('article')!).queryByText(
         'research-notes.txt',
@@ -510,9 +716,9 @@ describe('reply-level conversation presentation', () => {
     const { container, unmount } = render(<ConversationReplies thread={thread} />);
     await user.click(screen.getByText('Activity'));
     expect(container.querySelectorAll('.activity > ol > li')).toHaveLength(1);
-    const legacy = screen.getByText(/^Legacy events/).closest('details')!;
+    const legacy = screen.getByText(/^Additional activity/).closest('details')!;
     expect(legacy).not.toHaveAttribute('open');
-    await user.click(screen.getByText(/^Legacy events/));
+    await user.click(screen.getByText(/^Additional activity/));
     expect(legacy).toHaveAttribute('open');
     expect(legacy).toHaveTextContent('Legacy tool started');
     expect(legacy).toHaveTextContent('Legacy tool input');
@@ -521,7 +727,7 @@ describe('reply-level conversation presentation', () => {
     const reloaded = replyThread({ messages, events, activities: [typed] });
     const restored = render(<ConversationReplies thread={reloaded} />);
     expect(restored.container.querySelectorAll('.activity > ol > li')).toHaveLength(1);
-    expect(screen.getByText(/^Legacy events/).closest('details')).toHaveTextContent(
+    expect(screen.getByText(/^Additional activity/).closest('details')).toHaveTextContent(
       'Legacy tool completed',
     );
     expect(screen.getByText('printf complete')).toBeInTheDocument();

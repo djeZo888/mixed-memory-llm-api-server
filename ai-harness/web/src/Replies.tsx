@@ -57,8 +57,10 @@ function Progress({ messages, finalReady }: { messages: Message[]; finalReady: b
     </details>
   );
 }
+const isTerminalActivity = (item: ActivityItem) =>
+  item.status === 'completed' || item.status === 'failed' || item.status === 'cancelled';
 function duration(item: ActivityItem): string | undefined {
-  if (!item.startedAt || !item.finishedAt) return undefined;
+  if (!isTerminalActivity(item) || !item.startedAt || !item.finishedAt) return undefined;
   const elapsed = Date.parse(item.finishedAt) - Date.parse(item.startedAt);
   return Number.isFinite(elapsed) && elapsed >= 0 ? `${(elapsed / 1000).toFixed(1)} s` : undefined;
 }
@@ -70,11 +72,12 @@ function Activities({ items }: { items: ActivityItem[] }) {
   const legacy = items.filter(
     (item) =>
       item.legacy &&
-      ['tool', 'subagent'].includes(item.kind) &&
-      items.some(
-        (canonical) =>
-          !canonical.legacy && canonical.runId === item.runId && canonical.kind === item.kind,
-      ),
+      (item.kind === 'subagent_summary' ||
+        (['tool', 'subagent'].includes(item.kind) &&
+          items.some(
+            (canonical) =>
+              !canonical.legacy && canonical.runId === item.runId && canonical.kind === item.kind,
+          ))),
   );
   const folded = new Set(legacy);
   const primary = items.filter((item) => !folded.has(item));
@@ -101,7 +104,13 @@ function Activities({ items }: { items: ActivityItem[] }) {
                 </span>
                 <span>
                   {elapsed && <span>{elapsed} · </span>}
-                  <Timestamp value={item.finishedAt ?? item.updatedAt ?? item.createdAt} />
+                  <Timestamp
+                    value={
+                      (isTerminalActivity(item) ? item.finishedAt : undefined) ??
+                      item.updatedAt ??
+                      item.createdAt
+                    }
+                  />
                 </span>
               </div>
               <p>{item.label}</p>
@@ -136,7 +145,7 @@ function Activities({ items }: { items: ActivityItem[] }) {
       </ol>
       {legacy.length > 0 && (
         <details className="legacy-events">
-          <summary>Legacy events ({legacy.length})</summary>
+          <summary>Additional activity ({legacy.length})</summary>
           <p>Compatibility records retained without assuming an individual tool match.</p>
           <ol>
             {legacy.map((item) => (
@@ -282,7 +291,7 @@ function UserMessage({ message, thread }: { message: Message; thread: Thread }) 
                   {attachment ? (
                     <>
                       {url ? (
-                        <a href={url} download>
+                        <a href={url} download={attachment.name}>
                           {attachment.name}
                         </a>
                       ) : (
@@ -303,10 +312,11 @@ function UserMessage({ message, thread }: { message: Message; thread: Thread }) 
   );
 }
 function AssistantReply({ reply, thread }: { reply: Reply; thread: Thread }) {
-  const progress = reply.messages.filter(
+  const messages = reply.messages.filter((message) => message.content.trim().length > 0);
+  const progress = messages.filter(
     (message) => message.phase === 'intermediate' || message.phase === 'thinking',
   );
-  const responses = reply.messages.filter(
+  const responses = messages.filter(
     (message) => message.phase !== 'intermediate' && message.phase !== 'thinking',
   );
   const finalReady = responses.some(
@@ -315,7 +325,7 @@ function AssistantReply({ reply, thread }: { reply: Reply; thread: Thread }) {
   const run = thread.runs.find((run) => run.id === reply.runId);
   const zip =
     reply.runId && run ? runZipUrl(thread.session.id, reply.runId, run.zipUrl) : undefined;
-  if (!reply.messages.length && !reply.activity.length && !reply.artifacts.length) return null;
+  if (!messages.length && !reply.activity.length && !reply.artifacts.length) return null;
   return (
     <article
       className="message message-assistant assistant-reply"
