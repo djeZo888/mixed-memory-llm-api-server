@@ -251,7 +251,7 @@ def worker(config: dict) -> dict:
         run_native([chrome, "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
                     "--disable-background-networking", "--disable-component-update", "--disable-extensions",
                     "--disable-sync", "--no-first-run", "--no-default-browser-check",
-                    "--disable-default-apps", "--metrics-recording-only", "--blink-settings=scriptEnabled=false",
+                    "--disable-default-apps", "--metrics-recording-only",
                     "--host-resolver-rules=MAP * ~NOTFOUND", "--proxy-server=http://127.0.0.1:9",
                     "--user-data-dir=" + str(Path("chrome-profile").absolute()),
                     "--print-to-pdf=" + str(Path("created.pdf").absolute()), Path("static.html").absolute().as_uri()])
@@ -341,9 +341,9 @@ def resource_setup(stage_fd, seconds, memory):
         resource.setrlimit(resource.RLIMIT_AS, (768 * MIB, 768 * MIB))
 
 
-def stage_size(stage_fd: int) -> int:
+def stage_size(stage_fd: int, *extra_fds: int) -> int:
     total, entries = 0, 0
-    def walk(fd):
+    def walk(fd, staged_inputs=False):
         nonlocal total, entries
         for name in os.listdir(fd):
             entries += 1
@@ -363,13 +363,39 @@ def stage_size(stage_fd: int) -> int:
                 finally:
                     os.close(child)
             elif stat.S_ISREG(st.st_mode):
-                if st.st_size > MAX_FILE and name not in {"input.pdf", "input.document"}:
+                if st.st_size > MAX_FILE and not (staged_inputs and name in {"input.pdf", "input.document"}):
                     raise ToolError("Native output exceeded the per-file limit")
                 total += st.st_size
                 if total > MAX_TOTAL:
                     raise ToolError("Working files exceeded the 80 MiB aggregate limit")
-    walk(stage_fd)
+    walk(stage_fd, staged_inputs=True)
+    for fd in extra_fds:
+        walk(fd)
     return total
+
+
+@contextlib.contextmanager
+def chromium_tmp():
+    # Ignore inherited TMPDIR: Chromium appends socket names subject to AF_UNIX
+    # path limits. /tmp is a reviewed container tmpfs; macOS uses /private/tmp.
+    # Anchor creation and cleanup, and never follow a replaced directory entry.
+    parent = Workspace("/private/tmp" if sys.platform == "darwin" else "/tmp")
+    name = "pdf-" + uuid.uuid4().hex
+    fd = None
+    created = False
+    try:
+        os.mkdir(name, 0o700, dir_fd=parent.fd)
+        created = True
+        fd = os.open(name, DIR_FLAGS, dir_fd=parent.fd)
+        yield Path(parent.root) / name, fd
+    finally:
+        try:
+            if fd is not None:
+                os.close(fd)
+            if created:
+                shutil.rmtree(name, dir_fd=parent.fd)
+        finally:
+            parent.close()
 
 
 def supervise(config, stage_fd, stage_path: Path, timeout):
@@ -378,7 +404,12 @@ def supervise(config, stage_fd, stage_path: Path, timeout):
     env.update({"HOME": str(stage_path), "TMPDIR": str(stage_path), "PYTHONDONTWRITEBYTECODE": "1", "AI_HARNESS_PDF_WORKER_FD": str(stage_fd)})
     def log_file(name):
         return os.fdopen(os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=stage_fd), "wb")
-    with log_file("worker.stdout") as out, log_file("worker.stderr") as err:
+    # Only Chromium needs a short socket path. Its private temporary files share
+    # the stage's aggregate/file-count budget and are removed after group cleanup.
+    tmp_context = chromium_tmp() if config["command"] == "create" else contextlib.nullcontext((stage_path, None))
+    with tmp_context as (tmp_path, tmp_fd), log_file("worker.stdout") as out, log_file("worker.stderr") as err:
+        env["TMPDIR"] = str(tmp_path)
+        extra_fds = (tmp_fd,) if tmp_fd is not None else ()
         proc = subprocess.Popen([sys.executable, script, "--internal-worker"], stdin=subprocess.PIPE, stdout=out, stderr=err,
                                 env=env, start_new_session=True, pass_fds=(stage_fd,),
                                 preexec_fn=lambda: resource_setup(stage_fd, timeout, config["command"] != "create"))
@@ -389,9 +420,9 @@ def supervise(config, stage_fd, stage_path: Path, timeout):
             while proc.poll() is None:
                 if time.monotonic() >= deadline:
                     raise ToolError("Operation timed out; select fewer pages or a smaller input")
-                stage_size(stage_fd)
+                stage_size(stage_fd, *extra_fds)
                 time.sleep(0.05)
-            stage_size(stage_fd)
+            stage_size(stage_fd, *extra_fds)
             with os.fdopen(os.open("worker.stdout", FILE_FLAGS, dir_fd=stage_fd), "rb") as stream:
                 raw = stream.read(32 * 1024 + 1)
             if len(raw) > 32 * 1024:

@@ -77,7 +77,9 @@ license files in the final image. No package is installed automatically at runti
 - Every output <=16 MiB; temporary working set on disk <=80 MiB (polled at 50ms).
   Native per-file resource limit is 16 MiB. Deadline defaults 60 seconds, supports
   1..120; supervisor kills the process group on timeout/cancellation/error.
-  All native invocations use argument arrays and no shell.
+  All native invocations use argument arrays and no shell. Terminated orphan
+  descendants require a reaping container init (reviewed Podman `--init`/catatonit);
+  a zombie is terminated but is not evidence of successful reaping.
 - Rasterization: 72..200 requested DPI, <=2400 pixels on either edge. Very large
   or invalid page dimensions are rejected. OCR emits page boundaries and a
   verification reminder; verify units, tables, minus signs and component values
@@ -88,11 +90,16 @@ license files in the final image. No package is installed automatically at runti
   memory/process limits. macOS address-space enforcement is not claimed.
 - Creation supports a deliberately small static text/table HTML subset. User CSS,
   scripts, images, iframes, URL attributes and active content are removed. A fixed
-  CSP forbids resource fetches; JavaScript is disabled, name resolution is blocked,
+  CSP forbids resource fetches and scripts; name resolution is blocked,
   and a dead loopback proxy is set. Browser background networking is disabled.
   This is basic document creation, not arbitrary webpage printing; use the native
   browser for public-page research separately. It never calls models or cloud OCR.
-- Private staging is created inside workspace and removed afterwards. The runtime
+- Private staging and the Chromium profile stay inside workspace. Creation uses
+  a separate private, short `/tmp/pdf-<uuid>` directory for Chromium sockets
+  (`/private/tmp` on macOS), avoiding the Unix socket path limit. Both directories
+  share the 80 MiB/4096-entry monitored budget and per-file limits; both are removed
+  after native process-group termination on success, failure, timeout or cancellation.
+  The runtime
   must serialize workspace writers and protect the workspace ancestry from rename
   races by other same-user processes; this helper is not a hostile same-UID
   filesystem isolation boundary. Its checks complement the native container

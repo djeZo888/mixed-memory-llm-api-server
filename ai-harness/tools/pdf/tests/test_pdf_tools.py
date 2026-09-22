@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -31,6 +32,28 @@ def write_pdf(path, text="PDF fixture alpha 123", pages=1):
         page[NameObject("/Contents")] = writer._add_object(stream)
     with path.open("wb") as target:
         writer.write(target)
+
+
+def process_snapshot(pid):
+    """Read liveness and identity; kill(pid, 0) also succeeds for zombies."""
+    if sys.platform.startswith("linux"):
+        try:
+            fields = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
+        except FileNotFoundError:
+            return None
+        return {"pid": pid, "state": fields[0], "ppid": int(fields[1]),
+                "pgid": int(fields[2]), "start": fields[19]}
+    result = subprocess.run(["/bin/ps", "-p", str(pid), "-o", "ppid=,pgid=,stat=,lstart="],
+                            text=True, capture_output=True, check=False)
+    fields = result.stdout.split()
+    if not fields:
+        return None
+    return {"pid": pid, "ppid": int(fields[0]), "pgid": int(fields[1]),
+            "state": fields[2][0], "start": " ".join(fields[3:])}
+
+
+def same_live_process(before, after):
+    return after is not None and before["start"] == after["start"] and after["state"] not in {"Z", "X"}
 
 
 class PDFTests(unittest.TestCase):
@@ -80,12 +103,22 @@ class PDFTests(unittest.TestCase):
         self.cli("ocr", "fixture.pdf", "--output", "ocr.txt", timeout=30)
         self.assertIn("fixture", (self.root / "ocr.txt").read_text().lower())
 
-    @unittest.skipUnless(os.environ.get("MCODE_CHROME_PATH") and Path(os.environ.get("MCODE_CHROME_PATH", "")).is_file(), "NOT_TESTED: sandboxed Chromium executable not configured")
+    @unittest.skipUnless(os.environ.get("MCODE_CHROME_PATH") and Path(os.environ.get("MCODE_CHROME_PATH", "")).is_file()
+                         and shutil.which("pdftoppm") and shutil.which("tesseract"),
+                         "NOT_TESTED: real sandboxed Chromium/Poppler/Tesseract unavailable")
     def test_chromium_create_real(self):
+        # This path reproduces Chromium's former AF_UNIX socket path overflow.
+        self.root = self.root / ("long-workspace-" + "x" * 120)
+        self.root.mkdir()
+        self.assertGreater(len(str(self.root)), 120)
         (self.root / "report.md").write_text("# Fixture report\n\nChromium fixture alpha 123.\n\n| A | B |\n|---|---|\n| 1 | 2 |\n")
         self.cli("--timeout", "30", "create", "report.md", "--output", "report.pdf", timeout=35)
         self.cli("extract", "report.pdf", "--output", "report.txt")
         self.assertIn("Chromium fixture alpha 123", (self.root / "report.txt").read_text())
+        self.cli("render", "report.pdf", "--output-dir", "images", timeout=30)
+        self.assertTrue((self.root / "images/page-0001.png").is_file())
+        self.cli("ocr", "report.pdf", "--output", "ocr.txt", timeout=30)
+        self.assertIn("fixture", (self.root / "ocr.txt").read_text().lower())
 
     def test_selected_pages(self):
         write_pdf(self.pdf, pages=3)
@@ -213,17 +246,6 @@ class PDFTests(unittest.TestCase):
         result = self.cli("create", "report.md", "--output", "report.pdf", ok=False, env=env)
         self.assertIn("Dependency unavailable: sandboxed Chromium", result["error"]["message"])
 
-    def test_timeout_kills_native_process(self):
-        # Deliberately a subprocess fixture, not a real Poppler acceptance claim.
-        bin_dir = self.root / "bin"
-        bin_dir.mkdir()
-        fake = bin_dir / "pdftoppm"
-        fake.write_text(f"#!{sys.executable}\nimport time\ntime.sleep(20)\n")
-        fake.chmod(0o700)
-        env = dict(os.environ, PATH=str(bin_dir))
-        result = self.cli("--timeout", "1", "render", "fixture.pdf", "--output-dir", "pages", ok=False, env=env, timeout=5)
-        self.assertIn("timed out", result["error"]["message"])
-
     def test_sanitizer_blocks_active_content(self):
         text = '<h1 onclick="evil()">Good</h1><script>evil()</script><img src="file:///etc/passwd"><style>body{background:url(https://evil)}</style><iframe src="https://evil">hidden</iframe><a href="javascript:evil()">label</a>'
         clean = module.static_html(text)
@@ -262,53 +284,127 @@ class PDFTests(unittest.TestCase):
         self.cli("render", "fixture.pdf", "--pages", "2", "--output-dir", "images", env=dict(os.environ, PATH=str(bin_dir)))
         self.assertEqual((self.root / "images/page-0001.png").read_bytes(), b"keep me")
 
-    def test_sigterm_cancels_entire_native_group(self):
+    def cancellation_fixture(self, command, cancel):
+        # Fake native executable: verifies supervision, not native tool behavior.
         bin_dir = self.root / "bin"
         bin_dir.mkdir()
-        fake = bin_dir / "pdftoppm"
-        fake.write_text(f"#!{sys.executable}\nimport os,pathlib,subprocess,sys,time\np=subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)'])\n(pathlib.Path.cwd().parent/'native-pids').write_text(str(os.getpid())+' '+str(p.pid))\ntime.sleep(30)\n")
+        fake = bin_dir / ("chromium" if command == "create" else "pdftoppm")
+        fake.write_text(f"#!{sys.executable}\n" + r'''import json,os,pathlib,subprocess,sys,time
+child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'])
+marker = pathlib.Path.cwd().parent / 'native-processes.json'
+marker.with_suffix('.tmp').write_text(json.dumps({'pids': [os.getpid(), child.pid], 'tmpdir': os.environ['TMPDIR']}))
+marker.with_suffix('.tmp').replace(marker)
+time.sleep(30)
+''')
         fake.chmod(0o700)
-        proc = subprocess.Popen([sys.executable, str(SCRIPT), "--workspace", str(self.root), "render", "fixture.pdf", "--output-dir", "images"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=dict(os.environ, PATH=str(bin_dir)))
+        if command == "create":
+            (self.root / "report.md").write_text("# Cancellation fixture")
+            arguments = ["create", "report.md", "--output", "report.pdf"]
+        else:
+            arguments = ["render", "fixture.pdf", "--output-dir", "images"]
+        env = dict(os.environ, PATH=str(bin_dir), MCODE_CHROME_PATH=str(fake))
+        proc = subprocess.Popen([sys.executable, str(SCRIPT), "--workspace", str(self.root),
+                                 "--timeout", "2" if cancel == "timeout" else "15", *arguments],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+        identities = []
         try:
+            marker = self.root / "native-processes.json"
             deadline = time.monotonic() + 5
-            while not (self.root / "native-pids").exists() and time.monotonic() < deadline:
-                time.sleep(0.05)
-            self.assertTrue((self.root / "native-pids").exists())
-            native_pids = [int(x) for x in (self.root / "native-pids").read_text().split()]
-            proc.terminate()
+            while not marker.exists() and proc.poll() is None and time.monotonic() < deadline:
+                time.sleep(0.02)
+            self.assertTrue(marker.exists(), "native parent/descendant did not start")
+            recorded = json.loads(marker.read_text())
+            identities = [process_snapshot(pid) for pid in recorded["pids"]]
+            for identity in identities:
+                self.assertIsNotNone(identity)
+                self.assertTrue(same_live_process(identity, identity), identity)
+            self.assertEqual(identities[1]["ppid"], identities[0]["pid"])
+            self.assertEqual(identities[1]["pgid"], identities[0]["pgid"])
+            if cancel == "sigterm":
+                proc.terminate()
             out, err = proc.communicate(timeout=5)
-            self.assertEqual(proc.returncode, 130, out + err)
-            self.assertEqual(json.loads(out)["error"]["code"], "cancelled")
-            for pid in native_pids:
-                deadline = time.monotonic() + 2
-                while time.monotonic() < deadline:
-                    try:
-                        os.kill(pid, 0)
-                    except ProcessLookupError:
-                        break
-                    time.sleep(0.05)
-                else:
-                    self.fail(f"native process {pid} survived cancellation")
-            self.assertFalse(list(self.root.glob(".pdf-tools-*")))
+            self.assertEqual(proc.returncode, 130 if cancel == "sigterm" else 1, out + err)
+            payload = json.loads(out)
+            self.assertFalse(payload["ok"])
+            if cancel == "sigterm":
+                self.assertEqual(payload["error"]["code"], "cancelled")
+            else:
+                self.assertIn("timed out", payload["error"]["message"])
+            deadline = time.monotonic() + 2
+            while True:
+                observed = [process_snapshot(item["pid"]) for item in identities]
+                live = [after for before, after in zip(identities, observed) if same_live_process(before, after)]
+                if all(after is None or before["start"] != after["start"]
+                       for before, after in zip(identities, observed)) or time.monotonic() >= deadline:
+                    break
+                time.sleep(0.02)
+            # Preserve the distinction in Linux test logs: terminated zombies are
+            # not running descendants, but their reaping requires container init.
+            print("native cancellation evidence: " + json.dumps({"command": command, "cancel": cancel,
+                  "before": identities, "after": observed, "reaping_verified": all(x is None for x in observed)}),
+                  file=sys.stderr, flush=True)
+            self.assertFalse(live, f"native descendants still running: {live}")
+            self.assertFalse(list(self.root.glob(".pdf-tools-*")), "staging directory leaked")
+            if command == "create":
+                scratch = Path(recorded["tmpdir"])
+                self.assertNotEqual(scratch.parent, self.root)
+                self.assertFalse(scratch.exists(), "Chromium short temporary directory leaked")
+            self.assertFalse((self.root / "report.pdf").exists())
         finally:
             if proc.poll() is None:
-                proc.kill()
-                proc.wait()
+                proc.terminate()
+                try:
+                    proc.communicate(timeout=5)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.communicate(timeout=5)
+            # Exact identities only, including when an assertion fails; never pkill
+            # or a process-group kill that could select unrelated test processes.
+            for identity in identities:
+                if identity and same_live_process(identity, process_snapshot(identity["pid"])):
+                    try:
+                        os.kill(identity["pid"], signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+
+    def test_sigterm_cancels_entire_native_group(self):
+        self.cancellation_fixture("render", "sigterm")
+
+    def test_timeout_kills_native_process(self):
+        self.cancellation_fixture("render", "timeout")
+
+    def test_creation_sigterm_cleans_short_tmp_fixture(self):
+        self.cancellation_fixture("create", "sigterm")
+
+    def test_creation_timeout_cleans_short_tmp_fixture(self):
+        self.cancellation_fixture("create", "timeout")
 
     def test_creation_chromium_policy_fixture(self):
         # Fake browser verifies policy and writes a real fixture PDF. This is NOT
         # real Chromium render acceptance; test_chromium_create_real is separate.
         (self.root / "report.md").write_text("# Report\n\nfixture body\n<script>BAD_SCRIPT()</script><img src='https://invalid.invalid/a'>")
         fake = self.root / "fake-chromium"
-        fake.write_text(f"#!{sys.executable}\n" + r'''import pathlib,sys
+        fake.write_text(f"#!{sys.executable}\n" + r'''import os,pathlib,socket,stat,sys
+tmp = pathlib.Path(os.environ['TMPDIR'])
+assert tmp.parent == pathlib.Path('/tmp').resolve()
+assert stat.S_IMODE(tmp.stat().st_mode) == 0o700
+assert len(os.fsencode(str(tmp))) < 60
+assert tmp != pathlib.Path.cwd()
+assert os.environ['HOME'] == str(pathlib.Path.cwd())
+assert '--user-data-dir=' + str(pathlib.Path.cwd() / 'chrome-profile') in sys.argv
+(pathlib.Path.cwd().parent / 'observed-tmpdir').write_text(str(tmp))
+socket_dir = tmp / 'org.chromium.Chromium.fixture'
+socket_dir.mkdir()
+with socket.socket(socket.AF_UNIX) as singleton:
+    singleton.bind(str(socket_dir / 'SingletonSocket'))
 assert '--no-sandbox' not in sys.argv
 assert '--disable-setuid-sandbox' not in sys.argv
-assert '--blink-settings=scriptEnabled=false' in sys.argv
+assert '--blink-settings=scriptEnabled=false' not in sys.argv
 assert '--host-resolver-rules=MAP * ~NOTFOUND' in sys.argv
 assert '--proxy-server=http://127.0.0.1:9' in sys.argv
 text=pathlib.Path('static.html').read_text()
 assert 'BAD_SCRIPT' not in text and 'invalid.invalid' not in text
-assert 'default-src' in text and '<h1>Report</h1>' in text
+assert "script-src 'none'" in text and '<h1>Report</h1>' in text
 from pypdf import PdfWriter
 writer=PdfWriter()
 writer.add_blank_page(width=612,height=792)
@@ -319,11 +415,13 @@ writer.write(output)
         result = self.cli("create", "report.md", "--output", "report.pdf", env=dict(os.environ, MCODE_CHROME_PATH=str(fake)))
         self.assertEqual(result["pages"], [1])
         self.assertTrue((self.root / "report.pdf").read_bytes().startswith(b"%PDF-"))
+        self.assertFalse(Path((self.root / "observed-tmpdir").read_text()).exists())
 
     def test_creation_still_caps_generated_pages_fixture(self):
         (self.root / "report.md").write_text("# Creation remains bounded")
         fake = self.root / "fake-chromium"
-        fake.write_text(f"#!{sys.executable}\n" + r'''import sys
+        fake.write_text(f"#!{sys.executable}\n" + r'''import os,pathlib,sys
+(pathlib.Path.cwd().parent / 'observed-tmpdir').write_text(os.environ['TMPDIR'])
 from pypdf import PdfWriter
 writer=PdfWriter()
 for _ in range(31):
@@ -334,7 +432,60 @@ writer.write(output)
         fake.chmod(0o700)
         result = self.cli("create", "report.md", "--output", "report.pdf", ok=False, env=dict(os.environ, MCODE_CHROME_PATH=str(fake)))
         self.assertIn("exceeds 30 pages", result["error"]["message"])
+        self.assertFalse(Path((self.root / "observed-tmpdir").read_text()).exists())
         self.assertFalse((self.root / "report.pdf").exists())
+
+    def test_creation_monitors_short_tmp_size_fixture(self):
+        (self.root / "report.md").write_text("# Temporary size fixture")
+        fake = self.root / "fake-chromium"
+        fake.write_text(f"#!{sys.executable}\n" + r'''import os,pathlib,time
+scratch = pathlib.Path(os.environ['TMPDIR'])
+(pathlib.Path.cwd().parent / 'observed-tmpdir').write_text(str(scratch))
+for index in range(6):
+    with (scratch / f'piece-{index}').open('wb') as stream:
+        stream.truncate(16 * 1024 * 1024)
+time.sleep(20)
+''')
+        fake.chmod(0o700)
+        result = self.cli("--timeout", "3", "create", "report.md", "--output", "report.pdf",
+                          ok=False, env=dict(os.environ, MCODE_CHROME_PATH=str(fake)), timeout=5)
+        self.assertIn("aggregate limit", result["error"]["message"])
+        self.assertFalse(Path((self.root / "observed-tmpdir").read_text()).exists())
+        self.assertFalse((self.root / "report.pdf").exists())
+
+    def test_short_tmp_shares_working_size_budget(self):
+        # Sparse local files exercise aggregate accounting without heavy I/O.
+        stage = self.root / "stage"
+        scratch = self.root / "scratch"
+        stage.mkdir()
+        scratch.mkdir()
+        with (stage / "input.pdf").open("wb") as stream:
+            stream.truncate(module.MIB)
+        for index in range(5):
+            with (scratch / f"piece-{index}").open("wb") as stream:
+                stream.truncate(module.MAX_FILE)
+        stage_fd = os.open(stage, module.DIR_FLAGS)
+        scratch_fd = os.open(scratch, module.DIR_FLAGS)
+        try:
+            self.assertEqual(module.stage_size(scratch_fd), module.MAX_TOTAL)
+            with self.assertRaisesRegex(module.ToolError, "aggregate limit"):
+                module.stage_size(stage_fd, scratch_fd)
+            for path in scratch.iterdir():
+                path.unlink()
+            with (scratch / "input.pdf").open("wb") as stream:
+                stream.truncate(module.MAX_FILE + 1)
+            with self.assertRaisesRegex(module.ToolError, "per-file limit"):
+                module.stage_size(stage_fd, scratch_fd)
+            (scratch / "input.pdf").unlink()
+            outside = self.root / "outside"
+            outside.mkdir()
+            with (outside / "large").open("wb") as stream:
+                stream.truncate(module.MAX_TOTAL + 1)
+            (scratch / "link").symlink_to(outside, target_is_directory=True)
+            self.assertEqual(module.stage_size(stage_fd, scratch_fd), module.MIB)
+        finally:
+            os.close(scratch_fd)
+            os.close(stage_fd)
 
     def test_native_output_file_limit_fixture(self):
         bin_dir = self.root / "bin"
