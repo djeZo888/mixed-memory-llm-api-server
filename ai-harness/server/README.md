@@ -166,6 +166,15 @@ the old chat/history, and seeds the new engine's first prompt with that summary.
 JSON errors are `{error:{code,message}}`. IDs are opaque; timestamps are UTC ISO.
 The shapes match the task's `COORDINATION.md` v1 contract.
 
+Native CLI slash commands are unsupported in v0.0.1. Message submission returns
+400 `unsupported_slash_command` before enqueue or any stored/engine mutation for
+`/help`, `/new`, `/model`, `/status`, `/doctor`, `/context`, `/skills`, `/mcp`,
+`/usage`, `/compact` and the direct slash aliases of `REVIEWED_SKILLS`. Recognition
+matches the pinned ACP parser: a case-sensitive complete first token at the
+start of the text, with optional whitespace-separated arguments. Absolute file
+paths and prose remain ordinary tasks. Phrase a normal task to use a skill;
+automatic native compression remains enabled.
+
 | Method and path | Result |
 | --- | --- |
 | `GET /api/health` | `{version:"0.0.1",status:"ok",visionAvailable:boolean}; fixed deployment defaults true` |

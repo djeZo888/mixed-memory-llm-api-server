@@ -8,7 +8,23 @@ import { ApiError, requireId } from "./errors.js";
 import { Store } from "./store.js";
 import { Files, MAX_UPLOAD } from "./files.js";
 import { Broker, type BrokerOptions } from "./broker.js";
+import { REVIEWED_SKILLS } from "./policy.js";
 import type { Event } from "./contracts.js";
+// MiniMax ae65651 packages/tui/src/acp/commands.ts: exact, case-sensitive
+// command tokens, plus the direct slash aliases advertised for reviewed skills.
+const unsupportedSlashCommands = new Set<string>([
+  "help",
+  "new",
+  "model",
+  "status",
+  "doctor",
+  "context",
+  "skills",
+  "mcp",
+  "usage",
+  "compact",
+  ...REVIEWED_SKILLS,
+]);
 export interface AppOptions extends Omit<BrokerOptions, "store" | "files"> {
   dataDir: string;
   allowedOrigins?: string[];
@@ -221,6 +237,15 @@ export async function createApp(options: AppOptions): Promise<{
       const attachmentIds = ids.map(requireId);
       if (!body.text.trim() && !attachmentIds.length)
         throw new ApiError(400, "invalid_message", "Message is empty");
+      const command = /^\/([^\s]+)(?:\s+([\s\S]*?))?\s*$/u.exec(
+        body.text,
+      )?.[1];
+      if (command && unsupportedSlashCommands.has(command))
+        throw new ApiError(
+          400,
+          "unsupported_slash_command",
+          "Native CLI slash commands are not supported in ai-harness v0.0.1. Please phrase a normal task instead.",
+        );
       const runId = broker.enqueue(
         id(req),
         "message",
