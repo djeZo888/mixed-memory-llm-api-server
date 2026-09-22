@@ -25,7 +25,6 @@ MAX_INPUT = 25 * MIB
 MAX_FILE = 16 * MIB
 MAX_TOTAL = 80 * MIB
 MAX_PAGES = 30
-MAX_DOCUMENT_PAGES = 200
 MAX_EDGE = 2400
 DIR_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
 FILE_FLAGS = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
@@ -142,8 +141,8 @@ class Workspace:
 
 
 def pages(spec: str | None, count: int) -> list[int]:
-    if count < 1 or count > MAX_DOCUMENT_PAGES:
-        raise ToolError("PDF must have 1..200 pages; split larger documents before use")
+    if count < 1:
+        raise ToolError("PDF must have at least one page")
     if spec is None:
         if not 1 <= count <= MAX_PAGES:
             raise ToolError("Select --pages explicitly for documents over 30 pages")
@@ -152,12 +151,16 @@ def pages(spec: str | None, count: int) -> list[int]:
         raise ToolError("Page selection is too long")
     chosen = set()
     for part in spec.split(","):
-        if not re.fullmatch(r"[1-9][0-9]{0,2}(?:-[1-9][0-9]{0,2})?", part):
+        if not re.fullmatch(r"[1-9][0-9]*(?:-[1-9][0-9]*)?", part):
             raise ToolError("Use --pages 1,3-5 with positive one-based page numbers")
         lo, _, hi = part.partition("-")
         first, last = int(lo), int(hi or lo)
         if first > last or last > count:
             raise ToolError("Page selection is reversed or outside the document")
+        # Check range width before constructing it, even for a huge valid page
+        # count. Request digit length is independently bounded above.
+        if last - first + 1 > MAX_PAGES:
+            raise ToolError("At most 30 pages per request")
         chosen.update(range(first, last + 1))
         if len(chosen) > MAX_PAGES:
             raise ToolError("At most 30 pages per request")
@@ -474,7 +477,7 @@ def execute(args):
             output = str(Path(args.output_dir) / name) if args.command == "render" else args.output
             workspace.check_output(output)
         for name in produced:
-            if not re.fullmatch(r"(?:page-[0-9]{4}\.png|extracted\.txt|ocr\.txt|created\.pdf)", name):
+            if not re.fullmatch(r"(?:page-[0-9]{4,}\.png|extracted\.txt|ocr\.txt|created\.pdf)", name):
                 raise ToolError("Invalid internal artifact")
             output = str(Path(args.output_dir) / name) if args.command == "render" else args.output
             with os.fdopen(os.open(name, FILE_FLAGS, dir_fd=stage_fd), "rb") as stream:

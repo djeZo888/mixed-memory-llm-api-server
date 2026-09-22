@@ -21,12 +21,13 @@ def write_pdf(path, text="PDF fixture alpha 123", pages=1):
     from pypdf import PdfWriter
     from pypdf.generic import DictionaryObject, NameObject, DecodedStreamObject
     writer = PdfWriter()
-    for _ in range(pages):
+    for page_index in range(pages):
         page = writer.add_blank_page(width=612, height=792)
         font = DictionaryObject({NameObject("/Type"): NameObject("/Font"), NameObject("/Subtype"): NameObject("/Type1"), NameObject("/BaseFont"): NameObject("/Helvetica")})
         page[NameObject("/Resources")] = DictionaryObject({NameObject("/Font"): DictionaryObject({NameObject("/F1"): writer._add_object(font)})})
         stream = DecodedStreamObject()
-        stream.set_data(f"BT /F1 20 Tf 72 700 Td ({text}) Tj ET".encode())
+        page_text = text(page_index + 1) if callable(text) else text
+        stream.set_data(f"BT /F1 20 Tf 72 700 Td ({page_text}) Tj ET".encode())
         page[NameObject("/Contents")] = writer._add_object(stream)
     with path.open("wb") as target:
         writer.write(target)
@@ -101,8 +102,51 @@ class PDFTests(unittest.TestCase):
         write_pdf(self.pdf, pages=31)
         self.cli("extract", "fixture.pdf", "--output", "text.txt", ok=False)
         self.cli("extract", "fixture.pdf", "--pages", "1", "--output", "text.txt")
-        write_pdf(self.pdf, pages=201)
-        self.cli("extract", "fixture.pdf", "--pages", "1", "--output", "too-many.txt", ok=False)
+        write_pdf(self.pdf, pages=205, text=lambda page: f"Datasheet unique page {page}")
+        result = self.cli("extract", "fixture.pdf", "--pages", "203-205", "--output", "late.txt")
+        self.assertEqual(result["pages"], [203, 204, 205])
+        text = (self.root / "late.txt").read_text()
+        self.assertIn("Datasheet unique page 203", text)
+        self.assertIn("Datasheet unique page 205", text)
+        self.assertNotIn("Datasheet unique page 202", text)
+
+    def test_four_digit_late_range_real_extraction(self):
+        write_pdf(self.pdf, pages=1005, text=lambda page: f"Long datasheet unique page {page}")
+        result = self.cli("extract", "fixture.pdf", "--pages", "1001-1003", "--output", "late-four-digit.txt")
+        self.assertEqual(result["pages"], [1001, 1002, 1003])
+        text = (self.root / "late-four-digit.txt").read_text()
+        for page in (1001, 1002, 1003):
+            self.assertIn(f"Long datasheet unique page {page}", text)
+        self.assertNotIn("Long datasheet unique page 1000", text)
+        self.assertNotIn("Long datasheet unique page 1004", text)
+
+    def test_page_range_width_checked_before_expansion(self):
+        from unittest.mock import patch
+        with patch.object(module, "range", side_effect=AssertionError("range was expanded"), create=True):
+            for spec in ("1-100000000000000000000", "90000000000000000000-100000000000000000000"):
+                with self.subTest(spec=spec), self.assertRaises(module.ToolError):
+                    module.pages(spec, 100000000000000000000)
+        self.assertEqual(module.pages("10000-10002", 20000), [10000, 10001, 10002])
+        self.assertEqual(module.pages("20000", 20000), [20000])
+        with self.assertRaises(module.ToolError):
+            module.pages("1-30,31", 20000)
+        with self.assertRaises(module.ToolError):
+            module.pages("1" * 151, 20000)
+
+    def test_five_digit_artifact_publication_fixture(self):
+        # Exercise complete publication/validation with a fake worker result;
+        # no giant PDF or native rendering acceptance claim is needed.
+        from unittest.mock import patch
+        def fake_worker(config, stage_fd, stage_path, timeout):
+            handle = os.open("page-10000.png", os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600, dir_fd=stage_fd)
+            with os.fdopen(handle, "wb") as stream:
+                stream.write(b"fixture PNG")
+            return {"files": ["page-10000.png"], "pages": [10000]}
+        args = module.build_parser().parse_args(["--workspace", str(self.root), "render", "fixture.pdf", "--pages", "10000", "--output-dir", "images"])
+        with patch.object(module, "supervise", side_effect=fake_worker):
+            result = module.execute(args)
+        self.assertEqual(result["artifacts"][0]["path"], "images/page-10000.png")
+        self.assertEqual((self.root / "images/page-10000.png").read_bytes(), b"fixture PNG")
 
     def test_output_collision(self):
         target = self.root / "text.txt"
@@ -275,6 +319,22 @@ writer.write(output)
         result = self.cli("create", "report.md", "--output", "report.pdf", env=dict(os.environ, MCODE_CHROME_PATH=str(fake)))
         self.assertEqual(result["pages"], [1])
         self.assertTrue((self.root / "report.pdf").read_bytes().startswith(b"%PDF-"))
+
+    def test_creation_still_caps_generated_pages_fixture(self):
+        (self.root / "report.md").write_text("# Creation remains bounded")
+        fake = self.root / "fake-chromium"
+        fake.write_text(f"#!{sys.executable}\n" + r'''import sys
+from pypdf import PdfWriter
+writer=PdfWriter()
+for _ in range(31):
+    writer.add_blank_page(width=612,height=792)
+output=next(x.split('=',1)[1] for x in sys.argv if x.startswith('--print-to-pdf='))
+writer.write(output)
+''')
+        fake.chmod(0o700)
+        result = self.cli("create", "report.md", "--output", "report.pdf", ok=False, env=dict(os.environ, MCODE_CHROME_PATH=str(fake)))
+        self.assertIn("exceeds 30 pages", result["error"]["message"])
+        self.assertFalse((self.root / "report.pdf").exists())
 
     def test_native_output_file_limit_fixture(self):
         bin_dir = self.root / "bin"

@@ -29,7 +29,8 @@ must be serialized by the owning runtime.
 
 ## Container integration proposal (PREP-owned)
 
-Copy this directory to `/opt/ai-harness/tools/pdf`, alongside the other tools.
+Use `ai-harness/` as the Containerfile build context. Copy this directory to
+`/opt/ai-harness/tools/pdf`, alongside the other tools.
 Install into the existing `/opt/ai-harness-python` venv. No extra host mounts.
 
 ```dockerfile
@@ -37,8 +38,8 @@ Install into the existing `/opt/ai-harness-python` venv. No extra host mounts.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     poppler-utils tesseract-ocr tesseract-ocr-eng chromium \
  && rm -rf /var/lib/apt/lists/*
-COPY ai-harness/tools /opt/ai-harness/tools
-COPY ai-harness/skills /opt/ai-harness/skills
+COPY tools/ /opt/ai-harness/tools/
+COPY skills/ /opt/ai-harness/skills/
 RUN /opt/ai-harness-python/bin/python -m pip install --no-cache-dir \
     --require-hashes -r /opt/ai-harness/tools/pdf/requirements.lock
 ENV MCODE_CHROME_PATH=/usr/bin/chromium
@@ -64,9 +65,15 @@ license files in the final image. No package is installed automatically at runti
   relative paths cannot contain `..`. Symlink components and hardlinked inputs
   are rejected. Input reads/output writes use anchored directory descriptors,
   `O_NOFOLLOW`, regular-file checks and exclusive output creation.
-- PDF input <=25 MiB; HTML/Markdown <=1 MiB of UTF-8. PDF must have 1..200 pages;
-  at most 30 selected pages per command. Documents over 30 pages require an
-  explicit selection. Encrypted PDFs are refused.
+- PDF processing input <=25 MiB; HTML/Markdown <=1 MiB of UTF-8. The separate
+  UI upload allowance is 50 MiB: accepting an upload does not promise that this
+  helper can process an input above its own limit.
+- PDF must have at least one page; at most 30 selected pages per command.
+  Documents over 30 pages require an explicit selection. A small late-page range
+  from a longer datasheet is supported (including page numbers above 1000 or
+  10000), subject to the same file-size, parser memory and total deadline limits.
+  Oversized ranges are rejected before expansion. Creation remains limited to
+  30 generated pages. Encrypted PDFs are refused.
 - Every output <=16 MiB; temporary working set on disk <=80 MiB (polled at 50ms).
   Native per-file resource limit is 16 MiB. Deadline defaults 60 seconds, supports
   1..120; supervisor kills the process group on timeout/cancellation/error.

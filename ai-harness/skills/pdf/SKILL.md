@@ -17,6 +17,12 @@ select relevant pages instead of bulk processing. The helper's `--help` is
 authoritative for current limits and dependency errors. Do not work around a
 path, size, page, timeout or sandbox rejection by calling an unrestricted helper.
 
+The PDF processing input limit is 25 MiB, independently of the UI's 50 MiB upload
+limit. A successfully uploaded larger file is not a promise that this helper can
+process it. For a long datasheet, request a small explicit page range; do not
+interpret a bounded whole-document extraction limit as a limit on useful late
+pages in the document.
+
 ```sh
 /opt/ai-harness-python/bin/python /opt/ai-harness/tools/pdf/pdf_tools.py --workspace "$PWD" extract source.pdf --output excerpt.txt --pages 1-3 --engine pdfplumber
 /opt/ai-harness-python/bin/python /opt/ai-harness/tools/pdf/pdf_tools.py --workspace "$PWD" render source.pdf --output-dir page-images --pages 2 --dpi 144

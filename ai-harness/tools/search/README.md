@@ -9,11 +9,12 @@ and notices. Installation does not start or contact that service.
 ## Image dependency contract
 
 Copy this entire directory to `/opt/ai-harness/tools/search` and retain its
-`package.json`, `package-lock.json` and dependency licenses. During image build:
+`package.json`, `package-lock.json` and dependency licenses. PREP's agreed build
+context is `ai-harness/`; its Containerfile fragment is:
 
 ```dockerfile
-COPY ai-harness/tools /opt/ai-harness/tools
-COPY ai-harness/skills /opt/ai-harness/skills
+COPY tools/ /opt/ai-harness/tools/
+COPY skills/ /opt/ai-harness/skills/
 RUN cd /opt/ai-harness/tools/search && npm ci --omit=dev --ignore-scripts
 ```
 
@@ -24,14 +25,41 @@ compatible native stdio MCP without introducing v2 protocol requirements.
 No extra host mounts or global packages are needed. `npm ci` downloads build-time
 packages; runtime search only contacts the configured private endpoint.
 
-Merge `mcpServers.example.json` into the native MiniMax `.mcp.json` at the
-canonical conversation workspace root. The pinned native runtime expands
-`${AI_HARNESS_SEARXNG_URL}` from its environment; PREP must provide that variable
-and protect deployment-managed configuration. Its `timeout: 20000` is in
-milliseconds and exceeds the adapter's own 10-second deadline. Entrypoint:
+PREP should render the following entry into the existing per-session profile
+file `${MINIMAX_DATA_DIR}/mcp.json` (no leading dot), merging other reviewed
+entries. The endpoint shown is the deployment candidate; profile generation must
+write the actual operator-selected literal URL into `env`:
+
+```json
+{
+  "mcpServers": {
+    "searxng": {
+      "command": "node",
+      "args": ["/opt/ai-harness/tools/search/searxng-mcp.mjs"],
+      "timeout": 20000,
+      "env": {
+        "AI_HARNESS_SEARXNG_URL": "http://10.0.2.2:8082"
+      }
+    }
+  }
+}
+```
+
+At pinned MiniMax revision `ae65651df5f97ae1085ab4e19964f4b78c769a4e`, profile MCP
+configuration passes `env` values through literally; it does **not** expand
+`${AI_HARNESS_SEARXNG_URL}`. The separate workspace `.mcp.json` loader does perform
+environment expansion. Therefore `mcpServers.example.json` is a **workspace-only
+alternative**, for the canonical conversation workspace root, and must not be
+copied unchanged into the profile. The deployment contract uses the profile
+entry above and needs no extra host mounts. A same-named project or ACP session
+entry can override the profile entry under native precedence; configuration
+ownership and acceptance belong to PREP/root.
+
+The native `timeout: 20000` is in milliseconds and exceeds the adapter's own
+10-second deadline. Entrypoint:
 `node /opt/ai-harness/tools/search/searxng-mcp.mjs`. stdout is exclusively MCP
-messages during normal operation; safe diagnostics go to stderr. `--help` prints
-CLI documentation without making any network request.
+messages during normal operation; safe diagnostics go to stderr. `--help` prints CLI
+documentation without making any network request.
 
 `AI_HARNESS_SEARXNG_URL` is required **operator configuration**, never a tool
 argument. It accepts an HTTP(S) base URL with a private or loopback literal IPv4

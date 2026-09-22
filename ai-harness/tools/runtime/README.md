@@ -50,3 +50,61 @@ ctest --test-dir ../evidence/runtime-build --output-on-failure
 
 Results and platform limitations are recorded in task evidence, never inferred
 from installed package names. No full native-agent or Linux acceptance is claimed.
+
+## Native MiniMax selection fragment (PREP-owned integration)
+
+At exact pin `ae65651df5f97ae1085ab4e19964f4b78c769a4e`, the native settings
+file is `${MINIMAX_DATA_DIR}/config.yaml`. Deep-merge the JSON-compatible mapping
+in `minimax-settings.fragment.json` into PREP's existing settings; it is not a
+complete replacement config. Preserve provider settings, other beta/features
+and the separate PREP choice for `agents.default.features.mavis`.
+
+`agents.default.skills: [code-review]` selects standalone **builtin** skills;
+it suppresses builtin Office/PDF advice while permitting curated profile/global
+skills. `builtinTools: []` and `features.webSearch: false` suppress Matrix
+capabilities/search; `features.delegation: true` keeps delegation available.
+`skills.external.enabled: false` disables workspace and host external ingestion,
+while native `${MINIMAX_DATA_DIR}/skills` remains a global source. At first profile
+initialization copy only the five curated directories there: `technical-research`,
+`code-investigation`, `calculations`, `technical-testing`, `pdf`, plus the
+first-party `LICENSE-MIT.txt` notice. The global `pdf`
+shadows the builtin by source precedence, in combination with builtin suppression
+and external ingestion disabled. Profiles must contain only reviewed agent/global
+skill roots; no additional host mounts are needed.
+
+Canonical execution-profile `configSelection.skills` is a different selector:
+it filters **all standalone skills**, including curated ones. Prefer leaving it
+absent. If PREP explicitly supplies it, the corresponding fragment is:
+
+```json
+{
+  "configSelection": {
+    "skills": [
+      "technical-research", "code-investigation", "calculations",
+      "technical-testing", "pdf", "code-review"
+    ]
+  }
+}
+```
+
+That fragment belongs to the canonical execution profile, not top-level
+`config.yaml`. The optional `configSelection.extensionSkills` must likewise be
+absent or include the five curated names. A selector only narrows ready skills;
+it cannot enable an unavailable capability.
+
+Keep `beta.browserUseTooling: true` and the native browser provider. Its `browser`
+tool and `control-in-app-browser` skill are capability-owned injection, separate
+from these standalone skill selectors. Do not put the browser skill in the
+builtin whitelist or add a Playwright MCP. Private SearXNG is the configured MCP
+search entry; `features.webSearch: false` disables Matrix search, not SearXNG.
+
+Profile MCP lives at `${MINIMAX_DATA_DIR}/mcp.json` and takes literal environment
+values. The workspace alternative `.mcp.json` supports environment expansion.
+See `../search/README.md` for distinct examples. All choices above are backed by
+reviewed pinned source; the live native roster remains NOT_TESTED until the
+separate integration acceptance.
+
+These settings are defaults: explicit per-role capability overrides take
+precedence. PREP must ensure configured roles inherit or retain the reviewed
+restrictions, and check delegated-agent effective rosters during native acceptance.
+This source fragment does not constrain unknown overriding agent definitions.
