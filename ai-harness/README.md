@@ -1,60 +1,63 @@
-# ai-harness v0.0.2 candidate
+# ai-harness v0.0.2
 
-Version 0.0.2 was authorized on 2026-09-22. This checkout contains the reviewed
-candidate UI source; this task supplies **source and synthetic fixture evidence
-only**. It does not establish that 0.0.2 is deployed or accepted on the live
-service. See the [0.0.2 plan](PLAN-v0.0.2.md) and
-[0.0.2 acceptance report](docs/acceptance-v0.0.2.md) for exact identities,
-observations and limits. Production remains separately owned. Fixture review
-found a minor idle/queued status inconsistency; the authorized focused follow-up
-corrected it and passed regression plus isolated browser verification.
+Version 0.0.2 is deployed at `cacfdd43`, including the four WEB corrections
+exported as `42612a5`. Bounded deployed acceptance is complete with explicit
+limits: one owned main request and queued follow-up, genuine progress, one
+background child, refresh/reconnect, separate reply files, two SVG previews and
+byte-verified downloads/ZIP passed. Final readback confirmed folded Additional
+activity, retained history and no blank responding row. Chromium downloaded
+`načrt.txt` with the exact 85 bytes under the combined UTF-8 process locale and
+`sl-SI` browser context. Earlier literal `download` observations remain a utility
+configuration finding; the individual locale variables were not isolated.
+The child's public browser result is model-reported; neither native nor fallback
+browser execution was independently proven.
 
-## Candidate UI changes
+See the [current acceptance report](docs/acceptance-v0.0.2.md),
+[machine-readable results](docs/acceptance-v0.0.2.json) and
+[release plan](PLAN-v0.0.2.md) for exact revisions, verification and remaining
+limits. [Version 0.0.1 acceptance](docs/acceptance-v0.0.1.md) remains the historical
+record for earlier PDF, search, lifecycle and capacity checks.
 
-- Progress displays emitted intermediate updates separately from the classified
-  final answer. It opens during work, collapses when the final answer is ready,
-  and can be reopened. Missing historical phase information stays unclassified.
-- Each reply groups its own activity and files. Canonical tool updates retain
-  available command, URL, duration and detail. Child counts follow the supplied
-  lifecycle summary; zero children alone does not mean a run has finished.
-- Generated SVG/image files have per-reply previews and individual downloads.
-  Replies with multiple files and a supplied archive route offer **Download all
-  ZIP**. Proven shared-file membership is retained; unknown ownership is labelled.
-- Attach or drop supported files on the composer. Submitted user messages retain
-  their recorded attachment names and download links. Image capability and upload
-  errors are visible. Failed submission retains the draft.
-- **Enter** inserts a newline; **Ctrl+Enter** or **Cmd+Enter** submits, as does the
-  send button. The composer displays this hint. Browser fixture checks do not
-  establish platform IME compatibility.
-- A follow-up sent while work is active queues for the next turn. It does not
-  steer the current native turn. Run status remains visible outside the composer,
-  and late answers/files stay with their original run across refresh.
-- Only an untouched new chat displays **0 / 480,000 tokens (0%)**. Existing
-  unknown and stale context retain those labels. Timestamps use
-  **Europe/Ljubljana**, including automatic CET/CEST conversion.
+## Current UI behavior
 
-These describe the candidate behavior and contract. Fixture events, uploads,
-child counts and file bytes are synthetic. The fixture ZIP is an empty route
-response: it proves neither production archive contents nor native generation.
-Live engine/server behavior, native child counts, real ZIP contents, migration of
-user history and production rendering remain **NOT_TESTED** in this phase.
+- Emitted intermediate updates appear separately from the classified final;
+  completed final answers collapse progress, and reopening retains the updates.
+  This reliable separation applies to new replies with proven native metadata.
+  Old merged text remains original/unclassified; no retroactive perfect split is
+  promised. Progress reports actual activity, not hidden reasoning.
+- Each reply owns its activity, previews, downloads and per-run **Download all
+  ZIP**. Follow-ups submitted during work queue for the next turn. Refresh
+  restores saved messages and progress.
+- Attach or drop supported files. Submitted messages retain recorded attachment
+  names and download links. **Enter** inserts a newline; **Ctrl+Enter** or
+  **Cmd+Enter** submits. Ctrl+Enter passed live; platform IME and Cmd+Enter remain
+  outside this live acceptance.
+- An untouched new chat starts at **0 / 480,000 tokens (0%)**. Later context is
+  an estimate with explicit unknown/stale states. Timestamps use
+  **Europe/Ljubljana**; actual displayed times and the independently verified
+  host timezone agree.
 
-## Preserved v0.0.1 release history and operating guidance
+The deployed WEB corrections fold compatibility heartbeat rows into the existing
+**Additional activity** section, suppress stale finish/duration on nonterminal
+activity, set the attachment's explicit download name and omit whitespace-only
+assistant rows. History, nonempty partial text and canonical status remain.
+The saved active snapshot verifies the timing correction; deployed settled
+readback verifies 43 primary / 156 Additional activity rows and reply grouping.
+Drag/drop has fixture coverage; actual file-chooser upload passed live, without
+OS drag automation. Focused tests, build/typecheck and the saved snapshot fixture
+remain distinct from actual deployed evidence.
 
-The following records the previously accepted release and its limits; it is not
-a fresh inspection of the running service. The [0.0.1 plan](PLAN-v0.0.1.md) and
-[0.0.1 acceptance report](docs/acceptance-v0.0.1.md) remain unchanged.
-
-A shared LAN chat for technical research, PDFs and coding, using MiniMax Code
-and the two existing Qwen instances. **Bounded live acceptance is complete with
-limitations**, including unexecuted capacity and automatic-threshold cases.
-See the [approved plan](PLAN-v0.0.1.md) and [architecture](docs/architecture.md).
-The [acceptance report](docs/acceptance-v0.0.1.md) records tested revisions,
-live findings, qualifications and unexecuted cases.
+Worker1 independently verified the final deployment at a closed-admission
+barrier: 68 messages, 30 SQL file rows and 72 regular files (825,197 bytes), with
+matching paired message/file fingerprints. The earlier activation separately
+preserved 61 messages, 27 SQL file rows and 66 regular files. These are bounded
+barrier comparisons, not a later all-user history audit. Current CI and D2 pass;
+the unchanged deferred installer fixture retains one TMPDIR-regex failure,
+detailed in the acceptance report.
 
 ## Access and everyday use
 
-The active HTTP port 80 address is `http://10.156.100.61/` (initial live readiness).
+The active HTTP port 80 address is `http://10.156.100.61/` (verified final deployment).
 There are no accounts, login, settings or model selector. Everyone with access
 shares conversations and task access. The operator controls LAN access;
 HTTP provides no transport encryption.
@@ -63,15 +66,15 @@ This is a shared workspace service with no per-person privacy boundary.
 - Choose **New chat**, or select an existing chat from the list, then send a task.
   Follow-ups in one chat run sequentially; separate chats can run concurrently.
 - Attach PDFs, source/text files or images; download files from artifact links.
-  The image upload/recognition/follow-up path passed a live synthetic-image case;
-  the acceptance report bounds the tested PDF and image coverage.
+  Earlier PDF and image coverage is recorded in the
+  [v0.0.1 report](docs/acceptance-v0.0.1.md).
 - Expand progress to follow actual browsing, tools, tests, background subagents,
   queueing and compression. Progress is activity reporting, not hidden reasoning.
 - Refresh or reconnect to recover saved history and current progress without
   duplicate replies. Closing the browser does not stop server-side work.
-- Use **Stop** to stop the native task/container and wait for confirmed cleanup.
+- Use **Stop all** to stop the native task/container and wait for confirmed cleanup.
   Already dispatched inference may keep draining and temporarily occupy a lane.
-  The V2 fix passed a tiny live Stop, same-chat follow-up and final health checks.
+  The earlier Stop and follow-up acceptance is recorded in the v0.0.1 report.
   After a proven clean stop, a new explicit prompt continues the same native
   session, preserving history, context and workspace. Cancelled tasks stay stopped.
   Unknown/interrupted work must not silently replay; unresolved cleanup needs
@@ -80,8 +83,8 @@ This is a shared workspace service with no per-person privacy boundary.
   the same project workspace. The old chat and history remain. Runs in linked
   chats serialize because they share project files.
 - **Delete chat** cancels active work before hiding metadata and retains project
-  files. Corrected active Delete and file preservation passed live; that case still
-  emitted the older cancellation error, recorded separately in the report.
+  files. Earlier Delete acceptance and its cancellation-message limit remain in
+  the v0.0.1 report.
 
 ## Capacity and context
 

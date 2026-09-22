@@ -1,10 +1,21 @@
-# ai-harness 0.0.2 — authorized candidate and acceptance plan
+# ai-harness 0.0.2 — release plan
 
-Authorized on 2026-09-22. This extends the [0.0.1 plan](PLAN-v0.0.1.md) for the
-requested UI and additive server/event contract. Existing infrastructure,
-models, context/output limits, access policy and worker ownership remain.
-The [acceptance report](docs/acceptance-v0.0.2.md) distinguishes source/fixture
-observations from any later deployed/live results.
+Authorized on 2026-09-22. This extends the [0.0.1 plan](PLAN-v0.0.1.md) with the
+requested conversation UI and additive server/event contract. The
+[current acceptance report](docs/acceptance-v0.0.2.md) records exact reviewed
+source, deployed runtime, source/fixture coverage, focused live outcomes and
+remaining limits. The [v0.0.1 report](docs/acceptance-v0.0.1.md) preserves the
+earlier release evidence. Existing infrastructure, models, context/output
+limits, access policy and worker ownership remain.
+
+The release is deployed at `cacfdd43`, including the four WEB corrections from
+`42612a5`. Focused tests, build/typecheck and the saved snapshot fixture passed;
+the owned live campaign and final read-only presentation/Unicode-download
+readback are accepted with explicit limits. Native child browser execution
+remains unproven, drag/drop is fixture-only, and platform IME was not exercised.
+New classified native replies have proven progress/final separation; old merged
+text remains original/unclassified. Current CI/D2 pass; the unchanged deferred
+installer TMPDIR fixture failure remains documented in the acceptance report.
 
 ## Requested behavior
 
@@ -30,48 +41,40 @@ observations from any later deployed/live results.
    instant. Display timestamps with automatic CET/CEST, never a fixed offset.
 8. Display version 0.0.2 and preserve v0.0.1 source, release evidence and limits.
 
-## This bounded phase
+## Delivery and acceptance
 
-H002-UI-FIXTURES starts from root-integrated candidate
-`eb8387c9431b83a50d3c782b45ab7468f8f5a173`. Worker2 builds its static web assets
-and runs a focused synthetic fixture campaign at desktop 1440 and mobile 390.
-Only the task-owned, rootless Linux Chromium container and its internal
-127.0.0.1 fixture server may be used. There is no production app, gateway,
-inference or ai-vm access and no deployment or service change in this phase.
+1. Implement the UI, additive server contract and small reproducible native
+   metadata bridge in isolated worker copies. Preserve compatible existing
+   fields and unknown historical identities; do not infer phases from prose.
+2. Review the combined source and scoped deterministic/fixture evidence.
+   Preserve synthetic event, count, attachment and archive-routing evidence as
+   fixture coverage; it does not establish native behavior or real file bytes.
+3. Root coordinates deployment of the exact reviewed immutable runtime after
+   an admission barrier, idle verification and consistent backup. Worker1 owns
+   authorized host/deployment work and original-data comparisons. Preserve
+   user conversations/files, protected credentials and rollback evidence.
+4. Separately assigned Worker2 acceptance uses the explicit root grant naming
+   source, runtime and origin. Exercise one owned chat with a real attachment,
+   emitted progress/tools, one background child, two SVGs, one queued follow-up,
+   refresh, actual ZIP/download equality, desktop/mobile rendering and local
+   time. Report missing metadata and observed failures without inventing phases,
+   counts or completion. Coordinate defects before source fixes or another run.
+5. Reconcile the actual results and limits in the acceptance report, verify
+   owned settlement/cleanup, and hand off the scoped docs commit for parent
+   review and publication. Preserve test chats/artifacts and keep bulky traces,
+   screenshots and private database backups outside Git.
 
-The fixture reuses the approved utility image
-`sha256:84ea979312f7743d9ab789465aae7adde92f97d6169744ec7b63776a9482b227`
-with the candidate assets, not the image's historical web build. Existing
-Node/Chromium/Playwright and the approved sandbox profile are reused without
-rebuilding, retagging or installing a toolchain. The container has no network,
-host ports, broad mounts or sandbox bypass. Actual versions and launch controls
-are recorded in task evidence. This utility image is not a release-runtime claim.
+## Operating boundaries
 
-Screenshots are marked FIXTURE / NOT LIVE INFERENCE. Evidence distinguishes
-browser observations, unit/source proof and unexecuted cases. Synthetic fixture
-events, attachment bytes and child summaries do not prove backend/native
-behavior. The fixture ZIP is an empty archive used only to check routing.
-All live engine/server behavior, real archive contents, native child counts,
-user-history migration and production rendering remain NOT_TESTED here.
-UI defects are reported to root for source-owner coordination; this task edits
-only its release-document paths and evidence drivers/fixtures.
+Mac-Orchestrator coordinates/reviews/synchronizes. Fresh isolated native worker
+tasks implement/build/test; only assigned tasks contact hosts. Retain exact
+session, source, image, event/run and evidence identities. The browser utility
+image is distinct from the production runtime. Preserve the approved rootless
+Chromium sandbox, seccomp, resource bounds and narrow owned mounts.
 
-## Later independently authorized acceptance
-
-Root reviews the combined final source/runtime and coordinates any deployment
-at an idle point, with a consistent metadata backup and prior immutable release
-preserved. User conversations/files and active work must remain untouched.
-Only a fresh, separately assigned live gate may permit actual browser/API work
-against production; the prepared evidence driver defaults to NO_LIVE_GATE.
-
-The later campaign uses owned new test chats to check real intermediate/final
-boundaries, tools and native child counts, per-reply SVG/files and ZIP contents,
-attachment round trips, queued follow-ups, refresh continuity and local time.
-Existing user-history migration/rendering needs separately authorized read-only
-review. Do not repeat GPU, full-context, long-output or the broad v0.0.1 suite.
-
-Mac-Orchestrator coordinates/reviews/synchronizes. Fresh isolated worker tasks
-implement/build/test; only assigned tasks contact hosts. Keep native session IDs,
-source/image identities, compact receipts, screenshots and cleanup records.
-No model/lifecycle changes, GLM integration, installer, new accounts, credential
-changes, push or deployment are authorized by this fixture/document phase.
+Live UI work remains within its current root grant and owned campaign data;
+it grants no inspection of other users' chat bodies, shared-service mutation
+or ai-vm contact. Existing private access policy, credentials, GPU placement,
+two shared gateway request slots and fixed 480,000-token context remain.
+No GLM integration, new models/accounts, model lifecycle work, installer
+reopening or broad GPU/context/output/v0.0.1 campaign is part of this release.

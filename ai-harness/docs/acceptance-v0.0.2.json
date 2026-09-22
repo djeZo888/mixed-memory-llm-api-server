@@ -1,240 +1,417 @@
 {
-  "schema_version": 1,
-  "task": "H002-UI-FIXTURES-20260922",
+  "schema_version": 2,
+  "task": "H002-UI-LIVE-20260922",
   "date": "2026-09-22",
-  "stage": "source_fixture_candidate",
-  "overall_status": "SOURCE_FIXTURE_CANDIDATE_STATUS_FINDING_CORRECTED",
-  "live_gate": "NO_LIVE_GATE",
-  "production_contact": false,
-  "session_id": "01a0c7b6-5206-7cf1-9cc5-1df1643f1e61",
+  "overall_status": "DEPLOYED_ACCEPTANCE_COMPLETE_WITH_LIMITS",
   "identities": {
-    "candidate_ui_source": "eb8387c9431b83a50d3c782b45ab7468f8f5a173",
+    "corrected_web_commit": "42612a514387fcc812ac5b396cb603f70c8de2b4",
+    "production_runtime": "sha256:4af6da23f70c3bc20d557be623d3d3bed7ef5d889e2b510debe556dc54936da3",
+    "origin": "http://10.156.100.61",
+    "native_session": "01a0c7cf-c3c2-7f01-8256-51618094ed21",
     "utility_image": "sha256:84ea979312f7743d9ab789465aae7adde92f97d6169744ec7b63776a9482b227",
+    "utility_is_production_engine": false,
     "seccomp_sha256": "0474c063b32acee85a1eb5ccfc35f7b1f66278af8da722c45b1d25eb2ae1cfbb",
-    "dependency_lock_sha256": "c37680f13608e51a146425b897aca0b781b299d30f626c051139d8e2f284cf09",
-    "utility_versions": {
-      "node": "v24.21.0",
-      "playwright": "1.63.0",
-      "chromium": "Chromium 153.0.8010.52 built on Debian GNU/Linux 12 (bookworm)"
+    "campaign_source": "78bef292c33c5a689b8b7486ca6ba95c203ccd32",
+    "deployed_source": "cacfdd43c42d675ab154ba7308404d71c81a64f1"
+  },
+  "live_gate": {
+    "status_during_campaign": "GO",
+    "openedAt": "2026-09-22T06:47:54.775137+00:00",
+    "expiresAt": "2026-09-22T07:12:54.775137+00:00",
+    "further_inference_authorized": false
+  },
+  "owned_case": {
+    "session_id": "cbbe3d60-5dc9-4b27-b227-071a14e02295",
+    "runs": [
+      {
+        "id": "65a3fe76-5d00-4041-8067-5be54b895c25",
+        "kind": "message",
+        "status": "completed",
+        "createdAt": "2026-09-22T06:57:03.832Z",
+        "updatedAt": "2026-09-22T06:59:50.088Z",
+        "finalMessageId": "m_836fc402e6662753916074e38b210d93c3087357767e0a1891b3e0f98ddcddef",
+        "artifactIds": [
+          "9583f1fb-5104-4dd0-91df-49591ee22067",
+          "08517008-20d4-4b8d-804b-138a02c50df2"
+        ],
+        "zipUrl": "/api/sessions/cbbe3d60-5dc9-4b27-b227-071a14e02295/runs/65a3fe76-5d00-4041-8067-5be54b895c25/artifacts.zip",
+        "subagents": {
+          "known": true,
+          "active": 0,
+          "completed": 1,
+          "failed": 0,
+          "cancelled": 0,
+          "updatedAt": "2026-09-22T06:59:50.011Z"
+        }
+      },
+      {
+        "id": "8f3b2019-e4ea-46d2-8af2-2cbca90fc3ba",
+        "kind": "message",
+        "status": "completed",
+        "createdAt": "2026-09-22T06:57:03.951Z",
+        "updatedAt": "2026-09-22T06:59:54.539Z",
+        "finalMessageId": "m_10d535b5268585d3149d91987bdc928283a1775692dd7dbff6cba3803db4ee66",
+        "artifactIds": [],
+        "subagents": {
+          "known": true,
+          "active": 0,
+          "completed": 0,
+          "failed": 0,
+          "cancelled": 0,
+          "updatedAt": "2026-09-22T06:59:54.489Z"
+        }
+      }
+    ],
+    "main_final_words": 70,
+    "native_child": "mvs_335f673e4cbe43378238cf1571a738fd",
+    "nonce": "H002-a5ce757f23",
+    "public_destination_requested": "https://www.w3.org/WAI/standards-guidelines/wcag/",
+    "actual_browser_destination_independently_verified": false,
+    "main_and_followup_submissions": 2,
+    "event_ids": {
+      "intermediate_classification": 207,
+      "main_final": 752,
+      "main_completed": 755,
+      "main_done": 757,
+      "followup_final": 808,
+      "followup_completed": 809,
+      "idle": 810,
+      "followup_done": 811
+    }
+  },
+  "checklist": [
+    {
+      "id": "fresh_context_keyboard",
+      "status": "LIVE_PASS",
+      "detail": "Untouched0/480000; Enter newline; actual Ctrl+Enter; final estimated26317/480000(5.5%)."
     },
-    "utility_image_is_release_runtime_acceptance": false
+    {
+      "id": "upload_bytes_and_header",
+      "status": "LIVE_PASS",
+      "detail": "Visible chooser FilePayload NFC načrt.txt;85bytes and SHA256 match; UTF8 Content-Disposition correct."
+    },
+    {
+      "id": "upload_suggested_filename",
+      "status": "LIVE_PASS",
+      "detail": "Actual deployed UI suggested načrt.txt; 85 bytes and expected SHA256 under combined LANG=C.UTF-8, LC_ALL=C.UTF-8 and context locale sl-SI. Earlier literal download is a utility configuration finding; individual variable causality not isolated."
+    },
+    {
+      "id": "queue_refresh_settlement",
+      "status": "LIVE_PASS",
+      "detail": "One main plus one followup; running/queued overlap before and after refresh; both completed; no repeated main."
+    },
+    {
+      "id": "new_reply_progress_final",
+      "status": "LIVE_PASS",
+      "detail": "Actual intermediate messages visible, classified final collapse, reopen retains notes; main final70words."
+    },
+    {
+      "id": "native_counts_and_local_command",
+      "status": "LIVE_PASS",
+      "detail": "Actual one-child summary and root bash command creating exactly two nonce SVGs; status0 alone not completion."
+    },
+    {
+      "id": "native_child_browser",
+      "status": "NOT_TESTED",
+      "detail": "Native browser unavailable/headless fallback is model-reported; no independent invocation/result proof."
+    },
+    {
+      "id": "per_reply_artifacts_zip",
+      "status": "LIVE_PASS",
+      "detail": "Main exactly2SVGs; followup0; ZIP exactly2numbered entries match individual bytes/hashes."
+    },
+    {
+      "id": "svg_desktop_mobile",
+      "status": "LIVE_PASS",
+      "detail": "Desktop1440x1080/mobile390x844 visual review; two nonce SVG previews render; unrelated rows masked."
+    },
+    {
+      "id": "timezone_version",
+      "status": "LIVE_PASS",
+      "detail": "UI0.0.2; actual06:57/06:59UTC ->08:57/08:59 Europe/Ljubljana; host verified separately."
+    },
+    {
+      "id": "four_web_corrections",
+      "status": "FIXTURE_PASS",
+      "detail": "62 focused tests, build/typecheck and one saved owned snapshot passed at 42612a5; deployed as cacfdd43. Actual presentation and filename readback separately LIVE_PASS; corrected active timing remains fixture-proven."
+    },
+    {
+      "id": "historical_fixture_edges",
+      "status": "FIXTURE_PASS",
+      "detail": "Drag/drop, error/draft, shared/no-message ownership, unknown/stale context, composition guards and locale fixtures. No OS drag automation; real chooser FilePayload upload separately LIVE_PASS."
+    },
+    {
+      "id": "legacy_merged_history",
+      "status": "NOT_TESTED",
+      "detail": "Old merged text remains original/unclassified; no retroactive perfect split or all-user history review."
+    },
+    {
+      "id": "platform_ime_and_broader_cases",
+      "status": "NOT_TESTED",
+      "detail": "Real IME/Cmd+Enter,fullcapacity/output,PNG/JPEGvariants,hostileSVG,broaderprovider/lifecycle/installer not requalified."
+    },
+    {
+      "id": "deployed_additional_activity",
+      "status": "LIVE_PASS",
+      "detail": "43 primary and 156 collapsed Additional activity rows; 71 compatibility summaries folded; all history retained."
+    },
+    {
+      "id": "nonterminal_timing",
+      "status": "FIXTURE_PASS",
+      "detail": "Recorded completed to in_progress stale-finishedAt transition; corrected active timing checked using saved actual snapshot, without additional live inference."
+    },
+    {
+      "id": "deployed_whitespace_and_grouping",
+      "status": "LIVE_PASS",
+      "detail": "Zero blank responding rows; stored whitespace tail retained; main final, two progress messages, two image previews, ZIP route and separate follow-up retained."
+    }
+  ],
+  "file_verification": {
+    "byteAndArchiveStatus": "LIVE_PASS",
+    "uploadSuggestedFilenameStatus": "LIVE_PASS",
+    "upload": {
+      "kind": "download",
+      "href": "/api/attachments/554104fe-8f32-461d-a56c-6da16c6c6469/download",
+      "path": "upload-download.txt",
+      "suggestedFilename": "načrt.txt",
+      "contentDisposition": "attachment; filename=\"na_rt.txt\"; filename*=UTF-8''na%C4%8Drt.txt",
+      "size": 85,
+      "sha256": "3d4b3c96ee6dd650ab9603a0226beb2939f1369cb9e50761f20f304b19b85cfc",
+      "responseSha256": "3d4b3c96ee6dd650ab9603a0226beb2939f1369cb9e50761f20f304b19b85cfc",
+      "equal": true,
+      "filename_evidence": "locale-diagnostic/diagnostic-receipt.json"
+    },
+    "zipEntries": [
+      {
+        "name": "1-nacrt-a.svg",
+        "size": 229,
+        "sha256": "f9a067d182f6ecb3ab54ee328dd05e5610b44e986a065c57c5b4020f76cb81c4",
+        "matchesRegisteredDownload": true
+      },
+      {
+        "name": "2-nacrt-b.svg",
+        "size": 229,
+        "sha256": "f0508152e14b3e4467c0686866694e30ce1a5f40085993217a916ae9e088c026",
+        "matchesRegisteredDownload": true
+      }
+    ],
+    "extraneousEntries": [],
+    "mainArtifactIds": [
+      "9583f1fb-5104-4dd0-91df-49591ee22067",
+      "08517008-20d4-4b8d-804b-138a02c50df2"
+    ],
+    "followupArtifactIds": [],
+    "mainFinalWords": 70,
+    "initial_campaign_filename": {
+      "suggestedFilename": "download",
+      "original_receipt": "actual/file-verification.json",
+      "classification": "TEST_ENVIRONMENT_FINDING",
+      "preserved": true
+    },
+    "filesystem_upload_path_ambiguity": "No request on original filesystem-path attempt; cause including normalization unproven. Actual chooser FilePayload passed."
+  },
+  "corrected_web": {
+    "commit": "42612a514387fcc812ac5b396cb603f70c8de2b4",
+    "base": "78bef292c33c5a689b8b7486ca6ba95c203ccd32",
+    "bundle_sha256": "fd616b424789733c2f09f332318d5533efbca02a8b61dd541d48872d3fdc4db4",
+    "files_sha256": {
+      "ai-harness/web/src/Replies.tsx": "06d77eb528d3393cda4b4862e352d792dcd7963a8aebd6d147a59ddd890cb38e",
+      "ai-harness/web/tests/replies.test.tsx": "da301300a55b4d1c30d1d832cd4507daa9f85bbcbae430ba901fea7d65bebdc0"
+    },
+    "checks": {
+      "focusedReplyTests": "62 PASS",
+      "productionBuildTypecheck": "PASS",
+      "savedOwnedSnapshotChromiumFixture": "PASS",
+      "ownedFixtureCleanup": "PASS",
+      "gitDiffCheck": "PASS"
+    },
+    "fixture_status": "FIXTURE_PASS",
+    "snapshot_fixture_checks": {
+      "nonterminalTiming": {
+        "status": "FIXTURE_PASS",
+        "statusValue": "in_progress",
+        "staleFinishedAt": "2026-09-22T06:57:28.138Z",
+        "displayedTimestamp": "2026-09-22T06:57:28.226Z"
+      },
+      "heartbeats": {
+        "status": "FIXTURE_PASS",
+        "recordedHeartbeats": 71,
+        "primaryRows": 43,
+        "retainedAdditionalRows": 156
+      },
+      "attachmentDownloadAttribute": {
+        "status": "FIXTURE_PASS",
+        "value": "načrt.txt",
+        "productionSuggestedFilename": "LIVE_PASS_SEPARATE_LOCALE_RECEIPT"
+      },
+      "whitespacePresentation": {
+        "status": "FIXTURE_PASS",
+        "storedWhitespaceMessageRetained": true,
+        "blankResponseRows": 0,
+        "nonemptyProgressRows": 2
+      }
+    },
+    "actual_postchange_readback": "LIVE_PASS_WITH_EXPLICIT_LIMITS",
+    "deployment_status": "DEPLOYED",
+    "four_changes": [
+      "Fold only legacy subagent_summary into existing Additional activity; retain allrecords",
+      "Use terminal-only finishedAt/duration; preserve canonicalstatus",
+      "Explicit attachment download name",
+      "Suppress whitespace-only assistant/progress presentation; retain storage/nonempty partial"
+    ],
+    "initial_failures_preserved": true,
+    "deployed_source": "cacfdd43c42d675ab154ba7308404d71c81a64f1"
+  },
+  "legacy_boundary": "Reliable separation is observed for newly classified native replies. Existing merged text stays original/unclassified unless exact metadata establishes boundaries.",
+  "native_browser_limit": {
+    "status": "NOT_TESTED",
+    "model_report_only": "Native browser tool unregistered; headless Chromium fallback",
+    "denied_event_ids": [
+      223,
+      329,
+      393
+    ],
+    "denied_operation_and_cause": "Not exposed by saved app events; no exact accessible transcript path established",
+    "diagnosis_receipt": "native-child-diagnosis.json"
+  },
+  "ci": {
+    "source": "cacfdd43c42d675ab154ba7308404d71c81a64f1",
+    "authority": "LATEST-ROOT-FACTS.md; root supplied receipts",
+    "passing_runs": {
+      "CI": "35699502666",
+      "D2": "35699502737"
+    },
+    "deferred_installer_fixture": {
+      "status": "FAILED",
+      "run_id": "35699502718",
+      "file_line": "tests/install/test_container.py:185",
+      "cause": "Unchanged TMPDIR regex",
+      "tests": 313,
+      "failures": 1,
+      "skips": 1,
+      "installer_source_changed": false
+    }
   },
   "evidence": {
-    "local_root": "/Users/agent/CodexProjects/llm-orchestration/tasks/H002-UI-FIXTURES-20260922/evidence",
-    "remote_root": "/home/user/ai-harness-build/H002-UI-FIXTURES-20260922",
-    "primary_receipt": "browser/results/receipt.json",
-    "supplement_receipt": "browser/supplement/receipt.json",
+    "local_root": "/Users/agent/CodexProjects/llm-orchestration/tasks/H002-UI-LIVE-20260922/evidence",
+    "remote_root": "/home/user/ai-harness-build/H002-UI-LIVE-20260922",
+    "live_receipts": "actual/receipts.jsonl",
+    "files": "actual/file-verification.json",
     "visual_review": "visual-review.json",
-    "defects": "ROOT-DEFECTS.md",
-    "build": "build.log",
-    "focused_unit": "focused-unit.log",
-    "source_hashes": "source-build-receipt.json",
-    "launch": "browser/launch-fixture.sh",
-    "supplement_launch": "browser/launch-supplement.sh",
-    "later_live": "later-live/CHECKLIST.md",
-    "cleanup": "browser/cleanup-final.json"
+    "saved_snapshot_fixture": "final-web/results/receipt.json",
+    "fixture_screenshot": "final-web/results/saved-owned-snapshot.png",
+    "source_handoff": "FINAL-WEB-HANDOFF.json",
+    "historical_fixture_root": "H002-UI-FIXTURES-20260922/evidence",
+    "historical_fixture_session": "01a0c7b6-5206-7cf1-9cc5-1df1643f1e61",
+    "final_deployment": "ROOT-FINAL-deployment.json",
+    "latest_root_facts": "LATEST-ROOT-FACTS.md",
+    "presentation_readback": "readback/readback-receipt.json",
+    "final_screenshot": "readback/corrected-owned-chat.png",
+    "filename_locale_receipt": "locale-diagnostic/diagnostic-receipt.json"
   },
-  "isolation": {
-    "rootless": true,
-    "network": "none",
-    "ports": [],
-    "origin": "http://127.0.0.1:4193",
-    "chromium_sandbox": true,
-    "read_only_root": true,
-    "no_new_privileges": true,
-    "cap_drop": "ALL",
-    "init": "/usr/bin/catatonit",
-    "cpu": 2,
-    "memory_bytes": 2147483648,
-    "pids": 512,
-    "shm_bytes": 536870912,
-    "mounts": "owned payload read-only and owned evidence read-write only"
-  },
-  "build": {
-    "status": "PASS",
-    "command": "npm --prefix ai-harness/web run build",
-    "asset_sha256": {
-      "dist/index.html": "bd83375e2fd561210bffe551a21b0271357b446f2e63b60edf2c4cb8aed2f967",
-      "dist/assets/index-B_GnoiYb.js": "3e84de903801e16d266166f2a0b0adaa339bb81662179124c8b5f79632e15ea3",
-      "dist/assets/index-DnJbvr23.css": "628c8eaeb9cdd2ad3b6a4fb9cc27a74a299258ea4390704ffdc3daa786719bc0"
-    },
-    "cache": "H002-WEB node_modules copied after exact package-lock match"
-  },
-  "unit_tests": {
-    "status": "PASS",
-    "tests": 13,
-    "files": 2,
-    "command": "npm --prefix ai-harness/web test -- tests/composer.test.tsx tests/reply-groups-correction.test.tsx",
-    "ime_scope": "synthetic DOM event guard proof only"
-  },
-  "browser_cases": [
-    {
-      "name": "progress_queue_lifecycle",
-      "status": "PASS",
-      "runIds": {
-        "original": "fixture/run-1",
-        "queued": "fixture/run-2"
-      },
-      "assertions": [
-        "Enter newline / Ctrl+Enter submit",
-        "visible keyboard hint",
-        "version DOM",
-        "SSE intermediate visible",
-        "zero authoritative children remains working",
-        "two authoritative children shown",
-        "tool one row command URL duration detail",
-        "queued indicator",
-        "late final/file ownership",
-        "final collapse and reopen",
-        "refresh grouping no duplicates",
-        "status spinner outside composer",
-        "desktop/mobile no horizontal overflow"
-      ]
-    },
-    {
-      "name": "files_membership_previews",
-      "status": "PASS",
-      "assertions": [
-        "shared artifact membership in two runs",
-        "no-message run keeps files/activity",
-        "two decoded SVG previews as img",
-        "individual download routed",
-        "two ZIP links route by run",
-        "refresh membership"
-      ],
-      "limits": [
-        "ZIP archive deliberately empty; contents NOT_TESTED",
-        "generated images are synthetic SVG specimens, no engine generation",
-        "individual route specimen does not validate server archive or artifact bytes"
-      ]
-    },
-    {
-      "name": "attachments_drop_errors_draft",
-      "status": "PASS",
-      "assertions": [
-        "actual input form and DataTransfer drop event paths",
-        "multipart uploads and message attachment IDs",
-        "user message names and download route",
-        "invalid type and capability errors",
-        "draft retained on synthetic HTTP 503"
-      ],
-      "limits": [
-        "DataTransfer dispatch is synthetic browser input, not OS drag automation",
-        "download bytes are fixed synthetic fixture response, not source byte equality"
-      ]
-    },
-    {
-      "name": "fresh_context_timezone_sidebar",
-      "status": "PASS",
-      "assertions": [
-        "used initial context not zero",
-        "unknown stale not zero",
-        "untouched new context zero",
-        "explicit Ljubljana summer 12:24 and winter 11:24 under UTC browser",
-        "0.0.2 sidebar DOM",
-        "mobile sidebar open/Escape focus",
-        "no horizontal overflow"
-      ],
-      "environment": {
-        "timeZone": "Europe/Ljubljana",
-        "location": {
-          "city": "Ljubljana",
-          "country": "Slovenia"
-        },
-        "now": "2026-09-22T10:24:00.000Z"
-      },
-      "limits": [
-        "environment.now is frozen fixture instant; live clock/engine environment NOT_TESTED"
-      ]
-    },
-    {
-      "name": "queue_settlement_and_sandbox",
-      "status": "PASS",
-      "assertions": [
-        "two completed replies with independent activities and files",
-        "single-file reply ZIP absent",
-        "fixture-emitted queued run starts and settles",
-        "refresh unique replies and no extra send",
-        "completed Ready no spinner",
-        "new chat zero disappears after prompt",
-        "settled mobile sidebar capture",
-        "Chromium process sandbox controls"
-      ],
-      "limit": "Next-turn start/completion explicitly injected; server scheduling and native child behavior NOT_TESTED."
-    }
-  ],
-  "browser_status": "FIXTURE_PASS",
-  "page_errors": [],
-  "nonfixture_requests": [],
-  "screenshots": [
-    "browser/results/desktop-active-zero-children.png",
-    "browser/results/desktop-drag-over.png",
-    "browser/results/desktop-final-original-run.png",
-    "browser/results/desktop-fresh-zero.png",
-    "browser/results/desktop-queued-tool-detail.png",
-    "browser/results/desktop-shared-gallery-no-message.png",
-    "browser/results/desktop-upload-errors-draft.png",
-    "browser/results/mobile-active-queued.png",
-    "browser/results/mobile-final-retained-group.png",
-    "browser/results/mobile-fresh-zero.png",
-    "browser/results/mobile-shared-gallery.png",
-    "browser/results/mobile-sidebar-version.png",
-    "browser/results/mobile-upload-errors-draft.png",
-    "browser/supplement/desktop-two-completed-replies.png",
-    "browser/supplement/mobile-nonempty-context.png",
-    "browser/supplement/mobile-sidebar-settled.png",
-    "browser/supplement/mobile-two-completed-replies.png"
-  ],
-  "visual_status": "REVIEWED_WITH_MINOR_FINDING",
-  "findings": [
-    {
-      "id": "H002-UI-001",
-      "status": "CORRECTED_FOCUSED_FIXTURE_PASS",
-      "severity": "minor",
-      "detail": "Pre-fix idle badge/sidebar conflicted with Queued strip; retained original receipts. Authorized follow-up reuses existing idle-only typed-run rule for all surfaces.",
-      "source_changed": true,
-      "correction": {
-        "base": "ac25d51031b386649636ec120051a879ac178b83",
-        "build": "PASS",
-        "focused_tests": 12,
-        "browser_scenarios": 1,
-        "receipt": "status-correction/results/receipt.json",
-        "screenshot": "status-correction/results/desktop-status-corrected.png",
-        "screenshot_visually_reviewed": true,
-        "production_rendering": "NOT_TESTED",
-        "unselected_rows": "Actual list aggregate only; no cross-conversation run cache"
-      }
-    }
-  ],
-  "fixture_adaptations": [
-    "Evidence copy adds only fixture/second-svg preview using original SVG with changed text.",
-    "Driver injects additive contract events for progress, lifecycle, zero/two children, queue, late final/files, shared membership and no-message runs.",
-    "Supplement explicitly emits queued-run start/completion; no backend scheduling acceptance.",
-    "One fixture-origin message POST fulfilled with synthetic HTTP 503 for retained draft.",
-    "DataTransfer dispatch exercises browser drag/drop handlers with synthetic File objects.",
-    "UTC browser context plus frozen summer/winter timestamps verifies explicit Ljubljana conversion.",
-    "Original fixture multipart handler records synthetic upload metadata; downloads fixed synthetic bytes.",
-    "Fixture ZIP deliberately empty; routing only."
-  ],
-  "not_tested": [
-    "Live engine/server event classification and settlement",
-    "Native child counts or lifecycle",
-    "Real ZIP contents and archive ownership/security",
-    "Real upload/download byte equality",
-    "Production rendering",
-    "User-history migration or existing user chat inspection",
-    "Live current clock or engine locale integration",
-    "Real platform IME and Cmd+Enter",
-    "PNG/JPEG decoding variants or hostile SVG execution testing",
-    "Full context/output, GPU, broad H001 regressions, installer"
-  ],
   "cleanup": {
-    "status": "PASS",
-    "detail": "Both unique task containers and owned Node driver/server processes absent; task payload/evidence retained outside Git."
+    "live_owned_browser_and_driver": "PASS",
+    "live_owned_runs": "completed",
+    "chat_artifacts_preserved": true,
+    "isolated_fixture": "PASS",
+    "shared_service_mutation": false,
+    "readback_browser": "PASS",
+    "locale_diagnostic_owned_container_and_driver": "ABSENT",
+    "evidence": "locale-diagnostic/cleanup.txt"
   },
-  "publication": {
-    "status": "ROOT_REVIEW_PENDING",
-    "push": false,
-    "deployment": false
-  }
+  "initial_worker1_deployment": {
+    "evidence": "ROOT-deployment.json",
+    "independent_native_session": "01a0c7b9-2fc7-7e30-b704-0e052405260a",
+    "source": "78bef292c33c5a689b8b7486ca6ba95c203ccd32",
+    "runtime": "4af6da23f70c3bc20d557be623d3d3bed7ef5d889e2b510debe556dc54936da3",
+    "original_messages": {
+      "count": 61,
+      "sha256": "97287e4a183a9feae7715c522f69d82c04bce5dc3e4364adf8f617f15311d57c"
+    },
+    "original_regular_files": {
+      "directories": 36,
+      "files": 66,
+      "symlinks": 0,
+      "bytes": 824111,
+      "excluded_directories": 0,
+      "excluded_files": 0,
+      "excluded_symlinks": 0,
+      "sha256": "55d6b077c0e40b21f044625efe9b15a1bea6537f1faf0e73723b37fec141105a"
+    },
+    "sql_file_rows_in_verified_backup": 27,
+    "paired_message_and_file_fingerprints_match": true,
+    "host_timezone": "Europe/Ljubljana",
+    "host_intl_timezone": "Europe/Ljubljana",
+    "successful_admission_barrier_seconds": 1.754,
+    "initial_host_probe_outage_seconds_approximate": 80,
+    "raw_database_copied": false,
+    "not_a_later_all_user_audit": true
+  },
+  "worker1_deployment": {
+    "evidence": "ROOT-FINAL-deployment.json",
+    "independent_native_session": "01a0c7f0-fa46-7533-aa87-4f1feeaeb8e7",
+    "source": "cacfdd43c42d675ab154ba7308404d71c81a64f1",
+    "runtime": "4af6da23f70c3bc20d557be623d3d3bed7ef5d889e2b510debe556dc54936da3",
+    "http_restored_at": "2026-09-22T07:28:51.598+00:00",
+    "successful_admission_barrier_seconds": 1.974,
+    "original_messages": {
+      "count": 68,
+      "sha256": "e0336ab5063fa85c6e68d26bfd50ccdc3405c39766945cc0f410d5b903f42845"
+    },
+    "original_regular_files": {
+      "files": 72,
+      "bytes": 825197,
+      "sha256": "6678d0bd4f429219e742aa97324012b997cdf6b5400e39a729997f1ddc1ea533"
+    },
+    "sql_file_rows_in_verified_backup": 30,
+    "paired_message_and_file_fingerprints_match": true,
+    "backup_integrity": "ok",
+    "idle_health_static": "PASS",
+    "host_timezone": "Europe/Ljubljana",
+    "host_intl_timezone": "Europe/Ljubljana",
+    "raw_database_copied": false,
+    "not_a_later_all_user_audit": true
+  },
+  "final_readback": {
+    "source": "cacfdd43c42d675ab154ba7308404d71c81a64f1",
+    "mode": "READ_ONLY_EXISTING_OWNED_CHAT_NO_INFERENCE",
+    "status": "LIVE_PASS_WITH_EXPLICIT_LIMITS",
+    "presentation_receipt": "readback/readback-receipt.json",
+    "screenshot": "readback/corrected-owned-chat.png",
+    "primary_activity_count": 43,
+    "additional_activity_count": 156,
+    "blank_response_rows": 0,
+    "stored_whitespace_tail_preserved": true,
+    "progress_messages": 2,
+    "main_artifacts": 2,
+    "followup_artifacts": 0,
+    "zip_grouping_preserved": true,
+    "filename_receipt": "locale-diagnostic/diagnostic-receipt.json",
+    "suggested_filename": "načrt.txt",
+    "bytes": 85,
+    "sha256": "3d4b3c96ee6dd650ab9603a0226beb2939f1369cb9e50761f20f304b19b85cfc",
+    "combined_configuration": {
+      "LANG": "C.UTF-8",
+      "LC_ALL": "C.UTF-8",
+      "context_locale": "sl-SI"
+    },
+    "earlier_utility": {
+      "LANG": null,
+      "LC_ALL": null,
+      "LC_CTYPE": null,
+      "charmap": "ANSI_X3.4-1968",
+      "suggested_filename": "download",
+      "classification": "TEST_ENVIRONMENT_FINDING"
+    },
+    "individual_locale_variable_causality_isolated": false,
+    "original_failed_receipts_preserved": true,
+    "no_unresolved_production_filename_bug": true
+  },
+  "remaining_limits": [
+    "Native and fallback child browser execution not independently proven; model report only.",
+    "Old merged text remains original/unclassified; no retroactive perfect split or later all-user history audit.",
+    "Corrected nonterminal timing is fixture-proven from recorded transition.",
+    "Drag/drop fixture-only; no OS drag automation. Platform IME, Cmd+Enter and broader provider/capacity/lifecycle cases not requalified.",
+    "Unchanged deferred installer fixture CI failure remains."
+  ]
 }
