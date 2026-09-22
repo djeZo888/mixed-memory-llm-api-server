@@ -1,9 +1,10 @@
 # ai-harness v0.0.1 architecture
 
 This is the current design under the [approved plan](../PLAN-v0.0.1.md).
-Deployment, native completion integration and live acceptance remain in progress;
-the [user guide](../README.md) carries the acceptance-report placeholder.
-No final image, release directory or live release PASS is established here.
+Live evidence spans initial `10dea3e`, Delete/lifecycle `d58020c` and V2 Stop
+`7659955`, including final follow-up/health. The docs base remains `d58020c`.
+The [acceptance report](acceptance-v0.0.1.md) pins each release and separates
+bounded live results, fixtures, failures and unexecuted cases.
 
 ## Request path and storage
 
@@ -19,10 +20,10 @@ LAN browser -> nginx HTTP :80 -> React UI / Fastify server (127.0.0.1:8080)
                       GPU0 Qwen  GPU1 Qwen
 ```
 
-The planned browser origin is `http://10.156.100.61/`. React/Vite serves the
-shared chat interface; the Node/TypeScript server persists chats, original
-messages, run state, ordered events, context observations and file metadata in
-SQLite. Project files, uploads and downloadable artifact snapshots use filesystem
+The active browser origin is `http://10.156.100.61/` (initial live readiness).
+React/Vite serves the shared chat interface; the Node/TypeScript server persists
+chats, original messages, run state, events, context observations and file metadata
+in SQLite. Project files, uploads and downloadable artifact snapshots use filesystem
 storage. Reconnect combines a consistent saved snapshot with later stream events
 to avoid duplicated replies. Browser disconnection does not cancel a run.
 
@@ -83,16 +84,21 @@ automatic native compression remains part of supported normal prompts.
 
 Unknown work retains partial history and blocks workspace reuse pending cleanup.
 Verified shutdown of the exact owned container can prove process cleanup, but
-cannot turn an unknown run into successful completion. Restart does not silently
-replay interrupted commands. Delete cancels active work before hiding metadata
-and retains project files. See [server recovery details](../server/README.md).
+cannot turn an unknown run into successful completion. Stop cleanup does not end
+already dispatched upstream inference: it may drain while retaining a gateway
+lane. V2 suppresses tagged cancellation failures only after verified cleanup;
+the tiny live Stop and explicit same-chat follow-up passed. Clean restart
+and one controlled crash/no-replay case passed on `d58020c`: interrupted work was
+quarantined, counter unchanged, old container absent. Active Delete and preservation
+also passed there, with the older spurious cancellation error recorded separately.
+See [server recovery details](../server/README.md).
 
 ## Tools and operations
 
 Private SearXNG and local Chromium support public research, JavaScript pages and
 source links; logged-in actions and publishing are excluded. Local PDF tools cover
 text, rendering, OCR and basic generation; Python/C++/Node tools cover code work.
-Optional image uploads require deployment acceptance of the application path.
+Image upload, recognition and follow-up passed a bounded synthetic-image live case.
 Office, CAD and simulators are outside scope. See [tooling](../tools/runtime/README.md),
 [deployment](../deploy/README.md) and [service commands/licenses](../README.md).
 SearXNG is a separate AGPL-3.0-or-later service; its

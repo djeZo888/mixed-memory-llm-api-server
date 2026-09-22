@@ -1,38 +1,42 @@
 # ai-harness v0.0.1
 
 A shared LAN chat for technical research, PDFs and coding, using MiniMax Code
-and the two existing Qwen instances. This guide describes the approved scope
-and current design; **deployment and live acceptance are still in progress**.
+and the two existing Qwen instances. **Bounded live acceptance is complete with
+limitations**, including unexecuted capacity and automatic-threshold cases.
 See the [approved plan](PLAN-v0.0.1.md) and [architecture](docs/architecture.md).
-**Acceptance report — placeholder:** [future reviewed report](docs/acceptance-v0.0.1.md).
-That target does not exist yet; the coordinator will update it after live tests.
+The [acceptance report](docs/acceptance-v0.0.1.md) records tested revisions,
+live findings, qualifications and unexecuted cases.
 
 ## Access and everyday use
 
-The planned address is `http://10.156.100.61/`. There are no accounts, login,
-settings or model selector. Everyone with access shares conversations and task
-access. The operator controls LAN access; HTTP provides no transport encryption.
+The active HTTP port 80 address is `http://10.156.100.61/` (initial live readiness).
+There are no accounts, login, settings or model selector. Everyone with access
+shares conversations and task access. The operator controls LAN access;
+HTTP provides no transport encryption.
 This is a shared workspace service with no per-person privacy boundary.
 
 - Choose **New chat**, or select an existing chat from the list, then send a task.
   Follow-ups in one chat run sequentially; separate chats can run concurrently.
-- Attach PDFs or source/text files. Download generated files from artifact links.
-  Optional image uploads are enabled only after deployment acceptance of that
-  path; this guide does not establish current image availability.
+- Attach PDFs, source/text files or images; download files from artifact links.
+  The image upload/recognition/follow-up path passed a live synthetic-image case;
+  the acceptance report bounds the tested PDF and image coverage.
 - Expand progress to follow actual browsing, tools, tests, background subagents,
   queueing and compression. Progress is activity reporting, not hidden reasoning.
 - Refresh or reconnect to recover saved history and current progress without
   duplicate replies. Closing the browser does not stop server-side work.
-- Use **Stop** to cancel active work and wait for confirmed cleanup. After a
-  proven clean stop, a new explicit prompt continues the same native session,
-  preserving history, context and project workspace. Cancelled tasks stay stopped.
+- Use **Stop** to stop the native task/container and wait for confirmed cleanup.
+  Already dispatched inference may keep draining and temporarily occupy a lane.
+  The V2 fix passed a tiny live Stop, same-chat follow-up and final health checks.
+  After a proven clean stop, a new explicit prompt continues the same native
+  session, preserving history, context and workspace. Cancelled tasks stay stopped.
   Unknown/interrupted work must not silently replay; unresolved cleanup needs
   operator review before the workspace can be used again.
 - **Continue in new chat** creates a handoff summary and a new conversation using
   the same project workspace. The old chat and history remain. Runs in linked
   chats serialize because they share project files.
-- **Delete chat** cancels active work first and waits for confirmed cleanup.
-  Deleting conversation metadata retains project files; it is not file cleanup.
+- **Delete chat** cancels active work before hiding metadata and retains project
+  files. Corrected active Delete and file preservation passed live; that case still
+  emitted the older cancellation error, recorded separately in the report.
 
 ## Capacity and context
 
@@ -54,7 +58,8 @@ context setting. The production budget starts normal compression near 412,416
 input tokens to reserve output space; tool results may be archived earlier.
 Native CLI slash commands such as `/status`, `/context` and `/compact` are
 unsupported and rejected in the web integration. Automatic compression remains
-supported.
+supported. A manual native compaction/recall probe passed; production-threshold
+compression and web compression rendering remain untested.
 
 ## Work supported by the approved scope
 
@@ -68,7 +73,7 @@ outside v0.0.1 scope.
 
 ## Operator use
 
-After reviewed deployment and activation, run these ordinary service commands as
+For the deployed service, run these ordinary service commands as
 the existing `user` account on the ai-harness host. Choose the needed action;
 stop/restart can interrupt active tasks and must not trigger automatic replay.
 
