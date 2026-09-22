@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 export const MODEL = 'qwen3.8-27b';
 export const MODEL_REF = `custom_provider:harness/${MODEL}`;
 export const REQUEST_TIMEOUT_MS = 151 * 60 * 1000;
+export const SHARED_SLOT_INSTRUCTIONS = 'Two shared inference slots serve all chats and agents. Delegate independent tasks when useful; excess inference requests are queued.\n';
 
 export function localConfig(env) {
   if (env.AI_HARNESS_GATEWAY_URL !== 'http://10.0.2.2:8081/v1') {
@@ -37,7 +38,7 @@ export function localConfig(env) {
       },
     },
     // The container is the process boundary; retain native task/delegation tools.
-    permissionMode: 'auto',
+    permissionMode: 'default',
     agents: { default: {
       tools: ['read', 'write', 'edit', 'bash', 'task_query', 'task_output', 'task_stop', 'grep', 'glob', 'todowrite', 'web_fetch'],
       builtinTools: [],
@@ -54,11 +55,7 @@ export function localConfig(env) {
     // Zero disables the native producer-active backstop. The server owns
     // explicit cancellation and its separate queue/active inference budgets.
     agentStop: { debounceMs: 500, maxActiveSpanMs: 0 },
-    skills: { external: { enabled: true, walkUp: false, sources: {
-      'user-cc': { enabled: false }, 'user-codex': { enabled: false },
-      'user-agents': { enabled: true }, 'workspace-minimax': { enabled: true },
-      'workspace-cc': { enabled: false }, 'workspace-agents': { enabled: true },
-    } } },
+    skills: { external: { enabled: false } },
   };
 }
 
@@ -73,6 +70,18 @@ export function configureProfile(env) {
   const config = localConfig(env);
   mkdirSync(env.HOME, { recursive: true, mode: 0o700 });
   if (realpathSync(env.HOME) !== env.HOME) throw new Error('Profile home must not be a symlink.');
+  // The pinned native GlobalInstructions reader uses dataDir/AGENTS.md, not a
+  // config.yaml prompt field. Seed once and preserve later user instructions.
+  const instructions = path.join(profile, 'AGENTS.md');
+  try {
+    const existing = lstatSync(instructions);
+    if (!existing.isFile() || existing.uid !== process.getuid() || existing.nlink !== 1) {
+      throw new Error('Refusing an unsafe AGENTS.md target.');
+    }
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    writeFileSync(instructions, SHARED_SLOT_INSTRUCTIONS, { mode: 0o600, flag: 'wx' });
+  }
   const target = path.join(profile, 'config.yaml');
   try {
     const existing = lstatSync(target);

@@ -10,7 +10,8 @@ Usage: run-engine.sh --profile-dir ABS --workspace ABS
 Run the reviewed MiniMax image through local, rootless Podman using ACP stdio.
 Both existing directories must be owned by this user, resolve without symlinks,
 and be distinct. They are mounted at the identical absolute paths. The profile
-gets an isolated home/ directory; no other host directory or socket is mounted.
+gets isolated state/ and state/home directories; native sibling lock files stay
+inside that mount. No other host directory or socket is mounted.
 
 Required environment:
   AI_HARNESS_GATEWAY_TOKEN  Ephemeral per-runner inference-only gateway token;
@@ -104,7 +105,7 @@ rootless=$("$podman_bin" --remote=false info --format '{{.Host.Security.Rootless
 
 image_tag=localhost/ai-harness-engine:0.0.1-ae65651df5f9
 revision=ae65651df5f97ae1085ab4e19964f4b78c769a4e
-patchset=b583f01e412c3316fe3a5e62f8b5ce83269091e077b3eb6df2e615dd8428402d
+patchset=2f4b3f8a2d74348b2ca6b4e4f7ac069d9a6ec0e957a8fce6a1287f1ab96a2e7c
 image_metadata=$("$podman_bin" --remote=false image inspect --format '{{.Id}}|{{index .Labels "org.opencontainers.image.revision"}}|{{index .Labels "org.opencontainers.image.ai-harness.patchset"}}' "$image_tag" 2>/dev/null) || die 'reviewed engine image is absent; build it separately after bootstrap'
 image_id=${image_metadata%%|*}
 image_labels=${image_metadata#*|}
@@ -112,20 +113,40 @@ image_revision=${image_labels%%|*}
 image_patchset=${image_labels#*|}
 [[ "$image_id" =~ ^(sha256:)?[0-9a-f]{64}$ && "$image_revision" = "$revision" && "$image_patchset" = "$patchset" ]] || die 'local image identity, MiniMax revision or patchset label does not match the reviewed pins'
 
-container_home=$profile_dir/home
+# Native proper-lockfile writes a sibling dataDir.lock. Nest dataDir inside the
+# existing profile mount so its lock remains writable without mounting parents.
+for legacy_entry in config.yaml home AGENTS.md mcp.json skills; do
+  [[ ! -e "$profile_dir/$legacy_entry" && ! -L "$profile_dir/$legacy_entry" ]] || die 'legacy root-level profile requires explicit migration before this launcher'
+done
+container_data=$profile_dir/state
+if [[ ! -e "$container_data" && ! -L "$container_data" ]]; then
+  mkdir -- "$container_data"
+fi
+validate_directory "$container_data" 'isolated engine state'
+container_home=$container_data/home
 if [[ ! -e "$container_home" && ! -L "$container_home" ]]; then
   mkdir -- "$container_home"
 fi
 validate_directory "$container_home" 'isolated engine home'
 
 # Do not add -t: ACP is newline-delimited JSON, never terminal text.
-# Default seccomp/AppArmor stay enabled. Browser sandbox capability is tested
-# after bootstrap; a failure must not be hidden by --no-sandbox or --privileged.
+# Preserve AppArmor and the pinned Podman seccomp rules, with only chroot
+# admitted for Chromium inside its nested user namespace. No outer caps added.
+security_profile=$launcher_dir/security/chromium-seccomp.json
+"$python_bin" - "$security_profile" <<'PY_SECCOMP' || die 'reviewed Chromium seccomp profile identity mismatch'
+import hashlib, sys
+try:
+    valid = hashlib.sha256(open(sys.argv[1], 'rb').read()).hexdigest() == '0474c063b32acee85a1eb5ccfc35f7b1f66278af8da722c45b1d25eb2ae1cfbb'
+except OSError:
+    valid = False
+sys.exit(0 if valid else 1)
+PY_SECCOMP
 exec "$python_bin" "$launcher_dir/engine/redact-acp.py" "$podman_bin" \
   --remote=false run --rm --interactive --pull=never \
   --userns keep-id --user "$host_uid:$host_gid" \
   --network slirp4netns:allow_host_loopback=true \
   --cap-drop ALL --security-opt no-new-privileges \
+  --security-opt "seccomp=$security_profile" \
   --read-only --pids-limit 1024 --shm-size 512m \
   --tmpfs /tmp:rw,nosuid,nodev,size=1g,mode=1777 \
   --tmpfs /run:rw,nosuid,nodev,size=64m,mode=755 \
@@ -134,7 +155,7 @@ exec "$python_bin" "$launcher_dir/engine/redact-acp.py" "$podman_bin" \
   --volume "$profile_dir:$profile_dir:rw,rprivate" \
   --volume "$workspace:$workspace:rw,rprivate" \
   --workdir "$workspace" \
-  --env "HOME=$container_home" --env "MINIMAX_DATA_DIR=$profile_dir" \
+  --env "HOME=$container_home" --env "MINIMAX_DATA_DIR=$container_data" \
   --env PATH=/opt/ai-harness-python/bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin \
   --env TERM=dumb --env NO_COLOR=1 \
   --env MCODE_DISABLE_TELEMETRY=1 --env DO_NOT_TRACK=1 \

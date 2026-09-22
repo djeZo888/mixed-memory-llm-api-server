@@ -1,6 +1,6 @@
-# Build context: ai-harness/deploy. No host home, credentials or engine vendor tree.
+# Build context: ai-harness/. No host home, credentials or engine vendor tree.
 # Registry index verified 2026-09-22; linux/amd64 member is recorded in engine/pins.json.
-FROM docker.io/library/node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS build
+FROM docker.io/library/node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS source-base
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
@@ -11,16 +11,26 @@ RUN git init --quiet \
     && git fetch --depth=1 origin ae65651df5f97ae1085ab4e19964f4b78c769a4e \
     && git checkout --detach FETCH_HEAD \
     && test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e
-COPY patches /tmp/ai-harness-patches
+
+FROM source-base AS build
+COPY deploy/patches/*.patch deploy/patches/*SHA256SUMS /tmp/ai-harness-patches/
 # Fail closed on upstream-file or patch drift before building the exact source.
 RUN test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e \
     && sha256sum -c /tmp/ai-harness-patches/source.SHA256SUMS \
     && cd /tmp/ai-harness-patches && sha256sum -c SHA256SUMS \
-    && printf '%s\n' 'b583f01e412c3316fe3a5e62f8b5ce83269091e077b3eb6df2e615dd8428402d  SHA256SUMS' | sha256sum -c - \
+    && printf '%s\n' '2f4b3f8a2d74348b2ca6b4e4f7ac069d9a6ec0e957a8fce6a1287f1ab96a2e7c  SHA256SUMS' | sha256sum -c - \
     && cd /build/minimax \
-    && git apply --check /tmp/ai-harness-patches/0001-gateway-request-budget.patch /tmp/ai-harness-patches/0002-acp-compaction-notifications.patch \
-    && git apply /tmp/ai-harness-patches/0001-gateway-request-budget.patch /tmp/ai-harness-patches/0002-acp-compaction-notifications.patch \
+    && for patch in /tmp/ai-harness-patches/[0-9]*.patch; do \
+         git apply --check --whitespace=error "$patch" && git apply --whitespace=error "$patch" || exit; \
+       done \
     && sha256sum -c /tmp/ai-harness-patches/patched.SHA256SUMS
+# Upstream release packaging requires a clean committed tree. Commit only the
+# verified patchset inside this build; retain both original and derived revisions.
+RUN git add --all \
+    && GIT_AUTHOR_DATE=2026-09-22T00:00:00Z GIT_COMMITTER_DATE=2026-09-22T00:00:00Z \
+       git -c user.name='ai-harness source build' -c user.email='ai-harness-build@localhost' \
+       commit --quiet --no-gpg-sign -m 'Apply identity-checked ai-harness deployment patches' \
+    && test -z "$(git status --porcelain --untracked-files=no)"
 # Frozen workspace lock; upstream verifies the external mcode-tools archive/CLI
 # and carries its manifest/notices into the release. Never bypass these hashes.
 RUN pnpm install --frozen-lockfile \
@@ -34,16 +44,12 @@ RUN mkdir /opt/minimax \
     && npm install --omit=dev --include=optional --ignore-scripts=false \
     && node cli.js --version \
     && cp /build/minimax/pnpm-lock.yaml /opt/minimax/source-pnpm-lock.yaml \
+    && git -C /build/minimax rev-parse HEAD > /opt/minimax/patched-source-revision.txt \
     && cp /build/release/*.sha256 /opt/minimax/ \
     && npm cache clean --force
 
-FROM docker.io/library/node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+FROM docker.io/library/node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS runtime-deps
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
-LABEL org.opencontainers.image.title="ai-harness local MiniMax engine" \
-      org.opencontainers.image.version="0.0.1" \
-      org.opencontainers.image.revision="ae65651df5f97ae1085ab4e19964f4b78c769a4e" \
-      org.opencontainers.image.ai-harness.patchset="b583f01e412c3316fe3a5e62f8b5ce83269091e077b3eb6df2e615dd8428402d" \
-      org.opencontainers.image.source="https://github.com/MiniMax-AI/minimax-code"
 RUN apt-get update && apt-get install -y --no-install-recommends \
       bash ca-certificates curl git openssh-client ripgrep jq file unzip xz-utils \
       chromium chromium-sandbox fonts-liberation fonts-dejavu-core \
@@ -61,9 +67,15 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 RUN npm install --global typescript@5.9.3 @playwright/test@1.56.1 \
     && npm list --global --depth=0 --json > /usr/local/share/ai-harness-npm.json \
     && npm cache clean --force
+FROM runtime-deps AS runtime-base
+LABEL org.opencontainers.image.title="ai-harness local MiniMax engine" \
+      org.opencontainers.image.version="0.0.1" \
+      org.opencontainers.image.revision="ae65651df5f97ae1085ab4e19964f4b78c769a4e" \
+      org.opencontainers.image.ai-harness.patchset="2f4b3f8a2d74348b2ca6b4e4f7ac069d9a6ec0e957a8fce6a1287f1ab96a2e7c" \
+      org.opencontainers.image.source="https://github.com/MiniMax-AI/minimax-code"
 COPY --from=build /opt/minimax /opt/minimax
-COPY patches /usr/local/share/ai-harness-patches
-COPY engine /opt/ai-harness/engine
+COPY deploy/patches /usr/local/share/ai-harness-patches
+COPY deploy/engine /opt/ai-harness/engine
 RUN mkdir -p /opt/ai-harness/bin \
     && ln -s ../engine/mcode-local /opt/ai-harness/bin/mcode-local \
     && chmod 0555 /opt/ai-harness/engine/mcode-local \
@@ -79,3 +91,7 @@ ENV PATH="/opt/ai-harness-python/bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin
 # Existing image user; no host account changes. Launcher uses keep-id and its UID.
 USER 1000:1000
 ENTRYPOINT ["/opt/ai-harness/bin/mcode-local"]
+
+# Root integrates only reviewed TOOLS/SERVER assets in a later stage FROM runtime-base.
+# Reserved image paths: /opt/ai-harness/tools and /opt/ai-harness/skills.
+# Keep their COPY/install steps after runtime-base to reuse the pinned compile.

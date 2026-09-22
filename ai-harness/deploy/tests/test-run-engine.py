@@ -163,18 +163,34 @@ else:
         self.assertIn("--pull=never", argv)
         self.assertIn("--read-only", argv)
         self.assertIn("no-new-privileges", argv)
+        self.assertIn("seccomp=" + str(LAUNCHER.parent / "security/chromium-seccomp.json"), argv)
+        self.assertEqual(argv[argv.index("--cap-drop") + 1], "ALL")
         self.assertNotIn("--privileged", argv)
         self.assertNotIn("--env-host", argv)
         self.assertNotIn("--no-sandbox", argv)
         self.assertNotIn("-t", argv)
         container_env = [argv[index + 1] for index, item in enumerate(argv) if item == "--env"]
         self.assertCountEqual(container_env, [
-            f"HOME={self.profile}/home", f"MINIMAX_DATA_DIR={self.profile}",
+            f"HOME={self.profile}/state/home", f"MINIMAX_DATA_DIR={self.profile}/state",
             "PATH=/opt/ai-harness-python/bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin", "TERM=dumb", "NO_COLOR=1",
             "MCODE_DISABLE_TELEMETRY=1", "DO_NOT_TRACK=1", "MCODE_CHROME_PATH=/usr/bin/chromium", "PYTHONDONTWRITEBYTECODE=1",
             "AI_HARNESS_GATEWAY_URL", "AI_HARNESS_GATEWAY_TOKEN", "AI_HARNESS_SESSION_ID",
         ])
-        self.assertEqual((self.profile / "home").stat().st_mode & 0o777, 0o700)
+        self.assertEqual((self.profile / "state" / "home").stat().st_mode & 0o777, 0o700)
+
+    def test_legacy_profile_layout_refused_without_hiding_history(self):
+        (self.profile / "config.yaml").write_text('{"fixture_history":"preserve"}')
+        result = self.invoke()
+        self.assertEqual(result.returncode, 64)
+        self.assertIn("explicit migration", result.stderr)
+        self.assertFalse((self.profile / "state").exists())
+        self.assertEqual((self.profile / "config.yaml").read_text(), '{"fixture_history":"preserve"}')
+
+    def test_symlinked_engine_state_rejected(self):
+        (self.profile / "state").symlink_to(self.home, target_is_directory=True)
+        result = self.invoke()
+        self.assertEqual(result.returncode, 64)
+        self.assertNotIn("run", [call["argv"][1] for call in self.calls()])
 
     def test_engine_exit_status_propagates(self):
         self.settings["exit"] = 17
@@ -257,7 +273,7 @@ else:
         self.settings["rootless"] = "false"
         self.assertEqual(self.invoke().returncode, 64)
         self.assertEqual(len(self.calls()), 1)
-        self.assertFalse((self.profile / "home").exists())
+        self.assertFalse((self.profile / "state" / "home").exists())
 
     def test_image_revision_and_identity_checked(self):
         for updates in ({"revision": "wrong"}, {"image_id": "mutable-tag"}, {"missing_image": True},
@@ -266,7 +282,7 @@ else:
                 self.settings.update(updates)
                 self.assertEqual(self.invoke().returncode, 64)
                 self.assertFalse(any("run" in call["argv"] for call in self.calls()))
-                self.assertFalse((self.profile / "home").exists())
+                self.assertFalse((self.profile / "state" / "home").exists())
                 self.settings = {"rootless": "true", "revision": REVISION, "image_id": IMAGE_ID,
                                  "patchset": PATCHSET, "exit": 0}
 
@@ -290,7 +306,8 @@ else:
                 self.assertFalse(self.calls())
 
     def test_symlinked_engine_home_rejected(self):
-        (self.profile / "home").symlink_to(self.home, target_is_directory=True)
+        (self.profile / "state").mkdir()
+        (self.profile / "state" / "home").symlink_to(self.home, target_is_directory=True)
         self.assertEqual(self.invoke().returncode, 64)
         self.assertFalse(any("run" in call["argv"] for call in self.calls()))
 

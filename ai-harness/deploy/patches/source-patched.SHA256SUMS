@@ -1,6 +1,4 @@
 1977a0947a4a036adea9e1f5677c41984cea49bfd4f3a6b2a03782510ba074fc  packages/agent-core/src/pi-turn-runner/defaults.ts
 3d78cf5b25cdee1f01ff81cd9f39de3d8b86173933fa2efea489603dc7f9c5ba  packages/tui/src/acp/agent.ts
 5e747161117a8f713271dffe2f13665fac7686e1ba3c66ffefafeb72e49ae76d  packages/tui/src/acp/extensions.ts
-f6cc035d8b217f3ebacb416c8c212d4c01073e68a8c80de77d3a5ba1887d6102  pnpm-lock.yaml
-40ecd2aa96637067e7ff2fdbd5b9e30994fe852556393ca8b76b2890d0a22fa9  third_party/pi-mono/packages/ai/package.json
 aefcbed438e88ab0ef9561b436796fe2647ed4030f2921e7abf171923e41a5cb  third_party/pi-mono/packages/ai/src/providers/openai-completions.ts

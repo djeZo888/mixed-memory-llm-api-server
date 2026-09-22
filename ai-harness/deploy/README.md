@@ -65,23 +65,28 @@ Node PATH and supplies only the protected inference-key **path** to the backend.
 Do not put upstream or lifecycle keys in the container/profile/build context.
 The backend creates short-lived inference-only runner tokens.
 
-After rootless Podman is available and reviewed sources are staged, build once
-as `user` from this directory:
+After rootless Podman is available and reviewed sources are staged, build as
+`user` with **`ai-harness/` as the context**, from that directory:
 
 ```sh
-podman build --file Containerfile \
+podman build --format docker --layers --target runtime-base --file deploy/Containerfile \
   --tag localhost/ai-harness-engine:0.0.1-ae65651df5f9 .
 podman image inspect localhost/ai-harness-engine:0.0.1-ae65651df5f9
 ```
 
-Retain the resulting image ID and build log outside Git. The Containerfile
-builds exact MiniMax source rather than copying a vendor tree into this repo;
-see [engine/README.md](engine/README.md) for source/artifact pins and limitations.
-Use the deployment directory alone as build context, with no host secrets.
-No automatic build or pull occurs inside `run-engine.sh`.
-Root owns the later integration that embeds reviewed tools/skills in the image.
-That task must update all build-context commands, Containerfile COPY paths and
-related documentation together; the context remains this directory for PREP.
+Retain the image ID and incremental build log outside Git. `.containerignore`
+excludes keys, logs, workspaces, node_modules, Git and build scratch. Stage only
+reviewed source into an isolated user build directory; the context is never a
+host home. No automatic build or pull occurs inside `run-engine.sh`.
+
+`source-base` caches the pinned source/toolchain, `build` compiles MiniMax and
+`runtime-deps` caches runtime packages. The named `runtime-base` retains that
+compile and provides the later reviewed integration point: add a stage
+`FROM runtime-base` and copy TOOLS assets into `/opt/ai-harness/tools` and curated
+skills into `/opt/ai-harness/skills`. Current source does not copy unfinished
+TOOLS/SERVER work. The later integration must reconcile supplemental Python
+pins with the reviewed TOOLS dependency contract. See
+[engine/README.md](engine/README.md) for source/artifact pins and limitations.
 
 The backend invokes:
 
@@ -92,7 +97,7 @@ The backend invokes:
 It supplies `AI_HARNESS_GATEWAY_TOKEN` (ephemeral inference-only),
 `AI_HARNESS_SESSION_ID` and optionally the single reviewed
 `AI_HARNESS_GATEWAY_URL=http://10.0.2.2:8081/v1`. Do not put a token literal in a
-command/history or unit. Container HOME is profile/home; only that session
+command/history or unit. Container HOME is profile/state/home; only that session
 profile and workspace are mounted, at their original absolute paths. No host
 SSH/Codex directories, service data root, credentials or management sockets are
 mounted. Reviewed skills/tools image integration remains with root's later task;
@@ -106,7 +111,8 @@ generation uses logical `qwen3.8-27b` through the same gateway, with explicit
 480000 context and65536 maximum output in the generated custom provider.
 
 The recorded source patches set the main request default and common OpenAI
-adapter fallback to 151 minutes and add real ACP compaction lifecycle
+adapter fallback to 151 minutes, extend only the reviewed gateway origin's
+Undici header/body transport timers to that budget, and add real ACP compaction lifecycle
 notifications. Native titles retain their bounded 10,000/15,000 ms timeouts and
 1,000/1,024-token budgets. Title failure remains nonfatal and cancellation removes
 queued requests; the portal names chats. The profile enables native image
@@ -127,9 +133,16 @@ establish container settlement; retain SERVER workspace quarantine in that case.
 
 ## Verification boundary
 
-Worker1 runs shell syntax/ShellCheck, mocked launcher/profile checks and pin
-checks. These do not establish a built image, actual rootless networking,
-Chromium sandbox, live ACP, inference, SSE or service/reboot acceptance.
+Source tests and Linux runtime smoke have separate evidence. Run the bounded
+non-inference image acceptance with an unoccupied host loopback port 8081:
+
+```sh
+python3 deploy/tests/runtime-smoke.py --help
+```
+
+The task RESULT records exact commands, image identity and actual outcomes.
+Source checks alone do not establish rootless networking, Chromium sandbox,
+live ACP, inference, SSE or service/reboot acceptance.
 
 After bootstrap/build, acceptance must run a nonroot browser and confirm its
 sandbox works with the actual host AppArmor/userns and container security
@@ -139,3 +152,27 @@ reviewed default security settings block nested Chromium. Also verify the
 gateway from the actual rootless namespace with an ephemeral token, while the
 host gateway remains loopback-only. Tool/search/PDF integration and full user
 flows depend on their separately owned source and bounded live acceptance.
+
+
+The actual Podman4.9.3 stock profile blocked Chromium's sandbox `chroot` while
+`unshare -Ur` succeeded. The launcher now verifies and applies the scoped
+[Chromium seccomp profile](security/README.md) (relative to deploy): only the
+`chroot` syscall changes from capability-conditional to allowed; all other
+stock rules remain identical. The outer container keeps `--cap-drop ALL` and
+`no-new-privileges`, AppArmor remains enabled, and Chromium retains its own
+nested namespace and seccomp sandboxes. This is not a global host policy change.
+
+
+The launcher mounts the supplied profile directory at the identical absolute
+path, then sets `MINIMAX_DATA_DIR=<profile>/state` and
+`HOME=<profile>/state/home`. This places native `proper-lockfile`'s sibling
+`state.lock` inside the writable isolated mount. The initial leaf-dataDir
+layout failed actual ACP startup with `agent_name_conflict_migration_failed:lock`;
+no parent-directory mount or native migration bypass is used. Later curated
+skills/MCP initialization must target `${MINIMAX_DATA_DIR}/skills` and
+`${MINIMAX_DATA_DIR}/mcp.json`, now beneath `state/`. Configuration and global
+instructions likewise live at `state/config.yaml` and `state/AGENTS.md`.
+
+The launcher refuses recognized legacy root-level profile files rather than
+hiding prior history. Existing profiles require an explicit reviewed migration;
+this task exercises new isolated profiles only.

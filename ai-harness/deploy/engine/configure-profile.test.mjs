@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { configureProfile, localConfig, MODEL, MODEL_REF, REQUEST_TIMEOUT_MS } from './configure-profile.mjs';
+import { configureProfile, localConfig, MODEL, MODEL_REF, REQUEST_TIMEOUT_MS, SHARED_SLOT_INSTRUCTIONS } from './configure-profile.mjs';
 
 const fixture = {
   AI_HARNESS_GATEWAY_URL: 'http://10.0.2.2:8081/v1',
@@ -26,6 +26,8 @@ test('custom main and auxiliary selection has explicit native limits, without ma
   assert.deepEqual(config.custom_provider.harness.models[MODEL].modalities, { input: ['text', 'image'], output: ['text'] });
   assert.equal(config.custom_provider.harness.models[MODEL].capabilities.support_image, true);
   assert.equal(config.agentStop.maxActiveSpanMs, 0);
+  assert.equal(config.permissionMode, 'default');
+  assert.deepEqual(config.skills.external, { enabled: false });
   assert.equal(config.minimax_api, undefined);
   assert.equal(config.beta.mcodeTools, false);
   assert.equal(config.beta.browserUseTooling, true);
@@ -82,13 +84,27 @@ test('writes private config and refreshes ephemeral authorization without changi
     writeFileSync(path.join(profile, 'history-fixture.json'), '{"preserved":true}\n');
     configureProfile(env);
     const target = path.join(profile, 'config.yaml');
+    const instructions = path.join(profile, 'AGENTS.md');
+    assert.equal(lstatSync(instructions).mode & 0o777, 0o600);
+    assert.equal(readFileSync(instructions, 'utf8'), SHARED_SLOT_INSTRUCTIONS);
+    writeFileSync(instructions, `${SHARED_SLOT_INSTRUCTIONS}\nPreserve this user instruction.\n`);
     assert.equal(lstatSync(target).mode & 0o777, 0o600);
     const first = JSON.parse(readFileSync(target, 'utf8'));
     assert.equal(first.custom_provider.harness.options.apiKey, fixture.AI_HARNESS_GATEWAY_TOKEN);
     configureProfile({ ...env, AI_HARNESS_GATEWAY_TOKEN: 'second-fixture-authorization' });
     const second = JSON.parse(readFileSync(target, 'utf8'));
     assert.equal(second.custom_provider.harness.options.apiKey, 'second-fixture-authorization');
+    assert.equal(readFileSync(instructions, 'utf8'), `${SHARED_SLOT_INSTRUCTIONS}\nPreserve this user instruction.\n`);
     assert.equal(readFileSync(path.join(profile, 'history-fixture.json'), 'utf8'), '{"preserved":true}\n');
+  } finally { rmSync(profile, { recursive: true, force: true }); }
+});
+
+test('rejects a symlink at the native global instructions path', () => {
+  const profile = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'h001-profile-')));
+  const env = { ...fixture, MINIMAX_DATA_DIR: profile, HOME: path.join(profile, 'home') };
+  try {
+    symlinkSync('/tmp/unused-h001-instructions-target', path.join(profile, 'AGENTS.md'));
+    assert.throws(() => configureProfile(env), /unsafe AGENTS\.md target/u);
   } finally { rmSync(profile, { recursive: true, force: true }); }
 });
 

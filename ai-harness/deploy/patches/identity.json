@@ -1,14 +1,26 @@
 {
   "sourceRevision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
-  "patchSetSha256": "b583f01e412c3316fe3a5e62f8b5ce83269091e077b3eb6df2e615dd8428402d",
+  "patchSetSha256": "2f4b3f8a2d74348b2ca6b4e4f7ac069d9a6ec0e957a8fce6a1287f1ab96a2e7c",
   "patches": [
     {
       "path": "0001-gateway-request-budget.patch",
-      "sha256": "28d00e116d47b355e6e2f249b18fdc5e9e48bb290f16bb512a8ab532f756b161"
+      "sha256": "28d00e116d47b355e6e2f249b18fdc5e9e48bb290f16bb512a8ab532f756b161",
+      "phase": "source"
     },
     {
       "path": "0002-acp-compaction-notifications.patch",
-      "sha256": "ec56ccb5834dd75f7e4c9a9bff9599ebaf1da41c101c0cbde858c47f46cc8d2f"
+      "sha256": "ec56ccb5834dd75f7e4c9a9bff9599ebaf1da41c101c0cbde858c47f46cc8d2f",
+      "phase": "source"
+    },
+    {
+      "path": "0003-gateway-undici-dependency.patch",
+      "sha256": "f1db7f0c33096b818ed5eea9b8899c0845e81ab74917eb98aec028a168c62c08",
+      "phase": "dependency"
+    },
+    {
+      "path": "0004-gateway-fetch-timeouts.patch",
+      "sha256": "544f0c8bb830b9cbc8da9b700220b5dfc9ff9e270cd9949142618efd3dcb2569",
+      "phase": "source"
     }
   ],
   "files": [
@@ -28,9 +40,26 @@
       "patchedSha256": "5e747161117a8f713271dffe2f13665fac7686e1ba3c66ffefafeb72e49ae76d"
     },
     {
+      "path": "pnpm-lock.yaml",
+      "originalSha256": "5e4fd57322e3c9e630d7eb2d043a7b094f5f141380ce1f8173310d005ab65ce3",
+      "patchedSha256": "f6cc035d8b217f3ebacb416c8c212d4c01073e68a8c80de77d3a5ba1887d6102"
+    },
+    {
+      "path": "third_party/pi-mono/packages/ai/package.json",
+      "originalSha256": "82458b298e5d19fbc0c9d91a6fb0b472b18957faabd17d6b15e5f96c939c4587",
+      "patchedSha256": "40ecd2aa96637067e7ff2fdbd5b9e30994fe852556393ca8b76b2890d0a22fa9"
+    },
+    {
       "path": "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts",
       "originalSha256": "9271d59f34d58854af1e0a32a6d67e55fedd68673519f22c08eebce97ca8be21",
-      "patchedSha256": "73c3decbf8a78b5fa672bf4690bfec4ea717a04799dc400eff92654d79a0d01e"
+      "patchedSha256": "aefcbed438e88ab0ef9561b436796fe2647ed4030f2921e7abf171923e41a5cb"
     }
-  ]
+  ],
+  "transport": {
+    "gatewayOrigin": "http://10.0.2.2:8081",
+    "headersTimeoutMs": 9060000,
+    "bodyTimeoutMs": 9060000,
+    "undici": "7.29.1",
+    "undiciIntegrity": "sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q=="
+  }
 }

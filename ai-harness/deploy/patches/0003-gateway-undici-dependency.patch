@@ -1,0 +1,48 @@
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 8014dab..d7dc1c4 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -937,6 +937,9 @@ importers:
+       typebox:
+         specifier: 1.1.38
+         version: 1.1.38
++      undici:
++        specifier: 7.29.1
++        version: 7.29.1
+     devDependencies:
+       '@types/node':
+         specifier: 24.12.4
+@@ -3738,6 +3741,10 @@ packages:
+   undici-types@7.16.0:
+     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
+ 
++  undici@7.29.1:
++    resolution: {integrity: sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q==}
++    engines: {node: '>=20.18.1'}
++
+   undici@8.10.2:
+     resolution: {integrity: sha512-/y4/bH9YNU5hi9NIrpOuvGXFcxrj3CMrV+/AYpowAYTpHn8gX/XPFjNy766FPoYY0miQhdW977JFWKGNhBdwyQ==}
+     engines: {node: '>=22.19.0'}
+@@ -6504,6 +6511,8 @@ snapshots:
+ 
+   undici-types@7.16.0: {}
+ 
++  undici@7.29.1: {}
++
+   undici@8.10.2: {}
+ 
+   unpdf@1.8.1: {}
+diff --git a/third_party/pi-mono/packages/ai/package.json b/third_party/pi-mono/packages/ai/package.json
+index 12cab71..f8dc4c9 100644
+--- a/third_party/pi-mono/packages/ai/package.json
++++ b/third_party/pi-mono/packages/ai/package.json
+@@ -66,7 +66,8 @@
+     "https-proxy-agent": "7.0.6",
+     "openai": "6.26.0",
+     "partial-json": "0.1.7",
+-    "typebox": "1.1.38"
++    "typebox": "1.1.38",
++    "undici": "7.29.1"
+   },
+   "keywords": [
+     "ai",

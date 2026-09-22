@@ -1,23 +1,31 @@
 # Pinned local engine
 
-Build from `ai-harness/deploy` after the user completes the reviewed host
-bootstrap:
+Build with **`ai-harness/` as the context**, from that directory as the ordinary
+user after the reviewed host bootstrap:
 
 ```sh
-podman build --pull=always --tag localhost/ai-harness-engine:0.0.1-ae65651df5f9 --file Containerfile .
+podman build --format docker --layers --target runtime-base --tag localhost/ai-harness-engine:0.0.1-ae65651df5f9 --file deploy/Containerfile .
 podman image inspect localhost/ai-harness-engine:0.0.1-ae65651df5f9 --format '{{.Id}}'
 ```
 
-The PREP build context remains `ai-harness/deploy`. Root's later tools/skills
-integration will embed its reviewed assets in the image and must update all
-build-context commands, Containerfile COPY paths and related documentation
-together. It is not a prerequisite for completing this source-only PREP.
+The `.containerignore` excludes private runtime state and build scratch. The
+named `runtime-base` is the reusable base for a later reviewed tools/skills
+stage. Add its COPY steps after `FROM runtime-base` at `/opt/ai-harness/tools`
+and `/opt/ai-harness/skills`; no unfinished tools or server source is imported.
+`source-base`, `build`, and `runtime-deps` retain source/package layers.
+Only patch bytes/hash manifests enter the compilation stage; patch documentation
+changes do not invalidate compilation. Dependency/source patch changes do.
+Later tools/skills COPY steps leave the complete runtime-base cache reusable.
 
 The build starts from official MiniMax source at
-`ae65651df5f97ae1085ab4e19964f4b78c769a4e`, applies the two recorded identity-checked patches
-under `deploy/patches` (request budgets and ACP compaction notifications), uses its frozen pnpm lock and
+`ae65651df5f97ae1085ab4e19964f4b78c769a4e`, applies the recorded identity-checked patches
+under `deploy/patches` (request budgets and ACP compaction notifications), uses its coherently patched frozen pnpm lock and
 official release-packaging script, then installs that source-built runtime
-archive. No upstream engine tree is committed here. The final image contains
+archive. Upstream packaging requires a clean tree, so the build creates a
+deterministic local commit of only the verified patchset before compilation.
+`patched-source-revision.txt` and `release.json` retain that derived revision;
+the image original-source label remains the pinned upstream revision.
+No upstream engine tree is committed here. The final image contains
 the runtime bundle, external dependencies and licenses, not the build checkout.
 `pins.json` records the registry-verified Node 24 base and external pins.
 The official source manifest is version 0.5.1; this harness remains version 0.0.1.
@@ -70,7 +78,9 @@ their cloud transport rejects `AUTH_REQUIRED` before fetch and their runtime
 returns no bindings. This is source evidence, not an egress firewall claim.
 Do not log into MiniMax within this local-only profile.
 
-Native delegation remains enabled. Curated PDF/search skills and SearXNG MCP
+The initial permission mode is `default`, external skill ingestion is disabled,
+and the supported profile `AGENTS.md` explains two shared inference slots,
+independent delegation and queued excess inference. Native delegation remains enabled. Curated PDF/search skills and SearXNG MCP
 will be embedded by root's subsequent integration task; no paid native-search
 fallback is enabled.
 The two shared inference slots are admitted by the host gateway, not by the
@@ -119,8 +129,8 @@ This is a request ceiling, not an overall conversation/tool-execution deadline.
 Offline checks (Node 24; pristine extraction required):
 
 ```sh
-node --test engine/configure-profile.test.mjs
-AI_HARNESS_MINIMAX_SOURCE=/absolute/pristine/minimax-code node --test tests/test-provider-patch.mjs
+node --test deploy/engine/configure-profile.test.mjs
+AI_HARNESS_MINIMAX_SOURCE=/absolute/pristine/minimax-code node --test deploy/tests/test-provider-patch.mjs
 ```
 
 The provider fixture verifies patch/source identities and application, executes
@@ -185,3 +195,38 @@ checked. The actual image has **not** been built in this PREP subtask; no claim
 of installed native modules, container start, model inference, ACP acceptance,
 gateway reachability, sandboxed Chromium or PDF/tool acceptance follows from
 these source checks. Run those bounded checks after root review/bootstrap.
+
+
+## Runtime-build evidence
+
+The H001-RUNTIME-BUILD task records actual Linux build/smoke results separately
+from the historical PREP checks above. `deploy/tests/runtime-smoke.py` uses only
+owned local HTTP/HTML fixtures and native ACP initialize/newSession; it never
+requests generation. Retain its exact image ID, manifest/notices checks,
+Chromium sandbox output, gateway receipt and real container termination result.
+Full tools/search/PDF, SERVER/Web, inference/vision, compaction and service
+acceptance remain later integration tests.
+
+
+The actual Podman4.9.3 stock profile blocked Chromium's sandbox `chroot` while
+`unshare -Ur` succeeded. The launcher now verifies and applies the scoped
+[Chromium seccomp profile](../security/README.md) (relative to deploy): only the
+`chroot` syscall changes from capability-conditional to allowed; all other
+stock rules remain identical. The outer container keeps `--cap-drop ALL` and
+`no-new-privileges`, AppArmor remains enabled, and Chromium retains its own
+nested namespace and seccomp sandboxes. This is not a global host policy change.
+
+
+The launcher mounts the supplied profile directory at the identical absolute
+path, then sets `MINIMAX_DATA_DIR=<profile>/state` and
+`HOME=<profile>/state/home`. This places native `proper-lockfile`'s sibling
+`state.lock` inside the writable isolated mount. The initial leaf-dataDir
+layout failed actual ACP startup with `agent_name_conflict_migration_failed:lock`;
+no parent-directory mount or native migration bypass is used. Later curated
+skills/MCP initialization must target `${MINIMAX_DATA_DIR}/skills` and
+`${MINIMAX_DATA_DIR}/mcp.json`, now beneath `state/`. Configuration and global
+instructions likewise live at `state/config.yaml` and `state/AGENTS.md`.
+
+The launcher refuses recognized legacy root-level profile files rather than
+hiding prior history. Existing profiles require an explicit reviewed migration;
+this task exercises new isolated profiles only.

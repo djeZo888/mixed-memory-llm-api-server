@@ -10,14 +10,69 @@ remains the profile setting.
 compression or occupied-context calculation. See `compaction-notes.md` and
 `../engine/README.md` for source evidence and exact test boundaries.
 
-`SHA256SUMS` pins the two patch files. Its SHA256 is the image/launcher admission
-identity: `b583f01e412c3316fe3a5e62f8b5ce83269091e077b3eb6df2e615dd8428402d`.
-`source.SHA256SUMS` and `patched.SHA256SUMS` identify all four affected source files.
-`identity.json` provides the same mapping in structured form.
+`0003` pins the common adapter's direct Undici dependency to **7.29.1**, matching
+Node 24.21.0's built-in Undici major/API. It changes only that importer's package
+manifest and the frozen workspace lock, including npm's exact SHA512 integrity.
+Other upstream importers retain their existing Undici 8.10.2 dependency. Version 8
+cannot supply a dispatcher to this Node version's built-in fetch: a real local
+HTTP fixture reproduced `InvalidArgumentError: invalid onRequestStart method`.
+`0004` supplies the common adapter with a gateway-only fetch wrapper and a shared
+Undici dispatcher. It overwrites fetch-supplied header/body dispatch limits to
+9,060,000 ms for **http://10.0.2.2:8081 only**. Agent defaults alone are insufficient
+when fetch supplies its own 300-second request options. The wrapper preserves
+explicit AbortSignal, body, headers and other fetch options, and retains custom
+fetch implementations. Other provider and request origins keep their original
+fetch. Redirect dispatches outside the gateway do not receive extended limits.
+No global dispatcher, retry algorithm, model capacity or auxiliary output budget
+changes are introduced. The common adapter covers main, direct and fallback
+compaction requests; short title SDK/AbortSignal limits still win.
 
-The Containerfile checks the original Git HEAD and files, patch checksums,
-`git apply --check`, and resulting files before source compilation. The final
-image retains these small review artifacts and carries the patchset label.
-The upstream tree is not vendored here. Offline patch application and fixture
-tests do not constitute a full TypeScript build, container build, ACP transport
-or live model/compaction acceptance.
+`0001` and `0002` remain byte-identical to PREP. `SHA256SUMS` pins all four patches;
+its SHA256 is the image/launcher admission identity:
+`2f4b3f8a2d74348b2ca6b4e4f7ac069d9a6ec0e957a8fce6a1287f1ab96a2e7c`.
+`source.SHA256SUMS` and `patched.SHA256SUMS` identify all six affected source files.
+`identity.json` provides the same mapping and the transport/dependency pins.
+
+For reusable dependency layers, first COPY only `0003` and the `dependency-*`
+manifests, verify original hashes, apply `0003`, verify patched hashes, then run
+`pnpm install --frozen-lockfile`. COPY generic source patches later; verify
+`source-source.SHA256SUMS`, apply `0001`, `0002`, `0004` **sequentially** with an
+individual `git apply --check` before each, then verify
+`source-patched.SHA256SUMS`. `0004` is based on the result of `0001`. The complete
+set may also be applied sequentially before installation. Verify the complete
+`SHA256SUMS` admission identity and `patched.SHA256SUMS` before compilation.
+
+The upstream tree is not vendored here. The final image retains these small
+review artifacts and carries the patchset label. The pinned release packager
+requires clean committed source; a deterministic local build commit can record
+the already hash-verified modifications while preserving the original pin in
+image metadata. It is not an upstream commit or a publication.
+
+## Local transport fixture
+
+After installing exact `undici@7.29.1` into an isolated fixture directory, run:
+
+```sh
+AI_HARNESS_MINIMAX_SOURCE=/absolute/pristine-pinned-source \
+AI_HARNESS_UNDICI_MODULE=/absolute/fixture/node_modules/undici/index.js \
+node --test ai-harness/deploy/tests/test-provider-patch.mjs \
+  ai-harness/deploy/tests/test-gateway-transport.mjs
+```
+
+The transport fixture checks all original/patch/final hashes, applies the exact
+patches to a temporary copy, and executes the actual extracted adapter helper
+using Node fetch and the pinned Undici. A fixture-only connector maps the
+reviewed gateway address to an ephemeral local loopback HTTP server; no gateway,
+model or internet endpoint is contacted. Injected 20 ms transport limits fail on
+delayed headers and delayed body chunks; the exact patched dispatcher survives
+both 1.6-second delays. Existing AbortSignal cancels while waiting for headers
+and after body streaming starts. Additional checks cover exact origin matching,
+URL/Request inputs, custom fetch preservation and unchanged main/title budgets.
+These accelerated cases validate timeout behavior without waiting 300 seconds.
+
+Node 24.21.0 source fixtures passed 7/7. The exact helper also passed a TypeScript
+5.9.3 check and esbuild 0.28.2 Node ESM bundle/import. `pnpm@9.12.0 install
+--lockfile-only --frozen-lockfile --ignore-scripts` accepted all 32 workspace
+importers and left the patched lock byte-identical. These are local source and
+transport checks; they do not establish Linux image, ACP, full TypeScript,
+live model, 151-minute occupied duration or real compaction acceptance.
