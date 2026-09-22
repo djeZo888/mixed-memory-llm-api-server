@@ -50,6 +50,28 @@ describe('contract transport', () => {
     expect(source.close).toHaveBeenCalledOnce();
     vi.unstubAllGlobals();
   });
+  it('omits Content-Type for bodyless DELETE and retains it for JSON POST', async () => {
+    const fetcher = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ status: 'deleting' }), { status: 202 }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ status: 'cancelling' })));
+
+    await expect(api.remove('owned-chat')).resolves.toEqual({ status: 'deleting' });
+    const [deletePath, deleteOptions] = fetcher.mock.calls[0];
+    expect(deletePath).toBe('/api/sessions/owned-chat');
+    expect(deleteOptions?.method).toBe('DELETE');
+    expect(deleteOptions?.body).toBeUndefined();
+    expect(new Headers(deleteOptions?.headers).has('Content-Type')).toBe(false);
+
+    await expect(api.cancel('owned-chat')).resolves.toEqual({ status: 'cancelling' });
+    const [cancelPath, cancelOptions] = fetcher.mock.calls[1];
+    expect(cancelPath).toBe('/api/sessions/owned-chat/cancel');
+    expect(cancelOptions?.method).toBe('POST');
+    expect(cancelOptions?.body).toBe('{}');
+    expect(new Headers(cancelOptions?.headers).get('Content-Type')).toBe('application/json');
+  });
   it('encodes opaque paths, sends one multipart file field and surfaces structured API errors', async () => {
     expect(sessionPath('opaque/space ?#')).toBe('/api/sessions/opaque%2Fspace%20%3F%23');
     expect(artifactPath('//external/?')).toBe('/api/artifacts/%2F%2Fexternal%2F%3F/download');
@@ -62,6 +84,7 @@ describe('contract transport', () => {
     await api.upload('a/b', file);
     const [path, options] = fetcher.mock.calls[0];
     expect(path).toBe('/api/sessions/a%2Fb/uploads');
+    expect(new Headers(options?.headers).has('Content-Type')).toBe(false);
     const form = options?.body as FormData;
     expect([...form.keys()]).toEqual(['file']);
     expect((form.get('file') as File).name).toBe('notes.txt');

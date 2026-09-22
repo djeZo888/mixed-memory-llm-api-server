@@ -19,9 +19,12 @@ export const sessionPath = (id: string) => `/api/sessions/${encodeURIComponent(i
 export const artifactPath = (id: string) => `/api/artifacts/${encodeURIComponent(id)}/download`;
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  if (init?.body != null && !(init.body instanceof FormData) && !headers.has('Content-Type'))
+    headers.set('Content-Type', 'application/json');
   const response = await fetch(path, {
     ...init,
-    headers: init?.body instanceof FormData ? undefined : { 'Content-Type': 'application/json' },
+    headers,
     cache: 'no-store',
   });
   const body = await response.json().catch(() => null);
