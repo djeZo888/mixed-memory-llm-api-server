@@ -12,16 +12,31 @@ RUN git init --quiet \
     && git checkout --detach FETCH_HEAD \
     && test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e
 
-FROM source-base AS build
+# Dependency inputs are isolated from all ACP/source patches and documentation.
+FROM source-base AS source-deps
+COPY deploy/patches/0003-gateway-undici-dependency.patch deploy/patches/dependency-source.SHA256SUMS deploy/patches/dependency-patched.SHA256SUMS /tmp/ai-harness-dependency/
+RUN test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e \
+    && sha256sum -c /tmp/ai-harness-dependency/dependency-source.SHA256SUMS \
+    && printf '%s\n' 'f1db7f0c33096b818ed5eea9b8899c0845e81ab74917eb98aec028a168c62c08  /tmp/ai-harness-dependency/0003-gateway-undici-dependency.patch' | sha256sum -c - \
+    && git apply --check --whitespace=error --include=third_party/pi-mono/packages/ai/package.json --include=pnpm-lock.yaml /tmp/ai-harness-dependency/0003-gateway-undici-dependency.patch \
+    && git apply --whitespace=error --include=third_party/pi-mono/packages/ai/package.json --include=pnpm-lock.yaml /tmp/ai-harness-dependency/0003-gateway-undici-dependency.patch \
+    && sha256sum -c /tmp/ai-harness-dependency/dependency-patched.SHA256SUMS
+RUN pnpm install --frozen-lockfile \
+    && sha256sum -c /tmp/ai-harness-dependency/dependency-patched.SHA256SUMS
+
+FROM source-deps AS build
 COPY deploy/patches/*.patch deploy/patches/*SHA256SUMS /tmp/ai-harness-patches/
 # Fail closed on upstream-file or patch drift before building the exact source.
 RUN test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e \
-    && sha256sum -c /tmp/ai-harness-patches/source.SHA256SUMS \
+    && sha256sum -c /tmp/ai-harness-patches/source-source.SHA256SUMS \
+    && sha256sum -c /tmp/ai-harness-patches/dependency-patched.SHA256SUMS \
     && cd /tmp/ai-harness-patches && sha256sum -c SHA256SUMS \
-    && printf '%s\n' '2f4b3f8a2d74348b2ca6b4e4f7ac069d9a6ec0e957a8fce6a1287f1ab96a2e7c  SHA256SUMS' | sha256sum -c - \
+    && printf '%s\n' '00418190e3abae6ef9e44c60dedfda220d2a60fa9d64e364fa650d142362f8b7  SHA256SUMS' | sha256sum -c - \
     && cd /build/minimax \
     && for patch in /tmp/ai-harness-patches/[0-9]*.patch; do \
-         git apply --check --whitespace=error "$patch" && git apply --whitespace=error "$patch" || exit; \
+         if [[ "${patch##*/}" = 0003-gateway-undici-dependency.patch ]]; then continue; fi; \
+         git apply --check --whitespace=error --exclude=third_party/pi-mono/packages/ai/package.json --exclude=pnpm-lock.yaml "$patch" \
+           && git apply --whitespace=error --exclude=third_party/pi-mono/packages/ai/package.json --exclude=pnpm-lock.yaml "$patch" || exit; \
        done \
     && sha256sum -c /tmp/ai-harness-patches/patched.SHA256SUMS
 # Upstream release packaging requires a clean committed tree. Commit only the
@@ -33,7 +48,7 @@ RUN git add --all \
     && test -z "$(git status --porcelain --untracked-files=no)"
 # Frozen workspace lock; upstream verifies the external mcode-tools archive/CLI
 # and carries its manifest/notices into the release. Never bypass these hashes.
-RUN pnpm install --frozen-lockfile \
+RUN pnpm typecheck \
     && MCODE_RELEASE_TAG=v0.5.1 pnpm build \
     && node scripts/package-cli-release.mjs v0.5.1 /build/release \
     && cd /build/release && sha256sum -c minimax-code-0.5.1.tar.gz.sha256
@@ -71,7 +86,7 @@ FROM runtime-deps AS runtime-base
 LABEL org.opencontainers.image.title="ai-harness local MiniMax engine" \
       org.opencontainers.image.version="0.0.1" \
       org.opencontainers.image.revision="ae65651df5f97ae1085ab4e19964f4b78c769a4e" \
-      org.opencontainers.image.ai-harness.patchset="2f4b3f8a2d74348b2ca6b4e4f7ac069d9a6ec0e957a8fce6a1287f1ab96a2e7c" \
+      org.opencontainers.image.ai-harness.patchset="00418190e3abae6ef9e44c60dedfda220d2a60fa9d64e364fa650d142362f8b7" \
       org.opencontainers.image.source="https://github.com/MiniMax-AI/minimax-code"
 COPY --from=build /opt/minimax /opt/minimax
 COPY deploy/patches /usr/local/share/ai-harness-patches

@@ -1,3 +1,4 @@
 28d00e116d47b355e6e2f249b18fdc5e9e48bb290f16bb512a8ab532f756b161  0001-gateway-request-budget.patch
 ec56ccb5834dd75f7e4c9a9bff9599ebaf1da41c101c0cbde858c47f46cc8d2f  0002-acp-compaction-notifications.patch
 544f0c8bb830b9cbc8da9b700220b5dfc9ff9e270cd9949142618efd3dcb2569  0004-gateway-fetch-timeouts.patch
+5b4e758778aa81e7a3f99ee3296f3bfec37d7d07b80e380b208e20951dbee4bc  0005-gateway-dispatcher-type-bridge.patch

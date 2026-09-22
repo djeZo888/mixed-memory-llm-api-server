@@ -27,18 +27,28 @@ No global dispatcher, retry algorithm, model capacity or auxiliary output budget
 changes are introduced. The common adapter covers main, direct and fallback
 compaction requests; short title SDK/AbortSignal limits still win.
 
-`0001` and `0002` remain byte-identical to PREP. `SHA256SUMS` pins all four patches;
+`0005` adds only an `unknown` type bridge for the fetch options assertion. The
+full Linux typecheck exposed a structural mismatch between the pinned runtime
+dispatcher and the ambient `undici-types` declarations. Node 24 transport
+fixtures validate that runtime dispatch contract. With comments removed, the
+entire provider transpiles to byte-identical JavaScript before/after `0005`
+(TypeScript 5.9.3); no runtime behavior or dependency changes are introduced.
+The full Linux typecheck/build remains the acceptance gate.
+
+`0001` and `0002` remain byte-identical to PREP. `0001` through `0004` and all
+dependency-phase identities remain byte-identical after `0005` was added.
+`SHA256SUMS` pins all five patches;
 its SHA256 is the image/launcher admission identity:
-`2f4b3f8a2d74348b2ca6b4e4f7ac069d9a6ec0e957a8fce6a1287f1ab96a2e7c`.
+`00418190e3abae6ef9e44c60dedfda220d2a60fa9d64e364fa650d142362f8b7`.
 `source.SHA256SUMS` and `patched.SHA256SUMS` identify all six affected source files.
 `identity.json` provides the same mapping and the transport/dependency pins.
 
 For reusable dependency layers, first COPY only `0003` and the `dependency-*`
 manifests, verify original hashes, apply `0003`, verify patched hashes, then run
 `pnpm install --frozen-lockfile`. COPY generic source patches later; verify
-`source-source.SHA256SUMS`, apply `0001`, `0002`, `0004` **sequentially** with an
+`source-source.SHA256SUMS`, apply `0001`, `0002`, `0004`, `0005` **sequentially** with an
 individual `git apply --check` before each, then verify
-`source-patched.SHA256SUMS`. `0004` is based on the result of `0001`. The complete
+`source-patched.SHA256SUMS`. `0004` is based on the result of `0001`; `0005` follows `0004`. The complete
 set may also be applied sequentially before installation. Verify the complete
 `SHA256SUMS` admission identity and `patched.SHA256SUMS` before compilation.
 

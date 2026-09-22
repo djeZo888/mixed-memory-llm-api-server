@@ -87,6 +87,8 @@ elif args[:2] == ["image", "inspect"]:
         sys.exit(125)
     print(settings["image_id"] + "|" + settings["revision"] + "|" + settings["patchset"])
 elif args[0] == "run":
+    if settings.get("startup_stdout"):
+        os.write(1, settings["startup_stdout"].encode())
     (base / "run.pid").write_text(str(os.getpid()))
     if settings.get("hang"):
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
@@ -104,6 +106,8 @@ elif args[0] == "run":
 elif args[0] == "rm":
     if settings.get("cleanup_failure"):
         sys.exit(125)
+elif args[:2] == ["container", "exists"]:
+    sys.exit(settings.get("exists_exit", 1))
 else:
     raise AssertionError(args)
 ''')
@@ -141,19 +145,20 @@ else:
         self.assertEqual(result.stdout, request)
         self.assertEqual(result.stderr, "fixture engine stderr\n")
         calls = self.calls()
-        self.assertEqual(len(calls), 4)
+        self.assertEqual(len(calls), 5)
         for call in calls:
             self.assertFalse(forbidden.keys() & call["env"].keys())
             self.assertNotIn(TOKEN, " ".join(call["argv"]))
-            if call["argv"][1] == "rm":
+            if call["argv"][1] in ("rm", "container"):
                 self.assertNotIn("AI_HARNESS_GATEWAY_TOKEN", call["env"])
             else:
                 self.assertEqual(call["env"]["AI_HARNESS_GATEWAY_TOKEN"], TOKEN)
             self.assertEqual(call["env"]["XDG_RUNTIME_DIR"], f"/run/user/{os.getuid()}")
-        argv = calls[-2]["argv"]
+        argv = calls[-3]["argv"]
         container_name = argv[argv.index("--name") + 1]
         self.assertRegex(container_name, r"^ai-harness-[0-9a-f]{32}$")
-        self.assertEqual(calls[-1]["argv"], ["--remote=false", "rm", "--force", "--time", "20", "--ignore", container_name])
+        self.assertEqual(calls[-2]["argv"], ["--remote=false", "rm", "--force", "--time", "20", "--ignore", container_name])
+        self.assertEqual(calls[-1]["argv"], ["--remote=false", "container", "exists", container_name])
         mounts = [argv[index + 1] for index, item in enumerate(argv) if item == "--volume"]
         self.assertEqual(mounts, [f"{self.profile}:{self.profile}:rw,rprivate", f"{self.workspace}:{self.workspace}:rw,rprivate"])
         self.assertEqual(argv[-1], IMAGE_ID)
@@ -194,7 +199,12 @@ else:
 
     def test_engine_exit_status_propagates(self):
         self.settings["exit"] = 17
-        self.assertEqual(self.invoke().returncode, 17)
+        request = '{"jsonrpc":"2.0","id":1}\n'
+        result = self.invoke(text=request)
+        self.assertEqual(result.returncode, 17)
+        self.assertEqual(result.stdout, request)
+        self.assertEqual(result.stderr, "fixture engine stderr\n")
+        self.assertEqual(self.calls()[-1]["argv"][1:3], ["container", "exists"])
 
     def test_help_does_not_start_podman(self):
         result = self.invoke(["--help"])
@@ -227,7 +237,7 @@ else:
         self.env["AI_HARNESS_SESSION_ID"] = "session.fixture-01"
         result = self.invoke()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.calls()[-2]["env"]["AI_HARNESS_SESSION_ID"], "session.fixture-01")
+        self.assertEqual(self.calls()[-3]["env"]["AI_HARNESS_SESSION_ID"], "session.fixture-01")
 
     def test_streams_redact_split_token_without_corrupting_acp(self):
         self.settings.update(leak_streams=True, leak_preflight=True)
@@ -245,8 +255,11 @@ else:
         self.assertIn("settlement unconfirmed", result.stderr)
         self.assertNotIn(TOKEN, result.stderr)
 
-    def test_term_reaps_cli_and_removes_only_its_exact_container(self):
+    def invoke_signal(self, number):
         self.settings["hang"] = True
+        self.settings["startup_stdout"] = '{"jsonrpc":"2.0","method":"fixture/native-notification"}\n'
+        (self.bin / "run.pid").unlink(missing_ok=True)
+        self.log.unlink(missing_ok=True)
         self.settings_path.write_text(json.dumps(self.settings))
         process = subprocess.Popen(["/bin/bash", str(LAUNCHER), "--profile-dir", str(self.profile),
                                     "--workspace", str(self.workspace)], env=self.env,
@@ -257,17 +270,52 @@ else:
             time.sleep(0.01)
         self.assertTrue((self.bin / "run.pid").exists())
         child_pid = int((self.bin / "run.pid").read_text())
-        process.send_signal(signal.SIGTERM)
+        started = time.monotonic()
+        process.send_signal(number)
         stdout, stderr = process.communicate(timeout=8)
-        self.assertEqual(process.returncode, 143, stderr)
-        self.assertEqual(stdout, b"")
+        elapsed = time.monotonic() - started
+        self.assertLess(elapsed, 8)
+        self.assertEqual(stdout, self.settings["startup_stdout"].encode())
         self.assertNotIn(TOKEN.encode(), stdout + stderr)
         with self.assertRaises(ProcessLookupError):
             os.kill(child_pid, 0)
         calls = self.calls()
-        run_args = calls[-2]["argv"]
+        run_args = calls[-3]["argv"]
         name = run_args[run_args.index("--name") + 1]
-        self.assertEqual(calls[-1]["argv"], ["--remote=false", "rm", "--force", "--time", "20", "--ignore", name])
+        self.assertEqual(calls[-2]["argv"], ["--remote=false", "rm", "--force", "--time", "20", "--ignore", name])
+        self.assertEqual(calls[-1]["argv"], ["--remote=false", "container", "exists", name])
+        return process.returncode, stdout, stderr
+
+    def test_requested_signals_acknowledge_only_verified_exact_cleanup(self):
+        for number in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+            with self.subTest(signal=number):
+                code, _stdout, stderr = self.invoke_signal(number)
+                self.assertEqual(code, 0, stderr)
+                self.assertEqual(stderr, b"")
+
+    def test_requested_signal_cleanup_failure_is_125(self):
+        self.settings["cleanup_failure"] = True
+        code, _stdout, stderr = self.invoke_signal(signal.SIGTERM)
+        self.assertEqual(code, 125)
+        self.assertIn(b"settlement unconfirmed", stderr)
+
+    def test_requested_signal_absence_uncertainty_is_125(self):
+        for exists_exit in (0, 125):
+            with self.subTest(exists_exit=exists_exit):
+                self.settings["exists_exit"] = exists_exit
+                code, _stdout, stderr = self.invoke_signal(signal.SIGTERM)
+                self.assertEqual(code, 125)
+                self.assertIn(b"settlement unconfirmed", stderr)
+
+    def test_normal_exit_absence_uncertainty_cannot_report_success(self):
+        for exists_exit in (0, 125):
+            with self.subTest(exists_exit=exists_exit):
+                self.settings["exists_exit"] = exists_exit
+                request = '{"jsonrpc":"2.0","id":1}\n'
+                result = self.invoke(text=request)
+                self.assertEqual(result.returncode, 125)
+                self.assertEqual(result.stdout, request)
+                self.assertIn("settlement unconfirmed", result.stderr)
 
     def test_nonroot_container_engine_required(self):
         self.settings["rootless"] = "false"

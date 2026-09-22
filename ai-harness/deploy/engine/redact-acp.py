@@ -79,6 +79,8 @@ def main():
     filters = []
     code = 125
     cleanup_ok = True
+    engine_exited = False
+    requested_stop = False
     try:
         process = subprocess.Popen(args, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    start_new_session=True)
@@ -89,19 +91,25 @@ def main():
         while not stopped.is_set():
             try:
                 code = process.wait(timeout=0.1)
+                engine_exited = True
                 break
             except subprocess.TimeoutExpired:
                 pass
-        if received_signal[0]:
-            code = 128 + received_signal[0]
-        elif pipe_failed.is_set():
+        if pipe_failed.is_set():
             code = 125
+        # A requested stop is acknowledged only after verified settlement below.
+        # An already observed engine failure is never normalized by a signal.
+        requested_stop = bool(received_signal[0]) and not engine_exited
     except (OSError, ValueError):
         os.write(2, b"run-engine: ACP process start failed\n")
     finally:
         # A second TERM must not interrupt cleanup and strand the container.
         for number in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
             signal.signal(number, signal.SIG_IGN)
+        if process is not None and process.poll() is not None and not engine_exited:
+            code = process.returncode
+            engine_exited = True
+            requested_stop = False
         if process is not None and process.poll() is None:
             try:
                 os.killpg(process.pid, signal.SIGTERM)
@@ -123,8 +131,18 @@ def main():
         try:
             result = subprocess.run([podman, "--remote=false", "rm", "--force", "--time", "20", "--ignore", container],
                                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                    timeout=30, env=cleanup_env, check=False)
+                                    timeout=28, env=cleanup_env, check=False)
             cleanup_ok = cleanup_ok and result.returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            cleanup_ok = False
+        # rm success alone is insufficient: Podman must explicitly report this
+        # exact random container absent (exists exit1). Exit0 or errors are not
+        # a settlement receipt. Cleanup budget: CLI4 + rm28 + exists2 + pipes4.
+        try:
+            result = subprocess.run([podman, "--remote=false", "container", "exists", container],
+                                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                    timeout=2, env=cleanup_env, check=False)
+            cleanup_ok = cleanup_ok and result.returncode == 1
         except (OSError, subprocess.TimeoutExpired):
             cleanup_ok = False
         for worker in filters:
@@ -139,6 +157,10 @@ def main():
             except OSError:
                 pass
             code = 125
+        elif requested_stop and process is not None:
+            # SERVER treats exit0 as the clean cancellation acknowledgment.
+            # ACP stdout remains exclusively the engine's byte stream.
+            code = 0
     return code if code >= 0 else 128 - code
 
 

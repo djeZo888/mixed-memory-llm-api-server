@@ -3,4 +3,4 @@
 5e747161117a8f713271dffe2f13665fac7686e1ba3c66ffefafeb72e49ae76d  packages/tui/src/acp/extensions.ts
 f6cc035d8b217f3ebacb416c8c212d4c01073e68a8c80de77d3a5ba1887d6102  pnpm-lock.yaml
 40ecd2aa96637067e7ff2fdbd5b9e30994fe852556393ca8b76b2890d0a22fa9  third_party/pi-mono/packages/ai/package.json
-aefcbed438e88ab0ef9561b436796fe2647ed4030f2921e7abf171923e41a5cb  third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
+ac725f4baa2a923a704b0250165b389f7745139231bf108f3ac3df3a0541e35a  third_party/pi-mono/packages/ai/src/providers/openai-completions.ts

@@ -12,9 +12,15 @@ The `.containerignore` excludes private runtime state and build scratch. The
 named `runtime-base` is the reusable base for a later reviewed tools/skills
 stage. Add its COPY steps after `FROM runtime-base` at `/opt/ai-harness/tools`
 and `/opt/ai-harness/skills`; no unfinished tools or server source is imported.
-`source-base`, `build`, and `runtime-deps` retain source/package layers.
-Only patch bytes/hash manifests enter the compilation stage; patch documentation
-changes do not invalidate compilation. Dependency/source patch changes do.
+`source-base`, `source-deps`, `build`, and `runtime-deps` retain source/package
+layers. The isolated `source-deps` stage applies only the two manifest/lock
+hunks of pinned `0003`, verifies their original/resulting hashes and installs
+with the frozen pnpm lock. Generic ACP/source patches are copied only in the
+later `build` stage. It checks pristine nondependency sources and dependency
+posthashes separately, applies remaining hunks, checks full patched hashes,
+commits deterministically and typechecks/compiles/packages the source. A future
+ACP/source patch must rebuild compilation but cannot invalidate pnpm installation.
+Patch documentation does not enter either dependency or compilation inputs.
 Later tools/skills COPY steps leave the complete runtime-base cache reusable.
 
 The build starts from official MiniMax source at
@@ -230,3 +236,9 @@ instructions likewise live at `state/config.yaml` and `state/AGENTS.md`.
 The launcher refuses recognized legacy root-level profile files rather than
 hiding prior history. Existing profiles require an explicit reviewed migration;
 this task exercises new isolated profiles only.
+
+
+A requested TERM/INT/HUP acknowledges cleanup with launcher exit0 only after
+exact owned-container absence is verified. Cleanup failure or uncertainty is125;
+unexpected engine failures retain their nonzero status. This transport cleanup
+acknowledgment is distinct from the ACP task result and emits no stdout marker.

@@ -79,7 +79,9 @@ excludes keys, logs, workspaces, node_modules, Git and build scratch. Stage only
 reviewed source into an isolated user build directory; the context is never a
 host home. No automatic build or pull occurs inside `run-engine.sh`.
 
-`source-base` caches the pinned source/toolchain, `build` compiles MiniMax and
+`source-base` caches the pinned source/toolchain, `source-deps` installs the
+frozen workspace dependencies using only the pinned manifest/lock patch,
+`build` applies later source/ACP patches and typechecks/compiles MiniMax, and
 `runtime-deps` caches runtime packages. The named `runtime-base` retains that
 compile and provides the later reviewed integration point: add a stage
 `FROM runtime-base` and copy TOOLS assets into `/opt/ai-harness/tools` and curated
@@ -124,6 +126,9 @@ HEAD, patch bytes and source bytes before building.
 The host Python3 supervisor redacts the ephemeral token, including split chunks
 and JSON escaping, from both stdout and stderr. It uses an exact random container
 name for bounded cleanup on exit/TERM; failed or unconfirmed cleanup returns125.
+Requested TERM/INT/HUP returns0 only after verified exact-container cleanup;
+this is a cleanup acknowledgment, separate from the ACP task result. Unexpected
+engine failures retain their nonzero status. No stdout markers are added.
 Nonsecret ACP bytes are preserved. The launcher cleanup budget is at most 40
 seconds. The agreed source contract gives SERVER 45 seconds to wait for the exact
 launcher exit and 60–70 seconds for overall shutdown with parallel cleanup. The

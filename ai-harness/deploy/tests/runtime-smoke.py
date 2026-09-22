@@ -370,7 +370,7 @@ try {
                    "container_id": container, "container_exists_exit": exists,
                    "remaining_original_host_pids": list(pending), "launcher_budget_seconds": 40}
         (self.output / "termination.json").write_text(json.dumps(receipt, indent=2) + "\n")
-        if code != 143 or elapsed > 40 or exists != 1 or pending or not getattr(self, "descendants", None):
+        if code != 0 or elapsed > 40 or exists != 1 or pending or not getattr(self, "descendants", None):
             raise RuntimeError("real TERM receipt failed or incomplete; see termination.json")
         return receipt
 
