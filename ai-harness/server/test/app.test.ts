@@ -929,6 +929,66 @@ test(
   },
 );
 
+test(
+  "shutdown during workspace preparation cannot create a late native runner or inference token",
+  { timeout: 3000 },
+  async (t) => {
+    let finishPreparation!: () => void;
+    const preparation = new Promise<void>((resolve) => {
+      finishPreparation = resolve;
+    });
+    t.after(() => finishPreparation());
+    const h = await setup(t),
+      s = await h.session();
+    const prepare = h.files.prepare.bind(h.files);
+    let preparing = false;
+    h.files.prepare = async (sessionId, workspaceId) => {
+      if (sessionId === s.id) {
+        preparing = true;
+        await preparation;
+      }
+      await prepare(sessionId, workspaceId);
+    };
+    assert.equal(
+      (
+        await inject(h.app, {
+          method: "POST",
+          url: `/api/sessions/${s.id}/messages`,
+          payload: {
+            text: "Accepted request must not launch after shutdown starts.",
+          },
+        })
+      ).statusCode,
+      202,
+    );
+    await until(() => preparing);
+    assert.equal(h.fixture.options.length, 0);
+    const shutdown = h.broker.close();
+    finishPreparation();
+    await Promise.race([
+      shutdown,
+      delay(500).then(() => {
+        throw new Error("Shutdown did not settle preparation race");
+      }),
+    ]);
+    assert.equal(
+      h.fixture.options.length,
+      0,
+      "engine factory never runs after shutdown admission closes",
+    );
+    assert.equal(
+      h.issued.length,
+      0,
+      "no runner credential is minted after shutdown",
+    );
+    assert.equal(h.store.getSession(s.id).nativeSessionId, undefined);
+    assert.equal(
+      h.store.messages(s.id)[0]!.content,
+      "Accepted request must not launch after shutdown starts.",
+    );
+  },
+);
+
 test("app restart never launches interrupted work or replays effects, and blocks unsafe workspace reuse", async (t) => {
   const h = await setup(t),
     s = await h.session(),
@@ -984,6 +1044,9 @@ test("unknown native background settlement preserves history and blocks queued w
           },
         );
       },
+      async close() {
+        throw new Error("fixture process cleanup is unconfirmed");
+      },
     };
   };
   const h = await setup(t, fixture);
@@ -1017,7 +1080,7 @@ test("unknown native background settlement preserves history and blocks queued w
     "queued sibling never launches a native process",
   );
   assert.ok(h.store.isQuarantined(workspaceId));
-  assert.equal(h.store.getSession(original.id).status, "failed");
+  assert.equal(h.store.getSession(original.id).status, "interrupted");
   assert.equal(h.store.getSession(sibling.id).status, "interrupted");
   const publicState = (
     await inject(h.app, `/api/sessions/${original.id}`)
@@ -1071,6 +1134,253 @@ test("unknown native background settlement preserves history and blocks queued w
   }
 });
 
+for (const outcome of ["unknown", "failed", "cancelled", "deleted"] as const)
+  test(
+    `verified process cleanup releases the workspace without promoting ${outcome} prompt to success`,
+    { timeout: 5000 },
+    async (t) => {
+      let confirmCleanup!: () => void;
+      const cleanupProof = new Promise<void>((resolve) => {
+        confirmCleanup = resolve;
+      });
+      t.after(() => confirmCleanup());
+      const fixture = engines(true),
+        baseFactory = fixture.factory;
+      let originalId = "",
+        closeStarted = false;
+      fixture.factory = (options) => {
+        const engine = baseFactory(options);
+        return {
+          ...engine,
+          async prompt(text, attachments) {
+            await engine.prompt(text, attachments);
+            if (options.sessionId === originalId) {
+              if (outcome === "failed")
+                throw new Error("fixture ordinary prompt failure");
+              throw Object.assign(
+                new Error("fixture native settlement is unknown"),
+                { code: "engine_settlement_unknown" },
+              );
+            }
+          },
+          async close() {
+            if (options.sessionId === originalId) {
+              closeStarted = true;
+              await cleanupProof;
+            }
+            await engine.close();
+          },
+        };
+      };
+      const h = await setup(t, fixture),
+        original = await h.session();
+      originalId = original.id;
+      const workspaceId = h.store.getSession(original.id).workspaceId;
+      const sibling = await h.broker.createSession(workspaceId);
+      const started = await inject(h.app, {
+        method: "POST",
+        url: `/api/sessions/${original.id}/messages`,
+        payload: {
+          text: "Preserve the accepted original request; never replay it.",
+        },
+      });
+      assert.equal(started.statusCode, 202);
+      await until(() => fixture.calls.length === 1);
+      fixture.calls[0]!.update({
+        type: "text",
+        text: "Partial visible response before cleanup.",
+      });
+      assert.equal(
+        (
+          await inject(h.app, {
+            method: "POST",
+            url: `/api/sessions/${sibling.id}/messages`,
+            payload: { text: "Explicit queued work in the shared workspace." },
+          })
+        ).statusCode,
+        202,
+      );
+      if (outcome === "cancelled")
+        assert.equal(
+          (
+            await inject(h.app, {
+              method: "POST",
+              url: `/api/sessions/${original.id}/cancel`,
+              payload: {},
+            })
+          ).statusCode,
+          202,
+        );
+      if (outcome === "deleted")
+        assert.equal(
+          (
+            await inject(h.app, {
+              method: "DELETE",
+              url: `/api/sessions/${original.id}`,
+            })
+          ).statusCode,
+          202,
+        );
+      fixture.calls[0]!.resolve();
+      await until(() => closeStarted, "verified process cleanup attempt");
+      assert.ok(h.store.isQuarantined(workspaceId));
+      assert.equal(
+        fixture.calls.length,
+        1,
+        "queued work cannot start before process cleanup proof",
+      );
+      assert.equal(h.store.getSession(sibling.id).status, "queued");
+      assert.equal(
+        h.store.allEvents(original.id).some((event) => event.type === "done"),
+        false,
+      );
+      assert.ok(
+        h.store.listSessions().some((session) => session.id === original.id),
+        "deletion stays visible until process cleanup is proven",
+      );
+      confirmCleanup();
+      await until(
+        () => fixture.calls.length === 2,
+        "queued sibling after cleanup proof",
+      );
+      assert.equal(fixture.calls[1]!.sessionId, sibling.id);
+      assert.equal(h.store.isQuarantined(workspaceId), false);
+      fixture.calls[1]!.resolve();
+      await h.broker.idle();
+      const stored = h.store.getSession(original.id, true);
+      assert.equal(
+        stored.status,
+        outcome === "unknown"
+          ? "interrupted"
+          : outcome === "failed"
+            ? "failed"
+            : "idle",
+      );
+      assert.equal(stored.deleted, outcome === "deleted");
+      assert.equal(stored.context?.stale, true);
+      assert.equal(
+        h.store.db
+          .prepare("SELECT status FROM runs WHERE id=?")
+          .get(started.json().runId)?.status,
+        outcome === "unknown"
+          ? "interrupted"
+          : outcome === "failed"
+            ? "failed"
+            : "cancelled",
+      );
+      assert.deepEqual(
+        h.store.messages(original.id).map((message) => message.content),
+        [
+          "Preserve the accepted original request; never replay it.",
+          "Partial visible response before cleanup.",
+        ],
+      );
+      assert.equal(
+        fixture.calls.filter((call) => call.sessionId === original.id).length,
+        1,
+      );
+      assert.equal(
+        h.store
+          .allEvents(original.id)
+          .some((event) => event.type === "handoff"),
+        false,
+      );
+      assert.ok(
+        h.store
+          .allEvents(original.id)
+          .some(
+            (event) =>
+              event.type === "error" &&
+              event.data.code ===
+                (outcome === "failed"
+                  ? "engine_failed"
+                  : "engine_settlement_unknown"),
+          ),
+      );
+    },
+  );
+
+test(
+  "late native cancel rejection cannot quarantine a workspace after verified process cleanup admits its successor",
+  { timeout: 3000 },
+  async (t) => {
+    let rejectCancellation!: (error: Error) => void;
+    const nativeCancellation = new Promise<void>((_resolve, reject) => {
+      rejectCancellation = reject;
+    });
+    void nativeCancellation.catch(() => {});
+    t.after(() =>
+      rejectCancellation(new Error("fixture cancellation transport closed")),
+    );
+    const fixture = engines(true),
+      baseFactory = fixture.factory;
+    let originalId = "";
+    fixture.factory = (options) => {
+      const engine = baseFactory(options);
+      return {
+        ...engine,
+        async prompt(text, attachments) {
+          await engine.prompt(text, attachments);
+          if (options.sessionId === originalId)
+            throw Object.assign(new Error("fixture native proof missing"), {
+              code: "engine_settlement_unknown",
+            });
+        },
+        async cancel() {
+          if (options.sessionId === originalId) return nativeCancellation;
+          await engine.cancel();
+        },
+      };
+    };
+    const h = await setup(t, fixture),
+      original = await h.session();
+    originalId = original.id;
+    const workspaceId = h.store.getSession(originalId).workspaceId;
+    const successor = await h.broker.createSession(workspaceId);
+    await inject(h.app, {
+      method: "POST",
+      url: `/api/sessions/${originalId}/messages`,
+      payload: { text: "Original interrupted request" },
+    });
+    await until(() => fixture.calls.length === 1);
+    await inject(h.app, {
+      method: "POST",
+      url: `/api/sessions/${successor.id}/messages`,
+      payload: { text: "Explicit successor" },
+    });
+    assert.equal(
+      (
+        await inject(h.app, {
+          method: "POST",
+          url: `/api/sessions/${originalId}/cancel`,
+          payload: {},
+        })
+      ).statusCode,
+      202,
+    );
+    fixture.calls[0]!.resolve();
+    await until(
+      () => fixture.calls.length === 2,
+      "verified close admits successor despite unresolved native cancel transport",
+    );
+    assert.equal(h.store.isQuarantined(workspaceId), false);
+    assert.equal(h.store.getSession(successor.id).status, "running");
+    rejectCancellation(
+      new Error("late native cancellation rejection after process cleanup"),
+    );
+    await delay(10);
+    assert.equal(
+      h.store.isQuarantined(workspaceId),
+      false,
+      "a stale request cannot revoke the newer cleanup proof",
+    );
+    fixture.calls[1]!.resolve();
+    await h.broker.idle();
+    assert.equal(h.store.getSession(originalId).status, "idle");
+    assert.equal(h.store.getSession(successor.id).status, "idle");
+  },
+);
+
 test("ambiguous engine failure quarantines shared workspace, keeps partial history and sanitizes error", async (t) => {
   const fixture = engines();
   fixture.factory = (options) => ({
@@ -1082,7 +1392,9 @@ test("ambiguous engine failure quarantines shared workspace, keeps partial histo
       throw new Error("private diagnostic fixture secret that must not leak");
     },
     async cancel() {},
-    async close() {},
+    async close() {
+      throw new Error("fixture process cleanup is unconfirmed");
+    },
   });
   const h = await setup(t, fixture),
     s = await h.session();

@@ -88,7 +88,7 @@ export interface Engine {
   prompt(
     text: string,
     attachments?: { path: string; mimeType: string; name: string }[],
-  ): Promise<void>;
+  ): Promise<void | "completed" | "cancelled">;
   cancel(): Promise<void>;
   close(): Promise<void>;
 }

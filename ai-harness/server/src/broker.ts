@@ -5,6 +5,7 @@ import type {
   EngineFactory,
   EngineUpdate,
   Context,
+  Status,
 } from "./contracts.js";
 import { CONTEXT_LIMIT } from "./contracts.js";
 import { ApiError } from "./errors.js";
@@ -21,6 +22,7 @@ export interface BrokerOptions {
 interface Runner {
   engine: Engine;
   token: string;
+  closePromise?: Promise<boolean>;
 }
 interface Active {
   run: Run;
@@ -28,6 +30,7 @@ interface Active {
   settled: Promise<void>;
   cancelPromise?: Promise<void>;
   cancelFailed?: boolean;
+  cleanupPromise?: Promise<boolean>;
 }
 export class Broker {
   readonly store: Store;
@@ -152,6 +155,8 @@ export class Broker {
       return runner.engine;
     }
     await this.files.prepare(s.id, s.workspaceId);
+    if (this.closing)
+      throw new Error("Server is shutting down before engine launch");
     const token = this.options.issueToken(s.id);
     const entry = {
       token,
@@ -180,6 +185,8 @@ export class Broker {
     let assistantId: string | undefined;
     let summary = "";
     let success = false;
+    let cleanupConfirmed = false;
+    let failureStatus: Status = "failed";
     const artifactJobs: Promise<unknown>[] = [];
     try {
       const s = this.store.getSession(run.sessionId);
@@ -301,12 +308,13 @@ export class Broker {
             run.kind === "handoff"
               ? "Create a factual handoff summary for a new chat continuing this project in the same workspace. Summarize the user goal, completed work, current files and validation, unresolved issues and constraints, and precise next steps. Do not perform new work or change files; reply with the summary only."
               : run.text;
-          await engine.prompt(
+          const promptOutcome = await engine.prompt(
             handoff
               ? `Context from the prior chat (same workspace):\n${handoff.summary}\n\nCurrent user request:\n${requestText}`
               : requestText,
             attachments,
           );
+          if (promptOutcome === "cancelled") active.cancelled = true;
           if (handoff && !active.cancelled)
             this.store.db
               .prepare("UPDATE handoffs SET delivered=1 WHERE session_id=?")
@@ -356,13 +364,14 @@ export class Broker {
       success = true;
     } catch (error) {
       this.store.quarantine(run.workspaceId, "engine_settlement_unconfirmed");
-      this.store.updateRun(run.id, "failed");
       this.store.markContextStale(run.sessionId, run.id);
       const backgroundUnknown =
         !!error &&
         typeof error === "object" &&
         "code" in error &&
         error.code === "engine_settlement_unknown";
+      failureStatus = backgroundUnknown ? "interrupted" : "failed";
+      this.store.updateRun(run.id, failureStatus);
       this.store.emit(
         run.sessionId,
         "error",
@@ -371,12 +380,43 @@ export class Broker {
             ? "engine_settlement_unknown"
             : "engine_failed",
           message: backgroundUnknown
-            ? "Native background owner continuation could not be confirmed idle; workspace paused for operator settlement review."
-            : "Engine failed; workspace paused until operator confirms all processes settled. The prompt was not replayed.",
+            ? "Native completion could not be confirmed; process cleanup is being verified. The run was not accepted as completed."
+            : "Engine request failed; partial history is retained and cleanup is being verified. The prompt was not replayed.",
         },
         run.id,
       );
-      await this.closeRunner(run.sessionId).catch(() => {});
+      try {
+        cleanupConfirmed = await this.closeRunner(run.sessionId);
+      } catch {
+        cleanupConfirmed = false;
+      }
+      if (cleanupConfirmed) {
+        this.store.releaseQuarantineAfterVerifiedCleanup(run.workspaceId);
+        if (active.cancelled) {
+          this.store.updateRun(run.id, "cancelled");
+          failureStatus = "idle";
+        }
+        this.store.emit(
+          run.sessionId,
+          "progress",
+          {
+            kind: "cleanup",
+            label:
+              "Owned engine container cleanup confirmed; interrupted work was not replayed",
+          },
+          run.id,
+        );
+      } else
+        this.store.emit(
+          run.sessionId,
+          "error",
+          {
+            code: "engine_cleanup_unknown",
+            message:
+              "Workspace remains quarantined until process cleanup is confirmed",
+          },
+          run.id,
+        );
     } finally {
       if (assistantId && !success)
         this.store.emit(
@@ -389,7 +429,7 @@ export class Broker {
       const pending = (this.queues.get(run.workspaceId) ?? []).some(
         (r) => r.sessionId === s.id,
       );
-      if (s.deleteRequested && success) {
+      if (s.deleteRequested && (success || cleanupConfirmed)) {
         try {
           await this.closeRunner(s.id);
           this.store.finishDelete(s.id);
@@ -400,7 +440,7 @@ export class Broker {
       } else
         this.store.setStatus(
           s.id,
-          success ? (pending ? "queued" : "idle") : "failed",
+          success ? (pending ? "queued" : "idle") : failureStatus,
           run.id,
         );
       this.store.emit(s.id, "done", { runId: run.id }, run.id);
@@ -433,15 +473,21 @@ export class Broker {
       );
     }
   }
-  private async closeRunner(id: string) {
+  private async closeRunner(id: string): Promise<boolean> {
+    const active = [...this.active.values()].find(
+      (a) => a.run.sessionId === id,
+    );
     const runner = this.runners.get(id);
-    if (!runner) return;
-    try {
-      await runner.engine.close();
-    } finally {
-      this.options.revokeToken(runner.token);
-      this.runners.delete(id);
-    }
+    if (!runner) return active?.cleanupPromise ?? false;
+    runner.closePromise ??= runner.engine
+      .close()
+      .then(() => true)
+      .finally(() => {
+        this.options.revokeToken(runner.token);
+        if (this.runners.get(id) === runner) this.runners.delete(id);
+      });
+    if (active) active.cleanupPromise = runner.closePromise;
+    return runner.closePromise;
   }
   async cancel(id: string) {
     const s = this.store.getSession(id);
@@ -465,7 +511,6 @@ export class Broker {
       if (runner && !active.cancelPromise)
         active.cancelPromise = runner.engine.cancel().catch(() => {
           active.cancelFailed = true;
-          this.store.quarantine(s.workspaceId, "cancel_unconfirmed");
         });
     } else if (!s.deleteRequested && !this.store.isQuarantined(s.workspaceId))
       this.store.setStatus(id, "idle");

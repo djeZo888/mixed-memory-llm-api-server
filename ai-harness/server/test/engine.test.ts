@@ -17,10 +17,11 @@ import { setTimeout as delay } from "node:timers/promises";
 import {
   createEngine,
   EngineSettlementError,
+  EngineCleanupError,
   NATIVE_PERMISSION_POLICY,
   scopedPath,
   workspacePermission,
-  workspaceShellPermission,
+  nativeShellInput,
 } from "../src/engine.js";
 import type { EngineOptions, EngineUpdate } from "../src/contracts.js";
 
@@ -36,6 +37,7 @@ async function harness(
   const profileDir = join(root, "profile");
   const workspace = join(root, "workspace");
   await mkdir(profileDir);
+  await mkdir(join(profileDir, "state"));
   await mkdir(workspace);
   await writeFile(join(profileDir, "fixture.json"), JSON.stringify(config));
   const updates: EngineUpdate[] = [];
@@ -116,6 +118,11 @@ test("official SDK subprocess initialize/new/prompt updates and private launcher
   assert.equal(launch.inheritedSecret, false);
   assert.equal(launch.gatewayPresent, true);
   assert.equal(launch.nodeOptionsInherited, false);
+  assert.equal(launch.home, join(h.profileDir, "state", "home"));
+  assert.equal(launch.dataDir, join(h.profileDir, "state"));
+  const sent = calls.find((c) => c.method === "prompt")!.params.prompt;
+  assert.match(sent[0].text, /public research/);
+  assert.equal(sent.at(-1).text, "updates");
   const init = calls.find((call) => call.method === "initialize")!;
   assert.equal(init.params.clientCapabilities.terminal, false);
   assert.deepEqual(init.params.clientCapabilities.fs, {
@@ -152,13 +159,10 @@ test("restoration and required delegation capabilities fail closed", async (t) =
     0,
   );
   const unsupported = await harness(t, { noDelegation: true });
-  await assert.rejects(
-    unsupported.engine.start(),
-    /delegation settlement capabilities/,
-  );
+  await assert.rejects(unsupported.engine.start(), /settlement capabilities/);
 });
 
-test("workspace scoped permission requests allow safe local work and deny publication/traversal/symlinks", async (t) => {
+test("workspace scoped permission requests allow native shell and deny unmanaged send/traversal/symlinks", async (t) => {
   const h = await harness(t);
   await symlink(h.root, join(h.workspace, "link"));
   await h.engine.prompt("permissions");
@@ -167,11 +171,11 @@ test("workspace scoped permission requests allow safe local work and deny public
   );
   assert.deepEqual(
     results.map((call) => call.result.outcome.optionId),
-    ["yes", "no", "yes", "no", "no", "no"],
+    ["yes", "no", "yes", "yes", "no", "no"],
   );
 });
 
-test("cancellation sends real SDK cancel and stops delegation before returning", async (t) => {
+test("cancellation sends real SDK cancel and requires fresh native settlement", async (t) => {
   const h = await harness(t);
   await h.engine.start();
   const prompt = h.engine.prompt("wait");
@@ -186,7 +190,7 @@ test("cancellation sends real SDK cancel and stops delegation before returning",
   const calls = await h.calls();
   assert.ok(calls.some((call) => call.method === "cancel"));
   assert.ok(
-    calls.some((call) => call.method === "mcode/session/delegation/stop"),
+    calls.some((call) => call.method === "mcode/session/settlement/get"),
   );
 });
 
@@ -252,7 +256,7 @@ test("attachments use bounded registered workspace paths; outside and symlink pa
   ]);
   const calls = await h.calls();
   const prompt = calls.find((call) => call.method === "prompt")!;
-  assert.match(prompt.params.prompt[0].text, /Attached workspace files/);
+  assert.match(prompt.params.prompt.at(-1).text, /Attached workspace files/);
   await assert.rejects(
     h.engine.prompt("bad", [
       {
@@ -303,14 +307,14 @@ test("transport loss revokes runner authorization and close refuses unconfirmed 
   await assert.rejects(h.engine.prompt("crash"));
   for (let i = 0; i < 50 && h.exits() === 0; i++) await delay(10);
   assert.equal(h.exits(), 1);
-  await assert.rejects(h.engine.close(), /workspace settlement is unknown/);
-  await assert.rejects(h.engine.close(), /workspace settlement is unknown/);
+  await assert.rejects(h.engine.close(), EngineCleanupError);
+  await assert.rejects(h.engine.close(), EngineCleanupError);
 });
 
-test("malformed post-cancel child snapshot makes close fail rather than claim settlement", async (t) => {
+test("unknown native settlement preserves failure while verified launcher cleanup succeeds", async (t) => {
   const h = await harness(t, { badSnapshot: true });
   await assert.rejects(h.engine.prompt("children"), /settlement is unknown/);
-  await assert.rejects(h.engine.close(), /workspace settlement is unknown/);
+  await h.engine.close();
 });
 
 test("cancellation during initialization does not issue a prompt; later explicit turn remains usable", async (t) => {
@@ -355,11 +359,11 @@ test("runner token split across assistant chunks cannot enter durable message pr
 test("native global rules seed exact fail-closed policy before the engine launch", async (t) => {
   const h = await harness(t);
   await writeFile(
-    join(h.profileDir, "permission.json"),
+    join(h.profileDir, "state", "permission.json"),
     JSON.stringify({ allow: ["bash"] }),
   );
   await h.engine.start();
-  const policyPath = join(h.profileDir, "permission.json");
+  const policyPath = join(h.profileDir, "state", "permission.json");
   assert.deepEqual(
     JSON.parse(await readFile(policyPath, "utf8")),
     NATIVE_PERMISSION_POLICY,
@@ -374,7 +378,7 @@ test("symlinked native policy fails before launch and cannot overwrite the targe
   const h = await harness(t);
   const target = join(h.root, "outside-policy.json");
   await writeFile(target, "keep");
-  await symlink(target, join(h.profileDir, "permission.json"));
+  await symlink(target, join(h.profileDir, "state", "permission.json"));
   await assert.rejects(
     h.engine.start(),
     /Unsafe native permission policy path/,
@@ -385,74 +389,65 @@ test("symlinked native policy fails before launch and cannot overwrite the targe
   });
 });
 
-test("real native background marker keeps workspace quarantined after children finish", async (t) => {
+test("authoritative background completion projects only root continuations and then permits release", async (t) => {
   const h = await harness(t);
-  await h.engine.start();
-  await assert.rejects(
-    h.engine.prompt("background"),
-    (error: unknown) =>
-      error instanceof EngineSettlementError &&
-      error.code === "engine_settlement_unknown",
+  assert.equal(await h.engine.prompt("background"), "completed");
+  const text = h.updates
+    .filter((v) => v.type === "text")
+    .map((v) => (v.type === "text" ? v.text : ""))
+    .join("");
+  assert.equal(
+    text,
+    "fixture response root continuation one root continuation two",
   );
-  await assert.rejects(
-    h.engine.close(),
-    /background delivery settlement is unknown/,
-  );
-  assert.equal(h.exits(), 1);
+  const calls = await h.calls();
+  const fresh = calls
+    .filter((c) => c.method === "mcode/session/settlement/get")
+    .at(-1)!;
+  assert.equal(fresh.params.runId, "run-1");
+  assert.match(fresh.params.instanceId, /^[0-9a-f-]{36}$/);
+  await h.engine.close();
 });
 
-test("approved container-local code and build commands pass; publishing, escapes and unknown shell fail closed", async (t) => {
+test("native bash schema admits authorized arbitrary code operations, with workspace cwd fixed natively", async (t) => {
   const h = await harness(t);
-  await mkdir(join(h.workspace, "src"));
-  await writeFile(join(h.workspace, "src", "test ž.py"), "print(1)");
-  const allowed = [
+  for (const command of [
     "npm test",
-    "npm ci",
-    "npm install typescript",
-    "npm run build",
-    "python3 -m pip install pytest",
-    "python3 -c 'print(1 + 2)'",
-    "node -e 'console.log(1 + 2)'",
-    "python3 -m pytest",
-    'cd src && python3 "test ž.py"',
-    "g++ main.cpp -o ./app && ./app",
-    "cmake -S . -B build; cmake --build build",
-  ];
-  for (const command of allowed)
-    assert.equal(
-      await workspaceShellPermission(h.workspace, command),
-      true,
-      command,
-    );
-  const denied = [
+    "bash build.sh | tee output.log",
+    'printf "%s" "$(node script.js)"',
+    "npm exec tsc",
+    "python /opt/ai-harness/tools/render_pdf.py input.pdf",
     "npm publish",
-    "npm run deploy",
-    "git push origin main",
-    "gh pr create",
-    "ssh example.com",
-    "curl -X POST https://example.com",
-    "python3 ../../escape.py",
-    "cd /etc && node app.js",
-    "npm test | sh",
-    "npm test > /tmp/out",
-    'node -e "console.log(process.env.SECRET)"',
-    `python3 -c 'import requests; requests.post("https://example.com")'`,
-    "npm --prefix /tmp test",
-    "unknown-command",
-    "npm test && git push",
-    "npm test $(whoami)",
-  ];
-  for (const command of denied)
+  ]) {
+    assert.equal(nativeShellInput({ command }), true);
     assert.equal(
-      await workspaceShellPermission(h.workspace, command).catch(() => false),
-      false,
-      command,
+      await workspacePermission(h.workspace, {
+        sessionId: "native",
+        toolCall: { toolCallId: "shell", name: "bash", rawInput: { command } },
+        options: [],
+      }),
+      true,
     );
-  await symlink(h.root, join(h.workspace, "escape.py"));
+  }
+  for (const input of [
+    { command: 42 },
+    { command: "pwd", cwd: "/etc" },
+    { command: "pwd", workingDirectory: h.workspace },
+    { command: "pwd", timeout: "5" },
+    { command: "pwd", run_in_background: "true" },
+    { command: "pwd", timeout: 2147484 },
+  ])
+    assert.equal(nativeShellInput(input), false);
   assert.equal(
-    await workspaceShellPermission(h.workspace, "python3 escape.py").catch(
-      () => false,
-    ),
+    await workspacePermission(h.workspace, {
+      sessionId: "native",
+      toolCall: {
+        toolCallId: "shell",
+        name: "unknown_shell",
+        rawInput: { command: "pwd" },
+      },
+      options: [],
+    }),
     false,
   );
 });
@@ -504,16 +499,10 @@ test("official SDK compaction notifications preserve fast ordered transitions, d
   );
 });
 
-test("native foreground bash auto-promotion also prevents unproven workspace settlement", async (t) => {
+test("native bash auto-promotion with exhaustive receipt completes normally", async (t) => {
   const h = await harness(t);
-  await assert.rejects(
-    h.engine.prompt("bash-background"),
-    EngineSettlementError,
-  );
-  await assert.rejects(
-    h.engine.close(),
-    /background delivery settlement is unknown/,
-  );
+  assert.equal(await h.engine.prompt("bash-background"), "completed");
+  await h.engine.close();
 });
 
 test("reviewed container assets allow reads without host existence, never mutations or sibling escapes", async (t) => {
@@ -614,4 +603,136 @@ test("closing during asynchronous startup prevents any later launcher spawn", as
     code: "ENOENT",
   });
   await assert.rejects(h.engine.start(), /closed/);
+});
+
+for (const mode of [
+  "missing",
+  "unknown",
+  "running",
+  "stale",
+  "foreign",
+  "duplicate",
+  "nonexhaustive",
+  "reasons",
+  "malformed",
+]) {
+  test(`original prompt receipt ${mode} cannot establish success`, async (t) => {
+    const h = await harness(t, { promptReceipt: mode });
+    await assert.rejects(h.engine.prompt("updates"), EngineSettlementError);
+    await h.engine.close();
+  });
+}
+for (const mode of [
+  "missing",
+  "unknown",
+  "running",
+  "stale",
+  "foreign",
+  "run",
+  "duplicate",
+  "nonexhaustive",
+  "reasons",
+  "malformed",
+]) {
+  test(`fresh settlement receipt ${mode} cannot establish success`, async (t) => {
+    const h = await harness(t, { freshReceipt: mode });
+    await assert.rejects(h.engine.prompt("updates"), EngineSettlementError);
+    assert.equal(
+      (await h.calls()).filter((c) => c.method === "prompt").length,
+      1,
+    );
+    await h.engine.close();
+  });
+}
+test("missing completion capability and unknown restore fail before native prompt", async (t) => {
+  const unsupported = await harness(t, { noSettlement: true });
+  await assert.rejects(unsupported.engine.start(), /settlement/);
+  for (const restore of ["load", "resume"]) {
+    const h = await harness(t, { restore, restoreUnknown: true }, "restored");
+    await assert.rejects(h.engine.prompt("never"), EngineSettlementError);
+    assert.equal(
+      (await h.calls()).filter((c) => c.method === "prompt").length,
+      0,
+    );
+  }
+});
+test("native cancellation is returned distinctly without caller cancellation", async (t) => {
+  const h = await harness(t, { nativeCancelled: true });
+  assert.equal(await h.engine.prompt("updates"), "cancelled");
+});
+test("late root notifications and child text never append after completion", async (t) => {
+  const h = await harness(t, { lateText: true });
+  await h.engine.prompt("background");
+  await delay(60);
+  const text = h.updates
+    .filter((v) => v.type === "text")
+    .map((v) => (v.type === "text" ? v.text : ""))
+    .join("");
+  assert.equal(
+    text,
+    "fixture response root continuation one root continuation two",
+  );
+});
+for (const exitCode of [125, 143])
+  test(`launcher exit ${exitCode} is not verified cleanup`, async (t) => {
+    const h = await harness(t, {
+      exitCode,
+      shutdownTimeouts: { acpMs: 25, launcherMs: 100, killMs: 100 },
+    });
+    await h.engine.start();
+    await assert.rejects(h.engine.close(), EngineCleanupError);
+  });
+test("cancel notification acknowledgement cannot substitute for fresh cancellation receipt", async (t) => {
+  const h = await harness(t, { freshReceipt: "unknown" });
+  await h.engine.start();
+  const pending = h.engine.prompt("wait");
+  const failed = assert.rejects(pending, EngineSettlementError);
+  for (
+    let i = 0;
+    i < 50 && !(await h.calls()).some((c) => c.method === "prompt");
+    i++
+  )
+    await delay(10);
+  await assert.rejects(h.engine.cancel(), EngineSettlementError);
+  await failed;
+  await h.engine.close();
+});
+test("failed completion cannot be followed by native replay or another prompt", async (t) => {
+  const h = await harness(t, { freshReceipt: "unknown" });
+  await assert.rejects(h.engine.prompt("first"), EngineSettlementError);
+  await assert.rejects(h.engine.prompt("second"), EngineSettlementError);
+  assert.equal(
+    (await h.calls()).filter((c) => c.method === "prompt").length,
+    1,
+  );
+});
+
+test("official SDK shell permissions admit scripts, pipelines, substitutions and reviewed helper paths", async (t) => {
+  const h = await harness(t);
+  await h.engine.prompt("shell-policy");
+  const permissions = (await h.calls()).filter(
+    (c) => c.method === "shell_permission",
+  );
+  assert.deepEqual(
+    permissions.map((c) => c.result.outcome.optionId),
+    ["yes", "yes", "yes", "yes", "yes", "no", "no", "no", "no"],
+  );
+});
+test("private state symlink fails before launcher spawn", async (t) => {
+  const h = await harness(t);
+  await rm(join(h.profileDir, "state"), { recursive: true });
+  await symlink(h.workspace, join(h.profileDir, "state"));
+  await assert.rejects(h.engine.start(), /owned real directory/);
+  await assert.rejects(readFile(join(h.profileDir, "calls.json")), {
+    code: "ENOENT",
+  });
+});
+
+test("new native session cannot admit an identity-less running receipt", async (t) => {
+  const h = await harness(t, { initialRunning: true });
+  await assert.rejects(h.engine.prompt("never"), EngineSettlementError);
+  assert.equal(
+    (await h.calls()).filter((c) => c.method === "prompt").length,
+    0,
+  );
 });

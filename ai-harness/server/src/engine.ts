@@ -14,6 +14,12 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { Readable, Writable } from "node:stream";
 import { setTimeout as delay } from "node:timers/promises";
 import * as acp from "@agentclientprotocol/sdk";
+import {
+  TRUSTED_BROWSER_INSTRUCTION,
+  reviewedToolPermission,
+  REVIEWED_POLICY_ASK,
+  REVIEWED_POLICY_DENY,
+} from "./policy.js";
 import type {
   Engine,
   EngineFactory,
@@ -27,11 +33,91 @@ const DELEGATION_UPDATE = "mcode/session/delegation_update";
 export class EngineSettlementError extends Error {
   readonly code = "engine_settlement_unknown";
   constructor() {
-    super(
-      "Native background delivery settlement is unknown; workspace requires review",
-    );
+    super("Native completion settlement is unknown; workspace requires review");
     this.name = "EngineSettlementError";
   }
+}
+
+const SETTLEMENT_GET = "mcode/session/settlement/get";
+const SETTLEMENT_META = "minimax-code/settlement";
+interface SettlementReceipt {
+  schemaVersion: 1;
+  instanceId: string;
+  rootSessionId: string;
+  runId: string | null;
+  exhaustive: boolean;
+  state: "running" | "settled" | "cancelled" | "unknown";
+  rootTurnIds: string[];
+  reasons: string[];
+}
+export class EngineCleanupError extends Error {
+  readonly code = "engine_cleanup_unknown";
+  constructor() {
+    super(
+      "Engine launcher cleanup is unconfirmed; workspace settlement is unknown",
+    );
+    this.name = "EngineCleanupError";
+  }
+}
+function nativeId(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.length > 0 &&
+    value.length <= 512 &&
+    !/[\x00-\x20\x7f]/.test(value)
+  );
+}
+function parseSettlement(value: unknown): SettlementReceipt {
+  if (
+    !record(value) ||
+    Object.keys(value).some(
+      (key) =>
+        ![
+          "schemaVersion",
+          "instanceId",
+          "rootSessionId",
+          "runId",
+          "exhaustive",
+          "state",
+          "rootTurnIds",
+          "reasons",
+        ].includes(key),
+    ) ||
+    value.schemaVersion !== 1 ||
+    typeof value.instanceId !== "string" ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      value.instanceId,
+    ) ||
+    !nativeId(value.rootSessionId) ||
+    !(value.runId === null || nativeId(value.runId)) ||
+    typeof value.exhaustive !== "boolean" ||
+    !["running", "settled", "cancelled", "unknown"].includes(
+      String(value.state),
+    ) ||
+    !Array.isArray(value.rootTurnIds) ||
+    value.rootTurnIds.length > 10000 ||
+    !value.rootTurnIds.every(nativeId) ||
+    new Set(value.rootTurnIds).size !== value.rootTurnIds.length ||
+    !Array.isArray(value.reasons) ||
+    value.reasons.length > 1000 ||
+    !value.reasons.every(
+      (reason) =>
+        typeof reason === "string" && reason.length > 0 && reason.length <= 512,
+    ) ||
+    (value.runId === null
+      ? value.rootTurnIds.length !== 0
+      : value.rootTurnIds[0] !== value.runId)
+  )
+    throw new EngineSettlementError();
+  return value as unknown as SettlementReceipt;
+}
+function idleReceipt(receipt: SettlementReceipt): boolean {
+  return (
+    receipt.runId !== null &&
+    receipt.exhaustive &&
+    receipt.reasons.length === 0 &&
+    ["settled", "cancelled"].includes(receipt.state)
+  );
 }
 
 const TERMINAL_CHILD = new Set(["completed", "failed", "stopped"]);
@@ -97,249 +183,25 @@ export async function scopedPath(
   return target;
 }
 
-/** Recognized code actions run inside PREP's container. Parsing limits command
- * admission; it cannot prove the behavior of arbitrary Python/Node/package code.
- * PREP must constrain filesystem, egress, credentials and unreviewed tools.
+/** Pinned ae65651 builtin-defs.ts LocalBashToolDef has no selectable cwd.
+ * local-pi-tools.ts binds it to workspaceRoot. This is schema admission, not a
+ * script sandbox: shell programs run within PREP's reviewed container boundary.
  */
-export function tokenizeWorkspaceShell(source: string): string[][] | null {
-  if (!source.trim() || source.length > 32768 || source.includes("\0"))
-    return null;
-  const commands: string[][] = [];
-  let words: string[] = [];
-  let word = "";
-  let started = false;
-  let quote = "";
-  const finishWord = () => {
-    if (started) words.push(word);
-    word = "";
-    started = false;
-  };
-  const finishCommand = () => {
-    finishWord();
-    if (!words.length) return false;
-    commands.push(words);
-    words = [];
-    return true;
-  };
-  for (let i = 0; i < source.length; i++) {
-    const ch = source[i]!;
-    if (quote) {
-      if (ch === quote) {
-        quote = "";
-        continue;
-      }
-      if (quote === '"' && (ch === "$" || ch === "`")) return null;
-      if (ch === "\\" && quote === '"') {
-        const next = source[++i];
-        if (next === undefined || next === "\n") return null;
-        word += next;
-      } else word += ch;
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      quote = ch;
-      started = true;
-      continue;
-    }
-    if (ch === "\\") {
-      const next = source[++i];
-      if (next === undefined || next === "\n") return null;
-      word += next;
-      started = true;
-      continue;
-    }
-    if (ch === ";" || ch === "\n" || (ch === "&" && source[i + 1] === "&")) {
-      if (!finishCommand()) return null;
-      if (ch === "&") i++;
-      continue;
-    }
-    if ("|&<>$`(){}#".includes(ch)) return null;
-    if (/\s/.test(ch)) {
-      finishWord();
-      continue;
-    }
-    word += ch;
-    started = true;
-  }
-  if (quote) return null;
-  finishWord();
-  if (words.length) commands.push(words);
-  return commands.length ? commands : null;
-}
-
-export async function workspaceShellPermission(
-  workspace: string,
-  source: string,
-): Promise<boolean> {
-  const commands = tokenizeWorkspaceShell(source);
-  if (!commands) return false;
-  let cwd = resolve(workspace);
-  const builtOutputs = new Set<string>();
-  for (const words of commands) {
-    const executable = words[0]!;
-    const args = words.slice(1);
-    // Do not accept executable paths outside the reviewed PATH or workspace.
-    const command = executable.startsWith("./") ? "./program" : executable;
-    if (
-      /\b(?:publish|unpublish|push|deploy|send|upload|login|logout|token|auth)\b/i.test(
-        args[0] ?? "",
-      )
-    )
-      return false;
-    if (command === "cd") {
-      if (args.length !== 1 || args[0]!.startsWith("-")) return false;
-      cwd = await scopedPath(workspace, resolve(cwd, args[0]!));
-      if (!(await stat(cwd)).isDirectory()) return false;
-      continue;
-    }
-    if (command === "pwd") {
-      if (args.length) return false;
-      continue;
-    }
-    let inlineIndex = -1;
-    if (/^python(?:3(?:\.\d+)?)?$/.test(command)) {
-      if (!args.length) return false;
-      if (args[0] === "-c") {
-        if (args.length < 2) return false;
-        inlineIndex = 1;
-      } else if (args[0] === "-m") {
-        if (
-          ![
-            "pytest",
-            "unittest",
-            "compileall",
-            "py_compile",
-            "pip",
-            "build",
-          ].includes(args[1] ?? "")
-        )
-          return false;
-        if (
-          args[1] === "pip" &&
-          !["install", "check", "list", "show"].includes(args[2] ?? "")
-        )
-          return false;
-      } else if (args[0]!.startsWith("-")) return false;
-    } else if (
-      [
-        "node",
-        "tsx",
-        "tsc",
-        "pytest",
-        "c++",
-        "g++",
-        "gcc",
-        "clang",
-        "clang++",
-        "cc",
-        "make",
-        "cmake",
-        "ctest",
-        "ninja",
-      ].includes(command)
-    ) {
-      if (["node", "tsx"].includes(command)) {
-        if (!args.length) return false;
-        if (args[0] === "-e" || args[0] === "--eval") {
-          if (args.length < 2) return false;
-          inlineIndex = 1;
-        } else if (args[0]!.startsWith("-") && args[0] !== "--test")
-          return false;
-      }
-      if (
-        command === "cmake" &&
-        args.some((arg) =>
-          ["-P", "--install", "--workflow", "--open"].includes(arg),
-        )
-      )
-        return false;
-      if (
-        ["make", "ninja"].includes(command) &&
-        args.some((arg) =>
-          /^(?:install|uninstall|publish|deploy|push|upload|send)$/.test(arg),
-        )
-      )
-        return false;
-    } else if (["npm", "pnpm", "yarn"].includes(command)) {
-      if (
-        !["test", "build", "install", "ci", "run", "exec"].includes(
-          args[0] ?? "",
-        ) ||
-        args[0] === "exec"
-      )
-        return false;
-      if (
-        args[0] === "run" &&
-        !/^(?:test|build|check|lint|format|typecheck)(?::[a-zA-Z0-9:_-]+)?$/.test(
-          args[1] ?? "",
-        )
-      )
-        return false;
-    } else if (["pip", "pip3"].includes(command)) {
-      if (!["install", "check", "list", "show"].includes(args[0] ?? ""))
-        return false;
-    } else if (command === "./program") {
-      const program = await scopedPath(
-        workspace,
-        resolve(cwd, executable),
-        true,
-      );
-      try {
-        if (!(await stat(program)).isFile()) return false;
-      } catch {
-        if (!builtOutputs.has(program)) return false;
-      }
-    } else return false;
-    if (["c++", "g++", "gcc", "clang", "clang++", "cc"].includes(command)) {
-      const output = args.indexOf("-o");
-      if (output >= 0 && args[output + 1])
-        builtOutputs.add(
-          await scopedPath(workspace, resolve(cwd, args[output + 1]!), true),
-        );
-    }
-    if (inlineIndex >= 0) {
-      // Reject obvious external-write/escape primitives. This is deliberately not
-      // claimed to sandbox language execution; the container is that boundary.
-      const code = args[inlineIndex]!;
-      if (
-        /(?:https?:|ssh:|curl\b|wget\b|\b(?:fetch|socket|requests|urllib|subprocess|child_process|env|environ|eval|exec|publish|upload|send|connect)\b|(?:^|["'])\.\.[/\\]|["']\/(?:etc|proc|sys|dev|home|root|tmp)\b)/i.test(
-          code,
-        )
-      )
-        return false;
-    }
-    for (let index = 0; index < args.length; index++) {
-      if (index === inlineIndex) continue;
-      const arg = args[index]!;
-      if (
-        arg.includes("\0") ||
-        /^~/.test(arg) ||
-        /(?:^|[/\\])\.\.(?:[/\\]|$)/.test(arg)
-      )
-        return false;
-      if (
-        /^(?:--prefix|--cache|--global|-g|--user|--target|--root|--userconfig|--globalconfig|--registry|--index-url|--extra-index-url|--trusted-host|--exec|--require|--import|--loader)(?:=|$)/.test(
-          arg,
-        )
-      )
-        return false;
-      if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(arg)) return false;
-      if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(arg) || arg.startsWith("git@"))
-        return false;
-      let pathArg = arg;
-      const equal = arg.indexOf("=");
-      if (equal >= 0) pathArg = arg.slice(equal + 1);
-      if (/^-[ILo]/.test(pathArg) && pathArg.length > 2)
-        pathArg = pathArg.slice(2);
-      if (
-        isAbsolute(pathArg) ||
-        (!pathArg.startsWith("-") && !/^[0-9]+$/.test(pathArg))
-      ) {
-        await scopedPath(workspace, resolve(cwd, pathArg), true);
-      }
-    }
-  }
-  return true;
+export function nativeShellInput(input: unknown): boolean {
+  return (
+    record(input) &&
+    Object.keys(input).every((key) =>
+      ["command", "timeout", "run_in_background"].includes(key),
+    ) &&
+    typeof input.command === "string" &&
+    !input.command.includes("\0") &&
+    (input.timeout === undefined ||
+      (typeof input.timeout === "number" &&
+        Number.isFinite(input.timeout) &&
+        input.timeout <= 2_147_483)) &&
+    (input.run_in_background === undefined ||
+      typeof input.run_in_background === "boolean")
+  );
 }
 
 /** Reviewed image assets are container-only paths. PREP mounts these roots
@@ -359,13 +221,13 @@ export function isReviewedAssetPath(candidate: string): boolean {
   return READ_ONLY_ASSET_ROOTS.some((root) => within(root, path));
 }
 
-/** A narrow autonomous policy, not an attempt to classify arbitrary shell source.
- * Unknown tools/commands, background shell, external writes and publication fail closed.
- */
+/** Scoped native tool admission; arbitrary shell source is contained by PREP, not classified here. */
 export async function workspacePermission(
   workspace: string,
   request: acp.RequestPermissionRequest,
 ): Promise<boolean> {
+  const reviewed = await reviewedToolPermission(workspace, request, scopedPath);
+  if (reviewed !== undefined) return reviewed;
   const tool = request.toolCall;
   // name is supplied by pinned MiniMax; title is descriptive prose and is not authority.
   const name = tool.name;
@@ -386,12 +248,8 @@ export async function workspacePermission(
       await scopedPath(workspace, expected, name === "write");
       return true;
     }
-    if (name === "bash") {
-      if (input.run_in_background === true || typeof input.command !== "string")
-        return false;
-      // Admit recognized workspace code/build actions; PREP enforces process/network isolation.
-      return await workspaceShellPermission(workspace, input.command);
-    }
+    if (name === "bash") return nativeShellInput(input);
+
     return false;
   } catch {
     return false;
@@ -406,28 +264,16 @@ export async function workspacePermission(
  */
 export const NATIVE_PERMISSION_POLICY = {
   allow: [],
-  ask: ["read", "write", "edit", "grep", "glob", "bash"],
-  deny: [
-    "website_deploy",
-    "mavis",
-    "request_feature_enable",
-    "code_review",
-    "memory",
-    "browser",
-    "browser_inspect",
-    "browser_navigate",
-    "browser_click",
-    "browser_type",
-    "browser_press_key",
-    "browser_scroll",
-    "browser_hover",
-    "browser_wait_for",
-    "browser_get_dom",
-    "browser_screenshot",
-    "browser_paste",
-    "browser_verify_text",
-    "browser_inspect_editable_targets",
+  ask: [
+    "read",
+    "write",
+    "edit",
+    "grep",
+    "glob",
+    "bash",
+    ...REVIEWED_POLICY_ASK,
   ],
+  deny: [...REVIEWED_POLICY_DENY],
 } as const;
 
 export async function seedNativePermissionPolicy(
@@ -537,6 +383,12 @@ class AcpEngine implements Engine {
   private settled = true;
   private textTail = "";
   private backgroundObserved = false;
+  private receipt?: SettlementReceipt;
+  private rootIdentity?: string;
+  private instanceIdentity?: string;
+  private newSession = false;
+  private requestedTermination = false;
+  private seenRuns = new Set<string>();
 
   constructor(private readonly options: EngineOptions) {
     this.nativeId = options.nativeSessionId;
@@ -568,7 +420,21 @@ class AcpEngine implements Engine {
       throw new Error("Invalid engine gateway URL");
     }
     await mkdir(o.profileDir, { recursive: true, mode: 0o700 });
-    await seedNativePermissionPolicy(o.profileDir);
+    const profileInfo = await lstat(o.profileDir);
+    if (!profileInfo.isDirectory() || profileInfo.isSymbolicLink())
+      throw new Error("Unsafe engine profile directory");
+    const nativeState = join(o.profileDir, "state");
+    await mkdir(nativeState, { recursive: true, mode: 0o700 });
+    await seedNativePermissionPolicy(nativeState);
+    const nativeHome = join(nativeState, "home");
+    await mkdir(nativeHome, { recursive: true, mode: 0o700 });
+    const homeInfo = await lstat(nativeHome);
+    if (
+      !homeInfo.isDirectory() ||
+      homeInfo.isSymbolicLink() ||
+      (process.getuid && homeInfo.uid !== process.getuid())
+    )
+      throw new Error("Unsafe engine home directory");
     await mkdir(dirname(o.stderrPath), { recursive: true, mode: 0o700 });
     await realpath(o.workspace);
     const logHandle = await open(
@@ -588,7 +454,8 @@ class AcpEngine implements Engine {
     const env: NodeJS.ProcessEnv = {
       PATH: `${dirname(process.execPath)}:/usr/local/bin:/usr/bin:/bin`,
       LANG: "C.UTF-8",
-      HOME: process.env.HOME ?? o.profileDir,
+      HOME: nativeHome,
+      MINIMAX_DATA_DIR: nativeState,
       AI_HARNESS_GATEWAY_URL: o.gatewayUrl,
       AI_HARNESS_GATEWAY_TOKEN: o.gatewayToken,
       AI_HARNESS_SESSION_ID: o.sessionId,
@@ -689,7 +556,8 @@ class AcpEngine implements Engine {
           : [];
       if (
         !methods.includes(DELEGATION_GET) ||
-        !methods.includes(DELEGATION_STOP)
+        !methods.includes(DELEGATION_STOP) ||
+        !methods.includes(SETTLEMENT_GET)
       ) {
         throw new Error(
           "Engine lacks required background delegation settlement capabilities",
@@ -729,6 +597,7 @@ class AcpEngine implements Engine {
         )
           throw new Error("Invalid native session ID");
         this.nativeId = session.sessionId;
+        this.newSession = true;
         o.onNativeSessionId(session.sessionId);
       }
       // This setting is process-wide in pinned MiniMax; each chat has its own process.
@@ -752,6 +621,23 @@ class AcpEngine implements Engine {
       ) {
         throw new Error("Engine did not confirm default permission mode");
       }
+      const initial = await this.readSettlement(connection);
+      this.instanceIdentity = initial.instanceId;
+      this.rootIdentity = initial.rootSessionId;
+      if (
+        !idleReceipt(initial) &&
+        !(
+          this.newSession &&
+          !this.startedWork &&
+          initial.state === "unknown" &&
+          !initial.exhaustive &&
+          initial.runId === null &&
+          initial.rootTurnIds.length === 0
+        )
+      )
+        throw new EngineSettlementError();
+      this.receipt = initial;
+      if (initial.runId) this.seenRuns.add(initial.runId);
       this.restoring = false;
       this.initialized = true;
     } catch (error) {
@@ -819,6 +705,7 @@ class AcpEngine implements Engine {
       return;
     const update = params.update;
     if (update.sessionUpdate === "agent_message_chunk") {
+      if (!this.active) return;
       if (update.content.type === "text") this.projectText(update.content.text);
     } else if (
       update.sessionUpdate === "tool_call" ||
@@ -985,32 +872,59 @@ class AcpEngine implements Engine {
     }
   }
 
-  private async waitForChildren(
+  private async readSettlement(
     connection = this.requireConnection(),
-  ): Promise<void> {
-    for (;;) {
-      const result = await deadline(
-        connection.request<unknown>(DELEGATION_GET, {
-          sessionId: this.nativeId,
-        }),
-        30_000,
-        "Engine delegation settlement timed out",
-      );
-      const state = snapshot(
-        record(result) ? result.snapshot : undefined,
-        this.nativeId!,
-      );
-      this.projectChildren(state);
-      if (state.members.every((child) => TERMINAL_CHILD.has(child.status)))
-        return;
-      await delay(250, undefined, { signal: connection.signal });
-    }
+    expected?: SettlementReceipt,
+  ): Promise<SettlementReceipt> {
+    const result = await deadline(
+      connection.request<unknown>(SETTLEMENT_GET, {
+        sessionId: this.nativeId,
+        ...(expected
+          ? {
+              instanceId: expected.instanceId,
+              ...(expected.runId ? { runId: expected.runId } : {}),
+            }
+          : {}),
+      }),
+      30_000,
+      "Engine settlement query timed out",
+    );
+    const receipt = parseSettlement(
+      record(result) ? result.receipt : undefined,
+    );
+    if (
+      (this.instanceIdentity && receipt.instanceId !== this.instanceIdentity) ||
+      (this.rootIdentity && receipt.rootSessionId !== this.rootIdentity) ||
+      (expected &&
+        (receipt.instanceId !== expected.instanceId ||
+          receipt.rootSessionId !== expected.rootSessionId ||
+          receipt.runId !== expected.runId))
+    )
+      throw new EngineSettlementError();
+    return receipt;
+  }
+
+  private async preflight(connection: acp.ClientSideConnection): Promise<void> {
+    const current = await this.readSettlement(connection, this.receipt);
+    if (
+      !idleReceipt(current) &&
+      !(
+        this.newSession &&
+        !this.startedWork &&
+        current.state === "unknown" &&
+        !current.exhaustive &&
+        current.runId === null &&
+        current.rootTurnIds.length === 0
+      )
+    )
+      throw new EngineSettlementError();
+    this.receipt = current;
   }
 
   async prompt(
     text: string,
     attachments: { path: string; mimeType: string; name: string }[] = [],
-  ): Promise<void> {
+  ): Promise<void | "completed" | "cancelled"> {
     if (this.active) throw new Error("An engine prompt is already active");
     this.active = true;
     this.cancelled = false;
@@ -1018,6 +932,8 @@ class AcpEngine implements Engine {
       await this.start();
       if (this.cancelled) return;
       const connection = this.requireConnection();
+      await this.preflight(connection);
+      if (this.cancelled) return "cancelled";
       const references: string[] = [];
       for (const attachment of attachments) {
         const path = await scopedPath(this.options.workspace, attachment.path);
@@ -1037,6 +953,7 @@ class AcpEngine implements Engine {
       const result = await connection.prompt({
         sessionId: this.nativeId!,
         prompt: [
+          { type: "text", text: TRUSTED_BROWSER_INSTRUCTION },
           {
             type: "text",
             text:
@@ -1047,18 +964,31 @@ class AcpEngine implements Engine {
           },
         ],
       });
-      // A parent turn does not own an inference permit, and parent completion does not settle its children.
-      await this.waitForChildren();
-      // Pin ae65651 background completion can automatically start another root turn.
-      // delegation/get omits root activity, and session/close aborts without awaiting.
-      // A child terminal snapshot therefore cannot safely release the shared workspace.
-      if (this.backgroundObserved) {
-        await this.close().catch(() => undefined);
+      const receipt = parseSettlement(result._meta?.[SETTLEMENT_META]);
+      if (
+        !idleReceipt(receipt) ||
+        receipt.instanceId !== this.instanceIdentity ||
+        receipt.rootSessionId !== this.rootIdentity ||
+        this.seenRuns.has(receipt.runId!) ||
+        (result.stopReason === "end_turn"
+          ? receipt.state !== "settled"
+          : result.stopReason === "cancelled"
+            ? receipt.state !== "cancelled"
+            : true)
+      )
         throw new EngineSettlementError();
-      }
+      const fresh = await this.readSettlement(connection, receipt);
+      if (
+        !idleReceipt(fresh) ||
+        fresh.state !== receipt.state ||
+        JSON.stringify(fresh.rootTurnIds) !==
+          JSON.stringify(receipt.rootTurnIds)
+      )
+        throw new EngineSettlementError();
+      this.receipt = fresh;
+      this.seenRuns.add(fresh.runId!);
       this.settled = true;
-      if (!["end_turn", "cancelled"].includes(result.stopReason))
-        throw new Error(`Engine stopped: ${result.stopReason}`);
+      return fresh.state === "cancelled" ? "cancelled" : "completed";
     } catch (error) {
       if (error instanceof EngineSettlementError) throw error;
       throw new Error(
@@ -1078,15 +1008,26 @@ class AcpEngine implements Engine {
   async cancel(): Promise<void> {
     this.cancelled = true;
     const connection = this.connection;
-    if (!connection || !this.nativeId || connection.signal.aborted) return;
+    if (!connection || !this.nativeId || connection.signal.aborted) {
+      if (this.startedWork && !this.settled) throw new EngineSettlementError();
+      return;
+    }
     await connection.cancel({ sessionId: this.nativeId });
+    if (!this.startedWork) return;
     await deadline(
-      connection.request(DELEGATION_STOP, { sessionId: this.nativeId }),
+      (async () => {
+        let expected: SettlementReceipt | undefined;
+        for (;;) {
+          const receipt = await this.readSettlement(connection, expected);
+          if (!expected && receipt.runId !== null) expected = receipt;
+          if (idleReceipt(receipt) && receipt.state === "cancelled") return;
+          if (receipt.state !== "running") throw new EngineSettlementError();
+          await delay(20, undefined, { signal: connection.signal });
+        }
+      })(),
       30_000,
-      "Engine delegation cancellation timed out",
+      "Engine cancellation settlement timed out",
     );
-    await this.waitForChildren();
-    if (this.backgroundObserved) throw new EngineSettlementError();
   }
 
   close(): Promise<void> {
@@ -1102,47 +1043,21 @@ class AcpEngine implements Engine {
       return;
     }
     const connection = this.connection;
-    let settlementError: Error | undefined = this.backgroundObserved
-      ? new EngineSettlementError()
-      : undefined;
-    if (
-      this.startedWork &&
-      !this.settled &&
-      (!connection || connection.signal.aborted)
-    ) {
-      settlementError = new Error(
-        "Engine workspace settlement is unknown after transport loss",
-      );
-    }
     if (connection && !connection.signal.aborted && this.nativeId) {
-      try {
-        await deadline(
-          (async () => {
-            await connection.cancel({ sessionId: this.nativeId! });
-            await connection.request(DELEGATION_STOP, {
-              sessionId: this.nativeId,
-            });
-            if (this.startedWork) {
-              await this.waitForChildren(connection);
-              if (this.backgroundObserved)
-                settlementError = new EngineSettlementError();
-              else this.settled = true;
-            }
-            if (this.supportsClose)
-              await connection.closeSession({ sessionId: this.nativeId! });
-          })(),
-          this.options.shutdownTimeouts?.acpMs ?? 5_000,
-          "Engine shutdown settlement timed out",
-        );
-      } catch {
-        if (this.startedWork && !this.settled)
-          settlementError = new Error(
-            "Engine workspace settlement is unknown after cancellation",
-          );
-      }
+      await deadline(
+        (async () => {
+          await connection.cancel({ sessionId: this.nativeId! });
+          if (this.startedWork) await this.readSettlement(connection);
+          if (this.supportsClose)
+            await connection.closeSession({ sessionId: this.nativeId! });
+        })(),
+        this.options.shutdownTimeouts?.acpMs ?? 5_000,
+        "Engine native shutdown timed out",
+      ).catch(() => undefined);
     }
-    if (child.exitCode === null && child.signalCode === null)
-      child.kill("SIGTERM");
+    if (child.exitCode === null && child.signalCode === null) {
+      this.requestedTermination = child.kill("SIGTERM");
+    }
     child.stdin.end();
     try {
       await deadline(
@@ -1163,17 +1078,16 @@ class AcpEngine implements Engine {
     // PREP's launcher contract reserves exit 0 for verified exact-container cleanup.
     // A socket close, nonzero status or signal exit provides no such evidence.
     if (
+      !this.requestedTermination ||
       !this.exitStatus ||
       this.exitStatus.code !== 0 ||
       this.exitStatus.signal !== null ||
       this.exitStatus.spawnError
     ) {
-      throw new Error(
-        "Engine launcher cleanup is unconfirmed; workspace settlement is unknown",
-      );
+      throw new EngineCleanupError();
     }
     // A killed ACP pipe is not evidence that container grandchildren stopped.
-    if (settlementError) throw settlementError;
+    // Verified owned-container cleanup releases process ownership only; prompt failures remain failures.
   }
 
   private requireConnection(): acp.ClientSideConnection {

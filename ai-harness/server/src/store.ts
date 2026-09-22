@@ -95,6 +95,11 @@ export class Store {
       .prepare("INSERT OR REPLACE INTO quarantined_workspaces VALUES(?,?)")
       .run(workspaceId, reason);
   }
+  releaseQuarantineAfterVerifiedCleanup(workspaceId: string) {
+    this.db
+      .prepare("DELETE FROM quarantined_workspaces WHERE id=?")
+      .run(workspaceId);
+  }
   isQuarantined(workspaceId: string) {
     return !!this.db
       .prepare("SELECT id FROM quarantined_workspaces WHERE id=?")

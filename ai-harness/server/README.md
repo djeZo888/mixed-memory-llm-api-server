@@ -73,36 +73,42 @@ the gateway. No direct upstream key is exposed to the engine.
 
 ## Permission boundary
 
-Before launch the server atomically writes mode-0600 `profile/permission.json`.
-**PREP must set `MINIMAX_DATA_DIR` to that exact absolute profile directory and
-preserve this file**, without extra allow rules or alternate data roots. Native
-`permissionMode=default` is selected and verified through the official SDK.
-The pinned native default fast-allows some shell publication commands, so the
-server's rules force read/write/edit/grep/glob/bash escalation to the ACP client.
-Scoped regular workspace file operations and read-only container assets under
-`/opt/ai-harness/skills` and `/opt/ai-harness/tools` are approved. Asset checks are
-lexical container policy and do not open nonexistent host paths; PREP mounts
-these reviewed image roots read-only without escaping links. Asset mutations are
-denied; unsafe paths, arbitrary
-shell source and external writes are denied. Recognized container-local Python/C++/Node build/test/package commands are
-admitted under the coordinator-approved PREP isolation/network boundary. Explicit
-publishing/send/host-management commands, unrecognized shell operations and
-unsafe path arguments are denied. Arbitrary program/package script effects
-cannot be proven safe by command recognition; PREP must enforce the reviewed
-external-write/credential boundary. The server's own tests run on the authorized
-worker; this is not live MiniMax coding-task acceptance.
+Before launch the server creates a guarded private `profile/state` directory and
+atomically writes mode-0600 `profile/state/permission.json`. PREP sets
+`MINIMAX_DATA_DIR=ABS_PROFILE/state` and `HOME=ABS_PROFILE/state/home`; the sole
+profile mount remains `ABS_PROFILE`, leaving the native migration lock inside
+that mount. PREP preserves the permission file without broad allow rules.
+Native `permissionMode=default` is selected and verified through the SDK.
 
-Website deployment, dynamic feature/MCP configuration, code-review side execution,
-memory and every pinned browser tool are currently denied as a temporary
-fail-closed policy. Native browser/search/skill policy is **incomplete**, pending
-the coordinator's reviewed POLICY-CONTRACT; blanket browser denial is not
-accepted final behavior. Native task children
-remain enabled and their permission requests use the root chat callback. PREP
-must disable unreviewed profile-global MCP, Matrix and plugin tools: their native
-catalog provenance can bypass the permission gate. Empty ACP `mcpServers` alone
-does not disable those global discovery paths. Read-only research/browser tooling
-must be integrated under the separately reviewed tools task; no browsing/sandbox
-acceptance is claimed here. The server policy is not a kernel sandbox.
+Native read/write/edit/grep/glob/bash requests go through ACP permission checks.
+File mutations are workspace-scoped. Read-only container assets under
+`/opt/ai-harness/skills` and `/opt/ai-harness/tools` are admitted without host
+existence checks or host callbacks; PREP supplies read-only mounts without
+escaping links. The authorized native bash schema allows autonomous scripts,
+pipelines, substitutions, builds, tests, package commands and PDF helpers.
+Command-string recognition is not a sandbox or a network firewall. The actual
+boundary is PREP's rootless container, fixed workspace/profile mounts, read-only
+image, absence of host credentials/sockets, and fresh browser. Host ACP filesystem
+and terminal capabilities remain disabled.
+
+The reviewed native browser uses ask rules plus actual tool-name/action/input
+validation. Public navigation, read/query, screenshot, scroll, hover, wait and
+research clicks are admitted; form entry, uploads, arbitrary keys, unknown
+operations and managed publishing/login/deployment tools are denied. A separate
+trusted engine instruction limits clicks to public research/navigation/downloads
+and prohibits login, forms, publish/send/delete/purchase. Lexical URL checks do
+not establish DNS/network isolation. The pinned screenshot schema is inline-only;
+unsupported file fields are not invented.
+
+The `skill` tool admits exactly technical-research, code-investigation,
+calculations, technical-testing, pdf, code-review and control-in-app-browser.
+Only the direct `mcp__searxng__searxng_search` adapter is admitted. PREP/RUNTIME
+sets `mcpToolSearch:{enabled:false}` to expose it inline; `tool_search` and
+`mcp_invoke` wrappers are denied. Unreviewed global MCP, Matrix and plugin
+catalogs must stay disabled: an empty ACP mcpServers list alone does not disable
+all native discovery. Native task children remain enabled and use the root
+chat permission callback. SDK fixtures establish admission behavior, not actual
+browser downloads, helpers, container isolation or research acceptance.
 
 ## Persistence and run semantics
 
@@ -128,25 +134,28 @@ failure emits compaction_failed without inventing the prompt outcome. Native
 compaction event counters never replace occupied-context measurements.
 
 Runs sharing one workspace execute sequentially, including across a handoff.
-Separate workspaces can run concurrently. Parent prompt completion is followed
-by native delegation-state checks; queued/running/unknown children retain the
-workspace. Foreground delegation can settle normally. **Native background
-delegation is enabled but has a source acceptance hold:** completion can steer a
-new parent turn, while this pinned ACP revision exposes only child status and
-its close response does not await parent termination. When `backgroundTaskId` is
-observed, the bridge waits for children, stops/closes the launcher, then reports
-`engine_settlement_unknown` and durably quarantines the workspace. It never
-admits a next writer based on an inferred idle parent. Full background continuation
-needs a reviewed native settlement extension and live acceptance. Cancellation requests both root cancellation and
-native child stop. Browser SSE disconnection never cancels a run. Follow-ups
-queue durably but a server restart marks unfinished/queued work interrupted;
-no tool effect or prompt is automatically replayed.
+Separate workspaces can run concurrently. The native bridge must advertise
+`mcode/session/settlement/get`. The original prompt remains attached through
+background root continuations and output drain, then supplies the versioned
+`minimax-code/settlement` receipt. The server strictly validates native instance,
+root session, initial run and ordered root-turn identities, exhaustive status,
+and a fresh get using the expected instance/run before releasing the workspace.
+Children are progress only. Background-task presence alone does not quarantine a
+valid settled run. Missing/stale/foreign/malformed/non-exhaustive receipts, unknown
+state or pending projection cannot authorize success. No timer-idle inference is
+used. Cancellation requests root/child stop and requires settlement proof; a
+notification ACK alone is insufficient. Browser SSE disconnect never cancels.
 
-Engine failures of uncertain settlement quarantine the workspace. Restarted
-unfinished runs also quarantine their workspace. These blocks are durable and
-have no public bypass. An operator must verify every engine/container descendant
-has settled before an offline, reviewed repair of the corresponding
-`quarantined_workspaces` row. Do not clear this merely because a socket closed.
+Unknown native completion retains partial history and interrupts the run.
+Requested launcher SIGTERM followed by exit **0** is PREP's verified exact-container
+cleanup proof and may release a live workspace quarantine; it cannot turn that
+run into successful prompt completion. Cancelled work stays cancelled; ordinary
+errors stay failed. Exit143, cleanup-failure125, a closed ACP pipe, unrequested
+parent exit and final SIGKILL do not prove cleanup. Restarted unfinished runs
+quarantine their workspace and never replay prompts/tool effects. Native load
+must suppress interrupted delivery or report unknown before admitting a new
+prompt. Durable restart quarantine has no public bypass: an operator must
+independently verify descendants settled before a reviewed offline repair.
 Deletion first cancels work and waits for confirmed settlement before hiding
 metadata; project files remain. Uncertain deletion stays visible. Handoff asks
 the real engine for a summary, creates a new chat sharing the workspace, retains
@@ -252,18 +261,18 @@ reconciliation or VM operation was performed in this source task.
 
 ## Acceptance boundary
 
-Two features remain **incomplete**: authoritative native background
-parent/delivery settlement (awaiting SETTLEMENT-CONTRACT), and approved native
-browser/search/skill tool admission (awaiting POLICY-CONTRACT). The current
-quarantine/deny fallbacks are safe temporary behavior, not feature acceptance. PREP's permission/network/container boundary and the
-new compaction patch still need integrated acceptance. The fail-closed behavior
-and approved command admission are fixture-tested; successful native background
-continuation, coding/browsing and UI vision are not claimed.
+The SERVER halves of the reviewed settlement, compaction and native-tool policy
+contracts are implemented and tested with the official SDK. PREP/RUNTIME must
+integrate the matching native settlement/compaction patches, profile layout,
+fixed inline search roster, verified launcher cleanup and >=151-minute SDK plus
+Undici gateway transport. Engine retries after admission/compression failure are
+an integration dependency; the server/gateway does not replay or retry requests.
 
-
-Local fixtures/builds validate source behavior, not deployed MiniMax, container
-isolation, gateway reachability, live Qwen context occupancy, vision, browser
-research, PDF/OCR tools, actual coding tasks, or production cancellation. Those
-require root-reviewed integration and separately dispatched live acceptance.
-No ai-vm services, models, credentials, lifecycle, installer, deploy or web source
-are changed by this package.
+Local fixtures/builds validate source behavior, not deployed MiniMax, Linux,
+container isolation, gateway reachability, live context occupancy, UI vision,
+browser research/downloads, PDF/OCR helpers, actual coding workloads or production
+cancellation. Configuration and the separate bounded capability probe establish
+480000/65536 settings/acceptance, not actual occupied480K or full64K generation.
+Those require root-reviewed integration and separately dispatched acceptance.
+No ai-vm services, models, real credentials, lifecycle, installer, deploy or web
+source are changed by this package.

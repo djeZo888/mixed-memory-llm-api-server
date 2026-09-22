@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Protocol fixture only: no inference, no MiniMax runtime, no network requests.
+import { randomUUID } from "node:crypto";
 import { readFile, writeFile, rename } from "node:fs/promises";
 import { join } from "node:path";
 import { Readable, Writable } from "node:stream";
@@ -33,6 +34,8 @@ await save({
   upstreamKeyFileInherited: Boolean(process.env.AI_HARNESS_INFERENCE_KEY_FILE),
   inheritedSecret: Boolean(process.env.AI_HARNESS_TEST_SECRET),
   gatewayPresent: Boolean(process.env.AI_HARNESS_GATEWAY_TOKEN),
+  home: process.env.HOME,
+  dataDir: process.env.MINIMAX_DATA_DIR,
   nodeOptionsInherited: Boolean(process.env.NODE_OPTIONS),
 });
 process.stderr.write(
@@ -60,6 +63,58 @@ process.on("SIGTERM", () => {
   });
 });
 let id;
+const instanceId = randomUUID();
+let runId = null;
+let rootTurnIds = [];
+let state = "unknown";
+let runCount = 0;
+let promptDelivered = false;
+const currentReceipt = () => ({
+  schemaVersion: 1,
+  instanceId,
+  rootSessionId: id,
+  runId,
+  exhaustive: state !== "unknown",
+  state,
+  rootTurnIds: [...rootTurnIds],
+  reasons: state === "unknown" ? ["no_current_run"] : [],
+});
+const altered = (receipt, mode) => {
+  if (mode === "missing") return undefined;
+  if (mode === "unknown")
+    return {
+      ...receipt,
+      state: "unknown",
+      exhaustive: false,
+      reasons: ["inspection_failed"],
+    };
+  if (mode === "running")
+    return {
+      ...receipt,
+      state: "running",
+      reasons: ["acp_projection_pending"],
+    };
+  if (mode === "stale") return { ...receipt, instanceId: randomUUID() };
+  if (mode === "foreign") return { ...receipt, rootSessionId: "foreign-root" };
+  if (mode === "run")
+    return { ...receipt, runId: "foreign-run", rootTurnIds: ["foreign-run"] };
+  if (mode === "duplicate")
+    return { ...receipt, rootTurnIds: [receipt.runId, receipt.runId] };
+  if (mode === "nonexhaustive") return { ...receipt, exhaustive: false };
+  if (mode === "reasons") return { ...receipt, reasons: ["pending_delivery"] };
+  if (mode === "malformed") return { schemaVersion: 1 };
+  return receipt;
+};
+const promptResponse = (stopReason) => {
+  state = stopReason === "cancelled" ? "cancelled" : "settled";
+  promptDelivered = true;
+  const receipt = altered(currentReceipt(), config.promptReceipt);
+  return {
+    stopReason,
+    ...(receipt ? { _meta: { "minimax-code/settlement": receipt } } : {}),
+  };
+};
+
 let resolvePrompt;
 let children = [];
 let connection;
@@ -97,6 +152,9 @@ connection = new acp.AgentSideConnection(
               : [
                   "mcode/session/delegation/get",
                   "mcode/session/delegation/stop",
+                  ...(config.noSettlement
+                    ? []
+                    : ["mcode/session/settlement/get"]),
                 ],
           },
         },
@@ -109,11 +167,21 @@ connection = new acp.AgentSideConnection(
     },
     async resumeSession(params) {
       id = params.sessionId;
+      if (!config.restoreUnknown) {
+        runId = "restored-run";
+        rootTurnIds = [runId];
+        state = "settled";
+      }
       await save({ method: "resume", params });
       return {};
     },
     async loadSession(params) {
       id = params.sessionId;
+      if (!config.restoreUnknown) {
+        runId = "restored-run";
+        rootTurnIds = [runId];
+        state = "settled";
+      }
       await save({ method: "load", params });
       await update({
         sessionUpdate: "agent_message_chunk",
@@ -137,9 +205,14 @@ connection = new acp.AgentSideConnection(
     },
     async prompt(params) {
       await save({ method: "prompt", params });
-      const text = params.prompt
-        .map((block) => (block.type === "text" ? block.text : ""))
-        .join("");
+      runId = `run-${++runCount}`;
+      rootTurnIds = [runId];
+      state = "running";
+      promptDelivered = false;
+      const text =
+        params.prompt
+          .map((block) => (block.type === "text" ? block.text : ""))
+          .at(-1) ?? "";
       if (text === "crash") {
         setTimeout(() => process.exit(12), 5);
         return await new Promise(() => {});
@@ -226,6 +299,44 @@ connection = new acp.AgentSideConnection(
             details: { status: "auto_promoted", task_id: "bg-shell" },
           },
         });
+      }
+      if (text === "shell-policy") {
+        const inputs = [
+          {
+            name: "bash",
+            rawInput: { command: "bash build.sh | tee output.log" },
+          },
+          {
+            name: "bash",
+            rawInput: { command: 'printf "%s" "$(node script.js)"' },
+          },
+          { name: "bash", rawInput: { command: "npm exec tsc" } },
+          {
+            name: "bash",
+            rawInput: {
+              command: "python /opt/ai-harness/tools/render_pdf.py input.pdf",
+            },
+          },
+          {
+            name: "bash",
+            rawInput: { command: "pwd", run_in_background: true },
+          },
+          { name: "bash", rawInput: { command: 42 } },
+          { name: "bash", rawInput: { command: "pwd", cwd: "/etc" } },
+          { name: "unknown_shell", rawInput: { command: "pwd" } },
+          { name: "bash", rawInput: { command: "pwd", timeout: "5" } },
+        ];
+        for (const [index, input] of inputs.entries()) {
+          const result = await connection.requestPermission({
+            sessionId: id,
+            toolCall: { toolCallId: `shell-${index}`, title: "bash", ...input },
+            options: [
+              { optionId: "yes", kind: "allow_once", name: "Allow" },
+              { optionId: "no", kind: "reject_once", name: "Reject" },
+            ],
+          });
+          await save({ method: "shell_permission", index, result });
+        }
       }
       if (text === "permissions") {
         const queries = [
@@ -333,23 +444,96 @@ connection = new acp.AgentSideConnection(
           sessionId: id,
           snapshot: delegation(),
         });
-        if (text === "children" || text === "background")
-          setTimeout(() => {
-            children[0].status = "completed";
-          }, 350);
+        if (text === "children-cancel")
+          return await new Promise((resolve) => {
+            resolvePrompt = resolve;
+          });
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        children[0].status = "completed";
+        await connection.extNotification("mcode/session/delegation_update", {
+          sessionId: id,
+          snapshot: delegation(),
+        });
+        if (text === "background") {
+          await connection.sessionUpdate({
+            sessionId: "child-1",
+            update: {
+              sessionUpdate: "agent_message_chunk",
+              content: { type: "text", text: "CHILD TEXT MUST NEVER PROJECT" },
+            },
+          });
+          rootTurnIds.push(`${runId}-continuation`);
+          await update({
+            sessionUpdate: "agent_message_chunk",
+            content: { type: "text", text: " root continuation one" },
+          });
+          await update({
+            sessionUpdate: "agent_message_chunk",
+            content: { type: "text", text: " root continuation two" },
+          });
+        }
       }
-      return { stopReason: "end_turn" };
+      if (config.nativeCancelled) return promptResponse("cancelled");
+      if (config.lateText)
+        setTimeout(() => {
+          void update({
+            sessionUpdate: "agent_message_chunk",
+            content: { type: "text", text: "late forbidden text" },
+          });
+        }, 25);
+      return promptResponse("end_turn");
     },
     async cancel(params) {
       await save({ method: "cancel", params });
-      resolvePrompt?.({ stopReason: "cancelled" });
+      if (config.ignoreStop) return;
+      if (runId !== null) state = "cancelled";
+      for (const child of children) child.status = "stopped";
+      await connection.extNotification("mcode/session/delegation_update", {
+        sessionId: id,
+        snapshot: delegation(),
+      });
+      resolvePrompt?.(promptResponse("cancelled"));
     },
     async closeSession(params) {
       await save({ method: "close", params });
+      if (config.ignoreStop) return await new Promise(() => {});
       return {};
     },
     async extMethod(method, params) {
       await save({ method, params });
+      if (method === "mcode/session/settlement/get") {
+        let receipt = currentReceipt();
+        if (runId === null && config.initialRunning)
+          receipt = {
+            ...receipt,
+            state: "running",
+            exhaustive: true,
+            reasons: ["acp_projection_pending"],
+          };
+        if (
+          (params.instanceId && params.instanceId !== instanceId) ||
+          (params.runId && params.runId !== runId)
+        )
+          receipt = {
+            ...receipt,
+            state: "unknown",
+            exhaustive: false,
+            reasons: ["stale_expectation"],
+          };
+        if (promptDelivered)
+          receipt = altered(
+            receipt,
+            config.freshReceipt ??
+              (config.badSnapshot ? "malformed" : undefined),
+          );
+        if (config.ignoreStop && runId && state === "cancelled")
+          receipt = {
+            ...receipt,
+            state: "running",
+            reasons: ["acp_projection_pending"],
+          };
+        return { receipt };
+      }
       if (method === "mcode/session/delegation/get")
         return { snapshot: config.badSnapshot ? {} : delegation() };
       if (method === "mcode/session/delegation/stop") {
