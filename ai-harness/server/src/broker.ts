@@ -32,6 +32,13 @@ interface Active {
   cancelFailed?: boolean;
   cleanupPromise?: Promise<boolean>;
 }
+// Only known cancellation-settlement failures carry this tag. Unrelated errors
+// after a prompt must remain visible even when Stop has also been requested.
+class CancellationSettlementError extends Error {
+  constructor(readonly requestedAtFailure: boolean, options?: ErrorOptions) {
+    super("Cancellation settlement was not confirmed", options);
+  }
+}
 export class Broker {
   readonly store: Store;
   readonly files: Files;
@@ -292,13 +299,20 @@ export class Broker {
       if (this.closing)
         throw new Error("Server is shutting down before engine launch");
       const engine = await this.runner(s, update);
-      if (active.cancelled) await engine.cancel();
+      const cancelBeforePrompt = async () => {
+        try {
+          await engine.cancel();
+        } catch (error) {
+          throw new CancellationSettlementError(active.cancelled, { cause: error });
+        }
+      };
+      if (active.cancelled) await cancelBeforePrompt();
       else {
         const attachments = await this.files.attachments(
           s.id,
           run.attachmentIds,
         );
-        if (active.cancelled) await engine.cancel();
+        if (active.cancelled) await cancelBeforePrompt();
         else {
           const handoff = this.store.db
             .prepare(
@@ -330,7 +344,7 @@ export class Broker {
       }
       await active.cancelPromise;
       if (active.cancelFailed)
-        throw new Error("Cancellation settlement was not confirmed");
+        throw new CancellationSettlementError(active.cancelled);
       await Promise.all(artifactJobs);
       if (assistantId)
         this.store.emit(
@@ -363,7 +377,7 @@ export class Broker {
       // Confirm its settlement again immediately before releasing this workspace.
       await active.cancelPromise;
       if (active.cancelFailed)
-        throw new Error("Cancellation settlement was not confirmed");
+        throw new CancellationSettlementError(active.cancelled);
       this.store.updateRun(
         run.id,
         active.cancelled ? "cancelled" : "completed",
@@ -392,9 +406,10 @@ export class Broker {
         },
         run.id,
       );
-      // Capture Stop intent at the prompt failure, before cleanup can admit a
-      // later Stop for an unrelated failure. Defer only this cancellation race.
-      const cancellationRace = promptRejectedDuringCancellation;
+      // Capture Stop intent at a prompt failure or a known cancel-settlement
+      // failure, before cleanup can admit a later Stop for an unrelated error.
+      const cancellationRace = promptRejectedDuringCancellation ||
+        (error instanceof CancellationSettlementError && error.requestedAtFailure);
       if (!cancellationRace) emitFailure();
       try {
         cleanupConfirmed = await this.closeRunner(run.sessionId);

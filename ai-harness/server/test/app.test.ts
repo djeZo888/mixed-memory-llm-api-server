@@ -1302,6 +1302,132 @@ for (const outcome of ["unknown", "failed", "cancelled", "deleted"] as const)
     },
   );
 
+const cancellationCheckpointCases = (["after-prompt", "after-artifacts"] as const)
+  .flatMap((checkpoint) => (["rejected", "timeout"] as const)
+    .flatMap((rpc) => (["verified", "unknown"] as const)
+      .map((cleanup) => ({ checkpoint, rpc, cleanup }))));
+for (const { checkpoint, rpc, cleanup } of [
+  ...cancellationCheckpointCases,
+  { checkpoint: "before-prompt", rpc: "rejected", cleanup: "verified" } as const,
+])
+  test(`Stop settlement checkpoint: ${checkpoint}, cancel ${rpc}, cleanup ${cleanup}`, async (t) => {
+    let finishStart!: () => void, finishDiscovery!: () => void;
+    let failCancel!: () => void, finishCleanup!: () => void;
+    const startGate = new Promise<void>((resolve) => { finishStart = resolve; });
+    const discoveryGate = new Promise<void>((resolve) => { finishDiscovery = resolve; });
+    const cancelGate = new Promise<void>((resolve) => { failCancel = resolve; });
+    const cleanupGate = new Promise<void>((resolve) => { finishCleanup = resolve; });
+    t.after(() => { finishStart(); finishDiscovery(); failCancel(); finishCleanup(); });
+    if (checkpoint !== "before-prompt") finishStart();
+    let startEntered = false, promptResolved = false, discoveryEntered = false;
+    let discoveryFinished = false, closeStarted = false, logicalMs = 0;
+    let scans = 0;
+    const timeline: { event: string; at: number }[] = [];
+    const fixture = engines(true), baseFactory = fixture.factory;
+    fixture.factory = (options) => {
+      const engine = baseFactory(options);
+      return {
+        ...engine,
+        async start() {
+          startEntered = true;
+          await startGate;
+          await engine.start();
+        },
+        async prompt(text, attachments) {
+          await engine.prompt(text, attachments);
+          promptResolved = true;
+          return "cancelled" as const;
+        },
+        async cancel() {
+          await engine.cancel();
+          await cancelGate;
+          timeline.push({ event: `cancel-${rpc}`, at: logicalMs });
+          throw new Error(rpc === "timeout"
+            ? "Engine cancellation settlement timed out"
+            : "Cancellation RPC rejected");
+        },
+        async close() {
+          closeStarted = true;
+          await cleanupGate;
+          timeline.push({ event: `cleanup-${cleanup}`, at: logicalMs });
+          if (cleanup === "unknown") throw new Error("Exact cleanup unconfirmed");
+          await engine.close();
+        },
+      };
+    };
+    const h = await setup(t, fixture), session = await h.session();
+    const workspace = h.store.getSession(session.id).workspaceId;
+    const discover = h.files.discover.bind(h.files);
+    h.files.discover = async (id) => {
+      if (++scans === 2) {
+        discoveryEntered = true;
+        await discoveryGate;
+        discoveryFinished = true;
+      }
+      return discover(id);
+    };
+    const request = await inject(h.app, {
+      method: "POST", url: `/api/sessions/${session.id}/messages`,
+      payload: { text: "Controlled cancellation checkpoint" },
+    });
+    if (checkpoint === "before-prompt") {
+      await until(() => startEntered);
+    } else {
+      await until(() => fixture.calls.length === 1);
+      fixture.calls[0]!.update({ type: "text", text: "Retained original partial response" });
+      if (checkpoint === "after-artifacts") {
+        fixture.calls[0]!.resolve();
+        await until(() => discoveryEntered);
+        assert.equal(promptResolved, true, "cancelled prompt passed the first checkpoint before the late cancel RPC");
+      }
+    }
+    assert.equal((await inject(h.app, {
+      method: "POST", url: `/api/sessions/${session.id}/cancel`, payload: {},
+    })).statusCode, 202);
+    if (checkpoint === "before-prompt") {
+      finishStart();
+      await until(() => fixture.cancelled.length === 2, "direct pre-prompt cancellation");
+      assert.equal(fixture.calls.length, 0, "Stop before start must not submit a prompt");
+    } else if (checkpoint === "after-prompt") {
+      fixture.calls[0]!.resolve();
+      await until(() => promptResolved);
+      assert.equal(scans, 1, "cancelled prompt is held at the first checkpoint");
+    } else {
+      finishDiscovery();
+      await until(() => discoveryFinished);
+      assert.equal(scans, 2, "late Stop reaches the second checkpoint");
+    }
+    // Controlled gates represent a 30s cancel deadline and later 46s cleanup;
+    // the fixture neither waits 30s nor relies on wall-clock timing.
+    logicalMs = 30_000;
+    failCancel();
+    await until(() => closeStarted);
+    assert.ok(timeline.some((entry) => entry.event === `cancel-${rpc}` && entry.at === 30_000));
+    assert.ok(h.store.isQuarantined(workspace));
+    assert.equal(h.store.allEvents(session.id).some((event) => event.type === "done"), false);
+    assert.equal(h.store.allEvents(session.id).some((event) => event.type === "error"), false,
+      "known cancellation settlement failure awaits exact cleanup outcome");
+    logicalMs = 46_000;
+    finishCleanup();
+    await h.broker.idle();
+    assert.ok(timeline.some((entry) => entry.event === `cleanup-${cleanup}` && entry.at === 46_000));
+    const errors = h.store.allEvents(session.id).filter((event) => event.type === "error");
+    if (cleanup === "verified") {
+      assert.deepEqual(errors, []);
+      assert.equal(h.store.isQuarantined(workspace), false);
+      assert.equal(h.store.getSession(session.id).status, "idle");
+      assert.equal(h.store.db.prepare("SELECT status FROM runs WHERE id=?")
+        .get(request.json().runId)?.status, "cancelled");
+    } else {
+      assert.ok(errors.some((event) => event.data.code === "engine_failed"));
+      assert.ok(errors.some((event) => event.data.code === "engine_cleanup_unknown"));
+      assert.ok(h.store.isQuarantined(workspace));
+    }
+    assert.deepEqual(h.store.messages(session.id).map((message) => message.content),
+      checkpoint === "before-prompt" ? ["Controlled cancellation checkpoint"]
+        : ["Controlled cancellation checkpoint", "Retained original partial response"]);
+  });
+
 for (const scenario of ["confirmed", "cancel-rejected", "cancel-pending", "cancel-timeout", "cleanup-unknown", "settlement-unknown", "unexpected", "late-stop", "post-prompt-failure"] as const)
   test(`Stop prompt rejection race preserves proof boundaries: ${scenario}`, async (t) => {
     let confirmCancel!: () => void;
