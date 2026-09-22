@@ -1,0 +1,315 @@
+import { constants } from "node:fs";
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
+import { pipeline } from "node:stream/promises";
+import { Transform, type Readable } from "node:stream";
+import { ApiError, requireId } from "./errors.js";
+import type { FileRecord, Store } from "./store.js";
+export const MAX_UPLOAD = 50 * 1024 * 1024;
+const MAX_ARTIFACT = 64 * 1024 * 1024;
+export function safeName(name: string): string {
+  const value = path
+    .basename(name.replaceAll("\\", "/"))
+    .normalize("NFKC")
+    .replace(/[^a-zA-Z0-9._ -]/g, "_")
+    .replace(/^\.+/, "")
+    .slice(0, 150);
+  return value || "file";
+}
+export class Files {
+  readonly root: string;
+  constructor(
+    root: string,
+    readonly store: Store,
+  ) {
+    this.root = path.resolve(root);
+  }
+  async init() {
+    await fs.mkdir(this.root, { recursive: true, mode: 0o700 });
+    await this.assertNoLinks(this.root);
+    for (const name of [
+      "workspaces",
+      "profiles",
+      "logs",
+      "uploads",
+      "artifacts",
+    ]) {
+      const dir = path.join(this.root, name);
+      await fs.mkdir(dir, { recursive: true, mode: 0o700 });
+      await this.assertNoLinks(dir);
+    }
+  }
+  async assertNoLinks(target: string) {
+    const absolute = path.resolve(target);
+    let current = path.parse(absolute).root;
+    for (const segment of absolute
+      .slice(current.length)
+      .split(path.sep)
+      .filter(Boolean)) {
+      current = path.join(current, segment);
+      if ((await fs.lstat(current)).isSymbolicLink())
+        throw new ApiError(
+          400,
+          "unsafe_path",
+          "Symbolic links are not allowed",
+        );
+    }
+  }
+  workspace(id: string) {
+    return path.join(this.root, "workspaces", requireId(id));
+  }
+  profile(id: string) {
+    return path.join(this.root, "profiles", requireId(id));
+  }
+  log(id: string) {
+    return path.join(this.root, "logs", `${requireId(id)}.stderr.log`);
+  }
+  async prepare(sessionId: string, workspaceId: string) {
+    for (const dir of [this.workspace(workspaceId), this.profile(sessionId)]) {
+      await fs.mkdir(dir, { recursive: true, mode: 0o700 });
+      await this.assertNoLinks(dir);
+    }
+  }
+  async openGuarded(root: string, relative: string) {
+    if (
+      path.isAbsolute(relative) ||
+      !relative ||
+      relative.includes("\0") ||
+      relative.split(/[\\/]/).some((p) => p === "..")
+    )
+      throw new ApiError(400, "unsafe_path", "Invalid file path");
+    const canonicalRoot = await fs.realpath(root);
+    const candidate = path.resolve(root, relative);
+    if (!candidate.startsWith(path.resolve(root) + path.sep))
+      throw new ApiError(400, "unsafe_path", "File is outside workspace");
+    await this.assertNoLinks(candidate);
+    if ((await fs.realpath(candidate)) !== path.join(canonicalRoot, relative))
+      throw new ApiError(400, "unsafe_path", "Noncanonical file path");
+    const handle = await fs.open(
+      candidate,
+      constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
+    );
+    try {
+      const stat = await handle.stat();
+      const check = await fs.stat(candidate);
+      await this.assertNoLinks(candidate);
+      if (
+        !stat.isFile() ||
+        stat.nlink !== 1 ||
+        stat.ino !== check.ino ||
+        stat.dev !== check.dev ||
+        (await fs.realpath(candidate)) !== path.join(canonicalRoot, relative)
+      )
+        throw new ApiError(400, "unsafe_path", "Unsafe file identity");
+      if (process.platform === "linux") {
+        const fdPath = await fs.readlink(`/proc/self/fd/${handle.fd}`);
+        if (fdPath !== path.join(canonicalRoot, relative))
+          throw new ApiError(400, "unsafe_path", "File escaped workspace");
+      }
+      return { handle, stat };
+    } catch (e) {
+      await handle.close();
+      throw e;
+    }
+  }
+  async upload(
+    sessionId: string,
+    filename: string,
+    mimeType: string,
+    input: Readable,
+  ): Promise<FileRecord> {
+    const s = this.store.getSession(sessionId);
+    if (s.deleteRequested)
+      throw new ApiError(409, "deleting", "Session is deleting");
+    const id = randomUUID(),
+      name = safeName(filename),
+      relative = `${id}-${name}`;
+    const root = path.join(this.root, "uploads");
+    const dest = path.join(root, relative);
+    let size = 0;
+    const limit = new Transform({
+      transform(chunk, _encoding, callback) {
+        size += chunk.length;
+        callback(
+          size > MAX_UPLOAD
+            ? new ApiError(413, "upload_too_large", "Upload exceeds 50 MiB")
+            : null,
+          chunk,
+        );
+      },
+    });
+    const handle = await fs.open(dest, "wx", 0o600);
+    try {
+      if (input.destroyed && !input.readableEnded)
+        throw new ApiError(
+          400,
+          "invalid_upload",
+          "Multipart file stream ended prematurely",
+        );
+      await pipeline(input, limit, handle.createWriteStream());
+      if ((input as Readable & { truncated?: boolean }).truncated)
+        throw new ApiError(413, "upload_too_large", "Upload exceeds 50 MiB");
+      return this.store.saveFile({
+        id,
+        sessionId,
+        kind: "attachment",
+        path: relative,
+        name,
+        mimeType: mimeType.slice(0, 200),
+        size,
+      });
+    } catch (e) {
+      await handle.close().catch(() => {});
+      await fs.rm(dest, { force: true });
+      throw e;
+    }
+  }
+  async discardAttachment(f: FileRecord) {
+    if (f.kind !== "attachment") return;
+    await fs.rm(path.join(this.root, "uploads", f.path), { force: true });
+    this.store.db.prepare("DELETE FROM files WHERE id=?").run(f.id);
+  }
+  async attachments(sessionId: string, ids: string[]) {
+    const s = this.store.getSession(sessionId);
+    await this.prepare(s.id, s.workspaceId);
+    const workspace = this.workspace(s.workspaceId);
+    const folder = path.join(workspace, ".uploads");
+    await fs.mkdir(folder, { recursive: true, mode: 0o700 });
+    await this.assertNoLinks(folder);
+    const out = [];
+    for (const id of ids) {
+      const f = this.store.file(requireId(id));
+      if (f.kind !== "attachment" || f.sessionId !== sessionId)
+        throw new ApiError(
+          400,
+          "invalid_attachment",
+          "Attachment does not belong to this chat",
+        );
+      const { handle } = await this.openGuarded(
+        path.join(this.root, "uploads"),
+        f.path,
+      );
+      const destination = path.join(folder, `${randomUUID()}-${f.name}`);
+      const target = await fs.open(
+        destination,
+        constants.O_CREAT |
+          constants.O_EXCL |
+          constants.O_WRONLY |
+          constants.O_NOFOLLOW,
+        0o600,
+      );
+      try {
+        await pipeline(handle.createReadStream(), target.createWriteStream());
+      } finally {
+        await handle.close().catch(() => {});
+        await target.close().catch(() => {});
+      }
+      out.push({ path: destination, name: f.name, mimeType: f.mimeType });
+    }
+    return out;
+  }
+  async registerArtifact(
+    sessionId: string,
+    filePath: string,
+    name?: string,
+    mimeType = "application/octet-stream",
+  ) {
+    const s = this.store.getSession(sessionId);
+    const workspace = this.workspace(s.workspaceId);
+    const relative = path.isAbsolute(filePath)
+      ? path.relative(workspace, filePath)
+      : filePath;
+    if (relative.split(path.sep).some((p) => p.startsWith(".")))
+      throw new ApiError(
+        400,
+        "unsafe_path",
+        "Hidden files cannot be published as artifacts",
+      );
+    const { handle, stat } = await this.openGuarded(workspace, relative);
+    if (stat.size > MAX_ARTIFACT) {
+      await handle.close();
+      throw new ApiError(413, "artifact_too_large", "Artifact exceeds 64 MiB");
+    }
+    const id = randomUUID(),
+      dest = path.join(this.root, "artifacts", id);
+    const target = await fs.open(dest, "wx", 0o600);
+    try {
+      let bytes = 0;
+      const bounded = new Transform({
+        transform(chunk, _e, cb) {
+          bytes += chunk.length;
+          cb(
+            bytes > MAX_ARTIFACT
+              ? new ApiError(
+                  413,
+                  "artifact_too_large",
+                  "Artifact grew beyond limit",
+                )
+              : null,
+            chunk,
+          );
+        },
+      });
+      await pipeline(
+        handle.createReadStream(),
+        bounded,
+        target.createWriteStream(),
+      );
+      return this.store.saveFile({
+        id,
+        sessionId,
+        kind: "artifact",
+        path: id,
+        name: safeName(name ?? path.basename(relative)),
+        mimeType,
+        size: bytes,
+      });
+    } catch (e) {
+      await fs.rm(dest, { force: true });
+      throw e;
+    } finally {
+      await handle.close().catch(() => {});
+      await target.close().catch(() => {});
+    }
+  }
+  async discover(sessionId: string) {
+    const s = this.store.getSession(sessionId),
+      root = this.workspace(s.workspaceId);
+    let visited = 0;
+    const candidates: { path: string; size: number; mtime: number }[] = [];
+    const walk = async (dir: string, depth: number): Promise<void> => {
+      if (depth > 8) return;
+      for (const item of await fs.readdir(path.join(root, dir), {
+        withFileTypes: true,
+      })) {
+        if (++visited > 1000) return;
+        if (
+          item.name.startsWith(".") ||
+          ["node_modules", "dist", "__pycache__"].includes(item.name)
+        )
+          continue;
+        const rel = path.join(dir, item.name);
+        if (item.isDirectory()) await walk(rel, depth + 1);
+        else if (item.isFile()) {
+          const st = await fs.stat(path.join(root, rel));
+          if (st.size <= MAX_ARTIFACT)
+            candidates.push({ path: rel, size: st.size, mtime: st.mtimeMs });
+        }
+      }
+    };
+    await walk("", 0);
+    return candidates;
+  }
+  async download(id: string) {
+    const f = this.store.file(requireId(id));
+    if (f.kind !== "artifact")
+      throw new ApiError(404, "not_found", "Artifact not found");
+    this.store.getSession(f.sessionId);
+    const { handle, stat } = await this.openGuarded(
+      path.join(this.root, "artifacts"),
+      f.path,
+    );
+    return { file: f, size: stat.size, stream: handle.createReadStream() };
+  }
+}

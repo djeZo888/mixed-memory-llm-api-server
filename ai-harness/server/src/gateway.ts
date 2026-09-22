@@ -1,0 +1,724 @@
+import Fastify, { type FastifyInstance, type FastifyReply } from "fastify";
+import { randomBytes } from "node:crypto";
+import {
+  request as httpRequest,
+  type ClientRequest,
+  type IncomingMessage,
+} from "node:http";
+import { request as httpsRequest } from "node:https";
+import { MAX_OUTPUT, MODEL, type GatewayUsage } from "./contracts.js";
+
+export interface GatewayUpstream {
+  url: string;
+  alias: string;
+}
+export interface GatewayOptions {
+  /** The protected credential is supplied by the host. This module never reads files. */
+  upstreamKey: string | (() => string | Promise<string>);
+  /** Deployment uses the fixed defaults; overrides permit local protocol fixtures. */
+  upstreams?: readonly [GatewayUpstream, GatewayUpstream];
+  onUsage?: (usage: GatewayUsage) => void;
+  queueLimit?: number;
+  /** Aggregate serialized request-body bytes waiting for a lane; default 128 MiB. */
+  queueByteLimit?: number;
+  queueTimeoutMs?: number;
+  activeTimeoutMs?: number;
+  /** Durable host ledger; previous active requests recover quarantined. */
+  initialLaneStates?: Readonly<Record<string, LaneState>>;
+  /** Must durably commit synchronously. Admission records active before dispatch. */
+  onLaneState?: (alias: string, state: LaneState) => void;
+}
+export type LaneState = "idle" | "active" | "quarantined";
+export interface Gateway {
+  app: FastifyInstance;
+  issueToken(sessionId: string): string;
+  revokeToken(token: string): void;
+  snapshot(): {
+    queued: number;
+    queuedBytes: number;
+    lanes: { alias: string; state: LaneState }[];
+  };
+  close(): Promise<void>;
+}
+
+const DEFAULT_UPSTREAMS: readonly [GatewayUpstream, GatewayUpstream] = [
+  { url: "http://10.156.100.60:30002/v1", alias: "qwen3.8-27b-gpu0" },
+  { url: "http://10.156.100.60:30004/v1", alias: "qwen3.8-27b" },
+];
+const OBSERVATION_LIMIT = 256 * 1024;
+
+class GatewayError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+interface Lane {
+  upstream: GatewayUpstream;
+  state: LaneState;
+}
+interface Ticket {
+  bytes: number;
+  signal: AbortSignal;
+  resolve: (lane: Lane) => void;
+  reject: (error: Error) => void;
+  timer?: NodeJS.Timeout;
+  abort: () => void;
+}
+
+/** One shared FIFO for every request, including native children and compaction. */
+class Admission {
+  readonly lanes: Lane[];
+  private queue: Ticket[] = [];
+  private queueBytes = 0;
+  private stopped = false;
+  constructor(
+    upstreams: readonly GatewayUpstream[],
+    private limit: number,
+    private byteLimit: number,
+    private timeout: number,
+    initial: Readonly<Record<string, LaneState>> = {},
+    private onState?: (alias: string, state: LaneState) => void,
+  ) {
+    this.lanes = upstreams.map((upstream) => {
+      const previous = initial[upstream.alias];
+      if (
+        previous !== undefined &&
+        !["idle", "active", "quarantined"].includes(previous)
+      )
+        throw new Error("Invalid persisted lane state");
+      const lane: Lane = {
+        upstream,
+        state: previous && previous !== "idle" ? "quarantined" : "idle",
+      };
+      this.onState?.(upstream.alias, lane.state);
+      return lane;
+    });
+  }
+  private transition(lane: Lane, state: LaneState) {
+    try {
+      this.onState?.(lane.upstream.alias, state);
+    } catch {
+      lane.state = "quarantined";
+      // A failed active write occurs before dispatch. A failed settlement write
+      // leaves the previous durable active record, which recovers quarantined.
+      throw new GatewayError(
+        503,
+        "lane_ledger_unavailable",
+        "Inference lane ledger is unavailable",
+      );
+    }
+    lane.state = state;
+  }
+  get queued() {
+    return this.queue.length;
+  }
+  get queuedBytes() {
+    return this.queueBytes;
+  }
+  acquire(signal: AbortSignal, bytes: number): Promise<Lane> {
+    if (this.stopped)
+      return Promise.reject(
+        new GatewayError(503, "gateway_stopping", "Gateway is stopping"),
+      );
+    if (signal.aborted)
+      return Promise.reject(
+        new GatewayError(499, "cancelled", "Request cancelled"),
+      );
+    const lane = this.lanes.find((candidate) => candidate.state === "idle");
+    if (lane && !this.queue.length) {
+      try {
+        this.transition(lane, "active");
+        return Promise.resolve(lane);
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }
+    if (this.lanes.every((candidate) => candidate.state === "quarantined")) {
+      return Promise.reject(
+        new GatewayError(
+          503,
+          "lanes_quarantined",
+          "Inference lanes require settlement review",
+        ),
+      );
+    }
+    if (this.queue.length >= this.limit)
+      return Promise.reject(
+        new GatewayError(429, "queue_full", "Inference queue is full"),
+      );
+    if (bytes > this.byteLimit - this.queueBytes)
+      return Promise.reject(
+        new GatewayError(
+          429,
+          "queue_bytes_full",
+          "Inference queue body budget is full",
+        ),
+      );
+    return new Promise((resolve, reject) => {
+      const ticket: Ticket = {
+        bytes,
+        signal,
+        resolve,
+        reject,
+        abort: () => {
+          this.remove(ticket);
+          reject(new GatewayError(499, "cancelled", "Request cancelled"));
+        },
+      };
+      ticket.timer = setTimeout(() => {
+        this.remove(ticket);
+        reject(
+          new GatewayError(
+            504,
+            "queue_timeout",
+            "Inference queue wait exceeded its limit",
+          ),
+        );
+      }, this.timeout);
+      ticket.timer.unref();
+      signal.addEventListener("abort", ticket.abort, { once: true });
+      this.queue.push(ticket);
+      this.queueBytes += bytes;
+    });
+  }
+  private remove(ticket: Ticket) {
+    const index = this.queue.indexOf(ticket);
+    if (index !== -1) {
+      this.queue.splice(index, 1);
+      this.queueBytes -= ticket.bytes;
+    }
+    clearTimeout(ticket.timer);
+    ticket.signal.removeEventListener("abort", ticket.abort);
+  }
+  settle(lane: Lane, confirmed: boolean) {
+    try {
+      this.transition(
+        lane,
+        confirmed && !this.stopped ? "idle" : "quarantined",
+      );
+    } catch {
+      /* Fail closed locally; previous durable active remains unsafe. */
+    }
+    while (this.queue.length) {
+      const available = this.lanes.find(
+        (candidate) => candidate.state === "idle",
+      );
+      if (!available) break;
+      const ticket = this.queue[0]!;
+      this.remove(ticket);
+      if (ticket.signal.aborted) {
+        ticket.reject(new GatewayError(499, "cancelled", "Request cancelled"));
+        continue;
+      }
+      try {
+        this.transition(available, "active");
+        ticket.resolve(available);
+      } catch (error) {
+        ticket.reject(error as Error);
+      }
+    }
+    if (this.lanes.every((candidate) => candidate.state === "quarantined"))
+      this.rejectQueued(
+        "lanes_quarantined",
+        "Inference lanes require settlement review",
+      );
+  }
+  private rejectQueued(code: string, message: string) {
+    for (const ticket of [...this.queue]) {
+      this.remove(ticket);
+      ticket.reject(new GatewayError(503, code, message));
+    }
+  }
+  stop() {
+    this.stopped = true;
+    this.rejectQueued("gateway_stopping", "Gateway is stopping");
+  }
+}
+
+/** Observe real usage without changing forwarded bytes or buffering an unbounded response. */
+class UsageObserver {
+  private buffered = "";
+  private bytes = 0;
+  private overflow = false;
+  terminal = false;
+  constructor(
+    private stream: boolean,
+    private emit: (value: unknown) => void,
+  ) {}
+  data(chunk: Buffer) {
+    if (!this.stream) {
+      this.bytes += chunk.length;
+      if (this.bytes <= OBSERVATION_LIMIT)
+        this.buffered += chunk.toString("utf8");
+      else {
+        this.buffered = "";
+        this.overflow = true;
+      }
+      return;
+    }
+    // SSE data lines are ASCII JSON. Splitting across UTF-8 characters does not
+    // affect token counts or terminal recognition; response bytes are untouched.
+    for (const piece of chunk.toString("utf8").split(/(?<=\n)/)) {
+      if (!this.overflow) {
+        this.buffered += piece;
+        if (this.buffered.length > OBSERVATION_LIMIT) {
+          this.buffered = "";
+          this.overflow = true;
+        }
+      }
+      if (piece.endsWith("\n")) {
+        if (!this.overflow) this.line(this.buffered.trim());
+        this.buffered = "";
+        this.overflow = false;
+      }
+    }
+  }
+  private line(line: string) {
+    if (!line.startsWith("data:")) return;
+    const value = line.slice(5).trim();
+    if (value === "[DONE]") {
+      this.terminal = true;
+      return;
+    }
+    try {
+      this.emit(JSON.parse(value));
+    } catch {
+      /* A malformed observation never alters the stream. */
+    }
+  }
+  end() {
+    if (this.stream) {
+      if (!this.overflow && this.buffered) this.line(this.buffered.trim());
+      return;
+    }
+    if (!this.overflow) {
+      try {
+        this.emit(JSON.parse(this.buffered));
+      } catch {
+        /* Usage unavailable. */
+      }
+    }
+  }
+}
+
+function positive(
+  value: number | undefined,
+  fallback: number,
+  name: string,
+): number {
+  const result = value ?? fallback;
+  if (!Number.isSafeInteger(result) || result < 1)
+    throw new Error(`${name} must be a positive integer`);
+  return result;
+}
+
+function requestBody(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new GatewayError(400, "invalid_request", "Expected a JSON object");
+  const body = value as Record<string, unknown>;
+  if (body.model !== MODEL)
+    throw new GatewayError(
+      400,
+      "unsupported_model",
+      "Only qwen3.8-27b is supported",
+    );
+  if (!Array.isArray(body.messages))
+    throw new GatewayError(400, "invalid_request", "messages must be an array");
+  if (body.stream !== undefined && typeof body.stream !== "boolean")
+    throw new GatewayError(400, "invalid_request", "stream must be a boolean");
+  const result = { ...body };
+  for (const field of ["max_tokens", "max_completion_tokens"]) {
+    const cap = body[field];
+    if (cap !== undefined) {
+      if (typeof cap !== "number" || !Number.isSafeInteger(cap) || cap < 1)
+        throw new GatewayError(
+          400,
+          "invalid_output_limit",
+          `${field} must be a positive integer`,
+        );
+      result[field] = Math.min(cap, MAX_OUTPUT);
+    }
+  }
+  if (
+    body.max_tokens !== undefined &&
+    body.max_completion_tokens !== undefined &&
+    body.max_tokens !== body.max_completion_tokens
+  ) {
+    throw new GatewayError(
+      400,
+      "conflicting_output_limits",
+      "Output limits must agree when both are declared",
+    );
+  }
+  if (body.max_tokens === undefined && body.max_completion_tokens === undefined)
+    result.max_tokens = MAX_OUTPUT;
+  return result;
+}
+
+export function createGateway(options: GatewayOptions): Gateway {
+  const upstreams = options.upstreams ?? DEFAULT_UPSTREAMS;
+  if (
+    upstreams.length !== 2 ||
+    upstreams.some(
+      (item, index) => item.alias !== DEFAULT_UPSTREAMS[index]!.alias,
+    )
+  )
+    throw new Error("Gateway requires the reviewed two Qwen aliases");
+  for (const upstream of upstreams) {
+    const url = new URL(upstream.url);
+    if (
+      !["http:", "https:"].includes(url.protocol) ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash
+    )
+      throw new Error("Invalid inference upstream URL");
+  }
+  const admission = new Admission(
+    upstreams,
+    positive(options.queueLimit, 128, "queueLimit"),
+    positive(options.queueByteLimit, 128 * 1024 * 1024, "queueByteLimit"),
+    positive(options.queueTimeoutMs, 30 * 60 * 1000, "queueTimeoutMs"),
+    options.initialLaneStates,
+    options.onLaneState,
+  );
+  const activeTimeout = positive(
+    options.activeTimeoutMs,
+    2 * 60 * 60 * 1000,
+    "activeTimeoutMs",
+  );
+  const tokens = new Map<string, string>();
+  const active = new Set<ClientRequest>();
+  const app = Fastify({
+    logger: false,
+    bodyLimit: 64 * 1024 * 1024,
+    requestTimeout: 0,
+    connectionTimeout: 0,
+    forceCloseConnections: true,
+  });
+  app.setErrorHandler((error, _request, reply) => {
+    const known = error instanceof GatewayError;
+    const statusCode =
+      error && typeof error === "object" && "statusCode" in error
+        ? error.statusCode
+        : undefined;
+    const status = known
+      ? error.status
+      : typeof statusCode === "number"
+        ? statusCode
+        : 500;
+    reply.code(status).send({
+      error: {
+        code: known
+          ? error.code
+          : status === 413
+            ? "body_too_large"
+            : "invalid_request",
+        message: known
+          ? error.message
+          : status === 413
+            ? "Request body is too large"
+            : "Request could not be processed",
+      },
+    });
+  });
+  app.addHook("onRequest", async (request, reply) => {
+    const authorization = request.headers.authorization;
+    const token = authorization?.startsWith("Bearer ")
+      ? authorization.slice(7)
+      : undefined;
+    if (!token || !tokens.has(token))
+      return reply.code(401).send({
+        error: {
+          code: "unauthorized",
+          message: "Inference authorization required",
+        },
+      });
+    // This internal bearer service has no browser API and never grants CORS.
+    if (request.headers.origin)
+      return reply.code(403).send({
+        error: {
+          code: "browser_forbidden",
+          message: "Browser access is not supported",
+        },
+      });
+  });
+  app.setNotFoundHandler((_request, reply) =>
+    reply.code(404).send({
+      error: {
+        code: "unsupported_route",
+        message: "Only supported inference routes are available",
+      },
+    }),
+  );
+  app.get("/v1/models", async () => ({
+    object: "list",
+    data: [{ id: MODEL, object: "model", owned_by: "local" }],
+  }));
+
+  app.post("/v1/chat/completions", async (request, reply) => {
+    const body = requestBody(request.body);
+    const bodyBytes = Buffer.byteLength(JSON.stringify(body));
+    const token = request.headers.authorization!.slice(7);
+    const sessionId = tokens.get(token);
+    if (!sessionId)
+      throw new GatewayError(
+        401,
+        "unauthorized",
+        "Inference authorization required",
+      );
+    const cancelled = new AbortController();
+    let disconnected = false;
+    let upstreamResponse: IncomingMessage | undefined;
+    const disconnect = () => {
+      if (reply.raw.writableEnded) return;
+      disconnected = true;
+      cancelled.abort();
+      // A cancelled consumer is detached. Keep consuming upstream with bounded
+      // observation buffers; aborting its socket would not prove GPU settlement.
+      upstreamResponse?.resume();
+    };
+    reply.raw.once("close", disconnect);
+    let lane: Lane;
+    try {
+      lane = await admission.acquire(cancelled.signal, bodyBytes);
+    } catch (error) {
+      reply.raw.removeListener("close", disconnect);
+      if (disconnected) return reply;
+      throw error;
+    }
+    if (disconnected) {
+      admission.settle(lane, true);
+      return reply;
+    }
+    const requireCurrentToken = () => {
+      if (tokens.get(token) === sessionId) return;
+      // No upstream request exists yet: release this admission safely. Revoking
+      // a token never aborts an already dispatched generation or its drain.
+      admission.settle(lane, true);
+      reply.raw.removeListener("close", disconnect);
+      throw new GatewayError(
+        401,
+        "unauthorized",
+        "Inference authorization required",
+      );
+    };
+    requireCurrentToken();
+    let key: string;
+    try {
+      key =
+        typeof options.upstreamKey === "function"
+          ? await options.upstreamKey()
+          : options.upstreamKey;
+      if (!key || !/^[\x21-\x7e]+$/.test(key))
+        throw new Error("Invalid upstream credential");
+    } catch {
+      admission.settle(lane, true);
+      reply.raw.removeListener("close", disconnect);
+      throw new GatewayError(
+        503,
+        "upstream_credential_unavailable",
+        "Inference credential is unavailable",
+      );
+    }
+    if (disconnected) {
+      admission.settle(lane, true);
+      return reply;
+    }
+    requireCurrentToken();
+    const payload = JSON.stringify({ ...body, model: lane.upstream.alias });
+    const endpoint = new URL(
+      `${lane.upstream.url.replace(/\/$/, "")}/chat/completions`,
+    );
+    const observe = new UsageObserver(
+      body.stream === true,
+      (value: unknown) => {
+        if (!value || typeof value !== "object") return;
+        const usage = (value as { usage?: unknown }).usage;
+        if (!usage || typeof usage !== "object") return;
+        const {
+          prompt_tokens: promptTokens,
+          completion_tokens: completionTokens,
+        } = usage as Record<string, unknown>;
+        if (
+          typeof promptTokens !== "number" ||
+          !Number.isSafeInteger(promptTokens) ||
+          promptTokens < 0
+        )
+          return;
+        // This is one request's input occupancy, never a sum. A runner can issue
+        // child/compression requests: callers must keep that attribution uncertain.
+        try {
+          options.onUsage?.({
+            sessionId,
+            promptTokens,
+            ...(typeof completionTokens === "number" &&
+            Number.isSafeInteger(completionTokens) &&
+            completionTokens >= 0
+              ? { completionTokens }
+              : {}),
+            source:
+              "gateway.latest-request.prompt_tokens (main/child/compaction attribution unknown)",
+          });
+        } catch {
+          /* A telemetry consumer must not alter inference transport. */
+        }
+      },
+    );
+    reply.hijack();
+    await new Promise<void>((resolve) => {
+      let settled = false;
+      let timeout: NodeJS.Timeout | undefined;
+      const settle = (confirmed: boolean) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        active.delete(upstream);
+        admission.settle(lane, confirmed);
+        reply.raw.removeListener("close", disconnect);
+        resolve();
+      };
+      const fail = (code: string, message: string) => {
+        if (settled) return;
+        if (!disconnected && !reply.raw.destroyed) {
+          if (!reply.raw.headersSent)
+            sendRawError(
+              reply,
+              code === "active_timeout" ? 504 : 502,
+              code,
+              message,
+            );
+          else reply.raw.destroy();
+        }
+        settle(false);
+      };
+      const transport =
+        endpoint.protocol === "https:" ? httpsRequest : httpRequest;
+      const upstream = transport(
+        endpoint,
+        {
+          method: "POST",
+          agent: false,
+          headers: {
+            "content-type": "application/json",
+            "content-length": Buffer.byteLength(payload),
+            authorization: `Bearer ${key}`,
+            accept:
+              body.stream === true ? "text/event-stream" : "application/json",
+          },
+        },
+        (response) => {
+          if (settled) {
+            response.resume();
+            return;
+          }
+          upstreamResponse = response;
+          if (!disconnected) {
+            reply.raw.statusCode = response.statusCode ?? 502;
+            for (const header of [
+              "content-type",
+              "content-encoding",
+              "cache-control",
+              "x-request-id",
+            ]) {
+              const value = response.headers[header];
+              if (value !== undefined) reply.raw.setHeader(header, value);
+            }
+            reply.raw.setHeader("x-accel-buffering", "no");
+          }
+          response.on("data", (chunk: Buffer) => {
+            if (settled) return;
+            observe.data(chunk);
+            if (!disconnected && !reply.raw.destroyed) {
+              if (!reply.raw.write(chunk)) {
+                response.pause();
+                reply.raw.once("drain", () => response.resume());
+              }
+            }
+          });
+          response.once("end", () => {
+            if (settled) return;
+            observe.end();
+            const status = response.statusCode ?? 502;
+            const rejectedBeforeGeneration = [
+              400, 401, 403, 404, 405, 413, 415, 422, 429,
+            ].includes(status);
+            const success = status >= 200 && status < 300;
+            // For SSE success, an early EOF without [DONE] is ambiguous. Even if
+            // content was emitted, no retry and no automatic lane recovery occurs.
+            // A proxy 5xx/timeout also cannot prove that its backend GPU is idle.
+            const confirmed =
+              response.complete &&
+              (rejectedBeforeGeneration ||
+                (success && (body.stream !== true || observe.terminal)));
+            if (!disconnected && !reply.raw.destroyed) reply.raw.end();
+            settle(confirmed);
+          });
+          response.once("error", () =>
+            fail("upstream_interrupted", "Inference transport was interrupted"),
+          );
+          response.once("aborted", () =>
+            fail("upstream_interrupted", "Inference transport was interrupted"),
+          );
+        },
+      );
+      active.add(upstream);
+      upstream.once("error", () =>
+        fail("upstream_interrupted", "Inference transport was interrupted"),
+      );
+      timeout = setTimeout(() => {
+        fail(
+          "active_timeout",
+          "Active generation exceeded its limit; lane requires settlement review",
+        );
+        upstream.destroy();
+        upstreamResponse?.destroy();
+      }, activeTimeout);
+      timeout.unref();
+      upstream.end(payload);
+    });
+    return reply;
+  });
+  app.addHook("preClose", async () => {
+    admission.stop();
+    tokens.clear();
+    for (const request of active) request.destroy();
+  });
+  return {
+    app,
+    issueToken(sessionId) {
+      if (!sessionId) throw new Error("sessionId is required");
+      const token = randomBytes(32).toString("base64url");
+      tokens.set(token, sessionId);
+      return token;
+    },
+    revokeToken(token) {
+      tokens.delete(token);
+    },
+    snapshot: () => ({
+      queued: admission.queued,
+      queuedBytes: admission.queuedBytes,
+      lanes: admission.lanes.map(({ upstream, state }) => ({
+        alias: upstream.alias,
+        state,
+      })),
+    }),
+    close: () => app.close(),
+  };
+}
+
+function sendRawError(
+  reply: FastifyReply,
+  status: number,
+  code: string,
+  message: string,
+) {
+  reply.raw.statusCode = status;
+  reply.raw.setHeader("content-type", "application/json");
+  reply.raw.end(JSON.stringify({ error: { code, message } }));
+}
