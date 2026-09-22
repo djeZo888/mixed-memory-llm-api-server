@@ -274,7 +274,7 @@ describe('reply-level conversation presentation', () => {
     expect(screen.queryByRole('link', { name: 'Download all ZIP' })).not.toBeInTheDocument();
   });
 
-  it('uses an exact message ID when legacy message run metadata is absent without inventing a ZIP association', () => {
+  it('uses an exact message ID when no run membership is proven without inventing a ZIP association', () => {
     const thread = replyThread({
       messages: [
         replyMessage('legacy-answer', 'assistant', 'Legacy answer with exact file identity'),
@@ -292,7 +292,7 @@ describe('reply-level conversation presentation', () => {
       runs: [
         replyRun('known-run', {
           status: 'completed',
-          artifactIds: ['exact-one', 'exact-two'],
+          artifactIds: [],
           zipUrl: '/api/sessions/chat%2Fa/runs/known-run/artifacts.zip',
         }),
       ],
