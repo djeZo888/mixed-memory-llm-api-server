@@ -1,0 +1,14 @@
+{
+  "name": "@ai-harness/searxng-mcp",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Bounded private SearXNG MCP stdio adapter",
+  "engines": { "node": ">=24 <25" },
+  "scripts": { "start": "node searxng-mcp.mjs", "test": "node --test test/*.test.mjs" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "4.6.5"
+  }
+}

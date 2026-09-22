@@ -1,0 +1,43 @@
+# First-party configuration, MIT. SearXNG itself is AGPL-3.0-or-later.
+# Private, single-user proposal. Not deployed or public-search-tested.
+use_default_settings:
+  engines:
+    keep_only: [duckduckgo, brave, wikipedia, arxiv]
+general:
+  debug: false
+  instance_name: "ai-harness private research"
+  enable_metrics: false
+search:
+  safe_search: 1
+  autocomplete: ""
+  favicon_resolver: ""
+  default_lang: en
+  max_page: 1
+  formats: [json]
+server:
+  # In-container IPv4 only. Host publication MUST be 127.0.0.1:8082:8080.
+  bind_address: "0.0.0.0"
+  port: 8080
+  base_url: "http://127.0.0.1:8082/"
+  limiter: false
+  public_instance: false
+  image_proxy: false
+  # Required operator environment SEARXNG_SECRET overrides this empty sentinel.
+  secret_key: ""
+valkey:
+  url: false
+outgoing:
+  request_timeout: 4.0
+  max_request_timeout: 8.0
+  pool_connections: 8
+engines:
+  - name: duckduckgo
+    disabled: false
+  - name: brave
+    disabled: false
+  - name: wikipedia
+    display_type: [list]
+    disabled: false
+  - name: arxiv
+    categories: [general, science, scientific publications]
+    disabled: false
