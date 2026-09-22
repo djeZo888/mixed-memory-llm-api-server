@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { HarnessStore, busyKey, pendingRunIds } from './store';
 import { isActive, type Status } from './types';
+import { resolveStatus } from './status';
 import { Composer } from './Composer';
 import { ConversationReplies, WorkingStatus } from './Replies';
 
@@ -140,31 +141,37 @@ export function App({ store }: { store: HarnessStore }) {
           {!state.listLoading && state.sessions.length === 0 && (
             <p className="sidebar-hint">Your conversations will appear here.</p>
           )}
-          {state.sessions.map((session) => (
-            <div
-              className={`session-row ${session.id === selected ? 'selected' : ''}`}
-              key={session.id}
-            >
-              <button
-                className="session-select"
-                onClick={() => select(session.id)}
-                aria-current={session.id === selected ? 'page' : undefined}
+          {state.sessions.map((session) => {
+            const status = resolveStatus(
+              session.status,
+              thread?.session.id === session.id ? thread.runs : undefined,
+            );
+            return (
+              <div
+                className={`session-row ${session.id === selected ? 'selected' : ''}`}
+                key={session.id}
               >
-                <MessageSquare size={16} />
-                <span>
-                  <span className="session-title">{session.title || 'Untitled chat'}</span>
-                  <span className={`session-state status-${session.status}`}>{session.status}</span>
-                </span>
-              </button>
-              <button
-                className="icon-button delete-chat"
-                onClick={() => setConfirmDelete(session.id)}
-                aria-label={`Delete chat ${session.title || 'Untitled chat'}`}
-              >
-                <Trash2 size={15} />
-              </button>
-            </div>
-          ))}
+                <button
+                  className="session-select"
+                  onClick={() => select(session.id)}
+                  aria-current={session.id === selected ? 'page' : undefined}
+                >
+                  <MessageSquare size={16} />
+                  <span>
+                    <span className="session-title">{session.title || 'Untitled chat'}</span>
+                    <span className={`session-state status-${status}`}>{status}</span>
+                  </span>
+                </button>
+                <button
+                  className="icon-button delete-chat"
+                  onClick={() => setConfirmDelete(session.id)}
+                  aria-label={`Delete chat ${session.title || 'Untitled chat'}`}
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            );
+          })}
         </nav>
         <div className="sidebar-footer">
           <span className="version-dot" />
@@ -189,7 +196,7 @@ export function App({ store }: { store: HarnessStore }) {
           </div>
           {thread && (
             <div className="header-actions">
-              <Badge status={thread.session.status} />
+              <Badge status={resolveStatus(thread.session.status, thread.runs)} />
               <button
                 className="text-button handoff"
                 disabled={

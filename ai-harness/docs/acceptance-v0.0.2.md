@@ -1,7 +1,7 @@
 # ai-harness 0.0.2 — source/fixture candidate acceptance
 
-**Five focused actual-browser fixture scenarios pass, with one minor UI status
-inconsistency for root/WEB triage. This is not deployed/live acceptance.**
+**Five original browser fixture scenarios pass; the status finding is corrected
+and verified by one focused follow-up. This is not deployed/live acceptance.**
 Authorized 2026-09-22; see the [plan](../PLAN-v0.0.2.md) and
 [machine-readable receipt](acceptance-v0.0.2.json). The
 [0.0.1 acceptance](acceptance-v0.0.1.md) is preserved as historical evidence.
@@ -52,16 +52,19 @@ status are readable. The initial mobile sidebar shot caught its transition;
 The conversation scrolls internally, so one full-page screenshot does not show
 all history. Normal scroll clipping is not a missing-content finding.
 
-## Finding for source-owner triage
+## Status finding and focused correction
 
-**H002-UI-001 (minor, open):** with session state `idle` and a typed queued run,
-the dedicated run-status strip correctly shows `Queued`, spinner and the pending
-turn, while header/sidebar still say `idle`. This persists across the matching
-fixture snapshot refresh. See `ROOT-DEFECTS.md`,
-`browser/results/desktop-final-original-run.png` and
-`browser/results/mobile-final-retained-group.png`. No WEB source was changed;
-root coordinates any correction. The fixture does not establish how long this
-state occurs on production.
+**H002-UI-001 (corrected, fixture verified):** pre-fix `eb8387c` showed idle in
+header/sidebar while the run strip correctly showed Queued; retained evidence:
+`ROOT-DEFECTS.md` and `browser/results/desktop-final-original-run.png`.
+The authorized follow-up to docs commit `ac25d510` reuses the existing idle-only
+cancelling > running > queued rule across all three surfaces. Other aggregate
+states remain authoritative; only the current loaded thread supplies typed runs,
+and every unselected chat retains its list aggregate. Build and 12 focused regressions
+pass. One isolated Chromium scenario confirms consistent queued labels after
+refresh/chat switching; `status-correction/results/receipt.json` and visually
+reviewed `status-correction/results/desktop-status-corrected.png` record it.
+The original five scenarios were not repeated. Production remains NOT_TESTED.
 
 ## Explicit fixture adaptations and limits
 

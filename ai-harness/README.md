@@ -6,8 +6,8 @@ only**. It does not establish that 0.0.2 is deployed or accepted on the live
 service. See the [0.0.2 plan](PLAN-v0.0.2.md) and
 [0.0.2 acceptance report](docs/acceptance-v0.0.2.md) for exact identities,
 observations and limits. Production remains separately owned. Fixture review
-found a minor status inconsistency: the header/sidebar can say idle while the
-run-status strip correctly shows a queued follow-up; root/WEB triage is pending.
+found a minor idle/queued status inconsistency; the authorized focused follow-up
+corrected it and passed regression plus isolated browser verification.
 
 ## Candidate UI changes
 

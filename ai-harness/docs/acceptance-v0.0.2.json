@@ -3,7 +3,7 @@
   "task": "H002-UI-FIXTURES-20260922",
   "date": "2026-09-22",
   "stage": "source_fixture_candidate",
-  "overall_status": "SOURCE_FIXTURE_CANDIDATE_WITH_UI_FINDING",
+  "overall_status": "SOURCE_FIXTURE_CANDIDATE_STATUS_FINDING_CORRECTED",
   "live_gate": "NO_LIVE_GATE",
   "production_contact": false,
   "session_id": "01a0c7b6-5206-7cf1-9cc5-1df1643f1e61",
@@ -189,10 +189,21 @@
   "findings": [
     {
       "id": "H002-UI-001",
-      "status": "OPEN_FOR_ROOT_WEB_TRIAGE",
+      "status": "CORRECTED_FOCUSED_FIXTURE_PASS",
       "severity": "minor",
-      "detail": "idle badge/sidebar conflicts with Queued status strip when typed queued run survives an idle session state; reproduced across fixture refresh.",
-      "source_changed": false
+      "detail": "Pre-fix idle badge/sidebar conflicted with Queued strip; retained original receipts. Authorized follow-up reuses existing idle-only typed-run rule for all surfaces.",
+      "source_changed": true,
+      "correction": {
+        "base": "ac25d51031b386649636ec120051a879ac178b83",
+        "build": "PASS",
+        "focused_tests": 12,
+        "browser_scenarios": 1,
+        "receipt": "status-correction/results/receipt.json",
+        "screenshot": "status-correction/results/desktop-status-corrected.png",
+        "screenshot_visually_reviewed": true,
+        "production_rendering": "NOT_TESTED",
+        "unselected_rows": "Actual list aggregate only; no cross-conversation run cache"
+      }
     }
   ],
   "fixture_adaptations": [

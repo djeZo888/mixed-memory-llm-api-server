@@ -3,6 +3,7 @@ import { ChevronDown, Download, FileText, LoaderCircle, Paperclip, Terminal } fr
 import { Markdown } from './Markdown';
 import { groupReplies, type Reply } from './reply-groups';
 import { bytes, formatTime } from './display';
+import { currentRun, resolveStatus } from './status';
 import {
   artifactDownloadUrl,
   attachmentDownloadUrl,
@@ -380,23 +381,8 @@ export function ConversationReplies({ thread }: { thread: Thread }) {
 }
 export function WorkingStatus({ thread }: { thread: Thread }) {
   const runs = [...thread.runs].reverse();
-  const current =
-    runs.find((run) => run.status === 'cancelling') ??
-    runs.find((run) => run.status === 'running') ??
-    runs.find((run) => run.status === 'queued');
-  // Aggregate session state can briefly become idle between queued turns.
-  // A typed pending run still represents real work; preserve other emitted
-  // session states, especially compacting, cancelling and terminal failures.
-  const status =
-    thread.session.status === 'idle'
-      ? current?.status === 'cancelling'
-        ? 'cancelling'
-        : current?.status === 'running'
-          ? 'running'
-          : current?.status === 'queued'
-            ? 'queued'
-            : 'idle'
-      : thread.session.status;
+  const current = currentRun(thread.runs);
+  const status = resolveStatus(thread.session.status, thread.runs);
   const active = isActive(status);
   const summary =
     current?.subagents ??
