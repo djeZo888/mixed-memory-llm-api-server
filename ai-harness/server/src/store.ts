@@ -161,8 +161,7 @@ export class Store {
   }
   getSession(id: string, includeDeleted = false): StoredSession {
     const r = this.db.prepare("SELECT * FROM sessions WHERE id=?").get(id) as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
     if (!r || (r.deleted && !includeDeleted))
       throw new ApiError(404, "not_found", "Session not found");
     return {
@@ -766,43 +765,57 @@ export class Store {
     for (const event of events) this.events.emit(sessionId, event);
   }
   saveFile(f: FileRecord): FileRecord {
-    const old = this.db
-      .prepare("SELECT id FROM files WHERE session_id=? AND kind=? AND path=?")
-      .get(f.sessionId, f.kind, f.path) as { id: string } | undefined;
-    if (old) {
+    // A savepoint also preserves an enclosing caller transaction on failure.
+    this.db.exec("SAVEPOINT save_file");
+    try {
+      const old = this.db
+        .prepare(
+          "SELECT id FROM files WHERE session_id=? AND kind=? AND path=?",
+        )
+        .get(f.sessionId, f.kind, f.path) as { id: string } | undefined;
+      if (old) {
+        this.db
+          .prepare("UPDATE files SET name=?,mime_type=?,size=? WHERE id=?")
+          .run(safeStorageName(f.name), f.mimeType, f.size, old.id);
+        this.db
+          .prepare("INSERT OR REPLACE INTO h002_file_names VALUES(?,?)")
+          .run(old.id, displayName(f.name));
+        const saved = this.file(old.id);
+        this.db.exec("RELEASE SAVEPOINT save_file");
+        return saved;
+      }
       this.db
-        .prepare("UPDATE files SET name=?,mime_type=?,size=? WHERE id=?")
-        .run(safeStorageName(f.name), f.mimeType, f.size, old.id);
+        .prepare(
+          "INSERT INTO files(id,session_id,kind,path,name,mime_type,size) VALUES(?,?,?,?,?,?,?)",
+        )
+        .run(
+          f.id,
+          f.sessionId,
+          f.kind,
+          f.path,
+          safeStorageName(f.name),
+          f.mimeType,
+          f.size,
+        );
       this.db
-        .prepare("INSERT OR REPLACE INTO h002_file_names VALUES(?,?)")
-        .run(old.id, displayName(f.name));
-      return this.file(old.id);
-    }
-    this.db
-      .prepare(
-        "INSERT INTO files(id,session_id,kind,path,name,mime_type,size) VALUES(?,?,?,?,?,?,?)",
-      )
-      .run(
-        f.id,
-        f.sessionId,
-        f.kind,
-        f.path,
-        safeStorageName(f.name),
-        f.mimeType,
-        f.size,
+        .prepare("INSERT INTO h002_file_names VALUES(?,?)")
+        .run(f.id, displayName(f.name));
+      this.db
+        .prepare("INSERT INTO h002_file_refs VALUES(?,?,?)")
+        .run(f.id, f.runId ?? null, f.messageId ?? null);
+      this.db.exec("RELEASE SAVEPOINT save_file");
+      return f;
+    } catch (error) {
+      this.db.exec(
+        "ROLLBACK TO SAVEPOINT save_file; RELEASE SAVEPOINT save_file",
       );
-    this.db
-      .prepare("INSERT INTO h002_file_names VALUES(?,?)")
-      .run(f.id, displayName(f.name));
-    this.db
-      .prepare("INSERT INTO h002_file_refs VALUES(?,?,?)")
-      .run(f.id, f.runId ?? null, f.messageId ?? null);
-    return f;
+      throw error;
+    }
   }
+
   file(id: string): FileRecord {
     const r = this.db.prepare("SELECT * FROM files WHERE id=?").get(id) as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
     if (!r) throw new ApiError(404, "not_found", "File not found");
     const ref = this.db
       .prepare("SELECT run_id,message_id FROM h002_file_refs WHERE file_id=?")
