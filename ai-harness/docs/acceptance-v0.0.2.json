@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "task": "H002-UI-FIXTURES-20260922",
+  "date": "2026-09-22",
+  "stage": "source_fixture_candidate",
+  "overall_status": "SOURCE_FIXTURE_CANDIDATE_WITH_UI_FINDING",
+  "live_gate": "NO_LIVE_GATE",
+  "production_contact": false,
+  "session_id": "01a0c7b6-5206-7cf1-9cc5-1df1643f1e61",
+  "identities": {
+    "candidate_ui_source": "eb8387c9431b83a50d3c782b45ab7468f8f5a173",
+    "utility_image": "sha256:84ea979312f7743d9ab789465aae7adde92f97d6169744ec7b63776a9482b227",
+    "seccomp_sha256": "0474c063b32acee85a1eb5ccfc35f7b1f66278af8da722c45b1d25eb2ae1cfbb",
+    "dependency_lock_sha256": "c37680f13608e51a146425b897aca0b781b299d30f626c051139d8e2f284cf09",
+    "utility_versions": {
+      "node": "v24.21.0",
+      "playwright": "1.63.0",
+      "chromium": "Chromium 153.0.8010.52 built on Debian GNU/Linux 12 (bookworm)"
+    },
+    "utility_image_is_release_runtime_acceptance": false
+  },
+  "evidence": {
+    "local_root": "/Users/agent/CodexProjects/llm-orchestration/tasks/H002-UI-FIXTURES-20260922/evidence",
+    "remote_root": "/home/user/ai-harness-build/H002-UI-FIXTURES-20260922",
+    "primary_receipt": "browser/results/receipt.json",
+    "supplement_receipt": "browser/supplement/receipt.json",
+    "visual_review": "visual-review.json",
+    "defects": "ROOT-DEFECTS.md",
+    "build": "build.log",
+    "focused_unit": "focused-unit.log",
+    "source_hashes": "source-build-receipt.json",
+    "launch": "browser/launch-fixture.sh",
+    "supplement_launch": "browser/launch-supplement.sh",
+    "later_live": "later-live/CHECKLIST.md",
+    "cleanup": "browser/cleanup-final.json"
+  },
+  "isolation": {
+    "rootless": true,
+    "network": "none",
+    "ports": [],
+    "origin": "http://127.0.0.1:4193",
+    "chromium_sandbox": true,
+    "read_only_root": true,
+    "no_new_privileges": true,
+    "cap_drop": "ALL",
+    "init": "/usr/bin/catatonit",
+    "cpu": 2,
+    "memory_bytes": 2147483648,
+    "pids": 512,
+    "shm_bytes": 536870912,
+    "mounts": "owned payload read-only and owned evidence read-write only"
+  },
+  "build": {
+    "status": "PASS",
+    "command": "npm --prefix ai-harness/web run build",
+    "asset_sha256": {
+      "dist/index.html": "bd83375e2fd561210bffe551a21b0271357b446f2e63b60edf2c4cb8aed2f967",
+      "dist/assets/index-B_GnoiYb.js": "3e84de903801e16d266166f2a0b0adaa339bb81662179124c8b5f79632e15ea3",
+      "dist/assets/index-DnJbvr23.css": "628c8eaeb9cdd2ad3b6a4fb9cc27a74a299258ea4390704ffdc3daa786719bc0"
+    },
+    "cache": "H002-WEB node_modules copied after exact package-lock match"
+  },
+  "unit_tests": {
+    "status": "PASS",
+    "tests": 13,
+    "files": 2,
+    "command": "npm --prefix ai-harness/web test -- tests/composer.test.tsx tests/reply-groups-correction.test.tsx",
+    "ime_scope": "synthetic DOM event guard proof only"
+  },
+  "browser_cases": [
+    {
+      "name": "progress_queue_lifecycle",
+      "status": "PASS",
+      "runIds": {
+        "original": "fixture/run-1",
+        "queued": "fixture/run-2"
+      },
+      "assertions": [
+        "Enter newline / Ctrl+Enter submit",
+        "visible keyboard hint",
+        "version DOM",
+        "SSE intermediate visible",
+        "zero authoritative children remains working",
+        "two authoritative children shown",
+        "tool one row command URL duration detail",
+        "queued indicator",
+        "late final/file ownership",
+        "final collapse and reopen",
+        "refresh grouping no duplicates",
+        "status spinner outside composer",
+        "desktop/mobile no horizontal overflow"
+      ]
+    },
+    {
+      "name": "files_membership_previews",
+      "status": "PASS",
+      "assertions": [
+        "shared artifact membership in two runs",
+        "no-message run keeps files/activity",
+        "two decoded SVG previews as img",
+        "individual download routed",
+        "two ZIP links route by run",
+        "refresh membership"
+      ],
+      "limits": [
+        "ZIP archive deliberately empty; contents NOT_TESTED",
+        "generated images are synthetic SVG specimens, no engine generation",
+        "individual route specimen does not validate server archive or artifact bytes"
+      ]
+    },
+    {
+      "name": "attachments_drop_errors_draft",
+      "status": "PASS",
+      "assertions": [
+        "actual input form and DataTransfer drop event paths",
+        "multipart uploads and message attachment IDs",
+        "user message names and download route",
+        "invalid type and capability errors",
+        "draft retained on synthetic HTTP 503"
+      ],
+      "limits": [
+        "DataTransfer dispatch is synthetic browser input, not OS drag automation",
+        "download bytes are fixed synthetic fixture response, not source byte equality"
+      ]
+    },
+    {
+      "name": "fresh_context_timezone_sidebar",
+      "status": "PASS",
+      "assertions": [
+        "used initial context not zero",
+        "unknown stale not zero",
+        "untouched new context zero",
+        "explicit Ljubljana summer 12:24 and winter 11:24 under UTC browser",
+        "0.0.2 sidebar DOM",
+        "mobile sidebar open/Escape focus",
+        "no horizontal overflow"
+      ],
+      "environment": {
+        "timeZone": "Europe/Ljubljana",
+        "location": {
+          "city": "Ljubljana",
+          "country": "Slovenia"
+        },
+        "now": "2026-09-22T10:24:00.000Z"
+      },
+      "limits": [
+        "environment.now is frozen fixture instant; live clock/engine environment NOT_TESTED"
+      ]
+    },
+    {
+      "name": "queue_settlement_and_sandbox",
+      "status": "PASS",
+      "assertions": [
+        "two completed replies with independent activities and files",
+        "single-file reply ZIP absent",
+        "fixture-emitted queued run starts and settles",
+        "refresh unique replies and no extra send",
+        "completed Ready no spinner",
+        "new chat zero disappears after prompt",
+        "settled mobile sidebar capture",
+        "Chromium process sandbox controls"
+      ],
+      "limit": "Next-turn start/completion explicitly injected; server scheduling and native child behavior NOT_TESTED."
+    }
+  ],
+  "browser_status": "FIXTURE_PASS",
+  "page_errors": [],
+  "nonfixture_requests": [],
+  "screenshots": [
+    "browser/results/desktop-active-zero-children.png",
+    "browser/results/desktop-drag-over.png",
+    "browser/results/desktop-final-original-run.png",
+    "browser/results/desktop-fresh-zero.png",
+    "browser/results/desktop-queued-tool-detail.png",
+    "browser/results/desktop-shared-gallery-no-message.png",
+    "browser/results/desktop-upload-errors-draft.png",
+    "browser/results/mobile-active-queued.png",
+    "browser/results/mobile-final-retained-group.png",
+    "browser/results/mobile-fresh-zero.png",
+    "browser/results/mobile-shared-gallery.png",
+    "browser/results/mobile-sidebar-version.png",
+    "browser/results/mobile-upload-errors-draft.png",
+    "browser/supplement/desktop-two-completed-replies.png",
+    "browser/supplement/mobile-nonempty-context.png",
+    "browser/supplement/mobile-sidebar-settled.png",
+    "browser/supplement/mobile-two-completed-replies.png"
+  ],
+  "visual_status": "REVIEWED_WITH_MINOR_FINDING",
+  "findings": [
+    {
+      "id": "H002-UI-001",
+      "status": "OPEN_FOR_ROOT_WEB_TRIAGE",
+      "severity": "minor",
+      "detail": "idle badge/sidebar conflicts with Queued status strip when typed queued run survives an idle session state; reproduced across fixture refresh.",
+      "source_changed": false
+    }
+  ],
+  "fixture_adaptations": [
+    "Evidence copy adds only fixture/second-svg preview using original SVG with changed text.",
+    "Driver injects additive contract events for progress, lifecycle, zero/two children, queue, late final/files, shared membership and no-message runs.",
+    "Supplement explicitly emits queued-run start/completion; no backend scheduling acceptance.",
+    "One fixture-origin message POST fulfilled with synthetic HTTP 503 for retained draft.",
+    "DataTransfer dispatch exercises browser drag/drop handlers with synthetic File objects.",
+    "UTC browser context plus frozen summer/winter timestamps verifies explicit Ljubljana conversion.",
+    "Original fixture multipart handler records synthetic upload metadata; downloads fixed synthetic bytes.",
+    "Fixture ZIP deliberately empty; routing only."
+  ],
+  "not_tested": [
+    "Live engine/server event classification and settlement",
+    "Native child counts or lifecycle",
+    "Real ZIP contents and archive ownership/security",
+    "Real upload/download byte equality",
+    "Production rendering",
+    "User-history migration or existing user chat inspection",
+    "Live current clock or engine locale integration",
+    "Real platform IME and Cmd+Enter",
+    "PNG/JPEG decoding variants or hostile SVG execution testing",
+    "Full context/output, GPU, broad H001 regressions, installer"
+  ],
+  "cleanup": {
+    "status": "PASS",
+    "detail": "Both unique task containers and owned Node driver/server processes absent; task payload/evidence retained outside Git."
+  },
+  "publication": {
+    "status": "ROOT_REVIEW_PENDING",
+    "push": false,
+    "deployment": false
+  }
+}

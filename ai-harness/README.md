@@ -1,4 +1,49 @@
-# ai-harness v0.0.1
+# ai-harness v0.0.2 candidate
+
+Version 0.0.2 was authorized on 2026-09-22. This checkout contains the reviewed
+candidate UI source; this task supplies **source and synthetic fixture evidence
+only**. It does not establish that 0.0.2 is deployed or accepted on the live
+service. See the [0.0.2 plan](PLAN-v0.0.2.md) and
+[0.0.2 acceptance report](docs/acceptance-v0.0.2.md) for exact identities,
+observations and limits. Production remains separately owned. Fixture review
+found a minor status inconsistency: the header/sidebar can say idle while the
+run-status strip correctly shows a queued follow-up; root/WEB triage is pending.
+
+## Candidate UI changes
+
+- Progress displays emitted intermediate updates separately from the classified
+  final answer. It opens during work, collapses when the final answer is ready,
+  and can be reopened. Missing historical phase information stays unclassified.
+- Each reply groups its own activity and files. Canonical tool updates retain
+  available command, URL, duration and detail. Child counts follow the supplied
+  lifecycle summary; zero children alone does not mean a run has finished.
+- Generated SVG/image files have per-reply previews and individual downloads.
+  Replies with multiple files and a supplied archive route offer **Download all
+  ZIP**. Proven shared-file membership is retained; unknown ownership is labelled.
+- Attach or drop supported files on the composer. Submitted user messages retain
+  their recorded attachment names and download links. Image capability and upload
+  errors are visible. Failed submission retains the draft.
+- **Enter** inserts a newline; **Ctrl+Enter** or **Cmd+Enter** submits, as does the
+  send button. The composer displays this hint. Browser fixture checks do not
+  establish platform IME compatibility.
+- A follow-up sent while work is active queues for the next turn. It does not
+  steer the current native turn. Run status remains visible outside the composer,
+  and late answers/files stay with their original run across refresh.
+- Only an untouched new chat displays **0 / 480,000 tokens (0%)**. Existing
+  unknown and stale context retain those labels. Timestamps use
+  **Europe/Ljubljana**, including automatic CET/CEST conversion.
+
+These describe the candidate behavior and contract. Fixture events, uploads,
+child counts and file bytes are synthetic. The fixture ZIP is an empty route
+response: it proves neither production archive contents nor native generation.
+Live engine/server behavior, native child counts, real ZIP contents, migration of
+user history and production rendering remain **NOT_TESTED** in this phase.
+
+## Preserved v0.0.1 release history and operating guidance
+
+The following records the previously accepted release and its limits; it is not
+a fresh inspection of the running service. The [0.0.1 plan](PLAN-v0.0.1.md) and
+[0.0.1 acceptance report](docs/acceptance-v0.0.1.md) remain unchanged.
 
 A shared LAN chat for technical research, PDFs and coding, using MiniMax Code
 and the two existing Qwen instances. **Bounded live acceptance is complete with
