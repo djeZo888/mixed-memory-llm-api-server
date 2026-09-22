@@ -11,6 +11,7 @@ import {
   stat,
 } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { userInfo } from "node:os";
 import { Readable, Writable } from "node:stream";
 import { setTimeout as delay } from "node:timers/promises";
 import * as acp from "@agentclientprotocol/sdk";
@@ -423,6 +424,19 @@ class AcpEngine implements Engine {
     ) {
       throw new Error("Invalid engine gateway URL");
     }
+    // The host launcher/Podman needs the service account home. Only the launcher
+    // sets the container's private HOME; ambient HOME is not account authority.
+    const account = userInfo();
+    const uid = process.getuid?.();
+    if (
+      uid === undefined || uid === 0 || account.uid !== uid ||
+      process.geteuid?.() !== uid || !isAbsolute(account.homedir)
+    )
+      throw new Error("Engine launcher requires an ordinary service account");
+    const hostHome = await realpath(account.homedir);
+    const hostHomeInfo = await stat(hostHome);
+    if (!hostHomeInfo.isDirectory() || hostHomeInfo.uid !== uid)
+      throw new Error("Engine launcher home must be an owned existing directory");
     await mkdir(o.profileDir, { recursive: true, mode: 0o700 });
     const profileInfo = await lstat(o.profileDir);
     if (!profileInfo.isDirectory() || profileInfo.isSymbolicLink())
@@ -458,8 +472,7 @@ class AcpEngine implements Engine {
     const env: NodeJS.ProcessEnv = {
       PATH: `${dirname(process.execPath)}:/usr/local/bin:/usr/bin:/bin`,
       LANG: "C.UTF-8",
-      HOME: nativeHome,
-      MINIMAX_DATA_DIR: nativeState,
+      HOME: hostHome,
       AI_HARNESS_GATEWAY_URL: o.gatewayUrl,
       AI_HARNESS_GATEWAY_TOKEN: o.gatewayToken,
       AI_HARNESS_SESSION_ID: o.sessionId,

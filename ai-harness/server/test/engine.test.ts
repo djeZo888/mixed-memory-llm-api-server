@@ -4,15 +4,18 @@ import {
   mkdtemp,
   mkdir,
   readFile,
+  realpath,
   rm,
   stat,
   symlink,
   writeFile,
 } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { tmpdir, userInfo } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomBytes } from "node:crypto";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   createEngine,
@@ -36,8 +39,8 @@ async function harness(
   const root = await mkdtemp(join(tmpdir(), "h001-acp-"));
   const profileDir = join(root, "profile");
   const workspace = join(root, "workspace");
-  await mkdir(profileDir);
-  await mkdir(join(profileDir, "state"));
+  await mkdir(profileDir, { mode: 0o700 });
+  await mkdir(join(profileDir, "state"), { mode: 0o700 });
   await mkdir(workspace);
   await writeFile(join(profileDir, "fixture.json"), JSON.stringify(config));
   const updates: EngineUpdate[] = [];
@@ -118,8 +121,8 @@ test("official SDK subprocess initialize/new/prompt updates and private launcher
   assert.equal(launch.inheritedSecret, false);
   assert.equal(launch.gatewayPresent, true);
   assert.equal(launch.nodeOptionsInherited, false);
-  assert.equal(launch.home, join(h.profileDir, "state", "home"));
-  assert.equal(launch.dataDir, join(h.profileDir, "state"));
+  assert.equal(launch.home, await realpath(userInfo().homedir));
+  assert.equal(launch.dataDir, undefined);
   const sent = calls.find((c) => c.method === "prompt")!.params.prompt;
   assert.match(sent[0].text, /public research/);
   assert.equal(sent.at(-1).text, "updates");
@@ -133,6 +136,103 @@ test("official SDK subprocess initialize/new/prompt updates and private launcher
   const log = await readFile(h.stderrPath, "utf8");
   assert.ok(log.includes("[REDACTED]"));
   assert.ok(!log.includes(h.token));
+});
+
+test("trusted host HOME ignores ambient spoofing while reviewed launcher confines native HOME to profile", async (t) => {
+  const h = await harness(t);
+  const nativeState = join(h.profileDir, "state");
+  const nativeHome = join(nativeState, "home");
+  const hostHome = await realpath(userInfo().homedir);
+  const ambient = {
+    HOME: nativeHome,
+    MINIMAX_DATA_DIR: "/fixture/untrusted-state",
+    HTTPS_PROXY: "http://fixture.invalid:1",
+    SSH_AUTH_SOCK: "/fixture/untrusted-agent",
+    CONTAINER_HOST: "unix:///fixture/untrusted-podman",
+  };
+  const previous = Object.fromEntries(Object.keys(ambient).map((key) => [key, process.env[key]]));
+  Object.assign(process.env, ambient);
+  try {
+    await h.engine.start();
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+  const launch = (await h.calls()).find((call) => call.method === "launch")!;
+  assert.equal(launch.home, hostHome);
+  assert.notEqual(launch.home, nativeHome);
+  assert.equal(launch.dataDir, undefined);
+  assert.equal(launch.proxyInherited, false);
+  assert.equal(launch.authSocketInherited, false);
+  assert.equal(launch.containerHostInherited, false);
+  for (const privatePath of [nativeState, nativeHome, join(nativeState, "permission.json")]) {
+    const info = await stat(privatePath);
+    assert.equal(info.uid, process.getuid!());
+    assert.equal(info.mode & 0o077, 0, privatePath);
+  }
+  assert.equal(hostHome === h.profileDir || hostHome.startsWith(h.profileDir + "/"), false);
+
+  // Inspect the actual reviewed launcher contract without starting Podman,
+  // touching an image or invoking the native engine.
+  const source = await readFile(new URL("../../deploy/run-engine.sh", import.meta.url), "utf8");
+  assert.ok(source.includes('host_home=$(cd -- "$HOME" && pwd -P)'));
+  assert.ok(source.includes('export PATH=/usr/bin:/bin HOME="$host_home"'));
+  assert.ok(source.includes("container_data=$profile_dir/state"));
+  assert.ok(source.includes("container_home=$container_data/home"));
+  const invocation = source.slice(source.indexOf('exec "$python_bin"'));
+  assert.deepEqual([...invocation.matchAll(/--volume\s+"([^"]+)"/g)].map((match) => match[1]), [
+    "$profile_dir:$profile_dir:rw,rprivate",
+    "$workspace:$workspace:rw,rprivate",
+  ]);
+  assert.ok(invocation.includes('--env "HOME=$container_home" --env "MINIMAX_DATA_DIR=$container_data"'));
+  assert.equal(/--(?:mount|env-file)\b/.test(invocation), false);
+  assert.equal(invocation.includes("$host_home"), false);
+
+  // Run the unchanged launcher with a fake Podman executable. The fake reports
+  // pinned metadata and records arguments; it cannot start any container.
+  const mockBin = join(h.root, "mock-bin");
+  await mkdir(mockBin);
+  const pins = JSON.parse(await readFile(new URL("../../deploy/patches/identity.json", import.meta.url), "utf8"));
+  await writeFile(join(mockBin, "podman"), `#!${process.execPath}
+import { writeFileSync } from "node:fs";
+const argv = process.argv.slice(2);
+if (argv[0] !== "--remote=false") process.exit(90);
+if (argv[1] === "info") console.log("true");
+else if (argv[1] === "image" && argv[2] === "inspect") console.log("sha256:${"a".repeat(64)}|ae65651df5f97ae1085ab4e19964f4b78c769a4e|${pins.patchSetSha256}");
+else if (argv[1] === "run") writeFileSync(new URL("./invocation.json", import.meta.url), JSON.stringify({argv, home:process.env.HOME, dataDir:process.env.MINIMAX_DATA_DIR}));
+else if (argv[1] === "rm") process.exit(0);
+else if (argv[1] === "container" && argv[2] === "exists") process.exit(1);
+else process.exit(91);
+`, { mode: 0o700 });
+  const canonicalProfile = await realpath(h.profileDir);
+  const canonicalWorkspace = await realpath(h.workspace);
+  const realLauncher = fileURLToPath(new URL("../../deploy/run-engine.sh", import.meta.url));
+  const launcherArgs = [realLauncher, "--profile-dir", canonicalProfile, "--workspace", canonicalWorkspace];
+  const launcherEnv = {
+    PATH: `${mockBin}:/usr/bin:/bin`, HOME: launch.home,
+    AI_HARNESS_GATEWAY_TOKEN: h.token, AI_HARNESS_SESSION_ID: "fixture-home",
+    AI_HARNESS_GATEWAY_URL: "http://10.0.2.2:8081/v1",
+  };
+  await promisify(execFile)("/bin/bash", launcherArgs, { env: launcherEnv, timeout: 5000 });
+  const invoked = JSON.parse(await readFile(join(mockBin, "invocation.json"), "utf8"));
+  assert.equal(invoked.home, hostHome);
+  assert.equal(invoked.dataDir, undefined);
+  const values = (flag: string) => (invoked.argv as string[]).flatMap((value, index, all) => value === flag ? [all[index + 1]] : []);
+  assert.deepEqual(values("--volume"), [
+    `${canonicalProfile}:${canonicalProfile}:rw,rprivate`,
+    `${canonicalWorkspace}:${canonicalWorkspace}:rw,rprivate`,
+  ]);
+  assert.ok(values("--env").includes(`HOME=${canonicalProfile}/state/home`));
+  assert.ok(values("--env").includes(`MINIMAX_DATA_DIR=${canonicalProfile}/state`));
+  await assert.rejects(promisify(execFile)("/bin/bash", launcherArgs, {
+    env: { ...launcherEnv, HOME: await realpath(nativeHome) }, timeout: 5000,
+  }), (error: unknown) => {
+    assert.match(String((error as { stderr: string }).stderr), /cannot expose the user home or an ancestor/);
+    return true;
+  });
+  assert.equal(await h.engine.prompt("ordinary startup follow-up"), "completed");
 });
 
 for (const mode of ["resume", "load"])

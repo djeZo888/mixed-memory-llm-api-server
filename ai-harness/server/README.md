@@ -56,6 +56,12 @@ The server directly executes the launcher (no shell) with
   it when the engine closes/exits
 - `AI_HARNESS_SESSION_ID`: public chat identifier
 
+The host launcher's `HOME` is the canonical existing home from `userInfo()` for
+the ordinary service account, checked for ownership; ambient `HOME` is ignored.
+No host `MINIMAX_DATA_DIR` is passed. The reviewed launcher sets container-only
+`HOME=ABS_PROFILE/state/home` and `MINIMAX_DATA_DIR=ABS_PROFILE/state` explicitly,
+mounting only profile/workspace. The host home is never a container mount.
+
 The container must mount profile/workspace at the **same absolute paths**.
 PREP must verify container reachability (candidate `http://10.0.2.2:8081/v1`)
 and terminate descendants on launcher shutdown. The server allows 5 seconds for

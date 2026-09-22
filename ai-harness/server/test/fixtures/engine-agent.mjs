@@ -36,6 +36,9 @@ await save({
   gatewayPresent: Boolean(process.env.AI_HARNESS_GATEWAY_TOKEN),
   home: process.env.HOME,
   dataDir: process.env.MINIMAX_DATA_DIR,
+  proxyInherited: Boolean(process.env.HTTPS_PROXY),
+  authSocketInherited: Boolean(process.env.SSH_AUTH_SOCK),
+  containerHostInherited: Boolean(process.env.CONTAINER_HOST),
   nodeOptionsInherited: Boolean(process.env.NODE_OPTIONS),
 });
 process.stderr.write(
