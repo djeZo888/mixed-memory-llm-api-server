@@ -46,6 +46,7 @@ describe('UI', () => {
     const store = new HarnessStore(transport);
     render(<App store={store} />);
     await screen.findByRole('textbox', { name: 'Message' });
+    expect(screen.getByText('0.0.2')).toBeInTheDocument();
     await waitFor(() => expect(streams.length).toBe(1));
     fireEvent.change(screen.getByLabelText('Upload file'), {
       target: { files: [new File(['notes'], 'notes.txt', { type: 'text/plain' })] },
@@ -64,7 +65,7 @@ describe('UI', () => {
         }),
       );
     });
-    await user.click(screen.getByRole('button', { name: 'Stop' }));
+    await user.click(screen.getByRole('button', { name: 'Stop all' }));
     expect(transport.cancel).toHaveBeenCalledWith('chat/a');
     expect(store.getSnapshot().thread?.session.status).toBe('cancelling');
     await user.click(screen.getByText('Activity'));

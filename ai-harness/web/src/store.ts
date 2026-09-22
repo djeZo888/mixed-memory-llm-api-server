@@ -1,7 +1,7 @@
 import { api, ApiError, type Transport } from './api';
 import { applyEvent, reconcileSnapshot } from './state';
-import { uploadProblem } from './uploads';
-import type { Attachment, ServerEvent, Session, Thread } from './types';
+import { uploadKey, uploadProblem } from './uploads';
+import type { Attachment, ServerEvent, Session, Snapshot, Thread } from './types';
 
 export interface ViewState {
   sessions: Session[];
@@ -15,7 +15,12 @@ export interface ViewState {
   healthLoaded: boolean;
   busy: Record<string, boolean>;
   attachments: Record<string, Attachment[]>;
-  submitted: Record<string, string | undefined>;
+  submitted: Record<string, string[] | undefined>;
+}
+export interface UploadUpdate {
+  file: File;
+  status: 'uploading' | 'ready' | 'error';
+  error?: string;
 }
 const messageOf = (error: unknown) =>
   error instanceof Error ? error.message : 'The request could not be completed.';
@@ -23,6 +28,17 @@ export const busyKey = (action: string, id = '') => `${action}:${id}`;
 // Opaque server IDs may match Object.prototype names.
 export const lookup = <T>(record: Record<string, T>, id: string): T | undefined =>
   Object.hasOwn(record, id) ? record[id] : undefined;
+export const runPending = (status: string) => ['queued', 'running', 'cancelling'].includes(status);
+export function pendingRunIds(state: ViewState, id: string): string[] {
+  const runs = state.thread?.session.id === id ? state.thread.runs : [];
+  const terminal = new Set(runs.filter((run) => !runPending(run.status)).map((run) => run.id));
+  return [
+    ...new Set([
+      ...(lookup(state.submitted, id) ?? []).filter((runId) => !terminal.has(runId)),
+      ...runs.filter((run) => runPending(run.status)).map((run) => run.id),
+    ]),
+  ];
+}
 export class HarnessStore {
   private state: ViewState = {
     sessions: [],
@@ -49,6 +65,7 @@ export class HarnessStore {
   private read?: AbortController;
   private boot?: AbortController;
   private deleted = new Set<string>();
+  private uploadedFiles = new Map<string, Map<string, string>>();
   private resyncing = false;
   private resyncAgain = false;
   private buffered: ServerEvent[] = [];
@@ -140,14 +157,26 @@ export class HarnessStore {
   private current(id: string, generation: number) {
     return !this.closed && this.state.selectedId === id && this.generation === generation;
   }
+  private hydrateCompletions(snapshot: Snapshot) {
+    const completed = this.completedRuns.get(snapshot.session.id) ?? new Set<string>();
+    for (const event of snapshot.events)
+      if (event.sessionId === snapshot.session.id && event.type === 'done')
+        completed.add(event.data.runId);
+    for (const run of snapshot.runs ?? []) if (!runPending(run.status)) completed.add(run.id);
+    this.completedRuns.set(snapshot.session.id, completed);
+  }
   private showThread(thread: Thread) {
-    const terminal = ['idle', 'failed', 'interrupted', 'deleting'].includes(thread.session.status);
+    const id = thread.session.id;
+    const terminal = new Set(
+      thread.runs.filter((run) => !runPending(run.status)).map((run) => run.id),
+    );
+    const submitted = (lookup(this.state.submitted, id) ?? []).filter(
+      (runId) => !terminal.has(runId) && !this.completedRuns.get(id)?.has(runId),
+    );
     this.update({
       thread,
-      ...(terminal
-        ? { submitted: { ...this.state.submitted, [thread.session.id]: undefined } }
-        : {}),
-      sessions: this.state.sessions.map((s) => (s.id === thread.session.id ? thread.session : s)),
+      submitted: { ...this.state.submitted, [id]: submitted.length ? submitted : undefined },
+      sessions: this.state.sessions.map((s) => (s.id === id ? thread.session : s)),
     });
   }
   private async loadInitial(id: string, generation: number) {
@@ -159,6 +188,7 @@ export class HarnessStore {
         this.forget(id);
         return;
       }
+      this.hydrateCompletions(snapshot);
       const thread = reconcileSnapshot(snapshot);
       this.showThread(thread);
       this.update({ loading: false });
@@ -201,11 +231,30 @@ export class HarnessStore {
     this.handleControl(event);
   }
   private handleControl(event: ServerEvent, fromSnapshot = false) {
+    if (event.type === 'run' && !runPending(event.data.run.status)) {
+      const completed = this.completedRuns.get(event.sessionId) ?? new Set<string>();
+      completed.add(event.data.run.id);
+      this.completedRuns.set(event.sessionId, completed);
+    }
+    if (
+      event.type === 'state' &&
+      !['queued', 'running', 'compacting', 'cancelling'].includes(event.data.status) &&
+      !this.state.thread?.runs.length
+    )
+      this.update({ submitted: { ...this.state.submitted, [event.sessionId]: undefined } });
     if (event.type === 'done') {
       const completed = this.completedRuns.get(event.sessionId) ?? new Set<string>();
       completed.add(event.data.runId);
       this.completedRuns.set(event.sessionId, completed);
-      this.update({ submitted: { ...this.state.submitted, [event.sessionId]: undefined } });
+      const pending = (lookup(this.state.submitted, event.sessionId) ?? []).filter(
+        (id) => id !== event.data.runId,
+      );
+      this.update({
+        submitted: {
+          ...this.state.submitted,
+          [event.sessionId]: pending.length ? pending : undefined,
+        },
+      });
       if (!fromSnapshot) void this.resync();
       void this.refreshList(false);
     }
@@ -242,6 +291,7 @@ export class HarnessStore {
       // An older/cached snapshot without a cutoff must not rewind the cursor or UI.
       const renderedCursor = this.state.thread?.lastEventId ?? 0;
       if (thread.lastEventId >= renderedCursor) {
+        this.hydrateCompletions(snapshot);
         this.showThread(thread);
         // A reconnect GET can win the race against SSE replay. Do not lose an
         // unseen handoff/done just because the snapshot advanced our cursor.
@@ -308,7 +358,9 @@ export class HarnessStore {
     const sessions = this.state.sessions.filter((s) => s.id !== id);
     const attachments = { ...this.state.attachments };
     delete attachments[id];
-    this.update({ sessions, attachments });
+    const submitted = { ...this.state.submitted };
+    delete submitted[id];
+    this.update({ sessions, attachments, submitted });
     if (this.state.selectedId === id) this.select(sessions[0]?.id ?? null);
   }
   remove = (id: string) =>
@@ -344,7 +396,11 @@ export class HarnessStore {
           },
           submitted: {
             ...this.state.submitted,
-            [id]: this.completedRuns.get(id)?.has(runId) ? undefined : runId,
+            [id]:
+              this.completedRuns.get(id)?.has(runId) ||
+              this.state.thread?.runs.some((run) => run.id === runId && !runPending(run.status))
+                ? lookup(this.state.submitted, id)
+                : [...new Set([...(lookup(this.state.submitted, id) ?? []), runId])],
           },
         });
         if (this.state.selectedId === id) void this.resync();
@@ -368,7 +424,7 @@ export class HarnessStore {
   };
   handoff = (id: string) => {
     const before = this.handoffs.get(id) ?? 0;
-    if (lookup(this.state.submitted, id)) return Promise.resolve(false);
+    if (pendingRunIds(this.state, id).length) return Promise.resolve(false);
     return this.action(
       'handoff',
       id,
@@ -376,32 +432,96 @@ export class HarnessStore {
       ({ runId }) => {
         const settled =
           this.completedRuns.get(id)?.has(runId) || (this.handoffs.get(id) ?? 0) !== before;
-        this.update({ submitted: { ...this.state.submitted, [id]: settled ? undefined : runId } });
+        this.update({
+          submitted: { ...this.state.submitted, [id]: settled ? undefined : [runId] },
+        });
         if (this.state.selectedId === id) void this.resync();
       },
     );
   };
-  upload = (id: string, file: File) => {
-    const problem = uploadProblem(file, this.state.visionAvailable);
-    if (problem) {
-      this.update({ error: problem });
-      return Promise.resolve(false);
-    }
-    if (this.state.busy[busyKey('send', id)] || this.state.busy[busyKey('delete', id)])
-      return Promise.resolve(false);
-    return this.action(
+  upload = (id: string, file: File) => this.uploadBatch(id, [file]);
+  uploadBatch = async (id: string, files: File[], onUpdate?: (update: UploadUpdate) => void) => {
+    if (
+      this.closed ||
+      this.state.busy[busyKey('send', id)] ||
+      this.state.busy[busyKey('delete', id)]
+    )
+      return false;
+    const unique = [...new Map(files.map((file) => [uploadKey(file), file])).values()];
+    if (!unique.length) return false;
+    const generation = this.generation;
+    let allSucceeded = true;
+    // Hold one lock for the entire batch, including the gap between requests.
+    // A send can never capture a partially uploaded selection.
+    const accepted = await this.action(
       'upload',
       id,
-      () => this.transport.upload(id, file),
-      ({ attachment }) => {
-        this.update({
-          attachments: {
-            ...this.state.attachments,
-            [id]: [...(lookup(this.state.attachments, id) ?? []), attachment],
-          },
-        });
+      async () => {
+        const known = this.uploadedFiles.get(id) ?? new Map<string, string>();
+        const attachedIds = new Set((lookup(this.state.attachments, id) ?? []).map((a) => a.id));
+        for (const [key, attachmentId] of known) {
+          if (!attachedIds.has(attachmentId)) known.delete(key);
+        }
+        this.uploadedFiles.set(id, known);
+        for (const file of unique) {
+          if (this.closed || this.deleted.has(id) || this.state.busy[busyKey('delete', id)]) {
+            allSucceeded = false;
+            onUpdate?.({ file, status: 'error', error: 'Upload stopped because the chat closed.' });
+            continue;
+          }
+          const previous = known.get(uploadKey(file));
+          if (
+            previous &&
+            (lookup(this.state.attachments, id) ?? []).some((a) => a.id === previous)
+          ) {
+            onUpdate?.({ file, status: 'ready' });
+            continue;
+          }
+          try {
+            const problem = uploadProblem(file, this.state.visionAvailable);
+            if (problem) throw new Error(problem);
+            onUpdate?.({ file, status: 'uploading' });
+            const { attachment } = await this.transport.upload(id, file);
+            if (this.closed || this.deleted.has(id)) {
+              allSucceeded = false;
+              continue;
+            }
+            known.set(uploadKey(file), attachment.id);
+            const thread = this.state.thread;
+            this.update({
+              attachments: {
+                ...this.state.attachments,
+                [id]: [
+                  ...(lookup(this.state.attachments, id) ?? []).filter(
+                    (a) => a.id !== attachment.id,
+                  ),
+                  attachment,
+                ],
+              },
+              ...(thread?.session.id === id
+                ? {
+                    thread: {
+                      ...thread,
+                      attachments: [
+                        ...thread.attachments.filter((a) => a.id !== attachment.id),
+                        attachment,
+                      ],
+                    },
+                  }
+                : {}),
+            });
+            onUpdate?.({ file, status: 'ready' });
+          } catch (error) {
+            allSucceeded = false;
+            const problem = messageOf(error);
+            onUpdate?.({ file, status: 'error', error: problem });
+            if (this.current(id, generation)) this.update({ error: problem });
+          }
+        }
       },
+      () => {},
     );
+    return accepted && allSucceeded;
   };
   removeAttachment = (id: string, attachmentId: string) => {
     if (this.state.busy[busyKey('send', id)]) return;

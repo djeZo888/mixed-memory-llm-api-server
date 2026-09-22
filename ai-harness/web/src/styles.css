@@ -1128,3 +1128,237 @@ h1 {
     transition: none !important;
   }
 }
+
+/* v0.0.2: reply-level progress and files, with compact readable lifecycle rows. */
+.assistant-reply .activity,
+.assistant-reply .artifacts {
+  margin-left: 0;
+}
+.message-final {
+  border-left: 3px solid #769580;
+  padding: 3px 0 3px 17px;
+  margin: 8px 0 20px;
+}
+.message-response {
+  margin-bottom: 20px;
+}
+.progress-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 18px;
+  background: #f8f9f5;
+}
+.progress-panel > summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  padding: 12px 15px;
+  color: #687562;
+  font-size: 12px;
+  list-style: none;
+}
+.progress-panel > summary::-webkit-details-marker {
+  display: none;
+}
+.progress-panel[open] > summary > svg:last-child {
+  transform: rotate(180deg);
+}
+.progress-messages {
+  padding: 0 15px 15px;
+}
+.progress-message {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  margin-top: 9px;
+}
+.progress-message .markdown {
+  font-size: 13px;
+}
+.activity-command {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 90px;
+  overflow: auto;
+  font-size: 11px;
+  background: #eef1e9;
+  border-radius: 4px;
+  padding: 7px;
+}
+.activity-url {
+  font-size: 11px;
+}
+.show-more {
+  margin: 0 15px 13px;
+  font-size: 11px;
+}
+.files-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.files-heading h2 {
+  margin-bottom: 0;
+}
+.zip-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+}
+.reply-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+}
+.artifact-preview {
+  margin: 12px 0;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.artifact-preview img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+}
+.artifact-preview figcaption,
+.artifact-preview p {
+  font-size: 11px;
+  padding: 8px;
+  overflow-wrap: anywhere;
+  color: #687562;
+}
+.message-attachments {
+  list-style: none;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+}
+.message-attachments li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  overflow-wrap: anywhere;
+}
+.message-attachments small {
+  color: #929b89;
+}
+.unassociated-history {
+  border-top: 1px dashed var(--line);
+  padding-top: 14px;
+  margin: 20px 0;
+}
+.unassociated-history > p {
+  font-size: 12px;
+  margin: 0 0 5px;
+}
+.unassociated-history > small {
+  color: #818975;
+  font-size: 11px;
+}
+.unassociated-history .activity,
+.unassociated-history .artifacts {
+  margin-left: 0;
+  margin-top: 14px;
+}
+.working-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 30px;
+  font-size: 11px;
+  color: #75836b;
+}
+.working-status > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.working-status strong {
+  font-weight: 500;
+}
+.is-working {
+  background: #f2f6ee;
+  color: #41634b;
+}
+.working-spinner {
+  animation: working-rotate 1.2s linear infinite;
+}
+@keyframes working-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.drop-active {
+  outline: 2px dashed #769580;
+  outline-offset: 3px;
+}
+.drop-hint,
+.upload-notice {
+  color: #5b7559;
+  font-size: 11px;
+  padding: 8px 14px;
+  margin: 0;
+}
+.upload-status {
+  padding: 8px 14px 0;
+  margin: 0;
+  list-style: none;
+  font-size: 11px;
+}
+.upload-status li {
+  overflow-wrap: anywhere;
+  padding: 4px 0;
+}
+.upload-error {
+  color: #9d5942;
+}
+.keyboard-hint {
+  display: inline !important;
+}
+@media (max-width: 700px) {
+  .working-status {
+    padding: 8px 18px;
+    font-size: 10px;
+    gap: 7px 13px;
+  }
+  .composer-note {
+    flex-wrap: wrap;
+  }
+  .message-final {
+    padding-left: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .working-spinner {
+    animation: none;
+  }
+}
+.legacy-events {
+  margin: 0 15px 12px;
+  font-size: 11px;
+}
+.legacy-events > summary {
+  cursor: pointer;
+  color: #758b6b;
+}
+.legacy-events > p {
+  color: #8a9480;
+  font-size: 10px;
+}
+.composer-queue-note {
+  margin: 7px 1px 0;
+  color: #75836b;
+  font-size: 10px;
+  line-height: 1.5;
+}

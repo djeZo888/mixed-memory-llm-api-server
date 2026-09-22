@@ -5,7 +5,12 @@ const sourceExtensions = new Set(
 );
 export const uploadAccept =
   '.pdf,text/*,' + [...sourceExtensions].map((extension) => `.${extension}`).join(',');
+// Matches the reviewed server multipart and streamed-file limit.
+export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
+export const uploadKey = (file: File) =>
+  JSON.stringify([file.name, file.size, file.type, file.lastModified]);
 export function uploadProblem(file: File, visionAvailable: boolean): string | null {
+  if (file.size > MAX_UPLOAD_BYTES) return 'Upload exceeds 50 MiB per file.';
   if (
     file.type.startsWith('image/') ||
     /\.(png|jpe?g|gif|webp|svg|avif|heic|bmp|tiff?)$/i.test(file.name)

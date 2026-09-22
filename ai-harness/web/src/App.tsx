@@ -1,171 +1,26 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   ArrowDown,
-  ArrowUp,
   ArrowUpRight,
-  Check,
-  ChevronDown,
-  Download,
   FileText,
   Menu,
   MessageSquare,
-  Paperclip,
   Plus,
-  Square,
   Terminal,
   Trash2,
   X,
 } from 'lucide-react';
-import { HarnessStore, busyKey, lookup, type ViewState } from './store';
+import { HarnessStore, busyKey, pendingRunIds } from './store';
 import { isActive, type Status } from './types';
-import { artifactPath } from './api';
-import { ContextMeter } from './ContextMeter';
-import { Markdown } from './Markdown';
-import { uploadAccept } from './uploads';
+import { Composer } from './Composer';
+import { ConversationReplies, WorkingStatus } from './Replies';
 
-const iconSize = 17;
 function Badge({ status }: { status: Status }) {
   return (
     <span className={`badge status-${status}`}>
       <span />
       {status}
     </span>
-  );
-}
-const time = (value: string) => {
-  const date = new Date(value);
-  return Number.isNaN(date.valueOf())
-    ? ''
-    : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
-const bytes = (size: number) =>
-  size >= 1024 * 1024
-    ? `${(size / 1024 / 1024).toFixed(1)} MB`
-    : `${Math.max(1, Math.round(size / 1024))} KB`;
-
-function Composer({ store, state, id }: { store: HarnessStore; state: ViewState; id: string }) {
-  const [text, setText] = useState('');
-  const input = useRef<HTMLTextAreaElement>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
-  const attachments = lookup(state.attachments, id) ?? [];
-  const busy = (action: string) => state.busy[busyKey(action, id)];
-  const locked = busy('send') || busy('upload') || busy('delete') || state.loading || !state.thread;
-  const active = isActive(state.thread?.session.status) || !!lookup(state.submitted, id);
-  useEffect(() => {
-    input.current?.focus();
-  }, []);
-  async function send() {
-    const submitted = text;
-    if (locked || (!text.trim() && !attachments.length)) return;
-    if (await store.send(id, submitted)) setText((value) => (value === submitted ? '' : value));
-    input.current?.focus();
-  }
-  return (
-    <div className="composer-wrap">
-      <ContextMeter context={state.thread?.session.context} />
-      <form
-        className="composer"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void send();
-        }}
-      >
-        {attachments.length > 0 && (
-          <ul className="attachments" aria-label="Attached files">
-            {attachments.map((attachment) => (
-              <li key={attachment.id}>
-                <FileText size={15} />
-                <span title={attachment.name}>{attachment.name}</span>
-                <small>{bytes(attachment.size)}</small>
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label={`Remove attachment ${attachment.name}`}
-                  disabled={!!busy('send')}
-                  onClick={() => store.removeAttachment(id, attachment.id)}
-                >
-                  <X size={14} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <label className="sr-only" htmlFor="message-input">
-          Message
-        </label>
-        <textarea
-          id="message-input"
-          ref={input}
-          rows={3}
-          placeholder="Ask a question or describe a task…"
-          value={text}
-          disabled={!!locked}
-          onChange={(event) => setText(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-              event.preventDefault();
-              void send();
-            }
-          }}
-        />
-        <div className="composer-actions">
-          <input
-            ref={fileInput}
-            className="sr-only"
-            type="file"
-            tabIndex={-1}
-            aria-label="Upload file"
-            accept={uploadAccept + (state.visionAvailable ? ',image/*' : '')}
-            disabled={!!locked}
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = '';
-              if (file) void store.upload(id, file);
-            }}
-          />
-          <button
-            type="button"
-            className="text-button attach-button"
-            disabled={!!locked}
-            onClick={() => fileInput.current?.click()}
-          >
-            <Paperclip size={iconSize} />
-            {busy('upload') ? 'Uploading…' : 'Attach file'}
-          </button>
-          <div className="send-actions">
-            {active && (
-              <button
-                type="button"
-                className="stop-button"
-                disabled={!!busy('cancel') || state.thread?.session.status === 'cancelling'}
-                onClick={() => void store.cancel(id)}
-              >
-                <Square size={12} fill="currentColor" />
-                {state.thread?.session.status === 'cancelling' ? 'Cancelling' : 'Stop'}
-              </button>
-            )}
-            <button
-              className="send-button"
-              type="submit"
-              aria-label="Send message"
-              disabled={!!locked || (!text.trim() && !attachments.length)}
-            >
-              <ArrowUp size={20} />
-            </button>
-          </div>
-        </div>
-      </form>
-      <div className="composer-note">
-        <span>
-          {state.healthLoaded
-            ? state.visionAvailable
-              ? 'PDF, source, text and image files'
-              : 'PDF, source and text files · Images unavailable'
-            : 'Checking attachment capabilities…'}
-        </span>
-        <span className="keyboard-hint">Enter to send · Shift + Enter for a new line</span>
-      </div>
-    </div>
   );
 }
 
@@ -223,6 +78,16 @@ export function App({ store }: { store: HarnessStore }) {
   return (
     <div
       className="app-shell"
+      onDragOver={(event) => {
+        if (Array.from(event.dataTransfer.types).includes('Files')) event.preventDefault();
+      }}
+      onDrop={(event) => {
+        if (
+          Array.from(event.dataTransfer.types).includes('Files') ||
+          event.dataTransfer.files.length
+        )
+          event.preventDefault();
+      }}
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
           if (sidebarOpen) dismissSidebar();
@@ -303,7 +168,7 @@ export function App({ store }: { store: HarnessStore }) {
         </nav>
         <div className="sidebar-footer">
           <span className="version-dot" />
-          ai-harness <span>0.0.1</span>
+          ai-harness <span>0.0.2</span>
           <p>A space for technical work.</p>
         </div>
       </aside>
@@ -330,7 +195,7 @@ export function App({ store }: { store: HarnessStore }) {
                 disabled={
                   !!state.busy[busyKey('handoff', selected!)] ||
                   isActive(thread.session.status) ||
-                  !!lookup(state.submitted, selected!)
+                  pendingRunIds(state, selected!).length > 0
                 }
                 onClick={() => void store.handoff(selected!)}
               >
@@ -355,6 +220,7 @@ export function App({ store }: { store: HarnessStore }) {
             )}
           </div>
         )}
+        {thread && <WorkingStatus thread={thread} />}
         {state.error && (
           <div className="error-banner" role="alert">
             <span>{state.error}</span>
@@ -426,105 +292,15 @@ export function App({ store }: { store: HarnessStore }) {
                   <p>Send a message or attach a file below.</p>
                 </div>
               )}
-              {thread?.messages.map((message) => (
-                <article
-                  className={`message message-${message.role}`}
-                  key={message.id}
-                  aria-label={`${message.role === 'user' ? 'You' : 'Assistant'} message`}
-                >
-                  <div className={`avatar avatar-${message.role}`}>
-                    {message.role === 'user' ? 'Y' : <Terminal size={17} />}
-                  </div>
-                  <div className="message-body">
-                    <div className="message-meta">
-                      <strong>{message.role === 'user' ? 'You' : 'Assistant'}</strong>
-                      <time dateTime={message.createdAt}>{time(message.createdAt)}</time>
-                    </div>
-                    <div className="markdown">
-                      <Markdown>{message.content}</Markdown>
-                    </div>
-                    {!!message.attachmentIds?.length && (
-                      <p className="message-attachments">
-                        <Paperclip size={14} />
-                        {message.attachmentIds.length} attached{' '}
-                        {message.attachmentIds.length === 1 ? 'file' : 'files'}
-                      </p>
-                    )}
-                  </div>
-                </article>
-              ))}
-              {!!thread?.activity.length && (
-                <details className="activity">
-                  <summary>
-                    <Terminal size={15} />
-                    <span>Activity</span>
-                    <span className="activity-count">
-                      {thread.activity.length}
-                      {thread.activity.length === 100
-                        ? ' latest'
-                        : thread.activity.length === 1
-                          ? ' event'
-                          : ' events'}
-                    </span>
-                    <ChevronDown size={15} />
-                  </summary>
-                  <ol>
-                    {thread.activity.map((item) => (
-                      <li key={item.id}>
-                        <div>
-                          <span className="activity-kind">{item.kind}</span>
-                          <time dateTime={item.createdAt}>{time(item.createdAt)}</time>
-                        </div>
-                        <p>{item.label}</p>
-                        {item.detail && (
-                          <details>
-                            <summary>View detail</summary>
-                            <pre>
-                              {item.detail}
-                              {item.detail.length === 6000
-                                ? '\n[Display limited to 6,000 characters]'
-                                : ''}
-                            </pre>
-                          </details>
-                        )}
-                      </li>
-                    ))}
-                  </ol>
-                </details>
-              )}
-              {thread?.error && (
-                <div className="run-error" role="alert">
-                  {thread.error}
-                </div>
-              )}
-              {!!thread?.artifacts.length && (
-                <section className="artifacts" aria-label="Artifacts">
-                  <h2>Files from this conversation</h2>
-                  {thread.artifacts.map((artifact) => (
-                    <a
-                      className="artifact"
-                      key={artifact.id}
-                      href={artifactPath(artifact.id)}
-                      download
-                    >
-                      <span className="artifact-icon">
-                        <FileText size={19} />
-                      </span>
-                      <span>
-                        <strong>{artifact.name}</strong>
-                        <small>{bytes(artifact.size)} · Download</small>
-                      </span>
-                      <Download size={17} />
-                    </a>
-                  ))}
-                </section>
-              )}
-              {lookup(state.submitted, selected) && !isActive(thread?.session.status) && (
-                <p className="submitted" role="status">
-                  <Check size={14} />
-                  Request accepted. Waiting for server status.
-                </p>
-              )}
+              {thread && <ConversationReplies thread={thread} />}
+              {state.submitted[selected]?.length &&
+                !thread?.runs.some((run) =>
+                  ['queued', 'running', 'cancelling'].includes(run.status),
+                ) && (
+                  <p className="submitted" role="status">
+                    Request accepted. Waiting for server status.
+                  </p>
+                )}
               <div ref={end} />
             </div>
           )}
@@ -534,7 +310,12 @@ export function App({ store }: { store: HarnessStore }) {
             className="jump-latest"
             onClick={() => {
               setFollowing(true);
-              end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+              end.current?.scrollIntoView({
+                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                  ? 'auto'
+                  : 'smooth',
+                block: 'end',
+              });
             }}
           >
             <ArrowDown size={14} />

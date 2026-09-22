@@ -26,6 +26,8 @@ export interface Session {
   status: Status;
   context?: Context;
 }
+export type MessagePhase = 'intermediate' | 'thinking' | 'final' | 'unclassified';
+export type StreamState = 'streaming' | 'completed';
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -33,23 +35,97 @@ export interface Message {
   createdAt: string;
   runId?: string;
   attachmentIds?: string[];
+  phase?: MessagePhase;
+  nativeMessageId?: string;
+  nativeTurnId?: string;
+  streamState?: StreamState;
 }
 export interface Attachment {
   id: string;
   name: string;
   mimeType: string;
   size: number;
+  downloadUrl?: string;
+  previewUrl?: string;
 }
 export interface Artifact extends Attachment {
   downloadUrl: string;
+  runId?: string | null;
+  messageId?: string | null;
+}
+export interface Summary {
+  known: boolean;
+  active: number | null;
+  completed: number | null;
+  failed: number | null;
+  cancelled: number | null;
+  updatedAt?: string;
+}
+export type RunStatus =
+  'queued' | 'running' | 'cancelling' | 'completed' | 'cancelled' | 'interrupted' | 'failed';
+export interface RunSnapshot {
+  id: string;
+  kind: 'message' | 'handoff';
+  status: RunStatus;
+  createdAt: string;
+  updatedAt: string;
+  finalMessageId?: string | null;
+  artifactIds: string[];
+  zipUrl?: string;
+  subagents: Summary;
+}
+export type ActivityStatus =
+  'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled' | 'unknown';
+export interface Activity {
+  id: string;
+  runId: string;
+  kind: 'tool' | 'subagent';
+  name: string;
+  status: ActivityStatus;
+  summary?: string;
+  command?: string;
+  url?: string;
+  detail?: string;
+  startedAt?: string;
+  updatedAt: string;
+  finishedAt?: string;
+  toolCallId?: string;
+  childSessionId?: string;
+  parentSessionId?: string;
+  backgroundTaskId?: string;
+}
+// Internal presentation record. Old progress/errors retain their event identity
+// and unknown lifecycle fields; they never become invented tool or agent runs.
+export interface ActivityItem extends Omit<Activity, 'kind' | 'runId' | 'status'> {
+  kind: string;
+  runId?: string;
+  status?: ActivityStatus;
+  label: string;
+  createdAt: string;
+  legacy: boolean;
+  taskId?: string;
+}
+export interface Environment {
+  timeZone: 'Europe/Ljubljana';
+  location: { city: 'Ljubljana'; country: 'Slovenia' };
+  now: string;
 }
 type EventData = {
   message: { message: Message };
-  assistant_delta: { messageId: string; text: string };
+  assistant_delta: {
+    messageId: string;
+    text: string;
+    phase?: MessagePhase;
+    nativeMessageId?: string;
+    nativeTurnId?: string;
+  };
   progress: { kind: string; label: string; detail?: string; taskId?: string };
   context: { context: Context };
   state: { status: Status };
   artifact: { artifact: Artifact };
+  run: { run: RunSnapshot };
+  activity: { activity: Activity };
+  subagents: { runId: string; summary: Summary };
   error: { code: string; message: string };
   done: { runId: string };
   handoff: { newSessionId: string };
@@ -72,6 +148,9 @@ export const eventTypes: EventType[] = [
   'context',
   'state',
   'artifact',
+  'run',
+  'activity',
+  'subagents',
   'error',
   'done',
   'handoff',
@@ -81,19 +160,20 @@ export interface Snapshot {
   messages: Message[];
   events: ServerEvent[];
   artifacts: Artifact[];
-}
-export interface Activity {
-  id: number;
-  createdAt: string;
-  kind: string;
-  label: string;
-  detail?: string;
+  runs?: RunSnapshot[];
+  activities?: Activity[];
+  attachments?: Attachment[];
+  environment?: Environment;
 }
 export interface Thread {
   session: Session;
   messages: Message[];
   artifacts: Artifact[];
-  activity: Activity[];
+  activity: ActivityItem[];
+  runs: RunSnapshot[];
+  attachments: Attachment[];
+  subagentsByRun: Record<string, Summary>;
+  environment?: Environment;
   lastEventId: number;
   error: string | null;
 }
