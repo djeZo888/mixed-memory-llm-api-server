@@ -139,6 +139,7 @@ test("events have independent monotonic per-session ids and durable pagination",
 test("assistant delta commits text and event together and notifies snapshot observers only after commit", async (t) => {
   const { store, session } = await setup(t);
   const run = store.createRun(session, "message", "transaction fixture", []);
+  const priorEvents = store.allEvents(session.id);
   const message = store.addMessage(
     session.id,
     "assistant",
@@ -157,7 +158,7 @@ test("assistant delta commits text and event together and notifies snapshot obse
     /fixture event insert failure/,
   );
   assert.equal(store.message(message.id).content, "Original. ");
-  assert.equal(store.allEvents(session.id).length, 0);
+  assert.equal(store.allEvents(session.id).length, priorEvents.length);
   assert.equal(
     observations.length,
     0,
@@ -165,14 +166,14 @@ test("assistant delta commits text and event together and notifies snapshot obse
   );
   store.db.exec("DROP TRIGGER reject_fixture_delta");
   const event = store.appendDelta(session.id, message.id, "Committed.", run.id);
-  assert.equal(event.id, 1);
+  assert.equal(event.id, priorEvents.length + 1);
   assert.equal(
     observations.length,
     1,
     "subscriber can open a snapshot transaction after commit",
   );
   assert.equal(observations[0]!.messages[0]!.content, "Original. Committed.");
-  assert.deepEqual(observations[0]!.events, [event]);
+  assert.deepEqual(observations[0]!.events, [...priorEvents, event]);
   assert.equal(store.message(message.id).content, "Original. Committed.");
 });
 
@@ -293,7 +294,7 @@ test("space and Unicode filenames remain safe through attachment projection and 
     "text/plain",
     Readable.from(["Unicode filename fixture"]),
   );
-  assert.equal(upload.name, "na_rt prostora __.txt");
+  assert.equal(upload.name, "načrt prostora 東京.txt");
   const projected = await files.attachments(session.id, [upload.id]);
   assert.ok(projected[0]!.path.startsWith(workspace + path.sep));
   assert.ok(projected[0]!.path.includes(" "));
@@ -304,7 +305,7 @@ test("space and Unicode filenames remain safe through attachment projection and 
   const source = path.join(workspace, "izhod 東京 spaces.txt");
   await writeFile(source, "Unicode path snapshot");
   const artifact = await files.registerArtifact(session.id, source);
-  assert.equal(artifact.name, "izhod __ spaces.txt");
+  assert.equal(artifact.name, "izhod 東京 spaces.txt");
   const download = await files.download(artifact.id);
   let body = "";
   for await (const chunk of download.stream) body += chunk;

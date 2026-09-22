@@ -63,7 +63,7 @@ test("API rejects pinned slash commands without mutations; ordinary tasks and na
       assert.equal(response.json().error.code, "unsupported_slash_command", text);
       assert.match(response.json().error.message, /phrase a normal task/i);
       assert.deepEqual(changes(), beforeChanges, `no SQL mutation for ${text}`);
-      assert.deepEqual(h.store.snapshot(sessionId), baseline, text);
+      assert.deepEqual({ ...h.store.snapshot(sessionId), environment: baseline.environment }, baseline, text);
       assert.equal(enqueues, 0);
       assert.equal(launches, 0);
       assert.equal(tokens, 0);

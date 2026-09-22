@@ -173,14 +173,15 @@ test("JSON contract, durable messages/native identity/events and unknown context
   const h = await setup(t);
   const health = await inject(h.app, "/api/health");
   assert.deepEqual(health.json(), {
-    version: "0.0.1",
+    version: "0.0.2",
+    environment: health.json().environment,
     status: "ok",
     visionAvailable: false,
   });
   const s = await h.session();
-  assert.equal(s.context.used, null);
+  assert.equal(s.context.used, 0);
   assert.equal(s.context.limit, 480000);
-  assert.equal(s.context.stale, true);
+  assert.equal(s.context.stale, false);
   assert.equal("workspaceId" in s, false);
   assert.equal("nativeSessionId" in s, false);
   const response = await inject(h.app, {
@@ -213,7 +214,7 @@ test("JSON contract, durable messages/native identity/events and unknown context
   const reopened = await createApp(h.options);
   try {
     const after = (await inject(reopened.app, `/api/sessions/${s.id}`)).json();
-    assert.deepEqual(after, before);
+    assert.deepEqual({ ...after, environment: before.environment }, before);
     const next = await inject(reopened.app, {
       method: "POST",
       url: `/api/sessions/${s.id}/messages`,
@@ -1840,7 +1841,7 @@ test("explicit reviewed vision availability enables image health and upload with
   assert.equal(uploaded.statusCode, 201, uploaded.body);
   const attachment = uploaded.json().attachment;
   assert.equal(attachment.mimeType, "image/png");
-  assert.match(attachment.name, /^[a-zA-Z0-9._ -]+$/);
+  assert.equal(attachment.name, "načrt prostora 東京.png");
   assert.ok(attachment.name.includes(" "));
   const projected = await h.files.attachments(s.id, [attachment.id]);
   assert.equal(projected.length, 1);

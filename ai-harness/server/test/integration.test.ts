@@ -205,7 +205,9 @@ test(
     assert.equal(application.store.getSession(sessionId).status, "idle");
     const firstHistory = application.store.messages(sessionId);
     assert.deepEqual(
-      firstHistory.map((message) => message.content),
+      firstHistory
+        .filter((m) => m.phase !== "thinking")
+        .map((message) => message.content),
       ["gateway", "Gateway fixture visible answer. fixture response"],
     );
     assert.equal(
@@ -267,9 +269,9 @@ test(
       restoredCalls.some((call) => call.method === "new"),
       false,
     );
-    assert.equal(application.store.messages(sessionId).length, 4);
+    assert.equal(application.store.messages(sessionId).length, 6);
     assert.deepEqual(
-      application.store.messages(sessionId).slice(0, 2),
+      application.store.messages(sessionId).slice(0, firstHistory.length),
       firstHistory,
     );
     assert.equal(upstreamRequests.length, 2);

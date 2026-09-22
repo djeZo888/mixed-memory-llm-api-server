@@ -26,7 +26,15 @@ export interface Session {
   status: Status;
   context?: Context;
 }
-export interface Message {
+export type MessageChannel = "thought" | "commentary" | "final" | "unknown";
+export interface MessagePhase {
+  phase: "intermediate" | "thinking" | "final" | "unclassified";
+  nativeMessageId?: string;
+  nativeTurnId?: string;
+  streamState?: "streaming" | "completed";
+}
+export interface Message extends Partial<MessagePhase> {
+  attachments?: Attachment[];
   id: string;
   role: "user" | "assistant";
   content: string;
@@ -35,12 +43,17 @@ export interface Message {
   attachmentIds?: string[];
 }
 export interface Attachment {
+  downloadUrl?: string;
+  previewUrl?: string;
   id: string;
   name: string;
   mimeType: string;
   size: number;
 }
 export interface Artifact extends Attachment {
+  runId: string | null;
+  messageId: string | null;
+  previewUrl?: string;
   downloadUrl: string;
 }
 export interface Event {
@@ -51,14 +64,103 @@ export interface Event {
   createdAt: string;
   data: Record<string, unknown>;
 }
+export interface SubagentSummary {
+  known: boolean;
+  active: number | null;
+  completed: number | null;
+  failed: number | null;
+  cancelled: number | null;
+  updatedAt?: string;
+}
+export const unknownSubagents = (): SubagentSummary => ({
+  known: false,
+  active: null,
+  completed: null,
+  failed: null,
+  cancelled: null,
+});
+export interface Activity {
+  id: string;
+  runId: string;
+  kind: "tool" | "subagent";
+  name: string;
+  status:
+    | "pending"
+    | "in_progress"
+    | "completed"
+    | "failed"
+    | "cancelled"
+    | "unknown";
+  summary?: string;
+  command?: string;
+  url?: string;
+  detail?: string;
+  startedAt?: string;
+  updatedAt: string;
+  finishedAt?: string;
+  toolCallId?: string;
+  childSessionId?: string;
+  parentSessionId?: string;
+  backgroundTaskId?: string;
+}
+export interface RunSnapshot {
+  id: string;
+  kind: "message" | "handoff";
+  status:
+    | "queued"
+    | "running"
+    | "cancelling"
+    | "completed"
+    | "cancelled"
+    | "interrupted"
+    | "failed";
+  createdAt: string;
+  updatedAt: string;
+  finalMessageId?: string | null;
+  artifactIds: string[];
+  zipUrl?: string;
+  subagents: SubagentSummary;
+}
+export interface Environment {
+  timeZone: "Europe/Ljubljana";
+  location: { city: "Ljubljana"; country: "Slovenia" };
+  now: string;
+}
 export type EngineUpdate =
-  | { type: "text"; text: string }
+  | {
+      type: "text";
+      text: string;
+      nativeMessageId?: string;
+      channel?: MessageChannel;
+      phaseSource?: string;
+    }
+  | {
+      type: "phase";
+      nativeMessageId: string;
+      channel: "commentary" | "final" | "unknown";
+      phaseSource: string;
+      nativeTurnId?: string;
+      streamState?: "streaming" | "completed";
+    }
   | {
       type: "progress";
       kind: string;
       label: string;
       detail?: string;
       taskId?: string;
+      toolActivityId?: string;
+      toolCallId?: string;
+      name?: string;
+      command?: string;
+      url?: string;
+      status?: string;
+      startedAt?: string;
+      updatedAt?: string;
+      completedAt?: string;
+      subagentId?: string;
+      parentSessionId?: string;
+      backgroundTaskId?: string;
+      subagents?: SubagentSummary;
     }
   | {
       type: "compaction";

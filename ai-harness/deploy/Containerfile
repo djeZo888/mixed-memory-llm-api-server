@@ -34,7 +34,7 @@ RUN test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e \
     && sha256sum -c /tmp/ai-harness-patches/source-source.SHA256SUMS \
     && sha256sum -c /tmp/ai-harness-patches/dependency-patched.SHA256SUMS \
     && cd /tmp/ai-harness-patches && sha256sum -c SHA256SUMS \
-    && printf '%s\n' '8d3575bc32df22794dea977a4daad75406f617f1a3a4787a739b0fbd651bb034  SHA256SUMS' | sha256sum -c - \
+    && printf '%s\n' 'e764cdacb97998b7e7b514e9fabb0bc5d508e1d3e1ffd0a38443812a117d3aef  SHA256SUMS' | sha256sum -c - \
     && cd /build/minimax \
     && for patch in /tmp/ai-harness-patches/[0-9]*.patch; do \
          if [[ "${patch##*/}" = 0003-gateway-undici-dependency.patch ]]; then continue; fi; \
@@ -110,10 +110,16 @@ RUN cd /opt/ai-harness/tools/search && npm ci --omit=dev --ignore-scripts \
     && cd /opt/ai-harness/tools/runtime && npm list --omit=dev --json > /usr/local/share/ai-harness-npm-reviewed.json
 
 FROM runtime-deps AS runtime-base
+# Keep the existing runtime-deps/Chromium layer; ensure the IANA zone is available.
+RUN if ! test -s /usr/share/zoneinfo/Europe/Ljubljana; then \
+      apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata \
+      && rm -rf /var/lib/apt/lists/*; \
+    fi \
+    && dpkg-query -W -f='${Package}\t${Version}\n' > /usr/local/share/ai-harness-dpkg.tsv
 LABEL org.opencontainers.image.title="ai-harness local MiniMax engine" \
-      org.opencontainers.image.version="0.0.1" \
+      org.opencontainers.image.version="0.0.2" \
       org.opencontainers.image.revision="ae65651df5f97ae1085ab4e19964f4b78c769a4e" \
-      org.opencontainers.image.ai-harness.patchset="8d3575bc32df22794dea977a4daad75406f617f1a3a4787a739b0fbd651bb034" \
+      org.opencontainers.image.ai-harness.patchset="e764cdacb97998b7e7b514e9fabb0bc5d508e1d3e1ffd0a38443812a117d3aef" \
       org.opencontainers.image.source="https://github.com/MiniMax-AI/minimax-code"
 COPY --from=build /opt/minimax /opt/minimax
 COPY deploy/patches /usr/local/share/ai-harness-patches
@@ -122,13 +128,14 @@ RUN mkdir -p /opt/ai-harness/bin \
     && ln -s ../engine/mcode-local /opt/ai-harness/bin/mcode-local \
     && chmod 0555 /opt/ai-harness/engine/mcode-local \
     && test -x /usr/bin/chromium \
+    && test -s /usr/share/zoneinfo/Europe/Ljubljana \
     && test -s /opt/minimax/MCODE_TOOLS_NOTICES.md \
     && test -s /opt/minimax/embedded/mcode-tools/manifest.json \
     && printf '%s\n' 'e5a59ec5362e395b519317ad6fecd99f6e92308b9d985be44b64eb2f2b73a722  /opt/minimax/embedded/mcode-tools/cli.mjs' | sha256sum -c - \
     && node --check /opt/ai-harness/engine/configure-profile.mjs
 ENV PATH="/opt/ai-harness-python/bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin" \
     MCODE_DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 \
-    MCODE_CHROME_PATH=/usr/bin/chromium PYTHONDONTWRITEBYTECODE=1
+    MCODE_CHROME_PATH=/usr/bin/chromium PYTHONDONTWRITEBYTECODE=1 TZ=Europe/Ljubljana
 # Existing image user; no host account changes. Launcher uses keep-id and its UID.
 USER 1000:1000
 ENTRYPOINT ["/opt/ai-harness/bin/mcode-local"]

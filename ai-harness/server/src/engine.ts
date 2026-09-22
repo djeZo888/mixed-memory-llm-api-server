@@ -1,3 +1,4 @@
+import { TIME_ZONE, clockInstruction } from "./locale.js";
 import { randomUUID } from "node:crypto";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { constants, type WriteStream } from "node:fs";
@@ -26,6 +27,8 @@ import type {
   EngineFactory,
   EngineOptions,
   EngineUpdate,
+  MessageChannel,
+  SubagentSummary,
 } from "./contracts.js";
 
 const DELEGATION_GET = "mcode/session/delegation/get";
@@ -39,6 +42,7 @@ export class EngineSettlementError extends Error {
   }
 }
 
+const MESSAGE_BOUNDARY = "mcode/session/message_update";
 const SETTLEMENT_GET = "mcode/session/settlement/get";
 const SETTLEMENT_META = "minimax-code/settlement";
 interface SettlementReceipt {
@@ -329,6 +333,7 @@ export async function seedNativePermissionPolicy(
 
 interface ChildSnapshot {
   schemaVersion: 1;
+  complete?: boolean;
   rootSessionId: string;
   members: {
     sessionId: string;
@@ -337,27 +342,48 @@ interface ChildSnapshot {
     task?: string;
     agentName?: string;
     backgroundTaskId?: string;
+    createdAtMs?: number;
+    updatedAtMs?: number;
   }[];
 }
-function snapshot(value: unknown, nativeId: string): ChildSnapshot {
+function snapshot(value: unknown, rootId: string): ChildSnapshot {
   if (
     !record(value) ||
     value.schemaVersion !== 1 ||
-    value.rootSessionId !== nativeId ||
-    !Array.isArray(value.members)
+    value.rootSessionId !== rootId ||
+    !Array.isArray(value.members) ||
+    value.members.length > 10000 ||
+    (value.complete !== undefined && typeof value.complete !== "boolean")
   ) {
     throw new Error("Engine delegation settlement is unknown");
   }
   for (const member of value.members) {
     if (
       !record(member) ||
-      typeof member.sessionId !== "string" ||
-      typeof member.parentSessionId !== "string" ||
+      !nativeId(member.sessionId) ||
+      !nativeId(member.parentSessionId) ||
       typeof member.status !== "string" ||
       !CHILD_STATES.has(member.status)
     ) {
       throw new Error("Engine delegation settlement is unknown");
     }
+  }
+  const members = value.members as ChildSnapshot["members"];
+  const identities = new Set(members.map((m) => m.sessionId));
+  if (identities.size !== members.length || identities.has(rootId))
+    throw new Error("Invalid child identities");
+  const parents = new Map(members.map((m) => [m.sessionId, m.parentSessionId]));
+  const rooted = new Set([rootId]);
+  for (const member of members) {
+    const seen = new Set<string>();
+    let cursor = member.sessionId;
+    while (!rooted.has(cursor)) {
+      if (seen.has(cursor) || !parents.has(cursor))
+        throw new Error("Incomplete child tree");
+      seen.add(cursor);
+      cursor = parents.get(cursor)!;
+    }
+    for (const id of seen) rooted.add(id);
   }
   return value as unknown as ChildSnapshot;
 }
@@ -375,7 +401,32 @@ class AcpEngine implements Engine {
   private supportsClose = false;
   private compactions = new Set<string>();
   private childStates = new Map<string, string>();
-  private tools = new Map<string, { label: string; kind: string }>();
+  private childBaseline?: Map<string, string>;
+  private childRunMembers = new Set<string>();
+  private childBaselineComplete = false;
+  private tools = new Map<
+    string,
+    Extract<EngineUpdate, { type: "progress" }>
+  >();
+  private textTails = new Map<
+    string,
+    {
+      text: string;
+      nativeMessageId?: string;
+      channel: MessageChannel;
+      phaseSource: string;
+    }
+  >();
+  private visibleMessages = new Set<string>();
+  private boundaries = new Map<
+    string,
+    {
+      turnId: string;
+      kind: string | null;
+      finishReason: string | null;
+      status: "streaming" | "completed";
+    }
+  >();
   private exitPromise?: Promise<void>;
   private exitStatus?: {
     code: number | null;
@@ -386,7 +437,6 @@ class AcpEngine implements Engine {
   private closePromise?: Promise<void>;
   private startedWork = false;
   private settled = true;
-  private textTail = "";
   private backgroundObserved = false;
   private receipt?: SettlementReceipt;
   private rootIdentity?: string;
@@ -429,14 +479,19 @@ class AcpEngine implements Engine {
     const account = userInfo();
     const uid = process.getuid?.();
     if (
-      uid === undefined || uid === 0 || account.uid !== uid ||
-      process.geteuid?.() !== uid || !isAbsolute(account.homedir)
+      uid === undefined ||
+      uid === 0 ||
+      account.uid !== uid ||
+      process.geteuid?.() !== uid ||
+      !isAbsolute(account.homedir)
     )
       throw new Error("Engine launcher requires an ordinary service account");
     const hostHome = await realpath(account.homedir);
     const hostHomeInfo = await stat(hostHome);
     if (!hostHomeInfo.isDirectory() || hostHomeInfo.uid !== uid)
-      throw new Error("Engine launcher home must be an owned existing directory");
+      throw new Error(
+        "Engine launcher home must be an owned existing directory",
+      );
     await mkdir(o.profileDir, { recursive: true, mode: 0o700 });
     const profileInfo = await lstat(o.profileDir);
     if (!profileInfo.isDirectory() || profileInfo.isSymbolicLink())
@@ -472,6 +527,7 @@ class AcpEngine implements Engine {
     const env: NodeJS.ProcessEnv = {
       PATH: `${dirname(process.execPath)}:/usr/local/bin:/usr/bin:/bin`,
       LANG: "C.UTF-8",
+      TZ: TIME_ZONE,
       HOME: hostHome,
       AI_HARNESS_GATEWAY_URL: o.gatewayUrl,
       AI_HARNESS_GATEWAY_TOKEN: o.gatewayToken,
@@ -552,7 +608,7 @@ class AcpEngine implements Engine {
       const init = await deadline(
         connection.initialize({
           protocolVersion: acp.PROTOCOL_VERSION,
-          clientInfo: { name: "ai-harness", version: "0.0.1" },
+          clientInfo: { name: "ai-harness", version: "0.0.2" },
           clientCapabilities: {
             fs: { readTextFile: false, writeTextFile: false },
             terminal: false,
@@ -675,8 +731,16 @@ class AcpEngine implements Engine {
     );
   }
 
-  private projectText(text: string): void {
-    const safe = (this.textTail + text).replaceAll(
+  private projectText(
+    text: string,
+    nativeMessageId: string | undefined,
+    channel: MessageChannel,
+  ): void {
+    if (nativeMessageId && channel !== "thought" && text.trim())
+      this.visibleMessages.add(nativeMessageId);
+    const key = JSON.stringify([nativeMessageId ?? null, channel]);
+    const previous = this.textTails.get(key);
+    const safe = ((previous?.text ?? "") + text).replaceAll(
       this.options.gatewayToken,
       "[REDACTED]",
     );
@@ -684,8 +748,84 @@ class AcpEngine implements Engine {
       0,
       safe.length - this.options.gatewayToken.length + 1,
     );
-    if (cutoff) this.emit({ type: "text", text: safe.slice(0, cutoff) });
-    this.textTail = safe.slice(cutoff);
+    const metadata = {
+      nativeMessageId,
+      channel,
+      phaseSource:
+        channel === "thought"
+          ? "acp:agent_thought_chunk"
+          : "acp:agent_message_chunk",
+    };
+    if (cutoff)
+      this.emit({ type: "text", text: safe.slice(0, cutoff), ...metadata });
+    this.textTails.set(key, { text: safe.slice(cutoff), ...metadata });
+  }
+
+  private flushText(nativeMessageId?: string): void {
+    for (const [key, tail] of this.textTails) {
+      if (
+        nativeMessageId !== undefined &&
+        tail.nativeMessageId !== nativeMessageId
+      )
+        continue;
+      if (tail.text) this.emit({ type: "text", ...tail });
+      this.textTails.delete(key);
+    }
+  }
+
+  private safeDetail(text: string, max = MAX_DETAIL): string {
+    return bounded(
+      text
+        .replaceAll(this.options.gatewayToken, "[REDACTED]")
+        .replace(/(Bearer\s+)[A-Za-z0-9._~+/=-]+/gi, "$1[REDACTED]")
+        .replace(
+          /((?:api[_-]?key|token|password|secret|authorization)\s*[=:]\s*)[^\s&]+/gi,
+          "$1[REDACTED]",
+        )
+        .replace(/(https?:\/\/)[^/@\s]+:[^/@\s]+@/gi, "$1[REDACTED]@"),
+      max,
+    );
+  }
+
+  private inputSummary(input: unknown): {
+    command?: string;
+    url?: string;
+    detail?: string;
+  } {
+    if (!record(input)) return {};
+    const result: { command?: string; url?: string; detail?: string } = {};
+    const details: string[] = [];
+    if (typeof input.action === "string")
+      details.push(`action: ${this.safeDetail(input.action, 120)}`);
+    // Native browser's reviewed schema nests parameters under input; inspect only
+    // known fields, never serialize arbitrary objects or credentials.
+    if (typeof input.action === "string" && record(input.input)) {
+      for (const key of ["url", "query", "path"]) {
+        if (typeof input.input[key] !== "string") continue;
+        const safe = this.safeDetail(input.input[key] as string);
+        if (key === "url") result.url = safe;
+        details.push(`${key}: ${safe}`);
+      }
+    }
+    // Explicit actual input fields only: no raw arbitrary serialization or credential fields.
+    for (const key of [
+      "command",
+      "url",
+      "query",
+      "path",
+      "file_path",
+      "filePath",
+      "pattern",
+      "description",
+    ]) {
+      const value = input[key];
+      if (typeof value !== "string") continue;
+      const safe = this.safeDetail(value);
+      if (key === "command" || key === "url") result[key] = safe;
+      details.push(`${key}: ${safe}`);
+    }
+    if (details.length) result.detail = this.safeDetail(details.join("\n"));
+    return result;
   }
 
   private async permission(
@@ -721,15 +861,34 @@ class AcpEngine implements Engine {
     if (this.restoring || params.sessionId !== this.nativeId || this.closing)
       return;
     const update = params.update;
-    if (update.sessionUpdate === "agent_message_chunk") {
+    if (
+      update.sessionUpdate === "agent_message_chunk" ||
+      update.sessionUpdate === "agent_thought_chunk"
+    ) {
       if (!this.active) return;
-      if (update.content.type === "text") this.projectText(update.content.text);
+      if (update.content.type === "text")
+        this.projectText(
+          update.content.text,
+          nativeId(update.messageId) &&
+            !update.messageId.includes(this.options.gatewayToken)
+            ? update.messageId
+            : undefined,
+          update.sessionUpdate === "agent_thought_chunk"
+            ? "thought"
+            : "unknown",
+        );
     } else if (
       update.sessionUpdate === "tool_call" ||
       update.sessionUpdate === "tool_call_update"
     ) {
       const known = this.tools.get(update.toolCallId);
-      const label = bounded(update.title ?? known?.label ?? "Tool", 160);
+      if (
+        !this.active ||
+        !nativeId(update.toolCallId) ||
+        update.toolCallId.includes(this.options.gatewayToken)
+      )
+        return;
+      const label = this.safeDetail(update.title ?? known?.name ?? "Tool", 160);
       const kind = update.kind ?? known?.kind ?? "other";
       if (label === "bash") {
         const raw = update.rawOutput;
@@ -747,9 +906,7 @@ class AcpEngine implements Engine {
         )
           this.backgroundObserved = true;
       }
-      if (update.status !== "completed" && update.status !== "failed")
-        this.tools.set(update.toolCallId, { label, kind });
-      else this.tools.delete(update.toolCallId);
+      const input = this.inputSummary(update.rawInput);
       const detail = (update.content ?? [])
         .flatMap((part) =>
           part.type === "content" && part.content.type === "text"
@@ -757,13 +914,37 @@ class AcpEngine implements Engine {
             : [],
         )
         .join("\n");
-      this.emit({
+      const observed = new Date().toISOString();
+      const status = update.status ?? known?.status ?? "unknown";
+      const projected: Extract<EngineUpdate, { type: "progress" }> = {
+        ...known,
         type: "progress",
         kind: "tool",
-        label: `${label}: ${update.status ?? "pending"}`,
-        taskId: bounded(update.toolCallId, 200),
-        ...(detail ? { detail: bounded(detail) } : {}),
-      });
+        label: `${label}: ${status}`,
+        taskId: update.toolCallId,
+        toolCallId: update.toolCallId,
+        toolActivityId: update.toolCallId,
+        name: this.safeDetail(
+          typeof update.name === "string"
+            ? update.name
+            : (known?.name ?? label),
+          160,
+        ),
+        status,
+        ...(known?.startedAt
+          ? { startedAt: known.startedAt }
+          : ["pending", "in_progress"].includes(status)
+            ? { startedAt: observed }
+            : {}),
+        updatedAt: observed,
+        ...input,
+        ...(detail ? { detail: this.safeDetail(detail) } : {}),
+        ...(["completed", "failed"].includes(status)
+          ? { completedAt: known?.completedAt ?? observed }
+          : {}),
+      };
+      this.tools.set(update.toolCallId, projected);
+      this.emit(projected);
     } else if (update.sessionUpdate === "usage_update") {
       if (
         Number.isSafeInteger(update.used) &&
@@ -796,7 +977,7 @@ class AcpEngine implements Engine {
         ),
       });
     }
-    // agent_thought_chunk is deliberately not exposed as inferred work/progress.
+    // Only actual emitted thought chunks are projected; no inferred hidden reasoning.
     // Explicit compaction lifecycle comes only from PREP reviewed custom notifications.
   }
 
@@ -808,6 +989,62 @@ class AcpEngine implements Engine {
       !this.nativeId
     )
       return;
+    if (method === MESSAGE_BOUNDARY) {
+      if (
+        !this.active ||
+        params.schemaVersion !== 1 ||
+        !nativeId(params.messageId) ||
+        !nativeId(params.turnId) ||
+        params.messageId.includes(this.options.gatewayToken) ||
+        params.turnId.includes(this.options.gatewayToken) ||
+        !["streaming", "completed"].includes(String(params.status)) ||
+        ![null, "preamble", "final"].includes(params.kind as string | null) ||
+        !(
+          params.finishReason === undefined ||
+          (typeof params.finishReason === "string" &&
+            params.finishReason.length <= 100)
+        ) ||
+        Object.keys(params).some(
+          (k) =>
+            ![
+              "schemaVersion",
+              "sessionId",
+              "messageId",
+              "turnId",
+              "kind",
+              "finishReason",
+              "status",
+            ].includes(k),
+        )
+      )
+        return;
+      const previous = this.boundaries.get(params.messageId);
+      if (
+        previous &&
+        (previous.turnId !== params.turnId || previous.status === "completed")
+      )
+        return;
+      if (params.status === "completed") this.flushText(params.messageId);
+      this.boundaries.set(params.messageId, {
+        turnId: params.turnId,
+        kind: params.kind as string | null,
+        finishReason: (params.finishReason as string | undefined) ?? null,
+        status: params.status as "streaming" | "completed",
+      });
+      this.emit({
+        type: "phase",
+        nativeMessageId: params.messageId,
+        nativeTurnId: params.turnId,
+        channel:
+          params.kind === "preamble" ||
+          ["tool_calls", "toolUse"].includes(String(params.finishReason))
+            ? "commentary"
+            : "unknown",
+        phaseSource: "native:message_update",
+        streamState: params.status as "streaming" | "completed",
+      });
+      return;
+    }
     if (method === "mcode/session/compaction_update") {
       const id = params.compactionId;
       const status = params.status;
@@ -864,29 +1101,135 @@ class AcpEngine implements Engine {
     try {
       this.projectChildren(snapshot(params.snapshot, this.nativeId));
     } catch {
+      this.unknownChildren();
       /* A fresh required get decides settlement; malformed notifications cannot settle it. */
     }
   }
 
+  private unknownChildren(): void {
+    this.emit({
+      type: "progress",
+      kind: "subagent_summary",
+      label: "Subagent counts unknown",
+      subagents: {
+        known: false,
+        active: null,
+        completed: null,
+        failed: null,
+        cancelled: null,
+        updatedAt: new Date().toISOString(),
+      },
+    });
+  }
+
+  private async baselineChildren(
+    connection: acp.ClientSideConnection,
+  ): Promise<void> {
+    try {
+      const result = await deadline(
+        connection.request<unknown>(DELEGATION_GET, {
+          sessionId: this.nativeId,
+        }),
+        5000,
+        "Child snapshot unavailable",
+      );
+      const state = snapshot(
+        record(result) ? result.snapshot : undefined,
+        this.nativeId!,
+      );
+      this.childBaseline = new Map(
+        state.members.map((m) => [m.sessionId, m.status]),
+      );
+      this.childBaselineComplete = state.complete === true;
+      this.projectChildren(state);
+    } catch {
+      this.childBaseline = undefined;
+      this.childBaselineComplete = false;
+      this.unknownChildren();
+    }
+  }
+
   private projectChildren(state: ChildSnapshot): void {
+    if (!this.active || !this.childBaseline) return;
+    const observed = new Date().toISOString();
     for (const child of state.members) {
       if (
         typeof child.backgroundTaskId === "string" &&
         child.backgroundTaskId.length > 0
       )
         this.backgroundObserved = true;
-      if (this.childStates.get(child.sessionId) === child.status) continue;
+      if (this.childBaseline.get(child.sessionId) !== child.status)
+        this.childRunMembers.add(child.sessionId);
+      if (
+        !this.childRunMembers.has(child.sessionId) ||
+        this.childStates.get(child.sessionId) === child.status
+      )
+        continue;
       this.childStates.set(child.sessionId, child.status);
+      const timestamp = (ms: unknown) =>
+        typeof ms === "number" &&
+        Number.isFinite(ms) &&
+        ms >= 0 &&
+        ms <= 8.64e15
+          ? new Date(ms).toISOString()
+          : undefined;
       this.emit({
         type: "progress",
         kind: "subagent",
-        label: `${bounded(child.agentName ?? "Subagent", 120)}: ${child.status}`,
-        taskId: bounded(child.sessionId, 200),
+        label: `${this.safeDetail(child.agentName ?? "Subagent", 120)}: ${child.status}`,
+        name: this.safeDetail(child.agentName ?? "Subagent", 120),
+        taskId: child.sessionId,
+        subagentId: child.sessionId,
+        parentSessionId: child.parentSessionId,
+        status: child.status,
+        updatedAt: timestamp(child.updatedAtMs) ?? observed,
+        ...(timestamp(child.createdAtMs)
+          ? { startedAt: timestamp(child.createdAtMs) }
+          : {}),
+        ...(TERMINAL_CHILD.has(child.status)
+          ? { completedAt: timestamp(child.updatedAtMs) ?? observed }
+          : {}),
+        ...(typeof child.backgroundTaskId === "string"
+          ? { backgroundTaskId: this.safeDetail(child.backgroundTaskId, 512) }
+          : {}),
         ...(typeof child.task === "string"
-          ? { detail: bounded(child.task) }
+          ? { detail: this.safeDetail(child.task) }
           : {}),
       });
     }
+    const members = state.members.filter((m) =>
+      this.childRunMembers.has(m.sessionId),
+    );
+    if (
+      !this.childBaselineComplete ||
+      state.complete !== true ||
+      members.length !== this.childRunMembers.size ||
+      members.some((m) => m.status === "unknown")
+    ) {
+      this.unknownChildren();
+      return;
+    }
+    const summary: SubagentSummary = {
+      known: true,
+      active: 0,
+      completed: 0,
+      failed: 0,
+      cancelled: 0,
+      updatedAt: observed,
+    };
+    for (const child of members) {
+      if (child.status === "running" || child.status === "queued")
+        summary.active!++;
+      else if (child.status === "completed") summary.completed!++;
+      else if (child.status === "failed") summary.failed!++;
+      else if (child.status === "stopped") summary.cancelled!++;
+    }
+    this.emit({
+      type: "progress",
+      kind: "subagent_summary",
+      label: "Native subagent snapshot",
+      subagents: summary,
+    });
   }
 
   private async readSettlement(
@@ -945,11 +1288,32 @@ class AcpEngine implements Engine {
     if (this.active) throw new Error("An engine prompt is already active");
     this.active = true;
     this.cancelled = false;
+    this.tools.clear();
+    this.textTails.clear();
+    this.boundaries.clear();
+    this.childStates.clear();
+    this.visibleMessages.clear();
+    this.childBaseline = undefined;
+    this.childBaselineComplete = false;
+    this.childRunMembers.clear();
+    this.emit({
+      type: "progress",
+      kind: "subagent_summary",
+      label: "Subagent counts unknown",
+      subagents: {
+        known: false,
+        active: null,
+        completed: null,
+        failed: null,
+        cancelled: null,
+      },
+    });
     try {
       await this.start();
       if (this.cancelled) return;
       const connection = this.requireConnection();
       await this.preflight(connection);
+      await this.baselineChildren(connection);
       if (this.cancelled) return "cancelled";
       const references: string[] = [];
       for (const attachment of attachments) {
@@ -971,6 +1335,7 @@ class AcpEngine implements Engine {
         sessionId: this.nativeId!,
         prompt: [
           { type: "text", text: TRUSTED_BROWSER_INSTRUCTION },
+          { type: "text", text: clockInstruction() },
           {
             type: "text",
             text:
@@ -1005,6 +1370,49 @@ class AcpEngine implements Engine {
       this.receipt = fresh;
       this.seenRuns.add(fresh.runId!);
       this.settled = true;
+      this.flushText();
+      // A stopped preamble can precede a background continuation. Only the last
+      // real root turn in the verified exhaustive receipt can supply run-final.
+      if (fresh.state === "settled") {
+        const finalTurn = fresh.rootTurnIds.at(-1);
+        const candidates = [...this.boundaries].filter(
+          ([, b]) =>
+            b.turnId === finalTurn &&
+            b.status === "completed" &&
+            b.kind !== "preamble" &&
+            (b.kind === "final" ||
+              ["stop", "end_turn", "stop_sequence"].includes(
+                b.finishReason ?? "",
+              )),
+        );
+        const lastCandidate = candidates.at(-1)?.[0];
+        const finalId =
+          lastCandidate && this.visibleMessages.has(lastCandidate)
+            ? lastCandidate
+            : undefined;
+        for (const [id, b] of this.boundaries) {
+          if (!fresh.rootTurnIds.includes(b.turnId)) continue;
+          if (
+            id === finalId ||
+            ["tool_calls", "toolUse"].includes(b.finishReason ?? "") ||
+            b.kind === "preamble" ||
+            (finalId &&
+              b.status === "completed" &&
+              (b.kind === "final" ||
+                ["stop", "end_turn", "stop_sequence"].includes(
+                  b.finishReason ?? "",
+                )))
+          )
+            this.emit({
+              type: "phase",
+              nativeMessageId: id,
+              channel: id === finalId ? "final" : "commentary",
+              nativeTurnId: b.turnId,
+              streamState: "completed",
+              phaseSource: "native:message_update+settled_root_turn",
+            });
+        }
+      }
       return fresh.state === "cancelled" ? "cancelled" : "completed";
     } catch (error) {
       if (error instanceof EngineSettlementError) throw error;
@@ -1016,8 +1424,7 @@ class AcpEngine implements Engine {
           : "Engine operation failed",
       );
     } finally {
-      if (this.textTail) this.emit({ type: "text", text: this.textTail });
-      this.textTail = "";
+      this.flushText();
       this.active = false;
     }
   }

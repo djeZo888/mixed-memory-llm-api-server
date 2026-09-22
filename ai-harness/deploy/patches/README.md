@@ -118,3 +118,24 @@ unknown; initialize/session-new/receipt inspection is inference-free validation.
 Normal completion, continuation, cancellation, clean restart/rearm, and interrupted
 unknown behavior are tested by the reviewed synthetic native suites. Those tests
 are not live model inference or full end-to-end application acceptance.
+
+
+## H002 metadata bridge (0.0.2 source)
+
+`0008-message-metadata-and-snapshots.patch` applies after the reviewed 0001..0007
+series on `ae65651df5f97ae1085ab4e19964f4b78c769a4e`. It emits native message/turn
+metadata independently of content deduplication, tracks text/thought deduplication
+separately, and adds a pagination-completeness marker to delegation snapshots.
+It changes no provider, model, native settlement or inference behavior.
+`identity.json` and checksum manifests pin originals and final patched files.
+
+Offline source verification (after applying the pinned series):
+
+```sh
+AI_HARNESS_MINIMAX_SOURCE=/absolute/patched-source node \
+  --import ./ai-harness/server/node_modules/tsx/dist/loader.mjs --test \
+  ai-harness/deploy/tests/test-message-metadata.mts
+```
+
+This checks the pinned native files and the thought-only/full-visible-message
+regression. It is not the full native build/typecheck or Linux runtime acceptance.

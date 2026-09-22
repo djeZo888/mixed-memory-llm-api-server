@@ -8,6 +8,8 @@ import { ApiError, requireId } from "./errors.js";
 import { Store } from "./store.js";
 import { Files, MAX_UPLOAD } from "./files.js";
 import { Broker, type BrokerOptions } from "./broker.js";
+import { contentDisposition, imageMime } from "./file-metadata.js";
+import { environment } from "./locale.js";
 import { REVIEWED_SKILLS } from "./policy.js";
 import type { Event } from "./contracts.js";
 // MiniMax ae65651 packages/tui/src/acp/commands.ts: exact, case-sensitive
@@ -200,7 +202,8 @@ export async function createApp(options: AppOptions): Promise<{
       throwFileSizeLimit: true,
     });
     app.get("/api/health", async () => ({
-      version: "0.0.1",
+      version: "0.0.2",
+      environment: environment(),
       status: "ok",
       visionAvailable: options.visionAvailable === true,
     }));
@@ -237,14 +240,12 @@ export async function createApp(options: AppOptions): Promise<{
       const attachmentIds = ids.map(requireId);
       if (!body.text.trim() && !attachmentIds.length)
         throw new ApiError(400, "invalid_message", "Message is empty");
-      const command = /^\/([^\s]+)(?:\s+([\s\S]*?))?\s*$/u.exec(
-        body.text,
-      )?.[1];
+      const command = /^\/([^\s]+)(?:\s+([\s\S]*?))?\s*$/u.exec(body.text)?.[1];
       if (command && unsupportedSlashCommands.has(command))
         throw new ApiError(
           400,
           "unsupported_slash_command",
-          "Native CLI slash commands are not supported in ai-harness v0.0.1. Please phrase a normal task instead.",
+          "Native CLI slash commands are not supported in ai-harness v0.0.2. Please phrase a normal task instead.",
         );
       const runId = broker.enqueue(
         id(req),
@@ -317,23 +318,68 @@ export async function createApp(options: AppOptions): Promise<{
           .map((f) => store.publicFile(f)),
       };
     });
-    app.get("/api/artifacts/:id/download", async (req, reply) => {
+    for (const kind of ["artifact", "attachment"] as const) {
+      app.get(`/api/${kind}s/:id/download`, async (req, reply) => {
+        if (Object.keys(req.query as object).length)
+          throw new ApiError(
+            400,
+            "invalid_query",
+            "Downloads accept a file ID only",
+          );
+        const value = await files.download(id(req), kind);
+        reply
+          .type("application/octet-stream")
+          .header("Content-Disposition", contentDisposition(value.file.name))
+          .header("Content-Length", value.size);
+        return reply.send(value.stream);
+      });
+    }
+    app.get("/api/files/:id/preview", async (req, reply) => {
       if (Object.keys(req.query as object).length)
         throw new ApiError(
           400,
           "invalid_query",
-          "Downloads accept an artifact ID only",
+          "Preview accepts a file ID only",
         );
-      const value = await files.download(id(req));
+      const file = store.file(id(req));
+      const mime = imageMime(file.name);
+      if (!mime)
+        throw new ApiError(
+          415,
+          "unsupported_preview",
+          "Only image assets have previews",
+        );
+      const value = await files.download(file.id, file.kind);
       reply
-        .type("application/octet-stream")
+        .type(mime)
+        .header("Content-Disposition", contentDisposition(file.name, true))
+        .header("Content-Length", value.size)
         .header(
-          "Content-Disposition",
-          `attachment; filename="${value.file.name.replaceAll('"', "_")}"`,
-        )
-        .header("Content-Length", value.size);
+          "Content-Security-Policy",
+          "sandbox; default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+        );
       return reply.send(value.stream);
     });
+    app.get(
+      "/api/sessions/:id/runs/:runId/artifacts.zip",
+      async (req, reply) => {
+        if (Object.keys(req.query as object).length)
+          throw new ApiError(
+            400,
+            "invalid_query",
+            "ZIP selection is the owned run only",
+          );
+        const runId = requireId((req.params as { runId: string }).runId);
+        const stream = await files.zip(id(req), runId);
+        reply
+          .type("application/zip")
+          .header(
+            "Content-Disposition",
+            contentDisposition(`reply-${runId}.zip`),
+          );
+        return reply.send(stream);
+      },
+    );
     app.get("/api/sessions/:id/events", async (req, reply) => {
       const sessionId = id(req);
       store.getSession(sessionId);

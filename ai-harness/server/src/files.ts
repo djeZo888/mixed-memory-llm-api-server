@@ -5,18 +5,17 @@ import { randomUUID } from "node:crypto";
 import { pipeline } from "node:stream/promises";
 import { Transform, type Readable } from "node:stream";
 import { ApiError, requireId } from "./errors.js";
+import { displayName, imageMime, safeStorageName } from "./file-metadata.js";
+import {
+  zipStream,
+  MAX_ZIP_FILES,
+  MAX_ZIP_BYTES,
+  type ZipEntry,
+} from "./zip.js";
 import type { FileRecord, Store } from "./store.js";
 export const MAX_UPLOAD = 50 * 1024 * 1024;
 const MAX_ARTIFACT = 64 * 1024 * 1024;
-export function safeName(name: string): string {
-  const value = path
-    .basename(name.replaceAll("\\", "/"))
-    .normalize("NFKC")
-    .replace(/[^a-zA-Z0-9._ -]/g, "_")
-    .replace(/^\.+/, "")
-    .slice(0, 150);
-  return value || "file";
-}
+export const safeName = safeStorageName;
 export class Files {
   readonly root: string;
   constructor(
@@ -123,8 +122,8 @@ export class Files {
     if (s.deleteRequested)
       throw new ApiError(409, "deleting", "Session is deleting");
     const id = randomUUID(),
-      name = safeName(filename),
-      relative = `${id}-${name}`;
+      name = displayName(filename),
+      relative = `${id}-${safeName(filename)}`;
     const root = path.join(this.root, "uploads");
     const dest = path.join(root, relative);
     let size = 0;
@@ -190,7 +189,10 @@ export class Files {
         path.join(this.root, "uploads"),
         f.path,
       );
-      const destination = path.join(folder, `${randomUUID()}-${f.name}`);
+      const destination = path.join(
+        folder,
+        `${randomUUID()}-${safeName(f.name)}`,
+      );
       const target = await fs.open(
         destination,
         constants.O_CREAT |
@@ -214,7 +216,25 @@ export class Files {
     filePath: string,
     name?: string,
     mimeType = "application/octet-stream",
+    runId?: string,
+    messageId?: string,
   ) {
+    if (
+      runId &&
+      !this.store.db
+        .prepare("SELECT id FROM runs WHERE id=? AND session_id=?")
+        .get(runId, sessionId)
+    )
+      throw new ApiError(404, "not_found", "Run not found");
+    if (
+      messageId &&
+      !this.store.db
+        .prepare(
+          "SELECT id FROM messages WHERE id=? AND session_id=? AND run_id=? AND role='assistant'",
+        )
+        .get(messageId, sessionId, runId ?? null)
+    )
+      throw new ApiError(404, "not_found", "Message not found");
     const s = this.store.getSession(sessionId);
     const workspace = this.workspace(s.workspaceId);
     const relative = path.isAbsolute(filePath)
@@ -261,8 +281,10 @@ export class Files {
         sessionId,
         kind: "artifact",
         path: id,
-        name: safeName(name ?? path.basename(relative)),
-        mimeType,
+        name: displayName(name ?? path.basename(relative)),
+        mimeType: imageMime(name ?? relative) ?? mimeType,
+        runId: runId ?? null,
+        messageId: messageId ?? null,
         size: bytes,
       });
     } catch (e) {
@@ -301,13 +323,55 @@ export class Files {
     await walk("", 0);
     return candidates;
   }
-  async download(id: string) {
+  async zip(sessionId: string, runId: string) {
+    this.store.getSession(requireId(sessionId));
+    requireId(runId);
+    if (
+      !this.store.db
+        .prepare("SELECT id FROM runs WHERE id=? AND session_id=?")
+        .get(runId, sessionId)
+    )
+      throw new ApiError(404, "not_found", "Run not found");
+    const files = this.store
+      .files(sessionId, "artifact")
+      .filter((f) => f.runId === runId);
+    if (!files.length)
+      throw new ApiError(404, "not_found", "No files for this run");
+    if (
+      files.length > MAX_ZIP_FILES ||
+      files.reduce((n, f) => n + f.size, 0) > MAX_ZIP_BYTES
+    )
+      throw new ApiError(
+        413,
+        "zip_too_large",
+        "ZIP exceeds 100 files or 256 MiB",
+      );
+    const entries: ZipEntry[] = [];
+    try {
+      let bytes = 0;
+      for (const file of files) {
+        const { handle, stat } = await this.openGuarded(
+          path.join(this.root, "artifacts"),
+          file.path,
+        );
+        entries.push({ handle, size: stat.size, name: file.name });
+        bytes += stat.size;
+        if (stat.size > MAX_ARTIFACT || bytes > MAX_ZIP_BYTES)
+          throw new ApiError(413, "zip_too_large", "ZIP exceeds size limit");
+      }
+      return zipStream(entries);
+    } catch (error) {
+      await Promise.all(entries.map((e) => e.handle.close().catch(() => {})));
+      throw error;
+    }
+  }
+  async download(id: string, kind: FileRecord["kind"] = "artifact") {
     const f = this.store.file(requireId(id));
-    if (f.kind !== "artifact")
+    if (f.kind !== kind)
       throw new ApiError(404, "not_found", "Artifact not found");
     this.store.getSession(f.sessionId);
     const { handle, stat } = await this.openGuarded(
-      path.join(this.root, "artifacts"),
+      path.join(this.root, kind === "artifact" ? "artifacts" : "uploads"),
       f.path,
     );
     return { file: f, size: stat.size, stream: handle.createReadStream() };

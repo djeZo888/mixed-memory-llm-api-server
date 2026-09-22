@@ -1,9 +1,49 @@
-# ai-harness server 0.0.1
+# ai-harness server 0.0.2
 
 Node 24 / TypeScript / Fastify / SQLite control plane and two-lane inference
 gateway for the approved ai-harness plan. This directory owns the server only;
 PREP owns the engine container/launcher and WEB owns the frontend. First-party
 source is MIT under this directory's LICENSE. No hosted MiniMax account is used.
+
+## 0.0.2 source contract
+
+Snapshots retain all prior fields and add `runs`, `activities`, `attachments`,
+`environment`, and an explicit atomic `watermark`. Messages carry native
+identity and `phase` (`intermediate`, `thinking`, `final`, `unclassified`). Actual
+emitted thought text is a separate message/channel; no reasoning is inferred.
+The native metadata bridge is `mcode/session/message_update` schema 1. A final
+candidate requires a fresh exhaustive native settlement, the last root turn,
+and a real final kind/terminal finish reason with visible text. Publication waits
+for the app run's final cancellation check and commits final metadata, file
+associations, run state and events together.
+
+`run`, `activity` and `subagents` events restore run queues and upsert activities.
+Tool inputs expose only bounded, redacted recognized fields, including native
+browser `{action,input:{url}}`. Child counts require a complete native snapshot
+and a per-run historical baseline; missing/truncated capability remains unknown.
+Legacy merged messages remain unclassified. Historical file/activity grouping
+uses existing event run IDs; historical commands and phases are not fabricated.
+
+Original `messages`/`files` table layouts are unchanged. Additive `h002_*`
+companion tables preserve old positional inserts. New file names retain an ASCII
+fallback in `files.name` for old-release download headers; companion metadata
+retains the sanitized original Unicode name. Existing rows are not renamed.
+
+Downloads use `/api/attachments/:id/download` and the existing artifact route.
+`/api/files/:id/preview` serves allowlisted image MIME types under sandboxed CSP
+and `nosniff`; clients must use an image element, never inline SVG markup.
+Per-run `/api/sessions/:id/runs/:runId/artifacts.zip` streams only registered
+owned snapshots, limited to 100 files/256 MiB. Names are unique and path-free;
+reads retain the same symlink/hardlink/containment guards. Downloads and previews
+do not publish or register files.
+
+An untouched chat alone has `context.source="empty"`, used 0; enqueue/handoff
+invalidates that value. Environment metadata and each native request's clock
+are computed freshly for IANA `Europe/Ljubljana`, Ljubljana, Slovenia. Source
+passes that timezone through the real Podman argument list and ensures zoneinfo
+in the image. Native Chromium inherits this process environment. Effective
+Linux/browser timezone, native image build and coordinated deployment remain
+separate acceptance gates; source tests do not establish them.
 
 ## Build and local verification
 

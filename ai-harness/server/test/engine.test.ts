@@ -100,10 +100,10 @@ test("official SDK subprocess initialize/new/prompt updates and private launcher
   await h.engine.prompt("updates");
   assert.deepEqual(h.nativeIds, ["native-fixture-session"]);
   assert.deepEqual(
-    h.updates.filter((value) => value.type === "text"),
+    h.updates.filter((value) => value.type === "text" && value.channel !== "thought").map(v => ({ type: v.type, text: v.type === "text" ? v.text : "" })),
     [{ type: "text", text: "fixture response" }],
   );
-  assert.ok(!JSON.stringify(h.updates).includes("private reasoning"));
+  assert.ok(h.updates.some(v => v.type === "text" && v.channel === "thought" && v.text.includes("private reasoning")), "actual emitted thoughts are preserved separately");
   assert.ok(
     h.updates.some(
       (value) =>
@@ -319,7 +319,7 @@ test("immediate Stop before root admission accepts only fresh exhaustive cancell
   const h = await harness(t);
   await h.engine.start();
   await stopBeforeAdmission(h);
-  assert.deepEqual(h.updates, [], "no native root turn was admitted");
+  assert.deepEqual(h.updates.filter(v => v.type === "text"), [], "no native root turn was admitted");
   assert.equal(await h.engine.prompt("ordinary follow-up"), "completed");
   const calls = await h.calls();
   assert.equal(calls.filter((call) => call.method === "prompt").length, 2);
@@ -501,7 +501,7 @@ test("runner token split across assistant chunks cannot enter durable message pr
   const h = await harness(t);
   await h.engine.prompt("token-output");
   const text = h.updates
-    .filter((value) => value.type === "text")
+    .filter((value) => value.type === "text" && value.channel !== "thought")
     .map((value) => (value.type === "text" ? value.text : ""))
     .join("");
   assert.equal(text, "[REDACTED]fixture response");
@@ -545,7 +545,7 @@ test("authoritative background completion projects only root continuations and t
   const h = await harness(t);
   assert.equal(await h.engine.prompt("background"), "completed");
   const text = h.updates
-    .filter((v) => v.type === "text")
+    .filter((v) => v.type === "text" && v.channel !== "thought")
     .map((v) => (v.type === "text" ? v.text : ""))
     .join("");
   assert.equal(
@@ -823,7 +823,7 @@ test("late root notifications and child text never append after completion", asy
   await h.engine.prompt("background");
   await delay(60);
   const text = h.updates
-    .filter((v) => v.type === "text")
+    .filter((v) => v.type === "text" && v.channel !== "thought")
     .map((v) => (v.type === "text" ? v.text : ""))
     .join("");
   assert.equal(
@@ -892,5 +892,163 @@ test("new native session cannot admit an identity-less running receipt", async (
   assert.equal(
     (await h.calls()).filter((c) => c.method === "prompt").length,
     0,
+  );
+});
+
+test("H002 SDK metadata preserves channels, redacts interleaved tails, upserts actual tool input and gates final on last root", async (t) => {
+  const h = await harness(t, { h002: true, snapshotComplete: true, earlierKindFinal: true });
+  await h.engine.prompt("synthetic channel fixture");
+  const texts = h.updates.filter(
+    (u): u is Extract<EngineUpdate, { type: "text" }> => u.type === "text",
+  );
+  const joined = (id: string, channel: string) =>
+    texts
+      .filter((u) => u.nativeMessageId === id && u.channel === channel)
+      .map((u) => u.text)
+      .join("");
+  assert.equal(joined("native-a", "thought"), "Emitted thought [REDACTED].");
+  assert.equal(joined("native-a", "unknown"), "Planning [REDACTED].");
+  assert.equal(joined("native-z", "unknown"), "Actual final answer.");
+  assert.ok(!JSON.stringify(h.updates).includes(h.token));
+  assert.deepEqual(
+    h.updates
+      .filter((u) => u.type === "phase" && u.channel === "final")
+      .map((u) =>
+        u.type === "phase" ? [u.nativeMessageId, u.nativeTurnId] : [],
+      ),
+    [["native-z", "run-1-last"]],
+  );
+  assert.ok(
+    h.updates.some(
+      (u) =>
+        u.type === "phase" &&
+        u.nativeMessageId === "native-a" &&
+        u.channel === "commentary",
+    ),
+  );
+  const tools = h.updates.filter(
+    (u): u is Extract<EngineUpdate, { type: "progress" }> =>
+      u.type === "progress" &&
+      u.kind === "tool" &&
+      u.toolCallId === "real-tool",
+  );
+  assert.equal(tools.length, 2);
+  assert.equal(tools[0].toolActivityId, tools[1].toolActivityId);
+  assert.equal(tools[1].status, "completed");
+  assert.equal(tools[1].name, "bash");
+  assert.equal(tools[1].command, tools[0].command);
+  assert.ok(tools[1].command!.length <= 2048);
+  assert.match(tools[1].url!, /\[REDACTED\]/);
+  assert.ok(tools[1].completedAt);
+  const browser = h.updates.find(
+    (u) => u.type === "progress" && u.toolCallId === "browser-tool",
+  );
+  assert.ok(
+    browser?.type === "progress" &&
+      browser.url === "https://example.test/research?token=[REDACTED]" &&
+      browser.detail?.includes("action: navigate"),
+  );
+  const launch = (await h.calls()).find((c) => c.method === "launch")!;
+  assert.equal(launch.tz, "Europe/Ljubljana");
+  assert.match(
+    (await h.calls()).find((c) => c.method === "prompt")!.params.prompt[1].text,
+    /Ljubljana, Slovenia/,
+  );
+});
+
+for (const config of [
+  { emptyLast: true },
+  { omitMetadata: true },
+  { nativeCancelled: true },
+  { freshReceipt: "unknown" },
+]) {
+  test(`H002 no final with ${Object.keys(config)[0]}`, async (t) => {
+    const h = await harness(t, { h002: true, ...config });
+    if ("freshReceipt" in config)
+      await assert.rejects(h.engine.prompt("synthetic"));
+    else await h.engine.prompt("synthetic");
+    assert.ok(
+      !h.updates.some((u) => u.type === "phase" && u.channel === "final"),
+    );
+  });
+}
+
+test("H002 full child baseline counts new and changed unique members; old completed history excluded", async (t) => {
+  const h = await harness(t, {
+    h002: true,
+    snapshotComplete: true,
+    initialChildren: [
+      {
+        sessionId: "old",
+        parentSessionId: "native-fixture-session",
+        status: "completed",
+      },
+    ],
+    childSequence: [
+      [
+        { sessionId: "old", parentSessionId: "$root", status: "completed" },
+        { sessionId: "new", parentSessionId: "$root", status: "queued" },
+      ],
+      [
+        { sessionId: "old", parentSessionId: "$root", status: "completed" },
+        { sessionId: "new", parentSessionId: "$root", status: "running" },
+      ],
+      [
+        { sessionId: "old", parentSessionId: "$root", status: "completed" },
+        { sessionId: "new", parentSessionId: "$root", status: "completed" },
+      ],
+    ],
+  });
+  await h.engine.prompt("synthetic");
+  const summaries = h.updates.flatMap((u) =>
+    u.type === "progress" && u.subagents ? [u.subagents] : [],
+  );
+  assert.ok(
+    summaries.some((s) => s.known && s.active === 1 && s.completed === 0),
+  );
+  assert.equal(summaries.at(-1)!.completed, 1);
+  assert.equal(summaries.at(-1)!.active, 0);
+  assert.ok(
+    !h.updates.some((u) => u.type === "progress" && u.subagentId === "old"),
+  );
+  const start = h.updates.length;
+  await h.engine.prompt("synthetic second");
+  assert.ok(
+    h.updates
+      .slice(start)
+      .some(
+        (u) =>
+          u.type === "progress" &&
+          u.subagents?.known &&
+          u.subagents.active === 0 &&
+          u.subagents.completed === 0,
+      ),
+  );
+});
+
+test("H002 missing or truncated native child capability keeps counts explicitly unknown", async (t) => {
+  const h = await harness(t, {
+    h002: true,
+    snapshotComplete: false,
+    childSequence: [
+      [{ sessionId: "new", parentSessionId: "$root", status: "running" }],
+    ],
+  });
+  await h.engine.prompt("synthetic");
+  assert.ok(
+    h.updates.some(
+      (u) =>
+        u.type === "progress" &&
+        u.subagentId === "new" &&
+        u.status === "running",
+    ),
+  );
+  assert.ok(
+    h.updates.every(
+      (u) =>
+        u.type !== "progress" ||
+        !u.subagents ||
+        (!u.subagents.known && u.subagents.active === null),
+    ),
   );
 });

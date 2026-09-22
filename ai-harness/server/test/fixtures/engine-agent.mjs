@@ -39,6 +39,7 @@ await save({
   proxyInherited: Boolean(process.env.HTTPS_PROXY),
   authSocketInherited: Boolean(process.env.SSH_AUTH_SOCK),
   containerHostInherited: Boolean(process.env.CONTAINER_HOST),
+  tz: process.env.TZ,
   nodeOptionsInherited: Boolean(process.env.NODE_OPTIONS),
 });
 process.stderr.write(
@@ -104,7 +105,8 @@ const altered = (receipt, mode) => {
   if (mode === "duplicate")
     return { ...receipt, rootTurnIds: [receipt.runId, receipt.runId] };
   if (mode === "empty-turns") return { ...receipt, rootTurnIds: [] };
-  if (mode === "wrong-first") return { ...receipt, rootTurnIds: ["other-turn"] };
+  if (mode === "wrong-first")
+    return { ...receipt, rootTurnIds: ["other-turn"] };
   if (mode === "null-run") return { ...receipt, runId: null, rootTurnIds: [] };
   if (mode === "nonexhaustive") return { ...receipt, exhaustive: false };
   if (mode === "reasons") return { ...receipt, reasons: ["pending_delivery"] };
@@ -122,13 +124,14 @@ const promptResponse = (stopReason) => {
 };
 
 let resolvePrompt;
-let children = [];
+let children = config.initialChildren ?? [];
 let connection;
 const update = (body) =>
   connection.sessionUpdate({ sessionId: id, update: body });
 const delegation = () => ({
   schemaVersion: 1,
   rootSessionId: id,
+  complete: config.snapshotComplete,
   members: children,
 });
 connection = new acp.AgentSideConnection(
@@ -220,9 +223,110 @@ connection = new acp.AgentSideConnection(
         params.prompt
           .map((block) => (block.type === "text" ? block.text : ""))
           .at(-1) ?? "";
+      if (config.h002) {
+        const meta = async (messageId, turnId, kind, status, finishReason) => {
+          if (config.omitMetadata) return;
+          await connection.extNotification("mcode/session/message_update", {
+            schemaVersion: 1,
+            sessionId: id,
+            messageId,
+            turnId,
+            kind,
+            status,
+            ...(finishReason ? { finishReason } : {}),
+          });
+        };
+        const chunk = async (messageId, type, text) =>
+          update({
+            sessionUpdate: type,
+            messageId,
+            content: { type: "text", text },
+          });
+        const token = process.env.AI_HARNESS_GATEWAY_TOKEN;
+        await meta("native-a", runId, null, "streaming");
+        await chunk(
+          "native-a",
+          "agent_thought_chunk",
+          "Emitted thought " + token.slice(0, 20),
+        );
+        await chunk(
+          "native-a",
+          "agent_message_chunk",
+          "Planning " + token.slice(0, 25),
+        );
+        await chunk("native-a", "agent_thought_chunk", token.slice(20) + ".");
+        await chunk("native-a", "agent_message_chunk", token.slice(25) + ".");
+        await meta(
+          "native-a",
+          runId,
+          config.earlierKindFinal ? "final" : null,
+          "completed",
+          config.earlierKindFinal ? undefined : "stop",
+        );
+        await update({
+          sessionUpdate: "tool_call",
+          toolCallId: "real-tool",
+          title: "bash",
+          name: "bash",
+          status: "in_progress",
+          rawInput: {
+            command: "echo actual --token=" + token + " " + "x".repeat(5000),
+            url: "https://example.test/file?token=" + token,
+          },
+        });
+        await update({
+          sessionUpdate: "tool_call_update",
+          toolCallId: "real-tool",
+          status: "completed",
+        });
+        await update({
+          sessionUpdate: "tool_call",
+          toolCallId: "browser-tool",
+          title: "browser",
+          name: "browser",
+          status: "in_progress",
+          rawInput: {
+            action: "navigate",
+            input: { url: "https://example.test/research?token=" + token },
+          },
+        });
+        if (config.childSequence) {
+          for (const snapshotMembers of config.childSequence) {
+            children = snapshotMembers.map((c) => ({
+              ...c,
+              parentSessionId:
+                c.parentSessionId === "$root" ? id : c.parentSessionId,
+            }));
+            await connection.extNotification(
+              "mcode/session/delegation_update",
+              { sessionId: id, snapshot: delegation() },
+            );
+          }
+        }
+        rootTurnIds.push(`${runId}-last`);
+        await meta("native-z", `${runId}-last`, null, "streaming");
+        if (!config.emptyLast)
+          await chunk(
+            "native-z",
+            "agent_message_chunk",
+            "Actual final answer.",
+          );
+        await meta(
+          "native-z",
+          `${runId}-last`,
+          config.finalKind === false ? null : "final",
+          "completed",
+          "stop",
+        );
+        return promptResponse(
+          config.nativeCancelled ? "cancelled" : "end_turn",
+        );
+      }
       if (text === "early-stop") {
         rootTurnIds = [];
-        const pending = new Promise((resolve) => { resolvePrompt = resolve; });
+        const pending = new Promise((resolve) => {
+          resolvePrompt = resolve;
+        });
         await save({ method: "before-root-admission", runId });
         return await pending;
       }

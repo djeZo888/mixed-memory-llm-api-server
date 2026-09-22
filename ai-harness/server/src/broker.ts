@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Store, Run, StoredSession } from "./store.js";
 import { Files } from "./files.js";
 import type {
@@ -6,6 +7,8 @@ import type {
   EngineUpdate,
   Context,
   Status,
+  MessagePhase,
+  Activity,
 } from "./contracts.js";
 import { CONTEXT_LIMIT } from "./contracts.js";
 import { ApiError } from "./errors.js";
@@ -35,7 +38,10 @@ interface Active {
 // Only known cancellation-settlement failures carry this tag. Unrelated errors
 // after a prompt must remain visible even when Stop has also been requested.
 class CancellationSettlementError extends Error {
-  constructor(readonly requestedAtFailure: boolean, options?: ErrorOptions) {
+  constructor(
+    readonly requestedAtFailure: boolean,
+    options?: ErrorOptions,
+  ) {
     super("Cancellation settlement was not confirmed", options);
   }
 }
@@ -87,6 +93,7 @@ export class Broker {
         );
     }
     const run = this.store.createRun(s, kind, text, attachmentIds);
+    this.store.touchContext(s.id, run.id);
     if (kind === "message") {
       const message = this.store.addMessage(
         s.id,
@@ -190,6 +197,20 @@ export class Broker {
   private async execute(active: Active) {
     const run = active.run;
     let assistantId: string | undefined;
+    const assistantIds = new Set<string>();
+    let finalCandidate: { messageId: string; phase: MessagePhase } | undefined;
+    const phases = new Map<string, MessagePhase>();
+    const messageId = (native: string | undefined, thought = false) =>
+      "m_" +
+      createHash("sha256")
+        .update(
+          JSON.stringify([
+            run.id,
+            native ?? "legacy",
+            thought ? "thought" : "text",
+          ]),
+        )
+        .digest("hex");
     let summary = "";
     let success = false;
     let cleanupConfirmed = false;
@@ -211,24 +232,100 @@ export class Broker {
         if (this.active.get(s.workspaceId) !== active) return;
         if (u.type === "text") {
           if (!u.text) return;
-          summary += u.text;
-          if (!assistantId) {
-            assistantId = this.store.addMessage(
-              s.id,
-              "assistant",
-              "",
-              run.id,
-            ).id;
-          }
-          this.store.appendDelta(s.id, assistantId, u.text, run.id);
-        } else if (u.type === "progress") {
-          const data = {
-            kind: u.kind.slice(0, 100),
-            label: u.label.slice(0, 300),
-            ...(u.detail ? { detail: u.detail.slice(0, 8192) } : {}),
-            ...(u.taskId ? { taskId: u.taskId.slice(0, 200) } : {}),
+          const thought = u.channel === "thought";
+          if (!thought) summary += u.text;
+          const id = messageId(u.nativeMessageId, thought);
+          const phase = phases.get(id) ?? {
+            phase: (thought
+              ? "thinking"
+              : "unclassified") as MessagePhase["phase"],
+            ...(u.nativeMessageId
+              ? { nativeMessageId: u.nativeMessageId }
+              : {}),
+            streamState: "streaming" as const,
           };
-          this.store.emit(s.id, "progress", data, run.id);
+          this.store.appendDelta(s.id, id, u.text, run.id, phase);
+          assistantIds.add(id);
+          if (!thought) assistantId = id;
+        } else if (u.type === "phase") {
+          const id = messageId(u.nativeMessageId);
+          const phase: MessagePhase = {
+            phase:
+              u.channel === "final"
+                ? "final"
+                : u.channel === "commentary"
+                  ? "intermediate"
+                  : "unclassified",
+            nativeMessageId: u.nativeMessageId,
+            ...(u.nativeTurnId ? { nativeTurnId: u.nativeTurnId } : {}),
+            streamState: u.streamState ?? "completed",
+          };
+          if (u.channel === "final") {
+            finalCandidate = { messageId: id, phase };
+            phase.phase = "unclassified";
+            // Keep a distinct candidate copy until the final app cancellation check.
+            finalCandidate.phase = { ...phase, phase: "final" };
+          }
+          phases.set(id, phase);
+          this.store.setMessagePhase(s.id, id, run.id, phase);
+          const thoughtId = messageId(u.nativeMessageId, true);
+          const thoughtPhase: MessagePhase = { ...phase, phase: "thinking" };
+          phases.set(thoughtId, thoughtPhase);
+          this.store.setMessagePhase(s.id, thoughtId, run.id, thoughtPhase);
+        } else if (u.type === "progress") {
+          const { type, ...data } = u;
+          this.store.emit(
+            s.id,
+            "progress",
+            {
+              ...data,
+              kind: u.kind.slice(0, 100),
+              label: u.label.slice(0, 300),
+              ...(u.toolActivityId
+                ? { toolActivityId: `${run.id}:${u.toolActivityId}` }
+                : {}),
+            },
+            run.id,
+          );
+          if (u.subagents) this.store.setSubagents(s.id, run.id, u.subagents);
+          const nativeActivityId = u.toolCallId ?? u.subagentId;
+          if (
+            nativeActivityId &&
+            (u.kind === "tool" || u.kind === "subagent")
+          ) {
+            const statuses: Record<string, Activity["status"]> = {
+              queued: "pending",
+              pending: "pending",
+              running: "in_progress",
+              in_progress: "in_progress",
+              completed: "completed",
+              failed: "failed",
+              stopped: "cancelled",
+              cancelled: "cancelled",
+            };
+            this.store.upsertActivity(s.id, {
+              id: `${u.kind}:${nativeActivityId}`,
+              runId: run.id,
+              kind: u.kind,
+              name: u.name ?? (u.kind === "subagent" ? "Subagent" : "Tool"),
+              status: statuses[u.status ?? ""] ?? "unknown",
+              summary: u.label,
+              updatedAt: u.updatedAt ?? new Date().toISOString(),
+              ...(u.detail !== undefined ? { detail: u.detail } : {}),
+              ...(u.command !== undefined ? { command: u.command } : {}),
+              ...(u.url !== undefined ? { url: u.url } : {}),
+              ...(u.startedAt ? { startedAt: u.startedAt } : {}),
+              ...(u.completedAt ? { finishedAt: u.completedAt } : {}),
+              ...(u.toolCallId ? { toolCallId: u.toolCallId } : {}),
+              ...(u.subagentId ? { childSessionId: u.subagentId } : {}),
+              ...(u.parentSessionId
+                ? { parentSessionId: u.parentSessionId }
+                : {}),
+              ...(u.backgroundTaskId
+                ? { backgroundTaskId: u.backgroundTaskId }
+                : {}),
+            });
+          }
           if (u.kind === "compaction")
             this.store.setStatus(s.id, "compacting", run.id);
         } else if (u.type === "compaction") {
@@ -303,7 +400,9 @@ export class Broker {
         try {
           await engine.cancel();
         } catch (error) {
-          throw new CancellationSettlementError(active.cancelled, { cause: error });
+          throw new CancellationSettlementError(active.cancelled, {
+            cause: error,
+          });
         }
       };
       if (active.cancelled) await cancelBeforePrompt();
@@ -346,7 +445,7 @@ export class Broker {
       if (active.cancelFailed)
         throw new CancellationSettlementError(active.cancelled);
       await Promise.all(artifactJobs);
-      if (assistantId)
+      for (const assistantId of assistantIds)
         this.store.emit(
           s.id,
           "message",
@@ -358,6 +457,7 @@ export class Broker {
           throw new Error("Engine produced no handoff summary");
         const next = await this.createSession(s.workspaceId);
         this.store.setTitle(next.id, `Continue: ${s.title}`);
+        this.store.touchContext(next.id);
         const m = this.store.addMessage(
           next.id,
           "assistant",
@@ -378,9 +478,10 @@ export class Broker {
       await active.cancelPromise;
       if (active.cancelFailed)
         throw new CancellationSettlementError(active.cancelled);
-      this.store.updateRun(
+      this.store.settleRun(
         run.id,
         active.cancelled ? "cancelled" : "completed",
+        active.cancelled ? undefined : finalCandidate,
       );
       success = true;
     } catch (error) {
@@ -393,23 +494,26 @@ export class Broker {
         error.code === "engine_settlement_unknown";
       failureStatus = backgroundUnknown ? "interrupted" : "failed";
       this.store.updateRun(run.id, failureStatus);
-      const emitFailure = () => this.store.emit(
-        run.sessionId,
-        "error",
-        {
-          code: backgroundUnknown
-            ? "engine_settlement_unknown"
-            : "engine_failed",
-          message: backgroundUnknown
-            ? "Native completion could not be confirmed; process cleanup is being verified. The run was not accepted as completed."
-            : "Engine request failed; partial history is retained and cleanup is being verified. The prompt was not replayed.",
-        },
-        run.id,
-      );
+      const emitFailure = () =>
+        this.store.emit(
+          run.sessionId,
+          "error",
+          {
+            code: backgroundUnknown
+              ? "engine_settlement_unknown"
+              : "engine_failed",
+            message: backgroundUnknown
+              ? "Native completion could not be confirmed; process cleanup is being verified. The run was not accepted as completed."
+              : "Engine request failed; partial history is retained and cleanup is being verified. The prompt was not replayed.",
+          },
+          run.id,
+        );
       // Capture Stop intent at a prompt failure or a known cancel-settlement
       // failure, before cleanup can admit a later Stop for an unrelated error.
-      const cancellationRace = promptRejectedDuringCancellation ||
-        (error instanceof CancellationSettlementError && error.requestedAtFailure);
+      const cancellationRace =
+        promptRejectedDuringCancellation ||
+        (error instanceof CancellationSettlementError &&
+          error.requestedAtFailure);
       if (!cancellationRace) emitFailure();
       try {
         cleanupConfirmed = await this.closeRunner(run.sessionId);
@@ -448,13 +552,14 @@ export class Broker {
           run.id,
         );
     } finally {
-      if (assistantId && !success)
-        this.store.emit(
-          run.sessionId,
-          "message",
-          { message: this.store.message(assistantId) },
-          run.id,
-        );
+      if (!success)
+        for (const assistantId of assistantIds)
+          this.store.emit(
+            run.sessionId,
+            "message",
+            { message: this.store.message(assistantId) },
+            run.id,
+          );
       const s = this.store.getSession(run.sessionId, true);
       const pending = (this.queues.get(run.workspaceId) ?? []).some(
         (r) => r.sessionId === s.id,
@@ -482,15 +587,24 @@ export class Broker {
     runId: string,
     name?: string,
     mime?: string,
+    messageId?: string,
   ) {
     try {
-      const f = await this.files.registerArtifact(id, file, name, mime);
+      const f = await this.files.registerArtifact(
+        id,
+        file,
+        name,
+        mime,
+        runId,
+        messageId,
+      );
       this.store.emit(
         id,
         "artifact",
         { artifact: this.store.publicFile(f) },
         runId,
       );
+      this.store.emitRun(runId);
     } catch {
       this.store.emit(
         id,
