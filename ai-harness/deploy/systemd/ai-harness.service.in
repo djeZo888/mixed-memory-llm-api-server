@@ -13,7 +13,7 @@ ExecStart=@HARNESS_DIR@/deploy/run-server.sh --node-prefix @NODE_PREFIX@ --app-d
 UMask=0077
 Restart=on-failure
 RestartSec=5
-TimeoutStopSec=150
+TimeoutStopSec=90
 KillMode=control-group
 Delegate=yes
 # No NoNewPrivileges/RestrictNamespaces here: rootless Podman needs newuidmap,

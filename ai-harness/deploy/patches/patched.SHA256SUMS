@@ -1,6 +1,4 @@
 1977a0947a4a036adea9e1f5677c41984cea49bfd4f3a6b2a03782510ba074fc  packages/agent-core/src/pi-turn-runner/defaults.ts
-6828ff414976c55709c846a933b6a81207118e454fa47d1a88790149ac1ddca2  packages/local-runtime-v2/src/service/session-system/sessions/root/archived-root-title.ts
-b93eec185327161e970be4aacc2190df044e2745ca4a7edf9814988c92fe1e4c  packages/local-runtime-v2/src/service/session-system/sessions/title/session-title-service.ts
 3d78cf5b25cdee1f01ff81cd9f39de3d8b86173933fa2efea489603dc7f9c5ba  packages/tui/src/acp/agent.ts
 5e747161117a8f713271dffe2f13665fac7686e1ba3c66ffefafeb72e49ae76d  packages/tui/src/acp/extensions.ts
 73c3decbf8a78b5fa672bf4690bfec4ea717a04799dc400eff92654d79a0d01e  third_party/pi-mono/packages/ai/src/providers/openai-completions.ts

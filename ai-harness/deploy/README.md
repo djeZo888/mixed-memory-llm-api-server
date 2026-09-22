@@ -79,6 +79,9 @@ builds exact MiniMax source rather than copying a vendor tree into this repo;
 see [engine/README.md](engine/README.md) for source/artifact pins and limitations.
 Use the deployment directory alone as build context, with no host secrets.
 No automatic build or pull occurs inside `run-engine.sh`.
+Root owns the later integration that embeds reviewed tools/skills in the image.
+That task must update all build-context commands, Containerfile COPY paths and
+related documentation together; the context remains this directory for PREP.
 
 The backend invokes:
 
@@ -92,7 +95,7 @@ It supplies `AI_HARNESS_GATEWAY_TOKEN` (ephemeral inference-only),
 command/history or unit. Container HOME is profile/home; only that session
 profile and workspace are mounted, at their original absolute paths. No host
 SSH/Codex directories, service data root, credentials or management sockets are
-mounted. Optional reviewed skills/tools integration remains with the tools task;
+mounted. Reviewed skills/tools image integration remains with root's later task;
 the initial launcher has no arbitrary extra-mount escape hatch.
 
 The launcher uses `slirp4netns:allow_host_loopback=true` to reach the host gateway
@@ -102,9 +105,11 @@ and patchset label and resolves the image to an immutable local ID. All main/lig
 generation uses logical `qwen3.8-27b` through the same gateway, with explicit
 480000 context and65536 maximum output in the generated custom provider.
 
-The recorded source patches cover151-minute request timeouts (including direct
-auxiliary calls) and real ACP compaction lifecycle notifications. Smaller native
-title output-token budgets remain unchanged. The profile enables native image
+The recorded source patches set the main request default and common OpenAI
+adapter fallback to 151 minutes and add real ACP compaction lifecycle
+notifications. Native titles retain their bounded 10,000/15,000 ms timeouts and
+1,000/1,024-token budgets. Title failure remains nonfatal and cancellation removes
+queued requests; the portal names chats. The profile enables native image
 input following root's separate inference gate; image-file handling through the
 deployed application still needs acceptance. `patches/identity.json` records
 both original and resulting source hashes. The Containerfile checks upstream
@@ -113,11 +118,12 @@ HEAD, patch bytes and source bytes before building.
 The host Python3 supervisor redacts the ephemeral token, including split chunks
 and JSON escaping, from both stdout and stderr. It uses an exact random container
 name for bounded cleanup on exit/TERM; failed or unconfirmed cleanup returns125.
-Nonsecret ACP bytes are preserved. Root must allow at least40 seconds after TERM
-before forcibly killing this supervisor. The inspected SERVER implementation's
-five-second escalation must be aligned before activation. The user systemd
-template already allows150 seconds. SIGKILL or a host crash cannot establish
-container settlement; retain SERVER workspace quarantine in that case.
+Nonsecret ACP bytes are preserved. The launcher cleanup budget is at most 40
+seconds. The agreed source contract gives SERVER 45 seconds to wait for the exact
+launcher exit and 60–70 seconds for overall shutdown with parallel cleanup. The
+user systemd template allows 90 seconds. This resolves the source contract;
+live shutdown acceptance remains pending. SIGKILL or a host crash cannot
+establish container settlement; retain SERVER workspace quarantine in that case.
 
 ## Verification boundary
 

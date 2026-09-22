@@ -40,19 +40,30 @@ const defaultsPath = 'packages/agent-core/src/pi-turn-runner/defaults.ts';
 const titlePath = 'packages/local-runtime-v2/src/service/session-system/sessions/title/session-title-service.ts';
 const archivePath = 'packages/local-runtime-v2/src/service/session-system/sessions/root/archived-root-title.ts';
 const providerPath = 'third_party/pi-mono/packages/ai/src/providers/openai-completions.ts';
+// Titles are explicitly outside this patch. Preserve upstream nonfatal bounds.
+for (const relative of [titlePath, archivePath]) {
+  mkdirSync(path.dirname(path.join(copy, relative)), { recursive: true });
+  copyFileSync(path.join(source, relative), path.join(copy, relative));
+}
 
-test('patch applies only to the four identity-checked sources and keeps originals pristine', () => {
-  assert.deepEqual(patch.files.map((entry) => entry.path).sort(), [defaultsPath, titlePath, archivePath, providerPath].sort());
+test('patch applies only to main/provider sources and leaves titles byte-identical', () => {
+  assert.deepEqual(patch.files.map((entry) => entry.path).sort(), [defaultsPath, providerPath].sort());
+  const patchText = readFileSync(patchPath, 'utf8');
+  assert.equal(patchText.includes(titlePath), false);
+  assert.equal(patchText.includes(archivePath), false);
   for (const identity of patch.files) {
     assert.equal(sha256(readFileSync(path.join(copy, identity.path))), identity.patchedSha256);
     assert.equal(sha256(readFileSync(path.join(source, identity.path))), identity.originalSha256);
   }
+  for (const relative of [titlePath, archivePath]) {
+    assert.equal(readPatched(relative), readFileSync(path.join(source, relative), 'utf8'));
+  }
 });
 
-test('main and both title budgets are 151 min while title output limits remain narrow', () => {
+test('main budget is 151 min and native titles retain 10000/15000 ms and narrow outputs', () => {
   assert.equal(constant(readPatched(defaultsPath), 'LLM_REQUEST_TIMEOUT_MS'), 9_060_000);
-  assert.equal(constant(readPatched(titlePath), 'TITLE_TIMEOUT_MS'), 9_060_000);
-  assert.equal(constant(readPatched(archivePath), 'ARCHIVE_TITLE_TIMEOUT_MS'), 9_060_000);
+  assert.equal(constant(readPatched(titlePath), 'TITLE_TIMEOUT_MS'), 10_000);
+  assert.equal(constant(readPatched(archivePath), 'ARCHIVE_TITLE_TIMEOUT_MS'), 15_000);
   assert.equal(constant(readPatched(titlePath), 'TITLE_MAX_TOKENS'), 1_000);
   assert.equal(constant(readPatched(archivePath), 'ARCHIVE_TITLE_MAX_TOKENS'), 1_024);
 });
@@ -63,6 +74,9 @@ test('actual provider request-options expression covers unwrapped auxiliaries an
   const optionsFor = Function('options', `return (${match[1]})`);
   assert.deepEqual(optionsFor(undefined), { timeout: 9_060_000, maxRetries: 0 });
   assert.deepEqual(optionsFor({ maxTokens: 1000 }), { timeout: 9_060_000, maxRetries: 0 });
+  for (const timeoutMs of [10_000, 15_000]) {
+    assert.equal(optionsFor({ timeoutMs }).timeout, timeoutMs);
+  }
   const signal = new AbortController().signal;
   const explicit = optionsFor({ signal, timeoutMs: 9_060_001, maxRetries: 0 });
   assert.equal(explicit.signal, signal);
@@ -70,7 +84,7 @@ test('actual provider request-options expression covers unwrapped auxiliaries an
   assert.equal(explicit.maxRetries, 0);
 });
 
-test('native title completion passes 151 min to both SDK option and AbortSignal, preserving auxiliary outputs', async () => {
+test('native titles pass original short SDK/AbortSignal bounds and preserve auxiliary outputs', async () => {
   const relative = 'packages/local-runtime-v2/src/service/session-system/sessions/title/title-model-completion.ts';
   const js = stripTypeScriptTypes(readFileSync(path.join(source, relative), 'utf8'));
   const { completeTitleModelResponse } = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`);
@@ -95,11 +109,11 @@ test('native title completion passes 151 min to both SDK option and AbortSignal,
         },
         nowMs: () => 0,
       }, { session: { sessionId: 'fixture' }, turnId: 'title-fixture', systemPrompt: 'fixture', userPrompt: 'fixture', timeoutMs, maxTokens });
-      assert.equal(captured.timeoutMs, 9_060_000);
+      assert.equal(captured.timeoutMs, timeoutMs);
       assert.equal(captured.maxTokens, maxTokens);
       assert.equal(captured.signal.aborted, false);
     }
-    assert.deepEqual(timeouts, [9_060_000, 9_060_000]);
+    assert.deepEqual(timeouts, [10_000, 15_000]);
   } finally { AbortSignal.timeout = originalTimeout; }
 });
 

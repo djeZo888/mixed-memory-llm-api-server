@@ -16,7 +16,7 @@ COPY patches /tmp/ai-harness-patches
 RUN test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e \
     && sha256sum -c /tmp/ai-harness-patches/source.SHA256SUMS \
     && cd /tmp/ai-harness-patches && sha256sum -c SHA256SUMS \
-    && printf '%s\n' '256e6fc91a7b86fcc0073c3755bd0aab6be50bb4125827be36d9b99dc1b09d0c  SHA256SUMS' | sha256sum -c - \
+    && printf '%s\n' 'b583f01e412c3316fe3a5e62f8b5ce83269091e077b3eb6df2e615dd8428402d  SHA256SUMS' | sha256sum -c - \
     && cd /build/minimax \
     && git apply --check /tmp/ai-harness-patches/0001-gateway-request-budget.patch /tmp/ai-harness-patches/0002-acp-compaction-notifications.patch \
     && git apply /tmp/ai-harness-patches/0001-gateway-request-budget.patch /tmp/ai-harness-patches/0002-acp-compaction-notifications.patch \
@@ -42,7 +42,7 @@ SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 LABEL org.opencontainers.image.title="ai-harness local MiniMax engine" \
       org.opencontainers.image.version="0.0.1" \
       org.opencontainers.image.revision="ae65651df5f97ae1085ab4e19964f4b78c769a4e" \
-      org.opencontainers.image.ai-harness.patchset="256e6fc91a7b86fcc0073c3755bd0aab6be50bb4125827be36d9b99dc1b09d0c" \
+      org.opencontainers.image.ai-harness.patchset="b583f01e412c3316fe3a5e62f8b5ce83269091e077b3eb6df2e615dd8428402d" \
       org.opencontainers.image.source="https://github.com/MiniMax-AI/minimax-code"
 RUN apt-get update && apt-get install -y --no-install-recommends \
       bash ca-certificates curl git openssh-client ripgrep jq file unzip xz-utils \

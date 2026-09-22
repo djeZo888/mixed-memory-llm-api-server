@@ -79,3 +79,9 @@ the service user's systemd cgroup delegation. The launcher never invokes sudo.
 Service stop/restart may interrupt active tasks; backend recovery must mark
 them interrupted and must not replay side effects. Reboot, install, runtime
 build, activation and end-to-end operation are separate from source/static QA.
+
+The agreed shutdown source contract budgets at most 40 seconds for launcher
+cleanup, 45 seconds for SERVER to observe its exact exit, and 60–70 seconds for
+overall server exit with parallel cleanup. `TimeoutStopSec=90` leaves the user
+service room to complete that sequence. Live shutdown acceptance remains pending;
+unconfirmed container settlement retains the backend workspace quarantine.

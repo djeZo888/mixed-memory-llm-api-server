@@ -8,6 +8,11 @@ podman build --pull=always --tag localhost/ai-harness-engine:0.0.1-ae65651df5f9 
 podman image inspect localhost/ai-harness-engine:0.0.1-ae65651df5f9 --format '{{.Id}}'
 ```
 
+The PREP build context remains `ai-harness/deploy`. Root's later tools/skills
+integration will embed its reviewed assets in the image and must update all
+build-context commands, Containerfile COPY paths and related documentation
+together. It is not a prerequisite for completing this source-only PREP.
+
 The build starts from official MiniMax source at
 `ae65651df5f97ae1085ab4e19964f4b78c769a4e`, applies the two recorded identity-checked patches
 under `deploy/patches` (request budgets and ACP compaction notifications), uses its frozen pnpm lock and
@@ -65,8 +70,9 @@ their cloud transport rejects `AUTH_REQUIRED` before fetch and their runtime
 returns no bindings. This is source evidence, not an egress firewall claim.
 Do not log into MiniMax within this local-only profile.
 
-Native delegation remains enabled. Curated PDF/search skills and SearXNG MCP are
-owned by the subsequent tools task; no paid native-search fallback is enabled.
+Native delegation remains enabled. Curated PDF/search skills and SearXNG MCP
+will be embedded by root's subsequent integration task; no paid native-search
+fallback is enabled.
 The two shared inference slots are admitted by the host gateway, not by the
 container. The profile sets `agentStop.maxActiveSpanMs=0`. The pinned config schema and
 parser document and accept zero as disabling its forced producer-active
@@ -85,7 +91,7 @@ the standalone skill allowlist.
 
 ## Request budget patch
 
-`patches/0001-gateway-request-budget.patch` changes four narrowly scoped
+`patches/0001-gateway-request-budget.patch` changes two narrowly scoped
 source sites. `engine/pins.json` records its SHA-256 and pristine/patched SHA-256
 for every affected file. The original upstream extraction remains outside Git.
 
@@ -96,14 +102,12 @@ for every affected file. The original upstream extraction remains outside Git.
   absent. Direct `streamSimple`/`completeSimple` summaries otherwise inherit
   the SDK default, bypassing the main wrapper. Cancellation signal and zero
   automatic retry default remain unchanged; explicit options still win.
-- `packages/local-runtime-v2/src/service/session-system/sessions/title/session-title-service.ts`:
-  explicit title timeout from 10 seconds to 151 minutes.
-- `packages/local-runtime-v2/src/service/session-system/sessions/root/archived-root-title.ts`:
-  explicit archive-title timeout from 15 seconds to 151 minutes.
 
-The title constants feed both the SDK option and `AbortSignal.timeout` in
-`title-model-completion.ts`; changing only the common fallback would leave
-those short aborts active. Their output-token limits remain 1,000/1,024.
+Native session-title and archive-title constants remain 10,000 ms and 15,000 ms,
+respectively. They feed both the SDK option and `AbortSignal.timeout` in
+`title-model-completion.ts`; explicit bounded title timeouts override the common
+fallback. Their output-token limits remain 1,000/1,024. Title failure stays
+nonfatal and cancellation removes queued requests; the portal names chats.
 The native `checkpoint-provider.ts` forwards its original cancellation signal
 and no explicit shorter timeout; the legacy `generateSummary` implementation
 in `third_party/pi-mono/packages/agent/src/harness/compaction/compaction.ts`
@@ -121,9 +125,10 @@ AI_HARNESS_MINIMAX_SOURCE=/absolute/pristine/minimax-code node --test tests/test
 
 The provider fixture verifies patch/source identities and application, executes
 the actual request-options expression and native type-stripped title adapter
-with a fake stream, and checks the two timeout paths plus preserved token
-budgets. It does not wait 151 minutes, make an SDK/network call or establish
-live gateway reachability. Profile success/failure CLI tests assert no token,
+with a fake stream, and checks the 151-minute default/fallback, exact bounded
+native title timeouts and preserved token budgets. It does not wait 151 minutes,
+make an SDK/network call or establish live gateway reachability. Profile
+success/failure CLI tests assert no token,
 environment-derived path or raw filesystem error reaches stdout/stderr.
 
 ## Chromium and technical tools

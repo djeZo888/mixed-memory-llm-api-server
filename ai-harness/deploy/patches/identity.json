@@ -1,10 +1,10 @@
 {
   "sourceRevision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
-  "patchSetSha256": "256e6fc91a7b86fcc0073c3755bd0aab6be50bb4125827be36d9b99dc1b09d0c",
+  "patchSetSha256": "b583f01e412c3316fe3a5e62f8b5ce83269091e077b3eb6df2e615dd8428402d",
   "patches": [
     {
       "path": "0001-gateway-request-budget.patch",
-      "sha256": "e8086c1a2b4da08b1a50af88044741f83c05ee1d400a5d5f4fb017310e32b75b"
+      "sha256": "28d00e116d47b355e6e2f249b18fdc5e9e48bb290f16bb512a8ab532f756b161"
     },
     {
       "path": "0002-acp-compaction-notifications.patch",
@@ -16,16 +16,6 @@
       "path": "packages/agent-core/src/pi-turn-runner/defaults.ts",
       "originalSha256": "644698ef49486fd0a4030388a2d34497afd643116f54da5a829ca6166b1967ac",
       "patchedSha256": "1977a0947a4a036adea9e1f5677c41984cea49bfd4f3a6b2a03782510ba074fc"
-    },
-    {
-      "path": "packages/local-runtime-v2/src/service/session-system/sessions/root/archived-root-title.ts",
-      "originalSha256": "7bf6b8f74d85e69509e119042ef45c8a583236f5e957b1cdc34df51a29911e46",
-      "patchedSha256": "6828ff414976c55709c846a933b6a81207118e454fa47d1a88790149ac1ddca2"
-    },
-    {
-      "path": "packages/local-runtime-v2/src/service/session-system/sessions/title/session-title-service.ts",
-      "originalSha256": "9d776489297e49e0d5f677fd172c7ee6556ef2ace2ceaeb03478aea17f156a8d",
-      "patchedSha256": "b93eec185327161e970be4aacc2190df044e2745ca4a7edf9814988c92fe1e4c"
     },
     {
       "path": "packages/tui/src/acp/agent.ts",
