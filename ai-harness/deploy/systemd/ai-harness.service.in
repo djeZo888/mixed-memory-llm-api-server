@@ -1,5 +1,5 @@
 # User unit template. Replace @HARNESS_DIR@, @NODE_PREFIX@, @DATA_DIR@ and
-# @INFERENCE_KEY_FILE@ with reviewed absolute paths; no credentials in this file.
+# @BROWSER_APPROVAL_KEY_FILE@ and @INFERENCE_KEY_FILE@ with reviewed absolute paths; no credentials in this file.
 [Unit]
 Description=ai-harness v0.0.1 local web server and inference gateway
 StartLimitIntervalSec=60
@@ -9,7 +9,7 @@ StartLimitBurst=5
 Type=simple
 WorkingDirectory=@HARNESS_DIR@/server
 Environment="PATH=@NODE_PREFIX@/bin:/usr/local/bin:/usr/bin:/bin"
-ExecStart=@HARNESS_DIR@/deploy/run-server.sh --node-prefix @NODE_PREFIX@ --app-dir @HARNESS_DIR@ --data-dir @DATA_DIR@ --inference-key-file @INFERENCE_KEY_FILE@
+ExecStart=@HARNESS_DIR@/deploy/run-server.sh --node-prefix @NODE_PREFIX@ --app-dir @HARNESS_DIR@ --data-dir @DATA_DIR@ --inference-key-file @INFERENCE_KEY_FILE@ --browser-approval-key-file @BROWSER_APPROVAL_KEY_FILE@
 UMask=0077
 Restart=on-failure
 RestartSec=5

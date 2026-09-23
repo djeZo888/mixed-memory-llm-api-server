@@ -35,6 +35,7 @@ export interface Run {
   status: string;
 }
 export interface FileRecord {
+  image?: import("./image-contracts.js").ImageMetadata;
   id: string;
   sessionId: string;
   kind: "attachment" | "artifact";
@@ -66,6 +67,9 @@ export class Store {
    CREATE INDEX IF NOT EXISTS events_session ON events(session_id,id);`);
     // Companion tables preserve old release positional INSERT compatibility on rollback.
     this.db.exec(`
+      CREATE TABLE IF NOT EXISTS h003_image_outputs(workspace_id TEXT NOT NULL,path TEXT NOT NULL,job_id TEXT NOT NULL,PRIMARY KEY(workspace_id,path));
+      CREATE TABLE IF NOT EXISTS h003_image_file_meta(file_id TEXT PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS h003_run_image_refs(run_id TEXT PRIMARY KEY REFERENCES runs(id),data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS h002_message_meta(message_id TEXT PRIMARY KEY REFERENCES messages(id) ON DELETE CASCADE,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS h002_file_refs(file_id TEXT PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,run_id TEXT,message_id TEXT);
       CREATE TABLE IF NOT EXISTS h002_file_names(file_id TEXT PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,display_name TEXT NOT NULL);
@@ -161,7 +165,8 @@ export class Store {
   }
   getSession(id: string, includeDeleted = false): StoredSession {
     const r = this.db.prepare("SELECT * FROM sessions WHERE id=?").get(id) as
-      Record<string, unknown> | undefined;
+      | Record<string, unknown>
+      | undefined;
     if (!r || (r.deleted && !includeDeleted))
       throw new ApiError(404, "not_found", "Session not found");
     return {
@@ -329,7 +334,29 @@ export class Store {
     const r = this.db
       .prepare("SELECT * FROM messages WHERE id=?")
       .get(id) as Record<string, unknown>;
+    // The broker persisted validated run refs before adding the user message.
+    // Re-derive only owned image artifacts for both the emitted message and refresh;
+    // old messages/runs with no refs retain their original projection.
+    const imageRow =
+      r.role === "user" && r.run_id
+        ? this.db
+            .prepare(
+              "SELECT refs.data FROM h003_run_image_refs refs JOIN runs ON runs.id=refs.run_id WHERE runs.id=? AND runs.session_id=?",
+            )
+            .get(r.run_id as string, r.session_id as string)
+        : undefined;
+    const imageReferences = imageRow
+      ? decode<string[]>(imageRow.data).filter(
+          (fileId) =>
+            !!this.db
+              .prepare(
+                "SELECT id FROM files WHERE id=? AND session_id=? AND kind='artifact' AND mime_type IN ('image/png','image/jpeg')",
+              )
+              .get(fileId, r.session_id as string),
+        )
+      : [];
     return {
+      ...(imageReferences.length ? { imageReferences } : {}),
       id: String(r.id),
       ...this.messagePhase(id),
       attachments: decode<string[]>(r.attachment_ids).flatMap((id) => {
@@ -803,6 +830,10 @@ export class Store {
       this.db
         .prepare("INSERT INTO h002_file_refs VALUES(?,?,?)")
         .run(f.id, f.runId ?? null, f.messageId ?? null);
+      if (f.image)
+        this.db
+          .prepare("INSERT OR REPLACE INTO h003_image_file_meta VALUES(?,?)")
+          .run(f.id, JSON.stringify(f.image));
       this.db.exec("RELEASE SAVEPOINT save_file");
       return f;
     } catch (error) {
@@ -815,12 +846,27 @@ export class Store {
 
   file(id: string): FileRecord {
     const r = this.db.prepare("SELECT * FROM files WHERE id=?").get(id) as
-      Record<string, unknown> | undefined;
+      | Record<string, unknown>
+      | undefined;
     if (!r) throw new ApiError(404, "not_found", "File not found");
     const ref = this.db
       .prepare("SELECT run_id,message_id FROM h002_file_refs WHERE file_id=?")
       .get(id);
+    const image = this.db
+      .prepare("SELECT data FROM h003_image_file_meta WHERE file_id=?")
+      .get(id)?.data;
+    const metadata = image
+      ? decode<import("./image-contracts.js").ImageMetadata>(image)
+      : undefined;
+    if (metadata && /^([1-9]\d*)x([1-9]\d*)$/.test(metadata.actualSize)) {
+      const [width, height] = metadata.actualSize.split("x").map(Number);
+      if (Number.isSafeInteger(width) && Number.isSafeInteger(height)) {
+        metadata.width ??= width;
+        metadata.height ??= height;
+      }
+    }
     return {
+      ...(metadata ? { image: metadata } : {}),
       id: String(r.id),
       sessionId: String(r.session_id),
       kind: r.kind as FileRecord["kind"],
@@ -859,6 +905,7 @@ export class Store {
       ? {
           ...value,
           downloadUrl: `/api/artifacts/${f.id}/download`,
+          ...(f.image ? { image: f.image } : {}),
           runId: f.runId ?? null,
           messageId: f.messageId ?? null,
         }

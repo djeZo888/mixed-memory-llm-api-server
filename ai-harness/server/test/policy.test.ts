@@ -329,3 +329,22 @@ test("policy exports ask gates without blanket browser denial and delegates only
       undefined,
     );
 });
+
+test("only exact reviewed image MCP tools and image skill supplement native role ceilings", async (t) => {
+  const { permit } = await fixture(t);
+  for (const name of [
+    "mcp__image__image_capabilities",
+    "mcp__image__image_generate",
+    "mcp__image__image_edit",
+  ])
+    assert.equal(await permit(name, {}), true);
+  assert.equal(await permit("skill", { name: "image" }), true);
+  for (const name of [
+    "mcp__image__approve",
+    "mcp__image__admin",
+    "mcp__foreign__image_edit",
+    "mcp_invoke",
+    "tool_search",
+  ])
+    assert.equal(await permit(name, {}), false);
+});

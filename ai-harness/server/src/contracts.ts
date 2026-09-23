@@ -41,6 +41,7 @@ export interface Message extends Partial<MessagePhase> {
   createdAt: string;
   runId?: string;
   attachmentIds?: string[];
+  imageReferences?: string[];
 }
 export interface Attachment {
   downloadUrl?: string;
@@ -51,6 +52,7 @@ export interface Attachment {
   size: number;
 }
 export interface Artifact extends Attachment {
+  image?: import("./image-contracts.js").ImageMetadata;
   runId: string | null;
   messageId: string | null;
   previewUrl?: string;
@@ -201,3 +203,11 @@ export interface GatewayUsage {
   completionTokens?: number;
   source: string;
 }
+
+export type {
+  ImageJob,
+  ImageState,
+  ImageReference,
+  ImageAdjustment,
+  ImageMetadata,
+} from "./image-contracts.js";

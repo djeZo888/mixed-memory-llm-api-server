@@ -173,7 +173,7 @@ test("JSON contract, durable messages/native identity/events and unknown context
   const h = await setup(t);
   const health = await inject(h.app, "/api/health");
   assert.deepEqual(health.json(), {
-    version: "0.0.2",
+    version: "0.0.3",
     environment: health.json().environment,
     status: "ok",
     visionAvailable: false,

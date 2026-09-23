@@ -3,10 +3,13 @@ import multipart from "@fastify/multipart";
 import staticPlugin from "@fastify/static";
 import { existsSync, lstatSync, realpathSync } from "node:fs";
 import path from "node:path";
+import { timingSafeEqual } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { ApiError, requireId } from "./errors.js";
 import { Store } from "./store.js";
 import { Files, MAX_UPLOAD } from "./files.js";
+import { ImageBroker } from "./image-broker.js";
+import type { ImageBackend } from "./image-contracts.js";
 import { Broker, type BrokerOptions } from "./broker.js";
 import { contentDisposition, imageMime } from "./file-metadata.js";
 import { environment } from "./locale.js";
@@ -33,6 +36,9 @@ export interface AppOptions extends Omit<BrokerOptions, "store" | "files"> {
   webDist?: string;
   heartbeatMs?: number;
   visionAvailable?: boolean;
+  imageBackend?: ImageBackend;
+  /** Separate protected nginx-to-server capability; never passed to engines. */
+  approvalProxyKey?: string;
 }
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value))
@@ -51,6 +57,7 @@ export async function createApp(options: AppOptions): Promise<{
   store: Store;
   files: Files;
   broker: Broker;
+  images?: ImageBroker;
 }> {
   const origins = new Set(
     (
@@ -119,6 +126,7 @@ export async function createApp(options: AppOptions): Promise<{
     throw new Error("Another server owns this data directory");
   }
   let cleanupResources = () => owner.close();
+  let images: ImageBroker | undefined;
   try {
     const store = new Store(path.join(temporary.root, "harness.sqlite"));
     let closed = false;
@@ -134,7 +142,28 @@ export async function createApp(options: AppOptions): Promise<{
     await chmod(path.join(temporary.root, "harness.sqlite"), 0o600);
     const files = new Files(temporary.root, store);
     await files.init();
-    const broker = new Broker({ ...options, store, files });
+    const broker = new Broker({
+      ...options,
+      store,
+      files,
+      cancelImages: (id) => images?.cancelSession(id),
+    });
+    if (options.imageBackend)
+      images = new ImageBroker({
+        store,
+        files,
+        backend: options.imageBackend,
+        currentRun: (id) => broker.currentImageRun(id),
+      });
+    const imageBroker = () => {
+      if (!images)
+        throw new ApiError(
+          503,
+          "image_unavailable",
+          "Image broker is not configured",
+        );
+      return images;
+    };
     app.addHook("onRequest", async (req, reply) => {
       const host = req.headers.host;
       if (
@@ -202,7 +231,7 @@ export async function createApp(options: AppOptions): Promise<{
       throwFileSizeLimit: true,
     });
     app.get("/api/health", async () => ({
-      version: "0.0.2",
+      version: "0.0.3",
       environment: environment(),
       status: "ok",
       visionAvailable: options.visionAvailable === true,
@@ -212,6 +241,65 @@ export async function createApp(options: AppOptions): Promise<{
       only(object(req.body), []);
       return { session: await broker.createSession() };
     });
+    app.get("/api/image-capabilities", async () =>
+      imageBroker().capabilities(),
+    );
+    app.get("/api/sessions/:id/image-jobs", async (req) => ({
+      jobs: imageBroker().list(id(req)),
+    }));
+    app.get(
+      "/api/sessions/:id/image-jobs/:jobId/approval-token",
+      async (req) => {
+        const received = req.headers["x-ai-harness-approval-proxy"],
+          expected = options.approvalProxyKey;
+        if (
+          !expected ||
+          typeof received !== "string" ||
+          Buffer.byteLength(received) !== Buffer.byteLength(expected) ||
+          !timingSafeEqual(Buffer.from(received), Buffer.from(expected))
+        )
+          throw new ApiError(
+            403,
+            "image_approval_forbidden",
+            "Image approval token requires the trusted browser proxy",
+          );
+        return imageBroker().issueApprovalToken(
+          id(req),
+          requireId((req.params as { jobId: string }).jobId),
+        );
+      },
+    );
+    app.post("/api/sessions/:id/image-jobs/:jobId/approval", async (req) => {
+      const body = object(req.body);
+      only(body, ["decision", "approvalToken"]);
+      if (body.decision !== "approve" && body.decision !== "reject")
+        throw new ApiError(
+          400,
+          "invalid_decision",
+          "Expected approve or reject",
+        );
+      return {
+        job: imageBroker().browser(
+          await imageBroker().approve(
+            id(req),
+            requireId((req.params as { jobId: string }).jobId),
+            body.decision,
+            body.approvalToken as string,
+          ),
+        ),
+      };
+    });
+    app.post("/api/sessions/:id/image-jobs/:jobId/cancel", async (req) => {
+      only(object(req.body), []);
+      return {
+        job: imageBroker().browser(
+          imageBroker().cancel(
+            id(req),
+            requireId((req.params as { jobId: string }).jobId),
+          ),
+        ),
+      };
+    });
     app.get("/api/sessions/:id", async (req) => store.snapshot(id(req)));
     app.delete("/api/sessions/:id", async (req, reply) => {
       const status = await broker.delete(id(req));
@@ -219,7 +307,7 @@ export async function createApp(options: AppOptions): Promise<{
     });
     app.post("/api/sessions/:id/messages", async (req, reply) => {
       const body = object(req.body);
-      only(body, ["text", "attachmentIds"]);
+      only(body, ["text", "attachmentIds", "imageReferences"]);
       if (typeof body.text !== "string" || body.text.length > 250000)
         throw new ApiError(
           400,
@@ -238,20 +326,33 @@ export async function createApp(options: AppOptions): Promise<{
           "Invalid attachment identifiers",
         );
       const attachmentIds = ids.map(requireId);
-      if (!body.text.trim() && !attachmentIds.length)
+      const references = body.imageReferences ?? [];
+      if (
+        !Array.isArray(references) ||
+        references.length > 10 ||
+        new Set(references).size !== references.length
+      )
+        throw new ApiError(
+          400,
+          "invalid_image_reference",
+          "Invalid image references",
+        );
+      const imageReferences = references.map(requireId);
+      if (!body.text.trim() && !attachmentIds.length && !imageReferences.length)
         throw new ApiError(400, "invalid_message", "Message is empty");
       const command = /^\/([^\s]+)(?:\s+([\s\S]*?))?\s*$/u.exec(body.text)?.[1];
       if (command && unsupportedSlashCommands.has(command))
         throw new ApiError(
           400,
           "unsupported_slash_command",
-          "Native CLI slash commands are not supported in ai-harness v0.0.2. Please phrase a normal task instead.",
+          "Native CLI slash commands are not supported in ai-harness v0.0.3. Please phrase a normal task instead.",
         );
       const runId = broker.enqueue(
         id(req),
         "message",
         body.text,
         attachmentIds,
+        imageReferences,
       );
       return reply.code(202).send({ runId });
     });
@@ -504,12 +605,13 @@ export async function createApp(options: AppOptions): Promise<{
         .send({ error: { code: "not_found", message: "Route not found" } }),
     );
     app.addHook("onClose", async () => {
-      await broker.close();
+      await Promise.all([broker.close(), images?.close()]);
       cleanupResources();
     });
     await app.ready();
-    return { app, store, files, broker };
+    return { app, store, files, broker, images };
   } catch (error) {
+    await images?.close();
     cleanupResources();
     throw error;
   }

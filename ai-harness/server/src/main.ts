@@ -4,6 +4,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createApp } from "./app.js";
 import { createGateway, type LaneState } from "./gateway.js";
+import { ImageUpstream } from "./image-upstream.js";
 import { createEngine } from "./engine.js";
 
 function required(name: string): string {
@@ -54,12 +55,18 @@ export async function start() {
     launcher = required("AI_HARNESS_ENGINE_LAUNCHER"),
     keyFile = required("AI_HARNESS_INFERENCE_KEY_FILE");
   const key = await readProtectedCredential(keyFile);
+  const approvalKeyFile = process.env.AI_HARNESS_BROWSER_APPROVAL_KEY_FILE;
+  const approvalProxyKey = approvalKeyFile
+    ? await readProtectedCredential(approvalKeyFile)
+    : undefined;
   const gatewayPort = port("AI_HARNESS_GATEWAY_PORT", 8081);
   let gateway: ReturnType<typeof createGateway> | undefined;
   const application = await createApp({
     dataDir,
     launcher,
     engineFactory: createEngine,
+    imageBackend: new ImageUpstream({ key }),
+    approvalProxyKey,
     gatewayUrl:
       process.env.AI_HARNESS_GATEWAY_URL ??
       `http://127.0.0.1:${gatewayPort}/v1`,
@@ -84,6 +91,7 @@ export async function start() {
     );
     gateway = createGateway({
       upstreamKey: key,
+      images: application.images,
       initialLaneStates: states,
       onLaneState: (alias, state) => {
         application.store.db
@@ -118,7 +126,10 @@ export async function start() {
   const close = async () => {
     if (stopping) return;
     stopping = true;
-    await application.broker.close();
+    await Promise.all([
+      application.broker.close(),
+      application.images?.close(),
+    ]);
     await gateway!.close();
     await application.app.close();
   };
@@ -137,7 +148,7 @@ export async function start() {
         },
       );
     });
-  process.stdout.write("ai-harness 0.0.1 listening on IPv4 loopback\n");
+  process.stdout.write("ai-harness 0.0.3 listening on IPv4 loopback\n");
   return { ...application, gateway, close };
 }
 if (
