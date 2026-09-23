@@ -1,18 +1,25 @@
-# Bounded private image API — source integration
+# Bounded private image API
 
 The deployed Full HD service exposes six opaque generation sizes: **1024x1024,
 1024x576, 1216x704, 1472x832, 1760x992 and 1920x1080**. The public hard ceiling
 is **1920x1080 / 2073600 pixels**. Full HD uses the already-qualified native
 1920x1088 workload (2088960 pixels) and removes exactly eight bottom rows;
-there is no resize. The five smaller profiles retain native=public and crop0.
-Public 1920x1088 and UHD are refused. Editing and transparency remain unqualified.
+there is no resize. The five smaller profiles retain native=public and crop=0.
+Public 1920x1088 and UHD are refused. The deployed measured guarded edit profiles
+are **one reference at 1024x1024 or 1536x864**, and **two references at 1024x1024**.
+These are opaque natural-language creative edits: unrelated details may change,
+and there is no pixel-perfect preservation guarantee. Masks and transparency are
+unsupported. Full HD editing remains excluded because its measured free GPU
+reserve was **4.39%, below the 5% floor**, despite passing visual review.
 
-See the [Full HD change report](../reports/image21-fhd-20260923/RESULT.md) for
-current deployment and single-call acceptance. The [prior qualification report](../reports/image21-qualify-20260923/RESULT.md)
+See the [current activation report](../reports/h003-image-api-activate-20260923/LIVE-RESULT.md)
+for the deployed profiles and activation scope. The [Full HD change report](../reports/image21-fhd-20260923/RESULT.md)
+records the earlier generation deployment and single-call acceptance. The [prior qualification report](../reports/image21-qualify-20260923/RESULT.md)
 is immutable historical native workload evidence, including 53.3355 s and
-44776.3125 MiB sampled device peak for 1920x1088. This change does not claim a
-new memory benchmark. The protected manifest binds the Full HD crop evidence to
-that same qualified native workload; smaller-profile evidence hashes are retained.
+44776.3125 MiB sampled device peak for 1920x1088. That earlier generation change
+did not claim a new memory benchmark. The protected manifest binds the Full HD
+crop evidence to that same qualified native workload; smaller-profile evidence
+hashes are retained.
 
 The generic `qualification.empty.json` source template still contains **no measured
 profiles and no runtime image digest**. Deploying that empty template keeps
@@ -36,7 +43,7 @@ environment, access logs or backend forwarding.
 | GET `/v1/models` | Model alias `qwen-image-2.1` |
 | GET `/v1/image-capabilities` | Exact pinned model/runtime revisions, actual reviewed image digest, measured profiles and state |
 | POST `/v1/images/generations` | JSON request, synchronous PNG `b64_json` |
-| POST `/v1/images/edits` | Multipart schema exists; valid edits currently return 400 `unqualified_profile` because no edit profile is accepted |
+| POST `/v1/images/edits` | Multipart request, synchronous PNG `b64_json` for the exact measured edit profiles above; other valid profile combinations return 400 `unqualified_profile` |
 
 Allowed scalar fields: `prompt` (required, UTF-8 <=16384 bytes), `model` (alias),
 `size` (default `1024x1024`), `n` (exactly integer 1), `seed` (optional integer
@@ -48,8 +55,9 @@ Unknown fields, queries, URLs, server paths, runtime settings,
 masks, duplicate fields, mixed image/image[] lists and other formats are refused.
 Masks are not pixel-preserving inpainting: the upstream native implementation
 ignores its mask parameter. No resizing, downsampling, public URLs or stored jobs.
-The source candidate also supports the explicit one-reference Full HD transport
-padding/crop below. This does not qualify or enable any public edit profile.
+The adapter source also supports the explicit one-reference Full HD transport
+padding/crop below. That edit geometry remains disabled because measured reserve
+failed qualification; generation at 1920x1080 remains supported.
 
 Limits are 32 MiB encoded/file, 64 MiB combined encoded files, two references,
 64 MiB+64 KiB total streamed multipart body including its bounded envelope, and
@@ -58,11 +66,12 @@ content. Decode actual PNG/JPEG dimensions and reject malformed/bomb/multiframe
 images. Each edit reference must equal the exact qualified public output dimensions.
 Maximum public dimensions are 1920x1080 and 2073600 pixels, permitted only in a reviewed
 profile. One-reference editing and generation are separate profiles. Two-reference
-sizes require their own evidence, remain 1024-class until then, and never inherit
-the one-reference ceiling. Output must decode as one PNG of the exact selected
-native size, then only the explicitly approved bottom crop if present; public output
-remains at most 2073600 pixels. Re-encoding strips native metadata. Only `created` and `data[].b64_json` are
-returned, never raw native errors, revised prompts, paths or URLs.
+editing is qualified only at 1024x1024 and never inherits the one-reference ceiling.
+Output must decode as one PNG of the exact selected native size, then only the
+explicitly approved bottom crop if present; public output
+remains at most 2073600 pixels. Re-encoding strips native metadata. Responses contain
+`created` and `data[].b64_json`; successful edits also report the actual seed in
+`data[0].seed`. Raw native errors, revised prompts, paths and URLs are never returned.
 
 ## Admission and recovery
 
@@ -188,7 +197,9 @@ and manifest review bind evidence to exact actual model/runtime/build identity.
 
 The sole nonidentity mapping is public `size=1920x1080`,
 `native_size=1920x1088`, `crop_bottom=8`, opaque generation with zero references
-or a separately qualified opaque edit with exactly one reference.
+or, at the source-schema level, a separately qualified opaque edit with exactly one
+reference. The deployed manifest excludes Full HD editing because its measured
+reserve failed the 5% floor; the edit mapping below describes source support only.
 Missing mapping, raw native1080/crop0, two-reference Full HD, transparency and arbitrary mappings
 are refused for Full HD. Native PNG dimensions must match 1920x1088 exactly
 before removing rows1080..1087. An already-cropped or otherwise wrong response
@@ -209,13 +220,17 @@ patch16/merge2 and65536..16777216pixel bounds. The proposed1024x1024,
 1536x864 and padded1920x1088 references remain dimension-identical at both stages.
 The current Torchvision resize returns its input when dimensions match;
 normalization and model encoding still occur. This source audit is not image
-fidelity or memory acceptance. All public edit profiles remain absent.
+fidelity or memory acceptance. At that historical source-only checkpoint, public
+edit profiles were absent; the deployed measured profiles are listed above.
 
-The generic template remains empty. The installed protected six-profile manifest
-and hash-bound crop/native evidence are in the Full HD report. Root reviewed
-exact source and evidence before activation; the separate live receipt records
-the single public acceptance. Offline fixtures remain separate from live evidence. No model/runtime/settings/placement change or new memory qualification
-is needed for the identical native workload.
+The generic template remains empty. The earlier six-profile generation manifest
+and hash-bound crop/native evidence are in the historical Full HD report. Root
+reviewed exact source and evidence before that activation; its separate live receipt
+records the single public acceptance. That generation change reused the identical
+native workload without model/runtime/settings/placement changes or new memory
+qualification. The [current protected manifest](../reports/h003-image-api-activate-20260923/qualification.json)
+contains those six generation records plus the three measured guarded edit profiles.
+Offline fixtures remain separate from live evidence.
 
 ## Offline verification and source migration
 
@@ -252,8 +267,10 @@ A source bundle alone does not authorize runtime activation. The original source
 task did not establish live inference, image quality, Linux service/sudo/storage,
 cleanup, runtime pins, firewall or client acceptance. Subsequent retained deployment
 and qualification evidence is recorded in the
-[current report](../reports/image21-qualify-20260923/RESULT.md); its scope and limits
-apply to those observations. The Full HD report separately records its bounded deployment and single acceptance status.
+[historical qualification report](../reports/image21-qualify-20260923/RESULT.md); its scope and limits
+apply to those observations. The historical Full HD report separately records its
+bounded generation deployment and single acceptance status. Current guarded edit
+deployment is recorded in the activation report linked above.
 
 ## Pinned primary source contract
 
@@ -269,24 +286,25 @@ and Qwen-specific `true_cfg_scale` to 1, with fixed CPU initial-noise RNG. Nativ
 other native fields are discarded. No native content/download endpoint is exposed.
 Captured source hashes and provenance accompany the taskroot evidence package.
 
-## Unactivated editing seed correction
+## Editing seeds and retained model limitation
 
-The [H003 diagnosis](../reports/h003-edit-20260923/RESULT.md) retains the failed
-same-noise seed42 teapot regression and the successful seed43 counterpart.
+The historical [H003 diagnosis](../reports/h003-edit-20260923/RESULT.md) retains the
+failed same-noise seed 42 teapot regression and the successful seed 43 counterpart.
 This is a model/runtime seed-reuse limitation with an orchestration mitigation,
-not a proven denoiser repair. Editing profiles remain unqualified in production.
+not an intrinsic model repair. The original strict seed 42 regression remains a
+failure; deployment of the measured guarded profiles does not change that result.
 
-The source candidate preserves every explicit seed exactly. For a validated edit
-that omits seed, it chooses one fresh random32-bit seed and retains it in the
-owned request instead of inheriting native seed42. Successful edit responses add
+The deployed adapter preserves every explicit seed exactly. When an edit omits
+the seed, it chooses a fresh random seed once after validation and retains it in
+the owned request instead of inheriting native seed 42. Successful edit responses add
 `data[0].seed` with the actual native seed; `created` and `b64_json` are unchanged.
-The additive seed field is an image API extension. Generation defaults, explicit
-generation seeds and generation response fields are unchanged. No retry redraws
-a seed, and rejected unqualified edits do not draw or dispatch.
+The additive seed field is an image API extension. The generation default remains
+42; explicit generation seeds and generation response fields are unchanged.
+No retry redraws a seed, and rejected unqualified edits do not draw or dispatch.
 
 The harness owns persistence of actual seed provenance with artifacts, avoidance of
-known source/ancestor seeds when choosing a missing seed, and rejection of explicit
+known source or ancestor seeds when choosing a missing seed, and rejection of explicit
 known collisions before dispatch with `source_seed_collision`. The image API
 does not infer provenance or rewrite explicit seeds. Unknown provenance cannot
-guarantee collision avoidance. This source candidate is not deployed; exact root
-review and separate live acceptance/qualification are still required.
+guarantee collision avoidance. These guards mitigate known source or ancestor seed
+reuse; they do not remove the underlying model limitation.
