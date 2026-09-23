@@ -18,7 +18,7 @@ environment, access logs or backend forwarding.
 | Route | Behavior |
 |---|---|
 | GET `/health/live` | Adapter event loop responds |
-| GET `/health/ready` | 200 only after startup reconciliation and nonempty reviewed profiles; reports busy/admitting |
+| GET `/health/ready` | 200 only after reconciliation, nonempty reviewed profiles and a fresh bounded native `/health` check; reports busy/admitting |
 | GET `/v1/models` | Model alias `qwen-image-2.1` |
 | GET `/v1/image-capabilities` | Exact pinned model/runtime revisions, actual reviewed image digest, measured profiles and state |
 | POST `/v1/images/generations` | JSON request, synchronous PNG `b64_json` |
@@ -28,21 +28,25 @@ Allowed scalar fields: `prompt` (required, UTF-8 <=16384 bytes), `model` (alias)
 `size` (default `1024x1024`), `n` (exactly integer 1), `seed` (optional integer
 0..9223372036854775807), `response_format` (`b64_json`), `background` (`opaque`
 default, or separately qualified `transparent`). Steps and both native CFG fields
-are fixed to 40/1/1. Unknown fields, queries, URLs, server paths, runtime settings,
+are fixed to 40/1/1. Both native routes set `generator_device=cpu` for initial noise
+RNG only; model CPU offload is unchanged and caller overrides are rejected.
+Unknown fields, queries, URLs, server paths, runtime settings,
 masks, duplicate fields, mixed image/image[] lists and other formats are refused.
 Masks are not pixel-preserving inpainting: the upstream native implementation
 ignores its mask parameter. No resizing, downsampling, public URLs or stored jobs.
+The sole optional pad/crop path requires measurement of the exact UHD recipe below.
 
 Limits are 32MiB encoded/file, 64MiB combined encoded files, two references,
 64MiB+64KiB total streamed multipart body including its bounded envelope, and
 64KiB JSON body. Content-Length, MIME type and uploaded filename never authorize
 content. Decode actual PNG/JPEG dimensions and reject malformed/bomb/multiframe
-images. Each edit reference must equal the exact qualified output dimensions.
+images. Each edit reference must equal the exact qualified public output dimensions.
 Maximum dimensions are 3840x2160 and 8294400 pixels, permitted only in a reviewed
 profile. One-reference editing and generation are separate profiles. Two-reference
 sizes require their own evidence, remain 1024-class until then, and never inherit
-the one-reference ceiling. Output must decode as one PNG of the exact requested
-size; re-encoding strips native metadata. Only `created` and `data[].b64_json` are
+the one-reference ceiling. Output must decode as one PNG of the exact selected
+native size, then only the explicitly approved bottom crop if present; public output
+remains at most8294400 pixels. Re-encoding strips native metadata. Only `created` and `data[].b64_json` are
 returned, never raw native errors, revised prompts, paths or URLs.
 
 ## Admission and recovery
@@ -51,6 +55,19 @@ One process, one active owned operation, zero waiting requests. Admission is tak
 before upload parsing. A competing request receives immediate429 with
 `Retry-After: 1`; an unready idle service returns503. Invalid requests return400,
 encoded limits413, wrong generation media type415, native failure502, deadline504.
+Readiness GET and pre-submission admission each use one native `/health` request.
+The latter runs after atomic image ownership reservation and validation, immediately
+before native submission. A separate health client avoids the image client's busy
+single connection: total budget2s, connect/read/write1s, pool0.5s, two health
+connections, at most1024 response bytes, fixed loopback URL, no proxy or redirects.
+Only the pinned warm-readiness response200 with exact JSON `{"status":"ok"}` passes.
+Failure/timeout/invalid health returns503 and latches admission closed; canceling a
+readiness probe conservatively latches it closed too. Successful
+health alone never reopens it. GET never invokes recovery or cancels active images.
+A successful active image also cannot erase a concurrent health-failure latch.
+There is no polling daemon. Required helper reconciliation remains the only reopening
+path. Busy image contenders still receive429 while any admission probe is pending.
+
 Client cancellation/disconnect does not cancel the supervisor or native operation.
 The supervisor strongly retains all upload buffers, CPU decode tasks and native
 transport until settlement. CPU image work runs off-loop and remains owned through
@@ -108,14 +125,17 @@ request-supplied admin action. Worker1 owns helper implementation and runtime la
 Native persistent `input_save_path` and `output_path` must be `None`, with cloud
 upload disabled, and native tempfile root on dedicated guarded registered data.
 The pinned native function deletes its exact generated directory in `finally` but
-uses `shutil.rmtree(..., ignore_errors=True)`. **A successful native response cannot
-prove deletion succeeded.** Before deployment root/Worker1 must make cleanup failure
-observable (or integrate an equivalent checked guarded spool), qualify exact success,
-error, disconnect and timeout cleanup, and inject deletion failure. Adapter502 closes
-and recovers on observable native failure; it never deletes a response-supplied path.
-Recovery must remove only exact owned orphan directories after stopping the backend
-under anchored guards, never sweep a shared temp root. This unresolved native
-integration prerequisite is not satisfied by the offline fixture backend.
+uses `shutil.rmtree(..., ignore_errors=True)`. **HTTP200 alone is not cleanup
+evidence.** The initial finding is retained in the first delivery and its review
+handoff. Root accepted bounded equivalent guarded-spool checks: Worker1 observes
+exact owned TMPDIR before/after normal generation/edit and backend restart; fixed
+recovery removes only exact owned orphan directories after backend stop under
+anchored guards. Do not sweep shared temp roots or delete response-supplied paths.
+No upstream cleanup repair or injected live GPU-failure campaign is required.
+If actual residual files appear, record exact paths/ownership and make a narrow
+correction. A needed helper cleanup-failure fixture may be a small offline source
+test, not a new exhaustive deployment gate. Actual observations remain Worker1
+integration evidence; the adapter's simulated spool fixture does not establish them.
 
 ## Qualification manifest
 
@@ -130,20 +150,32 @@ install-time schema example with zero support claims. Root-protected manifest fi
 | `runtime_image_digest` | `null` until known; exact `sha256:` OCI digest required for any profiles |
 | `profiles` | list of separately reviewed measured cases, initially empty |
 
-Each profile has exactly `operation` (`generation`/`edit`), `size`, `references`
+Each profile requires `operation` (`generation`/`edit`), public `size`, `references`
 (0 generation;1/2 edit), `transparent` (boolean), `conditioning` (empty for opaque;
 explicit bounded model conditioning text for transparent), and `evidence_sha256`
-(lowercase64-hex digest of reviewed qualification evidence). Duplicate profiles
+(lowercase64-hex digest of reviewed qualification evidence). Optional `native_size`
+and `crop_bottom` default to public size and0, preserving existing profiles. These
+two effective fields are always exposed in capability records. Duplicate profiles
 are rejected. Transparent profiles require both measured alpha and visual task
-acceptance; output alpha is checked on every transparent response. Configured
+acceptance; output alpha is checked after any approved crop on every response. Configured
 sizes, projected memory or this schema are never measured evidence. The helper
 and manifest review bind evidence to exact actual model/runtime/build identity.
 
-For example, an eventual measured `edit/3840x2160/references=1` entry would authorize
-same-size one-reference edits only. It would say nothing about two-reference UHD,
-transparent UHD or generation support. This is an explanatory example, **not a
-shipped or measured profile**. Worker1 starts with1024square and qualifies the
-approved ladder through exact UHD before publishing passing entries.
+The sole nonidentity mapping is an explicit public `size=3840x2160`,
+`native_size=3840x2176`, `crop_bottom=16` profile: generation with0 references or
+editing with exactly1. Remove exactly the16 bottom native output rows; for the edit,
+edge-pad exactly16 bottom input rows by repeating the last decoded public row.
+No resize, distortion, arbitrary crop or larger public image admission. Public
+input/output limits remain8294400 pixels; only this native recipe allows8355840.
+All other profiles require native=public and crop0. Two-reference UHD is rejected
+pending separate root authorization/qualification. Native dimensions must match
+exactly before cropping; an already-cropped or otherwise wrong response fails.
+
+For example, that future measured edit entry would authorize only same-public-size
+one-reference UHD edits with this precise padding/cropping recipe. It says nothing
+about transparency or generation support. This is a schema example, **not a shipped
+or measured profile**. Worker1 must measure this exact recipe with>=5% VRAM margin
+and visual success before publishing any entry. Default profiles remain empty.
 
 ## Offline verification and source migration
 
@@ -185,10 +217,11 @@ acceptance are **NOT_TESTED** by this source task.
 Inspected official SGLang files at the pinned revision:
 [image routes](https://github.com/sgl-project/sglang/blob/0cd8be351d0825488f4b81c8931167bbab618eca/python/sglang/multimodal_gen/runtime/entrypoints/openai/image_api.py),
 [request/response schema](https://github.com/sgl-project/sglang/blob/0cd8be351d0825488f4b81c8931167bbab618eca/python/sglang/multimodal_gen/runtime/entrypoints/openai/protocol.py),
-[temporary output/upload helpers](https://github.com/sgl-project/sglang/blob/0cd8be351d0825488f4b81c8931167bbab618eca/python/sglang/multimodal_gen/runtime/entrypoints/openai/utils.py).
+[temporary output/upload helpers](https://github.com/sgl-project/sglang/blob/0cd8be351d0825488f4b81c8931167bbab618eca/python/sglang/multimodal_gen/runtime/entrypoints/openai/utils.py),
+[pinned warm health handler](https://github.com/sgl-project/sglang/blob/0cd8be351d0825488f4b81c8931167bbab618eca/python/sglang/multimodal_gen/runtime/entrypoints/http_server.py).
 Generation sends allowlisted JSON; edit sends allowlisted multipart with generated
 PNG/JPEG filenames and actual validated content. The adapter explicitly requests
 b64_json because native generation defaults to URL. It sets both `guidance_scale`
-and Qwen-specific `true_cfg_scale` to1. Native `data[0].b64_json` is decoded and all
+and Qwen-specific `true_cfg_scale` to1, with fixed CPU initial-noise RNG. Native `data[0].b64_json` is decoded and all
 other native fields are discarded. No native content/download endpoint is exposed.
 Captured source hashes and provenance accompany the taskroot evidence package.

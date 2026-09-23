@@ -5,12 +5,14 @@ import signal
 
 import httpx
 
-from .protocol import BackendFailure, OUTPUT_LIMIT, owned_thread, public_output
+from .protocol import BackendFailure, OUTPUT_LIMIT, Refusal, owned_thread, public_output, strict_json
 
 BACKEND_URL = 'http://127.0.0.1:30007'
 RECOVERY_HELPER = '/usr/local/libexec/llm-image-backend-recover'
 RECOVERY_COMMAND = ('/usr/bin/sudo', '-n', '--', RECOVERY_HELPER)
 RECOVERY_BUDGET = 900
+HEALTH_BUDGET = 2
+HEALTH_BODY_LIMIT = 1024
 
 
 async def recover():
@@ -50,6 +52,28 @@ class NativeBackend:
                                        follow_redirects=False, timeout=None,
                                        limits=httpx.Limits(max_connections=1, max_keepalive_connections=1),
                                        transport=transport)
+        # Separate pool: a long image response must never occupy health capacity.
+        self.health_client = httpx.AsyncClient(
+            base_url=BACKEND_URL, trust_env=False, follow_redirects=False,
+            timeout=httpx.Timeout(connect=1, read=1, write=1, pool=.5),
+            limits=httpx.Limits(max_connections=2, max_keepalive_connections=2), transport=transport)
+
+    async def health(self):
+        """Pinned /health warm-readiness, one small request with a total budget."""
+        try:
+            async with asyncio.timeout(HEALTH_BUDGET):
+                async with self.health_client.stream('GET', '/health') as response:
+                    if (response.status_code != 200 or
+                            response.headers.get('content-type', '').split(';')[0] != 'application/json'):
+                        return False
+                    raw = bytearray()
+                    async for chunk in response.aiter_bytes(chunk_size=HEALTH_BODY_LIMIT):
+                        if len(raw) + len(chunk) > HEALTH_BODY_LIMIT:
+                            return False
+                        raw.extend(chunk)
+                return strict_json(raw) == {'status': 'ok'}
+        except (httpx.HTTPError, TimeoutError, Refusal, ValueError):
+            return False
 
     async def call(self, request):
         if request.images:
@@ -75,3 +99,4 @@ class NativeBackend:
 
     async def close(self):
         await self.client.aclose()
+        await self.health_client.aclose()

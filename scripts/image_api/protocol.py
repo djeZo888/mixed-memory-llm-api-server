@@ -21,9 +21,10 @@ FILE_LIMIT = 32 * 1024 * 1024
 TOTAL_LIMIT = 64 * 1024 * 1024
 ENVELOPE_LIMIT = 64 * 1024
 JSON_LIMIT = 64 * 1024
-PIXEL_LIMIT = 8294400
+PIXEL_LIMIT = 8294400  # Public input/output bound, even for the UHD recipe.
+UHD_NATIVE_PIXELS = 8355840
 OUTPUT_LIMIT = 48 * 1024 * 1024
-Image.MAX_IMAGE_PIXELS = PIXEL_LIMIT
+Image.MAX_IMAGE_PIXELS = UHD_NATIVE_PIXELS  # Explicit public/native checks below remain mandatory.
 
 
 class Refusal(Exception):
@@ -73,6 +74,25 @@ def dimensions(value):
     return width, height
 
 
+def profile_geometry(profile):
+    """Only the reviewed UHD exception; legacy profiles retain native=public."""
+    public = profile['size']
+    native = profile.get('native_size', public)
+    crop = profile.get('crop_bottom', 0)
+    if type(crop) is not int or not isinstance(native, str):
+        raise Refusal()
+    if public == '3840x2160' and profile['references'] == 2:
+        # Two-reference UHD requires separate future root authorization.
+        raise Refusal()
+    if native == public and crop == 0:
+        return native, crop
+    if (public == '3840x2160' and native == '3840x2176' and crop == 16
+            and ((profile['operation'] == 'generation' and profile['references'] == 0)
+                 or (profile['operation'] == 'edit' and profile['references'] == 1))):
+        return native, crop
+    raise Refusal()
+
+
 def qualification(value):
     """Protected local data is authority; no configured size becomes measured."""
     keys = {'schema_version', 'runtime_revision', 'model_id', 'model_revision',
@@ -91,8 +111,9 @@ def qualification(value):
         raise Refusal()
     seen = set()
     for p in profiles:
-        if not isinstance(p, dict) or set(p) != {'operation', 'size', 'references', 'transparent',
-                                                'conditioning', 'evidence_sha256'}:
+        required = {'operation', 'size', 'references', 'transparent', 'conditioning', 'evidence_sha256'}
+        if (not isinstance(p, dict) or not required <= set(p)
+                or set(p) - required - {'native_size', 'crop_bottom'}):
             raise Refusal()
         dimensions(p['size'])
         if (p['operation'] not in ('generation', 'edit') or type(p['references']) is not int
@@ -104,6 +125,7 @@ def qualification(value):
                 or not isinstance(p['evidence_sha256'], str)
                 or not re.fullmatch(r'[0-9a-f]{64}', p['evidence_sha256'])):
             raise Refusal()
+        profile_geometry(p)
         signature = (p['operation'], p['size'], p['references'], p['transparent'])
         if signature in seen:
             raise Refusal()
@@ -117,21 +139,44 @@ class Validated:
     images: list[bytes]
     size: tuple[int, int]
     transparent: bool
+    native_size: tuple[int, int]
+    crop_bottom: int
 
 
-def decode_image(raw, size, *, output=False, transparent=False):
+def decode_image(raw, size, *, output=False, transparent=False, crop_bottom=0, pad_bottom=False):
     """Check real content and full decode; never resize or trust MIME/extension."""
     try:
+        maximum = PIXEL_LIMIT
+        if crop_bottom:
+            if not output or crop_bottom != 16 or size != (3840, 2176):
+                raise ValueError()
+            maximum = UHD_NATIVE_PIXELS
+        if pad_bottom and (output or size != (3840, 2160)):
+            raise ValueError()
         with warnings.catch_warnings():
             warnings.simplefilter('error', Image.DecompressionBombWarning)
             with Image.open(io.BytesIO(raw)) as probe:
                 if (probe.format not in (('PNG',) if output else ('PNG', 'JPEG'))
-                        or probe.size != size or probe.width * probe.height > PIXEL_LIMIT
+                        or probe.size != size or probe.width * probe.height > maximum
                         or getattr(probe, 'n_frames', 1) != 1):
                     raise ValueError()
                 probe.verify()
             with Image.open(io.BytesIO(raw)) as image:
                 image.load()
+                if crop_bottom:
+                    image = image.crop((0, 0, 3840, 2160))
+                if pad_bottom:
+                    # PNG transport preserves decoded pixels and replicates only
+                    # the last public row. No resampling, scaling or interpolation.
+                    source = image.convert('RGBA')
+                    padded = Image.new('RGBA', (3840, 2176))
+                    padded.paste(source, (0, 0))
+                    edge = source.crop((0, 2159, 3840, 2160))
+                    for y in range(2160, 2176):
+                        padded.paste(edge, (0, y))
+                    stream = io.BytesIO()
+                    padded.save(stream, format='PNG')
+                    return stream.getvalue()
                 if output:
                     if transparent and ('A' not in image.getbands()
                                         or image.getchannel('A').getextrema()[0] == 255):
@@ -175,15 +220,18 @@ def validate(fields, images, operation, config):
         raise Refusal(400, 'unqualified_profile')
     if any(len(raw) > FILE_LIMIT for raw in images) or sum(map(len, images)) > TOTAL_LIMIT:
         raise Refusal(413, 'input_too_large')
-    for raw in images:
-        decode_image(raw, size)
+    native_size, crop_bottom = profile_geometry(profile)
+    for index, raw in enumerate(images):
+        padded = decode_image(raw, size, pad_bottom=bool(crop_bottom))
+        if crop_bottom:
+            images[index] = padded
     native = {'model': ALIAS, 'prompt': (profile['conditioning'] + '\n' if transparent else '') + prompt,
-              'n': 1, 'size': value['size'], 'response_format': 'b64_json', 'output_format': 'png',
+              'n': 1, 'size': native_size, 'response_format': 'b64_json', 'output_format': 'png',
               'background': value['background'], 'num_inference_steps': 40,
-              'guidance_scale': 1, 'true_cfg_scale': 1}
+              'guidance_scale': 1, 'true_cfg_scale': 1, 'generator_device': 'cpu'}
     if 'seed' in value:
         native['seed'] = value['seed']
-    return Validated(native, images, size, transparent)
+    return Validated(native, images, size, transparent, tuple(map(int, native_size.split('x'))), crop_bottom)
 
 
 def public_output(raw, request):
@@ -196,7 +244,8 @@ def public_output(raw, request):
         if len(encoded) > OUTPUT_LIMIT:
             raise ValueError()
         png = base64.b64decode(encoded, validate=True)
-        png = decode_image(png, request.size, output=True, transparent=request.transparent)
+        png = decode_image(png, request.native_size, output=True, transparent=request.transparent,
+                           crop_bottom=request.crop_bottom)
         return {'created': int(time.time()), 'data': [{'b64_json': base64.b64encode(png).decode('ascii')}]}
     except (KeyError, TypeError, ValueError, binascii.Error, Refusal):
         raise BackendFailure() from None

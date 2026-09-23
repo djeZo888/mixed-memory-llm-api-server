@@ -10,7 +10,7 @@ from starlette.requests import ClientDisconnect
 from starlette.responses import JSONResponse
 
 from .backend import NativeBackend, recover
-from .protocol import ALIAS, BackendFailure, Refusal, owned_thread, validate
+from .protocol import ALIAS, BackendFailure, Refusal, owned_thread, profile_geometry, validate
 from .uploads import Uploads, read_json
 
 REQUEST_BUDGET = 900
@@ -45,6 +45,22 @@ class Owner:
         self.phase = 'ready' if self.ready else 'closed'
         return self.ready
 
+    async def probe(self):
+        # A positive probe is only a check, never recovery authorization. Keep the
+        # failure latched even if another in-flight probe later reports success.
+        if not self.ready:
+            return False
+        try:
+            healthy = await self.backend.health()
+        except asyncio.CancelledError:
+            self.ready, self.phase = False, 'closed'
+            raise
+        except Exception:
+            healthy = False
+        if healthy is not True:
+            self.ready, self.phase = False, 'closed'
+        return self.ready and not self.stopping
+
     def status(self):
         qualified = bool(self.config['profiles'])
         return {'ready': self.ready and qualified, 'busy': self.owner is not None,
@@ -74,6 +90,10 @@ class Owner:
             validated = await owned_thread(validate, fields, images, operation, self.config)
             if asyncio.get_running_loop().time() >= self.deadline:
                 raise Refusal(504, 'request_timeout')
+            if not await self.probe():
+                raise Refusal(503, 'not_ready')
+            if asyncio.get_running_loop().time() >= self.deadline:
+                raise Refusal(504, 'request_timeout')
             # No await separates submission marker from entering fixed backend.
             self.submitted = True
             result = await self.backend.call(validated)
@@ -101,7 +121,8 @@ class Owner:
         try:
             done, _ = await asyncio.wait({self.work}, timeout=self.budget)
             if not done:
-                self.ready, self.phase = False, 'recovering' if self.submitted else 'closed'
+                if self.submitted:
+                    self.ready, self.phase = False, 'recovering'
                 result = error(504, 'request_timeout')
                 needs_recovery = self.submitted
             else:
@@ -134,8 +155,6 @@ class Owner:
                 self.work.cancel()
                 with suppress(asyncio.CancelledError, Exception):
                     await self.work
-            if not needs_recovery and self.phase in ('closed', 'recovering'):
-                self.ready, self.phase = not self.stopping, 'ready'
         except asyncio.CancelledError:
             self.ready, self.phase = False, 'closed'
             # During forced shutdown preserve child ownership until process death;
@@ -204,6 +223,7 @@ def create_app(config, key, *, backend=None, recovery=recover, budget=REQUEST_BU
 
     @app.get('/health/ready')
     async def ready():
+        await owner.probe()
         status = owner.status()
         return JSONResponse(status, 200 if status['ready'] else 503)
 
@@ -216,12 +236,15 @@ def create_app(config, key, *, backend=None, recovery=recover, budget=REQUEST_BU
         return {**owner.status(), 'model': ALIAS,
                 **{key: config[key] for key in ('runtime_revision', 'runtime_image_digest',
                                                'model_id', 'model_revision')},
-                'profiles': [{k: p[k] for k in ('operation', 'size', 'references', 'transparent',
-                                               'evidence_sha256')} for p in config['profiles']],
+                'profiles': [{**{k: p[k] for k in ('operation', 'size', 'references', 'transparent',
+                                                  'evidence_sha256')},
+                              'native_size': profile_geometry(p)[0], 'crop_bottom': profile_geometry(p)[1]}
+                             for p in config['profiles']],
                 'limits': {'encoded_file_bytes': 33554432, 'encoded_total_bytes': 67108864,
                            'maximum_pixels_when_qualified': 8294400, 'references': 2,
+                           'approved_uhd_native_pixels': 8355840,
                            'n': 1, 'active': 1, 'waiting': 0, 'budget_seconds': 900},
-                'defaults': {'size': '1024x1024', 'steps': 40, 'cfg': 1},
+                'defaults': {'size': '1024x1024', 'steps': 40, 'cfg': 1, 'generator_device': 'cpu'},
                 'masks': False, 'response_format': 'b64_json', 'output_format': 'png'}
 
     async def handle(request, operation):

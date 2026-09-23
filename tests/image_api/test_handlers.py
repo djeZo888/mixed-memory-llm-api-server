@@ -62,6 +62,9 @@ class Backend:
         self.fail, self.cleaned, self.spool = fail, False, None
         self.retained = None
 
+    async def health(self):
+        return True
+
     async def call(self, request):
         self.calls.append(copy.deepcopy(request.native))
         self.retained = request
@@ -77,7 +80,7 @@ class Backend:
                 if self.fail:
                     raise RuntimeError('/native/private/path DO_NOT_LEAK')
                 return protocol.public_output(json.dumps({'data': [{'b64_json': base64.b64encode(
-                    png(request.size, alpha=request.transparent, metadata=True)).decode(),
+                    png(request.native_size, alpha=request.transparent, metadata=True)).decode(),
                     'revised_prompt': '/native/private/path'}]}).encode(), request)
             finally:
                 self.active -= 1
@@ -133,11 +136,13 @@ class Handlers(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(backend.calls[0]['seed'], 9)
             self.assertEqual(backend.calls[0]['num_inference_steps'], 40)
             self.assertEqual(backend.calls[0]['true_cfg_scale'], 1)
+            self.assertEqual(backend.calls[0]['generator_device'], 'cpu')
 
     async def test_unsafe_unknown_fields_and_invalid_model_n_seed_size(self):
         async with fixture() as (client, owner, backend, _):
             invalid = [{'url': 'http://invalid'}, {'mask': 'x'}, {'image': '/private'}, {'output_path': '/tmp'},
                        {'diffusers_kwargs': {}}, {'num_inference_steps': 1}, {'guidance_scale': 8},
+                       {'generator_device': 'cpu'}, {'generator_device': 'cuda'}, {'native_size': '3840x2176'}, {'crop_bottom': 16},
                        {'model': 'other'}, {'n': 2}, {'n': True}, {'n': 1.0}, {'n': '1'},
                        {'seed': -1}, {'seed': 2**63}, {'seed': True}, {'seed': None},
                        {'response_format': 'url'}, {'size': '3840x2160'}, {'size': '4096x4096'},
@@ -412,6 +417,8 @@ class NativeWire(unittest.IsolatedAsyncioTestCase):
     async def test_exact_generation_and_edit_wire_no_path_or_caller_headers(self):
         observed = []
         async def upstream(request):
+            if request.method == 'GET':
+                return httpx.Response(200, json={'status': 'ok'})
             observed.append((request.url, request.headers, await request.aread()))
             return httpx.Response(200, json={'id': 'native', 'data': [{'b64_json': base64.b64encode(png()).decode(),
                                    'file_path': None, 'url': None}], 'unused': '/native/private'})
@@ -423,7 +430,9 @@ class NativeWire(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(str(observed[0][0]), 'http://127.0.0.1:30007/v1/images/generations')
         body = json.loads(observed[0][2])
         self.assertEqual(set(body), {'model', 'prompt', 'n', 'size', 'response_format', 'output_format',
-                                    'background', 'num_inference_steps', 'guidance_scale', 'true_cfg_scale'})
+                                    'background', 'num_inference_steps', 'guidance_scale', 'true_cfg_scale', 'generator_device'})
+        self.assertEqual(body['generator_device'], 'cpu')
+        self.assertIn(b'name="generator_device"\r\n\r\ncpu', observed[1][2])
         self.assertNotIn('authorization', observed[0][1])
         self.assertIn(b'name="image"; filename="reference-0.jpg"', observed[1][2])
         self.assertNotIn(b'private-name', observed[1][2])
@@ -436,6 +445,8 @@ class NativeWire(unittest.IsolatedAsyncioTestCase):
                          httpx.Response(200, json={'data': [{'b64_json': base64.b64encode(png((32, 32))).decode()}]})]:
             calls = []
             async def upstream(request):
+                if request.method == 'GET':
+                    return httpx.Response(200, json={'status': 'ok'})
                 calls.append(str(request.url))
                 return response
             native = NativeBackend(transport=httpx.MockTransport(upstream))
