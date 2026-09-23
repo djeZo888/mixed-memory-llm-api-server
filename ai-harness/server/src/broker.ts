@@ -21,6 +21,7 @@ export interface BrokerOptions {
   issueToken: (sessionId: string) => string;
   revokeToken: (token: string) => void;
   maxQueued?: number;
+  cancelImages?: (sessionId: string) => void;
 }
 interface Runner {
   engine: Engine;
@@ -56,6 +57,14 @@ export class Broker {
     this.store = options.store;
     this.files = options.files;
   }
+  currentImageRun(sessionId: string) {
+    const active = [...this.active.values()].find(
+      (a) => a.run.sessionId === sessionId && !a.cancelled,
+    );
+    return active
+      ? { runId: active.run.id, workspaceId: active.run.workspaceId }
+      : undefined;
+  }
   async createSession(workspaceId?: string) {
     const s = this.store.createSession(workspaceId);
     await this.files.prepare(s.id, s.workspaceId);
@@ -66,6 +75,7 @@ export class Broker {
     kind: Run["kind"],
     text: string,
     attachmentIds: string[] = [],
+    imageReferences: string[] = [],
   ): string {
     const s = this.store.getSession(sessionId);
     if (this.closing)
@@ -92,7 +102,24 @@ export class Broker {
           "Attachment does not belong to this chat",
         );
     }
+    for (const id of imageReferences) {
+      const f = this.store.file(id);
+      if (
+        f.kind !== "artifact" ||
+        f.sessionId !== sessionId ||
+        !["image/png", "image/jpeg"].includes(f.mimeType)
+      )
+        throw new ApiError(
+          400,
+          "invalid_image_reference",
+          "Image artifact does not belong to this chat",
+        );
+    }
     const run = this.store.createRun(s, kind, text, attachmentIds);
+    if (imageReferences.length)
+      this.store.db
+        .prepare("INSERT INTO h003_run_image_refs VALUES(?,?)")
+        .run(run.id, JSON.stringify(imageReferences));
     this.store.touchContext(s.id, run.id);
     if (kind === "message") {
       const message = this.store.addMessage(
@@ -411,6 +438,13 @@ export class Broker {
           s.id,
           run.attachmentIds,
         );
+        const imageRefRow = this.store.db
+          .prepare("SELECT data FROM h003_run_image_refs WHERE run_id=?")
+          .get(run.id);
+        const imagePaths = await this.files.imageReferences(
+          s.id,
+          imageRefRow ? JSON.parse(String(imageRefRow.data)) : [],
+        );
         if (active.cancelled) await cancelBeforePrompt();
         else {
           const handoff = this.store.db
@@ -421,7 +455,10 @@ export class Broker {
           const requestText =
             run.kind === "handoff"
               ? "Create a factual handoff summary for a new chat continuing this project in the same workspace. Summarize the user goal, completed work, current files and validation, unresolved issues and constraints, and precise next steps. Do not perform new work or change files; reply with the summary only."
-              : run.text;
+              : run.text +
+                (imagePaths.length
+                  ? `\n\nUser-selected image references (workspace-relative paths):\n${imagePaths.map((p) => JSON.stringify(p)).join("\n")}\nUse these owned files for image tools when requested.`
+                  : "");
           let promptOutcome: Awaited<ReturnType<Engine["prompt"]>>;
           try {
             promptOutcome = await engine.prompt(
@@ -634,6 +671,7 @@ export class Broker {
     return runner.closePromise;
   }
   async cancel(id: string) {
+    if (!this.closing) this.options.cancelImages?.(id);
     const s = this.store.getSession(id);
     const queue = this.queues.get(s.workspaceId) ?? [];
     this.queues.set(

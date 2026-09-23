@@ -85,3 +85,46 @@ cleanup, 45 seconds for SERVER to observe its exact exit, and 60–70 seconds fo
 overall server exit with parallel cleanup. `TimeoutStopSec=90` leaves the user
 service room to complete that sequence. Live shutdown acceptance remains pending;
 unconfirmed container settlement retains the backend workspace quarantine.
+
+## v0.0.3 host image broker and browser approval capability
+
+The reviewed server pins Sharp 0.35.4 (lockfile includes its platform codec) on
+Node24. Run `npm ci` in server on the deployment host; do not copy macOS native
+node_modules to Linux. Main reuses the existing protected inference-key loader
+and key for fixed `http://10.156.100.60:30006`. There is no production URL override.
+Image health/reconciliation owns no text lane. Missing edit capabilities keep
+editing unavailable. This source delivery does not qualify image editing.
+
+Canvas approval now requires a separate host-only nginx-to-server capability.
+For later root-reviewed deployment, provision a random secret outside Git, with
+an owner-only file readable by the existing harness service user; set
+`@BROWSER_APPROVAL_KEY_FILE@` / `--browser-approval-key-file` to that file. The
+server loads it using the existing protected file loader. Never mount this file
+or expose its value to engines, browser JS, MCP, environment values or logs.
+Without this optional file, image generation works but approval-token issuance
+fails closed. It must not reuse the inference key or session bearer token.
+
+Install `/etc/ai-harness/image-approval-proxy.conf` root:root0600, containing only
+`proxy_set_header X-AI-Harness-Approval-Proxy "<same protected secret>";` with the
+real value supplied privately during reviewed activation. The checked-in nginx
+configuration includes that file only on the exact approval-token issuance route;
+all other routes strip the header. Do not capture `nginx -T` output after install.
+The source nginx ACL denies127/8, ::1 and the known harness address10.156.100.61,
+allows external10.156.100.0/24 browser clients and denies everything else. Before
+activation, root must inventory actual host/container egress addresses and add
+all own addresses to the deny list, and review any required external LAN range.
+Do not enable real-IP rewriting based on untrusted forwarding headers.
+
+Browser GET `/api/sessions/:id/image-jobs/:jobId/approval-token` returns
+`{approvalToken,expiresAt}`; only this route needs the proxy capability header.
+The browser includes `approvalToken` with approve/reject. Tokens are random,
+10-minute, stored only as hashes and bound to the persisted job/input/adjustment.
+Identical token+decision replay only returns the same decision's result; it cannot
+execute again. They are never included in job records, SSE, artifacts or MCP.
+
+Offline tests cover missing/spoofed proxy header, bearer-surface rejection,
+wrong-job/expired/consumed token handling and immutable approval binding. Later
+activation must separately verify actual engine-to8080 and engine-to80 issuance
+rejection (including forged Origin/Host/forwarding headers), external LAN browser
+issuance and approval success, no proxy secret in responses/logs, and Linux codec
+loading. Those are deployment acceptance gates, not claims from these fixtures.

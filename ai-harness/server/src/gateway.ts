@@ -1,3 +1,5 @@
+import type { ImageBroker } from "./image-broker.js";
+import { ApiError, requireId } from "./errors.js";
 import Fastify, { type FastifyInstance, type FastifyReply } from "fastify";
 import { randomBytes } from "node:crypto";
 import {
@@ -13,6 +15,7 @@ export interface GatewayUpstream {
   alias: string;
 }
 export interface GatewayOptions {
+  images?: ImageBroker;
   /** The protected credential is supplied by the host. This module never reads files. */
   upstreamKey: string | (() => string | Promise<string>);
   /** Deployment uses the fixed defaults; overrides permit local protocol fixtures. */
@@ -402,6 +405,10 @@ export function createGateway(options: GatewayOptions): Gateway {
     forceCloseConnections: true,
   });
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof ApiError)
+      return reply
+        .code(error.statusCode)
+        .send({ error: { code: error.code, message: error.message } });
     const known = error instanceof GatewayError;
     const statusCode =
       error && typeof error === "object" && "statusCode" in error
@@ -460,6 +467,50 @@ export function createGateway(options: GatewayOptions): Gateway {
     object: "list",
     data: [{ id: MODEL, object: "model", owned_by: "local" }],
   }));
+
+  const imageBroker = () => {
+    if (!options.images)
+      throw new ApiError(
+        503,
+        "image_unavailable",
+        "Image broker is not configured",
+      );
+    return options.images;
+  };
+  const imageSession = (authorization: string | undefined) => {
+    const sessionId = tokens.get(authorization!.slice(7));
+    if (!sessionId)
+      throw new ApiError(401, "unauthorized", "Session authorization required");
+    return sessionId;
+  };
+  app.get("/v1/image-capabilities", async () => imageBroker().capabilities());
+  app.post("/v1/image-jobs", { bodyLimit: 64 * 1024 }, async (request) => ({
+    job: await imageBroker().submit(
+      imageSession(request.headers.authorization),
+      request.body,
+    ),
+  }));
+  app.get("/v1/image-jobs/:jobId", async (request) => ({
+    job: imageBroker().get(
+      imageSession(request.headers.authorization),
+      requireId((request.params as { jobId: string }).jobId),
+    ),
+  }));
+  app.post("/v1/image-jobs/:jobId/cancel", async (request) => {
+    if (
+      !request.body ||
+      typeof request.body !== "object" ||
+      Array.isArray(request.body) ||
+      Object.keys(request.body).length
+    )
+      throw new ApiError(400, "invalid_body", "Expected an empty object");
+    return {
+      job: imageBroker().cancel(
+        imageSession(request.headers.authorization),
+        requireId((request.params as { jobId: string }).jobId),
+      ),
+    };
+  });
 
   app.post("/v1/chat/completions", async (request, reply) => {
     const body = requestBody(request.body);

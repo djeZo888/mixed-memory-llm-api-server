@@ -32,10 +32,13 @@ class ServerContract(unittest.TestCase):
             key = root / 'synthetic-key'
             key.write_text('synthetic-test-value-never-exported')
             key.chmod(0o600)
+            approval_key = root / 'synthetic-approval-key'
+            approval_key.write_text('synthetic-approval-value-never-exported')
+            approval_key.chmod(0o600)
             data = root / 'data'
             args = ['/bin/bash', str(LAUNCHER), '--node-prefix', str(prefix),
                     '--app-dir', str(app), '--data-dir', str(data),
-                    '--inference-key-file', str(key), '--engine-launcher', str(engine)]
+                    '--inference-key-file', str(key), '--browser-approval-key-file', str(approval_key), '--engine-launcher', str(engine)]
             env = dict(os.environ, OPENAI_API_KEY='ambient-must-not-pass',
                        AI_HARNESS_GATEWAY_TOKEN='ambient-runner-must-not-pass',
                        AI_HARNESS_GATEWAY_URL='http://unreviewed.invalid/v1')
@@ -46,6 +49,8 @@ class ServerContract(unittest.TestCase):
             self.assertEqual(observed['AI_HARNESS_ALLOWED_ORIGINS'], 'http://10.156.100.61')
             self.assertEqual(observed['AI_HARNESS_WEB_DIST'], str(app / 'web/dist'))
             self.assertEqual(observed['AI_HARNESS_INFERENCE_KEY_FILE'], str(key))
+            self.assertEqual(observed['AI_HARNESS_BROWSER_APPROVAL_KEY_FILE'], str(approval_key))
+            self.assertNotIn(approval_key.read_text(), result.stdout + result.stderr)
             self.assertTrue(observed['PATH'].startswith(str(prefix / 'bin') + ':'))
             for name in ('OPENAI_API_KEY', 'AI_HARNESS_GATEWAY_TOKEN', 'NODE_OPTIONS', 'SSH_AUTH_SOCK'):
                 self.assertNotIn(name, observed)

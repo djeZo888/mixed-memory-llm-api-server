@@ -336,3 +336,63 @@ cancellation. Configuration and the separate bounded capability probe establish
 Those require root-reviewed integration and separately dispatched acceptance.
 No ai-vm services, models, real credentials, lifecycle, installer, deploy or web
 source are changed by this package.
+
+## v0.0.3 host image broker (source candidate)
+
+`main.ts` loads the existing protected inference key once and constructs the fixed
+private image adapter. `image-broker.ts` persists jobs, revisions, canonical request
+hashes, source/ancestor seed provenance, immutable reference hashes and admission
+before dispatch. SQLite companion tables preserve existing chat/file schemas.
+The broker owns one image lane with eight waiting jobs and a30-minute queue
+deadline. Native transport has900 seconds to headers and30 seconds to consume the
+bounded response; host preparation/codecs and saving have bounded deadlines.
+Only reviewed busy429 can retry, honoring Retry-After and the original deadline.
+If all eight waiters are occupied on429, the non-admitted job fails explicitly
+with `image_queue_full`; it is never automatically resubmitted. Ambiguous errors
+are never replayed, and the lane stays quarantined until authenticated readiness
+proves ready, admitting and not busy. Restart interrupts every unresolved job.
+
+The backend's capability JSON passes through unchanged. Missing operation/refcount
+profiles mean unavailable. Generation defaults to1920x1080; edits use exact source
+geometry when qualified, otherwise stage aspect-preserving downsize/padding for
+browser approval. The backend exclusively owns any FHD bottom8 transport mapping.
+Sharp0.35.4 is pinned with integrity-locked native dependencies; PNG/JPEG are fully
+decoded, oriented, converted to sRGB and flattened on white. Originals and normalized
+copies are separate host-only snapshots. Output must decode as one opaque PNG at
+exact public dimensions; no native URLs, errors or encoded pixels leave the host.
+
+Image gateway routes reuse the existing session token; current run/workspace come
+from the text broker. `outputPath` is relative and appears only in internal job
+results. Browser/SSE records omit it and identify owned artifacts by id. Optional
+artifact `image` metadata records jobId, dimensions, model, seed and output hash.
+Model provenance records the exact capability-selected model. If upstream returns
+its optional effective seed, it must equal the persisted submitted seed; mismatch
+fails and never silently replaces the requested seed. Known source/ancestor seeds are excluded from random
+seed selection; explicit collisions fail with `source_seed_collision`. Imported
+images without retained provenance cannot guarantee collision detection.
+
+Approval capabilities are browser-only and bound to immutable job/input/adjustment;
+see [runtime setup](../deploy/RUNTIME.md#v003-host-image-broker-and-browser-approval-capability).
+The separate proxy secret is never passed to an engine. Main and ordinary worker
+image tools supplement native permission checks; native explore/verifier ceilings
+remain owned by engine packaging. No model-supplied approval flag is recognized.
+
+Normal turn completion and client disconnect leave image work alive. Stop also
+checks detached jobs while text is idle. Dispatched cancellation retains ownership
+until settled. Late cancelled/deleted-session output is saved internally with its
+original run and no revived assistant text. Managed workspace output paths are
+excluded from later text artifact discovery. A failed workspace copy still retains
+the authoritative artifact and provenance. Workspace-selected next-edit copies
+preserve attachmentIds semantics and expose explicit relative paths to the engine.
+
+Focused offline checks (no startup, credentials, service contact or inference):
+
+```sh
+npm run typecheck
+node_modules/.bin/tsx --test --test-timeout=15000 test/image-broker.test.ts test/image-upstream.test.ts test/image-integration.test.ts test/policy.test.ts
+```
+
+Fixtures use a real local codec and fake IPv4-loopback HTTP upstream. They do not
+qualify editing fidelity, deployed geometry profiles, Linux codec installation,
+nginx runtime ACLs or actual engine/browser reachability. Those remain separate
+root-reviewed activation/acceptance work.

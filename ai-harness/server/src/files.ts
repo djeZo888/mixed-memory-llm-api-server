@@ -211,6 +211,67 @@ export class Files {
     }
     return out;
   }
+  async imageReferences(sessionId: string, ids: string[]): Promise<string[]> {
+    if (!ids.length) return [];
+    const s = this.store.getSession(sessionId);
+    await this.prepare(sessionId, s.workspaceId);
+    const root = this.workspace(s.workspaceId),
+      folder = path.join(root, ".image-references");
+    await fs.mkdir(folder, { recursive: true, mode: 0o700 });
+    await this.assertNoLinks(folder);
+    const result: string[] = [];
+    for (const id of ids) {
+      const f = this.store.file(requireId(id));
+      if (
+        f.kind !== "artifact" ||
+        f.sessionId !== sessionId ||
+        !["image/png", "image/jpeg"].includes(f.mimeType)
+      )
+        throw new ApiError(
+          400,
+          "invalid_image_reference",
+          "Image artifact does not belong to this chat",
+        );
+      const { handle, stat } = await this.openGuarded(
+        path.join(this.root, "artifacts"),
+        f.path,
+      );
+      if (stat.size > MAX_ARTIFACT) {
+        await handle.close();
+        throw new ApiError(413, "image_too_large", "Reference exceeds limit");
+      }
+      const relative = `.image-references/${randomUUID()}-${safeName(f.name)}`;
+      const target = await fs.open(path.join(root, relative), "wx", 0o600);
+      try {
+        let bytes = 0;
+        const limit = new Transform({
+          transform(chunk, _encoding, callback) {
+            bytes += chunk.length;
+            callback(
+              bytes > MAX_ARTIFACT
+                ? new ApiError(
+                    413,
+                    "image_too_large",
+                    "Reference exceeds limit",
+                  )
+                : null,
+              chunk,
+            );
+          },
+        });
+        await pipeline(
+          handle.createReadStream(),
+          limit,
+          target.createWriteStream(),
+        );
+        result.push(relative);
+      } finally {
+        await handle.close().catch(() => {});
+        await target.close().catch(() => {});
+      }
+    }
+    return result;
+  }
   async registerArtifact(
     sessionId: string,
     filePath: string,
@@ -245,6 +306,18 @@ export class Files {
         400,
         "unsafe_path",
         "Hidden files cannot be published as artifacts",
+      );
+    if (
+      this.store.db
+        .prepare(
+          "SELECT job_id FROM h003_image_outputs WHERE workspace_id=? AND path=?",
+        )
+        .get(s.workspaceId, relative)
+    )
+      throw new ApiError(
+        409,
+        "managed_image",
+        "Image broker owns this artifact and its original reply provenance",
       );
     const { handle, stat } = await this.openGuarded(workspace, relative);
     if (stat.size > MAX_ARTIFACT) {
@@ -314,6 +387,14 @@ export class Files {
         const rel = path.join(dir, item.name);
         if (item.isDirectory()) await walk(rel, depth + 1);
         else if (item.isFile()) {
+          if (
+            this.store.db
+              .prepare(
+                "SELECT job_id FROM h003_image_outputs WHERE workspace_id=? AND path=?",
+              )
+              .get(s.workspaceId, rel)
+          )
+            continue;
           const st = await fs.stat(path.join(root, rel));
           if (st.size <= MAX_ARTIFACT)
             candidates.push({ path: rel, size: st.size, mtime: st.mtimeMs });
