@@ -1,6 +1,7 @@
 """Protected credential/source metadata and fixed privilege wiring; Linux NOT_TESTED."""
 import asyncio
 import copy
+import configparser
 import json
 import os
 from pathlib import Path
@@ -156,6 +157,19 @@ class Configuration(unittest.TestCase):
         self.assertIn("host='127.0.0.1', port=30006, workers=1", serve)
         self.assertIn('singleton()', serve)
         self.assertIn('proxy_headers=False', serve)
+
+    def test_api_is_the_only_image_boot_owner_ordered_after_text_boot(self):
+        unit = configparser.ConfigParser(interpolation=None)
+        unit.read(ROOT / 'scripts/image_api/llm-image-api.service.in')
+        self.assertEqual(unit['Unit']['After'].split(), ['network.target', 'llmctl-boot.service'])
+        self.assertNotIn('llmctl-boot.service', unit['Unit'].get('Requires', '').split())
+        for dependency in ('Requires', 'Wants'):
+            self.assertNotIn('llm-image-backend.service', unit['Unit'].get(dependency, '').split())
+        self.assertEqual(unit['Install']['WantedBy'], 'multi-user.target')
+        self.assertNotIn('Also', unit['Install'])  # Enabling API cannot enable backend.
+        self.assertIn('/scripts/image_api/serve.py', unit['Service']['ExecStart'])
+        self.assertEqual(backend.RECOVERY_COMMAND,
+                         ('/usr/bin/sudo', '-n', '--', '/usr/local/libexec/llm-image-backend-recover'))
 
     def test_process_lock_rejects_second_owner_and_unsafe_file(self):
         with tempfile.TemporaryDirectory() as directory:

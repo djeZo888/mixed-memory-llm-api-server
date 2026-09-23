@@ -41,6 +41,33 @@ class Health(unittest.IsolatedAsyncioTestCase):
             self.assertEqual((await client.get('/health/ready')).status_code, 200)
             self.assertEqual((await client.post('/v1/images/generations', json={'prompt': 'x'})).status_code, 200)
 
+    async def test_cancelled_readiness_get_preserves_health_and_next_image_probes(self):
+        native = Backend()
+        entered = asyncio.Event()
+        probes = 0
+        async def health():
+            nonlocal probes
+            probes += 1
+            if probes == 1:
+                entered.set()
+                await asyncio.Event().wait()
+            return True
+        native.health = health
+        async with fixture(backend=native) as (client, owner, _, resets):
+            readiness = asyncio.create_task(client.get('/health/ready'))
+            await asyncio.wait_for(entered.wait(), 1)
+            readiness.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await readiness
+            self.assertTrue(owner.status()['admitting'])
+            self.assertEqual(owner.phase, 'ready')
+            self.assertEqual(len(resets), 1)
+            self.assertEqual(native.calls, [])
+            self.assertEqual((await client.post('/v1/images/generations', json={'prompt': 'x'})).status_code, 200)
+            self.assertEqual(probes, 2)  # Actual image made its own fresh probe.
+            self.assertEqual(len(native.calls), 1)
+            self.assertEqual(len(resets), 1)
+
     async def test_pre_admission_probe_reserves_slot_before_await(self):
         native = Backend(blocked=True)
         entered, release = asyncio.Event(), asyncio.Event()
@@ -287,4 +314,7 @@ class UHD(unittest.IsolatedAsyncioTestCase):
                 config([{**valid, **changes}])
         for operation, references in [('generation', 0), ('edit', 1)]:
             self.assertEqual(len(config([uhd_profile(operation, references)])['profiles']), 1)
+            for mapping in [{}, {'native_size': '3840x2160', 'crop_bottom': 0}]:
+                with self.subTest(operation=operation, mapping=mapping), self.assertRaises(protocol.Refusal):
+                    config([{**profile(operation, references, '3840x2160'), **mapping}])
         self.assertEqual(config([profile('generation', 0)])['profiles'][0]['size'], '1024x1024')

@@ -163,7 +163,9 @@ class Handlers(unittest.IsolatedAsyncioTestCase):
             caps = (await client.get('/v1/image-capabilities')).json()
             self.assertEqual(caps['profiles'], [])
             self.assertFalse(caps['admitting'])
-        measured = [profile('generation', 0, '3840x2160'), profile('edit', 1, '3840x2160'), profile('edit', 2)]
+        measured = [{**profile(operation, references, '3840x2160'),
+                     'native_size': '3840x2176', 'crop_bottom': 16}
+                    for operation, references in [('generation', 0), ('edit', 1)]] + [profile('edit', 2)]
         async with fixture(qualification=config(measured)) as (client, _, backend, _):
             self.assertEqual((await client.get('/v1/image-capabilities')).json()['profiles'][1]['references'], 1)
             self.assertEqual((await client.post('/v1/images/generations', json={'prompt': 'x'})).status_code, 400)

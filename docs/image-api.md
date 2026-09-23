@@ -61,9 +61,10 @@ before native submission. A separate health client avoids the image client's bus
 single connection: total budget2s, connect/read/write1s, pool0.5s, two health
 connections, at most1024 response bytes, fixed loopback URL, no proxy or redirects.
 Only the pinned warm-readiness response200 with exact JSON `{"status":"ok"}` passes.
-Failure/timeout/invalid health returns503 and latches admission closed; canceling a
-readiness probe conservatively latches it closed too. Successful
-health alone never reopens it. GET never invokes recovery or cancels active images.
+Failure/timeout/invalid health returns503 and latches admission closed. Caller-only
+probe cancellation propagates without changing readiness: cancellation is not
+backend-failure evidence. The next image still performs its own fresh health probe.
+Successful health alone never reopens a failed state. GET never invokes recovery or cancels active images.
 A successful active image also cannot erase a concurrent health-failure latch.
 There is no polling daemon. Required helper reconciliation remains the only reopening
 path. Busy image contenders still receive429 while any admission probe is pending.
@@ -92,6 +93,12 @@ an existing nonroot service user/group and the exact registered services root;
 protect source and the separate venv against that user, groups and other users.
 
 - Adapter unit `llm-image-api.service`; backend unit `llm-image-backend.service`.
+- Enable only `llm-image-api.service` as the image boot owner, ordered with
+  `After=network.target llmctl-boot.service`. No dependency on text boot success,
+  and no Requires/Wants that independently starts the backend. The fixed recovery
+  helper starts/resets/warms `llm-image-backend.service`; Worker1 installs that unit
+  ordered after text boot but does not independently boot-enable it. Text units
+  remain unchanged; this is source ordering, not reboot acceptance.
 - Fixed entrypoint `/usr/local/lib/llm-server/image-api/scripts/image_api/serve.py`,
   via the separately pinned venv Python with `-I -B`. No server arguments allowed.
 - Config `/etc/llm-server/image-api.json`, root:root0644 with protected ancestry.
@@ -154,7 +161,8 @@ Each profile requires `operation` (`generation`/`edit`), public `size`, `referen
 (0 generation;1/2 edit), `transparent` (boolean), `conditioning` (empty for opaque;
 explicit bounded model conditioning text for transparent), and `evidence_sha256`
 (lowercase64-hex digest of reviewed qualification evidence). Optional `native_size`
-and `crop_bottom` default to public size and0, preserving existing profiles. These
+and `crop_bottom` default to public size and0 for ordinary non-UHD profiles. UHD
+requires both explicit mapping fields as described below. These
 two effective fields are always exposed in capability records. Duplicate profiles
 are rejected. Transparent profiles require both measured alpha and visual task
 acceptance; output alpha is checked after any approved crop on every response. Configured
@@ -163,7 +171,9 @@ and manifest review bind evidence to exact actual model/runtime/build identity.
 
 The sole nonidentity mapping is an explicit public `size=3840x2160`,
 `native_size=3840x2176`, `crop_bottom=16` profile: generation with0 references or
-editing with exactly1. Remove exactly the16 bottom native output rows; for the edit,
+editing with exactly1. This mapping is mandatory for UHD because the pinned native
+runtime requires32px alignment: reject missing mapping and explicit raw native
+3840x2160/crop0. Remove exactly the16 bottom native output rows; for the edit,
 edge-pad exactly16 bottom input rows by repeating the last decoded public row.
 No resize, distortion, arbitrary crop or larger public image admission. Public
 input/output limits remain8294400 pixels; only this native recipe allows8355840.

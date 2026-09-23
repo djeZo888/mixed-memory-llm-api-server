@@ -53,7 +53,7 @@ class Owner:
         try:
             healthy = await self.backend.health()
         except asyncio.CancelledError:
-            self.ready, self.phase = False, 'closed'
+            # Caller-only probe cancellation says nothing about backend health.
             raise
         except Exception:
             healthy = False

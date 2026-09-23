@@ -81,14 +81,15 @@ def profile_geometry(profile):
     crop = profile.get('crop_bottom', 0)
     if type(crop) is not int or not isinstance(native, str):
         raise Refusal()
-    if public == '3840x2160' and profile['references'] == 2:
-        # Two-reference UHD requires separate future root authorization.
+    if public == '3840x2160':
+        # UHD always requires the explicit aligned recipe; raw2160 is not a
+        # valid native height. Two-reference UHD is not currently authorized.
+        if (native == '3840x2176' and crop == 16
+                and ((profile['operation'] == 'generation' and profile['references'] == 0)
+                     or (profile['operation'] == 'edit' and profile['references'] == 1))):
+            return native, crop
         raise Refusal()
     if native == public and crop == 0:
-        return native, crop
-    if (public == '3840x2160' and native == '3840x2176' and crop == 16
-            and ((profile['operation'] == 'generation' and profile['references'] == 0)
-                 or (profile['operation'] == 'edit' and profile['references'] == 1))):
         return native, crop
     raise Refusal()
 
