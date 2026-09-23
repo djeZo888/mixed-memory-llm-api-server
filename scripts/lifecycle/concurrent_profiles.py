@@ -158,14 +158,23 @@ def validate_pair(d, peer):
 
 @safe
 def validate_gpu_inventory(rows):
-    """Current host nvidia-smi index,uuid output; no saved intent substitutes."""
+    """Require the fixed UUIDs once; physical indices and row order may change."""
     if isinstance(rows, str):
         rows = [tuple(part.strip() for part in line.split(',')) for line in rows.splitlines() if line.strip()]
-    require(isinstance(rows, (list, tuple)) and len(rows) == 2
+    require(isinstance(rows, (list, tuple)) and bool(rows)
             and all(isinstance(row, (list, tuple)) and len(row) == 2 for row in rows),
             'concurrent_gpu_inventory_mismatch')
-    require([(str(index), uuid) for index, uuid in rows] == list(zip(('0', '1'), GPU_UUIDS)),
-            'concurrent_gpu_inventory_mismatch')
+    indices, uuids = set(), set()
+    for index, uuid in rows:
+        require((type(index) is int or isinstance(index, str))
+                and re.fullmatch(r'0|[1-9][0-9]*', str(index))
+                and isinstance(uuid, str)
+                and re.fullmatch(r'GPU-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', uuid),
+                'concurrent_gpu_inventory_mismatch')
+        require(int(index) not in indices and uuid not in uuids, 'concurrent_gpu_inventory_mismatch')
+        indices.add(int(index))
+        uuids.add(uuid)
+    require(set(GPU_UUIDS) <= uuids, 'concurrent_gpu_inventory_mismatch')
 
 
 @safe
@@ -415,16 +424,18 @@ def preflight_current(d, instance, run_fn, *, residents=None):
     text = read(['nvidia-smi', '--query-gpu=index,uuid,memory.total,memory.free', '--format=csv,noheader,nounits'])
     require(len(text) <= 4096, 'concurrent_current_gpu_memory_unavailable')
     rows = [tuple(value.strip() for value in line.split(',')) for line in text.splitlines() if line.strip()]
-    require(len(rows) == 2 and all(len(row) == 4 and row[2].isdigit() and row[3].isdigit() for row in rows),
+    require(rows and all(len(row) == 4 and row[2].isascii() and row[2].isdigit()
+                        and row[3].isascii() and row[3].isdigit() for row in rows),
             'concurrent_current_gpu_memory_unavailable')
     validate_gpu_inventory([(row[0], row[1]) for row in rows])
+    memory_by_uuid = {row[1]: tuple(int(value) * 1024**2 for value in row[2:]) for row in rows}
+    require(all(total > 0 and 0 <= free <= total for total, free in memory_by_uuid.values()),
+            'concurrent_current_gpu_memory_unavailable')
     gpu_required = {}
     for slot in set(residents) | {target}:
         proof = receipt['slots'][slot]
-        index = 0 if slot == 'glm' else 1
-        total, free = (int(value) * 1024**2 for value in rows[index][2:])
-        require(total == proof['gpu_total_bytes'] and 0 <= free <= total,
-                'concurrent_current_gpu_memory_unavailable')
+        total, free = memory_by_uuid[proof['visible_cuda_devices']['CUDA0']]
+        require(total == proof['gpu_total_bytes'], 'concurrent_current_gpu_memory_unavailable')
         reserve = max(16 * 1024**3, (total + 9) // 10 if proof['deployment'] in QWEN_PROFILES else 0)
         # Accepted measured occupied GPU bytes include model, allocated cache
         # and workspace. A resident target has already paid that allocation.
