@@ -55,11 +55,26 @@ RUN pnpm typecheck \
     && MCODE_RELEASE_TAG=v0.5.1 pnpm build \
     && node scripts/package-cli-release.mjs v0.5.1 /build/release \
     && cd /build/release && sha256sum -c minimax-code-0.5.1.tar.gz.sha256
-# Runtime-only npm installation archive produced by the pinned source build.
+# Runtime dependencies use the retained exact release lock, after source compilation.
+# Optional verified installed graph cache; ordinary builds remain portable with npm ci.
+ARG AI_HARNESS_NATIVE_DEPS_CACHE=0
+COPY deploy/engine/native-runtime/ /tmp/ai-harness-native-runtime/
 RUN mkdir /opt/minimax \
     && tar -xzf /build/release/minimax-code-0.5.1.tar.gz -C /opt/minimax --strip-components=1 \
+    && cp /tmp/ai-harness-native-runtime/package-lock.json /opt/minimax/package-lock.json \
     && cd /opt/minimax \
-    && npm install --omit=dev --include=optional --ignore-scripts=false \
+    && sha256sum -c /tmp/ai-harness-native-runtime/SHA256SUMS \
+    && case "$AI_HARNESS_NATIVE_DEPS_CACHE" in \
+         0) npm ci --omit=dev --include=optional --ignore-scripts=false --no-audit --no-fund ;; \
+         1) (cd /tmp/ai-harness-native-deps-cache && sha256sum -c /tmp/ai-harness-native-runtime/SHA256SUMS) \
+            && test -d /tmp/ai-harness-native-deps-cache/node_modules \
+            && test ! -L /tmp/ai-harness-native-deps-cache/node_modules \
+            && test ! -e /opt/minimax/node_modules \
+            && cp -a /tmp/ai-harness-native-deps-cache/node_modules /opt/minimax/node_modules \
+            && npm ls --all --omit=dev --offline ;; \
+         *) echo 'Invalid AI_HARNESS_NATIVE_DEPS_CACHE value' >&2; exit 1 ;; \
+       esac \
+    && sha256sum -c /tmp/ai-harness-native-runtime/SHA256SUMS \
     && node cli.js --version \
     && cp /build/minimax/pnpm-lock.yaml /opt/minimax/source-pnpm-lock.yaml \
     && git -C /build/minimax rev-parse HEAD > /opt/minimax/patched-source-revision.txt \
