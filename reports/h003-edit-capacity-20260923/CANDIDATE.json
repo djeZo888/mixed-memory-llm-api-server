@@ -1,13 +1,13 @@
 {
   "task": "H003-EDIT-CAPACITY-20260923",
   "native_session_id": "01a0ce36-b30b-7af2-adf7-a37c9e8a8a5a",
-  "status": "SOURCE_PREFLIGHT_CHECKPOINT_REVIEW_REQUIRED",
+  "status": "QUALIFICATION_COMPLETE_NOT_INSTALLED",
   "base": "4022dbcd10b5cb6ed87f6521bc876295ea955d1b",
   "reviewed_runtime_source": "b5717d03416252c8640c47d37baf892a0c4e532a",
   "source_commit": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
-  "diff": "CANDIDATE.diff",
+  "diff": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/CANDIDATE.diff",
   "diff_sha256": "01eff8216e6d9d40a335e3b5fe2201060ad8b15456e816cb41de9c92380fbf0d",
-  "installed_to_candidate_protocol_diff": "installed-to-candidate-protocol.diff",
+  "installed_to_candidate_protocol_diff": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/installed-to-candidate-protocol.diff",
   "installed_seed_correction_present": false,
   "base_source_seed_correction_present": true,
   "candidate_api_source_sha256": {
@@ -20,97 +20,59 @@
     "uploads.py": "23903630b94c020af05988dfc13b0f1e650b431ca9f276485873234997e3ce93"
   },
   "installed_api_identity_receipt": "artifacts/installed-api-sha256.txt",
-  "next_call": {
-    "id": "C01",
-    "state": "PREDECLARED_NOT_DISPATCHED",
-    "accepted_executions": 0,
-    "hypothesis": "Fresh nonancestor seed preserves original teapot geometry while changing red to blue.",
-    "prompt": "Change the red teapot to blue, keeping its shape, table, window, and lighting unchanged.",
-    "operation": "edit",
-    "references": [
-      {
-        "index": 1,
-        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/teapot-original.png",
-        "sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
-        "source_dimensions": [
-          1024,
-          1024
-        ],
-        "original_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-20260923/artifacts/original-rgb.png",
-        "original_dimensions": [
-          1024,
-          1024
-        ],
-        "original_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
-        "known_ancestor_seeds": [
-          42
-        ],
-        "working_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/teapot-original.png",
-        "working_dimensions": [
-          1024,
-          1024
-        ],
-        "working_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
-        "padding": {
-          "top": 0,
-          "right": 0,
-          "bottom": 0,
-          "left": 0
-        }
-      }
-    ],
-    "size": "1024x1024",
-    "native_size": "1024x1024",
-    "crop_bottom": 0,
-    "seed": 46,
-    "recipe": {
-      "model": "qwen-image-2.1",
-      "attention_backend": "torch_sdpa",
-      "execution": "eager",
-      "residency": "all=resident",
-      "num_inference_steps": 40,
-      "guidance_scale": 1,
-      "true_cfg_scale": 1,
-      "generator_device": "cpu",
-      "n": 1,
-      "output_format": "png",
-      "background": "opaque"
-    },
-    "source_candidate": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
-    "success_criteria": [
-      "Requested visible change and retained scene/object geometry, no severe global damage or incoherent texture.",
-      "Original scene fidelity outside the described localized edit.",
-      "Exact opaque delivered dimensions and validated native decode; C03 exact top1080 crop.",
-      "Continuous all-device memory/process capture through settle; Ada>=5%free, host available>=15%, no new reserve/runtime failure.",
-      "Fresh per-request global swap deltas and three-container swap/events; no zero-swap claim from cumulative historical counters.",
-      "Success exit, absent owned probe/context, unchanged original backend identity during private case; exact stopped-wrapper barrier and healthy native backend.",
-      "Root visual approval and measured reserve acceptance before profile enablement."
-    ],
-    "dispatch_gate": "Root exact source/runner review, clean-stop window receipt and coordinated C01GO; no dispatch this turn."
-  },
+  "next_call": null,
   "user_guarded_edit_acceptance": "APPROVED",
   "exact_original_seed42_regression": "FAIL_PRESERVED",
   "public_edit_profiles": [],
-  "accepted_capacity_calls": 0,
-  "qualification_budget_remaining": 4,
-  "production_activation": "NOT_AUTHORIZED_THIS_TURN",
+  "accepted_capacity_calls": 4,
+  "qualification_budget_remaining": 0,
+  "production_activation": "SEPARATE_FRESH_TASK; NOT_PERFORMED_HERE",
   "manifest_path": "/etc/llm-server/image-api.json",
   "manifest_live_reload_supported": false,
-  "proposal": "One graceful wrapper stop with hash-bound clean receipt, then private native plus host adapter-venv qualification; root review; one final existing API recovery/reload plus fixedwarmup with only passing profiles. No warm-adoption changes.",
-  "window_procedure": "Verify Restart=no, SIGTERM API main, bounded30s graceful drain with no held lease/no forced-kill fallback; only after clean exit acquire canonical lease and verify unchanged backend/text identities before durable hash-bound receipt.",
+  "proposal": "Exact six existing generation profiles plus three measured/root-accepted edit profiles; separate fresh task activation.",
+  "window_procedure": "Original clean-stop proof failed and remains immutable; explicit root source-bound no-inflight reconciliation admitted this controlled window; each later call binds settled predecessor. Window released, no further host contact.",
   "clean_stop_producer": "reports/h003-edit-capacity-20260923/private-runner/open_capacity_window.py",
   "clean_stop_producer_sha256": "2f873367b813a93edbe77cced162fa5ccd26f11fa86aacb48f0412f6979ba6c6",
   "private_runner_sha256": {
     "capacity_probe.py": "9c58124530a2ac0e6601f82264b360b28271f8007f11846877668f51a4b152fa",
     "open_capacity_window.py": "2f873367b813a93edbe77cced162fa5ccd26f11fa86aacb48f0412f6979ba6c6",
     "candidate_codec.py": "a68af1cb16b4fdef7f7201180002a66ab25c060b7b9d63ea958b3e76482943b5",
-    "capacity_runner.py": "b34ce6b961d03f3c9074ce41d25927fa37698c04a22420732a6f6f1442be24f9"
+    "capacity_runner.py": "7c5de62f41d7cf95b2006786c98ae65106d13530208b7925e1a93b05eb27ef5f",
+    "reconcile_capacity_window.py": "59904d4f9f6d975476ffc603ebd20b9b0b69fc43b6e590cf5bf559ec9212da7c"
   },
   "next_phase_missing": [
-    "root source/runner review and coordinated request release",
-    "measured fidelity/reserve and root visual review",
-    "final measured manifest plus exact protected install transaction review",
-    "Worker2 published API acceptance"
+    "Fresh activation task exact install transaction review and activation",
+    "Worker2 published API end-to-end acceptance"
   ],
-  "diff_format": "unified context0; apply with git apply --unidiff-zero"
+  "diff_format": "unified context0; apply with git apply --unidiff-zero",
+  "source_review": "PASSED_BY_ROOT",
+  "reviewed_c01_predeclaration": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/C01-PREDECLARATION.json",
+  "execution_result": "C01/C02/C04 pass; C03 reserve failure excluded",
+  "reconciliation_authority_sha256": "da2f9bc819c7f68b656643dcbafdcf6e9c719eca09ce5ee2e38a03070148392d",
+  "qualified_edit_profiles": [
+    {
+      "operation": "edit",
+      "references": 1,
+      "size": "1024x1024",
+      "case": "C01"
+    },
+    {
+      "operation": "edit",
+      "references": 1,
+      "size": "1536x864",
+      "case": "C02"
+    },
+    {
+      "operation": "edit",
+      "references": 2,
+      "size": "1024x1024",
+      "case": "C04"
+    }
+  ],
+  "qualified_manifest_sha256": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3",
+  "qualified_manifest": "QUALIFIED-MANIFEST-CANDIDATE.json",
+  "private_runner_final_source_commit": "8a355eb2b337cf131c879792438893e0efc05a33",
+  "window_release": "CAPACITY-WINDOW-RELEASE.json",
+  "asgi_cleanup": "UNPROVEN",
+  "source_present_identically_in_publication_base": "6a56776f3c6699542fa119ca6ca46b7c94c3039f"
 }

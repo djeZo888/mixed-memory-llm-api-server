@@ -7,8 +7,9 @@ import json
 from pathlib import Path
 import unittest
 import tempfile
-from capacity_runner import identity, probe_command, settle_private_case, violations, admission_closed, memory_pass, require_previous_settlement
+from capacity_runner import approved_c03_reserve_settlement, KNOWN_C03_RESERVE_SHA, settled_case_continuation, admission_proved, AUTHORITY_SHA, FAILED_WINDOW_SHA, INSTALLED_SOURCES, RECONCILIATION_TYPE, identity, probe_command, settle_private_case, violations, admission_closed, memory_pass, require_previous_settlement
 from candidate_codec import process
+from reconcile_capacity_window import process_identity
 
 
 class CapacitySettlement(unittest.TestCase):
@@ -88,6 +89,66 @@ class CapacitySettlement(unittest.TestCase):
         self.assertFalse(admission_closed({'ActiveState': 'deactivating', 'MainPID': '100', 'Result': 'success', 'ExecMainStatus': '0'}))
         self.assertTrue(admission_closed({'ActiveState': 'inactive', 'MainPID': '0', 'Result': 'success', 'ExecMainStatus': '0'}))
 
+    def test_task_specific_reconciliation_never_accepts_generic_killed_exit(self):
+        unit = {'ActiveState': 'inactive', 'SubState': 'dead', 'MainPID': '0',
+                'Result': 'success', 'ExecMainCode': '2', 'ExecMainStatus': '15'}
+        proof = {'evidence_type': RECONCILIATION_TYPE, 'clean_stop_proved': False,
+                 'asgi_cleanup': 'UNPROVEN', 'original_failed_receipt_sha256': FAILED_WINDOW_SHA,
+                 'authority_sha256': AUTHORITY_SHA, 'installed_source_sha256': INSTALLED_SOURCES,
+                 'no_inflight_native_operation_proved': True, 'coordinated_no_call_interval': True,
+                 'old_api_process_absent': True, 'loopback_api_listener_absent': True,
+                 'canonical_lease': True, 'private_requests': 0, 'api_after': unit.copy()}
+        self.assertFalse(admission_closed(unit))  # Existing strict check preserved.
+        self.assertTrue(admission_proved(unit, proof, 'C01'))
+        self.assertFalse(admission_proved(unit, proof, 'C02'))
+        for key in proof:
+            missing = dict(proof); missing.pop(key)
+            self.assertFalse(admission_proved(unit, missing, 'C01'), key)
+        for field, value in [('MainPID', '22'), ('Result', 'signal'), ('ExecMainCode', '3'),
+                             ('ExecMainStatus', '9'), ('SubState', 'failed')]:
+            changed = {**unit, field: value}
+            self.assertFalse(admission_proved(changed, {**proof, 'api_after': changed}, 'C01'), field)
+        for key, value in [('authority_sha256', 'unknown'), ('original_failed_receipt_sha256', 'unknown'),
+                           ('installed_source_sha256', {}), ('coordinated_no_call_interval', False),
+                           ('asgi_cleanup', 'PROVED'), ('private_requests', 1)]:
+            self.assertFalse(admission_proved(unit, {**proof, key: value}, 'C01'), key)
+        clean = {**unit, 'ExecMainCode': '1', 'ExecMainStatus': '0'}
+        self.assertTrue(admission_proved(clean, {'clean_stop_proved': True}, 'C01'))
+
+    def test_c02_continuation_requires_successful_settled_c01_same_window(self):
+        unit = {'MainPID': '0'}
+        good = {'case': 'C01', 'accepted_model_executions': 1, 'dispatches': 1,
+                'qualification_memory_pass': True, 'native_operation_settled': True,
+                'violations': [], 'checkpoint_api_stopped_backend_healthy': True,
+                'telemetry_durable_settled': True, 'admission_receipt_sha256': 'bound', 'api_after': unit}
+        self.assertTrue(settled_case_continuation(good, 'C02', 'bound', unit))
+        for key in good:
+            broken = dict(good); broken.pop(key)
+            if key == 'violations': broken[key] = ['reserve']
+            self.assertFalse(settled_case_continuation(broken, 'C02', 'bound', unit), key)
+        self.assertFalse(settled_case_continuation(good, 'C03', 'bound', unit))
+        self.assertTrue(settled_case_continuation({**good, 'case': 'C02'}, 'C03', 'bound', unit))
+        self.assertFalse(settled_case_continuation({**good, 'case': 'C02'}, 'C04', 'bound', unit))
+        self.assertTrue(settled_case_continuation({**good, 'case': 'C03'}, 'C04', 'bound', unit))
+        self.assertFalse(settled_case_continuation(good, 'C02', 'wrong', unit))
+        self.assertFalse(settled_case_continuation({**good, 'runner_error_type': 'late'}, 'C02', 'bound', unit))
+
+    def test_only_exact_approved_settled_c03_reserve_miss_can_continue_c04(self):
+        good = {'case': 'C03', 'exit_code': 0, 'dispatches': 1, 'accepted_model_executions': 1,
+                'qualification_memory_pass': False, 'violations': ['device_reserve'],
+                'native_operation_settled': True, 'checkpoint_api_stopped_backend_healthy': True,
+                'telemetry_durable_settled': True, 'admission_receipt_sha256': 'window', 'api_after': {}}
+        self.assertTrue(approved_c03_reserve_settlement(good, KNOWN_C03_RESERVE_SHA))
+        self.assertFalse(memory_pass(good))  # C03 remains failed.
+        self.assertFalse(approved_c03_reserve_settlement(good, None))
+        self.assertFalse(approved_c03_reserve_settlement(good, 'other'))
+        self.assertFalse(settled_case_continuation(good, 'C04', 'window', {}))
+        self.assertTrue(settled_case_continuation(good, 'C04', 'window', {}, KNOWN_C03_RESERVE_SHA))
+        for key,value in [('native_operation_settled',False),('telemetry_durable_settled',False),
+                          ('runner_error_type','late'),('violations',['device_reserve','new_global_swap_activity']),
+                          ('exit_code',124),('case','C02')]:
+            self.assertFalse(approved_c03_reserve_settlement({**good,key:value}, KNOWN_C03_RESERVE_SHA),key)
+
     def test_late_error_or_unsettled_telemetry_cannot_pass(self):
         good = {'native_operation_settled': True, 'violations': [], 'checkpoint_api_stopped_backend_healthy': True, 'telemetry_durable_settled': True}
         self.assertTrue(memory_pass(good))
@@ -102,7 +163,11 @@ class CapacitySettlement(unittest.TestCase):
         self.assertEqual(command[-3:-1], ['-I', '-B'])
 
     def test_context_comparison_ignores_memory_bytes(self):
-        self.assertEqual(identity([['gpu', '123', '100']]), identity([['gpu', '123', '200']]))
+        live = [('gpu', '123', '100')]
+        persisted = json.loads(json.dumps(live))
+        self.assertEqual(process_identity(live), process_identity(persisted))
+        self.assertNotEqual(process_identity(live), process_identity([['gpu', '124', '100']]))
+        self.assertEqual(identity(live), identity([['gpu', '123', '200']]))
         self.assertNotEqual(identity([['gpu', '123', '100']]), identity([['gpu', '124', '100']]))
 
     def test_fresh_swap_events_and_reserve_failures_detected(self):

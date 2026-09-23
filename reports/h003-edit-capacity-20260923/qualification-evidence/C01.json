@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "task": "H003-EDIT-CAPACITY-20260923",
+  "case": "C01",
+  "operation": "edit",
+  "references": 1,
+  "size": "1024x1024",
+  "native_size": "1024x1024",
+  "seed": 46,
+  "recipe": {
+    "model": "qwen-image-2.1",
+    "attention_backend": "torch_sdpa",
+    "execution": "eager",
+    "residency": "all=resident",
+    "num_inference_steps": 40,
+    "guidance_scale": 1,
+    "true_cfg_scale": 1,
+    "generator_device": "cpu",
+    "n": 1,
+    "output_format": "png",
+    "background": "opaque"
+  },
+  "api_source_commit": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+  "runner_source_commit": "91f60ddb862e39193e0f006a7c70f377af94d295",
+  "settled_receipt_sha256": "a5d4ec6b6ed0e90121f77febd29b1ac1d839b2c01d6756221d7a6433fb2245c1",
+  "settled_receipt_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/model-receipt.json",
+  "root_visual_decision": "PASS",
+  "root_decisions_sha256": "70db2727bad0cad067e69cb07d809d024e3109108f670ddc520a1cb95cf2ce64",
+  "qualification_memory_pass": true,
+  "settlement_checks": {
+    "api_remains_stopped": true,
+    "decoded_success": true,
+    "fresh_guards_and_reserve": true,
+    "owned_probe_absent": true,
+    "same_backend_contexts": true,
+    "same_models": true,
+    "telemetry_complete": true
+  },
+  "swap_delta_pages": {
+    "pswpin": 0,
+    "pswpout": 0
+  },
+  "elapsed_seconds": 27.15086695300124,
+  "delivered_sha256": "f282f5654d2c53db2495e6ff23d213d014015f43d098684f34e215ad8752f882",
+  "delivered_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/model/delivered.png",
+  "source_sha256": [
+    "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575"
+  ],
+  "request_metrics_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/metrics.json",
+  "minimum_ada_free_mib": 9158,
+  "limitations": [
+    "Private native plus reviewed adapter qualification; public API end-to-end acceptance is separate.",
+    "Guarded creative edits are not pixel-exact preservation; fresh seeds do not repair the original seed42 regression.",
+    "Opaque delivered RGB only; no mask or transparency qualification."
+  ]
+}

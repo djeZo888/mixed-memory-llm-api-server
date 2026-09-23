@@ -1,0 +1,80 @@
+{
+  "case": "C03",
+  "status": "FAIL_RESERVE_SETTLED",
+  "accepted_calls": 1,
+  "budget_total_used": 3,
+  "budget_max": 4,
+  "seed": 48,
+  "native_operation_settled": true,
+  "qualification_memory_pass": false,
+  "violations": [
+    "device_reserve"
+  ],
+  "minimum_ada_free_mib": 2156,
+  "minimum_ada_free_percent": 4.387464387464387,
+  "peak_ada_used_mib": 46984,
+  "swap_delta_pages": {
+    "pswpin": 0,
+    "pswpout": 0
+  },
+  "settlement_checks": {
+    "decoded_success": true,
+    "owned_probe_absent": true,
+    "same_backend_contexts": true,
+    "same_models": true,
+    "api_remains_stopped": true,
+    "fresh_guards_and_reserve": true,
+    "telemetry_complete": true
+  },
+  "geometry": {
+    "original": [
+      1920,
+      1080
+    ],
+    "staged_reference": [
+      1920,
+      1088
+    ],
+    "raw_decode": [
+      1920,
+      1088
+    ],
+    "delivered": [
+      1920,
+      1080
+    ],
+    "original_first1080_rgba_rows_equal": true,
+    "bottom8_repeat_last_row": true,
+    "delivery_exact_raw_top1080_rgb": true,
+    "stretch": false,
+    "native_raw_alpha_extrema": [
+      252,
+      255
+    ],
+    "delivered_opaque": true
+  },
+  "images": {
+    "input-1.png": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/model/input-1.png",
+      "sha256": "5fe8b7f929b8699920111d136ce952e4ad635574098939e82f1a45a6bd61f51b"
+    },
+    "raw-native.png": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/model/raw-native.png",
+      "sha256": "08619997d934f2fb865880472aa617edb578c0c99a9bb010f94c6bb1a28f9bd6"
+    },
+    "delivered.png": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/model/delivered.png",
+      "sha256": "3fe9fbde51d18d9b35eaf9d8bb4d088ef54fba01685fec0dcb66773a0298b039"
+    }
+  },
+  "elapsed_seconds": 65.49602156499896,
+  "settled_case_receipt_sha256": "9fd701c802a7b03e4122fc3c3a4f52b52564842ccfb3011a99db415e14634cf9",
+  "metrics_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/metrics.json",
+  "telemetry_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/telemetry.jsonl",
+  "profile_enabled": false,
+  "api_intentionally_stopped": true,
+  "C04": "COMPLETED_ONCE_UNDER_EXPLICIT_INDEPENDENT_RELEASE; see C04-POST-C03-RELEASE.json",
+  "root_visual_review": "VISUAL PASS but MEMORY FAIL; EXCLUDED",
+  "public_ready": false,
+  "budget_total_used_at_final_checkpoint": 4
+}

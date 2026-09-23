@@ -1,30 +1,24 @@
-# Native Worker1 source checkpoint
+# Guarded edit capacity — completed
 
-Retain session **01a0ce36-b30b-7af2-adf7-a37c9e8a8a5a**. No wrapper/session files edited.
-Source: **f6e69d290a3cbf58dafbcfa726f9474f083a7cfd**; base4022dbcd over reviewedb5717d.
-Review CANDIDATE.json, CANDIDATE.diff, installed-to-candidate-protocol.diff,
-TEST-RESULT.json and CAPACITY-PLAN.md. No publication or activation.
+Exactly four accepted model calls, one per case; no model replay. One C03 CPU preparation was rejected before staging/dispatch, preserved and corrected after proving identical pixels with different PNG encoder bytes. Closed H003-EDIT diagnostic budget was not used.
 
-Final clean-window producer: helpers/open_capacity_window.py
-SHA256 **2f873367b813a93edbe77cced162fa5ccd26f11fa86aacb48f0412f6979ba6c6**.
-It uses root's final SIGTERM-MAIN/no-lease-during-drain procedure, not systemctl stop.
-Bounded30s; clean exit0/oldPID+listener absent, then canonical lease/unchanged models
-and durable receipt. No forced kill/restart fallback. It has NOT been invoked.
-Runner/codec hashes are in CANDIDATE.json; every case binds the producer receipt.
+| Case | Refs / delivered size | Seed | Seconds | Ada peak MiB | Min free MiB / % | Root visual | Qualification |
+|---|---|---:|---:|---:|---|---|---|
+| C01 | 1 / 1024x1024 | 46 | 27.151 | 39982 | 9158 / 18.637% | PASS | PASS |
+| C02 | 1 / 1536x864 | 47 | 36.476 | 41206 | 7934 / 16.146% | PASS creative | PASS |
+| C03 | 1 / 1920x1080 | 48 | 65.496 | 46984 | 2156 / 4.387% | PASS creative | FAIL reserve; excluded |
+| C04 | 2 / 1024x1024 | 49 | 31.217 | 42744 | 6396 / 13.016% | PASS both references | PASS |
 
-29 adapter +11 runner/codec offline tests PASS. Geometry includes native-equivalent
-RGBA/tRNS/EXIF normalization, exact bottom8pad/top1080crop, seed and refcount gates.
-Installed API still lacks the reviewed seed source correction; activation diff includes it.
-Native processor/resize source audited; no runtime/weights/settings changes.
+All calls HTTP200/exit0 and settled normally, with no owned probe/context left, unchanged three model identities and complete sampled telemetry. Host available minimum exceeded 97.23%; both text GPUs retained >36% free. Global swap delta 0; every container swap/event delta 0. q1 retained historical 148 MiB swap and memory.events max 441 near its unchanged 32 GiB cap; its triggering cause remains unproven. Image/q0 swap 0. Sampled extrema do not guarantee unseen instantaneous peaks.
 
-**0/4 capacity calls; all4 remain.** Original fail42/pass43 preserved; guarded user
-acceptance APPROVED; public editing disabled. Next: root exact packet review and
-C01GO, then one graceful private window and C01 seed46/exact retained prompt.
-Larger/two-ref calls require prior results and conservative reserve forecast. Final
-reviewed source+passed manifest activation uses one existing recovery/fixedwarmup,
-separately counted. Public API end-to-end acceptance remains Worker2's later work.
+The API was intentionally stopped throughout qualification and at release; public readiness was false. Final read-only snapshot at 14:09:30.386996Z verified canonical guards/lease, warm backend health, exact ownership and both 480000-token text contexts. Window released 14:11:25.823865Z to H003-IMAGE-API-ACTIVATE-20260923; this session has no further ai-vm contact. No API installation, activation, reload or warmup was performed here.
 
-Read-only final12:53:18UTC: generationready/idle,6gen/0edit, all model/API identities
-unchanged, both480K contexts retained. No new swap in checkpoint; q1 prior148MiB remains.
-Outputs/fixtures stay outside Git. Deployment timeline wording corrected and tracked
-LakeBled PNG removed; its exact original and hash are preserved at prior task path.
+User accepted guarded editing. Fresh seeds mitigate the observed same-noise limitation; this is not intrinsic model repair or a pass of exact original seed42. Retained fail42/pass43 hashes/paths are in evidence/fixture-manifest.json and ARTIFACT-INDEX.json. C02 redraws incidental mountain/tree detail: preservation is creative, not pixel-exact. Harness rejects/avoids known source/ancestor seed collisions; unknown imported provenance limits detection. API missing edit seed is chosen once after validation, reported/persisted; explicit seeds and generation defaults unchanged.
+
+Only opaque RGB delivery is qualified. Raw RGBA alpha spans 251–255 (C03 252–255); delivery retains exact RGB values while discarding alpha. C03 native 1920x1088 references preserved all 1080 original rows plus 8 copies of the last row; output removes the same 8 bottom rows, without stretch. Geometry passed but reserve failed. C02 resize was explicitly authorized diagnostic preparation; no product resizing approval is inferred. No masks/transparency promises or model/settings changes.
+
+Original SIGTERM clean-stop receipt remains immutable SHA 6ff05a981433d782d3b918338a27f803c243707d892cbbd52119a6c124ae02b5, clean_stop_proved=false/code 2/status 15/ASGI-cleanup-UNPROVEN. Separate source-bound no-inflight receipt SHA 0b076c4a42dc67bf8ad381fcb92754561e5bed9c2d9d71176cf023bee095adde records root-authorized sole-caller evidence, exact installed ready/owner/busy and HTTP-only close code, absence of API PID/listener, unchanged model ownership and canonical lease. Health alone never proves scheduler idle. No generic killed-exit acceptance. C04 binds the exact root-reviewed normally settled C03 reserve-only failure; C03 remains failed.
+
+Reviewed API source f6e69d290a3cbf58dafbcfa726f9474f083a7cfd is unchanged and uninstalled. CANDIDATE.json records exact API/helper hashes. The proposed manifest SHA 9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3 preserves six generation profiles and adds only C01/C02/C04 with hashed evidence. Protected-manifest validation passed. Focused source tests:29 prior unchanged adapter tests;14 final runner/codec tests pass. Private native+adapter qualification is distinct from later public API end-to-end acceptance.
+
+Raw receipts, telemetry, input/raw/delivered PNGs and source captures remain outside Git under the task artifacts paths in ARTIFACT-INDEX.json. REQUEST-LEDGER.json preserves exact predeclared prompts, inputs, recipe and actual outcomes; PROFILE-QUALIFICATION-MATRIX.json defines the accepted boundary. Root owns publication; no push or main merge.

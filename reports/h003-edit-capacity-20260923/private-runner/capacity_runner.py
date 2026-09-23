@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import re
+import socket
 import subprocess
 import sys
 import threading
@@ -17,6 +18,15 @@ import time
 import urllib.request
 
 SERVICE_SHA = '0edadcb43ec83d369d7bdb66dddc7035962d620475314b0142cb9f047b197586'
+FAILED_WINDOW_SHA = '6ff05a981433d782d3b918338a27f803c243707d892cbbd52119a6c124ae02b5'
+AUTHORITY_SHA = 'da2f9bc819c7f68b656643dcbafdcf6e9c719eca09ce5ee2e38a03070148392d'
+RECONCILIATION_TYPE = 'H003_C01_COORDINATED_NO_INFLIGHT_V1'
+KNOWN_C03_RESERVE_SHA = '9fd701c802a7b03e4122fc3c3a4f52b52564842ccfb3011a99db415e14634cf9'
+INSTALLED_SOURCES = {
+    '/usr/local/lib/llm-server/image-api/scripts/image_api/app.py': '4cad82ce35d4650c7f3242bd6816769010c6a52510fae1c3c26b8789acdc0d22',
+    '/usr/local/lib/llm-server/image-api/scripts/image_api/backend.py': '64a5ceccb247e7c7ed646cc3ae9af89aeffb7aebd862c11604786a2041db9485',
+    '/usr/local/lib/llm-server/image-api/scripts/image_api/serve.py': '0d19743ab91ea4f8cafe2bf6d7ddd9d56d2248604da23c711a19f825ba4b6d2e',
+}
 
 
 def identity(rows):
@@ -25,6 +35,25 @@ def identity(rows):
 
 def admission_closed(unit):
     return unit.get('ActiveState') == 'inactive' and unit.get('MainPID') == '0' and unit.get('Result') == 'success' and unit.get('ExecMainStatus') == '0'
+
+
+def admission_proved(unit, window, case):
+    if window.get('clean_stop_proved') is True:
+        return admission_closed(unit)
+    # Root-authorized evidence for this one controlled window, never a generic
+    # killed-exit acceptance. ASGI cleanup remains explicitly unproven.
+    return (case == 'C01' and window.get('evidence_type') == RECONCILIATION_TYPE and
+        window.get('clean_stop_proved') is False and window.get('asgi_cleanup') == 'UNPROVEN' and
+        window.get('original_failed_receipt_sha256') == FAILED_WINDOW_SHA and
+        window.get('authority_sha256') == AUTHORITY_SHA and
+        window.get('installed_source_sha256') == INSTALLED_SOURCES and
+        window.get('no_inflight_native_operation_proved') is True and
+        window.get('coordinated_no_call_interval') is True and
+        window.get('old_api_process_absent') is True and window.get('loopback_api_listener_absent') is True and
+        window.get('canonical_lease') is True and window.get('private_requests') == 0 and
+        unit == window.get('api_after') and
+        all(unit.get(k) == v for k, v in {'ActiveState': 'inactive', 'SubState': 'dead',
+            'MainPID': '0', 'Result': 'success', 'ExecMainCode': '2', 'ExecMainStatus': '15'}.items()))
 
 
 def settle_private_case(receipt, check):
@@ -44,7 +73,25 @@ def memory_pass(receipt):
         not any(k in receipt for k in ('runner_error_type', 'settlement_error_type', 'telemetry_error_type', 'final_observation_error_type', 'evidence_error_type')))
 
 
-def require_previous_settlement(base, run_id, current):
+def approved_c03_reserve_settlement(previous, digest):
+    # Root's exact post-C03 release permits independent C04 after this settled
+    # late-decode reserve miss. It never makes C03 a memory pass.
+    return (digest == KNOWN_C03_RESERVE_SHA and previous.get('case') == 'C03' and
+        previous.get('exit_code') == 0 and previous.get('dispatches') == 1 and
+        previous.get('accepted_model_executions') == 1 and
+        previous.get('qualification_memory_pass') is False and previous.get('violations') == ['device_reserve'] and
+        memory_pass({**previous, 'violations': []}))
+
+
+def settled_case_continuation(previous, case, window_sha256, unit, approved_c03_sha=None):
+    return (case in ('C02', 'C03', 'C04') and previous.get('case') == {'C02': 'C01', 'C03': 'C02', 'C04': 'C03'}[case] and
+        previous.get('accepted_model_executions') == 1 and previous.get('dispatches') == 1 and
+        ((previous.get('qualification_memory_pass') is True and memory_pass(previous)) or
+         (case == 'C04' and approved_c03_reserve_settlement(previous, approved_c03_sha))) and
+        previous.get('admission_receipt_sha256') == window_sha256 and previous.get('api_after') == unit)
+
+
+def require_previous_settlement(base, run_id, current, approved_c03_sha=None):
     for case in ('C01', 'C02', 'C03', 'C04'):
         name = 'H003-CAPACITY-' + case
         stage = base / 'work/evidence' / run_id / name
@@ -55,6 +102,9 @@ def require_previous_settlement(base, run_id, current):
             raise RuntimeError('existing_or_unreceipted_case_no_retry')
         previous = json.loads(receipt.read_text())
         if previous.get('dispatches') and (not previous.get('native_operation_settled') or not previous.get('qualification_memory_pass')):
+            if (current == 'C04' and case == 'C03' and approved_c03_sha == hashlib.sha256(receipt.read_bytes()).hexdigest()
+                    and approved_c03_reserve_settlement(previous, approved_c03_sha)):
+                continue
             raise RuntimeError('prior_dispatch_unsettled_or_failed_end_window')
 
 
@@ -124,7 +174,7 @@ def main(payload):
     spec.loader.exec_module(m)
     r = m.Runtime()
     def unit():
-        fields = ['Id', 'MainPID', 'ActiveState', 'FreezerState', 'ExecMainStartTimestamp', 'ControlGroup', 'Result', 'ExecMainStatus']
+        fields = ['Id', 'MainPID', 'ActiveState', 'FreezerState', 'ExecMainStartTimestamp', 'ControlGroup', 'Result', 'ExecMainStatus', 'ExecMainCode', 'SubState', 'ExecMainExitTimestamp']
         return dict(line.split('=', 1) for line in m.run(['systemctl', 'show', 'llm-image-api.service',
                     *[x for field in fields for x in ('-p', field)]]).stdout.splitlines())
     def model_identities():
@@ -140,12 +190,28 @@ def main(payload):
         state = r.state()
         before = r.verify_resident(state)
         original_unit = unit()
-        assert admission_closed(original_unit)
-        window_raw = (m.BASE / 'receipts/H003-CAPACITY-WINDOW.json').read_bytes()
+        reconciled = payload.get('admission_evidence_type') == RECONCILIATION_TYPE
+        window_name = 'H003-CAPACITY-RECONCILIATION-C01.json' if reconciled else 'H003-CAPACITY-WINDOW.json'
+        window_raw = (m.BASE / 'receipts' / window_name).read_bytes()
         assert hashlib.sha256(window_raw).hexdigest() == payload['window_receipt_sha256']
         window = json.loads(window_raw)
-        assert window['clean_stop_proved'] is True
-        require_previous_settlement(m.BASE, state['run_id'], case['id'])
+        admission_case = case['id']
+        if reconciled and case['id'] in ('C02', 'C03', 'C04'):
+            previous_case = {'C02': 'C01', 'C03': 'C02', 'C04': 'C03'}[case['id']]
+            previous_raw = (m.BASE / 'receipts' / ('H003-CAPACITY-' + previous_case + '-receipt.json')).read_bytes()
+            assert hashlib.sha256(previous_raw).hexdigest() == payload['settled_predecessor_receipt_sha256']
+            assert settled_case_continuation(json.loads(previous_raw), case['id'], payload['window_receipt_sha256'], original_unit, payload.get('approved_reserve_only_c03_sha256'))
+            admission_case = 'C01'  # Same stopped window, also bound to the settled predecessor.
+        assert admission_proved(original_unit, window, admission_case)
+        if reconciled:
+            assert hashlib.sha256((m.BASE / 'receipts/H003-CAPACITY-WINDOW.json').read_bytes()).hexdigest() == FAILED_WINDOW_SHA
+            for path, digest in INSTALLED_SOURCES.items():
+                assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == digest
+            assert not Path('/proc/' + window['original_failed_receipt']['api_before']['MainPID']).exists()
+            with socket.socket() as sock:
+                sock.settimeout(1)
+                assert sock.connect_ex(('127.0.0.1', 30006)) != 0
+        require_previous_settlement(m.BASE, state['run_id'], case['id'], payload.get('approved_reserve_only_c03_sha256'))
         assert before['container_id'] == window['backend_after']['container_id']
         assert identity(before['gpu_processes']) == identity(window['backend_after']['gpu_processes'])
         original_models = model_identities()
@@ -186,6 +252,11 @@ os.fsync(child);os.close(child);os.fsync(fd);os.close(fd)
                    'api_before': original_unit, 'models_before': original_models, 'sample_before': first,
                    'dispatches': 0, 'api_intentionally_stopped': True, 'native_operation_settled': False, 'violations': []}
         receipt['headroom_forecast'] = payload.get('headroom_forecast')
+        receipt['admission_receipt_sha256'] = payload['window_receipt_sha256']
+        receipt['admission_evidence_type'] = window.get('evidence_type', 'STRICT_CLEAN_STOP')
+        receipt['runner_source_commit'] = payload.get('runner_source_commit')
+        receipt['settled_predecessor_receipt_sha256'] = payload.get('settled_predecessor_receipt_sha256')
+        receipt['approved_reserve_only_c03_sha256'] = payload.get('approved_reserve_only_c03_sha256')
         stop = threading.Event()
         sampler = None
         probe_path = '/work/evidence/' + state['run_id'] + '/' + name + '/probe.py'
@@ -203,7 +274,7 @@ os.fsync(child);os.close(child);os.fsync(fd);os.close(fd)
                     input=json.dumps({'run_id': state['run_id'], 'name': name, 'files': files}), text=True, capture_output=True, check=True, timeout=30)
                 anchor.check()
             receipt['staging_complete'] = True
-            assert unit() == original_unit and admission_closed(unit())
+            assert unit() == original_unit and admission_proved(unit(), window, admission_case)
             r.guards()
             with r.anchor() as anchor:
                 with anchor.open('receipts/' + name + '-telemetry.jsonl', os.O_WRONLY | os.O_CREAT | os.O_EXCL) as output:
@@ -267,7 +338,7 @@ n.write_exclusive(child,'delivered.png',base64.b64decode(p['data'],validate=True
                                     'owned_probe_absent': not any(probe_path in line for line in top.splitlines()[1:]),
                                     'same_backend_contexts': identity(after['gpu_processes']) == identity(before['gpu_processes']),
                                     'same_models': model_identities() == original_models,
-                                    'api_remains_stopped': status == original_unit and admission_closed(status),
+                                    'api_remains_stopped': status == original_unit and admission_proved(status, window, admission_case),
                                     'fresh_guards_and_reserve': True,
                                     'telemetry_complete': receipt['telemetry_durable_settled'] and 'telemetry_error_type' not in receipt}
                         settle_private_case(receipt, check)
@@ -287,7 +358,7 @@ n.write_exclusive(child,'delivered.png',base64.b64decode(p['data'],validate=True
                 receipt['api_after'] = unit()
                 r.guards()
                 receipt['backend_final'] = r.verify_resident(state)
-                receipt['checkpoint_api_stopped_backend_healthy'] = (receipt['api_after'] == original_unit and admission_closed(receipt['api_after']) and model_identities() == original_models)
+                receipt['checkpoint_api_stopped_backend_healthy'] = (receipt['api_after'] == original_unit and admission_proved(receipt['api_after'], window, admission_case) and model_identities() == original_models)
                 receipt['sample_after'] = sample(cgroups)
                 receipt['swap_delta'] = {k: receipt['sample_after']['swap'][k] - first['swap'][k] for k in first['swap']}
                 receipt['violations'] = sorted(set(receipt['violations'] + violations(receipt['sample_after'], first)))
