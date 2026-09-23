@@ -30,6 +30,19 @@ No keeper release/deployment/inference/push/merge before root exact source revie
 Existing allow_interrupt for any running target remains required; no atomic
 drain claim, common router, frontend, ai-harness policy or installer work.
 
+Current Image21 authority, 2026-09-23: the approved
+[dedicated Ada plan](docs/qwen-image-2.1-ada-plan.md) and
+[current qualification report](reports/image21-qualify-20260923/RESULT.md) cover
+three resident models: both existing 480,000-token text Qwens and dedicated
+Qwen-Image-2.1 generation. Six opaque sizes are accepted: 1024x1024, 1024x576,
+1216x704, 1472x832, 1760x992 and 1920x1088. Editing and UHD remain unqualified.
+The separate image API unit owns backend boot and reconciliation. Older singleton,
+two-model and no-new-model clauses are superseded only within this approved scope;
+installer, frontend and harness exclusions remain. The current closeout is local
+documentation and evidence packaging only: preserve deployed code
+`f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7` and warm services. Root owns bundle
+review, import and publication; this closeout authorizes no VM contact or new tests.
+
 ## Authorized sequence and ownership
 
 - Finish working **ai-vm first**: authenticated private-network inference and

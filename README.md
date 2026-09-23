@@ -1,6 +1,6 @@
 # mixed-memory-llm-api-server
 
-An API-only local AI server for **Qwen3.8-27B FP8** and **GLM5.3 UD-Q4_K_XL**.
+An API-only local AI server for **Qwen3.8-27B FP8**, **GLM5.3 UD-Q4_K_XL** and dedicated **Qwen-Image-2.1** generation.
 Reviewed source `04143b18cca7aca724d9a4a4bcf943fe86c040db` defines **dual-qwen**
 as the default: one Qwen instance per GPU. Optional **glm-qwen** replaces only
 GPU0 with GLM; returning to dual-qwen replaces GPU0 with Qwen again.
@@ -19,7 +19,7 @@ Refresh status before use; this is a dated snapshot.
 | GPU1 / `qwen`, both modes | `qwen38-27b-q1-480000-yarn4-bf16kv` | `qwen3.8-27b` / 30004 |
 | GPU0 / `glm`, optional | `glm-5.3-ud-q4-k-xl-g1-480000` | `glm-5.3` / 30002 |
 
-All three configure **480,000 tokens** on the existing **72-vCPU guest**.
+All three text deployment profiles configure **480,000 tokens** on the existing **72-vCPU guest**.
 Both Qwen instances share guest CPUs 0–7 (union 8); optional GLM uses 0–71,
 sharing 0–7 with GPU1 Qwen. These are guest affinity masks, not exclusive cores
 or physical host pinning. [Model matrix](docs/model-matrix.md) records resources
@@ -31,6 +31,19 @@ Q1's outer JSON fence failed strict formatting. Output windows did not overlap.
 Its STOPPED/manual restoration is historical benchmark state, not production
 state or activation acceptance.
 
+The dedicated Ada image service preserves both warm text Qwens and their 480,000-token
+profiles. Its six accepted opaque generation sizes are **1024x1024, 1024x576,
+1216x704, 1472x832, 1760x992 and 1920x1088**. Each output matches its native size
+without cropping; 1920x1088 retained 8.88% minimum sampled device free memory.
+Editing is unsupported after failed fidelity, and UHD remains untested. Retained
+Worker2 checks at 04:31 UTC on 2026-09-23 returned 200 for all four authenticated
+GETs, with the API ready, idle and admitting. See the
+[image qualification](reports/image21-qualify-20260923/RESULT.md).
+
+Deployed image API code remains `f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7`.
+The documentation and evidence publication is a separate commit and requires no
+redeployment.
+
 ## Use the APIs
 
 Control uses `http://10.156.100.60:30000/control/v1/...`. Clients discover and
@@ -39,7 +52,7 @@ with `/v1`; the aliases above identify the loaded instance. There is no common
 inference router or automatic fallback. Native listeners stay authenticated
 IPv4 loopback behind the reviewed private transport.
 
-- [Image API source and integration](docs/image-api.md): authenticated, bounded Qwen-Image-2.1 adapter; live qualification pending.
+- [Image API source and integration](docs/image-api.md): authenticated private Qwen-Image-2.1 generation API; editing is unsupported after failed visual fidelity. See [measured qualification](reports/image21-qualify-20260923/RESULT.md) for exact passing sizes and evidence.
 - [API operations and examples](docs/ai-vm-api-operations.md): discovery,
   separate credentials, targeted switch/poll and inference.
 - [Control contract](docs/control-api.md) and [inference contract](docs/api-contract.md).

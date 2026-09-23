@@ -1,0 +1,42 @@
+{
+  "admitting": true,
+  "busy": false,
+  "defaults": {
+    "cfg": 1,
+    "generator_device": "cpu",
+    "size": "1024x1024",
+    "steps": 40
+  },
+  "limits": {
+    "active": 1,
+    "approved_uhd_native_pixels": 8355840,
+    "budget_seconds": 900,
+    "encoded_file_bytes": 33554432,
+    "encoded_total_bytes": 67108864,
+    "maximum_pixels_when_qualified": 8294400,
+    "n": 1,
+    "references": 2,
+    "waiting": 0
+  },
+  "masks": false,
+  "model": "qwen-image-2.1",
+  "model_id": "Qwen/Qwen-Image-2.1",
+  "model_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+  "output_format": "png",
+  "profiles": [
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "3e1f682911863f191439fcb757eeec5d706ba966f6e657f8a5e40b498b4a274f",
+      "native_size": "1024x1024",
+      "operation": "generation",
+      "references": 0,
+      "size": "1024x1024",
+      "transparent": false
+    }
+  ],
+  "ready": true,
+  "response_format": "b64_json",
+  "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+  "runtime_revision": "0cd8be351d0825488f4b81c8931167bbab618eca",
+  "state": "ready"
+}

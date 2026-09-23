@@ -1,11 +1,31 @@
 # Bounded private image API — source integration
 
-The IMAGE21 source task adds an authenticated adapter for `qwen-image-2.1`.
-Source/offline fixtures are not SGLang execution, real-image qualification, or a
-production release. The shipped qualification manifest contains **no measured
-profiles and no runtime image digest**; inference and readiness remain closed.
-Worker1 supplies exact runtime/checkpoint/build manifests and qualification after
-root review. This does not change text slot implementations or their profiles.
+The deployed generation-only service uses reviewed API code
+`f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7` and the pinned Ada SGLang runtime.
+Its individually measured opaque generation sizes are **1024x1024, 1024x576,
+1216x704, 1472x832, 1760x992 and 1920x1088**. Delivered and native dimensions match
+at every accepted size, with no crop or resize. Editing remains unsupported after
+both SGLang RGBA/RGB attempts and the completed pinned Diffusers reference failed
+fidelity; a valid public edit receives HTTP 400 `unqualified_profile`. UHD,
+transparency and two-reference profiles remain unqualified. See the
+[current qualification report](../reports/image21-qualify-20260923/RESULT.md) for
+timings, memory margins and untested targets.
+
+The installed protected qualification manifest has SHA256
+`d8d38a8212bb2f040b979f899e74564af541b36a83832b21122f280792b3ec7b` and exposes
+those six opaque generation profiles. Retained Worker2 evidence from
+2026-09-23 at 04:31 UTC records four authenticated GETs, all HTTP 200: liveness,
+readiness, models and capabilities. The API was ready, idle and admitting, with
+exact runtime pins and no edit profiles. These are retained observations; local
+closeout made no service calls. The documentation and evidence publication is a
+separate commit from the deployed API code and requires no redeployment.
+
+The generic `qualification.empty.json` source template still contains **no measured
+profiles and no runtime image digest**. Deploying that empty template keeps
+readiness and inference closed. The protected measured deployment manifest is
+separate. Source and offline fixtures alone do not establish runtime or image
+acceptance. The image service preserves both existing warm text slots and their
+480,000-token profiles.
 
 ## Public contract
 
@@ -22,7 +42,7 @@ environment, access logs or backend forwarding.
 | GET `/v1/models` | Model alias `qwen-image-2.1` |
 | GET `/v1/image-capabilities` | Exact pinned model/runtime revisions, actual reviewed image digest, measured profiles and state |
 | POST `/v1/images/generations` | JSON request, synchronous PNG `b64_json` |
-| POST `/v1/images/edits` | Multipart request with `image` or `image[]` files, synchronous PNG `b64_json` |
+| POST `/v1/images/edits` | Multipart schema exists; valid edits currently return 400 `unqualified_profile` because no edit profile is accepted |
 
 Allowed scalar fields: `prompt` (required, UTF-8 <=16384 bytes), `model` (alias),
 `size` (default `1024x1024`), `n` (exactly integer 1), `seed` (optional integer
@@ -36,9 +56,9 @@ Masks are not pixel-preserving inpainting: the upstream native implementation
 ignores its mask parameter. No resizing, downsampling, public URLs or stored jobs.
 The sole optional pad/crop path requires measurement of the exact UHD recipe below.
 
-Limits are 32MiB encoded/file, 64MiB combined encoded files, two references,
-64MiB+64KiB total streamed multipart body including its bounded envelope, and
-64KiB JSON body. Content-Length, MIME type and uploaded filename never authorize
+Limits are 32 MiB encoded/file, 64 MiB combined encoded files, two references,
+64 MiB+64 KiB total streamed multipart body including its bounded envelope, and
+64 KiB JSON body. Content-Length, MIME type and uploaded filename never authorize
 content. Decode actual PNG/JPEG dimensions and reject malformed/bomb/multiframe
 images. Each edit reference must equal the exact qualified public output dimensions.
 Maximum dimensions are 3840x2160 and 8294400 pixels, permitted only in a reviewed
@@ -46,38 +66,38 @@ profile. One-reference editing and generation are separate profiles. Two-referen
 sizes require their own evidence, remain 1024-class until then, and never inherit
 the one-reference ceiling. Output must decode as one PNG of the exact selected
 native size, then only the explicitly approved bottom crop if present; public output
-remains at most8294400 pixels. Re-encoding strips native metadata. Only `created` and `data[].b64_json` are
+remains at most 8294400 pixels. Re-encoding strips native metadata. Only `created` and `data[].b64_json` are
 returned, never raw native errors, revised prompts, paths or URLs.
 
 ## Admission and recovery
 
 One process, one active owned operation, zero waiting requests. Admission is taken
-before upload parsing. A competing request receives immediate429 with
-`Retry-After: 1`; an unready idle service returns503. Invalid requests return400,
-encoded limits413, wrong generation media type415, native failure502, deadline504.
+before upload parsing. A competing request receives immediate 429 with
+`Retry-After: 1`; an unready idle service returns 503. Invalid requests return 400,
+encoded limits 413, wrong generation media type 415, native failure 502, deadline 504.
 Readiness GET and pre-submission admission each use one native `/health` request.
 The latter runs after atomic image ownership reservation and validation, immediately
 before native submission. A separate health client avoids the image client's busy
-single connection: total budget2s, connect/read/write1s, pool0.5s, two health
-connections, at most1024 response bytes, fixed loopback URL, no proxy or redirects.
-Only the pinned warm-readiness response200 with exact JSON `{"status":"ok"}` passes.
-Failure/timeout/invalid health returns503 and latches admission closed. Caller-only
+single connection: total budget 2 s, connect/read/write 1 s, pool 0.5 s, two health
+connections, at most 1024 response bytes, fixed loopback URL, no proxy or redirects.
+Only the pinned warm-readiness response 200 with exact JSON `{"status":"ok"}` passes.
+Failure/timeout/invalid health returns 503 and latches admission closed. Caller-only
 probe cancellation propagates without changing readiness: cancellation is not
 backend-failure evidence. The next image still performs its own fresh health probe.
 Successful health alone never reopens a failed state. GET never invokes recovery or cancels active images.
 A successful active image also cannot erase a concurrent health-failure latch.
 There is no polling daemon. Required helper reconciliation remains the only reopening
-path. Busy image contenders still receive429 while any admission probe is pending.
+path. Busy image contenders still receive 429 while any admission probe is pending.
 
 Client cancellation/disconnect does not cancel the supervisor or native operation.
 The supervisor strongly retains all upload buffers, CPU decode tasks and native
 transport until settlement. CPU image work runs off-loop and remains owned through
-cancellation; a monotonic deadline prevents late native submission or late200.
+cancellation; a monotonic deadline prevents late native submission or late 200.
 
-The900s budget includes body receive/validation/native call. A timeout before
+The 900 s budget includes body receive/validation/native call. A timeout before
 submission cancels upload work and releases only after owned validation settles.
 An unresolved native timeout, or ambiguous transport/output failure, closes readiness
-and invokes the fixed recovery helper once. The504 response does not wait for
+and invokes the fixed recovery helper once. The 504 response does not wait for
 recovery. Admission stays occupied until the prior call settles or exact backend
 replacement is proved and the old local transport/CPU work is joined. Failed
 recovery stays closed, even if the old call subsequently finishes. No retry loop or
@@ -101,17 +121,18 @@ protect source and the separate venv against that user, groups and other users.
   remain unchanged; this is source ordering, not reboot acceptance.
 - Fixed entrypoint `/usr/local/lib/llm-server/image-api/scripts/image_api/serve.py`,
   via the separately pinned venv Python with `-I -B`. No server arguments allowed.
-- Config `/etc/llm-server/image-api.json`, root:root0644 with protected ancestry.
-- Credential `/run/credentials/llm-image-api.service/inference-key`, mode0400/0600,
-  root or service-owned, no symlinks/hardlinks/mutable ancestry. Source is existing
+- Config `/etc/llm-server/image-api.json`, root:root mode 0644 with protected ancestry.
+- Credential `/run/credentials/llm-image-api.service/inference-key`, mode 0400/0600
+  root or service-owned; the observed systemd 0440 mode is allowed only root:root.
+  No symlinks/hardlinks/mutable ancestry. Source is existing
   registered `services/secrets/llm-api-key`; verify its protected metadata and
   exact deployed LoadCredential mapping without printing it.
-- Runtime lock `/run/llm-image-api/owner.lock`, owned service uid0600 in0700
+- Runtime lock `/run/llm-image-api/owner.lock`, owned by the service UID, mode 0600 in a mode 0700
   systemd RuntimeDirectory. No adapter data/spool/log/cache writes; uploads are
   memory only. Output/access/error logs and core dumps are disabled.
 - Recovery command is exactly `/usr/bin/sudo -n -- /usr/local/libexec/llm-image-backend-recover`.
-  Root-owned0755 helper, protected ancestry, zero arguments and900s self-cap.
-  Render sudoers root:root0440, run `visudo -cf` on that rendered file. Its `""`
+  Root-owned mode 0755 helper, protected ancestry, zero arguments and a 900 s self-cap.
+  Render sudoers root:root mode 0440, run `visudo -cf` on that rendered file. Its `""`
   argument constraint means no helper arguments, not an unrestricted argument list.
 - Do not combine sudo with `NoNewPrivileges=yes`, private users, restrictive
   capability bounds or filesystem restrictions inherited by the root helper.
@@ -124,7 +145,7 @@ The fixed recovery interface must acquire the existing canonical lifecycle lock,
 use current registered storage/root-disk guards, terminate/remove **only** the owned
 image backend, start its reviewed exact image/checkpoint on Ada, wait native
 readiness, complete deterministic warm generation, verify decoded success and Ada
-residency, and return0 only then. It must also verify the protected API config's
+residency, and return 0 only then. It must also verify the protected API config's
 runtime/model pins match the deployed manifests. Nonzero/timeouts leave API closed.
 Adapter code contains no container image, checkpoint path, systemctl command or
 request-supplied admin action. Worker1 owns helper implementation and runtime launch.
@@ -132,7 +153,7 @@ request-supplied admin action. Worker1 owns helper implementation and runtime la
 Native persistent `input_save_path` and `output_path` must be `None`, with cloud
 upload disabled, and native tempfile root on dedicated guarded registered data.
 The pinned native function deletes its exact generated directory in `finally` but
-uses `shutil.rmtree(..., ignore_errors=True)`. **HTTP200 alone is not cleanup
+uses `shutil.rmtree(..., ignore_errors=True)`. **HTTP 200 alone is not cleanup
 evidence.** The initial finding is retained in the first delivery and its review
 handoff. Root accepted bounded equivalent guarded-spool checks: Worker1 observes
 exact owned TMPDIR before/after normal generation/edit and backend restart; fixed
@@ -151,17 +172,17 @@ install-time schema example with zero support claims. Root-protected manifest fi
 
 | Field | Meaning |
 |---|---|
-| `schema_version` | integer1 |
+| `schema_version` | integer 1 |
 | `runtime_revision` | `0cd8be351d0825488f4b81c8931167bbab618eca` |
 | `model_id`, `model_revision` | `Qwen/Qwen-Image-2.1`, `790c92633540aa0cb11d9abf19eb46d861714758` |
 | `runtime_image_digest` | `null` until known; exact `sha256:` OCI digest required for any profiles |
 | `profiles` | list of separately reviewed measured cases, initially empty |
 
 Each profile requires `operation` (`generation`/`edit`), public `size`, `references`
-(0 generation;1/2 edit), `transparent` (boolean), `conditioning` (empty for opaque;
+(0 generation; 1/2 edit), `transparent` (boolean), `conditioning` (empty for opaque;
 explicit bounded model conditioning text for transparent), and `evidence_sha256`
-(lowercase64-hex digest of reviewed qualification evidence). Optional `native_size`
-and `crop_bottom` default to public size and0 for ordinary non-UHD profiles. UHD
+(lowercase 64-hex digest of reviewed qualification evidence). Optional `native_size`
+and `crop_bottom` default to public size and 0 for ordinary non-UHD profiles. UHD
 requires both explicit mapping fields as described below. These
 two effective fields are always exposed in capability records. Duplicate profiles
 are rejected. Transparent profiles require both measured alpha and visual task
@@ -170,13 +191,13 @@ sizes, projected memory or this schema are never measured evidence. The helper
 and manifest review bind evidence to exact actual model/runtime/build identity.
 
 The sole nonidentity mapping is an explicit public `size=3840x2160`,
-`native_size=3840x2176`, `crop_bottom=16` profile: generation with0 references or
-editing with exactly1. This mapping is mandatory for UHD because the pinned native
-runtime requires32px alignment: reject missing mapping and explicit raw native
-3840x2160/crop0. Remove exactly the16 bottom native output rows; for the edit,
-edge-pad exactly16 bottom input rows by repeating the last decoded public row.
+`native_size=3840x2176`, `crop_bottom=16` profile: generation with 0 references or
+editing with exactly 1. This mapping is mandatory for UHD because the pinned native
+runtime requires 32 px alignment: reject missing mapping and explicit raw native
+3840x2160/crop0. Remove exactly the 16 bottom native output rows; for the edit,
+edge-pad exactly 16 bottom input rows by repeating the last decoded public row.
 No resize, distortion, arbitrary crop or larger public image admission. Public
-input/output limits remain8294400 pixels; only this native recipe allows8355840.
+input/output limits remain 8294400 pixels; only this native recipe allows 8355840.
 All other profiles require native=public and crop0. Two-reference UHD is rejected
 pending separate root authorization/qualification. Native dimensions must match
 exactly before cropping; an already-cropped or otherwise wrong response fails.
@@ -184,8 +205,8 @@ exactly before cropping; an already-cropped or otherwise wrong response fails.
 For example, that future measured edit entry would authorize only same-public-size
 one-reference UHD edits with this precise padding/cropping recipe. It says nothing
 about transparency or generation support. This is a schema example, **not a shipped
-or measured profile**. Worker1 must measure this exact recipe with>=5% VRAM margin
-and visual success before publishing any entry. Default profiles remain empty.
+or measured profile**. Worker1 must measure this exact recipe with >=5% VRAM margin
+and visual success before publishing any entry. The generic template profiles remain empty; the deployed measured manifest contains only the six opaque generation profiles listed above.
 
 ## Offline verification and source migration
 
@@ -211,16 +232,20 @@ existing `tests/lifecycle` discovery namespace shadowing `scripts/lifecycle`.
 
 The additive transport changes the protected fixed policy/helper signature and the
 control source copy of `private_network.py`. It keeps the six old socket/service
-files byte-identical, ports30000/30002/30004, interface/subnet, rule ordering,
+files byte-identical, ports 30000/30002/30004, interface/subnet, rule ordering,
 terminal DROP, systemd patch validation, no public/wildcard/IPv6 bind, and the
 [existing private transport policy](private-network.md). Plain private HTTP has no
 on-path encryption; no new TLS termination or TLS acceptance is claimed.
 
 See [reviewed migration procedure](image-api-source-migration.md). Old receipts and
 historical evidence are preserved, never edited to pretend new source was accepted.
-No source bundle authorizes runtime activation. Live native inference/image quality,
-Linux service/sudo/storage, exact native cleanup, runtime pins, firewall and client
-acceptance are **NOT_TESTED** by this source task.
+A source bundle alone does not authorize runtime activation. The original source-only
+task did not establish live inference, image quality, Linux service/sudo/storage,
+cleanup, runtime pins, firewall or client acceptance. Subsequent retained deployment
+and qualification evidence is recorded in the
+[current report](../reports/image21-qualify-20260923/RESULT.md); its scope and limits
+apply to those observations. This documentation closeout performs no new runtime
+checks or activation.
 
 ## Pinned primary source contract
 
@@ -232,6 +257,6 @@ Inspected official SGLang files at the pinned revision:
 Generation sends allowlisted JSON; edit sends allowlisted multipart with generated
 PNG/JPEG filenames and actual validated content. The adapter explicitly requests
 b64_json because native generation defaults to URL. It sets both `guidance_scale`
-and Qwen-specific `true_cfg_scale` to1, with fixed CPU initial-noise RNG. Native `data[0].b64_json` is decoded and all
+and Qwen-specific `true_cfg_scale` to 1, with fixed CPU initial-noise RNG. Native `data[0].b64_json` is decoded and all
 other native fields are discarded. No native content/download endpoint is exposed.
 Captured source hashes and provenance accompany the taskroot evidence package.

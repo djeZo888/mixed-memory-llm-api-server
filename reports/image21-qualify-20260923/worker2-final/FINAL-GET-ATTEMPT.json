@@ -1,0 +1,6 @@
+{
+  "authority_sha256": "1219f7e136567613ac7373401ebd0303dad24c6652b151a00fa64a199a8db5e7",
+  "scope": "Exactly four authenticated GETs; no retry; exclusive attempt marker",
+  "session_id": "01a0cc7e-6a5f-7852-bef0-6f55a846b262",
+  "started_utc": "2026-09-23T04:31:39.667457+00:00"
+}

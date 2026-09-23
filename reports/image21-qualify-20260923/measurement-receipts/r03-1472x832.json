@@ -1,0 +1,502 @@
+{
+  "admission_forecast": {
+    "adjacent_transient_slopes": [
+      {
+        "bytes_per_pixel": 7806.030769230769,
+        "lower_case": "r01-1024x576",
+        "midpoint_pixels": 722944.0,
+        "upper_case": "r02-1216x704"
+      },
+      {
+        "bytes_per_pixel": 5261.617021276596,
+        "lower_case": "r02-1216x704",
+        "midpoint_pixels": 952320.0,
+        "upper_case": "worker2-api-1024x1024"
+      }
+    ],
+    "allocation_allowance_bytes": 268435456,
+    "anchor_case": "worker2-api-1024x1024",
+    "anchor_transient_per_pixel": 6152.0,
+    "basis": "Measured anchor transient plus pixel increment times max(anchor transient/pixel, observed adjacent slope, demonstrated recent rising slope)",
+    "decision": "ADMIT_FOR_REVIEW",
+    "limitation": "Observed200ms peaks can miss transients; unseen kernel/allocation thresholds remain uncertain. Forecast is not measured support.",
+    "maximum_allowed_used_bytes": 48950673408,
+    "native_pixels": 1224704,
+    "next_native_size": "1472x832",
+    "next_public_size": "1472x832",
+    "observations_pixel_sorted": [
+      {
+        "case_id": "r01-1024x576",
+        "evidence_sha256": "97a0826d104ab3194c1ed454b128e5c67bc1532fd174a9aa3e9961dc82763c27",
+        "native_pixels": 589824,
+        "peak_bytes": 37858115584,
+        "resident_bytes": 34498478080,
+        "total_bytes": 51527024640,
+        "transient_bytes": 3359637504
+      },
+      {
+        "case_id": "r02-1216x704",
+        "evidence_sha256": "0387db9f0dad6c5f774ad87c8f194ed9f60e4400f0f5840c5782239ccf28d319",
+        "native_pixels": 856064,
+        "peak_bytes": 39936393216,
+        "resident_bytes": 34498478080,
+        "total_bytes": 51527024640,
+        "transient_bytes": 5437915136
+      },
+      {
+        "case_id": "worker2-api-1024x1024",
+        "evidence_sha256": "2b805df5ed03b0a080493afa8152d481088ac2ee10927057d808f94a4dd844cc",
+        "native_pixels": 1048576,
+        "peak_bytes": 40947220480,
+        "resident_bytes": 34496380928,
+        "scope": "Shared exclusive Worker2 window; total-window measured peak",
+        "total_bytes": 51527024640,
+        "transient_bytes": 6450839552
+      }
+    ],
+    "policy": "ROOT-FORECAST-AMENDMENT.md",
+    "predicted_device_used_bytes": 42592613676,
+    "predicted_transient_bytes": 7825700140,
+    "recent_nonlinear_trend": {
+      "demonstrated": false,
+      "projected_next_interval_bytes_per_pixel": null
+    },
+    "resident_bytes": 34498478080,
+    "selected_growth_bytes_per_pixel": 7806.030769230769
+  },
+  "api_state": {
+    "ActiveState": "inactive",
+    "MainPID": "0",
+    "SubState": "dead"
+  },
+  "backend_run_id": "49fe6ab1e155453b8a529e199f16a1a2",
+  "caller": "Worker1 sole accepted caller; API stopped; native loopback",
+  "campaign_id": "IMAGE21-QUALIFY-20260923",
+  "case_id": "r03-1472x832",
+  "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+  "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+  "combined_base_commit": "43ed79f3905c769f449f48300c7087d7a432f989",
+  "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+  "criteria": {
+    "container_swap_zero": true,
+    "correct_decoded_output": true,
+    "device_free_at_least_5_percent": true,
+    "host_available_at_least_15_percent": true,
+    "no_observed_host_oom": true,
+    "no_observed_swap_activity": true,
+    "one_generation": true,
+    "ready_and_owned_after": true,
+    "tmp_cleanup": true
+  },
+  "crop_bottom": 0,
+  "delivered_output": {
+    "bytes": 1393044,
+    "format": "PNG",
+    "fully_decoded": true,
+    "height": 832,
+    "mode": "RGB",
+    "sha256": "afe409ffa44f8a6f0eea7568bc0cb08e53008792546c661cbd04b27864c19687",
+    "width": 1472
+  },
+  "evidence_sha256": {
+    "generation.png": "afe409ffa44f8a6f0eea7568bc0cb08e53008792546c661cbd04b27864c19687",
+    "native-perf.json": "8276ecc3b10d12c545d1265d26707085113118238371af57c9353776eaa27b19",
+    "native-response.json": "cc9665c6717c63e7a5cd4d89a667c6621a448bdccf0ff54dbe228dac70d00361",
+    "native.png": "5667eab8c21ad8f425a41a53bd249f21fbbaf9aa68e5cd1578ed65d9570ac26d",
+    "request.json": "8b6a3e4a877202e05c990b53912dcea6d0749176806805b497b8059ab6c71e05",
+    "telemetry.jsonl": "8bb5bd1ceca16f8e15fdb2d64675251371be591497d13d9262df3c4533a68fdb"
+  },
+  "finished_monotonic": 11642.195705576,
+  "finished_utc": "2026-09-23T04:14:59.529759+00:00",
+  "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+  "http_status": 200,
+  "load_average_after": [
+    3.01953125,
+    3.029296875,
+    3.0
+  ],
+  "load_average_before": [
+    3.0341796875,
+    3.03515625,
+    3.0
+  ],
+  "metrics": {
+    "cgroup": {
+      "memory.current": {
+        "max": 5306511360,
+        "min": 5301972992,
+        "sample_count": 32
+      },
+      "memory.peak": {
+        "max": 5320138752,
+        "min": 5316444160,
+        "sample_count": 32
+      },
+      "memory.swap.current": {
+        "max": 0,
+        "min": 0,
+        "sample_count": 32
+      }
+    },
+    "device": {
+      "first_sample_used_bytes": 34498478080,
+      "last_sample_used_bytes": 34500575232,
+      "minimum_free_fraction": 0.18530092592592592,
+      "request_window_peak_used_bytes": 41979019264,
+      "sampled_min_free_bytes": 9548005376,
+      "sampled_peak_used_bytes": 41979019264,
+      "total_bytes": 51527024640
+    },
+    "host": {
+      "max_swap_used_bytes": 0,
+      "min_available_bytes": 921162407936,
+      "min_available_fraction": 0.9729003038937142,
+      "vmstat_counter_deltas": {
+        "oom_kill": 0,
+        "pgmajfault": 0,
+        "pswpin": 0,
+        "pswpout": 0
+      }
+    },
+    "limitations": [
+      "Device peaks between200ms observations may be missed.",
+      "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+      "No PSS polling; NVML device totals are not allocator/process peaks.",
+      "NVML PCIe20ms counters and utilization remain in raw telemetry."
+    ],
+    "sampling": {
+      "max_observed_interval_seconds": 0.20027825400029542,
+      "requested_interval_seconds": 0.2,
+      "sample_count": 158,
+      "skipped_schedule_slots": 0
+    }
+  },
+  "native_height": 832,
+  "native_output": {
+    "bytes": 1880101,
+    "format": "PNG",
+    "fully_decoded": true,
+    "height": 832,
+    "mode": "RGBA",
+    "sha256": "5667eab8c21ad8f425a41a53bd249f21fbbaf9aa68e5cd1578ed65d9570ac26d",
+    "width": 1472
+  },
+  "native_response_metrics": {
+    "inference_time_s": 28.4104878929993,
+    "peak_memory_mb": 38390.0
+  },
+  "native_width": 1472,
+  "numeric_criteria_pass": true,
+  "operation": "generation",
+  "predicted_next_demand": {
+    "adjacent_transient_slopes": [
+      {
+        "bytes_per_pixel": 7806.030769230769,
+        "lower_case": "r01-1024x576",
+        "midpoint_pixels": 722944.0,
+        "upper_case": "r02-1216x704"
+      },
+      {
+        "bytes_per_pixel": 5261.617021276596,
+        "lower_case": "r02-1216x704",
+        "midpoint_pixels": 952320.0,
+        "upper_case": "worker2-api-1024x1024"
+      },
+      {
+        "bytes_per_pixel": 5846.325581395349,
+        "lower_case": "worker2-api-1024x1024",
+        "midpoint_pixels": 1136640.0,
+        "upper_case": "r03-1472x832"
+      }
+    ],
+    "allocation_allowance_bytes": 268435456,
+    "anchor_case": "r03-1472x832",
+    "anchor_transient_per_pixel": 6108.040133779265,
+    "basis": "Measured anchor transient plus pixel increment times max(anchor transient/pixel, observed adjacent slope, demonstrated recent rising slope)",
+    "decision": "ADMIT_FOR_REVIEW",
+    "limitation": "Observed200ms peaks can miss transients; unseen kernel/allocation thresholds remain uncertain. Forecast is not measured support.",
+    "maximum_allowed_used_bytes": 48950673408,
+    "native_pixels": 1745920,
+    "next_native_size": "1760x992",
+    "next_public_size": "1760x992",
+    "observations_pixel_sorted": [
+      {
+        "case_id": "r01-1024x576",
+        "evidence_sha256": "97a0826d104ab3194c1ed454b128e5c67bc1532fd174a9aa3e9961dc82763c27",
+        "native_pixels": 589824,
+        "peak_bytes": 37858115584,
+        "resident_bytes": 34498478080,
+        "total_bytes": 51527024640,
+        "transient_bytes": 3359637504
+      },
+      {
+        "case_id": "r02-1216x704",
+        "evidence_sha256": "0387db9f0dad6c5f774ad87c8f194ed9f60e4400f0f5840c5782239ccf28d319",
+        "native_pixels": 856064,
+        "peak_bytes": 39936393216,
+        "resident_bytes": 34498478080,
+        "total_bytes": 51527024640,
+        "transient_bytes": 5437915136
+      },
+      {
+        "case_id": "worker2-api-1024x1024",
+        "evidence_sha256": "2b805df5ed03b0a080493afa8152d481088ac2ee10927057d808f94a4dd844cc",
+        "native_pixels": 1048576,
+        "peak_bytes": 40947220480,
+        "resident_bytes": 34496380928,
+        "scope": "Shared exclusive Worker2 window; total-window measured peak",
+        "total_bytes": 51527024640,
+        "transient_bytes": 6450839552
+      },
+      {
+        "case_id": "r03-1472x832",
+        "native_pixels": 1224704,
+        "peak_bytes": 41979019264,
+        "resident_bytes": 34498478080,
+        "total_bytes": 51527024640,
+        "transient_bytes": 7480541184
+      }
+    ],
+    "policy": "ROOT-FORECAST-AMENDMENT.md",
+    "predicted_device_used_bytes": 46316082854,
+    "predicted_transient_bytes": 11549169318,
+    "recent_nonlinear_trend": {
+      "demonstrated": true,
+      "latest_adjacent_slope": 5846.325581395349,
+      "method": "Linear continuation of observed positive secant-slope rise by interval midpoint",
+      "previous_adjacent_slope": 5261.617021276596,
+      "projected_next_interval_bytes_per_pixel": 6952.3992742866585
+    },
+    "resident_bytes": 34498478080,
+    "selected_growth_bytes_per_pixel": 7806.030769230769
+  },
+  "profile_eligible": false,
+  "public_height": 832,
+  "public_width": 1472,
+  "recovery": {
+    "attempted": false,
+    "required_on_ambiguous_or_failed_native_outcome": false
+  },
+  "references": 0,
+  "request_count": 1,
+  "request_finished_monotonic": 11640.58856095,
+  "request_finished_utc": "2026-09-23T04:14:57.922653+00:00",
+  "request_seconds": 28.60269934200005,
+  "request_settings": {
+    "background": "opaque",
+    "enable_cache_dit": false,
+    "enable_teacache": false,
+    "generator_device": "cpu",
+    "guidance_scale": 1.0,
+    "model": "qwen-image-2.1",
+    "n": 1,
+    "num_inference_steps": 40,
+    "output_format": "png",
+    "perf_dump_path": "/work/evidence/49fe6ab1e155453b8a529e199f16a1a2/IMAGE21-QUALIFY-20260923-r03-1472x832-perf.json",
+    "prompt": "A red ceramic teapot on a wooden table beside a window, softly lit by daylight.",
+    "response_format": "b64_json",
+    "seed": 42,
+    "size": "1472x832",
+    "true_cfg_scale": 1.0
+  },
+  "request_started_monotonic": 11611.985861608,
+  "request_started_utc": "2026-09-23T04:14:29.319929+00:00",
+  "residency_after": {
+    "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+    "device_current": {
+      "free_bytes": 17026777088,
+      "total_bytes": 51527024640,
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+    },
+    "gpu_processes": [
+      [
+        "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "115633",
+        "32228"
+      ]
+    ],
+    "host_current": {
+      "MemAvailable": 921189265408,
+      "MemTotal": 946820968448,
+      "SwapFree": 3157258240,
+      "SwapTotal": 3157258240
+    },
+    "started_at": "2026-09-23T03:55:55.463204199Z"
+  },
+  "residency_before": {
+    "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+    "device_current": {
+      "free_bytes": 17028874240,
+      "total_bytes": 51527024640,
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+    },
+    "gpu_processes": [
+      [
+        "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "115633",
+        "32226"
+      ]
+    ],
+    "host_current": {
+      "MemAvailable": 921217691648,
+      "MemTotal": 946820968448,
+      "SwapFree": 3157258240,
+      "SwapTotal": 3157258240
+    },
+    "started_at": "2026-09-23T03:55:55.463204199Z"
+  },
+  "rung": 3,
+  "runtime_config_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+  "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+  "runtime_source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+  "sampler_exit": 0,
+  "schema_version": 1,
+  "session_id": "01a0cc5e-a873-7813-9b5c-6e3124bdd181",
+  "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7",
+  "source_sha256": {
+    "native_request.py": "91180c1613de1fa113426dba2c534a8c31b851f066a252c1dcfd08fa8012bf6f",
+    "protocol.py": "ebca2b024d236d03475dde15a63414c49fb86714733afa1bbf8ca68d88fd5238",
+    "service.py": "0edadcb43ec83d369d7bdb66dddc7035962d620475314b0142cb9f047b197586",
+    "telemetry.py": "a6d5f9262de82a318c7aa86dfef599fa6228463bb712c94d916c653afba2f0e9"
+  },
+  "started_monotonic": 11610.370148691,
+  "started_utc": "2026-09-23T04:14:27.704199+00:00",
+  "status": "PARTIAL",
+  "tmp_after": {
+    "entries": [
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "0aa61d92a1396fa66401f3f0b82f778859d484c5c69b477a71ae5f3d41eee2d5-models-text_encoder-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "a9266072b484424e665444b9969db6247bd1789edd747c6c812cff9a5d4f90ea-models-transformer-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "fabcc496123b7f987ea6ad4d77406e2e1971ed2554072b6de71a3501dfee4bc0-models-vae-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "tmp3hgjagsu",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpcujd26ut",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpop4zvxdj",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "tmpv6oq442l",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpwpcfkw9v",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "ubuntu",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "ubuntu/cutlass_python_cache",
+        "uid": 1000
+      }
+    ],
+    "exists": true,
+    "path": "/data/services/image21-runtime-20260923/work/tmp/49fe6ab1e155453b8a529e199f16a1a2"
+  },
+  "tmp_before": {
+    "entries": [
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "0aa61d92a1396fa66401f3f0b82f778859d484c5c69b477a71ae5f3d41eee2d5-models-text_encoder-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "a9266072b484424e665444b9969db6247bd1789edd747c6c812cff9a5d4f90ea-models-transformer-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "fabcc496123b7f987ea6ad4d77406e2e1971ed2554072b6de71a3501dfee4bc0-models-vae-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "tmp3hgjagsu",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpcujd26ut",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpop4zvxdj",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "tmpv6oq442l",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpwpcfkw9v",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "ubuntu",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "ubuntu/cutlass_python_cache",
+        "uid": 1000
+      }
+    ],
+    "exists": true,
+    "path": "/data/services/image21-runtime-20260923/work/tmp/49fe6ab1e155453b8a529e199f16a1a2"
+  },
+  "tmp_new_entries": [],
+  "visual_verification": {
+    "required": "Caller/root visual task review",
+    "status": "NOT_TESTED"
+  }
+}
