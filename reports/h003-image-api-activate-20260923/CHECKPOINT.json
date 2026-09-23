@@ -1,0 +1,29 @@
+{
+  "task": "H003-IMAGE-API-ACTIVATE-20260923",
+  "status": "READY_SOURCE_ONLY",
+  "native_session_id": "01a0ce8e-681a-77b3-83b8-5a6faab3f62d",
+  "host_contacts": 0,
+  "vm_mutations": 0,
+  "inference_calls": 0,
+  "startup_recoveries": 0,
+  "fixed_warmups": 0,
+  "text_restarts": 0,
+  "harness_restarts_or_builds": 0,
+  "source_files_changed": 0,
+  "offline_tests": {
+    "passed": 21,
+    "failed": 0,
+    "scope": "seed/FHD/RGBA fixtures with fake ASGI/backend"
+  },
+  "window_owner": "H003-EDIT-CAPACITY-20260923",
+  "activation_authorized": false,
+  "qualified_manifest_pending": true,
+  "next": "Separate final capacity HANDOFF + exact approved manifest + source/transaction GO, then one bounded activation; no polling.",
+  "offline_transaction_checks": {
+    "status": "PASS",
+    "negative_payload_cases": 8,
+    "simulated_install_compensation_cases": 2,
+    "live_validation": false,
+    "helper_sha256": "432bf4ea600299966569dd77d1fd7c01863bdb6a42b6ed2bccce6ccddbb5ffa2"
+  }
+}

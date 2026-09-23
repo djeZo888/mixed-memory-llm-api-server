@@ -1,0 +1,76 @@
+{
+  "private_index_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/input-index.json",
+  "private_index_sha256": "266072865ff4e145bd2e44ca5f5e9a0ad0f6ddbf9ad81b2d10e3da6244443681",
+  "retained_inputs": [
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/activation-COORDINATOR-NOTE.md",
+      "sha256": "50218acfe23102623c1ccda3048d4c5e2f4e7395ff360c55f5d04ef4195cbe91"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/capacity-CANDIDATE.json",
+      "sha256": "4d113d93275b3b61a4dc0984532e0c192398471f1391ab84b97473d8cc9130e6"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/capacity-HANDOFF.md",
+      "sha256": "9f2fc93e6a15f3d76be3aa0370f2276b92b82ad9e5fca17b33a3a3d40ef1e60e"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/capacity-COORDINATOR-NOTE.md",
+      "sha256": "92d6562a4c534bafe7540de89ef5a19cf82e84fd7e400e343c1b39319d11714c"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/capacity-PROFILE-QUALIFICATION-MATRIX.json",
+      "sha256": "aec4c7fb802c2383dd451d16c20214733d084f2b63d8559a69a63636bb635a45"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/capacity-REQUEST-LEDGER.json",
+      "sha256": "3f1a50db3ce9fa786f44276e7223c0a0e7c2d895a77cb9b2851d2a5a7210a18e"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/capacity-C01-RESULT.json",
+      "sha256": "5c88724e3b56c8b941fd386ab6d34c8ac8422fef3d6af1a5338d363b49451123"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/capacity-C02-RESULT.json",
+      "sha256": "d59d04bd893d8d55b4ddb8bd200d47ef51459b989414c4864bdb1584ef1b0678"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/capacity-C03-RESULT.json",
+      "sha256": "f02081842c66c2863332ae2dcf9aaa2a79c76f00a0edf5cbb1a029160b8b0098"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/capacity-artifacts__installed-api-sha256.txt",
+      "sha256": "7e48335debf78351f27ceade21ae6c466982bb42735a88a9f2f80d0c0c064643"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/capacity-artifacts__preflight-after.json",
+      "sha256": "ed3fdc3cca0d08bd12d2416fb05b9c435915e202c179fc09bb28f89226f4dda7"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/capacity-artifacts__C01__window-receipt.json",
+      "sha256": "6ff05a981433d782d3b918338a27f803c243707d892cbbd52119a6c124ae02b5"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/retained-inputs/capacity-artifacts__C01__reconciliation-receipt.json",
+      "sha256": "0b076c4a42dc67bf8ad381fcb92754561e5bed9c2d9d71176cf023bee095adde"
+    }
+  ],
+  "source_tests": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/source-tests.txt",
+    "sha256": "2f3ff105a92986f738e15e9136e5c234a15a9b51ef02ac794dc2435a61b93cad"
+  },
+  "transaction_checks": [
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/transaction-review/offline_check.py",
+      "sha256": "4aeed6f36f4dd75fb7fc286b6a0bc081fc25e1c37d6ccb86a106b1c0f4e93976"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/transaction-review/result.json",
+      "sha256": "bfeaa9151c3bbdbad9d53f06033f095d6d82892cae0bbb681e6e9f25d1ada4af"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/transaction-checks-final/result.json",
+      "sha256": "bfeaa9151c3bbdbad9d53f06033f095d6d82892cae0bbb681e6e9f25d1ada4af"
+    }
+  ]
+}
