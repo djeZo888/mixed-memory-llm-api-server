@@ -12,7 +12,7 @@ import time
 import warnings
 from dataclasses import dataclass
 
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 ALIAS = 'qwen-image-2.1'
 RUNTIME_REVISION = '0cd8be351d0825488f4b81c8931167bbab618eca'
@@ -141,11 +141,14 @@ def qualification(value):
 
 
 def pad_edit_reference(raw):
-    """Validated Full HD pixels plus eight copies of the last row, no resampling."""
+    """Native-equivalent canonical pixels plus eight last rows, no resampling."""
     with Image.open(io.BytesIO(raw)) as image:
-        mode = 'RGBA' if 'A' in image.getbands() else 'RGB'
-        pixels = image.convert(mode)
-        padded = Image.new(mode, (1920, 1088))
+        # Match native load_image: apply EXIF orientation then convert to RGBA,
+        # including palette/RGB/L tRNS. Reject orientation-swapped geometry.
+        pixels = ImageOps.exif_transpose(image).convert('RGBA')
+        if pixels.size != (1920, 1080):
+            raise Refusal(400, 'invalid_image')
+        padded = Image.new('RGBA', (1920, 1088))
         padded.paste(pixels, (0, 0))
         row = pixels.crop((0, 1079, 1920, 1080))
         for y in range(1080, 1088):

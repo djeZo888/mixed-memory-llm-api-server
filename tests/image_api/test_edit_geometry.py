@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 import httpx
-from PIL import Image
+from PIL import Image, ImageOps
 
 from test_handlers import config, fixture, png, profile
 from test_corrections import encoded, fhd_profile
@@ -70,8 +70,8 @@ class EditGeometry(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(seen[0]['generator_device'], b'cpu')
         padded = Image.open(io.BytesIO(seen[0]['image']))
         self.assertEqual(padded.size, (1920, 1088))
-        self.assertEqual(padded.crop((0, 0, 1920, 1080)).tobytes(), source.tobytes())
-        self.assertEqual(padded.crop((0, 1080, 1920, 1088)).tobytes(), source.crop((0, 1079, 1920, 1080)).tobytes() * 8)
+        self.assertEqual(padded.crop((0, 0, 1920, 1080)).tobytes(), source.convert('RGBA').tobytes())
+        self.assertEqual(padded.crop((0, 1080, 1920, 1088)).tobytes(), source.convert('RGBA').crop((0, 1079, 1920, 1080)).tobytes() * 8)
         # Pinned native area/32 geometry must see an identity resize.
         area = 1920 * 1088
         width = max(32, round(math.sqrt(area * padded.width / padded.height) / 32) * 32)
@@ -153,3 +153,41 @@ class EditGeometry(unittest.IsolatedAsyncioTestCase):
                                       files={'image': ('x.png', png((1920, 1080)))})
             self.assertEqual(reply.json()['error']['code'], 'unqualified_profile')
             self.assertEqual(backend.calls, [])
+
+    def test_fullhd_trns_preserves_native_equivalent_rgba_pixels(self):
+        for mode, color, transparency in [('P', 1, 1), ('RGB', (9, 10, 11), (9, 10, 11)), ('L', 19, 19)]:
+            source = Image.new(mode, (1920, 1080), color)
+            if mode == 'P':
+                source.putpalette([0, 0, 0, 9, 10, 11] + [0] * 762)
+            source.putpixel((17, 29), 0 if mode != 'RGB' else (20, 30, 40))
+            stream = io.BytesIO()
+            source.save(stream, format='PNG', transparency=transparency)
+            raw = stream.getvalue()
+            rgba = Image.open(io.BytesIO(raw)).convert('RGBA')
+            self.assertEqual(rgba.getchannel('A').getextrema(), (0, 255))
+            requests = [protocol.validate({'prompt': 'x', 'size': '1920x1080', 'seed': 48}, [data],
+                                         'edit', config([edit_profile()])) for data in (raw, encoded(rgba))]
+            self.assertEqual(requests[0].images, requests[1].images)
+            padded = Image.open(io.BytesIO(requests[0].images[0]))
+            self.assertEqual(padded.crop((0, 0, 1920, 1080)).tobytes(), rgba.tobytes())
+
+    def test_fullhd_exif_native_orientation_before_padding(self):
+        source = patterned((1920, 1080))
+        for orientation in (2, 3, 4, 6, 8):
+            exif = Image.Exif()
+            exif[274] = orientation
+            stream = io.BytesIO()
+            source.save(stream, format='JPEG', exif=exif)
+            raw = stream.getvalue()
+            with patch.object(protocol.secrets, 'randbits', side_effect=AssertionError('explicit or invalid draw')):
+                if orientation in (6, 8):
+                    with self.assertRaises(protocol.Refusal) as failure:
+                        protocol.validate({'prompt': 'x', 'size': '1920x1080'}, [raw], 'edit', config([edit_profile()]))
+                    self.assertEqual(failure.exception.code, 'invalid_image')
+                    continue
+                request = protocol.validate({'prompt': 'x', 'size': '1920x1080', 'seed': 48}, [raw], 'edit', config([edit_profile()]))
+            expected = ImageOps.exif_transpose(Image.open(io.BytesIO(raw))).convert('RGBA')
+            padded = Image.open(io.BytesIO(request.images[0]))
+            self.assertEqual(padded.crop((0, 0, 1920, 1080)).tobytes(), expected.tobytes())
+            self.assertEqual(padded.crop((0, 1080, 1920, 1088)).tobytes(), expected.crop((0, 1079, 1920, 1080)).tobytes() * 8)
+            self.assertNotIn(274, padded.getexif())

@@ -194,8 +194,10 @@ are refused for Full HD. Native PNG dimensions must match 1920x1088 exactly
 before removing rows1080..1087. An already-cropped or otherwise wrong response
 fails. The existing safe PNG decode/crop/re-encode path strips metadata and emits
 RGB. For a qualified one-reference Full HD edit, validate the original1920x1080
-first, then create a separate PNG containing its unchanged decoded pixels plus
-eight copies of its last row at the bottom. No source file changes or resampling
+first, apply native-equivalent EXIF orientation and RGBA normalization (including
+palette/RGB/L tRNS), and require canonical1920x1080. Orientation-swapped geometry
+is rejected. Then create a separate PNG containing its unchanged canonical pixels
+plus eight copies of its last row at the bottom. No source file changes or resampling
 occur. The native reference is1920x1088, so the pipeline's target-area/multiple32
 resize is identity. Capabilities expose `input_padding:{top:0,right:0,bottom:8,left:0}`
 for this edit mapping (all zero for identity edit profiles). Generation capability
