@@ -15,6 +15,8 @@ from lifecycle import concurrent_profiles as pair
 from lifecycle.manager import Manager
 from runtime import sglang38_pair_file_auth as launcher
 
+ADA_UUID = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
+
 
 def bound(identifier, binding=None):
     binding = binding or BindingFixture()
@@ -123,12 +125,41 @@ class Profiles(unittest.TestCase):
             with patch.object(pair, 'ROOT', root), self.assertRaisesRegex(LifecycleError, 'concurrent_source_pin_mismatch'):
                 pair.declared_profile(pair.GLM_PROFILE)
 
-    def test_gpu_inventory_rejects_indices_duplicates_unknown_and_remapping(self):
-        pair.validate_gpu_inventory('0, ' + pair.GPU_UUIDS[0] + '\n1, ' + pair.GPU_UUIDS[1] + '\n')
-        for rows in ([(0, pair.GPU_UUIDS[1]), (1, pair.GPU_UUIDS[0])], [(0, pair.GPU_UUIDS[0])],
-                     [(0, pair.GPU_UUIDS[0]), (0, pair.GPU_UUIDS[1])], [], None, '0, unknown\n1, unknown'):
+    def test_gpu_inventory_retains_two_gpus_and_accepts_extra_and_reordered_indices(self):
+        inventories = [list(enumerate(pair.GPU_UUIDS)),
+            [(0, pair.GPU_UUIDS[1]), (1, pair.GPU_UUIDS[0])],
+            [(0, pair.GPU_UUIDS[0]), (1, pair.GPU_UUIDS[1]), (2, ADA_UUID)],
+            [(7, pair.GPU_UUIDS[1]), (0, ADA_UUID), (3, pair.GPU_UUIDS[0])]]
+        for rows in inventories:
+            for value in (rows, '\n'.join(f'{index}, {uuid}' for index, uuid in rows) + '\n'):
+                with self.subTest(rows=value):
+                    pair.validate_gpu_inventory(value)
+
+    def test_gpu_inventory_requires_each_fixed_uuid_once_and_unique_physical_indices(self):
+        valid = list(enumerate(pair.GPU_UUIDS))
+        inventories = [[], None, [(0, ADA_UUID)],
+            [(0, pair.GPU_UUIDS[0]), (2, ADA_UUID)],
+            [(1, pair.GPU_UUIDS[1]), (2, ADA_UUID)]]
+        inventories += [valid + [(2, uuid)] for uuid in pair.GPU_UUIDS]
+        inventories += [valid + [(2, ADA_UUID), (3, ADA_UUID)],
+            [(0, pair.GPU_UUIDS[0]), ('0', pair.GPU_UUIDS[1])], valid + [('1', ADA_UUID)]]
+        for rows in inventories:
             with self.subTest(rows=rows), self.assertRaisesRegex(LifecycleError, 'concurrent_gpu_inventory_mismatch'):
                 pair.validate_gpu_inventory(rows)
+
+    def test_gpu_inventory_rejects_malformed_identity_rows_including_extra_device(self):
+        valid = list(enumerate(pair.GPU_UUIDS))
+        bad_rows = [None, '2, ' + ADA_UUID, (2,), (2, ADA_UUID, 'extra'),
+            (True, ADA_UUID), (2.0, ADA_UUID), (-1, ADA_UUID), ('-1', ADA_UUID),
+            ('02', ADA_UUID), ('2.0', ADA_UUID), ('+2', ADA_UUID), ('\u0662', ADA_UUID),
+            ('', ADA_UUID), (2, None), (2, 123), (2, 'RTX 6000 Ada'),
+            (2, 'GPU-unknown'), (2, ADA_UUID[:-1]), (2, ADA_UUID.replace('-', '', 1))]
+        for row in bad_rows:
+            with self.subTest(row=row), self.assertRaisesRegex(LifecycleError, 'concurrent_gpu_inventory_mismatch'):
+                pair.validate_gpu_inventory(valid + [row])
+        for text in ('0, unknown\n1, unknown', '0, ' + pair.GPU_UUIDS[0] + ', extra'):
+            with self.assertRaisesRegex(LifecycleError, 'concurrent_gpu_inventory_mismatch'):
+                pair.validate_gpu_inventory(text)
 
     def test_glm_full_command_pins_allocation_and_native_defaults(self):
         d = bound(pair.GLM_PROFILE)
@@ -174,6 +205,23 @@ class Acceptance(unittest.TestCase):
         self.assertEqual(accepted['slots']['glm']['configured_context'], 480000)
         self.assertEqual(accepted['slots']['glm']['largest_occupied_context'], 65008)
         pair.check_acceptance(bound(pair.QWEN_PROFILE, d['_storage_binding']), instance)
+
+    def test_historical_two_gpu_inventory_and_measurement_bytes_remain_unchanged(self):
+        d = bound(pair.QWEN0_PROFILE); proof, instance = receipt(d)
+        original = copy.deepcopy(proof)
+        for identifier in pair.PROFILES:
+            pair.check_acceptance(bound(identifier, d['_storage_binding']), instance)
+        self.assertEqual(proof, original)
+        self.assertEqual(proof['gpu_inventory'], list(enumerate(pair.GPU_UUIDS)))
+
+    def test_old_critical_source_hash_refuses_even_with_matching_receipt_digest(self):
+        d = bound(pair.QWEN0_PROFILE); proof, instance = receipt(d)
+        critical = 'scripts/lifecycle/concurrent_profiles.py'
+        self.assertIn(critical, proof['source_sha256'])
+        proof['source_sha256'][critical] = '0' * 64
+        instance['concurrent_pair_acceptance']['sha256'] = pair.receipt_sha256(proof)
+        with self.assertRaisesRegex(LifecycleError, 'concurrent_acceptance_identity_mismatch'):
+            pair.check_acceptance(d, instance)
 
     def test_actual_capacity_source_and_margin_evidence_fail_closed(self):
         d = bound(pair.QWEN_PROFILE); original, instance = receipt(d)
@@ -331,7 +379,7 @@ class ManagerPairIntegration(unittest.TestCase):
 
     def test_current_gpu_inventory_blocks_before_artifacts_or_container_creation(self):
         d, _ = self.prepare(pair.GLM_PROFILE)
-        wrong = '0, ' + pair.GPU_UUIDS[1] + '\n1, ' + pair.GPU_UUIDS[0]
+        wrong = '0, ' + ADA_UUID + '\n1, ' + pair.GPU_UUIDS[0]
         with patch.object(self.manager, 'check_sources'), patch.object(self.manager, 'host_guards'), \
                 patch.object(self.manager, 'run', return_value=wrong) as run, \
                 patch.object(self.manager, 'check_artifacts') as artifacts:
@@ -339,6 +387,19 @@ class ManagerPairIntegration(unittest.TestCase):
                 self.manager.prepare_start(d)
             run.assert_called_once_with(['nvidia-smi', '--query-gpu=index,uuid', '--format=csv,noheader'], timeout=30)
             artifacts.assert_not_called()
+            self.assertEqual(self.inspects, [])
+
+    def test_manager_accepts_reordered_extra_gpu_before_existing_artifact_gate(self):
+        d, _ = self.prepare(pair.QWEN0_PROFILE)
+        inventory = f'7, {pair.GPU_UUIDS[1]}\n0, {ADA_UUID}\n3, {pair.GPU_UUIDS[0]}\n'
+        self.manager.instance.update(obsolete_boot_owner_disabled=True,
+                                     obsolete_boot_owner_evidence=['SYNTHETIC'])
+        with patch.object(self.manager, 'check_sources'), patch.object(self.manager, 'host_guards'), \
+                patch.object(self.manager, 'run', return_value=inventory), \
+                patch.object(self.manager, 'check_artifacts', side_effect=LifecycleError('synthetic_artifact_gate')) as artifacts:
+            with self.assertRaisesRegex(LifecycleError, 'synthetic_artifact_gate'):
+                self.manager.prepare_start(d)
+            artifacts.assert_called_once_with(d)
             self.assertEqual(self.inspects, [])
 
 

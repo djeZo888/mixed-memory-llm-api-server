@@ -1,0 +1,38 @@
+{
+  "crop_bottom": 8,
+  "live_acceptance": "PENDING_ROOT_REVIEW_AND_DEPLOYMENT",
+  "native_qualification": {
+    "evidence_scope": "historical native1920x1088; not a new memory measurement",
+    "measured_device_free_percent": 8.880112942612943,
+    "measured_device_peak_mib": 44776.3125,
+    "measured_http_seconds": 53.33550874100001,
+    "path": "reports/image21-qualify-20260923/qualified-cases/refinement-1920x1088.json",
+    "prior_manifest_sha256": "d8d38a8212bb2f040b979f899e74564af541b36a83832b21122f280792b3ec7b",
+    "sha256": "cbf6b540d0d8aabe2db226228fe4ec9531c99e3abc3e8473c18a4a6a29f5153e"
+  },
+  "native_size": "1920x1088",
+  "offline_crop_verification": {
+    "fixture_sha256": "dfd9dd4df45803d1cb50132eb41bd7f4ef2ad9fc8d9a992da20bb6d9d2038763",
+    "protocol_sha256": "35653fa23fa883f20da9c869e75e7fd613008f23fe9793f16e240852b3e40243",
+    "result": "PASS; all retained RGB pixels equal exact top1080 native rows",
+    "result_path": "reports/image21-fhd-20260923/focused-test-result.txt",
+    "result_sha256": "38fcd453dd7091a4ed0e1cad8e2856c85149d0032a327a81d19312ec4fa2879b",
+    "test": "test_corrections.FullHD.test_explicit_mapping_capability_and_exact_native_crop"
+  },
+  "operation": "generation",
+  "public_size": "1920x1080",
+  "references": 0,
+  "removed_rows": [
+    1080,
+    1087
+  ],
+  "resize": false,
+  "retained_rows": [
+    0,
+    1079
+  ],
+  "runtime_unchanged": true,
+  "schema_version": 1,
+  "scope": "Full HD output crop over unchanged already-qualified native workload",
+  "transparent": false
+}

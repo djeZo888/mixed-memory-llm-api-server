@@ -35,7 +35,7 @@ EXPECTED = {
     'schema_version': 1, 'mode': 'socket_proxyd_private_ipv4',
     'interface': 'enp6s18', 'private_address': '10.156.100.60',
     'prefix_length': 24, 'allowed_client_ipv4': ['10.156.100.0/24'],
-    'ports': {'control': 30000, 'glm': 30002, 'qwen38': 30004},
+    'ports': {'control': 30000, 'glm': 30002, 'qwen38': 30004, 'image': 30006},
 }
 
 
@@ -114,7 +114,7 @@ def load_policy():
 def expected_units():
     """Exact reviewed transport units; no deployment/model dependencies."""
     units = {}
-    for role, port in (("control", 30000), ("glm", 30002), ("qwen38", 30004)):
+    for role, port in (("control", 30000), ("glm", 30002), ("qwen38", 30004), ("image", 30006)):
         name = "llm-private-" + role
         units[name + ".socket"] = f"""# N1S owned transport: edits require source/policy review.
 [Unit]
@@ -192,7 +192,7 @@ def _units_stopped():
         _require(info.get('ActiveState') in ('inactive', 'failed')
                  and info.get('UnitFileState') in (('disabled',) if name.endswith('.socket')
                                                    else ('static', 'disabled')),
-                 'stop all six transport units and disable sockets before ingress removal')
+                 'stop all eight transport units and disable sockets before ingress removal')
 
 
 def _installation():
@@ -247,7 +247,7 @@ def _interface():
 
 def _rules():
     jump = ['-d', '10.156.100.60/32', '-p', 'tcp', '-m', 'multiport', '--dports',
-            '30000,30002,30004', '-m', 'comment', '--comment', TAG, '-j', CHAIN]
+            '30000,30002,30004,30006', '-m', 'comment', '--comment', TAG, '-j', CHAIN]
     rules = [
         ['-i', 'lo', '-m', 'comment', '--comment', TAG + ':loopback', '-j', 'ACCEPT'],
         ['-s', '10.156.100.0/24', '-i', 'enp6s18', '-m', 'comment', '--comment',
@@ -395,7 +395,7 @@ def source_check():
     for name, content in expected_units().items():
         _require((root / 'configs/network' / name).read_bytes() == content.encode(),
                  'source unit drift')
-    return 'fixed source policy and six exact units passed (systemd runtime NOT_TESTED)'
+    return 'fixed source policy and eight exact units passed (systemd runtime NOT_TESTED)'
 
 
 def main(argv=None):

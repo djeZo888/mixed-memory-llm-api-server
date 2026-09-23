@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
-from tests.lifecycle.test_concurrent_profiles import bound, receipt, pair, LifecycleError, Manager
+from tests.lifecycle.test_concurrent_profiles import ADA_UUID, bound, receipt, pair, LifecycleError, Manager
 from lifecycle import runtime_io
 
 GIB = 1024**3
@@ -54,7 +54,90 @@ class MemoryFixture:
 class CurrentMemory(unittest.TestCase):
     def setUp(self):
         self.d = bound(pair.GLM_PROFILE)
-        _, self.instance = receipt(self.d)
+        self.proof, self.instance = receipt(self.d)
+
+    def asymmetric_case(self, identifier, resident_slots):
+        """Deliberately distinct synthetic totals/peaks; never hardware evidence."""
+        for review in self.proof['modes'].values():
+            review['slots']['glm'].update(gpu_total_bytes=96 * GIB, minimum_free_gpu_bytes=24 * GIB)
+            review['slots']['qwen'].update(gpu_total_bytes=80 * GIB, minimum_free_gpu_bytes=20 * GIB)
+        self.instance['concurrent_pair_acceptance']['sha256'] = pair.receipt_sha256(self.proof)
+        d = bound(identifier, self.d['_storage_binding'])
+        mode = 'dual-qwen' if identifier == pair.QWEN0_PROFILE else 'glm-qwen'
+        residents = {slot: resident(slot) for slot in resident_slots}
+        for slot, container in residents.items():
+            container['Config']['Labels']['io.llmctl.deployment'] = pair.MODES[mode][slot]
+        fixture = MemoryFixture(residents={slot: 1 for slot in residents})
+        target = pair.slot_for_deployment(identifier)
+        needed = {slot: (16 if slot in residents else (88 if slot == 'glm' else 76)) * GIB
+                  for slot in set(residents) | {target}}
+        # Ada is intentionally first and abundant, with remapped physical indices.
+        rows = [[0, ADA_UUID, 256 * 1024, 255 * 1024],
+                [7, pair.GPU_UUIDS[1], 80 * 1024, needed.get('qwen', 80 * GIB) // 1024**2],
+                [3, pair.GPU_UUIDS[0], 96 * 1024, needed.get('glm', 96 * GIB) // 1024**2]]
+        return d, residents, fixture, rows, needed
+
+    @staticmethod
+    def set_gpu_rows(fixture, rows):
+        fixture.overrides[tuple(GPU_QUERY)] = '\n'.join(', '.join(map(str, row)) for row in rows)
+
+    def test_reordered_asymmetric_memory_follows_each_uuid_for_new_and_resident_slots(self):
+        for identifier in pair.PROFILES:
+            for resident_slots in ((), ('glm',), ('qwen',), ('glm', 'qwen')):
+                d, residents, fixture, rows, needed = self.asymmetric_case(identifier, resident_slots)
+                for inventory in (rows, list(reversed(rows)), rows[1:], list(reversed(rows[1:]))):
+                    with self.subTest(identifier=identifier, residents=resident_slots, rows=inventory):
+                        self.set_gpu_rows(fixture, inventory)
+                        result = pair.preflight_current(d, self.instance, fixture.run, residents=residents)
+                        self.assertEqual(result['gpu_required_free_bytes'], needed)
+
+    def test_abundant_ada_and_peer_cannot_cover_low_free_exact_blackwell(self):
+        for identifier in pair.PROFILES:
+            for resident_slots in ((), ('glm',), ('qwen',), ('glm', 'qwen')):
+                d, residents, fixture, rows, needed = self.asymmetric_case(identifier, resident_slots)
+                for slot, required in needed.items():
+                    bad = copy.deepcopy(rows)
+                    for row in bad:
+                        row[3] = row[2]  # Every other GPU has all its memory free.
+                        if row[1] == pair.GPU_UUIDS[0 if slot == 'glm' else 1]:
+                            row[3] = required // 1024**2 - 1
+                    self.set_gpu_rows(fixture, bad)
+                    with self.subTest(identifier=identifier, residents=resident_slots, low=slot), \
+                            self.assertRaisesRegex(LifecycleError, 'concurrent_current_gpu_memory_insufficient'):
+                        pair.preflight_current(d, self.instance, fixture.run, residents=residents)
+
+    def test_wrong_total_for_target_or_resident_uuid_refuses_even_with_matching_ada_total(self):
+        for identifier in pair.PROFILES:
+            for resident_slots in ((), ('glm', 'qwen')):
+                d, residents, fixture, rows, needed = self.asymmetric_case(identifier, resident_slots)
+                for slot in needed:
+                    bad = copy.deepcopy(rows)
+                    for row in bad:
+                        if row[1] == pair.GPU_UUIDS[0 if slot == 'glm' else 1]:
+                            # Ada has the exact expected total; the required UUID does not.
+                            bad[0][2:] = [row[2], row[2]]
+                            row[2] += 1024
+                            row[3] = row[2]
+                    self.set_gpu_rows(fixture, bad)
+                    with self.subTest(identifier=identifier, residents=resident_slots, wrong=slot), \
+                            self.assertRaisesRegex(LifecycleError, 'concurrent_current_gpu_memory_unavailable'):
+                        pair.preflight_current(d, self.instance, fixture.run, residents=residents)
+
+    def test_current_memory_rejects_missing_duplicate_and_malformed_gpu_rows(self):
+        d, residents, fixture, rows, _ = self.asymmetric_case(pair.GLM_PROFILE, ())
+        identity_cases = [rows[:2], [rows[0], rows[2]], rows + [[9, *rows[2][1:]]],
+                          rows + [[3, ADA_UUID, 49140, 49140]]]
+        malformed = [[], [*rows, [9, ADA_UUID]],
+                     [*rows[1:], [0, ADA_UUID, 'N/A', 'N/A']],
+                     [*rows[1:], [0, ADA_UUID, 0, 0]],
+                     [*rows[1:], [0, ADA_UUID, 49140, 49141]],
+                     [*rows[1:], [0, ADA_UUID, 49140, -1]]]
+        for cases, code in ((identity_cases, 'concurrent_gpu_inventory_mismatch'),
+                            (malformed, 'concurrent_current_gpu_memory_unavailable')):
+            for inventory in cases:
+                self.set_gpu_rows(fixture, inventory)
+                with self.subTest(rows=inventory), self.assertRaisesRegex(LifecycleError, code):
+                    pair.preflight_current(d, self.instance, fixture.run, residents=residents)
 
     def test_fresh_load_requires_full_host_cap_headroom_and_measured_gpu_allocation(self):
         fixture = MemoryFixture(available=656)

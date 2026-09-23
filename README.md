@@ -1,6 +1,6 @@
 # mixed-memory-llm-api-server
 
-An API-only local AI server for **Qwen3.8-27B FP8** and **GLM5.3 UD-Q4_K_XL**.
+An API-only local AI server for **Qwen3.8-27B FP8**, **GLM5.3 UD-Q4_K_XL** and dedicated **Qwen-Image-2.1** generation.
 Reviewed source `04143b18cca7aca724d9a4a4bcf943fe86c040db` defines **dual-qwen**
 as the default: one Qwen instance per GPU. Optional **glm-qwen** replaces only
 GPU0 with GLM; returning to dual-qwen replaces GPU0 with Qwen again.
@@ -19,7 +19,7 @@ Refresh status before use; this is a dated snapshot.
 | GPU1 / `qwen`, both modes | `qwen38-27b-q1-480000-yarn4-bf16kv` | `qwen3.8-27b` / 30004 |
 | GPU0 / `glm`, optional | `glm-5.3-ud-q4-k-xl-g1-480000` | `glm-5.3` / 30002 |
 
-All three configure **480,000 tokens** on the existing **72-vCPU guest**.
+All three text deployment profiles configure **480,000 tokens** on the existing **72-vCPU guest**.
 Both Qwen instances share guest CPUs 0–7 (union 8); optional GLM uses 0–71,
 sharing 0–7 with GPU1 Qwen. These are guest affinity masks, not exclusive cores
 or physical host pinning. [Model matrix](docs/model-matrix.md) records resources
@@ -31,6 +31,22 @@ Q1's outer JSON fence failed strict formatting. Output windows did not overlap.
 Its STOPPED/manual restoration is historical benchmark state, not production
 state or activation acceptance.
 
+The dedicated Ada image service preserves both warm text Qwens and their 480,000-token
+profiles. Its six accepted opaque generation sizes are **1024x1024, 1024x576,
+1216x704, 1472x832, 1760x992 and 1920x1080**. The public hard ceiling is
+1920x1080 / 2073600 pixels. Full HD uses native 1920x1088 and removes exactly eight
+bottom rows; smaller profiles keep native=public. No resize. Editing and transparency
+remain unqualified; public 1920x1088 and UHD are refused.
+
+Deployed image API/helper source is `36c7c2d2ee8d9ed59e9310e708eb640c5aecad5e`.
+One Full HD Lake Bled acceptance returned a fully decoded RGB PNG in 54.8s helper
+time, with the API ready/idle afterward and both original text containers unchanged.
+See [Full HD deployment and acceptance](reports/image21-fhd-20260923/RESULT.md)
+and [ready-to-run examples with full prompts](examples/image-api/README.md).
+The [historical qualification](reports/image21-qualify-20260923/RESULT.md) retains
+native 1920x1088 timing/memory evidence (8.88% sampled device-free margin); no new
+memory benchmark was run for the identical native workload.
+
 ## Use the APIs
 
 Control uses `http://10.156.100.60:30000/control/v1/...`. Clients discover and
@@ -39,6 +55,7 @@ with `/v1`; the aliases above identify the loaded instance. There is no common
 inference router or automatic fallback. Native listeners stay authenticated
 IPv4 loopback behind the reviewed private transport.
 
+- [Image API source and integration](docs/image-api.md): authenticated private Qwen-Image-2.1 generation API; editing is unsupported after failed visual fidelity. See [Full HD acceptance](reports/image21-fhd-20260923/RESULT.md) for current sizes and evidence.
 - [API operations and examples](docs/ai-vm-api-operations.md): discovery,
   separate credentials, targeted switch/poll and inference.
 - [Control contract](docs/control-api.md) and [inference contract](docs/api-contract.md).
