@@ -1,24 +1,18 @@
 # Bounded private image API — source integration
 
-The deployed generation-only service uses reviewed API code
-`f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7` and the pinned Ada SGLang runtime.
-Its individually measured opaque generation sizes are **1024x1024, 1024x576,
-1216x704, 1472x832, 1760x992 and 1920x1088**. Delivered and native dimensions match
-at every accepted size, with no crop or resize. Editing remains unsupported after
-both SGLang RGBA/RGB attempts and the completed pinned Diffusers reference failed
-fidelity; a valid public edit receives HTTP 400 `unqualified_profile`. UHD,
-transparency and two-reference profiles remain unqualified. See the
-[current qualification report](../reports/image21-qualify-20260923/RESULT.md) for
-timings, memory margins and untested targets.
+The Full HD candidate exposes six opaque generation sizes: **1024x1024,
+1024x576, 1216x704, 1472x832, 1760x992 and 1920x1080**. The public hard ceiling
+is **1920x1080 / 2073600 pixels**. Full HD uses the already-qualified native
+1920x1088 workload (2088960 pixels) and removes exactly eight bottom rows;
+there is no resize. The five smaller profiles retain native=public and crop0.
+Public 1920x1088 and UHD are refused. Editing and transparency remain unqualified.
 
-The installed protected qualification manifest has SHA256
-`d8d38a8212bb2f040b979f899e74564af541b36a83832b21122f280792b3ec7b` and exposes
-those six opaque generation profiles. Retained Worker2 evidence from
-2026-09-23 at 04:31 UTC records four authenticated GETs, all HTTP 200: liveness,
-readiness, models and capabilities. The API was ready, idle and admitting, with
-exact runtime pins and no edit profiles. These are retained observations; local
-closeout made no service calls. The documentation and evidence publication is a
-separate commit from the deployed API code and requires no redeployment.
+See the [Full HD change report](../reports/image21-fhd-20260923/RESULT.md) for
+candidate/deployment status. The [prior qualification report](../reports/image21-qualify-20260923/RESULT.md)
+is immutable historical native workload evidence, including 53.3355 s and
+44776.3125 MiB sampled device peak for 1920x1088. This change does not claim a
+new memory benchmark. The protected manifest binds the Full HD crop evidence to
+that same qualified native workload; smaller-profile evidence hashes are retained.
 
 The generic `qualification.empty.json` source template still contains **no measured
 profiles and no runtime image digest**. Deploying that empty template keeps
@@ -54,19 +48,19 @@ Unknown fields, queries, URLs, server paths, runtime settings,
 masks, duplicate fields, mixed image/image[] lists and other formats are refused.
 Masks are not pixel-preserving inpainting: the upstream native implementation
 ignores its mask parameter. No resizing, downsampling, public URLs or stored jobs.
-The sole optional pad/crop path requires measurement of the exact UHD recipe below.
+The sole geometry exception is the explicit generation-only Full HD crop below.
 
 Limits are 32 MiB encoded/file, 64 MiB combined encoded files, two references,
 64 MiB+64 KiB total streamed multipart body including its bounded envelope, and
 64 KiB JSON body. Content-Length, MIME type and uploaded filename never authorize
 content. Decode actual PNG/JPEG dimensions and reject malformed/bomb/multiframe
 images. Each edit reference must equal the exact qualified public output dimensions.
-Maximum dimensions are 3840x2160 and 8294400 pixels, permitted only in a reviewed
+Maximum public dimensions are 1920x1080 and 2073600 pixels, permitted only in a reviewed
 profile. One-reference editing and generation are separate profiles. Two-reference
 sizes require their own evidence, remain 1024-class until then, and never inherit
 the one-reference ceiling. Output must decode as one PNG of the exact selected
 native size, then only the explicitly approved bottom crop if present; public output
-remains at most 8294400 pixels. Re-encoding strips native metadata. Only `created` and `data[].b64_json` are
+remains at most 2073600 pixels. Re-encoding strips native metadata. Only `created` and `data[].b64_json` are
 returned, never raw native errors, revised prompts, paths or URLs.
 
 ## Admission and recovery
@@ -177,12 +171,13 @@ install-time schema example with zero support claims. Root-protected manifest fi
 | `model_id`, `model_revision` | `Qwen/Qwen-Image-2.1`, `790c92633540aa0cb11d9abf19eb46d861714758` |
 | `runtime_image_digest` | `null` until known; exact `sha256:` OCI digest required for any profiles |
 | `profiles` | list of separately reviewed measured cases, initially empty |
+| `limits` | exact fixed `max_width=1920`, `max_height=1080`, `max_pixels=2073600`, `native_max_pixels=2088960`; missing or different values refuse startup |
 
 Each profile requires `operation` (`generation`/`edit`), public `size`, `references`
 (0 generation; 1/2 edit), `transparent` (boolean), `conditioning` (empty for opaque;
 explicit bounded model conditioning text for transparent), and `evidence_sha256`
 (lowercase 64-hex digest of reviewed qualification evidence). Optional `native_size`
-and `crop_bottom` default to public size and 0 for ordinary non-UHD profiles. UHD
+and `crop_bottom` default to public size and 0 for the five smaller profiles. Full HD
 requires both explicit mapping fields as described below. These
 two effective fields are always exposed in capability records. Duplicate profiles
 are rejected. Transparent profiles require both measured alpha and visual task
@@ -190,23 +185,20 @@ acceptance; output alpha is checked after any approved crop on every response. C
 sizes, projected memory or this schema are never measured evidence. The helper
 and manifest review bind evidence to exact actual model/runtime/build identity.
 
-The sole nonidentity mapping is an explicit public `size=3840x2160`,
-`native_size=3840x2176`, `crop_bottom=16` profile: generation with 0 references or
-editing with exactly 1. This mapping is mandatory for UHD because the pinned native
-runtime requires 32 px alignment: reject missing mapping and explicit raw native
-3840x2160/crop0. Remove exactly the 16 bottom native output rows; for the edit,
-edge-pad exactly 16 bottom input rows by repeating the last decoded public row.
-No resize, distortion, arbitrary crop or larger public image admission. Public
-input/output limits remain 8294400 pixels; only this native recipe allows 8355840.
-All other profiles require native=public and crop0. Two-reference UHD is rejected
-pending separate root authorization/qualification. Native dimensions must match
-exactly before cropping; an already-cropped or otherwise wrong response fails.
+The sole nonidentity mapping is public `size=1920x1080`,
+`native_size=1920x1088`, `crop_bottom=8`, opaque generation with zero references.
+Missing mapping, raw native1080/crop0, edits, transparency and arbitrary mappings
+are refused for Full HD. Native PNG dimensions must match 1920x1088 exactly
+before removing rows1080..1087. An already-cropped or otherwise wrong response
+fails. The existing safe PNG decode/crop/re-encode path strips metadata and emits
+RGB. No edit padding remains. Public input/output has the 2073600-pixel limit;
+only this native output crop allows 2088960 pixels.
 
-For example, that future measured edit entry would authorize only same-public-size
-one-reference UHD edits with this precise padding/cropping recipe. It says nothing
-about transparency or generation support. This is a schema example, **not a shipped
-or measured profile**. Worker1 must measure this exact recipe with >=5% VRAM margin
-and visual success before publishing any entry. The generic template profiles remain empty; the deployed measured manifest contains only the six opaque generation profiles listed above.
+The generic template remains empty. The proposed protected six-profile manifest
+and hash-bound crop/native evidence are in the Full HD report. Deployment requires
+root review of exact source and evidence; offline fixtures do not claim live
+acceptance. No model/runtime/settings/placement change or new memory qualification
+is needed for the identical native workload.
 
 ## Offline verification and source migration
 
@@ -215,10 +207,10 @@ From the repository using the separate adapter environment:
 ```sh
 uv venv ../.venv
 uv pip sync --require-hashes --python ../.venv/bin/python scripts/image_api/requirements.lock
-PYTHONDONTWRITEBYTECODE=1 ../.venv/bin/python -m unittest discover -s tests/image_api -v
-PYTHONDONTWRITEBYTECODE=1 ../.venv/bin/python -m unittest discover -s tests -p 'test_private_network*.py' -v
-PYTHONDONTWRITEBYTECODE=1 ../.venv/bin/python tests/test_control_source_closure.py
-python3 -B scripts/control/private_network.py source-check
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=tests/image_api ../.venv/bin/python -m unittest -v \
+  test_corrections.FullHD test_protection.Configuration \
+  test_handlers.Handlers.test_empty_profiles_fail_closed_and_capabilities_distinguish_profiles \
+  test_handlers.Handlers.test_unsafe_unknown_fields_and_invalid_model_n_seed_size
 ```
 
 Direct and transitive dependencies are hash-pinned in the separate
@@ -244,8 +236,7 @@ task did not establish live inference, image quality, Linux service/sudo/storage
 cleanup, runtime pins, firewall or client acceptance. Subsequent retained deployment
 and qualification evidence is recorded in the
 [current report](../reports/image21-qualify-20260923/RESULT.md); its scope and limits
-apply to those observations. This documentation closeout performs no new runtime
-checks or activation.
+apply to those observations. The Full HD report separately records its bounded deployment and single acceptance status.
 
 ## Pinned primary source contract
 

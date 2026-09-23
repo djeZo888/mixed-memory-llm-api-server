@@ -6,7 +6,17 @@ supersedes earlier new-model exclusions only for this image service and necessar
 three-GPU compatibility. ai-harness/MiniMax integration and installer work remain
 deferred. First-party additions remain MIT; model license is tracked separately.
 
-## Current facts and first tasks
+## Current bounded follow-up
+
+The original execution and ladder below are historical. The Full HD follow-up
+supersedes the public ceiling: 1920x1080 / 2073600 pixels, with exactly native
+1920x1088 / 2088960 pixels followed by removal of eight bottom rows. Preserve the
+five smaller opaque profiles. Editing/transparency remain unqualified; UHD and
+public1088 are refused. Both original text Qwens and the image model remain
+resident. No new memory benchmark, runtime/model changes or repeated inference;
+see [current report](../reports/image21-fhd-20260923/RESULT.md).
+
+## Historical facts and first tasks
 
 Read-only inventory found driver 595.84, 72 guest vCPUs and three GPUs. Blackwell
 UUIDs are GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237 and

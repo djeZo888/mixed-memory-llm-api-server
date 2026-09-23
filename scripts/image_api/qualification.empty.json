@@ -4,5 +4,11 @@
   "model_id": "Qwen/Qwen-Image-2.1",
   "model_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
   "runtime_image_digest": null,
-  "profiles": []
+  "profiles": [],
+  "limits": {
+    "max_width": 1920,
+    "max_height": 1080,
+    "max_pixels": 2073600,
+    "native_max_pixels": 2088960
+  }
 }

@@ -21,10 +21,12 @@ FILE_LIMIT = 32 * 1024 * 1024
 TOTAL_LIMIT = 64 * 1024 * 1024
 ENVELOPE_LIMIT = 64 * 1024
 JSON_LIMIT = 64 * 1024
-PIXEL_LIMIT = 8294400  # Public input/output bound, even for the UHD recipe.
-UHD_NATIVE_PIXELS = 8355840
+PIXEL_LIMIT = 2073600  # Public Full HD ceiling.
+FHD_NATIVE_PIXELS = 2088960
+HARD_LIMITS = {'max_width': 1920, 'max_height': 1080, 'max_pixels': PIXEL_LIMIT,
+               'native_max_pixels': FHD_NATIVE_PIXELS}
 OUTPUT_LIMIT = 48 * 1024 * 1024
-Image.MAX_IMAGE_PIXELS = UHD_NATIVE_PIXELS  # Explicit public/native checks below remain mandatory.
+Image.MAX_IMAGE_PIXELS = FHD_NATIVE_PIXELS  # Explicit public/native checks below remain mandatory.
 
 
 class Refusal(Exception):
@@ -69,24 +71,23 @@ def dimensions(value):
     if not isinstance(value, str) or not re.fullmatch(r'[1-9][0-9]{0,3}x[1-9][0-9]{0,3}', value):
         raise Refusal()
     width, height = map(int, value.split('x'))
-    if width > 3840 or height > 2160 or width * height > PIXEL_LIMIT:
+    if width > HARD_LIMITS['max_width'] or height > HARD_LIMITS['max_height'] or width * height > PIXEL_LIMIT:
         raise Refusal(400, 'unsupported_size')
     return width, height
 
 
 def profile_geometry(profile):
-    """Only the reviewed UHD exception; legacy profiles retain native=public."""
+    """Only opaque generation has the explicit Full HD bottom-row crop."""
     public = profile['size']
+    dimensions(public)
     native = profile.get('native_size', public)
     crop = profile.get('crop_bottom', 0)
     if type(crop) is not int or not isinstance(native, str):
         raise Refusal()
-    if public == '3840x2160':
-        # UHD always requires the explicit aligned recipe; raw2160 is not a
-        # valid native height. Two-reference UHD is not currently authorized.
-        if (native == '3840x2176' and crop == 16
-                and ((profile['operation'] == 'generation' and profile['references'] == 0)
-                     or (profile['operation'] == 'edit' and profile['references'] == 1))):
+    if public == '1920x1080':
+        if (native == '1920x1088' and crop == 8
+                and profile['operation'] == 'generation' and profile['references'] == 0
+                and profile['transparent'] is False):
             return native, crop
         raise Refusal()
     if native == public and crop == 0:
@@ -97,12 +98,16 @@ def profile_geometry(profile):
 def qualification(value):
     """Protected local data is authority; no configured size becomes measured."""
     keys = {'schema_version', 'runtime_revision', 'model_id', 'model_revision',
-            'runtime_image_digest', 'profiles'}
+            'runtime_image_digest', 'profiles', 'limits'}
     if not isinstance(value, dict) or set(value) != keys:
         raise Refusal()
     if (type(value['schema_version']) is not int or value['schema_version'] != 1
             or value['runtime_revision'] != RUNTIME_REVISION or value['model_id'] != MODEL_ID
             or value['model_revision'] != MODEL_REVISION):
+        raise Refusal()
+    limits = value['limits']
+    if (not isinstance(limits, dict) or limits != HARD_LIMITS
+            or any(type(v) is not int for v in limits.values())):
         raise Refusal()
     digest = value['runtime_image_digest']
     if digest is not None and (not isinstance(digest, str) or not re.fullmatch(r'sha256:[0-9a-f]{64}', digest)):
@@ -144,16 +149,14 @@ class Validated:
     crop_bottom: int
 
 
-def decode_image(raw, size, *, output=False, transparent=False, crop_bottom=0, pad_bottom=False):
+def decode_image(raw, size, *, output=False, transparent=False, crop_bottom=0):
     """Check real content and full decode; never resize or trust MIME/extension."""
     try:
         maximum = PIXEL_LIMIT
         if crop_bottom:
-            if not output or crop_bottom != 16 or size != (3840, 2176):
+            if not output or crop_bottom != 8 or size != (1920, 1088):
                 raise ValueError()
-            maximum = UHD_NATIVE_PIXELS
-        if pad_bottom and (output or size != (3840, 2160)):
-            raise ValueError()
+            maximum = FHD_NATIVE_PIXELS
         with warnings.catch_warnings():
             warnings.simplefilter('error', Image.DecompressionBombWarning)
             with Image.open(io.BytesIO(raw)) as probe:
@@ -165,19 +168,7 @@ def decode_image(raw, size, *, output=False, transparent=False, crop_bottom=0, p
             with Image.open(io.BytesIO(raw)) as image:
                 image.load()
                 if crop_bottom:
-                    image = image.crop((0, 0, 3840, 2160))
-                if pad_bottom:
-                    # PNG transport preserves decoded pixels and replicates only
-                    # the last public row. No resampling, scaling or interpolation.
-                    source = image.convert('RGBA')
-                    padded = Image.new('RGBA', (3840, 2176))
-                    padded.paste(source, (0, 0))
-                    edge = source.crop((0, 2159, 3840, 2160))
-                    for y in range(2160, 2176):
-                        padded.paste(edge, (0, y))
-                    stream = io.BytesIO()
-                    padded.save(stream, format='PNG')
-                    return stream.getvalue()
+                    image = image.crop((0, 0, 1920, 1080))
                 if output:
                     if transparent and ('A' not in image.getbands()
                                         or image.getchannel('A').getextrema()[0] == 255):
@@ -222,10 +213,8 @@ def validate(fields, images, operation, config):
     if any(len(raw) > FILE_LIMIT for raw in images) or sum(map(len, images)) > TOTAL_LIMIT:
         raise Refusal(413, 'input_too_large')
     native_size, crop_bottom = profile_geometry(profile)
-    for index, raw in enumerate(images):
-        padded = decode_image(raw, size, pad_bottom=bool(crop_bottom))
-        if crop_bottom:
-            images[index] = padded
+    for raw in images:
+        decode_image(raw, size)
     native = {'model': ALIAS, 'prompt': (profile['conditioning'] + '\n' if transparent else '') + prompt,
               'n': 1, 'size': native_size, 'response_format': 'b64_json', 'output_format': 'png',
               'background': value['background'], 'num_inference_steps': 40,

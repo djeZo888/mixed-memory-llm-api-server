@@ -35,13 +35,18 @@ Current Image21 authority, 2026-09-23: the approved
 [current qualification report](reports/image21-qualify-20260923/RESULT.md) cover
 three resident models: both existing 480,000-token text Qwens and dedicated
 Qwen-Image-2.1 generation. Six opaque sizes are accepted: 1024x1024, 1024x576,
-1216x704, 1472x832, 1760x992 and 1920x1088. Editing and UHD remain unqualified.
+1216x704, 1472x832, 1760x992 and public 1920x1080 (native 1920x1088,
+exact crop of eight bottom rows). Public hard ceiling: 1920x1080 / 2073600 pixels;
+native cap: 2088960 pixels. Editing, transparency and UHD remain unqualified.
 The separate image API unit owns backend boot and reconciliation. Older singleton,
 two-model and no-new-model clauses are superseded only within this approved scope;
-installer, frontend and harness exclusions remain. The current closeout is local
-documentation and evidence packaging only: preserve deployed code
-`f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7` and warm services. Root owns bundle
-review, import and publication; this closeout authorizes no VM contact or new tests.
+installer, frontend and harness exclusions remain. The bounded Full HD change is governed by
+[its current report](reports/image21-fhd-20260923/RESULT.md): root reviews the exact
+candidate before guarded atomic activation, then Worker1 performs exactly one
+public Full HD generation. Preserve original qualification receipts and both warm
+text services; no model/runtime/placement changes or new memory benchmark. Root
+owns final review and normal PR5 update; no main merge or force push.
+
 
 ## Authorized sequence and ownership
 

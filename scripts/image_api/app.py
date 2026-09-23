@@ -10,7 +10,7 @@ from starlette.requests import ClientDisconnect
 from starlette.responses import JSONResponse
 
 from .backend import NativeBackend, recover
-from .protocol import ALIAS, BackendFailure, Refusal, owned_thread, profile_geometry, validate
+from .protocol import ALIAS, HARD_LIMITS, BackendFailure, Refusal, owned_thread, profile_geometry, validate
 from .uploads import Uploads, read_json
 
 REQUEST_BUDGET = 900
@@ -241,8 +241,8 @@ def create_app(config, key, *, backend=None, recovery=recover, budget=REQUEST_BU
                               'native_size': profile_geometry(p)[0], 'crop_bottom': profile_geometry(p)[1]}
                              for p in config['profiles']],
                 'limits': {'encoded_file_bytes': 33554432, 'encoded_total_bytes': 67108864,
-                           'maximum_pixels_when_qualified': 8294400, 'references': 2,
-                           'approved_uhd_native_pixels': 8355840,
+                           'maximum_pixels_when_qualified': HARD_LIMITS['max_pixels'], 'references': 2,
+                           **HARD_LIMITS,
                            'n': 1, 'active': 1, 'waiting': 0, 'budget_seconds': 900},
                 'defaults': {'size': '1024x1024', 'steps': 40, 'cfg': 1, 'generator_device': 'cpu'},
                 'masks': False, 'response_format': 'b64_json', 'output_format': 'png'}

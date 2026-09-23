@@ -163,20 +163,13 @@ class Handlers(unittest.IsolatedAsyncioTestCase):
             caps = (await client.get('/v1/image-capabilities')).json()
             self.assertEqual(caps['profiles'], [])
             self.assertFalse(caps['admitting'])
-        measured = [{**profile(operation, references, '3840x2160'),
-                     'native_size': '3840x2176', 'crop_bottom': 16}
-                    for operation, references in [('generation', 0), ('edit', 1)]] + [profile('edit', 2)]
+        measured = [{**profile('generation', 0, '1920x1080'),
+                     'native_size': '1920x1088', 'crop_bottom': 8}]
         async with fixture(qualification=config(measured)) as (client, _, backend, _):
-            self.assertEqual((await client.get('/v1/image-capabilities')).json()['profiles'][1]['references'], 1)
+            caps = (await client.get('/v1/image-capabilities')).json()['profiles']
+            self.assertEqual(caps[0]['references'], 0)
             self.assertEqual((await client.post('/v1/images/generations', json={'prompt': 'x'})).status_code, 400)
-            # Qualified UHD one-reference has no old 4MP ceiling.
-            image = png((3840, 2160))
-            reply = await client.post('/v1/images/edits', data={'prompt': 'x', 'size': '3840x2160'},
-                                      files={'image': ('x.png', image, 'image/png')})
-            self.assertEqual(reply.status_code, 200)
-            reply = await client.post('/v1/images/edits', data={'prompt': 'x', 'size': '3840x2160'},
-                                      files=[('image', ('x', image)), ('image', ('y', image))])
-            self.assertEqual(reply.status_code, 400)
+            self.assertEqual(backend.calls, [])
 
     async def test_png_jpeg_references_actual_decode_and_no_resize(self):
         async with fixture() as (client, _, backend, _):

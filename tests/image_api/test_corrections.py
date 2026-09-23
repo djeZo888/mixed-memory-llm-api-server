@@ -1,4 +1,4 @@
-"""Root correction fixtures: ASGI ownership/health and the sole UHD mapping.
+"""Root correction fixtures: ASGI ownership/health and the sole Full HD mapping.
 
 All images and backend responses are local synthetic source fixtures, never
 Worker1 qualification or actual native SGLang/GPU acceptance.
@@ -212,8 +212,8 @@ class Health(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(sum(method == 'POST' for method, _ in observed), 1)
 
 
-def uhd_profile(operation, references):
-    return {**profile(operation, references, '3840x2160'), 'native_size': '3840x2176', 'crop_bottom': 16}
+def fhd_profile():
+    return {**profile('generation', 0, '1920x1080'), 'native_size': '1920x1088', 'crop_bottom': 8}
 
 
 def encoded(image):
@@ -222,11 +222,12 @@ def encoded(image):
     return result.getvalue()
 
 
-class UHD(unittest.IsolatedAsyncioTestCase):
+class FullHD(unittest.IsolatedAsyncioTestCase):
     async def test_explicit_mapping_capability_and_exact_native_crop(self):
-        output = Image.new('RGB', (3840, 2176), (10, 20, 30))
-        output.paste((1, 2, 3), (0, 2159, 3840, 2160))
-        output.paste((250, 0, 0), (0, 2160, 3840, 2176))
+        output = Image.new('RGB', (1920, 1088))
+        # Every row differs; equality proves retained rows were neither scaled nor shifted.
+        for y in range(1088):
+            output.paste((y % 256, y // 256, 73), (0, y, 1920, y + 1))
         observed = []
         async def upstream(request):
             if request.method == 'GET':
@@ -234,87 +235,99 @@ class UHD(unittest.IsolatedAsyncioTestCase):
             observed.append(json.loads(await request.aread()))
             return httpx.Response(200, json={'data': [{'b64_json': base64.b64encode(encoded(output)).decode()}]})
         native = wire.NativeBackend(transport=httpx.MockTransport(upstream))
-        async with fixture(backend=native, qualification=config([uhd_profile('generation', 0)])) as (client, _, _, _):
+        async with fixture(backend=native, qualification=config([fhd_profile()])) as (client, _, _, _):
             caps = (await client.get('/v1/image-capabilities')).json()
-            self.assertEqual(caps['profiles'][0]['native_size'], '3840x2176')
-            self.assertEqual(caps['profiles'][0]['crop_bottom'], 16)
-            self.assertEqual(caps['limits']['maximum_pixels_when_qualified'], 8294400)
-            self.assertEqual(caps['limits']['approved_uhd_native_pixels'], 8355840)
-            reply = await client.post('/v1/images/generations', json={'prompt': 'x', 'size': '3840x2160'})
+            self.assertEqual(caps['profiles'][0]['native_size'], '1920x1088')
+            self.assertEqual(caps['profiles'][0]['crop_bottom'], 8)
+            self.assertEqual(caps['limits']['maximum_pixels_when_qualified'], 2073600)
+            self.assertEqual({k: caps['limits'][k] for k in protocol.HARD_LIMITS}, protocol.HARD_LIMITS)
+            self.assertNotIn('approved_uhd_native_pixels', caps['limits'])
+            reply = await client.post('/v1/images/generations', json={
+                'prompt': 'full prompt fixture', 'size': '1920x1080', 'seed': 42, 'n': 1})
             self.assertEqual(reply.status_code, 200)
             actual = Image.open(io.BytesIO(base64.b64decode(reply.json()['data'][0]['b64_json'])))
-            self.assertEqual(actual.size, (3840, 2160))
-            self.assertEqual(actual.tobytes(), output.crop((0, 0, 3840, 2160)).tobytes())
-            self.assertEqual(observed[0]['size'], '3840x2176')
-            self.assertEqual(observed[0]['generator_device'], 'cpu')
-
-    async def test_one_reference_bottom_edge_padding_preserves_decoded_pixels(self):
-        public = Image.new('RGBA', (3840, 2160), (10, 20, 30, 200))
-        public.paste((30, 40, 50, 60), (0, 2159, 3840, 2160))
-        original = encoded(public)
-        native = Backend()
-        received = []
-        original_call = native.call
-        async def capture(request):
-            received.append((copy.deepcopy(request.native), request.images[0]))
-            return await original_call(request)
-        native.call = capture
-        async with fixture(backend=native, qualification=config([uhd_profile('edit', 1)])) as (client, _, _, _):
-            reply = await client.post('/v1/images/edits', data={'prompt': 'x', 'size': '3840x2160'},
-                                      files={'image': ('fixture.png', original)})
-            self.assertEqual(reply.status_code, 200)
-            actual = Image.open(io.BytesIO(received[0][1]))
-            self.assertEqual(actual.size, (3840, 2176))
-            self.assertEqual(actual.crop((0, 0, 3840, 2160)).tobytes(), public.tobytes())
-            last_row = public.crop((0, 2159, 3840, 2160)).tobytes()
-            self.assertEqual(actual.crop((0, 2160, 3840, 2176)).tobytes(), last_row * 16)
-            self.assertEqual(received[0][0]['size'], '3840x2176')
-            self.assertEqual(received[0][0]['generator_device'], 'cpu')
-            # Native-sized public uploads remain over the public pixel bound.
-            reply = await client.post('/v1/images/edits', data={'prompt': 'x', 'size': '3840x2160'},
-                                      files={'image': ('too-large.png', received[0][1])})
-            self.assertEqual(reply.status_code, 400)
-            self.assertEqual(len(received), 1)
+            self.assertEqual(actual.size, (1920, 1080))
+            self.assertEqual(actual.mode, 'RGB')
+            self.assertEqual(actual.tobytes(), output.crop((0, 0, 1920, 1080)).tobytes())
+            self.assertEqual(observed, [{'model': protocol.ALIAS, 'prompt': 'full prompt fixture',
+                'n': 1, 'size': '1920x1088', 'response_format': 'b64_json', 'output_format': 'png',
+                'background': 'opaque', 'num_inference_steps': 40, 'guidance_scale': 1,
+                'true_cfg_scale': 1, 'generator_device': 'cpu', 'seed': 42}])
 
     async def test_wrong_native_dimensions_fail_instead_of_accepting_or_resizing(self):
-        for size in [(3840, 2160), (3840, 2175), (3840, 2177), (3839, 2176)]:
+        for size in [(1920, 1080), (1920, 1087), (1920, 1089), (1919, 1088), (1921, 1088)]:
             native = Backend()
             async def wrong(request):
                 return protocol.public_output(json.dumps({'data': [{'b64_json': base64.b64encode(png(size)).decode()}]}).encode(), request)
             native.call = wrong
-            async with fixture(backend=native, qualification=config([uhd_profile('generation', 0)])) as (client, _, _, resets):
-                reply = await client.post('/v1/images/generations', json={'prompt': 'x', 'size': '3840x2160'})
+            async with fixture(backend=native, qualification=config([fhd_profile()])) as (client, _, _, resets):
+                reply = await client.post('/v1/images/generations', json={'prompt': 'x', 'size': '1920x1080'})
                 self.assertEqual(reply.status_code, 502, size)
                 self.assertEqual(len(resets), 2)
 
-    async def test_legacy_profile_native_public_and_transparency_after_crop(self):
-        async with fixture() as (client, _, _, _):
+    async def test_five_smaller_profiles_unchanged(self):
+        sizes = ['1024x1024', '1024x576', '1216x704', '1472x832', '1760x992']
+        async with fixture(qualification=config([profile('generation', 0, s) for s in sizes] + [fhd_profile()])) as (client, _, backend, _):
             caps = (await client.get('/v1/image-capabilities')).json()['profiles']
-            self.assertTrue(all(p['native_size'] == p['size'] and p['crop_bottom'] == 0 for p in caps))
-            self.assertEqual((await client.post('/v1/images/generations', json={'prompt': 'x'})).status_code, 200)
-        p = {**uhd_profile('generation', 0), 'transparent': True, 'conditioning': 'fixture transparency'}
-        image = Image.new('RGBA', (3840, 2176), (1, 2, 3, 255))
-        image.paste((1, 2, 3, 0), (0, 2160, 3840, 2176))
-        native = Backend()
-        async def cropped_alpha(request):
-            return protocol.public_output(json.dumps({'data': [{'b64_json': base64.b64encode(encoded(image)).decode()}]}).encode(), request)
-        native.call = cropped_alpha
-        async with fixture(backend=native, qualification=config([p])) as (client, _, _, _):
-            reply = await client.post('/v1/images/generations', json={'prompt': 'x', 'size': '3840x2160', 'background': 'transparent'})
-            self.assertEqual(reply.status_code, 502)  # Alpha only in discarded rows is not transparency.
+            self.assertEqual([p['size'] for p in caps], sizes + ['1920x1080'])
+            self.assertTrue(all(p['native_size'] == p['size'] and p['crop_bottom'] == 0 for p in caps[:-1]))
+            for size in sizes:
+                response = await client.post('/v1/images/generations', json={'prompt': 'x', 'size': size})
+                self.assertEqual(response.status_code, 200)
+                image = Image.open(io.BytesIO(base64.b64decode(response.json()['data'][0]['b64_json'])))
+                self.assertEqual(image.size, tuple(map(int, size.split('x'))))
+                self.assertEqual(backend.calls[-1]['size'], size)
 
-    def test_invalid_native_mappings_and_two_reference_uhd_rejected(self):
-        valid = uhd_profile('edit', 1)
-        for changes in [{'native_size': '3840x2175'}, {'native_size': '3840x2177'},
-                        {'native_size': '3840x2160'}, {'crop_bottom': 0}, {'crop_bottom': 15},
-                        {'crop_bottom': True}, {'size': '1024x1024'}, {'references': 2},
-                        {'native_size': '4096x2176'}, {'crop': [0, 0, 3840, 2160]},
-                        {'references': 2, 'native_size': '3840x2160', 'crop_bottom': 0}]:
+    async def test_public_bounds_and_unqualified_transparency_refused_before_native(self):
+        async with fixture(qualification=config([fhd_profile()])) as (client, _, backend, _):
+            for size in ['1920x1088', '3840x2160', '3840x2176', '1921x1', '1x1081', '1920x1081', '4096x4096']:
+                response = await client.post('/v1/images/generations', json={'prompt': 'x', 'size': size})
+                self.assertEqual(response.status_code, 400, size)
+                self.assertEqual(response.json()['error']['code'], 'unsupported_size')
+            response = await client.post('/v1/images/generations', json={
+                'prompt': 'x', 'size': '1920x1080', 'background': 'transparent'})
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(backend.calls, [])
+
+    def test_invalid_mapping_and_edit_mapping_refused(self):
+        for changes in [{'native_size': '1920x1087'}, {'native_size': '1920x1089'},
+                        {'native_size': '1920x1080'}, {'crop_bottom': 0}, {'crop_bottom': 7},
+                        {'crop_bottom': True}, {'size': '1024x1024'},
+                        {'operation': 'edit', 'references': 1}, {'operation': 'edit', 'references': 2},
+                        {'transparent': True, 'conditioning': 'transparent fixture'},
+                        {'native_size': '3840x2176'}, {'crop': [0, 0, 1920, 1080]}]:
             with self.subTest(changes=changes), self.assertRaises(protocol.Refusal):
-                config([{**valid, **changes}])
-        for operation, references in [('generation', 0), ('edit', 1)]:
-            self.assertEqual(len(config([uhd_profile(operation, references)])['profiles']), 1)
-            for mapping in [{}, {'native_size': '3840x2160', 'crop_bottom': 0}]:
-                with self.subTest(operation=operation, mapping=mapping), self.assertRaises(protocol.Refusal):
-                    config([{**profile(operation, references, '3840x2160'), **mapping}])
-        self.assertEqual(config([profile('generation', 0)])['profiles'][0]['size'], '1024x1024')
+                config([{**fhd_profile(), **changes}])
+        for mapping in [{}, {'native_size': '1920x1080', 'crop_bottom': 0}]:
+            with self.assertRaises(protocol.Refusal):
+                config([{**profile('generation', 0, '1920x1080'), **mapping}])
+        for size in ['1920x1088', '3840x2160']:
+            with self.assertRaises(protocol.Refusal):
+                config([profile('generation', 0, size)])
+
+    def test_native_pixel_exception_only_applies_to_exact_output_crop(self):
+        raw = png((1920, 1088))
+        with self.assertRaises(protocol.Refusal):
+            protocol.decode_image(raw, (1920, 1088))
+        with self.assertRaises(protocol.BackendFailure):
+            protocol.decode_image(raw, (1920, 1088), output=True)
+        for crop in [7, 9, True]:
+            with self.assertRaises(protocol.BackendFailure):
+                protocol.decode_image(raw, (1920, 1088), output=True, crop_bottom=crop)
+
+    def test_protected_limits_required_exact_and_not_configurable(self):
+        valid = config([fhd_profile()])
+        self.assertEqual(valid['limits'], protocol.HARD_LIMITS)
+        for key in protocol.HARD_LIMITS:
+            for value in [True, 1, 8294400]:
+                bad = copy.deepcopy(valid)
+                bad['limits'][key] = value
+                with self.assertRaises(protocol.Refusal):
+                    protocol.qualification(bad)
+        for value in [None, {}, {**protocol.HARD_LIMITS, 'extra': 1}]:
+            bad = {**valid, 'limits': value}
+            with self.assertRaises(protocol.Refusal):
+                protocol.qualification(bad)
+        del valid['limits']
+        with self.assertRaises(protocol.Refusal):
+            protocol.qualification(valid)
