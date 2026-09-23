@@ -39,6 +39,7 @@ with `/v1`; the aliases above identify the loaded instance. There is no common
 inference router or automatic fallback. Native listeners stay authenticated
 IPv4 loopback behind the reviewed private transport.
 
+- [Image API source and integration](docs/image-api.md): authenticated, bounded Qwen-Image-2.1 adapter; live qualification pending.
 - [API operations and examples](docs/ai-vm-api-operations.md): discovery,
   separate credentials, targeted switch/poll and inference.
 - [Control contract](docs/control-api.md) and [inference contract](docs/api-contract.md).

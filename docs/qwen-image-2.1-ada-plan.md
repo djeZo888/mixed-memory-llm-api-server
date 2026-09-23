@@ -78,9 +78,12 @@ enforced auth and an unbounded internal queue: a thin adapter is required.
 - POST /v1/images/generations (JSON), /v1/images/edits (multipart).
 - Synchronous PNG b64_json responses. No permanent artifact/job platform yet.
 - One active request, zero queue; 429 Retry-After when occupied. At most two
-  PNG/JPEG references, 16 MiB and four megapixels each initially. Validate decoded
-  images, qualified sizes, n=1 and allowlisted settings. No server paths, arbitrary
-  remote image URLs or runtime overrides. Larger-reference policy only after tests.
+  PNG/JPEG references, 32 MiB encoded per file and 64 MiB total. Decoded pixel
+  limits follow measured profiles through UHD (at most 8294400 pixels); one-reference
+  edits use same-size inputs at each qualified rung, and two references remain
+  1024-class unless separately qualified. Validate decoded images, qualified sizes,
+  n=1 and allowlisted settings. No server paths, arbitrary remote image URLs or
+  runtime overrides. Larger-reference policy only after tests.
 - Reject native mask field: upstream declares it but ignores it. Marked-image
   edits are instruction-guided, not guaranteed pixel-preserving inpainting.
 - Active request budget 15 minutes. Retain slot through upstream completion even

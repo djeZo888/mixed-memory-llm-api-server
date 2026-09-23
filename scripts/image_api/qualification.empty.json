@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "runtime_revision": "0cd8be351d0825488f4b81c8931167bbab618eca",
+  "model_id": "Qwen/Qwen-Image-2.1",
+  "model_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+  "runtime_image_digest": null,
+  "profiles": []
+}
