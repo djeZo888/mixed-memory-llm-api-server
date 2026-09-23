@@ -6,11 +6,29 @@ import io
 import json
 from pathlib import Path
 import unittest
-from capacity_runner import identity, probe_command, settle_private_case, violations, admission_closed, memory_pass
+import tempfile
+from capacity_runner import identity, probe_command, settle_private_case, violations, admission_closed, memory_pass, require_previous_settlement
 from candidate_codec import process
 
 
 class CapacitySettlement(unittest.TestCase):
+    def test_ambiguous_previous_dispatch_blocks_even_independent_c04(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            stage = root / 'work/evidence/run/H003-CAPACITY-C01'
+            stage.mkdir(parents=True)
+            with self.assertRaises(RuntimeError):
+                require_previous_settlement(root, 'run', 'C04')
+            (root / 'receipts').mkdir()
+            receipt = root / 'receipts/H003-CAPACITY-C01-receipt.json'
+            receipt.write_text(json.dumps({'dispatches': 1, 'native_operation_settled': False}))
+            with self.assertRaises(RuntimeError):
+                require_previous_settlement(root, 'run', 'C04')
+            receipt.write_text(json.dumps({'dispatches': 1, 'native_operation_settled': True, 'qualification_memory_pass': True}))
+            require_previous_settlement(root, 'run', 'C04')
+            with self.assertRaises(RuntimeError):
+                require_previous_settlement(root, 'run', 'C01')
+
     def test_actual_candidate_codec_prepare_deliver_without_native_request(self):
         from PIL import Image
         from candidate_codec import process

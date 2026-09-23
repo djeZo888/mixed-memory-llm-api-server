@@ -44,6 +44,20 @@ def memory_pass(receipt):
         not any(k in receipt for k in ('runner_error_type', 'settlement_error_type', 'telemetry_error_type', 'final_observation_error_type', 'evidence_error_type')))
 
 
+def require_previous_settlement(base, run_id, current):
+    for case in ('C01', 'C02', 'C03', 'C04'):
+        name = 'H003-CAPACITY-' + case
+        stage = base / 'work/evidence' / run_id / name
+        receipt = base / 'receipts' / (name + '-receipt.json')
+        if not stage.exists() and not receipt.exists():
+            continue
+        if case == current or not receipt.is_file():
+            raise RuntimeError('existing_or_unreceipted_case_no_retry')
+        previous = json.loads(receipt.read_text())
+        if previous.get('dispatches') and (not previous.get('native_operation_settled') or not previous.get('qualification_memory_pass')):
+            raise RuntimeError('prior_dispatch_unsettled_or_failed_end_window')
+
+
 def probe_command(container, path):
     return ['docker', 'exec', container, '/usr/bin/timeout', '--signal=TERM', '--kill-after=5s',
             '840s', '/opt/image-venv/bin/python', '-I', '-B', path]
@@ -131,6 +145,7 @@ def main(payload):
         assert hashlib.sha256(window_raw).hexdigest() == payload['window_receipt_sha256']
         window = json.loads(window_raw)
         assert window['clean_stop_proved'] is True
+        require_previous_settlement(m.BASE, state['run_id'], case['id'])
         assert before['container_id'] == window['backend_after']['container_id']
         assert identity(before['gpu_processes']) == identity(window['backend_after']['gpu_processes'])
         original_models = model_identities()
