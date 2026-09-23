@@ -2,6 +2,21 @@
 
 User-approved implementation plan, 23 September 2026.
 
+### Approved editing acceptance amendment
+
+On 23 September 2026, after reviewing the diagnostic results, the user approved
+**guarded editing**: fresh seeds by default and rejection of known source-seed
+reuse. The exact original seed-42 regression still fails. Three edits with fresh
+seeds passed visual review, including an independent source and a follow-up edit.
+This is an accepted workaround for an unresolved model limitation, not a repair
+of the native same-seed behavior. Original failure evidence must remain available.
+
+The amendment permits dimension qualification and harness acceptance to proceed;
+it does not waive fidelity, memory, original preservation, or resize approval
+checks. Advertise only profiles that pass those checks. Unknown imported-image
+seed provenance cannot be checked reliably. The original acceptance wording below
+is retained as history and is superseded only for the seed-42 repair requirement.
+
 ## Goal and fixed decisions
 
 Integrate Qwen-Image-2.1 into pinned MiniMax for image generation, reference-based
