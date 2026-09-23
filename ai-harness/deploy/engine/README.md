@@ -9,7 +9,7 @@ podman image inspect localhost/ai-harness-engine:0.0.1-ae65651df5f9 --format '{{
 ```
 
 The `.containerignore` excludes private runtime state and build scratch. The
-final `runtime` stage embeds the reviewed tools and five skills, using a digest-pinned
+final `runtime` stage embeds the reviewed tools and six skills, using a digest-pinned
 official Python 3.12 slim-bookworm interpreter copied into the same Debian suite.
 Its rebuilt venv excludes system-site-packages. Supplemental Python manifests
 install with `--require-hashes`; both Node tool lockfiles use
@@ -63,7 +63,7 @@ canonical isolated `MINIMAX_DATA_DIR` and `HOME=$MINIMAX_DATA_DIR/home`, plus
 `AI_HARNESS_GATEWAY_URL`, `AI_HARNESS_GATEWAY_TOKEN` and
 `AI_HARNESS_SESSION_ID`. It writes private `config.yaml` atomically and starts
 `node /opt/minimax/cli.js acp` on stdin/stdout. It never prints the token.
-The bearer value is a per-runner inference-only gateway token; it is persisted
+The bearer value is a per-runner text/image gateway token; it is persisted
 only in the protected conversation profile and replaced on restart. Backend
 revocation must make the old value unusable. No real upstream or lifecycle key
 belongs in this profile, image, environment or mount.
@@ -93,16 +93,20 @@ Do not log into MiniMax within this local-only profile.
 The initial permission mode is `default`, external skill ingestion is disabled,
 and the supported profile `AGENTS.md` explains two shared inference slots,
 independent delegation and queued excess inference. Native delegation remains enabled.
-At first initialization, `configure-profile.mjs` copies exactly the five reviewed
+At first initialization, `configure-profile.mjs` copies exactly the six reviewed
 skills and MIT license from `/opt/ai-harness/skills` into `${MINIMAX_DATA_DIR}/skills`
 through a private staging directory. Reuse requires matching reviewed contents,
 owned private directories/files, and no symlinks, hardlinks or additional entries.
 The standalone builtin whitelist is `[code-review]`; external skill ingestion is
 disabled, and no canonical `configSelection.skills` filter is introduced.
-`${MINIMAX_DATA_DIR}/mcp.json` registers only the embedded SearXNG stdio adapter,
+`${MINIMAX_DATA_DIR}/mcp.json` registers the embedded SearXNG and image stdio adapters,
 with literal `http://10.0.2.2:8082` (the profile loader does not expand environment
 strings). `mcpToolSearch.enabled=false` exposes the reviewed configured search tool
-directly. No paid native-search fallback is enabled.
+directly. No paid native-search fallback is enabled. The image adapter uses the same
+validated session bearer and fixed internal8081 gateway; the protected upstream
+key never enters the container. Its MCP timeout is50 minutes. Native main/mavis
+and delegated worker roles retain configured MCP, while existing explore/verifier
+read-only role ceilings remain unchanged.
 The two shared inference slots are admitted by the host gateway, not by the
 container. The profile sets `agentStop.maxActiveSpanMs=0`. The pinned config schema and
 parser document and accept zero as disabling its forced producer-active
@@ -289,3 +293,33 @@ compaction notifications and exposes schema1 settlement receipts; the server mus
 use the native contract and verified container cleanup rather than infer settlement
 from a prompt or cancel acknowledgement. No generation is needed for initialize,
 session-new and never-started settlement inspection.
+
+
+## Additive image tools (v0.0.3 source preparation)
+
+`tools/image` contains the three reviewed MCP tools: `image_capabilities`,
+`image_generate`, and `image_edit`. The separate `image-tools` build stage uses
+its pinned SDK/Zod lockfile without invalidating existing native/runtime tool
+layers. It is copied into the final `runtime` image. No changes to the pinned
+MiniMax source, ACP,480000 context,65536 output or two host text lanes are needed.
+
+The image skill is seeded for main and child sessions. Existing profiles with
+exactly the prior five unmodified reviewed skills are upgraded additively after
+byte/ownership checks; custom or unsafe profiles still fail closed. The image
+adapter receives only the fixed gateway URL and the session bearer in private
+`mcp.json`, refreshed with the text config on each startup. No backend key,
+host address or client-selected session/run identity is supplied to its tools.
+
+Each tool invocation submits once, never replays an uncertain POST and polls
+only the accepted job. Approval returns immediately and is performed by a user
+click on the stored browser job. Engine/disconnection cleanup does not cancel
+accepted host image jobs; explicit cancellation drains already dispatched work.
+Final results contain metadata/artifact IDs and relative workspace paths.
+
+Deployment needs Worker1's reviewed server routes, broker, persistence, SSE,
+file/reference validation and approval endpoint together with rebuilt web and
+final engine images. Reuse existing session-token lifecycle. Do not run the
+image adapter against the image VM directly. Run the extended native `roster`
+probe after the combined final image build to check actual main/worker MCP and
+all-role skill discovery. The source fixtures and profile tests do not prove
+runtime discovery, image API compatibility or live generation/editing quality.

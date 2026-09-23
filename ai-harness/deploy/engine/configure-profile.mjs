@@ -2,9 +2,10 @@ import { constants, closeSync, fstatSync, lstatSync, mkdirSync, mkdtempSync, ope
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const CURATED_SKILLS = Object.freeze(['technical-research', 'code-investigation', 'calculations', 'technical-testing', 'pdf']);
+export const CURATED_SKILLS = Object.freeze(['technical-research', 'code-investigation', 'calculations', 'technical-testing', 'pdf', 'image']);
 export const SKILLS_SOURCE = '/opt/ai-harness/skills';
 export const SEARXNG_URL = 'http://10.0.2.2:8082';
+export const IMAGE_TIMEOUT_MS = 50 * 60 * 1000;
 
 export const MODEL = 'qwen3.8-27b';
 export const MODEL_REF = `custom_provider:harness/${MODEL}`;
@@ -49,7 +50,7 @@ export function localConfig(env) {
       skills: ['code-review'],
       features: { delegation: true, webSearch: false, mavis: false },
     } },
-    // Keep the one reviewed MCP search tool directly exposed. Browser and
+    // Keep the reviewed MCP search and image tools directly exposed. Browser and
     // delegation capabilities remain native feature-owned tools.
     mcpToolSearch: { enabled: false },
     beta: { browserUseTooling: true, mcodeTools: false, codexOAuth: false, cuMode: false, asr: false },
@@ -64,13 +65,25 @@ export function localConfig(env) {
   };
 }
 
-export function localMcpConfig() {
+export function localMcpConfig(env) {
+  // Validate the same session bearer as text; never forward backend credentials
+  // or caller/session identity to the image adapter. Native children use this
+  // profile's configured MCP inventory under their existing capability ceiling.
+  localConfig(env);
   return { mcpServers: { searxng: {
     command: 'node',
     args: ['/opt/ai-harness/tools/search/searxng-mcp.mjs'],
     // The profile MCP reader passes these strings literally; no ${VAR} expansion.
     env: { AI_HARNESS_SEARXNG_URL: SEARXNG_URL },
     timeout: 20000,
+  }, image: {
+    command: 'node',
+    args: ['/opt/ai-harness/tools/image/image-mcp.mjs'],
+    env: {
+      AI_HARNESS_GATEWAY_URL: 'http://10.0.2.2:8081/v1',
+      AI_HARNESS_GATEWAY_TOKEN: env.AI_HARNESS_GATEWAY_TOKEN,
+    },
+    timeout: IMAGE_TIMEOUT_MS,
   } } };
 }
 
@@ -100,10 +113,10 @@ function safeRead(target, owned = false) {
   } finally { closeSync(fd); }
 }
 
-function skillTree(source, destination, copy) {
+function skillTree(source, destination, copy, omit = []) {
   safeDirectory(source);
   safeDirectory(destination, true);
-  const names = readdirSync(source).sort();
+  const names = readdirSync(source).filter(name => !omit.includes(name)).sort();
   if (!copy && JSON.stringify(readdirSync(destination).sort()) !== JSON.stringify(names)) {
     throw new Error('Existing skills do not match the reviewed image roster.');
   }
@@ -138,6 +151,18 @@ export function seedReviewedSkills(profile, source = SKILLS_SOURCE) {
   safeRead(path.join(source, 'LICENSE-MIT.txt'));
   const target = path.join(profile, 'skills');
   if (statIfPresent(target)) {
+    // Upgrade only the exact prior reviewed roster. Verify every old byte and
+    // ownership before adding the new skill; never replace user-modified files.
+    const prior = expected.filter(name => name !== 'image');
+    if (JSON.stringify(readdirSync(target).sort()) === JSON.stringify(prior)) {
+      skillTree(source, target, false, ['image']);
+      const staging = mkdtempSync(path.join(profile, '.skills-'));
+      try {
+        skillTree(path.join(source, 'image'), staging, true);
+        if (statIfPresent(path.join(target, 'image'))) throw new Error('Image skill appeared during initialization.');
+        renameSync(staging, path.join(target, 'image'));
+      } finally { rmSync(staging, { recursive: true, force: true }); }
+    }
     skillTree(source, target, false);
     return;
   }
@@ -190,8 +215,8 @@ export function configureProfile(env, skillsSource = SKILLS_SOURCE) {
     writeFileSync(instructions, SHARED_SLOT_INSTRUCTIONS, { mode: 0o600, flag: 'wx' });
   }
   seedReviewedSkills(profile, skillsSource);
-  writePrivateJson(profile, 'mcp.json', localMcpConfig());
-  // JSON is a YAML subset. Never print this ephemeral inference-only token.
+  writePrivateJson(profile, 'mcp.json', localMcpConfig(env));
+  // JSON is a YAML subset. Never print this ephemeral session gateway token.
   // Atomic replacement also makes every runner refresh a formerly expired token.
   writePrivateJson(profile, 'config.yaml', config);
 }

@@ -14,7 +14,7 @@ gets isolated state/ and state/home directories; native sibling lock files stay
 inside that mount. No other host directory or socket is mounted.
 
 Required environment:
-  AI_HARNESS_GATEWAY_TOKEN  Ephemeral per-runner inference-only gateway token;
+  AI_HARNESS_GATEWAY_TOKEN  Ephemeral per-runner text/image gateway token;
                            16..4096 characters, no ASCII control characters.
   AI_HARNESS_SESSION_ID     1..128 letters/digits/._-, first character alphanumeric.
 Optional environment:

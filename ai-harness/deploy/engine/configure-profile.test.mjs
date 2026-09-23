@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { configureProfile, localConfig, MODEL, MODEL_REF, REQUEST_TIMEOUT_MS, SHARED_SLOT_INSTRUCTIONS, CURATED_SKILLS, SKILLS_SOURCE, SEARXNG_URL, localMcpConfig } from './configure-profile.mjs';
+import { configureProfile, localConfig, MODEL, MODEL_REF, REQUEST_TIMEOUT_MS, SHARED_SLOT_INSTRUCTIONS, CURATED_SKILLS, SKILLS_SOURCE, SEARXNG_URL, IMAGE_TIMEOUT_MS, localMcpConfig } from './configure-profile.mjs';
 
 const reviewedSource = realpathSync(existsSync(SKILLS_SOURCE) ? SKILLS_SOURCE : fileURLToPath(new URL('../../skills', import.meta.url)));
 const configure = env => configureProfile(env, reviewedSource);
@@ -98,6 +98,9 @@ test('writes private config and refreshes ephemeral authorization without changi
     configure({ ...env, AI_HARNESS_GATEWAY_TOKEN: 'second-fixture-authorization' });
     const second = JSON.parse(readFileSync(target, 'utf8'));
     assert.equal(second.custom_provider.harness.options.apiKey, 'second-fixture-authorization');
+    const mcp = JSON.parse(readFileSync(path.join(profile, 'mcp.json'), 'utf8'));
+    assert.equal(mcp.mcpServers.image.env.AI_HARNESS_GATEWAY_TOKEN, 'second-fixture-authorization');
+    assert.equal(lstatSync(path.join(profile, 'mcp.json')).mode & 0o777, 0o600);
     assert.equal(readFileSync(instructions, 'utf8'), `${SHARED_SLOT_INSTRUCTIONS}\nPreserve this user instruction.\n`);
     assert.equal(readFileSync(path.join(profile, 'history-fixture.json'), 'utf8'), '{"preserved":true}\n');
   } finally { rmSync(profile, { recursive: true, force: true }); }
@@ -124,14 +127,19 @@ test('rejects config symlink and a home outside the isolated profile', () => {
 
 
 test('profile MCP uses the literal private endpoint and direct reviewed stdio adapter', () => {
-  assert.deepEqual(localMcpConfig(), { mcpServers: { searxng: {
+  assert.deepEqual(localMcpConfig(fixture), { mcpServers: { searxng: {
     command: 'node', args: ['/opt/ai-harness/tools/search/searxng-mcp.mjs'],
     env: { AI_HARNESS_SEARXNG_URL: 'http://10.0.2.2:8082' }, timeout: 20000,
+  }, image: {
+    command: 'node', args: ['/opt/ai-harness/tools/image/image-mcp.mjs'],
+    env: { AI_HARNESS_GATEWAY_URL: fixture.AI_HARNESS_GATEWAY_URL, AI_HARNESS_GATEWAY_TOKEN: fixture.AI_HARNESS_GATEWAY_TOKEN },
+    timeout: 3_000_000,
   } } });
+  assert.equal(IMAGE_TIMEOUT_MS, 3_000_000);
   assert.equal(SEARXNG_URL, 'http://10.0.2.2:8082');
 });
 
-test('seeds exactly five skills and license, validates reuse and refreshes private MCP', () => {
+test('seeds exactly six skills and license, validates reuse and refreshes private MCP', () => {
   const profile = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'h001-skills-')));
   const env = { ...fixture, MINIMAX_DATA_DIR: profile, HOME: path.join(profile, 'home'), AI_HARNESS_SEARXNG_URL: 'https://ignored.invalid' };
   try {
@@ -145,10 +153,10 @@ test('seeds exactly five skills and license, validates reuse and refreshes priva
     const original = lstatSync(path.join(target, 'pdf', 'SKILL.md'));
     const mcpPath = path.join(profile, 'mcp.json');
     assert.equal(lstatSync(mcpPath).mode & 0o777, 0o600);
-    assert.deepEqual(JSON.parse(readFileSync(mcpPath)), localMcpConfig());
+    assert.deepEqual(JSON.parse(readFileSync(mcpPath)), localMcpConfig(fixture));
     writeFileSync(mcpPath, '{}');
     configure(env);
-    assert.deepEqual(JSON.parse(readFileSync(mcpPath)), localMcpConfig());
+    assert.deepEqual(JSON.parse(readFileSync(mcpPath)), localMcpConfig(fixture));
     assert.equal(lstatSync(path.join(target, 'pdf', 'SKILL.md')).ino, original.ino);
     assert.equal(readdirSync(profile).some(name => name.startsWith('.skills-')), false);
   } finally { rmSync(profile, { recursive: true, force: true }); }
@@ -209,5 +217,27 @@ test('installed CLI succeeds silently with packaged skills', { skip: !existsSync
     assert.equal(result.status, 0);
     assert.equal(result.stdout, '');
     assert.equal(result.stderr, '');
+  } finally { rmSync(profile, { recursive: true, force: true }); }
+});
+
+
+test('upgrades only the exact prior reviewed skills without replacing originals or history', () => {
+  const profile = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'h003-skills-')));
+  const env = { ...fixture, MINIMAX_DATA_DIR: profile, HOME: path.join(profile, 'home') };
+  try {
+    configure(env);
+    const skills = path.join(profile, 'skills');
+    rmSync(path.join(skills, 'image'), { recursive: true });
+    const original = lstatSync(path.join(skills, 'pdf', 'SKILL.md')).ino;
+    writeFileSync(path.join(profile, 'history-fixture.json'), 'preserved');
+    configure(env);
+    assert.equal(lstatSync(path.join(skills, 'pdf', 'SKILL.md')).ino, original);
+    assert.equal(readFileSync(path.join(profile, 'history-fixture.json'), 'utf8'), 'preserved');
+    assert.equal(readFileSync(path.join(skills, 'image', 'SKILL.md'), 'utf8'), readFileSync(path.join(reviewedSource, 'image', 'SKILL.md'), 'utf8'));
+    rmSync(path.join(skills, 'image'), { recursive: true });
+    writeFileSync(path.join(skills, 'pdf', 'SKILL.md'), 'customized');
+    assert.throws(() => configure(env), /reviewed image contents/);
+    assert.equal(existsSync(path.join(skills, 'image')), false);
+    assert.equal(readFileSync(path.join(skills, 'pdf', 'SKILL.md'), 'utf8'), 'customized');
   } finally { rmSync(profile, { recursive: true, force: true }); }
 });
