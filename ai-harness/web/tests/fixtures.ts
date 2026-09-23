@@ -40,7 +40,7 @@ export function fixtureTransport() {
     close: ReturnType<typeof vi.fn>;
   }[] = [];
   const transport = {
-    imageCapabilities: vi.fn(async (): Promise<unknown> => ({ operations: {} })),
+    imageCapabilities: vi.fn(async (): Promise<unknown> => ({ profiles: [] })),
     health: vi.fn(async () => ({ visionAvailable: false })),
     list: vi.fn(async () => ({ sessions: [session(), session('chat/b')] })),
     snapshot: vi.fn(async (id: string) => snapshot(id)),

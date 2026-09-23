@@ -121,8 +121,12 @@ queue position, elapsed time, dimensions, seed/model, source fingerprints and
 concise errors are displayed without invented percent progress.
 
 Canvas approval shows each source's original dimensions, the proposed canvas and
-the reason. Only an explicit browser click posts `{decision:'approve'|'reject'}`
-to `/api/sessions/:id/image-jobs/:jobId/approval`. The browser does not send new
+the reason, including exact working dimensions and all four padding values. Only
+an explicit browser click fetches `/api/sessions/:id/image-jobs/:jobId/approval-token`
+and then posts `{decision:'approve'|'reject',approvalToken}` to the approval route.
+The token is an ephemeral request-local value and is never cached in application
+state or exposed to model records. Failed decisions are not automatically replayed;
+each explicit retry fetches a fresh token. The browser does not send new
 sizes, references, prompts or an approval boolean. Cancelling an active image
 shows its saved running/saving state with draining intent until the host settles;
 closing the browser or ending a text turn does not cancel image work.
@@ -135,15 +139,22 @@ reply files. Missing or disabled edit capability profiles disable reuse. The
 client never substitutes generation for an unavailable edit. Image uploads are
 also enabled when the image service advertises qualified reference profiles.
 
-The frozen contract does not yet specify the browser capability route or its
-nested record layout. The isolated provisional binding is
-`GET /api/image-capabilities` with
-`{model?,operations:{generation?:{available,profiles:[{referenceCount,sizes}]},edit?:{available,profiles:[{referenceCount,sizes}]}}}`.
-Unknown/malformed profiles fail closed. Job size fields currently use
-`WIDTHxHEIGHT`; references and adjustment sources use
-`{fileId?,name,sha256,width,height}`. These precise interface questions are tracked
-in the task's `INTERFACE.md`; root must reconcile them with Worker1 before combining
-sources. Approval/cancel responses accept either `{job}` or the raw updated job.
+`GET /api/image-capabilities` returns the unchanged reviewed upstream JSON. The
+browser reads `profiles` entries with `operation`, `size`, `references`,
+`transparent`, `evidence_sha256`, `native_size` and `crop_bottom`; unknown,
+malformed or transparent profiles do not enable editing. Availability follows
+qualified operation/reference counts, while `ready`, `admitting` and `busy` are
+separate service states. The upstream `defaults.size` does not change the harness
+1920x1080 generation default.
+
+Job size fields use `WIDTHxHEIGHT`. Sources carry
+`{referenceId,fileId?,name,sha256,width,height}` and adjustment sources add exact
+`workingWidth`, `workingHeight` and `padding:{top,right,bottom,left}`. Every job
+has a positive integer `revision`. GET, SSE and action responses share revision
+ordering: lower/equal revisions cannot overwrite a newer card, while a newer
+running-to-queued revision is a valid known-non-admission retry. Browser
+approval/cancel responses use the exact `{job}` envelope. Internal `outputPath`
+is omitted from browser records; preview/download uses the saved artifact ID.
 
 Focused source checks:
 
@@ -156,3 +167,7 @@ PLAYWRIGHT_CHANNEL=chrome npm run test:browser -- tests/image.browser.ts
 
 These local fixtures do not establish deployed image generation/editing,
 resident-model behavior, GPU cancellation or backend geometry qualification.
+
+Browser approval-token fixtures cover click sequencing and errors only. Worker1
+owns protected token issuance and proxy/origin policy; deployed security remains
+NOT_TESTED by this source task.

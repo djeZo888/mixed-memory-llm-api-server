@@ -11,6 +11,7 @@ import { createdAt, deferred, event, fixtureTransport, snapshot } from './fixtur
 
 const job = (patch: Partial<ImageJob> = {}): ImageJob => ({
   id: 'image/one',
+  revision: 1,
   sessionId: 'chat/a',
   runId: 'run/image',
   requestId: 'request/one',
@@ -25,26 +26,46 @@ const job = (patch: Partial<ImageJob> = {}): ImageJob => ({
   cancelRequested: false,
   ...patch,
 });
+const profile = (operation = 'edit', references = 1, size = '1024x1024') => ({
+  operation,
+  references,
+  size,
+  transparent: false,
+  evidence_sha256: 'a'.repeat(64),
+  native_size: size,
+  crop_bottom: 0,
+});
 const capabilities = {
-  operations: {
-    generation: { available: true, profiles: [{ referenceCount: 0, sizes: ['1920x1080'] }] },
-    edit: { available: true, profiles: [{ referenceCount: 1, sizes: ['1024x1024'] }] },
-  },
+  ready: true,
+  admitting: true,
+  busy: false,
+  state: 'ready',
+  model: 'Qwen-Image-2.1',
+  profiles: [profile('generation', 0, '1920x1080'), profile()],
+  defaults: { size: '1024x1024' },
+  output_format: 'png',
 };
 
 describe('image lifecycle and reference boundaries', () => {
-  it('discovers exact reference-count edit profiles and fails closed for absent, disabled and malformed records', () => {
+  it('discovers exact upstream operation/reference profiles and fails closed for absent, transparent and malformed records', () => {
     expect(editAvailable(imageCapabilities(capabilities), 1)).toBe(true);
     expect(editAvailable(imageCapabilities(capabilities), 2)).toBe(false);
     expect(
+      editAvailable(imageCapabilities({ ...capabilities, profiles: [profile('generation', 0)] })),
+    ).toBe(false);
+    expect(
       editAvailable(
-        imageCapabilities({ operations: { generation: capabilities.operations.generation } }),
+        imageCapabilities({ ...capabilities, profiles: [{ ...profile(), transparent: true }] }),
       ),
     ).toBe(false);
     expect(
       editAvailable(
         imageCapabilities({
-          operations: { edit: { ...capabilities.operations.edit, available: false } },
+          ...capabilities,
+          profiles: [
+            { ...profile(), size: 'unknown' },
+            { ...profile(), references: 1.5 },
+          ],
         }),
       ),
     ).toBe(false);
@@ -52,15 +73,16 @@ describe('image lifecycle and reference boundaries', () => {
       editAvailable(
         imageCapabilities({
           operations: {
-            edit: { available: true, profiles: [{ referenceCount: 1, sizes: [null, 'unknown'] }] },
+            edit: { available: true, profiles: [{ referenceCount: 1, sizes: ['1024x1024'] }] },
           },
         }),
       ),
     ).toBe(false);
   });
 
-  it('retains cancellation intent and terminal state across stale GETs, rejects foreign jobs and reports real elapsed time', () => {
+  it('uses revisions to preserve terminal state and late artifacts across stale GETs, rejects foreign/malformed jobs, and reports real elapsed time', () => {
     const cancelled = job({
+      revision: 5,
       state: 'cancelled',
       cancelRequested: true,
       finishedAt: '2026-09-22T12:01:00.000Z',
@@ -68,49 +90,44 @@ describe('image lifecycle and reference boundaries', () => {
     expect(
       mergeImageJobs(
         [cancelled],
-        [job({ state: 'queued' }), job({ id: 'foreign', sessionId: 'other' })],
+        [job({ revision: 4, state: 'queued' }), job({ id: 'foreign', sessionId: 'other' })],
         'chat/a',
       ),
     ).toEqual([cancelled]);
-    const stale = job({
-      state: 'failed',
-      finishedAt: '2026-09-22T12:00:59.000Z',
-      artifactId: 'late-output',
-    });
-    expect(mergeImageJobs([cancelled], [stale], 'chat/a')[0]).toMatchObject({
-      state: 'cancelled',
-      artifactId: 'late-output',
-      cancelRequested: true,
-    });
-    expect(
-      mergeImageJobs(
-        [{ ...cancelled, artifactId: 'late-output', actualSize: '1024x1024' }],
-        [cancelled],
-        'chat/a',
-      )[0],
-    ).toMatchObject({ artifactId: 'late-output', actualSize: '1024x1024', state: 'cancelled' });
+    const stale = job({ revision: 4, state: 'failed', artifactId: 'untrusted-stale-output' });
+    expect(mergeImageJobs([cancelled], [stale], 'chat/a')).toEqual([cancelled]);
+    const late = { ...cancelled, revision: 6, artifactId: 'late-output', actualSize: '1024x1024' };
+    expect(mergeImageJobs([cancelled], [late], 'chat/a')).toEqual([late]);
+    expect(mergeImageJobs([late], [cancelled], 'chat/a')).toEqual([late]);
+    expect(mergeImageJobs([], [job({ revision: 0 }), job({ revision: 1.5 })], 'chat/a')).toEqual(
+      [],
+    );
     expect(
       imageElapsed(job({ state: 'running', elapsedMs: 1 }), Date.parse(createdAt) + 65000),
     ).toBe('1m 5s');
     expect(imageElapsed(cancelled, Date.parse(createdAt) + 9999999)).toBe('1m 0s');
   });
 
-  it('honors ordered SSE requeue after known non-admission while rejecting stale GET state regressions', () => {
-    const running = job({ state: 'running' });
+  it('accepts newer running-to-queued revisions from GET/SSE and ignores older revisions even in later SSE envelopes', () => {
+    const running = job({ revision: 2, state: 'running' });
     const thread = reconcileSnapshot({ ...snapshot(), imageJobs: [running] });
-    const requeued = job({ state: 'queued', queuePosition: 2 });
-    const update = event(1, 'image_job', { job: requeued });
-    expect(applyEvent(thread, update).imageJobs?.[0]).toMatchObject({
-      state: 'queued',
-      queuePosition: 2,
-    });
+    const requeued = job({ revision: 3, state: 'queued', queuePosition: 2 });
+    const afterQueue = applyEvent(thread, event(1, 'image_job', { job: requeued }));
+    expect(afterQueue.imageJobs?.[0]).toEqual(requeued);
+    expect(applyEvent(afterQueue, event(2, 'image_job', { job: running })).imageJobs?.[0]).toEqual(
+      requeued,
+    );
     expect(
       reconcileSnapshot({
         ...snapshot(),
-        events: [event(1, 'image_job', { job: running }), event(2, 'image_job', { job: requeued })],
-      }).imageJobs?.[0].state,
-    ).toBe('queued');
-    expect(mergeImageJobs([running], [requeued], 'chat/a')[0].state).toBe('running');
+        events: [event(1, 'image_job', { job: requeued }), event(2, 'image_job', { job: running })],
+        imageJobs: [running],
+      }).imageJobs?.[0],
+    ).toEqual(requeued);
+    expect(mergeImageJobs([running], [requeued], 'chat/a')[0]).toEqual(requeued);
+    expect(mergeImageJobs([requeued], [{ ...requeued, state: 'running' }], 'chat/a')[0]).toEqual(
+      requeued,
+    );
   });
 
   it('rejects SSE image records whose run conflicts with the event envelope', () => {
@@ -140,14 +157,31 @@ describe('image lifecycle and reference boundaries', () => {
     fixture.transport.imageJobs.mockReturnValueOnce(read.promise);
     fixture.streams[0].callbacks.disconnected();
     fixture.streams[0].callbacks.open();
-    fixture.streams[0].callbacks.event(event(1, 'image_job', { job: job({ state: 'running' }) }));
-    read.resolve({ jobs: [job({ state: 'queued' })] });
+    fixture.streams[0].callbacks.event(
+      event(1, 'image_job', { job: job({ revision: 3, state: 'running' }) }),
+    );
+    read.resolve({ jobs: [job({ revision: 2, state: 'queued' })] });
     await waitFor(() => expect(fixture.transport.imageJobs).toHaveBeenCalledTimes(2));
     await Promise.resolve();
     expect(store.getSnapshot().thread?.imageJobs?.[0].state).toBe('running');
     store.dispose();
     expect(fixture.transport.cancelImage).not.toHaveBeenCalled();
     expect(fixture.transport.cancel).not.toHaveBeenCalled();
+  });
+
+  it('keeps a newer card revision when a successful reconnect GET returns an older job projection', async () => {
+    const fixture = fixtureTransport();
+    const newer = job({ revision: 4, state: 'queued', queuePosition: 2 });
+    fixture.transport.imageJobs.mockResolvedValueOnce({ jobs: [newer] });
+    const store = new HarnessStore(fixture.transport);
+    await store.start();
+    await waitFor(() => expect(fixture.streams).toHaveLength(1));
+    fixture.transport.imageJobs.mockResolvedValueOnce({
+      jobs: [job({ revision: 3, state: 'running' })],
+    });
+    await store.resync();
+    expect(store.getSnapshot().thread?.imageJobs?.[0]).toEqual(newer);
+    store.dispose();
   });
 
   it('preserves ordinary chat and last known jobs when the image route fails, and refreshes disabled capabilities on reconnect', async () => {
@@ -163,14 +197,18 @@ describe('image lifecycle and reference boundaries', () => {
     await waitFor(() => expect(fixture.streams).toHaveLength(1));
     expect(store.getSnapshot().thread?.messages[0].content).toBe('Existing conversation');
     expect(store.getSnapshot().imageJobsError).toContain('Image status unavailable');
-    fixture.streams[0].callbacks.event(event(1, 'image_job', { job: job({ state: 'running' }) }));
+    fixture.streams[0].callbacks.event(
+      event(1, 'image_job', { job: job({ revision: 2, state: 'running' }) }),
+    );
     fixture.transport.snapshot.mockResolvedValueOnce({
       ...snapshot(),
       messages: [{ id: 'text', role: 'assistant', content: 'Existing conversation', createdAt }],
-      events: [event(2, 'image_job', { job: job({ state: 'queued', queuePosition: 1 }) })],
+      events: [
+        event(2, 'image_job', { job: job({ revision: 3, state: 'queued', queuePosition: 1 }) }),
+      ],
     });
     fixture.transport.imageJobs.mockRejectedValueOnce(new Error('Still offline'));
-    fixture.transport.imageCapabilities.mockResolvedValue({ operations: {} });
+    fixture.transport.imageCapabilities.mockResolvedValue({ ...capabilities, profiles: [] });
     fixture.streams[0].callbacks.open();
     await waitFor(() => expect(editAvailable(store.getSnapshot().imageCapabilities)).toBe(false));
     await waitFor(() => expect(store.getSnapshot().thread?.imageJobs?.[0].state).toBe('queued'));
@@ -225,11 +263,7 @@ describe('image lifecycle and reference boundaries', () => {
 
   it('stages references toward a qualified two-reference edit without inventing single-reference support', async () => {
     const fixture = fixtureTransport();
-    const onlyTwo = {
-      operations: {
-        edit: { available: true, profiles: [{ referenceCount: 2, sizes: ['1024x1024'] }] },
-      },
-    };
+    const onlyTwo = { ...capabilities, profiles: [profile('edit', 2)] };
     fixture.transport.imageCapabilities.mockResolvedValue(onlyTwo);
     fixture.transport.snapshot.mockResolvedValue({
       ...snapshot(),
@@ -264,26 +298,71 @@ describe('image lifecycle and reference boundaries', () => {
     store.dispose();
   });
 
-  it('sends browser approval decisions without dimensions, references or a model approval flag', async () => {
+  it('fetches ephemeral approval authorization per user decision and sends only the exact token-bound body', async () => {
     const fetcher = vi
       .spyOn(globalThis, 'fetch')
-      .mockImplementation(
-        async () => new Response(JSON.stringify({ job: job({ state: 'queued' }) })),
+      .mockResolvedValueOnce(new Response(JSON.stringify({ approvalToken: 'fixture-token-one' })))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ job: job({ revision: 2, state: 'queued' }) })),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ approvalToken: 'fixture-token-two' })))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ job: job({ revision: 2, state: 'cancelled' }) })),
       );
     await api.approveImage('chat/a', 'image/one', 'approve');
-    fetcher.mockResolvedValueOnce(new Response(JSON.stringify(job({ state: 'cancelled' }))));
-    await expect(api.approveImage('chat/a', 'image/one', 'reject')).resolves.toEqual({
-      job: job({ state: 'cancelled' }),
-    });
+    await api.approveImage('chat/a', 'image/one', 'reject');
+    const base = '/api/sessions/chat%2Fa/image-jobs/image%2Fone';
     expect(
       fetcher.mock.calls.map(([path, options]) => [
         path,
-        options?.method,
-        JSON.parse(options?.body as string),
+        options?.method ?? 'GET',
+        options?.body ? JSON.parse(options.body as string) : null,
       ]),
     ).toEqual([
-      ['/api/sessions/chat%2Fa/image-jobs/image%2Fone/approval', 'POST', { decision: 'approve' }],
-      ['/api/sessions/chat%2Fa/image-jobs/image%2Fone/approval', 'POST', { decision: 'reject' }],
+      [`${base}/approval-token`, 'GET', null],
+      [`${base}/approval`, 'POST', { decision: 'approve', approvalToken: 'fixture-token-one' }],
+      [`${base}/approval-token`, 'GET', null],
+      [`${base}/approval`, 'POST', { decision: 'reject', approvalToken: 'fixture-token-two' }],
     ]);
+  });
+
+  it('never replays a denied decision and obtains a fresh token only on an explicit retry', async () => {
+    const fetcher = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ approvalToken: 'fixture-expired' })))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            error: { code: 'approval_expired', message: 'Approval expired. Try again.' },
+          }),
+          { status: 403 },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ approvalToken: 'fixture-fresh' })))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ job: job({ revision: 2, state: 'queued' }) })),
+      );
+    await expect(api.approveImage('chat/a', 'image/one', 'approve')).rejects.toThrow(
+      'Approval expired',
+    );
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    await api.approveImage('chat/a', 'image/one', 'approve');
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(JSON.parse(fetcher.mock.calls[3][1]?.body as string)).toEqual({
+      decision: 'approve',
+      approvalToken: 'fixture-fresh',
+    });
+  });
+
+  it('rejects missing authorization tokens and noncontract raw job responses', async () => {
+    const fetcher = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ approvalToken: '' })));
+    await expect(api.approveImage('chat/a', 'image/one', 'approve')).rejects.toThrow(
+      'Approval authorization was unavailable',
+    );
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    fetcher.mockResolvedValueOnce(new Response(JSON.stringify(job())));
+    await expect(api.cancelImage('chat/a', 'image/one')).rejects.toThrow('unreadable image job');
   });
 });

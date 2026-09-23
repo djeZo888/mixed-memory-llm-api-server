@@ -137,12 +137,7 @@ export function applyEvent(thread: Thread, event: ServerEvent): Thread {
       next.artifacts = upsert(next.artifacts, artifactFrom(event));
       break;
     case 'image_job':
-      next.imageJobs = mergeImageJobs(
-        next.imageJobs ?? [],
-        [event.data.job],
-        thread.session.id,
-        true,
-      );
+      next.imageJobs = mergeImageJobs(next.imageJobs ?? [], [event.data.job], thread.session.id);
       break;
     case 'run': {
       const run = event.data.run;
@@ -198,7 +193,7 @@ export function reconcileSnapshot(snapshot: Snapshot, inFlight: ServerEvent[] = 
       event.type === 'image_job' &&
       (event.runId === undefined || event.runId === event.data.job.runId)
     ) {
-      imageJobs = mergeImageJobs(imageJobs, [event.data.job], snapshot.session.id, true);
+      imageJobs = mergeImageJobs(imageJobs, [event.data.job], snapshot.session.id);
     } else if (event.type === 'run') {
       runs = upsert(runs, event.data.run);
       subagentsByRun[event.data.run.id] = event.data.run.subagents;

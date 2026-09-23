@@ -1454,3 +1454,9 @@ h1 {
 .image-references li {
   background: #eef5f0;
 }
+
+.image-working-dimensions {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+}

@@ -76,7 +76,7 @@ export function ImageJobs({ jobs, actions }: { jobs: ImageJob[]; actions?: Image
             {!!job.references.length && (
               <ul className="image-job-sources" aria-label="Image sources">
                 {job.references.map((source, index) => (
-                  <li key={`${source.sha256}:${index}`}>
+                  <li key={`${source.referenceId}:${index}`}>
                     <span>{source.name}</span> · {source.width}×{source.height}
                     {source.fileId && <small> · File {source.fileId}</small>}
                     <details>
@@ -96,8 +96,13 @@ export function ImageJobs({ jobs, actions }: { jobs: ImageJob[]; actions?: Image
                 </strong>
                 <ul aria-label="Original image dimensions">
                   {job.adjustment.sources.map((source, index) => (
-                    <li key={`${source.sha256}:${index}`}>
+                    <li key={`${source.referenceId}:${index}`}>
                       {source.name}: {source.width}×{source.height}
+                      <span className="image-working-dimensions">
+                        Working image: {source.workingWidth}×{source.workingHeight}. Padding
+                        (pixels): top {source.padding.top}, right {source.padding.right}, bottom{' '}
+                        {source.padding.bottom}, left {source.padding.left}.
+                      </span>
                     </li>
                   ))}
                 </ul>

@@ -65,6 +65,11 @@ let counter;
 let vision;
 let imageDecisions;
 let imageCapabilities;
+let approvalTokens;
+let approvalFailures;
+let approvalCounter;
+let imageGetOverrides;
+let omitImageEvents;
 const connections = new Map();
 function session(id, title) {
   return {
@@ -96,15 +101,55 @@ function reset() {
   counter = 0;
   vision = false;
   imageDecisions = new Map();
+  approvalTokens = new Map();
+  approvalFailures = new Map();
+  approvalCounter = 0;
+  imageGetOverrides = new Map();
+  omitImageEvents = new Set();
   imageCapabilities = {
+    ready: true,
+    admitting: true,
+    busy: false,
+    state: 'ready',
     model: 'Qwen-Image-2.1',
-    operations: {
-      generation: { available: true, profiles: [{ referenceCount: 0, sizes: ['1920x1080'] }] },
-      edit: {
-        available: true,
-        profiles: [{ referenceCount: 1, sizes: ['1024x1024', '1920x1080'] }],
+    runtime_revision: 'fixture-runtime',
+    runtime_image_digest: `sha256:${'b'.repeat(64)}`,
+    model_id: 'Qwen/Qwen-Image-2.1',
+    model_revision: 'fixture-model',
+    profiles: [
+      {
+        operation: 'generation',
+        size: '1920x1080',
+        references: 0,
+        transparent: false,
+        evidence_sha256: 'a'.repeat(64),
+        native_size: '1920x1088',
+        crop_bottom: 8,
       },
-    },
+      {
+        operation: 'edit',
+        size: '1024x1024',
+        references: 1,
+        transparent: false,
+        evidence_sha256: 'b'.repeat(64),
+        native_size: '1024x1024',
+        crop_bottom: 0,
+      },
+      {
+        operation: 'edit',
+        size: '1920x1080',
+        references: 1,
+        transparent: false,
+        evidence_sha256: 'c'.repeat(64),
+        native_size: '1920x1088',
+        crop_bottom: 8,
+      },
+    ],
+    limits: { n: 1 },
+    defaults: { size: '1024x1024' },
+    masks: false,
+    response_format: 'b64_json',
+    output_format: 'png',
   };
   sessions[0].context = {
     used: 123456,
@@ -254,7 +299,8 @@ function emit(id, type, data, named = true, runId) {
   if (type === 'image_job') {
     const index = history.imageJobs.findIndex((job) => job.id === data.job.id);
     if (index < 0) history.imageJobs.push(data.job);
-    else history.imageJobs[index] = data.job;
+    else if (data.job.revision > history.imageJobs[index].revision)
+      history.imageJobs[index] = data.job;
   }
   if (type === 'message') {
     const index = history.messages.findIndex((m) => m.id === data.message.id);
@@ -309,6 +355,11 @@ const server = http.createServer(async (request, response) => {
       if (input.jobs) history.imageJobs = input.jobs;
       if (input.artifacts) history.artifacts.push(...input.artifacts);
       if (input.capabilities) imageCapabilities = input.capabilities;
+      if (input.getJobs) imageGetOverrides.set(input.sessionId, input.getJobs);
+      if (input.omitImageEvents) omitImageEvents.add(input.sessionId);
+      if (input.approvalFailures)
+        for (const [jobId, failure] of Object.entries(input.approvalFailures))
+          approvalFailures.set(jobId, failure);
       return json(response, 200, { fixture: true });
     }
     if (url.pathname === '/__fixture/vision') {
@@ -353,7 +404,9 @@ const server = http.createServer(async (request, response) => {
       return json(response, 201, { session: s });
     }
     const imageRoute =
-      /^\/api\/sessions\/([^/]+)\/image-jobs(?:\/([^/]+)\/(approval|cancel))?$/.exec(url.pathname);
+      /^\/api\/sessions\/([^/]+)\/image-jobs(?:\/([^/]+)\/(approval|approval-token|cancel))?$/.exec(
+        url.pathname,
+      );
     if (imageRoute) {
       const id = decodeURIComponent(imageRoute[1]);
       const history = histories.get(id);
@@ -363,7 +416,9 @@ const server = http.createServer(async (request, response) => {
         });
       if (!imageRoute[2] && request.method === 'GET') {
         calls.push({ action: 'image-jobs', id });
-        return json(response, 200, { jobs: history.imageJobs });
+        const jobs = imageGetOverrides.get(id) ?? history.imageJobs;
+        imageGetOverrides.delete(id);
+        return json(response, 200, { jobs });
       }
       const jobId = decodeURIComponent(imageRoute[2] ?? '');
       const job = history.imageJobs.find((item) => item.id === jobId);
@@ -371,18 +426,59 @@ const server = http.createServer(async (request, response) => {
         return json(response, 404, {
           error: { code: 'not_found', message: 'Unknown fixture image job.' },
         });
+      if (imageRoute[3] === 'approval-token' && request.method === 'GET') {
+        // UI sequencing fixture only. Proxy-secret/origin enforcement is owned
+        // by the real server and requires separate deployment security acceptance.
+        calls.push({ action: 'image-approval-token', id, jobId });
+        if (approvalFailures.get(jobId) === 'denied') {
+          approvalFailures.delete(jobId);
+          return json(response, 403, {
+            error: {
+              code: 'approval_forbidden',
+              message: 'Image approval is unavailable from this browser origin.',
+            },
+          });
+        }
+        const approvalToken = `fixture-approval-token-${++approvalCounter}`;
+        approvalTokens.set(jobId, approvalToken);
+        return json(response, 200, { approvalToken });
+      }
       if (request.method !== 'POST')
         return json(response, 405, {
           error: { code: 'method_not_allowed', message: 'POST required.' },
         });
       if (imageRoute[3] === 'approval') {
         const input = data();
-        if (Object.keys(input).length !== 1 || !['approve', 'reject'].includes(input.decision)) {
+        if (
+          Object.keys(input).length !== 2 ||
+          !['approve', 'reject'].includes(input.decision) ||
+          typeof input.approvalToken !== 'string'
+        ) {
           return json(response, 400, {
-            error: { code: 'invalid_request', message: 'Only decision is accepted.' },
+            error: {
+              code: 'invalid_request',
+              message: 'Only decision and approvalToken are accepted.',
+            },
           });
         }
         calls.push({ action: 'image-approval', id, jobId, body: input });
+        if (approvalFailures.get(jobId) === 'expired') {
+          approvalFailures.delete(jobId);
+          approvalTokens.delete(jobId);
+          return json(response, 403, {
+            error: {
+              code: 'approval_token_expired',
+              message: 'The image approval token expired. Click again to retry.',
+            },
+          });
+        }
+        if (approvalTokens.get(jobId) !== input.approvalToken)
+          return json(response, 403, {
+            error: {
+              code: 'approval_token_invalid',
+              message: 'A fresh browser approval token is required.',
+            },
+          });
         const previous = imageDecisions.get(`${id}:${jobId}`);
         if (previous === input.decision) return json(response, 200, { job });
         if (job.state !== 'awaiting_approval' || !job.adjustment) {
@@ -395,6 +491,7 @@ const server = http.createServer(async (request, response) => {
         }
         const updated = {
           ...job,
+          revision: job.revision + 1,
           state: input.decision === 'approve' ? 'queued' : 'cancelled',
           cancelRequested: input.decision === 'reject',
         };
@@ -428,7 +525,12 @@ const server = http.createServer(async (request, response) => {
       }
       calls.push({ action: 'image-cancel', id, jobId, body: data() });
       const active = ['running', 'saving'].includes(job.state);
-      const updated = { ...job, state: active ? job.state : 'cancelled', cancelRequested: true };
+      const updated = {
+        ...job,
+        revision: job.revision + 1,
+        state: active ? job.state : 'cancelled',
+        cancelRequested: true,
+      };
       if (!active) updated.finishedAt = at;
       emit(id, 'image_job', { job: updated }, true, job.runId);
       return json(response, 200, { job: updated });
@@ -551,7 +653,17 @@ const server = http.createServer(async (request, response) => {
       }
       if (!operation) {
         calls.push({ action: 'snapshot', id });
-        return json(response, 200, { session: s, ...history, environment });
+        // Jobs come from the dedicated list. A bounded text snapshot may have
+        // no image events, so stale list responses must not erase newer cards.
+        return json(response, 200, {
+          session: s,
+          ...history,
+          imageJobs: undefined,
+          events: omitImageEvents.has(id)
+            ? history.events.filter((event) => event.type !== 'image_job')
+            : history.events,
+          environment,
+        });
       }
       if (operation === 'messages') {
         const input = data();

@@ -1,50 +1,22 @@
-import type { ImageJob, ImageJobState } from './types';
+import type { ImageJob } from './types';
 
-const order: Record<ImageJobState, number> = {
-  awaiting_approval: 0,
-  queued: 1,
-  running: 2,
-  saving: 3,
-  completed: 4,
-  failed: 4,
-  cancelled: 4,
-  interrupted: 4,
-};
-export const imageJobActive = (job: ImageJob) => order[job.state] < 4;
+export const imageJobActive = (job: ImageJob) =>
+  ['awaiting_approval', 'queued', 'running', 'saving'].includes(job.state);
+const validRevision = (job: ImageJob) => Number.isSafeInteger(job.revision) && job.revision >= 1;
 
-// GET and SSE can race. A stale persisted read may update queue metadata but
-// must not rewind dispatch or settlement. Ordered persisted SSE is authoritative:
-// known non-admission may legitimately requeue a dispatched job. Cancellation
-// intent and immutable run ownership remain preserved in either path.
-export function mergeImageJobs(
-  current: ImageJob[],
-  incoming: ImageJob[],
-  sessionId: string,
-  orderedEvent = false,
-) {
+// Persisted revisions order GET, SSE and POST acknowledgements alike. State names
+// are not an ordering: known non-admission may requeue a running job. Equal
+// revisions are immutable duplicate records, and cannot change the stored job.
+export function mergeImageJobs(current: ImageJob[], incoming: ImageJob[], sessionId: string) {
   const jobs = new Map(
-    current.filter((job) => job.sessionId === sessionId).map((job) => [job.id, job]),
+    current
+      .filter((job) => job.sessionId === sessionId && validRevision(job))
+      .map((job) => [job.id, job]),
   );
   for (const job of incoming) {
-    if (job.sessionId !== sessionId) continue;
+    if (job.sessionId !== sessionId || !validRevision(job)) continue;
     const previous = jobs.get(job.id);
-    if (
-      previous &&
-      (previous.runId !== job.runId || (!orderedEvent && order[job.state] < order[previous.state]))
-    )
-      continue;
-    if (
-      !orderedEvent &&
-      previous &&
-      order[previous.state] === 4 &&
-      previous.state !== job.state &&
-      !(Date.parse(job.finishedAt ?? '') > Date.parse(previous.finishedAt ?? ''))
-    ) {
-      // A cancelled delivery may acquire a retained artifact while draining,
-      // without allowing an older response to revive a terminal state.
-      jobs.set(job.id, { ...previous, ...(job.artifactId ? { artifactId: job.artifactId } : {}) });
-      continue;
-    }
+    if (previous && (previous.runId !== job.runId || job.revision <= previous.revision)) continue;
     jobs.set(job.id, {
       ...job,
       ...(previous?.artifactId && !job.artifactId ? { artifactId: previous.artifactId } : {}),

@@ -5,7 +5,7 @@ import { ContextMeter } from './ContextMeter';
 import { contextForThread } from './context';
 import { isActive } from './types';
 import { imageJobActive } from './image-jobs';
-import { imageReferencesAvailable } from './image-capabilities';
+import { canStageEditReference, imageReferencesAvailable } from './image-capabilities';
 import { uploadAccept, uploadKey } from './uploads';
 
 interface UploadItem {
@@ -343,7 +343,7 @@ export function Composer({
               : 'PDF, source and text files · 50 MiB per file · Images unavailable'
             : 'Checking attachment capabilities…'}
         </span>
-        {state.imageCapabilitiesLoaded && !state.imageCapabilities?.operations.edit && (
+        {state.imageCapabilitiesLoaded && !canStageEditReference(state.imageCapabilities) && (
           <span>Image editing unavailable</span>
         )}
         <span className="keyboard-hint" id="composer-keyboard-hint">

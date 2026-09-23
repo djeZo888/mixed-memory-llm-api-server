@@ -1,56 +1,76 @@
 import type { ImageOperation } from './types';
 
 export interface ImageProfile {
-  referenceCount: number;
-  sizes: string[];
+  operation: ImageOperation;
+  size: string;
+  references: number;
+  transparent: false;
+  evidence_sha256: string;
+  native_size?: string;
+  crop_bottom?: number;
 }
 export interface ImageCapabilities {
   model?: string;
-  operations: Partial<Record<ImageOperation, { available: boolean; profiles: ImageProfile[] }>>;
+  ready: boolean;
+  admitting: boolean;
+  busy: boolean;
+  profiles: ImageProfile[];
 }
 const object = (value: unknown): Record<string, unknown> | undefined =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : undefined;
+const size = (value: unknown): value is string =>
+  typeof value === 'string' && /^[1-9]\d*x[1-9]\d*$/.test(value);
 
-// Keep the capability boundary narrow: absent, unknown or malformed operation
-// profiles never advertise editing or substitute generation for editing.
+// Parse the unchanged upstream profile array. Absent or malformed edit records
+// never advertise editing, and generation profiles cannot enable editing.
 export function imageCapabilities(value: unknown): ImageCapabilities {
   const input = object(value);
-  const operations = object(input?.operations);
-  const result: ImageCapabilities = { operations: {} };
+  const result: ImageCapabilities = {
+    ready: input?.ready === true,
+    admitting: input?.admitting === true,
+    busy: input?.busy === true,
+    profiles: [],
+  };
   if (typeof input?.model === 'string') result.model = input.model;
-  for (const operation of ['generation', 'edit'] as const) {
-    const record = object(operations?.[operation]);
-    if (!record || record.available !== true || !Array.isArray(record.profiles)) continue;
-    const profiles: ImageProfile[] = [];
-    for (const raw of record.profiles) {
-      const profile = object(raw);
-      if (
-        !profile ||
-        !Number.isSafeInteger(profile.referenceCount) ||
-        Number(profile.referenceCount) < 0 ||
-        !Array.isArray(profile.sizes)
-      )
-        continue;
-      const sizes = profile.sizes.filter(
-        (size): size is string => typeof size === 'string' && /^[1-9]\d*x[1-9]\d*$/.test(size),
-      );
-      if (sizes.length) profiles.push({ referenceCount: Number(profile.referenceCount), sizes });
-    }
-    if (profiles.length) result.operations[operation] = { available: true, profiles };
+  if (!Array.isArray(input?.profiles)) return result;
+  for (const raw of input.profiles) {
+    const profile = object(raw);
+    if (
+      !profile ||
+      !['generation', 'edit'].includes(String(profile.operation)) ||
+      !size(profile.size) ||
+      !Number.isSafeInteger(profile.references) ||
+      Number(profile.references) < 0 ||
+      profile.transparent !== false ||
+      typeof profile.evidence_sha256 !== 'string' ||
+      !/^[a-f\d]{64}$/i.test(profile.evidence_sha256)
+    )
+      continue;
+    result.profiles.push({
+      operation: profile.operation as ImageOperation,
+      size: profile.size,
+      references: Number(profile.references),
+      transparent: false,
+      evidence_sha256: profile.evidence_sha256,
+      ...(size(profile.native_size) ? { native_size: profile.native_size } : {}),
+      ...(Number.isSafeInteger(profile.crop_bottom) && Number(profile.crop_bottom) >= 0
+        ? { crop_bottom: Number(profile.crop_bottom) }
+        : {}),
+    });
   }
   return result;
 }
 export const editAvailable = (capabilities: ImageCapabilities | null, count = 1) =>
-  capabilities?.operations.edit?.profiles.some((profile) => profile.referenceCount === count) ===
-  true;
-// A draft may collect references toward a qualified count (for example two),
-// without claiming that every intermediate count is an enabled edit operation.
+  capabilities?.profiles.some(
+    (profile) => profile.operation === 'edit' && profile.references === count,
+  ) === true;
+// A draft can collect references toward a qualified count without claiming
+// qualification for every intermediate count.
 export const canStageEditReference = (capabilities: ImageCapabilities | null, count = 1) =>
-  capabilities?.operations.edit?.profiles.some((profile) => profile.referenceCount >= count) ===
-  true;
+  capabilities?.profiles.some(
+    (profile) => profile.operation === 'edit' && profile.references >= count,
+  ) === true;
 export const imageReferencesAvailable = (capabilities: ImageCapabilities | null) =>
-  Object.values(capabilities?.operations ?? {}).some((operation) =>
-    operation.profiles.some((profile) => profile.referenceCount > 0),
-  );
+  capabilities?.profiles.some((profile) => profile.references > 0) === true;

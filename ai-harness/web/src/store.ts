@@ -215,7 +215,8 @@ export class HarnessStore {
       const { jobs } = await this.transport.imageJobs(id, signal);
       if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
       if (this.state.selectedId === id) this.update({ imageJobsError: null });
-      return { ...snapshot, imageJobs: jobs };
+      const previous = this.state.thread?.session.id === id ? this.state.thread.imageJobs : [];
+      return { ...snapshot, imageJobs: mergeImageJobs(previous ?? [], jobs, id) };
     } catch (error) {
       if (signal.aborted) throw error;
       if (this.state.selectedId === id)
@@ -225,26 +226,9 @@ export class HarnessStore {
       // Image status is additive: preserve text chat and known jobs during an
       // image-route failure. Persisted image_job events can still advance them.
       const previous = this.state.thread?.session.id === id ? this.state.thread.imageJobs : [];
-      const persistedIds = new Set(
-        snapshot.events
-          .filter(
-            (event) =>
-              event.sessionId === id &&
-              event.type === 'image_job' &&
-              event.data.job.sessionId === id &&
-              (event.runId === undefined || event.runId === event.data.job.runId),
-          )
-          .map((event) => (event.type === 'image_job' ? event.data.job.id : '')),
-      );
       return {
         ...snapshot,
-        // Ordered persisted events may legitimately requeue after known
-        // non-admission. Never overwrite that evidence with our older card.
-        imageJobs: mergeImageJobs(
-          (previous ?? []).filter((job) => !persistedIds.has(job.id)),
-          snapshot.imageJobs ?? [],
-          id,
-        ),
+        imageJobs: mergeImageJobs(previous ?? [], snapshot.imageJobs ?? [], id),
       };
     }
   }

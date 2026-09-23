@@ -47,7 +47,7 @@ function publicText(value, token, max = 600) {
   if (typeof value !== 'string') return undefined;
   return value.split(token).join('[redacted]')
     .replace(/(?:data:|https?:\/\/|file:\/\/|Bearer\s+)\S+/giu, '[redacted]')
-    .replace(/["']?\b(?:api[ _-]?key|(?:access[ _-]?|bearer[ _-]?)?token|secret|authorization|password)["']?\s*[:=]\s*(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\S+)/giu, '[redacted]')
+    .replace(/["']?\b(?:api[ _-]?key|(?:access[ _-]?|bearer[ _-]?|approval[ _-]?)?token|secret|authorization|password)["']?\s*[:=]\s*(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\S+)/giu, '[redacted]')
     .replace(/(?:[A-Za-z]:[\\/]|\\\\)[^\s,;)]+/gu, '[path omitted]')
     .replace(/(?:^|[\s=(])(?:\/[A-Za-z0-9_.~-]+){1,}(?:\/[^\s,;)]*)?/gu, ' [path omitted]')
     .replace(/[A-Za-z0-9+/=_-]{96,}/gu, '[data omitted]')
@@ -57,46 +57,35 @@ function safeId(value, token) { return identifier(value) && value.length < 96 &&
 function modelName(value, token) {
   return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._/-]{0,94}$/u.test(value) && !value.includes(token) ? value : undefined;
 }
-function dimensions(value) {
-  if (sizeValue(value)) return value;
-  if (value && Number.isSafeInteger(value.width) && Number.isSafeInteger(value.height)
-      && value.width > 0 && value.width <= 99999 && value.height > 0 && value.height <= 99999) {
-    return { width: value.width, height: value.height };
-  }
-  return undefined;
-}
 function assign(target, key, value) { if (value !== undefined) target[key] = value; }
-function publicReference(value, token) {
+function publicReference(value, token, adjustment = false) {
   if (!value || typeof value !== 'object') return {};
   const result = {};
-  for (const key of ['id', 'fileId', 'artifactId']) assign(result, key, safeId(value[key], token));
+  for (const key of ['referenceId', 'fileId']) assign(result, key, safeId(value[key], token));
   if (typeof value.name === 'string') assign(result, 'name', publicText(value.name.split(/[\\/]/u).at(-1), token, 256));
-  for (const key of ['hash', 'sha256']) if (/^[a-f\d]{64}$/iu.test(value[key] ?? '')) result[key] = value[key];
-  for (const key of ['dimensions', 'size']) assign(result, key, dimensions(value[key]));
-  if (Number.isSafeInteger(value.width) && Number.isSafeInteger(value.height)) {
-    const pair = dimensions(value); if (pair) Object.assign(result, pair);
+  if (/^[a-f\d]{64}$/iu.test(value.sha256 ?? '')) result.sha256 = value.sha256;
+  for (const key of adjustment ? ['width', 'height', 'workingWidth', 'workingHeight'] : ['width', 'height']) {
+    if (Number.isSafeInteger(value[key]) && value[key] > 0) result[key] = value[key];
   }
-  if (relativePath(value.workspacePath) && !value.workspacePath.includes(token)) result.workspacePath = value.workspacePath;
+  if (adjustment && value.padding && ['top', 'right', 'bottom', 'left'].every(key => Number.isSafeInteger(value.padding[key]) && value.padding[key] >= 0)) {
+    result.padding = Object.fromEntries(['top', 'right', 'bottom', 'left'].map(key => [key, value.padding[key]]));
+  }
   return result;
 }
 export function publicError(value, token, fallback = 'IMAGE_REQUEST_FAILED') {
   const result = { code: safeId(value?.code, token) ?? fallback, message: publicText(value?.message, token) || 'The image request failed. Check the image job card.' };
-  // Unsupported size errors must retain the authoritative supported list.
-  for (const key of ['supportedSizes', 'supported_sizes']) {
-    if (Array.isArray(value?.[key])) result[key] = value[key].map(dimensions).filter(Boolean).slice(0, 64);
-  }
   return result;
 }
 export function publicJob(value, token) {
   if (!value || !safeId(value.id, token) || !states.has(value.state)
-      || !['generation', 'edit'].includes(value.operation)) {
+      || !['generation', 'edit'].includes(value.operation) || !Number.isSafeInteger(value.revision) || value.revision < 1) {
     throw new ImageError('INVALID_JOB_RESPONSE', 'The gateway returned an invalid image job record.');
   }
-  const result = { id: value.id, operation: value.operation, state: value.state };
+  const result = { id: value.id, revision: value.revision, operation: value.operation, state: value.state };
   for (const key of ['requestId', 'runId', 'artifactId']) assign(result, key, safeId(value[key], token));
   // Session identity and prompt are intentionally not returned to model context.
   assign(result, 'model', modelName(value.model, token));
-  for (const key of ['requestedSize', 'actualSize']) assign(result, key, dimensions(value[key]));
+  for (const key of ['requestedSize', 'actualSize']) if (sizeValue(value[key])) result[key] = value[key];
   for (const key of ['seed', 'elapsedMs', 'queuePosition']) {
     if (Number.isSafeInteger(value[key]) && (key === 'seed' || value[key] >= 0)) result[key] = value[key];
   }
@@ -108,11 +97,11 @@ export function publicJob(value, token) {
   if (value.error) result.error = publicError(value.error, token);
   if (value.adjustment && typeof value.adjustment === 'object') {
     result.adjustment = {};
-    assign(result.adjustment, 'targetSize', dimensions(value.adjustment.targetSize));
+    if (sizeValue(value.adjustment.targetSize)) result.adjustment.targetSize = value.adjustment.targetSize;
     assign(result.adjustment, 'reason', publicText(value.adjustment.reason, token));
-    if (Array.isArray(value.adjustment.sources)) result.adjustment.sources = value.adjustment.sources.slice(0, LIMITS.references).map(item => publicReference(item, token));
+    if (Array.isArray(value.adjustment.sources)) result.adjustment.sources = value.adjustment.sources.slice(0, LIMITS.references).map(item => publicReference(item, token, true));
   }
-  if (value.state === 'completed' && relativePath(value.workspacePath) && !value.workspacePath.includes(token)) result.workspacePath = value.workspacePath;
+  if (value.state === 'completed' && relativePath(value.outputPath) && !value.outputPath.includes(token)) result.outputPath = value.outputPath;
   return result;
 }
 
@@ -120,24 +109,42 @@ export function publicJob(value, token) {
 // unknown upstream additions never reach a model, even in nested profiles.
 export function publicCapabilities(value, token) {
   const invalid = () => { throw new ImageError('INVALID_CAPABILITIES', 'The gateway returned invalid image operation capabilities.'); };
-  if (!value || typeof value !== 'object' || !value.operations || Array.isArray(value.operations)
-      || typeof value.operations !== 'object' || !('generation' in value.operations || 'edit' in value.operations)) invalid();
-  const result = { operations: {} };
-  assign(result, 'model', modelName(value.model, token));
-  assign(result, 'reason', publicText(value.reason, token));
-  for (const key of ['available', 'opaque']) if (typeof value[key] === 'boolean') result[key] = value[key];
-  assign(result, 'defaultSize', dimensions(value.defaultSize));
-  for (const operation of ['generation', 'edit']) {
-    const source = value.operations[operation];
-    const valid = source?.available === true && Array.isArray(source.profiles) && source.profiles.length <= 64
-      && source.profiles.length > 0 && source.profiles.every(profile => profile && Number.isSafeInteger(profile.referenceCount)
-        && profile.referenceCount >= 0 && profile.referenceCount <= LIMITS.references && Array.isArray(profile.sizes)
-        && profile.sizes.length > 0 && profile.sizes.length <= 64 && profile.sizes.every(sizeValue));
-    // A missing edit qualification must not erase valid generation discovery.
-    result.operations[operation] = { available: valid, profiles: valid ? source.profiles.map(profile => ({ referenceCount: profile.referenceCount, sizes: [...profile.sizes] })) : [] };
-    assign(result.operations[operation], 'reason', publicText(source?.reason, token));
+  if (!value || typeof value !== 'object' || !Array.isArray(value.profiles) || value.profiles.length > 64) invalid();
+  const result = {};
+  for (const key of ['ready', 'admitting', 'busy']) if (typeof value[key] === 'boolean') result[key] = value[key];
+  for (const key of ['state', 'model', 'runtime_revision', 'model_id', 'model_revision']) assign(result, key, modelName(value[key], token));
+  if (/^sha256:[a-f\d]{64}$/iu.test(value.runtime_image_digest ?? '')) result.runtime_image_digest = value.runtime_image_digest;
+  result.profiles = [];
+  for (const profile of value.profiles) {
+    if (!profile || !['generation', 'edit'].includes(profile.operation) || !sizeValue(profile.size)
+        || !Number.isSafeInteger(profile.references) || profile.references < 0 || profile.references > LIMITS.references
+        || profile.transparent !== false || !/^[a-f\d]{64}$/iu.test(profile.evidence_sha256 ?? '')) continue;
+    const out = { operation: profile.operation, size: profile.size, references: profile.references, transparent: profile.transparent };
+    if (/^[a-f\d]{64}$/iu.test(profile.evidence_sha256 ?? '')) out.evidence_sha256 = profile.evidence_sha256;
+    if (sizeValue(profile.native_size)) out.native_size = profile.native_size;
+    if (Number.isSafeInteger(profile.crop_bottom) && profile.crop_bottom >= 0) out.crop_bottom = profile.crop_bottom;
+    result.profiles.push(out);
   }
+  // These reviewed upstream records remain in their original shape. Sanitize
+  // nested primitives without manufacturing an operations/defaults projection.
+  for (const key of ['limits', 'defaults', 'masks', 'response_format', 'output_format']) assign(result, key, capabilityData(value[key], token));
   return result;
+}
+
+function capabilityData(value, token, depth = 0) {
+  if (depth > 5) return undefined;
+  if (value === null || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value))) return value;
+  if (typeof value === 'string') return publicText(value, token);
+  if (Array.isArray(value)) return value.slice(0, 64).map(item => capabilityData(item, token, depth + 1)).filter(item => item !== undefined);
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [key, item] of Object.entries(value).slice(0, 64)) {
+      if (!/^[A-Za-z][A-Za-z0-9_]{0,63}$/u.test(key) || /(?:api.?key|token|secret|auth|password|base64|data|bytes|path|url|host)/iu.test(key)) continue;
+      assign(out, key, capabilityData(item, token, depth + 1));
+    }
+    return out;
+  }
+  return undefined;
 }
 
 async function boundedJSON(response) {
@@ -187,7 +194,7 @@ export function createImageClient({ token, fetchImpl = fetch, now = Date.now, sl
   async function capabilities(input = {}, { signal } = {}) {
     if (!capabilitiesInput.safeParse(input).success) throw new ImageError('INVALID_INPUT', 'image_capabilities accepts no arguments.');
     const data = await request('/image-capabilities', 'GET', undefined, signal, LIMITS.requestMs);
-    return { capabilities: publicCapabilities(data.capabilities ?? data, token) };
+    return publicCapabilities(data, token);
   }
   async function invoke(operation, input, { signal, onProgress } = {}) {
     const parsed = (operation === 'edit' ? editInput : generateInput).safeParse(input);
@@ -200,7 +207,7 @@ export function createImageClient({ token, fetchImpl = fetch, now = Date.now, sl
     let job;
     try {
       const data = await request('/image-jobs', 'POST', body, signal, deadline - now());
-      job = publicJob(data.job ?? data, token);
+      job = publicJob(data.job, token);
       if (job.requestId !== requestId || job.operation !== operation) throw new ImageError('INVALID_JOB_RESPONSE', 'The gateway returned a different request identity or operation.');
     } catch (error) {
       // A response error proves no usable acceptance record, not non-admission.
@@ -227,9 +234,10 @@ export function createImageClient({ token, fetchImpl = fetch, now = Date.now, sl
       if (signal?.aborted || now() >= deadline) continue;
       try {
         const data = await request(`/image-jobs/${encodeURIComponent(job.id)}`, 'GET', undefined, signal, deadline - now());
-        const next = publicJob(data.job ?? data, token);
+        const next = publicJob(data.job, token);
         if (next.id !== job.id || next.requestId !== requestId || next.operation !== operation) throw new ImageError('INVALID_JOB_RESPONSE', 'The gateway returned an unrelated image job.');
-        job = next; observationError = undefined;
+        if (next.revision > job.revision) job = next;
+        observationError = undefined;
       } catch (error) {
         observationError = { code: error.code, message: error.message, ...error.detail };
         if (error.detail?.httpStatus && ![408, 429].includes(error.detail.httpStatus) && error.detail.httpStatus < 500) {

@@ -1,6 +1,6 @@
 # Session image MCP adapter
 
-Three stdio MCP tools connect native MiniMax main agents and delegated children
+Three stdio MCP tools connect native MiniMax main agents and ordinary delegated workers
 to the host-owned persistent image broker:
 
 - `image_capabilities {}` reads current operation/size/reference-count profiles.
@@ -50,31 +50,36 @@ unknown properties, image bytes, backend settings and host paths. Error codes an
 useful messages are retained with credential/path/data-URI redaction. There is no
 raw response or exception logging.
 
-## Wire integration checkpoint
+## Confirmed wire contract
 
-The frozen contract defines ImageJob fields, routes and submission semantics but
-leaves capabilities and the completion path envelope unspecified. Pending the
-tracked Worker1 answer in the task's `INTERFACE.md`, this adapter and the web
-fixtures use this single provisional capability shape:
+Internal submit/get/cancel and browser approve/cancel return `{job: ImageJob}`;
+browser job lists return `{jobs: ImageJob[]}`. The gateway and browser capability
+route pass through the reviewed upstream capability JSON. The MCP result retains
+its known metadata in the same shape, excluding secret/byte/path fields:
+`ready`, `admitting`, `busy`, `state`, `model`, `runtime_revision`,
+`runtime_image_digest`, `model_id`, `model_revision`, `profiles`, `limits`,
+`defaults`, `masks`, `response_format`, and `output_format`.
 
-```json
-{
-  "model": "Qwen-Image-2.1",
-  "operations": {
-    "generation": {"available": true, "profiles": [{"referenceCount": 0, "sizes": ["1920x1080"]}]},
-    "edit": {"available": false, "profiles": [], "reason": "No qualified edit profile"}
-  }
-}
-```
+Each advertised profile contains `operation`, `size`, `references`, `transparent`,
+`evidence_sha256`, `native_size`, and `crop_bottom`. Qualification is specific to
+operation, size and reference count. Missing, malformed or non-opaque edit
+profiles do not enable editing. Do not manufacture a separate operations schema.
+Upstream `defaults.size` is 1024x1024; harness generation still defaults to 1920x1080.
+The two defaults have different owners and must not be conflated.
 
-Optional root metadata: `available`, `opaque`, `defaultSize`, `reason`. This is a
-wire-shape example, not a claim about deployed capabilities. Missing/malformed
-profiles disable that operation while preserving other valid operation profiles;
-an unknown overall schema fails closed. `size`, requested/actual sizes and profile sizes
-use `WIDTHxHEIGHT` strings; dimensions in source/adjustment records also accept
-`{width,height}`. GET/POST job responses accept the job itself or `{job}`; completed
-jobs use the provisional relative `workspacePath` field. No unknown metadata is
-passed through. Reconcile these exact fields before server integration/deployment.
+Job `revision` starts at 1 and increases on every persisted update. Polling ignores
+older/equal revisions, preserving valid newer transitions such as running back
+to queued after known 429 non-admission. It never retries the submission itself.
+`requestedSize`, `actualSize` and adjustment `targetSize` use WIDTHxHEIGHT strings.
+Sources contain `referenceId`, optional `fileId`, `name`, `sha256`, `width`, and
+`height`. Adjustment sources add `workingWidth`, `workingHeight` and
+`padding:{top,right,bottom,left}`. Completed internal jobs use relative
+`outputPath`; browser job records omit that path and use `artifactId` instead.
+
+The browser separately obtains a short-lived approval token on an actual user
+click, then posts `{decision,approvalToken}`. This adapter has no approval-token
+endpoint or input, and never exposes that token in model results. Browser-token
+issuance/security is host-owned and requires separate deployed acceptance.
 
 ## Packaging and focused offline verification
 

@@ -73,14 +73,21 @@ export type ImageJobState =
   | 'cancelled'
   | 'interrupted';
 export interface ImageReference {
+  referenceId: string;
   fileId?: string;
   name: string;
   sha256: string;
   width: number;
   height: number;
 }
+export interface ImageAdjustmentSource extends ImageReference {
+  workingWidth: number;
+  workingHeight: number;
+  padding: { top: number; right: number; bottom: number; left: number };
+}
 export interface ImageJob {
   id: string;
+  revision: number;
   sessionId: string;
   runId: string;
   requestId: string;
@@ -99,7 +106,7 @@ export interface ImageJob {
   queuePosition?: number;
   artifactId?: string;
   error?: { code: string; message: string };
-  adjustment?: { sources: ImageReference[]; targetSize: string; reason: string };
+  adjustment?: { sources: ImageAdjustmentSource[]; targetSize: string; reason: string };
   cancelRequested: boolean;
 }
 export interface Summary {

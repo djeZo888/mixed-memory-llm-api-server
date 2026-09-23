@@ -46,16 +46,23 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 const post = <T>(path: string, body: unknown) =>
   request<T>(path, { method: 'POST', body: JSON.stringify(body) });
 async function imageJobPost(path: string, body: unknown): Promise<{ job: ImageJob }> {
-  const result = await post<ImageJob | { job: ImageJob }>(path, body);
-  const job = result && typeof result === 'object' && 'job' in result ? result.job : result;
-  if (!job || typeof job !== 'object' || !('id' in job) || typeof job.id !== 'string')
+  const result = await post<{ job: ImageJob }>(path, body);
+  const job = result?.job;
+  if (
+    !job ||
+    typeof job !== 'object' ||
+    typeof job.id !== 'string' ||
+    !Number.isSafeInteger(job.revision) ||
+    job.revision < 1
+  )
     throw new ApiError(
       200,
       'invalid_response',
       'The server returned an unreadable image job. Refresh its saved status.',
     );
-  return { job: job as ImageJob };
+  return { job };
 }
+
 export interface StreamCallbacks {
   event: (event: ServerEvent) => void;
   open: () => void;
@@ -128,10 +135,19 @@ export const api: Transport = {
       ...(imageReferences?.length ? { imageReferences } : {}),
     }),
   imageJobs: (id, signal) => request(`${sessionPath(id)}/image-jobs`, { signal }),
-  approveImage: (id, jobId, decision) =>
-    imageJobPost(`${sessionPath(id)}/image-jobs/${encodeURIComponent(jobId)}/approval`, {
-      decision,
-    }),
+  approveImage: async (id, jobId, decision) => {
+    const path = `${sessionPath(id)}/image-jobs/${encodeURIComponent(jobId)}`;
+    // This method is invoked only by the user's approval-card click. Tokens
+    // remain local to that action; every explicit retry fetches a fresh token.
+    const { approvalToken } = await request<{ approvalToken: string }>(`${path}/approval-token`);
+    if (typeof approvalToken !== 'string' || !approvalToken)
+      throw new ApiError(
+        200,
+        'invalid_response',
+        'Approval authorization was unavailable. Try the approval card again.',
+      );
+    return imageJobPost(`${path}/approval`, { decision, approvalToken });
+  },
   cancelImage: (id, jobId) =>
     imageJobPost(`${sessionPath(id)}/image-jobs/${encodeURIComponent(jobId)}/cancel`, {}),
   cancel: (id) => post(`${sessionPath(id)}/cancel`, {}),
