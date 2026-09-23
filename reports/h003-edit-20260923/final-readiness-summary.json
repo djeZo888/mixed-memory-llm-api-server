@@ -1,0 +1,75 @@
+{
+  "status": "PASS",
+  "scope": "Read-only readiness receipt comparison and CPU artifact integrity; no additional model call or source test suite.",
+  "utc": "2026-09-23T11:22:45.879569+00:00",
+  "generation_ready": {
+    "status": 200,
+    "body": {
+      "ready": true,
+      "busy": false,
+      "admitting": true,
+      "state": "ready"
+    }
+  },
+  "six_generation_profiles_unchanged": true,
+  "public_edit_profiles": 0,
+  "runtime_config_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+  "container_id": "ca750f6dca24f2117ef8b91d0d28a1688d4a66b0bd671622840b8b1e243cfb8d",
+  "native_gpu_uuid_pid": [
+    [
+      "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "147055"
+    ]
+  ],
+  "api_and_text_identities_unchanged": true,
+  "containers": [
+    {
+      "id": "ca750f6dca24f2117ef8b91d0d28a1688d4a66b0bd671622840b8b1e243cfb8d",
+      "name": "/llm-image-backend",
+      "image": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "started": "2026-09-23T06:22:18.622164192Z",
+      "pid": 146684
+    },
+    {
+      "id": "a2afad49380a592739944f2766f5547687a5cf302badd375bda14fffdb09f75c",
+      "name": "/llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+      "image": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "started": "2026-09-23T02:05:36.354298377Z",
+      "pid": 53058
+    },
+    {
+      "id": "a71924b9e7fa4f72c6eeefc243731f59bdc0d951b817de1d32f32dbfd67f450e",
+      "name": "/llmctl-qwen38-27b-q1-480000-yarn4-bf16kv",
+      "image": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "started": "2026-09-23T02:04:14.101319306Z",
+      "pid": 32207
+    }
+  ],
+  "units": "MainPID=144838\nExecMainStartTimestamp=Wed 2026-09-23 06:22:09 UTC\nId=llm-image-api.service\nActiveState=active\nUnitFileState=enabled\n\nMainPID=0\nExecMainStartTimestamp=Wed 2026-09-23 06:22:16 UTC\nId=llm-image-backend.service\nActiveState=active\nUnitFileState=disabled\n",
+  "runtime_spool_unchanged": true,
+  "guards": "pass",
+  "canonical_lease": "acquired and released without lifecycle mutation",
+  "pixel_delivery": [
+    {
+      "case": "d05",
+      "opaque_rgb": true,
+      "native_rgb_pixels_identical": true,
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "case": "d06",
+      "opaque_rgb": true,
+      "native_rgb_pixels_identical": true,
+      "size": [
+        1024,
+        1024
+      ]
+    }
+  ],
+  "d06_exact_d04_input_bytes": true,
+  "actual_gpu_requests": 5,
+  "remaining_reserved": 1
+}

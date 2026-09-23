@@ -1,0 +1,81 @@
+{
+  "after": {
+    "container_id": "ca750f6dca24f2117ef8b91d0d28a1688d4a66b0bd671622840b8b1e243cfb8d",
+    "device_current": {
+      "free_bytes": 17028874240,
+      "total_bytes": 51527024640,
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+    },
+    "gpu_processes": [
+      [
+        "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "147055",
+        "32226"
+      ]
+    ],
+    "host_current": {
+      "MemAvailable": 920926044160,
+      "MemTotal": 946820968448,
+      "SwapFree": 3157258240,
+      "SwapTotal": 3157258240
+    },
+    "started_at": "2026-09-23T06:22:18.622164192Z"
+  },
+  "api_after": {
+    "ActiveState": "active",
+    "ExecMainStartTimestamp": "Wed 2026-09-23 06:22:09 UTC",
+    "FreezerState": "running",
+    "MainPID": "144838"
+  },
+  "api_before": {
+    "ActiveState": "active",
+    "ExecMainStartTimestamp": "Wed 2026-09-23 06:22:09 UTC",
+    "FreezerState": "running",
+    "MainPID": "144838"
+  },
+  "before": {
+    "container_id": "ca750f6dca24f2117ef8b91d0d28a1688d4a66b0bd671622840b8b1e243cfb8d",
+    "device_current": {
+      "free_bytes": 17024679936,
+      "total_bytes": 51527024640,
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+    },
+    "gpu_processes": [
+      [
+        "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "147055",
+        "32230"
+      ]
+    ],
+    "host_current": {
+      "MemAvailable": 920914993152,
+      "MemTotal": 946820968448,
+      "SwapFree": 3157258240,
+      "SwapTotal": 3157258240
+    },
+    "started_at": "2026-09-23T06:22:18.622164192Z"
+  },
+  "exit_code": 0,
+  "gpu_processes_restored": true,
+  "inference_attempts": 1,
+  "native_operation_settled": true,
+  "probe_processes_absent": true,
+  "probe_sha256": "f59cdd911b98cea1441a027000d36b50533fe2f28b0d1e6e7c201d1146d5ff5d",
+  "ready_after": {
+    "admitting": true,
+    "busy": false,
+    "ready": true,
+    "state": "ready"
+  },
+  "ready_before": {
+    "admitting": true,
+    "busy": false,
+    "ready": true,
+    "state": "ready"
+  },
+  "sampler_exit": 0,
+  "stderr": "",
+  "stdout": "",
+  "utc": "2026-09-23T11:21:29.352345+00:00",
+  "wall_seconds": 28.25822255499952
+}

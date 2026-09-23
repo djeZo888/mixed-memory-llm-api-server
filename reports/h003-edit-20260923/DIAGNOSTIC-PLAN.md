@@ -120,3 +120,12 @@ used-memory as identity. It stayed frozen, then explicit guarded checks proved
 HTTP200,40steps,one output, no probe process, same native GPU UUID/PID; adapter
 was thawed and ready200 rechecked. The next runner compares UUID/PID only and
 still requires completed successful response. Timeout/ambiguity stays closed.
+
+## D05 declared before dispatch
+Licensed NASA/scikit-image natural astronaut photograph, original hash88431cd9653ccd539741b555fb0a46b61558b301d4110412b5bc28b5e3ea6cb5; authorized test-only aspect-preserving LANCZOS512→1024 preparation recorded in artifacts/d05-fixture/PREPARATION.json. Working hash09fc2049a0c52f366a3fa38cc6cf6e2494cdd934147fe3994192965d78d03bf5.
+Prompt: Change only the orange fabric of the astronaut's flight suit to dark blue. Keep her face, hair, pose, suit shape, patches, neck ring, helmet, flag, shuttle model, background, and lighting unchanged.
+Seed45,1024×1024,n1,40steps,CPU RNG,guidance1,trueCFG1,no negative prompt,opaquePNG. One native request; unchanged deployed runtime. Hypothesis/discriminator and exact helper hashes declared in ledger. Fourth actual GPU call; D06 next, sixth reserved.
+
+## D06 declared before dispatch
+Exact D04 delivered RGB inputc718b9feb9c7825cb66b69b69be5e87829b811fb536fcc109346c73533a281bb, no image modification. Prompt: Change the blue teapot to green, keeping its shape, table, window, and lighting unchanged.
+Seed44 distinct from known ancestors42/43,1024×1024,n1,40steps,CPU RNG,guidance1,trueCFG1,no negative prompt,opaquePNG. One native request unchanged deployed recipe. Hypothesis/discriminator/helper hashes in ledger. Fifth actual GPU call; sixth reserved.
