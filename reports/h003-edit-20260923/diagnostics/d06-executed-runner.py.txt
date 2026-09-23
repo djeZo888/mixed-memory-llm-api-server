@@ -1,0 +1,63 @@
+"""One task-scoped probe under existing guards/lease; no backend lifecycle call."""
+import base64,hashlib,importlib.util,json,os,pathlib,subprocess,sys,time,urllib.request
+payload=json.load(sys.stdin)
+p=pathlib.Path('/data/services/image21-runtime-20260923/source/service.py')
+assert hashlib.sha256(p.read_bytes()).hexdigest()=='0edadcb43ec83d369d7bdb66dddc7035962d620475314b0142cb9f047b197586'
+spec=importlib.util.spec_from_file_location('runtime',p);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+r=m.Runtime()
+spec=importlib.util.spec_from_file_location('approved_loader','/usr/local/lib/llm-server/image-api/examples/generate.py');h=importlib.util.module_from_spec(spec);spec.loader.exec_module(h);key=h.read_key()
+def ready():
+ req=urllib.request.Request('http://127.0.0.1:30006/health/ready',headers={'Authorization':'Bearer '+key})
+ with urllib.request.urlopen(req,timeout=4) as reply:return json.load(reply)
+def unit():
+ return dict(x.split('=',1) for x in m.run(['systemctl','show','llm-image-api.service','-p','MainPID','-p','ActiveState','-p','FreezerState','-p','ExecMainStartTimestamp']).stdout.splitlines())
+with m.acquire_lease(blocking=False):
+ r.guards();s=r.state();assert s['warm'] and s['phase']=='warm';before=r.verify_resident(s);u=unit();assert u['ActiveState']=='active' and u['FreezerState']=='running'
+ status=ready();assert status['ready'] and status['admitting'] and not status['busy']
+ rel='work/evidence/'+s['run_id']+'/H003-D06';dest=m.BASE/rel
+ stage_code="""import os,sys,json,base64,hashlib,importlib.util
+spec=importlib.util.spec_from_file_location('native','/runtime/native_request.py');n=importlib.util.module_from_spec(spec);spec.loader.exec_module(n)
+payload=json.load(sys.stdin);fd=n.open_run_directory(payload['run_id'])
+os.mkdir('H003-D06',0o700,dir_fd=fd);child=os.open('H003-D06',os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=fd)
+for name in ('probe.py','input.png'):
+ raw=base64.b64decode(payload[name]['data'],validate=True);assert hashlib.sha256(raw).hexdigest()==payload[name]['sha256'];n.write_exclusive(child,name,raw)
+os.fsync(child);os.close(child);os.fsync(fd);os.close(fd)
+print('staged')
+"""
+ payload['run_id']=s['run_id']
+ with r.anchor() as a:
+  staging=subprocess.run(['docker','exec','-i',s['container']['id'],'/opt/image-venv/bin/python','-I','-B','-c',stage_code],input=json.dumps(payload),capture_output=True,text=True,timeout=30)
+  assert staging.returncode==0,staging.stderr
+  a.check()
+ telemetry_rel='receipts/H003-D06-telemetry.jsonl'
+ frozen=False;settled=False;sampler=None;receipt={'before':before,'api_before':u,'ready_before':status,'utc':m.now(),'probe_sha256':payload['probe.py']['sha256'],'inference_attempts':0}
+ try:
+  # Sole task admission owner; freeze preserves the existing API process and avoids warm/restart.
+  m.run(['systemctl','freeze','llm-image-api.service']);frozen=True;assert unit()['FreezerState']=='frozen'
+  r.guards();r.verify_resident(s)
+  with r.anchor() as a:
+   with a.open(telemetry_rel,os.O_WRONLY|os.O_CREAT|os.O_EXCL) as f:
+    sampler=subprocess.Popen(['/usr/bin/python3','-I','-B',str(m.BASE/'source/telemetry.py'),'--output-fd',str(f.fileno()),'--output-path',str(m.BASE/telemetry_rel),'--cgroup','/sys/fs/cgroup/system.slice/docker-'+s['container']['id']+'.scope'],pass_fds=(f.fileno(),),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    try:
+     time.sleep(.4);assert sampler.poll() is None
+     receipt['inference_attempts']=1;t=time.monotonic()
+     proc=subprocess.run(['docker','exec',s['container']['id'],'/usr/bin/timeout','--signal=TERM','--kill-after=5s','840s','/opt/image-venv/bin/python','-I','-B','/work/evidence/'+s['run_id']+'/H003-D06/probe.py'],capture_output=True,text=True,timeout=855)
+     receipt.update(exit_code=proc.returncode,wall_seconds=time.monotonic()-t,stdout=proc.stdout[-4000:],stderr=proc.stderr[-8000:])
+     # A complete200/decoded PNG is required: killing an HTTP client cannot settle native inference.
+     top=m.run(['docker','top',s['container']['id'],'-eo','pid,args']).stdout
+     receipt['probe_processes_absent']=not any('/H003-D06/probe.py' in line for line in top.splitlines()[1:])
+     after=r.verify_resident(s)
+     receipt['gpu_processes_restored']=[tuple(row[:2]) for row in after['gpu_processes']]==[tuple(row[:2]) for row in before['gpu_processes']]
+     settled=proc.returncode==0 and receipt['probe_processes_absent'] and receipt['gpu_processes_restored']
+     receipt['native_operation_settled']=settled
+    finally:receipt['sampler_exit']=m.settle_sampler(sampler);f.fsync()
+   a.check()
+ finally:
+  receipt['native_operation_settled']=settled
+  if frozen and settled:m.run(['systemctl','thaw','llm-image-api.service'])
+  receipt.update(api_after=unit(),ready_after=ready() if settled else None,after=r.verify_resident(s));r.guards()
+  if settled:assert receipt['api_after']==u,'api identity/state changed'
+  # Ambiguous timeout/error deliberately stays frozen for exact settlement by owner;
+  # no helper/restart/warm or automatic inference retry.
+  with r.anchor() as a:a.atomic_json('receipts/H003-D06-receipt.json',receipt)
+ print(json.dumps(receipt,indent=2))

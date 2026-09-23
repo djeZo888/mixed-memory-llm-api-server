@@ -7,6 +7,7 @@ import binascii
 import io
 import json
 import re
+import secrets
 import time
 import warnings
 from dataclasses import dataclass
@@ -221,6 +222,10 @@ def validate(fields, images, operation, config):
               'guidance_scale': 1, 'true_cfg_scale': 1, 'generator_device': 'cpu'}
     if 'seed' in value:
         native['seed'] = value['seed']
+    elif images:
+        # Native omission inherits seed42. Reusing source noise can damage edits.
+        # Choose once per owned request; explicit caller seeds remain exact.
+        native['seed'] = secrets.randbits(32)
     return Validated(native, images, size, transparent, tuple(map(int, native_size.split('x'))), crop_bottom)
 
 
@@ -236,6 +241,9 @@ def public_output(raw, request):
         png = base64.b64decode(encoded, validate=True)
         png = decode_image(png, request.native_size, output=True, transparent=request.transparent,
                            crop_bottom=request.crop_bottom)
-        return {'created': int(time.time()), 'data': [{'b64_json': base64.b64encode(png).decode('ascii')}]}
+        item = {'b64_json': base64.b64encode(png).decode('ascii')}
+        if request.images:
+            item['seed'] = request.native['seed']
+        return {'created': int(time.time()), 'data': [item]}
     except (KeyError, TypeError, ValueError, binascii.Error, Refusal):
         raise BackendFailure() from None
