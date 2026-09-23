@@ -2,11 +2,40 @@
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { resolve, extname } from 'node:path';
+import { deflateSync } from 'node:zlib';
 const port = 4193;
 const at = '2026-09-22T10:24:00.000Z';
 const initialRunId = 'fixture/initial-run';
 const svg =
   '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" viewBox="0 0 600 200"><rect width="600" height="200" rx="14" fill="#eef1e9"/><g fill="#425a4b" font-family="sans-serif" font-size="20" text-anchor="middle"><rect x="30" y="68" width="150" height="64" rx="9" fill="#dbe3d5"/><rect x="225" y="68" width="150" height="64" rx="9" fill="#dbe3d5"/><rect x="420" y="68" width="150" height="64" rx="9" fill="#dbe3d5"/><text x="105" y="108">Snapshot</text><text x="300" y="108">Replay</text><text x="495" y="108">Resume</text><text x="201" y="108">→</text><text x="397" y="108">→</text><text x="300" y="36" font-size="15">FIXTURE — NOT LIVE INFERENCE</text></g></svg>';
+// A solid opaque 1920x1080 PNG is only a browser download/preview specimen.
+// No image model, inference service or user image is involved.
+function pngChunk(type, data) {
+  const content = Buffer.concat([Buffer.from(type), data]);
+  let crc = 0xffffffff;
+  for (const byte of content) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+  }
+  const length = Buffer.alloc(4),
+    checksum = Buffer.alloc(4);
+  length.writeUInt32BE(data.length);
+  checksum.writeUInt32BE((crc ^ 0xffffffff) >>> 0);
+  return Buffer.concat([length, content, checksum]);
+}
+const pngHeader = Buffer.alloc(13);
+pngHeader.writeUInt32BE(1920, 0);
+pngHeader.writeUInt32BE(1080, 4);
+pngHeader[8] = 8;
+pngHeader[9] = 2;
+const pngRows = Buffer.alloc((1920 * 3 + 1) * 1080, 225);
+for (let row = 0; row < 1080; row++) pngRows[row * (1920 * 3 + 1)] = 0;
+const imagePng = Buffer.concat([
+  Buffer.from('89504e470d0a1a0a', 'hex'),
+  pngChunk('IHDR', pngHeader),
+  pngChunk('IDAT', deflateSync(pngRows)),
+  pngChunk('IEND', Buffer.alloc(0)),
+]);
 const summary = (active = 0) => ({
   known: true,
   active,
@@ -22,6 +51,7 @@ const freshHistory = () => ({
   activities: [],
   runs: [],
   attachments: [],
+  imageJobs: [],
 });
 const environment = {
   timeZone: 'Europe/Ljubljana',
@@ -33,6 +63,8 @@ let histories;
 let calls;
 let counter;
 let vision;
+let imageDecisions;
+let imageCapabilities;
 const connections = new Map();
 function session(id, title) {
   return {
@@ -63,6 +95,17 @@ function reset() {
   calls = [];
   counter = 0;
   vision = false;
+  imageDecisions = new Map();
+  imageCapabilities = {
+    model: 'Qwen-Image-2.1',
+    operations: {
+      generation: { available: true, profiles: [{ referenceCount: 0, sizes: ['1920x1080'] }] },
+      edit: {
+        available: true,
+        profiles: [{ referenceCount: 1, sizes: ['1024x1024', '1920x1080'] }],
+      },
+    },
+  };
   sessions[0].context = {
     used: 123456,
     limit: 480000,
@@ -208,6 +251,11 @@ function emit(id, type, data, named = true, runId) {
     if (index < 0) history.artifacts.push(artifact);
     else history.artifacts[index] = artifact;
   }
+  if (type === 'image_job') {
+    const index = history.imageJobs.findIndex((job) => job.id === data.job.id);
+    if (index < 0) history.imageJobs.push(data.job);
+    else history.imageJobs[index] = data.job;
+  }
   if (type === 'message') {
     const index = history.messages.findIndex((m) => m.id === data.message.id);
     if (index < 0) history.messages.push(data.message);
@@ -250,6 +298,19 @@ const server = http.createServer(async (request, response) => {
       return json(response, 200, { fixture: true });
     }
     if (url.pathname === '/__fixture/calls') return json(response, 200, { calls });
+    if (url.pathname === '/__fixture/images') {
+      // Snapshot-only changes deliberately have no SSE frame: reconnect must load GET.
+      const input = data();
+      const history = histories.get(input.sessionId);
+      if (!history)
+        return json(response, 404, {
+          error: { code: 'not_found', message: 'Unknown fixture session.' },
+        });
+      if (input.jobs) history.imageJobs = input.jobs;
+      if (input.artifacts) history.artifacts.push(...input.artifacts);
+      if (input.capabilities) imageCapabilities = input.capabilities;
+      return json(response, 200, { fixture: true });
+    }
     if (url.pathname === '/__fixture/vision') {
       vision = data().enabled;
       return json(response, 200, { vision });
@@ -278,6 +339,10 @@ const server = http.createServer(async (request, response) => {
     }
     if (url.pathname === '/api/health')
       return json(response, 200, { version: '0.0.2', status: 'ok', visionAvailable: vision });
+    if (url.pathname === '/api/image-capabilities') {
+      calls.push({ action: 'image-capabilities' });
+      return json(response, 200, imageCapabilities);
+    }
     if (url.pathname === '/api/sessions' && request.method === 'GET')
       return json(response, 200, { sessions });
     if (url.pathname === '/api/sessions' && request.method === 'POST') {
@@ -286,6 +351,87 @@ const server = http.createServer(async (request, response) => {
       histories.set(s.id, freshHistory());
       calls.push({ action: 'create', id: s.id });
       return json(response, 201, { session: s });
+    }
+    const imageRoute =
+      /^\/api\/sessions\/([^/]+)\/image-jobs(?:\/([^/]+)\/(approval|cancel))?$/.exec(url.pathname);
+    if (imageRoute) {
+      const id = decodeURIComponent(imageRoute[1]);
+      const history = histories.get(id);
+      if (!history)
+        return json(response, 404, {
+          error: { code: 'not_found', message: 'Unknown fixture session.' },
+        });
+      if (!imageRoute[2] && request.method === 'GET') {
+        calls.push({ action: 'image-jobs', id });
+        return json(response, 200, { jobs: history.imageJobs });
+      }
+      const jobId = decodeURIComponent(imageRoute[2] ?? '');
+      const job = history.imageJobs.find((item) => item.id === jobId);
+      if (!job || job.sessionId !== id)
+        return json(response, 404, {
+          error: { code: 'not_found', message: 'Unknown fixture image job.' },
+        });
+      if (request.method !== 'POST')
+        return json(response, 405, {
+          error: { code: 'method_not_allowed', message: 'POST required.' },
+        });
+      if (imageRoute[3] === 'approval') {
+        const input = data();
+        if (Object.keys(input).length !== 1 || !['approve', 'reject'].includes(input.decision)) {
+          return json(response, 400, {
+            error: { code: 'invalid_request', message: 'Only decision is accepted.' },
+          });
+        }
+        calls.push({ action: 'image-approval', id, jobId, body: input });
+        const previous = imageDecisions.get(`${id}:${jobId}`);
+        if (previous === input.decision) return json(response, 200, { job });
+        if (job.state !== 'awaiting_approval' || !job.adjustment) {
+          return json(response, 409, {
+            error: {
+              code: 'invalid_state',
+              message: 'The image job is no longer awaiting approval.',
+            },
+          });
+        }
+        const updated = {
+          ...job,
+          state: input.decision === 'approve' ? 'queued' : 'cancelled',
+          cancelRequested: input.decision === 'reject',
+        };
+        imageDecisions.set(`${id}:${jobId}`, input.decision);
+        if (input.decision === 'approve') updated.queuePosition = 1;
+        else updated.finishedAt = at;
+        emit(id, 'image_job', { job: updated }, true, job.runId);
+        emit(
+          id,
+          'activity',
+          {
+            activity: {
+              id: `approval/${jobId}`,
+              runId: job.runId,
+              kind: 'tool',
+              name: 'image_approval',
+              status: 'completed',
+              summary:
+                input.decision === 'approve'
+                  ? 'User approved the saved image adjustment.'
+                  : 'User rejected the saved image adjustment.',
+              startedAt: at,
+              updatedAt: at,
+              finishedAt: at,
+            },
+          },
+          true,
+          job.runId,
+        );
+        return json(response, 200, { job: updated });
+      }
+      calls.push({ action: 'image-cancel', id, jobId, body: data() });
+      const active = ['running', 'saving'].includes(job.state);
+      const updated = { ...job, state: active ? job.state : 'cancelled', cancelRequested: true };
+      if (!active) updated.finishedAt = at;
+      emit(id, 'image_job', { job: updated }, true, job.runId);
+      return json(response, 200, { job: updated });
     }
     const zip = /^\/api\/sessions\/([^/]+)\/runs\/([^/]+)\/artifacts\.zip$/.exec(url.pathname);
     if (zip) {
@@ -308,17 +454,21 @@ const server = http.createServer(async (request, response) => {
     const preview = /^\/api\/files\/([^/]+)\/preview$/.exec(url.pathname);
     if (preview) {
       const id = decodeURIComponent(preview[1]);
-      if (id !== 'fixture/pipeline-svg')
+      const file = [...histories.values()]
+        .flatMap((history) => history.artifacts)
+        .find((file) => file.id === id);
+      const png = file?.mimeType === 'image/png';
+      if (id !== 'fixture/pipeline-svg' && !png)
         return json(response, 404, {
           error: { code: 'not_found', message: 'Unknown fixture preview.' },
         });
       calls.push({ action: 'preview', id });
       response.writeHead(200, {
-        'Content-Type': 'image/svg+xml',
+        'Content-Type': png ? 'image/png' : 'image/svg+xml',
         'Content-Security-Policy': "sandbox; default-src 'none'; style-src 'unsafe-inline'",
         'X-Content-Type-Options': 'nosniff',
       });
-      return response.end(svg);
+      return response.end(png ? imagePng : svg);
     }
     const attachment = /^\/api\/attachments\/([^/]+)\/download$/.exec(url.pathname);
     if (attachment) {
@@ -340,13 +490,25 @@ const server = http.createServer(async (request, response) => {
     const artifact = /^\/api\/artifacts\/([^/]+)\/download$/.exec(url.pathname);
     if (artifact) {
       const id = decodeURIComponent(artifact[1]);
+      const file = [...histories.values()]
+        .flatMap((history) => history.artifacts)
+        .find((file) => file.id === id);
+      const png = file?.mimeType === 'image/png';
       calls.push({ action: 'download', id });
       response.writeHead(200, {
-        'Content-Type': id === 'fixture/pipeline-svg' ? 'image/svg+xml' : 'text/markdown',
-        'Content-Disposition': `attachment; filename="${id === 'fixture/pipeline-svg' ? 'pipeline.svg' : 'streaming-review.md'}"`,
+        'Content-Type': png
+          ? 'image/png'
+          : id === 'fixture/pipeline-svg'
+            ? 'image/svg+xml'
+            : 'text/markdown',
+        'Content-Disposition': `attachment; filename="${png ? file.name.replaceAll('"', '_') : id === 'fixture/pipeline-svg' ? 'pipeline.svg' : 'streaming-review.md'}"`,
       });
       return response.end(
-        id === 'fixture/pipeline-svg' ? svg : '# Fixture review\nNot live inference.\n',
+        png
+          ? imagePng
+          : id === 'fixture/pipeline-svg'
+            ? svg
+            : '# Fixture review\nNot live inference.\n',
       );
     }
     const match =
@@ -393,6 +555,23 @@ const server = http.createServer(async (request, response) => {
       }
       if (operation === 'messages') {
         const input = data();
+        if (
+          input.imageReferences !== undefined &&
+          (!Array.isArray(input.imageReferences) ||
+            input.imageReferences.some(
+              (fileId) =>
+                !history.artifacts.some(
+                  (file) => file.id === fileId && file.mimeType.startsWith('image/'),
+                ),
+            ))
+        ) {
+          return json(response, 400, {
+            error: {
+              code: 'invalid_image_reference',
+              message: 'Image references must identify owned artifacts.',
+            },
+          });
+        }
         calls.push({ action: 'send', id, ...input });
         const runId = `fixture/run-${++counter}`;
         const queued = ['queued', 'running', 'compacting', 'cancelling'].includes(s.status);
@@ -424,6 +603,7 @@ const server = http.createServer(async (request, response) => {
               content: input.text,
               createdAt: at,
               attachmentIds: input.attachmentIds,
+              imageReferences: input.imageReferences,
               runId,
             },
           },

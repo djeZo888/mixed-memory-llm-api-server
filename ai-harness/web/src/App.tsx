@@ -14,6 +14,7 @@ import { HarnessStore, busyKey, pendingRunIds } from './store';
 import { isActive, type Status } from './types';
 import { resolveStatus } from './status';
 import { Composer } from './Composer';
+import { canStageEditReference } from './image-capabilities';
 import { ConversationReplies, WorkingStatus } from './Replies';
 
 function Badge({ status }: { status: Status }) {
@@ -299,7 +300,45 @@ export function App({ store }: { store: HarnessStore }) {
                   <p>Send a message or attach a file below.</p>
                 </div>
               )}
-              {thread && <ConversationReplies thread={thread} />}
+              {state.imageJobsError && (
+                <div className="image-job-notice" role="status">
+                  {state.imageJobsError}{' '}
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => {
+                      void store.resync();
+                    }}
+                  >
+                    Refresh image status
+                  </button>
+                </div>
+              )}
+              {thread && (
+                <ConversationReplies
+                  thread={thread}
+                  imageActions={{
+                    decide: (jobId, decision) => {
+                      void store.approveImage(thread.session.id, jobId, decision);
+                    },
+                    cancel: (jobId) => {
+                      void store.cancelImage(thread.session.id, jobId);
+                    },
+                    busy: (jobId) => !!state.busy[busyKey(`image:${jobId}`, thread.session.id)],
+                    reconnecting: state.connection !== 'connected',
+                  }}
+                  useForEdit={(artifactId) =>
+                    store.addImageReference(thread.session.id, artifactId)
+                  }
+                  editUnavailable={
+                    canStageEditReference(state.imageCapabilities)
+                      ? undefined
+                      : state.imageCapabilitiesLoaded
+                        ? 'Image editing is unavailable for this service.'
+                        : 'Checking image editing capabilities…'
+                  }
+                />
+              )}
               {state.submitted[selected]?.length &&
                 !thread?.runs.some((run) =>
                   ['queued', 'running', 'cancelling'].includes(run.status),

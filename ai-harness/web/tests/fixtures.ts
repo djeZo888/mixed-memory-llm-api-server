@@ -40,9 +40,13 @@ export function fixtureTransport() {
     close: ReturnType<typeof vi.fn>;
   }[] = [];
   const transport = {
+    imageCapabilities: vi.fn(async (): Promise<unknown> => ({ operations: {} })),
     health: vi.fn(async () => ({ visionAvailable: false })),
     list: vi.fn(async () => ({ sessions: [session(), session('chat/b')] })),
     snapshot: vi.fn(async (id: string) => snapshot(id)),
+    imageJobs: vi.fn(async () => ({ jobs: [] as import('../src/types').ImageJob[] })),
+    approveImage: vi.fn<Transport['approveImage']>(),
+    cancelImage: vi.fn<Transport['cancelImage']>(),
     create: vi.fn(async () => ({ session: session('new') })),
     remove: vi.fn(async () => ({ status: 'deleting' as const })),
     send: vi.fn(async () => ({ runId: 'run/1' })),

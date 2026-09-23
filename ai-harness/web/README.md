@@ -104,8 +104,55 @@ including automatic CET/CEST, while preserving original ISO `dateTime` attribute
 Enter inserts a newline. Ctrl+Enter and Cmd+Enter send, with IME composition
 protected. Attach and drag/drop share serialized validation/upload handling,
 per-file feedback, duplicate guards and the existing 50 MiB server limit. PDF and
-source/text files are accepted; images require explicit health capability. The
+source/text files are accepted; images require explicit health or qualified image-reference capability. The
 server owns content validation. Drafts survive failed sends, but switching chats
 still discards local unsent text; completed uploads stay with their session.
 
 First-party source is MIT licensed. Third-party packages retain their licenses.
+
+## H003 image workflow (source/offline)
+
+Image cards remain attached to their stored `runId`, including when approval or
+completion happens after the assistant turn ends. The browser loads
+`GET /api/sessions/:id/image-jobs` on initial selection and reconnection, and
+upserts persisted `image_job: {job}` SSE events. Failed image-status reads preserve
+ordinary chat and last known cards with a visible refresh notice. Current state,
+queue position, elapsed time, dimensions, seed/model, source fingerprints and
+concise errors are displayed without invented percent progress.
+
+Canvas approval shows each source's original dimensions, the proposed canvas and
+the reason. Only an explicit browser click posts `{decision:'approve'|'reject'}`
+to `/api/sessions/:id/image-jobs/:jobId/approval`. The browser does not send new
+sizes, references, prompts or an approval boolean. Cancelling an active image
+shows its saved running/saving state with draining intent until the host settles;
+closing the browser or ending a text turn does not cancel image work.
+
+Generated images retain existing preview, download and reply ZIP links. Use for
+next edit selects the current session's artifact ID in a separate composer list;
+message submission adds `imageReferences` without changing upload `attachmentIds`.
+Successful sends clear only the submitted selections, and originals remain in
+reply files. Missing or disabled edit capability profiles disable reuse. The
+client never substitutes generation for an unavailable edit. Image uploads are
+also enabled when the image service advertises qualified reference profiles.
+
+The frozen contract does not yet specify the browser capability route or its
+nested record layout. The isolated provisional binding is
+`GET /api/image-capabilities` with
+`{model?,operations:{generation?:{available,profiles:[{referenceCount,sizes}]},edit?:{available,profiles:[{referenceCount,sizes}]}}}`.
+Unknown/malformed profiles fail closed. Job size fields currently use
+`WIDTHxHEIGHT`; references and adjustment sources use
+`{fileId?,name,sha256,width,height}`. These precise interface questions are tracked
+in the task's `INTERFACE.md`; root must reconcile them with Worker1 before combining
+sources. Approval/cancel responses accept either `{job}` or the raw updated job.
+
+Focused source checks:
+
+```sh
+npm run typecheck
+npm run test -- tests/image-jobs.test.ts tests/store.test.ts tests/api.test.ts tests/composer.test.tsx
+npm run build
+PLAYWRIGHT_CHANNEL=chrome npm run test:browser -- tests/image.browser.ts
+```
+
+These local fixtures do not establish deployed image generation/editing,
+resident-model behavior, GPU cancellation or backend geometry qualification.

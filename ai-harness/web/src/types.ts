@@ -35,6 +35,7 @@ export interface Message {
   createdAt: string;
   runId?: string;
   attachmentIds?: string[];
+  imageReferences?: string[];
   phase?: MessagePhase;
   nativeMessageId?: string;
   nativeTurnId?: string;
@@ -52,6 +53,54 @@ export interface Artifact extends Attachment {
   downloadUrl: string;
   runId?: string | null;
   messageId?: string | null;
+  image?: {
+    jobId?: string;
+    operation?: ImageOperation;
+    width?: number;
+    height?: number;
+    seed?: number;
+    model?: string;
+  };
+}
+export type ImageOperation = 'generation' | 'edit';
+export type ImageJobState =
+  | 'awaiting_approval'
+  | 'queued'
+  | 'running'
+  | 'saving'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'interrupted';
+export interface ImageReference {
+  fileId?: string;
+  name: string;
+  sha256: string;
+  width: number;
+  height: number;
+}
+export interface ImageJob {
+  id: string;
+  sessionId: string;
+  runId: string;
+  requestId: string;
+  operation: ImageOperation;
+  state: ImageJobState;
+  model: string;
+  prompt: string;
+  seed: number;
+  requestedSize: string;
+  actualSize?: string;
+  references: ImageReference[];
+  createdAt: string;
+  startedAt?: string;
+  finishedAt?: string;
+  elapsedMs?: number;
+  queuePosition?: number;
+  artifactId?: string;
+  error?: { code: string; message: string };
+  adjustment?: { sources: ImageReference[]; targetSize: string; reason: string };
+  cancelRequested: boolean;
 }
 export interface Summary {
   known: boolean;
@@ -123,6 +172,7 @@ type EventData = {
   context: { context: Context };
   state: { status: Status };
   artifact: { artifact: Artifact };
+  image_job: { job: ImageJob };
   run: { run: RunSnapshot };
   activity: { activity: Activity };
   subagents: { runId: string; summary: Summary };
@@ -148,6 +198,7 @@ export const eventTypes: EventType[] = [
   'context',
   'state',
   'artifact',
+  'image_job',
   'run',
   'activity',
   'subagents',
@@ -160,6 +211,7 @@ export interface Snapshot {
   messages: Message[];
   events: ServerEvent[];
   artifacts: Artifact[];
+  imageJobs?: ImageJob[];
   runs?: RunSnapshot[];
   activities?: Activity[];
   attachments?: Attachment[];
@@ -169,6 +221,7 @@ export interface Thread {
   session: Session;
   messages: Message[];
   artifacts: Artifact[];
+  imageJobs?: ImageJob[];
   activity: ActivityItem[];
   runs: RunSnapshot[];
   attachments: Attachment[];

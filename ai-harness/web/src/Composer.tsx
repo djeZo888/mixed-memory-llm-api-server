@@ -4,6 +4,8 @@ import { HarnessStore, busyKey, lookup, pendingRunIds, type ViewState } from './
 import { ContextMeter } from './ContextMeter';
 import { contextForThread } from './context';
 import { isActive } from './types';
+import { imageJobActive } from './image-jobs';
+import { imageReferencesAvailable } from './image-capabilities';
 import { uploadAccept, uploadKey } from './uploads';
 
 interface UploadItem {
@@ -40,17 +42,25 @@ export function Composer({
   const composing = useRef(false);
   const dragDepth = useRef(0);
   const attachments = lookup(state.attachments, id) ?? [];
+  const imageReferences = lookup(state.imageReferences, id) ?? [];
+  const imageUploads = state.visionAvailable || imageReferencesAvailable(state.imageCapabilities);
   const busy = (action: string) => state.busy[busyKey(action, id)];
   const locked =
     uploading || busy('send') || busy('upload') || busy('delete') || state.loading || !state.thread;
   const active = isActive(state.thread?.session.status) || pendingRunIds(state, id).length > 0;
+  const imageActive = state.thread?.imageJobs?.some(imageJobActive) ?? false;
   useEffect(() => {
     input.current?.focus();
   }, []);
 
   async function send() {
     const submitted = text;
-    if (locked || uploadLock.current || sendLock.current || (!text.trim() && !attachments.length))
+    if (
+      locked ||
+      uploadLock.current ||
+      sendLock.current ||
+      (!text.trim() && !attachments.length && !imageReferences.length)
+    )
       return;
     sendLock.current = true;
     try {
@@ -180,6 +190,26 @@ export function Composer({
             ))}
           </ul>
         )}
+        {imageReferences.length > 0 && (
+          <ul className="attachments image-references" aria-label="Image edit references">
+            {imageReferences.map((artifact) => (
+              <li key={artifact.id}>
+                <FileText size={15} />
+                <span>{artifact.name}</span>
+                <small>Image reference · Original retained</small>
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label={`Remove image reference ${artifact.name}`}
+                  disabled={!!busy('send')}
+                  onClick={() => store.removeImageReference(id, artifact.id)}
+                >
+                  <X size={14} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
         {uploads.length > 0 && (
           <ul
             className="attachments upload-status"
@@ -252,7 +282,7 @@ export function Composer({
             multiple
             tabIndex={-1}
             aria-label="Upload file"
-            accept={uploadAccept + (state.visionAvailable ? ',image/*' : '')}
+            accept={uploadAccept + (imageUploads ? ',image/*' : '')}
             disabled={!!locked}
             onChange={(event) => {
               const files = Array.from(event.target.files ?? []);
@@ -270,11 +300,15 @@ export function Composer({
             {uploading || busy('upload') ? 'Uploading…' : 'Attach files'}
           </button>
           <div className="send-actions">
-            {active && (
+            {(active || imageActive) && (
               <button
                 type="button"
                 className="stop-button"
-                title="Stop active and queued turns"
+                title={
+                  imageActive
+                    ? 'Stop active and queued turns and image jobs'
+                    : 'Stop active and queued turns'
+                }
                 disabled={!!busy('cancel') || state.thread?.session.status === 'cancelling'}
                 onClick={() => void store.cancel(id)}
               >
@@ -287,7 +321,9 @@ export function Composer({
               type="submit"
               aria-label={active ? 'Queue message for next turn' : 'Send message'}
               title={active ? 'Queue for next turn' : 'Send message'}
-              disabled={!!locked || (!text.trim() && !attachments.length)}
+              disabled={
+                !!locked || (!text.trim() && !attachments.length && !imageReferences.length)
+              }
             >
               <ArrowUp size={20} />
             </button>
@@ -302,11 +338,14 @@ export function Composer({
       <div className="composer-note">
         <span>
           {state.healthLoaded
-            ? state.visionAvailable
+            ? imageUploads
               ? 'PDF, source, text and image files · 50 MiB per file'
               : 'PDF, source and text files · 50 MiB per file · Images unavailable'
             : 'Checking attachment capabilities…'}
         </span>
+        {state.imageCapabilitiesLoaded && !state.imageCapabilities?.operations.edit && (
+          <span>Image editing unavailable</span>
+        )}
         <span className="keyboard-hint" id="composer-keyboard-hint">
           Enter for a new line · Ctrl / Cmd + Enter to send
         </span>
