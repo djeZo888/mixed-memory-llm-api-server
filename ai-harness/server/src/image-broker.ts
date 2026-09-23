@@ -665,12 +665,19 @@ export class ImageBroker {
     if (this.pumping || this.lane !== "idle") return;
     const r = this.queued()[0];
     if (!r || this.now() < r.retryAt) return;
+    const previousState = r.job.state,
+      previousStartedAt = r.job.startedAt;
     this.pumping = true;
     r.job.state = "running";
     r.job.startedAt = this.iso();
     try {
       this.persist(r, "active");
     } catch {
+      // persist restores revisions/positions; also undo this tentative admission
+      // so readiness reconciliation cannot strand a job that never dispatched.
+      r.job.state = previousState;
+      if (previousStartedAt === undefined) delete r.job.startedAt;
+      else r.job.startedAt = previousStartedAt;
       this.pumping = false;
       return;
     }

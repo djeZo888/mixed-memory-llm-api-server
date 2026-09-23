@@ -745,16 +745,100 @@ test("bad output metadata or transparent output never completes as a valid owned
   assert.equal(f.store.files(f.session.id, "artifact").length, 0);
 });
 
-test("failed durable lane admission cannot dispatch and graceful shutdown interrupts instead of replay", async (t) => {
+test("failed durable lane admission rolls back and recovers after readiness without restart", async (t) => {
   const f = await fixture(t);
+  f.backend.healthy = false;
+  const events: ImageJob[] = [];
+  f.store.events.on(f.session.id, (event) => {
+    if (event.type === "image_job") events.push(event.data.job as ImageJob);
+  });
+  const stored = (id: string) =>
+    JSON.parse(
+      String(
+        f.store.db
+          .prepare("SELECT data FROM h003_image_jobs WHERE id=?")
+          .get(id)!.data,
+      ),
+    );
   f.store.db.exec(
     "CREATE TRIGGER fail_image_admission BEFORE INSERT ON h003_image_lane WHEN NEW.state='active' BEGIN SELECT RAISE(FAIL,'fixture ledger failure'); END",
   );
-  await f.submit("ledger-failure");
+  const a = await f.submit("ledger-failure"),
+    b = await f.submit("ledger-waiter");
+  const before = [stored(a.id), stored(b.id)];
+  const eventCount = events.length;
+  const checkRollback = () => {
+    assert.equal(f.broker.snapshot().lane, "quarantined");
+    for (const [index, job] of [a, b].entries()) {
+      const current = f.broker.get(f.session.id, job.id);
+      assert.equal(current.state, "queued");
+      assert.equal(current.startedAt, undefined);
+      assert.equal(current.elapsedMs, undefined);
+      assert.equal(current.queuePosition, index + 1);
+      assert.equal(current.revision, before[index].job.revision);
+      assert.deepEqual(stored(job.id), before[index]);
+    }
+    assert.equal(events.length, eventCount, "no uncommitted transition event");
+    assert.equal(f.backend.calls.length, 0, "no unpersisted inference");
+  };
+  checkRollback();
+  // A second failed admission also rolls back the other waiter's position/revision.
+  f.backend.healthy = true;
+  await f.broker.reconcile();
+  f.backend.healthy = false;
+  checkRollback();
+  f.store.db.exec("DROP TRIGGER fail_image_admission");
+  await f.broker.reconcile();
+  checkRollback();
+  f.backend.healthy = true;
+  f.backend.idle = false;
+  await f.broker.reconcile();
+  checkRollback();
+
+  const dispatches: string[] = [];
+  const execute = f.backend.execute.bind(f.backend);
+  f.backend.execute = (input, signal) => {
+    const job = [a, b][dispatches.length];
+    const durable = stored(job.id);
+    assert.equal(durable.job.state, "running");
+    assert.equal(
+      durable.job.startedAt,
+      f.broker.get(f.session.id, job.id).startedAt,
+    );
+    assert.ok(durable.job.startedAt);
+    assert.equal(durable.job.queuePosition, undefined);
+    assert.equal(durable.job.seed, input.seed);
+    assert.equal(durable.deadline, before[dispatches.length].deadline);
+    assert.equal(
+      f.store.db.prepare("SELECT state FROM h003_image_lane WHERE id=1").get()!
+        .state,
+      "active",
+    );
+    dispatches.push(job.id);
+    return execute(input, signal);
+  };
+  f.backend.idle = true;
+  await f.broker.reconcile();
+  await until(() => f.backend.calls.length === 1);
+  const waiter = f.broker.get(f.session.id, b.id);
+  assert.equal(waiter.queuePosition, 1);
+  assert.equal(waiter.revision, before[1].job.revision + 1);
+  assert.equal(stored(b.id).job.queuePosition, 1);
+  const projected = events.filter((job) => job.id === b.id).at(-1)!;
+  assert.equal(projected.revision, waiter.revision);
+  assert.equal(projected.queuePosition, waiter.queuePosition);
+  await f.backend.complete(0);
+  await until(() => f.backend.calls.length === 2);
+  await f.backend.complete(1);
+  await until(() =>
+    f.broker.list(f.session.id).every((job) => job.state === "completed"),
+  );
+  await until(() => f.broker.snapshot().lane === "idle");
+  await f.broker.reconcile();
   await delay(20);
-  assert.equal(f.backend.calls.length, 0);
-  await f.broker.close();
-  assert.equal(f.broker.list(f.session.id)[0].state, "interrupted");
+  assert.deepEqual(dispatches, [a.id, b.id]);
+  assert.equal(f.broker.snapshot().queued, 0);
+  assert.equal(f.backend.calls.length, 2);
 });
 
 test("queue start, cancel and busy429 reorder every affected waiter with durable newer revisions", async (t) => {
