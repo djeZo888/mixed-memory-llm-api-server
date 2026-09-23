@@ -1,0 +1,47 @@
+{
+  "started": "2026-09-23T12:09:47.491255+00:00",
+  "beforeMainPID": "32296",
+  "sseWatermark": 430,
+  "scope": "protocol reconnect and durable job/session/artifact readback; independent browser UI acceptance remains Worker2",
+  "stopResult": "Result=success\nExecMainStatus=0\nActiveState=inactive",
+  "stoppedAt": "2026-09-23T12:09:47.819716+00:00",
+  "afterMainPID": "33683",
+  "health": {
+    "version": "0.0.3",
+    "environment": {
+      "timeZone": "Europe/Ljubljana",
+      "location": {
+        "city": "Ljubljana",
+        "country": "Slovenia"
+      },
+      "now": "2026-09-23T12:09:48.033Z"
+    },
+    "status": "ok",
+    "visionAvailable": true
+  },
+  "completed": "2026-09-23T12:09:48.044603+00:00",
+  "stateIdentical": true,
+  "imageJobIdentical": true,
+  "artifactsAndMessagesIdentical": true,
+  "sseReplayedLastDurableEvent": true,
+  "sseEventId": 430,
+  "inferenceRequests": 0,
+  "imageJobsBefore": 1,
+  "imageJobsAfter": 1,
+  "status": "PASS",
+  "before_counts": {
+    "sessions": 17,
+    "messages": 74,
+    "runs": 37,
+    "events": 10701,
+    "files": 31
+  },
+  "after_counts": {
+    "sessions": 17,
+    "messages": 74,
+    "runs": 37,
+    "events": 10701,
+    "files": 31
+  },
+  "full_private_local_evidence": "taskroot artifacts/restart-reconnect.json"
+}

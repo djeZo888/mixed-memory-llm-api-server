@@ -1,0 +1,13 @@
+{
+  "utc": "2026-09-23T11:59:51.812522+00:00",
+  "source_commit": "b5717d03416252c8640c47d37baf892a0c4e532a",
+  "release_path": "/home/user/.local/share/ai-harness-app/releases/b5717d03416252c8640c47d37baf892a0c4e532a",
+  "source_files_verified": 217,
+  "unchanged_compiled_files_verified": 39,
+  "original_build_source": "158d3055f83efbe5edac915e867f4522ba23dabc",
+  "reviewed_runtime_base": "1b7ceb7467dc97228322077467e64ba382892ab5",
+  "only_postbuild_change": "deploy/tests/native-integration.mjs",
+  "builds_repeated": false,
+  "source_manifest_sha256": "4a08faba879f7aca0f5fe3beb21284a966d694ec7a0eca959d189a0fce475ad5",
+  "compiled_manifest_sha256": "adbec40e21249988d8a53cd832fbb958b25b637f30ef52b0a363a5187288a6f3"
+}
