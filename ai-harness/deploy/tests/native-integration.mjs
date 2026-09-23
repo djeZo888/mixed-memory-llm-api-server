@@ -223,10 +223,25 @@ async function roster() {
         tool: { def: { name }, impl: neverExecute }, source,
         ...(serverName ? { serverName } : {}),
       });
+      // The public facade deliberately reports configured tools as []; discovery
+      // is lazy. Inspect its SAME native owner, retained by the pinned process-
+      // local application. `owner` is TypeScript private, not an ECMAScript slot.
+      // Fail closed on shape drift. This path only initializes MCP and lists tools.
+      const mcpOwner = host.application?.mcp?.owner;
+      assert.equal(typeof mcpOwner?.listNativeTools, 'function', 'pinned native MCP owner unavailable');
+      assert.equal(typeof mcpOwner?.runtimeToolsFromNative, 'function', 'pinned native MCP projection unavailable');
+      const mcpContext = { workspaceRoot: workspace, dataDir };
+      const discovered = await mcpOwner.listNativeTools(mcpContext);
+      report.nativeMcpCatalog = discovered.map(tool => ({ server: tool.server,
+        name: tool.toolName, nativeName: tool.nativeName, source: tool.source,
+        inputSchema: tool.inputSchema }));
+      const configuredTools = mcpOwner.runtimeToolsFromNative(discovered, mcpContext);
       const mcpEntries = [
         ...[...native.AGENT_BUILTIN_MCP_TOOL_IDS, 'web_search'].map(name => entry(name, 'builtin-matrix')),
-        entry('mcp__searxng__searxng_search', 'configured', 'searxng'),
-        ...['image_capabilities', 'image_generate', 'image_edit'].map(name => entry(`mcp__image__${name}`, 'configured', 'image')),
+        ...configuredTools.map((tool, index) => ({
+          tool: { def: tool.def, impl: neverExecute },
+          source: discovered[index].source, serverName: discovered[index].server,
+        })),
       ];
       for (const role of report.roles) {
         const filtered = native.filterLocalTurnCapabilityInventory({
@@ -247,14 +262,16 @@ async function roster() {
         const expectedMcp = ['mavis', 'worker'].includes(role.name) ? ['mcp__image__image_capabilities', 'mcp__image__image_edit', 'mcp__image__image_generate', 'mcp__searxng__searxng_search'] : [];
         assert.deepEqual(configuredMcpNames, expectedMcp);
         role.nativeDefinitionFilter = { toolNames, configuredMcpNames,
-          evidence: 'Native pure filter executed on native base definitions, browser admission tools and non-executable MCP name sentinels; no turn or tool execution.' };
+          evidence: 'Native pure filter executed on native base definitions, browser admission tools and discovered configured MCP schema definitions with throwing implementations; builtin MCP name sentinels remain inspection-only. No turn or tool execution.' };
       }
     } finally { browserUse.close(); }
     const servers = await adapter.listMcpServers();
     // Retain only capability metadata; never command environments/credentials.
-    report.mcp = servers.map(server => ({ name: server.name, status: server.status, tools: (server.tools ?? []).map(tool => typeof tool === 'string' ? tool : tool.name) }));
+    report.mcp = servers.map(server => ({ name: server.name, status: server.status,
+      tools: report.nativeMcpCatalog.filter(tool => tool.server === server.name).map(tool => tool.nativeName) }));
     const imageServer = report.mcp.find(server => server.name === 'image');
     assert(imageServer, 'configured image MCP server missing from native inventory');
+    assert.equal(imageServer.status, 'available', 'native image MCP discovery did not connect');
     assert.deepEqual(imageServer.tools.map(name => name.replace(/^mcp__image__/, '')).sort(),
       ['image_capabilities', 'image_edit', 'image_generate'], 'native image MCP catalog differs');
     report.nativeBrowserCapabilities = provider.getCapabilities();
