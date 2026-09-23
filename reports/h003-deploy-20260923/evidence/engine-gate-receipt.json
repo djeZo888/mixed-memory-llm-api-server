@@ -1,0 +1,26 @@
+{
+  "utc": "2026-09-23T12:01:16.374845+00:00",
+  "authoritative_receipt": "ENGINE-READY-RECEIPT.json",
+  "sha256": "c48b96021447b873fb100b58f0d8549a3229e9e6ec30138af3bde581802e1a06",
+  "candidate": {
+    "Id": "31b7a4d0aba256266e55a4aa510b0b7af484bef3502e9ffa2b333cf6c48b1428",
+    "Digest": "sha256:617c01955ccf794ea6642af64a5ac1800df00a8be9adf0d07679b42fc4679453",
+    "RepoTags": [
+      "localhost/ai-harness-engine:h003-21e2006f-20260923-probe2"
+    ],
+    "Labels": {
+      "io.buildah.version": "1.33.7",
+      "org.opencontainers.image.ai-harness.patchset": "e764cdacb97998b7e7b514e9fabb0bc5d508e1d3e1ffd0a38443812a117d3aef",
+      "org.opencontainers.image.revision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+      "org.opencontainers.image.source": "https://github.com/MiniMax-AI/minimax-code",
+      "org.opencontainers.image.title": "ai-harness local MiniMax engine",
+      "org.opencontainers.image.version": "0.0.3"
+    }
+  },
+  "engine_source": "a9ea401bf454e12a2c59b2a1d6bd2dda797eb79d",
+  "combined_source": "b5717d03416252c8640c47d37baf892a0c4e532a",
+  "window_released": true,
+  "root_activation_authorization": "COORDINATOR-NOTE.md ROOT ACTIVATION AUTHORIZATION ENGINE GATE PASSED",
+  "native_stdio_discovery_and_role_filters": "PASS per authoritative Worker2 receipt",
+  "actual_tool_execution": "not tested by Worker2 build; main generation planned here; delegated worker independent acceptance later"
+}

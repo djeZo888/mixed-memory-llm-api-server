@@ -1,0 +1,29 @@
+{
+  "utc": "2026-09-23T12:11:06.827Z",
+  "results": [
+    {
+      "url": "/api/artifacts/303fbf98-ce8d-49b3-9028-05719e1bee8c/download",
+      "status": 200,
+      "contentType": "application/octet-stream",
+      "contentDisposition": "attachment; filename=\"image-f6bff2d1-8269-4a20-9b09-f50a8f687de3.png\"; filename*=UTF-8''image-f6bff2d1-8269-4a20-9b09-f50a8f687de3.png",
+      "length": 2758770,
+      "sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+      "width": 1920,
+      "height": 1080,
+      "hasAlpha": false,
+      "decodedOpaquePNG": true
+    },
+    {
+      "url": "/api/files/303fbf98-ce8d-49b3-9028-05719e1bee8c/preview",
+      "status": 200,
+      "contentType": "image/png",
+      "contentDisposition": "inline; filename=\"image-f6bff2d1-8269-4a20-9b09-f50a8f687de3.png\"; filename*=UTF-8''image-f6bff2d1-8269-4a20-9b09-f50a8f687de3.png",
+      "length": 2758770,
+      "sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+      "width": 1920,
+      "height": 1080,
+      "hasAlpha": false,
+      "decodedOpaquePNG": true
+    }
+  ]
+}

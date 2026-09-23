@@ -1,0 +1,70 @@
+{
+  "utc": "2026-09-23T12:14:27.652074+00:00",
+  "prior_session_records": 14,
+  "prior_visible_sessions": 11,
+  "all_prior_session_workspace_native_identities_preserved": true,
+  "current_session_records": 18,
+  "current_visible_sessions": 15,
+  "current_counts": {
+    "sessions": 18,
+    "messages": 75,
+    "runs": 38,
+    "events": 10875,
+    "files": 31
+  },
+  "current_active_runs": [
+    {
+      "id": "5c5d9037-d3e3-4a37-a806-bcf04ccf1dbd",
+      "session_id": "f7a763f7-2f68-422b-9c93-35a2950ade1d",
+      "status": "running"
+    }
+  ],
+  "gateway_lanes": [
+    {
+      "alias": "qwen3.8-27b",
+      "state": "idle"
+    },
+    {
+      "alias": "qwen3.8-27b-gpu0",
+      "state": "active"
+    }
+  ],
+  "credential_metadata": [
+    {
+      "path": "/home/user/.config/ai-harness/inference-key",
+      "uid": 1000,
+      "mode": "0o600",
+      "mtimeUtc": "2026-09-22T01:25:53.599051+00:00",
+      "regular": true,
+      "symlink": false
+    },
+    {
+      "path": "/home/user/.config/ai-harness/browser-approval-key",
+      "uid": 1000,
+      "mode": "0o600",
+      "mtimeUtc": "2026-09-23T11:54:42.045653+00:00",
+      "regular": true,
+      "symlink": false
+    }
+  ],
+  "installed_unit_sha256": "f8cf9f43a0e80ad818ee250370fb95a2693436794f55611c267c88ef21533cb5",
+  "installed_site_sha256": "5b7242929b16a7e1b9980b45366594496226b147dd81d15c0322a56b0bcc91d5",
+  "engine_id": "31b7a4d0aba256266e55a4aa510b0b7af484bef3502e9ffa2b333cf6c48b1428",
+  "engine_digest": "sha256:617c01955ccf794ea6642af64a5ac1800df00a8be9adf0d07679b42fc4679453",
+  "health80": {
+    "version": "0.0.3",
+    "environment": {
+      "timeZone": "Europe/Ljubljana",
+      "location": {
+        "city": "Ljubljana",
+        "country": "Slovenia"
+      },
+      "now": "2026-09-23T12:14:27.664Z"
+    },
+    "status": "ok",
+    "visionAvailable": true
+  },
+  "service": "MainPID=33683\nNRestarts=0\nExecMainStartTimestamp=Wed 2026-09-23 14:09:47 CEST\nActiveState=active\n",
+  "read_only": true,
+  "read_only_after_latest_coordinator_note_observed": true
+}
