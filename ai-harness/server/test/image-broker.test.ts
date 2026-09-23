@@ -297,7 +297,10 @@ test("immutable snapshots, detached browser approval, idempotent decision, origi
   assert.deepEqual(await readFile(uploadPath), original);
   await writeFile(uploadPath, await png(5, 5)); // Changes after staging do not affect frozen approval.
   f.endText();
-  const { approvalToken } = f.broker.issueApprovalToken(f.session.id, job.id);
+  const { approvalToken } = await f.broker.issueApprovalToken(
+    f.session.id,
+    job.id,
+  );
   const [approved, repeated] = await Promise.all([
     f.broker.approve(f.session.id, job.id, "approve", approvalToken),
     f.broker.approve(f.session.id, job.id, "approve", approvalToken),
@@ -341,7 +344,10 @@ test("approval rejects tampered snapshot; rejection and explicit Stop while text
     file = await f.upload(await png(120, 60));
   const body = { operation: "edit", references: [{ fileId: file.id }] };
   const j = await f.submit("tamper", body);
-  const { approvalToken } = f.broker.issueApprovalToken(f.session.id, j.id);
+  const { approvalToken } = await f.broker.issueApprovalToken(
+    f.session.id,
+    j.id,
+  );
   const frozen = path.join(f.dir, "image-jobs", j.id, "0.png");
   await chmod(frozen, 0o600);
   await writeFile(frozen, await png());
@@ -558,7 +564,10 @@ test("browser capability is job-bound, expires, hides token and allows only iden
   const body = { operation: "edit", references: [{ fileId: file.id }] };
   const a = await f.submit("cap-a", body),
     b = await f.submit("cap-b", body);
-  const { approvalToken } = f.broker.issueApprovalToken(f.session.id, a.id);
+  const { approvalToken } = await f.broker.issueApprovalToken(
+    f.session.id,
+    a.id,
+  );
   await assert.rejects(
     f.broker.approve(f.session.id, b.id, "approve", approvalToken),
     /browser-issued/,
@@ -580,7 +589,8 @@ test("browser capability is job-bound, expires, hides token and allows only iden
     f.broker.approve(f.session.id, a.id, "approve", approvalToken),
     /expired/,
   );
-  const fresh = f.broker.issueApprovalToken(f.session.id, a.id).approvalToken;
+  const fresh = (await f.broker.issueApprovalToken(f.session.id, a.id))
+    .approvalToken;
   const rejected = await f.broker.approve(f.session.id, a.id, "reject", fresh);
   assert.deepEqual(
     await f.broker.approve(f.session.id, a.id, "reject", fresh),
@@ -745,4 +755,178 @@ test("failed durable lane admission cannot dispatch and graceful shutdown interr
   assert.equal(f.backend.calls.length, 0);
   await f.broker.close();
   assert.equal(f.broker.list(f.session.id)[0].state, "interrupted");
+});
+
+test("queue start, cancel and busy429 reorder every affected waiter with durable newer revisions", async (t) => {
+  const f = await fixture(t);
+  // Match the browser's strict revision reducer: equal revisions are ignored.
+  const projected = new Map<string, ImageJob>();
+  f.store.events.on(f.session.id, (event) => {
+    if (event.type !== "image_job") return;
+    const job = event.data.job as ImageJob;
+    if (job.revision > (projected.get(job.id)?.revision ?? 0))
+      projected.set(job.id, job);
+  });
+  const a = await f.submit("position-active");
+  await until(() => f.backend.calls.length === 1);
+  const b = await f.submit("position-b"),
+    c = await f.submit("position-c"),
+    d = await f.submit("position-d");
+  const read = (id: string) => f.broker.get(f.session.id, id);
+  const stored = (id: string) =>
+    JSON.parse(
+      String(
+        f.store.db
+          .prepare("SELECT data FROM h003_image_jobs WHERE id=?")
+          .get(id)!.data,
+      ),
+    );
+  const deadlines = new Map(
+    [b, c, d].map((job) => [job.id, stored(job.id).deadline]),
+  );
+  const check = () => {
+    for (const job of f.broker.list(f.session.id)) {
+      const seen = projected.get(job.id)!;
+      assert.equal(seen.revision, job.revision);
+      assert.equal(seen.state, job.state);
+      assert.equal(seen.queuePosition, job.queuePosition);
+      assert.equal(stored(job.id).job.queuePosition, job.queuePosition);
+      // A refresh at equal revision gives precisely the same queue position.
+      if (job.revision > seen.revision) projected.set(job.id, job);
+      assert.equal(projected.get(job.id)!.queuePosition, job.queuePosition);
+    }
+  };
+  check();
+  assert.deepEqual(
+    [
+      read(b.id).queuePosition,
+      read(c.id).queuePosition,
+      read(d.id).queuePosition,
+    ],
+    [1, 2, 3],
+  );
+  const cBefore = read(c.id).revision,
+    dBefore = read(d.id).revision;
+  await f.backend.complete(0);
+  await until(() => f.backend.calls.length === 2);
+  assert.equal(read(a.id).state, "completed");
+  assert.equal(read(b.id).queuePosition, undefined);
+  assert.deepEqual(
+    [read(c.id).queuePosition, read(d.id).queuePosition],
+    [1, 2],
+  );
+  assert.ok(read(c.id).revision > cBefore && read(d.id).revision > dBefore);
+  check();
+  const dStarted = read(d.id).revision;
+  f.broker.cancel(f.session.id, c.id);
+  assert.equal(read(d.id).queuePosition, 1);
+  assert.ok(read(d.id).revision > dStarted);
+  check();
+  const e = await f.submit("position-e"),
+    dCancelled = read(d.id).revision,
+    eBefore = read(e.id).revision;
+  f.backend.calls[1].resolve({ kind: "not_admitted", retryAfterMs: 1000 });
+  await until(() => read(b.id).state === "queued");
+  assert.deepEqual(
+    [
+      read(b.id).queuePosition,
+      read(d.id).queuePosition,
+      read(e.id).queuePosition,
+    ],
+    [1, 2, 3],
+  );
+  assert.ok(read(d.id).revision > dCancelled && read(e.id).revision > eBefore);
+  check();
+  const dRequeued = read(d.id).revision;
+  f.advance(1000);
+  await until(() => f.backend.calls.length === 3);
+  assert.deepEqual(
+    [read(d.id).queuePosition, read(e.id).queuePosition],
+    [1, 2],
+  );
+  assert.ok(read(d.id).revision > dRequeued);
+  check();
+  for (const [id, deadline] of deadlines)
+    assert.equal(stored(id).deadline, deadline);
+  assert.equal(f.backend.calls[2].input.seed, b.seed);
+  assert.equal(f.broker.snapshot().queued, 2);
+});
+
+test("token issuance waits behind delayed approval and cannot rotate the consumed token", async (t) => {
+  const f = await fixture(t),
+    file = await f.upload(await png(120, 60));
+  const job = await f.submit("token-race", {
+    operation: "edit",
+    references: [{ fileId: file.id }],
+  });
+  const t1 = await f.broker.issueApprovalToken(f.session.id, job.id);
+  const original = f.broker.imageFiles.frozen.bind(f.broker.imageFiles);
+  let enter!: () => void, release!: () => void;
+  const entered = new Promise<void>((resolve) => {
+    enter = resolve;
+  });
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  f.broker.imageFiles.frozen = async (...args) => {
+    enter();
+    await gate;
+    return original(...args);
+  };
+  t.after(() => {
+    release();
+  });
+  const approval = f.broker.approve(
+    f.session.id,
+    job.id,
+    "approve",
+    t1.approvalToken,
+  );
+  await entered;
+  let issuanceSettled = false;
+  const t2 = f.broker.issueApprovalToken(f.session.id, job.id).then(
+    (value) => {
+      issuanceSettled = true;
+      return value;
+    },
+    (error) => {
+      issuanceSettled = true;
+      throw error;
+    },
+  );
+  const refused = assert.rejects(t2, /no longer pending/);
+  await delay(10);
+  assert.equal(issuanceSettled, false);
+  release();
+  const approved = await approval;
+  await refused;
+  await until(() => f.backend.calls.length === 1);
+  const retry = await f.broker.approve(
+    f.session.id,
+    job.id,
+    "approve",
+    t1.approvalToken,
+  );
+  assert.equal(retry.id, approved.id);
+  assert.equal(f.backend.calls.length, 1);
+  const durable = JSON.parse(
+    String(
+      f.store.db
+        .prepare("SELECT data FROM h003_image_jobs WHERE id=?")
+        .get(job.id)!.data,
+    ),
+  );
+  assert.equal(durable.approvalTokenHash, sha256(t1.approvalToken));
+  assert.equal(durable.decision, "approve");
+  await f.backend.complete();
+  await until(() => readCompleted());
+  function readCompleted() {
+    return f.broker.get(f.session.id, job.id).state === "completed";
+  }
+  assert.equal(
+    (await f.broker.approve(f.session.id, job.id, "approve", t1.approvalToken))
+      .state,
+    "completed",
+  );
+  assert.equal(f.backend.calls.length, 1);
 });

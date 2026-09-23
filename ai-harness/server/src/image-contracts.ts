@@ -58,6 +58,9 @@ export interface ImageJob {
   cancelRequested: boolean;
 }
 export interface ImageMetadata {
+  /** Present on new records; older actualSize-only records are hydrated on read. */
+  width?: number;
+  height?: number;
   jobId: string;
   actualSize: string;
   model: string;

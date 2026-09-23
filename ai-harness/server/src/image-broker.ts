@@ -200,34 +200,64 @@ export class ImageBroker {
   }
   private persist(r: RecordData, lane?: Lane) {
     const db = this.options.store.db;
+    // Queue position is a revisioned part of each job, not an unversioned GET
+    // calculation. Commit the transition and every affected waiter together.
+    const changed = new Set<RecordData>([r]);
+    const positions = new Map(
+      this.queued().map((entry, index) => [entry, index + 1]),
+    );
+    const before = new Map<
+      RecordData,
+      { revision: number; position?: number }
+    >();
+    for (const entry of this.records.values()) {
+      const position = positions.get(entry);
+      if (entry.job.queuePosition !== position) changed.add(entry);
+    }
+    for (const entry of changed)
+      before.set(entry, {
+        revision: entry.job.revision,
+        position: entry.job.queuePosition,
+      });
     db.exec("BEGIN IMMEDIATE");
-    const previousRevision = r.job.revision;
-    r.job.revision++;
     try {
-      db.prepare("INSERT OR REPLACE INTO h003_image_jobs VALUES(?,?,?,?)").run(
-        r.job.id,
-        r.job.sessionId,
-        r.job.requestId,
-        JSON.stringify(r),
-      );
+      for (const entry of changed) {
+        entry.job.revision++;
+        const position = positions.get(entry);
+        if (position === undefined) delete entry.job.queuePosition;
+        else entry.job.queuePosition = position;
+        db.prepare(
+          "INSERT OR REPLACE INTO h003_image_jobs VALUES(?,?,?,?)",
+        ).run(
+          entry.job.id,
+          entry.job.sessionId,
+          entry.job.requestId,
+          JSON.stringify(entry),
+        );
+      }
       if (lane)
         db.prepare("INSERT OR REPLACE INTO h003_image_lane VALUES(1,?)").run(
           lane,
         );
       db.exec("COMMIT");
     } catch (e) {
-      r.job.revision = previousRevision;
+      for (const [entry, old] of before) {
+        entry.job.revision = old.revision;
+        if (old.position === undefined) delete entry.job.queuePosition;
+        else entry.job.queuePosition = old.position;
+      }
       db.exec("ROLLBACK");
       this.lane = "quarantined";
       throw e;
     }
     if (lane) this.lane = lane;
-    this.options.store.emit(
-      r.job.sessionId,
-      "image_job",
-      { job: this.public(r, true) },
-      r.job.runId,
-    );
+    for (const entry of changed)
+      this.options.store.emit(
+        entry.job.sessionId,
+        "image_job",
+        { job: this.public(entry, true) },
+        entry.job.runId,
+      );
   }
   private queued() {
     return [...this.records.values()].filter((r) => r.job.state === "queued");
@@ -245,9 +275,6 @@ export class ImageBroker {
                 Date.parse(r.job.startedAt),
             ),
           }
-        : {}),
-      ...(r.job.state === "queued"
-        ? { queuePosition: this.queued().indexOf(r) + 1 }
         : {}),
     });
   }
@@ -482,32 +509,34 @@ export class ImageBroker {
     );
   }
   issueApprovalToken(sessionId: string, jobId: string) {
-    const r = this.owned(sessionId, jobId);
-    if (
-      this.closed ||
-      r.job.state !== "awaiting_approval" ||
-      r.decision ||
-      this.options.store.getSession(sessionId).deleteRequested
-    )
-      throw new ApiError(
-        409,
-        "invalid_image_state",
-        "Image approval is no longer pending",
-      );
-    if (r.approvalHash !== this.approvalHash(r.job, r.snapshots))
-      throw new ApiError(
-        409,
-        "approval_changed",
-        "Approval adjustment has changed",
-      );
-    const approvalToken = randomBytes(32).toString("hex");
-    r.approvalTokenHash = sha256(approvalToken);
-    r.approvalTokenExpires = this.now() + 10 * 60 * 1000;
-    this.persist(r);
-    return {
-      approvalToken,
-      expiresAt: new Date(r.approvalTokenExpires).toISOString(),
-    };
+    return this.lock(async () => {
+      const r = this.owned(sessionId, jobId);
+      if (
+        this.closed ||
+        r.job.state !== "awaiting_approval" ||
+        r.decision ||
+        this.options.store.getSession(sessionId).deleteRequested
+      )
+        throw new ApiError(
+          409,
+          "invalid_image_state",
+          "Image approval is no longer pending",
+        );
+      if (r.approvalHash !== this.approvalHash(r.job, r.snapshots))
+        throw new ApiError(
+          409,
+          "approval_changed",
+          "Approval adjustment has changed",
+        );
+      const approvalToken = randomBytes(32).toString("hex");
+      r.approvalTokenHash = sha256(approvalToken);
+      r.approvalTokenExpires = this.now() + 10 * 60 * 1000;
+      this.persist(r);
+      return {
+        approvalToken,
+        expiresAt: new Date(r.approvalTokenExpires).toISOString(),
+      };
+    });
   }
   /** Issuance is restricted to the browser proxy capability route. Never gateway tools. */
   async approve(

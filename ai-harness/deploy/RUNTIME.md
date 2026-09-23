@@ -110,9 +110,9 @@ real value supplied privately during reviewed activation. The checked-in nginx
 configuration includes that file only on the exact approval-token issuance route;
 all other routes strip the header. Do not capture `nginx -T` output after install.
 The source nginx ACL denies127/8, ::1 and the known harness address10.156.100.61,
-allows external10.156.100.0/24 browser clients and denies everything else. Before
-activation, root must inventory actual host/container egress addresses and add
-all own addresses to the deny list, and review any required external LAN range.
+then allows all other peers under the existing listener/network exposure policy.
+Before activation, root must inventory actual host/container egress addresses and
+add all own addresses to the deny list; no new client subnet restriction is added.
 Do not enable real-IP rewriting based on untrusted forwarding headers.
 
 Browser GET `/api/sessions/:id/image-jobs/:jobId/approval-token` returns

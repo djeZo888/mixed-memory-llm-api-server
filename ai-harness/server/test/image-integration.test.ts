@@ -6,6 +6,7 @@ import path from "node:path";
 import { createServer, type ServerResponse } from "node:http";
 import { Readable } from "node:stream";
 import sharp from "sharp";
+import { Store } from "../src/store.js";
 import { createApp } from "../src/app.js";
 import { createGateway } from "../src/gateway.js";
 import { ImageUpstream } from "../src/image-upstream.js";
@@ -338,6 +339,26 @@ test("normal text turn end preserves image job; late artifact belongs to origina
   const completed = f.images!.get(f.session.id, job.id),
     artifact = f.store.file(completed.artifactId!);
   assert.equal(artifact.runId, f.runId);
+  assert.equal(artifact.image?.width, 64);
+  assert.equal(artifact.image?.height, 64);
+  assert.equal(artifact.image?.actualSize, "64x64");
+  const rawMetadata = JSON.parse(
+    String(
+      f.store.db
+        .prepare("SELECT data FROM h003_image_file_meta WHERE file_id=?")
+        .get(artifact.id)!.data,
+    ),
+  );
+  assert.equal(rawMetadata.width, 64);
+  assert.equal(rawMetadata.height, 64);
+  // Existing actualSize-only rows still hydrate numeric dimensions on refresh.
+  delete rawMetadata.width;
+  delete rawMetadata.height;
+  f.store.db
+    .prepare("UPDATE h003_image_file_meta SET data=? WHERE file_id=?")
+    .run(JSON.stringify(rawMetadata), artifact.id);
+  assert.equal(f.store.file(artifact.id).image?.width, 64);
+  assert.equal(f.store.file(artifact.id).image?.height, 64);
   assert.equal(artifact.messageId, f.store.runSnapshot(f.runId).finalMessageId);
   assert.ok(artifact.messageId);
   assert.equal(
@@ -351,6 +372,35 @@ test("normal text turn end preserves image job; late artifact belongs to origina
     { text: "edit this", imageReferences: [artifact.id], attachmentIds: [] },
   );
   assert.equal(followup.statusCode, 202);
+  const followupRun = followup.json().runId;
+  const selectedMessage = f.store
+    .messages(f.session.id)
+    .find(
+      (message) => message.role === "user" && message.runId === followupRun,
+    )!;
+  assert.deepEqual(selectedMessage.imageReferences, [artifact.id]);
+  assert.equal(selectedMessage.attachmentIds, undefined);
+  const emitted = f.store
+    .allEvents(f.session.id)
+    .find((event) => event.type === "message" && event.runId === followupRun)!;
+  assert.deepEqual(
+    (emitted.data.message as { imageReferences: string[] }).imageReferences,
+    [artifact.id],
+  );
+  const refreshed = (
+    await f.browser("GET", `/api/sessions/${f.session.id}`)
+  ).json();
+  assert.deepEqual(
+    refreshed.messages.find(
+      (message: { id: string }) => message.id === selectedMessage.id,
+    ).imageReferences,
+    [artifact.id],
+  );
+  assert.equal(
+    refreshed.artifacts.find((file: { id: string }) => file.id === artifact.id)
+      .image.width,
+    64,
+  );
   await until(() => f.turns.length === 2);
   assert.match(f.turns[1].text, /\.image-references\//);
   assert.equal(f.turns[1].attachments.length, 0);
@@ -368,6 +418,24 @@ test("normal text turn end preserves image job; late artifact belongs to origina
   await f.broker.idle();
   assert.equal(f.store.files(f.session.id, "artifact").length, 1);
   assert.equal(f.store.file(artifact.id).runId, f.runId);
+  const reopenedPath = path.join(f.dir, "projection-refresh.sqlite");
+  f.store.db.prepare("VACUUM INTO ?").run(reopenedPath);
+  const reopened = new Store(reopenedPath);
+  try {
+    assert.deepEqual(reopened.message(selectedMessage.id).imageReferences, [
+      artifact.id,
+    ]);
+    assert.equal(reopened.file(artifact.id).image?.height, 64);
+    assert.equal(
+      reopened
+        .messages(f.session.id)
+        .filter((message) => message.role === "assistant")
+        .some((message) => message.imageReferences),
+      false,
+    );
+  } finally {
+    reopened.close();
+  }
   const other = await f.broker.createSession();
   assert.equal(
     (
@@ -378,6 +446,21 @@ test("normal text turn end preserves image job; late artifact belongs to origina
     ).statusCode,
     400,
   );
+  const alien = f.store.saveFile({
+    id: "foreign-image",
+    sessionId: other.id,
+    kind: "artifact",
+    path: "foreign-image",
+    name: "foreign.png",
+    mimeType: "image/png",
+    size: 1,
+  });
+  f.store.db
+    .prepare("UPDATE h003_run_image_refs SET data=? WHERE run_id=?")
+    .run(JSON.stringify([artifact.id, alien.id]), followupRun);
+  assert.deepEqual(f.store.message(selectedMessage.id).imageReferences, [
+    artifact.id,
+  ]);
 });
 
 test("approval after text completion binds original run; Stop while idle removes approval and Delete drains active output", async (t) => {
@@ -505,7 +588,9 @@ test("approval token route refuses direct requests/forged forwarding/bearer and 
   const [specific, generic] = nginx.split("    location / {");
   assert.match(specific, /deny 127\.0\.0\.0\/8;/);
   assert.match(specific, /deny 10\.156\.100\.61;/);
-  assert.match(specific, /deny all;/);
+  assert.match(specific, /allow all;/);
+  assert.ok(!specific.includes("allow 10.156.100.0/24"));
+  assert.match(specific, /deny 10\.156\.100\.61;[\s\S]*allow all;/);
   assert.match(
     specific,
     /include \/etc\/ai-harness\/image-approval-proxy.conf;/,

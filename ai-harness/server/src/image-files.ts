@@ -160,6 +160,7 @@ export class ImageFiles {
     await this.write(artifact, bytes, signal);
     const store = this.files.store,
       run = store.runSnapshot(job.runId);
+    const [width, height] = job.actualSize!.split("x").map(Number);
     const f = store.saveFile({
       id,
       sessionId: job.sessionId,
@@ -174,6 +175,8 @@ export class ImageFiles {
           ? run.finalMessageId
           : null,
       image: {
+        width,
+        height,
         jobId: job.id,
         actualSize: job.actualSize!,
         model: job.model,

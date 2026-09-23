@@ -334,7 +334,29 @@ export class Store {
     const r = this.db
       .prepare("SELECT * FROM messages WHERE id=?")
       .get(id) as Record<string, unknown>;
+    // The broker persisted validated run refs before adding the user message.
+    // Re-derive only owned image artifacts for both the emitted message and refresh;
+    // old messages/runs with no refs retain their original projection.
+    const imageRow =
+      r.role === "user" && r.run_id
+        ? this.db
+            .prepare(
+              "SELECT refs.data FROM h003_run_image_refs refs JOIN runs ON runs.id=refs.run_id WHERE runs.id=? AND runs.session_id=?",
+            )
+            .get(r.run_id as string, r.session_id as string)
+        : undefined;
+    const imageReferences = imageRow
+      ? decode<string[]>(imageRow.data).filter(
+          (fileId) =>
+            !!this.db
+              .prepare(
+                "SELECT id FROM files WHERE id=? AND session_id=? AND kind='artifact' AND mime_type IN ('image/png','image/jpeg')",
+              )
+              .get(fileId, r.session_id as string),
+        )
+      : [];
     return {
+      ...(imageReferences.length ? { imageReferences } : {}),
       id: String(r.id),
       ...this.messagePhase(id),
       attachments: decode<string[]>(r.attachment_ids).flatMap((id) => {
@@ -833,10 +855,18 @@ export class Store {
     const image = this.db
       .prepare("SELECT data FROM h003_image_file_meta WHERE file_id=?")
       .get(id)?.data;
+    const metadata = image
+      ? decode<import("./image-contracts.js").ImageMetadata>(image)
+      : undefined;
+    if (metadata && /^([1-9]\d*)x([1-9]\d*)$/.test(metadata.actualSize)) {
+      const [width, height] = metadata.actualSize.split("x").map(Number);
+      if (Number.isSafeInteger(width) && Number.isSafeInteger(height)) {
+        metadata.width ??= width;
+        metadata.height ??= height;
+      }
+    }
     return {
-      ...(image
-        ? { image: decode<import("./image-contracts.js").ImageMetadata>(image) }
-        : {}),
+      ...(metadata ? { image: metadata } : {}),
       id: String(r.id),
       sessionId: String(r.session_id),
       kind: r.kind as FileRecord["kind"],

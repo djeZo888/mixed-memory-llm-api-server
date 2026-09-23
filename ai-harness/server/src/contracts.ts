@@ -41,6 +41,7 @@ export interface Message extends Partial<MessagePhase> {
   createdAt: string;
   runId?: string;
   attachmentIds?: string[];
+  imageReferences?: string[];
 }
 export interface Attachment {
   downloadUrl?: string;
