@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "task": "H003-EDIT-20260923",
+  "budget": 6,
+  "attempts_used": 3,
+  "remaining": 3,
+  "entries": [
+    {
+      "id": "D01",
+      "status": "failed_before_gpu_dispatch",
+      "declared_utc": "2026-09-23T10:43:15.334663+00:00",
+      "hypothesis": "Gross native VAE reconstruction damage can explain shared scene texture/contrast artifacts independently of instruction following.",
+      "input_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+      "original_regression_prompt": "Change the red teapot to blue, keeping its shape, table, window, and lighting unchanged.",
+      "probe_prompt": null,
+      "seed": 42,
+      "seed_effect": "none; posterior mode, no random sampling",
+      "width": 1024,
+      "height": 1024,
+      "references": 1,
+      "n": 1,
+      "steps": 0,
+      "vae_encode": 1,
+      "vae_decode": 1,
+      "precision": "native BF16",
+      "tiling": false,
+      "offload": false,
+      "approximate_cache": false,
+      "image": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "checkpoint": "790c92633540aa0cb11d9abf19eb46d861714758",
+      "probe_sha256": "6cfe52717492da803858506dc3ad5f345481b7234605e06d33989f114cc23b1a",
+      "predicted_discriminator": "Coarse/high-contrast reconstruction supports H1; clean reconstruction weakens gross VAE damage and focuses prompt/denoising; sound raw but damaged RGB isolates output.",
+      "attempts": 1,
+      "steps_completed": 0,
+      "outputs": [],
+      "latency_seconds": null,
+      "memory": null,
+      "outcome": "Installed anchored storage guard rejected root traversal into native-owned evidence directory; no admission freeze and no GPU call. Conservatively consumes one budget entry.",
+      "gpu_invocations": 0,
+      "encode_completed": 0,
+      "decode_completed": 0,
+      "evidence": "artifacts/d01-execution.txt",
+      "budget_consumed": false
+    },
+    {
+      "id": "D02",
+      "status": "completed",
+      "declared_utc": "2026-09-23T10:44:19.563711+00:00",
+      "hypothesis": "Gross native VAE reconstruction damage can explain shared scene texture/contrast artifacts independently of instruction following.",
+      "input_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+      "original_regression_prompt": "Change the red teapot to blue, keeping its shape, table, window, and lighting unchanged.",
+      "probe_prompt": null,
+      "seed": 42,
+      "seed_effect": "none; posterior mode, no random sampling",
+      "width": 1024,
+      "height": 1024,
+      "references": 1,
+      "n": 1,
+      "steps": 0,
+      "vae_encode": 1,
+      "vae_decode": 1,
+      "precision": "native BF16",
+      "tiling": false,
+      "offload": false,
+      "approximate_cache": false,
+      "image": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "checkpoint": "790c92633540aa0cb11d9abf19eb46d861714758",
+      "probe_sha256": "17a8375fffd582acde2663862d9ab78071131b66eb98adb177bc45e03f875f9d",
+      "predicted_discriminator": "Coarse/high-contrast reconstruction supports H1; clean reconstruction weakens gross VAE damage and focuses prompt/denoising; sound raw but damaged RGB isolates output.",
+      "attempts": 1,
+      "steps_completed": 0,
+      "outputs": [
+        {
+          "name": "conditioning.png",
+          "sha256": "581c4ebc7abd7bef1b9d6e73d8d4bd9733136a8bf89a6b7525b70c9cb41d1ef3",
+          "mode": "RGBA",
+          "size": [
+            1024,
+            1024
+          ]
+        },
+        {
+          "name": "raw-reconstruction.png",
+          "sha256": "13f72d46fec3a91258da5121cb0161a36884c1922446048b436d96b53609bb7f",
+          "mode": "RGBA",
+          "size": [
+            1024,
+            1024
+          ]
+        },
+        {
+          "name": "delivered-rgb.png",
+          "sha256": "7257e60926f7d62dcaa3d18e5661429a27344f90d3145d997ac29c5d9be032a9",
+          "mode": "RGB",
+          "size": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "latency_seconds": 3.5370176569995238,
+      "memory": {
+        "sampled_device_min_free_bytes": 9942990848,
+        "sampled_device_peak_used_bytes": 41584033792,
+        "host_min_available_fraction": 0.9709789339572393,
+        "host_swap_used_max": 0,
+        "cgroup_swap_used_max": 0,
+        "sampling": "200ms device / 1s host; between-sample peaks not observed",
+        "allocator": {
+          "max_allocated": 4020660224,
+          "max_reserved": 6551502848
+        }
+      },
+      "outcome": "VAE reconstruction visually preserves scene/soft lighting; gross VAE damage hypothesis weakened. No fidelity repair established.",
+      "gpu_invocations": 1,
+      "encode_completed": 1,
+      "decode_completed": 1,
+      "evidence": "artifacts/d02-metrics.json",
+      "budget_consumed": true
+    },
+    {
+      "id": "D03",
+      "status": "completed_visual_fail",
+      "declared_utc": "2026-09-23T10:48:26.355604+00:00",
+      "hypothesis": "If reference-conditioned denoising damages the image independently of recolouring semantics, even an identity instruction will reproduce contrast/texture damage despite clean VAE reconstruction.",
+      "input_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+      "prompt": "Return the input image unchanged.",
+      "original_regression": false,
+      "acceptance_eligible": false,
+      "seed": 42,
+      "generator_device": "cpu",
+      "width": 1024,
+      "height": 1024,
+      "references": 1,
+      "n": 1,
+      "steps": 40,
+      "guidance_scale": 1.0,
+      "true_cfg_scale": 1.0,
+      "negative_prompt": null,
+      "precision": "native BF16/FP32",
+      "tiling": false,
+      "offload": false,
+      "approximate_cache": false,
+      "image": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "checkpoint": "790c92633540aa0cb11d9abf19eb46d861714758",
+      "probe_sha256": "1941d73ad63f9e236e9d668fa2e4cbbe4538484f7b0e35527faf65fe5ead5a25",
+      "runner_sha256": "cdeac90535728ff8ac0b4183605621267079a71eddebef49aaac0448a8784e20",
+      "predicted_discriminator": "Severe artifacts on identity edit implicate conditioning/denoising beyond recolouring semantics; preserved image focuses investigation on original instruction behavior. Neither outcome establishes repair.",
+      "attempts": 1,
+      "gpu_invocations": 1,
+      "steps_completed": 40,
+      "outputs": [
+        {
+          "name": "raw-output.png",
+          "sha256": "dbd31e8147ff78b7c0189fdf5810169c121b8d20213dd7e67889ee9e4e65a5f5"
+        },
+        {
+          "name": "delivered-rgb.png",
+          "sha256": "44cd2e5047af6ef60010ed00d254020482b9f2f63d0d72bfe0a36ef54f3c1810"
+        }
+      ],
+      "latency_seconds": 27.225865560001694,
+      "memory": {
+        "sampled_device_min_free_bytes": 9602531328,
+        "sampled_device_peak_used_bytes": 41924493312,
+        "host_min_available_fraction": 0.9725661810019086,
+        "host_swap_used_max": 0,
+        "cgroup_swap_used_max": 0,
+        "sampling": "200ms device / 1s host; between-sample peaks not observed"
+      },
+      "outcome": "Identity edit reproduces severe coarse texture/high contrast and sharpened window background while retaining red pot. Not acceptance; implicates reference conditioning/denoising beyond recolouring semantics.",
+      "native_seconds": 26.870978196995566,
+      "evidence": "artifacts/d03-metrics.json",
+      "budget_consumed": true,
+      "settlement_correction": "Initial comparison included used_memory and left adapter frozen despite completed HTTP200; explicit guarded settlement corrected identity comparison to (GPU UUID, PID), verified40steps/output and absent probe, then thawed same adapter process. Subsequent ready GET200."
+    },
+    {
+      "id": "D04",
+      "status": "completed_diagnostic_visual_pass",
+      "declared_utc": "2026-09-23T10:57:06.190489+00:00",
+      "hypothesis": "Reusing generation seed42 at identical resolution during editing causes a reference/noise interaction. Original source was CPU seed42. Change only edit seed to43.",
+      "input_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+      "prompt": "Change the red teapot to blue, keeping its shape, table, window, and lighting unchanged.",
+      "original_regression": false,
+      "acceptance_eligible": false,
+      "seed": 43,
+      "generator_device": "cpu",
+      "width": 1024,
+      "height": 1024,
+      "references": 1,
+      "n": 1,
+      "steps": 40,
+      "guidance_scale": 1.0,
+      "true_cfg_scale": 1.0,
+      "negative_prompt": null,
+      "precision": "native BF16/FP32",
+      "tiling": false,
+      "offload": false,
+      "approximate_cache": false,
+      "image": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "checkpoint": "790c92633540aa0cb11d9abf19eb46d861714758",
+      "probe_sha256": "57493b0677b56b2ca221e6ca4d86bcfa554e3f98e2c080c8e57509be19cb7c10",
+      "runner_sha256": "d913d40dd14323b5d12d4a0fa1f1f765e9c7ccc8f56d097f90ad1cba21f95036",
+      "predicted_discriminator": "Clean blue edit preserving soft background/light at43 supports case-specific seed-reuse artifact; same harsh damage weakens hypothesis. It cannot replace failed42 regression.",
+      "attempts": 1,
+      "gpu_invocations": 1,
+      "steps_completed": 40,
+      "outputs": [
+        {
+          "name": "raw-output.png",
+          "sha256": "1d91948757a0f7111d65baa6553236d853c3b0590b0b06cb36c6476c4b108412"
+        },
+        {
+          "name": "delivered-rgb.png",
+          "sha256": "c718b9feb9c7825cb66b69b69be5e87829b811fb536fcc109346c73533a281bb"
+        }
+      ],
+      "latency_seconds": 27.24990554899705,
+      "memory": {
+        "sampled_device_min_free_bytes": 9602531328,
+        "sampled_device_peak_used_bytes": 41924493312,
+        "host_min_available_fraction": 0.972565878178028,
+        "host_swap_used_max": 0,
+        "cgroup_swap_used_max": 0,
+        "sampling": "200ms device / 1s host; between-sample peaks not observed"
+      },
+      "outcome": "Blue recolour preserves subject major geometry, soft background/table/light without severe artifacts. Supports case-specific seed-reuse sensitivity. NOT original42 regression acceptance.",
+      "native_seconds": 26.901859562000027,
+      "evidence": "artifacts/d04-metrics.json",
+      "budget_consumed": true
+    }
+  ],
+  "actual_gpu_requests": 3,
+  "budget_accounting_note": "Root D04 direction explicitly counts six actual GPU diagnostics; D01 staging never dispatched, excluded from request count. Attempt retained permanently."
+}

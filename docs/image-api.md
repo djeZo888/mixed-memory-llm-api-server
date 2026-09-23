@@ -251,3 +251,25 @@ b64_json because native generation defaults to URL. It sets both `guidance_scale
 and Qwen-specific `true_cfg_scale` to 1, with fixed CPU initial-noise RNG. Native `data[0].b64_json` is decoded and all
 other native fields are discarded. No native content/download endpoint is exposed.
 Captured source hashes and provenance accompany the taskroot evidence package.
+
+## Unactivated editing seed correction
+
+The [H003 diagnosis](../reports/h003-edit-20260923/RESULT.md) retains the failed
+same-noise seed42 teapot regression and the successful seed43 counterpart.
+This is a model/runtime seed-reuse limitation with an orchestration mitigation,
+not a proven denoiser repair. Editing profiles remain unqualified in production.
+
+The source candidate preserves every explicit seed exactly. For a validated edit
+that omits seed, it chooses one fresh random32-bit seed and retains it in the
+owned request instead of inheriting native seed42. Successful edit responses add
+`data[0].seed` with the actual native seed; `created` and `b64_json` are unchanged.
+The additive seed field is an image API extension. Generation defaults, explicit
+generation seeds and generation response fields are unchanged. No retry redraws
+a seed, and rejected unqualified edits do not draw or dispatch.
+
+The future harness must persist actual seed provenance with artifacts, avoid
+known source/ancestor seeds when choosing a missing seed, and reject explicit
+known collisions before dispatch with `source_seed_collision`. The image API
+does not infer provenance or rewrite explicit seeds. Unknown provenance cannot
+guarantee collision avoidance. This source candidate is not deployed; exact root
+review and separate live acceptance/qualification are still required.
