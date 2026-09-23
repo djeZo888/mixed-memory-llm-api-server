@@ -78,7 +78,7 @@ def dimensions(value):
 
 
 def profile_geometry(profile):
-    """Only opaque generation has the explicit Full HD bottom-row crop."""
+    """Explicit Full HD transport geometry; support still requires a profile."""
     public = profile['size']
     dimensions(public)
     native = profile.get('native_size', public)
@@ -87,7 +87,7 @@ def profile_geometry(profile):
         raise Refusal()
     if public == '1920x1080':
         if (native == '1920x1088' and crop == 8
-                and profile['operation'] == 'generation' and profile['references'] == 0
+                and (profile['operation'], profile['references']) in (('generation', 0), ('edit', 1))
                 and profile['transparent'] is False):
             return native, crop
         raise Refusal()
@@ -138,6 +138,21 @@ def qualification(value):
             raise Refusal()
         seen.add(signature)
     return value
+
+
+def pad_edit_reference(raw):
+    """Validated Full HD pixels plus eight copies of the last row, no resampling."""
+    with Image.open(io.BytesIO(raw)) as image:
+        mode = 'RGBA' if 'A' in image.getbands() else 'RGB'
+        pixels = image.convert(mode)
+        padded = Image.new(mode, (1920, 1088))
+        padded.paste(pixels, (0, 0))
+        row = pixels.crop((0, 1079, 1920, 1080))
+        for y in range(1080, 1088):
+            padded.paste(row, (0, y))
+        result = io.BytesIO()
+        padded.save(result, format='PNG')
+        return result.getvalue()
 
 
 @dataclass
@@ -216,6 +231,10 @@ def validate(fields, images, operation, config):
     native_size, crop_bottom = profile_geometry(profile)
     for raw in images:
         decode_image(raw, size)
+    if images and crop_bottom:
+        # Keep caller bytes untouched. Native conditioning's area/32 resize is
+        # identity only when the reference already has the native padded size.
+        images = [pad_edit_reference(raw) for raw in images]
     native = {'model': ALIAS, 'prompt': (profile['conditioning'] + '\n' if transparent else '') + prompt,
               'n': 1, 'size': native_size, 'response_format': 'b64_json', 'output_format': 'png',
               'background': value['background'], 'num_inference_steps': 40,

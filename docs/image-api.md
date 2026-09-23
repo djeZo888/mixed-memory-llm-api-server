@@ -48,7 +48,8 @@ Unknown fields, queries, URLs, server paths, runtime settings,
 masks, duplicate fields, mixed image/image[] lists and other formats are refused.
 Masks are not pixel-preserving inpainting: the upstream native implementation
 ignores its mask parameter. No resizing, downsampling, public URLs or stored jobs.
-The sole geometry exception is the explicit generation-only Full HD crop below.
+The source candidate also supports the explicit one-reference Full HD transport
+padding/crop below. This does not qualify or enable any public edit profile.
 
 Limits are 32 MiB encoded/file, 64 MiB combined encoded files, two references,
 64 MiB+64 KiB total streamed multipart body including its bounded envelope, and
@@ -186,13 +187,27 @@ sizes, projected memory or this schema are never measured evidence. The helper
 and manifest review bind evidence to exact actual model/runtime/build identity.
 
 The sole nonidentity mapping is public `size=1920x1080`,
-`native_size=1920x1088`, `crop_bottom=8`, opaque generation with zero references.
-Missing mapping, raw native1080/crop0, edits, transparency and arbitrary mappings
+`native_size=1920x1088`, `crop_bottom=8`, opaque generation with zero references
+or a separately qualified opaque edit with exactly one reference.
+Missing mapping, raw native1080/crop0, two-reference Full HD, transparency and arbitrary mappings
 are refused for Full HD. Native PNG dimensions must match 1920x1088 exactly
 before removing rows1080..1087. An already-cropped or otherwise wrong response
 fails. The existing safe PNG decode/crop/re-encode path strips metadata and emits
-RGB. No edit padding remains. Public input/output has the 2073600-pixel limit;
-only this native output crop allows 2088960 pixels.
+RGB. For a qualified one-reference Full HD edit, validate the original1920x1080
+first, then create a separate PNG containing its unchanged decoded pixels plus
+eight copies of its last row at the bottom. No source file changes or resampling
+occur. The native reference is1920x1088, so the pipeline's target-area/multiple32
+resize is identity. Capabilities expose `input_padding:{top:0,right:0,bottom:8,left:0}`
+for this edit mapping (all zero for identity edit profiles). Generation capability
+fields remain unchanged. Public input/output keeps the2073600-pixel limit; only
+this internal padded reference and exact native output use2088960pixels.
+
+The installed Qwen processor performs a second smart resize, using checkpoint
+patch16/merge2 and65536..16777216pixel bounds. The proposed1024x1024,
+1536x864 and padded1920x1088 references remain dimension-identical at both stages.
+The current Torchvision resize returns its input when dimensions match;
+normalization and model encoding still occur. This source audit is not image
+fidelity or memory acceptance. All public edit profiles remain absent.
 
 The generic template remains empty. The installed protected six-profile manifest
 and hash-bound crop/native evidence are in the Full HD report. Root reviewed
@@ -267,8 +282,8 @@ The additive seed field is an image API extension. Generation defaults, explicit
 generation seeds and generation response fields are unchanged. No retry redraws
 a seed, and rejected unqualified edits do not draw or dispatch.
 
-The future harness must persist actual seed provenance with artifacts, avoid
-known source/ancestor seeds when choosing a missing seed, and reject explicit
+The harness owns persistence of actual seed provenance with artifacts, avoidance of
+known source/ancestor seeds when choosing a missing seed, and rejection of explicit
 known collisions before dispatch with `source_seed_collision`. The image API
 does not infer provenance or rewrite explicit seeds. Unknown provenance cannot
 guarantee collision avoidance. This source candidate is not deployed; exact root
