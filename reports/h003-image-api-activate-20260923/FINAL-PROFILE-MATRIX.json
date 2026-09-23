@@ -1,0 +1,280 @@
+{
+  "task": "H003-IMAGE-API-ACTIVATE-20260923",
+  "scope": "Final retained capacity qualification records only; not activation or live readiness evidence.",
+  "supersedes_for_profile_decisions": "PROFILE-MATRIX.json historical source-only snapshot remains unchanged.",
+  "qualified_manifest_sha256": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3",
+  "manifest_hash_verified_locally": true,
+  "profile_count": 9,
+  "generation_profiles_preserved_exactly": 6,
+  "accepted_edit_profiles": 3,
+  "profiles": [
+    {
+      "conditioning": "",
+      "crop_bottom": 0,
+      "evidence_sha256": "29250a7887d4bd9688a4ebd2c3f0720db1960116012f31fa553dddf37656aad4",
+      "native_size": "1024x1024",
+      "operation": "generation",
+      "references": 0,
+      "size": "1024x1024",
+      "transparent": false
+    },
+    {
+      "conditioning": "",
+      "crop_bottom": 0,
+      "evidence_sha256": "f4c2f070cb44477dcacd671f46646cfa39e0374e859c808ec7c78c9cc3a35af1",
+      "native_size": "1024x576",
+      "operation": "generation",
+      "references": 0,
+      "size": "1024x576",
+      "transparent": false
+    },
+    {
+      "conditioning": "",
+      "crop_bottom": 0,
+      "evidence_sha256": "0c5536fb0a6ec34bb972e84ae05a1d01bcf8a96281220f3f31c9c08ddbda16ef",
+      "native_size": "1216x704",
+      "operation": "generation",
+      "references": 0,
+      "size": "1216x704",
+      "transparent": false
+    },
+    {
+      "conditioning": "",
+      "crop_bottom": 0,
+      "evidence_sha256": "f017918f5885133522197bb5765201788e66a1423c4303992a65887eabd520e3",
+      "native_size": "1472x832",
+      "operation": "generation",
+      "references": 0,
+      "size": "1472x832",
+      "transparent": false
+    },
+    {
+      "conditioning": "",
+      "crop_bottom": 0,
+      "evidence_sha256": "f91eaca9a0d8583081ccaa9d62d48bd7511bd5b99b8193a26abd7106f27e3c83",
+      "native_size": "1760x992",
+      "operation": "generation",
+      "references": 0,
+      "size": "1760x992",
+      "transparent": false
+    },
+    {
+      "conditioning": "",
+      "crop_bottom": 8,
+      "evidence_sha256": "b33ceb2e05638c3342581b964b21ae2c201e0748ac4331a15ac13ffa992786eb",
+      "native_size": "1920x1088",
+      "operation": "generation",
+      "references": 0,
+      "size": "1920x1080",
+      "transparent": false
+    },
+    {
+      "operation": "edit",
+      "references": 1,
+      "size": "1024x1024",
+      "native_size": "1024x1024",
+      "crop_bottom": 0,
+      "transparent": false,
+      "conditioning": "",
+      "evidence_sha256": "8ea1261c9fd96dbb88722b1547eb8a8122ea36133942b5e5a43588a372d6eb93"
+    },
+    {
+      "operation": "edit",
+      "references": 1,
+      "size": "1536x864",
+      "native_size": "1536x864",
+      "crop_bottom": 0,
+      "transparent": false,
+      "conditioning": "",
+      "evidence_sha256": "5879deca84126408e71c39218dbc9e949cb94dd26b09730c5ffdc64e6a737306"
+    },
+    {
+      "operation": "edit",
+      "references": 2,
+      "size": "1024x1024",
+      "native_size": "1024x1024",
+      "crop_bottom": 0,
+      "transparent": false,
+      "conditioning": "",
+      "evidence_sha256": "7cd06cec250b8e4ae90f8ef4ca0d9b6ca6dfbd2d392b3584cd4b5bd51bc49205"
+    }
+  ],
+  "capacity_cases": [
+    {
+      "case": "C01",
+      "status": "ACCEPTED",
+      "operation": "edit",
+      "references": 1,
+      "size": "1024x1024",
+      "native_size": "1024x1024",
+      "crop_bottom": 0,
+      "seed": 46,
+      "root_visual_decision": "PASS",
+      "qualification_memory_pass": true,
+      "native_operation_settled": true,
+      "elapsed_seconds": 27.15086695300124,
+      "minimum_ada_free_mib": 9158,
+      "minimum_ada_free_percent": 18.636548636548635,
+      "peak_ada_used_mib": 39982,
+      "minimum_host_available_percent": 97.24827054361641,
+      "global_swap_delta_pages": {
+        "pswpin": 0,
+        "pswpout": 0
+      },
+      "telemetry_samples": 89,
+      "maximum_sample_gap_seconds": 0.33496928215026855,
+      "result_sha256": "5c88724e3b56c8b941fd386ab6d34c8ac8422fef3d6af1a5338d363b49451123",
+      "metrics_sha256": "de79b9dac14dcf35d927955e100fea697c4581aa6f982845a0b11eb71acc2174",
+      "settled_case_receipt_sha256": "a5d4ec6b6ed0e90121f77febd29b1ac1d839b2c01d6756221d7a6433fb2245c1",
+      "manifest_evidence_sha256": "8ea1261c9fd96dbb88722b1547eb8a8122ea36133942b5e5a43588a372d6eb93",
+      "cgroup_swap_current_before_after_bytes": {
+        "llm-image-backend": [
+          0,
+          0
+        ],
+        "llmctl-qwen38-27b-q0-480000-yarn4-bf16kv": [
+          0,
+          0
+        ],
+        "llmctl-qwen38-27b-q1-480000-yarn4-bf16kv": [
+          155086848,
+          155086848
+        ]
+      },
+      "cgroup_memory_and_swap_event_deltas_zero": true
+    },
+    {
+      "case": "C02",
+      "status": "ACCEPTED",
+      "operation": "edit",
+      "references": 1,
+      "size": "1536x864",
+      "native_size": "1536x864",
+      "crop_bottom": 0,
+      "seed": 47,
+      "root_visual_decision": "PASS creative/non-pixel-exact",
+      "qualification_memory_pass": true,
+      "native_operation_settled": true,
+      "elapsed_seconds": 36.475666003003425,
+      "minimum_ada_free_mib": 7934,
+      "minimum_ada_free_percent": 16.145706145706146,
+      "peak_ada_used_mib": 41206,
+      "minimum_host_available_percent": 97.23904782602672,
+      "global_swap_delta_pages": {
+        "pswpin": 0,
+        "pswpout": 0
+      },
+      "telemetry_samples": 119,
+      "maximum_sample_gap_seconds": 0.3456113338470459,
+      "result_sha256": "d59d04bd893d8d55b4ddb8bd200d47ef51459b989414c4864bdb1584ef1b0678",
+      "metrics_sha256": "da1efbd028c6b159a805959c1c4d0ae4729e30d75991789c4a2d5b29b0021a08",
+      "settled_case_receipt_sha256": "2340e3458a7b572ea305760f012fd36c31bb886025fc376916c48e4526260bae",
+      "manifest_evidence_sha256": "5879deca84126408e71c39218dbc9e949cb94dd26b09730c5ffdc64e6a737306",
+      "cgroup_swap_current_before_after_bytes": {
+        "llm-image-backend": [
+          0,
+          0
+        ],
+        "llmctl-qwen38-27b-q0-480000-yarn4-bf16kv": [
+          0,
+          0
+        ],
+        "llmctl-qwen38-27b-q1-480000-yarn4-bf16kv": [
+          155086848,
+          155086848
+        ]
+      },
+      "cgroup_memory_and_swap_event_deltas_zero": true
+    },
+    {
+      "case": "C03",
+      "status": "EXCLUDED_MEMORY_RESERVE",
+      "operation": "edit",
+      "references": 1,
+      "size": "1920x1080",
+      "native_size": "1920x1088",
+      "crop_bottom": 8,
+      "seed": 48,
+      "root_visual_decision": "VISUAL PASS but MEMORY FAIL; EXCLUDED",
+      "qualification_memory_pass": false,
+      "native_operation_settled": true,
+      "elapsed_seconds": 65.49602156499896,
+      "minimum_ada_free_mib": 2156,
+      "minimum_ada_free_percent": 4.387464387464387,
+      "peak_ada_used_mib": 46984,
+      "minimum_host_available_percent": 97.23476632895907,
+      "global_swap_delta_pages": {
+        "pswpin": 0,
+        "pswpout": 0
+      },
+      "telemetry_samples": 213,
+      "maximum_sample_gap_seconds": 0.35755228996276855,
+      "result_sha256": "f02081842c66c2863332ae2dcf9aaa2a79c76f00a0edf5cbb1a029160b8b0098",
+      "metrics_sha256": "7a6275f152fa13877a8a07d8667be1d38499a85299f7617e0e450d4d245c8b0e",
+      "settled_case_receipt_sha256": "9fd701c802a7b03e4122fc3c3a4f52b52564842ccfb3011a99db415e14634cf9",
+      "exclusion_reason": "Ada minimum free 4.387464387464387% is below the required 5% floor despite visual PASS; no public FHD edit profile.",
+      "cgroup_detail": "Not included in the supplied compact metrics; do not infer per-cgroup zero swap from global deltas."
+    },
+    {
+      "case": "C04",
+      "status": "ACCEPTED",
+      "operation": "edit",
+      "references": 2,
+      "size": "1024x1024",
+      "native_size": "1024x1024",
+      "crop_bottom": 0,
+      "seed": 49,
+      "root_visual_decision": "PASS both refs recognizably used; coherent portrait-on-teapot",
+      "qualification_memory_pass": true,
+      "native_operation_settled": true,
+      "elapsed_seconds": 31.217477444995893,
+      "minimum_ada_free_mib": 6396,
+      "minimum_ada_free_percent": 13.015873015873018,
+      "peak_ada_used_mib": 42744,
+      "minimum_host_available_percent": 97.24251732248852,
+      "global_swap_delta_pages": {
+        "pswpin": 0,
+        "pswpout": 0
+      },
+      "telemetry_samples": 102,
+      "maximum_sample_gap_seconds": 0.3707599639892578,
+      "result_sha256": "4dbd4aac9011174251091073204e6e2571ff9977386a7169a31564d148794955",
+      "metrics_sha256": "e5d1876172f12d1b0ec11610f3543796407d5d06943b92ee64ce75098e9d7aac",
+      "settled_case_receipt_sha256": "fd743b180e244f74721f254c3cdde54883a8f47a6a7caaed1081e9f0b336879b",
+      "manifest_evidence_sha256": "7cd06cec250b8e4ae90f8ef4ca0d9b6ca6dfbd2d392b3584cd4b5bd51bc49205",
+      "decision_precedence": "Later ROOT-QUALIFICATION-DECISIONS.json resolves the compact result's pending visual status to PASS.",
+      "cgroup_detail": "Not included in the supplied compact metrics; do not infer per-cgroup zero swap from global deltas."
+    }
+  ],
+  "capacity_calls_consumed": 4,
+  "capacity_budget": 4,
+  "remaining_capacity_calls": 0,
+  "root_acceptance_utc": "2026-09-23T14:06:08.891028+00:00",
+  "capacity_window_release": {
+    "status": "RELEASED",
+    "utc": "2026-09-23T14:11:25.823865+00:00",
+    "from_session": "01a0ce36-b30b-7af2-adf7-a37c9e8a8a5a",
+    "to_session": "01a0ce8e-681a-77b3-83b8-5a6faab3f62d",
+    "api_intentionally_stopped_at_release": true,
+    "public_ready_at_release": false
+  },
+  "protected_input_directory": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/capacity-final",
+  "protected_input_sha256": {
+    "QUALIFIED-MANIFEST-CANDIDATE.json": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3",
+    "ROOT-QUALIFICATION-DECISIONS.json": "70db2727bad0cad067e69cb07d809d024e3109108f670ddc520a1cb95cf2ce64",
+    "CAPACITY-WINDOW-RELEASE.json": "f9066977060b902eb4e8678fca8bec6f6a3cb185fc85c29b4a9a6d6b2458f197",
+    "MANIFEST-VALIDATION.json": "be4350a71eeedb23b0a88bce9497bd6f3c27a28ec7bac459d8ff4c0e339b2a30"
+  },
+  "limitations": [
+    "Sampled extrema do not establish unobserved instantaneous maxima.",
+    "C02 accepted as guarded creative edit, with incidental background redrawing; not pixel-exact preservation.",
+    "C04 root visual PASS: both independent references recognizably used in coherent portrait-on-teapot.",
+    "Fresh seeds are an orchestration workaround; original seed42 fail42 remains preserved without intrinsic model repair.",
+    "Historic q1 cgroup swap 155086848 bytes is not newly introduced image swap; per-operation global zero deltas are not blanket zero-swap claims.",
+    "Only the exact nine manifest records are accepted; FHD edit, other reference-count/size combinations and transparency remain excluded or unqualified.",
+    "Original SIGTERM ASGI cleanup remains UNPROVEN; task-only settled no-inflight evidence is separate."
+  ],
+  "local_only": true,
+  "host_contact": false,
+  "inference_count": 0
+}

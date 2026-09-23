@@ -5,11 +5,14 @@ helper and prepared output directory. Python 3 and its standard library are
 sufficient. Each command requests one opaque **1920×1080 PNG**.
 
 Full HD is deployed with public `1920x1080` → native `1920x1088`, removing eight
-bottom rows. The seed42 `lake-bled` preset passed the single live acceptance;
+bottom rows. The seed 42 `lake-bled` preset passed the earlier generation acceptance;
 [receipt and full decode](../../reports/image21-fhd-20260923/RESULT.md). The PCB
-and house presets have not been executed or visually assessed. Generation only;
-editing remains disabled. The PCB and house prompts are visual concepts, not
-verified engineering designs.
+and house presets have not been executed or visually assessed. This example CLI
+remains generation-only. The deployed API also exposes measured guarded opaque
+edits with one reference at 1024x1024 or 1536x864, or two references at 1024x1024;
+see the [API guidance and editing limits](../../docs/image-api.md). Full HD editing
+remains excluded. The PCB and house prompts are visual concepts, not verified
+engineering designs.
 
 ```sh
 sudo python3 /usr/local/lib/llm-server/image-api/examples/generate.py --example lake-bled --output /data/services/image-api/examples/output/lake-bled.png
@@ -38,7 +41,8 @@ be pasted into a command or placed in the shell environment.
 The fixed endpoint is `POST http://127.0.0.1:30006/v1/images/generations` with
 `Content-Type: application/json` and an in-memory Bearer authorization header.
 This readable body uses a complete short free-text prompt; `--example` sends the
-full corresponding preset below. Omit `seed` when no seed was supplied.
+full corresponding preset below. Omit `seed` when no seed was supplied; generation
+keeps the native default of 42.
 
 ```json
 {

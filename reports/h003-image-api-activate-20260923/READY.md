@@ -1,5 +1,9 @@
 # READY — source-only activation preparation
 
+**Historical preparation checkpoint.** The separately authorized activation is
+complete; see [LIVE-RESULT.md](LIVE-RESULT.md) and [WINDOW-RELEASE.json](WINDOW-RELEASE.json).
+The preparation facts below describe commit `56bf2c7` before execution GO.
+
 Native Worker1 session `01a0ce8e-681a-77b3-83b8-5a6faab3f62d` retained.
 No ai-vm/ai-harness contact, deployment, restart, recovery, warmup or inference.
 Capacity task still owns the window. Final capacity HANDOFF, measured/root-reviewed
