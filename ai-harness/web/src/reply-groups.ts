@@ -1,4 +1,4 @@
-import type { ActivityItem, Artifact, Message, Thread } from './types';
+import type { ActivityItem, Artifact, ImageJob, Message, Thread } from './types';
 
 export interface Reply {
   key: string;
@@ -6,6 +6,7 @@ export interface Reply {
   messages: Message[];
   activity: ActivityItem[];
   artifacts: Artifact[];
+  imageJobs: ImageJob[];
 }
 export type ConversationItem = { kind: 'user'; message: Message } | { kind: 'reply'; reply: Reply };
 export interface Replies {
@@ -28,7 +29,7 @@ export function groupReplies(thread: Thread): Replies {
     createdAt: string,
     index = items.length,
   ) => {
-    const reply: Reply = { key, runId, messages: [], activity: [], artifacts: [] };
+    const reply: Reply = { key, runId, messages: [], activity: [], artifacts: [], imageJobs: [] };
     items.splice(index, 0, { kind: 'reply', reply });
     replyTimes.set(reply, (runId ? runTimes.get(runId) : undefined) ?? Date.parse(createdAt));
     if (runId) byRun.set(runId, reply);
@@ -68,6 +69,20 @@ export function groupReplies(thread: Thread): Replies {
     const at = Date.parse(run.createdAt);
     const before = items.findIndex((item) => itemTime(item) > at);
     create(`run:${run.id}`, run.id, run.createdAt, before < 0 ? items.length : before);
+  }
+  for (const job of thread.imageJobs ?? []) {
+    if (job.sessionId !== thread.session.id) continue;
+    let reply = byRun.get(job.runId);
+    if (!reply) {
+      const before = items.findIndex((item) => itemTime(item) > Date.parse(job.createdAt));
+      reply = create(
+        `run:${job.runId}`,
+        job.runId,
+        job.createdAt,
+        before < 0 ? items.length : before,
+      );
+    }
+    reply.imageJobs.push(job);
   }
   const memberships = new Map<string, Set<Reply>>();
   for (const run of thread.runs) {

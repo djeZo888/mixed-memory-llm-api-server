@@ -1,6 +1,7 @@
 import {
   eventTypes,
   type Attachment,
+  type ImageJob,
   type ServerEvent,
   type Session,
   type Snapshot,
@@ -44,6 +45,24 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 const post = <T>(path: string, body: unknown) =>
   request<T>(path, { method: 'POST', body: JSON.stringify(body) });
+async function imageJobPost(path: string, body: unknown): Promise<{ job: ImageJob }> {
+  const result = await post<{ job: ImageJob }>(path, body);
+  const job = result?.job;
+  if (
+    !job ||
+    typeof job !== 'object' ||
+    typeof job.id !== 'string' ||
+    !Number.isSafeInteger(job.revision) ||
+    job.revision < 1
+  )
+    throw new ApiError(
+      200,
+      'invalid_response',
+      'The server returned an unreadable image job. Refresh its saved status.',
+    );
+  return { job };
+}
+
 export interface StreamCallbacks {
   event: (event: ServerEvent) => void;
   open: () => void;
@@ -51,11 +70,24 @@ export interface StreamCallbacks {
 }
 export interface Transport {
   health(signal?: AbortSignal): Promise<{ visionAvailable: boolean }>;
+  imageCapabilities(signal?: AbortSignal): Promise<unknown>;
   list(signal?: AbortSignal): Promise<{ sessions: Session[] }>;
   snapshot(id: string, signal?: AbortSignal): Promise<Snapshot>;
   create(): Promise<{ session: Session }>;
   remove(id: string): Promise<{ status: 'deleting' | 'deleted' }>;
-  send(id: string, text: string, attachmentIds: string[]): Promise<{ runId: string }>;
+  send(
+    id: string,
+    text: string,
+    attachmentIds: string[],
+    imageReferences?: string[],
+  ): Promise<{ runId: string }>;
+  imageJobs(id: string, signal?: AbortSignal): Promise<{ jobs: ImageJob[] }>;
+  approveImage(
+    id: string,
+    jobId: string,
+    decision: 'approve' | 'reject',
+  ): Promise<{ job: ImageJob }>;
+  cancelImage(id: string, jobId: string): Promise<{ job: ImageJob }>;
   cancel(id: string): Promise<{ status: 'cancelling' }>;
   handoff(id: string): Promise<{ runId: string }>;
   upload(id: string, file: File): Promise<{ attachment: Attachment }>;
@@ -91,11 +123,33 @@ export function subscribe(id: string, after: number, callbacks: StreamCallbacks)
 }
 export const api: Transport = {
   health: (signal) => request('/api/health', { signal }),
+  imageCapabilities: (signal) => request('/api/image-capabilities', { signal }),
   list: (signal) => request('/api/sessions', { signal }),
   snapshot: (id, signal) => request(sessionPath(id), { signal }),
   create: () => post('/api/sessions', {}),
   remove: (id) => request(sessionPath(id), { method: 'DELETE' }),
-  send: (id, text, attachmentIds) => post(`${sessionPath(id)}/messages`, { text, attachmentIds }),
+  send: (id, text, attachmentIds, imageReferences) =>
+    post(`${sessionPath(id)}/messages`, {
+      text,
+      attachmentIds,
+      ...(imageReferences?.length ? { imageReferences } : {}),
+    }),
+  imageJobs: (id, signal) => request(`${sessionPath(id)}/image-jobs`, { signal }),
+  approveImage: async (id, jobId, decision) => {
+    const path = `${sessionPath(id)}/image-jobs/${encodeURIComponent(jobId)}`;
+    // This method is invoked only by the user's approval-card click. Tokens
+    // remain local to that action; every explicit retry fetches a fresh token.
+    const { approvalToken } = await request<{ approvalToken: string }>(`${path}/approval-token`);
+    if (typeof approvalToken !== 'string' || !approvalToken)
+      throw new ApiError(
+        200,
+        'invalid_response',
+        'Approval authorization was unavailable. Try the approval card again.',
+      );
+    return imageJobPost(`${path}/approval`, { decision, approvalToken });
+  },
+  cancelImage: (id, jobId) =>
+    imageJobPost(`${sessionPath(id)}/image-jobs/${encodeURIComponent(jobId)}/cancel`, {}),
   cancel: (id) => post(`${sessionPath(id)}/cancel`, {}),
   handoff: (id) => post(`${sessionPath(id)}/handoff`, {}),
   upload: (id, file) => {

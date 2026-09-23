@@ -1,7 +1,14 @@
 import { api, ApiError, type Transport } from './api';
 import { applyEvent, reconcileSnapshot } from './state';
+import { imageJobActive, mergeImageJobs } from './image-jobs';
+import {
+  canStageEditReference,
+  imageCapabilities,
+  imageReferencesAvailable,
+  type ImageCapabilities,
+} from './image-capabilities';
 import { uploadKey, uploadProblem } from './uploads';
-import type { Attachment, ServerEvent, Session, Snapshot, Thread } from './types';
+import type { Artifact, Attachment, ServerEvent, Session, Snapshot, Thread } from './types';
 
 export interface ViewState {
   sessions: Session[];
@@ -13,8 +20,12 @@ export interface ViewState {
   connection: 'connecting' | 'connected' | 'reconnecting' | 'offline';
   visionAvailable: boolean;
   healthLoaded: boolean;
+  imageCapabilities: ImageCapabilities | null;
+  imageCapabilitiesLoaded: boolean;
+  imageJobsError: string | null;
   busy: Record<string, boolean>;
   attachments: Record<string, Attachment[]>;
+  imageReferences: Record<string, Artifact[]>;
   submitted: Record<string, string[] | undefined>;
 }
 export interface UploadUpdate {
@@ -50,8 +61,12 @@ export class HarnessStore {
     connection: 'offline',
     visionAvailable: false,
     healthLoaded: false,
+    imageCapabilities: null,
+    imageCapabilitiesLoaded: false,
+    imageJobsError: null,
     busy: {},
     attachments: {},
+    imageReferences: {},
     submitted: {},
   };
   private listeners = new Set<() => void>();
@@ -59,6 +74,7 @@ export class HarnessStore {
   private listGeneration = 0;
   private closed = false;
   private lifetime = 0;
+  private capabilityGeneration = 0;
   private completedRuns = new Map<string, Set<string>>();
   private handoffs = new Map<string, number>();
   private closeStream?: () => void;
@@ -99,12 +115,25 @@ export class HarnessStore {
       .catch(() => {
         if (lifetime === this.lifetime) this.update({ healthLoaded: true });
       });
+    void this.refreshImageCapabilities();
     await this.refreshList(false);
     if (!this.closed && lifetime === this.lifetime) {
       const id =
         this.state.sessions.find((s) => s.id === (this.state.selectedId ?? preferred))?.id ??
         this.state.sessions[0]?.id;
       if (id) this.select(id);
+    }
+  }
+  private async refreshImageCapabilities() {
+    const lifetime = this.lifetime;
+    const ticket = ++this.capabilityGeneration;
+    try {
+      const value = await this.transport.imageCapabilities(this.boot?.signal);
+      if (this.closed || lifetime !== this.lifetime || ticket !== this.capabilityGeneration) return;
+      this.update({ imageCapabilities: imageCapabilities(value), imageCapabilitiesLoaded: true });
+    } catch {
+      if (!this.closed && lifetime === this.lifetime && ticket === this.capabilityGeneration)
+        this.update({ imageCapabilities: null, imageCapabilitiesLoaded: true });
     }
   }
   dispose() {
@@ -151,6 +180,7 @@ export class HarnessStore {
       loading: !!id,
       error: null,
       connection: id ? 'connecting' : 'offline',
+      imageJobsError: null,
     });
     if (id) void this.loadInitial(id, this.generation);
   };
@@ -179,10 +209,33 @@ export class HarnessStore {
       sessions: this.state.sessions.map((s) => (s.id === id ? thread.session : s)),
     });
   }
+  private async readSnapshot(id: string, signal: AbortSignal): Promise<Snapshot> {
+    const snapshot = await this.transport.snapshot(id, signal);
+    try {
+      const { jobs } = await this.transport.imageJobs(id, signal);
+      if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      if (this.state.selectedId === id) this.update({ imageJobsError: null });
+      const previous = this.state.thread?.session.id === id ? this.state.thread.imageJobs : [];
+      return { ...snapshot, imageJobs: mergeImageJobs(previous ?? [], jobs, id) };
+    } catch (error) {
+      if (signal.aborted) throw error;
+      if (this.state.selectedId === id)
+        this.update({
+          imageJobsError: `Image status unavailable: ${messageOf(error)} Last saved jobs remain visible.`,
+        });
+      // Image status is additive: preserve text chat and known jobs during an
+      // image-route failure. Persisted image_job events can still advance them.
+      const previous = this.state.thread?.session.id === id ? this.state.thread.imageJobs : [];
+      return {
+        ...snapshot,
+        imageJobs: mergeImageJobs(previous ?? [], snapshot.imageJobs ?? [], id),
+      };
+    }
+  }
   private async loadInitial(id: string, generation: number) {
     this.read = new AbortController();
     try {
-      const snapshot = await this.transport.snapshot(id, this.read.signal);
+      const snapshot = await this.readSnapshot(id, this.read.signal);
       if (!this.current(id, generation) || snapshot.session.id !== id) return;
       if (snapshot.session.status === 'deleting') {
         this.forget(id);
@@ -278,10 +331,11 @@ export class HarnessStore {
     }
     this.resyncing = true;
     this.buffered = [];
+    void this.refreshImageCapabilities();
     const generation = this.generation;
     this.read = new AbortController();
     try {
-      const snapshot = await this.transport.snapshot(id, this.read.signal);
+      const snapshot = await this.readSnapshot(id, this.read.signal);
       if (!this.current(id, generation) || snapshot.session.id !== id) return;
       const thread = reconcileSnapshot(snapshot, this.buffered);
       if (thread.session.status === 'deleting') {
@@ -360,7 +414,9 @@ export class HarnessStore {
     delete attachments[id];
     const submitted = { ...this.state.submitted };
     delete submitted[id];
-    this.update({ sessions, attachments, submitted });
+    const imageReferences = { ...this.state.imageReferences };
+    delete imageReferences[id];
+    this.update({ sessions, attachments, submitted, imageReferences });
     if (this.state.selectedId === id) this.select(sessions[0]?.id ?? null);
   }
   remove = (id: string) =>
@@ -372,8 +428,9 @@ export class HarnessStore {
     );
   send = (id: string, text: string) => {
     const attachments = lookup(this.state.attachments, id) ?? [];
+    const imageReferences = lookup(this.state.imageReferences, id) ?? [];
     if (
-      (!text.trim() && attachments.length === 0) ||
+      (!text.trim() && attachments.length === 0 && imageReferences.length === 0) ||
       this.state.busy[busyKey('upload', id)] ||
       this.state.busy[busyKey('delete', id)]
     )
@@ -386,13 +443,21 @@ export class HarnessStore {
           id,
           text,
           attachments.map((a) => a.id),
+          ...(imageReferences.length ? [imageReferences.map((a) => a.id)] : []),
         ),
       ({ runId }) => {
         const used = new Set(attachments.map((a) => a.id));
+        const referenced = new Set(imageReferences.map((a) => a.id));
         this.update({
           attachments: {
             ...this.state.attachments,
             [id]: (lookup(this.state.attachments, id) ?? []).filter((a) => !used.has(a.id)),
+          },
+          imageReferences: {
+            ...this.state.imageReferences,
+            [id]: (lookup(this.state.imageReferences, id) ?? []).filter(
+              (a) => !referenced.has(a.id),
+            ),
           },
           submitted: {
             ...this.state.submitted,
@@ -406,6 +471,67 @@ export class HarnessStore {
         if (this.state.selectedId === id) void this.resync();
       },
     );
+  };
+  private imageAction(id: string, jobId: string, decision?: 'approve' | 'reject') {
+    const job =
+      this.state.thread?.session.id === id
+        ? this.state.thread.imageJobs?.find((candidate) => candidate.id === jobId)
+        : undefined;
+    if (!job || !imageJobActive(job) || (decision && job.state !== 'awaiting_approval'))
+      return Promise.resolve(false);
+    return this.action(
+      `image:${jobId}`,
+      id,
+      () =>
+        decision
+          ? this.transport.approveImage(id, jobId, decision)
+          : this.transport.cancelImage(id, jobId),
+      ({ job: updated }) => {
+        const thread = this.state.thread;
+        // Never let a delayed POST acknowledgement overwrite a newer SSE state.
+        if (
+          thread?.session.id === id &&
+          thread.imageJobs?.find((item) => item.id === jobId) === job &&
+          updated.id === jobId &&
+          updated.runId === job.runId
+        )
+          this.showThread({
+            ...thread,
+            imageJobs: mergeImageJobs(thread.imageJobs ?? [], [updated], id),
+          });
+        if (this.state.selectedId === id) void this.resync();
+      },
+    );
+  }
+  approveImage = (id: string, jobId: string, decision: 'approve' | 'reject') =>
+    this.imageAction(id, jobId, decision);
+  cancelImage = (id: string, jobId: string) => this.imageAction(id, jobId);
+  addImageReference = (id: string, artifactId: string) => {
+    if (this.state.thread?.session.id !== id || this.state.busy[busyKey('send', id)]) return;
+    const artifact = this.state.thread.artifacts.find((item) => item.id === artifactId);
+    if (!artifact || !['image/png', 'image/jpeg'].includes(artifact.mimeType)) return;
+    const current = lookup(this.state.imageReferences, id) ?? [];
+    if (current.some((item) => item.id === artifactId)) return;
+    if (!canStageEditReference(this.state.imageCapabilities, current.length + 1)) {
+      this.update({
+        error: `Image editing with ${current.length + 1} reference(s) is unavailable.`,
+      });
+      return;
+    }
+    this.update({
+      imageReferences: { ...this.state.imageReferences, [id]: [...current, artifact] },
+    });
+  };
+  removeImageReference = (id: string, artifactId: string) => {
+    if (this.state.busy[busyKey('send', id)]) return;
+    this.update({
+      imageReferences: {
+        ...this.state.imageReferences,
+        [id]: (lookup(this.state.imageReferences, id) ?? []).filter(
+          (item) => item.id !== artifactId,
+        ),
+      },
+    });
   };
   cancel = (id: string) => {
     const cursor = this.state.thread?.lastEventId;
@@ -478,7 +604,10 @@ export class HarnessStore {
             continue;
           }
           try {
-            const problem = uploadProblem(file, this.state.visionAvailable);
+            const problem = uploadProblem(
+              file,
+              this.state.visionAvailable || imageReferencesAvailable(this.state.imageCapabilities),
+            );
             if (problem) throw new Error(problem);
             onUpdate?.({ file, status: 'uploading' });
             const { attachment } = await this.transport.upload(id, file);

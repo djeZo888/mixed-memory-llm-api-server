@@ -109,6 +109,12 @@ RUN cd /opt/ai-harness/tools/search && npm ci --omit=dev --ignore-scripts \
     && /opt/ai-harness-python/bin/python -m pip freeze > /usr/local/share/ai-harness-python-reviewed.txt \
     && cd /opt/ai-harness/tools/runtime && npm list --omit=dev --json > /usr/local/share/ai-harness-npm-reviewed.json
 
+# Additive image adapter keeps the costly existing runtime/tool layers cached.
+FROM runtime-deps AS image-tools
+COPY tools/image/ /opt/ai-harness/tools/image/
+RUN cd /opt/ai-harness/tools/image && npm ci --omit=dev --ignore-scripts \
+    && node --check image-mcp.mjs
+
 FROM runtime-deps AS runtime-base
 # Keep the existing runtime-deps/Chromium layer; ensure the IANA zone is available.
 RUN if ! test -s /usr/share/zoneinfo/Europe/Ljubljana; then \
@@ -117,7 +123,7 @@ RUN if ! test -s /usr/share/zoneinfo/Europe/Ljubljana; then \
     fi \
     && dpkg-query -W -f='${Package}\t${Version}\n' > /usr/local/share/ai-harness-dpkg.tsv
 LABEL org.opencontainers.image.title="ai-harness local MiniMax engine" \
-      org.opencontainers.image.version="0.0.2" \
+      org.opencontainers.image.version="0.0.3" \
       org.opencontainers.image.revision="ae65651df5f97ae1085ab4e19964f4b78c769a4e" \
       org.opencontainers.image.ai-harness.patchset="e764cdacb97998b7e7b514e9fabb0bc5d508e1d3e1ffd0a38443812a117d3aef" \
       org.opencontainers.image.source="https://github.com/MiniMax-AI/minimax-code"
@@ -150,6 +156,7 @@ RUN /sbin/ldconfig && rm -rf /opt/ai-harness-python \
     && npm uninstall --global --ignore-scripts typescript @playwright/test
 COPY --from=reviewed-tools /opt/ai-harness-python/ /opt/ai-harness-python/
 COPY --from=reviewed-tools /opt/ai-harness/tools/ /opt/ai-harness/tools/
+COPY --from=image-tools /opt/ai-harness/tools/image/ /opt/ai-harness/tools/image/
 COPY --from=reviewed-tools /usr/local/share/ai-harness-python-reviewed.txt /usr/local/share/ai-harness-python.txt
 COPY --from=reviewed-tools /usr/local/share/ai-harness-npm-reviewed.json /usr/local/share/ai-harness-npm.json
 COPY skills/ /opt/ai-harness/skills/

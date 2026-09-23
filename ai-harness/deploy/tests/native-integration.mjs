@@ -161,7 +161,7 @@ async function roster() {
     const catalog = new native.BuiltinAgentCatalog();
     const definitions = await catalog.listDefinitions();
     assert.deepEqual(definitions.map(def => def.name).sort(), ['explore', 'mavis', 'verifier', 'worker']);
-    const curated = ['technical-research', 'code-investigation', 'calculations', 'technical-testing', 'pdf'];
+    const curated = ['technical-research', 'code-investigation', 'calculations', 'technical-testing', 'pdf', 'image'];
     report.roles = [];
     for (const definition of definitions) {
       const surface = definition.name === 'mavis' ? 'cli' : 'task-child';
@@ -226,6 +226,7 @@ async function roster() {
       const mcpEntries = [
         ...[...native.AGENT_BUILTIN_MCP_TOOL_IDS, 'web_search'].map(name => entry(name, 'builtin-matrix')),
         entry('mcp__searxng__searxng_search', 'configured', 'searxng'),
+        ...['image_capabilities', 'image_generate', 'image_edit'].map(name => entry(`mcp__image__${name}`, 'configured', 'image')),
       ];
       for (const role of report.roles) {
         const filtered = native.filterLocalTurnCapabilityInventory({
@@ -243,7 +244,7 @@ async function roster() {
         for (const tool of ['task', 'task_append']) assert.equal(toolNames.includes(tool), role.name === 'mavis');
         assert(!filtered.mcpEntries.some(item => item.source === 'builtin-matrix'), `${role.name} Matrix tool widened`);
         const configuredMcpNames = filtered.mcpEntries.map(item => item.tool.def.name).sort();
-        const expectedMcp = ['mavis', 'worker'].includes(role.name) ? ['mcp__searxng__searxng_search'] : [];
+        const expectedMcp = ['mavis', 'worker'].includes(role.name) ? ['mcp__image__image_capabilities', 'mcp__image__image_edit', 'mcp__image__image_generate', 'mcp__searxng__searxng_search'] : [];
         assert.deepEqual(configuredMcpNames, expectedMcp);
         role.nativeDefinitionFilter = { toolNames, configuredMcpNames,
           evidence: 'Native pure filter executed on native base definitions, browser admission tools and non-executable MCP name sentinels; no turn or tool execution.' };
@@ -252,8 +253,12 @@ async function roster() {
     const servers = await adapter.listMcpServers();
     // Retain only capability metadata; never command environments/credentials.
     report.mcp = servers.map(server => ({ name: server.name, status: server.status, tools: (server.tools ?? []).map(tool => typeof tool === 'string' ? tool : tool.name) }));
+    const imageServer = report.mcp.find(server => server.name === 'image');
+    assert(imageServer, 'configured image MCP server missing from native inventory');
+    assert.deepEqual(imageServer.tools.map(name => name.replace(/^mcp__image__/, '')).sort(),
+      ['image_capabilities', 'image_edit', 'image_generate'], 'native image MCP catalog differs');
     report.nativeBrowserCapabilities = provider.getCapabilities();
-    report.limits = ['Main and delegated builtin role capability resolution, native skill selectors, browser feature admission and native definition filters executed without a turn. Final assembled live per-turn tool schema roster and delegated execution remain unmeasured.', 'Pinned canonical explore/verifier policy suppresses configured SearXNG MCP; mavis/worker retain it. All four roles retain the five curated global skills.'];
+    report.limits = ['Main and delegated builtin role capability resolution, native skill selectors, browser feature admission and native definition filters executed without a turn. Final assembled live per-turn tool schema roster and delegated execution remain unmeasured.', 'Pinned canonical explore/verifier policy suppresses configured search/image MCP; mavis/worker retain it. All four roles retain the six curated global skills.'];
   } finally {
     if (host) await host.apiHost.close();
     await provider.close();

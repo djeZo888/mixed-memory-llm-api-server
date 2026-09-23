@@ -86,7 +86,7 @@ frozen workspace dependencies using only the pinned manifest/lock patch,
 an official digest-pinned CPython 3.12 slim-bookworm interpreter and isolated
 venv, installs the reviewed Python hash locks and npm locks, independently of
 native source compilation. Final target `runtime` replaces the historical
-supplemental tools and copies the reviewed tools and five skills into
+supplemental tools and copies the reviewed tools and six skills into
 `/opt/ai-harness/tools` and `/opt/ai-harness/skills`. The entrypoint seeds those
 skills into the mounted profile state; no additional mount is needed. Native
 acceptance probes are bundled separately from the exact patched build. See
@@ -98,7 +98,7 @@ The backend invokes:
 ./run-engine.sh --profile-dir /ABS/session/profile --workspace /ABS/workspace
 ```
 
-It supplies `AI_HARNESS_GATEWAY_TOKEN` (ephemeral inference-only),
+It supplies `AI_HARNESS_GATEWAY_TOKEN` (ephemeral text/image gateway),
 `AI_HARNESS_SESSION_ID` and optionally the single reviewed
 `AI_HARNESS_GATEWAY_URL=http://10.0.2.2:8081/v1`. Do not put a token literal in a
 command/history or unit. Container HOME is profile/state/home; only that session

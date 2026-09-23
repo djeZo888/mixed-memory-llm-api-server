@@ -1,0 +1,19 @@
+{
+  "name": "@ai-harness/image-mcp",
+  "version": "0.0.3",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Session-scoped local image job MCP adapter",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "start": "node image-mcp.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "4.6.5"
+  }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, Download, FileText, LoaderCircle, Paperclip, Terminal } from 'lucide-react';
 import { Markdown } from './Markdown';
+import { ImageJobs, type ImageActions } from './ImageJobs';
 import { groupReplies, type Reply } from './reply-groups';
 import { bytes, formatTime } from './display';
 import { currentRun, resolveStatus } from './status';
@@ -215,7 +216,11 @@ function Files({
   artifacts,
   zip,
   unassociated = false,
+  useForEdit,
+  editUnavailable,
 }: {
+  useForEdit?: (artifactId: string) => void;
+  editUnavailable?: string;
   artifacts: Artifact[];
   zip?: string;
   unassociated?: boolean;
@@ -256,13 +261,31 @@ function Files({
             {url && <Download size={17} />}
           </>
         );
-        return url ? (
-          <a className="artifact" key={artifact.id} href={url} download>
-            {contents}
-          </a>
-        ) : (
-          <div className="artifact" key={artifact.id}>
-            {contents}
+        return (
+          <div className="artifact-entry" key={artifact.id}>
+            {url ? (
+              <a className="artifact" href={url} download>
+                {contents}
+              </a>
+            ) : (
+              <div className="artifact">{contents}</div>
+            )}
+            {['image/png', 'image/jpeg'].includes(artifact.mimeType) && (
+              <button
+                type="button"
+                className="text-button use-image"
+                disabled={!useForEdit || !!editUnavailable}
+                title={editUnavailable}
+                onClick={() => useForEdit?.(artifact.id)}
+              >
+                Use for next edit
+              </button>
+            )}
+            {artifact.image?.width && artifact.image.height && (
+              <small>
+                {artifact.image.width}×{artifact.image.height}
+              </small>
+            )}
           </div>
         );
       })}
@@ -280,6 +303,19 @@ function UserMessage({ message, thread }: { message: Message; thread: Thread }) 
           <Timestamp value={message.createdAt} />
         </div>
         <Text message={message} />
+        {!!message.imageReferences?.length && (
+          <ul className="message-attachments" aria-label="Referenced images">
+            {message.imageReferences.map((id) => {
+              const artifact = thread.artifacts.find((item) => item.id === id);
+              return (
+                <li key={id}>
+                  <Paperclip size={14} />
+                  <span>{artifact?.name ?? 'Referenced image'} · Image reference</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
         {!!message.attachmentIds?.length && (
           <ul className="message-attachments" aria-label="Uploaded files">
             {message.attachmentIds.map((id) => {
@@ -311,7 +347,18 @@ function UserMessage({ message, thread }: { message: Message; thread: Thread }) 
     </article>
   );
 }
-function AssistantReply({ reply, thread }: { reply: Reply; thread: Thread }) {
+interface ImageReplyProps {
+  imageActions?: ImageActions;
+  useForEdit?: (artifactId: string) => void;
+  editUnavailable?: string;
+}
+function AssistantReply({
+  reply,
+  thread,
+  imageActions,
+  useForEdit,
+  editUnavailable,
+}: { reply: Reply; thread: Thread } & ImageReplyProps) {
   const messages = reply.messages.filter((message) => message.content.trim().length > 0);
   const progress = messages.filter(
     (message) => message.phase === 'intermediate' || message.phase === 'thinking',
@@ -325,7 +372,13 @@ function AssistantReply({ reply, thread }: { reply: Reply; thread: Thread }) {
   const run = thread.runs.find((run) => run.id === reply.runId);
   const zip =
     reply.runId && run ? runZipUrl(thread.session.id, reply.runId, run.zipUrl) : undefined;
-  if (!messages.length && !reply.activity.length && !reply.artifacts.length) return null;
+  if (
+    !messages.length &&
+    !reply.activity.length &&
+    !reply.artifacts.length &&
+    !reply.imageJobs.length
+  )
+    return null;
   return (
     <article
       className="message message-assistant assistant-reply"
@@ -361,12 +414,21 @@ function AssistantReply({ reply, thread }: { reply: Reply; thread: Thread }) {
         })}
         <ErrorNotices items={reply.activity} />
         <Activities items={reply.activity} />
-        <Files artifacts={reply.artifacts} zip={zip} />
+        <ImageJobs jobs={reply.imageJobs} actions={imageActions} />
+        <Files
+          artifacts={reply.artifacts}
+          zip={zip}
+          useForEdit={useForEdit}
+          editUnavailable={editUnavailable}
+        />
       </div>
     </article>
   );
 }
-export function ConversationReplies({ thread }: { thread: Thread }) {
+export function ConversationReplies({
+  thread,
+  ...imageProps
+}: { thread: Thread } & ImageReplyProps) {
   const { items, unassociated } = groupReplies(thread);
   return (
     <>
@@ -374,7 +436,7 @@ export function ConversationReplies({ thread }: { thread: Thread }) {
         item.kind === 'user' ? (
           <UserMessage key={`user:${item.message.id}`} message={item.message} thread={thread} />
         ) : (
-          <AssistantReply key={item.reply.key} reply={item.reply} thread={thread} />
+          <AssistantReply key={item.reply.key} reply={item.reply} thread={thread} {...imageProps} />
         ),
       )}
       {(unassociated.activity.length > 0 || unassociated.artifacts.length > 0) && (
@@ -383,7 +445,12 @@ export function ConversationReplies({ thread }: { thread: Thread }) {
           <small>These records are preserved, but their reply could not be verified.</small>
           <ErrorNotices items={unassociated.activity} unknownReply />
           <Activities items={unassociated.activity} />
-          <Files artifacts={unassociated.artifacts} unassociated />
+          <Files
+            artifacts={unassociated.artifacts}
+            unassociated
+            useForEdit={imageProps.useForEdit}
+            editUnavailable={imageProps.editUnavailable}
+          />
         </section>
       )}
     </>

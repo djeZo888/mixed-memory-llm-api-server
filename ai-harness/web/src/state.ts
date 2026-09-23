@@ -1,7 +1,9 @@
+import { mergeImageJobs } from './image-jobs';
 import type {
   Activity,
   ActivityItem,
   Artifact,
+  ImageJob,
   Message,
   RunSnapshot,
   ServerEvent,
@@ -98,6 +100,12 @@ const deltaMetadata = (
 
 export function applyEvent(thread: Thread, event: ServerEvent): Thread {
   if (event.sessionId !== thread.session.id || event.id <= thread.lastEventId) return thread;
+  if (
+    event.type === 'image_job' &&
+    (event.data.job.sessionId !== thread.session.id ||
+      (event.runId !== undefined && event.runId !== event.data.job.runId))
+  )
+    return thread;
   let next: Thread = { ...thread, lastEventId: event.id };
   switch (event.type) {
     case 'message':
@@ -127,6 +135,9 @@ export function applyEvent(thread: Thread, event: ServerEvent): Thread {
       break;
     case 'artifact':
       next.artifacts = upsert(next.artifacts, artifactFrom(event));
+      break;
+    case 'image_job':
+      next.imageJobs = mergeImageJobs(next.imageJobs ?? [], [event.data.job], thread.session.id);
       break;
     case 'run': {
       const run = event.data.run;
@@ -163,6 +174,7 @@ export function reconcileSnapshot(snapshot: Snapshot, inFlight: ServerEvent[] = 
   const messageMetadata = new Map<string, Partial<Message>>();
   const artifactMetadata = new Map<string, Artifact>();
   let runs: RunSnapshot[] = [];
+  let imageJobs: ImageJob[] = [];
   let activity: ActivityItem[] = [];
   const subagentsByRun: Record<string, Summary> = Object.create(null);
   for (const event of events) {
@@ -177,6 +189,11 @@ export function reconcileSnapshot(snapshot: Snapshot, inFlight: ServerEvent[] = 
     } else if (event.type === 'artifact') {
       const artifact = artifactFrom(event);
       artifactMetadata.set(artifact.id, { ...artifactMetadata.get(artifact.id), ...artifact });
+    } else if (
+      event.type === 'image_job' &&
+      (event.runId === undefined || event.runId === event.data.job.runId)
+    ) {
+      imageJobs = mergeImageJobs(imageJobs, [event.data.job], snapshot.session.id);
     } else if (event.type === 'run') {
       runs = upsert(runs, event.data.run);
       subagentsByRun[event.data.run.id] = event.data.run.subagents;
@@ -215,6 +232,7 @@ export function reconcileSnapshot(snapshot: Snapshot, inFlight: ServerEvent[] = 
       };
     }),
     runs,
+    imageJobs: mergeImageJobs(imageJobs, snapshot.imageJobs ?? [], snapshot.session.id),
     attachments: snapshot.attachments ?? [],
     subagentsByRun,
     environment: snapshot.environment,
