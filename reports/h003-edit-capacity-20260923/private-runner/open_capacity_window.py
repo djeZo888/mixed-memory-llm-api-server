@@ -61,7 +61,9 @@ def main(payload):
             assert sorted(row[:2] for row in backend['gpu_processes']) == sorted(row[:2] for row in before['gpu_processes'])
             assert models() == old_models
             receipt.update(api_after=after, backend_after=backend, models_after=old_models,
-                           old_api_process_absent=True, loopback_api_listener_absent=True, clean_stop_proved=True)
+                           old_api_process_absent=True, loopback_api_listener_absent=True,
+                           clean_exit_and_identity_verified=True, clean_stop_proved=False,
+                           blocking_reason='Clean API exit cannot exclude a raced ambiguous native transport failure after failed recovery. Native-idle proof requires root review; no private dispatch.')
         except BaseException as error:
             receipt['error_type'] = type(error).__name__
         finally:
