@@ -1,0 +1,246 @@
+{
+  "backend_container": {
+    "id": "07d56cc784018f513e63ae4c163a246ea4e011b0d5869c1dd57cf2961dd6a35e",
+    "image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8"
+  },
+  "backend_run_id": "13f9882a277a41e6997cf406e9bcd976",
+  "before_acceptance_tmp": {
+    "entries": [
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "0aa61d92a1396fa66401f3f0b82f778859d484c5c69b477a71ae5f3d41eee2d5-models-text_encoder-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "a9266072b484424e665444b9969db6247bd1789edd747c6c812cff9a5d4f90ea-models-transformer-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "fabcc496123b7f987ea6ad4d77406e2e1971ed2554072b6de71a3501dfee4bc0-models-vae-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmp57jq1vrj",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "tmpe92zl0v6",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpo9ji16cd",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "tmpq4ffjlnl",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpu9bdxbal",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "ubuntu",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "ubuntu/cutlass_python_cache",
+        "uid": 1000
+      }
+    ],
+    "exists": true,
+    "path": "/data/services/image21-runtime-20260923/work/tmp/13f9882a277a41e6997cf406e9bcd976"
+  },
+  "capabilities": {
+    "admitting": true,
+    "busy": false,
+    "defaults": {
+      "cfg": 1,
+      "generator_device": "cpu",
+      "size": "1024x1024",
+      "steps": 40
+    },
+    "limits": {
+      "active": 1,
+      "budget_seconds": 900,
+      "encoded_file_bytes": 33554432,
+      "encoded_total_bytes": 67108864,
+      "max_height": 1080,
+      "max_pixels": 2073600,
+      "max_width": 1920,
+      "maximum_pixels_when_qualified": 2073600,
+      "n": 1,
+      "native_max_pixels": 2088960,
+      "references": 2,
+      "waiting": 0
+    },
+    "masks": false,
+    "model": "qwen-image-2.1",
+    "model_id": "Qwen/Qwen-Image-2.1",
+    "model_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+    "output_format": "png",
+    "profiles": [
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "29250a7887d4bd9688a4ebd2c3f0720db1960116012f31fa553dddf37656aad4",
+        "native_size": "1024x1024",
+        "operation": "generation",
+        "references": 0,
+        "size": "1024x1024",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "f4c2f070cb44477dcacd671f46646cfa39e0374e859c808ec7c78c9cc3a35af1",
+        "native_size": "1024x576",
+        "operation": "generation",
+        "references": 0,
+        "size": "1024x576",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "0c5536fb0a6ec34bb972e84ae05a1d01bcf8a96281220f3f31c9c08ddbda16ef",
+        "native_size": "1216x704",
+        "operation": "generation",
+        "references": 0,
+        "size": "1216x704",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "f017918f5885133522197bb5765201788e66a1423c4303992a65887eabd520e3",
+        "native_size": "1472x832",
+        "operation": "generation",
+        "references": 0,
+        "size": "1472x832",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "f91eaca9a0d8583081ccaa9d62d48bd7511bd5b99b8193a26abd7106f27e3c83",
+        "native_size": "1760x992",
+        "operation": "generation",
+        "references": 0,
+        "size": "1760x992",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 8,
+        "evidence_sha256": "b33ceb2e05638c3342581b964b21ae2c201e0748ac4331a15ac13ffa992786eb",
+        "native_size": "1920x1088",
+        "operation": "generation",
+        "references": 0,
+        "size": "1920x1080",
+        "transparent": false
+      }
+    ],
+    "ready": true,
+    "response_format": "b64_json",
+    "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    "runtime_revision": "0cd8be351d0825488f4b81c8931167bbab618eca",
+    "state": "ready"
+  },
+  "credential": {
+    "gid": 0,
+    "mode": "0440",
+    "uid": 0
+  },
+  "normal_warm": {
+    "completed_utc": "2026-09-23T05:44:49.167174+00:00",
+    "generation": {
+      "finished_utc": "2026-09-23T05:44:49.003183+00:00",
+      "http_call_count": 1,
+      "http_elapsed_seconds": 24.144949,
+      "http_status": 200,
+      "mode": "generation",
+      "native_inference_seconds": 24.014046894000785,
+      "native_peak_reserved_mib": 37570.0,
+      "native_perf": {
+        "available": true,
+        "bytes": 4658,
+        "filename": "generation-perf.json",
+        "sha256": "dee7b13be0bab13834e211d5582b4890b6a81b42672ff499f69aaa0f748f0d30"
+      },
+      "output": {
+        "bytes": 1692710,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 1024,
+        "mode": "RGBA",
+        "sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+        "width": 1024
+      },
+      "request_body_bytes": 490,
+      "request_body_sha256": "8552a902bad22735c98ee90ae605c5aaccd2b50fdf8e16a7fc54233c57a822ba",
+      "response_bytes": 2257256,
+      "run_id": "13f9882a277a41e6997cf406e9bcd976",
+      "schema_version": 1,
+      "scope": "native_transport_and_decode_only",
+      "settings": {
+        "enable_cache_dit": false,
+        "enable_teacache": false,
+        "generator_device": "cpu",
+        "guidance_scale": 1.0,
+        "model": "qwen-image-2.1",
+        "n": 1,
+        "num_inference_steps": 40,
+        "output_format": "png",
+        "perf_dump_path": "/work/evidence/13f9882a277a41e6997cf406e9bcd976/generation-perf.json",
+        "prompt": "A red ceramic teapot on a wooden table beside a window, softly lit by daylight.",
+        "response_format": "b64_json",
+        "seed": 42,
+        "size": "1024x1024",
+        "true_cfg_scale": 1.0
+      },
+      "started_utc": "2026-09-23T05:44:24.823028+00:00",
+      "status": "pass",
+      "timeout_seconds": 840,
+      "total_elapsed_seconds": 24.18017,
+      "visual_verification": "NOT_TESTED"
+    },
+    "phase": "warm",
+    "start_utc": "2026-09-23T05:43:53.099529+00:00",
+    "tmp_new_entries_after_generation": [],
+    "warm": true
+  },
+  "readiness": {
+    "admitting": true,
+    "busy": false,
+    "ready": true,
+    "state": "ready"
+  },
+  "runtime_config_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+  "source_commit": "36c7c2d2ee8d9ed59e9310e708eb640c5aecad5e",
+  "source_files": {
+    "/etc/llm-server/image-api.json": "12969d9966f222217891791f0a2d6f4202ee2b0a7f83ef36f18d734a96721b07",
+    "/usr/local/lib/llm-server/image-api/examples/generate.py": "56c74620e2c9bb847b9f2923a2fb9b7da3121fed54bceb09197643e04c48469f",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/__init__.py": "9f66047f4c2cde6ab4cb85b47c97a6274903fb560b96ef1f49fd42c1e67c751c",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/app.py": "4cad82ce35d4650c7f3242bd6816769010c6a52510fae1c3c26b8789acdc0d22",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/backend.py": "64a5ceccb247e7c7ed646cc3ae9af89aeffb7aebd862c11604786a2041db9485",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/protection.py": "9c8e5fad91717fa8e7665475e9cc49bb2092955439aaf3febeaf203cc7da6269",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/protocol.py": "35653fa23fa883f20da9c869e75e7fd613008f23fe9793f16e240852b3e40243",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/serve.py": "0d19743ab91ea4f8cafe2bf6d7ddd9d56d2248604da23c711a19f825ba4b6d2e",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/uploads.py": "23903630b94c020af05988dfc13b0f1e650b431ca9f276485873234997e3ce93"
+  },
+  "status": "READY_AFTER_ONE_NORMAL_RECONCILIATION"
+}

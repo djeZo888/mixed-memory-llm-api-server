@@ -33,16 +33,19 @@ state or activation acceptance.
 
 The dedicated Ada image service preserves both warm text Qwens and their 480,000-token
 profiles. Its six accepted opaque generation sizes are **1024x1024, 1024x576,
-1216x704, 1472x832, 1760x992 and 1920x1088**. Each output matches its native size
-without cropping; 1920x1088 retained 8.88% minimum sampled device free memory.
-Editing is unsupported after failed fidelity, and UHD remains untested. Retained
-Worker2 checks at 04:31 UTC on 2026-09-23 returned 200 for all four authenticated
-GETs, with the API ready, idle and admitting. See the
-[image qualification](reports/image21-qualify-20260923/RESULT.md).
+1216x704, 1472x832, 1760x992 and 1920x1080**. The public hard ceiling is
+1920x1080 / 2073600 pixels. Full HD uses native 1920x1088 and removes exactly eight
+bottom rows; smaller profiles keep native=public. No resize. Editing and transparency
+remain unqualified; public 1920x1088 and UHD are refused.
 
-Deployed image API code remains `f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7`.
-The documentation and evidence publication is a separate commit and requires no
-redeployment.
+Deployed image API/helper source is `36c7c2d2ee8d9ed59e9310e708eb640c5aecad5e`.
+One Full HD Lake Bled acceptance returned a fully decoded RGB PNG in 54.8s helper
+time, with the API ready/idle afterward and both original text containers unchanged.
+See [Full HD deployment and acceptance](reports/image21-fhd-20260923/RESULT.md)
+and [ready-to-run examples with full prompts](examples/image-api/README.md).
+The [historical qualification](reports/image21-qualify-20260923/RESULT.md) retains
+native 1920x1088 timing/memory evidence (8.88% sampled device-free margin); no new
+memory benchmark was run for the identical native workload.
 
 ## Use the APIs
 
@@ -52,7 +55,7 @@ with `/v1`; the aliases above identify the loaded instance. There is no common
 inference router or automatic fallback. Native listeners stay authenticated
 IPv4 loopback behind the reviewed private transport.
 
-- [Image API source and integration](docs/image-api.md): authenticated private Qwen-Image-2.1 generation API; editing is unsupported after failed visual fidelity. See [measured qualification](reports/image21-qualify-20260923/RESULT.md) for exact passing sizes and evidence.
+- [Image API source and integration](docs/image-api.md): authenticated private Qwen-Image-2.1 generation API; editing is unsupported after failed visual fidelity. See [Full HD acceptance](reports/image21-fhd-20260923/RESULT.md) for current sizes and evidence.
 - [API operations and examples](docs/ai-vm-api-operations.md): discovery,
   separate credentials, targeted switch/poll and inference.
 - [Control contract](docs/control-api.md) and [inference contract](docs/api-contract.md).

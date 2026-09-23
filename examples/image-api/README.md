@@ -1,15 +1,15 @@
 # FullHD image generation examples
 
-Run these commands from the **ai-vm SSH console**, after Worker1 installs the
-helper and prepares the output directory. Python 3 and its standard library are
+Run these commands from the **ai-vm SSH console**, using the installed
+helper and prepared output directory. Python 3 and its standard library are
 sufficient. Each command requests one opaque **1920×1080 PNG**.
 
-FullHD availability depends on Worker1 deploying and accepting the public
-`1920x1080` → native `1920x1088` mapping that removes eight bottom rows. This
-source-only examples task has made no live API calls; these prompts have not yet
-been executed or assessed as generated images. Generation only; editing is
-disabled. The PCB and house prompts are visual concepts, not verified engineering
-designs.
+Full HD is deployed with public `1920x1080` → native `1920x1088`, removing eight
+bottom rows. The seed42 `lake-bled` preset passed the single live acceptance;
+[receipt and full decode](../../reports/image21-fhd-20260923/RESULT.md). The PCB
+and house presets have not been executed or visually assessed. Generation only;
+editing remains disabled. The PCB and house prompts are visual concepts, not
+verified engineering designs.
 
 ```sh
 sudo python3 /usr/local/lib/llm-server/image-api/examples/generate.py --example lake-bled --output /data/services/image-api/examples/output/lake-bled.png

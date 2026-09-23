@@ -1,6 +1,6 @@
 # Bounded private image API — source integration
 
-The Full HD candidate exposes six opaque generation sizes: **1024x1024,
+The deployed Full HD service exposes six opaque generation sizes: **1024x1024,
 1024x576, 1216x704, 1472x832, 1760x992 and 1920x1080**. The public hard ceiling
 is **1920x1080 / 2073600 pixels**. Full HD uses the already-qualified native
 1920x1088 workload (2088960 pixels) and removes exactly eight bottom rows;
@@ -8,7 +8,7 @@ there is no resize. The five smaller profiles retain native=public and crop0.
 Public 1920x1088 and UHD are refused. Editing and transparency remain unqualified.
 
 See the [Full HD change report](../reports/image21-fhd-20260923/RESULT.md) for
-candidate/deployment status. The [prior qualification report](../reports/image21-qualify-20260923/RESULT.md)
+current deployment and single-call acceptance. The [prior qualification report](../reports/image21-qualify-20260923/RESULT.md)
 is immutable historical native workload evidence, including 53.3355 s and
 44776.3125 MiB sampled device peak for 1920x1088. This change does not claim a
 new memory benchmark. The protected manifest binds the Full HD crop evidence to
@@ -194,10 +194,10 @@ fails. The existing safe PNG decode/crop/re-encode path strips metadata and emit
 RGB. No edit padding remains. Public input/output has the 2073600-pixel limit;
 only this native output crop allows 2088960 pixels.
 
-The generic template remains empty. The proposed protected six-profile manifest
-and hash-bound crop/native evidence are in the Full HD report. Deployment requires
-root review of exact source and evidence; offline fixtures do not claim live
-acceptance. No model/runtime/settings/placement change or new memory qualification
+The generic template remains empty. The installed protected six-profile manifest
+and hash-bound crop/native evidence are in the Full HD report. Root reviewed
+exact source and evidence before activation; the separate live receipt records
+the single public acceptance. Offline fixtures remain separate from live evidence. No model/runtime/settings/placement change or new memory qualification
 is needed for the identical native workload.
 
 ## Offline verification and source migration
