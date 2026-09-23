@@ -175,7 +175,7 @@ test('invalid references, unsupported settings and caller identity/approval are 
     { prompt: 'x', sessionId: 'another' }, { prompt: 'x', runId: 'another' }, { prompt: 'x', approved: true },
     { prompt: 'x', approvalToken: 'browser-token-fixture' },
     { prompt: 'x', url: GATEWAY }, { prompt: 'x', token }, { prompt: 'x', n: 2 }, { prompt: 'x', transparent: true },
-    { prompt: 'x', seed: 1.2 }, { prompt: 'x', seed: Number.MAX_SAFE_INTEGER + 1 },
+    { prompt: 'x', seed: -1 }, { prompt: 'x', seed: 1.2 }, { prompt: 'x', seed: Number.MAX_SAFE_INTEGER + 1 },
     ...['/tmp/x.png', '../x.png', 'dir/../x.png', './x.png', 'C:\\x.png', 'https://example.com/x.png', 'data:image/png;base64,abc', 'dir/%2e%2e/x.png', 'a//b.png', 'a\u0000b.png'].map(workspacePath => ({ prompt: 'x', references: [{ workspacePath }] })),
     { prompt: 'x', references: [{ fileId: 'owned', workspacePath: 'x.png' }] },
     { prompt: 'x', references: [{ fileId: '../other' }] },

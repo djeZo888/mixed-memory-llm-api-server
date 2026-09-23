@@ -176,7 +176,7 @@ export function App({ store }: { store: HarnessStore }) {
         </nav>
         <div className="sidebar-footer">
           <span className="version-dot" />
-          ai-harness <span>0.0.2</span>
+          ai-harness <span>0.0.3</span>
           <p>A space for technical work.</p>
         </div>
       </aside>

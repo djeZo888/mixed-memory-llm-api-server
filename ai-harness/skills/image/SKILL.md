@@ -1,6 +1,6 @@
 ---
 name: image
-description: Create, edit or creatively transform images using resident Qwen-Image-2.1 through the local image MCP tools. Use for every creative image request, including reference-based generation and follow-up edits; ordinary coding, text, scientific plots and image inspection keep their existing tools.
+description: Create, edit or creatively transform images using resident Qwen-Image-2.1 through the local image MCP tools. Use image_edit with references for reference-based creation and follow-up edits; ordinary coding, text, scientific plots and image inspection keep their existing tools.
 ---
 
 # Image work
@@ -21,7 +21,11 @@ means unavailable: explain the returned reason, never substitute generation.
 Default generation is opaque PNG at 1920x1080. Do not promise transparency,
 masks, pixel-perfect inpainting or support beyond the advertised profiles.
 
-Pass a clear prompt, optional supported `size` and optional safe integer `seed`.
+Use `image_edit` with references for reference-based creation. Current generation
+profiles accept zero references. Do not automatically convert an operation or
+assume generation-reference qualification; unqualified inputs may fail.
+
+Pass a clear prompt, optional supported `size` and optional nonnegative safe integer `seed`.
 References are current-session `{fileId}` records or anchored relative
 `{workspacePath}` files supplied by the harness. Use the actual owned IDs/paths,
 never infer them from filenames or invent IDs. Never pass URLs, absolute paths,

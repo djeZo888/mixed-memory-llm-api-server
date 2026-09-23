@@ -30,13 +30,13 @@ export function createImageServer(client, lifetime = new AbortController()) {
   }, (input, extra) => run(() => client.capabilities(input, { signal: AbortSignal.any([extra.signal, lifetime.signal]) })));
   server.registerTool('image_generate', {
     title: 'Generate an image locally',
-    description: 'Create one opaque image using resident Qwen-Image-2.1. Default size 1920x1080. References must be current-session file IDs or anchored relative workspace paths. Submit once; the stored job survives tool/turn ending. If awaiting approval, ask the user to use the image approval card; never resubmit or approve by tool.',
+    description: 'Create one opaque image using resident Qwen-Image-2.1. Default size 1920x1080. Current generation profiles accept zero references; reference-based creation uses image_edit with references. Do not automatically convert operations; unqualified inputs may fail. Submit once; the stored job survives tool/turn ending. If awaiting approval, ask the user to use the image approval card; never resubmit or approve by tool.',
     inputSchema: generateInput,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   }, (input, extra) => invoke('generation', input, extra));
   server.registerTool('image_edit', {
     title: 'Edit an image locally',
-    description: 'Create a new opaque edited version using resident Qwen-Image-2.1 and one or more explicit current-session file IDs or anchored relative workspace paths. Read image_capabilities for enabled sizes/reference counts first. Preserve originals and source geometry; any required resize/canvas change needs the user approval card. Unavailable edits cannot fall back to generation or another creative service.',
+    description: 'Use for reference-based creation or a new opaque edited version using resident Qwen-Image-2.1, with references containing explicit current-session file IDs or anchored relative workspace paths. Read image_capabilities for enabled sizes/reference counts first. Preserve originals and source geometry; any required resize/canvas change needs the user approval card. Unavailable edits cannot fall back to generation or another creative service.',
     inputSchema: editInput,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   }, (input, extra) => invoke('edit', input, extra));

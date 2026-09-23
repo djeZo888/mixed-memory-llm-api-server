@@ -22,7 +22,7 @@ const reference = z.union([
 const fields = {
   prompt: z.string().trim().min(1).max(LIMITS.prompt).refine(value => !/[\p{Cf}\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/u.test(value), 'Invalid prompt characters'),
   size: z.string().refine(sizeValue, 'Use a supported WIDTHxHEIGHT size').optional(),
-  seed: z.number().int().min(Number.MIN_SAFE_INTEGER).max(Number.MAX_SAFE_INTEGER).optional(),
+  seed: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
 };
 export const capabilitiesInput = z.object({}).strict();
 export const generateInput = z.object({ ...fields, references: z.array(reference).max(LIMITS.references).optional() }).strict();
