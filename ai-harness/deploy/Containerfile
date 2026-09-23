@@ -163,6 +163,8 @@ COPY skills/ /opt/ai-harness/skills/
 COPY --from=native-probes /opt/minimax/native-probes.mjs /opt/minimax/native-probes.mjs
 COPY --from=native-probes /opt/minimax/native-probes.mjs.metafile.json /usr/local/share/ai-harness-native-probes.metafile.json
 COPY deploy/tests/native-integration.mjs /opt/ai-harness/tests/native-integration.mjs
+COPY deploy/tests/native-worker-boundary.mjs /opt/ai-harness/tests/native-worker-boundary.mjs
+COPY deploy/tests/fixtures/native-image-mcp-catalog.json /opt/ai-harness/tests/fixtures/native-image-mcp-catalog.json
 RUN mkdir -p /usr/local/share/licenses/python-3.12 \
     && cp /usr/local/lib/python3.12/LICENSE.txt /usr/local/share/licenses/python-3.12/LICENSE.txt
 ENV PATH="/opt/ai-harness-python/bin:/opt/ai-harness/tools/runtime/node_modules/.bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin" \

@@ -323,3 +323,33 @@ image adapter against the image VM directly. Run the extended native `roster`
 probe after the combined final image build to check actual main/worker MCP and
 all-role skill discovery. The source fixtures and profile tests do not prove
 runtime discovery, image API compatibility or live generation/editing quality.
+
+## Offline worker boundary regression
+
+`deploy/tests/native-worker-boundary.mjs` consumes the packaged native probe
+bundle and the small retained discovered-schema fixture beside it. It executes
+production source metadata resolution, builtin/custom rendering, child capability
+freezing, final tool assembly and OpenAI payload conversion. A manual-source
+agent literally named `worker` retains its explicit restrictions; explore/verifier
+ceilings and existing frozen worker restrictions are also checked. Image MCP and
+`skill` must be present for a fresh builtin worker both before and after freeze.
+
+For an isolated exact patched source checkout with existing dependencies:
+
+```sh
+AI_HARNESS_NATIVE_DEPENDENCY_ROOT="$NATIVE_DEPS" node deploy/tests/build-native-probes.mjs "$NATIVE_SOURCE" "$PROBE_BUNDLE"
+MAVIS_BUILTIN_AGENTS_V2_DIR="$NATIVE_SOURCE/packages/local-runtime-v2/assets/agents" node deploy/tests/native-worker-boundary.mjs "$PROBE_BUNDLE"
+```
+
+The dependency override is optional; it defaults to the supplied source root.
+In the built image, run `node /opt/ai-harness/tests/native-worker-boundary.mjs`.
+An optional second argument accepts a retained `native-roster.json` with
+`nativeMcpCatalog`, allowing a separately authorized build task to supply its
+actual discovered schemas. No discovery or model request occurs in this probe.
+
+Evidence is explicitly synthetic: in-memory storage and injected discovery;
+`captureFrozenDefinition` shares the new-task freeze routine but skips model
+reselection. `onPayload` aborts before a provider request; tool implementations
+throw. Browser injection and actual process startup are outside this fixture.
+Output contains tool names/schema hashes and source HEAD plus exact profile-file
+hash, not prompts, credentials or raw traces. This does not replace live acceptance.

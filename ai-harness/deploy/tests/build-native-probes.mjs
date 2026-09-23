@@ -8,6 +8,7 @@ import { createRequire } from 'node:module';
 import { resolve, join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 if (process.argv.includes('--help')) {
   console.log('Usage: node build-native-probes.mjs SOURCE_ROOT OUTPUT.mjs');
   process.exit(0);
@@ -15,7 +16,9 @@ if (process.argv.includes('--help')) {
 const [rootArg, outputArg] = process.argv.slice(2);
 if (!rootArg || !outputArg) throw Error('SOURCE_ROOT and OUTPUT.mjs are required');
 const root = resolve(rootArg), outfile = resolve(outputArg);
-const require = createRequire(join(root, 'package.json'));
+// Optional existing dependency tree for an isolated offline source checkout.
+const dependencyRoot = resolve(process.env.AI_HARNESS_NATIVE_DEPENDENCY_ROOT || root);
+const require = createRequire(join(dependencyRoot, 'package.json'));
 const { build } = require('esbuild');
 const { createTuiBundleModuleLocationConfig } = await import(pathToFileURL(join(root, 'scripts/lib/tui-npm-bundle-profile.mjs')));
 const { cliExternalModules } = await import(pathToFileURL(join(root, 'scripts/lib/cli-release.mjs')));
@@ -51,15 +54,24 @@ const exports = [
   ['resolveAgentCapabilities, AGENT_BUILTIN_MCP_TOOL_IDS', 'packages/config/src/agent-capabilities.ts'],
   ['BuiltinAgentCatalog, resolveCanonicalCapabilities', 'packages/local-runtime-v2/src/service/agent/builtin/catalog.ts'],
   ['applyBuiltinSubagentTaskChildCeiling, toCapabilityCeiling', 'packages/local-runtime-v2/src/service/agent/domain/validation.ts'],
-  ['filterLocalTurnCapabilityInventory', 'packages/local-runtime-v2/src/service/turn-system/agent-host/assembly/local-turn-tool-catalog.ts'],
+  ['filterLocalTurnCapabilityInventory, buildLocalTurnToolCatalog', 'packages/local-runtime-v2/src/service/turn-system/agent-host/assembly/local-turn-tool-catalog.ts'],
   ['LOCAL_BASE_TOOL_DEFS', 'packages/agent-tools/src/desktop/builtin-defs.ts'],
   ['LocalBrowserUseService', 'packages/local-runtime-v2/src/service/browser-use/browser-use.service.ts'],
+  ['renderAgentProfile, renderFrozenAgentProfile, resolveAgentProfileRenderContext', 'packages/local-runtime-v2/src/service/agent/application/agent-profile.ts'],
+  ['isTrustedBuiltinCreationSource', 'packages/agent-tools/src/desktop/subagent-roles.ts'],
+  ['buildBuiltinCanonicalBaseline', 'packages/local-runtime-v2/src/service/agent/application/config/builtin-canonical-files.ts'],
+  ['bindTaskAgentBindingCapture', 'packages/local-runtime-v2/src/application/session/task-agent-ready-inventory.ts'],
+  ['LocalMcpService', 'packages/local-runtime-v2/src/service/mcp/runtime/local-mcp.service.ts'],
+  ['newTools', 'packages/agent-core/src/pi-turn-runner/tools.ts'],
+  ['streamOpenAICompletions', 'third_party/pi-mono/packages/ai/src/providers/openai-completions.ts'],
 ];
 const location = createTuiBundleModuleLocationConfig();
 const patchedRevision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+const agentProfileSha256 = createHash('sha256').update(readFileSync(join(root,
+  'packages/local-runtime-v2/src/service/agent/application/agent-profile.ts'))).digest('hex');
 const result = await build({
-  absWorkingDir: root,
-  stdin: { contents: exports.map(([names, path]) => `export { ${names} } from ${JSON.stringify('./' + path)};`).join('\n') + `\nexport const probeSourceRevision = ${JSON.stringify(patchedRevision)};`, resolveDir: root, sourcefile: 'ai-harness-native-probe-entry.mjs' },
+  absWorkingDir: root, nodePaths: [join(dependencyRoot, 'node_modules')],
+  stdin: { contents: exports.map(([names, path]) => `export { ${names} } from ${JSON.stringify('./' + path)};`).join('\n') + `\nexport const probeSourceRevision = ${JSON.stringify(patchedRevision)};\nexport const probeAgentProfileSha256 = ${JSON.stringify(agentProfileSha256)};`, resolveDir: root, sourcefile: 'ai-harness-native-probe-entry.mjs' },
   outfile, external: cliExternalModules, bundle: true, format: 'esm', platform: 'node', target: 'node22',
   banner: { js: location.banner }, plugins: [sourcePlugin], metafile: true,
   define: { ...location.define, __CLI_VERSION__: '"0.5.1"', __CLI_CHANNEL__: '"source"', __IS_NPM_BUILD__: 'true', __BUILD_PROFILE__: '"tui"', __TUI_BUILD_ENV__: '"prod"', __TUI_BUILD_VARIANT__: '"standard"', __TUI_NPM_DIST_TAG__: '"latest"' },
