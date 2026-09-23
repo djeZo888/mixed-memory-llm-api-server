@@ -34,7 +34,7 @@ RUN test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e \
     && sha256sum -c /tmp/ai-harness-patches/source-source.SHA256SUMS \
     && sha256sum -c /tmp/ai-harness-patches/dependency-patched.SHA256SUMS \
     && cd /tmp/ai-harness-patches && sha256sum -c SHA256SUMS \
-    && printf '%s\n' 'e764cdacb97998b7e7b514e9fabb0bc5d508e1d3e1ffd0a38443812a117d3aef  SHA256SUMS' | sha256sum -c - \
+    && printf '%s\n' '69d7fe14ed8b1e394fe7315e04724e3ef89c2efbd21118a42fa1842f5ed48eff  SHA256SUMS' | sha256sum -c - \
     && cd /build/minimax \
     && for patch in /tmp/ai-harness-patches/[0-9]*.patch; do \
          if [[ "${patch##*/}" = 0003-gateway-undici-dependency.patch ]]; then continue; fi; \
@@ -125,7 +125,7 @@ RUN if ! test -s /usr/share/zoneinfo/Europe/Ljubljana; then \
 LABEL org.opencontainers.image.title="ai-harness local MiniMax engine" \
       org.opencontainers.image.version="0.0.3" \
       org.opencontainers.image.revision="ae65651df5f97ae1085ab4e19964f4b78c769a4e" \
-      org.opencontainers.image.ai-harness.patchset="e764cdacb97998b7e7b514e9fabb0bc5d508e1d3e1ffd0a38443812a117d3aef" \
+      org.opencontainers.image.ai-harness.patchset="69d7fe14ed8b1e394fe7315e04724e3ef89c2efbd21118a42fa1842f5ed48eff" \
       org.opencontainers.image.source="https://github.com/MiniMax-AI/minimax-code"
 COPY --from=build /opt/minimax /opt/minimax
 COPY deploy/patches /usr/local/share/ai-harness-patches

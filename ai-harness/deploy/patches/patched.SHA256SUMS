@@ -42,3 +42,4 @@ c21e65e6481821a4853479e046bfcc2e43516ccb12449942be6a80c7eca3fc01  packages/tui/t
 9610b8fb643db2ec35881c154b0ca92bc5605b803b1f33a4f10daa8249faff73  test/vitest-suites.json
 55856634a778a0ffa47d0a3042bc16640b44a80256fe553325d8455c6117f3be  packages/tui/src/acp/updates.ts
 cca909428167b3e7df603e19d6a0579fb5238da17b47f6af945f563ebf99adeb  packages/tui/src/runtime/adapters/delegation-access.ts
+40281fa50c3a30b799a62643685ee4af96a8b545cb4c9bca67531b94bbc47bdb  packages/local-runtime-v2/src/service/agent/application/agent-profile.ts
