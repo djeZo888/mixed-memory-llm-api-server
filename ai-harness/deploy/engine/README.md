@@ -50,6 +50,23 @@ SHA-256. It retains `embedded/mcode-tools/manifest.json` and
 The media integration is disabled, but its required build artifact and notices
 remain unchanged. No claim that this external artifact is source-built.
 
+The source-built native release also uses the retained npm lock in
+`native-runtime/package-lock.json`. `native-runtime/SHA256SUMS` verifies both
+that lock and the freshly generated release `package.json` before `npm ci`.
+This pins transitive runtime dependencies without re-resolving their versions;
+ordinary builds fetch the lock's exact integrity-checked artifacts.
+
+A reviewed build may instead reuse an already installed dependency tree with
+`--build-arg AI_HARNESS_NATIVE_DEPS_CACHE=1` and a read-only task-owned mount at
+`/tmp/ai-harness-native-deps-cache` containing `package.json`, `package-lock.json`
+and `node_modules`. Both manifests must match the committed hashes. The build
+copies only `node_modules`, checks `npm ls --all --omit=dev --offline`, and retains
+the newly compiled CLI, native revision and probes. This optional cache requires
+an exact immutable donor identity plus before/after full dependency-tree hashes,
+file modes, symlink targets and native ABI verification in the build receipt.
+It is not required for a clean-host build. Keep the cache mount read-only and use
+`--network none` when all build dependencies are already cached.
+
 The base/source and supplemental Python/npm lockfiles are pinned. Apt packages
 inherit the preserved base build and are not a reproducible repository snapshot.
 The PSF license is retained at `/usr/local/share/licenses/python-3.12/LICENSE.txt`. Preserve the built
