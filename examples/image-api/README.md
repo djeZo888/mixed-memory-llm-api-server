@@ -12,9 +12,10 @@ disabled. The PCB and house prompts are visual concepts, not verified engineerin
 designs.
 
 ```sh
-sudo python3 /data/services/image-api/examples/generate.py --example lake-bled --output /data/services/image-api/examples/output/lake-bled.png
-sudo python3 /data/services/image-api/examples/generate.py --example pcb --output /data/services/image-api/examples/output/pcb.png
-sudo python3 /data/services/image-api/examples/generate.py --example ecohouse --output /data/services/image-api/examples/output/ecohouse.png
+sudo python3 /usr/local/lib/llm-server/image-api/examples/generate.py --example lake-bled --output /data/services/image-api/examples/output/lake-bled.png
+sudo python3 /usr/local/lib/llm-server/image-api/examples/generate.py --example pcb --output /data/services/image-api/examples/output/pcb.png
+sudo python3 /usr/local/lib/llm-server/image-api/examples/generate.py --example ecohouse --output /data/services/image-api/examples/output/ecohouse.png
+sudo python3 /usr/local/lib/llm-server/image-api/examples/generate.py --prompt "Photorealistic wide landscape of a quiet alpine meadow at sunrise, with wildflowers in the foreground, mist between distant mountains and soft golden light." --output /data/services/image-api/examples/output/custom.png
 ```
 
 Choose at least one of `--example` or `--prompt`. A complete free-text `--prompt`
