@@ -1,22 +1,18 @@
-# ai-harness v0.0.2
+# ai-harness v0.0.3
 
-Version 0.0.2 is deployed at `cacfdd43`, including the four WEB corrections
-exported as `42612a5`. Bounded deployed acceptance is complete with explicit
-limits: one owned main request and queued follow-up, genuine progress, one
-background child, refresh/reconnect, separate reply files, two SVG previews and
-byte-verified downloads/ZIP passed. Final readback confirmed folded Additional
-activity, retained history and no blank responding row. Chromium downloaded
-`načrt.txt` with the exact 85 bytes under the combined UTF-8 process locale and
-`sl-SI` browser context. Earlier literal `download` observations remain a utility
-configuration finding; the individual locale variables were not isolated.
-The child's public browser result is model-reported; neither native nor fallback
-browser execution was independently proven.
+Version 0.0.3 adds resident Qwen image generation and guarded editing to ordinary
+chat and fresh ordinary workers. The bounded edit campaign completed three native
+MCP edits, including a follow-up reference and external resize approval across
+refresh, with no fallback or retry. Root visual review is recorded in the
+[current acceptance report](docs/acceptance-v0.0.3.md) and
+[compact evidence summary](docs/acceptance-v0.0.3.json).
 
-See the [current acceptance report](docs/acceptance-v0.0.2.md),
-[machine-readable results](docs/acceptance-v0.0.2.json) and
-[release plan](PLAN-v0.0.2.md) for exact revisions, verification and remaining
-limits. [Version 0.0.1 acceptance](docs/acceptance-v0.0.1.md) remains the historical
-record for earlier PDF, search, lifecycle and capacity checks.
+See [chat examples](docs/chat-examples-v0.0.3.md) for usable image prompts.
+The [earlier worker-path failure](docs/acceptance-v0.0.3-historical-worker-failure.md)
+remains historical evidence. [v0.0.2 acceptance](docs/acceptance-v0.0.2.md)
+records earlier chat/progress/download/ZIP checks; [v0.0.1](docs/acceptance-v0.0.1.md)
+records earlier PDF/search/lifecycle checks. Those checks were not rerun by the
+three-edit campaign.
 
 ## Current UI behavior
 
@@ -37,7 +33,7 @@ record for earlier PDF, search, lifecycle and capacity checks.
   **Europe/Ljubljana**; actual displayed times and the independently verified
   host timezone agree.
 
-The deployed WEB corrections fold compatibility heartbeat rows into the existing
+The earlier v0.0.2 WEB corrections fold compatibility heartbeat rows into the existing
 **Additional activity** section, suppress stale finish/duration on nonterminal
 activity, set the attachment's explicit download name and omit whitespace-only
 assistant rows. History, nonempty partial text and canonical status remain.
@@ -47,11 +43,11 @@ Drag/drop has fixture coverage; actual file-chooser upload passed live, without
 OS drag automation. Focused tests, build/typecheck and the saved snapshot fixture
 remain distinct from actual deployed evidence.
 
-Worker1 independently verified the final deployment at a closed-admission
+For v0.0.2, Worker1 independently verified deployment at a closed-admission
 barrier: 68 messages, 30 SQL file rows and 72 regular files (825,197 bytes), with
 matching paired message/file fingerprints. The earlier activation separately
 preserved 61 messages, 27 SQL file rows and 66 regular files. These are bounded
-barrier comparisons, not a later all-user history audit. Current CI and D2 pass;
+barrier comparisons, not a later all-user history audit. The earlier CI and D2 checks passed;
 the unchanged deferred installer fixture retains one TMPDIR-regex failure,
 detailed in the acceptance report.
 
@@ -85,6 +81,38 @@ This is a shared workspace service with no per-person privacy boundary.
 - **Delete chat** cancels active work before hiding metadata and retains project
   files. Earlier Delete acceptance and its cancellation-message limit remain in
   the v0.0.1 report.
+
+## Image generation and editing
+
+| Operation | References | Supported output sizes |
+|---|---:|---|
+| Generate | 0 | 1024×1024, 1024×576, 1216×704, 1472×832, 1760×992, 1920×1080 |
+| Edit | 1 | 1024×1024, 1536×864 |
+| Edit | 2 | 1024×1024 |
+
+Each creative request produces one opaque PNG through the resident image model.
+Full HD **editing**, masks and transparency are unavailable. Full HD generation
+uses native 1920×1088 with the bottom eight rows removed; public output stays
+1920×1080. The public ceiling is 2,073,600 pixels. The
+[measured qualification](../reports/h003-edit-capacity-20260923/RESULT.md) excludes
+Full HD editing because it fell below the required 5% free-memory reserve.
+
+Attach a source image to ask for a concrete change. **Use for next edit** stages a
+result as the next reference. Originals remain unchanged and each completed edit
+has a separate artifact with its own preview, download, dimensions and seed.
+When a resize/canvas change is needed, review the real card's original/working
+sizes, padding and target. **Reject change** cancels before image dispatch;
+**Approve resize** starts that exact saved proposal. Refresh preserves a pending
+card, and its job can complete after the assistant turn without another message.
+An assistant statement of approval does not replace the user's card decision.
+
+Omit the edit seed for a fresh one. Known source/ancestor-seed collisions are
+rejected before dispatch, never silently replaced. Imported images may lack
+history, including images uploaded into a new chat. Fresh seeds are a workaround
+for the retained seed42 failure, not an intrinsic repair or a promise of
+pixel-exact preservation. Do not repeat an uncertain accepted request; review its
+saved job state. Main chat and fresh ordinary workers have the creative tools;
+explore/verifier/custom restrictions remain unchanged.
 
 ## Capacity and context
 
