@@ -1,0 +1,240 @@
+{
+  "case": "C02",
+  "dispatch_utc": "2026-09-23T13:38:15.033367+00:00",
+  "native_response_complete_utc_derived": "2026-09-23T13:38:51.509033+00:00",
+  "completion_timestamp_method": "Dispatch intent UTC plus HTTP monotonic elapsed; not a server timestamp.",
+  "elapsed_seconds": 36.475666003003425,
+  "telemetry_file_samples": 119,
+  "first_continuous_sample_utc": "2026-09-23T13:38:14.853652+00:00",
+  "last_continuous_sample_utc": "2026-09-23T13:38:52.395454+00:00",
+  "final_settlement_sample_utc": "2026-09-23T13:38:52.471799+00:00",
+  "maximum_continuous_sample_gap_seconds": 0.3456113338470459,
+  "continuous_sample_spans_dispatch_through_completion": true,
+  "telemetry_durable_settled": true,
+  "sampling_limitation": "Sampled extrema; no guarantee of unobserved instantaneous peaks.",
+  "devices": [
+    {
+      "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "total_mib": 97887,
+      "free_before_mib": 35610,
+      "minimum_free_mib": 35610,
+      "minimum_free_percent": 36.37868154096049,
+      "minimum_free_utc": "2026-09-23T13:38:14.233170+00:00",
+      "peak_device_used_mib": 62277,
+      "peak_process_used_mib": 61630,
+      "free_after_mib": 35610,
+      "gpu_pids_entire_window": [
+        "53583"
+      ]
+    },
+    {
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "total_mib": 97887,
+      "free_before_mib": 35612,
+      "minimum_free_mib": 35612,
+      "minimum_free_percent": 36.3807247131897,
+      "minimum_free_utc": "2026-09-23T13:38:14.233170+00:00",
+      "peak_device_used_mib": 62275,
+      "peak_process_used_mib": 61628,
+      "free_after_mib": 35612,
+      "gpu_pids_entire_window": [
+        "32839"
+      ]
+    },
+    {
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "total_mib": 49140,
+      "free_before_mib": 16236,
+      "minimum_free_mib": 7934,
+      "minimum_free_percent": 16.145706145706146,
+      "minimum_free_utc": "2026-09-23T13:38:51.440207+00:00",
+      "peak_device_used_mib": 41206,
+      "peak_process_used_mib": 37168,
+      "free_after_mib": 16236,
+      "gpu_pids_entire_window": [
+        "147055"
+      ]
+    }
+  ],
+  "host": {
+    "total_kib": 924629852,
+    "minimum_available_kib": 899101264,
+    "minimum_available_percent": 97.2390478260267,
+    "minimum_available_utc": "2026-09-23T13:38:21.550775+00:00"
+  },
+  "global_swap": {
+    "before_pages": {
+      "pswpin": 308,
+      "pswpout": 5323
+    },
+    "after_pages": {
+      "pswpin": 308,
+      "pswpout": 5323
+    },
+    "delta_pages": {
+      "pswpin": 0,
+      "pswpout": 0
+    },
+    "all_observed_unchanged": true
+  },
+  "cgroups": {
+    "llm-image-backend": {
+      "memory_current_before_bytes": 5374054400,
+      "memory_current_peak_bytes": 5453950976,
+      "memory_current_after_bytes": 5437652992,
+      "memory_max_bytes": 103079215104,
+      "swap_current_before_bytes": 0,
+      "swap_current_peak_bytes": 0,
+      "swap_current_after_bytes": 0,
+      "swap_current_delta_bytes": 0,
+      "memory_events_before": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "memory_events_delta": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "swap_events_before": {
+        "fail": 0,
+        "high": 0,
+        "max": 0
+      },
+      "swap_events_delta": {
+        "fail": 0,
+        "high": 0,
+        "max": 0
+      },
+      "all_observed_events_and_swap_unchanged": true
+    },
+    "llmctl-qwen38-27b-q0-480000-yarn4-bf16kv": {
+      "memory_current_before_bytes": 6871556096,
+      "memory_current_peak_bytes": 6872338432,
+      "memory_current_after_bytes": 6871818240,
+      "memory_max_bytes": 34359738368,
+      "swap_current_before_bytes": 0,
+      "swap_current_peak_bytes": 0,
+      "swap_current_after_bytes": 0,
+      "swap_current_delta_bytes": 0,
+      "memory_events_before": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "memory_events_delta": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "swap_events_before": {
+        "fail": 0,
+        "high": 0,
+        "max": 0
+      },
+      "swap_events_delta": {
+        "fail": 0,
+        "high": 0,
+        "max": 0
+      },
+      "all_observed_events_and_swap_unchanged": true
+    },
+    "llmctl-qwen38-27b-q1-480000-yarn4-bf16kv": {
+      "memory_current_before_bytes": 34352271360,
+      "memory_current_peak_bytes": 34353061888,
+      "memory_current_after_bytes": 34352271360,
+      "memory_max_bytes": 34359738368,
+      "swap_current_before_bytes": 155086848,
+      "swap_current_peak_bytes": 155086848,
+      "swap_current_after_bytes": 155086848,
+      "swap_current_delta_bytes": 0,
+      "memory_events_before": {
+        "high": 0,
+        "low": 0,
+        "max": 441,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "memory_events_delta": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "swap_events_before": {
+        "fail": 0,
+        "high": 0,
+        "max": 0
+      },
+      "swap_events_delta": {
+        "fail": 0,
+        "high": 0,
+        "max": 0
+      },
+      "all_observed_events_and_swap_unchanged": true
+    }
+  },
+  "all_gpu_uuid_pid_sets_unchanged": true,
+  "images": {
+    "delivered.png": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model/delivered.png",
+      "sha256": "8d8de5dc90db97fd8b6e790b477ebf4ef3178b8b6301a35c9d0c9bf95297798c",
+      "bytes": 1837833
+    },
+    "input-1.png": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model/input-1.png",
+      "sha256": "a4bb120253fece2e5349bd9e54e9f280c5e20b18858a6f04df34063b56a31e4c",
+      "bytes": 1782976
+    },
+    "raw-native.png": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model/raw-native.png",
+      "sha256": "a79e4dbb241fc7358657343e913a272908fdf2bb02ef29cddb0a346092a16924",
+      "bytes": 2436554
+    }
+  },
+  "delivery": {
+    "raw_mode": "RGBA",
+    "raw_alpha_extrema": [
+      251,
+      255
+    ],
+    "raw_dimensions": [
+      1536,
+      864
+    ],
+    "delivered_mode": "RGB",
+    "delivered_dimensions": [
+      1536,
+      864
+    ],
+    "delivered_opaque": true,
+    "exact_raw_top_rows_rgb": true
+  },
+  "settlement_checks": {
+    "api_remains_stopped": true,
+    "decoded_success": true,
+    "fresh_guards_and_reserve": true,
+    "owned_probe_absent": true,
+    "same_backend_contexts": true,
+    "same_models": true,
+    "telemetry_complete": true
+  },
+  "qualification_memory_pass": true,
+  "violations": []
+}

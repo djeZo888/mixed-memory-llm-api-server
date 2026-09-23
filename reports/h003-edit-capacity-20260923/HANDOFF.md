@@ -1,30 +1,9 @@
-# Native Worker1 source checkpoint
+# Native Worker1 handoff
 
-Retain session **01a0ce36-b30b-7af2-adf7-a37c9e8a8a5a**. No wrapper/session files edited.
-Source: **f6e69d290a3cbf58dafbcfa726f9474f083a7cfd**; base4022dbcd over reviewedb5717d.
-Review CANDIDATE.json, CANDIDATE.diff, installed-to-candidate-protocol.diff,
-TEST-RESULT.json and CAPACITY-PLAN.md. No publication or activation.
+Capacity campaign complete: 4/4; source API f6e69d290a3cbf58dafbcfa726f9474f083a7cfd unchanged/uninstalled. Native session 01a0ce36-b30b-7af2-adf7-a37c9e8a8a5a retained. Final report commit/bundle are in taskroot CHECKPOINT.json.
 
-Final clean-window producer: helpers/open_capacity_window.py
-SHA256 **2f873367b813a93edbe77cced162fa5ccd26f11fa86aacb48f0412f6979ba6c6**.
-It uses root's final SIGTERM-MAIN/no-lease-during-drain procedure, not systemctl stop.
-Bounded30s; clean exit0/oldPID+listener absent, then canonical lease/unchanged models
-and durable receipt. No forced kill/restart fallback. It has NOT been invoked.
-Runner/codec hashes are in CANDIDATE.json; every case binds the producer receipt.
+Sole ai-vm ownership RELEASED to fresh activation task H003-IMAGE-API-ACTIVATE-20260923 session 01a0ce8e-681a-77b3-83b8-5a6faab3f62d at 14:11:25.823865Z; final snapshot14:09:30.386996Z. This session performs local packaging only after release. API inactive/dead, no listener 30006, all models warm unchanged; both text contexts 480000. Original ASGI cleanup remains unproven. See CAPACITY-WINDOW-RELEASE.json and IDENTITY-HANDOFF.json.
 
-29 adapter +11 runner/codec offline tests PASS. Geometry includes native-equivalent
-RGBA/tRNS/EXIF normalization, exact bottom8pad/top1080crop, seed and refcount gates.
-Installed API still lacks the reviewed seed source correction; activation diff includes it.
-Native processor/resize source audited; no runtime/weights/settings changes.
+Activate only after root's separate exact transaction review: candidate source hashes in CANDIDATE.json; QUALIFIED-MANIFEST-CANDIDATE.json SHA 9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3; three evidence JSONs in qualification-evidence. Six generation profiles preserved exactly, edits with 1 reference at 1024x1024 or 1536x864, and 2 references at 1024x1024 accepted. C03 Full HD edit excluded: 4.387% reserve. No inference budget remains in this task. Startup recovery/fixed warmup and public/harness acceptance belong to separate task authority.
 
-**0/4 capacity calls; all4 remain.** Original fail42/pass43 preserved; guarded user
-acceptance APPROVED; public editing disabled. Next: root exact packet review and
-C01GO, then one graceful private window and C01 seed46/exact retained prompt.
-Larger/two-ref calls require prior results and conservative reserve forecast. Final
-reviewed source+passed manifest activation uses one existing recovery/fixedwarmup,
-separately counted. Public API end-to-end acceptance remains Worker2's later work.
-
-Read-only final12:53:18UTC: generationready/idle,6gen/0edit, all model/API identities
-unchanged, both480K contexts retained. No new swap in checkpoint; q1 prior148MiB remains.
-Outputs/fixtures stay outside Git. Deployment timeline wording corrected and tracked
-LakeBled PNG removed; its exact original and hash are preserved at prior task path.
+C01 output artifacts/C01/model/delivered.png; C02 artifacts/C02/model/delivered.png; C03 artifacts/C03/model/delivered.png; C04 artifacts/C04/model/delivered.png. Originals and raw decodes are alongside (C03 original unpadded at artifacts/fixtures/lake-bled-fullhd.png); exact local/remote paths and hashes in ARTIFACT-INDEX.json. All root visual decisions frozen in ROOT-QUALIFICATION-DECISIONS.json. No model/weights/runtime/settings/context changes. Guarded creative fidelity and seed workaround limitations remain; fail42/pass43 preserved. No broad profile extrapolation.

@@ -2,17 +2,17 @@
   "schema_version": 1,
   "task": "H003-EDIT-CAPACITY-20260923",
   "budget_max_accepted": 4,
-  "accepted_model_calls": 0,
-  "dispatches": 0,
-  "rejected_predispatch_staging": 0,
+  "accepted_model_calls": 4,
+  "dispatches": 4,
+  "rejected_predispatch_staging": 1,
   "activation_fixed_warmups": 0,
   "activation_fixed_warmups_separately_permitted": 1,
   "closed_diagnostic_budget_reused": false,
   "cases": [
     {
       "id": "C01",
-      "state": "PREDECLARED_NOT_DISPATCHED",
-      "accepted_executions": 0,
+      "state": "PASS_ROOT_VISUAL_AND_MEMORY",
+      "accepted_executions": 1,
       "hypothesis": "Fresh nonancestor seed preserves original teapot geometry while changing red to blue.",
       "prompt": "Change the red teapot to blue, keeping its shape, table, window, and lighting unchanged.",
       "operation": "edit",
@@ -75,12 +75,17 @@
         "Success exit, absent owned probe/context, unchanged original backend identity during private case; exact stopped-wrapper barrier and healthy native backend.",
         "Root visual approval and measured reserve acceptance before profile enablement."
       ],
-      "dispatch_gate": "Root exact source/runner review, clean-stop window receipt and coordinated C01GO; no dispatch this turn."
+      "dispatch_gate": "Satisfied: C01-GO.json",
+      "result": "C01-RESULT.json",
+      "admission_receipt_sha256": "0b076c4a42dc67bf8ad381fcb92754561e5bed9c2d9d71176cf023bee095adde",
+      "runner_source_commit": "91f60ddb862e39193e0f006a7c70f377af94d295",
+      "root_visual_review": "PASS",
+      "settled_receipt_sha256": "a5d4ec6b6ed0e90121f77febd29b1ac1d839b2c01d6756221d7a6433fb2245c1"
     },
     {
       "id": "C02",
-      "state": "PREDECLARED_NOT_DISPATCHED",
-      "accepted_executions": 0,
+      "state": "PASS_ROOT_VISUAL_AND_MEMORY",
+      "accepted_executions": 1,
       "hypothesis": "One-reference landscape retains geometry and scene coherence during a localized roof recolour.",
       "prompt": "Change only the orange tiled roof of the large church nave immediately to the left of the tall white bell tower to deep blue tiles. Keep the roof shape, tower, other buildings, island, trees, mountains, lake, framing, and morning lighting unchanged, with a coherent corresponding reflection in the water.",
       "operation": "edit",
@@ -143,12 +148,19 @@
         "Success exit, absent owned probe/context, unchanged original backend identity during private case; exact stopped-wrapper barrier and healthy native backend.",
         "Root visual approval and measured reserve acceptance before profile enablement."
       ],
-      "dispatch_gate": "Root exact source/runner review, clean-stop window receipt and coordinated C01GO; no dispatch this turn."
+      "dispatch_gate": "Satisfied: C02-GO.json",
+      "runner_source_commit": "a5ca3e74d72af81c3bd2a58e55f2d8c066e86de3",
+      "admission_receipt_sha256": "0b076c4a42dc67bf8ad381fcb92754561e5bed9c2d9d71176cf023bee095adde",
+      "settled_predecessor_receipt_sha256": "a5d4ec6b6ed0e90121f77febd29b1ac1d839b2c01d6756221d7a6433fb2245c1",
+      "result": "C02-RESULT.json",
+      "fidelity_note": "Guarded creative edit: incidental mountain/tree detail redrawn; background not pixel-exact.",
+      "root_visual_review": "PASS creative/non-pixel-exact",
+      "settled_receipt_sha256": "2340e3458a7b572ea305760f012fd36c31bb886025fc376916c48e4526260bae"
     },
     {
       "id": "C03",
-      "state": "PREDECLARED_NOT_DISPATCHED",
-      "accepted_executions": 0,
+      "state": "FAIL_RESERVE_SETTLED",
+      "accepted_executions": 1,
       "hypothesis": "Exact bottom8pad/crop permits Full HD local edit without reference or output stretch.",
       "prompt": "Change only the orange tiled roof of the large church nave immediately to the left of the tall white bell tower to deep blue tiles. Keep the roof shape, tower, other buildings, island, trees, mountains, lake, framing, and morning lighting unchanged, with a coherent corresponding reflection in the water.",
       "operation": "edit",
@@ -170,18 +182,19 @@
           "known_ancestor_seeds": [
             23092301
           ],
-          "working_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/lake-bled-native1920x1088.png",
+          "working_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/host-prepared1920x1088.png",
           "working_dimensions": [
             1920,
             1088
           ],
-          "working_sha256": "19d9caede2e6b21f0a5bae6244bcd5b5ddc294f7c7b2db27824c9cfbf88051bc",
+          "working_sha256": "5fe8b7f929b8699920111d136ce952e4ad635574098939e82f1a45a6bd61f51b",
           "padding": {
             "top": 0,
             "right": 0,
             "bottom": 8,
             "left": 0
-          }
+          },
+          "working_rgba_pixel_sha256": "53734e8f127c2b9da3caa6834cf96f1679f8757f961debd389d19e9dbcc7fe8a"
         }
       ],
       "size": "1920x1080",
@@ -211,12 +224,20 @@
         "Success exit, absent owned probe/context, unchanged original backend identity during private case; exact stopped-wrapper barrier and healthy native backend.",
         "Root visual approval and measured reserve acceptance before profile enablement."
       ],
-      "dispatch_gate": "Root exact source/runner review, clean-stop window receipt and coordinated C01GO; no dispatch this turn."
+      "dispatch_gate": "Satisfied: C03-GO.json",
+      "runner_source_commit": "269311cdfa994f1d371ad4a108ef38b1672d6b8c",
+      "admission_receipt_sha256": "0b076c4a42dc67bf8ad381fcb92754561e5bed9c2d9d71176cf023bee095adde",
+      "settled_predecessor_receipt_sha256": "2340e3458a7b572ea305760f012fd36c31bb886025fc376916c48e4526260bae",
+      "predispatch_rejection_sha256": "2c1120014194ac7643b75b3c94c95b5ff87df7945fa09df4d534c77ac7500e1c",
+      "staging_repair": "PNG encoding only: Linux zlib1.3 versus macOS zlib-ng; identical RGBA pixels. Original source unchanged.",
+      "result": "C03-RESULT.json",
+      "root_visual_review": "VISUAL PASS but MEMORY FAIL; EXCLUDED",
+      "settled_receipt_sha256": "9fd701c802a7b03e4122fc3c3a4f52b52564842ccfb3011a99db415e14634cf9"
     },
     {
       "id": "C04",
-      "state": "PREDECLARED_NOT_DISPATCHED",
-      "accepted_executions": 0,
+      "state": "PASS_ROOT_VISUAL_AND_MEMORY",
+      "accepted_executions": 1,
       "hypothesis": "Two independently retained references both contribute visibly: original teapot scene and recognizable astronaut portrait.",
       "prompt": "Use <image1> as the base scene. Add a small rectangular photographic portrait on the front of the red teapot showing the astronaut from <image2>, with her recognizable face, orange spacesuit, and black helmet. Keep the teapot red and preserve its shape, spout, handle, lid, table, window, lighting, and overall framing. The portrait should follow the teapot surface naturally.",
       "operation": "edit",
@@ -307,7 +328,21 @@
         "Success exit, absent owned probe/context, unchanged original backend identity during private case; exact stopped-wrapper barrier and healthy native backend.",
         "Root visual approval and measured reserve acceptance before profile enablement."
       ],
-      "dispatch_gate": "Root exact source/runner review, clean-stop window receipt and coordinated C01GO; no dispatch this turn."
+      "dispatch_gate": "Satisfied: C04-GO.json and C04-POST-C03-RELEASE.json",
+      "runner_source_commit": "8a355eb2b337cf131c879792438893e0efc05a33",
+      "admission_receipt_sha256": "0b076c4a42dc67bf8ad381fcb92754561e5bed9c2d9d71176cf023bee095adde",
+      "settled_predecessor_receipt_sha256": "9fd701c802a7b03e4122fc3c3a4f52b52564842ccfb3011a99db415e14634cf9",
+      "result": "C04-RESULT.json",
+      "root_visual_review": "PASS both refs recognizably used; coherent portrait-on-teapot",
+      "settled_receipt_sha256": "fd743b180e244f74721f254c3cdde54883a8f47a6a7caaed1081e9f0b336879b"
     }
-  ]
+  ],
+  "barrier_attempts": 1,
+  "execution_checkpoint": "FOUR_CALL_BUDGET_EXHAUSTED",
+  "capacity_slots_reserved_pending_settlement": 0,
+  "remaining_accepted_calls": 0,
+  "ambiguous_slots_reserved": 0,
+  "status": "COMPLETE_BUDGET_EXHAUSTED",
+  "api_intentionally_stopped_at_release": true,
+  "no_more_requests": true
 }

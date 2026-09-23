@@ -1,0 +1,10 @@
+{
+  "case": "C02",
+  "authorized_by": "root",
+  "scope": "one request after conservative C01 forecast",
+  "seed": 47,
+  "size": "1536x864",
+  "prerequisite_visual": "C01 root visual PASS",
+  "received_utc": "2026-09-23T13:32:04.975321+00:00",
+  "note": "ROOT VISUAL PASS C01: exact retained teapot becomes blue; shape/table/window/highlights/texture coherent, no severe global damage. C01 machine/telemetry PASS. Coordinator independently read89samples: Ada peak39982MiB, minimum9158MiBfree/18.63655%; hostminimum97.24827%; imagecgrouppeak5389488128bytes; swapdelta0/0. Confirm your own concise summary.\nRoot GO C02 only:1536x864, one reference, seed47, fixedrecipe, exactly once, no retry. Use measured conservative forecast from C01 before dispatch; refuse if<5%reserve. Bind successful settled C01 receipt and continued sole-caller lease/window, no new shutdown/reset/reconciliation framework. All other models unchanged; API stays stopped. Return PNG/original and concise requestwindow memory/swap/settlement immediately for root's next larger gate before packaging. Do not run C03/C04 or activate API. Follow existing max4 accepted capacity budget (C01 used1).\nIf this note is consumed before turn end, proceed within existing task/session. Otherwise close bounded checkpoint and coordinator will explicitly resume against this GO; no idle approval polling."
+}

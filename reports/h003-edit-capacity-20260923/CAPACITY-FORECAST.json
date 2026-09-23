@@ -1,0 +1,35 @@
+{
+  "status": "CLOSED_FOUR_MEASURED_CASES_NO_MORE_CALLS",
+  "historical_v1": "artifacts/C02/forecast-v1-preserved.json",
+  "historical_v2": "artifacts/forecast-v2-before-final.json",
+  "estimates_are_not_qualification": true,
+  "C02": {
+    "forecast_free_mib": 3874.41259765625,
+    "actual_free_mib": 7934,
+    "outcome": "PASS"
+  },
+  "C03": {
+    "controlling_authority": "C03-GO.json",
+    "formula": "44554.75 MiB nominal peak + 2048 MiB uncertainty",
+    "forecast_peak_used_mib": 46602.75,
+    "forecast_free_mib": 2537.25,
+    "actual_peak_used_mib": 46984,
+    "actual_free_mib": 2156,
+    "outcome": "FAIL_RESERVE_DISABLED",
+    "phase_evidence": "artifacts/C03/reserve-phase-proof.json",
+    "phase_limitation": "Late final-decode timing inference, not direct phase instrumentation."
+  },
+  "C04": {
+    "controlling_authority": [
+      "C04-GO.json",
+      "C04-POST-C03-RELEASE.json"
+    ],
+    "formula": "C01 peak39982 +2048 MiB extra prefix K/V +4096 MiB uncertainty",
+    "forecast_peak_used_mib": 46126,
+    "forecast_free_mib": 3014,
+    "actual_peak_used_mib": 42744,
+    "actual_free_mib": 6396,
+    "outcome": "PASS"
+  },
+  "future_untested_profiles": "UNQUALIFIED; no extrapolation enables profiles"
+}

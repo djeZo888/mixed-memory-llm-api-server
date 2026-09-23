@@ -1,0 +1,278 @@
+{
+  "C01": {
+    "remote_stage": "/data/services/image21-runtime-20260923/work/evidence/a5a5aad28d4f4f01851fe0008f132e8e/H003-CAPACITY-C01",
+    "remote_receipt": "/data/services/image21-runtime-20260923/receipts/H003-CAPACITY-C01-receipt.json",
+    "files": [
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/model-receipt.json",
+        "sha256": "a5d4ec6b6ed0e90121f77febd29b1ac1d839b2c01d6756221d7a6433fb2245c1",
+        "bytes": 13832
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/telemetry.jsonl",
+        "sha256": "fd97fb84ae54fb174aa2343f6f8be561079f13b7e9ef689bc41ce9685983b892",
+        "bytes": 126697
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/metrics.json",
+        "sha256": "9c58ac72a34750d670668a34223bab8f4f902d46a807047ea84cda0874cc41b3",
+        "bytes": 6970
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/model/dispatch-intent.json",
+        "sha256": "fa4ebd2c8615207c2d89b8d70d2fd56223850855fba892c5f6cdbad27c293abd",
+        "bytes": 57
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/model/probe-result.json",
+        "sha256": "7014d43473d43fab74270be20dfa0c8591bb9afb0f551cb1cb5abe0873da56c7",
+        "bytes": 219
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/model/native-response.json",
+        "sha256": "bc8ac34900a973d75c5dc462366eee51760b0cf164251c323a73609dc428599c",
+        "bytes": 2330865
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/request-launch.json",
+        "sha256": "709bacd50f2a278656419a0fa458b99f1c054c68c1262d5c5f6a5f4b016e546d",
+        "bytes": 3522
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/model/delivered.png",
+        "sha256": "f282f5654d2c53db2495e6ff23d213d014015f43d098684f34e215ad8752f882",
+        "bytes": 1311466
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/model/input-1.png",
+        "sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+        "bytes": 1271632
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/model/raw-native.png",
+        "sha256": "ce98884f295568a36f89b785d99536b1d35b1183a8aa7bf70bf480d954f3ea38",
+        "bytes": 1747909
+      }
+    ]
+  },
+  "C02": {
+    "remote_stage": "/data/services/image21-runtime-20260923/work/evidence/a5a5aad28d4f4f01851fe0008f132e8e/H003-CAPACITY-C02",
+    "remote_receipt": "/data/services/image21-runtime-20260923/receipts/H003-CAPACITY-C02-receipt.json",
+    "files": [
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model-receipt.json",
+        "sha256": "2340e3458a7b572ea305760f012fd36c31bb886025fc376916c48e4526260bae",
+        "bytes": 14293
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/telemetry.jsonl",
+        "sha256": "4fd00c0ac9ee5d7618e1462055f36dfabf249789e6967cf98ddd9184dee683de",
+        "bytes": 169406
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/metrics.json",
+        "sha256": "64ce170b14bea11936933e5a0b6453f286eef06213ffd41d6a687f97a0a259c6",
+        "bytes": 6968
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model/dispatch-intent.json",
+        "sha256": "fd75f4be73f8395ce5c7bb95d57cce55880ea112ea924a3b3dfb8b531c0c7715",
+        "bytes": 57
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model/probe-result.json",
+        "sha256": "b3b5cd5f215115ba3ef43a317ac2e607736911e1ed9330dac5749d73fff32bf2",
+        "bytes": 220
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model/native-response.json",
+        "sha256": "11a54ca4d227fcf7bb4298713d2c59b9dae6982be593fd64c1676b700caa7f71",
+        "bytes": 3249273
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/request-launch.json",
+        "sha256": "767f2676a14f5da45aeb41226b3fb93d549af743553c9cb97cab954b7124bee4",
+        "bytes": 5683
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model/delivered.png",
+        "sha256": "8d8de5dc90db97fd8b6e790b477ebf4ef3178b8b6301a35c9d0c9bf95297798c",
+        "bytes": 1837833
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model/input-1.png",
+        "sha256": "a4bb120253fece2e5349bd9e54e9f280c5e20b18858a6f04df34063b56a31e4c",
+        "bytes": 1782976
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model/raw-native.png",
+        "sha256": "a79e4dbb241fc7358657343e913a272908fdf2bb02ef29cddb0a346092a16924",
+        "bytes": 2436554
+      }
+    ]
+  },
+  "C03": {
+    "remote_stage": "/data/services/image21-runtime-20260923/work/evidence/a5a5aad28d4f4f01851fe0008f132e8e/H003-CAPACITY-C03",
+    "remote_receipt": "/data/services/image21-runtime-20260923/receipts/H003-CAPACITY-C03-receipt.json",
+    "files": [
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/model-receipt.json",
+        "sha256": "9fd701c802a7b03e4122fc3c3a4f52b52564842ccfb3011a99db415e14634cf9",
+        "bytes": 14320
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/telemetry.jsonl",
+        "sha256": "f8fb39586ba60ccbc724dba9ba4811c08ff9a96e721de3dd5d4f054ba19e11c9",
+        "bytes": 303042
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/metrics.json",
+        "sha256": "904ea8884d14ca58f7f25d987113d71d473a2969831704f649d5bfb7dd6233f3",
+        "bytes": 6995
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/model/dispatch-intent.json",
+        "sha256": "903c2d2f6370f7c5d0e1e43bac26dafb51fce42ed17f448deed8a1a6b6c92b51",
+        "bytes": 57
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/model/probe-result.json",
+        "sha256": "4d820d8ef577e5fe799da7b90a7258c22aa9ae4f8503a3ce870db088d79a8fb9",
+        "bytes": 219
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/model/native-response.json",
+        "sha256": "fa0db6495ac705533be0f8105490f8aa65aa590b8cbced8969767fef0556411a",
+        "bytes": 5098404
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/request-launch.json",
+        "sha256": "d31e4bb545207c1fda535fd1861d17df49aa24b6b8c2424b1aeaae8aad9e1531",
+        "bytes": 5423
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/model/delivered.png",
+        "sha256": "3fe9fbde51d18d9b35eaf9d8bb4d088ef54fba01685fec0dcb66773a0298b039",
+        "bytes": 2869071
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/model/input-1.png",
+        "sha256": "5fe8b7f929b8699920111d136ce952e4ad635574098939e82f1a45a6bd61f51b",
+        "bytes": 3096772
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/model/raw-native.png",
+        "sha256": "08619997d934f2fb865880472aa617edb578c0c99a9bb010f94c6bb1a28f9bd6",
+        "bytes": 3823404
+      }
+    ]
+  },
+  "C04": {
+    "remote_stage": "/data/services/image21-runtime-20260923/work/evidence/a5a5aad28d4f4f01851fe0008f132e8e/H003-CAPACITY-C04",
+    "remote_receipt": "/data/services/image21-runtime-20260923/receipts/H003-CAPACITY-C04-receipt.json",
+    "files": [
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/model-receipt.json",
+        "sha256": "fd743b180e244f74721f254c3cdde54883a8f47a6a7caaed1081e9f0b336879b",
+        "bytes": 14452
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/telemetry.jsonl",
+        "sha256": "2416005fedfeef966b7f583d3bb7c3e5d42a118510300242235729949709d47f",
+        "bytes": 145218
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/metrics.json",
+        "sha256": "40e6d9f11ef0d59769b3eb2389a57f48cc553a3983f4c8b475c9541e9354a1a7",
+        "bytes": 7234
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/model/dispatch-intent.json",
+        "sha256": "a2c0f0df3bf84d2d9c593332875c4675b26236edae03283321851cf54549b9fd",
+        "bytes": 57
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/model/probe-result.json",
+        "sha256": "8b54fc1e6318569d747633ad4b42d1c056ab36f5e56123b619274e785d376a7f",
+        "bytes": 220
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/model/native-response.json",
+        "sha256": "1b9a1e61c8ec769ef835625f2f362a34dffdfb9192414923dd9f0830d7bff114",
+        "bytes": 2457697
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/request-launch.json",
+        "sha256": "6cb1f8a2db9bad0217718e7f883ad783e7e919de1d5bf9e59c5f049bdc5cd044",
+        "bytes": 9375
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/model/delivered.png",
+        "sha256": "e93b0935ba3a584fac74e576d67cb900ec0c193c0d895e0e3e8c0d1719c75857",
+        "bytes": 1410107
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/model/input-1.png",
+        "sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+        "bytes": 1271632
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/model/input-2.png",
+        "sha256": "09fc2049a0c52f366a3fa38cc6cf6e2494cdd934147fe3994192965d78d03bf5",
+        "bytes": 1299678
+      },
+      {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/model/raw-native.png",
+        "sha256": "0357a2444510bf19d2fd27b7d76d9e3bc91417856f32cbe8e1a0d17ec051b1d2",
+        "bytes": 1842819
+      }
+    ]
+  },
+  "retained_regression_and_fixture_provenance": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixture-manifest.json",
+    "sha256": "4ab0f939c20ebf2f1103080b532bb8ca8e02615befc3dfbd68d00ed020790285",
+    "bytes": 2989
+  },
+  "original_stop_failure": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/window-receipt.json",
+    "sha256": "6ff05a981433d782d3b918338a27f803c243707d892cbbd52119a6c124ae02b5",
+    "bytes": 1977
+  },
+  "task_reconciliation": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/reconciliation-receipt.json",
+    "sha256": "0b076c4a42dc67bf8ad381fcb92754561e5bed9c2d9d71176cf023bee095adde",
+    "bytes": 12818
+  },
+  "C03_zero_dispatch_rejection": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/predispatch-receipt.json",
+    "sha256": "2c1120014194ac7643b75b3c94c95b5ff87df7945fa09df4d534c77ac7500e1c",
+    "bytes": 8464
+  },
+  "C03_reserve_timing": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C03/reserve-phase-proof.json",
+    "sha256": "464db092978269620e8d2aa5bb818ed06e81d6447af6fb5096d60619c0f7911d",
+    "bytes": 494
+  },
+  "final_snapshot": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/post-C04-readonly.json",
+    "sha256": "240aeb93fcd6bb69b42e1b801b865857fa5fbdcb37e88759a4575f3a445ba9d6",
+    "bytes": 8274
+  },
+  "root_decisions": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/ROOT-QUALIFICATION-DECISIONS.json",
+    "sha256": "70db2727bad0cad067e69cb07d809d024e3109108f670ddc520a1cb95cf2ce64",
+    "bytes": 850
+  },
+  "source_diff": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/CANDIDATE.diff",
+    "sha256": "01eff8216e6d9d40a335e3b5fe2201060ad8b15456e816cb41de9c92380fbf0d"
+  },
+  "predeclaration": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/C01-PREDECLARATION.json",
+    "sha256": "bbd49e182785e98ee0855b03196a29d6051a52587821ba284a86850278a7bc8b"
+  },
+  "reconciliation_source_proof": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/reconciliation-receipt.json",
+    "sha256": "0b076c4a42dc67bf8ad381fcb92754561e5bed9c2d9d71176cf023bee095adde"
+  }
+}
