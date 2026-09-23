@@ -1,0 +1,28 @@
+[Unit]
+Description=Resident Qwen Image 2.1 native backend on fixed Ada UUID
+Requires=docker.service
+After=docker.service systemd-tmpfiles-setup.service llmctl-boot.service
+RequiresMountsFor=/data /data/models-large
+BindsTo=data.mount data-models\x2dlarge.mount
+After=data.mount data-models\x2dlarge.mount
+ConditionPathIsMountPoint=/data
+ConditionPathIsMountPoint=/data/models-large
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=root
+Group=root
+WorkingDirectory=/
+ExecStart=/usr/bin/python3 -I -B /data/services/image21-runtime-20260923/source/service.py start
+ExecStop=/usr/bin/python3 -I -B /data/services/image21-runtime-20260923/source/service.py stop
+TimeoutStartSec=840
+TimeoutStopSec=120
+UMask=0077
+Restart=no
+KillMode=control-group
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target
