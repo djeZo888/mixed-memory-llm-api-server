@@ -1,198 +1,602 @@
 {
-  "task": "H003-ACCEPT-20260923",
-  "status": "COMPLETE_ACCEPTANCE_FAIL_NATIVE_WORKER_MCP",
-  "completedAtUtc": "2026-09-23T12:19:41.742192+00:00",
-  "sourceCommit": "b5717d03416252c8640c47d37baf892a0c4e532a",
-  "windowReturned": true,
-  "lastRemoteContactUtc": "2026-09-23T12:21:26.101316Z",
-  "acceptedBrokerImageJobs": {
-    "worker1": 1,
-    "worker2": 1,
-    "total": 2
+  "task": "H003-EDIT-ACCEPT-20260923",
+  "status": "BOUNDED_ACCEPTANCE_PASS_WITH_LIMITS",
+  "nativeAcceptanceSessionId": "01a0ce66-4245-7e52-8d3f-a2efe5a58a54",
+  "sourceCommit": "9de9ecf701bedd0bcb337d9dcb49a4aca1c3fa27",
+  "engine": {
+    "engineId": "11e764b2f30822ef7f65c6484c9e13892f8b18ac8b6ea4a9ae1fa2cd8473fb87",
+    "engineDigest": "sha256:d60f138286d755fb9857f08f0f981c88084e8a82f763abe354f8c421f2102d64",
+    "nativePin": "3df245464c0d58eab6e71d808e6741b11472f459",
+    "patchset": "69d7fe14ed8b1e394fe7315e04724e3ef89c2efbd21118a42fa1842f5ed48eff"
   },
-  "nativeImageMcpCalls": {
-    "worker1Main": 1,
-    "worker2Main": 0,
-    "worker2Child": 0
-  },
-  "retries": 0,
-  "optionalQueuedSubmissions": 0,
-  "edits": 0,
-  "workerSessionId": "f7a763f7-2f68-422b-9c93-35a2950ade1d",
-  "workerRunId": "5c5d9037-d3e3-4a37-a806-bcf04ccf1dbd",
-  "workerJobId": "55b7accf-5c69-491c-aad2-9f4e404d8c6d",
-  "workerRequestId": "dcf466dc-8ca5-41eb-ae7d-0943f23bf972",
-  "workerArtifactId": "8a0d52e5-510e-4c6d-8cc3-8194790774c3",
-  "blockingFailure": "worker used Python HTTP POST through bash to internal gateway, not registered native MCP",
-  "securityNegatives": "PASS",
-  "browserArtifactChecks": "PASS_WITH_INITIAL_ELAPSED_UNKNOWN_CAVEAT",
-  "automaticReconnectIndicator": "NOT_OBSERVED",
-  "queuedCancel": "NOT_TESTED",
-  "zip": "NOT_TESTED",
-  "editingResizeApproval": "NOT_TESTED",
-  "noSwap": "FAIL_ROOT_REPORTED_NOT_RETESTED",
-  "report": "acceptance-v0.0.3.md",
   "modelPins": {
+    "model": "qwen-image-2.1",
     "model_id": "Qwen/Qwen-Image-2.1",
     "model_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
     "runtime_revision": "0cd8be351d0825488f4b81c8931167bbab618eca",
     "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8"
   },
-  "engine": {
-    "engine_id": "31b7a4d0aba256266e55a4aa510b0b7af484bef3502e9ffa2b333cf6c48b1428",
-    "engine_digest": "sha256:617c01955ccf794ea6642af64a5ac1800df00a8be9adf0d07679b42fc4679453",
-    "source_commit": "b5717d03416252c8640c47d37baf892a0c4e532a"
-  },
-  "mainCase": {
-    "id": "f6bff2d1-8269-4a20-9b09-f50a8f687de3",
-    "sessionId": "0d53338d-9ee5-4c92-8ff8-1f070de1f089",
-    "runId": "ff218982-4dd7-4d46-990c-f86d52e01ca8",
-    "requestId": "9f76f517-bf3a-4e19-9b14-73b16e71a19b",
-    "artifactId": "303fbf98-ce8d-49b3-9028-05719e1bee8c",
-    "seed": 23092301,
-    "model": "qwen-image-2.1",
-    "requestedSize": "1920x1080",
-    "actualSize": "1920x1080",
-    "state": "completed",
-    "startedAt": "2026-09-23T12:06:05.261Z",
-    "finishedAt": "2026-09-23T12:06:58.952Z",
-    "elapsedMs": 53691
-  },
-  "workerCase": {
-    "id": "55b7accf-5c69-491c-aad2-9f4e404d8c6d",
-    "revision": 5,
-    "sessionId": "f7a763f7-2f68-422b-9c93-35a2950ade1d",
-    "runId": "5c5d9037-d3e3-4a37-a806-bcf04ccf1dbd",
-    "requestId": "dcf466dc-8ca5-41eb-ae7d-0943f23bf972",
-    "operation": "generation",
-    "state": "completed",
-    "model": "qwen-image-2.1",
-    "seed": 2026092302,
-    "requestedSize": "1024x1024",
-    "actualSize": "1024x1024",
-    "createdAt": "2026-09-23T12:14:08.914Z",
-    "startedAt": "2026-09-23T12:14:08.920Z",
-    "finishedAt": "2026-09-23T12:14:33.356Z",
-    "elapsedMs": 24436,
-    "artifactId": "8a0d52e5-510e-4c6d-8cc3-8194790774c3",
-    "cancelRequested": false
-  },
-  "outputs": [
+  "profiles": [
     {
-      "case": "worker",
-      "artifactId": "8a0d52e5-510e-4c6d-8cc3-8194790774c3",
-      "artifactCount": 1,
-      "sha256Match": true,
-      "widthMatch": true,
-      "heightMatch": true,
-      "sizeBytesMatch": true,
-      "mimeMatch": true,
-      "opaque": true,
-      "metadata": {
-        "width": 1024,
-        "height": 1024,
-        "jobId": "55b7accf-5c69-491c-aad2-9f4e404d8c6d",
-        "actualSize": "1024x1024",
-        "model": "qwen-image-2.1",
-        "seed": 2026092302,
-        "sha256": "d5935ecc677fcec429dd2a089d1afbce5f6a003127ddf59a9291b42f4377eb1a"
+      "operation": "generation",
+      "size": "1024x1024",
+      "references": 0,
+      "transparent": false,
+      "evidence_sha256": "29250a7887d4bd9688a4ebd2c3f0720db1960116012f31fa553dddf37656aad4",
+      "native_size": "1024x1024",
+      "crop_bottom": 0
+    },
+    {
+      "operation": "generation",
+      "size": "1024x576",
+      "references": 0,
+      "transparent": false,
+      "evidence_sha256": "f4c2f070cb44477dcacd671f46646cfa39e0374e859c808ec7c78c9cc3a35af1",
+      "native_size": "1024x576",
+      "crop_bottom": 0
+    },
+    {
+      "operation": "generation",
+      "size": "1216x704",
+      "references": 0,
+      "transparent": false,
+      "evidence_sha256": "0c5536fb0a6ec34bb972e84ae05a1d01bcf8a96281220f3f31c9c08ddbda16ef",
+      "native_size": "1216x704",
+      "crop_bottom": 0
+    },
+    {
+      "operation": "generation",
+      "size": "1472x832",
+      "references": 0,
+      "transparent": false,
+      "evidence_sha256": "f017918f5885133522197bb5765201788e66a1423c4303992a65887eabd520e3",
+      "native_size": "1472x832",
+      "crop_bottom": 0
+    },
+    {
+      "operation": "generation",
+      "size": "1760x992",
+      "references": 0,
+      "transparent": false,
+      "evidence_sha256": "f91eaca9a0d8583081ccaa9d62d48bd7511bd5b99b8193a26abd7106f27e3c83",
+      "native_size": "1760x992",
+      "crop_bottom": 0
+    },
+    {
+      "operation": "generation",
+      "size": "1920x1080",
+      "references": 0,
+      "transparent": false,
+      "evidence_sha256": "b33ceb2e05638c3342581b964b21ae2c201e0748ac4331a15ac13ffa992786eb",
+      "native_size": "1920x1088",
+      "crop_bottom": 8
+    },
+    {
+      "operation": "edit",
+      "size": "1024x1024",
+      "references": 1,
+      "transparent": false,
+      "evidence_sha256": "8ea1261c9fd96dbb88722b1547eb8a8122ea36133942b5e5a43588a372d6eb93",
+      "native_size": "1024x1024",
+      "crop_bottom": 0,
+      "input_padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
       }
     },
     {
-      "case": "main",
-      "artifactId": "303fbf98-ce8d-49b3-9028-05719e1bee8c",
-      "artifactCount": 1,
-      "sha256Match": true,
-      "widthMatch": true,
-      "heightMatch": true,
-      "sizeBytesMatch": true,
-      "mimeMatch": true,
-      "opaque": true,
-      "metadata": {
-        "width": 1920,
-        "height": 1080,
-        "jobId": "f6bff2d1-8269-4a20-9b09-f50a8f687de3",
-        "actualSize": "1920x1080",
-        "model": "qwen-image-2.1",
-        "seed": 23092301,
-        "sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506"
+      "operation": "edit",
+      "size": "1536x864",
+      "references": 1,
+      "transparent": false,
+      "evidence_sha256": "5879deca84126408e71c39218dbc9e949cb94dd26b09730c5ffdc64e6a737306",
+      "native_size": "1536x864",
+      "crop_bottom": 0,
+      "input_padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "operation": "edit",
+      "size": "1024x1024",
+      "references": 2,
+      "transparent": false,
+      "evidence_sha256": "7cd06cec250b8e4ae90f8ef4ca0d9b6ca6dfbd2d392b3584cd4b5bd51bc49205",
+      "native_size": "1024x1024",
+      "crop_bottom": 0,
+      "input_padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
       }
     }
   ],
-  "nativeParentSessionId": "mvs_cdfd01d0e86942338f961529085212d8",
-  "nativeChildSessionId": "mvs_38e001ee3e934f0eb4cbbbc9e5b261bd",
-  "childFallbackCommandSha256": "81f145c94dc223af4c562f05be67ad356228f3a07d66793531fb48fc8a3e0db1",
-  "childFallbackToolCallId": "call_89b9a5d2140f4b8784d0b091",
-  "mainRegisteredToolCallId": "call_ed67e1a280f74d50a97f3288",
-  "retainedNativeMainTrace": {
-    "observedAtUtc": "2026-09-23T12:21:26.101028+00:00",
-    "completedReadbackAtUtc": "2026-09-23T12:21:26.101316+00:00",
-    "harnessSessionId": "0d53338d-9ee5-4c92-8ff8-1f070de1f089",
-    "harnessRunId": "ff218982-4dd7-4d46-990c-f86d52e01ca8",
-    "sessions": [
-      {
-        "session_id": "mvs_0327580b00f3416d94d99dcf22b7b5a5",
-        "parent_session_id": null,
-        "agent_name": "mavis",
-        "session_type": "branch",
-        "session_kind": "conversation",
-        "status": "idle",
-        "created_at_ms": 1790165153323,
-        "updated_at_ms": 1790165233023
-      }
-    ],
-    "counts": {
-      "mvs_0327580b00f3416d94d99dcf22b7b5a5": {
-        "skill": 1,
-        "mcp__image__image_capabilities": 1,
-        "mcp__image__image_generate": 1
-      }
-    },
-    "knownImageJob": "f6bff2d1-8269-4a20-9b09-f50a8f687de3",
-    "knownImageRequest": "9f76f517-bf3a-4e19-9b14-73b16e71a19b",
-    "offeredProviderToolSchemas": "NOT_RETAINED_IN_SCOPED_NATIVE_MESSAGE_ROWS",
-    "tools": [
-      {
-        "toolName": "skill",
-        "toolCallId": "call_f07efa6ff5a24b5db8ba6d83",
-        "created_at_ms": 1790165156174,
-        "status": 2,
-        "safeArgs": {},
-        "knownJobInResult": false,
-        "knownRequestInResult": false
+  "completedEditCount": 3,
+  "rejectedUndispatchedCount": 1,
+  "imageEditInvocationCountIncludingRejected": 4,
+  "generationCount": 0,
+  "retryCount": 0,
+  "fallbackCount": 0,
+  "cases": [
+    {
+      "case": "A",
+      "job": {
+        "id": "57bd9fc9-4d26-4fdd-81de-b52393c7cda0",
+        "sessionId": "bfefef20-f51b-4814-aa09-88b7c52ad270",
+        "runId": "7ed5a8bb-15b3-4395-b40a-2a708fd9bd39",
+        "requestId": "22779381-d297-424c-b250-90b99fa49026",
+        "operation": "edit",
+        "revision": 5,
+        "state": "completed",
+        "seed": 4322739,
+        "requestedSize": "1024x1024",
+        "actualSize": "1024x1024",
+        "model": "qwen-image-2.1",
+        "createdAt": "2026-09-23T14:29:24.295Z",
+        "startedAt": "2026-09-23T14:29:24.299Z",
+        "finishedAt": "2026-09-23T14:29:52.082Z",
+        "elapsedMs": 27783,
+        "artifactId": "69c88730-68c9-432c-b307-873afbadcbbb",
+        "references": [
+          {
+            "referenceId": "reference-1",
+            "name": "173ed42d-fbab-41af-a785-fa1808f10369-worker-1024.png",
+            "sha256": "d5935ecc677fcec429dd2a089d1afbce5f6a003127ddf59a9291b42f4377eb1a",
+            "width": 1024,
+            "height": 1024
+          }
+        ],
+        "cancelRequested": false
       },
-      {
-        "toolName": "mcp__image__image_capabilities",
-        "toolCallId": "call_888d45f64eba4d79bf55a686",
-        "created_at_ms": 1790165158681,
-        "status": 2,
-        "safeArgs": {},
-        "knownJobInResult": false,
-        "knownRequestInResult": false
-      },
-      {
-        "toolName": "mcp__image__image_generate",
-        "toolCallId": "call_ed67e1a280f74d50a97f3288",
-        "created_at_ms": 1790165225307,
-        "status": 2,
-        "safeArgs": {
-          "size": "1920x1080",
-          "seed": 23092301
+      "nativeImageEditCallId": "call_3209102ac8074d3a915c5535",
+      "nativeSeedOmissionProven": true,
+      "output": {
+        "sha256": "8cb9d7455e38c47829abf3569ca2d1ea28aba022ba5146d12ffa9826b19a166c",
+        "dimensions": {
+          "width": 1024,
+          "height": 1024
         },
-        "knownJobInResult": true,
-        "knownRequestInResult": true
+        "bytes": 1331528,
+        "artifactId": "69c88730-68c9-432c-b307-873afbadcbbb"
+      },
+      "png": "evidence/A-main-blue.png",
+      "visualRootVerdict": "PASS"
+    },
+    {
+      "case": "B",
+      "job": {
+        "id": "9046dd71-3905-415c-b1c7-c04852650a70",
+        "sessionId": "bfefef20-f51b-4814-aa09-88b7c52ad270",
+        "runId": "8e79555e-5e50-47d4-8873-c9e1a93dffc0",
+        "requestId": "3212c798-a9ad-4734-a09b-0dc084f1ffef",
+        "operation": "edit",
+        "revision": 5,
+        "state": "completed",
+        "seed": 2250473401,
+        "requestedSize": "1024x1024",
+        "actualSize": "1024x1024",
+        "model": "qwen-image-2.1",
+        "createdAt": "2026-09-23T14:30:59.675Z",
+        "startedAt": "2026-09-23T14:30:59.679Z",
+        "finishedAt": "2026-09-23T14:31:28.320Z",
+        "elapsedMs": 28641,
+        "artifactId": "c22ef057-c2d1-44bf-9612-2d842ccdd7cc",
+        "references": [
+          {
+            "referenceId": "reference-1",
+            "name": "0bdae539-8d08-4f81-b1cc-023f132405ac-image-57bd9fc9-4d26-4fdd-81de-b52393c7cda0.png",
+            "sha256": "8cb9d7455e38c47829abf3569ca2d1ea28aba022ba5146d12ffa9826b19a166c",
+            "width": 1024,
+            "height": 1024
+          }
+        ],
+        "cancelRequested": false
+      },
+      "nativeImageEditCallId": "call_90e1923450734468a3094ec5",
+      "nativeSeedOmissionProven": true,
+      "output": {
+        "sha256": "ed7468ad2f1684d36ccd6361a8648190399d8e4a7d61a6448bf2999ea2c9d50f",
+        "dimensions": {
+          "width": 1024,
+          "height": 1024
+        },
+        "bytes": 1368891,
+        "artifactId": "c22ef057-c2d1-44bf-9612-2d842ccdd7cc"
+      },
+      "png": "evidence/B-worker-green.png",
+      "visualRootVerdict": "PASS"
+    },
+    {
+      "case": "C",
+      "job": {
+        "id": "ec258379-7447-4065-bff3-5847ddc1bf19",
+        "sessionId": "d866d605-287f-4984-bac5-5a9d489b1df0",
+        "runId": "396ba990-03a9-42cd-8bf8-aeb0e885720a",
+        "requestId": "3797be41-9361-4dcb-b7c3-eb0259d8f55e",
+        "operation": "edit",
+        "revision": 7,
+        "state": "completed",
+        "seed": 739097034,
+        "requestedSize": "1536x864",
+        "actualSize": "1536x864",
+        "model": "qwen-image-2.1",
+        "createdAt": "2026-09-23T14:33:46.403Z",
+        "startedAt": "2026-09-23T14:34:27.952Z",
+        "finishedAt": "2026-09-23T14:35:05.374Z",
+        "elapsedMs": 37422,
+        "artifactId": "f10d2c0d-def3-4201-bed6-e9f37e7d6f73",
+        "references": [
+          {
+            "referenceId": "reference-1",
+            "name": "750202de-edf2-44b6-8722-2af47edac263-main-fhd.png",
+            "sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+            "width": 1920,
+            "height": 1080
+          }
+        ],
+        "adjustment": {
+          "targetSize": "1536x864",
+          "reason": "Fit the entire image on a qualified canvas; preserve aspect ratio and pad with white.",
+          "sources": [
+            {
+              "referenceId": "reference-1",
+              "name": "750202de-edf2-44b6-8722-2af47edac263-main-fhd.png",
+              "sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+              "width": 1920,
+              "height": 1080,
+              "workingWidth": 1536,
+              "workingHeight": 864,
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            }
+          ]
+        },
+        "cancelRequested": false
+      },
+      "nativeImageEditCallId": "call_3f7136b8cec845ba8a3698aa",
+      "nativeSeedOmissionProven": false,
+      "output": {
+        "sha256": "71440807f29452a61ccc6f1420cb4937559eed4cfca012c22be5da9bccae9e46",
+        "dimensions": {
+          "width": 1536,
+          "height": 864
+        },
+        "bytes": 1875176,
+        "artifactId": "f10d2c0d-def3-4201-bed6-e9f37e7d6f73"
+      },
+      "png": "evidence/C-approved-blue-roof.png",
+      "visualRootVerdict": "PASS"
+    }
+  ],
+  "rejected": {
+    "id": "29641a99-1230-42c3-bcf3-0c4399426d75",
+    "sessionId": "d866d605-287f-4984-bac5-5a9d489b1df0",
+    "runId": "f5815ce7-a0b4-4b72-b3c1-f890fbf9a34b",
+    "requestId": "969bb561-5bd4-4621-ac17-b01a520a6cb3",
+    "operation": "edit",
+    "revision": 3,
+    "state": "cancelled",
+    "seed": 248086337,
+    "requestedSize": "1536x864",
+    "model": "qwen-image-2.1",
+    "createdAt": "2026-09-23T14:32:46.863Z",
+    "finishedAt": "2026-09-23T14:33:14.490Z",
+    "references": [
+      {
+        "referenceId": "reference-1",
+        "name": "750202de-edf2-44b6-8722-2af47edac263-main-fhd.png",
+        "sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+        "width": 1920,
+        "height": 1080
       }
     ],
-    "shellCalls": []
+    "adjustment": {
+      "targetSize": "1536x864",
+      "reason": "Fit the entire image on a qualified canvas; preserve aspect ratio and pad with white.",
+      "sources": [
+        {
+          "referenceId": "reference-1",
+          "name": "750202de-edf2-44b6-8722-2af47edac263-main-fhd.png",
+          "sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+          "width": 1920,
+          "height": 1080,
+          "workingWidth": 1536,
+          "workingHeight": 864,
+          "padding": {
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0
+          }
+        }
+      ]
+    },
+    "cancelRequested": true
   },
-  "taskEvidenceSha256": {
-    "evidence/security/native-final-provenance.json": "c317832e6ecb20cffe2a095cc5f0bbd0aa647681b0d28dcab30b746fb7224582",
-    "evidence/security/engine-approval-negatives-corrected.jsonl": "30d180302180b4bdf68b4254302f7ff6a9a4c15584d7a4a97cd322de5f6e0db3",
-    "evidence/independent-metadata-comparison.json": "cdf8045923b67be2d753b6c7b1814213cb6838f2db4734260465a5bd07e7b0d4",
-    "evidence/browser-live.jsonl": "d4c4d1b99c24ffcece28cdcfea423b24902d386db800c91dbc91dd1352117864",
-    "evidence/png-validation.json": "6f9cce995f1a88d536fe7bc832e44423d0fc8292145554b391451040f4d844df",
-    "evidence/worker1-timeline-review.json": "52dd4f2c4ff4cbc8e01f0d975f24fa987f9fe8db5cc73d66ab7ce677d6df4f79",
-    "evidence/security/main-final-provenance.json": "20a3a8b2b8fa81294c7c37813e301532bd59a7461c53aadc8a6fb6429db26215"
+  "nativeSessions": [
+    {
+      "session_id": "mvs_706a3b45fdb44c0ea782ba88fc0305f0",
+      "parent_session_id": null,
+      "agent_name": "mavis",
+      "session_type": "branch",
+      "session_kind": "conversation",
+      "status": "idle",
+      "created_at_ms": 1790173752166,
+      "updated_at_ms": 1790173908120
+    },
+    {
+      "session_id": "mvs_f26a0ecc5e6b44c8a28b3e0610fbd8c8",
+      "parent_session_id": "mvs_706a3b45fdb44c0ea782ba88fc0305f0",
+      "agent_name": "worker",
+      "session_type": "branch",
+      "session_kind": "task",
+      "status": "idle",
+      "created_at_ms": 1790173852897,
+      "updated_at_ms": 1790173898652
+    }
+  ],
+  "nativeToolCounts": {
+    "mvs_706a3b45fdb44c0ea782ba88fc0305f0": {
+      "skill": 1,
+      "mcp__image__image_capabilities": 1,
+      "mcp__image__image_edit": 1,
+      "task": 1
+    },
+    "mvs_f26a0ecc5e6b44c8a28b3e0610fbd8c8": {
+      "mcp__image__image_edit": 1
+    }
   },
-  "lastRemoteContactScope": "Later root-authorized retained Worker1 main profile only; did not reacquire inference/deployment window"
+  "noResubmission": {
+    "jobId": "ec258379-7447-4065-bff3-5847ddc1bf19",
+    "messagesBefore": [
+      "e4cb9605-2221-4e2f-8fde-19708b927bfb",
+      "m_a2c1340db4e5de989c0f44dd14f31e7bb9904ba34f23fdb5b1a6a207713d1aae",
+      "83776d26-0357-4d9f-9ba5-86168a9ae6ed",
+      "m_963b55fca67c90fdd4d2e8faeacb44d6c70ff6de5962c81d578dd240e992969c"
+    ],
+    "messagesAfter": [
+      "e4cb9605-2221-4e2f-8fde-19708b927bfb",
+      "m_a2c1340db4e5de989c0f44dd14f31e7bb9904ba34f23fdb5b1a6a207713d1aae",
+      "83776d26-0357-4d9f-9ba5-86168a9ae6ed",
+      "m_963b55fca67c90fdd4d2e8faeacb44d6c70ff6de5962c81d578dd240e992969c"
+    ],
+    "runsBefore": [
+      "f5815ce7-a0b4-4b72-b3c1-f890fbf9a34b",
+      "396ba990-03a9-42cd-8bf8-aeb0e885720a"
+    ],
+    "runsAfter": [
+      "f5815ce7-a0b4-4b72-b3c1-f890fbf9a34b",
+      "396ba990-03a9-42cd-8bf8-aeb0e885720a"
+    ],
+    "unchangedMessages": true,
+    "unchangedRuns": true,
+    "nativeImageEditCallsInApprovedRun": 1
+  },
+  "originals": [
+    {
+      "file": "evidence/source-square.png",
+      "sha256": "d5935ecc677fcec429dd2a089d1afbce5f6a003127ddf59a9291b42f4377eb1a",
+      "unchanged": true
+    },
+    {
+      "file": "evidence/source-fhd.png",
+      "sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+      "unchanged": true
+    }
+  ],
+  "qualification": {
+    "sourcePublication": "1d8095d",
+    "canonicalReport": "reports/h003-edit-capacity-20260923/RESULT.md",
+    "metrics": [
+      {
+        "case": "C01",
+        "references": 1,
+        "size": "1024x1024",
+        "httpElapsedSeconds": 27.15086695300124,
+        "peakDeviceMiB": 39982,
+        "minimumFreeMiB": 9158,
+        "minimumFreePercent": 18.636548636548635,
+        "globalSwapDeltaPages": {
+          "pswpin": 0,
+          "pswpout": 0
+        },
+        "qualified": true,
+        "samplingLimitation": "Sampled extrema; no guarantee of unobserved instantaneous peaks."
+      },
+      {
+        "case": "C02",
+        "references": 1,
+        "size": "1536x864",
+        "httpElapsedSeconds": 36.475666003003425,
+        "peakDeviceMiB": 41206,
+        "minimumFreeMiB": 7934,
+        "minimumFreePercent": 16.145706145706146,
+        "globalSwapDeltaPages": {
+          "pswpin": 0,
+          "pswpout": 0
+        },
+        "qualified": true,
+        "samplingLimitation": "Sampled extrema; no guarantee of unobserved instantaneous peaks."
+      },
+      {
+        "case": "C03",
+        "references": 1,
+        "size": "1920x1080",
+        "httpElapsedSeconds": 65.49602156499896,
+        "peakDeviceMiB": 46984,
+        "minimumFreeMiB": 2156,
+        "minimumFreePercent": 4.387464387464387,
+        "globalSwapDeltaPages": {
+          "pswpin": 0,
+          "pswpout": 0
+        },
+        "qualified": false,
+        "samplingLimitation": "Sampled extrema; no guarantee of unobserved instantaneous peaks."
+      },
+      {
+        "case": "C04",
+        "references": 2,
+        "size": "1024x1024",
+        "httpElapsedSeconds": 31.217477444995893,
+        "peakDeviceMiB": 42744,
+        "minimumFreeMiB": 6396,
+        "minimumFreePercent": 13.015873015873016,
+        "globalSwapDeltaPages": {
+          "pswpin": 0,
+          "pswpout": 0
+        },
+        "qualified": true,
+        "samplingLimitation": "Sampled extrema; no guarantee of unobserved instantaneous peaks."
+      }
+    ]
+  },
+  "acceptanceWindowMemory": "NOT_MEASURED",
+  "windowReturn": {
+    "task": "H003-EDIT-ACCEPT-20260923",
+    "status": "RELEASED_SETTLED",
+    "releasedAtUtc": "2026-09-23T14:36:23.677230+00:00",
+    "to": "root / Worker1",
+    "acceptedEdits": 3,
+    "generationRequests": 0,
+    "retries": 0,
+    "fallbacks": 0,
+    "ownedSessionsIdle": true,
+    "backendReadyAdmittingIdle": true,
+    "browserClosedAtUtc": "2026-09-23T14:35:55.639Z",
+    "noFurtherLiveActions": true,
+    "lastScopedSsh": "evidence/native-trace-command.json",
+    "evidence": "evidence/",
+    "remaining": "Local result/docs/bundle plus root visual review; no image window required."
+  },
+  "limitations": [
+    "Fresh-seed workaround only; exact original seed42 severe failure remains FAIL.",
+    "New-chat uploads do not import original generation-seed ancestry; collision checks not rerun live.",
+    "Prior frozen worker HTTP fallback remains historical FAIL.",
+    "C omitted seed requested; native argument proof only A/B.",
+    "Qualification zero swap deltas do not erase q1 historical155086848-byte swap or prior305/5323 attribution caveat.",
+    "Clean-host npm ci NOT_EXECUTED in cached engine build.",
+    "No new generation, two-reference UI, queue/Stop, idempotency, security-isolation or ZIP coverage."
+  ],
+  "historicalSnapshot": {
+    "originalMarkdownSha256": "68402a1f1c4165a4543128b173348fcab06490a9539935e6c1cdbb360c9ca2ac",
+    "retainedMarkdownSha256": "1b45506c08f5d4a119a54cf0ac288c697086b3f509aa2bc574dea2d6c36893c0",
+    "markdownChange": "Only compact-summary hyperlink retargeted to historical JSON; all historical findings preserved.",
+    "originalAndRetainedJsonSha256": "38c673322e08771caa9893a56275ace49e6f90c698b231a6c7850e341012e84d",
+    "files": [
+      "ai-harness/docs/acceptance-v0.0.3-historical-worker-failure.md",
+      "ai-harness/docs/acceptance-v0.0.3-historical-worker-failure.json"
+    ]
+  },
+  "evidenceHashes": [
+    {
+      "path": "evidence/A-final.json",
+      "sha256": "8c5a062cfffcce92912b48ab9a37329442ec49e50f5cbe586826a64e21a8c7e2"
+    },
+    {
+      "path": "evidence/B-final.json",
+      "sha256": "cf82f0a1e51b257bcf3824e313690ab72d9eb7df47085ad7af527fa144775dad"
+    },
+    {
+      "path": "evidence/C-final.json",
+      "sha256": "96d5d0a24865a4e2b28cf2652e732f4375dce2760dc72c783d4922143d1a801e"
+    },
+    {
+      "path": "evidence/native-owned-trace.json",
+      "sha256": "49e4c3f05018aab3a9155d61e8d948ae0f0b87b74733e07121f2eed9804734fe"
+    },
+    {
+      "path": "evidence/native-trace-command.json",
+      "sha256": "9737ca8f66f7f5f6e0201d00df8ef4ffd3640c615e20decec44c278ff6d0b0db"
+    },
+    {
+      "path": "evidence/AB-image-events.json",
+      "sha256": "1c94ecbc655cbbc20337e41e1d8aef0410e05bab5a5ff10d83e7a28ff577b7e2"
+    },
+    {
+      "path": "evidence/C-image-events.json",
+      "sha256": "bbe63e43660c2755d7e1f0d2e8aef5a662ee770c50370b41b9cdade2fb149d9f"
+    },
+    {
+      "path": "evidence/C-no-resubmission.json",
+      "sha256": "eaceaab8b6383c038454db9658cf87784ec29ed0db26839ef59adf5c3a66aed9"
+    },
+    {
+      "path": "evidence/C-refresh-binding.json",
+      "sha256": "c116fac6f5afb5dfe407ce97bcc4a2d2aabe38413ff81b2447c1f433025a68a8"
+    },
+    {
+      "path": "evidence/A-png-validation.json",
+      "sha256": "37facce26a62a0b6a82bc3f81f2d72910a04e4daa4adf4cee19933b2d95fd456"
+    },
+    {
+      "path": "evidence/B-png-validation.json",
+      "sha256": "bf5ac4991c7ae83f4fd9c62d23bdddce849fa31fa2015535f6f2c5d8cb887d67"
+    },
+    {
+      "path": "evidence/C-png-validation.json",
+      "sha256": "d76ccb9dab676470f6ea1d465ae10f28df87dbf28aeaeb98c41b7bf3666f9f58"
+    },
+    {
+      "path": "evidence/live-timeline.jsonl",
+      "sha256": "e4b9ae8023593330b7575e6378e12e9f95af878349ce282d99b639772e157c13"
+    },
+    {
+      "path": "evidence/instrumentation-notes.json",
+      "sha256": "c439597afd885d08dcceab97800186afc367c5b1bfbad78180b9d9c5fd858184"
+    },
+    {
+      "path": "BUDGET.json",
+      "sha256": "1aaa3455da626937eae35b3799c5bd7e2da821439bcac0170a219d990781c227"
+    },
+    {
+      "path": "ACCEPTANCE-WINDOW-RETURN.json",
+      "sha256": "f75a1bf2cce87230a5ed84ec6b43ba9d5ba53a09a8bf33279ef0d58ad440bf42"
+    },
+    {
+      "path": "LIVE-READY-RECEIPT.json",
+      "sha256": "b8c9fab3060a2ce20208e8adcc6d01155ea9d2ec12f3346a98a39957fdf23a6a"
+    },
+    {
+      "path": "WINDOW-RELEASE.json",
+      "sha256": "3cea83e3c318419c45c63158bc3c8df1bba18ed65744168344667f09e5864135"
+    },
+    {
+      "path": "HARNESS-ACTIVATION-PROJECTION.json",
+      "sha256": "70c69b80f2603416bb29c0baf54ef715b72a60e0f9f145f21c7d3f22b6a4f5e1"
+    },
+    {
+      "path": "ENGINE-RECEIPT.json",
+      "sha256": "5b6407f96dd779b29a3f103facda67441231184f603b3c4058834bb7cb9308b1"
+    },
+    {
+      "path": "ROOT-VISUAL-A-PASS.md",
+      "sha256": "8b2fdc91f1afd05afba7a04b0bf33fd755937f50db6aeec1bbf585eb36d63e3c"
+    },
+    {
+      "path": "ROOT-VISUAL-B-PASS.md",
+      "sha256": "9702c2491dc1a93c8d0085692e9dd73faad7fc17d5a775886d388db0b0e97759"
+    },
+    {
+      "path": "ROOT-VISUAL-C-PASS.md",
+      "sha256": "b754df24a51c56a608acf604d46e89ea3b3b2e2b4d883188157758ade1a48fa9"
+    },
+    {
+      "path": "ROOT-CAPACITY-DOCS-HANDOFF.md",
+      "sha256": "48a7d5c72d555d39e94f3f536d10cdff44886ebcb5e96cdfc29242cc28e40cb8"
+    },
+    {
+      "path": "ROOT-AGENTS-DOCS-AMENDMENT.md",
+      "sha256": "3ccfa8298cb11f49859909d3ba95afc77f6cb933152a65b5f4be5324e7ebb3a4"
+    }
+  ]
 }

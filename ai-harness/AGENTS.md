@@ -1,5 +1,14 @@
 # ai-harness work
 
+Current v0.0.3 outcome, 2026-09-23: the approved [image plan](PLAN-v0.0.3.md)
+and [current acceptance](docs/acceptance-v0.0.3.md) cover resident generation and
+qualified guarded editing. Three bounded edits passed actual main/fresh ordinary
+worker MCP and external resize approval, with root visual A/B/C PASS. The window
+is settled/released; this pointer grants no new inference, host or deployment
+work. It supersedes older image/harness exclusions only for the reviewed scope.
+Preserve explore/verifier/custom restrictions, known seed/geometry limits,
+original files, warm model identities and state; production remains Worker1-owned.
+
 The user authorized implementation and deployment of [v0.0.1](PLAN-v0.0.1.md)
 and the [v0.0.2 work](PLAN-v0.0.2.md) on 2026-09-22. This supersedes earlier
 frontend/harness exclusions for this directory and bounded ai-harness work.

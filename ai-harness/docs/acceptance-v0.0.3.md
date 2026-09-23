@@ -1,54 +1,91 @@
-# v0.0.3 bounded live acceptance — native worker path failed
+# v0.0.3 guarded editing acceptance
 
-On 2026-09-23, fresh native Worker2 task `H003-ACCEPT-20260923` independently
-checked deployed source `b5717d03416252c8640c47d37baf892a0c4e532a` after root GO.
-Worker1 retained production ownership. This report does **not** accept the
-release: the worker generated its image through a Python HTTP gateway fallback,
-with zero registered native image MCP calls. The cause is not proven; diagnosis
-and repair belong to a fresh task.
+The bounded browser workflow passes on source `9de9ecf701bedd0bcb337d9dcb49a4aca1c3fa27`
+with repaired engine `11e764b2f30822ef7f65c6484c9e13892f8b18ac8b6ea4a9ae1fa2cd8473fb87`,
+digest `sha256:d60f138286d755fb9857f08f0f981c88084e8a82f763abe354f8c421f2102d64`.
+Exactly **three edits completed**, with no generation, retry or fallback. One
+additional resize request was rejected before dispatch. Root visual review: **A/B/C PASS**. The window was returned settled at 14:36:23 UTC, 23 September 2026.
+The [earlier failed-worker report](acceptance-v0.0.3-historical-worker-failure.md)
+and its [original summary](acceptance-v0.0.3-historical-worker-failure.json) remain available as historical evidence.
 
-| Area | Outcome |
+| Check | Result / evidence |
 |---|---|
-| Deployment identity | PASS: activation source and engine image/digest match reviewed receipt; actual owned engine container independently matched immutable image. Live health reports 0.0.3. Legacy runtime tag 0.0.2 is not the immutable version proof. |
-| Image model pins | PASS: live capabilities match retained Qwen-Image-2.1 model revision, runtime revision/digest and six qualified generation profiles. |
-| Ordinary main generation | PASS: Worker1's existing Full HD image reused; independent persisted activity and retained native trace confirm one `skill`, one `mcp__image__image_capabilities`, one `mcp__image__image_generate`, and zero bash calls. |
-| Ordinary worker delegation | PASS: exactly one native `task` selected `agent_name: worker`; actual parent/child identities retained. No role ceilings changed. |
-| Worker native image MCP path | **FAIL:** child used 16 bash calls and a Python HTTP POST to internal `/v1/image-jobs`; zero registered image MCP calls. Native task results contain the resulting job/request IDs. Successful output does not qualify this fallback. |
-| Browser image handling | PASS: real installed Chrome/Playwright showed reply-specific running state, same-job reload recovery, completed previews and downloads. SSE revisions 1–5 retain job/run identity. First live elapsed field showed `Unknown`; reload showed 2s, completion 24s. Automatic reconnect indicator was not observed during the bounded offline toggle. |
-| Artifacts | PASS: both downloaded PNGs independently decode as opaque RGB; dimensions, byte sizes, MIME and SHA256 match job/artifact metadata. One artifact per run, no duplication after reload. |
-| Concurrent text | PASS: existing two text requests completed entirely within main image broker interval 12:06:05.261–12:06:58.952 UTC, in 3.529s and 3.427s. This is not GPU-kernel timing evidence. |
-| Approval-token isolation | PASS: actual owned engine-origin requests to server8080 with allowed Host/Origin and spoofed proxy/forwarding headers returned 403 `image_approval_forbidden`; host80 variants returned 403 without a token. Two initial origin-only denials were excluded from proxy-secret proof; eight corrected checks followed. No real proxy secret or session bearer was used by probes. |
-| Queue cancellation | NOT_TESTED: no safe atomic queue-only admission guard; no extra submission risking a third image. |
-| ZIP | NOT_TESTED: no naturally available multi-file reply; one artifact in each separate run. |
-| Editing / resize approval | NOT_TESTED: disabled/unqualified in this task; disabled UI is not edit acceptance. Later edit authorization does not extend this campaign. |
+| Deployment and published profiles | PASS: root-reviewed live-ready/activation receipts; public capabilities match all nine exact profiles and model/runtime pins. |
+| Main native edit | PASS: one actual `mcp__image__image_edit`, with seed omitted; exact uploaded source hash, new artifact and 1024×1024 output. |
+| Use for next edit / ordinary worker | PASS: real button stages A; fresh ordinary child `mvs_f26a0ecc5e6b44c8a28b3e0610fbd8c8` invokes native `image_edit` once, seed omitted, zero shell/fallback calls. B's reference hash equals A's downloaded hash. |
+| Preview, download and provenance | PASS: three distinct artifacts, browser previews/clicked downloads, opaque PNG decode/CRC/dimensions/hash checks. Retained originals remain byte-identical. Running/completed job revisions are retained; B's card screenshot captures completion. |
+| External resize rejection | PASS: real 1920×1080 → 1536×864 card, external Reject change returns 200; cancelled job never queues/starts and has no artifact. |
+| Refresh then external approval | PASS: new explicit request, unchanged job/request/source/proposal across refresh, external Approve resize returns 200; same saved job completes with no new message/run/model submission. One edit call in that run. |
+| Visual result | A/B/C root PASS. Creative preservation, not pixel-exact fidelity. |
+| Additional coverage | No new generation, two-reference workflow, queue/Stop, security-isolation, collision/idempotency or benchmark campaign. Existing focused fixtures and prior live checks remain separate. No natural multi-artifact reply, so ZIP not tested here. |
 
-The broker accepted **two** image jobs across workers: one reused Worker1 main
-image and one Worker2 child fallback. Both completed. Native image-MCP acceptance
-is **main 1, child 0**. There were no image retries, replacements, optional queued
-submissions or edits. The failed-path image consumes the second image budget.
+## Accepted profiles and measured qualification
 
-| Case | Dimensions | Seed | Model | Broker execution |
-|---|---|---|---|---|
-| Worker1 main | 1920×1080 | 23092301 | qwen-image-2.1 | 53.691s |
-| Worker2 child fallback | 1024×1024 | 2026092302 | qwen-image-2.1 | 24.436s |
+Generation (zero references): **1024×1024, 1024×576, 1216×704, 1472×832,
+1760×992, 1920×1080**. Public ceiling: 1920×1080 / 2,073,600 pixels; Full HD
+uses native 1920×1088 and removes eight bottom rows. This campaign did not repeat generation.
+Editing: **one reference at 1024×1024 or 1536×864; two references at 1024×1024**.
+Opaque PNG output only; no masks/transparency or larger editing geometry.
 
-Root reports a separate strict no-swap gate **FAIL**: cumulative counters changed
-from 0/0 to 305/5323, with attribution unresolved. Main-image memory samples were
-after inference and do not establish peak reserve. No overall release acceptance,
-no-swap success, intrinsic model repair, or editing qualification is claimed.
-The main final prose also contained a host-path image link; the dedicated gallery
-and artifact download passed, but that prose link is not accepted.
+The following are Worker1's retained [capacity measurements](../../reports/h003-edit-capacity-20260923/RESULT.md)
+(publication `1d8095d`), not the later browser acceptance timings. Duration is
+HTTP monotonic elapsed for the native operation. Memory is sampled total Ada
+**device** usage, not an allocator peak; 1 GiB = 1024 MiB.
 
-The inference/deployment window was returned to Worker1/root with the owned chat
-idle, run completed, zero active children and one retained image. An owned Stop
-was sent after detecting the fallback, but native completion preceded it; this
-does not establish cancellation coverage. A later root grant allowed only retained
-main-trace readback and this documentation commit/bundle. No generation was repeated.
+| Qualification case | References / size | Seconds | Peak device MiB | Minimum free | Decision |
+|---|---|---:|---:|---|---|
+| C01 | 1 / 1024×1024 | 27.151 | 39,982 | 9,158 MiB / 18.637% | Qualified |
+| C02 | 1 / 1536×864 | 36.476 | 41,206 | 7,934 MiB / 16.146% | Qualified |
+| C03 | 1 / 1920×1080 | 65.496 | 46,984 | 2,156 MiB / 4.387% | **Excluded:** below 5% reserve despite visual pass |
+| C04 | 2 / 1024×1024 | 31.217 | 42,744 | 6,396 MiB / 13.016% | Qualified |
 
-Exact session/run/job/request/artifact IDs, model pins, output hashes and evidence
-hashes are in [the compact summary](acceptance-v0.0.3.json). Full sanitized native
-traces, response/SSE metadata, genuine screenshots, downloads, scripts, wrapper,
-events and actual exit are retained under task `H003-ACCEPT-20260923`, outside Git.
-No implementation changes, builds, installations, broad tests, ai-vm contact,
-production configuration changes, service restarts, cleanup, push or main merge
-were performed by Worker2 acceptance. Source fixtures are not live acceptance.
+All four qualification windows had zero new swap deltas; sampled extrema cannot
+exclude unseen instantaneous peaks. Existing text q1 cgroup swap was **155,086,848
+bytes (148 MiB)**, with memory.events max441 near its 32 GiB cap; its cause remains
+unproven. Historical cumulative swapdelta305/5323 retains its attribution caveat.
+Memory/swap during this later browser acceptance interval was **NOT_MEASURED**;
+old post-generation samples cannot establish peak reserve or no-swap success.
+
+## This browser campaign
+
+| Case | Result | Effective seed | Dimensions | Broker execution interval, UTC | Seconds |
+|---|---|---:|---|---|---:|
+| A main | Turquoise teapot → cobalt blue | 4322739 | 1024×1024 | 14:29:24.299–14:29:52.082 | 27.783 |
+| B fresh worker | A blue teapot → emerald green | 2250473401 | 1024×1024 | 14:30:59.679–14:31:28.320 | 28.641 |
+| C approved | Island church orange roof → muted blue | 739097034 | 1536×864 | 14:34:27.952–14:35:05.374 | 37.422 |
+
+C preserved the original 1920×1080 bytes and proposed a 1536×864 working image
+with **zero padding**. The text turn finished before user approval; the image
+completed later under that same run. The rejected job consumed no image admission.
+C job `ec258379-7447-4065-bff3-5847ddc1bf19`, request
+`3797be41-9361-4dcb-b7c3-eb0259d8f55e`, run
+`396ba990-03a9-42cd-8bf8-aeb0e885720a`, artifact
+`f10d2c0d-def3-4201-bed6-e9f37e7d6f73` belong to owned chat
+`d866d605-287f-4984-bac5-5a9d489b1df0`. Both owned chats were idle and the public
+backend ready/admitting/idle at return; the task browser was closed.
+
+All effective seeds differ from the known input/ancestor seeds. Native argument
+proof of omitted seed covers A/B; C records the requested omission and saved seed.
+
+## Material limits and provenance
+
+Fresh random seeds and the known source/ancestor-seed guard are an approved
+workaround. **The exact original seed42 severe failure remains FAIL**; seed43's
+successful counterpart does not prove intrinsic model repair. New-chat uploads
+preserve bytes but do not import old generation ancestry; unknown imported
+provenance cannot guarantee collision detection. Existing same-session
+source/ancestor rejection fixtures were not rerun or presented as new live proof.
+The earlier frozen worker's HTTP fallback remains a historical failure.
+
+Clean-host `npm ci`: **NOT_EXECUTED** in this cached engine build. Native startup,
+role/provider fixtures and old security/queue fixtures remain distinct from live
+execution. Explore/verifier/custom restrictions were unchanged. No new service,
+model, deployment, credential access, ai-vm contact or production patch occurred.
+A separately authorized read-only harness trace accessed only the owned A/B
+profile and exact parent/child; it proves one main and one worker edit, no fallback.
+
+Exact IDs, hashes, pins, evidence digests and limits are in the [compact result](acceptance-v0.0.3.json).
+Full sanitized screenshots, original/output PNGs, job events, native trace,
+one-shot markers and session/exit records remain under task
+`H003-EDIT-ACCEPT-20260923`, outside Git. [Chat examples](chat-examples-v0.0.3.md)
+describe the accepted workflow without authorizing another acceptance campaign.
