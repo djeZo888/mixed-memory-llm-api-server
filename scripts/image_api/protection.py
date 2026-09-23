@@ -34,7 +34,9 @@ def protected(path, *, modes, maximum, credential=False):
             before = os.fstat(fd)
             owners = {0, os.geteuid()} if credential else {0}
             if (not stat.S_ISREG(before.st_mode) or before.st_uid not in owners or before.st_nlink != 1
-                    or stat.S_IMODE(before.st_mode) not in modes or before.st_size > maximum):
+                    or stat.S_IMODE(before.st_mode) not in modes or before.st_size > maximum
+                    or credential and stat.S_IMODE(before.st_mode) == 0o440
+                    and (before.st_uid != 0 or before.st_gid != 0)):
                 raise ProtectionError()
             raw = os.read(fd, maximum + 1)
             signature = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_uid, s.st_gid, s.st_nlink,
@@ -52,7 +54,7 @@ def protected(path, *, modes, maximum, credential=False):
 
 
 def key():
-    raw = protected(CREDENTIAL, modes={0o400, 0o600}, maximum=257, credential=True)
+    raw = protected(CREDENTIAL, modes={0o400, 0o440, 0o600}, maximum=257, credential=True)
     value = raw[:-1] if raw.endswith(b'\n') else raw
     if not re.fullmatch(rb'[A-Za-z0-9._~+/=-]{32,256}', value):
         raise ProtectionError()
