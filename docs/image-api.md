@@ -290,8 +290,8 @@ Captured source hashes and provenance accompany the taskroot evidence package.
 
 The historical [H003 diagnosis](../reports/h003-edit-20260923/RESULT.md) retains the
 failed same-noise seed 42 teapot regression and the successful seed 43 counterpart.
-This is observed seed-reuse sensitivity; the underlying cause remains unresolved with an orchestration mitigation,
-not an intrinsic model repair. The original strict seed 42 regression remains a
+The observed seed-reuse sensitivity has an unresolved underlying cause. Fresh-seed
+selection is an orchestration workaround, not an intrinsic model repair. The original strict seed 42 regression remains a
 failure; deployment of the measured guarded profiles does not change that result.
 
 The deployed adapter preserves every explicit seed exactly. When an edit omits
