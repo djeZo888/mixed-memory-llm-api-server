@@ -289,11 +289,11 @@ class FullHD(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(response.status_code, 400)
             self.assertEqual(backend.calls, [])
 
-    def test_invalid_mapping_and_edit_mapping_refused(self):
+    def test_invalid_mapping_and_unqualified_two_reference_fhd_mapping_refused(self):
         for changes in [{'native_size': '1920x1087'}, {'native_size': '1920x1089'},
                         {'native_size': '1920x1080'}, {'crop_bottom': 0}, {'crop_bottom': 7},
                         {'crop_bottom': True}, {'size': '1024x1024'},
-                        {'operation': 'edit', 'references': 1}, {'operation': 'edit', 'references': 2},
+                        {'operation': 'edit', 'references': 2},
                         {'transparent': True, 'conditioning': 'transparent fixture'},
                         {'native_size': '3840x2176'}, {'crop': [0, 0, 1920, 1080]}]:
             with self.subTest(changes=changes), self.assertRaises(protocol.Refusal):

@@ -238,7 +238,10 @@ def create_app(config, key, *, backend=None, recovery=recover, budget=REQUEST_BU
                                                'model_id', 'model_revision')},
                 'profiles': [{**{k: p[k] for k in ('operation', 'size', 'references', 'transparent',
                                                   'evidence_sha256')},
-                              'native_size': profile_geometry(p)[0], 'crop_bottom': profile_geometry(p)[1]}
+                              'native_size': profile_geometry(p)[0], 'crop_bottom': profile_geometry(p)[1],
+                              **({'input_padding': {'top': 0, 'right': 0,
+                                   'bottom': profile_geometry(p)[1], 'left': 0}}
+                                 if p['operation'] == 'edit' else {})}
                              for p in config['profiles']],
                 'limits': {'encoded_file_bytes': 33554432, 'encoded_total_bytes': 67108864,
                            'maximum_pixels_when_qualified': HARD_LIMITS['max_pixels'], 'references': 2,
