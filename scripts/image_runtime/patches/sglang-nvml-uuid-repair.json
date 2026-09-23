@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "repair_slot": 1,
+  "maximum_sglang_repairs_authorized": 1,
+  "reason": "Pinned platform helper rejects valid full GPU UUID CUDA_VISIBLE_DEVICES values by int conversion before model load",
+  "upstream_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+  "file": "python/sglang/multimodal_gen/runtime/platforms/cuda.py",
+  "original_git_blob_sha1": "19388b1b9f8594e8f9ce778846541d5427612808",
+  "original_sha256": "c0a99f13fe1d54e1c9d85cc90ea32c09dbd1ca27451159e0c64953881dd82e9f",
+  "repaired_sha256": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de",
+  "patch_sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e",
+  "patch_file": "sglang-nvml-uuid.patch",
+  "changed_function": "device_id_to_physical_device_id",
+  "behavior": "GPU- UUID resolves via balanced NVML init/get-handle-by-UUID/get-current-index/shutdown; numeric and unset behavior unchanged; errors propagate without fallback",
+  "live_gpu_validation": "NOT_TESTED_BY_PATCH_AUTHOR"
+}
