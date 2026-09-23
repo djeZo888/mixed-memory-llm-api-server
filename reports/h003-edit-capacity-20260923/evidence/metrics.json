@@ -1,0 +1,8 @@
+{
+  "accepted_model_calls": 0,
+  "request_metrics": [],
+  "raw_decoded_png": [],
+  "delivered_png": [],
+  "reason": "Source/preflight-only gate; no execution results exist.",
+  "preflight_only": true
+}

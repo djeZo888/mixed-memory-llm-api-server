@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "before_utc": "2026-09-23T12:24:34.772863+00:00",
+  "after_utc": "2026-09-23T12:53:18.830800+00:00",
+  "same_container_pid_start_image": true,
+  "same_gpu_uuid_pid_contexts": true,
+  "same_api_unit_identity": true,
+  "same_runtime_config": true,
+  "generation_ready_idle": true,
+  "both_text_contexts": 480000,
+  "generation_profiles": 6,
+  "edit_profiles": 0,
+  "global_swap_delta_during_readonly_checkpoint": {
+    "pswpin": 0,
+    "pswpout": 0
+  },
+  "no_model_request": true,
+  "q1_prior_swap_preserved_not_zero": 155086848,
+  "continuous_request_monitoring": "NOT_APPLICABLE_NO_REQUEST"
+}

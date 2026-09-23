@@ -1,0 +1,17 @@
+{
+  "status": "PASS_SOURCE_ONLY",
+  "source_commit": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+  "offline_adapter_tests": 29,
+  "offline_runner_codec_tests": 11,
+  "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=repo/tests/image_api .venv/bin/python -m unittest -v test_edit_geometry test_edit_seed test_corrections.FullHD test_protection.Configuration test_handlers.NativeWire.test_exact_generation_and_edit_wire_no_path_or_caller_headers test_handlers.Handlers.test_png_jpeg_references_actual_decode_and_no_resize test_handlers.Handlers.test_unsafe_unknown_fields_and_invalid_model_n_seed_size",
+  "runner_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=helpers .venv/bin/python -m unittest -v test_capacity_runner",
+  "linux_stop_timeout_execution": "NOT_RUN",
+  "python": "3.13.15 (main, Sep  1 2026, 14:05:45) [Clang 22.1.3 ]",
+  "dependencies": "Hash-pinned scripts/image_api/requirements.lock; isolated local .venv",
+  "installed_smart_resize_offline_cases": 4,
+  "read_only_vm_preflight": "PASS",
+  "runtime_inference": "NOT_RUN",
+  "gpu_capacity": "NOT_MEASURED",
+  "public_edit_activation": "NOT_RUN",
+  "test_log_sha256": "d684be45e64720e9f3fae6f1cf21df4ced7dfaaf4e1ec075ff18b0b4f0e6ec2b"
+}

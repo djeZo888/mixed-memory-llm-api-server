@@ -1,0 +1,16 @@
+test_actual_candidate_codec_prepare_deliver_without_native_request (test_capacity_runner.CapacitySettlement.test_actual_candidate_codec_prepare_deliver_without_native_request) ... ok
+test_ambiguous_previous_dispatch_blocks_even_independent_c04 (test_capacity_runner.CapacitySettlement.test_ambiguous_previous_dispatch_blocks_even_independent_c04) ... ok
+test_check_exception_retained_for_final_receipt (test_capacity_runner.CapacitySettlement.test_check_exception_retained_for_final_receipt) ... ok
+test_context_comparison_ignores_memory_bytes (test_capacity_runner.CapacitySettlement.test_context_comparison_ignores_memory_bytes) ... ok
+test_fresh_swap_events_and_reserve_failures_detected (test_capacity_runner.CapacitySettlement.test_fresh_swap_events_and_reserve_failures_detected) ... ok
+test_in_container_term_kill_and_fixed_request_path (test_capacity_runner.CapacitySettlement.test_in_container_term_kill_and_fixed_request_path) ... ok
+test_late_error_or_unsettled_telemetry_cannot_pass (test_capacity_runner.CapacitySettlement.test_late_error_or_unsettled_telemetry_cannot_pass) ... ok
+test_missing_probe_or_changed_identity_or_failed_guard_never_passes (test_capacity_runner.CapacitySettlement.test_missing_probe_or_changed_identity_or_failed_guard_never_passes) ... ok
+test_running_wrapper_refused_even_if_ready_get_preceded_racing_admission (test_capacity_runner.CapacitySettlement.test_running_wrapper_refused_even_if_ready_get_preceded_racing_admission) ... ok
+test_success_requires_all_settlement_checks (test_capacity_runner.CapacitySettlement.test_success_requires_all_settlement_checks) ... ok
+test_timeout_kill_or_unknown_exit_never_passes (test_capacity_runner.CapacitySettlement.test_timeout_kill_or_unknown_exit_never_passes) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.038s
+
+OK

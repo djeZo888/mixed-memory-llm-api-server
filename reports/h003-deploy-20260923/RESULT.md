@@ -48,7 +48,7 @@ Native internal LLM/title requests are not claimed as an exact request count.
 
 Preview/download both HTTP200 and identical opaque1920x1080 PNG2758770bytes,
 SHA256 `262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506`.
-Example: evidence/lake-bled-fullhd.png. Main assistant authored an absolute
+Retained original outside Git: `/Users/agent/CodexProjects/llm-orchestration/tasks/H003-DEPLOY-20260923/artifacts/lake-bled-fullhd.png`. Main assistant authored an absolute
 workspace Markdown link; existing Markdown suppresses it. Actual artifact card
 API paths work; Worker2 must assess visible browser behavior independently.
 
@@ -56,8 +56,10 @@ One idle graceful stop/start12:09:47.491–12:09:48.045UTC preserved all chats,
 jobs/messages/artifacts and replayed durable SSE event430, with no new inference.
 The first helper attempt failed on an inspection shape before any stop; it was
 corrected without production source change. A coordinator-note timing race must
-remain visible: the current no-restart note mtime precedes that restart, but its
-new instruction was first observed afterward. Immediate idle checks showed no
+remain visible: the recorded current note mtime12:14:50UTC follows the
+12:09:48UTC restart. The instruction was consumed after the already-entered
+restart; current mtime does not prove when an earlier note version was written.
+Worker2 firstGET was12:10:00.952UTC; no Worker2POST overlapped this restart. Immediate idle checks showed no
 active run/image/lane. No later lifecycle/config changes were made; preserve
 Worker2's acceptance window. This is protocol reconnect evidence, not UI evidence.
 

@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "task": "H003-EDIT-CAPACITY-20260923",
+  "budget_max_accepted": 4,
+  "accepted_model_calls": 0,
+  "dispatches": 0,
+  "rejected_predispatch_staging": 0,
+  "activation_fixed_warmups": 0,
+  "activation_fixed_warmups_separately_permitted": 1,
+  "closed_diagnostic_budget_reused": false,
+  "cases": [
+    {
+      "id": "C01",
+      "state": "PREDECLARED_NOT_DISPATCHED",
+      "accepted_executions": 0,
+      "hypothesis": "Fresh nonancestor seed preserves original teapot geometry while changing red to blue.",
+      "prompt": "Change the red teapot to blue, keeping its shape, table, window, and lighting unchanged.",
+      "operation": "edit",
+      "references": [
+        {
+          "index": 1,
+          "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/teapot-original.png",
+          "sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+          "source_dimensions": [
+            1024,
+            1024
+          ],
+          "original_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-20260923/artifacts/original-rgb.png",
+          "original_dimensions": [
+            1024,
+            1024
+          ],
+          "original_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+          "known_ancestor_seeds": [
+            42
+          ],
+          "working_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/teapot-original.png",
+          "working_dimensions": [
+            1024,
+            1024
+          ],
+          "working_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        }
+      ],
+      "size": "1024x1024",
+      "native_size": "1024x1024",
+      "crop_bottom": 0,
+      "seed": 46,
+      "recipe": {
+        "model": "qwen-image-2.1",
+        "attention_backend": "torch_sdpa",
+        "execution": "eager",
+        "residency": "all=resident",
+        "num_inference_steps": 40,
+        "guidance_scale": 1,
+        "true_cfg_scale": 1,
+        "generator_device": "cpu",
+        "n": 1,
+        "output_format": "png",
+        "background": "opaque"
+      },
+      "source_candidate": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+      "success_criteria": [
+        "Requested visible change and retained scene/object geometry, no severe global damage or incoherent texture.",
+        "Original scene fidelity outside the described localized edit.",
+        "Exact opaque delivered dimensions and validated native decode; C03 exact top1080 crop.",
+        "Continuous all-device memory/process capture through settle; Ada>=5%free, host available>=15%, no new reserve/runtime failure.",
+        "Fresh per-request global swap deltas and three-container swap/events; no zero-swap claim from cumulative historical counters.",
+        "Success exit, absent owned probe/context, unchanged original backend identity during private case; exact stopped-wrapper barrier and healthy native backend.",
+        "Root visual approval and measured reserve acceptance before profile enablement."
+      ],
+      "dispatch_gate": "Root exact source/runner review, clean-stop window receipt and coordinated C01GO; no dispatch this turn."
+    },
+    {
+      "id": "C02",
+      "state": "PREDECLARED_NOT_DISPATCHED",
+      "accepted_executions": 0,
+      "hypothesis": "One-reference landscape retains geometry and scene coherence during a localized roof recolour.",
+      "prompt": "Change only the orange tiled roof of the large church nave immediately to the left of the tall white bell tower to deep blue tiles. Keep the roof shape, tower, other buildings, island, trees, mountains, lake, framing, and morning lighting unchanged, with a coherent corresponding reflection in the water.",
+      "operation": "edit",
+      "references": [
+        {
+          "index": 1,
+          "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/lake-bled-1536x864-diagnostic.png",
+          "sha256": "a4bb120253fece2e5349bd9e54e9f280c5e20b18858a6f04df34063b56a31e4c",
+          "source_dimensions": [
+            1536,
+            864
+          ],
+          "original_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/lake-bled-fullhd.png",
+          "original_dimensions": [
+            1920,
+            1080
+          ],
+          "original_sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+          "known_ancestor_seeds": [
+            23092301
+          ],
+          "working_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/lake-bled-1536x864-diagnostic.png",
+          "working_dimensions": [
+            1536,
+            864
+          ],
+          "working_sha256": "a4bb120253fece2e5349bd9e54e9f280c5e20b18858a6f04df34063b56a31e4c",
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        }
+      ],
+      "size": "1536x864",
+      "native_size": "1536x864",
+      "crop_bottom": 0,
+      "seed": 47,
+      "recipe": {
+        "model": "qwen-image-2.1",
+        "attention_backend": "torch_sdpa",
+        "execution": "eager",
+        "residency": "all=resident",
+        "num_inference_steps": 40,
+        "guidance_scale": 1,
+        "true_cfg_scale": 1,
+        "generator_device": "cpu",
+        "n": 1,
+        "output_format": "png",
+        "background": "opaque"
+      },
+      "source_candidate": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+      "success_criteria": [
+        "Requested visible change and retained scene/object geometry, no severe global damage or incoherent texture.",
+        "Original scene fidelity outside the described localized edit.",
+        "Exact opaque delivered dimensions and validated native decode; C03 exact top1080 crop.",
+        "Continuous all-device memory/process capture through settle; Ada>=5%free, host available>=15%, no new reserve/runtime failure.",
+        "Fresh per-request global swap deltas and three-container swap/events; no zero-swap claim from cumulative historical counters.",
+        "Success exit, absent owned probe/context, unchanged original backend identity during private case; exact stopped-wrapper barrier and healthy native backend.",
+        "Root visual approval and measured reserve acceptance before profile enablement."
+      ],
+      "dispatch_gate": "Root exact source/runner review, clean-stop window receipt and coordinated C01GO; no dispatch this turn."
+    },
+    {
+      "id": "C03",
+      "state": "PREDECLARED_NOT_DISPATCHED",
+      "accepted_executions": 0,
+      "hypothesis": "Exact bottom8pad/crop permits Full HD local edit without reference or output stretch.",
+      "prompt": "Change only the orange tiled roof of the large church nave immediately to the left of the tall white bell tower to deep blue tiles. Keep the roof shape, tower, other buildings, island, trees, mountains, lake, framing, and morning lighting unchanged, with a coherent corresponding reflection in the water.",
+      "operation": "edit",
+      "references": [
+        {
+          "index": 1,
+          "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/lake-bled-fullhd.png",
+          "sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+          "source_dimensions": [
+            1920,
+            1080
+          ],
+          "original_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-DEPLOY-20260923/artifacts/lake-bled-fullhd.png",
+          "original_dimensions": [
+            1920,
+            1080
+          ],
+          "original_sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+          "known_ancestor_seeds": [
+            23092301
+          ],
+          "working_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/lake-bled-native1920x1088.png",
+          "working_dimensions": [
+            1920,
+            1088
+          ],
+          "working_sha256": "19d9caede2e6b21f0a5bae6244bcd5b5ddc294f7c7b2db27824c9cfbf88051bc",
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 8,
+            "left": 0
+          }
+        }
+      ],
+      "size": "1920x1080",
+      "native_size": "1920x1088",
+      "crop_bottom": 8,
+      "seed": 48,
+      "recipe": {
+        "model": "qwen-image-2.1",
+        "attention_backend": "torch_sdpa",
+        "execution": "eager",
+        "residency": "all=resident",
+        "num_inference_steps": 40,
+        "guidance_scale": 1,
+        "true_cfg_scale": 1,
+        "generator_device": "cpu",
+        "n": 1,
+        "output_format": "png",
+        "background": "opaque"
+      },
+      "source_candidate": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+      "success_criteria": [
+        "Requested visible change and retained scene/object geometry, no severe global damage or incoherent texture.",
+        "Original scene fidelity outside the described localized edit.",
+        "Exact opaque delivered dimensions and validated native decode; C03 exact top1080 crop.",
+        "Continuous all-device memory/process capture through settle; Ada>=5%free, host available>=15%, no new reserve/runtime failure.",
+        "Fresh per-request global swap deltas and three-container swap/events; no zero-swap claim from cumulative historical counters.",
+        "Success exit, absent owned probe/context, unchanged original backend identity during private case; exact stopped-wrapper barrier and healthy native backend.",
+        "Root visual approval and measured reserve acceptance before profile enablement."
+      ],
+      "dispatch_gate": "Root exact source/runner review, clean-stop window receipt and coordinated C01GO; no dispatch this turn."
+    },
+    {
+      "id": "C04",
+      "state": "PREDECLARED_NOT_DISPATCHED",
+      "accepted_executions": 0,
+      "hypothesis": "Two independently retained references both contribute visibly: original teapot scene and recognizable astronaut portrait.",
+      "prompt": "Use <image1> as the base scene. Add a small rectangular photographic portrait on the front of the red teapot showing the astronaut from <image2>, with her recognizable face, orange spacesuit, and black helmet. Keep the teapot red and preserve its shape, spout, handle, lid, table, window, lighting, and overall framing. The portrait should follow the teapot surface naturally.",
+      "operation": "edit",
+      "references": [
+        {
+          "index": 1,
+          "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/teapot-original.png",
+          "sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+          "source_dimensions": [
+            1024,
+            1024
+          ],
+          "original_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-20260923/artifacts/original-rgb.png",
+          "original_dimensions": [
+            1024,
+            1024
+          ],
+          "original_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+          "known_ancestor_seeds": [
+            42
+          ],
+          "working_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/teapot-original.png",
+          "working_dimensions": [
+            1024,
+            1024
+          ],
+          "working_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        },
+        {
+          "index": 2,
+          "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/astronaut-1024.png",
+          "sha256": "09fc2049a0c52f366a3fa38cc6cf6e2494cdd934147fe3994192965d78d03bf5",
+          "source_dimensions": [
+            1024,
+            1024
+          ],
+          "original_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-20260923/artifacts/d05-fixture/astronaut-1024.png",
+          "original_dimensions": [
+            1024,
+            1024
+          ],
+          "original_sha256": "09fc2049a0c52f366a3fa38cc6cf6e2494cdd934147fe3994192965d78d03bf5",
+          "known_ancestor_seeds": [],
+          "working_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/astronaut-1024.png",
+          "working_dimensions": [
+            1024,
+            1024
+          ],
+          "working_sha256": "09fc2049a0c52f366a3fa38cc6cf6e2494cdd934147fe3994192965d78d03bf5",
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        }
+      ],
+      "size": "1024x1024",
+      "native_size": "1024x1024",
+      "crop_bottom": 0,
+      "seed": 49,
+      "recipe": {
+        "model": "qwen-image-2.1",
+        "attention_backend": "torch_sdpa",
+        "execution": "eager",
+        "residency": "all=resident",
+        "num_inference_steps": 40,
+        "guidance_scale": 1,
+        "true_cfg_scale": 1,
+        "generator_device": "cpu",
+        "n": 1,
+        "output_format": "png",
+        "background": "opaque"
+      },
+      "source_candidate": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+      "success_criteria": [
+        "Requested visible change and retained scene/object geometry, no severe global damage or incoherent texture.",
+        "C04 additionally requires recognizable contribution from each ordered reference; single-reference success is insufficient.",
+        "Exact opaque delivered dimensions and validated native decode; C03 exact top1080 crop.",
+        "Continuous all-device memory/process capture through settle; Ada>=5%free, host available>=15%, no new reserve/runtime failure.",
+        "Fresh per-request global swap deltas and three-container swap/events; no zero-swap claim from cumulative historical counters.",
+        "Success exit, absent owned probe/context, unchanged original backend identity during private case; exact stopped-wrapper barrier and healthy native backend.",
+        "Root visual approval and measured reserve acceptance before profile enablement."
+      ],
+      "dispatch_gate": "Root exact source/runner review, clean-stop window receipt and coordinated C01GO; no dispatch this turn."
+    }
+  ]
+}

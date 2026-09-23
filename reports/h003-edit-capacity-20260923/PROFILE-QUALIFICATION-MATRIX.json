@@ -1,0 +1,49 @@
+{
+  "public_edit_profiles_enabled": 0,
+  "profiles": [
+    {
+      "case": "C01",
+      "operation": "edit",
+      "references": 1,
+      "size": "1024x1024",
+      "native_size": "1024x1024",
+      "capacity": "NOT_MEASURED",
+      "fidelity": "NOT_TESTED",
+      "root_visual_review": "PENDING",
+      "enabled": false
+    },
+    {
+      "case": "C02",
+      "operation": "edit",
+      "references": 1,
+      "size": "1536x864",
+      "native_size": "1536x864",
+      "capacity": "NOT_MEASURED",
+      "fidelity": "NOT_TESTED",
+      "root_visual_review": "PENDING",
+      "enabled": false
+    },
+    {
+      "case": "C03",
+      "operation": "edit",
+      "references": 1,
+      "size": "1920x1080",
+      "native_size": "1920x1088",
+      "capacity": "NOT_MEASURED",
+      "fidelity": "NOT_TESTED",
+      "root_visual_review": "PENDING",
+      "enabled": false
+    },
+    {
+      "case": "C04",
+      "operation": "edit",
+      "references": 2,
+      "size": "1024x1024",
+      "native_size": "1024x1024",
+      "capacity": "NOT_MEASURED",
+      "fidelity": "NOT_TESTED",
+      "root_visual_review": "PENDING",
+      "enabled": false
+    }
+  ]
+}
