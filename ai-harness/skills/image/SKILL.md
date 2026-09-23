@@ -30,6 +30,13 @@ For edits, reference the intended original or prior result explicitly. Ask for
 the missing source when it is unavailable. Preserve originals; each result is
 a new version. Keep requested changes and preservation instructions clear.
 
+For successive edits, prefer an omitted or fresh seed. The same seed reproduces
+a request/recipe, but the server rejects known source/ancestor generation seed
+reuse as `source_seed_collision`. Preserve an explicit user seed: never silently
+change it or automatically resubmit. Explain a collision and ask the user for
+a new seed or permission to omit it. Seed choice does not qualify editing;
+capability discovery still governs availability.
+
 Editing preserves original geometry when qualified. Any necessary resize,
 padding or canvas adjustment requires the user's approval of exact source and
 proposed dimensions on the saved image job card. When the tool returns

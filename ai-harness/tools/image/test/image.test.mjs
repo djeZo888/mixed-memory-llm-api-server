@@ -88,6 +88,17 @@ test('known non-admission is also never retried; operation/ref-count/size errors
   assert.equal(value.error.code, 'EDIT_UNAVAILABLE'); assert.equal(value.submissionUncertain, undefined);
 });
 
+test('explicit edit seed collision preserves seed42 and never resubmits', async () => {
+  const error = { code: 'source_seed_collision', message: 'Seed 42 matches a source or ancestor generation seed. Choose a new seed or omit it.' };
+  const f = fixture([response({ error }, 400)]);
+  const value = await f.client.invoke('edit', { prompt: 'Make the kettle blue', seed: 42, references: [{ fileId: 'artifact-1' }] });
+  assert.deepEqual(f.calls.map(call => [call.method, call.url]), [['POST', `${GATEWAY}/image-jobs`]]);
+  assert.equal(f.calls[0].data.seed, 42);
+  assert.deepEqual(value.error, { ...error, httpStatus: 400 });
+  assert.equal(value.submissionUncertain, undefined);
+  assert.deepEqual(f.waits, []);
+});
+
 test('transient GET failures retry only GET and keep the accepted identity', async () => {
   const f = fixture([response({ job: record('queued') }, 202), new Error('socket closed'),
     response({ error: { code: 'TEMPORARILY_UNAVAILABLE', message: 'Unavailable' } }, 503),
