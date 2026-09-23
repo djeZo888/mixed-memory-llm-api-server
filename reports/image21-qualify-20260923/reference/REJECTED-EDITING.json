@@ -1,0 +1,446 @@
+{
+  "capability": {
+    "additional_edits_authorized": false,
+    "causal_limit": "Same class of fidelity failure occurs in pinned Diffusers reference; failure is not isolated to SGLang. This does not establish intrinsic model/checkpoint fault or the specific numerical cause.",
+    "diffusers_promotion": false,
+    "editing": "UNSUPPORTED_AFTER_FAILED_FIDELITY",
+    "qualified_edit_profiles": [],
+    "transparency": "UNSUPPORTED_NOT_TESTED",
+    "two_reference": "UNSUPPORTED_NOT_TESTED"
+  },
+  "cases": [
+    {
+      "case_id": "sglang_raw_rgba",
+      "cgroup_lifetime_peak_bytes": 5417795584,
+      "cgroup_swap_used_max_bytes": 0,
+      "completed_outputs": 1,
+      "device": {
+        "sampled_min_free_bytes": 9602531328,
+        "sampled_min_free_percent": 18.635913,
+        "sampled_peak_used_bytes": 41924493312,
+        "total_bytes": 51527024640
+      },
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "failure_class": "VISUAL_FIDELITY",
+      "host_min_available_bytes": 921029550080,
+      "host_min_available_percent": 97.275998,
+      "host_swap_used_max_bytes": 0,
+      "http_seconds": 28.63818,
+      "input": {
+        "bytes": 1692710,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 1024,
+        "mode": "RGBA",
+        "sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+        "width": 1024
+      },
+      "native_allocator": {
+        "after_forward_peak_allocated_mib": 34267.35,
+        "after_forward_peak_reserved_mib": 38336.0,
+        "load_peak_allocated_mib": 31083.04,
+        "load_peak_reserved_mib": 31252.0,
+        "runtime_checkpoint_current_allocated_mib": 31093.13,
+        "runtime_checkpoint_current_reserved_mib": 38336.0,
+        "runtime_peak_allocated_mib": 34267.35,
+        "runtime_peak_reserved_mib": 38336.0,
+        "scope": "runtime_peak is native cumulative maximum across requests since startup; after_forward fields are native reported request checkpoint peaks; neither is NVML total-device or per-process current",
+        "scope_source": "pinned SGLang gpu_worker.py updates _runtime_peak_* with max(previous, snapshot)"
+      },
+      "native_inference_seconds": 28.27086932200018,
+      "native_perf_receipt": {
+        "available": true,
+        "bytes": 4651,
+        "filename": "edit-perf.json",
+        "sha256": "80efc540754e7500dca1fd7b201692533de797656b1019ab7064906e5351ba95"
+      },
+      "output": {
+        "bytes": 2165324,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 1024,
+        "mode": "RGBA",
+        "sha256": "ed3feb60a983dbbbf38b62d24e37a9b978a04b8f01c709d025843746389b2ac1",
+        "width": 1024
+      },
+      "output_bytes_locally_rehashed": false,
+      "pipeline_calls": 1,
+      "raw_source_files": {
+        "evidence/baseline/2088c347bc1e41a9a3e086b20b9be7be-edit-telemetry.jsonl": "8acba06207f0ed852a93e1941b25aee070663985a5800996e3a851d4598f2892",
+        "evidence/baseline/edit-perf.json": "80efc540754e7500dca1fd7b201692533de797656b1019ab7064906e5351ba95",
+        "evidence/baseline/edit-summary.json": "52d783b061de398ec0ebe80dba6e7f9ad0ba2c78438737e51951579ebe6aa29e"
+      },
+      "recipe": {
+        "enable_teacache": false,
+        "generator_device": "cpu",
+        "guidance_scale": 1.0,
+        "model": "qwen-image-2.1",
+        "n": 1,
+        "num_inference_steps": 40,
+        "output_format": "png",
+        "perf_dump_path": "/work/evidence/2088c347bc1e41a9a3e086b20b9be7be/edit-perf.json",
+        "prompt": "Change the red teapot to blue, keeping its shape, table, window, and lighting unchanged.",
+        "response_format": "b64_json",
+        "seed": 42,
+        "size": "1024x1024",
+        "true_cfg_scale": 1.0
+      },
+      "retained_output_location": "IMAGE21-RUNTIME-20260923/evidence/baseline/edit.png",
+      "review_basis": "Recorded actual PNG reviews by primary, independent and root; no new visual qualification in this compilation.",
+      "sampling": {
+        "first_query_to_sampler_start_seconds": 0.024612,
+        "first_sample_utc": "2026-09-23T03:00:23.464623+00:00",
+        "host_sample_count": 30,
+        "last_query_to_stop_seconds": 0.145222,
+        "last_sample_utc": "2026-09-23T03:00:52.864691+00:00",
+        "max_actual_sample_interval_seconds": 0.200088,
+        "max_query_duration_seconds": 0.136522,
+        "nominal_device_interval_seconds": 0.2,
+        "nominal_host_interval_seconds": 1.0,
+        "request_end_after_last_sample_seconds": 0.065344,
+        "request_start_before_first_sample_seconds": 0,
+        "sample_count": 148,
+        "skipped_schedule_slots": 0,
+        "stop_utc": "2026-09-23T03:00:53.051775+00:00",
+        "unavailable_metric_counts": {},
+        "unobserved_peak_intervals": "Between all discrete samples; query durations are not synchronized metric timestamps. No continuous peak guarantee."
+      },
+      "semantic_color_change": "PARTIAL",
+      "status": "FAIL",
+      "transport_decode_status": "PASS",
+      "visual_observation": "Teapot darkblue/navy and composition preserved, but strong unwanted contrast, coarse surface/detail and changed background blur/lighting fail unchanged-scene instruction",
+      "visual_status": "FAIL"
+    },
+    {
+      "case_id": "sglang_normalized_rgb",
+      "cgroup_lifetime_peak_bytes": 5438451712,
+      "cgroup_swap_used_max_bytes": 0,
+      "completed_outputs": 1,
+      "device": {
+        "sampled_min_free_bytes": 9602531328,
+        "sampled_min_free_percent": 18.635913,
+        "sampled_peak_used_bytes": 41924493312,
+        "total_bytes": 51527024640
+      },
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "failure_class": "VISUAL_FIDELITY",
+      "host_min_available_bytes": 921043390464,
+      "host_min_available_percent": 97.27746,
+      "host_swap_used_max_bytes": 0,
+      "http_seconds": 27.346664,
+      "input": {
+        "bytes": 1271632,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 1024,
+        "mode": "RGB",
+        "sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+        "width": 1024
+      },
+      "native_allocator": {
+        "after_forward_peak_allocated_mib": 34267.42,
+        "after_forward_peak_reserved_mib": 38336.0,
+        "load_peak_allocated_mib": 31083.04,
+        "load_peak_reserved_mib": 31252.0,
+        "runtime_checkpoint_current_allocated_mib": 31093.2,
+        "runtime_checkpoint_current_reserved_mib": 38336.0,
+        "runtime_peak_allocated_mib": 34267.42,
+        "runtime_peak_reserved_mib": 38336.0,
+        "scope": "runtime_peak is native cumulative maximum across requests since startup; after_forward fields are native reported request checkpoint peaks; neither is NVML total-device or per-process current",
+        "scope_source": "pinned SGLang gpu_worker.py updates _runtime_peak_* with max(previous, snapshot)"
+      },
+      "native_inference_seconds": 26.988528212000347,
+      "native_perf_receipt": {
+        "available": true,
+        "bytes": 4646,
+        "filename": "edit-perf.json",
+        "sha256": "a6a498e0214ad9ec1aa5bcc8f96d95067982fcf2d6d92d3fa2e003b8cc1a6f7b"
+      },
+      "output": {
+        "bytes": 2165240,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 1024,
+        "mode": "RGBA",
+        "sha256": "a76c98a479c2e319677b931e699373b376846e3bfd2769d18ca66c74c99d706b",
+        "width": 1024
+      },
+      "output_bytes_locally_rehashed": false,
+      "pipeline_calls": 1,
+      "raw_source_files": {
+        "evidence/rgb-comparison/2088c347bc1e41a9a3e086b20b9be7be-rgb-comparison-telemetry.jsonl": "da0f7a229af3e51fa6abecbe6bc6139474d972993d297ca35d6dd5224f8305c1",
+        "evidence/rgb-comparison/edit-perf.json": "a6a498e0214ad9ec1aa5bcc8f96d95067982fcf2d6d92d3fa2e003b8cc1a6f7b",
+        "evidence/rgb-comparison/edit-summary.json": "26f59f97aaa1ce7c2b2cfe5c6c0085d66d96afff4abf77a7f5bc2ec76740477c"
+      },
+      "recipe": {
+        "enable_teacache": false,
+        "generator_device": "cpu",
+        "guidance_scale": 1.0,
+        "model": "qwen-image-2.1",
+        "n": 1,
+        "num_inference_steps": 40,
+        "output_format": "png",
+        "perf_dump_path": "/work/evidence/2088c347bc1e41a9a3e086b20b9be7be/rgb-comparison/edit-perf.json",
+        "prompt": "Change the red teapot to blue, keeping its shape, table, window, and lighting unchanged.",
+        "response_format": "b64_json",
+        "seed": 42,
+        "size": "1024x1024",
+        "true_cfg_scale": 1.0
+      },
+      "retained_output_location": "IMAGE21-RUNTIME-20260923/evidence/rgb-comparison/edit.png",
+      "review_basis": "Recorded actual PNG reviews by primary, independent and root; no new visual qualification in this compilation.",
+      "sampling": {
+        "first_query_to_sampler_start_seconds": 0.024518,
+        "first_sample_utc": "2026-09-23T03:08:41.320525+00:00",
+        "host_sample_count": 29,
+        "last_query_to_stop_seconds": 0.048198,
+        "last_sample_utc": "2026-09-23T03:09:09.520606+00:00",
+        "max_actual_sample_interval_seconds": 0.200101,
+        "max_query_duration_seconds": 0.146986,
+        "nominal_device_interval_seconds": 0.2,
+        "nominal_host_interval_seconds": 1.0,
+        "request_end_after_last_sample_seconds": 0,
+        "request_start_before_first_sample_seconds": 0,
+        "sample_count": 142,
+        "skipped_schedule_slots": 0,
+        "stop_utc": "2026-09-23T03:09:09.609895+00:00",
+        "unavailable_metric_counts": {},
+        "unobserved_peak_intervals": "Between all discrete samples; query durations are not synchronized metric timestamps. No continuous peak guarantee."
+      },
+      "semantic_color_change": "PARTIAL",
+      "status": "FAIL",
+      "transport_decode_status": "PASS",
+      "visual_observation": "ActualcomparisonPNGviewed; same darknavyteapot with heavycontrast/coarsetexture/sharpenedbackground and alteredsoftlighting. OpaqueRGBnormalizationdidnotresolveobservedfidelityfailure.",
+      "visual_status": "FAIL"
+    },
+    {
+      "capacity_qualified": false,
+      "case_id": "diffusers_initial_cache_error",
+      "completed_denoising_steps": 0,
+      "completed_outputs": 0,
+      "container_wall_seconds": 19.209151319999364,
+      "diagnosis": "The one-shot launch omitted TRITON_CACHE_DIR; the default Transformers rotary path attempted cache creation under /home/ubuntu/.triton on the read-only container filesystem.",
+      "error": "[Errno 30] Read-only file system: '/home/ubuntu/.triton'",
+      "failure_class": "ENVIRONMENT_PRE_DENOISING",
+      "load_seconds": 13.928210870999465,
+      "native_inference_seconds": null,
+      "output": null,
+      "pipeline_calls": 1,
+      "status": "FAIL",
+      "timing_limit": "No completed inference; exception path did not persist exact failed-call duration. Container load-plus-attempt wall time is preserved.",
+      "visual_evidence": false,
+      "visual_status": "NOT_TESTED"
+    },
+    {
+      "case_id": "diffusers_corrected",
+      "cgroup_lifetime_peak_bytes": 5670006784,
+      "cgroup_swap_used_max_bytes": 0,
+      "completed_denoising_steps": 40,
+      "completed_outputs": 1,
+      "device": {
+        "sampled_min_free_bytes": 5884280832,
+        "sampled_min_free_percent": 11.419795482295482,
+        "sampled_peak_used_bytes": 45642743808,
+        "total_bytes": 51527024640
+      },
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "failure_class": "VISUAL_FIDELITY",
+      "host_min_available_bytes": 920876662784,
+      "host_min_available_percent": 97.25985096142018,
+      "host_swap_used_max_bytes": 0,
+      "http_seconds": null,
+      "input_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+      "load_seconds": 13.733034730001236,
+      "native_allocator": {
+        "current_allocated_bytes": 32471560192,
+        "current_reserved_bytes": 44398804992,
+        "max_memory_allocated_bytes": 41695526400,
+        "max_memory_reserved_bytes": 44398804992
+      },
+      "native_inference_seconds": 30.87944184600019,
+      "output": {
+        "bytes": 1984698,
+        "extrema": [
+          [
+            0,
+            255
+          ],
+          [
+            0,
+            255
+          ],
+          [
+            0,
+            255
+          ],
+          [
+            227,
+            255
+          ]
+        ],
+        "mode": "RGBA",
+        "sha256": "67893b76fe9045e07b1a85a4d25c9f213c2a3467c5d647d31f42f1e3d4ae0422",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      "output_bytes_locally_rehashed": true,
+      "pipeline_calls": 1,
+      "retained_output_location": "reference-evidence/output.png",
+      "review_basis": "Primary and independent actual PNG review agree; root independently agrees in archived ROOT-CORRECTED-RESULT-CLOSEOUT.md.",
+      "sampling": "200ms device totals;1s host/cgroup;between-sample peaks unobserved;initial/final cgroup absent samples retained",
+      "semantic_color_change": "PARTIAL",
+      "status": "FAIL",
+      "visual_observation": "Teapot becomes dark navy/purple-blue, but coarse texture and harsh highlights/contrast affect pot and table; soft window background becomes sharp mottled foliage. Lighting and scene fidelity not preserved.",
+      "visual_status": "FAIL"
+    }
+  ],
+  "diffusers": {
+    "attention": "Diffusers native; Transformers root/text/vision sdpa; 32 QwenImage21AttnProcessor instances",
+    "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+    "constructor": "QwenImage21Pipeline.from_pretrained('/models',local_files_only=True,torch_dtype=torch.bfloat16).to('cuda')",
+    "correction_file": "CORRECTION-PINS.json",
+    "correction_scope": "Same immutable image, source recipe, checkpoint, input, constructor and numeric parameters; add complete approved writable cache environment and check 13 paths as UID1000/GID1001. No rebuild.",
+    "dependency_file": "DEPENDENCIES.json",
+    "dependency_limit": [
+      "All installed versions frozen; inherited packages are identified by immutable accepted parent image.",
+      "Inherited original receipt lacks archive hashes for35 distributions. This is not a complete from-scratch archive lock.",
+      "distribution-records.sha256 hashes installed wheel RECORD manifests, not an independent rehash of all payload files."
+    ],
+    "image_id": "sha256:6c0635058db5b238b54d594e1aaa7b3175561e60b0ff151de1c00f85324e2b96",
+    "metrics_file": "METRICS-CORRECTED.json",
+    "parent_image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    "precision_residency": "All components native BF16/FP32 resident on Ada; no offload, quantization, tiling or torch.compile.",
+    "recipe_file": "RECIPE.json",
+    "session_id": "01a0cc4b-c378-7880-b15f-0ca5886bc4a9",
+    "source_archive_receipt": "SOURCE-ARCHIVE-RECEIPT.json",
+    "source_commit": "8b3c707ebd3ec4881f4190cf42931da07eaf3b65",
+    "tokenizers": "0.23.2",
+    "torch": "2.13.0+cu130",
+    "transformers": "5.17.0",
+    "version": "0.41.0.dev0"
+  },
+  "metrics_limits": [
+    "200 ms device and 1 s host/cgroup sampling do not observe between-sample peaks.",
+    "Native allocated/reserved peaks and NVML total-device usage are distinct.",
+    "SGLang runtime allocator maxima and cgroup memory.peak may be lifetime maxima, not reset per call.",
+    "No completed inference timing exists for the first Diffusers environment error.",
+    "Source paths and historical SGLang PNG/trace hashes are receipts; those bulky historical bytes were not supplied or rehashed here."
+  ],
+  "prompt": "Change the red teapot to blue, keeping its shape, table, window, and lighting unchanged.",
+  "prompt_sha256": "a9f870646680ede8671e01a4604a95be4ba2ad013bf517b0d21869289f33889b",
+  "qualification_source": {
+    "api_source_commit": "07d2a495c648c5cfbad21a5b15fec4b7fc7b4a58",
+    "bundle_sha256": "77c6d195f3cd49bf66afec32b7b0f824b2518a76300fdfc5f897654ab0c07346",
+    "prior_reference_corrected_exit_code": 0,
+    "prior_reference_session": "01a0cc4b-c378-7880-b15f-0ca5886bc4a9",
+    "restored_container": "18caf935baedc917fd2e3ad4e086b589acf3b6ef110f91dfbbe940ab6a873ed8",
+    "restored_run": "99c0105a7acf43788fdb0d436660f29b",
+    "root_go_preconditions_satisfied": true,
+    "root_scope": "GENERATION_ONLY_API_AND_GENERATION_ONLY_LADDER",
+    "runtime_source_commit": "02ac227b16022ee23e7ee3aeebd1a75f2b6a1d2b",
+    "source_commit": "43ed79f3905c769f449f48300c7087d7a432f989"
+  },
+  "restored_handoff": {
+    "canonical_lease_released": true,
+    "fixed_recovery_status": "PASS_FIXED_HELPER_EXIT0_WARM",
+    "qwens_unchanged": true,
+    "receipt_utc": "2026-09-23T03:43:33.094358+00:00",
+    "reference_container_id": "94fbcc4211a1d07536301188825adf8b6d6e0fbabc3dfb408ffa38b4da21a50f",
+    "reference_container_state": {
+      "Dead": false,
+      "Error": "",
+      "ExitCode": 0,
+      "FinishedAt": "2026-09-23T03:40:06.222002665Z",
+      "OOMKilled": false,
+      "Paused": false,
+      "Pid": 0,
+      "Restarting": false,
+      "Running": false,
+      "StartedAt": "2026-09-23T03:39:16.611008282Z",
+      "Status": "exited"
+    },
+    "reference_gpu_context_released": true,
+    "scope": "Historical state at supplied receipt UTC; current qualification deployment may replace this container.",
+    "sglang_container_id": "18caf935baedc917fd2e3ad4e086b589acf3b6ef110f91dfbbe940ab6a873ed8",
+    "sglang_image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    "sglang_run_id": "99c0105a7acf43788fdb0d436660f29b"
+  },
+  "schema_version": 1,
+  "scope": "Historical rejected editing evidence compiled from supplied local receipts; no replay, new inference, VM inspection or runtime promotion.",
+  "sglang": {
+    "checkpoint_bytes": 33131614782,
+    "checkpoint_files": 26,
+    "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+    "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+    "image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    "installed_config_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+    "normalization": {
+      "call": "protocol.decode_image(raw,(1024,1024),output=True,transparent=False)",
+      "input_raw_sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+      "normalization_location": "ordinaryUID1000_currentpinnedruntimecontainer",
+      "normalization_source_commit": "07d2a495c648c5cfbad21a5b15fec4b7fc7b4a58",
+      "normalized_bytes": 1271632,
+      "normalized_mode": "RGB",
+      "normalized_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+      "not_inference": "Normalizationonly; preserveoriginalrawreceipts",
+      "pillow_version": "11.3.0",
+      "protocol_sha256": "ebca2b024d236d03475dde15a63414c49fb86714733afa1bbf8ca68d88fd5238",
+      "rgb_pixels_identical_to_raw_convert_rgb": true,
+      "utc": "2026-09-23T03:07:10.738467+00:00"
+    },
+    "run_id_for_edits": "2088c347bc1e41a9a3e086b20b9be7be",
+    "runtime_policy": {
+      "all_components_resident": true,
+      "attention_backend": "torch_sdpa",
+      "backend": "sglang",
+      "cfg": 1,
+      "eager": true,
+      "embedded_guidance_note": "Generic logged field unused by QwenImage21; effective true CFG is 1. No distilled guidance embedding.",
+      "embedded_guidance_scale_effective": false,
+      "generator_device": "cpu",
+      "logged_generic_embedded_guidance_scale": 6.0,
+      "n": 1,
+      "precision": "native BF16/FP32",
+      "seed": 42,
+      "steps": 40
+    },
+    "source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+    "source_sha256": {
+      "Dockerfile": "d8295698cc454210c9a369d29d863c999e0fd1815a74b606f8648e6cd3b45997",
+      "llm-image-backend-recover": "ffe1120721e3494a442a91f4ffe46e105755c53f03efe679ad4b4f630558b3be",
+      "llm-image-backend.service": "6861cdfab9a83082e4db41773186ddea1d077e37279555561440dbf860c7617c",
+      "native_request.py": "91180c1613de1fa113426dba2c534a8c31b851f066a252c1dcfd08fa8012bf6f",
+      "native_server.py": "a98a99b984f354c0a339a45233aea01abae589b9bc25ea44a9f3b861429111ee",
+      "service.py": "0edadcb43ec83d369d7bdb66dddc7035962d620475314b0142cb9f047b197586",
+      "telemetry.py": "a6d5f9262de82a318c7aa86dfef599fa6228463bb712c94d916c653afba2f0e9"
+    },
+    "uuid_patch": {
+      "count": 1,
+      "file_repaired_sha256": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de",
+      "parent_image_id": "sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83",
+      "patch_sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e",
+      "reason": "NVML resolve authoritative CUDA_VISIBLE_DEVICES GPU UUID to current index"
+    }
+  },
+  "shared_recipe": {
+    "height": 1024,
+    "n": 1,
+    "noise_rng": "cpu",
+    "seed": 42,
+    "steps": 40,
+    "true_cfg_scale": 1,
+    "width": 1024
+  },
+  "source_manifest_file": "INPUT-MANIFEST.json"
+}

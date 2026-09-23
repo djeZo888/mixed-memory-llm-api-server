@@ -1,0 +1,111 @@
+{
+  "backend_container_id": null,
+  "backend_container_id_status": "NOT_REOBSERVED_AFTER_FINAL_RECOVERY",
+  "capabilities_canonical_sha256": "ab0e32b0babda2cc0dffb9f88fc5567c79767e4cee7ef6f6bf8a3e86d9fa6394",
+  "endpoint": "http://10.156.100.60:30006",
+  "final_deployment_receipt_sha256": "b294bc7df37edb878d11149513ed0746a65be41689833cf2edadef1416a52958",
+  "key_source": {
+    "path": "/data/services/secrets/llm-api-key"
+  },
+  "provenance": {
+    "capabilities": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/IMAGE21-QUALIFY-20260923/worker2-final-evidence/FINAL-GET-CAPABILITIES.json",
+      "sha256": "44d3e771a57b667a0d06bec7d0836dafe3ecb23f611a8cc0c68d582f395399e5"
+    },
+    "result": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/IMAGE21-QUALIFY-20260923/worker2-final-evidence/FINAL-GET-RESULT.json",
+      "sha256": "f9862059eb12b70cb849cf466bf9cc206c549beda02fa5eb359b1598fd1bb97b"
+    }
+  },
+  "qualification": {
+    "model_id": "Qwen/Qwen-Image-2.1",
+    "model_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+    "profiles": [
+      {
+        "conditioning": "",
+        "crop_bottom": 0,
+        "evidence_sha256": "29250a7887d4bd9688a4ebd2c3f0720db1960116012f31fa553dddf37656aad4",
+        "native_size": "1024x1024",
+        "operation": "generation",
+        "references": 0,
+        "size": "1024x1024",
+        "transparent": false
+      },
+      {
+        "conditioning": "",
+        "crop_bottom": 0,
+        "evidence_sha256": "f4c2f070cb44477dcacd671f46646cfa39e0374e859c808ec7c78c9cc3a35af1",
+        "native_size": "1024x576",
+        "operation": "generation",
+        "references": 0,
+        "size": "1024x576",
+        "transparent": false
+      },
+      {
+        "conditioning": "",
+        "crop_bottom": 0,
+        "evidence_sha256": "0c5536fb0a6ec34bb972e84ae05a1d01bcf8a96281220f3f31c9c08ddbda16ef",
+        "native_size": "1216x704",
+        "operation": "generation",
+        "references": 0,
+        "size": "1216x704",
+        "transparent": false
+      },
+      {
+        "conditioning": "",
+        "crop_bottom": 0,
+        "evidence_sha256": "f017918f5885133522197bb5765201788e66a1423c4303992a65887eabd520e3",
+        "native_size": "1472x832",
+        "operation": "generation",
+        "references": 0,
+        "size": "1472x832",
+        "transparent": false
+      },
+      {
+        "conditioning": "",
+        "crop_bottom": 0,
+        "evidence_sha256": "f91eaca9a0d8583081ccaa9d62d48bd7511bd5b99b8193a26abd7106f27e3c83",
+        "native_size": "1760x992",
+        "operation": "generation",
+        "references": 0,
+        "size": "1760x992",
+        "transparent": false
+      },
+      {
+        "conditioning": "",
+        "crop_bottom": 0,
+        "evidence_sha256": "cbf6b540d0d8aabe2db226228fe4ec9531c99e3abc3e8473c18a4a6a29f5153e",
+        "native_size": "1920x1088",
+        "operation": "generation",
+        "references": 0,
+        "size": "1920x1088",
+        "transparent": false
+      }
+    ],
+    "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    "runtime_revision": "0cd8be351d0825488f4b81c8931167bbab618eca",
+    "schema_version": 1
+  },
+  "qualification_sha256": "d8d38a8212bb2f040b979f899e74564af541b36a83832b21122f280792b3ec7b",
+  "reconciliation": "PASS_LOCAL_WORKER1; original Worker2 pending artifact field remains historical; Worker2 independent reconciliation not implied",
+  "schema_version": 1,
+  "service": {
+    "admitting": true,
+    "busy": false,
+    "ready": true,
+    "state": "ready"
+  },
+  "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7",
+  "text_services": [
+    {
+      "context_length": 480000,
+      "endpoint": "http://10.156.100.60:30002",
+      "model": "qwen3.8-27b-gpu0"
+    },
+    {
+      "context_length": 480000,
+      "endpoint": "http://10.156.100.60:30004",
+      "model": "qwen3.8-27b"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+  "source_tree_sha256": "a7b6342f55b62979a7d88526632a68bce2fd3461dfb7e55eabf109f5a6725522",
+  "dockerfile_sha256": "d8295698cc454210c9a369d29d863c999e0fd1815a74b606f8648e6cd3b45997",
+  "base_linux_amd64_digest": "sha256:a85c9f5af049f0ab679c1669ae6fa8393022886739af7361e85bb96878e8cdd4",
+  "build_started_utc": "2026-09-23T02:13:27.622640+00:00",
+  "status": "BUILT_AFTER_DIAGNOSED_BUILD_ENVIRONMENT_REPAIR",
+  "image_id": "sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83",
+  "build_seconds": 288.8419090240004
+}

@@ -1,0 +1,86 @@
+{
+  "status": "COMPLETED_VISUAL_FIDELITY_FAIL",
+  "attempt": "corrected_cache_environment",
+  "load_seconds": 13.733034730001236,
+  "inference_seconds": 30.87944184600019,
+  "load_allocator": {
+    "max_memory_allocated_bytes": 32457959936,
+    "max_memory_reserved_bytes": 32648462336,
+    "current_allocated_bytes": 32457959936,
+    "current_reserved_bytes": 32648462336
+  },
+  "inference_allocator": {
+    "max_memory_allocated_bytes": 41695526400,
+    "max_memory_reserved_bytes": 44398804992,
+    "current_allocated_bytes": 32471560192,
+    "current_reserved_bytes": 44398804992
+  },
+  "device_telemetry": {
+    "elapsed_s": 50.56081819800056,
+    "event": "stop",
+    "max_query_duration_s": 0.10484723999979906,
+    "max_sample_interval_s": 0.20053292800002964,
+    "monotonic_s": 9549.086417098,
+    "nvml_shutdown": {
+      "code": 0,
+      "function": "nvmlShutdown"
+    },
+    "sampled_max_used_bytes": 45642743808,
+    "sampled_min_free_bytes": 5884280832,
+    "samples": 253,
+    "signal_stop_requested": true,
+    "skipped_schedule_slots": 0,
+    "utc": "2026-09-23T03:40:06.420473+00:00"
+  },
+  "host_min_available_bytes": 920876662784,
+  "host_min_available_fraction": 0.9725985096142018,
+  "host_swap_used_max_bytes": 0,
+  "cgroup_swap_max_bytes": 0,
+  "cgroup_observed_lifetime_peak_bytes": 5670006784,
+  "sampled_margins_pass": true,
+  "output": {
+    "sha256": "67893b76fe9045e07b1a85a4d25c9f213c2a3467c5d647d31f42f1e3d4ae0422",
+    "bytes": 1984698,
+    "mode": "RGBA",
+    "size": [
+      1024,
+      1024
+    ],
+    "extrema": [
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ],
+      [
+        227,
+        255
+      ]
+    ]
+  },
+  "ada_released": true,
+  "qwens_unchanged": true,
+  "corrected_pipeline_calls": 1,
+  "completed_edits": 1,
+  "prior_attempt": {
+    "precall_counter": 1,
+    "completed_denoising_steps": 0,
+    "completed_edits": 0
+  },
+  "telemetry_scope": "200ms device totals;1s host/cgroup;between-sample peaks unobserved;initial/final cgroup absent samples retained",
+  "visual_review": {
+    "status": "FAIL",
+    "actual_png_reviewers": [
+      "primary",
+      "independent"
+    ],
+    "observation": "Dark navy/purple-blue pot with coarse texture, harsh highlights/contrast; soft window blur and lighting changed."
+  }
+}

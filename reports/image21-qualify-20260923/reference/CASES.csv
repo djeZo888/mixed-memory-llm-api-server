@@ -1,0 +1,5 @@
+case_id,status,failure_class,visual_status,pipeline_calls,completed_outputs,http_seconds,native_inference_seconds,sampled_peak_used_bytes,sampled_min_free_bytes,output_sha256
+sglang_raw_rgba,FAIL,VISUAL_FIDELITY,FAIL,1,1,28.63818,28.27086932200018,41924493312,9602531328,ed3feb60a983dbbbf38b62d24e37a9b978a04b8f01c709d025843746389b2ac1
+sglang_normalized_rgb,FAIL,VISUAL_FIDELITY,FAIL,1,1,27.346664,26.988528212000347,41924493312,9602531328,a76c98a479c2e319677b931e699373b376846e3bfd2769d18ca66c74c99d706b
+diffusers_initial_cache_error,FAIL,ENVIRONMENT_PRE_DENOISING,NOT_TESTED,1,0,,,,,
+diffusers_corrected,FAIL,VISUAL_FIDELITY,FAIL,1,1,,30.87944184600019,45642743808,5884280832,67893b76fe9045e07b1a85a4d25c9f213c2a3467c5d647d31f42f1e3d4ae0422

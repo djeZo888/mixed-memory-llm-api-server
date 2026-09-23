@@ -50,10 +50,30 @@ proofs as Q/Q. Current mode admission derives physical placement from trusted
 resident deployment IDs, not model names or saved readiness. Missing either
 mode/proof fails closed; exact root review precedes receipt publication.
 
+Historical two-GPU receipt inventories remain valid when both required UUIDs
+occur exactly once, even after a third GPU is installed. Do not rewrite the old
+inventory or measurement proofs merely to add Ada. Identity rows require a
+nonnegative canonical decimal physical index and a full lowercase `GPU-` UUID;
+duplicate indices/UUIDs, malformed rows and missing required identities fail.
+Additional well-formed GPUs and reordered/remapped indices are accepted without
+changing either fixed placement.
+
+`concurrent_profiles.py` is itself in `source_identity()`: the old protected
+receipt must reject changed critical bytes. Compatibility requires a separately
+root-reviewed amendment preserving schema 2, both modes, every old proof and
+measurement lineage, with an appended amendment evidence reference and updated
+source identity/digest. Follow the [Worker1 publication sequence and rollback
+limits](qwen-image-2.1-compat-rollout.md). Source/offline tests grant no production
+acceptance and create no production receipt.
+
 ## Fresh admission and readiness
 
 Immediately before start/create/reuse, under the canonical owner, recheck online
-CPUs0–71, exact GPU UUID order/totals, current MemAvailable and free GPU memory.
+CPUs0–71, required GPU UUID identities, current MemAvailable and free GPU memory.
+Map total/free bytes by exact UUID, independent of row order and physical index.
+For the target and every resident slot, require that UUID's total to equal its
+own accepted proof, and its free bytes to meet that slot's existing requirement.
+Neither Ada nor the peer's total/free bytes can satisfy a constrained slot.
 Retain16GiB shared host headroom plus full reviewed caps of target/resident peer,
 less each exact resident container's disjoint `anon + shmem` charge. Require
 zero swap, validate PID/cgroup and recheck container start identity. Do not credit

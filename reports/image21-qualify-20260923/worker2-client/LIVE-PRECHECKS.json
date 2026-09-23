@@ -1,0 +1,10 @@
+{
+  "status": "LIVE_PASS",
+  "recorded_utc": "2026-09-23T04:08:45.680125+00:00",
+  "read_status": "LIVE_PASS",
+  "invalid_status": "LIVE_PASS",
+  "accepted_generation_submitted": false,
+  "requests_in_flight": false,
+  "sampler_gate": "WAITING_FOR_CONFIRMATION_NOTE_OR_COORDINATOR",
+  "last_clock_check_utc": "2026-09-23T04:08:07Z"
+}

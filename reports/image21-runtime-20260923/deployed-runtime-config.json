@@ -1,0 +1,35 @@
+{
+  "checkpoint_path": "/data/models-large/qwen-image-2.1-790c92633540aa0cb11d9abf19eb46d861714758",
+  "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+  "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+  "image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+  "network_id": "4d21a85d6dc326cc90d68e0f017d2e58fb96f5664e55384c1f3f337661d7ef80",
+  "network_policy": {
+    "host_publish": "127.0.0.1:30007:30007/tcp",
+    "internal": false,
+    "name": "llm-image-backend-private",
+    "native_http_bind_inside_namespace": "0.0.0.0:30007",
+    "reason": "InternalbridgepublishunsupportedonDocker29.6.1; dedicatedordinarybridgewithsoleloopbackpublication",
+    "unpublished_internal_ports": [
+      30008,
+      30009,
+      30010
+    ]
+  },
+  "owner": "IMAGE21-RUNTIME-20260923",
+  "schema_version": 1,
+  "source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+  "source_sha256": {
+    "native_request.py": "91180c1613de1fa113426dba2c534a8c31b851f066a252c1dcfd08fa8012bf6f",
+    "native_server.py": "a98a99b984f354c0a339a45233aea01abae589b9bc25ea44a9f3b861429111ee",
+    "service.py": "0edadcb43ec83d369d7bdb66dddc7035962d620475314b0142cb9f047b197586",
+    "telemetry.py": "a6d5f9262de82a318c7aa86dfef599fa6228463bb712c94d916c653afba2f0e9"
+  },
+  "upstream_repair": {
+    "count": 1,
+    "file_repaired_sha256": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de",
+    "parent_image_id": "sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83",
+    "patch_sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e",
+    "reason": "NVML resolve authoritative CUDA_VISIBLE_DEVICES GPU UUID to current index"
+  }
+}

@@ -1,0 +1,23 @@
+# IMAGE21 runtime result — partial acceptance
+
+The reviewed compatibility amendment is deployed and both original Qwens are warm at their original UUIDs, container identities and480000 contexts. Tiny authenticated responses passed at the existing endpoints. Historical accepted measurements, keys, text runtime policies and rollback releases were preserved.
+
+The pinned Qwen-Image-2.1 checkpoint is complete and the native BF16/FP32 SGLang runtime is resident on the Ada only. Generation passed. Both the original reference edit and the one root-authorized production RGB comparison failed visual fidelity: the teapot becomes blue and composition remains close, but contrast, surface texture, background detail and lighting change substantially. HTTP success and decoded PNGs are not presented as visual acceptance. No edit profile is qualified, and no further inference ran after the comparison.
+
+| Request | HTTP time | Sampled device peak | Minimum free VRAM | Visual result |
+|---|---:|---:|---:|---|
+| Generation | 24.31s | 39,214.31 MiB | 20.20% | PASS |
+| Raw RGBA reference edit | 28.64s | 39,982.31 MiB | 18.64% | Visual fidelity FAIL |
+| Production RGB reference comparison | 27.35s | 39,982.31 MiB | 18.64% | Visual fidelity FAIL |
+
+All outputs fully decoded at1024×1024. Recipe: n1,40steps,CFG1/true_cfg1,seed42; the logged generic embedded_guidance_scale=6 is unused by QwenImage21 and is not an effective recipe parameter. Cold load to native health was30.37s. Observed device total49,140MiB; minimum required free2,457MiB. Host minimum available exceeded97%, versus required15%; sampled container swap was zero. `METRICS.json` distinguishes200ms NVML sampled total-device peaks, allocator peaks, per-process/current usage, cgroup lifetime peaks and sampling gaps. Native allocated/reserved generation peaks were34,266.57/37,570MiB; edits reserved38,336MiB. Sampling cannot exclude shorter unobserved peaks; initial generation cgroup reading preceded cgroup creation.
+
+Exact runtime image ID `sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8` derives from official SGLang commit`0cd8be351d0825488f4b81c8931167bbab618eca` plus one reviewed seven-line UUID/NVML repair. Official checkpoint revision`790c92633540aa0cb11d9abf19eb46d861714758`:26verified files,33,131,614,782bytes. Original image and failure evidence remain intact. Actual dependency/OS freezes, base image digest and patch hashes are in the build receipts; local image metadata is not a registry publication claim.
+
+Three pre-model startup failures were diagnosed and preserved: private-parent traversal under systemd umask, FlashInfer home/cache placement, and upstream UUID parsing. The initial build also needed an approved dependency-build isolation correction. None was an OOM or fit measurement. The model then loaded successfully. A wildcard internal PyTorch store under host networking required root-authorized container isolation. A GPU-free probe established that Docker29.6.1 did not publish the requested port from an internal bridge. Root accepted a dedicated ordinary bridge with only host127.0.0.1:30007 published. Internal30008/30009/30010 remain unpublished; external TCP probes to all four ports were refused. No custom global firewall rules were added.
+
+The first successful generation remains as pre-containment evidence; the required restart/warm produced the current accepted generation. The raw-RGBA edit remains separate from the single additional RGB comparison authorized by ROOT-EDIT-RGB-COMPARISON-GO. Exact reviewed API normalization was used, preserving RGB pixels. It did not resolve the observed visual problem; root cause remains undiagnosed. RGBA output alone does not establish transparency support.
+
+Retained state: original two Qwens plus exactly one image container, dedicated backend systemd owner active/exited, canonical lease free, no active task orphan. Backend is disabled for boot so the future API unit can be the sole enabled image owner. No adapter is installed and no public profile is accepted. A stopped failed build container is deliberately preserved. Existing root-disk free-space warning remains; registered guards and root payload scan passed.
+
+No resolution ladder, two-reference/transparency qualification, API admission/fault campaign, Diffusers reference, benchmarks, old480K tests, harness or installer work ran. Next work is root review/integration of this source bundle with the independently published API source, then a fresh bounded edit diagnosis and adapter/client qualification. See `HANDOFF.md`, `BACKEND-CONTRACT.json` and the task source handoff.

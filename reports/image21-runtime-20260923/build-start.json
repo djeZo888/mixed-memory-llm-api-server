@@ -1,0 +1,7 @@
+{
+  "source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+  "source_tree_sha256": "a7b6342f55b62979a7d88526632a68bce2fd3461dfb7e55eabf109f5a6725522",
+  "dockerfile_sha256": "e256c4e09193617de59ab080c565bb4d99bfd0b88136681f5e35bf53ae56895f",
+  "base_linux_amd64_digest": "sha256:a85c9f5af049f0ab679c1669ae6fa8393022886739af7361e85bb96878e8cdd4",
+  "build_started_utc": "2026-09-23T02:13:27.622640+00:00"
+}

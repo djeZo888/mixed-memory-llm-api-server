@@ -1,0 +1,16 @@
+--- a/python/sglang/multimodal_gen/runtime/platforms/cuda.py
++++ b/python/sglang/multimodal_gen/runtime/platforms/cuda.py
+@@ -63,6 +63,13 @@
+             )
+             raise RuntimeError(msg)
+         physical_device_id = device_ids[device_id]
++        if physical_device_id.startswith("GPU-"):
++            pynvml.nvmlInit()
++            try:
++                handle = pynvml.nvmlDeviceGetHandleByUUID(physical_device_id)
++                return int(pynvml.nvmlDeviceGetIndex(handle))
++            finally:
++                pynvml.nvmlShutdown()
+         return int(physical_device_id)
+     else:
+         return device_id

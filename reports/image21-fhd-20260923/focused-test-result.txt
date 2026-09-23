@@ -1,0 +1,20 @@
+test_explicit_mapping_capability_and_exact_native_crop (test_corrections.FullHD.test_explicit_mapping_capability_and_exact_native_crop) ... Executing <Task pending name='Task-4' coro=<Owner.execute() running at /Users/agent/CodexProjects/llm-orchestration/tasks/IMAGE21-FHD-20260923/repo/scripts/image_api/app.py:99> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /Users/agent/.local/share/uv/python/cpython-3.13.15-macos-aarch64-none/lib/python3.13/asyncio/tasks.py:977, Task.task_wakeup()] created at /Users/agent/.local/share/uv/python/cpython-3.13.15-macos-aarch64-none/lib/python3.13/asyncio/base_events.py:460> cb=[_wait.<locals>._on_completion() at /Users/agent/.local/share/uv/python/cpython-3.13.15-macos-aarch64-none/lib/python3.13/asyncio/tasks.py:521] created at /Users/agent/.local/share/uv/python/cpython-3.13.15-macos-aarch64-none/lib/python3.13/asyncio/tasks.py:410> took 0.183 seconds
+ok
+test_five_smaller_profiles_unchanged (test_corrections.FullHD.test_five_smaller_profiles_unchanged) ... ok
+test_invalid_mapping_and_edit_mapping_refused (test_corrections.FullHD.test_invalid_mapping_and_edit_mapping_refused) ... ok
+test_native_pixel_exception_only_applies_to_exact_output_crop (test_corrections.FullHD.test_native_pixel_exception_only_applies_to_exact_output_crop) ... ok
+test_protected_limits_required_exact_and_not_configurable (test_corrections.FullHD.test_protected_limits_required_exact_and_not_configurable) ... ok
+test_public_bounds_and_unqualified_transparency_refused_before_native (test_corrections.FullHD.test_public_bounds_and_unqualified_transparency_refused_before_native) ... ok
+test_wrong_native_dimensions_fail_instead_of_accepting_or_resizing (test_corrections.FullHD.test_wrong_native_dimensions_fail_instead_of_accepting_or_resizing) ... ok
+test_api_is_the_only_image_boot_owner_ordered_after_text_boot (test_protection.Configuration.test_api_is_the_only_image_boot_owner_ordered_after_text_boot) ... ok
+test_empty_manifest_claims_no_measured_profiles_and_no_digest (test_protection.Configuration.test_empty_manifest_claims_no_measured_profiles_and_no_digest) ... ok
+test_pins_schema_and_conditioned_profile_fail_closed (test_protection.Configuration.test_pins_schema_and_conditioned_profile_fail_closed) ... ok
+test_process_lock_rejects_second_owner_and_unsafe_file (test_protection.Configuration.test_process_lock_rejects_second_owner_and_unsafe_file) ... ok
+test_unit_sudo_wiring_and_single_worker_fixed_invocation (test_protection.Configuration.test_unit_sudo_wiring_and_single_worker_fixed_invocation) ... ok
+test_empty_profiles_fail_closed_and_capabilities_distinguish_profiles (test_handlers.Handlers.test_empty_profiles_fail_closed_and_capabilities_distinguish_profiles) ... ok
+test_unsafe_unknown_fields_and_invalid_model_n_seed_size (test_handlers.Handlers.test_unsafe_unknown_fields_and_invalid_model_n_seed_size) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.368s
+
+OK
