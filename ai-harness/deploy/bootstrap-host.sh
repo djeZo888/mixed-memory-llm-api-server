@@ -31,9 +31,14 @@ for file in /etc/subuid /etc/subgid; do
 done
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 asset="$script_dir/nginx/ai-harness.conf"
-asset_sha=2cc30be5e59d8d0c05488eec896e989144bc67e377571f10908d6695ca855286
+asset_sha=d078bf243a68df9214401420224fdb15df0fc991da2b483bd060ccfe67a22ac3
 [[ -f $asset && ! -L $asset ]] || die 'Missing regular bundled nginx asset.'
 [[ $(sha256sum "$asset" | cut -d' ' -f1) == "$asset_sha" ]] || die 'Bundled nginx asset hash mismatch.'
+# H003's reviewed site requires a separately provisioned host-only credential.
+# Refuse before package/config mutation; never read or print the secret here.
+approval_include=/etc/ai-harness/image-approval-proxy.conf
+[[ -f $approval_include && ! -L $approval_include ]] || die 'Provision the protected /etc/ai-harness/image-approval-proxy.conf before bootstrap; see RUNTIME.md.'
+[[ $(stat -c '%u:%g:%a:%h' "$approval_include") == 0:0:600:1 ]] || die 'Approval proxy include must be a root:root0600 regular file with one link.'
 stock_file() {
   local path=$1 expected actual
   [[ -f $path && ! -L $path ]] || die "Expected regular stock file: $path"

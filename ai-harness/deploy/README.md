@@ -57,6 +57,22 @@ restore the preserved default link only after reviewing its wildcard exposure.
 Always run `nginx -t` before reload. No global package removal, pruning, sudoers
 change or automatic reboot is included.
 
+## H003 existing-host upgrade
+
+The image-approval site requires the separately provisioned root:root0600
+`/etc/ai-harness/image-approval-proxy.conf` described in [RUNTIME.md](RUNTIME.md).
+Bootstrap verifies this prerequisite before installing packages or changing host
+configuration; it does not create credentials. Its bundled asset and checksum
+manifest include the reviewed H003 route.
+
+The H003 deployment upgrades the existing host without replaying bootstrap:
+preserve the installed unit/site/release and a consistent SQLite backup, build
+server/web in a private release, provision or reuse the protected approval key,
+derive the host/container deny addresses, then validate the staged unit and
+nginx configuration. Activate only after authoritative engine identity/roster
+and ownership release, current readiness and idle-user-work gates pass. Keep the
+prior release and immutable engine image for rollback.
+
 ## Ordinary-user runtime and image
 
 See [RUNTIME.md](RUNTIME.md) for the checksum-verified official Node24 prefix,
