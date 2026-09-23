@@ -139,3 +139,14 @@ AI_HARNESS_MINIMAX_SOURCE=/absolute/patched-source node \
 
 This checks the pinned native files and the thought-only/full-visible-message
 regression. It is not the full native build/typecheck or Linux runtime acceptance.
+
+
+`0009-builtin-audit-selector.patch` corrects trusted builtin profile loading.
+The startup-generated builtin file is an audit mirror; its native-tool ceiling
+must not become a universal selector that removes configured MCP and `skill`
+from a newly frozen worker. Only persistent model settings are selected from
+that mirror. Shipped role ceilings, custom selectors and existing frozen task
+bindings remain authoritative. No historical binding migration is included.
+H003-MCP-DIAG retained an offline before/after provider-payload capture: worker
+image MCP and skill restored, main unchanged, explore/verifier MCP excluded,
+and explicit custom restrictions preserved. This is not live acceptance.

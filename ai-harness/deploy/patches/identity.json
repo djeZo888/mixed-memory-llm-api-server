@@ -1,6 +1,6 @@
 {
   "sourceRevision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
-  "patchSetSha256": "e764cdacb97998b7e7b514e9fabb0bc5d508e1d3e1ffd0a38443812a117d3aef",
+  "patchSetSha256": "69d7fe14ed8b1e394fe7315e04724e3ef89c2efbd21118a42fa1842f5ed48eff",
   "patches": [
     {
       "path": "0001-gateway-request-budget.patch",
@@ -40,6 +40,11 @@
     {
       "path": "0008-message-metadata-and-snapshots.patch",
       "sha256": "fe7576ed96beb19202ad04f3b1d7b64cd16a39496bcf9d15500f903a0192bf65",
+      "phase": "source"
+    },
+    {
+      "path": "0009-builtin-audit-selector.patch",
+      "sha256": "9c10f0ae1d79fe17208a59367dbe4ce8197bea2dcc32178be51e4310ba7dddab",
       "phase": "source"
     }
   ],
@@ -263,6 +268,11 @@
       "path": "packages/tui/src/runtime/adapters/delegation-access.ts",
       "originalSha256": "76e449f864da3c6199f1da12d84ed8d836ca72f9f60e19d40b3e3fffff9459ca",
       "patchedSha256": "cca909428167b3e7df603e19d6a0579fb5238da17b47f6af945f563ebf99adeb"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/service/agent/application/agent-profile.ts",
+      "originalSha256": "3412b7b3c5b9e314afcce83787e9f3027946eabaee1676a2788526aed8ef2f57",
+      "patchedSha256": "40281fa50c3a30b799a62643685ee4af96a8b545cb4c9bca67531b94bbc47bdb"
     }
   ],
   "transport": {
@@ -283,5 +293,10 @@
     "patch": "0008-message-metadata-and-snapshots.patch",
     "protocol": "mcode/session/message_update schemaVersion 1",
     "scope": "Metadata-only native message bridge; per-channel full-message dedup; explicit delegation pagination completeness. No inference or lifecycle change."
+  },
+  "h003BuiltinAuditSelector": {
+    "basePatchedRevision": "9eb83dfdbd8b5b84c5ef45da6922295b9829d386",
+    "patch": "0009-builtin-audit-selector.patch",
+    "scope": "Trusted builtin audit mirrors retain model settings only; custom and frozen selectors and canonical capability ceilings unchanged."
   }
 }
