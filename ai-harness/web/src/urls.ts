@@ -48,3 +48,28 @@ export function runZipUrl(sessionId: string, runId: string, supplied?: string): 
     session && run ? `/api/sessions/${session}/runs/${run}/artifacts.zip` : undefined,
   );
 }
+
+export function runFilesZipUrl(
+  sessionId: string,
+  runId: string,
+  supplied?: string,
+): string | undefined {
+  const session = segment(sessionId),
+    run = segment(runId);
+  return exact(
+    supplied,
+    session && run ? `/api/sessions/${session}/runs/${run}/files.zip` : undefined,
+  );
+}
+export function messageZipUrl(
+  sessionId: string,
+  messageId: string,
+  supplied?: string,
+): string | undefined {
+  const session = segment(sessionId),
+    message = segment(messageId);
+  return exact(
+    supplied,
+    session && message ? `/api/sessions/${session}/messages/${message}/files.zip` : undefined,
+  );
+}

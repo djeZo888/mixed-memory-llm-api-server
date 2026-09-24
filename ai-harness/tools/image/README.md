@@ -50,6 +50,23 @@ unknown properties, image bytes, backend settings and host paths. Error codes an
 useful messages are retained with credential/path/data-URI redaction. There is no
 raw response or exception logging.
 
+Completed jobs with a safe retained artifact ID also expose `previewUrl` and
+`downloadUrl`, derived only as `/api/files/<id>/preview` and
+`/api/artifacts/<id>/download`; upstream URLs are never forwarded. The terminal
+tool result includes `imageMarkdown` for placement within the final narrative.
+The same links are available when a failed workspace copy retained an artifact,
+with the failure still reported. Browser routes continue to authorize reads;
+these links grant no new access. Pending/cancelled/uncertain jobs gain no image
+presentation links.
+
+The skill, tool descriptions and result guidance ask the agent to plan a small
+purposeful set of distinct images and reuse successes. Embedding, layout or
+cosmetic self-verification must not cause another generation. Explicit variants,
+multiple distinct illustrations, later user edits and true failed-output retries
+remain supported. This is behavioral guidance, not semantic intent enforcement:
+no count cap, frozen output slots, prompt-similarity filter or new admission
+framework is introduced. Fixture tests cannot prove a model will follow it.
+
 ## Confirmed wire contract
 
 Internal submit/get/cancel and browser approve/cancel return `{job: ImageJob}`;

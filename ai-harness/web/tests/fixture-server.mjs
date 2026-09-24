@@ -36,6 +36,39 @@ const imagePng = Buffer.concat([
   pngChunk('IDAT', deflateSync(pngRows)),
   pngChunk('IEND', Buffer.alloc(0)),
 ]);
+// Distinct procedural raster specimens make loaded inline images obvious in QA.
+// Colored bands and a diagonal white motif are fixture bytes, never model output.
+const h004Images = [
+  [
+    [35, 82, 116],
+    [58, 148, 160],
+    [219, 232, 167],
+  ],
+  [
+    [184, 74, 55],
+    [231, 168, 65],
+    [64, 57, 101],
+  ],
+].map((colors) => {
+  const rows = Buffer.alloc((1920 * 3 + 1) * 1080);
+  for (let y = 0; y < 1080; y++) {
+    for (let x = 0; x < 1920; x++) {
+      const color = Math.abs(x - y * 1.7) < 50 ? [250, 250, 245] : colors[Math.floor(x / 640)];
+      const offset = y * (1920 * 3 + 1) + x * 3 + 1;
+      rows[offset] = color[0];
+      rows[offset + 1] = color[1];
+      rows[offset + 2] = color[2];
+    }
+  }
+  return Buffer.concat([
+    Buffer.from('89504e470d0a1a0a', 'hex'),
+    pngChunk('IHDR', pngHeader),
+    pngChunk('IDAT', deflateSync(rows)),
+    pngChunk('IEND', Buffer.alloc(0)),
+  ]);
+});
+const imageBody = (file) =>
+  file?.id.startsWith('h004-file-') ? h004Images[Number(file.id.split('-').at(-1)) % 2] : imagePng;
 const summary = (active = 0) => ({
   known: true,
   active,
@@ -362,6 +395,71 @@ const server = http.createServer(async (request, response) => {
           approvalFailures.set(jobId, failure);
       return json(response, 200, { fixture: true });
     }
+    if (url.pathname === '/__fixture/h004') {
+      const history = histories.get(sessions[0].id);
+      const runId = initialRunId;
+      history.attachments = ['upload-one', 'upload-two'].map((id) => ({
+        id,
+        name: `${id}.txt`,
+        size: 18,
+        mimeType: 'text/plain',
+        downloadUrl: `/api/attachments/${id}/download`,
+      }));
+      history.artifacts = Array.from({ length: 20 }, (_, index) => ({
+        id: `h004-file-${index}`,
+        name: index === 19 ? 'report.txt' : `illustration-${index}.png`,
+        mimeType: index === 19 ? 'text/plain' : 'image/png',
+        size: index === 19 ? 20 : h004Images[index % 2].length,
+        downloadUrl: `/api/artifacts/h004-file-${index}/download`,
+        ...(index < 19
+          ? {
+              previewUrl: `/api/files/h004-file-${index}/preview`,
+              referencePaths: [`/fixture/workspace/illustration-${index}.png`],
+            }
+          : {}),
+        runId,
+        messageId: 'h004-final',
+      }));
+      history.messages = [
+        {
+          id: 'h004-user',
+          role: 'user',
+          content: 'Fixture: inspect these files and illustrate the comparison.',
+          createdAt: at,
+          runId,
+          attachmentIds: history.attachments.map((file) => file.id),
+          zipUrl: '/api/sessions/fixture%2Fchat-a/messages/h004-user/files.zip',
+        },
+        {
+          id: 'h004-final',
+          role: 'assistant',
+          phase: 'final',
+          streamState: 'completed',
+          createdAt: at,
+          runId,
+          content:
+            'First illustration belongs here.\n\n![First illustration](/fixture/workspace/illustration-0.png)\n\nThe second illustration follows this explanation.\n\n![Second illustration][second]\n\n[second]: /api/files/h004-file-1/preview\n\n[Download first original](/api/artifacts/h004-file-0/download)\n\n| Comparison criterion with meaningful words | First outcome | Second outcome | Notes |\n| --- | --- | --- | --- |\n| Long criteria remain readable without one-letter lines | An explanation with enough words to wrap across normal lines in its own cell. | Another outcome with a deliberately long unbroken token abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz | Supporting notes remain readable. |\n\nOnly two selected illustrations belong in this narrative; drafts remain downloadable.',
+        },
+      ];
+      history.runs = [
+        {
+          id: runId,
+          kind: 'message',
+          status: 'completed',
+          createdAt: at,
+          updatedAt: at,
+          artifactIds: history.artifacts.map((file) => file.id),
+          attachmentIds: history.attachments.map((file) => file.id),
+          finalMessageId: 'h004-final',
+          zipUrl: '/api/sessions/fixture%2Fchat-a/runs/fixture%2Finitial-run/artifacts.zip',
+          filesZipUrl: '/api/sessions/fixture%2Fchat-a/runs/fixture%2Finitial-run/files.zip',
+          subagents: summary(),
+        },
+      ];
+      history.activities = [];
+      history.events = [];
+      return json(response, 200, { fixture: true });
+    }
     if (url.pathname === '/__fixture/vision') {
       vision = data().enabled;
       return json(response, 200, { vision });
@@ -535,6 +633,42 @@ const server = http.createServer(async (request, response) => {
       emit(id, 'image_job', { job: updated }, true, job.runId);
       return json(response, 200, { job: updated });
     }
+    const filesZip = /^\/api\/sessions\/([^/]+)\/(runs|messages)\/([^/]+)\/files\.zip$/.exec(
+      url.pathname,
+    );
+    if (filesZip) {
+      if (url.search) return json(response, 400, { error: { code: 'invalid_query' } });
+      const sessionId = decodeURIComponent(filesZip[1]),
+        owner = decodeURIComponent(filesZip[3]);
+      const history = histories.get(sessionId);
+      const record =
+        filesZip[2] === 'runs'
+          ? history?.runs.find((run) => run.id === owner)
+          : history?.messages.find((message) => message.id === owner && message.role === 'user');
+      if (!record) return json(response, 404, { error: { code: 'not_found' } });
+      const files = [
+        ...(filesZip[2] === 'runs'
+          ? history.artifacts.filter((file) => record.artifactIds.includes(file.id))
+          : []),
+        ...history.attachments.filter((file) => record.attachmentIds?.includes(file.id)),
+      ];
+      if (files.length < 2) return json(response, 400, { error: { code: 'not_multiple_files' } });
+      calls.push({ action: 'files-zip', id: sessionId, owner });
+      response.writeHead(200, {
+        'Content-Type': 'application/zip',
+        'Content-Disposition': 'attachment; filename="fixture-reply-files.zip"',
+        'X-Fixture-Only': 'synthetic-stored-zip',
+      });
+      return response.end(
+        fixtureZip(
+          files.map((file) => ({
+            name: file.name,
+            content:
+              file.mimeType === 'image/png' ? imageBody(file) : Buffer.from(`FIXTURE ${file.name}`),
+          })),
+        ),
+      );
+    }
     const zip = /^\/api\/sessions\/([^/]+)\/runs\/([^/]+)\/artifacts\.zip$/.exec(url.pathname);
     if (zip) {
       const sessionId = decodeURIComponent(zip[1]),
@@ -570,7 +704,7 @@ const server = http.createServer(async (request, response) => {
         'Content-Security-Policy': "sandbox; default-src 'none'; style-src 'unsafe-inline'",
         'X-Content-Type-Options': 'nosniff',
       });
-      return response.end(png ? imagePng : svg);
+      return response.end(png ? imageBody(file) : svg);
     }
     const attachment = /^\/api\/attachments\/([^/]+)\/download$/.exec(url.pathname);
     if (attachment) {
@@ -607,7 +741,7 @@ const server = http.createServer(async (request, response) => {
       });
       return response.end(
         png
-          ? imagePng
+          ? imageBody(file)
           : id === 'fixture/pipeline-svg'
             ? svg
             : '# Fixture review\nNot live inference.\n',
@@ -840,3 +974,46 @@ const server = http.createServer(async (request, response) => {
   }
 });
 server.listen(port, '127.0.0.1', () => console.log(`FIXTURE ONLY http://127.0.0.1:${port}`));
+
+function fixtureZip(files) {
+  const entries = [],
+    central = [];
+  let offset = 0;
+  for (const file of files) {
+    const name = Buffer.from(file.name),
+      data = file.content;
+    let crc = 0xffffffff;
+    for (const byte of data) {
+      crc ^= byte;
+      for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+    }
+    crc = (crc ^ 0xffffffff) >>> 0;
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt32LE(crc, 14);
+    local.writeUInt32LE(data.length, 18);
+    local.writeUInt32LE(data.length, 22);
+    local.writeUInt16LE(name.length, 26);
+    const directory = Buffer.alloc(46);
+    directory.writeUInt32LE(0x02014b50);
+    directory.writeUInt16LE(20, 4);
+    directory.writeUInt16LE(20, 6);
+    directory.writeUInt32LE(crc, 16);
+    directory.writeUInt32LE(data.length, 20);
+    directory.writeUInt32LE(data.length, 24);
+    directory.writeUInt16LE(name.length, 28);
+    directory.writeUInt32LE(offset, 42);
+    entries.push(local, name, data);
+    central.push(directory, name);
+    offset += local.length + name.length + data.length;
+  }
+  const directory = Buffer.concat(central),
+    end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50);
+  end.writeUInt16LE(files.length, 8);
+  end.writeUInt16LE(files.length, 10);
+  end.writeUInt32LE(directory.length, 12);
+  end.writeUInt32LE(offset, 16);
+  return Buffer.concat([...entries, directory, end]);
+}

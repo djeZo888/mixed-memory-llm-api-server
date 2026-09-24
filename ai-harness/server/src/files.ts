@@ -1,7 +1,7 @@
 import { constants } from "node:fs";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { pipeline } from "node:stream/promises";
 import { Transform, type Readable } from "node:stream";
 import { ApiError, requireId } from "./errors.js";
@@ -13,6 +13,7 @@ import {
   type ZipEntry,
 } from "./zip.js";
 import type { FileRecord, Store } from "./store.js";
+import type { Artifact, Attachment } from "./contracts.js";
 export const MAX_UPLOAD = 50 * 1024 * 1024;
 const MAX_ARTIFACT = 64 * 1024 * 1024;
 export const safeName = safeStorageName;
@@ -358,6 +359,7 @@ export class Files {
         mimeType: imageMime(name ?? relative) ?? mimeType,
         runId: runId ?? null,
         messageId: messageId ?? null,
+        sourcePath: relative,
         size: bytes,
       });
     } catch (e) {
@@ -404,20 +406,144 @@ export class Files {
     await walk("", 0);
     return candidates;
   }
-  async zip(sessionId: string, runId: string) {
+  /** Legacy recovery is a read-only projection. No original row or event is rewritten. */
+  async withLegacyReferences(
+    sessionId: string,
+    artifacts: (Attachment | Artifact)[],
+  ) {
+    const session = this.store.getSession(sessionId);
+    const workspace = this.workspace(session.workspaceId);
+    let budget = MAX_ZIP_BYTES,
+      candidates = 0;
+    const result: (Attachment | Artifact)[] = [];
+    for (const artifact of artifacts) {
+      result.push(artifact);
+      if (!("runId" in artifact)) continue;
+      const file = this.store.file(artifact.id);
+      if (
+        file.sessionId !== sessionId ||
+        file.runId !== artifact.runId ||
+        file.messageId !== artifact.messageId
+      )
+        continue;
+      const aliases = this.store.legacyReferencePaths(file);
+      if (!aliases.length || ++candidates > MAX_ZIP_FILES ||
+        file.size > MAX_ARTIFACT || file.size * 2 > budget)
+        continue;
+      // Read only a server-composed direct child, never the model's link target.
+      let source: Awaited<ReturnType<Files["openGuarded"]>> | undefined;
+      let snapshot: Awaited<ReturnType<Files["openGuarded"]>> | undefined;
+      try {
+        source = await this.openGuarded(workspace, file.name);
+        snapshot = await this.openGuarded(
+          path.join(this.root, "artifacts"),
+          file.path,
+        );
+        if (source.stat.size !== file.size || snapshot.stat.size !== file.size)
+          continue;
+        budget -= file.size * 2;
+        const digest = async (opened: NonNullable<typeof source>) => {
+          const hash = createHash("sha256");
+          let position = 0;
+          while (position < opened.stat.size) {
+            const buffer = Buffer.allocUnsafe(
+              Math.min(64 * 1024, opened.stat.size - position),
+            );
+            const { bytesRead } = await opened.handle.read(
+              buffer,
+              0,
+              buffer.length,
+              position,
+            );
+            if (!bytesRead) throw new Error("Legacy source changed");
+            hash.update(buffer.subarray(0, bytesRead));
+            position += bytesRead;
+          }
+          const after = await opened.handle.stat();
+          if (
+            after.size !== opened.stat.size ||
+            after.mtimeMs !== opened.stat.mtimeMs ||
+            after.ctimeMs !== opened.stat.ctimeMs
+          )
+            throw new Error("Legacy source changed");
+          return hash.digest("hex");
+        };
+        if ((await digest(source)) === (await digest(snapshot)))
+          result[result.length - 1] = { ...artifact, referencePaths: aliases };
+      } catch {
+        /* Missing, changed or unsafe legacy sources retain the conservative UI fallback. */
+      } finally {
+        await source?.handle.close().catch(() => {});
+        await snapshot?.handle.close().catch(() => {});
+      }
+    }
+    return result;
+  }
+  async zip(sessionId: string, runId: string, includeAttachments = false) {
     this.store.getSession(requireId(sessionId));
     requireId(runId);
-    if (
-      !this.store.db
-        .prepare("SELECT id FROM runs WHERE id=? AND session_id=?")
-        .get(runId, sessionId)
-    )
-      throw new ApiError(404, "not_found", "Run not found");
+    const run = this.store.db
+      .prepare("SELECT attachment_ids FROM runs WHERE id=? AND session_id=?")
+      .get(runId, sessionId);
+    if (!run) throw new ApiError(404, "not_found", "Run not found");
     const files = this.store
       .files(sessionId, "artifact")
       .filter((f) => f.runId === runId);
+    for (const file of files) {
+      if (
+        file.messageId &&
+        !this.store.db
+          .prepare(
+            "SELECT id FROM messages WHERE id=? AND session_id=? AND run_id=? AND role='assistant'",
+          )
+          .get(file.messageId, sessionId, runId)
+      )
+        throw new ApiError(
+          404,
+          "not_found",
+          "Artifact not found in this reply",
+        );
+    }
+    if (includeAttachments)
+      files.push(
+        ...this.store.ownedAttachments(
+          sessionId,
+          this.attachmentIds(run.attachment_ids),
+          true,
+        ),
+      );
+    return this.zipFiles(files);
+  }
+  async messageZip(sessionId: string, messageId: string) {
+    this.store.getSession(requireId(sessionId));
+    const message = this.store.db
+      .prepare(
+        "SELECT attachment_ids FROM messages WHERE id=? AND session_id=? AND role='user'",
+      )
+      .get(requireId(messageId), sessionId);
+    if (!message) throw new ApiError(404, "not_found", "Message not found");
+    return this.zipFiles(
+      this.store.ownedAttachments(
+        sessionId,
+        this.attachmentIds(message.attachment_ids),
+        true,
+      ),
+    );
+  }
+  private attachmentIds(value: unknown): string[] {
+    let ids: unknown;
+    try {
+      ids = JSON.parse(String(value));
+    } catch {
+      /* Invalid stored references fail closed. */
+    }
+    if (!Array.isArray(ids) || ids.some((id) => typeof id !== "string"))
+      throw new ApiError(404, "not_found", "Invalid reply file references");
+    return ids.map(requireId);
+  }
+  private async zipFiles(files: FileRecord[]) {
     if (!files.length)
-      throw new ApiError(404, "not_found", "No files for this run");
+      throw new ApiError(404, "not_found", "No files for this reply");
     if (
       files.length > MAX_ZIP_FILES ||
       files.reduce((n, f) => n + f.size, 0) > MAX_ZIP_BYTES
@@ -432,12 +558,18 @@ export class Files {
       let bytes = 0;
       for (const file of files) {
         const { handle, stat } = await this.openGuarded(
-          path.join(this.root, "artifacts"),
+          path.join(
+            this.root,
+            file.kind === "artifact" ? "artifacts" : "uploads",
+          ),
           file.path,
         );
         entries.push({ handle, size: stat.size, name: file.name });
         bytes += stat.size;
-        if (stat.size > MAX_ARTIFACT || bytes > MAX_ZIP_BYTES)
+        if (
+          stat.size > (file.kind === "artifact" ? MAX_ARTIFACT : MAX_UPLOAD) ||
+          bytes > MAX_ZIP_BYTES
+        )
           throw new ApiError(413, "zip_too_large", "ZIP exceeds size limit");
       }
       return zipStream(entries);

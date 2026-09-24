@@ -36,6 +36,7 @@ export interface Message {
   runId?: string;
   attachmentIds?: string[];
   imageReferences?: string[];
+  zipUrl?: string;
   phase?: MessagePhase;
   nativeMessageId?: string;
   nativeTurnId?: string;
@@ -50,6 +51,7 @@ export interface Attachment {
   previewUrl?: string;
 }
 export interface Artifact extends Attachment {
+  referencePaths?: string[];
   downloadUrl: string;
   runId?: string | null;
   messageId?: string | null;
@@ -127,6 +129,8 @@ export interface RunSnapshot {
   updatedAt: string;
   finalMessageId?: string | null;
   artifactIds: string[];
+  attachmentIds?: string[];
+  filesZipUrl?: string;
   zipUrl?: string;
   subagents: Summary;
 }

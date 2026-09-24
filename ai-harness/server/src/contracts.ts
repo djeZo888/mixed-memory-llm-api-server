@@ -35,6 +35,7 @@ export interface MessagePhase {
 }
 export interface Message extends Partial<MessagePhase> {
   attachments?: Attachment[];
+  zipUrl?: string;
   id: string;
   role: "user" | "assistant";
   content: string;
@@ -52,6 +53,8 @@ export interface Attachment {
   size: number;
 }
 export interface Artifact extends Attachment {
+  /** Exact server-attested references; resolved to the immutable artifact, never read as paths. */
+  referencePaths?: string[];
   image?: import("./image-contracts.js").ImageMetadata;
   runId: string | null;
   messageId: string | null;
@@ -120,6 +123,8 @@ export interface RunSnapshot {
   updatedAt: string;
   finalMessageId?: string | null;
   artifactIds: string[];
+  attachmentIds?: string[];
+  filesZipUrl?: string;
   zipUrl?: string;
   subagents: SubagentSummary;
 }

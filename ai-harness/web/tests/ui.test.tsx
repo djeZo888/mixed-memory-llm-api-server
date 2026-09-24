@@ -46,7 +46,7 @@ describe('UI', () => {
     const store = new HarnessStore(transport);
     render(<App store={store} />);
     await screen.findByRole('textbox', { name: 'Message' });
-    expect(screen.getByText('0.0.2')).toBeInTheDocument();
+    expect(screen.getByText('0.0.3')).toBeInTheDocument();
     await waitFor(() => expect(streams.length).toBe(1));
     fireEvent.change(screen.getByLabelText('Upload file'), {
       target: { files: [new File(['notes'], 'notes.txt', { type: 'text/plain' })] },

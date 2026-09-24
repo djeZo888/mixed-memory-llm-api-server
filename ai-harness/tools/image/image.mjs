@@ -102,6 +102,13 @@ export function publicJob(value, token) {
     if (Array.isArray(value.adjustment.sources)) result.adjustment.sources = value.adjustment.sources.slice(0, LIMITS.references).map(item => publicReference(item, token, true));
   }
   if (value.state === 'completed' && relativePath(value.outputPath) && !value.outputPath.includes(token)) result.outputPath = value.outputPath;
+  // The trusted session job supplies the artifact ID, never a URL/path. These
+  // fixed same-origin routes still authorize the file on every browser read.
+  // A retained artifact after a workspace-copy failure is reusable too.
+  if (['completed', 'failed'].includes(value.state) && /^[A-Za-z0-9_-]{1,80}$/u.test(result.artifactId ?? '')) {
+    result.previewUrl = `/api/files/${result.artifactId}/preview`;
+    result.downloadUrl = `/api/artifacts/${result.artifactId}/download`;
+  }
   return result;
 }
 
@@ -219,7 +226,13 @@ export function createImageClient({ token, fetchImpl = fetch, now = Date.now, sl
     let attempt = 0; let observationError;
     while (true) {
       if (job.state === 'awaiting_approval') return { job, instruction: 'Use the user approval card to approve or reject the exact resize/canvas adjustment. Do not submit another job or approve through a tool.' };
-      if (terminal.has(job.state)) return { job };
+      if (terminal.has(job.state)) return {
+        job,
+        ...(job.previewUrl ? {
+          imageMarkdown: `![Generated image](${job.previewUrl})`,
+          instruction: 'Reuse this saved artifact. Put imageMarkdown at the relevant place in the final answer and describe it accurately; use downloadUrl for a file link. Do not regenerate to repair embedding, layout, links, or cosmetic self-verification. Additional variants require a user request or a concrete unmet output requirement. If the job reports an error, disclose it; a retained artifact is not a successful workspace copy.',
+        } : {}),
+      };
       if (signal?.aborted || now() >= deadline) return { job, observationStopped: true,
         ...(observationError ? { error: observationError } : {}),
         instruction: 'The submitted image job survives this tool ending. Check its image job card for the result; do not resubmit. Active cancellation drains until the backend settles.' };

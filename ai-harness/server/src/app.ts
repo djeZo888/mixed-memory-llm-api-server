@@ -128,7 +128,10 @@ export async function createApp(options: AppOptions): Promise<{
   let cleanupResources = () => owner.close();
   let images: ImageBroker | undefined;
   try {
-    const store = new Store(path.join(temporary.root, "harness.sqlite"));
+    const store = new Store(
+      path.join(temporary.root, "harness.sqlite"),
+      path.join(temporary.root, "workspaces"),
+    );
     let closed = false;
     cleanupResources = () => {
       if (closed) return;
@@ -300,7 +303,14 @@ export async function createApp(options: AppOptions): Promise<{
         ),
       };
     });
-    app.get("/api/sessions/:id", async (req) => store.snapshot(id(req)));
+    app.get("/api/sessions/:id", async (req) => {
+      const snapshot = store.snapshot(id(req));
+      snapshot.artifacts = await files.withLegacyReferences(
+        id(req),
+        snapshot.artifacts,
+      );
+      return snapshot;
+    });
     app.delete("/api/sessions/:id", async (req, reply) => {
       const status = await broker.delete(id(req));
       return reply.code(status === "deleted" ? 200 : 202).send({ status });
@@ -414,9 +424,10 @@ export async function createApp(options: AppOptions): Promise<{
       const sessionId = id(req);
       store.getSession(sessionId);
       return {
-        artifacts: store
-          .files(sessionId, "artifact")
-          .map((f) => store.publicFile(f)),
+        artifacts: await files.withLegacyReferences(
+          sessionId,
+          store.files(sessionId, "artifact").map((f) => store.publicFile(f)),
+        ),
       };
     });
     for (const kind of ["artifact", "attachment"] as const) {
@@ -461,24 +472,47 @@ export async function createApp(options: AppOptions): Promise<{
         );
       return reply.send(value.stream);
     });
+    for (const selection of ["artifacts", "files"] as const)
+      app.get(
+        `/api/sessions/:id/runs/:runId/${selection}.zip`,
+        async (req, reply) => {
+          if (Object.keys(req.query as object).length)
+            throw new ApiError(
+              400,
+              "invalid_query",
+              "ZIP selection is the owned run only",
+            );
+          const runId = requireId((req.params as { runId: string }).runId);
+          const stream = await files.zip(id(req), runId, selection === "files");
+          reply
+            .type("application/zip")
+            .header(
+              "Content-Disposition",
+              contentDisposition(`reply-${runId}.zip`),
+            );
+          return reply.send(stream);
+        },
+      );
     app.get(
-      "/api/sessions/:id/runs/:runId/artifacts.zip",
+      "/api/sessions/:id/messages/:messageId/files.zip",
       async (req, reply) => {
         if (Object.keys(req.query as object).length)
           throw new ApiError(
             400,
             "invalid_query",
-            "ZIP selection is the owned run only",
+            "ZIP selection is the owned message only",
           );
-        const runId = requireId((req.params as { runId: string }).runId);
-        const stream = await files.zip(id(req), runId);
-        reply
+        const messageId = requireId(
+          (req.params as { messageId: string }).messageId,
+        );
+        const stream = await files.messageZip(id(req), messageId);
+        return reply
           .type("application/zip")
           .header(
             "Content-Disposition",
-            contentDisposition(`reply-${runId}.zip`),
-          );
-        return reply.send(stream);
+            contentDisposition(`message-${messageId}.zip`),
+          )
+          .send(stream);
       },
     );
     app.get("/api/sessions/:id/events", async (req, reply) => {

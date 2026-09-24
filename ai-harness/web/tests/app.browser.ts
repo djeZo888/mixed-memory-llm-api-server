@@ -217,7 +217,7 @@ test('v0.0.2 fixture: progress settles, lifecycle stays singular and reply files
     'href',
     '/api/attachments/fixture%2Finitial-upload/download',
   );
-  const zip = initialReply.getByRole('link', { name: 'Download all ZIP' });
+  const zip = initialReply.getByRole('link', { name: 'Download all ZIP', exact: true });
   await expect(zip).toHaveAttribute(
     'href',
     '/api/sessions/fixture%2Fchat-a/runs/fixture%2Finitial-run/artifacts.zip',
@@ -368,7 +368,7 @@ test('v0.0.2 fixture: progress settles, lifecycle stays singular and reply files
   await expect(reply.getByText('npm test -- fixture', { exact: true })).toBeVisible();
   await expect(reply.getByText('4.0 s', { exact: false })).toBeVisible();
   await expect(reply.getByRole('link', { name: /second-turn.txt/ })).toBeVisible();
-  await expect(reply.getByRole('link', { name: 'Download all ZIP' })).toHaveCount(0);
+  await expect(reply.getByRole('link', { name: 'Download all ZIP', exact: true })).toHaveCount(0);
   await expect(initialReply.getByRole('link', { name: /second-turn.txt/ })).toHaveCount(0);
   await expect(working).toContainText('Active subagents: 0');
   await page.screenshot({

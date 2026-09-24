@@ -49,6 +49,11 @@ test('single POST and fixed session authorization, then bounded GET polling prod
   assert.deepEqual(observed, [['queued', 0], ['running', 1000]]);
   assert.equal(result.job.outputPath, 'outputs/kettle.png');
   assert.equal(result.job.artifactId, 'artifact-1');
+  assert.equal(result.job.previewUrl, '/api/files/artifact-1/preview');
+  assert.equal(result.job.downloadUrl, '/api/artifacts/artifact-1/download');
+  assert.equal(result.imageMarkdown, '![Generated image](/api/files/artifact-1/preview)');
+  assert.match(result.instruction, /relevant place in the final answer/);
+  assert.match(result.instruction, /Do not regenerate to repair embedding/);
   assert.equal(result.job.seed, 42);
   assert.ok(!JSON.stringify(result).includes(token));
   assert.equal(result.job.prompt, undefined);
@@ -151,6 +156,69 @@ test('separate invocations receive distinct stable submission IDs', async () => 
   await client.invoke('generation', { prompt: 'First image' });
   await client.invoke('generation', { prompt: 'Second image' });
   assert.equal(ids.length, 2); assert.notEqual(ids[0], ids[1]);
+});
+
+test('explicit related variants remain separate successful requests with their exact seeds and sizes', async () => {
+  const calls = [];
+  const client = createImageClient({ token, fetchImpl: async (_url, options) => {
+    const body = JSON.parse(options.body); calls.push(body);
+    return response({ job: record('completed', { requestId: body.requestId, artifactId: `variant-${calls.length}`,
+      seed: body.seed, actualSize: body.size, outputPath: `images/variant-${calls.length}.png` }) });
+  } });
+  const first = await client.invoke('generation', { prompt: 'A kettle, first requested alternative', seed: 42, size: '1024x1024' });
+  const second = await client.invoke('generation', { prompt: 'A kettle, second requested alternative', seed: 43, size: '1024x1024' });
+  assert.equal(calls.length, 2);
+  assert.notEqual(calls[0].requestId, calls[1].requestId);
+  assert.deepEqual(calls.map(({ seed, size }) => [seed, size]), [[42, '1024x1024'], [43, '1024x1024']]);
+  assert.equal(first.imageMarkdown, '![Generated image](/api/files/variant-1/preview)');
+  assert.equal(second.imageMarkdown, '![Generated image](/api/files/variant-2/preview)');
+});
+
+test('a true failed output is reported without automatic retry and a deliberate retry remains possible', async () => {
+  const bodies = [];
+  const client = createImageClient({ token, fetchImpl: async (_url, options) => {
+    const body = JSON.parse(options.body); bodies.push(body);
+    return response({ job: record(bodies.length === 1 ? 'failed' : 'completed', { requestId: body.requestId,
+      ...(bodies.length === 1 ? { error: { code: 'invalid_image_output', message: 'Invalid output dimensions' } }
+        : { artifactId: 'retry-artifact', actualSize: body.size, outputPath: 'images/retry.png' }) }) });
+  } });
+  const input = { prompt: 'A kettle', seed: 42, size: '1024x1024' };
+  const failed = await client.invoke('generation', input);
+  assert.equal(bodies.length, 1);
+  assert.equal(failed.job.error.code, 'invalid_image_output');
+  assert.equal(failed.imageMarkdown, undefined);
+  const retried = await client.invoke('generation', input);
+  assert.equal(bodies.length, 2);
+  assert.equal(retried.job.state, 'completed');
+  assert.equal(bodies[1].seed, 42);
+});
+
+test('retained artifact on workspace-copy failure gets stable presentation links without hiding the error', async () => {
+  const f = fixture([response({ job: record('failed', { artifactId: 'retained-1',
+    error: { code: 'image_workspace_save_failed', message: 'Image artifact retained; workspace copy could not be saved' } }) })]);
+  const result = await f.client.invoke('generation', { prompt: 'A kettle' });
+  assert.equal(f.calls.length, 1);
+  assert.equal(result.job.state, 'failed');
+  assert.equal(result.job.error.code, 'image_workspace_save_failed');
+  assert.equal(result.imageMarkdown, '![Generated image](/api/files/retained-1/preview)');
+  assert.match(result.instruction, /disclose it/);
+});
+
+test('presentation links are derived only from safe retained IDs, ignoring supplied URLs and raw paths', () => {
+  const owned = publicJob(record('completed', { artifactId: 'owned-1',
+    previewUrl: 'https://untrusted.invalid/image.svg', downloadUrl: 'javascript:alert(1)',
+    imageMarkdown: '<img src=x onerror=alert(1)>', outputPath: '/private/image.png' }), token);
+  assert.equal(owned.previewUrl, '/api/files/owned-1/preview');
+  assert.equal(owned.downloadUrl, '/api/artifacts/owned-1/download');
+  assert.equal(owned.imageMarkdown, undefined);
+  for (const artifactId of ['../other', 'path/image', 'bad%2fpath', 'a'.repeat(81), 'id.with.dots']) {
+    const value = publicJob(record('completed', { artifactId }), token);
+    assert.equal(value.previewUrl, undefined, artifactId);
+    assert.equal(value.downloadUrl, undefined, artifactId);
+  }
+  for (const state of ['queued', 'running', 'cancelled', 'interrupted', 'awaiting_approval']) {
+    assert.equal(publicJob(record(state, { artifactId: 'owned-1' }), token).previewUrl, undefined);
+  }
 });
 
 test('tool cancellation/disconnection only stops observation; an active cancellation retains real running state', async () => {

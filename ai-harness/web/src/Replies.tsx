@@ -10,6 +10,8 @@ import {
   attachmentDownloadUrl,
   previewUrl,
   runZipUrl,
+  runFilesZipUrl,
+  messageZipUrl,
   safePublicUrl,
 } from './urls';
 import { isActive, type ActivityItem, type Artifact, type Message, type Thread } from './types';
@@ -21,10 +23,20 @@ function Timestamp({ value }: { value: string }) {
     </time>
   );
 }
-function Text({ message }: { message: Message }) {
+function Text({
+  message,
+  artifacts,
+  fallbackImages,
+}: {
+  message: Message;
+  artifacts?: Artifact[];
+  fallbackImages?: boolean;
+}) {
   return (
     <div className="markdown">
-      <Markdown>{message.content}</Markdown>
+      <Markdown artifacts={artifacts} fallbackImages={fallbackImages}>
+        {message.content}
+      </Markdown>
     </div>
   );
 }
@@ -233,12 +245,6 @@ function Files({
     >
       <div className="files-heading">
         <h2>{unassociated ? 'Files with unknown reply' : 'Files from this reply'}</h2>
-        {artifacts.length > 1 && zip && (
-          <a className="zip-link" href={zip} download>
-            <Download size={14} />
-            Download all ZIP
-          </a>
-        )}
       </div>
       <div className="reply-gallery">
         {artifacts.map((artifact) => (
@@ -289,11 +295,31 @@ function Files({
           </div>
         );
       })}
+      {zip && (
+        <div className="reply-downloads">
+          <a className="zip-link" href={zip} download aria-label="Download all ZIP from this reply">
+            <Download size={14} />
+            Download all ZIP
+          </a>
+        </div>
+      )}
     </section>
   );
 }
+function ZipLink({ url }: { url?: string }) {
+  return url ? (
+    <a className="zip-link" href={url} download>
+      <Download size={14} />
+      Download all ZIP
+    </a>
+  ) : null;
+}
 function UserMessage({ message, thread }: { message: Message; thread: Thread }) {
   const attachments = new Map(thread.attachments.map((attachment) => [attachment.id, attachment]));
+  const zip =
+    new Set(message.attachmentIds?.filter((id) => attachments.has(id))).size > 1
+      ? messageZipUrl(thread.session.id, message.id, message.zipUrl)
+      : undefined;
   return (
     <article className="message message-user" aria-label="You message">
       <div className="avatar avatar-user">Y</div>
@@ -303,6 +329,7 @@ function UserMessage({ message, thread }: { message: Message; thread: Thread }) 
           <Timestamp value={message.createdAt} />
         </div>
         <Text message={message} />
+        <ZipLink url={zip} />
         {!!message.imageReferences?.length && (
           <ul className="message-attachments" aria-label="Referenced images">
             {message.imageReferences.map((id) => {
@@ -370,8 +397,19 @@ function AssistantReply({
     (message) => message.phase === 'final' && message.streamState === 'completed',
   );
   const run = thread.runs.find((run) => run.id === reply.runId);
+  const attachments = new Set(thread.attachments.map((file) => file.id));
+  const uploadCount = new Set(run?.attachmentIds?.filter((id) => attachments.has(id))).size;
   const zip =
-    reply.runId && run ? runZipUrl(thread.session.id, reply.runId, run.zipUrl) : undefined;
+    reply.runId && run
+      ? ((reply.artifacts.length + uploadCount > 1
+          ? runFilesZipUrl(thread.session.id, reply.runId, run.filesZipUrl)
+          : undefined) ??
+        (reply.artifacts.length > 1
+          ? runZipUrl(thread.session.id, reply.runId, run.zipUrl)
+          : undefined))
+      : undefined;
+  const finalResponse =
+    responses.find((message) => message.id === run?.finalMessageId) ?? responses.at(-1);
   if (
     !messages.length &&
     !reply.activity.length &&
@@ -390,6 +428,14 @@ function AssistantReply({
       </div>
       <div className="message-body">
         {progress.length > 0 && <Progress messages={progress} finalReady={finalReady} />}
+        {zip && (
+          <div className="reply-downloads">
+            <ZipLink url={zip} />
+            <small>
+              {uploadCount ? 'Uploads and files from this reply' : 'Files from this reply'}
+            </small>
+          </div>
+        )}
         {responses.map((message) => {
           const final = message.phase === 'final';
           return (
@@ -408,7 +454,11 @@ function AssistantReply({
                 </strong>
                 <Timestamp value={message.createdAt} />
               </div>
-              <Text message={message} />
+              <Text
+                message={message}
+                artifacts={reply.artifacts}
+                fallbackImages={message === finalResponse && message.streamState !== 'streaming'}
+              />
             </section>
           );
         })}

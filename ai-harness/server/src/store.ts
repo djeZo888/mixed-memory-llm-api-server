@@ -1,5 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
+import path from "node:path";
 import { EventEmitter } from "node:events";
 import type {
   Session,
@@ -17,7 +18,7 @@ import type {
 import { CONTEXT_LIMIT, unknownSubagents } from "./contracts.js";
 import { environment } from "./locale.js";
 import { imageMime, safeStorageName, displayName } from "./file-metadata.js";
-import { ApiError } from "./errors.js";
+import { ApiError, requireId } from "./errors.js";
 
 export interface StoredSession extends Session {
   workspaceId: string;
@@ -36,6 +37,7 @@ export interface Run {
 }
 export interface FileRecord {
   image?: import("./image-contracts.js").ImageMetadata;
+  sourcePath?: string;
   id: string;
   sessionId: string;
   kind: "attachment" | "artifact";
@@ -51,9 +53,12 @@ const decode = <T>(v: unknown): T => JSON.parse(String(v));
 export class Store {
   readonly db: DatabaseSync;
   readonly events = new EventEmitter();
-  constructor(path: string) {
+  constructor(
+    databasePath: string,
+    private readonly workspaceRoot?: string,
+  ) {
     this.events.setMaxListeners(0);
-    this.db = new DatabaseSync(path);
+    this.db = new DatabaseSync(databasePath);
     this.db
       .exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
    CREATE TABLE IF NOT EXISTS handoffs(session_id TEXT PRIMARY KEY,summary TEXT NOT NULL,delivered INTEGER NOT NULL DEFAULT 0);
@@ -67,6 +72,7 @@ export class Store {
    CREATE INDEX IF NOT EXISTS events_session ON events(session_id,id);`);
     // Companion tables preserve old release positional INSERT compatibility on rollback.
     this.db.exec(`
+      CREATE TABLE IF NOT EXISTS h004_file_sources(file_id TEXT PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,source_path TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS h003_image_outputs(workspace_id TEXT NOT NULL,path TEXT NOT NULL,job_id TEXT NOT NULL,PRIMARY KEY(workspace_id,path));
       CREATE TABLE IF NOT EXISTS h003_image_file_meta(file_id TEXT PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS h003_run_image_refs(run_id TEXT PRIMARY KEY REFERENCES runs(id),data TEXT NOT NULL);
@@ -355,18 +361,21 @@ export class Store {
               .get(fileId, r.session_id as string),
         )
       : [];
+    const attachmentIds = decode<string[]>(r.attachment_ids);
+    const attachments = this.ownedAttachments(
+      String(r.session_id),
+      attachmentIds,
+    );
     return {
       ...(imageReferences.length ? { imageReferences } : {}),
       id: String(r.id),
       ...this.messagePhase(id),
-      attachments: decode<string[]>(r.attachment_ids).flatMap((id) => {
-        const f = this.db
-          .prepare(
-            "SELECT id FROM files WHERE id=? AND session_id=? AND kind='attachment'",
-          )
-          .get(id, r.session_id as string);
-        return f ? [this.publicFile(this.file(id))] : [];
-      }),
+      attachments: attachments.map((f) => this.publicFile(f)),
+      ...(r.role === "user" &&
+      attachments.length > 1 &&
+      attachments.length === new Set(attachmentIds).size
+        ? { zipUrl: `/api/sessions/${r.session_id}/messages/${id}/files.zip` }
+        : {}),
       role: r.role as Message["role"],
       content: String(r.content),
       createdAt: String(r.created_at),
@@ -514,6 +523,11 @@ export class Store {
     const artifactIds = this.files(String(r.session_id), "artifact")
       .filter((f) => f.runId === id)
       .map((f) => f.id);
+    const requestedAttachments = decode<string[]>(r.attachment_ids);
+    const attachmentIds = this.ownedAttachments(
+      String(r.session_id),
+      requestedAttachments,
+    ).map((f) => f.id);
     const finalMessageId =
       this.messages(String(r.session_id)).findLast(
         (m) => m.runId === id && m.phase === "final",
@@ -529,6 +543,11 @@ export class Store {
       updatedAt: String(r.updated_at),
       finalMessageId,
       artifactIds,
+      attachmentIds,
+      ...(artifactIds.length + attachmentIds.length > 1 &&
+      attachmentIds.length === new Set(requestedAttachments).size
+        ? { filesZipUrl: `/api/sessions/${r.session_id}/runs/${id}/files.zip` }
+        : {}),
       ...(artifactIds.length > 1
         ? { zipUrl: `/api/sessions/${r.session_id}/runs/${id}/artifacts.zip` }
         : {}),
@@ -830,6 +849,10 @@ export class Store {
       this.db
         .prepare("INSERT INTO h002_file_refs VALUES(?,?,?)")
         .run(f.id, f.runId ?? null, f.messageId ?? null);
+      if (f.sourcePath)
+        this.db
+          .prepare("INSERT INTO h004_file_sources VALUES(?,?)")
+          .run(f.id, f.sourcePath);
       if (f.image)
         this.db
           .prepare("INSERT OR REPLACE INTO h003_image_file_meta VALUES(?,?)")
@@ -855,6 +878,9 @@ export class Store {
     const image = this.db
       .prepare("SELECT data FROM h003_image_file_meta WHERE file_id=?")
       .get(id)?.data;
+    const source = this.db
+      .prepare("SELECT source_path FROM h004_file_sources WHERE file_id=?")
+      .get(id);
     const metadata = image
       ? decode<import("./image-contracts.js").ImageMetadata>(image)
       : undefined;
@@ -867,6 +893,7 @@ export class Store {
     }
     return {
       ...(metadata ? { image: metadata } : {}),
+      ...(source ? { sourcePath: String(source.source_path) } : {}),
       id: String(r.id),
       sessionId: String(r.session_id),
       kind: r.kind as FileRecord["kind"],
@@ -891,7 +918,113 @@ export class Store {
         .all(sessionId, kind) as { id: string }[]
     ).map((r) => this.file(r.id));
   }
+  /** Upload membership is many-to-many through requests/messages, never reassigned to a file row. */
+  ownedAttachments(
+    sessionId: string,
+    ids: string[],
+    strict = false,
+  ): FileRecord[] {
+    return [...new Set(ids)].flatMap((id) => {
+      const row = this.db
+        .prepare(
+          "SELECT id FROM files WHERE id=? AND session_id=? AND kind='attachment'",
+        )
+        .get(id, sessionId);
+      if (!row) {
+        if (strict)
+          throw new ApiError(
+            404,
+            "not_found",
+            "Attachment not found in this reply",
+          );
+        return [];
+      }
+      return [this.file(id)];
+    });
+  }
+  private linkedPaths(f: FileRecord): string[] {
+    if (!f.runId) return [];
+    const rows = this.db
+      .prepare(
+        "SELECT id,content FROM messages WHERE session_id=? AND run_id=? AND role='assistant'",
+      )
+      .all(f.sessionId, f.runId);
+    const targets = new Set<string>();
+    for (const row of rows) {
+      if (f.messageId && f.messageId !== row.id) continue;
+      const content = String(row.content);
+      const destinations = [
+        ...content.matchAll(
+          /!?\[[^\]\r\n]*\]\(\s*(?:<([^>\r\n]+)>|([^\s()]+))(?:\s+(?:"[^"\r\n]*"|'[^'\r\n]*'))?\s*\)/g,
+        ),
+        ...content.matchAll(/^\[[^\]\r\n]+\]:\s*(?:<([^>\r\n]+)>|([^\s]+))/gm),
+      ];
+      for (const match of destinations) targets.add(match[1] ?? match[2]);
+    }
+    return [...targets];
+  }
+  /** Candidates only: Files must prove byte identity before exposing a legacy alias. */
+  legacyReferencePaths(f: FileRecord): string[] {
+    if (
+      f.kind !== "artifact" ||
+      !f.runId ||
+      f.sourcePath ||
+      f.image ||
+      !this.workspaceRoot
+    )
+      return [];
+    if (
+      f.name !== path.basename(f.name) ||
+      /[\\/\x00-\x1f\x7f]/.test(f.name) ||
+      f.name.startsWith(".")
+    )
+      return [];
+    const sameName = this.db.prepare(
+      `SELECT COUNT(*) AS count FROM files f JOIN h002_file_refs r ON r.file_id=f.id
+       LEFT JOIN h002_file_names n ON n.file_id=f.id
+       WHERE f.session_id=? AND f.kind='artifact' AND r.run_id=? AND COALESCE(n.display_name,f.name)=?`,
+    ).get(f.sessionId, f.runId, f.name);
+    if (Number(sameName?.count) !== 1) return [];
+    const session = this.getSession(f.sessionId);
+    const target = path.join(
+      this.workspaceRoot,
+      requireId(session.workspaceId),
+      f.name,
+    );
+    return this.linkedPaths(f).includes(target) ? [target] : [];
+  }
+  private referencePaths(f: FileRecord): string[] {
+    if (f.kind !== "artifact" || !f.runId) return [];
+    // Image metadata is committed with the authoritative snapshot, before SSE or
+    // the optional workspace copy. This name is fixed by ImageFiles.save.
+    const source =
+      f.sourcePath ??
+      (f.image && f.name === `image-${f.image.jobId}.png` ? f.name : undefined);
+    if (
+      !source ||
+      path.isAbsolute(source) ||
+      /[\\\x00-\x1f\x7f]/.test(source) ||
+      source
+        .split("/")
+        .some((segment) => !segment || segment === "." || segment === "..")
+    )
+      return [];
+    const aliases = [source];
+    if (this.workspaceRoot) {
+      // A cancelled image may finish saving after soft deletion. Internal
+      // publication must retain its artifact; public routes still reject deleted chats.
+      const session = this.getSession(f.sessionId, true);
+      const target = path.join(
+        this.workspaceRoot,
+        requireId(session.workspaceId),
+        source,
+      );
+      if (this.linkedPaths(f).includes(target)) aliases.push(target);
+    }
+    return aliases;
+  }
   publicFile(f: FileRecord): Attachment | Artifact {
+    const referencePaths = this.referencePaths(f);
     const value = {
       id: f.id,
       name: f.name,
@@ -905,6 +1038,7 @@ export class Store {
       ? {
           ...value,
           downloadUrl: `/api/artifacts/${f.id}/download`,
+          ...(referencePaths.length ? { referencePaths } : {}),
           ...(f.image ? { image: f.image } : {}),
           runId: f.runId ?? null,
           messageId: f.messageId ?? null,
