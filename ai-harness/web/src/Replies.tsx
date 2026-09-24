@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ChevronDown, Download, FileText, LoaderCircle, Paperclip, Terminal } from 'lucide-react';
-import { Markdown } from './Markdown';
+import { Markdown, type InlineImageRegistration } from './Markdown';
 import { ImageJobs, type ImageActions } from './ImageJobs';
 import { groupReplies, type Reply } from './reply-groups';
 import { bytes, formatTime } from './display';
@@ -27,14 +27,20 @@ function Text({
   message,
   artifacts,
   fallbackImages,
+  registerInlineImage,
 }: {
   message: Message;
   artifacts?: Artifact[];
   fallbackImages?: boolean;
+  registerInlineImage?: InlineImageRegistration;
 }) {
   return (
     <div className="markdown">
-      <Markdown artifacts={artifacts} fallbackImages={fallbackImages}>
+      <Markdown
+        artifacts={artifacts}
+        fallbackImages={fallbackImages}
+        registerInlineImage={registerInlineImage}
+      >
         {message.content}
       </Markdown>
     </div>
@@ -226,6 +232,7 @@ function ErrorNotices({
 }
 function Files({
   artifacts,
+  inlineImages,
   zip,
   unassociated = false,
   useForEdit,
@@ -234,10 +241,14 @@ function Files({
   useForEdit?: (artifactId: string) => void;
   editUnavailable?: string;
   artifacts: Artifact[];
+  inlineImages?: ReadonlyMap<string, number>;
   zip?: string;
   unassociated?: boolean;
 }) {
   if (!artifacts.length) return null;
+  const additional = artifacts.filter(
+    (artifact) => !inlineImages?.has(artifact.id) && previewUrl(artifact.id, artifact.previewUrl),
+  );
   return (
     <section
       className="artifacts"
@@ -246,11 +257,16 @@ function Files({
       <div className="files-heading">
         <h2>{unassociated ? 'Files with unknown reply' : 'Files from this reply'}</h2>
       </div>
-      <div className="reply-gallery">
-        {artifacts.map((artifact) => (
-          <Preview key={artifact.id} artifact={artifact} />
-        ))}
-      </div>
+      {additional.length > 0 && (
+        <details className="additional-image-previews">
+          <summary>Additional image previews ({additional.length})</summary>
+          <div className="reply-gallery">
+            {additional.map((artifact) => (
+              <Preview key={artifact.id} artifact={artifact} />
+            ))}
+          </div>
+        </details>
+      )}
       {artifacts.map((artifact) => {
         const url = artifactDownloadUrl(artifact.id);
         const contents = (
@@ -386,6 +402,18 @@ function AssistantReply({
   useForEdit,
   editUnavailable,
 }: { reply: Reply; thread: Thread } & ImageReplyProps) {
+  const [inlineImages, setInlineImages] = useState<ReadonlyMap<string, number>>(new Map());
+  const registerInlineImage = useCallback<InlineImageRegistration>((id) => {
+    setInlineImages((current) => new Map(current).set(id, (current.get(id) ?? 0) + 1));
+    return () =>
+      setInlineImages((current) => {
+        const next = new Map(current);
+        const count = (next.get(id) ?? 1) - 1;
+        if (count) next.set(id, count);
+        else next.delete(id);
+        return next;
+      });
+  }, []);
   const messages = reply.messages.filter((message) => message.content.trim().length > 0);
   const progress = messages.filter(
     (message) => message.phase === 'intermediate' || message.phase === 'thinking',
@@ -458,6 +486,7 @@ function AssistantReply({
                 message={message}
                 artifacts={reply.artifacts}
                 fallbackImages={message === finalResponse && message.streamState !== 'streaming'}
+                registerInlineImage={registerInlineImage}
               />
             </section>
           );
@@ -467,6 +496,7 @@ function AssistantReply({
         <ImageJobs jobs={reply.imageJobs} actions={imageActions} />
         <Files
           artifacts={reply.artifacts}
+          inlineImages={inlineImages}
           zip={zip}
           useForEdit={useForEdit}
           editUnavailable={editUnavailable}

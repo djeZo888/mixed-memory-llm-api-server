@@ -1229,6 +1229,14 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: 12px;
 }
+.additional-image-previews {
+  margin-bottom: 12px;
+}
+.additional-image-previews > summary {
+  cursor: pointer;
+  font-size: 13px;
+  padding: 8px 0;
+}
 .artifact-preview {
   margin: 12px 0;
   min-width: 0;

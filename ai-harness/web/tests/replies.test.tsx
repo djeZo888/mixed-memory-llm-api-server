@@ -568,6 +568,7 @@ describe('reply-level conversation presentation', () => {
       ],
     });
     const { container } = render(<ConversationReplies thread={thread} />);
+    fireEvent.click(screen.getByText('Additional image previews (1)'));
     const preview = screen.getByRole('img', { name: 'diagram.svg' });
     expect(preview).toHaveAttribute('src', '/api/files/safe-svg/preview');
     expect(screen.queryByRole('img', { name: 'old.svg' })).not.toBeInTheDocument();

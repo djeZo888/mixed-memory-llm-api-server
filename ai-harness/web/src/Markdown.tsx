@@ -1,4 +1,12 @@
-import { createContext, memo, useContext, useEffect, useState, type ComponentProps } from 'react';
+import {
+  createContext,
+  memo,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type ComponentProps,
+} from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Artifact } from './types';
@@ -15,9 +23,15 @@ export function safeLink(value: string): string | undefined {
     return undefined;
   }
 }
+export type InlineImageRegistration = (artifactId: string) => () => void;
+const InlineImages = createContext<InlineImageRegistration | undefined>(undefined);
 function InlineImage({ file, alt }: { file: Artifact; alt?: string }) {
   const src = rasterPreview(file);
+  const register = useContext(InlineImages);
   const [failed, setFailed] = useState(false);
+  // Only the safe renderer reports placements. Keep failed inline previews
+  // registered too: their download fallback must not trigger another preview.
+  useLayoutEffect(() => register?.(file.id), [register, file.id]);
   useEffect(() => setFailed(false), [src]);
   return failed ? (
     <span className="image-placeholder">
@@ -84,29 +98,33 @@ export const Markdown = memo(function Markdown({
   children,
   artifacts = [],
   fallbackImages = false,
+  registerInlineImage,
 }: {
   children: string;
   artifacts?: Artifact[];
   fallbackImages?: boolean;
+  registerInlineImage?: InlineImageRegistration;
 }) {
   const references = artifactReferences(artifacts);
   return (
-    <ArtifactCatalog.Provider value={references}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm, ownedArtifactMarkdown(artifacts, fallbackImages)]}
-        skipHtml
-        urlTransform={(url, key) => {
-          const file = references.get(url);
-          if (file)
-            return key === 'src'
-              ? (rasterPreview(file) ?? '')
-              : (artifactDownloadUrl(file.id) ?? '');
-          return key === 'href' ? (safeLink(url) ?? '') : '';
-        }}
-        components={components}
-      >
-        {children}
-      </ReactMarkdown>
-    </ArtifactCatalog.Provider>
+    <InlineImages.Provider value={registerInlineImage}>
+      <ArtifactCatalog.Provider value={references}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm, ownedArtifactMarkdown(artifacts, fallbackImages)]}
+          skipHtml
+          urlTransform={(url, key) => {
+            const file = references.get(url);
+            if (file)
+              return key === 'src'
+                ? (rasterPreview(file) ?? '')
+                : (artifactDownloadUrl(file.id) ?? '');
+            return key === 'href' ? (safeLink(url) ?? '') : '';
+          }}
+          components={components}
+        >
+          {children}
+        </ReactMarkdown>
+      </ArtifactCatalog.Provider>
+    </InlineImages.Provider>
   );
 });

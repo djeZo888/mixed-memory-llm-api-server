@@ -437,8 +437,15 @@ const server = http.createServer(async (request, response) => {
           streamState: 'completed',
           createdAt: at,
           runId,
-          content:
-            'First illustration belongs here.\n\n![First illustration](/fixture/workspace/illustration-0.png)\n\nThe second illustration follows this explanation.\n\n![Second illustration][second]\n\n[second]: /api/files/h004-file-1/preview\n\n[Download first original](/api/artifacts/h004-file-0/download)\n\n| Comparison criterion with meaningful words | First outcome | Second outcome | Notes |\n| --- | --- | --- | --- |\n| Long criteria remain readable without one-letter lines | An explanation with enough words to wrap across normal lines in its own cell. | Another outcome with a deliberately long unbroken token abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz | Supporting notes remain readable. |\n\nOnly two selected illustrations belong in this narrative; drafts remain downloadable.',
+          content: [
+            'First illustration belongs here.\n\n![First illustration](/fixture/workspace/illustration-0.png)\n\nThe second illustration follows this explanation.\n\n![Second illustration][second]\n\n[second]: /api/files/h004-file-1/preview\n\n[Download first original](/api/artifacts/h004-file-0/download)',
+            ...Array.from({ length: 8 }, (_, offset) => {
+              const index = offset + 2;
+              return `Selected illustration ${index + 1} belongs after this explanation.\n\n![Selected illustration ${index + 1}](/fixture/workspace/illustration-${index}.png)`;
+            }),
+            '| Comparison criterion with meaningful words | First outcome | Second outcome | Notes |\n| --- | --- | --- | --- |\n| Long criteria remain readable without one-letter lines | An explanation with enough words to wrap across normal lines in its own cell. | Another outcome with a deliberately long unbroken token abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz | Supporting notes remain readable. |',
+            'Ten selected illustrations belong in this narrative; nine drafts remain downloadable with optional previews.',
+          ].join('\n\n'),
         },
       ];
       history.runs = [

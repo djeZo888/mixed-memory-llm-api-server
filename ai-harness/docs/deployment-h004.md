@@ -118,7 +118,7 @@ customizations and chat state are preserved. Its default/check modes do not writ
 import hashlib, os, pathlib, re, stat, sys, tempfile
 PROFILES = pathlib.Path('/home/user/.local/share/ai-harness/profiles')
 OLD = 'c8b7c8988e7bdb2aa579522dad47b3c47aaa830016b973b6a65758988ad2e57d'
-NEW = '4fb64b24bcfb7e6e3428c0df02e2b485c90213306c4e671599df75a04269b974'
+NEW = '56449a3fa8055915f085333c85a295a3e1c2676489efff3a2a5428c71aad3c01'
 if sys.flags.optimize: raise RuntimeError("Optimized Python disables required checks")
 mode, source = sys.argv[1:]
 assert mode in ('check-upgrade', 'upgrade', 'check-rollback', 'rollback')
@@ -358,13 +358,19 @@ Verify service PID/cwd/argv point to the approved release, no restart loop,
 listeners remain nginx10.156.100.61:80 and loopback8080/8081, credentials/config
 unchanged, history/file hashes and counts preserved. In a read-only browser open
 only the authorized newest conversation: ten saved image references should render
-at their authored narrative positions, separately from trays; ZIP links should be
-reachable near final heading and file-list end. Download an existing reply ZIP
-and compare entry names/content to its owned catalog privately. Confirm tables
-at desktop and narrow widths; no UI-only image generation. Use fixture evidence
-for malicious refs and upload combinations; any fresh agent acceptance needs its
-own explicitly bounded root grant. The guidance-only behavior remains unproven
-until that separately authorized test.
+at their authored narrative positions without duplicate full-size previews below.
+The nine unused image previews belong in a default-collapsed `Additional image
+previews` section; all filenames, Download and Use for next edit controls remain
+accessible. ZIP links should be reachable near the final heading and file-list
+end. Download an existing reply ZIP and compare entry names/content to its owned
+catalog privately. Prioritize this existing-chat rendering and ZIP check, then
+one short owned chat reusing an already supplied image under the fresh root grant.
+Do not repeat research or generate a new image by default. If a changed tool-result
+format truly requires generation, propose exactly one bounded request for root
+review before making it. Confirm tables at desktop and narrow widths; use fixture
+evidence for malicious refs and upload combinations. Restart only the harness app
+and engine when idle; never restart ai-vm models. Guidance compliance and any
+latency improvement remain unproven by the synthetic source checks.
 
 For rollback in a fresh quiet/settled window, preserve all post-activation history,
 then restore only the recorded prior unit and retained engine alias:

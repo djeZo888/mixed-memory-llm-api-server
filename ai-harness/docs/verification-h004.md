@@ -24,9 +24,16 @@ Worker2. Exact delivered commit and bundle checksum are in the parent `REPORT.md
   selected as edit references keep their original reply ownership.
 - Tables wrap text, retain an11rem minimum first column and scroll within the
   reply on narrow screens.
+- Inline/fallback previews register only artifact IDs selected by the existing
+  safe renderer; the bottom gallery excludes these IDs without interpreting
+  Markdown a second time. Other previews live in default-collapsed Additional
+  image previews. Every file/download/edit control and both ZIP links remain
+  outside the disclosure; files, ownership and stored history are unchanged.
 
 ## Verification
 
+The table below records the parent source phase, before the narrow review
+follow-up. Its durable evidence remains in `H004-HARNESS-20260924/evidence`.
 All runs use local fixtures, Node24.21.0 and pinned dependency locks.
 
 | Check | Result |
@@ -40,7 +47,7 @@ All runs use local fixtures, Node24.21.0 and pinned dependency locks.
 | Extracted profile-skill procedure, synthetic dry-run/update/rollback/refusal |PASS |
 | Whitespace and staged source/privacy checks |PASS at final handoff |
 
-Browser fixtures verify two authored narrative image positions among19 tray
+Parent browser fixtures verified two authored narrative image positions among19 tray
 images, ordinary download links,22-entry combined ZIP contents,2-entry upload
 ZIP contents, cross-chat/query refusal and zero external image requests. The
 backend independently checks real ZIP CRC/contents, duplicate names, invalid
@@ -59,6 +66,31 @@ reset table scroll during state updates. Stable component identities now preserv
 scroll and image-error state. Initial failures remain
 in parent evidence; they are not presented as production failures.
 
+## Narrow source-review follow-up
+
+Evidence is outside Git in `H004-HARNESS-REVIEW-20260924/evidence`. Only affected
+checks are rerun: web typecheck/build, H004 and reply rendering unit tests,
+H004 browser fixtures and exact-hash profile-skill update/rollback fixtures.
+Prior backend and adapter passes remain parent evidence, not new executions.
+
+- Web build/typecheck and focused unit selection: PASS, 73/73 tests. Covers 19 PNGs
+  with 10 narrative placements and 9 additional previews, always-accessible file
+  and edit controls/ZIPs, exact reference-style and legacy resolution, ambiguous
+  and unrelated reference refusal, fallback deduplication, StrictMode, repeated
+  placements, failed inline images, catalog refresh and streamed message/artifact
+  changes. Existing safe SVG gallery behavior remains available when expanded.
+- H004 browser fixtures: PASS, 3/3 cases. The fixture matches the 19/10/9 split
+  and checks default collapse, expansion, reload and stream updates, edit controls, responsive
+  tables and owned ZIP downloads. Seven reviewed screenshots and a sanitized
+  browser summary are in follow-up evidence; synthetic files only, no model calls.
+- The packaged guidance also stops repeated local edit/read self-verification
+  once deliverables are acceptable, while preserving concrete unmet requirements
+  and explicitly requested variants without a count cap. Candidate skill SHA256
+  is `56449a3fa8055915f085333c85a295a3e1c2676489efff3a2a5428c71aad3c01`.
+  Extracted deployment helper dry-run/update/idempotence/rollback/refusal and
+  unchanged profile-seeder compatibility fixtures PASS. Production rollback hash
+  and custom-content/history preservation remain in the deployment handoff.
+
 ## Read-only production findings and limits
 
 The newest run took41m22s with nine successful image calls; job execution/saving
@@ -68,6 +100,13 @@ immutable artifact bytes. The deployed DOM had ten placeholders and zero final
 images. ZIP serialization/membership was correct and one ZIP link existed, but
 it lay2239px above the default bottom viewport. Candidate UI fixes discoverability;
 this is not evidence of a previously missing backend ZIP field.
+
+Existing private activity timestamps additionally separate 25 browser invocations
+(14.161s) and 7 search invocations (5.623s); their disjoint union is 19.784s. All
+non-image tool intervals occupy 36.474s. The 1904.520s outside recorded tool
+intervals cannot be attributed to text-model time: no text gateway start/end or
+latency metrics are present. These are tool invocation durations, not isolated
+network waits; no new profiling or host inspection was performed.
 
 Live behavioral improvement/latency, production candidate rendering, deployment,
 engine-overlay build, live profile update and rollback are **NOT_TESTED**. Guidance

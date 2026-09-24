@@ -33,8 +33,11 @@ upload ZIP coverage is a separate part of the user's explicit requested outcome.
    set of distinct purposeful illustrations; reuse successful artifacts. Embedding,
    links, layout and cosmetic self-verification are not reasons to regenerate.
    Explicitly requested variants, different illustrations, later user edits and
-   retries for concrete failed requirements remain possible. Preserve current
-   request-id idempotency and uncertain-submission/no-replay behavior. Do not add
+   retries for concrete failed requirements remain possible. Stop repeated local
+   file edit/read self-verification once requested deliverables are acceptable;
+   concrete unmet requirements and requested variants remain valid, without a cap.
+   Preserve current request-id idempotency and uncertain-submission/no-replay
+   behavior. Do not add
    output slots, frozen counts, prompt similarity filters or intent enforcement.
    Completed tool results provide canonical owned artifact Markdown for narrative
    placement. Never print base64, credentials or host paths in final answers.
@@ -49,6 +52,9 @@ upload ZIP coverage is a separate part of the user's explicit requested outcome.
    provide a labeled fallback whose placement is explicitly unknown; avoid adding
    all omitted intermediate variants to an already illustrated answer. Raw HTML,
    external images, arbitrary paths and SVG inline injection stay blocked.
+   Inline and fallback images do not repeat in the file gallery. Keep other image
+   previews in a default-collapsed Additional image previews section, with every
+   filename, Download and Use for next edit control outside the disclosure.
 3. **Reply downloads.** Put Download all ZIP where a long reply can be found at
    both the final answer and file-list end. Server-selected run membership includes
    generated files and uploads explicitly attached to that run. User messages can

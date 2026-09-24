@@ -1,9 +1,11 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { StrictMode } from 'react';
+import { describe, expect, it, vi } from 'vitest';
 import { Markdown } from '../src/Markdown';
 import { ConversationReplies } from '../src/Replies';
 import { messageZipUrl, runFilesZipUrl } from '../src/urls';
-import { replyArtifact, replyMessage, replyRun, replyThread } from './reply-fixtures';
+import { applyEvent } from '../src/state';
+import { replyArtifact, replyMessage, replyRun, replyThread, runEvent } from './reply-fixtures';
 const image = (id = 'picture', additions = {}) =>
   replyArtifact(id, `${id}.png`, {
     mimeType: 'image/png',
@@ -89,11 +91,13 @@ describe('H004 owned narrative artifacts', () => {
       ],
     });
     const original = JSON.stringify(thread);
-    render(<ConversationReplies thread={thread} />);
+    const { container } = render(<ConversationReplies thread={thread} />);
     const final = screen.getByLabelText('Final answer');
     expect(within(final).getByRole('img', { name: 'picture.png' })).toBeInTheDocument();
     expect(final).toHaveTextContent('Their placement in the original answer was not specified.');
     expect(within(final).queryByRole('img', { name: 'other.png' })).not.toBeInTheDocument();
+    expect(final.closest('article')!.querySelector('.reply-gallery')).toBeNull();
+    expect(container.querySelectorAll('.additional-image-previews')).toHaveLength(1);
     expect(JSON.stringify(thread)).toBe(original);
   });
   it('preserves table DOM/scroll and failed preview state across catalog refreshes', () => {
@@ -125,6 +129,169 @@ describe('H004 owned narrative artifacts', () => {
     expect(
       screen.getByRole('region', { name: 'Scrollable table' }).querySelector('table'),
     ).not.toBeNull();
+  });
+});
+describe('H004 additional previews', () => {
+  const galleryThread = (artifacts: ReturnType<typeof image>[], content: string) =>
+    replyThread({
+      messages: [
+        replyMessage('answer', 'assistant', content, {
+          runId: 'run/one',
+          phase: 'final',
+          streamState: 'completed',
+        }),
+      ],
+      artifacts: artifacts.map((artifact) => ({ ...artifact, runId: 'run/one' })),
+      runs: [
+        replyRun('run/one', {
+          artifactIds: artifacts.map((artifact) => artifact.id),
+          finalMessageId: 'answer',
+          zipUrl: '/api/sessions/chat%2Fa/runs/run%2Fone/artifacts.zip',
+        }),
+      ],
+    });
+  it('keeps 10 narrative placements, hides only 9 draft previews, and retains every file control and both ZIPs', () => {
+    const files = Array.from({ length: 19 }, (_, i) => image(`picture-${i}`));
+    const thread = galleryThread(
+      files,
+      files
+        .slice(0, 10)
+        .map((file) => `![Chosen ${file.id}](artifact:${file.id})`)
+        .join('\n\n'),
+    );
+    const original = JSON.stringify(thread);
+    const useForEdit = vi.fn();
+    const { container, rerender } = render(
+      <StrictMode>
+        <ConversationReplies thread={thread} useForEdit={useForEdit} />
+      </StrictMode>,
+    );
+    const details = container.querySelector(
+      'details.additional-image-previews',
+    ) as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    expect(details.querySelectorAll('img')).toHaveLength(9);
+    expect(screen.getByLabelText('Final answer').querySelectorAll('img')).toHaveLength(10);
+    for (const file of files) {
+      const download = screen.getByRole('link', {
+        name: new RegExp(`${file.name.replace('.', '\\.')}.*Download`),
+      });
+      expect(download.closest('details')).toBeNull();
+      expect(download).toHaveAttribute('href', `/api/artifacts/${file.id}/download`);
+    }
+    const controls = screen.getAllByRole('button', { name: 'Use for next edit' });
+    expect(controls).toHaveLength(19);
+    fireEvent.click(controls[0]);
+    fireEvent.click(controls[18]);
+    expect(useForEdit.mock.calls).toEqual([['picture-0'], ['picture-18']]);
+    const zips = screen.getAllByRole('link', { name: /Download all ZIP/ });
+    expect(zips).toHaveLength(2);
+    for (const zip of zips) expect(zip.closest('details')).toBeNull();
+    // User expansion and inline load-error fallback survive a catalog refresh.
+    fireEvent.click(within(details).getByText('Additional image previews (9)'));
+    expect(details.open).toBe(true);
+    fireEvent.error(screen.getByRole('img', { name: 'Chosen picture-0' }));
+    rerender(
+      <StrictMode>
+        <ConversationReplies
+          thread={galleryThread(
+            files.map((file) => ({ ...file })),
+            thread.messages[0].content,
+          )}
+          useForEdit={useForEdit}
+        />
+      </StrictMode>,
+    );
+    expect(container.querySelector('details.additional-image-previews')).toBe(details);
+    expect(details.open).toBe(true);
+    expect(details.querySelectorAll('img')).toHaveLength(9);
+    expect(screen.getByRole('link', { name: 'Download picture-0.png' })).toBeInTheDocument();
+    expect(JSON.stringify(thread)).toBe(original);
+  });
+  it('deduplicates only actual safe renderer placements, including references and exact legacy links', () => {
+    const files = [
+      image('placed'),
+      image('legacy'),
+      image('draft'),
+      image('first', { referencePaths: ['/fixture/ambiguous.png'] }),
+      image('second', { referencePaths: ['/fixture/ambiguous.png'] }),
+    ];
+    const thread = galleryThread(
+      files,
+      '![Placed][ref]\n\n[ref]: artifact:placed\n\n[Legacy](/fixture/workspace/legacy.png)\n\n[Download draft](/api/artifacts/draft/download)\n\n![Wrong path](/elsewhere/draft.png) ![Ambiguous](/fixture/ambiguous.png) ![Foreign](artifact:foreign) ![Remote](https://example.test/draft.png)\n\n```md\n![Code](artifact:draft)\n```',
+    );
+    const { container } = render(<ConversationReplies thread={thread} />);
+    expect(screen.getByLabelText('Final answer').querySelectorAll('img')).toHaveLength(2);
+    expect(
+      Array.from(container.querySelectorAll('.reply-gallery img')).map((img) =>
+        img.getAttribute('src'),
+      ),
+    ).toEqual([
+      '/api/files/draft/preview',
+      '/api/files/first/preview',
+      '/api/files/second/preview',
+    ]);
+  });
+  it('updates placement membership through streamed content, artifact arrival and message replacement', () => {
+    let thread = galleryThread(
+      [image('placed'), image('draft')],
+      '![First](artifact:placed)\n\n![Again](artifact:placed)\n\n![Arriving](artifact:late)',
+    );
+    thread.messages[0].streamState = 'streaming';
+    const { container, rerender } = render(<ConversationReplies thread={thread} />);
+    const sources = () =>
+      Array.from(container.querySelectorAll('.reply-gallery img')).map((img) =>
+        img.getAttribute('src'),
+      );
+    expect(sources()).toEqual(['/api/files/draft/preview']);
+    thread = applyEvent(
+      thread,
+      runEvent(thread.lastEventId + 1, 'artifact', { artifact: image('late') }, 'run/one'),
+    );
+    rerender(<ConversationReplies thread={thread} />);
+    expect(screen.getByRole('img', { name: 'Arriving' })).toHaveAttribute(
+      'src',
+      '/api/files/late/preview',
+    );
+    expect(sources()).toEqual(['/api/files/draft/preview']);
+    thread = applyEvent(
+      thread,
+      runEvent(
+        thread.lastEventId + 1,
+        'message',
+        { message: { ...thread.messages[0], content: '![Again](artifact:placed)' } },
+        'run/one',
+      ),
+    );
+    rerender(<ConversationReplies thread={thread} />);
+    expect(sources()).toEqual(['/api/files/draft/preview', '/api/files/late/preview']);
+    thread = applyEvent(
+      thread,
+      runEvent(
+        thread.lastEventId + 1,
+        'assistant_delta',
+        { messageId: 'answer', text: '\n\n![Draft](artifact:draft)', phase: 'final' },
+        'run/one',
+      ),
+    );
+    rerender(<ConversationReplies thread={thread} />);
+    expect(sources()).toEqual(['/api/files/late/preview']);
+    // An empty streaming response releases its placements without fallback.
+    thread = applyEvent(
+      thread,
+      runEvent(
+        thread.lastEventId + 1,
+        'message',
+        { message: { ...thread.messages[0], content: '' } },
+        'run/one',
+      ),
+    );
+    rerender(<ConversationReplies thread={thread} />);
+    expect(sources()).toEqual([
+      '/api/files/placed/preview',
+      '/api/files/draft/preview',
+      '/api/files/late/preview',
+    ]);
   });
 });
 describe('H004 per-reply ZIP discovery and ownership', () => {

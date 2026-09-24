@@ -28,6 +28,9 @@ retry, but an uncertain submission, pending approval or retained artifact does
 not justify a replacement. Later user-requested edits remain valid and use the
 intended original or prior result. Do not invent an image count or make extra
 images merely to fill a quota.
+Once requested deliverables are acceptable, stop repeated local file edits and
+reads for self-verification; continue only for a concrete unmet requirement or
+an explicitly requested variant, without imposing an arbitrary iteration cap.
 
 Read capabilities before choosing an operation, size or reference count.
 Only advertised qualified profiles are available. Missing/disabled editing

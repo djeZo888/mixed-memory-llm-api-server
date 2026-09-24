@@ -41,9 +41,31 @@ test('H004 stored reply: narrative images, discoverable ZIP downloads and scoped
     document.body.append(label);
   });
   const reply = page.locator('[data-run-id="fixture/initial-run"]'),
-    final = reply.getByLabel('Final answer');
-  await expect(final.locator('img')).toHaveCount(2);
+    final = reply.getByLabel('Final answer'),
+    additional = reply.locator('.additional-image-previews');
+  await expect(final.locator('img')).toHaveCount(10);
   await expect(page.locator('.connection')).toContainText('Connected');
+  await expect(additional).not.toHaveAttribute('open', '');
+  await expect(additional.locator('summary')).toContainText('Additional image previews');
+  await expect(additional.locator('img')).toHaveCount(9);
+  await expect(additional.locator('img').first()).not.toBeVisible();
+  const fileEntries = reply.locator('.artifact-entry');
+  await expect(fileEntries).toHaveCount(20);
+  await expect(fileEntries.locator('a[download]')).toHaveCount(20);
+  await expect(fileEntries.getByRole('button', { name: 'Use for next edit' })).toHaveCount(19);
+  expect(
+    await fileEntries.evaluateAll((nodes) => nodes.every((node) => !node.closest('details'))),
+  ).toBe(true);
+  for (const index of [0, 10, 18]) {
+    const entry = fileEntries.nth(index);
+    await expect(entry.getByRole('link')).toContainText(`illustration-${index}.png`);
+    await expect(entry.getByRole('link')).toContainText('Download');
+    await expect(entry.getByRole('link')).toHaveAttribute(
+      'href',
+      `/api/artifacts/h004-file-${index}/download`,
+    );
+    await expect(entry.getByRole('button', { name: 'Use for next edit' })).toBeEnabled();
+  }
   await expect(
     reply.getByRole('link', { name: 'Download all ZIP from this reply', exact: true }),
   ).toBeInViewport();
@@ -57,7 +79,11 @@ test('H004 stored reply: narrative images, discoverable ZIP downloads and scoped
     '/api/files/h004-file-1/preview',
   );
   await expect(final).not.toContainText('placement in the original answer');
-  await expect(reply.locator('.reply-gallery img')).toHaveCount(19);
+  expect(
+    await reply
+      .locator('.reply-gallery img')
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('src'))),
+  ).toEqual(Array.from({ length: 9 }, (_, index) => `/api/files/h004-file-${index + 10}/preview`));
   const positions = await final.evaluate((node) =>
     Array.from(node.querySelectorAll('.markdown > p')).map((p) => ({
       text: p.textContent,
@@ -92,6 +118,20 @@ test('H004 stored reply: narrative images, discoverable ZIP downloads and scoped
   await bottomZip.scrollIntoViewIfNeeded();
   await expect(bottomZip).toBeInViewport();
   await page.screenshot({ path: resolve(evidence, 'h004-files-footer-desktop.png') });
+  await additional.evaluate((node) => node.scrollIntoView({ block: 'start' }));
+  await page.screenshot({
+    path: resolve(evidence, 'h004-additional-previews-collapsed-desktop.png'),
+  });
+  await additional.locator('summary').click();
+  await expect(additional).toHaveAttribute('open', '');
+  await expect(additional.locator('img').first()).toBeVisible();
+  await expect(additional.locator('img').first()).toHaveJSProperty('naturalWidth', 1920);
+  await additional.scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: resolve(evidence, 'h004-additional-previews-expanded-desktop.png'),
+  });
+  await additional.locator('summary').click();
+  await expect(additional.locator('img').first()).not.toBeVisible();
   const downloadPromise = page.waitForEvent('download');
   await bottomZip.click();
   const download = await downloadPromise;
@@ -121,8 +161,18 @@ test('H004 stored reply: narrative images, discoverable ZIP downloads and scoped
       )
     ).status(),
   ).toBe(400);
+  await fileEntries.nth(10).getByRole('button', { name: 'Use for next edit' }).click();
+  await expect(page.getByRole('list', { name: 'Image edit references' })).toContainText(
+    'illustration-10.png',
+  );
+  await expect(additional).not.toHaveAttribute('open', '');
+  await page.getByRole('button', { name: 'Remove image reference illustration-10.png' }).click();
+  await additional.locator('summary').click();
+  await expect(additional).toHaveAttribute('open', '');
   await page.reload();
-  await expect(final.locator('img')).toHaveCount(2);
+  await expect(final.locator('img')).toHaveCount(10);
+  await expect(additional).not.toHaveAttribute('open', '');
+  await expect(additional.locator('img')).toHaveCount(9);
   expect(errors).toEqual([]);
   expect(remote).toEqual([]);
   await writeFile(
@@ -131,8 +181,11 @@ test('H004 stored reply: narrative images, discoverable ZIP downloads and scoped
       {
         fixture: true,
         liveInference: false,
-        inlineImages: 2,
-        trayImages: 19,
+        inlineImages: 10,
+        additionalImages: 9,
+        additionalPreviewsCollapsedByDefault: true,
+        downloadableOutputFiles: 20,
+        editControlsOutsideDisclosure: 19,
         combinedZipEntries: [...files.keys()],
         uploadZipEntries: [...uploads.keys()],
         firstColumnWidth: firstColumn!.width,
@@ -143,6 +196,85 @@ test('H004 stored reply: narrative images, discoverable ZIP downloads and scoped
       2,
     ),
   );
+});
+test('H004 preview disclosure and ownership survive artifact refresh and streamed placements', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('.connection')).toContainText('Connected');
+  const reply = page.locator('[data-run-id="fixture/initial-run"]'),
+    final = reply.getByLabel('Final answer'),
+    additional = reply.locator('.additional-image-previews');
+  const history = await (
+    await request.get(`/api/sessions/${encodeURIComponent(sessionId)}`)
+  ).json();
+  const message = history.messages.find((item: { id: string }) => item.id === 'h004-final');
+  const artifact = history.artifacts.find((item: { id: string }) => item.id === 'h004-file-10');
+  await additional.locator('summary').click();
+  await expect(additional).toHaveAttribute('open', '');
+  await request.post('/__fixture/event', {
+    data: {
+      sessionId,
+      type: 'artifact',
+      runId: 'fixture/initial-run',
+      data: { artifact: { ...artifact, size: artifact.size + 1 } },
+    },
+  });
+  await expect(final.locator('img')).toHaveCount(10);
+  await expect(additional.locator('img')).toHaveCount(9);
+  await expect(additional).toHaveAttribute('open', '');
+  await request.post('/__fixture/event', {
+    data: {
+      sessionId,
+      type: 'assistant_delta',
+      runId: 'fixture/initial-run',
+      data: {
+        messageId: message.id,
+        phase: 'final',
+        text: '\n\n![Streamed selection](/api/files/h004-file-10/pre',
+      },
+    },
+  });
+  await expect(final).toContainText('Streamed selection');
+  await expect(final.locator('img')).toHaveCount(10);
+  await expect(additional.locator('img')).toHaveCount(9);
+  await request.post('/__fixture/event', {
+    data: {
+      sessionId,
+      type: 'assistant_delta',
+      runId: 'fixture/initial-run',
+      data: { messageId: message.id, phase: 'final', text: 'view)' },
+    },
+  });
+  await expect(final.getByRole('img', { name: 'Streamed selection' })).toHaveAttribute(
+    'src',
+    '/api/files/h004-file-10/preview',
+  );
+  await expect(final.locator('img')).toHaveCount(11);
+  await expect(additional.locator('img')).toHaveCount(8);
+  await expect(additional.locator('img[src="/api/files/h004-file-10/preview"]')).toHaveCount(0);
+  await expect(additional).toHaveAttribute('open', '');
+  await additional.locator('summary').click();
+  await request.post('/__fixture/event', {
+    data: {
+      sessionId,
+      type: 'message',
+      runId: 'fixture/initial-run',
+      data: { message },
+    },
+  });
+  await expect(final.locator('img')).toHaveCount(10);
+  await expect(additional.locator('img')).toHaveCount(9);
+  await expect(additional).not.toHaveAttribute('open', '');
+  await expect(reply.locator('.artifact-entry')).toHaveCount(20);
+  await expect(
+    reply.getByRole('link', { name: 'Download all ZIP from this reply', exact: true }),
+  ).toBeVisible();
+  const calls = (await (await request.get('/__fixture/calls')).json()).calls;
+  expect(
+    calls.some((call: { action: string }) => ['send', 'image-decision'].includes(call.action)),
+  ).toBe(false);
 });
 test('H004 narrow table and historical fallback remain usable without model calls', async ({
   page,
@@ -194,6 +326,15 @@ test('H004 narrow table and historical fallback remain usable without model call
   });
   await expect(final).toContainText('Their placement in the original answer was not specified.');
   await expect(final.locator('img')).toHaveCount(19);
+  const reply = page.locator('[data-run-id="fixture/initial-run"]');
+  await expect(reply.locator('.reply-gallery img')).toHaveCount(0);
+  await expect(reply.locator('.additional-image-previews')).toHaveCount(0);
+  await expect(reply.locator('.artifact-entry a[download]')).toHaveCount(20);
+  await expect(reply.getByRole('button', { name: 'Use for next edit' })).toHaveCount(19);
+  await expect(reply.getByRole('link', { name: 'Download all ZIP', exact: true })).toBeVisible();
+  await expect(
+    reply.getByRole('link', { name: 'Download all ZIP from this reply', exact: true }),
+  ).toBeVisible();
   await final.locator('img').first().scrollIntoViewIfNeeded();
   await expect(final.locator('img').first()).toHaveJSProperty('naturalWidth', 1920);
   await page.screenshot({ path: resolve(evidence, 'h004-historical-fallback-narrow.png') });
