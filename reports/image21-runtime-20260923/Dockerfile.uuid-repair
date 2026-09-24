@@ -1,0 +1,9 @@
+FROM sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83
+LABEL io.llm-image.repair="single-nvml-uuid-resolution" io.llm-image.parent-id="sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83"
+COPY sglang-nvml-uuid.patch /opt/image-receipts/sglang-nvml-uuid.patch
+RUN test "$(git -C /opt/sglang-src rev-parse HEAD)" = 0cd8be351d0825488f4b81c8931167bbab618eca \
+    && echo "c0a99f13fe1d54e1c9d85cc90ea32c09dbd1ca27451159e0c64953881dd82e9f  /opt/image-venv/lib/python3.12/site-packages/sglang/multimodal_gen/runtime/platforms/cuda.py" | sha256sum -c - \
+    && git -C /opt/sglang-src apply --check /opt/image-receipts/sglang-nvml-uuid.patch \
+    && git -C /opt/sglang-src apply /opt/image-receipts/sglang-nvml-uuid.patch \
+    && cp /opt/sglang-src/python/sglang/multimodal_gen/runtime/platforms/cuda.py /opt/image-venv/lib/python3.12/site-packages/sglang/multimodal_gen/runtime/platforms/cuda.py \
+    && sha256sum /opt/image-venv/lib/python3.12/site-packages/sglang/multimodal_gen/runtime/platforms/cuda.py /opt/image-receipts/sglang-nvml-uuid.patch > /opt/image-receipts/uuid-repair.sha256

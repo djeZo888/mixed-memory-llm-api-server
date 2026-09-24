@@ -1,0 +1,34 @@
+{
+  "status": "OFFLINE_PASS_CAPACITY_COMPLETE_C03_RESERVE_FAIL",
+  "source_commit": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+  "offline_adapter_tests": 29,
+  "offline_runner_codec_tests": 14,
+  "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=repo/tests/image_api .venv/bin/python -m unittest -v test_edit_geometry test_edit_seed test_corrections.FullHD test_protection.Configuration test_handlers.NativeWire.test_exact_generation_and_edit_wire_no_path_or_caller_headers test_handlers.Handlers.test_png_jpeg_references_actual_decode_and_no_resize test_handlers.Handlers.test_unsafe_unknown_fields_and_invalid_model_n_seed_size",
+  "runner_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=helpers .venv/bin/python -m unittest -v test_capacity_runner",
+  "linux_stop_timeout_execution": "SIGTERM executed once; exit classification failed 2/15 versus required 1/0; no timeout or forced kill",
+  "python": "3.13.15 (main, Sep  1 2026, 14:05:45) [Clang 22.1.3 ]",
+  "dependencies": "Hash-pinned scripts/image_api/requirements.lock; isolated local .venv",
+  "installed_smart_resize_offline_cases": 4,
+  "read_only_vm_preflight": "PASS",
+  "runtime_inference": "4 accepted executions; 1 rejected predispatch preparation; no replay",
+  "gpu_capacity": {
+    "C01": "PASS",
+    "C02": "PASS",
+    "C03": "FAIL_RESERVE",
+    "C04": "PASS"
+  },
+  "public_edit_activation": "NOT_RUN",
+  "test_log_sha256": "d684be45e64720e9f3fae6f1cf21df4ced7dfaaf4e1ec075ff18b0b4f0e6ec2b",
+  "live_barrier_result": "Original strict stop FAIL remains; task-only reconciliation accepted without claiming ASGI cleanup",
+  "final_runner_test_log_sha256": "5dbbe8346fa8bad7f0068f834acd0bff98dd92fcc4cacf0c847c32a5f93d1d17",
+  "manifest_validation": {
+    "result": "PASS",
+    "candidate_sha256": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3",
+    "installed_manifest_sha256": "12969d9966f222217891791f0a2d6f4202ee2b0a7f83ef36f18d734a96721b07",
+    "validator_source_commit": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+    "generation_profiles_preserved_exactly": 6,
+    "accepted_edit_profiles": 3,
+    "C03_excluded": true,
+    "installed": false
+  }
+}

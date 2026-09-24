@@ -1,0 +1,35 @@
+{
+  "model_container_pid_start_image_cpu_memory_settings_preserved": true,
+  "runtime_config_and_native_launcher_hashes_preserved": true,
+  "both_qwens_configured_context": 480000,
+  "upstream_readiness_receipt": "artifacts/upstream-final.json",
+  "image_generation_profiles": 6,
+  "edit_profiles": 0,
+  "postjob_sampled_device_min_free_fraction": {
+    "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237": 0.36378681540960495,
+    "GPU-69acfa26-8b60-61b5-702d-aee252c163cc": 0.363807247131897,
+    "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23": 0.33044363044363045
+  },
+  "postjob_sampled_host_min_available_fraction": 0.9726200360660646,
+  "samples_utc_from": "2026-09-23T12:07:09.730588+00:00",
+  "samples_utc_to": "2026-09-23T12:07:40.051633+00:00",
+  "sample_count": 30,
+  "sampling_boundary": "Samples began after image completed; these prove checkpoint headroom, not live-job device peak. No new memory benchmark or warmup.",
+  "strict_no_swap_gate": "FAIL_OBSERVED_SWAP",
+  "swap_baseline": {
+    "pswpin": 0,
+    "pswpout": 0
+  },
+  "swap_final": {
+    "pswpin": 305,
+    "pswpout": 5323
+  },
+  "swap_used_bytes": 155189248,
+  "swap_detail": "artifacts/swap-readonly-detail.json",
+  "qwen_gpu1_cgroup_swap_bytes": 155086848,
+  "qwen_gpu1_cgroup_memory_max_events": 441,
+  "oom_or_oom_kill_events": 0,
+  "attribution": "Read-only cgroup evidence locates current swap in GPU1 Qwen; exact request/time of page-out was not instrumented. No source/limit/model change or remediation performed.",
+  "current_state_utc": "2026-09-23T12:11:06.337488+00:00",
+  "during_image_peak_margin_measurement": "NOT_TESTED"
+}

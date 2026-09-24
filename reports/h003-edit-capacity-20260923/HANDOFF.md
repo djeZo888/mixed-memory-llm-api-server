@@ -1,0 +1,9 @@
+# Native Worker1 handoff
+
+Capacity campaign complete: 4/4; source API f6e69d290a3cbf58dafbcfa726f9474f083a7cfd unchanged/uninstalled. Native session 01a0ce36-b30b-7af2-adf7-a37c9e8a8a5a retained. Final report commit/bundle are in taskroot CHECKPOINT.json.
+
+Sole ai-vm ownership RELEASED to fresh activation task H003-IMAGE-API-ACTIVATE-20260923 session 01a0ce8e-681a-77b3-83b8-5a6faab3f62d at 14:11:25.823865Z; final snapshot14:09:30.386996Z. This session performs local packaging only after release. API inactive/dead, no listener 30006, all models warm unchanged; both text contexts 480000. Original ASGI cleanup remains unproven. See CAPACITY-WINDOW-RELEASE.json and IDENTITY-HANDOFF.json.
+
+Activate only after root's separate exact transaction review: candidate source hashes in CANDIDATE.json; QUALIFIED-MANIFEST-CANDIDATE.json SHA 9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3; three evidence JSONs in qualification-evidence. Six generation profiles preserved exactly, edits with 1 reference at 1024x1024 or 1536x864, and 2 references at 1024x1024 accepted. C03 Full HD edit excluded: 4.387% reserve. No inference budget remains in this task. Startup recovery/fixed warmup and public/harness acceptance belong to separate task authority.
+
+C01 output artifacts/C01/model/delivered.png; C02 artifacts/C02/model/delivered.png; C03 artifacts/C03/model/delivered.png; C04 artifacts/C04/model/delivered.png. Originals and raw decodes are alongside (C03 original unpadded at artifacts/fixtures/lake-bled-fullhd.png); exact local/remote paths and hashes in ARTIFACT-INDEX.json. All root visual decisions frozen in ROOT-QUALIFICATION-DECISIONS.json. No model/weights/runtime/settings/context changes. Guarded creative fidelity and seed workaround limitations remain; fail42/pass43 preserved. No broad profile extrapolation.

@@ -1,0 +1,94 @@
+{
+  "task": "H003-HARNESS-ENGINE-ACTIVATE-20260923",
+  "status": "PASS_ROOT_ACCEPTED",
+  "reportDisposition": "Docs-only privacy/size trim superseding a9d3efa607eb1a49691a407077a35cdf00e607e2",
+  "reviewedSource": "9de9ecf701bedd0bcb337d9dcb49a4aca1c3fa27",
+  "installedRelease": "/home/user/.local/share/ai-harness-app/releases/9de9ecf701bedd0bcb337d9dcb49a4aca1c3fa27",
+  "sourceFilesVerified": 224,
+  "inputBundleSha256": "4742e3a4f53fb5cbd8154b859bee2a92ddc3db347b7faf5398967cad294b67d5",
+  "engineReceiptSha256": "5b6407f96dd779b29a3f103facda67441231184f603b3c4058834bb7cb9308b1",
+  "launcherSha256": "772d819b745f752b9a8b92ede4ec7d00f35c30e646c0cc6ef7dc50beb858dec2",
+  "unitSha256": "80cdcd5e57c75fa918cd9cd56eb55536893347682d7172cb57952112c6bffce1",
+  "engine": {
+    "id": "11e764b2f30822ef7f65c6484c9e13892f8b18ac8b6ea4a9ae1fa2cd8473fb87",
+    "digest": "sha256:d60f138286d755fb9857f08f0f981c88084e8a82f763abe354f8c421f2102d64",
+    "productionAlias": "localhost/ai-harness-engine:0.0.2-ae65651df5f9",
+    "candidateTag": "localhost/ai-harness-engine:h003-worker-mcp-20260923",
+    "buildSource": "8a99053fa92974bbb3ff45e094f9ca86b5d5d4f6",
+    "nativePin": "3df245464c0d58eab6e71d808e6741b11472f459",
+    "nativeBase": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+    "patchset": "69d7fe14ed8b1e394fe7315e04724e3ef89c2efbd21118a42fa1842f5ed48eff"
+  },
+  "buildReuse": {
+    "serverWebSourceUnchanged": true,
+    "compiledFilesVerified": 39,
+    "compiledManifestSha256": "adbec40e21249988d8a53cd832fbb958b25b637f30ef52b0a363a5187288a6f3",
+    "dependencyBytesModesSymlinksMatched": true,
+    "rebuilds": 0
+  },
+  "activation": {
+    "count": 1,
+    "stopRequestedAtUtc": "2026-09-23T13:22:29.404791+00:00",
+    "stopCompletedAtUtc": "2026-09-23T13:22:29.650873+00:00",
+    "startRequestedAtUtc": "2026-09-23T13:22:32.171828+00:00",
+    "verifiedAtUtc": "2026-09-23T13:22:33.531190+00:00",
+    "lastHostObservationAtUtc": "2026-09-23T13:23:29.092393+00:00",
+    "beforePid": 33683,
+    "afterPid": 49895,
+    "afterServiceStartedAt": "Wed 2026-09-23 15:22:32 CEST",
+    "gracefulStopExit": 0,
+    "nRestarts": 0,
+    "health80": {
+      "httpStatus": 200,
+      "version": "0.0.3",
+      "status": "ok"
+    }
+  },
+  "preservation": {
+    "unchangedCounts": {
+      "sessions": 18,
+      "messages": 78,
+      "runs": 38,
+      "events": 11964,
+      "files": 32,
+      "h003_image_jobs": 2,
+      "visibleChats": 15,
+      "profileDirectories": 18,
+      "workspaceDirectories": 17
+    },
+    "sessionWorkspaceNativeIdentitiesPreserved": true,
+    "userTableContentAndSevenDataTreesPreserved": true,
+    "configProtectedKeysAndNginxUnchanged": true,
+    "oldImageAndReleaseRetained": true,
+    "sqliteBackupIntegrity": "ok",
+    "rollbackPath": "/home/user/.local/share/ai-harness-deploy/H003-HARNESS-ENGINE-ACTIVATE-20260923/rollback-20260923T131930Z",
+    "rollbackExecuted": false
+  },
+  "boundaries": {
+    "taskInferenceCalls": 0,
+    "newChats": 0,
+    "mcpCalls": 0,
+    "directAiVmContact": false,
+    "modelOrImageApiLifecycleActions": 0,
+    "pruningOrKeyRotation": false,
+    "newEngineExecutionOrLiveAcceptanceClaim": false,
+    "imageLane": "quarantined as expected while separately owned imageAPI is stopped; no readiness gate",
+    "zeroInferenceEvidence": "Task actions and unchanged stored activity; no host-wide telemetry claim."
+  },
+  "lifecycleOwnership": {
+    "releasedAtUtc": "2026-09-23T13:25:15.438748+00:00",
+    "released": true,
+    "laterRestartAuthorized": false
+  },
+  "docsOnlyFollowup": {
+    "hostContact": false,
+    "hostActions": 0,
+    "retests": 0,
+    "implementationChanges": false,
+    "rawArtifactsDeleted": false,
+    "supersedesCommit": "a9d3efa607eb1a49691a407077a35cdf00e607e2",
+    "replacementParent": "9de9ecf701bedd0bcb337d9dcb49a4aca1c3fa27"
+  },
+  "protectedEvidence": "PROTECTED-EVIDENCE.json",
+  "protectedEvidenceManifestSha256": "bce8f05a1b1f9b971a247c3dbf93038ede90461744608b63c9adeedf1a18c4ff"
+}

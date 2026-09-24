@@ -1,0 +1,145 @@
+{
+  "files": [
+    {
+      "bytes": 1391,
+      "locally_hashed": true,
+      "sha256": "40c7f2388a383adf5849ae7b1bf9e179e848858f4297069a21063c4667988d4a",
+      "task_relative_path": "ROOT-GO.md"
+    },
+    {
+      "bytes": 659,
+      "locally_hashed": true,
+      "sha256": "6b98c2c14d2b8c4981ced32137402c62749e331a74dde73debad3eef976bef78",
+      "task_relative_path": "SOURCE-RECEIPT.json"
+    },
+    {
+      "bytes": 1968,
+      "locally_hashed": true,
+      "sha256": "62baab4a11525ac095111644dceac10aaae5c212ccffacf3a8544b3b3b82c576",
+      "task_relative_path": "REFERENCE-HANDOFF.md"
+    },
+    {
+      "bytes": 3176,
+      "locally_hashed": true,
+      "sha256": "31ee2c3fbde742009eba9a3bd9af232efc9712d1ad4afb948534b61dd34a26be",
+      "task_relative_path": "REFERENCE-RESULT.json"
+    },
+    {
+      "bytes": 2732,
+      "locally_hashed": true,
+      "sha256": "26a1dfa8d64a40a7dbe9891d18032ac0bb202d899b0efffcaefb5fccaacca204",
+      "task_relative_path": "REFERENCE-RESTORED.json"
+    },
+    {
+      "bytes": 10519,
+      "locally_hashed": true,
+      "sha256": "cbbe37591a42191588f110d81ef1b098f96f02fc69be5aa57cb21a62026d6bba",
+      "task_relative_path": "RUNTIME-HANDOFF.md"
+    },
+    {
+      "bytes": 1681,
+      "locally_hashed": true,
+      "sha256": "67b714f72269da9c75b63b8f09b02cfcae72e7fc694a99b6b321f6092bbd6e14",
+      "task_relative_path": "reference-evidence/CORRECTION-PINS.json"
+    },
+    {
+      "bytes": 3018,
+      "locally_hashed": true,
+      "sha256": "25ea96a3804d194e70b785abe497db342c9e54f53463a700ee064957e3ff2827",
+      "task_relative_path": "reference-evidence/DEPENDENCIES.json"
+    },
+    {
+      "bytes": 2338,
+      "locally_hashed": true,
+      "sha256": "24cdcd5a216ddc3922752249006340f28cd181a92f4023d5553415429f8d1753",
+      "task_relative_path": "reference-evidence/METRICS-CORRECTED.json"
+    },
+    {
+      "bytes": 4017,
+      "locally_hashed": true,
+      "sha256": "470b6561acf78f38e38095f259df69ffbcc731b96c66f6fbc6ab3afaafacd52a",
+      "task_relative_path": "reference-evidence/RECIPE.json"
+    },
+    {
+      "bytes": 4789,
+      "locally_hashed": true,
+      "sha256": "12fd01bef0ec29b01396fdc4e44f5b7a273030f74115b7900358f96d2e4547be",
+      "task_relative_path": "reference-evidence/RESULT.md"
+    },
+    {
+      "bytes": 1984698,
+      "locally_hashed": true,
+      "sha256": "67893b76fe9045e07b1a85a4d25c9f213c2a3467c5d647d31f42f1e3d4ae0422",
+      "task_relative_path": "reference-evidence/output.png"
+    },
+    {
+      "bytes": 22955,
+      "locally_hashed": true,
+      "sha256": "24d7d6c2da98d12ba719096fd640d2032f932fdeb52959d7b1b9f802b343475d",
+      "task_relative_path": "reference-evidence/reference-corrected-source.tar.gz"
+    },
+    {
+      "bytes": 9179,
+      "locally_hashed": true,
+      "sha256": "d1e750de97f2a46774a519638d54e339eb6efb0036acfe865246ba8c9dee170d",
+      "task_relative_path": "repo/reports/image21-runtime-20260923/BACKEND-CONTRACT.json"
+    },
+    {
+      "bytes": 10829,
+      "locally_hashed": true,
+      "sha256": "a9f58154e58ef77f229320a2dd6d5da23eb9e413c6ba68c2e0adf1a476fdc5f5",
+      "task_relative_path": "repo/reports/image21-runtime-20260923/CHECKPOINT-RECEIPT.json"
+    },
+    {
+      "bytes": 17180,
+      "locally_hashed": true,
+      "sha256": "984cb91d34285084e2206d42b970d6b75cbb99d727c4d60416d6dd10f8566c85",
+      "task_relative_path": "repo/reports/image21-runtime-20260923/METRICS.json"
+    },
+    {
+      "bytes": 1839,
+      "locally_hashed": true,
+      "sha256": "52d783b061de398ec0ebe80dba6e7f9ad0ba2c78438737e51951579ebe6aa29e",
+      "task_relative_path": "repo/reports/image21-runtime-20260923/edit-summary.json"
+    },
+    {
+      "bytes": 2061,
+      "locally_hashed": true,
+      "sha256": "26f59f97aaa1ce7c2b2cfe5c6c0085d66d96afff4abf77a7f5bc2ec76740477c",
+      "task_relative_path": "repo/reports/image21-runtime-20260923/rgb-comparison-summary.json"
+    },
+    {
+      "bytes": 7109,
+      "locally_hashed": true,
+      "sha256": "d946f2cb5df0dc2a41261012d25d90d7dffbf906cbd04ed5224d9a83e70bb76f",
+      "task_relative_path": "repo/reports/image21-runtime-20260923/rgb-normalization.json"
+    },
+    {
+      "bytes": 1618,
+      "locally_hashed": true,
+      "sha256": "2920369858c3ff835ccb711e467f79addc8310ebc3809dd53e203a52abf6bfda",
+      "task_relative_path": "repo/reports/image21-runtime-20260923/visual-review.json"
+    },
+    {
+      "bytes": 1632,
+      "locally_hashed": true,
+      "sha256": "ffd9551184fd6217a07955c6fb1765d1bad018e2f428993afb13c33df68f04f7",
+      "task_relative_path": "repo/reports/image21-runtime-20260923/EDIT-VISUAL-FINDING.md"
+    },
+    {
+      "bytes": 1091,
+      "locally_hashed": true,
+      "sha256": "3a911361a3af91d70c4f7677ba024ee83a04a489252f2dedf9d7407466b8a3e5",
+      "task_relative_path": "repo/reports/image21-runtime-20260923/RGB-COMPARISON-RESULT.md"
+    },
+    {
+      "bytes": 7984,
+      "locally_hashed": true,
+      "sha256": "e37599380e00636204c2276ec969ae2ee10ca738d515bb074c06a93852d8acfa",
+      "task_relative_path": "repo/reports/image21-runtime-20260923/derived-image-receipt.json"
+    }
+  ],
+  "path_base": "/Users/agent/CodexProjects/llm-orchestration/tasks/IMAGE21-QUALIFY-20260923",
+  "schema_version": 1,
+  "scope": "Supplied local bytes used for this compilation; historical raw trace paths are separately identified in REJECTED-EDITING.json."
+}

@@ -1,0 +1,145 @@
+{
+  "actual_capabilities_sha256": "44d3e771a57b667a0d06bec7d0836dafe3ecb23f611a8cc0c68d582f395399e5",
+  "actual_profiles": [
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "0c5536fb0a6ec34bb972e84ae05a1d01bcf8a96281220f3f31c9c08ddbda16ef",
+      "native_size": "1216x704",
+      "operation": "generation",
+      "references": 0,
+      "size": "1216x704",
+      "transparent": false
+    },
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "29250a7887d4bd9688a4ebd2c3f0720db1960116012f31fa553dddf37656aad4",
+      "native_size": "1024x1024",
+      "operation": "generation",
+      "references": 0,
+      "size": "1024x1024",
+      "transparent": false
+    },
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "cbf6b540d0d8aabe2db226228fe4ec9531c99e3abc3e8473c18a4a6a29f5153e",
+      "native_size": "1920x1088",
+      "operation": "generation",
+      "references": 0,
+      "size": "1920x1088",
+      "transparent": false
+    },
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "f017918f5885133522197bb5765201788e66a1423c4303992a65887eabd520e3",
+      "native_size": "1472x832",
+      "operation": "generation",
+      "references": 0,
+      "size": "1472x832",
+      "transparent": false
+    },
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "f4c2f070cb44477dcacd671f46646cfa39e0374e859c808ec7c78c9cc3a35af1",
+      "native_size": "1024x576",
+      "operation": "generation",
+      "references": 0,
+      "size": "1024x576",
+      "transparent": false
+    },
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "f91eaca9a0d8583081ccaa9d62d48bd7511bd5b99b8193a26abd7106f27e3c83",
+      "native_size": "1760x992",
+      "operation": "generation",
+      "references": 0,
+      "size": "1760x992",
+      "transparent": false
+    }
+  ],
+  "api_call_count": 4,
+  "authority": "FINAL-GET-GO.md; current root authority supersedes absent final receipt gate",
+  "checks": [
+    {
+      "at": "2026-09-23T04:31:40.110106+00:00",
+      "check": "liveness",
+      "elapsed_seconds": 0.066,
+      "http_status": 200,
+      "response_bytes": 13,
+      "retry_after_1": false,
+      "status": "LIVE_PASS"
+    },
+    {
+      "at": "2026-09-23T04:31:40.175978+00:00",
+      "check": "readiness",
+      "elapsed_seconds": 0.008,
+      "http_status": 200,
+      "response_bytes": 60,
+      "retry_after_1": false,
+      "service": {
+        "admitting": true,
+        "busy": false,
+        "ready": true,
+        "state": "ready"
+      },
+      "status": "LIVE_PASS"
+    },
+    {
+      "at": "2026-09-23T04:31:40.184298+00:00",
+      "check": "models",
+      "elapsed_seconds": 0.007,
+      "http_status": 200,
+      "model_alias": "qwen-image-2.1",
+      "response_bytes": 86,
+      "retry_after_1": false,
+      "status": "LIVE_PASS"
+    },
+    {
+      "at": "2026-09-23T04:31:40.191626+00:00",
+      "check": "capabilities",
+      "elapsed_seconds": 0.045,
+      "http_status": 200,
+      "response_bytes": 1945,
+      "retry_after_1": false,
+      "service": {
+        "admitting": true,
+        "busy": false,
+        "ready": true,
+        "state": "ready"
+      },
+      "status": "LIVE_PASS"
+    }
+  ],
+  "client_sha256": "11c24a2c835db2553eb901ba6e622b734e7d7b58aac877d31347d46b738643a4",
+  "credential_discarded": true,
+  "credential_loader": "unchanged client.remote_key; fixed approved path; memory only",
+  "edit_profiles": [],
+  "endpoint": "http://10.156.100.60:30006",
+  "errors": [],
+  "expected_profile_sizes": [
+    "1024x1024",
+    "1024x576",
+    "1216x704",
+    "1472x832",
+    "1760x992",
+    "1920x1088"
+  ],
+  "expected_protected_manifest_sha256": "d8d38a8212bb2f040b979f899e74564af541b36a83832b21122f280792b3ec7b",
+  "expected_runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+  "expected_source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7",
+  "final_worker1_artifact_reconciliation": "PENDING_ARTIFACT",
+  "finished_utc": "2026-09-23T04:31:40.238013+00:00",
+  "pins": {
+    "model_id": "Qwen/Qwen-Image-2.1",
+    "model_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+    "runtime_revision": "0cd8be351d0825488f4b81c8931167bbab618eca"
+  },
+  "post_count": 0,
+  "profile_set_check": "PASS",
+  "protected_manifest_locally_validated": false,
+  "retry_count": 0,
+  "schema_version": 1,
+  "session_id": "01a0cc7e-6a5f-7852-bef0-6f55a846b262",
+  "source_verification_scope": "Root current deployment confirmation; these GETs do not expose source commit",
+  "started_utc": "2026-09-23T04:31:39.667904+00:00",
+  "status": "PASS"
+}

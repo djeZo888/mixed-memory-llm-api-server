@@ -1,0 +1,508 @@
+{
+  "backend_container": {
+    "id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+    "image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8"
+  },
+  "backend_run_id": "49fe6ab1e155453b8a529e199f16a1a2",
+  "caller_owner": "Worker1 deployment; idle awaiting explicit Worker2 handoff",
+  "campaign_id": "IMAGE21-QUALIFY-20260923",
+  "capabilities": {
+    "admitting": true,
+    "busy": false,
+    "defaults": {
+      "cfg": 1,
+      "generator_device": "cpu",
+      "size": "1024x1024",
+      "steps": 40
+    },
+    "limits": {
+      "active": 1,
+      "approved_uhd_native_pixels": 8355840,
+      "budget_seconds": 900,
+      "encoded_file_bytes": 33554432,
+      "encoded_total_bytes": 67108864,
+      "maximum_pixels_when_qualified": 8294400,
+      "n": 1,
+      "references": 2,
+      "waiting": 0
+    },
+    "masks": false,
+    "model": "qwen-image-2.1",
+    "model_id": "Qwen/Qwen-Image-2.1",
+    "model_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+    "output_format": "png",
+    "profiles": [
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "3e1f682911863f191439fcb757eeec5d706ba966f6e657f8a5e40b498b4a274f",
+        "native_size": "1024x1024",
+        "operation": "generation",
+        "references": 0,
+        "size": "1024x1024",
+        "transparent": false
+      }
+    ],
+    "ready": true,
+    "response_format": "b64_json",
+    "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    "runtime_revision": "0cd8be351d0825488f4b81c8931167bbab618eca",
+    "state": "ready"
+  },
+  "capabilities_canonical_sha256": "c90ea7d8622396ff39a656d880af89f3201c3630cb83a934ff207bc6e00c6d70",
+  "combined_bundle_sha256": "77c6d195f3cd49bf66afec32b7b0f824b2518a76300fdfc5f897654ab0c07346",
+  "combined_source_commit": "43ed79f3905c769f449f48300c7087d7a432f989",
+  "credential_source": {
+    "gid": 0,
+    "mode": "0o600",
+    "path": "/data/services/secrets/llm-api-key",
+    "uid": 0,
+    "value_disclosed": false
+  },
+  "editing": "UNSUPPORTED_FAILED_VISUAL_FIDELITY",
+  "endpoints": {
+    "adapter": "http://127.0.0.1:30006",
+    "native_worker_only": "http://127.0.0.1:30007",
+    "private": "http://10.156.100.60:30006"
+  },
+  "file_sha256": {
+    "/data/services/image21-qualify-20260923/source-amendment.json": "30c3737fb07cff3f5d3c24ed594022b7f1ea39eeee916e27f71277af1f9d843b",
+    "/data/services/image21-qualify-20260923/source/scripts/image_api/requirements.lock": "feaef24a6e9b4e42b44f044b1ff8339a180868da179e9a580f66b12696798f03",
+    "/data/services/image21-runtime-20260923/config.json": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+    "/etc/llm-server/image-api.json": "dd3d08189c03912a0cc6cdf630b74f564cd825dc0f64b89b05364dfb9a80a99d",
+    "/etc/llm-server/network.json": "eb04d179cd6c9af896dfc1809e7804ef533c9e52fd356da9ecc0d4907bd3c064",
+    "/etc/sudoers.d/llm-image-api": "a416e1cde88334e8e695010d33e66b0af790bb83f3e76000fbf7c96afc6fefe9",
+    "/etc/systemd/system/llm-image-api.service": "5e74fb94792b1ea5e043bf28566c2648635499d1112d6c8e5e9897b9d43253a6",
+    "/etc/systemd/system/llm-image-backend.service": "6861cdfab9a83082e4db41773186ddea1d077e37279555561440dbf860c7617c",
+    "/etc/systemd/system/llm-private-image.service": "09591c9274bcdec62774a5cb44fc5e82fe731bb8b5ea4dc7be372adcc7dfc3c2",
+    "/etc/systemd/system/llm-private-image.socket": "56d0f877ae87a1d268b0f1ad78113a4ab86bc0e0135e3dbf497775aab1e97761",
+    "/usr/local/lib/llm-server/control-api/scripts/control/private_network.py": "d7b82c296fb94846ea9825c1f38d1892b67a8b853279f7e01f807668ea2e9b33",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/__init__.py": "9f66047f4c2cde6ab4cb85b47c97a6274903fb560b96ef1f49fd42c1e67c751c",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/app.py": "7ebde3edc9cdc54b83d8063c8956384aa6e32edff5d86f8852b75592cb719cad",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/backend.py": "64a5ceccb247e7c7ed646cc3ae9af89aeffb7aebd862c11604786a2041db9485",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/protection.py": "9c8e5fad91717fa8e7665475e9cc49bb2092955439aaf3febeaf203cc7da6269",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/protocol.py": "ebca2b024d236d03475dde15a63414c49fb86714733afa1bbf8ca68d88fd5238",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/serve.py": "0d19743ab91ea4f8cafe2bf6d7ddd9d56d2248604da23c711a19f825ba4b6d2e",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/uploads.py": "23903630b94c020af05988dfc13b0f1e650b431ca9f276485873234997e3ce93",
+    "/usr/local/lib/llm-server/private-network/private_network.py": "d7b82c296fb94846ea9825c1f38d1892b67a8b853279f7e01f807668ea2e9b33",
+    "/usr/local/libexec/llm-image-backend-recover": "ffe1120721e3494a442a91f4ffe46e105755c53f03efe679ad4b4f630558b3be"
+  },
+  "guards": "registered storage and root disk passed before and after; root free-space warning retained",
+  "helper": "/usr/local/libexec/llm-image-backend-recover",
+  "helper_arguments": [],
+  "lease": "released at receipt exit",
+  "network": {
+    "docker_restart": {
+      "MaximumRetryCount": 0,
+      "Name": "no"
+    },
+    "id": "4d21a85d6dc326cc90d68e0f017d2e58fb96f5664e55384c1f3f337661d7ef80",
+    "inspection": {
+      "Attachable": false,
+      "ConfigFrom": {
+        "Network": ""
+      },
+      "ConfigOnly": false,
+      "Containers": {
+        "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773": {
+          "EndpointID": "0ab866aa6d17657eed04b53290fb9bab2db8fc4fff4d66a35cc96e6738253767",
+          "IPv4Address": "172.19.0.2/16",
+          "IPv6Address": "",
+          "MacAddress": "fe:a1:c7:87:23:5c",
+          "Name": "llm-image-backend"
+        }
+      },
+      "Created": "2026-09-23T02:58:18.293755049Z",
+      "Driver": "bridge",
+      "EnableIPv4": true,
+      "EnableIPv6": false,
+      "IPAM": {
+        "Config": [
+          {
+            "Gateway": "172.19.0.1",
+            "Subnet": "172.19.0.0/16"
+          }
+        ],
+        "Driver": "default",
+        "Options": {}
+      },
+      "Id": "4d21a85d6dc326cc90d68e0f017d2e58fb96f5664e55384c1f3f337661d7ef80",
+      "Ingress": false,
+      "Internal": false,
+      "Labels": {
+        "io.llm-image.owner": "IMAGE21-RUNTIME-20260923"
+      },
+      "Name": "llm-image-backend-private",
+      "Options": {},
+      "Scope": "local",
+      "Status": {
+        "IPAM": {
+          "Subnets": {
+            "172.19.0.0/16": {
+              "DynamicIPsAvailable": 65532,
+              "IPsInUse": 4
+            }
+          }
+        }
+      }
+    },
+    "ports": {
+      "30007/tcp": [
+        {
+          "HostIp": "127.0.0.1",
+          "HostPort": "30007"
+        }
+      ]
+    }
+  },
+  "readiness": {
+    "admitting": true,
+    "busy": false,
+    "ready": true,
+    "state": "ready"
+  },
+  "residency": {
+    "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+    "device_current": {
+      "free_bytes": 17030971392,
+      "total_bytes": 51527024640,
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+    },
+    "gpu_processes": [
+      [
+        "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "115633",
+        "32224"
+      ]
+    ],
+    "host_current": {
+      "MemAvailable": 921182736384,
+      "MemTotal": 946820968448,
+      "SwapFree": 3157258240,
+      "SwapTotal": 3157258240
+    },
+    "started_at": "2026-09-23T03:55:55.463204199Z"
+  },
+  "runtime": {
+    "checkpoint_path": "/data/models-large/qwen-image-2.1-790c92633540aa0cb11d9abf19eb46d861714758",
+    "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+    "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+    "image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    "network_id": "4d21a85d6dc326cc90d68e0f017d2e58fb96f5664e55384c1f3f337661d7ef80",
+    "network_policy": {
+      "host_publish": "127.0.0.1:30007:30007/tcp",
+      "internal": false,
+      "name": "llm-image-backend-private",
+      "native_http_bind_inside_namespace": "0.0.0.0:30007",
+      "reason": "InternalbridgepublishunsupportedonDocker29.6.1; dedicatedordinarybridgewithsoleloopbackpublication",
+      "unpublished_internal_ports": [
+        30008,
+        30009,
+        30010
+      ]
+    },
+    "owner": "IMAGE21-RUNTIME-20260923",
+    "schema_version": 1,
+    "source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+    "source_sha256": {
+      "native_request.py": "91180c1613de1fa113426dba2c534a8c31b851f066a252c1dcfd08fa8012bf6f",
+      "native_server.py": "a98a99b984f354c0a339a45233aea01abae589b9bc25ea44a9f3b861429111ee",
+      "service.py": "0edadcb43ec83d369d7bdb66dddc7035962d620475314b0142cb9f047b197586",
+      "telemetry.py": "a6d5f9262de82a318c7aa86dfef599fa6228463bb712c94d916c653afba2f0e9"
+    },
+    "upstream_repair": {
+      "count": 1,
+      "file_repaired_sha256": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de",
+      "parent_image_id": "sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83",
+      "patch_sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e",
+      "reason": "NVML resolve authoritative CUDA_VISIBLE_DEVICES GPU UUID to current index"
+    }
+  },
+  "schema_version": 1,
+  "service_group": "user",
+  "service_uid": 1000,
+  "service_user": "user",
+  "session_id": "01a0cc5e-a873-7813-9b5c-6e3124bdd181",
+  "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7",
+  "source_delta": "ROOT-CREDENTIAL-MODE-GO.md exact root:root0440 credential metadata correction",
+  "status": "DEPLOYED_READY_GENERATION_ONLY",
+  "systemd_credential": {
+    "gid": 0,
+    "mode": "0o440",
+    "path": "/run/credentials/llm-image-api.service/inference-key",
+    "uid": 0
+  },
+  "text_containers": [
+    {
+      "id": "a2afad49380a592739944f2766f5547687a5cf302badd375bda14fffdb09f75c",
+      "image_id": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "pid": 53058,
+      "resources": {
+        "CpusetCpus": "0-7",
+        "DeviceRequests": [
+          {
+            "Capabilities": [
+              [
+                "gpu"
+              ]
+            ],
+            "Count": 0,
+            "DeviceIDs": [
+              "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+            ],
+            "Driver": "",
+            "Options": {}
+          }
+        ],
+        "Memory": 34359738368,
+        "MemorySwap": 34359738368
+      },
+      "running": true,
+      "started_at": "2026-09-23T02:05:36.354298377Z"
+    },
+    {
+      "id": "a71924b9e7fa4f72c6eeefc243731f59bdc0d951b817de1d32f32dbfd67f450e",
+      "image_id": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "pid": 32207,
+      "resources": {
+        "CpusetCpus": "0-7",
+        "DeviceRequests": [
+          {
+            "Capabilities": [
+              [
+                "gpu"
+              ]
+            ],
+            "Count": 0,
+            "DeviceIDs": [
+              "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+            ],
+            "Driver": "",
+            "Options": {}
+          }
+        ],
+        "Memory": 34359738368,
+        "MemorySwap": 34359738368
+      },
+      "running": true,
+      "started_at": "2026-09-23T02:04:14.101319306Z"
+    }
+  ],
+  "units": {
+    "llm-image-api.service": "Restart=no\nExecMainStatus=0\nUser=user\nGroup=user\nNoNewPrivileges=no\nRequires=system.slice -.mount sysinit.target\nWants=\nAfter=llmctl-boot.service system.slice sysinit.target network.target -.mount basic.target\nActiveState=active\nSubState=running\nDropInPaths=\nUnitFileState=enabled\n",
+    "llm-image-backend.service": "Restart=no\nExecMainStatus=0\nUser=root\nGroup=root\nNoNewPrivileges=no\nRequires=data.mount system.slice -.mount docker.service \"data-models\\\\x2dlarge.mount\" sysinit.target\nWants=\nAfter=llmctl-boot.service system.slice data.mount docker.service sysinit.target -.mount \"data-models\\\\x2dlarge.mount\" basic.target systemd-tmpfiles-setup.service\nActiveState=active\nSubState=exited\nDropInPaths=\nUnitFileState=disabled\n",
+    "llm-private-image.service": "Restart=no\nExecMainStatus=0\nUser=llm-private-image\nGroup=llm-private-image\nNoNewPrivileges=yes\nRequires=system.slice sysinit.target llm-private-image.socket -.mount\nWants=tmp.mount\nAfter=system.slice tmp.mount llm-private-image.socket network-online.target systemd-tmpfiles-setup.service basic.target -.mount sysinit.target\nActiveState=inactive\nSubState=dead\nDropInPaths=\nUnitFileState=static\n",
+    "llm-private-image.socket": "User=\nGroup=\nNoNewPrivileges=no\nRequires=sysinit.target system.slice\nWants=network-online.target\nAfter=network-online.target systemd-journald.socket system.slice sysinit.target sys-subsystem-net-devices-enp6s18.device\nActiveState=active\nSubState=listening\nDropInPaths=\nUnitFileState=enabled\n"
+  },
+  "utc": "2026-09-23T03:57:14.282184+00:00",
+  "warm_receipt": {
+    "completed_utc": "2026-09-23T03:56:50.739817+00:00",
+    "generation": {
+      "finished_utc": "2026-09-23T03:56:50.572720+00:00",
+      "http_call_count": 1,
+      "http_elapsed_seconds": 24.315614,
+      "http_status": 200,
+      "mode": "generation",
+      "native_inference_seconds": 24.180714080999678,
+      "native_peak_reserved_mib": 37570.0,
+      "native_perf": {
+        "available": true,
+        "bytes": 4656,
+        "filename": "generation-perf.json",
+        "sha256": "9b900935dbfee1bd2c2ac2858f1d61723657e3e819f98f6b219d1ecf8d1fb5b8"
+      },
+      "output": {
+        "bytes": 1692710,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 1024,
+        "mode": "RGBA",
+        "sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+        "width": 1024
+      },
+      "request_body_bytes": 490,
+      "request_body_sha256": "43ec0d88942e68aa3029d932f2725dd1d6c1dc81a9cae92fc821fdc95e9c59df",
+      "response_bytes": 2257256,
+      "run_id": "49fe6ab1e155453b8a529e199f16a1a2",
+      "schema_version": 1,
+      "scope": "native_transport_and_decode_only",
+      "settings": {
+        "enable_cache_dit": false,
+        "enable_teacache": false,
+        "generator_device": "cpu",
+        "guidance_scale": 1.0,
+        "model": "qwen-image-2.1",
+        "n": 1,
+        "num_inference_steps": 40,
+        "output_format": "png",
+        "perf_dump_path": "/work/evidence/49fe6ab1e155453b8a529e199f16a1a2/generation-perf.json",
+        "prompt": "A red ceramic teapot on a wooden table beside a window, softly lit by daylight.",
+        "response_format": "b64_json",
+        "seed": 42,
+        "size": "1024x1024",
+        "true_cfg_scale": 1.0
+      },
+      "started_utc": "2026-09-23T03:56:26.222329+00:00",
+      "status": "pass",
+      "timeout_seconds": 840,
+      "total_elapsed_seconds": 24.350405,
+      "visual_verification": "NOT_TESTED"
+    },
+    "native_ready_seconds": 30.39005821200044,
+    "phase": "warm",
+    "sampled_max_cgroup_swap_bytes": 0,
+    "sampled_min_host_available_bytes": 921343401984,
+    "start_utc": "2026-09-23T03:55:54.466979+00:00",
+    "telemetry_path": "/data/services/image21-runtime-20260923/receipts/49fe6ab1e155453b8a529e199f16a1a2-telemetry.jsonl",
+    "telemetry_summary": {
+      "elapsed_s": 55.92766674900122,
+      "event": "stop",
+      "max_query_duration_s": 0.10499502800121263,
+      "max_sample_interval_s": 0.20016650800062052,
+      "monotonic_s": 10553.360148201,
+      "nvml_shutdown": {
+        "code": 0,
+        "function": "nvmlShutdown"
+      },
+      "sampled_max_used_bytes": 41119186944,
+      "sampled_min_free_bytes": 10407837696,
+      "samples": 280,
+      "signal_stop_requested": true,
+      "skipped_schedule_slots": 0,
+      "utc": "2026-09-23T03:56:50.694205+00:00"
+    },
+    "tmp_after_generation": {
+      "entries": [
+        {
+          "bytes": 0,
+          "directory": false,
+          "path": "0aa61d92a1396fa66401f3f0b82f778859d484c5c69b477a71ae5f3d41eee2d5-models-text_encoder-config.json.lock",
+          "uid": 1000
+        },
+        {
+          "bytes": 0,
+          "directory": false,
+          "path": "a9266072b484424e665444b9969db6247bd1789edd747c6c812cff9a5d4f90ea-models-transformer-config.json.lock",
+          "uid": 1000
+        },
+        {
+          "bytes": 0,
+          "directory": false,
+          "path": "fabcc496123b7f987ea6ad4d77406e2e1971ed2554072b6de71a3501dfee4bc0-models-vae-config.json.lock",
+          "uid": 1000
+        },
+        {
+          "bytes": 4096,
+          "directory": true,
+          "path": "tmp3hgjagsu",
+          "uid": 1000
+        },
+        {
+          "bytes": 0,
+          "directory": false,
+          "path": "tmpcujd26ut",
+          "uid": 1000
+        },
+        {
+          "bytes": 0,
+          "directory": false,
+          "path": "tmpop4zvxdj",
+          "uid": 1000
+        },
+        {
+          "bytes": 4096,
+          "directory": true,
+          "path": "tmpv6oq442l",
+          "uid": 1000
+        },
+        {
+          "bytes": 0,
+          "directory": false,
+          "path": "tmpwpcfkw9v",
+          "uid": 1000
+        },
+        {
+          "bytes": 4096,
+          "directory": true,
+          "path": "ubuntu",
+          "uid": 1000
+        },
+        {
+          "bytes": 4096,
+          "directory": true,
+          "path": "ubuntu/cutlass_python_cache",
+          "uid": 1000
+        }
+      ],
+      "exists": true,
+      "path": "/data/services/image21-runtime-20260923/work/tmp/49fe6ab1e155453b8a529e199f16a1a2"
+    },
+    "tmp_before_generation": {
+      "entries": [
+        {
+          "bytes": 0,
+          "directory": false,
+          "path": "0aa61d92a1396fa66401f3f0b82f778859d484c5c69b477a71ae5f3d41eee2d5-models-text_encoder-config.json.lock",
+          "uid": 1000
+        },
+        {
+          "bytes": 0,
+          "directory": false,
+          "path": "a9266072b484424e665444b9969db6247bd1789edd747c6c812cff9a5d4f90ea-models-transformer-config.json.lock",
+          "uid": 1000
+        },
+        {
+          "bytes": 0,
+          "directory": false,
+          "path": "fabcc496123b7f987ea6ad4d77406e2e1971ed2554072b6de71a3501dfee4bc0-models-vae-config.json.lock",
+          "uid": 1000
+        },
+        {
+          "bytes": 4096,
+          "directory": true,
+          "path": "tmp3hgjagsu",
+          "uid": 1000
+        },
+        {
+          "bytes": 0,
+          "directory": false,
+          "path": "tmpcujd26ut",
+          "uid": 1000
+        },
+        {
+          "bytes": 0,
+          "directory": false,
+          "path": "tmpop4zvxdj",
+          "uid": 1000
+        },
+        {
+          "bytes": 4096,
+          "directory": true,
+          "path": "tmpv6oq442l",
+          "uid": 1000
+        },
+        {
+          "bytes": 0,
+          "directory": false,
+          "path": "tmpwpcfkw9v",
+          "uid": 1000
+        },
+        {
+          "bytes": 4096,
+          "directory": true,
+          "path": "ubuntu",
+          "uid": 1000
+        },
+        {
+          "bytes": 4096,
+          "directory": true,
+          "path": "ubuntu/cutlass_python_cache",
+          "uid": 1000
+        }
+      ],
+      "exists": true,
+      "path": "/data/services/image21-runtime-20260923/work/tmp/49fe6ab1e155453b8a529e199f16a1a2"
+    },
+    "tmp_new_entries_after_generation": [],
+    "warm": true
+  }
+}

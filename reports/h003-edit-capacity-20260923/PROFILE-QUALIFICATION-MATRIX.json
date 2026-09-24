@@ -1,0 +1,68 @@
+{
+  "public_edit_profiles_enabled_by_this_task": 0,
+  "root_accepted_edit_profiles": 3,
+  "generation_profiles_preserved": 6,
+  "manifest_candidate_sha256": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3",
+  "profiles": [
+    {
+      "case": "C01",
+      "operation": "edit",
+      "references": 1,
+      "size": "1024x1024",
+      "native_size": "1024x1024",
+      "seed": 46,
+      "capacity": "MEASURED_PASS",
+      "root_visual_review": "PASS",
+      "minimum_ada_free_mib": 9158,
+      "minimum_ada_free_percent": 18.636548636548635,
+      "included_in_manifest_candidate": true,
+      "enabled_at_handoff": false,
+      "dispatch": "ACCEPTED_SETTLED"
+    },
+    {
+      "case": "C02",
+      "operation": "edit",
+      "references": 1,
+      "size": "1536x864",
+      "native_size": "1536x864",
+      "seed": 47,
+      "capacity": "MEASURED_PASS",
+      "root_visual_review": "PASS creative/non-pixel-exact",
+      "minimum_ada_free_mib": 7934,
+      "minimum_ada_free_percent": 16.145706145706146,
+      "included_in_manifest_candidate": true,
+      "enabled_at_handoff": false,
+      "dispatch": "ACCEPTED_SETTLED"
+    },
+    {
+      "case": "C03",
+      "operation": "edit",
+      "references": 1,
+      "size": "1920x1080",
+      "native_size": "1920x1088",
+      "seed": 48,
+      "capacity": "MEASURED_FAIL_RESERVE",
+      "root_visual_review": "VISUAL PASS but MEMORY FAIL; EXCLUDED",
+      "minimum_ada_free_mib": 2156,
+      "minimum_ada_free_percent": 4.387464387464387,
+      "included_in_manifest_candidate": false,
+      "enabled_at_handoff": false,
+      "dispatch": "ACCEPTED_SETTLED"
+    },
+    {
+      "case": "C04",
+      "operation": "edit",
+      "references": 2,
+      "size": "1024x1024",
+      "native_size": "1024x1024",
+      "seed": 49,
+      "capacity": "MEASURED_PASS",
+      "root_visual_review": "PASS both refs recognizably used; coherent portrait-on-teapot",
+      "minimum_ada_free_mib": 6396,
+      "minimum_ada_free_percent": 13.015873015873016,
+      "included_in_manifest_candidate": true,
+      "enabled_at_handoff": false,
+      "dispatch": "ACCEPTED_SETTLED"
+    }
+  ]
+}

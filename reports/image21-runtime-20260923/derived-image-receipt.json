@@ -1,0 +1,146 @@
+{
+  "build_model_loads_or_requests_as_recorded": 0,
+  "build_record_utc": "2026-09-23T02:47:57.723137+00:00",
+  "build_status": "BUILT_SINGLE_SGLANG_REPAIR",
+  "change_summary": {
+    "changed_upstream_file": "python/sglang/multimodal_gen/runtime/platforms/cuda.py",
+    "deleted_lines": 0,
+    "derived_rootfs_layer_count": 25,
+    "extra_layers": [
+      "sha256:84ee8e0b11beb8a9c734e01f4596ee9ccd025d5844a806b620a5d52bde24010a",
+      "sha256:6057e3e08b990974d9bbd9f5e3d3b97b9786f542b3ce188db1c34c6aee786ed3"
+    ],
+    "function": "device_id_to_physical_device_id",
+    "inserted_lines": 7,
+    "package_install_or_dependency_resolution_steps": 0,
+    "parent_rootfs_layer_count": 23,
+    "parent_rootfs_prefix_matches": true
+  },
+  "compiled_utc": "2026-09-23T03:00:52.640818+00:00",
+  "configured_runtime_image_matches_derived_id": true,
+  "configured_upstream_repair_as_observed": {
+    "count": 1,
+    "file_repaired_sha256": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de",
+    "parent_image_id": "sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83",
+    "patch_sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e",
+    "reason": "NVML resolve authoritative CUDA_VISIBLE_DEVICES GPU UUID to current index"
+  },
+  "dependency_evidence": {
+    "derived_inventory_reexported": false,
+    "installed_distribution_count": 240,
+    "note": "No package-manager operation occurs in the derived Dockerfile. Package versions and dependency artifacts are inherited; installed SGLang cuda.py is the documented exception to original wheel contents. Existing parent hash-coverage limitations remain.",
+    "parent_archive_hashes": "pip-archive-hashes.json",
+    "parent_freeze": "requirements.freeze.txt",
+    "parent_inventory": "python-dependency-inventory.json",
+    "parent_os_inventory": "dpkg-versions.tsv",
+    "parent_reproducibility_receipt": "build-reproducibility.json",
+    "status": "INHERITED_FROM_EXACT_PARENT_IMAGE_BY_DERIVATION"
+  },
+  "derived_image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+  "elapsed_seconds_as_recorded": 15.493012811999506,
+  "evidence_class": "DERIVED_IMAGE_SOURCE_AND_BUILD_METADATA_ONLY",
+  "image_identity_as_recorded": {
+    "Architecture": "amd64",
+    "Created": "2026-09-23T02:47:57.504594658Z",
+    "Id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    "Os": "linux",
+    "RepoDigests": [
+      "local/qwen-image21@sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8"
+    ],
+    "RootFS": {
+      "Layers": [
+        "sha256:5e732af9e7c568c9b41ecabc76ac93a58471934d5155070dfd64a9567667fd9d",
+        "sha256:f5b49b5386a3c18aca8dccc85784c57d64b182f621a632374c44daeb7822e9ca",
+        "sha256:2950e5ad5b560d8a4561ea596a8589f9be34eb485ad04ae521438c978d98a212",
+        "sha256:f56f6d7fecabd59c6ae0104489b7e42e0b1c538ba1246f0019b099a12cca8cd6",
+        "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+        "sha256:6756a6579040c1541966a48c3e4d3bac9500de08ee027795439141ee0ba0eecd",
+        "sha256:fdb5c9bcf16b58539209a7e6a469bea3a5b5434d2c4e9d4719968e22fe0ef1d7",
+        "sha256:c6340b3836ce7fea1a99cadff25d755971a2091ecc7815f7761cce83624961ca",
+        "sha256:6d6b5c3ac20f833a318cc28f64194bc3d50371b023199e420c641dd5d3264d5e",
+        "sha256:2dfea3ee7ecb9bf9eaf210231c0d8fc84706edea83c584300f86aef7eb0dfe1d",
+        "sha256:988d8769daf31ed246461f52c452d8b11248ba47e5b06fe8210915025327d393",
+        "sha256:cd905001042d6fb31a08ed1272f4b36b9bf1814c0e111355cc8725277cd4bfb7",
+        "sha256:ae8a69caad45e0cf5977673d59e9b3d444943e89e8eb503a7798f093c65162e8",
+        "sha256:3f83440160ca573ae240f1525e4e9d6c7ee9d055dfc7be61ac7af84ee1642313",
+        "sha256:72f31487cece23c9c9f79d1336cf0887726864ba145d967da1fb5d775e533d93",
+        "sha256:f314c9c8fc857622bb39d9a4840ea8c81c70517f0b441b3f7037fefbc345610c",
+        "sha256:e26cec4ba1cb292a09eb26ee40c732850eaa0ea0e42eaec3be3c00e66dd5d6c2",
+        "sha256:8c557a0dd6efc51d8e4041a1fd6ec9a96fe7a584ca069469c5ad91f4d9bcb842",
+        "sha256:58330432042dfc08884ac6f445e08c19e7958f71d220859bcc97e19f41ce659a",
+        "sha256:92b77ab2d9aa2af9aa774099de28724c6d04f0e5575926678081078bb478e610",
+        "sha256:34e2190424184e18566c1ef3c0e39860c007650b7991d160fa4bd208ea6d067b",
+        "sha256:b6f67cfe167dc6132b299a5c07c61741c47955256ee0a73acba8efeb6915cc95",
+        "sha256:e7317ddd3966e4ae8faeb296e2eeb4eab097e17dcd3248d6beb3fb1c29edcc67",
+        "sha256:84ee8e0b11beb8a9c734e01f4596ee9ccd025d5844a806b620a5d52bde24010a",
+        "sha256:6057e3e08b990974d9bbd9f5e3d3b97b9786f542b3ce188db1c34c6aee786ed3"
+      ],
+      "Type": "layers"
+    },
+    "Size": 9035673023
+  },
+  "input_provenance": [
+    {
+      "bytes": 11731,
+      "path": "evidence/uuid-repair-build.jsonl",
+      "sha256": "20505ed48d2424baf22c0b5d53317ee2e68b99d6c48bc927d133b5e92e3a0331"
+    },
+    {
+      "bytes": 1762,
+      "path": "RUNTIME-CONFIG.json",
+      "sha256": "1cea5c6b3e025cce97fedeea3f6f844430a6809fbe09ac457eaa8d1deeef5a84"
+    },
+    {
+      "bytes": 1130,
+      "path": "repo/scripts/image_runtime/Dockerfile.uuid-repair",
+      "sha256": "58aedcf0f543d3c71efa500c4cd304ffd315292646fa3778ecc72fdafad470b9"
+    },
+    {
+      "bytes": 625,
+      "path": "repo/scripts/image_runtime/patches/sglang-nvml-uuid.patch",
+      "sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e"
+    },
+    {
+      "bytes": 1019,
+      "path": "repo/scripts/image_runtime/patches/sglang-nvml-uuid-repair.json",
+      "sha256": "b1d6cfb2785d853e6af392bb2ae2d78cf8eb900acaa349ad42df62dbf3857d49"
+    },
+    {
+      "bytes": 2245,
+      "path": "repo/reports/image21-runtime-20260923/image-identity.json",
+      "sha256": "0a22b9bbfa7313b3c1f697f34a3a46667d26a9296219c5c35a5e428926c23974"
+    }
+  ],
+  "limitations": [
+    "Source-only compiler performed no VM read, build, model load or inference.",
+    "The actual live device/output/visual/transport/memory result belongs to the parent task and is not asserted here.",
+    "Derived dependency identity follows the exact parent reference and no-install recipe; a new pip or dpkg inventory was not exported by this compiler.",
+    "The repaired cuda.py SHA256 is the exact patch result and configured expected value; this compiler did not read the file back from the built image.",
+    "Docker Id and RepoDigests are observed local metadata, not proof of registry publication or pullability."
+  ],
+  "observed_repo_digests": [
+    "local/qwen-image21@sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8"
+  ],
+  "parent_image_id": "sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83",
+  "registry_publication_or_pullability": "NOT_VERIFIED",
+  "repair": {
+    "behavior": "GPU- UUID resolves via balanced NVML init/get-handle-by-UUID/get-current-index/shutdown; numeric and unset behavior unchanged; errors propagate without fallback",
+    "changed_function": "device_id_to_physical_device_id",
+    "file": "python/sglang/multimodal_gen/runtime/platforms/cuda.py",
+    "live_gpu_validation": "NOT_TESTED_BY_PATCH_AUTHOR",
+    "maximum_sglang_repairs_authorized": 1,
+    "original_git_blob_sha1": "19388b1b9f8594e8f9ce778846541d5427612808",
+    "original_sha256": "c0a99f13fe1d54e1c9d85cc90ea32c09dbd1ca27451159e0c64953881dd82e9f",
+    "patch_file": "sglang-nvml-uuid.patch",
+    "patch_sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e",
+    "reason": "Pinned platform helper rejects valid full GPU UUID CUDA_VISIBLE_DEVICES values by int conversion before model load",
+    "repair_slot": 1,
+    "repaired_sha256": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de",
+    "schema_version": 1,
+    "upstream_commit": "0cd8be351d0825488f4b81c8931167bbab618eca"
+  },
+  "repair_count": 1,
+  "repair_limit": 1,
+  "schema_version": 1,
+  "source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca"
+}

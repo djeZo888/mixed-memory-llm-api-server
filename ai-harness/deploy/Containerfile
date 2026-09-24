@@ -1,0 +1,191 @@
+# Build context: ai-harness/. No host home, credentials or engine vendor tree.
+# Registry index verified 2026-09-22; linux/amd64 member is recorded in engine/pins.json.
+# Same Debian suite as Node runtime; registry manifest/config verified in task evidence.
+FROM docker.io/library/python:3.12-slim-bookworm@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e AS python312
+
+FROM docker.io/library/node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS source-base
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+RUN npm install --global pnpm@9.12.0
+WORKDIR /build/minimax
+RUN git init --quiet \
+    && git remote add origin https://github.com/MiniMax-AI/minimax-code.git \
+    && git fetch --depth=1 origin ae65651df5f97ae1085ab4e19964f4b78c769a4e \
+    && git checkout --detach FETCH_HEAD \
+    && test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e
+
+# Dependency inputs are isolated from all ACP/source patches and documentation.
+FROM source-base AS source-deps
+COPY deploy/patches/0003-gateway-undici-dependency.patch deploy/patches/dependency-source.SHA256SUMS deploy/patches/dependency-patched.SHA256SUMS /tmp/ai-harness-dependency/
+RUN test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e \
+    && sha256sum -c /tmp/ai-harness-dependency/dependency-source.SHA256SUMS \
+    && printf '%s\n' 'f1db7f0c33096b818ed5eea9b8899c0845e81ab74917eb98aec028a168c62c08  /tmp/ai-harness-dependency/0003-gateway-undici-dependency.patch' | sha256sum -c - \
+    && git apply --check --whitespace=error --include=third_party/pi-mono/packages/ai/package.json --include=pnpm-lock.yaml /tmp/ai-harness-dependency/0003-gateway-undici-dependency.patch \
+    && git apply --whitespace=error --include=third_party/pi-mono/packages/ai/package.json --include=pnpm-lock.yaml /tmp/ai-harness-dependency/0003-gateway-undici-dependency.patch \
+    && sha256sum -c /tmp/ai-harness-dependency/dependency-patched.SHA256SUMS
+RUN pnpm install --frozen-lockfile \
+    && sha256sum -c /tmp/ai-harness-dependency/dependency-patched.SHA256SUMS
+
+FROM source-deps AS build
+COPY deploy/patches/*.patch deploy/patches/*SHA256SUMS /tmp/ai-harness-patches/
+# Fail closed on upstream-file or patch drift before building the exact source.
+RUN test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e \
+    && sha256sum -c /tmp/ai-harness-patches/source-source.SHA256SUMS \
+    && sha256sum -c /tmp/ai-harness-patches/dependency-patched.SHA256SUMS \
+    && cd /tmp/ai-harness-patches && sha256sum -c SHA256SUMS \
+    && printf '%s\n' '69d7fe14ed8b1e394fe7315e04724e3ef89c2efbd21118a42fa1842f5ed48eff  SHA256SUMS' | sha256sum -c - \
+    && cd /build/minimax \
+    && for patch in /tmp/ai-harness-patches/[0-9]*.patch; do \
+         if [[ "${patch##*/}" = 0003-gateway-undici-dependency.patch ]]; then continue; fi; \
+         git apply --check --whitespace=error --exclude=third_party/pi-mono/packages/ai/package.json --exclude=pnpm-lock.yaml "$patch" \
+           && git apply --whitespace=error --exclude=third_party/pi-mono/packages/ai/package.json --exclude=pnpm-lock.yaml "$patch" || exit; \
+       done \
+    && sha256sum -c /tmp/ai-harness-patches/patched.SHA256SUMS
+# Upstream release packaging requires a clean committed tree. Commit only the
+# verified patchset inside this build; retain both original and derived revisions.
+RUN git add --all \
+    && GIT_AUTHOR_DATE=2026-09-22T00:00:00Z GIT_COMMITTER_DATE=2026-09-22T00:00:00Z \
+       git -c user.name='ai-harness source build' -c user.email='ai-harness-build@localhost' \
+       commit --quiet --no-gpg-sign -m 'Apply identity-checked ai-harness deployment patches' \
+    && test -z "$(git status --porcelain --untracked-files=no)"
+# Frozen workspace lock; upstream verifies the external mcode-tools archive/CLI
+# and carries its manifest/notices into the release. Never bypass these hashes.
+RUN pnpm typecheck \
+    && MCODE_RELEASE_TAG=v0.5.1 pnpm build \
+    && node scripts/package-cli-release.mjs v0.5.1 /build/release \
+    && cd /build/release && sha256sum -c minimax-code-0.5.1.tar.gz.sha256
+# Runtime dependencies use the retained exact release lock, after source compilation.
+# Optional verified installed graph cache; ordinary builds remain portable with npm ci.
+ARG AI_HARNESS_NATIVE_DEPS_CACHE=0
+COPY deploy/engine/native-runtime/ /tmp/ai-harness-native-runtime/
+RUN mkdir /opt/minimax \
+    && tar -xzf /build/release/minimax-code-0.5.1.tar.gz -C /opt/minimax --strip-components=1 \
+    && cp /tmp/ai-harness-native-runtime/package-lock.json /opt/minimax/package-lock.json \
+    && cd /opt/minimax \
+    && sha256sum -c /tmp/ai-harness-native-runtime/SHA256SUMS \
+    && case "$AI_HARNESS_NATIVE_DEPS_CACHE" in \
+         0) npm ci --omit=dev --include=optional --ignore-scripts=false --no-audit --no-fund ;; \
+         1) (cd /tmp/ai-harness-native-deps-cache && sha256sum -c /tmp/ai-harness-native-runtime/SHA256SUMS) \
+            && test -d /tmp/ai-harness-native-deps-cache/node_modules \
+            && test ! -L /tmp/ai-harness-native-deps-cache/node_modules \
+            && test ! -e /opt/minimax/node_modules \
+            && cp -a /tmp/ai-harness-native-deps-cache/node_modules /opt/minimax/node_modules \
+            && npm ls --all --omit=dev --offline ;; \
+         *) echo 'Invalid AI_HARNESS_NATIVE_DEPS_CACHE value' >&2; exit 1 ;; \
+       esac \
+    && sha256sum -c /tmp/ai-harness-native-runtime/SHA256SUMS \
+    && node cli.js --version \
+    && cp /build/minimax/pnpm-lock.yaml /opt/minimax/source-pnpm-lock.yaml \
+    && git -C /build/minimax rev-parse HEAD > /opt/minimax/patched-source-revision.txt \
+    && cp /build/release/*.sha256 /opt/minimax/ \
+    && npm cache clean --force
+
+# Acceptance exports use the exact built source; this stage never installs deps.
+FROM build AS native-probes
+COPY deploy/tests/build-native-probes.mjs /tmp/build-native-probes.mjs
+RUN node /tmp/build-native-probes.mjs /build/minimax /opt/minimax/native-probes.mjs
+
+FROM docker.io/library/node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS runtime-deps
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      bash ca-certificates curl git openssh-client ripgrep jq file unzip xz-utils \
+      chromium chromium-sandbox fonts-liberation fonts-dejavu-core \
+      poppler-utils tesseract-ocr tesseract-ocr-eng \
+      python3 python3-venv python3-pip python3-pytest python3-numpy python3-scipy \
+      python3-matplotlib python3-pandas python3-sympy \
+      build-essential clang cmake ninja-build gdb pkg-config util-linux \
+    && dpkg-query -W -f='${Package}\t${Version}\n' > /usr/local/share/ai-harness-dpkg.tsv \
+    && rm -rf /var/lib/apt/lists/*
+RUN python3 -m venv --system-site-packages /opt/ai-harness-python \
+    && /opt/ai-harness-python/bin/pip install --no-cache-dir \
+      pypdf==6.1.1 pdfplumber==0.11.7 reportlab==4.4.4 \
+    && /opt/ai-harness-python/bin/pip freeze > /usr/local/share/ai-harness-python.txt
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+RUN npm install --global typescript@5.9.3 @playwright/test@1.56.1 \
+    && npm list --global --depth=0 --json > /usr/local/share/ai-harness-npm.json \
+    && npm cache clean --force
+# Hash-locked tools are built independently of native source/ACP/browser patches.
+# Keep the costly existing apt/Chromium layers; replace their historical venv.
+FROM runtime-deps AS reviewed-tools
+COPY --from=python312 /usr/local/ /usr/local/
+RUN ldconfig && rm -rf /opt/ai-harness-python \
+    && /usr/local/bin/python3.12 -m venv /opt/ai-harness-python
+COPY tools/search/ /opt/ai-harness/tools/search/
+COPY tools/pdf/ /opt/ai-harness/tools/pdf/
+COPY tools/runtime/ /opt/ai-harness/tools/runtime/
+COPY tools/LICENSE-MIT.txt /opt/ai-harness/tools/LICENSE-MIT.txt
+RUN cd /opt/ai-harness/tools/search && npm ci --omit=dev --ignore-scripts \
+    && cd /opt/ai-harness/tools/runtime && npm ci --omit=dev --ignore-scripts \
+    && /opt/ai-harness-python/bin/python -m pip install --no-cache-dir --require-hashes \
+      -r /opt/ai-harness/tools/pdf/requirements.lock -r /opt/ai-harness/tools/runtime/requirements.lock \
+    && /opt/ai-harness-python/bin/python -m pip check \
+    && /opt/ai-harness-python/bin/python -c 'import sys, ssl, sqlite3, ctypes, lzma, numpy, scipy, sympy, matplotlib, pytest, pypdf, pdfplumber, markdown; assert sys.version_info[:2] == (3, 12); assert sys.prefix != sys.base_prefix' \
+    && /opt/ai-harness-python/bin/python -m pip freeze > /usr/local/share/ai-harness-python-reviewed.txt \
+    && cd /opt/ai-harness/tools/runtime && npm list --omit=dev --json > /usr/local/share/ai-harness-npm-reviewed.json
+
+# Additive image adapter keeps the costly existing runtime/tool layers cached.
+FROM runtime-deps AS image-tools
+COPY tools/image/ /opt/ai-harness/tools/image/
+RUN cd /opt/ai-harness/tools/image && npm ci --omit=dev --ignore-scripts \
+    && node --check image-mcp.mjs
+
+FROM runtime-deps AS runtime-base
+# Keep the existing runtime-deps/Chromium layer; ensure the IANA zone is available.
+RUN if ! test -s /usr/share/zoneinfo/Europe/Ljubljana; then \
+      apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata \
+      && rm -rf /var/lib/apt/lists/*; \
+    fi \
+    && dpkg-query -W -f='${Package}\t${Version}\n' > /usr/local/share/ai-harness-dpkg.tsv
+LABEL org.opencontainers.image.title="ai-harness local MiniMax engine" \
+      org.opencontainers.image.version="0.0.3" \
+      org.opencontainers.image.revision="ae65651df5f97ae1085ab4e19964f4b78c769a4e" \
+      org.opencontainers.image.ai-harness.patchset="69d7fe14ed8b1e394fe7315e04724e3ef89c2efbd21118a42fa1842f5ed48eff" \
+      org.opencontainers.image.source="https://github.com/MiniMax-AI/minimax-code"
+COPY --from=build /opt/minimax /opt/minimax
+COPY deploy/patches /usr/local/share/ai-harness-patches
+COPY deploy/engine /opt/ai-harness/engine
+RUN mkdir -p /opt/ai-harness/bin \
+    && ln -s ../engine/mcode-local /opt/ai-harness/bin/mcode-local \
+    && chmod 0555 /opt/ai-harness/engine/mcode-local \
+    && test -x /usr/bin/chromium \
+    && test -s /usr/share/zoneinfo/Europe/Ljubljana \
+    && test -s /opt/minimax/MCODE_TOOLS_NOTICES.md \
+    && test -s /opt/minimax/embedded/mcode-tools/manifest.json \
+    && printf '%s\n' 'e5a59ec5362e395b519317ad6fecd99f6e92308b9d985be44b64eb2f2b73a722  /opt/minimax/embedded/mcode-tools/cli.mjs' | sha256sum -c - \
+    && node --check /opt/ai-harness/engine/configure-profile.mjs
+ENV PATH="/opt/ai-harness-python/bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin" \
+    MCODE_DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 \
+    MCODE_CHROME_PATH=/usr/bin/chromium PYTHONDONTWRITEBYTECODE=1 TZ=Europe/Ljubljana
+# Existing image user; no host account changes. Launcher uses keep-id and its UID.
+USER 1000:1000
+ENTRYPOINT ["/opt/ai-harness/bin/mcode-local"]
+
+# Final runtime adds the reviewed tools/skills without invalidating source-deps.
+FROM runtime-base AS runtime
+USER root
+COPY --from=python312 /usr/local/ /usr/local/
+# Remove historical supplemental tooling from the active filesystem. The old
+# layers remain cached, but the final PATH resolves only the reviewed lockfiles.
+RUN /sbin/ldconfig && rm -rf /opt/ai-harness-python \
+    && npm uninstall --global --ignore-scripts typescript @playwright/test
+COPY --from=reviewed-tools /opt/ai-harness-python/ /opt/ai-harness-python/
+COPY --from=reviewed-tools /opt/ai-harness/tools/ /opt/ai-harness/tools/
+COPY --from=image-tools /opt/ai-harness/tools/image/ /opt/ai-harness/tools/image/
+COPY --from=reviewed-tools /usr/local/share/ai-harness-python-reviewed.txt /usr/local/share/ai-harness-python.txt
+COPY --from=reviewed-tools /usr/local/share/ai-harness-npm-reviewed.json /usr/local/share/ai-harness-npm.json
+COPY skills/ /opt/ai-harness/skills/
+COPY --from=native-probes /opt/minimax/native-probes.mjs /opt/minimax/native-probes.mjs
+COPY --from=native-probes /opt/minimax/native-probes.mjs.metafile.json /usr/local/share/ai-harness-native-probes.metafile.json
+COPY deploy/tests/native-integration.mjs /opt/ai-harness/tests/native-integration.mjs
+COPY deploy/tests/native-worker-boundary.mjs /opt/ai-harness/tests/native-worker-boundary.mjs
+COPY deploy/tests/fixtures/native-image-mcp-catalog.json /opt/ai-harness/tests/fixtures/native-image-mcp-catalog.json
+RUN mkdir -p /usr/local/share/licenses/python-3.12 \
+    && cp /usr/local/lib/python3.12/LICENSE.txt /usr/local/share/licenses/python-3.12/LICENSE.txt
+ENV PATH="/opt/ai-harness-python/bin:/opt/ai-harness/tools/runtime/node_modules/.bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin" \
+    AI_HARNESS_SEARXNG_URL=http://10.0.2.2:8082
+RUN /opt/ai-harness-python/bin/python -m pip check \
+    && /opt/ai-harness-python/bin/python -c 'import ssl, sqlite3, ctypes, lzma, numpy, scipy, sympy, matplotlib, pytest, pypdf, pdfplumber, markdown; import site; assert not site.ENABLE_USER_SITE' \
+    && test -s /opt/ai-harness/skills/pdf/MINIMAX-LICENSE.txt \
+    && node --test /opt/ai-harness/engine/configure-profile.test.mjs
+USER 1000:1000

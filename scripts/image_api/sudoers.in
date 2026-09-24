@@ -1,0 +1,3 @@
+# root:root 0440; validate rendered rule with visudo -cf before installation.
+# Empty quoted argument specification means ZERO arguments, not arbitrary arguments.
+@EXISTING_SERVICE_USER@ ALL=(root) NOPASSWD: /usr/local/libexec/llm-image-backend-recover ""

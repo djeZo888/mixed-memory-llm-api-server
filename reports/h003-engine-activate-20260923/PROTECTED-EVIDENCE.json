@@ -1,0 +1,19 @@
+{
+  "root": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-HARNESS-ENGINE-ACTIVATE-20260923/evidence",
+  "access": "Local protected evidence only: directory0700/files0600; raw artifacts excluded from publication.",
+  "artifacts": {
+    "prepared.json": "49c448502dec7485331c22fb02498bc52a04b47a70303ed4a4c23c3ff8c77d2e",
+    "activation-result.json": "3834e47922f604b3caa4a450092489631d2a26b2e1939b81182a9307766db3d3",
+    "final-readback.json": "6bc34241240057df48e8b10216cdafe92adf57836fe35c25bff4b7460962e48a",
+    "source-manifests.json": "90bf8b5eea28f571959cf3c22570bc4b77f3f2f564022381e5429295b525e5c1",
+    "original-report-a9d3efa/ACTIVATION-RECEIPT.json": "bc1488a9b6ec3957784c5cd1ec4410ad88a4d66ad85d1f1227dd056197629987",
+    "original-report-a9d3efa/evidence/ENGINE-RECEIPT.json": "5b6407f96dd779b29a3f103facda67441231184f603b3c4058834bb7cb9308b1",
+    "original-report-a9d3efa/evidence/COORDINATOR-NOTE.activation.md": "d10e1ac87fad4ee1320e345478358861bac843207f4055199c303e6d9f91878d",
+    "original-report-a9d3efa/evidence/COORDINATOR-NOTE.md": "ba388efbf96dd646666772b91cb5499db8c3990d281a4e8883dc8a5e4bb8a895",
+    "original-report-a9d3efa/evidence/independent-audit.md": "1dc9ec8bc3596c40f05631ad6a39c74741ebb5826a523fb5a37c49349895d9a2",
+    "original-publication-a9d3efa/activation-report.bundle": "14358b379973b4e11e5ea88ad1e946307c9211fd603a4a908f46a49d816efc49",
+    "original-publication-a9d3efa/REPORT-TRANSPORT.json": "f16b47dd47e516141a8a2d9b2d1379418d7a11d8034e251f3b4cd0ff2198a502"
+  },
+  "preservedOriginalReportBranch": "backup/h003-engine-activate-report-a9d3efa",
+  "originalCommit": "a9d3efa607eb1a49691a407077a35cdf00e607e2"
+}

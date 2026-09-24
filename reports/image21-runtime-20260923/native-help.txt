@@ -1,0 +1,842 @@
+usage: sglang serve [-h] [--config CONFIG] [--model-path MODEL_PATH]
+                    [--model-subfolder MODEL_SUBFOLDER]
+                    [--model-variant MODEL_VARIANT]
+                    [--minimax-h3-adaln-online [MINIMAX_H3_ADALN_ONLINE]]
+                    [--minimax-h3-adaln-plan-width MINIMAX_H3_ADALN_PLAN_WIDTH]
+                    [--minimax-h3-adaln-host-cache-gb MINIMAX_H3_ADALN_HOST_CACHE_GB]
+                    [--minimax-h3-adaln-cache-path MINIMAX_H3_ADALN_CACHE_PATH]
+                    [--model-id MODEL_ID]
+                    [--served-model-name SERVED_MODEL_NAME]
+                    [--pipeline PIPELINE_CLASS_NAME]
+                    [--load-diffusion-decoder [LOAD_DIFFUSION_DECODER]]
+                    [--attention-backend ATTENTION_BACKEND]
+                    [--attention-backend-config ATTENTION_BACKEND_CONFIG]
+                    [--component-attention-backends COMPONENT_ATTENTION_BACKENDS]
+                    [--cache-dit-config CACHE_DIT_CONFIG]
+                    [--trust-remote-code [TRUST_REMOTE_CODE]]
+                    [--revision REVISION]
+                    [--performance-mode {manual,auto,speed,memory}]
+                    [--enable-nccl-nvls [ENABLE_NCCL_NVLS]]
+                    [--num-gpus NUM_GPUS] [--base-gpu-id BASE_GPU_ID]
+                    [--nnodes NNODES] [--node-rank NODE_RANK]
+                    [--dist-init-addr DIST_INIT_ADDR]
+                    [--gpu-ids GPU_IDS [GPU_IDS ...]] [--tp-size TP_SIZE]
+                    [--sp-degree SP_DEGREE] [--ulysses-degree ULYSSES_DEGREE]
+                    [--ring-degree RING_DEGREE]
+                    [--encoder-parallel {auto,fold,dp,replicate}]
+                    [--kv-gather-degree KV_GATHER_DEGREE]
+                    [--enable-cfg-parallel [ENABLE_CFG_PARALLEL]]
+                    [--cfg-parallel-size CFG_PARALLEL_DEGREE]
+                    [--data-parallel-size DP_SIZE]
+                    [--hsdp-replicate-dim HSDP_REPLICATE_DIM]
+                    [--hsdp-shard-dim HSDP_SHARD_DIM]
+                    [--dist-timeout DIST_TIMEOUT]
+                    [--scheduler-rpc-timeout SCHEDULER_RPC_TIMEOUT]
+                    [--disagg-role {monolithic,encoder,denoiser,decoder,server,denoising}]
+                    [--disagg-timeout DISAGG_TIMEOUT]
+                    [--disagg-downstream-wait-timeout DISAGG_DOWNSTREAM_WAIT_TIMEOUT]
+                    [--disagg-dispatch-policy {round_robin,max_free_slots}]
+                    [--disagg-instance-id DISAGG_INSTANCE_ID]
+                    [--disagg-max-slots-per-instance DISAGG_MAX_SLOTS_PER_INSTANCE]
+                    [--disagg-transfer-redundancy DISAGG_TRANSFER_REDUNDANCY]
+                    [--disagg-role-device {auto,cpu,cuda}]
+                    [--disagg-transfer-backend {auto,mock,mooncake}]
+                    [--disagg-transfer-pool-size DISAGG_TRANSFER_POOL_SIZE]
+                    [--disagg-transfer-pin-memory {auto,off,required}]
+                    [--disagg-p2p-hostname DISAGG_P2P_HOSTNAME]
+                    [--disagg-ib-device DISAGG_IB_DEVICE]
+                    [--disagg-server-addr DISAGG_SERVER_ADDR]
+                    [--encoder-urls ENCODER_URLS]
+                    [--denoiser-urls DENOISER_URLS]
+                    [--decoder-urls DECODER_URLS] [--encoder-tp ENCODER_TP]
+                    [--denoiser-tp DENOISER_TP] [--denoiser-sp DENOISER_SP]
+                    [--denoiser-ulysses DENOISER_ULYSSES]
+                    [--denoiser-ring DENOISER_RING] [--decoder-sp DECODER_SP]
+                    [--prompt-file-path PROMPT_FILE_PATH]
+                    [--mask-strategy-file-path MASK_STRATEGY_FILE_PATH]
+                    [--enable-torch-compile [ENABLE_TORCH_COMPILE]]
+                    [--regional-compile [REGIONAL_COMPILE]]
+                    [--offload-during-compile [OFFLOAD_DURING_COMPILE]]
+                    [--enable-breakable-cuda-graph [ENABLE_BREAKABLE_CUDA_GRAPH]]
+                    [--bcg-text-buckets BCG_TEXT_BUCKETS [BCG_TEXT_BUCKETS ...]]
+                    [--enable-layerwise-nvtx-marker [ENABLE_LAYERWISE_NVTX_MARKER]]
+                    [--warmup-mode {off,request,server}]
+                    [--warmup-resolutions WARMUP_RESOLUTIONS [WARMUP_RESOLUTIONS ...]]
+                    [--warmup-num-frames WARMUP_NUM_FRAMES]
+                    [--warmup-steps WARMUP_STEPS]
+                    [--warmup-sampling-params WARMUP_SAMPLING_PARAMS]
+                    [--component-residency COMPONENT=MODE [COMPONENT=MODE ...]]
+                    [--dit-cpu-offload [DIT_CPU_OFFLOAD]]
+                    [--direct-gpu-weight-loading [DIRECT_GPU_WEIGHT_LOADING]]
+                    [--cpu-offload-components CPU_OFFLOAD_COMPONENTS [CPU_OFFLOAD_COMPONENTS ...]]
+                    [--dit-layerwise-offload [DIT_LAYERWISE_OFFLOAD]]
+                    [--layerwise-offload-components LAYERWISE_OFFLOAD_COMPONENTS [LAYERWISE_OFFLOAD_COMPONENTS ...]]
+                    [--dit-offload-prefetch-size DIT_OFFLOAD_PREFETCH_SIZE]
+                    [--dit-layerwise-resident-layers DIT_LAYERWISE_RESIDENT_LAYERS]
+                    [--layerwise-prefetch-size LAYERWISE_PREFETCH_SIZE]
+                    [--layerwise-resident-layers LAYERWISE_RESIDENT_LAYERS]
+                    [--layerwise-residency-policy LAYERWISE_RESIDENCY_POLICY]
+                    [--dit-layerwise-residency-policy {leading,strided}]
+                    [--text-encoder-cpu-offload [TEXT_ENCODER_CPU_OFFLOAD]]
+                    [--image-encoder-cpu-offload [IMAGE_ENCODER_CPU_OFFLOAD]]
+                    [--vae-cpu-offload [VAE_CPU_OFFLOAD]]
+                    [--use-fsdp-inference [USE_FSDP_INFERENCE]]
+                    [--pin-cpu-memory [PIN_CPU_MEMORY]]
+                    [--ltx2-two-stage-device-mode {original,resident}]
+                    [--disable-autocast [DISABLE_AUTOCAST]]
+                    [--kv-cache-quant {off,int4,int2}]
+                    [--kv-cache-quant-centroids KV_CACHE_QUANT_CENTROIDS]
+                    [--kv-cache-quant-block-size KV_CACHE_QUANT_BLOCK_SIZE]
+                    [--kv-cache-quant-stages KV_CACHE_QUANT_STAGES]
+                    [--kv-cache-quant-iters KV_CACHE_QUANT_ITERS]
+                    [--kv-cache-quant-asymmetric]
+                    [--kv-cache-quant-keep-recent KV_CACHE_QUANT_KEEP_RECENT]
+                    [--kv-cache-quant-sink {0,1}]
+                    [--kv-cache-quant-sink-keep KV_CACHE_QUANT_SINK_KEEP]
+                    [--quantization QUANTIZATION]
+                    [--quantization-ignored-layers QUANTIZATION_IGNORED_LAYERS [QUANTIZATION_IGNORED_LAYERS ...]]
+                    [--enable-svdquant [ENABLE_SVDQUANT]]
+                    [--transformer-weights-path TRANSFORMER_WEIGHTS_PATH]
+                    [--quantization-precision QUANTIZATION_PRECISION]
+                    [--quantization-rank QUANTIZATION_RANK]
+                    [--quantization-act-unsigned [QUANTIZATION_ACT_UNSIGNED]]
+                    [--master-port MASTER_PORT]
+                    [--scheduler-port SCHEDULER_PORT]
+                    [--batching-mode {dynamic}]
+                    [--batching-max-size BATCHING_MAX_SIZE]
+                    [--batching-delay-ms BATCHING_DELAY_MS]
+                    [--batching-config BATCHING_CONFIG]
+                    [--enable-batching-metrics] [--host HOST] [--port PORT]
+                    [--enable-metrics [ENABLE_METRICS]]
+                    [--strict-ports [STRICT_PORTS]] [--webui [WEBUI]]
+                    [--webui-port WEBUI_PORT] [--output-path OUTPUT_PATH]
+                    [--input-save-path INPUT_SAVE_PATH]
+                    [--lora-path LORA_PATH] [--lora-nickname LORA_NICKNAME]
+                    [--lora-scale LORA_SCALE] [--lora-alpha LORA_ALPHA]
+                    [--lora-merge-mode {auto,merge,dynamic}]
+                    [--lora-weight-name LORA_WEIGHT_NAME]
+                    [--pipeline-config-path PIPELINE_CONFIG_PATH]
+                    [--embedded-cfg-scale EMBEDDED_CFG_SCALE]
+                    [--flow-shift FLOW_SHIFT]
+                    [--scheduler-class-override SCHEDULER_CLASS_OVERRIDE]
+                    [--resolution RESOLUTION] [--streaming [STREAMING]]
+                    [--refiner-chunked [REFINER_CHUNKED]]
+                    [--num-frame-per-block NUM_FRAME_PER_BLOCK]
+                    [--dit-precision {fp32,fp16,bf16}]
+                    [--vae-precision {fp32,fp16,bf16}]
+                    [--vae-decode-precision {fp32,fp16,bf16}]
+                    [--vae-tiling [VAE_TILING]]
+                    [--diffusion-decoder-tiling [DIFFUSION_DECODER_TILING]]
+                    [--diffusion-decoder-parallel-tiling [DIFFUSION_DECODER_PARALLEL_TILING]]
+                    [--vae-slicing [VAE_SLICING]] [--vae-sp [VAE_SP]]
+                    [--text-encoder-precisions {fp32,fp16,bf16} [{fp32,fp16,bf16} ...]]
+                    [--image-encoder-precision {fp32,fp16,bf16}]
+                    [--dmd-denoising-steps DMD_DENOISING_STEPS]
+                    [--realtime-causal-sink-size REALTIME_CAUSAL_SINK_SIZE]
+                    [--realtime-causal-kv-cache-num-frames REALTIME_CAUSAL_KV_CACHE_NUM_FRAMES]
+                    [--vae-config.load-encoder [VAE_CONFIG.LOAD_ENCODER]]
+                    [--vae-config.load-decoder [VAE_CONFIG.LOAD_DECODER]]
+                    [--vae-config.tile-sample-min-height VAE_CONFIG.TILE_SAMPLE_MIN_HEIGHT]
+                    [--vae-config.tile-sample-min-width VAE_CONFIG.TILE_SAMPLE_MIN_WIDTH]
+                    [--vae-config.tile-sample-min-num-frames VAE_CONFIG.TILE_SAMPLE_MIN_NUM_FRAMES]
+                    [--vae-config.tile-sample-stride-height VAE_CONFIG.TILE_SAMPLE_STRIDE_HEIGHT]
+                    [--vae-config.tile-sample-stride-width VAE_CONFIG.TILE_SAMPLE_STRIDE_WIDTH]
+                    [--vae-config.tile-sample-stride-num-frames VAE_CONFIG.TILE_SAMPLE_STRIDE_NUM_FRAMES]
+                    [--vae-config.blend-num-frames VAE_CONFIG.BLEND_NUM_FRAMES]
+                    [--vae-config.use-tiling [VAE_CONFIG.USE_TILING]]
+                    [--vae-config.use-temporal-tiling [VAE_CONFIG.USE_TEMPORAL_TILING]]
+                    [--vae-config.use-parallel-tiling [VAE_CONFIG.USE_PARALLEL_TILING]]
+                    [--vae-config.use-parallel-decode [VAE_CONFIG.USE_PARALLEL_DECODE]]
+                    [--vae-config.parallel-decode-mode {tiled,patch,spatial_shard,spatial,auto}]
+                    [--dit-config.prefix DIT_CONFIG.PREFIX]
+                    [--dit-config.quant-config DIT_CONFIG.QUANT_CONFIG]
+                    [--dit-config.torch-compile-mode DIT_CONFIG.TORCH_COMPILE_MODE]
+                    [--log-level LOG_LEVEL] [--enable-trace]
+                    [--otlp-traces-endpoint OTLP_TRACES_ENDPOINT]
+                    [--otlp-service-name OTLP_SERVICE_NAME] [--log-requests]
+                    [--log-requests-level {0,1,2,3}]
+                    [--log-requests-format {text,json}]
+                    [--log-requests-target LOG_REQUESTS_TARGET [LOG_REQUESTS_TARGET ...]]
+                    [--uvicorn-access-log-exclude-prefixes [UVICORN_ACCESS_LOG_EXCLUDE_PREFIXES ...]]
+                    [--enable-cache-report]
+                    [--backend {auto,sglang,diffusers}]
+                    [--srt-encoder-url SRT_ENCODER_URL]
+                    [--srt-encoder-connection-timeout SRT_ENCODER_CONNECTION_TIMEOUT]
+                    [--srt-encoder-timeout SRT_ENCODER_TIMEOUT]
+                    [--pe-server-url PE_SERVER_URL]
+
+SGLang Diffusion Model Serving
+
+options:
+  -h, --help            show this help message and exit
+  --config CONFIG       Read CLI options from a config JSON or YAML file.
+  --model-path MODEL_PATH
+                        The path of the model weights. This can be a local
+                        folder or a Hugging Face repo ID.
+  --model-subfolder MODEL_SUBFOLDER
+                        Advanced override for a Diffusers pipeline subfolder
+                        inside the model repository. Prefer --model-variant
+                        when a model exposes semantic variant-to-weights
+                        routing.
+  --model-variant MODEL_VARIANT
+                        Semantic checkpoint variant to serve. Models with
+                        partitioned checkpoints use this value to select the
+                        compatible weights without exposing repository
+                        subfolder layout.
+  --minimax-h3-adaln-online [MINIMAX_H3_ADALN_ONLINE]
+                        Rebuild MiniMax H3 AdaLN outputs from the checkpoint
+                        per request instead of keeping the 24.2 GiB of
+                        adaln_proj weights resident. Works with any step count
+                        or schedule and needs no prebuilt artifact. Requires
+                        unquantized weights.
+  --minimax-h3-adaln-plan-width MINIMAX_H3_ADALN_PLAN_WIDTH
+                        Widest timestep plan --minimax-h3-adaln-online sizes
+                        its slab for. The default 4 covers every task; a
+                        deployment serving only t2va (2) or fl2va (3) can
+                        shrink the slab proportionally. A request exceeding it
+                        is rejected rather than truncated.
+  --minimax-h3-adaln-host-cache-gb MINIMAX_H3_ADALN_HOST_CACHE_GB
+                        Pinned host memory (decimal GB, per rank) caching
+                        AdaLN plans built by --minimax-h3-adaln-online, so a
+                        plan set evicted from the GPU slab swaps back in over
+                        PCIe instead of re-reading the 24.2 GiB checkpoint
+                        (measured 5.8-6.7 s). One 50-step schedule needs ~0.9
+                        (t2va) / 1.33 (fl2va) / 1.77 (ref2va) GB; the default
+                        8 holds several. Groups are evicted LRU and over-cap
+                        groups just recompute. 0 disables the tier.
+  --minimax-h3-adaln-cache-path MINIMAX_H3_ADALN_CACHE_PATH
+                        Path to a precomputed MiniMax H3 AdaLN cache. This
+                        only supports the matching unquantized H3 checkpoint
+                        and rejects requests whose timestep embeddings are not
+                        present in the cache.
+  --model-id MODEL_ID   Override the model ID used for config resolution.
+                        Useful when --model-path is a local directory whose
+                        name does not match any registered HF repo name.
+                        Should be the repo name portion of the HF ID (e.g.
+                        'Qwen-Image' for 'Qwen/Qwen-Image').
+  --served-model-name SERVED_MODEL_NAME
+                        Override the model name exposed by /v1/models and used
+                        in generation responses. Defaults to --model-id if
+                        set, otherwise --model-path.
+  --pipeline PIPELINE_CLASS_NAME, --pipeline-class-name PIPELINE_CLASS_NAME
+                        Advanced override for pipeline class selection from
+                        the model registry or model_index.json. Must match a
+                        registered pipeline_name.
+  --load-diffusion-decoder [LOAD_DIFFUSION_DECODER]
+                        Load the optional LTX-2.5 diffusion decoder so
+                        requests may set use_diffusion_decoder. Offline
+                        generate enables this automatically when --use-
+                        diffusion-decoder is passed.
+  --attention-backend ATTENTION_BACKEND
+                        The global attention backend. Native DiT components
+                        treat it as strict; auxiliary native components use a
+                        compatible fallback when needed. Use --component-
+                        attention-backends for a component-scoped choice. For
+                        diffusers pipelines, use names such as flash,
+                        _flash_3_hub, sage, or xformers.
+  --attention-backend-config ATTENTION_BACKEND_CONFIG
+                        Configuration for the attention backend. Can be a JSON
+                        string, a path to a JSON/YAML file, or key=value
+                        pairs.
+  --component-attention-backends COMPONENT_ATTENTION_BACKENDS
+                        Per-component attention backend overrides for native
+                        pipelines. Use component names from model_index.json,
+                        e.g. 'text_encoder=torch_sdpa,transformer=fa'.
+  --cache-dit-config CACHE_DIT_CONFIG
+                        Path to a Cache-DiT YAML/JSON config. Enables cache-
+                        dit for diffusers backend.
+  --trust-remote-code [TRUST_REMOTE_CODE]
+                        Trust remote code when loading HuggingFace models
+  --revision REVISION   The specific model version to use (can be a branch
+                        name, tag name, or commit id)
+  --performance-mode {manual,auto,speed,memory}, --mode {manual,auto,speed,memory}
+                        Preset for performance and memory defaults. 'manual'
+                        keeps performance-related server args under explicit
+                        user control, no adjustment is made; 'auto' keeps safe
+                        defaults and applies high-confidence FSDP/CFG
+                        improvements; 'speed' favors GPU-resident execution
+                        for lower latency and higher throughput, and may OOM;
+                        'memory' favors lower GPU memory usage; Explicit
+                        offload/FSDP/parallelism flags take precedence.
+  --enable-nccl-nvls [ENABLE_NCCL_NVLS]
+                        Enable NCCL NVLS when available.
+  --num-gpus NUM_GPUS   The number of GPUs to use.
+  --base-gpu-id BASE_GPU_ID
+                        The starting GPU ID for this instance. Used with
+                        --disagg-role to place role instances on specific GPUs
+                        without CUDA_VISIBLE_DEVICES.
+  --nnodes NNODES       The number of nodes for cross-node parallelism. --num-
+                        gpus is the total GPU count across all nodes; each
+                        node runs num_gpus // nnodes local workers.
+  --node-rank NODE_RANK
+                        The rank of this node among --nnodes nodes, in [0,
+                        nnodes).
+  --dist-init-addr DIST_INIT_ADDR
+                        The host:port distributed rendezvous address,
+                        reachable from every node. Required when --nnodes > 1.
+  --gpu-ids GPU_IDS [GPU_IDS ...]
+                        Physical GPU IDs for this instance, e.g. --gpu-ids 0 1
+                        6 7 or --gpu-ids 0,1,6,7. Overrides --base-gpu-id for
+                        standalone disagg roles.
+  --tp-size TP_SIZE     The tensor parallelism size. Defaults to 1 if not
+                        specified.
+  --sp-degree SP_DEGREE
+                        The sequence parallelism size. If not specified, will
+                        use all remaining GPUs after accounting for TP and DP.
+  --ulysses-degree ULYSSES_DEGREE
+                        Ulysses sequence parallel degree. Used in attention
+                        layer.
+  --ring-degree RING_DEGREE
+                        Ring sequence parallel degree. Used in attention
+                        layer.
+  --encoder-parallel {auto,fold,dp,replicate}
+                        Text/image encoder parallelism across a multi-rank
+                        replica. `auto` folds encoders wide enough to benefit
+                        (best single-request latency) and data-parallels
+                        eligible native text encoders at batch>1; `fold`
+                        always tensor-parallels the encoder weights across the
+                        replica; `dp` never folds and splits the batch across
+                        encoder copies inside each replica, composing with
+                        encoder TP (best batched throughput); `replicate`
+                        disables both. The default is `auto`.
+  --kv-gather-degree KV_GATHER_DEGREE
+                        Sequence-parallel degree that splits rows inside
+                        attention and exchanges with one K/V all-gather
+                        (queries stay local) instead of Ulysses all-to-all.
+                        Non-causal attention only; does not compose with
+                        --ulysses-degree/--ring-degree yet. When no SP degree
+                        is set explicitly, sp_degree=2 defaults to
+                        kv_gather_degree=2 (its measured-win zone) and higher
+                        degrees default to Ulysses.
+  --enable-cfg-parallel [ENABLE_CFG_PARALLEL]
+                        Enable cfg parallel at degree 2. Auto-enabled when
+                        num_gpus >= 2 and no SP flags are set. Use false to
+                        disable it explicitly.
+  --cfg-parallel-size CFG_PARALLEL_DEGREE
+                        Number of GPUs per CFG parallel group (1 = disabled, N
+                        > 1 = enabled at degree N). Supersedes --enable-cfg-
+                        parallel. Allows 4-branch CFG parallel (e.g., --cfg-
+                        parallel-size 4) for models with cond + neg +
+                        perturbed + modality branches.
+  --data-parallel-size DP_SIZE, --dp-size DP_SIZE, --dp DP_SIZE
+                        The data parallelism size.
+  --hsdp-replicate-dim HSDP_REPLICATE_DIM
+                        The data parallelism size.
+  --hsdp-shard-dim HSDP_SHARD_DIM
+                        The data parallelism shards. Defaults to num_gpus if
+                        not specified.
+  --dist-timeout DIST_TIMEOUT
+                        Timeout for torch.distributed operations in seconds.
+                        Increase this value if you encounter 'Connection
+                        closed by peer' errors after the service is idle.
+  --scheduler-rpc-timeout SCHEDULER_RPC_TIMEOUT
+                        Optional end-to-end timeout in seconds for a scheduler
+                        RPC, including time spent in the scheduler queue. By
+                        default no transport-level deadline is imposed;
+                        callers may still cancel their request.
+  --disagg-role {monolithic,encoder,denoiser,decoder,server,denoising}
+                        Role for disaggregated pipeline.
+  --disagg-timeout DISAGG_TIMEOUT
+                        Timeout in seconds for pending disagg requests.
+                        Default: 3600.
+  --disagg-downstream-wait-timeout DISAGG_DOWNSTREAM_WAIT_TIMEOUT
+                        Timeout in seconds while waiting for a downstream role
+                        slot. Default: 1800.
+  --disagg-dispatch-policy {round_robin,max_free_slots}
+                        Dispatch policy for pool mode disagg routing.
+  --disagg-instance-id DISAGG_INSTANCE_ID
+                        Stable per-role instance ID used by DiffusionServer
+                        registration.
+  --disagg-max-slots-per-instance DISAGG_MAX_SLOTS_PER_INSTANCE
+                        Maximum concurrent transfer/computation slots tracked
+                        per instance.
+  --disagg-transfer-redundancy DISAGG_TRANSFER_REDUNDANCY
+                        Redundancy factor used when sizing transfer buffers
+                        from warmup.
+  --disagg-role-device {auto,cpu,cuda}
+                        Per-role device override. 'cpu' is intended for same-
+                        machine encoder roles.
+  --disagg-transfer-backend {auto,mock,mooncake}
+                        Transfer backend for multimodal diffusion
+                        disaggregation.
+  --disagg-transfer-pool-size DISAGG_TRANSFER_POOL_SIZE
+                        Size of the P2P transfer buffer pool in bytes.
+  --disagg-transfer-pin-memory {auto,off,required}
+                        CUDA host-register same-host shared-memory transfer
+                        buffers.
+  --disagg-p2p-hostname DISAGG_P2P_HOSTNAME
+                        Hostname for P2P transfer engine.
+  --disagg-ib-device DISAGG_IB_DEVICE
+                        InfiniBand device for P2P RDMA transfers.
+  --disagg-server-addr DISAGG_SERVER_ADDR
+                        DiffusionServer head node address for per-role launch
+                        mode.
+  --encoder-urls ENCODER_URLS
+                        Encoder instance work endpoints for DiffusionServer
+                        head mode.
+  --denoiser-urls DENOISER_URLS
+                        Denoiser instance work endpoints for DiffusionServer
+                        head mode.
+  --decoder-urls DECODER_URLS
+                        Decoder instance work endpoints for DiffusionServer
+                        head mode.
+  --encoder-tp ENCODER_TP
+                        Tensor parallelism for encoder role.
+  --denoiser-tp DENOISER_TP
+                        Tensor parallelism for denoiser role.
+  --denoiser-sp DENOISER_SP
+                        Sequence parallelism for denoiser role.
+  --denoiser-ulysses DENOISER_ULYSSES
+                        Ulysses SP degree for denoiser role.
+  --denoiser-ring DENOISER_RING
+                        Ring SP degree for denoiser role.
+  --decoder-sp DECODER_SP
+                        Sequence parallelism for decoder role.
+  --prompt-file-path PROMPT_FILE_PATH
+                        Path to a text file containing prompts (one per line)
+                        for batch processing
+  --mask-strategy-file-path MASK_STRATEGY_FILE_PATH
+                        Path to mask strategy JSON file for STA
+  --enable-torch-compile [ENABLE_TORCH_COMPILE]
+                        Use torch.compile to speed up diffusion hot paths.
+                        When no warmup mode is configured, this enables server
+                        warmup so first real requests do not pay compile
+                        latency. However, will likely cause precision drifts.
+                        See (https://github.com/pytorch/pytorch/issues/145213)
+  --regional-compile [REGIONAL_COMPILE]
+                        Compile repeated DiT submodules selected by the
+                        model's _compile_conditions instead of compiling the
+                        whole transformer. Requires --enable-torch-compile.
+  --offload-during-compile [OFFLOAD_DURING_COMPILE]
+                        Offload components during the torch.compile warmup
+                        (the DiT layerwise) so max-autotune fits on tighter-
+                        memory GPUs, then restore the configured residency for
+                        serving. Skipped when the DiT is already layerwise-
+                        offloaded, or under cache-dit / FSDP.
+  --enable-breakable-cuda-graph [ENABLE_BREAKABLE_CUDA_GRAPH]
+                        Capture the DiT forward as breakable CUDA graph
+                        segments (split at attention; SP all-to-all / dynamic
+                        attention stay eager) to cut per-kernel launch
+                        overhead. Mutually exclusive with --enable-torch-
+                        compile and Cache-DiT (BCG takes priority). Requires
+                        --warmup-resolutions; all of them are captured at
+                        warmup.
+  --bcg-text-buckets BCG_TEXT_BUCKETS [BCG_TEXT_BUCKETS ...]
+                        Prompt sequence-length padding budget for breakable
+                        CUDA graph. Prompt-conditioning is padded up to the
+                        smallest bucket that fits so different prompt lengths
+                        reuse one captured graph; warmup captures one graph
+                        per bucket. Defaults to 64 128 256 512 1024. Replaces
+                        the legacy SGLANG_BCG_TEXT_BUCKETS env var.
+  --enable-layerwise-nvtx-marker [ENABLE_LAYERWISE_NVTX_MARKER]
+                        Enable layerwise NVTX markers for profiling with
+                        Nsight Systems. Adds NVTX ranges around each pipeline
+                        stage, the denoising loop, every denoising step, the
+                        predict_noise / scheduler_step sub-operations, and
+                        every transformer submodule forward (recursive).
+                        Warmup steps are excluded to keep captured traces
+                        clean.
+  --warmup-mode {off,request,server}
+                        Warmup mode. One of: `off` (no warmup); `request`
+                        (request-based: warm on real incoming requests);
+                        `server` (server-based: a synthetic warmup request
+                        right after the server is ready, before traffic).
+                        `sglang serve` defaults to `server`; other entrypoints
+                        default to request-based when warmup is enabled. When
+                        enabled, look for the line ending with `(with warmup
+                        excluded)` for actual processing time.
+  --warmup-resolutions WARMUP_RESOLUTIONS [WARMUP_RESOLUTIONS ...]
+                        Specify explicit warmup resolutions. e.g., `--warmup-
+                        resolutions 256x256 720x720`
+  --warmup-num-frames WARMUP_NUM_FRAMES
+                        Override the synthetic video warmup frame count. Use
+                        this with breakable CUDA graphs when serving a non-
+                        default frame count so the captured latent shape
+                        matches the request.
+  --warmup-steps WARMUP_STEPS
+                        The number of warmup steps to perform for each
+                        resolution.
+  --warmup-sampling-params WARMUP_SAMPLING_PARAMS
+                        JSON object overriding model sampling defaults for
+                        synthetic warmup and auto residency planning, for
+                        example '{"width":832,"height":480,"num_frames":9,"num
+                        _inference_steps":4}'. Warmup still applies its
+                        bounded execution caps.
+  --component-residency COMPONENT=MODE [COMPONENT=MODE ...]
+                        Select resident, component-offload, snapshot-offload,
+                        or layerwise-offload for pipeline components. Exact
+                        model_index.json component keys override the dit,
+                        text_encoder, image_encoder, vae, and all groups.
+                        Components without an assignment keep their automatic
+                        placement.
+  --dit-cpu-offload [DIT_CPU_OFFLOAD]
+                        Use CPU offload for DiT inference. Enable if run out
+                        of memory with FSDP.
+  --direct-gpu-weight-loading [DIRECT_GPU_WEIGHT_LOADING]
+                        Load the full unquantized DiT checkpoint state dict
+                        directly onto GPU before assigning model parameters.
+                        This may reduce startup time depending on the model,
+                        but temporarily requires checkpoint weights and model
+                        weights to coexist on GPU. Disabled by default.
+  --cpu-offload-components CPU_OFFLOAD_COMPONENTS [CPU_OFFLOAD_COMPONENTS ...]
+                        Select component keys from model_index.json for coarse
+                        CPU offload. Use dit, text_encoder, image_encoder, or
+                        vae as group aliases; all selects every loaded module
+                        and none disables component offload. This
+                        compatibility option can be combined with per-
+                        component CPU offload flags; selected components take
+                        component-offload while unmatched components retain
+                        their existing settings.
+  --dit-layerwise-offload [DIT_LAYERWISE_OFFLOAD]
+                        Enable layerwise CPU offload with async H2D prefetch
+                        overlap for DiTs. It selects only the DiT layerwise
+                        group. Compatible with cache-dit: skipped blocks are
+                        not streamed. Cannot be used together with
+                        use_fsdp_inference. If legacy DiT offload flags are
+                        also provided, layerwise offload is the effective DiT
+                        mode.
+  --layerwise-offload-components LAYERWISE_OFFLOAD_COMPONENTS [LAYERWISE_OFFLOAD_COMPONENTS ...], --layerwise-offload-modules LAYERWISE_OFFLOAD_COMPONENTS [LAYERWISE_OFFLOAD_COMPONENTS ...]
+                        Select pipeline components for layerwise offload. Use
+                        dit to select the DiT layerwise group, default for the
+                        default group (currently text_encoder, image_encoder,
+                        and vae), or all to select every layerwise-offloadable
+                        component. This option does not imply --dit-layerwise-
+                        offload. Example: --layerwise-offload-components
+                        text_encoder image_encoder vae.
+  --dit-offload-prefetch-size DIT_OFFLOAD_PREFETCH_SIZE
+                        The size of prefetch for dit-layerwise-offload. If the
+                        value is between 0.0 and 1.0, it is treated as a ratio
+                        of the total number of layers. If the value is >= 1,
+                        it is treated as the absolute number of layers. 0.0
+                        means prefetch 1 layer (lowest memory). Values above
+                        0.5 might have peak memory close to no offload but
+                        worse performance.
+  --dit-layerwise-resident-layers DIT_LAYERWISE_RESIDENT_LAYERS
+                        With --dit-layerwise-offload, keep this many DiT
+                        layers on the GPU across the denoise steps of a
+                        request and stream the rest with --dit-offload-
+                        prefetch-size; which layers stay is --dit-layerwise-
+                        residency-policy. 0.0 = off (pure streaming). Between
+                        0.0 and 1.0 = ratio of layers; >= 1 = absolute count.
+                        Unlike raising the prefetch size, resident layers are
+                        transferred once per request rather than once per
+                        step, so this trades VRAM for lower denoise latency
+                        when memory is available. They are released when the
+                        request finishes, not kept for the life of the server.
+  --layerwise-prefetch-size LAYERWISE_PREFETCH_SIZE
+                        Per-component override of --dit-offload-prefetch-size,
+                        as component=value entries, e.g. --layerwise-prefetch-
+                        size text_encoder=2,vae=2. Same units as the DiT flag.
+                        Components with no entry keep their group default.
+                        Prefetch overlaps a layer's transfer with the previous
+                        layer's compute, which happens within a single pass,
+                        so it is worth tuning on any streamed component.
+  --layerwise-resident-layers LAYERWISE_RESIDENT_LAYERS
+                        Per-component override of --dit-layerwise-resident-
+                        layers, as component=value entries, e.g. --layerwise-
+                        resident-layers video_vae=36. The layers are held on
+                        the GPU while that component does its work for a
+                        request and released when it finishes, so this pays
+                        for a component that runs its layers many times per
+                        request -- a DiT across the denoise steps, a video VAE
+                        across the latent chunks. A component that runs its
+                        layers once per request, such as a text encoder,
+                        transfers the whole set again every request, so
+                        setting this for one has no effect.
+  --layerwise-residency-policy LAYERWISE_RESIDENCY_POLICY
+                        Per-component override of --dit-layerwise-residency-
+                        policy, as component=value entries, e.g. --layerwise-
+                        residency-policy text_encoder=strided.
+  --dit-layerwise-residency-policy {leading,strided}
+                        Which layers --dit-layerwise-resident-layers keeps
+                        resident. 'leading' (default) keeps the first N, which
+                        crams the whole weight stream into the tail of each
+                        step. 'strided' spreads the resident layers evenly
+                        over the stack so the same bytes move over the whole
+                        step instead: same VRAM, same bytes, only a different
+                        schedule. Worth trying when weight streaming overlaps
+                        memory-bound compute -- the transfers stop competing
+                        with it for L2 and DRAM bandwidth, which is where the
+                        gain comes from.
+  --text-encoder-cpu-offload [TEXT_ENCODER_CPU_OFFLOAD]
+                        Use CPU offload for text encoder. Enable if run out of
+                        memory.
+  --image-encoder-cpu-offload [IMAGE_ENCODER_CPU_OFFLOAD]
+                        Use CPU offload for image encoder. Enable if run out
+                        of memory.
+  --vae-cpu-offload [VAE_CPU_OFFLOAD]
+                        Use CPU offload for VAE. Enable if run out of memory.
+  --use-fsdp-inference [USE_FSDP_INFERENCE]
+                        Use FSDP inference to shard DiT weights across GPUs.
+                        For single-GPU memory pressure, prefer CPU or
+                        layerwise offload.
+  --pin-cpu-memory [PIN_CPU_MEMORY]
+                        Pin memory for CPU offload. Only added as a temp
+                        workaround if it throws "CUDA error: invalid
+                        argument". Should be enabled in almost all cases
+  --ltx2-two-stage-device-mode {original,resident}
+                        LTX-2.3 two-stage device residency mode: 'original'
+                        keeps official two-stage semantics without premerged
+                        stage2, 'resident' keeps both transformers resident on
+                        GPU. Default is auto: resident on H200/high-memory
+                        CUDA GPUs, otherwise original.
+  --disable-autocast [DISABLE_AUTOCAST]
+                        Disable autocast for denoising loop and vae decoding
+                        in pipeline sampling
+  --kv-cache-quant {off,int4,int2}
+                        Enable Quant-VideoGen PRQ KV-cache quantization
+                        (off|int4|int2). Defaults reproduce the tuned per-
+                        chunk config (stages=1, centroids=128, block=64,
+                        symmetric, iters=2, recent=1, per-chunk sink).
+  --kv-cache-quant-centroids KV_CACHE_QUANT_CENTROIDS
+                        PRQ k-means centroids per stage (default 128).
+  --kv-cache-quant-block-size KV_CACHE_QUANT_BLOCK_SIZE
+                        PRQ residual scale block size (default 64).
+  --kv-cache-quant-stages KV_CACHE_QUANT_STAGES
+                        PRQ k-means stages (default 1).
+  --kv-cache-quant-iters KV_CACHE_QUANT_ITERS
+                        PRQ k-means iterations (default 2).
+  --kv-cache-quant-asymmetric
+                        Use KIVI-style asymmetric residual quantization.
+  --kv-cache-quant-keep-recent KV_CACHE_QUANT_KEEP_RECENT
+                        Completed chunks kept bf16 before quantizing (default
+                        1).
+  --kv-cache-quant-sink {0,1}
+                        Quantize the attention sink too (1, default) or keep
+                        it bf16 (0).
+  --kv-cache-quant-sink-keep KV_CACHE_QUANT_SINK_KEEP
+                        Leading sink chunks kept bf16 forever (default 0).
+  --quantization QUANTIZATION
+                        Quantization method for the transformer. If omitted,
+                        the method is auto-detected from the checkpoint config
+                        or safetensors metadata when possible. Use this flag
+                        to override auto-detection. Online (post-load)
+                        quantization from a BF16/FP16 checkpoint is supported
+                        for 'fp8' and 'mxfp4'. Other methods ('modelopt',
+                        'modelopt_fp8', 'modelopt_fp4', 'mxfp8', 'mxfp4_npu',
+                        'modelslim') require a pre-quantized checkpoint. Note:
+                        'mxfp4' targets ROCm + MI350+ (gfx95x); 'mxfp4_npu' /
+                        'mxfp8' target Ascend NPU (A5 series for mxfp4_npu).
+  --quantization-ignored-layers QUANTIZATION_IGNORED_LAYERS [QUANTIZATION_IGNORED_LAYERS ...]
+                        Layer name patterns to keep unquantized during online
+                        quantization (fp8/mxfp4). Each pattern is matched
+                        against the layer prefix. Example: --quantization-
+                        ignored-layers img_mod txt_mod to_out
+  --enable-svdquant [ENABLE_SVDQUANT]
+                        Enable Nunchaku SVDQuant (W4A4-style) inference.
+  --transformer-weights-path TRANSFORMER_WEIGHTS_PATH
+                        Path to pre-quantized transformer weights. Can be a
+                        single .safetensors file, a directory, or a
+                        HuggingFace repo ID. Used by Nunchaku (SVDQuant) and
+                        quantized single-file checkpoints.
+  --quantization-precision QUANTIZATION_PRECISION
+                        Quantization precision: int4 or nvfp4. If not
+                        specified, inferred from model path or defaults to
+                        int4.
+  --quantization-rank QUANTIZATION_RANK
+                        SVD low-rank dimension (e.g., 32). If not specified,
+                        inferred from model path or defaults to 32.
+  --quantization-act-unsigned [QUANTIZATION_ACT_UNSIGNED]
+                        Use unsigned activation quantization (if supported).
+  --master-port MASTER_PORT
+                        Master port for distributed inference. If not set, a
+                        random free port will be used.
+  --scheduler-port SCHEDULER_PORT
+                        Port for the scheduler server.
+  --batching-mode {dynamic}
+                        Request batching scheduler mode. Currently only
+                        'dynamic' is implemented.
+  --batching-max-size BATCHING_MAX_SIZE
+                        Maximum number of compatible generation requests to
+                        merge into one batch.
+  --batching-delay-ms BATCHING_DELAY_MS
+                        Maximum time (in ms) to wait for forming a larger
+                        batch before dispatch.
+  --batching-config BATCHING_CONFIG
+                        Optional JSON file with {'schema_version': 1, 'rules':
+                        [...]} batching admission rules that can cap
+                        model/resolution shapes below --batching-max-size.
+  --enable-batching-metrics
+                        Log periodic batch efficiency metrics such as realized
+                        batch size and queue wait time.
+  --host HOST           Host for the HTTP API server.
+  --port PORT           Port for the HTTP API server.
+  --enable-metrics [ENABLE_METRICS]
+                        Expose Prometheus metrics at /metrics.
+  --strict-ports [STRICT_PORTS]
+                        If enabled, fail when requested ports are unavailable
+                        instead of auto-selecting.
+  --webui [WEBUI]       Whether to use webui for better display
+  --webui-port WEBUI_PORT
+                        Whether to use webui for better display
+  --output-path OUTPUT_PATH
+                        Directory path to save generated images/videos. Set to
+                        "" to disable persistent saving.
+  --input-save-path INPUT_SAVE_PATH
+                        Directory path to save uploaded input images/videos.
+                        Set to "" to disable persistent saving.
+  --lora-path LORA_PATH
+                        The path to the LoRA adapter weights (can be local
+                        file path or HF hub id) to launch with
+  --lora-nickname LORA_NICKNAME
+                        The nickname for the LoRA adapter to launch with
+  --lora-scale LORA_SCALE
+                        LoRA scale for merging (e.g., 0.125 for Hyper-SD).
+                        Same as lora_scale in Diffusers
+  --lora-alpha LORA_ALPHA
+                        Override the LoRA training alpha when neither the
+                        checkpoint nor adapter_config.json records it
+  --lora-merge-mode {auto,merge,dynamic}
+                        How LoRA is applied: auto keeps static merge for
+                        regular weights and uses dynamic LoRA for FSDP-sharded
+                        weights to avoid full-gather; merge always merges into
+                        base weights; dynamic always applies LoRA at forward
+                        time.
+  --lora-weight-name LORA_WEIGHT_NAME
+                        Specific safetensors filename to load from a multi-
+                        file LoRA repo
+  --pipeline-config-path PIPELINE_CONFIG_PATH
+                        Path to the pipeline config
+  --embedded-cfg-scale EMBEDDED_CFG_SCALE
+                        Embedded CFG scale
+  --flow-shift FLOW_SHIFT
+                        Flow shift parameter
+  --scheduler-class-override SCHEDULER_CLASS_OVERRIDE
+                        Override the scheduler class from
+                        scheduler_config.json.
+  --resolution RESOLUTION
+                        Override the selected pipeline config's resolution
+                        setting. Only applies to pipelines that define a
+                        resolution field.
+  --streaming [STREAMING]
+                        SANA-WM: enable chunk-causal streaming (forward_long)
+                        generation.
+  --refiner-chunked [REFINER_CHUNKED]
+                        SANA-WM: chunk-wise streaming refiner (vs whole-clip
+                        dense refiner).
+  --num-frame-per-block NUM_FRAME_PER_BLOCK
+                        SANA-WM: latent frames per streaming chunk (default
+                        3).
+  --dit-precision {fp32,fp16,bf16}
+                        Precision for the DiT model
+  --vae-precision {fp32,fp16,bf16}
+                        Precision for VAE
+  --vae-decode-precision {fp32,fp16,bf16}
+                        Optional decode-only VAE precision override. Defaults
+                        to --vae-precision when unset.
+  --vae-tiling [VAE_TILING]
+                        Enable VAE tiling
+  --diffusion-decoder-tiling [DIFFUSION_DECODER_TILING]
+                        Enable tiling for the LTX-2.5 diffusion decoder
+  --diffusion-decoder-parallel-tiling [DIFFUSION_DECODER_PARALLEL_TILING]
+                        Split the LTX-2.5 diffusion decoder's tiles across the
+                        decode-parallel ranks (TP/SP/PP/CFG within a replica).
+                        Requires --diffusion-decoder-tiling, since the tiles
+                        it splits only exist on that path; inert otherwise,
+                        and at a single rank
+  --vae-slicing [VAE_SLICING]
+                        Enable VAE slicing
+  --vae-sp [VAE_SP]     Enable VAE spatial parallelism
+  --text-encoder-precisions {fp32,fp16,bf16} [{fp32,fp16,bf16} ...]
+                        Precision for each text encoder
+  --image-encoder-precision {fp32,fp16,bf16}
+                        Precision for image encoder
+  --dmd-denoising-steps DMD_DENOISING_STEPS
+                        Comma-separated list of denoising steps (e.g.,
+                        '1000,757,522')
+  --realtime-causal-sink-size REALTIME_CAUSAL_SINK_SIZE
+                        Override the number of sink frames kept by realtime
+                        causal DiT pipelines that support it.
+  --realtime-causal-kv-cache-num-frames REALTIME_CAUSAL_KV_CACHE_NUM_FRAMES
+                        Override the total frame capacity of realtime causal
+                        DiT KV cache for pipelines that support it.
+  --vae-config.load-encoder [VAE_CONFIG.LOAD_ENCODER]
+                        Whether to load the VAE encoder
+  --vae-config.load-decoder [VAE_CONFIG.LOAD_DECODER]
+                        Whether to load the VAE decoder
+  --vae-config.tile-sample-min-height VAE_CONFIG.TILE_SAMPLE_MIN_HEIGHT
+                        Minimum height for VAE tile sampling
+  --vae-config.tile-sample-min-width VAE_CONFIG.TILE_SAMPLE_MIN_WIDTH
+                        Minimum width for VAE tile sampling
+  --vae-config.tile-sample-min-num-frames VAE_CONFIG.TILE_SAMPLE_MIN_NUM_FRAMES
+                        Minimum number of frames for VAE tile sampling
+  --vae-config.tile-sample-stride-height VAE_CONFIG.TILE_SAMPLE_STRIDE_HEIGHT
+                        Stride height for VAE tile sampling
+  --vae-config.tile-sample-stride-width VAE_CONFIG.TILE_SAMPLE_STRIDE_WIDTH
+                        Stride width for VAE tile sampling
+  --vae-config.tile-sample-stride-num-frames VAE_CONFIG.TILE_SAMPLE_STRIDE_NUM_FRAMES
+                        Stride number of frames for VAE tile sampling
+  --vae-config.blend-num-frames VAE_CONFIG.BLEND_NUM_FRAMES
+                        Number of frames to blend for VAE tile sampling
+  --vae-config.use-tiling [VAE_CONFIG.USE_TILING]
+                        Whether to use tiling for VAE
+  --vae-config.use-temporal-tiling [VAE_CONFIG.USE_TEMPORAL_TILING]
+                        Whether to use temporal tiling for VAE
+  --vae-config.use-parallel-tiling [VAE_CONFIG.USE_PARALLEL_TILING]
+                        Whether to use parallel tiling for VAE
+  --vae-config.use-parallel-decode [VAE_CONFIG.USE_PARALLEL_DECODE]
+                        Whether to use parallel decode for VAE
+  --vae-config.parallel-decode-mode {tiled,patch,spatial_shard,spatial,auto}
+                        Parallel decode mode for VAE
+  --dit-config.prefix DIT_CONFIG.PREFIX
+                        Prefix for the DiT model
+  --dit-config.quant-config DIT_CONFIG.QUANT_CONFIG
+                        Quantization configuration for the DiT model
+  --dit-config.torch-compile-mode DIT_CONFIG.TORCH_COMPILE_MODE
+                        torch.compile mode for the DiT model
+  --log-level LOG_LEVEL
+                        The logging level of all loggers.
+  --enable-trace        Enable OpenTelemetry tracing.
+  --otlp-traces-endpoint OTLP_TRACES_ENDPOINT
+                        OTLP collector endpoint when --enable-trace is set.
+                        Format: <host>:<port>
+  --otlp-service-name OTLP_SERVICE_NAME
+                        Service name for OTLP traces (displayed as
+                        'service.name' in trace backends). If unset, falls
+                        back to the OTEL_SERVICE_NAME env var, then to
+                        'sglang-diffusion'.
+  --log-requests        Log user-facing fields of all requests (default:
+                        False). Verbosity is controlled by --log-requests-
+                        level.
+  --log-requests-level {0,1,2,3}
+                        Verbosity level for request logging. 0: Log request
+                        metadata only (request_id). 1: Log metadata + sampling
+                        config (seed, steps, guidance, resolution, frames,
+                        fps, ...). 2: Log metadata + sampling config +
+                        prompt/negative prompt (truncated to 2 KiB). 3: Log
+                        metadata + sampling config + full prompt/negative
+                        prompt.
+  --log-requests-format {text,json}
+                        Format for request logging: 'text' (human-readable) or
+                        'json' (structured)
+  --log-requests-target LOG_REQUESTS_TARGET [LOG_REQUESTS_TARGET ...]
+                        Target(s) for request logging: 'stdout' and/or
+                        directory path(s) for file output. Can specify
+                        multiple targets, e.g., '--log-requests-target stdout
+                        /my/path'.
+  --uvicorn-access-log-exclude-prefixes [UVICORN_ACCESS_LOG_EXCLUDE_PREFIXES ...]
+                        Exclude uvicorn access logs whose request path starts
+                        with any of these prefixes. Defaults to empty
+                        (disabled). Example: --uvicorn-access-log-exclude-
+                        prefixes /metrics /health
+  --enable-cache-report
+                        Return number of cached tokens in
+                        usage.prompt_tokens_details for each OpenAI-compatible
+                        request.
+  --backend {auto,sglang,diffusers}
+                        The model backend to use. 'auto' prefers sglang native
+                        and falls back to diffusers. 'sglang' uses native
+                        optimized implementation. 'diffusers' uses vanilla
+                        diffusers pipeline.
+  --srt-encoder-url SRT_ENCODER_URL
+                        Url of SGLang server for encoder stage
+  --srt-encoder-connection-timeout SRT_ENCODER_CONNECTION_TIMEOUT
+                        Timeout (in seconds) for establishing the initial TCP
+                        connection to the SGLang encoder server. Default value
+                        is 3.05.
+  --srt-encoder-timeout SRT_ENCODER_TIMEOUT
+                        Timeout (in seconds) for HTTP requests to the SGLang
+                        encoder server. Increase value if connection between
+                        diffusion server and AR model server is slow.
+  --pe-server-url PE_SERVER_URL
+                        URL of SGLang server for PE model

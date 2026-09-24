@@ -1,0 +1,423 @@
+{
+  "schema_version": 1,
+  "task": "H004-GPU-FOLLOWUP-20260924",
+  "status": "PASS_HEALTHY_BANDWIDTH_ONLY",
+  "source_base": "b2f6580cc5283479f28854b37e3200117610ddd0",
+  "followup_session_id": "01a0d379-72ca-7c50-8175-28172a8a09cd",
+  "evidence_inputs": [
+    "inventory.json",
+    "followup-summary.json",
+    "followup-completion.jsonl",
+    "reset-guest.json"
+  ],
+  "measurement_window_utc": {
+    "start": "2026-09-24T12:58:07.148654+00:00",
+    "end": "2026-09-24T12:58:39.152577+00:00"
+  },
+  "units": {
+    "memory": "MiB = 2^20 bytes",
+    "bandwidth": "decimal GB/s = 10^9 bytes/s",
+    "temperature": "degrees Celsius",
+    "null": "unavailable or not tested; see status"
+  },
+  "method": {
+    "tool": "nvbandwidth",
+    "version": "0.10.0",
+    "source_pin": "82fc4e8c6afa0babb8687793678f615b3b8d793e",
+    "buffer_MiB": 256,
+    "buffer_bytes": 268435456,
+    "host_memory": "pinned",
+    "cases": [
+      "host_to_device_memcpy_ce",
+      "device_to_host_memcpy_ce"
+    ],
+    "gpu_selection": "full CUDA_VISIBLE_DEVICES UUID; one healthy GPU per invocation",
+    "warmup_samples_per_direction_per_gpu": 1,
+    "warmup_excluded": true,
+    "warmup_pairs_completed": 3,
+    "measured_samples_per_direction_per_gpu": 5,
+    "measured_invocations": 3,
+    "accepted_samples_total": 30,
+    "native_verification_enabled": true,
+    "all_completed_case_exit_codes_zero": true,
+    "bandwidth_native_output_decimal_places": 2,
+    "bandwidth_precision_note": "Samples and medians retain native output precision; trailing zeroes may be omitted by JSON numeric serialization.",
+    "earlier_partial_warmup": "Excluded after known fourth-card warning stopped the first attempt; no completed valid case repeated."
+  },
+  "telemetry": {
+    "method": "persistent NVML healthy UUID handles",
+    "requested_interval_ms": 200,
+    "start_utc": "2026-09-24T12:58:07.421602+00:00",
+    "end_utc": "2026-09-24T12:58:38.834301+00:00",
+    "frames": 158,
+    "interval_ms": {
+      "min": 135.9570026397705,
+      "median": 200.06990432739258,
+      "max": 264.08886909484863
+    },
+    "query_duration_ms": {
+      "min": 0.7353549999606912,
+      "max": 65.87696500037055
+    },
+    "core_stop_C": 85,
+    "sensor_loss_or_stale_stop": true,
+    "stale_sample_stop_seconds": 2,
+    "scope": "Short transfer interval with resident models; not sustained-load thermal qualification."
+  },
+  "kernel_monitor": {
+    "known_failed_guest_pci": "0000:04:00.0",
+    "known_warning_sequences": 13,
+    "known_warning_lines": 78,
+    "known_message_types": 6,
+    "known_message_occurrences_each": 13,
+    "unknown_error_count": 0,
+    "new_healthy_gpu_errors_observed": 0,
+    "shared_driver_hang_observed": false,
+    "policy": "Only the exact retained six-message fourth-device failure sequence was recognized; any new or healthy-device error remained a stop condition.",
+    "fourth_fault_persisted": true
+  },
+  "gpus": [
+    {
+      "guest_pci": "0000:01:00.0",
+      "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "exact_model": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "pci_identity": {
+        "vendor": "0x10de",
+        "device": "0x2bb1",
+        "subsystem_vendor": "0x10de",
+        "subsystem_device": "0x204b"
+      },
+      "nvml_visible": true,
+      "vram_MiB": 97887,
+      "links": {
+        "initial_observed": {
+          "generation": 1,
+          "width_lanes": 16
+        },
+        "initial_context": "resident_models_idle",
+        "endpoint_maximum": {
+          "generation": 5,
+          "width_lanes": 16
+        },
+        "nvml_maximum_link": {
+          "generation": 5,
+          "width_lanes": 16
+        },
+        "nvml_maximum_device_generation": 5,
+        "active_observed": {
+          "generation": 5,
+          "width_lanes": 16
+        },
+        "final_observed": {
+          "generation": 1,
+          "width_lanes": 16
+        }
+      },
+      "bandwidth": {
+        "status": "PASS",
+        "H2D": {
+          "median": 57.0,
+          "samples": [
+            56.99,
+            57.0,
+            57.0,
+            57.0,
+            57.0
+          ]
+        },
+        "D2H": {
+          "median": 56.5,
+          "samples": [
+            56.5,
+            56.5,
+            56.5,
+            56.5,
+            56.5
+          ]
+        }
+      },
+      "temperature": {
+        "core_C": {
+          "min": 33,
+          "max": 35
+        },
+        "active_case_core_C": {
+          "min": 33,
+          "max": 35
+        },
+        "memory_C": null,
+        "memory_status": "UNAVAILABLE",
+        "memory_status_basis": "retained_inventory_no_global_rediscovery"
+      },
+      "resident_load": {
+        "role": "Qwen_text_480000",
+        "scheduler_allocation_MiB": 61006,
+        "initial_total_used_MiB": 61653.3125,
+        "final_total_used_MiB": 61653.3125,
+        "maximum_total_used_MiB": 62594.625
+      }
+    },
+    {
+      "guest_pci": "0000:02:00.0",
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "exact_model": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "pci_identity": {
+        "vendor": "0x10de",
+        "device": "0x2bb1",
+        "subsystem_vendor": "0x10de",
+        "subsystem_device": "0x204b"
+      },
+      "nvml_visible": true,
+      "vram_MiB": 97887,
+      "links": {
+        "initial_observed": {
+          "generation": 1,
+          "width_lanes": 16
+        },
+        "initial_context": "resident_models_idle",
+        "endpoint_maximum": {
+          "generation": 5,
+          "width_lanes": 16
+        },
+        "nvml_maximum_link": {
+          "generation": 5,
+          "width_lanes": 16
+        },
+        "nvml_maximum_device_generation": 5,
+        "active_observed": {
+          "generation": 5,
+          "width_lanes": 16
+        },
+        "final_observed": {
+          "generation": 1,
+          "width_lanes": 16
+        }
+      },
+      "bandwidth": {
+        "status": "PASS",
+        "H2D": {
+          "median": 57.0,
+          "samples": [
+            57.0,
+            57.0,
+            57.0,
+            57.0,
+            56.98
+          ]
+        },
+        "D2H": {
+          "median": 56.5,
+          "samples": [
+            56.5,
+            56.5,
+            56.5,
+            56.5,
+            56.5
+          ]
+        }
+      },
+      "temperature": {
+        "core_C": {
+          "min": 34,
+          "max": 36
+        },
+        "active_case_core_C": {
+          "min": 34,
+          "max": 36
+        },
+        "memory_C": null,
+        "memory_status": "UNAVAILABLE",
+        "memory_status_basis": "retained_inventory_no_global_rediscovery"
+      },
+      "resident_load": {
+        "role": "Qwen_text_480000",
+        "scheduler_allocation_MiB": 61006,
+        "initial_total_used_MiB": 61685.3125,
+        "final_total_used_MiB": 61685.3125,
+        "maximum_total_used_MiB": 62624.625
+      }
+    },
+    {
+      "guest_pci": "0000:03:00.0",
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "exact_model": "NVIDIA RTX 6000 Ada Generation",
+      "pci_identity": {
+        "vendor": "0x10de",
+        "device": "0x26b1",
+        "subsystem_vendor": "0x10de",
+        "subsystem_device": "0x16a1"
+      },
+      "nvml_visible": true,
+      "vram_MiB": 49140,
+      "links": {
+        "initial_observed": {
+          "generation": 1,
+          "width_lanes": 4
+        },
+        "initial_context": "resident_models_idle",
+        "endpoint_maximum": {
+          "generation": 4,
+          "width_lanes": 16
+        },
+        "nvml_maximum_link": {
+          "generation": 3,
+          "width_lanes": 16
+        },
+        "nvml_maximum_device_generation": 4,
+        "active_observed": {
+          "generation": 3,
+          "width_lanes": 4
+        },
+        "final_observed": {
+          "generation": 3,
+          "width_lanes": 4
+        }
+      },
+      "bandwidth": {
+        "status": "PASS",
+        "H2D": {
+          "median": 2.61,
+          "samples": [
+            2.61,
+            2.61,
+            2.61,
+            2.61,
+            2.61
+          ]
+        },
+        "D2H": {
+          "median": 2.89,
+          "samples": [
+            2.89,
+            2.89,
+            2.89,
+            2.89,
+            2.89
+          ]
+        }
+      },
+      "temperature": {
+        "core_C": {
+          "min": 32,
+          "max": 38
+        },
+        "active_case_core_C": {
+          "min": 32,
+          "max": 38
+        },
+        "memory_C": null,
+        "memory_status": "UNAVAILABLE",
+        "memory_status_basis": "retained_inventory_no_global_rediscovery"
+      },
+      "resident_load": {
+        "role": "Qwen_Image_2.1",
+        "scheduler_allocation_MiB": 32224,
+        "initial_total_used_MiB": 32866.3125,
+        "final_total_used_MiB": 32866.3125,
+        "maximum_total_used_MiB": 33603.625
+      }
+    },
+    {
+      "guest_pci": "0000:04:00.0",
+      "uuid": null,
+      "exact_model": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "pci_identity": {
+        "vendor": "0x10de",
+        "device": "0x2bb5",
+        "subsystem_vendor": "0x10de",
+        "subsystem_device": "0x204e"
+      },
+      "nvml_visible": false,
+      "vram_MiB": null,
+      "links": {
+        "initial_observed": {
+          "generation": 3,
+          "width_lanes": 4
+        },
+        "initial_context": "failed_initialization_read_only",
+        "endpoint_maximum": {
+          "generation": 5,
+          "width_lanes": 16
+        },
+        "nvml_maximum_link": null,
+        "nvml_maximum_device_generation": null,
+        "active_observed": null,
+        "final_observed": null
+      },
+      "bandwidth": {
+        "status": "NOT_TESTED",
+        "H2D": {
+          "median": null,
+          "samples": []
+        },
+        "D2H": {
+          "median": null,
+          "samples": []
+        }
+      },
+      "temperature": {
+        "core_C": {
+          "min": null,
+          "max": null
+        },
+        "active_case_core_C": {
+          "min": null,
+          "max": null
+        },
+        "memory_C": null,
+        "memory_status": "UNAVAILABLE",
+        "memory_status_basis": "NVML_unavailable"
+      },
+      "resident_load": {
+        "role": null,
+        "scheduler_allocation_MiB": null,
+        "initial_total_used_MiB": null,
+        "final_total_used_MiB": null,
+        "maximum_total_used_MiB": null
+      },
+      "limitation": "FSP/GSP initialization unresolved; no fourth-card load, UUID/VRAM/temperature/bandwidth unavailable; BAR size is not VRAM."
+    }
+  ],
+  "preservation": {
+    "services_unchanged": true,
+    "both_text_profiles_tokens": 480000,
+    "text_models_resident": 2,
+    "ada_image_model_resident": true,
+    "inference_sent_by_this_task": false,
+    "attribution": "Measurements include existing resident allocations; external client activity was not controlled. Container/process preservation is not new inference or context-capacity acceptance."
+  },
+  "reset_review": {
+    "observation_utc": "2026-09-24T12:54:53.048159+00:00",
+    "guest_pci": "0000:04:00.0",
+    "bound_driver": "nvidia",
+    "sysfs_reset_exists": true,
+    "enabled_reset_methods": [
+      "flr",
+      "bus"
+    ],
+    "pcie_flr_capability_advertised": true,
+    "guest_virtual_root_port": "0000:00:1c.3",
+    "sole_device_on_guest_bus": true,
+    "guest_iommu_group_exposed": false,
+    "target_open_descriptor_count": 0,
+    "descriptor_scan_error_count": 0,
+    "physical_reset_isolation_established": false,
+    "safe_supported_guest_only_reset_path_established": false
+  },
+  "limits": {
+    "recovery_performed": false,
+    "fourth_gpu_recovered": false,
+    "reset_or_unbind_or_driver_reload_performed": false,
+    "fourth_gpu_load_performed": false,
+    "image_capacity_phase": "BLOCKED",
+    "host_contact_performed": false,
+    "host_fully_powered_off_for_card_installation": "user_confirmed",
+    "another_cold_cycle_proven_fix": false,
+    "early_vfio_missing_2bb5_hypothesis": "UNCONFIRMED",
+    "result_scope": "Healthy-card short pinned transfer measurements only; fourth-card recovery and image-capacity acceptance are not established.",
+    "image_capacity_authorization": "USER_AUTHORIZED",
+    "image_capacity_test_status": "NOT_TESTED",
+    "image_capacity_blocker": "Fourth GPU cannot initialize and lacks telemetry.",
+    "next_action": "Root reviews user read-only host/riser/power evidence and coordinates the next safe image-capacity window once the card is healthy; no new benchmark permission needed."
+  }
+}

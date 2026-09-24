@@ -1,0 +1,120 @@
+{
+  "base": {
+    "manifest_digest": "sha256:a85c9f5af049f0ab679c1669ae6fa8393022886739af7361e85bb96878e8cdd4",
+    "platform": "linux/amd64",
+    "repository": "nvidia/cuda"
+  },
+  "build": {
+    "build_seconds_as_recorded": 288.8419090240004,
+    "build_started_utc": "2026-09-23T02:13:27.622640+00:00",
+    "docker_engine_and_buildkit_versions": "NOT_PRESENT_IN_SUPPLIED_RECEIPTS",
+    "python": "Python 3.12.3",
+    "recorded_status": "BUILT_AFTER_DIAGNOSED_BUILD_ENVIRONMENT_REPAIR",
+    "rust_extension_builds": "disabled_by_SGLANG_BUILD_RUST_EXTS_none"
+  },
+  "created_utc": "2026-09-23T02:37:04.567531+00:00",
+  "dependency_coverage": {
+    "freeze_matches_inspect": true,
+    "hermetic_rebuild_lock_complete": false,
+    "installed_python_distributions": 240,
+    "installed_without_archive_hash_count": 35,
+    "os_package_rows": 461,
+    "pip_report_archives": 205,
+    "reported_source_distribution_hashes": 2,
+    "reported_wheel_hashes": 203
+  },
+  "evidence_class": "SOURCE_AND_BUILD_METADATA_ONLY",
+  "image": {
+    "architecture": "amd64",
+    "created": "2026-09-23T02:28:02.321571757Z",
+    "local_docker_id": "sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83",
+    "observed_repo_digests": [
+      "local/qwen-image21@sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83"
+    ],
+    "os": "linux",
+    "registry_publication_or_pullability": "NOT_VERIFIED",
+    "rootfs_layer_count": 23,
+    "size_bytes": 9035653882
+  },
+  "limitations": [
+    "Receipt compiles saved local evidence; no VM inspection or new build was performed by this compiler.",
+    "Observed local Docker Id and RepoDigests are preserved separately; registry publication and pullability were not verified.",
+    "Thirty-five distributions installed before the reported install stage lack archive hashes in the supplied evidence.",
+    "Two reported inputs are source distributions; their input archive hashes do not identify locally produced wheel bytes.",
+    "OS versions are inventoried, but apt archive hashes and repository snapshots are not present.",
+    "The source tree listing identifies committed blobs; it is not an independent check of every working-tree file at build time.",
+    "No GPU execution, model load, generated output, visual success, memory margin, readiness, or transport acceptance is claimed."
+  ],
+  "raw_input_receipts": [
+    {
+      "bytes": 601,
+      "copied_verbatim_to_report": "build-complete.json",
+      "sha256": "23ec06eccf8f4bb360abf26ffd5f8149e9a11eb4e15d03cb2b543760b1c1bbee",
+      "task_relative_path": "evidence/runtime-receipts/build-complete.json"
+    },
+    {
+      "bytes": 412,
+      "copied_verbatim_to_report": "build-start.json",
+      "sha256": "d77ee6b19eba399be2558d2b4d8e58898a7eaadb2b80407d056fc8fba2f3e006",
+      "task_relative_path": "evidence/runtime-receipts/build-start.json"
+    },
+    {
+      "bytes": 2245,
+      "copied_verbatim_to_report": "image-identity.json",
+      "sha256": "0a22b9bbfa7313b3c1f697f34a3a46667d26a9296219c5c35a5e428926c23974",
+      "task_relative_path": "evidence/runtime-receipts/image-identity.json"
+    },
+    {
+      "bytes": 15286,
+      "copied_verbatim_to_report": "dpkg-versions.tsv",
+      "sha256": "0b97a358a5595c4c3c9ad699bb8cec51ff6950ef199c5c10aeaa8f3b38751de4",
+      "task_relative_path": "evidence/runtime-receipts/runtime/dpkg-versions.tsv"
+    },
+    {
+      "bytes": 53444,
+      "copied_verbatim_to_report": "native-help.txt",
+      "sha256": "d2036f3d858800fe1f134c35c805f83f8f4e0ffa9fd2b59ad4d6c9bd07a2f796",
+      "task_relative_path": "evidence/runtime-receipts/runtime/native-help.txt"
+    },
+    {
+      "bytes": 2665308,
+      "copied_verbatim_to_report": null,
+      "sha256": "d7f09d78fd78432c9e931bbe463cffb137d001a52c16a4a18c1e6364765648e5",
+      "task_relative_path": "evidence/runtime-receipts/runtime/pip-inspect.json"
+    },
+    {
+      "bytes": 2537760,
+      "copied_verbatim_to_report": null,
+      "sha256": "a66e38ffe4115558568a3061e36b4895415f6b9b183781aab3ed3c8ed2b605e4",
+      "task_relative_path": "evidence/runtime-receipts/runtime/pip-install-report.json"
+    },
+    {
+      "bytes": 14,
+      "copied_verbatim_to_report": "python-version.txt",
+      "sha256": "5b3e43dc38ca01e3f5a7854ba50d4330864b0c1e0f646650b2c78cf072acc366",
+      "task_relative_path": "evidence/runtime-receipts/runtime/python-version.txt"
+    },
+    {
+      "bytes": 4720,
+      "copied_verbatim_to_report": "requirements.freeze.txt",
+      "sha256": "1e32595f5e15ca835b79680718dd0d1c16cc9ca55407de8cf2f66b4dd2d8664c",
+      "task_relative_path": "evidence/runtime-receipts/runtime/requirements.freeze.txt"
+    },
+    {
+      "bytes": 1098496,
+      "copied_verbatim_to_report": null,
+      "sha256": "a7b6342f55b62979a7d88526632a68bce2fd3461dfb7e55eabf109f5a6725522",
+      "task_relative_path": "evidence/runtime-receipts/source-tree.txt"
+    }
+  ],
+  "schema_version": 1,
+  "source": {
+    "commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+    "final_dockerfile_sha256": "d8295698cc454210c9a369d29d863c999e0fd1815a74b606f8648e6cd3b45997",
+    "git_tree_listing_sha256": "a7b6342f55b62979a7d88526632a68bce2fd3461dfb7e55eabf109f5a6725522",
+    "initial_dockerfile_sha256": "e256c4e09193617de59ab080c565bb4d99bfd0b88136681f5e35bf53ae56895f",
+    "listing_blob_count": 9573,
+    "listing_matches_previously_fetched_official_commit_tree": true,
+    "official_repository": "https://github.com/sgl-project/sglang"
+  }
+}

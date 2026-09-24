@@ -1,0 +1,78 @@
+{
+  "task": "H003-EDIT-CAPACITY-20260923",
+  "native_session_id": "01a0ce36-b30b-7af2-adf7-a37c9e8a8a5a",
+  "status": "QUALIFICATION_COMPLETE_NOT_INSTALLED",
+  "base": "4022dbcd10b5cb6ed87f6521bc876295ea955d1b",
+  "reviewed_runtime_source": "b5717d03416252c8640c47d37baf892a0c4e532a",
+  "source_commit": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+  "diff": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/CANDIDATE.diff",
+  "diff_sha256": "01eff8216e6d9d40a335e3b5fe2201060ad8b15456e816cb41de9c92380fbf0d",
+  "installed_to_candidate_protocol_diff": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/installed-to-candidate-protocol.diff",
+  "installed_seed_correction_present": false,
+  "base_source_seed_correction_present": true,
+  "candidate_api_source_sha256": {
+    "__init__.py": "9f66047f4c2cde6ab4cb85b47c97a6274903fb560b96ef1f49fd42c1e67c751c",
+    "app.py": "45abd74890af3a9d8045aeec6de56d773266e31f8e098ece5084d1f0fe7cb897",
+    "backend.py": "64a5ceccb247e7c7ed646cc3ae9af89aeffb7aebd862c11604786a2041db9485",
+    "protection.py": "9c8e5fad91717fa8e7665475e9cc49bb2092955439aaf3febeaf203cc7da6269",
+    "protocol.py": "257df8ac052af14cd44aabb0daf30fa333132d9a4be8074ccab8d9e571de3b1b",
+    "serve.py": "0d19743ab91ea4f8cafe2bf6d7ddd9d56d2248604da23c711a19f825ba4b6d2e",
+    "uploads.py": "23903630b94c020af05988dfc13b0f1e650b431ca9f276485873234997e3ce93"
+  },
+  "installed_api_identity_receipt": "artifacts/installed-api-sha256.txt",
+  "next_call": null,
+  "user_guarded_edit_acceptance": "APPROVED",
+  "exact_original_seed42_regression": "FAIL_PRESERVED",
+  "public_edit_profiles": [],
+  "accepted_capacity_calls": 4,
+  "qualification_budget_remaining": 0,
+  "production_activation": "SEPARATE_FRESH_TASK; NOT_PERFORMED_HERE",
+  "manifest_path": "/etc/llm-server/image-api.json",
+  "manifest_live_reload_supported": false,
+  "proposal": "Exact six existing generation profiles plus three measured/root-accepted edit profiles; separate fresh task activation.",
+  "window_procedure": "Original clean-stop proof failed and remains immutable; explicit root source-bound no-inflight reconciliation admitted this controlled window; each later call binds settled predecessor. Window released, no further host contact.",
+  "clean_stop_producer": "reports/h003-edit-capacity-20260923/private-runner/open_capacity_window.py",
+  "clean_stop_producer_sha256": "2f873367b813a93edbe77cced162fa5ccd26f11fa86aacb48f0412f6979ba6c6",
+  "private_runner_sha256": {
+    "capacity_probe.py": "9c58124530a2ac0e6601f82264b360b28271f8007f11846877668f51a4b152fa",
+    "open_capacity_window.py": "2f873367b813a93edbe77cced162fa5ccd26f11fa86aacb48f0412f6979ba6c6",
+    "candidate_codec.py": "a68af1cb16b4fdef7f7201180002a66ab25c060b7b9d63ea958b3e76482943b5",
+    "capacity_runner.py": "7c5de62f41d7cf95b2006786c98ae65106d13530208b7925e1a93b05eb27ef5f",
+    "reconcile_capacity_window.py": "59904d4f9f6d975476ffc603ebd20b9b0b69fc43b6e590cf5bf559ec9212da7c"
+  },
+  "next_phase_missing": [
+    "Fresh activation task exact install transaction review and activation",
+    "Worker2 published API end-to-end acceptance"
+  ],
+  "diff_format": "unified context0; apply with git apply --unidiff-zero",
+  "source_review": "PASSED_BY_ROOT",
+  "reviewed_c01_predeclaration": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/C01-PREDECLARATION.json",
+  "execution_result": "C01/C02/C04 pass; C03 reserve failure excluded",
+  "reconciliation_authority_sha256": "da2f9bc819c7f68b656643dcbafdcf6e9c719eca09ce5ee2e38a03070148392d",
+  "qualified_edit_profiles": [
+    {
+      "operation": "edit",
+      "references": 1,
+      "size": "1024x1024",
+      "case": "C01"
+    },
+    {
+      "operation": "edit",
+      "references": 1,
+      "size": "1536x864",
+      "case": "C02"
+    },
+    {
+      "operation": "edit",
+      "references": 2,
+      "size": "1024x1024",
+      "case": "C04"
+    }
+  ],
+  "qualified_manifest_sha256": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3",
+  "qualified_manifest": "QUALIFIED-MANIFEST-CANDIDATE.json",
+  "private_runner_final_source_commit": "8a355eb2b337cf131c879792438893e0efc05a33",
+  "window_release": "CAPACITY-WINDOW-RELEASE.json",
+  "asgi_cleanup": "UNPROVEN",
+  "source_present_identically_in_publication_base": "6a56776f3c6699542fa119ca6ca46b7c94c3039f"
+}

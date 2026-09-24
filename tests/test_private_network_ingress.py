@@ -155,7 +155,7 @@ class IngressTests(unittest.TestCase):
     def test_lan_interface_and_loopback_then_terminal_drop(self):
         jump, rules = net._rules()
         self.assertIn('10.156.100.60/32', jump)
-        self.assertIn('30000,30002,30004', jump)
+        self.assertIn('30000,30002,30004,30006', jump)
         self.assertEqual(rules[0][:2], ['-i', 'lo'])
         self.assertEqual(rules[1][:4], ['-s', '10.156.100.0/24', '-i', 'enp6s18'])
         self.assertEqual(rules[2][-2:], ['-j', 'DROP'])

@@ -1,0 +1,21 @@
+# Managed exclusively by ai-harness/tools/searxng; ownership marker v1.
+[Unit]
+Description=ai-harness private loopback SearXNG
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/ai-harness-searxng/service.env
+ExecStart=%h/.ai-harness-searxng/current/run.sh run
+ExecStop=%h/.ai-harness-searxng/current/run.sh stop
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=45
+TimeoutStopSec=30
+UMask=0077
+
+[Install]
+WantedBy=default.target

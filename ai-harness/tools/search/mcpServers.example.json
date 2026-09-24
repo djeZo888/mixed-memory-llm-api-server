@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "searxng": {
+      "command": "node",
+      "timeout": 20000,
+      "args": ["/opt/ai-harness/tools/search/searxng-mcp.mjs"],
+      "env": {
+        "AI_HARNESS_SEARXNG_URL": "${AI_HARNESS_SEARXNG_URL}"
+      }
+    }
+  }
+}

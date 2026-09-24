@@ -1,0 +1,59 @@
+{
+  "started": "2026-09-23T12:04:07.759952+00:00",
+  "source_commit": "b5717d03416252c8640c47d37baf892a0c4e532a",
+  "release_path": "/home/user/.local/share/ai-harness-app/releases/b5717d03416252c8640c47d37baf892a0c4e532a",
+  "engine_id": "31b7a4d0aba256266e55a4aa510b0b7af484bef3502e9ffa2b333cf6c48b1428",
+  "engine_digest": "sha256:617c01955ccf794ea6642af64a5ac1800df00a8be9adf0d07679b42fc4679453",
+  "engine_runtime_tag": "localhost/ai-harness-engine:0.0.2-ae65651df5f9",
+  "rollback_path": "/home/user/.local/share/ai-harness-deploy/H003-DEPLOY-20260923/rollback-20260923T120139Z",
+  "root_rollback_path": "/var/backups/ai-harness-H003-DEPLOY-20260923/20260923T115442Z",
+  "before_health": {
+    "version": "0.0.2",
+    "environment": {
+      "timeZone": "Europe/Ljubljana",
+      "location": {
+        "city": "Ljubljana",
+        "country": "Slovenia"
+      },
+      "now": "2026-09-23T12:04:07.772Z"
+    },
+    "status": "ok",
+    "visionAvailable": true
+  },
+  "steps": [
+    {
+      "name": "old service stopped gracefully after idle gate",
+      "utc": "2026-09-23T12:04:07.789394+00:00"
+    },
+    {
+      "name": "existing production alias mapped to receipt immutable image",
+      "utc": "2026-09-23T12:04:07.847350+00:00"
+    },
+    {
+      "name": "new service started",
+      "utc": "2026-09-23T12:04:07.928204+00:00"
+    },
+    {
+      "name": "validated narrow nginx site reloaded",
+      "utc": "2026-09-23T12:04:08.200329+00:00"
+    }
+  ],
+  "inference_calls": 0,
+  "graceful_stop": "Result=success\nExecMainCode=1\nExecMainStatus=0\nActiveState=inactive\nSubState=dead",
+  "nginx_test": "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok\nnginx: configuration file /etc/nginx/nginx.conf test is successful",
+  "after_health": {
+    "version": "0.0.3",
+    "environment": {
+      "timeZone": "Europe/Ljubljana",
+      "location": {
+        "city": "Ljubljana",
+        "country": "Slovenia"
+      },
+      "now": "2026-09-23T12:04:08.180Z"
+    },
+    "status": "ok",
+    "visionAvailable": true
+  },
+  "completed": "2026-09-23T12:04:08.200744+00:00",
+  "status": "ACTIVATED"
+}

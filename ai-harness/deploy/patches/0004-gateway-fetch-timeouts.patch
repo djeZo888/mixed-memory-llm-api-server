@@ -1,0 +1,65 @@
+diff --git a/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts b/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
+index 5dd5eab..bfebd4b 100644
+--- a/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
++++ b/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
+@@ -1,4 +1,5 @@
+ import OpenAI from "openai";
++import { Agent } from "undici";
+ import type {
+ 	ChatCompletionAssistantMessageParam,
+ 	ChatCompletionChunk,
+@@ -40,6 +41,39 @@ import { clampOpenAIPromptCacheKey } from "./openai-prompt-cache.ts";
+ import { buildBaseOptions } from "./simple-options.ts";
+ import { transformMessages } from "./transform-messages.ts";
+ 
++// ai-harness transport: only the reviewed private gateway gets the long budget.
++const GATEWAY_ORIGIN = "http://10.0.2.2:8081";
++const GATEWAY_TRANSPORT_TIMEOUT_MS = 151 * 60_000;
++
++function isHarnessGateway(url: string): boolean {
++	try {
++		return new URL(url).origin === GATEWAY_ORIGIN;
++	} catch {
++		return false;
++	}
++}
++
++// Fetch implementations can supply their own 300s dispatch timeouts, overriding
++// Agent defaults. Set both values at dispatch, without touching the SDK signal.
++const gatewayDispatcher = new Agent().compose((dispatch) => (options, handler) =>
++	dispatch(
++		isHarnessGateway(String(options.origin))
++			? { ...options, headersTimeout: GATEWAY_TRANSPORT_TIMEOUT_MS, bodyTimeout: GATEWAY_TRANSPORT_TIMEOUT_MS }
++			: options,
++		handler,
++	),
++);
++
++function harnessGatewayFetch(baseURL: string, fetch: typeof globalThis.fetch = globalThis.fetch): typeof globalThis.fetch {
++	if (!isHarnessGateway(baseURL)) return fetch;
++	return (input, init) => {
++		const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
++		if (!isHarnessGateway(url)) return fetch(input, init);
++		// Preserve explicit AbortSignal, request body and all existing fetch options.
++		return fetch(input, { ...init, dispatcher: gatewayDispatcher } as RequestInit);
++	};
++}
++
+ /**
+  * Check if conversation messages contain tool calls or tool results.
+  * This is needed because Anthropic (via proxy) requires the tools param
+@@ -490,11 +524,12 @@ function createClient(
+ 				}
+ 			: headers;
+ 
++	const baseURL = isCloudflareProvider(model.provider) ? resolveCloudflareBaseUrl(model) : model.baseUrl;
+ 	return new OpenAI({
+ 		apiKey,
+-		baseURL: isCloudflareProvider(model.provider) ? resolveCloudflareBaseUrl(model) : model.baseUrl,
++		baseURL,
+ 		dangerouslyAllowBrowser: true,
+-		...(fetch ? { fetch } : {}),
++		fetch: harnessGatewayFetch(baseURL, fetch),
+ 		defaultHeaders,
+ 	});
+ }

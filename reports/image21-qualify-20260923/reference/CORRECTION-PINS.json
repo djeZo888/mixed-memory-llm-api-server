@@ -1,0 +1,35 @@
+{
+  "same_image_id": "sha256:6c0635058db5b238b54d594e1aaa7b3175561e60b0ff151de1c00f85324e2b96",
+  "base_dependency_manifest": "DEPENDENCIES.json",
+  "effective_environment": {
+    "CUDA_CACHE_PATH": "/work/cache/cuda",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+    "FLASHINFER_WORKSPACE_BASE": "/work/cache",
+    "HF_HOME": "/work/cache/hf",
+    "HF_HUB_CACHE": "/work/cache/hf/hub",
+    "HF_HUB_OFFLINE": "1",
+    "HOME": "/work/cache",
+    "NVIDIA_VISIBLE_DEVICES": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONUNBUFFERED": "1",
+    "SGLANG_CACHE_DIT_ENABLED": "false",
+    "SGLANG_DIFFUSION_CACHE_ROOT": "/work/cache/sglang",
+    "SGLANG_DIFFUSION_CONFIG_ROOT": "/work/cache/sglang-config",
+    "TMPDIR": "/work/tmp/cccccccccccccccccccccccccccccccc",
+    "TOKENIZERS_PARALLELISM": "false",
+    "TORCHINDUCTOR_CACHE_DIR": "/work/cache/inductor",
+    "TORCH_EXTENSIONS_DIR": "/work/cache/extensions",
+    "TORCH_HOME": "/work/cache/torch",
+    "TRANSFORMERS_OFFLINE": "1",
+    "TRITON_CACHE_DIR": "/work/cache/triton",
+    "XDG_CACHE_HOME": "/work/cache"
+  },
+  "recipe_source_sha256": "69c38e1aca561f0b702f5947b25be4b96fa648d3e777cef6d119019bbbf18ba5",
+  "corrected_source_sha256": {
+    "source/trial_corrected.py": "a6d5fbaca2cbdf2bac0823ebfd6edbd6d1932e1c299ed5c79773398e678c7266",
+    "source/corrected_entry.py": "72fcc03e9de3e7bfe2dc1f8f6a4286374d42a47636aab340d676c329feaf7cfb"
+  },
+  "input_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+  "output_sha256": "67893b76fe9045e07b1a85a4d25c9f213c2a3467c5d647d31f42f1e3d4ae0422"
+}

@@ -1,0 +1,36 @@
+{
+  "root_visual_decisions": {
+    "C01": "PASS",
+    "C02": "PASS creative/non-pixel-exact",
+    "C03": "VISUAL PASS but MEMORY FAIL; EXCLUDED",
+    "C04": "PASS both refs recognizably used; coherent portrait-on-teapot"
+  },
+  "accepted_edit_profiles": [
+    {
+      "operation": "edit",
+      "references": 1,
+      "size": "1024x1024",
+      "case": "C01"
+    },
+    {
+      "operation": "edit",
+      "references": 1,
+      "size": "1536x864",
+      "case": "C02"
+    },
+    {
+      "operation": "edit",
+      "references": 2,
+      "size": "1024x1024",
+      "case": "C04"
+    }
+  ],
+  "excluded": {
+    "C03": "1920x1080 edit reserve4.387% <5%floor"
+  },
+  "preserve_existing_generation_profiles": 6,
+  "capacity_calls": 4,
+  "maximum_capacity_calls": 4,
+  "no_more_model_requests": true,
+  "accepted_utc": "2026-09-23T14:06:08.891028+00:00"
+}

@@ -1,0 +1,2792 @@
+{
+  "additional_refinement": {
+    "actual_native_output": {
+      "bytes": 3561882,
+      "format": "PNG",
+      "fully_decoded": true,
+      "height": 1088,
+      "mode": "RGBA",
+      "sha256": "0a892fff3b20b183bf88446452698dad66b62a9ca6f3e4e84af1737179ed8614",
+      "width": 1920
+    },
+    "authorization": {
+      "boundary": "Exactly one additional 1920x1088 generation if forecast safe; then stop all tests. Frozen planned r05 remains NOT_TESTED.",
+      "note": {
+        "bytes": 1102,
+        "path": "ROOT-FINAL-REFINEMENT.md",
+        "sha256": "582b9f4e5538a003ce51f807b1a1b533174be320eccacc883e1cdab75ef8c835"
+      }
+    },
+    "caller": "Worker1 sole accepted caller; API stopped; native loopback",
+    "case_id": "refinement-1920x1088",
+    "cpu_load_snapshots": {
+      "load_average_after": [
+        3.0615234375,
+        3.02734375,
+        3.00537109375
+      ],
+      "load_average_before": [
+        3.16015625,
+        3.03662109375,
+        3.0107421875
+      ]
+    },
+    "criteria": {
+      "container_swap_zero": true,
+      "correct_decoded_output": true,
+      "device_free_at_least_5_percent": true,
+      "host_available_at_least_15_percent": true,
+      "native_dimensions_and_crop_verified": true,
+      "no_observed_host_oom": true,
+      "no_observed_swap_activity": true,
+      "one_generation": true,
+      "ready_and_owned_after": true,
+      "recorded_numeric_criteria_complete": true,
+      "tmp_cleanup": true,
+      "visual_task_success": true
+    },
+    "delivered_output": {
+      "bytes": 2674580,
+      "format": "PNG",
+      "fully_decoded": true,
+      "height": 1088,
+      "mode": "RGB",
+      "sha256": "6613c43c3fc04eafe977113565684f8c41bbe2d3acbd8855dd445ad4aced56b5",
+      "width": 1920
+    },
+    "evidence_sha256": "cbf6b540d0d8aabe2db226228fe4ec9531c99e3abc3e8473c18a4a6a29f5153e",
+    "failure": null,
+    "http_request_seconds": 53.33550874100001,
+    "http_status": 200,
+    "limitations": [
+      "NVML samples are total-device use, not allocator or process peaks.",
+      "Peaks between nominal 200 ms device samples remain unobserved.",
+      "Host/cgroup observations are nominally 1 s; no PSS polling.",
+      "Native runtime peaks and cgroup memory.peak are lifetime high-water marks.",
+      "CPU load snapshots and PCIe counters do not prove absence of transient activity.",
+      "Missing evidence remains NOT_TESTED/PARTIAL; forecast is not measured support.",
+      "Device peaks between200ms observations may be missed.",
+      "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+      "No PSS polling; NVML device totals are not allocator/process peaks.",
+      "NVML PCIe20ms counters and utilization remain in raw telemetry."
+    ],
+    "measurement_receipt": {
+      "bytes": 14627,
+      "path": "artifacts/ladder/refinement-1920x1088/receipt.json",
+      "sha256": "5c47dd6b76d8824fad3a94d187417a60c333b2cbaf68e5642dcf7ff383ef9597"
+    },
+    "metrics": {
+      "cgroup": {
+        "memory.current": {
+          "max": 5333606400,
+          "min": 5315571712,
+          "sample_count": 57
+        },
+        "memory.peak": {
+          "max": 5335511040,
+          "min": 5320142848,
+          "sample_count": 57
+        },
+        "memory.swap.current": {
+          "max": 0,
+          "min": 0,
+          "sample_count": 57
+        }
+      },
+      "device": {
+        "first_sample_used_bytes": 34500575232,
+        "last_sample_used_bytes": 34500575232,
+        "minimum_free_fraction": 0.08880112942612943,
+        "request_window_peak_used_bytes": 46951366656,
+        "sampled_min_free_bytes": 4575657984,
+        "sampled_peak_used_bytes": 46951366656,
+        "total_bytes": 51527024640
+      },
+      "host": {
+        "max_swap_used_bytes": 0,
+        "min_available_bytes": 921090887680,
+        "min_available_fraction": 0.9728247666396996,
+        "vmstat_counter_deltas": {
+          "oom_kill": 0,
+          "pgmajfault": 0,
+          "pswpin": 0,
+          "pswpout": 0
+        }
+      },
+      "limitations": [
+        "Device peaks between200ms observations may be missed.",
+        "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+        "No PSS polling; NVML device totals are not allocator/process peaks.",
+        "NVML PCIe20ms counters and utilization remain in raw telemetry."
+      ],
+      "sampling": {
+        "max_observed_interval_seconds": 0.2000800559999334,
+        "requested_interval_seconds": 0.2,
+        "sample_count": 283,
+        "skipped_schedule_slots": 0
+      }
+    },
+    "metrics_full_shared_window": null,
+    "native_allocator": {
+      "after_forward": {
+        "allocated_mb": 31109.82,
+        "peak_allocated_mb": 37415.44,
+        "peak_reserved_mb": 43132.0,
+        "reserved_mb": 43132.0
+      },
+      "available": true,
+      "load_peak": {
+        "peak_allocated_mb": 31083.04,
+        "peak_reserved_mb": 31252.0
+      },
+      "native_inference_seconds": 53.015609738999046,
+      "reported_units": "MiB (native *_mb uses binary divisor)",
+      "runtime_cumulative_peak": {
+        "peak_allocated_mb": 37415.44,
+        "peak_reserved_mb": 43132.0
+      },
+      "scope": "after_forward is the native request checkpoint; runtime peaks accumulate across requests. Neither is NVML physical-device peak."
+    },
+    "native_inference_seconds": 53.015609738999046,
+    "native_response_metrics": {
+      "inference_time_s": 53.015609738999046,
+      "peak_memory_mb": 43132.0
+    },
+    "operation": "generation",
+    "planned_crop_bottom": 0,
+    "planned_native_size": "1920x1088",
+    "predicted_next_demand": {
+      "decision": "END_OF_AUTHORIZED_REFINEMENT"
+    },
+    "profile_eligible": true,
+    "raw_artifact_sha256": {
+      "generation.png": "6613c43c3fc04eafe977113565684f8c41bbe2d3acbd8855dd445ad4aced56b5",
+      "native-perf.json": "cd2452911b9cabac77658ea27bc985109356c7265d1e8627e980c4826953fce6",
+      "native-response.json": "7346a0340eb22dc467ca82a8871a22e2eee7808c6b03c7da9a05b2bf313dccc3",
+      "native.png": "0a892fff3b20b183bf88446452698dad66b62a9ca6f3e4e84af1737179ed8614",
+      "request.json": "1695f2769e9250e723cefe36d9a970fdcf4fe4ca317690553e08600fd184db2a",
+      "telemetry.jsonl": "98d3acc1c32eabab8478d1255f4c72333747d256039599a0b5163e9b5bfa66ca"
+    },
+    "raw_status": "PARTIAL",
+    "recipe_comparison": null,
+    "recovery": {
+      "attempted": false,
+      "required_on_ambiguous_or_failed_native_outcome": false
+    },
+    "references": 0,
+    "request_count": 1,
+    "request_settings": {
+      "background": "opaque",
+      "enable_cache_dit": false,
+      "enable_teacache": false,
+      "generator_device": "cpu",
+      "guidance_scale": 1.0,
+      "model": "qwen-image-2.1",
+      "n": 1,
+      "num_inference_steps": 40,
+      "output_format": "png",
+      "prompt": "A red ceramic teapot on a wooden table beside a window, softly lit by daylight.",
+      "seed": 42,
+      "size": "1920x1088",
+      "true_cfg_scale": 1.0
+    },
+    "requested_size": "1920x1088",
+    "residency_after": {
+      "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+      "device_current": {
+        "free_bytes": 17026777088,
+        "total_bytes": 51527024640,
+        "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+      },
+      "gpu_processes": [
+        [
+          "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "115633",
+          "32228"
+        ]
+      ],
+      "host_current": {
+        "MemAvailable": 921088122880,
+        "MemTotal": 946820968448,
+        "SwapFree": 3157258240,
+        "SwapTotal": 3157258240
+      },
+      "started_at": "2026-09-23T03:55:55.463204199Z"
+    },
+    "root_approved_size": true,
+    "root_profile_review": {
+      "review_receipt": {
+        "bytes": 302,
+        "path": "artifacts/root-profile-review.json",
+        "sha256": "42648590293faad4a0a545cf5053515bbdb8b262998c2ad809a51d1d0952fda1"
+      },
+      "root_note": "ROOT-FINAL-PROFILES-GO.md",
+      "root_note_sha256": "433f61004625e090b5da2f9650ba00bc1330c5fb74d5ce296c7c790f9815d07c"
+    },
+    "rung": null,
+    "runtime_identity": {
+      "api_state": {
+        "ActiveState": "inactive",
+        "MainPID": "0",
+        "SubState": "dead"
+      },
+      "backend_run_id": "49fe6ab1e155453b8a529e199f16a1a2",
+      "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+      "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+      "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+      "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "runtime_config_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+      "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "runtime_source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+      "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7"
+    },
+    "scope": "additional_root_authorized_refinement_beyond_frozen_ladder",
+    "source_receipts": [],
+    "status": "PASS",
+    "timing": {
+      "finished_monotonic": 12091.37907461,
+      "finished_utc": "2026-09-23T04:22:28.713126+00:00",
+      "request_finished_monotonic": 12089.514687036,
+      "request_finished_utc": "2026-09-23T04:22:26.848778+00:00",
+      "request_started_monotonic": 12036.179178295,
+      "request_started_utc": "2026-09-23T04:21:33.513247+00:00",
+      "started_monotonic": 12034.574660434,
+      "started_utc": "2026-09-23T04:21:31.908712+00:00"
+    },
+    "tmp": {
+      "after_count": 10,
+      "before_count": 10,
+      "new_entries": []
+    },
+    "visual": {
+      "finding": "Coherent red ceramic teapot with lid, handle and spout, wooden table, softly lit window. No visible corruption; generation task succeeds.",
+      "hash_bound": true,
+      "method": "view_image",
+      "output_sha256": "6613c43c3fc04eafe977113565684f8c41bbe2d3acbd8855dd445ad4aced56b5",
+      "receipt": {
+        "bytes": 383,
+        "path": "artifacts/ladder/refinement-1920x1088/visual-review.json",
+        "sha256": "6f105b1160b364479a1eb9d39b15b260c7d0291b7c3b5bb22253cb24c71a3286"
+      },
+      "reviewer": "Worker1 actual decoded PNG inspection",
+      "status": "PASS"
+    }
+  },
+  "artifact_manifest": [
+    {
+      "bytes": 6649,
+      "path": "API-CONTRACT.md",
+      "sha256": "cc0b27bd33f18479287dd5572311280975cd04fbd5721893216f3e9479f17eef"
+    },
+    {
+      "bytes": 19356,
+      "path": "DEPLOYMENT-RECEIPT.json",
+      "sha256": "4f2a4a9e3e5ca47a63ef5524be76897d59b906e4d31f4a240ad60debb2e5ca30"
+    },
+    {
+      "bytes": 7114,
+      "path": "QUALIFICATION-HANDOFF-CONTRACT.md",
+      "sha256": "a37adbbc212a4d829279d34741f5672790f7f546b043edf16d24a32608784a82"
+    },
+    {
+      "bytes": 1168,
+      "path": "ROOT-FINAL-PROFILES-GO.md",
+      "sha256": "433f61004625e090b5da2f9650ba00bc1330c5fb74d5ce296c7c790f9815d07c"
+    },
+    {
+      "bytes": 1102,
+      "path": "ROOT-FINAL-REFINEMENT.md",
+      "sha256": "582b9f4e5538a003ce51f807b1a1b533174be320eccacc883e1cdab75ef8c835"
+    },
+    {
+      "bytes": 1391,
+      "path": "ROOT-GO.md",
+      "sha256": "40c7f2388a383adf5849ae7b1bf9e179e848858f4297069a21063c4667988d4a"
+    },
+    {
+      "bytes": 659,
+      "path": "SOURCE-RECEIPT.json",
+      "sha256": "6b98c2c14d2b8c4981ced32137402c62749e331a74dde73debad3eef976bef78"
+    },
+    {
+      "bytes": 4656,
+      "path": "artifacts/deployment-warm/generation-perf.json",
+      "sha256": "9b900935dbfee1bd2c2ac2858f1d61723657e3e819f98f6b219d1ecf8d1fb5b8"
+    },
+    {
+      "bytes": 1692710,
+      "path": "artifacts/deployment-warm/generation.png",
+      "sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487"
+    },
+    {
+      "bytes": 291582,
+      "path": "artifacts/deployment-warm/telemetry.jsonl",
+      "sha256": "d77661fa2b53b46a79e0cd286c02b4d3c8567dd500b8c01aac02a326c79774f6"
+    },
+    {
+      "bytes": 379,
+      "path": "artifacts/deployment-warm/visual-review.json",
+      "sha256": "02e35b069d2f908bd7d36556f59eb39353ccfe2b471757eb0fa0789d9a37305d"
+    },
+    {
+      "bytes": 666009,
+      "path": "artifacts/ladder/r01-1024x576/generation.png",
+      "sha256": "51ff493b2329d8c29dd6ba89cc7e59fb1e4b130b8d42fb8d5ee75a87169f8971"
+    },
+    {
+      "bytes": 4676,
+      "path": "artifacts/ladder/r01-1024x576/native-perf.json",
+      "sha256": "e1d4277039b3b314596ce190934e9418e5a4bb3faa5faa0cbf2c78b5a5ad25c0"
+    },
+    {
+      "bytes": 906924,
+      "path": "artifacts/ladder/r01-1024x576/native.png",
+      "sha256": "63bb5efb918dadcfdbe0820bf0cf86b4c9656a1d704904b7004fbb6a210ec788"
+    },
+    {
+      "bytes": 14003,
+      "path": "artifacts/ladder/r01-1024x576/receipt.json",
+      "sha256": "97a0826d104ab3194c1ed454b128e5c67bc1532fd174a9aa3e9961dc82763c27"
+    },
+    {
+      "bytes": 86551,
+      "path": "artifacts/ladder/r01-1024x576/telemetry.jsonl",
+      "sha256": "d5c66b66b50b06b4a9301ac0f763f692c4c6c002934b16728ee1c99700a46ee4"
+    },
+    {
+      "bytes": 380,
+      "path": "artifacts/ladder/r01-1024x576/visual-review.json",
+      "sha256": "411bd39b19a5a4d3792e40f1ce191912401e0c399e4bbbc46c68d9d7644a274b"
+    },
+    {
+      "bytes": 1033747,
+      "path": "artifacts/ladder/r02-1216x704/generation.png",
+      "sha256": "b365edc833897ac903a4e2b613f9a1b0f6a2a3ffe145e838260c0528a0b25ae6"
+    },
+    {
+      "bytes": 4669,
+      "path": "artifacts/ladder/r02-1216x704/native-perf.json",
+      "sha256": "2da0294c130ebca524841f6d3aa42d7109eb02992f36793b2ee1fe1cc701d245"
+    },
+    {
+      "bytes": 1404628,
+      "path": "artifacts/ladder/r02-1216x704/native.png",
+      "sha256": "7830dfedbf0b55c69bccd7a6eb1bdc854897d68d5628d1ad0ed5b50a46154dd9"
+    },
+    {
+      "bytes": 15087,
+      "path": "artifacts/ladder/r02-1216x704/receipt.json",
+      "sha256": "0387db9f0dad6c5f774ad87c8f194ed9f60e4400f0f5840c5782239ccf28d319"
+    },
+    {
+      "bytes": 116842,
+      "path": "artifacts/ladder/r02-1216x704/telemetry.jsonl",
+      "sha256": "5707a11e38d7ddfe9cca6ab9f3832d0f1f0c1fe6ab8234640f64b112118560aa"
+    },
+    {
+      "bytes": 371,
+      "path": "artifacts/ladder/r02-1216x704/visual-review.json",
+      "sha256": "ae67f932320b6579f01ca65b3e1cc1cda086e7ea73655cd7aa726f981e56e4b6"
+    },
+    {
+      "bytes": 1393044,
+      "path": "artifacts/ladder/r03-1472x832/generation.png",
+      "sha256": "afe409ffa44f8a6f0eea7568bc0cb08e53008792546c661cbd04b27864c19687"
+    },
+    {
+      "bytes": 4655,
+      "path": "artifacts/ladder/r03-1472x832/native-perf.json",
+      "sha256": "8276ecc3b10d12c545d1265d26707085113118238371af57c9353776eaa27b19"
+    },
+    {
+      "bytes": 1880101,
+      "path": "artifacts/ladder/r03-1472x832/native.png",
+      "sha256": "5667eab8c21ad8f425a41a53bd249f21fbbaf9aa68e5cd1578ed65d9570ac26d"
+    },
+    {
+      "bytes": 16320,
+      "path": "artifacts/ladder/r03-1472x832/receipt.json",
+      "sha256": "b09dd5cea1c5a287bec276dccfdd547877e75de89a838af4f66d68af5af88417"
+    },
+    {
+      "bytes": 165253,
+      "path": "artifacts/ladder/r03-1472x832/telemetry.jsonl",
+      "sha256": "8bb5bd1ceca16f8e15fdb2d64675251371be591497d13d9262df3c4533a68fdb"
+    },
+    {
+      "bytes": 393,
+      "path": "artifacts/ladder/r03-1472x832/visual-review.json",
+      "sha256": "e3808ee94b619dbbd441c6bb4d66efee7d5294c8800c0d07db4405a92d21a685"
+    },
+    {
+      "bytes": 1990987,
+      "path": "artifacts/ladder/r04-1760x992/generation.png",
+      "sha256": "c23c442760b05ebfa09376bfb81dbeda92dc38ae8385fd41b221b83cbd5e6209"
+    },
+    {
+      "bytes": 4691,
+      "path": "artifacts/ladder/r04-1760x992/native-perf.json",
+      "sha256": "79e1693dc0ebc46613099436d57c8794aa4dfea892c29d504bb7ff3b2ae0f6a6"
+    },
+    {
+      "bytes": 2716644,
+      "path": "artifacts/ladder/r04-1760x992/native.png",
+      "sha256": "df864c0b1491ad311019485b40a66658edc1659b05247a6efde5f126e03df12d"
+    },
+    {
+      "bytes": 17355,
+      "path": "artifacts/ladder/r04-1760x992/receipt.json",
+      "sha256": "75d146b28b2b4c298e884b3269ff60a8cdde19a6022789d76ff1d0c788f008a4"
+    },
+    {
+      "bytes": 252354,
+      "path": "artifacts/ladder/r04-1760x992/telemetry.jsonl",
+      "sha256": "086b201f70522d879267303fd20a0592b349a746601042cf9ec915e332a6b96d"
+    },
+    {
+      "bytes": 371,
+      "path": "artifacts/ladder/r04-1760x992/visual-review.json",
+      "sha256": "a7c669be54f7a54f259cbae35e07abae4088fdc93b9f5d48750f9dbfb2447f9f"
+    },
+    {
+      "bytes": 2674580,
+      "path": "artifacts/ladder/refinement-1920x1088/generation.png",
+      "sha256": "6613c43c3fc04eafe977113565684f8c41bbe2d3acbd8855dd445ad4aced56b5"
+    },
+    {
+      "bytes": 4687,
+      "path": "artifacts/ladder/refinement-1920x1088/native-perf.json",
+      "sha256": "cd2452911b9cabac77658ea27bc985109356c7265d1e8627e980c4826953fce6"
+    },
+    {
+      "bytes": 3561882,
+      "path": "artifacts/ladder/refinement-1920x1088/native.png",
+      "sha256": "0a892fff3b20b183bf88446452698dad66b62a9ca6f3e4e84af1737179ed8614"
+    },
+    {
+      "bytes": 14627,
+      "path": "artifacts/ladder/refinement-1920x1088/receipt.json",
+      "sha256": "5c47dd6b76d8824fad3a94d187417a60c333b2cbaf68e5642dcf7ff383ef9597"
+    },
+    {
+      "bytes": 294959,
+      "path": "artifacts/ladder/refinement-1920x1088/telemetry.jsonl",
+      "sha256": "98d3acc1c32eabab8478d1255f4c72333747d256039599a0b5163e9b5bfa66ca"
+    },
+    {
+      "bytes": 383,
+      "path": "artifacts/ladder/refinement-1920x1088/visual-review.json",
+      "sha256": "6f105b1160b364479a1eb9d39b15b260c7d0291b7c3b5bb22253cb24c71a3286"
+    },
+    {
+      "bytes": 302,
+      "path": "artifacts/root-profile-review.json",
+      "sha256": "42648590293faad4a0a545cf5053515bbdb8b262998c2ad809a51d1d0952fda1"
+    },
+    {
+      "bytes": 1428822,
+      "path": "artifacts/worker2-baseline-segment2/telemetry.jsonl",
+      "sha256": "01b9ce5cb03129a09e477b6a3c4f62412ba9286e02dd12722b8c0399e202fd39"
+    },
+    {
+      "bytes": 966533,
+      "path": "artifacts/worker2-baseline/generation.png",
+      "sha256": "876ad24718d40d31090a214ef7028a26b2e966cc14fe0f3894c20e91fe56467b"
+    },
+    {
+      "bytes": 18198,
+      "path": "artifacts/worker2-baseline/receipt.json",
+      "sha256": "3785f6b579a77b205d22c6e8344e7cdf69477f5a9b8a215e1299d8565b13d071"
+    },
+    {
+      "bytes": 617,
+      "path": "artifacts/worker2-baseline/visual-review.json",
+      "sha256": "d566b835ed16e94ea7eeb528a50202e4018c09cd46790e377c60a1485d51e0da"
+    },
+    {
+      "bytes": 3635,
+      "path": "qualification-tools/frozen-ladder.json",
+      "sha256": "3c123a0384743b6914f0f5c0cdfbcfcaf3f31edac5162a74b2beeb2e1d1c4e89"
+    },
+    {
+      "bytes": 9179,
+      "path": "repo/reports/image21-runtime-20260923/BACKEND-CONTRACT.json",
+      "sha256": "d1e750de97f2a46774a519638d54e339eb6efb0036acfe865246ba8c9dee170d"
+    },
+    {
+      "bytes": 5466,
+      "path": "repo/reports/image21-runtime-20260923/build-reproducibility.json",
+      "sha256": "03c821a7dfbfa1af133ca2d9078f31ef20529b02cc0f553a515460b98b1016a2"
+    },
+    {
+      "bytes": 7984,
+      "path": "repo/reports/image21-runtime-20260923/derived-image-receipt.json",
+      "sha256": "e37599380e00636204c2276ec969ae2ee10ca738d515bb074c06a93852d8acfa"
+    },
+    {
+      "bytes": 76846,
+      "path": "repo/reports/image21-runtime-20260923/pip-archive-hashes.json",
+      "sha256": "eb461e4411eb752084e587b2d1d7a04249c0e2e6f2c6bf182f132390f778dc91"
+    },
+    {
+      "bytes": 46616,
+      "path": "repo/reports/image21-runtime-20260923/python-dependency-inventory.json",
+      "sha256": "71fb5affaaf506672e65681dded90fac0723ce94e86f75092796ffeb44049c2e"
+    },
+    {
+      "bytes": 4720,
+      "path": "repo/reports/image21-runtime-20260923/requirements.freeze.txt",
+      "sha256": "1e32595f5e15ca835b79680718dd0d1c16cc9ca55407de8cf2f66b4dd2d8664c"
+    },
+    {
+      "bytes": 2636,
+      "path": "worker2-client-evidence/LIVE-WINDOW-RELEASE.json",
+      "sha256": "1d7d79b581c1f1b6d51f07af65c6acddade466f7402e4cea23e037f401307beb"
+    },
+    {
+      "bytes": 3575,
+      "path": "worker2-client-evidence/LIVE-generate.json",
+      "sha256": "f476fd5eb3dfc213243f5832eaf904568847fef3f0d074a5da3f042e8b3a7ab5"
+    }
+  ],
+  "completion": {
+    "future_checks": "No future boot/restart, higher/UHD, transparent or editing qualification implied.",
+    "local_profile_reconciliation": "PASS exact six profiles, hashes and pins",
+    "remaining_work": [
+      "Root review/import/publication; independent Worker2 final artifact reconciliation if requested by root."
+    ],
+    "service_verification": "PASS retained normal final recovery plus Worker2 four final GETs; no new calls",
+    "status": "COMPLETE_LOCAL_CLOSEOUT"
+  },
+  "editing": {
+    "evidence": "reference/REJECTED-EDITING.json",
+    "qualified_profiles": [],
+    "status": "UNSUPPORTED_AFTER_FAILED_FIDELITY",
+    "transparency": "UNSUPPORTED_NOT_TESTED",
+    "two_reference": "UNSUPPORTED_NOT_TESTED"
+  },
+  "eligible_generation_sizes": [
+    "1024x1024",
+    "1024x576",
+    "1216x704",
+    "1472x832",
+    "1760x992",
+    "1920x1088"
+  ],
+  "header": {
+    "advertised_profiles_at_final_deployment": [
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "29250a7887d4bd9688a4ebd2c3f0720db1960116012f31fa553dddf37656aad4",
+        "native_size": "1024x1024",
+        "operation": "generation",
+        "references": 0,
+        "size": "1024x1024",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "f4c2f070cb44477dcacd671f46646cfa39e0374e859c808ec7c78c9cc3a35af1",
+        "native_size": "1024x576",
+        "operation": "generation",
+        "references": 0,
+        "size": "1024x576",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "0c5536fb0a6ec34bb972e84ae05a1d01bcf8a96281220f3f31c9c08ddbda16ef",
+        "native_size": "1216x704",
+        "operation": "generation",
+        "references": 0,
+        "size": "1216x704",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "f017918f5885133522197bb5765201788e66a1423c4303992a65887eabd520e3",
+        "native_size": "1472x832",
+        "operation": "generation",
+        "references": 0,
+        "size": "1472x832",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "f91eaca9a0d8583081ccaa9d62d48bd7511bd5b99b8193a26abd7106f27e3c83",
+        "native_size": "1760x992",
+        "operation": "generation",
+        "references": 0,
+        "size": "1760x992",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "cbf6b540d0d8aabe2db226228fe4ec9531c99e3abc3e8473c18a4a6a29f5153e",
+        "native_size": "1920x1088",
+        "operation": "generation",
+        "references": 0,
+        "size": "1920x1088",
+        "transparent": false
+      }
+    ],
+    "advertised_profiles_at_initial_deployment": [
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "3e1f682911863f191439fcb757eeec5d706ba966f6e657f8a5e40b498b4a274f",
+        "native_size": "1024x1024",
+        "operation": "generation",
+        "references": 0,
+        "size": "1024x1024",
+        "transparent": false
+      }
+    ],
+    "caller_windows": {
+      "baseline": "Worker2 exclusive authenticated API baseline",
+      "final": "Worker2 four authenticated GETs only; 04:31:39-04:31:40 UTC; 0 POSTs, 0 retries",
+      "ladder": "Worker1 sole native caller with API stopped"
+    },
+    "campaign_id": "IMAGE21-QUALIFY-20260923",
+    "combined_source": {
+      "api_source_commit": "07d2a495c648c5cfbad21a5b15fec4b7fc7b4a58",
+      "bundle_sha256": "77c6d195f3cd49bf66afec32b7b0f824b2518a76300fdfc5f897654ab0c07346",
+      "prior_reference_corrected_exit_code": 0,
+      "prior_reference_session": "01a0cc4b-c378-7880-b15f-0ca5886bc4a9",
+      "restored_container": "18caf935baedc917fd2e3ad4e086b589acf3b6ef110f91dfbbe940ab6a873ed8",
+      "restored_run": "99c0105a7acf43788fdb0d436660f29b",
+      "root_go_preconditions_satisfied": true,
+      "root_scope": "GENERATION_ONLY_API_AND_GENERATION_ONLY_LADDER",
+      "runtime_source_commit": "02ac227b16022ee23e7ee3aeebd1a75f2b6a1d2b",
+      "source_commit": "43ed79f3905c769f449f48300c7087d7a432f989"
+    },
+    "contracts": {
+      "API-CONTRACT.md": {
+        "bytes": 6649,
+        "path": "API-CONTRACT.md",
+        "sha256": "cc0b27bd33f18479287dd5572311280975cd04fbd5721893216f3e9479f17eef"
+      },
+      "QUALIFICATION-HANDOFF-CONTRACT.md": {
+        "bytes": 7114,
+        "path": "QUALIFICATION-HANDOFF-CONTRACT.md",
+        "sha256": "a37adbbc212a4d829279d34741f5672790f7f546b043edf16d24a32608784a82"
+      },
+      "ROOT-GO.md": {
+        "bytes": 1391,
+        "path": "ROOT-GO.md",
+        "sha256": "40c7f2388a383adf5849ae7b1bf9e179e848858f4297069a21063c4667988d4a"
+      }
+    },
+    "deployed_source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7",
+    "ended_utc": "2026-09-23T04:31:40.238013+00:00",
+    "endpoints": {
+      "adapter": "http://127.0.0.1:30006",
+      "native_worker_only": "http://127.0.0.1:30007",
+      "private": "http://10.156.100.60:30006"
+    },
+    "final_deployment_receipt": {
+      "bytes": 7752,
+      "path": "FINAL-DEPLOYMENT-RECEIPT.json",
+      "sha256": "b294bc7df37edb878d11149513ed0746a65be41689833cf2edadef1416a52958"
+    },
+    "identity_scope": "Initial deployment/container identities remain historical; final container ID was not reobserved. See final receipt.",
+    "immutable_config_and_unit_helper_hashes": {
+      "/data/services/image21-qualify-20260923/source-amendment.json": "30c3737fb07cff3f5d3c24ed594022b7f1ea39eeee916e27f71277af1f9d843b",
+      "/data/services/image21-qualify-20260923/source/scripts/image_api/requirements.lock": "feaef24a6e9b4e42b44f044b1ff8339a180868da179e9a580f66b12696798f03",
+      "/data/services/image21-runtime-20260923/config.json": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+      "/etc/llm-server/image-api.json": "dd3d08189c03912a0cc6cdf630b74f564cd825dc0f64b89b05364dfb9a80a99d",
+      "/etc/llm-server/network.json": "eb04d179cd6c9af896dfc1809e7804ef533c9e52fd356da9ecc0d4907bd3c064",
+      "/etc/sudoers.d/llm-image-api": "a416e1cde88334e8e695010d33e66b0af790bb83f3e76000fbf7c96afc6fefe9",
+      "/etc/systemd/system/llm-image-api.service": "5e74fb94792b1ea5e043bf28566c2648635499d1112d6c8e5e9897b9d43253a6",
+      "/etc/systemd/system/llm-image-backend.service": "6861cdfab9a83082e4db41773186ddea1d077e37279555561440dbf860c7617c",
+      "/etc/systemd/system/llm-private-image.service": "09591c9274bcdec62774a5cb44fc5e82fe731bb8b5ea4dc7be372adcc7dfc3c2",
+      "/etc/systemd/system/llm-private-image.socket": "56d0f877ae87a1d268b0f1ad78113a4ab86bc0e0135e3dbf497775aab1e97761",
+      "/usr/local/lib/llm-server/control-api/scripts/control/private_network.py": "d7b82c296fb94846ea9825c1f38d1892b67a8b853279f7e01f807668ea2e9b33",
+      "/usr/local/lib/llm-server/image-api/scripts/image_api/__init__.py": "9f66047f4c2cde6ab4cb85b47c97a6274903fb560b96ef1f49fd42c1e67c751c",
+      "/usr/local/lib/llm-server/image-api/scripts/image_api/app.py": "7ebde3edc9cdc54b83d8063c8956384aa6e32edff5d86f8852b75592cb719cad",
+      "/usr/local/lib/llm-server/image-api/scripts/image_api/backend.py": "64a5ceccb247e7c7ed646cc3ae9af89aeffb7aebd862c11604786a2041db9485",
+      "/usr/local/lib/llm-server/image-api/scripts/image_api/protection.py": "9c8e5fad91717fa8e7665475e9cc49bb2092955439aaf3febeaf203cc7da6269",
+      "/usr/local/lib/llm-server/image-api/scripts/image_api/protocol.py": "ebca2b024d236d03475dde15a63414c49fb86714733afa1bbf8ca68d88fd5238",
+      "/usr/local/lib/llm-server/image-api/scripts/image_api/serve.py": "0d19743ab91ea4f8cafe2bf6d7ddd9d56d2248604da23c711a19f825ba4b6d2e",
+      "/usr/local/lib/llm-server/image-api/scripts/image_api/uploads.py": "23903630b94c020af05988dfc13b0f1e650b431ca9f276485873234997e3ce93",
+      "/usr/local/lib/llm-server/private-network/private_network.py": "d7b82c296fb94846ea9825c1f38d1892b67a8b853279f7e01f807668ea2e9b33",
+      "/usr/local/libexec/llm-image-backend-recover": "ffe1120721e3494a442a91f4ffe46e105755c53f03efe679ad4b4f630558b3be"
+    },
+    "measurement_policy": "No source body, request auth or base64 response is emitted. Raw receipts are unchanged.",
+    "model": {
+      "checkpoint_manifest_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+      "id": "Qwen/Qwen-Image-2.1",
+      "revision": "790c92633540aa0cb11d9abf19eb46d861714758"
+    },
+    "resources": {
+      "accepted_resource_policy": {
+        "cpuset_cpus": "8-15",
+        "gpu_free_fraction_minimum": 0.05,
+        "host_free_fraction_minimum": 0.15,
+        "memory_bytes": 103079215104,
+        "memory_swap_bytes": 103079215104
+      },
+      "driver": null,
+      "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "host_total_bytes": 946820968448,
+      "missing_hardware_fields": "null means not supplied/currently verified by this aggregation",
+      "numa_policy": null,
+      "observed_device_total_bytes": 51527024640,
+      "pcie_bus": null,
+      "resource_policy_evidence": "Accepted runtime BACKEND-CONTRACT.json; current deployment identities in DEPLOYMENT-RECEIPT.json."
+    },
+    "root_profile_review": {
+      "approved_generation_sizes": [
+        "1024x1024",
+        "1024x576",
+        "1216x704",
+        "1472x832",
+        "1760x992",
+        "1920x1088"
+      ],
+      "editing_supported": false,
+      "root_note": "ROOT-FINAL-PROFILES-GO.md",
+      "root_note_sha256": "433f61004625e090b5da2f9650ba00bc1330c5fb74d5ce296c7c790f9815d07c"
+    },
+    "runtime": {
+      "checkpoint_path": "/data/models-large/qwen-image-2.1-790c92633540aa0cb11d9abf19eb46d861714758",
+      "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+      "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+      "image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "network_id": "4d21a85d6dc326cc90d68e0f017d2e58fb96f5664e55384c1f3f337661d7ef80",
+      "network_policy": {
+        "host_publish": "127.0.0.1:30007:30007/tcp",
+        "internal": false,
+        "name": "llm-image-backend-private",
+        "native_http_bind_inside_namespace": "0.0.0.0:30007",
+        "reason": "InternalbridgepublishunsupportedonDocker29.6.1; dedicatedordinarybridgewithsoleloopbackpublication",
+        "unpublished_internal_ports": [
+          30008,
+          30009,
+          30010
+        ]
+      },
+      "owner": "IMAGE21-RUNTIME-20260923",
+      "schema_version": 1,
+      "source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+      "source_sha256": {
+        "native_request.py": "91180c1613de1fa113426dba2c534a8c31b851f066a252c1dcfd08fa8012bf6f",
+        "native_server.py": "a98a99b984f354c0a339a45233aea01abae589b9bc25ea44a9f3b861429111ee",
+        "service.py": "0edadcb43ec83d369d7bdb66dddc7035962d620475314b0142cb9f047b197586",
+        "telemetry.py": "a6d5f9262de82a318c7aa86dfef599fa6228463bb712c94d916c653afba2f0e9"
+      },
+      "upstream_repair": {
+        "count": 1,
+        "file_repaired_sha256": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de",
+        "parent_image_id": "sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83",
+        "patch_sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e",
+        "reason": "NVML resolve authoritative CUDA_VISIBLE_DEVICES GPU UUID to current index"
+      }
+    },
+    "runtime_dependency_limit": "35 inherited distribution archive hashes unavailable; immutable image and frozen versions retained.",
+    "runtime_dependency_receipts": {
+      "build-reproducibility.json": {
+        "bytes": 5466,
+        "path": "repo/reports/image21-runtime-20260923/build-reproducibility.json",
+        "sha256": "03c821a7dfbfa1af133ca2d9078f31ef20529b02cc0f553a515460b98b1016a2"
+      },
+      "derived-image-receipt.json": {
+        "bytes": 7984,
+        "path": "repo/reports/image21-runtime-20260923/derived-image-receipt.json",
+        "sha256": "e37599380e00636204c2276ec969ae2ee10ca738d515bb074c06a93852d8acfa"
+      },
+      "pip-archive-hashes.json": {
+        "bytes": 76846,
+        "path": "repo/reports/image21-runtime-20260923/pip-archive-hashes.json",
+        "sha256": "eb461e4411eb752084e587b2d1d7a04249c0e2e6f2c6bf182f132390f778dc91"
+      },
+      "python-dependency-inventory.json": {
+        "bytes": 46616,
+        "path": "repo/reports/image21-runtime-20260923/python-dependency-inventory.json",
+        "sha256": "71fb5affaaf506672e65681dded90fac0723ce94e86f75092796ffeb44049c2e"
+      },
+      "requirements.freeze.txt": {
+        "bytes": 4720,
+        "path": "repo/reports/image21-runtime-20260923/requirements.freeze.txt",
+        "sha256": "1e32595f5e15ca835b79680718dd0d1c16cc9ca55407de8cf2f66b4dd2d8664c"
+      }
+    },
+    "schema_version": 1,
+    "session_id": "01a0cc5e-a873-7813-9b5c-6e3124bdd181",
+    "settings": {
+      "all_components_resident": true,
+      "attention_backend": "torch_sdpa",
+      "backend": "sglang",
+      "cfg": 1,
+      "eager": true,
+      "embedded_guidance_note": "Generic logged field unused by QwenImage21; effective true CFG is 1. No distilled guidance embedding.",
+      "embedded_guidance_scale_effective": false,
+      "generator_device": "cpu",
+      "logged_generic_embedded_guidance_scale": 6.0,
+      "n": 1,
+      "precision": "native BF16/FP32",
+      "prompt": "A red ceramic teapot on a wooden table beside a window, softly lit by daylight.",
+      "seed": 42,
+      "steps": 40
+    },
+    "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7",
+    "started_utc": "2026-09-23T03:55:54.466979+00:00",
+    "status": "COMPLETE_BOUNDED_QUALIFICATION",
+    "stop_reason": "ROOT_DIRECTED_STOP_AFTER_SINGLE_REFINEMENT",
+    "telemetry": {
+      "limitations": [
+        "NVML samples are total-device use, not allocator or process peaks.",
+        "Peaks between nominal 200 ms device samples remain unobserved.",
+        "Host/cgroup observations are nominally 1 s; no PSS polling.",
+        "Native runtime peaks and cgroup memory.peak are lifetime high-water marks.",
+        "CPU load snapshots and PCIe counters do not prove absence of transient activity.",
+        "Missing evidence remains NOT_TESTED/PARTIAL; forecast is not measured support."
+      ],
+      "native_allocator_source_keys": [
+        "memory_checkpoints.after_forward.peak_allocated_mb",
+        "memory_checkpoints.after_forward.peak_reserved_mb"
+      ],
+      "requested_device_interval_seconds": 0.2,
+      "requested_host_interval_seconds": 1,
+      "source_sha256": "a6d5f9262de82a318c7aa86dfef599fa6228463bb712c94d916c653afba2f0e9"
+    }
+  },
+  "highest_passing_generation_size": "1920x1088",
+  "highest_passing_ladder_size": "1760x992",
+  "ladder_cases": [
+    {
+      "actual_native_output": {
+        "bytes": 906924,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 576,
+        "mode": "RGBA",
+        "sha256": "63bb5efb918dadcfdbe0820bf0cf86b4c9656a1d704904b7004fbb6a210ec788",
+        "width": 1024
+      },
+      "authorization": null,
+      "caller": "Worker1 sole accepted caller; API stopped; native loopback",
+      "case_id": "r01-1024x576",
+      "cpu_load_snapshots": {
+        "load_average_after": [
+          3.0654296875,
+          3.04345703125,
+          3.00390625
+        ],
+        "load_average_before": [
+          3.08447265625,
+          3.04638671875,
+          3.00537109375
+        ]
+      },
+      "criteria": {
+        "container_swap_zero": true,
+        "correct_decoded_output": true,
+        "device_free_at_least_5_percent": true,
+        "host_available_at_least_15_percent": true,
+        "native_dimensions_and_crop_verified": true,
+        "no_observed_host_oom": true,
+        "no_observed_swap_activity": true,
+        "one_generation": true,
+        "ready_and_owned_after": true,
+        "recorded_numeric_criteria_complete": true,
+        "tmp_cleanup": true,
+        "visual_task_success": true
+      },
+      "delivered_output": {
+        "bytes": 666009,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 576,
+        "mode": "RGB",
+        "sha256": "51ff493b2329d8c29dd6ba89cc7e59fb1e4b130b8d42fb8d5ee75a87169f8971",
+        "width": 1024
+      },
+      "evidence_sha256": "f4c2f070cb44477dcacd671f46646cfa39e0374e859c808ec7c78c9cc3a35af1",
+      "failure": null,
+      "http_request_seconds": 13.58653102199969,
+      "http_status": 200,
+      "limitations": [
+        "NVML samples are total-device use, not allocator or process peaks.",
+        "Peaks between nominal 200 ms device samples remain unobserved.",
+        "Host/cgroup observations are nominally 1 s; no PSS polling.",
+        "Native runtime peaks and cgroup memory.peak are lifetime high-water marks.",
+        "CPU load snapshots and PCIe counters do not prove absence of transient activity.",
+        "Missing evidence remains NOT_TESTED/PARTIAL; forecast is not measured support.",
+        "Device peaks between200ms observations may be missed.",
+        "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+        "No PSS polling; NVML device totals are not allocator/process peaks.",
+        "NVML PCIe20ms counters and utilization remain in raw telemetry."
+      ],
+      "measurement_receipt": {
+        "bytes": 14003,
+        "path": "artifacts/ladder/r01-1024x576/receipt.json",
+        "sha256": "97a0826d104ab3194c1ed454b128e5c67bc1532fd174a9aa3e9961dc82763c27"
+      },
+      "metrics": {
+        "cgroup": {
+          "memory.current": {
+            "max": 5296218112,
+            "min": 5292937216,
+            "sample_count": 17
+          },
+          "memory.peak": {
+            "max": 5306912768,
+            "min": 5305413632,
+            "sample_count": 17
+          },
+          "memory.swap.current": {
+            "max": 0,
+            "min": 0,
+            "sample_count": 17
+          }
+        },
+        "device": {
+          "first_sample_used_bytes": 34498478080,
+          "last_sample_used_bytes": 34498478080,
+          "minimum_free_fraction": 0.2652765059015059,
+          "request_window_peak_used_bytes": 37858115584,
+          "sampled_min_free_bytes": 13668909056,
+          "sampled_peak_used_bytes": 37858115584,
+          "total_bytes": 51527024640
+        },
+        "host": {
+          "max_swap_used_bytes": 0,
+          "min_available_bytes": 921090871296,
+          "min_available_fraction": 0.9728247493354779,
+          "vmstat_counter_deltas": {
+            "oom_kill": 0,
+            "pgmajfault": 1,
+            "pswpin": 0,
+            "pswpout": 0
+          }
+        },
+        "limitations": [
+          "Device peaks between200ms observations may be missed.",
+          "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+          "No PSS polling; NVML device totals are not allocator/process peaks.",
+          "NVML PCIe20ms counters and utilization remain in raw telemetry."
+        ],
+        "sampling": {
+          "max_observed_interval_seconds": 0.20006896999984747,
+          "requested_interval_seconds": 0.2,
+          "sample_count": 82,
+          "skipped_schedule_slots": 0
+        }
+      },
+      "metrics_full_shared_window": null,
+      "native_allocator": {
+        "after_forward": {
+          "allocated_mb": 31097.54,
+          "peak_allocated_mb": 32880.07,
+          "peak_reserved_mb": 34460.0,
+          "reserved_mb": 34460.0
+        },
+        "available": true,
+        "load_peak": {
+          "peak_allocated_mb": 31083.04,
+          "peak_reserved_mb": 31252.0
+        },
+        "native_inference_seconds": 13.473055935999582,
+        "reported_units": "MiB (native *_mb uses binary divisor)",
+        "runtime_cumulative_peak": {
+          "peak_allocated_mb": 34267.47,
+          "peak_reserved_mb": 37570.0
+        },
+        "scope": "after_forward is the native request checkpoint; runtime peaks accumulate across requests. Neither is NVML physical-device peak."
+      },
+      "native_inference_seconds": 13.473055935999582,
+      "native_response_metrics": {
+        "inference_time_s": 13.473055935999582,
+        "peak_memory_mb": 34460.0
+      },
+      "operation": "generation",
+      "planned_crop_bottom": 0,
+      "planned_native_size": "1024x576",
+      "predicted_next_demand": {
+        "adjacent_transient_slopes": [
+          {
+            "bytes_per_pixel": 6738.285714285715,
+            "lower_case": "r01-1024x576",
+            "midpoint_pixels": 819200.0,
+            "upper_case": "worker2-api-1024x1024"
+          }
+        ],
+        "allocation_allowance_bytes": 268435456,
+        "anchor_case": "r01-1024x576",
+        "anchor_transient_per_pixel": 5696.0,
+        "basis": "Measured anchor transient plus pixel increment times max(anchor transient/pixel, observed adjacent slope, demonstrated recent rising slope)",
+        "decision": "ADMIT_FOR_REVIEW",
+        "limitation": "Observed200ms peaks can miss transients; unseen kernel/allocation thresholds remain uncertain. Forecast is not measured support.",
+        "maximum_allowed_used_bytes": 48950673408,
+        "native_pixels": 856064,
+        "next_native_size": "1216x704",
+        "next_public_size": "1216x704",
+        "observations_pixel_sorted": [
+          {
+            "case_id": "r01-1024x576",
+            "native_pixels": 589824,
+            "peak_bytes": 37858115584,
+            "resident_bytes": 34498478080,
+            "total_bytes": 51527024640,
+            "transient_bytes": 3359637504
+          },
+          {
+            "case_id": "worker2-api-1024x1024",
+            "evidence_sha256": "2b805df5ed03b0a080493afa8152d481088ac2ee10927057d808f94a4dd844cc",
+            "native_pixels": 1048576,
+            "peak_bytes": 40947220480,
+            "resident_bytes": 34496380928,
+            "scope": "Shared exclusive Worker2 window; total-window measured peak",
+            "total_bytes": 51527024640,
+            "transient_bytes": 6450839552
+          }
+        ],
+        "policy": "ROOT-FORECAST-AMENDMENT.md",
+        "predicted_device_used_bytes": 39920552229,
+        "predicted_transient_bytes": 5153638693,
+        "recent_nonlinear_trend": {
+          "demonstrated": false,
+          "projected_next_interval_bytes_per_pixel": null
+        },
+        "resident_bytes": 34498478080,
+        "selected_growth_bytes_per_pixel": 6738.285714285715
+      },
+      "profile_eligible": true,
+      "raw_artifact_sha256": {
+        "generation.png": "51ff493b2329d8c29dd6ba89cc7e59fb1e4b130b8d42fb8d5ee75a87169f8971",
+        "native-perf.json": "e1d4277039b3b314596ce190934e9418e5a4bb3faa5faa0cbf2c78b5a5ad25c0",
+        "native-response.json": "99e0e310597ee5911026873744754158bd1c568e89f46cc36e2f4201eac9cd93",
+        "native.png": "63bb5efb918dadcfdbe0820bf0cf86b4c9656a1d704904b7004fbb6a210ec788",
+        "request.json": "a168894bc0c43c9d2695f27e59d28bb2f43cd0b162f226c527460f6f43a4ada5",
+        "telemetry.jsonl": "d5c66b66b50b06b4a9301ac0f763f692c4c6c002934b16728ee1c99700a46ee4"
+      },
+      "raw_status": "PARTIAL",
+      "recipe_comparison": null,
+      "recovery": {
+        "attempted": false,
+        "required_on_ambiguous_or_failed_native_outcome": false
+      },
+      "references": 0,
+      "request_count": 1,
+      "request_settings": {
+        "background": "opaque",
+        "enable_cache_dit": false,
+        "enable_teacache": false,
+        "generator_device": "cpu",
+        "guidance_scale": 1.0,
+        "model": "qwen-image-2.1",
+        "n": 1,
+        "num_inference_steps": 40,
+        "output_format": "png",
+        "prompt": "A red ceramic teapot on a wooden table beside a window, softly lit by daylight.",
+        "seed": 42,
+        "size": "1024x576",
+        "true_cfg_scale": 1.0
+      },
+      "requested_size": "1024x576",
+      "residency_after": {
+        "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+        "device_current": {
+          "free_bytes": 17028874240,
+          "total_bytes": 51527024640,
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+        },
+        "gpu_processes": [
+          [
+            "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+            "115633",
+            "32226"
+          ]
+        ],
+        "host_current": {
+          "MemAvailable": 921133907968,
+          "MemTotal": 946820968448,
+          "SwapFree": 3157258240,
+          "SwapTotal": 3157258240
+        },
+        "started_at": "2026-09-23T03:55:55.463204199Z"
+      },
+      "root_approved_size": true,
+      "root_profile_review": {
+        "review_receipt": {
+          "bytes": 302,
+          "path": "artifacts/root-profile-review.json",
+          "sha256": "42648590293faad4a0a545cf5053515bbdb8b262998c2ad809a51d1d0952fda1"
+        },
+        "root_note": "ROOT-FINAL-PROFILES-GO.md",
+        "root_note_sha256": "433f61004625e090b5da2f9650ba00bc1330c5fb74d5ce296c7c790f9815d07c"
+      },
+      "rung": 1,
+      "runtime_identity": {
+        "api_state": {
+          "ActiveState": "inactive",
+          "MainPID": "0",
+          "SubState": "dead"
+        },
+        "backend_run_id": "49fe6ab1e155453b8a529e199f16a1a2",
+        "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+        "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+        "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+        "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "runtime_config_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+        "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+        "runtime_source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+        "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7"
+      },
+      "scope": "direct_native_ladder",
+      "source_receipts": [],
+      "status": "PASS",
+      "timing": {
+        "finished_monotonic": 11482.915742911,
+        "finished_utc": "2026-09-23T04:12:20.249791+00:00",
+        "request_finished_monotonic": 11481.483977761,
+        "request_finished_utc": "2026-09-23T04:12:18.818078+00:00",
+        "request_started_monotonic": 11467.897446739,
+        "request_started_utc": "2026-09-23T04:12:05.231514+00:00",
+        "started_monotonic": 11466.287267013,
+        "started_utc": "2026-09-23T04:12:03.621320+00:00"
+      },
+      "tmp": {
+        "after_count": 10,
+        "before_count": 10,
+        "new_entries": []
+      },
+      "visual": {
+        "finding": "Coherent red ceramic teapot on wooden table beside softly lit window. Prompt task succeeds; no visible corruption.",
+        "hash_bound": true,
+        "method": "view_image native returned PNG",
+        "output_sha256": "51ff493b2329d8c29dd6ba89cc7e59fb1e4b130b8d42fb8d5ee75a87169f8971",
+        "receipt": {
+          "bytes": 380,
+          "path": "artifacts/ladder/r01-1024x576/visual-review.json",
+          "sha256": "411bd39b19a5a4d3792e40f1ce191912401e0c399e4bbbc46c68d9d7644a274b"
+        },
+        "reviewer": "Worker1 actual decoded PNG inspection",
+        "status": "PASS"
+      }
+    },
+    {
+      "actual_native_output": {
+        "bytes": 1404628,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 704,
+        "mode": "RGBA",
+        "sha256": "7830dfedbf0b55c69bccd7a6eb1bdc854897d68d5628d1ad0ed5b50a46154dd9",
+        "width": 1216
+      },
+      "authorization": null,
+      "caller": "Worker1 sole accepted caller; API stopped; native loopback",
+      "case_id": "r02-1216x704",
+      "cpu_load_snapshots": {
+        "load_average_after": [
+          3.02001953125,
+          3.03076171875,
+          3.0
+        ],
+        "load_average_before": [
+          3.0322265625,
+          3.03564453125,
+          3.0
+        ]
+      },
+      "criteria": {
+        "container_swap_zero": true,
+        "correct_decoded_output": true,
+        "device_free_at_least_5_percent": true,
+        "host_available_at_least_15_percent": true,
+        "native_dimensions_and_crop_verified": true,
+        "no_observed_host_oom": true,
+        "no_observed_swap_activity": true,
+        "one_generation": true,
+        "ready_and_owned_after": true,
+        "recorded_numeric_criteria_complete": true,
+        "tmp_cleanup": true,
+        "visual_task_success": true
+      },
+      "delivered_output": {
+        "bytes": 1033747,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 704,
+        "mode": "RGB",
+        "sha256": "b365edc833897ac903a4e2b613f9a1b0f6a2a3ffe145e838260c0528a0b25ae6",
+        "width": 1216
+      },
+      "evidence_sha256": "0c5536fb0a6ec34bb972e84ae05a1d01bcf8a96281220f3f31c9c08ddbda16ef",
+      "failure": null,
+      "http_request_seconds": 19.406880251000985,
+      "http_status": 200,
+      "limitations": [
+        "NVML samples are total-device use, not allocator or process peaks.",
+        "Peaks between nominal 200 ms device samples remain unobserved.",
+        "Host/cgroup observations are nominally 1 s; no PSS polling.",
+        "Native runtime peaks and cgroup memory.peak are lifetime high-water marks.",
+        "CPU load snapshots and PCIe counters do not prove absence of transient activity.",
+        "Missing evidence remains NOT_TESTED/PARTIAL; forecast is not measured support.",
+        "Device peaks between200ms observations may be missed.",
+        "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+        "No PSS polling; NVML device totals are not allocator/process peaks.",
+        "NVML PCIe20ms counters and utilization remain in raw telemetry."
+      ],
+      "measurement_receipt": {
+        "bytes": 15087,
+        "path": "artifacts/ladder/r02-1216x704/receipt.json",
+        "sha256": "0387db9f0dad6c5f774ad87c8f194ed9f60e4400f0f5840c5782239ccf28d319"
+      },
+      "metrics": {
+        "cgroup": {
+          "memory.current": {
+            "max": 5305286656,
+            "min": 5295955968,
+            "sample_count": 23
+          },
+          "memory.peak": {
+            "max": 5316444160,
+            "min": 5306912768,
+            "sample_count": 23
+          },
+          "memory.swap.current": {
+            "max": 0,
+            "min": 0,
+            "sample_count": 23
+          }
+        },
+        "device": {
+          "first_sample_used_bytes": 34498478080,
+          "last_sample_used_bytes": 34498478080,
+          "minimum_free_fraction": 0.22494276556776557,
+          "request_window_peak_used_bytes": 39936393216,
+          "sampled_min_free_bytes": 11590631424,
+          "sampled_peak_used_bytes": 39936393216,
+          "total_bytes": 51527024640
+        },
+        "host": {
+          "max_swap_used_bytes": 0,
+          "min_available_bytes": 921123774464,
+          "min_available_fraction": 0.9728595005388166,
+          "vmstat_counter_deltas": {
+            "oom_kill": 0,
+            "pgmajfault": 0,
+            "pswpin": 0,
+            "pswpout": 0
+          }
+        },
+        "limitations": [
+          "Device peaks between200ms observations may be missed.",
+          "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+          "No PSS polling; NVML device totals are not allocator/process peaks.",
+          "NVML PCIe20ms counters and utilization remain in raw telemetry."
+        ],
+        "sampling": {
+          "max_observed_interval_seconds": 0.20057875699967553,
+          "requested_interval_seconds": 0.2,
+          "sample_count": 111,
+          "skipped_schedule_slots": 0
+        }
+      },
+      "metrics_full_shared_window": null,
+      "native_allocator": {
+        "after_forward": {
+          "allocated_mb": 31099.28,
+          "peak_allocated_mb": 33685.75,
+          "peak_reserved_mb": 36442.0,
+          "reserved_mb": 36442.0
+        },
+        "available": true,
+        "load_peak": {
+          "peak_allocated_mb": 31083.04,
+          "peak_reserved_mb": 31252.0
+        },
+        "native_inference_seconds": 19.2552108710006,
+        "reported_units": "MiB (native *_mb uses binary divisor)",
+        "runtime_cumulative_peak": {
+          "peak_allocated_mb": 34267.47,
+          "peak_reserved_mb": 37570.0
+        },
+        "scope": "after_forward is the native request checkpoint; runtime peaks accumulate across requests. Neither is NVML physical-device peak."
+      },
+      "native_inference_seconds": 19.2552108710006,
+      "native_response_metrics": {
+        "inference_time_s": 19.2552108710006,
+        "peak_memory_mb": 36442.0
+      },
+      "operation": "generation",
+      "planned_crop_bottom": 0,
+      "planned_native_size": "1216x704",
+      "predicted_next_demand": {
+        "adjacent_transient_slopes": [
+          {
+            "bytes_per_pixel": 7806.030769230769,
+            "lower_case": "r01-1024x576",
+            "midpoint_pixels": 722944.0,
+            "upper_case": "r02-1216x704"
+          },
+          {
+            "bytes_per_pixel": 5261.617021276596,
+            "lower_case": "r02-1216x704",
+            "midpoint_pixels": 952320.0,
+            "upper_case": "worker2-api-1024x1024"
+          }
+        ],
+        "allocation_allowance_bytes": 268435456,
+        "anchor_case": "worker2-api-1024x1024",
+        "anchor_transient_per_pixel": 6152.0,
+        "basis": "Measured anchor transient plus pixel increment times max(anchor transient/pixel, observed adjacent slope, demonstrated recent rising slope)",
+        "decision": "ADMIT_FOR_REVIEW",
+        "limitation": "Observed200ms peaks can miss transients; unseen kernel/allocation thresholds remain uncertain. Forecast is not measured support.",
+        "maximum_allowed_used_bytes": 48950673408,
+        "native_pixels": 1224704,
+        "next_native_size": "1472x832",
+        "next_public_size": "1472x832",
+        "observations_pixel_sorted": [
+          {
+            "case_id": "r01-1024x576",
+            "evidence_sha256": "97a0826d104ab3194c1ed454b128e5c67bc1532fd174a9aa3e9961dc82763c27",
+            "native_pixels": 589824,
+            "peak_bytes": 37858115584,
+            "resident_bytes": 34498478080,
+            "total_bytes": 51527024640,
+            "transient_bytes": 3359637504
+          },
+          {
+            "case_id": "r02-1216x704",
+            "native_pixels": 856064,
+            "peak_bytes": 39936393216,
+            "resident_bytes": 34498478080,
+            "total_bytes": 51527024640,
+            "transient_bytes": 5437915136
+          },
+          {
+            "case_id": "worker2-api-1024x1024",
+            "evidence_sha256": "2b805df5ed03b0a080493afa8152d481088ac2ee10927057d808f94a4dd844cc",
+            "native_pixels": 1048576,
+            "peak_bytes": 40947220480,
+            "resident_bytes": 34496380928,
+            "scope": "Shared exclusive Worker2 window; total-window measured peak",
+            "total_bytes": 51527024640,
+            "transient_bytes": 6450839552
+          }
+        ],
+        "policy": "ROOT-FORECAST-AMENDMENT.md",
+        "predicted_device_used_bytes": 42592613676,
+        "predicted_transient_bytes": 7825700140,
+        "recent_nonlinear_trend": {
+          "demonstrated": false,
+          "projected_next_interval_bytes_per_pixel": null
+        },
+        "resident_bytes": 34498478080,
+        "selected_growth_bytes_per_pixel": 7806.030769230769
+      },
+      "profile_eligible": true,
+      "raw_artifact_sha256": {
+        "generation.png": "b365edc833897ac903a4e2b613f9a1b0f6a2a3ffe145e838260c0528a0b25ae6",
+        "native-perf.json": "2da0294c130ebca524841f6d3aa42d7109eb02992f36793b2ee1fe1cc701d245",
+        "native-response.json": "c09be14340d3d5cdd619eceb1c620bdd9b58f6e35fdedd6a135f27d29e1c3be7",
+        "native.png": "7830dfedbf0b55c69bccd7a6eb1bdc854897d68d5628d1ad0ed5b50a46154dd9",
+        "request.json": "670cbb43ac4fdee0d5e9a7a4a193e1019f8e97c477cb2b86670530cf966e63c7",
+        "telemetry.jsonl": "5707a11e38d7ddfe9cca6ab9f3832d0f1f0c1fe6ab8234640f64b112118560aa"
+      },
+      "raw_status": "PARTIAL",
+      "recipe_comparison": null,
+      "recovery": {
+        "attempted": false,
+        "required_on_ambiguous_or_failed_native_outcome": false
+      },
+      "references": 0,
+      "request_count": 1,
+      "request_settings": {
+        "background": "opaque",
+        "enable_cache_dit": false,
+        "enable_teacache": false,
+        "generator_device": "cpu",
+        "guidance_scale": 1.0,
+        "model": "qwen-image-2.1",
+        "n": 1,
+        "num_inference_steps": 40,
+        "output_format": "png",
+        "prompt": "A red ceramic teapot on a wooden table beside a window, softly lit by daylight.",
+        "seed": 42,
+        "size": "1216x704",
+        "true_cfg_scale": 1.0
+      },
+      "requested_size": "1216x704",
+      "residency_after": {
+        "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+        "device_current": {
+          "free_bytes": 17028874240,
+          "total_bytes": 51527024640,
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+        },
+        "gpu_processes": [
+          [
+            "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+            "115633",
+            "32226"
+          ]
+        ],
+        "host_current": {
+          "MemAvailable": 921123278848,
+          "MemTotal": 946820968448,
+          "SwapFree": 3157258240,
+          "SwapTotal": 3157258240
+        },
+        "started_at": "2026-09-23T03:55:55.463204199Z"
+      },
+      "root_approved_size": true,
+      "root_profile_review": {
+        "review_receipt": {
+          "bytes": 302,
+          "path": "artifacts/root-profile-review.json",
+          "sha256": "42648590293faad4a0a545cf5053515bbdb8b262998c2ad809a51d1d0952fda1"
+        },
+        "root_note": "ROOT-FINAL-PROFILES-GO.md",
+        "root_note_sha256": "433f61004625e090b5da2f9650ba00bc1330c5fb74d5ce296c7c790f9815d07c"
+      },
+      "rung": 2,
+      "runtime_identity": {
+        "api_state": {
+          "ActiveState": "inactive",
+          "MainPID": "0",
+          "SubState": "dead"
+        },
+        "backend_run_id": "49fe6ab1e155453b8a529e199f16a1a2",
+        "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+        "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+        "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+        "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "runtime_config_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+        "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+        "runtime_source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+        "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7"
+      },
+      "scope": "direct_native_ladder",
+      "source_receipts": [],
+      "status": "PASS",
+      "timing": {
+        "finished_monotonic": 11543.586335714,
+        "finished_utc": "2026-09-23T04:13:20.920392+00:00",
+        "request_finished_monotonic": 11542.072815977,
+        "request_finished_utc": "2026-09-23T04:13:19.406906+00:00",
+        "request_started_monotonic": 11522.665935726,
+        "request_started_utc": "2026-09-23T04:13:00.000003+00:00",
+        "started_monotonic": 11521.051832573,
+        "started_utc": "2026-09-23T04:12:58.385886+00:00"
+      },
+      "tmp": {
+        "after_count": 10,
+        "before_count": 10,
+        "new_entries": []
+      },
+      "visual": {
+        "finding": "Coherent glossy red ceramic teapot with lid, handle and spout on wooden table by daylight window; generation prompt succeeds.",
+        "hash_bound": true,
+        "method": "view_image",
+        "output_sha256": "b365edc833897ac903a4e2b613f9a1b0f6a2a3ffe145e838260c0528a0b25ae6",
+        "receipt": {
+          "bytes": 371,
+          "path": "artifacts/ladder/r02-1216x704/visual-review.json",
+          "sha256": "ae67f932320b6579f01ca65b3e1cc1cda086e7ea73655cd7aa726f981e56e4b6"
+        },
+        "reviewer": "Worker1 actual decoded PNG inspection",
+        "status": "PASS"
+      }
+    },
+    {
+      "actual_native_output": {
+        "bytes": 1880101,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 832,
+        "mode": "RGBA",
+        "sha256": "5667eab8c21ad8f425a41a53bd249f21fbbaf9aa68e5cd1578ed65d9570ac26d",
+        "width": 1472
+      },
+      "authorization": null,
+      "caller": "Worker1 sole accepted caller; API stopped; native loopback",
+      "case_id": "r03-1472x832",
+      "cpu_load_snapshots": {
+        "load_average_after": [
+          3.01953125,
+          3.029296875,
+          3.0
+        ],
+        "load_average_before": [
+          3.0341796875,
+          3.03515625,
+          3.0
+        ]
+      },
+      "criteria": {
+        "container_swap_zero": true,
+        "correct_decoded_output": true,
+        "device_free_at_least_5_percent": true,
+        "host_available_at_least_15_percent": true,
+        "native_dimensions_and_crop_verified": true,
+        "no_observed_host_oom": true,
+        "no_observed_swap_activity": true,
+        "one_generation": true,
+        "ready_and_owned_after": true,
+        "recorded_numeric_criteria_complete": true,
+        "tmp_cleanup": true,
+        "visual_task_success": true
+      },
+      "delivered_output": {
+        "bytes": 1393044,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 832,
+        "mode": "RGB",
+        "sha256": "afe409ffa44f8a6f0eea7568bc0cb08e53008792546c661cbd04b27864c19687",
+        "width": 1472
+      },
+      "evidence_sha256": "f017918f5885133522197bb5765201788e66a1423c4303992a65887eabd520e3",
+      "failure": null,
+      "http_request_seconds": 28.60269934200005,
+      "http_status": 200,
+      "limitations": [
+        "NVML samples are total-device use, not allocator or process peaks.",
+        "Peaks between nominal 200 ms device samples remain unobserved.",
+        "Host/cgroup observations are nominally 1 s; no PSS polling.",
+        "Native runtime peaks and cgroup memory.peak are lifetime high-water marks.",
+        "CPU load snapshots and PCIe counters do not prove absence of transient activity.",
+        "Missing evidence remains NOT_TESTED/PARTIAL; forecast is not measured support.",
+        "Device peaks between200ms observations may be missed.",
+        "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+        "No PSS polling; NVML device totals are not allocator/process peaks.",
+        "NVML PCIe20ms counters and utilization remain in raw telemetry."
+      ],
+      "measurement_receipt": {
+        "bytes": 16320,
+        "path": "artifacts/ladder/r03-1472x832/receipt.json",
+        "sha256": "b09dd5cea1c5a287bec276dccfdd547877e75de89a838af4f66d68af5af88417"
+      },
+      "metrics": {
+        "cgroup": {
+          "memory.current": {
+            "max": 5306511360,
+            "min": 5301972992,
+            "sample_count": 32
+          },
+          "memory.peak": {
+            "max": 5320138752,
+            "min": 5316444160,
+            "sample_count": 32
+          },
+          "memory.swap.current": {
+            "max": 0,
+            "min": 0,
+            "sample_count": 32
+          }
+        },
+        "device": {
+          "first_sample_used_bytes": 34498478080,
+          "last_sample_used_bytes": 34500575232,
+          "minimum_free_fraction": 0.18530092592592592,
+          "request_window_peak_used_bytes": 41979019264,
+          "sampled_min_free_bytes": 9548005376,
+          "sampled_peak_used_bytes": 41979019264,
+          "total_bytes": 51527024640
+        },
+        "host": {
+          "max_swap_used_bytes": 0,
+          "min_available_bytes": 921162407936,
+          "min_available_fraction": 0.9729003038937142,
+          "vmstat_counter_deltas": {
+            "oom_kill": 0,
+            "pgmajfault": 0,
+            "pswpin": 0,
+            "pswpout": 0
+          }
+        },
+        "limitations": [
+          "Device peaks between200ms observations may be missed.",
+          "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+          "No PSS polling; NVML device totals are not allocator/process peaks.",
+          "NVML PCIe20ms counters and utilization remain in raw telemetry."
+        ],
+        "sampling": {
+          "max_observed_interval_seconds": 0.20027825400029542,
+          "requested_interval_seconds": 0.2,
+          "sample_count": 158,
+          "skipped_schedule_slots": 0
+        }
+      },
+      "metrics_full_shared_window": null,
+      "native_allocator": {
+        "after_forward": {
+          "allocated_mb": 31102.39,
+          "peak_allocated_mb": 34800.84,
+          "peak_reserved_mb": 38390.0,
+          "reserved_mb": 38390.0
+        },
+        "available": true,
+        "load_peak": {
+          "peak_allocated_mb": 31083.04,
+          "peak_reserved_mb": 31252.0
+        },
+        "native_inference_seconds": 28.4104878929993,
+        "reported_units": "MiB (native *_mb uses binary divisor)",
+        "runtime_cumulative_peak": {
+          "peak_allocated_mb": 34800.84,
+          "peak_reserved_mb": 38390.0
+        },
+        "scope": "after_forward is the native request checkpoint; runtime peaks accumulate across requests. Neither is NVML physical-device peak."
+      },
+      "native_inference_seconds": 28.4104878929993,
+      "native_response_metrics": {
+        "inference_time_s": 28.4104878929993,
+        "peak_memory_mb": 38390.0
+      },
+      "operation": "generation",
+      "planned_crop_bottom": 0,
+      "planned_native_size": "1472x832",
+      "predicted_next_demand": {
+        "adjacent_transient_slopes": [
+          {
+            "bytes_per_pixel": 7806.030769230769,
+            "lower_case": "r01-1024x576",
+            "midpoint_pixels": 722944.0,
+            "upper_case": "r02-1216x704"
+          },
+          {
+            "bytes_per_pixel": 5261.617021276596,
+            "lower_case": "r02-1216x704",
+            "midpoint_pixels": 952320.0,
+            "upper_case": "worker2-api-1024x1024"
+          },
+          {
+            "bytes_per_pixel": 5846.325581395349,
+            "lower_case": "worker2-api-1024x1024",
+            "midpoint_pixels": 1136640.0,
+            "upper_case": "r03-1472x832"
+          }
+        ],
+        "allocation_allowance_bytes": 268435456,
+        "anchor_case": "r03-1472x832",
+        "anchor_transient_per_pixel": 6108.040133779265,
+        "basis": "Measured anchor transient plus pixel increment times max(anchor transient/pixel, observed adjacent slope, demonstrated recent rising slope)",
+        "decision": "ADMIT_FOR_REVIEW",
+        "limitation": "Observed200ms peaks can miss transients; unseen kernel/allocation thresholds remain uncertain. Forecast is not measured support.",
+        "maximum_allowed_used_bytes": 48950673408,
+        "native_pixels": 1745920,
+        "next_native_size": "1760x992",
+        "next_public_size": "1760x992",
+        "observations_pixel_sorted": [
+          {
+            "case_id": "r01-1024x576",
+            "evidence_sha256": "97a0826d104ab3194c1ed454b128e5c67bc1532fd174a9aa3e9961dc82763c27",
+            "native_pixels": 589824,
+            "peak_bytes": 37858115584,
+            "resident_bytes": 34498478080,
+            "total_bytes": 51527024640,
+            "transient_bytes": 3359637504
+          },
+          {
+            "case_id": "r02-1216x704",
+            "evidence_sha256": "0387db9f0dad6c5f774ad87c8f194ed9f60e4400f0f5840c5782239ccf28d319",
+            "native_pixels": 856064,
+            "peak_bytes": 39936393216,
+            "resident_bytes": 34498478080,
+            "total_bytes": 51527024640,
+            "transient_bytes": 5437915136
+          },
+          {
+            "case_id": "worker2-api-1024x1024",
+            "evidence_sha256": "2b805df5ed03b0a080493afa8152d481088ac2ee10927057d808f94a4dd844cc",
+            "native_pixels": 1048576,
+            "peak_bytes": 40947220480,
+            "resident_bytes": 34496380928,
+            "scope": "Shared exclusive Worker2 window; total-window measured peak",
+            "total_bytes": 51527024640,
+            "transient_bytes": 6450839552
+          },
+          {
+            "case_id": "r03-1472x832",
+            "native_pixels": 1224704,
+            "peak_bytes": 41979019264,
+            "resident_bytes": 34498478080,
+            "total_bytes": 51527024640,
+            "transient_bytes": 7480541184
+          }
+        ],
+        "policy": "ROOT-FORECAST-AMENDMENT.md",
+        "predicted_device_used_bytes": 46316082854,
+        "predicted_transient_bytes": 11549169318,
+        "recent_nonlinear_trend": {
+          "demonstrated": true,
+          "latest_adjacent_slope": 5846.325581395349,
+          "method": "Linear continuation of observed positive secant-slope rise by interval midpoint",
+          "previous_adjacent_slope": 5261.617021276596,
+          "projected_next_interval_bytes_per_pixel": 6952.3992742866585
+        },
+        "resident_bytes": 34498478080,
+        "selected_growth_bytes_per_pixel": 7806.030769230769
+      },
+      "profile_eligible": true,
+      "raw_artifact_sha256": {
+        "generation.png": "afe409ffa44f8a6f0eea7568bc0cb08e53008792546c661cbd04b27864c19687",
+        "native-perf.json": "8276ecc3b10d12c545d1265d26707085113118238371af57c9353776eaa27b19",
+        "native-response.json": "cc9665c6717c63e7a5cd4d89a667c6621a448bdccf0ff54dbe228dac70d00361",
+        "native.png": "5667eab8c21ad8f425a41a53bd249f21fbbaf9aa68e5cd1578ed65d9570ac26d",
+        "request.json": "8b6a3e4a877202e05c990b53912dcea6d0749176806805b497b8059ab6c71e05",
+        "telemetry.jsonl": "8bb5bd1ceca16f8e15fdb2d64675251371be591497d13d9262df3c4533a68fdb"
+      },
+      "raw_status": "PARTIAL",
+      "recipe_comparison": null,
+      "recovery": {
+        "attempted": false,
+        "required_on_ambiguous_or_failed_native_outcome": false
+      },
+      "references": 0,
+      "request_count": 1,
+      "request_settings": {
+        "background": "opaque",
+        "enable_cache_dit": false,
+        "enable_teacache": false,
+        "generator_device": "cpu",
+        "guidance_scale": 1.0,
+        "model": "qwen-image-2.1",
+        "n": 1,
+        "num_inference_steps": 40,
+        "output_format": "png",
+        "prompt": "A red ceramic teapot on a wooden table beside a window, softly lit by daylight.",
+        "seed": 42,
+        "size": "1472x832",
+        "true_cfg_scale": 1.0
+      },
+      "requested_size": "1472x832",
+      "residency_after": {
+        "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+        "device_current": {
+          "free_bytes": 17026777088,
+          "total_bytes": 51527024640,
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+        },
+        "gpu_processes": [
+          [
+            "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+            "115633",
+            "32228"
+          ]
+        ],
+        "host_current": {
+          "MemAvailable": 921189265408,
+          "MemTotal": 946820968448,
+          "SwapFree": 3157258240,
+          "SwapTotal": 3157258240
+        },
+        "started_at": "2026-09-23T03:55:55.463204199Z"
+      },
+      "root_approved_size": true,
+      "root_profile_review": {
+        "review_receipt": {
+          "bytes": 302,
+          "path": "artifacts/root-profile-review.json",
+          "sha256": "42648590293faad4a0a545cf5053515bbdb8b262998c2ad809a51d1d0952fda1"
+        },
+        "root_note": "ROOT-FINAL-PROFILES-GO.md",
+        "root_note_sha256": "433f61004625e090b5da2f9650ba00bc1330c5fb74d5ce296c7c790f9815d07c"
+      },
+      "rung": 3,
+      "runtime_identity": {
+        "api_state": {
+          "ActiveState": "inactive",
+          "MainPID": "0",
+          "SubState": "dead"
+        },
+        "backend_run_id": "49fe6ab1e155453b8a529e199f16a1a2",
+        "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+        "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+        "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+        "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "runtime_config_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+        "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+        "runtime_source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+        "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7"
+      },
+      "scope": "direct_native_ladder",
+      "source_receipts": [],
+      "status": "PASS",
+      "timing": {
+        "finished_monotonic": 11642.195705576,
+        "finished_utc": "2026-09-23T04:14:59.529759+00:00",
+        "request_finished_monotonic": 11640.58856095,
+        "request_finished_utc": "2026-09-23T04:14:57.922653+00:00",
+        "request_started_monotonic": 11611.985861608,
+        "request_started_utc": "2026-09-23T04:14:29.319929+00:00",
+        "started_monotonic": 11610.370148691,
+        "started_utc": "2026-09-23T04:14:27.704199+00:00"
+      },
+      "tmp": {
+        "after_count": 10,
+        "before_count": 10,
+        "new_entries": []
+      },
+      "visual": {
+        "finding": "Red ceramic lidded teapot with coherent handle/spout on wooden table beside softly lit window; requested scene succeeds without visible corruption.",
+        "hash_bound": true,
+        "method": "view_image",
+        "output_sha256": "afe409ffa44f8a6f0eea7568bc0cb08e53008792546c661cbd04b27864c19687",
+        "receipt": {
+          "bytes": 393,
+          "path": "artifacts/ladder/r03-1472x832/visual-review.json",
+          "sha256": "e3808ee94b619dbbd441c6bb4d66efee7d5294c8800c0d07db4405a92d21a685"
+        },
+        "reviewer": "Worker1 actual decoded PNG inspection",
+        "status": "PASS"
+      }
+    },
+    {
+      "actual_native_output": {
+        "bytes": 2716644,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 992,
+        "mode": "RGBA",
+        "sha256": "df864c0b1491ad311019485b40a66658edc1659b05247a6efde5f126e03df12d",
+        "width": 1760
+      },
+      "authorization": null,
+      "caller": "Worker1 sole accepted caller; API stopped; native loopback",
+      "case_id": "r04-1760x992",
+      "cpu_load_snapshots": {
+        "load_average_after": [
+          3.00390625,
+          3.02197265625,
+          3.0
+        ],
+        "load_average_before": [
+          3.0107421875,
+          3.0263671875,
+          3.0
+        ]
+      },
+      "criteria": {
+        "container_swap_zero": true,
+        "correct_decoded_output": true,
+        "device_free_at_least_5_percent": true,
+        "host_available_at_least_15_percent": true,
+        "native_dimensions_and_crop_verified": true,
+        "no_observed_host_oom": true,
+        "no_observed_swap_activity": true,
+        "one_generation": true,
+        "ready_and_owned_after": true,
+        "recorded_numeric_criteria_complete": true,
+        "tmp_cleanup": true,
+        "visual_task_success": true
+      },
+      "delivered_output": {
+        "bytes": 1990987,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 992,
+        "mode": "RGB",
+        "sha256": "c23c442760b05ebfa09376bfb81dbeda92dc38ae8385fd41b221b83cbd5e6209",
+        "width": 1760
+      },
+      "evidence_sha256": "f91eaca9a0d8583081ccaa9d62d48bd7511bd5b99b8193a26abd7106f27e3c83",
+      "failure": null,
+      "http_request_seconds": 45.21368461699967,
+      "http_status": 200,
+      "limitations": [
+        "NVML samples are total-device use, not allocator or process peaks.",
+        "Peaks between nominal 200 ms device samples remain unobserved.",
+        "Host/cgroup observations are nominally 1 s; no PSS polling.",
+        "Native runtime peaks and cgroup memory.peak are lifetime high-water marks.",
+        "CPU load snapshots and PCIe counters do not prove absence of transient activity.",
+        "Missing evidence remains NOT_TESTED/PARTIAL; forecast is not measured support.",
+        "Device peaks between200ms observations may be missed.",
+        "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+        "No PSS polling; NVML device totals are not allocator/process peaks.",
+        "NVML PCIe20ms counters and utilization remain in raw telemetry."
+      ],
+      "measurement_receipt": {
+        "bytes": 17355,
+        "path": "artifacts/ladder/r04-1760x992/receipt.json",
+        "sha256": "75d146b28b2b4c298e884b3269ff60a8cdde19a6022789d76ff1d0c788f008a4"
+      },
+      "metrics": {
+        "cgroup": {
+          "memory.current": {
+            "max": 5316091904,
+            "min": 5301579776,
+            "sample_count": 49
+          },
+          "memory.peak": {
+            "max": 5320142848,
+            "min": 5320138752,
+            "sample_count": 49
+          },
+          "memory.swap.current": {
+            "max": 0,
+            "min": 0,
+            "sample_count": 49
+          }
+        },
+        "device": {
+          "first_sample_used_bytes": 34500575232,
+          "last_sample_used_bytes": 34500575232,
+          "minimum_free_fraction": 0.12880926943426943,
+          "request_window_peak_used_bytes": 44889866240,
+          "sampled_min_free_bytes": 6637158400,
+          "sampled_peak_used_bytes": 44889866240,
+          "total_bytes": 51527024640
+        },
+        "host": {
+          "max_swap_used_bytes": 0,
+          "min_available_bytes": 921126957056,
+          "min_available_fraction": 0.9728628618838926,
+          "vmstat_counter_deltas": {
+            "oom_kill": 0,
+            "pgmajfault": 0,
+            "pswpin": 0,
+            "pswpout": 0
+          }
+        },
+        "limitations": [
+          "Device peaks between200ms observations may be missed.",
+          "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+          "No PSS polling; NVML device totals are not allocator/process peaks.",
+          "NVML PCIe20ms counters and utilization remain in raw telemetry."
+        ],
+        "sampling": {
+          "max_observed_interval_seconds": 0.20075496200115595,
+          "requested_interval_seconds": 0.2,
+          "sample_count": 242,
+          "skipped_schedule_slots": 0
+        }
+      },
+      "metrics_full_shared_window": null,
+      "native_allocator": {
+        "after_forward": {
+          "allocated_mb": 31106.8,
+          "peak_allocated_mb": 36377.22,
+          "peak_reserved_mb": 41166.0,
+          "reserved_mb": 41166.0
+        },
+        "available": true,
+        "load_peak": {
+          "peak_allocated_mb": 31083.04,
+          "peak_reserved_mb": 31252.0
+        },
+        "native_inference_seconds": 44.94311561500035,
+        "reported_units": "MiB (native *_mb uses binary divisor)",
+        "runtime_cumulative_peak": {
+          "peak_allocated_mb": 36377.22,
+          "peak_reserved_mb": 41166.0
+        },
+        "scope": "after_forward is the native request checkpoint; runtime peaks accumulate across requests. Neither is NVML physical-device peak."
+      },
+      "native_inference_seconds": 44.94311561500035,
+      "native_response_metrics": {
+        "inference_time_s": 44.94311561500035,
+        "peak_memory_mb": 41166.0
+      },
+      "operation": "generation",
+      "planned_crop_bottom": 0,
+      "planned_native_size": "1760x992",
+      "predicted_next_demand": {
+        "adjacent_transient_slopes": [
+          {
+            "bytes_per_pixel": 7806.030769230769,
+            "lower_case": "r01-1024x576",
+            "midpoint_pixels": 722944.0,
+            "upper_case": "r02-1216x704"
+          },
+          {
+            "bytes_per_pixel": 5261.617021276596,
+            "lower_case": "r02-1216x704",
+            "midpoint_pixels": 952320.0,
+            "upper_case": "worker2-api-1024x1024"
+          },
+          {
+            "bytes_per_pixel": 5846.325581395349,
+            "lower_case": "worker2-api-1024x1024",
+            "midpoint_pixels": 1136640.0,
+            "upper_case": "r03-1472x832"
+          },
+          {
+            "bytes_per_pixel": 5580.699410609037,
+            "lower_case": "r03-1472x832",
+            "midpoint_pixels": 1485312.0,
+            "upper_case": "r04-1760x992"
+          }
+        ],
+        "allocation_allowance_bytes": 268435456,
+        "anchor_case": "r04-1760x992",
+        "anchor_transient_per_pixel": 5950.611143695015,
+        "basis": "Measured anchor transient plus pixel increment times max(anchor transient/pixel, observed adjacent slope, demonstrated recent rising slope)",
+        "decision": "STOP_UNSAFE_FORECAST",
+        "limitation": "Observed200ms peaks can miss transients; unseen kernel/allocation thresholds remain uncertain. Forecast is not measured support.",
+        "maximum_allowed_used_bytes": 48950673408,
+        "native_pixels": 2500608,
+        "next_native_size": "2112x1184",
+        "next_public_size": "2112x1184",
+        "observations_pixel_sorted": [
+          {
+            "case_id": "r01-1024x576",
+            "evidence_sha256": "97a0826d104ab3194c1ed454b128e5c67bc1532fd174a9aa3e9961dc82763c27",
+            "native_pixels": 589824,
+            "peak_bytes": 37858115584,
+            "resident_bytes": 34498478080,
+            "total_bytes": 51527024640,
+            "transient_bytes": 3359637504
+          },
+          {
+            "case_id": "r02-1216x704",
+            "evidence_sha256": "0387db9f0dad6c5f774ad87c8f194ed9f60e4400f0f5840c5782239ccf28d319",
+            "native_pixels": 856064,
+            "peak_bytes": 39936393216,
+            "resident_bytes": 34498478080,
+            "total_bytes": 51527024640,
+            "transient_bytes": 5437915136
+          },
+          {
+            "case_id": "worker2-api-1024x1024",
+            "evidence_sha256": "2b805df5ed03b0a080493afa8152d481088ac2ee10927057d808f94a4dd844cc",
+            "native_pixels": 1048576,
+            "peak_bytes": 40947220480,
+            "resident_bytes": 34496380928,
+            "scope": "Shared exclusive Worker2 window; total-window measured peak",
+            "total_bytes": 51527024640,
+            "transient_bytes": 6450839552
+          },
+          {
+            "case_id": "r03-1472x832",
+            "evidence_sha256": "b09dd5cea1c5a287bec276dccfdd547877e75de89a838af4f66d68af5af88417",
+            "native_pixels": 1224704,
+            "peak_bytes": 41979019264,
+            "resident_bytes": 34498478080,
+            "total_bytes": 51527024640,
+            "transient_bytes": 7480541184
+          },
+          {
+            "case_id": "r04-1760x992",
+            "native_pixels": 1745920,
+            "peak_bytes": 44889866240,
+            "resident_bytes": 34500575232,
+            "total_bytes": 51527024640,
+            "transient_bytes": 10389291008
+          }
+        ],
+        "policy": "ROOT-FORECAST-AMENDMENT.md",
+        "predicted_device_used_bytes": 51049419446,
+        "predicted_transient_bytes": 16280408758,
+        "recent_nonlinear_trend": {
+          "demonstrated": false,
+          "projected_next_interval_bytes_per_pixel": null
+        },
+        "resident_bytes": 34500575232,
+        "selected_growth_bytes_per_pixel": 7806.030769230769
+      },
+      "profile_eligible": true,
+      "raw_artifact_sha256": {
+        "generation.png": "c23c442760b05ebfa09376bfb81dbeda92dc38ae8385fd41b221b83cbd5e6209",
+        "native-perf.json": "79e1693dc0ebc46613099436d57c8794aa4dfea892c29d504bb7ff3b2ae0f6a6",
+        "native-response.json": "ba0ccd8bc29e18ee443697c4965052df32840aaa11f889935310d1ac05d54233",
+        "native.png": "df864c0b1491ad311019485b40a66658edc1659b05247a6efde5f126e03df12d",
+        "request.json": "7f88e984f8a71b97288bf178c125390eb2b5b20ff14935de59ced51ee307c153",
+        "telemetry.jsonl": "086b201f70522d879267303fd20a0592b349a746601042cf9ec915e332a6b96d"
+      },
+      "raw_status": "PARTIAL",
+      "recipe_comparison": null,
+      "recovery": {
+        "attempted": false,
+        "required_on_ambiguous_or_failed_native_outcome": false
+      },
+      "references": 0,
+      "request_count": 1,
+      "request_settings": {
+        "background": "opaque",
+        "enable_cache_dit": false,
+        "enable_teacache": false,
+        "generator_device": "cpu",
+        "guidance_scale": 1.0,
+        "model": "qwen-image-2.1",
+        "n": 1,
+        "num_inference_steps": 40,
+        "output_format": "png",
+        "prompt": "A red ceramic teapot on a wooden table beside a window, softly lit by daylight.",
+        "seed": 42,
+        "size": "1760x992",
+        "true_cfg_scale": 1.0
+      },
+      "requested_size": "1760x992",
+      "residency_after": {
+        "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+        "device_current": {
+          "free_bytes": 17026777088,
+          "total_bytes": 51527024640,
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+        },
+        "gpu_processes": [
+          [
+            "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+            "115633",
+            "32228"
+          ]
+        ],
+        "host_current": {
+          "MemAvailable": 921127079936,
+          "MemTotal": 946820968448,
+          "SwapFree": 3157258240,
+          "SwapTotal": 3157258240
+        },
+        "started_at": "2026-09-23T03:55:55.463204199Z"
+      },
+      "root_approved_size": true,
+      "root_profile_review": {
+        "review_receipt": {
+          "bytes": 302,
+          "path": "artifacts/root-profile-review.json",
+          "sha256": "42648590293faad4a0a545cf5053515bbdb8b262998c2ad809a51d1d0952fda1"
+        },
+        "root_note": "ROOT-FINAL-PROFILES-GO.md",
+        "root_note_sha256": "433f61004625e090b5da2f9650ba00bc1330c5fb74d5ce296c7c790f9815d07c"
+      },
+      "rung": 4,
+      "runtime_identity": {
+        "api_state": {
+          "ActiveState": "inactive",
+          "MainPID": "0",
+          "SubState": "dead"
+        },
+        "backend_run_id": "49fe6ab1e155453b8a529e199f16a1a2",
+        "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+        "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+        "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+        "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "runtime_config_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+        "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+        "runtime_source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+        "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7"
+      },
+      "scope": "direct_native_ladder",
+      "source_receipts": [],
+      "status": "PASS",
+      "timing": {
+        "finished_monotonic": 11718.476452455,
+        "finished_utc": "2026-09-23T04:16:15.810505+00:00",
+        "request_finished_monotonic": 11716.702610343,
+        "request_finished_utc": "2026-09-23T04:16:14.036703+00:00",
+        "request_started_monotonic": 11671.488925726,
+        "request_started_utc": "2026-09-23T04:15:28.822993+00:00",
+        "started_monotonic": 11669.875732383,
+        "started_utc": "2026-09-23T04:15:27.209786+00:00"
+      },
+      "tmp": {
+        "after_count": 10,
+        "before_count": 10,
+        "new_entries": []
+      },
+      "visual": {
+        "finding": "Coherent red ceramic teapot and lid with handle/spout on wooden table beside softly lit window; no corruption, task succeeds.",
+        "hash_bound": true,
+        "method": "view_image",
+        "output_sha256": "c23c442760b05ebfa09376bfb81dbeda92dc38ae8385fd41b221b83cbd5e6209",
+        "receipt": {
+          "bytes": 371,
+          "path": "artifacts/ladder/r04-1760x992/visual-review.json",
+          "sha256": "a7c669be54f7a54f259cbae35e07abae4088fdc93b9f5d48750f9dbfb2447f9f"
+        },
+        "reviewer": "Worker1 actual decoded PNG inspection",
+        "status": "PASS"
+      }
+    },
+    {
+      "actual_native_output": null,
+      "authorization": null,
+      "case_id": "r05-2112x1184",
+      "criteria": {},
+      "delivered_output": null,
+      "not_tested_reason": "No completed measurement receipt supplied.",
+      "operation": "generation",
+      "planned_crop_bottom": 0,
+      "planned_native_size": "2112x1184",
+      "profile_eligible": false,
+      "references": 0,
+      "requested_size": "2112x1184",
+      "rung": 5,
+      "scope": "direct_native_ladder",
+      "status": "NOT_TESTED",
+      "visual": {
+        "hash_bound": false,
+        "status": "NOT_TESTED"
+      }
+    },
+    {
+      "actual_native_output": null,
+      "authorization": null,
+      "case_id": "r06-2528x1408",
+      "criteria": {},
+      "delivered_output": null,
+      "not_tested_reason": "No completed measurement receipt supplied.",
+      "operation": "generation",
+      "planned_crop_bottom": 0,
+      "planned_native_size": "2528x1408",
+      "profile_eligible": false,
+      "references": 0,
+      "requested_size": "2528x1408",
+      "rung": 6,
+      "scope": "direct_native_ladder",
+      "status": "NOT_TESTED",
+      "visual": {
+        "hash_bound": false,
+        "status": "NOT_TESTED"
+      }
+    },
+    {
+      "actual_native_output": null,
+      "authorization": null,
+      "case_id": "r07-3040x1696",
+      "criteria": {},
+      "delivered_output": null,
+      "not_tested_reason": "No completed measurement receipt supplied.",
+      "operation": "generation",
+      "planned_crop_bottom": 0,
+      "planned_native_size": "3040x1696",
+      "profile_eligible": false,
+      "references": 0,
+      "requested_size": "3040x1696",
+      "rung": 7,
+      "scope": "direct_native_ladder",
+      "status": "NOT_TESTED",
+      "visual": {
+        "hash_bound": false,
+        "status": "NOT_TESTED"
+      }
+    },
+    {
+      "actual_native_output": null,
+      "authorization": null,
+      "case_id": "r08-3648x2048",
+      "criteria": {},
+      "delivered_output": null,
+      "not_tested_reason": "No completed measurement receipt supplied.",
+      "operation": "generation",
+      "planned_crop_bottom": 0,
+      "planned_native_size": "3648x2048",
+      "profile_eligible": false,
+      "references": 0,
+      "requested_size": "3648x2048",
+      "rung": 8,
+      "scope": "direct_native_ladder",
+      "status": "NOT_TESTED",
+      "visual": {
+        "hash_bound": false,
+        "status": "NOT_TESTED"
+      }
+    },
+    {
+      "actual_native_output": null,
+      "authorization": null,
+      "case_id": "r09-3840x2160",
+      "criteria": {},
+      "delivered_output": null,
+      "not_tested_reason": "No completed measurement receipt supplied.",
+      "operation": "generation",
+      "planned_crop_bottom": 16,
+      "planned_native_size": "3840x2176",
+      "profile_eligible": false,
+      "references": 0,
+      "requested_size": "3840x2160",
+      "rung": 9,
+      "scope": "direct_native_ladder",
+      "status": "NOT_TESTED",
+      "visual": {
+        "hash_bound": false,
+        "status": "NOT_TESTED"
+      }
+    }
+  ],
+  "required_deployment_recoveries": [
+    {
+      "case_id": "initial-deployment-recovery",
+      "delivered_output": {
+        "bytes": 1692710,
+        "format": "PNG",
+        "fully_decoded": true,
+        "height": 1024,
+        "mode": "RGBA",
+        "sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+        "width": 1024
+      },
+      "evidence_limit": "Required recovery plus load/warm sampling; never counted as Worker2 API baseline or a ladder case.",
+      "finished_utc": "2026-09-23T03:56:50.739817+00:00",
+      "http_request_seconds": 24.315614,
+      "native_allocator": {
+        "after_forward": {
+          "allocated_mb": 31100.35,
+          "peak_allocated_mb": 34266.57,
+          "peak_reserved_mb": 37570.0,
+          "reserved_mb": 37570.0
+        },
+        "available": true,
+        "load_peak": {
+          "peak_allocated_mb": 31083.04,
+          "peak_reserved_mb": 31252.0
+        },
+        "native_inference_seconds": 24.180714080999678,
+        "reported_units": "MiB (native *_mb uses binary divisor)",
+        "runtime_cumulative_peak": {
+          "peak_allocated_mb": 34266.57,
+          "peak_reserved_mb": 37570.0
+        },
+        "scope": "after_forward is the native request checkpoint; runtime peaks accumulate across requests. Neither is NVML physical-device peak."
+      },
+      "native_inference_seconds": 24.180714080999678,
+      "native_ready_seconds": 30.39005821200044,
+      "profile_eligible": false,
+      "request_count": 1,
+      "requested_size": "1024x1024",
+      "sampled_metrics": {
+        "sampled_max_cgroup_swap_bytes": 0,
+        "sampled_min_host_available_bytes": 921343401984,
+        "telemetry_summary": {
+          "elapsed_s": 55.92766674900122,
+          "event": "stop",
+          "max_query_duration_s": 0.10499502800121263,
+          "max_sample_interval_s": 0.20016650800062052,
+          "monotonic_s": 10553.360148201,
+          "nvml_shutdown": {
+            "code": 0,
+            "function": "nvmlShutdown"
+          },
+          "sampled_max_used_bytes": 41119186944,
+          "sampled_min_free_bytes": 10407837696,
+          "samples": 280,
+          "signal_stop_requested": true,
+          "skipped_schedule_slots": 0,
+          "utc": "2026-09-23T03:56:50.694205+00:00"
+        }
+      },
+      "scope": "required_deployment_recovery_not_benchmark",
+      "started_utc": "2026-09-23T03:55:54.466979+00:00",
+      "status": "PASS",
+      "visual": {
+        "finding": "Red ceramic teapot on wooden table beside softly lit window; coherent shape and scene. Exact PNG hash also matches accepted original baseline.",
+        "hash_bound": true,
+        "output_sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+        "receipt": {
+          "bytes": 379,
+          "path": "artifacts/deployment-warm/visual-review.json",
+          "sha256": "02e35b069d2f908bd7d36556f59eb39353ccfe2b471757eb0fa0789d9a37305d"
+        },
+        "reviewer": "native Worker1 actual PNG inspection",
+        "scope": "required deployment recovery, not benchmark call",
+        "status": "PASS"
+      }
+    },
+    {
+      "backend_container_id": null,
+      "case_id": "final-deployment-recovery",
+      "evidence": {
+        "bytes": 1108,
+        "path": "FINAL-RECOVERY-EVIDENCE.json",
+        "sha256": "daaa98483d3eec79d7049da1e64a25275ac2515f19d32e4a852207ace3879bd8"
+      },
+      "evidence_limit": "Final normal recovery succeeded in retained item_235. Exact final warm image, duration, sample peaks and container ID were not retained here; not inferred or repeated.",
+      "profile_eligible": false,
+      "readiness": {
+        "admitting": true,
+        "busy": false,
+        "ready": true,
+        "state": "ready"
+      },
+      "scope": "required_deployment_recovery_not_benchmark",
+      "status": "PASS"
+    }
+  ],
+  "separate_api_baseline": {
+    "actual_native_output": null,
+    "authorization": null,
+    "caller": "Worker2 sole accepted API image caller in authorized window",
+    "case_id": "api-baseline-1024x1024",
+    "cpu_load_snapshots": {},
+    "criteria": {
+      "container_swap_zero": true,
+      "correct_decoded_output": true,
+      "device_free_at_least_5_percent": true,
+      "host_available_at_least_15_percent": true,
+      "no_observed_host_oom": true,
+      "no_observed_swap_activity": true,
+      "one_generation": true,
+      "raw_client_receipt_binding": true,
+      "ready_and_owned_after": true,
+      "recorded_numeric_criteria_complete": true,
+      "sampler_clean_exit": true,
+      "tmp_cleanup": true,
+      "visual_task_success": true,
+      "zero_accepted_edits": true
+    },
+    "delivered_output": {
+      "alpha_qualification": "NOT_TESTED",
+      "bytes": 966533,
+      "decode_evidence": "Worker2 client png() performed Pillow verify/load; local compiler verified original PNG hash, not an additional decoder run.",
+      "format": "PNG",
+      "fully_decoded": true,
+      "height": 1024,
+      "mode": "RGB",
+      "sha256": "876ad24718d40d31090a214ef7028a26b2e966cc14fe0f3894c20e91fe56467b",
+      "width": 1024
+    },
+    "evidence_sha256": "29250a7887d4bd9688a4ebd2c3f0720db1960116012f31fa553dddf37656aad4",
+    "failure": null,
+    "http_request_seconds": 24.183102209004574,
+    "http_status": 200,
+    "limitations": [
+      "NVML samples are total-device use, not allocator or process peaks.",
+      "Peaks between nominal 200 ms device samples remain unobserved.",
+      "Host/cgroup observations are nominally 1 s; no PSS polling.",
+      "Native runtime peaks and cgroup memory.peak are lifetime high-water marks.",
+      "CPU load snapshots and PCIe counters do not prove absence of transient activity.",
+      "Missing evidence remains NOT_TESTED/PARTIAL; forecast is not measured support.",
+      "Request end UTC is derived from client start UTC plus full-precision local monotonic duration, not a separately sampled UTC end.",
+      "Cross-host UTC clock offset was not measured; UTC intersection uses the supplied recorded clocks. Cross-host monotonic values were never compared.",
+      "NVML peaks between 200 ms samples are unobserved; query duration is not a synchronized metric timestamp.",
+      "Host/cgroup sampling is nominally 1 s. memory.peak is a cgroup lifetime high-water mark.",
+      "This independent API baseline uses seed 20260923 and its studio-teapot prompt, unlike the seed 42 ladder. It is not a same-recipe comparison.",
+      "No per-request native perf dump was saved. Native log timing and peak are rounded; allocated peak is unavailable. Deployment-warm allocator values were not reused.",
+      "Full-window margins include idle time, invalid checks and concurrent tiny text calls; request-window telemetry is separately identified.",
+      "Alpha/transparency qualification remains NOT_TESTED. No PSS polling."
+    ],
+    "measurement_receipt": {
+      "bytes": 18198,
+      "path": "artifacts/worker2-baseline/receipt.json",
+      "sha256": "3785f6b579a77b205d22c6e8344e7cdf69477f5a9b8a215e1299d8565b13d071"
+    },
+    "metrics": {
+      "cgroup": {
+        "memory.current": {
+          "max": 5293105152,
+          "min": 5280264192,
+          "sample_count": 25
+        },
+        "memory.peak": {
+          "max": 5305413632,
+          "min": 5305413632,
+          "sample_count": 25
+        },
+        "memory.swap.current": {
+          "max": 0,
+          "min": 0,
+          "sample_count": 25
+        }
+      },
+      "device": {
+        "first_sample_used_bytes": 34496380928,
+        "last_sample_used_bytes": 36650156032,
+        "minimum_free_fraction": 0.20532534595034596,
+        "request_window_peak_used_bytes": 40947220480,
+        "sampled_min_free_bytes": 10579804160,
+        "sampled_peak_used_bytes": 40947220480,
+        "total_bytes": 51527024640
+      },
+      "host": {
+        "max_swap_used_bytes": 0,
+        "min_available_bytes": 921160019968,
+        "min_available_fraction": 0.9728977818033935,
+        "vmstat_counter_deltas": {
+          "oom_kill": 0,
+          "pgmajfault": 0,
+          "pswpin": 0,
+          "pswpout": 0
+        }
+      },
+      "limitations": [
+        "Request end UTC is derived from client start UTC plus full-precision local monotonic duration, not a separately sampled UTC end.",
+        "Cross-host UTC clock offset was not measured; UTC intersection uses the supplied recorded clocks. Cross-host monotonic values were never compared.",
+        "NVML peaks between 200 ms samples are unobserved; query duration is not a synchronized metric timestamp.",
+        "Host/cgroup sampling is nominally 1 s. memory.peak is a cgroup lifetime high-water mark.",
+        "This independent API baseline uses seed 20260923 and its studio-teapot prompt, unlike the seed 42 ladder. It is not a same-recipe comparison.",
+        "No per-request native perf dump was saved. Native log timing and peak are rounded; allocated peak is unavailable. Deployment-warm allocator values were not reused.",
+        "Full-window margins include idle time, invalid checks and concurrent tiny text calls; request-window telemetry is separately identified.",
+        "Alpha/transparency qualification remains NOT_TESTED. No PSS polling."
+      ],
+      "sampling": {
+        "first_sample_utc": "2026-09-23T04:09:35.656837+00:00",
+        "full_window_skipped_schedule_slots": 0,
+        "host_sample_count": 25,
+        "last_sample_to_request_end_seconds": 0.115445,
+        "last_sample_utc": "2026-09-23T04:09:59.656814+00:00",
+        "max_observed_interval_seconds": 0.20002287900024385,
+        "max_query_duration_seconds": 0.13378247899890994,
+        "request_start_to_first_sample_seconds": 0.06768,
+        "requested_interval_seconds": 0.2,
+        "sample_count": 121
+      },
+      "scope": "UTC-intersected actual Worker2 HTTP request; client monotonic clocks are not compared to VM monotonic clocks."
+    },
+    "metrics_full_shared_window": {
+      "cgroup": {
+        "memory.current": {
+          "max": 5293473792,
+          "min": 5280247808,
+          "sample_count": 276
+        },
+        "memory.peak": {
+          "max": 5305413632,
+          "min": 5305413632,
+          "sample_count": 276
+        },
+        "memory.swap.current": {
+          "max": 0,
+          "min": 0,
+          "sample_count": 276
+        }
+      },
+      "device": {
+        "first_sample_used_bytes": 34496380928,
+        "last_sample_used_bytes": 34498478080,
+        "minimum_free_fraction": 0.20532534595034596,
+        "request_window_peak_used_bytes": 40947220480,
+        "sampled_min_free_bytes": 10579804160,
+        "sampled_peak_used_bytes": 40947220480,
+        "total_bytes": 51527024640
+      },
+      "host": {
+        "max_swap_used_bytes": 0,
+        "min_available_bytes": 921160019968,
+        "min_available_fraction": 0.9728977818033935,
+        "vmstat_counter_deltas": {
+          "oom_kill": 0,
+          "pgmajfault": 0,
+          "pswpin": 0,
+          "pswpout": 0
+        }
+      },
+      "limitations": [
+        "Device peaks between200ms observations may be missed.",
+        "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+        "No PSS polling; NVML device totals are not allocator/process peaks.",
+        "NVML PCIe20ms counters and utilization remain in raw telemetry."
+      ],
+      "sampling": {
+        "max_observed_interval_seconds": 0.20054517599965038,
+        "requested_interval_seconds": 0.2,
+        "sample_count": 1380,
+        "skipped_schedule_slots": 0
+      }
+    },
+    "native_allocator": {
+      "after_forward": {},
+      "available": false,
+      "interpretation": "Reserved-memory interpretation follows pinned runtime/receipt semantics; log itself labels generic peak MB. No allocated peak is available.",
+      "log_excerpts": [
+        "[09-23 04:09:59] Pixel data generated successfully in 23.83 seconds",
+        "[09-23 04:09:59] Peak memory usage: 37406.00 MB"
+      ],
+      "log_receipt": {
+        "bytes": 20315,
+        "path": "artifacts/worker2-native-log.txt",
+        "sha256": "b90264b46b9b2d3352aa9c46d2a5124f9812e9b7af1373078fff56419d7ceeec"
+      },
+      "native_inference_seconds": 23.83,
+      "peak_allocated_mib": null,
+      "peak_reserved_mib": 37406.0,
+      "perf_dump_available": false,
+      "reported_label": "Peak memory usage: 37406.00 MB",
+      "reported_peak_reserved_mib": 37406.0,
+      "runtime_cumulative_peak": {},
+      "scope": "Rounded native request log; reserved interpretation inferred from known pinned semantics; no per-request performance dump.",
+      "source": "Rounded current API-call native log, not deployment-warm perf dump."
+    },
+    "native_inference_seconds": 23.83,
+    "native_response_metrics": {},
+    "operation": "generation",
+    "planned_crop_bottom": 0,
+    "planned_native_size": "1024x1024",
+    "predicted_next_demand": null,
+    "profile_eligible": true,
+    "raw_artifact_sha256": {
+      "generation.png": "876ad24718d40d31090a214ef7028a26b2e966cc14fe0f3894c20e91fe56467b",
+      "telemetry.jsonl": "01b9ce5cb03129a09e477b6a3c4f62412ba9286e02dd12722b8c0399e202fd39"
+    },
+    "raw_status": "PARTIAL",
+    "recipe_comparison": {
+      "actual_seed": 20260923,
+      "basis": "Actual attempt payload and native log; reviewed client defaults supply 40 steps, CFG1 and CPU noise RNG. No rerun authorized.",
+      "ladder_seed": 42,
+      "same_recipe_as_ladder": false,
+      "status": "ACCEPTED_INDEPENDENT_API_RECIPE"
+    },
+    "recovery": {
+      "attempted": false,
+      "required": false
+    },
+    "references": 0,
+    "request_count": 1,
+    "request_settings": {
+      "background": "opaque",
+      "generator_device": "cpu",
+      "guidance_scale": 1,
+      "model": "qwen-image-2.1",
+      "n": 1,
+      "num_inference_steps": 40,
+      "prompt": "A studio photograph of one red ceramic teapot with a curved spout and round lid, centered on a pale wooden table against a plain cream background. Soft daylight, clear silhouette, no text, no other objects.",
+      "seed": 20260923,
+      "size": "1024x1024",
+      "true_cfg_scale": 1
+    },
+    "requested_size": "1024x1024",
+    "residency_after": {
+      "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+      "device_current": {
+        "free_bytes": 17028874240,
+        "total_bytes": 51527024640,
+        "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+      },
+      "gpu_processes": [
+        [
+          "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "115633",
+          "32226"
+        ]
+      ],
+      "host_current": {
+        "MemAvailable": 921142452224,
+        "MemTotal": 946820968448,
+        "SwapFree": 3157258240,
+        "SwapTotal": 3157258240
+      },
+      "started_at": "2026-09-23T03:55:55.463204199Z"
+    },
+    "root_approved_size": true,
+    "root_profile_review": {
+      "review_receipt": {
+        "bytes": 302,
+        "path": "artifacts/root-profile-review.json",
+        "sha256": "42648590293faad4a0a545cf5053515bbdb8b262998c2ad809a51d1d0952fda1"
+      },
+      "root_note": "ROOT-FINAL-PROFILES-GO.md",
+      "root_note_sha256": "433f61004625e090b5da2f9650ba00bc1330c5fb74d5ce296c7c790f9815d07c"
+    },
+    "rung": null,
+    "runtime_identity": {
+      "backend_run_id": "49fe6ab1e155453b8a529e199f16a1a2",
+      "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+      "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+      "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+      "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "runtime_config_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+      "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "runtime_source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+      "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7"
+    },
+    "scope": "api_baseline",
+    "source_receipts": [
+      {
+        "bytes": 2636,
+        "path": "worker2-client-evidence/LIVE-WINDOW-RELEASE.json",
+        "sha256": "1d7d79b581c1f1b6d51f07af65c6acddade466f7402e4cea23e037f401307beb"
+      },
+      {
+        "bytes": 3575,
+        "path": "worker2-client-evidence/LIVE-generate.json",
+        "sha256": "f476fd5eb3dfc213243f5832eaf904568847fef3f0d074a5da3f042e8b3a7ab5"
+      },
+      {
+        "bytes": 661,
+        "path": "worker2-client-evidence/evidence/baseline-generation.attempt.json",
+        "sha256": "f309ac6de13411505deda6afb7d2abcbf3e565704d5c552a8c389bfee2ddc4bb"
+      },
+      {
+        "bytes": 2303,
+        "path": "worker2-client-evidence/LIVE-reject-edit.json",
+        "sha256": "3bba71be62c0df0765b7c08bc9535802a09edd7e4c5a9f1dbcbc9c66c6d2a91a"
+      },
+      {
+        "bytes": 6980,
+        "path": "artifacts/worker2-baseline-segment2/window-result.json",
+        "sha256": "2b805df5ed03b0a080493afa8152d481088ac2ee10927057d808f94a4dd844cc"
+      },
+      {
+        "bytes": 1428822,
+        "path": "artifacts/worker2-baseline-segment2/telemetry.jsonl",
+        "sha256": "01b9ce5cb03129a09e477b6a3c4f62412ba9286e02dd12722b8c0399e202fd39"
+      },
+      {
+        "bytes": 19356,
+        "path": "DEPLOYMENT-RECEIPT.json",
+        "sha256": "4f2a4a9e3e5ca47a63ef5524be76897d59b906e4d31f4a240ad60debb2e5ca30"
+      },
+      {
+        "bytes": 1515,
+        "path": "ROOT-WORKER2-RESULT.md",
+        "sha256": "4d4cd86d7c7b31c527a20c889c50163bc34b96c7e5e22cd955618a721eb09773"
+      },
+      {
+        "bytes": 20315,
+        "path": "artifacts/worker2-native-log.txt",
+        "sha256": "b90264b46b9b2d3352aa9c46d2a5124f9812e9b7af1373078fff56419d7ceeec"
+      },
+      {
+        "bytes": 29965,
+        "path": "worker2-client-evidence/client.py",
+        "sha256": "11c24a2c835db2553eb901ba6e622b734e7d7b58aac877d31347d46b738643a4"
+      }
+    ],
+    "status": "PASS",
+    "timing": {
+      "finished_utc": "2026-09-23T04:09:59.772259+00:00",
+      "request_finished_utc": "2026-09-23T04:09:59.772259+00:00",
+      "request_started_utc": "2026-09-23T04:09:35.589157+00:00",
+      "started_utc": "2026-09-23T04:09:35.589157+00:00"
+    },
+    "tmp": {
+      "after_count": 10,
+      "before_count": 10,
+      "new_entries": []
+    },
+    "visual": {
+      "finding": "Coherent red teapot/table/soft light; window not visible.",
+      "hash_bound": true,
+      "method": "Reuse exact root visual verdict; no new image call or substituted review.",
+      "output_sha256": "876ad24718d40d31090a214ef7028a26b2e966cc14fe0f3894c20e91fe56467b",
+      "receipt": {
+        "bytes": 617,
+        "path": "artifacts/worker2-baseline/visual-review.json",
+        "sha256": "d566b835ed16e94ea7eeb528a50202e4018c09cd46790e377c60a1485d51e0da"
+      },
+      "reviewer": "Root independent actual Worker2 PNG review",
+      "root_note": "ROOT-WORKER2-RESULT.md",
+      "root_note_sha256": "4d4cd86d7c7b31c527a20c889c50163bc34b96c7e5e22cd955618a721eb09773",
+      "status": "PASS"
+    }
+  },
+  "uhd_mapping": {
+    "status": "NOT_TESTED"
+  },
+  "unmeasured_rungs": [
+    "2112x1184",
+    "2528x1408",
+    "3040x1696",
+    "3648x2048",
+    "3840x2160"
+  ],
+  "worker2_final_receipts": {
+    "FINAL-GET-CAPABILITIES.json": {
+      "bytes": 2490,
+      "path": "worker2-final/FINAL-GET-CAPABILITIES.json",
+      "sha256": "44d3e771a57b667a0d06bec7d0836dafe3ecb23f611a8cc0c68d582f395399e5"
+    },
+    "FINAL-GET-RESULT.json": {
+      "bytes": 4526,
+      "path": "worker2-final/FINAL-GET-RESULT.json",
+      "sha256": "f9862059eb12b70cb849cf466bf9cc206c549beda02fa5eb359b1598fd1bb97b"
+    }
+  },
+  "worker2_receipts": [
+    {
+      "receipt": {
+        "bytes": 2636,
+        "path": "worker2-client-evidence/LIVE-WINDOW-RELEASE.json",
+        "sha256": "1d7d79b581c1f1b6d51f07af65c6acddade466f7402e4cea23e037f401307beb"
+      },
+      "reported_summary": {
+        "session_id": "01a0cc29-cf0d-7812-be6f-83899ac24917"
+      }
+    }
+  ]
+}

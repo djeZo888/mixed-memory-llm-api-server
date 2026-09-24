@@ -1,0 +1,474 @@
+{
+  "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+  "profiles": {
+    "edit_rgb_comparison": {
+      "cgroup": {
+        "last_sampled_memory_current_bytes": 5357223936,
+        "observed_kernel_lifetime_memory_peak_bytes_range": {
+          "max": 5438451712,
+          "min": 5417795584
+        },
+        "peak_scope": "memory.peak is cgroup lifetime high-water mark; not reset per request",
+        "sampled_memory_current_bytes_range": {
+          "max": 5357223936,
+          "min": 5354659840
+        },
+        "sampled_swap_current_bytes_range": {
+          "max": 0,
+          "min": 0
+        },
+        "valid_counts": {
+          "memory.current": 29,
+          "memory.peak": 29,
+          "memory.swap.current": 29
+        }
+      },
+      "device": {
+        "last_sample_current": {
+          "free": 17024352256,
+          "total": 51527024640,
+          "used": 34502672384,
+          "utc": "2026-09-23T03:09:09.520606+00:00"
+        },
+        "post_request_current_snapshot": {
+          "free_bytes": 17024679936,
+          "total_bytes": 51527024640,
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+        },
+        "post_request_process_usage_mib": [
+          {
+            "pid": 87156,
+            "used_mib": 32230,
+            "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+          }
+        ],
+        "request_window_sampled_peak_used_bytes": 41924493312,
+        "sampled_min_free_bytes": 9602531328,
+        "sampled_min_free_mib": 9157.6875,
+        "sampled_min_free_percent": 18.635913,
+        "sampled_peak_used_bytes": 41924493312,
+        "sampled_peak_used_mib": 39982.3125,
+        "total_bytes": 51527024640,
+        "total_mib": 49140.0
+      },
+      "host": {
+        "minimum_memavailable_bytes": 921043390464,
+        "minimum_memavailable_percent": 97.27746,
+        "sample_count": 29,
+        "swap_used_bytes_range": {
+          "max": 0,
+          "min": 0
+        },
+        "vmstat_counter_deltas": {
+          "oom_kill": 0,
+          "pgmajfault": 0,
+          "pswpin": 0,
+          "pswpout": 0
+        }
+      },
+      "native_allocator": {
+        "after_forward_peak_allocated_mib": 34267.42,
+        "after_forward_peak_reserved_mib": 38336.0,
+        "load_peak_allocated_mib": 31083.04,
+        "load_peak_reserved_mib": 31252.0,
+        "runtime_checkpoint_current_allocated_mib": 31093.2,
+        "runtime_checkpoint_current_reserved_mib": 38336.0,
+        "runtime_peak_allocated_mib": 34267.42,
+        "runtime_peak_reserved_mib": 38336.0,
+        "scope": "runtime_peak is native cumulative maximum across requests since startup; after_forward fields are native reported request checkpoint peaks; neither is NVML total-device or per-process current",
+        "scope_source": "pinned SGLang gpu_worker.py updates _runtime_peak_* with max(previous, snapshot)"
+      },
+      "pcie": {
+        "link_generations_observed": [
+          1,
+          3
+        ],
+        "link_widths_observed": [
+          4
+        ],
+        "nvml_throughput_window_ms": 20,
+        "rx_kb_per_s_range": {
+          "max": 1324023,
+          "min": 244
+        },
+        "tx_kb_per_s_range": {
+          "max": 138476,
+          "min": 634
+        }
+      },
+      "request": {
+        "finished_utc": "2026-09-23T03:09:09.488942+00:00",
+        "http_call_count": 1,
+        "http_elapsed_seconds": 27.346664,
+        "http_status": 200,
+        "native_inference_seconds": 26.988528,
+        "output": {
+          "bytes": 2165240,
+          "format": "PNG",
+          "fully_decoded": true,
+          "height": 1024,
+          "mode": "RGBA",
+          "sha256": "a76c98a479c2e319677b931e699373b376846e3bfd2769d18ca66c74c99d706b",
+          "width": 1024
+        },
+        "started_utc": "2026-09-23T03:08:42.083493+00:00"
+      },
+      "sampling": {
+        "first_query_to_sampler_start_seconds": 0.024518,
+        "first_sample_utc": "2026-09-23T03:08:41.320525+00:00",
+        "host_sample_count": 29,
+        "last_query_to_stop_seconds": 0.048198,
+        "last_sample_utc": "2026-09-23T03:09:09.520606+00:00",
+        "max_actual_sample_interval_seconds": 0.200101,
+        "max_query_duration_seconds": 0.146986,
+        "nominal_device_interval_seconds": 0.2,
+        "nominal_host_interval_seconds": 1.0,
+        "request_end_after_last_sample_seconds": 0,
+        "request_start_before_first_sample_seconds": 0,
+        "sample_count": 142,
+        "skipped_schedule_slots": 0,
+        "stop_utc": "2026-09-23T03:09:09.609895+00:00",
+        "unavailable_metric_counts": {},
+        "unobserved_peak_intervals": "Between all discrete samples; query durations are not synchronized metric timestamps. No continuous peak guarantee."
+      },
+      "source_files": {
+        "evidence/rgb-comparison/2088c347bc1e41a9a3e086b20b9be7be-rgb-comparison-telemetry.jsonl": "da0f7a229af3e51fa6abecbe6bc6139474d972993d297ca35d6dd5224f8305c1",
+        "evidence/rgb-comparison/edit-perf.json": "a6a498e0214ad9ec1aa5bcc8f96d95067982fcf2d6d92d3fa2e003b8cc1a6f7b",
+        "evidence/rgb-comparison/edit-summary.json": "26f59f97aaa1ce7c2b2cfe5c6c0085d66d96afff4abf77a7f5bc2ec76740477c"
+      },
+      "telemetry_scope": "request_with_surrounding_idle",
+      "utilization_percent": {
+        "gpu": {
+          "max": 100,
+          "min": 0
+        },
+        "memory": {
+          "max": 38,
+          "min": 1
+        }
+      }
+    },
+    "edit_rgba": {
+      "cgroup": {
+        "last_sampled_memory_current_bytes": 5367300096,
+        "observed_kernel_lifetime_memory_peak_bytes_range": {
+          "max": 5417795584,
+          "min": 5304082432
+        },
+        "peak_scope": "memory.peak is cgroup lifetime high-water mark; not reset per request",
+        "sampled_memory_current_bytes_range": {
+          "max": 5367828480,
+          "min": 5278818304
+        },
+        "sampled_swap_current_bytes_range": {
+          "max": 0,
+          "min": 0
+        },
+        "valid_counts": {
+          "memory.current": 30,
+          "memory.peak": 30,
+          "memory.swap.current": 30
+        }
+      },
+      "device": {
+        "last_sample_current": {
+          "free": 11471093760,
+          "total": 51527024640,
+          "used": 40055930880,
+          "utc": "2026-09-23T03:00:52.864691+00:00"
+        },
+        "post_request_current_snapshot": {
+          "free_bytes": 17026777088,
+          "total_bytes": 51527024640,
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+        },
+        "post_request_process_usage_mib": [
+          {
+            "pid": 87156,
+            "used_mib": 32228,
+            "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+          }
+        ],
+        "request_window_sampled_peak_used_bytes": 41924493312,
+        "sampled_min_free_bytes": 9602531328,
+        "sampled_min_free_mib": 9157.6875,
+        "sampled_min_free_percent": 18.635913,
+        "sampled_peak_used_bytes": 41924493312,
+        "sampled_peak_used_mib": 39982.3125,
+        "total_bytes": 51527024640,
+        "total_mib": 49140.0
+      },
+      "host": {
+        "minimum_memavailable_bytes": 921029550080,
+        "minimum_memavailable_percent": 97.275998,
+        "sample_count": 30,
+        "swap_used_bytes_range": {
+          "max": 0,
+          "min": 0
+        },
+        "vmstat_counter_deltas": {
+          "oom_kill": 0,
+          "pgmajfault": 0,
+          "pswpin": 0,
+          "pswpout": 0
+        }
+      },
+      "native_allocator": {
+        "after_forward_peak_allocated_mib": 34267.35,
+        "after_forward_peak_reserved_mib": 38336.0,
+        "load_peak_allocated_mib": 31083.04,
+        "load_peak_reserved_mib": 31252.0,
+        "runtime_checkpoint_current_allocated_mib": 31093.13,
+        "runtime_checkpoint_current_reserved_mib": 38336.0,
+        "runtime_peak_allocated_mib": 34267.35,
+        "runtime_peak_reserved_mib": 38336.0,
+        "scope": "runtime_peak is native cumulative maximum across requests since startup; after_forward fields are native reported request checkpoint peaks; neither is NVML total-device or per-process current",
+        "scope_source": "pinned SGLang gpu_worker.py updates _runtime_peak_* with max(previous, snapshot)"
+      },
+      "pcie": {
+        "link_generations_observed": [
+          1,
+          3
+        ],
+        "link_widths_observed": [
+          4
+        ],
+        "nvml_throughput_window_ms": 20,
+        "rx_kb_per_s_range": {
+          "max": 85839,
+          "min": 244
+        },
+        "tx_kb_per_s_range": {
+          "max": 88525,
+          "min": 683
+        }
+      },
+      "request": {
+        "finished_utc": "2026-09-23T03:00:52.930035+00:00",
+        "http_call_count": 1,
+        "http_elapsed_seconds": 28.63818,
+        "http_status": 200,
+        "native_inference_seconds": 28.270869,
+        "output": {
+          "bytes": 2165324,
+          "format": "PNG",
+          "fully_decoded": true,
+          "height": 1024,
+          "mode": "RGBA",
+          "sha256": "ed3feb60a983dbbbf38b62d24e37a9b978a04b8f01c709d025843746389b2ac1",
+          "width": 1024
+        },
+        "started_utc": "2026-09-23T03:00:24.229099+00:00"
+      },
+      "sampling": {
+        "first_query_to_sampler_start_seconds": 0.024612,
+        "first_sample_utc": "2026-09-23T03:00:23.464623+00:00",
+        "host_sample_count": 30,
+        "last_query_to_stop_seconds": 0.145222,
+        "last_sample_utc": "2026-09-23T03:00:52.864691+00:00",
+        "max_actual_sample_interval_seconds": 0.200088,
+        "max_query_duration_seconds": 0.136522,
+        "nominal_device_interval_seconds": 0.2,
+        "nominal_host_interval_seconds": 1.0,
+        "request_end_after_last_sample_seconds": 0.065344,
+        "request_start_before_first_sample_seconds": 0,
+        "sample_count": 148,
+        "skipped_schedule_slots": 0,
+        "stop_utc": "2026-09-23T03:00:53.051775+00:00",
+        "unavailable_metric_counts": {},
+        "unobserved_peak_intervals": "Between all discrete samples; query durations are not synchronized metric timestamps. No continuous peak guarantee."
+      },
+      "source_files": {
+        "evidence/baseline/2088c347bc1e41a9a3e086b20b9be7be-edit-telemetry.jsonl": "8acba06207f0ed852a93e1941b25aee070663985a5800996e3a851d4598f2892",
+        "evidence/baseline/edit-perf.json": "80efc540754e7500dca1fd7b201692533de797656b1019ab7064906e5351ba95",
+        "evidence/baseline/edit-summary.json": "52d783b061de398ec0ebe80dba6e7f9ad0ba2c78438737e51951579ebe6aa29e"
+      },
+      "telemetry_scope": "request_with_surrounding_idle",
+      "utilization_percent": {
+        "gpu": {
+          "max": 100,
+          "min": 0
+        },
+        "memory": {
+          "max": 18,
+          "min": 1
+        }
+      }
+    },
+    "generation": {
+      "cgroup": {
+        "last_sampled_memory_current_bytes": 5033439232,
+        "observed_kernel_lifetime_memory_peak_bytes_range": {
+          "max": 5033439232,
+          "min": 228405248
+        },
+        "peak_scope": "memory.peak is cgroup lifetime high-water mark; not reset per request",
+        "sampled_memory_current_bytes_range": {
+          "max": 5033439232,
+          "min": 228405248
+        },
+        "sampled_swap_current_bytes_range": {
+          "max": 0,
+          "min": 0
+        },
+        "valid_counts": {
+          "memory.current": 55,
+          "memory.peak": 55,
+          "memory.swap.current": 55
+        }
+      },
+      "device": {
+        "last_sample_current": {
+          "free": 17030643712,
+          "total": 51527024640,
+          "used": 34496380928,
+          "utc": "2026-09-23T02:59:44.519726+00:00"
+        },
+        "post_request_current_snapshot": {
+          "free_bytes": 17030971392,
+          "total_bytes": 51527024640,
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+        },
+        "post_request_process_usage_mib": [
+          {
+            "pid": 87156,
+            "used_mib": 32224,
+            "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+          }
+        ],
+        "request_window_sampled_peak_used_bytes": 41119186944,
+        "sampled_min_free_bytes": 10407837696,
+        "sampled_min_free_mib": 9925.6875,
+        "sampled_min_free_percent": 20.198794,
+        "sampled_peak_used_bytes": 41119186944,
+        "sampled_peak_used_mib": 39214.3125,
+        "total_bytes": 51527024640,
+        "total_mib": 49140.0
+      },
+      "host": {
+        "minimum_memavailable_bytes": 921368190976,
+        "minimum_memavailable_percent": 97.311764,
+        "sample_count": 56,
+        "swap_used_bytes_range": {
+          "max": 0,
+          "min": 0
+        },
+        "vmstat_counter_deltas": {
+          "oom_kill": 0,
+          "pgmajfault": 2,
+          "pswpin": 0,
+          "pswpout": 0
+        }
+      },
+      "native_allocator": {
+        "after_forward_peak_allocated_mib": 34266.57,
+        "after_forward_peak_reserved_mib": 37570.0,
+        "load_peak_allocated_mib": 31083.04,
+        "load_peak_reserved_mib": 31252.0,
+        "runtime_checkpoint_current_allocated_mib": 31092.35,
+        "runtime_checkpoint_current_reserved_mib": 37570.0,
+        "runtime_peak_allocated_mib": 34266.57,
+        "runtime_peak_reserved_mib": 37570.0,
+        "scope": "runtime_peak is native cumulative maximum across requests since startup; after_forward fields are native reported request checkpoint peaks; neither is NVML total-device or per-process current",
+        "scope_source": "pinned SGLang gpu_worker.py updates _runtime_peak_* with max(previous, snapshot)"
+      },
+      "native_ready_seconds": 30.371467,
+      "pcie": {
+        "link_generations_observed": [
+          1,
+          3
+        ],
+        "link_widths_observed": [
+          4
+        ],
+        "nvml_throughput_window_ms": 20,
+        "rx_kb_per_s_range": {
+          "max": 2801367,
+          "min": 244
+        },
+        "tx_kb_per_s_range": {
+          "max": 321289,
+          "min": 634
+        }
+      },
+      "request": {
+        "finished_utc": "2026-09-23T02:59:44.459281+00:00",
+        "http_call_count": 1,
+        "http_elapsed_seconds": 24.314615,
+        "http_status": 200,
+        "native_inference_seconds": 24.18252,
+        "output": {
+          "bytes": 1692710,
+          "format": "PNG",
+          "fully_decoded": true,
+          "height": 1024,
+          "mode": "RGBA",
+          "sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+          "width": 1024
+        },
+        "started_utc": "2026-09-23T02:59:20.109840+00:00"
+      },
+      "sampling": {
+        "first_query_to_sampler_start_seconds": 0.025176,
+        "first_sample_utc": "2026-09-23T02:58:48.719631+00:00",
+        "host_sample_count": 56,
+        "last_query_to_stop_seconds": 0.020494,
+        "last_sample_utc": "2026-09-23T02:59:44.519726+00:00",
+        "max_actual_sample_interval_seconds": 0.200602,
+        "max_query_duration_seconds": 0.130532,
+        "nominal_device_interval_seconds": 0.2,
+        "nominal_host_interval_seconds": 1.0,
+        "request_end_after_last_sample_seconds": 0,
+        "request_start_before_first_sample_seconds": 0,
+        "sample_count": 280,
+        "skipped_schedule_slots": 0,
+        "stop_utc": "2026-09-23T02:59:44.581670+00:00",
+        "unavailable_metric_counts": {
+          "cgroup.memory.current:unavailable": 1,
+          "cgroup.memory.peak:unavailable": 1,
+          "cgroup.memory.swap.current:unavailable": 1
+        },
+        "unobserved_peak_intervals": "Between all discrete samples; query durations are not synchronized metric timestamps. No continuous peak guarantee."
+      },
+      "source_files": {
+        "evidence/baseline/2088c347bc1e41a9a3e086b20b9be7be-telemetry.jsonl": "bc020e83ff3eddd9abc21f161b09d5987693dd85eaa2dec1c1df28a3ad6aaaae",
+        "evidence/baseline/generation-perf.json": "98df01de2251c7b56927f764516d1f2766dbd9a13295ce71dade48a3e9543961",
+        "evidence/baseline/generation-summary.json": "8da44c4c33e7b38d3336774302a61653a5fb5efc7ed7fc88c612334346081e2f"
+      },
+      "telemetry_scope": "cold_load_plus_generation",
+      "utilization_percent": {
+        "gpu": {
+          "max": 100,
+          "min": 0
+        },
+        "memory": {
+          "max": 74,
+          "min": 0
+        }
+      }
+    }
+  },
+  "schema_version": 1,
+  "scope": "Retained local real-device evidence aggregation; no new VM calls, inference or tests. These metrics do not establish visual success.",
+  "units": {
+    "mib": "bytes / 1048576",
+    "native_allocator": "native keys named *_mb are reported here as MiB; pinned source uses binary divisor",
+    "pcie": "NVML KB/s; counter window 20ms, sampled every nominal 200ms"
+  },
+  "unobserved_between_profile_windows": [
+    {
+      "after_profile": "generation",
+      "before_profile": "edit_rgba",
+      "last_sample_utc": "2026-09-23T02:59:44.519726+00:00",
+      "next_sample_utc": "2026-09-23T03:00:23.464623+00:00",
+      "seconds": 38.944897
+    },
+    {
+      "after_profile": "edit_rgba",
+      "before_profile": "edit_rgb_comparison",
+      "last_sample_utc": "2026-09-23T03:00:52.864691+00:00",
+      "next_sample_utc": "2026-09-23T03:08:41.320525+00:00",
+      "seconds": 468.455834
+    }
+  ]
+}

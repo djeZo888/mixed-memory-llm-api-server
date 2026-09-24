@@ -1,0 +1,64 @@
+{
+  "comparison": "reviewed_api_opaque_rgb_reference",
+  "finished_utc": "2026-09-23T03:09:09.488942+00:00",
+  "http_call_count": 1,
+  "http_elapsed_seconds": 27.346664,
+  "http_status": 200,
+  "input": {
+    "bytes": 1271632,
+    "format": "PNG",
+    "fully_decoded": true,
+    "height": 1024,
+    "mode": "RGB",
+    "sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+    "width": 1024
+  },
+  "mode": "edit",
+  "native_inference_seconds": 26.988528212000347,
+  "native_peak_reserved_mib": 38336.0,
+  "native_perf": {
+    "available": true,
+    "bytes": 4646,
+    "filename": "edit-perf.json",
+    "sha256": "a6a498e0214ad9ec1aa5bcc8f96d95067982fcf2d6d92d3fa2e003b8cc1a6f7b"
+  },
+  "normalization_receipt": {
+    "filename": "normalization.json",
+    "sha256": "d946f2cb5df0dc2a41261012d25d90d7dffbf906cbd04ed5224d9a83e70bb76f"
+  },
+  "output": {
+    "bytes": 2165240,
+    "format": "PNG",
+    "fully_decoded": true,
+    "height": 1024,
+    "mode": "RGBA",
+    "sha256": "a76c98a479c2e319677b931e699373b376846e3bfd2769d18ca66c74c99d706b",
+    "width": 1024
+  },
+  "request_body_bytes": 1273339,
+  "request_body_sha256": "564799a1bc1a57bac963e1995dd514269524bb689bf431e0591c7fc2d2bee09d",
+  "response_bytes": 2887305,
+  "run_id": "2088c347bc1e41a9a3e086b20b9be7be",
+  "schema_version": 1,
+  "scope": "native_transport_and_decode_only",
+  "settings": {
+    "enable_teacache": false,
+    "generator_device": "cpu",
+    "guidance_scale": 1.0,
+    "model": "qwen-image-2.1",
+    "n": 1,
+    "num_inference_steps": 40,
+    "output_format": "png",
+    "perf_dump_path": "/work/evidence/2088c347bc1e41a9a3e086b20b9be7be/rgb-comparison/edit-perf.json",
+    "prompt": "Change the red teapot to blue, keeping its shape, table, window, and lighting unchanged.",
+    "response_format": "b64_json",
+    "seed": 42,
+    "size": "1024x1024",
+    "true_cfg_scale": 1.0
+  },
+  "started_utc": "2026-09-23T03:08:42.083493+00:00",
+  "status": "pass",
+  "timeout_seconds": 840,
+  "total_elapsed_seconds": 27.405462,
+  "visual_verification": "NOT_TESTED"
+}

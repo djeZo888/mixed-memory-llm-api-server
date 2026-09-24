@@ -1,0 +1,34 @@
+diff --git a/packages/agent-core/src/pi-turn-runner/defaults.ts b/packages/agent-core/src/pi-turn-runner/defaults.ts
+--- a/packages/agent-core/src/pi-turn-runner/defaults.ts
++++ b/packages/agent-core/src/pi-turn-runner/defaults.ts
+@@ -12,13 +12,13 @@
+ 
+ /**
+  * Default per-call LLM HTTP timeout (ms) injected into every provider
+- * stream invocation via `wrapStreamFnWithTimeout`. 20 minutes is long
+- * enough for thinking turns without letting a wedged provider hang the
+- * agent loop indefinitely.
++ * stream invocation via `wrapStreamFnWithTimeout`. The local harness allows
++ * 120 minutes active generation + 30 minutes admission queue + 1 minute
++ * transport margin. The gateway owns the separate active/queue budgets.
+  *
+  * Per-call upstream wrappers that explicitly set `options.timeoutMs` win.
+  */
+-export const LLM_REQUEST_TIMEOUT_MS = 20 * 60 * 1000;
++export const LLM_REQUEST_TIMEOUT_MS = 151 * 60 * 1000;
+ 
+ export const defaultMessageIdAllocator: PiMessageIdAllocator = {
+   async allocateAssistantMessageId() {
+diff --git a/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts b/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
+--- a/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
++++ b/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
+@@ -151,7 +151,8 @@
+ 			}
+ 			const requestOptions = {
+ 				...(options?.signal ? { signal: options.signal } : {}),
+-				...(options?.timeoutMs !== undefined ? { timeout: options.timeoutMs } : {}),
++				// Direct streamSimple auxiliaries also need the full local gateway budget.
++				timeout: options?.timeoutMs ?? 151 * 60 * 1000,
+ 				maxRetries: options?.maxRetries ?? 0,
+ 			};
+ 			const { data: openaiStream, response } = await client.chat.completions

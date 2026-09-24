@@ -1,0 +1,334 @@
+{
+  "task": "H003-ENGINE-BUILD-20260923",
+  "status": "COMPLETE_PRIVATE_BUILD_NATIVE_ROSTER_PASS",
+  "completedAtUtc": "2026-09-23T11:57:51.257694+00:00",
+  "windowReleased": true,
+  "productionDeploymentOwner": "Worker1",
+  "deploymentAuthorizedByThisReceipt": false,
+  "host": {
+    "sshAlias": "ai-harness",
+    "user": "user",
+    "uid": 1000,
+    "home": "/home/user",
+    "podman": "4.9.3",
+    "rootless": true,
+    "graphRoot": "/home/user/.local/share/containers/storage",
+    "staging": "/home/user/ai-harness-h003-engine-build-20260923"
+  },
+  "reviewedBase": "21e2006f48c75aad4dc981a20325b43b6ec53913",
+  "source": {
+    "reviewedBase": "21e2006f48c75aad4dc981a20325b43b6ec53913",
+    "sourceCommit": "a9ea401bf454e12a2c59b2a1d6bd2dda797eb79d",
+    "sourceChanged": true,
+    "changedFiles": [
+      "ai-harness/deploy/tests/native-integration.mjs"
+    ],
+    "delta": "21 additions, 4 deletions; probe only; runtime/Containerfile/locks/pins unchanged",
+    "archiveSha256": "aa74d0d40955a415105c7d176a108cfe8494df6d487c7ff1502e684e501f1d71",
+    "archiveMetadata": "Exact git archive file contents; each file timestamp preserved from initial reviewed archive to reuse copy-layer cache",
+    "sourceTree": "a8b323604a61a264a3001ae7b61a7886a4ec82a4"
+  },
+  "sourceFix": {
+    "commit": "a9ea401bf454e12a2c59b2a1d6bd2dda797eb79d",
+    "file": "ai-harness/deploy/tests/native-integration.mjs",
+    "additions": 21,
+    "deletions": 4,
+    "validation": "node --check and git diff --check PASS; actual corrected final-image roster PASS",
+    "bundle": "source.bundle",
+    "bundleSha256": "9d01b30c7e31c6ad2e1155ad64cc36db826d51e3a68327c3dec39ae279c08d80",
+    "requiresRootPromotionReview": true,
+    "otherSourceFilesChanged": false
+  },
+  "candidate": {
+    "Id": "31b7a4d0aba256266e55a4aa510b0b7af484bef3502e9ffa2b333cf6c48b1428",
+    "Digest": "sha256:617c01955ccf794ea6642af64a5ac1800df00a8be9adf0d07679b42fc4679453",
+    "RepoTags": [
+      "localhost/ai-harness-engine:h003-21e2006f-20260923-probe2"
+    ],
+    "RepoDigests": [
+      "localhost/ai-harness-engine@sha256:617c01955ccf794ea6642af64a5ac1800df00a8be9adf0d07679b42fc4679453"
+    ],
+    "Created": "2026-09-23T11:53:40.971313545Z",
+    "Size": 3219550552,
+    "Architecture": "amd64",
+    "Os": "linux",
+    "Labels": {
+      "io.buildah.version": "1.33.7",
+      "org.opencontainers.image.ai-harness.patchset": "e764cdacb97998b7e7b514e9fabb0bc5d508e1d3e1ffd0a38443812a117d3aef",
+      "org.opencontainers.image.revision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+      "org.opencontainers.image.source": "https://github.com/MiniMax-AI/minimax-code",
+      "org.opencontainers.image.title": "ai-harness local MiniMax engine",
+      "org.opencontainers.image.version": "0.0.3"
+    },
+    "RootFS": {
+      "Type": "layers",
+      "Layers": [
+        "sha256:34467cc93912af891dfee8a3902adf9b4f355a9bca4eaa46f658d1181a21de0d",
+        "sha256:d4538219a5351d13fddbd63f69f91967df4615ce1920c8a0f981a6a1382e9c2b",
+        "sha256:be63ab2861093aeb3c3b7a85e837d5d562510736ba39c00c5ad6b9d5714c9035",
+        "sha256:429894d93c7696cccc056cc2caa20da017bbb4f604ad1226327aa060d78b3bd9",
+        "sha256:362feb000ea275c02b50abdf827ccf034ae1f7d50989852ea8fc3cd9b80fd7b3",
+        "sha256:154968a5309500581db9eb276a95889403fa37729c3515afa831401d2f610a1f",
+        "sha256:a507581ced839f9402349f13f22c431663d19135939974131fb15fccccac1f1c",
+        "sha256:93dd59ec0e2bcc27bdc3568f700bba4d116834198435587f89e53cb05b8b533d",
+        "sha256:088d129329f37e7631e265ae56ee11ef527a027c3e99365ec919ce29ca8320db",
+        "sha256:43b0a6cdd9dcdaaa0d3537d6ccc13bfdddeee39aad404914e0d8c72c0ca62771",
+        "sha256:c0197689adb77745a43eb73c2d3990c862acfc99aaa3543e77878e5a20c64e0d",
+        "sha256:4417657e470cf60eb4d0536a60a6b6ef5da18ca7f116e3755144f698b4efb348",
+        "sha256:d82d9bf052ad4df4492ca96ebe8c6f3eb7b32812cde4fcf387f340e9a52230fd",
+        "sha256:7a06623eefdc251cecdecd1589becc97e9850ee86c5a5e065f2daeeec3f5367e",
+        "sha256:bdab821912a816946fb14547fb290b2a285aef4de1359a61bd101650b7e9bb31",
+        "sha256:8e499048888573e87e2a57d5c4fc307912420a0b3157ebd30f84dc16f5d682df",
+        "sha256:694975d2247fe444a6c031eb13038c2608569dbfbd9abab26ca3ff2ce92814e7",
+        "sha256:004c8711bd3aa9537bc27d98b0592fe829b16782d530c0d572d46eeadfea337f",
+        "sha256:b33db690e217e57fa28f83d6884228524a6da7f2694f01f427555335f8c0535e",
+        "sha256:28a2323bc1a371761e5ffbe730962f054a11c9ba6e9c92484175228162267e58",
+        "sha256:b3174cc028976524fa25b4e77fb9441c7aa1dfe2185c84215b929fd4b30ebcbb",
+        "sha256:285d211ebdeff9729653cf54ad4f608cd120173aca28e2666db6f6a431740af7",
+        "sha256:a019c8a00a9a3d9bae7dd521e2abbd013a065155b116b90b1de98b4994665861",
+        "sha256:ebb07923fe42fa813b7d3e5888289f6e8fd43c002d2ff65793bbb0a1e0eb17f3",
+        "sha256:8e46d0ff82e0f47b473b3c54dce3c02fc21b4ba7e921553834b3d00abdae5c78",
+        "sha256:53cdf230b4fb45815283e6cd27d18605a9e130341fda5138bff1fb392659e85e"
+      ]
+    },
+    "User": "1000:1000",
+    "Entrypoint": [
+      "/opt/ai-harness/bin/mcode-local"
+    ]
+  },
+  "originalCandidate": {
+    "source": "21e2006f48c75aad4dc981a20325b43b6ec53913",
+    "tag": "localhost/ai-harness-engine:h003-21e2006f-20260923",
+    "imageId": "781ff1bca046c40ea4472214cefc95093797ded6a264b37b9e76c4de2b0561f5",
+    "digest": "sha256:0477a7bb7c737b756f66bab269b2c08ca46695b821d8897b4db8140dcd992efe",
+    "retained": true,
+    "probe": "Original packaged native roster failed because public configured-MCP inventory deliberately returns empty tool arrays."
+  },
+  "build": {
+    "target": "runtime",
+    "flags": [
+      "--layers",
+      "--format docker",
+      "--target runtime",
+      "--file deploy/Containerfile",
+      "--pull=never",
+      "--network none",
+      "--jobs=1"
+    ],
+    "profileTests": {
+      "passed": 13,
+      "failed": 0
+    },
+    "cacheReceipt": "evidence/cache-hit-receipt.json",
+    "cacheHits": {
+      "originalRuntime": 30,
+      "lockedImageTools": 6,
+      "finalRuntime": 49
+    },
+    "networkException": "Only committed additive image-tools npm ci lock graph fetched; 94 exact packages. No apt/native/Python/reviewed-tools resolution or repinning.",
+    "archiveMetadata": "Final context retains exact committed bytes; original archive modes and timestamps restored solely for cache reuse."
+  },
+  "runtime": {
+    "versions": {
+      "node": "v24.21.0",
+      "python": "Python 3.12.14",
+      "nativeCLI": "0.5.1"
+    },
+    "python": {
+      "executable": "/opt/ai-harness-python/bin/python",
+      "pathResolution": "/opt/ai-harness-python/bin/python",
+      "prefix": "/opt/ai-harness-python",
+      "basePrefix": "/usr/local",
+      "userSite": false
+    },
+    "manifestFilesHashed": 46,
+    "manifestReceipt": "evidence/host/final2/runtime-manifests.json",
+    "sourceComparedManifests": "pins, configure-profile, probe, three npm locks, two Python locks: identical",
+    "imageNpmLockGraph": {
+      "packages": 94,
+      "metadataAndVersionsMatch": true,
+      "npmLsExit": 0
+    },
+    "nativePatchedSourceRevision": "9eb83dfdbd8b5b84c5ef45da6922295b9829d386"
+  },
+  "acceptance": {
+    "nativeRuntimeStartup": "PASS; quarantined; no turn",
+    "nativeMcpRegistry": "PASS; same native runtime owner; actual stdio initialize/tools-list; metadata/schema captured",
+    "mcp": [
+      {
+        "name": "searxng",
+        "status": "available",
+        "tools": [
+          "mcp__searxng__searxng_search"
+        ]
+      },
+      {
+        "name": "image",
+        "status": "available",
+        "tools": [
+          "mcp__image__image_capabilities",
+          "mcp__image__image_generate",
+          "mcp__image__image_edit"
+        ]
+      }
+    ],
+    "roles": [
+      {
+        "name": "mavis",
+        "surface": "cli",
+        "nativeTools": [
+          "ask_user",
+          "bash",
+          "browser",
+          "code_review",
+          "edit",
+          "glob",
+          "grep",
+          "read",
+          "request_feature_enable",
+          "skill",
+          "task",
+          "task_append",
+          "task_output",
+          "task_query",
+          "task_stop",
+          "todowrite",
+          "web_fetch",
+          "write"
+        ],
+        "configuredMcp": [
+          "mcp__image__image_capabilities",
+          "mcp__image__image_edit",
+          "mcp__image__image_generate",
+          "mcp__searxng__searxng_search"
+        ]
+      },
+      {
+        "name": "explore",
+        "surface": "task-child",
+        "nativeTools": [
+          "bash",
+          "browser",
+          "code_review",
+          "glob",
+          "grep",
+          "read",
+          "skill",
+          "web_fetch"
+        ],
+        "configuredMcp": []
+      },
+      {
+        "name": "worker",
+        "surface": "task-child",
+        "nativeTools": [
+          "bash",
+          "browser",
+          "code_review",
+          "edit",
+          "glob",
+          "grep",
+          "read",
+          "request_feature_enable",
+          "skill",
+          "task_output",
+          "task_query",
+          "task_stop",
+          "web_fetch",
+          "write"
+        ],
+        "configuredMcp": [
+          "mcp__image__image_capabilities",
+          "mcp__image__image_edit",
+          "mcp__image__image_generate",
+          "mcp__searxng__searxng_search"
+        ]
+      },
+      {
+        "name": "verifier",
+        "surface": "task-child",
+        "nativeTools": [
+          "bash",
+          "browser",
+          "code_review",
+          "glob",
+          "grep",
+          "read",
+          "skill",
+          "task_output",
+          "task_query",
+          "task_stop",
+          "web_fetch"
+        ],
+        "configuredMcp": []
+      }
+    ],
+    "filters": "Actual discovered configured MCP schema definitions with throwing implementations, native definitions, browser feature admission and canonical role filters; no tool execution",
+    "generationRequests": 0,
+    "isolation": "UID1000, keep-id, network none, capdrop ALL, no-new-privileges, read-only root, reviewed seccomp, tmpfs, task-only profile/workspace",
+    "fakeCredential": "Random UUID, private mode0600 profile only, sanitized logs, not synchronized",
+    "evidence": "evidence/host/final2/native-roster.json"
+  },
+  "productionBeforeAfter": {
+    "unchanged": true,
+    "engineTag": "localhost/ai-harness-engine:0.0.2-ae65651df5f9",
+    "imageId": "4af6da23f70c3bc20d557be623d3d3bed7ef5d889e2b510debe556dc54936da3",
+    "digest": "sha256:e9ab4de40f3b36b2cfa08fc41f61c514800ab417e6d8e5a52683827fac1ca1f3",
+    "services": {
+      "ai-harness.service": {
+        "pid": 1659,
+        "restarts": 0,
+        "state": "active/running"
+      },
+      "ai-harness-searxng.service": {
+        "pid": 1658,
+        "restarts": 0,
+        "state": "active/running"
+      },
+      "nginx.service": {
+        "pid": 1558,
+        "restarts": 0,
+        "state": "active/running"
+      }
+    },
+    "sameServiceStartTimestamp": "Wed 2026-09-23 03:01:29 CEST",
+    "before": [
+      "evidence/host-preflight.txt",
+      "evidence/production-before.txt"
+    ],
+    "after": "evidence/production-after.txt"
+  },
+  "storage": {
+    "beforeFreeBytes": 429243580416,
+    "afterFreeBytes": 418938228736,
+    "guardMinimumBytes": 21474836480,
+    "guard": "PASS",
+    "cleanupOrPrune": false
+  },
+  "ownedProbeTasks": "All six retained task containers exited; no active H003 container. No image/container removal.",
+  "failuresRetained": [
+    "Initial network-none attempt interrupted at additive image-tools npm ci; reported process exit 0 did not mean success; no candidate then.",
+    "Original roster FAILED configured MCP tools=[]; exact failure retained.",
+    "First patch archive attempt invalid: local git identity absent, commit failed and base archive was staged; marked invalid and interrupted offline.",
+    "Corrected archive cache miss due restrictive staging modes; terminated offline, original task archive metadata restored, successful cached final build retained.",
+    "Final native roster PASS exit0 initially rejected by task wrapper JSON parser because of ANSI prefix; existing sanitized output parsed after stripping ANSI, no probe rerun."
+  ],
+  "limitations": [
+    "Actual main/worker assembled live per-turn schemas and model/delegated execution: NOT_TESTED. Native configured schemas and canonical filters were inspected without any turn.",
+    "Image generation/edit execution, text/image/GPU inference, real gateway/API requests, model downloads: NOT_TESTED and not performed.",
+    "Deployment/live production acceptance, ACP session/create proof, browser execution and sandbox runtime behavior: NOT_TESTED in this task.",
+    "Explore/verifier suppress configured MCP and omit native write/edit/delegation tools; pinned native policy still includes bash/browser. This is capability-filter evidence, not proof of behavioral read-only execution.",
+    "Committed pins.json retains historical imageTag 0.0.2; candidate identity is the inspected unique tag, image ID and digest. No pin was changed."
+  ],
+  "hostEvidenceSynchronizedTo": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-ENGINE-BUILD-20260923/evidence/host",
+  "sessionArtifactsRetained": [
+    "events.jsonl",
+    "stderr.log",
+    "wrapper.log",
+    "run.sh",
+    "STATUS.md",
+    "source.bundle"
+  ],
+  "independentAudit": "PASS; evidence/independent-closeout-audit.txt",
+  "nativeSessionArtifact": "native-session.json"
+}

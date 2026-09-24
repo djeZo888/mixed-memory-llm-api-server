@@ -1,0 +1,171 @@
+{
+  "raw_evidence_directory": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live",
+  "scope": "All post-release work was local packaging; no host contact after WINDOW-RELEASE. No raw trace or PNG committed.",
+  "last_vm_observation_utc": "2026-09-23T14:20:19.810519+00:00",
+  "last_harness_observation_utc": "2026-09-23T14:20:19.339081+00:00",
+  "startup_native_evidence_path": "/data/services/image21-runtime-20260923/work/evidence/7166f85afcd245f4bded206488970a08",
+  "startup_native_output_sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+  "startup_vm_telemetry_path": "/data/services/image21-runtime-20260923/receipts/7166f85afcd245f4bded206488970a08-telemetry.jsonl",
+  "artifacts": [
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/harness-after.json",
+      "bytes": 7716,
+      "sha256": "7b9fcc1620e4e4e0e7b222d7f49faaa695453f0a0987323137b977cecc26f58c"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/harness-after.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/harness-before.json",
+      "bytes": 4684,
+      "sha256": "6e4a7a094a4c194b4f09ae154f536d76536a562375178a7e474599dfda255b52"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/harness-before.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/harness_after.py",
+      "bytes": 2918,
+      "sha256": "53c4f623227fe8b230badd989ce1e294173edfdbfb9f7aeb92b1c004d60aaad8"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/harness_snapshot.py",
+      "bytes": 2568,
+      "sha256": "cedc011e8aeed61ab942b2a756613a3fd3f4a2fc5e3056978ca087cb8b2f90ab"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/install-exit.json",
+      "bytes": 17,
+      "sha256": "c365161d39236fe0f1d32937fbc549796b8487d8faf65ed3879b96897c78ea5d"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/install-launch.json",
+      "bytes": 228,
+      "sha256": "69e2d6242744fb2f06794210a63243f6a4ef487aced1747e86edd04850edc1f9"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/install.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/install.stdout",
+      "bytes": 230,
+      "sha256": "c2050df7f041a764141549493f9ebaaea9b07e06e2d84dc6740a776ad0c6ba36"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/payload-validation.json",
+      "bytes": 2373,
+      "sha256": "1b9ac8b46aa1c686c4ff77794e25d16b99ae4354637fdb64709282a027cba418"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/payload.json",
+      "bytes": 43488,
+      "sha256": "c27259f49df6ce6abef91244cd8da27493fcee9e24d312c08220b2ab93c36c53"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/stage-inputs.py",
+      "bytes": 112119,
+      "sha256": "96d5fed6023ba531e1b9d9682662d09996a5464e288e4336d550c0503211e4a1"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/staging.json",
+      "bytes": 605,
+      "sha256": "2b0330a0702b9313316d83667470267f0e6e3be0e13b3c16801765a43e419282"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/staging.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/start-events.jsonl",
+      "bytes": 2245,
+      "sha256": "a0af7c426150897d7d3027744a3f163c54663cf1357144321077df948f19b68a"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/start-exit-code",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/start-launch.json",
+      "bytes": 98,
+      "sha256": "1b3776a8424ffa5b838e2a7e21455ab93519549113c59054c411a0435579ff5f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/start-once.py",
+      "bytes": 2942,
+      "sha256": "37de6478cbcd1a0d7fc6021179038d76bf8f070026f5ea75ffde7ac34fd21f06"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/start.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/startup-telemetry.jsonl",
+      "bytes": 291847,
+      "sha256": "e5102efba62faae289f657cb54bc9151ff27721b8bc93057647232126def925f"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/validate-live.py",
+      "bytes": 9374,
+      "sha256": "2843a5b6fe17953ac414a5e5f6a9af42cc0507f619b619956b3fe7ceb0565d37"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/vm-after.json",
+      "bytes": 356945,
+      "sha256": "72fe29d9c97107cbeb953f3bc79660c51597c095af653d3939391fbe63a18fcb"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/vm-after.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/vm-before.json",
+      "bytes": 25845,
+      "sha256": "1b87590f35391784d737ecdefafabc46b6a1345b462b6552be82fcc76872cb11"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/vm-before.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/vm_after.py",
+      "bytes": 4462,
+      "sha256": "e506e2b890db2e894da2fd0444ec573a4fe4f1931514140e8a019ffa7b0e344a"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live/vm_snapshot.py",
+      "bytes": 3941,
+      "sha256": "ad029fae6aaeef0444b33a99271d24c4fcc465d8f8c6c92d73029d6828c93e8a"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/capacity-final/CAPACITY-WINDOW-RELEASE.json",
+      "bytes": 2153,
+      "sha256": "f9066977060b902eb4e8678fca8bec6f6a3cb185fc85c29b4a9a6d6b2458f197"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/capacity-final/ROOT-QUALIFICATION-DECISIONS.json",
+      "bytes": 850,
+      "sha256": "70db2727bad0cad067e69cb07d809d024e3109108f670ddc520a1cb95cf2ce64"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/capacity-final/post-C04-readonly.json",
+      "bytes": 8274,
+      "sha256": "240aeb93fcd6bb69b42e1b801b865857fa5fbdcb37e88759a4575f3a445ba9d6"
+    },
+    {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/capacity-final/QUALIFIED-MANIFEST-CANDIDATE.json",
+      "bytes": 3112,
+      "sha256": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3"
+    }
+  ]
+}

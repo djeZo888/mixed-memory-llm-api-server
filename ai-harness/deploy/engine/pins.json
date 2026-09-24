@@ -1,0 +1,176 @@
+{
+  "reviewedAt": "2026-09-22",
+  "imageTag": "localhost/ai-harness-engine:0.0.2-ae65651df5f9",
+  "base": "docker.io/library/node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6",
+  "baseLinuxAmd64Manifest": "sha256:5cbc7caba8c2c0f0bca675d1b61b9f2857e1cf1853c6164ee9dd409501a936e7",
+  "node": "24.21.0",
+  "pnpm": "9.12.0",
+  "miniMaxRepository": "https://github.com/MiniMax-AI/minimax-code.git",
+  "miniMaxRevision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+  "miniMaxManifestVersion": "0.5.1",
+  "mcodeTools": {
+    "version": "0.0.4",
+    "archive": "https://registry.npmjs.org/@minimax-ai/code/-/code-0.3.11.tgz",
+    "archiveSha512Base64": "sBOd8yvQRVuQNoGvzCDwXKaj5rQxLI3gKnojWS4+0wnMU9IXtxObSqbfBxz30Lze/zitRtSG2v76iJGHOmHRUA==",
+    "cliSha256": "e5a59ec5362e395b519317ad6fecd99f6e92308b9d985be44b64eb2f2b73a722"
+  },
+  "additionalNpm": {
+    "typescript": "7.0.2",
+    "@playwright/test": "1.63.0",
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "4.6.5"
+  },
+  "additionalPython": {
+    "pytest": "9.1.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sympy": "1.14.0",
+    "matplotlib": "3.11.2",
+    "pypdf": "6.19.0",
+    "pdfplumber": "0.11.10",
+    "Markdown": "3.10.3"
+  },
+  "gatewayUrl": "http://10.0.2.2:8081/v1",
+  "logicalModel": "qwen3.8-27b",
+  "contextWindow": 480000,
+  "maxOutputTokens": 65536,
+  "dependencyBoundary": "Node/Python base images, native source/mcode-tools and supplemental npm/Python lockfiles pinned. Apt package snapshot inherits preserved base build; image emits package manifests. Retain exact final image ID and manifests.",
+  "requestTimeoutMs": 9060000,
+  "inputModalities": [
+    "text",
+    "image"
+  ],
+  "supportImage": true,
+  "requestBudgetPatch": {
+    "path": "patches/0001-gateway-request-budget.patch",
+    "sha256": "28d00e116d47b355e6e2f249b18fdc5e9e48bb290f16bb512a8ab532f756b161",
+    "files": [
+      {
+        "path": "packages/agent-core/src/pi-turn-runner/defaults.ts",
+        "originalSha256": "644698ef49486fd0a4030388a2d34497afd643116f54da5a829ca6166b1967ac",
+        "patchedSha256": "1977a0947a4a036adea9e1f5677c41984cea49bfd4f3a6b2a03782510ba074fc"
+      },
+      {
+        "path": "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts",
+        "originalSha256": "9271d59f34d58854af1e0a32a6d67e55fedd68673519f22c08eebce97ca8be21",
+        "patchedSha256": "73c3decbf8a78b5fa672bf4690bfec4ea717a04799dc400eff92654d79a0d01e"
+      }
+    ],
+    "identityBoundary": "These resulting hashes apply immediately after 0001; identity.json pins the final combined source."
+  },
+  "patchSetSha256": "69d7fe14ed8b1e394fe7315e04724e3ef89c2efbd21118a42fa1842f5ed48eff",
+  "patchIdentity": "patches/identity.json",
+  "transportPatch": {
+    "patches": [
+      {
+        "path": "0003-gateway-undici-dependency.patch",
+        "sha256": "f1db7f0c33096b818ed5eea9b8899c0845e81ab74917eb98aec028a168c62c08",
+        "phase": "dependency"
+      },
+      {
+        "path": "0004-gateway-fetch-timeouts.patch",
+        "sha256": "544f0c8bb830b9cbc8da9b700220b5dfc9ff9e270cd9949142618efd3dcb2569",
+        "phase": "source"
+      },
+      {
+        "path": "0005-gateway-dispatcher-type-bridge.patch",
+        "sha256": "5b4e758778aa81e7a3f99ee3296f3bfec37d7d07b80e380b208e20951dbee4bc",
+        "phase": "source"
+      }
+    ],
+    "transport": {
+      "gatewayOrigin": "http://10.0.2.2:8081",
+      "headersTimeoutMs": 9060000,
+      "bodyTimeoutMs": 9060000,
+      "undici": "7.29.1",
+      "undiciIntegrity": "sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q=="
+    },
+    "files": [
+      {
+        "path": "pnpm-lock.yaml",
+        "originalSha256": "5e4fd57322e3c9e630d7eb2d043a7b094f5f141380ce1f8173310d005ab65ce3",
+        "patchedSha256": "f6cc035d8b217f3ebacb416c8c212d4c01073e68a8c80de77d3a5ba1887d6102"
+      },
+      {
+        "path": "third_party/pi-mono/packages/ai/package.json",
+        "originalSha256": "82458b298e5d19fbc0c9d91a6fb0b472b18957faabd17d6b15e5f96c939c4587",
+        "patchedSha256": "40ecd2aa96637067e7ff2fdbd5b9e30994fe852556393ca8b76b2890d0a22fa9"
+      },
+      {
+        "path": "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts",
+        "originalSha256": "9271d59f34d58854af1e0a32a6d67e55fedd68673519f22c08eebce97ca8be21",
+        "patchedSha256": "ac725f4baa2a923a704b0250165b389f7745139231bf108f3ac3df3a0541e35a"
+      }
+    ]
+  },
+  "buildContext": "ai-harness/",
+  "buildTarget": "runtime",
+  "buildFormat": "docker",
+  "chromiumSeccomp": {
+    "source": "ai-harness:/usr/share/containers/seccomp.json",
+    "sourceSha256": "cc374cf23846ce1f62f4dc807a8e2b8673c783c6f56cb475467621035d281e6c",
+    "profileSha256": "0474c063b32acee85a1eb5ccfc35f7b1f66278af8da722c45b1d25eb2ae1cfbb",
+    "withoutChrootCanonicalSha256": "615f55e6d11dc878108ab7368c0da74e7288b9a65e168ded110a39b0569337c8",
+    "change": "Only chroot changes from capability-conditional to allowed; all other syscall rules unchanged. Required by Chromium chroot inside nested user namespace with outer capabilities dropped.",
+    "observedFailure": "Check failed: sys_chroot(\"/proc/self/fdinfo/\") == 0; Chromium zygote exits prematurely under stock Podman4.9.3 profile."
+  },
+  "profileDataSubdirectory": "state",
+  "profileHomeSubdirectory": "state/home",
+  "python": {
+    "image": "docker.io/library/python:3.12-slim-bookworm@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e",
+    "index": "sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e",
+    "linuxAmd64Manifest": "sha256:1aaa65a85fda306ffb8b910824d4e93bdce61e212c7e87168123ea3073b41a1a",
+    "version": "3.12.14",
+    "config": "sha256:febd0be41adb897a0ab8f1f1c693d8912669ea60c4940e076e9946b60e210ef0"
+  },
+  "browserDownloads": {
+    "patch": "0006-browser-workspace-downloads.patch",
+    "sha256": "a7f39896847bec656665b30d17621928c6dab7e10771b713ed369140fccd96bf",
+    "files": [
+      {
+        "path": "packages/agent-tools/src/desktop/local-browser.ts",
+        "originalSha256": "ee9f680ae82f16f900d607e55009c35e6549b1565428004c1dcbe2794076dc52",
+        "patchedSha256": "d9e32a17514f055d093704b6c6dc18fd35fd3d6009790d869e9f6dc2542aa3a8"
+      },
+      {
+        "path": "packages/tui/src/runtime/browser/headless-chrome-provider.ts",
+        "originalSha256": "324f261ac24e9aa94d9a2299e8b4db1cf03e552f99757513bec9e4e733e54b96",
+        "patchedSha256": "218bbbd905900c9a472bf3653da2d560d2a6c4640e93b976ba4454d9b7591505"
+      },
+      {
+        "path": "packages/tui/src/runtime/browser/headless-chrome-transport.ts",
+        "originalSha256": "2d72e96d68f87d365b5a0670e5ca45addfb72d6d3e878b42b20d68b78ebb810e",
+        "patchedSha256": "92203c34dd98bc98380ff17593cfef189109cf8da803bea76f9c80aead3a163d"
+      }
+    ],
+    "root": "<canonical workspace>/downloads/browser/<safeSessionId>",
+    "filename": "Chromium download GUID",
+    "compactResult": "Completed checked workspace-relative filePath"
+  },
+  "hostInit": {
+    "path": "/usr/bin/catatonit",
+    "package": "catatonit",
+    "version": "0.1.7-1",
+    "binaryVersion": "0.1.7_catatonit",
+    "sha256": "43e9b836ca7631672f12d0610cd574875b62d236dfd62e3b86751f35862e5eba",
+    "purpose": "Podman managed read-only PID1 init executable bind; orphan reaping, no added data/admin mount"
+  },
+  "nativeCompletion": {
+    "approvedPatchSha256": "e3cdb67ea41ef7e8ef6ee3bc014b79f83da3f5c23a7af25b0deccf96a1bbe10d",
+    "approvedCommit": "4a70b28e9d038747ff130302c844ccb06367d03f",
+    "integrationPatchSha256": "882f4e01cd3e7be14690b7070118233aad59a72d7c76c2777aba286f5c834a5e",
+    "overlap": "0007 context preserves existing 0002 compaction notification; initialize test expected notifications adds exactly that preexisting notification. No runtime deviation from approved completion behavior. Five new paths use null originalSha256; git apply --check requires absence."
+  },
+  "reviewedTools": {
+    "baseCommit": "517e5dbeba3b7370d5485b6e012c7326adf458a8",
+    "pdfCorrectionCommit": "184e78082ce3c14b85a09795f23b506b330327f3",
+    "sourceLockPolicy": "Reviewed npm/Python locks unchanged; root-approved three-file PDF implementation correction imported separately."
+  },
+  "h002Metadata": {
+    "base": "ae65651df5f97ae1085ab4e19964f4b78c769a4e + reviewed 0001..0007",
+    "patch": "0008-message-metadata-and-snapshots.patch",
+    "protocol": "mcode/session/message_update schemaVersion 1",
+    "scope": "Metadata-only native message bridge; per-channel full-message dedup; explicit delegation pagination completeness. No inference or lifecycle change."
+  },
+  "timeZone": "Europe/Ljubljana"
+}
