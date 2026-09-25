@@ -48,7 +48,7 @@ def main(argv=None):
         from control.node_action_owner import production_owner
         reader = CanonicalIdentityReader()
         owner = production_owner(reader, control_key=key)
-        observers = BoundedObservers(production_callbacks(reader))
+        observers = BoundedObservers(production_callbacks(reader, control_key=key))
         application = NodeApplication(NodeStatus(observers), NodeActions(owner))
         server = make_server(application, key, host='127.0.0.1', port=30008)
         owner.start()

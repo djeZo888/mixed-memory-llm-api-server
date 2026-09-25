@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import signal
 import stat
 import sys
@@ -30,6 +31,18 @@ def _trusted_bootstrap():
     sys.path.insert(0, str(_ROOT / 'scripts'))
 
 
+def startup_identity():
+    """Cache nonsecret native identity once, before accepting any requests."""
+    boot_id = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+    invocation_id = os.environ.get('INVOCATION_ID', '')
+    main_pid = os.getpid()
+    if (not re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', boot_id)
+            or not re.fullmatch(r'[0-9a-f]{32}', invocation_id)
+            or type(main_pid) is not int or main_pid <= 0):
+        raise ValueError('control_identity_unknown')
+    return dict(boot_id=boot_id, invocation_id=invocation_id, main_pid=main_pid)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Protected authenticated control API on 127.0.0.1:30000')
     parser.add_argument('--check-binding', action='store_true',
@@ -47,7 +60,8 @@ def main(argv=None):
             print(json.dumps({'status': 'binding_validated', 'listener_started': False,
                               'normal_lifecycle_acceptance': 'not_performed'}))
             return 0
-        application = production_application(_ROOT / 'configs', key, advertised_policy=advertised_policy)
+        application = production_application(_ROOT / 'configs', key, advertised_policy=advertised_policy,
+                                             readiness_identity=startup_identity())
         server = make_server(application, key, host='127.0.0.1', port=30000)
         def interrupted(_signum, _frame):
             raise KeyboardInterrupt

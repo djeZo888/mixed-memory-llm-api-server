@@ -55,7 +55,7 @@ def strict_json(raw):
 
 def native_get(port, path, key, seconds):
     if (port, path) not in ((30002, '/v1/readiness'), (30004, '/v1/readiness'),
-                            (30006, '/v1/image-capabilities')):
+                            (30006, '/v1/image-capabilities'), (30000, '/control/v1/readiness')):
         raise ValueError('unregistered_passive_route')
     conn = http.client.HTTPConnection('127.0.0.1', port, timeout=max(.001, seconds))
     deadline = time.monotonic() + seconds
@@ -96,6 +96,27 @@ def native_get(port, path, key, seconds):
             timer.cancel()
             timer.join()
         conn.close()
+
+
+def control_readiness(code, value, identity):
+    """Accept only the supported passive API response from this native unit."""
+    unit = identity.get('unit_identity', {})
+    if (code != 200 or type(value) is not dict or set(value) != {
+            'schema_version', 'service_id', 'readiness_kind', 'ready',
+            'boot_id', 'invocation_id', 'main_pid'}
+            or type(value['schema_version']) is not int or value['schema_version'] != 1
+            or value['service_id'] != 'control' or value['readiness_kind'] != 'process_api'
+            or value['ready'] is not True
+            or type(value['boot_id']) is not str or not BOOT.fullmatch(value['boot_id'])
+            or value['boot_id'] != identity.get('boot_id')
+            or type(value['invocation_id']) is not str or not re.fullmatch('[0-9a-f]{32}', value['invocation_id'])
+            or value['invocation_id'] != unit.get('InvocationID')
+            or type(value['main_pid']) is not int or value['main_pid'] <= 0
+            or str(value['main_pid']) != unit.get('MainPID')
+            or unit.get('Id') != UNITS['control'] or unit.get('ActiveState') not in ('active', 'reloading')
+            or identity.get('ownership_valid') is not True):
+        raise ValueError('invalid_passive_control_readiness')
+    return {'ready': True, 'admitting': None, 'activity': 'unknown', 'reason': None}
 
 
 def text_readiness(code, value, alias):
@@ -424,8 +445,9 @@ def aggregate_generation(boot_id, rows, gpu_uuid=None):
 
 
 class PassiveServiceCollector:
-    def __init__(self, service_id, reader, *, get=native_get, clock=time.monotonic):
+    def __init__(self, service_id, reader, *, get=native_get, clock=time.monotonic, control_key=None):
         self.service_id, self.reader, self.get, self.clock = service_id, reader, get, clock
+        self._control_key = control_key
         self._positive = None
 
     def __call__(self, seconds):
@@ -445,7 +467,29 @@ class PassiveServiceCollector:
             else:
                 result.update(self._positive)
                 result.update(ready=False, admitting=False, generation=None)
-        if not result.get('running') or self.service_id in ('control', 'node'):
+        if not result.get('running') or self.service_id == 'node':
+            return result
+        if self.service_id == 'control':
+            # Independent of storage/model owners; reuse the validated startup
+            # credential. Native identity brackets the actual authenticated GET.
+            def remaining():
+                budget = seconds - (self.clock() - started)
+                if budget <= 0:
+                    raise TimeoutError()
+                return budget
+            try:
+                if self._control_key is None:
+                    raise ValueError('control_credential_unavailable')
+                status = control_readiness(*self.get(30000, '/control/v1/readiness',
+                    self._control_key, remaining()), result)
+                current = self.reader._unit('control', remaining())
+                if (current != result.get('unit_identity')
+                        or self.reader.boot()['boot_id'] != result['boot_id']):
+                    raise ValueError('control_identity_changed')
+                remaining()
+                result.update(status)
+            except Exception:
+                result.update(ready=None, admitting=None, reason='readiness_unknown')
             return result
         identity_completed = self.clock()
         try:
