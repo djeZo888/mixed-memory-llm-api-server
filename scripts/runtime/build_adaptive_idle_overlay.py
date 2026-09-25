@@ -83,6 +83,16 @@ def dockerfile(spec, target, core, overlay_digest):
         lines.append("COPY " + json.dumps(["files/" + relative, native_path(spec, relative)]))
     lines.append("COPY " + json.dumps(["provenance.json", "/opt/llmctl/adaptive-idle/" + target + ".json"]))
     lines.append("COPY " + json.dumps(["verify.py", "/opt/llmctl/adaptive-idle/verify.py"]))
+    if target == "image":
+        # Protected context transfer deliberately creates 0600 host files. COPY
+        # preserves those modes, but the image runs as 1000:1001. Normalize only
+        # these public payload files inside the derivative, never host storage
+        # or the whole native package. Plain RUN works with the legacy builder.
+        public_files = [native_path(spec, relative) for relative in sorted(core["output_raw_sha256"])]
+        public_files += ["/opt/llmctl/adaptive-idle/image.json", "/opt/llmctl/adaptive-idle/verify.py"]
+        commands = ["chmod 0644 " + " ".join("'" + name + "'" for name in public_files),
+                    "chmod 0755 /opt/llmctl /opt/llmctl/adaptive-idle"]
+        lines.append("RUN " + json.dumps(["/bin/sh", "-ec", " && ".join(commands)]))
     return ("\n".join(lines) + "\n").encode()
 
 

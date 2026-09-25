@@ -1,7 +1,10 @@
 """Offline packaging boundaries; synthetic source is never native acceptance."""
 import hashlib
 import json
+import os
 from pathlib import Path
+import stat
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -69,6 +72,52 @@ class OverlayPackagingTests(unittest.TestCase):
             self.prepare()
         self.assertFalse((self.root / "output").exists())
         self.assertEqual(self.native.read_bytes(), b"VALUE = 1\r\n")
+
+    def test_image_legacy_recipe_repairs_restrictive_copy_without_touching_secrets(self):
+        self.manifest.write_text(json.dumps({"image": self.spec}))
+        previous_umask = os.umask(0o077)
+        try:
+            receipt = builder.prepare(self.source, "image", self.root / "image",
+                                      manifest_path=self.manifest, runtime=self.runtime)
+        finally:
+            os.umask(previous_umask)
+        context = self.root / "image"
+        # Reproduce COPY preserving restrictive protected-transfer file modes.
+        metadata = self.root / "opt/llmctl/adaptive-idle"
+        metadata.mkdir(parents=True, mode=0o700)
+        metadata.parent.chmod(0o700)
+        copied = []
+        for line in (context / "Dockerfile").read_text().splitlines():
+            if line.startswith("COPY "):
+                source, destination = json.loads(line[5:])
+                destination = Path(destination.replace("/opt/llmctl", str(metadata.parent)))
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes((context / source).read_bytes())
+                destination.chmod(0o600)
+                copied.append(destination)
+        before = {str(p): builder.digest(p.read_bytes()) for p in copied}
+        secret = self.root / "protected-host-secret"
+        secret.write_bytes(b"synthetic-fixture-only")
+        secret.chmod(0o600)
+        old_secret = (secret.read_bytes(), secret.stat().st_mode)
+        recipe = (context / "Dockerfile").read_text().splitlines()
+        command = json.loads(recipe[-1][4:])
+        self.assertEqual(command[:2], ["/bin/sh", "-ec"])
+        self.assertNotIn("-R", command[2])
+        self.assertNotIn("--chmod", "\n".join(recipe))
+        command[2] = command[2].replace("/opt/llmctl", str(metadata.parent))
+        subprocess.run(command, check=True)
+        self.assertEqual(before, {str(p): builder.digest(p.read_bytes()) for p in copied})
+        self.assertEqual(old_secret, (secret.read_bytes(), secret.stat().st_mode))
+        for path in copied:
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o644)
+            # UID1000:GID1001 uses non-owner bits on root-owned COPY payload.
+            self.assertTrue(path.stat().st_mode & stat.S_IROTH)
+            self.assertFalse(path.stat().st_mode & (stat.S_IWGRP | stat.S_IWOTH))
+        for path in (metadata, metadata.parent):
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o755)
+        core = {key: receipt[key] for key in verifier.CORE_KEYS}
+        self.assertEqual(builder.digest(builder.canonical(core)), receipt["overlay_sha256"])
 
     def test_unpinned_patch_target_rejected_before_output(self):
         self.patch.write_text(self.patch.read_text().replace("scheduler.py", "other.py"))
