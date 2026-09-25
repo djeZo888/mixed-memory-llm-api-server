@@ -335,15 +335,23 @@ class Fixtures(unittest.TestCase):
 
     def test_stop_requires_inactive_dead_zero_owner_pids_and_no_job(self):
         self.ops.freeze = lambda _: {"frozen": True}
-        for index, (active, sub, main_pid, control_pid, job_pending) in enumerate((
-                ("active", "dead", 0, 0, False), ("inactive", "dead", 1234, 0, False),
-                ("inactive", "running", 0, 0, False), ("inactive", "exited", 0, 0, False),
-                ("deactivating", "stop", 0, 0, False), ("inactive", "dead", 0, 5678, False),
-                ("inactive", "dead", 0, 0, True))):
-            with self.subTest(active=active, sub=sub, main_pid=main_pid, control_pid=control_pid, job_pending=job_pending):
-                self.identity.update(active="active", sub="running", main_pid=1234, control_pid=0, job_pending=False)
+        for index, (active, sub, main_pid, control_pid, job_pending, load, invocation) in enumerate((
+                ("active", "dead", 0, 0, False, "loaded", "a" * 32),
+                ("inactive", "dead", 1234, 0, False, "loaded", "a" * 32),
+                ("inactive", "running", 0, 0, False, "loaded", "a" * 32),
+                ("inactive", "exited", 0, 0, False, "loaded", "a" * 32),
+                ("deactivating", "stop", 0, 0, False, "loaded", "a" * 32),
+                ("inactive", "dead", 0, 5678, False, "loaded", "a" * 32),
+                ("inactive", "dead", 0, 0, True, "loaded", "a" * 32),
+                ("inactive", "dead", 0, 0, False, "not-found", "a" * 32),
+                ("inactive", "dead", 0, 0, False, "loaded", "b" * 32))):
+            with self.subTest(active=active, sub=sub, main_pid=main_pid, control_pid=control_pid, job_pending=job_pending,
+                              load=load, invocation=invocation):
+                self.identity.update(active="active", sub="running", main_pid=1234, control_pid=0, job_pending=False,
+                                     load="loaded", invocation="a" * 32)
                 self.ops.refresh("harness")
-                self.ops.execute = lambda _: self.identity.update(active=active, sub=sub, main_pid=main_pid, control_pid=control_pid, job_pending=job_pending)
+                self.ops.execute = lambda _: self.identity.update(active=active, sub=sub, main_pid=main_pid,
+                    control_pid=control_pid, job_pending=job_pending, load=load, invocation=invocation)
                 request = self.request("service.stop", key=f"unsettled-stop-{index}")
                 with mock.patch.object(threading.Thread, "start"):
                     receipt = self.ops.submit(request)

@@ -468,9 +468,10 @@ class Operations:
                         # systemd can retain the last InvocationID after a clean
                         # stop. The blocking stop's success plus inactive/dead,
                         # no owner processes and no pending job prove settlement.
-                        settled = (after["active"] == "inactive" and after["sub"] == "dead"
+                        settled = (after["load"] == "loaded" and after["active"] == "inactive" and after["sub"] == "dead"
                                    and after["main_pid"] == 0 and after["control_pid"] == 0
-                                   and after["job_pending"] is False)
+                                   and after["job_pending"] is False
+                                   and after["invocation"] in {"", before[service]["invocation"]})
                     elif request["action"] == "service.restart":
                         settled = (after["active"] == "active" and bool(after["invocation"])
                                    and after["invocation"] != before[service]["invocation"])
