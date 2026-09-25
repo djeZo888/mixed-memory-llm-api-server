@@ -967,13 +967,28 @@ class Manager:
         from . import concurrent_profiles as pair
         if not d.get('legacy') and pair.is_pair(d):
             from .hardware_policy import HardwarePolicy, RegisteredLatchStore
+            from .storage_binding import _binding_errors
             from control.hardware_latch import LatchStorageUnavailable
             lease = getattr(self, '_hardware_lease', None)
             store = RegisteredLatchStore(self.binding, lease=lease, storage_io=self.persistent_writer(),
                                          system_root=self.lease_system_root, trusted_uid=self.trusted_uid)
+            boot_restore = getattr(self, '_boot_restore_hardware', False)
+            @_binding_errors
+            def diagnostic(receipt):
+                lease.validate()
+                path = self.binding.path('services', 'llm-manager/evidence/boot-hardware-'
+                    + receipt['boot_id'] + '-' + receipt['gpu_uuid'] + '-' + str(time.time_ns()) + '.json')
+                self.binding.storage.root_payload_guard(self.binding.registry, roles=('data',))
+                try:
+                    self.persistent_json(path, dict(receipt, deployment_id=d['id'],
+                                                   stage='pre_native_hardware_gate'))
+                finally:
+                    self.binding.storage.root_payload_guard(self.binding.registry, roles=('data',))
+                lease.validate()
             try:
                 HardwarePolicy(store, lease=lease, run=self.run, system_root=self.lease_system_root,
-                               trusted_uid=self.trusted_uid).require_start(d['launch']['gpus'])
+                               trusted_uid=self.trusted_uid).require_start(d['launch']['gpus'],
+                    boot_restore=boot_restore, diagnostic=diagnostic if boot_restore else None)
             except LatchStorageUnavailable:
                 raise LifecycleError('hardware_latch_unknown') from None
 
@@ -1156,14 +1171,20 @@ class Manager:
                     and after['State'].get('StartedAt') == before['State'].get('StartedAt'),
                     'concurrent_resident_identity_changed')
 
-    def _start(self) -> None:
+    def _start(self, *, boot_restore=False) -> None:
         require(self.state.get("selected") is not None, "no_deployment_selected_use_select")
         require(not self.state.get('pending_create'), 'pending_create_requires_recovery_stop')
         d = self.deployment(self.state["selected"])
         if self._slots_envelope is not None:
             self.validate_slot_deployment(d, self._slot_target)
         self.state.update(desired="running", container_running=None if self.state.get("container") else False)
-        self.prepare_start(d)  # ALL mount checks before artifact stat or Docker inventory.
+        # Only this pre-native gate may retry hardware UNKNOWN during boot.
+        # Reset the context even on failure; no Docker/model action is replayed.
+        self._boot_restore_hardware = boot_restore
+        try:
+            self.prepare_start(d)  # ALL mount checks before artifact stat or Docker inventory.
+        finally:
+            self._boot_restore_hardware = False
         identity = self.state.get("container")
         c = self.trusted_container(identity) if identity else None
         if c and not d.get("legacy"):
@@ -1556,7 +1577,7 @@ class Manager:
                     if action in {'select', 'activate'}:
                         self._select(deployment_id, boot_policy)
                     elif action in {'start', 'boot-start'}:
-                        self._start()
+                        self._start(boot_restore=action == 'boot-start')
                     elif action == 'restart':
                         self.require_hardware(self.deployment(self.state['selected']))
                         self._stop()
@@ -1693,7 +1714,7 @@ class Manager:
                 elif action == "boot-start":
                     require(self.state.get("failure") != "recovery_journal_invalid_primary_used", "recovery_journal_invalid_no_boot_resume")
                     if self.state["selected"] and self.state["desired"] == "running" and self.state["boot_policy"] == "resume":
-                        self._start()
+                        self._start(boot_restore=True)
                 else:
                     raise LifecycleError("unsupported_lifecycle_action")
             except (LifecycleError, BindingError) as exc:
