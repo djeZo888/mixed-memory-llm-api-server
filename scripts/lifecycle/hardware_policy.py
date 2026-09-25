@@ -31,6 +31,8 @@ GPU_UUIDS = ('GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',
              'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23')
 UUID = re.compile(r'GPU-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z')
 BOOT = re.compile(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z')
+BOOT_PROBE_BUDGET_SECONDS = 10.0
+BOOT_PROBE_BACKOFF_SECONDS = 0.25
 
 
 def boot_identity():
@@ -188,18 +190,20 @@ def read_latch_status(binding, gpu_uuids, *, current_boot_id=None, wall=time.tim
 class HardwarePolicy:
     """Producer/start gate invoked inside the existing owner's canonical lease."""
     def __init__(self, store, *, lease, run=_run, boot=boot_identity,
-                 system_root=Path('/'), trusted_uid=0, wall=time.time, monotonic=time.monotonic):
+                 system_root=Path('/'), trusted_uid=0, wall=time.time, monotonic=time.monotonic,
+                 sleep=time.sleep):
         self.store, self.lease, self.run, self.boot = store, lease, run, boot
         self.system_root, self.trusted_uid, self.wall = system_root, trusted_uid, wall
         self.monotonic = monotonic
+        self.sleep = sleep
 
     def _owner(self):
         _validate_borrowed_lease(self.lease, system_root=self.system_root, trusted_uid=self.trusted_uid)
         return ProtectedHardwareLatch(self.store)
 
-    def collect_inventory(self):
+    def collect_inventory(self, *, timeout=2):
         before = self.boot()
-        raw = self.run(['/usr/bin/nvidia-smi', '--query-gpu=uuid', '--format=csv,noheader,nounits'], timeout=2)
+        raw = self.run(['/usr/bin/nvidia-smi', '--query-gpu=uuid', '--format=csv,noheader,nounits'], timeout=timeout)
         after = self.boot()
         if not isinstance(raw, str) or len(raw) > 65536 or before['boot_id'] != after['boot_id']:
             raise LifecycleError('hardware_inventory_unknown')
@@ -244,38 +248,115 @@ class HardwarePolicy:
         return latch.validate_required(gpu_uuid, current_boot_id=current_boot_id,
                                        receipt={'observed_at': observed_at, 'observation_id': observation_id})
 
-    def require_start(self, gpu_uuids):
+    def require_start(self, gpu_uuids, *, boot_restore=False, diagnostic=None):
+        """Boot may wait briefly for exact hardware evidence, never replay a start.
+
+        The ten-second probe/sleep budget includes at most one inventory fallback.
+        Guards, protected writes and native startup are not retried. Manual calls
+        retain one exact probe. A successful query is always checked on this boot;
+        unknown evidence never admits a start, even when the budget expires.
+        """
         required = tuple(gpu_uuids)
         if not required or len(set(required)) != len(required) or any(gpu not in GPU_UUIDS for gpu in required):
             raise LifecycleError('hardware_requirement_invalid')
         latch = self._owner()
         before = self.boot()
         for gpu in required:
+            started = self.monotonic()
+            deadline = started + BOOT_PROBE_BUDGET_SECONDS
+            attempts = []
+            def report(result):
+                if diagnostic is not None:
+                    diagnostic({'schema_version': 1, 'boot_id': before['boot_id'],
+                        'gpu_uuid': gpu, 'boot_restore': boot_restore,
+                        'budget_seconds': BOOT_PROBE_BUDGET_SECONDS if boot_restore else 2,
+                        'attempts': attempts, 'result': result,
+                        'elapsed_ms': round(max(0, self.monotonic() - started) * 1000, 3)})
             saved = latch.export_state()['targets'].get(gpu)
             if saved and saved['hardware_latched'] and saved['boot_id'] == before['boot_id']:
+                report(saved['reason'])
                 raise LifecycleError(saved['reason'])
-            try:
-                raw = self.run(['/usr/bin/nvidia-smi', '--id=' + gpu, '--query-gpu=uuid',
-                                '--format=csv,noheader,nounits'], timeout=2)
-                after = self.boot()
-                if not isinstance(raw, str) or len(raw) > 4096 or raw.strip() != gpu or before['boot_id'] != after['boot_id']:
+            inventory_attempted = False
+            outcome = 'unknown'
+            for _ in range(41 if boot_restore else 1):
+                _validate_borrowed_lease(self.lease, system_root=self.system_root, trusted_uid=self.trusted_uid)
+                remaining = deadline - self.monotonic()
+                if boot_restore and remaining <= 0:
+                    break
+                if self.boot()['boot_id'] != before['boot_id']:
+                    report('boot_changed')
                     raise LifecycleError('hardware_target_unknown')
-            except Exception:
-                # A target error itself is UNKNOWN. Only a separate successful
-                # complete inventory can prove absence; no message/error parsing.
+                probe_started = self.monotonic()
+                remaining = deadline - probe_started
+                if boot_restore and remaining <= 0:
+                    break
+                timeout = min(2, remaining) if boot_restore else 2
+                outcome = 'exact_uuid'
                 try:
-                    inventory, identity = self.collect_inventory()
-                    for target in required:
-                        latch.observe(target, inventory, current_boot_id=identity['boot_id'],
+                    raw = self.run(['/usr/bin/nvidia-smi', '--id=' + gpu, '--query-gpu=uuid',
+                                    '--format=csv,noheader,nounits'], timeout=timeout)
+                    if not isinstance(raw, str) or len(raw) > 4096 or raw.strip() != gpu:
+                        outcome = 'invalid_result'
+                except (OSError, RuntimeError, ValueError, subprocess.SubprocessError, LifecycleError) as exc:
+                    # Enumerated codes only: never retain raw output/exception text.
+                    outcome = ('timeout' if isinstance(exc, subprocess.TimeoutExpired)
+                               or isinstance(exc, LifecycleError) and exc.code == 'command_timeout'
+                               else exc.code if isinstance(exc, LifecycleError)
+                               and exc.code in {'command_failed', 'command_unavailable'} else 'probe_failed')
+                ended = self.monotonic()
+                observed_at = datetime.datetime.fromtimestamp(self.wall(), datetime.timezone.utc).isoformat()
+                if ended - probe_started > timeout:
+                    outcome = 'timeout'
+                if self.boot()['boot_id'] != before['boot_id']:
+                    outcome = 'boot_changed'
+                attempts.append({'kind': 'target', 'outcome': outcome,
+                    'observed_at': observed_at,
+                    'duration_ms': round(max(0, ended - probe_started) * 1000, 3)})
+                if outcome == 'exact_uuid':
+                    report('exact_uuid')
+                    # Keep the probe's timestamp through diagnostic/protected I/O.
+                    # Existing freshness and same-boot latch checks still apply.
+                    result = self.validate_required(gpu, current_boot_id=before['boot_id'],
+                        observed_at=observed_at, observation_id=uuid.uuid4().hex)
+                    if result['hardware_latched']:
+                        raise LifecycleError(result['reason'])
+                    # validate_required rereads protected state. Later targets'
+                    # inventory fallback must retain this newly written proof.
+                    latch = self._owner()
+                    break
+                if outcome == 'boot_changed':
+                    report('boot_changed')
+                    raise LifecycleError('hardware_target_unknown')
+                # UNKNOWN alone cannot prove absence. Preserve the single
+                # complete-inventory fallback, never repeat global NVML queries.
+                remaining = deadline - self.monotonic()
+                if not inventory_attempted and (not boot_restore or remaining > 0):
+                    inventory_attempted = True
+                    probe_started = self.monotonic()
+                    inventory_outcome = 'inventory_unknown'
+                    try:
+                        inventory, identity = self.collect_inventory(timeout=min(2, remaining) if boot_restore else 2)
+                        inventory_outcome = 'complete'
+                    except (OSError, RuntimeError, ValueError, subprocess.SubprocessError, LifecycleError):
+                        inventory = None
+                    attempts.append({'kind': 'inventory', 'outcome': inventory_outcome,
+                        'duration_ms': round(max(0, self.monotonic() - probe_started) * 1000, 3)})
+                    if inventory is not None and identity['boot_id'] == before['boot_id']:
+                        # This fallback diagnoses the failed target only; it
+                        # cannot revoke an independent exact-positive peer.
+                        latch.observe(gpu, inventory, current_boot_id=identity['boot_id'],
                                       boot_age_seconds=identity['uptime_seconds'])
-                except (OSError, RuntimeError, ValueError, subprocess.SubprocessError, LifecycleError):
-                    pass
+                saved = latch.export_state()['targets'].get(gpu)
+                if saved and saved['hardware_latched']:
+                    report(saved['reason'])
+                    raise LifecycleError(saved['reason'])
+                if boot_restore:
+                    self.sleep(min(BOOT_PROBE_BACKOFF_SECONDS, max(0, deadline - self.monotonic())))
+            else:
+                outcome = 'unknown'
+            if outcome != 'exact_uuid':
+                report('unknown')
                 saved = latch.export_state()['targets'].get(gpu)
                 raise LifecycleError(saved['reason'] if saved and saved['hardware_latched']
                                      else 'hardware_target_unknown') from None
-            result = latch.validate_required(gpu, current_boot_id=after['boot_id'],
-                receipt={'observed_at': datetime.datetime.fromtimestamp(self.wall(), datetime.timezone.utc).isoformat(),
-                         'observation_id': uuid.uuid4().hex})
-            if result['hardware_latched']:
-                raise LifecycleError(result['reason'])
         return True
