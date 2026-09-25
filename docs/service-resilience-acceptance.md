@@ -2,18 +2,34 @@
 
 **PARTIAL / PENDING acceptance.** This publication checkpoint records sanitized
 repair receipts through the activation's last VM contact at **19:44:30 UTC**,
-plus the latest root-supplied watcher/admin/image-lane readbacks on September 25.
+plus root-supplied local-owner acceptance through **20:21:11 UTC**, Qwen action
+results through **20:22:21 UTC** and failed-start status at **20:23:18 UTC** on September 25
+and the separately dated Ada preliminary idle readback.
 All three models were ready at 19:41:16 UTC: both Qwens retained their invocations,
 the repaired image service was warm, and node/control processes were active.
-Root now records watcher failure/restore PASS and trusted-LAN admin OPEN;
-typed lifecycle, serial reboot and formal quiet/wake acceptance remain pending. A bounded task's PASS is not a final H005 PASS.
+Root records local helper LIVE PASS, typed main stop/start with hold release PASS,
+status/main independence in both directions PASS, watcher PASS and admin OPEN.
+Remaining Qwen-peer/node/image checks, serial reboot and formal quiet/wake
+acceptance are pending. A bounded task's PASS is not a final H005 PASS.
+
+**Current receipt-backed blocker, 20:22:21 UTC:** typed Qwen0 stop succeeded,
+but its one subsequent start failed with generic `operation_failed`. Qwen0 is
+stopped/ready false with its stop hold retained; Qwen1 and image remain ready
+in the 20:23:18 status receipt, with unchanged peer identity reported by root. The 19:41 all-three-ready result above is historical,
+not current readiness after this event. No retry, inference or assumed cause is
+claimed. Separate Worker1 recovery diagnosis owns the incident; this publication
+task has no VM contact. Exact `QWEN-STOP.json`, `QWEN-START.json`,
+`QWEN-START-FAILED-STATUS.json` and `QWEN-HEALTHY-PEER.json` are now indexed.
 
 This report was prepared offline from combined source
-`62d9f0e188b03a9183d281fbe55345806f23650d`. It does not claim that this combined
-Git commit was deployed wholesale. The 18:18 acceptance draft is a historical
+`ec9943f38daaf8b92c3bdcba30bf42592659312d`. Root approved and normally published
+that exact combined source to `feature/service-resilience` in Draft PR7, based on
+`feature/ai-harness-v0.0.3`. It does not claim the combined Git commit was deployed
+wholesale; the deployed component identities below remain distinct. The 18:18 acceptance draft is a historical
 outline, superseded by the receipts below. No VM contact, deployment, build,
 inference or service-dependent test occurred during this documentation task.
-Root review and later publication are separate; no push, PR6 update or main merge.
+This later docs-only evidence delta awaits root review and is **not pushed**.
+No VM contact, new deployment, PR6 update or main merge is part of this follow-up.
 
 ## Implemented behavior and evidence boundary
 
@@ -42,8 +58,10 @@ live transition, retained cache/VRAM and immediate wake are still acceptance gat
 | Refreshed actual-text-image CPU auth | Both slot receipts passed with the new global binding and synthetic engine/model seams; final source validated those receipts without rerunning them | No model/GPU execution or new capacity measurement; driver control nodes were present, GPU device nodes were absent |
 | Real short text checks, Phase B | Both loaded Qwens returned `OK`, 17 prompt / 2 completion tokens each, seed 42, temperature 0; authenticated passive readiness passed | Short functionality only; not main/child workflow, long-context, throughput or sustained acceptance |
 | Real repaired-image checks | Canonical warmup plus exactly one public 1024×1024 generation; final all-three-ready readback | No fresh edit, Full HD, visual-content or sustained benchmark acceptance |
-| Harness status/credential repair | Status component active with schema 1 and unchanged healthy main identity; credential mount/ACL compatibility repaired | Does not prove action execution or independence during downtime |
-| Later watcher/admin readback | Root records watcher PASS; fresh restored-policy attestation and trusted-LAN admin exposure receipts supplied | Restored raw nft digest is not comparable across deliberate table recreation; typed action/reboot acceptance remains pending |
+| Harness status/credential repair | Status component active with schema 1; credential mount/ACL compatibility repaired | Earlier activation receipt alone did not prove actions or independence; later live receipts below do |
+| Local helper and typed main actions | Reviewed CAP_SETUID unit and stop-proof component active; later main stop/start succeeded, retaining then releasing the scoped hold; original unknown plus separate recovery retained | Does not close ai-vm/Qwen-peer/image or every advertised action |
+| Local status/main independence | Main stayed HTTP200 during status restart; status stayed HTTP200 while main was stopped; local idempotency/CAS refusals passed | Observed HTTP availability at these boundaries, not model-serving or all-node independence |
+| Later watcher/admin readback | Root records watcher PASS; fresh restored-policy attestation and trusted-LAN admin exposure receipts supplied | Restored raw nft digest is not comparable across deliberate table recreation; remaining typed scopes and reboot acceptance remain pending |
 | Packet-causal task denial | Root accepted host rejection of the owned Slirp connection with trusted connections successful before/after | Client timeout alone was not proof; this narrow causal result is not the complete container/watcher/lifecycle matrix |
 | Dated transfer measurements | Brief copy-engine bandwidth and sampled core temperatures for four cards | No sustained thermal, platform maximum, D2D/P2P or model-capacity claim |
 
@@ -71,7 +89,7 @@ These are closure counts, not independent test totals.
 Both Qwens retain 480,000 **configured** tokens, FP8 weights/BF16 KV, shared guest
 CPUs 0–7, 32 GiB memory each with no additional swap allowance, radix cache disabled
 and Mamba cache 1. Image retains CPUs 8–15 and 96 GiB memory with no additional
-swap allowance. The unchanged Qwen starts were 18:45:29.790881105Z and
+swap allowance. At the historical 19:41 readback, the unchanged Qwen starts were 18:45:29.790881105Z and
 18:47:38.530847547Z; generations 23/17 and running/resume intent were preserved.
 Exact native container identities remain in the retained deployment receipt.
 The Server Blackwell remains unassigned; ECC settings were unchanged.
@@ -85,8 +103,18 @@ reading or recording credential bytes, hash or length. Admin was CLOSED in that
 earlier receipt; the later `ADMIN-EXPOSED.json` explicitly records OPEN on the
 reviewed trusted LAN. This is exposure evidence, not typed action success.
 
-Node authenticated status returned 200 and missing/wrong credentials were denied.
-All three models were observed ready. **Control projection remains limited:**
+The helper's hardened unit repair is source
+`45e2ee1c4ce588d2d486162e84fb51aa8795d146`, activated at 20:09:47 UTC; the stopped-owner
+proof component is source `03a1c422007c15078f3b1878d72882ba3017f9b0`, activated at
+20:20:29 UTC. These are distinct from the main `63dcb23`, status `c640b9c`, combined
+`ec9943f`, and unchanged ai-vm `5b20f26` / image `50a3bfd` identities. The unit
+retains ambient `CAP_SETUID` for its fixed ordinary-user transition; activation
+readbacks retain NoNewPrivileges=1 and seccomp mode 2. Main/search/status/egress/nginx
+invocations were unchanged during each component activation. Later owned main
+and status actions deliberately changed their invocations.
+
+At that historical repair readback, node authenticated status returned 200 and
+missing/wrong credentials were denied. All three models were observed ready. **Control projection remains limited:**
 control's process was active, but node reported availability `unknown`, ready
 `null`, reason `observation_unavailable`. No newer supplied receipt resolves this.
 This conservative unknown is intentional until API proof exists; it is not a
@@ -154,6 +182,18 @@ Each scheduler retained **61,008 MiB process VRAM**. This is **PRELIMINARY**:
 no formal 600-second transition, all-three quiet window, retained cache proof,
 immediate wake or renewed busy interval is established by it.
 
+The separate Ada preliminary receipt sampled **19:56:32.783893–19:56:37.916861 UTC**
+for **5.132964 seconds**, after more than 600 seconds of witnessed inactivity.
+The unchanged image scheduler accumulated 3 whole-process ticks, approximately
+**0.584% of one CPU**; its main thread accumulated zero ticks, state S, in
+`do_poll.constprop.0`. Process VRAM stayed **32,226 MiB**, with core temperature
+38 °C. Thus the three preliminary whole-process values are Q0 0.389%, Q1 0.195%,
+and Ada 0.584%, each measured over its own short interval, not simultaneously.
+Witnessed inactivity and resident VRAM do not establish native asynchronous-work
+counters, the formal 600-second transition, a common 660-second quiet window,
+cache-retention acceptance or immediate wake/renewal. No mutation or inference
+was performed in that Ada readback.
+
 The repair activation's last VM contact was **19:44:30.006989Z**, and its window
 closure receipt was emitted at 19:44:56.947265Z. No active task/lease remained.
 The final guard passed with the existing below-6-GiB root-free warning; this does
@@ -192,9 +232,9 @@ intentional restore delete/recreate because kernel handles regenerate. The
 restoration receipt is not substituted for unrelated lifecycle checks.
 
 `ADMIN-EXPOSED.json` records trusted-LAN admin OPEN, unchanged main/status source
-identities, settled test fixtures and no private state reset. Local harness/search
-readiness projection remains unknown and VM control ready remains null, pending
-typed functional checks. `IMAGE-LANE-READBACK.json` reports idle, uncertainty zero,
+identities, settled test fixtures and no private state reset. That earlier local harness/search
+projection was unknown; later main functionality and status/main independence
+are proved below. VM control ready remains null pending its own functional proof. `IMAGE-LANE-READBACK.json` reports idle, uncertainty zero,
 and all 18 preexisting terminal image jobs (17 completed, 1 cancelled); root
 confirms those jobs unchanged. The shutdown-only image-lane marker legitimately
 auto-reconciled with uncertainty false plus ready **and** idle. This was not an
@@ -203,16 +243,63 @@ request, explicit reconciliation action or SQL state reset was performed by that
 task. Historical workspace quarantine count **1** remains. Do not describe every
 old image quarantine marker as unchanged.
 
+## Local helper and typed lifecycle acceptance
+
+The original local UID-transition failure is superseded by the reviewed
+CAP_SETUID unit repair and actual helper activation. The later stopped-owner fix
+handles normal systemd retention of the last InvocationID: successful blocking
+stop must be followed by loaded, **inactive/dead**, **MainPID=0**, **ControlPID=0**
+and **no pending job**. InvocationID may be empty or exactly the captured old
+identity; an unrelated identity is rejected. A retained old InvocationID alone
+neither means running nor proves settlement. Source fixes and their local live
+outcomes are separate from source fixtures, whose counts are not repeated here.
+
+| Exact local receipt | Observed outcome, UTC | Scope and retained limitation |
+|---|---|---|
+| `REPAIRED-TARGETS.json` | Repaired target catalog advertises typed actions | Catalog availability is not successful execution; unknown activity/null counters stay unknown |
+| `MAIN-STOP.json` | Original stop accepted 20:10:44.149, ended **UNKNOWN** 20:10:45.848 with dispatch frozen | Original operation `be7ee28d…` remains unknown; later source fixes do not rewrite it |
+| `MAIN-RECOVERY.json` | Separately confirmed restart `2069390e…` succeeded 20:11:30.879 and released its hold | Observer expected HTTP202 but received HTTP200; a read recovered the existing operation, with no second POST or automatic replay |
+| `IDEMPOTENCY-CAS.json` | Exact repeat returns the original **UNKNOWN**; mismatched key gets 409 `idempotency_conflict`; stale generation gets 409 `node_action_conflict` | No new lifecycle operation accepted; readiness did not settle the original uncertainty |
+| `STATUS-RESTART.json` | Status restart succeeded 20:18:21.420; observed status outage then HTTP200, while main remained HTTP200 | Status scope only; demonstrates main availability during status downtime |
+| `MAIN-STOP-ACCEPTANCE.json` | New typed main stop succeeded 20:20:41.480, dispatch hold retained | Exactly harness scope; successful current operation is separate from the historical unknown |
+| `MAIN-DOWN-STATUS-UP.json` | At 20:21:04.634, status HTTP200 while main HTTP502; fresh main unavailable/ready null and dispatch frozen | Demonstrates status availability while main is down; never calls an unreachable main idle |
+| `MAIN-START-ACCEPTANCE.json` | Typed main start succeeded 20:21:11.493, dispatch hold released | Canonical action completion and validated start, not passive readiness alone, release this maintenance hold |
+
+Root accepts the local helper, main stop/start with hold release, and both
+status/main independence directions as **LIVE PASS within these scopes**.
+Original unknown outcomes, separate confirmed recovery and historical workspace
+quarantine remain evidence. This is not acceptance of one-Qwen peer continuity,
+node/control/image lifecycle, every advertised target, or reboots.
+
+## Qwen0 stop, failed start and limited peer evidence
+
+`QWEN-STOP.json` records scoped Qwen0 stop `305542ba…` succeeded at
+20:21:51.500 UTC with its dispatch hold retained. `QWEN-START.json` records the
+one later start `b5c1acdc…` failed at 20:22:21.509 with `operation_failed`.
+The start receipt's own `dispatch_frozen=false` is not proof that the distinct
+successful-stop hold was cleared; root retains that stop hold. Neither operation
+is retried or relabeled, and the failure cause is unknown here.
+
+The failed-start status at 20:23:18 shows Qwen0 unavailable/ready false, Qwen1
+available/ready true and image available/ready true. `QWEN-HEALTHY-PEER.json`
+separately records unchanged boot and peer generation, Qwen1 ready during the
+single-lane maintenance, and main HTTP200. This is **peer readiness/availability
+PASS only**. Actual main/child/compaction routing is explicitly fixture-only in
+that receipt; no live peer inference or compaction was run. Recovery/start,
+complete peer-serving acceptance and dependent later gates remain pending/blocked.
+
 ## Remaining live gates — all PENDING
 
 | Gate | Receipt needed before changing status |
 |---|---|
-| Typed scoped actions and independence | Every required scoped action/refusal, idempotency/CAS and canonical settlement; healthy text peer continuity; independent status/control during downtime; local harness/search/status behavior; explicit image quarantine reconciliation while retaining pending approvals/history |
+| Remaining typed scopes and independence | Qwen0 start failure requires separate recovery; one-Qwen maintenance with healthy peer continuity; node/control/image actions and independence; remaining advertised local/search actions or refusals; explicit image quarantine reconciliation coverage while retaining pending approvals/history. Local main stop/start, status restart, local idempotency/CAS and status/main independence are already accepted above |
 | Serial typed self-reboots | ai-vm first, then ai-harness, one at a time through the typed path; changed boot IDs, restored desired warm services/history, retained containment, latches/holds/uncertain outcomes accounted for |
 | One formal quiet window | All three warm for **at least 660 seconds**, passive 5-second polling throughout; exact scheduler PID/TID deltas below **5% of one CPU** after blocking, 600-second transition and retained cache/VRAM demonstrated |
 | Immediate wake and renewed work interval | Bounded work for both text schedulers and image immediately after that window; response, renewed busy interval and final all-three-warm state. One qualified bounded image edit may supply the image wake; it has not run |
 
-Worker2 owns the remaining typed lifecycle checks; their completion receipts
+The latest Qwen0 incident blocks dependent peer/lifecycle, reboot and formal
+quiet/wake gates until reviewed recovery. Worker2 owns remaining typed lifecycle
+checks; their completion receipts
 were not supplied at this checkpoint. Root steering retains the raw NETWORK and BROWSER
 results as **INCONCLUSIVE**, separately from the accepted packet-causal conclusion.
 Its PRIVATE accounting is 64 detailed checks; a 65-row summary includes the
@@ -236,5 +323,6 @@ Retain pending approvals, current quarantine state, historical failed/unknown re
 operation journals, boot intent, latch provenance and original qualification
 receipts. Rollback must use current canonical owners and matched sources; old
 snapshots must not overwrite current journals, intents, latches or chat data.
-No automatic replay or global reset/cleanup is authorized. Root reviews this
-checkpoint and appends final exact receipts in a follow-up before publication.
+No automatic replay or global reset/cleanup is authorized. Approved source
+`ec9943f` is published in Draft PR7. This docs-only follow-up remains unpushed
+pending root review; later exact live receipts are required before final acceptance.

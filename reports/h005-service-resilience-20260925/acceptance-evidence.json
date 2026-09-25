@@ -2,19 +2,22 @@
   "schema_version": 1,
   "report_date": "2026-09-25",
   "status": "PARTIAL_PENDING",
-  "combined_source_commit": "62d9f0e188b03a9183d281fbe55345806f23650d",
+  "combined_source_commit": "ec9943f38daaf8b92c3bdcba30bf42592659312d",
   "receipt_cutoff": {
-    "last_vm_contact_utc": "2026-09-25T19:44:30.006989Z",
     "closure_emitted_utc": "2026-09-25T19:44:56.947265Z",
-    "harness_update": "Latest root-supplied WATCHER-RESTORED, ADMIN-EXPOSED and IMAGE-LANE-READBACK; delivered2026-09-25, no UTC field in these compact receipts"
+    "harness_update": "Root-supplied local owner action receipts through2026-09-25T20:21:11.493Z; not a new VM query",
+    "repair_activation_last_vm_contact_utc": "2026-09-25T19:44:30.006989Z",
+    "ada_preliminary_end_utc": "2026-09-25T19:56:37.916861Z",
+    "qwen_failed_start_status_utc": "2026-09-25T20:23:18.254678Z"
   },
   "preparation": {
     "source_only": true,
     "vm_contact": false,
     "network_service_tests": false,
-    "push": false,
-    "pull_request": false,
-    "overlapping_test_counts_summed": false
+    "push": true,
+    "pull_request": true,
+    "overlapping_test_counts_summed": false,
+    "publication_scope": "Exact reviewed combinedec9943f published; current docs delta unpushed for root review; PR7 remains draft"
   },
   "deployed_components": {
     "ai_vm_successor_source": "5b20f26b36e8caedfd62ce42060ecdbe32126224",
@@ -30,22 +33,9 @@
       "image_id": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
       "image_config_digest": "sha256:3f6178faa74c4a9bcb95ed4304dbee57473efa8913a793e067014af4a98281ad",
       "overlay_sha256": "dda84e200adcc6a1ee8915e0e993627695477a346c5848fc27f9251c34d04b3b"
-    }
-  },
-  "current_snapshot": {
-    "all_three_ready_utc": "2026-09-25T19:41:16.962708Z",
-    "qwen_invocations_unchanged": true,
-    "qwen_configured_context_each": 480000,
-    "image_warm": true,
-    "node_active": true,
-    "control_process_active": true,
-    "control_node_projection": {
-      "availability": "unknown",
-      "ready": null,
-      "reason": "observation_unavailable"
     },
-    "server_gpu_assignment": "unassigned",
-    "ecc": "unchanged"
+    "harness_helper_unit_source": "45e2ee1c4ce588d2d486162e84fb51aa8795d146",
+    "harness_stopped_owner_source": "03a1c422007c15078f3b1878d72882ba3017f9b0"
   },
   "cpu_text_auth": {
     "status": "BOTH_FRESH_CPU_AUTH_PASS",
@@ -89,7 +79,7 @@
   },
   "pending_gates": [
     {
-      "gate": "all_typed_scoped_actions_peer_and_control_independence",
+      "gate": "remaining_qwen_peer_node_control_image_and_local_search_typed_scopes",
       "status": "PENDING"
     },
     {
@@ -122,8 +112,8 @@
     "No sustained benchmark or thermal qualification",
     "No hardware fault injection",
     "No automatic replay of uncertain work",
-    "Preliminary5.138s observation does not close formal quiet/wake gate",
-    "Historical qualification runtime digest is not current running image identity"
+    "Historical qualification runtime digest is not current running image identity",
+    "Separate short Qwen/Ada idle intervals do not establish formal common quiet transition or wake"
   ],
   "artifacts": [
     {
@@ -431,6 +421,150 @@
       "raw_sha256": "cbd53aef3b7f1f99b338087072f08672646a8173c43551787a63846298338f9d",
       "retention": "external_original_not_copied",
       "scope": "Idle uncertainty0,17completed+1cancelled; no uncertain-owner clearing claim"
+    },
+    {
+      "id": "helper_unit_activation",
+      "artifact": "HELPER-ACTIVATION.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "f86d8df7fd52d6abbb1bce4a307b915755a9e7e3053297c1a00ffe9bf9d03c39",
+      "retention": "external_original_not_copied",
+      "scope": "CAP_SETUID unit45e activated; hardening retained; other service invocations unchanged"
+    },
+    {
+      "id": "stopped_owner_activation",
+      "artifact": "STOP-ACTIVATION.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "a56a632362fe44bc5c6e550e046521a37efa1bcdc4dc06fd666130eba9ca8669",
+      "retention": "external_original_not_copied",
+      "scope": "Helper03a component activated; inactive/dead zeroPIDs nojob retained-old-InvocationID settlement semantics"
+    },
+    {
+      "id": "repaired_targets",
+      "artifact": "REPAIRED-TARGETS.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "68dd25d49f3cdc2cdb611a2e3a20bf4e7e9fecaf8902d966261100c2c8d9b378",
+      "retention": "external_original_not_copied",
+      "scope": "Advertised action catalog only; unknown activity/null counters do not prove action success"
+    },
+    {
+      "id": "original_main_stop_unknown",
+      "artifact": "MAIN-STOP.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "13232c38e97ffc267a1b71a13e3a8f9c23237e621002d22c77131e80a6d6c1f8",
+      "retention": "external_original_not_copied",
+      "scope": "Original stop remains UNKNOWN; dispatch held; never rewritten as later success"
+    },
+    {
+      "id": "separate_main_recovery",
+      "artifact": "MAIN-RECOVERY.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "d9af9c5258bdd69132127c6b607c33cbf57d153d100637336f99afc400a91eb2",
+      "retention": "external_original_not_copied",
+      "scope": "Separately confirmed restart succeeded; hold released; observer recovered existing operation with no second POST"
+    },
+    {
+      "id": "local_idempotency_cas",
+      "artifact": "IDEMPOTENCY-CAS.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "51fdd2633b5439c00c2cb4c7e4bdfbe383530dfe318b0d6b49feca6980bbb2ba",
+      "retention": "external_original_not_copied",
+      "scope": "Repeat preserves original unknown; mismatched key and stale generation409; no new accepted operation"
+    },
+    {
+      "id": "typed_main_stop",
+      "artifact": "MAIN-STOP-ACCEPTANCE.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "3b0e908ec179d2eede156f4eafcebbcbfe23b4fdcd523ee79ce0bc6017a31f4d",
+      "retention": "external_original_not_copied",
+      "scope": "New scoped stop succeeded; hold retained"
+    },
+    {
+      "id": "typed_main_start",
+      "artifact": "MAIN-START-ACCEPTANCE.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "5a86b07eec0ec558345baea4ce910d227a7491d80374cd46ced4ecbd663f9fad",
+      "retention": "external_original_not_copied",
+      "scope": "Typed start succeeded; hold released"
+    },
+    {
+      "id": "typed_status_restart",
+      "artifact": "STATUS-RESTART.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "19e57746b73553dabe3e082055d74cc1af56da8efdd860a400ff02bd5daef25f",
+      "retention": "external_original_not_copied",
+      "scope": "Status restart succeeded; main remainedHTTP200 during status outage"
+    },
+    {
+      "id": "status_without_main",
+      "artifact": "MAIN-DOWN-STATUS-UP.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "720e5c149c742050a3ad8b6a91c2fec9c2f4b83f1394871196260c6a3b24ed37",
+      "retention": "external_original_not_copied",
+      "scope": "StatusHTTP200 while mainHTTP502; main unavailable not idle"
+    },
+    {
+      "id": "ada_preliminary_idle",
+      "artifact": "ADA-IDLE-PRELIMINARY.json",
+      "source": "root-evidence",
+      "evidence_class": "preliminary_idle_only",
+      "raw_sha256": "b426f5e16b9862240288217c58ad78c7795b2cd77f84c9df4b8cf3734d286bad",
+      "retention": "external_original_not_copied",
+      "scope": "Separate5.132964s readback,0.584458%oneCPU aggregate, main0ticks and32226MiB resident; not formal quiet/wake"
+    },
+    {
+      "id": "root_latest_steering",
+      "artifact": "OWNER-FIX-STEERING-USED.md",
+      "source": "H005-PUBLICATION-PREP-20260925",
+      "evidence_class": "root_supplied_current_incident_report_not_action_receipt",
+      "raw_sha256": "721ee7b79e61e3886a769917135ce76a21c5f6788c311c00b2d349d01632c916",
+      "retention": "external_original_not_copied",
+      "scope": "Current Qwen0 stopped after successful stop and failed start; hold retained; Q1/image ready unchanged per root; exact action receipts pending"
+    },
+    {
+      "id": "qwen0_typed_stop",
+      "artifact": "QWEN-STOP.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "e5e413f8d4776ed974089a7a7bea2fdf7b666ede39b7c243f3f49a81874e0ea5",
+      "retention": "external_original_not_copied",
+      "scope": "Scoped stop succeeded and retained its hold"
+    },
+    {
+      "id": "qwen0_typed_start_failed",
+      "artifact": "QWEN-START.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "d364b11fa3b176f7555cfa4fa0f84e14e01ee769299b5072dc5fd239a6f9013d",
+      "retention": "external_original_not_copied",
+      "scope": "One start failed operation_failed; its own hold false does not settle prior stop hold"
+    },
+    {
+      "id": "qwen_failed_start_status",
+      "artifact": "QWEN-START-FAILED-STATUS.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "5e98f3fd76152eb5cdbe9d533204e76b9ee76b820eeb5efb2c1841f5c5e66026",
+      "retention": "external_original_not_copied",
+      "scope": "Q0 unavailable/readyfalse; Q1/image ready; no inference claim"
+    },
+    {
+      "id": "qwen_healthy_peer_readiness",
+      "artifact": "QWEN-HEALTHY-PEER.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "531e93d4003b951da32000910dd24c2b19cf15ea532b28dba061dc47c46c2624",
+      "retention": "external_original_not_copied",
+      "scope": "Peer generation/boot unchanged, ready and mainHTTP200; main/child/compaction live routing NOT_RUN"
     }
   ],
   "harness_boundary_limits": {
@@ -439,7 +573,7 @@
     "private_summary_rows_including_summary_itself": 65,
     "control_ready_null": "intentional_until_api_proof_not_declared_source_bug",
     "watcher_failure_restore": "PASS_ROOT_ACCEPTED_WITH_RESTORATION_RECEIPT",
-    "typed_lifecycle": "PENDING",
+    "typed_lifecycle": "PARTIAL_LOCAL_MAIN_STOP_START_STATUS_RESTART_AND_IDEMPOTENCY_CAS_PASS_OTHER_SCOPES_PENDING",
     "admin": "OPEN_REVIEWED_TRUSTED_LAN",
     "historical_workspace_quarantine_count": 1,
     "image_lane": {
@@ -450,6 +584,179 @@
       "shutdown_only_marker": "auto_reconciled_with_uncertainty_false_and_ready_and_idle",
       "uncertain_owner_clear": false,
       "explicit_reconciliation_action": false
+    }
+  },
+  "local_live_acceptance": {
+    "overall": "LOCAL_SCOPES_LIVE_PASS_NOT_ALL_H005",
+    "helper": "PASS",
+    "main_stop_start_hold_release": "PASS",
+    "status_main_independence_both_directions": "PASS",
+    "idempotency_cas": "PASS",
+    "stopped_owner_proof": {
+      "required": [
+        "loaded",
+        "inactive",
+        "dead",
+        "MainPID0",
+        "ControlPID0",
+        "no_pending_job"
+      ],
+      "invocation_id": "empty_or_exact_captured_old_identity",
+      "unrelated_identity": "REJECT"
+    },
+    "operations": {
+      "MAIN-STOP.json": {
+        "operation_id": "ai-harness~relay-be7ee28d-fca0-42cd-91d3-f713834be0e0",
+        "action": "service.stop",
+        "status": "unknown",
+        "created_at": "2026-09-25T20:10:44.149Z",
+        "updated_at": "2026-09-25T20:10:45.848Z",
+        "affected_services": [
+          "harness"
+        ],
+        "dispatch_frozen": true
+      },
+      "MAIN-RECOVERY.json": {
+        "operation_id": "ai-harness~relay-2069390e-4602-4dc3-a99f-937b96bcfd3f",
+        "action": "service.restart",
+        "status": "succeeded",
+        "created_at": "2026-09-25T20:11:30.332Z",
+        "updated_at": "2026-09-25T20:11:30.879Z",
+        "affected_services": [
+          "harness"
+        ],
+        "dispatch_frozen": false
+      },
+      "MAIN-STOP-ACCEPTANCE.json": {
+        "operation_id": "ai-harness~relay-3de0b26f-35a9-4a3d-a096-716d84fa29c4",
+        "action": "service.stop",
+        "status": "succeeded",
+        "created_at": "2026-09-25T20:20:40.296Z",
+        "updated_at": "2026-09-25T20:20:41.480Z",
+        "affected_services": [
+          "harness"
+        ],
+        "dispatch_frozen": true
+      },
+      "MAIN-START-ACCEPTANCE.json": {
+        "operation_id": "ai-harness~relay-a35c4c6c-b2b2-49e9-bdcc-63feb68a4a8d",
+        "action": "service.start",
+        "status": "succeeded",
+        "created_at": "2026-09-25T20:21:07.063Z",
+        "updated_at": "2026-09-25T20:21:11.493Z",
+        "affected_services": [
+          "harness"
+        ],
+        "dispatch_frozen": false
+      },
+      "STATUS-RESTART.json": {
+        "operation_id": "ai-harness~relay-126314c9-28ef-420f-89a1-c5347be95427",
+        "action": "service.restart",
+        "status": "succeeded",
+        "created_at": "2026-09-25T20:18:16.239Z",
+        "updated_at": "2026-09-25T20:18:21.420Z",
+        "affected_services": [
+          "status"
+        ],
+        "dispatch_frozen": false
+      }
+    },
+    "original_unknown_rewritten": false,
+    "automatic_replay": false
+  },
+  "preliminary_idle": {
+    "status": "PRELIMINARY_NOT_FORMAL_TRANSITION_OR_WAKE",
+    "common_simultaneous_window": false,
+    "percent_basis": "100_percent_is_one_CPU_whole_scheduler_process",
+    "qwen": {
+      "seconds": 5.138109,
+      "gpu0_percent": 0.389248,
+      "gpu1_percent": 0.194624,
+      "main_thread_tick_delta_each": 0,
+      "process_vram_mib_each": 61008
+    },
+    "image": {
+      "seconds": 5.132964,
+      "process_percent": 0.584458,
+      "process_ticks": 3,
+      "main_thread_ticks": 0,
+      "main_thread_state": "S",
+      "main_thread_wait": "do_poll",
+      "process_vram_mib": 32226,
+      "core_temperature_c": 38,
+      "native_async_counters": "NOT_OBSERVED",
+      "witnessed_inactivity_over_600s": true
+    }
+  },
+  "historical_model_snapshot": {
+    "all_three_ready_utc": "2026-09-25T19:41:16.962708Z",
+    "qwen_invocations_unchanged": true,
+    "qwen_configured_context_each": 480000,
+    "image_warm": true,
+    "node_active": true,
+    "control_process_active": true,
+    "control_node_projection": {
+      "availability": "unknown",
+      "ready": null,
+      "reason": "observation_unavailable"
+    },
+    "server_gpu_assignment": "unassigned",
+    "ecc": "unchanged"
+  },
+  "current_qwen_incident": {
+    "observed_utc": "2026-09-25T20:22:21Z",
+    "evidence_class": "exact_action_and_status_receipts_plus_root_stop_hold_report",
+    "qwen0_stop": {
+      "status": "succeeded",
+      "owner_operation_id": "84d48b7c898d47019426e6ee5e29b3dc",
+      "relay_receipt": {
+        "operation_id": "ai-vm~relay-305542ba-f559-4d40-b966-78e8e2c99a12",
+        "status": "succeeded",
+        "created_at": "2026-09-25T20:21:39.356Z",
+        "updated_at": "2026-09-25T20:21:51.500Z",
+        "reason": null,
+        "affected_services": [
+          "qwen-gpu0"
+        ],
+        "dispatch_frozen": true
+      }
+    },
+    "qwen0_start": {
+      "status": "failed",
+      "reason": "operation_failed",
+      "owner_operation_id": "1fd56c215c914b18b748570177ca7c83",
+      "relay_receipt": {
+        "operation_id": "ai-vm~relay-b5c1acdc-cd40-46dd-b80b-cfcead493d03",
+        "status": "failed",
+        "created_at": "2026-09-25T20:22:12.867Z",
+        "updated_at": "2026-09-25T20:22:21.509Z",
+        "reason": "operation_failed",
+        "affected_services": [
+          "qwen-gpu0"
+        ],
+        "dispatch_frozen": false
+      }
+    },
+    "qwen0": {
+      "state": "stopped",
+      "ready": false,
+      "stop_hold_retained": true
+    },
+    "qwen1": "ready_in_failed_start_status_peer_generation_unchanged",
+    "image": "ready_in_failed_start_status",
+    "cause": "UNKNOWN",
+    "retry_or_inference": "NOT_PERFORMED",
+    "recovery_owner": "separate_Worker1_diagnosis",
+    "dependent_gates": "PENDING_BLOCKED_UNTIL_REVIEWED_RECOVERY",
+    "status_observed_utc": "2026-09-25T20:23:18.254678Z",
+    "hold_distinction": "Failed start dispatch_frozen=false concerns that operation; prior successful stop hold retained per root",
+    "peer_evidence": {
+      "ready": true,
+      "boot_unchanged": true,
+      "generation_unchanged": true,
+      "main_http": 200,
+      "live_peer_inference_or_compaction": "NOT_RUN",
+      "main_child_compaction_routing": "FIXTURE_PASS_ONLY"
     }
   }
 }
