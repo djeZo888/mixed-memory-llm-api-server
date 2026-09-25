@@ -16,7 +16,7 @@ from runtime import qwen38_oci as parent
 
 ROOT = Path(__file__).resolve().parents[2]
 RELATIVE = 'configs/runtimes/h005-runtime-binding.json'
-BINDING_SHA256 = '66c83c3487d6a9cae7b7c9c9dd5415a0a272c2fa1732f9e64b8eedbea3c40079'
+BINDING_SHA256 = '9da2236e927c44e2af618e0862ee84f54d4645ec0bcb1e93c25c0d98b45ee6ae'
 Qwen38OCIError = parent.Qwen38OCIError
 require, same = parent.require, parent.same
 

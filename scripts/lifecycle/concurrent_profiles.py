@@ -36,8 +36,8 @@ HOST_HEADROOM_POLICY_15 = {
     'basis': 'sampled_required_working_set_estimate_bytes',
 }
 PINS = {
-    'configs/runtimes/h005-runtime-binding.json': '66c83c3487d6a9cae7b7c9c9dd5415a0a272c2fa1732f9e64b8eedbea3c40079',
-    'scripts/runtime/h005_runtime_binding.py': 'c158a255ae281783e4c11a5a37c1a32d08929011b7a011d6de83107331798911',
+    'configs/runtimes/h005-runtime-binding.json': '9da2236e927c44e2af618e0862ee84f54d4645ec0bcb1e93c25c0d98b45ee6ae',
+    'scripts/runtime/h005_runtime_binding.py': '30b223cc246c3c8e7338079ce21c2fbb0427a1d34510f8d6a88ca9c6c564716e',
     'configs/deployments/qwen38-27b-q1-480000-yarn4-bf16kv.json': '6b4d6725010b58e53c784be781af968bf8b295cca402f0b6e4c91d2ea73077dd',
     'configs/deployments/qwen38-27b-q0-480000-yarn4-bf16kv.json': '7c2587d74e8f4654574c74d8b6e955dac1db9a185fc1c0201bacee92b3ecffe4',
     'configs/deployments/glm-5.3-ud-q4-k-xl-g1-480000.json': '1baa9913542a088a7dd40d1a902ef53605ff4a1c5eafc409814116df25d49899',
