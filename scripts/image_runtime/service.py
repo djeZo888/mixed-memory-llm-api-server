@@ -226,13 +226,22 @@ class Runtime:
         return {**snapshot, 'removed_exact_owned_invocation': True}
 
     def current_device(self):
-        data = run(['nvidia-smi', '--query-gpu=uuid,memory.total,memory.free',
-                    '--format=csv,noheader,nounits']).stdout
-        rows = [tuple(part.strip() for part in line.split(',')) for line in data.splitlines()]
-        matches = [row for row in rows if row[0] == GPU_UUID]
-        require(len(matches) == 1 and len({r[0] for r in rows}) == len(rows), 'ada_identity_missing')
-        return {'uuid': GPU_UUID, 'total_bytes': int(matches[0][1]) * 1024**2,
-                'free_bytes': int(matches[0][2]) * 1024**2}
+        # Select the dedicated UUID before querying: unrelated missing/faulted
+        # cards must not become an image admission prerequisite. A shared driver
+        # failure can still fail this read; no GPU/driver isolation is claimed.
+        data = run(['nvidia-smi', '--id=' + GPU_UUID,
+                    '--query-gpu=uuid,memory.total,memory.free',
+                    '--format=csv,noheader,nounits'], timeout=5).stdout
+        require(isinstance(data, str) and len(data) <= 4096, 'ada_memory_unavailable')
+        rows = [tuple(part.strip() for part in line.split(','))
+                for line in data.splitlines() if line.strip()]
+        require(len(rows) == 1 and len(rows[0]) == 3 and rows[0][0] == GPU_UUID,
+                'ada_identity_missing')
+        require(all(value.isascii() and value.isdigit() for value in rows[0][1:]),
+                'ada_memory_unavailable')
+        total, free = (int(value) * 1024**2 for value in rows[0][1:])
+        require(total > 0 and 0 <= free <= total, 'ada_memory_unavailable')
+        return {'uuid': GPU_UUID, 'total_bytes': total, 'free_bytes': free}
 
     def host_headroom(self):
         values = {}
@@ -245,18 +254,27 @@ class Runtime:
         return values
 
     def check_ports(self):
+        # Only 30007 is published in the host namespace. Scheduler/store ports
+        # remain inside the exact owned bridge network verified at start/reuse.
+        # Host 30008 belongs to the independent node observer/management service.
         output = run(['ss', '-H', '-ltn']).stdout
         for line in output.splitlines():
             fields = line.split()
             if len(fields) >= 4:
-                require(fields[3].rsplit(':', 1)[-1] not in {'30007', '30008', '30009', '30010'},
+                require(fields[3].rsplit(':', 1)[-1] != '30007',
                         'native_port_already_owned')
 
     def require_ada_idle(self):
-        output = run(['nvidia-smi', '--query-compute-apps=gpu_uuid,pid',
-                      '--format=csv,noheader,nounits']).stdout
-        require(not any(line.split(',')[0].strip() == GPU_UUID for line in output.splitlines()),
-                'ada_compute_process_already_present')
+        output = run(['nvidia-smi', '--id=' + GPU_UUID, '--query-compute-apps=gpu_uuid,pid',
+                      '--format=csv,noheader,nounits'], timeout=5).stdout
+        require(isinstance(output, str) and len(output) <= 65536, 'ada_process_inventory_invalid')
+        rows = [tuple(value.strip() for value in line.split(','))
+                for line in output.splitlines() if line.strip()]
+        require(all(len(row) == 2 and row[0] == GPU_UUID and row[1].isascii()
+                    and row[1].isdigit() and int(row[1]) > 0 for row in rows),
+                'ada_process_inventory_invalid')
+        require(len({row[1] for row in rows}) == len(rows), 'ada_process_inventory_invalid')
+        require(not rows, 'ada_compute_process_already_present')
 
     def check_network(self, state):
         network = json.loads(run(['docker', 'network', 'inspect', self.config['network_id']]).stdout)[0]

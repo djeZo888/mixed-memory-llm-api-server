@@ -118,6 +118,17 @@ that ID. Container checks require exactly the loopback port mapping in configure
 bindings and, while running, effective bindings. The owner does not adopt or
 recreate a missing or conflicting network during recovery.
 
+H005 source preparation scopes the host port-availability check to published
+30007. Host 30008 is reserved for the independent node service; the image's
+unpublished scheduler/store ports do not reserve the host namespace. Exact
+owned-bridge and configured/effective binding checks above remain mandatory.
+Image memory and compute-process admission query only the fixed Ada UUID with
+bounded `nvidia-smi --id` calls; no physical index or peer inventory substitutes
+for the required UUID. Missing/duplicate/malformed target proof is refused.
+Unrelated missing or failed cards are not queried by these admission gates;
+shared driver failure can still block the target. These are offline source and
+fixture checks, not live isolation or cold-start acceptance.
+
 A GPU-free probe on the installed Docker 29.6.1 showed that a dedicated
 `--internal` bridge retained the requested binding in `HostConfig.PortBindings`
 but returned `{"30007/tcp": null}` in `NetworkSettings.Ports`: the in-container

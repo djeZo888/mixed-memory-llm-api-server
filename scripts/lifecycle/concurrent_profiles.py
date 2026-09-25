@@ -157,8 +157,17 @@ def validate_pair(d, peer):
 
 
 @safe
-def validate_gpu_inventory(rows):
-    """Require the fixed UUIDs once; physical indices and row order may change."""
+def validate_gpu_inventory(rows, *, required_uuids=GPU_UUIDS):
+    """Require exactly the caller's UUIDs once, never substitute an ordinal.
+
+    Historical pair acceptance still requires both devices by default. Current
+    service admission supplies its own target UUID: a missing unassigned or
+    peer device is not a dependency of that service. Ambiguous inventories fail
+    closed; neither a physical index nor a card name establishes identity.
+    """
+    require(isinstance(required_uuids, (list, tuple)) and bool(required_uuids)
+            and len(required_uuids) == len(set(required_uuids))
+            and set(required_uuids) <= set(GPU_UUIDS), 'concurrent_gpu_requirement_invalid')
     if isinstance(rows, str):
         rows = [tuple(part.strip() for part in line.split(',')) for line in rows.splitlines() if line.strip()]
     require(isinstance(rows, (list, tuple)) and bool(rows)
@@ -174,7 +183,7 @@ def validate_gpu_inventory(rows):
         require(int(index) not in indices and uuid not in uuids, 'concurrent_gpu_inventory_mismatch')
         indices.add(int(index))
         uuids.add(uuid)
-    require(set(GPU_UUIDS) <= uuids, 'concurrent_gpu_inventory_mismatch')
+    require(set(required_uuids) <= uuids, 'concurrent_gpu_inventory_mismatch')
 
 
 @safe
@@ -387,8 +396,13 @@ def preflight_current(d, instance, run_fn, *, residents=None):
     or resident peer's full reviewed cap, less current anon plus no-swap shmem,
     and retain the existing 16-GiB host headroom. Thus resident allocations are
     not counted twice, reclaimable cache is not double-credited, and remaining
-    room up to each cap is retained even for an idle peer. This is a current
-    bounded sample, not an allocator reservation or benchmark recertification.
+    room up to each cap is retained even for an idle peer. GPU admission checks
+    only this target's UUID/allocation; a missing or degraded peer GPU cannot
+    donate memory or prevent admission on the independent healthy target.
+    Queries address only the target UUID, so unrelated cards are not enumerated.
+    A shared-driver failure can still block admission; no driver isolation is
+    claimed. This bounded sample is not an allocator reservation or benchmark
+    recertification.
     """
     residents = {} if residents is None else residents
     require(type(residents) is dict and set(residents) <= set(SLOTS), 'concurrent_resident_identity_invalid')
@@ -421,27 +435,28 @@ def preflight_current(d, instance, run_fn, *, residents=None):
     for slot in set(residents) | {target}:
         required += max(0, receipt['slots'][slot]['memory_bytes'] - credit.get(slot, 0))
     require(host_available >= required, 'concurrent_current_host_memory_insufficient')
-    text = read(['nvidia-smi', '--query-gpu=index,uuid,memory.total,memory.free', '--format=csv,noheader,nounits'])
+    target_uuid = d['launch']['gpus'][0]
+    text = read(['nvidia-smi', '--id=' + target_uuid,
+                 '--query-gpu=index,uuid,memory.total,memory.free', '--format=csv,noheader,nounits'])
     require(len(text) <= 4096, 'concurrent_current_gpu_memory_unavailable')
     rows = [tuple(value.strip() for value in line.split(',')) for line in text.splitlines() if line.strip()]
-    require(rows and all(len(row) == 4 and row[2].isascii() and row[2].isdigit()
-                        and row[3].isascii() and row[3].isdigit() for row in rows),
+    require(rows and all(len(row) == 4 for row in rows),
             'concurrent_current_gpu_memory_unavailable')
-    validate_gpu_inventory([(row[0], row[1]) for row in rows])
-    memory_by_uuid = {row[1]: tuple(int(value) * 1024**2 for value in row[2:]) for row in rows}
-    require(all(total > 0 and 0 <= free <= total for total, free in memory_by_uuid.values()),
+    validate_gpu_inventory([(row[0], row[1]) for row in rows], required_uuids=d['launch']['gpus'])
+    row = next(row for row in rows if row[1] == target_uuid)
+    require(all(value.isascii() and value.isdigit() for value in row[2:]),
             'concurrent_current_gpu_memory_unavailable')
-    gpu_required = {}
-    for slot in set(residents) | {target}:
-        proof = receipt['slots'][slot]
-        total, free = memory_by_uuid[proof['visible_cuda_devices']['CUDA0']]
-        require(total == proof['gpu_total_bytes'], 'concurrent_current_gpu_memory_unavailable')
-        reserve = max(16 * 1024**3, (total + 9) // 10 if proof['deployment'] in QWEN_PROFILES else 0)
-        # Accepted measured occupied GPU bytes include model, allocated cache
-        # and workspace. A resident target has already paid that allocation.
-        needed = reserve + (0 if slot in residents else total - proof['minimum_free_gpu_bytes'])
-        require(free >= needed, 'concurrent_current_gpu_memory_insufficient')
-        gpu_required[slot] = needed
+    total, free = (int(value) * 1024**2 for value in row[2:])
+    require(total > 0 and 0 <= free <= total, 'concurrent_current_gpu_memory_unavailable')
+    proof = receipt['slots'][target]
+    require(proof['visible_cuda_devices']['CUDA0'] == target_uuid
+            and total == proof['gpu_total_bytes'], 'concurrent_current_gpu_memory_unavailable')
+    reserve = max(16 * 1024**3, (total + 9) // 10 if proof['deployment'] in QWEN_PROFILES else 0)
+    # Accepted measured occupied GPU bytes include model, allocated cache
+    # and workspace. A resident target has already paid that allocation.
+    needed = reserve + (0 if target in residents else total - proof['minimum_free_gpu_bytes'])
+    require(free >= needed, 'concurrent_current_gpu_memory_insufficient')
+    gpu_required = {target: needed}
     return {'host_available_bytes': host_available, 'required_host_available_bytes': required,
             'resident_slots': sorted(residents), 'gpu_required_free_bytes': gpu_required}
 

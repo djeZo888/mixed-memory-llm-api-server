@@ -869,8 +869,10 @@ class Manager:
             from . import concurrent_profiles as pair
             if pair.is_pair(d):
                 pair.check_acceptance(d, self.instance)
-                pair.validate_gpu_inventory(self.run(['nvidia-smi', '--query-gpu=index,uuid',
-                                                      '--format=csv,noheader'], timeout=30))
+                pair.validate_gpu_inventory(self.run(['nvidia-smi', '--id=' + d['launch']['gpus'][0],
+                                                      '--query-gpu=index,uuid',
+                                                      '--format=csv,noheader'], timeout=30),
+                                            required_uuids=d['launch']['gpus'])
         require(self.instance.get("obsolete_boot_owner_disabled") is True
                 and bool(self.instance.get("obsolete_boot_owner_evidence")), "obsolete_boot_owner_removal_required")
         self.check_artifacts(d)

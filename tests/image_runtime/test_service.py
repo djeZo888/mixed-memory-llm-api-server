@@ -59,6 +59,75 @@ class ServiceReview(unittest.TestCase):
         runtime.config = {"image_id": IMAGE}
         return runtime
 
+    def test_current_device_queries_only_exact_ada_when_global_inventory_fails(self):
+        expected = ['nvidia-smi', '--id=' + service.GPU_UUID,
+                    '--query-gpu=uuid,memory.total,memory.free', '--format=csv,noheader,nounits']
+        # These peer inventories are intentionally inaccessible; the code must
+        # never inspect them or select a physical index to find dedicated Ada.
+        for peers in ([], ['GPU-text0'], ['GPU-extra', 'GPU-text1', 'GPU-text0']):
+            def target_only(argv, *, timeout):
+                if argv != expected:
+                    raise subprocess.TimeoutExpired('synthetic-global-inventory-' + str(len(peers)), timeout)
+                self.assertEqual(timeout, 5)
+                return completed(argv, f' {service.GPU_UUID}, 49140, 48000\n')
+            with self.subTest(peers=peers), patch.object(service, 'run', side_effect=target_only) as run:
+                self.assertEqual(self.runtime().current_device(), {
+                    'uuid': service.GPU_UUID, 'total_bytes': 49140 * 1024**2, 'free_bytes': 48000 * 1024**2})
+                run.assert_called_once_with(expected, timeout=5)
+
+    def test_current_device_missing_ambiguous_foreign_or_malformed_identity_refused(self):
+        valid = f'{service.GPU_UUID}, 49140, 48000\n'
+        rows = ['', '\n', 'GPU-foreign, 49140, 48000\n', valid + valid,
+                valid + 'GPU-foreign, 49140, 48000\n',
+                service.GPU_UUID, service.GPU_UUID + ', 49140',
+                service.GPU_UUID + ', 49140, 48000, extra']
+        for output in rows:
+            with self.subTest(output=output), patch.object(service, 'run', return_value=completed([], output)):
+                with self.assertRaisesRegex(RuntimeError, 'ada_identity_missing'):
+                    self.runtime().current_device()
+
+    def test_current_device_invalid_or_unknown_memory_never_invents_capacity(self):
+        for total, free in [('N/A', 'N/A'), ('0', '0'), ('49140', '49141'),
+                            ('49140', '-1'), ('-1', '0'), ('49140', '1.0'),
+                            ('49140', ''), ('٤٩١٤٠', '0'), ('49140', 'True')]:
+            output = f'{service.GPU_UUID}, {total}, {free}\n'
+            with self.subTest(total=total, free=free), patch.object(service, 'run', return_value=completed([], output)):
+                with self.assertRaisesRegex(RuntimeError, 'ada_memory_unavailable'):
+                    self.runtime().current_device()
+        with patch.object(service, 'run', return_value=completed([], 'x' * 4097)):
+            with self.assertRaisesRegex(RuntimeError, 'ada_memory_unavailable'):
+                self.runtime().current_device()
+
+    def test_current_device_shared_driver_failure_has_no_ordinal_or_global_fallback(self):
+        for failure in (RuntimeError('owned_command_failed'), subprocess.TimeoutExpired('synthetic-target-query', 5)):
+            with self.subTest(failure=type(failure).__name__), patch.object(service, 'run', side_effect=failure) as run:
+                with self.assertRaises(type(failure)):
+                    self.runtime().current_device()
+                self.assertEqual(run.call_count, 1)
+                self.assertEqual(run.call_args.args[0][1], '--id=' + service.GPU_UUID)
+
+    def test_host_node_listener_is_not_an_image_internal_port_conflict(self):
+        runtime = self.runtime()
+        peers = '\n'.join(f'LISTEN 0 4096 127.0.0.1:{port} 0.0.0.0:*'
+                          for port in (30000, 30002, 30004, 30008, 30009, 30010))
+        with patch.object(service, 'run', return_value=completed([], peers)):
+            runtime.check_ports()
+        for address in ('127.0.0.1', '0.0.0.0', '[::]'):
+            output = peers + f'\nLISTEN 0 4096 {address}:30007 0.0.0.0:*'
+            with self.subTest(address=address), patch.object(service, 'run', return_value=completed([], output)):
+                with self.assertRaisesRegex(RuntimeError, 'native_port_already_owned'):
+                    runtime.check_ports()
+
+    def test_native_create_publishes_only_30007_in_owned_bridge_namespace(self):
+        runtime = self.runtime()
+        runtime.model = '/data/models-large/synthetic-model'
+        argv = runtime.create_argv(RUN_ID)
+        self.assertEqual([argv[index + 1] for index, flag in enumerate(argv) if flag == '--publish'],
+                         ['127.0.0.1:30007:30007/tcp'])
+        self.assertEqual(argv[argv.index('--network') + 1], service.NETWORK)
+        self.assertEqual(argv[argv.index('--gpus') + 1], 'device=' + service.GPU_UUID)
+        self.assertNotIn('--network=host', argv)
+
     def test_cli_rejects_extra_or_user_controlled_actions_before_runtime(self):
         for argv in (["service.py", "recover", "--unit", "other.service"],
                      ["service.py", "arbitrary"], ["service.py"]):
@@ -110,6 +179,7 @@ class ServiceReview(unittest.TestCase):
             lambda value: value["HostConfig"]["DeviceRequests"][0].update(DeviceIDs=["GPU-foreign"]),
             lambda value: value["HostConfig"].update(NetworkMode="host"),
             lambda value: value["HostConfig"].update(PortBindings={"30007/tcp": [{"HostIp": "0.0.0.0", "HostPort": "30007"}]}),
+            lambda value: value["HostConfig"]["PortBindings"].update({"30008/tcp": [{"HostIp": "127.0.0.1", "HostPort": "30008"}]}),
         )
         for mutate in mutations:
             with self.subTest(mutation=mutate):
@@ -125,16 +195,36 @@ class ServiceReview(unittest.TestCase):
                 self.assertEqual([call.args[0] for call in run.call_args_list], [["docker", "inspect", CID]])
                 runtime.save.assert_not_called()
 
-    def test_ada_idle_gate_rejects_ada_but_allows_text_gpu_processes(self):
+    def test_ada_idle_gate_queries_only_ada_and_rejects_existing_process(self):
         runtime = self.runtime()
-        for rows, allowed in (("GPU-text, 7\n", True),
-                              ("GPU-text, 7\n" + service.GPU_UUID + ", 8\n", False)):
-            with self.subTest(rows=rows), patch.object(service, "run", return_value=completed([], rows)):
+        expected = ['nvidia-smi', '--id=' + service.GPU_UUID, '--query-compute-apps=gpu_uuid,pid',
+                    '--format=csv,noheader,nounits']
+        for rows, allowed in (("\n", True), (service.GPU_UUID + ", 8\n", False)):
+            def target_only(argv, *, timeout):
+                if argv != expected:
+                    raise subprocess.TimeoutExpired('synthetic-unassigned-gpu-failed', timeout)
+                self.assertEqual(timeout, 5)
+                return completed(argv, rows)
+            with self.subTest(rows=rows), patch.object(service, "run", side_effect=target_only) as run:
                 if allowed:
                     runtime.require_ada_idle()
                 else:
                     with self.assertRaisesRegex(RuntimeError, "ada_compute_process_already_present"):
                         runtime.require_ada_idle()
+                run.assert_called_once_with(expected, timeout=5)
+
+    def test_ada_idle_gate_rejects_malformed_or_ambiguous_target_process_proof(self):
+        runtime = self.runtime()
+        uuid = service.GPU_UUID
+        for output in ('GPU-text, 7\n', uuid, uuid + ', N/A', uuid + ', -1', uuid + ', 0',
+                       uuid + ', 7, extra', uuid + ', ٧', (uuid + ', 7\n') * 2, 'x' * 65537):
+            with self.subTest(output=output[:100]), patch.object(service, 'run', return_value=completed([], output)):
+                with self.assertRaisesRegex(RuntimeError, 'ada_process_inventory_invalid'):
+                    runtime.require_ada_idle()
+        with patch.object(service, 'run', side_effect=RuntimeError('owned_command_failed')) as run:
+            with self.assertRaisesRegex(RuntimeError, 'owned_command_failed'):
+                runtime.require_ada_idle()
+            self.assertEqual(run.call_count, 1)
 
     def test_sampler_hang_kills_only_exact_child_and_returns(self):
         sampler = Mock()

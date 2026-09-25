@@ -147,6 +147,19 @@ class Profiles(unittest.TestCase):
             with self.subTest(rows=rows), self.assertRaisesRegex(LifecycleError, 'concurrent_gpu_inventory_mismatch'):
                 pair.validate_gpu_inventory(rows)
 
+    def test_target_requirement_accepts_missing_peer_without_ordinal_substitution(self):
+        for target in pair.GPU_UUIDS:
+            peer = next(uuid for uuid in pair.GPU_UUIDS if uuid != target)
+            for rows in ([(7, target)], [(0, ADA_UUID), (7, target)], [(7, target), (0, ADA_UUID)]):
+                pair.validate_gpu_inventory(rows, required_uuids=[target])
+            for rows in ([(0, peer)], [(0, ADA_UUID)], [(0, target), (7, target)]):
+                with self.subTest(target=target, rows=rows), self.assertRaisesRegex(
+                        LifecycleError, 'concurrent_gpu_inventory_mismatch'):
+                    pair.validate_gpu_inventory(rows, required_uuids=[target])
+        for required in ([], ['0'], [ADA_UUID], [pair.GPU_UUIDS[0]] * 2):
+            with self.assertRaisesRegex(LifecycleError, 'concurrent_gpu_requirement_invalid'):
+                pair.validate_gpu_inventory(list(enumerate(pair.GPU_UUIDS)), required_uuids=required)
+
     def test_gpu_inventory_rejects_malformed_identity_rows_including_extra_device(self):
         valid = list(enumerate(pair.GPU_UUIDS))
         bad_rows = [None, '2, ' + ADA_UUID, (2,), (2, ADA_UUID, 'extra'),
@@ -379,15 +392,33 @@ class ManagerPairIntegration(unittest.TestCase):
 
     def test_current_gpu_inventory_blocks_before_artifacts_or_container_creation(self):
         d, _ = self.prepare(pair.GLM_PROFILE)
-        wrong = '0, ' + ADA_UUID + '\n1, ' + pair.GPU_UUIDS[0]
+        wrong = '0, ' + ADA_UUID + '\n1, ' + pair.GPU_UUIDS[1]
         with patch.object(self.manager, 'check_sources'), patch.object(self.manager, 'host_guards'), \
                 patch.object(self.manager, 'run', return_value=wrong) as run, \
                 patch.object(self.manager, 'check_artifacts') as artifacts:
             with self.assertRaisesRegex(LifecycleError, 'concurrent_gpu_inventory_mismatch'):
                 self.manager.prepare_start(d)
-            run.assert_called_once_with(['nvidia-smi', '--query-gpu=index,uuid', '--format=csv,noheader'], timeout=30)
+            run.assert_called_once_with(['nvidia-smi', '--id=' + pair.GPU_UUIDS[0],
+                                         '--query-gpu=index,uuid', '--format=csv,noheader'], timeout=30)
             artifacts.assert_not_called()
             self.assertEqual(self.inspects, [])
+
+    def test_manager_accepts_target_when_peer_is_absent_before_artifact_gate(self):
+        for identifier in pair.PROFILES:
+            d, _ = self.prepare(identifier)
+            inventory = f"9, {d['launch']['gpus'][0]}\n0, {ADA_UUID}\n"
+            self.manager.instance.update(obsolete_boot_owner_disabled=True,
+                                         obsolete_boot_owner_evidence=['SYNTHETIC'])
+            def target_only(argv, *, timeout):
+                if argv != ['nvidia-smi', '--id=' + d['launch']['gpus'][0],
+                            '--query-gpu=index,uuid', '--format=csv,noheader']:
+                    raise LifecycleError('synthetic_unassigned_gpu_query_hang')
+                return inventory
+            with patch.object(self.manager, 'check_sources'), patch.object(self.manager, 'host_guards'), \
+                    patch.object(self.manager, 'run', side_effect=target_only), \
+                    patch.object(self.manager, 'check_artifacts', side_effect=LifecycleError('synthetic_artifact_gate')):
+                with self.subTest(identifier=identifier), self.assertRaisesRegex(LifecycleError, 'synthetic_artifact_gate'):
+                    self.manager.prepare_start(d)
 
     def test_manager_accepts_reordered_extra_gpu_before_existing_artifact_gate(self):
         d, _ = self.prepare(pair.QWEN0_PROFILE)
