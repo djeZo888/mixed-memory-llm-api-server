@@ -4,7 +4,7 @@ These are saved measurements, not a new run. First three cards reuse
 [H004, 2026-09-24](../h004-gpu-20260924/RESULT.md); the Server uses the retained
 H005-NEWGPU-QUALIFY-20260925 receipt. Exact raw SHA256 values are in the
 [evidence index](acceptance-evidence.json). Current overall acceptance remains
-[PARTIAL / PENDING](../../docs/service-resilience-acceptance.md).
+[PARTIAL / BLOCKED](../../docs/service-resilience-acceptance.md).
 
 Rates are median **decimal GB/s (10^9 bytes/s)** from nvbandwidth pinned copy-engine
 transfers, 256 MiB, five measured samples per direction per card, with one excluded warmup sample

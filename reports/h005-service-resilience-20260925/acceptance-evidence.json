@@ -1,41 +1,57 @@
 {
   "schema_version": 1,
   "report_date": "2026-09-25",
-  "status": "PARTIAL_PENDING",
-  "combined_source_commit": "ec9943f38daaf8b92c3bdcba30bf42592659312d",
+  "status": "PARTIAL_BLOCKED",
+  "combined_source_commit": "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
   "receipt_cutoff": {
     "closure_emitted_utc": "2026-09-25T19:44:56.947265Z",
-    "harness_update": "Root-supplied local owner action receipts through2026-09-25T20:21:11.493Z; not a new VM query",
     "repair_activation_last_vm_contact_utc": "2026-09-25T19:44:30.006989Z",
     "ada_preliminary_end_utc": "2026-09-25T19:56:37.916861Z",
-    "qwen_failed_start_status_utc": "2026-09-25T20:23:18.254678Z"
+    "qwen_failed_start_status_utc": "2026-09-25T20:23:18.254678Z",
+    "historical_harness_update": "Root-supplied local owner action receipts through2026-09-25T20:21:11.493Z; not a new VM query",
+    "harness_update": "Supplied local receipts through 2026-09-25T21:30:16.610088Z; no new VM or harness query",
+    "qwen_canonical_recovery_utc": "2026-09-25T21:10:22.546965+00:00",
+    "control_readiness_live_utc": "2026-09-25T21:27:26.363256+00:00",
+    "control_typed_restart_final_utc": "2026-09-25T21:29:48.622Z",
+    "latest_supplied_snapshot_utc": "2026-09-25T21:30:16.610088+00:00",
+    "final_execution_receipts": "Root STEERING reports ai-vm changed boot with canonical reboot owner reconciled but llmctl-boot restoration exit 1 at 21:37:53; harness reboot and quiet/wake halted; exact new action/cause receipts not yet supplied",
+    "latest_root_steering_event_utc": "2026-09-25T21:37:53Z"
   },
   "preparation": {
     "source_only": true,
     "vm_contact": false,
     "network_service_tests": false,
-    "push": true,
-    "pull_request": true,
+    "push": false,
+    "pull_request": false,
     "overlapping_test_counts_summed": false,
-    "publication_scope": "Exact reviewed combinedec9943f published; current docs delta unpushed for root review; PR7 remains draft"
+    "publication_scope": "Docs-only candidate on reviewed combined fc6896f; no push, PR update, ready transition or merge in this task before root exact final review GO",
+    "previous_publication": "Existing draft PR7 head ac8f71a927b4eb1635936edd6eba19997e213527 per root supplied task summary; not queried by this task"
   },
   "deployed_components": {
-    "ai_vm_successor_source": "5b20f26b36e8caedfd62ce42060ecdbe32126224",
     "harness_main_source": "63dcb23ebd0b2cb82a295bea78192f3e1a433a6e",
     "harness_status_source": "c640b9c9c3b9a41fb639eeb92018d34470041ad3",
     "runtime_binding_raw_sha256": "9da2236e927c44e2af618e0862ee84f54d4645ec0bcb1e93c25c0d98b45ee6ae",
     "text": {
       "image_id": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
       "image_config_digest": "sha256:8f9a45a8a4de689280c054867103fc072f064703427212aeb6d603551a86f4b2",
-      "overlay_sha256": "b7f03476fe13779ed4867e4ca509dcba2861431210b6a264cf551558b5927a27"
+      "overlay_sha256": "b7f03476fe13779ed4867e4ca509dcba2861431210b6a264cf551558b5927a27",
+      "image_id_domain": "oci_platform_manifest",
+      "image_config_digest_domain": "oci_image_config"
     },
     "image": {
       "image_id": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
       "image_config_digest": "sha256:3f6178faa74c4a9bcb95ed4304dbee57473efa8913a793e067014af4a98281ad",
-      "overlay_sha256": "dda84e200adcc6a1ee8915e0e993627695477a346c5848fc27f9251c34d04b3b"
+      "overlay_sha256": "dda84e200adcc6a1ee8915e0e993627695477a346c5848fc27f9251c34d04b3b",
+      "image_id_domain": "oci_platform_manifest",
+      "image_config_digest_domain": "oci_image_config"
     },
     "harness_helper_unit_source": "45e2ee1c4ce588d2d486162e84fb51aa8795d146",
-    "harness_stopped_owner_source": "03a1c422007c15078f3b1878d72882ba3017f9b0"
+    "harness_stopped_owner_source": "03a1c422007c15078f3b1878d72882ba3017f9b0",
+    "historical_ai_vm_successor_source": "5b20f26b36e8caedfd62ce42060ecdbe32126224",
+    "ai_vm_control_node_source": "aaa643fcd90ac4ae0a50e4a8e1a3df19ca0ebcc3",
+    "ai_vm_host_future_boot_source": "aaa643fcd90ac4ae0a50e4a8e1a3df19ca0ebcc3",
+    "image_runtime_host_closure_source": "014e294fdeab91942a046fa7b0b9d7f833951e82",
+    "combined_repository_is_wholesale_deployed": false
   },
   "cpu_text_auth": {
     "status": "BOTH_FRESH_CPU_AUTH_PASS",
@@ -79,32 +95,32 @@
   },
   "pending_gates": [
     {
-      "gate": "remaining_qwen_peer_node_control_image_and_local_search_typed_scopes",
-      "status": "PENDING"
-    },
-    {
-      "gate": "image_quarantine_reconciliation",
-      "status": "PENDING"
-    },
-    {
       "gate": "serial_typed_ai_vm_then_ai_harness_self_reboots",
-      "status": "PENDING"
+      "status": "BLOCKED",
+      "execution_state": "HALTED_PER_ROOT_STEERING",
+      "required_proof": "ai-vm changed boot and canonical owner reconciled per root summary, but model restoration failed; both complete restorations still required"
     },
     {
-      "gate": "one_all_three_warm_660_second_quiet_window_passive_5_second_polling",
-      "status": "PENDING"
+      "gate": "one_all_three_warm_665_second_quiet_window_passive_5_second_polling",
+      "status": "BLOCKED",
+      "execution_state": "HALTED_PER_ROOT_STEERING",
+      "required_proof": "Actual common post-work interval, exact scheduler CPU units with 100 percent equal to one CPU, main TID, blocking state and VRAM"
     },
     {
-      "gate": "per_pid_tid_below_5_percent_one_cpu_cache_vram_retention",
-      "status": "PENDING"
+      "gate": "per_pid_tid_below_5_percent_one_cpu_and_residency",
+      "status": "BLOCKED",
+      "limit": "VRAM alone does not establish cache contents",
+      "execution_state": "HALTED_PER_ROOT_STEERING"
     },
     {
-      "gate": "immediate_bounded_wakes_renewed_busy_finish_warm",
-      "status": "PENDING"
+      "gate": "immediate_bounded_normal_text_wake_each_renewed_busy_finish_all_three_warm",
+      "status": "BLOCKED",
+      "execution_state": "HALTED_PER_ROOT_STEERING"
     },
     {
-      "gate": "bounded_qualified_image_edit_sanity",
-      "status": "PENDING"
+      "gate": "bounded_qualified_1024_image_edit_sanity",
+      "status": "BLOCKED",
+      "execution_state": "HALTED_PER_ROOT_STEERING"
     }
   ],
   "limits": [
@@ -565,15 +581,258 @@
       "raw_sha256": "531e93d4003b951da32000910dd24c2b19cf15ea532b28dba061dc47c46c2624",
       "retention": "external_original_not_copied",
       "scope": "Peer generation/boot unchanged, ready and mainHTTP200; main/child/compaction live routing NOT_RUN"
+    },
+    {
+      "id": "q0_cause",
+      "artifact": "w1-recovery/CAUSE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_read_only_diagnosis",
+      "raw_sha256": "2109f590712055723938206ea78a6094dbf01f6a26073263b25edec4eb300854",
+      "retention": "external_original_not_copied",
+      "scope": "Original untrusted_concurrent_peer independently reproduced; failed owner retained; not original stderr"
+    },
+    {
+      "id": "q0_second_cause",
+      "artifact": "w1-recovery/CAUSE-2.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_read_only_diagnosis",
+      "raw_sha256": "e08c7342637336098f8b21ed6f4f3594816dfec13591481500710b54a3d47e53",
+      "retention": "external_original_not_copied",
+      "scope": "Second failed owner retained; complete Docker Mounts entries equal after Destination sorting"
+    },
+    {
+      "id": "q0_mount_order_source",
+      "artifact": "w1-recovery/MOUNT-ORDER-SOURCE-READY.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "source_offline_validation",
+      "raw_sha256": "1198154c7e912ec4f550c86b294394b1a43a7cebb3ca9d77247474db94201ea5",
+      "retention": "external_original_not_copied",
+      "scope": "Exact 014e294 mount ordering fix; 45 scoped PASS, overlapping groups not summed"
+    },
+    {
+      "id": "q0_mount_order_transition",
+      "artifact": "w1-recovery/MOUNT-ORDER-TRANSITION.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "source_publication_plan",
+      "raw_sha256": "6bd92b1e8e5863c602efbd24d59ba07bcdcfdb6ba8fe16ea2fd6577cded318d9",
+      "retention": "external_original_not_copied",
+      "scope": "Reviewed matched publication transition; proposal identity is not live success"
+    },
+    {
+      "id": "q0_mount_order_publication",
+      "artifact": "w1-recovery/MOUNT-ORDER-PUBLICATION.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "0370f59f14b097959d8b87f2159bc68c9938679327afb5d1fe8bbe63e305997a",
+      "retention": "external_original_not_copied",
+      "scope": "Matched source publication; no native restart during publication"
+    },
+    {
+      "id": "q0_recovery_succeeded",
+      "artifact": "w1-recovery/RECOVERY-SUCCEEDED.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "e004d40c7217cb09389244d9b3cf5acb079c4d6af155b5e1e266ba290af4ed99",
+      "retention": "external_original_not_copied",
+      "scope": "Distinct canonical Q0 owner succeeded; original container new PID/start; peer identities preserved; no inference"
+    },
+    {
+      "id": "q0_final_guard_closure",
+      "artifact": "w1-recovery/FINAL-GUARD-CLOSURE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "90df50559969b1ae3684ae7be30333735dcaa56f561dc8127a74daf3e33e0d6c",
+      "retention": "external_original_not_copied",
+      "scope": "014e294 closure, registered guards PASS; retained below-6-GiB-root warning"
+    },
+    {
+      "id": "q0_recovery_window_closed",
+      "artifact": "w1-recovery/WORKER1-WINDOW-CLOSED.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "318755e6557f62327b2009e38eeb74631b1a13b4637ae42e3f060650489b6ad3",
+      "retention": "external_original_not_copied",
+      "scope": "Window closed after canonical success and hold reconciliation; no reboot acceptance"
+    },
+    {
+      "id": "control_source_ready",
+      "artifact": "w1-control/SOURCE-READY.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "source_offline_validation",
+      "raw_sha256": "4d07ed288a98443b701de40604e6ac6444425278afdaac1621c793778333786e",
+      "retention": "external_original_not_copied",
+      "scope": "aaa643 source closure and 47 focused tests; source-only receipt"
+    },
+    {
+      "id": "control_validation",
+      "artifact": "w1-control/VALIDATION.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "source_offline_validation",
+      "raw_sha256": "c29235c1ba2d8beeb603ad1f0bca6ee3cca22832272bd560dddd7da613c74092",
+      "retention": "external_original_not_copied",
+      "scope": "47 distinct tests in this group only; no addition to overlapping historical counts"
+    },
+    {
+      "id": "control_transition",
+      "artifact": "w1-control/TRANSITION.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "source_publication_plan",
+      "raw_sha256": "72afeda613e13d010803ce0c2beeb02c3cc232bd1fbd54b906317db72f201b37",
+      "retention": "external_original_not_copied",
+      "scope": "Matched transition for passive control readiness; no model restart or runtime build"
+    },
+    {
+      "id": "control_publication",
+      "artifact": "w1-control/LIVE-PUBLICATION.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "d0553a30b10f33c081d9811ec35b23c64e218178faf7d85e6296560dd1bef112",
+      "retention": "external_original_not_copied",
+      "scope": "aaa643 matched host source publication; native invocations preserved"
+    },
+    {
+      "id": "control_readiness_live",
+      "artifact": "w1-control/CONTROL-READINESS-LIVE-PASS.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "16e21c43b928caa1020f11998fb359226eff4fa1a6d3c9c5dba075b1d26d34f7",
+      "retention": "external_original_not_copied",
+      "scope": "Actual boot/invocation/PID readiness match, fresh node ready and 401 denials; not typed restart receipt"
+    },
+    {
+      "id": "image_restart_native_proof",
+      "artifact": "w1-control/IMAGE-RESTART-NATIVE-PROOF.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "508dd3a4d509d0177b617b15a82d5033d68a6073fc9c5f5841c90e8e01ac4637",
+      "retention": "external_original_not_copied",
+      "scope": "Canonical image restart success and exact old absence/new container/PID/run proof; same image, no public generation"
+    },
+    {
+      "id": "q1_peer_serving",
+      "artifact": "w2-peer/PEER-SERVING.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "ff578b22384ad66385723ac2b2c81a51fd16f24de4f2548e1e1f99f6c5fac34e",
+      "retention": "external_original_not_copied",
+      "scope": "One settled normal Q1 chat OK while Q0 held; no tools, child or compaction acceptance"
+    },
+    {
+      "id": "q1_peer_final_settlement",
+      "artifact": "w2-peer/FINAL-SETTLEMENT.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "2663c201c65bd517ba2ec9392ad8680c54bfe300b1436fdd2ca41c917cd8e9b9",
+      "retention": "external_original_not_copied",
+      "scope": "Both lanes idle, active requests and queue zero; Q0 stop hold preserved"
+    },
+    {
+      "id": "q1_peer_window_closed",
+      "artifact": "w2-peer/WINDOW-CLOSED.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "3376074578e26604b230b0f27e7f3b707c81334f991b15fffc079c3f00586f81",
+      "retention": "external_original_not_copied",
+      "scope": "Owned peer request settled with no retry or replay"
+    },
+    {
+      "id": "q0_second_failed_start",
+      "artifact": "w2-final/Q0-RECOVERY.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "0594b9d8ca4a19a40212d05fb6f39bd281998c33ff0fd08eaadbd4c64f9da7a9",
+      "retention": "external_original_not_copied",
+      "scope": "Second distinct start failed; accepted POST is not success"
+    },
+    {
+      "id": "q0_final_relay_start",
+      "artifact": "w2-final/Q0-RECOVERY-2.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "0d0232695c279617137af836c1c1b5603a9ca6296a8e90ed668332a9c1fac7c6",
+      "retention": "external_original_not_copied",
+      "scope": "Distinct start relay succeeded and hold unfrozen after canonical recovery"
+    },
+    {
+      "id": "q0_restored_metadata",
+      "artifact": "w2-final/Q0-RESTORED-METADATA.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_metadata_receipt",
+      "raw_sha256": "9928b872a0adc7bf7be246838a893a3c0abbf55782311efa472da0a105564e16",
+      "retention": "external_original_not_copied",
+      "scope": "Prior stop hold reconciled; both failed rows retained; not reboot drain proof"
+    },
+    {
+      "id": "image_typed_restart",
+      "artifact": "w2-final/IMAGE-RESTART.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "2818fb3d8923dd2202cb31502b179382060a5cd687b4f786a9efe1f8fa2d69da",
+      "retention": "external_original_not_copied",
+      "scope": "Typed image restart final success; inspect final rather than initial accepted response"
+    },
+    {
+      "id": "image_typed_restart_acceptance",
+      "artifact": "w2-final/IMAGE-RESTART-ACCEPTANCE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "76c586d4126336925ea87bd49ad66ac85f003335e338ff29efbc3a654ec57847",
+      "retention": "external_original_not_copied",
+      "scope": "Image hold released by validated owner readiness; no public image generation"
+    },
+    {
+      "id": "control_typed_restart",
+      "artifact": "w2-final/CONTROL-RESTART.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "8f48f68dfa2ca75dfe5f77ef1e094d86152c578b0268fea1c8f2d5a0fc528519",
+      "retention": "external_original_not_copied",
+      "scope": "One typed control restart final succeeded; dispatch hold released"
+    },
+    {
+      "id": "control_restart_local_state",
+      "artifact": "w2-final/CONTROL-RESTART-LOCAL-STATE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_metadata_receipt",
+      "raw_sha256": "9190995ebce93211d953449fd716287a501e35ccaec9b0259c6263ee2aa4091d",
+      "retention": "external_original_not_copied",
+      "scope": "Canonical control owner relay release and local services/history preservation; original failures retained"
+    },
+    {
+      "id": "pre_reboot_preservation",
+      "artifact": "w2-final/PRE-REBOOT-PRESERVATION-COMPLETE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_metadata_receipt",
+      "raw_sha256": "b1b51a870fc172d997bf8dba4896bcdc1cc072bf28297b6adb41b3f4ce48a091",
+      "retention": "external_original_not_copied",
+      "scope": "Counts-only pre-reboot snapshot; separate SQLite transactions, no credential equality or content readback proof"
+    },
+    {
+      "id": "final_publication_root_summary",
+      "artifact": "PROMPT.md",
+      "source": "H005-FINAL-PUBLICATION-20260925",
+      "evidence_class": "root_supplied_task_summary_not_individual_action_receipt",
+      "raw_sha256": "4f75dbcae63ca1f1e29a6ea4333648ac6b4523a788d3ab3817a4ead43f64c8aa",
+      "retention": "external_original_not_copied",
+      "scope": "Current authority and root verified summary, including 100 node HTTP200 samples and main drain/chat/files preservation; final reboot/quiet/wake in progress, not passed"
+    },
+    {
+      "id": "final_publication_root_blocker",
+      "artifact": "STEERING-USED-BLOCKER-20260925.md",
+      "source": "H005-FINAL-PUBLICATION-20260925",
+      "evidence_class": "root_supplied_current_incident_summary_not_action_or_cause_receipt",
+      "raw_sha256": "05a7efa5203ccfe03214e154cd847000dd97d1bfa401aefe72f49cf1e5f3bc17",
+      "retention": "external_original_not_copied",
+      "scope": "Changed ai-vm boot and canonical reboot reconciliation reported separately from failed model restoration; harness reboot and quiet/wake halted; cause unknown"
     }
   ],
   "harness_boundary_limits": {
     "root_steering": "NETWORK/BROWSER raw INCONCLUSIVE retained; packet-causal denial accepted separately",
     "private_detailed_checks": 64,
     "private_summary_rows_including_summary_itself": 65,
-    "control_ready_null": "intentional_until_api_proof_not_declared_source_bug",
+    "control_ready_null": "Historical intentional unknown without process/API proof; later passive readiness gap repaired at aaa643 and live proof accepted; activity and request counters remain unknown/null",
     "watcher_failure_restore": "PASS_ROOT_ACCEPTED_WITH_RESTORATION_RECEIPT",
-    "typed_lifecycle": "PARTIAL_LOCAL_MAIN_STOP_START_STATUS_RESTART_AND_IDEMPOTENCY_CAS_PASS_OTHER_SCOPES_PENDING",
+    "typed_lifecycle": "LOCAL_MAIN_STATUS_Q0_RECOVERY_IMAGE_CONTROL_AND_Q1_PEER_SCOPES_PASS_NOT_ALL_H005",
     "admin": "OPEN_REVIEWED_TRUSTED_LAN",
     "historical_workspace_quarantine_count": 1,
     "image_lane": {
@@ -583,11 +842,12 @@
       "preexisting_cancelled_jobs": 1,
       "shutdown_only_marker": "auto_reconciled_with_uncertainty_false_and_ready_and_idle",
       "uncertain_owner_clear": false,
-      "explicit_reconciliation_action": false
+      "explicit_reconciliation_action": false,
+      "reconciliation_limit": "Shutdown-only marker auto-reconciled; no uncertain-owner clearing or explicit reconciliation action claimed"
     }
   },
   "local_live_acceptance": {
-    "overall": "LOCAL_SCOPES_LIVE_PASS_NOT_ALL_H005",
+    "overall": "BOUNDED_LOCAL_Q0_RECOVERY_PEER_IMAGE_AND_CONTROL_SCOPES_PASS_NOT_ALL_H005",
     "helper": "PASS",
     "main_stop_start_hold_release": "PASS",
     "status_main_independence_both_directions": "PASS",
@@ -703,7 +963,18 @@
     "server_gpu_assignment": "unassigned",
     "ecc": "unchanged"
   },
-  "current_qwen_incident": {
+  "source_bundle": {
+    "artifact": "H005-REVIEWED-COMBINED.bundle",
+    "raw_sha256": "eab2b37eaa0a3f0bc3dab169689232ad9371ad9ce6f43abec30c060a1eed98ac",
+    "head": "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
+    "prerequisites": [
+      "5b20f26b36e8caedfd62ce42060ecdbe32126224",
+      "ac8f71a927b4eb1635936edd6eba19997e213527"
+    ],
+    "verification": "git bundle verify PASS against local repository; both prerequisite refs are required",
+    "deployed_source_claim": false
+  },
+  "historical_qwen_incident_before_recovery": {
     "observed_utc": "2026-09-25T20:22:21Z",
     "evidence_class": "exact_action_and_status_receipts_plus_root_stop_hold_report",
     "qwen0_stop": {
@@ -757,6 +1028,218 @@
       "main_http": 200,
       "live_peer_inference_or_compaction": "NOT_RUN",
       "main_child_compaction_routing": "FIXTURE_PASS_ONLY"
+    },
+    "historical_only": true
+  },
+  "new_bounded_acceptance": {
+    "q1_peer_serving": {
+      "status": "PASS",
+      "settled_utc": "2026-09-25T20:43:35.951294+00:00",
+      "response": "OK",
+      "messages_post_attempts": 1,
+      "retry_or_replay": false,
+      "q0_hold_preserved": true,
+      "final_active_requests": 0,
+      "final_queue_depth": 0,
+      "scope": "One normal tiny Q1 main chat; no tools, child task or compaction live acceptance",
+      "evidence_ids": [
+        "q1_peer_serving",
+        "q1_peer_final_settlement"
+      ]
+    },
+    "image_typed_restart": {
+      "status": "PASS",
+      "owner_id": "5ac77ee01c9d432c8bd6ae89f35a0686",
+      "canonical_succeeded_utc": "2026-09-25T21:18:58.405316+00:00",
+      "old_container_absent": true,
+      "old_container_id": "088d61f2dbe08ff1532109a8ab99a4103bcc58cfd5e9be2d2297436c761e8a89",
+      "new_container": {
+        "id": "398bc85ac9e0e2d406460129caec59022759aaec73f063586ad1a34156fe5ac7",
+        "image": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+        "pid": 1748673,
+        "started_at": "2026-09-25T21:18:01.932742426Z",
+        "run_id": "d7cbbeadca7a46239ba35748cba8a6bb"
+      },
+      "same_runtime_image": true,
+      "qwen_native_identities_preserved": true,
+      "hold_released": true,
+      "public_image_generation_requests": 0,
+      "evidence_ids": [
+        "image_typed_restart",
+        "image_typed_restart_acceptance",
+        "image_restart_native_proof"
+      ]
+    },
+    "control_readiness": {
+      "status": "PASS",
+      "source_commit": "aaa643fcd90ac4ae0a50e4a8e1a3df19ca0ebcc3",
+      "readiness_kind": "process_api",
+      "boot_invocation_pid_match": true,
+      "fresh_node_ready": true,
+      "missing_credential_http": 401,
+      "wrong_credential_http": 401,
+      "activity": "unknown",
+      "active_requests": null,
+      "queue_depth": null,
+      "native_models_unchanged": true,
+      "source_focused_tests": 47,
+      "test_scope": "Source/offline/local loopback; inherited result not rerun by docs task; overlaps other groups and is not summed",
+      "evidence_ids": [
+        "control_source_ready",
+        "control_validation",
+        "control_readiness_live"
+      ]
+    },
+    "control_typed_restart": {
+      "status": "PASS",
+      "canonical_owner_id": "380e058cd9984d91b1540fa97b7586f4",
+      "relay_status": "succeeded",
+      "post_attempts": 1,
+      "hold_release_reason": "validated_owner_readiness",
+      "holds_after": [],
+      "node_http_200_samples": 100,
+      "node_samples_evidence_class": "root_supplied_task_summary_not_individual_sample_receipt",
+      "models_unchanged_evidence_class": "root_supplied_task_summary",
+      "evidence_ids": [
+        "control_typed_restart",
+        "control_restart_local_state",
+        "final_publication_root_summary"
+      ]
+    },
+    "pre_reboot_preservation": {
+      "status": "METADATA_CAPTURED",
+      "observed_utc": "2026-09-25T21:21:26.576713+00:00",
+      "main_drain_normal_stop_start": "PASS_PER_ROOT_SUPPLIED_SUMMARY",
+      "chat_files_preserved": "PER_ROOT_SUPPLIED_SUMMARY; snapshot alone proves metadata counts only",
+      "history_counts": {
+        "events": 24819,
+        "files": 60,
+        "h003_image_file_meta": 17,
+        "h003_image_jobs": 18,
+        "h003_run_image_refs": 2,
+        "handoffs": 1,
+        "messages": 131,
+        "quarantined_workspaces": 1,
+        "runs": 47,
+        "sessions": 25
+      },
+      "historical_workspace_quarantine": 1,
+      "image_jobs": {
+        "completed": 17,
+        "cancelled": 1
+      },
+      "nonterminal_runs": 0,
+      "task_containers": 0,
+      "holds_after": [],
+      "failed_q0_history_retained": true,
+      "original_main_unknown_retained": true,
+      "limits": [
+        "No model/service readiness assertion or operation reconciliation.",
+        "No credential bytes, hashes, sizes, ACL reads, or credential equality claim.",
+        "Separate SQLite read transactions; not an atomic cross-database snapshot.",
+        "History comparison is metadata counts, never chat/content readback."
+      ],
+      "evidence_ids": [
+        "pre_reboot_preservation",
+        "control_restart_local_state",
+        "final_publication_root_summary"
+      ]
+    },
+    "evidence_time_boundary": "Historical pre-reboot acceptance at listed receipt times; superseded for current readiness by current_reboot_incident"
+  },
+  "hash_domains": {
+    "raw_sha256": "SHA256 of exact retained artifact bytes",
+    "canonical_sha256": "Only an explicitly identified canonical object or source map; not interchangeable with raw file digest",
+    "image_id": "OCI platform manifest digest as declared by runtime binding",
+    "image_config_digest": "OCI image configuration digest; distinct from platform manifest"
+  },
+  "source_closure_progression": [
+    {
+      "source_commit": "014e294fdeab91942a046fa7b0b9d7f833951e82",
+      "source_map_canonical_sha256": "d39ae5c059ba241de402dfa6627d56a4ff00e9bd888e10520b4102847350d016",
+      "source_paths_verified": 215,
+      "evidence_id": "q0_final_guard_closure"
+    },
+    {
+      "source_commit": "aaa643fcd90ac4ae0a50e4a8e1a3df19ca0ebcc3",
+      "source_map_canonical_sha256": "cbf30d21d9273a22235655d14ae6cee848d7d528dec943558dd7327b780d497a",
+      "source_paths_verified": 215,
+      "evidence_id": "control_readiness_live"
     }
+  ],
+  "scope_coverage_not_established": {
+    "node_and_local_search_typed_scopes": "NOT_ESTABLISHED_BY_SUPPLIED_RECEIPTS",
+    "history": "Previously pending in intermediate report; not an added gate in root current final sequence"
+  },
+  "historical_pre_reboot_qwen_recovery": {
+    "status": "RECOVERED_BY_DISTINCT_CANONICAL_OPERATION",
+    "source_commit": "014e294fdeab91942a046fa7b0b9d7f833951e82",
+    "cause_sequence": [
+      {
+        "owner": "1fd56c215c914b18b748570177ca7c83",
+        "status": "failed",
+        "cause": "Legacy conflict admission rejected approved dedicated image GPU peer",
+        "diagnosis_limit": "Independently reproduced installed read-only preflight; not recovered original stderr",
+        "repair_source": "91f44888e2c1ba8ce039d395a5ebef0099a442bb"
+      },
+      {
+        "owner": "a086e26b44104d8d9d76ad0b5e12e0b2",
+        "status": "failed",
+        "cause": "Docker inspect Mounts order varied; complete entries equal when sorted by Destination",
+        "repair_source": "014e294fdeab91942a046fa7b0b9d7f833951e82"
+      }
+    ],
+    "canonical_recovery": {
+      "operation_id": "094af8cf01974fb6920bbd10e4e12146",
+      "action": "service.start",
+      "status": "succeeded",
+      "updated_at": "2026-09-25T21:10:22.546965+00:00"
+    },
+    "original_container_restarted": {
+      "container_id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+      "image_id": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "pid": 1654611,
+      "started_at": "2026-09-25T21:09:46.328601336Z"
+    },
+    "qwen0_ready": true,
+    "previous_stop_hold_reconciled": true,
+    "holds_after": [],
+    "both_failed_receipts_preserved": true,
+    "qwen1_and_image_native_identities_unchanged_through_repair": true,
+    "configured_context_tokens": 480000,
+    "capacity_evidence": "Inherited dated evidence; no new occupied-context or capacity acceptance",
+    "functional_inference_in_recovery": false,
+    "evidence_ids": [
+      "q0_cause",
+      "q0_second_cause",
+      "q0_recovery_succeeded",
+      "q0_restored_metadata"
+    ],
+    "historical_only": true
+  },
+  "current_reboot_incident": {
+    "status": "PARTIAL_BLOCKED",
+    "evidence_class": "root_supplied_current_incident_summary_not_action_or_cause_receipt",
+    "evidence_ids": [
+      "final_publication_root_blocker"
+    ],
+    "observed_event_utc": "2026-09-25T21:37:53Z",
+    "ai_vm_boot_id": "56fe4c47-0751-44ed-916d-a052ef4a134c",
+    "ai_vm_boot_changed": true,
+    "canonical_reboot_owner_reconciled": true,
+    "boot_restore_service": "llmctl-boot.service",
+    "boot_restore_exit_code": 1,
+    "model_restoration": "FAILED",
+    "models": {
+      "qwen_gpu0": "ready; hardware_latch_unknown reported",
+      "qwen_gpu1": "stopped",
+      "image": "stopped"
+    },
+    "ai_harness_reboot": "HALTED",
+    "formal_quiet_wake": "HALTED",
+    "final_all_three_warm": "NOT_ESTABLISHED",
+    "cause": "UNKNOWN_PENDING_READ_ONLY_CAUSE_RECEIPT",
+    "repair_owner": "Root coordinating; Worker1 read-only cause capture",
+    "prior_pass_scope": "All earlier recovery, restart and readiness passes apply to their recorded pre-reboot receipt times only"
   }
 }
