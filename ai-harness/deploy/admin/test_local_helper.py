@@ -41,7 +41,7 @@ class Fixtures(unittest.TestCase):
         self.path = Path(self.temp.name) / "ops.db"
         self.boot = BOOT_A
         self.clock = 1000.
-        self.identity = {"load": "loaded", "active": "active", "sub": "running", "invocation": "a" * 32}
+        self.identity = {"load": "loaded", "active": "active", "sub": "running", "invocation": "a" * 32, "main_pid": 1234, "control_pid": 0, "job_pending": False}
         self.calls = []
         self.ops = helper.Operations(self.path, lambda: self.boot, lambda _: copy.deepcopy(self.identity),
                                      lambda request: self.calls.append(request), clock=lambda: self.clock, lease=lease_fixture)
@@ -92,8 +92,8 @@ class Fixtures(unittest.TestCase):
                 with self.subTest(service=service, action=action):
                     command = owner.command(self.request(action=f"service.{action}", service=service))
                     self.assertEqual(command, [*prefix, action, unit])
-            self.assertEqual(owner.service_command(service, "show", "--property=LoadState,ActiveState,SubState,InvocationID"),
-                             [*prefix, "show", "--property=LoadState,ActiveState,SubState,InvocationID", unit])
+            self.assertEqual(owner.service_command(service, "show", "--property=LoadState,ActiveState,SubState,InvocationID,MainPID,ControlPID,Job"),
+                             [*prefix, "show", "--property=LoadState,ActiveState,SubState,InvocationID,MainPID,ControlPID,Job", unit])
         self.assertEqual(owner.command(self.request(action="node.reboot")),
                          ["/usr/bin/systemctl", "--no-ask-password", "reboot"])
         for replacement in ({"service_id": "nginx.service"}, {"path": "/bin/sh"}, {"action": []}, {"service_id": {}},
@@ -103,6 +103,37 @@ class Fixtures(unittest.TestCase):
             with self.assertRaises(helper.Rejected):
                 helper.validate_request(request)
         self.assertEqual(self.calls, [])
+
+    def test_service_observation_requires_bounded_canonical_process_ids_and_job(self):
+        owner = helper.CommandOwner(helper.Identity(1000, 1000, "user", "/home/user"))
+        props = b"LoadState=loaded\nActiveState=inactive\nSubState=dead\nInvocationID=" + b"a" * 32 + b"\n"
+        for property_name, key in ((b"MainPID", "main_pid"), (b"ControlPID", "control_pid")):
+            other = b"ControlPID" if property_name == b"MainPID" else b"MainPID"
+            for raw, expected in ((b"0", 0), (b"1234", 1234), (b"2147483647", 2147483647)):
+                output = props + other + b"=0\n" + property_name + b"=" + raw + b"\nJob=\n"
+                with self.subTest(property=property_name, pid=raw), mock.patch.object(owner, "run", return_value=(0, output)) as run:
+                    observed = owner.observe_service("harness")
+                    self.assertEqual(observed[key], expected)
+                    self.assertEqual(observed["invocation"], "a" * 32)
+                    self.assertFalse(observed["job_pending"])
+                    self.assertEqual(run.call_args.args,
+                                     (owner.service_command("harness", "show", "--property=LoadState,ActiveState,SubState,InvocationID,MainPID,ControlPID,Job"), 2))
+            for raw in (None, b"", b"-1", b"+1", b"01", b"1.0", b" 0", b"2147483648", b"9" * 11):
+                output = props + other + b"=0\nJob=\n"
+                if raw is not None:
+                    output += property_name + b"=" + raw + b"\n"
+                with self.subTest(property=property_name, pid=raw), mock.patch.object(owner, "run", return_value=(0, output)):
+                    with self.assertRaises(helper.Rejected) as caught:
+                        owner.observe_service("harness")
+                    self.assertEqual(caught.exception.code, "service_observation_invalid")
+        for job in (b"19", b"[19, /org/freedesktop/systemd1/job/19]", b"0", b" "):
+            output = props + b"MainPID=0\nControlPID=0\nJob=" + job + b"\n"
+            with self.subTest(job=job), mock.patch.object(owner, "run", return_value=(0, output)):
+                self.assertTrue(owner.observe_service("harness")["job_pending"])
+        with mock.patch.object(owner, "run", return_value=(0, props + b"MainPID=0\nControlPID=0\n")):
+            with self.assertRaises(helper.Rejected) as caught:
+                owner.observe_service("harness")
+            self.assertEqual(caught.exception.code, "service_observation_invalid")
 
     def test_hardened_unit_preserves_required_uid_drop_capability(self):
         # systemd 255's keep_seccomp_privileges launch path drops CAP_SETUID
@@ -293,13 +324,41 @@ class Fixtures(unittest.TestCase):
         self.assertEqual(uncertain["reason"], "owner_settlement_unproven")
         self.assertEqual(self.ops.submit(request)["operation_id"], uncertain["operation_id"])
         self.assertEqual(len(self.calls), 1)
-        self.ops.execute = lambda _: self.identity.update(active="inactive", sub="dead", invocation="")
+        self.ops.execute = lambda _: self.identity.update(active="inactive", sub="dead", main_pid=0)
         stopped = self.await_operation(self.ops.submit(self.request("service.stop", key="fixture-stop")))
         self.assertEqual(stopped["status"], "succeeded")
-        self.ops.execute = lambda _: self.identity.update(active="active", sub="running", invocation="b" * 32)
+        self.assertEqual(self.identity["invocation"], "a" * 32, "historical invocation may remain after stop")
+        self.ops.execute = lambda _: self.identity.update(active="active", sub="running", invocation="b" * 32, main_pid=5678)
         restarted = self.await_operation(self.ops.submit(self.request("service.restart", key="fixture-restart")))
         self.assertEqual(restarted["status"], "succeeded")
         self.assertIsNone(self.ops.status()["services"][0]["ready"])
+
+    def test_stop_requires_inactive_dead_zero_owner_pids_and_no_job(self):
+        self.ops.freeze = lambda _: {"frozen": True}
+        for index, (active, sub, main_pid, control_pid, job_pending, load, invocation) in enumerate((
+                ("active", "dead", 0, 0, False, "loaded", "a" * 32),
+                ("inactive", "dead", 1234, 0, False, "loaded", "a" * 32),
+                ("inactive", "running", 0, 0, False, "loaded", "a" * 32),
+                ("inactive", "exited", 0, 0, False, "loaded", "a" * 32),
+                ("deactivating", "stop", 0, 0, False, "loaded", "a" * 32),
+                ("inactive", "dead", 0, 5678, False, "loaded", "a" * 32),
+                ("inactive", "dead", 0, 0, True, "loaded", "a" * 32),
+                ("inactive", "dead", 0, 0, False, "not-found", "a" * 32),
+                ("inactive", "dead", 0, 0, False, "loaded", "b" * 32))):
+            with self.subTest(active=active, sub=sub, main_pid=main_pid, control_pid=control_pid, job_pending=job_pending,
+                              load=load, invocation=invocation):
+                self.identity.update(active="active", sub="running", main_pid=1234, control_pid=0, job_pending=False,
+                                     load="loaded", invocation="a" * 32)
+                self.ops.refresh("harness")
+                self.ops.execute = lambda _: self.identity.update(active=active, sub=sub, main_pid=main_pid,
+                    control_pid=control_pid, job_pending=job_pending, load=load, invocation=invocation)
+                request = self.request("service.stop", key=f"unsettled-stop-{index}")
+                with mock.patch.object(threading.Thread, "start"):
+                    receipt = self.ops.submit(request)
+                self.ops._run(receipt["operation_id"], request)
+                result = self.ops.get(receipt["operation_id"])
+                self.assertEqual(result["status"], "unknown")
+                self.assertEqual(result["reason"], "owner_settlement_unproven")
 
     def test_protected_sqlite_gate_exact_receipt_unknown_work_and_no_auto_release(self):
         gate_path = Path(self.temp.name) / "dispatch.sqlite"
