@@ -333,6 +333,10 @@ class Manager:
             value = self.profile_json(self.config_root / kind / (name + ".json"))
             require(value.get("id") == name and value.get("schema_version") == 1, "invalid_profile")
             d["_" + field] = value
+        from .concurrent_profiles import QWEN_PROFILES
+        if identifier in QWEN_PROFILES:
+            from runtime.h005_runtime_binding import profile
+            d['_runtime'] = profile(d['_runtime'])
         self.bind_deployment(d)
         self.validate_deployment(d)
         return d
@@ -921,7 +925,7 @@ class Manager:
         if pair.is_pair(d):
             pair.check_acceptance(d, self.instance)
         launch, rt = d["launch"], d["_runtime"]
-        reference = adapter.IMAGE_REFERENCE if backend == "sglang_qwen38" else rt["image_tag"]
+        reference = adapter.image_reference(d) if backend == "sglang_qwen38" else rt["image_tag"]
         image = json.loads(self.docker.capture("image", "inspect", reference))
         require(isinstance(image, list) and len(image) == 1 and isinstance(image[0], dict),
                 "runtime_image_id_mismatch")
@@ -958,7 +962,7 @@ class Manager:
         for key, value in environment.items():
             args += ["--env", key + "=" + value]
         if backend == "sglang_qwen38":
-            args += ["--ulimit", "core=1:1", "--pull=never", adapter.IMAGE_REFERENCE]
+            args += ["--ulimit", "core=1:1", "--pull=never", adapter.image_reference(d)]
         else:
             args += [e["image_id"]]
         args += self.launch_command(d, e)
@@ -1014,7 +1018,7 @@ class Manager:
             pair.validate_reuse(c, d)
         adapter = self.sglang_adapter(d)
         if adapter:
-            reference = adapter.IMAGE_REFERENCE if self.backend(d) == "sglang_qwen38" else e["image_id"]
+            reference = adapter.image_reference(d) if self.backend(d) == "sglang_qwen38" else e["image_id"]
             image = json.loads(self.docker.capture("image", "inspect", reference))
             require(isinstance(image, list) and len(image) == 1 and isinstance(image[0], dict)
                     and image[0].get("Id") == expected_image_id, "runtime_image_id_mismatch")

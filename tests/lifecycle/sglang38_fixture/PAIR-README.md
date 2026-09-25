@@ -65,5 +65,37 @@ Run gpu1 separately using `--slot gpu1` and a new protected output filename.
 Both receipts bind distinct deployment, alias, port and argv; GPU0 proof cannot
 be copied to GPU1. Updated native fixture provenance requires fresh base auth
 proof as well; preserved older receipts remain historical. Base production auth
-launcher bytes and runtime/image/model pins are unchanged. PREP runs no fixture
+launcher bytes and historical runtime/image/model pins are unchanged. PREP runs no fixture
 container, reads no protected inference key and writes no acceptance receipt.
+
+## H005 derived-image mode
+
+The new fixed-pair release requires `--adaptive-overlay` on the command above,
+separately for each slot. Omitting that flag selects the preserved historical
+parent-image fixture; its receipt cannot admit the H005 derived pair. Production
+admission calls `check_pair_receipt(..., adaptive=True)` explicitly.
+
+The derived mode reads the exact source-hashed
+`configs/runtimes/h005-runtime-binding.json` through
+`scripts/runtime/h005_runtime_binding.py`. Missing completed BUILD identities
+fail before Docker execution. It selects the observed immutable text image ID,
+preserves the config/manifest identity distinction and parent manifest/config
+relationship, merges every final overlay source hash into the legacy source
+closure, and independently runs the production installed-overlay verifier before
+native imports. The main fixture and its warmup fault children use the same
+derived mode. No CLI image/hash overrides or tag fallback exist.
+
+The Uvicorn capture requires exactly the installed native
+`GenerationDrainMiddleware`, exactly one outer layer, and exactly the underlying
+native `server.app` with the original `server_args` identity. State, auth-layer and
+warmup checks use that verified native app; all ASGI requests still traverse the
+captured outer wrapper. Subclasses, lookalikes, nested wrappers, substituted apps,
+and silently accepting an unwrapped app fail. The dependency fixture also checks
+the exact image `DiffusionDrainMiddleware(app)` import and construction from full
+pinned patched native source.
+
+Local tests exercise source/receipt controls and dependency fixtures only.
+Actual CPU-only built-image imports/msgspec/native auth execution remain
+`NOT_TESTED` until the separately authorized native fixture runs. These fixtures
+never establish live inference, occupied context, idle CPU, cache residency,
+hardware acceptance, or rollout GO.

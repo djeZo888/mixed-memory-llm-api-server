@@ -18,7 +18,10 @@ import time
 import urllib.error
 import urllib.request
 
-RELEASE = Path('/data/services/releases/b39781d83404799c6fa9262fd94adb09b0995ec8-image21-compat-20260923')
+# Fixed candidate directory; the reviewed external manifest binds its commit and
+# raw bytes. Do not derive this path from this file's hash (a circular binding),
+# replace an existing nonidentical release, or fall back to an older release.
+RELEASE = Path('/data/services/releases/h005-activation-binding-20260925')
 BASE = Path('/data/services/image21-runtime-20260923')
 UNIT = 'llm-image-backend.service'
 NAME = 'llm-image-backend'
@@ -31,6 +34,34 @@ CAP_BYTES = 96 * 1024**3
 OPERATION_DEADLINE = None
 SETTLEMENT_DEADLINE = None
 NATIVE_UID, NATIVE_GID = 1000, 1001
+# These are the exact executable runtime files and the complete import/guard
+# closure used by this image owner. Protected config supplies their raw hashes;
+# missing or extra entries are refused, including an omitted new dependency.
+RUNTIME_SOURCE_FILES = ('native_request.py', 'native_server.py', 'service.py', 'telemetry.py')
+RELEASE_SOURCE_FILES = (
+    'scripts/common/lifecycle_lease.py', 'scripts/common/registered-storage.py',
+    'scripts/control/__init__.py', 'scripts/control/installation.py',
+    'scripts/control/hardware_latch.py',
+    'scripts/install/__init__.py', 'scripts/install/storage.py', 'scripts/install/storage_io.py',
+    'scripts/lifecycle/__init__.py', 'scripts/lifecycle/manager.py',
+    'scripts/lifecycle/runtime_io.py', 'scripts/lifecycle/storage_binding.py',
+    'scripts/lifecycle/qwen_next.py', 'scripts/lifecycle/slot_state.py',
+    'scripts/lifecycle/hardware_policy.py',
+    'scripts/runtime/qwen38_oci.py',
+    'scripts/runtime/h005_runtime_binding.py', 'configs/runtimes/h005-runtime-binding.json',
+    'scripts/runtime/verify_adaptive_idle_overlay.py',
+    'scripts/runtime/adaptive_idle_sources.json', 'scripts/runtime/adaptive_idle_source_gate.py',
+    'scripts/runtime/build_adaptive_idle_overlay.py',
+    'scripts/runtime/adaptive_idle.py', 'scripts/runtime/adaptive_text.py',
+    'scripts/runtime/adaptive_text_drain.py', 'scripts/runtime/adaptive_diffusion.py',
+    'scripts/runtime/adaptive_diffusion_drain.py',
+    'scripts/runtime/patches/text-adaptive-idle.patch',
+    'scripts/runtime/patches/text-adaptive-drain.patch',
+    'scripts/runtime/patches/text-adaptive-grammar.patch',
+    'scripts/runtime/patches/diffusion-adaptive-idle.patch',
+    'scripts/runtime/patches/diffusion-adaptive-drain.patch',
+    'scripts/image_runtime/source-closure.json',
+)
 sys.path.insert(0, str(RELEASE / 'scripts'))
 from common.lifecycle_lease import acquire_lease
 from control.installation import protected_file
@@ -38,6 +69,7 @@ from install import storage_io
 from lifecycle.manager import StorageRunner
 from lifecycle.storage_binding import RegisteredStorageBinding
 from lifecycle.hardware_policy import HardwarePolicy, RegisteredLatchStore
+from runtime.h005_runtime_binding import load as load_runtime_binding
 
 
 def require(condition, code):
@@ -47,6 +79,22 @@ def require(condition, code):
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def verify_source_closure(config):
+    """Validate reviewed protected runtime/release maps without any mutation."""
+    for field, root, expected in (
+            ('source_sha256', BASE / 'source', RUNTIME_SOURCE_FILES),
+            ('release_source_sha256', RELEASE, RELEASE_SOURCE_FILES)):
+        source_hashes = config.get(field)
+        require(type(source_hashes) is dict and set(source_hashes) == set(expected),
+                'runtime_source_closure_mismatch')
+        for name in expected:
+            digest = source_hashes[name]
+            require(type(digest) is str and re.fullmatch('[0-9a-f]{64}', digest),
+                    'runtime_source_digest_invalid')
+            require(hashlib.sha256(protected_file(root / name)).hexdigest() == digest,
+                    'runtime_source_changed')
 
 
 def run(argv, *, timeout=60, check=True):
@@ -84,10 +132,13 @@ class Runtime:
         require(self.binding.path('services', 'image21-runtime-20260923') == str(BASE),
                 'registered_runtime_root_mismatch')
         self.binding.validate_path('services', str(BASE))
+        self.binding.validate_path('services', str(RELEASE))
         self.config = self.binding.read_json('services', str(BASE / 'config.json'))
         require(self.config['schema_version'] == 1 and self.config['owner'] == OWNER,
                 'config_identity_mismatch')
         require(re.fullmatch('sha256:[0-9a-f]{64}', self.config['image_id']), 'image_digest_required')
+        require(self.config['image_id'] == load_runtime_binding()['image']['image_id'],
+                'runtime_image_binding_mismatch')
         require(re.fullmatch('[0-9a-f]{64}', self.config['network_id']), 'owned_network_id_required')
         require(self.config['source_commit'] == SOURCE_SHA and
                 self.config['checkpoint_revision'] == CHECKPOINT_REV, 'pin_mismatch')
@@ -99,10 +150,7 @@ class Runtime:
                 'checkpoint_receipt_incomplete')
         require(hashlib.sha256(protected_file(Path(self.model) / 'CHECKPOINT-RECEIPT.json')).hexdigest()
                 == self.config['checkpoint_receipt_sha256'], 'checkpoint_receipt_changed')
-        for name, digest in self.config['source_sha256'].items():
-            require(re.fullmatch('[a-z_]+[.]py', name), 'invalid_runtime_source_name')
-            require(hashlib.sha256(protected_file(BASE / 'source' / name)).hexdigest() == digest,
-                    'runtime_source_changed')
+        verify_source_closure(self.config)
 
     def require_hardware(self):
         lease = getattr(self, 'lease', None)

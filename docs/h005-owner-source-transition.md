@@ -1,204 +1,178 @@
-# H005 protected source and runtime transition proposal
+# H005 reviewed source and runtime transition candidate
 
-Status: **source proposal; activation binding incomplete**. This document does
-not authorize deployment, publish acceptance, change a pin, or establish a live
-result. The owner task starts at
-`deba8af306cb0b3f87ddf8a2ed669d2eae1ac076`; the parallel runtime task owns the exact
-scheduler overlays and text readiness launcher. Root must review their combined
-immutable candidate before assigning a fresh activation session.
+This is a **source/offline activation package**, not deployment or activation GO.
+The Worker1 binding task starts at integrated `afebf390666674b2a84f7147cf156f80600bdfc9`
+and preserves the runtime overlay bytes from
+`f9d9b5191534581d854067507922af2b56790710`. Root owns exact final review and serial
+activation. Installer remains paused. No second lifecycle or new model is added.
 
-## Existing checks remain authoritative
+## Completed build lineage, distinct digest domains
 
-`concurrent_profiles.check_acceptance()` requires the protected schema-2
-`root-reviewed-dualq-480k` receipt at the registered data suffix
-`services/llm-manager/evidence/dualq-480k.accepted.json`. The instance reference
-contains exactly `path`, canonical JSON `sha256`, and `reviewed_source_commit`.
-The receipt binds the complete current `source_identity()`, both modes and all
-slot proofs. Changes to `manager.py`, `concurrent_profiles.py`, control source or
-pinned launcher bytes invalidate the prior exact source acceptance. Source
-checks and regenerated fixture receipts do not replace that acceptance.
+The completed `H005-ADAPTIVE-BUILD-20260925/BUILT-IMAGES.json` raw SHA256 is
+`5d896fdb52aa3a5d55ed42ba6dc7f402de1da9f98b3cee22bdf4f62f076fe9dc`;
+`FINAL-HASHES.json` SHA256 is
+`e6ac2e4d63e972ca900a7fc01ee65dcb530c2e5fbf9f1cd26b1ac5aff08f0420`.
+The binding task verified both plus the complete mirrored receipt/context hashes
+without contacting ai-vm. The build preserves each parent's complete layer prefix.
 
-The image `Runtime` independently reads protected registered `config.json`,
-checks checkpoint revision/size/count/receipt digest, and verifies every
-`source_sha256` entry against protected installed runtime files. The control,
-image API and node installation checks protect their own import closures.
-Protected ownership is not an exact-source digest: root's combined delivery
-manifest must also cover those files, units, fixed adapters and policy source.
+| Target | Immutable local Docker ID / OCI manifest | OCI config digest |
+|---|---|---|
+| Text | `sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf` | `sha256:8f9a45a8a4de689280c054867103fc072f064703427212aeb6d603551a86f4b2` |
+| Image | `sha256:f01aafc2fefb4a5f961c73b7435ccfbdf5a801ccc55a9112d50fc5d45beb3a0f` | `sha256:e0a3d6b3b0e55583feb272dac0c0f3caedbabf65bb19f60efbf7f13c3591b51f` |
 
-This proposal changes none of these checks. An incomplete/mixed source,
-receipt, instance, image config, overlay or import closure must stay closed.
-An old receipt is retained as historical evidence, never relabeled as proof
-that the revised scheduler, launcher or owner ran successfully.
+No derived registry publication is claimed. Local tags are provenance only and
+are never runtime selectors. Text parent remains manifest
+`sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262`,
+config `sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813`.
+Image repaired parent remains manifest/local ID
+`sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8`,
+config `sha256:d8bb36563e0cdfa7d315417cf4a9dbf064c86ccc5b16d21a60f3216d71e150da`.
 
-## Exact candidate record required before activation
+`configs/runtimes/h005-runtime-binding.json` records those relationships, build
+receipt hashes, original source pins, full final native-file hashes, verifier
+and overlay hashes. `runtime.h005_runtime_binding` verifies its exact raw bytes.
+The two pair declarations alone receive an effective runtime copy selecting the
+new immutable local ID. Parent runtime/model/deployment JSON remains unchanged;
+legacy singleton/TP2 profiles retain their historical selectors. Current pair
+startup always requires a new protected per-slot actual-image auth receipt.
+The image Runtime requires the same fixed binding's image ID in protected config.
 
-Root's frozen source review must have a machine-readable manifest with all of:
+Text overlay: `b7f03476fe13779ed4867e4ca509dcba2861431210b6a264cf551558b5927a27`.
+Image overlay: `dda84e200adcc6a1ee8915e0e993627695477a346c5848fc27f9251c34d04b3b`.
+Both launchers retain their f9d9b5 bytes and independent baked-overlay verifier
+checks. Complete native originals and final files remain bound; no hash guard
+is disabled or supplied through an environment override.
 
-- Owner and runtime source commits, exact base commits, verified bundle hashes,
-  and an integrated candidate commit. No dirty tree may stand in for that commit.
-- Every current `concurrent_profiles.source_identity()` path and SHA256, plus
-  the complete control recovery/normal and node source closures and image
-  owner/API/runtime source, units, fixed recovery helper and network policy.
-  Include newly imported `hardware_policy.py` and `hardware_latch.py` explicitly;
-  a changed caller hash alone does not bind a dependency's bytes. The final
-  reviewed `source_identity()` and closure declarations must include every new
-  dependency they are intended to enforce. Do not omit a mismatching path.
-- An old/new digest row for every changed critical path, with its owner and
-  reason. Compare against protected *installed bytes*, not only a Git ancestor.
-  Record full bytes' SHA256, never stripped/normalized scheduler hashes.
-- Parallel runtime's exact overlay artifact hashes, original/target in-container
-  paths, exact original and patched file SHA256, upstream commit and dependency
-  image identity, patch order, and a closed expected file set. Patch application
-  must reject missing, extra, partial, already modified or wrong-base source.
-  Include both text launcher readiness bytes and image launcher bytes.
-- Guarded build receipts and the new immutable derived runtime-image identities,
-  with unchanged parent manifest/config identity lineage. Reverify the baked
-  overlay receipt, verifier and every final in-container native file before
-  admission. No derived image exists at this source checkpoint; parent-only
-  historical image identity cannot stand in for a changed executable image.
-- Raw and canonical hashes of the retained old text receipt/instance, raw
-  hashes of image runtime/API configs and checkpoint receipt, original source
-  manifests, installed storage guard identities, and root's review reference.
-  Credentials themselves never enter this record.
+## Source closure and noncircular hashes
 
-A source-only review manifest may use
-`status: SOURCE_REVIEW_ONLY`, `activation_binding: INCOMPLETE` and
-`runtime_overlay_proof: null` while the other task is still working. Those
-values are explicit blockers, not values any production acceptance verifier
-may accept. The final manifest must be regenerated **after** both workers stop
-editing and must match the exact reviewed delivery. Its SHA256 belongs in the
-root review, task result and later protected transition evidence.
+1. Freeze runtime overlays and completed build receipts; transcribe only their
+   verified immutable IDs into the binding JSON.
+2. Hash that raw JSON into `h005_runtime_binding.BINDING_SHA256`. Hash that module,
+   JSON and final pair launcher into `concurrent_profiles.PINS`. No file embeds
+   its own hash. Fixture file hashes go into `provenance.json`, whose raw hash
+   goes into `qwen38.PROFILE_HASHES`.
+3. Freeze all code. `concurrent_profiles.source_identity()` hashes the union of
+   exact profile pins, owner files, complete control recovery/normal closures and
+   node closure. Closure declarations list paths, not hashes of themselves.
+4. Generate external `CRITICAL-SOURCE.json`, `SOURCE-MANIFEST.json` and image
+   config templates from the final commit. These artifacts are outside the Git
+   tree and bind that commit plus raw file hashes; their own digests belong in
+   the task result/root review. Acceptance receipts consume these source hashes;
+   source never hashes an acceptance receipt back into itself.
 
-The retained extraction's text image identity has two distinct meanings:
-manifest digest `sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262`
-and OCI config digest
-`sha256:e6238090791a938ab86dd21a9a6394192dad15237e815df557cf83524d54b813`.
-The parallel task's `TEXT-IMAGE-DIGEST-PROVENANCE.json` binds that relationship.
-A Docker `.Image` observation is not permission to exchange those meanings or
-to rewrite existing runtime pins. Record each field with its original meaning
-and verify against the exact extraction. Runtime `RUNTIME-INTERFACE.md` and the
-final overlay proof remain required inputs; this proposal does not manufacture
-them from the extraction inventory.
+Task `tools/generate-package.py` reproduces the external outputs locally. It has
+no host mutation/network/Docker calls. Its `--check` mode compares regenerated
+bytes. Commit and bundle hashes are recorded only after the source is committed.
+Root may merge the binding delta onto its newer harness commit, then regenerate
+external integrated metadata; owned critical bytes must remain identical or be
+reviewed and tested anew. This task does not edit the peer harness tree.
 
-The runtime handoff observed during this owner checkpoint lists candidate
-`4eead577a45abbb7c1cf9134e20caf1114a5e3d3` but explicitly marks it
-**SUPERSEDED — do not build**, pending cancellation/error drain corrections.
-Its hashes are provenance for that superseded candidate only. This owner
-checkpoint therefore does not copy its launcher bytes, update critical pins,
-or bind it as the runtime overlay proof. The replacement exact commit, closed
-file/hash inventory and verified bundle remain required before integration.
+Control and node static validation include every runtime helper, patch,
+manifest and owner dependency. The image service fixed `RELEASE` is
+`/data/services/releases/h005-activation-binding-20260925`; publish that complete
+reviewed directory once and refuse a nonidentical existing directory. Do not
+edit an old immutable release. Image protected config requires exactly the four
+runtime files and all `RELEASE_SOURCE_FILES` via `source_sha256` and
+`release_source_sha256`. The image closure also records the unchanged API files,
+units and fixed recovery helper for the external delivery manifest. Small
+protected source/config/unit writes remain distinct from registered data writes;
+reusing storage APIs is not authorization to resume installer work.
 
-## Preserve measurements and bind changed executable behavior
+## Explicit acceptance transition
 
-Keep original weights/revisions and checkpoint receipts, runtime base images,
-FP8 weights/BF16 KV, both configured 480000-token Qwens, shared CPU masks,
-no-swap memory caps, 72 guest vCPUs, the 15% sampled required-working-set margin,
-UUID placement, text reserve policy, Ada generation/editing profiles and Full HD
-crop semantics. The added server GPU remains unassigned. No capacity, memory,
-context, geometry, concurrency or new-model expansion is part of this change.
+Keep schema-2 `root-reviewed-dualq-480k`, all existing resource/source/auth gates
+and `concurrent_pair_acceptance={path,sha256,reviewed_source_commit}`. SHA256 here
+is canonical JSON (`receipt_sha256`), while backup hashes also cover raw bytes.
+Copy the original receipt unchanged to registered data suffix
+`services/llm-manager/evidence/h005-predecessor/dualq-480k.accepted.json` first.
+The successor requires `h005_transition` with:
 
-For each old mode/slot proof, preserve the exact original measured allocation,
-working-set estimate, host peak, GPU total/free, largest occupied context and
-measurement evidence references. Record their observation dates and source
-identity as **inherited historical measurements**. Configured 480000 remains
-separate from measured occupied context. Do not change an old measurement or
-create a PASS field because an offline test passes.
+- `kind: inherited-capacity-new-runtime-auth`;
+- exact runtime binding hash and f9d9b5 runtime source commit;
+- the archived predecessor canonical receipt digest;
+- original measurement date (`capacity_observed_at`, YYYY-MM-DD);
+- `live_acceptance: SEPARATE_RECEIPT_REQUIRED`.
 
-There are two different amendment cases:
+The validator compares all predecessor slot proof keys and values unchanged
+except Qwen `runtime_image_id`, `pair_launcher_sha256`, `native_auth_checks`.
+It also preserves original host usable memory, vCPUs, headroom policy, GPU
+inventory and concurrency review, plus every original evidence reference.
+GLM proof values remain unchanged. New evidence may be appended. Thus old
+`allocation`, `short_inference`, `correctness`, occupied-context and working-set
+rows are explicitly inherited historical measurements, not fresh tests of the
+changed runtime. Root must review that bounded inheritance assumption; a changed
+capacity assumption stops the transition rather than manufacturing a PASS.
 
-1. If only owner/control critical bytes change and all profile/runtime/launcher
-   pins remain byte-identical, the existing schema-2 compatibility procedure in
-   [the retained rollout handoff](qwen-image-2.1-compat-rollout.md) can preserve
-   both mode proofs. Root explicitly reviews applicability, changes the reviewed
-   source commit/current critical hashes, and appends the protected amendment
-   evidence reference. The old receipt bytes and digest remain retained.
-2. A changed runtime image must bind its actual derived immutable identity and
-   build/overlay receipt as well as the changed source. A changed pair launcher additionally conflicts with
-   `proof.pair_launcher_sha256 == PINS[pair_launcher]` and the existing native
-   authentication checks. Merely replacing `source_sha256` cannot satisfy the
-   production contract honestly. Root must review exact changed launcher pins
-   only after the runtime worker supplies them, and obtain fresh actual-image
-   authentication/readiness/alias proof for each Qwen slot/port tuple. Keep the
-   original slot proofs as immutable historical evidence. The successor receipt
-   may bind the newly reviewed launcher and its actual native-auth result only
-   with a protected amendment explaining which execution facts were rerun and
-   which capacity measurements are inherited. Do not copy old auth PASS values
-   to changed launcher bytes. Both modes still require their complete existing
-   proofs; an untouched GLM launcher retains its own original lineage.
+Both fixed Qwen slot tuples require fresh **CPU-only actual-image native auth**
+receipts via `run_pair_fixture.py --adaptive-overlay --slot gpu0|gpu1`.
+The explicit mode selects the built immutable image, verifies all native raw
+pins and the installed baked overlay, and requires exact
+`GenerationDrainMiddleware` identity plus `wrapper.app is server.app`.
+Requests continue through the outer middleware; metadata comes from the inner
+native app. Image full-source fixtures similarly assert exact
+`DiffusionDrainMiddleware` and underlying native app; no identity assertion is
+skipped. Historical unwrapped mode cannot satisfy revised production admission.
 
-The current schema can carry explicit amendment/evidence references while
-retaining the existing capacity fields and guards; it needs no permissive
-schema or alternate acceptance flag. Root must approve the successor receipt's
-exact diff. If the runtime overlay changes assumptions underlying the retained
-measurements, stop and return that conflict for review. This bounded task does
-not authorize silently rerunning large context or memory benchmarks.
+Protected new receipts live at registered data suffixes
+`services/llm-manager/evidence/h005-gpu0.auth.json` and `h005-gpu1.auth.json`.
+The instance adds `h005_pair_runtime_evidence`, keyed by exact deployment ID,
+with `{path,sha256}` canonical JSON references. The production adapter checks
+the entire actual-image receipt including slot, model alias, port, launcher,
+fixture/source hashes, immutable image/domain, supported checks and settled
+CPU fixture-container lifetimes. Old parent auth receipts stay untouched.
+Model execution/native lifespan/live inference fields in CPU receipts remain
+NOT_TESTED. Live authenticated readiness is checked after canonical model start
+and warmup; it is not a circular prerequisite to initial start.
 
-Image runtime config updates likewise need exact before/after source and
-config hashes plus overlay proof. `source_commit` there identifies pinned
-upstream SGLang, not this owner repository commit; do not overwrite it with the
-H005 commit. Preserve checkpoint and runtime-image facts and the existing
-qualification/capacity receipts. Record changed helper hashes separately from
-prior generation/editing evidence. A new service source importing owner code
-must point to the reviewed protected release containing that complete closure;
-do not mutate an old immutable release or assume a historical `RELEASE` path
-already contains new modules.
+Neither this source task nor the BUILD helper-only checks have run those CPU
+native auth fixtures. Full native package import and native msgspec codec are
+also NOT_TESTED. Build-only never implies activation GO.
 
-## Guarded publication and incomplete-write recovery
+## Once-only latch initialization and guarded publication
 
-Only a fresh root-assigned Worker1 activation session may perform these steps.
-Resolve current installed guard/source identities and capture actual ownership,
-boot, intent, pending operations and direct-client impact first. Obtain the
-already required interruption authorization and use the established maintenance
-path. Harness dispatch freeze does not prove direct clients are idle.
+`RegisteredLatchStore.initialize()` is explicit activation preparation, never
+called from startup, polling, restart or recovery. Under the borrowed canonical
+lease, it reads the protected fixed
+`services/llm-manager/evidence/h005-latch-first-install.reviewed.json` review.
+That review must attest no prior state across retained releases and bind its
+absence evidence hash and reviewed source commit. The parent must preexist.
 
-Under the existing canonical lifecycle lease, revalidate registered storage and
-protected operation paths before and after each write/change. Retain verified
-exact old source/config/receipt/instance bytes and their hashes beneath protected
-registered evidence roots. Keep prior recovery artifacts and journals.
+The initializer runs registered root-payload and mounted guards, creates
+`hardware-latch.initialized.json` exclusively, fsyncs file and parent, then
+creates `hardware-latch.json` exclusively and fsyncs it. Existing state or marker
+refuses; a partial marker or missing state after initialization stays closed
+for root-reviewed recovery. No silent retry clears hardware history. Empty state
+means UNKNOWN until current-boot exact-UUID positive validation. Existing
+current-boot positive latches survive source/service restart and reset; prior
+boot protection clears only through the reviewed exact-target proof.
 
-Publish the reviewed release and complete closures through the existing
-protected deployment path. Bind the exact runtime overlays/readiness launchers;
-verify originals and resulting bytes against the reviewed manifest. Re-read the
-old receipt/instance/config identities immediately before replacing them. Use
-the existing Manager persistent/anchored JSON writer and image registered
-anchored writer, preserving modes, single-link files, fsync/rename semantics and
-current source/config guards. Publish the text successor receipt, then its exact
-instance reference. Image source/config and standalone node/network policy are
-separate reviewed steps.
+Root assigns a fresh activation owner/window. First capture current active work,
+intent, operation journals, boot, exact owned containers/images/config/source,
+old receipts and installed guard identities. Coordinate target-scoped harness
+freeze/ACK, preserve request quarantine, and obtain required interruption
+confirmation. Direct clients need settlement too. Use current installed guards
+and registered paths, protected anchored writers and the canonical lifecycle
+lease before/after writes. No old-checkout guard fallback, alternate lock,
+protected write, service action or network contact occurs in this source task.
 
-The first installation also needs the once-only protected latch initialization
-specified in [hardware policy](hardware-owner-policy.md), and the registered
-node journal parent and canonical `/run/llmctl` provisioning. Ordinary starts
-must never recreate a missing latch store. Render the node unit's registered
-data root from current protected registration; no root-disk fallback is valid.
+Publish complete source/config/receipt/instance in maintenance; individual
+fsync/rename replacements are atomic but the collection is not one transaction.
+Re-read all hashes, reload consumers without mixed imports, and verify full
+closure/admission before starting through existing Manager/image owners.
+Model order is Qwen0, Qwen1, then Ada image, serially and according to captured
+intent. Preserve both480000 contexts, weights, BF16 KV/cache,72vCPUs, shared CPU
+masks, no-swap caps,15% sampled working-set margin, UUID placement and Ada FHD/edit.
+No giant context retest, relocation or architecture expansion.
 
-Individual file replacement is atomic. The source/overlay/receipt/instance/image
-config collection is **not one atomic transaction**. An interrupted publication
-stays in maintenance; no model start occurs on a partial combination. Re-read
-all outputs and their complete digests, reload source consumers without mixed
-old Python modules, then run existing acceptance for both modes/all three text
-profiles and image configuration verification. Do not bypass a mismatching pin,
-ignore an omitted closure dependency, weaken storage guards or run an old helper
-to force a partial candidate to start.
+The task's `DEPLOYMENT-PLAN.md` gives exact installation/write targets, commands,
+rollback and all poststart gates. The one final at-least660s all-three quiet
+window follows lifecycle/self-reboot checks, retains passive5s observations,
+requires each scheduler below5% of oneCPU after its600s grace, then immediate
+short wake requests and renewed busy grace. All live fields in
+`IDLE-ACCEPTANCE-TEMPLATE.json` remain NOT_TESTED.
 
-Use existing model owners for the captured intended state. Hardware latches,
-request quarantine, manual-recovery gates and current resource admission remain
-in force. A source transition, daemon restart or GPU reset does not clear a
-positive boot hardware latch.
-
-Rollback restores a root-reviewed matched source/overlay/config/receipt/reference
-set under the same owners/guards. Preserve failed candidate evidence. Do not
-restore stale runtime state over current journals or claim that byte restoration
-proves readiness. If the retained old set cannot admit current hardware or state,
-stop for root's recovery decision; no topology change or guard bypass follows.
-
-## Gates this source proposal cannot close
-
-Final runtime file/hash handoff; combined source and closure review; exact
-protected transition/receipt/config diff approval; current installation identity
-and rollback capture; actual-image checks for revised launchers; separate node
-port/network policy publication; serial live owner/action/reboot acceptance;
-authenticated passive readiness; and the authorized at-least-11-minute idle/wake
-measurement remain live/review gates. A reboot operation succeeds only when a
-later observation proves a changed boot. No offline fixture here proves those
-outcomes or a deployable release.
+Rollback preserves and restores a matched old source/image/config/receipt set
+through canonical owners/guards, retaining failed candidate evidence. Never
+restore old journals over newer work or clear latch/quarantine. Retain all three
+old images and D1 recovery artifacts. Byte restoration alone proves no readiness;
+if the old set cannot safely admit current hardware/state, stop for root review.

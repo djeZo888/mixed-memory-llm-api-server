@@ -61,6 +61,16 @@ def receipt(d):
                 proof.update(pair_launcher_sha256=pair.PINS['scripts/runtime/sglang38_pair_file_auth.py'],
                     native_auth_checks={name: 'PASS' for name in q.AUTH_CHECKS})
     path = binding.path('data', pair.ACCEPTANCE_SUFFIX)
+    # Explicit dependency fixture: dated predecessor stays separate; this does
+    # not mint deployed measurement or actual-image authentication evidence.
+    from runtime.h005_runtime_binding import BINDING_SHA256, load
+    predecessor = copy.deepcopy(value)
+    binding.documents[binding.path('data', pair.PREDECESSOR_SUFFIX)] = predecessor
+    value['h005_transition'] = {
+        'kind': 'inherited-capacity-new-runtime-auth', 'runtime_binding_sha256': BINDING_SHA256,
+        'runtime_source_commit': load(require_complete=False)['runtime_source_commit'],
+        'predecessor_receipt_sha256': pair.receipt_sha256(predecessor),
+        'capacity_observed_at': '2026-09-21', 'live_acceptance': 'SEPARATE_RECEIPT_REQUIRED'}
     binding.documents[path] = value
     instance = {'id': 'synthetic-instance', 'concurrent_pair_acceptance': {
         'path': path, 'sha256': pair.receipt_sha256(value), 'reviewed_source_commit': 'a' * 40}}
@@ -313,6 +323,26 @@ class QwenPairLauncher(unittest.TestCase):
 class ManagerPairIntegration(unittest.TestCase):
     """Real Manager create/reuse validation; synthetic image, storage and receipts."""
     def setUp(self):
+        from runtime import h005_runtime_binding
+        # Explicit source-only completed-build collaborator. The production
+        # image/source/receipt guards all run; only their external facts are
+        # synthetic and no protected receipt is published by these tests.
+        completed = copy.deepcopy(h005_runtime_binding.load(require_complete=False))
+        completed.update(status='COMPLETE_VERIFIED_BUILD', build_receipt_sha256='8' * 64)
+        for target, digit in (('text', '6'), ('image', '7')):
+            completed[target].update(image_id='sha256:' + digit * 64,
+                image_config_digest='sha256:' + digit * 64,
+                image_manifest_digest=None, image_id_domain='oci_config')
+        binding_patch = patch.object(h005_runtime_binding, 'load', return_value=completed)
+        binding_patch.start()
+        self.addCleanup(binding_patch.stop)
+        self.pair_fixture = q.pair_auth_fixture()
+        fixture_binding = patch.object(self.pair_fixture, 'runtime_binding', return_value=h005_runtime_binding)
+        fixture_binding.start()
+        self.addCleanup(fixture_binding.stop)
+        fixture_patch = patch.object(q, 'pair_auth_fixture', return_value=self.pair_fixture)
+        fixture_patch.start()
+        self.addCleanup(fixture_patch.stop)
         self.binding = BindingFixture()
         self.binding.identity = {'synthetic': 'registered-storage-fixture'}
         self.manager = Manager(pair.ROOT / 'configs', {'schema_version': 1, 'id': 'synthetic-instance',
@@ -342,10 +372,36 @@ class ManagerPairIntegration(unittest.TestCase):
         _, instance = receipt(d)
         self.manager.instance.update(instance)
         if identifier in pair.QWEN_PROFILES:
-            _, runtime = auth_receipt(d)
-            self.manager.instance.update(runtime)
-            self.images[q.IMAGE_REFERENCE] = qimage(d)
-            c = qcontainer(d)
+            from types import SimpleNamespace
+            from tests.lifecycle.test_qwen38_image_fixture import native_result, lifetime
+            fixture = self.pair_fixture
+            slot = 'gpu' + str(d['concurrent_pair']['guest_gpu_index'])
+            provenance, _ = fixture.adaptive_provenance(pair.ROOT)
+            native = native_result(provenance, fixture.CONTEXT)
+            native.update(image_id_pin=provenance['image_id'], image_reference=provenance['image_reference'],
+                extension_identity=fixture.pair_identity(pair.ROOT, slot=slot, adaptive=True),
+                model_config_resolution=fixture.expected_extension_resolution(provenance))
+            observed = qimage(d)
+            observed.update(Id=provenance['image_reference'], RepoDigests=[])
+            observed['Config']['Labels']['io.llmctl.adaptive-idle.overlay-sha256'] = (
+                fixture.runtime_binding(pair.ROOT).load()['text']['overlay_sha256'])
+            with patch.object(fixture.host, 'validate_output_path'), \
+                    patch.object(fixture.host.subprocess, 'run', return_value=SimpleNamespace(
+                        returncode=0, stdout=json.dumps([observed]).encode())), \
+                    patch.object(fixture.host, 'run_disposable_fixture', return_value=(SimpleNamespace(
+                        returncode=0, stdout=json.dumps(native).encode(), stderr=b''), lifetime(fixture.CONTEXT))), \
+                    patch.object(fixture.host, 'write_receipt') as writer:
+                proof = fixture.run(pair.ROOT, Path('/synthetic/never-published.json'), slot=slot, adaptive=True)
+                writer.assert_called_once()
+            path = self.binding.path('data', 'services/llm-manager/evidence/h005-' + slot + '.auth.json')
+            self.binding.documents[path] = proof
+            self.manager.instance.setdefault('h005_pair_runtime_evidence', {})[identifier] = {
+                'path': path, 'sha256': pair.receipt_sha256(proof)}
+            self.images[d['_runtime']['image_ref']] = observed
+            with patch('tests.lifecycle.test_qwen38.image', return_value=observed):
+                c = qcontainer(d)
+            c['Image'] = provenance['image_reference']
+            c['Config']['Image'] = provenance['image_reference']
             c['HostConfig']['PortBindings'] = {str(d['container_port']) + '/tcp':
                 [{'HostIp': '127.0.0.1', 'HostPort': str(d['endpoint']['port'])}]}
         else:
@@ -394,6 +450,23 @@ class ManagerPairIntegration(unittest.TestCase):
             self.assertEqual(self.inspects, [])
             with self.assertRaisesRegex(LifecycleError, 'concurrent_reviewed_acceptance_required'):
                 self.manager.validate_reused_contract(c, d)
+
+    def test_derived_pair_requires_new_auth_and_rejects_parent_receipts_before_image_inspect(self):
+        for identifier in pair.QWEN_PROFILES:
+            d, _ = self.prepare(identifier)
+            reference = self.manager.instance['h005_pair_runtime_evidence'].pop(identifier)
+            self.inspects.clear()
+            with self.subTest(identifier=identifier), \
+                    self.assertRaisesRegex(LifecycleError, 'h005_pair_auth_reference_required'):
+                self.manager.create_args(d)
+            self.assertEqual(self.inspects, [])
+            parent_proof, _ = auth_receipt(d)
+            self.binding.documents[reference['path']] = parent_proof
+            self.manager.instance['h005_pair_runtime_evidence'][identifier] = {
+                'path': reference['path'], 'sha256': pair.receipt_sha256(parent_proof)}
+            with self.subTest(parent_receipt=identifier), self.assertRaises(LifecycleError):
+                self.manager.create_args(d)
+            self.assertEqual(self.inspects, [])
 
     def test_current_gpu_inventory_blocks_before_artifacts_or_container_creation(self):
         d, _ = self.prepare(pair.GLM_PROFILE)
