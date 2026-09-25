@@ -27,6 +27,15 @@ User commands use fixed `runuser`/`env -i`/`systemctl` argument vectors with no
 shell. No ai-vm contact, model lifecycle, GPU reset, installer or Proxmox action
 exists here. The backend adapters on ai-vm remain Worker1-owned.
 
+The unit explicitly retains ambient `CAP_SETUID` for that fixed UID drop.
+systemd 255's seccomp setup drops this capability from permitted/effective sets
+even for `User=root` unless it is ambient; the bounding set alone is insufficient
+with `NoNewPrivileges=yes`. A matching sandbox probe must verify the fixed
+user-manager observation and that the resulting ordinary user has UID/GID1000
+(or the registered identity), zero permitted/effective/ambient capabilities,
+and retained no-new-privileges/seccomp. Do not remove the unit hardening or
+replace the fixed command with arbitrary user or shell dispatch.
+
 Before any stop/restart/reboot, the helper independently verifies the durable
 freeze ledger at fixed `/var/lib/ai-harness-dispatch/state.sqlite`. The parent
 is the existing harness UID's private0700 directory outside all workspace/profile
