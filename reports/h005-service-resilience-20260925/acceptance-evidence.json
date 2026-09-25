@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "report_date": "2026-09-25",
-  "status": "PARTIAL_BLOCKED",
+  "status": "PARTIAL_PENDING",
   "combined_source_commit": "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
   "receipt_cutoff": {
     "closure_emitted_utc": "2026-09-25T19:44:56.947265Z",
@@ -9,13 +9,14 @@
     "ada_preliminary_end_utc": "2026-09-25T19:56:37.916861Z",
     "qwen_failed_start_status_utc": "2026-09-25T20:23:18.254678Z",
     "historical_harness_update": "Root-supplied local owner action receipts through2026-09-25T20:21:11.493Z; not a new VM query",
-    "harness_update": "Supplied local receipts through 2026-09-25T21:30:16.610088Z; no new VM or harness query",
+    "harness_update": "Supplied local receipts through 2026-09-25T21:48:30.455212Z; no new VM or harness query",
     "qwen_canonical_recovery_utc": "2026-09-25T21:10:22.546965+00:00",
     "control_readiness_live_utc": "2026-09-25T21:27:26.363256+00:00",
     "control_typed_restart_final_utc": "2026-09-25T21:29:48.622Z",
-    "latest_supplied_snapshot_utc": "2026-09-25T21:30:16.610088+00:00",
-    "final_execution_receipts": "Root STEERING reports ai-vm changed boot with canonical reboot owner reconciled but llmctl-boot restoration exit 1 at 21:37:53; harness reboot and quiet/wake halted; exact new action/cause receipts not yet supplied",
-    "latest_root_steering_event_utc": "2026-09-25T21:37:53Z"
+    "latest_supplied_snapshot_utc": "2026-09-25T21:48:30.455212+00:00",
+    "final_execution_receipts": "Actual supplied receipts confirm first ai-vm reboot owner reconciliation and failed automatic Q1 restoration; one manual Q1 recovery restored all three models/control and empty holds at 21:48:30.455212Z. Repeat reboot, harness reboot and formal quiet/wake remain pending; boot-only fix remains outside reviewed combined source.",
+    "latest_root_steering_event_utc": "2026-09-25T21:48:30Z",
+    "latest_root_steering_summary_utc_minute": "2026-09-25T21:49Z"
   },
   "preparation": {
     "source_only": true,
@@ -96,31 +97,33 @@
   "pending_gates": [
     {
       "gate": "serial_typed_ai_vm_then_ai_harness_self_reboots",
-      "status": "BLOCKED",
-      "execution_state": "HALTED_PER_ROOT_STEERING",
-      "required_proof": "ai-vm changed boot and canonical owner reconciled per root summary, but model restoration failed; both complete restorations still required"
+      "status": "PENDING",
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z",
+      "required_proof": "First ai-vm changed boot and owner reconciliation succeeded but automatic Q1 restoration failed; reviewed boot-only fix and successful repeat ai-vm plus harness restoration remain pending"
     },
     {
       "gate": "one_all_three_warm_665_second_quiet_window_passive_5_second_polling",
-      "status": "BLOCKED",
-      "execution_state": "HALTED_PER_ROOT_STEERING",
+      "status": "PENDING",
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z",
       "required_proof": "Actual common post-work interval, exact scheduler CPU units with 100 percent equal to one CPU, main TID, blocking state and VRAM"
     },
     {
       "gate": "per_pid_tid_below_5_percent_one_cpu_and_residency",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "limit": "VRAM alone does not establish cache contents",
-      "execution_state": "HALTED_PER_ROOT_STEERING"
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
     },
     {
       "gate": "immediate_bounded_normal_text_wake_each_renewed_busy_finish_all_three_warm",
-      "status": "BLOCKED",
-      "execution_state": "HALTED_PER_ROOT_STEERING"
+      "status": "PENDING",
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z",
+      "required_proof": "One ordinary authenticated tiny request to each exact Qwen endpoint before and after quiet; renewed busy and final all-three-warm proof; no new lane selector"
     },
     {
       "gate": "bounded_qualified_1024_image_edit_sanity",
-      "status": "BLOCKED",
-      "execution_state": "HALTED_PER_ROOT_STEERING"
+      "status": "PENDING",
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z",
+      "required_proof": "Worker2 qualified 1024 image edit through harness with completed result and final all-three-warm proof"
     }
   ],
   "limits": [
@@ -824,6 +827,60 @@
       "raw_sha256": "05a7efa5203ccfe03214e154cd847000dd97d1bfa401aefe72f49cf1e5f3bc17",
       "retention": "external_original_not_copied",
       "scope": "Changed ai-vm boot and canonical reboot reconciliation reported separately from failed model restoration; harness reboot and quiet/wake halted; cause unknown"
+    },
+    {
+      "id": "final_publication_root_recovery",
+      "artifact": "STEERING-USED-RECOVERY-20260925.md",
+      "source": "H005-FINAL-PUBLICATION-20260925",
+      "evidence_class": "root_supplied_recovery_and_current_status_summary_not_action_or_cause_receipt",
+      "raw_sha256": "4090eaa332f031ccdd9b3a386e84a6587cc5a9680e69ea71ad59e82d2f09a4b9",
+      "retention": "external_original_not_copied",
+      "scope": "21:49Z root summary: automatic Q1 boot restoration failed hardware_target_unknown before native; manual Q1 recovery succeeded and all three ready 21:48:30; image initial delay not failure; repeat reboot, harness reboot and formal quiet/wake remain pending"
+    },
+    {
+      "id": "first_reboot_restoration_failure",
+      "artifact": "w1-reboot/BOOT-RESTORATION-FAILURE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_read_only_failure_receipt",
+      "raw_sha256": "063d563398d5df4825e839e5fc4c28eef6f85187516c4d478b5a39f1e019f7d4",
+      "retention": "external_original_not_copied",
+      "scope": "Canonical boot service exit 1 and Q1 hardware_target_unknown; stale prior-boot validation observed, no root-cause or GPU fault proof"
+    },
+    {
+      "id": "first_reboot_final_acceptance",
+      "artifact": "w1-reboot/FINAL-ACCEPTANCE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_acceptance_receipt",
+      "raw_sha256": "51fc0761483522a2a918d952dd2c39d7686bad2fb35f7981920f44c22f049c35",
+      "retention": "external_original_not_copied",
+      "scope": "Changed boot and canonical reboot reconciled; automatic Q1 restore FAIL; Q0/image/control later ready, quiet/wake not started; root cause unestablished"
+    },
+    {
+      "id": "first_reboot_window_closed",
+      "artifact": "w1-reboot/WINDOW-CLOSED.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_execution_closure_receipt",
+      "raw_sha256": "0afc4678abeee46ef5aacf201177c269c7f73f518c9d4b258b2c41c7ac51e649",
+      "retention": "external_original_not_copied",
+      "scope": "Observer closed after failed boot restoration; historical failure receipts retained, no replay or repair"
+    },
+    {
+      "id": "q1_manual_recovery_acceptance",
+      "artifact": "w2-final/Q1-RECOVERY-ACCEPTANCE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_acceptance_receipt",
+      "raw_sha256": "4eb68ec5a9ce49505a1d815565b8737a5493aa88ac27af336e412b3363f029f1",
+      "retention": "external_original_not_copied",
+      "scope": "One manual Q1 recovery, all three models/control fresh ready and holds empty; Q0/image generations preserved; not automatic reboot acceptance"
+    },
+    {
+      "id": "q1_manual_recovery_window_closed",
+      "artifact": "w2-final/Q1-WINDOW-CLOSED.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_execution_closure_receipt",
+      "raw_sha256": "6b376c68f5f72a10ffaa8734302712201ba18ca2191d541758ee7bfc8a0752d1",
+      "retention": "external_original_not_copied",
+      "scope": "Manual recovery settled, no outstanding posts/polls/model requests, no tasks; original boot restoration still failed"
     }
   ],
   "harness_boundary_limits": {
@@ -1218,6 +1275,90 @@
     "historical_only": true
   },
   "current_reboot_incident": {
+    "status": "PARTIAL_PENDING",
+    "evidence_class": "bounded_reboot_failure_and_manual_recovery_receipts_with_separate_root_source_fix_summary",
+    "evidence_ids": [
+      "final_publication_root_blocker",
+      "final_publication_root_recovery",
+      "first_reboot_restoration_failure",
+      "first_reboot_final_acceptance",
+      "first_reboot_window_closed",
+      "q1_manual_recovery_acceptance",
+      "q1_manual_recovery_window_closed"
+    ],
+    "latest_summary_utc_minute": "2026-09-25T21:49Z",
+    "ai_vm_boot_id": "56fe4c47-0751-44ed-916d-a052ef4a134c",
+    "ai_vm_boot_changed": true,
+    "canonical_reboot_owner_reconciled": true,
+    "first_automatic_model_restoration": {
+      "status": "FAILED",
+      "boot_restore_service": "llmctl-boot.service",
+      "exit_code": 1,
+      "failure_utc": "2026-09-25T21:37:53.657238+00:00",
+      "service": "qwen-gpu1",
+      "failure_code": "hardware_target_unknown",
+      "phase": "before_native_start",
+      "low_level_nvml_timeout_subtype": "UNPROVEN_UNAVAILABLE",
+      "image_initial_delay": "NOT_A_FAILURE",
+      "failure_not_rewritten_by_manual_recovery": true,
+      "cause_stage": "Q1 exact UUID admission probe before native start; historical probe subtype not retained",
+      "root_cause": "NOT_ESTABLISHED",
+      "stale_prior_boot_validation": "Observed at failure capture; not GPU hardware fault proof",
+      "evidence_ids": [
+        "first_reboot_restoration_failure",
+        "first_reboot_final_acceptance"
+      ]
+    },
+    "q1_manual_recovery": {
+      "status": "PASS",
+      "owner_id": "79c32ac21e04471fa4d2deca8afa4345",
+      "relay_operation_id": "ff5d5c9b-8f7f-444b-96af-626190463e98",
+      "completed_utc": "2026-09-25T21:47:54Z",
+      "explicit_manual_recoveries": 1,
+      "completed_utc_evidence_class": "root_supplied_2149Z_summary; exact completion timestamp not in supplied acceptance receipt",
+      "accepted_snapshot_utc": "2026-09-25T21:48:30.455212+00:00",
+      "evidence_ids": [
+        "q1_manual_recovery_acceptance",
+        "q1_manual_recovery_window_closed"
+      ],
+      "hold_release_reason": "validated_owner_readiness",
+      "model_requests": 0,
+      "retry_replay": false
+    },
+    "latest_model_snapshot": {
+      "observed_utc": "2026-09-25T21:48:30.455212+00:00",
+      "qwen_gpu0_ready": true,
+      "qwen_gpu1_ready": true,
+      "image_ready": true,
+      "holds": [],
+      "qwen_gpu0_and_image_generations_unchanged_during_q1_recovery": true,
+      "evidence_limit": "Bounded supplied acceptance at this time; does not establish automatic boot restoration or final post-quiet/wake state",
+      "control_ready": true,
+      "qwen_gpu0_and_image_generations": {
+        "qwen-gpu0": 4406363042390625,
+        "image": 226256932367129
+      },
+      "qwen_gpu1_generation": 4233948466332408,
+      "evidence_ids": [
+        "q1_manual_recovery_acceptance",
+        "q1_manual_recovery_window_closed"
+      ]
+    },
+    "boot_only_source_fix": {
+      "status": "UNDERWAY_REVIEW_PENDING",
+      "included_in_reviewed_combined_source": false,
+      "reviewed_combined_source": "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
+      "scope": "Bounded UNKNOWN pre-start validation; no new lane selector work"
+    },
+    "second_ai_vm_reboot": "NOT_YET_EXECUTED",
+    "ai_harness_reboot": "NOT_YET_EXECUTED",
+    "formal_quiet_wake": "NOT_YET_EXECUTED",
+    "final_all_three_warm_after_quiet_wake": "NOT_ESTABLISHED",
+    "prior_pass_scope": "Earlier recovery, restart and readiness passes retain their recorded receipt-time boundaries; manual recovery does not convert automatic restoration to PASS",
+    "canonical_reboot_operation_id": "a8af1d3585a64d50825aedb819e0a21d",
+    "baseline_boot_id": "37e425eb-3d3e-4070-80a0-5ecfb39604f1"
+  },
+  "historical_first_reboot_initial_snapshot": {
     "status": "PARTIAL_BLOCKED",
     "evidence_class": "root_supplied_current_incident_summary_not_action_or_cause_receipt",
     "evidence_ids": [
@@ -1240,6 +1381,19 @@
     "final_all_three_warm": "NOT_ESTABLISHED",
     "cause": "UNKNOWN_PENDING_READ_ONLY_CAUSE_RECEIPT",
     "repair_owner": "Root coordinating; Worker1 read-only cause capture",
-    "prior_pass_scope": "All earlier recovery, restart and readiness passes apply to their recorded pre-reboot receipt times only"
+    "prior_pass_scope": "All earlier recovery, restart and readiness passes apply to their recorded pre-reboot receipt times only",
+    "historical_only": true,
+    "later_clarification": "Initial image stopped/delayed observation was not an image failure; latest root recovery summary supersedes current model state"
+  },
+  "reboot_receipt_scope_limits": {
+    "initial_observer_final_status": "HALTED_NOT_ACCEPTED",
+    "initial_observer_latest_view_utc": "2026-09-25T21:43:08.395326+00:00",
+    "initial_observer_latest_view": "Q0 and image ready/available; Q1 stopped/unavailable; control ready; all hardware latch projections false",
+    "formal_quiet_window": "NOT_STARTED",
+    "formal_wake_requests": "NOT_STARTED",
+    "scheduler_acceptance_table": "NOT_MEASURED: quiet/wake gate not reached",
+    "root_payload_scan": "NOT_RUN: execution performed no VM payload write or lifecycle mutation; no extra global scan",
+    "inference_from_stale_validation": "No GPU fault or historical low-level probe subtype proven",
+    "manual_recovery_does_not_rewrite_automatic_failure": true
   }
 }

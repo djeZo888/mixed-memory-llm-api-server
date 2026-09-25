@@ -1,18 +1,29 @@
 # H005 service resilience acceptance — 2026-09-25
 
-**PARTIAL / BLOCKED acceptance; Draft PR7.** This offline publication checkpoint
-adds supplied repair and typed-action receipts through **21:30:16 UTC** on
-September 25. Qwen0's canonical recovery, one settled healthy-peer chat, image
-restart, passive control readiness and typed control restart are now evidenced.
-Both failed Qwen0 starts and the original unknown main stop remain historical
-outcomes. **New root-reported blocker at 21:37:53 UTC:** ai-vm changed boot to
-`56fe4c47-0751-44ed-916d-a052ef4a134c` and its canonical reboot owner reconciled,
-but `llmctl-boot.service` failed restoration with exit 1. Root reports Q1/image
-stopped and Q0 ready with `hardware_latch_unknown`. This is successful reboot
-dispatch/boot change, **not successful model restoration**. Harness reboot and
-formal quiet/wake are halted. Exact failure receipts are awaited; no cause is
-inferred from exit 1. Earlier all-three-ready snapshots are historical.
-A plan, READY state, accepted POST or SSH disconnect is not reboot acceptance.
+**PARTIAL / PENDING acceptance; Draft PR7.** This offline publication checkpoint
+adds supplied repair, action and recovery receipts through **21:48:30 UTC** and root
+steering through **21:49 UTC** on September 25. Qwen0's canonical recovery, one
+settled healthy-peer chat, image restart, passive control readiness and typed
+control restart are evidenced. Both failed Qwen0 starts and the original unknown
+main stop remain historical outcomes.
+
+**First reboot automatic restoration FAILED.** The supplied receipts confirm ai-vm changed boot
+from `37e425eb…` to `56fe4c47-0751-44ed-916d-a052ef4a134c` and the canonical reboot
+owner reconciled, but Q1 automatic restore failed before native startup with
+`hardware_target_unknown`; `llmctl-boot.service` exited 1 at 21:37:53 UTC.
+The historical probe subtype was not retained; an NVML timeout is unproven. The first readback's
+stopped image was a startup delay, not an image failure: Q0, image and control
+subsequently became ready independently. A single explicit manual Q1 recovery
+succeeded at **21:47:54 UTC**, owner `79c32ac21e04471fa4d2deca8afa4345`.
+`Q1-RECOVERY-ACCEPTANCE.json` confirms all three models and control fresh/ready,
+holds empty at **21:48:30.455212 UTC**, and Q0/Ada generations unchanged. The
+21:47:54 completion time comes from root steering; manual recovery does **not**
+turn failed automatic restoration into PASS.
+
+A bounded boot-only pre-start UNKNOWN-validation fix is under preparation/review.
+No second reboot, harness reboot, formal 665-second quiet window or final wakes
+are yet evidenced. A plan, READY state, accepted POST or SSH disconnect does not
+close those gates. Earlier pre-reboot acceptance applies only at its receipt time.
 
 The exact reviewed combined input is
 `fc6896f56b1999d46ca6448ab3e6f9f9332f5acf`, from the verified supplied bundle.
@@ -349,20 +360,45 @@ snapshot, not a content readback, new backup or post-reboot preservation proof.
 Original unknown main-stop and both failed Q0 histories remain. Current action
 success never authorizes automatic replay of those outcomes.
 
-## Remaining live gates — BLOCKED / PENDING receipt-backed completion
+## First typed reboot failure and distinct manual recovery
+
+`w1-reboot/FINAL-ACCEPTANCE.json` records canonical reboot owner
+`a8af1d3585a64d50825aedb819e0a21d` succeeded through dispatch and changed-boot
+reconciliation. Automatic model restoration nevertheless failed at
+**21:37:53.657238 UTC** under host source `aaa643f`. The confirmed Q1 failure is
+`hardware_target_unknown` at its exact-UUID admission probe before native start;
+the historical probe subtype was not retained. Stale prior-boot validation in
+the failure capture is not proof of a GPU hardware fault. The initialized latch
+marker and historical operation semantics were preserved; no latch reinitialization
+or implicit retry was performed. By the 21:43:08 read-only view, Q0/image/control
+were ready and hardware latch projections were false; Q1 was still stopped.
+The initial image delay must not be reported as image startup failure.
+
+That execution closed **HALTED_NOT_ACCEPTED** at 21:44:23.239083 UTC, without
+starting harness reboot, quiet measurement or wake requests. Its historical
+`final_all_three_warm=NOT_ACCEPTED` is preserved. Later Worker2 acceptance is a
+separate **manual recovery PASS**: owner `79c32ac21e04471fa4d2deca8afa4345`, relay
+`ff5d5c9b…`, actual validated-owner hold release, fresh readiness at 21:48:30.455212,
+no task containers/nonterminal runs and zero model requests or replay. Historical
+quarantine count 1 and image jobs 17 completed / 1 cancelled remained. The
+recovery window closed with no outstanding requests; it explicitly retains
+`reboot_restoration_pass=false`.
+
+## Remaining live gates — PENDING receipt-backed completion
 
 | Gate | Receipt needed before changing status |
 |---|---|
 | Serial typed self-reboots | ai-vm first, then ai-harness, one at a time; actual changed boot IDs, canonical operation reconciliation, restored desired warm services/history and containment, latches/holds/uncertain outcomes accounted for |
 | One formal quiet window | One **665-second** run (at least 660 seconds), all three warm, passive 5-second polling after real work; exact scheduler process and main-TID CPU deltas in units where 100% is one CPU, below 5% after blocking, 600-second transition, block state and VRAM observations |
-| Immediate wake and renewed work interval | Bounded ordinary text work for each Qwen and one qualified 1024×1024 edit; response/settlement, renewed busy interval and final all-three-warm state. VRAM residency alone does not prove cache contents |
+| Immediate wake and renewed work interval | One tiny normal authenticated request to each exact Qwen endpoint before and after quiet, plus Worker2's qualified 1024×1024 edit through the harness; response/settlement, renewed busy interval and final all-three-warm state. VRAM residency alone does not prove cache contents |
 
-Root's latest `STEERING.md` reports ai-vm boot changed and canonical reboot
-reconciled, but warm-model restoration failed at 21:37:53 UTC. The remaining
-harness reboot and quiet/wake steps are **HALTED** pending root-coordinated
-read-only diagnosis and a repair decision. Detailed failure receipts have not
-yet been supplied. No READY declaration, accepted POST or SSH disconnect closes
-these gates; the successful boot change does not erase failed restoration.
+The supplied failure and manual-recovery receipts preserve those distinct
+outcomes. Root's latest `STEERING.md` describes a boot-only source correction;
+it is not part of this report's reviewed `fc6896f` input. Final gates remain
+**PENDING** until actual subsequent execution receipts arrive. No lane-selector
+work or assumed second reboot is included, and the first automatic restoration
+failure remains failed regardless of later recovery.
+
 Unexercised advertised local/search actions, hardware fault injection, live
 child/compaction routing and repeated capacity or sustained GPU stress are not
 silently promoted by the accepted scoped actions above.
@@ -392,4 +428,5 @@ No automatic replay or global reset/cleanup is authorized. Root reports Draft PR
 at `ac8f71a`; reviewed combined input `fc6896f` and this docs-only follow-up remain
 unpublished pending exact root review and explicit publication GO. Serial reboot
 and formal quiet/wake receipts are still required before final acceptance; the
-new model-restoration failure remains an active blocker.
+first automatic-restoration failure is preserved and its source correction/retest
+remain pending.

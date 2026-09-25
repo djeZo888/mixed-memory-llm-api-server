@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "report_date": "2026-09-25",
-  "status": "PARTIAL_BLOCKED",
+  "status": "PARTIAL_PENDING",
   "combined_source_commit": "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
   "evidence_index": "acceptance-evidence.json",
-  "receipt_cutoff_utc": "2026-09-25T21:30:16.610088+00:00",
+  "receipt_cutoff_utc": "2026-09-25T21:48:30.455212+00:00",
   "publication": "DRAFT_PENDING_ROOT_EXACT_FINAL_REVIEW_GO",
   "counting": "Rows are distinct evidence boundaries, not additive test counts. No aggregate pass percentage or summed overlapping count.",
   "rows": [
@@ -164,60 +164,86 @@
     },
     {
       "gate": "serial_typed_ai_vm_then_ai_harness_self_reboots",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "evidence_ids": [],
-      "scope": "Changed boot and canonical restoration for both VMs; plan, accepted POST and SSH drop are insufficient",
-      "execution_state": "HALTED_PER_ROOT_STEERING"
+      "scope": "Successful automatic restoration on repeat ai-vm reboot after reviewed boot-only fix and changed-boot canonical restoration on harness remain pending; initial reboot dispatch alone is insufficient",
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
     },
     {
       "gate": "one_all_three_warm_665_second_quiet_window_passive_5_second_polling",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "evidence_ids": [],
       "scope": "Actual common post-work interval, exact scheduler CPU units with 100 percent equal to one CPU, main TID, blocking state and VRAM",
-      "execution_state": "HALTED_PER_ROOT_STEERING"
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
     },
     {
       "gate": "per_pid_tid_below_5_percent_one_cpu_and_residency",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "evidence_ids": [],
       "scope": "VRAM alone does not establish cache contents",
-      "execution_state": "HALTED_PER_ROOT_STEERING"
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
     },
     {
       "gate": "immediate_bounded_normal_text_wake_each_renewed_busy_finish_all_three_warm",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "evidence_ids": [],
-      "scope": "Actual completed execution receipt required",
-      "execution_state": "HALTED_PER_ROOT_STEERING"
+      "scope": "One ordinary authenticated tiny request to each exact Qwen endpoint before and after quiet, renewed busy and final all-three-warm proof; no new lane selector",
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
     },
     {
       "gate": "bounded_qualified_1024_image_edit_sanity",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "evidence_ids": [],
-      "scope": "Actual completed execution receipt required",
-      "execution_state": "HALTED_PER_ROOT_STEERING"
+      "scope": "Worker2 qualified 1024 image edit through harness, completed result and final all-three-warm proof",
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
     },
     {
       "gate": "ai_vm_typed_reboot_boot_change_and_owner_reconciliation",
-      "status": "PASS_ROOT_SUMMARY",
+      "status": "PASS",
       "evidence_ids": [
-        "final_publication_root_blocker"
+        "first_reboot_final_acceptance"
       ],
-      "scope": "Changed boot and canonical reboot owner reconciled per root; independent action receipt not yet supplied; does not establish model restoration"
+      "scope": "Actual changed boot and canonical reboot journal dispatch/reconciliation succeeded; model restoration is a separate failed gate",
+      "owner_id": "a8af1d3585a64d50825aedb819e0a21d"
     },
     {
       "gate": "ai_vm_post_reboot_model_restoration",
-      "status": "FAIL_ROOT_SUMMARY",
+      "status": "FAIL",
       "evidence_ids": [
-        "final_publication_root_blocker"
+        "first_reboot_restoration_failure",
+        "first_reboot_final_acceptance",
+        "first_reboot_window_closed"
       ],
-      "scope": "llmctl-boot.service exit 1 at 21:37:53; Q1/image stopped, Q0 ready/hardware_latch_unknown; cause not yet established"
+      "scope": "Automatic Q1 restoration failed hardware_target_unknown before native; llmctl-boot exit 1. Stale prior-boot validation is not GPU fault proof; historical low-level probe subtype/root cause unestablished. Q0/image/control later ready; image delay not a failure. Manual recovery does not change this FAIL.",
+      "observed_utc": "2026-09-25T21:37:53.657238+00:00"
     },
     {
       "gate": "node_and_local_search_typed_scope_coverage",
       "status": "NOT_ESTABLISHED",
       "evidence_ids": [],
       "scope": "Historical unexercised scope retained for honesty; not an added final gate"
+    },
+    {
+      "gate": "q1_manual_recovery_after_failed_automatic_boot_restore",
+      "status": "PASS",
+      "evidence_ids": [
+        "q1_manual_recovery_acceptance",
+        "q1_manual_recovery_window_closed",
+        "final_publication_root_recovery"
+      ],
+      "scope": "One explicit manual Q1 recovery accepted; all three models/control fresh ready, empty holds, Q0/Ada generations unchanged, no model requests or replay. First automatic boot restoration remains FAIL.",
+      "owner_id": "79c32ac21e04471fa4d2deca8afa4345",
+      "completed_utc": "2026-09-25T21:47:54Z",
+      "accepted_snapshot_utc": "2026-09-25T21:48:30.455212+00:00",
+      "completed_utc_evidence_class": "root_supplied_2149Z_summary_only"
+    },
+    {
+      "gate": "boot_only_unknown_pre_start_validation_source_fix",
+      "status": "PENDING_REVIEW",
+      "evidence_ids": [
+        "final_publication_root_recovery"
+      ],
+      "scope": "Underway/review pending; absent from reviewed combined fc6896f source and not a deployment claim"
     }
   ],
   "limits": [
@@ -226,6 +252,7 @@
     "VRAM residency alone cannot prove cache contents",
     "Combined repository source is not a wholesale deployed-component identity"
   ],
-  "latest_root_steering_event_utc": "2026-09-25T21:37:53Z",
-  "evidence_time_boundary": "Existing PASS rows establish only the named pre-reboot scopes at their receipt times; current final model restoration is blocked"
+  "latest_root_steering_event_utc": "2026-09-25T21:48:30Z",
+  "evidence_time_boundary": "Earlier PASS rows establish named scopes at their receipt times. First automatic Q1 boot restoration remains failed despite later manual recovery; final repeat reboot, harness reboot and formal quiet/wake are pending.",
+  "latest_root_steering_summary_utc_minute": "2026-09-25T21:49Z"
 }
