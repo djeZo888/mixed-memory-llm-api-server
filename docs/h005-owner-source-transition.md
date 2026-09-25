@@ -1,5 +1,9 @@
 # H005 reviewed source and runtime transition candidate
 
+> Historical source checkpoint — 2026-09-25. The text below preserves its original
+> evidence boundary. See the [current H005 acceptance report](service-resilience-acceptance.md)
+> for later repair/deployment receipts and PARTIAL / PENDING live acceptance.
+
 This is a **source/offline activation package**, not deployment or activation GO.
 The Worker1 binding task starts at integrated `afebf390666674b2a84f7147cf156f80600bdfc9`
 and preserves the runtime overlay bytes from

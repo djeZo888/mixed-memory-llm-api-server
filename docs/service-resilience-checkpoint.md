@@ -1,5 +1,9 @@
 # H005 Worker1 core/node source checkpoint
 
+> Historical source checkpoint — 2026-09-25. The text below preserves its original
+> evidence boundary. See the [current H005 acceptance report](service-resilience-acceptance.md)
+> for later repair/deployment receipts and PARTIAL / PENDING live acceptance.
+
 This source checkpoint adds UUID-scoped text/Ada pre-create admission and an
 independent protected passive node API candidate. No deployment or live
 acceptance was performed. Initial plan publication is separate; implementation

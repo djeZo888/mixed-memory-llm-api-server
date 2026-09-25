@@ -1,0 +1,455 @@
+{
+  "schema_version": 1,
+  "report_date": "2026-09-25",
+  "status": "PARTIAL_PENDING",
+  "combined_source_commit": "62d9f0e188b03a9183d281fbe55345806f23650d",
+  "receipt_cutoff": {
+    "last_vm_contact_utc": "2026-09-25T19:44:30.006989Z",
+    "closure_emitted_utc": "2026-09-25T19:44:56.947265Z",
+    "harness_update": "Latest root-supplied WATCHER-RESTORED, ADMIN-EXPOSED and IMAGE-LANE-READBACK; delivered2026-09-25, no UTC field in these compact receipts"
+  },
+  "preparation": {
+    "source_only": true,
+    "vm_contact": false,
+    "network_service_tests": false,
+    "push": false,
+    "pull_request": false,
+    "overlapping_test_counts_summed": false
+  },
+  "deployed_components": {
+    "ai_vm_successor_source": "5b20f26b36e8caedfd62ce42060ecdbe32126224",
+    "harness_main_source": "63dcb23ebd0b2cb82a295bea78192f3e1a433a6e",
+    "harness_status_source": "c640b9c9c3b9a41fb639eeb92018d34470041ad3",
+    "runtime_binding_raw_sha256": "9da2236e927c44e2af618e0862ee84f54d4645ec0bcb1e93c25c0d98b45ee6ae",
+    "text": {
+      "image_id": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "image_config_digest": "sha256:8f9a45a8a4de689280c054867103fc072f064703427212aeb6d603551a86f4b2",
+      "overlay_sha256": "b7f03476fe13779ed4867e4ca509dcba2861431210b6a264cf551558b5927a27"
+    },
+    "image": {
+      "image_id": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+      "image_config_digest": "sha256:3f6178faa74c4a9bcb95ed4304dbee57473efa8913a793e067014af4a98281ad",
+      "overlay_sha256": "dda84e200adcc6a1ee8915e0e993627695477a346c5848fc27f9251c34d04b3b"
+    }
+  },
+  "current_snapshot": {
+    "all_three_ready_utc": "2026-09-25T19:41:16.962708Z",
+    "qwen_invocations_unchanged": true,
+    "qwen_configured_context_each": 480000,
+    "image_warm": true,
+    "node_active": true,
+    "control_process_active": true,
+    "control_node_projection": {
+      "availability": "unknown",
+      "ready": null,
+      "reason": "observation_unavailable"
+    },
+    "server_gpu_assignment": "unassigned",
+    "ecc": "unchanged"
+  },
+  "cpu_text_auth": {
+    "status": "BOTH_FRESH_CPU_AUTH_PASS",
+    "final_source_validation": "BOTH_VALIDATE_AGAINST_FINAL_SOURCE_NO_RERUN",
+    "model_execution": "NOT_TESTED",
+    "gpu_execution": "NOT_TESTED",
+    "receipts": {
+      "gpu0": {
+        "raw_sha256": "dd0f56817257ef5a0d73d1b13621d96a9eca6ea40590c50fc6f6108abfafd675",
+        "canonical_sha256": "dc0440c7290d40090833d5d51d258b3cd1debd9c9613103fa4b138a5a3406cf6",
+        "cleanup": "QUIESCENT_REMOVAL_VERIFIED"
+      },
+      "gpu1": {
+        "raw_sha256": "c48f112e94397fd96f64be71c26ac8943cfdfc3fadb28a04c424fc53eaa968d9",
+        "canonical_sha256": "e3f91fced1ea56c2f724650ac2f7f34454bc497763aded02183d2404ce5329b4",
+        "cleanup": "QUIESCENT_REMOVAL_VERIFIED"
+      }
+    }
+  },
+  "final_successor_provenance": {
+    "source_manifest_raw_sha256": "98ab3f85067225dcbce6fafb1153056da213611afd860d335ec34c1932ff74a6",
+    "proposal_hashes": {
+      "TRANSITION.proposal.json": {
+        "canonical_sha256": "d12d66218680b4dbe54754492851bb2f8f6687ac6015d11e9f842896461c20b5",
+        "raw_sha256": "5ca182ec1ff322f7c564f97e4e4dd8e6e982a77140285e4989318291b511596b"
+      },
+      "acceptance.proposal.json": {
+        "canonical_sha256": "b2e54ba006636bcc3b6a63153553ac72eb860d4b9634a3f934ce2adc977540ad",
+        "raw_sha256": "00ba03cef535116092b6bbf09d284bb8c946920a8ba341ec691f75597d60c62b"
+      },
+      "image-config.proposal.json": {
+        "canonical_sha256": "6231c9c59b09aae6658767847e6dda48a050655f302462a4c06b5f9abf9da1f0",
+        "raw_sha256": "2693e8fe3d462758e6887888c1df04e6249198515743d8d6121302caea9a643b"
+      },
+      "instance.proposal.json": {
+        "canonical_sha256": "2c3a0efb89ebfbf97677b7f8bac39f89357f8cf02e86e38db4673263d98c3536",
+        "raw_sha256": "ce1806929120d30400045129ccedec1e8949b477e41f21a2e413ed5f9576d0c0"
+      }
+    },
+    "boot_unit_raw_sha256": "fb0789f374c93b6cf5b25d63e59c2854cb0645ebecfbe1b54b9c0e4868dc9e94"
+  },
+  "pending_gates": [
+    {
+      "gate": "all_typed_scoped_actions_peer_and_control_independence",
+      "status": "PENDING"
+    },
+    {
+      "gate": "image_quarantine_reconciliation",
+      "status": "PENDING"
+    },
+    {
+      "gate": "serial_typed_ai_vm_then_ai_harness_self_reboots",
+      "status": "PENDING"
+    },
+    {
+      "gate": "one_all_three_warm_660_second_quiet_window_passive_5_second_polling",
+      "status": "PENDING"
+    },
+    {
+      "gate": "per_pid_tid_below_5_percent_one_cpu_cache_vram_retention",
+      "status": "PENDING"
+    },
+    {
+      "gate": "immediate_bounded_wakes_renewed_busy_finish_warm",
+      "status": "PENDING"
+    },
+    {
+      "gate": "bounded_qualified_image_edit_sanity",
+      "status": "PENDING"
+    }
+  ],
+  "limits": [
+    "No new occupied480K or capacity acceptance",
+    "No sustained benchmark or thermal qualification",
+    "No hardware fault injection",
+    "No automatic replay of uncertain work",
+    "Preliminary5.138s observation does not close formal quiet/wake gate",
+    "Historical qualification runtime digest is not current running image identity"
+  ],
+  "artifacts": [
+    {
+      "id": "repair_result",
+      "artifact": "RESULT.md",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "6c21262d412521cef4e2cfdc88bf671a67a9e16e4a628f235e842942432ce28b",
+      "retention": "external_original_not_copied",
+      "scope": "Bounded repair activation only; later live gates not tested"
+    },
+    {
+      "id": "repair_final",
+      "artifact": "FINAL-DEPLOYMENT-RECEIPT.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "becacb7d1a6a2ffe9ab01568c31cdefeb196fd903331ff2b4530841bff96c6a7",
+      "retention": "external_original_not_copied",
+      "scope": "Exact successor publication, all three ready, unchanged Qwen invocations, control projection unknown"
+    },
+    {
+      "id": "image_ready",
+      "artifact": "IMAGE-READY.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "9a857ce5a4b8703487b627b4d8889c11a2c1f5078012a0766a748c04676ca516",
+      "retention": "external_original_not_copied",
+      "scope": "Fresh readiness before public generation; does not clear quarantine"
+    },
+    {
+      "id": "image_generation",
+      "artifact": "IMAGE-GENERATION.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "cf74ae73be7915df23844ec6ac05337e2af680bf76d8303a8f04bf4108a307d3",
+      "retention": "external_original_not_copied",
+      "scope": "One 1024x1024 public generation; short functional only; visual content not tested"
+    },
+    {
+      "id": "preliminary_idle",
+      "artifact": "CHEAP-IDLE-PRELIMINARY.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "b85124475104b5bde88dd6875116261f2286724bdc2f674ed6310a2f8a5f2b47",
+      "retention": "external_original_not_copied",
+      "scope": "5.138 seconds only; not formal quiet transition or wake"
+    },
+    {
+      "id": "repair_window_closed",
+      "artifact": "WINDOW-CLOSED.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "409c36d233f130b54d9c0deb3bad9e76af4b73c8b15b52b8e35b9bb78de103a1",
+      "retention": "external_original_not_copied",
+      "scope": "Last VM contact 19:44:30Z; closure emitted 19:44:56Z"
+    },
+    {
+      "id": "repair_publication",
+      "artifact": "PUBLICATION.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "663338faba21a4536613d3bee8a0609ddee60f7d8f61eecd05e87ca4689fb86e",
+      "retention": "external_original_not_copied",
+      "scope": "Matched immutable successor publication; no old release rewrite"
+    },
+    {
+      "id": "old_image_settled",
+      "artifact": "OLD-IMAGE-SETTLED.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "ccb80775a469a588138a13764fff4db88298337de63ea98d0b747d7d974bfe3f",
+      "retention": "external_original_not_copied",
+      "scope": "Exact failed old invocation settled and container absent; no replay"
+    },
+    {
+      "id": "permission_repair_result",
+      "artifact": "RESULT.md",
+      "source": "H005-IMAGE-PERMISSIONS-FIX-20260925",
+      "evidence_class": "source_and_actual_image_cpu",
+      "raw_sha256": "2cd26f7d960176a2ed0649a571f7254ecf4c73120554e368d4be4be2aa9568f6",
+      "retention": "external_original_not_copied",
+      "scope": "Image packaging repair; local fixture groups overlap and are not summed"
+    },
+    {
+      "id": "successor_hashes",
+      "artifact": "SUCCESSOR-FINAL-HASHES.json",
+      "source": "H005-IMAGE-PERMISSIONS-FIX-20260925",
+      "evidence_class": "source_and_actual_image_cpu",
+      "raw_sha256": "3536b5a659f9157de3a61689596bed6283ac4f0fa183e37e93dc89087c9b5da1",
+      "retention": "external_original_not_copied",
+      "scope": "Final source and proposal identities; fresh text CPU receipts validated without rerun"
+    },
+    {
+      "id": "text_cpu_refresh",
+      "artifact": "TEXT-PROOF-REFRESH.json",
+      "source": "H005-IMAGE-PERMISSIONS-FIX-20260925",
+      "evidence_class": "source_and_actual_image_cpu",
+      "raw_sha256": "4a39baab06cdf45bebe0341b160c615f95ac18194a52080a686851e164719853",
+      "retention": "external_original_not_copied",
+      "scope": "Actual unchanged text image with synthetic engine/model; no GPU execution"
+    },
+    {
+      "id": "image_uid_cpu",
+      "artifact": "BUILD-CPU-CHECKPOINT.json",
+      "source": "H005-IMAGE-PERMISSIONS-FIX-20260925",
+      "evidence_class": "source_and_actual_image_cpu",
+      "raw_sha256": "b31bb5332938c52fee4610556a17ee3ef077d3b25756045bd6049f137e3d76dc",
+      "retention": "external_original_not_copied",
+      "scope": "Actual UID1000:GID1001, 15 verified overlay files, 17 readable files; no CUDA init"
+    },
+    {
+      "id": "phase_b",
+      "artifact": "RESULT.md",
+      "source": "H005-ACTIVATION-PHASE-B-20260925",
+      "evidence_class": "historical_live_receipt",
+      "raw_sha256": "1f9e4f7add6ccbc2a359fbc5a002f8f3945ecf1b48a1cdccf9192114aeb96e8e",
+      "retention": "external_original_not_copied",
+      "scope": "Two tiny text responses; original image permission failure retained"
+    },
+    {
+      "id": "harness_status_activation",
+      "artifact": "STATUS-ACTIVATION.json",
+      "source": "root-evidence",
+      "evidence_class": "root_supplied_sanitized_receipt",
+      "raw_sha256": "a541ed93c98028c61cb325ac690581c553d5677126f4dd84bf11fd860406325a",
+      "retention": "external_original_not_copied",
+      "scope": "Status component active; unchanged main; admin closed; no full live acceptance"
+    },
+    {
+      "id": "harness_credential_mount",
+      "artifact": "STATUS-MOUNT-EVIDENCE.json",
+      "source": "root-evidence",
+      "evidence_class": "root_supplied_sanitized_receipt",
+      "raw_sha256": "7a42762ce279656bb8411f770a7ff12bbce32caa129ee75b01f2b80e0e46fcfc",
+      "retention": "external_original_not_copied",
+      "scope": "Credential mount metadata/ACL only; no credential bytes/hash/length"
+    },
+    {
+      "id": "packet_causality",
+      "artifact": "PACKET-CAUSALITY.json",
+      "source": "root-evidence",
+      "evidence_class": "root_supplied_sanitized_receipt",
+      "raw_sha256": "342f004a4fe031f8b7073482819fbf32ad2c0dd2b5530b2c05800ae5ea5a6973",
+      "retention": "external_original_not_copied",
+      "scope": "Root accepted narrow causal Slirp host rejection; does not establish watcher/action matrix"
+    },
+    {
+      "id": "h004_hardware_report",
+      "artifact": "reports/h004-gpu-20260924/RESULT.md",
+      "source": "repository",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "30f20a19629744a9fe6deb5808cf379aeb522833db8205fbd0ba1c4180e25932",
+      "retention": "repository",
+      "scope": "First three cards reused, no H005 remeasurement"
+    },
+    {
+      "id": "h004_hardware_data",
+      "artifact": "reports/h004-gpu-20260924/results.json",
+      "source": "repository",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "77afaeedc74a585f54423abbc2e46ba546359c1205ffc6cfd0ed53dd4a60a1a2",
+      "retention": "repository",
+      "scope": "Raw H004 compact data including historical fourth-card failure"
+    },
+    {
+      "id": "image21_bandwidth",
+      "artifact": "reports/image21-bandwidth-20260923/RESULT.md",
+      "source": "repository",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "92879dee5d25c9b719669a231d57b120c9a2b48629437ea38ece6952b27341a5",
+      "retention": "repository",
+      "scope": "Separate September23 run; D2D/P2P not tested"
+    },
+    {
+      "id": "image21_bandwidth_data",
+      "artifact": "reports/image21-bandwidth-20260923/RESULT.json",
+      "source": "repository",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "750327ac9bf948a3e66af135bc0952d69203c494c8f66435b1d50b9296871dec",
+      "retention": "repository",
+      "scope": "Separate historical bandwidth data"
+    },
+    {
+      "id": "historical_dualq_report",
+      "artifact": "reports/dualq-480k-20260921.md",
+      "source": "repository",
+      "evidence_class": "inherited_capacity",
+      "raw_sha256": "8c793742903c4f2d37f1c30476aecfdd1f97d9f4fd24574ce85548db08ed3105",
+      "retention": "repository",
+      "scope": "Dated occupied-context result, Q1 strict JSON caveat preserved"
+    },
+    {
+      "id": "historical_dualq_data",
+      "artifact": "reports/dualq-480k-20260921.json",
+      "source": "repository",
+      "evidence_class": "inherited_capacity",
+      "raw_sha256": "8c9c6a4c10bda0fac994cea08cdeca5c29249029c82f8f70769864e2a09be3b5",
+      "retention": "repository",
+      "scope": "Not new H005 capacity evidence"
+    },
+    {
+      "id": "historical_generation",
+      "artifact": "reports/image21-qualify-20260923/RESULT.md",
+      "source": "repository",
+      "evidence_class": "inherited_qualification",
+      "raw_sha256": "3a3be3696c201941bb920e4c85887cd0c9d5c3c169c34332d5f45a1d7c2226bf",
+      "retention": "repository",
+      "scope": "Six generation sizes with subsequent Full HD amendment"
+    },
+    {
+      "id": "historical_full_hd",
+      "artifact": "reports/image21-fhd-20260923/RESULT.md",
+      "source": "repository",
+      "evidence_class": "inherited_qualification",
+      "raw_sha256": "a7b305bf13eb9de887be290eee356e691db4193c35433affa93132bffe3f8fe7",
+      "retention": "repository",
+      "scope": "1920x1088 native cropped to1920x1080 public"
+    },
+    {
+      "id": "historical_edit_capacity",
+      "artifact": "reports/h003-edit-capacity-20260923/RESULT.md",
+      "source": "repository",
+      "evidence_class": "inherited_qualification",
+      "raw_sha256": "8234b1905d63d8ee203f64a15fb676164d7f974ca03e258a9250dfda7c9ec0d5",
+      "retention": "repository",
+      "scope": "Bounded qualified edit geometry; exclusions preserved"
+    },
+    {
+      "id": "historical_edit_workflow",
+      "artifact": "ai-harness/docs/acceptance-v0.0.3.md",
+      "source": "repository",
+      "evidence_class": "inherited_qualification",
+      "raw_sha256": "b352fb300ef5d2fe3f1b410fbc81f62ed275571e5dc89e36c0cb2f66d29fc43f",
+      "retention": "repository",
+      "scope": "Guarded main/worker edits, seed and provenance limitations retained"
+    },
+    {
+      "id": "current_runtime_binding",
+      "artifact": "configs/runtimes/h005-runtime-binding.json",
+      "source": "repository",
+      "evidence_class": "source_identity",
+      "raw_sha256": "9da2236e927c44e2af618e0862ee84f54d4645ec0bcb1e93c25c0d98b45ee6ae",
+      "retention": "repository",
+      "scope": "Current raw binding, distinct image manifest/config/overlay identities"
+    },
+    {
+      "id": "server_qualification",
+      "artifact": "RESULT.md",
+      "source": "H005-NEWGPU-QUALIFY-20260925",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "1ac660b9b28173fa2f939e88f77740d0f011d682694c920cb763448304421b26",
+      "retention": "external_original_not_copied",
+      "scope": "Brief successful Server transfer sanity only; unassigned; ECC unchanged"
+    },
+    {
+      "id": "server_measurements",
+      "artifact": "measurements.json",
+      "source": "H005-NEWGPU-QUALIFY-20260925",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "25d7b0962092831053aef2de44c4152bb91cdc0f135ee887e446b6edb35717e5",
+      "retention": "external_original_not_copied",
+      "scope": "Brief successful Server transfer sanity only; unassigned; ECC unchanged"
+    },
+    {
+      "id": "server_measurements_csv",
+      "artifact": "measurements.csv",
+      "source": "H005-NEWGPU-QUALIFY-20260925",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "11ab4504f92ca639f1c067f04703ce9cce5c1bd41eb1963a7bd0b3903b4e17ea",
+      "retention": "external_original_not_copied",
+      "scope": "Brief successful Server transfer sanity only; unassigned; ECC unchanged"
+    },
+    {
+      "id": "root_steering",
+      "artifact": "STEERING-USED-20260925.md",
+      "source": "H005-PUBLICATION-PREP-20260925",
+      "evidence_class": "root_supplied_accounting_and_review_instruction",
+      "raw_sha256": "418873fdb685a05ea04ce5cff8437107a74f11a7b1f574a4869b9f46824c05d5",
+      "retention": "external_original_not_copied",
+      "scope": "PRIVATE count interpretation; preserve raw NETWORK/BROWSER INCONCLUSIVE separately from accepted causal denial; control unknown intentional; later watcher/admin/readback accepted with quarantine distinction"
+    },
+    {
+      "id": "watcher_restored",
+      "artifact": "WATCHER-RESTORED.json",
+      "source": "root-evidence",
+      "evidence_class": "root_supplied_sanitized_receipt",
+      "raw_sha256": "53c0681d1e3da6e93cabe907134855b3534227edb012ef5d2a853fff11915abc",
+      "retention": "external_original_not_copied",
+      "scope": "Fresh policy attestation after restore; source/render unchanged; raw digest comparison across table recreation invalid"
+    },
+    {
+      "id": "admin_exposed",
+      "artifact": "ADMIN-EXPOSED.json",
+      "source": "root-evidence",
+      "evidence_class": "root_supplied_sanitized_receipt",
+      "raw_sha256": "4d6c0b553a3dae3d8d00f0d8838c64d69baa0657839dc8555c9e67470efb0b06",
+      "retention": "external_original_not_copied",
+      "scope": "Reviewed trusted-LAN admin open; no private state reset; historical quarantine1 remains; typed actions not accepted"
+    },
+    {
+      "id": "image_lane_readback",
+      "artifact": "IMAGE-LANE-READBACK.json",
+      "source": "root-evidence",
+      "evidence_class": "root_supplied_sanitized_receipt",
+      "raw_sha256": "cbd53aef3b7f1f99b338087072f08672646a8173c43551787a63846298338f9d",
+      "retention": "external_original_not_copied",
+      "scope": "Idle uncertainty0,17completed+1cancelled; no uncertain-owner clearing claim"
+    }
+  ],
+  "harness_boundary_limits": {
+    "root_steering": "NETWORK/BROWSER raw INCONCLUSIVE retained; packet-causal denial accepted separately",
+    "private_detailed_checks": 64,
+    "private_summary_rows_including_summary_itself": 65,
+    "control_ready_null": "intentional_until_api_proof_not_declared_source_bug",
+    "watcher_failure_restore": "PASS_ROOT_ACCEPTED_WITH_RESTORATION_RECEIPT",
+    "typed_lifecycle": "PENDING",
+    "admin": "OPEN_REVIEWED_TRUSTED_LAN",
+    "historical_workspace_quarantine_count": 1,
+    "image_lane": {
+      "state": "idle",
+      "uncertain": 0,
+      "preexisting_completed_jobs": 17,
+      "preexisting_cancelled_jobs": 1,
+      "shutdown_only_marker": "auto_reconciled_with_uncertainty_false_and_ready_and_idle",
+      "uncertain_owner_clear": false,
+      "explicit_reconciliation_action": false
+    }
+  }
+}

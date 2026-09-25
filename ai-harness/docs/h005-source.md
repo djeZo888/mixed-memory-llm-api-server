@@ -1,5 +1,9 @@
 # H005 harness source candidate
 
+> Historical source checkpoint — 2026-09-25. The text below preserves its original
+> evidence boundary. See the [current H005 acceptance report](../../docs/service-resilience-acceptance.md)
+> for later repair/deployment receipts and PARTIAL / PENDING live acceptance.
+
 This source-only follow-up starts at `46a6654205275aa7ced12e60ef608dab6a9e7dc2`
 and changes only `ai-harness/`. It completes the protected dispatch/action source
 seams left by the intermediate checkpoint. It grants no deployment, VM contact,

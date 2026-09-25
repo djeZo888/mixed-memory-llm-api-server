@@ -1,5 +1,9 @@
 # Adaptive idle native source overlay — H005, 2026-09-25
 
+> Historical source checkpoint — 2026-09-25. The text below preserves its original
+> evidence boundary. See the [current H005 acceptance report](service-resilience-acceptance.md)
+> for later repair/deployment receipts and PARTIAL / PENDING live acceptance.
+
 This source checkpoint binds the 600-second policy to the full pinned text normal
 scheduler and diffusion monolithic scheduler. It includes reproducible offline
 patch application, source hashes, candidate derived-image recipes and launch
