@@ -72,6 +72,7 @@ class BootHardwarePolicyTests(unittest.TestCase):
         self.store = MemoryProtectedStore()
         self.store.state = prior_proofs()
         self.commands, self.diagnostics = [], []
+        self.inventory_output = None
         self.probe = lambda gpu, timeout: gpu + '\n'
         self.policy = HardwarePolicy(self.store, lease=self.lease,
             system_root=self.root, trusted_uid=os.geteuid(), run=self.command,
@@ -86,6 +87,8 @@ class BootHardwarePolicyTests(unittest.TestCase):
         self.assertGreater(timeout, 0)
         self.assertLessEqual(timeout, 2)
         if argv[1] == '--query-gpu=uuid':
+            if self.inventory_output is not None:
+                return self.inventory_output
             raise LifecycleError('hardware_inventory_unknown')
         self.assertTrue(argv[1].startswith('--id='))
         return self.probe(argv[1][len('--id='):], timeout)
@@ -122,8 +125,8 @@ class BootHardwarePolicyTests(unittest.TestCase):
         self.assertEqual(len(self.targets()), 2)
         # One absence fallback is retained; no repeated global queries.
         self.assertEqual(sum(cmd[0][1] == '--query-gpu=uuid' for cmd in self.commands), 1)
-        self.assertTrue(self.clock.sleeps)
-        self.assertLessEqual(self.clock.elapsed, 10)
+        self.assertEqual(self.clock.sleeps, [.5])
+        self.assertLessEqual(self.clock.elapsed, 30)
         self.assertFalse(self.status()['hardware_latched'])
 
         self.assertEqual(self.store.state['validated'][Q1]['boot_id'], NEXT_BOOT)
@@ -140,9 +143,10 @@ class BootHardwarePolicyTests(unittest.TestCase):
         with self.assertRaisesRegex(LifecycleError, '^hardware_target_unknown$'):
             self.require()
         self.assertGreater(len(self.targets()), 1)
-        self.assertLessEqual(self.clock.elapsed, 10.000001)
+        self.assertLessEqual(self.clock.elapsed, 30.000001)
+        self.assertLessEqual(len(self.targets()), 61)
         for _argv, timeout, started in self.targets():
-            self.assertLessEqual(timeout, 10 - started + .000001)
+            self.assertLessEqual(timeout, 30 - started + .000001)
         self.assertLessEqual(sum(cmd[0][1] == '--query-gpu=uuid' for cmd in self.commands), 1)
         self.assertEqual(self.store.state, before)
         self.assertIsNone(self.status()['hardware_latched'])
@@ -213,6 +217,55 @@ class BootHardwarePolicyTests(unittest.TestCase):
         self.assertTrue(self.store.state['targets'][Q0]['hardware_latched'])
         self.assertEqual(len(self.targets()), 1)
         self.assertFalse(self.status()['hardware_latched'])
+
+    def inherited_latch(self):
+        latch = HardwareLatch()
+        for second in (0, 5):
+            latch.observe(Q1, inventory(second, boot=BOOT, uuids=[Q0, ADA]),
+                          current_boot_id=BOOT, boot_age_seconds=150)
+        self.store.state = latch.export_state()
+
+    def test_inherited_latch_first_unknown_retains_protection_then_exact_success_clears(self):
+        self.inherited_latch()
+        self.inventory_output = Q1 + '\n'  # Global presence is not exact positive proof.
+        before = copy.deepcopy(self.store.state)
+        def probe(gpu, timeout):
+            if len(self.targets()) == 1:
+                self.clock.elapsed += min(timeout, .1)
+                self.assertTrue(self.status()['hardware_latched'])
+                self.assertEqual(self.store.state, before)
+                raise LifecycleError('command_failed')
+            self.assertTrue(self.status()['hardware_latched'])
+            self.assertEqual(self.store.state['targets'][Q1]['boot_id'], BOOT)
+            self.clock.elapsed += .01
+            return gpu + '\n'
+        self.probe = probe
+        self.assertTrue(self.require())
+        self.assertEqual(len(self.targets()), 2)
+        self.assertEqual(sum(cmd[0][1] == '--query-gpu=uuid' for cmd in self.commands), 1)
+        self.assertEqual(self.clock.sleeps, [.5])
+        self.assertNotIn(Q1, self.store.state['targets'])
+        self.assertFalse(self.status()['hardware_latched'])
+        self.assertEqual(self.store.state['validated'][Q1]['boot_id'], NEXT_BOOT)
+
+    def test_inherited_latch_persistent_unknown_uses_budget_then_retains_protection(self):
+        self.inherited_latch()
+        self.inventory_output = Q1 + '\n'  # Even complete presence cannot clear protection.
+        before = copy.deepcopy(self.store.state)
+        def probe(_gpu, timeout):
+            self.clock.elapsed += timeout
+            self.assertTrue(self.status()['hardware_latched'])
+            raise LifecycleError('command_failed')
+        self.probe = probe
+        with self.assertRaisesRegex(LifecycleError, '^hardware_missing$'):
+            self.require()
+        self.assertGreater(len(self.targets()), 1)
+        self.assertLessEqual(len(self.targets()), 61)
+        self.assertAlmostEqual(self.clock.elapsed, 30)
+        self.assertEqual(sum(cmd[0][1] == '--query-gpu=uuid' for cmd in self.commands), 1)
+        self.assertEqual(self.store.state, before)
+        self.assertTrue(self.status()['hardware_latched'])
+        self.assertEqual(self.status()['hardware_latched_boot_id'], BOOT)
 
     def test_second_target_unknown_inventory_cannot_erase_first_exact_proof(self):
         calls = {Q0: 0, Q1: 0}
@@ -336,7 +389,7 @@ class BootHardwareManagerTests(unittest.TestCase):
         state = self.manager.read_state()
         self.assertGreater(self.target_counts[Q1], 1)
         self.assertEqual(self.target_counts[Q0], 1)
-        self.assertLessEqual(self.clock.elapsed, 10.010001)
+        self.assertLessEqual(self.clock.elapsed, 30.010001)
         self.assertEqual([item for item in self.events if item[0] == 'native_start'], [('native_start', Q0)])
         self.assertEqual(state['slots']['qwen']['failure'], 'hardware_target_unknown')
         self.assertEqual(state['slots']['glm']['observed'], 'ready')

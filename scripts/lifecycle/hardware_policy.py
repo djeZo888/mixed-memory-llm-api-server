@@ -31,8 +31,8 @@ GPU_UUIDS = ('GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',
              'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23')
 UUID = re.compile(r'GPU-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z')
 BOOT = re.compile(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z')
-BOOT_PROBE_BUDGET_SECONDS = 10.0
-BOOT_PROBE_BACKOFF_SECONDS = 0.25
+BOOT_PROBE_BUDGET_SECONDS = 30.0
+BOOT_PROBE_BACKOFF_SECONDS = 0.5
 
 
 def boot_identity():
@@ -251,7 +251,7 @@ class HardwarePolicy:
     def require_start(self, gpu_uuids, *, boot_restore=False, diagnostic=None):
         """Boot may wait briefly for exact hardware evidence, never replay a start.
 
-        The ten-second probe/sleep budget includes at most one inventory fallback.
+        The thirty-second probe/sleep budget includes at most one inventory fallback.
         Guards, protected writes and native startup are not retried. Manual calls
         retain one exact probe. A successful query is always checked on this boot;
         unknown evidence never admits a start, even when the budget expires.
@@ -278,7 +278,7 @@ class HardwarePolicy:
                 raise LifecycleError(saved['reason'])
             inventory_attempted = False
             outcome = 'unknown'
-            for _ in range(41 if boot_restore else 1):
+            for _ in range(61 if boot_restore else 1):
                 _validate_borrowed_lease(self.lease, system_root=self.system_root, trusted_uid=self.trusted_uid)
                 remaining = deadline - self.monotonic()
                 if boot_restore and remaining <= 0:
@@ -344,10 +344,18 @@ class HardwarePolicy:
                     if inventory is not None and identity['boot_id'] == before['boot_id']:
                         # This fallback diagnoses the failed target only; it
                         # cannot revoke an independent exact-positive peer.
-                        latch.observe(gpu, inventory, current_boot_id=identity['boot_id'],
-                                      boot_age_seconds=identity['uptime_seconds'])
+                        saved = latch.export_state()['targets'].get(gpu)
+                        inherited_positive = (boot_restore and saved and saved['hardware_latched']
+                            and saved['boot_id'] != before['boot_id']
+                            and gpu in inventory['gpu_uuids'] and gpu not in inventory['hardware_faults'])
+                        # Presence in a global fallback must not clear inherited
+                        # protection while this target's exact probe is UNKNOWN.
+                        if not inherited_positive:
+                            latch.observe(gpu, inventory, current_boot_id=identity['boot_id'],
+                                          boot_age_seconds=identity['uptime_seconds'])
                 saved = latch.export_state()['targets'].get(gpu)
-                if saved and saved['hardware_latched']:
+                if (saved and saved['hardware_latched']
+                        and (not boot_restore or saved['boot_id'] == before['boot_id'])):
                     report(saved['reason'])
                     raise LifecycleError(saved['reason'])
                 if boot_restore:
