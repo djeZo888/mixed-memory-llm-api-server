@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Offline fixtures only: no systemd, ai-vm, reboot, privileged command or secrets."""
 import copy
+import configparser
 from contextlib import contextmanager
 import hashlib
 import importlib.util
@@ -80,18 +81,53 @@ class Fixtures(unittest.TestCase):
 
     def test_only_fixed_registered_commands_no_shell_or_input_paths(self):
         owner = helper.CommandOwner(helper.Identity(1000, 1000, "user", "/home/user"))
+        user_prefix = ["/usr/sbin/runuser", "--user", "user", "--", "/usr/bin/env", "-i",
+                       "PATH=/usr/bin:/bin", "LANG=C", "HOME=/home/user",
+                       "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus",
+                       "/usr/bin/systemctl", "--user", "--no-ask-password", "--no-pager"]
+        system_prefix = ["/usr/bin/systemctl", "--no-ask-password", "--no-pager"]
         for service, unit in helper.SERVICES.items():
-            command = owner.command(self.request(service=service))
-            self.assertEqual(command[-2:], ["start", unit])
-            self.assertNotIn("sh", command)
-            if service != "status":
-                self.assertEqual(command[:4], ["/usr/sbin/runuser", "--user", "user", "--"])
-        for replacement in ({"service_id": "nginx.service"}, {"path": "/bin/sh"}, {"action": []}, {"service_id": {}}, {"gpu_uuid": "unrequested"}):
+            prefix = system_prefix if service == "status" else user_prefix
+            for action in ("start", "stop", "restart"):
+                with self.subTest(service=service, action=action):
+                    command = owner.command(self.request(action=f"service.{action}", service=service))
+                    self.assertEqual(command, [*prefix, action, unit])
+            self.assertEqual(owner.service_command(service, "show", "--property=LoadState,ActiveState,SubState,InvocationID"),
+                             [*prefix, "show", "--property=LoadState,ActiveState,SubState,InvocationID", unit])
+        self.assertEqual(owner.command(self.request(action="node.reboot")),
+                         ["/usr/bin/systemctl", "--no-ask-password", "reboot"])
+        for replacement in ({"service_id": "nginx.service"}, {"path": "/bin/sh"}, {"action": []}, {"service_id": {}},
+                            {"gpu_uuid": "unrequested"}, {"user": "root"}, {"argv": ["/bin/sh"]}):
             request = self.request()
             request.update(replacement)
             with self.assertRaises(helper.Rejected):
                 helper.validate_request(request)
         self.assertEqual(self.calls, [])
+
+    def test_hardened_unit_preserves_required_uid_drop_capability(self):
+        # systemd 255's keep_seccomp_privileges launch path drops CAP_SETUID
+        # from permitted/effective unless it is explicitly ambient, even for
+        # User=root. The native baseline/candidate probe establishes causality;
+        # this fixture prevents losing the fix or broadening its unit boundary.
+        unit = configparser.ConfigParser(interpolation=None)
+        unit.read(Path(__file__).with_name("ai-harness-admin.service.in"))
+        service = unit["Service"]
+        self.assertEqual(service["AmbientCapabilities"], "CAP_SETUID")
+        expected = {
+            "User": "root", "Group": "@HARNESS_GROUP@",
+            "ExecStart": "/usr/bin/python3 @HELPER_FILE@",
+            "NoNewPrivileges": "yes", "PrivateTmp": "yes", "PrivateDevices": "yes",
+            "ProtectSystem": "strict", "ProtectHome": "read-only",
+            "ProtectKernelTunables": "yes", "ProtectKernelModules": "yes", "ProtectControlGroups": "yes",
+            "RestrictAddressFamilies": "AF_UNIX", "UMask": "0077", "KillMode": "control-group",
+            "RuntimeDirectory": "ai-harness-admin", "RuntimeDirectoryMode": "0750",
+            "StateDirectory": "ai-harness-admin", "StateDirectoryMode": "0700",
+            "ReadWritePaths": "/run/ai-harness-admin /var/lib/ai-harness-admin /run/llmctl",
+            "ReadOnlyPaths": "/var/lib/ai-harness-dispatch",
+        }
+        for key, value in expected.items():
+            with self.subTest(directive=key):
+                self.assertEqual(service[key], value)
 
     def test_freshness_outage_does_not_fabricate_missing_hardware(self):
         self.clock += 16

@@ -22,6 +22,9 @@ RestartSec=5
 TimeoutStopSec=5
 KillMode=control-group
 NoNewPrivileges=yes
+# systemd 255's seccomp setup drops CAP_SETUID even for User=root unless ambient.
+# Retain it for the fixed runuser UID drop; the ordinary user loses all caps.
+AmbientCapabilities=CAP_SETUID
 PrivateTmp=yes
 PrivateDevices=yes
 ProtectSystem=strict
