@@ -95,7 +95,9 @@ from the installed protected repository root and acquires its nonblocking
 rechecks generation/boot, verifies the freeze evidence, rechecks boot directly,
 and validates the lease immediately before command dispatch. The lease remains
 held across the fixed systemd owner command and post-action observation. Stop
-succeeds only after inactive state with no invocation; restart additionally
+succeeds only after inactive/dead state, zero MainPID/ControlPID and no pending
+systemd job. The last InvocationID may remain as historical identity after a
+clean stop; an empty invocation is not required. Restart additionally
 requires a changed active invocation, proving the old systemd-owned invocation
 settled. A zero command result without those observations stays
 `unknown/owner_settlement_unproven`. Active state is never API readiness. The

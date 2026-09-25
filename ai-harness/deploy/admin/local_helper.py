@@ -149,7 +149,7 @@ class CommandOwner:
         return boot
 
     def observe_service(self, service: str) -> dict:
-        rc, output = self.run(self.service_command(service, "show", "--property=LoadState,ActiveState,SubState,InvocationID"), 2)
+        rc, output = self.run(self.service_command(service, "show", "--property=LoadState,ActiveState,SubState,InvocationID,MainPID,ControlPID,Job"), 2)
         if rc:
             raise Rejected("service_observation_unavailable", 503)
         props = dict(line.split("=", 1) for line in output.decode("ascii").splitlines() if "=" in line)
@@ -159,6 +159,14 @@ class CommandOwner:
             raise Rejected("service_observation_invalid", 503)
         if value["invocation"] and not re.fullmatch(r"[0-9a-f]{32}", value["invocation"]):
             raise Rejected("service_observation_invalid", 503)
+        for property_name, key in (("MainPID", "main_pid"), ("ControlPID", "control_pid")):
+            pid = props.get(property_name, "")
+            if not re.fullmatch(r"0|[1-9][0-9]{0,9}", pid) or int(pid) > 2147483647:
+                raise Rejected("service_observation_invalid", 503)
+            value[key] = int(pid)
+        if "Job" not in props:
+            raise Rejected("service_observation_invalid", 503)
+        value["job_pending"] = props["Job"] != ""
         return value
 
     def execute(self, request: dict) -> None:
@@ -457,7 +465,12 @@ class Operations:
                         raise Rejected("owner_settlement_unproven", 503)
                     after = self.observations[service]["value"]
                     if request["action"] == "service.stop":
-                        settled = after["active"] == "inactive" and not after["invocation"]
+                        # systemd can retain the last InvocationID after a clean
+                        # stop. The blocking stop's success plus inactive/dead,
+                        # no owner processes and no pending job prove settlement.
+                        settled = (after["active"] == "inactive" and after["sub"] == "dead"
+                                   and after["main_pid"] == 0 and after["control_pid"] == 0
+                                   and after["job_pending"] is False)
                     elif request["action"] == "service.restart":
                         settled = (after["active"] == "active" and bool(after["invocation"])
                                    and after["invocation"] != before[service]["invocation"])
