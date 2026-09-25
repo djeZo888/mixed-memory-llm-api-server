@@ -21,7 +21,7 @@ import urllib.request
 # Fixed candidate directory; the reviewed external manifest binds its commit and
 # raw bytes. Do not derive this path from this file's hash (a circular binding),
 # replace an existing nonidentical release, or fall back to an older release.
-RELEASE = Path('/data/services/releases/h005-activation-binding-20260925')
+RELEASE = Path('/data/services/releases/h005-image-permissions-fix-20260925')
 BASE = Path('/data/services/image21-runtime-20260923')
 UNIT = 'llm-image-backend.service'
 NAME = 'llm-image-backend'

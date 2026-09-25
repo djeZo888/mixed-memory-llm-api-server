@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "release_root": "/data/services/releases/h005-activation-binding-20260925",
+  "release_root": "/data/services/releases/h005-image-permissions-fix-20260925",
   "runtime_root": "/data/services/image21-runtime-20260923",
   "release_files": [
     "scripts/common/lifecycle_lease.py",
