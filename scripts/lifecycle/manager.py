@@ -835,7 +835,11 @@ class Manager:
                     and actual.get('StartedAt') == current['StartedAt']
                     and not any(current.get(k) or actual.get(k) for k in ('Paused', 'Restarting', 'Dead'))
                     and all(fresh.get(k) == c.get(k)
-                            for k in ('Config', 'HostConfig', 'Mounts', 'NetworkSettings'))
+                            for k in ('Config', 'HostConfig', 'NetworkSettings'))
+                    # Docker serializes Mounts from an unordered map. Preserve
+                    # every entry/field while comparing by unique destination.
+                    and sorted(fresh['Mounts'], key=lambda m: m['Destination'])
+                        == sorted(c['Mounts'], key=lambda m: m['Destination'])
                     and self.binding.read_json('services', base + '/state.json') == state
                     and self.binding.read_json('services', base + '/config.json') == config, code)
         except Exception:
