@@ -61,6 +61,10 @@ validate_directory() {
   physical=$(cd -- "$path" && pwd -P) || die "$purpose cannot be resolved"
   [[ "$physical" = "$path" ]] || die "$purpose must be canonical, with no symlink, dot component, or trailing slash"
   [[ "$host_home" != "$path" && "$host_home" != "$path/"* ]] || die "$purpose cannot expose the user home or an ancestor"
+  # Host-only freeze/audit state must never be exposed through a same-UID bind.
+  for sensitive in /var/lib/ai-harness-dispatch /run/ai-harness-dispatch /var/lib/ai-harness-admin /run/ai-harness-admin /run/ai-harness-status; do
+    [[ "$sensitive" != "$path" && "$sensitive" != "$path/"* && "$path" != "$sensitive/"* ]] || die "$purpose cannot expose private control state or ancestors"
+  done
   for sensitive in .ssh .codex .gnupg .aws .azure .kube .docker .config .local/share/containers .local/share/keyrings; do
     sensitive=$host_home/$sensitive
     [[ "$sensitive" != "$path" && "$sensitive" != "$path/"* && "$path" != "$sensitive/"* ]] || die "$purpose cannot expose credential directories or their ancestors"

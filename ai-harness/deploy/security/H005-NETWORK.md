@@ -146,3 +146,19 @@ and [its Slirp helper source](https://github.com/containers/common/blob/v0.57.5/
 These support the intended inheritance/explicit-parent design; the installed
 runtime identities and all socket-owning process placement still require live
 readback and packet tests.
+
+## H005 integration dispatch control acceptance amendment
+
+Before exposing destructive admin routes, verify `/run/ai-harness-dispatch` and
+`/var/lib/ai-harness-dispatch` (including SQLite sidecars) are absent from every
+keep-id task/profile mount. Source launcher explicitly rejects them and ancestors;
+actual namespace/escape/host-network enforcement remains NOT_TESTED. No freeze
+route exists on8080/8081, no private UDS TCP fallback. Test encoded/slash-normalized
+paths, slirp10.0.2.2, private .61:80, IPv6, direct30000/30008 and redirects from both
+ordinary and browser tasks, retaining gateway/search/DNS/public research. Check
+status/search recovery while chat is down, per-Qwen and image hold isolation,
+last-boundary requests, uncertain receipt recovery and reboot degraded-peer release.
+Keep policy installed for existing tasks if its watcher fails; reject new tasks.
+Retain gate/action evidence during rollback; missing ledger is not permission to
+resume. Do not downgrade to an app that ignores outstanding holds without root
+reconciliation. These are later acceptance procedures, not current live results.

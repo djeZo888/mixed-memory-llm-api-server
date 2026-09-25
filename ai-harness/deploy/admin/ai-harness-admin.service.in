@@ -30,7 +30,8 @@ ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes
 RestrictAddressFamilies=AF_UNIX
-ReadWritePaths=/run/ai-harness-admin /var/lib/ai-harness-admin
+ReadWritePaths=/run/ai-harness-admin /var/lib/ai-harness-admin /run/llmctl
+ReadOnlyPaths=/var/lib/ai-harness-dispatch
 StandardOutput=null
 StandardError=journal
 

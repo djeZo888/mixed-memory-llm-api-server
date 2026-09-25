@@ -139,7 +139,7 @@ test("positive hardware latch survives late same-boot readiness and a restarted 
   recovered.stop();
 });
 
-test("new boot needs complete fresh valid inventory without target faults before clearing retained latch", async () => {
+test("new boot requires fresh authoritative target validation with unchanged exact UUIDs", async () => {
   const f = fixture();
   const latched = healthy();
   latched.services[0].hardware_latched = true;
@@ -147,39 +147,21 @@ test("new boot needs complete fresh valid inventory without target faults before
   f.set(latched);
   await f.observer.poll();
   for (const alter of [
+    (node: ReturnType<typeof healthy>) => { node.boot_id = null; },
+    (node: ReturnType<typeof healthy>) => { node.boot_id = "boot-a"; },
+    (node: ReturnType<typeof healthy>) => { node.services[0].state = "unknown"; },
+    (node: ReturnType<typeof healthy>) => { node.services[0].freshness = "stale"; },
+    (node: ReturnType<typeof healthy>) => { node.services[0].age_ms = 15000; },
+    (node: ReturnType<typeof healthy>) => { node.services[0].observed_at = null; },
+    (node: ReturnType<typeof healthy>) => { node.services[0].hardware_latched = null; },
+    (node: ReturnType<typeof healthy>) => { node.services[0].required_gpu_uuids = []; },
     (node: ReturnType<typeof healthy>) => {
-      node.boot_id = null;
+      node.services[0].required_gpu_uuids = node.services[1].required_gpu_uuids;
     },
     (node: ReturnType<typeof healthy>) => {
-      node.inventory.complete = false;
+      node.services[0].required_gpu_uuids.push(node.services[1].required_gpu_uuids[0]);
     },
-    (node: ReturnType<typeof healthy>) => {
-      node.inventory.freshness = "stale";
-    },
-    (node: ReturnType<typeof healthy>) => {
-      node.inventory.age_ms = 15000;
-    },
-    (node: ReturnType<typeof healthy>) => {
-      node.inventory.boot_id = "boot-a";
-    },
-    (node: ReturnType<typeof healthy>) => {
-      node.inventory.gpu_uuids = [];
-    },
-    (node: ReturnType<typeof healthy>) => {
-      node.inventory.gpu_uuids.push(uuid);
-    },
-    (node: ReturnType<typeof healthy>) => {
-      node.inventory.hardware_faults[uuid] = "hardware_fault";
-    },
-    (node: ReturnType<typeof healthy>) => {
-      node.inventory.hardware_faults = null;
-    },
-    (node: ReturnType<typeof healthy>) => {
-      node.inventory.gpu_uuids.push("invalid-inventory-identity");
-    },
-    (node: ReturnType<typeof healthy>) => {
-      node.services[0].hardware_latched = null;
-    },
+    (node: ReturnType<typeof healthy>) => { node.services[0].required_gpu_uuids.push(uuid); },
   ]) {
     const next = healthy("boot-b");
     alter(next);
@@ -192,6 +174,42 @@ test("new boot needs complete fresh valid inventory without target faults before
   assert.equal(f.observer.get("qwen3.8-27b-gpu0").state, "available");
   assert.deepEqual(f.ledger(), {});
   f.observer.stop();
+});
+
+test("authoritative positive target recovery clears a prior-boot latch despite unrelated global inventory failure", async () => {
+  const f = fixture();
+  const inherited = healthy("boot-b");
+  inherited.services[0].hardware_latched = true;
+  inherited.services[0].hardware_latched_boot_id = "boot-a";
+  Object.assign(inherited.inventory, {
+    state: "error", freshness: "unknown", complete: false,
+    observed_at: null, age_ms: null, observation_id: null, gpu_uuids: [],
+  });
+  f.set(inherited);
+  await f.observer.poll();
+  assert.equal(f.observer.get("qwen3.8-27b-gpu0").dispatch, "reject");
+  const validated = structuredClone(inherited);
+  validated.services[0].hardware_latched = false;
+  validated.services[0].hardware_latched_boot_id = null;
+  f.set(validated);
+  await f.observer.poll();
+  assert.equal(f.observer.get("qwen3.8-27b-gpu0").dispatch, "allow");
+  assert.deepEqual(f.ledger(), {});
+  assert.equal(f.observer.snapshot().value?.inventory.complete, false);
+  f.observer.stop();
+});
+
+test("target validation cannot clear a retained latch without an originating or observed boot", async () => {
+  for (const observedBootId of [undefined, null]) {
+    const observer = new NodeAvailability({
+      backend: { status: async () => healthy("boot-b") },
+      initialLatches: { "qwen-gpu0": { bootId: null, observedBootId, requiredGpuUuids: [uuid] } },
+      onLatch: () => assert.fail("missing boot provenance must not clear"),
+    });
+    await observer.poll();
+    assert.equal(observer.get("qwen3.8-27b-gpu0").dispatch, "reject");
+    observer.stop();
+  }
 });
 
 test("readiness unknown or stale gates only new admission and never writes a hardware latch", async () => {
@@ -297,7 +315,7 @@ test("poll ticks publish expiry while a deadline-exceeding observer keeps one ca
   assert.equal(observer.states().image, "unknown");
 });
 
-test("successful passive snapshots never settle an ambiguous real gateway request or replay it", async (t) => {
+test("targeted new-boot recovery and passive fallback never settle an ambiguous gateway request or replay it", async (t) => {
   const seen: string[] = [];
   const upstream = createServer(async (request, response) => {
     const chunks: Buffer[] = [];
@@ -319,11 +337,12 @@ test("successful passive snapshots never settle an ambiguous real gateway reques
   let gateway: Gateway | undefined;
   const writes: HardwareLatchLedger[] = [];
   let telemetryFailed = false;
+  let node = healthy();
   const observer = new NodeAvailability({
     backend: {
       status: async () => {
         if (telemetryFailed) throw Error("fixture telemetry outage");
-        return healthy();
+        return node;
       },
     },
     readiness: {
@@ -360,6 +379,15 @@ test("successful passive snapshots never settle an ambiguous real gateway reques
     });
   assert.equal((await send()).statusCode, 502);
   assert.equal(gateway.snapshot().lanes[0]!.state, "quarantined");
+  node.services[0].hardware_latched = true;
+  node.services[0].hardware_latched_boot_id = "boot-a";
+  await observer.poll();
+  assert.equal(gateway.snapshot().lanes[0]!.availability.dispatch, "reject");
+  node = healthy("boot-b");
+  Object.assign(node.inventory, {
+    state: "error", freshness: "unknown", complete: false,
+    observed_at: null, age_ms: null, observation_id: null, gpu_uuids: [],
+  });
   await observer.poll();
   assert.equal(gateway.snapshot().lanes[0]!.availability.state, "available");
   assert.equal(gateway.snapshot().lanes[0]!.state, "quarantined");
@@ -368,7 +396,10 @@ test("successful passive snapshots never settle an ambiguous real gateway reques
   assert.equal(observer.states().qwenGpu1, "unknown");
   assert.equal((await send()).statusCode, 200);
   assert.deepEqual(seen, ["qwen3.8-27b-gpu0", "qwen3.8-27b"]);
-  assert.deepEqual(writes, []);
+  assert.deepEqual(writes, [
+    { "qwen-gpu0": { bootId: "boot-a", requiredGpuUuids: [uuid] } },
+    {},
+  ]);
 });
 
 test("passive backend fallback permits telemetry-only outage while preserving unknown public state and hardware latch", async () => {

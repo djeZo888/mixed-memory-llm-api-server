@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
+import { AdminActions, type AdminFreeze } from "../src/admin-actions.js";
 import { createStatusService } from "../src/status-service.js";
 import { sanitizeNode, validateAction } from "../src/node-contract.js";
 import type { NodeBackend } from "../src/node-client.js";
@@ -41,6 +43,7 @@ function vm() {
   node.services[0].last_request = "DO_NOT_EXPOSE";
   return node;
 }
+const freeze: AdminFreeze = { hold: () => {}, acknowledge: async () => ({}), release: () => {}, settle: async () => {}, inspect: async () => ({ frozen: false, ready: true, activity: "idle", active_requests: 0, queue_depth: 0 }) };
 const backend = (value: unknown): NodeBackend => ({
   status: async () => value,
   action: async () => fixture("node-operation-v1"),
@@ -152,11 +155,14 @@ test("typed async admin relay keeps key/boot/generation, namespaces receipts and
     action: async (a: any) => {
       calls++;
       accepted.push(a);
-      return fixture("node-operation-v1");
+      return { ...fixture("node-operation-v1"), action: a.action, service_id: a.service_id ?? null, gpu_uuid: a.gpu_uuid ?? null, expected_boot_id: a.expected_boot_id, expected_generation: a.expected_generation };
     },
   };
+  const backends = { "ai-vm": remote, "ai-harness": backend(null) };
+  const db = new DatabaseSync(":memory:");
+  const actions = new AdminActions({ db, freeze, backends, autoPoll: false });
   const service = createStatusService({
-    backends: { "ai-vm": remote, "ai-harness": backend(null) },
+    backends, freeze, actions,
     autoPoll: false,
   });
   const auth = await service.app.inject({
@@ -169,7 +175,7 @@ test("typed async admin relay keeps key/boot/generation, namespaces receipts and
     "x-csrf-token": auth.json().csrf,
     cookie: String(auth.headers["set-cookie"]).split(";")[0]!,
   };
-  const action = { ...fixture("node-action-v1"), action: "service.start" };
+  const action = { ...fixture("node-action-v1"), action: "service.start", expected_generation: 3 };
   const receipt = await service.app.inject({
     method: "POST",
     url: "/api/admin/v1/actions",
@@ -177,10 +183,11 @@ test("typed async admin relay keeps key/boot/generation, namespaces receipts and
     payload: action,
   });
   assert.equal(receipt.statusCode, 202);
+  await new Promise(resolve => setImmediate(resolve));
   assert.equal(calls, 1);
   assert.deepEqual(accepted[0], action);
   assert.match(receipt.json().operation_id, /^ai-vm~/);
-  assert.equal(receipt.json().created_at, "2026-09-25T16:10:00+00:00");
+  assert.ok(Number.isFinite(Date.parse(receipt.json().created_at)));
   assert.equal(
     (
       await service.app.inject({
@@ -209,10 +216,10 @@ test("typed async admin relay keeps key/boot/generation, namespaces receipts and
         method: "POST",
         url: "/api/admin/v1/actions",
         headers,
-        payload: fixture("node-action-v1"),
+        payload: { ...action, action: "service.restart" },
       })
     ).statusCode,
-    422,
+    409,
   );
   assert.equal(calls, 1);
   await service.app.close();

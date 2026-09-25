@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """H005 fixed local systemd adapter; private UDS only, no caller-selected argv.
 
-Source only. Existing systemd managers own lifecycle. A protected app admission
-interlock is required before destructive actions; its absent default rejects them.
+Source only. Existing systemd managers own lifecycle. Every destructive action
+requires protected durable admission evidence under the canonical lifecycle lease.
 """
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import hashlib
+import importlib.util
 import http.server
 import json
 import os
@@ -27,7 +28,7 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, ContextManager
 
 # Check the adjacent implementation before privileged import, not only after it
 # has executed. Test imports never dispatch and remain usable as ordinary users.
@@ -42,6 +43,7 @@ from resource_observer import ProcResources, ResourceCache
 SOCKET_PATH = "/run/ai-harness-admin/helper.sock"
 CONFIG_PATH = "/etc/ai-harness/local-admin.json"
 STATE_PATH = "/var/lib/ai-harness-admin/operations.sqlite3"
+DISPATCH_STATE_PATH = "/var/lib/ai-harness-dispatch/state.sqlite"
 MAX_BODY = 16384
 MAX_OPERATIONS = 10000
 HTTP_WORKERS = 4
@@ -165,16 +167,109 @@ class CommandOwner:
             raise Rejected("owner_failed_unknown", 503)
 
 
-def missing_interlock(request: dict) -> Callable[[], None]:
-    raise Rejected("local_admission_interlock_unavailable", 422)
+def missing_interlock(request: dict) -> dict:
+    raise Rejected("local_admission_interlock_unavailable", 503)
+
+
+def canonical_lease() -> ContextManager:
+    """Reuse the protected canonical module, never a second local lock."""
+    source = Path(__file__).absolute().parents[3] / "scripts/common/lifecycle_lease.py"
+    protected_path(source)
+    spec = importlib.util.spec_from_file_location("harness_canonical_lifecycle_lease", source)
+    if spec is None or spec.loader is None:
+        raise Rejected("canonical_lease_unavailable", 503)
+    # A fresh module per operation would fork its capability registry. Keep the
+    # loaded canonical implementation for this single bounded command worker.
+    global _lease_module
+    if _lease_module is None:
+        import sys
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        _lease_module = module
+    return _lease_module.acquire_lease(blocking=False)
+
+
+_lease_module = None
+
+
+class ProtectedFreeze:
+    """Read exact durable gate evidence; no socket/TCP fallback or gate release.
+
+    Both status and app write/read this fixed private ledger. An app that cannot
+    read it refuses new dispatch. An acknowledged row proves its dispatch checks
+    have observed the hold; an unacknowledged row never proves idle.
+    """
+    def __init__(self, uid: int):
+        self.uid = uid
+
+    def _validate_path(self) -> None:
+        path = Path(DISPATCH_STATE_PATH)
+        # Fixed path is outside workspace/profile roots. Host same-UID processes
+        # are trusted; deployment must keep this directory out of task mounts.
+        for item in path.parents:
+            metadata = item.lstat()
+            permitted = {0, self.uid} if item == path.parent else {0}
+            if (not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid not in permitted
+                    or stat.S_ISLNK(metadata.st_mode) or metadata.st_mode & 0o022):
+                raise Rejected("unsafe_dispatch_state", 503)
+        directory = path.parent.lstat()
+        metadata = path.lstat()
+        if (directory.st_uid != self.uid or stat.S_IMODE(directory.st_mode) != 0o700
+                or not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != self.uid
+                or metadata.st_nlink != 1 or stat.S_IMODE(metadata.st_mode) != 0o600):
+            raise Rejected("unsafe_dispatch_state", 503)
+        for suffix in ("-journal", "-wal", "-shm"):
+            sidecar = Path(str(path) + suffix)
+            try:
+                metadata = sidecar.lstat()
+            except FileNotFoundError:
+                continue
+            if (not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != self.uid
+                    or metadata.st_nlink != 1 or metadata.st_mode & 0o077):
+                raise Rejected("unsafe_dispatch_state", 503)
+
+    def __call__(self, request: dict) -> dict:
+        request = validate_request(request)
+        try:
+            self._validate_path()
+            # mode=ro forbids accidental creation and mutation. Busy gate storage
+            # cannot turn into an inferred idle state or a bypass.
+            db = sqlite3.connect(f"file:{DISPATCH_STATE_PATH}?mode=ro", uri=True, timeout=.25)
+            try:
+                row = db.execute("SELECT fingerprint,action,acknowledged,scope FROM dispatch_holds WHERE key=?",
+                                 (request["node_id"] + "~" + request["idempotency_key"],)).fetchone()
+            finally:
+                db.close()
+        except Rejected:
+            raise
+        except (OSError, sqlite3.Error):
+            raise Rejected("dispatch_freeze_unavailable", 503) from None
+        fingerprint = hashlib.sha256(canonical(request).encode()).hexdigest()
+        try:
+            expected_scope = list(SERVICES) if request["action"] == "node.reboot" else [request["service_id"]]
+            matches = (row is not None and canonical(json.loads(row[1])) == canonical(request)
+                       and json.loads(row[3]) == expected_scope)
+        except (TypeError, ValueError):
+            matches = False
+        if not matches or row[0] != fingerprint or type(row[2]) is not int or row[2] not in {0, 1}:
+            raise Rejected("dispatch_freeze_mismatch", 409)
+        whole_app = request["action"] == "node.reboot" or (request["action"] in {"service.stop", "service.restart"}
+                                                                         and request.get("service_id") == "harness")
+        if row[2] != 1 and not (whole_app and request["allow_interrupt"]):
+            raise Rejected("dispatch_freeze_unacknowledged", 503)
+        return {"schema_version": 1, "frozen": True, "request_fingerprint": fingerprint,
+                "owner_key": request["idempotency_key"], "scope": expected_scope,
+                "app_state": "acknowledged" if row[2] == 1 else "unreachable_confirmed"}
 
 
 class Operations:
     """Cached passive status and durable once-only dispatch; no restart replay."""
     def __init__(self, database: Path, boot: Callable[[], str], observe: Callable[[str], dict],
-                 execute: Callable[[dict], None], freeze: Callable[[dict], Callable[[], None]] = missing_interlock,
-                 clock: Callable[[], float] = time.time):
+                 execute: Callable[[dict], None], freeze: Callable[[dict], dict] = missing_interlock,
+                 clock: Callable[[], float] = time.time, lease: Callable[[], ContextManager] = canonical_lease):
         self.boot, self.observe, self.execute, self.freeze, self.clock = boot, observe, execute, freeze, clock
+        self.lease = lease
         self.lock = threading.RLock()
         self.busy = False
         self.receipts = {}
@@ -185,6 +280,7 @@ class Operations:
         self.db = sqlite3.connect(database, check_same_thread=False)
         self.db.execute("PRAGMA synchronous=FULL")
         self.db.execute("CREATE TABLE IF NOT EXISTS operations (id TEXT PRIMARY KEY, key TEXT UNIQUE, fingerprint TEXT, value TEXT)")
+        self.db.execute("CREATE TABLE IF NOT EXISTS dispatches (operation_id TEXT PRIMARY KEY)")
         self.db.execute("CREATE TABLE IF NOT EXISTS audit (sequence INTEGER PRIMARY KEY, at REAL, operation_id TEXT, status TEXT, reason TEXT)")
         self.db.execute("CREATE TABLE IF NOT EXISTS identities (target TEXT PRIMARY KEY, fingerprint TEXT, generation INTEGER)")
         with self.db:
@@ -229,6 +325,7 @@ class Operations:
                 self.db.commit()
                 self.observations[service] = candidate
                 self.node_generation = node_generation
+                self.reconcile_changed_boot(boot)
             return True
         except Exception as error:
             with self.lock:
@@ -265,8 +362,8 @@ class Operations:
                              "affected_services": [service],
                              "deployment_id": None, "model_alias": None, "configured_context_tokens": None,
                              "max_output_tokens": None, "operation_profiles": [],
-                             "interrupt_required": True, "actions_supported": ["service.start"],
-                             "action_limit_reason": "local_admission_interlock_unavailable"})
+                             "interrupt_required": True, "actions_supported": ["service.start", "service.stop", "service.restart"],
+                             "action_limit_reason": None})
         observations = list(self.observations.values())
         latest = max(observations, key=lambda x: x["at"]) if observations else None
         boot = latest["boot"] if latest else None
@@ -276,7 +373,7 @@ class Operations:
                 "inventory": {**unknown, "boot_id": boot, "complete": False, "observation_id": None, "gpu_uuids": [], "hardware_faults": {}},
                 "resources": self.resources.snapshot(),
                 "affected_services": list(SERVICES), "activity": "unknown", "interrupt_required": True,
-                "actions_supported": [], "action_limit_reason": "local_admission_interlock_unavailable"}
+                "actions_supported": ["node.reboot"], "action_limit_reason": None}
 
     def _check_confirmation(self, request: dict) -> None:
         snapshot = self.status()
@@ -310,7 +407,7 @@ class Operations:
                 raise Rejected("audit_capacity_reached", 503)
             self._check_confirmation(request)
             if request["action"] != "service.start" and self.freeze is missing_interlock:
-                raise Rejected("local_admission_interlock_unavailable", 422)
+                raise Rejected("local_admission_interlock_unavailable", 503)
             op = {"schema_version": 1, "operation_id": str(uuid.uuid4()), "node_id": "ai-harness", "action": request["action"],
                   "service_id": request.get("service_id"), "gpu_uuid": None,
                   "expected_boot_id": request["expected_boot_id"], "expected_generation": request["expected_generation"],
@@ -325,47 +422,75 @@ class Operations:
             return op.copy()
 
     def _run(self, operation_id: str, request: dict) -> None:
-        release = None
         dispatched = False
         try:
-            # Refresh affected identity then recheck at dispatch. systemd remains
-            # authoritative; the helper does not claim atomic drain/ownership.
-            for service in SERVICES if request["action"] == "node.reboot" else [request["service_id"]]:
-                if not self.refresh(service):
-                    raise Rejected("dispatch_observation_unavailable", 503)
-            with self.lock:
-                self._check_confirmation(request)
-                if request["action"] != "service.start":
-                    release = self.freeze(request)
+            with self.lease() as lease:
+                lease.validate()
+                # Observe and recheck only after canonical ownership is held.
+                for service in SERVICES if request["action"] == "node.reboot" else [request["service_id"]]:
+                    if not self.refresh(service):
+                        raise Rejected("dispatch_observation_unavailable", 503)
+                before = {service: self.observations[service]["value"].copy() for service in SERVICES
+                          if service in self.observations}
+                with self.lock:
                     self._check_confirmation(request)
-                op = self.get(operation_id)
-                op.update(status="running", updated_at=timestamp(self.clock()))
-                with self.db:
+                    evidence = self.freeze(request) if request["action"] != "service.start" else None
+                    self._check_confirmation(request)
+                    if self.boot() != request["expected_boot_id"]:
+                        raise Rejected("confirmation_stale", 409)
+                    lease.validate()
+                    op = self.get(operation_id)
+                    op.update(status="running", updated_at=timestamp(self.clock()),
+                              reason="dispatch_freeze_" + evidence["app_state"] if isinstance(evidence, dict) and evidence.get("app_state") in {"acknowledged", "unreachable_confirmed"} else None)
+                    with self.db:
+                        self.db.execute("INSERT INTO dispatches VALUES(?)", (operation_id,))
+                        self._write(op)
+                # The durable hold remains until separate validated-readiness or
+                # explicit failed-operation reconciliation. Never auto-release.
+                lease.validate()
+                dispatched = True
+                self.execute(request)
+                lease.validate()
+                if request["action"] != "node.reboot":
+                    service = request["service_id"]
+                    if not self.refresh(service) or self.boot() != request["expected_boot_id"]:
+                        raise Rejected("owner_settlement_unproven", 503)
+                    after = self.observations[service]["value"]
+                    if request["action"] == "service.stop":
+                        settled = after["active"] == "inactive" and not after["invocation"]
+                    elif request["action"] == "service.restart":
+                        settled = (after["active"] == "active" and bool(after["invocation"])
+                                   and after["invocation"] != before[service]["invocation"])
+                    else:
+                        settled = after["active"] == "active" and bool(after["invocation"])
+                    if not settled:
+                        raise Rejected("owner_settlement_unproven", 503)
+                with self.lock, self.db:
+                    op.update(status="unknown" if request["action"] == "node.reboot" else "succeeded",
+                              reason="reboot_awaiting_changed_boot" if request["action"] == "node.reboot" else None,
+                              updated_at=timestamp(self.clock()))
                     self._write(op)
-            dispatched = True
-            self.execute(request)
-            with self.lock, self.db:
-                # A successful reboot command merely schedules shutdown.
-                op.update(status="unknown" if request["action"] == "node.reboot" else "succeeded",
-                          reason="reboot_awaiting_changed_boot" if request["action"] == "node.reboot" else None,
-                          updated_at=timestamp(self.clock()))
-                self._write(op)
         except Exception as error:
             with self.lock, self.db:
                 op = self.get(operation_id)
-                reason = error.code if isinstance(error, Rejected) else "owner_error_unknown"
+                reason = error.code if isinstance(error, Rejected) else "lifecycle_busy" if getattr(error, "code", None) == "lifecycle_busy" else "owner_error_unknown"
                 op.update(status="unknown" if dispatched else "failed", reason=reason, updated_at=timestamp(self.clock()))
                 self._write(op)
         finally:
-            # An interlock implementation must retain its hold for uncertain or
-            # stopped owners; callback decides based on authoritative owner state.
-            if release is not None:
-                try:
-                    release()
-                except Exception:
-                    pass
             with self.lock:
                 self.busy = False
+
+    def reconcile_changed_boot(self, current_boot: str) -> None:
+        """Passive changed-boot evidence settles reboot receipts, never replays."""
+        if not isinstance(current_boot, str) or not BOOT.fullmatch(current_boot):
+            return
+        for receipt in list(self.receipts.values()):
+            if (receipt["action"] == "node.reboot" and receipt["status"] == "unknown"
+                    and receipt["expected_boot_id"] != current_boot
+                    and self.db.execute("SELECT 1 FROM dispatches WHERE operation_id=?", (receipt["operation_id"],)).fetchone()):
+                receipt.update(status="succeeded", reason="reboot_observed_changed_boot",
+                               updated_at=timestamp(self.clock()))
+                self._write(receipt)
 
 
 def protected_path(path: Path, *, directory: bool = False) -> None:
@@ -496,7 +621,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="validate protected installed config and paths without serving or dispatch")
+    parser.add_argument("--check", "--dry-run", dest="check", action="store_true",
+                        help="validate protected installed config and paths without serving or dispatch")
     args = parser.parse_args()
     if os.geteuid() != 0 or os.uname().sysname != "Linux":
         parser.error("root-owned Linux service only")
@@ -506,11 +632,13 @@ def main() -> None:
     protected_path(Path(SOCKET_PATH).parent, directory=True)
     if Path(STATE_PATH).exists() or Path(STATE_PATH).is_symlink():
         protected_path(Path(STATE_PATH))
+    protected_path(Path(__file__).absolute().parents[3] / "scripts/common/lifecycle_lease.py")
+    protected_path(Path("/run/llmctl"), directory=True)
     if args.check:
         return
     os.umask(0o077)
     owner = CommandOwner(identity)
-    operations = Operations(Path(STATE_PATH), owner.boot_id, owner.observe_service, owner.execute)
+    operations = Operations(Path(STATE_PATH), owner.boot_id, owner.observe_service, owner.execute, freeze=ProtectedFreeze(identity.uid))
     operations.resources = ResourceCache(ProcResources().observe)
     operations.resources.start()
     # Never unlink an occupied or unreviewed stale socket; systemd RuntimeDirectory

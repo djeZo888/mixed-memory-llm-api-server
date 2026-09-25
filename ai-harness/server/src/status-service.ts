@@ -1,11 +1,11 @@
 import Fastify from "fastify";
+import { dispatchScope, type AdminActions, type AdminFreeze } from "./admin-actions.js";
 import { AdminSecurity } from "./admin-security.js";
 import { ApiError } from "./errors.js";
 import { ObserverCache } from "./observer-cache.js";
 import {
   NODE_IDS,
   sanitizeNode,
-  sanitizeOperation,
   unknownNode,
   validateAction,
   type NodeId,
@@ -20,6 +20,8 @@ export function createStatusService(options: {
   autoPoll?: boolean;
   deadlineMs?: number;
   now?: () => number;
+  actions?: AdminActions;
+  freeze?: AdminFreeze;
 }) {
   const app = Fastify({
     logger: false,
@@ -111,6 +113,7 @@ export function createStatusService(options: {
     security.issue(req, reply),
   );
   app.get("/api/admin/v1/targets", async () => ({
+    dispatch_impact: await options.freeze?.inspect() ?? { frozen: false, activity: "unknown", active_requests: null, queue_depth: null, ready: false },
     targets: snapshot().flatMap((node) => {
       if (
         !node.boot_id ||
@@ -124,10 +127,11 @@ export function createStatusService(options: {
           ...base,
           expected_generation: node.generation,
           actions: ["node.reboot"],
+          dispatch_scope: dispatchScope({ node_id: node.node_id, action: "node.reboot" }, node),
           affected_services: node.affected_services,
-          activity: node.services.every((s) => s.activity === "idle")
-            ? "idle"
-            : "unknown",
+          activity: node.services.some((s) => s.activity === "busy")
+            ? "busy"
+            : node.affected_services.length > 0 && node.affected_services.every((id) => node.services.find((s) => s.service_id === id)?.activity === "idle") ? "idle" : "unknown",
           active_requests: null,
           queue_depth: null,
         },
@@ -138,6 +142,7 @@ export function createStatusService(options: {
             service_id: s.service_id,
             expected_generation: s.generation!,
             actions: ["service.start", "service.stop", "service.restart"],
+            dispatch_scope: [s.service_id],
             affected_services: s.affected_services,
             activity: s.activity,
             active_requests: s.active_requests,
@@ -150,6 +155,7 @@ export function createStatusService(options: {
             gpu_uuid: g.uuid,
             expected_generation: g.generation!,
             actions: ["gpu.reset"],
+            dispatch_scope: g.affected_services,
             affected_services: g.affected_services,
             activity: "unknown",
             active_requests: null,
@@ -158,57 +164,33 @@ export function createStatusService(options: {
       ];
     }),
   }));
-  // At most one admission per node in this relay. Node owner remains durable
-  // idempotency/audit/lease authority; a timeout never causes automatic replay.
-  const admitting = new Set<NodeId>();
   app.post("/api/admin/v1/actions", async (req, reply) => {
     security.mutation(req);
     const action = validateAction(req.body);
-    // Intermediate source checkpoint. Root requires a protected cross-host
-    // harness dispatch freeze before ALL destructive actions, including ai-vm.
-    // Confirmation alone is insufficient. No hidden enable flag bypasses this.
-    if (action.action !== "service.start")
-      throw new ApiError(
-        422,
-        "admission_interlock_unavailable",
-        "This source checkpoint requires the protected harness dispatch-freeze interlock before destructive actions",
-      );
-    if (admitting.has(action.node_id))
-      throw new ApiError(
-        503,
-        "node_admission_busy",
-        "Another node admission is pending",
-      );
-    admitting.add(action.node_id);
-    try {
-      const receipt = await options.backends[action.node_id].action(
-        action,
-        AbortSignal.timeout(2000),
-      );
-      return reply.code(202).send(sanitizeOperation(receipt, action.node_id));
-    } finally {
-      admitting.delete(action.node_id);
-    }
+    if (!options.actions) throw new ApiError(503, "admission_unavailable", "Protected action journal is unavailable");
+    return reply.code(202).send(await options.actions.submit(action));
   });
+  const operationId = (raw: string) => {
+    const match = /^(ai-vm|ai-harness)~([a-zA-Z0-9_.:-]{1,128})$/.exec(raw);
+    if (!match) throw new ApiError(400, "invalid_operation", "Invalid namespaced operation ID");
+    return { nodeId: match[1] as NodeId, id: match[2]! };
+  };
   app.get("/api/admin/v1/operations/:id", async (req) => {
-    const match = /^(ai-vm|ai-harness)~([a-zA-Z0-9_.:-]{1,128})$/.exec(
-      (req.params as { id: string }).id,
-    );
-    if (!match)
-      throw new ApiError(
-        400,
-        "invalid_operation",
-        "Invalid namespaced operation ID",
-      );
-    return sanitizeOperation(
-      await options.backends[match[1] as NodeId].operation(
-        match[2]!,
-        AbortSignal.timeout(2000),
-      ),
-      match[1] as NodeId,
-    );
+    const { nodeId, id } = operationId((req.params as { id: string }).id);
+    if (!options.actions) throw new ApiError(503, "admission_unavailable", "Protected action journal is unavailable");
+    return options.actions.get(id, nodeId);
+  });
+  app.post("/api/admin/v1/operations/:id/reconcile", async (req) => {
+    security.mutation(req);
+    const { nodeId, id } = operationId((req.params as { id: string }).id);
+    const body = req.body as Record<string, unknown> | null;
+    if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).length !== 4 || Object.keys(body).some(key => !["allow_interrupt", "expected_boot_id", "expected_generation", "idempotency_key"].includes(key)) || body.allow_interrupt !== true)
+      throw new ApiError(400, "invalid_reconciliation", "Explicit recovery interruption and displayed boot/generation/key confirmation required");
+    if (!options.actions) throw new ApiError(503, "admission_unavailable", "Protected action journal is unavailable");
+    return options.actions.reconcile(id, nodeId, body as { allow_interrupt: boolean; expected_boot_id: string; expected_generation: number; idempotency_key: string });
   });
   app.addHook("onClose", async () => {
+    options.actions?.close();
     for (const cache of Object.values(caches)) cache.stop();
   });
   if (options.autoPoll !== false)

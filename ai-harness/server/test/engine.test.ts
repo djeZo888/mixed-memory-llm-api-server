@@ -57,6 +57,7 @@ async function harness(
     gatewayUrl: "http://127.0.0.1:8081/v1",
     gatewayToken: token,
     stderrPath,
+    dispatchHeld: config.dispatchHeld as (() => boolean) | undefined,
     shutdownTimeouts:
       config.shutdownTimeouts as EngineOptions["shutdownTimeouts"],
     onExit: () => {
@@ -199,6 +200,7 @@ test("trusted host HOME ignores ambient spoofing while reviewed launcher confine
 import { writeFileSync } from "node:fs";
 const argv = process.argv.slice(2);
 if (argv[0] !== "--remote=false") process.exit(90);
+if (argv[1] === "--cgroup-manager=systemd") argv.splice(1, 1);
 if (argv[1] === "info") console.log("true");
 else if (argv[1] === "image" && argv[2] === "inspect") console.log("sha256:${"a".repeat(64)}|ae65651df5f97ae1085ab4e19964f4b78c769a4e|${pins.patchSetSha256}");
 else if (argv[1] === "run") writeFileSync(new URL("./invocation.json", import.meta.url), JSON.stringify({argv, home:process.env.HOME, dataDir:process.env.MINIMAX_DATA_DIR}));
@@ -206,6 +208,9 @@ else if (argv[1] === "rm") process.exit(0);
 else if (argv[1] === "container" && argv[2] === "exists") process.exit(1);
 else process.exit(91);
 `, { mode: 0o700 });
+  // Match the existing launcher fixture: bypass only Linux attestation in this
+  // synthetic interpreter, never in production. No actual Podman is called.
+  await writeFile(join(mockBin, "python3"), '#!/bin/bash\ncase "$1" in */task-egress.py) shift 2;; esac\nexec /usr/bin/python3 "$@"\n', { mode: 0o700 });
   const canonicalProfile = await realpath(h.profileDir);
   const canonicalWorkspace = await realpath(h.workspace);
   const realLauncher = fileURLToPath(new URL("../../deploy/run-engine.sh", import.meta.url));
@@ -1051,4 +1056,20 @@ test("H002 missing or truncated native child capability keeps counts explicitly 
         (!u.subagents.known && u.subagents.active === null),
     ),
   );
+});
+
+
+test("whole-app gate rechecks before native spawn and prompt after asynchronous preparation", async t => {
+  let held = true;
+  const h = await harness(t, { dispatchHeld: () => held });
+  const start = h.engine.start();
+  await delay(100);
+  assert.equal(h.nativeIds.length, 0);
+  held = false; await start;
+  held = true;
+  const pending = h.engine.prompt("updates");
+  await delay(100);
+  assert.equal((await h.calls()).filter(call => call.method === "prompt").length, 0);
+  held = false; await pending;
+  assert.equal((await h.calls()).filter(call => call.method === "prompt").length, 1);
 });

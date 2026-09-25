@@ -21,6 +21,7 @@ export interface GatewayUpstream {
 }
 export interface GatewayOptions {
   images?: ImageBroker;
+  dispatchHeld?: (alias: string) => boolean;
   /** Local cached observation only; unknown preserves existing admission behavior. */
   availability?: AvailabilityProvider;
   /** The protected credential is supplied by the host. This module never reads files. */
@@ -54,6 +55,7 @@ export interface Gateway {
   };
   /** Publish cache changes promptly without touching active request settlement. */
   notifyAvailabilityChanged(): void;
+  reconcileAfterOwnerSettlement(aliases: string[]): boolean;
   close(): Promise<void>;
 }
 
@@ -75,6 +77,8 @@ class GatewayError extends Error {
 interface Lane {
   upstream: GatewayUpstream;
   state: LaneState;
+  dispatched?: boolean;
+  ownerSettled?: boolean;
 }
 interface Ticket {
   bytes: number;
@@ -129,6 +133,22 @@ class Admission {
       );
     }
     lane.state = state;
+    if (state === "active") {
+      lane.dispatched = false;
+      lane.ownerSettled = false;
+    }
+  }
+  reconcileAfterOwnerSettlement(aliases: string[]): boolean {
+    const lanes = this.lanes.filter((lane) =>
+      aliases.includes(lane.upstream.alias),
+    );
+    for (const lane of lanes) {
+      if (lane.state === "quarantined") this.transition(lane, "idle");
+      else if (lane.state === "active" && lane.dispatched)
+        lane.ownerSettled = true;
+    }
+    this.notifyAvailabilityChanged();
+    return true;
   }
   get queued() {
     return this.queue.length;
@@ -241,7 +261,9 @@ class Admission {
     try {
       this.transition(
         lane,
-        confirmed && !this.stopped ? "idle" : "quarantined",
+        (confirmed || lane.ownerSettled) && !this.stopped
+          ? "idle"
+          : "quarantined",
       );
     } catch {
       /* Fail closed locally; previous durable active remains unsafe. */
@@ -637,6 +659,18 @@ export function createGateway(options: GatewayOptions): Gateway {
     requireCurrentToken();
     // Credential loading may yield. Recheck before the first upstream byte; an
     // unavailable lane never causes replay or migration of already active work.
+    while (
+      options.dispatchHeld?.(lane.upstream.alias) &&
+      !disconnected &&
+      !cancelled.signal.aborted
+    )
+      await new Promise<void>((resolve) => setTimeout(resolve, 50));
+    if (disconnected || cancelled.signal.aborted) {
+      admission.settle(lane, true);
+      reply.raw.removeListener("close", disconnect);
+      return reply;
+    }
+    requireCurrentToken();
     if (admission.available(lane).dispatch !== "allow") {
       admission.settle(lane, true);
       reply.raw.removeListener("close", disconnect);
@@ -646,6 +680,8 @@ export function createGateway(options: GatewayOptions): Gateway {
         "Selected Qwen lane is unavailable",
       );
     }
+    lane.dispatched = true;
+    lane.ownerSettled = false;
     const payload = JSON.stringify({ ...body, model: lane.upstream.alias });
     const endpoint = new URL(
       `${lane.upstream.url.replace(/\/$/, "")}/chat/completions`,
@@ -824,6 +860,8 @@ export function createGateway(options: GatewayOptions): Gateway {
         availability: admission.available(lane),
       })),
     }),
+    reconcileAfterOwnerSettlement: (aliases) =>
+      admission.reconcileAfterOwnerSettlement(aliases),
     notifyAvailabilityChanged: () => admission.notifyAvailabilityChanged(),
     close: () => app.close(),
   };

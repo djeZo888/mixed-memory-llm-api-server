@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Offline fixtures only: no systemd, ai-vm, reboot, privileged command or secrets."""
 import copy
+from contextlib import contextmanager
+import hashlib
 import importlib.util
 import json
 import os
@@ -22,6 +24,16 @@ BOOT_A = "00000000-0000-0000-0000-000000000001"
 BOOT_B = "00000000-0000-0000-0000-000000000002"
 
 
+class Lease:
+    def validate(self):
+        pass
+
+
+@contextmanager
+def lease_fixture():
+    yield Lease()
+
+
 class Fixtures(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -31,7 +43,7 @@ class Fixtures(unittest.TestCase):
         self.identity = {"load": "loaded", "active": "active", "sub": "running", "invocation": "a" * 32}
         self.calls = []
         self.ops = helper.Operations(self.path, lambda: self.boot, lambda _: copy.deepcopy(self.identity),
-                                     lambda request: self.calls.append(request), clock=lambda: self.clock)
+                                     lambda request: self.calls.append(request), clock=lambda: self.clock, lease=lease_fixture)
         for service in helper.SERVICES:
             self.ops.refresh(service)
 
@@ -128,7 +140,7 @@ class Fixtures(unittest.TestCase):
         self.assertEqual(len(self.calls), 1)
         self.ops.db.close()
         self.ops = helper.Operations(self.path, lambda: self.boot, lambda _: self.identity,
-                                     lambda value: self.fail("must not replay"))
+                                     lambda value: self.fail("must not replay"), lease=lease_fixture)
         self.assertEqual(self.ops.submit(request)["operation_id"], accepted["operation_id"])
 
     def test_restart_recovers_inflight_as_unknown_without_replay(self):
@@ -138,7 +150,7 @@ class Fixtures(unittest.TestCase):
         self.ops.busy = False
         self.ops.db.close()
         self.ops = helper.Operations(self.path, lambda: self.boot, lambda _: self.identity,
-                                     lambda value: self.fail("must not replay"))
+                                     lambda value: self.fail("must not replay"), lease=lease_fixture)
         receipt = self.ops.get(accepted["operation_id"])
         self.assertEqual(receipt["status"], "unknown")
         self.assertEqual(receipt["reason"], "helper_restarted_no_replay")
@@ -185,17 +197,126 @@ class Fixtures(unittest.TestCase):
         release.set()
         self.await_operation(accepted)
 
-    def test_fixture_interlock_precedes_dispatch_and_reboot_is_not_claimed_complete(self):
+    def test_protected_freeze_precedes_dispatch_and_reboot_waits_for_changed_boot(self):
         events = []
         def freeze(request):
             events.append("freeze")
-            return lambda: events.append("release")
+            return {"frozen": True, "app_state": "acknowledged"}
         self.ops.freeze = freeze
         self.ops.execute = lambda request: events.append("execute")
         receipt = self.await_operation(self.ops.submit(self.request("node.reboot")))
-        self.assertEqual(events, ["freeze", "execute", "release"])
+        self.assertEqual(events, ["freeze", "execute"])
         self.assertEqual(receipt["status"], "unknown")
         self.assertEqual(receipt["reason"], "reboot_awaiting_changed_boot")
+        self.ops.refresh("harness")
+        self.assertEqual(self.ops.get(receipt["operation_id"])["status"], "unknown")
+        self.boot = BOOT_B
+        self.ops.refresh("harness")
+        self.assertEqual(self.ops.get(receipt["operation_id"])["status"], "succeeded")
+        self.assertEqual(self.ops.get(receipt["operation_id"])["reason"], "reboot_observed_changed_boot")
+        self.assertEqual(events, ["freeze", "execute"])
+
+    def test_canonical_lease_spans_freeze_recheck_and_fixed_owner_dispatch(self):
+        events = []
+        class TrackedLease:
+            def validate(self):
+                events.append("validate")
+        @contextmanager
+        def lease():
+            events.append("acquire")
+            try:
+                yield TrackedLease()
+            finally:
+                events.append("release_lease")
+        self.ops.lease = lease
+        self.ops.freeze = lambda _: events.append("verify_gate")
+        def execute(_):
+            events.append("execute")
+            self.identity["invocation"] = "b" * 32
+        self.ops.execute = execute
+        receipt = self.await_operation(self.ops.submit(self.request("service.restart")))
+        self.assertEqual(receipt["status"], "succeeded")
+        self.assertLess(events.index("acquire"), events.index("verify_gate"))
+        self.assertLess(events.index("verify_gate"), events.index("execute"))
+        self.assertLess(events.index("execute"), events.index("release_lease"))
+
+    def test_boot_change_during_freeze_fails_before_dispatch_and_retains_hold(self):
+        def freeze(_):
+            self.boot = BOOT_B
+        self.ops.freeze = freeze
+        receipt = self.await_operation(self.ops.submit(self.request("service.restart")))
+        self.assertEqual(receipt["status"], "failed")
+        self.assertEqual(receipt["reason"], "confirmation_stale")
+        self.assertEqual(self.calls, [])
+
+    def test_owner_success_requires_old_invocation_settlement(self):
+        self.ops.freeze = lambda _: {"frozen": True}
+        request = self.request("service.restart")
+        uncertain = self.await_operation(self.ops.submit(request))
+        self.assertEqual(uncertain["status"], "unknown")
+        self.assertEqual(uncertain["reason"], "owner_settlement_unproven")
+        self.assertEqual(self.ops.submit(request)["operation_id"], uncertain["operation_id"])
+        self.assertEqual(len(self.calls), 1)
+        self.ops.execute = lambda _: self.identity.update(active="inactive", sub="dead", invocation="")
+        stopped = self.await_operation(self.ops.submit(self.request("service.stop", key="fixture-stop")))
+        self.assertEqual(stopped["status"], "succeeded")
+        self.ops.execute = lambda _: self.identity.update(active="active", sub="running", invocation="b" * 32)
+        restarted = self.await_operation(self.ops.submit(self.request("service.restart", key="fixture-restart")))
+        self.assertEqual(restarted["status"], "succeeded")
+        self.assertIsNone(self.ops.status()["services"][0]["ready"])
+
+    def test_protected_sqlite_gate_exact_receipt_unknown_work_and_no_auto_release(self):
+        gate_path = Path(self.temp.name) / "dispatch.sqlite"
+        gate = sqlite3.connect(gate_path)
+        gate.execute("CREATE TABLE dispatch_holds (key TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, action TEXT NOT NULL, acknowledged INTEGER NOT NULL DEFAULT 0, scope TEXT NOT NULL)")
+        freeze = helper.ProtectedFreeze(os.getuid())
+        def hold(request, acknowledged=1):
+            gate.execute("INSERT OR REPLACE INTO dispatch_holds VALUES(?,?,?,?,?)", (
+                request["node_id"] + "~" + request["idempotency_key"],
+                hashlib.sha256(helper.canonical(request).encode()).hexdigest(), json.dumps(request), acknowledged,
+                json.dumps(list(helper.SERVICES) if request["action"] == "node.reboot" else [request["service_id"]])))
+            gate.commit()
+        with mock.patch.object(helper, "DISPATCH_STATE_PATH", str(gate_path)), mock.patch.object(freeze, "_validate_path"):
+            request = self.request("service.restart")
+            with self.assertRaisesRegex(helper.Rejected, "dispatch_freeze_mismatch"):
+                freeze(request)
+            hold(request)
+            self.assertEqual(freeze(request)["app_state"], "acknowledged")
+            gate.execute("UPDATE dispatch_holds SET scope=?", (json.dumps(["status"]),))
+            gate.commit()
+            with self.assertRaisesRegex(helper.Rejected, "dispatch_freeze_mismatch"):
+                freeze(request)
+            hold(request)
+            changed = {**request, "expected_generation": request["expected_generation"] + 1}
+            with self.assertRaisesRegex(helper.Rejected, "dispatch_freeze_mismatch"):
+                freeze(changed)
+            hold(request, 0)
+            self.assertEqual(freeze(request)["app_state"], "unreachable_confirmed")
+            search = self.request("service.stop", service="search")
+            hold(search, 0)
+            with self.assertRaisesRegex(helper.Rejected, "dispatch_freeze_unacknowledged"):
+                freeze(search)
+            hold(request)
+            self.ops.freeze = freeze
+            self.ops.execute = lambda _: (_ for _ in ()).throw(helper.Rejected("owner_timeout_unknown", 503))
+            receipt = self.await_operation(self.ops.submit(request))
+            self.assertEqual(receipt["status"], "unknown")
+            self.assertEqual(freeze(request)["app_state"], "acknowledged")
+            self.assertEqual(self.ops.submit(request)["operation_id"], receipt["operation_id"])
+            self.assertEqual(gate.execute("SELECT COUNT(*) FROM dispatch_holds").fetchone()[0], 1)
+        gate.close()
+
+    def test_accepted_undispatched_reboot_does_not_claim_success_from_unrelated_boot(self):
+        self.ops.freeze = lambda _: {"frozen": True}
+        with mock.patch.object(threading.Thread, "start"):
+            accepted = self.ops.submit(self.request("node.reboot"))
+        self.ops.busy = False
+        self.ops.db.close()
+        self.boot = BOOT_B
+        self.ops = helper.Operations(self.path, lambda: self.boot, lambda _: self.identity,
+                                     lambda _: self.fail("must not replay"), lease=lease_fixture)
+        self.ops.refresh("harness")
+        self.assertEqual(self.ops.get(accepted["operation_id"])["status"], "unknown")
 
     def test_audit_has_no_request_body_idempotency_keys_or_command_output(self):
         self.ops.execute = lambda request: (_ for _ in ()).throw(RuntimeError("private-command-output"))
