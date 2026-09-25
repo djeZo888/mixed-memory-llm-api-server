@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "report_date": "2026-09-25",
+  "status": "PARTIAL_PENDING",
+  "combined_source_commit": "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
+  "evidence_index": "acceptance-evidence.json",
+  "receipt_cutoff_utc": "2026-09-25T21:48:30.455212+00:00",
+  "publication": "DRAFT_PENDING_ROOT_EXACT_FINAL_REVIEW_GO",
+  "counting": "Rows are distinct evidence boundaries, not additive test counts. No aggregate pass percentage or summed overlapping count.",
+  "rows": [
+    {
+      "gate": "q0_original_admission_failure",
+      "status": "FAIL_PRESERVED",
+      "evidence_ids": [
+        "qwen0_typed_start_failed",
+        "q0_cause"
+      ],
+      "scope": "Original owner 1fd56 remains failed; read-only diagnosis identifies missing dedicated-image peer admission",
+      "owner_id": "1fd56c215c914b18b748570177ca7c83"
+    },
+    {
+      "gate": "q0_second_mount_order_failure",
+      "status": "FAIL_PRESERVED",
+      "evidence_ids": [
+        "q0_second_failed_start",
+        "q0_second_cause"
+      ],
+      "scope": "Distinct owner a086 remains failed after 91f448; list-order-only mismatch identified",
+      "owner_id": "a086e26b44104d8d9d76ad0b5e12e0b2"
+    },
+    {
+      "gate": "q0_canonical_recovery",
+      "status": "PASS",
+      "evidence_ids": [
+        "q0_mount_order_source",
+        "q0_mount_order_publication",
+        "q0_recovery_succeeded",
+        "q0_final_relay_start",
+        "q0_restored_metadata"
+      ],
+      "scope": "014e294 canonical recovery of original container, new PID/start; Q1/Ada preserved and prior stop hold released",
+      "owner_id": "094af8cf01974fb6920bbd10e4e12146",
+      "completed_utc": "2026-09-25T21:10:22.546965+00:00",
+      "new_inference_or_capacity_acceptance": false
+    },
+    {
+      "gate": "q1_serves_while_q0_held",
+      "status": "PASS",
+      "evidence_ids": [
+        "q1_peer_serving",
+        "q1_peer_final_settlement"
+      ],
+      "scope": "One normal tiny Q1 chat returned OK and fully settled; Q0 hold retained; no child/compaction/tool acceptance",
+      "completed_utc": "2026-09-25T20:43:35.951294+00:00",
+      "post_attempts": 1
+    },
+    {
+      "gate": "typed_image_restart",
+      "status": "PASS",
+      "evidence_ids": [
+        "image_typed_restart",
+        "image_typed_restart_acceptance",
+        "image_restart_native_proof"
+      ],
+      "scope": "Canonical restart plus exact old container absence/new PID/run, hold release and unchanged Qwens; no public generation",
+      "owner_id": "5ac77ee01c9d432c8bd6ae89f35a0686",
+      "completed_utc": "2026-09-25T21:18:58.405316+00:00"
+    },
+    {
+      "gate": "passive_control_readiness_source",
+      "status": "PASS",
+      "evidence_ids": [
+        "control_source_ready",
+        "control_validation"
+      ],
+      "scope": "aaa643 host-only process/API readiness correction; 47 focused source tests, not rerun in docs task",
+      "test_count": 47,
+      "counts_additive": false
+    },
+    {
+      "gate": "passive_control_readiness_live",
+      "status": "PASS",
+      "evidence_ids": [
+        "control_readiness_live"
+      ],
+      "scope": "Actual startup boot/invocation/PID matches; 401 denials; fresh node ready true; activity/counters still unknown",
+      "completed_utc": "2026-09-25T21:27:26.363256+00:00"
+    },
+    {
+      "gate": "typed_control_restart",
+      "status": "PASS",
+      "evidence_ids": [
+        "control_typed_restart",
+        "control_restart_local_state"
+      ],
+      "scope": "One accepted action followed to final success and actual validated-owner hold release",
+      "owner_id": "380e058cd9984d91b1540fa97b7586f4",
+      "completed_utc": "2026-09-25T21:29:48.622Z"
+    },
+    {
+      "gate": "control_restart_node_continuity",
+      "status": "PASS_ROOT_SUMMARY",
+      "evidence_ids": [
+        "final_publication_root_summary"
+      ],
+      "scope": "100 node HTTP200 samples and unchanged models are root-supplied summary; individual samples not supplied here",
+      "http_200_samples": 100
+    },
+    {
+      "gate": "main_drain_chat_files_preservation",
+      "status": "PASS_ROOT_SUMMARY",
+      "evidence_ids": [
+        "final_publication_root_summary",
+        "pre_reboot_preservation",
+        "control_restart_local_state"
+      ],
+      "scope": "Normal drain/stop/start with chat/files preserved per root; separate snapshot confirms counts only, 0 task containers/nonterminal runs and no holds; historical quarantine1/image17completed+1cancelled retained",
+      "snapshot_utc": "2026-09-25T21:21:26.576713+00:00"
+    },
+    {
+      "gate": "raw_network_browser_results",
+      "status": "INCONCLUSIVE_RETAINED",
+      "evidence_ids": [
+        "root_steering"
+      ],
+      "scope": "Earlier raw NETWORK/BROWSER outcomes retained; no conversion of those raw results to PASS"
+    },
+    {
+      "gate": "causal_network_denial",
+      "status": "PASS_ROOT_ACCEPTED",
+      "evidence_ids": [
+        "packet_causality",
+        "root_steering"
+      ],
+      "scope": "Separate bounded causal packet denial evidence accepted by root"
+    },
+    {
+      "gate": "private_boundary_counts",
+      "status": "PASS_SCOPED",
+      "evidence_ids": [
+        "root_steering"
+      ],
+      "scope": "64 detailed checks; 65 summary rows include summary itself",
+      "detailed_checks": 64,
+      "summary_rows_including_summary": 65
+    },
+    {
+      "gate": "preliminary_idle",
+      "status": "PRELIMINARY_NOT_FORMAL",
+      "evidence_ids": [
+        "preliminary_idle",
+        "ada_preliminary_idle"
+      ],
+      "scope": "Separate short samples; not common quiet/wake or cache-content proof"
+    },
+    {
+      "gate": "historical_480k_capacity",
+      "status": "INHERITED_DATED",
+      "evidence_ids": [
+        "historical_dualq_report",
+        "historical_dualq_data"
+      ],
+      "scope": "September 21 occupied-context evidence inherited; Q1 strict JSON caveat preserved; no H005 capacity rebenchmark"
+    },
+    {
+      "gate": "serial_typed_ai_vm_then_ai_harness_self_reboots",
+      "status": "PENDING",
+      "evidence_ids": [],
+      "scope": "Successful automatic restoration on repeat ai-vm reboot after reviewed boot-only fix and changed-boot canonical restoration on harness remain pending; initial reboot dispatch alone is insufficient",
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
+    },
+    {
+      "gate": "one_all_three_warm_665_second_quiet_window_passive_5_second_polling",
+      "status": "PENDING",
+      "evidence_ids": [],
+      "scope": "Actual common post-work interval, exact scheduler CPU units with 100 percent equal to one CPU, main TID, blocking state and VRAM",
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
+    },
+    {
+      "gate": "per_pid_tid_below_5_percent_one_cpu_and_residency",
+      "status": "PENDING",
+      "evidence_ids": [],
+      "scope": "VRAM alone does not establish cache contents",
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
+    },
+    {
+      "gate": "immediate_bounded_normal_text_wake_each_renewed_busy_finish_all_three_warm",
+      "status": "PENDING",
+      "evidence_ids": [],
+      "scope": "One ordinary authenticated tiny request to each exact Qwen endpoint before and after quiet, renewed busy and final all-three-warm proof; no new lane selector",
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
+    },
+    {
+      "gate": "bounded_qualified_1024_image_edit_sanity",
+      "status": "PENDING",
+      "evidence_ids": [],
+      "scope": "Worker2 qualified 1024 image edit through harness, completed result and final all-three-warm proof",
+      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
+    },
+    {
+      "gate": "ai_vm_typed_reboot_boot_change_and_owner_reconciliation",
+      "status": "PASS",
+      "evidence_ids": [
+        "first_reboot_final_acceptance"
+      ],
+      "scope": "Actual changed boot and canonical reboot journal dispatch/reconciliation succeeded; model restoration is a separate failed gate",
+      "owner_id": "a8af1d3585a64d50825aedb819e0a21d"
+    },
+    {
+      "gate": "ai_vm_post_reboot_model_restoration",
+      "status": "FAIL",
+      "evidence_ids": [
+        "first_reboot_restoration_failure",
+        "first_reboot_final_acceptance",
+        "first_reboot_window_closed"
+      ],
+      "scope": "Automatic Q1 restoration failed hardware_target_unknown before native; llmctl-boot exit 1. Stale prior-boot validation is not GPU fault proof; historical low-level probe subtype/root cause unestablished. Q0/image/control later ready; image delay not a failure. Manual recovery does not change this FAIL.",
+      "observed_utc": "2026-09-25T21:37:53.657238+00:00"
+    },
+    {
+      "gate": "node_and_local_search_typed_scope_coverage",
+      "status": "NOT_ESTABLISHED",
+      "evidence_ids": [],
+      "scope": "Historical unexercised scope retained for honesty; not an added final gate"
+    },
+    {
+      "gate": "q1_manual_recovery_after_failed_automatic_boot_restore",
+      "status": "PASS",
+      "evidence_ids": [
+        "q1_manual_recovery_acceptance",
+        "q1_manual_recovery_window_closed",
+        "final_publication_root_recovery"
+      ],
+      "scope": "One explicit manual Q1 recovery accepted; all three models/control fresh ready, empty holds, Q0/Ada generations unchanged, no model requests or replay. First automatic boot restoration remains FAIL.",
+      "owner_id": "79c32ac21e04471fa4d2deca8afa4345",
+      "completed_utc": "2026-09-25T21:47:54Z",
+      "accepted_snapshot_utc": "2026-09-25T21:48:30.455212+00:00",
+      "completed_utc_evidence_class": "root_supplied_2149Z_summary_only"
+    },
+    {
+      "gate": "boot_only_unknown_pre_start_validation_source_fix",
+      "status": "PENDING_REVIEW",
+      "evidence_ids": [
+        "final_publication_root_recovery"
+      ],
+      "scope": "Underway/review pending; absent from reviewed combined fc6896f source and not a deployment claim"
+    }
+  ],
+  "limits": [
+    "No VM or harness contact, live mutation, runtime build, product test or model call by this docs task",
+    "Completed source checks, accepted POST, plan/READY and SSH drop cannot establish reboot or quiet/wake PASS",
+    "VRAM residency alone cannot prove cache contents",
+    "Combined repository source is not a wholesale deployed-component identity"
+  ],
+  "latest_root_steering_event_utc": "2026-09-25T21:48:30Z",
+  "evidence_time_boundary": "Earlier PASS rows establish named scopes at their receipt times. First automatic Q1 boot restoration remains failed despite later manual recovery; final repeat reboot, harness reboot and formal quiet/wake are pending.",
+  "latest_root_steering_summary_utc_minute": "2026-09-25T21:49Z"
+}
