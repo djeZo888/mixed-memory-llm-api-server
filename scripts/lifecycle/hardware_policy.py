@@ -10,6 +10,9 @@ such probes; no driver isolation is claimed.
 from __future__ import annotations
 
 import datetime
+import hashlib
+import json
+import os
 import re
 import subprocess
 import time
@@ -21,6 +24,8 @@ from control.hardware_latch import HardwareLatch, ProtectedHardwareLatch, LatchS
 from lifecycle.runtime_io import LifecycleError
 
 STATE_SUFFIX = 'llm-manager/hardware-latch.json'
+INITIALIZATION_SUFFIX = 'llm-manager/hardware-latch.initialized.json'
+INITIALIZATION_REVIEW_SUFFIX = 'llm-manager/evidence/h005-latch-first-install.reviewed.json'
 GPU_UUIDS = ('GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',
              'GPU-69acfa26-8b60-61b5-702d-aee252c163cc',
              'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23')
@@ -54,6 +59,54 @@ class RegisteredLatchStore:
     def read(self):
         return self.binding.read_json('services', self.binding.path('services', STATE_SUFFIX), maximum=65536)
 
+    def initialize(self):
+        """Explicit first activation only; never called by starts or observers.
+
+        An exclusive durable marker precedes the exclusive state creation. A
+        partial initialization stays closed for reviewed recovery; retry cannot
+        erase old state or interpret a deleted latch as a first installation.
+        The protected review must attest absence across retained owner releases.
+        """
+        from control.hardware_latch import empty_state
+        from lifecycle.storage_binding import _entered_storage_context
+        _validate_borrowed_lease(self.lease, system_root=self.system_root, trusted_uid=self.trusted_uid)
+        review = self.binding.read_json('services', self.binding.path('services', INITIALIZATION_REVIEW_SUFFIX))
+        if (set(review) != {'schema_version', 'kind', 'status', 'reviewed_source_commit', 'absence_evidence_sha256'}
+                or type(review['schema_version']) is not int or review['schema_version'] != 1
+                or review['kind'] != 'h005-latch-first-install'
+                or review['status'] != 'REVIEWED_NO_PRIOR_STATE'
+                or not re.fullmatch(r'[0-9a-f]{40}', str(review['reviewed_source_commit']))
+                or not re.fullmatch(r'[0-9a-f]{64}', str(review['absence_evidence_sha256']))):
+            raise LifecycleError('hardware_latch_first_install_review_required')
+        if self.storage_io is None:
+            from install import storage_io
+        else:
+            storage_io = self.storage_io
+        self.binding.storage.root_payload_guard(self.binding.registry, roles=('data',))
+        for suffix in (STATE_SUFFIX, INITIALIZATION_SUFFIX):
+            self.binding.validate_path('services', self.binding.path('services', suffix))
+        try:
+            with self.binding.mounted_guard(storage_io, roles=('data',)) as guard:
+                with _entered_storage_context(storage_io.AnchoredRoot(self.binding.path('services'), guard)) as anchored:
+                    # Parent provisioning is a separate reviewed publication step.
+                    if any(anchored.stat(name, missing_ok=True) is not None
+                           for name in (STATE_SUFFIX, INITIALIZATION_SUFFIX)):
+                        raise LifecycleError('hardware_latch_already_initialized_or_present')
+                    marker = {'schema_version': 1, 'kind': 'h005-latch-initialization',
+                              'review_sha256': hashlib.sha256(json.dumps(review, sort_keys=True,
+                                  separators=(',', ':')).encode()).hexdigest()}
+                    for name, value in ((INITIALIZATION_SUFFIX, marker), (STATE_SUFFIX, empty_state())):
+                        with anchored.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600) as stream:
+                            stream.write((json.dumps(value, sort_keys=True) + '\n').encode())
+                            stream.fsync()
+                        with anchored.directory('llm-manager') as parent:
+                            os.fsync(parent.fileno())
+                    anchored.check()
+        finally:
+            self.binding.storage.root_payload_guard(self.binding.registry, roles=('data',))
+        _validate_borrowed_lease(self.lease, system_root=self.system_root, trusted_uid=self.trusted_uid)
+        return self.read()
+
     def write(self, value):
         _validate_borrowed_lease(self.lease, system_root=self.system_root, trusted_uid=self.trusted_uid)
         if self.storage_io is None:
@@ -69,6 +122,8 @@ class RegisteredLatchStore:
             with self.binding.mounted_guard(storage_io, roles=('data',)) as guard:
                 with _entered_storage_context(storage_io.AnchoredRoot(self.binding.path('services'), guard)) as anchored:
                     # No mkdir/bootstrap fallback. Activation must install protected state.
+                    HardwareLatch(anchored.read_json(STATE_SUFFIX, max_bytes=65536))
+                    HardwareLatch(value)
                     anchored.atomic_json(STATE_SUFFIX, value)
                     anchored.check()
         finally:

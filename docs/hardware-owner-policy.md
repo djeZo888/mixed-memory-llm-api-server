@@ -10,9 +10,14 @@ storage guards, target UUID resource admission and peer reservation remain intac
 
 State is fixed at the protected registered `services` root plus
 `llm-manager/hardware-latch.json`, schema 1. The reviewed activation transaction
-must install its initial `{"schema_version":1,"targets":{}}` **once**, before
+must install its initial `{"schema_version":1,"targets":{}}` **once** through
+`RegisteredLatchStore.initialize()`, before
 switching owner source, after proving no earlier state exists in any retained
-owner release. This is an activation prerequisite, not installer work. Runtime
+owner release. The fixed protected first-install review and exclusive durable
+`hardware-latch.initialized.json` marker bind that decision. Existing state or
+marker, partial initialization, or missing state after a marker refuse retry;
+file and parent fsync precede completion. See [the source transition](h005-owner-source-transition.md).
+This is an activation prerequisite, not installer work. Runtime
 code never creates empty state on missing/corrupt/read-failed persistence. Each
 write repeats the registered root-payload guard before/after and uses the
 registered mounted guard and AnchoredRoot, under the borrowed
