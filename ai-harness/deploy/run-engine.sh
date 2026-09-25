@@ -22,7 +22,8 @@ Optional environment:
 
 The local image must already exist with the reviewed MiniMax revision label.
 No image pull, sudo, host-network mode, or browser sandbox bypass is performed.
-Actual rootless gateway/browser capability requires post-bootstrap acceptance.
+A fresh root-owned task-egress policy attestation and fixed user slice are required.
+Actual Linux egress isolation/gateway/browser capability requires live acceptance.
 EOF
 }
 
@@ -141,8 +142,9 @@ except OSError:
     valid = False
 sys.exit(0 if valid else 1)
 PY_SECCOMP
-exec "$python_bin" "$launcher_dir/engine/redact-acp.py" "$podman_bin" \
-  --remote=false run --init --init-path /usr/bin/catatonit --rm --interactive --pull=never \
+exec "$python_bin" "$launcher_dir/engine/task-egress.py" -- \
+  "$launcher_dir/engine/redact-acp.py" "$podman_bin" \
+  --remote=false --cgroup-manager=systemd run --cgroup-parent=aiharnesstasks.slice --init --init-path /usr/bin/catatonit --rm --interactive --pull=never \
   --userns keep-id --user "$host_uid:$host_gid" \
   --network slirp4netns:allow_host_loopback=true \
   --cap-drop ALL --security-opt no-new-privileges \

@@ -41,7 +41,7 @@ export function fixtureTransport() {
   }[] = [];
   const transport = {
     imageCapabilities: vi.fn(async (): Promise<unknown> => ({ profiles: [] })),
-    health: vi.fn(async () => ({ visionAvailable: false })),
+    health: vi.fn<Transport['health']>(async () => ({ visionAvailable: false })),
     list: vi.fn(async () => ({ sessions: [session(), session('chat/b')] })),
     snapshot: vi.fn(async (id: string) => snapshot(id)),
     imageJobs: vi.fn(async () => ({ jobs: [] as import('../src/types').ImageJob[] })),

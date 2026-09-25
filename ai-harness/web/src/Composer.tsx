@@ -7,6 +7,7 @@ import { isActive } from './types';
 import { imageJobActive } from './image-jobs';
 import { canStageEditReference, imageReferencesAvailable } from './image-capabilities';
 import { uploadAccept, uploadKey } from './uploads';
+import { availabilityNotice } from './availability';
 
 interface UploadItem {
   key: string;
@@ -49,6 +50,7 @@ export function Composer({
     uploading || busy('send') || busy('upload') || busy('delete') || state.loading || !state.thread;
   const active = isActive(state.thread?.session.status) || pendingRunIds(state, id).length > 0;
   const imageActive = state.thread?.imageJobs?.some(imageJobActive) ?? false;
+  const availability = state.healthLoaded ? availabilityNotice(state.serviceAvailability) : '';
   useEffect(() => {
     input.current?.focus();
   }, []);
@@ -333,6 +335,11 @@ export function Composer({
       {active && (
         <p className="composer-queue-note">
           New messages queue for the next turn. Stop cancels active and queued turns.
+        </p>
+      )}
+      {availability && (
+        <p className="composer-queue-note" role="status">
+          {availability} <a href="/status">View status</a>
         </p>
       )}
       <div className="composer-note">

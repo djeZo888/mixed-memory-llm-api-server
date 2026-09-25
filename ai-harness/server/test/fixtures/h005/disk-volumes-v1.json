@@ -1,0 +1,58 @@
+{
+  "state": "ok",
+  "reason": null,
+  "observed_at": "2026-09-25T00:00:00+00:00",
+  "age_ms": 0,
+  "freshness": "fresh",
+  "total_bytes": 34359738368,
+  "available_bytes": 17179869184,
+  "read_bytes_per_second": 1024.0,
+  "write_bytes_per_second": 2048.0,
+  "volumes": [
+    {
+      "volume_id": "root",
+      "mount_point": "/",
+      "filesystem_uuid": "fixture-root-uuid",
+      "filesystem_type": "ext4",
+      "state": "ok",
+      "reason": null,
+      "observed_at": "2026-09-25T00:00:00+00:00",
+      "age_ms": 0,
+      "freshness": "fresh",
+      "total_bytes": 34359738368,
+      "available_bytes": 17179869184,
+      "read_bytes_per_second": 1024.0,
+      "write_bytes_per_second": 2048.0
+    },
+    {
+      "volume_id": "data",
+      "mount_point": "/data",
+      "filesystem_uuid": "fixture-data-uuid",
+      "filesystem_type": "ext4",
+      "state": "ok",
+      "reason": null,
+      "observed_at": "2026-09-25T00:00:00+00:00",
+      "age_ms": 0,
+      "freshness": "fresh",
+      "total_bytes": 1099511627776,
+      "available_bytes": 549755813888,
+      "read_bytes_per_second": 1024.0,
+      "write_bytes_per_second": 2048.0
+    },
+    {
+      "volume_id": "models",
+      "mount_point": "/data/models",
+      "filesystem_uuid": "fixture-models-uuid",
+      "filesystem_type": "ext4",
+      "state": "ok",
+      "reason": null,
+      "observed_at": "2026-09-25T00:00:00+00:00",
+      "age_ms": 0,
+      "freshness": "fresh",
+      "total_bytes": 2199023255552,
+      "available_bytes": 1099511627776,
+      "read_bytes_per_second": 1024.0,
+      "write_bytes_per_second": 2048.0
+    }
+  ]
+}

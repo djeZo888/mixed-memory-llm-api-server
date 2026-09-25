@@ -44,12 +44,12 @@ def main():
                     b"Filters the environment-provided ephemeral token and cleans up its exact container.\n")
         return 0
     token = os.environ.get("AI_HARNESS_GATEWAY_TOKEN", "")
-    if not token or len(sys.argv) < 3 or sys.argv[2:4] != ["--remote=false", "run"]:
+    if not token or len(sys.argv) < 3 or sys.argv[2:5] != ["--remote=false", "--cgroup-manager=systemd", "run"]:
         os.write(2, b"run-engine: invalid private ACP supervisor invocation\n")
         return 64
     podman = sys.argv[1]
     container = "ai-harness-" + uuid.uuid4().hex
-    args = [podman, *sys.argv[2:4], "--name", container, *sys.argv[4:]]
+    args = [podman, *sys.argv[2:5], "--name", container, *sys.argv[5:]]
     stopped = threading.Event()
     pipe_failed = threading.Event()
     received_signal = [0]

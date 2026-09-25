@@ -1,0 +1,113 @@
+import { request } from "node:http";
+import type { NodeAction, NodeId } from "./node-contract.js";
+import { ApiError } from "./errors.js";
+export interface NodeBackend {
+  status(signal: AbortSignal): Promise<unknown>;
+  action(action: NodeAction, signal: AbortSignal): Promise<unknown>;
+  operation(id: string, signal: AbortSignal): Promise<unknown>;
+}
+/** Fixed endpoints only, no redirects, no URLs/paths from callers. Credentials
+ * are injected by the protected startup loader, never returned/logged. */
+export function nodeClient(nodeId: NodeId, credential?: string): NodeBackend {
+  const options =
+    nodeId === "ai-vm"
+      ? { hostname: "10.156.100.60", port: 30008 }
+      : { socketPath: "/run/ai-harness-admin/helper.sock" };
+  if (nodeId === "ai-vm" && !credential)
+    throw Error("Node control credential required");
+  const call = (
+    method: string,
+    path: string,
+    signal: AbortSignal,
+    value?: unknown,
+  ) =>
+    new Promise<unknown>((resolve, reject) => {
+      const body = value === undefined ? undefined : JSON.stringify(value);
+      const req = request(
+        {
+          ...options,
+          method,
+          path,
+          signal,
+          agent: false,
+          headers: {
+            Accept: "application/json",
+            ...(credential ? { Authorization: `Bearer ${credential}` } : {}),
+            ...(body
+              ? {
+                  "Content-Type": "application/json",
+                  "Content-Length": Buffer.byteLength(body),
+                }
+              : {}),
+          },
+        },
+        (res) => {
+          const parts: Buffer[] = [];
+          let size = 0;
+          res.on("data", (chunk: Buffer) => {
+            size += chunk.length;
+            if (size > 512 * 1024) {
+              res.destroy();
+              req.destroy();
+              reject(Error("Node response too large"));
+            } else parts.push(chunk);
+          });
+          res.on("error", () => reject(Error("Node response unavailable")));
+          res.on("end", () => {
+            if (
+              !res.statusCode ||
+              res.statusCode < 200 ||
+              res.statusCode >= 300
+            ) {
+              const status = [400, 404, 409, 422, 503].includes(
+                res.statusCode ?? 0,
+              )
+                ? res.statusCode!
+                : 503;
+              reject(
+                new ApiError(
+                  status,
+                  status === 409
+                    ? "node_action_conflict"
+                    : status === 422
+                      ? "node_action_unsupported"
+                      : "node_unavailable",
+                  status === 409
+                    ? "Target changed or interruption confirmation required; refresh targets"
+                    : status === 422
+                      ? "Action unsupported by the guarded node owner"
+                      : "Node request unavailable; retain action key and inspect operation status",
+                ),
+              );
+              return;
+            }
+            try {
+              resolve(JSON.parse(Buffer.concat(parts).toString("utf8")));
+            } catch {
+              reject(Error("Invalid node response"));
+            }
+          });
+        },
+      );
+      req.on("error", () =>
+        reject(
+          new ApiError(
+            503,
+            "node_transport_error",
+            "Node transport unavailable; action outcome may be unknown",
+          ),
+        ),
+      );
+      req.end(body);
+    });
+  return {
+    status: (signal) => call("GET", "/control/v1/node/status", signal),
+    action: (value, signal) =>
+      call("POST", "/control/v1/node/actions", signal, value),
+    operation: (id, signal) => {
+      if (!/^[a-zA-Z0-9_.:-]{1,128}$/.test(id))
+        throw new ApiError(400, "invalid_operation", "Invalid operation ID");
+      return call("GET", `/control/v1/node/operations/${id}`, signal);
+    },
+  };
+}

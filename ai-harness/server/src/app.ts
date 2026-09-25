@@ -15,6 +15,7 @@ import { contentDisposition, imageMime } from "./file-metadata.js";
 import { environment } from "./locale.js";
 import { REVIEWED_SKILLS } from "./policy.js";
 import type { Event } from "./contracts.js";
+import type { AvailabilityProvider } from "./service-availability.js";
 // MiniMax ae65651 packages/tui/src/acp/commands.ts: exact, case-sensitive
 // command tokens, plus the direct slash aliases advertised for reviewed skills.
 const unsupportedSlashCommands = new Set<string>([
@@ -39,6 +40,8 @@ export interface AppOptions extends Omit<BrokerOptions, "store" | "files"> {
   imageBackend?: ImageBackend;
   /** Separate protected nginx-to-server capability; never passed to engines. */
   approvalProxyKey?: string;
+  availability?: AvailabilityProvider;
+  availabilitySummary?: () => { qwenGpu0: string; qwenGpu1: string; image: string };
 }
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value))
@@ -156,6 +159,7 @@ export async function createApp(options: AppOptions): Promise<{
         store,
         files,
         backend: options.imageBackend,
+        availability: options.availability,
         currentRun: (id) => broker.currentImageRun(id),
       });
     const imageBroker = () => {
@@ -238,6 +242,7 @@ export async function createApp(options: AppOptions): Promise<{
       environment: environment(),
       status: "ok",
       visionAvailable: options.visionAvailable === true,
+      ...(options.availabilitySummary ? { availability: options.availabilitySummary() } : {}),
     }));
     app.get("/api/sessions", async () => ({ sessions: store.listSessions() }));
     app.post("/api/sessions", async (req) => {
