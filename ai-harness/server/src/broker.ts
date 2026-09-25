@@ -21,6 +21,8 @@ export interface BrokerOptions {
   issueToken: (sessionId: string) => string;
   revokeToken: (token: string) => void;
   maxQueued?: number;
+  /** Protected durable host gate; never supplied by browser/task requests. */
+  dispatchHeld?: () => boolean;
   cancelImages?: (sessionId: string) => void;
 }
 interface Runner {
@@ -57,6 +59,25 @@ export class Broker {
     this.store = options.store;
     this.files = options.files;
   }
+  dispatchImpact() {
+    return {
+      active: this.active.size,
+      queued: [...this.queues.values()].reduce((n, q) => n + q.length, 0),
+    };
+  }
+  notifyDispatchChanged() {
+    if (!this.options.dispatchHeld?.())
+      for (const workspace of this.queues.keys()) this.pump(workspace);
+  }
+  private async waitForDispatch(active?: Active) {
+    while (this.options.dispatchHeld?.() && !this.closing && !active?.cancelled)
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, 100);
+        timer.unref();
+      });
+    if (this.closing || active?.cancelled)
+      throw new Error("Dispatch cancelled while frozen");
+  }
   currentImageRun(sessionId: string) {
     const active = [...this.active.values()].find(
       (a) => a.run.sessionId === sessionId && !a.cancelled,
@@ -78,6 +99,12 @@ export class Broker {
     imageReferences: string[] = [],
   ): string {
     const s = this.store.getSession(sessionId);
+    if (this.options.dispatchHeld?.())
+      throw new ApiError(
+        503,
+        "dispatch_frozen",
+        "New work is paused for a confirmed administrative operation",
+      );
     if (this.closing)
       throw new ApiError(503, "shutting_down", "Server is shutting down");
     if (s.deleteRequested)
@@ -148,7 +175,12 @@ export class Broker {
     return run.id;
   }
   private pump(workspaceId: string) {
-    if (this.closing || this.active.has(workspaceId)) return;
+    if (
+      this.closing ||
+      this.options.dispatchHeld?.() ||
+      this.active.has(workspaceId)
+    )
+      return;
     const queue = this.queues.get(workspaceId);
     const run = queue?.shift();
     if (!run) return;
@@ -189,8 +221,7 @@ export class Broker {
   ) {
     // Update callbacks are per turn; an existing runner reads a mutable dispatcher.
     let runner = this.runners.get(s.id) as
-      | (Runner & { update: (u: EngineUpdate) => void })
-      | undefined;
+      (Runner & { update: (u: EngineUpdate) => void }) | undefined;
     if (runner) {
       runner.update = onUpdate;
       return runner.engine;
@@ -206,6 +237,7 @@ export class Broker {
     };
     entry.engine = this.options.engineFactory({
       sessionId: s.id,
+      dispatchHeld: this.options.dispatchHeld,
       profileDir: this.files.profile(s.id),
       workspace: this.files.workspace(s.workspaceId),
       nativeSessionId: s.nativeSessionId,
@@ -218,6 +250,7 @@ export class Broker {
       onUpdate: (u) => entry.update(u),
     });
     this.runners.set(s.id, entry);
+    await this.waitForDispatch();
     await entry.engine.start();
     return entry.engine;
   }
@@ -461,6 +494,7 @@ export class Broker {
                   : "");
           let promptOutcome: Awaited<ReturnType<Engine["prompt"]>>;
           try {
+            await this.waitForDispatch(active);
             promptOutcome = await engine.prompt(
               handoff
                 ? `Context from the prior chat (same workspace):\n${handoff.summary}\n\nCurrent user request:\n${requestText}`

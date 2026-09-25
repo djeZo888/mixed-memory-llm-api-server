@@ -5,6 +5,7 @@ export interface NodeBackend {
   status(signal: AbortSignal): Promise<unknown>;
   action(action: NodeAction, signal: AbortSignal): Promise<unknown>;
   operation(id: string, signal: AbortSignal): Promise<unknown>;
+  passiveReady?(service: string, signal: AbortSignal): Promise<boolean>;
 }
 /** Fixed endpoints only, no redirects, no URLs/paths from callers. Credentials
  * are injected by the protected startup loader, never returned/logged. */
@@ -100,7 +101,64 @@ export function nodeClient(nodeId: NodeId, credential?: string): NodeBackend {
       );
       req.end(body);
     });
+  const passiveReady = async (
+    service: string,
+    signal: AbortSignal,
+  ): Promise<boolean> => {
+    if (nodeId !== "ai-harness") return false;
+    // This callback executes inside the independent status process itself.
+    if (service === "status") return true;
+    if (service !== "harness" && service !== "search") return false;
+    return new Promise<boolean>((resolve) => {
+      const req = request(
+        {
+          ...(service === "harness"
+            ? {
+                socketPath: "/run/ai-harness-dispatch/control.sock",
+                path: "/private/freeze/impact",
+                method: "GET",
+              }
+            : { hostname: "127.0.0.1", port: 8082, path: "/", method: "HEAD" }),
+          signal,
+          agent: false,
+          headers: {
+            Accept: service === "harness" ? "application/json" : "text/html",
+          },
+        },
+        (res) => {
+          let size = 0;
+          const chunks: Buffer[] = [];
+          res.on("data", (chunk: Buffer) => {
+            size += chunk.length;
+            if (size > 16384) {
+              res.destroy();
+              resolve(false);
+            } else chunks.push(chunk);
+          });
+          res.on("error", () => resolve(false));
+          res.on("end", () => {
+            if (res.statusCode !== 200) return resolve(false);
+            if (service === "search")
+              return resolve(
+                String(res.headers["content-type"]).startsWith("text/html"),
+              );
+            try {
+              const impact = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+              resolve(
+                impact.ready === true && typeof impact.frozen === "boolean",
+              );
+            } catch {
+              resolve(false);
+            }
+          });
+        },
+      );
+      req.on("error", () => resolve(false));
+      req.end();
+    });
+  };
   return {
+    passiveReady,
     status: (signal) => call("GET", "/control/v1/node/status", signal),
     action: (value, signal) =>
       call("POST", "/control/v1/node/actions", signal, value),

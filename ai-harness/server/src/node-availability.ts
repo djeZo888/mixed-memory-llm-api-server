@@ -154,7 +154,10 @@ export class NodeAvailability {
         };
         continue;
       }
-      const inventory = value.inventory;
+      // The node owner emits fresh false only after validating this service's
+      // exact required UUIDs in the current boot. That targeted positive proof
+      // remains authoritative when an unrelated GPU breaks global inventory.
+      // A changed requirement is not proof that the latched hardware recovered.
       if (
         old &&
         value.boot_id !== null &&
@@ -162,21 +165,10 @@ export class NodeAvailability {
         (old.bootId ?? old.observedBootId) !== value.boot_id &&
         service.hardware_latched === false &&
         this.fresh(service, 0) &&
-        this.fresh(inventory, 0) &&
-        inventory.complete &&
-        inventory.boot_id === value.boot_id &&
-        inventory.observation_id !== null &&
-        new Set(inventory.gpu_uuids).size === inventory.gpu_uuids.length &&
-        old.requiredGpuUuids.every(
-          (uuid) =>
-            inventory.gpu_uuids.includes(uuid) &&
-            !Object.hasOwn(inventory.hardware_faults, uuid),
-        ) &&
-        service.required_gpu_uuids.length > 0 &&
-        service.required_gpu_uuids.every(
-          (uuid) =>
-            inventory.gpu_uuids.includes(uuid) &&
-            !Object.hasOwn(inventory.hardware_faults, uuid),
+        service.required_gpu_uuids.length === old.requiredGpuUuids.length &&
+        new Set(service.required_gpu_uuids).size === old.requiredGpuUuids.length &&
+        old.requiredGpuUuids.every((uuid) =>
+          service.required_gpu_uuids.includes(uuid),
         )
       )
         delete next[id];

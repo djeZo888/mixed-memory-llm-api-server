@@ -775,3 +775,69 @@ test("availability is rechecked after credential loading before the first upstre
     ["idle", "idle"],
   );
 });
+
+test("per-lane administrative hold serves new child/compaction work on healthy peer and retains FIFO bytes", async (t) => {
+  let held = false;
+  const f = await fixture({ availability: alias => ({ state: "available", dispatch: held && alias === "qwen3.8-27b-gpu0" ? "hold" : "allow" }), dispatchHeld: alias => held && alias === "qwen3.8-27b-gpu0" });
+  t.after(f.close);
+  const first = f.send(); await until(() => f.seen.length === 1);
+  held = true; f.gateway.notifyAvailabilityChanged();
+  const second = f.send({ messages: [{ role: "user", content: "synthetic child" }] }); await until(() => f.seen.length === 2);
+  assert.equal(f.seen[1].lane, 1);
+  f.complete(0); await first;
+  const third = f.send({ messages: [{ role: "user", content: "synthetic compaction" }] });
+  await until(() => f.gateway.snapshot().queued === 1);
+  const bytes = f.gateway.snapshot().queuedBytes; assert.ok(bytes > 0);
+  f.complete(1); await second;
+  await until(() => f.seen.length === 3);
+  assert.equal(f.seen[2].lane, 1);
+  assert.equal(f.gateway.snapshot().queuedBytes, 0);
+  f.complete(2); await third;
+  held = false; f.gateway.notifyAvailabilityChanged();
+});
+test("freeze during credential await holds owned reservation until release, before upstream bytes", async t => {
+  let held = false, releaseKey!: () => void;
+  const pendingKey = new Promise<void>(resolve => { releaseKey = resolve; });
+  const f = await fixture({ upstreamKey: async () => { await pendingKey; return "fixture-key"; }, availability: () => ({ state: "available", dispatch: held ? "hold" : "allow" }), dispatchHeld: () => held });
+  t.after(f.close);
+  const pending = f.send(); await until(() => f.gateway.snapshot().lanes.some(l => l.state === "active"));
+  held = true; releaseKey();
+  await delay(100); assert.equal(f.seen.length, 0);
+  assert.equal(f.gateway.snapshot().lanes[0].state, "active");
+  held = false; f.gateway.notifyAvailabilityChanged();
+  await until(() => f.seen.length === 1); f.complete(0); assert.equal((await pending).status, 200);
+});
+
+test("canonical target settlement reconciles only old owned lane and never replays uncertain request", async t => {
+  const f = await fixture(); t.after(f.close);
+  const pending = f.send({ stream: true }); await until(() => f.seen.length === 1);
+  f.seen[0].response.setHeader("content-type", "text/event-stream");
+  f.seen[0].response.write('data: {"choices":[{"delta":{"content":"synthetic partial"}}]}\n\n');
+  const response = await pending, text = response.text().catch(error => error as Error);
+  // Owner proof is target-specific; an unrelated restart cannot settle lane0.
+  f.gateway.reconcileAfterOwnerSettlement(["qwen3.8-27b"]);
+  f.seen[0].response.destroy(); await text;
+  await until(() => f.gateway.snapshot().lanes[0].state === "quarantined");
+  assert.equal(f.seen.length, 1);
+  f.gateway.reconcileAfterOwnerSettlement(["qwen3.8-27b-gpu0"]);
+  assert.equal(f.gateway.snapshot().lanes[0].state, "idle");
+  const next = f.send({ stream: true }); await until(() => f.seen.length === 2);
+  f.seen[1].response.setHeader("content-type", "text/event-stream");
+  f.seen[1].response.write('data: {"choices":[]}\n\n');
+  const nextResponse = await next, nextText = nextResponse.text().catch(error => error as Error);
+  f.seen[1].response.destroy(); await nextText;
+  await until(() => f.gateway.snapshot().lanes[0].state === "quarantined");
+  assert.equal(f.seen.length, 2, "old proof cannot clear a new ambiguous request");
+});
+test("canonical old invocation proof safely settles late failure without aborting or replaying owned request", async t => {
+  const f = await fixture(); t.after(f.close);
+  const pending = f.send({ stream: true }); await until(() => f.seen.length === 1);
+  f.seen[0].response.setHeader("content-type", "text/event-stream");
+  f.seen[0].response.write('data: {"choices":[]}\n\n');
+  const response = await pending, text = response.text().catch(error => error as Error);
+  f.gateway.reconcileAfterOwnerSettlement(["qwen3.8-27b-gpu0"]);
+  assert.equal(f.gateway.snapshot().lanes[0].state, "active", "keep active settlement ownership");
+  f.seen[0].response.destroy(); await text;
+  await until(() => f.gateway.snapshot().lanes[0].state === "idle");
+  assert.equal(f.seen.length, 1);
+});

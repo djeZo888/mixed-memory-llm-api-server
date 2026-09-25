@@ -10,7 +10,6 @@ Type=simple
 User=@HARNESS_USER@
 Group=www-data
 SupplementaryGroups=@HARNESS_GROUP@
-SupplementaryGroups=@HARNESS_GROUP@
 WorkingDirectory=@HARNESS_DIR@/server
 ExecStart=@NODE_PREFIX@/bin/node @HARNESS_DIR@/server/dist/status-main.js
 Environment=AI_HARNESS_STATUS_SOCKET=/run/ai-harness-status/http.sock
@@ -24,7 +23,7 @@ RuntimeDirectory=ai-harness-status
 RuntimeDirectoryMode=0750
 StateDirectory=ai-harness-status
 StateDirectoryMode=0700
-UMask=0007
+UMask=0077
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=10
@@ -36,7 +35,10 @@ PrivateDevices=yes
 ProtectKernelTunables=yes
 ProtectControlGroups=yes
 RestrictAddressFamilies=AF_UNIX AF_INET
-ReadWritePaths=/run/ai-harness-status /var/lib/ai-harness-status
+# Shared dispatch ledger is existing-UID0700, outside every engine mount.
+# Status writes holds/receipts, but only chat binds the private control socket.
+ReadWritePaths=/run/ai-harness-status /var/lib/ai-harness-status /var/lib/ai-harness-dispatch
+ReadOnlyPaths=/run/ai-harness-dispatch
 
 [Install]
 WantedBy=multi-user.target

@@ -72,12 +72,12 @@
   },
   "services": [
     {
-      "service_id": "qwen-gpu0",
       "state": "unknown",
       "observed_at": null,
       "age_ms": null,
       "freshness": "unknown",
-      "reason": "not_observed",
+      "reason": "hardware_latch_unknown",
+      "service_id": "qwen-gpu0",
       "generation": null,
       "affected_services": [
         "qwen-gpu0"
@@ -97,15 +97,16 @@
       "model_alias": null,
       "configured_context_tokens": null,
       "max_output_tokens": null,
-      "operation_profiles": []
+      "operation_profiles": [],
+      "hardware_latched_boot_id": null
     },
     {
-      "service_id": "qwen-gpu1",
       "state": "unknown",
       "observed_at": null,
       "age_ms": null,
       "freshness": "unknown",
-      "reason": "not_observed",
+      "reason": "hardware_latch_unknown",
+      "service_id": "qwen-gpu1",
       "generation": null,
       "affected_services": [
         "qwen-gpu1"
@@ -125,15 +126,16 @@
       "model_alias": null,
       "configured_context_tokens": null,
       "max_output_tokens": null,
-      "operation_profiles": []
+      "operation_profiles": [],
+      "hardware_latched_boot_id": null
     },
     {
-      "service_id": "image",
       "state": "unknown",
       "observed_at": null,
       "age_ms": null,
       "freshness": "unknown",
-      "reason": "not_observed",
+      "reason": "hardware_latch_unknown",
+      "service_id": "image",
       "generation": null,
       "affected_services": [
         "image"
@@ -153,15 +155,16 @@
       "model_alias": null,
       "configured_context_tokens": null,
       "max_output_tokens": null,
-      "operation_profiles": []
+      "operation_profiles": [],
+      "hardware_latched_boot_id": null
     },
     {
-      "service_id": "control",
       "state": "unknown",
       "observed_at": null,
       "age_ms": null,
       "freshness": "unknown",
-      "reason": "not_observed",
+      "reason": "observation_unavailable",
+      "service_id": "control",
       "generation": null,
       "affected_services": [
         "control"
@@ -179,7 +182,8 @@
       "model_alias": null,
       "configured_context_tokens": null,
       "max_output_tokens": null,
-      "operation_profiles": []
+      "operation_profiles": [],
+      "hardware_latched_boot_id": null
     }
   ],
   "gpus": []

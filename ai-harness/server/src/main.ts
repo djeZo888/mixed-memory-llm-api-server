@@ -11,6 +11,8 @@ import {
   type HardwareLatchLedger,
 } from "./node-availability.js";
 import { nodeClient } from "./node-client.js";
+import { openDispatchFreeze, serveDispatchFreeze } from "./dispatch-freeze.js";
+import { serviceAvailability } from "./service-availability.js";
 import { createBackendReadiness } from "./backend-readiness.js";
 
 function required(name: string): string {
@@ -32,6 +34,7 @@ export async function start() {
   const dataDir = required("AI_HARNESS_DATA_DIR"),
     launcher = required("AI_HARNESS_ENGINE_LAUNCHER"),
     keyFile = required("AI_HARNESS_INFERENCE_KEY_FILE");
+  const freeze = openDispatchFreeze();
   const key = await readProtectedCredential(keyFile);
   const approvalKeyFile = process.env.AI_HARNESS_BROWSER_APPROVAL_KEY_FILE;
   const approvalProxyKey = approvalKeyFile
@@ -40,14 +43,29 @@ export async function start() {
   const gatewayPort = port("AI_HARNESS_GATEWAY_PORT", 8081);
   let gateway: ReturnType<typeof createGateway> | undefined;
   let nodeAvailability: NodeAvailability | undefined;
+  let freezeServer: Awaited<ReturnType<typeof serveDispatchFreeze>> | undefined;
+  let freezeTimer: NodeJS.Timeout | undefined;
+  const availability = (id: string) => {
+    const observed = serviceAvailability(
+      nodeAvailability ? (name) => nodeAvailability!.get(name) : undefined,
+      id,
+    );
+    return freeze.held(id) && observed.dispatch !== "reject"
+      ? {
+          ...observed,
+          dispatch: "hold" as const,
+          reason: "admin_dispatch_frozen",
+        }
+      : observed;
+  };
   const application = await createApp({
     dataDir,
     launcher,
     engineFactory: createEngine,
     imageBackend: new ImageUpstream({ key }),
     approvalProxyKey,
-    availability: (id) =>
-      nodeAvailability?.get(id) ?? { state: "unknown", dispatch: "allow" },
+    availability,
+    dispatchHeld: () => freeze.held("harness"),
     availabilitySummary: () =>
       nodeAvailability?.states() ?? {
         qwenGpu0: "unknown",
@@ -115,8 +133,8 @@ export async function start() {
     gateway = createGateway({
       upstreamKey: key,
       images: application.images,
-      availability: (id) =>
-        nodeAvailability?.get(id) ?? { state: "unknown", dispatch: "allow" },
+      availability,
+      dispatchHeld: (alias) => freeze.held(alias),
       initialLaneStates: states,
       onLaneState: (alias, state) => {
         application.store.db
@@ -137,14 +155,82 @@ export async function start() {
           );
       },
     });
+    const changed = () => {
+      application.broker.notifyDispatchChanged();
+      gateway?.notifyAvailabilityChanged();
+      application.images?.notifyAvailabilityChanged();
+    };
+    let previousHolds = JSON.stringify(
+      freeze.db.prepare("SELECT key FROM dispatch_holds ORDER BY key").all(),
+    );
+    freezeTimer = setInterval(() => {
+      try {
+        const holds = JSON.stringify(
+          freeze.db
+            .prepare("SELECT key FROM dispatch_holds ORDER BY key")
+            .all(),
+        );
+        if (holds !== previousHolds) {
+          previousHolds = holds;
+          changed();
+        }
+      } catch {
+        changed();
+      } // Dispatch gates independently fail closed on read error.
+    }, 250);
+    freezeTimer.unref();
     nodeAvailability?.start();
     await gateway.app.listen({ host: "127.0.0.1", port: gatewayPort });
     await application.app.listen({
       host: "127.0.0.1",
       port: port("AI_HARNESS_PORT", 8080),
     });
+    freezeServer = await serveDispatchFreeze(
+      freeze,
+      () => {
+        const broker = application.broker.dispatchImpact(),
+          lanes = gateway!.snapshot(),
+          image = application.images?.dispatchImpact();
+        const active =
+          broker.active +
+          lanes.lanes.filter((lane) => lane.state === "active").length +
+          (image?.lane === "active" ? 1 : 0);
+        const queued =
+          broker.queued +
+          lanes.queued +
+          (image?.queued ?? 0) +
+          (image?.awaitingApproval ?? 0);
+        // Counts are component reservations, not distinct user requests. Quarantine
+        // and native activity cannot be inferred idle from passive readiness.
+        return {
+          frozen: freeze.held(),
+          ready: true,
+          activity: active ? "busy" : "unknown",
+          active_requests: active,
+          queue_depth: queued,
+        };
+      },
+      changed,
+      (scope) => {
+        const aliases = [
+          scope.includes("qwen-gpu0") ? "qwen3.8-27b-gpu0" : null,
+          scope.includes("qwen-gpu1") ? "qwen3.8-27b" : null,
+        ].filter((id): id is string => !!id);
+        if (!gateway!.reconcileAfterOwnerSettlement(aliases)) return false;
+        if (
+          scope.includes("image") &&
+          application.images &&
+          !application.images.reconcileAfterOwnerSettlement()
+        )
+          return false;
+        return true;
+      },
+    );
   } catch (error) {
     nodeAvailability?.stop();
+    clearInterval(freezeTimer);
+    await freezeServer?.close();
+    freeze.close();
     await gateway?.close();
     await application.app.close();
     throw error;
@@ -154,12 +240,15 @@ export async function start() {
     if (stopping) return;
     stopping = true;
     nodeAvailability?.stop();
+    clearInterval(freezeTimer);
+    await freezeServer?.close();
     await Promise.all([
       application.broker.close(),
       application.images?.close(),
     ]);
     await gateway!.close();
     await application.app.close();
+    freeze.close();
   };
   for (const signal of ["SIGINT", "SIGTERM"] as const)
     process.once(signal, () => {

@@ -157,6 +157,8 @@ export class ImageBroker {
   private closed = false;
   private pumping = false;
   private reconciling = false;
+  private uncertain = false;
+  private ownerSettled = false;
   private serial: Promise<unknown> = Promise.resolve();
   private timer: NodeJS.Timeout;
   private controller?: AbortController;
@@ -169,16 +171,26 @@ export class ImageBroker {
     this.imageFiles = new ImageFiles(options.files);
     const db = options.store.db;
     db.exec(`CREATE TABLE IF NOT EXISTS h003_image_jobs(id TEXT PRIMARY KEY, session_id TEXT NOT NULL, request_id TEXT NOT NULL, data TEXT NOT NULL, UNIQUE(session_id,request_id));
-      CREATE TABLE IF NOT EXISTS h003_image_lane(id INTEGER PRIMARY KEY CHECK(id=1),state TEXT NOT NULL);`);
+      CREATE TABLE IF NOT EXISTS h003_image_lane(id INTEGER PRIMARY KEY CHECK(id=1),state TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS h005_image_ownership(id INTEGER PRIMARY KEY CHECK(id=1),uncertain INTEGER NOT NULL CHECK(uncertain IN (0,1)));`);
     for (const row of db
       .prepare("SELECT data FROM h003_image_jobs ORDER BY rowid")
       .all()) {
       const record = JSON.parse(String(row.data)) as RecordData;
       this.records.set(record.job.id, record);
     }
+    const previousLane = db.prepare("SELECT state FROM h003_image_lane WHERE id=1").get();
+    const ownership = db.prepare("SELECT uncertain FROM h005_image_ownership WHERE id=1").get();
+    // A crash while an owned job was running cannot prove upstream settlement.
+    // Legacy terminal ambiguity also migrates conservatively; queued/approval
+    // jobs have never been dispatched and keep their exact identity and inputs.
+    this.setUncertain(ownership?.uncertain === 1 || previousLane?.state === "active" ||
+      [...this.records.values()].some(r => ["running", "saving"].includes(r.job.state)) ||
+      (!ownership && previousLane?.state === "quarantined" && [...this.records.values()].some(r =>
+        ["image_completion_unknown", "server_stopped", "server_restarted"].includes(r.job.error?.code ?? ""))));
     this.setLane("quarantined");
     for (const r of this.records.values())
-      if (!terminal.has(r.job.state)) {
+      if (["running", "saving"].includes(r.job.state)) {
         r.job.state = "interrupted";
         r.job.finishedAt = this.iso();
         r.job.error = {
@@ -205,6 +217,13 @@ export class ImageBroker {
       .prepare("INSERT OR REPLACE INTO h003_image_lane VALUES(1,?)")
       .run(state);
     this.lane = state;
+  }
+  private setUncertain(value: boolean) {
+    // A failed positive write blocks this process before sending upstream bytes.
+    // A failed clear never changes the in-memory ownership gate.
+    if (value) this.uncertain = true;
+    this.options.store.db.prepare("INSERT OR REPLACE INTO h005_image_ownership VALUES(1,?)").run(value ? 1 : 0);
+    this.uncertain = value;
   }
   private persist(r: RecordData, lane?: Lane) {
     const db = this.options.store.db;
@@ -309,6 +328,36 @@ export class ImageBroker {
   }
   snapshot() {
     return { lane: this.lane, queued: this.queued().length };
+  }
+  dispatchImpact() {
+    return { ...this.snapshot(), uncertain: this.uncertain,
+      awaitingApproval: [...this.records.values()].filter(r => r.job.state === "awaiting_approval").length };
+  }
+  /** Private host caller must first verify canonical completed owner settlement
+   * and fresh readiness. Never exposed through browser, tool or session routes. */
+  reconcileAfterOwnerSettlement(): boolean {
+    if (this.closed) return false;
+    if (this.pumping || this.lane === "active") {
+      // Preparation may already own a reservation while waiting for the hold.
+      // It has no old upstream request to clear and must resume in place. A
+      // dispatched request instead retains its own completion/artifact path;
+      // canonical owner settlement proves only that it cannot remain active.
+      if (this.uncertain) {
+        this.setUncertain(false);
+        this.ownerSettled = true;
+      }
+      return true;
+    }
+    const db = this.options.store.db;
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      db.prepare("INSERT OR REPLACE INTO h005_image_ownership VALUES(1,0)").run();
+      db.prepare("INSERT OR REPLACE INTO h003_image_lane VALUES(1,'idle')").run();
+      db.exec("COMMIT");
+    } catch (error) { db.exec("ROLLBACK"); throw error; }
+    this.uncertain = false;
+    this.lane = "idle";
+    return true;
   }
   private dispatch() {
     return serviceAvailability(
@@ -750,6 +799,7 @@ export class ImageBroker {
   async reconcile(): Promise<void> {
     if (
       this.closed ||
+      this.uncertain ||
       this.dispatch() !== "allow" ||
       this.reconciling ||
       this.pumping ||
@@ -763,6 +813,7 @@ export class ImageBroker {
       );
       if (
         !this.closed &&
+        !this.uncertain &&
         this.dispatch() === "allow" &&
         health.ready === true &&
         health.idle === true
@@ -834,6 +885,8 @@ export class ImageBroker {
       this.requireAvailable();
       r.preparedSha256 = references.map(sha256);
       this.persist(r); // Exact conditioned bytes are hashed before native dispatch.
+      this.ownerSettled = false; // A prior owner's proof never covers a new request.
+      this.setUncertain(true); // Durable ownership precedes the first upstream byte.
       dispatched = true;
       const result = await this.options.backend.execute(
         {
@@ -846,6 +899,7 @@ export class ImageBroker {
         },
         controller.signal,
       );
+      this.setUncertain(false); // The owner returned a definite admitted/not-admitted result.
       settled = true;
       if (result.kind === "not_admitted") {
         if (this.unavailable())
@@ -946,11 +1000,11 @@ export class ImageBroker {
         this.closed
           ? "Server stopped; image work will not be replayed"
           : ambiguous
-            ? "Image completion is unknown; request will not be replayed and lane requires readiness and idle confirmation"
+            ? "Image completion is unknown; request will not be replayed and lane requires verified owner settlement and fresh readiness"
             : known
               ? error.message
               : "Image processing failed",
-        ambiguous || this.closed ? "quarantined" : "idle",
+        (ambiguous && !this.ownerSettled) || this.closed ? "quarantined" : "idle",
       );
     } finally {
       clearTimeout(timer);
@@ -969,7 +1023,7 @@ export class ImageBroker {
     this.controller?.abort();
     await this.execution;
     for (const r of this.records.values())
-      if (!terminal.has(r.job.state))
+      if (["running", "saving"].includes(r.job.state))
         this.finish(
           r,
           "interrupted",

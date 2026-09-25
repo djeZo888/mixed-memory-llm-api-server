@@ -2,6 +2,8 @@ import { chmod, lstat, realpath } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { readProtectedCredential } from "./protected-credential.js";
+import { openDispatchFreeze } from "./dispatch-freeze.js";
+import { AdminActions } from "./admin-actions.js";
 import { nodeClient } from "./node-client.js";
 import { createStatusService } from "./status-service.js";
 /** Independent entry point: no chat/store/engine instance or native probes. */
@@ -26,11 +28,15 @@ export async function startStatus() {
   const keyFile = process.env.AI_HARNESS_CONTROL_KEY_FILE;
   if (!keyFile) throw Error("Protected control credential not configured");
   const key = await readProtectedCredential(keyFile);
-  const service = createStatusService({
-    backends: {
-      "ai-vm": nodeClient("ai-vm", key),
-      "ai-harness": nodeClient("ai-harness"),
-    },
+  const freeze = openDispatchFreeze();
+  const backends = {
+    "ai-vm": nodeClient("ai-vm", key),
+    "ai-harness": nodeClient("ai-harness"),
+  };
+  const actions = new AdminActions({ db: freeze.db, freeze, backends });
+  const service = createStatusService({ backends, freeze, actions });
+  service.app.addHook("onClose", async () => {
+    freeze.close();
   });
   await service.app.listen({ path: socket });
   await chmod(socket, 0o660);

@@ -232,7 +232,7 @@ test("one active/eight queued, durable admission, stable concurrent dedup and qu
   );
 });
 
-test("unknown completion is never replayed; only ready AND idle reopens image lane", async (t) => {
+test("unknown completion is never replayed; readiness alone cannot clear durable ownership", async (t) => {
   const f = await fixture(t);
   const a = await f.submit("unknown");
   await until(() => f.backend.calls.length === 1);
@@ -250,6 +250,11 @@ test("unknown completion is never replayed; only ready AND idle reopens image la
   assert.equal(f.backend.calls.length, 1);
   f.backend.healthy = true;
   await f.broker.reconcile();
+  await delay(20);
+  assert.equal(f.backend.calls.length, 1);
+  assert.equal(f.broker.dispatchImpact().uncertain, true);
+  assert.equal(f.broker.reconcileAfterOwnerSettlement(), true);
+  f.broker.notifyAvailabilityChanged();
   await until(() => f.backend.calls.length === 2);
   assert.equal(f.broker.get(f.session.id, b.id).state, "running");
   assert.ok(!JSON.stringify(f.broker.list(f.session.id)).includes("secret"));
@@ -519,7 +524,7 @@ test("unqualified edit profiles never fall back; explicit unsupported geometry r
   assert.equal(job.requestedSize, "1920x1080");
 });
 
-test("restart interrupts running/queued/approval and reconciles independently without replay", async (t) => {
+test("restart retains queued jobs and approvals, while running work needs canonical settlement without replay", async (t) => {
   const f = await fixture(t);
   const a = await f.submit("active");
   await until(() => f.backend.calls.length === 1);
@@ -529,6 +534,7 @@ test("restart interrupts running/queued/approval and reconciles independently wi
     operation: "edit",
     references: [{ fileId: file.id }],
   });
+  const token = await f.broker.issueApprovalToken(f.session.id, c.id);
   // Preserve a crash-time durable snapshot in a separate DB, not a graceful close.
   const copy = path.join(f.dir, "restart.sqlite");
   f.store.db.prepare("VACUUM INTO ?").run(copy);
@@ -546,14 +552,29 @@ test("restart interrupts running/queued/approval and reconciles independently wi
     await recovered.close();
     recoveredStore.close();
   });
-  for (const j of [a, b, c])
-    assert.equal(recovered.get(f.session.id, j.id).state, "interrupted");
+  assert.equal(recovered.get(f.session.id, a.id).state, "interrupted");
+  assert.equal(recovered.get(f.session.id, b.id).state, "queued");
+  assert.equal(recovered.get(f.session.id, c.id).state, "awaiting_approval");
+  assert.equal(recovered.get(f.session.id, b.id).seed, b.seed);
+  assert.deepEqual(recovered.get(f.session.id, c.id).adjustment, c.adjustment);
+  assert.equal(recovered.dispatchImpact().awaitingApproval, 1);
   assert.equal(recovered.snapshot().lane, "quarantined");
   backend.idle = true;
   await recovered.reconcile();
   await delay(20);
-  assert.equal(recovered.snapshot().lane, "idle");
+  assert.equal(recovered.snapshot().lane, "quarantined");
   assert.equal(backend.calls.length, 0);
+  assert.equal(recovered.reconcileAfterOwnerSettlement(), true);
+  recovered.notifyAvailabilityChanged();
+  await until(() => backend.calls.length === 1);
+  assert.equal(backend.calls[0].input.seed, b.seed);
+  await backend.complete();
+  await until(() => recovered.get(f.session.id, b.id).state === "completed");
+  await recovered.approve(f.session.id, c.id, "approve", token.approvalToken);
+  await until(() => backend.calls.length === 2);
+  assert.equal(backend.calls[1].input.seed, c.seed);
+  await backend.complete();
+  await until(() => recovered.get(f.session.id, c.id).state === "completed");
   assert.equal(
     (
       await recovered.submit(f.session.id, {
@@ -565,6 +586,84 @@ test("restart interrupts running/queued/approval and reconciles independently wi
     ).state,
     "interrupted",
   );
+});
+
+test("graceful frozen restart preserves queued and approval identities without readiness-only recovery", async (t) => {
+  let held = false;
+  const availability: AvailabilityProvider = () => ({ state: "available", dispatch: held ? "hold" : "allow" });
+  const f = await fixture(t, { availability });
+  const active = await f.submit("closing-active");
+  await until(() => f.backend.calls.length === 1);
+  const queued = await f.submit("closing-queued", { seed: 17 });
+  const reference = await f.upload(await png(120, 60));
+  const approval = await f.submit("closing-approval", {
+    operation: "edit", seed: 18, references: [{ fileId: reference.id }],
+  });
+  held = true;
+  f.broker.notifyAvailabilityChanged();
+  await f.broker.close();
+  assert.equal(f.broker.get(f.session.id, active.id).state, "interrupted");
+  assert.equal(f.broker.get(f.session.id, queued.id).state, "queued");
+  assert.equal(f.broker.get(f.session.id, approval.id).state, "awaiting_approval");
+  const recovered = new ImageBroker({
+    store: f.store, files: f.files, backend: f.backend, currentRun: () => undefined,
+    availability, tickMs: 5,
+  });
+  await recovered.reconcile();
+  assert.equal(recovered.get(f.session.id, queued.id).seed, 17);
+  assert.equal(recovered.get(f.session.id, approval.id).seed, 18);
+  assert.deepEqual(recovered.get(f.session.id, approval.id).references, approval.references);
+  assert.equal(recovered.dispatchImpact().uncertain, true);
+  assert.equal(f.backend.calls.length, 1);
+  await recovered.close();
+});
+
+test("owner settlement during frozen preparation resumes its reservation without applying old proof to new dispatch", async (t) => {
+  let held = false, preparing = false;
+  const f = await fixture(t, { availability: () => ({ state: "available", dispatch: held ? "hold" : "allow" }) });
+  const frozen = f.broker.imageFiles.frozen.bind(f.broker.imageFiles);
+  let release!: () => void;
+  const pause = new Promise<void>(resolve => { release = resolve; });
+  f.broker.imageFiles.frozen = async (...args) => {
+    preparing = true;
+    await pause;
+    return frozen(...args);
+  };
+  const job = await f.submit("frozen-preparation");
+  await until(() => preparing);
+  held = true;
+  f.broker.notifyAvailabilityChanged();
+  assert.equal(f.broker.dispatchImpact().uncertain, false);
+  assert.equal(f.broker.reconcileAfterOwnerSettlement(), true);
+  release();
+  await delay(20);
+  assert.equal(f.backend.calls.length, 0);
+  held = false;
+  f.broker.notifyAvailabilityChanged();
+  await until(() => f.backend.calls.length === 1);
+  assert.equal(f.backend.calls[0].input.seed, job.seed);
+  f.backend.calls[0].reject(new Error("new invocation uncertain"));
+  await until(() => f.broker.get(f.session.id, job.id).state === "failed");
+  assert.equal(f.broker.dispatchImpact().uncertain, true);
+  assert.equal(f.broker.snapshot().lane, "quarantined");
+});
+
+test("canonical owner settlement of an active request preserves late failure and never replays it", async (t) => {
+  const f = await fixture(t);
+  const job = await f.submit("owner-interrupted");
+  await until(() => f.backend.calls.length === 1);
+  const queued = await f.submit("owner-next", { seed: 25 });
+  assert.equal(f.broker.dispatchImpact().uncertain, true);
+  assert.equal(f.broker.reconcileAfterOwnerSettlement(), true);
+  f.backend.calls[0].reject(new Error("old owner connection closed"));
+  await until(() => f.backend.calls.length === 2);
+  assert.equal(f.broker.get(f.session.id, job.id).state, "failed");
+  assert.equal(f.backend.calls[1].input.seed, queued.seed);
+  assert.equal((await f.submit("owner-interrupted")).id, job.id);
+  f.backend.calls[1].reject(new Error("new invocation uncertain"));
+  await until(() => f.broker.get(f.session.id, queued.id).state === "failed");
+  assert.equal(f.broker.dispatchImpact().uncertain, true);
+  assert.equal(f.broker.snapshot().lane, "quarantined");
 });
 
 test("browser capability is job-bound, expires, hides token and allows only identical consumed decision", async (t) => {
@@ -1103,6 +1202,8 @@ test("hardware unavailability blocks ready-idle reconciliation without replacing
   assert.equal(f.broker.snapshot().lane, "quarantined");
   f.backend.healthy = true;
   await f.broker.reconcile();
+  assert.equal(f.broker.snapshot().lane, "quarantined");
+  assert.equal(f.broker.reconcileAfterOwnerSettlement(), true);
   await until(() => f.broker.snapshot().lane === "idle");
   assert.equal(f.backend.calls.length, 1);
   assert.equal((await f.submit("ambiguous")).id, unknown.id);
@@ -1386,4 +1487,72 @@ test("production adapter resumes retained image work after soft-unavailable expi
   await until(
     () => f.broker.get(f.session.id, waiting.id).state === "completed",
   );
+});
+
+test("production private stop/start adapter clears actual image quarantine only with canonical outstanding stop", async (t) => {
+  const { DispatchFreeze, serveDispatchFreeze } = await import("../src/dispatch-freeze.js");
+  let gate: InstanceType<typeof DispatchFreeze> | undefined;
+  const f = await fixture(t, {
+    availability: () => ({ state: "available", dispatch: gate?.held("image") ? "hold" : "allow" }),
+  });
+  gate = new DispatchFreeze(path.join(f.dir, "private-freeze.sqlite"), path.join(f.dir, "freeze.sock"));
+  const app = await serveDispatchFreeze(
+    gate,
+    () => ({ frozen: gate!.held("image"), ready: true, activity: "unknown", active_requests: null, queue_depth: f.broker.snapshot().queued }),
+    () => f.broker.notifyAvailabilityChanged(),
+    (scope) => {
+      assert.deepEqual(scope, ["image"]);
+      return f.broker.reconcileAfterOwnerSettlement();
+    },
+  );
+  try {
+    const stop: import("../src/node-contract.js").NodeAction = {
+      schema_version: 1, node_id: "ai-vm", action: "service.stop", service_id: "image",
+      idempotency_key: "image-private-stop-001", expected_boot_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      expected_generation: 3, allow_interrupt: true,
+    };
+    const start: import("../src/node-contract.js").NodeAction = {
+      ...stop, action: "service.start", idempotency_key: "image-private-start-001", expected_generation: 4,
+    };
+    const active = await f.submit("private-uncertain-image", { seed: 71 });
+    await until(() => f.backend.calls.length === 1);
+    const queued = await f.submit("private-retained-image", { seed: 72 });
+    f.backend.calls[0].reject(new Error("synthetic ambiguous image response"));
+    await until(() => f.broker.get(f.session.id, active.id).state === "failed");
+    assert.equal(f.broker.dispatchImpact().uncertain, true);
+    gate.hold(stop);
+    assert.equal((await gate.acknowledge(stop)).app_state, "acknowledged");
+    gate.db.exec("CREATE TABLE admin_relay_operations(request_key TEXT,request TEXT,receipt TEXT,owner_id TEXT,dispatched INTEGER,released INTEGER)");
+    gate.db.prepare("INSERT INTO admin_relay_operations VALUES(?,?,?,?,1,0)").run(
+      "ai-vm:" + start.idempotency_key, JSON.stringify(start), JSON.stringify({ status: "succeeded" }), "canonical-image-start",
+    );
+    // Fresh readiness and a completed start cannot prove the old image settled.
+    f.backend.idle = true;
+    await assert.rejects(gate.settle(start));
+    assert.equal(f.broker.snapshot().lane, "quarantined");
+    assert.equal(f.broker.dispatchImpact().uncertain, true);
+    assert.equal(f.backend.calls.length, 1);
+    gate.db.prepare("INSERT INTO admin_relay_operations VALUES(?,?,?,?,1,0)").run(
+      "ai-vm:" + stop.idempotency_key, JSON.stringify(stop), JSON.stringify({ status: "succeeded" }), "canonical-image-stop",
+    );
+    await gate.settle(start); // Real UDS handler invokes the production ImageBroker.
+    assert.equal(f.broker.dispatchImpact().uncertain, false);
+    assert.equal(gate.held("image"), true);
+    assert.equal(f.broker.get(f.session.id, queued.id).state, "queued");
+    assert.equal(f.broker.get(f.session.id, queued.id).seed, 72);
+    await delay(20);
+    assert.equal(f.backend.calls.length, 1, "settlement must not release the held queue");
+    gate.release(stop);
+    f.broker.notifyAvailabilityChanged();
+    await until(() => f.backend.calls.length === 2);
+    assert.equal(f.backend.calls[1].input.seed, 72);
+    assert.equal(f.broker.get(f.session.id, queued.id).state, "running");
+    assert.equal((await f.submit("private-uncertain-image", { seed: 71 })).id, active.id);
+    await f.backend.complete();
+    await until(() => f.broker.get(f.session.id, queued.id).state === "completed");
+    assert.equal(f.backend.calls.length, 2, "the ambiguous image is never replayed");
+  } finally {
+    await app.close();
+    gate.close();
+  }
 });
