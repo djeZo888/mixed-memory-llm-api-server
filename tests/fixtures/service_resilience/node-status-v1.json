@@ -58,7 +58,54 @@
       "total_bytes": null,
       "available_bytes": null,
       "read_bytes_per_second": null,
-      "write_bytes_per_second": null
+      "write_bytes_per_second": null,
+      "volumes": [
+        {
+          "volume_id": "root",
+          "mount_point": null,
+          "filesystem_uuid": null,
+          "filesystem_type": null,
+          "state": "unknown",
+          "reason": null,
+          "observed_at": null,
+          "age_ms": null,
+          "freshness": "unknown",
+          "total_bytes": null,
+          "available_bytes": null,
+          "read_bytes_per_second": null,
+          "write_bytes_per_second": null
+        },
+        {
+          "volume_id": "data",
+          "mount_point": null,
+          "filesystem_uuid": null,
+          "filesystem_type": null,
+          "state": "unknown",
+          "reason": null,
+          "observed_at": null,
+          "age_ms": null,
+          "freshness": "unknown",
+          "total_bytes": null,
+          "available_bytes": null,
+          "read_bytes_per_second": null,
+          "write_bytes_per_second": null
+        },
+        {
+          "volume_id": "models",
+          "mount_point": null,
+          "filesystem_uuid": null,
+          "filesystem_type": null,
+          "state": "unknown",
+          "reason": null,
+          "observed_at": null,
+          "age_ms": null,
+          "freshness": "unknown",
+          "total_bytes": null,
+          "available_bytes": null,
+          "read_bytes_per_second": null,
+          "write_bytes_per_second": null
+        }
+      ]
     },
     "network": {
       "state": "unknown",
@@ -87,6 +134,7 @@
       "ready": null,
       "admitting": null,
       "hardware_latched": null,
+      "hardware_latched_boot_id": null,
       "required_gpu_uuids": [
         "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
       ],
@@ -115,6 +163,7 @@
       "ready": null,
       "admitting": null,
       "hardware_latched": null,
+      "hardware_latched_boot_id": null,
       "required_gpu_uuids": [
         "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
       ],
@@ -143,6 +192,7 @@
       "ready": null,
       "admitting": null,
       "hardware_latched": null,
+      "hardware_latched_boot_id": null,
       "required_gpu_uuids": [
         "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
       ],
@@ -171,6 +221,7 @@
       "ready": null,
       "admitting": null,
       "hardware_latched": null,
+      "hardware_latched_boot_id": null,
       "required_gpu_uuids": [],
       "activity": "unknown",
       "queue_depth": null,
@@ -182,5 +233,16 @@
       "operation_profiles": []
     }
   ],
+  "node_manager": {
+    "state": "unknown",
+    "observed_at": null,
+    "age_ms": null,
+    "freshness": "unknown",
+    "reason": "not_observed",
+    "service_id": "node",
+    "running": null,
+    "generation": null,
+    "actions": []
+  },
   "gpus": []
 }

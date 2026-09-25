@@ -2,7 +2,7 @@
 
 Frozen by root's 2026-09-25 contract review and subsequent independent-transport
 amendment. Exact shared wire fixtures are in
-`tests/fixtures/service_resilience/{node-status-v1,gpu-v1,node-action-v1,node-operation-v1}.json`.
+`tests/fixtures/service_resilience/{node-status-v1,gpu-v1,node-action-v1,node-operation-v1,disk-volumes-v1}.json`.
 This is a source checkpoint; the implementation limits below are release gates.
 
 ## Transport and identity
@@ -66,9 +66,16 @@ an empty capability list. Configured context is distinct from measured occupied
 context; known deployed text configuration remains480000.
 
 Generations change with relevant boot/identity/selection/latch/ownership, not
-metric polls. Canonical text generation remains authoritative. Unknown generation
+metric polls. Node generations are stable JSON-safe fingerprints incorporating the canonical text
+slot generation, selected deployment, concrete owner identity and protected latch
+identity. They are node CAS tokens, not interchangeable with legacy control tokens. Unknown generation
 rejects actions. A positive hardware latch survives stale telemetry; absence of
-a latch reader is null, never a fabricated safe state.
+a latch reader is null, never a fabricated safe state. Each service adds nullable
+`hardware_latched_boot_id`, retaining the original positive latch boot. False
+requires a fresh current-boot exact required-UUID validation; an absent latch
+record is null. Internal validation age plus cached sample age must be <=15s.
+Current-boot positive cannot clear from an HTTP response or negative snapshot.
+A prior-boot positive clears only after protected new-boot hardware validation.
 
 Resources are independently enveloped cpu/memory/disk/network. CPU percent uses
 100%=all node logical CPUs; capacity is bytes; I/O/network rates are bytes/s;
@@ -77,19 +84,33 @@ Current/max PCIe generation/width are separate. Temperature min/max carry
 `sampling_since`; missing sensor is null. Exact names are fixed by fixtures.
 No prompt/chat/credential/argv/raw exception data is public.
 
+`resources.disk.volumes` adds three stable `volume_id` values: `root`, `data`,
+`models`. Each has nullable `mount_point`, `filesystem_uuid`, `filesystem_type`,
+capacity/rates and its own observation envelope. State is ok|unknown|unavailable;
+reason is null|registration_unknown|mount_identity_unavailable|capacity_unavailable.
+Root-only legacy disk numeric fields remain compatible. Never sum registered
+volumes because roles can share a filesystem. Missing or misbound model mounts
+cannot publish root/data fallback capacity. Rates require two successful counter
+samples. Network rates cover guest physical/virtio NICs, excluding virtual
+bridge/veth/loopback double counting. Disk and network use independent bounded slots.
+
+Additional inventory-only GPUs remain visible as unassigned rows with unknown
+telemetry; they allocate no automatic observer or model placement. `node_manager`
+observes llm-node process state with an empty action list; no self-stop target exists.
+
 ## Boot hardware latch
 
 Proven absence requires matching boot ID and two distinct increasing successful
 complete inventories, each fresh and collected after120s boot grace. Explicit
 proven typed hardware faults may latch immediately under a reviewed producer;
-this checkpoint conservatively requires two consistent fault receipts too.
+the owner source now implements this immediate typed-fault path.
 Generic NVML errors/ECC counts alone are not proven hardware fault. App restart,
 reset and late healthy probes in the same boot cannot clear the latch. A new boot
 plus valid healthy target evidence clears it. Unknown new-boot evidence does not.
 Software failure and uncertain-request quarantine are separate.
 
-Runtime owners must enforce this latch for boot restore, manual start and image
-recovery before release. Protected persistence precedes publishing transitions;
+The text and image source owners enforce this latch for boot restore, manual
+start/restart and image explicit recovery, under the existing canonical lease. Protected persistence precedes publishing transitions;
 missing/unreadable state cannot silently initialize a fresh latch. Passive GET
 only reads cached latch results.
 
@@ -121,20 +142,62 @@ proven supported dedicated scope, and no other-GPU/global reset fallback.
 Errors:400 malformed,404 unknown operation,409 stale/conflict/confirmation,
 422 unsupported,503 owner/storage/deadline unavailable.
 
-## This source checkpoint's limits
+## Current source checkpoint and activation boundary
 
-The standalone candidate collects passive boot/inventory/process/CPU/memory and
-independent GPU telemetry. It deliberately reports unknown model readiness,
-installed metadata, canonical generation and latch state until protected owner
-adapters exist. Disk/network resource fields remain null. It is not a routing
-readiness source yet. Unknown aggregate telemetry must not kill healthy in-flight
-work or erase a known latch/quarantine; harness needs independent passive backend
-readiness for routing.
+Production source now wires canonical owner/process/selection/latch observations,
+exact text aliases and configured480000 context, protected installed image profiles,
+passive authenticated text readiness and image-capabilities, independently bounded
+CPU/memory/disk/network/GPU collectors, and fixed owner action adapters. Ready
+never proves idle. Image ready/busy/admitting=false remains available backpressure;
+startup/unhealthy readiness uncertainty is a temporary unknown admission gate.
+The lifetime does not require successful storage/control/chat observation.
 
-All production mutations return422: the typed owner seam and fixture durable
-receipts do not implement actual canonical action dispatch. Protected latch
-persistence and enforcement exist as a tested injected component, not wired to
-live owners. Runtime scheduler binding is separate required follow-up. Changing
-the private port policy requires a reviewed additive policy/receipt migration;
-source replacement alone must not overwrite current protected network state.
-No deployment or live acceptance is established by this checkpoint.
+Node status and operation GETs remain cached with no refresh/reconcile/mutation.
+One scheduled hardware-evidence slot consumes independently bounded exact-UUID
+and complete-inventory receipts under the existing canonical lease. Hardware
+proof timestamps are retained through storage delays and cached reads. This
+producer never stops work based on unknown/stale observations. Healthy inference
+start depends on its existing owner and guards, not availability of llm-node.
+
+Actions now delegate text start/stop/restart to actual Manager/ManagerSession
+preflight and borrowed lease; image and failed-control actions use fixed systemd
+owners. A single bounded async admission/execution slot persists a protected
+registered journal/audit before dispatch. CAS is rechecked after slow preflight,
+immediately before the fixed owner call. Journal capacity128 refuses new entries
+rather than dropping idempotency history. Ambiguous write outcomes force a
+protected re-read; ordinary pending work is interrupted without replay after
+restart. A recorded reboot remains unknown until later changed-boot proof.
+An inherited old-boot latch may reach journaled exact hardware validation; if it
+clears, changed generation yields a failed/stale_state receipt with no lifecycle
+command. Refresh and new explicit confirmation are required.
+
+A successful stop/restart receipt also proves that the old owned invocation
+settled. Text Manager completion and image completion verify the captured old
+container independently of a ready replacement: successful exact-ID absence,
+stopped/PID0, or a canonical same-container restart with changed PID and
+StartedAt. Image restart additionally requires a different owner run_id; image
+stop requires the native backend stopped, not only the API unit. Fixed control
+stop requires MainPID0, and restart requires changed InvocationID and PID.
+Unknown or contradictory settlement evidence cannot report succeeded.
+Readiness alone never clears uncertain request quarantine, and an old request
+is never replayed. Consumers may clear only the matching confirmed stop/restart
+quarantine before using fresh readiness to admit new work.
+
+Production GPU reset returns422/reset_scope_unproven until reviewed supported
+dedicated scope and complete concrete OS-consumer absence exist. The adapter has
+no global reset fallback and the fixture proof seam is not live reset acceptance.
+Orderly node reboot is self-only; no Proxmox or power-on route exists.
+
+This is source/offline acceptance only. The runtime worker owns scheduler overlays
+and launcher readiness; current old runtime is not claimed to expose the new route.
+Existing SGLang lifecycle/control probe now requires that passive route and has
+no generating health fallback; GLM probe semantics are unchanged. Revised critical
+source invalidates prior exact receipts. Historical receipts and runtime pins are
+preserved. Root must review the integrated immutable source, runtime file/hash
+handoff, protected receipt/config/closure transition, existing storage guards,
+node unit/path permissions, and additive private30008 policy before activation.
+See [transition proposal](h005-owner-source-transition.md) and
+[hardware policy](hardware-owner-policy.md). Worker2 separately owns harness freeze,
+quarantine, routing and UI; fixtures here are not cross-host acceptance. Linux
+systemd actions, live inference, GPU reset support, reboot and >=11-minute native
+idle/wake remain separate authorized acceptance work.

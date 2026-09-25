@@ -320,6 +320,11 @@ class ManagerPairIntegration(unittest.TestCase):
             'paths': {'state': {'role': 'data', 'suffix': 'services/llm-manager/active'}}},
             binding=self.binding, test_paths=True,
             run_fn=lambda *a, **k: self.fail('unexpected external process'))
+        # Hardware persistence/lease is exercised by test_hardware_policy;
+        # these existing source/resource fixtures enter prepare_start directly.
+        self.hardware_patch = patch.object(self.manager, 'require_hardware')
+        self.hardware_patch.start()
+        self.addCleanup(self.hardware_patch.stop)
         self.inspects = []
         self.images = {}
         def capture(*args, **kwargs):

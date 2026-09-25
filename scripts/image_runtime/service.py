@@ -37,6 +37,7 @@ from control.installation import protected_file
 from install import storage_io
 from lifecycle.manager import StorageRunner
 from lifecycle.storage_binding import RegisteredStorageBinding
+from lifecycle.hardware_policy import HardwarePolicy, RegisteredLatchStore
 
 
 def require(condition, code):
@@ -103,6 +104,12 @@ class Runtime:
             require(hashlib.sha256(protected_file(BASE / 'source' / name)).hexdigest() == digest,
                     'runtime_source_changed')
 
+    def require_hardware(self):
+        lease = getattr(self, 'lease', None)
+        store = RegisteredLatchStore(self.binding, lease=lease, storage_io=storage_io)
+        HardwarePolicy(store, lease=lease,
+                       run=lambda argv, timeout: run(argv, timeout=timeout).stdout).require_start([GPU_UUID])
+
     def guards(self):
         for extra in ([], ['--root-guard']):
             run(['/usr/bin/python3', '-I', '-B', str(RELEASE / 'scripts/common/registered-storage.py'),
@@ -151,11 +158,29 @@ class Runtime:
                 'owned_backend_identity_mismatch')
         requests = host['DeviceRequests']
         require(len(requests) == 1 and requests[0]['DeviceIDs'] == [GPU_UUID]
+                and requests[0].get('Count') == 0
+                and requests[0].get('Capabilities') == [['gpu']]
+                and requests[0].get('Driver') in ('', 'nvidia')
+                and not requests[0].get('Options')
                 and host['CpusetCpus'] == '8-15' and host['Memory'] == CAP_BYTES
                 and host['MemorySwap'] == CAP_BYTES and host['RestartPolicy']['Name'] == 'no'
                 and host['NetworkMode'] == NETWORK
                 and host['PortBindings'] == {'30007/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '30007'}]}
-                and value['Config']['User'] == '1000:1001',
+                and value['Config']['User'] == '1000:1001'
+                and host.get('Privileged') is False and not host.get('Devices')
+                and not host.get('DeviceCgroupRules')
+                and host.get('CapDrop') == ['ALL']
+                and 'no-new-privileges' in host.get('SecurityOpt', [])
+                and host.get('PidMode', '') == ''
+                and all(mount.get('Source') != '/'
+                        and not any(str(mount.get('Source', '')).startswith(prefix)
+                                    or str(mount.get('Destination', '')).startswith(prefix)
+                                    for prefix in ('/dev', '/proc', '/sys'))
+                        for mount in value.get('Mounts', []))
+                and sum(item == 'CUDA_VISIBLE_DEVICES=' + GPU_UUID for item in value['Config'].get('Env', [])) == 1
+                and sum(item == 'NVIDIA_VISIBLE_DEVICES=' + GPU_UUID for item in value['Config'].get('Env', [])) == 1
+                and sum(item.startswith('CUDA_VISIBLE_DEVICES=') for item in value['Config'].get('Env', [])) == 1
+                and sum(item.startswith('NVIDIA_VISIBLE_DEVICES=') for item in value['Config'].get('Env', [])) == 1,
                 'owned_backend_policy_mismatch')
         if value['State']['Running']:
             require(value['NetworkSettings']['Ports'] ==
@@ -363,12 +388,20 @@ class Runtime:
                 'native_network_attachment_mismatch')
         require(self.native_health(), 'native_backend_unready')
         pids = {int(line.split()[0]) for line in run(['docker', 'top', value['Id'], '-eo', 'pid']).stdout.splitlines()[1:]}
-        output = run(['nvidia-smi', '--query-compute-apps=gpu_uuid,pid,used_memory',
-                      '--format=csv,noheader,nounits']).stdout
-        apps = [tuple(part.strip() for part in line.split(',')) for line in output.splitlines()]
-        ada = [row for row in apps if row[0] == GPU_UUID]
-        require(ada and all(int(row[1]) in pids for row in ada), 'ada_process_ownership_mismatch')
-        require(all(row[0] == GPU_UUID for row in apps if int(row[1]) in pids), 'image_process_on_other_gpu')
+        output = run(['nvidia-smi', '--id=' + GPU_UUID,
+                      '--query-compute-apps=gpu_uuid,pid,used_memory',
+                      '--format=csv,noheader,nounits'], timeout=5).stdout
+        require(isinstance(output, str) and len(output) <= 65536, 'ada_process_inventory_invalid')
+        ada = [tuple(part.strip() for part in line.split(','))
+               for line in output.splitlines() if line.strip()]
+        require(ada and all(len(row) == 3 and row[0] == GPU_UUID and row[1].isascii()
+                            and row[1].isdigit() and int(row[1]) > 0
+                            and row[2].isascii() and row[2].isdigit() for row in ada)
+                and len({row[1] for row in ada}) == len(ada), 'ada_process_inventory_invalid')
+        require(all(int(row[1]) in pids for row in ada), 'ada_process_ownership_mismatch')
+        # Exact protected DeviceRequests, CUDA/NVIDIA visible-device settings,
+        # absence of privileged/device bypass, and target process ownership prove
+        # this container's assignment. No unassigned/peer GPU query is needed.
         device = self.current_device()
         require(device['free_bytes'] * 20 >= device['total_bytes'], 'ada_current_margin_below_5_percent')
         return {'container_id': value['Id'], 'started_at': value['State']['StartedAt'],
@@ -381,6 +414,7 @@ class Runtime:
         deadline = OPERATION_DEADLINE
         require(deadline is not None, 'owned_start_deadline_required')
         self.guards()
+        self.require_hardware()
         state = self.state()
         require(self.inspect_owned(state, missing_ok=True) is None, 'reset_owned_backend_before_start')
         self.check_network(state)
@@ -411,6 +445,7 @@ class Runtime:
                         time.sleep(0.4)
                         require(sampler.poll() is None, 'telemetry_start_failed')
                         self.guards()
+                        self.require_hardware()
                         self.require_ada_idle()
                         require(self.current_device()['free_bytes'] >= 33131614782 + device['total_bytes'] // 20,
                                 'ada_preload_weight_and_margin_unavailable')
@@ -492,8 +527,23 @@ def recover():
     runtime = Runtime()
     # Do not hold a lease while a separately invoked systemd ExecStart borrows it.
     # Every subprocess lifecycle owner independently takes the SAME canonical lease.
+    # A latched recovery attempt must not stop a healthy peer or existing work.
+    # Gate outside cleanup: failure before mutation must cause no stop/reset.
     try:
-        with acquire_lease(blocking=False):
+        with acquire_lease(blocking=False) as lease:
+            runtime.lease = lease
+            runtime.guards()
+            runtime.require_hardware()
+    except BaseException:
+        OPERATION_DEADLINE = None
+        raise
+    mutation_started = False
+    try:
+        with acquire_lease(blocking=False) as lease:
+            runtime.lease = lease
+            runtime.guards()
+            runtime.require_hardware()
+            mutation_started = True
             runtime.reset_owned()
         result = run(['systemctl', 'restart', UNIT], timeout=840, check=False)
         require(result.returncode == 0, 'owned_systemd_restart_warm_failed')
@@ -505,6 +555,11 @@ def recover():
             runtime.guards()
         print(json.dumps({'status': 'warm', 'run_id': state['run_id']}), flush=True)
     except BaseException:
+        # A second-lease contention or changed guard/latch can refuse after the
+        # initial preflight. No reset/restart was dispatched, so cleanup must
+        # not stop work belonging to the intervening owner.
+        if not mutation_started:
+            raise
         # Stop/cancel the exact systemd job as well as its Docker workload.
         # Killing only the systemctl or docker-exec client is not cancellation.
         OPERATION_DEADLINE = started + 900
@@ -536,7 +591,8 @@ def main():
     OPERATION_DEADLINE = started + (775 if sys.argv[1] == 'start' else 100)
     SETTLEMENT_DEADLINE = started + (835 if sys.argv[1] == 'start' else 115)
     runtime = Runtime()
-    with acquire_lease(blocking=False):
+    with acquire_lease(blocking=False) as lease:
+        runtime.lease = lease
         if sys.argv[1] == 'start':
             runtime.start()
         else:
