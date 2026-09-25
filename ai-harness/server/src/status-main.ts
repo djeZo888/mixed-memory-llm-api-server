@@ -1,7 +1,7 @@
 import { chmod, lstat, realpath } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { readProtectedCredential } from "./protected-credential.js";
+import { readStatusControlCredential } from "./status-credential.js";
 import { openDispatchFreeze } from "./dispatch-freeze.js";
 import { AdminActions } from "./admin-actions.js";
 import { nodeClient } from "./node-client.js";
@@ -27,7 +27,7 @@ export async function startStatus() {
     throw Error("Unsafe status socket directory");
   const keyFile = process.env.AI_HARNESS_CONTROL_KEY_FILE;
   if (!keyFile) throw Error("Protected control credential not configured");
-  const key = await readProtectedCredential(keyFile);
+  const key = await readStatusControlCredential(keyFile);
   const freeze = openDispatchFreeze();
   const backends = {
     "ai-vm": nodeClient("ai-vm", key),
