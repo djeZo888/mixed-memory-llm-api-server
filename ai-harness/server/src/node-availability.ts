@@ -9,13 +9,23 @@ import type {
 const SERVICES = ["qwen-gpu0", "qwen-gpu1", "image"] as const;
 type ServiceId = (typeof SERVICES)[number];
 export interface HardwareLatch {
-  bootId: string;
+  /** Authoritative latch origin, never inferred from the current node boot. */
+  bootId: string | null;
+  /** Conservative reboot boundary when the authority could not identify origin. */
+  observedBootId?: string | null;
   requiredGpuUuids: string[];
 }
 export type HardwareLatchLedger = Partial<Record<ServiceId, HardwareLatch>>;
 export interface NodeAvailabilityOptions {
   /** Direct passive node transport; never the status/admin daemon or native /health. */
   backend: Pick<NodeBackend, "status">;
+  /** Authenticated fixed passive backend probes, independently capped by service. */
+  readiness?: Partial<
+    Record<
+      ServiceId,
+      (signal: AbortSignal) => Promise<{ ready: boolean | null }>
+    >
+  >;
   initialLatches?: HardwareLatchLedger;
   /** Must synchronously durably commit the full replacement ledger before returning. */
   onLatch: (ledger: HardwareLatchLedger) => void;
@@ -46,6 +56,10 @@ const validUuid = (id: string) => /^GPU-[0-9a-f-]{36}$/i.test(id);
  * neither removing a key path nor a status-daemon outage clears hardware latches. */
 export class NodeAvailability {
   private readonly cache: ObserverCache<NodeSnapshot>;
+  private readonly readiness = new Map<
+    ServiceId,
+    ObserverCache<{ ready: boolean | null }>
+  >();
   private latches: HardwareLatchLedger;
   private ledgerFailed = false;
   private lastValue?: NodeSnapshot;
@@ -58,7 +72,13 @@ export class NodeAvailability {
       if (
         !(SERVICES as readonly string[]).includes(id) ||
         !value ||
-        !/^[a-zA-Z0-9_.:-]{1,128}$/.test(value.bootId) ||
+        (value.bootId !== null &&
+          (typeof value.bootId !== "string" ||
+            !/^[a-zA-Z0-9_.:-]{1,128}$/.test(value.bootId))) ||
+        (value.observedBootId !== undefined &&
+          value.observedBootId !== null &&
+          (typeof value.observedBootId !== "string" ||
+            !/^[a-zA-Z0-9_.:-]{1,128}$/.test(value.observedBootId))) ||
         !Array.isArray(value.requiredGpuUuids) ||
         !value.requiredGpuUuids.length ||
         value.requiredGpuUuids.some(
@@ -78,6 +98,19 @@ export class NodeAvailability {
         changed: () => this.publish(),
       },
     );
+    for (const id of SERVICES) {
+      const probe = options.readiness?.[id];
+      if (probe)
+        this.readiness.set(
+          id,
+          new ObserverCache(probe, {
+            now: options.now,
+            deadlineMs: options.deadlineMs ?? 2000,
+            staleMs: this.staleMs,
+            changed: () => this.publish(),
+          }),
+        );
+    }
   }
   private fresh(
     observation: {
@@ -97,7 +130,6 @@ export class NodeAvailability {
     );
   }
   private applyLatches(value: NodeSnapshot) {
-    if (!value.boot_id) return;
     const next = structuredClone(this.latches);
     for (const id of SERVICES) {
       const service = value.services.find((s) => s.service_id === id);
@@ -109,7 +141,15 @@ export class NodeAvailability {
         service.required_gpu_uuids.length
       ) {
         next[id] = {
-          bootId: value.boot_id,
+          bootId: service.hardware_latched_boot_id,
+          ...(service.hardware_latched_boot_id === null
+            ? {
+                observedBootId:
+                  old?.bootId === null
+                    ? (old.observedBootId ?? value.boot_id)
+                    : value.boot_id,
+              }
+            : {}),
           requiredGpuUuids: [...new Set(service.required_gpu_uuids)],
         };
         continue;
@@ -117,7 +157,9 @@ export class NodeAvailability {
       const inventory = value.inventory;
       if (
         old &&
-        old.bootId !== value.boot_id &&
+        value.boot_id !== null &&
+        (old.bootId ?? old.observedBootId) != null &&
+        (old.bootId ?? old.observedBootId) !== value.boot_id &&
         service.hardware_latched === false &&
         this.fresh(service, 0) &&
         this.fresh(inventory, 0) &&
@@ -170,9 +212,17 @@ export class NodeAvailability {
   }
   private readable(id: ServiceId): ServiceAvailability {
     if (this.latches[id])
-      return { state: "unavailable", reason: "hardware_latched" };
+      return {
+        state: "unavailable",
+        reason: "hardware_latched",
+        dispatch: "reject",
+      };
     if (this.ledgerFailed)
-      return { state: "unknown", reason: "availability_ledger_unavailable" };
+      return {
+        state: "unknown",
+        reason: "availability_ledger_unavailable",
+        dispatch: "hold",
+      };
     const cached = this.cache.snapshot();
     const value = cached.value;
     const service = value?.services.find((s) => s.service_id === id);
@@ -184,33 +234,69 @@ export class NodeAvailability {
       !service ||
       !this.fresh(service, cached.ageMs ?? this.staleMs)
     )
-      return { state: "unknown", reason: "readiness_unknown" };
+      return {
+        state: "unknown",
+        reason: "readiness_unknown",
+        dispatch: "hold",
+      };
     if (service.hardware_latched === true)
-      return { state: "unavailable", reason: "hardware_latched" };
+      return {
+        state: "unavailable",
+        reason: "hardware_latched",
+        dispatch: "reject",
+      };
     if (
       service.availability === "unavailable" ||
       service.ready === false ||
-      service.admitting === false
+      (id !== "image" && service.admitting === false)
     )
-      return { state: "unavailable", reason: service.reason ?? "not_ready" };
+      return {
+        state: "unavailable",
+        reason: service.reason ?? "not_ready",
+        dispatch: "hold",
+      };
     if (
       service.availability !== "available" ||
       service.ready !== true ||
-      service.admitting !== true ||
+      (id !== "image" && service.admitting === false) ||
       service.hardware_latched !== false
     )
-      return { state: "unknown", reason: "readiness_unknown" };
-    return { state: "available" };
+      return {
+        state: "unknown",
+        reason: "readiness_unknown",
+        dispatch: "hold",
+      };
+    return { state: "available", dispatch: "allow" };
   }
   /** Configured H005 admission gates unknown readiness without inventing a latch. */
   readonly get: AvailabilityProvider = (alias) => {
     const id = serviceId(alias);
-    const value = id
+    const value: ServiceAvailability = id
       ? this.readable(id)
-      : { state: "unknown" as const, reason: "readiness_unknown" };
-    return value.state === "unknown"
-      ? { state: "unavailable", reason: value.reason }
-      : value;
+      : { state: "unknown", reason: "readiness_unknown", dispatch: "hold" };
+    if (
+      id &&
+      !this.stopped &&
+      value.state === "unknown" &&
+      value.reason === "readiness_unknown"
+    ) {
+      const fallback = this.readiness.get(id)?.snapshot();
+      const last = this.cache
+        .snapshot()
+        .value?.services.find((service) => service.service_id === id);
+      if (
+        last?.availability !== "unavailable" &&
+        fallback?.state === "fresh" &&
+        fallback.error === null &&
+        fallback.value?.ready === true
+      )
+        return {
+          state: "unknown",
+          reason: "passive_backend_ready",
+          dispatch: "allow",
+        };
+    }
+    return value;
   };
   /** Public display retains unknown separately from hardware/service unavailability. */
   states() {
@@ -228,6 +314,13 @@ export class NodeAvailability {
     // Expiry is published every tick, including while an abort-ignoring probe is hung.
     this.publish();
     await this.cache.poll();
+    await Promise.all(
+      [...this.readiness].map(async ([id, cache]) => {
+        const state = this.readable(id);
+        if (state.state === "unknown" && state.reason === "readiness_unknown")
+          await cache.poll();
+      }),
+    );
   }
   start() {
     if (this.timer || this.stopped) return;
@@ -242,5 +335,6 @@ export class NodeAvailability {
     this.stopped = true;
     clearInterval(this.timer);
     this.cache.stop();
+    for (const cache of this.readiness.values()) cache.stop();
   }
 }

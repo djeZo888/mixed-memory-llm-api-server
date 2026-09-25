@@ -32,26 +32,44 @@ two 480000 Qwens plus Ada image geometry/approval rules are unchanged.
   CPU (100%=all logical CPUs), memory/pressure, disk/network and GPU facts retain
   nullable values and independent freshness. Public projection removes arbitrary
   payloads, private errors, commands, histories, prompts and credentials.
+  Registered root/data/models volume roles render separately with their own
+  freshness and nullable capacities; roles are never summed. GPU rows include
+  UUID suffix/assignment and sampled temperature range/interval. All visual
+  evidence uses synthetic fixtures, including four distinguishable GPUs.
 - Configured chat admission observes the passive node endpoint **directly**,
   independently from the status daemon. `--node-control-key-file ABS` opts the
   existing server launcher into that source seam. Without configuration and
   without a previously persisted latch, baseline admission is preserved. Once
-  configured, unknown/stale readiness gates new affected work transiently; it
-  never proves missing hardware or terminates healthy dispatched work.
+  configured, unknown/stale telemetry triggers independent bounded passive
+  readiness: text30002/30004 `/v1/readiness` (strict ready/up contract) and
+  image30006 `/v1/image-capabilities` (ready with admitting or busy). These routes
+  were explicitly approved by root; the new text endpoint is Worker1-owned and
+  not deployed in this phase. No `/health` fallback is used. Telemetry display
+  stays unknown, while independently ready services can dispatch. If readiness
+  is also unknown, dispatch pauses and existing queue/approval work is retained.
+  Positive latches, confirmed unavailability and request quarantine cannot be
+  bypassed by this fallback. Readiness is never evidence of idle.
 - Positive authoritative hardware latches persist in `node_hardware_latches`
   separately from `gateway_lanes`. App restart, late readiness and GPU reset do
-  not clear them. Clearing requires a different boot, complete fresh valid
+  not clear them. `hardware_latched_boot_id` retains the authoritative latch
+  origin, including a latch inherited from a previous boot; a current boot is
+  never substituted for unknown origin. Unknown-origin receipts retain a separate
+  first observed-boot boundary and stay blocked on that boot. Clearing requires
+  a different boot, complete fresh valid
   inventory of exact required UUIDs, no target faults, and authoritative service
   validation, durably committed before reuse. Existing ambiguous request lanes
   remain quarantined even after fresh status. No replay/retry/GLM fallback was
   added. The one shared FIFO continues across main/child/compaction requests.
-- One eligible Qwen serves supported tasks. Last-lane loss promptly rejects
+- One eligible Qwen serves supported tasks. Permanent last-lane loss promptly rejects
   queued work and releases byte reservations. Image known-unavailable admission
-  rejects undispatched queued/approval jobs and cannot reopen on readiness while
+  permanently rejects undispatched queued/approval jobs and cannot reopen on readiness while
   the hardware gate is closed; dispatched partial work and artifacts retain their
   original settlement path. Idempotency, seeds, references, original geometry,
   resize approval and output validation are preserved. Chat/tools expose degraded
-  or unknown availability without claiming absent hardware.
+  or unknown availability without claiming absent hardware. A healthy busy
+  image service with `admitting:false` stays eligible; its owned lane schedules
+  the waiters. Temporary observation failure holds pending work, not terminally
+  fails it. A hold during image preparation retains the existing reservation.
 
 ## Explicit follow-up before release
 
@@ -82,14 +100,10 @@ Immediate fresh Worker2 source follow-up must:
 4. Integrate exact Worker1 producer/action fixtures and inspect source together.
    Test interruption/late work/idempotency/conflict/restart/no-replay end to end
    before root authorizes a deployment task.
-5. Complete independent per-backend passive readiness fallback for a telemetry-only
-   node30008 outage. The current configured provider gates unknown readiness; it
-   does **not** yet continue healthy inference when node telemetry alone fails.
-   Worker1 must identify/expose genuinely passive backend readiness. Do not use
-   a generating native health or reconciling GET as a substitute. Bounded fallback
-   may admit independently confirmed healthy lanes while telemetry still displays
-   unknown, but must never override a positive latch, confirmed unavailability or
-   request quarantine. Test collector-down/healthy-backend and both-unknown cases.
+5. Integrate Worker1's new passive text `/v1/readiness` implementation and confirm
+   its exact alias/ready/state/status contract against these consumer fixtures.
+   The source fallback and production adapter-to-broker outage/busy/latch fixtures
+   are included here, but actual cross-host readiness behavior is NOT_TESTED.
 
 ## Credential provisioning template (not performed)
 
@@ -137,7 +151,7 @@ independent status evidence and helper audit for review.
 
 From `ai-harness/server`: `npm ci --ignore-scripts --no-audit --no-fund`,
 `npm run build`, and `./node_modules/.bin/tsx --test --test-timeout=15000
-test/{status-service,admin-security,observer-cache,node-availability,gateway,image-broker,config,app}.test.ts`.
+test/{status-service,admin-security,observer-cache,node-availability,backend-readiness,gateway,image-broker,config,app}.test.ts`.
 The synthetic UI fixture is `node test/status-browser.mjs /ABS/OUTSIDE/GIT/status.png`
 after build; it uses installed Chrome with a fresh profile and fake backends,
 never a production startup, model or chat.

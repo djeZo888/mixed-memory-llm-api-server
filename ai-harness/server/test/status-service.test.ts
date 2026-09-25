@@ -217,3 +217,26 @@ test("typed async admin relay keeps key/boot/generation, namespaces receipts and
   assert.equal(calls, 1);
   await service.app.close();
 });
+
+test("exact additive disk roles retain separate capacities/freshness and unavailable mount never borrows root", async () => {
+  const raw = vm(),
+    disk = fixture("disk-volumes-v1");
+  raw.resources.disk = disk;
+  const parsed = sanitizeNode(raw, "ai-vm");
+  assert.deepEqual(parsed.resources.disk, disk);
+  disk.volumes[2].state = "unavailable";
+  disk.volumes[2].reason = "mount_identity_unavailable";
+  disk.volumes[1].age_ms = 16000;
+  const service = createStatusService({
+    backends: { "ai-vm": backend(raw), "ai-harness": backend(null) },
+    autoPoll: false,
+  });
+  await service.caches["ai-vm"].poll();
+  const volumes = service.snapshot()[0]!.resources.disk!.volumes!;
+  assert.equal(volumes[1]!.freshness, "stale");
+  assert.equal(volumes[2]!.total_bytes, null);
+  assert.equal(volumes[2]!.available_bytes, null);
+  assert.equal(volumes[0]!.total_bytes, 34359738368);
+  assert.equal(volumes[2]!.reason, "mount_identity_unavailable");
+  await service.app.close();
+});

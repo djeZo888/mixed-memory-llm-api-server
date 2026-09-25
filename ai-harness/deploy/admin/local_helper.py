@@ -260,7 +260,7 @@ class Operations:
             services.append({**meta, "service_id": service, "generation": observation["generation"] if observation else None,
                              "installed_capabilities": {"harness": ["chat", "gateway"], "search": ["search"], "status": ["node.status", "node.actions"]}[service],
                              "availability": available, "ready": None, "admitting": None,
-                             "required_gpu_uuids": [], "hardware_latched": False,
+                             "required_gpu_uuids": [], "hardware_latched": False, "hardware_latched_boot_id": None,
                              "activity": "unknown", "queue_depth": None, "active_requests": None,
                              "affected_services": [service],
                              "deployment_id": None, "model_alias": None, "configured_context_tokens": None,

@@ -35,6 +35,7 @@ function healthy(boot = "boot-a") {
       ready: true,
       admitting: true,
       hardware_latched: false,
+      hardware_latched_boot_id: null,
     });
   Object.assign(node.inventory, fresh, {
     boot_id: boot,
@@ -85,8 +86,9 @@ test("direct passive backend independently exposes healthy lane aliases and no s
     onLatch: () => {},
   });
   assert.deepEqual(observer.get("qwen3.8-27b"), {
-    state: "unavailable",
+    state: "unknown",
     reason: "readiness_unknown",
+    dispatch: "hold",
   });
   await observer.poll();
   assert.deepEqual(observer.states(), {
@@ -94,8 +96,14 @@ test("direct passive backend independently exposes healthy lane aliases and no s
     qwenGpu1: "available",
     image: "available",
   });
-  assert.deepEqual(observer.get("qwen3.8-27b-gpu0"), { state: "available" });
-  assert.deepEqual(observer.get("image"), { state: "available" });
+  assert.deepEqual(observer.get("qwen3.8-27b-gpu0"), {
+    state: "available",
+    dispatch: "allow",
+  });
+  assert.deepEqual(observer.get("image"), {
+    state: "available",
+    dispatch: "allow",
+  });
   assert.equal(statusCalls, 1);
   observer.stop();
 });
@@ -104,6 +112,7 @@ test("positive hardware latch survives late same-boot readiness and a restarted 
   const f = fixture();
   const latched = healthy();
   latched.services[0].hardware_latched = true;
+  latched.services[0].hardware_latched_boot_id = "boot-a";
   latched.services[0].availability = "unavailable";
   f.set(latched);
   await f.observer.poll();
@@ -115,6 +124,7 @@ test("positive hardware latch survives late same-boot readiness and a restarted 
   assert.deepEqual(f.observer.get("qwen3.8-27b-gpu0"), {
     state: "unavailable",
     reason: "hardware_latched",
+    dispatch: "reject",
   });
   assert.equal(f.observer.get("qwen3.8-27b").state, "available");
   assert.equal(f.writes.length, 1);
@@ -133,6 +143,7 @@ test("new boot needs complete fresh valid inventory without target faults before
   const f = fixture();
   const latched = healthy();
   latched.services[0].hardware_latched = true;
+  latched.services[0].hardware_latched_boot_id = "boot-a";
   f.set(latched);
   await f.observer.poll();
   for (const alter of [
@@ -189,8 +200,9 @@ test("readiness unknown or stale gates only new admission and never writes a har
   f.advance(15000);
   assert.equal(f.observer.states().qwenGpu0, "unknown");
   assert.deepEqual(f.observer.get("qwen3.8-27b-gpu0"), {
-    state: "unavailable",
+    state: "unknown",
     reason: "readiness_unknown",
+    dispatch: "hold",
   });
   const partial = healthy();
   partial.services[0].ready = null;
@@ -306,8 +318,18 @@ test("successful passive snapshots never settle an ambiguous real gateway reques
   const port = (upstream.address() as { port: number }).port;
   let gateway: Gateway | undefined;
   const writes: HardwareLatchLedger[] = [];
+  let telemetryFailed = false;
   const observer = new NodeAvailability({
-    backend: { status: async () => healthy() },
+    backend: {
+      status: async () => {
+        if (telemetryFailed) throw Error("fixture telemetry outage");
+        return healthy();
+      },
+    },
+    readiness: {
+      "qwen-gpu0": async () => ({ ready: true }),
+      "qwen-gpu1": async () => ({ ready: true }),
+    },
     onLatch: (value) => {
       writes.push(value);
     },
@@ -341,7 +363,145 @@ test("successful passive snapshots never settle an ambiguous real gateway reques
   await observer.poll();
   assert.equal(gateway.snapshot().lanes[0]!.availability.state, "available");
   assert.equal(gateway.snapshot().lanes[0]!.state, "quarantined");
+  telemetryFailed = true;
+  await observer.poll();
+  assert.equal(observer.states().qwenGpu1, "unknown");
   assert.equal((await send()).statusCode, 200);
   assert.deepEqual(seen, ["qwen3.8-27b-gpu0", "qwen3.8-27b"]);
   assert.deepEqual(writes, []);
+});
+
+test("passive backend fallback permits telemetry-only outage while preserving unknown public state and hardware latch", async () => {
+  let node = healthy();
+  let failed = false;
+  let reads = 0;
+  const observer = new NodeAvailability({
+    backend: {
+      status: async () => {
+        if (failed) throw Error("telemetry outage");
+        return node;
+      },
+    },
+    readiness: {
+      "qwen-gpu0": async () => {
+        reads++;
+        return { ready: true };
+      },
+      image: async () => ({ ready: false }),
+    },
+    onLatch: () => {},
+  });
+  await observer.poll();
+  assert.equal(reads, 0);
+  failed = true;
+  await observer.poll();
+  assert.deepEqual(observer.get("qwen3.8-27b-gpu0"), {
+    state: "unknown",
+    reason: "passive_backend_ready",
+    dispatch: "allow",
+  });
+  assert.equal(observer.states().qwenGpu0, "unknown");
+  assert.equal(observer.get("image").dispatch, "hold");
+  failed = false;
+  node = healthy();
+  node.services[0].availability = "unavailable";
+  await observer.poll();
+  failed = true;
+  await observer.poll();
+  assert.equal(observer.get("qwen3.8-27b-gpu0").dispatch, "hold");
+  assert.equal(observer.states().qwenGpu0, "unknown");
+  failed = false;
+  node = healthy();
+  node.services[0].hardware_latched = true;
+  node.services[0].hardware_latched_boot_id = "boot-a";
+  await observer.poll();
+  failed = true;
+  await observer.poll();
+  assert.equal(observer.get("qwen3.8-27b-gpu0").dispatch, "reject");
+  observer.stop();
+});
+
+test("independent hung backend readiness probes remain capped and cannot invent admission or hardware absence", async () => {
+  let calls = 0;
+  const observer = new NodeAvailability({
+    backend: {
+      status: async () => {
+        throw Error("telemetry outage");
+      },
+    },
+    readiness: {
+      image: () => {
+        calls++;
+        return new Promise(() => {});
+      },
+    },
+    onLatch: () => assert.fail("unknown must not latch"),
+    deadlineMs: 5,
+  });
+  await observer.poll();
+  await observer.poll();
+  assert.equal(calls, 1);
+  assert.deepEqual(observer.get("image"), {
+    state: "unknown",
+    reason: "readiness_unknown",
+    dispatch: "hold",
+  });
+  observer.stop();
+});
+
+test("inherited latch keeps authoritative origin across reboot and clears only after validation of the new boot", async () => {
+  const f = fixture();
+  const initial = healthy("boot-a");
+  initial.services[0].hardware_latched = true;
+  initial.services[0].hardware_latched_boot_id = "boot-a";
+  f.set(initial);
+  await f.observer.poll();
+  const inherited = healthy("boot-b");
+  inherited.services[0].hardware_latched = true;
+  inherited.services[0].hardware_latched_boot_id = "boot-a";
+  f.set(inherited);
+  await f.observer.poll();
+  assert.equal(f.ledger()["qwen-gpu0"]?.bootId, "boot-a");
+  assert.equal(f.observer.get("qwen3.8-27b-gpu0").dispatch, "reject");
+  f.set(healthy("boot-b"));
+  await f.observer.poll();
+  assert.equal(f.observer.get("qwen3.8-27b-gpu0").dispatch, "allow");
+  const faultedNow = healthy("boot-b");
+  faultedNow.services[0].hardware_latched = true;
+  faultedNow.services[0].hardware_latched_boot_id = "boot-b";
+  f.set(faultedNow);
+  await f.observer.poll();
+  f.set(healthy("boot-b"));
+  await f.observer.poll();
+  assert.equal(f.ledger()["qwen-gpu0"]?.bootId, "boot-b");
+  assert.equal(f.observer.get("qwen3.8-27b-gpu0").dispatch, "reject");
+  f.observer.stop();
+});
+
+test("unknown latch origin is not relabeled current boot and cannot clear on same-boot late success", async () => {
+  const f = fixture();
+  const unknownOrigin = healthy("boot-b");
+  unknownOrigin.services[0].hardware_latched = true;
+  unknownOrigin.services[0].hardware_latched_boot_id = null;
+  f.set(unknownOrigin);
+  await f.observer.poll();
+  assert.deepEqual(f.ledger()["qwen-gpu0"], {
+    bootId: null,
+    observedBootId: "boot-b",
+    requiredGpuUuids: [uuid],
+  });
+  f.set(healthy("boot-b"));
+  await f.observer.poll();
+  assert.equal(f.observer.get("qwen3.8-27b-gpu0").dispatch, "reject");
+  const inheritedUnknown = healthy("boot-c");
+  inheritedUnknown.services[0].hardware_latched = true;
+  inheritedUnknown.services[0].hardware_latched_boot_id = null;
+  f.set(inheritedUnknown);
+  await f.observer.poll();
+  assert.equal(f.ledger()["qwen-gpu0"]?.observedBootId, "boot-b");
+  assert.equal(f.observer.get("qwen3.8-27b-gpu0").dispatch, "reject");
+  f.set(healthy("boot-c"));
+  await f.observer.poll();
+  assert.equal(f.observer.get("qwen3.8-27b-gpu0").dispatch, "allow");
+  f.observer.stop();
 });

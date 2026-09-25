@@ -141,12 +141,18 @@ class Admission {
   }
   private eligible(lane: Lane) {
     return (
-      lane.state !== "quarantined" &&
-      this.available(lane).state !== "unavailable"
+      lane.state !== "quarantined" && this.available(lane).dispatch === "allow"
     );
   }
   private blocked(): GatewayError | undefined {
-    if (this.lanes.some((lane) => this.eligible(lane))) return;
+    if (
+      this.lanes.some(
+        (lane) =>
+          lane.state !== "quarantined" &&
+          this.available(lane).dispatch !== "reject",
+      )
+    )
+      return;
     return this.lanes.some(
       (lane) => this.available(lane).state === "unavailable",
     )
@@ -631,7 +637,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     requireCurrentToken();
     // Credential loading may yield. Recheck before the first upstream byte; an
     // unavailable lane never causes replay or migration of already active work.
-    if (admission.available(lane).state === "unavailable") {
+    if (admission.available(lane).dispatch !== "allow") {
       admission.settle(lane, true);
       reply.raw.removeListener("close", disconnect);
       throw new GatewayError(

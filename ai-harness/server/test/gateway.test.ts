@@ -720,9 +720,11 @@ test("hardware availability remains independent of durable uncertain-request qua
   await (await response).text();
 });
 
-test("stale unknown and collector errors preserve normal admission without declaring hardware absence", async (t) => {
+test("configured unknown and observer errors retain the bounded FIFO until readiness returns", async (t) => {
+  let ready = false;
   const f = await fixture({
     availability: (alias) => {
+      if (ready) return { state: "available" };
       if (alias.endsWith("gpu0"))
         throw new Error("private fixture observer detail");
       return { state: "unknown", reason: "stale" };
@@ -731,12 +733,16 @@ test("stale unknown and collector errors preserve normal admission without decla
   t.after(f.close);
   const a = f.send(),
     b = f.send();
-  await until(() => f.seen.length === 2);
+  await until(() => f.gateway.snapshot().queued === 2);
+  assert.equal(f.seen.length, 0);
   assert.deepEqual(
     f.gateway.snapshot().lanes.map((lane) => lane.availability.state),
     ["unknown", "unknown"],
   );
   assert.ok(!JSON.stringify(f.gateway.snapshot()).includes("private fixture"));
+  ready = true;
+  f.gateway.notifyAvailabilityChanged();
+  await until(() => f.seen.length === 2);
   f.complete(0);
   f.complete(1);
   await Promise.all([a, b].map(async (response) => (await response).text()));

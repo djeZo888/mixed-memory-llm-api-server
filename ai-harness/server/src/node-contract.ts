@@ -93,6 +93,9 @@ const reasons = new Set([
   "confirmation_stale",
   "reboot_awaiting_changed_boot",
   "local_admission_interlock_unavailable",
+  "registration_unknown",
+  "mount_identity_unavailable",
+  "capacity_unavailable",
 ]);
 export const reason = (v: unknown) =>
   typeof v === "string" && reasons.has(v) ? v : v == null ? null : "unknown";
@@ -137,6 +140,46 @@ const resourceFields = {
   ],
   network: ["rx_bytes_per_second", "tx_bytes_per_second"],
 } as const;
+export function diskVolumes(raw: unknown) {
+  if (!Array.isArray(raw)) return [];
+  const entries = raw.slice(0, 3).map(record);
+  if (new Set(entries.map((v) => v.volume_id)).size !== entries.length)
+    return [];
+  return entries
+    .filter((v) => ["root", "data", "models"].includes(String(v.volume_id)))
+    .map((v) => ({
+      ...observation(v),
+      volume_id: v.volume_id as string,
+      state: enumValue(
+        v.state,
+        ["ok", "unknown", "unavailable"] as const,
+        "unknown",
+      ),
+      reason: [
+        "registration_unknown",
+        "mount_identity_unavailable",
+        "capacity_unavailable",
+      ].includes(String(v.reason))
+        ? String(v.reason)
+        : v.reason == null
+          ? null
+          : "registration_unknown",
+      mount_point:
+        typeof v.mount_point === "string" &&
+        /^\/[a-zA-Z0-9_./-]*$/.test(v.mount_point) &&
+        v.mount_point.length <= 256
+          ? v.mount_point
+          : null,
+      filesystem_uuid: identifier(v.filesystem_uuid),
+      filesystem_type: identifier(v.filesystem_type),
+      total_bytes: v.state === "ok" ? number(v.total_bytes) : null,
+      available_bytes: v.state === "ok" ? number(v.available_bytes) : null,
+      read_bytes_per_second:
+        v.state === "ok" ? number(v.read_bytes_per_second) : null,
+      write_bytes_per_second:
+        v.state === "ok" ? number(v.write_bytes_per_second) : null,
+    }));
+}
 export function sanitizeNode(raw: unknown, nodeId: NodeId) {
   const v = record(raw);
   if (v.schema_version !== 1 || v.node_id !== nodeId)
@@ -200,6 +243,7 @@ export function sanitizeNode(raw: unknown, nodeId: NodeId) {
         (u) => typeof u === "string" && /^GPU-[0-9a-f-]{36}$/i.test(u),
       ) as string[],
       hardware_latched: bool(s.hardware_latched),
+      hardware_latched_boot_id: identifier(s.hardware_latched_boot_id),
       activity: enumValue(
         s.activity,
         ["idle", "busy", "unknown"] as const,
@@ -293,6 +337,7 @@ export function sanitizeNode(raw: unknown, nodeId: NodeId) {
     ...observation(v),
     inventory: {
       ...observation(inventory),
+      ...(!inventoryValid ? { state: "unknown" as const } : {}),
       boot_id: identifier(inventory.boot_id),
       complete: inventory.complete === true && inventoryValid,
       observation_id: identifier(inventory.observation_id),
@@ -316,6 +361,9 @@ export function sanitizeNode(raw: unknown, nodeId: NodeId) {
             ...Object.fromEntries(
               fields.map((field) => [field, number(metric[field])]),
             ),
+            ...(key === "disk" && Array.isArray(metric.volumes)
+              ? { volumes: diskVolumes(metric.volumes) }
+              : {}),
           },
         ];
       }),

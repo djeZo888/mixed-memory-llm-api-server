@@ -161,6 +161,7 @@ export class ImageBroker {
   private timer: NodeJS.Timeout;
   private controller?: AbortController;
   private execution?: Promise<void>;
+  private resumePreparation?: () => void;
   readonly imageFiles: ImageFiles;
   readonly now: () => number;
   constructor(readonly options: ImageBrokerOptions) {
@@ -309,15 +310,22 @@ export class ImageBroker {
   snapshot() {
     return { lane: this.lane, queued: this.queued().length };
   }
+  private dispatch() {
+    return serviceAvailability(
+      this.options.availability,
+      this.options.serviceId ?? "image",
+    ).dispatch;
+  }
   private unavailable() {
-    return (
-      serviceAvailability(
-        this.options.availability,
-        this.options.serviceId ?? "image",
-      ).state === "unavailable"
-    );
+    return this.dispatch() === "reject";
   }
   private requireAvailable() {
+    if (this.dispatch() === "hold")
+      throw new ApiError(
+        503,
+        "image_readiness_unknown",
+        "Image readiness is temporarily unavailable; pending work is retained",
+      );
     if (this.unavailable())
       throw new ApiError(
         503,
@@ -694,6 +702,7 @@ export class ImageBroker {
         this.cancel(sessionId, r.job.id);
   }
   private kick() {
+    this.resumePreparation?.();
     if (this.closed || this.rejectUnavailablePending()) return;
     for (const r of this.queued())
       if (this.now() >= r.deadline)
@@ -703,6 +712,7 @@ export class ImageBroker {
           "image_queue_timeout",
           "Image queue deadline exceeded",
         );
+    if (this.dispatch() === "hold") return;
     if (this.lane === "quarantined") {
       void this.reconcile();
       return;
@@ -740,7 +750,7 @@ export class ImageBroker {
   async reconcile(): Promise<void> {
     if (
       this.closed ||
-      this.unavailable() ||
+      this.dispatch() !== "allow" ||
       this.reconciling ||
       this.pumping ||
       this.lane !== "quarantined"
@@ -753,7 +763,7 @@ export class ImageBroker {
       );
       if (
         !this.closed &&
-        !this.unavailable() &&
+        this.dispatch() === "allow" &&
         health.ready === true &&
         health.idle === true
       )
@@ -792,6 +802,30 @@ export class ImageBroker {
         references = [];
       for (const [i, bytes] of source.entries())
         references.push(await prepare(bytes, r.job.adjustment?.sources[i]));
+      if (controller.signal.aborted) throw new Error("timeout");
+      if (r.job.cancelRequested) {
+        this.finish(r, "cancelled", undefined, undefined, "idle");
+        return;
+      }
+      while (
+        this.dispatch() === "hold" &&
+        !controller.signal.aborted &&
+        !r.job.cancelRequested
+      ) {
+        // Keep this preparation's active reservation while telemetry is unknown.
+        // Requeueing here could create a ninth waiter and reorder the shared lane.
+        await new Promise<void>((resolve) => {
+          const release = () => {
+            this.resumePreparation = undefined;
+            controller.signal.removeEventListener("abort", release);
+            resolve();
+          };
+          this.resumePreparation = release;
+          controller.signal.addEventListener("abort", release, { once: true });
+          if (this.dispatch() !== "hold" || controller.signal.aborted)
+            release();
+        });
+      }
       if (controller.signal.aborted) throw new Error("timeout");
       if (r.job.cancelRequested) {
         this.finish(r, "cancelled", undefined, undefined, "idle");

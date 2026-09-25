@@ -11,6 +11,7 @@ import {
   type HardwareLatchLedger,
 } from "./node-availability.js";
 import { nodeClient } from "./node-client.js";
+import { createBackendReadiness } from "./backend-readiness.js";
 
 function required(name: string): string {
   const value = process.env[name];
@@ -45,7 +46,8 @@ export async function start() {
     engineFactory: createEngine,
     imageBackend: new ImageUpstream({ key }),
     approvalProxyKey,
-    availability: (id) => nodeAvailability?.get(id) ?? { state: "unknown" },
+    availability: (id) =>
+      nodeAvailability?.get(id) ?? { state: "unknown", dispatch: "allow" },
     availabilitySummary: () =>
       nodeAvailability?.states() ?? {
         qwenGpu0: "unknown",
@@ -81,6 +83,7 @@ export async function start() {
         ? await readProtectedCredential(controlKeyFile)
         : undefined;
       nodeAvailability = new NodeAvailability({
+        readiness: createBackendReadiness(key),
         backend: controlKey
           ? nodeClient("ai-vm", controlKey)
           : {
@@ -112,7 +115,8 @@ export async function start() {
     gateway = createGateway({
       upstreamKey: key,
       images: application.images,
-      availability: (id) => nodeAvailability?.get(id) ?? { state: "unknown" },
+      availability: (id) =>
+        nodeAvailability?.get(id) ?? { state: "unknown", dispatch: "allow" },
       initialLaneStates: states,
       onLaneState: (alias, state) => {
         application.store.db

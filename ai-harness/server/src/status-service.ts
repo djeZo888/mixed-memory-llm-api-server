@@ -59,6 +59,7 @@ export function createStatusService(options: {
       node.services.forEach(age);
       node.gpus.forEach(age);
       Object.values(node.resources).forEach(age);
+      node.resources.disk?.volumes?.forEach(age);
       return node;
     });
   app.addHook("onRequest", async (req, reply) => {
@@ -143,11 +144,7 @@ export function createStatusService(options: {
             queue_depth: s.queue_depth,
           })),
         ...node.gpus
-          .filter(
-            (g) =>
-              g.generation !== null &&
-              g.freshness === "fresh",
-          )
+          .filter((g) => g.generation !== null && g.freshness === "fresh")
           .map((g) => ({
             ...base,
             gpu_uuid: g.uuid,
