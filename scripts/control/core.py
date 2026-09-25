@@ -228,13 +228,14 @@ class _Ticket:
 class Application:
     def __init__(self, backend, journal, *, lease_factory=acquire_lease,
                  transition_seconds=8000, admission_seconds=10, read_seconds=10,
-                 advertised_policy=None):
+                 advertised_policy=None, readiness_identity=None):
         if (not 0 < transition_seconds <= 14400
                 or any(type(seconds) not in (int, float) or not 0 < seconds <= 60
                        for seconds in (admission_seconds, read_seconds))):
             raise ValueError("invalid_deadlines")
         self.backend, self.journal, self.lease_factory = backend, journal, lease_factory
         self.advertised_policy = copy.deepcopy(advertised_policy)
+        self._readiness_identity = copy.deepcopy(readiness_identity)
         self.transition_seconds, self.admission_seconds, self.read_seconds = transition_seconds, admission_seconds, read_seconds
         self._state_lock = threading.RLock()
         self._admission = threading.Lock()
@@ -551,6 +552,14 @@ class Application:
         try:
             if self._closed:
                 raise ControlError("service_closed")
+            if method == "GET" and path == "/control/v1/readiness":
+                # Process/API startup only. Never refresh, load a Manager, probe
+                # a backend or read credentials/storage on this passive path.
+                if self._readiness_identity is None:
+                    raise ControlError("observation_unavailable")
+                return 200, dict(schema_version=1, service_id="control",
+                                 readiness_kind="process_api", ready=True,
+                                 **self._readiness_identity)
             if method == "GET" and path in {"/control/v1/catalog", "/control/v1/status"}:
                 return self._read(path.endswith("catalog"))
             if method == "GET" and path in {"/control/v1/status/glm", "/control/v1/status/qwen"}:

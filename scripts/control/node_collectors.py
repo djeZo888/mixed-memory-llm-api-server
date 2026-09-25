@@ -255,7 +255,7 @@ class HardwareEvidenceCollector:
         return {'state': 'persisted'}
 
 
-def production_callbacks(identity_reader=None):
+def production_callbacks(identity_reader=None, *, control_key=None):
     from .node_observation import CanonicalIdentityReader, PassiveServiceCollector
     from .node_resources import resource_callbacks
     reader = identity_reader or CanonicalIdentityReader()
@@ -263,7 +263,8 @@ def production_callbacks(identity_reader=None):
     gpus = [GpuCollector(gpu) for gpu in GPU_UUIDS]
     result = {'boot': collect_boot, 'inventory': inventory,
               'cpu': CpuCollector(), 'memory': collect_memory}
-    result.update({service: PassiveServiceCollector(service, reader) for service in (*SERVICES, 'node')})
+    result.update({service: PassiveServiceCollector(service, reader,
+        control_key=control_key if service == 'control' else None) for service in (*SERVICES, 'node')})
     result.update(resource_callbacks())
     result.update({'gpu:' + collector.gpu_uuid: collector for collector in gpus})
     result['hardware_evidence'] = HardwareEvidenceCollector(inventory, gpus)
