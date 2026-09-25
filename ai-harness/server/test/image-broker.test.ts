@@ -1488,3 +1488,71 @@ test("production adapter resumes retained image work after soft-unavailable expi
     () => f.broker.get(f.session.id, waiting.id).state === "completed",
   );
 });
+
+test("production private stop/start adapter clears actual image quarantine only with canonical outstanding stop", async (t) => {
+  const { DispatchFreeze, serveDispatchFreeze } = await import("../src/dispatch-freeze.js");
+  let gate: InstanceType<typeof DispatchFreeze> | undefined;
+  const f = await fixture(t, {
+    availability: () => ({ state: "available", dispatch: gate?.held("image") ? "hold" : "allow" }),
+  });
+  gate = new DispatchFreeze(path.join(f.dir, "private-freeze.sqlite"), path.join(f.dir, "freeze.sock"));
+  const app = await serveDispatchFreeze(
+    gate,
+    () => ({ frozen: gate!.held("image"), ready: true, activity: "unknown", active_requests: null, queue_depth: f.broker.snapshot().queued }),
+    () => f.broker.notifyAvailabilityChanged(),
+    (scope) => {
+      assert.deepEqual(scope, ["image"]);
+      return f.broker.reconcileAfterOwnerSettlement();
+    },
+  );
+  try {
+    const stop: import("../src/node-contract.js").NodeAction = {
+      schema_version: 1, node_id: "ai-vm", action: "service.stop", service_id: "image",
+      idempotency_key: "image-private-stop-001", expected_boot_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      expected_generation: 3, allow_interrupt: true,
+    };
+    const start: import("../src/node-contract.js").NodeAction = {
+      ...stop, action: "service.start", idempotency_key: "image-private-start-001", expected_generation: 4,
+    };
+    const active = await f.submit("private-uncertain-image", { seed: 71 });
+    await until(() => f.backend.calls.length === 1);
+    const queued = await f.submit("private-retained-image", { seed: 72 });
+    f.backend.calls[0].reject(new Error("synthetic ambiguous image response"));
+    await until(() => f.broker.get(f.session.id, active.id).state === "failed");
+    assert.equal(f.broker.dispatchImpact().uncertain, true);
+    gate.hold(stop);
+    assert.equal((await gate.acknowledge(stop)).app_state, "acknowledged");
+    gate.db.exec("CREATE TABLE admin_relay_operations(request_key TEXT,request TEXT,receipt TEXT,owner_id TEXT,dispatched INTEGER,released INTEGER)");
+    gate.db.prepare("INSERT INTO admin_relay_operations VALUES(?,?,?,?,1,0)").run(
+      "ai-vm:" + start.idempotency_key, JSON.stringify(start), JSON.stringify({ status: "succeeded" }), "canonical-image-start",
+    );
+    // Fresh readiness and a completed start cannot prove the old image settled.
+    f.backend.idle = true;
+    await assert.rejects(gate.settle(start));
+    assert.equal(f.broker.snapshot().lane, "quarantined");
+    assert.equal(f.broker.dispatchImpact().uncertain, true);
+    assert.equal(f.backend.calls.length, 1);
+    gate.db.prepare("INSERT INTO admin_relay_operations VALUES(?,?,?,?,1,0)").run(
+      "ai-vm:" + stop.idempotency_key, JSON.stringify(stop), JSON.stringify({ status: "succeeded" }), "canonical-image-stop",
+    );
+    await gate.settle(start); // Real UDS handler invokes the production ImageBroker.
+    assert.equal(f.broker.dispatchImpact().uncertain, false);
+    assert.equal(gate.held("image"), true);
+    assert.equal(f.broker.get(f.session.id, queued.id).state, "queued");
+    assert.equal(f.broker.get(f.session.id, queued.id).seed, 72);
+    await delay(20);
+    assert.equal(f.backend.calls.length, 1, "settlement must not release the held queue");
+    gate.release(stop);
+    f.broker.notifyAvailabilityChanged();
+    await until(() => f.backend.calls.length === 2);
+    assert.equal(f.backend.calls[1].input.seed, 72);
+    assert.equal(f.broker.get(f.session.id, queued.id).state, "running");
+    assert.equal((await f.submit("private-uncertain-image", { seed: 71 })).id, active.id);
+    await f.backend.complete();
+    await until(() => f.broker.get(f.session.id, queued.id).state === "completed");
+    assert.equal(f.backend.calls.length, 2, "the ambiguous image is never replayed");
+  } finally {
+    await app.close();
+    gate.close();
+  }
+});

@@ -389,7 +389,7 @@ test("failed readiness reconciliation never erases canonical succeeded receipt o
   }
 });
 
-test("changed-boot reboot releases prior stopped lane while unrelated peers are latched or unknown", async () => {
+test("changed-boot reboot releases prior stopped lane while unrelated peers are latched or unknown", async (t) => {
   const r = rig();
   try {
     const stopped = await r.actions.submit({ ...base, action: "service.stop" });
@@ -411,6 +411,8 @@ test("changed-boot reboot releases prior stopped lane while unrelated peers are 
       ready: false,
     });
     Object.assign(r.node.services[2], {
+      state: "timeout",
+      reason: "observer_timeout",
       freshness: "unknown",
       age_ms: null,
       availability: "unknown",
@@ -431,6 +433,63 @@ test("changed-boot reboot releases prior stopped lane while unrelated peers are 
       .get(`ai-vm:${base.idempotency_key}`)!;
     assert.equal(audit.release_reason, "changed_boot_reconciled_stop_intent");
     assert.equal(audit.released_by, reboot.operation_id.split("~")[1]);
+    // Actual production NodeAvailability -> gateway after reboot: the hung
+    // image observer and latched GPU1 cannot retain GPU0 maintenance admission.
+    const { NodeAvailability } = await import("../src/node-availability.js");
+    const { createGateway } = await import("../src/gateway.js");
+    const { createServer } = await import("node:http");
+    const observer = new NodeAvailability({
+      backend: r.backends["ai-vm"],
+      onLatch: () => {},
+    });
+    await observer.poll();
+    t.after(() => observer.stop());
+    assert.equal(observer.get("qwen3.8-27b-gpu0").dispatch, "allow");
+    assert.equal(observer.get("qwen3.8-27b").dispatch, "reject");
+    assert.equal(observer.get("image").dispatch, "hold");
+    const seen: string[] = [];
+    const upstream = createServer(async (req, res) => {
+      const bytes: Buffer[] = [];
+      for await (const chunk of req) bytes.push(chunk as Buffer);
+      seen.push(JSON.parse(Buffer.concat(bytes).toString()).model);
+      res.setHeader("content-type", "application/json");
+      res.end(
+        JSON.stringify({
+          choices: [
+            {
+              message: { role: "assistant", content: "synthetic" },
+              finish_reason: "stop",
+            },
+          ],
+        }),
+      );
+    });
+    await new Promise<void>((resolve) =>
+      upstream.listen(0, "127.0.0.1", resolve),
+    );
+    t.after(
+      () => new Promise<void>((resolve) => upstream.close(() => resolve())),
+    );
+    const url = `http://127.0.0.1:${(upstream.address() as { port: number }).port}/v1`;
+    const gateway = createGateway({
+      upstreamKey: "fixture-only",
+      availability: (id) => observer.get(id),
+      upstreams: [
+        { url, alias: "qwen3.8-27b-gpu0" },
+        { url, alias: "qwen3.8-27b" },
+      ],
+    });
+    t.after(() => gateway.close());
+    const response = await gateway.app.inject({
+      method: "POST",
+      url: "/v1/chat/completions",
+      headers: {
+        authorization: `Bearer ${gateway.issueToken("fixture-reboot-client")}`,
+      },
+      payload: { model: "qwen3.8-27b", messages: [] },
+    });
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(seen, ["qwen3.8-27b-gpu0"]);
   } finally {
     r.close();
   }
