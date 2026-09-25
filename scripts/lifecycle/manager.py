@@ -9,6 +9,7 @@ import argparse
 from contextlib import contextmanager, nullcontext
 from functools import wraps
 import copy
+import hashlib
 import json
 import importlib
 import os
@@ -746,7 +747,119 @@ class Manager:
                 bindings = host.get('PortBindings') or {}
                 ports = {str(v.get('HostPort')) for values in bindings.values() if isinstance(values, list) for v in values}
                 if requested or ports & {'30002', '30004'}:
-                    raise LifecycleError('untrusted_concurrent_peer')
+                    self.validate_dedicated_image_peer(c, deployment)
+
+    def validate_dedicated_image_peer(self, c, deployment):
+        """Prove the approved dedicated owner, never adopt an unknown GPU user.
+
+        Called within normal slot admission under the caller's lifecycle lease.
+        CanonicalIdentityReader supplies protected ownership and a fresh exact
+        invocation; the inventory snapshot must also satisfy the image owner's
+        device/namespace/resource policy. No owner call, probe or write occurs.
+        """
+        code = 'untrusted_concurrent_peer'
+        try:
+            from . import concurrent_profiles as pair
+            from control.node_observation import (
+                CanonicalIdentityReader, IMAGE_OWNER, IMAGE_RUNTIME, IMAGE_REVISION)
+            from runtime.h005_runtime_binding import load as runtime_binding
+            gpu = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
+            network = 'llm-image-backend-private'
+            cap = 96 * 1024**3
+            ports = {'30007/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '30007'}]}
+            require(deployment is not None and pair.is_pair(deployment)
+                    and gpu not in deployment['launch']['gpus']
+                    and c.get('Name') == '/llm-image-backend', code)
+            base = self.binding.path('services', 'image21-runtime-20260923')
+            state = self.binding.read_json('services', base + '/state.json')
+            config = self.binding.read_json('services', base + '/config.json')
+            require(state.get('schema_version') == 1 and state.get('owner') == IMAGE_OWNER
+                    and state.get('phase') == 'warm' and state.get('warm') is True
+                    and config.get('schema_version') == 1 and config.get('owner') == IMAGE_OWNER
+                    and config.get('source_commit') == IMAGE_RUNTIME
+                    and config.get('checkpoint_revision') == IMAGE_REVISION
+                    and config.get('image_id') == runtime_binding()['image']['image_id']
+                    and c.get('Image') == config['image_id'], code)
+            # The protected image owner binds its current executable source.
+            # Keep its separate immutable release and running invocation intact.
+            sources = config.get('source_sha256')
+            require(type(sources) is dict and set(sources) == {
+                'service.py', 'native_server.py', 'native_request.py', 'telemetry.py'}, code)
+            from control.installation import protected_file
+            for name, expected in sources.items():
+                path = base + '/source/' + name
+                self.binding.validate_path('services', path)
+                require(type(expected) is str and re.fullmatch('[0-9a-f]{64}', expected)
+                        and hashlib.sha256(protected_file(Path(path))).hexdigest() == expected, code)
+            host, native = c['HostConfig'], c['Config']
+            model = self.binding.path('models', 'qwen-image-2.1-' + IMAGE_REVISION)
+            mounts = c.get('Mounts')
+            expected_mounts = {
+                '/models': (model, False), '/runtime': (base + '/source', False),
+                '/work': (base + '/work', True),
+                '/tmp': (base + '/work/tmp/' + state['run_id'], True)}
+            require(config.get('checkpoint_path') == model
+                    and type(mounts) is list and len(mounts) == len(expected_mounts)
+                    and {m.get('Destination') for m in mounts} == set(expected_mounts)
+                    and all(m.get('Type') == 'bind'
+                            and (m.get('Source'), m.get('RW')) == expected_mounts[m['Destination']]
+                            for m in mounts)
+                    and native.get('Entrypoint') == ['/opt/image-venv/bin/python']
+                    and native.get('Cmd') == ['-I', '-B', '/runtime/native_server.py', state['run_id']], code)
+            labels = native.get('Labels') or {}
+            require(labels.get('io.llm-image.owner') == IMAGE_OWNER
+                    and labels.get('io.llm-image.invocation') == state.get('run_id')
+                    and labels.get('io.llm-image.gpu') == gpu, code)
+            requests = host.get('DeviceRequests')
+            require(type(requests) is list and len(requests) == 1
+                    and requests[0].get('DeviceIDs') == [gpu] and requests[0].get('Count') == 0
+                    and requests[0].get('Capabilities') == [['gpu']]
+                    and requests[0].get('Driver') in ('', 'nvidia')
+                    and not requests[0].get('Options')
+                    and host.get('CpusetCpus') == '8-15' and host.get('Memory') == cap
+                    and host.get('MemorySwap') == cap
+                    and host.get('RestartPolicy') == {'Name': 'no', 'MaximumRetryCount': 0}
+                    and host.get('NetworkMode') == network and host.get('PortBindings') == ports
+                    and c['NetworkSettings'].get('Ports') == ports
+                    and set(c['NetworkSettings'].get('Networks', {})) == {network}
+                    and CONTAINER_RE.fullmatch(config.get('network_id', ''))
+                    and c['NetworkSettings']['Networks'][network].get('NetworkID') == config['network_id']
+                    and native.get('User') == '1000:1001'
+                    and host.get('ReadonlyRootfs') is True
+                    and host.get('Privileged') is False and not host.get('Devices')
+                    and not host.get('DeviceCgroupRules') and not host.get('CapAdd')
+                    and host.get('CapDrop') == ['ALL']
+                    and host.get('SecurityOpt') == ['no-new-privileges']
+                    and host.get('PidMode', '') == '' and host.get('IpcMode') == 'private'
+                    and host.get('UTSMode', '') == '' and host.get('UsernsMode', '') == ''
+                    and all(mount.get('Source') != '/'
+                            and not any(str(mount.get('Source', '')).startswith(prefix)
+                                        or str(mount.get('Destination', '')).startswith(prefix)
+                                        for prefix in ('/dev', '/proc', '/sys'))
+                            for mount in c.get('Mounts', [])), code)
+            entries = native.get('Env', [])
+            require(type(entries) is list and all(type(v) is str for v in entries), code)
+            for key in ('CUDA_VISIBLE_DEVICES', 'NVIDIA_VISIBLE_DEVICES'):
+                require([v for v in entries if v.startswith(key + '=')] == [key + '=' + gpu], code)
+            # Read the independent owner last. A stale inventory ID/PID/start or
+            # changed protected invocation cannot authorize target mutation.
+            proof = CanonicalIdentityReader(
+                run=lambda argv, seconds: self.run(argv, timeout=seconds),
+                binding=lambda seconds: self.binding).service('image', seconds=5)
+            owner = proof.get('owner_identity') or {}
+            current = c['State']
+            require(proof.get('ownership_valid') is True and proof.get('running') is True
+                    and proof.get('backend_running') is True
+                    and owner.get('container_id') == c['Id'] == state['container']['id']
+                    and state['container']['image_id'] == c['Image']
+                    and owner.get('run_id') == state['run_id']
+                    and owner.get('running') is True and current.get('Running') is True
+                    and type(current.get('Pid')) is int and current['Pid'] > 0
+                    and owner.get('pid') == current['Pid']
+                    and owner.get('started_at') == current.get('StartedAt')
+                    and not any(current.get(k) for k in ('Paused', 'Restarting', 'Dead')), code)
+        except Exception:
+            raise LifecycleError(code) from None
 
     @staticmethod
     def running(c: dict | None) -> bool:
