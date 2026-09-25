@@ -1,0 +1,66 @@
+--- a/python/sglang/srt/managers/tokenizer_manager.py
++++ b/python/sglang/srt/managers/tokenizer_manager.py
+@@ -56,6 +56,7 @@
+ from sglang.srt.environ import envs
+ from sglang.srt.lora.lora_registry import LoRARef, LoRARegistry
+ from sglang.srt.managers.async_dynamic_batch_tokenizer import AsyncDynamicbatchTokenizer
++from sglang.srt.managers.adaptive_text_drain import tracked_dispatch, tracked_generation
+ from sglang.srt.managers.disagg_service import start_disagg_service
+ from sglang.srt.managers.embed_types import PositionalEmbeds
+ from sglang.srt.managers.io_struct import (
+@@ -572,6 +573,7 @@
+             caller="TokenizerManager",
+         )
+ 
++    @tracked_dispatch
+     def _dispatch_to_scheduler(self, obj: Any) -> None:
+         if self.tokenizer_ipc_name is not None:
+             stamp_http_worker_ipc(obj, self.tokenizer_ipc_name)
+@@ -767,6 +769,7 @@
+         self.sampling_params_class = SamplingParams
+         self.signal_handler_class = SignalHandler
+ 
++    @tracked_generation
+     async def generate_request(
+         self,
+         obj: Union[GenerateReqInput, EmbeddingReqInput],
+--- a/python/sglang/srt/entrypoints/http_server.py
++++ b/python/sglang/srt/entrypoints/http_server.py
+@@ -157,6 +157,7 @@
+     write_data_for_multi_tokenizer,
+ )
+ from sglang.srt.managers.tokenizer_manager import ServerStatus, TokenizerManager
++from sglang.srt.managers.adaptive_text_drain import GenerationDrainMiddleware
+ from sglang.srt.observability.func_timer import enable_func_timer
+ from sglang.srt.observability.trace import (
+     process_tracing_init,
+@@ -2669,9 +2670,10 @@
+ 
+                 asyncio.run(_run_with_ssl_refresh())
+             else:
+-                # Default case, one tokenizer process
++                # Default case, one tokenizer process. Track draining outside
++                # the complete ASGI stack, including response buffering/errors.
+                 uvicorn.run(
+-                    app,
++                    GenerationDrainMiddleware(app),
+                     host=get_serving().host,
+                     port=get_serving().port,
+                     root_path=server_args.fastapi_root_path,
+--- a/python/sglang/srt/managers/io_struct.py
++++ b/python/sglang/srt/managers/io_struct.py
+@@ -89,6 +89,14 @@
+     @classmethod
+     def __get_pydantic_core_schema__(cls, source, handler):
+         return msgspec_struct_pydantic_core_schema(cls, handler)
++
++
++class AdaptiveIdleDrainReq(BaseReq, kw_only=True):
++    """Internal H005 lifetime control; never a model request or public body."""
++
++    event: Literal["begin", "end"]
++    token: str
++    admitted: bool = False
+ 
+ 
+ class BaseBatchReq(msgspec.Struct, tag=True, kw_only=True, array_like=True):

@@ -156,8 +156,8 @@ class CandidatePatchTests(unittest.TestCase):
         manifest = json.loads(source_gate.MANIFEST.read_text())
         key = "python/sglang/srt/managers/scheduler_components/idle_sleeper.py"
         self.assertEqual(hashlib.sha256(self.before.strip().encode()).hexdigest(),
-                         manifest["text"]["files"][key])
-        self.assertFalse(manifest["raw_byte_pins_available"])
+                         manifest["historical_normalized_evidence"]["text"]["files"][key])
+        self.assertFalse(manifest["historical_normalized_evidence"]["raw_byte_pins_available"])
         self.assertFalse(manifest["native_integration_accepted"])
 
     def test_candidate_preserves_cache_and_uses_indefinite_event_wait(self):
@@ -216,13 +216,13 @@ class CandidatePatchTests(unittest.TestCase):
                 path = root / relative
                 path.parent.mkdir(parents=True)
                 path.write_text(content)
-                manifest["text"]["files"][relative] = hashlib.sha256(content.strip().encode()).hexdigest()
+                manifest["text"]["files"][relative] = hashlib.sha256(content.encode()).hexdigest()
             manifest_path = root / "manifest.json"
             manifest_path.write_text(json.dumps(manifest))
             with patch.object(source_gate, "MANIFEST", manifest_path):
                 checked = source_gate.verify(root, "text")
                 self.assertFalse(checked["native_integration_accepted"])
-                self.assertEqual(checked["source_identity"], "matched_retained_normalized_text_only")
+                self.assertEqual(checked["source_identity"], "matched_official_upstream_raw_bytes")
                 (root / "python/scheduler.py").write_text("changed")
                 with self.assertRaisesRegex(ValueError, "pinned_native_source_hash_mismatch"):
                     source_gate.verify(root, "text")

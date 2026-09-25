@@ -1,11 +1,30 @@
 #!/usr/bin/env python3
 """Fixed native launch; only the root-owned unit supplies an invocation ID."""
 import os
+import hashlib
+import importlib.util
 from pathlib import Path
 import re
 import sys
 
 GPU_UUID = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
+ADAPTIVE_OVERLAY_SHA256 = 'a2d2eb892e600ff710e60145f64c2d65a6e62b45e5cf549fb9eb214e1772b0d2'
+ADAPTIVE_VERIFIER_SHA256 = '554c6ffc6c76fef28a3c778cd25ee1160a21a771906f95a7fea3418682ece00d'
+
+
+def verify_adaptive_overlay():
+    # A new derived image must carry the reviewed overlay. Historical parent
+    # identity alone is insufficient; canonical owner admission is additional.
+    verifier = Path('/opt/llmctl/adaptive-idle/verify.py')
+    if (verifier.is_symlink()
+            or hashlib.sha256(verifier.read_bytes()).hexdigest() != ADAPTIVE_VERIFIER_SHA256):
+        raise RuntimeError('adaptive_overlay_verifier_mismatch')
+    spec = importlib.util.spec_from_file_location('image_adaptive_verifier', verifier)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.verify_installed('/opt/llmctl/adaptive-idle/image.json',
+                                   ADAPTIVE_OVERLAY_SHA256, 'image')
+
 
 def launch_argv():
     return ['sglang', 'serve', '--model-type', 'diffusion',
@@ -30,6 +49,7 @@ def main():
         raise SystemExit('invalid_owned_invocation')
     if os.environ.get('CUDA_VISIBLE_DEVICES') != GPU_UUID:
         raise SystemExit('unexpected_cuda_visibility')
+    verify_adaptive_overlay()
     path = Path('/work/evidence') / sys.argv[1] / 'backend.log'
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     os.dup2(fd, 1)

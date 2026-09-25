@@ -1,0 +1,29 @@
+--- a/python/sglang/multimodal_gen/runtime/entrypoints/http_server.py
++++ b/python/sglang/multimodal_gen/runtime/entrypoints/http_server.py
+@@ -444,4 +444,7 @@
+     app.include_router(rollout_api.router)
+ 
+     app.state.server_args = server_args
++    from sglang.multimodal_gen.runtime.managers.adaptive_diffusion_drain import DiffusionDrainMiddleware
++    # Last registration is outermost: retain work through response forwarding.
++    app.add_middleware(DiffusionDrainMiddleware)
+     return app
+--- a/python/sglang/multimodal_gen/runtime/scheduler_client.py
++++ b/python/sglang/multimodal_gen/runtime/scheduler_client.py
+@@ -6,6 +6,8 @@
+ 
+ import zmq
+ import zmq.asyncio
++
++from sglang.multimodal_gen.runtime.managers.adaptive_diffusion_drain import track_generation
+ 
+ from sglang.multimodal_gen.runtime.entrypoints.control_requests import (
+     ListLorasReq,
+@@ -252,6 +254,7 @@
+         self.context = zmq.asyncio.Context()
+         logger.debug("AsyncSchedulerClient initialized with zmq.asyncio.Context")
+ 
++    @track_generation(Req)
+     async def forward(self, batch: Any, timeout_ms: int | None = None) -> Any:
+         """Sends a batch or request to the scheduler and waits for the response."""
+         self.request_logger.log_received_request(batch)

@@ -12,12 +12,29 @@ import argparse
 import hashlib
 import importlib.util
 from pathlib import Path
+import threading
 from types import SimpleNamespace
 
 BASE_SHA256 = "e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7da4"
 CONTEXT = 480000
+ADAPTIVE_OVERLAY_SHA256 = 'b7f03476fe13779ed4867e4ca509dcba2861431210b6a264cf551558b5927a27'
+ADAPTIVE_VERIFIER_SHA256 = '554c6ffc6c76fef28a3c778cd25ee1160a21a771906f95a7fea3418682ece00d'
 SLOTS = {'gpu0': {'port': 30002, 'served_model_name': 'qwen3.8-27b-gpu0'},
          'gpu1': {'port': 30004, 'served_model_name': 'qwen3.8-27b'}}
+
+
+def verify_adaptive_overlay():
+    # This guard is additional to protected lifecycle/image acceptance. A
+    # historical parent image alone cannot provide the reviewed native source.
+    verifier = Path('/opt/llmctl/adaptive-idle/verify.py')
+    if (verifier.is_symlink()
+            or hashlib.sha256(verifier.read_bytes()).hexdigest() != ADAPTIVE_VERIFIER_SHA256):
+        raise ValueError('adaptive_overlay_verifier_mismatch')
+    spec = importlib.util.spec_from_file_location('text_adaptive_verifier', verifier)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.verify_installed('/opt/llmctl/adaptive-idle/text.json',
+                                   ADAPTIVE_OVERLAY_SHA256, 'text')
 
 
 def pinned_base(path):
@@ -50,10 +67,48 @@ class _View:
         return self.overrides[name] if name in self.overrides else getattr(self.original, name)
 
 
+def install_readiness(base, http_server, slot, warmup_complete):
+    """Expose only the existing internal state, behind native file-backed auth.
+
+    The authenticated warmup's completion is a separate prerequisite: an Up
+    value from another native path cannot admit a still-starting instance.
+    This route never invokes health, submits work, or touches scheduler state.
+    """
+    from fastapi.responses import JSONResponse
+
+    app = http_server.app
+    if (not getattr(app, "_llmctl_file_auth_installed", False)
+            or getattr(app, "middleware_stack", None)
+            or any(getattr(route, "path", None) == "/v1/readiness" for route in app.routes)):
+        raise base.LaunchError("pair_readiness_installation_invalid")
+    alias = SLOTS[slot]["served_model_name"]
+
+    async def readiness():
+        manager = getattr(getattr(http_server, "_global_state", None), "tokenizer_manager", None)
+        status = getattr(manager, "server_status", None)
+        status_type = getattr(http_server, "ServerStatus", None)
+        state = "unknown"
+        if (isinstance(status_type, type) and type(status) is status_type
+                and getattr(manager, "served_model_name", None) == alias):
+            if status is getattr(status_type, "Starting", None):
+                state = "starting"
+            elif status is getattr(status_type, "Up", None):
+                state = "up" if warmup_complete.is_set() else "starting"
+            elif status is getattr(status_type, "UnHealthy", None):
+                state = "unhealthy"
+        ready = state == "up"
+        return JSONResponse({"schema_version": 1, "model_alias": alias, "ready": ready,
+                             "state": state, "admitting": None}, status_code=200 if ready else 503)
+
+    app.add_api_route("/v1/readiness", readiness, methods=["GET"], include_in_schema=False)
+
+
 def bind_variant(base, slot):
     """Check the fixed changed fields, reusing every unchanged base check."""
     argv = backend_argv(base, slot)
     original_validate, original_environment = base.validate_server_args, base.validate_environment
+    original_auth, original_warmup = base.install_auth, base.make_warmup
+    warmup_complete = threading.Event()
     changed = {"context_length": CONTEXT, "max_total_tokens": CONTEXT, "tp_size": 1,
                **SLOTS[slot]}
     projected = {"context_length": base.EXTENSION_CONTEXT,
@@ -74,9 +129,22 @@ def bind_variant(base, slot):
         return SimpleNamespace(key_file="/run/secrets/llm-api-key", warmup_timeout="600",
                                context_length=str(CONTEXT)), argv
 
+    def install_auth(http_server, add_api_key_middleware, key):
+        original_auth(http_server, add_api_key_middleware, key)
+        install_readiness(base, http_server, slot, warmup_complete)
+
+    def make_warmup(http_server, key, abort, ready, startup_deadline, timeout=600):
+        def completed():
+            ready()
+            warmup_complete.set()
+
+        return original_warmup(http_server, key, abort, completed, startup_deadline, timeout)
+
     base.parse_options = parse
     base.validate_server_args = validate
     base.validate_environment = lambda context=None: original_environment(base.EXTENSION_CONTEXT)
+    base.install_auth = install_auth
+    base.make_warmup = make_warmup
     return expected
 
 
@@ -88,6 +156,7 @@ def main(argv=None):
     options = parser.parse_args(arguments)
     if arguments != ['--slot', options.slot]:
         parser.error('only one canonical --slot argument is accepted')
+    verify_adaptive_overlay()
     base = pinned_base("/opt/llmctl/sglang38_file_auth.py")
     return base.main(bind_variant(base, options.slot))
 
