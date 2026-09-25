@@ -28,6 +28,65 @@ class LifecycleError(Exception):
         super().__init__(self.code)
 
 
+def validate_image_container(value, state, config):
+    """Pure shared proof of the fixed image owner's container containment.
+
+    The caller supplies protected state/config and a Docker inspection. This
+    verifies identity and isolation only; it performs no I/O or readiness check.
+    Keep the image owner and text admission on the same containment contract.
+    """
+    NAME = 'llm-image-backend'
+    OWNER = 'IMAGE21-RUNTIME-20260923'
+    GPU_UUID = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
+    NETWORK = 'llm-image-backend-private'
+    CAP_BYTES = 96 * 1024**3
+
+    def require(condition, code):
+        if not condition:
+            raise RuntimeError(code)
+
+    identity = state['container']
+    labels = value['Config'].get('Labels') or {}
+    host = value['HostConfig']
+    require(value['Id'] == identity['id'] and value['Name'] == '/' + NAME
+            and value['Image'] == identity['image_id'] == config['image_id']
+            and labels.get('io.llm-image.owner') == OWNER
+            and labels.get('io.llm-image.invocation') == state['run_id']
+            and labels.get('io.llm-image.gpu') == GPU_UUID,
+            'owned_backend_identity_mismatch')
+    requests = host['DeviceRequests']
+    require(len(requests) == 1 and requests[0]['DeviceIDs'] == [GPU_UUID]
+            and requests[0].get('Count') == 0
+            and requests[0].get('Capabilities') == [['gpu']]
+            and requests[0].get('Driver') in ('', 'nvidia')
+            and not requests[0].get('Options')
+            and host['CpusetCpus'] == '8-15' and host['Memory'] == CAP_BYTES
+            and host['MemorySwap'] == CAP_BYTES and host['RestartPolicy']['Name'] == 'no'
+            and host['NetworkMode'] == NETWORK
+            and host['PortBindings'] == {'30007/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '30007'}]}
+            and value['Config']['User'] == '1000:1001'
+            and host.get('Privileged') is False and not host.get('Devices')
+            and not host.get('DeviceCgroupRules')
+            and host.get('CapDrop') == ['ALL']
+            and 'no-new-privileges' in host.get('SecurityOpt', [])
+            and host.get('PidMode', '') == ''
+            and all(mount.get('Source') != '/'
+                    and not any(str(mount.get('Source', '')).startswith(prefix)
+                                or str(mount.get('Destination', '')).startswith(prefix)
+                                for prefix in ('/dev', '/proc', '/sys'))
+                    for mount in value.get('Mounts', []))
+            and sum(item == 'CUDA_VISIBLE_DEVICES=' + GPU_UUID for item in value['Config'].get('Env', [])) == 1
+            and sum(item == 'NVIDIA_VISIBLE_DEVICES=' + GPU_UUID for item in value['Config'].get('Env', [])) == 1
+            and sum(item.startswith('CUDA_VISIBLE_DEVICES=') for item in value['Config'].get('Env', [])) == 1
+            and sum(item.startswith('NVIDIA_VISIBLE_DEVICES=') for item in value['Config'].get('Env', [])) == 1,
+            'owned_backend_policy_mismatch')
+    if value['State']['Running']:
+        require(value['NetworkSettings']['Ports'] ==
+                {'30007/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '30007'}]},
+                'owned_effective_loopback_publication_mismatch')
+    return value
+
+
 def run(args: list[str], timeout: float = 30) -> str:
     """Run an explicit argv with a minimal environment and sanitized errors."""
     if not args or not all(isinstance(arg, str) and "\0" not in arg for arg in args):
