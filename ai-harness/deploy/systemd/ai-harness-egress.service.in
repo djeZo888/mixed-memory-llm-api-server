@@ -1,8 +1,8 @@
 # Root system unit. Replace reviewed paths; no automatic source-phase activation.
 [Unit]
 Description=ai-harness scoped task egress policy and live attestation
-After=network.target user@@HARNESS_UID@.service
-Requires=user@@HARNESS_UID@.service
+After=network.target user@@HARNESS_UID@.service ai-harness-task-slice.service
+Requires=user@@HARNESS_UID@.service ai-harness-task-slice.service
 
 [Service]
 Type=simple
