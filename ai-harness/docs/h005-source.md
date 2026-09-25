@@ -47,8 +47,10 @@ two 480000 Qwens plus Ada image geometry/approval rules are unchanged.
   not deployed in this phase. No `/health` fallback is used. Telemetry display
   stays unknown, while independently ready services can dispatch. If readiness
   is also unknown, dispatch pauses and existing queue/approval work is retained.
-  Positive latches, confirmed unavailability and request quarantine cannot be
-  bypassed by this fallback. Readiness is never evidence of idle.
+  Positive latches, fresh software unavailability and request quarantine cannot
+  be bypassed by this fallback. Software observations expire after15s; a stale
+  software-unavailable receipt cannot indefinitely block independently healthy
+  readiness. Readiness is never evidence of idle.
 - Positive authoritative hardware latches persist in `node_hardware_latches`
   separately from `gateway_lanes`. App restart, late readiness and GPU reset do
   not clear them. `hardware_latched_boot_id` retains the authoritative latch

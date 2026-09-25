@@ -1308,3 +1308,82 @@ test("readiness hold during preparation retains its reservation and eight waiter
     () => f.broker.get(f.session.id, waiting[0].id).state === "cancelled",
   );
 });
+
+test("production adapter resumes retained image work after soft-unavailable expires and independent readiness is fresh", async (t) => {
+  const node = JSON.parse(
+    await readFile(
+      new URL("./fixtures/h005/node-status-v1.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const fresh = {
+    state: "ok",
+    observed_at: "2026-09-25T18:00:00.000Z",
+    age_ms: 0,
+    freshness: "fresh",
+    reason: null,
+  };
+  Object.assign(node, fresh, { boot_id: "boot-fixture" });
+  const image = node.services.find(
+    (service: { service_id: string }) => service.service_id === "image",
+  );
+  Object.assign(image, fresh, {
+    availability: "available",
+    ready: true,
+    admitting: true,
+    hardware_latched: false,
+    hardware_latched_boot_id: null,
+  });
+  let clock = 0,
+    telemetryFailed = false;
+  let broker: ImageBroker | undefined;
+  const observer = new NodeAvailability({
+    backend: {
+      status: async () => {
+        if (telemetryFailed) throw Error("fixture node outage");
+        return node;
+      },
+    },
+    readiness: { image: async () => ({ ready: true }) },
+    onLatch: () =>
+      assert.fail("software unavailability must not latch hardware"),
+    changed: () => broker?.notifyAvailabilityChanged(),
+    now: () => clock,
+  });
+  t.after(() => observer.stop());
+  await observer.poll();
+  const f = await fixture(t, { availability: observer.get });
+  broker = f.broker;
+  const active = await f.submit("soft-active", { seed: 10 });
+  await until(() => f.backend.calls.length === 1);
+  const waiting = await f.submit("soft-waiting", { seed: 11 });
+  Object.assign(image, {
+    availability: "unavailable",
+    ready: false,
+    reason: "service_stopped",
+  });
+  await observer.poll();
+  telemetryFailed = true;
+  await observer.poll();
+  await f.backend.complete();
+  await until(
+    () => f.broker.get(f.session.id, active.id).state === "completed",
+  );
+  assert.equal(observer.get("image").dispatch, "hold");
+  assert.equal(f.broker.get(f.session.id, waiting.id).state, "queued");
+  clock = 14999;
+  await observer.poll();
+  assert.equal(observer.get("image").dispatch, "hold");
+  assert.equal(f.backend.calls.length, 1);
+  clock = 15000;
+  await observer.poll();
+  await until(() => f.backend.calls.length === 2);
+  assert.equal(observer.states().image, "unknown");
+  assert.equal(observer.get("image").dispatch, "allow");
+  assert.equal(f.backend.calls[1].input.seed, waiting.seed);
+  assert.equal((await f.submit("soft-waiting", { seed: 11 })).id, waiting.id);
+  await f.backend.complete();
+  await until(
+    () => f.broker.get(f.session.id, waiting.id).state === "completed",
+  );
+});

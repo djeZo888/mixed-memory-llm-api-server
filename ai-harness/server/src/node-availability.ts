@@ -281,11 +281,17 @@ export class NodeAvailability {
       value.reason === "readiness_unknown"
     ) {
       const fallback = this.readiness.get(id)?.snapshot();
-      const last = this.cache
-        .snapshot()
-        .value?.services.find((service) => service.service_id === id);
+      const cached = this.cache.snapshot();
+      const last = cached.value?.services.find(
+        (service) => service.service_id === id,
+      );
+      // Software readiness has an observation lifetime. Only the separate durable
+      // hardware latch remains authoritative after this soft observation expires.
+      const softUnavailable =
+        last?.availability === "unavailable" &&
+        this.fresh(last, cached.ageMs ?? this.staleMs);
       if (
-        last?.availability !== "unavailable" &&
+        !softUnavailable &&
         fallback?.state === "fresh" &&
         fallback.error === null &&
         fallback.value?.ready === true
