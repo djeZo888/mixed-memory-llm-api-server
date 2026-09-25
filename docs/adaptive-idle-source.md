@@ -30,9 +30,12 @@ result transmission and rejects unsupported asynchronous/disaggregated execution
 Native tokenizer/client and ASGI hooks keep scheduler work pending until both
 generation and response drain complete, including client-side completion delayed
 after the scheduler reply. The HTTP boundary is the native ASGI application's
-completed response send/cleanup, not remote TCP receipt. An exception escaping
-the image app conservatively retains pending work for owner recovery because an
-outer framework error response may still be draining. Text also retains running grammar compilation Futures
+completed response send/cleanup, not remote TCP receipt. Both HTTP adapters wrap
+the complete native ASGI stack, including framework error responses. Image begin acknowledgments and ordered completion sends remain
+owned across ordinary cancellation; healthy cancellation/error paths settle their
+drain state. Reservations inhibit waiting without renewing grace; only successful
+native model dispatch permits final completion renewal. Only genuinely failed or
+unresolved transport/work retains pending state for canonical owner recovery. Text also retains running grammar compilation Futures
 after an aborted request leaves the native queue: failed cancellation does not
 turn ongoing compilation into idle. Observed final completion starts fresh grace.
 Helpers do not alter request contents,

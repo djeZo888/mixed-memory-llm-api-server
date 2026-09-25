@@ -306,7 +306,7 @@ class ExactPatchedLoopTests(unittest.TestCase):
 
 class NativeDrainTests(unittest.IsolatedAsyncioTestCase):
     async def test_native_postprocessing_and_asgi_backpressure_get_final_grace(self):
-        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation
+        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation, mark_submitted
         clock, scheduler = Clock(), scheduler_fixture()
         waits, signals = [], []
         scheduler._poller.poll = lambda: waits.append(clock.now)
@@ -319,6 +319,7 @@ class NativeDrainTests(unittest.IsolatedAsyncioTestCase):
                     signals.append(batch['event'])
                     binding.process_signals([(b'client', batch)], lambda identity: None)
                     return NS()
+                mark_submitted(self, batch)  # Fixture successful native wire send.
                 binding.begin([(b'client', batch)])
                 clock.now = 1000
                 binding.complete()  # Scheduler reply available; native HTTP not done.
@@ -344,7 +345,7 @@ class NativeDrainTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(waits, [3100])
 
     async def test_passive_route_and_validation_failure_never_send_signals(self):
-        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation
+        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation, mark_submitted
         sent = []
         class Client:
             @track_generation(Req)
@@ -363,7 +364,7 @@ class NativeDrainTests(unittest.IsolatedAsyncioTestCase):
         self.assertIs(sent[-1], request)
 
     async def test_failed_end_delivery_keeps_scheduler_busy_conservatively(self):
-        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation
+        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation, mark_submitted
         clock, scheduler = Clock(), scheduler_fixture()
         binding = DiffusionIdleBinding(scheduler, Req, clock=clock)
         class Client:
@@ -382,23 +383,24 @@ class NativeDrainTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(binding.maybe_wait())
         self.assertEqual(len(binding._pending_drains), 1)
 
-    async def test_cancelled_begin_ack_never_dispatches_or_clears_uncertain_token(self):
+    async def test_cancelled_begin_ack_settles_ordered_end_without_generation(self):
         import asyncio
-        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation
+        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation, mark_submitted
         clock, scheduler = Clock(), scheduler_fixture()
         binding = DiffusionIdleBinding(scheduler, Req, clock=clock)
-        accepted, blocked_ack = asyncio.Event(), asyncio.Event()
+        accepted, release_ack, ended = asyncio.Event(), asyncio.Event(), asyncio.Event()
         signals, dispatched = [], []
         class Client:
             @track_generation(Req)
             async def forward(self, batch):
                 if isinstance(batch, dict):
                     signals.append(batch['event'])
-                    # Native scheduler accepted begin, but its ACK has not
-                    # reached the HTTP task when cancellation arrives.
                     binding.process_signals([(b'client', batch)], lambda identity: None)
-                    accepted.set()
-                    await blocked_ack.wait()
+                    if batch['event'] == 'begin':
+                        accepted.set()
+                        await release_ack.wait()
+                    else:
+                        ended.set()
                 else:
                     dispatched.append(batch)
         client = Client()
@@ -410,16 +412,25 @@ class NativeDrainTests(unittest.IsolatedAsyncioTestCase):
         task.cancel()
         with self.assertRaises(asyncio.CancelledError):
             await task
-        self.assertEqual(dispatched, [])  # No generation or replay after uncertain ACK.
+        self.assertEqual(dispatched, [])
         self.assertEqual(signals, ['begin'])
         self.assertEqual(len(binding._pending_drains), 1)
-        clock.now = 5000
-        self.assertFalse(binding.maybe_wait())  # No timer expires uncertain state.
-        clock.now = 10000
+        clock.now = 500
         self.assertFalse(binding.maybe_wait())
+        self.assertEqual(binding.policy.snapshot()['last_real_work_monotonic'], 0)
+        release_ack.set()  # Healthy IPC resolves ACK despite caller cancellation.
+        await asyncio.wait_for(ended.wait(), 1)
+        self.assertEqual(signals, ['begin', 'end'])
+        self.assertEqual(dispatched, [])
+        self.assertEqual(binding._pending_drains, set())
+        self.assertEqual(binding.policy.snapshot()['last_real_work_monotonic'], 0)
+        clock.now = 599.999
+        self.assertFalse(binding.maybe_wait())
+        clock.now = 600
+        self.assertTrue(binding.maybe_wait())
 
-    async def test_unhandled_outer_error_retains_pending_until_owner_recovery(self):
-        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation
+    async def test_healthy_postgeneration_error_response_drains_then_restarts_grace(self):
+        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation, mark_submitted
         clock, scheduler = Clock(), scheduler_fixture()
         binding = DiffusionIdleBinding(scheduler, Req, clock=clock)
         signals = []
@@ -429,20 +440,39 @@ class NativeDrainTests(unittest.IsolatedAsyncioTestCase):
                 if isinstance(batch, dict):
                     signals.append(batch['event'])
                     binding.process_signals([(b'client', batch)], lambda identity: None)
+                else:
+                    mark_submitted(self, batch)
         client = Client()
-        async def app(scope, receive, send):
+        async def route(scope, receive, send):
             await client.forward(Req())
-            raise RuntimeError('fixture outer500 has not drained')
-        with self.assertRaisesRegex(RuntimeError, 'outer500'):
-            await DiffusionDrainMiddleware(app)(
-                {'type': 'http', 'method': 'POST', 'path': '/v1/images/edits'}, None, None)
-        clock.now = 9000
+            raise RuntimeError('fixture postgeneration error')
+        async def error_wrapped_app(scope, receive, send):
+            # Starlette ServerErrorMiddleware sends its error response before
+            # reraising. Our launch wrapper surrounds that complete lifecycle.
+            try:
+                await route(scope, receive, send)
+            except Exception:
+                await send({'type': 'http.response.start', 'status': 500})
+                await send({'type': 'http.response.body', 'body': b'error'})
+                raise
+        async def send(message):
+            clock.now = 1700 if message['type'] == 'http.response.start' else 2500
+            self.assertEqual(signals, ['begin'])
+            self.assertFalse(binding.maybe_wait())
+        with self.assertRaisesRegex(RuntimeError, 'postgeneration error'):
+            await DiffusionDrainMiddleware(error_wrapped_app)(
+                {'type': 'http', 'method': 'POST', 'path': '/v1/images/edits'}, None, send)
+        self.assertEqual(signals, ['begin', 'end'])
+        self.assertEqual(binding._pending_drains, set())
+        self.assertEqual(binding.policy.snapshot()['last_real_work_monotonic'], 2500)
+        clock.now = 3099.999
         self.assertFalse(binding.maybe_wait())
-        self.assertEqual(signals, ['begin'])
+        clock.now = 3100
+        self.assertTrue(binding.maybe_wait())
 
     async def test_response_cancellation_finalizes_end_and_preserves_cancel(self):
         import asyncio
-        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation
+        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation, mark_submitted
         signals = []
         class Client:
             @track_generation(Req)
@@ -459,7 +489,7 @@ class NativeDrainTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_late_forward_completion_after_response_never_loses_end(self):
         import asyncio
-        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation
+        from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation, mark_submitted
         entered, release = asyncio.Event(), asyncio.Event()
         signals, children = [], []
         class Client:
@@ -483,7 +513,7 @@ class NativeDrainTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_exact_source_drain_patch_full_compile_and_hook_positions(self):
         root = Path(os.environ.get('ADAPTIVE_IMAGE_SOURCE_ROOT', ROOT.parent / 'scratch/native/image'))
-        files = {'python/sglang/multimodal_gen/runtime/scheduler_client.py': '9f2e9aaf88d8227d78b80a063c10e9c1bf8674f485cf145a09eb8c94c52fc22e', 'python/sglang/multimodal_gen/runtime/entrypoints/http_server.py': 'e4d11f5a5d43ab12d0ac6631524bb0b0b4aeee736e7f9cf3091eeb034cac2e41'}
+        files = {'python/sglang/multimodal_gen/runtime/scheduler_client.py': '9f2e9aaf88d8227d78b80a063c10e9c1bf8674f485cf145a09eb8c94c52fc22e', 'python/sglang/multimodal_gen/runtime/launch_server.py': 'd3b9d6ec9dd7d20f1fdc2b69874658b709a9416f9bc7095fc97a325294463af5'}
         if not all((root / name).is_file() for name in files):
             self.skipTest('Complete pinned diffusion client+HTTP source not supplied')
         with tempfile.TemporaryDirectory() as directory:
@@ -502,9 +532,66 @@ class NativeDrainTests(unittest.IsolatedAsyncioTestCase):
                     cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'AsyncSchedulerClient')
                     forward = next(n for n in cls.body if isinstance(n, ast.AsyncFunctionDef) and n.name == 'forward')
                     self.assertEqual(ast.unparse(forward.decorator_list[0]), 'track_generation(Req)')
+                    native = next(n for n in cls.body if isinstance(n, ast.AsyncFunctionDef) and n.name == '_forward_one')
+                    from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware, track_generation, mark_submitted
+                    for fail_send in (False, True):
+                        clock, scheduler = Clock(), scheduler_fixture()
+                        binding = DiffusionIdleBinding(scheduler, Req, clock=clock)
+                        signals = []
+                        class Socket:
+                            def setsockopt(self, *args): pass
+                            def connect(self, endpoint): pass
+                            async def send(self, payload):
+                                self_test.assertEqual(binding.policy.snapshot()['last_real_work_monotonic'], 0)
+                                if fail_send: raise OSError('fixture send not accepted')
+                            async def recv(self): return b'fixture output'
+                            def close(self): pass
+                        self_test = self
+                        namespace = {'mark_submitted': mark_submitted, 'Req': Req,
+                                     'zmq': NS(REQ=1, LINGER=2, error=NS(Again=TimeoutError)),
+                                     '_resolve_timeout_ms': lambda *args: None,
+                                     '_configure_recv_timeout': lambda *args: None,
+                                     'pickle': NS(dumps=lambda batch: batch, loads=lambda payload: payload),
+                                     '_materialize_output_batch_file_refs': lambda output: None}
+                        future = ast.ImportFrom(module='__future__', names=[ast.alias(name='annotations')], level=0)
+                        ast.fix_missing_locations(future)
+                        exec(compile(ast.Module(body=[future, native], type_ignores=[]), name, 'exec'), namespace)
+                        class Client:
+                            context = NS(socket=lambda *args: Socket())
+                            server_args = NS()
+                            @track_generation(Req)
+                            async def forward(self, batch):
+                                if isinstance(batch, dict):
+                                    signals.append(batch)
+                                    binding.process_signals([(b'client', batch)], lambda identity: None)
+                                else:
+                                    return await namespace['_forward_one'](self, 'fixture-endpoint', batch, None)
+                        client = Client()
+                        async def app(scope, receive, send):
+                            try:
+                                await client.forward(Req())
+                            except OSError:
+                                pass
+                            clock.now = 800
+                        await DiffusionDrainMiddleware(app)(
+                            {'type': 'http', 'method': 'POST', 'path': '/v1/images/generations'}, None, None)
+                        self.assertEqual(signals[-1]['admitted'], not fail_send)
+                        self.assertEqual(binding.policy.snapshot()['last_real_work_monotonic'], 0 if fail_send else 800)
+                        self.assertEqual(binding._pending_drains, set())
                 else:
-                    create = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'create_app')
-                    self.assertEqual(ast.unparse(create.body[-2]), 'app.add_middleware(DiffusionDrainMiddleware)')
+                    launch = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'launch_http_server_only')
+                    self.assertEqual(ast.unparse(launch.body[-1].value.args[0]), 'DiffusionDrainMiddleware(app)')
+                    from runtime.adaptive_diffusion_drain import DiffusionDrainMiddleware
+                    native_app, captured = object(), []
+                    namespace = {'init_diffusion_tracing': lambda *a: None,
+                                 'set_global_server_args': lambda *a: None,
+                                 'create_app': lambda args: native_app,
+                                 'DiffusionDrainMiddleware': DiffusionDrainMiddleware,
+                                 'uvicorn': NS(run=lambda app, **kwargs: captured.append(app))}
+                    exec(compile(ast.Module(body=[launch], type_ignores=[]), name, 'exec'), namespace)
+                    namespace['launch_http_server_only'](NS(log_level='info', host='127.0.0.1', port=30007))
+                    self.assertIsInstance(captured[0], DiffusionDrainMiddleware)
+                    self.assertIs(captured[0].app, native_app)
 
 
 if __name__ == '__main__':

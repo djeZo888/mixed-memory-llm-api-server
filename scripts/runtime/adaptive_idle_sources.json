@@ -129,7 +129,8 @@
       "python/sglang/multimodal_gen/runtime/pipelines_core/executors/sync_executor.py": "7b56b40f7a16f7668a046b7bf7cb5fede338865e9fab9e93ed6505ce4f365df5",
       "python/sglang/multimodal_gen/runtime/pipelines_core/executors/pipeline_executor.py": "bef6b7e247151c33067e5d8f67013556ef7f0a56acd30305e98f67c5f456d32f",
       "python/sglang/multimodal_gen/runtime/pipelines_core/executors/parallel_executor.py": "2ffba3c5278ff424b217dada919735ed2b7495ec173291767845f16da0944f77",
-      "python/sglang/multimodal_gen/runtime/entrypoints/http_server.py": "e4d11f5a5d43ab12d0ac6631524bb0b0b4aeee736e7f9cf3091eeb034cac2e41"
+      "python/sglang/multimodal_gen/runtime/entrypoints/http_server.py": "e4d11f5a5d43ab12d0ac6631524bb0b0b4aeee736e7f9cf3091eeb034cac2e41",
+      "python/sglang/multimodal_gen/runtime/launch_server.py": "d3b9d6ec9dd7d20f1fdc2b69874658b709a9416f9bc7095fc97a325294463af5"
     },
     "installed_raw_verified_files": [
       "python/sglang/multimodal_gen/runtime/managers/scheduler.py",

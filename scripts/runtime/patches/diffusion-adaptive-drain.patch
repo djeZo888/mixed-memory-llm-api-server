@@ -1,13 +1,23 @@
---- a/python/sglang/multimodal_gen/runtime/entrypoints/http_server.py
-+++ b/python/sglang/multimodal_gen/runtime/entrypoints/http_server.py
-@@ -444,4 +444,7 @@
-     app.include_router(rollout_api.router)
+--- a/python/sglang/multimodal_gen/runtime/launch_server.py
++++ b/python/sglang/multimodal_gen/runtime/launch_server.py
+@@ -7,6 +7,8 @@
+ import time
  
-     app.state.server_args = server_args
-+    from sglang.multimodal_gen.runtime.managers.adaptive_diffusion_drain import DiffusionDrainMiddleware
-+    # Last registration is outermost: retain work through response forwarding.
-+    app.add_middleware(DiffusionDrainMiddleware)
-     return app
+ import uvicorn
++
++from sglang.multimodal_gen.runtime.managers.adaptive_diffusion_drain import DiffusionDrainMiddleware
+ 
+ from sglang.multimodal_gen.runtime.disaggregation.orchestrator import (
+     DiffusionServer,
+@@ -484,7 +486,7 @@
+     set_global_server_args(server_args)
+     app = create_app(server_args)
+     uvicorn.run(
+-        app,
++        DiffusionDrainMiddleware(app),
+         use_colors=True,
+         log_level=server_args.log_level,
+         host=server_args.host,
 --- a/python/sglang/multimodal_gen/runtime/scheduler_client.py
 +++ b/python/sglang/multimodal_gen/runtime/scheduler_client.py
 @@ -6,6 +6,8 @@
@@ -15,7 +25,7 @@
  import zmq
  import zmq.asyncio
 +
-+from sglang.multimodal_gen.runtime.managers.adaptive_diffusion_drain import track_generation
++from sglang.multimodal_gen.runtime.managers.adaptive_diffusion_drain import mark_submitted, track_generation
  
  from sglang.multimodal_gen.runtime.entrypoints.control_requests import (
      ListLorasReq,
@@ -27,3 +37,11 @@
      async def forward(self, batch: Any, timeout_ms: int | None = None) -> Any:
          """Sends a batch or request to the scheduler and waits for the response."""
          self.request_logger.log_received_request(batch)
+@@ -287,6 +290,7 @@
+             _configure_recv_timeout(socket, effective_timeout)
+             socket.connect(endpoint)
+             await socket.send(pickle.dumps(batch))
++            mark_submitted(self, batch)
+             payload = await socket.recv()
+             output_batch = pickle.loads(payload)
+             _materialize_output_batch_file_refs(output_batch)

@@ -42,7 +42,11 @@ class DiffusionIdleBinding:
             if type(req) is not dict or "__llmctl_adaptive_drain__" not in req:
                 remaining.append((identity, req))
                 continue
-            valid = (set(req) == {"__llmctl_adaptive_drain__", "event", "token"}
+            expected = {"__llmctl_adaptive_drain__", "event", "token"}
+            if req.get("event") == "end":
+                expected.add("admitted")
+            valid = (set(req) == expected
+                     and (req.get("event") != "end" or type(req.get("admitted")) is bool)
                      and type(req["__llmctl_adaptive_drain__"]) is int
                      and req["__llmctl_adaptive_drain__"] == 1
                      and req["event"] in ("begin", "end")
@@ -54,7 +58,8 @@ class DiffusionIdleBinding:
                 self._pending_drains.add(req["token"])
             elif req["token"] in self._pending_drains:
                 self._pending_drains.remove(req["token"])
-                self.policy.record_real_work()
+                if req["admitted"]:
+                    self.policy.record_real_work()
             acknowledge(identity)
         return remaining
 
@@ -75,9 +80,12 @@ class DiffusionIdleBinding:
         real_queued = sum(self._is_generation(item[1]) for item in queue)
         if self._dispatching and not self._real_dispatch:
             return False
+        # Reservation/drain ownership inhibits waiting, but is not itself work.
+        if self._pending_drains and not self._real_dispatch and not real_queued:
+            return False
         activity = Activity(active=int(self._real_dispatch), queued=real_queued,
                             streaming=int(self._real_dispatch),
-                            pending_async=len(self._pending_drains))
+                            pending_async=0)
         if queue and not real_queued:
             return False
         return self.policy.maybe_wait(activity, self.scheduler._poller.poll)
