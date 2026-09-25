@@ -119,6 +119,28 @@ class DedicatedImagePeerTests(unittest.TestCase):
         self.manager.persistent_json.assert_not_called()
         self.manager.sglang_probe.assert_not_called()
 
+    def test_fresh_mount_order_is_irrelevant_but_full_entries_must_match(self):
+        self.fresh['Mounts'].reverse()
+        before = copy.deepcopy((self.candidate, self.fresh))
+        self.validate()
+        self.assertEqual((self.candidate, self.fresh), before)
+        cases = (
+            ('changed source', lambda mounts: mounts[0].update(Source='/data/services/foreign')),
+            ('changed writable flag', lambda mounts: mounts[0].update(RW=not mounts[0]['RW'])),
+            ('changed propagation', lambda mounts: mounts[0].update(Propagation='rshared')),
+            ('changed destination', lambda mounts: mounts[0].update(Destination='/different')),
+            ('duplicate destination', lambda mounts: mounts[0].update(Destination=mounts[1]['Destination'])),
+            ('duplicate entry', lambda mounts: mounts.append(copy.deepcopy(mounts[0]))),
+            ('missing entry', lambda mounts: mounts.pop()),
+        )
+        original = copy.deepcopy(self.fresh)
+        for name, mutate in cases:
+            with self.subTest(name=name):
+                self.fresh = copy.deepcopy(original)
+                mutate(self.fresh['Mounts'])
+                with self.assertRaisesRegex(LifecycleError, '^untrusted_concurrent_peer$'):
+                    self.validate()
+
     def test_backend_ownership_does_not_require_image_api_or_warm_readiness(self):
         for phase in ('loading', 'failed'):
             with self.subTest(image_phase=phase):
