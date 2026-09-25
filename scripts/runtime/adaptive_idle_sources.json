@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "status": "candidate_policy_native_binding_incomplete",
+  "native_integration_accepted": false,
+  "retained_evidence": "H004-POSTBOOT-PLAN-20260925/final-observation.json",
+  "observed_date": "2026-09-25",
+  "hash_semantics": "sha256(Path.read_text().strip().encode()) from H004 initial.py read helper; NOT raw-byte identities",
+  "raw_byte_pins_available": false,
+  "text": {
+    "upstream_revision": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+    "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "files": {
+      "python/sglang/srt/managers/scheduler.py": "6aacb3df56fcc396496220fc446d685939d0c8728510e208902f43d30b7ff696",
+      "python/sglang/srt/managers/scheduler_components/request_receiver.py": "abf13752fc2451e046f5879406b14f5c1b2d63b48421124e1f67009235b9b802",
+      "python/sglang/srt/managers/scheduler_components/idle_sleeper.py": "9a7ac3950b6a34d849ed87d94edae983d237376a58336ee77b1e86e27daff2b7"
+    }
+  },
+  "image": {
+    "upstream_revision": "0cd8be351d0825488f4b81c8931167bbab618eca",
+    "image_reference": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    "preserved_existing_patch_sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e",
+    "files": {
+      "python/sglang/multimodal_gen/runtime/managers/scheduler.py": "96e4ec52db4e16c6eb71dcea881177d66bc10a575efa621e01e1b2578298630f"
+    }
+  }
+}
