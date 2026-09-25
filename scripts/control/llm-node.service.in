@@ -1,0 +1,31 @@
+# H005 SOURCE CANDIDATE. Activation requires exact root source/policy review.
+[Unit]
+Description=Independent protected passive node status API
+After=local-fs.target
+# No Requires/BindsTo on chat, control, Docker, lifecycle or registered storage.
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/
+ExecStart=/usr/bin/python3 -I -B /usr/local/lib/llm-server/node-api/scripts/control/node_serve.py
+LoadCredential=control-api-key:/etc/llm-server/control-api-key
+UMask=0077
+Restart=no
+KillMode=control-group
+TimeoutStopSec=5
+StandardOutput=null
+StandardError=null
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET
+# Candidate has passive collectors only and rejects unsupported mutations.
+
+[Install]
+WantedBy=multi-user.target

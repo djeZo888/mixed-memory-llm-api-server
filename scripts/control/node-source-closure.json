@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "source_root": "/usr/local/lib/llm-server/node-api",
+  "files": [
+    "scripts/control/__init__.py",
+    "scripts/control/installation.py",
+    "scripts/control/http.py",
+    "scripts/control/node_serve.py",
+    "scripts/control/node_installation.py",
+    "scripts/control/node.py",
+    "scripts/control/node_collectors.py",
+    "scripts/control/passive.py",
+    "scripts/control/node_actions.py"
+  ]
+}
