@@ -1,12 +1,12 @@
 {
-  "build_final_receipt_sha256": "116f07d7de69663f7d3789f70906e19461621f248fd1d396745169db6b058ba7",
-  "build_full_hashes_sha256": "e6ac2e4d63e972ca900a7fc01ee65dcb530c2e5fbf9f1cd26b1ac5aff08f0420",
-  "build_receipt_path": "H005-ADAPTIVE-BUILD-20260925/BUILT-IMAGES.json",
-  "build_receipt_sha256": "5d896fdb52aa3a5d55ed42ba6dc7f402de1da9f98b3cee22bdf4f62f076fe9dc",
+  "build_final_receipt_sha256": "68133f814fefa397b67f04de81ebb5af4c6e7d117490df193fcd8ebc607f84e3",
+  "build_full_hashes_sha256": "7f663c0995a9513f28b5560bab0b7a906b8c09e7b9172a26026820d78194b456",
+  "build_receipt_path": "H005-IMAGE-PERMISSIONS-FIX-20260925/BUILT-IMAGES.json",
+  "build_receipt_sha256": "6b109b7e2487653a16aace032c333ecdc8ec3fadc585845fad426240804cfa2a",
   "image": {
-    "build_check_receipt_sha256": "592750de6bad1450a8ec18eb75892426b82982501116df2ed1999ffec506851b",
-    "context_manifest_sha256": "cfafe3464c1a796f4eaff70e5cbedc483fd57200a523297ea7a886d8fa5fc2f3",
-    "dockerfile_sha256": "94cad1308e67c67596e724f192f464b43490b393ac7c9292dd4ad735fa226b34",
+    "build_check_receipt_sha256": "af9b39e64a1d6f2dfd07f9a4da47cfe96625cb566ed75ebae9d402489b08247a",
+    "context_manifest_sha256": "c5a050558954cf4e6413e25fa13ecb6fc733d660c10dd54ab2714641dfb726ee",
+    "dockerfile_sha256": "1950c30534f43bed866847b5fd50afc34a4bb8d0113c3d7ffa060bb66020169b",
     "final_source_sha256": {
       "python/sglang/multimodal_gen/runtime/disaggregation/scheduler_mixin.py": "64b350f1d639a68f9992d72dc3a1fecb6f9492f82d817dc4d4573b89499858f8",
       "python/sglang/multimodal_gen/runtime/entrypoints/http_server.py": "e4d11f5a5d43ab12d0ac6631524bb0b0b4aeee736e7f9cf3091eeb034cac2e41",
@@ -23,15 +23,15 @@
       "python/sglang/multimodal_gen/runtime/server_args/server_args.py": "80a8197d79a279367ea84cce5bc206a7a70c6c0ae132c4750d92999dbed33e45",
       "python/sglang/multimodal_gen/runtime/server_warmup.py": "904304975c10baa8d51ac099882589f1f7337a5d54305d3ffc0e3898da7e33d4"
     },
-    "image_config_digest": "sha256:e0a3d6b3b0e55583feb272dac0c0f3caedbabf65bb19f60efbf7f13c3591b51f",
-    "image_id": "sha256:f01aafc2fefb4a5f961c73b7435ccfbdf5a801ccc55a9112d50fc5d45beb3a0f",
+    "image_config_digest": "sha256:3f6178faa74c4a9bcb95ed4304dbee57473efa8913a793e067014af4a98281ad",
+    "image_id": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
     "image_id_domain": "oci_platform_manifest",
-    "image_manifest_digest": "sha256:f01aafc2fefb4a5f961c73b7435ccfbdf5a801ccc55a9112d50fc5d45beb3a0f",
+    "image_manifest_digest": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
     "installed_preconditions": {
       "/opt/image-venv/lib/python3.12/site-packages/sglang/multimodal_gen/runtime/platforms/cuda.py": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de"
     },
     "native_package_root": "/opt/image-venv/lib/python3.12/site-packages/sglang",
-    "overlay_receipt_sha256": "0e221a318c9c3d80042c73a0a28847fa718d360d87d0b0eb6e7de146e0812393",
+    "overlay_receipt_sha256": "3103282c8e0818133ef8177a8fe3d48e92a17880cfe9baa0135efcefe7b34683",
     "overlay_sha256": "dda84e200adcc6a1ee8915e0e993627695477a346c5848fc27f9251c34d04b3b",
     "parent_config_digest": "sha256:d8bb36563e0cdfa7d315417cf4a9dbf064c86ccc5b16d21a60f3216d71e150da",
     "parent_image_reference": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
