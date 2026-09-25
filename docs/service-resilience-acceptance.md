@@ -2,7 +2,8 @@
 
 **PARTIAL / PENDING acceptance; Draft PR7.** This offline publication checkpoint
 adds supplied repair, action and recovery receipts through **21:48:30 UTC** and root
-steering through **21:49 UTC** on September 25. Qwen0's canonical recovery, one
+steering through **21:49 UTC** on September 25, plus the reviewed integration
+handoff received September 26 local time. Qwen0's canonical recovery, one
 settled healthy-peer chat, image restart, passive control readiness and typed
 control restart are evidenced. Both failed Qwen0 starts and the original unknown
 main stop remain historical outcomes.
@@ -20,14 +21,21 @@ holds empty at **21:48:30.455212 UTC**, and Q0/Ada generations unchanged. The
 21:47:54 completion time comes from root steering; manual recovery does **not**
 turn failed automatic restoration into PASS.
 
-A bounded boot-only pre-start UNKNOWN-validation fix is under preparation/review.
+The bounded boot-only pre-start UNKNOWN-validation correction
+`cb0fca52782774124a7f93df73da50e343debe7f` is now root-reviewed and integrated.
+Root's follow-up records **95 offline tests PASS**; these were not rerun here or
+added to overlapping suite counts. Matched publication is underway per root,
+without a supplied completion/retest receipt at this checkpoint.
 No second reboot, harness reboot, formal 665-second quiet window or final wakes
 are yet evidenced. A plan, READY state, accepted POST or SSH disconnect does not
 close those gates. Earlier pre-reboot acceptance applies only at its receipt time.
 
 The exact reviewed combined input is
-`fc6896f56b1999d46ca6448ab3e6f9f9332f5acf`, from the verified supplied bundle.
-It includes reviewed code through passive control readiness. Root reports the
+`c723e98805593bd05fb4b5ac8c9164baf8311eda`, from the verified supplied
+`H005-FINAL-INTEGRATION.bundle`. It combines the prior `bf083e2` docs and corrected
+boot source after the earlier `fc6896f` integration. The isolated copy was clean
+and fast-forwarded to that exact input before this docs-only follow-up. The last
+root-supplied publication checkpoint reports the
 remote PR7 head as `ac8f71a927b4eb1635936edd6eba19997e213527`, stacked on
 `feature/ai-harness-v0.0.3`. The earlier `ec9943f` publication is historical.
 Combined repository HEAD is not the deployed identity of every component; the
@@ -121,7 +129,7 @@ The helper's hardened unit repair is source
 `45e2ee1c4ce588d2d486162e84fb51aa8795d146`, activated at 20:09:47 UTC; the stopped-owner
 proof component is source `03a1c422007c15078f3b1878d72882ba3017f9b0`, activated at
 20:20:29 UTC. These are distinct from the main `63dcb23`, status `c640b9c`, combined
-`fc6896f`, current VM node/control `aaa643f`, image runtime host `014e294` and
+`c723e98`, last receipt-backed VM node/control `aaa643f`, image runtime host `014e294` and
 image `50a3bfd` identities. The unit retains ambient `CAP_SETUID` for its fixed ordinary-user transition; activation
 readbacks retain NoNewPrivileges=1 and seccomp mode 2. Main/search/status/egress/nginx
 invocations were unchanged during each component activation. Later owned main
@@ -393,8 +401,9 @@ recovery window closed with no outstanding requests; it explicitly retains
 | Immediate wake and renewed work interval | One tiny normal authenticated request to each exact Qwen endpoint before and after quiet, plus Worker2's qualified 1024×1024 edit through the harness; response/settlement, renewed busy interval and final all-three-warm state. VRAM residency alone does not prove cache contents |
 
 The supplied failure and manual-recovery receipts preserve those distinct
-outcomes. Root's latest `STEERING.md` describes a boot-only source correction;
-it is not part of this report's reviewed `fc6896f` input. Final gates remain
+outcomes. Root's later follow-up reviews the boot-only `cb0fca5` correction,
+now included in `c723e98`; source review and 95 offline tests do not establish
+successful publication or reboot restoration. Final gates remain
 **PENDING** until actual subsequent execution receipts arrive. No lane-selector
 work or assumed second reboot is included, and the first automatic restoration
 failure remains failed regardless of later recovery.
@@ -425,8 +434,9 @@ operation journals, boot intent, latch provenance and original qualification
 receipts. Rollback must use current canonical owners and matched sources; old
 snapshots must not overwrite current journals, intents, latches or chat data.
 No automatic replay or global reset/cleanup is authorized. Root reports Draft PR7
-at `ac8f71a`; reviewed combined input `fc6896f` and this docs-only follow-up remain
+at `ac8f71a` in its last supplied remote-head checkpoint; reviewed combined
+input `c723e98` and this docs-only follow-up remain
 unpublished pending exact root review and explicit publication GO. Serial reboot
 and formal quiet/wake receipts are still required before final acceptance; the
-first automatic-restoration failure is preserved and its source correction/retest
-remain pending.
+first automatic-restoration failure is preserved. The source correction is
+reviewed; receipt-backed publication/retest and final acceptance remain pending.

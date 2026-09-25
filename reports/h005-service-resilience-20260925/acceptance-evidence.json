@@ -2,7 +2,7 @@
   "schema_version": 1,
   "report_date": "2026-09-25",
   "status": "PARTIAL_PENDING",
-  "combined_source_commit": "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
+  "combined_source_commit": "c723e98805593bd05fb4b5ac8c9164baf8311eda",
   "receipt_cutoff": {
     "closure_emitted_utc": "2026-09-25T19:44:56.947265Z",
     "repair_activation_last_vm_contact_utc": "2026-09-25T19:44:30.006989Z",
@@ -14,7 +14,7 @@
     "control_readiness_live_utc": "2026-09-25T21:27:26.363256+00:00",
     "control_typed_restart_final_utc": "2026-09-25T21:29:48.622Z",
     "latest_supplied_snapshot_utc": "2026-09-25T21:48:30.455212+00:00",
-    "final_execution_receipts": "Actual supplied receipts confirm first ai-vm reboot owner reconciliation and failed automatic Q1 restoration; one manual Q1 recovery restored all three models/control and empty holds at 21:48:30.455212Z. Repeat reboot, harness reboot and formal quiet/wake remain pending; boot-only fix remains outside reviewed combined source.",
+    "final_execution_receipts": "Actual supplied receipts confirm first ai-vm reboot owner reconciliation and failed automatic Q1 restoration; distinct manual Q1 recovery restored all three models/control and empty holds at 21:48:30.455212Z. Root FINAL-DOCS-FOLLOWUP reports corrected cb0fca source reviewed/integrated at c723e98 with matched publication underway; no new live completion receipt. Repeat reboot, harness reboot and formal quiet/wake remain pending.",
     "latest_root_steering_event_utc": "2026-09-25T21:48:30Z",
     "latest_root_steering_summary_utc_minute": "2026-09-25T21:49Z"
   },
@@ -25,7 +25,7 @@
     "push": false,
     "pull_request": false,
     "overlapping_test_counts_summed": false,
-    "publication_scope": "Docs-only candidate on reviewed combined fc6896f; no push, PR update, ready transition or merge in this task before root exact final review GO",
+    "publication_scope": "Docs-only candidate on reviewed combined c723e98; no push, PR update, ready transition or merge in this task before root exact final review GO",
     "previous_publication": "Existing draft PR7 head ac8f71a927b4eb1635936edd6eba19997e213527 per root supplied task summary; not queried by this task"
   },
   "deployed_components": {
@@ -98,31 +98,31 @@
     {
       "gate": "serial_typed_ai_vm_then_ai_harness_self_reboots",
       "status": "PENDING",
-      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z",
-      "required_proof": "First ai-vm changed boot and owner reconciliation succeeded but automatic Q1 restoration failed; reviewed boot-only fix and successful repeat ai-vm plus harness restoration remain pending"
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
+      "required_proof": "First ai-vm changed boot and owner reconciliation succeeded but automatic Q1 restoration failed; corrected boot-only source reviewed, matched publication and successful repeat ai-vm plus harness restoration remain pending"
     },
     {
       "gate": "one_all_three_warm_665_second_quiet_window_passive_5_second_polling",
       "status": "PENDING",
-      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z",
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
       "required_proof": "Actual common post-work interval, exact scheduler CPU units with 100 percent equal to one CPU, main TID, blocking state and VRAM"
     },
     {
       "gate": "per_pid_tid_below_5_percent_one_cpu_and_residency",
       "status": "PENDING",
       "limit": "VRAM alone does not establish cache contents",
-      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT"
     },
     {
       "gate": "immediate_bounded_normal_text_wake_each_renewed_busy_finish_all_three_warm",
       "status": "PENDING",
-      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z",
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
       "required_proof": "One ordinary authenticated tiny request to each exact Qwen endpoint before and after quiet; renewed busy and final all-three-warm proof; no new lane selector"
     },
     {
       "gate": "bounded_qualified_1024_image_edit_sanity",
       "status": "PENDING",
-      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z",
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
       "required_proof": "Worker2 qualified 1024 image edit through harness with completed result and final all-three-warm proof"
     }
   ],
@@ -881,6 +881,15 @@
       "raw_sha256": "6b376c68f5f72a10ffaa8734302712201ba18ca2191d541758ee7bfc8a0752d1",
       "retention": "external_original_not_copied",
       "scope": "Manual recovery settled, no outstanding posts/polls/model requests, no tasks; original boot restoration still failed"
+    },
+    {
+      "id": "final_docs_followup_root_summary",
+      "artifact": "FINAL-DOCS-FOLLOWUP.md",
+      "source": "H005-FINAL-PUBLICATION-20260925",
+      "evidence_class": "root_supplied_source_review_and_publication_progress_summary_not_live_completion_receipt",
+      "raw_sha256": "a7949cb587cefcfbfbebf95c85aa29a50a1be7540a1c7118cdfcc4f800c381a1",
+      "retention": "external_original_not_copied",
+      "scope": "Corrected cb0fca boot source reviewed with 95 offline tests and integrated at c723e98; matched publication underway, no completed live proof; repeat VM/harness reboot and formal quiet/wake remain pending"
     }
   ],
   "harness_boundary_limits": {
@@ -1021,14 +1030,15 @@
     "ecc": "unchanged"
   },
   "source_bundle": {
-    "artifact": "H005-REVIEWED-COMBINED.bundle",
-    "raw_sha256": "eab2b37eaa0a3f0bc3dab169689232ad9371ad9ce6f43abec30c060a1eed98ac",
-    "head": "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
+    "artifact": "H005-FINAL-INTEGRATION.bundle",
+    "raw_sha256": "0fa2cbd2f6c149dac6f12f1e7a0eb02d39c5742111364f6e0dc37845b42b9ed5",
+    "head": "c723e98805593bd05fb4b5ac8c9164baf8311eda",
     "prerequisites": [
-      "5b20f26b36e8caedfd62ce42060ecdbe32126224",
-      "ac8f71a927b4eb1635936edd6eba19997e213527"
+      "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
+      "aaa643fcd90ac4ae0a50e4a8e1a3df19ca0ebcc3",
+      "bf083e2ad29742e7e1f3da36c1475343a1f29dd1"
     ],
-    "verification": "git bundle verify PASS against local repository; both prerequisite refs are required",
+    "verification": "git bundle verify PASS against local repository; all three prerequisite refs are required",
     "deployed_source_claim": false
   },
   "historical_qwen_incident_before_recovery": {
@@ -1345,14 +1355,22 @@
       ]
     },
     "boot_only_source_fix": {
-      "status": "UNDERWAY_REVIEW_PENDING",
-      "included_in_reviewed_combined_source": false,
-      "reviewed_combined_source": "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
-      "scope": "Bounded UNKNOWN pre-start validation; no new lane selector work"
+      "status": "SOURCE_REVIEWED_MATCHED_PUBLICATION_UNDERWAY",
+      "included_in_reviewed_combined_source": true,
+      "reviewed_combined_source": "c723e98805593bd05fb4b5ac8c9164baf8311eda",
+      "corrected_source_commit": "cb0fca52782774124a7f93df73da50e343debe7f",
+      "source_offline_tests": 95,
+      "test_count_evidence_class": "root_supplied_summary; no rerun by docs task; not additive with overlapping groups",
+      "matched_live_publication": "PENDING_ACTUAL_COMPLETION_RECEIPT",
+      "deployed_component_identity_changed_by_source_merge": false,
+      "scope": "Bounded UNKNOWN pre-start validation; no new lane selector work",
+      "evidence_ids": [
+        "final_docs_followup_root_summary"
+      ]
     },
-    "second_ai_vm_reboot": "NOT_YET_EXECUTED",
-    "ai_harness_reboot": "NOT_YET_EXECUTED",
-    "formal_quiet_wake": "NOT_YET_EXECUTED",
+    "second_ai_vm_reboot": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
+    "ai_harness_reboot": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
+    "formal_quiet_wake": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
     "final_all_three_warm_after_quiet_wake": "NOT_ESTABLISHED",
     "prior_pass_scope": "Earlier recovery, restart and readiness passes retain their recorded receipt-time boundaries; manual recovery does not convert automatic restoration to PASS",
     "canonical_reboot_operation_id": "a8af1d3585a64d50825aedb819e0a21d",
@@ -1395,5 +1413,18 @@
     "root_payload_scan": "NOT_RUN: execution performed no VM payload write or lifecycle mutation; no extra global scan",
     "inference_from_stale_validation": "No GPU fault or historical low-level probe subtype proven",
     "manual_recovery_does_not_rewrite_automatic_failure": true
-  }
+  },
+  "historical_source_bundles": [
+    {
+      "artifact": "H005-REVIEWED-COMBINED.bundle",
+      "raw_sha256": "eab2b37eaa0a3f0bc3dab169689232ad9371ad9ce6f43abec30c060a1eed98ac",
+      "head": "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
+      "prerequisites": [
+        "5b20f26b36e8caedfd62ce42060ecdbe32126224",
+        "ac8f71a927b4eb1635936edd6eba19997e213527"
+      ],
+      "verification": "git bundle verify PASS against local repository; both prerequisite refs are required",
+      "deployed_source_claim": false
+    }
+  ]
 }

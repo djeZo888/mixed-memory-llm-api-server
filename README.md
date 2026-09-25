@@ -35,10 +35,13 @@ The dedicated Ada image service preserves both warm text Qwens and their 480,000
 profiles. Its six accepted opaque generation sizes are **1024x1024, 1024x576,
 1216x704, 1472x832, 1760x992 and 1920x1080**. The public hard ceiling is
 1920x1080 / 2073600 pixels. Full HD uses native 1920x1088 and removes exactly eight
-bottom rows; smaller profiles keep native=public. No resize. Editing and transparency
-remain unqualified; public 1920x1088 and UHD are refused.
+bottom rows; smaller profiles keep native=public. No resize. Qualified guarded
+editing is recorded in the [current acceptance report](docs/service-resilience-acceptance.md)
+and [harness guide](ai-harness/README.md#image-generation-and-editing). Transparency,
+public 1920x1088 and UHD remain outside the accepted scope.
 
-Deployed image API/helper source is `36c7c2d2ee8d9ed59e9310e708eb640c5aecad5e`.
+**Historical Full HD checkpoint — 2026-09-23:** image API/helper source was
+`36c7c2d2ee8d9ed59e9310e708eb640c5aecad5e`.
 One Full HD Lake Bled acceptance returned a fully decoded RGB PNG in 54.8s helper
 time, with the API ready/idle afterward and both original text containers unchanged.
 See [Full HD deployment and acceptance](reports/image21-fhd-20260923/RESULT.md)
@@ -55,7 +58,9 @@ with `/v1`; the aliases above identify the loaded instance. There is no common
 inference router or automatic fallback. Native listeners stay authenticated
 IPv4 loopback behind the reviewed private transport.
 
-- [Image API source and integration](docs/image-api.md): authenticated private Qwen-Image-2.1 generation API; editing is unsupported after failed visual fidelity. See [Full HD acceptance](reports/image21-fhd-20260923/RESULT.md) for current sizes and evidence.
+- [Image API source and integration](docs/image-api.md): private image API interface.
+  The [current acceptance report](docs/service-resilience-acceptance.md) records
+  qualified generation/editing, retained limitations and exact runtime identities.
 - [API operations and examples](docs/ai-vm-api-operations.md): discovery,
   separate credentials, targeted switch/poll and inference.
 - [Control contract](docs/control-api.md) and [inference contract](docs/api-contract.md).
@@ -64,21 +69,35 @@ IPv4 loopback behind the reviewed private transport.
 - [Private client transport](docs/direct-client-network.md) and
   [protected credentials](docs/agent-client.md#protected-key-file).
 
-`mutation_busy` describes lifecycle work. Inference running/queued counts and
-external backlog remain unknown; Ready does not mean idle. A future harness
-owns its dispatch, backlog and drain before a targeted switch. Switching a
+`mutation_busy` describes lifecycle work; readiness does not mean idle. The
+harness owns its dispatch, backlog and drain before a targeted switch. Switching a
 running target requires `allow_interrupt:true`, fresh identity/generation and
 operation polling; the server provides no atomic drain guarantee.
 
-Enabled VM services own control, private transport and lifecycle, with no
-Worker1, SSH or benchmark-keeper lifetime dependency. Control restart and warm
-idempotent boot-intent replay passed; fresh clients still received correct
-answers after activation SSH exited. **Hardware boot, cold-boot replay and
-live full rollback remain NOT_TESTED.**
+The [current resilience acceptance report](docs/service-resilience-acceptance.md)
+records component deployment and reboot evidence. The first typed ai-vm reboot
+changed boot but automatic Q1 restoration **FAILED**; separate manual recovery
+**PASSED**. The reviewed boot correction is awaiting live publication/retest
+receipts. Repeat ai-vm reboot, harness reboot and formal quiet/wake acceptance
+remain **PENDING**; historical boot checks are not final H005 acceptance.
 
 Tools, browsing and file work run on ordinary external clients in trusted
-workspaces. A separate frontend VM is future work. **Installer implementation
-and tests remain paused.**
+workspaces. The separate [ai-harness](ai-harness/README.md) provides the deployed
+shared-LAN chat and task interface. **Installer implementation and tests remain
+paused.**
+
+## Status and administration
+
+Open [status](http://10.156.100.61/status) for read-only service observations and
+[admin](http://10.156.100.61/admin) for canonical typed operations. Admin uses the
+deployed anonymous trusted/shared-LAN access scope: it has no per-user login or
+authentication. Normal operations use admin so ownership, holds and receipts are
+maintained; follow the [operator guidance](ai-harness/README.md#operator-use) for
+status meanings, idle/wake behavior and uncertain results.
+
+The optional `status.ai-harness` DNS alias is user-managed and status-only. A local
+DNS entry may point it at `10.156.100.61`; this guide does not claim DNS is configured.
+Use the recorded IP-based admin address above for operations.
 
 ## Historical evidence
 

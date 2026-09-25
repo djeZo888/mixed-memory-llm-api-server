@@ -2,7 +2,7 @@
   "schema_version": 1,
   "report_date": "2026-09-25",
   "status": "PARTIAL_PENDING",
-  "combined_source_commit": "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
+  "combined_source_commit": "c723e98805593bd05fb4b5ac8c9164baf8311eda",
   "evidence_index": "acceptance-evidence.json",
   "receipt_cutoff_utc": "2026-09-25T21:48:30.455212+00:00",
   "publication": "DRAFT_PENDING_ROOT_EXACT_FINAL_REVIEW_GO",
@@ -166,36 +166,36 @@
       "gate": "serial_typed_ai_vm_then_ai_harness_self_reboots",
       "status": "PENDING",
       "evidence_ids": [],
-      "scope": "Successful automatic restoration on repeat ai-vm reboot after reviewed boot-only fix and changed-boot canonical restoration on harness remain pending; initial reboot dispatch alone is insufficient",
-      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
+      "scope": "Corrected boot-only source reviewed; matched publication and successful automatic restoration on repeat ai-vm reboot plus changed-boot canonical harness restoration remain pending. Initial reboot dispatch alone is insufficient.",
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT"
     },
     {
       "gate": "one_all_three_warm_665_second_quiet_window_passive_5_second_polling",
       "status": "PENDING",
       "evidence_ids": [],
       "scope": "Actual common post-work interval, exact scheduler CPU units with 100 percent equal to one CPU, main TID, blocking state and VRAM",
-      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT"
     },
     {
       "gate": "per_pid_tid_below_5_percent_one_cpu_and_residency",
       "status": "PENDING",
       "evidence_ids": [],
       "scope": "VRAM alone does not establish cache contents",
-      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT"
     },
     {
       "gate": "immediate_bounded_normal_text_wake_each_renewed_busy_finish_all_three_warm",
       "status": "PENDING",
       "evidence_ids": [],
       "scope": "One ordinary authenticated tiny request to each exact Qwen endpoint before and after quiet, renewed busy and final all-three-warm proof; no new lane selector",
-      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT"
     },
     {
       "gate": "bounded_qualified_1024_image_edit_sanity",
       "status": "PENDING",
       "evidence_ids": [],
       "scope": "Worker2 qualified 1024 image edit through harness, completed result and final all-three-warm proof",
-      "execution_state": "NOT_YET_EXECUTED_PER_ROOT_2149Z"
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT"
     },
     {
       "gate": "ai_vm_typed_reboot_boot_change_and_owner_reconciliation",
@@ -239,11 +239,15 @@
     },
     {
       "gate": "boot_only_unknown_pre_start_validation_source_fix",
-      "status": "PENDING_REVIEW",
+      "status": "PASS_SOURCE_REVIEWED_LIVE_PENDING",
       "evidence_ids": [
-        "final_publication_root_recovery"
+        "final_docs_followup_root_summary"
       ],
-      "scope": "Underway/review pending; absent from reviewed combined fc6896f source and not a deployment claim"
+      "scope": "Corrected cb0fca boot-only source integrated at reviewed c723e98; root reports 95 offline tests and reviewed source. Matched publication underway without actual completion proof; no deployed identity change from source merge.",
+      "corrected_source_commit": "cb0fca52782774124a7f93df73da50e343debe7f",
+      "test_count": 95,
+      "counts_additive": false,
+      "test_count_evidence_class": "root_supplied_summary_not_rerun"
     }
   ],
   "limits": [
