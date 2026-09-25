@@ -1,17 +1,7 @@
-"""Strict H005 action boundary; no production mutation adapter is enabled.
+"""Strict H005 typed action boundary for the protected canonical owner adapter.
 
-This module owns neither an executor nor a journal. A future reviewed adapter
-must delegate to the existing canonical owner and persist audit/idempotency
-before dispatch. The owner must replay exact requests before checking current
-boot/generation, then validate new requests under its canonical lease, freeze
-affected dispatch and enforce hardware latches and interruption confirmation.
-
-Owner methods have a cooperative two-second deadline. Arbitrary injected owner
-code has NO hard two-second guarantee here; creating replacement worker threads
-would introduce unbounded hung capacity and a second execution mechanism.
-Current production construction has no owner, so every action is unsupported.
-GPU reset, VM reboot, image and control mutations remain unsupported even with
-the text fixture port. No shell, unit, URL, path or target alias is caller chosen.
+No HTTP input selects a command, path, URL, unit, model, or deployment. The
+production owner persists and audits before dispatch under the existing lease.
 """
 from __future__ import annotations
 
@@ -28,6 +18,14 @@ SERVICES = frozenset((*SERVICE_TARGETS, 'image', 'control'))
 ACTIONS = frozenset(('service.start', 'service.stop', 'service.restart', 'gpu.reset', 'node.reboot'))
 BOOT = re.compile(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}')
 GPU = re.compile(r'GPU-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}')
+# Registration is separate from discovery. Extra inventory GPUs remain visible
+# but do not become action targets, acquire model assignments, or gain reset scope.
+REGISTERED_GPUS = frozenset((
+    'GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',
+    'GPU-69acfa26-8b60-61b5-702d-aee252c163cc',
+    'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23',
+    'GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528',
+))
 KEY = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}')
 OPID = re.compile(r'[0-9a-f]{32}')
 STATUSES = frozenset(('accepted', 'running', 'succeeded', 'failed', 'interrupted', 'unknown'))
@@ -38,7 +36,9 @@ ERRORS = {
     'unsupported_action': 422,
     'owner_unavailable': 503, 'storage_unavailable': 503,
     'deadline_exceeded': 503, 'observation_unavailable': 503,
-    'invalid_owner_receipt': 503,
+    'invalid_owner_receipt': 503, 'operation_interrupted': 503,
+    'operation_failed': 503, 'reset_scope_unproven': 422,
+    'consumers_present': 409, 'reboot_pending': 503, 'journal_full': 503,
 }
 
 
@@ -81,7 +81,7 @@ class ActionRequest:
             require(type(value.get('service_id')) is str and value['service_id'] in SERVICES)
         elif action == 'gpu.reset':
             keys.add('gpu_uuid')
-            require(matches(GPU, value.get('gpu_uuid')))
+            require(matches(GPU, value.get('gpu_uuid')) and value['gpu_uuid'] in REGISTERED_GPUS)
         require(set(value) == keys)
         require(type(value['schema_version']) is int and value['schema_version'] == 1
                 and value['node_id'] == NODE and type(value['node_id']) is str
@@ -126,7 +126,7 @@ class CanonicalActionOwner(Protocol):
         changes; key mismatch raises idempotency_conflict. A new request must
         check deadline, boot/generation, registered impact, latch and work under
         the canonical lease before persistence or dispatch. Never blind replay
-        unfinished mutations after restart. No second lock/executor/journal.
+        unfinished mutations after restart. No competing model lifecycle or alternate lifecycle lock.
         """
         ...
 
@@ -154,13 +154,19 @@ def _receipt(result, *, request=None, operation_id=None):
     require(type(value) is dict and set(value) == keys, 'invalid_owner_receipt')
     require(type(value['schema_version']) is int and value['schema_version'] == 1
             and value['node_id'] == NODE and matches(OPID, value['operation_id'])
-            and value['action'] in {'service.start', 'service.stop', 'service.restart'}
-            and value['service_id'] in SERVICE_TARGETS and value['gpu_uuid'] is None
+            and value['action'] in ACTIONS
+            and ((value['action'].startswith('service.') and value['service_id'] in SERVICES and value['gpu_uuid'] is None)
+                 or (value['action'] == 'gpu.reset' and value['service_id'] is None and matches(GPU, value['gpu_uuid']) and value['gpu_uuid'] in REGISTERED_GPUS)
+                 or (value['action'] == 'node.reboot' and value['service_id'] is None and value['gpu_uuid'] is None))
             and value['status'] in STATUSES
             and value['poll_url'] == '/control/v1/node/operations/' + value['operation_id']
             and _utc(value['created_at']) and _utc(value['updated_at'])
             and (value['reason'] is None or value['reason'] in ERRORS)
-            and value['affected_services'] == [value['service_id']]
+            and type(value['affected_services']) is list
+            and all(type(s) is str and s in SERVICES for s in value['affected_services'])
+            and len(set(value['affected_services'])) == len(value['affected_services'])
+            and (not value['action'].startswith('service.') or value['affected_services'] == [value['service_id']])
+            and (value['action'] != 'node.reboot' or set(value['affected_services']) == SERVICES)
             and matches(BOOT, value['expected_boot_id'])
             and type(value['expected_generation']) is int and 0 <= value['expected_generation'] < 2**63,
             'invalid_owner_receipt')
@@ -181,8 +187,7 @@ class NodeActions:
     def submit(self, payload):
         try:
             request = ActionRequest.parse(payload)
-            require(request.action.startswith('service.') and request.service_id in SERVICE_TARGETS
-                    and self.owner is not None, 'unsupported_action')
+            require(self.owner is not None, 'unsupported_action')
             require(request.action == 'service.start' or request.allow_interrupt, 'interruption_ack_required')
             deadline = self.monotonic() + 2
             result = self.owner.accept(request, deadline=deadline)

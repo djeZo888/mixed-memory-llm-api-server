@@ -73,6 +73,14 @@ def valid(sample):
     return sample['state'] == 'ok' and sample['freshness'] == 'fresh'
 
 
+def negative_hardware_current(raw, required, boot_id, extra_age_ms=0):
+    age = number(raw.get('hardware_validation_age_ms'))
+    return (raw.get('hardware_latched') is False and age is not None
+            and number(extra_age_ms) is not None and age + extra_age_ms <= 15000
+            and raw.get('hardware_validated_boot_id') == boot_id
+            and raw.get('hardware_validated_gpu_uuids') == list(required))
+
+
 class NodeStatus:
     def __init__(self, observers):
         self.observers = observers
@@ -99,10 +107,16 @@ class NodeStatus:
                            and type(ids) is list and len(ids) <= 64
                            and all(type(u) is str and UUID.fullmatch(u) for u in ids)
                            and len(set(ids)) == len(ids))
+        faults = value.get('hardware_faults', {})
+        from .hardware_latch import HARDWARE_FAULT_CODES
+        faults_valid = (type(faults) is dict and len(faults) <= 64 and all(
+            type(u) is str and UUID.fullmatch(u) and type(code) is str and code in HARDWARE_FAULT_CODES
+            for u, code in faults.items()))
+        inventory_valid = inventory_valid and faults_valid
         result['inventory'] = dict(envelope(inv), boot_id=value.get('boot_id') if
             type(value.get('boot_id')) is str and BOOT.fullmatch(value['boot_id']) else None,
             complete=inventory_valid, observation_id=identifier(value.get('observation_id')),
-            gpu_uuids=ids if inventory_valid else [], hardware_faults={})
+            gpu_uuids=ids if inventory_valid else [], hardware_faults=faults if inventory_valid else {})
         if valid(inv) and not inventory_valid:
             # A successful collector receipt is not proof that malformed,
             # partial or other-boot inventory is complete hardware evidence.
@@ -112,6 +126,38 @@ class NodeStatus:
             sample = self._read(name)
             raw = sample['value'] or {}
             result['resources'][name] = dict(envelope(sample), **{k: number(raw.get(k)) for k in fields})
+        disk_sample = self._read('disk')
+        disk_raw = disk_sample['value'] or {}
+        disk_volumes = disk_raw.get('volumes', [])
+        result['resources']['disk']['volumes'] = []
+        for volume_id in ('root', 'data', 'models'):
+            candidates = [v for v in disk_volumes if type(v) is dict and v.get('volume_id') == volume_id] if type(disk_volumes) is list else []
+            raw = candidates[0] if len(candidates) == 1 else {}
+            # Child capture times remain authoritative; a new parent must not
+            # make failed or cached mount capacity look fresh.
+            age = integer(raw.get('age_ms'))
+            outer_age = integer(disk_sample.get('age_ms'))
+            age = age + outer_age if age is not None and outer_age is not None else None
+            observed = raw.get('observed_at')
+            observed = observed if type(observed) is str and re.fullmatch(r'[0-9T:+.Z-]{20,40}', observed) else None
+            state = raw.get('state') if raw.get('state') in ('ok', 'unknown', 'unavailable') else 'unknown'
+            if not valid(disk_sample) and state == 'ok':
+                state = 'unknown'
+            mount = raw.get('mount_point')
+            mount = mount if type(mount) is str and len(mount) <= 256 and re.fullmatch(r'/(?:[A-Za-z0-9_.-]+/)*[A-Za-z0-9_.-]*', mount) and '..' not in mount.split('/') else None
+            fs_uuid = raw.get('filesystem_uuid')
+            fs_uuid = fs_uuid if type(fs_uuid) is str and re.fullmatch(r'[A-Za-z0-9-]{1,128}', fs_uuid) else None
+            fs_type = raw.get('filesystem_type')
+            fs_type = fs_type if type(fs_type) is str and re.fullmatch(r'[a-zA-Z0-9_.-]{1,32}', fs_type) else None
+            why = raw.get('reason') if raw.get('reason') in ('registration_unknown', 'mount_identity_unavailable', 'capacity_unavailable') else None
+            row = dict(volume_id=volume_id, mount_point=mount, filesystem_uuid=fs_uuid,
+                filesystem_type=fs_type, state=state, reason=why, observed_at=observed,
+                age_ms=age, freshness='unknown' if age is None else ('fresh' if age <= 15000 else 'stale'),
+                **{k: number(raw.get(k)) for k in RESOURCE_FIELDS['disk']})
+            if raw.get('state') != 'ok':
+                for k in RESOURCE_FIELDS['disk']:
+                    row[k] = None
+            result['resources']['disk']['volumes'].append(row)
         result['services'] = []
         for service_id, required in SERVICES.items():
             sample = self._read(service_id)
@@ -120,6 +166,8 @@ class NodeStatus:
             # Persisted positive latch survives stale/unknown telemetry. A
             # negative or unreadable latch never becomes proven-safe by default.
             latched = boolean(raw.get('hardware_latched'))
+            if latched is False and required and not negative_hardware_current(raw, required, boot_id, sample.get('age_ms')):
+                latched = None
             if latched is not True and not current:
                 latched = None
             ready = boolean(raw.get('ready')) if current else None
@@ -133,7 +181,7 @@ class NodeStatus:
                 ready = admitting = False
             elif current and latched is False and ready is True:
                 available = 'available'
-            elif current and ready is False:
+            elif current and ready is False and why in ('service_stopped', 'service_failed', 'unqualified', 'software_quarantine'):
                 available = 'unavailable'
             elif latched is None:
                 why = 'hardware_latch_unknown' if required else why
@@ -145,6 +193,7 @@ class NodeStatus:
                         generation=integer(raw.get('generation')), affected_services=[service_id],
                         installed_capabilities=sorted(set(capabilities)), availability=available,
                         ready=ready, admitting=admitting, hardware_latched=latched,
+                        hardware_latched_boot_id=raw.get('hardware_latched_boot_id') if type(raw.get('hardware_latched_boot_id')) is str and BOOT.fullmatch(raw['hardware_latched_boot_id']) else None,
                         required_gpu_uuids=list(required), activity=raw.get('activity') if current and
                         raw.get('activity') in ('busy', 'idle', 'unknown') else 'unknown',
                         queue_depth=integer(raw.get('queue_depth')) if current else None,
@@ -157,9 +206,21 @@ class NodeStatus:
             if type(profiles) is list:
                 for profile in profiles[:16]:
                     if (type(profile) is dict and profile.get('operation') in ('generation', 'edit') and
-                            profile.get('size') in ('1024x1024', '1024x576', '1216x704', '1472x832', '1760x992', '1920x1080')):
-                        item['operation_profiles'].append({k: profile[k] for k in ('operation', 'size')})
+                            profile.get('size') in ('1024x1024', '1024x576', '1216x704', '1472x832', '1760x992', '1920x1080', '1536x864')):
+                        entry = {k: profile[k] for k in ('operation', 'size')}
+                        if type(profile.get('references')) is int and 0 <= profile['references'] <= 2:
+                            entry['references'] = profile['references']
+                        if type(profile.get('transparent')) is bool:
+                            entry['transparent'] = profile['transparent']
+                        item['operation_profiles'].append(entry)
             result['services'].append(item)
+        from .node_observation import aggregate_generation
+        result['generation'] = aggregate_generation(boot_id, result['services'])
+        node_sample = self._read('node')
+        node_raw = node_sample['value'] or {}
+        result['node_manager'] = dict(envelope(node_sample), service_id='node',
+            running=boolean(node_raw.get('running')) if valid(node_sample) else None,
+            generation=integer(node_raw.get('generation')), actions=[])
         telemetry = self._read('gpu_metrics')
         rows = (telemetry['value'] or {}).get('gpus', [])
         rows = rows if type(rows) is list else []
@@ -173,7 +234,11 @@ class NodeStatus:
         for gpu_uuid in sorted(known):
             sample = self._read('gpu:' + gpu_uuid)
             if sample['value'] is None and sample['reason'] == 'not_observed':
-                continue
+                if gpu_uuid not in result['inventory']['gpu_uuids']:
+                    continue
+                # Inventory discovery must not hide an extra unassigned GPU.
+                # It gets no new thread, automatic assignment, or metric claims.
+                sample = dict(unknown(), value={'boot_id': boot_id, 'gpus': [{'uuid': gpu_uuid}]})
             candidates = (sample['value'] or {}).get('gpus', [])
             if type(candidates) is not list or len(candidates) != 1 or type(candidates[0]) is not dict or candidates[0].get('uuid') != gpu_uuid:
                 candidates = [{'uuid': gpu_uuid}]
@@ -200,6 +265,7 @@ class NodeStatus:
             target['pci_bus_id'] = row.get('pci_bus_id') if type(row.get('pci_bus_id')) is str and re.fullmatch(r'[0-9a-fA-F]{4,8}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-7]', row['pci_bus_id']) else None
             target['ecc_mode'] = row.get('ecc_mode') if row.get('ecc_mode') in ('enabled', 'disabled') else None
             target['sampling_since'] = row.get('sampling_since') if type(row.get('sampling_since')) is str and re.fullmatch(r'[0-9T:+.Z-]{20,40}', row['sampling_since']) else None
+            target['generation'] = aggregate_generation(boot_id, [row for row in result['services'] if row['service_id'] in target['affected_services']], uuid)
             result['gpus'].append(target)
         return result
 

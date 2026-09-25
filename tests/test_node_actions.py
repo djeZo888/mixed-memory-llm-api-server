@@ -13,7 +13,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
-from control.node_actions import ActionRequest, DurableReceipt, NodeActions, NodeActionError
+from control.node_actions import ActionRequest, DurableReceipt, NodeActions, NodeActionError, SERVICES, REGISTERED_GPUS
 
 FIXTURES = ROOT / 'tests/fixtures/service_resilience'
 
@@ -48,8 +48,9 @@ class FixtureOwner:
         if self.boot != request.expected_boot_id or self.generation != request.expected_generation:
             raise NodeActionError('stale_state')
         receipt = json.loads((FIXTURES / 'node-operation-v1.json').read_text())
-        receipt.update(action=request.action, service_id=request.service_id,
-                       affected_services=[request.service_id])
+        receipt.update(action=request.action, service_id=request.service_id, gpu_uuid=request.gpu_uuid,
+                       affected_services=([request.service_id] if request.service_id else
+                           list(SERVICES) if request.action == 'node.reboot' else []))
         self.records[request.idempotency_key] = {'request': request.wire(), 'receipt': receipt}
         self.path.write_text(json.dumps(self.records))
         self.events.append('durable_fixture_write')
@@ -92,7 +93,7 @@ class NodeActionTests(unittest.TestCase):
             self.assertEqual((code, result['error']['code']), (422, 'unsupported_action'))
         self.assertEqual(NodeActions().operation('0' * 32)[0], 404)
 
-    def test_reset_reboot_image_control_remain_unsupported_even_with_owner(self):
+    def test_all_registered_actions_are_delegated_to_the_reviewed_owner(self):
         payloads = [{**self.request, 'service_id': value} for value in ('image', 'control')]
         for action in ('gpu.reset', 'node.reboot'):
             payload = {name: value for name, value in self.request.items() if name != 'service_id'}
@@ -100,9 +101,10 @@ class NodeActionTests(unittest.TestCase):
             if action == 'gpu.reset':
                 payload['gpu_uuid'] = 'GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528'
             payloads.append(payload)
-        for payload in payloads:
-            self.assertEqual(self.actions.submit(payload), (422, {'error': {'code': 'unsupported_action'}}))
-        self.assertEqual(self.owner.events, [])
+        for i, payload in enumerate(payloads):
+            payload['idempotency_key'] = 'action-' + str(i)
+            self.assertEqual(self.actions.submit(payload)[0], 202)
+        self.assertEqual(self.owner.events.count('dispatch_once'), 4)
 
     def test_rejects_unknown_fields_targets_boolean_impostors_and_arbitrary_commands(self):
         changes = [{'schema_version': True}, {'schema_version': 2}, {'node_id': 'ai-harness'},
@@ -121,6 +123,15 @@ class NodeActionTests(unittest.TestCase):
         for payload in payloads:
             with self.subTest(payload=payload):
                 self.assertEqual(self.actions.submit(payload)[0], 400)
+        self.assertEqual(self.owner.events, [])
+
+    def test_reset_targets_are_fixed_registration_not_discovered_uuid_syntax(self):
+        payload = {key: value for key, value in self.request.items() if key != 'service_id'}
+        payload['action'] = 'gpu.reset'
+        for gpu_uuid in REGISTERED_GPUS:
+            self.assertEqual(ActionRequest.parse({**payload, 'gpu_uuid': gpu_uuid}).gpu_uuid, gpu_uuid)
+        payload['gpu_uuid'] = 'GPU-00000000-0000-0000-0000-000000000001'
+        self.assertEqual(self.actions.submit(payload), (400, {'error': {'code': 'invalid_request'}}))
         self.assertEqual(self.owner.events, [])
 
     def test_stop_and_restart_require_explicit_interruption_confirmation(self):

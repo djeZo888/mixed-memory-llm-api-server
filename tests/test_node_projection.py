@@ -43,6 +43,40 @@ def service(snapshot, name='qwen-gpu0'):
 
 
 class NodeProjectionTests(unittest.TestCase):
+    def test_inventory_only_fifth_gpu_is_visible_unassigned_without_collectors(self):
+        fifth='GPU-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+        snapshot=status(inventory=sample(dict(boot_id=BOOT,complete=True,gpu_uuids=[fifth]))).snapshot()
+        row=next(r for r in snapshot['gpus'] if r['uuid']==fifth)
+        self.assertEqual(row['affected_services'],[])
+        self.assertEqual(row['freshness'],'unknown');self.assertIsNone(row['memory_total_mib'])
+
+    def test_nested_volume_age_is_not_refreshed_by_parent_and_missing_has_no_capacity(self):
+        fixture=json.loads((Path(__file__).parent/'fixtures/service_resilience/disk-volumes-v1.json').read_text())
+        raw=fixture.get('resources',{}).get('disk',fixture)
+        raw=copy.deepcopy(raw)
+        raw['volumes'][0]['age_ms']=10000
+        raw['volumes'][2].update(state='unavailable',total_bytes=999,available_bytes=999,age_ms=None,observed_at=None)
+        disk=status(disk=sample(raw,age_ms=7000)).snapshot()['resources']['disk']
+        self.assertEqual(disk['volumes'][0]['age_ms'],17000)
+        self.assertEqual(disk['volumes'][0]['freshness'],'stale')
+        self.assertIsNone(disk['volumes'][2]['total_bytes'])
+        self.assertIsNone(disk['volumes'][2]['available_bytes'])
+
+    def test_negative_requires_exact_current_boot_fresh_validation_not_missing_record(self):
+        raw=dict(boot_id=BOOT,hardware_latched=False,ready=True)
+        def row():return service(status(**{'qwen-gpu0':sample(raw)}).snapshot())
+        self.assertIsNone(row()['hardware_latched'])
+        raw.update(hardware_validation_age_ms=0,hardware_validated_boot_id=BOOT,
+                   hardware_validated_gpu_uuids=[GPU])
+        self.assertFalse(row()['hardware_latched'])
+        for key,bad in (('hardware_validated_boot_id',NEXT_BOOT),
+                        ('hardware_validated_gpu_uuids',[OTHER_GPU]),('hardware_validation_age_ms',15001)):
+            good=raw[key];raw[key]=bad
+            self.assertIsNone(row()['hardware_latched']);raw[key]=good
+        raw['hardware_validation_age_ms']=14000
+        snapshot=status(**{'qwen-gpu0':sample(raw,age_ms=2000)}).snapshot()
+        self.assertIsNone(service(snapshot)['hardware_latched'])
+
     def test_malformed_gpu_metric_row_cannot_collapse_partial_status(self):
         for bad in ([], {}, None, 1):
             snapshot = status(gpu_metrics=sample({'boot_id': BOOT, 'gpus': [{'uuid': bad}]})).snapshot()
@@ -134,7 +168,8 @@ class NodeProjectionTests(unittest.TestCase):
 
     def test_healthy_independent_service_need_not_wait_for_inventory_collector(self):
         raw = {'boot_id': BOOT, 'hardware_latched': False, 'ready': True,
-               'admitting': True}
+               'admitting': True, 'hardware_validation_age_ms':0,
+               'hardware_validated_boot_id':BOOT,'hardware_validated_gpu_uuids':[GPU]}
         row = service(status(**{'qwen-gpu0': sample(raw)}).snapshot())
         self.assertEqual(row['availability'], 'available')
         self.assertEqual(row['activity'], 'unknown')  # Ready never means idle.

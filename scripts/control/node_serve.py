@@ -32,7 +32,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description='Independent protected node API on127.0.0.1:30008')
     parser.add_argument('--check-binding', action='store_true', help='Validate fixed source and credentials only')
     args = parser.parse_args(argv)
-    observers = server = None
+    observers = server = owner = None
     try:
         bootstrap()
         from control.node_installation import validate_installation
@@ -44,9 +44,14 @@ def main(argv=None):
         from control.node import NodeStatus, NodeApplication
         from control.node_actions import NodeActions
         from control.http import make_server
-        observers = BoundedObservers(production_callbacks())
-        application = NodeApplication(NodeStatus(observers), NodeActions())
+        from control.node_observation import CanonicalIdentityReader
+        from control.node_action_owner import production_owner
+        reader = CanonicalIdentityReader()
+        owner = production_owner(reader, control_key=key)
+        observers = BoundedObservers(production_callbacks(reader))
+        application = NodeApplication(NodeStatus(observers), NodeActions(owner))
         server = make_server(application, key, host='127.0.0.1', port=30008)
+        owner.start()
         observers.start()
         def interrupted(_signum, _frame):
             raise KeyboardInterrupt
@@ -58,6 +63,8 @@ def main(argv=None):
     except Exception:
         return 3
     finally:
+        if owner is not None:
+            owner.close()
         if observers is not None:
             observers.close()
         if server is not None:

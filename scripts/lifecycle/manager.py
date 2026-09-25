@@ -862,9 +862,24 @@ class Manager:
                 self.state["container"] = self.identity(c, d, legacy=True)
         return copy.deepcopy(self.observe())
 
+    def require_hardware(self, d):
+        from . import concurrent_profiles as pair
+        if not d.get('legacy') and pair.is_pair(d):
+            from .hardware_policy import HardwarePolicy, RegisteredLatchStore
+            from control.hardware_latch import LatchStorageUnavailable
+            lease = getattr(self, '_hardware_lease', None)
+            store = RegisteredLatchStore(self.binding, lease=lease, storage_io=self.persistent_writer(),
+                                         system_root=self.lease_system_root, trusted_uid=self.trusted_uid)
+            try:
+                HardwarePolicy(store, lease=lease, run=self.run, system_root=self.lease_system_root,
+                               trusted_uid=self.trusted_uid).require_start(d['launch']['gpus'])
+            except LatchStorageUnavailable:
+                raise LifecycleError('hardware_latch_unknown') from None
+
     def prepare_start(self, d: dict) -> None:
         self.check_sources(d)
         self.host_guards()
+        self.require_hardware(d)
         if not d.get('legacy'):
             from . import concurrent_profiles as pair
             if pair.is_pair(d):
@@ -1442,6 +1457,7 @@ class Manager:
                     elif action in {'start', 'boot-start'}:
                         self._start()
                     elif action == 'restart':
+                        self.require_hardware(self.deployment(self.state['selected']))
                         self._stop()
                         self._start()
                     elif action in {'stop', 'recover-stop', 'boot-stop'}:
@@ -1520,6 +1536,7 @@ class Manager:
         with (nullcontext(lease) if lease is not None else acquire_lease(
                 system_root=self.lease_system_root, trusted_uid=self.trusted_uid)) as active_lease:
             _validate_borrowed_lease(active_lease, system_root=self.lease_system_root, trusted_uid=self.trusted_uid)
+            self._hardware_lease = active_lease
             recovery_required = self.recovery_only
             if action in {'stop', 'recover-stop', 'boot-stop'}:
                 try:
@@ -1562,6 +1579,7 @@ class Manager:
                 elif action == "start":
                     self._start()
                 elif action == "restart":
+                    self.require_hardware(self.deployment(self.state["selected"]))
                     self._stop()
                     self._start()
                 elif action in {"stop", "recover-stop", "boot-stop"}:

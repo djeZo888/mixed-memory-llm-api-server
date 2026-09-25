@@ -31,10 +31,13 @@ def completed(argv, stdout="", returncode=0):
 def owned_container():
     return {
         "Id": CID, "Name": "/" + service.NAME, "Image": IMAGE,
-        "Config": {"User": "1000:1001", "Labels": {
+        "Config": {"User": "1000:1001", "Env": ["CUDA_VISIBLE_DEVICES=" + service.GPU_UUID, "NVIDIA_VISIBLE_DEVICES=" + service.GPU_UUID], "Labels": {
             "io.llm-image.owner": service.OWNER, "io.llm-image.invocation": RUN_ID,
             "io.llm-image.gpu": service.GPU_UUID}},
-        "HostConfig": {"DeviceRequests": [{"DeviceIDs": [service.GPU_UUID]}],
+        "HostConfig": {"DeviceRequests": [{"DeviceIDs": [service.GPU_UUID], "Count": 0,
+            "Capabilities": [["gpu"]], "Driver": "", "Options": {}}],
+            "Privileged": False, "Devices": [], "DeviceCgroupRules": [], "CapDrop": ["ALL"],
+            "SecurityOpt": ["no-new-privileges"], "PidMode": "",
             "CpusetCpus": "8-15", "Memory": service.CAP_BYTES,
             "MemorySwap": service.CAP_BYTES, "RestartPolicy": {"Name": "no"},
             "NetworkMode": "llm-image-backend-private",
@@ -177,6 +180,12 @@ class ServiceReview(unittest.TestCase):
             lambda value: value["Config"]["Labels"].update({"io.llm-image.invocation": "d" * 32}),
             lambda value: value["Config"]["Labels"].update({"io.llm-image.gpu": "GPU-foreign"}),
             lambda value: value["HostConfig"]["DeviceRequests"][0].update(DeviceIDs=["GPU-foreign"]),
+            lambda value: value["HostConfig"].update(Privileged=True),
+            lambda value: value["HostConfig"].update(Devices=[{"PathOnHost": "/dev/nvidia0"}]),
+            lambda value: value["HostConfig"].update(DeviceCgroupRules=["c 195:* rwm"]),
+            lambda value: value["HostConfig"]["DeviceRequests"][0].update(Count=-1),
+            lambda value: value["Config"]["Env"].append("NVIDIA_VISIBLE_DEVICES=all"),
+            lambda value: value.update(Mounts=[{"Source": "/", "Destination": "/host"}]),
             lambda value: value["HostConfig"].update(NetworkMode="host"),
             lambda value: value["HostConfig"].update(PortBindings={"30007/tcp": [{"HostIp": "0.0.0.0", "HostPort": "30007"}]}),
             lambda value: value["HostConfig"]["PortBindings"].update({"30008/tcp": [{"HostIp": "127.0.0.1", "HostPort": "30008"}]}),
@@ -284,6 +293,33 @@ class ServiceReview(unittest.TestCase):
         self.assertFalse(held[0])
         return calls, runtime
 
+    def test_recovery_second_gate_or_lease_refusal_never_stops_unmutated_work(self):
+        from common.lifecycle_lease import LeaseBusy
+        from lifecycle.runtime_io import LifecycleError
+        for failure in ('latch', 'lease', 'storage'):
+            runtime = Mock()
+            contexts = [contextlib.nullcontext('first'), contextlib.nullcontext('second')]
+            expected = RuntimeError
+            if failure == 'latch':
+                runtime.require_hardware.side_effect = [None, LifecycleError('hardware_missing')]
+                expected = LifecycleError
+            elif failure == 'lease':
+                contexts[1] = LeaseBusy()
+                expected = LeaseBusy
+            else:
+                runtime.guards.side_effect = [None, RuntimeError('guard_failed')]
+            with self.subTest(failure=failure), \
+                    patch.object(service, 'Runtime', return_value=runtime), \
+                    patch.object(service, 'acquire_lease', side_effect=contexts), \
+                    patch.object(service, 'run') as run:
+                with self.assertRaises(expected):
+                    service.recover()
+            runtime.reset_owned.assert_not_called()
+            runtime.state.assert_not_called()
+            runtime.save.assert_not_called()
+            run.assert_not_called()
+            self.assertIsNone(service.OPERATION_DEADLINE)
+
     def test_recovery_timeout_stops_exact_unit_and_owned_docker_under_lease(self):
         calls, runtime = self.exercise_recover_timeout()
         self.assertEqual(calls, [["systemctl", "restart", service.UNIT],
@@ -305,7 +341,7 @@ class ServiceReview(unittest.TestCase):
     def test_warm_failure_stops_backend_even_when_sampler_is_unsettled(self):
         runtime = self.runtime()
         state = {"container": None}
-        for method in ("guards", "check_ports", "check_network", "require_ada_idle", "host_headroom", "make_work"):
+        for method in ("guards", "require_hardware", "check_ports", "check_network", "require_ada_idle", "host_headroom", "make_work"):
             setattr(runtime, method, Mock())
         runtime.state = Mock(return_value=state)
         runtime.inspect_owned = Mock(side_effect=[None, owned_container(), owned_container()])

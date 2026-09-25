@@ -29,6 +29,13 @@ RECOVERY_FILES = (
 )
 
 NORMAL_FILES = (
+    'scripts/control/node.py', 'scripts/control/node_observation.py',
+    'scripts/control/node_actions.py', 'scripts/control/node_action_owner.py',
+    'scripts/control/node_collectors.py', 'scripts/control/node_resources.py',
+    'scripts/control/node_installation.py', 'scripts/control/node_serve.py',
+    'scripts/control/node-source-closure.json', 'scripts/control/passive.py',
+    'scripts/control/llm-node.service.in',
+    'scripts/control/hardware_latch.py', 'scripts/lifecycle/hardware_policy.py',
     'scripts/lifecycle/boot_unit.py', 'scripts/control/source-closure.json',
     'scripts/install/storage_io.py', 'scripts/install/prerequisites.py',
     'scripts/common/require-data-mounted.sh', 'scripts/common/registered-storage.py',

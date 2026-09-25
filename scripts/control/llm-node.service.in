@@ -24,8 +24,11 @@ ProtectHome=yes
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes
-RestrictAddressFamilies=AF_UNIX AF_INET
-# Candidate has passive collectors only and rejects unsupported mutations.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_NETLINK
+# Fixed owner adapters require the canonical lease and registered writer roots.
+# Render only from protected registration during a separately reviewed activation.
+ReadWritePaths=-@REGISTERED_DATA_ROOT@ /run/llmctl
+# Existing root tmpfiles provision shared /run/llmctl; never remove on stop.
 
 [Install]
 WantedBy=multi-user.target

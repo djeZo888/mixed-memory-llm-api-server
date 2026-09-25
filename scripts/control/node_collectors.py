@@ -100,6 +100,7 @@ class GpuCollector:
             raise ValueError('invalid_gpu_uuid')
         self.gpu_uuid, self.run, self.boot, self.wall = gpu_uuid, run, boot, wall
         self.extrema_boot = self.minimum = self.maximum = self.since = None
+        self.last_proof = None
 
     def __call__(self, seconds):
         before = self.boot()
@@ -130,6 +131,8 @@ class GpuCollector:
             self.minimum = temp if self.minimum is None else min(self.minimum, temp)
             self.maximum = temp if self.maximum is None else max(self.maximum, temp)
             self.since = self.since or utc(self.wall())
+        self.last_proof = (dict(gpu_uuid=self.gpu_uuid, boot_id=after['boot_id'],
+            observed_at=utc(self.wall()), observation_id=uuid.uuid4().hex), time.monotonic())
         ecc = record.findtext('ecc_mode/current_ecc')
         return {'boot_id': after['boot_id'], 'gpus': [{'uuid': self.gpu_uuid, **fields,
             'name': record.findtext('product_name'), 'index': None,
@@ -208,11 +211,60 @@ def collect_memory(_seconds):
     return result
 
 
-def production_callbacks():
-    result = {'boot': collect_boot, 'inventory': collect_inventory,
+class InventoryCollector:
+    def __init__(self):
+        self.last_proof = None
+
+    def __call__(self, seconds):
+        value = collect_inventory(seconds)
+        self.last_proof = (dict(value, observed_at=utc(time.time())), time.monotonic())
+        return value
+
+
+class HardwareEvidenceCollector:
+    """One bounded scheduled producer serializes latch proofs; never GET.
+
+    Exact-target proof remains independent of a failed global inventory. Failed
+    writes never publish false and no replacement threads are created. All
+    receipts retain their original capture time through storage/lease delays.
+    """
+    def __init__(self, inventory, gpus):
+        self.inventory, self.gpus = inventory, gpus
+
+    def __call__(self, seconds):
+        from common.lifecycle_lease import acquire_lease
+        from lifecycle.hardware_policy import HardwarePolicy, RegisteredLatchStore, GPU_UUIDS
+        from .node_observation import production_binding
+        with acquire_lease(blocking=False) as lease:
+            binding = production_binding(seconds)
+            policy = HardwarePolicy(RegisteredLatchStore(binding, lease=lease), lease=lease)
+            proof = self.inventory.last_proof
+            if proof is not None:
+                raw, captured = proof
+                age_ms = int(max(0, time.monotonic() - captured) * 1000)
+                inventory = dict(raw, state='ok', freshness='fresh' if age_ms <= 15000 else 'stale', age_ms=age_ms)
+                policy.observe_inventory(inventory, boot_age_seconds=raw['boot_age_seconds'] + age_ms / 1000)
+            for collector in self.gpus:
+                if collector.gpu_uuid not in GPU_UUIDS or collector.last_proof is None:
+                    continue
+                raw, captured = collector.last_proof
+                if time.monotonic() - captured > 15:
+                    continue
+                policy.validate_required(collector.gpu_uuid, current_boot_id=raw['boot_id'],
+                    observed_at=raw['observed_at'], observation_id=raw['observation_id'])
+        return {'state': 'persisted'}
+
+
+def production_callbacks(identity_reader=None):
+    from .node_observation import CanonicalIdentityReader, PassiveServiceCollector
+    from .node_resources import resource_callbacks
+    reader = identity_reader or CanonicalIdentityReader()
+    inventory = InventoryCollector()
+    gpus = [GpuCollector(gpu) for gpu in GPU_UUIDS]
+    result = {'boot': collect_boot, 'inventory': inventory,
               'cpu': CpuCollector(), 'memory': collect_memory}
-    result.update({service: service_collector(service) for service in SERVICES})
-    result.update({'gpu:' + gpu: GpuCollector(gpu) for gpu in GPU_UUIDS})
-    # Disk/network rates intentionally unknown until a reviewed interface/mount
-    # adapter exists. Directory existence is not registered storage evidence.
+    result.update({service: PassiveServiceCollector(service, reader) for service in (*SERVICES, 'node')})
+    result.update(resource_callbacks())
+    result.update({'gpu:' + collector.gpu_uuid: collector for collector in gpus})
+    result['hardware_evidence'] = HardwareEvidenceCollector(inventory, gpus)
     return result
