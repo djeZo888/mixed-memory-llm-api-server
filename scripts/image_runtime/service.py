@@ -21,7 +21,7 @@ import urllib.request
 # Fixed candidate directory; the reviewed external manifest binds its commit and
 # raw bytes. Do not derive this path from this file's hash (a circular binding),
 # replace an existing nonidentical release, or fall back to an older release.
-RELEASE = Path('/data/services/releases/h005-image-permissions-fix-20260925')
+RELEASE = Path('/data/services/releases/h005-qwen0-recovery-20260925')
 BASE = Path('/data/services/image21-runtime-20260923')
 UNIT = 'llm-image-backend.service'
 NAME = 'llm-image-backend'
@@ -67,6 +67,7 @@ from common.lifecycle_lease import acquire_lease
 from control.installation import protected_file
 from install import storage_io
 from lifecycle.manager import StorageRunner
+from lifecycle.runtime_io import validate_image_container
 from lifecycle.storage_binding import RegisteredStorageBinding
 from lifecycle.hardware_policy import HardwarePolicy, RegisteredLatchStore
 from runtime.h005_runtime_binding import load as load_runtime_binding
@@ -196,45 +197,7 @@ class Runtime:
                     'conflicting_backend_name')
             return None
         value = json.loads(result.stdout)[0]
-        labels = value['Config'].get('Labels') or {}
-        host = value['HostConfig']
-        require(value['Id'] == identity['id'] and value['Name'] == '/' + NAME
-                and value['Image'] == identity['image_id'] == self.config['image_id']
-                and labels.get('io.llm-image.owner') == OWNER
-                and labels.get('io.llm-image.invocation') == state['run_id']
-                and labels.get('io.llm-image.gpu') == GPU_UUID,
-                'owned_backend_identity_mismatch')
-        requests = host['DeviceRequests']
-        require(len(requests) == 1 and requests[0]['DeviceIDs'] == [GPU_UUID]
-                and requests[0].get('Count') == 0
-                and requests[0].get('Capabilities') == [['gpu']]
-                and requests[0].get('Driver') in ('', 'nvidia')
-                and not requests[0].get('Options')
-                and host['CpusetCpus'] == '8-15' and host['Memory'] == CAP_BYTES
-                and host['MemorySwap'] == CAP_BYTES and host['RestartPolicy']['Name'] == 'no'
-                and host['NetworkMode'] == NETWORK
-                and host['PortBindings'] == {'30007/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '30007'}]}
-                and value['Config']['User'] == '1000:1001'
-                and host.get('Privileged') is False and not host.get('Devices')
-                and not host.get('DeviceCgroupRules')
-                and host.get('CapDrop') == ['ALL']
-                and 'no-new-privileges' in host.get('SecurityOpt', [])
-                and host.get('PidMode', '') == ''
-                and all(mount.get('Source') != '/'
-                        and not any(str(mount.get('Source', '')).startswith(prefix)
-                                    or str(mount.get('Destination', '')).startswith(prefix)
-                                    for prefix in ('/dev', '/proc', '/sys'))
-                        for mount in value.get('Mounts', []))
-                and sum(item == 'CUDA_VISIBLE_DEVICES=' + GPU_UUID for item in value['Config'].get('Env', [])) == 1
-                and sum(item == 'NVIDIA_VISIBLE_DEVICES=' + GPU_UUID for item in value['Config'].get('Env', [])) == 1
-                and sum(item.startswith('CUDA_VISIBLE_DEVICES=') for item in value['Config'].get('Env', [])) == 1
-                and sum(item.startswith('NVIDIA_VISIBLE_DEVICES=') for item in value['Config'].get('Env', [])) == 1,
-                'owned_backend_policy_mismatch')
-        if value['State']['Running']:
-            require(value['NetworkSettings']['Ports'] ==
-                    {'30007/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '30007'}]},
-                    'owned_effective_loopback_publication_mismatch')
-        return value
+        return validate_image_container(value, state, self.config)
 
     def reset_owned(self):
         self.guards()

@@ -11,12 +11,13 @@ from lifecycle import concurrent_profiles as pair
 from lifecycle.manager import Manager, OWNER
 from lifecycle.runtime_io import LifecycleError
 from runtime.h005_runtime_binding import load
-from control.node_observation import IMAGE_RUNTIME, IMAGE_REVISION
 
 
 ROOT = Path(__file__).resolve().parents[2]
 ADA = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
 IMAGE_OWNER = 'IMAGE21-RUNTIME-20260923'
+IMAGE_RUNTIME = '0cd8be351d0825488f4b81c8931167bbab618eca'
+IMAGE_REVISION = '790c92633540aa0cb11d9abf19eb46d861714758'
 CID, RUN_ID, NETWORK_ID = 'a' * 64, 'b' * 32, 'c' * 64
 NETWORK = 'llm-image-backend-private'
 CAP = 96 * 1024**3
@@ -95,13 +96,13 @@ class DedicatedImagePeerTests(unittest.TestCase):
                     ('/work', base + '/work', True),
                     ('/tmp', base + '/work/tmp/' + RUN_ID, True))],
         }
-        self.proof = {'ownership_valid': True, 'running': True, 'backend_running': True,
-            'owner_identity': {'container_id': CID, 'pid': 592783, 'started_at': START,
-                'run_id': RUN_ID, 'running': True}}
-        self.reader_patch = patch('control.node_observation.CanonicalIdentityReader')
-        self.reader_class = self.reader_patch.start()
-        self.addCleanup(self.reader_patch.stop)
-        self.reader_class.return_value.service.side_effect = lambda *a, **k: copy.deepcopy(self.proof)
+        self.fresh = copy.deepcopy(self.candidate)
+        self.manager.docker = Mock(spec=['inspect', 'inventory'])
+        self.manager.docker.inspect.side_effect = lambda name: copy.deepcopy(self.fresh) if name == CID else None
+        forbidden_reader = patch('control.node_observation.CanonicalIdentityReader',
+            side_effect=AssertionError('image API/unit/latch ownership reader forbidden'))
+        self.forbidden_reader = forbidden_reader.start()
+        self.addCleanup(forbidden_reader.stop)
         self.deployments = {key: bound(key, self.binding) for key in (pair.QWEN0_PROFILE, pair.QWEN_PROFILE)}
         self.deployment = self.deployments[pair.QWEN0_PROFILE]
 
@@ -113,31 +114,49 @@ class DedicatedImagePeerTests(unittest.TestCase):
         before = copy.deepcopy((self.candidate, self.docs))
         self.validate()
         self.assertEqual((self.candidate, self.docs), before)
-        self.reader_class.return_value.service.assert_called_once_with('image', seconds=5)
+        self.manager.docker.inspect.assert_called_once_with(CID)
+        self.forbidden_reader.assert_not_called()
+        self.manager.persistent_json.assert_not_called()
+        self.manager.sglang_probe.assert_not_called()
+
+    def test_backend_ownership_does_not_require_image_api_or_warm_readiness(self):
+        for phase in ('loading', 'failed'):
+            with self.subTest(image_phase=phase):
+                self.state.update(phase=phase, warm=False)
+                # The API may be failed, absent, or unconfigured. Any attempt to
+                # consult its identity reader or files fails this positive case.
+                before = copy.deepcopy((self.candidate, self.docs, self.fresh))
+                self.validate()
+                self.assertEqual((self.candidate, self.docs, self.fresh), before)
+        self.forbidden_reader.assert_not_called()
+        self.assertTrue(all(call[0] == 'inspect' for call in self.manager.docker.mock_calls))
         self.manager.persistent_json.assert_not_called()
         self.manager.sglang_probe.assert_not_called()
 
     def test_unproven_owner_or_changed_invocation_is_rejected(self):
         cases = (
-            ('ownership', ('ownership_valid',), False),
-            ('backend stopped', ('backend_running',), False),
-            ('container id', ('owner_identity', 'container_id'), 'd' * 64),
-            ('pid', ('owner_identity', 'pid'), 592784),
-            ('started at', ('owner_identity', 'started_at'), '2026-09-25T20:22:21Z'),
-            ('invocation', ('owner_identity', 'run_id'), 'd' * 32),
+            ('backend stopped', ('State', 'Running'), False),
+            ('container id', ('Id',), 'd' * 64),
+            ('pid', ('State', 'Pid'), 592784),
+            ('started at', ('State', 'StartedAt'), '2026-09-25T20:22:21Z'),
+            ('invocation', ('Config', 'Labels', 'io.llm-image.invocation'), 'd' * 32),
+            ('device containment', ('HostConfig', 'DeviceRequests', 0, 'DeviceIDs'), [pair.GPU_UUIDS[0]]),
+            ('new environment', ('Config', 'Env'), self.candidate['Config']['Env'] + ['NEW_SETTING=yes']),
+            ('changed mounted source', ('Mounts', 1, 'Source'), '/data/services/unreviewed-source'),
+            ('changed network', ('NetworkSettings', 'Networks', NETWORK, 'NetworkID'), 'd' * 64),
+            ('paused', ('State', 'Paused'), True),
         )
-        original = copy.deepcopy(self.proof)
+        original = copy.deepcopy(self.fresh)
         for name, path, value in cases:
             with self.subTest(name=name):
-                self.proof = copy.deepcopy(original)
-                change(self.proof, path, value)
+                self.fresh = copy.deepcopy(original)
+                change(self.fresh, path, value)
                 with self.assertRaisesRegex(LifecycleError, '^untrusted_concurrent_peer$'):
                     self.validate()
 
     def test_protected_state_or_config_mismatch_is_rejected(self):
         cases = (
             ('state', ('owner',), 'foreign'), ('state', ('schema_version',), 2),
-            ('state', ('phase',), 'failed'), ('state', ('warm',), False),
             ('state', ('run_id',), 'd' * 32),
             ('state', ('container', 'id'), 'd' * 64),
             ('state', ('container', 'image_id'), 'sha256:' + 'd' * 64),
@@ -159,7 +178,7 @@ class DedicatedImagePeerTests(unittest.TestCase):
                     self.validate()
 
     def test_missing_or_unavailable_proof_fails_closed(self):
-        for target in (self.binding.read_json, self.reader_class.return_value.service):
+        for target in (self.binding.read_json, self.manager.docker.inspect):
             old = target.side_effect
             try:
                 target.side_effect = OSError('synthetic unavailable proof')
@@ -167,6 +186,24 @@ class DedicatedImagePeerTests(unittest.TestCase):
                     self.validate()
             finally:
                 target.side_effect = old
+        self.manager.docker.inspect.side_effect = None
+        self.manager.docker.inspect.return_value = None
+        with self.assertRaisesRegex(LifecycleError, '^untrusted_concurrent_peer$'):
+            self.validate()
+
+    def test_protected_owner_or_config_changed_during_inspection_is_rejected(self):
+        for suffix in ('state.json', 'config.json'):
+            with self.subTest(changed=suffix):
+                reads = {}
+                def read(role, path, **kwargs):
+                    reads[path] = reads.get(path, 0) + 1
+                    value = copy.deepcopy(self.docs[path])
+                    if path.endswith('/' + suffix) and reads[path] == 2:
+                        value['concurrent_change'] = True
+                    return value
+                self.binding.read_json.side_effect = read
+                with self.assertRaisesRegex(LifecycleError, '^untrusted_concurrent_peer$'):
+                    self.validate()
 
     def test_source_bytes_or_closure_change_is_rejected(self):
         path = next(iter(self.source_bytes))
@@ -183,7 +220,7 @@ class DedicatedImagePeerTests(unittest.TestCase):
         self.deployment['launch']['gpus'].append(ADA)
         with self.assertRaisesRegex(LifecycleError, '^untrusted_concurrent_peer$'):
             self.validate()
-        self.reader_class.return_value.service.assert_not_called()
+        self.manager.docker.inspect.assert_not_called()
 
     def test_adversarial_container_and_containment_fields_are_rejected(self):
         cases = (
@@ -255,9 +292,10 @@ class DedicatedImagePeerTests(unittest.TestCase):
         self.manager.deployment = Mock(side_effect=lambda name: self.deployments[name])
         self.manager.network_check = Mock()
         self.manager.validate_reused_contract = Mock()
-        self.manager.docker = Mock()
+        self.manager.docker = Mock(spec=['inspect', 'inventory'])
         self.manager.docker.inventory.return_value = [copy.deepcopy(text_peer), copy.deepcopy(self.candidate)]
-        self.manager.docker.inspect.side_effect = lambda name: copy.deepcopy(text_peer) if name == identity['id'] else None
+        self.manager.docker.inspect.side_effect = lambda name: copy.deepcopy(
+            text_peer if name == identity['id'] else self.fresh if name == CID else None)
         return self.deployments[profiles[target]], text_peer
 
     def test_conflict_check_admits_registered_image_for_both_qwen_slots(self):
@@ -286,11 +324,12 @@ class DedicatedImagePeerTests(unittest.TestCase):
         deployment, _ = self.integration('glm')
         self.manager.docker.inventory.return_value.pop()
         self.manager.conflict_check(deployment=deployment)
-        self.reader_class.return_value.service.assert_not_called()
+        self.assertNotIn(((CID,), {}), self.manager.docker.inspect.call_args_list)
         self.manager._slots_envelope = None
         self.manager.docker.inventory.return_value = [copy.deepcopy(self.candidate)]
         self.manager.conflict_check(deployment=deployment)
-        self.reader_class.return_value.service.assert_not_called()
+        self.assertNotIn(((CID,), {}), self.manager.docker.inspect.call_args_list)
+        self.forbidden_reader.assert_not_called()
 
 
 if __name__ == '__main__':

@@ -753,20 +753,20 @@ class Manager:
         """Prove the approved dedicated owner, never adopt an unknown GPU user.
 
         Called within normal slot admission under the caller's lifecycle lease.
-        CanonicalIdentityReader supplies protected ownership and a fresh exact
+        Protected native owner state and a fresh Docker inspection prove the
         invocation; the inventory snapshot must also satisfy the image owner's
         device/namespace/resource policy. No owner call, probe or write occurs.
         """
         code = 'untrusted_concurrent_peer'
         try:
             from . import concurrent_profiles as pair
-            from control.node_observation import (
-                CanonicalIdentityReader, IMAGE_OWNER, IMAGE_RUNTIME, IMAGE_REVISION)
+            IMAGE_OWNER = 'IMAGE21-RUNTIME-20260923'
+            IMAGE_RUNTIME = '0cd8be351d0825488f4b81c8931167bbab618eca'
+            IMAGE_REVISION = '790c92633540aa0cb11d9abf19eb46d861714758'
             from runtime.h005_runtime_binding import load as runtime_binding
+            from .runtime_io import validate_image_container
             gpu = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
             network = 'llm-image-backend-private'
-            cap = 96 * 1024**3
-            ports = {'30007/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '30007'}]}
             require(deployment is not None and pair.is_pair(deployment)
                     and gpu not in deployment['launch']['gpus']
                     and c.get('Name') == '/llm-image-backend', code)
@@ -774,7 +774,6 @@ class Manager:
             state = self.binding.read_json('services', base + '/state.json')
             config = self.binding.read_json('services', base + '/config.json')
             require(state.get('schema_version') == 1 and state.get('owner') == IMAGE_OWNER
-                    and state.get('phase') == 'warm' and state.get('warm') is True
                     and config.get('schema_version') == 1 and config.get('owner') == IMAGE_OWNER
                     and config.get('source_commit') == IMAGE_RUNTIME
                     and config.get('checkpoint_revision') == IMAGE_REVISION
@@ -806,58 +805,39 @@ class Manager:
                             for m in mounts)
                     and native.get('Entrypoint') == ['/opt/image-venv/bin/python']
                     and native.get('Cmd') == ['-I', '-B', '/runtime/native_server.py', state['run_id']], code)
-            labels = native.get('Labels') or {}
-            require(labels.get('io.llm-image.owner') == IMAGE_OWNER
-                    and labels.get('io.llm-image.invocation') == state.get('run_id')
-                    and labels.get('io.llm-image.gpu') == gpu, code)
-            requests = host.get('DeviceRequests')
-            require(type(requests) is list and len(requests) == 1
-                    and requests[0].get('DeviceIDs') == [gpu] and requests[0].get('Count') == 0
-                    and requests[0].get('Capabilities') == [['gpu']]
-                    and requests[0].get('Driver') in ('', 'nvidia')
-                    and not requests[0].get('Options')
-                    and host.get('CpusetCpus') == '8-15' and host.get('Memory') == cap
-                    and host.get('MemorySwap') == cap
-                    and host.get('RestartPolicy') == {'Name': 'no', 'MaximumRetryCount': 0}
-                    and host.get('NetworkMode') == network and host.get('PortBindings') == ports
-                    and c['NetworkSettings'].get('Ports') == ports
+            # Reuse the image owner's pure containment proof. Its availability,
+            # readiness, warm phase, health probes and telemetry are unrelated to
+            # whether this exact disjoint backend can coexist with text.
+            validate_image_container(c, state, config)
+            require(host.get('RestartPolicy') == {'Name': 'no', 'MaximumRetryCount': 0}
                     and set(c['NetworkSettings'].get('Networks', {})) == {network}
                     and CONTAINER_RE.fullmatch(config.get('network_id', ''))
                     and c['NetworkSettings']['Networks'][network].get('NetworkID') == config['network_id']
-                    and native.get('User') == '1000:1001'
-                    and host.get('ReadonlyRootfs') is True
-                    and host.get('Privileged') is False and not host.get('Devices')
-                    and not host.get('DeviceCgroupRules') and not host.get('CapAdd')
-                    and host.get('CapDrop') == ['ALL']
+                    and host.get('ReadonlyRootfs') is True and not host.get('CapAdd')
                     and host.get('SecurityOpt') == ['no-new-privileges']
-                    and host.get('PidMode', '') == '' and host.get('IpcMode') == 'private'
-                    and host.get('UTSMode', '') == '' and host.get('UsernsMode', '') == ''
-                    and all(mount.get('Source') != '/'
-                            and not any(str(mount.get('Source', '')).startswith(prefix)
-                                        or str(mount.get('Destination', '')).startswith(prefix)
-                                        for prefix in ('/dev', '/proc', '/sys'))
-                            for mount in c.get('Mounts', [])), code)
-            entries = native.get('Env', [])
-            require(type(entries) is list and all(type(v) is str for v in entries), code)
-            for key in ('CUDA_VISIBLE_DEVICES', 'NVIDIA_VISIBLE_DEVICES'):
-                require([v for v in entries if v.startswith(key + '=')] == [key + '=' + gpu], code)
-            # Read the independent owner last. A stale inventory ID/PID/start or
-            # changed protected invocation cannot authorize target mutation.
-            proof = CanonicalIdentityReader(
-                run=lambda argv, seconds: self.run(argv, timeout=seconds),
-                binding=lambda seconds: self.binding).service('image', seconds=5)
-            owner = proof.get('owner_identity') or {}
+                    and host.get('IpcMode') == 'private'
+                    and host.get('UTSMode', '') == '' and host.get('UsernsMode', '') == '', code)
+            # Reinspect the native owner last; image API config, units, latches
+            # and readiness are not dependencies of disjoint text admission.
+            fresh = self.docker.inspect(state['container']['id'])
+            require(type(fresh) is dict, code)
+            validate_image_container(fresh, state, config)
             current = c['State']
-            require(proof.get('ownership_valid') is True and proof.get('running') is True
-                    and proof.get('backend_running') is True
-                    and owner.get('container_id') == c['Id'] == state['container']['id']
+            actual = fresh['State']
+            require(fresh['Id'] == c['Id'] == state['container']['id']
                     and state['container']['image_id'] == c['Image']
-                    and owner.get('run_id') == state['run_id']
-                    and owner.get('running') is True and current.get('Running') is True
+                    and type(state.get('run_id')) is str
+                    and re.fullmatch('[0-9a-f]{32}', state['run_id'])
+                    and actual.get('Running') is True and current.get('Running') is True
                     and type(current.get('Pid')) is int and current['Pid'] > 0
-                    and owner.get('pid') == current['Pid']
-                    and owner.get('started_at') == current.get('StartedAt')
-                    and not any(current.get(k) for k in ('Paused', 'Restarting', 'Dead')), code)
+                    and actual.get('Pid') == current['Pid']
+                    and type(current.get('StartedAt')) is str and bool(current['StartedAt'])
+                    and actual.get('StartedAt') == current['StartedAt']
+                    and not any(current.get(k) or actual.get(k) for k in ('Paused', 'Restarting', 'Dead'))
+                    and all(fresh.get(k) == c.get(k)
+                            for k in ('Config', 'HostConfig', 'Mounts', 'NetworkSettings'))
+                    and self.binding.read_json('services', base + '/state.json') == state
+                    and self.binding.read_json('services', base + '/config.json') == config, code)
         except Exception:
             raise LifecycleError(code) from None
 
