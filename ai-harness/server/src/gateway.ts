@@ -1,4 +1,9 @@
 import type { ImageBroker } from "./image-broker.js";
+import {
+  serviceAvailability,
+  type AvailabilityProvider,
+  type ServiceAvailability,
+} from "./service-availability.js";
 import { ApiError, requireId } from "./errors.js";
 import Fastify, { type FastifyInstance, type FastifyReply } from "fastify";
 import { randomBytes } from "node:crypto";
@@ -16,6 +21,8 @@ export interface GatewayUpstream {
 }
 export interface GatewayOptions {
   images?: ImageBroker;
+  /** Local cached observation only; unknown preserves existing admission behavior. */
+  availability?: AvailabilityProvider;
   /** The protected credential is supplied by the host. This module never reads files. */
   upstreamKey: string | (() => string | Promise<string>);
   /** Deployment uses the fixed defaults; overrides permit local protocol fixtures. */
@@ -39,8 +46,14 @@ export interface Gateway {
   snapshot(): {
     queued: number;
     queuedBytes: number;
-    lanes: { alias: string; state: LaneState }[];
+    lanes: {
+      alias: string;
+      state: LaneState;
+      availability: ServiceAvailability;
+    }[];
   };
+  /** Publish cache changes promptly without touching active request settlement. */
+  notifyAvailabilityChanged(): void;
   close(): Promise<void>;
 }
 
@@ -85,6 +98,7 @@ class Admission {
     private timeout: number,
     initial: Readonly<Record<string, LaneState>> = {},
     private onState?: (alias: string, state: LaneState) => void,
+    private availability?: AvailabilityProvider,
   ) {
     this.lanes = upstreams.map((upstream) => {
       const previous = initial[upstream.alias];
@@ -122,6 +136,31 @@ class Admission {
   get queuedBytes() {
     return this.queueBytes;
   }
+  available(lane: Lane): ServiceAvailability {
+    return serviceAvailability(this.availability, lane.upstream.alias);
+  }
+  private eligible(lane: Lane) {
+    return (
+      lane.state !== "quarantined" &&
+      this.available(lane).state !== "unavailable"
+    );
+  }
+  private blocked(): GatewayError | undefined {
+    if (this.lanes.some((lane) => this.eligible(lane))) return;
+    return this.lanes.some(
+      (lane) => this.available(lane).state === "unavailable",
+    )
+      ? new GatewayError(
+          503,
+          "lanes_unavailable",
+          "No Qwen lane is currently available",
+        )
+      : new GatewayError(
+          503,
+          "lanes_quarantined",
+          "Inference lanes require settlement review",
+        );
+  }
   acquire(signal: AbortSignal, bytes: number): Promise<Lane> {
     if (this.stopped)
       return Promise.reject(
@@ -131,7 +170,9 @@ class Admission {
       return Promise.reject(
         new GatewayError(499, "cancelled", "Request cancelled"),
       );
-    const lane = this.lanes.find((candidate) => candidate.state === "idle");
+    const lane = this.lanes.find(
+      (candidate) => candidate.state === "idle" && this.eligible(candidate),
+    );
     if (lane && !this.queue.length) {
       try {
         this.transition(lane, "active");
@@ -140,15 +181,8 @@ class Admission {
         return Promise.reject(error);
       }
     }
-    if (this.lanes.every((candidate) => candidate.state === "quarantined")) {
-      return Promise.reject(
-        new GatewayError(
-          503,
-          "lanes_quarantined",
-          "Inference lanes require settlement review",
-        ),
-      );
-    }
+    const blocked = this.blocked();
+    if (blocked) return Promise.reject(blocked);
     if (this.queue.length >= this.limit)
       return Promise.reject(
         new GatewayError(429, "queue_full", "Inference queue is full"),
@@ -206,9 +240,13 @@ class Admission {
     } catch {
       /* Fail closed locally; previous durable active remains unsafe. */
     }
+    this.notifyAvailabilityChanged();
+  }
+  notifyAvailabilityChanged() {
+    if (this.stopped) return;
     while (this.queue.length) {
       const available = this.lanes.find(
-        (candidate) => candidate.state === "idle",
+        (candidate) => candidate.state === "idle" && this.eligible(candidate),
       );
       if (!available) break;
       const ticket = this.queue[0]!;
@@ -224,11 +262,8 @@ class Admission {
         ticket.reject(error as Error);
       }
     }
-    if (this.lanes.every((candidate) => candidate.state === "quarantined"))
-      this.rejectQueued(
-        "lanes_quarantined",
-        "Inference lanes require settlement review",
-      );
+    const blocked = this.blocked();
+    if (blocked) this.rejectQueued(blocked.code, blocked.message);
   }
   private rejectQueued(code: string, message: string) {
     for (const ticket of [...this.queue]) {
@@ -389,6 +424,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     positive(options.queueTimeoutMs, 30 * 60 * 1000, "queueTimeoutMs"),
     options.initialLaneStates,
     options.onLaneState,
+    options.availability,
   );
   const activeTimeout = positive(
     options.activeTimeoutMs,
@@ -465,7 +501,18 @@ export function createGateway(options: GatewayOptions): Gateway {
   );
   app.get("/v1/models", async () => ({
     object: "list",
-    data: [{ id: MODEL, object: "model", owned_by: "local" }],
+    data: [
+      {
+        id: MODEL,
+        object: "model",
+        owned_by: "local",
+        availability: admission.lanes.map((lane) => ({
+          alias: lane.upstream.alias,
+          state: admission.available(lane).state,
+          requestState: lane.state,
+        })),
+      },
+    ],
   }));
 
   const imageBroker = () => {
@@ -582,6 +629,17 @@ export function createGateway(options: GatewayOptions): Gateway {
       return reply;
     }
     requireCurrentToken();
+    // Credential loading may yield. Recheck before the first upstream byte; an
+    // unavailable lane never causes replay or migration of already active work.
+    if (admission.available(lane).state === "unavailable") {
+      admission.settle(lane, true);
+      reply.raw.removeListener("close", disconnect);
+      throw new GatewayError(
+        503,
+        "lane_unavailable",
+        "Selected Qwen lane is unavailable",
+      );
+    }
     const payload = JSON.stringify({ ...body, model: lane.upstream.alias });
     const endpoint = new URL(
       `${lane.upstream.url.replace(/\/$/, "")}/chat/completions`,
@@ -754,11 +812,13 @@ export function createGateway(options: GatewayOptions): Gateway {
     snapshot: () => ({
       queued: admission.queued,
       queuedBytes: admission.queuedBytes,
-      lanes: admission.lanes.map(({ upstream, state }) => ({
-        alias: upstream.alias,
-        state,
+      lanes: admission.lanes.map((lane) => ({
+        alias: lane.upstream.alias,
+        state: lane.state,
+        availability: admission.available(lane),
       })),
     }),
+    notifyAvailabilityChanged: () => admission.notifyAvailabilityChanged(),
     close: () => app.close(),
   };
 }

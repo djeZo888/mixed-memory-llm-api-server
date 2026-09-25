@@ -19,6 +19,10 @@ import { Store } from "../src/store.js";
 import { Files } from "../src/files.js";
 import { ImageBroker } from "../src/image-broker.js";
 import type {
+  AvailabilityProvider,
+  ServiceAvailability,
+} from "../src/service-availability.js";
+import type {
   ImageBackend,
   ImageProfile,
   ImageJob,
@@ -111,7 +115,10 @@ class Fake implements ImageBackend {
     });
   }
 }
-async function fixture(t: TestContext, options: { queueMs?: number } = {}) {
+async function fixture(
+  t: TestContext,
+  options: { queueMs?: number; availability?: AvailabilityProvider } = {},
+) {
   const dir = await realpath(await mkdtemp(path.join(tmpdir(), "h003-image-")));
   const store = new Store(path.join(dir, "db.sqlite")),
     files = new Files(dir, store);
@@ -133,6 +140,7 @@ async function fixture(t: TestContext, options: { queueMs?: number } = {}) {
     currentRun: (id) => (id === session.id ? current : undefined),
     now: () => clock,
     queueMs: options.queueMs,
+    availability: options.availability,
     tickMs: 5,
   });
   t.after(async () => {
@@ -1013,4 +1021,128 @@ test("token issuance waits behind delayed approval and cannot rotate the consume
     "completed",
   );
   assert.equal(f.backend.calls.length, 1);
+});
+
+test("known image unavailability rejects queued and approval jobs promptly while active artifacts survive", async (t) => {
+  let state: ServiceAvailability["state"] = "available";
+  const f = await fixture(t, { availability: () => ({ state }) });
+  const running = await f.submit("running", { seed: 41 });
+  await until(() => f.backend.calls.length === 1);
+  const waiting = await f.submit("waiting", { seed: 42 });
+  const bytes = await png(120, 60),
+    reference = await f.upload(bytes);
+  const editInput = {
+    operation: "edit",
+    size: undefined,
+    seed: 43,
+    references: [{ fileId: reference.id }],
+  };
+  const approval = await f.submit("approval", editInput);
+  const token = await f.broker.issueApprovalToken(f.session.id, approval.id);
+  assert.equal(approval.state, "awaiting_approval");
+  state = "unavailable";
+  f.broker.notifyAvailabilityChanged();
+  for (const original of [waiting, approval]) {
+    const failed = f.broker.get(f.session.id, original.id);
+    assert.equal(failed.state, "failed");
+    assert.equal(failed.error?.code, "image_service_unavailable");
+    assert.equal(failed.seed, original.seed);
+    assert.deepEqual(failed.references, original.references);
+    assert.deepEqual(failed.adjustment, original.adjustment);
+  }
+  assert.equal((await f.submit("waiting", { seed: 42 })).id, waiting.id);
+  assert.equal((await f.submit("approval", editInput)).id, approval.id);
+  await assert.rejects(
+    f.submit("waiting", { seed: 44 }),
+    /different image request/,
+  );
+  await assert.rejects(
+    f.broker.approve(f.session.id, approval.id, "approve", token.approvalToken),
+    /no longer pending/,
+  );
+  await assert.rejects(f.submit("new"), /Image service is unavailable/);
+  await assert.rejects(f.broker.capabilities(), /Image service is unavailable/);
+  assert.equal(f.broker.snapshot().queued, 0);
+  assert.equal(f.broker.get(f.session.id, running.id).state, "running");
+  await f.backend.complete();
+  await until(
+    () => f.broker.get(f.session.id, running.id).state === "completed",
+  );
+  assert.ok(f.broker.get(f.session.id, running.id).artifactId);
+  assert.deepEqual(
+    await readFile(path.join(f.dir, "uploads", reference.path)),
+    bytes,
+  );
+  state = "available";
+  f.broker.notifyAvailabilityChanged();
+  await delay(20);
+  assert.equal(f.backend.calls.length, 1);
+});
+
+test("hardware unavailability blocks ready-idle reconciliation without replacing request quarantine", async (t) => {
+  let state: ServiceAvailability["state"] = "available";
+  const f = await fixture(t, { availability: () => ({ state }) });
+  const unknown = await f.submit("ambiguous");
+  await until(() => f.backend.calls.length === 1);
+  state = "unavailable";
+  f.backend.calls[0]!.reject(new Error("fixture transport ambiguity"));
+  await until(() => f.broker.get(f.session.id, unknown.id).state === "failed");
+  f.backend.healthy = true;
+  f.backend.idle = true;
+  await f.broker.reconcile();
+  assert.equal(f.broker.snapshot().lane, "quarantined");
+  assert.equal(
+    f.broker.get(f.session.id, unknown.id).error?.code,
+    "image_completion_unknown",
+  );
+  f.backend.healthy = false;
+  state = "available";
+  f.broker.notifyAvailabilityChanged();
+  await f.broker.reconcile();
+  assert.equal(f.broker.snapshot().lane, "quarantined");
+  f.backend.healthy = true;
+  await f.broker.reconcile();
+  await until(() => f.broker.snapshot().lane === "idle");
+  assert.equal(f.backend.calls.length, 1);
+  assert.equal((await f.submit("ambiguous")).id, unknown.id);
+});
+
+test("unknown observer failures preserve image runtime and never declare hardware missing", async (t) => {
+  const f = await fixture(t, {
+    availability: () => {
+      throw new Error("observer failure fixture");
+    },
+  });
+  const job = await f.submit("normal");
+  await until(() => f.backend.calls.length === 1);
+  await f.backend.complete();
+  await until(() => f.broker.get(f.session.id, job.id).state === "completed");
+  assert.equal(f.broker.get(f.session.id, job.id).error, undefined);
+});
+
+test("image availability is rechecked after asynchronous reference preparation before dispatch", async (t) => {
+  let state: ServiceAvailability["state"] = "available",
+    preparing = false;
+  const f = await fixture(t, { availability: () => ({ state }) });
+  const frozen = f.broker.imageFiles.frozen.bind(f.broker.imageFiles);
+  let release!: () => void;
+  const pause = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  f.broker.imageFiles.frozen = async (...args) => {
+    preparing = true;
+    await pause;
+    return frozen(...args);
+  };
+  const job = await f.submit("preparing");
+  await until(() => preparing);
+  state = "unavailable";
+  f.broker.notifyAvailabilityChanged();
+  release();
+  await until(() => f.broker.get(f.session.id, job.id).state === "failed");
+  assert.equal(
+    f.broker.get(f.session.id, job.id).error?.code,
+    "image_service_unavailable",
+  );
+  assert.equal(f.backend.calls.length, 0);
 });

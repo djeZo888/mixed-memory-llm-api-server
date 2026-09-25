@@ -1,0 +1,24 @@
+# Root system unit. Replace reviewed paths; no automatic source-phase activation.
+[Unit]
+Description=ai-harness scoped task egress policy and live attestation
+After=network.target user@@HARNESS_UID@.service
+Requires=user@@HARNESS_UID@.service
+
+[Service]
+Type=simple
+User=root
+RuntimeDirectory=ai-harness-egress
+RuntimeDirectoryMode=0755
+ExecStart=/usr/bin/python3 @ROOT_OWNED_DEPLOY_DIR@/security/task-egress-policy.py --apply-watch
+Restart=no
+UMask=0022
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/run/ai-harness-egress
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+CapabilityBoundingSet=CAP_NET_ADMIN
+
+[Install]
+WantedBy=multi-user.target

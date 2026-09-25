@@ -1,0 +1,9 @@
+# Root-owned /etc/systemd/user/aiharnesstasks.slice; start before egress watcher.
+# No dashes: this must stay at level 4 below user@UID.service.
+[Unit]
+Description=ai-harness untrusted task egress boundary
+
+[Slice]
+CPUAccounting=yes
+MemoryAccounting=yes
+TasksAccounting=yes

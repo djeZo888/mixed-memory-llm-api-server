@@ -78,6 +78,8 @@ with (base / "calls.jsonl").open("a") as log:
     log.write(json.dumps({"argv": sys.argv[1:], "env": dict(os.environ)}) + "\n")
 args = sys.argv[1:]
 assert args.pop(0) == "--remote=false", args
+if args[0] == "--cgroup-manager=systemd":
+    args.pop(0)
 if args[0] == "info":
     if settings.get("leak_preflight"):
         sys.stderr.write(os.environ["AI_HARNESS_GATEWAY_TOKEN"])
@@ -112,6 +114,19 @@ else:
     raise AssertionError(args)
 ''')
         mock.chmod(0o700)
+        # Only this fake interpreter bypasses Linux policy setup for existing ACP
+        # fixture coverage. Production has no environment bypass. Policy semantics
+        # and guard rejection are covered by test-task-egress.py separately.
+        interpreter = self.bin / "python3"
+        interpreter.write_text(f"#!{sys.executable}\n" + r'''
+import os, pathlib, sys
+args = sys.argv[1:]
+if args and pathlib.Path(args[0]).name == "task-egress.py":
+    assert args[1] == "--"
+    args = args[2:]
+os.execv(sys.executable, [sys.executable, *args])
+''')
+        interpreter.chmod(0o700)
         self.env = dict(os.environ, PATH=f"{self.bin}:/usr/bin:/bin", HOME=str(self.home),
                         AI_HARNESS_GATEWAY_TOKEN=TOKEN, AI_HARNESS_SESSION_ID="session-fixture-01")
         self.env.pop("AI_HARNESS_GATEWAY_URL", None)
@@ -165,6 +180,8 @@ else:
         self.assertEqual(argv[argv.index("--network") + 1], "slirp4netns:allow_host_loopback=true")
         self.assertEqual(argv[argv.index("--user") + 1], f"{os.getuid()}:{os.getgid()}")
         self.assertEqual(argv[argv.index("--workdir") + 1], str(self.workspace))
+        self.assertIn("--cgroup-manager=systemd", argv)
+        self.assertIn("--cgroup-parent=aiharnesstasks.slice", argv)
         self.assertIn("--pull=never", argv)
         self.assertIn("--read-only", argv)
         self.assertIn("--init", argv)

@@ -1,4 +1,5 @@
 import { api, ApiError, type Transport } from './api';
+import { healthAvailability, type HealthAvailability } from './availability';
 import { applyEvent, reconcileSnapshot } from './state';
 import { imageJobActive, mergeImageJobs } from './image-jobs';
 import {
@@ -20,6 +21,7 @@ export interface ViewState {
   connection: 'connecting' | 'connected' | 'reconnecting' | 'offline';
   visionAvailable: boolean;
   healthLoaded: boolean;
+  serviceAvailability?: HealthAvailability;
   imageCapabilities: ImageCapabilities | null;
   imageCapabilitiesLoaded: boolean;
   imageJobsError: string | null;
@@ -80,6 +82,8 @@ export class HarnessStore {
   private closeStream?: () => void;
   private read?: AbortController;
   private boot?: AbortController;
+  private healthRead?: AbortController;
+  private healthTimer?: ReturnType<typeof setInterval>;
   private deleted = new Set<string>();
   private uploadedFiles = new Map<string, Map<string, string>>();
   private resyncing = false;
@@ -106,15 +110,9 @@ export class HarnessStore {
     this.closed = false;
     const lifetime = ++this.lifetime;
     this.boot = new AbortController();
-    void this.transport
-      .health(this.boot.signal)
-      .then((health) => {
-        if (this.closed || lifetime !== this.lifetime) return;
-        this.update({ visionAvailable: health.visionAvailable === true, healthLoaded: true });
-      })
-      .catch(() => {
-        if (lifetime === this.lifetime) this.update({ healthLoaded: true });
-      });
+    clearInterval(this.healthTimer);
+    void this.refreshHealth();
+    this.healthTimer = setInterval(() => void this.refreshHealth(), 5000);
     void this.refreshImageCapabilities();
     await this.refreshList(false);
     if (!this.closed && lifetime === this.lifetime) {
@@ -122,6 +120,36 @@ export class HarnessStore {
         this.state.sessions.find((s) => s.id === (this.state.selectedId ?? preferred))?.id ??
         this.state.sessions[0]?.id;
       if (id) this.select(id);
+    }
+  }
+  private async refreshHealth() {
+    // Do not replace hung work until it settles, even if it ignores cancellation.
+    if (this.closed || this.healthRead) return;
+    const lifetime = this.lifetime;
+    const read = new AbortController();
+    this.healthRead = read;
+    const current = () => !this.closed && lifetime === this.lifetime;
+    const unknown = () => {
+      if (current())
+        this.update({ healthLoaded: true, serviceAvailability: healthAvailability(undefined) });
+    };
+    const deadline = setTimeout(() => {
+      read.abort();
+      unknown();
+    }, 2000);
+    try {
+      const health = await this.transport.health(read.signal);
+      if (!current() || read.signal.aborted) return;
+      this.update({
+        visionAvailable: health.visionAvailable === true,
+        healthLoaded: true,
+        serviceAvailability: healthAvailability(health.availability),
+      });
+    } catch {
+      unknown();
+    } finally {
+      clearTimeout(deadline);
+      if (this.healthRead === read) this.healthRead = undefined;
     }
   }
   private async refreshImageCapabilities() {
@@ -144,6 +172,8 @@ export class HarnessStore {
     this.closeStream?.();
     this.read?.abort();
     this.boot?.abort();
+    this.healthRead?.abort();
+    clearInterval(this.healthTimer);
   }
   async refreshList(reconcileSelection = true) {
     const ticket = ++this.listGeneration;

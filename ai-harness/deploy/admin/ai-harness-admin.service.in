@@ -1,0 +1,38 @@
+# SOURCE TEMPLATE ONLY. Root-reviewed installed source and paths required.
+# Replace @HELPER_FILE@ and @HARNESS_GROUP@ with protected source and the existing
+# ordinary harness user's primary group. No new Linux login user or sudoers grant.
+[Unit]
+Description=ai-harness fixed local administrative owner adapter
+After=local-fs.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=root
+Group=@HARNESS_GROUP@
+ExecStart=/usr/bin/python3 @HELPER_FILE@
+RuntimeDirectory=ai-harness-admin
+RuntimeDirectoryMode=0750
+StateDirectory=ai-harness-admin
+StateDirectoryMode=0700
+UMask=0077
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=5
+KillMode=control-group
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+ReadWritePaths=/run/ai-harness-admin /var/lib/ai-harness-admin
+StandardOutput=null
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

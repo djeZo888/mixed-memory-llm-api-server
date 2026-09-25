@@ -1,0 +1,42 @@
+# Root system unit, existing ordinary account. No dependency from chat to this unit.
+# Replace only reviewed absolute paths. Root creates protected runtime dir/socket
+# with nginx's group; no privileged/helper socket is ever mounted into task engine.
+[Unit]
+Description=ai-harness independent read-only status and trusted LAN admin
+After=network.target
+
+[Service]
+Type=simple
+User=@HARNESS_USER@
+Group=www-data
+SupplementaryGroups=@HARNESS_GROUP@
+SupplementaryGroups=@HARNESS_GROUP@
+WorkingDirectory=@HARNESS_DIR@/server
+ExecStart=@NODE_PREFIX@/bin/node @HARNESS_DIR@/server/dist/status-main.js
+Environment=AI_HARNESS_STATUS_SOCKET=/run/ai-harness-status/http.sock
+Environment=AI_HARNESS_ADMIN_HELPER_SOCKET=/run/ai-harness-admin/helper.sock
+# Node transport endpoint and exact source configuration come from root-reviewed
+# release settings. Credential provisioning copies existing control authority,
+# never creates a new key, and happens only during authorized activation.
+LoadCredential=control-api-key:/etc/ai-harness/control-api-key
+Environment=AI_HARNESS_CONTROL_KEY_FILE=%d/control-api-key
+RuntimeDirectory=ai-harness-status
+RuntimeDirectoryMode=0750
+StateDirectory=ai-harness-status
+StateDirectoryMode=0700
+UMask=0007
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=10
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET
+ReadWritePaths=/run/ai-harness-status /var/lib/ai-harness-status
+
+[Install]
+WantedBy=multi-user.target

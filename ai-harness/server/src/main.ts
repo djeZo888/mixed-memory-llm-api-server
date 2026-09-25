@@ -1,11 +1,16 @@
-import { constants } from "node:fs";
-import { open, lstat, realpath } from "node:fs/promises";
+import { readProtectedCredential } from "./protected-credential.js";
+export { readProtectedCredential } from "./protected-credential.js";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createApp } from "./app.js";
 import { createGateway, type LaneState } from "./gateway.js";
 import { ImageUpstream } from "./image-upstream.js";
 import { createEngine } from "./engine.js";
+import {
+  NodeAvailability,
+  type HardwareLatchLedger,
+} from "./node-availability.js";
+import { nodeClient } from "./node-client.js";
 
 function required(name: string): string {
   const value = process.env[name];
@@ -20,34 +25,6 @@ function port(name: string, fallback: number) {
     throw new Error(`${name} must be a TCP port`);
   return +value;
 }
-/** Called only by explicit production startup. Fixtures inject synthetic credentials. */
-export async function readProtectedCredential(file: string): Promise<string> {
-  if (!path.isAbsolute(file) || (await realpath(file)) !== file)
-    throw new Error("Unsafe inference credential path");
-  const before = await lstat(file);
-  if (
-    !before.isFile() ||
-    before.isSymbolicLink() ||
-    before.nlink !== 1 ||
-    (before.mode & 0o077) !== 0 ||
-    ![0, process.getuid?.()].includes(before.uid)
-  )
-    throw new Error(
-      "Inference credential must be a protected owner-only regular file",
-    );
-  const handle = await open(file, constants.O_RDONLY | constants.O_NOFOLLOW);
-  try {
-    const info = await handle.stat();
-    if (info.ino !== before.ino || info.dev !== before.dev || info.size > 8192)
-      throw new Error("Unsafe inference credential identity");
-    const value = (await handle.readFile("utf8")).trim();
-    if (!value || !/^[\x21-\x7e]+$/.test(value))
-      throw new Error("Invalid inference credential");
-    return value;
-  } finally {
-    await handle.close();
-  }
-}
 export async function start() {
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw new Error("Node 24 is required");
@@ -61,12 +38,20 @@ export async function start() {
     : undefined;
   const gatewayPort = port("AI_HARNESS_GATEWAY_PORT", 8081);
   let gateway: ReturnType<typeof createGateway> | undefined;
+  let nodeAvailability: NodeAvailability | undefined;
   const application = await createApp({
     dataDir,
     launcher,
     engineFactory: createEngine,
     imageBackend: new ImageUpstream({ key }),
     approvalProxyKey,
+    availability: (id) => nodeAvailability?.get(id) ?? { state: "unknown" },
+    availabilitySummary: () =>
+      nodeAvailability?.states() ?? {
+        qwenGpu0: "unknown",
+        qwenGpu1: "unknown",
+        image: "unknown",
+      },
     gatewayUrl:
       process.env.AI_HARNESS_GATEWAY_URL ??
       `http://127.0.0.1:${gatewayPort}/v1`,
@@ -82,6 +67,41 @@ export async function start() {
     application.store.db.exec(
       "CREATE TABLE IF NOT EXISTS gateway_lanes(alias TEXT PRIMARY KEY,state TEXT NOT NULL); CREATE TABLE IF NOT EXISTS gateway_usage(session_id TEXT PRIMARY KEY,prompt_tokens INTEGER NOT NULL,completion_tokens INTEGER,source TEXT NOT NULL,observed_at TEXT NOT NULL)",
     );
+    application.store.db.exec(
+      "CREATE TABLE IF NOT EXISTS node_hardware_latches(id INTEGER PRIMARY KEY CHECK(id=1), value TEXT NOT NULL)",
+    );
+    const latchRow = application.store.db
+      .prepare("SELECT value FROM node_hardware_latches WHERE id=1")
+      .get() as { value: string } | undefined;
+    const controlKeyFile = process.env.AI_HARNESS_NODE_CONTROL_KEY_FILE;
+    // Optional H005 source wiring. The status daemon is never a chat startup
+    // dependency. Once a durable latch exists, disabling config cannot erase it.
+    if (controlKeyFile || latchRow) {
+      const controlKey = controlKeyFile
+        ? await readProtectedCredential(controlKeyFile)
+        : undefined;
+      nodeAvailability = new NodeAvailability({
+        backend: controlKey
+          ? nodeClient("ai-vm", controlKey)
+          : {
+              status: async () => {
+                throw Error("Passive node not configured");
+              },
+            },
+        initialLatches: latchRow
+          ? (JSON.parse(latchRow.value) as HardwareLatchLedger)
+          : {},
+        onLatch: (ledger) => {
+          application.store.db
+            .prepare("INSERT OR REPLACE INTO node_hardware_latches VALUES(1,?)")
+            .run(JSON.stringify(ledger));
+        },
+        changed: () => {
+          gateway?.notifyAvailabilityChanged();
+          application.images?.notifyAvailabilityChanged();
+        },
+      });
+    }
     const states = Object.fromEntries(
       (
         application.store.db
@@ -92,6 +112,7 @@ export async function start() {
     gateway = createGateway({
       upstreamKey: key,
       images: application.images,
+      availability: (id) => nodeAvailability?.get(id) ?? { state: "unknown" },
       initialLaneStates: states,
       onLaneState: (alias, state) => {
         application.store.db
@@ -112,12 +133,14 @@ export async function start() {
           );
       },
     });
+    nodeAvailability?.start();
     await gateway.app.listen({ host: "127.0.0.1", port: gatewayPort });
     await application.app.listen({
       host: "127.0.0.1",
       port: port("AI_HARNESS_PORT", 8080),
     });
   } catch (error) {
+    nodeAvailability?.stop();
     await gateway?.close();
     await application.app.close();
     throw error;
@@ -126,6 +149,7 @@ export async function start() {
   const close = async () => {
     if (stopping) return;
     stopping = true;
+    nodeAvailability?.stop();
     await Promise.all([
       application.broker.close(),
       application.images?.close(),

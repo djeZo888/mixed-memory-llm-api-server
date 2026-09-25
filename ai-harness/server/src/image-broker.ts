@@ -16,6 +16,10 @@ import {
   validateOutput,
 } from "./image-codec.js";
 import { ImageFiles } from "./image-files.js";
+import {
+  serviceAvailability,
+  type AvailabilityProvider,
+} from "./service-availability.js";
 
 type Lane = "idle" | "active" | "quarantined";
 interface RecordData {
@@ -37,6 +41,9 @@ export interface ImageBrokerOptions {
   store: Store;
   files: Files;
   backend: ImageBackend;
+  availability?: AvailabilityProvider;
+  /** Internal adapter identity; the node transport mapping is owned by the caller. */
+  serviceId?: string;
   currentRun(
     sessionId: string,
   ): { runId: string; workspaceId: string } | undefined;
@@ -302,7 +309,40 @@ export class ImageBroker {
   snapshot() {
     return { lane: this.lane, queued: this.queued().length };
   }
+  private unavailable() {
+    return (
+      serviceAvailability(
+        this.options.availability,
+        this.options.serviceId ?? "image",
+      ).state === "unavailable"
+    );
+  }
+  private requireAvailable() {
+    if (this.unavailable())
+      throw new ApiError(
+        503,
+        "image_service_unavailable",
+        "Image service is unavailable",
+      );
+  }
+  /** Active requests keep their settlement/artifact path. Only undispatched work fails. */
+  notifyAvailabilityChanged() {
+    this.kick();
+  }
+  private rejectUnavailablePending() {
+    if (!this.unavailable()) return false;
+    for (const r of this.records.values())
+      if (["queued", "awaiting_approval"].includes(r.job.state))
+        this.finish(
+          r,
+          "failed",
+          "image_service_unavailable",
+          "Image service is unavailable; request was not dispatched",
+        );
+    return true;
+  }
   async capabilities() {
+    this.requireAvailable();
     try {
       return await this.options.backend.capabilities(
         AbortSignal.timeout(10000),
@@ -349,6 +389,7 @@ export class ImageBroker {
           );
         return this.public(old);
       }
+      this.requireAvailable();
       const binding = this.binding(sessionId),
         id = randomUUID();
       const capabilities = await this.capabilities();
@@ -446,6 +487,7 @@ export class ImageBroker {
           "image_queue_full",
           "Image queue has eight waiting jobs",
         );
+      this.requireAvailable();
       const job: ImageJob = {
         revision: 0,
         id,
@@ -511,6 +553,7 @@ export class ImageBroker {
   issueApprovalToken(sessionId: string, jobId: string) {
     return this.lock(async () => {
       const r = this.owned(sessionId, jobId);
+      this.rejectUnavailablePending();
       if (
         this.closed ||
         r.job.state !== "awaiting_approval" ||
@@ -581,6 +624,7 @@ export class ImageBroker {
       if (this.options.store.getSession(sessionId).deleteRequested)
         throw new ApiError(409, "deleting", "Session is deleting");
       if (decision === "approve") {
+        this.requireAvailable();
         if (r.approvalHash !== this.approvalHash(r.job, r.snapshots))
           throw new ApiError(
             409,
@@ -598,6 +642,7 @@ export class ImageBroker {
             "invalid_image_state",
             "Image approval is no longer pending",
           );
+        this.requireAvailable();
         if (this.queued().length >= 8)
           throw new ApiError(
             429,
@@ -649,7 +694,7 @@ export class ImageBroker {
         this.cancel(sessionId, r.job.id);
   }
   private kick() {
-    if (this.closed) return;
+    if (this.closed || this.rejectUnavailablePending()) return;
     for (const r of this.queued())
       if (this.now() >= r.deadline)
         this.finish(
@@ -695,6 +740,7 @@ export class ImageBroker {
   async reconcile(): Promise<void> {
     if (
       this.closed ||
+      this.unavailable() ||
       this.reconciling ||
       this.pumping ||
       this.lane !== "quarantined"
@@ -705,7 +751,12 @@ export class ImageBroker {
       const health = await this.options.backend.readiness(
         AbortSignal.timeout(10000),
       );
-      if (!this.closed && health.ready === true && health.idle === true)
+      if (
+        !this.closed &&
+        !this.unavailable() &&
+        health.ready === true &&
+        health.idle === true
+      )
         this.setLane("idle");
     } catch {
       /* Retain quarantine without positive readiness AND idle evidence. */
@@ -746,6 +797,7 @@ export class ImageBroker {
         this.finish(r, "cancelled", undefined, undefined, "idle");
         return;
       }
+      this.requireAvailable();
       r.preparedSha256 = references.map(sha256);
       this.persist(r); // Exact conditioned bytes are hashed before native dispatch.
       dispatched = true;
@@ -762,7 +814,15 @@ export class ImageBroker {
       );
       settled = true;
       if (result.kind === "not_admitted") {
-        if (r.job.cancelRequested)
+        if (this.unavailable())
+          this.finish(
+            r,
+            "failed",
+            "image_service_unavailable",
+            "Image service is unavailable; request was not admitted",
+            "idle",
+          );
+        else if (r.job.cancelRequested)
           this.finish(r, "cancelled", undefined, undefined, "idle");
         else {
           if (!Number.isFinite(result.retryAfterMs) || result.retryAfterMs < 0)
