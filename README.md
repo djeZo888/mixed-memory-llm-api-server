@@ -20,11 +20,12 @@ Start with the [harness user guide](https://github.com/djeZo888/mixed-memory-llm
 and [H006 closeout](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/h006-closeout-20260926.md) describe the reviewed
 observation and placement foundation. H006's naming and update-policy statements
 remain evidence of that dated checkpoint; Sova is now the selected system name.
-Going forward, the new manual-update policy supersedes H006's
-package-installation-enabled policy: disable all automatic OS/package/Sova
-updates while preserving manual action. Worker1's H007 change is **IN PROGRESS,
-not yet accepted**; the [root-owned policy report](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/h007-update-policy-20260926.md)
-is **pending publication**. The historical H006 report stays unchanged.
+The manual-update policy now supersedes H006's package-installation-enabled
+policy. Automatic APT updates and the discovered refresh/update timers are
+disabled on both current VMs; Snap has a global indefinite hold. Current Sova
+service launch paths remain pinned. Manual update commands are available.
+See the [verified policy and coverage limits](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/h007-update-policy-20260926.md). The historical H006
+report stays unchanged. Maintenance-window automation is future work.
 
 ```mermaid
 flowchart TB

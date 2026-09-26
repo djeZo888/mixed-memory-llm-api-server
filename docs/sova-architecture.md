@@ -133,6 +133,7 @@ for the actual credential, observer and action boundaries.
 The [H006 closeout](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/h006-closeout-20260926.md) and
 [dated topology plan](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/system-topology-plan.md) retain their historical facts,
 including the then-undecided name and enabled package updates. H007 selects Sova;
-its [automatic-update disabling task](../TODO.md#immediate-h007-policy) is still
-Worker1-owned and in progress pending root integration of verified results.
-This architecture review is source-only, not deployment or live validation.
+the [manual-update policy](../TODO.md#immediate-h007-policy) is now verified on
+the two current VMs. The linked policy report defines its actual coverage and
+limitations. This architecture document remains a design contract, not acceptance
+of a distributed deployment or new routing implementation.

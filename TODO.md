@@ -12,19 +12,16 @@ evidence. This list is not an implementation or deployment acceptance report.
 
 ## Immediate H007 policy
 
-- **IN PROGRESS — Worker1: disable all automatic OS, package and Sova updates
-  now**, preserving explicit manual update action. Root will integrate
-  Worker1's verified outcome and exact scope later. This documentation task
-  neither changes hosts nor claims that disabling is complete.
-- This manual-update policy supersedes H006's package-installation-enabled
-  policy going forward; the historical report remains unchanged. Worker1's
-  outcome is **not yet accepted**. The expected
-  [root-owned H007 policy report](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/h007-update-policy-20260926.md) is
-  **pending publication**, not evidence of completion.
-- Keep needrestart protection distinct: deferring automatic restarts of managed
-  AI services does not disable package installation or every restart mechanism.
-  [H006 maintenance protection](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/h006-maintenance-robustness.md) remains dated
-  evidence; H006 correctly recorded security package updates enabled then.
+- **DONE on ai-vm and ai-harness:** disable automatic APT updates and the
+  discovered refresh/update timers, with a global indefinite Snap hold. Current
+  Sova launch paths remain pinned; explicit manual update commands remain
+  available. See the [verified H007 policy and coverage limits](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/h007-update-policy-20260926.md).
+- This supersedes H006's package-installation-enabled policy going forward.
+  Proxmox, Macs, future installations and arbitrary external schedulers were not
+  changed. Enforce the same policy when provisioning additional Sova nodes.
+- Keep needrestart protection distinct: deferring automatic restarts does not
+  itself disable package installation. [H006 maintenance protection](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/h006-maintenance-robustness.md)
+  remains historical evidence; it correctly recorded package updates enabled then.
 
 ## Future controlled maintenance software
 
