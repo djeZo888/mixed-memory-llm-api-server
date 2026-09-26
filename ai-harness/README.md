@@ -124,7 +124,20 @@ not a claim that full-window occupancy or full-length output has been accepted.
 One logical gateway serves both existing Qwens, with **exactly two shared request
 slots globally**, one per endpoint. Chats, native background subagents, automatic
 compression and auxiliary requests all compete for those slots; extra requests
-queue. A waiting parent does not reserve a slot. There is no GLM integration.
+queue. A waiting parent does not reserve a slot. Qwen remains the default for
+coding and ordinary agents. A parent may selectively delegate an independent
+subtask to the native `frontier` child, routed to GLM-5.3-Flash on its separate
+inference lane; the parent then reviews the returned result.
+
+The [H009 native acceptance](../reports/h009-frontier-20260926/ACCEPTANCE-02.md)
+passed one full-roster code workflow: Flash read, patched and tested a file,
+then Qwen independently reviewed the edit, reran the checks and returned the
+final answer. A separate Qwen completion overlapped occupied Flash. The actual
+Flash inputs were11,555–12,439tokens, with a2,048-token test output ceiling.
+Those test bounds do not change the production480,000/65,536 configuration.
+The result does not qualify full-window occupancy, every exposed tool, or new
+cancel/reconnect behavior. First-request latency included substantial prefill;
+use Flash selectively, not as the default coding agent.
 
 After replies and compression, the UI reports **estimated occupied context**,
 not cumulative token usage. A stale value describes an earlier observation;
