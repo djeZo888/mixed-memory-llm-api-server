@@ -52,6 +52,11 @@ and results; no repeated approval gates for task metadata corrections.
 
 ## ECC
 
+Final user decision during execution: keep ECC enabled on the three Blackwells,
+but disable it on Ada to retain the qualified Full HD image profile and its 5%
+reserve. A second coordinated guest restart is authorized after inference settles.
+This decision supersedes the initial uniform-ECC preference below.
+
 Prefer system-level ECC enabled on supported cards for reliability, following
 [NVIDIA guidance](https://nvidia.custhelp.com/app/answers/detail/a_id/5873/kw/installation).
 On-die ECC is distinct and cannot be toggled by the user. Capture all four GPUs'

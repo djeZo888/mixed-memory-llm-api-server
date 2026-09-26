@@ -1,5 +1,31 @@
 # AGENTS.md
 
+## Latest task precedence — 26 September 2026
+
+Sova now includes the ai-harness application and separate Qwen/image services.
+The authorized H008/H009 scope adds GLM-5.3-Flash on a dedicated fast Blackwell
+with CPU experts, while Qwen1 uses the additional Server Blackwell. Read
+[H009's current checkpoint](docs/h009-status-20260926.md) and the task handoff
+before interpreting historical scope below. Flash targets 480000 configured
+context; this round tests only 4K/16K occupied input, with 7% free GPU and 15%
+host reserve. Qwen remains coordinator and preferred coding/agentic model;
+Flash is selective research, document analysis and difficult reasoning.
+The user selected ECC on all three Blackwells and off on Ada to retain Full HD.
+Workers own implementation/live tests; root owns planning, coordination, review
+and integration. Existing installer exclusions remain. Current explicit user
+instructions supersede historical task-only restrictions without another
+approval roundtrip. Qualification and final deployed state must come from the
+latest evidence, not this summary.
+
+Benchmark stream capture must drain promptly. Do not acquire lifecycle locks,
+run full storage checks, rewrite full receipts or fsync every token in the stream
+read loop. Perform heavyweight checks at request boundaries, collect separate
+periodic telemetry, and use bounded buffered checkpoints for ordinary deltas.
+Keep ownership and terminal records durable. Label instrumented client timings
+separately from native decode windows and full-request averages.
+
+## Historical milestones and standing operating rules
+
 Current guidance for agents and operators. Read the
 [current scope and ownership checkpoint](docs/orchestration/2026-09-17-resumed.md)
 and the relevant task handoff before work; preserve their evidence boundaries.
