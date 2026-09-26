@@ -1,0 +1,37 @@
+{
+  "scope": "optional overlap preparation only; zero Flash inference",
+  "task_root": "/Users/agent/CodexProjects/llm-orchestration/tasks/H010-FLASH64K-20260926",
+  "vm_prefix": "/data/logs/flash-h008-20260926/H010-OVERLAP",
+  "files": [
+    {
+      "task_path": "../tools/overlap-job.py",
+      "bytes": 31941,
+      "sha256": "cdc2538643a4c7bf8aa4fd9e1a88ef0c3fbbd4d4b5e3c54fc6b28b4c523198ad"
+    },
+    {
+      "task_path": "../tools/dispatch-overlap.py",
+      "bytes": 2353,
+      "sha256": "caf50503a2cc32f9533a65071fc3c84be5fbdc03afa8df61d4b4e24095afc191"
+    },
+    {
+      "task_path": "../tools/abort-overlap.py",
+      "bytes": 3205,
+      "sha256": "a248e781a1555fc422d2dbe9086dc44605eab036b5c18c7003a012454b5fa67b"
+    },
+    {
+      "task_path": "../evidence/OVERLAP-LATEST.json",
+      "bytes": 61443,
+      "sha256": "65b8f105c912103453114eabe51f1c2d59210445f83561f7f195ba362182cc8e"
+    },
+    {
+      "task_path": "../evidence/OVERLAP-OWNER.json",
+      "bytes": 432,
+      "sha256": "dd8ff06073b86383bc2edcfa7298d6be1b8b73a40f27a7ce455573c08f6f5b74"
+    },
+    {
+      "task_path": "../evidence/OVERLAP-ABORT.json",
+      "bytes": 473,
+      "sha256": "329ed00b3afdec63f63add952689a66f3b82625b58c9b738b57ffeb13b7f40ae"
+    }
+  ]
+}

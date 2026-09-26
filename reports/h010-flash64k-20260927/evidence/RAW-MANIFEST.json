@@ -1,0 +1,71 @@
+{
+  "vm_root": "/data/logs/flash-h008-20260926",
+  "local_root": "/Users/agent/CodexProjects/llm-orchestration/tasks/H010-FLASH64K-20260926/evidence/raw",
+  "files": [
+    {
+      "name": "H010-FLASH64K-OWNER.json",
+      "bytes": 1044,
+      "sha256": "176434457cae247731d83e899d35b6f8f41ad4cbd9a29638f4a7b021a002113f"
+    },
+    {
+      "name": "H010-FLASH64K-job.py",
+      "bytes": 51486,
+      "sha256": "0ac1bc7987c7e798607f31570ca441f6c2e10d149feb9b30b984891bcaf345d6"
+    },
+    {
+      "name": "H010-FLASH64K-measured65536-FIXTURE.jsonl",
+      "bytes": 262248,
+      "sha256": "0a4c24d1c168f41562fb521ebb386f3db915d8c378b9ad734bd514930b12ee48"
+    },
+    {
+      "name": "H010-FLASH64K-measured65536-NATIVE.jsonl",
+      "bytes": 17876,
+      "sha256": "a1c4e455884c626aa32f7b405e78690bcc87c39648f46a38e7e85f51e4c24861"
+    },
+    {
+      "name": "H010-FLASH64K-measured65536-PROGRESS.jsonl",
+      "bytes": 36133,
+      "sha256": "269650aa2d438845d19b9dff471d055f7201eba8f7ee1584891f8ef137b37455"
+    },
+    {
+      "name": "H010-FLASH64K-measured65536-SSE.jsonl",
+      "bytes": 94600,
+      "sha256": "94a7c36c95e2109326f8338d93f8df7a23b4fd15342a5f90bcdcf1ff0cc15a11"
+    },
+    {
+      "name": "H010-FLASH64K-measured65536-TELEMETRY.jsonl",
+      "bytes": 1031340,
+      "sha256": "c02ea4f0a9db23bcbd59c807e9ba0cb23507a9521c0e205210df524b2b456bee"
+    },
+    {
+      "name": "H010-FLASH64K-warm8192-FIXTURE.jsonl",
+      "bytes": 35671,
+      "sha256": "9cc8e22ce02a0f809ccf5a186657ae4f15942d0fc51e2313ffd86196a3d51c41"
+    },
+    {
+      "name": "H010-FLASH64K-warm8192-NATIVE.jsonl",
+      "bytes": 5047,
+      "sha256": "6eb9cf4c7c394136e74f70879ed840469f3d48f4d6dc3962b6f15617e80ed27a"
+    },
+    {
+      "name": "H010-FLASH64K-warm8192-PROGRESS.jsonl",
+      "bytes": 30772,
+      "sha256": "31305e1a2facb8f573214a945f86a0440c1289e63f8283cb12199cf48b0d7b7e"
+    },
+    {
+      "name": "H010-FLASH64K-warm8192-SSE.jsonl",
+      "bytes": 80987,
+      "sha256": "c0e43a67a598d963bcec53273a59b53bc5e8c4231c2011829c657a9d2070393e"
+    },
+    {
+      "name": "H010-FLASH64K-warm8192-TELEMETRY.jsonl",
+      "bytes": 194122,
+      "sha256": "8a0c41b4d1e4950a4d119cfd3a56871d812856c85e9bc9cb18ed6506a7111b54"
+    },
+    {
+      "name": "H010-FLASH64K.json",
+      "bytes": 282879,
+      "sha256": "9799cb9fa0f8bf18d6ee3de70af1d4df5901b76d042a89006f9abdaed1a03505"
+    }
+  ]
+}

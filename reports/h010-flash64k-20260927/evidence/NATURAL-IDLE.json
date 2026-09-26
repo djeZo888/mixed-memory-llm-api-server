@@ -1,0 +1,333 @@
+{
+  "scope": "natural idle observation only; no controlled 600s idle/wake campaign",
+  "last_observed_current_boot_native_prefill_utc": "2026-09-26T21:21:34.029578565Z",
+  "last_prefill_kind": "normal backend startup64tokens",
+  "pre_request_sample_utc": "2026-09-26T23:30:25.719433+00:00",
+  "idle_expert_comparison_start_utc": "2026-09-26T23:24:09.649461+00:00",
+  "idle_expert_comparison_seconds": 376.069972,
+  "cpu_ticks_hz": 100,
+  "expert_cpu_seconds": 0.0,
+  "threads": [
+    {
+      "tid": 68858,
+      "mask": "1",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68860,
+      "mask": "2",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68861,
+      "mask": "3",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68862,
+      "mask": "4",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68863,
+      "mask": "5",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68864,
+      "mask": "6",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68865,
+      "mask": "7",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68903,
+      "mask": "17",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68904,
+      "mask": "18",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68905,
+      "mask": "19",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68906,
+      "mask": "20",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68907,
+      "mask": "21",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68908,
+      "mask": "22",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68909,
+      "mask": "23",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68911,
+      "mask": "25",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68912,
+      "mask": "26",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68913,
+      "mask": "27",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68914,
+      "mask": "28",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68915,
+      "mask": "29",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68916,
+      "mask": "30",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68917,
+      "mask": "31",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68939,
+      "mask": "33",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68940,
+      "mask": "34",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68941,
+      "mask": "35",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68942,
+      "mask": "36",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68943,
+      "mask": "37",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68944,
+      "mask": "38",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68945,
+      "mask": "39",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68976,
+      "mask": "41",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68977,
+      "mask": "42",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68978,
+      "mask": "43",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68979,
+      "mask": "44",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68980,
+      "mask": "45",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68981,
+      "mask": "46",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 68982,
+      "mask": "47",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69016,
+      "mask": "49",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69017,
+      "mask": "50",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69018,
+      "mask": "51",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69019,
+      "mask": "52",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69020,
+      "mask": "53",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69021,
+      "mask": "54",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69022,
+      "mask": "55",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69024,
+      "mask": "57",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69025,
+      "mask": "58",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69026,
+      "mask": "59",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69027,
+      "mask": "60",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69028,
+      "mask": "61",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69029,
+      "mask": "62",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69030,
+      "mask": "63",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69032,
+      "mask": "65",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69033,
+      "mask": "66",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69034,
+      "mask": "67",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69035,
+      "mask": "68",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69036,
+      "mask": "69",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69037,
+      "mask": "70",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69038,
+      "mask": "71",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69081,
+      "mask": "0",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69082,
+      "mask": "16",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69083,
+      "mask": "24",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69084,
+      "mask": "32",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69085,
+      "mask": "40",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69086,
+      "mask": "48",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69087,
+      "mask": "56",
+      "cpu_ticks_delta": 0
+    },
+    {
+      "tid": 69089,
+      "mask": "64",
+      "cpu_ticks_delta": 0
+    }
+  ],
+  "limit": "Only guest expert CPU tick deltas over this sampled interval; not every process, nor physical host mapping."
+}
