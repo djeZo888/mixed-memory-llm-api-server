@@ -2079,3 +2079,21 @@ test("real HTTP SSE heartbeat/replay/Last-Event-ID are monotonic; browser discon
   resumed.close();
   explicit.close();
 });
+
+test("whole-app freeze rejects new work, retains queued follow-up, and never exposes private routes on8080", async t => {
+  let frozen = false;
+  const e = engines(true), f = await setup(t, e, { dispatchHeld: () => frozen });
+  const s = await f.session();
+  f.broker.enqueue(s.id, "message", "synthetic first");
+  await until(() => e.calls.length === 1);
+  const queued = f.broker.enqueue(s.id, "message", "synthetic follow-up");
+  frozen = true;
+  assert.throws(() => f.broker.enqueue(s.id, "message", "rejected"), /paused/);
+  e.calls[0].resolve(); await until(() => f.broker.dispatchImpact().active === 0);
+  assert.equal(f.broker.dispatchImpact().queued, 1);
+  assert.equal(e.calls.length, 1);
+  assert.equal((await inject(f.app, { method: "POST", url: "/private/freeze/verify", payload: {} })).statusCode, 404);
+  frozen = false; f.broker.notifyDispatchChanged();
+  await until(() => e.calls.length === 2);
+  assert.ok(queued); e.calls[1].resolve(); await f.broker.idle();
+});

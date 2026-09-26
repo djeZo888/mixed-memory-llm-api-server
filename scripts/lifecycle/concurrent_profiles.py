@@ -29,12 +29,15 @@ PROFILES = (GLM_PROFILE, *QWEN_PROFILES)
 GPU_UUIDS = ('GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',
             'GPU-69acfa26-8b60-61b5-702d-aee252c163cc')
 ACCEPTANCE_SUFFIX = 'services/llm-manager/evidence/dualq-480k.accepted.json'
+PREDECESSOR_SUFFIX = 'services/llm-manager/evidence/h005-predecessor/dualq-480k.accepted.json'
 HOST_HEADROOM_POLICY_15 = {
     'version': 'sampled-required-working-set-15pct-v1',
     'numerator': 23, 'denominator': 20,
     'basis': 'sampled_required_working_set_estimate_bytes',
 }
 PINS = {
+    'configs/runtimes/h005-runtime-binding.json': '9da2236e927c44e2af618e0862ee84f54d4645ec0bcb1e93c25c0d98b45ee6ae',
+    'scripts/runtime/h005_runtime_binding.py': '30b223cc246c3c8e7338079ce21c2fbb0427a1d34510f8d6a88ca9c6c564716e',
     'configs/deployments/qwen38-27b-q1-480000-yarn4-bf16kv.json': '6b4d6725010b58e53c784be781af968bf8b295cca402f0b6e4c91d2ea73077dd',
     'configs/deployments/qwen38-27b-q0-480000-yarn4-bf16kv.json': '7c2587d74e8f4654574c74d8b6e955dac1db9a185fc1c0201bacee92b3ecffe4',
     'configs/deployments/glm-5.3-ud-q4-k-xl-g1-480000.json': '1baa9913542a088a7dd40d1a902ef53605ff4a1c5eafc409814116df25d49899',
@@ -43,7 +46,7 @@ PINS = {
     'configs/runtimes/llama-cpp-v0.4.1-d3br.json': 'd073105a70540df73cef325df7fdcfa32651f5a6aa8387b584708fb51b802d50',
     'configs/runtimes/sglang-qwen38-0.5.19.json': '17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11',
     'scripts/runtime/sglang38_file_auth.py': 'e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7da4',
-    'scripts/runtime/sglang38_pair_file_auth.py': '1c4cbe80cf39d2c907c7878550018383b68cf5fbefbfdf48b6159238aadf7f88',
+    'scripts/runtime/sglang38_pair_file_auth.py': '7e5ca90a8ede7be7ab1aa0a5cad669869d2c86385d6529680a32f585f850b77c',
 }
 
 
@@ -100,6 +103,9 @@ def declared_profile(identifier):
     d['_runtime'] = json.loads(_pinned('configs/runtimes/' + d['runtime'] + '.json'))
     for name in PINS:
         _pinned(name)
+    if identifier in QWEN_PROFILES:
+        from runtime.h005_runtime_binding import profile
+        d['_runtime'] = profile(d['_runtime'])
     return d
 
 
@@ -157,8 +163,17 @@ def validate_pair(d, peer):
 
 
 @safe
-def validate_gpu_inventory(rows):
-    """Require the fixed UUIDs once; physical indices and row order may change."""
+def validate_gpu_inventory(rows, *, required_uuids=GPU_UUIDS):
+    """Require exactly the caller's UUIDs once, never substitute an ordinal.
+
+    Historical pair acceptance still requires both devices by default. Current
+    service admission supplies its own target UUID: a missing unassigned or
+    peer device is not a dependency of that service. Ambiguous inventories fail
+    closed; neither a physical index nor a card name establishes identity.
+    """
+    require(isinstance(required_uuids, (list, tuple)) and bool(required_uuids)
+            and len(required_uuids) == len(set(required_uuids))
+            and set(required_uuids) <= set(GPU_UUIDS), 'concurrent_gpu_requirement_invalid')
     if isinstance(rows, str):
         rows = [tuple(part.strip() for part in line.split(',')) for line in rows.splitlines() if line.strip()]
     require(isinstance(rows, (list, tuple)) and bool(rows)
@@ -174,7 +189,7 @@ def validate_gpu_inventory(rows):
         require(int(index) not in indices and uuid not in uuids, 'concurrent_gpu_inventory_mismatch')
         indices.add(int(index))
         uuids.add(uuid)
-    require(set(GPU_UUIDS) <= uuids, 'concurrent_gpu_inventory_mismatch')
+    require(set(required_uuids) <= uuids, 'concurrent_gpu_inventory_mismatch')
 
 
 @safe
@@ -208,7 +223,14 @@ def source_identity():
     """Current critical shipped bytes that a reviewed acceptance must bind."""
     files = set(PINS) | {'scripts/lifecycle/concurrent_profiles.py', 'scripts/lifecycle/qwen38.py',
             'scripts/lifecycle/manager.py', 'scripts/lifecycle/boot_unit.py', 'scripts/lifecycle/slot_state.py',
-            'scripts/lifecycle/runtime_io.py',
+            'scripts/lifecycle/runtime_io.py', 'scripts/lifecycle/hardware_policy.py',
+            'scripts/control/hardware_latch.py',
+            'scripts/control/node.py', 'scripts/control/node_observation.py',
+            'scripts/control/node_actions.py', 'scripts/control/node_action_owner.py',
+            'scripts/control/node_collectors.py', 'scripts/control/node_resources.py',
+            'scripts/control/node_installation.py', 'scripts/control/node_serve.py',
+            'scripts/control/node-source-closure.json', 'scripts/control/passive.py',
+            'scripts/control/llm-node.service.in',
             'scripts/control/core.py', 'scripts/control/adapter.py', 'scripts/control/catalog.py',
             'scripts/control/journal.py', 'scripts/control/protocol.py', 'scripts/control/discovery.py',
             'tests/lifecycle/sglang38_fixture/provenance.json',
@@ -217,6 +239,13 @@ def source_identity():
             'tests/lifecycle/sglang38_fixture/run_pair_fixture.py',
             'tests/lifecycle/sglang38_fixture/run_pair_pinned_image.py',
             'scripts/control/installation.py', 'scripts/control/source-closure.json'}
+    # These declarations enumerate protected import closures, not hashes of
+    # themselves. The external receipt hashes this complete union after edits.
+    from control.installation import RECOVERY_FILES, NORMAL_FILES
+    from control.node_installation import SOURCE_FILES
+    files.update(RECOVERY_FILES)
+    files.update(NORMAL_FILES)
+    files.update(SOURCE_FILES)
     return {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in sorted(files)}
 
 
@@ -255,6 +284,7 @@ def check_acceptance(d, instance, *, mode=None):
             and isinstance(receipt.get('evidence'), list) and receipt['evidence']
             and all(isinstance(item, str) and item.strip() for item in receipt['evidence']),
             'concurrent_acceptance_identity_mismatch')
+    _check_h005_transition(receipt, binding)
     validate_gpu_inventory(receipt.get('gpu_inventory'))
     modes = receipt.get('modes')
     require(isinstance(modes, dict) and set(modes) == set(MODES), 'concurrent_acceptance_modes_mismatch')
@@ -274,6 +304,54 @@ def check_acceptance(d, instance, *, mode=None):
     # Projection preserves existing consumers while binding the entire protected
     # receipt above; callers may not reinterpret a G/Q receipt as Q/Q evidence.
     return {**receipt, 'accepted_mode': selected_mode, 'slots': modes[selected_mode]['slots']}
+
+
+def _check_h005_transition(receipt, binding):
+    """Keep measured capacity as dated predecessor evidence, not a new test.
+
+    Revised runtime authentication is separately required by qwen38.evidence
+    for the actual slot. This transition grants no live readiness/idle result.
+    """
+    from runtime.h005_runtime_binding import load, BINDING_SHA256
+    runtime = load(require_complete=False)
+    transition = receipt.get('h005_transition', {})
+    require(isinstance(transition, dict) and set(transition) == {
+            'kind', 'runtime_binding_sha256', 'runtime_source_commit',
+            'predecessor_receipt_sha256', 'capacity_observed_at', 'live_acceptance'}
+            and transition['kind'] == 'inherited-capacity-new-runtime-auth'
+            and transition['runtime_binding_sha256'] == BINDING_SHA256
+            and transition['runtime_source_commit'] == runtime['runtime_source_commit']
+            and isinstance(transition['capacity_observed_at'], str)
+            and re.fullmatch(r'\d{4}-\d{2}-\d{2}', transition['capacity_observed_at'])
+            and transition['live_acceptance'] == 'SEPARATE_RECEIPT_REQUIRED',
+            'h005_reviewed_transition_required')
+    predecessor = binding.read_json('data', binding.path('data', PREDECESSOR_SUFFIX), maximum=1024 * 1024)
+    require(receipt_sha256(predecessor) == transition['predecessor_receipt_sha256']
+            and predecessor.get('schema_version') == 2
+            and predecessor.get('kind') == 'root-reviewed-dualq-480k'
+            and predecessor.get('status') == 'ACCEPTED_FOR_ACTIVATION'
+            and predecessor.get('instance_id') == receipt['instance_id']
+            and same(predecessor.get('storage_identity'), receipt['storage_identity']),
+            'h005_predecessor_receipt_mismatch')
+    for field in ('host_usable_bytes', 'guest_total_vcpus', 'host_headroom_policy', 'gpu_inventory',
+                  'concurrency_performance_review'):
+        require(same(receipt.get(field), predecessor.get(field)), 'h005_inherited_measurement_changed')
+    require(all(item in receipt['evidence'] for item in predecessor.get('evidence', [])),
+            'h005_historical_evidence_removed')
+    # All old measured proof fields are retained byte-semantically. Only these
+    # executable/auth fields may be amended after new CPU native fixtures.
+    changed = {'runtime_image_id', 'pair_launcher_sha256', 'native_auth_checks'}
+    for mode, selections in MODES.items():
+        prior_mode, current_mode = predecessor['modes'][mode], receipt['modes'][mode]
+        require(same(prior_mode['concurrency_performance_review'], current_mode['concurrency_performance_review'])
+                and all(item in current_mode['evidence'] for item in prior_mode['evidence']),
+                'h005_historical_evidence_removed')
+        for slot, identifier in selections.items():
+            old = predecessor['modes'][mode]['slots'][slot]
+            new = receipt['modes'][mode]['slots'][slot]
+            require(set(new) == set(old) and all(same(value, new[key]) for key, value in old.items()
+                    if identifier == GLM_PROFILE or key not in changed),
+                    'h005_inherited_measurement_changed')
 
 
 def _check_mode_evidence(slots, selections, receipt):
@@ -387,8 +465,13 @@ def preflight_current(d, instance, run_fn, *, residents=None):
     or resident peer's full reviewed cap, less current anon plus no-swap shmem,
     and retain the existing 16-GiB host headroom. Thus resident allocations are
     not counted twice, reclaimable cache is not double-credited, and remaining
-    room up to each cap is retained even for an idle peer. This is a current
-    bounded sample, not an allocator reservation or benchmark recertification.
+    room up to each cap is retained even for an idle peer. GPU admission checks
+    only this target's UUID/allocation; a missing or degraded peer GPU cannot
+    donate memory or prevent admission on the independent healthy target.
+    Queries address only the target UUID, so unrelated cards are not enumerated.
+    A shared-driver failure can still block admission; no driver isolation is
+    claimed. This bounded sample is not an allocator reservation or benchmark
+    recertification.
     """
     residents = {} if residents is None else residents
     require(type(residents) is dict and set(residents) <= set(SLOTS), 'concurrent_resident_identity_invalid')
@@ -421,27 +504,28 @@ def preflight_current(d, instance, run_fn, *, residents=None):
     for slot in set(residents) | {target}:
         required += max(0, receipt['slots'][slot]['memory_bytes'] - credit.get(slot, 0))
     require(host_available >= required, 'concurrent_current_host_memory_insufficient')
-    text = read(['nvidia-smi', '--query-gpu=index,uuid,memory.total,memory.free', '--format=csv,noheader,nounits'])
+    target_uuid = d['launch']['gpus'][0]
+    text = read(['nvidia-smi', '--id=' + target_uuid,
+                 '--query-gpu=index,uuid,memory.total,memory.free', '--format=csv,noheader,nounits'])
     require(len(text) <= 4096, 'concurrent_current_gpu_memory_unavailable')
     rows = [tuple(value.strip() for value in line.split(',')) for line in text.splitlines() if line.strip()]
-    require(rows and all(len(row) == 4 and row[2].isascii() and row[2].isdigit()
-                        and row[3].isascii() and row[3].isdigit() for row in rows),
+    require(rows and all(len(row) == 4 for row in rows),
             'concurrent_current_gpu_memory_unavailable')
-    validate_gpu_inventory([(row[0], row[1]) for row in rows])
-    memory_by_uuid = {row[1]: tuple(int(value) * 1024**2 for value in row[2:]) for row in rows}
-    require(all(total > 0 and 0 <= free <= total for total, free in memory_by_uuid.values()),
+    validate_gpu_inventory([(row[0], row[1]) for row in rows], required_uuids=d['launch']['gpus'])
+    row = next(row for row in rows if row[1] == target_uuid)
+    require(all(value.isascii() and value.isdigit() for value in row[2:]),
             'concurrent_current_gpu_memory_unavailable')
-    gpu_required = {}
-    for slot in set(residents) | {target}:
-        proof = receipt['slots'][slot]
-        total, free = memory_by_uuid[proof['visible_cuda_devices']['CUDA0']]
-        require(total == proof['gpu_total_bytes'], 'concurrent_current_gpu_memory_unavailable')
-        reserve = max(16 * 1024**3, (total + 9) // 10 if proof['deployment'] in QWEN_PROFILES else 0)
-        # Accepted measured occupied GPU bytes include model, allocated cache
-        # and workspace. A resident target has already paid that allocation.
-        needed = reserve + (0 if slot in residents else total - proof['minimum_free_gpu_bytes'])
-        require(free >= needed, 'concurrent_current_gpu_memory_insufficient')
-        gpu_required[slot] = needed
+    total, free = (int(value) * 1024**2 for value in row[2:])
+    require(total > 0 and 0 <= free <= total, 'concurrent_current_gpu_memory_unavailable')
+    proof = receipt['slots'][target]
+    require(proof['visible_cuda_devices']['CUDA0'] == target_uuid
+            and total == proof['gpu_total_bytes'], 'concurrent_current_gpu_memory_unavailable')
+    reserve = max(16 * 1024**3, (total + 9) // 10 if proof['deployment'] in QWEN_PROFILES else 0)
+    # Accepted measured occupied GPU bytes include model, allocated cache
+    # and workspace. A resident target has already paid that allocation.
+    needed = reserve + (0 if target in residents else total - proof['minimum_free_gpu_bytes'])
+    require(free >= needed, 'concurrent_current_gpu_memory_insufficient')
+    gpu_required = {target: needed}
     return {'host_available_bytes': host_available, 'required_host_available_bytes': required,
             'resident_slots': sorted(residents), 'gpu_required_free_bytes': gpu_required}
 

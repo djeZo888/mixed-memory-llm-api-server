@@ -618,3 +618,226 @@ test("complete proxy errors remain ambiguous; definite admission rejection relea
   assert.equal(f.gateway.snapshot().lanes[1]!.state, "idle");
   assert.equal(f.seen.length, 2);
 });
+
+test("one healthy Qwen keeps the shared FIFO across main, child and compaction requests", async (t) => {
+  const f = await fixture({
+    availability: (alias) => ({
+      state: alias.endsWith("gpu0") ? "unavailable" : "available",
+    }),
+  });
+  t.after(f.close);
+  const child = f.gateway.issueToken("child");
+  const pending: Promise<Response>[] = [];
+  for (const [index, kind] of ["main", "child", "compaction"].entries()) {
+    pending.push(
+      f.send({ user: kind }, undefined, kind === "child" ? child : f.token),
+    );
+    await until(
+      () => f.seen.length + f.gateway.snapshot().queued === index + 1,
+    );
+  }
+  assert.equal(f.seen.length, 1);
+  for (let index = 0; index < pending.length; index++) {
+    await until(() => f.seen.length === index + 1);
+    assert.equal(f.seen[index]!.lane, 1);
+    assert.equal(
+      f.seen[index]!.body.user,
+      ["main", "child", "compaction"][index],
+    );
+    f.complete(index);
+    assert.equal((await pending[index]!).status, 200);
+  }
+  assert.deepEqual(f.maximum, [0, 1]);
+  const models = (await (
+    await fetch(`${f.url}/v1/models`, {
+      headers: { authorization: `Bearer ${f.token}` },
+    })
+  ).json()) as { data: { availability: { state: string }[] }[] };
+  assert.deepEqual(
+    models.data[0]!.availability.map((lane) => lane.state),
+    ["unavailable", "available"],
+  );
+});
+
+test("last available lane loss promptly rejects queued bytes while dispatched work is never replayed", async (t) => {
+  let unavailable = false;
+  const f = await fixture({
+    availability: () => ({ state: unavailable ? "unavailable" : "available" }),
+  });
+  t.after(f.close);
+  const first = f.send({ user: "first" }),
+    second = f.send({ user: "second" });
+  await until(() => f.seen.length === 2);
+  const queued = f.send({ user: "undispatched" });
+  await until(() => f.gateway.snapshot().queued === 1);
+  assert.ok(f.gateway.snapshot().queuedBytes > 0);
+  unavailable = true;
+  f.gateway.notifyAvailabilityChanged();
+  const rejected = await queued;
+  assert.equal(rejected.status, 503);
+  assert.equal(
+    ((await rejected.json()) as { error: { code: string } }).error.code,
+    "lanes_unavailable",
+  );
+  assert.equal(f.gateway.snapshot().queued, 0);
+  assert.equal(f.gateway.snapshot().queuedBytes, 0);
+  assert.deepEqual(
+    f.gateway.snapshot().lanes.map((lane) => lane.state),
+    ["active", "active"],
+  );
+  assert.equal((await f.send()).status, 503);
+  f.complete(0);
+  f.complete(1);
+  await Promise.all(
+    [first, second].map(async (response) => (await response).text()),
+  );
+  assert.equal((await f.send()).status, 503);
+  unavailable = false;
+  f.gateway.notifyAvailabilityChanged();
+  await delay(20);
+  assert.equal(f.seen.length, 2);
+});
+
+test("hardware availability remains independent of durable uncertain-request quarantine", async (t) => {
+  let unavailable = true;
+  const f = await fixture({
+    initialLaneStates: { "qwen3.8-27b-gpu0": "active" },
+    availability: (alias) => ({
+      state:
+        unavailable && !alias.endsWith("gpu0") ? "unavailable" : "available",
+    }),
+  });
+  t.after(f.close);
+  assert.equal((await f.send()).status, 503);
+  assert.equal(f.gateway.snapshot().lanes[0]!.state, "quarantined");
+  unavailable = false;
+  f.gateway.notifyAvailabilityChanged();
+  const response = f.send();
+  await until(() => f.seen.length === 1);
+  assert.equal(f.seen[0]!.lane, 1);
+  assert.equal(f.gateway.snapshot().lanes[0]!.state, "quarantined");
+  f.complete(0);
+  await (await response).text();
+});
+
+test("configured unknown and observer errors retain the bounded FIFO until readiness returns", async (t) => {
+  let ready = false;
+  const f = await fixture({
+    availability: (alias) => {
+      if (ready) return { state: "available" };
+      if (alias.endsWith("gpu0"))
+        throw new Error("private fixture observer detail");
+      return { state: "unknown", reason: "stale" };
+    },
+  });
+  t.after(f.close);
+  const a = f.send(),
+    b = f.send();
+  await until(() => f.gateway.snapshot().queued === 2);
+  assert.equal(f.seen.length, 0);
+  assert.deepEqual(
+    f.gateway.snapshot().lanes.map((lane) => lane.availability.state),
+    ["unknown", "unknown"],
+  );
+  assert.ok(!JSON.stringify(f.gateway.snapshot()).includes("private fixture"));
+  ready = true;
+  f.gateway.notifyAvailabilityChanged();
+  await until(() => f.seen.length === 2);
+  f.complete(0);
+  f.complete(1);
+  await Promise.all([a, b].map(async (response) => (await response).text()));
+});
+
+test("availability is rechecked after credential loading before the first upstream byte", async (t) => {
+  let unavailable = false,
+    loading = false;
+  let release!: (key: string) => void;
+  const key = new Promise<string>((resolve) => {
+    release = resolve;
+  });
+  const f = await fixture({
+    availability: () => ({ state: unavailable ? "unavailable" : "available" }),
+    upstreamKey: () => {
+      loading = true;
+      return key;
+    },
+  });
+  t.after(f.close);
+  const request = f.send();
+  await until(() => loading);
+  unavailable = true;
+  f.gateway.notifyAvailabilityChanged();
+  release("fixture-key");
+  assert.equal((await request).status, 503);
+  assert.equal(f.seen.length, 0);
+  assert.deepEqual(
+    f.gateway.snapshot().lanes.map((lane) => lane.state),
+    ["idle", "idle"],
+  );
+});
+
+test("per-lane administrative hold serves new child/compaction work on healthy peer and retains FIFO bytes", async (t) => {
+  let held = false;
+  const f = await fixture({ availability: alias => ({ state: "available", dispatch: held && alias === "qwen3.8-27b-gpu0" ? "hold" : "allow" }), dispatchHeld: alias => held && alias === "qwen3.8-27b-gpu0" });
+  t.after(f.close);
+  const first = f.send(); await until(() => f.seen.length === 1);
+  held = true; f.gateway.notifyAvailabilityChanged();
+  const second = f.send({ messages: [{ role: "user", content: "synthetic child" }] }); await until(() => f.seen.length === 2);
+  assert.equal(f.seen[1].lane, 1);
+  f.complete(0); await first;
+  const third = f.send({ messages: [{ role: "user", content: "synthetic compaction" }] });
+  await until(() => f.gateway.snapshot().queued === 1);
+  const bytes = f.gateway.snapshot().queuedBytes; assert.ok(bytes > 0);
+  f.complete(1); await second;
+  await until(() => f.seen.length === 3);
+  assert.equal(f.seen[2].lane, 1);
+  assert.equal(f.gateway.snapshot().queuedBytes, 0);
+  f.complete(2); await third;
+  held = false; f.gateway.notifyAvailabilityChanged();
+});
+test("freeze during credential await holds owned reservation until release, before upstream bytes", async t => {
+  let held = false, releaseKey!: () => void;
+  const pendingKey = new Promise<void>(resolve => { releaseKey = resolve; });
+  const f = await fixture({ upstreamKey: async () => { await pendingKey; return "fixture-key"; }, availability: () => ({ state: "available", dispatch: held ? "hold" : "allow" }), dispatchHeld: () => held });
+  t.after(f.close);
+  const pending = f.send(); await until(() => f.gateway.snapshot().lanes.some(l => l.state === "active"));
+  held = true; releaseKey();
+  await delay(100); assert.equal(f.seen.length, 0);
+  assert.equal(f.gateway.snapshot().lanes[0].state, "active");
+  held = false; f.gateway.notifyAvailabilityChanged();
+  await until(() => f.seen.length === 1); f.complete(0); assert.equal((await pending).status, 200);
+});
+
+test("canonical target settlement reconciles only old owned lane and never replays uncertain request", async t => {
+  const f = await fixture(); t.after(f.close);
+  const pending = f.send({ stream: true }); await until(() => f.seen.length === 1);
+  f.seen[0].response.setHeader("content-type", "text/event-stream");
+  f.seen[0].response.write('data: {"choices":[{"delta":{"content":"synthetic partial"}}]}\n\n');
+  const response = await pending, text = response.text().catch(error => error as Error);
+  // Owner proof is target-specific; an unrelated restart cannot settle lane0.
+  f.gateway.reconcileAfterOwnerSettlement(["qwen3.8-27b"]);
+  f.seen[0].response.destroy(); await text;
+  await until(() => f.gateway.snapshot().lanes[0].state === "quarantined");
+  assert.equal(f.seen.length, 1);
+  f.gateway.reconcileAfterOwnerSettlement(["qwen3.8-27b-gpu0"]);
+  assert.equal(f.gateway.snapshot().lanes[0].state, "idle");
+  const next = f.send({ stream: true }); await until(() => f.seen.length === 2);
+  f.seen[1].response.setHeader("content-type", "text/event-stream");
+  f.seen[1].response.write('data: {"choices":[]}\n\n');
+  const nextResponse = await next, nextText = nextResponse.text().catch(error => error as Error);
+  f.seen[1].response.destroy(); await nextText;
+  await until(() => f.gateway.snapshot().lanes[0].state === "quarantined");
+  assert.equal(f.seen.length, 2, "old proof cannot clear a new ambiguous request");
+});
+test("canonical old invocation proof safely settles late failure without aborting or replaying owned request", async t => {
+  const f = await fixture(); t.after(f.close);
+  const pending = f.send({ stream: true }); await until(() => f.seen.length === 1);
+  f.seen[0].response.setHeader("content-type", "text/event-stream");
+  f.seen[0].response.write('data: {"choices":[]}\n\n');
+  const response = await pending, text = response.text().catch(error => error as Error);
+  f.gateway.reconcileAfterOwnerSettlement(["qwen3.8-27b-gpu0"]);
+  assert.equal(f.gateway.snapshot().lanes[0].state, "active", "keep active settlement ownership");
+  f.seen[0].response.destroy(); await text;
+  await until(() => f.gateway.snapshot().lanes[0].state === "idle");
+  assert.equal(f.seen.length, 1);
+});

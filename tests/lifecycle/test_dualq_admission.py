@@ -65,7 +65,7 @@ class DualQAdmission(unittest.TestCase):
         fixture = MemoryFixture(available=80, free=(20, 95), residents={'glm': 10})
         result = pair.preflight_current(q1, self.instance, fixture.run, residents={'glm': q0})
         self.assertEqual(result['required_host_available_bytes'], 70 * GIB)
-        self.assertEqual(result['gpu_required_free_bytes']['glm'], 16 * GIB)
+        self.assertEqual(set(result['gpu_required_free_bytes']), {'qwen'})
         fixture.available = 69
         with self.assertRaisesRegex(LifecycleError, 'concurrent_current_host_memory_insufficient'):
             pair.preflight_current(q1, self.instance, fixture.run, residents={'glm': q0})

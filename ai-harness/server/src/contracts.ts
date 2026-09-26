@@ -187,6 +187,8 @@ export interface EngineOptions {
   gatewayUrl: string;
   gatewayToken: string;
   stderrPath: string;
+  /** Host-only final-boundary dispatch gate; never passed into task environment. */
+  dispatchHeld?: () => boolean;
   shutdownTimeouts?: { acpMs?: number; launcherMs?: number; killMs?: number };
   onExit?: () => void;
   onNativeSessionId: (id: string) => void;

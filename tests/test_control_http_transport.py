@@ -111,6 +111,7 @@ class TransportTests(unittest.TestCase):
     def test_all_routes_authenticate_before_application(self):
         for method, path in (
             ("GET", "/control/v1/catalog"), ("GET", "/control/v1/status"),
+            ("GET", "/control/v1/readiness"),
             ("GET", "/control/v1/operations/opaque"), ("GET", "/unknown"),
             ("POST", "/control/v1/switch"), ("POST", "/control/v1/stop"),
         ):

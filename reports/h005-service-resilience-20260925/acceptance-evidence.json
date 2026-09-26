@@ -1,0 +1,1430 @@
+{
+  "schema_version": 1,
+  "report_date": "2026-09-25",
+  "status": "PARTIAL_PENDING",
+  "combined_source_commit": "c723e98805593bd05fb4b5ac8c9164baf8311eda",
+  "receipt_cutoff": {
+    "closure_emitted_utc": "2026-09-25T19:44:56.947265Z",
+    "repair_activation_last_vm_contact_utc": "2026-09-25T19:44:30.006989Z",
+    "ada_preliminary_end_utc": "2026-09-25T19:56:37.916861Z",
+    "qwen_failed_start_status_utc": "2026-09-25T20:23:18.254678Z",
+    "historical_harness_update": "Root-supplied local owner action receipts through2026-09-25T20:21:11.493Z; not a new VM query",
+    "harness_update": "Supplied local receipts through 2026-09-25T21:48:30.455212Z; no new VM or harness query",
+    "qwen_canonical_recovery_utc": "2026-09-25T21:10:22.546965+00:00",
+    "control_readiness_live_utc": "2026-09-25T21:27:26.363256+00:00",
+    "control_typed_restart_final_utc": "2026-09-25T21:29:48.622Z",
+    "latest_supplied_snapshot_utc": "2026-09-25T21:48:30.455212+00:00",
+    "final_execution_receipts": "Actual supplied receipts confirm first ai-vm reboot owner reconciliation and failed automatic Q1 restoration; distinct manual Q1 recovery restored all three models/control and empty holds at 21:48:30.455212Z. Root FINAL-DOCS-FOLLOWUP reports corrected cb0fca source reviewed/integrated at c723e98 with matched publication underway; no new live completion receipt. Repeat reboot, harness reboot and formal quiet/wake remain pending.",
+    "latest_root_steering_event_utc": "2026-09-25T21:48:30Z",
+    "latest_root_steering_summary_utc_minute": "2026-09-25T21:49Z"
+  },
+  "preparation": {
+    "source_only": true,
+    "vm_contact": false,
+    "network_service_tests": false,
+    "push": false,
+    "pull_request": false,
+    "overlapping_test_counts_summed": false,
+    "publication_scope": "Docs-only candidate on reviewed combined c723e98; no push, PR update, ready transition or merge in this task before root exact final review GO",
+    "previous_publication": "Existing draft PR7 head ac8f71a927b4eb1635936edd6eba19997e213527 per root supplied task summary; not queried by this task"
+  },
+  "deployed_components": {
+    "harness_main_source": "63dcb23ebd0b2cb82a295bea78192f3e1a433a6e",
+    "harness_status_source": "c640b9c9c3b9a41fb639eeb92018d34470041ad3",
+    "runtime_binding_raw_sha256": "9da2236e927c44e2af618e0862ee84f54d4645ec0bcb1e93c25c0d98b45ee6ae",
+    "text": {
+      "image_id": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "image_config_digest": "sha256:8f9a45a8a4de689280c054867103fc072f064703427212aeb6d603551a86f4b2",
+      "overlay_sha256": "b7f03476fe13779ed4867e4ca509dcba2861431210b6a264cf551558b5927a27",
+      "image_id_domain": "oci_platform_manifest",
+      "image_config_digest_domain": "oci_image_config"
+    },
+    "image": {
+      "image_id": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+      "image_config_digest": "sha256:3f6178faa74c4a9bcb95ed4304dbee57473efa8913a793e067014af4a98281ad",
+      "overlay_sha256": "dda84e200adcc6a1ee8915e0e993627695477a346c5848fc27f9251c34d04b3b",
+      "image_id_domain": "oci_platform_manifest",
+      "image_config_digest_domain": "oci_image_config"
+    },
+    "harness_helper_unit_source": "45e2ee1c4ce588d2d486162e84fb51aa8795d146",
+    "harness_stopped_owner_source": "03a1c422007c15078f3b1878d72882ba3017f9b0",
+    "historical_ai_vm_successor_source": "5b20f26b36e8caedfd62ce42060ecdbe32126224",
+    "ai_vm_control_node_source": "aaa643fcd90ac4ae0a50e4a8e1a3df19ca0ebcc3",
+    "ai_vm_host_future_boot_source": "aaa643fcd90ac4ae0a50e4a8e1a3df19ca0ebcc3",
+    "image_runtime_host_closure_source": "014e294fdeab91942a046fa7b0b9d7f833951e82",
+    "combined_repository_is_wholesale_deployed": false
+  },
+  "cpu_text_auth": {
+    "status": "BOTH_FRESH_CPU_AUTH_PASS",
+    "final_source_validation": "BOTH_VALIDATE_AGAINST_FINAL_SOURCE_NO_RERUN",
+    "model_execution": "NOT_TESTED",
+    "gpu_execution": "NOT_TESTED",
+    "receipts": {
+      "gpu0": {
+        "raw_sha256": "dd0f56817257ef5a0d73d1b13621d96a9eca6ea40590c50fc6f6108abfafd675",
+        "canonical_sha256": "dc0440c7290d40090833d5d51d258b3cd1debd9c9613103fa4b138a5a3406cf6",
+        "cleanup": "QUIESCENT_REMOVAL_VERIFIED"
+      },
+      "gpu1": {
+        "raw_sha256": "c48f112e94397fd96f64be71c26ac8943cfdfc3fadb28a04c424fc53eaa968d9",
+        "canonical_sha256": "e3f91fced1ea56c2f724650ac2f7f34454bc497763aded02183d2404ce5329b4",
+        "cleanup": "QUIESCENT_REMOVAL_VERIFIED"
+      }
+    }
+  },
+  "final_successor_provenance": {
+    "source_manifest_raw_sha256": "98ab3f85067225dcbce6fafb1153056da213611afd860d335ec34c1932ff74a6",
+    "proposal_hashes": {
+      "TRANSITION.proposal.json": {
+        "canonical_sha256": "d12d66218680b4dbe54754492851bb2f8f6687ac6015d11e9f842896461c20b5",
+        "raw_sha256": "5ca182ec1ff322f7c564f97e4e4dd8e6e982a77140285e4989318291b511596b"
+      },
+      "acceptance.proposal.json": {
+        "canonical_sha256": "b2e54ba006636bcc3b6a63153553ac72eb860d4b9634a3f934ce2adc977540ad",
+        "raw_sha256": "00ba03cef535116092b6bbf09d284bb8c946920a8ba341ec691f75597d60c62b"
+      },
+      "image-config.proposal.json": {
+        "canonical_sha256": "6231c9c59b09aae6658767847e6dda48a050655f302462a4c06b5f9abf9da1f0",
+        "raw_sha256": "2693e8fe3d462758e6887888c1df04e6249198515743d8d6121302caea9a643b"
+      },
+      "instance.proposal.json": {
+        "canonical_sha256": "2c3a0efb89ebfbf97677b7f8bac39f89357f8cf02e86e38db4673263d98c3536",
+        "raw_sha256": "ce1806929120d30400045129ccedec1e8949b477e41f21a2e413ed5f9576d0c0"
+      }
+    },
+    "boot_unit_raw_sha256": "fb0789f374c93b6cf5b25d63e59c2854cb0645ebecfbe1b54b9c0e4868dc9e94"
+  },
+  "pending_gates": [
+    {
+      "gate": "serial_typed_ai_vm_then_ai_harness_self_reboots",
+      "status": "PENDING",
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
+      "required_proof": "First ai-vm changed boot and owner reconciliation succeeded but automatic Q1 restoration failed; corrected boot-only source reviewed, matched publication and successful repeat ai-vm plus harness restoration remain pending"
+    },
+    {
+      "gate": "one_all_three_warm_665_second_quiet_window_passive_5_second_polling",
+      "status": "PENDING",
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
+      "required_proof": "Actual common post-work interval, exact scheduler CPU units with 100 percent equal to one CPU, main TID, blocking state and VRAM"
+    },
+    {
+      "gate": "per_pid_tid_below_5_percent_one_cpu_and_residency",
+      "status": "PENDING",
+      "limit": "VRAM alone does not establish cache contents",
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT"
+    },
+    {
+      "gate": "immediate_bounded_normal_text_wake_each_renewed_busy_finish_all_three_warm",
+      "status": "PENDING",
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
+      "required_proof": "One ordinary authenticated tiny request to each exact Qwen endpoint before and after quiet; renewed busy and final all-three-warm proof; no new lane selector"
+    },
+    {
+      "gate": "bounded_qualified_1024_image_edit_sanity",
+      "status": "PENDING",
+      "execution_state": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
+      "required_proof": "Worker2 qualified 1024 image edit through harness with completed result and final all-three-warm proof"
+    }
+  ],
+  "limits": [
+    "No new occupied480K or capacity acceptance",
+    "No sustained benchmark or thermal qualification",
+    "No hardware fault injection",
+    "No automatic replay of uncertain work",
+    "Historical qualification runtime digest is not current running image identity",
+    "Separate short Qwen/Ada idle intervals do not establish formal common quiet transition or wake"
+  ],
+  "artifacts": [
+    {
+      "id": "repair_result",
+      "artifact": "RESULT.md",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "6c21262d412521cef4e2cfdc88bf671a67a9e16e4a628f235e842942432ce28b",
+      "retention": "external_original_not_copied",
+      "scope": "Bounded repair activation only; later live gates not tested"
+    },
+    {
+      "id": "repair_final",
+      "artifact": "FINAL-DEPLOYMENT-RECEIPT.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "becacb7d1a6a2ffe9ab01568c31cdefeb196fd903331ff2b4530841bff96c6a7",
+      "retention": "external_original_not_copied",
+      "scope": "Exact successor publication, all three ready, unchanged Qwen invocations, control projection unknown"
+    },
+    {
+      "id": "image_ready",
+      "artifact": "IMAGE-READY.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "9a857ce5a4b8703487b627b4d8889c11a2c1f5078012a0766a748c04676ca516",
+      "retention": "external_original_not_copied",
+      "scope": "Fresh readiness before public generation; does not clear quarantine"
+    },
+    {
+      "id": "image_generation",
+      "artifact": "IMAGE-GENERATION.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "cf74ae73be7915df23844ec6ac05337e2af680bf76d8303a8f04bf4108a307d3",
+      "retention": "external_original_not_copied",
+      "scope": "One 1024x1024 public generation; short functional only; visual content not tested"
+    },
+    {
+      "id": "preliminary_idle",
+      "artifact": "CHEAP-IDLE-PRELIMINARY.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "b85124475104b5bde88dd6875116261f2286724bdc2f674ed6310a2f8a5f2b47",
+      "retention": "external_original_not_copied",
+      "scope": "5.138 seconds only; not formal quiet transition or wake"
+    },
+    {
+      "id": "repair_window_closed",
+      "artifact": "WINDOW-CLOSED.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "409c36d233f130b54d9c0deb3bad9e76af4b73c8b15b52b8e35b9bb78de103a1",
+      "retention": "external_original_not_copied",
+      "scope": "Last VM contact 19:44:30Z; closure emitted 19:44:56Z"
+    },
+    {
+      "id": "repair_publication",
+      "artifact": "PUBLICATION.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "663338faba21a4536613d3bee8a0609ddee60f7d8f61eecd05e87ca4689fb86e",
+      "retention": "external_original_not_copied",
+      "scope": "Matched immutable successor publication; no old release rewrite"
+    },
+    {
+      "id": "old_image_settled",
+      "artifact": "OLD-IMAGE-SETTLED.json",
+      "source": "H005-IMAGE-REPAIR-ACTIVATE-20260925",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "ccb80775a469a588138a13764fff4db88298337de63ea98d0b747d7d974bfe3f",
+      "retention": "external_original_not_copied",
+      "scope": "Exact failed old invocation settled and container absent; no replay"
+    },
+    {
+      "id": "permission_repair_result",
+      "artifact": "RESULT.md",
+      "source": "H005-IMAGE-PERMISSIONS-FIX-20260925",
+      "evidence_class": "source_and_actual_image_cpu",
+      "raw_sha256": "2cd26f7d960176a2ed0649a571f7254ecf4c73120554e368d4be4be2aa9568f6",
+      "retention": "external_original_not_copied",
+      "scope": "Image packaging repair; local fixture groups overlap and are not summed"
+    },
+    {
+      "id": "successor_hashes",
+      "artifact": "SUCCESSOR-FINAL-HASHES.json",
+      "source": "H005-IMAGE-PERMISSIONS-FIX-20260925",
+      "evidence_class": "source_and_actual_image_cpu",
+      "raw_sha256": "3536b5a659f9157de3a61689596bed6283ac4f0fa183e37e93dc89087c9b5da1",
+      "retention": "external_original_not_copied",
+      "scope": "Final source and proposal identities; fresh text CPU receipts validated without rerun"
+    },
+    {
+      "id": "text_cpu_refresh",
+      "artifact": "TEXT-PROOF-REFRESH.json",
+      "source": "H005-IMAGE-PERMISSIONS-FIX-20260925",
+      "evidence_class": "source_and_actual_image_cpu",
+      "raw_sha256": "4a39baab06cdf45bebe0341b160c615f95ac18194a52080a686851e164719853",
+      "retention": "external_original_not_copied",
+      "scope": "Actual unchanged text image with synthetic engine/model; no GPU execution"
+    },
+    {
+      "id": "image_uid_cpu",
+      "artifact": "BUILD-CPU-CHECKPOINT.json",
+      "source": "H005-IMAGE-PERMISSIONS-FIX-20260925",
+      "evidence_class": "source_and_actual_image_cpu",
+      "raw_sha256": "b31bb5332938c52fee4610556a17ee3ef077d3b25756045bd6049f137e3d76dc",
+      "retention": "external_original_not_copied",
+      "scope": "Actual UID1000:GID1001, 15 verified overlay files, 17 readable files; no CUDA init"
+    },
+    {
+      "id": "phase_b",
+      "artifact": "RESULT.md",
+      "source": "H005-ACTIVATION-PHASE-B-20260925",
+      "evidence_class": "historical_live_receipt",
+      "raw_sha256": "1f9e4f7add6ccbc2a359fbc5a002f8f3945ecf1b48a1cdccf9192114aeb96e8e",
+      "retention": "external_original_not_copied",
+      "scope": "Two tiny text responses; original image permission failure retained"
+    },
+    {
+      "id": "harness_status_activation",
+      "artifact": "STATUS-ACTIVATION.json",
+      "source": "root-evidence",
+      "evidence_class": "root_supplied_sanitized_receipt",
+      "raw_sha256": "a541ed93c98028c61cb325ac690581c553d5677126f4dd84bf11fd860406325a",
+      "retention": "external_original_not_copied",
+      "scope": "Status component active; unchanged main; admin closed; no full live acceptance"
+    },
+    {
+      "id": "harness_credential_mount",
+      "artifact": "STATUS-MOUNT-EVIDENCE.json",
+      "source": "root-evidence",
+      "evidence_class": "root_supplied_sanitized_receipt",
+      "raw_sha256": "7a42762ce279656bb8411f770a7ff12bbce32caa129ee75b01f2b80e0e46fcfc",
+      "retention": "external_original_not_copied",
+      "scope": "Credential mount metadata/ACL only; no credential bytes/hash/length"
+    },
+    {
+      "id": "packet_causality",
+      "artifact": "PACKET-CAUSALITY.json",
+      "source": "root-evidence",
+      "evidence_class": "root_supplied_sanitized_receipt",
+      "raw_sha256": "342f004a4fe031f8b7073482819fbf32ad2c0dd2b5530b2c05800ae5ea5a6973",
+      "retention": "external_original_not_copied",
+      "scope": "Root accepted narrow causal Slirp host rejection; does not establish watcher/action matrix"
+    },
+    {
+      "id": "h004_hardware_report",
+      "artifact": "reports/h004-gpu-20260924/RESULT.md",
+      "source": "repository",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "30f20a19629744a9fe6deb5808cf379aeb522833db8205fbd0ba1c4180e25932",
+      "retention": "repository",
+      "scope": "First three cards reused, no H005 remeasurement"
+    },
+    {
+      "id": "h004_hardware_data",
+      "artifact": "reports/h004-gpu-20260924/results.json",
+      "source": "repository",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "77afaeedc74a585f54423abbc2e46ba546359c1205ffc6cfd0ed53dd4a60a1a2",
+      "retention": "repository",
+      "scope": "Raw H004 compact data including historical fourth-card failure"
+    },
+    {
+      "id": "image21_bandwidth",
+      "artifact": "reports/image21-bandwidth-20260923/RESULT.md",
+      "source": "repository",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "92879dee5d25c9b719669a231d57b120c9a2b48629437ea38ece6952b27341a5",
+      "retention": "repository",
+      "scope": "Separate September23 run; D2D/P2P not tested"
+    },
+    {
+      "id": "image21_bandwidth_data",
+      "artifact": "reports/image21-bandwidth-20260923/RESULT.json",
+      "source": "repository",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "750327ac9bf948a3e66af135bc0952d69203c494c8f66435b1d50b9296871dec",
+      "retention": "repository",
+      "scope": "Separate historical bandwidth data"
+    },
+    {
+      "id": "historical_dualq_report",
+      "artifact": "reports/dualq-480k-20260921.md",
+      "source": "repository",
+      "evidence_class": "inherited_capacity",
+      "raw_sha256": "8c793742903c4f2d37f1c30476aecfdd1f97d9f4fd24574ce85548db08ed3105",
+      "retention": "repository",
+      "scope": "Dated occupied-context result, Q1 strict JSON caveat preserved"
+    },
+    {
+      "id": "historical_dualq_data",
+      "artifact": "reports/dualq-480k-20260921.json",
+      "source": "repository",
+      "evidence_class": "inherited_capacity",
+      "raw_sha256": "8c9c6a4c10bda0fac994cea08cdeca5c29249029c82f8f70769864e2a09be3b5",
+      "retention": "repository",
+      "scope": "Not new H005 capacity evidence"
+    },
+    {
+      "id": "historical_generation",
+      "artifact": "reports/image21-qualify-20260923/RESULT.md",
+      "source": "repository",
+      "evidence_class": "inherited_qualification",
+      "raw_sha256": "3a3be3696c201941bb920e4c85887cd0c9d5c3c169c34332d5f45a1d7c2226bf",
+      "retention": "repository",
+      "scope": "Six generation sizes with subsequent Full HD amendment"
+    },
+    {
+      "id": "historical_full_hd",
+      "artifact": "reports/image21-fhd-20260923/RESULT.md",
+      "source": "repository",
+      "evidence_class": "inherited_qualification",
+      "raw_sha256": "a7b305bf13eb9de887be290eee356e691db4193c35433affa93132bffe3f8fe7",
+      "retention": "repository",
+      "scope": "1920x1088 native cropped to1920x1080 public"
+    },
+    {
+      "id": "historical_edit_capacity",
+      "artifact": "reports/h003-edit-capacity-20260923/RESULT.md",
+      "source": "repository",
+      "evidence_class": "inherited_qualification",
+      "raw_sha256": "8234b1905d63d8ee203f64a15fb676164d7f974ca03e258a9250dfda7c9ec0d5",
+      "retention": "repository",
+      "scope": "Bounded qualified edit geometry; exclusions preserved"
+    },
+    {
+      "id": "historical_edit_workflow",
+      "artifact": "ai-harness/docs/acceptance-v0.0.3.md",
+      "source": "repository",
+      "evidence_class": "inherited_qualification",
+      "raw_sha256": "b352fb300ef5d2fe3f1b410fbc81f62ed275571e5dc89e36c0cb2f66d29fc43f",
+      "retention": "repository",
+      "scope": "Guarded main/worker edits, seed and provenance limitations retained"
+    },
+    {
+      "id": "current_runtime_binding",
+      "artifact": "configs/runtimes/h005-runtime-binding.json",
+      "source": "repository",
+      "evidence_class": "source_identity",
+      "raw_sha256": "9da2236e927c44e2af618e0862ee84f54d4645ec0bcb1e93c25c0d98b45ee6ae",
+      "retention": "repository",
+      "scope": "Current raw binding, distinct image manifest/config/overlay identities"
+    },
+    {
+      "id": "server_qualification",
+      "artifact": "RESULT.md",
+      "source": "H005-NEWGPU-QUALIFY-20260925",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "1ac660b9b28173fa2f939e88f77740d0f011d682694c920cb763448304421b26",
+      "retention": "external_original_not_copied",
+      "scope": "Brief successful Server transfer sanity only; unassigned; ECC unchanged"
+    },
+    {
+      "id": "server_measurements",
+      "artifact": "measurements.json",
+      "source": "H005-NEWGPU-QUALIFY-20260925",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "25d7b0962092831053aef2de44c4152bb91cdc0f135ee887e446b6edb35717e5",
+      "retention": "external_original_not_copied",
+      "scope": "Brief successful Server transfer sanity only; unassigned; ECC unchanged"
+    },
+    {
+      "id": "server_measurements_csv",
+      "artifact": "measurements.csv",
+      "source": "H005-NEWGPU-QUALIFY-20260925",
+      "evidence_class": "dated_hardware",
+      "raw_sha256": "11ab4504f92ca639f1c067f04703ce9cce5c1bd41eb1963a7bd0b3903b4e17ea",
+      "retention": "external_original_not_copied",
+      "scope": "Brief successful Server transfer sanity only; unassigned; ECC unchanged"
+    },
+    {
+      "id": "root_steering",
+      "artifact": "STEERING-USED-20260925.md",
+      "source": "H005-PUBLICATION-PREP-20260925",
+      "evidence_class": "root_supplied_accounting_and_review_instruction",
+      "raw_sha256": "418873fdb685a05ea04ce5cff8437107a74f11a7b1f574a4869b9f46824c05d5",
+      "retention": "external_original_not_copied",
+      "scope": "PRIVATE count interpretation; preserve raw NETWORK/BROWSER INCONCLUSIVE separately from accepted causal denial; control unknown intentional; later watcher/admin/readback accepted with quarantine distinction"
+    },
+    {
+      "id": "watcher_restored",
+      "artifact": "WATCHER-RESTORED.json",
+      "source": "root-evidence",
+      "evidence_class": "root_supplied_sanitized_receipt",
+      "raw_sha256": "53c0681d1e3da6e93cabe907134855b3534227edb012ef5d2a853fff11915abc",
+      "retention": "external_original_not_copied",
+      "scope": "Fresh policy attestation after restore; source/render unchanged; raw digest comparison across table recreation invalid"
+    },
+    {
+      "id": "admin_exposed",
+      "artifact": "ADMIN-EXPOSED.json",
+      "source": "root-evidence",
+      "evidence_class": "root_supplied_sanitized_receipt",
+      "raw_sha256": "4d6c0b553a3dae3d8d00f0d8838c64d69baa0657839dc8555c9e67470efb0b06",
+      "retention": "external_original_not_copied",
+      "scope": "Reviewed trusted-LAN admin open; no private state reset; historical quarantine1 remains; typed actions not accepted"
+    },
+    {
+      "id": "image_lane_readback",
+      "artifact": "IMAGE-LANE-READBACK.json",
+      "source": "root-evidence",
+      "evidence_class": "root_supplied_sanitized_receipt",
+      "raw_sha256": "cbd53aef3b7f1f99b338087072f08672646a8173c43551787a63846298338f9d",
+      "retention": "external_original_not_copied",
+      "scope": "Idle uncertainty0,17completed+1cancelled; no uncertain-owner clearing claim"
+    },
+    {
+      "id": "helper_unit_activation",
+      "artifact": "HELPER-ACTIVATION.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "f86d8df7fd52d6abbb1bce4a307b915755a9e7e3053297c1a00ffe9bf9d03c39",
+      "retention": "external_original_not_copied",
+      "scope": "CAP_SETUID unit45e activated; hardening retained; other service invocations unchanged"
+    },
+    {
+      "id": "stopped_owner_activation",
+      "artifact": "STOP-ACTIVATION.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "a56a632362fe44bc5c6e550e046521a37efa1bcdc4dc06fd666130eba9ca8669",
+      "retention": "external_original_not_copied",
+      "scope": "Helper03a component activated; inactive/dead zeroPIDs nojob retained-old-InvocationID settlement semantics"
+    },
+    {
+      "id": "repaired_targets",
+      "artifact": "REPAIRED-TARGETS.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "68dd25d49f3cdc2cdb611a2e3a20bf4e7e9fecaf8902d966261100c2c8d9b378",
+      "retention": "external_original_not_copied",
+      "scope": "Advertised action catalog only; unknown activity/null counters do not prove action success"
+    },
+    {
+      "id": "original_main_stop_unknown",
+      "artifact": "MAIN-STOP.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "13232c38e97ffc267a1b71a13e3a8f9c23237e621002d22c77131e80a6d6c1f8",
+      "retention": "external_original_not_copied",
+      "scope": "Original stop remains UNKNOWN; dispatch held; never rewritten as later success"
+    },
+    {
+      "id": "separate_main_recovery",
+      "artifact": "MAIN-RECOVERY.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "d9af9c5258bdd69132127c6b607c33cbf57d153d100637336f99afc400a91eb2",
+      "retention": "external_original_not_copied",
+      "scope": "Separately confirmed restart succeeded; hold released; observer recovered existing operation with no second POST"
+    },
+    {
+      "id": "local_idempotency_cas",
+      "artifact": "IDEMPOTENCY-CAS.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "51fdd2633b5439c00c2cb4c7e4bdfbe383530dfe318b0d6b49feca6980bbb2ba",
+      "retention": "external_original_not_copied",
+      "scope": "Repeat preserves original unknown; mismatched key and stale generation409; no new accepted operation"
+    },
+    {
+      "id": "typed_main_stop",
+      "artifact": "MAIN-STOP-ACCEPTANCE.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "3b0e908ec179d2eede156f4eafcebbcbfe23b4fdcd523ee79ce0bc6017a31f4d",
+      "retention": "external_original_not_copied",
+      "scope": "New scoped stop succeeded; hold retained"
+    },
+    {
+      "id": "typed_main_start",
+      "artifact": "MAIN-START-ACCEPTANCE.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "5a86b07eec0ec558345baea4ce910d227a7491d80374cd46ced4ecbd663f9fad",
+      "retention": "external_original_not_copied",
+      "scope": "Typed start succeeded; hold released"
+    },
+    {
+      "id": "typed_status_restart",
+      "artifact": "STATUS-RESTART.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "19e57746b73553dabe3e082055d74cc1af56da8efdd860a400ff02bd5daef25f",
+      "retention": "external_original_not_copied",
+      "scope": "Status restart succeeded; main remainedHTTP200 during status outage"
+    },
+    {
+      "id": "status_without_main",
+      "artifact": "MAIN-DOWN-STATUS-UP.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "720e5c149c742050a3ad8b6a91c2fec9c2f4b83f1394871196260c6a3b24ed37",
+      "retention": "external_original_not_copied",
+      "scope": "StatusHTTP200 while mainHTTP502; main unavailable not idle"
+    },
+    {
+      "id": "ada_preliminary_idle",
+      "artifact": "ADA-IDLE-PRELIMINARY.json",
+      "source": "root-evidence",
+      "evidence_class": "preliminary_idle_only",
+      "raw_sha256": "b426f5e16b9862240288217c58ad78c7795b2cd77f84c9df4b8cf3734d286bad",
+      "retention": "external_original_not_copied",
+      "scope": "Separate5.132964s readback,0.584458%oneCPU aggregate, main0ticks and32226MiB resident; not formal quiet/wake"
+    },
+    {
+      "id": "root_latest_steering",
+      "artifact": "OWNER-FIX-STEERING-USED.md",
+      "source": "H005-PUBLICATION-PREP-20260925",
+      "evidence_class": "root_supplied_current_incident_report_not_action_receipt",
+      "raw_sha256": "721ee7b79e61e3886a769917135ce76a21c5f6788c311c00b2d349d01632c916",
+      "retention": "external_original_not_copied",
+      "scope": "Current Qwen0 stopped after successful stop and failed start; hold retained; Q1/image ready unchanged per root; exact action receipts pending"
+    },
+    {
+      "id": "qwen0_typed_stop",
+      "artifact": "QWEN-STOP.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "e5e413f8d4776ed974089a7a7bea2fdf7b666ede39b7c243f3f49a81874e0ea5",
+      "retention": "external_original_not_copied",
+      "scope": "Scoped stop succeeded and retained its hold"
+    },
+    {
+      "id": "qwen0_typed_start_failed",
+      "artifact": "QWEN-START.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "d364b11fa3b176f7555cfa4fa0f84e14e01ee769299b5072dc5fd239a6f9013d",
+      "retention": "external_original_not_copied",
+      "scope": "One start failed operation_failed; its own hold false does not settle prior stop hold"
+    },
+    {
+      "id": "qwen_failed_start_status",
+      "artifact": "QWEN-START-FAILED-STATUS.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "5e98f3fd76152eb5cdbe9d533204e76b9ee76b820eeb5efb2c1841f5c5e66026",
+      "retention": "external_original_not_copied",
+      "scope": "Q0 unavailable/readyfalse; Q1/image ready; no inference claim"
+    },
+    {
+      "id": "qwen_healthy_peer_readiness",
+      "artifact": "QWEN-HEALTHY-PEER.json",
+      "source": "root-evidence",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "531e93d4003b951da32000910dd24c2b19cf15ea532b28dba061dc47c46c2624",
+      "retention": "external_original_not_copied",
+      "scope": "Peer generation/boot unchanged, ready and mainHTTP200; main/child/compaction live routing NOT_RUN"
+    },
+    {
+      "id": "q0_cause",
+      "artifact": "w1-recovery/CAUSE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_read_only_diagnosis",
+      "raw_sha256": "2109f590712055723938206ea78a6094dbf01f6a26073263b25edec4eb300854",
+      "retention": "external_original_not_copied",
+      "scope": "Original untrusted_concurrent_peer independently reproduced; failed owner retained; not original stderr"
+    },
+    {
+      "id": "q0_second_cause",
+      "artifact": "w1-recovery/CAUSE-2.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_read_only_diagnosis",
+      "raw_sha256": "e08c7342637336098f8b21ed6f4f3594816dfec13591481500710b54a3d47e53",
+      "retention": "external_original_not_copied",
+      "scope": "Second failed owner retained; complete Docker Mounts entries equal after Destination sorting"
+    },
+    {
+      "id": "q0_mount_order_source",
+      "artifact": "w1-recovery/MOUNT-ORDER-SOURCE-READY.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "source_offline_validation",
+      "raw_sha256": "1198154c7e912ec4f550c86b294394b1a43a7cebb3ca9d77247474db94201ea5",
+      "retention": "external_original_not_copied",
+      "scope": "Exact 014e294 mount ordering fix; 45 scoped PASS, overlapping groups not summed"
+    },
+    {
+      "id": "q0_mount_order_transition",
+      "artifact": "w1-recovery/MOUNT-ORDER-TRANSITION.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "source_publication_plan",
+      "raw_sha256": "6bd92b1e8e5863c602efbd24d59ba07bcdcfdb6ba8fe16ea2fd6577cded318d9",
+      "retention": "external_original_not_copied",
+      "scope": "Reviewed matched publication transition; proposal identity is not live success"
+    },
+    {
+      "id": "q0_mount_order_publication",
+      "artifact": "w1-recovery/MOUNT-ORDER-PUBLICATION.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "0370f59f14b097959d8b87f2159bc68c9938679327afb5d1fe8bbe63e305997a",
+      "retention": "external_original_not_copied",
+      "scope": "Matched source publication; no native restart during publication"
+    },
+    {
+      "id": "q0_recovery_succeeded",
+      "artifact": "w1-recovery/RECOVERY-SUCCEEDED.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "e004d40c7217cb09389244d9b3cf5acb079c4d6af155b5e1e266ba290af4ed99",
+      "retention": "external_original_not_copied",
+      "scope": "Distinct canonical Q0 owner succeeded; original container new PID/start; peer identities preserved; no inference"
+    },
+    {
+      "id": "q0_final_guard_closure",
+      "artifact": "w1-recovery/FINAL-GUARD-CLOSURE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "90df50559969b1ae3684ae7be30333735dcaa56f561dc8127a74daf3e33e0d6c",
+      "retention": "external_original_not_copied",
+      "scope": "014e294 closure, registered guards PASS; retained below-6-GiB-root warning"
+    },
+    {
+      "id": "q0_recovery_window_closed",
+      "artifact": "w1-recovery/WORKER1-WINDOW-CLOSED.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "318755e6557f62327b2009e38eeb74631b1a13b4637ae42e3f060650489b6ad3",
+      "retention": "external_original_not_copied",
+      "scope": "Window closed after canonical success and hold reconciliation; no reboot acceptance"
+    },
+    {
+      "id": "control_source_ready",
+      "artifact": "w1-control/SOURCE-READY.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "source_offline_validation",
+      "raw_sha256": "4d07ed288a98443b701de40604e6ac6444425278afdaac1621c793778333786e",
+      "retention": "external_original_not_copied",
+      "scope": "aaa643 source closure and 47 focused tests; source-only receipt"
+    },
+    {
+      "id": "control_validation",
+      "artifact": "w1-control/VALIDATION.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "source_offline_validation",
+      "raw_sha256": "c29235c1ba2d8beeb603ad1f0bca6ee3cca22832272bd560dddd7da613c74092",
+      "retention": "external_original_not_copied",
+      "scope": "47 distinct tests in this group only; no addition to overlapping historical counts"
+    },
+    {
+      "id": "control_transition",
+      "artifact": "w1-control/TRANSITION.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "source_publication_plan",
+      "raw_sha256": "72afeda613e13d010803ce0c2beeb02c3cc232bd1fbd54b906317db72f201b37",
+      "retention": "external_original_not_copied",
+      "scope": "Matched transition for passive control readiness; no model restart or runtime build"
+    },
+    {
+      "id": "control_publication",
+      "artifact": "w1-control/LIVE-PUBLICATION.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "d0553a30b10f33c081d9811ec35b23c64e218178faf7d85e6296560dd1bef112",
+      "retention": "external_original_not_copied",
+      "scope": "aaa643 matched host source publication; native invocations preserved"
+    },
+    {
+      "id": "control_readiness_live",
+      "artifact": "w1-control/CONTROL-READINESS-LIVE-PASS.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "16e21c43b928caa1020f11998fb359226eff4fa1a6d3c9c5dba075b1d26d34f7",
+      "retention": "external_original_not_copied",
+      "scope": "Actual boot/invocation/PID readiness match, fresh node ready and 401 denials; not typed restart receipt"
+    },
+    {
+      "id": "image_restart_native_proof",
+      "artifact": "w1-control/IMAGE-RESTART-NATIVE-PROOF.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "508dd3a4d509d0177b617b15a82d5033d68a6073fc9c5f5841c90e8e01ac4637",
+      "retention": "external_original_not_copied",
+      "scope": "Canonical image restart success and exact old absence/new container/PID/run proof; same image, no public generation"
+    },
+    {
+      "id": "q1_peer_serving",
+      "artifact": "w2-peer/PEER-SERVING.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "ff578b22384ad66385723ac2b2c81a51fd16f24de4f2548e1e1f99f6c5fac34e",
+      "retention": "external_original_not_copied",
+      "scope": "One settled normal Q1 chat OK while Q0 held; no tools, child or compaction acceptance"
+    },
+    {
+      "id": "q1_peer_final_settlement",
+      "artifact": "w2-peer/FINAL-SETTLEMENT.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "2663c201c65bd517ba2ec9392ad8680c54bfe300b1436fdd2ca41c917cd8e9b9",
+      "retention": "external_original_not_copied",
+      "scope": "Both lanes idle, active requests and queue zero; Q0 stop hold preserved"
+    },
+    {
+      "id": "q1_peer_window_closed",
+      "artifact": "w2-peer/WINDOW-CLOSED.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "3376074578e26604b230b0f27e7f3b707c81334f991b15fffc079c3f00586f81",
+      "retention": "external_original_not_copied",
+      "scope": "Owned peer request settled with no retry or replay"
+    },
+    {
+      "id": "q0_second_failed_start",
+      "artifact": "w2-final/Q0-RECOVERY.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "0594b9d8ca4a19a40212d05fb6f39bd281998c33ff0fd08eaadbd4c64f9da7a9",
+      "retention": "external_original_not_copied",
+      "scope": "Second distinct start failed; accepted POST is not success"
+    },
+    {
+      "id": "q0_final_relay_start",
+      "artifact": "w2-final/Q0-RECOVERY-2.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "0d0232695c279617137af836c1c1b5603a9ca6296a8e90ed668332a9c1fac7c6",
+      "retention": "external_original_not_copied",
+      "scope": "Distinct start relay succeeded and hold unfrozen after canonical recovery"
+    },
+    {
+      "id": "q0_restored_metadata",
+      "artifact": "w2-final/Q0-RESTORED-METADATA.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_metadata_receipt",
+      "raw_sha256": "9928b872a0adc7bf7be246838a893a3c0abbf55782311efa472da0a105564e16",
+      "retention": "external_original_not_copied",
+      "scope": "Prior stop hold reconciled; both failed rows retained; not reboot drain proof"
+    },
+    {
+      "id": "image_typed_restart",
+      "artifact": "w2-final/IMAGE-RESTART.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "2818fb3d8923dd2202cb31502b179382060a5cd687b4f786a9efe1f8fa2d69da",
+      "retention": "external_original_not_copied",
+      "scope": "Typed image restart final success; inspect final rather than initial accepted response"
+    },
+    {
+      "id": "image_typed_restart_acceptance",
+      "artifact": "w2-final/IMAGE-RESTART-ACCEPTANCE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "76c586d4126336925ea87bd49ad66ac85f003335e338ff29efbc3a654ec57847",
+      "retention": "external_original_not_copied",
+      "scope": "Image hold released by validated owner readiness; no public image generation"
+    },
+    {
+      "id": "control_typed_restart",
+      "artifact": "w2-final/CONTROL-RESTART.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_receipt",
+      "raw_sha256": "8f48f68dfa2ca75dfe5f77ef1e094d86152c578b0268fea1c8f2d5a0fc528519",
+      "retention": "external_original_not_copied",
+      "scope": "One typed control restart final succeeded; dispatch hold released"
+    },
+    {
+      "id": "control_restart_local_state",
+      "artifact": "w2-final/CONTROL-RESTART-LOCAL-STATE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_metadata_receipt",
+      "raw_sha256": "9190995ebce93211d953449fd716287a501e35ccaec9b0259c6263ee2aa4091d",
+      "retention": "external_original_not_copied",
+      "scope": "Canonical control owner relay release and local services/history preservation; original failures retained"
+    },
+    {
+      "id": "pre_reboot_preservation",
+      "artifact": "w2-final/PRE-REBOOT-PRESERVATION-COMPLETE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_metadata_receipt",
+      "raw_sha256": "b1b51a870fc172d997bf8dba4896bcdc1cc072bf28297b6adb41b3f4ce48a091",
+      "retention": "external_original_not_copied",
+      "scope": "Counts-only pre-reboot snapshot; separate SQLite transactions, no credential equality or content readback proof"
+    },
+    {
+      "id": "final_publication_root_summary",
+      "artifact": "PROMPT.md",
+      "source": "H005-FINAL-PUBLICATION-20260925",
+      "evidence_class": "root_supplied_task_summary_not_individual_action_receipt",
+      "raw_sha256": "4f75dbcae63ca1f1e29a6ea4333648ac6b4523a788d3ab3817a4ead43f64c8aa",
+      "retention": "external_original_not_copied",
+      "scope": "Current authority and root verified summary, including 100 node HTTP200 samples and main drain/chat/files preservation; final reboot/quiet/wake in progress, not passed"
+    },
+    {
+      "id": "final_publication_root_blocker",
+      "artifact": "STEERING-USED-BLOCKER-20260925.md",
+      "source": "H005-FINAL-PUBLICATION-20260925",
+      "evidence_class": "root_supplied_current_incident_summary_not_action_or_cause_receipt",
+      "raw_sha256": "05a7efa5203ccfe03214e154cd847000dd97d1bfa401aefe72f49cf1e5f3bc17",
+      "retention": "external_original_not_copied",
+      "scope": "Changed ai-vm boot and canonical reboot reconciliation reported separately from failed model restoration; harness reboot and quiet/wake halted; cause unknown"
+    },
+    {
+      "id": "final_publication_root_recovery",
+      "artifact": "STEERING-USED-RECOVERY-20260925.md",
+      "source": "H005-FINAL-PUBLICATION-20260925",
+      "evidence_class": "root_supplied_recovery_and_current_status_summary_not_action_or_cause_receipt",
+      "raw_sha256": "4090eaa332f031ccdd9b3a386e84a6587cc5a9680e69ea71ad59e82d2f09a4b9",
+      "retention": "external_original_not_copied",
+      "scope": "21:49Z root summary: automatic Q1 boot restoration failed hardware_target_unknown before native; manual Q1 recovery succeeded and all three ready 21:48:30; image initial delay not failure; repeat reboot, harness reboot and formal quiet/wake remain pending"
+    },
+    {
+      "id": "first_reboot_restoration_failure",
+      "artifact": "w1-reboot/BOOT-RESTORATION-FAILURE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_read_only_failure_receipt",
+      "raw_sha256": "063d563398d5df4825e839e5fc4c28eef6f85187516c4d478b5a39f1e019f7d4",
+      "retention": "external_original_not_copied",
+      "scope": "Canonical boot service exit 1 and Q1 hardware_target_unknown; stale prior-boot validation observed, no root-cause or GPU fault proof"
+    },
+    {
+      "id": "first_reboot_final_acceptance",
+      "artifact": "w1-reboot/FINAL-ACCEPTANCE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_acceptance_receipt",
+      "raw_sha256": "51fc0761483522a2a918d952dd2c39d7686bad2fb35f7981920f44c22f049c35",
+      "retention": "external_original_not_copied",
+      "scope": "Changed boot and canonical reboot reconciled; automatic Q1 restore FAIL; Q0/image/control later ready, quiet/wake not started; root cause unestablished"
+    },
+    {
+      "id": "first_reboot_window_closed",
+      "artifact": "w1-reboot/WINDOW-CLOSED.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_execution_closure_receipt",
+      "raw_sha256": "0afc4678abeee46ef5aacf201177c269c7f73f518c9d4b258b2c41c7ac51e649",
+      "retention": "external_original_not_copied",
+      "scope": "Observer closed after failed boot restoration; historical failure receipts retained, no replay or repair"
+    },
+    {
+      "id": "q1_manual_recovery_acceptance",
+      "artifact": "w2-final/Q1-RECOVERY-ACCEPTANCE.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_live_acceptance_receipt",
+      "raw_sha256": "4eb68ec5a9ce49505a1d815565b8737a5493aa88ac27af336e412b3363f029f1",
+      "retention": "external_original_not_copied",
+      "scope": "One manual Q1 recovery, all three models/control fresh ready and holds empty; Q0/image generations preserved; not automatic reboot acceptance"
+    },
+    {
+      "id": "q1_manual_recovery_window_closed",
+      "artifact": "w2-final/Q1-WINDOW-CLOSED.json",
+      "source": "H005-FINAL-PUBLICATION-20260925/evidence-inbox",
+      "evidence_class": "bounded_execution_closure_receipt",
+      "raw_sha256": "6b376c68f5f72a10ffaa8734302712201ba18ca2191d541758ee7bfc8a0752d1",
+      "retention": "external_original_not_copied",
+      "scope": "Manual recovery settled, no outstanding posts/polls/model requests, no tasks; original boot restoration still failed"
+    },
+    {
+      "id": "final_docs_followup_root_summary",
+      "artifact": "FINAL-DOCS-FOLLOWUP.md",
+      "source": "H005-FINAL-PUBLICATION-20260925",
+      "evidence_class": "root_supplied_source_review_and_publication_progress_summary_not_live_completion_receipt",
+      "raw_sha256": "a7949cb587cefcfbfbebf95c85aa29a50a1be7540a1c7118cdfcc4f800c381a1",
+      "retention": "external_original_not_copied",
+      "scope": "Corrected cb0fca boot source reviewed with 95 offline tests and integrated at c723e98; matched publication underway, no completed live proof; repeat VM/harness reboot and formal quiet/wake remain pending"
+    }
+  ],
+  "harness_boundary_limits": {
+    "root_steering": "NETWORK/BROWSER raw INCONCLUSIVE retained; packet-causal denial accepted separately",
+    "private_detailed_checks": 64,
+    "private_summary_rows_including_summary_itself": 65,
+    "control_ready_null": "Historical intentional unknown without process/API proof; later passive readiness gap repaired at aaa643 and live proof accepted; activity and request counters remain unknown/null",
+    "watcher_failure_restore": "PASS_ROOT_ACCEPTED_WITH_RESTORATION_RECEIPT",
+    "typed_lifecycle": "LOCAL_MAIN_STATUS_Q0_RECOVERY_IMAGE_CONTROL_AND_Q1_PEER_SCOPES_PASS_NOT_ALL_H005",
+    "admin": "OPEN_REVIEWED_TRUSTED_LAN",
+    "historical_workspace_quarantine_count": 1,
+    "image_lane": {
+      "state": "idle",
+      "uncertain": 0,
+      "preexisting_completed_jobs": 17,
+      "preexisting_cancelled_jobs": 1,
+      "shutdown_only_marker": "auto_reconciled_with_uncertainty_false_and_ready_and_idle",
+      "uncertain_owner_clear": false,
+      "explicit_reconciliation_action": false,
+      "reconciliation_limit": "Shutdown-only marker auto-reconciled; no uncertain-owner clearing or explicit reconciliation action claimed"
+    }
+  },
+  "local_live_acceptance": {
+    "overall": "BOUNDED_LOCAL_Q0_RECOVERY_PEER_IMAGE_AND_CONTROL_SCOPES_PASS_NOT_ALL_H005",
+    "helper": "PASS",
+    "main_stop_start_hold_release": "PASS",
+    "status_main_independence_both_directions": "PASS",
+    "idempotency_cas": "PASS",
+    "stopped_owner_proof": {
+      "required": [
+        "loaded",
+        "inactive",
+        "dead",
+        "MainPID0",
+        "ControlPID0",
+        "no_pending_job"
+      ],
+      "invocation_id": "empty_or_exact_captured_old_identity",
+      "unrelated_identity": "REJECT"
+    },
+    "operations": {
+      "MAIN-STOP.json": {
+        "operation_id": "ai-harness~relay-be7ee28d-fca0-42cd-91d3-f713834be0e0",
+        "action": "service.stop",
+        "status": "unknown",
+        "created_at": "2026-09-25T20:10:44.149Z",
+        "updated_at": "2026-09-25T20:10:45.848Z",
+        "affected_services": [
+          "harness"
+        ],
+        "dispatch_frozen": true
+      },
+      "MAIN-RECOVERY.json": {
+        "operation_id": "ai-harness~relay-2069390e-4602-4dc3-a99f-937b96bcfd3f",
+        "action": "service.restart",
+        "status": "succeeded",
+        "created_at": "2026-09-25T20:11:30.332Z",
+        "updated_at": "2026-09-25T20:11:30.879Z",
+        "affected_services": [
+          "harness"
+        ],
+        "dispatch_frozen": false
+      },
+      "MAIN-STOP-ACCEPTANCE.json": {
+        "operation_id": "ai-harness~relay-3de0b26f-35a9-4a3d-a096-716d84fa29c4",
+        "action": "service.stop",
+        "status": "succeeded",
+        "created_at": "2026-09-25T20:20:40.296Z",
+        "updated_at": "2026-09-25T20:20:41.480Z",
+        "affected_services": [
+          "harness"
+        ],
+        "dispatch_frozen": true
+      },
+      "MAIN-START-ACCEPTANCE.json": {
+        "operation_id": "ai-harness~relay-a35c4c6c-b2b2-49e9-bdcc-63feb68a4a8d",
+        "action": "service.start",
+        "status": "succeeded",
+        "created_at": "2026-09-25T20:21:07.063Z",
+        "updated_at": "2026-09-25T20:21:11.493Z",
+        "affected_services": [
+          "harness"
+        ],
+        "dispatch_frozen": false
+      },
+      "STATUS-RESTART.json": {
+        "operation_id": "ai-harness~relay-126314c9-28ef-420f-89a1-c5347be95427",
+        "action": "service.restart",
+        "status": "succeeded",
+        "created_at": "2026-09-25T20:18:16.239Z",
+        "updated_at": "2026-09-25T20:18:21.420Z",
+        "affected_services": [
+          "status"
+        ],
+        "dispatch_frozen": false
+      }
+    },
+    "original_unknown_rewritten": false,
+    "automatic_replay": false
+  },
+  "preliminary_idle": {
+    "status": "PRELIMINARY_NOT_FORMAL_TRANSITION_OR_WAKE",
+    "common_simultaneous_window": false,
+    "percent_basis": "100_percent_is_one_CPU_whole_scheduler_process",
+    "qwen": {
+      "seconds": 5.138109,
+      "gpu0_percent": 0.389248,
+      "gpu1_percent": 0.194624,
+      "main_thread_tick_delta_each": 0,
+      "process_vram_mib_each": 61008
+    },
+    "image": {
+      "seconds": 5.132964,
+      "process_percent": 0.584458,
+      "process_ticks": 3,
+      "main_thread_ticks": 0,
+      "main_thread_state": "S",
+      "main_thread_wait": "do_poll",
+      "process_vram_mib": 32226,
+      "core_temperature_c": 38,
+      "native_async_counters": "NOT_OBSERVED",
+      "witnessed_inactivity_over_600s": true
+    }
+  },
+  "historical_model_snapshot": {
+    "all_three_ready_utc": "2026-09-25T19:41:16.962708Z",
+    "qwen_invocations_unchanged": true,
+    "qwen_configured_context_each": 480000,
+    "image_warm": true,
+    "node_active": true,
+    "control_process_active": true,
+    "control_node_projection": {
+      "availability": "unknown",
+      "ready": null,
+      "reason": "observation_unavailable"
+    },
+    "server_gpu_assignment": "unassigned",
+    "ecc": "unchanged"
+  },
+  "source_bundle": {
+    "artifact": "H005-FINAL-INTEGRATION.bundle",
+    "raw_sha256": "0fa2cbd2f6c149dac6f12f1e7a0eb02d39c5742111364f6e0dc37845b42b9ed5",
+    "head": "c723e98805593bd05fb4b5ac8c9164baf8311eda",
+    "prerequisites": [
+      "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
+      "aaa643fcd90ac4ae0a50e4a8e1a3df19ca0ebcc3",
+      "bf083e2ad29742e7e1f3da36c1475343a1f29dd1"
+    ],
+    "verification": "git bundle verify PASS against local repository; all three prerequisite refs are required",
+    "deployed_source_claim": false
+  },
+  "historical_qwen_incident_before_recovery": {
+    "observed_utc": "2026-09-25T20:22:21Z",
+    "evidence_class": "exact_action_and_status_receipts_plus_root_stop_hold_report",
+    "qwen0_stop": {
+      "status": "succeeded",
+      "owner_operation_id": "84d48b7c898d47019426e6ee5e29b3dc",
+      "relay_receipt": {
+        "operation_id": "ai-vm~relay-305542ba-f559-4d40-b966-78e8e2c99a12",
+        "status": "succeeded",
+        "created_at": "2026-09-25T20:21:39.356Z",
+        "updated_at": "2026-09-25T20:21:51.500Z",
+        "reason": null,
+        "affected_services": [
+          "qwen-gpu0"
+        ],
+        "dispatch_frozen": true
+      }
+    },
+    "qwen0_start": {
+      "status": "failed",
+      "reason": "operation_failed",
+      "owner_operation_id": "1fd56c215c914b18b748570177ca7c83",
+      "relay_receipt": {
+        "operation_id": "ai-vm~relay-b5c1acdc-cd40-46dd-b80b-cfcead493d03",
+        "status": "failed",
+        "created_at": "2026-09-25T20:22:12.867Z",
+        "updated_at": "2026-09-25T20:22:21.509Z",
+        "reason": "operation_failed",
+        "affected_services": [
+          "qwen-gpu0"
+        ],
+        "dispatch_frozen": false
+      }
+    },
+    "qwen0": {
+      "state": "stopped",
+      "ready": false,
+      "stop_hold_retained": true
+    },
+    "qwen1": "ready_in_failed_start_status_peer_generation_unchanged",
+    "image": "ready_in_failed_start_status",
+    "cause": "UNKNOWN",
+    "retry_or_inference": "NOT_PERFORMED",
+    "recovery_owner": "separate_Worker1_diagnosis",
+    "dependent_gates": "PENDING_BLOCKED_UNTIL_REVIEWED_RECOVERY",
+    "status_observed_utc": "2026-09-25T20:23:18.254678Z",
+    "hold_distinction": "Failed start dispatch_frozen=false concerns that operation; prior successful stop hold retained per root",
+    "peer_evidence": {
+      "ready": true,
+      "boot_unchanged": true,
+      "generation_unchanged": true,
+      "main_http": 200,
+      "live_peer_inference_or_compaction": "NOT_RUN",
+      "main_child_compaction_routing": "FIXTURE_PASS_ONLY"
+    },
+    "historical_only": true
+  },
+  "new_bounded_acceptance": {
+    "q1_peer_serving": {
+      "status": "PASS",
+      "settled_utc": "2026-09-25T20:43:35.951294+00:00",
+      "response": "OK",
+      "messages_post_attempts": 1,
+      "retry_or_replay": false,
+      "q0_hold_preserved": true,
+      "final_active_requests": 0,
+      "final_queue_depth": 0,
+      "scope": "One normal tiny Q1 main chat; no tools, child task or compaction live acceptance",
+      "evidence_ids": [
+        "q1_peer_serving",
+        "q1_peer_final_settlement"
+      ]
+    },
+    "image_typed_restart": {
+      "status": "PASS",
+      "owner_id": "5ac77ee01c9d432c8bd6ae89f35a0686",
+      "canonical_succeeded_utc": "2026-09-25T21:18:58.405316+00:00",
+      "old_container_absent": true,
+      "old_container_id": "088d61f2dbe08ff1532109a8ab99a4103bcc58cfd5e9be2d2297436c761e8a89",
+      "new_container": {
+        "id": "398bc85ac9e0e2d406460129caec59022759aaec73f063586ad1a34156fe5ac7",
+        "image": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+        "pid": 1748673,
+        "started_at": "2026-09-25T21:18:01.932742426Z",
+        "run_id": "d7cbbeadca7a46239ba35748cba8a6bb"
+      },
+      "same_runtime_image": true,
+      "qwen_native_identities_preserved": true,
+      "hold_released": true,
+      "public_image_generation_requests": 0,
+      "evidence_ids": [
+        "image_typed_restart",
+        "image_typed_restart_acceptance",
+        "image_restart_native_proof"
+      ]
+    },
+    "control_readiness": {
+      "status": "PASS",
+      "source_commit": "aaa643fcd90ac4ae0a50e4a8e1a3df19ca0ebcc3",
+      "readiness_kind": "process_api",
+      "boot_invocation_pid_match": true,
+      "fresh_node_ready": true,
+      "missing_credential_http": 401,
+      "wrong_credential_http": 401,
+      "activity": "unknown",
+      "active_requests": null,
+      "queue_depth": null,
+      "native_models_unchanged": true,
+      "source_focused_tests": 47,
+      "test_scope": "Source/offline/local loopback; inherited result not rerun by docs task; overlaps other groups and is not summed",
+      "evidence_ids": [
+        "control_source_ready",
+        "control_validation",
+        "control_readiness_live"
+      ]
+    },
+    "control_typed_restart": {
+      "status": "PASS",
+      "canonical_owner_id": "380e058cd9984d91b1540fa97b7586f4",
+      "relay_status": "succeeded",
+      "post_attempts": 1,
+      "hold_release_reason": "validated_owner_readiness",
+      "holds_after": [],
+      "node_http_200_samples": 100,
+      "node_samples_evidence_class": "root_supplied_task_summary_not_individual_sample_receipt",
+      "models_unchanged_evidence_class": "root_supplied_task_summary",
+      "evidence_ids": [
+        "control_typed_restart",
+        "control_restart_local_state",
+        "final_publication_root_summary"
+      ]
+    },
+    "pre_reboot_preservation": {
+      "status": "METADATA_CAPTURED",
+      "observed_utc": "2026-09-25T21:21:26.576713+00:00",
+      "main_drain_normal_stop_start": "PASS_PER_ROOT_SUPPLIED_SUMMARY",
+      "chat_files_preserved": "PER_ROOT_SUPPLIED_SUMMARY; snapshot alone proves metadata counts only",
+      "history_counts": {
+        "events": 24819,
+        "files": 60,
+        "h003_image_file_meta": 17,
+        "h003_image_jobs": 18,
+        "h003_run_image_refs": 2,
+        "handoffs": 1,
+        "messages": 131,
+        "quarantined_workspaces": 1,
+        "runs": 47,
+        "sessions": 25
+      },
+      "historical_workspace_quarantine": 1,
+      "image_jobs": {
+        "completed": 17,
+        "cancelled": 1
+      },
+      "nonterminal_runs": 0,
+      "task_containers": 0,
+      "holds_after": [],
+      "failed_q0_history_retained": true,
+      "original_main_unknown_retained": true,
+      "limits": [
+        "No model/service readiness assertion or operation reconciliation.",
+        "No credential bytes, hashes, sizes, ACL reads, or credential equality claim.",
+        "Separate SQLite read transactions; not an atomic cross-database snapshot.",
+        "History comparison is metadata counts, never chat/content readback."
+      ],
+      "evidence_ids": [
+        "pre_reboot_preservation",
+        "control_restart_local_state",
+        "final_publication_root_summary"
+      ]
+    },
+    "evidence_time_boundary": "Historical pre-reboot acceptance at listed receipt times; superseded for current readiness by current_reboot_incident"
+  },
+  "hash_domains": {
+    "raw_sha256": "SHA256 of exact retained artifact bytes",
+    "canonical_sha256": "Only an explicitly identified canonical object or source map; not interchangeable with raw file digest",
+    "image_id": "OCI platform manifest digest as declared by runtime binding",
+    "image_config_digest": "OCI image configuration digest; distinct from platform manifest"
+  },
+  "source_closure_progression": [
+    {
+      "source_commit": "014e294fdeab91942a046fa7b0b9d7f833951e82",
+      "source_map_canonical_sha256": "d39ae5c059ba241de402dfa6627d56a4ff00e9bd888e10520b4102847350d016",
+      "source_paths_verified": 215,
+      "evidence_id": "q0_final_guard_closure"
+    },
+    {
+      "source_commit": "aaa643fcd90ac4ae0a50e4a8e1a3df19ca0ebcc3",
+      "source_map_canonical_sha256": "cbf30d21d9273a22235655d14ae6cee848d7d528dec943558dd7327b780d497a",
+      "source_paths_verified": 215,
+      "evidence_id": "control_readiness_live"
+    }
+  ],
+  "scope_coverage_not_established": {
+    "node_and_local_search_typed_scopes": "NOT_ESTABLISHED_BY_SUPPLIED_RECEIPTS",
+    "history": "Previously pending in intermediate report; not an added gate in root current final sequence"
+  },
+  "historical_pre_reboot_qwen_recovery": {
+    "status": "RECOVERED_BY_DISTINCT_CANONICAL_OPERATION",
+    "source_commit": "014e294fdeab91942a046fa7b0b9d7f833951e82",
+    "cause_sequence": [
+      {
+        "owner": "1fd56c215c914b18b748570177ca7c83",
+        "status": "failed",
+        "cause": "Legacy conflict admission rejected approved dedicated image GPU peer",
+        "diagnosis_limit": "Independently reproduced installed read-only preflight; not recovered original stderr",
+        "repair_source": "91f44888e2c1ba8ce039d395a5ebef0099a442bb"
+      },
+      {
+        "owner": "a086e26b44104d8d9d76ad0b5e12e0b2",
+        "status": "failed",
+        "cause": "Docker inspect Mounts order varied; complete entries equal when sorted by Destination",
+        "repair_source": "014e294fdeab91942a046fa7b0b9d7f833951e82"
+      }
+    ],
+    "canonical_recovery": {
+      "operation_id": "094af8cf01974fb6920bbd10e4e12146",
+      "action": "service.start",
+      "status": "succeeded",
+      "updated_at": "2026-09-25T21:10:22.546965+00:00"
+    },
+    "original_container_restarted": {
+      "container_id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+      "image_id": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "pid": 1654611,
+      "started_at": "2026-09-25T21:09:46.328601336Z"
+    },
+    "qwen0_ready": true,
+    "previous_stop_hold_reconciled": true,
+    "holds_after": [],
+    "both_failed_receipts_preserved": true,
+    "qwen1_and_image_native_identities_unchanged_through_repair": true,
+    "configured_context_tokens": 480000,
+    "capacity_evidence": "Inherited dated evidence; no new occupied-context or capacity acceptance",
+    "functional_inference_in_recovery": false,
+    "evidence_ids": [
+      "q0_cause",
+      "q0_second_cause",
+      "q0_recovery_succeeded",
+      "q0_restored_metadata"
+    ],
+    "historical_only": true
+  },
+  "current_reboot_incident": {
+    "status": "PARTIAL_PENDING",
+    "evidence_class": "bounded_reboot_failure_and_manual_recovery_receipts_with_separate_root_source_fix_summary",
+    "evidence_ids": [
+      "final_publication_root_blocker",
+      "final_publication_root_recovery",
+      "first_reboot_restoration_failure",
+      "first_reboot_final_acceptance",
+      "first_reboot_window_closed",
+      "q1_manual_recovery_acceptance",
+      "q1_manual_recovery_window_closed"
+    ],
+    "latest_summary_utc_minute": "2026-09-25T21:49Z",
+    "ai_vm_boot_id": "56fe4c47-0751-44ed-916d-a052ef4a134c",
+    "ai_vm_boot_changed": true,
+    "canonical_reboot_owner_reconciled": true,
+    "first_automatic_model_restoration": {
+      "status": "FAILED",
+      "boot_restore_service": "llmctl-boot.service",
+      "exit_code": 1,
+      "failure_utc": "2026-09-25T21:37:53.657238+00:00",
+      "service": "qwen-gpu1",
+      "failure_code": "hardware_target_unknown",
+      "phase": "before_native_start",
+      "low_level_nvml_timeout_subtype": "UNPROVEN_UNAVAILABLE",
+      "image_initial_delay": "NOT_A_FAILURE",
+      "failure_not_rewritten_by_manual_recovery": true,
+      "cause_stage": "Q1 exact UUID admission probe before native start; historical probe subtype not retained",
+      "root_cause": "NOT_ESTABLISHED",
+      "stale_prior_boot_validation": "Observed at failure capture; not GPU hardware fault proof",
+      "evidence_ids": [
+        "first_reboot_restoration_failure",
+        "first_reboot_final_acceptance"
+      ]
+    },
+    "q1_manual_recovery": {
+      "status": "PASS",
+      "owner_id": "79c32ac21e04471fa4d2deca8afa4345",
+      "relay_operation_id": "ff5d5c9b-8f7f-444b-96af-626190463e98",
+      "completed_utc": "2026-09-25T21:47:54Z",
+      "explicit_manual_recoveries": 1,
+      "completed_utc_evidence_class": "root_supplied_2149Z_summary; exact completion timestamp not in supplied acceptance receipt",
+      "accepted_snapshot_utc": "2026-09-25T21:48:30.455212+00:00",
+      "evidence_ids": [
+        "q1_manual_recovery_acceptance",
+        "q1_manual_recovery_window_closed"
+      ],
+      "hold_release_reason": "validated_owner_readiness",
+      "model_requests": 0,
+      "retry_replay": false
+    },
+    "latest_model_snapshot": {
+      "observed_utc": "2026-09-25T21:48:30.455212+00:00",
+      "qwen_gpu0_ready": true,
+      "qwen_gpu1_ready": true,
+      "image_ready": true,
+      "holds": [],
+      "qwen_gpu0_and_image_generations_unchanged_during_q1_recovery": true,
+      "evidence_limit": "Bounded supplied acceptance at this time; does not establish automatic boot restoration or final post-quiet/wake state",
+      "control_ready": true,
+      "qwen_gpu0_and_image_generations": {
+        "qwen-gpu0": 4406363042390625,
+        "image": 226256932367129
+      },
+      "qwen_gpu1_generation": 4233948466332408,
+      "evidence_ids": [
+        "q1_manual_recovery_acceptance",
+        "q1_manual_recovery_window_closed"
+      ]
+    },
+    "boot_only_source_fix": {
+      "status": "SOURCE_REVIEWED_MATCHED_PUBLICATION_UNDERWAY",
+      "included_in_reviewed_combined_source": true,
+      "reviewed_combined_source": "c723e98805593bd05fb4b5ac8c9164baf8311eda",
+      "corrected_source_commit": "cb0fca52782774124a7f93df73da50e343debe7f",
+      "source_offline_tests": 95,
+      "test_count_evidence_class": "root_supplied_summary; no rerun by docs task; not additive with overlapping groups",
+      "matched_live_publication": "PENDING_ACTUAL_COMPLETION_RECEIPT",
+      "deployed_component_identity_changed_by_source_merge": false,
+      "scope": "Bounded UNKNOWN pre-start validation; no new lane selector work",
+      "evidence_ids": [
+        "final_docs_followup_root_summary"
+      ]
+    },
+    "second_ai_vm_reboot": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
+    "ai_harness_reboot": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
+    "formal_quiet_wake": "PENDING_NO_ACTUAL_COMPLETION_RECEIPT",
+    "final_all_three_warm_after_quiet_wake": "NOT_ESTABLISHED",
+    "prior_pass_scope": "Earlier recovery, restart and readiness passes retain their recorded receipt-time boundaries; manual recovery does not convert automatic restoration to PASS",
+    "canonical_reboot_operation_id": "a8af1d3585a64d50825aedb819e0a21d",
+    "baseline_boot_id": "37e425eb-3d3e-4070-80a0-5ecfb39604f1"
+  },
+  "historical_first_reboot_initial_snapshot": {
+    "status": "PARTIAL_BLOCKED",
+    "evidence_class": "root_supplied_current_incident_summary_not_action_or_cause_receipt",
+    "evidence_ids": [
+      "final_publication_root_blocker"
+    ],
+    "observed_event_utc": "2026-09-25T21:37:53Z",
+    "ai_vm_boot_id": "56fe4c47-0751-44ed-916d-a052ef4a134c",
+    "ai_vm_boot_changed": true,
+    "canonical_reboot_owner_reconciled": true,
+    "boot_restore_service": "llmctl-boot.service",
+    "boot_restore_exit_code": 1,
+    "model_restoration": "FAILED",
+    "models": {
+      "qwen_gpu0": "ready; hardware_latch_unknown reported",
+      "qwen_gpu1": "stopped",
+      "image": "stopped"
+    },
+    "ai_harness_reboot": "HALTED",
+    "formal_quiet_wake": "HALTED",
+    "final_all_three_warm": "NOT_ESTABLISHED",
+    "cause": "UNKNOWN_PENDING_READ_ONLY_CAUSE_RECEIPT",
+    "repair_owner": "Root coordinating; Worker1 read-only cause capture",
+    "prior_pass_scope": "All earlier recovery, restart and readiness passes apply to their recorded pre-reboot receipt times only",
+    "historical_only": true,
+    "later_clarification": "Initial image stopped/delayed observation was not an image failure; latest root recovery summary supersedes current model state"
+  },
+  "reboot_receipt_scope_limits": {
+    "initial_observer_final_status": "HALTED_NOT_ACCEPTED",
+    "initial_observer_latest_view_utc": "2026-09-25T21:43:08.395326+00:00",
+    "initial_observer_latest_view": "Q0 and image ready/available; Q1 stopped/unavailable; control ready; all hardware latch projections false",
+    "formal_quiet_window": "NOT_STARTED",
+    "formal_wake_requests": "NOT_STARTED",
+    "scheduler_acceptance_table": "NOT_MEASURED: quiet/wake gate not reached",
+    "root_payload_scan": "NOT_RUN: execution performed no VM payload write or lifecycle mutation; no extra global scan",
+    "inference_from_stale_validation": "No GPU fault or historical low-level probe subtype proven",
+    "manual_recovery_does_not_rewrite_automatic_failure": true
+  },
+  "historical_source_bundles": [
+    {
+      "artifact": "H005-REVIEWED-COMBINED.bundle",
+      "raw_sha256": "eab2b37eaa0a3f0bc3dab169689232ad9371ad9ce6f43abec30c060a1eed98ac",
+      "head": "fc6896f56b1999d46ca6448ab3e6f9f9332f5acf",
+      "prerequisites": [
+        "5b20f26b36e8caedfd62ce42060ecdbe32126224",
+        "ac8f71a927b4eb1635936edd6eba19997e213527"
+      ],
+      "verification": "git bundle verify PASS against local repository; both prerequisite refs are required",
+      "deployed_source_claim": false
+    }
+  ]
+}

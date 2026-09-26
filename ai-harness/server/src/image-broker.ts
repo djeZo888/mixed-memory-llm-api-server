@@ -16,6 +16,10 @@ import {
   validateOutput,
 } from "./image-codec.js";
 import { ImageFiles } from "./image-files.js";
+import {
+  serviceAvailability,
+  type AvailabilityProvider,
+} from "./service-availability.js";
 
 type Lane = "idle" | "active" | "quarantined";
 interface RecordData {
@@ -37,6 +41,9 @@ export interface ImageBrokerOptions {
   store: Store;
   files: Files;
   backend: ImageBackend;
+  availability?: AvailabilityProvider;
+  /** Internal adapter identity; the node transport mapping is owned by the caller. */
+  serviceId?: string;
   currentRun(
     sessionId: string,
   ): { runId: string; workspaceId: string } | undefined;
@@ -150,10 +157,13 @@ export class ImageBroker {
   private closed = false;
   private pumping = false;
   private reconciling = false;
+  private uncertain = false;
+  private ownerSettled = false;
   private serial: Promise<unknown> = Promise.resolve();
   private timer: NodeJS.Timeout;
   private controller?: AbortController;
   private execution?: Promise<void>;
+  private resumePreparation?: () => void;
   readonly imageFiles: ImageFiles;
   readonly now: () => number;
   constructor(readonly options: ImageBrokerOptions) {
@@ -161,16 +171,26 @@ export class ImageBroker {
     this.imageFiles = new ImageFiles(options.files);
     const db = options.store.db;
     db.exec(`CREATE TABLE IF NOT EXISTS h003_image_jobs(id TEXT PRIMARY KEY, session_id TEXT NOT NULL, request_id TEXT NOT NULL, data TEXT NOT NULL, UNIQUE(session_id,request_id));
-      CREATE TABLE IF NOT EXISTS h003_image_lane(id INTEGER PRIMARY KEY CHECK(id=1),state TEXT NOT NULL);`);
+      CREATE TABLE IF NOT EXISTS h003_image_lane(id INTEGER PRIMARY KEY CHECK(id=1),state TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS h005_image_ownership(id INTEGER PRIMARY KEY CHECK(id=1),uncertain INTEGER NOT NULL CHECK(uncertain IN (0,1)));`);
     for (const row of db
       .prepare("SELECT data FROM h003_image_jobs ORDER BY rowid")
       .all()) {
       const record = JSON.parse(String(row.data)) as RecordData;
       this.records.set(record.job.id, record);
     }
+    const previousLane = db.prepare("SELECT state FROM h003_image_lane WHERE id=1").get();
+    const ownership = db.prepare("SELECT uncertain FROM h005_image_ownership WHERE id=1").get();
+    // A crash while an owned job was running cannot prove upstream settlement.
+    // Legacy terminal ambiguity also migrates conservatively; queued/approval
+    // jobs have never been dispatched and keep their exact identity and inputs.
+    this.setUncertain(ownership?.uncertain === 1 || previousLane?.state === "active" ||
+      [...this.records.values()].some(r => ["running", "saving"].includes(r.job.state)) ||
+      (!ownership && previousLane?.state === "quarantined" && [...this.records.values()].some(r =>
+        ["image_completion_unknown", "server_stopped", "server_restarted"].includes(r.job.error?.code ?? ""))));
     this.setLane("quarantined");
     for (const r of this.records.values())
-      if (!terminal.has(r.job.state)) {
+      if (["running", "saving"].includes(r.job.state)) {
         r.job.state = "interrupted";
         r.job.finishedAt = this.iso();
         r.job.error = {
@@ -197,6 +217,13 @@ export class ImageBroker {
       .prepare("INSERT OR REPLACE INTO h003_image_lane VALUES(1,?)")
       .run(state);
     this.lane = state;
+  }
+  private setUncertain(value: boolean) {
+    // A failed positive write blocks this process before sending upstream bytes.
+    // A failed clear never changes the in-memory ownership gate.
+    if (value) this.uncertain = true;
+    this.options.store.db.prepare("INSERT OR REPLACE INTO h005_image_ownership VALUES(1,?)").run(value ? 1 : 0);
+    this.uncertain = value;
   }
   private persist(r: RecordData, lane?: Lane) {
     const db = this.options.store.db;
@@ -302,7 +329,77 @@ export class ImageBroker {
   snapshot() {
     return { lane: this.lane, queued: this.queued().length };
   }
+  dispatchImpact() {
+    return { ...this.snapshot(), uncertain: this.uncertain,
+      awaitingApproval: [...this.records.values()].filter(r => r.job.state === "awaiting_approval").length };
+  }
+  /** Private host caller must first verify canonical completed owner settlement
+   * and fresh readiness. Never exposed through browser, tool or session routes. */
+  reconcileAfterOwnerSettlement(): boolean {
+    if (this.closed) return false;
+    if (this.pumping || this.lane === "active") {
+      // Preparation may already own a reservation while waiting for the hold.
+      // It has no old upstream request to clear and must resume in place. A
+      // dispatched request instead retains its own completion/artifact path;
+      // canonical owner settlement proves only that it cannot remain active.
+      if (this.uncertain) {
+        this.setUncertain(false);
+        this.ownerSettled = true;
+      }
+      return true;
+    }
+    const db = this.options.store.db;
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      db.prepare("INSERT OR REPLACE INTO h005_image_ownership VALUES(1,0)").run();
+      db.prepare("INSERT OR REPLACE INTO h003_image_lane VALUES(1,'idle')").run();
+      db.exec("COMMIT");
+    } catch (error) { db.exec("ROLLBACK"); throw error; }
+    this.uncertain = false;
+    this.lane = "idle";
+    return true;
+  }
+  private dispatch() {
+    return serviceAvailability(
+      this.options.availability,
+      this.options.serviceId ?? "image",
+    ).dispatch;
+  }
+  private unavailable() {
+    return this.dispatch() === "reject";
+  }
+  private requireAvailable() {
+    if (this.dispatch() === "hold")
+      throw new ApiError(
+        503,
+        "image_readiness_unknown",
+        "Image readiness is temporarily unavailable; pending work is retained",
+      );
+    if (this.unavailable())
+      throw new ApiError(
+        503,
+        "image_service_unavailable",
+        "Image service is unavailable",
+      );
+  }
+  /** Active requests keep their settlement/artifact path. Only undispatched work fails. */
+  notifyAvailabilityChanged() {
+    this.kick();
+  }
+  private rejectUnavailablePending() {
+    if (!this.unavailable()) return false;
+    for (const r of this.records.values())
+      if (["queued", "awaiting_approval"].includes(r.job.state))
+        this.finish(
+          r,
+          "failed",
+          "image_service_unavailable",
+          "Image service is unavailable; request was not dispatched",
+        );
+    return true;
+  }
   async capabilities() {
+    this.requireAvailable();
     try {
       return await this.options.backend.capabilities(
         AbortSignal.timeout(10000),
@@ -349,6 +446,7 @@ export class ImageBroker {
           );
         return this.public(old);
       }
+      this.requireAvailable();
       const binding = this.binding(sessionId),
         id = randomUUID();
       const capabilities = await this.capabilities();
@@ -446,6 +544,7 @@ export class ImageBroker {
           "image_queue_full",
           "Image queue has eight waiting jobs",
         );
+      this.requireAvailable();
       const job: ImageJob = {
         revision: 0,
         id,
@@ -511,6 +610,7 @@ export class ImageBroker {
   issueApprovalToken(sessionId: string, jobId: string) {
     return this.lock(async () => {
       const r = this.owned(sessionId, jobId);
+      this.rejectUnavailablePending();
       if (
         this.closed ||
         r.job.state !== "awaiting_approval" ||
@@ -581,6 +681,7 @@ export class ImageBroker {
       if (this.options.store.getSession(sessionId).deleteRequested)
         throw new ApiError(409, "deleting", "Session is deleting");
       if (decision === "approve") {
+        this.requireAvailable();
         if (r.approvalHash !== this.approvalHash(r.job, r.snapshots))
           throw new ApiError(
             409,
@@ -598,6 +699,7 @@ export class ImageBroker {
             "invalid_image_state",
             "Image approval is no longer pending",
           );
+        this.requireAvailable();
         if (this.queued().length >= 8)
           throw new ApiError(
             429,
@@ -649,7 +751,8 @@ export class ImageBroker {
         this.cancel(sessionId, r.job.id);
   }
   private kick() {
-    if (this.closed) return;
+    this.resumePreparation?.();
+    if (this.closed || this.rejectUnavailablePending()) return;
     for (const r of this.queued())
       if (this.now() >= r.deadline)
         this.finish(
@@ -658,6 +761,7 @@ export class ImageBroker {
           "image_queue_timeout",
           "Image queue deadline exceeded",
         );
+    if (this.dispatch() === "hold") return;
     if (this.lane === "quarantined") {
       void this.reconcile();
       return;
@@ -695,6 +799,8 @@ export class ImageBroker {
   async reconcile(): Promise<void> {
     if (
       this.closed ||
+      this.uncertain ||
+      this.dispatch() !== "allow" ||
       this.reconciling ||
       this.pumping ||
       this.lane !== "quarantined"
@@ -705,7 +811,13 @@ export class ImageBroker {
       const health = await this.options.backend.readiness(
         AbortSignal.timeout(10000),
       );
-      if (!this.closed && health.ready === true && health.idle === true)
+      if (
+        !this.closed &&
+        !this.uncertain &&
+        this.dispatch() === "allow" &&
+        health.ready === true &&
+        health.idle === true
+      )
         this.setLane("idle");
     } catch {
       /* Retain quarantine without positive readiness AND idle evidence. */
@@ -746,8 +858,35 @@ export class ImageBroker {
         this.finish(r, "cancelled", undefined, undefined, "idle");
         return;
       }
+      while (
+        this.dispatch() === "hold" &&
+        !controller.signal.aborted &&
+        !r.job.cancelRequested
+      ) {
+        // Keep this preparation's active reservation while telemetry is unknown.
+        // Requeueing here could create a ninth waiter and reorder the shared lane.
+        await new Promise<void>((resolve) => {
+          const release = () => {
+            this.resumePreparation = undefined;
+            controller.signal.removeEventListener("abort", release);
+            resolve();
+          };
+          this.resumePreparation = release;
+          controller.signal.addEventListener("abort", release, { once: true });
+          if (this.dispatch() !== "hold" || controller.signal.aborted)
+            release();
+        });
+      }
+      if (controller.signal.aborted) throw new Error("timeout");
+      if (r.job.cancelRequested) {
+        this.finish(r, "cancelled", undefined, undefined, "idle");
+        return;
+      }
+      this.requireAvailable();
       r.preparedSha256 = references.map(sha256);
       this.persist(r); // Exact conditioned bytes are hashed before native dispatch.
+      this.ownerSettled = false; // A prior owner's proof never covers a new request.
+      this.setUncertain(true); // Durable ownership precedes the first upstream byte.
       dispatched = true;
       const result = await this.options.backend.execute(
         {
@@ -760,9 +899,18 @@ export class ImageBroker {
         },
         controller.signal,
       );
+      this.setUncertain(false); // The owner returned a definite admitted/not-admitted result.
       settled = true;
       if (result.kind === "not_admitted") {
-        if (r.job.cancelRequested)
+        if (this.unavailable())
+          this.finish(
+            r,
+            "failed",
+            "image_service_unavailable",
+            "Image service is unavailable; request was not admitted",
+            "idle",
+          );
+        else if (r.job.cancelRequested)
           this.finish(r, "cancelled", undefined, undefined, "idle");
         else {
           if (!Number.isFinite(result.retryAfterMs) || result.retryAfterMs < 0)
@@ -852,11 +1000,11 @@ export class ImageBroker {
         this.closed
           ? "Server stopped; image work will not be replayed"
           : ambiguous
-            ? "Image completion is unknown; request will not be replayed and lane requires readiness and idle confirmation"
+            ? "Image completion is unknown; request will not be replayed and lane requires verified owner settlement and fresh readiness"
             : known
               ? error.message
               : "Image processing failed",
-        ambiguous || this.closed ? "quarantined" : "idle",
+        (ambiguous && !this.ownerSettled) || this.closed ? "quarantined" : "idle",
       );
     } finally {
       clearTimeout(timer);
@@ -875,7 +1023,7 @@ export class ImageBroker {
     this.controller?.abort();
     await this.execution;
     for (const r of this.records.values())
-      if (!terminal.has(r.job.state))
+      if (["running", "saving"].includes(r.job.state))
         this.finish(
           r,
           "interrupted",

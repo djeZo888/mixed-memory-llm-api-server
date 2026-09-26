@@ -223,6 +223,42 @@ class SlotTests(unittest.TestCase):
         self.assertTrue(all(s['desired'] == 'running' for s in state['slots'].values()))
         self.assertTrue(all(s['container'] for s in state['slots'].values()))
 
+    def test_cold_boot_missing_first_peer_still_starts_healthy_slot(self):
+        from lifecycle import concurrent_profiles as pair
+        self.migrate()
+        for name, profile in [('glm', GLM), ('qwen', QWEN)]:
+            self.manager.dispatch('select', profile, boot_policy='resume', target=name)
+        saved = self.manager.read_state()
+        for item in saved['slots'].values():
+            item['desired'] = 'running'
+            self.assertIsNone(item['container'])
+        # Synthetic durable cold-boot intent, no preexisting Docker processes.
+        self.manager.state = saved
+        self.manager.save()
+        original = self.manager.prepare_start
+        attempted = []
+
+        def partial_inventory(deployment):
+            name = slot_state.deployment_slot(deployment['id'])
+            attempted.append(name)
+            required = pair.GPU_UUIDS[0 if name == 'glm' else 1]
+            pair.validate_gpu_inventory([(7, pair.GPU_UUIDS[0])], required_uuids=[required])
+            return original(deployment)
+
+        with patch.object(self.manager, 'prepare_start', side_effect=partial_inventory):
+            with self.assertRaisesRegex(LifecycleError, 'partial_slot_transition_failed'):
+                self.manager.dispatch('boot-start')
+        state = self.manager.read_state()
+        self.assertEqual(attempted, ['qwen', 'glm'])
+        self.assertEqual(state['slots']['qwen']['failure'], 'concurrent_gpu_inventory_mismatch')
+        self.assertIsNone(state['slots']['qwen']['container'])
+        self.assertEqual(state['slots']['glm']['observed'], 'ready')
+        self.assertTrue(state['slots']['glm']['container_running'])
+        self.assertTrue(all(s['desired'] == 'running' and s['boot_policy'] == 'resume'
+                            for s in state['slots'].values()))
+        self.assertEqual(len([call for call in self.docker.calls if call[0] == 'create']), 1)
+        self.assertFalse(any(call[0] in {'stop', 'remove'} for call in self.docker.calls))
+
     def test_storage_loss_recovery_retains_and_stops_both_exact_identities(self):
         before = self.pair()
         recovery = Manager(self.root/'absent', {'schema_version': 1, 'id': self.instance['id']},

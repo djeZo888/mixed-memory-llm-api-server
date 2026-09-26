@@ -4,25 +4,28 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage: run-server.sh --node-prefix ABS --app-dir ABS --data-dir ABS \
-                     --inference-key-file ABS [--browser-approval-key-file ABS] [--engine-launcher ABS]
+                     --inference-key-file ABS [--browser-approval-key-file ABS] [--node-control-key-file ABS] [--engine-launcher ABS]
 
 Run the built ai-harness server as the existing ordinary user. APP_DIR is the
 ai-harness directory containing server/dist/main.js and web/dist. The inference
 key path is server-only; the key is neither read nor printed by this launcher.
 The optional browser approval key is a separate host-only nginx proxy capability.
 It is loaded by the protected server loader; omission disables approval issuance.
+The optional node control key enables an independent passive node observer, never
+uses the status daemon, and must never be passed to engines. Its exact authority
+is documented in H005 source handoff; omission preserves baseline admission.
 ENGINE_LAUNCHER defaults to this script's sibling run-engine.sh.
 All required paths must exist, except DATA_DIR (created private if needed).
 Listeners are fixed by the server contract: 127.0.0.1:8080 and :8081.
 EOF
 }
 fail() { printf 'run-server: %s\n' "$*" >&2; exit 1; }
-node_prefix=''; app_dir=''; data_dir=''; key_file=''; approval_key_file=''
+node_prefix=''; app_dir=''; data_dir=''; key_file=''; approval_key_file=''; node_control_key_file=''
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 engine_launcher="$script_dir/run-engine.sh"
 while (($#)); do
   case "$1" in
-    --node-prefix|--app-dir|--data-dir|--inference-key-file|--browser-approval-key-file|--engine-launcher)
+    --node-prefix|--app-dir|--data-dir|--inference-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher)
       (($# >= 2)) || fail "$1 requires an absolute path"
       case "$1" in
         --node-prefix) node_prefix=$2 ;;
@@ -30,6 +33,7 @@ while (($#)); do
         --data-dir) data_dir=$2 ;;
         --inference-key-file) key_file=$2 ;;
         --browser-approval-key-file) approval_key_file=$2 ;;
+        --node-control-key-file) node_control_key_file=$2 ;;
         --engine-launcher) engine_launcher=$2 ;;
       esac
       shift 2 ;;
@@ -80,6 +84,7 @@ exec env -i \
   AI_HARNESS_DATA_DIR="$data_dir" AI_HARNESS_ENGINE_LAUNCHER="$engine_launcher" \
   AI_HARNESS_INFERENCE_KEY_FILE="$key_file" \
   AI_HARNESS_BROWSER_APPROVAL_KEY_FILE="$approval_key_file" \
+  AI_HARNESS_NODE_CONTROL_KEY_FILE="$node_control_key_file" \
   AI_HARNESS_GATEWAY_URL=http://10.0.2.2:8081/v1 \
   AI_HARNESS_ALLOWED_ORIGINS=http://10.156.100.61 \
   AI_HARNESS_WEB_DIST="$app_dir/web/dist" \

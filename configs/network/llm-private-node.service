@@ -1,0 +1,20 @@
+# N1S owned transport: edits require source/policy review.
+[Unit]
+Description=Opaque TCP forwarding for private node
+Requires=llm-private-node.socket
+BindsTo=llm-private-node.socket
+After=llm-private-node.socket network-online.target
+
+[Service]
+Type=notify
+DynamicUser=yes
+NoNewPrivileges=yes
+# Only this root precondition inspects protected policy and effective INPUT rules.
+ExecStartPre=+/usr/bin/python3 -I -B /usr/local/lib/llm-server/private-network/private_network.py check
+ExecStart=/usr/lib/systemd/systemd-socket-proxyd --connections-max=16 127.0.0.1:30008
+PrivateNetwork=no
+PrivateTmp=yes
+ProtectHome=yes
+LimitCORE=0
+StandardOutput=null
+StandardError=null

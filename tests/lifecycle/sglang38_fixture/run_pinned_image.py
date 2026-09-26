@@ -53,6 +53,9 @@ CONFIG_PATH = Path("/models/config.json")
 ALIAS = "qwen3.8-27b"
 PORT = 30004
 FIXTURE_SLOT = None
+# Selected only by the separately reviewed derived-image fixture adapter. The
+# historical parent-image fixture must continue to require its original app.
+DRAIN_TARGET = None
 CHILD_ARGUMENTS = ()
 EXTENSION_CONTEXT = 1000000
 CONFIG_SHA256 = "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc"
@@ -79,6 +82,32 @@ class FixtureFailure(Exception):
 def require(condition, code):
     if not condition:
         raise FixtureFailure(code)
+
+
+def native_application(server, application, server_args, *, target=None):
+    """Require the exact native app and, when selected, its outer drain class.
+
+    This verifies a launch already bound to reviewed source bytes; it does not
+    admit an image or relax source verification. No duck-typed wrapper, subclass,
+    extra layer or unwrapped-app fallback is accepted in derived-image mode.
+    """
+    require(target in (None, "text", "image"), "native_drain_target_invalid")
+    native = server.app
+    if target is None:
+        require(application is native, "native_global_application_not_retained")
+    else:
+        module_name, class_name = {
+            "text": ("sglang.srt.managers.adaptive_text_drain", "GenerationDrainMiddleware"),
+            "image": ("sglang.multimodal_gen.runtime.managers.adaptive_diffusion_drain",
+                      "DiffusionDrainMiddleware"),
+        }[target]
+        wrapper = getattr(importlib.import_module(module_name), class_name)
+        require(getattr(server, class_name, None) is wrapper
+                and type(application) is wrapper
+                and application.app is native,
+                "native_outer_drain_application_not_retained")
+    require(native.server_args is server_args, "native_global_application_not_retained")
+    return native
 
 
 def failure_origin(error):
@@ -190,6 +219,11 @@ def no_secret(value, sentinel):
     require(sentinel.encode("ascii") not in raw, "sentinel_disclosure")
 
 
+def source_provenance(repo):
+    """Legacy default; derived mode replaces this with its reviewed binding."""
+    return json.loads((repo / "tests/lifecycle/sglang38_fixture/provenance.json").read_text())
+
+
 def verify_sources(repo):
     """Verify immutable upstream files before importing the installed runtime.
 
@@ -198,7 +232,7 @@ def verify_sources(repo):
     """
     require(sys.platform == "linux", "linux_pinned_image_required")
     require(repo.is_absolute() and repo.resolve() == repo, "repository_path_invalid")
-    expected = json.loads((repo / "tests/lifecycle/sglang38_fixture/provenance.json").read_text())
+    expected = source_provenance(repo)
     require(expected["source_revision"] == SOURCE_REVISION
             and expected["image_id"] == IMAGE_ID
             and expected["image_reference"] == IMAGE_REFERENCE,
@@ -210,7 +244,7 @@ def verify_sources(repo):
     require(not source_root.is_relative_to(repo), "repository_sglang_substitution_refused")
     for name, identity in expected["sources"].items():
         path = source_root / name
-        require(path.is_file() and path.stat().st_size == identity["bytes"],
+        require(path.is_file() and ("bytes" not in identity or path.stat().st_size == identity["bytes"]),
                 "installed_source_size_mismatch")
         require(hashlib.sha256(path.read_bytes()).hexdigest() == identity["sha256"],
                 "installed_source_hash_mismatch")
@@ -438,7 +472,7 @@ def warmup_http_server(sentinel, mode):
         thread.join(timeout=3)
 
 
-def check_routes(server, app, tokenizer, sentinel, wrong):
+def check_routes(server, app, tokenizer, sentinel, wrong, *, native_app=None):
     from starlette.responses import JSONResponse
 
     class ModelChat:
@@ -451,7 +485,9 @@ def check_routes(server, app, tokenizer, sentinel, wrong):
                                  "model": ALIAS, "choices": []})
 
     chat = ModelChat()
-    app.state.openai_serving_chat = chat
+    # Requests traverse the captured outer ASGI app. Only state setup uses the
+    # verified underlying native app; middleware need not proxy its attributes.
+    (app if native_app is None else native_app).state.openai_serving_chat = chat
 
     async def checks():
         start_health = await asgi_request(app, "/health", sentinel)
@@ -526,7 +562,7 @@ def check_routes(server, app, tokenizer, sentinel, wrong):
     asyncio.run(checks())
 
 
-def check_native_model_validation(app, handlers, originals, sentinel, wrong):
+def check_native_model_validation(app, handlers, originals, sentinel, wrong, *, native_app=None):
     """Exercise installed validators and inherited dispatch, without generation."""
     from sglang.srt.entrypoints.openai import serving_base
     from sglang.srt.entrypoints.openai.protocol import ChatCompletionRequest, CompletionRequest
@@ -564,7 +600,8 @@ def check_native_model_validation(app, handlers, originals, sentinel, wrong):
     async def checks():
         for handler, request_type, path, state_name, valid, invalid, native_message in cases:
             with ExitStack() as stack:
-                stack.enter_context(patch.object(app.state, state_name, handler, create=True))
+                state = (app if native_app is None else native_app).state
+                stack.enter_context(patch.object(state, state_name, handler, create=True))
                 validator = stack.enter_context(patch.object(handler, "_validate_request",
                                                              wraps=handler._validate_request))
                 tripwires = [stack.enter_context(patch.object(handler, name,
@@ -830,7 +867,7 @@ def run_actual(repo, scenario, captured_logs, context=131072):
             del cache_environment[name]
         with patch.dict(os.environ, cache_environment, clear=True):
             cache_result = run_cache_probe(repo)
-        provenance = json.loads((repo / "tests/lifecycle/sglang38_fixture/provenance.json").read_text())
+        provenance = source_provenance(repo)
         contract = fixture_contract(repo)
         extension_proof["extension_identity"] = contract.extension_identity(repo, provenance)
     import torch
@@ -937,15 +974,14 @@ def run_actual(repo, scenario, captured_logs, context=131072):
 
             def capture_uvicorn(app, **kwargs):
                 captured.append(app)
-                require(app is server.app and app.server_args is engine_calls[-1][0],
-                        "native_global_application_not_retained")
+                native_app = native_application(server, app, engine_calls[-1][0], target=DRAIN_TARGET)
                 require(kwargs["host"] == launcher.FIXED_FLAGS["--host"] and kwargs["port"] == PORT
                         and "workers" not in kwargs, "unexpected_uvicorn_launch_mode")
-                layers = [m for m in app.user_middleware
+                layers = [m for m in native_app.user_middleware
                           if getattr(m.cls, "__name__", "") == "_ApiKeyASGIMiddleware"]
                 require(len(layers) == 2 and sum(m.kwargs.get("api_key") is None for m in layers) == 1,
                         "final_native_auth_layering_missing")
-                no_secret(repr(app.user_middleware), sentinel)
+                no_secret(repr(native_app.user_middleware), sentinel)
                 if scenario == "all":
                     callbacks = []
                     server._wait_and_warmup(engine_calls[-1][0],
@@ -953,12 +989,13 @@ def run_actual(repo, scenario, captured_logs, context=131072):
                         execute_warmup_func=lambda _args: False)
                     require(not callbacks and engine_calls[-1][1].server_status == server.ServerStatus.Starting,
                             "native_failed_warmup_advertised_ready")
-                    check_routes(server, app, engine_calls[-1][1], sentinel, wrong)
-                    check_native_model_validation(app, native_handlers, native_validators, sentinel, wrong)
+                    check_routes(server, app, engine_calls[-1][1], sentinel, wrong, native_app=native_app)
+                    check_native_model_validation(app, native_handlers, native_validators, sentinel, wrong,
+                                                  native_app=native_app)
                 mode = {"all": "success", "warmup-auth-failure": "auth-failure",
                         "warmup-timeout": "timeout"}[scenario]
                 with warmup_http_server(sentinel, mode) as calls:
-                    server._wait_and_warmup(**app.warmup_thread_kwargs)
+                    server._wait_and_warmup(**native_app.warmup_thread_kwargs)
                     require(scenario == "all", "failed_warmup_returned_without_process_exit")
                     require(calls == [("GET", "/model_info", True), ("POST", "/generate", True),
                                       ("POST", "/freeze_gc", False)],
@@ -1101,7 +1138,7 @@ def main(argv=None):
         if options.internal_scenario != "all":
             raise FixtureFailure("expected_abort_not_observed")
         run_failure_children(options.repo, options.context)
-        provenance = json.loads((options.repo / "tests/lifecycle/sglang38_fixture/provenance.json").read_text())
+        provenance = source_provenance(options.repo)
         result.update(status="PASS_ACTUAL_INSTALLED_SOURCE_FIXTURE", image_id_pin=IMAGE_ID,
                       source_revision=SOURCE_REVISION, image_reference=IMAGE_REFERENCE,
                       launcher_sha256=provenance["launcher_sha256"],

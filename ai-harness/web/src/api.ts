@@ -7,6 +7,8 @@ import {
   type Snapshot,
 } from './types';
 
+import type { HealthAvailability } from './availability';
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -69,7 +71,9 @@ export interface StreamCallbacks {
   disconnected: () => void;
 }
 export interface Transport {
-  health(signal?: AbortSignal): Promise<{ visionAvailable: boolean }>;
+  health(
+    signal?: AbortSignal,
+  ): Promise<{ visionAvailable: boolean; availability?: HealthAvailability }>;
   imageCapabilities(signal?: AbortSignal): Promise<unknown>;
   list(signal?: AbortSignal): Promise<{ sessions: Session[] }>;
   snapshot(id: string, signal?: AbortSignal): Promise<Snapshot>;

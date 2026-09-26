@@ -1,0 +1,21 @@
+# H005 DEPLOYMENT PROPOSAL ONLY. Requires exact root approval before installation.
+# Required by egress watcher; creates only the reviewed existing user's task slice.
+[Unit]
+Description=ai-harness task slice boot prerequisite
+Requires=user@@HARNESS_UID@.service
+After=user@@HARNESS_UID@.service
+Before=ai-harness-egress.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/sbin/runuser -u @HARNESS_USER@ -- /usr/bin/env -i HOME=@HARNESS_HOME@ USER=@HARNESS_USER@ LOGNAME=@HARNESS_USER@ LANG=C.UTF-8 PATH=/usr/bin:/bin XDG_RUNTIME_DIR=/run/user/@HARNESS_UID@ DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/@HARNESS_UID@/bus /usr/bin/systemctl --user start aiharnesstasks.slice
+ExecStartPost=/usr/bin/test -d /sys/fs/cgroup/user.slice/user-@HARNESS_UID@.slice/user@@HARNESS_UID@.service/aiharnesstasks.slice
+RemainAfterExit=yes
+TimeoutStartSec=10
+TimeoutStopSec=5
+KillMode=control-group
+StandardOutput=null
+StandardError=journal

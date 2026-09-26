@@ -18,7 +18,10 @@ import time
 import urllib.error
 import urllib.request
 
-RELEASE = Path('/data/services/releases/b39781d83404799c6fa9262fd94adb09b0995ec8-image21-compat-20260923')
+# Fixed candidate directory; the reviewed external manifest binds its commit and
+# raw bytes. Do not derive this path from this file's hash (a circular binding),
+# replace an existing nonidentical release, or fall back to an older release.
+RELEASE = Path('/data/services/releases/h005-qwen0-mount-order-fix-20260925')
 BASE = Path('/data/services/image21-runtime-20260923')
 UNIT = 'llm-image-backend.service'
 NAME = 'llm-image-backend'
@@ -31,12 +34,43 @@ CAP_BYTES = 96 * 1024**3
 OPERATION_DEADLINE = None
 SETTLEMENT_DEADLINE = None
 NATIVE_UID, NATIVE_GID = 1000, 1001
+# These are the exact executable runtime files and the complete import/guard
+# closure used by this image owner. Protected config supplies their raw hashes;
+# missing or extra entries are refused, including an omitted new dependency.
+RUNTIME_SOURCE_FILES = ('native_request.py', 'native_server.py', 'service.py', 'telemetry.py')
+RELEASE_SOURCE_FILES = (
+    'scripts/common/lifecycle_lease.py', 'scripts/common/registered-storage.py',
+    'scripts/control/__init__.py', 'scripts/control/installation.py',
+    'scripts/control/hardware_latch.py',
+    'scripts/install/__init__.py', 'scripts/install/storage.py', 'scripts/install/storage_io.py',
+    'scripts/lifecycle/__init__.py', 'scripts/lifecycle/manager.py',
+    'scripts/lifecycle/runtime_io.py', 'scripts/lifecycle/storage_binding.py',
+    'scripts/lifecycle/qwen_next.py', 'scripts/lifecycle/slot_state.py',
+    'scripts/lifecycle/hardware_policy.py',
+    'scripts/runtime/qwen38_oci.py',
+    'scripts/runtime/h005_runtime_binding.py', 'configs/runtimes/h005-runtime-binding.json',
+    'scripts/runtime/verify_adaptive_idle_overlay.py',
+    'scripts/runtime/adaptive_idle_sources.json', 'scripts/runtime/adaptive_idle_source_gate.py',
+    'scripts/runtime/build_adaptive_idle_overlay.py',
+    'scripts/runtime/adaptive_idle.py', 'scripts/runtime/adaptive_text.py',
+    'scripts/runtime/adaptive_text_drain.py', 'scripts/runtime/adaptive_diffusion.py',
+    'scripts/runtime/adaptive_diffusion_drain.py',
+    'scripts/runtime/patches/text-adaptive-idle.patch',
+    'scripts/runtime/patches/text-adaptive-drain.patch',
+    'scripts/runtime/patches/text-adaptive-grammar.patch',
+    'scripts/runtime/patches/diffusion-adaptive-idle.patch',
+    'scripts/runtime/patches/diffusion-adaptive-drain.patch',
+    'scripts/image_runtime/source-closure.json',
+)
 sys.path.insert(0, str(RELEASE / 'scripts'))
 from common.lifecycle_lease import acquire_lease
 from control.installation import protected_file
 from install import storage_io
 from lifecycle.manager import StorageRunner
+from lifecycle.runtime_io import validate_image_container
 from lifecycle.storage_binding import RegisteredStorageBinding
+from lifecycle.hardware_policy import HardwarePolicy, RegisteredLatchStore
+from runtime.h005_runtime_binding import load as load_runtime_binding
 
 
 def require(condition, code):
@@ -46,6 +80,22 @@ def require(condition, code):
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def verify_source_closure(config):
+    """Validate reviewed protected runtime/release maps without any mutation."""
+    for field, root, expected in (
+            ('source_sha256', BASE / 'source', RUNTIME_SOURCE_FILES),
+            ('release_source_sha256', RELEASE, RELEASE_SOURCE_FILES)):
+        source_hashes = config.get(field)
+        require(type(source_hashes) is dict and set(source_hashes) == set(expected),
+                'runtime_source_closure_mismatch')
+        for name in expected:
+            digest = source_hashes[name]
+            require(type(digest) is str and re.fullmatch('[0-9a-f]{64}', digest),
+                    'runtime_source_digest_invalid')
+            require(hashlib.sha256(protected_file(root / name)).hexdigest() == digest,
+                    'runtime_source_changed')
 
 
 def run(argv, *, timeout=60, check=True):
@@ -83,10 +133,13 @@ class Runtime:
         require(self.binding.path('services', 'image21-runtime-20260923') == str(BASE),
                 'registered_runtime_root_mismatch')
         self.binding.validate_path('services', str(BASE))
+        self.binding.validate_path('services', str(RELEASE))
         self.config = self.binding.read_json('services', str(BASE / 'config.json'))
         require(self.config['schema_version'] == 1 and self.config['owner'] == OWNER,
                 'config_identity_mismatch')
         require(re.fullmatch('sha256:[0-9a-f]{64}', self.config['image_id']), 'image_digest_required')
+        require(self.config['image_id'] == load_runtime_binding()['image']['image_id'],
+                'runtime_image_binding_mismatch')
         require(re.fullmatch('[0-9a-f]{64}', self.config['network_id']), 'owned_network_id_required')
         require(self.config['source_commit'] == SOURCE_SHA and
                 self.config['checkpoint_revision'] == CHECKPOINT_REV, 'pin_mismatch')
@@ -98,10 +151,13 @@ class Runtime:
                 'checkpoint_receipt_incomplete')
         require(hashlib.sha256(protected_file(Path(self.model) / 'CHECKPOINT-RECEIPT.json')).hexdigest()
                 == self.config['checkpoint_receipt_sha256'], 'checkpoint_receipt_changed')
-        for name, digest in self.config['source_sha256'].items():
-            require(re.fullmatch('[a-z_]+[.]py', name), 'invalid_runtime_source_name')
-            require(hashlib.sha256(protected_file(BASE / 'source' / name)).hexdigest() == digest,
-                    'runtime_source_changed')
+        verify_source_closure(self.config)
+
+    def require_hardware(self):
+        lease = getattr(self, 'lease', None)
+        store = RegisteredLatchStore(self.binding, lease=lease, storage_io=storage_io)
+        HardwarePolicy(store, lease=lease,
+                       run=lambda argv, timeout: run(argv, timeout=timeout).stdout).require_start([GPU_UUID])
 
     def guards(self):
         for extra in ([], ['--root-guard']):
@@ -141,27 +197,7 @@ class Runtime:
                     'conflicting_backend_name')
             return None
         value = json.loads(result.stdout)[0]
-        labels = value['Config'].get('Labels') or {}
-        host = value['HostConfig']
-        require(value['Id'] == identity['id'] and value['Name'] == '/' + NAME
-                and value['Image'] == identity['image_id'] == self.config['image_id']
-                and labels.get('io.llm-image.owner') == OWNER
-                and labels.get('io.llm-image.invocation') == state['run_id']
-                and labels.get('io.llm-image.gpu') == GPU_UUID,
-                'owned_backend_identity_mismatch')
-        requests = host['DeviceRequests']
-        require(len(requests) == 1 and requests[0]['DeviceIDs'] == [GPU_UUID]
-                and host['CpusetCpus'] == '8-15' and host['Memory'] == CAP_BYTES
-                and host['MemorySwap'] == CAP_BYTES and host['RestartPolicy']['Name'] == 'no'
-                and host['NetworkMode'] == NETWORK
-                and host['PortBindings'] == {'30007/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '30007'}]}
-                and value['Config']['User'] == '1000:1001',
-                'owned_backend_policy_mismatch')
-        if value['State']['Running']:
-            require(value['NetworkSettings']['Ports'] ==
-                    {'30007/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '30007'}]},
-                    'owned_effective_loopback_publication_mismatch')
-        return value
+        return validate_image_container(value, state, self.config)
 
     def reset_owned(self):
         self.guards()
@@ -226,13 +262,22 @@ class Runtime:
         return {**snapshot, 'removed_exact_owned_invocation': True}
 
     def current_device(self):
-        data = run(['nvidia-smi', '--query-gpu=uuid,memory.total,memory.free',
-                    '--format=csv,noheader,nounits']).stdout
-        rows = [tuple(part.strip() for part in line.split(',')) for line in data.splitlines()]
-        matches = [row for row in rows if row[0] == GPU_UUID]
-        require(len(matches) == 1 and len({r[0] for r in rows}) == len(rows), 'ada_identity_missing')
-        return {'uuid': GPU_UUID, 'total_bytes': int(matches[0][1]) * 1024**2,
-                'free_bytes': int(matches[0][2]) * 1024**2}
+        # Select the dedicated UUID before querying: unrelated missing/faulted
+        # cards must not become an image admission prerequisite. A shared driver
+        # failure can still fail this read; no GPU/driver isolation is claimed.
+        data = run(['nvidia-smi', '--id=' + GPU_UUID,
+                    '--query-gpu=uuid,memory.total,memory.free',
+                    '--format=csv,noheader,nounits'], timeout=5).stdout
+        require(isinstance(data, str) and len(data) <= 4096, 'ada_memory_unavailable')
+        rows = [tuple(part.strip() for part in line.split(','))
+                for line in data.splitlines() if line.strip()]
+        require(len(rows) == 1 and len(rows[0]) == 3 and rows[0][0] == GPU_UUID,
+                'ada_identity_missing')
+        require(all(value.isascii() and value.isdigit() for value in rows[0][1:]),
+                'ada_memory_unavailable')
+        total, free = (int(value) * 1024**2 for value in rows[0][1:])
+        require(total > 0 and 0 <= free <= total, 'ada_memory_unavailable')
+        return {'uuid': GPU_UUID, 'total_bytes': total, 'free_bytes': free}
 
     def host_headroom(self):
         values = {}
@@ -245,18 +290,27 @@ class Runtime:
         return values
 
     def check_ports(self):
+        # Only 30007 is published in the host namespace. Scheduler/store ports
+        # remain inside the exact owned bridge network verified at start/reuse.
+        # Host 30008 belongs to the independent node observer/management service.
         output = run(['ss', '-H', '-ltn']).stdout
         for line in output.splitlines():
             fields = line.split()
             if len(fields) >= 4:
-                require(fields[3].rsplit(':', 1)[-1] not in {'30007', '30008', '30009', '30010'},
+                require(fields[3].rsplit(':', 1)[-1] != '30007',
                         'native_port_already_owned')
 
     def require_ada_idle(self):
-        output = run(['nvidia-smi', '--query-compute-apps=gpu_uuid,pid',
-                      '--format=csv,noheader,nounits']).stdout
-        require(not any(line.split(',')[0].strip() == GPU_UUID for line in output.splitlines()),
-                'ada_compute_process_already_present')
+        output = run(['nvidia-smi', '--id=' + GPU_UUID, '--query-compute-apps=gpu_uuid,pid',
+                      '--format=csv,noheader,nounits'], timeout=5).stdout
+        require(isinstance(output, str) and len(output) <= 65536, 'ada_process_inventory_invalid')
+        rows = [tuple(value.strip() for value in line.split(','))
+                for line in output.splitlines() if line.strip()]
+        require(all(len(row) == 2 and row[0] == GPU_UUID and row[1].isascii()
+                    and row[1].isdigit() and int(row[1]) > 0 for row in rows),
+                'ada_process_inventory_invalid')
+        require(len({row[1] for row in rows}) == len(rows), 'ada_process_inventory_invalid')
+        require(not rows, 'ada_compute_process_already_present')
 
     def check_network(self, state):
         network = json.loads(run(['docker', 'network', 'inspect', self.config['network_id']]).stdout)[0]
@@ -345,12 +399,20 @@ class Runtime:
                 'native_network_attachment_mismatch')
         require(self.native_health(), 'native_backend_unready')
         pids = {int(line.split()[0]) for line in run(['docker', 'top', value['Id'], '-eo', 'pid']).stdout.splitlines()[1:]}
-        output = run(['nvidia-smi', '--query-compute-apps=gpu_uuid,pid,used_memory',
-                      '--format=csv,noheader,nounits']).stdout
-        apps = [tuple(part.strip() for part in line.split(',')) for line in output.splitlines()]
-        ada = [row for row in apps if row[0] == GPU_UUID]
-        require(ada and all(int(row[1]) in pids for row in ada), 'ada_process_ownership_mismatch')
-        require(all(row[0] == GPU_UUID for row in apps if int(row[1]) in pids), 'image_process_on_other_gpu')
+        output = run(['nvidia-smi', '--id=' + GPU_UUID,
+                      '--query-compute-apps=gpu_uuid,pid,used_memory',
+                      '--format=csv,noheader,nounits'], timeout=5).stdout
+        require(isinstance(output, str) and len(output) <= 65536, 'ada_process_inventory_invalid')
+        ada = [tuple(part.strip() for part in line.split(','))
+               for line in output.splitlines() if line.strip()]
+        require(ada and all(len(row) == 3 and row[0] == GPU_UUID and row[1].isascii()
+                            and row[1].isdigit() and int(row[1]) > 0
+                            and row[2].isascii() and row[2].isdigit() for row in ada)
+                and len({row[1] for row in ada}) == len(ada), 'ada_process_inventory_invalid')
+        require(all(int(row[1]) in pids for row in ada), 'ada_process_ownership_mismatch')
+        # Exact protected DeviceRequests, CUDA/NVIDIA visible-device settings,
+        # absence of privileged/device bypass, and target process ownership prove
+        # this container's assignment. No unassigned/peer GPU query is needed.
         device = self.current_device()
         require(device['free_bytes'] * 20 >= device['total_bytes'], 'ada_current_margin_below_5_percent')
         return {'container_id': value['Id'], 'started_at': value['State']['StartedAt'],
@@ -363,6 +425,7 @@ class Runtime:
         deadline = OPERATION_DEADLINE
         require(deadline is not None, 'owned_start_deadline_required')
         self.guards()
+        self.require_hardware()
         state = self.state()
         require(self.inspect_owned(state, missing_ok=True) is None, 'reset_owned_backend_before_start')
         self.check_network(state)
@@ -393,6 +456,7 @@ class Runtime:
                         time.sleep(0.4)
                         require(sampler.poll() is None, 'telemetry_start_failed')
                         self.guards()
+                        self.require_hardware()
                         self.require_ada_idle()
                         require(self.current_device()['free_bytes'] >= 33131614782 + device['total_bytes'] // 20,
                                 'ada_preload_weight_and_margin_unavailable')
@@ -474,8 +538,23 @@ def recover():
     runtime = Runtime()
     # Do not hold a lease while a separately invoked systemd ExecStart borrows it.
     # Every subprocess lifecycle owner independently takes the SAME canonical lease.
+    # A latched recovery attempt must not stop a healthy peer or existing work.
+    # Gate outside cleanup: failure before mutation must cause no stop/reset.
     try:
-        with acquire_lease(blocking=False):
+        with acquire_lease(blocking=False) as lease:
+            runtime.lease = lease
+            runtime.guards()
+            runtime.require_hardware()
+    except BaseException:
+        OPERATION_DEADLINE = None
+        raise
+    mutation_started = False
+    try:
+        with acquire_lease(blocking=False) as lease:
+            runtime.lease = lease
+            runtime.guards()
+            runtime.require_hardware()
+            mutation_started = True
             runtime.reset_owned()
         result = run(['systemctl', 'restart', UNIT], timeout=840, check=False)
         require(result.returncode == 0, 'owned_systemd_restart_warm_failed')
@@ -487,6 +566,11 @@ def recover():
             runtime.guards()
         print(json.dumps({'status': 'warm', 'run_id': state['run_id']}), flush=True)
     except BaseException:
+        # A second-lease contention or changed guard/latch can refuse after the
+        # initial preflight. No reset/restart was dispatched, so cleanup must
+        # not stop work belonging to the intervening owner.
+        if not mutation_started:
+            raise
         # Stop/cancel the exact systemd job as well as its Docker workload.
         # Killing only the systemctl or docker-exec client is not cancellation.
         OPERATION_DEADLINE = started + 900
@@ -518,7 +602,8 @@ def main():
     OPERATION_DEADLINE = started + (775 if sys.argv[1] == 'start' else 100)
     SETTLEMENT_DEADLINE = started + (835 if sys.argv[1] == 'start' else 115)
     runtime = Runtime()
-    with acquire_lease(blocking=False):
+    with acquire_lease(blocking=False) as lease:
+        runtime.lease = lease
         if sys.argv[1] == 'start':
             runtime.start()
         else:

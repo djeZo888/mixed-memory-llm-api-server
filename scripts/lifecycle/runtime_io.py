@@ -28,6 +28,65 @@ class LifecycleError(Exception):
         super().__init__(self.code)
 
 
+def validate_image_container(value, state, config):
+    """Pure shared proof of the fixed image owner's container containment.
+
+    The caller supplies protected state/config and a Docker inspection. This
+    verifies identity and isolation only; it performs no I/O or readiness check.
+    Keep the image owner and text admission on the same containment contract.
+    """
+    NAME = 'llm-image-backend'
+    OWNER = 'IMAGE21-RUNTIME-20260923'
+    GPU_UUID = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
+    NETWORK = 'llm-image-backend-private'
+    CAP_BYTES = 96 * 1024**3
+
+    def require(condition, code):
+        if not condition:
+            raise RuntimeError(code)
+
+    identity = state['container']
+    labels = value['Config'].get('Labels') or {}
+    host = value['HostConfig']
+    require(value['Id'] == identity['id'] and value['Name'] == '/' + NAME
+            and value['Image'] == identity['image_id'] == config['image_id']
+            and labels.get('io.llm-image.owner') == OWNER
+            and labels.get('io.llm-image.invocation') == state['run_id']
+            and labels.get('io.llm-image.gpu') == GPU_UUID,
+            'owned_backend_identity_mismatch')
+    requests = host['DeviceRequests']
+    require(len(requests) == 1 and requests[0]['DeviceIDs'] == [GPU_UUID]
+            and requests[0].get('Count') == 0
+            and requests[0].get('Capabilities') == [['gpu']]
+            and requests[0].get('Driver') in ('', 'nvidia')
+            and not requests[0].get('Options')
+            and host['CpusetCpus'] == '8-15' and host['Memory'] == CAP_BYTES
+            and host['MemorySwap'] == CAP_BYTES and host['RestartPolicy']['Name'] == 'no'
+            and host['NetworkMode'] == NETWORK
+            and host['PortBindings'] == {'30007/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '30007'}]}
+            and value['Config']['User'] == '1000:1001'
+            and host.get('Privileged') is False and not host.get('Devices')
+            and not host.get('DeviceCgroupRules')
+            and host.get('CapDrop') == ['ALL']
+            and 'no-new-privileges' in host.get('SecurityOpt', [])
+            and host.get('PidMode', '') == ''
+            and all(mount.get('Source') != '/'
+                    and not any(str(mount.get('Source', '')).startswith(prefix)
+                                or str(mount.get('Destination', '')).startswith(prefix)
+                                for prefix in ('/dev', '/proc', '/sys'))
+                    for mount in value.get('Mounts', []))
+            and sum(item == 'CUDA_VISIBLE_DEVICES=' + GPU_UUID for item in value['Config'].get('Env', [])) == 1
+            and sum(item == 'NVIDIA_VISIBLE_DEVICES=' + GPU_UUID for item in value['Config'].get('Env', [])) == 1
+            and sum(item.startswith('CUDA_VISIBLE_DEVICES=') for item in value['Config'].get('Env', [])) == 1
+            and sum(item.startswith('NVIDIA_VISIBLE_DEVICES=') for item in value['Config'].get('Env', [])) == 1,
+            'owned_backend_policy_mismatch')
+    if value['State']['Running']:
+        require(value['NetworkSettings']['Ports'] ==
+                {'30007/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '30007'}]},
+                'owned_effective_loopback_publication_mismatch')
+    return value
+
+
 def run(args: list[str], timeout: float = 30) -> str:
     """Run an explicit argv with a minimal environment and sanitized errors."""
     if not args or not all(isinstance(arg, str) and "\0" not in arg for arg in args):
@@ -338,18 +397,106 @@ def probe(endpoint: str, expected_model: str, key_file: str | Path | None,
 
 def probe_sglang(endpoint: str, expected_model: str, key_file: str | Path | None,
                  require_auth: bool = True, timeout: float = 3) -> str:
-    """SGLang readiness: health Up AND exact authenticated alias AND auth denial.
+    """Frozen passive readiness; no native health/model/generation fallback.
 
-    Native available_models can return metadata while still Starting. Native
-    /health returns 503 until the custom authenticated warmup marks Up. Neither
-    endpoint suffices alone. All requests share probe's one absolute deadline.
-    Keep GLM's existing probe contract unchanged; SGLang additionally rejects a
-    wrong key before accepting readiness. No response/key diagnostics are emitted.
+    Three requests to /v1/readiness share one absolute body/header deadline:
+    missing key denied, wrong key denied, correct key strict Up + exact alias.
+    The route belongs to the reviewed H005 runtime overlay; old/unsupported
+    runtimes remain not_ready until exact source activation. This proves neither
+    idle nor clearing of the independent protected hardware latch.
     """
-    if not require_auth:
+    if require_auth is not True or key_file is None:
         return "auth_error"
-    return probe(endpoint, expected_model, key_file, require_auth=True,
-                 timeout=timeout, check_wrong_key=True)
+    try:
+        url = urlsplit(endpoint)
+        if (url.scheme != "http" or url.hostname != "127.0.0.1" or url.username
+                or url.password or url.query or url.fragment or url.path.rstrip("/") != "/v1"
+                or url.port is None or type(timeout) not in (int, float) or not 0 < timeout <= 30):
+            return "not_ready"
+        key = _read_key(key_file)
+        deadline = time.monotonic() + timeout
+
+        def request(token=None, *, read=False):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError
+            connection = http.client.HTTPConnection("127.0.0.1", url.port, timeout=remaining)
+            timer = None
+            try:
+                connection.connect()
+                connected = connection.sock
+                def expire():
+                    try:
+                        connected.shutdown(socket.SHUT_RDWR)
+                    except OSError:
+                        pass
+                timer = threading.Timer(max(0, deadline - time.monotonic()), expire)
+                timer.daemon = True
+                timer.start()
+                headers = {"Accept": "application/json", "Connection": "close"}
+                if token is not None:
+                    headers['Authorization'] = 'Bearer ' + token
+                connection.request('GET', '/v1/readiness', headers=headers)
+                response = connection.getresponse()
+                if not read or response.status != 200:
+                    return response.status, None
+                if response.getheader('Content-Type', '').split(';', 1)[0].strip() != 'application/json':
+                    return response.status, None
+                payload = bytearray()
+                while True:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise TimeoutError
+                    if connection.sock is not None:
+                        connection.sock.settimeout(remaining)
+                    chunk = response.read1(min(4096, 16385 - len(payload)))
+                    if not chunk:
+                        break
+                    payload.extend(chunk)
+                    if len(payload) > 16384:
+                        return response.status, None
+                def pairs(items):
+                    result = {}
+                    for name, value in items:
+                        if name in result:
+                            raise ValueError('duplicate_readiness_field')
+                        result[name] = value
+                    return result
+                value = json.loads(payload, object_pairs_hook=pairs,
+                                   parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
+                return response.status, value
+            finally:
+                if timer is not None:
+                    timer.cancel()
+                    timer.join()
+                connection.close()
+
+        wrong = 'llmctl-invalid-readiness-key'
+        if wrong == key:
+            wrong += '-different'
+        for token in (None, wrong):
+            status, _ = request(token)
+            if status == 200:
+                return 'auth_error'
+            if status not in (401, 403):
+                return 'not_ready'
+        status, value = request(key, read=True)
+        if status in (401, 403):
+            return 'auth_error'
+        if (status != 200 or type(value) is not dict
+                or set(value) != {'schema_version', 'model_alias', 'ready', 'state', 'admitting'}
+                or type(value['schema_version']) is not int or value['schema_version'] != 1
+                or type(value['ready']) is not bool or value['ready'] is not True
+                or value['state'] != 'up' or value['admitting'] is not None
+                or time.monotonic() >= deadline):
+            return 'not_ready'
+        if value['model_alias'] != expected_model:
+            return 'wrong_model'
+        return 'ready'
+    except LifecycleError:
+        return 'auth_error'
+    except (OSError, ValueError, TypeError, RecursionError, http.client.HTTPException):
+        return 'not_ready'
 
 
 def native_capacity_metadata(endpoint: str, key_file: str | Path, *, timeout: float = 3,

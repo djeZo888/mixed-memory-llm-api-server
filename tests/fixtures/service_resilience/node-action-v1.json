@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "node_id": "ai-vm",
+  "action": "service.restart",
+  "service_id": "qwen-gpu0",
+  "idempotency_key": "fixture-restart-1",
+  "expected_boot_id": "37e425eb-3d3e-4070-80a0-5ecfb39604f1",
+  "expected_generation": 7,
+  "allow_interrupt": true
+}

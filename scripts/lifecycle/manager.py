@@ -9,6 +9,7 @@ import argparse
 from contextlib import contextmanager, nullcontext
 from functools import wraps
 import copy
+import hashlib
 import json
 import importlib
 import os
@@ -333,6 +334,10 @@ class Manager:
             value = self.profile_json(self.config_root / kind / (name + ".json"))
             require(value.get("id") == name and value.get("schema_version") == 1, "invalid_profile")
             d["_" + field] = value
+        from .concurrent_profiles import QWEN_PROFILES
+        if identifier in QWEN_PROFILES:
+            from runtime.h005_runtime_binding import profile
+            d['_runtime'] = profile(d['_runtime'])
         self.bind_deployment(d)
         self.validate_deployment(d)
         return d
@@ -742,7 +747,103 @@ class Manager:
                 bindings = host.get('PortBindings') or {}
                 ports = {str(v.get('HostPort')) for values in bindings.values() if isinstance(values, list) for v in values}
                 if requested or ports & {'30002', '30004'}:
-                    raise LifecycleError('untrusted_concurrent_peer')
+                    self.validate_dedicated_image_peer(c, deployment)
+
+    def validate_dedicated_image_peer(self, c, deployment):
+        """Prove the approved dedicated owner, never adopt an unknown GPU user.
+
+        Called within normal slot admission under the caller's lifecycle lease.
+        Protected native owner state and a fresh Docker inspection prove the
+        invocation; the inventory snapshot must also satisfy the image owner's
+        device/namespace/resource policy. No owner call, probe or write occurs.
+        """
+        code = 'untrusted_concurrent_peer'
+        try:
+            from . import concurrent_profiles as pair
+            IMAGE_OWNER = 'IMAGE21-RUNTIME-20260923'
+            IMAGE_RUNTIME = '0cd8be351d0825488f4b81c8931167bbab618eca'
+            IMAGE_REVISION = '790c92633540aa0cb11d9abf19eb46d861714758'
+            from runtime.h005_runtime_binding import load as runtime_binding
+            from .runtime_io import validate_image_container
+            gpu = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
+            network = 'llm-image-backend-private'
+            require(deployment is not None and pair.is_pair(deployment)
+                    and gpu not in deployment['launch']['gpus']
+                    and c.get('Name') == '/llm-image-backend', code)
+            base = self.binding.path('services', 'image21-runtime-20260923')
+            state = self.binding.read_json('services', base + '/state.json')
+            config = self.binding.read_json('services', base + '/config.json')
+            require(state.get('schema_version') == 1 and state.get('owner') == IMAGE_OWNER
+                    and config.get('schema_version') == 1 and config.get('owner') == IMAGE_OWNER
+                    and config.get('source_commit') == IMAGE_RUNTIME
+                    and config.get('checkpoint_revision') == IMAGE_REVISION
+                    and config.get('image_id') == runtime_binding()['image']['image_id']
+                    and c.get('Image') == config['image_id'], code)
+            # The protected image owner binds its current executable source.
+            # Keep its separate immutable release and running invocation intact.
+            sources = config.get('source_sha256')
+            require(type(sources) is dict and set(sources) == {
+                'service.py', 'native_server.py', 'native_request.py', 'telemetry.py'}, code)
+            from control.installation import protected_file
+            for name, expected in sources.items():
+                path = base + '/source/' + name
+                self.binding.validate_path('services', path)
+                require(type(expected) is str and re.fullmatch('[0-9a-f]{64}', expected)
+                        and hashlib.sha256(protected_file(Path(path))).hexdigest() == expected, code)
+            host, native = c['HostConfig'], c['Config']
+            model = self.binding.path('models', 'qwen-image-2.1-' + IMAGE_REVISION)
+            mounts = c.get('Mounts')
+            expected_mounts = {
+                '/models': (model, False), '/runtime': (base + '/source', False),
+                '/work': (base + '/work', True),
+                '/tmp': (base + '/work/tmp/' + state['run_id'], True)}
+            require(config.get('checkpoint_path') == model
+                    and type(mounts) is list and len(mounts) == len(expected_mounts)
+                    and {m.get('Destination') for m in mounts} == set(expected_mounts)
+                    and all(m.get('Type') == 'bind'
+                            and (m.get('Source'), m.get('RW')) == expected_mounts[m['Destination']]
+                            for m in mounts)
+                    and native.get('Entrypoint') == ['/opt/image-venv/bin/python']
+                    and native.get('Cmd') == ['-I', '-B', '/runtime/native_server.py', state['run_id']], code)
+            # Reuse the image owner's pure containment proof. Its availability,
+            # readiness, warm phase, health probes and telemetry are unrelated to
+            # whether this exact disjoint backend can coexist with text.
+            validate_image_container(c, state, config)
+            require(host.get('RestartPolicy') == {'Name': 'no', 'MaximumRetryCount': 0}
+                    and set(c['NetworkSettings'].get('Networks', {})) == {network}
+                    and CONTAINER_RE.fullmatch(config.get('network_id', ''))
+                    and c['NetworkSettings']['Networks'][network].get('NetworkID') == config['network_id']
+                    and host.get('ReadonlyRootfs') is True and not host.get('CapAdd')
+                    and host.get('SecurityOpt') == ['no-new-privileges']
+                    and host.get('IpcMode') == 'private'
+                    and host.get('UTSMode', '') == '' and host.get('UsernsMode', '') == '', code)
+            # Reinspect the native owner last; image API config, units, latches
+            # and readiness are not dependencies of disjoint text admission.
+            fresh = self.docker.inspect(state['container']['id'])
+            require(type(fresh) is dict, code)
+            validate_image_container(fresh, state, config)
+            current = c['State']
+            actual = fresh['State']
+            require(fresh['Id'] == c['Id'] == state['container']['id']
+                    and state['container']['image_id'] == c['Image']
+                    and type(state.get('run_id')) is str
+                    and re.fullmatch('[0-9a-f]{32}', state['run_id'])
+                    and actual.get('Running') is True and current.get('Running') is True
+                    and type(current.get('Pid')) is int and current['Pid'] > 0
+                    and actual.get('Pid') == current['Pid']
+                    and type(current.get('StartedAt')) is str and bool(current['StartedAt'])
+                    and actual.get('StartedAt') == current['StartedAt']
+                    and not any(current.get(k) or actual.get(k) for k in ('Paused', 'Restarting', 'Dead'))
+                    and all(fresh.get(k) == c.get(k)
+                            for k in ('Config', 'HostConfig', 'NetworkSettings'))
+                    # Docker serializes Mounts from an unordered map. Preserve
+                    # every entry/field while comparing by unique destination.
+                    and sorted(fresh['Mounts'], key=lambda m: m['Destination'])
+                        == sorted(c['Mounts'], key=lambda m: m['Destination'])
+                    and self.binding.read_json('services', base + '/state.json') == state
+                    and self.binding.read_json('services', base + '/config.json') == config, code)
+        except Exception:
+            raise LifecycleError(code) from None
 
     @staticmethod
     def running(c: dict | None) -> bool:
@@ -862,15 +963,47 @@ class Manager:
                 self.state["container"] = self.identity(c, d, legacy=True)
         return copy.deepcopy(self.observe())
 
+    def require_hardware(self, d):
+        from . import concurrent_profiles as pair
+        if not d.get('legacy') and pair.is_pair(d):
+            from .hardware_policy import HardwarePolicy, RegisteredLatchStore
+            from .storage_binding import _binding_errors
+            from control.hardware_latch import LatchStorageUnavailable
+            lease = getattr(self, '_hardware_lease', None)
+            store = RegisteredLatchStore(self.binding, lease=lease, storage_io=self.persistent_writer(),
+                                         system_root=self.lease_system_root, trusted_uid=self.trusted_uid)
+            boot_restore = getattr(self, '_boot_restore_hardware', False)
+            @_binding_errors
+            def diagnostic(receipt):
+                lease.validate()
+                path = self.binding.path('services', 'llm-manager/evidence/boot-hardware-'
+                    + receipt['boot_id'] + '-' + receipt['gpu_uuid'] + '-' + str(time.time_ns()) + '.json')
+                self.binding.storage.root_payload_guard(self.binding.registry, roles=('data',))
+                try:
+                    self.persistent_json(path, dict(receipt, deployment_id=d['id'],
+                                                   stage='pre_native_hardware_gate'))
+                finally:
+                    self.binding.storage.root_payload_guard(self.binding.registry, roles=('data',))
+                lease.validate()
+            try:
+                HardwarePolicy(store, lease=lease, run=self.run, system_root=self.lease_system_root,
+                               trusted_uid=self.trusted_uid).require_start(d['launch']['gpus'],
+                    boot_restore=boot_restore, diagnostic=diagnostic if boot_restore else None)
+            except LatchStorageUnavailable:
+                raise LifecycleError('hardware_latch_unknown') from None
+
     def prepare_start(self, d: dict) -> None:
         self.check_sources(d)
         self.host_guards()
+        self.require_hardware(d)
         if not d.get('legacy'):
             from . import concurrent_profiles as pair
             if pair.is_pair(d):
                 pair.check_acceptance(d, self.instance)
-                pair.validate_gpu_inventory(self.run(['nvidia-smi', '--query-gpu=index,uuid',
-                                                      '--format=csv,noheader'], timeout=30))
+                pair.validate_gpu_inventory(self.run(['nvidia-smi', '--id=' + d['launch']['gpus'][0],
+                                                      '--query-gpu=index,uuid',
+                                                      '--format=csv,noheader'], timeout=30),
+                                            required_uuids=d['launch']['gpus'])
         require(self.instance.get("obsolete_boot_owner_disabled") is True
                 and bool(self.instance.get("obsolete_boot_owner_evidence")), "obsolete_boot_owner_removal_required")
         self.check_artifacts(d)
@@ -904,7 +1037,7 @@ class Manager:
         if pair.is_pair(d):
             pair.check_acceptance(d, self.instance)
         launch, rt = d["launch"], d["_runtime"]
-        reference = adapter.IMAGE_REFERENCE if backend == "sglang_qwen38" else rt["image_tag"]
+        reference = adapter.image_reference(d) if backend == "sglang_qwen38" else rt["image_tag"]
         image = json.loads(self.docker.capture("image", "inspect", reference))
         require(isinstance(image, list) and len(image) == 1 and isinstance(image[0], dict),
                 "runtime_image_id_mismatch")
@@ -941,7 +1074,7 @@ class Manager:
         for key, value in environment.items():
             args += ["--env", key + "=" + value]
         if backend == "sglang_qwen38":
-            args += ["--ulimit", "core=1:1", "--pull=never", adapter.IMAGE_REFERENCE]
+            args += ["--ulimit", "core=1:1", "--pull=never", adapter.image_reference(d)]
         else:
             args += [e["image_id"]]
         args += self.launch_command(d, e)
@@ -997,7 +1130,7 @@ class Manager:
             pair.validate_reuse(c, d)
         adapter = self.sglang_adapter(d)
         if adapter:
-            reference = adapter.IMAGE_REFERENCE if self.backend(d) == "sglang_qwen38" else e["image_id"]
+            reference = adapter.image_reference(d) if self.backend(d) == "sglang_qwen38" else e["image_id"]
             image = json.loads(self.docker.capture("image", "inspect", reference))
             require(isinstance(image, list) and len(image) == 1 and isinstance(image[0], dict)
                     and image[0].get("Id") == expected_image_id, "runtime_image_id_mismatch")
@@ -1038,14 +1171,20 @@ class Manager:
                     and after['State'].get('StartedAt') == before['State'].get('StartedAt'),
                     'concurrent_resident_identity_changed')
 
-    def _start(self) -> None:
+    def _start(self, *, boot_restore=False) -> None:
         require(self.state.get("selected") is not None, "no_deployment_selected_use_select")
         require(not self.state.get('pending_create'), 'pending_create_requires_recovery_stop')
         d = self.deployment(self.state["selected"])
         if self._slots_envelope is not None:
             self.validate_slot_deployment(d, self._slot_target)
         self.state.update(desired="running", container_running=None if self.state.get("container") else False)
-        self.prepare_start(d)  # ALL mount checks before artifact stat or Docker inventory.
+        # Only this pre-native gate may retry hardware UNKNOWN during boot.
+        # Reset the context even on failure; no Docker/model action is replayed.
+        self._boot_restore_hardware = boot_restore
+        try:
+            self.prepare_start(d)  # ALL mount checks before artifact stat or Docker inventory.
+        finally:
+            self._boot_restore_hardware = False
         identity = self.state.get("container")
         c = self.trusted_container(identity) if identity else None
         if c and not d.get("legacy"):
@@ -1438,8 +1577,9 @@ class Manager:
                     if action in {'select', 'activate'}:
                         self._select(deployment_id, boot_policy)
                     elif action in {'start', 'boot-start'}:
-                        self._start()
+                        self._start(boot_restore=action == 'boot-start')
                     elif action == 'restart':
+                        self.require_hardware(self.deployment(self.state['selected']))
                         self._stop()
                         self._start()
                     elif action in {'stop', 'recover-stop', 'boot-stop'}:
@@ -1518,6 +1658,7 @@ class Manager:
         with (nullcontext(lease) if lease is not None else acquire_lease(
                 system_root=self.lease_system_root, trusted_uid=self.trusted_uid)) as active_lease:
             _validate_borrowed_lease(active_lease, system_root=self.lease_system_root, trusted_uid=self.trusted_uid)
+            self._hardware_lease = active_lease
             recovery_required = self.recovery_only
             if action in {'stop', 'recover-stop', 'boot-stop'}:
                 try:
@@ -1560,6 +1701,7 @@ class Manager:
                 elif action == "start":
                     self._start()
                 elif action == "restart":
+                    self.require_hardware(self.deployment(self.state["selected"]))
                     self._stop()
                     self._start()
                 elif action in {"stop", "recover-stop", "boot-stop"}:
@@ -1572,7 +1714,7 @@ class Manager:
                 elif action == "boot-start":
                     require(self.state.get("failure") != "recovery_journal_invalid_primary_used", "recovery_journal_invalid_no_boot_resume")
                     if self.state["selected"] and self.state["desired"] == "running" and self.state["boot_policy"] == "resume":
-                        self._start()
+                        self._start(boot_restore=True)
                 else:
                     raise LifecycleError("unsupported_lifecycle_action")
             except (LifecycleError, BindingError) as exc:

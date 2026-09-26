@@ -52,7 +52,7 @@ PROFILE_HASHES = {'configs/deployments/qwen38-27b-1000000-yarn4-tp2-bf16kv.json'
  'configs/runtimes/sglang-qwen38-0.5.19.json': '17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11',
  'configs/deployments/qwen38-27b-128k.json': 'cee5253c28bd8ff36f33630f27642cc9cdd3857eaa108bd177488efd6a0d133f',
  'configs/deployments/qwen38-27b-256k.json': '462ed5792940890eaa410c3c6dd4996c6723157eee5fb7021ee210ed2f78523a',
- 'tests/lifecycle/sglang38_fixture/provenance.json': '9ae082ff314148fa51d42278d04dc64699b6270f2f668e486160f66f5a4d1232'}
+ 'tests/lifecycle/sglang38_fixture/provenance.json': 'c5875cbc40a062829c6001885ca7f5e2edcaed86e4d7f1797324e41f2f71afd9'}
 Q38R_SHA256 = '3df6f2a0a46a33b2b48f62609235ff209e50403d679bd8ee120b941445a87ed0'
 AUTH_CHECKS = (
     'native_routes_and_final_chain', 'native_prepare_and_normalization',
@@ -172,6 +172,48 @@ def launcher_hash():
     return hashlib.sha256((ROOT / 'scripts/runtime/sglang38_file_auth.py').read_bytes()).hexdigest()
 
 
+def runtime_oci(d):
+    if d.get('id') in PAIR_PROFILES:
+        from runtime.h005_runtime_binding import text_oci
+        return text_oci()
+    return oci
+
+
+def image_reference(d):
+    return runtime_oci(d).IMAGE_REFERENCE
+
+
+def pair_auth_fixture():
+    spec = importlib.util.spec_from_file_location('h005_pair_auth_contract',
+            ROOT / 'tests/lifecycle/sglang38_fixture/run_pair_fixture.py')
+    fixture = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fixture)
+    return fixture
+
+
+def _pair_evidence(d, instance):
+    """New actual-image receipt; parent auth/capacity receipts stay historical."""
+    identity = runtime_oci(d)
+    slot = 'gpu' + str(d['concurrent_pair']['guest_gpu_index'])
+    path = _binding(d).path('data', 'services/llm-manager/evidence/h005-' + slot + '.auth.json')
+    reference = instance.get('h005_pair_runtime_evidence', {}).get(d['id'], {})
+    require(set(reference) == {'path', 'sha256'} and reference['path'] == path,
+            'h005_pair_auth_reference_required')
+    proof = _binding(d).read_json('data', path, maximum=1024 * 1024)
+    from . import concurrent_profiles
+    require(concurrent_profiles.receipt_sha256(proof) == reference['sha256'],
+            'h005_pair_auth_digest_mismatch')
+    fixture = pair_auth_fixture()
+    fixture.check_pair_receipt(proof, ROOT, slot=slot, adaptive=True)
+    observed = identity.validate_evidence(proof['docker_inspect'])
+    concurrent_profiles.check_acceptance(d, instance)
+    return {'image_id': identity.IMAGE_ID, 'image_reference': identity.IMAGE_REFERENCE,
+            'source_revision': SOURCE_REVISION, 'launcher_sha256': launcher_hash(),
+            'docker_inspect': observed, 'flags_verified': True, 'auth_gate_passed': True,
+            'supported_flags': d['_runtime']['required_cli_flags'], 'auth_gate_evidence': path,
+            'evidence': 'H005 actual-image CPU fixture; live acceptance is separate'}
+
+
 def launcher_targets(d):
     return {LAUNCHER_TARGET, PAIR_LAUNCHER_TARGET} if d.get('id') in PAIR_PROFILES else {LAUNCHER_TARGET}
 
@@ -270,6 +312,8 @@ def evidence(d, instance):
     it only after worker1 runs the exact shipped actual-image fixture.
     """
     validate(d)
+    if d['id'] in PAIR_PROFILES:
+        return _pair_evidence(d, instance)
     e = instance.get('runtime_evidence', {}).get(RUNTIME, {})
     identity = {'image_id': IMAGE_ID, 'image_reference': IMAGE_REFERENCE,
                 'source_revision': SOURCE_REVISION, 'launcher_sha256': launcher_hash()}
@@ -396,7 +440,7 @@ def launch_environment(d):
 @safe_errors
 def image_environment(image, d):
     validate(d)
-    oci.verify_image(image)
+    runtime_oci(d).verify_image(image)
     entries = image.get('Config', {}).get('Env', [])
     require(isinstance(entries, list) and all(isinstance(s, str) and '=' in s for s in entries),
             'qwen38_image_environment_invalid')
@@ -413,7 +457,7 @@ def image_environment(image, d):
 def verify_runtime_image(image, d, e):
     """Bind runtime/auth proof to this host's exact observed OCI domain."""
     image_environment(image, d)
-    observed = oci.verify_image(image)
+    observed = runtime_oci(d).verify_image(image)
     require(same(e.get('docker_inspect'), observed), 'qwen38_runtime_observed_identity_mismatch')
     return observed['image_id']
 
@@ -424,7 +468,7 @@ def validate_reused(c, d, e, image):
     validate_launcher(d, e)
     config, host = c.get('Config', {}), c.get('HostConfig', {})
     verify_runtime_image(image, d, e)
-    oci.validate_container_image(c, e['docker_inspect'])
+    runtime_oci(d).validate_container_image(c, e['docker_inspect'])
     require(config.get('Entrypoint') == ['python3'] and config.get('Cmd') == command(d),
             'qwen38_reused_command_mismatch')
     expected_env = image_environment(image, d)

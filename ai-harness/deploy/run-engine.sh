@@ -22,7 +22,8 @@ Optional environment:
 
 The local image must already exist with the reviewed MiniMax revision label.
 No image pull, sudo, host-network mode, or browser sandbox bypass is performed.
-Actual rootless gateway/browser capability requires post-bootstrap acceptance.
+A fresh root-owned task-egress policy attestation and fixed user slice are required.
+Actual Linux egress isolation/gateway/browser capability requires live acceptance.
 EOF
 }
 
@@ -60,6 +61,10 @@ validate_directory() {
   physical=$(cd -- "$path" && pwd -P) || die "$purpose cannot be resolved"
   [[ "$physical" = "$path" ]] || die "$purpose must be canonical, with no symlink, dot component, or trailing slash"
   [[ "$host_home" != "$path" && "$host_home" != "$path/"* ]] || die "$purpose cannot expose the user home or an ancestor"
+  # Host-only freeze/audit state must never be exposed through a same-UID bind.
+  for sensitive in /var/lib/ai-harness-dispatch /run/ai-harness-dispatch /var/lib/ai-harness-admin /run/ai-harness-admin /run/ai-harness-status; do
+    [[ "$sensitive" != "$path" && "$sensitive" != "$path/"* && "$path" != "$sensitive/"* ]] || die "$purpose cannot expose private control state or ancestors"
+  done
   for sensitive in .ssh .codex .gnupg .aws .azure .kube .docker .config .local/share/containers .local/share/keyrings; do
     sensitive=$host_home/$sensitive
     [[ "$sensitive" != "$path" && "$sensitive" != "$path/"* && "$path" != "$sensitive/"* ]] || die "$purpose cannot expose credential directories or their ancestors"
@@ -141,8 +146,9 @@ except OSError:
     valid = False
 sys.exit(0 if valid else 1)
 PY_SECCOMP
-exec "$python_bin" "$launcher_dir/engine/redact-acp.py" "$podman_bin" \
-  --remote=false run --init --init-path /usr/bin/catatonit --rm --interactive --pull=never \
+exec "$python_bin" "$launcher_dir/engine/task-egress.py" -- \
+  "$launcher_dir/engine/redact-acp.py" "$podman_bin" \
+  --remote=false --cgroup-manager=systemd run --cgroup-parent=aiharnesstasks.slice --init --init-path /usr/bin/catatonit --rm --interactive --pull=never \
   --userns keep-id --user "$host_uid:$host_gid" \
   --network slirp4netns:allow_host_loopback=true \
   --cap-drop ALL --security-opt no-new-privileges \

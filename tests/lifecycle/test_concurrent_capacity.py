@@ -13,6 +13,10 @@ GIB = 1024**3
 GPU_QUERY = ['nvidia-smi', '--query-gpu=index,uuid,memory.total,memory.free', '--format=csv,noheader,nounits']
 
 
+def target_gpu_query(uuid):
+    return [GPU_QUERY[0], '--id=' + uuid, *GPU_QUERY[1:]]
+
+
 def resident(slot):
     return {'Id': ('a' if slot == 'glm' else 'b') * 64, 'State': {'Running': True, 'Pid': 101 if slot == 'glm' else 102},
             'Config': {'Labels': {'io.llmctl.owner': 'mixed-memory-llm-api-server',
@@ -35,9 +39,9 @@ class MemoryFixture:
             return '0-71\n'
         if argv == ['/usr/bin/cat', '/proc/meminfo']:
             return f'MemTotal: {900 * GIB // 1024} kB\nMemAvailable: {self.available * GIB // 1024} kB\n'
-        if argv == GPU_QUERY:
+        if argv in [target_gpu_query(uuid) for uuid in pair.GPU_UUIDS]:
             return '\n'.join(f'{index}, {uuid}, {96 * 1024}, {self.free[index] * 1024}'
-                             for index, uuid in enumerate(pair.GPU_UUIDS))
+                             for index, uuid in enumerate(pair.GPU_UUIDS) if argv[1] == '--id=' + uuid)
         for slot, anon in self.residents.items():
             item = resident(slot); cid, pid = item['Id'], item['State']['Pid']
             root = '/sys/fs/cgroup/system.slice/docker-' + cid + '.scope'
@@ -70,7 +74,7 @@ class CurrentMemory(unittest.TestCase):
         fixture = MemoryFixture(residents={slot: 1 for slot in residents})
         target = pair.slot_for_deployment(identifier)
         needed = {slot: (16 if slot in residents else (88 if slot == 'glm' else 76)) * GIB
-                  for slot in set(residents) | {target}}
+                  for slot in (target,)}
         # Ada is intentionally first and abundant, with remapped physical indices.
         rows = [[0, ADA_UUID, 256 * 1024, 255 * 1024],
                 [7, pair.GPU_UUIDS[1], 80 * 1024, needed.get('qwen', 80 * GIB) // 1024**2],
@@ -79,7 +83,8 @@ class CurrentMemory(unittest.TestCase):
 
     @staticmethod
     def set_gpu_rows(fixture, rows):
-        fixture.overrides[tuple(GPU_QUERY)] = '\n'.join(', '.join(map(str, row)) for row in rows)
+        for uuid in pair.GPU_UUIDS:
+            fixture.overrides[tuple(target_gpu_query(uuid))] = '\n'.join(', '.join(map(str, row)) for row in rows)
 
     def test_reordered_asymmetric_memory_follows_each_uuid_for_new_and_resident_slots(self):
         for identifier in pair.PROFILES:
@@ -106,7 +111,7 @@ class CurrentMemory(unittest.TestCase):
                             self.assertRaisesRegex(LifecycleError, 'concurrent_current_gpu_memory_insufficient'):
                         pair.preflight_current(d, self.instance, fixture.run, residents=residents)
 
-    def test_wrong_total_for_target_or_resident_uuid_refuses_even_with_matching_ada_total(self):
+    def test_wrong_total_for_target_uuid_refuses_even_with_matching_ada_total(self):
         for identifier in pair.PROFILES:
             for resident_slots in ((), ('glm', 'qwen')):
                 d, residents, fixture, rows, needed = self.asymmetric_case(identifier, resident_slots)
@@ -125,19 +130,73 @@ class CurrentMemory(unittest.TestCase):
 
     def test_current_memory_rejects_missing_duplicate_and_malformed_gpu_rows(self):
         d, residents, fixture, rows, _ = self.asymmetric_case(pair.GLM_PROFILE, ())
-        identity_cases = [rows[:2], [rows[0], rows[2]], rows + [[9, *rows[2][1:]]],
+        identity_cases = [rows[:2], rows + [[9, *rows[2][1:]]],
                           rows + [[3, ADA_UUID, 49140, 49140]]]
         malformed = [[], [*rows, [9, ADA_UUID]],
-                     [*rows[1:], [0, ADA_UUID, 'N/A', 'N/A']],
-                     [*rows[1:], [0, ADA_UUID, 0, 0]],
-                     [*rows[1:], [0, ADA_UUID, 49140, 49141]],
-                     [*rows[1:], [0, ADA_UUID, 49140, -1]]]
+                     [*rows[:2], [3, pair.GPU_UUIDS[0], 'N/A', 'N/A']],
+                     [*rows[:2], [3, pair.GPU_UUIDS[0], 0, 0]],
+                     [*rows[:2], [3, pair.GPU_UUIDS[0], 49140, 49141]],
+                     [*rows[:2], [3, pair.GPU_UUIDS[0], 49140, -1]]]
         for cases, code in ((identity_cases, 'concurrent_gpu_inventory_mismatch'),
                             (malformed, 'concurrent_current_gpu_memory_unavailable')):
             for inventory in cases:
                 self.set_gpu_rows(fixture, inventory)
                 with self.subTest(rows=inventory), self.assertRaisesRegex(LifecycleError, code):
                     pair.preflight_current(d, self.instance, fixture.run, residents=residents)
+
+    def test_missing_peer_and_unavailable_peer_memory_do_not_gate_target_admission(self):
+        for identifier in pair.PROFILES:
+            for resident_slots in ((), ('glm', 'qwen')):
+                d, residents, fixture, rows, needed = self.asymmetric_case(identifier, resident_slots)
+                target_uuid = d['launch']['gpus'][0]
+                target_row = next(row for row in rows if row[1] == target_uuid)
+                # A stopped/missing peer, an unassigned card, and a retained
+                # running-container host allocation never donate target VRAM.
+                inventories = [[target_row], [rows[0], target_row]]
+                for telemetry in (['N/A', 'N/A'], [0, 0], [1, 2], [1, -1]):
+                    inventories.append([row if row[1] == target_uuid else [*row[:2], *telemetry]
+                                        for row in rows])
+                for inventory in inventories:
+                    self.set_gpu_rows(fixture, inventory)
+                    with self.subTest(identifier=identifier, residents=resident_slots, rows=inventory):
+                        result = pair.preflight_current(d, self.instance, fixture.run, residents=residents)
+                        self.assertEqual(result['gpu_required_free_bytes'], needed)
+                        self.assertEqual(result['resident_slots'], sorted(residents))
+                        expected_host = 16 * GIB + sum(self.proof['modes'][
+                            'dual-qwen' if identifier == pair.QWEN0_PROFILE else 'glm-qwen']['slots'][slot][
+                                'memory_bytes'] - (GIB if slot in residents else 0)
+                            for slot in set(residents) | {pair.slot_for_deployment(identifier)})
+                        self.assertEqual(result['required_host_available_bytes'], expected_host)
+
+    def test_missing_target_and_ambiguous_target_refuse_with_abundant_peer_memory(self):
+        for identifier in pair.PROFILES:
+            d, residents, fixture, rows, _ = self.asymmetric_case(identifier, ())
+            target_uuid = d['launch']['gpus'][0]
+            target_row = next(row for row in rows if row[1] == target_uuid)
+            missing = [row for row in rows if row[1] != target_uuid]
+            ambiguous = [*rows, [11, *target_row[1:]]]
+            for inventory in (missing, ambiguous):
+                self.set_gpu_rows(fixture, inventory)
+                with self.subTest(identifier=identifier, rows=inventory), self.assertRaisesRegex(
+                        LifecycleError, 'concurrent_gpu_inventory_mismatch'):
+                    pair.preflight_current(d, self.instance, fixture.run)
+
+    def test_exact_target_query_succeeds_when_global_inventory_would_fail(self):
+        for identifier in pair.PROFILES:
+            d = bound(identifier, self.d['_storage_binding'])
+            fixture = MemoryFixture()
+            commands = []
+
+            def read(argv, *, timeout):
+                commands.append(argv)
+                if argv[0] == 'nvidia-smi' and argv[1] != '--id=' + d['launch']['gpus'][0]:
+                    raise LifecycleError('synthetic_unassigned_gpu_query_hang')
+                return fixture.run(argv, timeout=timeout)
+
+            result = pair.preflight_current(d, self.instance, read)
+            self.assertEqual(set(result['gpu_required_free_bytes']), {pair.slot_for_deployment(identifier)})
+            self.assertEqual([argv for argv in commands if argv[0] == 'nvidia-smi'],
+                             [target_gpu_query(d['launch']['gpus'][0])])
 
     def test_fresh_load_requires_full_host_cap_headroom_and_measured_gpu_allocation(self):
         fixture = MemoryFixture(available=656)
@@ -156,7 +215,7 @@ class CurrentMemory(unittest.TestCase):
         result = pair.preflight_current(d, self.instance, fixture.run, residents={'glm': resident('glm')})
         # GLM cap640 minus anon400 + Qwen cap32 + shared headroom16.
         self.assertEqual(result['required_host_available_bytes'], 288 * GIB)
-        self.assertEqual(result['gpu_required_free_bytes'], {'glm': 16 * GIB, 'qwen': 92 * GIB})
+        self.assertEqual(result['gpu_required_free_bytes'], {'qwen': 92 * GIB})
         fixture.available = 287
         with self.assertRaisesRegex(LifecycleError, 'concurrent_current_host_memory_insufficient'):
             pair.preflight_current(d, self.instance, fixture.run, residents={'glm': resident('glm')})
@@ -233,8 +292,8 @@ class CurrentMemory(unittest.TestCase):
                  (['/usr/bin/cat', root + '/memory.stat'], 'anon 1\nfile 100\nshmem 101\n', 'concurrent_resident_memory_unavailable'),
                  (['/usr/bin/cat', root + '/memory.stat'], 'anon 1\nfile 100\nshmem -1\n', 'concurrent_resident_memory_unavailable'),
                  (['/usr/bin/cat', '/proc/meminfo'], 'MemAvailable: 100 bytes\n', 'concurrent_current_host_memory_unavailable'),
-                 (GPU_QUERY, '0, unknown, 90000, 80000\n1, unknown, 90000, 80000', 'concurrent_gpu_inventory_mismatch'),
-                 (GPU_QUERY, '0, unknown, N/A, N/A\n', 'concurrent_current_gpu_memory_unavailable')]
+                 (target_gpu_query(pair.GPU_UUIDS[0]), '0, unknown, 90000, 80000\n1, unknown, 90000, 80000', 'concurrent_gpu_inventory_mismatch'),
+                 (target_gpu_query(pair.GPU_UUIDS[0]), '0, ' + pair.GPU_UUIDS[0] + ', N/A, N/A\n', 'concurrent_current_gpu_memory_unavailable')]
         for argv, output, code in cases:
             fixture = MemoryFixture(residents={'glm': 400}); fixture.overrides[tuple(argv)] = output
             with self.subTest(code=code), self.assertRaisesRegex(LifecycleError, code):

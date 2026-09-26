@@ -536,6 +536,9 @@ class AcpEngine implements Engine {
     // Rootless Podman needs its ordinary user runtime directory; this is not a secret.
     if (process.env.XDG_RUNTIME_DIR)
       env.XDG_RUNTIME_DIR = process.env.XDG_RUNTIME_DIR;
+    while (o.dispatchHeld?.() && !this.closing && !this.cancelled)
+      await new Promise<void>(resolve => setTimeout(resolve, 50));
+    if (this.closing || this.cancelled) throw new Error("Engine launch cancelled while frozen");
     this.child = spawn(
       o.launcher,
       ["--profile-dir", o.profileDir, "--workspace", o.workspace],
@@ -1329,6 +1332,9 @@ class AcpEngine implements Engine {
         );
       }
       if (this.cancelled) return;
+      while (this.options.dispatchHeld?.() && !this.closing && !this.cancelled)
+        await new Promise<void>(resolve => setTimeout(resolve, 50));
+      if (this.closing || this.cancelled) return "cancelled";
       this.startedWork = true;
       this.settled = false;
       const result = await connection.prompt({

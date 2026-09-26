@@ -271,11 +271,31 @@ class ManagerSession:
             except Exception:
                 raise PackageBlocked() from None
 
+    @contextmanager
+    def _hardware_owner(self, lease):
+        """Bind already-held canonical authority during pre-dispatch checks.
+
+        preflight intentionally runs before Manager.dispatch (and before old
+        target stop), so dispatch has not bound its lease yet. Restore the
+        prior binding even on refusal; no new lock or borrowed FD is created.
+        """
+        _lease(self.manager, lease)
+        missing = object()
+        previous = getattr(self.manager, '_hardware_lease', missing)
+        self.manager._hardware_lease = lease
+        try:
+            yield
+        finally:
+            if previous is missing:
+                del self.manager._hardware_lease
+            else:
+                self.manager._hardware_lease = previous
+
     def preflight(self, target, lease, deadline, *, slot=None):
         _lease(self.manager, lease)
         if self.manager.recovery_only:
             raise StorageUnavailable()
-        with self._bounded(deadline):
+        with self._bounded(deadline), self._hardware_owner(lease):
             try:
                 self.manager.check_package_admission()
                 deployment = self.manager.deployment(target)
@@ -330,8 +350,8 @@ class ManagerSession:
         return self._dispatch('start', lease, deadline, slot=slot)
 
 
-def production_application(config_root, control_key, *, advertised_policy=None):
+def production_application(config_root, control_key, *, advertised_policy=None, readiness_identity=None):
     backend = ProductionBackend(config_root, control_key=control_key)
     return Application(backend, Journal(ManagerJournalStore(backend.load)),
                        read_seconds=60, admission_seconds=60,
-                       advertised_policy=advertised_policy)
+                       advertised_policy=advertised_policy, readiness_identity=readiness_identity)

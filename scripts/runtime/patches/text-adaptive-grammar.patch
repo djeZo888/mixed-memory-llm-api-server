@@ -1,0 +1,21 @@
+--- a/python/sglang/srt/constrained/grammar_manager.py
++++ b/python/sglang/srt/constrained/grammar_manager.py
+@@ -28,6 +28,9 @@
+         self.scheduler = scheduler
+         self.server_args = scheduler.server_args
+         self.grammar_queue: List[Req] = []
++        # A cancelled request may leave a running compiler Future. Keep its
++        # completion represented after native request queues discard the Req.
++        self._adaptive_pending_futures = set()
+         if not self.server_args.skip_tokenizer_init:
+             self.grammar_backend = create_grammar_backend(
+                 self.server_args,
+@@ -154,6 +157,8 @@
+                     key, req.require_reasoning
+                 )
+                 req.grammar = value
++                if isinstance(value, futures.Future):
++                    self._adaptive_pending_futures.add(value)
+ 
+                 if not cache_hit:
+                     req.grammar_key = key

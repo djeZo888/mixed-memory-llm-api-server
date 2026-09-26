@@ -149,9 +149,43 @@ outside v0.0.1 scope.
 
 ## Operator use
 
-For the deployed service, run these ordinary service commands as
-the existing `user` account on the ai-harness host. Choose the needed action;
-stop/restart can interrupt active tasks and must not trigger automatic replay.
+Use [status](http://10.156.100.61/status) for read-only observations and
+[admin](http://10.156.100.61/admin) for normal typed lifecycle operations. Admin
+is anonymous within the deployed trusted/shared-LAN scope; there is no per-user
+authentication. The optional user-managed `status.ai-harness` DNS alias is
+status-only; its DNS configuration is not asserted here.
+
+| Status | Meaning |
+|---|---|
+| Unavailable | Current evidence says the service cannot serve, for example because it is stopped or failed. |
+| Unknown | Evidence is missing, stale or inconclusive; it does not mean zero work or a missing GPU. |
+| Latched | Persistent hardware protection is holding the affected target. A service restart or a healthy same-boot observation does not clear it; protected new-boot validation is required. |
+
+A ready service can still be busy. Active or queued work causes backpressure;
+that is not unavailability. Check the separate activity and observation freshness.
+
+Each native scheduler keeps a **600-second busy grace after final real work
+completes**, including response drain and pending asynchronous work. Active,
+queued, draining or unknown work prevents blocking. Once genuinely idle beyond
+grace, it blocks waiting for an event while retaining model weights and cache
+allocations. Ordinary work wakes it immediately through that event and renews
+grace; this is wake behavior, not a zero-latency response promise. Passive status
+polls do not renew grace. The measured quiet/wake and reboot checks passed; see the
+[September 26 closeout](../docs/h005-closeout-20260926.md). VRAM residency alone
+does not prove cache contents.
+
+For normal operations, use the canonical typed admin action, review its affected
+services and interruption confirmation, then wait for its terminal receipt.
+An accepted request is not completion. After a timeout, inspect the existing
+operation; never blindly replay an uncertain action. An unknown/interrupted result
+needs confirmed recovery rather than an assumed success. Refresh stale target
+boot/generation identity before a distinct, explicitly confirmed new request.
+This path preserves operation ownership, scoped holds and receipts.
+
+The direct commands below are **host recovery procedures**, not the normal
+operator path. Run them as the existing `user` account on the ai-harness host
+when host recovery is needed. Choose the needed action; stop/restart can interrupt
+active tasks and must not trigger automatic replay.
 
 ```sh
 systemctl --user status ai-harness.service ai-harness-searxng.service --no-pager
