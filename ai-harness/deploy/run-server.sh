@@ -4,11 +4,13 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage: run-server.sh --node-prefix ABS --app-dir ABS --data-dir ABS \
-                     --inference-key-file ABS [--browser-approval-key-file ABS] [--node-control-key-file ABS] [--engine-launcher ABS]
+                     --inference-key-file ABS [--frontier-key-file ABS] [--browser-approval-key-file ABS] [--node-control-key-file ABS] [--engine-launcher ABS]
 
 Run the built ai-harness server as the existing ordinary user. APP_DIR is the
 ai-harness directory containing server/dist/main.js and web/dist. The inference
 key path is server-only; the key is neither read nor printed by this launcher.
+The optional frontier key path is server-only and lazy-loaded per frontier request;
+missing/unreadable frontier credentials do not prevent Qwen startup.
 The optional browser approval key is a separate host-only nginx proxy capability.
 It is loaded by the protected server loader; omission disables approval issuance.
 The optional node control key enables an independent passive node observer, never
@@ -20,18 +22,19 @@ Listeners are fixed by the server contract: 127.0.0.1:8080 and :8081.
 EOF
 }
 fail() { printf 'run-server: %s\n' "$*" >&2; exit 1; }
-node_prefix=''; app_dir=''; data_dir=''; key_file=''; approval_key_file=''; node_control_key_file=''
+node_prefix=''; app_dir=''; data_dir=''; key_file=''; approval_key_file=''; node_control_key_file=''; frontier_key_file=''
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 engine_launcher="$script_dir/run-engine.sh"
 while (($#)); do
   case "$1" in
-    --node-prefix|--app-dir|--data-dir|--inference-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher)
+    --node-prefix|--app-dir|--data-dir|--inference-key-file|--frontier-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher)
       (($# >= 2)) || fail "$1 requires an absolute path"
       case "$1" in
         --node-prefix) node_prefix=$2 ;;
         --app-dir) app_dir=$2 ;;
         --data-dir) data_dir=$2 ;;
         --inference-key-file) key_file=$2 ;;
+        --frontier-key-file) frontier_key_file=$2 ;;
         --browser-approval-key-file) approval_key_file=$2 ;;
         --node-control-key-file) node_control_key_file=$2 ;;
         --engine-launcher) engine_launcher=$2 ;;
@@ -62,6 +65,10 @@ if [[ -n "$approval_key_file" ]]; then
   [[ "$approval_key_file" == /* && "$approval_key_file" != *$'\n'* && "$approval_key_file" != *$'\r'* ]] || fail 'approval key path must be absolute and single-line'
   [[ -f "$approval_key_file" && -r "$approval_key_file" ]] || fail 'protected browser approval key file is missing or unreadable'
 fi
+if [[ -n "$frontier_key_file" ]]; then
+  [[ "$frontier_key_file" == /* && "$frontier_key_file" != *$'\n'* && "$frontier_key_file" != *$'\r'* ]] || fail 'frontier key path must be absolute and single-line'
+fi
+# Frontier metadata/content validation is deliberately lazy and host-only.
 # The same protected server loader validates approval-key metadata and reads it.
 # Missing configuration leaves approval-token issuance closed; generation still works.
 umask 077
@@ -83,6 +90,7 @@ exec env -i \
   XDG_RUNTIME_DIR="$runtime_dir" DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime_dir/bus" \
   AI_HARNESS_DATA_DIR="$data_dir" AI_HARNESS_ENGINE_LAUNCHER="$engine_launcher" \
   AI_HARNESS_INFERENCE_KEY_FILE="$key_file" \
+  AI_HARNESS_FRONTIER_KEY_FILE="$frontier_key_file" \
   AI_HARNESS_BROWSER_APPROVAL_KEY_FILE="$approval_key_file" \
   AI_HARNESS_NODE_CONTROL_KEY_FILE="$node_control_key_file" \
   AI_HARNESS_GATEWAY_URL=http://10.0.2.2:8081/v1 \

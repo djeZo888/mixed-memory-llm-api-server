@@ -13,6 +13,7 @@ import {
 import { HarnessStore, busyKey, pendingRunIds } from './store';
 import { isActive, type Status } from './types';
 import { resolveStatus } from './status';
+import { FrontierActivity } from './FrontierActivity';
 import { Composer } from './Composer';
 import { canStageEditReference } from './image-capabilities';
 import { ConversationReplies, WorkingStatus } from './Replies';
@@ -213,6 +214,7 @@ export function App({ store }: { store: HarnessStore }) {
             </div>
           )}
         </header>
+        {selected && <FrontierActivity sessionId={selected} />}
         {selected && (
           <div className={`connection connection-${state.connection}`} role="status">
             <span className="connection-dot" />

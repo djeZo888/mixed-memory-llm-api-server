@@ -41,6 +41,7 @@ export interface AppOptions extends Omit<BrokerOptions, "store" | "files"> {
   /** Separate protected nginx-to-server capability; never passed to engines. */
   approvalProxyKey?: string;
   availability?: AvailabilityProvider;
+  frontierStatus?: (sessionId: string) => unknown;
   availabilitySummary?: () => { qwenGpu0: string; qwenGpu1: string; image: string };
 }
 function object(value: unknown): Record<string, unknown> {
@@ -307,6 +308,10 @@ export async function createApp(options: AppOptions): Promise<{
           ),
         ),
       };
+    });
+    app.get("/api/sessions/:id/frontier", async (req) => {
+      const sessionId = id(req); store.getSession(sessionId);
+      return options.frontierStatus?.(sessionId) ?? { model: "glm-5.3-flash", configured: false, state: "unavailable", requests: [] };
     });
     app.get("/api/sessions/:id", async (req) => {
       const snapshot = store.snapshot(id(req));

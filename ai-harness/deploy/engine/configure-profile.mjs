@@ -7,6 +7,9 @@ export const SKILLS_SOURCE = '/opt/ai-harness/skills';
 export const SEARXNG_URL = 'http://10.0.2.2:8082';
 export const IMAGE_TIMEOUT_MS = 50 * 60 * 1000;
 
+export const FRONTIER_CONTEXT = 480000; // Replace only with reviewed qualification; gateway independently enforces it.
+export const FRONTIER_MODEL = 'glm-5.3-flash';
+export const FRONTIER_INSTRUCTIONS = 'Qwen is the default coordinator and ordinary coding/agentic worker. Select task(agent_name=frontier) for deep research, multi-document analysis, hard reasoning or independent diagnosis. Exceptional stuck coding needs explicit justification and Qwen verification. Frontier shares the workspace: code changes must be foreground or explicitly disjoint ownership. Use native task ownership, cancellation and result reuse. Neither model is presumed universally superior.\n';
 export const MODEL = 'qwen3.8-27b';
 export const MODEL_REF = `custom_provider:harness/${MODEL}`;
 export const REQUEST_TIMEOUT_MS = 151 * 60 * 1000;
@@ -28,6 +31,17 @@ export function localConfig(env) {
     defaultLightModel: MODEL_REF,
     defaultModelContextWindow: 480000,
     custom_provider: {
+      frontier: {
+        kind: 'custom', name: 'Local frontier gateway', enabled: true,
+        api: 'openai-completions',
+        options: { baseURL: 'http://10.0.2.2:8081/frontier/v1', apiKey: token, timeout: REQUEST_TIMEOUT_MS },
+        models: { [FRONTIER_MODEL]: { id: FRONTIER_MODEL, name: 'GLM-5.3-Flash', enabled: true,
+          tool_call: true, reasoning: true,
+          limit: { context: FRONTIER_CONTEXT, output: 65536 },
+          thinking: { effortOptions: ['high'], defaultEffort: 'high' },
+          modalities: { input: ['text'], output: ['text'] },
+        } },
+      },
       harness: {
         kind: 'custom', name: 'Local Qwen gateway', enabled: true,
         api: 'openai-completions',
@@ -191,6 +205,41 @@ function writePrivateJson(profile, name, value) {
   }
 }
 
+export function frontierAgentMarkdown() {
+  return `---
+name: frontier
+description: Deep research, multi-document analysis, hard reasoning and independent diagnosis; selective escalation from Qwen.
+model: custom_provider:frontier/glm-5.3-flash
+effort: high
+disallowedTools: [task, task_append]
+x-mavis:
+  contextWindow: ${FRONTIER_CONTEXT}
+  maxOutputTokens: 65536
+---
+${FRONTIER_INSTRUCTIONS}
+Use the normal approved tools, research, browser, search, PDF, code and image capabilities. Do not delegate recursively. Report uncertainty and evidence; reuse completed results.
+`;
+}
+export function seedFrontierAgent(profile) {
+  const agents = path.join(profile, 'agents');
+  if (!statIfPresent(agents)) mkdirSync(agents, { mode: 0o700 });
+  safeDirectory(agents, true);
+  const directory = path.join(agents, 'frontier');
+  const target = path.join(directory, 'agent.md');
+  const content = Buffer.from(frontierAgentMarkdown());
+  if (statIfPresent(directory)) {
+    safeDirectory(directory, true);
+    if (!safeRead(target, true).equals(content)) throw new Error('Existing frontier agent differs; explicit migration required.');
+    return;
+  }
+  const staging = mkdtempSync(path.join(agents, '.frontier-'));
+  try {
+    writeFileSync(path.join(staging, 'agent.md'), content, { mode: 0o600, flag: 'wx' });
+    if (statIfPresent(directory)) throw new Error('Frontier agent appeared during initialization.');
+    renameSync(staging, directory);
+  } finally { rmSync(staging, { recursive: true, force: true }); }
+}
+
 export function configureProfile(env, skillsSource = SKILLS_SOURCE) {
   const profile = env.MINIMAX_DATA_DIR;
   if (!profile || !path.isAbsolute(profile) || profile === '/' || realpathSync(profile) !== profile) {
@@ -212,8 +261,19 @@ export function configureProfile(env, skillsSource = SKILLS_SOURCE) {
     }
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
-    writeFileSync(instructions, SHARED_SLOT_INSTRUCTIONS, { mode: 0o600, flag: 'wx' });
+    writeFileSync(instructions, SHARED_SLOT_INSTRUCTIONS + FRONTIER_INSTRUCTIONS, { mode: 0o600, flag: 'wx' });
   }
+  // Upgrade the instruction surface by appending a managed policy. Existing user
+  // text stays byte-for-byte intact; a refreshed runner can discover frontier.
+  const previousInstructions = safeRead(instructions, true).toString('utf8');
+  if (!previousInstructions.includes(FRONTIER_INSTRUCTIONS)) {
+    const staging = path.join(profile, `.AGENTS-${process.pid}.tmp`);
+    try {
+      writeFileSync(staging, previousInstructions + '\n' + FRONTIER_INSTRUCTIONS, { mode: 0o600, flag: 'wx' });
+      renameSync(staging, instructions);
+    } finally { try { unlinkSync(staging); } catch (error) { if (error.code !== 'ENOENT') throw error; } }
+  }
+  seedFrontierAgent(profile);
   seedReviewedSkills(profile, skillsSource);
   writePrivateJson(profile, 'mcp.json', localMcpConfig(env));
   // JSON is a YAML subset. Never print this ephemeral session gateway token.

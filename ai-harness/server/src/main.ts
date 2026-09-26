@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { frontierConfiguration } from "./frontier.js";
+import { FrontierLedger } from "./frontier-ledger.js";
 import { readProtectedCredential } from "./protected-credential.js";
 export { readProtectedCredential } from "./protected-credential.js";
 import path from "node:path";
@@ -41,6 +44,7 @@ export async function start() {
     ? await readProtectedCredential(approvalKeyFile)
     : undefined;
   const gatewayPort = port("AI_HARNESS_GATEWAY_PORT", 8081);
+  let frontierLedger: FrontierLedger | undefined;
   let gateway: ReturnType<typeof createGateway> | undefined;
   let nodeAvailability: NodeAvailability | undefined;
   let freezeServer: Awaited<ReturnType<typeof serveDispatchFreeze>> | undefined;
@@ -63,6 +67,10 @@ export async function start() {
     launcher,
     engineFactory: createEngine,
     imageBackend: new ImageUpstream({ key }),
+    frontierStatus: (sessionId) => ({
+      ...gateway?.frontierSnapshot(),
+      requests: frontierLedger?.latest(sessionId) ?? [],
+    }),
     approvalProxyKey,
     availability,
     dispatchHeld: () => freeze.held("harness"),
@@ -123,6 +131,30 @@ export async function start() {
         },
       });
     }
+    frontierLedger = new FrontierLedger(application.store.db);
+    let configured: ReturnType<typeof frontierConfiguration>;
+    try {
+      configured = frontierConfiguration(
+        JSON.parse(
+          readFileSync(
+            new URL("../../config/frontier.json", import.meta.url),
+            "utf8",
+          ),
+        ),
+      );
+    } catch {
+      /* Missing/invalid frontier config never prevents Qwen startup. */
+    }
+    const frontier = configured
+      ? {
+          ...configured,
+          // Lazy read: missing frontier credential never prevents Qwen startup.
+          upstreamKey: () =>
+            readProtectedCredential(required("AI_HARNESS_FRONTIER_KEY_FILE")),
+          onRequestState: (record: import("./frontier.js").FrontierRecord) =>
+            frontierLedger!.record(record),
+        }
+      : undefined;
     const states = Object.fromEntries(
       (
         application.store.db
@@ -131,6 +163,7 @@ export async function start() {
       ).map((r) => [r.alias, r.state]),
     );
     gateway = createGateway({
+      frontier,
       upstreamKey: key,
       images: application.images,
       availability,
@@ -192,10 +225,12 @@ export async function start() {
           lanes = gateway!.snapshot(),
           image = application.images?.dispatchImpact();
         const active =
+          (gateway!.frontierSnapshot().state === "active" ? 1 : 0) +
           broker.active +
           lanes.lanes.filter((lane) => lane.state === "active").length +
           (image?.lane === "active" ? 1 : 0);
         const queued =
+          gateway!.frontierSnapshot().queued +
           broker.queued +
           lanes.queued +
           (image?.queued ?? 0) +

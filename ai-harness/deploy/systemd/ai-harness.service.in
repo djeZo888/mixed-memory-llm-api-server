@@ -1,3 +1,5 @@
+# H008 activation: append --frontier-key-file ABS to ExecStart only with a reviewed
+# protected host path; this optional path never enters engine task environments.
 # User unit template. Replace @HARNESS_DIR@, @NODE_PREFIX@, @DATA_DIR@ and
 # @BROWSER_APPROVAL_KEY_FILE@ and @INFERENCE_KEY_FILE@ with reviewed absolute paths; no credentials in this file.
 [Unit]

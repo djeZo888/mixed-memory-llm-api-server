@@ -110,7 +110,7 @@ rootless=$("$podman_bin" --remote=false info --format '{{.Host.Security.Rootless
 
 image_tag=localhost/ai-harness-engine:0.0.2-ae65651df5f9
 revision=ae65651df5f97ae1085ab4e19964f4b78c769a4e
-patchset=69d7fe14ed8b1e394fe7315e04724e3ef89c2efbd21118a42fa1842f5ed48eff
+patchset=e487935b3d6efce51216b8755cbd712912c30c7d45f6a9e5e293f0f998f89a65
 image_metadata=$("$podman_bin" --remote=false image inspect --format '{{.Id}}|{{index .Labels "org.opencontainers.image.revision"}}|{{index .Labels "org.opencontainers.image.ai-harness.patchset"}}' "$image_tag" 2>/dev/null) || die 'reviewed engine image is absent; build it separately after bootstrap'
 image_id=${image_metadata%%|*}
 image_labels=${image_metadata#*|}

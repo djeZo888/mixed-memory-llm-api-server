@@ -1,0 +1,107 @@
+diff --git a/packages/local-runtime-v2/src/service/model-system/resolution/model-token-estimator.ts b/packages/local-runtime-v2/src/service/model-system/resolution/model-token-estimator.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/local-runtime-v2/src/service/model-system/resolution/model-token-estimator.ts
+@@ -0,0 +1,21 @@
++import { Buffer } from 'node:buffer';
++import type { AgentMessage } from '@earendil-works/pi-agent-core';
++import { BpeTokenEstimator, createDefaultTokenEstimator, type TokenEstimator } from '@mavis/context-manager';
++
++/** Local scheduling heuristic only, NOT the GLM tokenizer or an admission proof.
++ * The host gateway counts the fully rendered prompt with the pinned upstream
++ * tokenizer/template before EVERY frontier inference, including compaction.
++ * UTF-8 sizing deliberately triggers earlier compaction than o200k for Flash.
++ * Qwen and every other provider retain their original estimator instance.
++ */
++class FrontierSchedulingEstimator extends BpeTokenEstimator {
++  override estimateTextTokens(text: string): number { return Buffer.byteLength(text, 'utf8'); }
++  override estimateMessage(message: AgentMessage): number {
++    return Buffer.byteLength(JSON.stringify(message), 'utf8') + 256;
++  }
++}
++const frontierEstimator = new FrontierSchedulingEstimator();
++export function modelTokenEstimator(model: { provider: string; id: string }): TokenEstimator {
++  return model.provider === 'custom_provider:frontier' && model.id === 'glm-5.3-flash'
++    ? frontierEstimator : createDefaultTokenEstimator();
++}
+diff --git a/packages/local-runtime-v2/src/service/model-system/resolution/dynamic-max-tokens.ts b/packages/local-runtime-v2/src/service/model-system/resolution/dynamic-max-tokens.ts
+--- a/packages/local-runtime-v2/src/service/model-system/resolution/dynamic-max-tokens.ts
++++ b/packages/local-runtime-v2/src/service/model-system/resolution/dynamic-max-tokens.ts
+@@ -1,4 +1,6 @@
+ import { streamSimple, type Api, type Context, type Model } from '@earendil-works/pi-ai';
++import { modelTokenEstimator } from './model-token-estimator.js';
++
+ import type { AgentMessage, StreamFn } from '@earendil-works/pi-agent-core';
+ import { LLM_RETRY_CALL_IDENTITY } from '@mavis/agent-core/pi-turn-runner';
+ import { createDefaultTokenEstimator, resolveDynamicMaxTokens } from '@mavis/context-manager';
+@@ -25,8 +27,8 @@
+   readonly budget: DynamicBudget;
+ }
+ 
+-function estimatePiContextTokens(context: Context): number {
+-  const estimator = createDefaultTokenEstimator();
++function estimatePiContextTokens(context: Context, model: Model<Api>): number {
++  const estimator = modelTokenEstimator(model);
+   const messages = [...(context.messages ?? [])] as AgentMessage[];
+   const systemTokens = context.systemPrompt
+     ? estimator.estimateTextTokens(context.systemPrompt)
+@@ -81,7 +83,7 @@
+     const desired = resolveDynamicMaxTokens({
+       contextWindow: input.contextWindow,
+       configuredMaxTokens: input.configured,
+-      estimatedContextTokens: estimatePiContextTokens(input.context),
++      estimatedContextTokens: estimatePiContextTokens(input.context, input.model),
+     });
+     if (desired >= input.configured) {
+       return { maxTokens: input.configured, disableReasoning: false };
+diff --git a/packages/local-runtime-v2/src/service/turn-system/compaction/execution/local-context-footprint.ts b/packages/local-runtime-v2/src/service/turn-system/compaction/execution/local-context-footprint.ts
+--- a/packages/local-runtime-v2/src/service/turn-system/compaction/execution/local-context-footprint.ts
++++ b/packages/local-runtime-v2/src/service/turn-system/compaction/execution/local-context-footprint.ts
+@@ -3,7 +3,7 @@
+ import type { AgentMessage } from '@earendil-works/pi-agent-core';
+ import type { Api, Model } from '@earendil-works/pi-ai';
+ import { projectAgentMessagesForModel } from '@mavis/agent-core/pi-turn-runner';
+-import { createDefaultTokenEstimator } from '@mavis/context-manager';
++import { modelTokenEstimator } from '../../../model-system/resolution/model-token-estimator.js';
+ 
+ import type { ContextFootprint, PairedContextFootprint } from '../algorithm/tool-trim-admission.js';
+ import type { ContextUsageAnchorKey, ContextUsageAnchorState } from './usage-anchor.js';
+@@ -31,7 +31,7 @@
+   options: LocalContextFootprintOptions,
+ ): LocalContextFootprintMeasurer {
+   const tools = options.tools ?? [];
+-  const estimator = createDefaultTokenEstimator();
++  const estimator = modelTokenEstimator(options.model);
+   const fixedMessages = [
+     ...(options.systemPrompt ? [textMessage(options.systemPrompt)] : []),
+     ...(tools.length > 0 ? [textMessage(strictStringify(tools))] : []),
+diff --git a/packages/local-runtime-v2/src/service/turn-system/compaction/execution/checkpoint-provider.ts b/packages/local-runtime-v2/src/service/turn-system/compaction/execution/checkpoint-provider.ts
+--- a/packages/local-runtime-v2/src/service/turn-system/compaction/execution/checkpoint-provider.ts
++++ b/packages/local-runtime-v2/src/service/turn-system/compaction/execution/checkpoint-provider.ts
+@@ -9,7 +9,7 @@
+   type LLMCallUsage,
+   type LLMRequestSettledEvent,
+ } from '@mavis/agent-core/pi-turn-runner';
+-import { createDefaultTokenEstimator } from '@mavis/context-manager';
++import { modelTokenEstimator } from '../../../model-system/resolution/model-token-estimator.js';
+ 
+ import type { CheckpointSession } from '../algorithm/compact-context.js';
+ import type { PromptSnapshotSource } from '../../agent-host/contracts.js';
+@@ -199,7 +199,7 @@
+     validatePositiveSafeInteger(options.maxSerializedInputBytes, 'maxSerializedInputBytes');
+   }
+   const context = buildCheckpointRequest(options, input, systemPrompt);
+-  const estimator = createDefaultTokenEstimator();
++  const estimator = modelTokenEstimator(options.model);
+   const inputTokens =
+     estimator.estimateTextTokens(context.systemPrompt ?? '') +
+     estimator.estimateMessages(context.messages);
+@@ -218,7 +218,7 @@
+   systemPrompt: string,
+ ): { readonly inputTokens: number; readonly serializedBytes: number } {
+   const context = buildCheckpointRequest(options, input, systemPrompt);
+-  const estimator = createDefaultTokenEstimator();
++  const estimator = modelTokenEstimator(options.model);
+   return {
+     inputTokens:
+       estimator.estimateTextTokens(context.systemPrompt ?? '') +
