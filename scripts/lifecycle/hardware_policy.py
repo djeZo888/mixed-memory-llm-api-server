@@ -28,6 +28,7 @@ INITIALIZATION_SUFFIX = 'llm-manager/hardware-latch.initialized.json'
 INITIALIZATION_REVIEW_SUFFIX = 'llm-manager/evidence/h005-latch-first-install.reviewed.json'
 GPU_UUIDS = ('GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',
              'GPU-69acfa26-8b60-61b5-702d-aee252c163cc',
+             'GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528',
              'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23')
 UUID = re.compile(r'GPU-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z')
 BOOT = re.compile(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z')

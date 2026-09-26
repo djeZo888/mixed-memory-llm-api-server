@@ -34,7 +34,7 @@ NATIVE_VARIANTS = {'qwen38-27b-128k': 131072, 'qwen38-27b-256k': 262144}
 EXTENSION_PROFILE = 'qwen38-27b-1000000-yarn4-tp2-bf16kv'
 PAIR_PROFILES = frozenset(QWEN_PROFILES)
 # Kept as the GPU1 name for callers that already select the fixed Qwen slot.
-PAIR_PROFILE = 'qwen38-27b-q1-480000-yarn4-bf16kv'
+PAIR_PROFILE = 'qwen38-27b-q1-server-480000-yarn4-bf16kv'
 VARIANTS = {**NATIVE_VARIANTS, EXTENSION_PROFILE: 1000000,
             **dict.fromkeys(PAIR_PROFILES, 480000)}
 LAUNCHER_TARGET = '/opt/llmctl/sglang38_file_auth.py'
@@ -194,7 +194,7 @@ def pair_auth_fixture():
 def _pair_evidence(d, instance):
     """New actual-image receipt; parent auth/capacity receipts stay historical."""
     identity = runtime_oci(d)
-    slot = 'gpu' + str(d['concurrent_pair']['guest_gpu_index'])
+    slot = ('gpu0' if d['concurrent_pair']['slot'] == 'glm' else 'gpu1')
     path = _binding(d).path('data', 'services/llm-manager/evidence/h005-' + slot + '.auth.json')
     reference = instance.get('h005_pair_runtime_evidence', {}).get(d['id'], {})
     require(set(reference) == {'path', 'sha256'} and reference['path'] == path,
@@ -222,7 +222,7 @@ def launcher_targets(d):
 def command(d):
     validate(d)
     if d['id'] in PAIR_PROFILES:
-        return [PAIR_LAUNCHER_TARGET, '--slot', 'gpu' + str(d['concurrent_pair']['guest_gpu_index'])]
+        return [PAIR_LAUNCHER_TARGET, '--slot', ('gpu0' if d['concurrent_pair']['slot'] == 'glm' else 'gpu1')]
     # Namespace import is safe: launcher main is guarded, imports stdlib only,
     # and neither reads a key nor imports SGLang at module import time.
     from runtime.sglang38_file_auth import backend_argv

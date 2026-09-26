@@ -20,10 +20,10 @@ import xml.etree.ElementTree as ET
 from .node import BOOT, UUID, SERVICES
 from .passive import utc
 
-SPARE_UUID = 'GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528'
+SPARE_UUID = 'GPU-69acfa26-8b60-61b5-702d-aee252c163cc'
 GPU_UUIDS = tuple(u for values in SERVICES.values() for u in values) + (SPARE_UUID,)
 CONTAINERS = {'qwen-gpu0': 'llmctl-qwen38-27b-q0-480000-yarn4-bf16kv',
-              'qwen-gpu1': 'llmctl-qwen38-27b-q1-480000-yarn4-bf16kv',
+              'qwen-gpu1': 'llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv',
               'image': 'llm-image-backend'}
 MAX_OUTPUT = 256 * 1024
 
