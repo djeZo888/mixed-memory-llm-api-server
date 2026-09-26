@@ -59,3 +59,5 @@ actual app/gateway import checks; see [packaging correction](PACKAGING-02.md).
 The [capture correction](CAPTURE-02.md) preserves durable boundaries while
 avoiding per-token fsync. Driver/gate/image/source pins and compact actual
 receipts are in ACCEPTANCE-02.json; private wire snapshots remain onai-harness.
+
+Final deployment completed after Worker1 final recovery; see [deployment receipt](DEPLOYMENT-02.md). Private health/status200, canonical Flash/Qwensavailable, FullHD restored, current data/files preserved.
