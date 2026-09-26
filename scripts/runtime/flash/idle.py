@@ -54,7 +54,9 @@ def install(scheduler_module):
             raise RuntimeError('flash_sm120_device_required')
         x=torch.ones((128,128),device='cuda'); y=x@x; torch.cuda.synchronize()
         if y[0,0].item()!=128: raise RuntimeError('flash_sm120_execution_failed')
-        print('FLASH_NATIVE_ALLOCATION '+json.dumps({**native,'sm120_execution':'PASS'}),flush=True)
+        print('FLASH_NATIVE_ALLOCATION '+json.dumps({**native,
+            'resolved_cache_dtype':str(self.tp_worker.model_runner.kv_cache_dtype),
+            'sm120_execution':'PASS'}),flush=True)
         self._flash_idle = FlashIdle(self)
     def run(self, *args, **kwargs):
         self._flash_idle.work()
