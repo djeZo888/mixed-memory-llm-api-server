@@ -171,6 +171,21 @@ class Handlers(unittest.IsolatedAsyncioTestCase):
             self.assertEqual((await client.post('/v1/images/generations', json={'prompt': 'x'})).status_code, 400)
             self.assertEqual(backend.calls, [])
 
+    async def test_generation_profile_removal_refuses_without_resize_and_advertises_maximum(self):
+        retained = [profile('generation', 0), profile('generation', 0, '1760x992'),
+                    profile('edit', 1), profile('edit', 1, '1536x864'), profile('edit', 2)]
+        async with fixture(qualification=config(retained)) as (client, _, backend, _):
+            caps = (await client.get('/v1/image-capabilities')).json()
+            status = (await client.get('/health/ready')).json()
+            self.assertEqual(caps['maximum_supported_generation_size'], '1760x992')
+            self.assertEqual(status['maximum_supported_generation_size'], '1760x992')
+            self.assertEqual([(p['operation'], p['size'], p['references']) for p in caps['profiles']],
+                             [(p['operation'], p['size'], p['references']) for p in retained])
+            reply = await client.post('/v1/images/generations', json={'prompt': 'fixture', 'size': '1920x1080'})
+            self.assertEqual(reply.status_code, 400)
+            self.assertEqual(reply.json()['error']['code'], 'unqualified_profile')
+            self.assertEqual(backend.calls, [])
+
     async def test_png_jpeg_references_actual_decode_and_no_resize(self):
         async with fixture() as (client, _, backend, _):
             for fmt in ('PNG', 'JPEG'):

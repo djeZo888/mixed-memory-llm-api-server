@@ -22,7 +22,7 @@
     "chunked_prefill_size": 2048,
     "kt_method": "FP8",
     "kt_cpuinfer": 64,
-    "kt_threadpool_count": 2,
+    "kt_threadpool_count": 8,
     "kt_num_gpu_experts": 0,
     "kt_gpu_prefill_token_threshold": 2048,
     "cuda_graph_bs": [
@@ -31,7 +31,17 @@
       4
     ],
     "tool_call_parser": "glm47",
-    "reasoning_parser": "glm45"
+    "reasoning_parser": "glm45",
+    "kt_numa_nodes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ]
   },
   "request_policy": {
     "payloads": [
@@ -57,8 +67,19 @@
   },
   "cpu_policy": {
     "expert_threads": 64,
-    "threadpool_count": 2,
-    "numa_spread": true
+    "threadpool_count": 8,
+    "numa_spread": true,
+    "guest_numa_nodes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "physical_host_core_mapping": "NOT_PROVEN_GLOBAL_AFFINITY_ONLY"
   },
   "acceptance_plan": {
     "configured_context": 480000,
@@ -68,15 +89,16 @@
       16384
     ],
     "sustained_decode_max_tokens": 2048,
-    "below_one_decode_token_per_second_stop_after_seconds": 300,
-    "near_full_occupied_context": "NOT_TESTED"
+    "near_full_occupied_context": "NOT_TESTED",
+    "progressing_request_cap_seconds": 1200,
+    "measured_output_tokens": 64,
+    "live_input_ceiling": 16384
   },
   "pending": [
-    "root exact activation GO",
-    "verified weights and immutable dependency capture",
-    "live native allocation and bounded inference qualification"
+    "H009 targeted runtime correction qualification",
+    "4K/16K native completion and semantic tool acceptance"
   ],
-  "owner": "H008-FLASH-20260926",
+  "owner": "H009-FLASH-20260926",
   "native_usable_bounds": {
     "input_tokens_max": 479993,
     "input_plus_requested_output_max": 479998,
