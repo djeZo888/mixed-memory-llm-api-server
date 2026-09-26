@@ -1,8 +1,10 @@
-# H006 narrow maintenance robustness — source candidate
+# H006 narrow maintenance robustness
 
-This candidate is based on `d703a254033cacc227644be47cc2d1150ac908f4`.
-It is source-only: root exact-source review and a fresh deployment/recovery GO
-are still required. The separate topology plan `acee029` is not included.
+The implementation was reviewed from `11c24d9`, based on
+`d703a254033cacc227644be47cc2d1150ac908f4`, and deployed on September 26.
+The recipe below records its deployment controls; it is not a direction to repeat
+the recovery. See the [H006 live report](h006-closeout-20260926.md) for outcomes,
+limitations and the separate control-operation completion correction.
 The September 26 diagnosis establishes an unattended library-update/API-restart
 shutdown chain, but **not the precise replacement-start refusal**. This change
 cannot retrospectively identify it. No healthy-backend adoption is added.
@@ -62,8 +64,9 @@ only when its local read is unavailable; it is not invented.
 
 Receipts are unique, exclusively created, fsynced files at registered
 `logs/image-runtime-attempts/<attempt_id>.json` (currently
-`/data/logs/image-runtime-attempts/`). The root-owned directory is created 0700;
-files are 0600. The same protected registration, full mounted/ancestry guard and
+`/data/logs/image-runtime-attempts/`). The root-owned directory has 0700 access
+permissions; the deployed directory also inherits the parent's SGID bit (2700),
+which grants no group access. Files are 0600. The same protected registration, full mounted/ancestry guard and
 root payload guard run before/after writes. No diagnostic write acquires a second
 lifecycle lock: these immutable exclusive files do not replace shared state.
 Existing registration identity and anchored descriptors remain authoritative.
@@ -106,7 +109,7 @@ mutation, request, warm generation or uncertain outcome is replayed. Existing
 source and the closeout's observed transient collector contention justify this
 preventive admission change; they do not prove the 06:00 failure subtype.
 
-## Root deployment and recovery recipe — not executed
+## Reviewed deployment and recovery procedure
 
 1. Review the exact source head and bundle in task `SOURCE-RESULT.json`. Refresh
    root's current deployment manifest, node/control/image identities, package

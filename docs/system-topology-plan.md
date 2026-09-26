@@ -24,10 +24,12 @@ flowchart TB
         Engine[MiniMax engines in task containers]
         Gateway[Text inference gateway]
         ImageJobs[Image job service]
+        Dispatch[Dispatch interlock]
         Search[SearXNG and search adapter]
-        Tools[Chromium, PDF and coding tools]
+        Tools[Chromium, PDF, image MCP and coding tools]
         Status[Independent status/admin service]
-        Helper[Local lifecycle helper and task policy]
+        Helper[Local administrative helper]
+        TaskPolicy[Egress watcher and task slice]
         Store[(Chat metadata and files)]
     end
     subgraph M[ai-vm VM]
@@ -37,29 +39,51 @@ flowchart TB
         Q1[Qwen instance 1 - Blackwell]
         ImageAPI[Image API and backend owner]
         Image[Qwen-Image - Ada]
+        Transport[Private API socket/service transports]
+        Boot[Boot reconciliation]
+        Containers[Docker and containerd]
     end
     User --> Web
     User --> Status
     Web --> Engine
     Web --> Store
+    Web --> Dispatch
     Engine --> Gateway
     Engine --> ImageJobs
     Engine --> Search
     Engine --> Tools
+    Engine -. task policy .-> TaskPolicy
     Gateway --> Q0
     Gateway --> Q1
     ImageJobs --> ImageAPI
     ImageAPI --> Image
     Status --> Node
     Status --> Helper
+    Gateway -. private transport .-> Transport
+    ImageJobs -. private transport .-> Transport
+    Status -. private transport .-> Transport
     Node --> Control
     Control --> Q0
     Control --> Q1
+    Boot --> Control
+    Boot --> ImageAPI
+    Containers -. hosts .-> Q0
+    Containers -. hosts .-> Q1
+    Containers -. hosts .-> Image
 ```
 
 Some boxes are components of one deployed service, not separate restartable
 processes. The registry must express this distinction. Node monitoring and
 supporting host services must not disappear merely because they have no GPU.
+
+The implemented inventory is in
+[`ai-harness/config/system-registry.json`](../ai-harness/config/system-registry.json):
+seven managed services plus 25 supporting or in-process components. The private
+transport box groups the fixed control/node/image and two text socket/service
+pairs; the task boxes group the on-demand MiniMax engine and its tool adapters.
+SearXNG includes its rootless container/transport. SQLite and workspace files are
+storage, not separate database daemons. A listed component without an independent
+probe has unknown health; its parent's availability is not a health certificate.
 
 `control` is deterministic lifecycle software, not a model. MiniMax agents use
 models for reasoning and delegation. A future capability-aware model router can

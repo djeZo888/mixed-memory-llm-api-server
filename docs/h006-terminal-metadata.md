@@ -1,8 +1,11 @@
-# H006 terminal metadata source candidate
+# H006 terminal metadata correction
 
-Source/offline only, based on `11c24d9c5a0bac3682cd633905fa7991ec968f19`.
-Root exact review and a fresh bounded activation assignment remain required.
-No VM contact, model request, service action or journal change occurred here.
+Source task based on `11c24d9c5a0bac3682cd633905fa7991ec968f19`, followed by
+separate reviewed activation of exact worker commit
+`4eebece053b3a0e40143ea16dd3892482b55d949`. The source task performed no VM
+actions. The subsequent deployment restarted only the node API and retained
+all loaded model identities and warm receipts. See the
+[closeout report](h006-closeout-20260926.md) for live evidence and limitations.
 
 ## Behavior and limits
 
@@ -52,7 +55,7 @@ preserves operation ID, request/key digests, dispatch flag and prior audit.
 same boot remains unknown; changed boot can establish reboot success. The old
 image restart is not that special case. No new reconciler is added.
 
-## Matched publication plan for later root authorization
+## Reviewed matched publication procedure
 
 The task's external `SOURCE-TRANSITION.json` binds exact before/after hashes and
 candidate metadata; `SOURCE-RESULT.json` binds the commit and test logs. Inputs
@@ -98,15 +101,17 @@ control restart is a blocker for this node-only plan, not restart authority.
    Assign a fresh Worker1 activation window; coordinate no new lifecycle actions
    with all clients. Refresh protected installed hashes, registered storage,
    root-disk guard identities and current journals. Any unreviewed source drift,
-   new running operation or active owner transition is a stop condition.
+   new running operation or active owner transition beyond the exact step2
+   completion-observation exception is a stop condition.
 2. Capture boot, node/control/image unit invocation IDs/PIDs/jobs, all three
    container IDs/images/start times/PIDs and native process start ticks. Preserve
    both Qwen480000 configuration bindings, image warm run/receipt hashes,
    ready/admitting observations, intent/recovery/latch and control journal hashes.
    Reconfirm no other active node/control operations, fixed image helpers or
    systemd jobs. Root11:10 explicitly permits interruption of **this known
-   operation's completion observation only**, with its exact accepted/dispatch
-   record. Acquire the canonical lease **before stopping node**, excluding
+   operation's completion observation only**: image operation
+   `1405e70bbdf0488589c5dc15f5710f3f`, with its exact accepted/dispatch record.
+   Acquire the canonical lease **before stopping node**, excluding
    dispatch mutation, and preserve model identities. No invasive `_busy` or
    Python-stack inspection is needed when these constraints are proved; absence
    of such inspection alone is not a blocker. Any other active work is a stop.
@@ -115,18 +120,20 @@ control restart is a blocker for this node-only plan, not restart authority.
    source files, old release manifest, acceptance, instance and boot unit. Capture
    journals as evidence only, never as rollback replacement inputs. Preserve the
    old maintenance backup and `/data/services/h006-maintenance-deploy-20260926/DELIVERY-MANIFEST.json`.
-4. While holding that canonical lease, stop **only** `llm-node.service`. Stage the new
-   release and metadata with protected ancestry, mounted guards and anchored
-   registered writes. Under canonical ownership, CAS-check captured before bytes,
+4. Keep the **same canonical lease continuously held through node stop and all
+   publication**, releasing it only after verification and before node start.
+   Stop **only** `llm-node.service`. Stage the new release and metadata with
+   protected ancestry, mounted guards and anchored registered writes. Before
+   publication prove the staged 140-file closure matches the old release with
+   exactly one owner-file hash changed, and all 81 critical source entries match
+   the proposed receipt. Under canonical ownership, CAS-check captured before bytes,
    publish the two source copies and matching acceptance/instance/boot binding,
    and re-read complete hashes. Individual replacements are atomic; this set is
    not one atomic transaction. Keep node stopped on partial failure. No live
    control action may be admitted during publication; the canonical lease guards
    mutation. Its running process does not import the changed node owner.
-5. Before publication, prove the staged 140-file closure matches the preserved
-   old release with exactly one owner-file hash changed, and that all 81 critical
-   source entries match the proposed receipt. After publication repeat this proof
-   from both installed roots and the successor release;
+5. After publication repeat that closure proof from both installed roots and
+   the successor release;
    validate existing acceptance for both modes/all three supported text profiles
    using read-only checks, not lifecycle commands. Verify unchanged image closure,
    all protected guards and model identities. Write the new protected delivery

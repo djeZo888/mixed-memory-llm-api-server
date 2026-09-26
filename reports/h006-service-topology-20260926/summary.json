@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-26",
+  "result": "DEPLOYED_WITH_DOCUMENTED_LIMITATIONS",
+  "source_commits": {
+    "maintenance_worker": "11c24d9c5a0bac3682cd633905fa7991ec968f19",
+    "status_worker": "24020c98ed6135a6c19c973ebb90e52dc95c2a6e",
+    "node_worker": "4eebece053b3a0e40143ea16dd3892482b55d949",
+    "root_integrated_code": "bf4c669"
+  },
+  "incident": {
+    "trigger": "unattended libexpat security update invoked needrestart; image API startup recovery stopped old native backend and replacement failed before container creation",
+    "replacement_failure_subtype": "UNKNOWN_diagnostics_discarded_at_time",
+    "idle_scheduler_failure": "NOT_DEMONSTRATED",
+    "gpu_disappearance": "NOT_DEMONSTRATED"
+  },
+  "recovery": {
+    "canonical_image_restart_count": 1,
+    "deterministic_warmup": "PASS",
+    "warmup_completed_utc": "2026-09-26T10:40:51.988Z",
+    "image_ready_admitting": "PASS",
+    "text_ready": "PASS",
+    "text_context_tokens_each": 480000,
+    "three_model_identities_preserved_during_final_node_activation": "PASS",
+    "extra_user_image_requests": 0,
+    "extra_text_inference_requests": 0
+  },
+  "maintenance": {
+    "needrestart_automatic_selection_deferred_units": 4,
+    "security_package_installation": "enabled",
+    "explicit_maintainer_manual_restarts": "outside override",
+    "protected_attempt_receipts": "PASS",
+    "controlled_restart_policy": "ordinary deferred patched processes within24h; urgent updates sooner"
+  },
+  "node_activation": {
+    "completed_utc": "2026-09-26T11:29:04.707673Z",
+    "node_only_stop_count": 1,
+    "node_only_start_count": 1,
+    "other_model_control_boot_image_harness_restarts": 0,
+    "old_operation_status": "interrupted",
+    "old_operation_reason": "operation_interrupted",
+    "audit_identity_preserved": "PASS",
+    "new_lifecycle_operations": 0,
+    "first_operation_http_status": 404,
+    "first_404_cause": "UNKNOWN_startup_cache_timing_plausible_not_proved",
+    "subsequent_operation_http_status": 200,
+    "current_node_status": "ok_fresh",
+    "source_only_qualification_inheritance": true,
+    "new_model_capacity_auth_qualification": false,
+    "terminal_error_syslog_delivery": "NOT_TESTED"
+  },
+  "status": {
+    "configured_nodes": [
+      "ai-vm",
+      "ai-harness"
+    ],
+    "managed_services": 7,
+    "supporting_or_in_process_components": 25,
+    "inventory_only_components_with_unknown_independent_health": 20,
+    "additional_fixed_local_probes": 4,
+    "all32_host_type_mappings": "PASS",
+    "desktop_and_mobile_live_browser": "PASS",
+    "unreachable_nodes_remain_listed": true,
+    "new_nodes_separate_credentials_required": true,
+    "existing_admin_scopes_preserved": "PASS",
+    "live_admin_actions_submitted": 0
+  },
+  "verification": {
+    "maintenance_source_tests": 53,
+    "canonical_lease_tests": 37,
+    "terminal_record_tests": 46,
+    "status_final_affected_server_tests": 93,
+    "local_helper_resource_tests": 28,
+    "status_live_checks": 29,
+    "linux_typecheck_build": "PASS",
+    "third_node_and_unavailable_peer": "SYNTHETIC_PASS",
+    "live_owner_sqlite_contents": "NOT_TESTED_locked_metadata_preserved",
+    "long_gpu_idle_benchmarks": "NOT_REPEATED",
+    "full_image_edit_regression": "NOT_REPEATED_unchanged_native_qualification"
+  },
+  "portability": {
+    "implemented": "central registry, host placement display and separately credentialed compatible node observation",
+    "automatic_workload_migration": false,
+    "inference_endpoint_remapping": false,
+    "new_vm_provisioning": false,
+    "semantic_arbitrary_model_selection": false
+  },
+  "retained_diagnostic_failures": [
+    "initial browser test selector corrected in tooling only",
+    "historical systemd execution fields excluded from preservation comparison after daemon-reload",
+    "initial post-start operation lookup404; later200 matches durable interrupted record"
+  ],
+  "private_receipt_digests": {
+    "image_deployment": {
+      "sha256": "a1698a60ce4aaaf4343a32165721e96444c03b416129cb627d3954c05e9a75c4",
+      "retention": "private task evidence; raw contents not published"
+    },
+    "status_acceptance": {
+      "sha256": "7e91c26652689f56bef7a9246dd8fbc259e4604174507f66a3d40d0ca4cd2097",
+      "retention": "private task evidence; raw contents not published"
+    },
+    "status_evidence_manifest": {
+      "sha256": "4fbbebee9d785245fc52a738c5398059fe006e711155fcf61efe19ece09356bb",
+      "retention": "private task evidence; raw contents not published"
+    },
+    "node_deployment": {
+      "sha256": "db16df99c3eb0d225f573ba1c75503ae1f4c94053792aaa34fcb77be2fb9a432",
+      "retention": "private task evidence; raw contents not published"
+    }
+  },
+  "protected_delivery_manifest_sha256": {
+    "image": "160a855a773d7f1fddfd66b6e87696e3d3268e9ad8112fc8254bb3a0e2672c75",
+    "node": "8ca7036223ffded60321872ceb06a874ece55db6f86638fefec94df472e9825e"
+  },
+  "naming": {
+    "selected": null,
+    "suggestions": [
+      "Sova",
+      "Sestav",
+      "Nodus",
+      "Tandem",
+      "Polaris"
+    ]
+  }
+}

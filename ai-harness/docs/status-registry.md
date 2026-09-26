@@ -174,8 +174,10 @@ cache, build and log storage with installed guards; existing ordinary task user,
 container/cgroup/egress prerequisites; protected credentials and private transport;
 and the real service/lifecycle owner with accepted capacity, health, leases and
 recovery evidence. None of these are established by a displayed registry row or
-source/synthetic test. Deployment, inference/lifecycle acceptance and installer
-work remain outside H006.
+source/synthetic test. The existing two-node status/helper deployment was checked
+separately in [the H006 live report](../../docs/h006-closeout-20260926.md).
+Deploying workloads on additional nodes, changing inference routing and installer
+work remain later steps.
 
 ## Focused offline verification
 
