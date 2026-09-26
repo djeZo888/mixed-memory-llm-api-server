@@ -161,6 +161,8 @@ class CollectorsTests(unittest.TestCase):
     def test_production_observers_are_bounded_and_individual(self):
         callbacks=collectors.production_callbacks()
         self.assertLessEqual(len(callbacks),17)
+        from control.passive import BoundedObservers
+        BoundedObservers(callbacks).close()
         self.assertEqual(len([name for name in callbacks if name.startswith('gpu:')]),4)
         self.assertNotIn('gpu_metrics',callbacks)
 
