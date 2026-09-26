@@ -28,9 +28,18 @@ def normalized_text_request(payload):
     if not isinstance(messages, list) or not messages:
         raise ContractError('messages_required')
     for message in messages:
-        if not isinstance(message, dict) or message.get('role') not in {'system', 'user', 'assistant', 'tool'}:
+        if not isinstance(message, dict) or message.get('role') not in {'system', 'developer', 'user', 'assistant', 'tool'}:
             raise ContractError('text_message_required')
-        if message.get('content') is not None and not isinstance(message['content'], str):
+        if message['role'] == 'developer':
+            message['role'] = 'system'
+        content = message.get('content')
+        if isinstance(content, list):
+            if any(type(part) is not dict or set(part) != {'type', 'text'}
+                   or part['type'] != 'text' or type(part['text']) is not str for part in content):
+                raise ContractError('multimodal_payload_unqualified')
+            # Pinned GLM openai-format template emits adjacent item.text values.
+            # Preserve arrays for the same native processing on BOTH routes.
+        elif content is not None and not isinstance(content, str):
             raise ContractError('multimodal_payload_unqualified')
         if any(key in message for key in ('image_url', 'video_url', 'audio', 'input_audio')):
             raise ContractError('multimodal_payload_unqualified')
@@ -50,6 +59,8 @@ def normalized_text_request(payload):
     for field in ('max_tokens', 'max_completion_tokens'):
         if field in value and (type(value[field]) is not int or not 1 <= value[field] <= OUTPUT):
             raise ContractError('output_ceiling_exceeded')
+    if value.get('n', 1) != 1 or value.get('continue_final_message', False):
+        raise ContractError('single_generation_required')
     value['reasoning_effort'] = 'high'
     value['chat_template_kwargs'] = {'clear_thinking': True}
     return value

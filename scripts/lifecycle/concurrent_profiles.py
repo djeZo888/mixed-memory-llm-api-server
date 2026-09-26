@@ -284,6 +284,8 @@ def check_acceptance(d, instance, *, mode=None):
             and isinstance(receipt.get('evidence'), list) and receipt['evidence']
             and all(isinstance(item, str) and item.strip() for item in receipt['evidence']),
             'concurrent_acceptance_identity_mismatch')
+    if receipt.get('h008_flash_source_transition') is not None:
+        require(d['id'] != GLM_PROFILE and mode != 'glm-qwen', 'historical_glm_disabled_flash_reserved')
     validate_gpu_inventory(receipt.get('gpu_inventory'))
     modes = receipt.get('modes')
     require(isinstance(modes, dict) and set(modes) == set(MODES), 'concurrent_acceptance_modes_mismatch')
@@ -327,7 +329,7 @@ def _check_h008_transition(receipt, binding):
         'services/llm-manager/evidence/h008-qwen1-proof.json'), maximum=1024 * 1024)
     require(receipt_sha256(fresh) == transition['proof_sha256']
         and fresh.get('kind') == 'h008-qwen1-fresh-hardware-allocation'
-        and fresh.get('source_sha256') == source_identity()
+        and fresh.get('source_sha256') == _h008_commission_source(receipt, binding)
         and fresh.get('gpu_uuid') == GPU_UUIDS[1]
         and fresh.get('configured_context') == 480000
         and fresh.get('native_pool_tokens') == 480000
@@ -346,6 +348,24 @@ def _check_h008_transition(receipt, binding):
         require(same(receipt['modes'][mode]['slots']['glm'], prior['modes'][mode]['slots']['glm'])
             and same(receipt['modes'][mode]['slots']['qwen'], fresh.get('slot_proof')),
             'h008_slot_measurement_mismatch')
+
+
+def _h008_commission_source(receipt, binding):
+    successor = receipt.get('h008_flash_source_transition')
+    if successor is None:
+        return source_identity()
+    require(type(successor) is dict and set(successor) == {'kind','predecessor_sha256'}
+        and successor['kind'] == 'source-only-flash-integration', 'h008_flash_successor_invalid')
+    prior = binding.read_json('data', binding.path('data',
+        'services/llm-manager/evidence/h008-qwen1-commission.accepted.json'), maximum=1024*1024)
+    require(receipt_sha256(prior) == successor['predecessor_sha256'], 'h008_flash_predecessor_invalid')
+    # Preserve every dated measurement verbatim. Only reviewed source binding,
+    # revision and this explicit successor link may change.
+    left = {k:v for k,v in receipt.items() if k not in
+            {'source_sha256','reviewed_source_commit','h008_flash_source_transition'}}
+    right = {k:v for k,v in prior.items() if k not in {'source_sha256','reviewed_source_commit'}}
+    require(same(left,right), 'h008_flash_measurements_changed')
+    return prior['source_sha256']
 
 
 def _check_h005_transition(receipt, binding):

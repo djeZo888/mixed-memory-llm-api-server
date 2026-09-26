@@ -747,7 +747,13 @@ class Manager:
                 bindings = host.get('PortBindings') or {}
                 ports = {str(v.get('HostPort')) for values in bindings.values() if isinstance(values, list) for v in values}
                 if requested or ports & {'30002', '30004'}:
-                    self.validate_dedicated_image_peer(c, deployment)
+                    if c.get('Name') == '/llm-frontier-flash':
+                        from runtime.flash.owner import validate_container, BASE
+                        require(deployment['id'] != pair.GLM_PROFILE, 'historical_glm_disabled_flash_reserved')
+                        validate_container(c, self.binding.read_json('services', BASE + '/config.json'),
+                                           self.binding.read_json('services', BASE + '/state.json'))
+                    else:
+                        self.validate_dedicated_image_peer(c, deployment)
 
     def validate_dedicated_image_peer(self, c, deployment):
         """Prove the approved dedicated owner, never adopt an unknown GPU user.

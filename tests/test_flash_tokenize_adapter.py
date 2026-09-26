@@ -18,8 +18,18 @@ class FlashTokenize(unittest.TestCase):
         self.assertNotIn('reasoning_effort', payload)
 
     def test_multimodal_is_rejected_before_native_count(self):
-        for content in [[{'type': 'image_url', 'image_url': {'url': 'example'}}], [{'type': 'text', 'text': 'ambiguous structured expansion'}], 3]:
+        for content in [[{'type': 'image_url', 'image_url': {'url': 'example'}}], [{'type': 'audio', 'text': 'unqualified'}], 3]:
             payload = self.payload(); payload['messages'][0]['content'] = content
+            with self.assertRaises(a.ContractError): a.normalized_text_request(payload)
+
+    def test_text_arrays_are_preserved_without_inserted_separator(self):
+        payload = self.payload()
+        payload['messages'][0]['content'] = [{'type':'text','text':'Hello'}, {'type':'text','text':'world'}]
+        value = a.normalized_text_request(payload)
+        self.assertEqual(value['messages'][0]['content'], payload['messages'][0]['content'])
+        self.assertEqual(''.join(x['text'] for x in value['messages'][0]['content']), 'Helloworld')
+        for invalid in [[{'type':'unknown','text':'x'}], [{'type':'text','text':3}], [{'type':'text','text':'x','image_url':'x'}]]:
+            payload['messages'][0]['content'] = invalid
             with self.assertRaises(a.ContractError): a.normalized_text_request(payload)
 
     def test_output_alias_template_and_reasoning_gates(self):
