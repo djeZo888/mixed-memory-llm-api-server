@@ -89,8 +89,24 @@ unconfirmed container settlement retains the backend workspace quarantine.
 ## v0.0.3 host image broker and browser approval capability
 
 The reviewed server pins Sharp 0.35.4 (lockfile includes its platform codec) on
-Node24. Run `npm ci` in server on the deployment host; do not copy macOS native
-node_modules to Linux. Main reuses the existing protected inference-key loader
+Node24. Install the committed server lockfile on the Linux deployment host with
+readable dependency modes, even when the surrounding deployment uses umask077:
+
+```sh
+# Inside the isolated staged release server directory, as the build user.
+(umask 022; npm ci)
+node --input-type=module -e "await import('./dist/app.js'); await import('./dist/gateway.js')"
+```
+
+Preserve those dependency modes when copying the staged release. Before paired
+promotion, repeat both direct imports from the final installed release as the
+ordinary service user. Root ownership alone does not prove runtime readability;
+root-owned0700 dependency directories and0600 files prevent module resolution.
+Keep deployment receipts, credentials and user data private; this umask applies
+only to the lockfile dependency-install subprocess. Preserve the lock digest and
+installed dependency hashes in the release receipt. Do not copy macOS native
+node_modules to Linux or depend on another release's dependency symlink.
+Main reuses the existing protected inference-key loader
 and key for fixed `http://10.156.100.60:30006`. There is no production URL override.
 Image health/reconciliation owns no text lane. Missing edit capabilities keep
 editing unavailable. This source delivery does not qualify image editing.
