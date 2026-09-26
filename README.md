@@ -1,7 +1,8 @@
 # Sova
 
 Sova is the whole-system name for this open-source AI workspace project: a
-chat/task harness, MiniMax agent runtime, two Qwen text instances, dedicated
+chat/task harness, MiniMax agent runtime, two Qwen text instances, an optional
+GLM-5.3-Flash reasoning worker, dedicated
 image generation and guarded editing, search/browser/PDF/coding tools, and
 deterministic lifecycle, status and administration software. Source paths, VM
 names and runtime identifiers retain their existing names. The intended
@@ -29,7 +30,7 @@ flowchart TB
         Web["Web chat and task API"]
         Agent["MiniMax main and child agents"]
         Tools["Search, browser, PDF and coding tools"]
-        Gateway["Fixed-Qwen gateway: two shared slots"]
+        Gateway["Inference gateway: two Qwen slots + one Flash slot"]
         ImageJobs["Image tools and job broker"]
         Data[("Chat metadata, workspaces and artifacts")]
         Status["Status and typed admin"]
@@ -38,8 +39,9 @@ flowchart TB
     subgraph M["current placement: ai-vm VM"]
         Node["Node status and typed operations"]
         Control["Deterministic text lifecycle control"]
-        Q0["Qwen text instance 0 / GPU0"]
-        Q1["Qwen text instance 1 / GPU1"]
+        Q0["Qwen text instance 0 / fast Blackwell"]
+        Q1["Qwen text instance 1 / Server Blackwell"]
+        Flash["GLM-5.3-Flash / CPU experts + fast Blackwell"]
         Image["Separate image API and Qwen-Image service / Ada"]
     end
     subgraph Future["FUTURE / OPTIONAL — not deployed"]
@@ -56,11 +58,13 @@ flowchart TB
     ImageJobs --> Data
     Gateway --> Q0
     Gateway --> Q1
+    Gateway --> Flash
     ImageJobs --> Image
     Status --> Node
     Status --> Helper
     Node --> Control
     Node --> Image
+    Node --> Flash
     Control --> Q0
     Control --> Q1
     User -.-> LB
@@ -81,13 +85,34 @@ adequate resources, registered storage, network/security policy and explicit
 deployment work. Registry edits alone do not relocate workloads or select models.
 
 The ai-vm role remains API-only, with separate direct inference endpoints and
-**no common ai-vm inference router**. The harness already has its own fixed-Qwen
-gateway: main agents, child agents and auxiliary calls share exactly two global
-inference slots. Image tools use a separate service; GLM is not integrated into
-the harness. Flexible routing is an accepted future design, not implemented
-arbitrary-model selection.
+**no common ai-vm inference router**. The harness gateway provides two Qwen slots
+and one independent Flash slot; image jobs use their own service. Qwen coordinates
+tasks and normally handles coding and agentic work. MiniMax can delegate difficult
+research, document analysis and reasoning to its native `frontier` child running
+GLM-5.3-Flash. This fixed routing policy does not implement arbitrary-model
+selection. See [H009 qualification and limits](docs/h009-status-20260926.md).
 
 ## Current models and dated acceptance
+
+The H009 deployment adds **GLM-5.3-Flash FP8** with CPU experts and a dedicated
+fast Blackwell, alongside both **Qwen3.8-27B FP8** instances and **Qwen-Image-2.1**
+on Ada. All three text services configure **480,000 tokens**; Flash has been
+tested with occupied inputs only through 16K. Qwen1 now uses the additional
+Server Blackwell. The [H008 migration report](docs/h008-status-20260926.md) records
+its warmed 64K result: 7,279 effective input tokens/s and 36.28 output tokens/s.
+These are separate tests, not simultaneous aggregate throughput.
+
+| Current text instance | Private API base | Role |
+|---|---|---|
+| Qwen0 | `http://10.156.100.60:30002/v1` | General coordination, coding and tools |
+| Qwen1 | `http://10.156.100.60:30004/v1` | Second concurrent Qwen lane |
+| GLM-5.3-Flash | `http://10.156.100.60:30010/v1` | Selective native frontier child |
+
+Current readiness must be checked through status. The linked H009 report records
+final recovery and evidence limits; configured capacity alone is not proof of
+full-context speed or correctness.
+
+### Historical two-GPU deployment — September 21
 
 Text profiles cover **Qwen3.8-27B FP8** and optional **GLM5.3 UD-Q4_K_XL**;
 the dedicated image model is **Qwen-Image-2.1**.
@@ -143,10 +168,10 @@ memory benchmark was run for the identical native workload.
 ## Use the APIs
 
 Control uses `http://10.156.100.60:30000/control/v1/...`. Clients discover and
-explicitly address separate inference bases on ports 30002 and 30004, each
+explicitly address separate inference bases on ports 30002, 30004 and 30010, each
 with `/v1`; the aliases above identify the loaded instance. These direct ai-vm
 APIs have no common inference router or automatic fallback; the harness's
-fixed-Qwen gateway is a separate client-side component. Native listeners stay
+Qwen/Flash gateway is a separate client-side component. Native listeners stay
 authenticated IPv4 loopback behind the reviewed private transport.
 
 - [Image API source and integration](docs/image-api.md): private image API interface.

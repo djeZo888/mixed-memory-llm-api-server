@@ -46,9 +46,10 @@ authorized windows and preserve manual operator control. Required work:
 
 ## Future routing and scaling
 
-**ACCEPTED DESIGN / IMPLEMENTATION PENDING.** The current harness still uses one
-Qwen family, two instances and two shared inference slots. The image tool path
-is separate; there is no GLM harness integration or arbitrary-model selection.
+**ACCEPTED DESIGN / GENERAL ROUTING IMPLEMENTATION PENDING.** H009 adds a fixed
+GLM-5.3-Flash frontier lane beside the two Qwen slots. Qwen remains coordinator;
+the image path stays separate. This is selective native child delegation, not
+arbitrary-model selection or distributed capacity management.
 
 - Implement ModelDefinition / ModelInstance / Node separation and multiple
   general-purpose and specialist models, with N compatible instances per model.
@@ -73,6 +74,24 @@ is separate; there is no GLM harness integration or arbitrary-model selection.
 See the [future routing contract](docs/sova-architecture.md#accepted-future-model-and-routing-design).
 No distributed MiniMax deployment or new capacity benchmark is claimed. General
 installer implementation and tests remain paused.
+
+## Flash follow-up qualification
+
+- Measure varied technical input and first-use behavior separately from warmed
+  repetitive fixtures. H009's first full-tool request took 620 seconds, while
+  its three continuations took 109, 45 and 49 seconds. Do not extrapolate a
+  constant speed from either the fastest native decode window or that first turn.
+- Test larger occupied contexts only in the separate user-authorized round.
+  Configured context is 480000; current Flash occupancy tests stop at 16384.
+- Investigate supported prefix reuse in a later pinned runtime. The current
+  GLM KPool implementation forces radix caching off for correctness; do not
+  bypass that guard as a performance tweak.
+- Refine Flash's conservative local context estimator, which can compact prose
+  earlier than the backend's actual token capacity. Preserve exact backend
+  tokenizer admission and original history while doing so.
+- Qualify the new Flash service's 600-second idle/wake behavior separately.
+  The current live workflow proves request processing after an idle interval,
+  but no controlled before/after CPU-idle measurement was performed in H009.
 
 ## Future organizations and access control
 
