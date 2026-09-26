@@ -1,6 +1,62 @@
 import { request } from "node:http";
 import type { NodeAction, NodeId } from "./node-contract.js";
 import { ApiError } from "./errors.js";
+
+// Fixed producer vocabulary from scripts/control/node_actions.py ERRORS.
+const upstreamCodes = new Set([
+  "invalid_request", "operation_unknown", "idempotency_conflict", "stale_state",
+  "interruption_ack_required", "lifecycle_busy", "hardware_unavailable",
+  "unsupported_action", "owner_unavailable", "storage_unavailable",
+  "deadline_exceeded", "observation_unavailable", "invalid_owner_receipt",
+  "operation_interrupted", "operation_failed", "reset_scope_unproven",
+  "consumers_present", "reboot_pending", "journal_full",
+]);
+const RESPONSE_LIMIT = 512 * 1024;
+
+/** Internal diagnostics only. Public ApiError fields retain their existing values. */
+export class NodeResponseError extends ApiError {
+  readonly upstreamStatus: number | null;
+  readonly upstreamCode: string | null;
+  constructor(upstreamStatus: unknown, upstreamCode: unknown) {
+    const observedStatus = typeof upstreamStatus === "number" &&
+      Number.isInteger(upstreamStatus) && upstreamStatus >= 100 && upstreamStatus <= 599
+      ? upstreamStatus : null;
+    const status = [400, 404, 409, 422, 503].includes(observedStatus ?? 0)
+      ? observedStatus! : 503;
+    super(
+      status,
+      status === 409 ? "node_action_conflict" : status === 422
+        ? "node_action_unsupported" : "node_unavailable",
+      status === 409
+        ? "Target changed or interruption confirmation required; refresh targets"
+        : status === 422
+          ? "Action unsupported by the guarded node owner"
+          : "Node request unavailable; retain action key and inspect operation status",
+    );
+    this.upstreamStatus = observedStatus;
+    this.upstreamCode = typeof upstreamCode === "string" && upstreamCodes.has(upstreamCode)
+      ? upstreamCode : null;
+  }
+}
+
+/** Parse only a bounded allowlisted error code; never retain the response body. */
+export function nodeResponseError(status: unknown, body: Buffer): NodeResponseError {
+  let code: unknown = null;
+  if (body.length <= RESPONSE_LIMIT) {
+    try {
+      const value: unknown = JSON.parse(body.toString("utf8"));
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        const error = (value as Record<string, unknown>).error;
+        if (error && typeof error === "object" && !Array.isArray(error))
+          code = (error as Record<string, unknown>).code;
+      }
+    } catch {
+      // Malformed upstream responses still use the unchanged public error.
+    }
+  }
+  return new NodeResponseError(status, code);
+}
+
 export interface NodeBackend {
   status(signal: AbortSignal): Promise<unknown>;
   action(action: NodeAction, signal: AbortSignal): Promise<unknown>;
@@ -47,7 +103,7 @@ export function nodeClient(nodeId: NodeId, credential?: string): NodeBackend {
           let size = 0;
           res.on("data", (chunk: Buffer) => {
             size += chunk.length;
-            if (size > 512 * 1024) {
+            if (size > RESPONSE_LIMIT) {
               res.destroy();
               req.destroy();
               reject(Error("Node response too large"));
@@ -60,26 +116,7 @@ export function nodeClient(nodeId: NodeId, credential?: string): NodeBackend {
               res.statusCode < 200 ||
               res.statusCode >= 300
             ) {
-              const status = [400, 404, 409, 422, 503].includes(
-                res.statusCode ?? 0,
-              )
-                ? res.statusCode!
-                : 503;
-              reject(
-                new ApiError(
-                  status,
-                  status === 409
-                    ? "node_action_conflict"
-                    : status === 422
-                      ? "node_action_unsupported"
-                      : "node_unavailable",
-                  status === 409
-                    ? "Target changed or interruption confirmation required; refresh targets"
-                    : status === 422
-                      ? "Action unsupported by the guarded node owner"
-                      : "Node request unavailable; retain action key and inspect operation status",
-                ),
-              );
+              reject(nodeResponseError(res.statusCode, Buffer.concat(parts)));
               return;
             }
             try {

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { ApiError } from "./errors.js";
-import type { NodeBackend } from "./node-client.js";
+import { NodeResponseError, type NodeBackend } from "./node-client.js";
 import {
   record,
   validateAction,
@@ -74,6 +74,13 @@ const covers = (scope: string[], previous: string[]) =>
   scope.includes("harness") || previous.every((id) => scope.includes(id));
 const settled = (status: string) =>
   ["succeeded", "failed", "interrupted"].includes(status);
+const diagnosticCodes = new Set([
+  "invalid_action", "freeze_conflict", "freeze_missing", "freeze_scope_unknown",
+  "freeze_ack_unavailable", "node_target_unknown", "node_action_conflict",
+  "node_action_unsupported", "node_unavailable", "node_transport_error",
+]);
+type DispatchPhase = "freeze_hold" | "freeze_acknowledge" | "advisory_status" |
+  "advisory_check" | "owner_request" | "owner_receipt";
 
 /** Protected durable relay journal. Node owners retain final lease/CAS authority.
  * A recorded dispatch is never posted again, including after a transport loss or
@@ -94,6 +101,11 @@ export class AdminActions {
   ) {
     options.db.exec(
       "CREATE TABLE IF NOT EXISTS admin_relay_operations(id TEXT PRIMARY KEY, request_key TEXT UNIQUE NOT NULL, fingerprint TEXT NOT NULL, request TEXT NOT NULL, scope TEXT NOT NULL, receipt TEXT NOT NULL, owner_id TEXT, dispatched INTEGER NOT NULL DEFAULT 0, released INTEGER NOT NULL DEFAULT 0, release_reason TEXT, released_by TEXT)",
+    );
+    // Protected diagnostics for future failures only. Never backfill old receipts
+    // or expose exception messages, bodies, stacks, or credentials in this table.
+    options.db.exec(
+      "CREATE TABLE IF NOT EXISTS admin_relay_failures(id TEXT PRIMARY KEY, phase TEXT NOT NULL, attempted INTEGER NOT NULL, error_code TEXT, status_code INTEGER, node_error_code TEXT, node_status_code INTEGER)",
     );
     for (const row of this.rows()) {
       const receipt = JSON.parse(row.receipt) as Receipt;
@@ -275,23 +287,32 @@ export class AdminActions {
   }
   private async dispatch(id: string, action: NodeAction) {
     let attempted = false;
+    let phase: DispatchPhase = "advisory_status";
     try {
       if (action.action !== "service.start") {
+        phase = "freeze_hold";
         this.options.freeze.hold(action, JSON.parse(this.row(id)!.scope));
+        phase = "freeze_acknowledge";
         await this.options.freeze.acknowledge(action);
       }
       // This check is advisory; the canonical owner repeats it under its lease.
-      this.check(action, await this.node(action));
+      phase = "advisory_status";
+      const node = await this.node(action);
+      phase = "advisory_check";
+      this.check(action, node);
       this.options.db
         .prepare("UPDATE admin_relay_operations SET dispatched=1 WHERE id=?")
         .run(id);
       attempted = true;
+      phase = "owner_request";
       const raw = await this.options.backends[action.node_id].action(
         action,
         this.signal(),
       );
+      phase = "owner_receipt";
       await this.acceptOwner(id, action, raw);
     } catch (error) {
+      this.recordFailure(id, phase, attempted, error);
       const rejected =
         error instanceof ApiError && [400, 409, 422].includes(error.statusCode);
       const receipt = JSON.parse(this.row(id)!.receipt) as Receipt;
@@ -310,6 +331,21 @@ export class AdminActions {
       }
     } finally {
       this.running.delete(action.node_id);
+    }
+  }
+  private recordFailure(id: string, phase: DispatchPhase, attempted: boolean, error: unknown) {
+    try {
+      this.options.db.prepare(
+        "INSERT OR IGNORE INTO admin_relay_failures(id,phase,attempted,error_code,status_code,node_error_code,node_status_code) VALUES(?,?,?,?,?,?,?)",
+      ).run(
+        id, phase, attempted ? 1 : 0,
+        error instanceof ApiError && diagnosticCodes.has(error.code) ? error.code : null,
+        error instanceof ApiError && [400, 404, 409, 422, 503].includes(error.statusCode) ? error.statusCode : null,
+        error instanceof NodeResponseError ? error.upstreamCode : null,
+        error instanceof NodeResponseError ? error.upstreamStatus : null,
+      );
+    } catch {
+      // Diagnostic storage must not change owner/hold settlement or replay rules.
     }
   }
   private async acceptOwner(id: string, action: NodeAction, raw: unknown) {

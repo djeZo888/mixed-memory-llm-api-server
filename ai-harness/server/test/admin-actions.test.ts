@@ -4,7 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import { readFileSync } from "node:fs";
 import { AdminActions, type AdminFreeze } from "../src/admin-actions.js";
 import type { NodeAction } from "../src/node-contract.js";
-import type { NodeBackend } from "../src/node-client.js";
+import { nodeResponseError, type NodeBackend } from "../src/node-client.js";
 import { ApiError } from "../src/errors.js";
 const fixture = (name: string) =>
   JSON.parse(
@@ -132,6 +132,84 @@ function rig() {
     },
   };
 }
+test("protected owner rejection diagnostic survives restart without changing public receipt or replaying", async () => {
+  const r = rig();
+  const sentinel = "private body must never be retained";
+  try {
+    let calls = 0;
+    r.backends["ai-vm"].action = async () => {
+      calls++;
+      throw nodeResponseError(409, Buffer.from(JSON.stringify({ error: { code: "lifecycle_busy", message: sentinel }, secret: sentinel })));
+    };
+    const operation = await r.actions.submit(base);
+    await turn();
+    const id = operation.operation_id.split("~")[1]!;
+    const diagnostic = { ...r.db.prepare("SELECT * FROM admin_relay_failures WHERE id=?").get(id) };
+    assert.deepEqual(diagnostic, {
+      id, phase: "owner_request", attempted: 1, error_code: "node_action_conflict",
+      status_code: 409, node_error_code: "lifecycle_busy", node_status_code: 409,
+    });
+    const final = r.get(operation);
+    assert.equal(final.status, "failed");
+    assert.equal(final.reason, "operation_failed");
+    assert.equal(r.held.size, 0);
+    assert.equal(JSON.stringify(final).includes("lifecycle_busy"), false);
+    assert.equal(JSON.stringify(diagnostic).includes(sentinel), false);
+    const row = r.db.prepare("SELECT receipt FROM admin_relay_operations WHERE id=?").get(id);
+    r.restart();
+    await r.actions.submit(base);
+    assert.equal(calls, 1);
+    assert.deepEqual(r.db.prepare("SELECT receipt FROM admin_relay_operations WHERE id=?").get(id), row);
+    assert.deepEqual({ ...r.db.prepare("SELECT * FROM admin_relay_failures WHERE id=?").get(id) }, diagnostic);
+  } finally {
+    r.close();
+  }
+});
+test("diagnostic absence and storage failure never backfill history or prevent rejection settlement", async () => {
+  const r = rig();
+  try {
+    r.ackFailure = true;
+    const first = await r.actions.submit(base);
+    await turn();
+    const before = r.db.prepare("SELECT receipt FROM admin_relay_operations WHERE id=?").get(first.operation_id.split("~")[1]);
+    // Simulate an existing operation from before diagnostic storage was installed.
+    r.db.exec("DROP TABLE admin_relay_failures");
+    r.restart();
+    assert.equal(r.db.prepare("SELECT count(*) AS count FROM admin_relay_failures").get()!.count, 0);
+    assert.deepEqual(r.db.prepare("SELECT receipt FROM admin_relay_operations WHERE id=?").get(first.operation_id.split("~")[1]), before);
+    r.db.exec("DROP TABLE admin_relay_failures");
+    const second = await r.actions.submit({ ...base, idempotency_key: "diagnostic-store-unavailable" });
+    await turn();
+    assert.equal(r.get(second).status, "failed");
+    assert.equal(r.get(second).reason, "operation_failed");
+    assert.equal(r.held.size, 0);
+    assert.equal(r.seen.length, 0);
+  } finally {
+    r.close();
+  }
+});
+test("protected diagnostics distinguish status retrieval from CAS and discard unregistered error data", async () => {
+  const r = rig();
+  const sentinel = "unregistered-private-diagnostic";
+  try {
+    r.freeze.acknowledge = async () => {
+      r.backends["ai-vm"].status = async () => { throw new ApiError(503, sentinel, sentinel); };
+    };
+    const operation = await r.actions.submit(base);
+    await turn();
+    const diagnostic = { ...r.db.prepare("SELECT * FROM admin_relay_failures WHERE id=?").get(operation.operation_id.split("~")[1]) };
+    assert.equal(diagnostic.phase, "advisory_status");
+    assert.equal(diagnostic.attempted, 0);
+    assert.equal(diagnostic.error_code, null);
+    assert.equal(diagnostic.status_code, 503);
+    assert.equal(JSON.stringify(diagnostic).includes(sentinel), false);
+    assert.equal(r.get(operation).status, "failed");
+    assert.equal(r.held.size, 0);
+    assert.equal(r.seen.length, 0);
+  } finally {
+    r.close();
+  }
+});
 test("destructive relay freezes before owner dispatch and exact repeats precede stale CAS", async () => {
   const r = rig();
   try {
@@ -172,6 +250,10 @@ test("missing interruption confirmation, failed freeze and post-freeze CAS never
     assert.equal(r.get(failed).status, "failed");
     assert.equal(r.seen.length, 0);
     assert.equal(r.held.size, 0);
+    assert.deepEqual(
+      { ...r.db.prepare("SELECT phase,attempted,error_code,status_code FROM admin_relay_failures WHERE id=?").get(failed.operation_id.split("~")[1]) },
+      { phase: "freeze_acknowledge", attempted: 0, error_code: null, status_code: null },
+    );
     r.ackFailure = false;
     r.changeAfterAck = true;
     const changed = await r.actions.submit({
@@ -182,6 +264,10 @@ test("missing interruption confirmation, failed freeze and post-freeze CAS never
     assert.equal(r.get(changed).status, "failed");
     assert.equal(r.seen.length, 0);
     assert.equal(r.held.size, 0);
+    assert.deepEqual(
+      { ...r.db.prepare("SELECT phase,attempted,error_code,status_code FROM admin_relay_failures WHERE id=?").get(changed.operation_id.split("~")[1]) },
+      { phase: "advisory_check", attempted: 0, error_code: "node_action_conflict", status_code: 409 },
+    );
   } finally {
     r.close();
   }
