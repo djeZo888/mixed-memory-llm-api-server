@@ -1,0 +1,16 @@
+{
+  "utc": "2026-09-26T21:12:06.929700+00:00",
+  "status": "CACHE_ENABLEMENT_UNSUPPORTED_BY_PINNED_RUNTIME",
+  "image_digest": "sha256:51791e17c0149019e2ddc032d8c1b2f60b86c3a6c293daff639e20053baa858a",
+  "model_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+  "path": "/opt/conda/lib/python3.11/site-packages/sglang/srt/server_args.py",
+  "sha256": "6de607f3c94d0bfa864ce4d33cc05cb1ea8165fb6fdede3961fe84b071739e52",
+  "decisive_source": [
+    {
+      "line": 1666,
+      "text": "1659:         if not self.disable_cuda_graph:\n1660:             self.cuda_graph_bs = [1, 2, 4]\n1661:             self.cuda_graph_max_bs = 4\n1662: \n1663:         # GLM's KPool live tail is request-local and Session AB does not yet\n1664:         # restore it from a reused prefix.  Force the safe no-prefix-cache\n1665:         # route even though radix cache is enabled by default for other models.\n1666:         self.disable_radix_cache = True\n1667: \n1668:         # Remember the exact-model gate so later generic normalization can\n1669:         # revalidate without loading or inspecting configs for other models.\n1670:         self._glm5_next_session_ab_active = True\n1671: \n1672:     def _configure_glm5_next_session_ab_nsa(\n1673:         self, capability: tuple[int, int]\n1674:     ) -> None:\n1675:         from sglang.srt.configs.glm5_next import get_glm5_next_gpu_profile\n1676: \n1677:         profile = get_glm5_next_gpu_profile(capability)"
+    }
+  ],
+  "source_changed": false,
+  "runtime_changed": false
+}

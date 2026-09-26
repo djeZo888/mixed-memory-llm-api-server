@@ -1,0 +1,1 @@
+{"utc": "2026-09-26T21:22:21.345406+00:00", "boot_id": "1c706f0b-7243-41a0-aea3-c447ef51664f", "action": "normal image owner restart after confirmed lifecycle_busy and absent backend", "public_image_requests": 0, "manual_latch_clear": false, "guard": "PASS", "restart_returncode": 0}
