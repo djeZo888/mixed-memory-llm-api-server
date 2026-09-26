@@ -42,6 +42,7 @@ NORMAL_FILES = (
     'scripts/lifecycle/sglang_file_auth.py',
     'reports/f1s-contract-evidence/f1a-qwen-manifest.json',
     'scripts/lifecycle/qwen38.py', 'scripts/lifecycle/concurrent_profiles.py',
+    'scripts/runtime/flash/owner.py',
     'scripts/runtime/qwen38_oci.py',
     'scripts/runtime/sglang38_file_auth.py', 'scripts/runtime/sglang38_pair_file_auth.py',
     'scripts/runtime/verify_adaptive_idle_overlay.py',

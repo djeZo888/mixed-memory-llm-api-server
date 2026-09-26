@@ -52,17 +52,17 @@
     }
   },
   "model_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
-  "status": "PREPARATION_NOT_ACTIVATION_READY",
+  "status": "SOURCE_ACTIVATION_CANDIDATE_LIVE_UNQUALIFIED",
   "schema_version": 1,
   "id": "kt-sglang-glm53-flash-h008",
-  "activation_image_digest": null,
+  "activation_image_digest": "sha256:51791e17c0149019e2ddc032d8c1b2f60b86c3a6c293daff639e20053baa858a",
   "cuda_arch": "sm_120",
   "python": "3.11",
   "kt_method": "FP8",
   "idle_policy": {
     "warm_grace_seconds": 600,
     "after_grace": "blocking",
-    "implementation": "PENDING_EXACT_FORK_OVERLAY_AND_TEST"
+    "implementation": "exact pinned wheel scheduler wrapper; KT native CV waits; live idle verification pending"
   },
   "dependencies_resolution": "Primary wheel SHA256 pins frozen; complete transitive install report and final image digest required before activation"
 }

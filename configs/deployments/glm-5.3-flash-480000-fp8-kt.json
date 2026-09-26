@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "glm-5.3-flash-480000-fp8-kt",
-  "status": "PREPARATION_ONLY_NOT_REGISTERED_WITH_MANAGER",
+  "status": "SEPARATE_FRONTIER_OWNER_SOURCE_CANDIDATE",
   "model": "glm-5.3-flash-fp8",
   "runtime": "kt-sglang-glm53-flash-h008",
   "service_id": "glm-5.3-flash",
@@ -72,10 +72,14 @@
     "near_full_occupied_context": "NOT_TESTED"
   },
   "pending": [
-    "protected independent lifecycle/status/boot owner",
-    "authenticated private transport and tokenization adapter",
-    "600second adaptive native blocking",
-    "old GLM mode exclusion while Flash reserved",
-    "fresh registered resource guards and live native480K allocation proof"
-  ]
+    "root exact activation GO",
+    "verified weights and immutable dependency capture",
+    "live native allocation and bounded inference qualification"
+  ],
+  "owner": "H008-FLASH-20260926",
+  "native_usable_bounds": {
+    "input_tokens_max": 479993,
+    "input_plus_requested_output_max": 479998,
+    "status": "PINNED_SOURCE_EXPECTED_ACTUAL_POOL_REQUIRED"
+  }
 }
