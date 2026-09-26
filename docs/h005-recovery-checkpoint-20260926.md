@@ -1,5 +1,7 @@
 # H005 recovery checkpoint — 2026-09-26
 
+**Historical interruption checkpoint.** Work resumed and the [September 26 closeout](h005-closeout-20260926.md) records the subsequent results.
+
 **Incomplete; resume from this checkpoint, not from bootstrap.** New implementation, deployment, reboot and inference work stopped during the account/connection incident audit. Ordinary shell checks found no native `codex exec` worker task running on either Mac. Neither VM was changed by this audit.
 
 ## Preserved work

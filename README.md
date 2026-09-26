@@ -74,12 +74,11 @@ harness owns its dispatch, backlog and drain before a targeted switch. Switching
 running target requires `allow_interrupt:true`, fresh identity/generation and
 operation polling; the server provides no atomic drain guarantee.
 
-The [current resilience acceptance report](docs/service-resilience-acceptance.md)
-records component deployment and reboot evidence. The first typed ai-vm reboot
-changed boot but automatic Q1 restoration **FAILED**; separate manual recovery
-**PASSED**. The reviewed boot correction is awaiting live publication/retest
-receipts. Repeat ai-vm reboot, harness reboot and formal quiet/wake acceptance
-remain **PENDING**; historical boot checks are not final H005 acceptance.
+The [September 26 resilience closeout](docs/h005-closeout-20260926.md) records
+successful idle/wake and sequential VM reboot recovery. Both Qwens and the Ada
+image service restored automatically. Status/admin services, history metadata
+and current-boot task containment were verified. Earlier failed attempts remain
+in the linked historical record.
 
 Tools, browsing and file work run on ordinary external clients in trusted
 workspaces. The separate [ai-harness](ai-harness/README.md) provides the deployed

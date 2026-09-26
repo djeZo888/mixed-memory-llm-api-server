@@ -170,9 +170,9 @@ queued, draining or unknown work prevents blocking. Once genuinely idle beyond
 grace, it blocks waiting for an event while retaining model weights and cache
 allocations. Ordinary work wakes it immediately through that event and renews
 grace; this is wake behavior, not a zero-latency response promise. Passive status
-polls do not renew grace. The formal all-three quiet/wake check remains pending
-in the [current acceptance report](../docs/service-resilience-acceptance.md);
-VRAM residency alone does not prove cache contents.
+polls do not renew grace. The measured quiet/wake and reboot checks passed; see the
+[September 26 closeout](../docs/h005-closeout-20260926.md). VRAM residency alone
+does not prove cache contents.
 
 For normal operations, use the canonical typed admin action, review its affected
 services and interruption confirmation, then wait for its terminal receipt.

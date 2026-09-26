@@ -258,5 +258,7 @@
   ],
   "latest_root_steering_event_utc": "2026-09-25T21:48:30Z",
   "evidence_time_boundary": "Earlier PASS rows establish named scopes at their receipt times. First automatic Q1 boot restoration remains failed despite later manual recovery; final repeat reboot, harness reboot and formal quiet/wake are pending.",
-  "latest_root_steering_summary_utc_minute": "2026-09-25T21:49Z"
+  "latest_root_steering_summary_utc_minute": "2026-09-25T21:49Z",
+  "historical_snapshot": true,
+  "superseded_by": "closeout-20260926.json"
 }

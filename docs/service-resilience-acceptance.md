@@ -1,5 +1,7 @@
 # H005 service resilience acceptance — 2026-09-25
 
+**Historical September 25 snapshot.** The current [September 26 closeout](h005-closeout-20260926.md) supersedes the pending gates below; original outcomes are retained.
+
 **PARTIAL / PENDING acceptance; Draft PR7.** This offline publication checkpoint
 adds supplied repair, action and recovery receipts through **21:48:30 UTC** and root
 steering through **21:49 UTC** on September 25, plus the reviewed integration
