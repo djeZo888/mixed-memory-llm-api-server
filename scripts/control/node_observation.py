@@ -22,7 +22,7 @@ from .node_collectors import boot_identity, command
 HEX = re.compile(r'[0-9a-f]{64}\Z')
 DEPLOYMENTS = {
     'qwen38-27b-q0-480000-yarn4-bf16kv': ('qwen-gpu0', 'qwen3.8-27b-gpu0', 30002),
-    'qwen38-27b-q1-480000-yarn4-bf16kv': ('qwen-gpu1', 'qwen3.8-27b', 30004),
+    'qwen38-27b-q1-server-480000-yarn4-bf16kv': ('qwen-gpu1', 'qwen3.8-27b', 30004),
     'glm-5.3-ud-q4-k-xl-g1-480000': ('qwen-gpu0', 'glm-5.3', 30002),
 }
 TEXT_OWNER = 'mixed-memory-llm-api-server'

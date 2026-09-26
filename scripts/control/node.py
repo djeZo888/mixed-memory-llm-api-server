@@ -15,7 +15,7 @@ BOOT = re.compile(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
 IDENTIFIER = re.compile(r'[a-zA-Z0-9][a-zA-Z0-9_.-]{0,95}\Z')
 SERVICES = {
     'qwen-gpu0': ('GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',),
-    'qwen-gpu1': ('GPU-69acfa26-8b60-61b5-702d-aee252c163cc',),
+    'qwen-gpu1': ('GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528',),
     'image': ('GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23',),
     'control': (),
 }
