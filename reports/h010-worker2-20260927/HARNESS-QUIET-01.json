@@ -1,0 +1,529 @@
+{
+  "schema_version": 1,
+  "before_utc": "2026-09-26T23:22:57.794122+00:00",
+  "production_release": "/opt/ai-harness/releases/296ae49e44eb250773223885b843994e2c5b9bcc/ai-harness",
+  "native_image_id": "c328dac0e6ede1dfb890a0657ebafd6f6fd4a1f2281f4e1c664ab95db7dcaa20",
+  "frontier_config": {
+    "model": "glm-5.3-flash",
+    "qualified": true,
+    "contextWindow": 480000,
+    "maxOutputTokens": 65536,
+    "tokenizerRevision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+    "templateRevision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+  },
+  "credentials_metadata": {
+    "browser-approval-key": {
+      "uid": 1000,
+      "gid": 1000,
+      "mode": "0o600",
+      "size": 65,
+      "nlink": 1,
+      "protected_ancestry": true,
+      "contents_read": false
+    },
+    "inference-key": {
+      "uid": 1000,
+      "gid": 1000,
+      "mode": "0o600",
+      "size": 64,
+      "nlink": 1,
+      "protected_ancestry": true,
+      "contents_read": false
+    },
+    "node-control-key": {
+      "uid": 1000,
+      "gid": 1000,
+      "mode": "0o600",
+      "size": 64,
+      "nlink": 1,
+      "protected_ancestry": true,
+      "contents_read": false
+    }
+  },
+  "before_units": {
+    "ai-harness.service": {
+      "MainPID": "190208",
+      "WorkingDirectory": "/opt/ai-harness/releases/296ae49e44eb250773223885b843994e2c5b9bcc/ai-harness/server",
+      "Id": "ai-harness.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-searxng.service": {
+      "MainPID": "190181",
+      "WorkingDirectory": "!/home/user",
+      "Id": "ai-harness-searxng.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-status.service": {
+      "MainPID": "187415",
+      "WorkingDirectory": "/opt/ai-harness/components/H008-REGISTRY-296ae49/ai-harness/server",
+      "Id": "ai-harness-status.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-admin.service": {
+      "MainPID": "66185",
+      "WorkingDirectory": "",
+      "Id": "ai-harness-admin.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    }
+  },
+  "before_containers": [
+    {
+      "id": "9bc2e4a10a7d82d275161d2567d25603af4b8063b1f14b59858ca28e6e9db558",
+      "image": "sha256:4ea190ed2bbb9a72b1719ce0947d4a144a0a74df9ac1272da28084761e6eef20",
+      "names": [
+        "ai-harness-searxng"
+      ],
+      "state": "running"
+    }
+  ],
+  "before_data": {
+    "sessions": {
+      "count": 26,
+      "sha256": "19ca377e380d72c39a6b31eaec57a889801ca2dc127167b0ef49cf85b99c4508",
+      "states": [
+        [
+          "idle",
+          25
+        ],
+        [
+          "interrupted",
+          1
+        ]
+      ]
+    },
+    "messages": {
+      "count": 133,
+      "sha256": "5e5b42e190814d176ebd78f2bdffc5c15499761fe8d50752a0a91549fd5c2015"
+    },
+    "files": {
+      "count": 62,
+      "sha256": "131d5f4a3e30fef0ea137a1c144a7efd40c47f4f154697a140c3e7ac02a1207d"
+    },
+    "runs": {
+      "count": 48,
+      "sha256": "3b50c72001731a0f75532bfc482d57791e04685eb565bdb5f32e539cd1719032",
+      "states": [
+        [
+          "cancelled",
+          5
+        ],
+        [
+          "completed",
+          42
+        ],
+        [
+          "interrupted",
+          1
+        ]
+      ]
+    },
+    "events": {
+      "count": 25359,
+      "sha256": "8100305ce6ec9d753d9390660d8410e4029b0235e60cd92862b14be904fefd98"
+    },
+    "quarantined_workspaces": {
+      "count": 1,
+      "sha256": "5805d468bf5ed2d4c602e3643882a1f0d70cdbd6b00b9667e10b110081d2d2b0"
+    },
+    "h003_image_jobs": {
+      "count": 19,
+      "sha256": "9370dc782305a1284a4a3758470bfa6e3018aca5a009ca7a88c81a110ea67311",
+      "states": [
+        [
+          "cancelled",
+          1
+        ],
+        [
+          "completed",
+          18
+        ]
+      ]
+    },
+    "h003_image_lane": {
+      "count": 1,
+      "sha256": "e9bc3f09fe47b363172ddaef0cf510df1fbf7a40f7557f958bc51e6dfe1fa980",
+      "states": [
+        [
+          "idle",
+          1
+        ]
+      ]
+    },
+    "h005_image_ownership": {
+      "count": 1,
+      "sha256": "465d674ce6bae7911e62c34c8ec4790981ae2eb73f9db75b8f8fe54a2d2c25a1",
+      "states": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    "gateway_lanes": {
+      "count": 3,
+      "sha256": "6ddd5f19b7a7c7170eb335b4df060f4a86c92989c714a887a0e9fde0a2ab749e",
+      "states": [
+        [
+          "idle",
+          3
+        ]
+      ]
+    },
+    "frontier_requests": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "states": []
+    }
+  },
+  "before_files": {
+    "sha256": "1e262519cde8059973b23a2fc2a2838e2a15cb4429269fe18e57cc4adb906f51",
+    "excluded_database_and_transient_files": 161,
+    "included_regular_files": 17597
+  },
+  "health_http": 200,
+  "health": {
+    "version": "0.0.3",
+    "environment": {
+      "timeZone": "Europe/Ljubljana",
+      "location": {
+        "city": "Ljubljana",
+        "country": "Slovenia"
+      },
+      "now": "2026-09-26T23:22:56.380Z"
+    },
+    "status": "ok",
+    "visionAvailable": true,
+    "availability": {
+      "qwenGpu0": "available",
+      "qwenGpu1": "available",
+      "image": "available"
+    }
+  },
+  "canonical_status_http": 200,
+  "canonical_services": [
+    {
+      "state": "ok",
+      "freshness": "fresh",
+      "service_id": "qwen-gpu0",
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "model_alias": "qwen3.8-27b-gpu0",
+      "configured_context_tokens": 480000,
+      "max_output_tokens": null,
+      "current_state": "available",
+      "health": "ready"
+    },
+    {
+      "state": "ok",
+      "freshness": "fresh",
+      "service_id": "qwen-gpu1",
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "model_alias": "qwen3.8-27b",
+      "configured_context_tokens": 480000,
+      "max_output_tokens": null,
+      "current_state": "available",
+      "health": "ready"
+    },
+    {
+      "state": "ok",
+      "freshness": "fresh",
+      "service_id": "image",
+      "availability": "available",
+      "ready": true,
+      "admitting": true,
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "model_alias": "qwen-image-2.1",
+      "configured_context_tokens": null,
+      "max_output_tokens": null,
+      "current_state": "available",
+      "health": "ready"
+    },
+    {
+      "state": "ok",
+      "freshness": "fresh",
+      "service_id": "control",
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "model_alias": null,
+      "configured_context_tokens": null,
+      "max_output_tokens": null,
+      "current_state": "available",
+      "health": "ready"
+    },
+    {
+      "state": "ok",
+      "freshness": "fresh",
+      "service_id": "glm-5.3-flash",
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "model_alias": "glm-5.3-flash",
+      "configured_context_tokens": 480000,
+      "max_output_tokens": 65536,
+      "current_state": "available",
+      "health": "ready"
+    },
+    {
+      "state": "ok",
+      "freshness": "fresh",
+      "service_id": "node"
+    },
+    {
+      "state": "ok",
+      "freshness": "fresh",
+      "service_id": "harness",
+      "availability": "available",
+      "ready": null,
+      "admitting": null,
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "model_alias": null,
+      "configured_context_tokens": null,
+      "max_output_tokens": null,
+      "current_state": "available",
+      "health": "unknown"
+    },
+    {
+      "state": "ok",
+      "freshness": "fresh",
+      "service_id": "search",
+      "availability": "available",
+      "ready": null,
+      "admitting": null,
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "model_alias": null,
+      "configured_context_tokens": null,
+      "max_output_tokens": null,
+      "current_state": "available",
+      "health": "unknown"
+    },
+    {
+      "state": "ok",
+      "freshness": "fresh",
+      "service_id": "status",
+      "availability": "available",
+      "ready": null,
+      "admitting": null,
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "model_alias": null,
+      "configured_context_tokens": null,
+      "max_output_tokens": null,
+      "current_state": "available",
+      "health": "unknown"
+    },
+    {
+      "state": "unknown",
+      "freshness": "unknown",
+      "service_id": "node"
+    }
+  ],
+  "snapshot": {
+    "path": "/home/user/ai-harness-build/H010-WORKER2-20260927/harness-before-stop-01.sqlite",
+    "sha256": "995845eb2ffb2035effdb339b8379a4c1cdba9ec8dd87e053ac6879bd87b955f",
+    "integrity": "ok",
+    "method": "SQLite backup API",
+    "mode": "0o600"
+  },
+  "atomic_drain_claim": false,
+  "stop_reason": "H010 user/root authorized idle app-only quiet benchmark window",
+  "restore_command": "systemctl --user start ai-harness.service",
+  "restore_authority": "fresh recovery-only native session after explicit Worker1 handback; no auto-resume",
+  "verified_stopped_utc": "2026-09-26T23:24:21.183369+00:00",
+  "after_units": {
+    "ai-harness.service": {
+      "MainPID": "0",
+      "WorkingDirectory": "/opt/ai-harness/releases/296ae49e44eb250773223885b843994e2c5b9bcc/ai-harness/server",
+      "Id": "ai-harness.service",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-searxng.service": {
+      "MainPID": "190181",
+      "WorkingDirectory": "!/home/user",
+      "Id": "ai-harness-searxng.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-status.service": {
+      "MainPID": "187415",
+      "WorkingDirectory": "/opt/ai-harness/components/H008-REGISTRY-296ae49/ai-harness/server",
+      "Id": "ai-harness-status.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-admin.service": {
+      "MainPID": "66185",
+      "WorkingDirectory": "",
+      "Id": "ai-harness-admin.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    }
+  },
+  "after_containers": [
+    {
+      "id": "9bc2e4a10a7d82d275161d2567d25603af4b8063b1f14b59858ca28e6e9db558",
+      "image": "sha256:4ea190ed2bbb9a72b1719ce0947d4a144a0a74df9ac1272da28084761e6eef20",
+      "names": [
+        "ai-harness-searxng"
+      ],
+      "state": "running"
+    }
+  ],
+  "after_data": {
+    "sessions": {
+      "count": 26,
+      "sha256": "19ca377e380d72c39a6b31eaec57a889801ca2dc127167b0ef49cf85b99c4508",
+      "states": [
+        [
+          "idle",
+          25
+        ],
+        [
+          "interrupted",
+          1
+        ]
+      ]
+    },
+    "messages": {
+      "count": 133,
+      "sha256": "5e5b42e190814d176ebd78f2bdffc5c15499761fe8d50752a0a91549fd5c2015"
+    },
+    "files": {
+      "count": 62,
+      "sha256": "131d5f4a3e30fef0ea137a1c144a7efd40c47f4f154697a140c3e7ac02a1207d"
+    },
+    "runs": {
+      "count": 48,
+      "sha256": "3b50c72001731a0f75532bfc482d57791e04685eb565bdb5f32e539cd1719032",
+      "states": [
+        [
+          "cancelled",
+          5
+        ],
+        [
+          "completed",
+          42
+        ],
+        [
+          "interrupted",
+          1
+        ]
+      ]
+    },
+    "events": {
+      "count": 25359,
+      "sha256": "8100305ce6ec9d753d9390660d8410e4029b0235e60cd92862b14be904fefd98"
+    },
+    "quarantined_workspaces": {
+      "count": 1,
+      "sha256": "5805d468bf5ed2d4c602e3643882a1f0d70cdbd6b00b9667e10b110081d2d2b0"
+    },
+    "h003_image_jobs": {
+      "count": 19,
+      "sha256": "9370dc782305a1284a4a3758470bfa6e3018aca5a009ca7a88c81a110ea67311",
+      "states": [
+        [
+          "cancelled",
+          1
+        ],
+        [
+          "completed",
+          18
+        ]
+      ]
+    },
+    "h003_image_lane": {
+      "count": 1,
+      "sha256": "56d994d4e38d429e78bb9c6b0b440dac01b94e17f65c791640d741d2989d0359",
+      "states": [
+        [
+          "quarantined",
+          1
+        ]
+      ]
+    },
+    "h005_image_ownership": {
+      "count": 1,
+      "sha256": "465d674ce6bae7911e62c34c8ec4790981ae2eb73f9db75b8f8fe54a2d2c25a1",
+      "states": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    "gateway_lanes": {
+      "count": 3,
+      "sha256": "6ddd5f19b7a7c7170eb335b4df060f4a86c92989c714a887a0e9fde0a2ab749e",
+      "states": [
+        [
+          "idle",
+          3
+        ]
+      ]
+    },
+    "frontier_requests": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "states": []
+    }
+  },
+  "after_files": {
+    "sha256": "1e262519cde8059973b23a2fc2a2838e2a15cb4429269fe18e57cc4adb906f51",
+    "excluded_database_and_transient_files": 160,
+    "included_regular_files": 17597
+  },
+  "status": "QUIET_APP_STOPPED_SEARCH_STATUS_ADMIN_PRESERVED",
+  "after_status_http": 200,
+  "changed_tables": [
+    "h003_image_lane"
+  ],
+  "inventory_equal_ignoring_sqlite_transients": true,
+  "recorder_warning": "Initial post-stop assert compared excluded SQLite/WAL/SHM file count, which can change on clean shutdown; read-only finalization compares included regular-file count and hash separately. No restore or restart. A read-only finalization compared JSON lists to Python tuples once; normalization corrected the receipt comparison; unchanged table hashes were retained.",
+  "owner_recheck_before_stop": "Passed in original stop invocation directly before systemctl stop; timestamp not persisted before recorder exception.",
+  "app_stop_timestamps": "MainPID=0\nActiveState=inactive\nUnitFileState=enabled\nActiveExitTimestamp=Sun 2026-09-27 01:22:57 CEST\nInactiveEnterTimestamp=Sun 2026-09-27 01:22:58 CEST\n",
+  "release_metadata_sha256": {
+    "/home/user/.config/systemd/user/ai-harness.service": "7e339dc3e44e566f5eb8c5206cf37b7123047502564465fda6afaea5a0321b57",
+    "/opt/ai-harness/releases/296ae49e44eb250773223885b843994e2c5b9bcc/ai-harness/config/frontier.json": "5c10ef1e1eae12ac297b7eabd07ba8023d799b25edc01626162a26e9c18f2261",
+    "/opt/ai-harness/releases/296ae49e44eb250773223885b843994e2c5b9bcc/ai-harness/deploy/run-engine.sh": "f3385648fdb2fd41efca41509b6c2a11ad5b6098fa5ad761e98dd5b2f2d5c722",
+    "/opt/ai-harness/releases/296ae49e44eb250773223885b843994e2c5b9bcc/ai-harness/deploy/run-server.sh": "1e70596f578db2c5af5dd5400575f9a47607f9a16e2f820d44175169cb19309f"
+  },
+  "active_user_units": "ai-harness-searxng.service loaded active running ai-harness private loopback SearXNG\n",
+  "inventory_scope": "All regular non-symlink data files except names ending .sqlite, .sqlite-wal, .sqlite-shm or .sqlite-journal. The raw inventory may include other SQLite filenames; no content/path lists are published.",
+  "stopped_utc": "2026-09-26T23:22:58Z"
+}
