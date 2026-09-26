@@ -51,7 +51,11 @@ export async function start() {
   let freezeTimer: NodeJS.Timeout | undefined;
   const availability = (id: string) => {
     const observed = serviceAvailability(
-      nodeAvailability ? (name) => nodeAvailability!.get(name) : undefined,
+      nodeAvailability
+        ? (name) => nodeAvailability!.get(name)
+        : id === "glm-5.3-flash"
+          ? () => ({ state: "unknown", dispatch: "hold" })
+          : undefined,
       id,
     );
     return freeze.held(id) && observed.dispatch !== "reject"
@@ -250,6 +254,7 @@ export async function start() {
         const aliases = [
           scope.includes("qwen-gpu0") ? "qwen3.8-27b-gpu0" : null,
           scope.includes("qwen-gpu1") ? "qwen3.8-27b" : null,
+          scope.includes("glm-5.3-flash") ? "glm-5.3-flash" : null,
         ].filter((id): id is string => !!id);
         if (!gateway!.reconcileAfterOwnerSettlement(aliases)) return false;
         if (

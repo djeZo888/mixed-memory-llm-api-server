@@ -72,6 +72,7 @@ export interface Gateway {
     configured: boolean;
     queued: number;
     state: LaneState | "unavailable";
+    availability: ServiceAvailability;
   };
   /** Publish cache changes promptly without touching active request settlement. */
   notifyAvailabilityChanged(): void;
@@ -474,6 +475,13 @@ export function createGateway(options: GatewayOptions): Gateway {
     options.onLaneState,
     options.availability,
   );
+  const frontierAvailability: AvailabilityProvider =
+    options.availability ??
+    (() => ({
+      state: "unknown",
+      reason: "readiness_unknown",
+      dispatch: "hold",
+    }));
   const frontierAdmission = options.frontier
     ? new Admission(
         [{ url: frontierUrl(options.frontier), alias: FRONTIER_MODEL }],
@@ -486,6 +494,7 @@ export function createGateway(options: GatewayOptions): Gateway {
         ),
         options.initialLaneStates,
         options.onLaneState,
+        frontierAvailability,
       )
     : undefined;
   const activeTimeout = positive(
@@ -776,7 +785,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       throw new GatewayError(
         503,
         "lane_unavailable",
-        "Selected Qwen lane is unavailable",
+        "Selected inference lane is unavailable",
       );
     }
     if (frontier) {
@@ -787,19 +796,28 @@ export function createGateway(options: GatewayOptions): Gateway {
           key,
           cancelled.signal,
         );
-        body.max_tokens = counted.reservedOutput;
         Object.assign(record!, counted);
         if (cancelled.signal.aborted)
           throw new ApiError(499, "cancelled", "Request cancelled");
         // This catch owns the single release. Do not call requireCurrentToken,
         // which releases before throwing and could free the next queued owner.
         if (tokens.get(token) !== sessionId)
-          throw new ApiError(401, "unauthorized", "Inference authorization required");
+          throw new ApiError(
+            401,
+            "unauthorized",
+            "Inference authorization required",
+          );
         if (
           options.dispatchHeld?.("harness") ||
           options.dispatchHeld?.(FRONTIER_MODEL)
         )
           throw new ApiError(503, "frontier_held", "Frontier dispatch is held");
+        if (selectedAdmission.available(lane).dispatch !== "allow")
+          throw new ApiError(
+            503,
+            "lane_unavailable",
+            "Frontier backend is unavailable",
+          );
         recordState("active");
       } catch (error) {
         selectedAdmission.settle(lane, true);
@@ -1007,10 +1025,21 @@ export function createGateway(options: GatewayOptions): Gateway {
       contextWindow: options.frontier?.contextWindow ?? null,
       queued: frontierAdmission?.queued ?? 0,
       state: frontierAdmission?.lanes[0]?.state ?? "unavailable",
+      availability: serviceAvailability(frontierAvailability, FRONTIER_MODEL),
     }),
-    reconcileAfterOwnerSettlement: (aliases) =>
-      admission.reconcileAfterOwnerSettlement(aliases),
-    notifyAvailabilityChanged: () => admission.notifyAvailabilityChanged(),
+    reconcileAfterOwnerSettlement: (aliases) => {
+      const qwen = admission.reconcileAfterOwnerSettlement(aliases);
+      // Only an exact owner-settlement alias may release frontier uncertainty.
+      const frontier = aliases.includes(FRONTIER_MODEL)
+        ? (frontierAdmission?.reconcileAfterOwnerSettlement([FRONTIER_MODEL]) ??
+          true)
+        : true;
+      return qwen && frontier;
+    },
+    notifyAvailabilityChanged: () => {
+      admission.notifyAvailabilityChanged();
+      frontierAdmission?.notifyAvailabilityChanged();
+    },
     close: () => app.close(),
   };
 }

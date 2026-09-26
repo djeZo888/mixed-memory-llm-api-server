@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { configureProfile, localConfig, MODEL, MODEL_REF, REQUEST_TIMEOUT_MS, SHARED_SLOT_INSTRUCTIONS, CURATED_SKILLS, SKILLS_SOURCE, SEARXNG_URL, IMAGE_TIMEOUT_MS, localMcpConfig, FRONTIER_INSTRUCTIONS, frontierAgentMarkdown } from './configure-profile.mjs';
+import { configureProfile, localConfig, MODEL, MODEL_REF, REQUEST_TIMEOUT_MS, SHARED_SLOT_INSTRUCTIONS, CURATED_SKILLS, SKILLS_SOURCE, SEARXNG_URL, IMAGE_TIMEOUT_MS, localMcpConfig, FRONTIER_INSTRUCTIONS, FRONTIER_SLOT_POLICY, frontierAgentMarkdown } from './configure-profile.mjs';
 
 const reviewedSource = realpathSync(existsSync(SKILLS_SOURCE) ? SKILLS_SOURCE : fileURLToPath(new URL('../../skills', import.meta.url)));
 const configure = env => configureProfile(env, reviewedSource);
@@ -90,7 +90,7 @@ test('writes private config and refreshes ephemeral authorization without changi
     const target = path.join(profile, 'config.yaml');
     const instructions = path.join(profile, 'AGENTS.md');
     assert.equal(lstatSync(instructions).mode & 0o777, 0o600);
-    assert.equal(readFileSync(instructions, 'utf8'), SHARED_SLOT_INSTRUCTIONS + FRONTIER_INSTRUCTIONS);
+    assert.equal(readFileSync(instructions, 'utf8'), SHARED_SLOT_INSTRUCTIONS + FRONTIER_INSTRUCTIONS + FRONTIER_SLOT_POLICY);
     writeFileSync(instructions, `${SHARED_SLOT_INSTRUCTIONS}\nPreserve this user instruction.\n`);
     assert.equal(lstatSync(target).mode & 0o777, 0o600);
     const first = JSON.parse(readFileSync(target, 'utf8'));
@@ -101,7 +101,14 @@ test('writes private config and refreshes ephemeral authorization without changi
     const mcp = JSON.parse(readFileSync(path.join(profile, 'mcp.json'), 'utf8'));
     assert.equal(mcp.mcpServers.image.env.AI_HARNESS_GATEWAY_TOKEN, 'second-fixture-authorization');
     assert.equal(lstatSync(path.join(profile, 'mcp.json')).mode & 0o777, 0o600);
-    assert.equal(readFileSync(instructions, 'utf8'), `${SHARED_SLOT_INSTRUCTIONS}\nPreserve this user instruction.\n\n${FRONTIER_INSTRUCTIONS}`);
+    assert.equal(readFileSync(instructions, 'utf8'), `${SHARED_SLOT_INSTRUCTIONS}\nPreserve this user instruction.\n\n${FRONTIER_INSTRUCTIONS}${FRONTIER_SLOT_POLICY}`);
+    const once = readFileSync(instructions, 'utf8');
+    configure(env);
+    assert.equal(readFileSync(instructions, 'utf8'), once);
+    // A profile from the first H008 candidate gains only the clarification.
+    writeFileSync(instructions, 'User text remains.\n' + SHARED_SLOT_INSTRUCTIONS + FRONTIER_INSTRUCTIONS);
+    configure(env);
+    assert.equal(readFileSync(instructions, 'utf8'), 'User text remains.\n' + SHARED_SLOT_INSTRUCTIONS + FRONTIER_INSTRUCTIONS + '\n' + FRONTIER_SLOT_POLICY);
     assert.equal(readFileSync(path.join(profile, 'history-fixture.json'), 'utf8'), '{"preserved":true}\n');
   } finally { rmSync(profile, { recursive: true, force: true }); }
 });

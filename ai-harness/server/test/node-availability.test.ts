@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
+import { validateAction } from "../src/node-contract.js";
 import { createGateway, type Gateway } from "../src/gateway.js";
 import { setTimeout as delay } from "node:timers/promises";
 import {
@@ -147,21 +148,41 @@ test("new boot requires fresh authoritative target validation with unchanged exa
   f.set(latched);
   await f.observer.poll();
   for (const alter of [
-    (node: ReturnType<typeof healthy>) => { node.boot_id = null; },
-    (node: ReturnType<typeof healthy>) => { node.boot_id = "boot-a"; },
-    (node: ReturnType<typeof healthy>) => { node.services[0].state = "unknown"; },
-    (node: ReturnType<typeof healthy>) => { node.services[0].freshness = "stale"; },
-    (node: ReturnType<typeof healthy>) => { node.services[0].age_ms = 15000; },
-    (node: ReturnType<typeof healthy>) => { node.services[0].observed_at = null; },
-    (node: ReturnType<typeof healthy>) => { node.services[0].hardware_latched = null; },
-    (node: ReturnType<typeof healthy>) => { node.services[0].required_gpu_uuids = []; },
+    (node: ReturnType<typeof healthy>) => {
+      node.boot_id = null;
+    },
+    (node: ReturnType<typeof healthy>) => {
+      node.boot_id = "boot-a";
+    },
+    (node: ReturnType<typeof healthy>) => {
+      node.services[0].state = "unknown";
+    },
+    (node: ReturnType<typeof healthy>) => {
+      node.services[0].freshness = "stale";
+    },
+    (node: ReturnType<typeof healthy>) => {
+      node.services[0].age_ms = 15000;
+    },
+    (node: ReturnType<typeof healthy>) => {
+      node.services[0].observed_at = null;
+    },
+    (node: ReturnType<typeof healthy>) => {
+      node.services[0].hardware_latched = null;
+    },
+    (node: ReturnType<typeof healthy>) => {
+      node.services[0].required_gpu_uuids = [];
+    },
     (node: ReturnType<typeof healthy>) => {
       node.services[0].required_gpu_uuids = node.services[1].required_gpu_uuids;
     },
     (node: ReturnType<typeof healthy>) => {
-      node.services[0].required_gpu_uuids.push(node.services[1].required_gpu_uuids[0]);
+      node.services[0].required_gpu_uuids.push(
+        node.services[1].required_gpu_uuids[0],
+      );
     },
-    (node: ReturnType<typeof healthy>) => { node.services[0].required_gpu_uuids.push(uuid); },
+    (node: ReturnType<typeof healthy>) => {
+      node.services[0].required_gpu_uuids.push(uuid);
+    },
   ]) {
     const next = healthy("boot-b");
     alter(next);
@@ -182,8 +203,13 @@ test("authoritative positive target recovery clears a prior-boot latch despite u
   inherited.services[0].hardware_latched = true;
   inherited.services[0].hardware_latched_boot_id = "boot-a";
   Object.assign(inherited.inventory, {
-    state: "error", freshness: "unknown", complete: false,
-    observed_at: null, age_ms: null, observation_id: null, gpu_uuids: [],
+    state: "error",
+    freshness: "unknown",
+    complete: false,
+    observed_at: null,
+    age_ms: null,
+    observation_id: null,
+    gpu_uuids: [],
   });
   f.set(inherited);
   await f.observer.poll();
@@ -203,7 +229,9 @@ test("target validation cannot clear a retained latch without an originating or 
   for (const observedBootId of [undefined, null]) {
     const observer = new NodeAvailability({
       backend: { status: async () => healthy("boot-b") },
-      initialLatches: { "qwen-gpu0": { bootId: null, observedBootId, requiredGpuUuids: [uuid] } },
+      initialLatches: {
+        "qwen-gpu0": { bootId: null, observedBootId, requiredGpuUuids: [uuid] },
+      },
       onLatch: () => assert.fail("missing boot provenance must not clear"),
     });
     await observer.poll();
@@ -385,8 +413,13 @@ test("targeted new-boot recovery and passive fallback never settle an ambiguous 
   assert.equal(gateway.snapshot().lanes[0]!.availability.dispatch, "reject");
   node = healthy("boot-b");
   Object.assign(node.inventory, {
-    state: "error", freshness: "unknown", complete: false,
-    observed_at: null, age_ms: null, observation_id: null, gpu_uuids: [],
+    state: "error",
+    freshness: "unknown",
+    complete: false,
+    observed_at: null,
+    age_ms: null,
+    observation_id: null,
+    gpu_uuids: [],
   });
   await observer.poll();
   assert.equal(gateway.snapshot().lanes[0]!.availability.state, "available");
@@ -535,4 +568,52 @@ test("unknown latch origin is not relabeled current boot and cannot clear on sam
   await f.observer.poll();
   assert.equal(f.observer.get("qwen3.8-27b-gpu0").dispatch, "allow");
   f.observer.stop();
+});
+
+test("canonical Flash node-status observation/latch is passive and isolated from Qwen", async () => {
+  const f = fixture();
+  await f.observer.poll();
+  assert.equal(f.observer.get("glm-5.3-flash").dispatch, "hold");
+  const node = healthy();
+  const flash = {
+    ...structuredClone(node.services[0]),
+    service_id: "glm-5.3-flash",
+  };
+  node.services.push(flash);
+  f.set(node);
+  await f.observer.poll();
+  assert.equal(f.observer.get("glm-5.3-flash").dispatch, "allow");
+  flash.ready = false;
+  f.set(structuredClone(node));
+  await f.observer.poll();
+  assert.equal(f.observer.get("glm-5.3-flash").dispatch, "hold");
+  assert.equal(f.observer.get("qwen3.8-27b").dispatch, "allow");
+  flash.hardware_latched = true;
+  flash.hardware_latched_boot_id = "boot-a";
+  f.set(structuredClone(node));
+  await f.observer.poll();
+  assert.equal(f.observer.get("glm-5.3-flash").dispatch, "reject");
+  assert.equal(f.ledger()["glm-5.3-flash"]?.bootId, "boot-a");
+  flash.ready = true;
+  flash.hardware_latched = false;
+  f.set(structuredClone(node));
+  await f.observer.poll();
+  assert.equal(f.observer.get("glm-5.3-flash").dispatch, "reject");
+  assert.equal(f.observer.get("qwen3.8-27b").dispatch, "allow");
+  f.observer.stop();
+});
+
+test("passive canonical Flash recognition grants no service lifecycle action", () => {
+  assert.throws(() =>
+    validateAction({
+      schema_version: 1,
+      node_id: "ai-vm",
+      action: "service.restart",
+      service_id: "glm-5.3-flash",
+      idempotency_key: "fixture-key-123456",
+      expected_boot_id: "boot-a",
+      expected_generation: 1,
+      allow_interrupt: false,
+    }),
+  );
 });

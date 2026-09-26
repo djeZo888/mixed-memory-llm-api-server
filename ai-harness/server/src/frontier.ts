@@ -1,6 +1,14 @@
 /** Fixed frontier contract. Tokenization is backend-rendered, never o200k. */
 import { ApiError } from "./errors.js";
 export const FRONTIER_REVISION = "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a";
+// Root-frozen source evidence: SGLang-KT tp_worker.py267-271,
+// scheduler.py1395 and utils.py101 at this exact revision (Flash pin above).
+// With context/pool 480000: input <=479993, input+requested output <=479998.
+// Actual pool/readback remains a backend activation gate.
+export const FRONTIER_RUNTIME_REVISION =
+  "541ddc37cbc92c60dc748db5ff1a2aad0b069a80";
+export const FRONTIER_INPUT_MARGIN = 7;
+export const FRONTIER_TOTAL_MARGIN = 2;
 export const FRONTIER_MODEL = "glm-5.3-flash";
 export const FRONTIER_URL = "http://10.156.100.60:30010/v1";
 export type FrontierRequestState =
@@ -24,8 +32,6 @@ export interface FrontierOptions {
   fixtureUrl?: string;
   countTimeoutMs?: number;
   fixtureQueueTimeoutMs?: number;
-  /** Bounded acceptance input ceiling; independent of configured model context. */
-  maxPromptTokens?: number;
   onRequestState: (record: FrontierRecord) => void;
 }
 export function frontierUrl(options: FrontierOptions): string {
@@ -46,6 +52,73 @@ export function frontierUrl(options: FrontierOptions): string {
     throw Error("Invalid frontier fixture URL");
   return u.href.replace(/\/$/, "");
 }
+/** Closed text-only message grammar: unknown/nested content blocks never reach
+ * tokenization. Tool schemas/arguments remain data, not model media inputs. */
+function textMessages(value: unknown): boolean {
+  const object = (v: unknown): v is Record<string, unknown> =>
+    !!v && typeof v === "object" && !Array.isArray(v);
+  const keys = (v: Record<string, unknown>, allowed: string[]) =>
+    Object.keys(v).every((k) => allowed.includes(k));
+  return (
+    Array.isArray(value) &&
+    value.every((message) => {
+      if (
+        !object(message) ||
+        !keys(message, [
+          "role",
+          "content",
+          "name",
+          "tool_calls",
+          "tool_call_id",
+          "reasoning_content",
+        ]) ||
+        typeof message.role !== "string" ||
+        !["system", "developer", "user", "assistant", "tool"].includes(
+          message.role,
+        )
+      )
+        return false;
+      for (const key of ["name", "tool_call_id", "reasoning_content"])
+        if (message[key] !== undefined && typeof message[key] !== "string")
+          return false;
+      const content = message.content;
+      if (!(
+        typeof content === "string" ||
+        (content == null &&
+          message.role === "assistant" &&
+          Array.isArray(message.tool_calls)) ||
+        (Array.isArray(content) &&
+          content.every(
+            (block) =>
+              object(block) &&
+              keys(block, ["type", "text"]) &&
+              block.type === "text" &&
+              typeof block.text === "string",
+          ))
+      ))
+        return false;
+      if (
+        message.tool_calls !== undefined &&
+        (message.role !== "assistant" ||
+          !Array.isArray(message.tool_calls) ||
+          !message.tool_calls.every(
+            (call) =>
+              object(call) &&
+              keys(call, ["id", "type", "function"]) &&
+              typeof call.id === "string" &&
+              call.type === "function" &&
+              object(call.function) &&
+              keys(call.function, ["name", "arguments"]) &&
+              typeof call.function.name === "string" &&
+              (typeof call.function.arguments === "string" ||
+                object(call.function.arguments)),
+          ))
+      )
+        return false;
+      return true;
+    })
+  );
+}
 export function frontierBody(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new ApiError(400, "invalid_request", "Expected object");
@@ -65,6 +138,7 @@ export function frontierBody(value: unknown): Record<string, unknown> {
     "top_p",
     "stop",
     "reasoning_effort",
+    "chat_template_kwargs",
     "store",
     "prompt_cache_key",
     "prompt_cache_retention",
@@ -72,13 +146,15 @@ export function frontierBody(value: unknown): Record<string, unknown> {
   if (
     Object.keys(b).some((k) => !allowed.has(k)) ||
     b.model !== FRONTIER_MODEL ||
-    !Array.isArray(b.messages) ||
+    !textMessages(b.messages) ||
+    (b.chat_template_kwargs !== undefined &&
+      JSON.stringify(b.chat_template_kwargs) !== '{"clear_thinking":true}') ||
     (b.stream !== undefined && typeof b.stream !== "boolean")
   )
     throw new ApiError(
       400,
       "invalid_frontier_request",
-      "Unsupported frontier request",
+      "Frontier accepts supported text-only messages",
     );
   if (b.store !== undefined && b.store !== false)
     throw new ApiError(
@@ -168,26 +244,22 @@ export async function countFrontier(
       v.count < 0
     )
       throw Error("count identity mismatch");
+    // The frozen count includes every rendered history/tool/template prefix.
+    // max_tokens reserves all future reasoning + answer tokens. Retain the
+    // pinned native input/total margins even though the template is exact.
+    // Reject overflow rather than mutate the payload after it has been counted.
+    const output = Number(body.max_tokens);
     if (
-      options.maxPromptTokens !== undefined &&
-      (!Number.isSafeInteger(options.maxPromptTokens) ||
-        options.maxPromptTokens < 1 ||
-        v.count > options.maxPromptTokens)
+      !Number.isSafeInteger(output) ||
+      output < 1 ||
+      output > 65536 ||
+      v.count > options.contextWindow - FRONTIER_INPUT_MARGIN ||
+      v.count + output > options.contextWindow - FRONTIER_TOTAL_MARGIN
     )
       throw new ApiError(
         413,
-        "frontier_acceptance_input_limit",
-        "Frontier input exceeds the current acceptance boundary",
-      );
-    const output = Math.min(
-      Number(body.max_tokens),
-      options.contextWindow - v.count,
-    );
-    if (output < 1)
-      throw new ApiError(
-        413,
         "frontier_context_full",
-        "Rendered frontier prompt leaves no output capacity",
+        "Rendered frontier input and reserved output exceed configured context",
       );
     return { promptTokens: v.count as number, reservedOutput: output };
   } catch (error) {
@@ -202,7 +274,7 @@ export async function countFrontier(
 
 export type FrontierConfiguration = Pick<
   FrontierOptions,
-  "contextWindow" | "tokenizerRevision" | "templateRevision" | "maxPromptTokens"
+  "contextWindow" | "tokenizerRevision" | "templateRevision"
 >;
 /** Invalid or unqualified source config disables only the frontier route. */
 export function frontierConfiguration(
@@ -217,16 +289,12 @@ export function frontierConfiguration(
     ![128000, 256000, 480000].includes(v.contextWindow) ||
     v.maxOutputTokens !== 65536 ||
     v.tokenizerRevision !== FRONTIER_REVISION ||
-    v.templateRevision !== FRONTIER_REVISION ||
-    !Number.isSafeInteger(v.maxPromptTokens) ||
-    Number(v.maxPromptTokens) < 1 ||
-    Number(v.maxPromptTokens) > Number(v.contextWindow)
+    v.templateRevision !== FRONTIER_REVISION
   )
     return;
   return {
     contextWindow: v.contextWindow as FrontierOptions["contextWindow"],
     tokenizerRevision: FRONTIER_REVISION,
     templateRevision: FRONTIER_REVISION,
-    maxPromptTokens: Number(v.maxPromptTokens),
   };
 }

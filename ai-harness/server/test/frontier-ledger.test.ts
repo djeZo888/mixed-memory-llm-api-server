@@ -58,7 +58,6 @@ test("missing, malformed, unsupported or unqualified frontier config cannot acti
     maxOutputTokens: 65536,
     tokenizerRevision: FRONTIER_REVISION,
     templateRevision: FRONTIER_REVISION,
-    maxPromptTokens: 16000,
   };
   assert.equal(frontierConfiguration(valid)?.contextWindow, 480000);
   for (const v of [
@@ -69,8 +68,6 @@ test("missing, malformed, unsupported or unqualified frontier config cannot acti
     { ...valid, contextWindow: "480000" },
     { ...valid, contextWindow: 1000000 },
     { ...valid, templateRevision: "e".repeat(40) },
-    { ...valid, maxPromptTokens: 0 },
-    { ...valid, maxPromptTokens: 480001 },
   ])
     assert.equal(frontierConfiguration(v), undefined);
 });

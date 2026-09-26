@@ -44,9 +44,12 @@ const model={api:'openai-completions',provider:'custom_provider:frontier',id:'gl
 const assembled=native.buildLocalTurnToolCatalog({sessionId:'frontier-child',sources,llmModel:model,modelCapabilities:{support_image:false},agentProfile:{capabilityCeiling:profile.capabilityCeiling,trustedBuiltin:false,surface:'task-child',configSelection:binding},config:config.mcpToolSearch,env:{}});
 const tools=native.newTools('/offline/workspace',assembled.tools,{}, {disableBuiltinFallback:true});
 let payload;
-const stream=native.streamOpenAICompletions(model,{systemPrompt:'Offline frontier fixture',messages:[{role:'user',content:'Research fixture',timestamp:0}],tools},{apiKey:'synthetic-session-bearer',maxTokens:65536,reasoning:'high',fetch:async()=>{requests++;throw Error('FORBIDDEN_NETWORK');},onPayload:p=>{payload=p;throw Error('CAPTURE_COMPLETE');}});
+const stream=native.streamOpenAICompletions(model,{systemPrompt:'Offline frontier fixture',messages:[{role:'user',content:[{type:'text',text:'Research fixture part one.'},{type:'text',text:' Part two.'}],timestamp:0}],tools},{apiKey:'synthetic-session-bearer',maxTokens:65536,reasoning:'high',fetch:async()=>{requests++;throw Error('FORBIDDEN_NETWORK');},onPayload:p=>{payload=p;throw Error('CAPTURE_COMPLETE');}});
 await stream.result();assert(payload);
 try { frontierBody(payload); } catch(e) { console.error({payloadKeys:Object.keys(payload),model:payload.model}); throw e; } // Real native payload must pass fixed host admission schema.
+const userContent=payload.messages.find(m=>m.role==='user').content;
+assert.deepEqual(userContent,[{type:'text',text:'Research fixture part one.'},{type:'text',text:' Part two.'}]);
+assert.deepEqual(frontierBody(payload).messages,payload.messages);
 const names=payload.tools.map(t=>t.function.name);assert(!names.includes('task'));assert(!names.includes('task_append'));assert(names.includes('mcp__image__image_edit'));assert(names.includes('skill'));
 const estimator=native.modelTokenEstimator(model);const qwen=native.modelTokenEstimator({...model,provider:'custom_provider:harness',id:'qwen3.8-27b'});
 assert.notEqual(estimator,qwen);assert.equal(estimator.estimateTextTokens('中文'),Buffer.byteLength('中文'));

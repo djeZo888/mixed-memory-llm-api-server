@@ -10,6 +10,7 @@ export const IMAGE_TIMEOUT_MS = 50 * 60 * 1000;
 export const FRONTIER_CONTEXT = 480000; // Replace only with reviewed qualification; gateway independently enforces it.
 export const FRONTIER_MODEL = 'glm-5.3-flash';
 export const FRONTIER_INSTRUCTIONS = 'Qwen is the default coordinator and ordinary coding/agentic worker. Select task(agent_name=frontier) for deep research, multi-document analysis, hard reasoning or independent diagnosis. Exceptional stuck coding needs explicit justification and Qwen verification. Frontier shares the workspace: code changes must be foreground or explicitly disjoint ownership. Use native task ownership, cancellation and result reuse. Neither model is presumed universally superior.\n';
+export const FRONTIER_SLOT_POLICY = 'Managed slot clarification: the two shared inference slots above are Qwen slots. Frontier GLM-5.3-Flash has one separate inference slot and queue. Flash model input is text-only; use browser/search/PDF text or OCR and approved image generation/edit MCP tools. Main Qwen vision is unchanged.\n';
 export const MODEL = 'qwen3.8-27b';
 export const MODEL_REF = `custom_provider:harness/${MODEL}`;
 export const REQUEST_TIMEOUT_MS = 151 * 60 * 1000;
@@ -261,15 +262,16 @@ export function configureProfile(env, skillsSource = SKILLS_SOURCE) {
     }
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
-    writeFileSync(instructions, SHARED_SLOT_INSTRUCTIONS + FRONTIER_INSTRUCTIONS, { mode: 0o600, flag: 'wx' });
+    writeFileSync(instructions, SHARED_SLOT_INSTRUCTIONS + FRONTIER_INSTRUCTIONS + FRONTIER_SLOT_POLICY, { mode: 0o600, flag: 'wx' });
   }
   // Upgrade the instruction surface by appending a managed policy. Existing user
   // text stays byte-for-byte intact; a refreshed runner can discover frontier.
   const previousInstructions = safeRead(instructions, true).toString('utf8');
-  if (!previousInstructions.includes(FRONTIER_INSTRUCTIONS)) {
+  const additions = [FRONTIER_INSTRUCTIONS, FRONTIER_SLOT_POLICY].filter(policy => !previousInstructions.includes(policy)).join('');
+  if (additions) {
     const staging = path.join(profile, `.AGENTS-${process.pid}.tmp`);
     try {
-      writeFileSync(staging, previousInstructions + '\n' + FRONTIER_INSTRUCTIONS, { mode: 0o600, flag: 'wx' });
+      writeFileSync(staging, previousInstructions + '\n' + additions, { mode: 0o600, flag: 'wx' });
       renameSync(staging, instructions);
     } finally { try { unlinkSync(staging); } catch (error) { if (error.code !== 'ENOENT') throw error; } }
   }

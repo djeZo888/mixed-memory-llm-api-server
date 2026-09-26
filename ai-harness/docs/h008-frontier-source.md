@@ -59,18 +59,37 @@ it excludes future output. Every call, including child compaction, is counted.
 The host checks exact identities/capacity, integer bounds, a 15-second timeout and
 16KiB response limit. The gateway normalizes `reasoning_effort=high` and
 `chat_template_kwargs.clear_thinking=true`; output is at most 65536 inclusive of
-reasoning and is reduced to remaining context if needed. Errors or zero output
-room reject before inference. Native store/cache hints are stripped consistently
+reasoning. Input plus the full requested output reservation must be <= configured
+context with the root-frozen native margins; overflow rejects rather than silently
+shrinking output. The count includes all template/tool/history/generation-prefix
+tokens. SGLang-KT revision `541ddc37cbc92c60dc748db5ff1a2aad0b069a80`
+(tp_worker.py267-271, scheduler.py1395, utils.py101) still imposes input <=479993
+and input+requested output <=479998 for context/pool480000. Source constants retain
+7 input tokens and 2 total tokens of margin. These margins are source-derived,
+root-approved; actual native pool/readback and HTTP parity remain activation gates.
+Native scheduling separately retains its existing 16K compaction reserve, which
+is unrelated to the round test-input ceiling. Native store/cache hints are stripped consistently
 from both count and generation payloads. Request content/credentials are not logged
 or written into the ownership journal.
 
-The root-frozen round boundary is configured **480000**, with **actual live
-rendered inputs limited to 16000**. This is an explicit acceptance restriction,
-not evidence of a model product limit or full occupied-context qualification.
-The host enforces `maxPromptTokens:16000` for this candidate. A later qualification
-change must be reviewed as source config; increasing context occupancy is not part
-of this handoff. Warm-load/peak-VRAM evidence belongs to Worker1 and is not inferred
-from this worker's build/tests.
+Production configured context is **480000** with no permanent 16000 input cap.
+The **<=16000 live input ceiling applies only to this round's test harness**.
+Largest live input tested by this worker: none (zero inference calls). The supplied
+offline tokenizer fixtures have a largest exact rendered input of 212 tokens;
+synthetic protocol boundary counts are not measured model occupancy. No effective
+480K occupied-context acceptance is claimed. Warm-load/peak-VRAM evidence belongs
+to Worker1 and is not inferred from these builds/tests.
+
+Flash initially accepts only text messages and text content blocks. A closed
+message grammar rejects OpenAI image_url, image/video/audio/input_audio/file and
+unknown nested content before tokenization/inference, without echoing content.
+Browser/search/PDF text/OCR and image generation/edit MCP tools remain available;
+main Qwen vision is unchanged. Valid pure-text arrays are preserved identically
+for count and inference, including user/tool arrays. Worker1 confirmed the pinned
+GLM OpenAI-format template emits text parts with no inserted separator; generic
+SGLang space-join normalization does not apply. The actual pinned MiniMax provider
+capture covers multiple user text parts without a network request. No multimodal
+qualification is attempted.
 
 The native v2 patch changes only the model-aware estimator selection in dynamic
 output, checkpoint fitting and local compaction footprint. Flash uses UTF-8 sizing
@@ -78,7 +97,28 @@ with per-message margin as a **local scheduling heuristic**, not its exact token
 or a proven rendered-template bound. Qwen and other providers keep their original
 estimator instance. The exact host admission is authoritative and fails closed if
 the heuristic underestimates. Native compaction/continuation fixture evidence is
-synthetic and does not establish occupied-model capacity.
+synthetic and does not establish occupied-model capacity. UTF-8 scheduling can
+compact prose 3-5x earlier than actual token capacity; that is a heuristic warning,
+not a proven bound. Fixed per-message margins can dominate smaller fixtures.
+
+Complete Worker1 fixture provenance and input bytes are preserved unchanged in
+`server/test/fixtures/h008/tokenizer-fixtures.json` (revision, wheel/file hashes,
+package versions, rendered-prompt and input-ID hashes). SGLang normalizes JSON
+tool-call argument strings into objects before template application. The offline
+native probe maps these original wire fixtures to deterministic equivalent Pi
+histories and compares actual current native estimates:
+
+| Fixture | Exact count | Dynamic estimate / ratio | Compaction footprint / ratio |
+| --- | ---: | ---: | ---: |
+| prose | 36 | 438 / 12.17x | 761 / 21.14x |
+| multilingual | 42 | 447 / 10.64x | 447 / 10.64x |
+| tools_history | 212 | 2041 / 9.63x | 2434 / 11.48x |
+
+These three small fixtures do not prove safety for all inputs, full tokenizer
+parity, or effective 480K context. Exact gateway admission remains authoritative.
+The HTTP fixture accepts the exact four-field count responses; live backend HTTP
+parity remains pending. Existing meaningful native current-v2 compaction and
+continuation evidence is preserved without a broader native refactor.
 
 ## Queue, durable ownership and status
 
@@ -97,7 +137,10 @@ counts and timestamp. Queued records recover cancelled; active records recover
 quarantined. The existing `gateway_lanes` ledger persists frontier occupancy before
 dispatch. There is deliberately no frontier administrative settlement action:
 backend owner proof and a reviewed reconciliation procedure are required to recover
-quarantine. The Qwen-only reconciliation function cannot clear frontier uncertainty. Existing
+quarantine. The gateway now has an explicit exact `glm-5.3-flash` owner-settlement
+path; Qwen/image/generic aliases and passive readiness cannot clear it. The existing
+admin wire contract still grants no Flash lifecycle action: the exact settlement
+seam requires future reviewed backend owner proof, not a new public bypass. Existing
 whole-ai-vm reboot holds also stop new frontier dispatch, without widening the
 canonical action/acknowledgement contract or granting new settlement authority.
 
@@ -106,7 +149,13 @@ frontier slot/queue state under the existing same-origin app policy. The UI rend
 it separately and never replaces the main 480K Qwen context meter. Native
 `engine.ts` retains its root-session notification guard; foreign child usage cannot
 overwrite main context. The registry adds passive `glm-5.3-flash` with endpoint ref
-`frontier-private`; it confers no new admin action authority.
+`frontier-private`; it confers no new admin action authority. NodeAvailability
+consumes canonical `glm-5.3-flash` from the existing Worker1 node-status service,
+including durable hardware latches, without inventing a Flash /readiness endpoint.
+Missing/down/unknown Flash holds its own admission independently of healthy Qwen.
+The snapshot exposes observed availability separately from durable lane state:
+idle is not usable-backend evidence. Availability is rechecked after asynchronous
+counting and before generation, alongside authorization and dispatch holds.
 
 ## Deployment, migration and restore plan — not executed
 
@@ -117,18 +166,24 @@ overwrite main context. The registry adds passive `glm-5.3-flash` with endpoint 
    Retain the receipt's original release `/opt/ai-harness/releases/63dcb23ebd0b2cb82a295bea78192f3e1a433a6e`.
 3. Build the native Linux image using the updated Containerfile and pinned patch
    manifests; run the existing launcher/image identity and actual-container egress
-   checks. This worker ran a macOS native build, not the Linux image build.
+   checks. Round-02 Linux candidate build receipts live in the task parent
+   `LINUX-BUILD-02.md/json`; a build is not deployment or inference acceptance.
+   Use a unique source-commit candidate tag and immutable image ID for offline
+   probes: run-engine.sh still selects the production tag, so do not invoke it
+   against this candidate until root authorizes promotion. Preserve production
+   image/release/unit/data/secrets. Reuse reviewed rootless layers and verified
+   native caches; no host bootstrap or OS update.
 4. Provision the protected frontier upstream key through existing host credential
    policy, without placing it in task profiles, images, argv, browsers or Git.
    Append `--frontier-key-file ABS` to the reviewed server ExecStart; an ambient
    environment variable is intentionally scrubbed by the launcher. Session profiles
    still receive only ephemeral session bearers.
-5. After accepted backend evidence, set the reviewed `qualified` flag true, retain
-   the 16000 input boundary, install the reviewed server/web/registry/image together,
+5. After accepted backend evidence, set the reviewed `qualified` flag true and install the reviewed server/web/registry/image together,
    and restart only under root integration coordination. No new backend URL flag.
 6. Verify real parent->Flash child in foreground and background, research and ordinary
    Qwen coding, cancellation/reconnect/result reuse, tools/MCP, compaction continuation,
-   status/UI and missing-Flash isolation. All actual Flash inputs remain <=16000.
+   status/UI and missing-Flash isolation. This round live test inputs stay <=16000;
+   that ceiling belongs to test dispatch, never production configuration.
 7. Restore upper service availability only on root instruction:
    `ssh ai-harness systemctl --user start ai-harness-searxng.service ai-harness.service`.
    Source activation and these starts were not performed here.

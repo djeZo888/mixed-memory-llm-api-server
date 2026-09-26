@@ -4,6 +4,5 @@
   "maxOutputTokens": 65536,
   "tokenizerRevision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
   "qualified": false,
-  "templateRevision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
-  "maxPromptTokens": 16000
+  "templateRevision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
 }
