@@ -63,9 +63,13 @@ class Owner:
 
     def status(self):
         qualified = bool(self.config['profiles'])
+        generation_sizes = [p['size'] for p in self.config['profiles'] if p['operation'] == 'generation']
+        maximum_generation_size = max(
+            generation_sizes, key=lambda size: int(size.split('x')[0]) * int(size.split('x')[1]), default=None)
         return {'ready': self.ready and qualified, 'busy': self.owner is not None,
                 'admitting': self.ready and qualified and self.owner is None,
-                'state': self.phase if qualified else 'unqualified'}
+                'state': self.phase if qualified else 'unqualified',
+                'maximum_supported_generation_size': maximum_generation_size}
 
     def claim(self, request, operation):
         if self.owner is not None:
