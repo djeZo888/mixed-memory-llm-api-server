@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "system_name": "Sova",
+  "date": "2026-09-26",
+  "status": "DEPLOYED_WITH_AI_VM_TRANSACTION_EXCEPTION",
+  "source_commit": "2b2aa2d22d9f2efb65ed593f0594e64ce8681d75",
+  "native_session_id": "01a0ddb4-bd78-7731-8ada-c03949da6b56",
+  "policy_changes_applied": 13,
+  "template_sha256": "8434b093177095dff31721799a9a7d06941e5a140210f6fb1035557afd52bef4",
+  "hosts": {
+    "ai-vm": {
+      "policy_status": "PASS",
+      "acceptance_status": "FAIL",
+      "apt_path": "/etc/apt/apt.conf.d/99zz-sova-disable-auto-updates",
+      "apt_owner_mode": "root:root 0644",
+      "suppressed_system_timers": [
+        "apt-daily.timer",
+        "apt-daily-upgrade.timer",
+        "fwupd-refresh.timer",
+        "update-notifier-download.timer"
+      ],
+      "snap_global_auto_refresh_hold": "forever",
+      "manual_routes_preserved": true,
+      "backup": {
+        "path": "/data/backups/h007-sova-auto-updates-20260926",
+        "manifest_sha256": "42297a7d34cb0973e2c26cac34307e2cd64094e23cad37435c091b561330ca13",
+        "metadata": {
+          "uid": 0,
+          "gid": 0,
+          "mode": "0o700",
+          "size": 4096,
+          "kind": "other"
+        }
+      },
+      "checks": {
+        "apt_effective": "PASS",
+        "apt_file": "PASS",
+        "timers_masked_inactive": "PASS",
+        "linked_workers_unmasked": "PASS",
+        "waiter_preserved": "PASS",
+        "policies_preserved": "PASS",
+        "boot_preserved": "PASS",
+        "units_preserved": "PASS",
+        "snap_forever_global": "PASS",
+        "snap_no_refresh_install": "PASS",
+        "no_package_transaction": "FAIL",
+        "manual_executables_preserved": "PASS",
+        "housekeeping_states_preserved": "PASS",
+        "containers_preserved": "PASS",
+        "protected_hashes_preserved": "PASS",
+        "contexts_and_readiness_preserved": "PASS",
+        "image_warm_preserved": "PASS",
+        "warm_receipts_preserved": "PASS",
+        "node_ready": "PASS",
+        "backup_files_root_0600": "PASS",
+        "checkpoint_package_db_and_logs_preserved": "PASS",
+        "checkpoint_no_package_lock": "PASS"
+      }
+    },
+    "ai-harness": {
+      "policy_status": "PASS",
+      "acceptance_status": "PASS",
+      "apt_path": "/etc/apt/apt.conf.d/99zz-sova-disable-auto-updates",
+      "apt_owner_mode": "root:root 0644",
+      "suppressed_system_timers": [
+        "apt-daily.timer",
+        "apt-daily-upgrade.timer",
+        "fwupd-refresh.timer",
+        "update-notifier-download.timer",
+        "podman-auto-update.timer"
+      ],
+      "snap_global_auto_refresh_hold": "forever",
+      "manual_routes_preserved": true,
+      "backup": {
+        "path": "/var/backups/h007-sova-auto-updates-20260926",
+        "manifest_sha256": "52fa8facae0717505e56f5bd1e14b885ae727d2c73cd8a0a795a6bdeed312c8b",
+        "metadata": {
+          "uid": 0,
+          "gid": 0,
+          "mode": "0o700",
+          "size": 4096,
+          "kind": "other"
+        }
+      },
+      "checks": {
+        "apt_effective": "PASS",
+        "apt_file": "PASS",
+        "timers_masked_inactive": "PASS",
+        "linked_workers_unmasked": "PASS",
+        "waiter_preserved": "PASS",
+        "policies_preserved": "PASS",
+        "boot_preserved": "PASS",
+        "units_preserved": "PASS",
+        "snap_forever_global": "PASS",
+        "snap_no_refresh_install": "PASS",
+        "no_package_transaction": "PASS",
+        "manual_executables_preserved": "PASS",
+        "housekeeping_states_preserved": "PASS",
+        "user_units_preserved": "PASS",
+        "harness_ready_queues_preserved": "PASS",
+        "backup_files_root_0600": "PASS",
+        "chat_status_initial_http_responses_preserved": "PASS",
+        "chat_ready_correct_configured_host": "PASS",
+        "status_current_fresh": "PASS",
+        "checkpoint_package_db_and_logs_preserved": "PASS",
+        "checkpoint_no_package_lock": "PASS"
+      }
+    }
+  },
+  "exception": {
+    "host": "ai-vm",
+    "observed": "apt-daily.service began at 2026-09-26 12:39:46 UTC during timer suppression; immediate pre-mutation package state was clear. Readback observed apt-get and the APT lists lock.",
+    "handling": "No worker stopped or killed; no automatic rollback. All approved settings installed. Narrow checkpoint at 12:41:09 UTC found no APT worker or package lock; PackageKit daemon remained.",
+    "package_db_dpkg_log_apt_history_hashes": "unchanged",
+    "no_new_package_transaction": "FAIL",
+    "refresh_network_activity": "UNKNOWN; no update/refresh network command was issued by this task, but automatic APT metadata activity occurred."
+  },
+  "preservation": {
+    "three_model_container_id_image_pid_start": "PASS",
+    "two_configured_context_tokens": [
+      480000,
+      480000
+    ],
+    "image_warm_run_and_three_json_receipt_hashes": "PASS",
+    "service_invocations_boot_ids": "PASS",
+    "protected_config_intent_journal_hashes": "PASS",
+    "existing_apt_needrestart_nvidia_policies": "PASS",
+    "unrelated_housekeeping_timer_states": "PASS",
+    "shutdown_waiters": "PASS",
+    "harness_dispatch_ready": true,
+    "harness_active_requests": 0,
+    "harness_queue_depth": 0,
+    "chat_health_http": 200,
+    "status_fresh": "PASS"
+  },
+  "snap_expected_side_effect": "Socket activation observed: inactive -> active -> inactive without a task stop/restart. Each host added one completed hold-snap change, no refresh/install change.",
+  "maintenance_and_snapshots": "TODO; not implemented",
+  "no_inference": true,
+  "no_ai_harness_or_model_service_restart": true,
+  "limits": [
+    "Point-in-time checks, not continuous monitoring or a universal promise about future/custom schedulers.",
+    "Manual commands remain available; no actual manual update was run.",
+    "Direct chat probe using the wrong Host returned403 before/after; configured Host later returned200.",
+    "Native model request/queue counters and harness activity are unknown.",
+    "Discovery launcher exited143 at600s; its internal task_exit0 did not establish native completion.",
+    "Interactive Codex/TUI update behavior remains outside scope."
+  ],
+  "root_review": {
+    "accepted_final_policy_state": true,
+    "historical_no_new_transaction_check": "FAIL_preserved",
+    "final_checkpoint": "No APT writer/lock and unchanged installed-package database, APT history and dpkg log; no AI service restarts",
+    "metadata_interpretation": "Configured apt-daily unit uses update; lists lock consistent with metadata refresh. Actual apt-get argv and scheduling cause not established.",
+    "activation_native_exit": 0,
+    "discovery_native_exit": 143
+  }
+}

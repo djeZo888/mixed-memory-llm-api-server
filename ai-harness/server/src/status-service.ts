@@ -4,17 +4,20 @@ import { AdminSecurity } from "./admin-security.js";
 import { ApiError } from "./errors.js";
 import { ObserverCache } from "./observer-cache.js";
 import {
-  NODE_IDS,
+  SERVICE_IDS,
   sanitizeNode,
   unknownNode,
   validateAction,
   type NodeId,
   type NodeSnapshot,
 } from "./node-contract.js";
+import { isActionNode, loadSystemRegistry, validateSystemRegistry, type SystemRegistry } from "./system-registry.js";
+import { projectNode } from "./status-projection.js";
 import type { NodeBackend } from "./node-client.js";
 import { statusHtml, statusCss, statusJs } from "./status-ui.js";
 export function createStatusService(options: {
-  backends: Record<NodeId, NodeBackend>;
+  backends: Record<string, Pick<NodeBackend, "status">>;
+  registry?: SystemRegistry;
   origins?: string[];
   readOnlyOrigins?: string[];
   autoPoll?: boolean;
@@ -23,6 +26,7 @@ export function createStatusService(options: {
   actions?: AdminActions;
   freeze?: AdminFreeze;
 }) {
+  const registry = validateSystemRegistry(options.registry ?? loadSystemRegistry());
   const app = Fastify({
     logger: false,
     trustProxy: false,
@@ -34,19 +38,23 @@ export function createStatusService(options: {
     options.readOnlyOrigins ?? ["http://status.ai-harness"],
   );
   const caches = Object.fromEntries(
-    NODE_IDS.map((id) => [
-      id,
+    registry.nodes.map(config => [
+      config.id,
       new ObserverCache(
-        async (signal) =>
-          sanitizeNode(await options.backends[id].status(signal), id),
+        async (signal) => {
+          const backend = Object.hasOwn(options.backends, config.id) ? options.backends[config.id] : undefined;
+          if (!backend) throw Error("Observation adapter unavailable");
+          return sanitizeNode(await backend.status(signal), config.id,
+            registry.services.filter(s => s.node_id === config.id).map(s => s.observation_key));
+        },
         { deadlineMs: options.deadlineMs, now: options.now },
       ),
     ]),
-  ) as Record<NodeId, ObserverCache<NodeSnapshot>>;
+  ) as Record<string, ObserverCache<NodeSnapshot>>;
   const snapshot = () =>
-    NODE_IDS.map((id) => {
-      const cached = caches[id].snapshot(),
-        node = structuredClone(cached.value ?? unknownNode(id));
+    registry.nodes.map(config => {
+      const cached = caches[config.id]!.snapshot(),
+        node = structuredClone(cached.value ?? unknownNode(config.id));
       const elapsed = cached.ageMs ?? 0;
       // Receiving cached JSON does not refresh its underlying observations.
       const age = (o: { age_ms: number | null; freshness: string }) => {
@@ -59,10 +67,12 @@ export function createStatusService(options: {
       age(node);
       age(node.inventory);
       node.services.forEach(age);
+      age(node.node_manager);
+      node.support.forEach(age);
       node.gpus.forEach(age);
       Object.values(node.resources).forEach(age);
       node.resources.disk?.volumes?.forEach(age);
-      return node;
+      return projectNode(node, config, registry);
     });
   app.addHook("onRequest", async (req, reply) => {
     security.check(
@@ -107,6 +117,7 @@ export function createStatusService(options: {
   );
   app.get("/api/status/v1/system", async () => ({
     schema_version: 1,
+    registry_version: registry.schema_version,
     nodes: snapshot(),
   }));
   app.get("/api/admin/session", async (req, reply) =>
@@ -115,6 +126,8 @@ export function createStatusService(options: {
   app.get("/api/admin/v1/targets", async () => ({
     dispatch_impact: await options.freeze?.inspect() ?? { frozen: false, activity: "unknown", active_requests: null, queue_depth: null, ready: false },
     targets: snapshot().flatMap((node) => {
+      const config = registry.nodes.find(n => n.id === node.node_id)!;
+      if (!isActionNode(node.node_id) || config.observation.adapter !== "node-v1") return [];
       if (
         !node.boot_id ||
         node.generation === null ||
@@ -136,7 +149,7 @@ export function createStatusService(options: {
           queue_depth: null,
         },
         ...node.services
-          .filter((s) => s.generation !== null && s.freshness === "fresh")
+          .filter((s) => (SERVICE_IDS[node.node_id as NodeId] as readonly string[]).includes(s.service_id) && s.generation !== null && s.freshness === "fresh")
           .map((s) => ({
             ...base,
             service_id: s.service_id,
@@ -149,7 +162,7 @@ export function createStatusService(options: {
             queue_depth: s.queue_depth,
           })),
         ...node.gpus
-          .filter((g) => g.generation !== null && g.freshness === "fresh")
+          .filter((g) => node.node_id === "ai-vm" && g.generation !== null && g.freshness === "fresh")
           .map((g) => ({
             ...base,
             gpu_uuid: g.uuid,

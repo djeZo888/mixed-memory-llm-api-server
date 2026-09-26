@@ -5,6 +5,7 @@ inference is executed. Production command/owner arguments and safety ordering
 are asserted at their actual dispatch boundaries.
 """
 import copy
+from contextlib import contextmanager
 from functools import partial
 import json
 import os
@@ -15,10 +16,11 @@ import threading
 import time
 from types import SimpleNamespace
 import unittest
+from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
-from common.lifecycle_lease import acquire_lease
+from common.lifecycle_lease import acquire_lease, LeaseBusy, LeaseError
 from control.node_actions import ActionRequest, DurableReceipt, NodeActions, NodeActionError, SERVICES
 from control.node_action_owner import (FixedOwnerDispatcher, ProductionNodeActionOwner,
                                        RegisteredNodeStore, validated_journal)
@@ -152,6 +154,227 @@ class OwnerTests(unittest.TestCase):
         encoded = json.dumps(self.store.value)
         self.assertNotIn('offline-action-1', encoded)
         self.assertNotIn('allow_interrupt', encoded)
+
+    def terminal_lease(self, *, busy=0, entry_error=None, validate_error=None, exit_error=None):
+        """Contend on the real canonical fixture lock only after one dispatch."""
+        attempts = []
+        @contextmanager
+        def lease_factory(*, blocking):
+            terminal = bool(self.dispatcher.calls)
+            if terminal:
+                attempts.append(blocking)
+                if len(attempts) <= busy:
+                    with self.lease(blocking=False):
+                        # Real flock contention at context entry, no body entered.
+                        with self.lease(blocking=blocking):
+                            self.fail('contended lease unexpectedly admitted')
+                if entry_error is not None:
+                    raise entry_error
+            with self.lease(blocking=blocking) as lease:
+                if terminal and validate_error is not None:
+                    def validate():
+                        raise validate_error
+                    yield SimpleNamespace(validate=validate)
+                else:
+                    yield lease
+                if terminal and exit_error is not None:
+                    raise exit_error
+        self.owner.lease_factory = lease_factory
+        return attempts
+
+    def terminal_done(self, body=None):
+        status, receipt = self.actions.submit(body or request())
+        self.assertEqual(status, 202)
+        self.wait(lambda: bool(self.dispatcher.calls) and not self.owner._busy)
+        self.assertEqual(len(self.dispatcher.calls), 1)
+        return receipt['operation_id'], self.store.value['operations'][receipt['operation_id']]
+
+    def test_terminal_transient_contention_commits_selected_success_once(self):
+        attempts = self.terminal_lease(busy=2)
+        with patch('control.node_action_owner.syslog.syslog') as diagnostic:
+            operation_id, entry = self.terminal_done()
+        self.assertEqual(attempts, [False] * 3)
+        self.assertEqual(entry['receipt']['status'], 'succeeded')
+        self.assertEqual([a['event'] for a in entry['audit']], ['accepted', 'dispatch', 'succeeded'])
+        self.assertEqual(self.store.events.count('succeeded'), 1)
+        self.assertEqual(self.actions.submit(request())[1]['operation_id'], operation_id)
+        self.assertEqual(len(self.dispatcher.calls), 1)
+        diagnostic.assert_not_called()
+
+    def test_terminal_persistent_contention_retains_running_then_startup_interrupts_without_replay(self):
+        attempts = self.terminal_lease(busy=float('inf'))
+        with patch('control.node_action_owner.TERMINAL_LEASE_SECONDS', .03), \
+             patch('control.node_action_owner.TERMINAL_LEASE_POLL_SECONDS', .01), \
+             patch('control.node_action_owner.syslog.syslog') as diagnostic:
+            operation_id, entry = self.terminal_done(request(service='image'))
+        self.assertTrue(1 <= len(attempts) <= 3)
+        self.assertEqual(entry['receipt']['status'], 'running')
+        self.assertEqual([a['event'] for a in entry['audit']], ['accepted', 'dispatch'])
+        audit = copy.deepcopy(entry['audit'])
+        diagnostic.assert_called_once()
+        message = diagnostic.call_args.args[1]
+        self.assertIn('terminal_metadata_uncertain', message)
+        self.assertIn('selected_status=succeeded selected_reason=none diagnostic=lease_busy_deadline', message)
+        self.assertIn('operation_id=' + operation_id, message)
+        self.assertEqual(self.actions.operation(operation_id)[1]['status'], 'running')
+        self.assertEqual(self.actions.submit(request(service='image'))[1]['status'], 'running')
+        self.owner.close()
+        restarted = self.make_owner()
+        result = NodeActions(restarted).submit(request(service='image'))[1]
+        self.assertEqual((result['operation_id'], result['status'], result['reason']),
+                         (operation_id, 'interrupted', 'operation_interrupted'))
+        saved = self.store.value['operations'][operation_id]
+        self.assertEqual(saved['audit'][:2], audit)
+        self.assertEqual([a['event'] for a in saved['audit']], ['accepted', 'dispatch', 'interrupted'])
+        self.assertTrue(saved['dispatch_recorded'])
+        self.assertEqual(len(self.dispatcher.calls), 1)
+
+    def test_terminal_unsafe_lease_entry_does_not_retry_or_relabel_success(self):
+        attempts = self.terminal_lease(entry_error=LeaseError('untrusted_lock_file'))
+        self.owner.sleep = Mock()
+        with patch('control.node_action_owner.syslog.syslog') as diagnostic:
+            _, entry = self.terminal_done()
+        self.assertEqual(attempts, [False])
+        self.owner.sleep.assert_not_called()
+        self.assertEqual(entry['receipt']['status'], 'running')
+        self.assertIn('selected_status=succeeded selected_reason=none diagnostic=lease_invalid',
+                      diagnostic.call_args.args[1])
+        self.assertNotIn('untrusted_lock_file', diagnostic.call_args.args[1])
+
+    def test_terminal_post_entry_leasebusy_validation_is_not_retried(self):
+        attempts = self.terminal_lease(validate_error=LeaseBusy())
+        self.owner.sleep = Mock()
+        with patch('control.node_action_owner.syslog.syslog') as diagnostic:
+            _, entry = self.terminal_done()
+        self.assertEqual(attempts, [False])
+        self.owner.sleep.assert_not_called()
+        self.assertEqual(entry['receipt']['status'], 'running')
+        self.assertIn('diagnostic=lease_invalid', diagnostic.call_args.args[1])
+
+    def test_terminal_diagnostic_transport_failure_keeps_owner_available_and_uncertainty(self):
+        attempts = self.terminal_lease(entry_error=LeaseError('untrusted_lock_file'))
+        with patch('control.node_action_owner.syslog.syslog', side_effect=OSError('sink unavailable')) as diagnostic:
+            operation_id, entry = self.terminal_done()
+        diagnostic.assert_called_once()
+        self.assertEqual(attempts, [False])
+        self.assertEqual(entry['receipt']['status'], 'running')
+        self.assertEqual([a['event'] for a in entry['audit']], ['accepted', 'dispatch'])
+        self.assertTrue(self.owner._thread.is_alive())
+        self.assertEqual(self.actions.submit(request())[1]['operation_id'], operation_id)
+        self.assertEqual(len(self.dispatcher.calls), 1)
+        self.owner.lease_factory = self.lease
+        code, later = self.actions.submit(request(idempotency_key='independent-action-2'))
+        self.assertEqual(code, 202)
+        self.assertEqual(self.finished(later['operation_id'])['status'], 'succeeded')
+        self.assertEqual(len(self.dispatcher.calls), 2)
+        self.assertEqual(self.actions.operation(operation_id)[1]['status'], 'running')
+
+    def test_terminal_actual_action_failure_keeps_own_reason_after_contention(self):
+        attempts = self.terminal_lease(busy=1)
+        def failed(*args):
+            raise NodeActionError('observation_unavailable')
+        self.dispatcher.complete = failed
+        with patch('control.node_action_owner.syslog.syslog') as diagnostic:
+            _, entry = self.terminal_done()
+        self.assertEqual(attempts, [False, False])
+        self.assertEqual((entry['receipt']['status'], entry['receipt']['reason']),
+                         ('failed', 'observation_unavailable'))
+        self.assertEqual([a['event'] for a in entry['audit']], ['accepted', 'dispatch', 'failed'])
+        self.assertEqual(entry['audit'][-1]['reason'], 'observation_unavailable')
+        diagnostic.assert_not_called()
+
+    def test_terminal_actual_action_failure_retained_in_deadline_diagnostic(self):
+        self.terminal_lease(busy=float('inf'))
+        def failed(*args):
+            raise NodeActionError('deadline_exceeded')
+        self.dispatcher.complete = failed
+        with patch('control.node_action_owner.TERMINAL_LEASE_SECONDS', .01), \
+             patch('control.node_action_owner.syslog.syslog') as diagnostic:
+            _, entry = self.terminal_done()
+        self.assertEqual(entry['receipt']['status'], 'running')
+        self.assertIn('selected_status=failed selected_reason=deadline_exceeded diagnostic=lease_busy_deadline',
+                      diagnostic.call_args.args[1])
+
+    def test_terminal_reboot_unknown_outcome_survives_contention(self):
+        self.terminal_lease(busy=1)
+        _, entry = self.terminal_done(request('node.reboot'))
+        self.assertEqual((entry['receipt']['status'], entry['receipt']['reason']), ('unknown', 'reboot_pending'))
+        self.assertEqual([a['event'] for a in entry['audit']], ['accepted', 'dispatch', 'unknown'])
+
+    def test_terminal_post_admission_write_error_is_not_retried(self):
+        attempts = self.terminal_lease()
+        write = self.store.write
+        writes = []
+        def failure(value):
+            status = next(iter(value['operations'].values()))['receipt']['status']
+            if status == 'succeeded':
+                writes.append(status)
+                raise OSError('private storage path or credential')
+            return write(value)
+        self.store.write = failure
+        with patch('control.node_action_owner.syslog.syslog') as diagnostic:
+            _, entry = self.terminal_done()
+        self.assertEqual(attempts, [False])
+        self.assertEqual(writes, ['succeeded'])
+        self.assertEqual(entry['receipt']['status'], 'running')
+        self.assertFalse(self.owner._loaded)
+        self.assertIn('selected_status=succeeded selected_reason=none diagnostic=storage_unavailable',
+                      diagnostic.call_args.args[1])
+        self.assertNotIn('private', diagnostic.call_args.args[1])
+
+    def test_terminal_post_commit_error_never_overwrites_success_or_replays(self):
+        attempts = self.terminal_lease()
+        write = self.store.write
+        writes = []
+        def uncertain(value):
+            write(value)
+            if next(iter(value['operations'].values()))['receipt']['status'] == 'succeeded':
+                writes.append('succeeded')
+                raise OSError('private post-rename fsync failure')
+        self.store.write = uncertain
+        with patch('control.node_action_owner.syslog.syslog') as diagnostic:
+            operation_id, entry = self.terminal_done()
+        self.assertEqual(attempts, [False])
+        self.assertEqual(writes, ['succeeded'])
+        self.assertEqual(entry['receipt']['status'], 'succeeded')
+        self.assertEqual([a['event'] for a in entry['audit']], ['accepted', 'dispatch', 'succeeded'])
+        self.assertIn('diagnostic=storage_unavailable', diagnostic.call_args.args[1])
+        self.assertFalse(self.owner._loaded)
+        self.store.write = write
+        self.assertEqual(self.actions.submit(request())[1]['operation_id'], operation_id)
+        self.assertEqual(self.actions.operation(operation_id)[1]['status'], 'succeeded')
+        self.assertEqual(len(self.dispatcher.calls), 1)
+
+    def test_terminal_update_leasebusy_is_not_an_entry_retry(self):
+        attempts = self.terminal_lease()
+        update = self.owner._update
+        updates = []
+        def failure(operation_id, status, reason=None, **kwargs):
+            if status == 'succeeded':
+                updates.append(status)
+                raise LeaseBusy()
+            return update(operation_id, status, reason, **kwargs)
+        self.owner._update = failure
+        self.owner.sleep = Mock()
+        with patch('control.node_action_owner.syslog.syslog') as diagnostic:
+            _, entry = self.terminal_done()
+        self.assertEqual(attempts, [False])
+        self.assertEqual(updates, ['succeeded'])
+        self.owner.sleep.assert_not_called()
+        self.assertEqual(entry['receipt']['status'], 'running')
+        self.assertIn('selected_status=succeeded selected_reason=none diagnostic=lease_invalid',
+                      diagnostic.call_args.args[1])
+
+    def test_terminal_release_error_is_not_an_entry_retry(self):
+        attempts = self.terminal_lease(exit_error=LeaseBusy())
+        self.owner.sleep = Mock()
+        with patch('control.node_action_owner.syslog.syslog') as diagnostic:
+            _, entry = self.terminal_done()
+        self.assertEqual(attempts, [False])
+        self.owner.sleep.assert_not_called()
+        self.assertEqual(entry['receipt']['status'], 'succeeded')
+        self.assertEqual([a['event'] for a in entry['audit']], ['accepted', 'dispatch', 'succeeded'])
+        self.assertIn('diagnostic=lease_invalid', diagnostic.call_args.args[1])
 
     def test_new_stale_latch_or_unknown_owner_cannot_dispatch(self):
         for field, value, reason in [('generation', 8, 'stale_state'), ('boot', NEXT_BOOT, 'stale_state'),

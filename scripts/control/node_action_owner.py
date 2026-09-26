@@ -1,24 +1,27 @@
 """Protected node operation adapter; delegates all lifecycle work to existing owners.
 
 A single admission/execution slot takes the existing canonical lifecycle lease.
-There is no model selector, scheduler, alternate lock, automatic retry, or recovery
-engine here. Disk I/O can occupy that slot indefinitely without replacement-thread
+There is no model selector, scheduler, alternate lock, action retry, or recovery
+engine here. Only terminal metadata lease entry has bounded contention retries.
+Disk I/O can occupy that slot indefinitely without replacement-thread
 growth; HTTP admission times out independently and status remains cached.
 """
 from __future__ import annotations
 
 import copy
+from contextlib import ExitStack
 from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
 import re
+import syslog
 import threading
 import time
 from types import SimpleNamespace
 import uuid
 
-from common.lifecycle_lease import acquire_lease, LeaseBusy
+from common.lifecycle_lease import acquire_lease, LeaseBusy, LeaseError
 from .node_actions import (ActionRequest, DurableReceipt, NodeActionError, SERVICES,
                            BOOT, ERRORS, _receipt, matches, require)
 
@@ -28,6 +31,8 @@ JOURNAL_SUFFIX = 'llm-node/operations.json'
 CONFIG_ROOT = Path('/usr/local/lib/llm-server/node-api/configs')
 TERMINAL = {'succeeded', 'failed', 'interrupted'}
 DIGEST = re.compile('[0-9a-f]{64}')
+TERMINAL_LEASE_SECONDS = 1.0
+TERMINAL_LEASE_POLL_SECONDS = .05
 
 
 def digest(value):
@@ -125,10 +130,12 @@ class ProductionNodeActionOwner:
     after scheduling; completion is observed after releasing this lease.
     """
     def __init__(self, store, identity_reader, dispatcher, *, lease_factory=acquire_lease,
-                 boot_reader=current_boot, monotonic=time.monotonic, transition_seconds=1920, autostart=True):
+                 boot_reader=current_boot, monotonic=time.monotonic, transition_seconds=1920,
+                 sleep=time.sleep, autostart=True):
         self.store, self.identity_reader, self.dispatcher = store, identity_reader, dispatcher
         self.lease_factory, self.boot_reader, self.monotonic = lease_factory, boot_reader, monotonic
         self.transition_seconds = transition_seconds
+        self.sleep = sleep
         self._lock = threading.RLock()
         self._wake = threading.Event()
         self._pending = None
@@ -288,11 +295,45 @@ class ProductionNodeActionOwner:
         self._save(state)
 
     def _finish(self, operation_id, status, reason=None):
-        # Status GET never reconciles. Completion metadata shares the canonical
-        # lease too; failure leaves durable running/unknown state for recovery.
-        with self.lease_factory(blocking=False) as lease:
-            lease.validate()
-            self._update(operation_id, status, reason)
+        # Retry only LeaseBusy from ENTRY, never validation, update or release:
+        # a post-write error may already have persisted the selected outcome.
+        # GET stays cached; failed publication leaves the last durable evidence.
+        deadline = self.monotonic() + TERMINAL_LEASE_SECONDS
+        diagnostic = None
+        try:
+            while True:
+                with ExitStack() as stack:
+                    try:
+                        lease = stack.enter_context(self.lease_factory(blocking=False))
+                    except LeaseBusy:
+                        remaining = deadline - self.monotonic()
+                        if remaining > 0:
+                            self.sleep(min(TERMINAL_LEASE_POLL_SECONDS, remaining))
+                        if self.monotonic() >= deadline:
+                            diagnostic = 'lease_busy_deadline'
+                            raise
+                        continue
+                    lease.validate()
+                    self._update(operation_id, status, reason)
+                return True
+        except Exception as exc:
+            if diagnostic is None:
+                diagnostic = ('lease_invalid' if isinstance(exc, LeaseError) else
+                              'storage_unavailable' if isinstance(exc, NodeActionError)
+                              and exc.code == 'storage_unavailable' else 'publication_failed')
+            # Fixed codes only: no exception text, paths, request data or secrets.
+            # The selected outcome is evidence, not a claim of durable commit.
+            # The fixed node unit discards stderr; use the local system log.
+            try:
+                syslog.syslog(syslog.LOG_ERR,
+                              'llm-node terminal_metadata_uncertain '
+                              f'operation_id={operation_id} selected_status={status} '
+                              f'selected_reason={reason or "none"} diagnostic={diagnostic}')
+            except Exception:
+                # Diagnostic transport is best effort; never kill the owner or
+                # retry publication/action work because the log sink failed.
+                pass
+            return False
 
     def _work(self):
         while True:
@@ -306,6 +347,7 @@ class ProductionNodeActionOwner:
                 ticket, self._pending = self._pending, None
                 self._busy = True
             operation_id = None
+            outcome = None
             try:
                 result = request = None
                 transition_deadline = self.monotonic() + self.transition_seconds
@@ -336,22 +378,23 @@ class ProductionNodeActionOwner:
                 if operation_id is not None:
                     self.dispatcher.complete(request, result, transition_deadline)
                     if request.action == 'node.reboot':
-                        self._finish(operation_id, 'unknown', 'reboot_pending')
+                        outcome = ('unknown', 'reboot_pending')
                     else:
-                        self._finish(operation_id, 'succeeded')
+                        outcome = ('succeeded', None)
             except Exception as exc:
                 code = 'lifecycle_busy' if isinstance(exc, LeaseBusy) else (
                     exc.code if isinstance(exc, NodeActionError) else 'operation_failed')
                 if operation_id is not None:
-                    try:
-                        self._finish(operation_id, 'failed', code)
-                    except Exception:
-                        pass  # Last durable running state is uncertain; never replay.
+                    outcome = ('failed', code)
                 if ticket is not None and ticket.result is None:
                     ticket.answer(error=NodeActionError(code))
             finally:
-                with self._lock:
-                    self._busy = False
+                try:
+                    if outcome is not None:
+                        self._finish(operation_id, *outcome)
+                finally:
+                    with self._lock:
+                        self._busy = False
 
 
 class FixedOwnerDispatcher:

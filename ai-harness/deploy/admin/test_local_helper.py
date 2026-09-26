@@ -79,6 +79,60 @@ class Fixtures(unittest.TestCase):
             self.ops.submit(request)
         self.assertEqual(code, caught.exception.code)
 
+    def test_support_is_read_only_separate_and_does_not_change_action_generation(self):
+        owner = helper.CommandOwner(helper.Identity(1000, 1000, "user", "/home/user"))
+        output = b"LoadState=loaded\nActiveState=active\nSubState=exited\nInvocationID=\nMainPID=0\nControlPID=0\nJob=\n"
+        cache = helper.SupportCache(owner.observe_support, clock=lambda: self.clock, monotonic=lambda: self.clock)
+        before = self.ops.status()["generation"]
+        self.ops.support = cache
+        with mock.patch.object(owner, "run", return_value=(0, output)) as run:
+            for component, unit in helper.SUPPORT_UNITS.items():
+                self.assertTrue(cache.refresh(component))
+                self.assertEqual(run.call_args.args[0], ["/usr/bin/systemctl", "--no-ask-password", "--no-pager", "show", "--property=LoadState,ActiveState,SubState,InvocationID,MainPID,ControlPID,Job", unit])
+                with self.assertRaises(helper.Rejected):
+                    owner.service_command(component, "restart")
+                request = self.request()
+                request["service_id"] = component
+                self.rejects(request, "service_not_allowed")
+            count = run.call_count
+            result = self.ops.status()
+            self.assertEqual(run.call_count, count)  # GET is memory-only.
+        self.assertEqual(result["generation"], before)
+        self.assertEqual([s["service_id"] for s in result["services"]], list(helper.SERVICES))
+        self.assertTrue(all(c["sub_state"] == "exited" and c["ready"] is None for c in result["support"]))
+        self.clock += 16
+        self.assertTrue(all(c["freshness"] == "stale" for c in cache.snapshot()))
+        with self.assertRaises(helper.Rejected):
+            cache.refresh("arbitrary.service")
+
+    def test_support_missing_failure_and_hung_slot_keep_independent_unknown_evidence(self):
+        entered, release = threading.Event(), threading.Event()
+        def observe(component):
+            if component == "nginx":
+                entered.set()
+                release.wait(2)
+                return {"active": "active", "sub": "running"}
+            if component == "egress":
+                return {"active": "failed", "sub": "failed"}
+            raise RuntimeError("unavailable")
+        cache = helper.SupportCache(observe, clock=lambda: self.clock, monotonic=lambda: self.clock)
+        worker = threading.Thread(target=lambda: cache.refresh("nginx"))
+        worker.start()
+        try:
+            self.assertTrue(entered.wait(1))
+            self.clock += 3
+            self.assertFalse(cache.refresh("nginx"))
+            self.assertTrue(cache.refresh("egress"))
+            self.assertFalse(cache.refresh("admin"))
+            rows = {c["component_id"]: c for c in cache.snapshot()}
+            self.assertEqual(rows["nginx"]["state"], "timeout")
+            self.assertEqual(rows["egress"]["active_state"], "failed")
+            self.assertEqual(rows["admin"]["freshness"], "unknown")
+            self.assertIsNone(rows["task-slice"]["age_ms"])
+        finally:
+            release.set()
+            worker.join(2)
+
     def test_only_fixed_registered_commands_no_shell_or_input_paths(self):
         owner = helper.CommandOwner(helper.Identity(1000, 1000, "user", "/home/user"))
         user_prefix = ["/usr/sbin/runuser", "--user", "user", "--", "/usr/bin/env", "-i",

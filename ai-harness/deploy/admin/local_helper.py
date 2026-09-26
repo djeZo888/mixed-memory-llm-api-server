@@ -48,6 +48,9 @@ MAX_BODY = 16384
 MAX_OPERATIONS = 10000
 HTTP_WORKERS = 4
 SERVICES = {"harness": "ai-harness.service", "search": "ai-harness-searxng.service", "status": "ai-harness-status.service"}
+# Observation-only allowlist. Never extend SERVICES/action validation from this map.
+SUPPORT_UNITS = {"nginx": "nginx.service", "admin": "ai-harness-admin.service",
+                 "egress": "ai-harness-egress.service", "task-slice": "ai-harness-task-slice.service"}
 ACTIONS = frozenset({"service.start", "service.stop", "service.restart", "node.reboot"})
 KEY = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
 BOOT = re.compile(r"^[0-9a-f-]{36}$")
@@ -149,7 +152,18 @@ class CommandOwner:
         return boot
 
     def observe_service(self, service: str) -> dict:
-        rc, output = self.run(self.service_command(service, "show", "--property=LoadState,ActiveState,SubState,InvocationID,MainPID,ControlPID,Job"), 2)
+        return self._observe_command(self.service_command(service, "show", "--property=LoadState,ActiveState,SubState,InvocationID,MainPID,ControlPID,Job"))
+
+    def observe_support(self, component: str) -> dict:
+        if component not in SUPPORT_UNITS:
+            raise Rejected("support_not_allowed")
+        # Only a fixed read-only systemd show. No request-derived unit or verb.
+        return self._observe_command(["/usr/bin/systemctl", "--no-ask-password", "--no-pager", "show",
+                                      "--property=LoadState,ActiveState,SubState,InvocationID,MainPID,ControlPID,Job",
+                                      SUPPORT_UNITS[component]])
+
+    def _observe_command(self, argv: list[str]) -> dict:
+        rc, output = self.run(argv, 2)
         if rc:
             raise Rejected("service_observation_unavailable", 503)
         props = dict(line.split("=", 1) for line in output.decode("ascii").splitlines() if "=" in line)
@@ -173,6 +187,63 @@ class CommandOwner:
         rc, _ = self.run(self.command(request), 90)
         if rc:
             raise Rejected("owner_failed_unknown", 503)
+
+
+class SupportCache:
+    """Four fixed independent observation slots, no lifecycle journal or owner action."""
+    def __init__(self, observe, clock=time.time, monotonic=time.monotonic):
+        self.observe, self.clock, self.monotonic = observe, clock, monotonic
+        self.values, self.started = {}, {}
+        self.lock = threading.Lock()
+
+    def refresh(self, component):
+        if component not in SUPPORT_UNITS:
+            raise Rejected("support_not_allowed")
+        with self.lock:
+            if component in self.started:
+                return False
+            self.started[component] = self.monotonic()
+        try:
+            value = self.observe(component)
+            if not isinstance(value, dict) or not all(isinstance(value.get(k), str) for k in ("active", "sub")):
+                raise ValueError("invalid support observation")
+            self.values[component] = {"active_state": value["active"], "sub_state": value["sub"],
+                                      "at": self.clock(), "monotonic": self.monotonic(), "state": "ok", "reason": None}
+            return True
+        except Exception:
+            prior = self.values.get(component)
+            if prior:
+                self.values[component] = {**prior, "state": "error", "reason": "service_observation_unavailable"}
+            return False
+        finally:
+            with self.lock:
+                self.started.pop(component, None)
+
+    def snapshot(self):
+        result = []
+        for component in SUPPORT_UNITS:
+            value = self.values.get(component)
+            age = max(0, round((self.monotonic() - value["monotonic"]) * 1000)) if value else None
+            item = {"component_id": component, "state": value["state"] if value else "unknown",
+                    "observed_at": timestamp(value["at"]) if value else None, "age_ms": age,
+                    "freshness": "unknown" if age is None else "fresh" if age <= 15000 else "stale",
+                    "reason": value["reason"] if value else "not_observed",
+                    "active_state": value["active_state"] if value else "unknown",
+                    "sub_state": value["sub_state"] if value else "unknown", "ready": None}
+            started = self.started.get(component)
+            if started is not None and self.monotonic() - started > 2:
+                item.update(state="timeout", reason="service_observation_unavailable")
+            result.append(item)
+        return result
+
+    def start(self):
+        def poll(component):
+            while True:
+                started = self.monotonic()
+                self.refresh(component)
+                time.sleep(max(0, 5 - (self.monotonic() - started)))
+        for component in SUPPORT_UNITS:
+            threading.Thread(target=poll, args=(component,), daemon=True).start()
 
 
 def missing_interlock(request: dict) -> dict:
@@ -282,6 +353,7 @@ class Operations:
         self.busy = False
         self.receipts = {}
         self.resources = ResourceCache(lambda _: {})
+        self.support = SupportCache(lambda _: {})
         self.node_generation = None
         self.observations: dict[str, dict] = {}
         self.probing: set[str] = set()
@@ -379,7 +451,7 @@ class Operations:
         return {"schema_version": 1, "node_id": "ai-harness", "boot_id": boot,
                 "generation": self.node_generation, **self._meta(latest), "services": services, "gpus": [],
                 "inventory": {**unknown, "boot_id": boot, "complete": False, "observation_id": None, "gpu_uuids": [], "hardware_faults": {}},
-                "resources": self.resources.snapshot(),
+                "resources": self.resources.snapshot(), "support": self.support.snapshot(),
                 "affected_services": list(SERVICES), "activity": "unknown", "interrupt_required": True,
                 "actions_supported": ["node.reboot"], "action_limit_reason": None}
 
@@ -655,6 +727,8 @@ def main() -> None:
     operations = Operations(Path(STATE_PATH), owner.boot_id, owner.observe_service, owner.execute, freeze=ProtectedFreeze(identity.uid))
     operations.resources = ResourceCache(ProcResources().observe)
     operations.resources.start()
+    operations.support = SupportCache(owner.observe_support)
+    operations.support.start()
     # Never unlink an occupied or unreviewed stale socket; systemd RuntimeDirectory
     # cleanup is the installed owner, and unexpected path requires operator review.
     server = Server(SOCKET_PATH, identity.uid, operations)

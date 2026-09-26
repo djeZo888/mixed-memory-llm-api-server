@@ -62,7 +62,33 @@ async function boundary() {
  * 0440/0550 group bits are the ACL mask, not an owning-group access grant.
  */
 export async function readStatusControlCredential(file: string): Promise<string> {
-  if (file !== registeredFile || process.env.CREDENTIALS_DIRECTORY !== directory)
+  if (file !== registeredFile) throw unsafe();
+  return readRegisteredStatusCredential(file);
+}
+
+/** Additional node credentials use only explicit reviewed systemd names under
+ * the same protected immutable mount. Never accepts an arbitrary file path. */
+export async function readStatusNodeCredential(name: string): Promise<string> {
+  if (!/^node-[a-z0-9][a-z0-9-]{0,55}$/.test(name)) throw unsafe();
+  return readRegisteredStatusCredential(`${directory}/${name}`);
+}
+
+/** Resolve reviewed references once at startup; absent or reused node secrets
+ * fail closed. The returned map never enters a public status snapshot. */
+export async function readStatusNodeCredentials(references: readonly { id: string; systemd_credential: string }[], controlKey: string): Promise<Record<string, string>> {
+  const credentials: Record<string, string> = { "control-api-key": controlKey };
+  for (const reference of references) {
+    if (reference.id === "control-api-key") continue;
+    const value = await readStatusNodeCredential(reference.systemd_credential);
+    if (Object.hasOwn(credentials, reference.id) || Object.values(credentials).includes(value))
+      throw Error("Node credentials must be isolated");
+    credentials[reference.id] = value;
+  }
+  return credentials;
+}
+
+async function readRegisteredStatusCredential(file: string): Promise<string> {
+  if (process.env.CREDENTIALS_DIRECTORY !== directory)
     throw unsafe();
   const initial = await boundary();
   if ((await fs.realpath(file)) !== file) throw unsafe();

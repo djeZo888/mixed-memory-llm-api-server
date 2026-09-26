@@ -6,6 +6,7 @@ import { chromium } from '../../web/node_modules/playwright/index.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { AdminActions } from '../dist/admin-actions.js';
 import { createStatusService } from '../dist/status-service.js';
+import { loadSystemRegistry } from '../dist/system-registry.js';
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/h005/node-status-v1.json', import.meta.url), 'utf8'));
 const diskFixture = JSON.parse(readFileSync(new URL('./fixtures/h005/disk-volumes-v1.json', import.meta.url), 'utf8'));
 const fresh = { state: 'ok', freshness: 'fresh', observed_at: new Date().toISOString(), age_ms: 0, reason: null };
@@ -43,7 +44,10 @@ const freeze = {hold:a=>holds.add(a.idempotency_key),acknowledge:async()=>({}),r
 function backend(id) {return { status: async () => snapshot(id), action: async action => { calls.push(action);if(failNextAction){failNextAction=false;throw Error("synthetic lost response");}return { schema_version: 1, node_id: id, operation_id: 'fixture-operation', action: action.action, service_id:action.service_id??null,gpu_uuid:action.gpu_uuid??null,expected_boot_id:action.expected_boot_id,expected_generation:action.expected_generation,status: 'succeeded', affected_services: [action.service_id] }; }, operation: async () => ({ schema_version: 1, node_id: id, operation_id: 'fixture-operation', action: 'service.start', status: 'succeeded', affected_services: ['qwen-gpu0'] }) };}
 const backends={'ai-vm':backend('ai-vm'),'ai-harness':backend('ai-harness')};
 const actions=new AdminActions({db,freeze,backends,autoPoll:false});
-const service = createStatusService({backends,actions,freeze,origins:['http://127.0.0.1:5197'],autoPoll:false});
+const registry=loadSystemRegistry();
+registry.nodes.push({id:'offline-lab',display_name:'Offline laboratory',observation:{adapter:'unsupported',transport:null}});
+registry.services.push({id:'lab-job',node_id:'offline-lab',display_name:'Expected lab job',observation_key:'lab-job',owner:'unassigned',capabilities:[],endpoint_ref:null});
+const service = createStatusService({registry,backends,actions,freeze,origins:['http://127.0.0.1:5197'],autoPoll:false});
 await Promise.all(Object.values(service.caches).map(c=>c.poll()));
 let browser;
 try {
@@ -53,17 +57,36 @@ try {
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:5197/status');
   await page.getByText('Hardware disabled for this boot').waitFor();
-  assert.equal(await page.locator('#nodes .panel').count(),2);
+  assert.equal(await page.locator('#nodes .panel').count(),registry.nodes.length);
+  assert.equal(await page.locator('#overview .vm-summary').count(),registry.nodes.length);
+  for(const id of ['ai-vm','ai-harness']){
+    const panel=page.locator('#overview .vm-summary[data-node-id="'+id+'"]');
+    await panel.waitFor({state:'visible'});
+    assert.ok((await panel.locator('h2').innerText()).startsWith(id+' — '));
+    assert.ok((await panel.boundingBox()).y<600, id+' is easy to find above detailed tables');
+  }
+  const inventory=page.locator('#inventory');
+  assert.deepEqual(await inventory.locator('th').allTextContents(),['Service / component','Host','Type','State','Health / readiness','Evidence']);
+  assert.ok((await inventory.innerText()).includes('ai-vm'));
+  assert.ok((await inventory.innerText()).includes('ai-harness'));
+  assert.ok((await inventory.innerText()).includes('task-capability'));
+  assert.ok((await inventory.innerText()).includes('support'));
+  const labRow=inventory.locator('tr').filter({hasText:'Expected lab job'});
+  assert.match(await labRow.innerText(),/offline-lab/);
+  assert.match(await labRow.innerText(),/unknown/);
+  assert.match(await page.locator('#overview [data-node-id="offline-lab"]').innerText(),/Unknown/);
+  assert.equal(await page.locator('#overview [data-node-id="offline-lab"]').getByText('0%',{exact:true}).count(),0);
+  assert.ok((await inventory.boundingBox()).y<(await page.locator('#nodes').boundingBox()).y);
   assert.equal(await page.locator('#action-form').count(),0);
   assert.equal(await page.locator('.gpu-table tr').count(),5);
   for(const text of ['UUID …00000001','UUID …00000004','Assigned: image','Unassigned','179.5 GiB / 512 GiB','16 GiB / 32 GiB','512 GiB / 1 TiB','1 TiB / 2 TiB','1.5 MiB/s'])assert.ok((await page.locator('#nodes').innerText()).includes(text),text);
   assert.ok(!(await page.locator('#nodes').innerText()).includes('[object Object]'));
   assert.equal(await page.locator('.volume-table tr').count(),8);
   assert.equal(await page.getByRole('heading',{name:'Registered volume roles'}).count(),2);
-  if(process.argv[2])await page.screenshot({path:process.argv[2],fullPage:true});
+  if(process.argv[2]){await page.screenshot({path:process.argv[2],fullPage:true});await page.screenshot({path:process.argv[2].replace('.png','-top.png'),fullPage:false});}
   await page.setViewportSize({width:390,height:844});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);
-  if(process.argv[3])await page.screenshot({path:process.argv[3],fullPage:true});
+  if(process.argv[3]){await page.screenshot({path:process.argv[3],fullPage:true});await page.screenshot({path:process.argv[3].replace('.png','-top.png'),fullPage:false});}
   await page.setViewportSize({width:1280,height:1000});
   volumeFailure = true;
   await Promise.all(Object.values(service.caches).map(c=>c.poll()));
@@ -73,8 +96,15 @@ try {
   assert.match(await volumes.locator('tr').nth(2).innerText(),/ok · stale/);
   assert.match(await volumes.locator('tr').nth(3).innerText(),/Unknown \/ Unknown/);
   assert.ok(!(await volumes.locator('tr').nth(3).innerText()).includes('16 GiB'));
+  await page.route('**/api/status/v1/system',route=>route.abort());
+  await page.getByText('Status transport unavailable.',{exact:false}).waitFor();
+  assert.match(await page.locator('#overview [data-node-id="ai-vm"]').innerText(),/Unknown · stale/);
+  assert.equal(await page.locator('#inventory .badge.available').count(),0);
+  await page.unroute('**/api/status/v1/system');
   await page.goto('http://127.0.0.1:5197/admin');
   await page.locator('#target option').nth(1).waitFor({state:'attached'});
+  const targetLabels=await page.locator('#target option').allTextContents();
+  assert.ok(!targetLabels.some(t=>/offline-lab|nginx|gateway|node-manager|extra/.test(t)));
   await page.locator('#target').selectOption({label:'ai-vm / qwen-gpu1'});
   await page.getByRole('button',{name:'Confirm action'}).click();
   await page.getByText(/Operation ai-vm~relay-.*: succeeded/).waitFor();
@@ -104,5 +134,5 @@ try {
   await page.getByRole('button',{name:'Confirm recovery restart',exact:true}).click();
   await page.getByText(/Operation ai-vm~relay-.*: succeeded/).waitFor();
   assert.equal(calls.length,4);assert.equal(calls[3].action,'service.restart');assert.equal(calls[3].expected_generation,2);assert.notEqual(calls[2].idempotency_key,calls[3].idempotency_key);assert.equal(holds.size,0);assert.deepEqual(errors,[]);
-  console.log('PASS synthetic Chrome status/admin: typed start/restart, protected scoped freeze, explicit action and recovery confirmations, retained uncertain outcome, no replay or page errors');
+  console.log('PASS synthetic Chrome status/admin: configured VM summaries, unified Host/type/state inventory, offline unknown rows, support has no targets, typed start/restart, protected scoped freeze, explicit action and recovery confirmations, retained uncertain outcome, no replay or page errors');
 } finally { await browser?.close();await service.app.close();db.close(); }

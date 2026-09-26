@@ -1,0 +1,454 @@
+{
+  "schema_version": 1,
+  "credentials": [
+    {
+      "id": "control-api-key",
+      "systemd_credential": "control-api-key"
+    }
+  ],
+  "transports": [
+    {
+      "id": "ai-vm-private",
+      "kind": "private-http",
+      "host": "10.156.100.60",
+      "port": 30008,
+      "socket_path": null,
+      "credential_ref": "control-api-key"
+    },
+    {
+      "id": "local-helper",
+      "kind": "local-helper",
+      "host": null,
+      "port": null,
+      "socket_path": "/run/ai-harness-admin/helper.sock",
+      "credential_ref": null
+    }
+  ],
+  "nodes": [
+    {
+      "id": "ai-vm",
+      "display_name": "AI model server",
+      "observation": {
+        "adapter": "node-v1",
+        "transport": "ai-vm-private"
+      }
+    },
+    {
+      "id": "ai-harness",
+      "display_name": "Chat and tools host",
+      "observation": {
+        "adapter": "node-v1",
+        "transport": "local-helper"
+      }
+    }
+  ],
+  "services": [
+    {
+      "id": "qwen-gpu0",
+      "node_id": "ai-vm",
+      "display_name": "Text inference GPU0",
+      "observation_key": "qwen-gpu0",
+      "owner": "llmctl",
+      "capabilities": [
+        "chat.completions"
+      ],
+      "endpoint_ref": "qwen-gpu0-private"
+    },
+    {
+      "id": "qwen-gpu1",
+      "node_id": "ai-vm",
+      "display_name": "Text inference GPU1",
+      "observation_key": "qwen-gpu1",
+      "owner": "llmctl",
+      "capabilities": [
+        "chat.completions"
+      ],
+      "endpoint_ref": "qwen-gpu1-private"
+    },
+    {
+      "id": "image",
+      "node_id": "ai-vm",
+      "display_name": "Image generation and editing",
+      "observation_key": "image",
+      "owner": "llm-image-api.service",
+      "capabilities": [
+        "images.generations",
+        "images.edits"
+      ],
+      "endpoint_ref": "image-private"
+    },
+    {
+      "id": "control",
+      "node_id": "ai-vm",
+      "display_name": "Model lifecycle control",
+      "observation_key": "control",
+      "owner": "llm-control.service",
+      "capabilities": [
+        "model.control"
+      ],
+      "endpoint_ref": "control-private"
+    },
+    {
+      "id": "harness",
+      "node_id": "ai-harness",
+      "display_name": "Chat, sessions and files",
+      "observation_key": "harness",
+      "owner": "user systemd",
+      "capabilities": [
+        "chat",
+        "gateway"
+      ],
+      "endpoint_ref": "harness-local"
+    },
+    {
+      "id": "search",
+      "node_id": "ai-harness",
+      "display_name": "Search",
+      "observation_key": "search",
+      "owner": "user systemd",
+      "capabilities": [
+        "search"
+      ],
+      "endpoint_ref": "search-local"
+    },
+    {
+      "id": "status",
+      "node_id": "ai-harness",
+      "display_name": "Status and administration",
+      "observation_key": "status",
+      "owner": "system systemd",
+      "capabilities": [
+        "node.status",
+        "node.actions"
+      ],
+      "endpoint_ref": "status-uds"
+    }
+  ],
+  "components": [
+    {
+      "id": "gateway",
+      "node_id": "ai-harness",
+      "display_name": "Inference gateway and admission",
+      "type": "capability",
+      "owner": "harness process",
+      "parent_id": "harness",
+      "independently_restartable": false,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "image-broker",
+      "node_id": "ai-harness",
+      "display_name": "Image orchestration and broker",
+      "type": "capability",
+      "owner": "harness process",
+      "parent_id": "harness",
+      "independently_restartable": false,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "dispatch",
+      "node_id": "ai-harness",
+      "display_name": "Dispatch interlock",
+      "type": "capability",
+      "owner": "harness process",
+      "parent_id": "harness",
+      "independently_restartable": false,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "task-engine",
+      "node_id": "ai-harness",
+      "display_name": "Native task execution",
+      "type": "task-capability",
+      "owner": "on-demand task engine",
+      "parent_id": "harness",
+      "independently_restartable": false,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "browser-tools",
+      "node_id": "ai-harness",
+      "display_name": "Browser automation",
+      "type": "task-capability",
+      "owner": "on-demand task engine",
+      "parent_id": "harness",
+      "independently_restartable": false,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "search-tools",
+      "node_id": "ai-harness",
+      "display_name": "Search MCP adapter",
+      "type": "task-capability",
+      "owner": "on-demand task engine",
+      "parent_id": "harness",
+      "independently_restartable": false,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "image-tools",
+      "node_id": "ai-harness",
+      "display_name": "Image MCP adapter",
+      "type": "task-capability",
+      "owner": "on-demand task engine",
+      "parent_id": "harness",
+      "independently_restartable": false,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "document-tools",
+      "node_id": "ai-harness",
+      "display_name": "PDF, calculation and code tools",
+      "type": "task-capability",
+      "owner": "on-demand task engine",
+      "parent_id": "harness",
+      "independently_restartable": false,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "nginx",
+      "node_id": "ai-harness",
+      "display_name": "Private HTTP proxy",
+      "type": "support",
+      "owner": "nginx.service",
+      "parent_id": null,
+      "independently_restartable": true,
+      "observation": {
+        "source": "support",
+        "key": "nginx"
+      }
+    },
+    {
+      "id": "admin",
+      "node_id": "ai-harness",
+      "display_name": "Local administrative owner",
+      "type": "support",
+      "owner": "ai-harness-admin.service",
+      "parent_id": null,
+      "independently_restartable": true,
+      "observation": {
+        "source": "support",
+        "key": "admin"
+      }
+    },
+    {
+      "id": "egress",
+      "node_id": "ai-harness",
+      "display_name": "Task egress watcher",
+      "type": "support",
+      "owner": "ai-harness-egress.service",
+      "parent_id": null,
+      "independently_restartable": true,
+      "observation": {
+        "source": "support",
+        "key": "egress"
+      }
+    },
+    {
+      "id": "task-slice",
+      "node_id": "ai-harness",
+      "display_name": "Task slice prerequisite (oneshot)",
+      "type": "support",
+      "owner": "ai-harness-task-slice.service",
+      "parent_id": null,
+      "independently_restartable": true,
+      "observation": {
+        "source": "support",
+        "key": "task-slice"
+      }
+    },
+    {
+      "id": "search-container",
+      "node_id": "ai-harness",
+      "display_name": "SearXNG container and rootless transport",
+      "type": "support",
+      "owner": "ai-harness-searxng.service",
+      "parent_id": "search",
+      "independently_restartable": false,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "node-manager",
+      "node_id": "ai-vm",
+      "display_name": "Node status and action API",
+      "type": "support",
+      "owner": "llm-node.service",
+      "parent_id": null,
+      "independently_restartable": true,
+      "observation": {
+        "source": "node_manager",
+        "key": null
+      }
+    },
+    {
+      "id": "control-unit",
+      "node_id": "ai-vm",
+      "display_name": "Model control process",
+      "type": "support",
+      "owner": "llm-control.service",
+      "parent_id": "control",
+      "independently_restartable": true,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "image-api",
+      "node_id": "ai-vm",
+      "display_name": "Image API owner",
+      "type": "support",
+      "owner": "llm-image-api.service",
+      "parent_id": "image",
+      "independently_restartable": true,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "image-backend",
+      "node_id": "ai-vm",
+      "display_name": "Native image backend",
+      "type": "support",
+      "owner": "llm-image-backend.service",
+      "parent_id": "image-api",
+      "independently_restartable": true,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "boot-owner",
+      "node_id": "ai-vm",
+      "display_name": "Boot reconciliation (oneshot)",
+      "type": "support",
+      "owner": "llmctl-boot.service",
+      "parent_id": null,
+      "independently_restartable": true,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "docker",
+      "node_id": "ai-vm",
+      "display_name": "Container engine",
+      "type": "support",
+      "owner": "docker.service",
+      "parent_id": null,
+      "independently_restartable": true,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "containerd",
+      "node_id": "ai-vm",
+      "display_name": "Container runtime",
+      "type": "support",
+      "owner": "containerd.service",
+      "parent_id": "docker",
+      "independently_restartable": true,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "private-glm",
+      "node_id": "ai-vm",
+      "display_name": "Private glm transport (socket/service)",
+      "type": "support",
+      "owner": "llm-private-glm.socket / llm-private-glm.service",
+      "parent_id": "qwen-gpu0",
+      "independently_restartable": true,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "private-qwen38",
+      "node_id": "ai-vm",
+      "display_name": "Private qwen38 transport (socket/service)",
+      "type": "support",
+      "owner": "llm-private-qwen38.socket / llm-private-qwen38.service",
+      "parent_id": "qwen-gpu1",
+      "independently_restartable": true,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "private-image",
+      "node_id": "ai-vm",
+      "display_name": "Private image transport (socket/service)",
+      "type": "support",
+      "owner": "llm-private-image.socket / llm-private-image.service",
+      "parent_id": "image",
+      "independently_restartable": true,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "private-control",
+      "node_id": "ai-vm",
+      "display_name": "Private control transport (socket/service)",
+      "type": "support",
+      "owner": "llm-private-control.socket / llm-private-control.service",
+      "parent_id": "control",
+      "independently_restartable": true,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "private-node",
+      "node_id": "ai-vm",
+      "display_name": "Private node transport (socket/service)",
+      "type": "support",
+      "owner": "llm-private-node.socket / llm-private-node.service",
+      "parent_id": "node-manager",
+      "independently_restartable": true,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    }
+  ]
+}
