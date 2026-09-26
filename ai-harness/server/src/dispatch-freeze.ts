@@ -102,10 +102,17 @@ export class DispatchFreeze {
           } as Record<string, string>
         )[serviceId] ?? serviceId;
       return this.db
-        .prepare("SELECT scope FROM dispatch_holds")
+        .prepare("SELECT scope,action FROM dispatch_holds")
         .all()
         .some((row) => {
           const scope = JSON.parse(String(row.scope)) as string[];
+          // Whole-node reboot also gates the independently routed frontier.
+          // Keep the existing canonical action/ack scope byte-for-byte unchanged:
+          // this adds no frontier lifecycle operation or settlement authority.
+          if (service === "glm-5.3-flash") {
+            const action = JSON.parse(String(row.action)) as NodeAction;
+            if (action.node_id === "ai-vm" && action.action === "node.reboot") return true;
+          }
           return scope.includes(service) || scope.includes("harness");
         });
     } catch {

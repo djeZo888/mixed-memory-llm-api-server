@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "id": "glm-5.3-flash-480000-fp8-kt",
+  "status": "SEPARATE_FRONTIER_OWNER_SOURCE_CANDIDATE",
+  "model": "glm-5.3-flash-fp8",
+  "runtime": "kt-sglang-glm53-flash-h008",
+  "service_id": "glm-5.3-flash",
+  "endpointRef": "frontier-private",
+  "endpoint": {
+    "host": "127.0.0.1",
+    "port": 30010,
+    "api_prefix": "/v1",
+    "served_model": "glm-5.3-flash"
+  },
+  "gpu_uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+  "launch": {
+    "tp_size": 1,
+    "context_length": 480000,
+    "max_total_tokens": 480000,
+    "max_running_requests": 1,
+    "mem_fraction_static": 0.65,
+    "chunked_prefill_size": 2048,
+    "kt_method": "FP8",
+    "kt_cpuinfer": 64,
+    "kt_threadpool_count": 2,
+    "kt_num_gpu_experts": 0,
+    "kt_gpu_prefill_token_threshold": 2048,
+    "cuda_graph_bs": [
+      1,
+      2,
+      4
+    ],
+    "tool_call_parser": "glm47",
+    "reasoning_parser": "glm45"
+  },
+  "request_policy": {
+    "payloads": [
+      "text",
+      "tools",
+      "tool_history"
+    ],
+    "reject_payloads": [
+      "image",
+      "video",
+      "audio"
+    ],
+    "max_output_tokens": 65536,
+    "reasoning_effort": "high",
+    "chat_template_kwargs": {
+      "clear_thinking": true
+    }
+  },
+  "memory_policy": {
+    "host_min_available_fraction": 0.15,
+    "target_gpu_min_free_fraction_at_measured_peak": 0.07,
+    "static_fraction_is_not_reserve_evidence": true
+  },
+  "cpu_policy": {
+    "expert_threads": 64,
+    "threadpool_count": 2,
+    "numa_spread": true
+  },
+  "acceptance_plan": {
+    "configured_context": 480000,
+    "warm_input_tokens": 4096,
+    "measured_input_tokens": [
+      4096,
+      16384
+    ],
+    "sustained_decode_max_tokens": 2048,
+    "below_one_decode_token_per_second_stop_after_seconds": 300,
+    "near_full_occupied_context": "NOT_TESTED"
+  },
+  "pending": [
+    "root exact activation GO",
+    "verified weights and immutable dependency capture",
+    "live native allocation and bounded inference qualification"
+  ],
+  "owner": "H008-FLASH-20260926",
+  "native_usable_bounds": {
+    "input_tokens_max": 479993,
+    "input_plus_requested_output_max": 479998,
+    "status": "PINNED_SOURCE_EXPECTED_ACTUAL_POOL_REQUIRED"
+  }
+}

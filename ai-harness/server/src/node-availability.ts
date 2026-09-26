@@ -6,7 +6,7 @@ import type {
   ServiceAvailability,
 } from "./service-availability.js";
 
-const SERVICES = ["qwen-gpu0", "qwen-gpu1", "image"] as const;
+const SERVICES = ["qwen-gpu0", "qwen-gpu1", "image", "glm-5.3-flash"] as const;
 type ServiceId = (typeof SERVICES)[number];
 export interface HardwareLatch {
   /** Authoritative latch origin, never inferred from the current node boot. */
@@ -90,7 +90,10 @@ export class NodeAvailability {
     this.staleMs = options.staleMs ?? 15000;
     this.cache = new ObserverCache(
       async (signal) =>
-        sanitizeNode(await options.backend.status(signal), "ai-vm"),
+        sanitizeNode(await options.backend.status(signal), "ai-vm", [
+          ...SERVICES,
+          "control",
+        ]),
       {
         now: options.now,
         deadlineMs: options.deadlineMs ?? 2000,
@@ -99,7 +102,9 @@ export class NodeAvailability {
       },
     );
     for (const id of SERVICES) {
-      const probe = options.readiness?.[id];
+      // Flash has no agreed passive /readiness route; observe node status only.
+      const probe =
+        id === "glm-5.3-flash" ? undefined : options.readiness?.[id];
       if (probe)
         this.readiness.set(
           id,
@@ -166,7 +171,8 @@ export class NodeAvailability {
         service.hardware_latched === false &&
         this.fresh(service, 0) &&
         service.required_gpu_uuids.length === old.requiredGpuUuids.length &&
-        new Set(service.required_gpu_uuids).size === old.requiredGpuUuids.length &&
+        new Set(service.required_gpu_uuids).size ===
+          old.requiredGpuUuids.length &&
         old.requiredGpuUuids.every((uuid) =>
           service.required_gpu_uuids.includes(uuid),
         )

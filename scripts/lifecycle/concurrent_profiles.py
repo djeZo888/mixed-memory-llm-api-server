@@ -17,7 +17,7 @@ from .runtime_io import LifecycleError
 
 ROOT = Path(__file__).resolve().parents[2]
 GLM_PROFILE = 'glm-5.3-ud-q4-k-xl-g1-480000'
-QWEN_PROFILE = 'qwen38-27b-q1-480000-yarn4-bf16kv'
+QWEN_PROFILE = 'qwen38-27b-q1-server-480000-yarn4-bf16kv'
 QWEN0_PROFILE = 'qwen38-27b-q0-480000-yarn4-bf16kv'
 QWEN_PROFILES = (QWEN0_PROFILE, QWEN_PROFILE)
 # Legacy persisted keys denote physical placement, not model identity.
@@ -27,7 +27,7 @@ MODES = {'dual-qwen': {'glm': QWEN0_PROFILE, 'qwen': QWEN_PROFILE},
 DEFAULT_MODE = 'dual-qwen'
 PROFILES = (GLM_PROFILE, *QWEN_PROFILES)
 GPU_UUIDS = ('GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',
-            'GPU-69acfa26-8b60-61b5-702d-aee252c163cc')
+            'GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528')
 ACCEPTANCE_SUFFIX = 'services/llm-manager/evidence/dualq-480k.accepted.json'
 PREDECESSOR_SUFFIX = 'services/llm-manager/evidence/h005-predecessor/dualq-480k.accepted.json'
 HOST_HEADROOM_POLICY_15 = {
@@ -38,7 +38,7 @@ HOST_HEADROOM_POLICY_15 = {
 PINS = {
     'configs/runtimes/h005-runtime-binding.json': '9da2236e927c44e2af618e0862ee84f54d4645ec0bcb1e93c25c0d98b45ee6ae',
     'scripts/runtime/h005_runtime_binding.py': '30b223cc246c3c8e7338079ce21c2fbb0427a1d34510f8d6a88ca9c6c564716e',
-    'configs/deployments/qwen38-27b-q1-480000-yarn4-bf16kv.json': '6b4d6725010b58e53c784be781af968bf8b295cca402f0b6e4c91d2ea73077dd',
+    'configs/deployments/qwen38-27b-q1-server-480000-yarn4-bf16kv.json': '8c717c154e8e2c84feb3ef9de83939ed9f597f5fbce0c0f325f5858ce1a8f0b3',
     'configs/deployments/qwen38-27b-q0-480000-yarn4-bf16kv.json': '7c2587d74e8f4654574c74d8b6e955dac1db9a185fc1c0201bacee92b3ecffe4',
     'configs/deployments/glm-5.3-ud-q4-k-xl-g1-480000.json': '1baa9913542a088a7dd40d1a902ef53605ff4a1c5eafc409814116df25d49899',
     'configs/models/glm-5.3-ud-q4-k-xl.json': '857924551fa83c546bb99f7b524b35c8d79d0cb9ba0a666e0c139bbace0e7e0d',
@@ -284,7 +284,8 @@ def check_acceptance(d, instance, *, mode=None):
             and isinstance(receipt.get('evidence'), list) and receipt['evidence']
             and all(isinstance(item, str) and item.strip() for item in receipt['evidence']),
             'concurrent_acceptance_identity_mismatch')
-    _check_h005_transition(receipt, binding)
+    if receipt.get('h008_flash_source_transition') is not None:
+        require(d['id'] != GLM_PROFILE and mode != 'glm-qwen', 'historical_glm_disabled_flash_reserved')
     validate_gpu_inventory(receipt.get('gpu_inventory'))
     modes = receipt.get('modes')
     require(isinstance(modes, dict) and set(modes) == set(MODES), 'concurrent_acceptance_modes_mismatch')
@@ -297,6 +298,7 @@ def check_acceptance(d, instance, *, mode=None):
                 and all(isinstance(item, str) and item.strip() for item in review['evidence']),
                 'concurrent_mode_evidence_required')
         _check_mode_evidence(review.get('slots'), selections, receipt)
+    _check_h008_transition(receipt, binding)
     selected_mode = mode or ('dual-qwen' if d['id'] == QWEN0_PROFILE else 'glm-qwen')
     require(selected_mode in MODES and d['id'] in MODES[selected_mode].values(),
             'concurrent_acceptance_modes_mismatch')
@@ -304,6 +306,66 @@ def check_acceptance(d, instance, *, mode=None):
     # Projection preserves existing consumers while binding the entire protected
     # receipt above; callers may not reinterpret a G/Q receipt as Q/Q evidence.
     return {**receipt, 'accepted_mode': selected_mode, 'slots': modes[selected_mode]['slots']}
+
+
+def _check_h008_transition(receipt, binding):
+    """Qwen1 relocation requires a fresh proof, never remaps old measurements.
+
+    The unchanged slot retains its dated H005 lineage. The migrated slot is
+    replaced in both mode views by one protected H008 measurement, whose source,
+    UUID, native allocation and occupied-context boundary are explicit.
+    """
+    transition = receipt.get('h008_transition', {})
+    require(isinstance(transition, dict) and set(transition) == {
+        'kind', 'predecessor_sha256', 'proof_sha256'}
+        and transition['kind'] == 'qwen1-server-migration-fresh-proof',
+        'h008_fresh_migration_proof_required')
+    prior = binding.read_json('data', binding.path('data',
+        'services/llm-manager/evidence/h008-predecessor.accepted.json'), maximum=1024 * 1024)
+    require(receipt_sha256(prior) == transition['predecessor_sha256'],
+            'h008_predecessor_digest_mismatch')
+    _check_h005_transition(prior, binding)
+    fresh = binding.read_json('data', binding.path('data',
+        'services/llm-manager/evidence/h008-qwen1-proof.json'), maximum=1024 * 1024)
+    require(receipt_sha256(fresh) == transition['proof_sha256']
+        and fresh.get('kind') == 'h008-qwen1-fresh-hardware-allocation'
+        and fresh.get('source_sha256') == _h008_commission_source(receipt, binding)
+        and fresh.get('gpu_uuid') == GPU_UUIDS[1]
+        and fresh.get('configured_context') == 480000
+        and fresh.get('native_pool_tokens') == 480000
+        and fresh.get('native_input_limit') == 479994
+        and fresh.get('short_output') == 'PASS'
+        and fresh.get('auth') == 'PASS'
+        and isinstance(fresh.get('observed_at'), str)
+        and re.fullmatch(r'[0-9a-f]{64}', str(fresh.get('container_id', ''))),
+        'h008_fresh_migration_proof_invalid')
+    for key in ('instance_id', 'storage_identity', 'host_usable_bytes',
+                'guest_total_vcpus', 'host_headroom_policy', 'h005_transition'):
+        require(same(receipt.get(key), prior.get(key)), 'h008_unchanged_binding_modified')
+    require(all(item in receipt['evidence'] for item in prior['evidence']),
+            'h008_historical_evidence_removed')
+    for mode in MODES:
+        require(same(receipt['modes'][mode]['slots']['glm'], prior['modes'][mode]['slots']['glm'])
+            and same(receipt['modes'][mode]['slots']['qwen'], fresh.get('slot_proof')),
+            'h008_slot_measurement_mismatch')
+
+
+def _h008_commission_source(receipt, binding):
+    successor = receipt.get('h008_flash_source_transition')
+    if successor is None:
+        return source_identity()
+    require(type(successor) is dict and set(successor) == {'kind','predecessor_sha256'}
+        and successor['kind'] == 'source-only-flash-integration', 'h008_flash_successor_invalid')
+    prior = binding.read_json('data', binding.path('data',
+        'services/llm-manager/evidence/h008-qwen1-commission.accepted.json'), maximum=1024*1024)
+    require(receipt_sha256(prior) == successor['predecessor_sha256'], 'h008_flash_predecessor_invalid')
+    # Preserve every dated measurement verbatim. Only reviewed source binding,
+    # revision and this explicit successor link may change.
+    left = {k:v for k,v in receipt.items() if k not in
+            {'source_sha256','reviewed_source_commit','h008_flash_source_transition'}}
+    right = {k:v for k,v in prior.items() if k not in {'source_sha256','reviewed_source_commit'}}
+    require(same(left,right), 'h008_flash_measurements_changed')
+    return prior['source_sha256']
 
 
 def _check_h005_transition(receipt, binding):

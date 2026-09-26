@@ -275,3 +275,18 @@ test("production private stop/start adapter clears actual gateway quarantine onl
     "local harness restart cannot settle remote lanes",
   );
 });
+
+
+test("frontier respects existing whole-node reboot holds without acquiring peer service or settlement authority", async (t) => {
+  const { gate } = await fixture(t);
+  gate.hold(action);
+  assert.equal(gate.held("glm-5.3-flash"), false);
+  const reboot = { ...action, action: "node.reboot", idempotency_key: "frontier-reboot-001" } as NodeAction;
+  delete reboot.service_id;
+  gate.hold(reboot);
+  assert.equal(gate.held("glm-5.3-flash"), true);
+  assert.deepEqual(gate.verify(reboot).scope, ["qwen-gpu0", "qwen-gpu1", "image"]);
+  gate.release(reboot);
+  assert.equal(gate.held("glm-5.3-flash"), false);
+  assert.equal(gate.held("qwen-gpu0"), true);
+});

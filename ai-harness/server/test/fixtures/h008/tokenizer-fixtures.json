@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "status": "EXACT_TOKENIZER_OFFLINE_FIXTURES_NATIVE_HTTP_NOT_YET_TESTED",
+  "created_utc": "2026-09-26T16:56:03.699218+00:00",
+  "normalization": "SGLang-KT serving_chat.py lines584-600: parse JSON tool-call arguments into objects before template",
+  "model_repo": "zai-org/GLM-5.3-Flash",
+  "model_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+  "transformers_kt_wheel_sha256": "5d1afb6d1ee00bb0163f740696bcbf05bb633856209312f9aca69627e1f84f17",
+  "tokenizers_version": "0.22.2",
+  "jinja2_version": "3.1.6",
+  "tokenizer_files_sha256": {
+    "tokenizer_config.json": "98b1271574f41abf89427ae2dda030d94dc9478f0edc5a8bd240db213c6fd5fc",
+    "config.json": "bb8f01c42cb92a52ca72e65afb4d5bd8d11aef083cd210e8de25dfb904f23e9f",
+    "tokenizer.json": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+    "processor_config.json": "aae38374c94b08cc9b0547c6e64f05b951bd9735cea571c6988f5ed552bed3ed",
+    "generation_config.json": "230c30609ecbbb9e6583bedde8e7bdda0c6eb8fe5fad0eaeb3d1b293d751cb4f",
+    "chat_template.jinja": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5"
+  },
+  "fixtures": [
+    {
+      "id": "prose",
+      "request": {
+        "model": "glm-5.3-flash",
+        "messages": [
+          {
+            "role": "system",
+            "content": "Answer clearly and briefly."
+          },
+          {
+            "role": "user",
+            "content": "Explain why a metal spoon feels colder than a wooden spoon at the same room temperature."
+          }
+        ],
+        "reasoning_effort": "high",
+        "chat_template_kwargs": {
+          "clear_thinking": true
+        }
+      },
+      "response": {
+        "count": 36,
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "context_limit": 480000
+      },
+      "input_ids_sha256": "d054814214b457d172fc4b05431e2ad0efea265c8b667a99703a69b142c9a2b8",
+      "rendered_prompt_sha256": "69fa4e83fc4365f440b53cbc0d4cb3fb593e70d2ce8435f3a1ec86ee8eb2749f"
+    },
+    {
+      "id": "multilingual",
+      "request": {
+        "model": "glm-5.3-flash",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Slovenščina: Dober dan. 日本語: こんにちは。 العربية: مرحباً. Explain the shared meaning in English."
+          }
+        ],
+        "reasoning_effort": "high",
+        "chat_template_kwargs": {
+          "clear_thinking": true
+        }
+      },
+      "response": {
+        "count": 42,
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "context_limit": 480000
+      },
+      "input_ids_sha256": "11c95f46824edf68ee3ce3a7a0efa513e458e34d88bc7a74b2eb09a545ad6f7d",
+      "rendered_prompt_sha256": "6c52920e5c3f5f951ca415e74b18da927679f6dcd9019f06fcc1547f8c59eff2"
+    },
+    {
+      "id": "tools_history",
+      "request": {
+        "model": "glm-5.3-flash",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Find the temperature in Ljubljana."
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "reasoning_content": "I should query the weather tool.",
+            "tool_calls": [
+              {
+                "id": "call_fixture_1",
+                "type": "function",
+                "function": {
+                  "name": "weather",
+                  "arguments": "{\"city\":\"Ljubljana\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_fixture_1",
+            "content": "{\"city\":\"Ljubljana\",\"temperature_c\":18}"
+          },
+          {
+            "role": "user",
+            "content": "Report that temperature and identify the city."
+          }
+        ],
+        "reasoning_effort": "high",
+        "chat_template_kwargs": {
+          "clear_thinking": true
+        },
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "weather",
+              "description": "Return the current temperature for a city.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "city"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ]
+      },
+      "response": {
+        "count": 212,
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "context_limit": 480000
+      },
+      "input_ids_sha256": "1fe1c4e5118d1f06412e0497f7aa71ad71de1b457f29f163e8e180c874ba655e",
+      "rendered_prompt_sha256": "95f089395cbb8e4d0ddcbf112a71cd7b7f969fd57f5ea28a9e7b40eff924de8a"
+    }
+  ]
+}

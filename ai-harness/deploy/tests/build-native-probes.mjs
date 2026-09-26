@@ -44,6 +44,13 @@ const sourcePlugin = { name: 'native-probe-reviewed-workspace-sources', setup(bu
   });
 }};
 const exports = [
+  ['createLocalContextFootprintMeasurer', 'packages/local-runtime-v2/src/service/turn-system/compaction/execution/local-context-footprint.ts'],
+  ['createCheckpointSession', 'packages/local-runtime-v2/src/service/turn-system/compaction/execution/checkpoint-provider.ts'],
+  ['compactContext', 'packages/local-runtime-v2/src/service/turn-system/compaction/algorithm/compact-context.ts'],
+  ['withLocalDynamicMaxTokens', 'packages/local-runtime-v2/src/service/model-system/resolution/dynamic-max-tokens.ts'],
+  ['createTaskAgentBindingCaptureCoordinator', 'packages/local-runtime-v2/src/application/session/task-agent-binding-capture.ts'],
+  ['parseCanonicalAgentMarkdown', 'packages/local-runtime-v2/src/service/agent/storage/canonical-agent-config.ts'],
+  ['modelTokenEstimator', 'packages/local-runtime-v2/src/service/model-system/resolution/model-token-estimator.ts'],
   ['HeadlessChromeBrowserProvider, safeSessionId, resolveHeadlessSessionLaunchOptions', 'packages/tui/src/runtime/browser/headless-chrome-provider.ts'],
   ['buildLocalBrowserRuntimeTools', 'packages/agent-tools/src/desktop/local-browser.ts'],
   ['createEmbeddedRuntimeHost', 'packages/tui/src/runtime/embedded-host.ts'],

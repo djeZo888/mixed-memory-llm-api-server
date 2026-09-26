@@ -1,0 +1,8 @@
+{
+  "model": "glm-5.3-flash",
+  "contextWindow": 480000,
+  "maxOutputTokens": 65536,
+  "tokenizerRevision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+  "qualified": false,
+  "templateRevision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+}

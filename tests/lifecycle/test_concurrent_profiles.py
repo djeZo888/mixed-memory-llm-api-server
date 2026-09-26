@@ -71,6 +71,16 @@ def receipt(d):
         'runtime_source_commit': load(require_complete=False)['runtime_source_commit'],
         'predecessor_receipt_sha256': pair.receipt_sha256(predecessor),
         'capacity_observed_at': '2026-09-21', 'live_acceptance': 'SEPARATE_RECEIPT_REQUIRED'}
+    h008_prior = copy.deepcopy(value)
+    binding.documents[binding.path('data', 'services/llm-manager/evidence/h008-predecessor.accepted.json')] = h008_prior
+    fresh = {'kind': 'h008-qwen1-fresh-hardware-allocation', 'source_sha256': pair.source_identity(),
+        'gpu_uuid': pair.GPU_UUIDS[1], 'configured_context': 480000, 'native_pool_tokens': 480000,
+        'native_input_limit': 479994, 'short_output': 'PASS', 'auth': 'PASS',
+        'observed_at': 'SYNTHETIC', 'container_id': 'b' * 64,
+        'slot_proof': copy.deepcopy(value['modes']['dual-qwen']['slots']['qwen'])}
+    binding.documents[binding.path('data', 'services/llm-manager/evidence/h008-qwen1-proof.json')] = fresh
+    value['h008_transition'] = {'kind': 'qwen1-server-migration-fresh-proof',
+        'predecessor_sha256': pair.receipt_sha256(h008_prior), 'proof_sha256': pair.receipt_sha256(fresh)}
     binding.documents[path] = value
     instance = {'id': 'synthetic-instance', 'concurrent_pair_acceptance': {
         'path': path, 'sha256': pair.receipt_sha256(value), 'reviewed_source_commit': 'a' * 40}}
@@ -375,7 +385,7 @@ class ManagerPairIntegration(unittest.TestCase):
             from types import SimpleNamespace
             from tests.lifecycle.test_qwen38_image_fixture import native_result, lifetime
             fixture = self.pair_fixture
-            slot = 'gpu' + str(d['concurrent_pair']['guest_gpu_index'])
+            slot = 'gpu0' if d['concurrent_pair']['slot'] == 'glm' else 'gpu1'
             provenance, _ = fixture.adaptive_provenance(pair.ROOT)
             native = native_result(provenance, fixture.CONTEXT)
             native.update(image_id_pin=provenance['image_id'], image_reference=provenance['image_reference'],

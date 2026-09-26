@@ -10,10 +10,10 @@ export function thirdNodeRegistry() {
   r.services.push({ id: "lab-service", node_id: "offline-lab", display_name: "Expected lab service", observation_key: "lab-service", owner: "unassigned", capabilities: [], endpoint_ref: null });
   return r;
 }
-test("default registry maps the seven owner identities and both real observation transports", () => {
+test("default registry retains seven action identities and adds passive frontier inventory", () => {
   const r = loadSystemRegistry();
   assert.deepEqual(r.nodes.map(n => [n.id, n.observation.transport]), [["ai-vm", "ai-vm-private"], ["ai-harness", "local-helper"]]);
-  for (const [node, ids] of Object.entries(SERVICE_IDS)) assert.deepEqual(r.services.filter(s => s.node_id === node).map(s => s.id), ids);
+  for (const [node, ids] of Object.entries(SERVICE_IDS)) assert.deepEqual(r.services.filter(s => s.node_id === node && s.id !== "glm-5.3-flash").map(s => s.id), ids);
   assert.equal(validateSystemRegistry(thirdNodeRegistry()).nodes.length, 3);
   assert.ok(r.components.every(c => c.type === "support" || c.independently_restartable === false));
 });

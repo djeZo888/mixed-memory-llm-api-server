@@ -122,6 +122,18 @@
         "node.actions"
       ],
       "endpoint_ref": "status-uds"
+    },
+    {
+      "id": "glm-5.3-flash",
+      "node_id": "ai-vm",
+      "display_name": "Frontier GLM-5.3-Flash (qualification pending)",
+      "observation_key": "glm-5.3-flash",
+      "owner": "Worker1 frontier backend",
+      "capabilities": [
+        "chat.completions",
+        "tokenize"
+      ],
+      "endpoint_ref": "frontier-private"
     }
   ],
   "components": [
@@ -445,6 +457,19 @@
       "owner": "llm-private-node.socket / llm-private-node.service",
       "parent_id": "node-manager",
       "independently_restartable": true,
+      "observation": {
+        "source": "none",
+        "key": null
+      }
+    },
+    {
+      "id": "frontier-child",
+      "node_id": "ai-harness",
+      "display_name": "Native frontier child and independent inference queue",
+      "type": "capability",
+      "owner": "harness process",
+      "parent_id": "harness",
+      "independently_restartable": false,
       "observation": {
         "source": "none",
         "key": null

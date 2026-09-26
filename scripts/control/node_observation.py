@@ -22,7 +22,7 @@ from .node_collectors import boot_identity, command
 HEX = re.compile(r'[0-9a-f]{64}\Z')
 DEPLOYMENTS = {
     'qwen38-27b-q0-480000-yarn4-bf16kv': ('qwen-gpu0', 'qwen3.8-27b-gpu0', 30002),
-    'qwen38-27b-q1-480000-yarn4-bf16kv': ('qwen-gpu1', 'qwen3.8-27b', 30004),
+    'qwen38-27b-q1-server-480000-yarn4-bf16kv': ('qwen-gpu1', 'qwen3.8-27b', 30004),
     'glm-5.3-ud-q4-k-xl-g1-480000': ('qwen-gpu0', 'glm-5.3', 30002),
 }
 TEXT_OWNER = 'mixed-memory-llm-api-server'
@@ -55,7 +55,7 @@ def strict_json(raw):
 
 def native_get(port, path, key, seconds):
     if (port, path) not in ((30002, '/v1/readiness'), (30004, '/v1/readiness'),
-                            (30006, '/v1/image-capabilities'), (30000, '/control/v1/readiness')):
+                            (30010, '/v1/readiness'), (30006, '/v1/image-capabilities'), (30000, '/control/v1/readiness')):
         raise ValueError('unregistered_passive_route')
     conn = http.client.HTTPConnection('127.0.0.1', port, timeout=max(.001, seconds))
     deadline = time.monotonic() + seconds
@@ -322,6 +322,26 @@ class CanonicalIdentityReader:
             except Exception:
                 pass  # Owner stop remains observable even if installed profile metadata is unavailable.
             semantics = [slot['generation'], selected, slot['desired'], identity, owner]
+        elif service_id == 'glm-5.3-flash':
+            from runtime.flash.owner import validate_container, BASE, NAME, OWNER, GPU
+            state = binding.read_json('services', BASE + '/state.json')
+            config = binding.read_json('services', BASE + '/config.json')
+            identity = state.get('container')
+            if state.get('owner') != OWNER or state.get('schema_version') != 1:
+                raise ValueError('frontier_owner_unknown')
+            owner = None
+            if identity is not None:
+                owner = self._container(identity, remaining(), {'io.llm-frontier.owner':OWNER,
+                    'io.llm-frontier.gpu':GPU})
+                raw = strict_json(self.run(['/usr/bin/docker','inspect',identity['id']],remaining()))
+                validate_container(raw[0], config, state)
+            else:
+                self._absent(NAME, remaining())
+            result.update(selected='glm-5.3-flash', deployment_id='glm-5.3-flash-480000-fp8-kt',
+                model_alias='glm-5.3-flash', configured_context_tokens=480000, max_output_tokens=65536,
+                installed_capabilities=['chat.completions'], owner_identity=owner,
+                running=bool(owner and owner['running']), ownership_valid=True)
+            semantics = [state, owner]
         else:
             state = binding.read_json('services', binding.path('services', 'image21-runtime-20260923/state.json'))
             if state.get('schema_version') != 1 or state.get('owner') != IMAGE_OWNER:
@@ -497,7 +517,10 @@ class PassiveServiceCollector:
             key_path = binding.path('data', 'services/secrets/llm-api-key')
             binding.validate_path('data', key_path)
             key = _key(self.reader.read(Path(key_path), modes={0o600}, maximum=257))
-            if self.service_id == 'image':
+            if self.service_id == 'glm-5.3-flash':
+                response = self.get(30010, '/v1/readiness', key, max(.001, seconds - (self.clock() - started)))
+                status = text_readiness(*response, 'glm-5.3-flash')
+            elif self.service_id == 'image':
                 response = self.get(30006, '/v1/image-capabilities', key, max(.001, seconds - (self.clock() - started)))
                 status = image_readiness(*response)
             elif result.get('selected') in DEPLOYMENTS and result['selected'].startswith('qwen38-'):

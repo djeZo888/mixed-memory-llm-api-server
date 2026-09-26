@@ -146,6 +146,7 @@ os.execv(sys.executable, [sys.executable, *args])
             "OPENAI_API_KEY": "fixture-real-upstream-must-not-pass",
             "MINIMAX_API_KEY": "fixture-provider-must-not-pass",
             "AI_HARNESS_INFERENCE_KEY_FILE": "/private/server-key",
+            "AI_HARNESS_FRONTIER_KEY_FILE": "/private/frontier-key",
             "SSH_AUTH_SOCK": "/private/ssh-agent.sock",
             "CONTAINER_HOST": "ssh://unexpected-host/run/podman.sock",
             "CONTAINER_CONNECTION": "unexpected-connection",
