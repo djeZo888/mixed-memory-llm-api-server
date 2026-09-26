@@ -60,7 +60,7 @@ function list<T>(v: unknown, max: number, parse: (x: unknown) => T): T[] {
   return v.map(parse);
 }
 function unique(values: string[]) { if (new Set(values).size !== values.length) fail(); }
-const endpointRefs = ["qwen-gpu0-private", "qwen-gpu1-private", "image-private", "control-private", "harness-local", "search-local", "status-uds"];
+const endpointRefs = ["frontier-private", "qwen-gpu0-private", "qwen-gpu1-private", "image-private", "control-private", "harness-local", "search-local", "status-uds"];
 export function validateSystemRegistry(raw: unknown): SystemRegistry {
   const v = object(raw, ["schema_version", "credentials", "transports", "nodes", "services", "components"]);
   if (v.schema_version !== 1) fail();

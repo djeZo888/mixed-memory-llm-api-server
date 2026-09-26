@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { configureProfile, localConfig, MODEL, MODEL_REF, REQUEST_TIMEOUT_MS, SHARED_SLOT_INSTRUCTIONS, CURATED_SKILLS, SKILLS_SOURCE, SEARXNG_URL, IMAGE_TIMEOUT_MS, localMcpConfig } from './configure-profile.mjs';
+import { configureProfile, localConfig, MODEL, MODEL_REF, REQUEST_TIMEOUT_MS, SHARED_SLOT_INSTRUCTIONS, CURATED_SKILLS, SKILLS_SOURCE, SEARXNG_URL, IMAGE_TIMEOUT_MS, localMcpConfig, FRONTIER_INSTRUCTIONS, FRONTIER_SLOT_POLICY, frontierAgentMarkdown } from './configure-profile.mjs';
 
 const reviewedSource = realpathSync(existsSync(SKILLS_SOURCE) ? SKILLS_SOURCE : fileURLToPath(new URL('../../skills', import.meta.url)));
 const configure = env => configureProfile(env, reviewedSource);
@@ -90,7 +90,7 @@ test('writes private config and refreshes ephemeral authorization without changi
     const target = path.join(profile, 'config.yaml');
     const instructions = path.join(profile, 'AGENTS.md');
     assert.equal(lstatSync(instructions).mode & 0o777, 0o600);
-    assert.equal(readFileSync(instructions, 'utf8'), SHARED_SLOT_INSTRUCTIONS);
+    assert.equal(readFileSync(instructions, 'utf8'), SHARED_SLOT_INSTRUCTIONS + FRONTIER_INSTRUCTIONS + FRONTIER_SLOT_POLICY);
     writeFileSync(instructions, `${SHARED_SLOT_INSTRUCTIONS}\nPreserve this user instruction.\n`);
     assert.equal(lstatSync(target).mode & 0o777, 0o600);
     const first = JSON.parse(readFileSync(target, 'utf8'));
@@ -101,7 +101,14 @@ test('writes private config and refreshes ephemeral authorization without changi
     const mcp = JSON.parse(readFileSync(path.join(profile, 'mcp.json'), 'utf8'));
     assert.equal(mcp.mcpServers.image.env.AI_HARNESS_GATEWAY_TOKEN, 'second-fixture-authorization');
     assert.equal(lstatSync(path.join(profile, 'mcp.json')).mode & 0o777, 0o600);
-    assert.equal(readFileSync(instructions, 'utf8'), `${SHARED_SLOT_INSTRUCTIONS}\nPreserve this user instruction.\n`);
+    assert.equal(readFileSync(instructions, 'utf8'), `${SHARED_SLOT_INSTRUCTIONS}\nPreserve this user instruction.\n\n${FRONTIER_INSTRUCTIONS}${FRONTIER_SLOT_POLICY}`);
+    const once = readFileSync(instructions, 'utf8');
+    configure(env);
+    assert.equal(readFileSync(instructions, 'utf8'), once);
+    // A profile from the first H008 candidate gains only the clarification.
+    writeFileSync(instructions, 'User text remains.\n' + SHARED_SLOT_INSTRUCTIONS + FRONTIER_INSTRUCTIONS);
+    configure(env);
+    assert.equal(readFileSync(instructions, 'utf8'), 'User text remains.\n' + SHARED_SLOT_INSTRUCTIONS + FRONTIER_INSTRUCTIONS + '\n' + FRONTIER_SLOT_POLICY);
     assert.equal(readFileSync(path.join(profile, 'history-fixture.json'), 'utf8'), '{"preserved":true}\n');
   } finally { rmSync(profile, { recursive: true, force: true }); }
 });
@@ -239,5 +246,34 @@ test('upgrades only the exact prior reviewed skills without replacing originals 
     assert.throws(() => configure(env), /reviewed image contents/);
     assert.equal(existsSync(path.join(skills, 'image')), false);
     assert.equal(readFileSync(path.join(skills, 'pdf', 'SKILL.md'), 'utf8'), 'customized');
+  } finally { rmSync(profile, { recursive: true, force: true }); }
+});
+
+
+test('managed frontier custom agent uses native model/limits and preserves tools/MCP inheritance', () => {
+  const config = localConfig(fixture);
+  assert.deepEqual(Object.keys(config.agents), ['default']);
+  assert.equal(config.custom_provider.frontier.options.baseURL, 'http://10.0.2.2:8081/frontier/v1');
+  assert.equal(config.custom_provider.frontier.options.timeout, REQUEST_TIMEOUT_MS);
+  const markdown = frontierAgentMarkdown();
+  assert.match(markdown, /model: custom_provider:frontier\/glm-5.3-flash/);
+  assert.match(markdown, /disallowedTools: \[task, task_append\]/);
+  assert.match(markdown, /effort: high/);
+  assert.doesNotMatch(markdown, /^tools:|^mcpServers:|^skills:/m);
+});
+
+test('managed frontier seed preserves custom conflict and rejects symlink escapes', () => {
+  const profile = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'h008-profile-')));
+  const env = { ...fixture, MINIMAX_DATA_DIR: profile, HOME: path.join(profile, 'home') };
+  try {
+    configure(env);
+    const agent = path.join(profile, 'agents/frontier/agent.md');
+    assert.equal(readFileSync(agent, 'utf8'), frontierAgentMarkdown());
+    assert.equal(lstatSync(agent).mode & 0o777, 0o600);
+    writeFileSync(agent, 'User-owned custom frontier.');
+    assert.throws(() => configure(env), /explicit migration required/);
+    assert.equal(readFileSync(agent, 'utf8'), 'User-owned custom frontier.');
+    unlinkSync(agent); symlinkSync('/tmp/unused-h008-agent-target', agent);
+    assert.throws(() => configure(env));
   } finally { rmSync(profile, { recursive: true, force: true }); }
 });

@@ -1,6 +1,6 @@
 {
   "sourceRevision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
-  "patchSetSha256": "69d7fe14ed8b1e394fe7315e04724e3ef89c2efbd21118a42fa1842f5ed48eff",
+  "patchSetSha256": "e487935b3d6efce51216b8755cbd712912c30c7d45f6a9e5e293f0f998f89a65",
   "patches": [
     {
       "path": "0001-gateway-request-budget.patch",
@@ -45,6 +45,11 @@
     {
       "path": "0009-builtin-audit-selector.patch",
       "sha256": "9c10f0ae1d79fe17208a59367dbe4ce8197bea2dcc32178be51e4310ba7dddab",
+      "phase": "source"
+    },
+    {
+      "path": "0010-frontier-model-accounting.patch",
+      "sha256": "ecd037dbd7cc3f56c47efa04d121e8779a9124e209fb4cda2b35cb7931b42192",
       "phase": "source"
     }
   ],
@@ -273,6 +278,26 @@
       "path": "packages/local-runtime-v2/src/service/agent/application/agent-profile.ts",
       "originalSha256": "3412b7b3c5b9e314afcce83787e9f3027946eabaee1676a2788526aed8ef2f57",
       "patchedSha256": "40281fa50c3a30b799a62643685ee4af96a8b545cb4c9bca67531b94bbc47bdb"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/service/model-system/resolution/model-token-estimator.ts",
+      "originalSha256": null,
+      "patchedSha256": "b51fc7fec8ebe9874adf3545f05c8cc6f64a2d74c994ba04531450a746b9ea0d"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/service/model-system/resolution/dynamic-max-tokens.ts",
+      "originalSha256": "729301a7d2479042c2a87057485bd0ddf9e34da437f6b8b1238ebe21a781d3c8",
+      "patchedSha256": "8aa364ff3b35dd5df9d6cdefe47f2072525dea2d7f084738ac1f6632d4ffe1a4"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/service/turn-system/compaction/execution/local-context-footprint.ts",
+      "originalSha256": "1978bc09c0563a64d977e715db13b1cbe24c6773684dcb77e396112ec2b1db79",
+      "patchedSha256": "c433228e1abb0e80fbff858d9fee5ef4ddf34cb12e9daf781aaade6e71c2029a"
+    },
+    {
+      "path": "packages/local-runtime-v2/src/service/turn-system/compaction/execution/checkpoint-provider.ts",
+      "originalSha256": "3add59a5345b1de12727f912a19ebc494f09691985fbdd896e5d5d0f4b7328e1",
+      "patchedSha256": "895f92e89592bde6964f1a18c34922062c0e02f837af1c9b5450bfb157231f58"
     }
   ],
   "transport": {

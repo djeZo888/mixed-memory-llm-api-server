@@ -264,7 +264,7 @@ test("registry retains third/unreachable node and missing service rows; support 
     assert.equal(nodes[2]!.services[0]!.service_id, "lab-job");
     assert.equal(nodes[2]!.services[0]!.health, "unknown");
     assert.equal(nodes[2]!.resources.cpu!.percent, null);
-    assert.equal(nodes[0]!.services.length, 4);
+    assert.equal(nodes[0]!.services.length, 5);
     assert.ok(nodes[0]!.services.every(s => s.freshness === "unknown" && s.ready === null));
     const nginx = nodes[1]!.components.find(c => c.component_id === "nginx")!;
     assert.equal(nginx.current_state, "active/running");

@@ -38,3 +38,6 @@ ca694004c2a9f7b5e77995e38828511e9485ee2c2152c494bb197491e408ca80  test/vitest-su
 c974773228f6e16682987a33fdd0be844fdfa1a85d94bc4632da38860113d758  packages/tui/src/acp/updates.ts
 76e449f864da3c6199f1da12d84ed8d836ca72f9f60e19d40b3e3fffff9459ca  packages/tui/src/runtime/adapters/delegation-access.ts
 3412b7b3c5b9e314afcce83787e9f3027946eabaee1676a2788526aed8ef2f57  packages/local-runtime-v2/src/service/agent/application/agent-profile.ts
+729301a7d2479042c2a87057485bd0ddf9e34da437f6b8b1238ebe21a781d3c8  packages/local-runtime-v2/src/service/model-system/resolution/dynamic-max-tokens.ts
+1978bc09c0563a64d977e715db13b1cbe24c6773684dcb77e396112ec2b1db79  packages/local-runtime-v2/src/service/turn-system/compaction/execution/local-context-footprint.ts
+3add59a5345b1de12727f912a19ebc494f09691985fbdd896e5d5d0f4b7328e1  packages/local-runtime-v2/src/service/turn-system/compaction/execution/checkpoint-provider.ts

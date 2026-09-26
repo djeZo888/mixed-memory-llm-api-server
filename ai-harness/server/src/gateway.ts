@@ -1,3 +1,11 @@
+import {
+  FRONTIER_MODEL,
+  frontierUrl,
+  frontierBody,
+  countFrontier,
+  type FrontierOptions,
+  type FrontierRecord,
+} from "./frontier.js";
 import type { ImageBroker } from "./image-broker.js";
 import {
   serviceAvailability,
@@ -5,7 +13,11 @@ import {
   type ServiceAvailability,
 } from "./service-availability.js";
 import { ApiError, requireId } from "./errors.js";
-import Fastify, { type FastifyInstance, type FastifyReply } from "fastify";
+import Fastify, {
+  type FastifyInstance,
+  type FastifyReply,
+  type FastifyRequest,
+} from "fastify";
 import { randomBytes } from "node:crypto";
 import {
   request as httpRequest,
@@ -20,6 +32,7 @@ export interface GatewayUpstream {
   alias: string;
 }
 export interface GatewayOptions {
+  frontier?: FrontierOptions;
   images?: ImageBroker;
   dispatchHeld?: (alias: string) => boolean;
   /** Local cached observation only; unknown preserves existing admission behavior. */
@@ -52,6 +65,14 @@ export interface Gateway {
       state: LaneState;
       availability: ServiceAvailability;
     }[];
+  };
+  frontierSnapshot(): {
+    model: string;
+    contextWindow: number | null;
+    configured: boolean;
+    queued: number;
+    state: LaneState | "unavailable";
+    availability: ServiceAvailability;
   };
   /** Publish cache changes promptly without touching active request settlement. */
   notifyAvailabilityChanged(): void;
@@ -454,12 +475,35 @@ export function createGateway(options: GatewayOptions): Gateway {
     options.onLaneState,
     options.availability,
   );
+  const frontierAvailability: AvailabilityProvider =
+    options.availability ??
+    (() => ({
+      state: "unknown",
+      reason: "readiness_unknown",
+      dispatch: "hold",
+    }));
+  const frontierAdmission = options.frontier
+    ? new Admission(
+        [{ url: frontierUrl(options.frontier), alias: FRONTIER_MODEL }],
+        8,
+        128 * 1024 * 1024,
+        positive(
+          options.frontier.fixtureQueueTimeoutMs,
+          30 * 60 * 1000,
+          "frontier queue timeout",
+        ),
+        options.initialLaneStates,
+        options.onLaneState,
+        frontierAvailability,
+      )
+    : undefined;
   const activeTimeout = positive(
     options.activeTimeoutMs,
     2 * 60 * 60 * 1000,
     "activeTimeoutMs",
   );
   const tokens = new Map<string, string>();
+  const frontierCancellations = new Map<string, Set<AbortController>>();
   const active = new Set<ClientRequest>();
   const app = Fastify({
     logger: false,
@@ -587,8 +631,25 @@ export function createGateway(options: GatewayOptions): Gateway {
     };
   });
 
-  app.post("/v1/chat/completions", async (request, reply) => {
-    const body = requestBody(request.body);
+  async function chat(request: FastifyRequest, reply: FastifyReply) {
+    const frontier =
+      request.routeOptions.url === "/frontier/v1/chat/completions";
+    const selectedAdmission = frontier ? frontierAdmission : admission;
+    if (!selectedAdmission || (frontier && !options.frontier))
+      throw new ApiError(
+        503,
+        "frontier_unavailable",
+        "Frontier is not qualified",
+      );
+    if (
+      frontier &&
+      (options.dispatchHeld?.("harness") ||
+        options.dispatchHeld?.(FRONTIER_MODEL))
+    )
+      throw new ApiError(503, "frontier_held", "Frontier dispatch is held");
+    const body = frontier
+      ? frontierBody(request.body)
+      : requestBody(request.body);
     const bodyBytes = Buffer.byteLength(JSON.stringify(body));
     const token = request.headers.authorization!.slice(7);
     const sessionId = tokens.get(token);
@@ -598,7 +659,35 @@ export function createGateway(options: GatewayOptions): Gateway {
         "unauthorized",
         "Inference authorization required",
       );
+    const record: FrontierRecord | undefined = frontier
+      ? {
+          id: randomBytes(16).toString("hex"),
+          sessionId,
+          state: "queued",
+          model: FRONTIER_MODEL,
+          contextWindow: options.frontier!.contextWindow,
+          updatedAt: new Date().toISOString(),
+        }
+      : undefined;
+    const recordState = (state: FrontierRecord["state"]) => {
+      if (record) {
+        record.state = state;
+        record.updatedAt = new Date().toISOString();
+        options.frontier!.onRequestState({ ...record });
+      }
+    };
+    recordState("queued");
     const cancelled = new AbortController();
+    if (frontier) {
+      const owned =
+        frontierCancellations.get(token) ?? new Set<AbortController>();
+      frontierCancellations.set(token, owned);
+      owned.add(cancelled);
+      reply.raw.once("close", () => {
+        owned.delete(cancelled);
+        if (!owned.size) frontierCancellations.delete(token);
+      });
+    }
     let disconnected = false;
     let upstreamResponse: IncomingMessage | undefined;
     const disconnect = () => {
@@ -612,21 +701,25 @@ export function createGateway(options: GatewayOptions): Gateway {
     reply.raw.once("close", disconnect);
     let lane: Lane;
     try {
-      lane = await admission.acquire(cancelled.signal, bodyBytes);
+      lane = await selectedAdmission.acquire(cancelled.signal, bodyBytes);
     } catch (error) {
+      recordState(cancelled.signal.aborted ? "cancelled" : "rejected");
       reply.raw.removeListener("close", disconnect);
       if (disconnected) return reply;
       throw error;
     }
     if (disconnected) {
-      admission.settle(lane, true);
+      selectedAdmission.settle(lane, true);
+      recordState("cancelled");
+      reply.raw.removeListener("close", disconnect);
       return reply;
     }
     const requireCurrentToken = () => {
       if (tokens.get(token) === sessionId) return;
       // No upstream request exists yet: release this admission safely. Revoking
       // a token never aborts an already dispatched generation or its drain.
-      admission.settle(lane, true);
+      selectedAdmission.settle(lane, true);
+      recordState("rejected");
       reply.raw.removeListener("close", disconnect);
       throw new GatewayError(
         401,
@@ -637,14 +730,15 @@ export function createGateway(options: GatewayOptions): Gateway {
     requireCurrentToken();
     let key: string;
     try {
-      key =
-        typeof options.upstreamKey === "function"
-          ? await options.upstreamKey()
-          : options.upstreamKey;
+      const credential = frontier
+        ? options.frontier!.upstreamKey
+        : options.upstreamKey;
+      key = typeof credential === "function" ? await credential() : credential;
       if (!key || !/^[\x21-\x7e]+$/.test(key))
         throw new Error("Invalid upstream credential");
     } catch {
-      admission.settle(lane, true);
+      selectedAdmission.settle(lane, true);
+      recordState("rejected");
       reply.raw.removeListener("close", disconnect);
       throw new GatewayError(
         503,
@@ -653,12 +747,24 @@ export function createGateway(options: GatewayOptions): Gateway {
       );
     }
     if (disconnected) {
-      admission.settle(lane, true);
+      selectedAdmission.settle(lane, true);
+      recordState("cancelled");
+      reply.raw.removeListener("close", disconnect);
       return reply;
     }
     requireCurrentToken();
     // Credential loading may yield. Recheck before the first upstream byte; an
     // unavailable lane never causes replay or migration of already active work.
+    if (
+      frontier &&
+      (options.dispatchHeld?.("harness") ||
+        options.dispatchHeld?.(FRONTIER_MODEL))
+    ) {
+      selectedAdmission.settle(lane, true);
+      recordState("rejected");
+      reply.raw.removeListener("close", disconnect);
+      throw new ApiError(503, "frontier_held", "Frontier dispatch is held");
+    }
     while (
       options.dispatchHeld?.(lane.upstream.alias) &&
       !disconnected &&
@@ -666,19 +772,59 @@ export function createGateway(options: GatewayOptions): Gateway {
     )
       await new Promise<void>((resolve) => setTimeout(resolve, 50));
     if (disconnected || cancelled.signal.aborted) {
-      admission.settle(lane, true);
+      selectedAdmission.settle(lane, true);
+      recordState("cancelled");
       reply.raw.removeListener("close", disconnect);
       return reply;
     }
     requireCurrentToken();
-    if (admission.available(lane).dispatch !== "allow") {
-      admission.settle(lane, true);
+    if (selectedAdmission.available(lane).dispatch !== "allow") {
+      selectedAdmission.settle(lane, true);
+      recordState("rejected");
       reply.raw.removeListener("close", disconnect);
       throw new GatewayError(
         503,
         "lane_unavailable",
-        "Selected Qwen lane is unavailable",
+        "Selected inference lane is unavailable",
       );
+    }
+    if (frontier) {
+      try {
+        const counted = await countFrontier(
+          options.frontier!,
+          body,
+          key,
+          cancelled.signal,
+        );
+        Object.assign(record!, counted);
+        if (cancelled.signal.aborted)
+          throw new ApiError(499, "cancelled", "Request cancelled");
+        // This catch owns the single release. Do not call requireCurrentToken,
+        // which releases before throwing and could free the next queued owner.
+        if (tokens.get(token) !== sessionId)
+          throw new ApiError(
+            401,
+            "unauthorized",
+            "Inference authorization required",
+          );
+        if (
+          options.dispatchHeld?.("harness") ||
+          options.dispatchHeld?.(FRONTIER_MODEL)
+        )
+          throw new ApiError(503, "frontier_held", "Frontier dispatch is held");
+        if (selectedAdmission.available(lane).dispatch !== "allow")
+          throw new ApiError(
+            503,
+            "lane_unavailable",
+            "Frontier backend is unavailable",
+          );
+        recordState("active");
+      } catch (error) {
+        selectedAdmission.settle(lane, true);
+        reply.raw.removeListener("close", disconnect);
+        recordState(cancelled.signal.aborted ? "cancelled" : "rejected");
+        throw error;
+      }
     }
     lane.dispatched = true;
     lane.ownerSettled = false;
@@ -705,17 +851,18 @@ export function createGateway(options: GatewayOptions): Gateway {
         // This is one request's input occupancy, never a sum. A runner can issue
         // child/compression requests: callers must keep that attribution uncertain.
         try {
-          options.onUsage?.({
-            sessionId,
-            promptTokens,
-            ...(typeof completionTokens === "number" &&
-            Number.isSafeInteger(completionTokens) &&
-            completionTokens >= 0
-              ? { completionTokens }
-              : {}),
-            source:
-              "gateway.latest-request.prompt_tokens (main/child/compaction attribution unknown)",
-          });
+          if (!frontier)
+            options.onUsage?.({
+              sessionId,
+              promptTokens,
+              ...(typeof completionTokens === "number" &&
+              Number.isSafeInteger(completionTokens) &&
+              completionTokens >= 0
+                ? { completionTokens }
+                : {}),
+              source:
+                "gateway.latest-request.prompt_tokens (main/child/compaction attribution unknown)",
+            });
         } catch {
           /* A telemetry consumer must not alter inference transport. */
         }
@@ -730,7 +877,12 @@ export function createGateway(options: GatewayOptions): Gateway {
         settled = true;
         clearTimeout(timeout);
         active.delete(upstream);
-        admission.settle(lane, confirmed);
+        selectedAdmission.settle(lane, confirmed);
+        try {
+          recordState(confirmed ? "settled" : "quarantined");
+        } catch {
+          /* durable active remains unsafe */
+        }
         reply.raw.removeListener("close", disconnect);
         resolve();
       };
@@ -834,9 +986,12 @@ export function createGateway(options: GatewayOptions): Gateway {
       upstream.end(payload);
     });
     return reply;
-  });
+  }
+  app.post("/v1/chat/completions", chat);
+  app.post("/frontier/v1/chat/completions", chat);
   app.addHook("preClose", async () => {
     admission.stop();
+    frontierAdmission?.stop();
     tokens.clear();
     for (const request of active) request.destroy();
   });
@@ -850,6 +1005,10 @@ export function createGateway(options: GatewayOptions): Gateway {
     },
     revokeToken(token) {
       tokens.delete(token);
+      // Frontier queued/counting work cancels immediately. Dispatched generation
+      // is not wired to this signal and retains its drain/settlement ownership.
+      for (const controller of frontierCancellations.get(token) ?? [])
+        controller.abort();
     },
     snapshot: () => ({
       queued: admission.queued,
@@ -860,9 +1019,27 @@ export function createGateway(options: GatewayOptions): Gateway {
         availability: admission.available(lane),
       })),
     }),
-    reconcileAfterOwnerSettlement: (aliases) =>
-      admission.reconcileAfterOwnerSettlement(aliases),
-    notifyAvailabilityChanged: () => admission.notifyAvailabilityChanged(),
+    frontierSnapshot: () => ({
+      model: FRONTIER_MODEL,
+      configured: !!options.frontier,
+      contextWindow: options.frontier?.contextWindow ?? null,
+      queued: frontierAdmission?.queued ?? 0,
+      state: frontierAdmission?.lanes[0]?.state ?? "unavailable",
+      availability: serviceAvailability(frontierAvailability, FRONTIER_MODEL),
+    }),
+    reconcileAfterOwnerSettlement: (aliases) => {
+      const qwen = admission.reconcileAfterOwnerSettlement(aliases);
+      // Only an exact owner-settlement alias may release frontier uncertainty.
+      const frontier = aliases.includes(FRONTIER_MODEL)
+        ? (frontierAdmission?.reconcileAfterOwnerSettlement([FRONTIER_MODEL]) ??
+          true)
+        : true;
+      return qwen && frontier;
+    },
+    notifyAvailabilityChanged: () => {
+      admission.notifyAvailabilityChanged();
+      frontierAdmission?.notifyAvailabilityChanged();
+    },
     close: () => app.close(),
   };
 }
