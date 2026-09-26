@@ -125,7 +125,7 @@ def main():
           '--kt-method','FP8','--kt-cpuinfer','64','--kt-threadpool-count','2','--kt-num-gpu-experts','0',
           '--kt-gpu-prefill-token-threshold','2048','--tool-call-parser','glm47','--reasoning-parser','glm45',
           '--cuda-graph-bs','1','2','4','--disable-overlap-schedule','--disable-radix-cache',
-          '--default-chat-template-kwargs','{"clear_thinking":true}', '--log-level','warning']
+          '--log-level','warning']
     native_parser=argparse.ArgumentParser()
     ServerArgs.add_cli_args(native_parser)
     args=ServerArgs.from_cli_args(native_parser.parse_args(argv))
