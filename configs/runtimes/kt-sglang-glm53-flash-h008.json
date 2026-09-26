@@ -1,0 +1,68 @@
+{
+  "base": {
+    "repository": "pytorch/pytorch",
+    "tag": "2.9.1-cuda12.8-cudnn9-devel",
+    "index_digest": "sha256:39236c0ad9c66baecf01bb2e4f5562543c5b336c0c785887798775d6d6fdbf9a",
+    "platform_digest": "sha256:39236c0ad9c66baecf01bb2e4f5562543c5b336c0c785887798775d6d6fdbf9a"
+  },
+  "ktransformers_source": "c40722bf04c494f2492b7eb9e86ef01a4ede45b3",
+  "sglang_source": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+  "packages": {
+    "ktransformers": {
+      "version": "0.7.0.post4",
+      "url": "https://files.pythonhosted.org/packages/82/4a/3fb28351964bf4c6ba66b93a6fa96771544e9cf24e900e3c586bc9435c53/ktransformers-0.7.0.post4-py3-none-manylinux_2_35_x86_64.whl",
+      "sha256": "a03072c575dc92bdf89d594eb370e3b732a4c8c30dc40f828c51a0bf27fd72c8",
+      "filename": "ktransformers-0.7.0.post4-py3-none-manylinux_2_35_x86_64.whl"
+    },
+    "kt-kernel": {
+      "version": "0.7.0.post4",
+      "url": "https://files.pythonhosted.org/packages/54/7e/9f1ac7f8873b4c47c93ac6ebf452a281629fc831b9818dc79c8297f8c68b/kt_kernel-0.7.0.post4-cp311-cp311-manylinux_2_35_x86_64.whl",
+      "sha256": "56a4388560c563cd44816b89318eec48f9883814fcdd6519b014a4e3eeee09b5",
+      "filename": "kt_kernel-0.7.0.post4-cp311-cp311-manylinux_2_35_x86_64.whl"
+    },
+    "sglang-kt": {
+      "version": "0.7.0.post4",
+      "url": "https://files.pythonhosted.org/packages/fc/3a/ea92173b2906a3c68a7384101be63d1f83089df48e50b19ae8c7de896c72/sglang_kt-0.7.0.post4-py3-none-manylinux_2_35_x86_64.whl",
+      "sha256": "ca468feca62f583b8c9f77a5279864accb3ee2824312c1bee015fbb34f253d1b",
+      "filename": "sglang_kt-0.7.0.post4-py3-none-manylinux_2_35_x86_64.whl"
+    },
+    "transformers-kt": {
+      "version": "5.6.0.post5",
+      "url": "https://files.pythonhosted.org/packages/95/18/574449d6216b2e42573e94cbd6bd37064bf5debf931c0a59203faa8dbe5d/transformers_kt-5.6.0.post5-py3-none-manylinux_2_35_x86_64.whl",
+      "sha256": "5d1afb6d1ee00bb0163f740696bcbf05bb633856209312f9aca69627e1f84f17",
+      "filename": "transformers_kt-5.6.0.post5-py3-none-manylinux_2_35_x86_64.whl"
+    },
+    "accelerate-kt": {
+      "version": "1.14.0.post3",
+      "url": "https://files.pythonhosted.org/packages/ca/45/31424259e8b8d0e817c84c1748ac9158f3caf12a8d4753257b3e165fab76/accelerate_kt-1.14.0.post3-py3-none-manylinux_2_35_x86_64.whl",
+      "sha256": "930901593b19a500dc275490a81163beec93e2379985fa538d8a7a04c565727d",
+      "filename": "accelerate_kt-1.14.0.post3-py3-none-manylinux_2_35_x86_64.whl"
+    },
+    "tokenizers": {
+      "version": "0.22.2",
+      "url": "https://files.pythonhosted.org/packages/2e/76/932be4b50ef6ccedf9d3c6639b056a967a86258c6d9200643f01269211ca/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "369cc9fc8cc10cb24143873a0d95438bb8ee257bb80c71989e3ee290e8d72c67",
+      "filename": "tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+    },
+    "jinja2": {
+      "version": "3.1.6",
+      "url": "https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl",
+      "sha256": "85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67",
+      "filename": "jinja2-3.1.6-py3-none-any.whl"
+    }
+  },
+  "model_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+  "status": "PREPARATION_NOT_ACTIVATION_READY",
+  "schema_version": 1,
+  "id": "kt-sglang-glm53-flash-h008",
+  "activation_image_digest": null,
+  "cuda_arch": "sm_120",
+  "python": "3.11",
+  "kt_method": "FP8",
+  "idle_policy": {
+    "warm_grace_seconds": 600,
+    "after_grace": "blocking",
+    "implementation": "PENDING_EXACT_FORK_OVERLAY_AND_TEST"
+  },
+  "dependencies_resolution": "Primary wheel SHA256 pins frozen; complete transitive install report and final image digest required before activation"
+}
