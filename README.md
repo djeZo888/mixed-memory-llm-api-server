@@ -90,14 +90,20 @@ and one independent Flash slot; image jobs use their own service. Qwen coordinat
 tasks and normally handles coding and agentic work. MiniMax can delegate difficult
 research, document analysis and reasoning to its native `frontier` child running
 GLM-5.3-Flash. This fixed routing policy does not implement arbitrary-model
-selection. See [H009 qualification and limits](docs/h009-status-20260926.md).
+selection. See [H009 delegation qualification](docs/h009-status-20260926.md) and
+[H010 64K benchmark and capacity estimate](docs/h010-status-20260927.md).
 
 ## Current models and dated acceptance
 
 The H009 deployment adds **GLM-5.3-Flash FP8** with CPU experts and a dedicated
 fast Blackwell, alongside both **Qwen3.8-27B FP8** instances and **Qwen-Image-2.1**
 on Ada. All three text services configure **480,000 tokens**; Flash has been
-tested with occupied inputs only through 16K. Qwen1 now uses the additional
+tested with an occupied **65,536-token** technical fixture: **265.9 effective
+input tokens/s**, **13.72 output tokens/s** and **30.79 GiB peak sampled VRAM**,
+finishing correctly in **257.3 seconds**. These measurements use the existing
+480K pool; full 480K occupancy remains untested for Flash. The declared 1,048,576
+limit is a conditional memory candidate, not a qualified configuration.
+[H010 report and limits](docs/h010-status-20260927.md). Qwen1 uses the additional
 Server Blackwell. The [H008 migration report](docs/h008-status-20260926.md) records
 its warmed 64K result: 7,279 effective input tokens/s and 36.28 output tokens/s.
 These are separate tests, not simultaneous aggregate throughput.
@@ -108,8 +114,8 @@ These are separate tests, not simultaneous aggregate throughput.
 | Qwen1 | `http://10.156.100.60:30004/v1` | Second concurrent Qwen lane |
 | GLM-5.3-Flash | `http://10.156.100.60:30010/v1` | Selective native frontier child |
 
-Current readiness must be checked through status. The linked H009 report records
-final recovery and evidence limits; configured capacity alone is not proof of
+Current readiness must be checked through status. The linked dated reports record
+recovery and evidence limits; configured capacity alone is not proof of
 full-context speed or correctness.
 
 ### Historical two-GPU deployment — September 21

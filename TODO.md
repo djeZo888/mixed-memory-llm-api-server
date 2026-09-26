@@ -81,8 +81,13 @@ installer implementation and tests remain paused.
   repetitive fixtures. H009's first full-tool request took 620 seconds, while
   its three continuations took 109, 45 and 49 seconds. Do not extrapolate a
   constant speed from either the fastest native decode window or that first turn.
-- Test larger occupied contexts only in the separate user-authorized round.
-  Configured context is 480000; current Flash occupancy tests stop at 16384.
+- **H010 completed:** varied 8192-token warm-up and one correct 65536-token
+  occupied technical fixture at unchanged 480000 configured context. See the
+  [64K report](docs/h010-status-20260927.md). Larger occupied contexts remain
+  separate future work; the 1,048,576-position memory estimate is not acceptance.
+- A full four-instance overlap test remains unverified. H010 passed both Qwens
+  plus image together, but its Flash smoke client never dispatched due test
+  coordination. All four instances retained independent resident services.
 - Investigate supported prefix reuse in a later pinned runtime. The current
   GLM KPool implementation forces radix caching off for correctness; do not
   bypass that guard as a performance tweak.
@@ -92,6 +97,8 @@ installer implementation and tests remain paused.
 - Qualify the new Flash service's 600-second idle/wake behavior separately.
   The current live workflow proves request processing after an idle interval,
   but no controlled before/after CPU-idle measurement was performed in H009.
+  H010 naturally observed zero CPU ticks from all 64 expert threads over 376 s
+  before successful warm-up; it does not prove the exact 600-second transition.
 
 ## Future organizations and access control
 

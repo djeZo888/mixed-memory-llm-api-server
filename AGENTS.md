@@ -6,6 +6,9 @@ H010, authorized27September, extends Flash live occupancy testing to65536tokens
 and asks for CPU-only comparison only if supported with minor changes. Follow
 [the bounded H010 plan](docs/h010-flash-64k-plan.md). It supersedes H009's16K test
 ceiling for this task; keep production480000 and current memory/ECC policy.
+The [H010 result](docs/h010-status-20260927.md) records the 65536-token PASS and
+conditional capacity estimate. CPU-only is not a supported minor configuration
+change in the pinned architecture. Larger occupancy remains unqualified.
 
 Sova now includes the ai-harness application and separate Qwen/image services.
 The authorized H008/H009 scope adds GLM-5.3-Flash on a dedicated fast Blackwell
