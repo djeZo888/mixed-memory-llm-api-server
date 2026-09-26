@@ -22,7 +22,7 @@ UMask=0077
 Restart=no
 KillMode=control-group
 StandardOutput=null
-StandardError=null
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target

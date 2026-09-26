@@ -14,7 +14,9 @@ import shutil
 import stat
 import subprocess
 import sys
+import syslog
 import time
+import uuid
 import urllib.error
 import urllib.request
 
@@ -63,9 +65,10 @@ RELEASE_SOURCE_FILES = (
     'scripts/image_runtime/source-closure.json',
 )
 sys.path.insert(0, str(RELEASE / 'scripts'))
-from common.lifecycle_lease import acquire_lease
+from common.lifecycle_lease import acquire_lease, LeaseBusy, LeaseError
 from control.installation import protected_file
 from install import storage_io
+from install.storage import StorageError
 from lifecycle.manager import StorageRunner
 from lifecycle.runtime_io import validate_image_container
 from lifecycle.storage_binding import RegisteredStorageBinding
@@ -80,6 +83,230 @@ def require(condition, code):
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+# Exact codes only: exception text, subprocess output and arbitrary code-shaped
+# strings are never diagnostics. Unknown exceptions collapse to a fixed code.
+SAFE_FAILURE_CODES = frozenset({
+    'ada_compute_process_already_present',
+    'ada_current_margin_below_5_percent',
+    'ada_identity_missing',
+    'ada_initial_margin_below_5_percent',
+    'ada_memory_unavailable',
+    'ada_preload_weight_and_margin_unavailable',
+    'ada_process_inventory_invalid',
+    'ada_process_ownership_mismatch',
+    'ada_sampled_peak_margin_below_5_percent',
+    'anchored_rmtree_required',
+    'checkpoint_path_mismatch',
+    'checkpoint_receipt_changed',
+    'checkpoint_receipt_incomplete',
+    'config_identity_mismatch',
+    'conflicting_backend_name',
+    'deterministic_warm_failed',
+    'hardware_boot_identity_unknown',
+    'hardware_fault',
+    'hardware_inventory_unknown',
+    'hardware_latch_first_install_review_required',
+    'hardware_latch_state_invalid',
+    'hardware_latch_storage_unavailable',
+    'hardware_missing',
+    'hardware_target_unknown',
+    'hardware_validation_stale',
+    'host_headroom_below_15_percent',
+    'host_sampled_margin_below_15_percent',
+    'image_digest_required',
+    'invalid_created_container_id',
+    'invalid_fixed_action',
+    'invalid_invocation',
+    'invalid_owned_container_id',
+    'invalid_tmp_owner',
+    'lifecycle_busy',
+    'native_backend_not_running',
+    'native_backend_unready',
+    'native_cgroup_swap_observed_or_unavailable',
+    'native_exited_during_load',
+    'native_network_attachment_mismatch',
+    'native_port_already_owned',
+    'native_readiness_timeout',
+    'owned_backend_missing',
+    'owned_backend_not_settled',
+    'owned_backend_removal_failed',
+    'owned_command_failed',
+    'owned_network_id_required',
+    'owned_operation_deadline',
+    'owned_private_network_mismatch',
+    'owned_service_terminated',
+    'owned_start_deadline_required',
+    'owned_systemd_restart_warm_failed',
+    'owned_tmp_inventory_bound',
+    'owned_warm_receipt_missing',
+    'pin_mismatch',
+    'registered_runtime_root_mismatch',
+    'registered_storage_guard_failed',
+    'registered_storage_verification_failed',
+    'reset_owned_backend_before_start',
+    'root_disk_guard_failed',
+    'root_required',
+    'runtime_image_binding_mismatch',
+    'runtime_source_changed',
+    'runtime_source_closure_mismatch',
+    'runtime_source_digest_invalid',
+    'state_identity_mismatch',
+    'systemd_invocation_required',
+    'telemetry_died_during_load',
+    'telemetry_failed',
+    'telemetry_start_failed',
+    'tmp_owner_mismatch',
+    'tmp_parent_identity_changed',
+    'unprotected_native_parent',
+    'unprotected_tmp_parent',
+    'unrecorded_backend_container',
+    'unsafe_native_workdir',
+    'unsafe_owned_tmp_entry',
+    'unsafe_owned_tmpdir',
+})
+ATTEMPT = None
+START_ADMISSION_SECONDS = 2.0
+
+
+def failure_code(error):
+    candidate = error.args[0] if error.args else None
+    if type(candidate) is str and candidate in SAFE_FAILURE_CODES:
+        return candidate
+    if isinstance(error, subprocess.TimeoutExpired):
+        return 'owned_command_timeout'
+    if isinstance(error, LeaseError):
+        return 'canonical_lease_refused'
+    if isinstance(error, (StorageError, storage_io.StorageIOError)):
+        return 'registered_storage_refused'
+    return 'owned_backend_failed'
+
+
+def attempt_phase(phase):
+    if ATTEMPT is not None:
+        ATTEMPT.phase = phase
+
+
+def attempt_failure(error):
+    # Capture before settlement so a cleanup error cannot replace the trigger.
+    if ATTEMPT is not None and ATTEMPT.failure is None:
+        ATTEMPT.failure = (ATTEMPT.phase, failure_code(error))
+
+
+def archive_failure_fields(state):
+    """Keep legacy evidence in protected state, never project it as current.
+
+    New per-attempt receipts retain subsequent failures independently. This
+    bounded set of legacy fields is not copied to diagnostics or the journal.
+    """
+    fields = ('failure_type', 'failure_code', 'native_failure', 'recovery_failure')
+    previous = {key: state.pop(key) for key in fields if key in state}
+    if previous and 'historical_failure' not in state:
+        # Freeze the first legacy snapshot: merging a later failure would
+        # misattribute older fields to the later run. New receipts carry history.
+        state['historical_failure'] = {**previous, 'run_id': state.get('run_id')}
+
+
+def persist_attempt(record):
+    """Unique immutable receipt; no shared lifecycle state or second lock.
+
+    Exclusive creation needs no lifecycle lease (including on LeaseBusy).
+    Never fall back to an unregistered/root path when the guards refuse.
+    """
+    binding = RegisteredStorageBinding.load(StorageRunner())
+    logs = binding.path('logs')
+    binding.validate_path('logs', logs)
+    guard = binding.storage.root_payload_guard
+    guard(binding.registry)
+    try:
+        with binding.mounted_guard(storage_io) as mounted:
+            with storage_io.AnchoredRoot(logs, mounted) as anchored:
+                anchored.mkdir('image-runtime-attempts', mode=0o700)
+                relative = 'image-runtime-attempts/' + record['attempt_id'] + '.json'
+                encoded = (json.dumps(record, sort_keys=True) + '\n').encode()
+                require(len(encoded) <= 2048, 'attempt_record_too_large')
+                with anchored.open(relative, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600) as output:
+                    output.write(encoded)
+                    output.fsync()
+                    os.fsync(output.parent)
+                    output.check()
+                anchored.check()
+    finally:
+        guard(binding.registry)
+
+
+class Attempt:
+    def __init__(self, action):
+        self.action = action
+        self.phase = 'construct'
+        self.failure = None
+        self.identity = uuid.uuid4().hex
+        self.started = now()
+        invocation = os.environ.get('INVOCATION_ID', '')
+        self.invocation = invocation if re.fullmatch('[0-9a-f]{32}', invocation) else None
+        try:
+            boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+        except OSError:
+            boot = ''
+        self.boot = boot if re.fullmatch('[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', boot) else None
+
+    def finish(self, error=None):
+        original = self.failure or (self.phase, failure_code(error) if error else 'ok')
+        record = {'schema_version': 1, 'attempt_id': self.identity,
+                  'action': self.action, 'phase': original[0], 'code': original[1],
+                  'status': 'failed' if error else 'succeeded',
+                  'boot_id': self.boot, 'invocation_id': self.invocation,
+                  'started_utc': self.started, 'finished_utc': now(),
+                  'settlement_code': failure_code(error) if self.failure and error else None}
+        self.emit(record, 'pending', error)
+        storage_status = 'verified'
+        try:
+            persist_attempt(record)
+        except Exception:
+            # Even a guard refusal gets this small safe journal record. It is
+            # explicitly NOT a protected-storage success or a recovery retry.
+            storage_status = 'unavailable'
+        self.emit(record, storage_status, error)
+
+    @staticmethod
+    def emit(record, storage_status, error):
+        safe = json.dumps({**record, 'storage_status': storage_status}, sort_keys=True)
+        try:
+            print(safe, file=sys.stderr, flush=True)
+        except (OSError, ValueError):
+            pass
+        # The fixed sudo helper's caller discards stderr. Authpriv preserves only
+        # this same enumerated record, never native/sudo output or a traceback.
+        try:
+            syslog.openlog('llm-image-attempt', syslog.LOG_PID, syslog.LOG_AUTHPRIV)
+            syslog.syslog(syslog.LOG_ERR if error or storage_status == 'unavailable' else syslog.LOG_INFO, safe)
+        except Exception:
+            pass
+
+
+@contextlib.contextmanager
+def start_admission():
+    """Only retry entry contention, before any backend mutation (max 2s).
+
+    The yielded body's exceptions are outside the retry loop. A systemd child
+    must never be launched with a parent holding this canonical lease.
+    """
+    deadline = time.monotonic() + START_ADMISSION_SECONDS
+    with contextlib.ExitStack() as stack:
+        while True:
+            try:
+                lease = stack.enter_context(acquire_lease(blocking=False))
+            except LeaseBusy:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise
+                time.sleep(min(0.2, remaining))
+                if time.monotonic() >= deadline:
+                    raise
+            else:
+                break
+        yield lease
 
 
 def verify_source_closure(config):
@@ -161,8 +388,10 @@ class Runtime:
 
     def guards(self):
         for extra in ([], ['--root-guard']):
-            run(['/usr/bin/python3', '-I', '-B', str(RELEASE / 'scripts/common/registered-storage.py'),
-                 '--json', *extra])
+            result = run(['/usr/bin/python3', '-I', '-B', str(RELEASE / 'scripts/common/registered-storage.py'),
+                          '--json', *extra], check=False)
+            require(result.returncode == 0,
+                    'root_disk_guard_failed' if extra else 'registered_storage_guard_failed')
         self.binding.verify()
 
     @contextlib.contextmanager
@@ -200,10 +429,12 @@ class Runtime:
         return validate_image_container(value, state, self.config)
 
     def reset_owned(self):
+        attempt_phase('reset_preflight')
         self.guards()
         state = self.state()
         value = self.inspect_owned(state, missing_ok=True)
         if value:
+            attempt_phase('reset_container')
             if value['State']['Running']:
                 run(['docker', 'stop', '--time', '30', value['Id']], timeout=45)
             value = self.inspect_owned(state)
@@ -211,6 +442,7 @@ class Runtime:
             run(['docker', 'rm', value['Id']])
             require(run(['docker', 'inspect', value['Id']], check=False).returncode != 0,
                     'owned_backend_removal_failed')
+        attempt_phase('reset_state')
         if state.get('run_id'):
             state['last_tmp_cleanup'] = self.cleanup_tmp(state['run_id'])
         state.update(phase='stopped', container=None, warm=False)
@@ -420,12 +652,15 @@ class Runtime:
 
     def start(self):
         global OPERATION_DEADLINE
+        attempt_phase('start_preflight')
         run_id = os.environ.get('INVOCATION_ID', '')
         require(re.fullmatch('[0-9a-f]{32}', run_id), 'systemd_invocation_required')
         deadline = OPERATION_DEADLINE
         require(deadline is not None, 'owned_start_deadline_required')
         self.guards()
+        attempt_phase('hardware_preflight')
         self.require_hardware()
+        attempt_phase('backend_preflight')
         state = self.state()
         require(self.inspect_owned(state, missing_ok=True) is None, 'reset_owned_backend_before_start')
         self.check_network(state)
@@ -434,14 +669,18 @@ class Runtime:
         self.host_headroom()
         device = self.current_device()
         require(device['free_bytes'] * 20 >= device['total_bytes'], 'ada_initial_margin_below_5_percent')
+        attempt_phase('prepare_work')
         self.make_work(run_id)
+        archive_failure_fields(state)
         state.update(run_id=run_id, phase='creating', warm=False, container=None, start_utc=now())
         self.save(state)
+        attempt_phase('container_create')
         cid = run(self.create_argv(run_id), timeout=60).stdout.strip()
         require(re.fullmatch('[0-9a-f]{64}', cid), 'invalid_created_container_id')
         state.update(phase='loading', container={'id': cid, 'image_id': self.config['image_id']})
         self.save(state)
         self.inspect_owned(state)
+        attempt_phase('telemetry_start')
         telemetry_rel = 'receipts/' + run_id + '-telemetry.jsonl'
         sampler = None
         try:
@@ -461,7 +700,9 @@ class Runtime:
                         require(self.current_device()['free_bytes'] >= 33131614782 + device['total_bytes'] // 20,
                                 'ada_preload_weight_and_margin_unavailable')
                         load_start = time.monotonic()
+                        attempt_phase('container_start')
                         run(['docker', 'start', cid])
+                        attempt_phase('native_readiness')
                         while not self.native_health():
                             require(time.monotonic() < deadline - 5, 'native_readiness_timeout')
                             require(self.inspect_owned(state)['State']['Running'], 'native_exited_during_load')
@@ -472,21 +713,27 @@ class Runtime:
                         state['tmp_before_generation'] = self.tmp_snapshot(run_id)
                         self.save(state)
                         self.guards()
+                        attempt_phase('warm_generation')
                         result = run(['docker', 'exec', cid, '/opt/image-venv/bin/python', '-I', '-B',
                                       '/runtime/native_request.py', '--mode', 'generation', '--run-id', run_id],
                                      timeout=max(1, deadline - time.monotonic()))
                         summary = json.loads(result.stdout)
                         require(summary['status'] == 'pass', 'deterministic_warm_failed')
+                        attempt_phase('residency_verify')
                         residency = self.verify_resident(state)
                         state['tmp_after_generation'] = self.tmp_snapshot(run_id)
                         before_names = {item['path'] for item in state['tmp_before_generation']['entries']}
                         state['tmp_new_entries_after_generation'] = [item for item in state['tmp_after_generation']['entries']
                                                                       if item['path'] not in before_names]
+                    except BaseException as error:
+                        attempt_failure(error)
+                        raise
                     finally:
                         sampler_result = settle_sampler(sampler)
                         output.fsync()
                     require(sampler_result == 0, 'telemetry_failed')
                     anchored.check()
+            attempt_phase('telemetry_verify')
             samples = [json.loads(line) for line in (BASE / telemetry_rel).read_text().splitlines()]
             end = samples[-1]
             require(end['sampled_min_free_bytes'] is not None and
@@ -499,6 +746,7 @@ class Runtime:
             swaps = [sample['host']['cgroup_bytes']['memory.swap.current']['value'] for sample in samples
                      if sample.get('host', {}).get('cgroup_bytes', {}).get('memory.swap.current', {}).get('status') == 'ok']
             require(swaps and max(swaps) == 0, 'native_cgroup_swap_observed_or_unavailable')
+            archive_failure_fields(state)
             state.update(phase='warm', warm=True, generation=summary, residency=residency,
                          telemetry_path=str(BASE / telemetry_rel), telemetry_summary=end, completed_utc=now())
             state['sampled_min_host_available_bytes'] = min(value['MemAvailable'] for value in hosts)
@@ -507,6 +755,7 @@ class Runtime:
             self.guards()
             print(json.dumps({'status': 'warm', 'run_id': run_id, 'container_id': cid}), flush=True)
         except BaseException as error:
+            attempt_failure(error)
             OPERATION_DEADLINE = SETTLEMENT_DEADLINE
             cleanup = {'sampler': settle_sampler(sampler)}
             try:
@@ -524,7 +773,7 @@ class Runtime:
                 except Exception as final_error:
                     cleanup['backend_forced_settle_error'] = type(final_error).__name__
             state.update(phase='failed', warm=False, failure_type=type(error).__name__,
-                         failure_code=str(error) if type(error) is RuntimeError else 'owned_start_failed',
+                         failure_code=failure_code(error),
                          telemetry_path=str(BASE / telemetry_rel), cleanup=cleanup)
             self.save(state)
             self.guards()
@@ -535,7 +784,9 @@ def recover():
     global OPERATION_DEADLINE
     started = time.monotonic()
     OPERATION_DEADLINE = started + 840
+    attempt_phase('construct')
     runtime = Runtime()
+    attempt_phase('recover_admission')
     # Do not hold a lease while a separately invoked systemd ExecStart borrows it.
     # Every subprocess lifecycle owner independently takes the SAME canonical lease.
     # A latched recovery attempt must not stop a healthy peer or existing work.
@@ -549,6 +800,7 @@ def recover():
         OPERATION_DEADLINE = None
         raise
     mutation_started = False
+    attempt_phase('recover_mutation_admission')
     try:
         with acquire_lease(blocking=False) as lease:
             runtime.lease = lease
@@ -556,8 +808,10 @@ def recover():
             runtime.require_hardware()
             mutation_started = True
             runtime.reset_owned()
+        attempt_phase('systemd_restart')
         result = run(['systemctl', 'restart', UNIT], timeout=840, check=False)
         require(result.returncode == 0, 'owned_systemd_restart_warm_failed')
+        attempt_phase('recover_verify')
         with acquire_lease(blocking=False):
             runtime.guards()
             state = runtime.state()
@@ -565,7 +819,8 @@ def recover():
             runtime.verify_resident(state)
             runtime.guards()
         print(json.dumps({'status': 'warm', 'run_id': state['run_id']}), flush=True)
-    except BaseException:
+    except BaseException as error:
+        attempt_failure(error)
         # A second-lease contention or changed guard/latch can refuse after the
         # initial preflight. No reset/restart was dispatched, so cleanup must
         # not stop work belonging to the intervening owner.
@@ -602,12 +857,31 @@ def main():
     OPERATION_DEADLINE = started + (775 if sys.argv[1] == 'start' else 100)
     SETTLEMENT_DEADLINE = started + (835 if sys.argv[1] == 'start' else 115)
     runtime = Runtime()
-    with acquire_lease(blocking=False) as lease:
+    attempt_phase('start_admission' if sys.argv[1] == 'start' else 'stop_admission')
+    with (start_admission() if sys.argv[1] == 'start' else acquire_lease(blocking=False)) as lease:
         runtime.lease = lease
         if sys.argv[1] == 'start':
+            attempt_phase('admitted_guards')
+            runtime.guards()
             runtime.start()
         else:
             runtime.reset_owned()
+
+
+def entrypoint():
+    global ATTEMPT
+    action = sys.argv[1] if len(sys.argv) == 2 and sys.argv[1] in {'start', 'stop', 'recover'} else 'invalid'
+    ATTEMPT = Attempt(action)
+    try:
+        main()
+    except Exception as error:
+        ATTEMPT.finish(error)
+        return 1
+    else:
+        ATTEMPT.finish()
+        return 0
+    finally:
+        ATTEMPT = None
 
 
 if __name__ == '__main__':
@@ -615,9 +889,4 @@ if __name__ == '__main__':
         raise RuntimeError('owned_service_terminated')
     signal.signal(signal.SIGTERM, interrupted)
     signal.signal(signal.SIGINT, interrupted)
-    try:
-        main()
-    except Exception as error:
-        print(json.dumps({'status': 'unready', 'error_type': type(error).__name__,
-                          'code': str(error) if type(error) is RuntimeError else 'owned_backend_failed'}), file=sys.stderr)
-        raise SystemExit(1)
+    raise SystemExit(entrypoint())

@@ -1,0 +1,69 @@
+{
+  "installed_sha256": {
+    "/etc/apt/apt.conf.d/20auto-upgrades": "b81a3a01864d5ed7f8d023f3fa86d65087ad6b85706d399dc229a60b1c784807",
+    "/etc/apt/apt.conf.d/50unattended-upgrades": "f1bc2a6850e112952878767144471625f88a10d26d7a8151921a3f74b850dc27",
+    "/etc/apt/apt.conf.d/99-hostrecover-nvidia-manual-upgrades": "dc5ae701c4430ca2aee61026679756138edf0cb983c53d84846e4a09c42066d1",
+    "/etc/needrestart/needrestart.conf": "baacdd683222532d35770efbf7cd83360fc33a4c49ef010787628f0da778f7ee",
+    "/usr/lib/needrestart/apt-pinvoke": "ee34cc66a524a871515f2aaf23e558f1f29382c499fd3918136f2371820df0ca",
+    "/usr/sbin/needrestart": "1ecfa621b808bf68ef2745c5cbd2aceb6dff8e646965edf4928cb8d99f15d4e1"
+  },
+  "limits": "No installed override, runtime readiness or recovery acceptance claimed. Refresh installed versions/hashes before deployment.",
+  "managed_units": [
+    "llm-control.service",
+    "llm-node.service",
+    "llm-image-api.service",
+    "llm-image-backend.service"
+  ],
+  "method": "Read-only SSH ai-vm from mac-worker1; no remote tests or mutations",
+  "needrestart_version": "3.6-7ubuntu4.5",
+  "observed_utc": "2026-09-26T10:17:49Z",
+  "raw_readonly_facts_sha256": "4e44857cd2f905d6ac97995f4b82a0b386b1bd0f1c4b8c7f5f86a305d1745846",
+  "raw_task_artifact": "../needrestart-readonly-facts.txt",
+  "registered_storage": {
+    "data": {
+      "fstype": "ext4",
+      "mount": "/data",
+      "path": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "models": {
+      "fstype": "ext4",
+      "mount": "/data/models-large",
+      "path": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "roots": {
+      "backups": "/data/backups",
+      "build": "/data/build",
+      "containerd": "/data/containerd",
+      "docker": "/data/docker",
+      "hf_cache": "/data/hf-cache",
+      "logs": "/data/logs",
+      "models": "/data/models-large",
+      "secrets": "/data/services/secrets",
+      "services": "/data/services",
+      "state": "/data/services/installer"
+    }
+  },
+  "security_policy": {
+    "automatic_reboot": false,
+    "changed": false,
+    "nvidia_manual_policy": "/etc/apt/apt.conf.d/99-hostrecover-nvidia-manual-upgrades",
+    "security_origins_enabled": true,
+    "unattended_upgrade": 1,
+    "update_package_lists": 1
+  },
+  "semantics": {
+    "apt_mode": "Ubuntu -m u selects automatic mode when no restart/UI override is set",
+    "conf_d": "sorted /etc/needrestart/conf.d/*.conf evaluated by main config",
+    "override_rc_zero": "skips restart and reports deferred service in automatic path",
+    "source_lines": [
+      263,
+      274,
+      1088,
+      1103
+    ]
+  },
+  "task": "H006-MAINTENANCE-SOURCE-20260926",
+  "unattended_upgrades_version": "2.9.1+nmu4ubuntu1"
+}
