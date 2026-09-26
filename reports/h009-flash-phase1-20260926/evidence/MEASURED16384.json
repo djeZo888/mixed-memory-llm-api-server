@@ -1,0 +1,277 @@
+{
+  "source": {
+    "task_relative_path": "evidence/qualification-raw/H009-MEASURED16384.json",
+    "sha256": "38ef5372b8067aab911bed8f20715a3efb713c2c4b178e34c3219e77264ab574"
+  },
+  "status": "PASS",
+  "start_utc": "2026-09-26T20:35:36.027347+00:00",
+  "end_utc": "2026-09-26T20:37:25.344410+00:00",
+  "fixture": {
+    "generation_prefix_included": true,
+    "known_answer": "12",
+    "native_tokenize": {
+      "context_limit": 480000,
+      "count": 16384,
+      "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+      "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+    },
+    "payload_sha256": "93777c4246e72077fced0b87d03efec7dae637b545047c51a66262717ee2cdb8",
+    "rendered_token_ids_sha256": "cd14289c0e33cf5a532f2b940ab1f9b8124a21f8a8dfee7498ca4400aaf20fb5",
+    "rendered_tokens": 16384,
+    "seed": "River measured beta record",
+    "tools": null
+  },
+  "native_capacity": {
+    "context_length": 480000,
+    "kt_cpuinfer": 64,
+    "kt_threadpool_count": 8,
+    "kv_cache_dtype": "fp8_e4m3",
+    "max_req_input_len": 479994,
+    "max_req_len": null,
+    "max_running_requests": 1,
+    "max_total_num_tokens": 480000,
+    "max_total_tokens": 480000
+  },
+  "native_allocation": {
+    "context": 480000,
+    "max_req_input_len": 479994,
+    "max_req_len": 479999,
+    "pool": 480000,
+    "resolved_cache_dtype": "torch.float8_e4m3fn",
+    "sm120_execution": "PASS"
+  },
+  "memory_summary": {
+    "cgroup_peak_bytes": 640475009024,
+    "max_cgroup_swap_bytes": 0,
+    "max_gpu_temp_c": 53.0,
+    "min_gpu_free_mib": 65098.0,
+    "min_host_available_bytes": 604105691136,
+    "peak_gpu_used_mib": 32152.0
+  },
+  "established_tcp30010_after_close": "",
+  "native_active_counter": "NOT_AVAILABLE_UNLESS_EXPLICIT_FRESH_NATIVE_READBACK",
+  "request": {
+    "status": "TRANSPORT_PASS",
+    "semantic_status": "PASS_ANSWER_12",
+    "http_status": 200,
+    "start_utc": "2026-09-26T20:35:40.098567+00:00",
+    "end_utc": "2026-09-26T20:37:24.920636+00:00",
+    "elapsed_seconds": 104.53570115600007,
+    "ttft_seconds": 84.12751654300007,
+    "ttft_basis": "request start to first nonempty native content, reasoning, or tool delta; transport included",
+    "first_positive_native_usage_seconds": 84.12751654300007,
+    "last_nonempty_delta_seconds": 100.46057452600007,
+    "input_tokens": 16384,
+    "output_tokens": 19,
+    "usage": {
+      "completion_tokens": 19,
+      "prompt_tokens": 16384,
+      "prompt_tokens_details": null,
+      "reasoning_tokens": 0,
+      "total_tokens": 16403
+    },
+    "finish_reason": "stop",
+    "output": "12",
+    "reasoning": "The user asks 7+5 and instructs to reply exactly \"12\".",
+    "decode_tokens_per_second": 0.9790438319883841,
+    "decode_rate_status": "NATIVE_INCREMENTAL_USAGE_OBSERVED_CLIENT_TIME_WINDOW",
+    "decode_rate_window": {
+      "end_native_tokens": 19,
+      "end_seconds": 102.51280166700008,
+      "start_native_tokens": 1,
+      "start_seconds": 84.12751654300007
+    },
+    "native_usage_samples": [
+      {
+        "seconds": 84.12751654300007,
+        "usage": {
+          "completion_tokens": 1,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16385
+        }
+      },
+      {
+        "seconds": 85.30589639300001,
+        "usage": {
+          "completion_tokens": 2,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16386
+        }
+      },
+      {
+        "seconds": 86.16412060800008,
+        "usage": {
+          "completion_tokens": 3,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16387
+        }
+      },
+      {
+        "seconds": 87.32960275100004,
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16388
+        }
+      },
+      {
+        "seconds": 88.23976525700004,
+        "usage": {
+          "completion_tokens": 5,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16389
+        }
+      },
+      {
+        "seconds": 89.42156125400004,
+        "usage": {
+          "completion_tokens": 6,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16390
+        }
+      },
+      {
+        "seconds": 90.29040197000006,
+        "usage": {
+          "completion_tokens": 7,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16391
+        }
+      },
+      {
+        "seconds": 91.44414585200002,
+        "usage": {
+          "completion_tokens": 8,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16392
+        }
+      },
+      {
+        "seconds": 92.30273747400008,
+        "usage": {
+          "completion_tokens": 9,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16393
+        }
+      },
+      {
+        "seconds": 93.47910747200001,
+        "usage": {
+          "completion_tokens": 10,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16394
+        }
+      },
+      {
+        "seconds": 94.374786514,
+        "usage": {
+          "completion_tokens": 11,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16395
+        }
+      },
+      {
+        "seconds": 95.52277696600004,
+        "usage": {
+          "completion_tokens": 12,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16396
+        }
+      },
+      {
+        "seconds": 96.40166148500009,
+        "usage": {
+          "completion_tokens": 13,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16397
+        }
+      },
+      {
+        "seconds": 97.55312297300009,
+        "usage": {
+          "completion_tokens": 14,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16398
+        }
+      },
+      {
+        "seconds": 98.43363271400005,
+        "usage": {
+          "completion_tokens": 15,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16399
+        }
+      },
+      {
+        "seconds": 99.57630419100008,
+        "usage": {
+          "completion_tokens": 16,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16400
+        }
+      },
+      {
+        "seconds": 100.46057452600007,
+        "usage": {
+          "completion_tokens": 18,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16402
+        }
+      },
+      {
+        "seconds": 102.51280166700008,
+        "usage": {
+          "completion_tokens": 19,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16403
+        }
+      }
+    ],
+    "output_cap_reached": false,
+    "requested_output": 64,
+    "sse_done": true,
+    "body_drained": true,
+    "request_socket_closed": true,
+    "cached_input_tokens": null,
+    "uncached_input_status": "NOT_REPORTED",
+    "sample_limit": "64 output tokens; capped reasoning may prevent final answer"
+  },
+  "timing_limit": "Client-observed native-token interval includes synchronous guarded receipt overhead; no runtime-only decode throughput claim.",
+  "reasoning_limit": "Completion tokens include native generated sequence. Native reasoning_tokens field is0 even when reasoning delta is nonempty; separate reasoning token count not established."
+}

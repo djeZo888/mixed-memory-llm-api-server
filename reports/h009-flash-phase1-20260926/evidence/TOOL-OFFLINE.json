@@ -1,0 +1,43 @@
+{
+  "observed_at_utc": "2026-09-26T20:06:09.699496+00:00",
+  "scope": "LOCAL_OFFLINE_ONLY_NO_VM_CONTACT_NO_DEPLOYMENT",
+  "native_source_package_sha256": "ca468feca62f583b8c9f77a5279864accb3ee2824312c1bee015fbb34f253d1b",
+  "llguidance_version": "0.7.30",
+  "local_llguidance_macos_arm64_wheel_sha256": "00a256d532911d2cf5ba4ef63e182944e767dd2402f38d63002016bc37755958",
+  "model_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+  "root_cause": {
+    "native_failure_log": "../native-complete.log:475-509",
+    "token_id": 154843,
+    "token_text": "<tool_call>",
+    "hf_added_token_special": false,
+    "llguidance_baseline_is_special_token": true,
+    "baseline_matcher_consumption": false,
+    "baseline_error": "byte FF instead of native token text; Parser Error at token154843"
+  },
+  "downstream_symptom": {
+    "method": "OpenAIServingChat._check_for_unstreamed_tool_args",
+    "source": "../tool-native-source/sglang/srt/entrypoints/openai/serving_chat.py:1511-1560",
+    "cause": "Incomplete <tool_call> leaves prev_tool_call_arr=[{}], streamed_args_for_tool=[empty string]; native completion flush defaults arguments={} and emits unnamed argument delta without a real call."
+  },
+  "correction": {
+    "tokenizer": "Preserve original native LLTokenizer token bytes, IDs, EOS, original HF encoder; honor actual non-special added-token flags only inside grammar matcher via public TokenizerWrapper. No template, weights or API token-count change.",
+    "completion": "Raise bounded ValueError for glm47 empty-name tracking slot; existing native stream catches it into SSE error instead of fabricated null-name {} call."
+  },
+  "proof": {
+    "tests": 3,
+    "result": "PASS",
+    "duration_seconds": 1.028,
+    "token_bytes_equality": "ALL155136",
+    "special_classification": "Only authoritative non-special added tokens changed",
+    "weather_xml_tokens": 13,
+    "fixed_complete_xml_accepted": true,
+    "fixed_eos_accepted": true
+  },
+  "deployment": "NOT_DEPLOYED; AUTO baseline must run before correction launch",
+  "live_forced_semantics": "NOT_TESTED_AFTER_FIX",
+  "live_auto_semantics": "NOT_TESTED_BY_THIS_AGENT",
+  "files": {
+    "scripts/runtime/flash/tool_runtime.py": "bd44a5a2970bfe5cc4c789b526a6b8b605b7bfb0d4a650da83adc0a43ac346fa",
+    "tests/test_flash_tools.py": "0c2ab44bc2ed907f781ca3f8aa4160a45cf2e5a9df479f026fafffb238a0e955"
+  }
+}

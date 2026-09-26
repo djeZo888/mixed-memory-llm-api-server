@@ -1,0 +1,50 @@
+{
+  "baseline_utc": "2026-09-26T19:58:29Z",
+  "status": "RECONSTRUCTED_FROM_CONTEMPORANEOUS_NOTICE_AND_EXECUTED_MUTATION_PREDICATE_NOT_ORIGINAL_RAW_READBACK",
+  "sources": [
+    {
+      "task_relative_path": "ROOT-NOTICE-ECC.md",
+      "sha256": "90bd7c7fbbbc10472d3054cc60161b0b9186304f5fb673f83699c8a8ba3d7c8a"
+    },
+    {
+      "task_relative_path": "tools/ecc-enable.py",
+      "sha256": "3d0741297ffb605fb8335354b6afd50180a5587f756052fc85be351b83fbb786"
+    },
+    {
+      "task_relative_path": "evidence/ECC-ENABLE.json",
+      "sha256": "e3d2d8511aa5bb0a6eb4aca5bb75274f2e63ce281d2f6ba3d39a081053abd741"
+    }
+  ],
+  "overwrite_note": "Original ../ECC-READBACK.json was overwritten by20:10:39 pending-state inspection during local inspect.py stdlib shadowing diagnosis; that file must not be called the19:58 baseline. Local script was subsequently renamed.",
+  "gpus": [
+    {
+      "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "current": "Disabled",
+      "pending": "Disabled",
+      "volatile_and_aggregate_counters": "N/A"
+    },
+    {
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "current": "Disabled",
+      "pending": "Disabled",
+      "volatile_and_aggregate_counters": "N/A"
+    },
+    {
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "name": "NVIDIA RTX 6000 Ada Generation",
+      "current": "Disabled",
+      "pending": "Disabled",
+      "volatile_and_aggregate_counters": "N/A"
+    },
+    {
+      "uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "current": "Enabled",
+      "pending": "Enabled",
+      "volatile_and_aggregate_counters": "all corrected/uncorrected0 per contemporaneous notice"
+    }
+  ],
+  "predicate": "ECC mutation executes only when UUID is in exact supported set AND current Disabled AND pending Disabled; all three mutation receipts succeeded."
+}

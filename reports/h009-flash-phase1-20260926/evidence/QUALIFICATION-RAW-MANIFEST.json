@@ -1,0 +1,126 @@
+{
+  "H009-AUTO-after-r1.json": {
+    "sha256": "4c1a65799e50d89badd47373549038d105855b55b3dea9b4196146529313cd2f",
+    "bytes": 68418
+  },
+  "H009-AUTO-after-r1-PROGRESS.jsonl": {
+    "sha256": "ac7bd2d88389f9e393a3f0318942b033fbe3b05105ad5f68b2e8ce46392e6fa7",
+    "bytes": 2856
+  },
+  "H009-AUTO-after-r1-TELEMETRY.jsonl": {
+    "sha256": "ce2ade672f7a6572ab8672fe40d94d3b0b5e2dbc629543e74f4d18f5c3da7364",
+    "bytes": 563041
+  },
+  "H009-AUTO-after-r1-SSE.jsonl": {
+    "sha256": "81afd9ae310744c178ff2176f5d870f358be9d70f844c8dc4eed99703fde05b1",
+    "bytes": 8850
+  },
+  "H009-AUTO-after-r1-FIXTURE.jsonl": {
+    "sha256": "dd8c842fd84f97d4920c854d46bbea8d5470c910ad1cc1f5ede4a0babb4e8123",
+    "bytes": 713
+  },
+  "H009-FORCED-after-r1-SSE.jsonl": {
+    "sha256": "3f8b41ac2e3af07f53964d5c655d57f7fd3f565f406c31008c3857db9a432999",
+    "bytes": 8868
+  },
+  "H009-FORCED-after-r1.json": {
+    "sha256": "e7f6f1e4d497a411a1ff25d74f5d11afd7e483964103b96e875926777ebf98b4",
+    "bytes": 68503
+  },
+  "H009-FORCED-after-r1-PROGRESS.jsonl": {
+    "sha256": "36264101c1338d0492474f4d6d817c285b7ffde9bd416cfa4443547ac175a9df",
+    "bytes": 2866
+  },
+  "H009-FORCED-after-r1-TELEMETRY.jsonl": {
+    "sha256": "b736bd8c028251e25889c120e64a00e13bf25e5ad9fd281c51ca567134602a56",
+    "bytes": 582488
+  },
+  "H009-FORCED-after-r1-FIXTURE.jsonl": {
+    "sha256": "8075feeb59b366b88c805fc4220857fb5089a98371d21a46e3249afb2bd99747",
+    "bytes": 805
+  },
+  "H009-WARM4096.json": {
+    "sha256": "6461abf6fd58989ae22afc1bb6e0cc64611d7ca68a942f79670678a4341b0c90",
+    "bytes": 64651
+  },
+  "H009-WARM4096-FIXTURE.jsonl": {
+    "sha256": "0a8f329215e58693c451ed1d8ea1a0c554879c5e5e6cc27bb79f9a15cd3640ac",
+    "bytes": 23174
+  },
+  "H009-WARM4096-SSE.jsonl": {
+    "sha256": "9f85d8a0271554a3a74701cb5f3a7b7433ed7bc9b0b41f5e269f3a2cf5dd868a",
+    "bytes": 2289
+  },
+  "H009-WARM4096-PROGRESS.jsonl": {
+    "sha256": "c585bcb33083f5b3bd43a45c45b73b1187ab5332695975897d912d514861b88d",
+    "bytes": 739
+  },
+  "H009-WARM4096-TELEMETRY.jsonl": {
+    "sha256": "bf6de1d3dc804524d03856fadd8e87a9feddd82b11bf9280e83ef0aabfb1f25a",
+    "bytes": 2275009
+  },
+  "H009-MEASURED4096-SSE.jsonl": {
+    "sha256": "b2a5a2006612fdf512149166e296a851f8b12b9dddb1c054e2f1474fe6bf359e",
+    "bytes": 2283
+  },
+  "H009-MEASURED4096-TELEMETRY.jsonl": {
+    "sha256": "0ddde3839969a1555f7e00ca571bf7791365842acf80e2c2d68e292fa48ea1aa",
+    "bytes": 311516
+  },
+  "H009-MEASURED4096-PROGRESS.jsonl": {
+    "sha256": "81ccc016e78e3f8257a8eabb820f31de893ecbd8994f9daa8cd3da117fe97ea2",
+    "bytes": 736
+  },
+  "H009-MEASURED4096.json": {
+    "sha256": "351e643838bbb2daba6a5a01d395910fbd6d890d3ca6426d6d83c3e124128c97",
+    "bytes": 64758
+  },
+  "H009-MEASURED4096-FIXTURE.jsonl": {
+    "sha256": "69a503cf3825d9035e25f20d62b3a4e354badfeb3bb9ff703811fda7c5785291",
+    "bytes": 23172
+  },
+  "H009-MEASURED16384-SSE.jsonl": {
+    "sha256": "25ec57351f01c1fe2b3c374b0fd0cc520e7c1cd2be191104f3d0bd22ab675ef3",
+    "bytes": 12297
+  },
+  "H009-MEASURED16384.json": {
+    "sha256": "38ef5372b8067aab911bed8f20715a3efb713c2c4b178e34c3219e77264ab574",
+    "bytes": 69154
+  },
+  "H009-MEASURED16384-TELEMETRY.jsonl": {
+    "sha256": "c5297b5e9c5948e44059249b7445e6a963842b75fb9073ef8663b717c060d29a",
+    "bytes": 1090700
+  },
+  "H009-MEASURED16384-FIXTURE.jsonl": {
+    "sha256": "2e57a465c39517bf36aa484e125c65aaf82d9cb76376efaef933dcebb2d46a98",
+    "bytes": 91316
+  },
+  "H009-MEASURED16384-PROGRESS.jsonl": {
+    "sha256": "94ac2d33c321c82d8cfbf15fa23883b912491d0cfad6641174c595857f91fc01",
+    "bytes": 4570
+  },
+  "H009-MEASURED16384-long128-r1-FIXTURE.jsonl": {
+    "sha256": "0371eb35abfcbecd009f2b5a5241b8a6a816614c04539e13dcc1e4d8271cbfe8",
+    "bytes": 91334
+  },
+  "H009-MEASURED16384-long128-r1-PROGRESS.jsonl": {
+    "sha256": "2389713d34cdf296ce308d0e82d4796f62fdc1a00392b6d7197f31f918e8f764",
+    "bytes": 31038
+  },
+  "H009-MEASURED16384-long128-r1-TELEMETRY.jsonl": {
+    "sha256": "1e5b4757362b1961392c12db4bf7584d7f4e425afd1daf39b2dd00c8a71dd14c",
+    "bytes": 2069912
+  },
+  "H009-MEASURED16384-long128-r1-SSE.jsonl": {
+    "sha256": "ca5f906529101482486b5aec2d17b5605513e887b69c3c47ae2c8f84e6921f0f",
+    "bytes": 81526
+  },
+  "H009-MEASURED16384-long128-r1.json": {
+    "sha256": "e934ce7774120f6661c352b41bd4b2cfd356e23f20c1bf7cc1950bc2feab7ef7",
+    "bytes": 98290
+  },
+  "NATIVE-CORRECTED-COMPLETE.log": {
+    "sha256": "7edb0d46238d1bf115511e4d994cf224ea04434870fd2d966727dd2465447ec7",
+    "bytes": 62518
+  }
+}

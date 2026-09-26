@@ -1,0 +1,22 @@
+{
+  "trigger": "sustained_current_host_swap_io",
+  "observed_start_utc": "2026-09-26T20:28:04.959473+00:00",
+  "observed_end_utc": "2026-09-26T20:28:16.960077+00:00",
+  "interval_pswpout_pages": [
+    1729,
+    3521,
+    2701,
+    1924,
+    1069,
+    134,
+    372
+  ],
+  "owned_flash_swap_bytes": [
+    0
+  ],
+  "min_host_available_bytes": 607211868160,
+  "recovery_observed_utc": "2026-09-26T20:28:18.960169+00:00",
+  "bug": "RESOURCE_FAILURE set before flush; LeaseBusy bypassed halt and reason capture; healthy samples never cleared stale status",
+  "current_pressure_or_halt_proven_by_status": false,
+  "local_source_fix": "../tools/load-watch-state-fix.diff"
+}
