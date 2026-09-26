@@ -16,7 +16,8 @@ receipt=pathlib.Path(args.receipt);assert receipt.is_absolute() and not receipt.
 assert receipt.parent.resolve()==P and not RUN.exists()
 # Full metadata, artifacts and host state preflight BEFORE job reservation/Popen.
 preflight_env={'HOME':'/home/user','PATH':'/home/user/.local/opt/ai-harness/node-v24.21.0/bin:/usr/bin:/bin','XDG_RUNTIME_DIR':'/run/user/1000','LANG':'C.UTF-8'}
-subprocess.run(['/home/user/.local/opt/ai-harness/node-v24.21.0/bin/node',str(P/'preflight-cli.mjs'),'--gate',args.gate,'--gate-sha256',args.gate_sha256,'--activation-manifest',args.activation_manifest],env=preflight_env,check=True,timeout=120)
+preflight_result=subprocess.run(['/home/user/.local/opt/ai-harness/node-v24.21.0/bin/node',str(P/'preflight-cli.mjs'),'--gate',args.gate,'--gate-sha256',args.gate_sha256,'--activation-manifest',args.activation_manifest],env=preflight_env,check=False,timeout=120)
+if preflight_result.returncode:sys.exit(preflight_result.returncode)
 now=lambda:datetime.datetime.now(datetime.timezone.utc).isoformat()
 gate_expiry=datetime.datetime.fromisoformat(json.loads(pathlib.Path(args.gate).read_text())['expiresUtc'].replace('Z','+00:00')).timestamp()
 wall_budget=min(1200,int(gate_expiry-time.time()))

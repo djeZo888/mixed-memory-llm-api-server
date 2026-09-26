@@ -80,11 +80,18 @@ export function checkGate(file,expectedSha,driverDir) {
   return g;
 }
 export function nodeCredentialPath() {
-  // Read only installed LoadCredential path metadata; never start the stopped unit.
-  const setting=execFileSync('/usr/bin/systemctl',['--user','show','ai-harness.service','-p','LoadCredential','--value'],{encoding:'utf8',timeout:10000}).trim();
-  const matches=[...setting.matchAll(/(?:^|\s)node-control-key:(\/[^\s;]+)/g)];
-  assert.equal(matches.length,1,'existing node observer LoadCredential source unavailable');
-  return privateFile(matches[0][1]);
+  // systemctl show emits LoadCredential=[unprintable] on the installed host.
+  // cat provides the installed fragment/drop-in directives without reading keys.
+  const unit=execFileSync('/usr/bin/systemctl',['--user','cat','ai-harness.service'],{encoding:'utf8',timeout:10000});
+  let sources=[];
+  for(const line of unit.replace(/\\\n/g,' ').split('\n')) {
+    const m=/^\s*LoadCredential\s*=\s*(.*?)\s*$/.exec(line);
+    if(!m)continue;
+    if(!m[1]){sources=[];continue;}
+    if(m[1].startsWith('node-control-key:'))sources.push(m[1].slice('node-control-key:'.length));
+  }
+  assert(sources.length===1 && /^\/[^\s;]+$/.test(sources[0]),'existing node observer LoadCredential source unavailable or ambiguous');
+  return privateFile(sources[0]);
 }
 export function checkArtifacts(manifest) {
   for(const line of manifest.serverArtifactsManifest.selectedEntries) {
@@ -92,15 +99,15 @@ export function checkArtifacts(manifest) {
   }
 }
 
-export function preflight(args, driverDir, metadataOnly=false) {
+export function preflight(args, driverDir) {
   const gate=checkGate(resolve(args['--gate']),args['--gate-sha256'],driverDir);
   evidenceFile(resolve(args['--activation-manifest']),'9d6182c51212e3eb348d398e41b2ace4edb07e8a321974f695d34c7ae554a689');
   const manifest=JSON.parse(readFileSync(args['--activation-manifest'],'utf8'));
   checkArtifacts(manifest);
-  evidenceFile(join(RELEASE,'deploy/run-engine.sh'),gate.launcherSha256);
-  evidenceFile(join(RELEASE,'deploy/engine/configure-profile.mjs'),gate.configureProfileSha256);
+  assert.equal(sha(readFileSync(join(RELEASE,'deploy/run-engine.sh'))),gate.launcherSha256,'launcher digest differs');
+  assert.equal(sha(readFileSync(join(RELEASE,'deploy/engine/configure-profile.mjs'))),gate.configureProfileSha256,'native profile generator digest differs');
   privateFile(KEY);
   const observerCredential=nodeCredentialPath();
-  const promoted=metadataOnly ? null : checkPromoted();
+  const promoted=checkPromoted();
   return {gate,promoted,observerCredential};
 }

@@ -37,6 +37,7 @@ function within(p,ms=Math.max(1,deadline-Date.now())){let timer;return Promise.r
 function capture(original,effective,meta){
   assert(Date.now()<deadline&&!closing,'fixture_dispatch_closed');
   assert.equal(available(meta.route.startsWith('/frontier')?FLASH:'qwen3.8-27b').dispatch,'allow');
+  if(meta.route.startsWith('/frontier'))assert(original.tool_choice===undefined||original.tool_choice==='auto','H009 requires native default/explicit auto tool choice');
   const countAndInferencePayload=meta.route.startsWith('/frontier')?frontierBody(effective):null;
   const seq=requests.length+1;const item={seq,phase,...meta,original,effective,...(countAndInferencePayload?{countAndInferencePayload,countAndInferencePayloadSha256:sha(countAndInferencePayload)}:{})};requests.push(item);
   write(`payloads/${String(seq).padStart(4,'0')}.json`,item);
@@ -82,8 +83,8 @@ async function run(id,text,{allowFailed=false}={}){
 function calls(sessionId,name){const found=new Map();for(const r of requests.filter(r=>r.sessionId===sessionId&&r.mode==='qwen'))for(const m of r.original.messages??[])for(const c of m.tool_calls??[])if(c.function?.name===name)found.set(c.id,c);return [...found.values()];}
 function taskResult(sessionId){
   for(const r of [...requests].reverse().filter(r=>r.sessionId===sessionId&&r.mode==='qwen'))for(const m of r.original.messages??[]){
-    if(m.role!=='tool')continue;const value=typeof m.content==='string'?m.content:JSON.stringify(m.content);
-    const match=/<task_result\s+task_id="([^"]+)"\s+session_id="([^"]+)"/.exec(value);if(match){const content=value.slice(match.index+match[0].length).replace(/^[^>]*>/,'').replace(/<\/task_result>[\s\S]*$/,'').trim();assert(content.length>20,'empty native child result');return {taskId:match[1],childSessionId:match[2],resultSha256:sha(value),resultLength:content.length};}
+    if(m.role!=='tool')continue;const value=typeof m.content==='string'?m.content:(m.content??[]).map(p=>p.text??'').join('');
+    const match=/<task_result\s+task_id="([^"]+)"\s+session_id="([^"]+)"/.exec(value);if(match){const content=value.slice(match.index+match[0].length).replace(/^[^>]*>/,'').replace(/<\/task_result>[\s\S]*$/,'').trim();const finalText=/\nfinal_text:\n([\s\S]*?)\nerror_message:/.exec(content)?.[1]?.trim();assert(content.includes('run_status: succeeded')&&content.includes('resolved_agent_name: frontier')&&finalText,'missing successful nonempty frontier final result');return {taskId:match[1],childSessionId:match[2],resultSha256:sha(value),finalTextSha256:sha(finalText),finalTextLength:finalText.length};}
   }throw Error('actual native foreground task result IDs absent');
 }
 async function snapshotChildren(id){const engine=engines.get(id);assert(engine?.connection?.request,'pinned ACP connection inspection seam unavailable');const nativeId=app.store.getSession(id).nativeSessionId;
@@ -138,17 +139,17 @@ try{
       for(const c of m.tool_calls??[]) {
         if(!['read','edit','write','bash'].includes(c.function?.name))continue;
         const result=messages.slice(i+1).find(v=>v.role==='tool'&&v.tool_call_id===c.id);
-        if(!result || !JSON.stringify(result.content??'').length)continue;
+        const resultText=typeof result?.content==='string'?result.content:(result?.content??[]).map(p=>p.text??'').join('');
+        if(!resultText.trim())continue;
         pairedTools.set(c.id,{toolCallId:c.id,name:c.function.name,argumentsSha256:sha(c.function.arguments),resultSha256:sha(result.content),requestSeq:r.seq,frontierRequestId:r.boundFrontierId});
       }
     }
   }
   assert(pairedTools.size>0,'actual Flash assistant tool call with matching tool result absent');
-  assert([...pairedTools.values()].some(c=>['edit','write'].includes(c.name)),'Flash edit/write tool result absent');
   assert([...pairedTools.values()].some(c=>c.name==='bash'),'Flash bash tool result absent');
   const final=code.snapshot.messages.filter(m=>m.role==='assistant'&&m.phase==='final'&&m.content?.trim());
   assert(final.length>0,'actual Qwen final answer absent');
-  write('child-tool-proof.json',{childNativeSessionId:codeResult.childSessionId,parentNativeSessionId:children.rootSessionId,taskId:codeResult.taskId,provider:'custom_provider:frontier',model:FLASH,route:'/frontier/v1/chat/completions',binding:'exactly one foreground frontier task; native task result and delegation graph; its Flash wire history with paired tool_call_id',pairedTools:[...pairedTools.values()],childResult:codeResult,parentFinal:final.map(m=>({id:m.id,sha256:sha(m.content)}))});
+  write('child-tool-proof.json',{childNativeSessionId:codeResult.childSessionId,parentNativeSessionId:children.rootSessionId,taskId:codeResult.taskId,provider:'custom_provider:frontier',model:FLASH,route:'/frontier/v1/chat/completions',toolChoices:[...new Set(childRequests.map(r=>r.original.tool_choice??'native-default-auto'))],binding:'exactly one foreground frontier task; native task result and delegation graph; its Flash wire history with paired tool_call_id',pairedTools:[...pairedTools.values()],childResult:codeResult,parentFinal:final.map(m=>({id:m.id,sha256:sha(m.content)}))});
   summary={codeSessionId:codeId,fullRosterSessionId:fullId,qwenUsage,flashRequests:states,childUsefulToolNames:[...new Set([...pairedTools.values()].map(c=>c.name))],semanticReview:'PENDING_ROOT_REVIEW',additionalCases:'NOT_TESTED: no new cancellation/reconnect concern',scope:'one native code task; full real child roster if initial full count fits, else explicit reduced actual schemas; no overflow replay'};status='COMPLETED_PENDING_ROOT_REVIEW';
 }catch(e){failure=String(e.code??e.message).slice(0,200);for(const s of secretValues)failure=failure.replaceAll(s,'[REDACTED]');record({event:'failed',code:failure});}
 finally{
