@@ -68,3 +68,22 @@ it('old chat response cannot overwrite selected child activity after reconnect/s
   );
   expect(screen.queryByText(/wrong-old-chat/)).toBeNull();
 });
+
+it.each([
+  ['idle', 'unavailable'],
+  ['idle', 'available'],
+  ['quarantined', 'available'],
+  ['idle', undefined],
+])('distinguishes lane %s from backend %s', async (lane, backend) => {
+  vi.stubGlobal('fetch', vi.fn(async () => ({
+    ok: true,
+    json: async () => ({model: 'glm-5.3-flash', configured: true, state: lane,
+      availability: backend ? {state: backend} : undefined,
+      contextWindow: 480000, queued: 0, requests: []}),
+  })));
+  render(<FrontierActivity sessionId="owned" />);
+  const badge = await screen.findByLabelText('Frontier child activity');
+  expect(badge.textContent).toContain(`backend ${backend ?? 'unknown'}`);
+  expect(badge.textContent).toContain(`lane ${lane}`);
+  expect(screen.queryByRole('progressbar')).toBeNull();
+});

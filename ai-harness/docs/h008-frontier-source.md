@@ -88,7 +88,11 @@ main Qwen vision is unchanged. Valid pure-text arrays are preserved identically
 for count and inference, including user/tool arrays. Worker1 confirmed the pinned
 GLM OpenAI-format template emits text parts with no inserted separator; generic
 SGLang space-join normalization does not apply. The actual pinned MiniMax provider
-capture covers multiple user text parts without a network request. No multimodal
+capture covers multiple user text parts without a network request. Its reasoning
+model system prompt is emitted as `developer`. The pinned GLM template omits that
+role, so Worker1 owns identical backend `developer` -> `system` normalization on
+both tokenize and inference routes before native processing. Gateway/native role
+selection is preserved; backend role parity remains an activation gate. No multimodal
 qualification is attempted.
 
 The native v2 patch changes only the model-aware estimator selection in dynamic
@@ -119,6 +123,13 @@ parity, or effective 480K context. Exact gateway admission remains authoritative
 The HTTP fixture accepts the exact four-field count responses; live backend HTTP
 parity remains pending. Existing meaningful native current-v2 compaction and
 continuation evidence is preserved without a broader native refactor.
+
+Follow-up TODO: integrate tokenizer-aware native Flash scheduling/compaction
+budgeting so large-document use can approach the configured 480K capacity. Keep
+exact host admission authoritative and qualify the actual pinned tokenizer/template
+and compaction/continuation behavior before replacing the current heuristic.
+The small-fixture ratios above are not universal scaling factors; no asynchronous
+context-accounting refactor is included in this round.
 
 ## Queue, durable ownership and status
 
@@ -154,7 +165,8 @@ consumes canonical `glm-5.3-flash` from the existing Worker1 node-status service
 including durable hardware latches, without inventing a Flash /readiness endpoint.
 Missing/down/unknown Flash holds its own admission independently of healthy Qwen.
 The snapshot exposes observed availability separately from durable lane state:
-idle is not usable-backend evidence. Availability is rechecked after asynchronous
+idle is not usable-backend evidence. The child UI labels `backend` availability
+and `lane` ownership/quarantine separately. Availability is rechecked after asynchronous
 counting and before generation, alongside authorization and dispatch holds.
 
 ## Deployment, migration and restore plan — not executed

@@ -47,6 +47,8 @@ let payload;
 const stream=native.streamOpenAICompletions(model,{systemPrompt:'Offline frontier fixture',messages:[{role:'user',content:[{type:'text',text:'Research fixture part one.'},{type:'text',text:' Part two.'}],timestamp:0}],tools},{apiKey:'synthetic-session-bearer',maxTokens:65536,reasoning:'high',fetch:async()=>{requests++;throw Error('FORBIDDEN_NETWORK');},onPayload:p=>{payload=p;throw Error('CAPTURE_COMPLETE');}});
 await stream.result();assert(payload);
 try { frontierBody(payload); } catch(e) { console.error({payloadKeys:Object.keys(payload),model:payload.model}); throw e; } // Real native payload must pass fixed host admission schema.
+const emittedSystemRole=payload.messages[0].role;
+assert.equal(emittedSystemRole,'developer'); // Worker1 normalizes to system equally on both backend routes.
 const userContent=payload.messages.find(m=>m.role==='user').content;
 assert.deepEqual(userContent,[{type:'text',text:'Research fixture part one.'},{type:'text',text:' Part two.'}]);
 assert.deepEqual(frontierBody(payload).messages,payload.messages);
@@ -55,4 +57,4 @@ const estimator=native.modelTokenEstimator(model);const qwen=native.modelTokenEs
 assert.notEqual(estimator,qwen);assert.equal(estimator.estimateTextTokens('中文'),Buffer.byteLength('中文'));
 assert.equal(native.modelTokenEstimator({...model,provider:'other'}),qwen);
 assert.equal(executions,0);assert.equal(requests,0);
-console.log(JSON.stringify({result:'PASS',evidence:'SYNTHETIC actual native renderer, fresh custom child binding, provider payload; no inference or tool execution',sourceRevision:native.probeSourceRevision,model:captured.effectiveModel,contextWindow:captured.effectiveModelContextWindow,maxOutputTokens:captured.effectiveModelMaxOutputTokens,effort:captured.effectiveModelThinking.effort,override:override.effectiveModel,tools:names,localEstimator:'UTF-8 scheduling heuristic; exact upstream gateway admission required',networkRequests:requests,toolExecutions:executions},null,2));
+console.log(JSON.stringify({result:'PASS',evidence:'SYNTHETIC actual native renderer, fresh custom child binding, provider payload; no inference or tool execution',sourceRevision:native.probeSourceRevision,model:captured.effectiveModel,contextWindow:captured.effectiveModelContextWindow,maxOutputTokens:captured.effectiveModelMaxOutputTokens,effort:captured.effectiveModelThinking.effort,override:override.effectiveModel,tools:names,emittedSystemRole,backendRoleContract:'Worker1 normalizes developer to system identically for tokenize and inference; gateway preserves role',localEstimator:'UTF-8 scheduling heuristic; exact upstream gateway admission required',networkRequests:requests,toolExecutions:executions},null,2));
