@@ -1,0 +1,78 @@
+{
+  "status": "FAIL_FORCED_TOOL_SEMANTICS",
+  "transport_http": 200,
+  "request": {
+    "model": "glm-5.3-flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Call the weather tool for Ljubljana. Do not guess the weather."
+      }
+    ],
+    "max_tokens": 2048,
+    "reasoning_effort": "high",
+    "chat_template_kwargs": {
+      "clear_thinking": true
+    },
+    "temperature": 0,
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "weather",
+          "description": "Return temperature for a city",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "city"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "weather"
+      }
+    },
+    "stream": true,
+    "stream_options": {
+      "include_usage": true,
+      "continuous_usage_stats": true
+    }
+  },
+  "raw_tool_deltas": [
+    {
+      "function": {
+        "arguments": "{}",
+        "name": null
+      },
+      "id": null,
+      "index": 0,
+      "type": "function"
+    }
+  ],
+  "usage": {
+    "completion_tokens": 3,
+    "prompt_tokens": 170,
+    "prompt_tokens_details": null,
+    "reasoning_tokens": 0,
+    "total_tokens": 173
+  },
+  "finish_reason": "stop",
+  "elapsed_seconds": 12.417291751000448,
+  "ttft_seconds": 12.417232951003825,
+  "decode_tokens_per_second": null,
+  "invalid_rate_reason": "Single buffered delta; prior34013.6 value divides by negligible post-first-delta interval and is not meaningful decode throughput",
+  "harness_ordinary_auto_tools": "NOT_TESTED",
+  "assembly_error": "TypeError adding None function name; independent task reporter error retained",
+  "source_receipt_sha256": "57f2dad9bfca45c53b679c36a11b80822cd1fbe00cb0e54a4458edda9c45a51e",
+  "admission": "Following request admitted after prior429 and bounded wait; no persistent active latch observed",
+  "original_429_body": "NOT_CAPTURED; HTTP429 status retained, inferred middleware cleanup is not body proof"
+}
