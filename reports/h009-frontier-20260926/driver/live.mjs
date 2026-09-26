@@ -21,7 +21,8 @@ const started=Date.now(),deadline=Math.min(started+1140000,Date.parse(gate.expir
 assert(deadline>started+60000,'insufficient coordinator window');
 const fd=openSync(join(RUNROOT,'events.jsonl'),'wx',0o600),secretValues=new Set();
 const write=(file,value)=>{const text=JSON.stringify(value,null,2)+'\n';for(const secret of secretValues)assert(!text.includes(secret),'secret echo refused');writeFileSync(join(RUNROOT,file),text,{mode:0o600,flag:'wx'});};
-function record(value){const text=JSON.stringify({at:new Date().toISOString(),...value})+'\n';for(const s of secretValues)assert(!text.includes(s),'secret echo refused');writeSync(fd,text);fsyncSync(fd);}
+let lastRecordSync=Date.now();
+function record(value,durable=true){const text=JSON.stringify({at:new Date().toISOString(),...value})+'\n';for(const s of secretValues)assert(!text.includes(s),'secret echo refused');writeSync(fd,text);if(durable||Date.now()-lastRecordSync>=1000){fsyncSync(fd);lastRecordSync=Date.now();}}
 write('OWNER.json',{pid:process.pid,source:SOURCE,image:IMAGE,startedUtc:new Date(started).toISOString(),deadlineUtc:new Date(deadline).toISOString(),rootGateSha256:args['--gate-sha256'],taskRoot:RUNROOT,promoted});
 const dist=join(RELEASE,'server/dist');const load=n=>import(pathToFileURL(join(dist,n+'.js')));
 const [{createApp},{createGateway},{createEngine},{FrontierLedger},{readProtectedCredential},{frontierBody},{NodeAvailability},{nodeClient},{createBackendReadiness}]=await Promise.all(['app','gateway','engine','frontier-ledger','protected-credential','frontier','node-availability','node-client','backend-readiness'].map(load));
@@ -58,7 +59,7 @@ const guards=createGuards({record,capture,getMode:()=>mode,
 });
 function ownedEngine(o){
   checkPromoted();const engine=createEngine({...o,onNativeSessionId:id=>{record({event:'native-session',sessionId:o.sessionId,nativeSessionId:id});o.onNativeSessionId(id);},
-    onUpdate:u=>{record({event:'native-update',sessionId:o.sessionId,type:u.type,kind:u.kind,name:u.name,taskId:u.taskId,subagentId:u.subagentId,parentSessionId:u.parentSessionId,backgroundTaskId:u.backgroundTaskId,status:u.status});o.onUpdate(u);}});
+    onUpdate:u=>{record({event:'native-update',sessionId:o.sessionId,type:u.type,kind:u.kind,name:u.name,taskId:u.taskId,subagentId:u.subagentId,parentSessionId:u.parentSessionId,backgroundTaskId:u.backgroundTaskId,status:u.status},u.type!=='text');o.onUpdate(u);}});
   engines.set(o.sessionId,engine);
   const start=engine.start.bind(engine);engine.start=async()=>{await start();
     for(const id of podman('ps','--quiet','--no-trunc').split('\n').filter(Boolean)){
