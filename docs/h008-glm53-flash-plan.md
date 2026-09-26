@@ -25,8 +25,10 @@ Deploy official GLM-5.3-Flash FP8 (~306 GiB weight files), pinned KTransformers
 and compatible SGLang/Transformers components. Use its documented SM120 and
 AVX-512 hybrid path in an isolated runtime. Start with 64 CPU expert threads,
 topology-aware placement, native-precision attention cache, one inference slot.
-Target 480,000 context; qualify first at 65,536, then repeat a short fixture at
-480,000. If capacity fails, test 256K then 128K and report the accepted limit.
+Target exactly 480,000 configured context; do not explore higher capacities.
+The user's latest steering limits Flash occupied-input tests to 4K and 16K;
+larger-input testing is a separate task. If allocation fails, report it and use
+a smaller diagnostic profile only to establish the cause, not as silent success.
 Configured capacity does not constitute full-window correctness testing.
 
 Reference: https://github.com/kvcache-ai/ktransformers/blob/main/doc/en/kt-kernel/GLM-5.3-Flash-Tutorial.md
@@ -94,8 +96,10 @@ Flash superiority. Small paired tasks will supplement these imperfect signals.
 ## Acceptance and bounded work
 
 After Qwen migration: coherent Flash smoke/tool/stream tests; short-input
-2,048-output sustained decode; approximately 4K/16K/64K prompt checks; larger
-configured-capacity allocation/short-request check. Record prompt speed,
+2,048-output sustained decode; approximately 4K/16K prompt checks against the
+480,000-token configured capacity. Qwen's migration benchmark remains 64K input.
+Record Flash VRAM after load, after warm-up and at measured peak; near-full-window
+workspace growth remains untested. Record prompt speed,
 decode speed over time, actual counts, TTFT, total time, RAM/VRAM, CPU and GPU
 activity/temperature. If sustained below one token/s for five minutes, capture
 diagnostics and pause that test. One targeted diagnostic retry; no model or
