@@ -1,0 +1,1 @@
+{"unit": "h009-flash-measured16384-long128-r1", "utc": "2026-09-26T20:43:16.095695+00:00", "mode": "measured16384", "script_sha256": "3651f87528936818bfbad34f98f783d7b96730aa723ba85ad0b6daa4eea18bea", "request_cap_seconds": 600, "job_cap_seconds": 730, "no_model_stop": "qualifier has no container stop/start", "lane_owner": "Worker1 H009 exclusive"}
