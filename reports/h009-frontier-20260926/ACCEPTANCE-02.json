@@ -69,7 +69,7 @@
         "name": "read",
         "arguments": "{\"path\":\"check.mjs\"}",
         "resultSha256": "919e804ae5ddcd7b64809a6db1c25339a4d3d13721cef9f2fb93b8f09237b333",
-        "checksPass": true
+        "checksPass": false
       },
       {
         "id": "call_2c02716b39104ce1a98773d5",
@@ -203,7 +203,9 @@
     "nativeSession": {
       "nativeSessionId": "01a0df78-5580-7ad1-bbfd-f552733ae48d",
       "startedUtc": "2026-09-26T20:46:40Z",
-      "hardStopUtc": "2026-09-26T21:45:00Z"
+      "hardStopUtc": "2026-09-26T21:31:40Z",
+      "absoluteDispatchCapUtc": "2026-09-26T21:45:00Z",
+      "maxDurationMinutes": 45
     },
     "sourceCommit": "a92c088246e8b8c64b14bf1b905a6873176a1173",
     "sourceParent": "799b29f4b54997ee172ec566b48ea830808dca96",
