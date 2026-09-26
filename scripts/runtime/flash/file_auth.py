@@ -109,6 +109,7 @@ def install_readiness(server):
 def main():
     parser=argparse.ArgumentParser(description=__doc__,allow_abbrev=False)
     parser.parse_args()
+    os.environ['TVM_FFI_CACHE_DIR'] = '/cache/tvm-ffi'
     verify_sources()
     fd=os.open('/run/secrets/llm-api-key',os.O_RDONLY|os.O_NOFOLLOW)
     try:
