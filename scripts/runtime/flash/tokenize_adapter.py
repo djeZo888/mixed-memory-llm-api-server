@@ -84,8 +84,13 @@ def install_tokenize_route(http_server, request_type):
     from fastapi.responses import JSONResponse
 
     app = http_server.app
-    if any(getattr(route, 'path', None) == '/v1/tokenize' for route in app.routes):
-        raise ContractError('tokenize_route_already_exists')
+    native_routes = [route for route in app.routes
+                     if getattr(route, 'path', None) in {'/v1/tokenize', '/tokenize'}]
+    if (len(native_routes) != 2
+            or {route.path for route in native_routes} != {'/v1/tokenize', '/tokenize'}
+            or any(route.methods != {'POST'} or route.endpoint is not
+                   getattr(http_server, 'openai_v1_tokenize', None) for route in native_routes)):
+        raise ContractError('unexpected_native_tokenize_route')
 
     async def tokenize(request):
         data = bytearray()
@@ -104,4 +109,8 @@ def install_tokenize_route(http_server, request_type):
     # Resolve Request explicitly: postponed local annotations cannot be resolved
     # by FastAPI against the module namespace without an eager import.
     tokenize.__annotations__['request'] = Request
+    # Replace only the exact source-pinned native route, never append a shadowed
+    # duplicate or retain its incompatible legacy request/response semantics.
+    for route in native_routes:
+        app.router.routes.remove(route)
     app.add_api_route('/v1/tokenize', tokenize, methods=['POST'], include_in_schema=False)
