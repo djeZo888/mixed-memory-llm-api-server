@@ -122,7 +122,7 @@ def main():
     argv=['--model-path','/models','--served-model-name',MODEL,'--host','127.0.0.1','--port',str(PORT),
           '--tp-size','1','--context-length','480000','--max-total-tokens','480000',
           '--max-running-requests','1','--mem-fraction-static','0.65','--chunked-prefill-size','2048',
-          '--kt-method','FP8','--kt-cpuinfer','64','--kt-threadpool-count','2','--kt-num-gpu-experts','0',
+          '--kt-weight-path','/models','--kt-method','FP8','--kt-cpuinfer','64','--kt-threadpool-count','2','--kt-num-gpu-experts','0',
           '--kt-gpu-prefill-token-threshold','2048','--tool-call-parser','glm47','--reasoning-parser','glm45',
           '--cuda-graph-bs','1','2','4','--disable-overlap-schedule','--disable-radix-cache',
           '--log-level','warning']
