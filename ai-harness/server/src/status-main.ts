@@ -1,10 +1,11 @@
 import { chmod, lstat, realpath } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { readStatusControlCredential } from "./status-credential.js";
+import { readStatusControlCredential, readStatusNodeCredentials } from "./status-credential.js";
 import { openDispatchFreeze } from "./dispatch-freeze.js";
 import { AdminActions } from "./admin-actions.js";
-import { nodeClient } from "./node-client.js";
+import { loadSystemRegistry } from "./system-registry.js";
+import { nodeClient, nodeObserver } from "./node-client.js";
 import { createStatusService } from "./status-service.js";
 /** Independent entry point: no chat/store/engine instance or native probes. */
 export async function startStatus() {
@@ -28,13 +29,16 @@ export async function startStatus() {
   const keyFile = process.env.AI_HARNESS_CONTROL_KEY_FILE;
   if (!keyFile) throw Error("Protected control credential not configured");
   const key = await readStatusControlCredential(keyFile);
+  const registry = loadSystemRegistry();
+  const credentials = await readStatusNodeCredentials(registry.credentials, key);
   const freeze = openDispatchFreeze();
   const backends = {
     "ai-vm": nodeClient("ai-vm", key),
     "ai-harness": nodeClient("ai-harness"),
   };
   const actions = new AdminActions({ db: freeze.db, freeze, backends });
-  const service = createStatusService({ backends, freeze, actions });
+  const observers = Object.fromEntries(registry.nodes.map(node => [node.id, nodeObserver(node, registry, credentials)]));
+  const service = createStatusService({ backends: observers, registry, freeze, actions });
   service.app.addHook("onClose", async () => {
     freeze.close();
   });

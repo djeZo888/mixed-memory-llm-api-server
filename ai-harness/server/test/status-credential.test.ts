@@ -4,7 +4,7 @@ import { constants, type Stats } from "node:fs";
 import fs from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { readStatusControlCredential } from "../src/status-credential.js";
+import { readStatusControlCredential, readStatusNodeCredential, readStatusNodeCredentials } from "../src/status-credential.js";
 import { readProtectedCredential } from "../src/protected-credential.js";
 const directory = "/run/credentials/ai-harness-status.service";
 const file = `${directory}/control-api-key`;
@@ -12,16 +12,16 @@ const mount = `72 23 0:42 / ${directory} ro,nosuid,nodev,noexec,relatime,nosymfo
 const metadata = (dir = false): Stats => ({ dev:42, ino:dir?2:3, uid:0, gid:0,
  mode:dir?0o40550:0o100440, nlink:dir?2:1, size:dir?40:23,
  isFile:()=>!dir,isDirectory:()=>dir,isSymbolicLink:()=>false }) as Stats;
-function fixture(t: any) {
+function fixture(t: any, selectedFile = file) {
  const f = {file:metadata(),parent:metadata(true),fd:metadata(),mount,value:"synthetic-fixture-only\n",
  realpath:(p:string)=>p,parentAt:(_p:string):Stats=>f.parent,opened:0,closed:0,read:0,afterRead:()=>{}};
  const previous=process.env.CREDENTIALS_DIRECTORY; process.env.CREDENTIALS_DIRECTORY=directory;
  t.after(()=>{if(previous===undefined)delete process.env.CREDENTIALS_DIRECTORY;else process.env.CREDENTIALS_DIRECTORY=previous;});
- t.mock.method(fs,"lstat",async(p:string)=>({... (p===file?f.file:f.parentAt(p))}));
+ t.mock.method(fs,"lstat",async(p:string)=>({... (p===selectedFile?f.file:f.parentAt(p))}));
  t.mock.method(fs,"realpath",async(p:string)=>f.realpath(p));
  t.mock.method(fs,"readFile",async(p:string)=>{assert.equal(p,"/proc/self/mountinfo");return f.mount;});
  t.mock.method(fs,"open",async(p:string,flags:number)=>{
-  assert.equal(p,file);assert.equal(flags,constants.O_RDONLY|constants.O_NOFOLLOW);f.opened++;
+  assert.equal(p,selectedFile);assert.equal(flags,constants.O_RDONLY|constants.O_NOFOLLOW);f.opened++;
   return {stat:async()=>({...f.fd}),readFile:async()=>{f.read++;f.afterRead();return f.value;},close:async()=>{f.closed++;}};
  });return f;
 }
@@ -108,3 +108,33 @@ for(const lookalike of [directory+"/other-key",directory+".other/control-api-key
  test(`unregistered selector ${lookalike}`,async t=>{
   const f=fixture(t);await assert.rejects(readStatusControlCredential(lookalike),/Unsafe status credential provenance/);assert.equal(f.opened,0);
  });
+
+
+test("additional node reference uses identical protected mount/FD checks with no arbitrary path or control fallback", async t => {
+ const f=fixture(t, `${directory}/node-lab`);
+ f.value="synthetic-distinct-node-token";
+ assert.equal(await readStatusNodeCredential("node-lab"),"synthetic-distinct-node-token");
+ f.file.isSymbolicLink=()=>true;
+ await assert.rejects(readStatusNodeCredential("node-lab"), /Unsafe status credential provenance/);
+ assert.equal(f.opened,1);
+});
+test("additional node credential names cannot select control key, arbitrary paths or environment directories", async t => {
+ const f=fixture(t);
+ for(const name of ["control-api-key", "../control-api-key", "node-../control-api-key", "node-", "/tmp/node-lab", "node-lab/key", "node-lab\n"])
+   await assert.rejects(readStatusNodeCredential(name), /Unsafe status credential provenance/);
+ assert.equal(f.opened,0);
+});
+
+
+test("startup credential map isolates node values and fails closed on missing or reused secrets", async t => {
+ const f=fixture(t, `${directory}/node-lab`);
+ const refs=[{id:"control-api-key",systemd_credential:"control-api-key"},{id:"lab-observation",systemd_credential:"node-lab"}];
+ f.value="synthetic-lab-token";
+ assert.deepEqual(await readStatusNodeCredentials(refs,"synthetic-control"),{"control-api-key":"synthetic-control","lab-observation":"synthetic-lab-token"});
+ f.value="synthetic-control";
+ await assert.rejects(readStatusNodeCredentials(refs,"synthetic-control"), /must be isolated/);
+ f.value="";
+ await assert.rejects(readStatusNodeCredentials(refs,"synthetic-control"), /Invalid status credential/);
+ t.mock.method(fs,"open",async()=>{throw Error("fixture missing credential");});
+ await assert.rejects(readStatusNodeCredentials(refs,"synthetic-control"), /fixture missing credential/);
+});

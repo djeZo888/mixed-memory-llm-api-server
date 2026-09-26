@@ -115,7 +115,7 @@ export function observation(raw: unknown) {
     observed_at: date(v.observed_at),
     age_ms: number(v.age_ms),
     freshness: enumValue(
-      v.freshness,
+      date(v.observed_at) !== null && number(v.age_ms) !== null ? v.freshness : "unknown",
       ["fresh", "stale", "unknown"] as const,
       "unknown",
     ),
@@ -180,7 +180,8 @@ export function diskVolumes(raw: unknown) {
         v.state === "ok" ? number(v.write_bytes_per_second) : null,
     }));
 }
-export function sanitizeNode(raw: unknown, nodeId: NodeId) {
+export function sanitizeNode(raw: unknown, nodeId: string, serviceIds: readonly string[] =
+  Object.hasOwn(SERVICE_IDS, nodeId) ? SERVICE_IDS[nodeId as NodeId] : []) {
   const v = record(raw);
   if (v.schema_version !== 1 || v.node_id !== nodeId)
     throw Error("Invalid node snapshot");
@@ -202,7 +203,7 @@ export function sanitizeNode(raw: unknown, nodeId: NodeId) {
   const services = (Array.isArray(v.services) ? v.services : [])
     .map(record)
     .filter((s) =>
-      (SERVICE_IDS[nodeId] as readonly unknown[]).includes(s.service_id),
+      (serviceIds as readonly unknown[]).includes(s.service_id),
     )
     .map((s) => ({
       ...observation(s),
@@ -212,7 +213,7 @@ export function sanitizeNode(raw: unknown, nodeId: NodeId) {
         ? s.affected_services
         : []
       ).filter((id) =>
-        (SERVICE_IDS[nodeId] as readonly unknown[]).includes(id),
+        (serviceIds as readonly unknown[]).includes(id),
       ) as string[],
       installed_capabilities: (Array.isArray(s.installed_capabilities)
         ? s.installed_capabilities
@@ -222,6 +223,7 @@ export function sanitizeNode(raw: unknown, nodeId: NodeId) {
           "chat.completions",
           "images.generations",
           "images.edits",
+          "model.control",
           "node.status",
           "node.actions",
           "search",
@@ -319,7 +321,7 @@ export function sanitizeNode(raw: unknown, nodeId: NodeId) {
         ? g.affected_services
         : []
       ).filter((s) =>
-        (SERVICE_IDS[nodeId] as readonly unknown[]).includes(s),
+        (serviceIds as readonly unknown[]).includes(s),
       ) as string[],
     }));
   const resources = record(v.resources);
@@ -332,7 +334,7 @@ export function sanitizeNode(raw: unknown, nodeId: NodeId) {
       ? v.affected_services
       : []
     ).filter((id) =>
-      (SERVICE_IDS[nodeId] as readonly unknown[]).includes(id),
+      (serviceIds as readonly unknown[]).includes(id),
     ) as string[],
     ...observation(v),
     inventory: {
@@ -369,12 +371,30 @@ export function sanitizeNode(raw: unknown, nodeId: NodeId) {
       }),
     ),
     services,
+    // Informational producer facts, never merged into lifecycle targets.
+    node_manager: {
+      ...observation(v.node_manager),
+      service_id: "node",
+      running: bool(record(v.node_manager).running),
+      generation: integer(record(v.node_manager).generation),
+      actions: [] as string[],
+    },
+    support: (nodeId === "ai-harness" ? ["nginx", "admin", "egress", "task-slice"] : []).map(component_id => {
+      const matches = (Array.isArray(v.support) ? v.support : []).map(record).filter(c => c.component_id === component_id);
+      const c = matches.length === 1 ? matches[0]! : {};
+      return {
+        ...observation(c), component_id,
+        active_state: enumValue(c.active_state, ["active", "inactive", "failed", "activating", "deactivating", "unknown"] as const, "unknown"),
+        sub_state: enumValue(c.sub_state, ["running", "exited", "dead", "failed", "start", "stop", "unknown"] as const, "unknown"),
+        ready: null,
+      };
+    }),
     gpus,
   };
 }
 export type NodeSnapshot = ReturnType<typeof sanitizeNode>;
-export function unknownNode(nodeId: NodeId): NodeSnapshot {
-  return sanitizeNode({ schema_version: 1, node_id: nodeId }, nodeId);
+export function unknownNode(nodeId: string, serviceIds: readonly string[] = []): NodeSnapshot {
+  return sanitizeNode({ schema_version: 1, node_id: nodeId }, nodeId, serviceIds);
 }
 export function validateAction(raw: unknown): NodeAction {
   const v = record(raw);

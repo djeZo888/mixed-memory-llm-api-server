@@ -1,5 +1,6 @@
 import { request } from "node:http";
 import type { NodeAction, NodeId } from "./node-contract.js";
+import type { RegistryNode, SystemRegistry } from "./system-registry.js";
 import { ApiError } from "./errors.js";
 
 // Fixed producer vocabulary from scripts/control/node_actions.py ERRORS.
@@ -63,16 +64,10 @@ export interface NodeBackend {
   operation(id: string, signal: AbortSignal): Promise<unknown>;
   passiveReady?(service: string, signal: AbortSignal): Promise<boolean>;
 }
-/** Fixed endpoints only, no redirects, no URLs/paths from callers. Credentials
- * are injected by the protected startup loader, never returned/logged. */
-export function nodeClient(nodeId: NodeId, credential?: string): NodeBackend {
-  const options =
-    nodeId === "ai-vm"
-      ? { hostname: "10.156.100.60", port: 30008 }
-      : { socketPath: "/run/ai-harness-admin/helper.sock" };
-  if (nodeId === "ai-vm" && !credential)
-    throw Error("Node control credential required");
-  const call = (
+/** Shared bounded HTTP mechanics: exact path supplied only by these adapters,
+ * redirects are errors and response bodies/credentials are never public. */
+function boundedNodeCall(options: { hostname: string; port: number } | { socketPath: string }, credential?: string) {
+  return (
     method: string,
     path: string,
     signal: AbortSignal,
@@ -138,6 +133,19 @@ export function nodeClient(nodeId: NodeId, credential?: string): NodeBackend {
       );
       req.end(body);
     });
+}
+/** Fixed endpoints only, no redirects, no URLs/paths from callers. Credentials
+ * are injected by the protected startup loader, never returned/logged. */
+export function nodeClient(nodeId: NodeId, credential?: string): NodeBackend {
+  if (nodeId !== "ai-vm" && nodeId !== "ai-harness")
+    throw Error("Unsupported node adapter");
+  const options =
+    nodeId === "ai-vm"
+      ? { hostname: "10.156.100.60", port: 30008 }
+      : { socketPath: "/run/ai-harness-admin/helper.sock" };
+  if (nodeId === "ai-vm" && !credential)
+    throw Error("Node control credential required");
+  const call = boundedNodeCall(options, credential);
   const passiveReady = async (
     service: string,
     signal: AbortSignal,
@@ -205,4 +213,21 @@ export function nodeClient(nodeId: NodeId, credential?: string): NodeBackend {
       return call("GET", `/control/v1/node/operations/${id}`, signal);
     },
   };
+}
+
+/** Registry-selected passive adapter: no mutation methods for generic nodes. */
+export function nodeObserver(node: RegistryNode, registry: SystemRegistry,
+  credentials: Readonly<Record<string, string>> = {}): Pick<NodeBackend, "status"> {
+  if (node.observation.adapter === "unsupported" && node.observation.transport === null)
+    return { status: async () => ({ schema_version: 1, node_id: node.id, reason: "unsupported" }) };
+  const transport = registry.transports.find(t => t.id === node.observation.transport);
+  if (node.observation.adapter !== "node-v1" || !transport || (transport.kind === "local-helper" && node.id !== "ai-harness"))
+    throw Error("Unsupported node binding");
+  if (transport.credential_ref === "control-api-key" && (node.id !== "ai-vm" || transport.kind !== "private-http" || transport.host !== "10.156.100.60" || transport.port !== 30008))
+    throw Error("Node credential scope mismatch");
+  const credential = transport.credential_ref && Object.hasOwn(credentials, transport.credential_ref) ? credentials[transport.credential_ref] : undefined;
+  if (transport.credential_ref && !credential) throw Error("Node control credential required");
+  const call = boundedNodeCall(transport.kind === "private-http"
+    ? { hostname: transport.host!, port: transport.port! } : { socketPath: transport.socket_path! }, credential);
+  return { status: signal => call("GET", "/control/v1/node/status", signal) };
 }
