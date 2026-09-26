@@ -1,6 +1,95 @@
-# mixed-memory-llm-api-server
+# Sova
 
-An API-only local AI server for **Qwen3.8-27B FP8**, **GLM5.3 UD-Q4_K_XL** and dedicated **Qwen-Image-2.1** generation.
+Sova is the whole-system name for this open-source AI workspace project: a
+chat/task harness, MiniMax agent runtime, two Qwen text instances, dedicated
+image generation and guarded editing, search/browser/PDF/coding tools, and
+deterministic lifecycle, status and administration software. Source paths, VM
+names and runtime identifiers retain their existing names. The intended
+top-level Apache-2.0 license text remains outstanding; see [License](#license)
+and the [harness component licenses](ai-harness/README.md#licenses).
+
+Start with the [harness user guide](ai-harness/README.md),
+[architecture and future routing design](docs/sova-architecture.md), and
+**[TODO and current H007 update policy](TODO.md)**. The
+[H006 registry/configuration extension guide](ai-harness/docs/status-registry.md)
+and [H006 closeout](docs/h006-closeout-20260926.md) describe the reviewed
+observation and placement foundation. H006's naming and update-policy statements
+remain evidence of that dated checkpoint; Sova is now the selected system name.
+Going forward, the new manual-update policy supersedes H006's
+package-installation-enabled policy: disable all automatic OS/package/Sova
+updates while preserving manual action. Worker1's H007 change is **IN PROGRESS,
+not yet accepted**; the [root-owned policy report](docs/h007-update-policy-20260926.md)
+is **pending publication**. The historical H006 report stays unchanged.
+
+```mermaid
+flowchart TB
+    User["LAN browser"]
+    subgraph H["current placement: ai-harness VM"]
+        Web["Web chat and task API"]
+        Agent["MiniMax main and child agents"]
+        Tools["Search, browser, PDF and coding tools"]
+        Gateway["Fixed-Qwen gateway: two shared slots"]
+        ImageJobs["Image tools and job broker"]
+        Data[("Chat metadata, workspaces and artifacts")]
+        Status["Status and typed admin"]
+        Helper["Deterministic local lifecycle helper"]
+    end
+    subgraph M["current placement: ai-vm VM"]
+        Node["Node status and typed operations"]
+        Control["Deterministic text lifecycle control"]
+        Q0["Qwen text instance 0 / GPU0"]
+        Q1["Qwen text instance 1 / GPU1"]
+        Image["Separate image API and Qwen-Image service / Ada"]
+    end
+    subgraph Future["FUTURE / OPTIONAL — not deployed"]
+        LB["Load-balancer layer"]
+        Replicas["Additional harness instances"]
+    end
+    User --> Web
+    User --> Status
+    Web --> Agent
+    Web --> Data
+    Agent --> Tools
+    Agent --> Gateway
+    Agent --> ImageJobs
+    ImageJobs --> Data
+    Gateway --> Q0
+    Gateway --> Q1
+    ImageJobs --> Image
+    Status --> Node
+    Status --> Helper
+    Node --> Control
+    Node --> Image
+    Control --> Q0
+    Control --> Q1
+    User -.-> LB
+    LB -.-> Web
+    LB -.-> Replicas
+```
+
+Boxes describe logical roles; some share a process. Cross-VM calls use the
+reviewed private transports. The optional future load balancer and its dashed
+links are **not deployed** and are not required for every topology. Harness
+replication requires the ownership, shared data and admission work described in
+the [architecture](docs/sova-architecture.md#placement-and-horizontal-scaling).
+
+Two VMs are the current placement, not a mandatory architecture. One host/VM can
+colocate compatible services; future deployments may span many VMs with multiple
+instances per model. Every placement still needs compatible hardware and runtime,
+adequate resources, registered storage, network/security policy and explicit
+deployment work. Registry edits alone do not relocate workloads or select models.
+
+The ai-vm role remains API-only, with separate direct inference endpoints and
+**no common ai-vm inference router**. The harness already has its own fixed-Qwen
+gateway: main agents, child agents and auxiliary calls share exactly two global
+inference slots. Image tools use a separate service; GLM is not integrated into
+the harness. Flexible routing is an accepted future design, not implemented
+arbitrary-model selection.
+
+## Current models and dated acceptance
+
+Text profiles cover **Qwen3.8-27B FP8** and optional **GLM5.3 UD-Q4_K_XL**;
+the dedicated image model is **Qwen-Image-2.1**.
 Reviewed source `04143b18cca7aca724d9a4a4bcf943fe86c040db` defines **dual-qwen**
 as the default: one Qwen instance per GPU. Optional **glm-qwen** replaces only
 GPU0 with GLM; returning to dual-qwen replaces GPU0 with Qwen again.
@@ -54,9 +143,10 @@ memory benchmark was run for the identical native workload.
 
 Control uses `http://10.156.100.60:30000/control/v1/...`. Clients discover and
 explicitly address separate inference bases on ports 30002 and 30004, each
-with `/v1`; the aliases above identify the loaded instance. There is no common
-inference router or automatic fallback. Native listeners stay authenticated
-IPv4 loopback behind the reviewed private transport.
+with `/v1`; the aliases above identify the loaded instance. These direct ai-vm
+APIs have no common inference router or automatic fallback; the harness's
+fixed-Qwen gateway is a separate client-side component. Native listeners stay
+authenticated IPv4 loopback behind the reviewed private transport.
 
 - [Image API source and integration](docs/image-api.md): private image API interface.
   The [current acceptance report](docs/service-resilience-acceptance.md) records
@@ -80,10 +170,11 @@ image service restored automatically. Status/admin services, history metadata
 and current-boot task containment were verified. Earlier failed attempts remain
 in the linked historical record.
 
-Tools, browsing and file work run on ordinary external clients in trusted
-workspaces. The separate [ai-harness](ai-harness/README.md) provides the deployed
-shared-LAN chat and task interface. **Installer implementation and tests remain
-paused.**
+Tools, browsing and file work run as an ordinary user in trusted client
+workspaces, currently through [ai-harness](ai-harness/README.md) on its own VM.
+It provides the deployed shared-LAN chat and task interface; that placement is
+not a requirement for all Sova deployments. **Installer implementation and tests
+remain paused.**
 
 ## Status and administration
 
