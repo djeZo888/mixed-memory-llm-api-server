@@ -21,6 +21,7 @@ OWNER='H008-FLASH-20260926'
 GPU='GPU-69acfa26-8b60-61b5-702d-aee252c163cc'
 IMAGE='sha256:51791e17c0149019e2ddc032d8c1b2f60b86c3a6c293daff639e20053baa858a'
 MEMORY=650*1024**3
+NUMA_SECCOMP_SHA256='5eebab079391a29eecdaa2cd8483b4cd76ce38e9baa4ade238494c0a71cf481f'
 GUARDS={'scripts/common/registered-storage.py':'21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d',
 'scripts/install/storage.py':'4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505',
 'scripts/install/storage_io.py':'5ba1b1356519bbb4922b563662a605459862a84b81ce4f521dfbce293d97302a',
@@ -45,6 +46,21 @@ def environment():
                          'CUDA_CACHE_PATH':'/cache/cuda','TMPDIR':'/tmp','OMP_NUM_THREADS':'1',
                          'DISABLE_OPENAPI_DOC':'1','SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN':'1'}
 
+
+def security_options_valid(options, config):
+    """Accept only the configured exact Docker profile plus three NUMA calls."""
+    if config.get('numa_seccomp_sha256') is None:
+        return options == ['no-new-privileges']
+    if config['numa_seccomp_sha256'] != NUMA_SECCOMP_SHA256 or not isinstance(options, list):
+        return False
+    if len(options) != 2 or options[0] != 'no-new-privileges' or not options[1].startswith('seccomp='):
+        return False
+    try:
+        profile = json.loads(options[1].split('=', 1)[1])
+        return hashlib.sha256(json.dumps(profile, sort_keys=True, separators=(',', ':')).encode()).hexdigest() == NUMA_SECCOMP_SHA256
+    except (ValueError, TypeError):
+        return False
+
 def validate_container(c, config, state):
     """Pure admission proof reused by Qwen and passive node observation."""
     require(config.get('owner')==OWNER and config.get('image_id')==IMAGE
@@ -62,7 +78,7 @@ def validate_container(c, config, state):
             and host.get('RestartPolicy')=={'Name':'no','MaximumRetryCount':0}
             and host.get('Memory')==host.get('MemorySwap')==MEMORY
             and host.get('CpusetCpus')=='0-71' and host.get('CapDrop')==['ALL']
-            and host.get('SecurityOpt')==['no-new-privileges']
+            and security_options_valid(host.get('SecurityOpt'),config)
             and host.get('LogConfig',{}).get('Type')=='local', 'frontier_containment_invalid')
     expected=mounts();actual=c.get('Mounts',[])
     require(len(actual)==len(expected) and {x.get('Destination') for x in actual}==set(expected)
@@ -146,6 +162,11 @@ def operate(action, *, borrowed=None):
                           '--cpuset-cpus','0-71','--memory',str(MEMORY),'--memory-swap',str(MEMORY),
                           '--shm-size','16g','--gpus','device='+GPU,'--label','io.llm-frontier.owner='+OWNER,
                           '--label','io.llm-frontier.gpu='+GPU,'--entrypoint','/opt/conda/bin/python']
+                    if config.get('numa_seccomp_sha256') is not None:
+                        require(config['numa_seccomp_sha256']==NUMA_SECCOMP_SHA256,'frontier_seccomp_identity_invalid')
+                        profile=json.loads(protected_file(Path(BASE+'/source/numa-seccomp.json'),modes={0o644}))
+                        require(hashlib.sha256(json.dumps(profile,sort_keys=True,separators=(',',':')).encode()).hexdigest()==NUMA_SECCOMP_SHA256,'frontier_seccomp_source_drift')
+                        argv+=['--security-opt','seccomp='+BASE+'/source/numa-seccomp.json']
                     env=environment()
                     for k,v in env.items(): argv+=['--env',k+'='+v]
                     for target,(source,writable) in mounts().items():
