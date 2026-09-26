@@ -3,6 +3,7 @@ type Snapshot = {
   model: string;
   configured: boolean;
   state: string;
+  availability?: { state: 'available' | 'unavailable' | 'unknown' };
   contextWindow: number | null;
   queued: number;
   requests: { state: string; promptTokens?: number; reservedOutput?: number; updatedAt: string }[];
@@ -38,7 +39,8 @@ export function FrontierActivity({ sessionId }: { sessionId: string }) {
   return (
     <aside className="frontier-activity" aria-label="Frontier child activity">
       <small>
-        {value.model} child · {value.state} · queue {value.queued}/8 · context{' '}
+        {value.model} child · backend {value.availability?.state ?? 'unknown'} · lane{' '}
+        {value.state} · queue {value.queued}/8 · context{' '}
         {value.contextWindow?.toLocaleString() ?? 'unknown'}
         {latest && (
           <>
