@@ -1,0 +1,259 @@
+{
+  "acceptance": {
+    "status": "PASS_FULL_ROSTER_NATIVE_WORKFLOW_OWNED_SETTLED",
+    "utc": "2026-09-26T21:13:35.108859+00:00",
+    "startedUtc": "2026-09-26T20:56:29.375863+00:00",
+    "endedUtc": "2026-09-26T21:11:41.573613+00:00",
+    "semanticReview": "PASS: actual child read/write/bash result and useful final; parent independently read edited file, reran tests, final accurately reports fix and retained task ID",
+    "proof": {
+      "childNativeSessionId": "mvs_d8df17f7b7304c11923d9537ee7f000a",
+      "parentNativeSessionId": "mvs_c3300df8d35d4115a8ec07c6a79b0d01",
+      "taskId": "bg_81661554-c232-4e6e-af8d-807b772d8980",
+      "provider": "custom_provider:frontier",
+      "model": "glm-5.3-flash",
+      "route": "/frontier/v1/chat/completions",
+      "toolChoices": [
+        "native-default-auto"
+      ],
+      "binding": "exactly one foreground frontier task; native task result and delegation graph; its Flash wire history with paired tool_call_id",
+      "pairedTools": [
+        {
+          "toolCallId": "call_440c096f0ffb4b7f8d321107",
+          "name": "bash",
+          "argumentsSha256": "16d1eee928c6a8c6c936f7b7b770138b46091ab0a493d4d19a29e03e0cd2af90",
+          "resultSha256": "ece7239db3b76cc211f0a79f1ebf9e91b8675adac94529a6d89556db57de1ed9",
+          "requestSeq": 16,
+          "frontierRequestId": "e8dccbbc8bebba1f7555050763e66f68"
+        },
+        {
+          "toolCallId": "call_96b7dc10d6c743cd972ac895",
+          "name": "write",
+          "argumentsSha256": "bbea61b4f21e897b72d7c0ee875eacf90ca329e44d924c4c7ca0bb0c197d8083",
+          "resultSha256": "5b265b887a8829fa32c3eddf26a5a59a50901c606561e90e60a8f697d66ef4c5",
+          "requestSeq": 16,
+          "frontierRequestId": "e8dccbbc8bebba1f7555050763e66f68"
+        },
+        {
+          "toolCallId": "call_57d830d76a4c4d60bed8c9d2",
+          "name": "bash",
+          "argumentsSha256": "5b31194f67c81f605fbbb32825cf862ba7b8fb72a938b3a07ad3dacd8bd6f076",
+          "resultSha256": "18fc0fe34fb818664c426d1eac0ce1c9fae5db3290fb29c824801db3916b3d49",
+          "requestSeq": 16,
+          "frontierRequestId": "e8dccbbc8bebba1f7555050763e66f68"
+        }
+      ],
+      "childResult": {
+        "taskId": "bg_81661554-c232-4e6e-af8d-807b772d8980",
+        "childSessionId": "mvs_d8df17f7b7304c11923d9537ee7f000a",
+        "resultSha256": "2d2c8d4f49fb0f5b58324c75596963f3ab160bb675bcab840cd099a4c9b4db13",
+        "finalTextSha256": "66022c0e542a2ad681c62387161fed950966a6940173351b61f2983aba633dfd",
+        "finalTextLength": 234
+      },
+      "parentFinal": [
+        {
+          "id": "m_c877750708cc6b27def950b9e89953056643bb30f54da4bfb6e80a907ed44036",
+          "sha256": "2f560fb7aa8edb97204aaaf90ebbb4d1f3955b49704d77b1f1d8aa12bb42af73"
+        }
+      ]
+    },
+    "parentIndependentVerification": [
+      {
+        "id": "call_a508ec5d18a640dc8d80cc39",
+        "name": "read",
+        "arguments": "{\"path\":\"edge.mjs\"}",
+        "resultSha256": "6c8f6fe7acfddf1ed3adf9ec06044d597ada68c1a7d34566285a0bf209cb2cdf",
+        "checksPass": false
+      },
+      {
+        "id": "call_b916cc93b1364f2b89facba8",
+        "name": "read",
+        "arguments": "{\"path\":\"check.mjs\"}",
+        "resultSha256": "919e804ae5ddcd7b64809a6db1c25339a4d3d13721cef9f2fb93b8f09237b333",
+        "checksPass": true
+      },
+      {
+        "id": "call_2c02716b39104ce1a98773d5",
+        "name": "bash",
+        "arguments": "{\"command\":\"node check.mjs\"}",
+        "resultSha256": "072b0effa6dc9e37cf0e4e9576a2fd3e15ace55d4a94d9996fcecc8f358360b3",
+        "checksPass": true
+      }
+    ],
+    "requests": [
+      {
+        "id": "7794e5f22846ccc76fef5b2595dadd2e",
+        "inputTokens": 11555,
+        "outputCeilingIncludingReasoning": 2048,
+        "actualOutputTokens": 17,
+        "actualOutputCountStatus": "native persisted local_runtime_token_usage; paired by child session and exact input/order",
+        "startedUtc": "2026-09-26T20:57:12.053Z",
+        "settledUtc": "2026-09-26T21:07:32.330Z",
+        "elapsedSeconds": 620.277,
+        "reportedReasoningTokens": 0
+      },
+      {
+        "id": "eebaf56cd3f07573979f4dc677b74445",
+        "inputTokens": 11729,
+        "outputCeilingIncludingReasoning": 2048,
+        "actualOutputTokens": 668,
+        "actualOutputCountStatus": "native persisted local_runtime_token_usage; paired by child session and exact input/order",
+        "startedUtc": "2026-09-26T21:07:40.630Z",
+        "settledUtc": "2026-09-26T21:09:29.597Z",
+        "elapsedSeconds": 108.967,
+        "reportedReasoningTokens": 0
+      },
+      {
+        "id": "f22f682e21ec7fc16850ad47b1a1b0ed",
+        "inputTokens": 12417,
+        "outputCeilingIncludingReasoning": 2048,
+        "actualOutputTokens": 14,
+        "actualOutputCountStatus": "native persisted local_runtime_token_usage; paired by child session and exact input/order",
+        "startedUtc": "2026-09-26T21:09:42.904Z",
+        "settledUtc": "2026-09-26T21:10:27.452Z",
+        "elapsedSeconds": 44.548,
+        "reportedReasoningTokens": 0
+      },
+      {
+        "id": "e8dccbbc8bebba1f7555050763e66f68",
+        "inputTokens": 12439,
+        "outputCeilingIncludingReasoning": 2048,
+        "actualOutputTokens": 49,
+        "actualOutputCountStatus": "native persisted local_runtime_token_usage; paired by child session and exact input/order",
+        "startedUtc": "2026-09-26T21:10:41.637Z",
+        "settledUtc": "2026-09-26T21:11:30.972Z",
+        "elapsedSeconds": 49.335,
+        "reportedReasoningTokens": 0
+      }
+    ],
+    "rosterScope": {
+      "mode": "full-live",
+      "actualToolCount": 17,
+      "toolNames": [
+        "read",
+        "write",
+        "edit",
+        "bash",
+        "grep",
+        "glob",
+        "skill",
+        "request_feature_enable",
+        "web_fetch",
+        "browser",
+        "task_query",
+        "task_output",
+        "task_stop",
+        "mcp__searxng__searxng_search",
+        "mcp__image__image_capabilities",
+        "mcp__image__image_generate",
+        "mcp__image__image_edit"
+      ],
+      "fullCountOnlyInput": 11367,
+      "fullCountOnlyNoFlashGeneration": true,
+      "toolsExercised": [
+        "bash",
+        "write"
+      ],
+      "allToolsExercised": false
+    },
+    "overlap": {
+      "qwenStartedUtc": "2026-09-26T20:57:12.058Z",
+      "qwenFinishedUtc": "2026-09-26T20:57:12.212Z",
+      "occupiedFlashRequestId": "7794e5f22846ccc76fef5b2595dadd2e",
+      "qwenUsage": {
+        "prompt_tokens": 36,
+        "total_tokens": 40,
+        "completion_tokens": 4,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0
+      },
+      "flashStillOccupiedAtQwenCompletion": true,
+      "overlapProof": "Qwen submitted and completed while native Flash occupied"
+    },
+    "ownedSettlement": {
+      "supervisorExitCode": 0,
+      "ownedPidsGone": true,
+      "ownedContainers": [],
+      "requiredPortListeners": [],
+      "all4FlashRequestsSettled": true,
+      "atomicBackendDrainClaim": false
+    },
+    "uppers": {
+      "ai-harness.service": "MainPID=0\nActiveState=inactive",
+      "ai-harness-searxng.service": "MainPID=0\nActiveState=inactive"
+    },
+    "keepUppersStoppedForFinalReboot": true,
+    "gateSha256": "2bd0bdcc4995ea4dbdf3239aa6155a4c1b82c983e091531fd968c4a1b6a12cd1",
+    "productionDataModified": false,
+    "scopeLimits": [
+      "No 480K occupied-context proof",
+      "No universal tool behavior acceptance",
+      "No image inference",
+      "Child used separate write tool rather than combining fix/test into one bash; useful code workflow passed",
+      "Native task wrapper reports model_verdict/file_change missing; actual model route and patch established by bound wire history and independent file verification"
+    ],
+    "actualFlashOutputTotal": 748,
+    "tokenUsageEvidence": "NATIVE-TOKEN-USAGE-02.json; runtime-reported output counts, separate reasoning field0 does not establish absence of hidden reasoning",
+    "finalCode": {
+      "sha256": "c108dde27a7acf4efe5ec999078cbb6926df27c4b088cb38a1a0c54bf38fa761",
+      "contents": "export function clamp(x,lo,hi) { if (Number.isNaN(x)) return lo; const a=Math.min(lo,hi), b=Math.max(lo,hi); return Math.min(b,Math.max(a,x)); }\n"
+    },
+    "parentIndependentVerificationActualResult": "EDGE_CHECK_PASS"
+  },
+  "provenance": {
+    "nativeSession": {
+      "nativeSessionId": "01a0df78-5580-7ad1-bbfd-f552733ae48d",
+      "startedUtc": "2026-09-26T20:46:40Z",
+      "hardStopUtc": "2026-09-26T21:45:00Z"
+    },
+    "sourceCommit": "a92c088246e8b8c64b14bf1b905a6873176a1173",
+    "sourceParent": "799b29f4b54997ee172ec566b48ea830808dca96",
+    "gateSha256": "2bd0bdcc4995ea4dbdf3239aa6155a4c1b82c983e091531fd968c4a1b6a12cd1",
+    "driverHashes": {
+      "check.mjs": "c12a2494df9baf41ce212c1c92f4115e77db7fb9a10428871b16447a8f3149f2",
+      "edge.mjs": "c164ce0369bafd0d54eaf4f022152cc25d637b26b2610c6ff88f02dbf86a24f1",
+      "guards.mjs": "68f91e1353c795067de8b6357da2223e30dbdeb74791a5b11fefb3d63f58242c",
+      "live.mjs": "b774d111236a6bd3acb7f44ce93443fc74e3f3c066d53c7202f695c48f3c5df8",
+      "policy-a.txt": "47215dd871e87e71f0ed313893057390961d5bdddcb758abda3d7bff0b342402",
+      "policy-b.txt": "ede232123fd44f6a08de0540d6f3cf75e317b909aac182d39e0a52ca2448e230",
+      "preflight-cli.mjs": "0148173be67cfd37c25321e1ef965381214c0465a4a6c52385138d34e4639d68",
+      "preflight.mjs": "d0f1218bbc704a6c8cd8bfc8c890c012b00d11ba3e634945d92a0c21cdcc4c23",
+      "prompts.json": "8a8d362d7576e48bc179d339c6275c15123e6616e6fcf0df46419cc18bad3689",
+      "receipt-boundary.test.mjs": "c1a0d4ad50d0e7b1f3cb4c6038dc327915388388f42f69d0180abb399e1e12ab",
+      "supervise.py": "18bd7ced53e9d6889b205bcd26c46d542268e1a14a2bdea9afff83d2ae1b5e65"
+    },
+    "runtimePins": {
+      "release": "296ae49e44eb250773223885b843994e2c5b9bcc",
+      "serverNativeSource": "36efaaed3b6a235a2b5877ed10dfab2665c51cbf",
+      "image": "c328dac0e6ede1dfb890a0657ebafd6f6fd4a1f2281f4e1c664ab95db7dcaa20",
+      "native": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+      "patchset": "e487935b3d6efce51216b8755cbd712912c30c7d45f6a9e5e293f0f998f89a65",
+      "activationManifestSha256": "9d6182c51212e3eb348d398e41b2ace4edb07e8a321974f695d34c7ae554a689",
+      "unitSha256": "7e339dc3e44e566f5eb8c5206cf37b7123047502564465fda6afaea5a0321b57",
+      "configSha256": "5c10ef1e1eae12ac297b7eabd07ba8023d799b25edc01626162a26e9c18f2261"
+    },
+    "limits": {
+      "productionContext": 480000,
+      "productionOutput": 65536,
+      "acceptanceFlashInputMax": 16384,
+      "acceptanceOutputIncludingReasoning": 2048,
+      "frozenInclusiveInputMax": 479993,
+      "frozenInclusiveInputPlusOutputMax": 479998
+    },
+    "bundles": {
+      "CANDIDATE-NATIVE02.bundle": "f9a3acd859b797ee5408bd56d9e38918396893d1b4e3e265f1d5203e0a1b3fe1",
+      "CANDIDATE-NATIVE02-PACKAGING.bundle": "d0facf6e84d5ebfb8a9a2d4f463c61ab21b1caccf420ec4bfe44c426cfa233bb"
+    }
+  },
+  "statusQualification": {
+    "utc": "2026-09-26T21:15:20.900707+00:00",
+    "path": "/opt/ai-harness/components/H008-REGISTRY-296ae49/ai-harness/config/system-registry.json",
+    "oldSha256": "ed31b14ac0209706809b6e1cb6518a108670eaef9b344eee72ee30d7b4e60df5",
+    "newSha256": "7fa184bcd2386e85d9d189d0024fb8570f38b0b842f0619b25a3699e9964b6c5",
+    "mode": "0444",
+    "owner": "root:root",
+    "change": "only Flash display_name: native code workflow qualified",
+    "validator": "PASS installed validator; no build",
+    "evidence": "ACCEPTANCE-RESULT-02.json",
+    "scope": "one full-roster native read/write/bash code workflow; no480Koccupancy/universaltools/reconnect claim"
+  }
+}
