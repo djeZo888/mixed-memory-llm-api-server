@@ -1,5 +1,31 @@
 # H014 — MiMo frontier comparison
 
+## Execution checkpoint — 07:40 UTC, 27 September
+
+The isolated llama.cpp7ac59a6 /CUDA13.2.1 SM120a image built successfully and
+passed CLI identity/help checks. Image digest:
+`sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e`.
+This establishes a build, not GPU/model compatibility or inference quality.
+The exact13-shard Pro download remains independent and bounded through
+08:50:01UTC. At07:37:18,111,105,009,056 of577,669,438,240 bytes were present,
+including incomplete files;1/13 shards was hash-verified. Preserve partials
+and verify every final file before load. No MiMo listener or model is active.
+
+The disabled provider adapter passed11 focused tests and TypeScript checking;
+it is not routed from Sova. Next: native exact-token counting, normal text and
+tool continuation, memory/placement qualification, then the benchmark ladder
+and existing frontier-lane integration. Do not treat source fixtures as live
+qualification. Qwen/GLM/image production services are restored; Sova's GLM1M
+release is active. There is no remaining dependency on a successful four-way
+stress test, but no further such test is authorized while cooling remains
+insufficient. [Latest checkpoint](../reports/h014-checkpoint-20260927/CHECKPOINT.md).
+
+Both workers are idle at the agreed time-limit checkpoint. The independent
+download may finish within its existing deadline; collect its terminal result
+without paid waiting. Resume model-load/benchmark work in the next bounded
+execution window. Do not redownload completed shards or rebuild this image
+without evidence of a concrete defect.
+
 ## Latest selection priority
 
 The user clarified that the best practical MiMo quality is the primary goal.

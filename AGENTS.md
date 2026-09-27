@@ -13,9 +13,14 @@ report before acting. Current plans: [H013](docs/h013-ecc-off-repeat.md),
 The exact Flash 1,000,000-input-token trial PASSED at04:30:46UTC; never replay it
 as a readiness test. Original evidence is immutable and archived privately.
 
-H013 continues durable Flash1,048,576 production promotion, matching Sova
-configuration/plain display label, ECC off on all three Blackwells (Ada off),
-and one guarded four-model repeat. The authorized guest reboot occurred at
+H013 production promotion is complete: Flash1,048,576, matching Sova release
+7143c17/image9ef885, plain display label, preserved chats/files, and all four
+services ready at07:37UTC. ECC is off on all GPUs. The one guarded four-model
+repeat stopped after50.086s at the server Qwen85C cutoff; native work settled
+and normal services were restored. No further stress retry until physical
+cooling improves and the user authorizes a repeat. Read the actual result in
+reports/h013-ecc-off-comparison-20260927 and Sova activation receipt. The
+authorized guest reboot occurred at
 05:33:56UTC; newboot6535a867-8e27-49d9-8a04-4ecc1adb1e32 and all four ECC modes
 Disabled/Disabled were verified. Do not reboot again without a concrete new
 recovery need and review. No Proxmox reboot, GPU reset or driver update.
@@ -38,8 +43,13 @@ Root selected Pro for the first bounded trial after source review, with
 MXFP4/BF16 Flash as fallback if impractical. Retain native expert precision and
 BF16/F32 nonexperts; the old155.9GiB Flash artifact also quantizes attention toQ8.
 Verify actual tensor metadata, source/runtime identity and memory reserves.
-After H013 settles, proceed with the selected pinned SM120 mixed CPU/GPU runtime, warmed
-4K/16K/64K and tool/technical checks. Review allocation/runtime before full1M.
+The isolated SM120 runtime build has passed version/help checks; MiMo has not
+loaded. The independent13-shard download was19.23% complete at07:37UTC and has
+an08:50UTC deadline. Preserve partials and inspect its existing terminal receipt;
+do not launch duplicate downloads or rebuild the successful image. At the
+current three-hour checkpoint, collect already-started job results and report;
+the next bounded execution window covers native load, warmed4K/16K/64K and
+tool/technical checks. Review allocation/runtime before full1M.
 Retain GLM and initially compare serially on the frontier GPU. Concurrent
 GLM/MiMo residency is a later option to assess after MiMo1M; user then decides.
 Keep paid CLI sessions closed while independent bounded jobs merely run.
