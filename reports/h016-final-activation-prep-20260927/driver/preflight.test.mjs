@@ -16,6 +16,8 @@ test('held preflight refuses before reading any file or contacting any host',asy
  await assert.rejects(preflight({},'/absent'),/HELD/);
 });
 test('admission boundary and exact profile source pin',()=>{
+ assert.equal(ADMIT_UTC,'2026-09-27T18:14:30Z');
+ assert.equal(SETTLE_UTC,'2026-09-27T18:29:30Z');
  assertAdmission(Date.parse(ADMIT_UTC));assert.throws(()=>assertAdmission(Date.parse(ADMIT_UTC)+1));
  assert.equal(Date.parse(SETTLE_UTC)-Date.parse(ADMIT_UTC),900000);
  assert.equal(sha(readFileSync(new URL('../../../ai-harness/deploy/engine/configure-profile.mjs',import.meta.url))),PROFILE_SHA256);

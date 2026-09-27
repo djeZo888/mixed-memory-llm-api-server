@@ -1,3 +1,8 @@
+BUSY16 supersedes ONLY the held deadline below: global18:33:08UTC, local18:30:00,
+calendar stop18:29:30+30s grace, theoretical inference18:14:30 minus overhead.
+See ACTIVATION.md and ../h016-final-window-busy-20260927/REVIEW.md.
+Original PREP15 early/test record follows unchanged.
+
 Root final timing supersedes initial proposal below: no static17:20 cutoff; actual
 post-preflight work>=720s,180s cleanup, local17:44:30 stop+30s grace.
 Theoretical latest inference17:29:30;12min attempt is not predicted PASS.

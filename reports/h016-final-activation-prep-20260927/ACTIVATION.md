@@ -109,25 +109,33 @@ H016_IID=$(cat final-combined.iid)
    HELD/UNKNOWN; local deadline does not prove GPU/native settlement. Coordinate
    exact owner with root/W1 before release, rollback or further requests.
 
+BUSY16 retiming supersedes the held PREP15 deadline under the explicit45-minute
+foreground extension. Global end18:33:08UTC; local hard settlement18:30:00UTC.
 Timing: root permits later launch from actual remaining time, with no static
-17:20 admission block. Supervisor includes measured preflight in1380s total;
+full-envelope admission block. Supervisor includes measured preflight in1380s total;
 work=min(1200, remaining monotonic total/absolute time minus180 cleanup).
 After measured preflight (including the live driver's repeated preflight), under
 720s work refuses before inference.720s is a12-minute attempt budget, NOT a
 predicted PASS; incomplete means NOT_QUALIFIED and native UNKNOWN. The theoretical
-latest inference admission is17:29:30 with zero extra overhead; latest launch is
+latest inference admission is18:14:30 with zero extra overhead; latest launch is
 earlier by actual dispatch/preflight time. Supervisor records actual work budget
-and deadline. Local cleanup target17:44:30; independent fixed systemd calendar
-stop then grants30s stop grace, fixed LOCAL hardend17:45. Runtime cap dynamically
-min(1470, seconds to17:44:30), plus30<=1500. No timer extends17:45. Exact native/GPU
+and deadline. Local cleanup target18:29:30; independent fixed systemd calendar
+stop then grants30s stop grace, fixed LOCAL hardend18:30. Runtime cap dynamically
+min(1470, seconds to18:29:30), plus30<=1500. No timer extends18:30. Exact native/GPU
 settlement remains separate W1 proof. Systemd scheduling/live cleanup NOT_TESTED.
 
-17:20+1500=17:45 leaves ONLY3m08 before global17:48:08 for final data/restoration
+For envelope arithmetic only,18:05+1500=18:30 leaves ONLY3m08 before global18:33:08 for final data/restoration
 contingency AND the separately owned final near1M background start proof. Tight,
 unproven; this packet cannot promise both fit. Root should reserve more time by
 starting acceptance earlier or hold final dispatch. The last occupied near1M8h
 request happens ONLY after native/production/Sova acceptance as the final task;
-then paid sessions close/pause automation. No such job or automation is created,
+then all paid workers close and the user nudges later. The LAST client must not
+impose a global app pause: keep parent Qwen, Sova UI and image up; the production
+proxy serializes its chat lane nonblockingly through drain. This differs from
+the existing exact-app-owner stop for foreground acceptance/paired promotion.
+The frozen LAST client pause requirement and unsafe BUSY handling need W1 fixes
+before deployment (see ../h016-final-window-busy-20260927/REVIEW.md).
+No such job or automation is created,
 launched or monitored here.
 
 Rollback on concrete failure/root coordination: stop admission, retain intent and

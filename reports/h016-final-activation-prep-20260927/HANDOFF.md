@@ -1,3 +1,12 @@
+BUSY16 CURRENT TIMING: explicit45-minute foreground extension; global18:33:08UTC,
+local hard settlement18:30:00, calendar stop18:29:30+30grace. Theoretical latest
+inference18:14:30 minus overhead; launch earlier by measured preflight.720s minimum
+work after measured preflight;180cleanup, work<=1200,total<=1380,systemd1470+30.
+No static full-envelope cutoff. Qualification/production/app remain HELD.
+See ../h016-final-window-busy-20260927/REVIEW.md and new focused test evidence.
+Original CHECKS.json/raw test hashes/SESSION.json remain the PREP15 record; the
+original timing narrative below is historical and superseded ONLY as above.
+
 # FINAL ACTIVATION PREP15 — source PASS, activation HELD
 
 Base45961b1614d6c5b8f667ebea8ba94817c86d64e3. Read ACTIVATION.md and CHECKS.json.

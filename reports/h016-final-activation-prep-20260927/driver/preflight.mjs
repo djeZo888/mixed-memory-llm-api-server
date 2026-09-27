@@ -15,9 +15,9 @@ export const KEY='/home/user/.config/ai-harness/inference-key';
 const BASE='6641df04cf4e8375029639a67c22da7c3ff4719d2b8e58748572f049de8fb022';
 const TAG='localhost/ai-harness-engine:0.0.2-ae65651df5f9';
 export const PROFILE_SHA256='045d0ed290a4870182610745a5a51ba471d9797bf5aebffbb3148ca4d000e020';
-export const ADMIT_UTC='2026-09-27T17:29:30Z';
+export const ADMIT_UTC='2026-09-27T18:14:30Z';
 export const MIN_WORK_SECONDS=720;
-export const SETTLE_UTC='2026-09-27T17:44:30Z'; // 30s systemd stop grace before fixed17:45
+export const SETTLE_UTC='2026-09-27T18:29:30Z'; // 30s systemd stop grace before fixed18:30
 export function assertAdmission(now=Date.now()) { assert(now<=Date.parse(ADMIT_UTC),'late actual app admission'); }
 // Existing qualification validator verifies native identity, precision, reserves and evidence.
 // Root/W1 records target/fallback reason in its existing capacity report.

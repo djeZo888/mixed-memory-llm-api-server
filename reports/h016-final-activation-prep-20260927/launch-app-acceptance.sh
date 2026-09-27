@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 if [[ ${1:-} == --help ]]; then
- echo 'HELD source-only fresh Linux systemd acceptance. Fixed hard settlement 2026-09-27T17:45:00Z; no dispatch until root reviews final source/qualification/timing.'
+ echo 'HELD source-only fresh Linux systemd acceptance. Fixed hard settlement 2026-09-27T18:30:00Z; no dispatch until root reviews final source/qualification/timing.'
  exit 0
 fi
 echo 'HELD: final W1 qualification/production identity and exact source/timing review required.' >&2
@@ -17,7 +17,7 @@ H016_DRIVER="$H016_TASK/driver"
 H016_RUNTIME=$(python3 - <<'PY'
 import datetime,math
 now=datetime.datetime.now(datetime.timezone.utc)
-stop=datetime.datetime(2026,9,27,17,44,30,tzinfo=datetime.timezone.utc)
+stop=datetime.datetime(2026,9,27,18,29,30,tzinfo=datetime.timezone.utc)
 assert (stop-now).total_seconds()>=900, 'insufficient launch budget before measured preflight'
 # Actual preflight elapsed is charged again by supervisor/live admission.
 print(min(1470,math.floor((stop-now).total_seconds())))
@@ -36,7 +36,7 @@ PY
 # extend the deadline. Runtime1470 + stop grace30 <=1500. No automatic restart.
 # Arm BEFORE the client; failed/ambiguous dispatch keeps intent and forbids replay.
 systemd-run --user --unit=h016-final15-app-hardstop \
- --on-calendar='2026-09-27 17:44:30 UTC' \
+ --on-calendar='2026-09-27 18:29:30 UTC' \
  --timer-property=AccuracySec=1us --timer-property=RandomizedDelaySec=0 \
  /usr/bin/systemctl --user stop h016-final15-app-acceptance.service
 systemctl --user show h016-final15-app-hardstop.timer -p ActiveState -p NextElapseUSecRealtime > "$H016_DRIVER/hardstop-readback.txt"
