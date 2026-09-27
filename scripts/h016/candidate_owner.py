@@ -17,8 +17,8 @@ from verify_retained import dependency, LOG
 from private_proxy import read_key
 
 P = pathlib.Path
-BASE = '/data/build/H016-20260927/worker1'
-NAME = 'llm-h016-mimo-pro'
+BASE = '/data/build/H016-20260927/worker1-r2'
+NAME = 'llm-h016-mimo-pro-r2'
 GPU = 'GPU-69acfa26-8b60-61b5-702d-aee252c163cc'
 IMAGE = 'sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e'
 GLM_ID = '2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab'
@@ -89,7 +89,7 @@ def preflight(h):
         cfg = json.loads(P(BASE, 'LAUNCH.json').read_text())
         q = json.loads(P(BASE, 'HARNESS-QUIET-01.json').read_text())
         h.require(q['status'] == 'QUIET_APP_STOPPED_SEARCH_STATUS_ADMIN_PRESERVED' and q['after_units']['ai-harness.service']['MainPID'] == '0' and q['after_data']['frontier_requests']['count'] == 0, 'upper_owner_not_quiet')
-        verified = json.loads(P(LOG, 'VERIFICATION-STATUS.json').read_text())
+        verified = json.loads(P('/data/logs/H016-20260927/worker1', 'VERIFICATION-STATUS.json').read_text())
         h.require(verified['status'] == 'VERIFIED_AND_INVENTORIED' and verified['verified_shards'] == 13, 'weights_unverified')
         h.require(P('/proc/sys/kernel/random/boot_id').read_text().strip() == h.BOOT, 'boot_changed')
         h.require(inspect(IMAGE)['Id'] == IMAGE, 'image_identity')
@@ -292,9 +292,12 @@ def main(run=False):
             time.sleep(5)
         else:
             raise RuntimeError('load_guard_or_deadline')
-        h.require('7ac59a6' in json.dumps(props.get('build_info')) and props.get('model_path') == '/models/MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00001-of-00013.gguf' and hashlib.sha256(props['chat_template'].encode()).hexdigest() == '11ea52e156de38a458e6b7720ad45915d65b97d4ec979a09f55e3c9bd1b4d059', 'loaded_build_model_template_mismatch')
-        h.require(props['default_generation_settings']['n_ctx'] == 131072 and props['total_slots'] == 1, 'loaded_capacity_mismatch')
-        save(h, 'NATIVE-IDENTITY.json', {'utc': h.now(), 'owner_id': state['candidate_id'], 'pid': state['native_pid'], 'alias': props['model_alias'], 'build_info': props.get('build_info'), 'model_path': props.get('model_path'), 'context': 131072, 'slots': 1, 'template_sha256': hashlib.sha256(props['chat_template'].encode()).hexdigest(), 'is_sleeping': props['is_sleeping']})
+        from native_identity import compact_identity, validate_identity
+        observed = {'utc': h.now(), 'owner_id': state['candidate_id'], 'pid': state['native_pid'], **compact_identity(props)}
+        # Persist only identity fields, before every individually diagnosed assertion.
+        save(h, 'NATIVE-OBSERVED.json', observed)
+        validate_identity(observed)
+        save(h, 'NATIVE-IDENTITY.json', observed)
         proxy = subprocess.Popen(['/usr/bin/python3', '-B', BASE + '/private_proxy.py'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         state.update(proxy_pid=proxy.pid, status='NATIVE_UP_ACCEPTANCE_RUNNING')
         save(h, 'OWNER.json', state)

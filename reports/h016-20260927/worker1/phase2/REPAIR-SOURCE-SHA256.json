@@ -1,0 +1,10 @@
+{
+  "candidate_owner.py": "621d8eb04cd9aeac12b9769b3bc7b00c2269928cb2f8f7bb14a7a77bbd2bcde5",
+  "benchmark.py": "8cd27c4839328c5ba3187d58d270e7504cb7fecc75b3827b4ce8cd233325702b",
+  "private_proxy.py": "82d88ed7e13de4a4a36b1a74a4186927e7e03a5380e109860e4e076f3baeb50c",
+  "telemetry.py": "df2c572fba760c963886a80a4a534c12b3c817465efc4a54aa85e01a72c7f39f",
+  "verify_retained.py": "dfb4479239129f7909ce54827cdd15a14215cebdc60da6e4e5939a995ead250f",
+  "native_identity.py": "0ba1f5781585ba887bd639e950870976e0ecb159caa674cb72dfa41cc48d3518",
+  "inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
+  "LAUNCH.json": "9f96098b3c491b9e22602144c5fa2f3ac7d706e7f41103a8f3539171e19bb211"
+}

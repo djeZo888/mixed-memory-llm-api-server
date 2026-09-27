@@ -5,7 +5,7 @@ import json
 import pathlib
 import random
 import time
-from candidate_owner import ADMIT_END, HARD_END, save
+from candidate_owner import ADMIT_END, HARD_END, BASE, LOG, save
 from telemetry import placement
 MODEL = 'mimo-v2.6-pro-rl'
 
@@ -138,6 +138,18 @@ def request(h, key, payload, label, failed):
 
 
 def qualify(h, key, failed):
+    # Private production roster: shape and canonical native count only, no 65536-token generation.
+    from private_proxy import normalize
+    raw_fixture = pathlib.Path(BASE, 'mimo-production-fixture-65536.json').read_bytes()
+    h.require(hashlib.sha256(raw_fixture).hexdigest() == '2fb03cef2e700b304f8eea538a5ef8df300afc53bb0a94241bc754c17679ef78', 'production_fixture_file_identity')
+    fixture_body = json.loads(raw_fixture)['canonicalBody']
+    normalize(fixture_body)
+    canonical = json.dumps(fixture_body, separators=(',', ':'), ensure_ascii=False).encode()
+    tools = json.dumps(fixture_body['tools'], separators=(',', ':'), ensure_ascii=False).encode()
+    h.require(hashlib.sha256(canonical).hexdigest() == 'c85d504741f038c1a0f150fdb59657a661ed38330958daab2b3f93f293e1e41b' and hashlib.sha256(tools).hexdigest() == '80e7a1e12e073ac57638e86638cf571158711ff821c96605135627777ce44e8c' and len(fixture_body['tools']) == 17, 'production_fixture_canonical_identity')
+    tokens, _ = count(key, fixture_body)
+    h.require(tokens + fixture_body['max_tokens'] <= 131071, 'production_fixture_count_capacity')
+    save(h, 'PRODUCTION17-COUNT.json', {'status': 'SHAPE_AND_NATIVE_COUNT_ONLY', 'input_tokens': tokens, 'output_ceiling': 65536, 'tools': 17, 'generated_tokens': 0, 'body_sha256': hashlib.sha256(canonical).hexdigest(), 'native_tool_qualification': False})
     for thinking in [False, True]:
         row = request(h, key, body('Compute 17*19. Give only the integer.', thinking=thinking, output=2048 if thinking else 256), 'TEXT-' + str(thinking), failed)
         correct = row['finish_reason'] == 'stop' and row['content'].strip() == '323'
@@ -155,7 +167,7 @@ def qualify(h, key, failed):
     h.require(row['finish_reason'] == 'stop' and '323' in row['content'] and not row['tool_calls'], 'tool_continuation_incorrect')
     warm, _, _ = fixture(key, 4096, 'warm-' + h.now())
     request(h, key, warm, 'WARM4K-DISCARDED', failed)
-    state = json.loads(pathlib.Path('/data/logs/H016-20260927/worker1/OWNER.json').read_text())
+    state = json.loads(pathlib.Path(LOG, 'OWNER.json').read_text())
     save(h, 'POST-WARM-PLACEMENT.json', placement(state['native_pid']))
     test, _, codes = fixture(key, 4096, 'measured-' + h.now())
     row = request(h, key, test, 'BENCH4096', failed)

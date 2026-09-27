@@ -13,7 +13,7 @@ import time
 
 P = pathlib.Path
 RUN = '/data/build/h014-pro-7ac59a6-20260927'
-LOG = '/data/logs/H016-20260927/worker1'
+LOG = '/data/logs/H016-20260927/worker1-r2'
 SESSION = '01a0e27e-32c5-7530-ac90-390e985795a2'
 DEPENDENCY_SHA = '03c0933c194c79a6aca5e98e26bd1682f99927c0f9dbfe53f25d9938caf3724c'
 MANIFEST_SHA = '6ac4242ac5d4df5b083b133062c78b792f1fdc7716d32c0e0000122e3263744b'
