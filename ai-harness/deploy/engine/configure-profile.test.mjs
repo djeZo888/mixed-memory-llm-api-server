@@ -354,3 +354,38 @@ test('MiMo numerical user edits never become managed prior content', async () =>
     seedFrontierAgent(profile);assert.equal(readFileSync(agent,'utf8'),frontierAgentMarkdown());
   } finally {rmSync(profile,{recursive:true,force:true});}
 });
+
+
+test('H016 exact managed context matrix retains legacy GLM hashes and all four MiMo tuples', async () => {
+  const { MIMO_MANAGED_CONTEXTS, selectedFrontierProfile } = await import('./configure-profile.mjs');
+  assert.deepEqual(MIMO_MANAGED_CONTEXTS, [131072,917504,1000000,1048576]);
+  const glm={model:'glm-5.3-flash',contextWindow:1048576,maxOutputTokens:65536};
+  const mimos=MIMO_MANAGED_CONTEXTS.map(contextWindow=>({model:'mimo-v2.6-pro-rl',contextWindow,maxOutputTokens:65536}));
+  const profile=realpathSync(mkdtempSync(path.join(os.tmpdir(),'h016-matrix-')));
+  const agent=path.join(profile,'agents/frontier/agent.md');
+  try {
+    seedFrontierAgent(profile);
+    writeFileSync(path.join(profile,'history-fixture.json'),'untouched');
+    for(const prior of [{...glm,contextWindow:480000},glm,...mimos]) for(const next of [glm,...mimos]) {
+      writeFileSync(agent,frontierAgentMarkdown(prior),{mode:0o600});
+      seedFrontierAgent(profile,next);
+      assert.equal(readFileSync(agent,'utf8'),frontierAgentMarkdown(next));
+      seedFrontierAgent(profile,next);
+    }
+    for(const spec of mimos) {
+      const selection={model:spec.model,mimoEnabled:true,mimoQualificationSha256:'a'.repeat(64),mimoContextWindow:spec.contextWindow,mimoMaxOutputTokens:65536};
+      assert.deepEqual(selectedFrontierProfile(selection),spec);
+      const config=localConfig(fixture,spec);
+      assert.equal(config.custom_provider.frontier.models[spec.model].name,'MiMo V2.6 Pro-RL');
+      assert.equal(config.defaultModelContextWindow,480000);
+      for(const change of [{mimoContextWindow:1048577},{mimoMaxOutputTokens:65537},{mimoContextWindow:1}]) assert.throws(()=>selectedFrontierProfile({...selection,...change}));
+      assert.equal(selectedFrontierProfile({...selection,mimoContextWindow:262144,mimoMaxOutputTokens:32768}).contextWindow,262144);
+      for(const edited of [frontierAgentMarkdown({...spec,contextWindow:spec.contextWindow+1}),frontierAgentMarkdown({...spec,maxOutputTokens:32768}),frontierAgentMarkdown(spec)+'User text.']) {
+        writeFileSync(agent,edited,{mode:0o600});
+        assert.throws(()=>seedFrontierAgent(profile),/explicit migration/);
+        assert.equal(readFileSync(agent,'utf8'),edited);
+      }
+    }
+    assert.equal(readFileSync(path.join(profile,'history-fixture.json'),'utf8'),'untouched');
+  } finally {rmSync(profile,{recursive:true,force:true});}
+});

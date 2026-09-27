@@ -19,6 +19,8 @@ export const REQUEST_TIMEOUT_MS = 151 * 60 * 1000;
 export const SHARED_SLOT_INSTRUCTIONS = 'Two shared inference slots serve all chats and agents. Delegate independent tasks when useful; excess inference requests are queued.\n';
 
 export const DEFAULT_FRONTIER_PROFILE = Object.freeze({ model: FRONTIER_MODEL, contextWindow: FRONTIER_CONTEXT, maxOutputTokens: 65536 });
+// Exact managed bytes only; support is not capacity qualification or selection.
+export const MIMO_MANAGED_CONTEXTS = Object.freeze([131072, 917504, 1000000, 1048576]);
 export function selectedFrontierProfile(selection) {
   if (selection?.model === FRONTIER_MODEL) return DEFAULT_FRONTIER_PROFILE;
   if (selection?.model !== 'mimo-v2.6-pro-rl' || selection.mimoEnabled !== true ||
@@ -50,7 +52,7 @@ export function localConfig(env, frontier = DEFAULT_FRONTIER_PROFILE) {
         kind: 'custom', name: 'Local frontier gateway', enabled: true,
         api: 'openai-completions',
         options: { baseURL: 'http://10.0.2.2:8081/frontier/v1', apiKey: token, timeout: REQUEST_TIMEOUT_MS },
-        models: { [frontier.model]: { id: frontier.model, name: frontier.model === FRONTIER_MODEL ? 'GLM-5.3-Flash' : 'MiMo-V2.6-Pro-RL', enabled: true,
+        models: { [frontier.model]: { id: frontier.model, name: frontier.model === FRONTIER_MODEL ? 'GLM-5.3-Flash' : 'MiMo V2.6 Pro-RL', enabled: true,
           tool_call: true, reasoning: true,
           limit: { context: frontier.contextWindow, output: frontier.maxOutputTokens },
           ...(frontier.model === FRONTIER_MODEL ? { thinking: { effortOptions: ['high'], defaultEffort: 'high' } } : {}),
@@ -238,7 +240,7 @@ function isManagedFrontierAgent(bytes) {
   if (createHash('sha256').update(bytes).digest('hex') === PRIOR_FRONTIER_AGENT_SHA256 || bytes.equals(Buffer.from(frontierAgentMarkdown()))) return true;
   // Only these explicitly reviewed generated profiles are eligible for a
   // future capacity switch/rollback. Arbitrary numeric edits are user content.
-  return [131072, 1048576].some(contextWindow => bytes.equals(Buffer.from(
+  return MIMO_MANAGED_CONTEXTS.some(contextWindow => bytes.equals(Buffer.from(
     frontierAgentMarkdown({ model: 'mimo-v2.6-pro-rl', contextWindow, maxOutputTokens: 65536 }),
   )));
 }
@@ -254,7 +256,7 @@ export function seedFrontierAgent(profile, frontier = DEFAULT_FRONTIER_PROFILE) 
     safeDirectory(directory, true);
     const previous = safeRead(target, true);
     if (previous.equals(content)) return;
-    // Only the exact prior reviewed 480K managed file is eligible. Custom bytes,
+    // Only exact reviewed managed tuples (including the old 480K hash) qualify. Custom bytes,
     // unsafe ownership/modes, links and extra profile content are never adopted.
     if (!isManagedFrontierAgent(previous)) {
       throw new Error('Existing frontier agent differs; explicit migration required.');

@@ -6,18 +6,21 @@ import {join,dirname,resolve} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {createGuards,sha,FLASH} from './guards.mjs';
-import {preflight,checkPromoted,podman,RELEASE,RUNROOT,KEY,IMAGE,SOURCE} from './preflight.mjs';
+import {preflight,checkPromoted,podman,RELEASE,RUNROOT,KEY,IMAGE,SOURCE,assertAdmission,SETTLE_UTC} from './preflight.mjs';
 const here=dirname(fileURLToPath(import.meta.url));
 if(process.argv.includes('--help')){
-  console.log('Usage: node live.mjs --gate ABS/ROOT-LIVE-GATE.json --gate-sha256 HEX --activation-manifest ABS/ACTIVATION-MANIFEST-03.json\nLinux user1000 only. Exact promotion, root live gate and Worker1 lane release first. Reuses existing observer and launcher. Default refuses; no promotion/start/replay.');process.exit(0);
+  console.log('Usage: node live.mjs --gate ABS/ROOT-LIVE-GATE.json --gate-sha256 HEX --activation-manifest ABS/ACTIVATION-MANIFEST.json --work-deadline-ms EPOCH_MS\nLinux user1000 only. Exact promotion, root live gate and Worker1 lane release first. Reuses existing observer and launcher. Default refuses; no promotion/start/replay.');process.exit(0);
 }
-const args={};for(let i=2;i<process.argv.length;i+=2){assert(['--gate','--gate-sha256','--activation-manifest'].includes(process.argv[i])&&!args[process.argv[i]]&&process.argv[i+1]);args[process.argv[i]]=process.argv[i+1];}
-assert.equal(Object.keys(args).length,3,'explicit coordinator gate/digest/activation manifest required');
+const args={};for(let i=2;i<process.argv.length;i+=2){assert(['--gate','--gate-sha256','--activation-manifest','--work-deadline-ms'].includes(process.argv[i])&&!args[process.argv[i]]&&process.argv[i+1]);args[process.argv[i]]=process.argv[i+1];}
+assert.equal(Object.keys(args).length,4,'explicit coordinator gate/digest/activation manifest required');
 process.umask(0o077);
-const {gate,promoted,observerCredential}=preflight(args,here);
+const {gate,promoted,observerCredential}=await preflight(args,here);
+assertAdmission();
 assert(!existsSync(RUNROOT),'never replay/reopen a prior acceptance run or clear its quarantine');
 mkdirSync(RUNROOT,{mode:0o700});mkdirSync(join(RUNROOT,'payloads'),{mode:0o700});
-const started=Date.now(),deadline=Math.min(started+480000,Date.parse(gate.expiresUtc)-60000);
+const started=Date.now(),workDeadline=Number(args['--work-deadline-ms']);
+assert(Number.isSafeInteger(workDeadline));
+const deadline=Math.min(started+1200000,workDeadline,Date.parse(SETTLE_UTC)-180000);
 assert(deadline>started+60000,'insufficient coordinator window');
 const fd=openSync(join(RUNROOT,'events.jsonl'),'wx',0o600),secretValues=new Set();
 const write=(file,value)=>{const text=JSON.stringify(value,null,2)+'\n';for(const secret of secretValues)assert(!text.includes(secret),'secret echo refused');writeFileSync(join(RUNROOT,file),text,{mode:0o600,flag:'wx'});};
@@ -32,7 +35,7 @@ const prompts=JSON.parse(readFileSync(join(here,'prompts.json')));
 const tokenSessions=new Map(),engines=new Map(),requests=[],states=[],qwenUsage=[],ownedContainers=new Map();
 let mode='full-live',phase='code',app,gateway,ledger,closing=false;
 const observer=new NodeAvailability({backend:nodeClient('ai-vm',observerKey),readiness:createBackendReadiness(key),onLatch:l=>record({event:'node-latch',ledger:l}),changed:()=>gateway?.notifyAvailabilityChanged()});
-const available=id=>Date.now()<Date.parse(gate.expiresUtc)?observer.get(id):{state:'unknown',dispatch:'reject'};
+const available=id=>Date.now()<deadline?observer.get(id):{state:'unknown',dispatch:'reject'};
 function within(p,ms=Math.max(1,deadline-Date.now())){let timer;return Promise.race([p,new Promise((_,no)=>timer=setTimeout(()=>no(Error('fixture_deadline')),ms))]).finally(()=>clearTimeout(timer));}
 function capture(original,effective,meta){
   assert(Date.now()<deadline&&!closing,'fixture_dispatch_closed');
@@ -107,7 +110,7 @@ try{
   assert(calls(codeId,'bash').some(c=>JSON.parse(c.function.arguments).command?.includes('check.mjs')),'Qwen independent bash verification missing');
   const workspace=app.files.workspace(app.store.getSession(codeId).workspaceId);assert.equal(sha(readFileSync(join(workspace,'check.mjs'))),sha(readFileSync(join(here,'check.mjs'))),'verification file changed');assert.notEqual(sha(readFileSync(join(workspace,'edge.mjs'))),sha(readFileSync(join(here,'edge.mjs'))),'child made no change');execFileSync(process.execPath,['check.mjs'],{cwd:workspace,timeout:5000,env:{PATH:'/usr/bin:/bin'},stdio:'pipe'});
   write('code-native-ids.json',{parentSessionId:children.rootSessionId,...codeResult,children,parentModel:'custom_provider:harness/qwen3.8-27b',childModel:'custom_provider:frontier/mimo-v2.6-pro-rl',modelEvidence:'actual native route payloads, unchanged profile, native foreground result and ACP delegation graph'});
-  const childRequests=requests.filter(r=>r.sessionId===codeId&&['full-live','narrow-live'].includes(r.mode));
+  const childRequests=requests.filter(r=>r.sessionId===codeId&&r.mode==='full-live');
   assert(childRequests.length>0 && childRequests.every(r=>r.original.model===FLASH && r.route==='/frontier/v1/chat/completions'),'actual child model/route mismatch');
   const pairedTools=new Map();
   for(const r of childRequests) {
@@ -127,6 +130,16 @@ try{
   assert([...pairedTools.values()].some(c=>c.name==='bash'),'MiMo bash tool result absent');
   const final=code.snapshot.messages.filter(m=>m.role==='assistant'&&m.phase==='final'&&m.content?.trim());
   assert(final.length>0,'actual Qwen final answer absent');
+  const parentRequests=requests.filter(r=>r.sessionId===codeId&&r.mode==='qwen');
+  assert(parentRequests.some(r=>{
+    const messages=r.original.messages??[];
+    const childIndex=messages.findIndex(m=>m.role==='tool'&&typeof m.content==='string'&&m.content.includes(`task_id="${codeResult.taskId}"`));
+    return childIndex>=0&&messages.slice(childIndex+1).some((m,i)=>m.role==='assistant'&&(m.tool_calls??[]).some(c=>
+      c.function?.name==='bash'&&JSON.parse(c.function.arguments).command?.includes('check.mjs')&&
+      messages.slice(childIndex+i+2).some(t=>t.role==='tool'&&t.tool_call_id===c.id&&JSON.stringify(t.content).includes('EDGE_CHECK_PASS'))));
+  }),'parent verification needs actual successful tool result after child completion');
+  const finalText=final.map(m=>m.content).join('\n');
+  assert(finalText.includes('H016_VERIFIED')&&finalText.includes(codeResult.taskId)&&finalText.includes('NaN=0')&&finalText.includes('reversed=10'),'final semantic assertion absent');
   write('child-tool-proof.json',{childNativeSessionId:codeResult.childSessionId,parentNativeSessionId:children.rootSessionId,taskId:codeResult.taskId,provider:'custom_provider:frontier',model:FLASH,route:'/frontier/v1/chat/completions',toolChoices:[...new Set(childRequests.map(r=>r.original.tool_choice??'native-default-auto'))],binding:'exactly one foreground frontier task; native task result and delegation graph; its MiMo wire history with paired tool_call_id',pairedTools:[...pairedTools.values()],childResult:codeResult,parentFinal:final.map(m=>({id:m.id,sha256:sha(m.content)}))});
   assert.equal(gateway.frontierSnapshot().state,'idle');const finals=new Map();for(const r of states)finals.set(r.id,r);assert(finals.size>1&&[...finals.values()].every(r=>r.state==='settled'),'native requests not serially settled');
   summary={codeSessionId:codeId,qwenUsage,mimoRequests:states,childUsefulToolNames:[...new Set([...pairedTools.values()].map(c=>c.name))],semanticReview:'PENDING_ROOT_REVIEW',additionalCases:'NOT_TESTED: no new cancellation/reconnect concern',scope:'one Qwen parent and MiMo foreground child; full production tools; no projection, count-only replay or overlap test'};status='COMPLETED_PENDING_ROOT_REVIEW';

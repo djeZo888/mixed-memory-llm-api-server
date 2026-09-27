@@ -11,8 +11,14 @@ umask 077
 export PATH=/home/user/.local/opt/ai-harness/node-v24.21.0/bin:/usr/bin:/bin
 H016_TASK=/home/user/ai-harness-build/H016-FINAL-INTEGRATION-20260927
 H016_DRIVER="$H016_TASK/driver"
+: "${H016_REVIEW:?existing actual root review/current W1 handoff path}"
 : "${H016_GO_SHA:?actual reviewed root gate SHA256}"
 [[ $H016_GO_SHA =~ ^[a-f0-9]{64}$ ]]
+# 1470 runtime + 30 stop grace = 1500 total; terminal settlement by17:25.
+python3 - <<'PYTIME'
+import datetime
+assert datetime.datetime.now(datetime.timezone.utc)<=datetime.datetime(2026,9,27,17,0,tzinfo=datetime.timezone.utc), 'late launch refused'
+PYTIME
 test ! -e "$H016_DRIVER/supervisor-result.json"
 test ! -e "$H016_TASK/live-acceptance-01"
 test ! -e "$H016_DRIVER/dispatch-intent.json"
@@ -25,12 +31,12 @@ PY
 # No --wait, --pipe, --pty, foreground client or detached SSH child.
 # Preflight AND all live requests run under the independent Linux manager.
 systemd-run --user --unit=h016-final-app-acceptance \
- --property=RuntimeMaxSec=660 --property=TimeoutStopSec=30 \
+ --property=RuntimeMaxSec=1470 --property=TimeoutStopSec=30 \
  --property=KillMode=control-group --property=WorkingDirectory="$H016_DRIVER" \
  --property=StandardOutput="append:$H016_DRIVER/systemd-output.log" \
  --property=StandardError="append:$H016_DRIVER/systemd-output.log" \
  /usr/bin/python3 "$H016_DRIVER/supervise.py" \
- --gate "$H016_TASK/private/ROOT-GO.json" --gate-sha256 "$H016_GO_SHA" \
+ --gate "$H016_REVIEW" --gate-sha256 "$H016_GO_SHA" \
  --activation-manifest "$H016_TASK/private/ACTIVATION-MANIFEST.json" \
  --receipt "$H016_DRIVER/supervisor-result.json"
 systemctl --user show h016-final-app-acceptance.service \

@@ -31,13 +31,17 @@ assert new['Labels']['org.opencontainers.image.ai-harness.source']=='928b3b47005
 PY
 podman run --rm --pull=never --http-proxy=false --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint cat "$H016_IID" /opt/ai-harness/config/active-frontier.json > private/image-active-frontier.json
 cmp "$H016_NEW/config/active-frontier.json" private/image-active-frontier.json
+podman run --rm --pull=never --http-proxy=false --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint cat "$H016_IID" /opt/ai-harness/deploy/engine/configure-profile.mjs > private/image-configure-profile.mjs
+cmp "$H016_NEW/deploy/engine/configure-profile.mjs" private/image-configure-profile.mjs
 node --input-type=module - "$H016_NEW" "$H016_SHA" <<'JS'
 import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {createHash} from 'node:crypto';import {pathToFileURL} from 'node:url';
 const [root,sha]=process.argv.slice(2);
 const {readMimoEvidence,validateMimoIntegration}=await import(pathToFileURL(root+'/server/dist/mimo-frontier.js'));
 const receipt=readMimoEvidence('/etc/sova-qualification/mimo.json');assert.equal(createHash('sha256').update(receipt.text).digest('hex'),sha);
-const {qualification}=validateMimoIntegration(receipt.value);const active=JSON.parse(readFileSync(root+'/config/active-frontier.json','utf8'));const candidate=JSON.parse(readFileSync(root+'/config/mimo-candidate.json','utf8'));
-assert.equal(active.model,'mimo-v2.6-pro-rl');assert.equal(active.mimoEnabled,true);assert.equal(active.mimoQualificationSha256,sha);assert.equal(active.mimoContextWindow,qualification.identity.actualSlotContext);assert.equal(active.mimoMaxOutputTokens,65536);assert([131072,1048576].includes(active.mimoContextWindow));assert(candidate.enabled&&candidate.qualified&&candidate.model===active.model);
+const validated=validateMimoIntegration(receipt.value);const {qualification,capacity}=validated;
+const {validateCapacity,PROFILE_SHA256}=await import(pathToFileURL(process.cwd()+'/driver/preflight.mjs'));validateCapacity(receipt.value,validated);
+assert.equal(createHash('sha256').update(readFileSync(root+'/deploy/engine/configure-profile.mjs')).digest('hex'),PROFILE_SHA256);const active=JSON.parse(readFileSync(root+'/config/active-frontier.json','utf8'));const candidate=JSON.parse(readFileSync(root+'/config/mimo-candidate.json','utf8'));
+assert.equal(active.model,'mimo-v2.6-pro-rl');assert.equal(active.mimoEnabled,true);assert.equal(active.mimoQualificationSha256,sha);assert.equal(active.mimoContextWindow,qualification.identity.actualSlotContext);assert.equal(active.mimoMaxOutputTokens,65536);assert([1000000,917504].includes(active.mimoContextWindow));assert(candidate.enabled&&candidate.qualified&&candidate.model===active.model);
 JS
 systemd-analyze --user verify "$H016_PREP/proposed/ai-harness.service"
 if [[ $H016_MODE == --dry-run ]]; then echo 'PASS local pair checks only; W1/root live owner review still required. No tag/unit/service change.'; exit 0; fi

@@ -8,14 +8,14 @@ import {pathToFileURL} from 'node:url';
 if(process.argv.includes('--help')) { console.log('Usage: rollback-profiles.mjs REVIEWED_H016_MODULE PROFILES_ROOT [--dry-run|--apply]\nRequires stopped app/settled task containers and W1 exact MiMo settlement plus explicit ready GLM selection before apply. Default dry-run.'); process.exit(0); }
 const [modulePath,rootArg,mode='--dry-run']=process.argv.slice(2);
 assert(['--dry-run','--apply'].includes(mode));
-assert.equal(createHash('sha256').update(readFileSync(modulePath)).digest('hex'),'a4aff30b28967d68ee4205b683c9445e8d5da091c78d686eb8cb6bf5586da118');
-const {frontierAgentMarkdown,frontierSlotPolicy,DEFAULT_FRONTIER_PROFILE,seedFrontierAgent}=await import(pathToFileURL(resolve(modulePath)));
+assert.equal(createHash('sha256').update(readFileSync(modulePath)).digest('hex'),'5f020d727b87a0911a9a8e39740c87de5d08c180459cc72d9a2fba28bcfe5c9b');
+const {frontierAgentMarkdown,frontierSlotPolicy,DEFAULT_FRONTIER_PROFILE,MIMO_MANAGED_CONTEXTS,seedFrontierAgent}=await import(pathToFileURL(resolve(modulePath)));
 const root=resolve(rootArg); assert.equal(realpathSync(root),root);
 const directory=p=>{const s=lstatSync(p); assert(s.isDirectory()&&!s.isSymbolicLink()&&s.uid===process.getuid()&&!(s.mode&0o022));};
 const read=p=>{const s=lstatSync(p); assert(s.isFile()&&s.uid===process.getuid()&&s.nlink===1&&!(s.mode&0o077));return readFileSync(p);};
 directory(root);
 const glm=Buffer.from(frontierAgentMarkdown());
-const mimos=[131072,1048576].map(contextWindow=>Buffer.from(frontierAgentMarkdown({model:'mimo-v2.6-pro-rl',contextWindow,maxOutputTokens:65536})));
+const mimos=MIMO_MANAGED_CONTEXTS.map(contextWindow=>Buffer.from(frontierAgentMarkdown({model:'mimo-v2.6-pro-rl',contextWindow,maxOutputTokens:65536})));
 const oldPolicy=frontierSlotPolicy({model:'mimo-v2.6-pro-rl'}), newPolicy=frontierSlotPolicy();
 const plans=[]; let untouched=0;
 for(const entry of readdirSync(root)) {

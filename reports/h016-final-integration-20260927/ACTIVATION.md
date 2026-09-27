@@ -1,159 +1,73 @@
-# H016 final integration: staged, activation held
+# H016 held source proposal — current root review
 
-Latest root steering (14:59UTC): global window extends to **17:48:08UTC**;
-this native session still ends by **15:05:48.133723UTC**. MiMo is intended as
-PRIMARY frontier replacing GLM only after full Sova acceptance; preserve both
-Qwens and image service. Initial131072 promotion is superseded pending final
-capacity qualification. Root proposes F16 about917504 (896K), 7% GPU reserve,
-a short allocation test and a new4K/16K/64K ladder in a separate W1 task.
-None of that is dispatched here. Current profile tuples/config are unchanged.
-A minimal managed-profile allowlist/rollback delta for917504 may be needed in
-that separate task. This packet's131072 driver/config proposal is now HELD,
-not permission to promote131072; preflight refuses before any contacts.
-Full17/native qualification flags remain missing/false; no qualified receipt.
+Source/static only, based on5b728983. All launch/activation/preflight holds remain.
+No qualification booleans or active config changed. Native/live checks NOT_TESTED.
+MiMo is the intended PRIMARY frontier only after actual Sova acceptance; Qwen
+remains main coordinator and ordinary coding/agentic model. Both Qwens and image
+remain; GLM is manual rollback on the same physical frontier slot/shared queue.
 
+Use the existing actual hash-reviewed W1 qualification receipt and current W1
+lane handoff/root review. No new receipt schema, permission file, expiry refresh
+loop or invented proof. Existing validateMimoIntegration retains native identity,
+precision, reserve, full17, nested strict schema, serial and ceiling checks.
+The selected context must be decimal1000000, or917504 only when W1's existing
+capacity report demonstrates actual target capacity/workspace-reserve failure.
+Configured=allocated=identity.actualSlotContext; occupiedTested remains the real
+measured value. Preserve F16 K/V and7% GPU reserve; root reviews existing source,
+settings, native props/slots and reserve evidence.65536 is the requested production
+output ceiling, not proof of65536 generated tokens. No occupied1M claim.
 
-This packet changes production source by exactly two lines: the server receipt
-literal and Docker `GOMP_SPINCOUNT=0`. Source commit is
-`df0702412b1a8f594db7d3211ca63f6aafe8a026`. Server-only compilation changed
-`server/dist/active-frontier.js` to SHA256
-`3a4b7f6a2563fd1c123cc14532fdd29c1ba3613544c87f7a3056b17bfefa0c35`.
-The new inert release is:
+The unchanged prepared host release is
 `/opt/ai-harness/releases/df0702412b1a8f594db7d3211ca63f6aafe8a026-h016/ai-harness`.
-All native engine, web, tool and dependency bytes are unchanged; engine remains
-`sha256:6641df04cf4e8375029639a67c22da7c3ff4719d2b8e58748572f049de8fb022`.
-No qualified overlay was built. The earlier 928b3b4 release remains intact.
+Existing artifact identities are reused from the prior packet, not re-observed.
+Engine base is `sha256:6641df04cf4e8375029639a67c22da7c3ff4719d2b8e58748572f049de8fb022`;
+compiled estimator/tools unchanged. Owner source remains
+`ee5d623f3334afba341e1539383ca672f7f4db096cf329adf1c69d2b871ec814`; W1 alone deploys.
+Receipt path `/etc/sova-qualification/mimo.json` remains unqualified/empty per
+prior packet; private `/etc/ai-harness`0700 must remain unchanged.
 
-The only new host configuration directory is `/etc/sova-qualification`,
-root:root0755. It is EMPTY. `/etc/ai-harness` remains0700; all existing child
-metadata was compared before/after without reading secret contents.
+Only after actual capacity choice and later root GO, the existing helper accepts:
+`stage-qualified-config.mjs RELEASE W1_MANIFEST SHA256 NEW_STAGE REVIEWED_PROFILE_MODULE`.
+It validates the existing receipt and exact profile source hash and proposes ONE
+COPY layer containing active config plus configure-profile.mjs over6641. It does
+not build/install/activate. Do not rebuild the native engine. Future build must
+hash-check and run the affected migration tests against the exact profile inside
+the overlay (using existing packaged skills), then prove host/image profile and
+active-config bytes identical. The held activate-pair draft enforces those bytes.
+Profile/source/test hashes are in `../h016-context-acceptance-20260927/SOURCE-CLOSURE.json`.
 
-## Required root/W1 qualification before any further host writes
+Remaining status gate: `ai-harness/config/system-registry.json` currently advertises
+GLM only. Before qualified pairing, root must review the selected frontier registry
+row with id/observation_key `mimo-v2.6-pro-rl` and display_name `MiMo V2.6 Pro-RL`,
+bound to the fresh observed MiMo node DTO; never relabel a GLM observation or
+publish both as concurrent ready capacity. `server/src/status-projection.ts`
+projects registry observation keys; `server/src/node-availability.ts` consumes
+canonical service readiness. `server/src/gateway.ts` already chooses one frontier
+model/queue and reports actual capacity. Qwen main meter stays independent.
+Native profile display name is now `MiMo V2.6 Pro-RL`; alias remains unchanged.
 
-Reuse the exact required schema in
-`../h016-activation-prep-20260927/NEEDED-FROM-W1.md`, with only its obsolete
-receipt path replaced by `/etc/sova-qualification/mimo.json`. W1 supplies the
-protected production manifest, actual full17 and strict schema qualification,
-65536 requested-ceiling acceptance with a short successful response, serial
-completion, exact current clean supervised production owner, native props/slot
-and canonical fresh node DTO. Count9461 alone is not qualification.
+The existing H009-derived real driver requires one Qwen parent, one MiMo native
+child, actual production17-tool schemas (including path/nested strict) and65536
+ceiling, actual assistant tool call + matching tool result in native continuation,
+successful child result and ACP parent/child mapping, parent's independent real
+bash result, immutable verification checks, final semantic assertion and exact
+settlement. No fabricated runtime tools/results or backend calls during staging.
+Saved payloads, native update stream events, output snapshots and terminal receipts
+remain private under the existing isolated run root. No replay/quarantine clear.
 
-Root must bind the actual deployed owner SHA256 to
-`ee5d623f3334afba341e1539383ca672f7f4db096cf329adf1c69d2b871ec814`, its
-source closure/manifest digest and Docker readback to `GOMP_SPINCOUNT=0`,
-`OMP_NUM_THREADS=1`, unchanged image/argv/thread/pinning/no-host settings.
-The owner code's existing source preflight pins its bytes; the app schema does
-not itself attest Docker environment. Do not infer that mapping from a boolean.
-W1 alone contacts/deploys ai-vm. No app inference until W1 lane handoff/root GO.
+The only future live entrypoint is the held `launch-app-acceptance.sh` under
+independent Linux systemd. Existing root review path is supplied explicitly;
+preflight refuses before contacts until root reviews/unholds this exact source.
+Actual unit/preflight/work admission after17:00UTC refuses before inference.
+1200s maximum work is reduced after preflight to leave cleanup within a1380s
+monotonic supervisor total. Absolute settlement bound is17:25UTC. Systemd runtime
+1470s + stop grace30s jointly cap1500s, leaving23m08s before17:48:08 recovery end.
+No foreground native CLI-owned client, no CLI SIGINT while a live child owns work,
+no paid waiting or blind retry. Uncertain/cancelled settlement stays UNKNOWN.
 
-Capacity facts are separate: published1048576, allocated/configured131072,
-output ceiling65536, occupied tested65536. Preserve actual completed output
-length independently. Do not reinterpret a requested ceiling as generated output.
-
-## Future config and receipt proposal — not executed
-
-The following requires the exact reviewed protected W1 application document;
-there is no template filled with invented qualification and no placeholder IID.
-The helper validates the actual document, then makes an overlay on exact6641.
-Its source is copied from the previous helper with stale path/owner prose fixed.
-No native rebuild occurs.
-
-```bash
-set -euo pipefail
-umask 077
-export PATH=/home/user/.local/opt/ai-harness/node-v24.21.0/bin:/usr/bin:/bin
-H016_TASK=/home/user/ai-harness-build/H016-FINAL-INTEGRATION-20260927
-H016_NEW=/opt/ai-harness/releases/df0702412b1a8f594db7d3211ca63f6aafe8a026-h016/ai-harness
-: "${H016_MANIFEST:?actual root-reviewed W1 application document}"
-: "${H016_SHA:?exact reviewed SHA256}"
-python3 /home/user/ai-harness-build/H016-MIMO-BUILD-20260927/guard.py > "$H016_TASK/private/pre-qualified.json"
-node "$H016_TASK/stage-qualified-config.mjs" "$H016_NEW" "$H016_MANIFEST" "$H016_SHA" "$H016_TASK/qualified-stage"
-podman build --pull=never --network none --format docker --file "$H016_TASK/qualified-stage/Containerfile" --iidfile "$H016_TASK/qualified-stage/qualified.iid" "$H016_TASK/qualified-stage"
-python3 /home/user/ai-harness-build/H016-MIMO-BUILD-20260927/guard.py > "$H016_TASK/private/post-qualified.json"
-# Root reviews exact IID, sole config layer and current W1 identity before pairing.
-sudo -n test ! -e /etc/sova-qualification/mimo.json
-sudo -n test ! -L /etc/sova-qualification/mimo.json
-# Directory root:root0755, canonical trusted ancestry already required; recheck.
-test "$(stat -c '%u:%g:%a' /etc/sova-qualification)" = 0:0:755
-sudo -n install -o root -g root -m 0644 "$H016_TASK/qualified-stage/mimo-qualification.json" /etc/sova-qualification/mimo.json
-sudo -n install -o root -g root -m 0644 "$H016_TASK/qualified-stage/config/active-frontier.json" "$H016_NEW/config/active-frontier.json"
-sudo -n install -o root -g root -m 0644 "$H016_TASK/qualified-stage/config/mimo-candidate.json" "$H016_NEW/config/mimo-candidate.json"
-# Re-read through unchanged readMimoEvidence as user1000, hash-match and validate.
-# Host and qualified-image active-frontier.json must be byte-identical.
-```
-
-The paired proposal `activate-pair.sh` has the corrected path/release/unit hashes
-but still exits78 unconditionally. It must not be unlocked by this session.
-After separate root GO, a reviewed follow-up can apply its existing exact pair
-checks to the real receipt/IID, then pair tag/unit paths while keeping app paused
-for the isolated H009-derived acceptance below. No late activation merely to use
-remaining time. The source-label928b3b4 on the unchanged engine is intentional;
-df07024 is the host receipt-path release. Status/app normal start follows actual
-acceptance and root review. No ledger clear, replay or second frontier owner.
-
-## Thin native application acceptance proposal — NOT RUN
-
-`driver/` derives directly from the existing H009 native driver (see
-`prepare-app-driver.py`). It retains `createApp`, `createEngine`, `createGateway`,
-`FrontierLedger`, protected credentials, passive node observer, native ACP graph,
-owned workspace/container settlement, and the original edge/check fixture.
-It removes the old full-count-only request, roster projection, overlap request,
-and GLM-specific gateway configuration. This is a proposal with syntax, hook
-fixtures and absent-gate refusal checked, not a live-qualified runner.
-
-One actual Qwen parent delegates exactly one foreground task to native MiMo.
-The child reads/fixes edge.mjs and runs immutable check.mjs. The parent independently
-runs check.mjs and produces its final answer. The full actual17 production tools
-must hash to `80e7a1e12e073ac57638e86638cf571158711ff821c96605135627777ce44e8c`;
-no schema substitution, reduced roster or native tool execution during preparation.
-Every MiMo request must use fewer than16384 input tokens and requested65536 output,
-with allocated131072. Prompt asks for a short result; wall time bounds actual work.
-
-Root issues a private, hash-pinned `ROOT_GO_H016_NATIVE_APP_ACCEPTANCE` gate only
-after current lane handoff. `driver/preflight.mjs` lists all required real gate
-fields and receipts; no gate is manufactured here. Its qualified image ID must
-be a real config overlay on6641, never6641 itself. The activation manifest and
-all driver/release hashes are pinned. Expiry must be no later than17:38:08UTC,
-leaving10minutes for final recovery. Native work cap480s; supervisor cap600s,
-including settlement; no second attempt. Owned data root is new
-`H016-FINAL-INTEGRATION-20260927/live-acceptance-01`, never production userdata.
-
-Exact future entrypoint after the separate capacity/driver/root-GO review is
-`bash "$H016_TASK/launch-app-acceptance.sh"`. The concrete script is currently
-HELD with exit78; its retained body uses only independent Linux
-`systemd-run --user --unit=h016-final-app-acceptance`, RuntimeMaxSec660,
-TimeoutStopSec30, KillMode=control-group, append-only task log output and the
-existing bounded `supervise.py`. No --wait/--pipe/--pty and no foreground live
-client. The supervisor runs preflight inside the job, saves live-process.log,
-supervisor-result.json and exact owned-container settlement. Native update
-contents stream to private events.jsonl with periodic/boundary fsync; complete
-request histories and final snapshots are retained. Dispatch intent is not proof.
-Verify invocation/PID/status from a new SSH session after launch, then close the
-paid CLI while the owned bounded job runs. Never SIGINT a CLI/supervisor while
-its child owns a live request; preserve and inspect job/request disposition
-before any recovery. The earlier W1 foreground stream-loss incident motivates
-this requirement. No such request or client ran in this packet.
-
-PASS requires actual Qwen and MiMo wire/model/route IDs; exactly one native task
-call and ACP parent/child mapping; child's assistant tool call paired with a real
-tool result in a subsequent MiMo request; successful child final result; parent's
-independent bash verification; immutable check file and actual edge-file change;
-parent final answer; all native requests settled and frontier idle; exact owned
-container release. Root reviews semantics. Any ambiguity stays held; no replay
-or quarantine clear. Recheck original production data identities afterwards.
-
-## Recovery in either outcome
-
-Actual state remains original7143c17/image9ef885, paused app. After W1 proves exact
-MiMo settlement, valid explicit GLM selection and original GLM1M readiness, normal
-`systemctl --user start ai-harness.service` is sufficient; no profiles migrated.
-This session does not start it. Original units, tag, image, release and private
-rollback copies in H016-ACTIVATION-PREP-20260927 remain unchanged.
-
-If a later MiMo activation actually migrates managed profiles, use the existing
-`rollback-profiles.mjs` with the new release's unchanged configure-profile.mjs,
-first dry-run then the reviewed apply, after app/owner settlement and W1's explicit
-ready GLM selection. Then restore exact original tag/unit pair using
-`../h016-activation-prep-20260927/ACTIVATION.md` recovery commands. Preserve current
-user data/history/files/custom profiles; never snapshot-restore user data or clear
-quarantine. Global deadline is now17:48:08UTC; this native cap remains15:05:48.133723UTC.
+Rollback remains the exact managed-profile helper: all four MiMo tuples return to
+GLM1048576/output65536; custom edits stop all-profile validation before writes.
+No user-data snapshot restore. Original7143/9ef rollback artifacts are preserved;
+normal recovery requires W1 exact MiMo settlement, explicit GLM selection/ready,
+and root-controlled original app restoration. Prior26sessions/133messages/62files/
+17597nonDB counts are prior packet evidence only; no audit repeated here.

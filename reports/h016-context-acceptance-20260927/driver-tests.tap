@@ -1,0 +1,12 @@
+✔ full actual tools/output preserved; malformed roster and oversized input close admission (1.985583ms)
+✔ final capacity uses existing actual receipt without conflating occupied input (4.120375ms)
+✔ held preflight refuses before reading any file or contacting any host (0.3695ms)
+✔ admission boundary and exact profile source pin (0.526709ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 57.533833
