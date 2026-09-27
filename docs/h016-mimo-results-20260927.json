@@ -173,7 +173,7 @@
       "reason": "Available activity and PCIe counters do not measure VRAM byte traffic; exact native run was not launched under a supported GPU byte-counter profiler."
     },
     "r8": {
-      "status": "COMPLETE_CURRENT_INCUMBENT_EIGHT_THREAD_TRIALS_PENDING",
+      "status": "COMPLETE_SUPERSEDED_BY_MEASURED_EIGHT_SPREAD_PROFILE",
       "only_inference_delta": "decode threads64 to16; batch threads64 retained",
       "configured_context": 131072,
       "GOMP_SPINCOUNT": "0",
@@ -224,6 +224,41 @@
       "frontier_sample_max_activity_percent": 23,
       "improvement_vs_r7_percent": 31.909,
       "correctness": "UNSCORED_THROUGHPUT_FIXTURE"
+    },
+    "r10_spread8": {
+      "baseline_finished_utc": "2026-09-27T16:38:31.812378+00:00",
+      "actual_input": 83,
+      "actual_output": 128,
+      "native_output_tokens_s": 9.209882711781072,
+      "sse_output_tokens_s": 9.209864306125807,
+      "improvement_pct": 18.637002630694944,
+      "prefill_seconds": 2.125482,
+      "ttft_seconds": 2.442546674996265,
+      "total_seconds": 16.232357357999717,
+      "done": true,
+      "full_http_drain": true,
+      "slot_idle": true,
+      "quality": "UNSCORED_LENGTH_FINISH",
+      "affinity_status": "INCONCLUSIVE",
+      "affinity_reason": "some_task_reads_unavailable",
+      "raw_affinity_sha256": "216aa3a796a33afb62e233545cc76469ca489eabdfc29a46e300c11cdc93963d",
+      "configured_context": 131072,
+      "decode_threads": 8,
+      "batch_threads": 64,
+      "guest_decode_cpus": [
+        0,
+        16,
+        24,
+        32,
+        40,
+        48,
+        56,
+        64
+      ],
+      "GOMP_SPINCOUNT": "0",
+      "comparison_scope": "Whole profile; GGML NUMA override disabled compared withR8.",
+      "steady_affinity": "Four later saved snapshots show eight substantially active singleton guest CPUs; whole-window classifier remains inconclusive.",
+      "physical_host_pinning": "NOT_PROVEN"
     }
   },
   "benchmarks_scope": "Historical pre-optimization R5 ladder at131072 configured context. A new ladder at selected optimized settings and final allocated context is authorized and pending.",
@@ -234,30 +269,36 @@
     "minimum_gpu_free_fraction": 0.07,
     "host_reserve_fraction": 0.15,
     "status": "PROJECTION_ONLY_ACTUAL_ALLOCATION_PENDING",
-    "largest_new_occupied_test_tokens": 65536,
+    "largest_new_occupied_test_tokens": null,
     "primary_frontier": "mimo-v2.6-pro-rl",
     "qwen_instances": 2,
     "image_model_preserved": true,
-    "decode_threads": null,
+    "decode_threads": 8,
     "batch_threads": 64,
     "GOMP_SPINCOUNT": "0",
     "expected_physical_pool_tokens": 1000192,
     "physical_pool_note": "Pinned allocator pads to256 cells. Actual allocation and exposed slot capacity still require final native readback.",
-    "incumbent_decode_threads": 16,
-    "eight_thread_affinity_trials": "AUTHORIZED_PENDING: spread one CPU per guest NUMA vs guest node0; actual affinity required",
+    "incumbent_decode_threads": 8,
+    "eight_thread_affinity_trials": "SPREAD_COMPLETE_9.20988_TPS; GUEST_NODE0_NOT_ADMITTED_TIME_BUDGET",
     "final_background_test": {
       "status": "AUTHORIZED_NOT_STARTED",
       "input_tokens": "Near usable capacity, reserving output and template space",
       "active_budget_seconds": 28800,
-      "start_after": "Final short ladder, native tools, production and actual Sova acceptance",
-      "after_start": "Close paid workers, pause automation, await user nudge"
+      "start_after": "Actual final allocation,4K/16K,native tools,clean production,and actual Sova acceptance",
+      "after_start": "Close paid workers, pause automation, await user nudge",
+      "sequence": [
+        "65536 input benchmark",
+        "nearusablecapacity ONLYif64K passes"
+      ]
     },
     "production_mimo_timeout_policy": {
       "active_seconds": 28800,
       "queue_seconds": 1800,
       "provider_seconds": 30660,
       "other_models": "unchanged",
-      "status": "SOURCE_IMPLEMENTATION_UNDER_REVIEW"
-    }
+      "status": "COMPILED_OFFLINE_PASS_NOT_DEPLOYED"
+    },
+    "four_then_conditional_two": "USER_AUTHORIZED_SOURCE_PREPARATION; actualtests pending; additionaltime authorization notassumed",
+    "foreground_largest_input_target": 16384
   }
 }

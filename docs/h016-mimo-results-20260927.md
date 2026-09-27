@@ -165,8 +165,20 @@ node versus eight on guest node0. Both retain 64 batch threads and external
 memory interleave; GGML's NUMA affinity override is disabled so distinct strict
 decode masks can take effect. Their actual thread placement must be checked.
 Guest node0 is not proof of physical GPU-local execution because Proxmox's
-aggregate CPU mask does not establish individual vCPU pinning. The 16-thread
-result remains the incumbent; 10 tokens/s has not been demonstrated.
+aggregate CPU mask does not establish individual vCPU pinning. The spread-eight trial completed at16:38UTC with **9.210 output tokens/s**,
+18.64% above the16-thread result. The identical83-input/128-output fixture had
+2.125s prefill,2.443s TTFT and16.232s total duration, with zero cached input,
+DONE/full HTTP drain and native-idle confirmation. This is a whole-profile
+comparison because GGML NUMA affinity also changed. It is a length-capped
+throughput sample, not a quality evaluation;10tokens/s remains unproven.
+
+The affinity classifier reported INCONCLUSIVE because the initial snapshot
+straddled the batch-to-decode transition and several unrelated threads exited.
+Four later saved snapshots show eight substantially active threads pinned to
+singleton guest CPUs0,16,24,32,40,48,56,64. These observations do not establish
+physical-host vCPU pinning. The guest-node0-only trial was not admitted within
+its remaining time budget. The user subsequently requested four decode threads
+and two only if four beats eight; these additional comparisons are pending.
 
 A new 4K/16K/64K ladder will use the selected settings and final allocated context.
 The first allocation target is decimal 1,000,000 tokens; 917,504 is the fallback
@@ -212,7 +224,10 @@ Published model context, configured allocation and largest completed input are
 reported separately. A configured 131K window and completed 4K/16K/64K inputs do not
 prove 1M capacity or long-context correctness. The latest user instruction
 authorizes a near-1M-input test as the final independent background task after
-native and Sova qualification. Its prompt must reserve answer/template space
+native and Sova qualification. To avoid paid observation of another long prefill,
+the final job runs the optimized64K rung first, and near-1M only if64K passes.
+Foreground qualification records the actual4K/16K results and native tools;
+64K and near-1M remain explicitly pending until their saved results exist. Its prompt must reserve answer/template space
 inside the actual usable window. After startup is verified, paid sessions and
 automated checks will stop; results await the user's later nudge. The existing
 GLM 1M test will not be repeated.
