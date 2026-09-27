@@ -2,6 +2,14 @@
 
 ## Latest task precedence — 27 September 2026
 
+H012 supersedes H011's 1M hold for one **Flash-only** trial: the user explicitly
+requests starting it now and ending the turn once native progress is confirmed.
+Follow [the H012 launch contract](docs/h012-flash-1m-launch.md). Keep Sova paused
+and the other three models idle; no concurrent-load or Qwen/image requests.
+Preserve all temperature, memory, ownership and progress guards. Successful1M
+stays loaded; failures use the reviewed exact-stop480K fallback. The separate
+four-way cooling hold below remains in effect. Use a fresh bounded Worker1 CLI.
+
 H011 closeout: the fan-adjusted repeat again reached the85C test cutoff; both
 Qwen GPUs reached85C. Sustained load remains unqualified and1M was NOT started.
 Read [the H011 result](docs/h011-status-20260927.md). Allfour backends were
