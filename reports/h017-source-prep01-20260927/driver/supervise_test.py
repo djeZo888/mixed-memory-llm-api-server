@@ -11,7 +11,7 @@ class Bounds(unittest.TestCase):
   with self.assertRaises(ValueError):work_budget(entry,0,entry+151,151)
   self.assertEqual(150+720+CLEANUP_SECONDS,SETTLE-entry)
  def test_no_static_full_envelope_cutoff(self):
-  entry=ADMIT-510 #20:26; still admits a full work budget
+  entry=ADMIT-510 #20:35; still admits a full work budget
   self.assertEqual(work_budget(entry,0,entry,0),1200)
   self.assertEqual(work_budget(ADMIT,0,ADMIT,0),720)
   with self.assertRaises(ValueError):work_budget(ADMIT,0,ADMIT+0.001,0.001)
@@ -26,14 +26,14 @@ class Bounds(unittest.TestCase):
    self.assertLessEqual(entry+elapsed+w+CLEANUP_SECONDS,SETTLE)
  def test_extended_absolute_instants(self):
   stamp=lambda n:datetime.datetime.fromtimestamp(n,datetime.timezone.utc).isoformat()
-  self.assertEqual(stamp(ADMIT),"2026-09-27T20:34:30+00:00")
-  self.assertEqual(stamp(SETTLE),"2026-09-27T20:49:30+00:00")
-  self.assertEqual(stamp(HARD_SETTLE),"2026-09-27T20:50:00+00:00")
+  self.assertEqual(stamp(ADMIT),"2026-09-27T20:43:30+00:00")
+  self.assertEqual(stamp(SETTLE),"2026-09-27T20:58:30+00:00")
+  self.assertEqual(stamp(HARD_SETTLE),"2026-09-27T20:59:00+00:00")
  def test_fixed_stop_and_no_replay(self):
   text=(Path(__file__).parent.parent/'launch-app-acceptance.sh').read_text()
   self.assertIn('min(1470,math.floor((stop-now).total_seconds()))',text)
   self.assertIn('TimeoutStopSec=30',text)
-  self.assertIn("--on-calendar='2026-09-27 20:49:30 UTC'",text)
+  self.assertIn("--on-calendar='2026-09-27 20:58:30 UTC'",text)
   self.assertNotIn('now<=latest',text)
   self.assertEqual(HARD_SETTLE-SETTLE,30)
   self.assertIn('os.O_EXCL',text);self.assertIn('Restart=no',text)

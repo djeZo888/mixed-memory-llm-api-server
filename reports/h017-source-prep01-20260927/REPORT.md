@@ -5,7 +5,7 @@ Base **d09620402007046881606dfbdc74c9ee3fde09b2**, isolated branch
 `01a0e446-c537-7e72-ae62-7b3c9ff4ddae` started
 2026-09-27T19:10:37.552010Z; unchanged hard cap19:35:37.552010Z.
 User global window19:07:11–21:07:11Z supersedes historical H016 deadlines.
-Root's same-task review confirms decimal950000 and20:50 hard settlement.
+Root's FINAL04 conditional authorization confirms decimal950000 and20:59 hard settlement.
 No subagents, live contacts, runtime probes, builds, downloads, dependency changes,
 service actions, inference, installer work or push occurred. Original Sova is
 UP per root/user handback; this worker did not reobserve or pause it.
@@ -112,8 +112,8 @@ requires actual Sova PASS before activation is accepted.
 
 ## Confirmed acceptance envelope
 
-Hard stop20:49:30UTC, 30-second service stop grace inside hard settlement20:50UTC;
-17min11s remain before global end21:07:11. Last theoretical admission20:34:30;
+Hard stop20:58:30UTC, 30-second service stop grace inside hard settlement20:59UTC;
+8min11s remain before global end21:07:11. Last theoretical admission20:43:30;
 actual measured preflight must leave **720s work plus180s cleanup**. The second
 preflight inside live.mjs is charged too; insufficient remaining work refuses
 before inference. Work<=1200s, supervisor<=1380s, outer service cap<=1470s and

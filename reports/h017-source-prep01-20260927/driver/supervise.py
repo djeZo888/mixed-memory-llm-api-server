@@ -5,7 +5,7 @@ ENTRY_MONO = time.monotonic()
 ENTRY_WALL = time.time()
 P = pathlib.Path(__file__).resolve().parent
 RUN = pathlib.Path('/home/user/ai-harness-build/H017-SOURCE-PREP01-20260927/live-acceptance-01')
-SETTLE = datetime.datetime(2026, 9, 27, 20, 49, 30, tzinfo=datetime.timezone.utc).timestamp()
+SETTLE = datetime.datetime(2026, 9, 27, 20, 58, 30, tzinfo=datetime.timezone.utc).timestamp()
 SUPERVISOR_SECONDS, WORK_SECONDS, CLEANUP_SECONDS = 1380, 1200, 180
 MIN_WORK_SECONDS = 720  # root-selected attempt budget, never predicted PASS
 ADMIT = SETTLE - CLEANUP_SECONDS - MIN_WORK_SECONDS  # theoretical inference bound only
@@ -38,7 +38,7 @@ def main():
     state={'startedUtc':datetime.datetime.fromtimestamp(ENTRY_WALL,datetime.timezone.utc).isoformat(),
            'supervisorPid':os.getpid(),'invocationId':os.environ['INVOCATION_ID'],
            'wallBudgetSeconds':SUPERVISOR_SECONDS,
-           'absoluteSettlementUtc':'2026-09-27T20:50:00Z','status':'PREFLIGHT',
+           'absoluteSettlementUtc':'2026-09-27T20:59:00Z','status':'PREFLIGHT',
            'nativeSettlement':'NOT_PROVEN','replayAllowed':False}
     def save():
         temp=receipt.with_suffix('.tmp');temp.write_text(json.dumps(state,indent=2)+'\n');temp.replace(receipt)

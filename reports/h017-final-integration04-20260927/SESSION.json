@@ -1,0 +1,17 @@
+{
+  "startedUtc": "2026-09-27T20:35:28.492207+00:00",
+  "hardDeadlineUtc": "2026-09-27T20:59:00+00:00",
+  "maximumSeconds": 1411,
+  "baseCommit": "a561bbc1f1832709a6a0de0f6c6d18648a850026",
+  "scope": "source-only retime pending authentic full17 qualification and current idle",
+  "rootConditionalGoUtc": "2026-09-27T20:34:00Z",
+  "stopUtc": "2026-09-27T20:58:30Z",
+  "hardSettlementUtc": "2026-09-27T20:59:00Z",
+  "theoreticalLatestAdmissionUtc": "2026-09-27T20:43:30Z",
+  "minimumActualWorkSeconds": 720,
+  "cleanupSeconds": 180,
+  "maximumWorkSeconds": 1200,
+  "maximumSupervisorSeconds": 1380,
+  "stopGraceSeconds": 30,
+  "automaticRetry": false
+}
