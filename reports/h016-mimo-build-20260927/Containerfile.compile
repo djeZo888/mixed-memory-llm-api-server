@@ -1,0 +1,30 @@
+FROM sha256:d476433f8d1bb1163a3d9250cf22032845099b6f8c8c8479048d3510e498c45a AS compiled
+COPY deploy/patches/*.patch deploy/patches/*SHA256SUMS /tmp/ai-harness-patches/
+# Fail closed on upstream-file or patch drift before building the exact source.
+RUN test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e \
+    && sha256sum -c /tmp/ai-harness-patches/source-source.SHA256SUMS \
+    && sha256sum -c /tmp/ai-harness-patches/dependency-patched.SHA256SUMS \
+    && cd /tmp/ai-harness-patches && sha256sum -c SHA256SUMS \
+    && printf '%s\n' 'a6dd7df37313edc4ea2f6bc742ffb6ff431a37abacb2facdbbf422a4c9f9d4bd  SHA256SUMS' | sha256sum -c - \
+    && cd /build/minimax \
+    && for patch in /tmp/ai-harness-patches/[0-9]*.patch; do \
+         if [[ "${patch##*/}" = 0003-gateway-undici-dependency.patch ]]; then continue; fi; \
+         git apply --check --whitespace=error --exclude=third_party/pi-mono/packages/ai/package.json --exclude=pnpm-lock.yaml "$patch" \
+           && git apply --whitespace=error --exclude=third_party/pi-mono/packages/ai/package.json --exclude=pnpm-lock.yaml "$patch" || exit; \
+       done \
+    && sha256sum -c /tmp/ai-harness-patches/patched.SHA256SUMS
+# Upstream release packaging requires a clean committed tree. Commit only the
+# verified patchset inside this build; retain both original and derived revisions.
+RUN git add --all \
+    && GIT_AUTHOR_DATE=2026-09-22T00:00:00Z GIT_COMMITTER_DATE=2026-09-22T00:00:00Z \
+       git -c user.name='ai-harness source build' -c user.email='ai-harness-build@localhost' \
+       commit --quiet --no-gpg-sign -m 'Apply identity-checked ai-harness deployment patches' \
+    && test -z "$(git status --porcelain --untracked-files=no)"
+# Frozen workspace lock; upstream verifies the external mcode-tools archive/CLI
+# and carries its manifest/notices into the release. Never bypass these hashes.
+RUN pnpm typecheck \
+    && MCODE_RELEASE_TAG=v0.5.1 pnpm build \
+    && node scripts/package-cli-release.mjs v0.5.1 /build/release \
+    && cd /build/release && sha256sum -c minimax-code-0.5.1.tar.gz.sha256
+COPY deploy/tests/build-native-probes.mjs /tmp/build-native-probes.mjs
+RUN mkdir /build/packaged && tar -xzf /build/release/minimax-code-0.5.1.tar.gz -C /build/packaged --strip-components=1 && node /tmp/build-native-probes.mjs /build/minimax /build/packaged/native-probes.mjs && git rev-parse HEAD > /build/packaged/patched-source-revision.txt && cp pnpm-lock.yaml /build/packaged/source-pnpm-lock.yaml && cp /build/release/*.sha256 /build/packaged/

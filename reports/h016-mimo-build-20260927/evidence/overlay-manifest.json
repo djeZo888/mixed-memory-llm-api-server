@@ -1,0 +1,176 @@
+{
+  "source": "928b3b470058241f089a839367d4b30d5887a6e3",
+  "base_image": "sha256:9ef88598cf54a03aa259c5aa2d2878b34b7473cfcec7c8c07cee6ba462c39f1c",
+  "compiled_image": "sha256:cde82ffa870c45f8b4396b19a74fe0ad31fdc50b60a2ecbad9d1a29a7cd1f813",
+  "native_source": "51d06736d5dd56d0e7b7e34dbb107fa015864817",
+  "estimator_source_sha256": "649b21e84263c278c1a43d8cc17ab19fdbf08a5a4b95c666d9a914dd81abea68",
+  "patchset": "a6dd7df37313edc4ea2f6bc742ffb6ff431a37abacb2facdbbf422a4c9f9d4bd",
+  "changed_file_allowlist": [
+    {
+      "path": "/opt/minimax/README.md",
+      "old_sha256": "6941af298960da2844a2366bf3deabff41259d09b764dfcc21fedebc14072d65",
+      "sha256": "b353555ad600bed36a4dfcabf78cfb206d26a737932e1e71ab373472ef27e498",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/chunks/chunk-32BSCVII.js",
+      "old_sha256": null,
+      "sha256": "29b357e7e5fba0ca603de007af99348e59d4ab5f4041f94931e494f7a6e79816",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/chunks/chunk-GL6GBUT3.js",
+      "old_sha256": null,
+      "sha256": "64c84a6673e448a2f7b0d17ac0695fb122f63baf7db87c826017145818d62955",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/chunks/chunk-XIOJLRIY.js",
+      "old_sha256": null,
+      "sha256": "82e558a6e9e0e64c0a496e30c3d024d32760d165224179d2244cfcee06a74b20",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/chunks/launcher-YOMBNI3O.js",
+      "old_sha256": null,
+      "sha256": "f6f202cd37b3834a6d660977dc9e139b684690e132fc947f3cba70a4f58bb588",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/chunks/lifecycle-WQ6AJSP4.js",
+      "old_sha256": null,
+      "sha256": "24212ededb66b3b7fbcb9d12b9a98db5f6ea7c565743597badf6f10b29889ba7",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/chunks/main-HD3E65Q6.js",
+      "old_sha256": null,
+      "sha256": "aab0b9cdd14b41146d2de76568394c86fb4b7d6b4f6c8049d5405cf6b456d15d",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/chunks/plugin-command-4FIO3I5K.js",
+      "old_sha256": null,
+      "sha256": "f909d96fa47f8ca5e92fa0d85e18f783ecf628586fc566a5269559efdd6201cf",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/chunks/provider-command-YR7SKJDW.js",
+      "old_sha256": null,
+      "sha256": "4e2c859c51e007f22a94b3cfa34d5d3e3bf49063633c753dc85b3ab55d564da1",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/chunks/run-acp-command-FW42KJRJ.js",
+      "old_sha256": null,
+      "sha256": "01aa7414e6e85208c488ab28462702c37f1496323a8a283b0a3f1022cfc14354",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/chunks/run-exec-command-DPSI2C3J.js",
+      "old_sha256": null,
+      "sha256": "e20ae05564365fe84896f3e4c8f359e7f218533a2bdc62ef5842345cfb989565",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/cli.js",
+      "old_sha256": "390b5f19b091ba2e77ef963308c65902ba75604b12ec011ac2e9d195f2278f21",
+      "sha256": "105a3452bae59390badce8c6515576e64acf6a846ba1394200d4758da60245f1",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/minimax-code-0.5.1.tar.gz.sha256",
+      "old_sha256": "c384b97c838002f8529dc2c64476730a727418cbd720c86c949748c179bb1116",
+      "sha256": "ed4090eb77d192880f05489f00c104f8a17222eb05709d109c117d3c14759c4a",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/native-probes.mjs",
+      "old_sha256": "bb81a884a7b3b8e7209f19bd71ddc8d79643fe26016a85b8349e96c73e7a82e2",
+      "sha256": "8ce558a29366e96e2fcb9ea35079f0125614b06a291830ee523df167efbeaa09",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/native-probes.mjs.metafile.json",
+      "old_sha256": null,
+      "sha256": "7590636e00614873d2f9c1edaeb445d5e8fb4bb50d8cc433b9c035e8aab1e817",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/patched-source-revision.txt",
+      "old_sha256": "ed6ba9705cdb4a1668af049e2275191bbbf4bae46fb1aed3ea65f14adae111d6",
+      "sha256": "325192542e1578a31b24b3c1a61e88f977f3431f7d1c278b5ac174a98261ec1b",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/minimax/release.json",
+      "old_sha256": "d603802a65518edec44036ae58095b1dec5ee645b041a0c8719d115759283fd7",
+      "sha256": "deb244ba44e475f5c3f7f6309486cdd52206da28e107151e1000f92837937fde",
+      "source": "packaged"
+    },
+    {
+      "path": "/opt/ai-harness/engine/pins.json",
+      "old_sha256": "60cafe800df16b08ff2a4b47674fc61d51732bb6dcd81afad90ee2f8d9b6be81",
+      "sha256": "dd9e1dc21d7625615f084518d5ce40c7c3dbb31ce9425952b1240e7797449ea1",
+      "source": "deploy/engine/pins.json"
+    },
+    {
+      "path": "/opt/ai-harness/engine/configure-profile.mjs",
+      "old_sha256": "43f671c752b3376e552623b0508b1c9c25b89c941e6332161f3c25daf1c3e362",
+      "sha256": "a4aff30b28967d68ee4205b683c9445e8d5da091c78d686eb8cb6bf5586da118",
+      "source": "deploy/engine/configure-profile.mjs"
+    },
+    {
+      "path": "/opt/ai-harness/config/active-frontier.json",
+      "old_sha256": null,
+      "sha256": "7a4bea03394e51fb005f56d39cd3b5b7c4a28d8c2de85e99b45fc73913febe1a",
+      "source": "config/active-frontier.json"
+    },
+    {
+      "path": "/usr/local/share/ai-harness-patches/0010-frontier-model-accounting.patch",
+      "old_sha256": "ecd037dbd7cc3f56c47efa04d121e8779a9124e209fb4cda2b35cb7931b42192",
+      "sha256": "43a2620284ccb6110723119ab4720d0f047ffd3805db8d84a3eaf7463d501c99",
+      "source": "deploy/patches/0010-frontier-model-accounting.patch"
+    },
+    {
+      "path": "/usr/local/share/ai-harness-patches/README.md",
+      "old_sha256": "e786f565d7bea715dbc605d1920867936536b291e337e38bfd2fb9f0a5554382",
+      "sha256": "c3f9547833153aba4a36297e9e9aba2f1dc5e0af292cd3d73164478497a1eba7",
+      "source": "deploy/patches/README.md"
+    },
+    {
+      "path": "/usr/local/share/ai-harness-patches/SHA256SUMS",
+      "old_sha256": "e487935b3d6efce51216b8755cbd712912c30c7d45f6a9e5e293f0f998f89a65",
+      "sha256": "a6dd7df37313edc4ea2f6bc742ffb6ff431a37abacb2facdbbf422a4c9f9d4bd",
+      "source": "deploy/patches/SHA256SUMS"
+    },
+    {
+      "path": "/usr/local/share/ai-harness-patches/identity.json",
+      "old_sha256": "b6ea1972491d24c90024fbfe777b335829aa23d286b9c1cad1973286300d3af6",
+      "sha256": "3021e5689e5754327c9af8ddb34e62303eb24a485eb62903885f044fd1fe3183",
+      "source": "deploy/patches/identity.json"
+    },
+    {
+      "path": "/usr/local/share/ai-harness-patches/patched.SHA256SUMS",
+      "old_sha256": "88708e17054cf04feb88242b60784152a6209b3a32b4379d2b007393889e2a89",
+      "sha256": "fb9b4e6b32ea5cb686b00c96792e644a0140ee0d40d1d7d36ea18827a83582ba",
+      "source": "deploy/patches/patched.SHA256SUMS"
+    },
+    {
+      "path": "/usr/local/share/ai-harness-patches/source-patched.SHA256SUMS",
+      "old_sha256": "d66c220043c2ce07fefda9d34a35176e6356cd1bd8b74812938da4ecca2d9f61",
+      "sha256": "b5c57a53a3ca9dedb37c83f4abba66c6153292f99f58e37e1467db6e48b0c9d0",
+      "source": "deploy/patches/source-patched.SHA256SUMS"
+    },
+    {
+      "path": "/usr/local/share/ai-harness-patches/source-patches.SHA256SUMS",
+      "old_sha256": "974d1f11b261442f382cb1c298cd3c59a2c8a0f3116957bdbe6a203692265559",
+      "sha256": "dfed4299112ca9e703f4a26793eb5ffba7609ecf5cd3cf804c8c848ce7df7dca",
+      "source": "deploy/patches/source-patches.SHA256SUMS"
+    }
+  ],
+  "unchanged_packaged_file_count": 899,
+  "unchanged_packaged_paths_sha256": "9ef594818967cb89c12a3331cf074a4f9e2bf37fe9924e386ada99cec7268ee0",
+  "full_remote_manifest_sha256": "2bcdb706b0323fb9715dcf0283622866ac6f691fd24cde50121cdd10b88cb006",
+  "full_remote_manifest_path": "/home/user/ai-harness-build/H016-MIMO-BUILD-20260927/overlay-manifest.json"
+}
