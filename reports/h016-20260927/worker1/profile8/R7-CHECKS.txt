@@ -1,0 +1,8 @@
+PASS all Python runtime files parse; 11 runtime files.
+PASS native argv, LAUNCH.json, fixtures, guards, precision, allocation and deadlines unchanged (namespace-only docstrings except owner predecessor).
+PASS Docker argv sole added environment GOMP_SPINCOUNT=0.
+PASS launcher systemd-run outside all parent contexts.
+PASS predecessor pins exact R6; fresh R7 paths/unit/container.
+PASS actual native Args equals pinned LAUNCH native_argv; readback GOMP_SPINCOUNT=0, memory/swap/cpuset unchanged.
+PASS exact predecessor positive and six negative identity/settlement checks; raw output R7-PREDECESSOR-CHECKS.txt.
+Public perf text trims trailing whitespace; original raw stdout/stderr unchanged in private receipts.

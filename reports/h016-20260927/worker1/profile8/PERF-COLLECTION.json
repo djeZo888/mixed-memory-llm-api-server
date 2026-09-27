@@ -1,0 +1,76 @@
+{
+  "attach_pid": 3995834,
+  "collectors": [
+    {
+      "argv": [
+        "perf",
+        "stat",
+        "-p",
+        "3995834",
+        "-e",
+        "task-clock,context-switches,cpu-migrations,page-faults,cycles,instructions,cache-references,cache-misses"
+      ],
+      "exit_code": -2,
+      "name": "stat",
+      "pid": 1753,
+      "raw_stderr": "\n Performance counter stats for process id '3995834':\n\n      7,885,454.69 msec task-clock                       #   59.110 CPUs utilized             \n         1,348,643      context-switches                 #  171.029 /sec                      \n         1,056,353      cpu-migrations                   #  133.962 /sec                      \n             5,491      page-faults                      #    0.696 /sec                      \n38,067,864,132,975      cycles                           #    4.828 GHz                       \n 4,765,734,059,696      instructions                     #    0.13  insn per cycle            \n    80,630,704,012      cache-references                 #   10.225 M/sec                     \n     2,947,870,566      cache-misses                     #    3.66% of all cache refs         \n\n     133.402348834 seconds time elapsed\n\n",
+      "reason": null,
+      "settled": true,
+      "status": "AVAILABLE"
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "-F",
+        "49",
+        "-e",
+        "cpu-clock",
+        "--call-graph",
+        "fp",
+        "-p",
+        "3995834",
+        "-B",
+        "-N",
+        "-o",
+        "/proc/self/fd/23"
+      ],
+      "exit_code": -2,
+      "name": "record",
+      "pid": 1759,
+      "raw_stderr": "[ perf record: Woken up 64 times to write data ]\n[ perf record: Captured and wrote 28.797 MB /proc/self/fd/23 ]\n",
+      "reason": null,
+      "settled": true,
+      "status": "AVAILABLE"
+    }
+  ],
+  "data_file": "/data/logs/H016-20260927/worker1-r6/PROFILE128-perf.data",
+  "finished_utc": "2026-09-27T14:14:58.990550+00:00",
+  "max_seconds": 240,
+  "reason": null,
+  "report": {
+    "argv": [
+      "perf",
+      "report",
+      "--stdio",
+      "--no-children",
+      "--sort",
+      "symbol",
+      "--call-graph",
+      "none",
+      "--percent-limit",
+      "0.5",
+      "--symfs",
+      "/proc/3995834/root",
+      "-i",
+      "/proc/self/fd/23"
+    ],
+    "exit_code": 0,
+    "raw_stderr": "",
+    "raw_stdout": "# To display the perf.data header info, please use --header/--header-only options.\n#\n#\n# Total Lost Samples: 0\n#\n# Samples: 386K of event 'cpu-clock'\n# Event count (approx.): 7887020305632\n#\n# Overhead  Symbol                                                                                                                        IPC   [IPC Coverage]\n# ........  ............................................................................................................................  ....................\n#\n    87.81%  [.] 0x00000000000258a2                                                                                                        -      -            \n     4.28%  [.] ggml_gemv_mxfp4_8x8_q8_0                                                                                                  -      -            \n     4.09%  [.] 0x00000000000256c2                                                                                                        -      -            \n     2.51%  [.] 0x00000000000258a2                                                                                                        -      -            \n     0.54%  [k] finish_task_switch.isra.0                                                                                                 -      -            \n\n\n#\n# (Cannot load tips.txt file, please install perf!)\n#\n",
+    "status": "AVAILABLE"
+  },
+  "scope": "CPU samples/counters only; cache misses are not host DRAM GB/s.",
+  "started_utc": "2026-09-27T14:12:44.111665+00:00",
+  "status": "AVAILABLE"
+}

@@ -1,0 +1,68 @@
+{
+  "utc": "2026-09-27T14:26:13.983457+00:00",
+  "unit": "MainPID=0\nControlPID=0\nResult=exit-code\nActiveState=failed\nSubState=failed\nInvocationID=f19495600cec4c81aebbdaa9f628aa49\n",
+  "r6": {
+    "Id": "4e41d368b9a704b2f11ab525008b2367e9c4c354fa7d1b46213013967f290bab",
+    "Image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-27T13:59:09.876064855Z",
+      "FinishedAt": "2026-09-27T14:23:41.722843484Z"
+    }
+  },
+  "glm": {
+    "Id": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
+    "Image": "sha256:51791e17c0149019e2ddc032d8c1b2f60b86c3a6c293daff639e20053baa858a",
+    "State": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 161945,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-27T14:23:43.246759212Z",
+      "FinishedAt": "2026-09-27T13:59:08.792656441Z"
+    }
+  },
+  "r6_pid_absent": true,
+  "r6_cgroup_absent": true,
+  "unit_cgroup_absent": true,
+  "glm_readiness": [
+    200,
+    {
+      "schema_version": 1,
+      "model_alias": "glm-5.3-flash",
+      "ready": true,
+      "state": "up",
+      "admitting": null
+    }
+  ],
+  "owner": {
+    "status": "SETTLED_GLM_RESTORED",
+    "candidate_id": "4e41d368b9a704b2f11ab525008b2367e9c4c354fa7d1b46213013967f290bab",
+    "native_pid": 3995834,
+    "native_started_at": "2026-09-27T13:59:09.876064855Z",
+    "pid": 3992462,
+    "native_settled": {
+      "cgroup_empty": true,
+      "gpu_compute_empty": true,
+      "pid_zero": true,
+      "utc": "2026-09-27T14:23:41.927770+00:00"
+    },
+    "glm_suppressed": false,
+    "glm_restored_utc": "2026-09-27T14:25:33.556894+00:00",
+    "error": "owned_supervisor_interrupted",
+    "error_type": "RuntimeError"
+  }
+}
