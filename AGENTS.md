@@ -2,6 +2,26 @@
 
 ## Latest task precedence — 27 September 2026
 
+User resumed after all Codex updates. H013 may continue: promote actual passed
+1M Flash to production and retain its research/document/difficult-reasoning
+delegation role, while Qwen remains coordinator and preferred routine coding/
+agentic model. Remove the user-visible "native code workflow qualified" label;
+preserve truthful readiness and underlying evidence. Disable ECC on all three
+Blackwells; retain Ada off. Integrated fans boost100% at>=70C. External Server
+CHA_FAN3 is currently100%; user requests100% at>=70C and50% below70C after exact
+header/API verification. Missing/stale GPU temperature must not lower cooling.
+Worker2 owns BMC discovery/control; Worker1 owns ai-vm operations. Preserve85C
+load cutoff. No host reboot or guessed IPMI raw commands.
+
+After H013 completion, H014 explicitly authorizes downloading and implementing
+MiMo-V2.6-Flash-RL as a frontier alternative, retaining GLM and both Qwens/image.
+Use serial standalone tests on the frontier GPU first; simultaneous GLM/MiMo
+residency is an explicit later option to evaluate after MiMo1M results, not yet
+qualified. Warm and benchmark4K/16K/64K plus tool/technical tasks, then review
+allocation/runtime evidence for the1M trial. Select default only from honest capability,
+quality and performance evidence. See docs/h014-mimo-trial-plan.md. Historical
+MiMo research-only and Codex update holds below are superseded by this request.
+
 H013 update checkpoint: the exact1M H012 request passed at04:30:46UTC and remains
 warm pending production promotion. The user requests a safe opportunity to
 update Codex on all3Macs. Finish current evidence handoffs, then no new native
