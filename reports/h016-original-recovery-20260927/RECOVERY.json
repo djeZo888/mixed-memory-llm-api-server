@@ -1,0 +1,170 @@
+{
+  "status": "PASS_ORIGINAL_SOVA_RESTORED",
+  "startedUtc": "2026-09-27T18:21:21.473827+00:00",
+  "startReturnedUtc": "2026-09-27T18:21:21.538021+00:00",
+  "finishedUtc": "2026-09-27T18:21:23.966848+00:00",
+  "rootBackendReceiptSha256": "99bb5cc097b8fc4c69dbd8a18cbb4601c58ac40b705b963f5f7e3580abb6d680",
+  "originalImage": "9ef88598cf54a03aa259c5aa2d2878b34b7473cfcec7c8c07cee6ba462c39f1c",
+  "originalUnitSha256": {
+    "/home/user/.config/systemd/user/ai-harness.service": "eee8e1d7a3f370e3fcdbf5783f1b03df8672296abcf27726cdaca73c62b71b9c",
+    "/etc/systemd/system/ai-harness-status.service.d/30-h008-registry.conf": "e033a07a50b8c5f9f535909e1405c87f99f932a3c1506aa36c30a4647462ac16"
+  },
+  "afterUnits": {
+    "ai-harness.service": {
+      "MainPID": "423636",
+      "WorkingDirectory": "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/server",
+      "Id": "ai-harness.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-searxng.service": {
+      "MainPID": "190181",
+      "WorkingDirectory": "!/home/user",
+      "Id": "ai-harness-searxng.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-status.service": {
+      "MainPID": "301728",
+      "WorkingDirectory": "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/server",
+      "Id": "ai-harness-status.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-admin.service": {
+      "MainPID": "66185",
+      "WorkingDirectory": "",
+      "Id": "ai-harness-admin.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    }
+  },
+  "http": {
+    "/api/health": {
+      "http_status": 200,
+      "bytes": 271
+    },
+    "/status": {
+      "http_status": 200,
+      "bytes": 876
+    },
+    "/api/status/v1/system": {
+      "http_status": 200,
+      "bytes": 26813
+    }
+  },
+  "health": {
+    "version": "0.0.3",
+    "environment": {
+      "timeZone": "Europe/Ljubljana",
+      "location": {
+        "city": "Ljubljana",
+        "country": "Slovenia"
+      },
+      "now": "2026-09-27T18:21:22.553Z"
+    },
+    "status": "ok",
+    "visionAvailable": true,
+    "availability": {
+      "qwenGpu0": "available",
+      "qwenGpu1": "available",
+      "image": "available"
+    }
+  },
+  "historyPreserved": {
+    "sessions": true,
+    "messages": true,
+    "files": true,
+    "runs": true,
+    "events": true,
+    "quarantined_workspaces": true,
+    "h003_image_jobs": true,
+    "h005_image_ownership": true,
+    "frontier_requests": true
+  },
+  "filesPreserved": true,
+  "otherServicesPreserved": true,
+  "unitsImageUnchanged": true,
+  "modelRequests": 0,
+  "profileTagUnitWrites": false,
+  "ownerSqliteRead": false,
+  "services": [
+    {
+      "service_id": "qwen-gpu0",
+      "display_name": "Text inference GPU0",
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "configured_context_tokens": 480000,
+      "max_output_tokens": null,
+      "freshness": "fresh",
+      "observed_at": "2026-09-27T18:21:17.707269+00:00",
+      "hardware_latched": false
+    },
+    {
+      "service_id": "qwen-gpu1",
+      "display_name": "Text inference GPU1",
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "configured_context_tokens": 480000,
+      "max_output_tokens": null,
+      "freshness": "fresh",
+      "observed_at": "2026-09-27T18:21:17.709104+00:00",
+      "hardware_latched": false
+    },
+    {
+      "service_id": "image",
+      "display_name": "Image generation and editing",
+      "availability": "available",
+      "ready": true,
+      "admitting": true,
+      "configured_context_tokens": null,
+      "max_output_tokens": null,
+      "freshness": "fresh",
+      "observed_at": "2026-09-27T18:21:17.703748+00:00",
+      "hardware_latched": false
+    },
+    {
+      "service_id": "glm-5.3-flash",
+      "display_name": "Frontier GLM-5.3-Flash",
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "configured_context_tokens": 1048576,
+      "max_output_tokens": 65536,
+      "freshness": "fresh",
+      "observed_at": "2026-09-27T18:21:18.007157+00:00",
+      "hardware_latched": false
+    }
+  ],
+  "contentCounts": {
+    "sessions": 26,
+    "messages": 133,
+    "files": 62,
+    "runs": 48,
+    "events": 25359,
+    "quarantined_workspaces": 1,
+    "h003_image_jobs": 19,
+    "frontier_requests": 0
+  },
+  "regularFiles": {
+    "regular_non_database_files": 17597,
+    "sha256": "1e262519cde8059973b23a2fc2a2838e2a15cb4429269fe18e57cc4adb906f51",
+    "excluded_database_and_transient_files": 161
+  },
+  "rawReceiptSha256": "13ae49b5a0b89cf4b55ef65d28deb144bfb3fd89e078466300a2ae487e8edc6f",
+  "rawStatusSha256": "ec27163ffb6c74b4063bfe4b0c47a7cf47c3b94b0b0bc2fe0bf0ed708392cf12",
+  "mechanicalCommandSha256": "485a5798a7103c59e688b08ec2c7188b707106b326ef3fef3579a404097d3cda",
+  "paidNativeSessionStarted": false,
+  "limits": [
+    "No inference or new acceptance cycle",
+    "MiMo image/release staged but unapplied; MiMo Sova acceptance and LAST64K/near1M NOT_RUN",
+    "Existing historical workspace quarantine and image jobs unchanged",
+    "Status availability is not native atomic-idle evidence"
+  ]
+}
