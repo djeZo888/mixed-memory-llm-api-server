@@ -10,7 +10,10 @@ new task. Three Blackwells use the 2200W workstation PSU; Ada has its own PSU.
 Keep production at480000. A reviewed temporary1048576 profile/manual runner may
 be implemented and staged. The user subsequently authorized starting its
 allocation/probe/1M inference after the four-way test, in a fresh native task;
-finish the turn after durable running proof and review results when they return. Preserve runtime/model pins and normal guards. Worker1 owns
+finish the turn after durable running proof and review results when they return.
+On verified1M success retain the candidate loaded for already-authorized
+production promotion; restore480K only on failure/timeout. Keep Sova paused
+until the return/result-review turn. Preserve runtime/model pins and normal guards. Worker1 owns
 live inference/telemetry and staging; Worker2 owns app quiet/recovery, independent
 review and manual-runner source. Root coordinates, reviews and publishes.
 

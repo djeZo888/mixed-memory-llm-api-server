@@ -51,8 +51,8 @@ reserves and recording timing/correctness/memory. Account for the 650 GiB cgroup
 Prefer a supported isolated maintenance profile using existing pinned weights
 and runtime; no new engine/model, global sed, bypassed storage/auth/lifecycle
 checks, or production-default increase. Snapshot exact prior state, prevent
-harness use of the experimental lane, and restore the qualified 480K service
-through its owner on success/failure. Protect against uncertain in-flight work,
+harness use of the experimental lane, and retain the verified 1M candidate on success. Restore the qualified 480K
+service through its owner on failure/timeout only. Protect against uncertain in-flight work,
 SSH disconnect and duplicate submission. Preserve the other three models.
 The preparation session remains source/offline only. After root review and
 staging, a fresh bounded Worker1 native session with direct updated authority
@@ -71,6 +71,8 @@ automatic retries, durable logs/result JSON and a short status command.
 Review actual concurrent load/stability, not just request admission. Preserve
 all four model services and publish compact evidence/code/commands in the
 existing GitHub branch/PR, with PSU measurement limits. Keep Sova paused for
-the long job. The background job restores the original 480K Flash backend on
-completion/failure; Sova app restoration and result review follow when the user
-returns. Never claim the 1M test passed merely because it started.
+the long job. The user further directs that a successful 1M instance stays loaded. On
+verified success retain it with explicit ownership for production promotion;
+on failure/timeout restore the original 480K Flash backend. Result review,
+promotion of a successful 1M profile into Sova, and app restoration follow when
+the user returns. That promotion is already authorized. Never claim the 1M test passed merely because it started.
