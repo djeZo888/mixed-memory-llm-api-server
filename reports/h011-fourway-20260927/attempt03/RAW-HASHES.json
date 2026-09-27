@@ -1,0 +1,297 @@
+[
+  {
+    "name": "H011-FOURWAY-FIXTURES.json",
+    "bytes": 7335944,
+    "sha256": "b2dbbc725a62e9eecf4da90e95320a7667693e0a5c8badc99493b047513a076e"
+  },
+  {
+    "name": "H011-FOURWAY-OWNER.json",
+    "bytes": 6850,
+    "sha256": "1b7d08a5c7248d7692d4d0c2a7e4ff1db9c0511ae1245a156681f56e907d9e68"
+  },
+  {
+    "name": "H011-FOURWAY-flash-0-OWNER.json",
+    "bytes": 213,
+    "sha256": "db3559d87e56d5cb2e3ee98ef2bac490233363e1937bd2e261bf05ef674ffbd1"
+  },
+  {
+    "name": "H011-FOURWAY-image-0-OWNER.json",
+    "bytes": 214,
+    "sha256": "2837f156924c0f9cd7f89d18945bd567d9deb1d708bb9c5d4aa48872087b260b"
+  },
+  {
+    "name": "H011-FOURWAY-job.py",
+    "bytes": 25198,
+    "sha256": "1bab4103c82a213e0d576b372ed8a472631c0e67d6931bf03bc0ec6030c07a5c"
+  },
+  {
+    "name": "H011-FOURWAY-native-flash.jsonl",
+    "bytes": 721,
+    "sha256": "5e17527225175a7e99314b09e1f1550b09ed711717bb89b76da430956d2b4a64"
+  },
+  {
+    "name": "H011-FOURWAY-native-qwen0.jsonl",
+    "bytes": 4673,
+    "sha256": "7e7e3b9606cb045d3b6c3786246af0b1bad62439844f35257719bab7a85680a9"
+  },
+  {
+    "name": "H011-FOURWAY-native-qwen1.jsonl",
+    "bytes": 4404,
+    "sha256": "fd159313e4d83a596693d52c2ef05d4cc8c8190ac667e222893b52d814acae41"
+  },
+  {
+    "name": "H011-FOURWAY-qwen0-0-OWNER.json",
+    "bytes": 213,
+    "sha256": "aad5705d3fad0d0135c9e08465d366c9a6ab0aadf59c794289605bff2e36b628"
+  },
+  {
+    "name": "H011-FOURWAY-qwen1-0-OWNER.json",
+    "bytes": 213,
+    "sha256": "5da6772e4c0eedee230654101318578f571d8a830405d3061cbe8525eb93886f"
+  },
+  {
+    "name": "H011-FOURWAY-telemetry.jsonl",
+    "bytes": 154413,
+    "sha256": "855c49a3455d65ff2878c8269476ddf97b18d28008cb00e2d0c147ccc304c4a9"
+  },
+  {
+    "name": "H011-FOURWAY.json",
+    "bytes": 439255,
+    "sha256": "97328bb9e6703466ca1c22189287d74e7dd8327ef475de025d42f4f2630500a0"
+  },
+  {
+    "name": "H011-FOURWAY02-FIXTURES.json",
+    "bytes": 21481325,
+    "sha256": "2fb663f5704a954d970a5910bcf80093db6969ed66a2807f3c54c2a8660a1ba3"
+  },
+  {
+    "name": "H011-FOURWAY02-OWNER.json",
+    "bytes": 6858,
+    "sha256": "216decf4734f2c50d997df66cecefbff52f4d51168837876a1fcd5e74b8dc98b"
+  },
+  {
+    "name": "H011-FOURWAY02-flash-0-OWNER.json",
+    "bytes": 213,
+    "sha256": "6f42c11c6683f45b5871dff77e2af7b20319a52bc94936ca0fb386ce6e8b2eee"
+  },
+  {
+    "name": "H011-FOURWAY02-image-0-OWNER.json",
+    "bytes": 214,
+    "sha256": "6e9ff3bc810620a3e44adc798ce1ac0b8e5784f5f01ea23951a7dbcb61178a4b"
+  },
+  {
+    "name": "H011-FOURWAY02-job.py",
+    "bytes": 26386,
+    "sha256": "3a49c39c3de62588579cfbe441ffdcdc7818cbb4d55d691517237b5eb35eb650"
+  },
+  {
+    "name": "H011-FOURWAY02-kernel-window.jsonl",
+    "bytes": 923,
+    "sha256": "c2c94ecef3ec1e6f26f21a767117a24285107b4a3063618a342315f45c549e9a"
+  },
+  {
+    "name": "H011-FOURWAY02-native-flash.jsonl",
+    "bytes": 3684,
+    "sha256": "94094ccaaf42edc9db855214fcaee6b9c69a6d3944c95196d077b0399b477581"
+  },
+  {
+    "name": "H011-FOURWAY02-native-image-owner.jsonl",
+    "bytes": 1443,
+    "sha256": "170c9cf3a32f9bd8a7ff38f78104392848eae2f9ca18ffcc13bb182b70f8da3f"
+  },
+  {
+    "name": "H011-FOURWAY02-native-qwen0.jsonl",
+    "bytes": 26020,
+    "sha256": "1014b0429d57b62192dd1a55e7c383b62933358eafaef18d81ba3ab6297cfd45"
+  },
+  {
+    "name": "H011-FOURWAY02-native-qwen1.jsonl",
+    "bytes": 26565,
+    "sha256": "b9aff7838e91fd984757fedea0d0320286730ad54b27765e142463fce40397b8"
+  },
+  {
+    "name": "H011-FOURWAY02-qwen0-0-OWNER.json",
+    "bytes": 213,
+    "sha256": "9d8751ce80637afb0fead98db1a2883a9d8fb19b17edc8bb141e6d5be292d614"
+  },
+  {
+    "name": "H011-FOURWAY02-qwen1-0-OWNER.json",
+    "bytes": 213,
+    "sha256": "aa6c4b6d32a77fa3e61defbcb8d78d54358a002453505d21e02fe524db5dc3b1"
+  },
+  {
+    "name": "H011-FOURWAY02-telemetry.jsonl",
+    "bytes": 324306,
+    "sha256": "b91f142b008ab1a5af40082ce656fc36ce212f2a5100b35dfd260ce720994b34"
+  },
+  {
+    "name": "H011-FOURWAY02.json",
+    "bytes": 493668,
+    "sha256": "e48f018e4826abb6fa0ac4eb54c5e55cdbee2b5b05abf8a7d73e02d99cd2c7b5"
+  },
+  {
+    "name": "H011-FOURWAY03-FIXTURES.json",
+    "bytes": 21483489,
+    "sha256": "135f2bbbea8deda81576feb667fbbd2411810a04150da9a76e6f0b730b467dec"
+  },
+  {
+    "name": "H011-FOURWAY03-OWNER.json",
+    "bytes": 6857,
+    "sha256": "6c803d09b13ff6a43e5b46ffea8078ecd5a703f897fd4277f2a19c74b2636356"
+  },
+  {
+    "name": "H011-FOURWAY03-flash-0-OWNER.json",
+    "bytes": 213,
+    "sha256": "1719f8ffa61c6854e47c841a7ec1042075bf791badf6fe970b44507c1a82f1e4"
+  },
+  {
+    "name": "H011-FOURWAY03-image-0-OWNER.json",
+    "bytes": 214,
+    "sha256": "a0003cbe2a656735ce937e73ba75811e94128d22d66fc4caadfce85b74a164be"
+  },
+  {
+    "name": "H011-FOURWAY03-job.py",
+    "bytes": 26465,
+    "sha256": "3f365054dece103571c59b00e756bc25087e38d7447b76d9af5edc766a0521e8"
+  },
+  {
+    "name": "H011-FOURWAY03-kernel-window.jsonl",
+    "bytes": 1065,
+    "sha256": "d10ddebdb042be7c6e98c0d162de18f069c70602f0216471b5a441fd750fd169"
+  },
+  {
+    "name": "H011-FOURWAY03-native-flash.jsonl",
+    "bytes": 3800,
+    "sha256": "962720c1157309b1bbdfc0fd58d3aaacf1b543c8f21e74b028891dd4759cbe3f"
+  },
+  {
+    "name": "H011-FOURWAY03-native-image-owner.jsonl",
+    "bytes": 1665,
+    "sha256": "e6959dd605cd0e17f7eb72e41149aa2514516e56c89e80bf551d58abeb58f653"
+  },
+  {
+    "name": "H011-FOURWAY03-native-qwen0.jsonl",
+    "bytes": 29930,
+    "sha256": "632836c52c5e091e873b5d06798a6089cf89f83c1bd166457a6faa8a14b54ef4"
+  },
+  {
+    "name": "H011-FOURWAY03-native-qwen1.jsonl",
+    "bytes": 29391,
+    "sha256": "981994607d54fa845df36fccaf88c1373c7af41945ffcc26315f7934002720d6"
+  },
+  {
+    "name": "H011-FOURWAY03-qwen0-0-OWNER.json",
+    "bytes": 213,
+    "sha256": "962bd4129b0026808f8341dd754db98031ba456095cf7a108fcd651215aa3821"
+  },
+  {
+    "name": "H011-FOURWAY03-qwen1-0-OWNER.json",
+    "bytes": 213,
+    "sha256": "7e086df56a3fbeb227ddb29071689f8bd38e39cb27c3d6f6bf2788503c3c06c2"
+  },
+  {
+    "name": "H011-FOURWAY03-telemetry.jsonl",
+    "bytes": 386379,
+    "sha256": "410c2bb545f9859469750455356b8a349c67a8902ec18b3cb275fd8f3660b4f3"
+  },
+  {
+    "name": "H011-FOURWAY03.json",
+    "bytes": 494147,
+    "sha256": "bd4b7d74fd23975cbe539c2a8a741645a818c849880d6138a5e67b0ae71f1b31"
+  },
+  {
+    "name": "H011-RECOVERY02.json",
+    "bytes": 5205,
+    "sha256": "50bfd9eb82b69cf659a13d4c8bed691b78e705857b7b7fe1212750df821da4d2"
+  },
+  {
+    "name": "H011-RECOVERY03.json",
+    "bytes": 6344,
+    "sha256": "2b7841fe90d9620a94dbbf934309e834fa08ee33221018d5a9a26512761baf8b"
+  },
+  {
+    "name": "H011-SAFEEND03.json",
+    "bytes": 113325,
+    "sha256": "c5896f4c021325b8c58dc44dfef6d5e00ed43918d3a24629f5f705d025da463a"
+  },
+  {
+    "name": "H011-WARM02-OWNER.json",
+    "bytes": 320,
+    "sha256": "2eb8f8e5318fb992d82670ecf0ca2ca8122aa8e593a29739578830b466874d36"
+  },
+  {
+    "name": "H011-WARM02-job.py",
+    "bytes": 51354,
+    "sha256": "c10309f6799910377f97fe1f96cf474742ff07fec5dcd7ed0c69bc88b554b9b6"
+  },
+  {
+    "name": "H011-WARM02-warm8192-FIXTURE.jsonl",
+    "bytes": 35565,
+    "sha256": "63a365bf1ad67be1a681c8691fa5278718c43aa1aadf73cc609eea7f54d2aa66"
+  },
+  {
+    "name": "H011-WARM02-warm8192-NATIVE.jsonl",
+    "bytes": 4874,
+    "sha256": "41dc3de27a579864fbdf7e3609d14fb804114b1ce8eb264f9ad6e0115588033b"
+  },
+  {
+    "name": "H011-WARM02-warm8192-PROGRESS.jsonl",
+    "bytes": 30803,
+    "sha256": "5891de204a6dd5e61e9b3f85d9696e9c6d16c37124ab90ef6bbd25c3ba4ed0b4"
+  },
+  {
+    "name": "H011-WARM02-warm8192-SSE.jsonl",
+    "bytes": 81076,
+    "sha256": "569f2cbf37c0b0cf0355d33c465927790666c2075bc58616186ce1382486ca50"
+  },
+  {
+    "name": "H011-WARM02-warm8192-TELEMETRY.jsonl",
+    "bytes": 175304,
+    "sha256": "bebffb5762a2f5c4e092bd217de88b99ee5e3aa7d97532798117b2240f843c36"
+  },
+  {
+    "name": "H011-WARM02.json",
+    "bytes": 199206,
+    "sha256": "dddac165e069cf381f1092e57bf9d47db0cee156ddac96b4f4e303893968cefa"
+  },
+  {
+    "name": "H011-WARM03-OWNER.json",
+    "bytes": 320,
+    "sha256": "07c4260c2f785b6efa254d7cfabd2d654474ad6f4c17b87e8b8e8082b4a1bdea"
+  },
+  {
+    "name": "H011-WARM03-job.py",
+    "bytes": 51351,
+    "sha256": "a044eb0a04575a797f8d241b61139867d0142f4ad2e04a8ddbfb2a920646dec9"
+  },
+  {
+    "name": "H011-WARM03-warm8192-FIXTURE.jsonl",
+    "bytes": 35717,
+    "sha256": "9a3d1c486008de6b8fd50a09c71498d86245d892428c60d6997e82cdb09a5297"
+  },
+  {
+    "name": "H011-WARM03-warm8192-NATIVE.jsonl",
+    "bytes": 9319,
+    "sha256": "314d036f0c9a0fbcb6699bc120c5cd6ce424749d11f83e30e5e231f3edb8eeb8"
+  },
+  {
+    "name": "H011-WARM03-warm8192-PROGRESS.jsonl",
+    "bytes": 31072,
+    "sha256": "913bc773d62001d692a76663d950989f1b47303d77238b8438663cdd0d8be644"
+  },
+  {
+    "name": "H011-WARM03-warm8192-SSE.jsonl",
+    "bytes": 81897,
+    "sha256": "763d2372c7a038be8747264b34025e834d28b3212e0cfe37721d880f82098f51"
+  },
+  {
+    "name": "H011-WARM03-warm8192-TELEMETRY.jsonl",
+    "bytes": 663741,
+    "sha256": "24c2be175e5bcb0f28ca389dc0e5483331d64a3223459a08439bebb441eed931"
+  },
+  {
+    "name": "H011-WARM03.json",
+    "bytes": 200419,
+    "sha256": "8874b215040037ad7fdd3ad044d303c7b6bfd4e91d8b6b6d65d47278e9b18f59"
+  }
+]

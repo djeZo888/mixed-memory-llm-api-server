@@ -1,5 +1,9 @@
 # H011 corrected four-model load — THERMAL STOP / NOT QUALIFIED
 
+Latest direct-authorized continuation: [attempt03 fan-adjusted repeat](attempt03/RESULTS.md)
+also stopped thermally; all four services were recovered ready at 480K. This
+document preserves attempt02 and its then-current authority/end state.
+
 The requested roughly five-minute load did **not** complete. The single
 corrected pass reached the Qwen1 Server Blackwell's85°C stop threshold after
 about38s; the next sample reached86°C. All new submissions stopped and all
