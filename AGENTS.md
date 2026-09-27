@@ -33,8 +33,10 @@ no automatic thermal retry. Cooling/ECC changes together cannot isolate ECC's
 thermal effect. Three Blackwells use the workstation PSU; Ada has its own PSU.
 Do not equate summed GPU board power with wall/PSU power.
 
-After H013 settles, H014 authorizes MiMo-V2.6-Flash-RL download/implementation:
-selected native MXFP4 weights, pinned SM120 mixed CPU/GPU runtime, warmed
+H014 prioritizes the best practical MiMo frontier quality, not GLM co-residency.
+Assess the stronger Pro candidate before selecting full-quality Flash; retain
+native expert precision and verify exact conversion/runtime support and reserves.
+After H013 settles, proceed with the selected pinned SM120 mixed CPU/GPU runtime, warmed
 4K/16K/64K and tool/technical checks. Review allocation/runtime before full1M.
 Retain GLM and initially compare serially on the frontier GPU. Concurrent
 GLM/MiMo residency is a later option to assess after MiMo1M; user then decides.

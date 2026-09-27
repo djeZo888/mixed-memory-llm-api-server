@@ -1,5 +1,20 @@
 # H014 — MiMo frontier comparison
 
+## Latest selection priority
+
+At 06:22 UTC the user clarified that the best practical MiMo quality is the
+primary goal. Keeping GLM and MiMo resident together is optional and must not
+drive a quality-reducing quantization choice. The proposed Flash GGUF preserves
+the released experts' native MXFP4 format; its conversion/runtime still requires
+verification. Root and Worker2 are checking whether the stronger Pro variant is
+practical on the same RAM plus one fast Blackwell before the download decision.
+No MiMo weights have been downloaded. Assess Pro first if its runtime support
+and memory reserves are practical; full-quality Flash remains the alternative.
+The Flash-specific steps below remain the candidate plan pending that assessment;
+they do not authorize silently downgrading precision for sharing. Weight-file
+size alone is not a complete allocation estimate, and published benchmark
+advantages do not establish local inference speed or reliable tool use.
+
 Authorized27September2026. Execute after H013 production1M promotion, cooling,
 ECC-off reboot and the single guarded overlap test settle. A failed thermal
 guard is a recorded result; it does not authorize repetitive stress testing.
