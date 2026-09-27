@@ -21,7 +21,7 @@ export const SHARED_SLOT_INSTRUCTIONS = 'Two shared inference slots serve all ch
 
 export const DEFAULT_FRONTIER_PROFILE = Object.freeze({ model: FRONTIER_MODEL, contextWindow: FRONTIER_CONTEXT, maxOutputTokens: 65536 });
 // Exact managed bytes only; support is not capacity qualification or selection.
-export const MIMO_MANAGED_CONTEXTS = Object.freeze([131072, 917504, 1000000, 1048576]);
+export const MIMO_MANAGED_CONTEXTS = Object.freeze([131072, 917504, 1000000, 1000192, 1048576]);
 export function selectedFrontierProfile(selection) {
   if (selection?.model === FRONTIER_MODEL) return DEFAULT_FRONTIER_PROFILE;
   if (selection?.model !== 'mimo-v2.6-pro-rl' || selection.mimoEnabled !== true ||
