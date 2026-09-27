@@ -1,0 +1,217 @@
+{
+  "status": "R5_POST_SESSION_SURVIVAL_LOADING_SNAPSHOT_ONLY",
+  "session": "01a0e2e3-7af6-7963-bf7e-2f3c6df30dc4",
+  "wrapper_started_utc": "2026-09-27T12:42:34Z",
+  "wrapper_deadline_utc": "2026-09-27T13:07:34.038353+00:00",
+  "observed_utc": "2026-09-27T12:43:48.842079+00:00",
+  "unit": "h016-mimo-initial-20260927-r5.service",
+  "invocation": "4600b556d5d04305a9157da80149a511",
+  "supervisor_pid": 2779569,
+  "unit_properties": {
+    "MainPID": "2779569",
+    "ControlPID": "0",
+    "Result": "success",
+    "ExecMainStatus": "0",
+    "ActiveState": "active",
+    "SubState": "running",
+    "InvocationID": "4600b556d5d04305a9157da80149a511"
+  },
+  "candidate_id": "c724b72b99f57f9e72b21bbc2a1fc104a9109b970657d5694ba05c25160a8308",
+  "native_pid": 2782009,
+  "native_started_at": "2026-09-27T12:37:37.213589148Z",
+  "native_state": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 2782009,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-27T12:37:37.213589148Z",
+    "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "base": "/data/build/H016-20260927/worker1-r5",
+  "log": "/data/logs/H016-20260927/worker1-r5",
+  "owner_status": "LOADING",
+  "memory_limit_bytes": 755914244096,
+  "glm_suppressed": true,
+  "guard": {
+    "source_sha256": "2c0e7483845530cf9b669d699c67b574e0f4a8cbba21dd6c511bc7ddf7f817aa",
+    "sample_utc": "2026-09-27T12:43:48.507890+00:00",
+    "age_seconds": 0.334189,
+    "host": {
+      "MemTotal": 946820976640,
+      "MemAvailable": 607202992128,
+      "SwapTotal": 3157258240,
+      "SwapFree": 3092508672
+    },
+    "gpus": [
+      {
+        "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+        "total_mib": 97887.0,
+        "used_mib": 61016.0,
+        "free_mib": 36234.0,
+        "temp_c": 34.0,
+        "util_pct": 0.0,
+        "board_w": 16.16
+      },
+      {
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "total_mib": 97887.0,
+        "used_mib": 39282.0,
+        "free_mib": 57969.0,
+        "temp_c": 35.0,
+        "util_pct": 0.0,
+        "board_w": 31.77
+      },
+      {
+        "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "total_mib": 49140.0,
+        "used_mib": 32238.0,
+        "free_mib": 16274.0,
+        "temp_c": 39.0,
+        "util_pct": 0.0,
+        "board_w": 26.07
+      },
+      {
+        "uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+        "total_mib": 97887.0,
+        "used_mib": 61015.0,
+        "free_mib": 36237.0,
+        "temp_c": 35.0,
+        "util_pct": 0.0,
+        "board_w": 81.45
+      }
+    ],
+    "temperature_limits_c": {
+      "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237": 85,
+      "GPU-69acfa26-8b60-61b5-702d-aee252c163cc": 85,
+      "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23": 85,
+      "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528": 85
+    },
+    "owned_swap_bytes": 0,
+    "memory_events": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "all_sample_thresholds_pass": true
+  },
+  "allocation_bytes": {
+    "cgroup_current": 556842057728,
+    "anon": 308717449216,
+    "file": 247207936000,
+    "shmem": 8392704,
+    "file_mapped": 10551296,
+    "inactive_file": 247198330880,
+    "active_file": 1171456,
+    "kernel": 916213760
+  },
+  "allocation_semantics": "Cgroup counters, not process RSS. file includes shmem; do not add shmem again. inactive_file/active_file describe file-cache activity and overlap file.",
+  "load_progress": {
+    "baseline_utc": "2026-09-27T12:37:53.392877+00:00",
+    "baseline_anon_bytes": 13971447808,
+    "current_utc": "2026-09-27T12:43:48.507890+00:00",
+    "current_anon_bytes": 308717449216,
+    "anon_growth_bytes": 294746001408,
+    "pgmajfault_before_after": [
+      16,
+      16
+    ],
+    "pgscan_before_after": [
+      0,
+      11320128
+    ],
+    "latest_native_log_utc": "2026-09-27T12:37:37.856812979Z",
+    "stage": "Native load_model and unused MTP tensor notices; no completed buffer allocation or server ready line in captured log."
+  },
+  "cgroup_observation": {
+    "captured_within": [
+      "2026-09-27T12:43:48.811264+00:00",
+      "2026-09-27T12:43:48.842079+00:00"
+    ],
+    "numa_bytes": {
+      "anon": {
+        "N0": 22619455488,
+        "N1": 20934606848,
+        "N2": 39687237632,
+        "N3": 42588200960,
+        "N4": 80836124672,
+        "N5": 39273791488,
+        "N6": 40011075584,
+        "N7": 23670022144
+      },
+      "file": {
+        "N0": 20438290432,
+        "N1": 20553416704,
+        "N2": 37614723072,
+        "N3": 40574570496,
+        "N4": 30973804544,
+        "N5": 37373181952,
+        "N6": 37643661312,
+        "N7": 22036287488
+      },
+      "shmem": {
+        "N0": 1048576,
+        "N1": 1048576,
+        "N2": 1048576,
+        "N3": 1048576,
+        "N4": 1052672,
+        "N5": 1048576,
+        "N6": 1048576,
+        "N7": 1048576
+      }
+    },
+    "cpu_stat": "usage_usec 257568159\nuser_usec 110310037\nsystem_usec 147258122\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+    "io_stat": "8:32 rbytes=293565526016 wbytes=0 rios=537160 wios=0 dbytes=0 dios=0\n8:16 rbytes=1064960 wbytes=32768 rios=127 wios=4 dbytes=0 dios=0\n",
+    "cpuset_cpus_effective": "0-7,16-71",
+    "cpuset_mems_effective": "0-7",
+    "scope": "Cgroup aggregate allocation during load. Not final process page placement or per-thread affinity; read separately from last guard sample."
+  },
+  "actual_buffer_name": null,
+  "actual_full_cpu_tensor_buffer_bytes": null,
+  "process_rss_breakdown": null,
+  "post_load_placement_receipt": false,
+  "native_identity_receipt": false,
+  "production17_count_receipt": false,
+  "qualification": "NOT_STARTED_NO_RECEIPTS",
+  "warm4k": "NOT_STARTED_NO_RECEIPT",
+  "measured4096": "NOT_STARTED_NO_RECEIPT",
+  "new_inference_submitted_by_phase4": false,
+  "completed_request_metrics": [],
+  "runtime_identity": {
+    "image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+    "configured_context": 131072,
+    "configured_slots": 1,
+    "context_scope": "Configuration retained from exact R5 launch; native readiness not established.",
+    "raw_template_pin": "11ea52e156de38a458e6b7720ad45915d65b97d4ec979a09f55e3c9bd1b4d059",
+    "effective_template_pin": "16b2dac352c6cf1aef8b0a976618c76deb28c5bf3aba4c8b788fb846aa3769a4",
+    "expected_production17_count": 9461,
+    "precision": "Native MXFP4 experts; BF16/F32 trunk, retained R5 launch; not rehashed/rebuilt."
+  },
+  "evidence_limits": [
+    "No proc status/maps/smaps/task scan while loading.",
+    "No final buffer name or 495 GiB CPU tensor-buffer readback yet.",
+    "No request throughput, TTFT, decode, correctness, warmth or larger-context projection available.",
+    "Existing request collector does not retain exact read-I/O boundaries. Current cgroup io.stat is a loading snapshot, not measured4K before/after.",
+    "Cgroup node allocation is visibly uneven during loading; no inference about completed process policy or tuning warranted."
+  ],
+  "independent_job_next": "Finish load; native identity; optional bounded placement; count9461; text/tool qualification; discarded4K; measured4096/256; then hold for root review.",
+  "load_deadline_approx_utc": "2026-09-27T12:57:37Z",
+  "admission_end_utc": "2026-09-27T13:25:00Z",
+  "candidate_settle_utc": "2026-09-27T13:40:00Z",
+  "global_end_utc": "2026-09-27T13:48:08Z",
+  "next": "Exit snapshot phase without paid waiting. Root resumes fresh bounded readback. No16K/64K until first4K and projection reviewed. Guard failure invokes exact original owner settlement only; no retry.",
+  "private_raw": {
+    "task_relative_path": "private/phase4/snapshot-01.json",
+    "sha256": "80d249f17789fdb7bcce6d5284eab73febdc77b3ee4eee4f87d34aa244f62e1f",
+    "bytes": 57073
+  },
+  "verification": "Exact unit/invocation/container/PID/StartedAt and guard hash matched; live cheap guard sample passed. Documentation-only phase; no tests replayed, deployment, build, download, source change, or GitHub push."
+}
