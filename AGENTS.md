@@ -40,9 +40,11 @@ model failure. A14:54:34 Proxmox UMC capture was idle, not decode. Preserve it
 and coordinate a replacement with actual native phase evidence.
 R7 settled and originalGLM readiness15:14:33 was verified. R8 normal settlement
 was requested15:32:36 after its completedresult and GLM restored15:34:27.
-No warm adoption. The frozen R9 is HELD pending the 8-thread comparisons;
-review new experimental deadlines before launch and retain recovery/reporting
-time before17:48:08. Do not hotpatch deadlines of an already-running owner.
+No warm adoption. R9 dispatched at16:45:04UTC using the measured eight-thread
+spread profile; its existing17:17 request deadline is unchanged. The new four-thread
+and conditional two-thread tests must wait for its exact physical settlement.
+Retain recovery/reporting time before18:33:08. Do not hotpatch deadlines of an
+already-running owner.
 Qualified permanent production may remain warm. This paragraph supersedes older
 15:48 checkpoint and initial131K promotion instructions below. Read latestSTATUS.
 
