@@ -116,9 +116,10 @@ explore/verifier/custom restrictions remain unchanged.
 
 ## Capacity and context
 
-Qwen main and child sessions have a fixed **480,000-token context**. The selected
-frontier child uses its separately qualified capacity: the H016 MiMo configuration
-is **1,000,000 tokens**, with production/application acceptance pending. The maximum
+Qwen main and child sessions have a fixed **480,000-token context**. The restored
+GLM frontier child uses **1,048,576 tokens**. The staged H016 MiMo candidate passed
+native qualification at **1,000,000 tokens**, but production startup failed and
+MiMo remains unavailable to Sova. The maximum
 output is **65,536 tokens per inference request**, including reasoning where
 counted. Input and output share the context window; these are configured limits,
 not a claim that full-window occupancy or full-length output has been accepted.
@@ -129,18 +130,19 @@ compression and auxiliary requests all compete for those slots; extra requests
 queue. A waiting parent does not reserve a slot. Qwen remains the default for
 coding and ordinary agents. A parent may selectively delegate an independent
 subtask to the native `frontier` child on a separate inference lane; the parent
-then reviews the returned result. H016 selects MiMo V2.6 Pro-RL as the intended
-primary frontier and retains GLM-5.3-Flash for manual rollback. See the
+then reviews the returned result. MiMo V2.6 Pro-RL remains the intended
+replacement, but the active frontier is GLM-5.3-Flash following verified recovery. See the
 [MiMo integration state and tested limits](../docs/h016-mimo-results-20260927.md).
-MiMo requests allow eight hours of active inference plus a separate 30-minute
-queue; Qwen and GLM retain their existing limits.
+The staged MiMo release permits eight hours of active inference plus a separate
+30-minute queue; it has not been activated. Qwen and GLM retain their existing limits.
 
 The [H009 native acceptance](../reports/h009-frontier-20260926/ACCEPTANCE-02.md)
 passed one full-roster code workflow: Flash read, patched and tested a file,
 then Qwen independently reviewed the edit, reran the checks and returned the
 final answer. A separate Qwen completion overlapped occupied Flash. The actual
 Flash inputs were11,555–12,439tokens, with a2,048-token test output ceiling.
-Those test bounds do not change the production480,000/65,536 configuration.
+Those historical tests preceded the later GLM promotion to1,048,576 context;
+the65,536 production output ceiling is unchanged.
 The result does not qualify full-window occupancy, every exposed tool, or new
 cancel/reconnect behavior. First-request latency included substantial prefill;
 use Flash selectively, not as the default coding agent.

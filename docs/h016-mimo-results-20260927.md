@@ -1,10 +1,10 @@
 # MiMo Pro-RL qualification — 27 September 2026
 
 Original window: **10:48:08–13:48:08 UTC**. Two two-hour extensions and a further45minutes for4/conditional2-thread tests
-make the current final deadline **18:33:08 UTC /20:33Ljubljana**. This is an intermediate checkpoint:
-the initial 4K/16K/64K ladder is complete and output speed has improved. The user
-now requests a new ladder at final optimized settings, maximum safe configured
-context and full Sova integration with MiMo as the primary frontier.
+make the current final deadline **18:33:08 UTC /20:33Ljubljana**. The optimized eight-thread profile passed native4K/16K and tool continuation at
+1,000,000 usable context. Ordinary production startup subsequently failed, so
+MiMo is **not yet enabled in Sova**. The unchanged GLM-backed Sova
+release was restored at18:21:23UTC, with health/status checks and preserved chats/files. Optimized64K and near1M have not started.
 
 ## Candidate and completed work
 
@@ -247,8 +247,8 @@ before any additional workspace growth. Decimal 1M has only about 1.45 GiB
 remaining above that reserve. These are allocation estimates, not tested
 capacities or speed/correctness predictions.
 
-Sova's application is paused while this work runs. User histories and files are
-preserved; the original GLM and harness release remain the rollback. No new
+Sova was paused during the attempted integration and is restored at the final
+checkpoint below. User histories and files are preserved. No new
 four-way stress test, BMC/fan/ECC change, driver change or reboot was performed.
 
 ## Evidence
@@ -299,9 +299,8 @@ values, not a recovered kernel memory.peak counter.
 The exact native process, cgroup and GPU allocation settled at17:07:45UTC; the
 original GLM was ready at17:09:27. The experimental systemd unit reports
 failed/exit-code despite ExecMainStatus0, an unresolved wrapper-status discrepancy.
-Actual model settlement and restoration were independently verified. Four-thread
-and conditional two-thread comparison is now dispatched; production/Sova
-acceptance and the final64K→near1M job remain pending.
+Actual model settlement and restoration were independently verified. The later four-thread result is recorded below. Production/Sova
+acceptance and the final64K→near1M job remain incomplete.
 
 
 ## Four-thread comparison and selected profile
@@ -324,3 +323,51 @@ The unchanged eight-thread R9 profile already passed native qualification at
 1,000,000 usable capacity. Production deployment and real Sova delegation remain
 separate checks. See the [four-thread evidence](../reports/h016-production-prep16-20260927/AFFINITY14-FIRST-RESULT.json) and
 [qualification provenance](../reports/h016-production-prep16-20260927/QUALIFICATION-PROVENANCE.md).
+
+
+## Persistent service startup — integration blocked
+
+The final Sova image and paired host release passed packaging checks and remain
+staged. They were never applied, and no live Sova-to-MiMo request was sent.
+
+The first ordinary MiMo launch stopped before readiness; its original exception
+was lost because the unit discarded diagnostics. A separately reproduced source
+defect treated a socket readiness timeout as a fatal mandatory-monitor timeout.
+The narrow correction passed19 focused tests, and unit diagnostics now go to
+the journal. This does not establish that defect as the first launch's cause.
+
+The corrected launch began17:54:58UTC. Its last healthy guard was18:04:40;
+at18:04:45 it reported LeaseBusy, followed by an ExecStopPost timeout. The
+service had not started its API proxy or admitted inference. Because cleanup
+runs in a finally block, the cleanup exception may hide the original failure.
+The underlying cause remains unproven until the retained evidence is reviewed.
+
+A third approximately11-minute load would leave insufficient time for the
+required live application test within the authorized window. Exact settlement
+and restoration of the unchanged GLM-backed Sova release are complete.
+The successful native benchmark evidence remains valid; production reliability
+and actual harness delegation are separate, unfinished checks.
+
+
+## Final handback — 18:21:23 UTC
+
+- GLM authenticated readiness passed at18:17:36UTC with1,048,576 context.
+  Both Qwen480K instances and the image model retained their identities and were ready.
+- Sova's unchanged7143/9ef885 release started normally at18:21. Health, status
+  page and system-status API returned HTTP200. The26sessions,133messages,62file
+  records and17,597 non-database files matched their preserved records.
+- MiMo is stopped and fully settled. Its final image remains staged; real Sova
+  delegation was not attempted. Optimized64K and near1M were never dispatched.
+- Paid worker sessions are closed. No further load or stress test is authorized
+  by this handback. Follow-up monitoring is paused at the end of this window.
+
+The next bounded integration task should first repair failure reporting and
+settlement contention, keeping the primary error visible. Then reuse the existing
+weights, runtime, successful native qualification and final application image for
+one clean production load and actual Sova delegation. Only after those pass
+should the prepared independent64K→near1M job start. No completed benchmark
+needs repeating merely because production integration is unfinished.
+
+[Exact backend recovery](../reports/h016-recovery18-20260927/README.md) ·
+[Original Sova recovery and preservation checks](../reports/h016-original-recovery-20260927/REPORT.md) ·
+[Supervisor findings and narrow proposed correction](../reports/h016-recovery18-20260927/offline-lease-proposal.md).

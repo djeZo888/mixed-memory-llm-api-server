@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "OPTIMIZATION_CONFIRMED_FINAL_CAPACITY_AND_INTEGRATION_ACTIVE",
+  "status": "NATIVE_OPTIMIZATION_QUALIFIED_MIMO_INTEGRATION_INCOMPLETE_ORIGINAL_SOVA_RESTORED",
   "window": {
     "start_utc": "2026-09-27T10:48:08Z",
     "deadline_utc": "2026-09-27T18:33:08Z",
@@ -84,13 +84,13 @@
     "harness_built": true,
     "host_release_staged": true,
     "native_basic_text_tool_continuation_passed": true,
-    "native_full_17_tool_qualification": "NOT_QUALIFIED_LOCAL_RECEIVER_INTERRUPTED",
-    "requested_65536_output_ceiling_live_qualification": "SUBMITTED_AND_NATIVE_SLOT_READBACK_ONLY_FULL_TOOL_CONTINUATION_PENDING",
-    "live_production_owner_lifecycle": "NOT_TESTED",
-    "actual_harness_delegation": "NOT_TESTED",
+    "native_full_17_tool_qualification": "PASS_R9_ALL17_ADVERTISED_READ_AND_RESULT_CONTINUATION_EXECUTED",
+    "requested_65536_output_ceiling_live_qualification": "PASS_R9_BOTH_REQUESTS_NOT_65K_GENERATED",
+    "live_production_owner_lifecycle": "FAILED_ORDINARY_STARTUP_TWO_ATTEMPTS_NO_INFERENCE",
+    "actual_harness_delegation": "NOT_TESTED_PRODUCTION_STARTUP_BLOCKED",
     "sova_mimo_enabled": false
   },
-  "memory_note": "Detailed phase/counter evidence: reports/h016-20260927/worker1/phase6; current max-context projections assume fixed non-KV overhead and are not allocation validation.",
+  "memory_note": "Historical131072 allocation is in memory; final1000000 sampled counters are in optimized_r9. cgroup memory includes reclaimable file cache and is not process RSS.",
   "memory": {
     "configured_context": 131072,
     "frontier_gpu_device_used_max_mib": 46482,
@@ -264,15 +264,15 @@
       "physical_host_pinning": "NOT_PROVEN"
     }
   },
-  "benchmarks_scope": "Historical pre-optimization R5 ladder at131072 configured context. A new ladder at selected optimized settings and final allocated context is authorized and pending.",
+  "benchmarks_scope": "Historical pre-optimization R5 ladder at131072; optimized_r9 contains the final eight-thread4K/16K at1000000. Optimized64K and near1M have not started.",
   "final_capacity_plan": {
     "target_decimal_tokens": 1000000,
     "fallback_tokens": 917504,
     "cache_precision": "F16",
     "minimum_gpu_free_fraction": 0.07,
     "host_reserve_fraction": 0.15,
-    "status": "PROJECTION_ONLY_ACTUAL_ALLOCATION_PENDING",
-    "largest_new_occupied_test_tokens": null,
+    "status": "R9_ALLOCATION_AND_4K_16K_NATIVE_TOOLS_PASS_PRODUCTION_NOT_QUALIFIED",
+    "largest_new_occupied_test_tokens": 16384,
     "primary_frontier": "mimo-v2.6-pro-rl",
     "qwen_instances": 2,
     "image_model_preserved": true,
@@ -280,11 +280,11 @@
     "batch_threads": 64,
     "GOMP_SPINCOUNT": "0",
     "expected_physical_pool_tokens": 1000192,
-    "physical_pool_note": "Pinned allocator pads to256 cells. Actual allocation and exposed slot capacity still require final native readback.",
+    "physical_pool_note": "Usable props/slot readback1000000 passed. Physical1000192 remains source-calculated only.",
     "incumbent_decode_threads": 8,
     "eight_thread_affinity_trials": "SPREAD_COMPLETE_9.20988_TPS; GUEST_NODE0_NOT_ADMITTED_TIME_BUDGET",
     "final_background_test": {
-      "status": "AUTHORIZED_NOT_STARTED",
+      "status": "NOT_STARTED_BLOCKED_BY_PRODUCTION_STARTUP",
       "input_tokens": "Near usable capacity, reserving output and template space",
       "active_budget_seconds": 28800,
       "start_after": "Actual final allocation,4K/16K,native tools,clean production,and actual Sova acceptance",
@@ -299,9 +299,9 @@
       "queue_seconds": 1800,
       "provider_seconds": 30660,
       "other_models": "unchanged",
-      "status": "COMPILED_OFFLINE_PASS_NOT_DEPLOYED"
+      "status": "FINAL_IMAGE_AND_PAIRED_HOST_STAGED_PASS_NOT_ACTIVATED"
     },
-    "four_then_conditional_two": "USER_AUTHORIZED_SOURCE_PREPARATION;45minuteextensiongranted;actualtests pending",
+    "four_then_conditional_two": "FOUR_COMPLETE_6.763922_TPS;TWO_NOT_TESTED_CONDITION_NOT_MET;EIGHT_SELECTED",
     "foreground_largest_input_target": 16384
   },
   "current_allocation_snapshot": {
@@ -420,5 +420,41 @@
     "selected_threads_decode": 8,
     "two_thread_status": "NOT_TESTED_CONDITION_NOT_MET",
     "evidence": "reports/h016-production-prep16-20260927/AFFINITY14-FIRST-RESULT.json"
-  }
+  },
+  "production_startup": {
+    "status": "FAILED_MIMO_SETTLED_ORIGINAL_GLM_AND_SOVA_RESTORED",
+    "corrected_unit_start_utc": "2026-09-27T17:54:58Z",
+    "last_healthy_guard_utc": "2026-09-27T18:04:40Z",
+    "journal_failure_utc": "2026-09-27T18:04:45Z",
+    "observed_terminal_error": "LeaseBusy; ExecStopPost TimeoutExpired",
+    "original_cause": "UNPROVEN_FINAL_SETTLEMENT_EXCEPTION_MAY_MASK_ORIGINAL",
+    "proxy_started": false,
+    "inference_requests": 0,
+    "source_repair_tests": 19,
+    "further_loads": "NOT_AUTHORIZED_THIS_WINDOW",
+    "evidence": "reports/h016-production-deploy17-20260927"
+  },
+  "recovery": {
+    "glm_authenticated_ready_utc": "2026-09-27T18:17:36.465648Z",
+    "selected_frontier": "glm-5.3-flash",
+    "selection_generation": 4,
+    "configured_context_tokens": 1048576,
+    "sova_restored_utc": "2026-09-27T18:21:23Z",
+    "sova_release": "7143c17d73173db9364b77956679c86d7026a4ae",
+    "sova_image": "9ef88598cf54a03aa259c5aa2d2878b34b7473cfcec7c8c07cee6ba462c39f1c",
+    "http_health_status": "PASS",
+    "chats_files_preserved": true,
+    "model_requests_during_recovery": 0,
+    "mimo_new_64k": "NOT_STARTED",
+    "mimo_near1m": "NOT_STARTED",
+    "source": "reports/h016-recovery18-20260927/RESULT.json",
+    "sova_evidence": "reports/h016-original-recovery-20260927/RECOVERY.json"
+  },
+  "remaining": [
+    "Preserve primary versus settlement errors and resolve the persistent-owner startup failure.",
+    "One clean ordinary MiMo load and actual Sova Qwen-to-MiMo tool delegation acceptance.",
+    "After acceptance, launch the independent optimized64K then near1M job and end paid sessions."
+  ],
+  "automation": "PAUSED",
+  "paid_worker_cli_sessions": "CLOSED"
 }

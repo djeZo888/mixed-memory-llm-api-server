@@ -1,5 +1,29 @@
 # AGENTS.md
 
+## Latest H016 handback — 27 September, 18:21 UTC
+
+The authorized window ended with **MiMo integration incomplete** and the original
+GLM-backed Sova restored. This section supersedes pending-action text below.
+Read `docs/h016-mimo-results-20260927.md` and the latest local H016 STATUS.
+Eight decode threads won9.20988tokens/s versus four6.76392; two was correctly
+skipped. Native4K/16K and full-roster read/result continuation passed at1,000,000
+usable context. Ordinary production failed before its proxy started, so no real
+Sova-to-MiMo acceptance or optimized64K/near1M job was dispatched.
+
+MiMo is exactly settled; GLM1,048,576 authenticated ready18:17:36. Original Sova
+7143/9ef885 is online at18:21:23 with chats/files preserved. Qwen0/Qwen1 and image
+retained their identities and readiness. All paid workers closed; automation is
+paused at handback. Do not resume tests from stale instructions automatically.
+
+The printed LeaseBusy may mask the initial failure because settlement ran in a
+finally block. Original cause remains UNKNOWN. The later node lock holder is
+not proof of the original cause. Exact cleanup and recorded no-proxy/no-request
+hold reconciliation succeeded; no node restart, driver change or third load.
+The narrow diagnostic/settlement proposal is offline only. Future authorized
+work should reuse artifacts and qualification, fix the owner first, and then
+perform actual production/Sova acceptance before the prepared detached job.
+
+
 ## Active H016 execution window
 
 Latest user extension adds45minutes for the requested4-thread and conditional2-thread comparisons: **final18:33:08UTC /20:33Ljubljana**. RunningR9 deadlines remain unchanged; new tasks use the new bounded window.

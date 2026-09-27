@@ -95,17 +95,18 @@ arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-
 
 ## Current models and dated acceptance
 
-**September 27, H016 maintenance:** MiMo V2.6 Pro-RL is being integrated as the
-primary frontier, replacing GLM-5.3-Flash in that role. Sova is paused during
-activation. The two Qwen instances and image service are preserved. Current
-availability comes from the status API; the measurements below are dated evidence.
+**September 27, 18:21 UTC checkpoint:** Sova is online with GLM-5.3-Flash,
+two Qwen instances and the image service. MiMo V2.6 Pro-RL passed optimized
+native tests, but its persistent service failed during loading; it is not yet
+enabled in Sova. The original application release and chats/files were preserved.
+Current availability comes from the status API; the measurements below are dated evidence.
 
 | Model / instance | Configured context | Private API base | Role |
 |---|---:|---|---|
 | Qwen0 | 480,000 | `http://10.156.100.60:30002/v1` | Coordination, coding and tools |
 | Qwen1 | 480,000 | `http://10.156.100.60:30004/v1` | Second concurrent Qwen lane |
-| MiMo V2.6 Pro-RL | 1,000,000 | `http://10.156.100.60:30012/v1` | Frontier candidate; production/application acceptance pending |
-| GLM-5.3-Flash | 1,048,576 | `http://10.156.100.60:30010/v1` | Retained manual rollback; shares frontier hardware |
+| MiMo V2.6 Pro-RL | 1,000,000 | `http://10.156.100.60:30012/v1` | Staged candidate; production startup failed, unavailable |
+| GLM-5.3-Flash | 1,048,576 | `http://10.156.100.60:30010/v1` | Active frontier after verified recovery |
 
 MiMo retains native MXFP4 experts and BF16/F32 nonexpert tensors. At a
 **1,000,000-token usable allocation**, the selected eight-decode-thread profile
@@ -119,7 +120,7 @@ context are pending; allocation does not establish long-context correctness.
 The earlier GLM test with exactly **1,000,000 input tokens** passed at approximately
 **145.85 input tokens/s** and **12.26 output tokens/s**, taking **6,876.78 seconds**.
 Its production promotion and ECC-off state are recorded in the
-[H013 evidence](reports/h013-ecc-off-comparison-20260927). Sustained four-model
+[H013 evidence](docs/h013-status-20260927.md). Sustained four-model
 load is still unqualified: the server Blackwell reached the 85°C guard during
 the concurrency repeat. Further stress testing awaits improved physical cooling.
 The separate warmed Qwen1 64K test reached **7,279 input tokens/s** and
