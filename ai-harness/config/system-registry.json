@@ -126,7 +126,7 @@
     {
       "id": "glm-5.3-flash",
       "node_id": "ai-vm",
-      "display_name": "Frontier GLM-5.3-Flash (native code workflow qualified)",
+      "display_name": "Frontier GLM-5.3-Flash",
       "observation_key": "glm-5.3-flash",
       "owner": "Worker1 frontier backend",
       "capabilities": [

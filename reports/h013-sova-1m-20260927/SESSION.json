@@ -1,0 +1,7 @@
+{
+  "native_id": "01a0e14c-a7a1-78f2-8228-c9bf19f55096",
+  "started_utc": "2026-09-27T05:18:11Z",
+  "deadline_utc": "2026-09-27T05:43:11Z",
+  "base": "f031ce71b1a3a9064ac3d665e86296f0741cee4e",
+  "scope": "PREP only; ai-harness isolated builds; no ai-vm/BMC/inference/activation/subagents/push"
+}

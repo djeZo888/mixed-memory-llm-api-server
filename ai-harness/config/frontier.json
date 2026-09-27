@@ -3,6 +3,6 @@
   "contextWindow": 1048576,
   "maxOutputTokens": 65536,
   "tokenizerRevision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
-  "qualified": false,
+  "qualified": true,
   "templateRevision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
 }

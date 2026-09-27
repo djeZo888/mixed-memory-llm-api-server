@@ -8,7 +8,7 @@ export const SKILLS_SOURCE = '/opt/ai-harness/skills';
 export const SEARXNG_URL = 'http://10.0.2.2:8082';
 export const IMAGE_TIMEOUT_MS = 50 * 60 * 1000;
 
-export const FRONTIER_CONTEXT = 1048576; // H013 source candidate only; gateway config stays unqualified until reviewed PASS.
+export const FRONTIER_CONTEXT = 1048576; // H013 reviewed native PASS; deploy only with the matching ready 1M backend.
 const PRIOR_FRONTIER_AGENT_SHA256 = 'ac773137a850439b9109bc22080071d46d60b8758ad9660d15981f7a7c761dfe';
 export const FRONTIER_MODEL = 'glm-5.3-flash';
 export const FRONTIER_INSTRUCTIONS = 'Qwen is the default coordinator and ordinary coding/agentic worker. Select task(agent_name=frontier) for deep research, multi-document analysis, hard reasoning or independent diagnosis. Exceptional stuck coding needs explicit justification and Qwen verification. Frontier shares the workspace: code changes must be foreground or explicitly disjoint ownership. Use native task ownership, cancellation and result reuse. Neither model is presumed universally superior.\n';
