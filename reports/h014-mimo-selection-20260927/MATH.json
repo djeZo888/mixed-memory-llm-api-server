@@ -1,0 +1,90 @@
+{
+  "units": "GiB=2^30 bytes; all values conditional source arithmetic, not measured allocation",
+  "historical_host": {
+    "MemTotal_bytes": 946820972544,
+    "MemTotal_gib": 881.7957458496094,
+    "reserve_15pct_gib": 132.2693618774414,
+    "aggregate_used_ceiling_85pct_gib": 749.526383972168,
+    "current_MemAvailable": "UNVERIFIED"
+  },
+  "models": {
+    "flash": {
+      "layers_global_sliding": [
+        9,
+        39
+      ],
+      "routed_expert_mxfp4_bytes": 160859947008,
+      "routed_expert_mxfp4_gib": 149.8125,
+      "file_minus_experts_gib": 13.08350619673729,
+      "global_f16_KV_bytes": 24159191040,
+      "global_f16_KV_gib": 22.5,
+      "sliding_f16_KV_single_seq_no_mtp_compact": {
+        "512": {
+          "cells": 768,
+          "gib": 0.142822265625
+        },
+        "2048": {
+          "cells": 2304,
+          "gib": 0.428466796875
+        },
+        "8192": {
+          "cells": 8448,
+          "gib": 1.571044921875
+        }
+      },
+      "sliding_f16_KV_full_1M_gib": 195.0,
+      "bf16_trunk_attention_weights_gib": 8.349609375,
+      "bf16_embedding_plus_output_gib": 2.328125,
+      "bf16_dense_FFN_gib": 0.375,
+      "f32_router_matrices_gib": 0.18359375,
+      "trunk_components_subtotal_gib_excluding_norms_sinks_MTP": 11.236328125,
+      "artifact_file_gib_previous_ggml_org_variant": 155.87496119737625,
+      "artifact_file_gib": 162.8960061967373
+    },
+    "pro": {
+      "layers_global_sliding": [
+        10,
+        60
+      ],
+      "artifact_file_gib": 537.996588498354,
+      "routed_expert_mxfp4_bytes": 531351207936,
+      "routed_expert_mxfp4_gib": 494.859375,
+      "file_minus_experts_gib": 43.13721349835396,
+      "global_f16_KV_bytes": 53687091200,
+      "global_f16_KV_gib": 50.0,
+      "sliding_f16_KV_single_seq_no_mtp_compact": {
+        "512": {
+          "cells": 768,
+          "gib": 0.2197265625
+        },
+        "2048": {
+          "cells": 2304,
+          "gib": 0.6591796875
+        },
+        "8192": {
+          "cells": 8448,
+          "gib": 2.4169921875
+        }
+      },
+      "sliding_f16_KV_full_1M_gib": 300.0,
+      "bf16_trunk_attention_weights_gib": 34.86328125,
+      "bf16_embedding_plus_output_gib": 3.4921875,
+      "bf16_dense_FFN_gib": 0.5625,
+      "f32_router_matrices_gib": 0.6064453125,
+      "trunk_components_subtotal_gib_excluding_norms_sinks_MTP": 39.5244140625
+    }
+  },
+  "pro_conservative_all_file_resident_plus_all_KV_host_ub512_gib": 588.216315060854,
+  "pro_remaining_aggregate_host_ceiling_before_other_usage_gib": 161.31006891131403,
+  "not_included": [
+    "current OS and other services",
+    "preserved two Qwen480K host buffers and mappings",
+    "preserved image host buffers and mappings",
+    "CUDA pinned/staging and CPU workspaces",
+    "CUDA graphs and GPU scratch/activation peaks",
+    "allocator padding and driver allocations",
+    "duplicate resident mmap pages for GPU-offloaded tensors",
+    "MTP or multimodal sidecars if enabled",
+    "model loading/repacking transient peak"
+  ]
+}

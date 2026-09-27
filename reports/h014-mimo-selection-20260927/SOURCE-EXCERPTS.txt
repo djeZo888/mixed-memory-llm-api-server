@@ -1,0 +1,1156 @@
+SOURCE llama-conversion__mimo.py
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/conversion/mimo.py
+ORIGINAL_SHA256 f0ab957609eb1807d1d9a4c75d4fff26e2c3f82c7e34224499d99aa247a51b75
+16: @ModelBase.register("MiMoV2FlashForCausalLM", "MiMoV2ForCausalLM")
+17: @ModelBase.example("XiaomiMiMo/MiMo-V2.5")
+18: class MimoV2Model(TextModel):
+19:     model_arch = gguf.MODEL_ARCH.MIMO2
+20:     supports_mtp_export = True
+21:
+22:     # MiMo V2-Flash, V2.5 and V2.5-Pro all ship 3 trained MTP layers under model.mtp.layers.{0,1,2}.
+23:     # The HF config does not expose the count, so it's hardcoded to match the count found in the safetensors.
+24:     _n_nextn = 3
+25:
+26:     def __init__(self, *args, **kwargs):
+27:         super().__init__(*args, **kwargs)
+28:
+29:         if self.no_mtp:
+30:             self._n_nextn = 0
+31:         self.block_count = self.hparams["num_hidden_layers"] + self._n_nextn
+32:         self.tensor_map = gguf.get_tensor_name_map(self.model_arch, self.block_count)
+33:
+34:     @staticmethod
+35:     def _tp_aware_qkv_dequant(weight: Tensor, scale_inv: Tensor,
+36:                               n_q: int, n_kv: int, hd: int, vhd: int,
+37:                               bs: int = 128) -> Tensor:
+38:         # MiMo-V2.5 (TP=4) and V2.5-Pro (TP=8) ship qkv_proj sharded across TP
+39:         # ranks; per rank, rows are stacked as [Q_per | K_per | V_per].
+40:         # weight_scale_inv has ceil(rows_per_rank/bs) block-rows per rank (last
+41:         # may extend past rows_per_rank with phantom rows not in the weight).
+42:         # Naive repeat_interleave aligns rank 0 only and mis-applies scales to
+43:         # later ranks once rows_per_rank isn't a multiple of bs.
+44:         # Re-group the per-rank [Q_per|K_per|V_per] rows into a single fused
+100:     def dequant_model(self):
+101:         # Capture raw FP8 (weight, scale_inv) lambdas for qkv_proj BEFORE super
+102:         # rewrites them with the existing dequant. Replace super's lambda after
+103:         # it runs so scale_inv removal still happens via the standard path.
+104:         qkv_overrides: dict[str, tuple[Callable, Callable, int]] = {}
+105:         qc = self.hparams.get("quantization_config")
+106:         if isinstance(qc, dict) and qc.get("quant_method") == "fp8":
+107:             pat = re.compile(r"^model\.(mtp\.)?layers\.(\d+)\.self_attn\.qkv_proj\.weight_scale_inv$")
+108:             for name in list(self.model_tensors.keys()):
+109:                 m = pat.match(name)
+110:                 if not m:
+111:                     continue
+112:                 weight_name = name.removesuffix("_scale_inv")
+113:                 if weight_name not in self.model_tensors:
+114:                     continue
+115:                 bid = int(m.group(2))
+116:                 if m.group(1) is not None:
+117:                     bid += self.hparams["num_hidden_layers"]
+118:                 qkv_overrides[weight_name] = (
+119:                     self.model_tensors[weight_name],
+120:                     self.model_tensors[name],
+121:                     bid,
+122:                 )
+123:
+124:         super().dequant_model()
+125:
+126:         if not qkv_overrides:
+127:             return
+128:
+129:         n_q = self.hparams["num_attention_heads"]
+130:         hd = self.hparams["head_dim"]
+131:         vhd = self.hparams["v_head_dim"]
+132:         hybrid = self.hparams["hybrid_layer_pattern"]
+133:         n_layer_text = self.hparams["num_hidden_layers"]
+134:         for weight_name, (w_fn, s_fn, bid) in qkv_overrides.items():
+135:             # MTP layers (bid >= n_layer_text) use SWA-style attention dims
+136:             is_swa = True if bid >= n_layer_text else hybrid[bid] == 1
+137:             n_kv = self.hparams["swa_num_key_value_heads" if is_swa else "num_key_value_heads"]
+138:             self.model_tensors[weight_name] = (
+139:                 lambda w_fn=w_fn, s_fn=s_fn, n_q=n_q, n_kv=n_kv, hd=hd, vhd=vhd:
+140:                     MimoV2Model._tp_aware_qkv_dequant(w_fn(), s_fn(), n_q, n_kv, hd, vhd)
+141:             )
+142:
+143:     def set_gguf_parameters(self):
+144:         super().set_gguf_parameters()
+145:
+146:         assert self.hparams["swa_head_dim"] == self.hparams["head_dim"]
+147:         assert self.hparams["swa_num_attention_heads"] == self.hparams["num_attention_heads"]
+148:         assert self.hparams["swa_v_head_dim"] == self.hparams["v_head_dim"]
+149:         assert self.hparams["topk_method"] == "noaux_tc"
+150:
+151:         n_head_kv = self.hparams["num_key_value_heads"]
+152:         n_head_kv_swa = self.hparams["swa_num_key_value_heads"]
+153:         # Extend the per-layer pattern with SWA entries for the MTP blocks so the
+154:         # runtime arrays (sized to extended block_count) are fully populated.
+155:         hybrid = list(self.hparams["hybrid_layer_pattern"]) + [1] * self._n_nextn
+156:         n_head_kv_arr = [n_head_kv_swa if use_swa == 1 else n_head_kv for use_swa in hybrid]
+157:         self.gguf_writer.add_head_count_kv(n_head_kv_arr)
+158:
+159:         self.gguf_writer.add_sliding_window(self.hparams["sliding_window"])
+160:         self.gguf_writer.add_sliding_window_pattern(hybrid)
+161:         self.gguf_writer.add_value_length(self.hparams["v_head_dim"])
+162:         self.gguf_writer.add_expert_count(self.hparams["n_routed_experts"])
+163:         self.gguf_writer.add_expert_feed_forward_length(self.hparams["moe_intermediate_size"])
+164:
+165:         rope_dim = int(self.hparams["head_dim"] * self.rope_parameters["partial_rotary_factor"])
+166:         self.gguf_writer.add_rope_dimension_count(rope_dim)
+167:
+168:         self.gguf_writer.add_layer_norm_rms_eps(self.hparams.get("layernorm_epsilon", 1e-5))
+169:
+170:         v_scale = self.hparams.get("attention_value_scale")
+171:         if v_scale is not None:
+172:             self.gguf_writer.add_attn_value_scale(float(v_scale))
+173:
+177:     _MXFP4_EXPERT_RE = re.compile(
+178:         r"^model\.layers\.(\d+)\.mlp\.experts\.(\d+)\.(gate|up|down)_proj\.weight$"
+179:     )
+180:     _MXFP4_PROJ = {
+181:         "gate": gguf.MODEL_TENSOR.FFN_GATE_EXP,
+182:         "up":   gguf.MODEL_TENSOR.FFN_UP_EXP,
+183:         "down": gguf.MODEL_TENSOR.FFN_DOWN_EXP,
+184:     }
+185:
+186:     def _is_mxfp4_packed(self) -> bool:
+187:         quant_config = self.hparams.get("quantization_config") or {}
+188:         if quant_config.get("store_dtype") != "mxfp4":
+189:             return False
+190:         # repack_mxfp4_blocks assumes ggml's 32-element group
+191:         block_size = quant_config.get("mxfp4_block_size", 32)
+192:         if block_size != 32:
+193:             raise NotImplementedError(
+194:                 f"MXFP4 block size {block_size} is not ggml's QK_MXFP4 (32)")
+195:         return True
+196:
+197:     def _write_mxfp4_experts(self) -> None:
+198:         n_experts = self.hparams["n_routed_experts"]
+199:
+200:         # the FP8 half uses `weight_scale_inv` and is left to dequant_model
+201:         stray = [n for n in self.model_tensors
+202:                  if n.endswith(".weight_scale") and not self._MXFP4_EXPERT_RE.match(n.removesuffix("_scale"))]
+203:         if stray:
+204:             raise NotImplementedError(
+205:                 f"{len(stray)} MXFP4 tensor(s) outside the routed experts, e.g. {stray[0]!r}; "
+206:                 "only the routed experts have a repack path"
+207:             )
+208:
+209:         # (bid, proj) -> {expert id: (weight name, scale name)}
+210:         groups: dict[tuple[int, str], dict[int, tuple[str, str]]] = {}
+211:         for name in self.model_tensors:
+212:             m = self._MXFP4_EXPERT_RE.match(name)
+213:             if m is None:
+214:                 continue
+215:             bid, eid, proj = int(m.group(1)), int(m.group(2)), m.group(3)
+216:             scale_name = name + "_scale"
+217:             if scale_name not in self.model_tensors:
+218:                 raise KeyError(f"missing {scale_name} for {name}")
+219:             groups.setdefault((bid, proj), {})[eid] = (name, scale_name)
+220:
+221:         consumed: list[str] = []
+222:         for (bid, proj), experts in sorted(groups.items()):
+223:             missing = [e for e in range(n_experts) if e not in experts]
+224:             if missing or len(experts) != n_experts:
+225:                 raise KeyError(
+226:                     f"layer {bid} {proj}_proj: {len(experts)} of {n_experts} experts present"
+227:                     + (f", first missing is {missing[0]}" if missing else "")
+228:                 )
+229:
+230:             loaders = []
+231:             for eid in range(n_experts):
+232:                 weight_name, scale_name = experts[eid]
+233:                 loaders.append((self.model_tensors[weight_name], self.model_tensors[scale_name]))
+234:                 consumed += [weight_name, scale_name]
+235:
+236:             data = self._mxfp4_expert_tensor(loaders)
+237:             new_name = self.format_tensor_name(self._MXFP4_PROJ[proj], bid)
+238:             shape = gguf.quant_shape_from_byte_shape(data.shape, gguf.GGMLQuantizationType.MXFP4)
+239:             logger.info(
+240:                 f"{new_name}: repacked {n_experts} experts to MXFP4, "
+241:                 f"shape = {{{', '.join(str(n) for n in reversed(shape))}}}"
+242:             )
+243:             self.gguf_writer.add_tensor(new_name, data, raw_dtype=gguf.GGMLQuantizationType.MXFP4)
+244:
+245:         for name in consumed:
+246:             del self.model_tensors[name]
+247:
+248:     def generate_extra_tensors(self) -> Iterable[tuple[str, Tensor]]:
+249:         # not a generator on purpose: base.py chains this with get_tensors(), so the
+250:         # tensors used here must be removed from model_tensors before that starts
+251:         if self._is_mxfp4_packed():
+252:             self._write_mxfp4_experts()
+328:
+329:     def prepare_tensors(self):
+330:         super().prepare_tensors()
+331:
+332:         if self._experts is not None:
+333:             # flatten `list[dict[str, Tensor]]` into `list[str]`
+334:             experts = [k for d in self._experts for k in d.keys()]
+335:             if len(experts) > 0:
+336:                 raise ValueError(f"Unprocessed experts: {experts}")
+337:
+338:         if self._is_mxfp4_packed():
+339:             self._is_mxfp4 = True
+340:             self.ftype = gguf.LlamaFileType.MOSTLY_MXFP4_MOE
+
+SOURCE llama-conversion__base.py
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/conversion/base.py
+ORIGINAL_SHA256 dee6c8ab37e130e10a8aaa13ab8231615c25a1988c3f7524927b41088d555b4d
+758:     def repack_mxfp4_blocks(packed: Tensor, scale: Tensor) -> np.ndarray:
+759:         """
+760:         Repack 4-bit MX weights into ggml `block_mxfp4`. Lossless - only moves bits.
+761:
+762:         Source (compressed-tensors "mxfp4-pack-quantized", also used by DeepSeek-V4):
+763:           packed  uint8 [rows, cols/2]  element 2i in the low nibble, 2i+1 in the high one
+764:           scale   uint8 [rows, cols/32] one E8M0 biased exponent per 32-element group
+765:
+766:         Destination, per group: one scale byte then 16 code bytes, where byte j holds
+767:         element j in the low nibble and element j+16 in the high one.
+768:
+769:         The 4-bit codes need no remapping: both sides index into ggml's kvalues_mxfp4
+770:         order. ggml doubles the kvalues and halves the scale, so the value is the same.
+771:         """
+772:         p = packed.contiguous().view(torch.uint8)
+773:         s = scale.contiguous().view(torch.uint8)
+774:
+775:         rows, packed_cols = p.shape
+776:         cols = packed_cols * 2
+777:         if cols % 32 != 0:
+778:             raise ValueError(f"MXFP4 source row has {cols} values, expected a multiple of 32")
+779:
+780:         n_blocks = cols // 32
+781:         if tuple(s.shape) != (rows, n_blocks):
+782:             raise ValueError(f"MXFP4 scale shape {tuple(s.shape)} does not match {(rows, n_blocks)}")
+783:
+784:         src = p.reshape(rows, n_blocks, 16)
+785:         lo = src & 0x0F           # elements 0, 2, 4, ...
+786:         hi = (src >> 4) & 0x0F    # elements 1, 3, 5, ...
+787:
+788:         vals = torch.stack((lo, hi), dim=-1).reshape(rows, n_blocks, 32)
+789:         qs = vals[:, :, :16] | (vals[:, :, 16:] << 4)
+790:
+791:         raw = torch.cat((s.unsqueeze(-1), qs.to(torch.uint8)), dim=-1)
+792:         return raw.reshape(rows, n_blocks * 17).cpu().numpy()
+793:
+794:     def _mxfp4_expert_tensor(self, loaders: list[tuple[Callable[[], Tensor], Callable[[], Tensor]]]):
+1075:             for new_name, data_torch in (self.modify_tensors(data_torch, name, bid)):
+1076:                 # TODO: why do we squeeze here?
+1077:                 # data = data_torch.squeeze().numpy()
+1078:                 data = data_torch.numpy()
+1079:
+1080:                 n_dims = len(data.shape)
+1081:                 data_qtype: gguf.GGMLQuantizationType | bool = self.tensor_force_quant(name, new_name, bid, n_dims)
+1082:
+1083:                 # Most of the codebase that takes in 1D tensors or norms only handles F32 tensors
+1084:                 if n_dims <= 1 or new_name.endswith("_norm.weight"):
+1085:                     data_qtype = gguf.GGMLQuantizationType.F32
+1086:
+1087:                 # Conditions should closely match those in llama_model_quantize_internal in llama.cpp
+1088:                 # Some tensor types are always in float32
+1089:                 if data_qtype is False and (
+1090:                     any(
+1091:                         self.match_model_tensor_name(new_name, key, bid)
+1092:                         for key in (
+1093:                             gguf.MODEL_TENSOR.FFN_GATE_INP,
+1094:                             gguf.MODEL_TENSOR.FFN_GATE_INP_SHEXP,
+1095:                             gguf.MODEL_TENSOR.POS_EMBD,
+1096:                             gguf.MODEL_TENSOR.TOKEN_TYPES,
+1139:                         data_qtype = gguf.GGMLQuantizationType.F16
+1140:
+1141:                 # No override (data_qtype is False), or wants to be quantized (data_qtype is True)
+1142:                 if isinstance(data_qtype, bool):
+1143:                     if self.ftype == gguf.LlamaFileType.ALL_F32:
+1144:                         data_qtype = gguf.GGMLQuantizationType.F32
+1145:                     elif self.ftype == gguf.LlamaFileType.MOSTLY_F16:
+1146:                         data_qtype = gguf.GGMLQuantizationType.F16
+1147:                     elif self.ftype == gguf.LlamaFileType.MOSTLY_BF16:
+1148:                         data_qtype = gguf.GGMLQuantizationType.BF16
+1149:                     elif self.ftype == gguf.LlamaFileType.MOSTLY_Q8_0:
+
+SOURCE llama-src__models__mimo2.cpp
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/models/mimo2.cpp
+ORIGINAL_SHA256 2aa58a9bdc648ac83aec0decb0d9e4075cce2bd152da0b69b0ace4f0446224d0
+3: void llama_model_mimo2::load_arch_hparams(llama_model_loader & ml) {
+4:     ml.get_key(LLM_KV_ATTENTION_LAYERNORM_RMS_EPS, hparams.f_norm_rms_eps);
+5:
+6:     hparams.swa_type = LLAMA_SWA_TYPE_STANDARD;
+7:
+8:     ml.get_key_or_arr(LLM_KV_EXPERT_FEED_FORWARD_LENGTH, hparams.n_ff_exp_arr, hparams.n_layer_all);
+9:     ml.get_key(LLM_KV_ATTENTION_SLIDING_WINDOW,   hparams.n_swa);
+10:     ml.get_key(LLM_KV_ROPE_FREQ_BASE_SWA,         hparams.rope_freq_base_train_swa, false);
+11:
+12:     ml.get_arr(LLM_KV_ATTENTION_SLIDING_WINDOW_PATTERN, hparams.is_swa_impl);
+13:
+14:     float value_scale = 0.0f;
+15:     if (ml.get_key(LLM_KV_ATTENTION_VALUE_SCALE, value_scale, false) && value_scale != 1.0f) {
+16:         hparams.f_attn_value_scale = value_scale;
+17:     }
+18:
+19:     switch (hparams.n_layer()) {
+20:         case 48: type = LLM_TYPE_310B_A15B; break;
+21:         default: type = LLM_TYPE_UNKNOWN;
+22:     }
+23: }
+24:
+25: void llama_model_mimo2::load_arch_tensors(llama_model_loader & ml) {
+26:     LLAMA_LOAD_LOCALS;
+27:
+28:     const bool mtp_only = (hparams.n_layer_nextn > 0) && (ml.get_weight("blk.0.attn_norm.weight") == nullptr);
+29:     const std::string mtp_probe = "blk." + std::to_string(n_layer) + ".nextn.eh_proj.weight";
+30:     const bool trunk_only = (hparams.n_layer_nextn > 0) && (ml.get_weight(mtp_probe.c_str()) == nullptr);
+31:     const int trunk_flags = mtp_only ? TENSOR_NOT_REQUIRED : 0;
+32:     int mtp_flags         = trunk_only ? TENSOR_NOT_REQUIRED : 0;
+33:
+34:     if (!ml.load_mtp) {
+35:         mtp_flags |= TENSOR_SKIP;
+36:     }
+37:
+38:     tok_embd = create_tensor(tn(LLM_TENSOR_TOKEN_EMBD, "weight"), {n_embd, n_vocab}, 0);
+39:
+40:     // output
+41:     output_norm = create_tensor(tn(LLM_TENSOR_OUTPUT_NORM, "weight"), {n_embd}, 0);
+42:     output      = create_tensor(tn(LLM_TENSOR_OUTPUT,      "weight"), {n_embd, n_vocab}, 0);
+43:
+44:     for (int i = 0; i < n_layer_all; ++i) {
+45:         auto & layer = layers[i];
+46:         uint32_t n_embd_k_gqa = hparams.n_embd_k_gqa(i);
+47:         uint32_t n_embd_v_gqa = hparams.n_embd_v_gqa(i);
+48:         uint32_t n_head = hparams.n_head(i);
+49:
+50:         const bool is_nextn = i >= n_layer;
+51:         const int  flags    = is_nextn ? mtp_flags : trunk_flags;
+52:
+53:         create_tensor_qkv(layer, i, n_embd, n_embd_head_k * n_head, n_embd_k_gqa, n_embd_v_gqa, flags);
+54:         layer.wo = create_tensor(tn(LLM_TENSOR_ATTN_OUT, "weight", i), { n_embd_head_v * n_head, n_embd }, flags);
+55:
+56:         layer.attn_norm  = create_tensor(tn(LLM_TENSOR_ATTN_NORM,  "weight", i), {n_embd}, flags);
+57:         layer.attn_sinks = create_tensor(tn(LLM_TENSOR_ATTN_SINKS, "weight", i), {n_head}, TENSOR_NOT_REQUIRED | flags);
+58:
+59:         layer.ffn_norm = create_tensor(tn(LLM_TENSOR_FFN_NORM, "weight", i), {n_embd}, flags);
+60:
+61:         // non-MoE branch
+62:         layer.ffn_gate = create_tensor(tn(LLM_TENSOR_FFN_GATE, "weight", i), {n_embd,   n_ff}, TENSOR_NOT_REQUIRED | flags);
+63:         layer.ffn_down = create_tensor(tn(LLM_TENSOR_FFN_DOWN, "weight", i), {  n_ff, n_embd}, TENSOR_NOT_REQUIRED | flags);
+64:         layer.ffn_up   = create_tensor(tn(LLM_TENSOR_FFN_UP,   "weight", i), {n_embd,   n_ff}, TENSOR_NOT_REQUIRED | flags);
+65:
+66:         // MoE branch
+67:         int64_t n_ff_exp = hparams.n_ff_exp();
+68:         layer.ffn_gate_inp  = create_tensor(tn(LLM_TENSOR_FFN_GATE_INP,  "weight", i), {n_embd, n_expert}, TENSOR_NOT_REQUIRED | flags);
+69:         layer.ffn_gate_exps = create_tensor(tn(LLM_TENSOR_FFN_GATE_EXPS, "weight", i), {n_embd, n_ff_exp,   n_expert}, TENSOR_NOT_REQUIRED | flags);
+70:         layer.ffn_down_exps = create_tensor(tn(LLM_TENSOR_FFN_DOWN_EXPS, "weight", i), {n_ff_exp,   n_embd, n_expert}, TENSOR_NOT_REQUIRED | flags);
+71:         layer.ffn_up_exps   = create_tensor(tn(LLM_TENSOR_FFN_UP_EXPS,   "weight", i), {n_embd, n_ff_exp,   n_expert}, TENSOR_NOT_REQUIRED | flags);
+72:         layer.ffn_exp_probs_b = create_tensor(tn(LLM_TENSOR_FFN_EXP_PROBS_B, "bias", i), {n_expert}, TENSOR_NOT_REQUIRED | flags);
+93: llama_model_mimo2::graph::graph(const llama_model & model, const llm_graph_params & params) : llm_graph_context(params) {
+94:     ggml_tensor * cur;
+95:     ggml_tensor * inpL;
+96:
+97:     inpL = build_inp_embd(model.tok_embd);
+98:
+99:     ggml_tensor * inp_pos = build_inp_pos();
+100:     auto * inp_attn = build_attn_inp_kv_iswa();
+101:     ggml_tensor * inp_out_ids = build_inp_out_ids();
+102:
+103:     const float v_scale = hparams.f_attn_value_scale;
+104:     const bool emit_h_nextn = cparams.embeddings_nextn;
+105:     const bool crop_last_layer = inp_out_ids && (!emit_h_nextn || cparams.embeddings_nextn_masked);
+106:
+107:     for (int il = 0; il < n_layer; ++il) {
+108:         ggml_tensor * inpSA = inpL;
+109:
+110:         uint32_t n_head_l    = hparams.n_head(il);
+111:         uint32_t n_head_kv_l = hparams.n_head_kv(il);
+112:         const float freq_base_l  = model.get_rope_freq_base(cparams, il);
+113:         const float freq_scale_l = model.get_rope_freq_scale(cparams, il);
+114:
+115:         cur = inpL;
+116:
+155:
+156:             Qcur = ggml_rope_ext(
+157:                 ctx0, Qcur, inp_pos, nullptr,
+158:                 n_rot, rope_type, n_ctx_orig, freq_base_l, freq_scale_l,
+159:                 ext_factor, attn_factor, beta_fast, beta_slow
+160:                 );
+161:
+162:             Kcur = ggml_rope_ext(
+163:                 ctx0, Kcur, inp_pos, nullptr,
+164:                 n_rot, rope_type, n_ctx_orig, freq_base_l, freq_scale_l,
+165:                 ext_factor, attn_factor, beta_fast, beta_slow
+166:                 );
+167:
+168:             cb(Qcur, "Qcur", il);
+169:             cb(Kcur, "Kcur", il);
+170:             cb(Vcur, "Vcur", il);
+171:
+172:             ggml_tensor * sinks = model.layers[il].attn_sinks;
+173:
+174:             cur = build_attn(inp_attn,
+175:                     model.layers[il].wo, NULL, model.layers[il].wo_s,
+176:                     Qcur, Kcur, Vcur, nullptr, sinks, nullptr, 1.0f/sqrtf(float(n_embd_head_k)), il);
+177:             cb(cur, "attn_out", il);
+178:
+179:             if (v_scale) {
+180:                 cur = ggml_scale(ctx0, cur, v_scale);
+181:                 cb(cur, "attn_out_scaled", il);
+182:             }
+183:         }
+200:             // dense branch
+201:             cur = build_ffn(cur,
+202:                     model.layers[il].ffn_up,   model.layers[il].ffn_up_b,   NULL,
+203:                     model.layers[il].ffn_gate, model.layers[il].ffn_gate_b, NULL,
+204:                     model.layers[il].ffn_down, model.layers[il].ffn_down_b, NULL,
+205:                     NULL,
+206:                     LLM_FFN_SILU, LLM_FFN_PAR, il);
+207:             cb(cur, "ffn_out", il);
+208:         } else {
+209:             // MoE branch
+210:             cur = build_moe_ffn(cur,
+211:                     model.layers[il].ffn_gate_inp,
+212:                     model.layers[il].ffn_up_exps,
+213:                     model.layers[il].ffn_gate_exps,
+214:                     model.layers[il].ffn_down_exps,
+215:                     model.layers[il].ffn_exp_probs_b,
+216:                     n_expert, n_expert_used,
+217:                     LLM_FFN_SILU, true,
+218:                     hparams.expert_weights_scale,
+219:                     LLAMA_EXPERT_GATING_FUNC_TYPE_SIGMOID,
+220:                     il);
+221:             cb(cur, "ffn_moe_out", il);
+222:         }
+223:
+
+SOURCE llama-common__arg.cpp
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/arg.cpp
+ORIGINAL_SHA256 25c465a79b18a360d8bbe422feafa292ebca1f570985b21d69bbdc0f3df6e1f9
+1686:     add_opt(common_arg(
+1687:         {"--swa-full"},
+1688:         string_format("use full-size SWA cache (default: %s)\n"
+1689:             "[(more info)](https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)", params.swa_full ? "true" : "false"),
+1690:         [](common_params & params) {
+1691:             params.swa_full = true;
+1692:         }
+1693:     ).set_env("LLAMA_ARG_SWA_FULL"));
+2755:     add_opt(common_arg(
+2756:         {"-cmoe", "--cpu-moe"},
+2757:         "keep all Mixture of Experts (MoE) weights in the CPU",
+2758:         [](common_params & params) {
+2759:             params.tensor_buft_overrides.push_back(llm_ffn_exps_cpu_override());
+2760:         }
+2761:     ).set_env("LLAMA_ARG_CPU_MOE"));
+2762:     add_opt(common_arg(
+2763:         {"-ncmoe", "--n-cpu-moe"}, "N",
+2764:         "keep the Mixture of Experts (MoE) weights of the first N layers in the CPU",
+2765:         [](common_params & params, int value) {
+2766:             if (value < 0) {
+2767:                 throw std::invalid_argument("invalid value");
+2768:             }
+2769:             llm_add_n_cpu_ffn_overrides(value, LLM_FFN_EXPS_REGEX, params.tensor_buft_overrides);
+2770:         }
+2771:     ).set_env("LLAMA_ARG_N_CPU_MOE"));
+2772:     add_opt(common_arg(
+2773:         {"-ncffn", "--n-cpu-ffn"}, "N",
+
+SOURCE llama-common__chat.cpp
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/chat.cpp
+ORIGINAL_SHA256 3d28ec8d7d0d96c4b462b69026deaac3d6454327ae87ff09aeec7451c43f73f1
+1211:
+1212:     // Qwen3-Coder XML tool calls, also used by Nemotron Nano 3, Qwen3.5 and StepFun-3.5-Flash
+1213:     if (src.find("<tool_call>") != std::string::npos &&
+1214:         src.find("<function=") != std::string::npos &&
+1215:         src.find("<parameter=") != std::string::npos &&
+1216:         // Exclude models that don't use \n between tags
+1217:         src.find("'<tool_call><function=' ~ tool_call.name ~ '>'") == std::string::npos) {
+1218:         LOG_DBG("Using specialized template: Qwen3-Coder\n");
+1219:         return common_chat_params_init_qwen3_coder(tmpl, params);
+1220:     }
+1221:
+1222:     return std::nullopt;
+1223: }
+1224:
+1225: static common_chat_params common_chat_templates_apply_jinja(const struct common_chat_templates *        tmpls,
+1332:         return *result;
+1333:     }
+1334:
+1335:     try {
+1336:         LOG_DBG("%s: using differential autoparser\n", __func__);
+1337:         struct autoparser::autoparser autoparser;
+1338:         autoparser.analyze_template(tmpl);
+1339:         auto auto_params = autoparser::peg_generator::generate_parser(tmpl, params, autoparser);
+1340:
+1341:         common_chat_msg_delimiters delimiters;
+1342:         if (!autoparser.assistant_start.empty()) {
+1343:             delimiters.add(COMMON_CHAT_ROLE_ASSISTANT, autoparser.assistant_start);
+1344:         }
+1345:         if (!autoparser.user_start.empty()) {
+1346:             delimiters.add(COMMON_CHAT_ROLE_USER, autoparser.user_start);
+1347:         }
+1348:
+1349:         auto_params.message_delimiters = std::move(delimiters);
+1350:
+1351:         auto_params.supports_thinking = autoparser.reasoning.mode != autoparser::reasoning_mode::NONE;
+1352:         if (auto_params.supports_thinking) {
+1353:             auto_params.thinking_start_tag = trim_whitespace(autoparser.reasoning.start);
+1354:             auto end_tag = trim_whitespace(autoparser.reasoning.end);
+1355:             if (!end_tag.empty()) {
+1356:                 auto_params.thinking_end_tags = {std::move(end_tag)};
+1357:             }
+1358:         }
+1359:         common_peg_arena arena;
+1360:         arena.load(auto_params.parser);
+1361:         LOG_DBG("%s: generated parser:\n%s\n\nparser generation prompt: %s\n", __func__, arena.dump(arena.root()).c_str(), auto_params.generation_prompt.c_str());
+1362:         return auto_params;
+1363:     } catch (const std::exception & e) {
+1364:         throw std::invalid_argument(std::string("Unable to generate parser for this template. Automatic parser generation failed: ") + e.what());
+1365:     }
+1366: }
+1367:
+1368: // Legacy template route (adhoc C++ implementation of known templates), forward to llama_chat_apply_template.
+1369: static common_chat_params common_chat_templates_apply_legacy(const struct common_chat_templates *        tmpls,
+
+SOURCE llama-common__chat-auto-parser-generator.cpp
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/chat-auto-parser-generator.cpp
+ORIGINAL_SHA256 9f76ec58eb8e7aa8d2c40df1be0a75ba2e90a0486fc347f6a00e73b4457d1df4
+180: common_peg_parser analyze_tools::build_parser(parser_build_context & ctx) const {
+181:     switch (format.mode) {
+182:         case tool_format::JSON_NATIVE:
+183:             return build_tool_parser_json_native(ctx);
+184:         case tool_format::TAG_WITH_JSON:
+185:             return build_tool_parser_tag_json(ctx);
+186:         case tool_format::TAG_WITH_TAGGED:
+187:             return build_tool_parser_tag_tagged(ctx);
+188:         default:
+189:             LOG_ERR("[ERROR] Template seems to support tool calls, but failed to determine tool format. Tool calling will not work properly. "
+190:                 "Check for a fixed template for your model in the models/templates directory of your llama.cpp installation or "
+191:                 "report an issue at https://github.com/ggml-org/llama.cpp/issues\n");
+192:             return ctx.p.eps();
+193:     }
+194: }
+195:
+196: common_peg_parser analyze_tools::build_tool_parser_json_native(parser_build_context & ctx) const {
+197:     auto &       p           = ctx.p;
+198:     const auto & inputs      = ctx.inputs;
+199:
+200:     // Build effective field names with dot notation if function_field is set
+201:     std::string name_field = format.name_field;
+202:     std::string args_field = format.args_field;
+203:
+204:     if (!format.function_field.empty() && format.function_field != "function" &&
+205:         name_field.find('.') == std::string::npos) {
+206:         name_field = format.function_field + "." + name_field;
+207:         args_field = format.function_field + "." + args_field;
+208:     }
+209:
+210:     auto tools_parser = p.eps();
+211:     if (format.section_start.empty() && !format.per_call_start.empty()) {
+212:         auto single_tool_parser = p.standard_json_tools(
+213:             format.per_call_start, format.per_call_end, inputs.tools, inputs.parallel_tool_calls,
+214:             inputs.tool_choice == COMMON_CHAT_TOOL_CHOICE_REQUIRED, name_field, args_field, format.tools_array_wrapped,
+215:             format.fun_name_is_key, format.id_field, format.gen_id_field, format.parameter_order, format.openai_wrapper_trigger);
+216:         tools_parser = p.trigger_rule("tool-calls", p.one_or_more(single_tool_parser + p.space()));
+217:     } else {
+218:         tools_parser = p.standard_json_tools(
+219:             format.section_start, format.section_end, inputs.tools, inputs.parallel_tool_calls,
+220:             inputs.tool_choice == COMMON_CHAT_TOOL_CHOICE_REQUIRED, name_field, args_field, format.tools_array_wrapped,
+221:             format.fun_name_is_key, format.id_field, format.gen_id_field, format.parameter_order, format.openai_wrapper_trigger);
+222:     }
+223:
+224:     // Handle content wrappers if present
+225:     if (ctx.content && ctx.content->is_always_wrapped()) {
+226:         auto wrapped_content = ctx.content->build_optional_wrapped(ctx);
+227:         return ctx.reasoning_parser + wrapped_content + tools_parser + p.end();
+228:     }
+229:
+230:     std::string tool_start = "{";
+231:     if (!format.section_start.empty()) {
+232:         tool_start = format.section_start;
+233:     } else if (!format.per_call_start.empty()) {
+234:         tool_start = format.per_call_start;
+235:     }
+236:
+237:     return ctx.reasoning_parser + p.optional(p.content(p.until(tool_start))) + tools_parser + p.end();
+238: }
+239:
+240: common_peg_parser analyze_tools::build_func_parser(common_chat_peg_builder & p, const std::string & name,
+241:                                                     const common_peg_parser & call_id_section, bool have_call_id,
+242:                                                     const common_peg_parser & args,
+243:                                                     std::optional<common_peg_parser> atomic_peek) const {
+244:     auto              open           = p.tool_open(function.name_prefix + p.tool_name(p.literal(name)) + function.name_suffix);
+245:     bool              matched_atomic = false;
+246:     common_peg_parser func_parser    = p.eps();
+247:
+248:     if (!function.args_separator.empty()) {
+249:         open = open + p.space() + p.literal(function.args_separator);
+250:     }
+
+SOURCE llama-src__llama-kv-cache-iswa.cpp
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-kv-cache-iswa.cpp
+ORIGINAL_SHA256 567fe836543e1dd9cdd5b7cb3a91afd049c17c7010f0bddf9fe149b02b5243cb
+53:     const layer_filter_cb filter_base = [&](int32_t il) {
+54:         if (filter && !filter(il)) {
+55:             return false;
+56:         }
+57:
+58:         return !model.hparams.is_swa(il);
+59:     };
+60:
+61:     const layer_filter_cb filter_swa  = [&](int32_t il) {
+62:         if (filter && !filter(il)) {
+63:             return false;
+64:         }
+65:
+66:         return  model.hparams.is_swa(il);
+67:     };
+68:
+69:     const uint32_t size_base = kv_size;
+70:
+71:     // note: the SWA cache is always padded to 256 for performance
+72:     //       https://github.com/ggml-org/llama.cpp/issues/17037
+73:     uint32_t size_swa = GGML_PAD(std::min(size_base, hparams.n_swa*(unified ? n_seq_max : 1) + n_ubatch), 256);
+74:
+75:     // when using full-size SWA cache, we set the SWA cache size to be equal to the base cache size
+76:     if (swa_full) {
+77:         LLAMA_LOG_WARN("%s: using full-size SWA cache (ref: %s)\n",
+78:                 __func__, "https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055");
+79:
+80:         size_swa = size_base;
+81:     }
+82:
+83:     LLAMA_LOG_INFO("%s: creating non-SWA KV cache, size = %u cells\n", __func__, size_base);
+84:
+85:     llama_memory_t mem_other_base = nullptr;
+86:     if (mem_other) {
+87:         mem_other_base = static_cast<llama_kv_cache_iswa *>(mem_other)->get_base();
+88:     }
+89:
+90:     llama_memory_t mem_other_swa = nullptr;
+91:     if (mem_other) {
+92:         mem_other_swa = static_cast<llama_kv_cache_iswa *>(mem_other)->get_swa();
+93:     }
+94:
+95:     kv_base = std::make_unique<llama_kv_cache>(
+96:             model, hparams, type_k, type_v,
+97:             v_trans, offload, unified, size_base, n_seq_max, n_pad,
+98:             0, LLAMA_SWA_TYPE_NONE, mem_other_base, filter_base, reuse, share);
+99:
+100:     LLAMA_LOG_INFO("%s: creating     SWA KV cache, size = %u cells\n", __func__, size_swa);
+101:
+102:     kv_swa = std::make_unique<llama_kv_cache>(
+103:             model, hparams, type_k, type_v,
+104:             v_trans, offload, unified, size_swa, n_seq_max, n_pad,
+105:             hparams.n_swa, hparams.swa_type, mem_other_swa, filter_swa, reuse, share);
+
+SOURCE llama-src__llama-kv-cache.cpp
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-kv-cache.cpp
+ORIGINAL_SHA256 c83046da70d2806bce76e2396953dafc805c3c413ab9e80df3d82c940f9da7b1
+80:     const  layer_reuse_cb & reuse,
+81:     const  layer_share_cb & share,
+82:              const char *   name_tag) :
+83:     model(model), hparams(hparams), v_trans(v_trans),
+84:     n_seq_max(n_seq_max), n_stream(unified ? 1 : n_seq_max), n_pad(n_pad), n_swa(n_swa), swa_type(swa_type),
+85:     other(static_cast<llama_kv_cache *>(mem_other)),
+209:         const uint32_t n_embd_k_gqa =            hparams.n_embd_k_gqa(il);
+210:         const uint32_t n_embd_v_gqa = !v_trans ? hparams.n_embd_v_gqa(il) : hparams.n_embd_v_gqa_max();
+211:
+212:         const char * dev_name = "CPU";
+213:
+214:         ggml_backend_buffer_type_t buft = ggml_backend_cpu_buffer_type();
+215:
+216:         if (offload) {
+217:             auto * dev = model.dev_layer(il);
+218:             buft = ggml_backend_dev_buffer_type(dev);
+219:
+220:             dev_name = ggml_backend_dev_name(dev);
+221:         }
+222:
+223:         LLAMA_LOG_DEBUG("%s: layer %3d: dev = %s\n", __func__, il, dev_name);
+224:
+225:         ggml_context * ctx = ctx_for_buft(buft);
+226:         if (!ctx) {
+227:             throw std::runtime_error("failed to create ggml context for kv cache");
+228:         }
+229:
+230:         const bool has_k = true;
+231:         const bool has_v = !is_mla;
+232:
+233:         ggml_tensor * k = has_k ? ggml_new_tensor_3d(ctx, type_k, n_embd_k_gqa, kv_size, n_stream) : nullptr;
+234:         ggml_tensor * v = has_v ? ggml_new_tensor_3d(ctx, type_v, n_embd_v_gqa, kv_size, n_stream) : nullptr;
+235:
+
+SOURCE llama-src__llama-model.cpp
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-model.cpp
+ORIGINAL_SHA256 15acd497f5ad85fd2754e8023b0ea524fd8961e326f6d3df15244fbd69b1b88b
+2739:                     }
+2740:
+2741:                     // don't filter when n_layer_nextn is repurposed for a router layer the trunk attends
+2742:                     // or when a model is entirely n_layer_nextn layers and has no trunk
+2743:                     if (hparams.n_layer_nextn > 0 && hparams.n_layer() > 0 && hparams.router_layer < 0) {
+2744:                         if (params.ctx_type == LLAMA_CONTEXT_TYPE_MTP) {
+2745:                             filter = [&](uint32_t il) { return il >= hparams.n_layer(); };
+2746:                         } else {
+2747:                             filter = [&](uint32_t il) { return il <  hparams.n_layer(); };
+2748:                         }
+2749:                     }
+2750:
+2751:                     if (hparams.swa_type != LLAMA_SWA_TYPE_NONE) {
+2752:                         GGML_ASSERT(hparams.is_swa_any());
+2753:
+2784:                             res = new llama_kv_cache_iswa(
+2785:                                     *this,
+2786:                                     params.type_k,
+2787:                                     params.type_v,
+2788:                                     !cparams.flash_attn,
+2789:                                     cparams.offload_kqv,
+2790:                                     params.swa_full,
+2791:                                     cparams.kv_unified,
+2792:                                     cparams.n_ctx_seq,
+2793:                                     cparams.n_seq_max,
+2794:                                     cparams.n_ubatch,
+2795:                                     1,
+2796:                                     nullptr,
+2797:                                     filter,
+2798:                                     reuse,
+2799:                                     share);
+2800:                         }
+
+SOURCE llama-common__common.h
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/common.h
+ORIGINAL_SHA256 292817b2482dce5f4d23cd723ee02b0a4f1325f308e88130adda365908db7465
+568:     bool simple_io         = false; // improves compatibility with subprocesses and limited consoles
+569:     bool cont_batching     = true;  // insert new sequences for decoding on-the-fly
+570:     bool no_perf           = false; // disable performance metrics
+571:     bool show_timings      = true;  // show timing information on CLI
+572:     bool ctx_shift         = false; // context shift on infinite text generation
+573:     bool swa_full          = false; // use full-size SWA cache (https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+574:     bool kv_unified        = false; // enable unified KV cache
+575:
+576:     bool input_prefix_bos  = false; // prefix BOS to user inputs, preceding input_prefix
+
+SOURCE llama-common__common.cpp
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/common.cpp
+ORIGINAL_SHA256 727619fe7705a6137e82f40dc7f9003aaae9d4c957f1946d820d87ec7289eb96
+1695:     cparams.flash_attn_type   = params.flash_attn_type;
+1696:     cparams.cb_eval           = params.cb_eval;
+1697:     cparams.cb_eval_user_data = params.cb_eval_user_data;
+1698:     cparams.offload_kqv       = !params.no_kv_offload;
+1699:     cparams.no_perf           = params.no_perf;
+1700:     cparams.op_offload        = !params.no_op_offload;
+1701:     cparams.swa_full          = params.swa_full;
+1702:     cparams.kv_unified        = params.kv_unified;
+1703:
+1704:     cparams.type_k = params.cache_type_k;
+
+SOURCE llama-src__llama-context.cpp
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-context.cpp
+ORIGINAL_SHA256 564a96d60361bdac69fcff60681de5ba4bab27aaa2ab971cb363df3b124a0538
+3731:         /*.cb_eval                     =*/ nullptr,
+3732:         /*.cb_eval_user_data           =*/ nullptr,
+3733:         /*.type_k                      =*/ GGML_TYPE_F16,
+3734:         /*.type_v                      =*/ GGML_TYPE_F16,
+3735:         /*.abort_callback              =*/ nullptr,
+3736:         /*.abort_callback_data         =*/ nullptr,
+3737:         /*.embeddings                  =*/ false,
+3738:         /*.offload_kqv                 =*/ true,
+3739:         /*.no_perf                     =*/ true,
+3740:         /*.op_offload                  =*/ true,
+3741:         /*.swa_full                    =*/ true,
+3742:         /*.kv_unified                  =*/ false,
+3743:         /*.sampler                     =*/ nullptr,
+3744:         /*.n_sampler                   =*/ 0,
+3745:         /*.ctx_other                   =*/ nullptr,
+
+SOURCE llama-ggml__src__ggml-cuda__CMakeLists.txt
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/CMakeLists.txt
+ORIGINAL_SHA256 8810366d36247b5e4f923f58f92a340ba6071ad5700ef4e5af7eb0cb7f7bc67a
+38:             endif()
+39:
+40:             if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL "12.8")
+41:                 # The CUDA architecture 120f-virtual would in principle work for Blackwell support
+42:                 #     but the newly added "f" suffix conflicted with a preexising regex for validating CUDA architectures in CMake.
+43:                 # So either a recent CMake version or one with the backported fix is needed.
+44:                 # The following versions should work:
+45:                 #   - CMake >= v3.31.8 && CMake < v4.0.0
+46:                 #   - CMake >= v4.0.2
+47:                 # This is NOT documented in the CMake release notes,
+48:                 #     check Modules/Internal/CMakeCUDAArchitecturesValidate.cmake in the CMake git repository instead.
+49:                 # However, the architectures 120a-real and 121a-real should work with basically any CMake version and
+50:                 #     until the release of e.g. Rubin there is no benefit to shipping virtual architectures for Blackwell.
+51:                 list(APPEND CMAKE_CUDA_ARCHITECTURES 120a-real)
+52:             endif()
+53:             if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL "12.9")
+54:                 list(APPEND CMAKE_CUDA_ARCHITECTURES 121a-real)
+55:             endif()
+56:         endif()
+75:     # Replace any plain 12X CUDA architectures with their "architecture-specific" equivalents 12Xa.
+76:     # 12X is forwards-compatible, 12Xa is not.
+77:     # Notably the Blackwell FP4 tensor core instructions are not forwards compatible and therefore need 12Xa.
+78:     # But while 12X vs. 12Xa can be checked in device code there is (to my knowledge) no easy way to do the same check in host code.
+79:     # So for now just replace all instances of 12X with 12Xa, this should be fine until Rubin is released.
+80:     foreach(ARCHS IN ITEMS CMAKE_CUDA_ARCHITECTURES CMAKE_CUDA_ARCHITECTURES_NATIVE)
+81:         set(FIXED_ARCHS "")
+82:         foreach(ARCH IN LISTS ${ARCHS})
+83:             if (ARCH MATCHES "^12[0-9](-real|-virtual)?$")
+84:                 string(REGEX REPLACE "^(12[0-9])((-real|-virtual)?)$" "\\1a\\2" FIXED_ARCH ${ARCH})
+85:                 message(STATUS "Replacing ${ARCH} in ${ARCHS} with ${FIXED_ARCH}")
+86:                 list(APPEND FIXED_ARCHS "${FIXED_ARCH}")
+87:             else()
+88:                 list(APPEND FIXED_ARCHS "${ARCH}")
+89:             endif()
+90:         endforeach()
+91:         set(${ARCHS} ${FIXED_ARCHS})
+92:     endforeach()
+93:
+94:     # If we try to compile a "native" build it will use the 12X architectures and fail.
+95:     # So we should instead use the native architectures as determined by CMake after replacing 12X with 12Xa.
+96:     # But if at the time of the build no GPUs are connected at all CMAKE_CUDA_ARCHITECTURES will contain garbage that we should not use.
+
+SOURCE llama-ggml__src__ggml-cuda__mmq.cu
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/mmq.cu
+ORIGINAL_SHA256 77373dc9affde43269ce2af699e587884c654ebf74abb7515912f26c9233f5a4
+69:         case GGML_TYPE_IQ4_NL:
+70:             mul_mat_q_case<GGML_TYPE_IQ4_NL>(ctx, args, stream);
+71:             break;
+72: // -----------------------------------------------------------------------
+73:         case GGML_TYPE_MXFP4:
+74:             // src1 at Q4 uses the native FP4 instructions, which are Blackwell-only
+75:             if (prec_src1 == GGML_PREC_Q4) {
+76:                 mul_mat_q_case<GGML_TYPE_MXFP4, GGML_PREC_Q4>(ctx, args, stream);
+77:                 break;
+78:             }
+79:             mul_mat_q_case<GGML_TYPE_MXFP4>(ctx, args, stream);
+80:             break;
+81:         case GGML_TYPE_NVFP4:
+115:
+116: // src1 is quantized to Q8_1 unless the FP4 types can use 4-bit activations, in which case they
+117: // default to the native W4A4 instructions on Blackwell.
+118: static ggml_prec ggml_cuda_mmq_get_prec_src1(const ggml_tensor * src0, const ggml_tensor * dst, const int cc) {
+119:     static const ggml_prec prec_env = ggml_cuda_mmq_get_prec_env();
+120:
+121:     ggml_prec prec = prec_env;
+122:     if (prec == GGML_PREC_UNDEFINED) {
+123:         prec = (ggml_prec) ggml_get_op_params_i32(dst, 3);
+124:     }
+125:
+126:     // Q4 only for the FP4 types on Blackwell
+127:     GGML_ASSERT(prec == GGML_PREC_UNDEFINED || prec == GGML_PREC_Q8 || prec == GGML_PREC_Q4);
+128:     const bool can_use_q4 = (src0->type == GGML_TYPE_NVFP4 || src0->type == GGML_TYPE_MXFP4) && blackwell_mma_available(cc);
+129:     if (prec == GGML_PREC_Q8 || !can_use_q4) {
+130:         return GGML_PREC_Q8;
+131:     }
+132:     return GGML_PREC_Q4;
+133: }
+134:
+135: void ggml_cuda_mul_mat_q(
+136:         ggml_backend_cuda_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * ids, ggml_tensor * dst) {
+137:     GGML_ASSERT(        src1->type == GGML_TYPE_F32);
+138:     GGML_ASSERT(        dst->type  == GGML_TYPE_F32);
+139:     GGML_ASSERT(!ids || ids->type  == GGML_TYPE_I32); // Optional, used for batched GGML_MUL_MAT_ID.
+140:
+141:     GGML_TENSOR_BINARY_OP_LOCALS;
+
+SOURCE llama-ggml__src__ggml-cuda__mmq.cuh
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/mmq.cuh
+ORIGINAL_SHA256 b4337f6777bde524b1e8af4aabea6edb5d58f1fa4d6986f4b50cc7e2f05290f0
+689:
+690: #ifdef BLACKWELL_MMA_AVAILABLE
+691:     switch (type) {
+692:         case GGML_TYPE_MXFP4:
+693:             if (prec_src1 == GGML_PREC_Q4) {
+694:                 return ggml_cuda_mmq_util_funcs(
+695:                     -1,
+696:                     ggml_cuda_mmq_load_tiles_mxfp4_fp4<type, J, fallback>,
+697:                     ggml_cuda_mmq_vec_dot_fp4_fp4_mma<type, J, fallback>,
+698:                     ggml_cuda_mmq_write_back_mma<type, J, fallback>);
+699:             }
+700:             break;
+701:         case GGML_TYPE_NVFP4:
+702:             if (prec_src1 == GGML_PREC_Q4) {
+703:                 return ggml_cuda_mmq_util_funcs(
+704:                     -1,
+705:                     ggml_cuda_mmq_load_tiles_nvfp4_nvfp4<type, J, fallback>,
+706:                     ggml_cuda_mmq_vec_dot_fp4_fp4_mma<type, J, fallback>,
+707:                     ggml_cuda_mmq_write_back_mma<type, J, fallback>);
+708:             }
+709:             break;
+710:         default:
+711:             break;
+712:     }
+713: #endif // BLACKWELL_MMA_AVAILABLE
+1549:         case 104:
+1550:             launch_mul_mat_q<type, 104, fallback, prec_src1>(ctx, args, stream);
+1551:             break;
+1552:         case 112:
+1553:             launch_mul_mat_q<type, 112, fallback, prec_src1>(ctx, args, stream);
+1554:             break;
+1555:         case 120:
+1556:             launch_mul_mat_q<type, 120, fallback, prec_src1>(ctx, args, stream);
+1557:             break;
+1558:         case 128:
+1559:             launch_mul_mat_q<type, 128, fallback, prec_src1>(ctx, args, stream);
+1560:             break;
+
+SOURCE llama-ggml__src__ggml-cuda__ggml-cuda.cu
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/ggml-cuda.cu
+ORIGINAL_SHA256 3743393c56dfc30a2b43cd18859187acebb407e61e1ef97a1ea5190762b24273
+5206:         case GGML_OP_MUL_MAT:
+5207:         case GGML_OP_MUL_MAT_ID:
+5208:             {
+5209:                 struct ggml_tensor * a = op->src[0];
+5210:                 struct ggml_tensor * b = op->src[1];
+5211:                 if (a->nb[0] != ggml_element_size(a) || b->nb[0] != ggml_element_size(b)) {
+5212:                     return false; // TODO this could in principle be implemented though currently there is no use case.
+5213:                 }
+5214:                 if (b->type == GGML_TYPE_F16 && a->type != GGML_TYPE_F16 && !ggml_cuda_op_mul_mat_use_fwht(op)) {
+5215:                     return false;
+5216:                 }
+5217:                 if (op->op == GGML_OP_MUL_MAT_ID && ggml_get_op_params_i32(op, 3) == GGML_PREC_F32) {
+5218:                     return false;
+5219:                 }
+5220: #ifdef GGML_USE_MUSA
+5232: #endif // GGML_USE_MUSA
+5233:                 switch (a->type) {
+5234:                     case GGML_TYPE_F32:
+5235:                     case GGML_TYPE_F16:
+5236:                     case GGML_TYPE_Q1_0:
+5237:                     case GGML_TYPE_Q2_0:
+5238:                     case GGML_TYPE_Q4_0:
+5239:                     case GGML_TYPE_Q4_1:
+5240:                     case GGML_TYPE_Q5_0:
+5241:                     case GGML_TYPE_Q5_1:
+5242:                     case GGML_TYPE_Q8_0:
+5243:                     case GGML_TYPE_MXFP4:
+5244:                     case GGML_TYPE_NVFP4:
+5245:                     case GGML_TYPE_Q2_K:
+5246:                     case GGML_TYPE_Q3_K:
+5247:                     case GGML_TYPE_Q4_K:
+5248:                     case GGML_TYPE_Q5_K:
+5249:                     case GGML_TYPE_Q6_K:
+5250:                     case GGML_TYPE_Q8_K:
+5251:                     case GGML_TYPE_IQ1_M:
+5252:                     case GGML_TYPE_IQ1_S:
+5253:                     case GGML_TYPE_IQ2_S:
+5254:                     case GGML_TYPE_IQ2_XS:
+5255:                     case GGML_TYPE_IQ2_XXS:
+5256:                     case GGML_TYPE_IQ3_S:
+5257:                     case GGML_TYPE_IQ3_XXS:
+5258:                     case GGML_TYPE_IQ4_NL:
+5259:                     case GGML_TYPE_IQ4_XS:
+5260:                     case GGML_TYPE_BF16:
+5261:                         return true;
+5262:                     default:
+5263:                         return false;
+5264:                 }
+
+SOURCE llama-ggml__src__ggml-cpu__ggml-cpu.c
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/ggml-cpu.c
+ORIGINAL_SHA256 559612b11d5aa286365c975dbe79deec9b3f4e89b06bd217bab98239cf30a942
+287:     [GGML_TYPE_MXFP4] = {
+288:         .from_float               = quantize_row_mxfp4,
+289:         .vec_dot                  = ggml_vec_dot_mxfp4_q8_0,
+290:         .vec_dot_type             = GGML_TYPE_Q8_0,
+291:         .nrows                    = 1,
+292:     },
+1858:             } break;
+1859:         case GGML_OP_MUL_MAT:
+1860:             {
+1861:                 ggml_compute_forward_mul_mat(params, tensor);
+1862:             } break;
+1863:         case GGML_OP_MUL_MAT_ID:
+1864:             {
+1865:                 ggml_compute_forward_mul_mat_id(params, tensor);
+1866:             } break;
+1867:         case GGML_OP_OUT_PROD:
+1868:             {
+
+SOURCE llama-ggml__src__ggml-cpu__arch__x86__quants.c
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/arch/x86/quants.c
+ORIGINAL_SHA256 3c489fdc77e3ab484a5f188bff9c60c0e9483c951ed65c1a562a04c249d5628e
+918: void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+919:     assert(nrc == 1);
+920:     UNUSED(nrc);
+921:     UNUSED(bx);
+922:     UNUSED(by);
+923:     UNUSED(bs);
+924:     assert(n % QK_MXFP4 == 0);
+925:     static_assert(QK_MXFP4 == QK8_0, "QK_MXFP4 and QK8_0 must be the same");
+926:
+927:     const block_mxfp4 * GGML_RESTRICT x = vx;
+928:     const block_q8_0 * GGML_RESTRICT y = vy;
+929:
+930:     const int nb = n / QK_MXFP4;
+931:
+932:     int ib = 0;
+933:     float sumf = 0;
+934:
+935: #if defined __AVX2__
+936:
+937:     const __m128i values128 = _mm_loadu_si128((const __m128i*)kvalues_fp4);
+938:     const __m128i m4b  = _mm_set1_epi8(0x0f);
+939:     const __m256i mone = _mm256_set1_epi16(1);
+
+SOURCE llama-ggml__src__ggml-cuda__fattn.cu
+URL https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/fattn.cu
+ORIGINAL_SHA256 3d9d722104e693f2443c1e84bc4a9f46daeacc9e7b4181a25e96a8e8d546b9db
+317:         case 192: {
+318:             // MiMo-V2.5 / V2.5-Pro / V2-Flash: gqa_ratio is 8 (SWA) or 16 (full attn)
+319:             GGML_ASSERT(V->ne[0] == 128);
+320:             float max_bias = 0.0f;
+321:             memcpy(&max_bias, (const float *) KQV->op_params + 1, sizeof(float));
+322:             const bool use_gqa_opt = mask && max_bias == 0.0f;
+323:             GGML_ASSERT(use_gqa_opt);
+324:             GGML_ASSERT(Q->ne[2] % K->ne[2] == 0);
+325:             const int gqa_ratio = Q->ne[2] / K->ne[2];
+326:             if (gqa_ratio % 16 == 0) {
+327:                 ggml_cuda_flash_attn_ext_mma_f16_switch_ncols1<192, 128, 16>(ctx, dst);
+328:             } else {
+329:                 GGML_ASSERT(gqa_ratio % 8 == 0);
+330:                 ggml_cuda_flash_attn_ext_mma_f16_switch_ncols1<192, 128,  8>(ctx, dst);
+331:             }
+332:         } break;
+333:         case 256:
+589:         case 192:
+590:             if (V->ne[0] != 128 || !gqa_opt_applies) {
+591:                 return BEST_FATTN_KERNEL_NONE;
+592:             }
+593:             if (gqa_ratio % 8 != 0) {
+594:                 return BEST_FATTN_KERNEL_NONE;
+595:             }
+596:             break;
+597:         case 320:
+598:             if (V->ne[0] != 256 || !gqa_opt_applies) {
+
+SOURCE aes-pro-kld_data__wiki-test-raw__aes_sedai__MiMo-V2.6-Pro-RL-MXFP4.md
+URL https://huggingface.co/AesSedai/MiMo-V2.6-Pro-RL-GGUF/resolve/ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d/kld_data/wiki-test-raw/aes_sedai/MiMo-V2.6-Pro-RL-MXFP4.md
+ORIGINAL_SHA256 5ec1fa5480e723ccdbd369d0aa4965ef9160b07fed7c58739e9bb2b29890eee3
+4: /home/jarvis/development/llama.cpp/build/bin/llama-perplexity --threads 48 --flash-attn on -lv 4 --file /mnt/srv/host/resources/KLD/wiki.test.raw --kl-divergence-base /mnt/srv/snowdrift/ref-logits/MiMo-V2.6-Pro-RL-BF16-512ctx-wiki.test.raw.bin --kl-divergence --batch-size 8192 --ubatch-size 8192 --model /mnt/srv/snowdrift/gguf/MiMo-V2.6-Pro-RL-GGUF/aes_sedai/MiMo-V2.6-Pro-RL-MXFP4.gguf
+5: 0.00.456.500 I cmn  common_init_: fitting params to device memory ...
+6: 0.00.456.508 I cmn  common_init_: (for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on)
+7: 0.00.456.770 I common_params_fit_impl: getting device memory data for initial parameters:
+8: 0.01.268.516 I common_memory_breakdown_print: | memory breakdown [MiB]                                       | total    free     self   model   context   compute    unaccounted |
+9: 0.01.268.525 I common_memory_breakdown_print: |   - CUDA0 (RTX PRO 6000 Blackwell Max-Q Workstation Edition) | 97250 = 96686 + (77054 = 71853 +     400 +    4801) +      -76491 |
+10: 0.01.268.526 I common_memory_breakdown_print: |   - CUDA1 (RTX PRO 6000 Blackwell Max-Q Workstation Edition) | 97250 = 96686 + (76696 = 70767 +     360 +    5569) +      -76133 |
+11: 0.01.268.526 I common_memory_breakdown_print: |   - CUDA2 (RTX PRO 6000 Blackwell Max-Q Workstation Edition) | 97250 = 96686 + (76696 = 70767 +     360 +    5569) +      -76133 |
+12: 0.01.268.526 I common_memory_breakdown_print: |   - CUDA3 (RTX PRO 6000 Blackwell Max-Q Workstation Edition) | 97250 = 96686 + (76696 = 70767 +     360 +    5569) +      -76133 |
+13: 0.01.268.527 I common_memory_breakdown_print: |   - CUDA4 (RTX PRO 6000 Blackwell Max-Q Workstation Edition) | 97250 = 96686 + (84599 = 78630 +     400 +    5569) +      -84036 |
+14: 0.01.268.527 I common_memory_breakdown_print: |   - CUDA5 (RTX PRO 6000 Blackwell Max-Q Workstation Edition) | 97250 = 96686 + (76696 = 70767 +     360 +    5569) +      -76133 |
+15: 0.01.268.527 I common_memory_breakdown_print: |   - CUDA6 (RTX PRO 6000 Blackwell Max-Q Workstation Edition) | 97250 = 96686 + (76696 = 70767 +     360 +    5569) +      -76133 |
+16: 0.01.268.527 I common_memory_breakdown_print: |   - CUDA7 (RTX PRO 6000 Blackwell Max-Q Workstation Edition) | 97250 = 96686 + (47864 = 41103 +     200 +    6561) +      -47301 |
+17: 0.01.268.527 I common_memory_breakdown_print: |   - Host                                                     |                   2237 =  1788 +       0 +     449                |
+55: 0.01.311.571 I llama_model_loader: - kv  22:                 mimo2.attention.key_length u32              = 192
+56: 0.01.311.572 I llama_model_loader: - kv  23:               mimo2.attention.value_length u32              = 128
+57: 0.01.311.572 I llama_model_loader: - kv  24:                          general.file_type u32              = 38
+58: 0.01.311.572 I llama_model_loader: - kv  25:             mimo2.attention.sliding_window u32              = 128
+59: 0.01.311.574 I llama_model_loader: - kv  26:     mimo2.attention.sliding_window_pattern arr[i32,73]      = [0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, ...
+60: 0.01.311.575 I llama_model_loader: - kv  27:           mimo2.expert_feed_forward_length u32              = 2048
+61: 0.01.311.576 I llama_model_loader: - kv  28:                 mimo2.rope.dimension_count u32              = 64
+62: 0.01.311.576 I llama_model_loader: - kv  29:     mimo2.attention.layer_norm_rms_epsilon f32              = 0.000010
+63: 0.01.311.577 I llama_model_loader: - kv  30:                mimo2.attention.value_scale f32              = 0.612000
+64: 0.01.311.577 I llama_model_loader: - kv  31:                 mimo2.nextn_predict_layers u32              = 3
+65: 0.01.311.579 I llama_model_loader: - kv  32:               general.quantization_version u32              = 2
+66: 0.01.311.580 I llama_model_loader: - kv  33:                       tokenizer.ggml.model str              = gpt2
+67: 0.01.311.581 I llama_model_loader: - kv  34:                         tokenizer.ggml.pre str              = qwen2
+68: 0.01.319.924 I llama_model_loader: - kv  35:                      tokenizer.ggml.tokens arr[str,152576]  = ["!", "\"", "#", "$", "%", "&", "'", ...
+69: 0.01.322.030 I llama_model_loader: - kv  36:                  tokenizer.ggml.token_type arr[i32,152576]  = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+70: 0.01.329.986 I llama_model_loader: - kv  37:                      tokenizer.ggml.merges arr[str,151387]  = ["Ġ Ġ", "ĠĠ ĠĠ", "i n", "Ġ t",...
+71: 0.01.329.995 I llama_model_loader: - kv  38:                tokenizer.ggml.eos_token_id u32              = 151645
+72: 0.01.329.995 I llama_model_loader: - kv  39:            tokenizer.ggml.padding_token_id u32              = 151643
+73: 0.01.329.996 I llama_model_loader: - kv  40:               tokenizer.ggml.add_bos_token bool             = false
+74: 0.01.329.999 I llama_model_loader: - kv  41:                    tokenizer.chat_template str              = {%- macro render_value(value) -%}\n   ...
+75: 0.01.329.999 I llama_model_loader: - type  f32:  357 tensors
+76: 0.01.330.000 I llama_model_loader: - type bf16:  163 tensors
+77: 0.01.330.000 I llama_model_loader: - type mxfp4:  207 tensors
+78: 0.01.330.001 I print_info: file format = GGUF V3 (latest)
+79: 0.01.330.001 I print_info: file type   = MXFP4 MoE
+80: 0.01.330.004 I print_info: file size   = 537.99 GiB (4.52 BPW)
+228: 7.25.085.930 I llama_context: n_ctx                 = 8192
+229: 7.25.085.930 I llama_context: n_ctx_seq             = 512
+230: 7.25.085.930 I llama_context: n_batch               = 8192
+231: 7.25.085.931 I llama_context: n_ubatch              = 8192
+232: 7.25.085.931 I llama_context: causal_attn           = 1
+233: 7.25.085.931 I llama_context: flash_attn            = enabled
+234: 7.25.085.935 I llama_context: kv_unified            = false
+235: 7.25.085.939 I llama_context: freq_base             = 10000000.0
+236: 7.25.085.939 I llama_context: freq_scale            = 1
+237: 7.25.085.939 I llama_context: n_rs_seq              = 0
+238: 7.25.085.940 I llama_context: n_outputs_max         = 8192
+239: 7.25.085.940 I llama_context: n_outputs_max_per_seq = 1
+240: 7.25.085.940 I llama_context: n_ctx_seq (512) < n_ctx_train (1048576) -- the full capacity of the model will not be utilized
+288: 7.25.508.762 I kl_divergence: computing over 584 chunks, n_ctx=512, batch_size=8192, n_seq=16
+289: 7.30.595.369 I kl_divergence: 5.09 seconds per pass - ETA 3.08 minutes
+877: ====== Perplexity statistics ======
+878: Mean PPL(Q)                   :   3.172064 ±   0.015439
+879: Mean PPL(base)                :   3.170872 ±   0.015405
+880: Cor(ln(PPL(Q)), ln(PPL(base))):  99.97%
+881: Mean ln(PPL(Q)/PPL(base))     :   0.000376 ±   0.000110
+882: Mean PPL(Q)/PPL(base)         :   1.000376 ±   0.000110
+883: Mean PPL(Q)-PPL(base)         :   0.001192 ±   0.000350
+884:
+885: ====== KL divergence statistics ======
+886: Mean    KLD:  -0.000000 ±   0.000000
+887: Maximum KLD:   0.000066
+888: 99.9%   KLD:   0.000051
+
+
+SOURCE ggml-flash-convert.log
+URL https://huggingface.co/ggml-org/MiMo-V2.6-Flash-RL-GGUF/resolve/a5d1269fdcf9c3346934411f700038e9cd9d5102/convert.log
+ORIGINAL_SHA256 69e7b07d58c9204f18d4394193ac17175a120d7dcd843a545d0925a0b7b2c212
+4: + QUANTIZE=llama.cpp/build/bin/llama-quantize
+5: + python3 llama.cpp/convert_hf_to_gguf.py ./model-temp-MiMo_V2.6_Flash_RL-PRIMARY --no-tensor-first-split --outtype bf16 --outfile ./upload-MiMo_V2.6_Flash_RL/MiMo-V2.6-Flash-RL-BF16.gguf --no-mtp --model-name MiMo-V2.6-Flash-RL
+1236: + python3 llama.cpp/convert_hf_to_gguf.py ./model-temp-MiMo_V2.6_Flash_RL-PRIMARY --outtype bf16 --outfile ./upload-MiMo_V2.6_Flash_RL/mtp-MiMo-V2.6-Flash-RL-BF16.gguf --mtp --model-name MiMo-V2.6-Flash-RL
+1501: + python3 llama.cpp/convert_hf_to_gguf.py ./model-temp-MiMo_V2.6_Flash_RL-PRIMARY --outtype bf16 --outfile ./upload-MiMo_V2.6_Flash_RL/mmproj-MiMo-V2.6-Flash-RL-BF16.gguf --mmproj --model-name MiMo-V2.6-Flash-RL
+2406: + python3 llama.cpp/convert_hf_to_gguf.py ./model-temp-MiMo_V2.6_Flash_RL-PRIMARY/dflash --outtype bf16 --target-model-dir ./model-temp-MiMo_V2.6_Flash_RL-PRIMARY --outfile ./upload-MiMo_V2.6_Flash_RL/dflash-MiMo-V2.6-Flash-RL-BF16.gguf --model-name MiMo-V2.6-Flash-RL
+2621: + llama.cpp/build/bin/llama-quantize --keep-split ./upload-MiMo_V2.6_Flash_RL/MiMo-V2.6-Flash-RL-BF16-00001-of-00002.gguf ./upload-MiMo_V2.6_Flash_RL/MiMo-V2.6-Flash-RL-MXFP4.gguf MXFP4_MOE
+2673: llama_model_loader: - type  f32:  230 tensors
+2674: llama_model_loader: - type bf16:  101 tensors
+2675: llama_model_loader: - type mxfp4:  141 tensors
+3154: + llama.cpp/build/bin/llama-quantize --keep-split --allow-requantize --pure --tensor-type token_embd.weight=q8_0 --tensor-type '^output.weight=q6_k' --tensor-type attn_=q8_0 --tensor-type ffn_down.weight=q8_0 --tensor-type ffn_gate.weight=q8_0 --tensor-type ffn_up.weight=q8_0 --tensor-type ffn_down_exps=mxfp4 --tensor-type ffn_gate_exps=q2_k --tensor-type ffn_up_exps=q2_k ./upload-MiMo_V2.6_Flash_RL/MiMo-V2.6-Flash-RL-BF16-00001-of-00002.gguf ./upload-MiMo_V2.6_Flash_RL/MiMo-V2.6-Flash-RL-Q2_K.gguf MXFP4_MOE
+3206: llama_model_loader: - type  f32:  230 tensors
+3207: llama_model_loader: - type bf16:  101 tensors
+3208: llama_model_loader: - type mxfp4:  141 tensors
+3881: + llama.cpp/build/bin/llama-quantize --pure ./upload-MiMo_V2.6_Flash_RL/mtp-MiMo-V2.6-Flash-RL-BF16.gguf ./upload-MiMo_V2.6_Flash_RL/mtp-MiMo-V2.6-Flash-RL-Q4_0.gguf Q4_0
+3930: llama_model_loader: - type  f32:   19 tensors
+3931: llama_model_loader: - type bf16:   20 tensors
+3976: + llama.cpp/build/bin/llama-quantize ./upload-MiMo_V2.6_Flash_RL/mtp-MiMo-V2.6-Flash-RL-BF16.gguf ./upload-MiMo_V2.6_Flash_RL/mtp-MiMo-V2.6-Flash-RL-Q8_0.gguf Q8_0
+3979: llama_quantize: quantizing './upload-MiMo_V2.6_Flash_RL/mtp-MiMo-V2.6-Flash-RL-BF16.gguf' to './upload-MiMo_V2.6_Flash_RL/mtp-MiMo-V2.6-Flash-RL-Q8_0.gguf' as Q8_0
+
+SOURCE aes-flash-quality.md
+URL https://huggingface.co/AesSedai/MiMo-V2.6-Flash-RL-GGUF/resolve/05c13439c18ba7183cb6afe294924c75ba7aa7b4/kld_data/wiki-test-raw/aes_sedai/MiMo-V2.6-Flash-RL-MXFP4.md
+ORIGINAL_SHA256 5e748d97a86211b3a4ef384bdda65718763b1370e1cc6e3ae4e2a441c5bb8848
+75: 0.03.655.981 I llama_model_loader: - type  f32:  248 tensors
+76: 0.03.655.981 I llama_model_loader: - type bf16:  119 tensors
+77: 0.03.655.981 I llama_model_loader: - type mxfp4:  141 tensors
+
+SOURCE ggml-flash-convert.log additional ranges
+2676: [   1/ 472] blk.1.ffn_down_exps.weight           - [  2048,   4096,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2677: [   2/ 472] blk.1.ffn_gate_exps.weight           - [  4096,   2048,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2678: [   3/ 472] blk.1.ffn_up_exps.weight             - [  4096,   2048,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2679: [   4/ 472] blk.2.ffn_down_exps.weight           - [  2048,   4096,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2680: [   5/ 472] blk.2.ffn_gate_exps.weight           - [  4096,   2048,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2681: [   6/ 472] blk.2.ffn_up_exps.weight             - [  4096,   2048,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2682: [   7/ 472] blk.3.ffn_down_exps.weight           - [  2048,   4096,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2683: [   8/ 472] blk.3.ffn_gate_exps.weight           - [  4096,   2048,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2684: [   9/ 472] blk.3.ffn_up_exps.weight             - [  4096,   2048,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2685: [  10/ 472] blk.4.ffn_down_exps.weight           - [  2048,   4096,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2686: [  11/ 472] blk.4.ffn_gate_exps.weight           - [  4096,   2048,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2687: [  12/ 472] blk.4.ffn_up_exps.weight             - [  4096,   2048,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2688: [  13/ 472] blk.5.ffn_down_exps.weight           - [  2048,   4096,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2689: [  14/ 472] blk.5.ffn_gate_exps.weight           - [  4096,   2048,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2690: [  15/ 472] blk.5.ffn_up_exps.weight             - [  4096,   2048,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2691: [  16/ 472] blk.6.ffn_down_exps.weight           - [  2048,   4096,    256,      1], type =  mxfp4, size = 1088.000 MiB
+2692: [  17/ 472] blk.6.ffn_gate_exps.weight           - [  4096,   2048,    256,      1], type =  mxfp4, size = 1088.000 MiB
+3137: [ 462/ 472] blk.8.attn_sinks.weight              - [    64,      1,      1,      1], type =    f32, size =    0.000 MiB
+3138: [ 463/ 472] blk.8.attn_output.weight             - [  8192,   4096,      1,      1], type =   bf16, converting to q8_0 .. size =    64.00 MiB ->    34.00 MiB
+3139: [ 464/ 472] blk.8.attn_qkv.weight                - [  4096,  14848,      1,      1], type =   bf16, converting to q8_0 .. size =   116.00 MiB ->    61.62 MiB
+3140: [ 465/ 472] blk.9.attn_norm.weight               - [  4096,      1,      1,      1], type =    f32, size =    0.016 MiB
+3141: [ 466/ 472] blk.9.exp_probs_b.bias               - [   256,      1,      1,      1], type =    f32, size =    0.001 MiB
+3142: [ 467/ 472] blk.9.ffn_gate_inp.weight            - [  4096,    256,      1,      1], type =    f32, size =    4.000 MiB
+3143: [ 468/ 472] blk.9.ffn_norm.weight                - [  4096,      1,      1,      1], type =    f32, size =    0.016 MiB
+3144: [ 469/ 472] blk.9.attn_sinks.weight              - [    64,      1,      1,      1], type =    f32, size =    0.000 MiB
+3145: [ 470/ 472] blk.9.attn_output.weight             - [  8192,   4096,      1,      1], type =   bf16, converting to q8_0 .. size =    64.00 MiB ->    34.00 MiB
+3146: [ 471/ 472] blk.9.attn_qkv.weight                - [  4096,  14848,      1,      1], type =   bf16, converting to q8_0 .. size =   116.00 MiB ->    61.62 MiB
+3147: [ 472/ 472] output_norm.weight                   - [  4096,      1,      1,      1], type =    f32, size =    0.016 MiB
+3148: llama_model_quantize_impl: model size  = 164915.57 MiB (4.48 BPW)
+3149: llama_model_quantize_impl: quant size  = 159610.26 MiB (4.34 BPW)
+3150:
+3151: llama_quantize: quantize time = 567625.10 ms
+3152: llama_quantize:    total time = 567625.10 ms
+3153: + FLAGS_Q2_K='--pure     --tensor-type token_embd.weight=q8_0     --tensor-type ^output.weight=q6_k     --tensor-type attn_=q8_0     --tensor-type ffn_down.weight=q8_0     --tensor-type ffn_gate.weight=q8_0     --tensor-type ffn_up.weight=q8_0     --tensor-type ffn_down_exps=mxfp4     --tensor-type ffn_gate_exps=q2_k     --tensor-type ffn_up_exps=q2_k '
