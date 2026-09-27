@@ -1,0 +1,21 @@
+{
+  "task": "H016-BACKEND-06-20260927",
+  "role": "Worker1 native backend executor",
+  "cli_session_id": "01a0e300-56c6-70b1-96e7-ef5092691aca",
+  "source_head": "7d92f0217ccdfdca0cb3a12418114b3e40435a65",
+  "started_utc": "2026-09-27T13:14:05Z",
+  "cli_cap_utc": "2026-09-27T13:34:05.315139+00:00",
+  "initial_prompt_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-BACKEND-06-20260927/PROMPT.md",
+  "initial_prompt_sha256": "cc19ecacc0a28ef78712e91f890742dc7f47cf0c94022b9a7998f570e8d7a23f",
+  "current_authority": "Direct root phase6 and decisions13:15/13:21; full17NOT_TESTED; after64Kterminal+clientPID0, normal exactR5stop+originalGLMrestore authorized promptly; no extra approval; no source/admission changes",
+  "raw_private_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-BACKEND-06-20260927/private/phase6",
+  "raw_snapshot_sha256": "c0d11830bc463122046c23b04b44c46c2524404cb586841098a9b74e6acaa157",
+  "vm_operations": [
+    "One read-only SSH snapshot at 2026-09-27T13:17:49.330852+00:00 through 2026-09-27T13:17:49.447621+00:00"
+  ],
+  "vm_mutations": [],
+  "inference_submissions": [],
+  "cleanup_1340": "UNCHANGED",
+  "admission_1325": "UNCHANGED",
+  "hard_end_utc": "2026-09-27T13:48:08Z"
+}

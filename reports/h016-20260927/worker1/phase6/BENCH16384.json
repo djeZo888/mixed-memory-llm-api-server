@@ -1,0 +1,39 @@
+{
+  "content": "{\"codes\": {\"early\": \"MF89NM7T\", \"middle\": \"9GX4ZDX9\", \"end\": \"SMQXNL2D\"}, \"product\": 323, \"safe_adc\": 4095}",
+  "correctness": "PASS",
+  "done": true,
+  "expected_input_tokens": 16384,
+  "finish_reason": "stop",
+  "finished_utc": "2026-09-27T13:05:38.624070+00:00",
+  "full_http_drain": true,
+  "label": "BENCH16384",
+  "native_timings": {
+    "cache_n": 0,
+    "predicted_ms": 59139.755,
+    "predicted_n": 55,
+    "predicted_per_second": 0.9130913714471763,
+    "predicted_per_token_ms": 1095.180648148148,
+    "prompt_ms": 269654.152,
+    "prompt_n": 16384,
+    "prompt_per_second": 60.759309205815605,
+    "prompt_per_token_ms": 16.45838330078125
+  },
+  "output_budget": 256,
+  "reasoning_content": "",
+  "request_sha256": "140c783fff02eadb907dfa75161db586039f00c7a6a04cc1eed61e19c78cde0a",
+  "response_id": "chatcmpl-DArwnQPAgZZrv3UzuExadLvWxgRCIB2M",
+  "started_utc": "2026-09-27T13:00:09.526049+00:00",
+  "status": "TRANSPORT_COMPLETE",
+  "thinking": false,
+  "tool_calls": [],
+  "total_seconds": 329.09793935999915,
+  "ttft_seconds": 269.9579532379976,
+  "usage": {
+    "completion_tokens": 55,
+    "prompt_tokens": 16384,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 16439
+  }
+}

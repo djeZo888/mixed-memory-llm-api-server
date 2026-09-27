@@ -1,0 +1,27 @@
+[
+  {
+    "path": "scripts/h016/r5/candidate_owner.py",
+    "sha256": "11041d78f05bb0522d48b293f0a4283629d4a15f787e8477be6591b4b7faa483",
+    "remote_deployed_match": true
+  },
+  {
+    "path": "scripts/h016/r5/telemetry.py",
+    "sha256": "2c0e7483845530cf9b669d699c67b574e0f4a8cbba21dd6c511bc7ddf7f817aa",
+    "remote_deployed_match": true
+  },
+  {
+    "path": "scripts/h016/r5/benchmark.py",
+    "sha256": "ece4d5d801edc10505ae7d7e9e108a8d4a017e76ac436a220b050f0239e75803",
+    "remote_deployed_match": true
+  },
+  {
+    "path": "scripts/h016/r5/private_proxy.py",
+    "sha256": "82d88ed7e13de4a4a36b1a74a4186927e7e03a5380e109860e4e076f3baeb50c",
+    "remote_deployed_match": true
+  },
+  {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-BACKEND-05-20260927/repo/reports/h016-20260927/worker1/phase5/single64k.py",
+    "sha256": "5f38a0ae058a70707267c6773c06d0dd459c8d133dec95485a9fb2d707132294",
+    "remote_deployed_match": true
+  }
+]

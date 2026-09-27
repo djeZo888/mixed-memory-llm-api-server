@@ -1,0 +1,9 @@
+PASS: all 10 report JSON files parse.
+PASS: nine inactive packet source hashes match current root source and review template.
+PASS: five deployed R5/helper source hashes match local retained source.
+PASS: SOURCE.diff empty; no runtime/config/container source changes.
+PASS: read-only collector compiles; one bounded execution returned exit0.
+PASS: source-derived global KV arithmetic reconciles6.25GiB131072 /50GiB1048576 and reserve table.
+NOT_RUN:68 offline source tests, new inference, allocation, production or full17 qualification.
+PASS: scoped secret-pattern scan found no matches (rg exit1).
+PASS: staged whitespace check after stripping excerpt-only trailing spaces.
