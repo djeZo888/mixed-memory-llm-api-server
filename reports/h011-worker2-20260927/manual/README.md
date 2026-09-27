@@ -1,8 +1,9 @@
 # H011 exact1M manual candidate
 
-**PREPARED_OFFLINE_NOT_EXECUTED — 1M LIVE NOT_TESTED, THERMAL BLOCK.**
-Root canceled all staging/launch this turn after ServerQwen1 reached85–86C
-during the corrected concurrent-load test. Keep Sova paused; no guard changes.
+**PREPARED_OFFLINE_NOT_EXECUTED — 1M LIVE NOT_TESTED, COOLING HOLD.**
+The later fan-adjusted load repeat also reached the85C test cutoff. See the
+[final H011 outcome](../../../docs/h011-status-20260927.md). Sova stays paused
+pending improved cooling and a later qualified load test; no guard changes.
 The commands below describe a future reviewed workflow, not a current launch.
 Source and mock checks do not qualify1M.
 Worker2 has made no ai-vm contact, allocation, profile activation or inference.
@@ -179,7 +180,7 @@ on separate CoreX PSU; three Blackwells on2200W workstation. No power/ECC limits
 are changed. Installer, downloads/builds, other models and production policies
 remain outside these source changes.
 
-Latest root steering at01:31: user fan adjustment is pending. A future repeat
-four-way qualification and later1M launch may follow after fan-ready confirmation,
-a passing repeat and root execution handoff. This preparation session does not
-wait for that work; no staging/launch or app restart was performed.
+Worker2 finished this source-only preparation before the fan-adjusted repeat.
+The final H011 outcome above supersedes its earlier pending-fan status. No1M
+staging, launch or app restart occurred. Successful1M retention remains the
+user-approved policy for a later trial.

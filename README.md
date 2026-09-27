@@ -95,6 +95,12 @@ selection. See [H009 delegation qualification](docs/h009-status-20260926.md) and
 
 ## Current models and dated acceptance
 
+**September 27 maintenance state:** all four backends were recovered ready and
+idle, but Sova remains paused after both Qwen GPUs reached the 85°C test cutoff
+in the fan-adjusted concurrent-load trial. Sustained four-model load is not yet
+qualified. The 1M Flash runner is prepared; no 1M test is running or completed.
+Cooling work precedes another load trial. [H011 results and next steps](docs/h011-status-20260927.md).
+
 The H009 deployment adds **GLM-5.3-Flash FP8** with CPU experts and a dedicated
 fast Blackwell, alongside both **Qwen3.8-27B FP8** instances and **Qwen-Image-2.1**
 on Ada. All three text services configure **480,000 tokens**; Flash has been

@@ -2,6 +2,13 @@
 
 ## Latest task precedence — 27 September 2026
 
+H011 closeout: the fan-adjusted repeat again reached the85C test cutoff; both
+Qwen GPUs reached85C. Sustained load remains unqualified and1M was NOT started.
+Read [the H011 result](docs/h011-status-20260927.md). Allfour backends were
+recovered ready at480K; Sova stayspaused. The user will improve cooling before
+another sustained test. Preserve this hold and all failed-attempt evidence.
+The prepared1M runner retains successful1M; no unconditional480K restoration.
+
 H011 explicitly authorizes a sustained four-model overlap test to assess load
 and stability, plus preparation of a user-operated 1M Flash test. Follow the
 [H011 plan](docs/h011-fourway-manual-1m-plan.md). Use one driver/owner for all four

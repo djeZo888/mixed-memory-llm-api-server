@@ -1,5 +1,9 @@
 # H011 Worker2 — prepared offline, harness remains paused
 
+Closeout note: the subsequent fan-adjusted repeat also reached the85C test
+cutoff. See [the final H011 outcome](../../docs/h011-status-20260927.md).
+The dated preparation observations below remain valid; no1M execution followed.
+
 `PREPARED_OFFLINE_NOT_EXECUTED`. Base5328a771596db54bee8b28e5f33b99892b3f5b7e,
 branch `worker2/h011-manual-1m`; fresh session01a0e05f-8219-7682-a55e-836475766600
 started00:59:10Z, absolute deadline01:54:10Z. The direct user steering at01:12
