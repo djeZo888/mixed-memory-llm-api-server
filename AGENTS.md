@@ -6,9 +6,10 @@ Latest user extension at14:56UTC adds two more hours: **final17:48:08UTC**.
 MiMo Pro is now explicitly the intended primary frontier replacing GLM, after
 qualification. Keep two Qwen instances and the image model. R7's single
 GOMP_SPINCOUNT=0 change improved unprofiled output to5.885tok/s for128 tokens
-and6.005tok/s for512; profiled3.364tok/s is separate. One further -t16/-tb64
-comparison is authorized across the same8guestNUMAs. Choose the winner, then
-validate maximum safe F16 allocation (target decimal1,000,000, fallback917,504)
+and6.005tok/s for512; profiled3.364tok/s is separate. R8's same83-input/128-output
+fixture reached7.76308tok/s (+31.9% overR7), with fullstream/nativeidle evidence.
+Root selected **16decode/64batchthreads with GOMP_SPINCOUNT=0**; no furtherA/B.
+Validate maximum safe F16 allocation (target decimal1,000,000, fallback917,504)
 while retaining7% freeVRAM. No cache precision change or occupied1M benchmark.
 The user explicitly requests a NEW4K/16K/64K ladder at final optimized settings;
 the old prohibition below no longer applies to that new ladder. Complete native
@@ -19,7 +20,8 @@ request. One native17 response completed but its local driver was interrupted
 and its terminal SSE/tool continuation was lost; it is NOT_QUALIFIED, not a
 model failure. A14:54:34 Proxmox UMC capture was idle, not decode. Preserve it
 and coordinate a replacement with actual native phase evidence.
-Existing R7 still has immutable15:15/15:35 boundaries. New experimental owners
+R7 settled and originalGLM readiness15:14:33 was verified. R8 normal settlement
+was requested15:32:36 after its completedresult. No warm adoption. New experimental owners
 close admission17:00 and settle17:25, leaving recovery/reporting before17:48:08.
 Qualified permanent production may remain warm. This paragraph supersedes older
 15:48 checkpoint and initial131K promotion instructions below. Read latestSTATUS.

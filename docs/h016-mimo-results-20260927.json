@@ -173,11 +173,57 @@
       "reason": "Available activity and PCIe counters do not measure VRAM byte traffic; exact native run was not launched under a supported GPU byte-counter profiler."
     },
     "r8": {
-      "status": "SOURCE_REVIEWED_PENDING_LAUNCH",
+      "status": "COMPLETE_SELECTED_FOR_FINAL_CONFIGURATION",
       "only_inference_delta": "decode threads64 to16; batch threads64 retained",
       "configured_context": 131072,
       "GOMP_SPINCOUNT": "0",
-      "test": "Same unprofiled83-input/128-output fixture after discarded tiny warmup"
+      "test": "Same unprofiled83-input/128-output fixture after discarded tiny warmup",
+      "native_result": {
+        "native_timings": {
+          "cache_n": 0,
+          "predicted_ms": 16359.491,
+          "predicted_n": 128,
+          "predicted_per_second": 7.7630777143372,
+          "predicted_per_token_ms": 128.81488976377952,
+          "prompt_ms": 2140.196,
+          "prompt_n": 83,
+          "prompt_per_second": 38.78149477898286,
+          "prompt_per_token_ms": 25.785493975903613
+        },
+        "usage": {
+          "completion_tokens": 128,
+          "prompt_tokens": 83,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 211
+        },
+        "ttft_seconds": 2.4568567450041883,
+        "total_seconds": 18.81639416800317,
+        "first_output_utc": "2026-09-27T15:26:59.000942+00:00",
+        "last_output_utc": "2026-09-27T15:27:15.360367+00:00",
+        "first_output_monotonic_seconds": 35522.348658294,
+        "last_output_monotonic_seconds": 35538.708088215,
+        "finish_reason": "length",
+        "done": true,
+        "full_http_drain": true,
+        "native_settlement": {
+          "is_processing": false,
+          "monotonic_seconds": 35538.709208403,
+          "slot_id": 0,
+          "status": "AUTHENTICATED_SLOT_IDLE_AFTER_FULL_DRAIN",
+          "utc": "2026-09-27T15:27:15.361464+00:00"
+        },
+        "correctness": "UNSCORED_NOT_A_QUALITY_TEST",
+        "request_sha256": "1fef2a52395898b3628a2e2e08058e7719cd43ca08906e16dd50bdd8e9cfc86f"
+      },
+      "boundary_cpu_core_equivalents": 9.254103395541822,
+      "major_faults_delta": 0,
+      "storage_read_bytes_delta": 0,
+      "frontier_sample_max_temperature_c": 42,
+      "frontier_sample_max_activity_percent": 23,
+      "improvement_vs_r7_percent": 31.909,
+      "correctness": "UNSCORED_THROUGHPUT_FIXTURE"
     }
   },
   "benchmarks_scope": "Historical pre-optimization R5 ladder at131072 configured context. A new ladder at selected optimized settings and final allocated context is authorized and pending.",
@@ -191,6 +237,11 @@
     "largest_new_occupied_test_tokens": 65536,
     "primary_frontier": "mimo-v2.6-pro-rl",
     "qwen_instances": 2,
-    "image_model_preserved": true
+    "image_model_preserved": true,
+    "decode_threads": 16,
+    "batch_threads": 64,
+    "GOMP_SPINCOUNT": "0",
+    "expected_physical_pool_tokens": 1000192,
+    "physical_pool_note": "Pinned allocator pads to256 cells. Actual allocation and exposed slot capacity still require final native readback."
   }
 }

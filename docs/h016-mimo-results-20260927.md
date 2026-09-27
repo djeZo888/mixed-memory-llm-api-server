@@ -147,11 +147,24 @@ became the largest sampled costs. Whole-container lifetime memory peaked at
 497.25 GiB anonymous memory, 112.81 GiB file cache and 0.98 GiB kernel memory.
 Owned swap remained zero and the frontier GPU reached at most 46°C.
 
-A further single-variable trial now compares 16 decode threads with 64, while
-retaining 64 input-processing threads and all other inference settings. Once
-the configuration is selected, a new 4K/16K/64K ladder will use the final allocated
-context. The first allocation target is decimal 1,000,000 tokens; 917,504 is the
-fallback if actual allocation or workspace fails the 7% GPU reserve.
+The further single-variable trial selected **16 decode threads**, retaining
+64 input-processing threads and all other inference settings. On the identical
+83-input/128-output fixture, R8 reached **7.763 output tokens/s**, 31.9% faster
+than R7. Prefill took 2.140 seconds, decode 16.359 seconds, TTFT 2.457 seconds
+and the complete request 18.816 seconds. Cached input was zero, and terminal
+stream evidence and subsequent native-idle readback passed. The response hit
+the output ceiling, so this remains throughput evidence rather than a quality test.
+
+The request boundary averaged 9.25 CPU-core equivalents, with no major faults,
+storage-read growth, owned swap or OOM. The frontier GPU reached 42°C and
+23% utilization in the available samples. Thread affinity observations do not
+by themselves identify which workers were active, and activity is not bandwidth.
+
+A new 4K/16K/64K ladder will use these settings and the final allocated context.
+The first allocation target is decimal 1,000,000 tokens; 917,504 is the fallback
+if actual allocation or workspace fails the 7% GPU reserve. Native cache padding
+to 256-cell blocks may make the physical pool 1,000,192 positions. Usable slot
+capacity and physical pool size will be reported separately.
 
 The user-supplied 20-second Proxmox capture began at 14:54:34 UTC, after MiMo
 had stopped generating. Its four intervals estimated 1.61, 1.66, 4.84 and
