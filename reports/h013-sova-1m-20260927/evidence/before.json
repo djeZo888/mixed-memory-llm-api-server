@@ -1,0 +1,51 @@
+{
+  "preserved": {
+    "image": "c328dac0e6ede1dfb890a0657ebafd6f6fd4a1f2281f4e1c664ab95db7dcaa20",
+    "units": {
+      "ai-harness.service": "MainPID=0\nWorkingDirectory=/opt/ai-harness/releases/296ae49e44eb250773223885b843994e2c5b9bcc/ai-harness/server\nActiveState=inactive",
+      "ai-harness-searxng.service": "MainPID=190181\nWorkingDirectory=!/home/user\nActiveState=active"
+    },
+    "production": "/opt/ai-harness/releases/296ae49e44eb250773223885b843994e2c5b9bcc/ai-harness",
+    "release": {
+      "sha256": "5079c23755b480ad0a74b8309003e461980d3978560a0c33680a766f0da5e688",
+      "files": 4414,
+      "links": 8,
+      "directories": 598
+    },
+    "data": {
+      "sha256": "34338ce63735f0cf9b5d66bbb48e63e7f7ddf0597ab53364751e71553a080539",
+      "files": 17757,
+      "links": 3,
+      "directories": 5041
+    },
+    "unit_sha256": "7e339dc3e44e566f5eb8c5206cf37b7123047502564465fda6afaea5a0321b57",
+    "credential_metadata": [
+      [
+        "browser-approval-key",
+        1000,
+        1000,
+        384,
+        65,
+        1790164482045652647
+      ],
+      [
+        "inference-key",
+        1000,
+        1000,
+        384,
+        64,
+        1790040353599051313
+      ],
+      [
+        "node-control-key",
+        1000,
+        1000,
+        384,
+        64,
+        1790361020876195021
+      ]
+    ]
+  },
+  "free_bytes": 395428204544,
+  "guard": "existing harness canonical protected paths, rootless graphroot, production identity/stopped state, >20GiB"
+}

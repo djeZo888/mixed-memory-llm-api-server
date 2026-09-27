@@ -8,11 +8,11 @@ const configured = (contextWindow: number, qualified = true) => ({
   tokenizerRevision: FRONTIER_REVISION, templateRevision: FRONTIER_REVISION,
 });
 
-test('H013 frontier candidate stays unqualified; exact capacities and output ceiling remain closed', () => {
+test('H013 reviewed 1M production candidate retains exact capacities and output ceiling', () => {
   const candidate = JSON.parse(readFileSync(new URL('../../config/frontier.json', import.meta.url), 'utf8'));
   assert.equal(candidate.contextWindow, 1048576);
-  assert.equal(candidate.qualified, false);
-  assert.equal(frontierConfiguration(candidate), undefined);
+  assert.equal(candidate.qualified, true);
+  assert.equal(frontierConfiguration(candidate)?.contextWindow, 1048576);
   for (const capacity of [128000, 256000, 480000, 1048576]) {
     assert.equal(frontierConfiguration(configured(capacity))?.contextWindow, capacity);
     assert.equal(frontierConfiguration(configured(capacity, false)), undefined);
