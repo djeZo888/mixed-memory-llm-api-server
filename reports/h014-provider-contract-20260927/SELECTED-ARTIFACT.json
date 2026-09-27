@@ -1,0 +1,141 @@
+{
+  "repo": "AesSedai/MiMo-V2.6-Pro-RL-GGUF",
+  "revision": "ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d",
+  "metadata_url": "https://huggingface.co/api/models/AesSedai/MiMo-V2.6-Pro-RL-GGUF/revision/ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d?blobs=true",
+  "metadata_sha256": "c585c9eedaf7c49f206e93905c378e6197ffab90ae972c2f8645c23fe8cd1c46",
+  "files": [
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00001-of-00013.gguf",
+      "blobId": "d85bcc29ea87446112150c4926ecdc00e942fd81",
+      "size": 5948832,
+      "lfs": {
+        "sha256": "8dfdbb3c425fe5b7d2488c113ab43400cbd5ebb8d23c2846fb5cf79cce108d6d",
+        "size": 5948832,
+        "pointerSize": 132
+      }
+    },
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00002-of-00013.gguf",
+      "blobId": "f5a9432bb94946474129664178889f563ee308c4",
+      "size": 48771368416,
+      "lfs": {
+        "sha256": "83f2fb7024a823a3c06e80869320f22f0e1a86b9b39ae12ed42a19a94d1ac300",
+        "size": 48771368416,
+        "pointerSize": 136
+      }
+    },
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00003-of-00013.gguf",
+      "blobId": "c61666fc2b9bab11706eff3bc02381cf68d77d8e",
+      "size": 48771368448,
+      "lfs": {
+        "sha256": "fd8176686f491b3809ec4fd696fa5c6d295f123f66b8030dd762760f0e49eac2",
+        "size": 48771368448,
+        "pointerSize": 136
+      }
+    },
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00004-of-00013.gguf",
+      "blobId": "b6e34e4e2bf08168700864e21db87be8f076fed3",
+      "size": 48771368448,
+      "lfs": {
+        "sha256": "a4214ed488d89b58312c0b06a5722b5996a6bc63dcd1c60d881403e5412c19d8",
+        "size": 48771368448,
+        "pointerSize": 136
+      }
+    },
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00005-of-00013.gguf",
+      "blobId": "4dcbea81a9e718a7763d4e6a0121c672446c3379",
+      "size": 48771368448,
+      "lfs": {
+        "sha256": "34a0be954b0a7f252d0bedebd84ace8fa7b840bf4b878206199499559b951a99",
+        "size": 48771368448,
+        "pointerSize": 136
+      }
+    },
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00006-of-00013.gguf",
+      "blobId": "3a85662998241c62f2abd7bae6107cd748b5337a",
+      "size": 48771368448,
+      "lfs": {
+        "sha256": "08040c3efc402b01c91835030f429a4afd2af8f96ccf557e0090ddcc03d5c531",
+        "size": 48771368448,
+        "pointerSize": 136
+      }
+    },
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00007-of-00013.gguf",
+      "blobId": "acc602be3264445f450ac5201ec6986d41e7f12b",
+      "size": 48771368448,
+      "lfs": {
+        "sha256": "92a7099339906389fe78957b6f6ba1039f667cdff38803418385ffac9e8fdab4",
+        "size": 48771368448,
+        "pointerSize": 136
+      }
+    },
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00008-of-00013.gguf",
+      "blobId": "0193dd3c6f7781f39490998da5b2b3c3d339f820",
+      "size": 48771368448,
+      "lfs": {
+        "sha256": "5da24f2484be35c1ac25f989ed8924896161ac042a53acba6a66c8b72b3c6bb3",
+        "size": 48771368448,
+        "pointerSize": 136
+      }
+    },
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00009-of-00013.gguf",
+      "blobId": "6098c415725de04b311d69a67e611337ce583a45",
+      "size": 48771368448,
+      "lfs": {
+        "sha256": "06c458a70e545d16d059b7099538148aee19620dad0f164eea17f138134b7d62",
+        "size": 48771368448,
+        "pointerSize": 136
+      }
+    },
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00010-of-00013.gguf",
+      "blobId": "889cacbff229a1492029d52534887b9b325b69f5",
+      "size": 48771368448,
+      "lfs": {
+        "sha256": "d42439dd6da5dc30dc5280ecad19c2a118e294711961bc1b68e0f5c0793355b6",
+        "size": 48771368448,
+        "pointerSize": 136
+      }
+    },
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00011-of-00013.gguf",
+      "blobId": "3eedadc0f79fe2250ae6bd5da7ce4c88502e9d96",
+      "size": 48771368448,
+      "lfs": {
+        "sha256": "e80233937acad71ab100c04a8f34b8d9dba513d9ef682a3e1f483b8282b3048c",
+        "size": 48771368448,
+        "pointerSize": 136
+      }
+    },
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00012-of-00013.gguf",
+      "blobId": "ed2f547b0878f1459f427ebf5f5ea79a687ba70b",
+      "size": 49382011904,
+      "lfs": {
+        "sha256": "b48324c51d29df0a68a0c7f3a0fe9cbd10ded3a0fa109dc6cad5e42a59c1b9d3",
+        "size": 49382011904,
+        "pointerSize": 136
+      }
+    },
+    {
+      "rfilename": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00013-of-00013.gguf",
+      "blobId": "8d5aaa3bd0851656a7a3a2d26c5e3d90c7e12356",
+      "size": 40567793056,
+      "lfs": {
+        "sha256": "1dc2bc4e2c649f3a15e8f1aa33b71abc1ac4d740b27ed438e5c9ed727079db85",
+        "size": 40567793056,
+        "pointerSize": 136
+      }
+    }
+  ],
+  "total_bytes": 577669438240,
+  "total_gib": 537.996588498354,
+  "hash_note": "LFS SHA256 supplied by public metadata; no weight bytes retrieved or locally verified."
+}
