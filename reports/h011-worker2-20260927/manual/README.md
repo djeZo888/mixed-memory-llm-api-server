@@ -1,6 +1,10 @@
 # H011 exact1M manual candidate
 
-**PREPARED_OFFLINE_NOT_EXECUTED.** Source and mock checks do not qualify1M.
+**PREPARED_OFFLINE_NOT_EXECUTED — 1M LIVE NOT_TESTED, THERMAL BLOCK.**
+Root canceled all staging/launch this turn after ServerQwen1 reached85–86C
+during the corrected concurrent-load test. Keep Sova paused; no guard changes.
+The commands below describe a future reviewed workflow, not a current launch.
+Source and mock checks do not qualify1M.
 Worker2 has made no ai-vm contact, allocation, profile activation or inference.
 Root reviews the exact source; Worker1 alone stages it and a fresh authorized
 Worker1 execution session owns any launch. Production remains480000 configured,

@@ -4,8 +4,10 @@
 branch `worker2/h011-manual-1m`; fresh session01a0e05f-8219-7682-a55e-836475766600
 started00:59:10Z, absolute deadline01:54:10Z. The direct user steering at01:12
 preserved the same bounded task and changed success to retain1M, with Sova paused.
-Root's final note delegates fresh quiet proof to Worker1; Worker2 need not wait
-for load settlement or start/recheck the app before ending.
+Latest root thermal-stop note cancels all1M staging/launch this turn. The
+corrected four-way test reportedly hit ServerQwen1 at85C then86C after about38s;
+five-minute load qualification did not pass. Worker2 performed only the requested
+read-only harness refresh; Worker1 retains backend settlement/recovery ownership.
 
 The app stopped normally at01:00:22Z after current idle/terminal owner checks,
 consistent private SQLite backup and before-state hashes. Actual inactive/PID0,
@@ -13,7 +15,12 @@ enabled; search/status/admin unchanged. All history and17597 regular non-DB
 files preserved. Normal image shutdown changed lane to quarantined, uncertain0;
 no manual clearing/old-data restoration. This dated receipt is historical proof
 of this stop, not authorization or current quiet proof for a later launch.
-[Quiet receipt](HARNESS-QUIET-01.json).
+[Initial quiet receipt](HARNESS-QUIET-01.json).
+
+Final read-only refresh at01:30:09Z passed: app still inactive/PID0/enabled;
+search/status/admin unchanged; all history,17597files and protected metadata
+preserved. Both Qwens/image were canonical ready/available; Flash was unavailable.
+This is app quiet proof, not native Flash settlement. [Refresh](HARNESS-QUIET-REFRESH-02.md).
 
 The concrete candidate is under [manual/](manual/README.md). It materializes
 closed context-only wrapper changes from exact production source hashes, plus a
@@ -42,6 +49,7 @@ stop grace is13530s; successful retained candidate intentionally outlives the jo
 
 [Artifact identity](ARTIFACT-01.json), [candidate file manifest](CANDIDATE-SHA256.json),
 [wall budgets](MANUAL-PLAN.json). Immutable tar and Git bundle live in the task
-root outside Git. Root reviews/synchronizes; fresh Worker1 alone stages/executes.
+root outside Git. Root reviews/synchronizes. **1M LIVE NOT_TESTED — thermal block. No staging or
+launch this turn.** Any later staged execution remains separately owned by Worker1.
 Future commands and two-console prerequisite are in the README. Keep Sova paused;
 no automatic production promotion, app restoration or new approval roundtrip.

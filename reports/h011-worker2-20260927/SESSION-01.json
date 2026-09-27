@@ -2,7 +2,7 @@
   "session_id": "01a0e05f-8219-7682-a55e-836475766600",
   "start_utc": "2026-09-27T00:59:10+00:00",
   "deadline_utc": "2026-09-27T01:54:10+00:00",
-  "status": "DELIVERING_OFFLINE_CANDIDATE_APP_REMAINS_PAUSED",
+  "status": "COMPLETE_OFFLINE_PACKAGE_THERMAL_BLOCK_APP_PAUSED",
   "ai_vm_contact": false,
   "inference": false,
   "remote_processes": [
@@ -10,6 +10,12 @@
       "host": "ai-harness",
       "pid": 224124,
       "role": "quiet helper",
+      "state": "exited 0"
+    },
+    {
+      "host": "ai-harness",
+      "pid": 228809,
+      "role": "read-only quiet refresh",
       "state": "exited 0"
     }
   ],
@@ -21,7 +27,9 @@
     "buffered_reader": 11
   },
   "native1m_executed": false,
-  "fresh_quiet_refresh": "Delegated by root final note to fresh Worker1 launch session",
+  "fresh_quiet_refresh": "2026-09-27T01:30:09.896214+00:00",
   "app_restore_performed": false,
-  "production_source_modified": false
+  "production_source_modified": false,
+  "backend_settlement": "Worker1 owned; final Flash availability unavailable",
+  "staging_or_launch": "CANCELLED_THIS_TURN_BY_ROOT_THERMAL_STOP"
 }

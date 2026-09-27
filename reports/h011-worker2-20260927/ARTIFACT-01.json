@@ -12,5 +12,7 @@
   },
   "native1m_allocation": false,
   "native1m_inference": false,
-  "production_source_modified": false
+  "production_source_modified": false,
+  "live_1m": "NOT_TESTED_THERMAL_BLOCK",
+  "staging_or_launch_this_turn": false
 }
