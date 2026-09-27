@@ -30,3 +30,9 @@ pins review plus W1 ordinary-production readiness. Keep app stopped. Do not infe
 ready from the static JSON. No automatic rollback; no data/quarantine/job replay.
 Original7143/9ef pair is retained. Source/report updates and named bundle are
 published to taskroot for root review; no push.
+
+First final-layer candidate4be2de83 failed execution as UID1000 because the private
+umask made payload directories0700, overlaid onto /opt and /usr. Preserved and
+never activated. Narrow fix explicitly sets only task-owned payload directories
+0755 before COPY; compiled bytes/profile/receipt remain identical. Replaced by a
+corrected single-COPY layer over the same6641 base; not a model/native rebuild.

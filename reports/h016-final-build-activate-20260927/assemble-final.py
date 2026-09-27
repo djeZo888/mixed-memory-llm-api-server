@@ -31,6 +31,9 @@ with tarfile.open(archive,'r:gz') as a:
 shutil.copy2(profile,stage/'payload/opt/ai-harness/engine/configure-profile.mjs')
 config=stage/'payload/opt/ai-harness/config';config.mkdir(parents=True,exist_ok=True)
 shutil.copy2(stage/'config/active-frontier.json',config/'active-frontier.json')
+# The private staging umask must not become root-only /opt or /usr in COPY.
+# Only directories inside this task-owned payload are adjusted.
+for directory in [stage/'payload',*(p for p in (stage/'payload').rglob('*') if p.is_dir())]:directory.chmod(0o755)
 for p in (config/'active-frontier.json',stage/'payload/opt/ai-harness/engine/configure-profile.mjs'):p.chmod(0o644)
 # Paired host delta: no compile, dependency changes, or mutation of old release.
 host=stage/'host';host.mkdir()
