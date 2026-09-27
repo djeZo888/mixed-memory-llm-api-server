@@ -2,6 +2,14 @@
 
 ## Latest task precedence — 27 September 2026
 
+User fan-control amendment: investigate and implement supported integrated GPU
+fan boost to 100% at >=70C, and investigate the Server Blackwell's external fans
+on motherboard CHA_FAN3. Source review and actual capability/readback precede
+activation; preserve the active1M test unchanged. Keep85C load cutoff. Do not
+guess motherboard PWM mappings or IPMI raw commands. Host/BMC access is pending.
+This supersedes historical no-fan-change wording for this narrow scope; ECC and
+cooling changes together cannot establish isolated ECC thermal causality.
+
 H013 is the current user request: inspect the running H012 Flash 1M test, preserve
 its final result, then disable ECC on all three Blackwells (Ada stays off), reboot
 ai-vm and run one guarded four-model repeat. Do not interrupt the active 1M job.
