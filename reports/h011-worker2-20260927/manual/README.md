@@ -178,3 +178,8 @@ GPU telemetry does not measure wall power or PSU transients. User wiring is Ada
 on separate CoreX PSU; three Blackwells on2200W workstation. No power/ECC limits
 are changed. Installer, downloads/builds, other models and production policies
 remain outside these source changes.
+
+Latest root steering at01:31: user fan adjustment is pending. A future repeat
+four-way qualification and later1M launch may follow after fan-ready confirmation,
+a passing repeat and root execution handoff. This preparation session does not
+wait for that work; no staging/launch or app restart was performed.

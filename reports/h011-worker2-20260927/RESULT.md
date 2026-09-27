@@ -53,3 +53,8 @@ root outside Git. Root reviews/synchronizes. **1M LIVE NOT_TESTED — thermal bl
 launch this turn.** Any later staged execution remains separately owned by Worker1.
 Future commands and two-console prerequisite are in the README. Keep Sova paused;
 no automatic production promotion, app restoration or new approval roundtrip.
+
+Latest root steering at01:31: user fan adjustment is pending. A future repeat
+four-way qualification and later1M launch may follow after fan-ready confirmation,
+a passing repeat and root execution handoff. This preparation session does not
+wait for that work; no staging/launch or app restart was performed.
