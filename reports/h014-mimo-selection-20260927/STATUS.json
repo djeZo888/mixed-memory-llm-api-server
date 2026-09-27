@@ -1,0 +1,25 @@
+{
+  "status": "SOURCE_ONLY_RESEARCH_COMPLETE_SELECTION_PENDING",
+  "base": "cb4cdf87b692b3b81b124b54b7c848cfc225175a",
+  "branch": "worker2/h014-mimo-selection",
+  "wrapper_start_utc": "2026-09-27T06:29:00Z",
+  "report_written_utc": "2026-09-27T06:38:24.899701+00:00",
+  "hard_deadline_utc": "2026-09-27T06:41:00Z",
+  "selection": "UNANSWERED: Pro-first vs full-quality Flash-first; root selects",
+  "production_contact": false,
+  "weights_retrieved": false,
+  "builds": false,
+  "inference": false,
+  "runtime_mutation": false,
+  "subagents": false,
+  "push": false,
+  "source_config_changed_outside_report": false,
+  "next_owner": "root review and pending user selection",
+  "limitations": [
+    "No local runtime/quality/performance/fit validation",
+    "AesSedai conversion commit and exact upstream source revision unverified",
+    "Public artifact hashes not checked against weight bytes",
+    "Historical MemTotal only; current free RAM and other-model host buffers unknown"
+  ],
+  "validation": "Source/config arithmetic, manifest integrity, diff/whitespace and scope checks; no application tests needed for reports only"
+}
