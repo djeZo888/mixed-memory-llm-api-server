@@ -395,5 +395,30 @@
     "raw_evidence_sha256": "c2d43fe768e7bb4c47398e205c5af496d077fdd9fbc0a931795f253726d9cbd3",
     "systemd_result": "failed/exit-code despite ExecMainStatus0; cause unresolved, native settlement independently verified",
     "production_sova_status": "PENDING"
+  },
+  "four_thread_comparison": {
+    "configured_context": 131072,
+    "threads_decode": 4,
+    "threads_batch": 64,
+    "decode_cpus": [
+      0,
+      24,
+      40,
+      56
+    ],
+    "input_tokens": 83,
+    "output_tokens": 128,
+    "output_tokens_per_second": 6.763922282426456,
+    "prefill_seconds": 2.01912,
+    "ttft_seconds": 2.3348983169998974,
+    "total_seconds": 21.11108741300268,
+    "cached_tokens": 0,
+    "transport": "PASS",
+    "correctness": "UNSCORED_NOT_A_QUALITY_TEST",
+    "affinity_diagnostic": "INCONCLUSIVE",
+    "reference_eight_output_tokens_per_second": 9.209882711781072,
+    "selected_threads_decode": 8,
+    "two_thread_status": "NOT_TESTED_CONDITION_NOT_MET",
+    "evidence": "reports/h016-production-prep16-20260927/AFFINITY14-FIRST-RESULT.json"
   }
 }

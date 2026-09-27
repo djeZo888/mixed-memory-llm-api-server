@@ -178,7 +178,7 @@ Four later saved snapshots show eight substantially active threads pinned to
 singleton guest CPUs0,16,24,32,40,48,56,64. These observations do not establish
 physical-host vCPU pinning. The guest-node0-only trial was not admitted within
 its remaining time budget. The user subsequently requested four decode threads
-and two only if four beats eight; these additional comparisons are pending.
+and two only if four beats eight. The four-thread result is now complete, as recorded below.
 
 A new 4K/16K/64K ladder will use the selected settings and final allocated context.
 The first allocation target is decimal 1,000,000 tokens; 917,504 is the fallback
@@ -302,3 +302,25 @@ failed/exit-code despite ExecMainStatus0, an unresolved wrapper-status discrepan
 Actual model settlement and restoration were independently verified. Four-thread
 and conditional two-thread comparison is now dispatched; production/Sova
 acceptance and the final64K→near1M job remain pending.
+
+
+## Four-thread comparison and selected profile
+
+The requested four-thread trial completed the same 83-input/128-output fixture
+with **6.764 output tokens/s**, compared with **9.210** for eight threads. Prefill
+was 2.019 s, first token 2.335 s and total duration 21.111 s. Cached input was
+zero; terminal stream, full response drain and native idle passed. This is
+length-capped throughput evidence, not a quality evaluation.
+
+Eight spread decode threads and 64 batch threads are the selected production
+profile. Four threads were approximately 26.6% slower. The conditional two-thread
+test was therefore not run. Eight is the best measured configuration, not a
+proof of a global optimum. The guest-node0-only eight-thread comparison was not
+admitted within its earlier time budget. The aggregate four-thread affinity
+diagnostic remains inconclusive; configured masks and observed thread activity
+do not prove physical-host pinning.
+
+The unchanged eight-thread R9 profile already passed native qualification at
+1,000,000 usable capacity. Production deployment and real Sova delegation remain
+separate checks. See the [four-thread evidence](../reports/h016-production-prep16-20260927/AFFINITY14-FIRST-RESULT.json) and
+[qualification provenance](../reports/h016-production-prep16-20260927/QUALIFICATION-PROVENANCE.md).
