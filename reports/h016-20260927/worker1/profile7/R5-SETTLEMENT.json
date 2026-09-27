@@ -1,0 +1,79 @@
+{
+  "utc": "2026-09-27T13:44:57.713261+00:00",
+  "units": {
+    "h016-mimo-initial-20260927-r5.service": {
+      "code": 0,
+      "text": "MainPID=0\nControlPID=0\nResult=timeout\nActiveState=failed\nSubState=failed\nInvocationID=4600b556d5d04305a9157da80149a511\n"
+    },
+    "h016-mimo-single64k-20260927-r5.service": {
+      "code": 0,
+      "text": "MainPID=0\nControlPID=0\nResult=success\nActiveState=inactive\nSubState=dead\nInvocationID=\n"
+    },
+    "llm-frontier-flash.service": {
+      "code": 0,
+      "text": "MainPID=0\nControlPID=0\nResult=success\nActiveState=active\nSubState=exited\nInvocationID=d5d22aa892704d41bbbcf984e4881d54\n"
+    }
+  },
+  "native": {
+    "Status": "exited",
+    "Running": false,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 0,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-27T12:37:37.213589148Z",
+    "FinishedAt": "2026-09-27T13:40:11.770314954Z"
+  },
+  "glm": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 3678545,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-27T13:40:13.257481912Z",
+    "FinishedAt": "2026-09-27T12:37:36.159565746Z"
+  },
+  "absent": {
+    "/proc/2782009": true,
+    "/proc/3254477": true,
+    "/sys/fs/cgroup/system.slice/docker-c724b72b99f57f9e72b21bbc2a1fc104a9109b970657d5694ba05c25160a8308.scope": true,
+    "/sys/fs/cgroup/system.slice/h016-mimo-initial-20260927-r5.service": true,
+    "/sys/fs/cgroup/system.slice/h016-mimo-single64k-20260927-r5.service": true
+  },
+  "owner": {
+    "candidate_id": "c724b72b99f57f9e72b21bbc2a1fc104a9109b970657d5694ba05c25160a8308",
+    "error": "owned_supervisor_interrupted",
+    "error_type": "RuntimeError",
+    "first4k_done_utc": "2026-09-27T12:54:28.726204+00:00",
+    "glm_restored_utc": "2026-09-27T13:42:07.642540+00:00",
+    "glm_suppressed": false,
+    "memory_limit_bytes": 755914244096,
+    "native_cgroup": "/sys/fs/cgroup/system.slice/docker-c724b72b99f57f9e72b21bbc2a1fc104a9109b970657d5694ba05c25160a8308.scope",
+    "native_pid": 2782009,
+    "native_settled": {
+      "cgroup_empty": true,
+      "gpu_compute_empty": true,
+      "pid_zero": true,
+      "utc": "2026-09-27T13:40:11.976429+00:00"
+    },
+    "native_started_at": "2026-09-27T12:37:37.213589148Z",
+    "old_glm_settled_utc": "2026-09-27T12:37:36.477899+00:00",
+    "pid": 2779569,
+    "post_glm_baseline": {
+      "MemAvailable": 916166709248,
+      "MemTotal": 946820976640,
+      "SwapFree": 3092508672,
+      "SwapTotal": 3157258240
+    },
+    "proxy_pid": 2951600,
+    "started_utc": "2026-09-27T12:37:27.890006+00:00",
+    "status": "SETTLED_GLM_RESTORED"
+  }
+}
