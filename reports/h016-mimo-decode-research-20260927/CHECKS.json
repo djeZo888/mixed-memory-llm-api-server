@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "checks": [
+    "42 source hashes and cited ranges verified",
+    "reused H014 bytes agree with pinned source manifest where covered",
+    "expert payload and 76-TID arithmetic verified",
+    "remote URLs checked without printing them; no embedded HTTP credentials",
+    "working-tree mutations confined to authorized new report directory",
+    "4K request-boundary read-I/O explicitly NOT_MEASURED; 16K/64K zero deltas credited to W1",
+    "Focused OpenMP source inspection: explicit graph num_threads clause, no nested region in inspected MXFP4 kernels",
+    "Local grep-based secret scan found no key/token/private-key patterns"
+  ],
+  "not_executed": [
+    "production contact",
+    "inference",
+    "profiling",
+    "build",
+    "download of weights",
+    "runtime change",
+    "staging",
+    "subagent",
+    "push",
+    "broad test suite"
+  ],
+  "limitations": [
+    "No raw W1 profile-07 packet available; observations credited to root relay.",
+    "Actual MXFP4 executed kernel and CPU_REPACK assignment unproven.",
+    "RAM bandwidth and CUDA DRAM bandwidth unavailable.",
+    "Primary-source comparison review bounded; no exact-match result found, not exhaustive absence."
+  ]
+}

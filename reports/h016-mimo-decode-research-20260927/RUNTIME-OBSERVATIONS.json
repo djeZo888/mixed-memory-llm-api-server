@@ -1,0 +1,63 @@
+{
+  "source": "root-relayed authoritative W1 observation; not a Worker2 host read",
+  "readback_utc": "2026-09-27T13:36:34Z",
+  "cpu": "AMD Ryzen Threadripper PRO 9985WX",
+  "physical_cores": 64,
+  "smt_threads": 128,
+  "guest_vcpus": 72,
+  "guest_numa_nodes": 8,
+  "guest_expert_mask": "0-7,16-71",
+  "host_affinity": "0-63,72-79; not guest 1:1 pin",
+  "cpu_backend": {
+    "path": "/opt/llama/libggml-cpu-zen4.so",
+    "sha256": "0899d6e438b3773955be3f930d3c095c92a896e63bf8b6707f1d9164ae7888f2",
+    "bytes": 1674256
+  },
+  "cuda_backend_sha256": "033b1a36a633530a3a6b9aa845e7c2fb3d9e02fd80c06a61db9fc6c58ffdd39b",
+  "expert_buffer_and_executed_kernel": "UNPROVEN",
+  "perf_version": "6.8.12",
+  "perf_event_paranoid": 4,
+  "umc_uncore": "not exposed per W1",
+  "absent_tools": [
+    "ncu",
+    "nsys",
+    "dcgmi"
+  ],
+  "actual_dram_gbps": "UNAVAILABLE",
+  "memory_rate": "UNKNOWN",
+  "per_tid_masks": {
+    "0-7,16-71": 13,
+    "0-7": 7,
+    "16-23": 8,
+    "24-31": 8,
+    "32-39": 8,
+    "40-47": 8,
+    "48-55": 8,
+    "56-63": 8,
+    "64-71": 8
+  },
+  "affinity_limit": "Post-64K-terminal snapshot, not decode-time physical host pinning proof",
+  "run64k": {
+    "terminal_utc": "2026-09-27T13:28:56Z",
+    "status": "PASS",
+    "input_tokens": 65536,
+    "output_tokens": 45,
+    "prefill_tps": 61.064,
+    "decode_tps": 0.913,
+    "early_stop": false
+  },
+  "r5_stop_utc": "2026-09-27T13:40:11Z",
+  "glm_restoration_began_utc": "2026-09-27T13:40:13Z",
+  "underlying_w1_packet": "profile-07 future/reference only; not available or hashed here",
+  "request_boundary_read_io": {
+    "4K": "NOT_MEASURED; no observed major-fault/refault increase",
+    "16K": {
+      "delta_bytes": 0,
+      "provenance": "W1 via final root correction"
+    },
+    "64K": {
+      "delta_bytes": 0,
+      "provenance": "W1 via final root correction"
+    }
+  }
+}
