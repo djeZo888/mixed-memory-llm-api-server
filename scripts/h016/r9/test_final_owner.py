@@ -24,6 +24,16 @@ class FinalOwnerTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.base = pathlib.Path(self.temp.name)
         self.cfg = json.loads((ROOT / 'LAUNCH.json').read_text())
+        # Keep legacy16 as an explicit fixture when reviewed LAUNCH selects8.
+        self.cfg['threads'] = 16
+        self.cfg['decode_profile'] = '16distribute'
+        argv = self.cfg['native_argv']
+        argv[argv.index('--threads') + 1] = '16'
+        argv[argv.index('--cpu-mask') + 1] = '0xffffffffffffff00ff'
+        if '--numa' in argv:
+            argv[argv.index('--numa') + 1] = 'distribute'
+        else:
+            argv.extend(['--numa', 'distribute'])
         self.winner = {'authorized': True, 'threads': 16, 'context': 1000000,
                        'expected_physical_cache_pool_tokens': 1000192,
                        'physical_padding_multiple': 256,
@@ -104,6 +114,93 @@ class FinalOwnerTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'root_authority_missing'):
             self.validate()
 
+    def select_eight(self, profile='8spread'):
+        self.cfg['threads'] = self.winner['threads'] = 8
+        self.cfg['decode_profile'] = self.winner['decode_profile'] = profile
+        argv = self.cfg['native_argv']
+        argv[argv.index('--threads') + 1] = '8'
+        argv[argv.index('--cpu-mask') + 1] = ('0x10101010101010001' if profile == '8spread' else '0xff')
+        pos = argv.index('--numa')
+        del argv[pos:pos + 2]
+
+    def test_actual_eight_requires_explicit_pair_proof_and_exact_placement(self):
+        self.select_eight()
+        with self.assertRaisesRegex(RuntimeError, 'actual_reviewed_pair_proof'):
+            self.validate()
+        self.winner['actual_pair_proof_sha256'] = 'a' * 64
+        self.validate()
+        self.winner['decode_profile'] = '8local'
+        with self.assertRaisesRegex(RuntimeError, 'actual_reviewed_pair_proof'):
+            self.validate()
+        self.winner['decode_profile'] = '8spread'
+        argv = self.cfg['native_argv']
+        argv[argv.index('--cpu-mask') + 1] = '0xff'
+        with self.assertRaisesRegex(RuntimeError, 'decode_affinity_mismatch'):
+            self.validate()
+        self.cfg['decode_profile'] = self.winner['decode_profile'] = '8local'
+        self.validate()
+        argv.extend(['--numa', 'distribute'])
+        with self.assertRaisesRegex(RuntimeError, 'decode_numa_mismatch'):
+            self.validate()
+
+    def test_thread_profile_mismatch_and_unreviewed_64_refused(self):
+        self.cfg['decode_profile'] = '8local'
+        with self.assertRaisesRegex(RuntimeError, 'decode_profile_mismatch'):
+            self.validate()
+        self.winner['threads'] = 64
+        with self.assertRaisesRegex(RuntimeError, 'root_threads_invalid'):
+            self.validate()
+
+    def affinity_pair(self, *, change_pair=None, active=False, running=False,
+                      remains=False, invocation_changed=False):
+        pair = {'controller_invocation_id': '3a323326650f4380a0dec32f96b13895',
+                'status': 'PAIR_STOPPED_ORIGINAL_GLM_READY_NO_REPLAY'}
+        if change_pair:
+            change_pair(pair)
+        old = {'status': 'SETTLED_GLM_RESTORED', 'glm_suppressed': False,
+               'candidate_id': 'retained-spread-id', 'native_pid': 123,
+               'native_started_at': '2026-09-27T16:28:00Z',
+               'native_cgroup': '/sys/fs/cgroup/retained-spread',
+               'native_settled': {key: True for key in
+                   ('pid_zero', 'cgroup_empty', 'gpu_compute_empty')}}
+        container = {'Id': old['candidate_id'], 'Image': owner.IMAGE,
+                     'Name': '/llm-h016-mimo-pro-r10-spread02',
+                     'State': {'Pid': 123 if running else 0, 'Running': running,
+                               'StartedAt': old['native_started_at']}}
+        def read(path, *_, **kwargs):
+            return json.dumps(pair if path.name == 'PAIR.json' else old)
+        def exists(path):
+            return ('worker1-r10-spread02/OWNER.json' in str(path)
+                    or (remains and str(path) == old['native_cgroup']))
+        def command(argv):
+            if argv[0] == 'docker':
+                return ''  # Skipped second child: no unit/container/owner.
+            invocation = 'changed' if invocation_changed else pair['controller_invocation_id']
+            return ('MainPID=' + ('2100223' if active else '0') + '\nControlPID=0\nActiveState='
+                    + ('active' if active else 'inactive') + '\nInvocationID=' + invocation)
+        harness = type('Harness', (), {'require': staticmethod(require)})()
+        with mock.patch.object(pathlib.Path, 'read_text', autospec=True, side_effect=read), \
+                mock.patch.object(pathlib.Path, 'exists', autospec=True, side_effect=exists), \
+                mock.patch.object(owner, 'run_cmd', side_effect=command), \
+                mock.patch.object(owner, 'inspect', return_value=container):
+            owner.require_affinity_pair_settled(harness)
+
+    def test_terminal_affinity_pair_with_skipped_second_child_is_accepted(self):
+        self.affinity_pair()
+        self.affinity_pair(change_pair=lambda p: p.update(
+            status='PAIR_COMPLETE_ORIGINAL_GLM_READY_AWAIT_ROOT_WINNER'))
+
+    def test_active_or_unsettled_affinity_pair_refused(self):
+        for kwargs, reason in [
+                ({'change_pair': lambda p: p.update(status='PROFILE_RUNNING')}, 'affinity_pair_not_terminal'),
+                ({'change_pair': lambda p: p.update(controller_invocation_id='other')}, 'affinity_pair_generation_changed'),
+                ({'active': True}, 'affinity_owner_active'),
+                ({'running': True}, 'affinity_native_not_settled'),
+                ({'remains': True}, 'affinity_native_process_remains'),
+                ({'invocation_changed': True}, 'affinity_controller_changed')]:
+            with self.subTest(reason=reason), self.assertRaisesRegex(RuntimeError, reason):
+                self.affinity_pair(**kwargs)
+
     def test_no_implicit_capacity_fallback(self):
         self.winner['context'] = self.cfg['capacity'] = 917504
         with self.assertRaisesRegex(RuntimeError, 'r9_context_requires_exact_review'):
@@ -111,7 +208,7 @@ class FinalOwnerTests(unittest.TestCase):
 
     def test_expiry_and_admission_are_absolute(self):
         self.validate()
-        self.go['expires_utc'] = '2026-09-27T17:00:01+00:00'
+        self.go['expires_utc'] = '2026-09-27T17:17:01+00:00'
         with self.assertRaisesRegex(RuntimeError, 'root_go_expired_or_outside_admission'):
             self.validate()
         self.go['expires_utc'] = '2026-09-27T16:00:00+00:00'
@@ -207,10 +304,10 @@ class FinalOwnerTests(unittest.TestCase):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
                     and node.func.attr == 'datetime':
                 dates.append(tuple(arg.value for arg in node.args if isinstance(arg, ast.Constant)))
-        self.assertEqual(sorted(dates), [(2026, 9, 27, 17, 0), (2026, 9, 27, 17, 25)])
+        self.assertEqual(sorted(dates), [(2026, 9, 27, 17, 17), (2026, 9, 27, 17, 17)])
         self.assertIn("['capacity']", source)
         self.assertNotIn('131072', source)
-        self.assertEqual(owner.ADMIT_END, datetime.datetime(2026, 9, 27, 17, 0,
+        self.assertEqual(owner.ADMIT_END, datetime.datetime(2026, 9, 27, 17, 17,
                          tzinfo=datetime.timezone.utc).timestamp())
         self.assertEqual(owner.HARD_END, datetime.datetime(2026, 9, 27, 17, 25,
                          tzinfo=datetime.timezone.utc).timestamp())

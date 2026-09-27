@@ -80,7 +80,7 @@ class FinalTests(unittest.TestCase):
             p.start()
             self.addCleanup(p.stop)
 
-    def stream_request(self, events, *, done=True, expected=83, output=128):
+    def stream_request(self, events, *, done=True, expected=83, output=128, planning_seconds=0):
         wire = b''.join(b'data: ' + json.dumps(e).encode() + b'\n\n' for e in events)
         if done:
             wire += b'data: [DONE]\n\n'
@@ -93,7 +93,7 @@ class FinalTests(unittest.TestCase):
         payload = b.body('technical', False, output)
         raw = json.dumps(payload, separators=(',', ':')).encode()
         with mock.patch.object(b, 'count', return_value=(expected, raw)) as counter, mock.patch.object(b.http.client, 'HTTPConnection', return_value=connection):
-            row = b.request(self.h, b'fake-offline-key', payload, 'TEST', threading.Event(), 1000000)
+            row = b.request(self.h, b'fake-offline-key', payload, 'TEST', threading.Event(), 1000000, planning_seconds)
         counter.assert_called_once()
         self.assertEqual(connection.request.call_args.args[2], raw)
         self.assertEqual(pathlib.Path(self.tmp.name, 'TEST-REQUEST.json').read_bytes(), raw)
@@ -113,8 +113,9 @@ class FinalTests(unittest.TestCase):
         raw_saved = [json.loads(x) for x in pathlib.Path(self.tmp.name, 'TEST-RAW.jsonl').read_text().splitlines()]
         self.assertEqual(b''.join(base64.b64decode(x['base64']) for x in raw_saved), wire)
         progress = pathlib.Path(self.tmp.name, 'TEST-PROGRESS.jsonl').read_text().splitlines()
-        self.assertEqual(len(progress), 1)
-        self.assertEqual(json.loads(progress[0])['event'], 'FIRST_OUTPUT')
+        self.assertEqual(len(progress), 2)
+        self.assertEqual(json.loads(progress[0])['event'], 'BODY_SENT')
+        self.assertEqual(json.loads(progress[1])['event'], 'FIRST_OUTPUT')
         self.assertEqual(row['native_interval_tokens_per_second'], 127 / 20)
         self.assertEqual(row['correctness'], 'UNSCORED')
         self.assertEqual(row['finish_reason'], 'length')
@@ -141,6 +142,83 @@ class FinalTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'completion_budget_unavailable'):
                 b.request(self.h, b'x', b.body('x'), 'LATE', threading.Event(), 1000000, 100000)
             counter.assert_not_called()
+
+    def test_next_bound_uses_only_next_rung_and_slower_actual_timing(self):
+        short = b.project_seconds(None, 4096)
+        long = b.project_seconds(None, 65536)
+        self.assertAlmostEqual(short, 1.2 * (4096 / 61 + 256 / 7.76) + 30)
+        self.assertGreater(long, short)
+        reference = {'native_timings': {'prompt_ms': 100000, 'predicted_ms': 10000,
+                                      'predicted_n': 51},
+                     'expected_input_tokens': 4096, 'total_seconds': 120}
+        self.assertGreater(b.project_seconds(reference, 4096), short)
+        # The short rung can fit while the later one cannot; no ladder-wide gate.
+        with mock.patch.object(b, 'ADMIT_END', b.CLIENT_END), \
+                mock.patch.object(b.time, 'time', return_value=b.CLIENT_END - short - 1):
+            b.next_admission(self.h, threading.Event(), 'NEXT4096', short, [])
+            with self.assertRaisesRegex(RuntimeError, 'completion_budget_unavailable'):
+                b.next_admission(self.h, threading.Event(), 'NEXT65536', long, [4096])
+        incomplete = b.save.call_args.args[2]
+        self.assertEqual(incomplete['status'], 'NOT_TESTED')
+        self.assertEqual(incomplete['completed_inputs'], [4096])
+
+    def test_existing_receipt_refuses_replay_before_count(self):
+        retained = pathlib.Path(self.tmp.name, 'PASSED.json')
+        retained.write_text('{"correctness":"PASS"}')
+        with mock.patch.object(b, 'count') as counter:
+            with self.assertRaisesRegex(RuntimeError, 'existing_receipt_no_replay'):
+                b.request(self.h, b'x', b.body('x'), 'PASSED', threading.Event(), 1000000)
+            counter.assert_not_called()
+        self.assertEqual(retained.read_text(), '{"correctness":"PASS"}')
+
+    def test_absolute_end_retains_eight_minute_physical_settlement_reserve(self):
+        self.assertEqual(b.CLIENT_END, owner.HARD_END - 480)
+        self.assertEqual(datetime.datetime.fromtimestamp(b.CLIENT_END, datetime.timezone.utc).isoformat(),
+                         '2026-09-27T17:17:00+00:00')
+
+    def test_foreground_ends_after_16k_and_native_tools_without_64k(self):
+        state = {'context': 1000000, 'allocated_context': 1000000, 'threads': 16, 'native_pid': 12}
+        pathlib.Path(self.tmp.name, 'OWNER.json').write_text(json.dumps(state))
+        events, projections = [], []
+        props = {'default_generation_settings': {'n_ctx': 1000000}, 'total_slots': 1,
+                 'model_alias': b.MODEL, 'is_sleeping': False}
+        slots = [{'n_ctx': 1000000, 'is_processing': False}]
+        def phase(h, key, payload, label, failed, state, planning_seconds, **kwargs):
+            events.append(label)
+            return {'label': label}
+        def projection(row, target):
+            projections.append((row.get('label') if row else None, target))
+            return 100 if target < 65536 else 100000
+        def tools(h, key, failed, state, completed):
+            self.assertEqual(completed, [4096, 16384])
+            events.extend(['FINAL17-TURN1', 'FINAL17-TURN2'])
+            b.save(self.h, 'FINAL17-QUALIFICATION.json', {'status': 'PASS'})
+        with mock.patch.object(b, 'get', side_effect=[(200, props), (200, slots)]), \
+                mock.patch.object(b, 'fixture', return_value=(b.body('x'), b'{}', ['a', 'b', 'c'])), \
+                mock.patch.object(b, 'phase_request', side_effect=phase), \
+                mock.patch.object(b, 'fixture_correct', return_value=True), \
+                mock.patch.object(b, 'production_pair', side_effect=tools), \
+                mock.patch.object(b, 'project_seconds', side_effect=projection):
+            b.qualify(self.h, b'x', threading.Event())
+        self.assertEqual(events, ['FINAL-WARM4096-DISCARDED', 'FINAL-BENCH4096',
+                                 'FINAL-BENCH16384', 'FINAL17-TURN1', 'FINAL17-TURN2'])
+        self.assertFalse(any(target == 65536 for _, target in projections))
+        receipts = {call.args[1]: call.args[2] for call in b.save.call_args_list}
+        self.assertEqual(receipts['FINAL17-QUALIFICATION.json']['status'], 'PASS')
+        complete = receipts['FINAL-CLIENT-COMPLETE.json']
+        self.assertEqual(complete['status'], 'PASS')
+        self.assertEqual(complete['measured_inputs'], [4096, 16384])
+        self.assertEqual(complete['largest_occupied_benchmark_input'], 16384)
+        self.assertEqual(complete['benchmark_65536'], 'NOT_TESTED_DEFERRED_TO_LAST_ROOTGO')
+        self.assertTrue(complete['native_tool_qualification'])
+        self.assertNotIn('FINAL-BENCH65536.json', receipts)
+
+    def test_planning_forecast_never_becomes_request_timeout(self):
+        row, _ = self.stream_request(self.events(), planning_seconds=1)
+        self.assertEqual(row['admission_planning_seconds'], 1)
+        self.assertEqual(row['client_deadline_utc'],
+                         datetime.datetime.fromtimestamp(b.CLIENT_END, datetime.timezone.utc).isoformat())
+        self.assertGreater(row['client_bound_seconds'], 1)
 
     def test_fixture_has_seed_before_every_exact_count(self):
         observed = []
@@ -262,7 +340,7 @@ class FinalTests(unittest.TestCase):
                     'request_sha256': 'second-request-hash'}
         state = {'context': 1000000, 'allocated_context': 1000000, 'threads': 16}
         with mock.patch.object(b, 'load_production_fixture', return_value=copy.deepcopy(original)), mock.patch.object(b, 'phase_request', side_effect=phase):
-            b.production_pair(self.h, b'fake-key', threading.Event(), state)
+            b.production_pair(self.h, b'fake-key', threading.Event(), state, [4096, 16384])
         self.assertEqual(len(received), 2)
         summary = b.save.call_args.args[2]
         self.assertTrue(summary['native_tool_qualification'])

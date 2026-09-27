@@ -158,8 +158,16 @@ def launch_args(manifest):
     raw = protected(BASE / 'source/launch.json')
     require(hashlib.sha256(raw).hexdigest() == manifest['source_sha256'][str(BASE / 'source/launch.json')], 'launch_source_changed')
     argv = json.loads(raw)['native_argv']
-    for name in ('--ctx-size', '--kv-unified-per-slot'):
-        argv[argv.index(name) + 1] = str(manifest['context'])
+    context_flags = ('--ctx-size', '--kv-unified-per-slot')
+    if manifest['context'] in (1000000, 1000192):
+        # The reviewed 1M request may expose allocator-rounded usable capacity.
+        # Preserve the source request; native_ready still requires exact actual
+        # props/slots agreement with manifest.context, never invented equality.
+        require(all(argv.count(name) == 1 and argv[argv.index(name) + 1] == '1000000'
+                    for name in context_flags), 'reviewed_1m_request_required')
+    else:
+        for name in context_flags:
+            argv[argv.index(name) + 1] = str(manifest['context'])
     require(type(manifest.get('no_host')) is bool, 'reviewed_no_host_required')
     if manifest['no_host']:
         argv.append('--no-host')
@@ -182,8 +190,11 @@ def validate_manifest(m):
             and HEX.fullmatch(m['tool_template_sha256'])), 'tool_template_pin_invalid')
     require(isinstance(m.get('container_name'), str) and re.fullmatch(r'llm-frontier-mimo-[a-z0-9-]{1,64}', m['container_name']), 'production_container_name_required')
     budget = m.get('memory', {})
+    # The measured cgroup peak already includes charged file cache. Only a
+    # separately justified incremental startup allowance belongs in the sum.
     require(all(type(budget.get(k)) is int and budget[k] > 0 for k in
-                ('limit_bytes', 'qualified_peak_bytes', 'startup_cache_bytes'))
+                ('limit_bytes', 'qualified_peak_bytes'))
+            and type(budget.get('startup_cache_bytes')) is int and budget['startup_cache_bytes'] >= 0
             and budget['limit_bytes'] >= budget['qualified_peak_bytes'] + budget['startup_cache_bytes'],
             'reviewed_memory_peak_and_cache_required')
     artifact = m.get('artifact', {})

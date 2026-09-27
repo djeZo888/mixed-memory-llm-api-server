@@ -10,12 +10,7 @@ import socket
 import threading
 import datetime
 import time
-import os
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from owner import (BASE, MODEL, read, setup, read_key, write, ticks, require_selected,
-                   validate_manifest, native_ready)
+from verify_retained import dependency
 
 ROUTES = {('POST', '/v1/chat/completions/input_tokens'),
           ('POST', '/v1/chat/completions'), ('GET', '/props'),
@@ -65,61 +60,26 @@ def normalize(body):
     return body
 
 
-class Disposition:
-    """One child, one request lane; ambiguous work stays held across exit."""
-    def __init__(self, h, manifest):
-        self.h, self.manifest = h, manifest
-        state = read(BASE / 'state.json')
-        self.native, self.launch_id = state['native'], state['launch_id']
-        self.boot, self.supervisor = state['boot_id'], state['supervisor']
-        h.require(state['status'] == 'STARTING_PROXY' and os.getppid() == self.supervisor['pid'], 'proxy_parent_required')
-        self.pid = os.getpid()
-        self.start_ticks = ticks(self.pid)
-        self.active, self.quarantined = 0, False
-        self.broken = threading.Event()
-        self.publish()
-
-    def snapshot(self):
-        return {'schema_version': 2, 'boot_id': self.boot, 'launch_id': self.launch_id,
-                'native': self.native, 'pid': self.pid, 'pid_start_ticks': self.start_ticks,
-                'parent_pid': self.supervisor['pid'], 'active_requests': self.active,
-                'quarantined': self.quarantined,
-                'observed_monotonic_s': time.monotonic()}
-
-    def publish(self):
-        write(self.h, 'proxy-state.json', self.snapshot())
-
-    def begin(self):
-        self.h.require(not self.quarantined and not self.broken.is_set() and self.active == 0, 'request_held')
-        require_selected(self.manifest)
-        self.active = 1
-        try:
-            self.publish()  # Durable ambiguity before any count/generation submission.
-        except BaseException:
-            self.quarantined = True
-            self.broken.set()
-            raise
-
-    def finish(self, clean):
-        self.active = 0
-        self.quarantined |= not clean
-        try:
-            self.publish()
-        except BaseException:
-            self.quarantined = True
-            self.broken.set()
-            raise
+def read_key(h):
+    with h.MountedStorageGuard(h.s) as g, h.AnchoredRoot('/data/services/secrets', g) as a, a.open('llm-api-key') as f:
+        st = f.stat()
+        raw = f.read(4097)
+        h.require(len(raw) <= 4096, 'invalid_key_file')
+        key = raw.rstrip()
+        h.require(st.st_mode & 0o777 == 0o600 and 1 <= len(key) <= 4096 and all(33 <= x <= 126 for x in key), 'invalid_key_file')
+        return key
 
 
 def serve():
-    h = setup()
-    manifest = read(BASE / 'manifest.json')
-    validate_manifest(manifest)
-    require_selected(manifest)
+    h = dependency()
     key = read_key(h)
-    h.require(native_ready(manifest, key) is True, 'native_still_loading')
-    capacity = manifest['context']
-    disposition = Disposition(h, manifest)
+    probe = http.client.HTTPConnection('127.0.0.1', 30012, timeout=10)
+    probe.request('GET', '/props', headers={'Authorization': 'Bearer ' + key.decode()})
+    response = probe.getresponse()
+    props = json.loads(response.read())
+    probe.close()
+    capacity = props.get('default_generation_settings', {}).get('n_ctx')
+    h.require(response.status == 200 and capacity == 131072 and props.get('total_slots') == 1 and props.get('model_alias') == MODEL and props.get('is_sleeping') is False, 'loaded_capacity_identity_required')
     owner = threading.Lock()
     quarantine = threading.Event()
 
@@ -151,7 +111,11 @@ def serve():
                 return self.error(404)
             chat = self.path == '/v1/chat/completions'
             now = time.time()
-            deadline = now + 8 * 60 * 60
+            if chat and now >= datetime.datetime(2026, 9, 27, 15, 15, tzinfo=datetime.timezone.utc).timestamp():
+                return self.error(503)
+            deadline = min(now + 7200, datetime.datetime(2026, 9, 27, 15, 35, tzinfo=datetime.timezone.utc).timestamp())
+            if now >= deadline:
+                return self.error(503)
             owned = False
             conn = None
             terminal = False
@@ -171,13 +135,11 @@ def serve():
                     body = normalize(json.loads(data))
                     raw = json.dumps(body).encode()
                 if chat:
-                    if quarantine.is_set() or (disposition is not None and (disposition.quarantined or disposition.broken.is_set())):
+                    if quarantine.is_set():
                         return self.error(503)
                     owned = owner.acquire(blocking=False)
                     if not owned:
                         return self.error(429)
-                    if disposition is not None:
-                        disposition.begin()
                 path = '/health' if self.path == '/v1/readiness' else self.path
                 conn = http.client.HTTPConnection('127.0.0.1', 30012, timeout=max(.1, deadline - time.time()))
                 if chat:
@@ -226,7 +188,7 @@ def serve():
                             self.wfile.flush()
                         except (BrokenPipeError, ConnectionResetError, socket.timeout):
                             detached = True  # Keep draining exact upstream; never retry.
-                terminal = response.status == 200 and not detached and (not chat or (done and finish and usage and not pending.strip()))
+                terminal = response.status == 200 and (not chat or (done and finish and usage and not pending.strip()))
             except (ValueError, TypeError, json.JSONDecodeError):
                 if conn is None:
                     self.error(400)
@@ -238,11 +200,7 @@ def serve():
                 if owned:
                     if not terminal:
                         quarantine.set()
-                    try:
-                        if disposition is not None:
-                            disposition.finish(terminal)
-                    finally:
-                        owner.release()
+                    owner.release()
                 self.close_connection = True
 
     server = http.server.ThreadingHTTPServer(('10.156.100.60', 30012), Handler, bind_and_activate=False)
@@ -254,6 +212,5 @@ def serve():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args()
+    argparse.ArgumentParser(description=__doc__).parse_args()
     serve()

@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Exact R9 systemd dispatch; --run only after direct root GO for this packet."""
+"""Exact R8 systemd dispatch; --run only after direct root GO for this packet."""
 import argparse
 import json
 import pathlib
 import subprocess
 import time
-from candidate_owner import BASE, LOG, HARD_END, ADMIT_END, SETTLE_START, preflight, run_cmd
+from candidate_owner import BASE, LOG, HARD_END, ADMIT_END, preflight, save, run_cmd
 from verify_retained import dependency
 
 
 def save_status(h, name, value):
-    """Storage-only receipt: never compete with the dispatched child lease."""
+    """Pure receipt write; never compete with the independent child lifecycle lease."""
     with h.MountedStorageGuard(h.s) as guard, h.AnchoredRoot(LOG, guard) as log:
         h.s.root_payload_guard()
         log.atomic_json(name, value)
@@ -19,14 +19,11 @@ def save_status(h, name, value):
 
 def main(run=False):
     h = dependency()
-    # Admit only bounded load plus the next warm request, never all remaining rungs.
-    from benchmark import project_seconds, CLIENT_END
-    h.require(time.time() + 1200 + project_seconds(None, 4096) < CLIENT_END,
-              'insufficient_load_and_next_warm_window')
+    h.require(time.time() + 900 < ADMIT_END, 'insufficient_load_and_baseline_window')
     cfg, proof = preflight(h)
-    unit = 'h016-mimo-final-20260927-r9.service'
-    h.require(run_cmd(['systemctl', 'show', unit, '-p', 'LoadState', '--value']).strip() == 'not-found', 'r9_unit_exists_no_replay')
-    remaining = int(SETTLE_START - time.time())
+    unit = 'h016-mimo-profile-20260927-r10-spread02.service'
+    h.require(run_cmd(['systemctl', 'show', unit, '-p', 'LoadState', '--value']).strip() == 'not-found', 'r8_unit_exists_no_replay')
+    remaining = int(HARD_END - time.time())
     argv = ['systemd-run', '--unit=' + unit, '--property=Type=exec', '--property=Restart=no',
             '--property=RuntimeMaxSec=' + str(remaining), '--property=TimeoutStopSec=420',
             '--property=KillMode=mixed', '--property=UMask=0077',

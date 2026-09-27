@@ -54,6 +54,26 @@ class AllocationTests(unittest.TestCase):
         self.assertEqual(proof['pool_padding_cells'], 192)
         self.assertEqual(proof['global_kv_bytes_calculated'], 51209830400)
 
+    def test_reviewed_usable_rounding_is_separate_from_config_and_physical_pool(self):
+        proof = parse_native_allocation(log_fixture(1000192), 1000000,
+                                        expected_pool_context=1000192,
+                                        expected_usable_context=1000192)
+        self.assertEqual(proof['status'], 'PROVEN', proof['reasons'])
+        self.assertEqual(proof['configured_context'], 1000000)
+        self.assertEqual(proof['usable_context_tokens'], 1000192)
+        self.assertEqual(proof['actual_global_pool_cells'], 1000192)
+        self.assertEqual(proof['pool_padding_cells'], 0)
+        self.assertEqual(parse_native_allocation(log_fixture(1000192), 1000000,
+                         expected_pool_context=1000192)['status'], 'UNPROVEN')
+        with self.assertRaises(ValueError):
+            parse_native_allocation(log_fixture(1000192), 1000000,
+                                    expected_pool_context=1000000,
+                                    expected_usable_context=1000192)
+        with self.assertRaises(ValueError):
+            parse_native_allocation(log_fixture(1000448), 1000000,
+                                    expected_pool_context=1000448,
+                                    expected_usable_context=1000448)
+
     def test_fallback_requires_its_own_actual_pool(self):
         self.assertEqual(parse_native_allocation(log_fixture(917504), 917504)['status'], 'PROVEN')
         self.assertEqual(parse_native_allocation(log_fixture(), 917504)['status'], 'UNPROVEN')

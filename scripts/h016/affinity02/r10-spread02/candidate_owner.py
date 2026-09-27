@@ -17,135 +17,18 @@ from verify_retained import dependency, LOG
 from private_proxy import read_key
 
 P = pathlib.Path
-BASE = '/data/build/H016-20260927/worker1-r9'
-NAME = 'llm-h016-mimo-pro-r9'
+BASE = '/data/build/H016-20260927/worker1-r10-spread02'
+NAME = 'llm-h016-mimo-pro-r10-spread02'
 GPU = 'GPU-69acfa26-8b60-61b5-702d-aee252c163cc'
 IMAGE = 'sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e'
 GLM_ID = '2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab'
 GLM_SOURCE = '/data/services/flash-h008-20260926/source'
 GLM_OWNER_SHA = 'd4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1'
 SERVICE = 'llm-frontier-flash.service'
-ADMIT_END = datetime.datetime(2026, 9, 27, 17, 17, tzinfo=datetime.timezone.utc).timestamp()
-HARD_END = datetime.datetime(2026, 9, 27, 17, 25, tzinfo=datetime.timezone.utc).timestamp()
-SETTLE_START = HARD_END - 450  # 17:17:30; existing 420s stop budget plus 30s physical margin.
+CONFIG = json.loads(P(__file__).with_name('LAUNCH.json').read_text())
+ADMIT_END = datetime.datetime.fromisoformat(CONFIG['admission_end_utc'].replace('Z','+00:00')).timestamp()
+HARD_END = datetime.datetime.fromisoformat(CONFIG['request_end_utc'].replace('Z','+00:00')).timestamp()
 PRESERVED = ['llmctl-qwen38-27b-q0-480000-yarn4-bf16kv', 'llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv', 'llm-image-backend']
-SOURCE_NAMES = {'LAUNCH.json', 'candidate_owner.py', 'benchmark.py', 'allocation.py',
-                'native_identity.py', 'private_proxy.py', 'telemetry.py',
-                'verify_retained.py', 'profile_activity.py', 'inspect_gguf.py', 'launch_r9.py'}
-FIXTURE_SHA = '2fb03cef2e700b304f8eea538a5ef8df300afc53bb0a94241bc754c17679ef78'
-
-
-def validate_authority(cfg, hashes):
-    """Only scoped winner data and exact-source GO authorize this one namespace."""
-    winner_raw = P(BASE, 'ROOT-WINNER.json').read_bytes()
-    winner = json.loads(winner_raw)
-    go = json.loads(P(BASE, 'ROOT-R9-GO.json').read_text())
-    if winner.get('authorized') is not True or go.get('authorized') is not True:
-        raise RuntimeError('root_authority_missing')
-    if not time.time() < datetime.datetime.fromisoformat(go['expires_utc']).timestamp() <= ADMIT_END:
-        raise RuntimeError('root_go_expired_or_outside_admission')
-    if go.get('winner_sha256') != hashlib.sha256(winner_raw).hexdigest():
-        raise RuntimeError('root_winner_not_bound')
-    if type(winner.get('threads')) is not int or winner['threads'] not in (8, 16):
-        raise RuntimeError('root_threads_invalid')
-    if winner.get('context') != 1000000 or cfg['capacity'] != winner['context']:
-        raise RuntimeError('r9_context_requires_exact_review')
-    pool = winner.get('expected_physical_cache_pool_tokens')
-    if type(pool) is not int or pool not in (1000000, 1000192):
-        raise RuntimeError('physical_pool_requires_scoped_review')
-    if pool != 1000000 and winner.get('physical_padding_multiple') != 256:
-        raise RuntimeError('physical_padding_not_reviewed')
-    if cfg.get('physical_cache_pool_tokens') != pool or cfg.get('threads') != winner['threads']:
-        raise RuntimeError('winner_launch_mismatch')
-    expected = go.get('source_sha256', {})
-    if set(expected) != SOURCE_NAMES or any(hashes.get(n) != d for n, d in expected.items()):
-        raise RuntimeError('incomplete_or_drifted_source_closure')
-    if go.get('fixture_sha256') != FIXTURE_SHA or hashes.get('mimo-production-fixture-65536.json') != FIXTURE_SHA:
-        raise RuntimeError('production_fixture_not_bound')
-    if cfg['admission_end_utc'] != '2026-09-27T17:17:00Z' or cfg['request_end_utc'] != '2026-09-27T17:25:00Z':
-        raise RuntimeError('deadline_changed')
-    logging = winner.get('logging_decision', {})
-    if (logging.get('keep_existing_default_verbosity') != 3 or
-            logging.get('add_log_verbosity4_authorized') is not False or
-            logging.get('missing_safe_component_log_is_not_failure') is not True):
-        raise RuntimeError('allocation_logging_decision_changed')
-    argv = cfg['native_argv']
-    if any(x in argv for x in ['--log-verbosity', '--verbosity', '-lv', '--verbose', '-v']):
-        raise RuntimeError('unapproved_logging_delta')
-    for flag, value in {'--ctx-size': '1000000', '--kv-unified-per-slot': '1000000',
-                        '--threads': str(winner['threads']), '--threads-batch': '64',
-                        '--cache-type-k': 'f16', '--cache-type-v': 'f16'}.items():
-        if argv.count(flag) != 1 or argv[argv.index(flag) + 1] != value:
-            raise RuntimeError('reviewed_native_argv_changed')
-
-    # Eight threads requires explicit root selection plus an actual pair proof pin.
-    profile = cfg.get('decode_profile', '16distribute')
-    expected = {'16distribute': (16, '0xffffffffffffff00ff', 'distribute'),
-                '8spread': (8, '0x10101010101010001', None),
-                '8local': (8, '0xff', None)}
-    if profile not in expected or expected[profile][0] != winner['threads']:
-        raise RuntimeError('decode_profile_mismatch')
-    if winner['threads'] == 8 and (winner.get('decode_profile') != profile or
-            not isinstance(winner.get('actual_pair_proof_sha256'), str) or
-            len(winner['actual_pair_proof_sha256']) != 64 or
-            any(c not in '0123456789abcdef' for c in winner['actual_pair_proof_sha256'])):
-        raise RuntimeError('eight_threads_requires_actual_reviewed_pair_proof')
-    if argv[argv.index('--cpu-mask') + 1] != expected[profile][1]:
-        raise RuntimeError('decode_affinity_mismatch')
-    numa = argv[argv.index('--numa') + 1] if '--numa' in argv else None
-    if numa != expected[profile][2]:
-        raise RuntimeError('decode_numa_mismatch')
-
-
-def capture_phase(h, state, label, occupied=None):
-    """Bounded boundary counters; never called from the five-second guard."""
-    from allocation import compose_phase
-    proof_path = P(LOG, 'ALLOCATION.json')
-    proof = json.loads(proof_path.read_text()) if proof_path.exists() else None
-    reserved, reserved_status = None, 'UNAVAILABLE'
-    try:
-        raw = run_cmd(['nvidia-smi', '--id=' + GPU, '--query-gpu=memory.reserved',
-                       '--format=csv,noheader,nounits'], 2).strip()
-        reserved = float(raw)
-        reserved_status = 'ACTUAL_NVIDIA_SMI_READBACK'
-    except (ValueError, OSError, subprocess.SubprocessError):
-        pass
-    counters = None
-    if state.get('native_cgroup'):
-        cg = P(state['native_cgroup'])
-        counters = {name: (cg / name).read_text().strip() for name in
-                    ['memory.current', 'memory.stat', 'memory.swap.current', 'memory.events']}
-    row = compose_phase(proof, label, gpu_rows(timeout=2), memory(), GPU,
-                        {k: state.get(k) for k in ['candidate_id', 'native_pid', 'native_started_at']},
-                        occupied_input_tokens=occupied, reserved_mib=reserved,
-                        utc=h.now(), monotonic=time.monotonic(), cgroup=counters)
-    row['reserved_readback_status'] = reserved_status
-    save(h, label + '-PHASE.json', row)
-    h.require(row['capture_status'] == 'CAPTURED' and row['host_reserve_pass'] is True and
-              row['frontier']['reserve_pass'] is True, 'phase_memory_or_reserve_invalid')
-    return row
-
-
-def require_consistent_components(h, proof, capacity, physical_pool):
-    """Missing optional logs are allowed; contradictory observed logs are not."""
-    contexts, slots = proof['native_context_records'], proof['slot_records']
-    h.require(not contexts or contexts == [physical_pool], 'observed_native_context_mismatch')
-    h.require(not slots or slots == [{'slots': 1, 'context': capacity}], 'observed_slot_log_mismatch')
-    for kind, cells in [('global', physical_pool), ('swa', 768)]:
-        pool = proof['pools'].get(kind)
-        if pool is None:
-            continue
-        h.require(pool['requested_cells_log'] == cells, 'observed_pool_creation_mismatch')
-        buffers = pool['buffers_mib_log_label']
-        h.require(not buffers or set(buffers) == {'CUDA0'}, 'observed_kv_device_mismatch')
-        if pool['summary'] is not None:
-            reasons = [x for x in proof['reasons'] if x.startswith(kind + '_')]
-            if not buffers:
-                reasons = [x for x in reasons if x in
-                           [kind + '_actual_cells_mismatch', kind + '_layer_or_sequence_mismatch',
-                            kind + '_not_f16', kind + '_size_mismatch', kind + '_k_v_size_mismatch']]
-            h.require(not reasons, 'observed_kv_component_mismatch')
-    h.require(not any(x.startswith('duplicate_') for x in proof['reasons']), 'duplicate_allocation_log')
 
 
 def run_cmd(argv, timeout=30):
@@ -225,48 +108,6 @@ def require_r8_settled(h):
               'r8_proxy_present')
 
 
-def require_affinity_pair_settled(h):
-    """Observe the independent pair only. No stop, restart, or adoption."""
-    base = P('/data/logs/H016-20260927')
-    pair = json.loads((base / 'worker1-affinity02/PAIR.json').read_text())
-    h.require(pair.get('controller_invocation_id') == '3a323326650f4380a0dec32f96b13895',
-              'affinity_pair_generation_changed')
-    h.require(pair.get('status') in ('PAIR_COMPLETE_ORIGINAL_GLM_READY_AWAIT_ROOT_WINNER',
-              'PAIR_STOPPED_ORIGINAL_GLM_READY_NO_REPLAY'), 'affinity_pair_not_terminal')
-    for profile in ('affinity02', 'r10-spread02', 'r11-local02'):
-        unit = ('h016-affinity02-20260927.service' if profile == 'affinity02' else
-                'h016-mimo-profile-20260927-' + profile + '.service')
-        props = dict(x.split('=', 1) for x in run_cmd(['systemctl', 'show', unit, '-p',
-                     'MainPID,ControlPID,ActiveState,InvocationID']).splitlines())
-        h.require(props.get('MainPID') == props.get('ControlPID') == '0' and
-                  props.get('ActiveState') in ('inactive', 'failed'), 'affinity_owner_active')
-        h.require(not P('/sys/fs/cgroup/system.slice', unit).exists(), 'affinity_unit_cgroup_present')
-        if profile == 'affinity02':
-            h.require(props.get('InvocationID') == pair['controller_invocation_id'], 'affinity_controller_changed')
-            continue
-        path = base / ('worker1-' + profile) / 'OWNER.json'
-        if not path.exists():
-            h.require(not run_cmd(['docker', 'ps', '-aq', '--filter',
-                      'name=^/llm-h016-mimo-pro-' + profile + '$']).strip(), 'unrecorded_affinity_candidate')
-            continue
-        old = json.loads(path.read_text())
-        h.require(old.get('status') == 'SETTLED_GLM_RESTORED' and not old.get('glm_suppressed') and
-                  not old.get('guard_failure'), 'affinity_owner_not_settled')
-        for field in ('pid', 'proxy_pid'):
-            h.require(not old.get(field) or not P('/proc', str(old[field])).exists(),
-                      'affinity_owner_or_proxy_process_remains')
-        if old.get('candidate_id'):
-            c = inspect(old['candidate_id'])
-            h.require(c['Id'] == old['candidate_id'] and c['Image'] == IMAGE and
-                      c['Name'] == '/llm-h016-mimo-pro-' + profile and not c['State']['Running'] and
-                      c['State']['Pid'] == 0 and c['State']['StartedAt'] == old['native_started_at'],
-                      'affinity_native_not_settled')
-            h.require(all(old.get('native_settled', {}).get(k) is True for k in
-                      ('pid_zero', 'cgroup_empty', 'gpu_compute_empty')), 'affinity_settlement_proof_missing')
-            h.require(not P('/proc', str(old['native_pid'])).exists() and
-                      not P(old['native_cgroup']).exists(), 'affinity_native_process_remains')
-
-
 def capture_native_log(h, state, label):
     """Retain every emitted log line privately; never filter backend selection."""
     if not state.get('candidate_id'):
@@ -282,7 +123,8 @@ def capture_native_log(h, state, label):
 
 def preflight(h):
     require_r8_settled(h)
-    require_affinity_pair_settled(h)
+    from authority import validate
+    validate(BASE)
     with h.transaction() as g, h.AnchoredRoot(BASE, g) as a:
         hashes = json.loads(P(BASE, 'SOURCE-SHA256.json').read_text())
         for name, digest in hashes.items():
@@ -291,7 +133,6 @@ def preflight(h):
             h.require(hashlib.sha256(P(BASE, name).read_bytes()).hexdigest() == digest, 'candidate_source_drift')
         h.require(hashes.get('numactl') == 'f3944bcd7848d64424f8daf27f350b03d7f3281b2fb9be5eaaba0ddd0e72efb8' and hashes.get('libnuma.so.1.0.0') == '02d7582c5d391e460e56aa67a414360e3183b968206645b9123f9dc7bff5d009', 'interleave_dependency_pins')
         cfg = json.loads(P(BASE, 'LAUNCH.json').read_text())
-        validate_authority(cfg, hashes)
         q = json.loads(P(BASE, 'HARNESS-QUIET-01.json').read_text())
         h.require(q['status'] == 'QUIET_APP_STOPPED_SEARCH_STATUS_ADMIN_PRESERVED' and q['after_units']['ai-harness.service']['MainPID'] == '0' and q['after_data']['frontier_requests']['count'] == 0, 'upper_owner_not_quiet')
         verified = json.loads(P('/data/logs/H016-20260927/worker1', 'VERIFICATION-STATUS.json').read_text())
@@ -433,7 +274,7 @@ def main(run=False):
         print(json.dumps({'status': 'PREFLIGHT_ONLY_NO_MUTATION', 'proof': proof, 'native_argv': cfg['native_argv']}))
         return
     key = read_key(h)
-    state = {'status': 'ADMITTED', 'started_utc': h.now(), 'pid': os.getpid(), 'proof': proof, 'glm_suppressed': False, 'context': cfg['capacity'], 'threads': cfg['threads']}
+    state = {'status': 'ADMITTED', 'started_utc': h.now(), 'pid': os.getpid(), 'proof': proof, 'glm_suppressed': False}
     save(h, 'OWNER.json', state)
     failed = threading.Event()
     proxy = None
@@ -460,7 +301,6 @@ def main(run=False):
         h.require(limit >= 704 * 1024**3, 'candidate_host_budget_insufficient_for_fixed_704gib')
         limit = 704 * 1024**3
         state.update(post_glm_baseline={k: mem[k] for k in ['MemTotal', 'MemAvailable', 'SwapTotal', 'SwapFree']}, memory_limit_bytes=limit, old_glm_settled_utc=h.now())
-        capture_phase(h, state, 'PRE-LOAD')
         argv = ['docker', 'create', '--name', NAME, '--network', 'host', '--read-only', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--security-opt', 'seccomp=' + GLM_SOURCE + '/numa-seccomp.json', '--log-driver', 'local', '--log-opt', 'max-size=64m', '--log-opt', 'max-file=2', '--restart', 'no', '--cpuset-cpus', '0-7,16-71', '--cpuset-mems', '0-7', '--memory', str(limit), '--memory-swap', str(limit), '--gpus', 'device=' + GPU, '--label', 'io.h016.owner=H016-20260927', '--mount', 'type=bind,src=' + h.MODEL + ',dst=/models,readonly', '--mount', 'type=bind,src=/data/services/secrets/llm-api-key,dst=/run/secrets/llm-api-key,readonly', '--tmpfs', '/tmp:rw,noexec,nosuid,size=1g', '--env', 'CUDA_CACHE_DISABLE=1', '--env', 'OMP_NUM_THREADS=1', '--env', 'GOMP_SPINCOUNT=0', '--mount', 'type=bind,src=' + BASE + '/numactl,dst=/usr/bin/numactl,readonly', '--mount', 'type=bind,src=' + BASE + '/libnuma.so.1.0.0,dst=/usr/lib/x86_64-linux-gnu/libnuma.so.1,readonly', '--entrypoint', '/usr/bin/numactl', IMAGE, '--interleave=0-7', '/opt/llama/llama-server'] + cfg['native_argv']
         with h.acquire_lease(blocking=False) as lease, h.MountedStorageGuard(h.s) as g:
             h.s.root_payload_guard()
@@ -503,42 +343,9 @@ def main(run=False):
         observed = {'utc': h.now(), 'owner_id': state['candidate_id'], 'pid': state['native_pid'], **compact_identity(props)}
         # Persist only identity fields, before every individually diagnosed assertion.
         save(h, 'NATIVE-OBSERVED.json', observed)
-        h.require(observed['context'] in (1000000, 1000192), 'actual_usable_context_invalid')
-        validate_identity(observed, observed['context'])
+        validate_identity(observed)
         save(h, 'NATIVE-IDENTITY.json', observed)
         capture_native_log(h, state, 'NATIVE-STARTUP-FULL')
-        from allocation import parse_native_allocation
-        startup = json.loads(P(LOG, 'NATIVE-STARTUP-FULL.json').read_text())
-        code, slots = get(30012, '/slots', key)
-        h.require(code == 200 and len(slots) == 1 and slots[0].get('n_ctx') == observed['context']
-                  and slots[0].get('is_processing') is False, 'actual_slot_capacity_or_idle_mismatch')
-        components = parse_native_allocation(startup['text'], cfg['capacity'],
-            expected_pool_context=cfg['physical_cache_pool_tokens'], expected_usable_context=slots[0]['n_ctx'])
-        save(h, 'ALLOCATION-COMPONENTS.json', components)
-        require_consistent_components(h, components, slots[0]['n_ctx'], cfg['physical_cache_pool_tokens'])
-        # Native padding/source arithmetic is not an observed physical-cell counter.
-        # Root accepts exposed capacity + measured allocation/reserve at default
-        # verbosity. Preserve missing component logs without fabricating readback.
-        actual_pool = components['actual_global_pool_cells']
-        h.require(actual_pool in (None, cfg['physical_cache_pool_tokens']), 'observed_physical_pool_mismatch')
-        allocation = {'status': 'EXPOSED_CAPACITY_READBACK', 'utc': h.now(),
-            'requested_context': cfg['capacity'], 'effective_configured_context': slots[0]['n_ctx'],
-            'actual_props_context': observed['context'], 'actual_slot_context': slots[0]['n_ctx'],
-            'actual_physical_pool_cells': actual_pool,
-            'source_calculated_physical_pool_cells': cfg['physical_cache_pool_tokens'],
-            'source_calculated_global_f16_kv_bytes': 51200 * cfg['physical_cache_pool_tokens'],
-            'source_calculated_swa_f16_kv_bytes': 768 * 60 * 8 * (192 + 128) * 2,
-            'physical_pool_evidence': 'NATIVE_LOG' if actual_pool is not None else 'SOURCE_CALCULATED_NOT_MEASURED',
-            'components': components, 'component_byte_readback': components['status'],
-            'scope': 'Usable native slot allocation; physical padding calculated when unlogged; occupied-context correctness separate.'}
-        save(h, 'ALLOCATION.json', allocation)
-        state['requested_context'] = cfg['capacity']
-        state['effective_configured_context'] = slots[0]['n_ctx']
-        state['allocated_context'] = slots[0]['n_ctx']
-        state['physical_cache_pool_tokens'] = actual_pool
-        state['source_calculated_physical_cache_pool_tokens'] = cfg['physical_cache_pool_tokens']
-        capture_phase(h, state, 'POST-LOAD')
-        save(h, 'OWNER.json', state)
         from telemetry import bounded_placement
         save(h, 'POST-LOAD-PLACEMENT.json', bounded_placement(state['native_pid']))
         proxy = subprocess.Popen(['/usr/bin/python3', '-B', BASE + '/private_proxy.py'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -547,13 +354,16 @@ def main(run=False):
         from benchmark import qualify
         qualify(h, key, failed)
         h.require(not failed.is_set() and proxy.poll() is None, 'guard_or_proxy_failed')
-        state.update(status='FINAL_NATIVE_16K_TOOLS_QUALIFIED_SETTLING', qualification_done_utc=h.now(),
-                     occupied_tested=16384, deferred_65536='NOT_TESTED_FOREGROUND')
+        state.update(status='PROFILE_BASELINE_COMPLETE_WARM_AWAIT_ROOT', baseline_done_utc=h.now())
         save(h, 'OWNER.json', state)
-        # Root-reviewed foreground terminal proof ends this experiment immediately.
-        # Existing finally performs ordinary exact settlement and original GLM restore.
-        exit_code = 0
-
+        # Independent guard retains warm owner for serial follow-up/W2; no paid CLI wait.
+        while time.time() < HARD_END:
+            h.require(not failed.is_set() and proxy.poll() is None and inspect(state['candidate_id'])['State']['Running'], 'warm_owner_guard_failed')
+            time.sleep(5)
+        # No persistent adoption in initial packet: bounded deadline always settles.
+        # Later adoption code must be separately reviewed before any W2 activation.
+        state['status'] = 'DEADLINE_SETTLING_UNADOPTED_CANDIDATE'
+        save(h, 'OWNER.json', state)
     except BaseException as exc:
         state.update(status='FAILED_SETTLING', error_type=type(exc).__name__, error=str(exc) if isinstance(exc, RuntimeError) else type(exc).__name__)
         save(h, 'OWNER.json', state)

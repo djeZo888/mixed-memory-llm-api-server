@@ -14,7 +14,7 @@ files={n:base64.b64encode((S/n).read_bytes()).decode() for n in SOURCE_NAMES}
 winner_raw=(T/'ROOT-WINNER.json').read_bytes()
 assert go['winner_sha256']==hashlib.sha256(winner_raw).hexdigest()
 winner=json.loads(winner_raw)
-assert winner['authorized'] is True and winner['threads'] in (16,64) and winner['context']==1000000
+assert winner['authorized'] is True and winner['threads'] in (8,16) and winner['context']==1000000
 fixture=(T.parent/'H016-BACKEND-02-20260927/private/mimo-production-fixture-65536.json').read_bytes()
 assert hashlib.sha256(fixture).hexdigest()==go['fixture_sha256']==FIXTURE_SHA
 assert {n:hashlib.sha256(base64.b64decode(b)).hexdigest() for n,b in files.items()}==go['source_sha256']
@@ -61,6 +61,6 @@ with h.transaction() as g:
 print(json.dumps({'status':'EXACT_R9_STAGED_NO_DISPATCH','utc':h.now(),'base':B,'log':L,'source_hashes':hashes}))
 '''.replace('PAYLOAD_FILES',repr(files)).replace('PAYLOAD_AUTHORITY',repr(go))
 r=subprocess.run(['ssh','ai-vm','sudo -n python3 -B -'],input=code,text=True,capture_output=True,timeout=40)
-(T/('private/finalprep11/R9-STAGING-'+datetime.datetime.now(datetime.timezone.utc).strftime('%H%M%S')+'.stderr')).write_text(r.stderr)
+(T/('private/finalsource13/R9-STAGING-'+datetime.datetime.now(datetime.timezone.utc).strftime('%H%M%S')+'.stderr')).write_text(r.stderr)
 if r.returncode:raise RuntimeError('staging failed '+r.stderr[-1000:])
 out=json.loads(r.stdout);(T/'R9-STAGED.json').write_text(json.dumps(out,indent=2)+'\n');print(json.dumps(out))

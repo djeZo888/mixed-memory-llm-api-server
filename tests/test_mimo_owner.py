@@ -125,6 +125,52 @@ class OwnerTests(unittest.TestCase):
             m['native_argv'].append('--arbitrary')
             with self.assertRaises(RuntimeError):o.launch_args(m)
 
+    def test_reviewed_1m_request_preserved_for_actual_allocator_rounding(self):
+        base=json.loads(PATH.with_name('launch.json').read_text())
+        for flag in ('--ctx-size','--kv-unified-per-slot'):
+            base['native_argv'][base['native_argv'].index(flag)+1]='1000000'
+        raw=json.dumps(base).encode()
+        for actual in (1000000,1000192):
+            m=dict(context=actual,no_host=True,
+                   source_sha256={str(o.BASE / 'source/launch.json'):hashlib.sha256(raw).hexdigest()},
+                   native_argv=base['native_argv']+['--no-host'])
+            with patch.object(o,'protected',return_value=raw):
+                self.assertEqual(o.launch_args(m),m['native_argv'])
+                self.assertEqual(m['context'],actual)
+                m['native_argv'][m['native_argv'].index('--ctx-size')+1]='1000192'
+                with self.assertRaisesRegex(RuntimeError,'reviewed_native_argv_changed'):
+                    o.launch_args(m)
+
+    def test_reviewed_1m_capacity_rejects_stale_or_mixed_source_request(self):
+        for requested in (('131072','131072'),('1000000','1000192'),('1000192','1000000')):
+            base=json.loads(PATH.with_name('launch.json').read_text())
+            for flag,value in zip(('--ctx-size','--kv-unified-per-slot'),requested):
+                base['native_argv'][base['native_argv'].index(flag)+1]=value
+            raw=json.dumps(base).encode()
+            for actual in (1000000,1000192):
+                m=dict(context=actual,no_host=True,
+                       source_sha256={str(o.BASE / 'source/launch.json'):hashlib.sha256(raw).hexdigest()},
+                       native_argv=base['native_argv']+['--no-host'])
+                with patch.object(o,'protected',return_value=raw),self.assertRaisesRegex(RuntimeError,'reviewed_1m_request_required'):
+                    o.launch_args(m)
+
+    def test_memory_peak_includes_cache_only_incremental_startup_added(self):
+        m=json.loads((PATH.parents[3] / 'reports/h016-production-owner-20260927/REVIEW-MANIFEST.template.json').read_text())
+        m.update(qualified=True,no_host=True,native_argv=['--no-host'],qualification_sha256={'fixture':'0'*64})
+        m['artifact']['files']=[{} for _ in range(13)]
+        m['memory']=dict(limit_bytes=704,qualified_peak_bytes=704,startup_cache_bytes=0)
+        o.validate_manifest(m)  # Cgroup peak already contains its charged file cache.
+        m['memory']=dict(limit_bytes=704,qualified_peak_bytes=700,startup_cache_bytes=4)
+        o.validate_manifest(m)  # Separately justified incremental allowance.
+        for budget in (dict(limit_bytes=704,qualified_peak_bytes=704,startup_cache_bytes=-1),
+                       dict(limit_bytes=704,qualified_peak_bytes=704,startup_cache_bytes=1),
+                       dict(limit_bytes=704,qualified_peak_bytes=700,startup_cache_bytes=5),
+                       dict(limit_bytes=704,qualified_peak_bytes=0,startup_cache_bytes=0),
+                       dict(limit_bytes=704,qualified_peak_bytes=700,startup_cache_bytes=False)):
+            m['memory']=budget
+            with self.assertRaisesRegex(RuntimeError,'reviewed_memory_peak_and_cache_required'):
+                o.validate_manifest(m)
+
     def test_explicit_glm_rollback_publishes_valid_selection_before_start(self):
         selected=dict(schema_version=1,selected_frontier=o.MODEL,generation=4)
         state=dict(status='SETTLED',request_hold=False,native={'container_id':'a'},native_cgroup='/fixture/absent',

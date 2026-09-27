@@ -20,7 +20,8 @@ _BACKEND = r"(CPU(?:_Mapped|_REPACK)?|CUDA_Host|CUDA\d+)"
 
 
 def parse_native_allocation(raw_text: str, expected_context: int, *,
-                            expected_pool_context: int | None = None) -> dict:
+                            expected_pool_context: int | None = None,
+                            expected_usable_context: int | None = None) -> dict:
     """Fail-closed extraction of one load's native global/SWA F16 allocation.
 
     Expected pinned log shapes: creating non-SWA/SWA KV cache, KV buffer size,
@@ -31,10 +32,15 @@ def parse_native_allocation(raw_text: str, expected_context: int, *,
     """
     if type(expected_context) is not int or expected_context <= 0:
         raise ValueError('expected_context must be a positive integer')
+    if expected_usable_context is None:
+        expected_usable_context = expected_context
+    if type(expected_usable_context) is not int or (expected_context, expected_usable_context) not in (
+            (expected_context, expected_context), (1000000, 1000192)):
+        raise ValueError('usable context must be exact or reviewed million-context rounding')
     if expected_pool_context is None:
         expected_pool_context = expected_context
-    if type(expected_pool_context) is not int or expected_pool_context < expected_context:
-        raise ValueError('expected_pool_context must be an explicit integer at least expected_context')
+    if type(expected_pool_context) is not int or expected_pool_context < expected_usable_context:
+        raise ValueError('expected_pool_context must be an explicit integer at least expected usable context')
     raw = raw_text.encode('utf-8')
     if len(raw) > MAX_LOG_BYTES:
         raise ValueError('native allocation log exceeds bounded capture size')
@@ -95,7 +101,7 @@ def parse_native_allocation(raw_text: str, expected_context: int, *,
             reasons.append(reason)
 
     need(contexts == [expected_pool_context], 'native_context_missing_duplicate_or_mismatched')
-    need(slots == [{'slots': 1, 'context': expected_context}], 'single_slot_context_missing_or_mismatched')
+    need(slots == [{'slots': 1, 'context': expected_usable_context}], 'single_slot_context_missing_or_mismatched')
     for kind, cells, layers, bytes_per_cell in [
             ('global', expected_pool_context, 10, GLOBAL_BYTES_PER_CELL),
             ('swa', 768, 60, 60 * 8 * (192 + 128) * 2)]:
@@ -126,9 +132,9 @@ def parse_native_allocation(raw_text: str, expected_context: int, *,
     return {'status': 'PROVEN' if not reasons else 'UNPROVEN', 'reasons': sorted(set(reasons)),
         'raw_log_sha256': hashlib.sha256(raw).hexdigest(), 'raw_log_bytes': len(raw),
         'configured_context': expected_context, 'native_context_records': contexts,
-        'usable_context_tokens': expected_context, 'expected_physical_pool_cells': expected_pool_context,
+        'usable_context_tokens': expected_usable_context, 'expected_physical_pool_cells': expected_pool_context,
         'slot_records': slots, 'actual_global_pool_cells': actual_cells,
-        'pool_padding_cells': actual_cells - expected_context if actual_cells is not None else None,
+        'pool_padding_cells': actual_cells - expected_usable_context if actual_cells is not None else None,
         'occupied_input_tokens': None, 'occupied_scope': 'Not established by allocation logs.',
         'global_kv_bytes_formula': '51200 * actual_global_pool_cells',
         'global_kv_bytes_calculated': GLOBAL_BYTES_PER_CELL * actual_cells if actual_cells is not None else None,

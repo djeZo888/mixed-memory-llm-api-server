@@ -24,10 +24,10 @@ from launch_r9 import main
 main(run=True)
 '''.replace('PAYLOAD_AUTHORITY',repr(go))
 r=subprocess.run(['ssh','ai-vm','sudo -n python3 -B -'],input=code,text=True,capture_output=True,timeout=60)
-(T/'private/finalprep11/R9-DISPATCH.stderr').write_text(r.stderr)
-(T/'private/finalprep11/R9-DISPATCH.stdout').write_text(r.stdout)
+(T/'private/finalsource13/R9-DISPATCH.stderr').write_text(r.stderr)
+(T/'private/finalsource13/R9-DISPATCH.stdout').write_text(r.stdout)
 if r.returncode:raise RuntimeError('R9 launcher failed; inspect actual state; no replay: '+r.stderr[-1500:])
-out=json.loads(r.stdout);(T/'private/finalprep11/R9-INITIAL-LAUNCH.json').write_text(json.dumps(out,indent=2)+'\n')
+out=json.loads(r.stdout);(T/'private/finalsource13/R9-INITIAL-LAUNCH.json').write_text(json.dumps(out,indent=2)+'\n')
 notice={k:out[k] for k in ['utc','status','unit','unit_readback','admission_end_utc','settlement_utc','global_end_utc']}
 (T/'R9-DISPATCH.json').write_text(json.dumps(notice,indent=2)+'\n')
 with (T/'ROOT-NOTICE.md').open('a') as f:f.write('\n## R9 SYSTEMD DISPATCH\n'+json.dumps(notice,indent=2)+'\n')

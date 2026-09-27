@@ -19,9 +19,13 @@ from candidate_owner import ADMIT_END, HARD_END, BASE, LOG, get, save
 from telemetry import bounded_placement
 MODEL = 'mimo-v2.6-pro-rl'
 SEED = 270927
-CLIENT_END = min(HARD_END - 1200, datetime.datetime(2026, 9, 27, 17, 5,
+CLIENT_END = min(HARD_END - 480, datetime.datetime(2026, 9, 27, 17, 17,
                  tzinfo=datetime.timezone.utc).timestamp())
-TOOL_PAIR_PLANNING_SECONDS = 900
+TOOL_TURN_SECONDS = 450
+PREFILL_PLANNING_TOKENS_PER_SECOND = 61.0
+DECODE_PLANNING_TOKENS_PER_SECOND = 7.76
+PLANNING_MARGIN = 1.20
+PLANNING_OVERHEAD_SECONDS = 30
 FIXTURE_SHA = '2fb03cef2e700b304f8eea538a5ef8df300afc53bb0a94241bc754c17679ef78'
 TOOLS_SHA = '80e7a1e12e073ac57638e86638cf571158711ff821c96605135627777ce44e8c'
 READ_NAME = 'FINAL17-READ.txt'
@@ -104,6 +108,7 @@ def admit(h, failed, planning_seconds=0):
 
 
 def request(h, key, payload, label, failed, capacity, planning_seconds=0):
+    h.require(not pathlib.Path(LOG, label + '.json').exists(), 'existing_receipt_no_replay')
     admit(h, failed, planning_seconds)
     expected, raw = count(key, payload)
     h.require(expected + payload['max_tokens'] <= capacity - 1, 'context_admission')
@@ -111,6 +116,9 @@ def request(h, key, payload, label, failed, capacity, planning_seconds=0):
     start = time.monotonic()
     deadline = CLIENT_END
     row = {'label': label, 'started_utc': h.now(), 'started_monotonic_seconds': start, 'raw_chunks': [], 'terminal_sse_events': [], 'expected_input_tokens': expected, 'request_sha256': hashlib.sha256(raw).hexdigest(), 'thinking': payload['chat_template_kwargs']['enable_thinking'], 'output_budget': payload['max_tokens'], 'status': 'SUBMITTED'}
+    row['client_deadline_utc'] = datetime.datetime.fromtimestamp(deadline, datetime.timezone.utc).isoformat()
+    row['client_bound_seconds'] = deadline - time.time()
+    row['admission_planning_seconds'] = planning_seconds
     save(h, label + '.json', row)
     c = http.client.HTTPConnection('127.0.0.1', 30012, timeout=max(.1, deadline - time.time()))
     response = None
@@ -136,6 +144,12 @@ def request(h, key, payload, label, failed, capacity, planning_seconds=0):
         c.request('POST', '/v1/chat/completions', raw, {'Authorization': 'Bearer ' + key.decode(), 'Content-Type': 'application/json'})
         row['request_sent_monotonic_seconds'] = time.monotonic()
         row['request_sent_utc'] = utc_now()
+        sent = {'event': 'BODY_SENT', 'label': label, 'utc': row['request_sent_utc'],
+                'monotonic_seconds': row['request_sent_monotonic_seconds'],
+                'request_sha256': row['request_sha256'], 'expected_input_tokens': expected,
+                'client_deadline_utc': row['client_deadline_utc']}
+        sent_line = (json.dumps(sent, separators=(',', ':')) + '\n').encode()
+        h.require(os.write(progress_fd, sent_line) == len(sent_line), 'body_sent_progress_short_write')
         response = c.getresponse()
         h.require(response.status == 200, 'native_http_failure')
         done, usage, finish = False, None, None
@@ -293,18 +307,44 @@ def phase_request(h, key, payload, label, failed, state, planning_seconds,
 
 
 def project_seconds(row, target):
-    """Only a conservative admission forecast; never reported as performance."""
-    timing = row['native_timings']
-    native_prompt = timing['prompt_ms'] / 1000
-    native_decode = timing['predicted_ms'] / 1000
-    # Do not extrapolate from allocated context. Scale occupied prompt work only,
-    # add measured request overhead and full 256-output allowance at actual rate.
-    intervals = timing['predicted_n'] - 1
-    if native_prompt <= 0 or native_decode <= 0 or intervals <= 0:
-        raise RuntimeError('positive_native_timing_required_for_projection')
-    overhead = max(0, row['total_seconds'] - native_prompt - native_decode)
-    return 1.5 * (native_prompt * target / row['expected_input_tokens']
-                  + native_decode * 255 / intervals + overhead) + 60
+    """Conservative per-NEXT forecast; prior slower timing can only enlarge it.
+
+    The reference rates are measured historical rates, not a winner claim. A
+    maximum 256-token answer is allowed; no allocated-context extrapolation.
+    """
+    prompt = target / PREFILL_PLANNING_TOKENS_PER_SECOND
+    decode = 256 / DECODE_PLANNING_TOKENS_PER_SECOND
+    overhead = 0
+    if row is not None:
+        timing = row['native_timings']
+        native_prompt = timing['prompt_ms'] / 1000
+        native_decode = timing['predicted_ms'] / 1000
+        intervals = timing['predicted_n'] - 1
+        if native_prompt <= 0 or native_decode <= 0 or intervals <= 0:
+            raise RuntimeError('positive_native_timing_required_for_projection')
+        prompt = max(prompt, native_prompt * target / row['expected_input_tokens'])
+        decode = max(decode, native_decode * 255 / intervals)
+        overhead = max(0, row['total_seconds'] - native_prompt - native_decode)
+    return PLANNING_MARGIN * (prompt + decode + overhead) + PLANNING_OVERHEAD_SECONDS
+
+
+def next_admission(h, failed, label, planning_seconds, completed, native_tool_qualification=False):
+    """Persist why the next request cannot fit; completed receipts are immutable."""
+    row = {'utc': utc_now(), 'next_request': label, 'completed_inputs': list(completed),
+           'native_tool_qualification': native_tool_qualification,
+           'planning_only_seconds': planning_seconds,
+           'finish_target_utc': datetime.datetime.fromtimestamp(CLIENT_END, datetime.timezone.utc).isoformat(),
+           'formula': '1.20 * (max(input/61, prior measured prompt projection) + max(256/7.76, prior measured decode projection) + measured overhead) + 30; tool-turn planning allowance450s; request deadline remains absolute CLIENT_END',
+           'limit': 'Per-next bounded admission only; no promise the remaining ladder or a 65536-output ceiling will complete.'}
+    try:
+        admit(h, failed, planning_seconds)
+    except RuntimeError as exc:
+        row.update(status='NOT_TESTED', reason=str(exc))
+        save(h, 'FINAL-ADMISSION-' + label + '.json', row)
+        save(h, 'FINAL-CLIENT-INCOMPLETE.json', row)
+        raise
+    row['status'] = 'ADMITTED'
+    save(h, 'FINAL-ADMISSION-' + label + '.json', row)
 
 
 def load_production_fixture(h):
@@ -366,15 +406,15 @@ def continuation(payload, row, tool_text):
     return result
 
 
-def production_pair(h, key, failed, state):
-    admit(h, failed, TOOL_PAIR_PLANNING_SECONDS)
+def production_pair(h, key, failed, state, completed):
+    next_admission(h, failed, 'FINAL17-TURN1', TOOL_TURN_SECONDS, completed)
     payload = load_production_fixture(h)
     path = prepare_read_fixture(h)
     payload['messages'] = [
         {'role': 'developer', 'content': 'For this qualification, call read exactly once with only the path argument specified by the user. Do not call another tool. After the real read result, add A and B and return only the integer sum, one space, then its exact MARKER value. Do not invent the file contents.'},
         {'role': 'user', 'content': [{'type': 'text', 'text': 'Read the real allowlisted file ' + path + ' using read({"path": "' + path + '"}). After its tool result, return A+B and the MARKER as instructed. Do not answer before the tool result.'}]}]
     first = phase_request(h, key, payload, 'FINAL17-TURN1', failed, state,
-                          TOOL_PAIR_PLANNING_SECONDS)
+                          TOOL_TURN_SECONDS)
     correct = first['finish_reason'] == 'tool_calls' and len(first['tool_calls']) == 1
     record_semantics(h, 'FINAL17-TURN1', first, correct, 'actual_one_read_tool_call_required')
     try:
@@ -385,8 +425,9 @@ def production_pair(h, key, failed, state):
         raise
     # Both the input count and generation receive this exact equivalent body.
     second_payload = continuation(payload, first, tool_text)
+    next_admission(h, failed, 'FINAL17-TURN2', TOOL_TURN_SECONDS, completed)
     second = phase_request(h, key, second_payload, 'FINAL17-TURN2', failed, state,
-                           TOOL_PAIR_PLANNING_SECONDS / 2)
+                           TOOL_TURN_SECONDS)
     correct = (second['finish_reason'] == 'stop' and not second['tool_calls']
                and second['content'].strip() == '5 ' + READ_MARKER)
     record_semantics(h, 'FINAL17-TURN2', second, correct, 'actual_tool_continuation_incorrect')
@@ -405,9 +446,11 @@ def production_pair(h, key, failed, state):
 
 def qualify(h, key, failed):
     state = json.loads(pathlib.Path(LOG, 'OWNER.json').read_text())
-    h.require(state['context'] == state['allocated_context'] and state['context'] in [1000000, 917504]
-              and state['threads'] in [16, 64], 'final_actual_allocation_and_thread_winner_required')
-    admit(h, failed, 2400)
+    h.require((state['context'], state['allocated_context']) in
+              [(1000000, 1000000), (1000000, 1000192), (917504, 917504)]
+              and state['threads'] in [8, 16], 'final_actual_allocation_and_thread_winner_required')
+    warm_seconds = project_seconds(None, 4096)
+    next_admission(h, failed, 'FINAL-WARM4096-DISCARDED', warm_seconds, [])
     code, props = get(30012, '/props', key)
     h.require(code == 200 and props['default_generation_settings']['n_ctx'] == state['allocated_context']
               and props['total_slots'] == 1 and props['model_alias'] == MODEL and props['is_sleeping'] is False,
@@ -419,8 +462,8 @@ def qualify(h, key, failed):
     # The one defined representative warmup supplies the initial short-answer
     # correctness and guard checkpoint; no extra benchmark request is admitted.
     warm, _, codes = fixture(key, 4096, 'H016-R9-FRESH-WARM-' + utc_now(),
-                             lambda: admit(h, failed, 2400))
-    row = phase_request(h, key, warm, 'FINAL-WARM4096-DISCARDED', failed, state, 2400,
+                             lambda: admit(h, failed, warm_seconds))
+    row = phase_request(h, key, warm, 'FINAL-WARM4096-DISCARDED', failed, state, warm_seconds,
                         exact_input=4096, require_uncached=True)
     row['measurement_role'] = 'DISCARDED_REPRESENTATIVE_WARMUP'
     record_semantics(h, 'FINAL-WARM4096-DISCARDED', row, fixture_correct(row, codes),
@@ -428,15 +471,9 @@ def qualify(h, key, failed):
     save(h, 'POST-WARM-PLACEMENT.json', bounded_placement(state['native_pid']))
     reference = row
     completed = []
-    for target in [4096, 16384, 65536]:
-        remaining = [n for n in [4096, 16384, 65536] if n >= target]
-        forecast = sum(project_seconds(reference, n) for n in remaining) + TOOL_PAIR_PLANNING_SECONDS
-        save(h, 'FINAL-ADMISSION-' + str(target) + '.json', {
-            'utc': utc_now(), 'target': target, 'remaining_targets': remaining,
-            'planning_only_seconds': forecast, 'finish_target_utc': datetime.datetime.fromtimestamp(CLIENT_END, datetime.timezone.utc).isoformat(),
-            'source_measurement': reference['label'], 'formula': '1.5 * (measured_prompt_s * occupied_target / measured_input + measured_decode_s * 255 / (predicted_n-1) + measured_overhead) + 60 per rung; plus 900s tool pair',
-            'limit': 'Conservative admission forecast only; not measured speed or proof of completion.'})
-        admit(h, failed, forecast)
+    for target in [4096, 16384]:
+        forecast = project_seconds(reference, target)
+        next_admission(h, failed, 'FINAL-BENCH' + str(target), forecast, completed)
         payload, _, codes = fixture(key, target, 'H016-R9-FRESH-MEASURED-' + str(target) + '-' + utc_now(),
                                     lambda: admit(h, failed, forecast))
         label = 'FINAL-BENCH' + str(target)
@@ -450,8 +487,11 @@ def qualify(h, key, failed):
         save(h, 'FINAL-LADDER-CHECKPOINT.json', {'completed': completed, 'utc': utc_now(),
              'allocated_context': state['allocated_context'], 'threads': state['threads'],
              'last_receipt': label + '.json', 'native_tool_qualification': False})
-    production_pair(h, key, failed, state)
+    production_pair(h, key, failed, state, completed)
     save(h, 'FINAL-CLIENT-COMPLETE.json', {'status': 'PASS', 'utc': utc_now(),
-         'measured_inputs': completed, 'allocated_context': state['allocated_context'],
+         'measured_inputs': completed, 'largest_occupied_benchmark_input': 16384,
+         'benchmark_65536': 'NOT_TESTED_DEFERRED_TO_LAST_ROOTGO',
+         'scope': 'Foreground 4K/16K and actual native17 only; no64K or near1M occupation claim.',
+         'allocated_context': state['allocated_context'],
          'threads': state['threads'], 'native_tool_qualification': True,
          'application_acceptance': 'NOT_TESTED', 'ordinary_production_load': 'NOT_TESTED'})

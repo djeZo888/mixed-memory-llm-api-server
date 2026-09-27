@@ -79,7 +79,7 @@ def serve():
     props = json.loads(response.read())
     probe.close()
     capacity = props.get('default_generation_settings', {}).get('n_ctx')
-    h.require(response.status == 200 and capacity == json.loads(__import__('pathlib').Path(__file__).with_name('LAUNCH.json').read_text())['capacity'] and props.get('total_slots') == 1 and props.get('model_alias') == MODEL and props.get('is_sleeping') is False, 'loaded_capacity_identity_required')
+    h.require(response.status == 200 and json.loads(__import__('pathlib').Path(__file__).with_name('LAUNCH.json').read_text())['capacity'] == 1000000 and capacity in (1000000, 1000192) and props.get('total_slots') == 1 and props.get('model_alias') == MODEL and props.get('is_sleeping') is False, 'loaded_capacity_identity_required')
     owner = threading.Lock()
     quarantine = threading.Event()
 
@@ -111,9 +111,9 @@ def serve():
                 return self.error(404)
             chat = self.path == '/v1/chat/completions'
             now = time.time()
-            if chat and now >= datetime.datetime(2026, 9, 27, 17, 0, tzinfo=datetime.timezone.utc).timestamp():
+            if chat and now >= datetime.datetime(2026, 9, 27, 17, 17, tzinfo=datetime.timezone.utc).timestamp():
                 return self.error(503)
-            deadline = min(now + 7200, datetime.datetime(2026, 9, 27, 17, 25, tzinfo=datetime.timezone.utc).timestamp())
+            deadline = min(now + 7200, datetime.datetime(2026, 9, 27, 17, 17, tzinfo=datetime.timezone.utc).timestamp())
             if now >= deadline:
                 return self.error(503)
             owned = False
