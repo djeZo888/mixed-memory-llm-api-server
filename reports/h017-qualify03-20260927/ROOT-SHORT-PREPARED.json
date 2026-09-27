@@ -1,0 +1,43 @@
+{
+  "status": "SHORT_STAGED_NOT_INSTALLED_OR_DISPATCHED",
+  "utc": "2026-09-27T20:04:50.850810+00:00",
+  "owner_status": "LOADING",
+  "identity": {
+    "boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+    "manifest_sha256": "83daa3e66924a8f945c168dfe9e0856c8c518196908335e029708eb46c0636eb",
+    "supervisor": {
+      "invocation_id": "6e0c4561cfdf4ecd83a373ce2aa4b7d5",
+      "pid": 1540308,
+      "unit": "llm-frontier-mimo.service"
+    },
+    "launch_id": "b08bc770f6244655a803ec1ba835813f",
+    "native": {
+      "container_id": "624bd1f5bb049adc8ead5205ff0f2446d4c61c6701b551871ee4fc42ab3deb8f",
+      "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "pid": 1541651,
+      "pid_start_ticks": "5182991",
+      "started_at": "2026-09-27T19:58:46.550187738Z"
+    }
+  },
+  "source_sha256": {
+    "/data/build/H016-20260927/worker1-final13-long/client.py": "efbd8a3f36fd480bca5ac40e47cbffb3e1896ebe72060680a7e9abede85c3f9a",
+    "/data/build/H016-20260927/worker1-final13-long/reader.py": "3adf8f433981c97a80dc23fcc0e9ed9e256c8d48755dc9579f1efcd9033541a5",
+    "/data/services/mimo-h016-20260927/source/owner.py": "6b9e409b4f32eb7b05af35c0d1ceeda533daa439f6abe4eab65847321bc1e04f",
+    "/data/services/mimo-h016-20260927/source/private_proxy.py": "a77224f28c5367f26b0336722c6717bf8aa021107a7a4753705cc10a2599de52",
+    "/data/build/H016-20260927/worker1-r9/benchmark.py": "269a8572a24ade777d48ad14804c9d7eef218bf6a8207a6a8be474d387ce0144",
+    "/data/build/H016-20260927/worker1-r9/candidate_owner.py": "9ed901ac7a198b66fb4c9d5dddb56985d1392e256b9971df754a345f5784c253",
+    "/data/build/H016-20260927/worker1-r9/telemetry.py": "79b63724750bdc51f029353bd2f3e6670da224946071b963d8b833e980f50c99",
+    "/data/build/H016-20260927/worker1-r9/verify_retained.py": "fd98e17a1c8712ddb9aa9393057a81243d1751a2ea45cca76e33738e1cd3a32c",
+    "/data/build/H016-20260927/worker1-r9/private_proxy.py": "334e206552b55379c27ddc663dfc202be20d26d290a977457c77c2028eee0f25",
+    "/data/build/H016-20260927/worker1-r9/native_identity.py": "15e3a67acef5c60e48728d51c12cefbe0e46037d4f76ed7ec9eb59841bba43ed",
+    "/data/build/H016-20260927/worker1-r9/inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
+    "/data/build/H016-20260927/worker1-r9/allocation.py": "e7ea91ca49e78d37537301a49347925b9cb06c98506898a01f2ecfe9221d0edb",
+    "/data/build/H016-20260927/worker1-r9/profile_activity.py": "dadbb73a4096364a5ddd401dd8dbd3f40d1dd9ec453d1ce10eebc59c82fe051a",
+    "/data/build/H017-20260927/worker1-qualify03/short/client.py": "36c2fb38e75959be9f6cf996dd8282e5beca68c0cda00a63c06cc9de9bba0ccf",
+    "/data/build/H017-20260927/worker1-qualify03/short/h017-qualify03.service": "68ab63532e349267a850405bf4052d143f1f6c9b9bb8ce6768d1560bde395a5d"
+  },
+  "authority_sha256": "9325c1d26cfae43b8b01ccf008c06108f327305f33af749de0a6b445c09a82e3",
+  "path": "/data/build/H017-20260927/worker1-qualify03/short",
+  "log": "/data/logs/H017-20260927/worker1-qualify03-short"
+}

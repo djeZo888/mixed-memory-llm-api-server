@@ -60,13 +60,40 @@ class OwnerTests(unittest.TestCase):
 
     def test_fatal_own_temperature_reserve_host_swap_oom_and_ceiling(self):
         for target,key,value in [('gpu','temp_c',85),('gpu','free_mib',6.99),('host','MemAvailable',149),
-                                 ('host','SwapFree',99),('cgroup','memory.swap.current','1'),
-                                 ('cgroup','memory.max','704'),('events','oom_kill','1')]:
+                                 ('host','SwapTotal',101),('cgroup','memory.swap.current','1'),
+                                 ('cgroup','memory.swap.max','1'),('cgroup','memory.max','704'),
+                                 ('events','oom','1'),('events','oom_kill','1')]:
             sample=copy.deepcopy(self.sample)
             mapping={'gpu':sample['gpus'][0],'host':sample['host'],'cgroup':sample['cgroup'],'events':sample['cgroup']['memory.events']}
             mapping[target][key]=value
             with self.assertRaises(RuntimeError,msg=(target,key)):
                 o.validate_sample(self.m,sample,self.baseline,85)
+
+    def test_background_host_swap_is_diagnostic_with_zero_owned_swap(self):
+        self.sample['host']['SwapFree'] = 90
+        o.validate_sample(self.m, self.sample, self.baseline, 85)
+        self.assertEqual(self.sample['host_swap_diagnostic'],
+                         {'baseline_used_bytes': 0, 'used_bytes': 10, 'delta_bytes': 10})
+        for target, key, value, code in (
+                ('cgroup', 'memory.swap.current', '1', 'native_memory_oom_or_swap'),
+                ('cgroup', 'memory.swap.max', '1', 'native_memory_oom_or_swap'),
+                ('host', 'MemAvailable', 149, 'host_reserve'),
+                ('host', 'SwapTotal', 101, 'host_swap_configuration_changed')):
+            sample = copy.deepcopy(self.sample)
+            sample[target][key] = value
+            with self.assertRaisesRegex(o.OwnerRefusal, code):
+                o.validate_sample(self.m, sample, self.baseline, 85)
+
+    def test_failing_numeric_sample_survives_in_failure_receipt(self):
+        host = {**self.baseline, 'MemAvailable': 149, 'SwapFree': 90}
+        with patch.object(o, 'run', return_value=o.GPU + ', 100, 7, 69'), \
+                patch.object(o, 'memory', return_value=host):
+            with self.assertRaises(o.OwnerRefusal) as caught:
+                o.sample_guard(self.m, self.baseline, 85)
+        receipt = o.failure(caught.exception, 'LOADING', 'resource_validate')
+        self.assertEqual(receipt['code'], 'host_reserve')
+        self.assertEqual(receipt['resource_memory'],
+                         {'host': host, 'baseline': self.baseline, 'cgroup': None})
 
     def test_mandatory_timeout_not_optional_mapping_wait(self):
         start=time.monotonic()

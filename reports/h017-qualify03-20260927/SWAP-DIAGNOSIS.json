@@ -1,0 +1,66 @@
+{
+  "utc": "2026-09-27T19:55:37.644469+00:00",
+  "settlement_proof": {
+    "container_pid_zero": true,
+    "container_stopped": true,
+    "native_pid_absent": true,
+    "cgroup_empty": true,
+    "gpu_compute_empty": true,
+    "proxy_state_absent": true
+  },
+  "units": {
+    "llm-frontier-mimo.service": {
+      "MainPID": "0",
+      "ControlPID": "0",
+      "Result": "exit-code",
+      "Id": "llm-frontier-mimo.service",
+      "ActiveState": "failed",
+      "SubState": "failed",
+      "InvocationID": "ff7a39cdb90e463185fe287790b85fde"
+    },
+    "llm-frontier-flash.service": {
+      "MainPID": "0",
+      "ControlPID": "0",
+      "Result": "success",
+      "Id": "llm-frontier-flash.service",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "InvocationID": "54898c642f5341c2aad98c60af81f1b7"
+    }
+  },
+  "current_vmstat": {
+    "pswpin": 7487,
+    "pswpout": 29244
+  },
+  "current_memory_psi": "some avg10=0.00 avg60=0.00 avg300=0.00 total=30601366\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=30571912\n",
+  "failing_numeric_sample": "UNAVAILABLE_NOT_PERSISTED",
+  "swap_used_bytes": {
+    "baseline": 102236160,
+    "last_good": 102236160,
+    "current": 103022592
+  },
+  "current_host_reserve_percent": 97.05316373840662,
+  "last_good": {
+    "utc": "2026-09-27T19:43:57.554740+00:00",
+    "owned_cgroup": {
+      "memory.current": "408034213888",
+      "memory.events": {
+        "high": "0",
+        "low": "0",
+        "max": "0",
+        "oom": "0",
+        "oom_group_kill": "0",
+        "oom_kill": "0"
+      },
+      "memory.max": "755914244096",
+      "memory.swap.current": "0",
+      "memory.swap.max": "0"
+    },
+    "MemAvailable": 700038922240
+  },
+  "swap_total_bytes": {
+    "baseline": 3157258240,
+    "current": 3157258240
+  },
+  "evidence_sha256": "2c50313645ed7734b39f824e5b4a311b88eb76a2772ec712ea2355a8fd78d4eb"
+}

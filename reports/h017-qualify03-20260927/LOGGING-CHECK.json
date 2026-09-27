@@ -1,0 +1,30 @@
+{
+  "unit_old_sha256": "6cd3bafbf3bd874c0eb188282348e4a4b5990b7465d44a8d88be55a6ba52e04d",
+  "unit_new_sha256": "cccc5bfbfe44b2c1a96fec205dee5421e35fb7c9914db8516c64a80f08e815e7",
+  "checks": [
+    {
+      "action": "run",
+      "returncode": 1,
+      "stdout": {
+        "status": "REFUSED_OR_FAILED",
+        "error_type": "RuntimeError"
+      },
+      "stderr_bytes": 0,
+      "payload_suppressed": true
+    },
+    {
+      "action": "settle",
+      "returncode": 1,
+      "stdout": {
+        "status": "REFUSED_OR_FAILED",
+        "error_type": "RuntimeError"
+      },
+      "stderr_bytes": 0,
+      "payload_suppressed": true
+    }
+  ],
+  "scope": "Offline main exception-path stdout/stderr and source review only; no Linux unit stage or dispatch.",
+  "client_sha256": "87b024cef456a8b0e626ba2f8204d8ede1a1dbdc0d7db866c952f96f010cfe78",
+  "reader_sha256": "3adf8f433981c97a80dc23fcc0e9ed9e256c8d48755dc9579f1efcd9033541a5",
+  "source_closure_sha256": "3f62e77b618b2db285b9e8fcc10f49958a01997eb65afa17da28f9f3d9114ded"
+}

@@ -47,7 +47,7 @@ OWNER_FAILURE_CODES = frozenset({
     'created_container_changed', 'created_id_invalid', 'deployed_source_closure_required',
     'exact_owned_container_required', 'frontier_compute_present', 'frontier_compute_remains',
     'glm_must_be_settled_before_selection', 'glm_original_changed', 'guard_adapter_changed',
-    'host_reserve', 'interleave_file_changed', 'interleave_pins_required',
+    'host_reserve', 'host_swap_configuration_changed', 'interleave_file_changed', 'interleave_pins_required',
     'key_invalid', 'launch_source_changed', 'native_bind_changed',
     'native_cgroup_not_empty', 'native_configuration_changed', 'native_generation_changed',
     'native_identity_or_capacity_changed', 'native_load_timeout', 'native_memory_oom_or_swap',
@@ -106,6 +106,8 @@ def failure(exc, phase, operation=None, elapsed=None):
         result['operation'] = operation
     if type(elapsed) in (int, float) and math.isfinite(elapsed) and elapsed >= 0:
         result['cycle_elapsed_s'] = round(elapsed, 6)
+    if type(exc) is OwnerRefusal and hasattr(exc, 'resource_memory'):
+        result['resource_memory'] = exc.resource_memory
     return result
 
 
@@ -428,8 +430,13 @@ def validate_sample(m, sample, baseline, limit):
             and row['total_mib'] > 0 and 0 <= row['temp_c'] < limit
             and row['free_mib'] * 100 >= 7 * row['total_mib'], 'owned_gpu_reserve_or_temperature')
     require(mem['MemTotal'] == baseline['MemTotal'] and mem['MemAvailable'] >= .15 * mem['MemTotal'], 'host_reserve')
-    require(mem['SwapTotal'] == baseline['SwapTotal']
-            and mem['SwapTotal'] - mem['SwapFree'] <= baseline['SwapTotal'] - baseline['SwapFree'], 'added_host_swap')
+    require(mem['SwapTotal'] == baseline['SwapTotal'], 'host_swap_configuration_changed')
+    # Aggregate swap belongs to the whole host. Own swap remains forbidden below;
+    # unrelated host variation is retained as evidence, not attributed to MiMo.
+    sample['host_swap_diagnostic'] = {
+        'baseline_used_bytes': baseline['SwapTotal'] - baseline['SwapFree'],
+        'used_bytes': mem['SwapTotal'] - mem['SwapFree'],
+        'delta_bytes': (mem['SwapTotal'] - mem['SwapFree']) - (baseline['SwapTotal'] - baseline['SwapFree'])}
     cg = sample.get('cgroup')
     if cg is not None:
         require(int(cg['memory.max']) == m['memory']['limit_bytes']
@@ -458,7 +465,16 @@ def sample_guard(m, baseline, limit, native=None, *, progress=lambda _: None):
                            ('memory.current', 'memory.max', 'memory.swap.current', 'memory.swap.max')}
         sample['cgroup']['memory.events'] = dict(x.split() for x in (cg / 'memory.events').read_text().splitlines())
     progress('resource_validate')
-    validate_sample(m, sample, baseline, limit)
+    try:
+        validate_sample(m, sample, baseline, limit)
+    except OwnerRefusal as exc:
+        # Preserve the actual cheap failing sample, before the last-good receipt
+        # can obscure it. No extra sampling, process scan or per-token work.
+        keys = ('MemTotal', 'MemAvailable', 'SwapTotal', 'SwapFree')
+        exc.resource_memory = {'host': {k: sample['host'][k] for k in keys},
+                               'baseline': {k: baseline[k] for k in keys},
+                               'cgroup': sample.get('cgroup')}
+        raise
     return sample
 
 

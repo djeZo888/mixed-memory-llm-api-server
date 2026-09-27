@@ -12,5 +12,5 @@ ExecStopPost=/usr/bin/python3 -I -B /data/build/H017-20260927/worker1-last950k/c
 RuntimeMaxSec=8h
 TimeoutStopSec=65
 KillMode=control-group
-StandardOutput=null
-StandardError=null
+StandardOutput=journal
+StandardError=journal
