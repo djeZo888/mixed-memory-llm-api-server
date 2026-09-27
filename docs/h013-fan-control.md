@@ -44,6 +44,32 @@ is unnecessary. Do not start a host listener until access and the actual control
 interface are known. The user has been asked for BMC network availability or an
 existing Proxmox SSH alias; no passwords are requested in chat.
 
+### Verified read-only discovery
+
+At 04:20 UTC the user-provided BMC address `10.156.100.40` returned HTTP200
+for `/` and `/redfish/v1`. It identifies an AMI MegaRAC Redfish service,
+Redfish1.11.0, with Chassis, Managers and TelemetryService links. OEM RTP13.03
+is an advertised component version, not a verified firmware release. No login,
+linked-resource reads or setters were attempted. CHA_FAN3's writable interface
+and Operator permissions remain unknown. The certificate is expired and lacks
+the LAN IP in its names; authenticated access needs an appropriate trust setup.
+The user was asked to create a dedicated `sova` account, initially Operator if
+available, and store its credential privately on ai-harness outside Git and
+task containers. No credential has been received or printed.
+
+Guest NVML getters confirmed two integrated fans on each fast Blackwell and
+one on Ada, with RPM and automatic-policy readback and reported range30–100%.
+The Server Blackwell reports zero integrated fans. Guest hwmon/IPMI devices are
+absent. These getter observations do not prove that fan setters work.
+
+The reviewed [NVML candidate and limitations](../reports/h013-fan-source-20260927/README.md)
+passed22 focused mocked checks. Root review added late-child recovery and
+bounded idle logging. Live100% setter/default-restoration and real systemd
+validation remain pending after1M settlement. A separate fan-only lock avoids
+blocking thermal control on the inference lifecycle lease. Its tiny protected
+system ownership record is control metadata; model data and bulk telemetry
+remain under the existing registered storage policy.
+
 ## Evidence and comparison
 
 The existing 1M run remains unchanged. Worker1 inspects live read-only support;

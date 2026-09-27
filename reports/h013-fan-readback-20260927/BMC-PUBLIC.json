@@ -1,0 +1,218 @@
+{
+  "observed_at_utc": "2026-09-27T04:20:01.681314+00:00",
+  "source_base": "31522361aee0b2eb3fa0037c0820c9cc1708cecd",
+  "scope": "Unauthenticated public discovery from this Mac; only HTTPS GET / and /redfish/v1 plus TLS certificate handshakes. No links followed. No credentials supplied. No other hosts contacted.",
+  "bounds": {
+    "connect_seconds": 4,
+    "get_total_seconds": 12,
+    "get_subprocess_seconds": 15,
+    "body_bytes_per_endpoint": 131072
+  },
+  "observations": {
+    "landing": {
+      "url": "https://10.156.100.40/",
+      "method": "GET",
+      "curl_exit": 0,
+      "http_status": "200",
+      "headers": {
+        "content-type": [
+          "text/html"
+        ],
+        "server": [
+          "lighttpd"
+        ],
+        "www-authenticate": [],
+        "content-encoding": [
+          "gzip"
+        ]
+      },
+      "body_bytes_retained": 1145,
+      "error": "",
+      "redirects_followed": 0,
+      "tls_identity_trusted": false,
+      "public_title": "",
+      "public_links": [
+        {
+          "tag": "link",
+          "rel": "stylesheet",
+          "href": "/styles.min.css"
+        }
+      ],
+      "public_meta": [],
+      "content_encoding": "gzip",
+      "decoded_body_bytes": 3352,
+      "public_script_references": [
+        {
+          "src": "/source.min.js",
+          "data-main": "/app/main"
+        },
+        {
+          "src": "/libs/js/html5shiv.js",
+          "condition": "IE < 9 comment"
+        },
+        {
+          "src": "/libs/js/respond.min.js",
+          "condition": "IE < 9 comment"
+        }
+      ],
+      "public_visible_text": "Processing ...",
+      "interpretation": "Dynamic application shell; empty title; scripts were not fetched or executed.",
+      "www_authenticate": "not present"
+    },
+    "redfish-v1": {
+      "url": "https://10.156.100.40/redfish/v1",
+      "method": "GET",
+      "curl_exit": 0,
+      "http_status": "200",
+      "headers": {
+        "server": [
+          "AMI MegaRAC Redfish Service"
+        ],
+        "content-type": [
+          "application/json; charset=UTF-8"
+        ],
+        "odata-version": [
+          "4.0"
+        ],
+        "www-authenticate": [],
+        "allow": [
+          "GET"
+        ],
+        "link": [
+          "<http://redfish.dmtf.org/schemas/v1/ServiceRoot.v1_5_2.json>; rel=describedby",
+          "</redfish/v1/JsonSchemas/AMIServiceRoot.v1_0_0.json>",
+          "</redfish/v1/TaskService>; path=/Tasks",
+          "</redfish/v1/Chassis>; path=/Chassis",
+          "</redfish/v1/Managers>; path=/Managers",
+          "</redfish/v1/EventService>; path=/EventService",
+          "</redfish/v1/JsonSchemas>; path=/JsonSchemas",
+          "</redfish/v1/Systems>; path=/Systems",
+          "</redfish/v1/TelemetryService>; path=/TelemetryService",
+          "</redfish/v1/Registries>; path=/Registries",
+          "</redfish/v1/CertificateService>; path=/CertificateService",
+          "</redfish/v1/Oem/Ami/InventoryData/Status>; path=/Oem/Ami/InventoryDataStatus",
+          "</redfish/v1/Oem/Ami/Configurations>; path=/Oem/Ami/Configurations",
+          "</redfish/v1/SessionService>; path=/SessionService",
+          "</redfish/v1/CompositionService>; path=/CompositionService",
+          "</redfish/v1/UpdateService>; path=/UpdateService",
+          "</redfish/v1/AccountService>; path=/AccountService",
+          "</redfish/v1/SessionService/Sessions>; path=/Links/Sessions"
+        ]
+      },
+      "body_bytes_retained": 1707,
+      "error": "",
+      "redirects_followed": 0,
+      "tls_identity_trusted": false,
+      "public_json": {
+        "@odata.context": "/redfish/v1/$metadata#ServiceRoot.ServiceRoot",
+        "@odata.etag": "\"1790472595\"",
+        "@odata.id": "/redfish/v1",
+        "@odata.type": "#ServiceRoot.v1_7_0.ServiceRoot",
+        "AccountService": {
+          "@odata.id": "/redfish/v1/AccountService"
+        },
+        "CertificateService": {
+          "@odata.id": "/redfish/v1/CertificateService"
+        },
+        "Chassis": {
+          "@odata.id": "/redfish/v1/Chassis"
+        },
+        "CompositionService": {
+          "@odata.id": "/redfish/v1/CompositionService"
+        },
+        "Description": "The service root for all Redfish requests on this host",
+        "EventService": {
+          "@odata.id": "/redfish/v1/EventService"
+        },
+        "Id": "RootService",
+        "JsonSchemas": {
+          "@odata.id": "/redfish/v1/JsonSchemas"
+        },
+        "Links": {
+          "Sessions": {
+            "@odata.id": "/redfish/v1/SessionService/Sessions"
+          }
+        },
+        "Managers": {
+          "@odata.id": "/redfish/v1/Managers"
+        },
+        "Name": "Root Service",
+        "Oem": {
+          "Ami": {
+            "@odata.type": "#AMIServiceRoot.v1_0_0.AMIServiceRoot",
+            "Configurations": {
+              "@odata.id": "/redfish/v1/Oem/Ami/Configurations"
+            },
+            "InventoryDataStatus": {
+              "@odata.id": "/redfish/v1/Oem/Ami/InventoryData/Status"
+            },
+            "RtpVersion": "13.03"
+          }
+        },
+        "Product": "AMI Redfish Server",
+        "ProtocolFeaturesSupported": {
+          "DeepOperations": {
+            "DeepPATCH": true,
+            "DeepPOST": false,
+            "MaxLevels": 6
+          },
+          "ExcerptQuery": true,
+          "ExpandQuery": {
+            "ExpandAll": true,
+            "Levels": true,
+            "Links": true,
+            "MaxLevels": 5,
+            "NoLinks": true
+          },
+          "FilterQuery": true,
+          "OnlyMemberQuery": true,
+          "SelectQuery": true
+        },
+        "RedfishVersion": "1.11.0",
+        "Registries": {
+          "@odata.id": "/redfish/v1/Registries"
+        },
+        "SessionService": {
+          "@odata.id": "/redfish/v1/SessionService"
+        },
+        "Systems": {
+          "@odata.id": "/redfish/v1/Systems"
+        },
+        "Tasks": {
+          "@odata.id": "/redfish/v1/TaskService"
+        },
+        "TelemetryService": {
+          "@odata.id": "/redfish/v1/TelemetryService"
+        },
+        "UUID": "23750b0c-5393-1000-01c7-4b558284cf60",
+        "UpdateService": {
+          "@odata.id": "/redfish/v1/UpdateService"
+        },
+        "Vendor": "AMI"
+      },
+      "www_authenticate": "not present"
+    },
+    "tls": {
+      "host": "10.156.100.40",
+      "port": 443,
+      "verification": "failed",
+      "identity_trusted": false,
+      "verification_error": "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1082)",
+      "protocol": "TLSv1.3",
+      "cipher": "TLS_AES_256_GCM_SHA384",
+      "certificate_details": "subject=C=US, ST=Georgia, L=Duluth, O=AMI, OU=MEGARAC, CN=ami.com, emailAddress=megarac@ami.com\nissuer=C=US, ST=Georgia, L=Norcross, O=American Megatrends International LLC (AMI), OU=Service Processors, CN=megarac.com, emailAddress=support@ami.com\nnotBefore=Jan  1 05:00:07 1980 GMT\nnotAfter=Dec 29 05:00:07 1989 GMT\nsha256 Fingerprint=0F:1E:E5:47:ED:BD:BC:A3:46:EA:2D:88:4D:32:71:A8:F2:83:51:D5:7A:16:BA:A9:11:C3:88:19:80:63:F7:EC\nX509v3 Subject Alternative Name: \n    DNS:megarac.com, DNS:169.254.0.17, IP Address:169.254.0.17",
+      "certificate_inspection_error": "",
+      "sha256_der": "0f1ee547edbdbca346ea2d884d3271a8f28351d57a16baa911c388198063f7ec"
+    }
+  },
+  "unknowns": [
+    "Dedicated sova account existence or ability to create it",
+    "Operator-role availability, privilege mapping and sufficiency",
+    "Redfish fan telemetry/control resources, write support and OEM fan behavior",
+    "BMC board/model and firmware release",
+    "Trusted identity of endpoint"
+  ],
+  "tls_assessment": "System verification failed: unable to get local issuer certificate. Leaf is also expired at observation time and SAN does not include 10.156.100.40. Subject differs from issuer; do not characterize leaf as self-signed. Unverified metadata fetch does not establish trusted identity.",
+  "independent_offline_review": "Landing metadata reviewed independently; no additional network activity.",
+  "completed_at_utc": "2026-09-27T04:21:23.383633+00:00"
+}
