@@ -29,6 +29,11 @@ import {
 import { request as httpsRequest } from "node:https";
 import { MAX_OUTPUT, MODEL, type GatewayUsage } from "./contracts.js";
 
+/** Per-dispatched-request elapsed budget; queue/count retain their own limits. */
+export function activeRequestTimeoutMs(model: string, override?: number): number {
+  return positive(override, (model === "mimo-v2.6-pro-rl" ? 8 : 2) * 60 * 60 * 1000, "activeTimeoutMs");
+}
+
 export interface GatewayUpstream {
   url: string;
   alias: string;
@@ -515,11 +520,8 @@ export function createGateway(options: GatewayOptions): Gateway {
         frontierAvailability,
       )
     : undefined;
-  const activeTimeout = positive(
-    options.activeTimeoutMs,
-    2 * 60 * 60 * 1000,
-    "activeTimeoutMs",
-  );
+  // Validate fixture override at construction; select the real model per request.
+  activeRequestTimeoutMs("qwen", options.activeTimeoutMs);
   const tokens = new Map<string, string>();
   const frontierCancellations = new Map<string, Set<AbortController>>();
   const active = new Set<ClientRequest>();
@@ -1044,7 +1046,7 @@ export function createGateway(options: GatewayOptions): Gateway {
         );
         upstream.destroy();
         upstreamResponse?.destroy();
-      }, activeTimeout);
+      }, activeRequestTimeoutMs(frontier && mimo ? MIMO_MODEL : "qwen-or-glm", options.activeTimeoutMs));
       timeout.unref();
       upstream.end(payload);
     });

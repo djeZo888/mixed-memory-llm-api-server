@@ -1,0 +1,18 @@
+{
+  "baseCompiledSource": "928b3b470058241f089a839367d4b30d5887a6e3",
+  "receiptPathSource": "df0702412b1a8f594db7d3211ca63f6aafe8a026",
+  "baseEngine": "sha256:6641df04cf4e8375029639a67c22da7c3ff4719d2b8e58748572f049de8fb022",
+  "activeFrontierJsUnchanged": "3a4b7f6a2563fd1c123cc14532fdd29c1ba3613544c87f7a3056b17bfefa0c35",
+  "profileBefore": "5f020d727b87a0911a9a8e39740c87de5d08c180459cc72d9a2fba28bcfe5c9b",
+  "profileAfter": "07134e9041a1a91f8f8a066fec48c227eefc5beb0fd7257e29298ecd7e4a3d05",
+  "compiledServer": {
+    "system-registry.d.ts": "7f1f5638547e2c7a0808fe1e2ad4e7257822a7fb818c0167ffccc0dbd806273e",
+    "gateway.js": "6757fc31c791e132fd408f416a12b032994f5a96914fb6086bbb4833baa528de",
+    "system-registry.js": "8938652968cd69a621395e98eda5c21e9128114bad06023be70c769af683cb1b",
+    "gateway.d.ts": "bdbd1a74e09f9e1884a607c0c6c2d3be0ca92aebaacec8c243034fbeb27435c2"
+  },
+  "engine": "PATCH_ONLY_NOT_BUILT",
+  "finalConfig": "HELD actual capacity/native17/production pins/root review",
+  "deployment": "NONE",
+  "originalFallback": "7143c17 / image9ef885 unchanged paused; no activation or migration"
+}

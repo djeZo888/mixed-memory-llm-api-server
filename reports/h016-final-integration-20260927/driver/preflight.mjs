@@ -14,7 +14,7 @@ export const RUNROOT=TASKROOT+'/live-acceptance-01';
 export const KEY='/home/user/.config/ai-harness/inference-key';
 const BASE='6641df04cf4e8375029639a67c22da7c3ff4719d2b8e58748572f049de8fb022';
 const TAG='localhost/ai-harness-engine:0.0.2-ae65651df5f9';
-export const PROFILE_SHA256='5f020d727b87a0911a9a8e39740c87de5d08c180459cc72d9a2fba28bcfe5c9b';
+export const PROFILE_SHA256='07134e9041a1a91f8f8a066fec48c227eefc5beb0fd7257e29298ecd7e4a3d05';
 export const ADMIT_UTC='2026-09-27T17:00:00Z';
 export const SETTLE_UTC='2026-09-27T17:25:00Z';
 export function assertAdmission(now=Date.now()) { assert(now<=Date.parse(ADMIT_UTC),'late actual app admission'); }
@@ -82,6 +82,9 @@ export async function preflight(args,driverDir){
  assert(g.releaseSha256?.['server/dist/active-frontier.js']==='3a4b7f6a2563fd1c123cc14532fdd29c1ba3613544c87f7a3056b17bfefa0c35');
  for(const name of ['deploy/run-engine.sh','deploy/engine/configure-profile.mjs','config/active-frontier.json','config/mimo-candidate.json'])assert.match(g.releaseSha256[name],/^[a-f0-9]{64}$/);
  assert.equal(g.releaseSha256['deploy/engine/configure-profile.mjs'],PROFILE_SHA256);
+ assert.equal(g.releaseSha256['server/dist/gateway.js'],'6757fc31c791e132fd408f416a12b032994f5a96914fb6086bbb4833baa528de','reviewed status/timeout artifact missing');
+ assert.equal(g.releaseSha256['server/dist/system-registry.js'],'8938652968cd69a621395e98eda5c21e9128114bad06023be70c769af683cb1b','reviewed status/timeout artifact missing');
+ assert.equal(g.releaseSha256['config/system-registry.json'],'a2d69b9ba6ddba922b9ec128ce2a7cf89e16602154d47fafc5376dd3f1bf5ddc','reviewed status/timeout artifact missing');
  ({validateMimoIntegration:validateIntegration}=await import(pathToFileURL(join(RELEASE,'server/dist/mimo-frontier.js'))));
  reviewed=g;IMAGE=g.image;const promoted=checkPromoted();assertAdmission();
  privateFile(KEY);const observerCredential=privateFile('/home/user/.config/ai-harness/node-control-key');

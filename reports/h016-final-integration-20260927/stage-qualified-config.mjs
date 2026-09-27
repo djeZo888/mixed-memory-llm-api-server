@@ -9,6 +9,7 @@ import {pathToFileURL} from 'node:url';
 import {validateCapacity,PROFILE_SHA256} from './driver/preflight.mjs';
 import {createHash} from 'node:crypto';
 if(process.argv.includes('--help')){console.log('Usage: node stage-qualified-config.mjs RELEASE_ROOT W1_MANIFEST EXPECTED_SHA256 NEW_STAGE REVIEWED_PROFILE_MODULE\nRoot-reviewed qualified manifest required. Writes an isolated config/Containerfile proposal only. Current clean W1 production owner is required before activation.');process.exit(0);}
+assert.fail('HELD: MiMo 8h31 engine patch requires compiled artifact closure and root review before final single overlay');
 const [releaseArg,manifestArg,expected,stageArg,profileArg]=process.argv.slice(2);assert(releaseArg&&manifestArg&&stageArg&&profileArg&&/^[a-f0-9]{64}$/.test(expected??''),'five arguments required');
 const release=realpathSync(releaseArg),stage=resolve(stageArg),manifest=readFileSync(manifestArg);
 assert.equal(createHash('sha256').update(manifest).digest('hex'),expected,'manifest hash differs from root review');

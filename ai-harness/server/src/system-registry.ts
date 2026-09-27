@@ -144,14 +144,28 @@ export function validateSystemRegistry(raw: unknown): SystemRegistry {
     if (s && (s.node_id !== nodeId || s.observation_key !== serviceId)) fail();
     if (services.some(s => s.id !== serviceId && s.node_id === nodeId && s.observation_key === serviceId)) fail();
   }
+  // Both retained identities describe the same physical frontier. Neither may
+  // borrow the other model's readiness observation or claim another endpoint.
+  for (const model of ["glm-5.3-flash", "mimo-v2.6-pro-rl"]) {
+    for (const s of services) {
+      if ((s.id === model || s.observation_key === model) &&
+          (s.id !== model || s.observation_key !== model || s.node_id !== "ai-vm" || s.endpoint_ref !== "frontier-private")) fail();
+    }
+  }
   return { schema_version: 1, credentials, transports, nodes, services, components };
 }
-/** Inventory shows the selected shared frontier, never two concurrent slots. */
+/** Inventory retains both identities; selection never creates another queue or readiness. */
 export function selectRegistryFrontier(registry: SystemRegistry, model: string): SystemRegistry {
-  if (model === "glm-5.3-flash") return registry;
-  if (model !== "mimo-v2.6-pro-rl") throw Error("Invalid selected frontier");
-  return validateSystemRegistry({ ...registry, services: registry.services.map(s => s.id === "glm-5.3-flash"
-    ? { ...s, id: model, observation_key: model, display_name: "Frontier MiMo-V2.6-Pro-RL" } : s) });
+  if (!["glm-5.3-flash", "mimo-v2.6-pro-rl"].includes(model)) throw Error("Invalid selected frontier");
+  const valid = validateSystemRegistry(registry);
+  if (!valid.services.some(s => s.id === model)) throw Error("Selected frontier missing from registry");
+  return validateSystemRegistry({ ...valid, services: valid.services.map(s => {
+    if (s.id === "glm-5.3-flash" && model !== s.id)
+      return { ...s, display_name: "GLM-5.3-Flash (dormant; manual rollback)" };
+    if (s.id === "mimo-v2.6-pro-rl")
+      return { ...s, display_name: model === s.id ? "MiMo V2.6 Pro-RL" : "MiMo V2.6 Pro-RL (dormant)" };
+    return s;
+  }) });
 }
 export function loadSystemRegistry(): SystemRegistry {
   // Fixed path relative to source/dist, shipped and reviewed with the release.

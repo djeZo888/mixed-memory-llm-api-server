@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer, type ServerResponse } from 'node:http';
 import { setTimeout as delay } from 'node:timers/promises';
 import { createHash } from 'node:crypto';
-import { createGateway, type LaneState } from '../src/gateway.js';
+import { createGateway, activeRequestTimeoutMs, type LaneState } from '../src/gateway.js';
 import { FRONTIER_MODEL, type FrontierRecord } from '../src/frontier.js';
 import { MIMO_MODEL, MIMO_RUNTIME, MIMO_ARTIFACT_REVISION, MIMO_ARTIFACT_MANIFEST_SHA256, prepareMimo, type MimoQualification } from '../src/mimo.js';
 import { observeMimoNative, validateMimoIntegration, type MimoFrontierOptions } from '../src/mimo-frontier.js';
@@ -101,13 +101,13 @@ test('strict nested schemas preserved; false storage discarded before canonical 
  assert.throws(()=>prepareMimo(body({store:true})));assert.throws(()=>prepareMimo(body({tools:[{type:'function',function:{...tools[0]!.function,strict:'true'}}]})));
 });
 
-test('selected registry reports one actual frontier and retains rollback config',async()=>{
+test('selected registry reports both canonical inventory identities on the shared frontier',async()=>{
  const {selectRegistryFrontier,validateSystemRegistry}=await import('../src/system-registry.js');
  const {readFileSync}=await import('node:fs');
  const registry=validateSystemRegistry(JSON.parse(readFileSync(new URL('../../config/system-registry.json',import.meta.url),'utf8')));
  const selected=selectRegistryFrontier(registry,MIMO_MODEL);
- assert.equal(selected.services.filter(s=>s.endpoint_ref==='frontier-private').length,1);
- assert.ok(selected.services.some(s=>s.id===MIMO_MODEL&&s.observation_key===MIMO_MODEL));assert.ok(!selected.services.some(s=>s.id===FRONTIER_MODEL));
+ assert.equal(selected.services.filter(s=>s.endpoint_ref==='frontier-private').length,2);
+ assert.ok(selected.services.some(s=>s.id===MIMO_MODEL&&s.observation_key===MIMO_MODEL));assert.ok(selected.services.some(s=>s.id===FRONTIER_MODEL&&s.observation_key===FRONTIER_MODEL&&s.display_name.includes('dormant')));
  assert.ok(registry.services.some(s=>s.id===FRONTIER_MODEL));
 });
 test('granular qualification cannot mistake arithmetic or requested ceiling for native occupied/output proof',()=>{
@@ -121,4 +121,14 @@ test('durable unresolved request blocks a switch even if lane row was missing',a
  frontier:{provider:'mimo',contextWindow:131072,qualification:proof(),capacity:{published:1048576,configured:131072,allocated:131072,occupiedTested:4096},upstreamKey:'fixture',observe:async()=>proof().identity,serialCompletionQualified:true,onRequestState:()=>{}}});
  try {assert.equal(gateway.frontierSnapshot().state,'quarantined');assert.equal(gateway.reconcileAfterOwnerSettlement([FRONTIER_MODEL]),false);}
  finally {await gateway.close();}
+});
+
+test('MiMo elapsed budget is eight hours; Qwen and GLM retain two, fixture timeouts do not replay', async t => {
+ assert.equal(activeRequestTimeoutMs(MIMO_MODEL),28_800_000);
+ for(const model of [FRONTIER_MODEL,'qwen3.8-27b','qwen3.8-27b-gpu0']) assert.equal(activeRequestTimeoutMs(model),7_200_000);
+ assert.equal(activeRequestTimeoutMs(MIMO_MODEL,40),40);
+ const f=await fixture();t.after(f.close);
+ const response=await f.send();assert.equal(response.status,504);await response.text();
+ assert.equal(f.requests.length,1);assert.equal(f.gateway.frontierSnapshot().state,'quarantined');
+ assert.equal((await f.send()).status,503);assert.equal(f.requests.length,1);
 });

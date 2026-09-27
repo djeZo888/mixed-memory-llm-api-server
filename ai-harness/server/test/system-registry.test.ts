@@ -13,7 +13,7 @@ export function thirdNodeRegistry() {
 test("default registry retains seven action identities and adds passive frontier inventory", () => {
   const r = loadSystemRegistry();
   assert.deepEqual(r.nodes.map(n => [n.id, n.observation.transport]), [["ai-vm", "ai-vm-private"], ["ai-harness", "local-helper"]]);
-  for (const [node, ids] of Object.entries(SERVICE_IDS)) assert.deepEqual(r.services.filter(s => s.node_id === node && s.id !== "glm-5.3-flash").map(s => s.id), ids);
+  for (const [node, ids] of Object.entries(SERVICE_IDS)) assert.deepEqual(r.services.filter(s => s.node_id === node && !["glm-5.3-flash", "mimo-v2.6-pro-rl"].includes(s.id)).map(s => s.id), ids);
   assert.equal(validateSystemRegistry(thirdNodeRegistry()).nodes.length, 3);
   assert.ok(r.components.every(c => c.type === "support" || c.independently_restartable === false));
 });
