@@ -1,8 +1,8 @@
 # Sova
 
 Sova is the whole-system name for this open-source AI workspace project: a
-chat/task harness, MiniMax agent runtime, two Qwen text instances, an optional
-GLM-5.3-Flash reasoning worker, dedicated
+chat/task harness, MiniMax agent runtime, two Qwen text instances, a selectable
+frontier reasoning worker, dedicated
 image generation and guarded editing, search/browser/PDF/coding tools, and
 deterministic lifecycle, status and administration software. Source paths, VM
 names and runtime identifiers retain their existing names. The intended
@@ -30,7 +30,7 @@ flowchart TB
         Web["Web chat and task API"]
         Agent["MiniMax main and child agents"]
         Tools["Search, browser, PDF and coding tools"]
-        Gateway["Inference gateway: two Qwen slots + one Flash slot"]
+        Gateway["Inference gateway: two Qwen slots + one frontier slot"]
         ImageJobs["Image tools and job broker"]
         Data[("Chat metadata, workspaces and artifacts")]
         Status["Status and typed admin"]
@@ -41,7 +41,7 @@ flowchart TB
         Control["Deterministic text lifecycle control"]
         Q0["Qwen text instance 0 / fast Blackwell"]
         Q1["Qwen text instance 1 / Server Blackwell"]
-        Flash["GLM-5.3-Flash / CPU experts + fast Blackwell"]
+        Frontier["Selected frontier: MiMo or GLM / CPU experts + fast Blackwell"]
         Image["Separate image API and Qwen-Image service / Ada"]
     end
     subgraph Future["FUTURE / OPTIONAL — not deployed"]
@@ -58,13 +58,13 @@ flowchart TB
     ImageJobs --> Data
     Gateway --> Q0
     Gateway --> Q1
-    Gateway --> Flash
+    Gateway --> Frontier
     ImageJobs --> Image
     Status --> Node
     Status --> Helper
     Node --> Control
     Node --> Image
-    Node --> Flash
+    Node --> Frontier
     Control --> Q0
     Control --> Q1
     User -.-> LB
@@ -86,43 +86,50 @@ deployment work. Registry edits alone do not relocate workloads or select models
 
 The ai-vm role remains API-only, with separate direct inference endpoints and
 **no common ai-vm inference router**. The harness gateway provides two Qwen slots
-and one independent Flash slot; image jobs use their own service. Qwen coordinates
+and one independent frontier slot; image jobs use their own service. Qwen coordinates
 tasks and normally handles coding and agentic work. MiniMax can delegate difficult
 research, document analysis and reasoning to its native `frontier` child running
-GLM-5.3-Flash. This fixed routing policy does not implement arbitrary-model
-selection. See [H009 delegation qualification](docs/h009-status-20260926.md) and
+the selected qualified frontier model. This fixed routing policy does not implement
+arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-20260926.md) and
 [H010 64K benchmark and capacity estimate](docs/h010-status-20260927.md).
 
 ## Current models and dated acceptance
 
-**September 27 maintenance state:** all four backends were recovered ready and
-idle, but Sova remains paused after both Qwen GPUs reached the 85°C test cutoff
-in the fan-adjusted concurrent-load trial. Sustained four-model load is not yet
-qualified. The 1M Flash runner is prepared; no 1M test is running or completed.
-Cooling work precedes another load trial. [H011 results and next steps](docs/h011-status-20260927.md).
+**September 27, H016 maintenance:** MiMo V2.6 Pro-RL is being integrated as the
+primary frontier, replacing GLM-5.3-Flash in that role. Sova is paused during
+activation. The two Qwen instances and image service are preserved. Current
+availability comes from the status API; the measurements below are dated evidence.
 
-The H009 deployment adds **GLM-5.3-Flash FP8** with CPU experts and a dedicated
-fast Blackwell, alongside both **Qwen3.8-27B FP8** instances and **Qwen-Image-2.1**
-on Ada. All three text services configure **480,000 tokens**; Flash has been
-tested with an occupied **65,536-token** technical fixture: **265.9 effective
-input tokens/s**, **13.72 output tokens/s** and **30.79 GiB peak sampled VRAM**,
-finishing correctly in **257.3 seconds**. These measurements use the existing
-480K pool; full 480K occupancy remains untested for Flash. The declared 1,048,576
-limit is a conditional memory candidate, not a qualified configuration.
-[H010 report and limits](docs/h010-status-20260927.md). Qwen1 uses the additional
-Server Blackwell. The [H008 migration report](docs/h008-status-20260926.md) records
-its warmed 64K result: 7,279 effective input tokens/s and 36.28 output tokens/s.
-These are separate tests, not simultaneous aggregate throughput.
+| Model / instance | Configured context | Private API base | Role |
+|---|---:|---|---|
+| Qwen0 | 480,000 | `http://10.156.100.60:30002/v1` | Coordination, coding and tools |
+| Qwen1 | 480,000 | `http://10.156.100.60:30004/v1` | Second concurrent Qwen lane |
+| MiMo V2.6 Pro-RL | 1,000,000 | `http://10.156.100.60:30012/v1` | Frontier candidate; production/application acceptance pending |
+| GLM-5.3-Flash | 1,048,576 | `http://10.156.100.60:30010/v1` | Retained manual rollback; shares frontier hardware |
 
-| Current text instance | Private API base | Role |
-|---|---|---|
-| Qwen0 | `http://10.156.100.60:30002/v1` | General coordination, coding and tools |
-| Qwen1 | `http://10.156.100.60:30004/v1` | Second concurrent Qwen lane |
-| GLM-5.3-Flash | `http://10.156.100.60:30010/v1` | Selective native frontier child |
+MiMo retains native MXFP4 experts and BF16/F32 nonexpert tensors. At a
+**1,000,000-token usable allocation**, the selected eight-decode-thread profile
+passed 4K/16K inputs at **71.49/69.56 input tokens/s** and **9.58/9.41 output
+tokens/s**. Sampled peak GPU usage was **87.67 GiB**, with **7.31 GiB free**;
+sampled cgroup memory reached **573.37 GiB**, including reclaimable file cache.
+Native tool-call continuation passed. Optimized 64K and near-million occupied
+context are pending; allocation does not establish long-context correctness.
+[MiMo results, configuration and limits](docs/h016-mimo-results-20260927.md).
 
-Current readiness must be checked through status. The linked dated reports record
-recovery and evidence limits; configured capacity alone is not proof of
-full-context speed or correctness.
+The earlier GLM test with exactly **1,000,000 input tokens** passed at approximately
+**145.85 input tokens/s** and **12.26 output tokens/s**, taking **6,876.78 seconds**.
+Its production promotion and ECC-off state are recorded in the
+[H013 evidence](reports/h013-ecc-off-comparison-20260927). Sustained four-model
+load is still unqualified: the server Blackwell reached the 85°C guard during
+the concurrency repeat. Further stress testing awaits improved physical cooling.
+The separate warmed Qwen1 64K test reached **7,279 input tokens/s** and
+**36.28 output tokens/s** on the Server Blackwell's limited PCIe link.
+[Qwen migration evidence](docs/h008-status-20260926.md). These are separate tests,
+not simultaneous aggregate throughput or comparative model-quality scores.
+
+Qwen-Image-2.1 remains a separate resident Ada service, with Full HD generation
+and the documented guarded editing policy. GLM and MiMo are alternate owners
+of the same frontier hardware; this release does not claim simultaneous residency.
 
 ### Historical two-GPU deployment — September 21
 
