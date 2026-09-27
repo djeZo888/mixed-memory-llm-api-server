@@ -18,10 +18,11 @@ SERVICES = {
     'qwen-gpu1': ('GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528',),
     'image': ('GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23',),
     'glm-5.3-flash': ('GPU-69acfa26-8b60-61b5-702d-aee252c163cc',),
+    'mimo-v2.6-pro-rl': ('GPU-69acfa26-8b60-61b5-702d-aee252c163cc',),
     'control': (),
 }
 LEGACY_TARGETS = {'qwen-gpu0': 'glm', 'qwen-gpu1': 'qwen'}
-CAPABILITIES = {'glm-5.3-flash': {'chat.completions'}, 'qwen-gpu0': {'chat.completions'}, 'qwen-gpu1': {'chat.completions'},
+CAPABILITIES = {'glm-5.3-flash': {'chat.completions'}, 'mimo-v2.6-pro-rl': {'chat.completions'}, 'qwen-gpu0': {'chat.completions'}, 'qwen-gpu1': {'chat.completions'},
                 'image': {'images.generations', 'images.edits'}, 'control': {'model.control'}}
 RESOURCE_FIELDS = {
     'cpu': ('percent', 'logical_count'),
@@ -173,6 +174,12 @@ class NodeStatus:
                 latched = None
             ready = boolean(raw.get('ready')) if current else None
             admitting = boolean(raw.get('admitting')) if current else None
+            if service_id == 'mimo-v2.6-pro-rl' and ready is True:
+                guard_age = number(raw.get('guard_age_ms'))
+                outer_age = number(sample.get('age_ms'))
+                if (raw.get('guard_boot_id') != boot_id or guard_age is None or outer_age is None
+                        or guard_age + outer_age > 15000):
+                    ready = admitting = None
             available = 'unknown'
             why = reason(raw.get('reason')) if current else 'observation_unavailable'
             if latched:

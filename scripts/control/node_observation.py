@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import http.client
 import json
+import math
 from pathlib import Path
 import re
 import socket
@@ -32,7 +33,15 @@ IMAGE_RUNTIME = '0cd8be351d0825488f4b81c8931167bbab618eca'
 IMAGE_REVISION = '790c92633540aa0cb11d9abf19eb46d861714758'
 PROFILE_ROOT = Path('/usr/local/lib/llm-server/node-api/configs/deployments')
 UNITS = {'control': 'llm-control.service', 'image': 'llm-image-api.service',
-         'node': 'llm-node.service'}
+         'node': 'llm-node.service', 'mimo': 'llm-frontier-mimo.service'}
+MIMO = 'mimo-v2.6-pro-rl'
+MIMO_BASE = '/data/services/mimo-h016-20260927'
+MIMO_OWNER = 'H016-MIMO-PERSISTENT-20260927'
+MIMO_IMAGE = 'sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e'
+MIMO_REVISION = 'ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d'
+MIMO_TEMPLATE = '16b2dac352c6cf1aef8b0a976618c76deb28c5bf3aba4c8b788fb846aa3769a4'
+MIMO_BUILD = 'b1-7ac59a6'
+MIMO_MODEL_PATH = '/models/MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00001-of-00013.gguf'
 # Exact historical 480K and pending H013 1M source identities, not qualification.
 # Publish capacity only after authenticated native allocation agrees below.
 FLASH_CONTEXT_SOURCES = {
@@ -97,6 +106,45 @@ def generation(value):
     return int.from_bytes(hashlib.sha256(raw).digest()[:7], 'big') >> 3
 
 
+def canonical_sha256(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'),
+                                    allow_nan=False).encode()).hexdigest()
+
+
+def mimo_native_readiness(props_response, slots_response, manifest):
+    """Native allocation agrees with a protected qualification of this invocation.
+
+    Plain /slots is the debug-OFF route. Slot activity never proves GPU idle or
+    releases a quarantined request lane; the control DTO leaves admission null.
+    """
+    code, props = props_response
+    slot_code, slots = slots_response
+    if (code != 200 or type(props) is not dict or props.get('model_alias') != MIMO
+            or props.get('is_sleeping') is not False
+            or props.get('build_info') != manifest.get('build_info')
+            or props.get('model_path') != manifest.get('model_path')
+            or type(props.get('chat_template')) is not str
+            or hashlib.sha256(props['chat_template'].encode()).hexdigest() != manifest.get('template_sha256')
+            or type(props.get('total_slots')) is not int or props['total_slots'] != 1
+            or type(props.get('default_generation_settings')) is not dict
+            or type(props['default_generation_settings'].get('n_ctx')) is not int
+            or props['default_generation_settings']['n_ctx'] != manifest.get('context')
+            or slot_code != 200 or type(slots) is not list or len(slots) != 1
+            or type(slots[0]) is not dict or type(slots[0].get('id')) is not int
+            or slots[0]['id'] != manifest.get('slot_id')
+            or type(slots[0].get('n_ctx')) is not int or slots[0]['n_ctx'] != manifest.get('context')
+            or type(slots[0].get('is_processing')) is not bool
+            or slots[0].get('speculative') is not False or 'prompt' in slots[0] or 'generated' in slots[0]
+            or any(props.get('modalities', {}).get(k) is not False for k in ('vision', 'video', 'audio'))
+            or (None if 'chat_template_tool_use' not in props else
+                hashlib.sha256(props['chat_template_tool_use'].encode()).hexdigest()
+                if type(props['chat_template_tool_use']) is str else 'invalid') != manifest.get('tool_template_sha256')):
+        raise ValueError('mimo_native_identity_or_capacity_unknown')
+    return {'ready': True, 'admitting': None, 'reason': None, 'activity': 'unknown',
+            'configured_context_tokens': manifest['context'],
+            'deployment_id': 'mimo-v2.6-pro-rl-' + str(manifest['context']) + '-mxfp4'}
+
+
 def strict_json(raw):
     def pairs(items):
         value = {}
@@ -112,6 +160,7 @@ def strict_json(raw):
 def native_get(port, path, key, seconds):
     if (port, path) not in ((30002, '/v1/readiness'), (30004, '/v1/readiness'),
                             (30010, '/v1/readiness'), (30010, '/get_server_info'),
+                            (30012, '/props'), (30012, '/slots'),
                             (30006, '/v1/image-capabilities'), (30000, '/control/v1/readiness')):
         raise ValueError('unregistered_passive_route')
     conn = http.client.HTTPConnection('127.0.0.1', port, timeout=max(.001, seconds))
@@ -316,6 +365,74 @@ class CanonicalIdentityReader:
         if raw.strip():
             raise ValueError('unrecorded_owner_container')
 
+    def _mimo(self, binding, boot_id, remaining, result):
+        manifest = binding.read_json('services', MIMO_BASE + '/manifest.json')
+        state = binding.read_json('services', MIMO_BASE + '/state.json')
+        guard = binding.read_json('services', MIMO_BASE + '/guard.json')
+        selection = result['frontier_selection']
+        digest = canonical_sha256(manifest)
+        native = state.get('native', {})
+        if (manifest.get('schema_version') != 2 or manifest.get('owner') != MIMO_OWNER
+                or manifest.get('service_id') != MIMO or manifest.get('qualified') is not True
+                or manifest.get('required_gpu_uuids') != list(SERVICES[MIMO])
+                or manifest.get('image_id') != MIMO_IMAGE or manifest.get('model_revision') != MIMO_REVISION
+                or type(manifest.get('context')) is not int or not 65536 < manifest['context'] <= 1048576
+                or manifest.get('parallel') != 1 or manifest.get('slot_id') != 0
+                or manifest.get('template_sha256') != MIMO_TEMPLATE
+                or manifest.get('build_info') != MIMO_BUILD or manifest.get('model_path') != MIMO_MODEL_PATH
+                or state.get('schema_version') != 2 or state.get('status') != 'RUNNING'
+                or state.get('manifest_sha256') != digest or state.get('boot_id') != boot_id
+                or selection.get('manifest_sha256') != digest or state.get('selection') != selection
+                or type(native) is not dict or native.get('image_id') != MIMO_IMAGE
+                or native.get('name') != manifest.get('container_name')
+                or type(native.get('pid')) is not int or native['pid'] <= 0
+                or type(native.get('pid_start_ticks')) is not str
+                or not re.fullmatch('[0-9]+', native['pid_start_ticks'])):
+            raise ValueError('mimo_qualification_unknown')
+        owner = self._container({'id': native.get('container_id'), 'image_id': MIMO_IMAGE,
+            'name': manifest['container_name']}, remaining(), {'io.h016.owner': MIMO_OWNER,
+            'io.h016.manifest': digest, 'io.h016.launch': state['launch_id']})
+        if (not owner['running'] or owner['pid'] != native['pid'] or owner['started_at'] != native.get('started_at')):
+            raise ValueError('mimo_native_invocation_changed')
+        proc = self.run(['/usr/bin/cat', '/proc/' + str(native['pid']) + '/stat'], remaining())
+        if proc.rsplit(')', 1)[-1].split()[19] != native['pid_start_ticks']:
+            raise ValueError('mimo_native_pid_reused')
+        supervisor = state.get('supervisor', {})
+        unit = self._unit('mimo', remaining())
+        if (supervisor.get('unit') != UNITS['mimo'] or unit['ActiveState'] != 'active'
+                or unit['MainPID'] != str(supervisor.get('pid'))
+                or unit['InvocationID'] != supervisor.get('invocation_id')
+                or guard.get('supervisor') != supervisor):
+            raise ValueError('mimo_supervision_unknown')
+        child = state.get('proxy', {})
+        proxy = guard.get('proxy_disposition') or {}
+        observed = guard.get('observed_monotonic_s')
+        if (guard.get('schema_version') != 2 or guard.get('status') != 'ok'
+                or guard.get('boot_id') != boot_id or guard.get('manifest_sha256') != digest
+                or guard.get('selection') != selection or guard.get('native') != native
+                or guard.get('hardware_latched') is not False or guard.get('proxy') != child
+                or type(observed) not in (int, float) or not math.isfinite(observed)
+                or not 0 <= self.clock() - observed <= 15
+                or proxy.get('schema_version') != 2 or proxy.get('boot_id') != boot_id
+                or proxy.get('native') != native or proxy.get('launch_id') != state.get('launch_id')
+                or child.get('parent_pid') != supervisor.get('pid')
+                or any(proxy.get(k) != child.get(k) for k in ('pid', 'pid_start_ticks', 'parent_pid'))
+                or type(child.get('pid')) is not int or child['pid'] <= 0
+                or type(proxy.get('active_requests')) is not int or proxy['active_requests'] not in (0, 1)
+                or type(proxy.get('quarantined')) is not bool):
+            raise ValueError('mimo_guard_or_proxy_unknown')
+        proc = self.run(['/usr/bin/cat', '/proc/' + str(child['pid']) + '/stat'], remaining()).rsplit(')', 1)[-1].split()
+        if proc[19] != child['pid_start_ticks'] or proc[1] != str(supervisor['pid']):
+            raise ValueError('mimo_proxy_child_changed')
+        result.update(selected=MIMO, model_alias=MIMO, max_output_tokens=65536,
+            configured_context_tokens=None, deployment_id=None, installed_capabilities=['chat.completions'],
+            owner_identity=owner, running=True, ownership_valid=True, mimo_manifest=manifest,
+            guard_age_ms=(self.clock() - observed) * 1000, guard_boot_id=boot_id,
+            software_quarantined=proxy['quarantined'])
+        if proxy['quarantined']:
+            result.update(ready=False, admitting=False, reason='software_quarantine')
+        return [digest, state, owner, proxy['quarantined']]
+
     def _service(self, service_id, seconds, result):
         if service_id not in SERVICES and service_id != 'node':
             raise ValueError('unregistered_service')
@@ -339,6 +456,18 @@ class CanonicalIdentityReader:
             return result
         binding = self.binding(remaining())
         result.update(self.latch(binding, SERVICES[service_id]))
+        if service_id in (MIMO, 'glm-5.3-flash'):
+            selection = binding.read_json('services', MIMO_BASE + '/selection.json')
+            if (type(selection.get('schema_version')) is not int or selection['schema_version'] != 1
+                    or selection.get('selected_frontier') not in (MIMO, 'glm-5.3-flash')
+                    or type(selection.get('generation')) is not int or selection['generation'] <= 0):
+                raise ValueError('frontier_selection_unknown')
+            result['frontier_selection'] = selection
+            result['frontier_selected'] = selection['selected_frontier'] == service_id
+            if service_id == MIMO and not result['frontier_selected']:
+                # A selected rollback is not proof that a dormant candidate is absent.
+                result.update(model_alias=MIMO, ready=False, admitting=False, reason='unqualified')
+                return result
         if service_id in LEGACY_TARGETS:
             state = binding.read_json('data', binding.path('data', 'services/llm-manager/active/active.json'))
             if state.get('schema_version') != 3 or set(state.get('slots', {})) != {'glm', 'qwen'}:
@@ -379,6 +508,8 @@ class CanonicalIdentityReader:
             except Exception:
                 pass  # Owner stop remains observable even if installed profile metadata is unavailable.
             semantics = [slot['generation'], selected, slot['desired'], identity, owner]
+        elif service_id == MIMO:
+            semantics = self._mimo(binding, boot['boot_id'], remaining, result)
         elif service_id == 'glm-5.3-flash':
             from runtime.flash.owner import validate_container, BASE, NAME, OWNER, GPU
             state = binding.read_json('services', BASE + '/state.json')
@@ -434,6 +565,8 @@ class CanonicalIdentityReader:
             semantics = [state.get('run_id'), identity, owner, unit]
         if self.boot()['boot_id'] != boot['boot_id'] or self.clock() >= deadline:
             raise ValueError('observation_changed_or_expired')
+        if service_id in (MIMO, 'glm-5.3-flash'):
+            semantics = [semantics, selection]
         result['generation'] = generation([boot['boot_id'], semantics, result['identity']]) if result.get('identity') is not None else None
         if result.get('hardware_latched') is False:
             result['hardware_validation_age_ms'] = result.get('hardware_validation_age_ms', 15001) + max(0, seconds - remaining()) * 1000
@@ -443,6 +576,8 @@ class CanonicalIdentityReader:
             result.update(ready=False, admitting=False, reason='service_stopped')
         if result.get('hardware_latched') is True:
             result.update(ready=False, admitting=False)
+        if result.get('frontier_selected') is False:
+            result.update(ready=False, admitting=False, reason='unqualified')
         return result
 
     def old_owner_settled(self, service_id, old_identity, seconds=2):
@@ -547,7 +682,8 @@ class PassiveServiceCollector:
             else:
                 result.update(self._positive)
                 result.update(ready=False, admitting=False, generation=None)
-        if not result.get('running') or self.service_id == 'node':
+        if (not result.get('running') or self.service_id == 'node'
+                or result.get('frontier_selected') is False or result.get('software_quarantined') is True):
             return result
         if self.service_id == 'control':
             # Independent of storage/model owners; reuse the validated startup
@@ -577,7 +713,21 @@ class PassiveServiceCollector:
             key_path = binding.path('data', 'services/secrets/llm-api-key')
             binding.validate_path('data', key_path)
             key = _key(self.reader.read(Path(key_path), modes={0o600}, maximum=257))
-            if self.service_id == 'glm-5.3-flash':
+            if self.service_id == MIMO:
+                status = mimo_native_readiness(
+                    self.get(30012, '/props', key, max(.001, seconds - (self.clock() - started))),
+                    self.get(30012, '/slots', key, max(.001, seconds - (self.clock() - started))),
+                    result.get('mimo_manifest', {}))
+                current = self.reader.service(MIMO, max(.001, seconds - (self.clock() - started)))
+                if (type(result.get('generation')) is not int or type(current.get('generation')) is not int
+                        or not current.get('ownership_valid') or not current.get('running')
+                        or current.get('frontier_selected') is not True or current.get('software_quarantined') is not False
+                        or current.get('generation') != result.get('generation')
+                        or self.clock() - started >= seconds):
+                    raise ValueError('mimo_readback_identity_changed')
+                # Admission intentionally remains unknown: native slot idle alone is insufficient.
+                result.update(guard_age_ms=current['guard_age_ms'], guard_boot_id=current['guard_boot_id'])
+            elif self.service_id == 'glm-5.3-flash':
                 response = self.get(30010, '/v1/readiness', key, max(.001, seconds - (self.clock() - started)))
                 status = text_readiness(*response, 'glm-5.3-flash')
                 if status['ready']:
@@ -587,6 +737,8 @@ class PassiveServiceCollector:
                     current = self.reader.service(self.service_id, max(.001, seconds - (self.clock() - started)))
                     if (type(result.get('generation')) is not int or type(current.get('generation')) is not int
                             or not current.get('ownership_valid') or not current.get('running')
+                            or current.get('frontier_selected') is not True
+                            or current.get('frontier_selection') != result.get('frontier_selection')
                             or current.get('generation') != result.get('generation')
                             or self.clock() - started >= seconds):
                         raise ValueError('frontier_capacity_identity_changed')

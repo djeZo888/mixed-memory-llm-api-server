@@ -1,0 +1,45 @@
+{
+  "inputs": {
+    "base": "a076c2c6a8cf409aa7890765d81ac288cd16d308",
+    "w1Phase2": "4240b8ec4c99043f0b51abb6216d3ef960f287a3",
+    "sourceTarSha256": "4ee40ea21a694b372a1f27c312eae607ec3ae725ccce5996cd2c7182a108d646",
+    "r3": "worker1/phase-03/review-source fixed copy; SOURCE-SHA256.json supplied",
+    "ownership": "W2 prospective scripts/runtime/mimo and node slice; W1 scripts/h016 benchmark/runtime live work"
+  },
+  "w1_files": {
+    "scripts/control/node.py": "d67384fed158b8977d5e968f46bada976df5053fc31264995001765e926ed571",
+    "scripts/control/node_collectors.py": "4031aa397e23d0472d3c1e8bfa8eec813457285deabb496c937ef0b9e624b305",
+    "scripts/control/node_observation.py": "f0f94f6952ad05151761b2d461993e462ea6aada67be34cf74aaf34c82e7c2ac",
+    "scripts/control/passive.py": "f535b9a0e8c8869566a40209d78704de428e14518d1b6eebf0540589e26817a3",
+    "scripts/h016/benchmark.py": "8cd27c4839328c5ba3187d58d270e7504cb7fecc75b3827b4ce8cd233325702b",
+    "scripts/h016/candidate_owner.py": "621d8eb04cd9aeac12b9769b3bc7b00c2269928cb2f8f7bb14a7a77bbd2bcde5",
+    "scripts/h016/native_identity.py": "0ba1f5781585ba887bd639e950870976e0ecb159caa674cb72dfa41cc48d3518",
+    "scripts/h016/private_proxy.py": "f64ef8df77ed067038f8cd4e88b378e435e66f6373a6a05802bfc32c469cddac",
+    "scripts/h016/proxy_state.py": "23986a886f46f1597e70ed0a34dc340a4a7397078dade6e0190735a7d1898355",
+    "scripts/h016/telemetry.py": "df2c572fba760c963886a80a4a534c12b3c817465efc4a54aa85e01a72c7f39f",
+    "scripts/h016/test_packet.py": "3abbdf9966f3750ae8c7d374004868b333b4a436dbe7e8a900ab258c87e54c1b",
+    "scripts/h016/test_proxy_state.py": "75bb5a4b3bba10516a9459b7450f4ecb6bb023937230db8d9788d2ea2c7feb92",
+    "scripts/h016/test_repair.py": "e5b74d0c6658d39975922b24ab1522c736bc3eca3d9d4f274beddcaadfbc6d35",
+    "scripts/h016/verify_retained.py": "dfb4479239129f7909ce54827cdd15a14215cebdc60da6e4e5939a995ead250f",
+    "scripts/runtime/mimo/ADOPTION.md": "e9e94e8cd54edab68ca48900815efe24bccf4e578a6fdcedbaaa497a89762303",
+    "scripts/runtime/mimo/llm-frontier-flash-selection.conf": "7b8b44e3b9aaad8fd6ab2a86101caa549fe5debd749db48204c6f359d1d7bb7b",
+    "scripts/runtime/mimo/llm-frontier-mimo-proxy.service": "aca3d8cf76c983176f773bd8baae5c4bb8f5a2aded360e69677f046c29fa5c01",
+    "scripts/runtime/mimo/llm-frontier-mimo.service": "a03e85097e9738562906d471d659b970c951f0e972c50c0210b830f9bb7698e0",
+    "scripts/runtime/mimo/owner.py": "26817abc7c20ef19ab433777ece2e32aad815167ca8543dc98dc14f432d6b512",
+    "tests/test_mimo_node_observation.py": "32f099887331a441fe68e334c6974f70cd6c05864ae08b2080e742511a322e20",
+    "tests/test_node_passive.py": "0548d0756967ed3bed126dba48159d600ffba17305cf9c1d9aa61da88e1d1cd4"
+  },
+  "r3_files": {
+    "candidate_owner.py": "71528b171f2a54aafd409743d0ae0d831674fe22c8079ee25b6fc8babdeee546",
+    "benchmark.py": "8cd27c4839328c5ba3187d58d270e7504cb7fecc75b3827b4ce8cd233325702b",
+    "inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
+    "private_proxy.py": "82d88ed7e13de4a4a36b1a74a4186927e7e03a5380e109860e4e076f3baeb50c",
+    "test_packet.py": "46990f49b0ad469226407e8f21ec03b39433191b9f8fd70f753e38bf588d6000",
+    "telemetry.py": "df2c572fba760c963886a80a4a534c12b3c817465efc4a54aa85e01a72c7f39f",
+    "native_identity.py": "0ba1f5781585ba887bd639e950870976e0ecb159caa674cb72dfa41cc48d3518",
+    "test_repair.py": "154451b97693e5f7081535d5c2d4e5d07e6f5df4aa9de34338b7c17393c0e922",
+    "LAUNCH.json": "008709f88c8dc57bf65f0dfd5a679a6ee7ab03dcdd5a8a7f7c2b9a0403d99c76",
+    "verify_retained.py": "c0fc34d534c4572583a418810650a31e8f36aa24ca0e007359c2228c92ffb2ba"
+  },
+  "r4_guard_sha256": "2c0e7483845530cf9b669d699c67b574e0f4a8cbba21dd6c511bc7ddf7f817aa"
+}
