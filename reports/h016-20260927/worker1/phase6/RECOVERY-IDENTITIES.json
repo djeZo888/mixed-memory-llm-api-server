@@ -1,6 +1,6 @@
 {
   "observed_utc": "2026-09-27T13:17:49.447621+00:00",
-  "authority": "ROOT-AUTHORITY-1321.md",
+  "authority": "ROOT-AUTHORITY-1327.md",
   "candidate": {
     "Id": "c724b72b99f57f9e72b21bbc2a1fc104a9109b970657d5694ba05c25160a8308",
     "Image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
@@ -50,5 +50,7 @@
   "owner_source_sha256": "11041d78f05bb0522d48b293f0a4283629d4a15f787e8477be6591b4b7faa483",
   "single64k_source_sha256": "5f38a0ae058a70707267c6773c06d0dd459c8d133dec95485a9fb2d707132294",
   "must_refresh_before_stop": true,
-  "recovery_executed_in_phase6": false
+  "recovery_executed_in_phase6": false,
+  "previous_early_stop_authority": "ROOT-AUTHORITY-1321.md_REVOKED",
+  "early_stop_authority_revoked": true
 }

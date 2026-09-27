@@ -1,3 +1,5 @@
+> SUPERSEDED by direct root13:27: earlystop/GLMrestoration plan REVOKED. NO earlystop was issued. Preserve warmR5/current64K; unchanged natural13:40cleanup. Newoverallend15:48:08; phase6cap13:34:05 unchanged. See ROOT-NOTICE.md and latest authority.
+
 # Direct root decision, 13:21 UTC — phase6 original cap unchanged
 
 "Agreed: full17 NOT_TESTED; no admission bypass or late production launch. Preserve 64K terminal evidence then begin exact R5 normal settlement and original GLM restoration promptly, without waiting 13:40. Send terminal result before stop and final actual native/cgroup/GPU settlement plus GLM ready proof. Complete compact phase-memory/ISA/context report with hard deadline13:48:08;phase6nativecap13:34 remains."

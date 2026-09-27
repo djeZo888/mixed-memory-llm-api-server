@@ -1,0 +1,113 @@
+{
+  "status": "UNSUPPORTED_NO_EVIDENCE_OF_LIVE_DEADLINE_EXTENSION_CONTROL",
+  "review_scope": "Local retained exact R5 owner/proxy/benchmark source and systemd receipt; no SSH, process signals, VM or source mutations.",
+  "authority_note": "Root13:27 overall authorization extended to15:48:08; early stop revoked. This authorization does not update loaded process constants. Phase6 cap remains13:34:05.",
+  "snapshot_utc": "2026-09-27T13:17:49.447621+00:00",
+  "snapshot_sha256": "c0d11830bc463122046c23b04b44c46c2524404cb586841098a9b74e6acaa157",
+  "owner_unit": "h016-mimo-initial-20260927-r5.service",
+  "owner_invocation": "4600b556d5d04305a9157da80149a511",
+  "owner_pid": 2779569,
+  "controls": {
+    "owner_admit_end_utc": "2026-09-27T13:25:00Z",
+    "owner_hard_end_utc": "2026-09-27T13:40:00Z",
+    "proxy_admit_end_utc": "2026-09-27T13:25:00Z",
+    "proxy_absolute_end_utc": "2026-09-27T13:40:00Z",
+    "benchmark_deadline": "min(request_start+7200,HARD_END) with imported constants",
+    "systemd_RuntimeMaxSec": 3754,
+    "systemd_TimeoutStopSec": 420,
+    "systemd_ExecStopPost": "/usr/bin/python3 -B /data/build/H016-20260927/worker1-r5/candidate_owner.py --settle",
+    "custom_signal_handler": "SIGTERM only; raises owned_supervisor_interrupted; finally cleans proxy and settles"
+  },
+  "findings": [
+    "No control endpoint, reload signal, periodic deadline-file read or mutable external deadline mechanism is evidenced in these exact files.",
+    "Changing RuntimeMaxSec alone would not change the already-loaded owner13:40 cutoff, proxy13:25 admission/13:40 deadline, or imported benchmark constants.",
+    "Editing the source on disk would not alter the active interpreter constants and is not a supported live-extension control.",
+    "SIGTERM invokes interruption and cleanup, not extension. No signal/process action was performed.",
+    "Retained unit receipt independently shows RuntimeMaxUSec1h2min34s and exact ExecStopPost; this is not a fresh health poll."
+  ],
+  "sources": {
+    "scripts/h016/r5/candidate_owner.py": {
+      "sha256": "11041d78f05bb0522d48b293f0a4283629d4a15f787e8477be6591b4b7faa483",
+      "matches_remote_snapshot_source_hash": true,
+      "excerpts": [
+        {
+          "start_line": 28,
+          "end_line": 29,
+          "sha256": "1cfa52720070345eeb0d5177f18060a83472c325e5b7129c0a5331718912c91b",
+          "text": "28: ADMIT_END = datetime.datetime(2026, 9, 27, 13, 25, tzinfo=datetime.timezone.utc).timestamp()\n29: HARD_END = datetime.datetime(2026, 9, 27, 13, 40, tzinfo=datetime.timezone.utc).timestamp()"
+        },
+        {
+          "start_line": 208,
+          "end_line": 222,
+          "sha256": "82c5a17dcecce10272b6a25db8998de3935eebfae49d513e15ac587e4493f53b",
+          "text": "208: def cleanup_proxy_and_settle(h, proxy):\n209:     try:\n210:         if proxy and proxy.poll() is None:\n211:             proxy.terminate()\n212:             try:\n213:                 proxy.wait(timeout=3)\n214:             except subprocess.TimeoutExpired:\n215:                 proxy.kill()\n216:                 proxy.wait(timeout=3)\n217:     finally:\n218:         settle(h)\n219: \n220: \n221: def interrupted(*_):\n222:     raise RuntimeError('owned_supervisor_interrupted')"
+        },
+        {
+          "start_line": 313,
+          "end_line": 325,
+          "sha256": "211b4e8818ea0b0ca79c0d050b2beda11f95e92101cfdbaffcd4f8a728ce96fc",
+          "text": "313:         while time.time() < HARD_END:\n314:             h.require(not failed.is_set() and proxy.poll() is None and inspect(state['candidate_id'])['State']['Running'], 'warm_owner_guard_failed')\n315:             time.sleep(5)\n316:         # No persistent adoption in initial packet: bounded deadline always settles.\n317:         # Later adoption code must be separately reviewed before any W2 activation.\n318:         state['status'] = 'DEADLINE_SETTLING_UNADOPTED_CANDIDATE'\n319:         save(h, 'OWNER.json', state)\n320:     except BaseException as exc:\n321:         state.update(status='FAILED_SETTLING', error_type=type(exc).__name__, error=str(exc) if isinstance(exc, RuntimeError) else type(exc).__name__)\n322:         save(h, 'OWNER.json', state)\n323:     finally:\n324:         failed.set()\n325:         cleanup_proxy_and_settle(h, proxy)"
+        },
+        {
+          "start_line": 329,
+          "end_line": 340,
+          "sha256": "c7de858969f463bcc0b736876af166f96f3e062a5be4cc7fd8882a85cd5dd13f",
+          "text": "329: if __name__ == '__main__':\n330:     parser = argparse.ArgumentParser(description=__doc__)\n331:     parser.add_argument('--run', action='store_true')\n332:     parser.add_argument('--settle', action='store_true')\n333:     parser.add_argument('--dry-run', action='store_true')\n334:     args = parser.parse_args()\n335:     if args.settle:\n336:         h = dependency()\n337:         settle(h)\n338:     else:\n339:         signal.signal(signal.SIGTERM, interrupted)\n340:         raise SystemExit(main(run=args.run and not args.dry_run) or 0)"
+        }
+      ]
+    },
+    "scripts/h016/r5/private_proxy.py": {
+      "sha256": "82d88ed7e13de4a4a36b1a74a4186927e7e03a5380e109860e4e076f3baeb50c",
+      "matches_remote_snapshot_source_hash": true,
+      "excerpts": [
+        {
+          "start_line": 112,
+          "end_line": 118,
+          "sha256": "5e8003bc60e18e45677877f060f37bead5075163c1e4de485f6f9e5762ad032a",
+          "text": "112:             chat = self.path == '/v1/chat/completions'\n113:             now = time.time()\n114:             if chat and now >= datetime.datetime(2026, 9, 27, 13, 25, tzinfo=datetime.timezone.utc).timestamp():\n115:                 return self.error(503)\n116:             deadline = min(now + 7200, datetime.datetime(2026, 9, 27, 13, 40, tzinfo=datetime.timezone.utc).timestamp())\n117:             if now >= deadline:\n118:                 return self.error(503)"
+        },
+        {
+          "start_line": 163,
+          "end_line": 167,
+          "sha256": "5ab40a9425f606bc6bb7a7f562c4b0857ef6305e8c8df825dee2ba08c9239a07",
+          "text": "163:                 while True:\n164:                     if time.time() >= deadline:\n165:                         raise TimeoutError('owned_absolute_deadline')\n166:                     if conn.sock:\n167:                         conn.sock.settimeout(max(.1, deadline - time.time()))"
+        }
+      ]
+    },
+    "scripts/h016/r5/benchmark.py": {
+      "sha256": "ece4d5d801edc10505ae7d7e9e108a8d4a017e76ac436a220b050f0239e75803",
+      "matches_remote_snapshot_source_hash": true,
+      "excerpts": [
+        {
+          "start_line": 8,
+          "end_line": 8,
+          "sha256": "e97ff4deda80e1355da4237eca198213994bb441326d5512e955ec80fe5c5153",
+          "text": "8: from candidate_owner import ADMIT_END, HARD_END, BASE, LOG, save"
+        },
+        {
+          "start_line": 73,
+          "end_line": 81,
+          "sha256": "a6d1a1cd76075607805387faec950dead1a00af9a8ed9c661b28b6fab4cb7064",
+          "text": "73: def request(h, key, payload, label, failed):\n74:     h.require(time.time() < ADMIT_END and not failed.is_set(), 'benchmark_admission_closed')\n75:     expected, raw = count(key, payload)\n76:     h.require(expected + payload['max_tokens'] <= 131071, 'context_admission')\n77:     start = time.monotonic()\n78:     deadline = min(time.time() + 7200, HARD_END)\n79:     row = {'label': label, 'started_utc': h.now(), 'expected_input_tokens': expected, 'request_sha256': hashlib.sha256(raw).hexdigest(), 'thinking': payload['chat_template_kwargs']['enable_thinking'], 'output_budget': payload['max_tokens'], 'status': 'SUBMITTED'}\n80:     save(h, label + '.json', row)\n81:     c = http.client.HTTPConnection('127.0.0.1', 30012, timeout=max(.1, deadline - time.time()))"
+        },
+        {
+          "start_line": 90,
+          "end_line": 94,
+          "sha256": "2e6eecd6efa5fea84ddba979784123a332d2236753cda68f36b73625bfd08dab",
+          "text": "90:         while True:\n91:             h.require(time.time() < deadline and not failed.is_set(), 'request_guard_or_deadline')\n92:             if c.sock:\n93:                 c.sock.settimeout(max(.1, deadline - time.time()))\n94:             chunk = response.read1(65536)"
+        }
+      ]
+    },
+    "reports/h016-20260927/worker1/phase3/r5/R5-LAUNCH.json": {
+      "sha256": "17f182bb5c1d531220464fbf63e56690bc7a976e3f19bc7892236b0138c20cc6",
+      "excerpts": [
+        {
+          "start_line": 7,
+          "end_line": 14,
+          "sha256": "803c664492caa6bef08a58268e49bea49b12c523aba910e6f70d3305d97bda00",
+          "text": "7:     \"--property=Restart=no\",\n8:     \"--property=RuntimeMaxSec=3754\",\n9:     \"--property=TimeoutStopSec=420\",\n10:     \"--property=KillMode=mixed\",\n11:     \"--property=UMask=0077\",\n12:     \"--property=StandardOutput=null\",\n13:     \"--property=StandardError=null\",\n14:     \"--property=ExecStopPost=/usr/bin/python3 -B /data/build/H016-20260927/worker1-r5/candidate_owner.py --settle\","
+        }
+      ]
+    }
+  }
+}

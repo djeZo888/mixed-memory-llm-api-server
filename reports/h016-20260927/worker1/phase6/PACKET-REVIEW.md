@@ -1,3 +1,5 @@
+> SUPERSEDED by direct root13:27: earlystop/GLMrestoration plan REVOKED. NO earlystop was issued. Preserve warmR5/current64K; unchanged natural13:40cleanup. Newoverallend15:48:08; phase6cap13:34:05 unchanged. See ROOT-NOTICE.md and latest authority.
+
 # H016 phase6 inactive packet and recovery handoff
 
 Local-only review at root `7d92f0217ccdfdca0cb3a12418114b3e40435a65`. No VM/SSH/network contact, source change, installation, staging, inference, test-suite replay, commit or push. All nine production/node source hashes match `reports/h016-production-owner-20260927/REVIEW-MANIFEST.template.json`; their diff from root is empty. Exact files, prospective paths, SHA256 values and empty-diff hash are in `PACKET-SHA256.json`. Supplied W2 revision `80f6fee` is not a local Git object; its ancestry was not independently verified. The existing packet remains inactive and unqualified.

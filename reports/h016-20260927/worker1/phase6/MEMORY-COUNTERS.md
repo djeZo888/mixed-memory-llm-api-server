@@ -1,3 +1,5 @@
+Update13:29:58:64K completed PASS at13:28:56.526621UTC,65536input/45output. Below is the preserved earlier snapshot analysis; see BENCH65536.json and64K-COUNTERS for terminal evidence. Allocation remains131072; no larger capacity validation.
+
 Retained R5 memory and counters (phase6 snapshot ending 2026-09-27T13:17:49.447621+00:00).
 
 4K and 16K completed correctly. The retained 64K evidence is partial prefill only: 26,624 / 65,536 tokens at 13:17:27.290464Z. No terminal or 64K qualification is claimed.

@@ -1,3 +1,5 @@
+Update13:29:58:64K completed PASS at13:28:56.526621UTC,65536input/45output. Below is the preserved earlier snapshot analysis; see BENCH65536.json and64K-COUNTERS for terminal evidence. Allocation remains131072; no larger capacity validation.
+
 # MiMo R5 maximum-context component estimate
 
 Estimate only, based on the retained snapshot ending 2026-09-27T13:17:49.447621+00:00. Actual slot allocation is **131,072**; passed occupied inputs are **4,096 and 16,384**. The independent 65,536-input request was pending at this snapshot. Full17 is NOT_TESTED. No larger allocation or speed extrapolation was performed.

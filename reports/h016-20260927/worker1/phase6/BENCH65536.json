@@ -1,0 +1,39 @@
+{
+  "content": "{\"early\":\"J536T4CR\",\"middle\":\"HJZMKFNA\",\"end\":\"SH9FQ9GZ\",\"product\":323,\"safe_adc\":4095}",
+  "correctness": "PASS",
+  "done": true,
+  "expected_input_tokens": 65536,
+  "finish_reason": "stop",
+  "finished_utc": "2026-09-27T13:28:56.526621+00:00",
+  "full_http_drain": true,
+  "label": "BENCH65536",
+  "native_timings": {
+    "cache_n": 0,
+    "predicted_ms": 48187.979,
+    "predicted_n": 45,
+    "predicted_per_second": 0.9130907938679064,
+    "predicted_per_token_ms": 1095.181340909091,
+    "prompt_ms": 1073242.495,
+    "prompt_n": 65536,
+    "prompt_per_second": 61.06355302302859,
+    "prompt_per_token_ms": 16.376380844116213
+  },
+  "output_budget": 256,
+  "reasoning_content": "",
+  "request_sha256": "db53e41394b2e78514e1ab58938b9fb0dc0082c2f455a87b1c1ae2a88521e645",
+  "response_id": "chatcmpl-Vm3rvfFPbRTIrfAFDZINid0WOTLjPef3",
+  "started_utc": "2026-09-27T13:10:14.781207+00:00",
+  "status": "TRANSPORT_COMPLETE",
+  "thinking": false,
+  "tool_calls": [],
+  "total_seconds": 1121.745313929001,
+  "ttft_seconds": 1073.5566010699986,
+  "usage": {
+    "completion_tokens": 45,
+    "prompt_tokens": 65536,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 65581
+  }
+}

@@ -1,3 +1,5 @@
+> SUPERSEDED by direct root13:27: earlystop/GLMrestoration plan REVOKED. NO earlystop was issued. Preserve warmR5/current64K; unchanged natural13:40cleanup. Newoverallend15:48:08; phase6cap13:34:05 unchanged. See ROOT-NOTICE.md and latest authority.
+
 # H016 phase6 — compact analysis; terminal/recovery handoff
 
 Current live evidence is the single read-only snapshot ending **13:17:49.447621 UTC**. R5 owner and independent64K client are active with unchanged identities; latest native log is **13:17:27.290464430 UTC, 26624/65536 prompt tokens**. BENCH65536 is SUBMITTED, not terminal. No new request, installation, source change, stop, recovery or production activation occurred in phase6. Full17 is **NOT_TESTED** by direct root13:21 decision.

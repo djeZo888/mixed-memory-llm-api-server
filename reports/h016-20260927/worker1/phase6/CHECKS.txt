@@ -7,3 +7,7 @@ PASS: source-derived global KV arithmetic reconciles6.25GiB131072 /50GiB1048576 
 NOT_RUN:68 offline source tests, new inference, allocation, production or full17 qualification.
 PASS: scoped secret-pattern scan found no matches (rg exit1).
 PASS: staged whitespace check after stripping excerpt-only trailing spaces.
+PASS: final 17 JSON reports parse; exact three64Kterminal file hashes match captured originals.
+PASS: all five deployedR5/helper hashes unchanged between13:17 and13:29 snapshots.
+PASS: final scoped secret-pattern scan no matches; no source/runtime/config edits.
+PASS:64Kexactcounter arithmetic and sampled guard reserves; wireSSE frames unavailable, parsed terminal preserved.
