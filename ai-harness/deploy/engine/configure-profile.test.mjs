@@ -356,9 +356,9 @@ test('MiMo numerical user edits never become managed prior content', async () =>
 });
 
 
-test('H016 exact managed context matrix retains legacy GLM hashes and all five MiMo tuples', async () => {
+test('H017 exact managed context matrix retains legacy GLM hashes and all six MiMo tuples', async () => {
   const { MIMO_MANAGED_CONTEXTS, selectedFrontierProfile } = await import('./configure-profile.mjs');
-  assert.deepEqual(MIMO_MANAGED_CONTEXTS, [131072,917504,1000000,1000192,1048576]);
+  assert.deepEqual(MIMO_MANAGED_CONTEXTS, [131072,917504,950000,1000000,1000192,1048576]);
   const glm={model:'glm-5.3-flash',contextWindow:1048576,maxOutputTokens:65536};
   const mimos=MIMO_MANAGED_CONTEXTS.map(contextWindow=>({model:'mimo-v2.6-pro-rl',contextWindow,maxOutputTokens:65536}));
   const profile=realpathSync(mkdtempSync(path.join(os.tmpdir(),'h016-matrix-')));

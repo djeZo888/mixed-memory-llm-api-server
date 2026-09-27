@@ -1,0 +1,11 @@
+{
+  "startedUtc": "2026-09-27T19:10:37.552010+00:00",
+  "hardDeadlineUtc": "2026-09-27T19:35:37.552010+00:00",
+  "maximumSeconds": 1500,
+  "sessionId": "01a0e446-c537-7e72-ae62-7b3c9ff4ddae",
+  "baseCommit": "d09620402007046881606dfbdc74c9ee3fde09b2",
+  "liveContacts": 0,
+  "preparedOnly": true,
+  "hardSettlementUtc": "2026-09-27T20:50:00Z",
+  "stopUtc": "2026-09-27T20:49:30Z"
+}
