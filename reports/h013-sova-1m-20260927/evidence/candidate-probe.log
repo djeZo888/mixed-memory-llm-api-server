@@ -1,0 +1,39 @@
+0.5.1
+6ed33db3604a104f398818c8c5319a951e222b52
+node:fs:621
+  return binding.open(
+                 ^
+
+Error: EACCES: permission denied, open '/opt/ai-harness/engine/configure-profile.test.mjs'
+    at Object.openSync (node:fs:621:18)
+    at Object.readFileSync (node:fs:487:35)
+    at getSourceSync (node:internal/modules/esm/load:41:17)
+    at defaultLoadSync (node:internal/modules/esm/load:156:34)
+    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:806:12)
+    at #loadSync (node:internal/modules/esm/loader:838:53)
+    at ModuleLoader.load (node:internal/modules/esm/loader:787:26)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:498:31)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:564:36)
+    at afterResolve (node:internal/modules/esm/loader:611:52) {
+  errno: -13,
+  code: 'EACCES',
+  syscall: 'open',
+  path: '/opt/ai-harness/engine/configure-profile.test.mjs'
+}
+
+Node.js v24.21.0
+✖ /opt/ai-harness/engine/configure-profile.test.mjs (18.065921ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22.226762
+
+✖ failing tests:
+
+test at opt/ai-harness/engine/configure-profile.test.mjs:1:1
+✖ /opt/ai-harness/engine/configure-profile.test.mjs (18.065921ms)
+  'test failed'

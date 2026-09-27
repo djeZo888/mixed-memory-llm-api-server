@@ -7,7 +7,7 @@ Reviewed H009 packaging/deployment and H013 scientific PASS handoffs. Removed
 only the obsolete display suffix, set the 1M candidate qualified=true, retained
 1048576/65536 and exact FRONTIER_INSTRUCTIONS. Existing exact-old SHA migration
 checks custom content, modes, links and preservation. Local full profile suite:
-15 PASS, 1 Linux-only skip; Linux rerun planned in candidate build.
+15 PASS, 1 packaged-skills skip; Linux rerun planned in candidate build.
 
 Read-only ai-harness verification: production unit inactive/MainPID0, release
 /opt/ai-harness/releases/296ae49e44eb250773223885b843994e2c5b9bcc/ai-harness;

@@ -11,15 +11,25 @@ H013_SOURCE=$(cat source.commit)
 python3 preservation.py "$H013_TASK/before.json"
 trap 'rc=$?; trap - EXIT; printf "%s\n" "$rc" > "$H013_TASK/build.exit"; date -u +%FT%TZ > "$H013_TASK/build.finished"; exit "$rc"' EXIT
 sha256sum -c source.SHA256SUMS
-mkdir -m 700 source
-tar -xf H013-source.tar -C source
+if [[ ! -d source ]]; then mkdir -m 700 source; tar -xf H013-source.tar -C source; fi
+python3 - <<'PYSOURCE'
+import hashlib, pathlib, tarfile
+with tarfile.open('H013-source.tar') as t:
+ for member in t.getmembers():
+  if member.isfile():
+   p=pathlib.Path('source')/member.name
+   assert p.is_file() and not p.is_symlink()
+   assert hashlib.sha256(p.read_bytes()).digest()==hashlib.sha256(t.extractfile(member).read()).digest(),member.name
+print('PASS exact archived source content')
+PYSOURCE
 cd source/ai-harness
 for part in server web; do
  donor=/opt/ai-harness/releases/296ae49e44eb250773223885b843994e2c5b9bcc/ai-harness/$part
+ if [[ "$part" == web ]]; then donor=/home/user/ai-harness-build/H008-296ae49-03/web; fi
  cmp "$part/package.json" "$donor/package.json"
  cmp "$part/package-lock.json" "$donor/package-lock.json"
- [[ -d $donor/node_modules && ! -L $donor/node_modules && ! -e $part/node_modules ]]
- cp -a "$donor/node_modules" "$part/node_modules"
+ [[ -d $donor/node_modules && ! -L $donor/node_modules ]]
+ if [[ ! -d $part/node_modules ]]; then cp -a "$donor/node_modules" "$part/node_modules"; fi
  (cd "$part"; npm ls --all --offline; npm run typecheck; npm run build) > "$H013_TASK/$part-build.log" 2>&1
  done
 (cd server; npm test) > "$H013_TASK/server-tests.log" 2>&1
