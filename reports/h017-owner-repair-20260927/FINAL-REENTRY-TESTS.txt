@@ -1,0 +1,16 @@
+test_actual_busy_expiry_preserves_prior_no_proxy_proof_but_not_fresh_success (test_mimo_owner_settlement.CanonicalSettlementTests.test_actual_busy_expiry_preserves_prior_no_proxy_proof_but_not_fresh_success) ... ok
+test_body_busy_is_not_retried (test_mimo_owner_settlement.CanonicalSettlementTests.test_body_busy_is_not_retried) ... ok
+test_inode_replacement_between_attempts_refuses (test_mimo_owner_settlement.CanonicalSettlementTests.test_inode_replacement_between_attempts_refuses) ... ok
+test_nested_borrow_uses_existing_scope_validation_and_no_reacquire (test_mimo_owner_settlement.CanonicalSettlementTests.test_nested_borrow_uses_existing_scope_validation_and_no_reacquire) ... ok
+test_real_flock_contention_stops_at_deadline_without_mutation (test_mimo_owner_settlement.CanonicalSettlementTests.test_real_flock_contention_stops_at_deadline_without_mutation) ... ok
+test_real_flock_wait_succeeds_on_same_inode (test_mimo_owner_settlement.CanonicalSettlementTests.test_real_flock_wait_succeeds_on_same_inode) ... ok
+test_untrusted_lock_fails_immediately_without_retry (test_mimo_owner_settlement.CanonicalSettlementTests.test_untrusted_lock_fails_immediately_without_retry) ... ok
+test_admission_between_pre_stop_idle_and_termination_remains_held (test_mimo_owner_settlement.FinalDispositionTests.test_admission_between_pre_stop_idle_and_termination_remains_held) ... ok
+test_exact_closed_child_terminal_receipt_and_repeat_keep_release (test_mimo_owner_settlement.FinalDispositionTests.test_exact_closed_child_terminal_receipt_and_repeat_keep_release) ... ok
+test_repeated_no_proxy_settlement_reproves_physical_state (test_mimo_owner_settlement.FinalDispositionTests.test_repeated_no_proxy_settlement_reproves_physical_state) ... ok
+test_wrong_or_malformed_final_receipts_and_unproven_child_remain_held (test_mimo_owner_settlement.FinalDispositionTests.test_wrong_or_malformed_final_receipts_and_unproven_child_remain_held) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.233s
+
+OK

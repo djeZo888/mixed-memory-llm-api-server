@@ -39,11 +39,97 @@ PREP = Path('/data/build/h014-pro-7ac59a6-20260927/prep.py')
 PREP_SHA = '03c0933c194c79a6aca5e98e26bd1682f99927c0f9dbfe53f25d9938caf3724c'
 HEX = re.compile(r'[0-9a-f]{64}\Z')
 BOOT = Path('/proc/sys/kernel/random/boot_id')
+LEASE_PATH = Path('/run/llmctl/lifecycle.lock')
+SETTLEMENT_LEASE_SECONDS = 10
+OWNER_FAILURE_CODES = frozenset({
+    'added_host_swap', 'artifact_manifest_changed', 'boot_changed',
+    'command_failed', 'command_output_bound', 'container_not_settled',
+    'created_container_changed', 'created_id_invalid', 'deployed_source_closure_required',
+    'exact_owned_container_required', 'frontier_compute_present', 'frontier_compute_remains',
+    'glm_must_be_settled_before_selection', 'glm_original_changed', 'guard_adapter_changed',
+    'host_reserve', 'interleave_file_changed', 'interleave_pins_required',
+    'key_invalid', 'launch_source_changed', 'native_bind_changed',
+    'native_cgroup_not_empty', 'native_configuration_changed', 'native_generation_changed',
+    'native_identity_or_capacity_changed', 'native_load_timeout', 'native_memory_oom_or_swap',
+    'native_not_running', 'native_pins_required', 'native_process_changed',
+    'native_response_limit', 'no_double_launch', 'not_selected',
+    'numa_seccomp_changed', 'old_native_pid_remains', 'owned_container_missing_requires_review',
+    'owned_gpu_latch_unproven', 'owned_gpu_missing', 'owned_gpu_reserve_or_temperature',
+    'owned_gpu_sample_invalid', 'owner_interrupted', 'preserved_glm_pins_required',
+    'prior_owner_or_request_unsettled', 'production_container_name_required', 'protected_file',
+    'protected_file_changed', 'protected_parent', 'proxy_child_died',
+    'proxy_child_identity_or_disposition', 'proxy_final_identity_unknown', 'proxy_not_settled',
+    'proxy_start_failed', 'recovery_invocation_changed', 'registered_mount_changed',
+    'reviewed_1m_request_required', 'reviewed_capacity_required', 'reviewed_file_changed',
+    'reviewed_launch_required', 'reviewed_memory_exceeds_fresh_reserve', 'reviewed_memory_peak_and_cache_required',
+    'reviewed_native_argv_changed', 'reviewed_no_host_required', 'reviewed_qualified_manifest_required',
+    'rollback_cgroup_present', 'rollback_compute_present', 'rollback_native_not_settled',
+    'rollback_requires_exact_settlement', 'runtime_image_changed', 'selection_changed_during_rollback',
+    'selection_changed_or_not_mimo', 'selection_invalid', 'selection_manifest_required',
+    'service_required', 'settlement_deadline_invalid', 'settlement_lease_deadline',
+    'settlement_lock_changed', 'source_and_qualification_pins_required', 'supervisor_cgroup_changed',
+    'supervisor_not_current', 'tool_template_pin_invalid', 'unrecorded_container_exists',
+    'verified_artifact_required', 'verified_shard_changed',
+})
+
+
+class OwnerRefusal(RuntimeError):
+    """Owner-generated diagnostic code; never arbitrary command/request text."""
+
+
+def failure(exc, phase, operation=None, elapsed=None):
+    code = 'unexpected_error'
+    if type(exc) is OwnerRefusal and str(exc) in OWNER_FAILURE_CODES:
+        code = str(exc)
+    elif isinstance(exc, MandatoryGuardTimeout):
+        code = 'mandatory_guard_timeout'
+    elif isinstance(exc, TimeoutError):
+        code = 'timeout'
+    elif isinstance(exc, OSError):
+        code = 'os_error'
+    elif isinstance(exc, http.client.HTTPException):
+        code = 'http_error'
+    elif isinstance(exc, subprocess.TimeoutExpired):
+        code = 'command_timeout'
+    elif type(exc).__name__ == 'LeaseBusy':
+        code = 'lifecycle_busy'
+    elif type(exc).__name__ == 'LeaseError':
+        code = 'lifecycle_invalid'
+    result = {'phase': phase if phase in ('CREATING', 'LOADING', 'STARTING_PROXY', 'RUNNING',
+            'SETTLING', 'SETTLED', 'HELD', 'CLI') else 'UNKNOWN', 'code': code,
+            'observed_at': datetime.datetime.now(datetime.timezone.utc).isoformat()}
+    if operation in ('launch', 'key_read', 'selection_read', 'boot_read', 'docker_inspect',
+                     'resource_sample', 'nvml_sample', 'host_memory', 'cgroup_memory',
+                     'resource_validate', 'hardware_latch', 'native_readiness', 'http_props',
+                     'http_slots', 'native_identity', 'state_write', 'proxy_start',
+                     'proxy_snapshot', 'guard_write', 'cycle_sleep', 'settlement'):
+        result['operation'] = operation
+    if type(elapsed) in (int, float) and math.isfinite(elapsed) and elapsed >= 0:
+        result['cycle_elapsed_s'] = round(elapsed, 6)
+    return result
+
+
+def record_failure(h, state, field, exc, phase, operation=None, elapsed=None):
+    """Best-effort guarded receipt plus sanitized durable systemd journal record.
+
+    Neither a failed receipt nor a failed journal write may prevent settlement.
+    """
+    state[field] = failure(exc, phase, operation, elapsed)
+    try:
+        write(h, 'state.json', state)
+    except BaseException as receipt_error:
+        state['receipt_failure'] = failure(receipt_error, phase)
+    try:
+        print(json.dumps({'status': 'OWNER_FAILURE', 'launch_id': state['launch_id'],
+                          **{k: state[k] for k in ('primary_failure', 'settlement_failure',
+                             'settlement_recheck_failure', 'receipt_failure') if k in state}}), flush=True)
+    except BaseException:
+        pass
 
 
 def require(value, reason):
     if not value:
-        raise RuntimeError(reason)
+        raise OwnerRefusal(reason)
 
 
 def digest(value):
@@ -291,11 +377,14 @@ def get(path, key, timeout=1):
         c.close()
 
 
-def native_ready(m, key):
+def native_ready(m, key, *, progress=lambda _: None):
+    progress('http_props')
     code, props = get('/props', key)
+    progress('http_slots')
     slot_code, slots = get('/slots', key)
     if code == 503 or slot_code == 503:
         return False  # Loading only; malformed successful identity remains fatal.
+    progress('native_identity')
     template = props.get('chat_template')
     tool = props.get('chat_template_tool_use')
     require(code == slot_code == 200 and props.get('model_alias') == MODEL
@@ -351,20 +440,24 @@ def validate_sample(m, sample, baseline, limit):
     return row
 
 
-def sample_guard(m, baseline, limit, native=None):
+def sample_guard(m, baseline, limit, native=None, *, progress=lambda _: None):
     # R4 cheap guard behavior: one own-GPU query <=2s, host and cgroup only.
+    progress('nvml_sample')
     raw = run(['nvidia-smi', '--id=' + GPU, '--query-gpu=uuid,memory.total,memory.free,temperature.gpu', '--format=csv,noheader,nounits'], 2)
     rows = []
     for line in raw.splitlines():
         fields = [x.strip() for x in line.split(',')]
         require(len(fields) == 4, 'owned_gpu_sample_invalid')
         rows.append(dict(zip(('uuid', 'total_mib', 'free_mib', 'temp_c'), [fields[0]] + [float(v) for v in fields[1:]])))
+    progress('host_memory')
     sample = {'gpus': rows, 'host': memory()}
     if native is not None:
+        progress('cgroup_memory')
         cg = cgpath(native['pid'])
         sample['cgroup'] = {n: (cg / n).read_text().strip() for n in
                            ('memory.current', 'memory.max', 'memory.swap.current', 'memory.swap.max')}
         sample['cgroup']['memory.events'] = dict(x.split() for x in (cg / 'memory.events').read_text().splitlines())
+    progress('resource_validate')
     validate_sample(m, sample, baseline, limit)
     return sample
 
@@ -423,9 +516,43 @@ def exact_container(c, m, state, *, configuration=True):
     return c
 
 
-def stop_exact(h, m, state):
+@contextlib.contextmanager
+def settlement_lease(h, *, lease=None, deadline=None):
+    """Only exact settlement retries contention; all trust errors fail closed."""
+    if lease is not None:
+        from common.lifecycle_lease import _validate_borrowed_lease
+        _validate_borrowed_lease(lease)
+        yield lease
+        _validate_borrowed_lease(lease)
+        return
+    end = time.monotonic() + SETTLEMENT_LEASE_SECONDS
+    if deadline is not None:
+        require(type(deadline) in (int, float) and math.isfinite(deadline), 'settlement_deadline_invalid')
+        end = min(end, deadline)
+    def identity():
+        info = LEASE_PATH.lstat()
+        return info.st_dev, info.st_ino
+    original = identity()
+    with contextlib.ExitStack() as stack:
+        while True:
+            require(identity() == original, 'settlement_lock_changed')
+            require(time.monotonic() < end, 'settlement_lease_deadline')
+            try:
+                active = stack.enter_context(h.acquire_lease(blocking=False))
+            except h.LeaseBusy:
+                time.sleep(min(.1, max(0, end - time.monotonic())))
+                continue
+            require(identity() == original, 'settlement_lock_changed')
+            require(time.monotonic() < end, 'settlement_lease_deadline')
+            active.validate()
+            break
+        yield active
+        active.validate()
+
+
+def stop_exact(h, m, state, *, lease=None, deadline=None):
     """Recovery uses exact protected launch labels, including create/start gaps."""
-    with h.acquire_lease(blocking=False), h.MountedStorageGuard(h.s) as g:
+    with settlement_lease(h, lease=lease, deadline=deadline), h.MountedStorageGuard(h.s) as g:
         storage_paths(h, g)
         h.s.root_payload_guard()
         found = run(['docker', 'ps', '-aq', '--no-trunc', '--filter', 'name=^/' + m['container_name'] + '$'], 2).strip()
@@ -472,27 +599,74 @@ def proxy_snapshot(state, proxy):
     return value
 
 
-def settle_state(h, m, state, proxy=None):
-    state['status'] = 'SETTLING'
-    # Preserve ambiguous active requests even if the child dies before its final write.
+def proxy_released(state, proxy):
+    """Read final disposition only after the exact child can no longer admit.
+
+    begin() persists active=1 before native I/O; finish() persists terminal
+    release. An earlier idle snapshot is never evidence of final release.
+    """
     try:
+        if not state.get('proxy_started'):
+            p = read(BASE / 'proxy-state.json')
+            return isinstance(p, dict) and p.get('launch_id') != state['launch_id']
+        expected = state.get('proxy', {})
+        require(type(expected.get('pid')) is int and expected['pid'] > 0
+                and isinstance(expected.get('pid_start_ticks'), str)
+                and expected.get('parent_pid') == state['supervisor']['pid']
+                and BOOT.read_text().strip() == state['boot_id'], 'proxy_final_identity_unknown')
+        if proxy is not None:
+            require(proxy.pid == expected['pid'] and proxy.poll() is not None, 'proxy_not_settled')
+        else:
+            require(not Path('/proc', str(expected['pid'])).exists()
+                    or ticks(expected['pid']) != expected['pid_start_ticks'], 'proxy_not_settled')
         p = read(BASE / 'proxy-state.json')
-        if p.get('launch_id') == state['launch_id']:
-            state['request_hold'] = state.get('request_hold', False) or p.get('quarantined') is not False or p.get('active_requests') != 0
-    except (OSError, ValueError, RuntimeError):
-        state['request_hold'] = bool(state.get('proxy_started')) or state.get('request_hold', False)
+        return (p.get('schema_version') == 2 and p.get('launch_id') == state['launch_id']
+                and p.get('native') == state['native'] and p.get('boot_id') == state['boot_id']
+                and all(p.get(k) == expected[k] for k in ('pid', 'pid_start_ticks', 'parent_pid'))
+                and type(p.get('active_requests')) is int and p['active_requests'] == 0
+                and p.get('quarantined') is False)
+    except FileNotFoundError:
+        return not state.get('proxy_started')
+    except (OSError, ValueError, RuntimeError, KeyError, AttributeError, TypeError):
+        return False
+
+
+def settle_state(h, m, state, proxy=None, *, lease=None, deadline=None):
+    # ExecStopPost can repeat this same protected, invocation-checked launch.
+    # Preserve its earlier proof only for contention before any new physical
+    # observation; the failed recheck is not fresh proof. rollback_glm always
+    # rechecks exact container/cgroup/GPU/source under its own canonical lease.
+    prior = dict(state) if (state.get('schema_version') == 2 and state.get('status') == 'SETTLED'
+            and state.get('manifest_sha256') == digest(m)
+            and state.get('proxy_started') is False and state.get('request_hold') is False
+            and state.get('settlement') == {'pid_released': True, 'cgroup_empty': True,
+                                          'gpu_compute_empty': True}) else None
+    state['status'] = 'SETTLING'
+    state.setdefault('request_hold', False)
     try:
         try:
             stop_proxy(proxy)
+            state['request_hold'] = state['request_hold'] or not proxy_released(state, proxy)
+        except BaseException:
+            state['request_hold'] = state['request_hold'] or bool(state.get('proxy_started'))
+            raise
         finally:
             # Failed status writes must never skip physical settlement.
-            state['settlement'] = stop_exact(h, m, state)
-    except BaseException:
-        state.update(status='HELD', request_hold=True, settlement=None)
-        try:
-            write(h, 'state.json', state)
-        except Exception:
-            pass  # Guard proof ages out; no successful settlement is published.
+            if lease is None and deadline is None:
+                state['settlement'] = stop_exact(h, m, state)
+            else:
+                state['settlement'] = stop_exact(h, m, state, lease=lease, deadline=deadline)
+    except BaseException as exc:
+        if (prior is not None and state.get('request_hold') is False
+                and type(exc) is OwnerRefusal and str(exc) == 'settlement_lease_deadline'):
+            state.clear()
+            state.update(prior)
+            record_failure(h, state, 'settlement_recheck_failure', exc, 'SETTLING', 'settlement')
+            raise
+        # Physical failure is not evidence of an admitted/unknown request.
+        # Preserve historical holds and every actual proxy ambiguity above.
+        state.update(status='HELD', settlement=None)
+        record_failure(h, state, 'settlement_failure', exc, 'SETTLING', 'settlement')
         raise
     state['status'] = 'SETTLED'
     write(h, 'state.json', state)
@@ -527,6 +701,12 @@ def supervise(dry_run=False):
     proxy = None
     proxy_deadline = None
     admitted = False
+    primary_error = None
+    cycle = None
+    operation = 'launch'
+    def progress(value):
+        nonlocal operation
+        operation = value
     try:
         with h.acquire_lease(blocking=False) as lease, h.MountedStorageGuard(h.s) as g:
             storage_paths(h, g)
@@ -560,35 +740,50 @@ def supervise(dry_run=False):
                 state.update(native=native_identity(c), native_cgroup=str(cgpath(c['State']['Pid'])), status='LOADING')
                 write(h, 'state.json', state)
                 h.s.root_payload_guard()
+        operation = 'key_read'
         key = read_key(h)
         load_end = time.monotonic() + 1800
         while True:
             cycle = time.monotonic()
             with bounded():
+                operation = 'selection_read'
                 require_selected(m, selected)
+                operation = 'boot_read'
                 require(BOOT.read_text().strip() == boot, 'boot_changed')
+                operation = 'docker_inspect'
                 exact_container(inspect(state['native']['container_id']), m, state)
-                sample = sample_guard(m, baseline, limit, state['native'])
+                operation = 'resource_sample'
+                sample = sample_guard(m, baseline, limit, state['native'], progress=progress)
+                operation = 'hardware_latch'
                 hardware = latch(h, boot)
                 if state['status'] == 'LOADING':
                     require(time.monotonic() < load_end, 'native_load_timeout')
                     ready = False
                     try:
-                        ready = native_ready(m, key)
+                        operation = 'native_readiness'
+                        ready = native_ready(m, key, progress=progress)
                     except MandatoryGuardTimeout:
                         raise
                     except (ConnectionError, OSError, http.client.HTTPException):
                         pass  # Loading may not yet bind or answer within the HTTP timeout.
                     if ready is True:
                         state['status'] = 'STARTING_PROXY'
+                        # Persist possible admission before creating the child;
+                        # an interruption in Popen must not claim no proxy.
+                        state['proxy_started'] = True
+                        operation = 'state_write'
                         write(h, 'state.json', state)
+                        operation = 'proxy_start'
                         proxy = subprocess.Popen(['/usr/bin/python3', '-I', '-B', str(BASE / 'source/private_proxy.py')],
                                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                         proxy_deadline = time.monotonic() + 5
-                        state['proxy_started'] = True
+                        state['proxy'] = {'pid': proxy.pid, 'pid_start_ticks': ticks(proxy.pid),
+                                          'parent_pid': os.getpid()}
+                        operation = 'state_write'
                         write(h, 'state.json', state)
                 disposition = None
                 if proxy is not None:
+                    operation = 'proxy_snapshot'
                     require(proxy.poll() is None, 'proxy_child_died')
                     try:
                         disposition = proxy_snapshot(state, proxy)
@@ -598,6 +793,7 @@ def supervise(dry_run=False):
                         state['proxy'] = {k: disposition[k] for k in ('pid', 'pid_start_ticks', 'parent_pid')}
                         if state['status'] != 'RUNNING':
                             state['status'] = 'RUNNING'
+                            operation = 'state_write'
                             write(h, 'state.json', state)
                 guard = {'schema_version': 2, 'status': 'ok', 'boot_id': boot, 'manifest_sha256': digest(m),
                          'selection': selected, 'supervisor': supervisor, 'native': state['native'],
@@ -605,11 +801,24 @@ def supervise(dry_run=False):
                          'observed_monotonic_s': time.monotonic(),
                          'observed_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
                          'hardware_latched': hardware['hardware_latched'], 'hardware_proof': hardware, 'sample': sample}
+                operation = 'guard_write'
                 write(h, 'guard.json', guard)
+            operation = 'cycle_sleep'
             time.sleep(max(0, 5 - (time.monotonic() - cycle)))
+    except BaseException as exc:
+        primary_error = exc
+        if admitted:
+            record_failure(h, state, 'primary_failure', exc, state['status'], operation,
+                           None if cycle is None else max(0, time.monotonic() - cycle))
+        raise
     finally:
         if admitted:
-            settle_state(h, m, state, proxy)
+            try:
+                settle_state(h, m, state, proxy)
+            except BaseException as exc:
+                record_failure(h, state, 'settlement_failure', exc, 'SETTLING', 'settlement')
+                if primary_error is None:
+                    raise
 
 
 def rollback_glm(h, m, expected, *, dry_run=False):
@@ -648,7 +857,7 @@ def main():
         require(args.service is not None, 'service_required')
         return 0 if selection()['selected_frontier'] == args.service else 1
     if args.action == 'supervise':
-        signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(RuntimeError('owner_interrupted')))
+        signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(OwnerRefusal('owner_interrupted')))
         supervise(args.dry_run)
         return 0
     m, h = read(BASE / 'manifest.json'), setup()
@@ -667,5 +876,5 @@ if __name__ == '__main__':
     try:
         raise SystemExit(main())
     except Exception as exc:
-        print(json.dumps({'status': 'REFUSED', 'reason': str(exc) if isinstance(exc, RuntimeError) else type(exc).__name__}))
+        print(json.dumps({'status': 'REFUSED', **failure(exc, 'CLI')}))
         raise SystemExit(255)

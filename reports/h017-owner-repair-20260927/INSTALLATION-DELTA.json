@@ -1,0 +1,48 @@
+{
+  "status": "SOURCE_ONLY_REQUIRES_ROOT_REVIEW_BEFORE_ANY_LIVE_ACTION",
+  "published_base": "d09620402007046881606dfbdc74c9ee3fde09b2",
+  "native_id": "01a0e445-a819-7622-a5ea-ca006b1de33b",
+  "deadline_utc": "2026-09-27T19:36:00Z",
+  "source_delta": [
+    {
+      "repository": "scripts/runtime/mimo/owner.py",
+      "destination": "/data/services/mimo-h016-20260927/source/owner.py",
+      "old_sha256": "7768181c10bb35c7fcaa02d243913aaedf9ff7396416252b826dc2bbdb814a2c",
+      "new_sha256": "33f12e1766e0f3481a7175ab55afafc8fc293caff5139f85848aba01493ee811"
+    },
+    {
+      "repository": "scripts/runtime/mimo/launch.json",
+      "destination": "/data/services/mimo-h016-20260927/source/launch.json",
+      "old_sha256": "c20b46fa1786dad3a358a0c3c29ecbba4a3d76afb3d4ea36f3ff823da6538241",
+      "new_sha256": "1fbfd1e9360c6ef7ed86bb26b339a65d21c21991dd1e5da48683f0df36d368cd"
+    }
+  ],
+  "capacity_amendment": {
+    "repository": "reports/h017-owner-repair-20260927/CAPACITY-AMENDMENT.json",
+    "destination": "/data/services/mimo-h016-20260927/qualification/h017-capacity-amendment.json",
+    "sha256": "1541bb86351c43f778706ac693e9fcca2e47b7ff69daa7725b06ad40109fbbfa"
+  },
+  "manifest": {
+    "repository": "reports/h017-owner-repair-20260927/MANIFEST-950000.proposed.json",
+    "destination": "/data/services/mimo-h016-20260927/manifest.json",
+    "raw_sha256": "a984cf3eed1a1707f475bc0edfa25a21c5cb63dcca25fdea4dae48a05da85772",
+    "canonical_sha256": "cfed2bb0a77f0ab5648f49521c32a5592fb40ec7e3575109dda3473214ee3924",
+    "previous_raw_sha256": "17d570d8c885878e9c770c056522323cfba0a1b4805b4dad5bbc58579b230547",
+    "previous_canonical_sha256": "c2d4cb314ce86a6c082faf784a5c3c55a6bb95acc1056f43f8baaeaa43f9016b"
+  },
+  "unchanged_unit_sha256": "c0c260e2fd554fc74ab045d072bdfa902780d05fa23b88f69f6324079e40573a",
+  "unchanged_proxy_sha256": "a77224f28c5367f26b0336722c6717bf8aa021107a7a4753705cc10a2599de52",
+  "unchanged_glm_preserved_sha256": {
+    "config.json": "4a5ea3904fba96480884b91414524617683b50e6f79fef96261e2b92183e6b71",
+    "source/owner.py": "d4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1"
+  },
+  "unchanged_guard_adapter": {
+    "path": "/data/build/h014-pro-7ac59a6-20260927/prep.py",
+    "sha256": "03c0933c194c79a6aca5e98e26bd1682f99927c0f9dbfe53f25d9938caf3724c"
+  },
+  "source_pin_count": 95,
+  "source_changed_pin_count": 2,
+  "qualification_pin_count": 6,
+  "new_actual_capacity": "NOT_TESTED",
+  "live_actions": false
+}

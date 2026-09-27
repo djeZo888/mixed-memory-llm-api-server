@@ -80,7 +80,7 @@ class OwnerTests(unittest.TestCase):
         self.assertNotIn('numa_maps',source);self.assertNotIn('/smaps',source)
         self.assertNotIn('placement(',source)
 
-    def _supervise_loading_fixture(self, readiness_error, *, sample_error=None):
+    def _supervise_loading_fixture(self, readiness_error, *, sample_error=None, settlement_error=None, receipt_error=None):
         """Run the actual owner loop, mocking every host/network boundary."""
         class LoopObserved(Exception):
             pass
@@ -111,8 +111,10 @@ class OwnerTests(unittest.TestCase):
                 exact_container=Mock(side_effect=lambda c,*_:c),native_identity=Mock(return_value=native),
                 cgpath=Mock(return_value=Path('/fixture/cgroup')),read_key=Mock(return_value=b'fixture'),
                 native_ready=Mock(side_effect=readiness_error),
-                write=Mock(side_effect=lambda h,name,value:writes.append((name,copy.deepcopy(value)))),
-                settle_state=Mock())
+                write=Mock(side_effect=lambda h,name,value: (_ for _ in ()).throw(receipt_error)
+                    if receipt_error is not None and 'primary_failure' in value
+                    else writes.append((name,copy.deepcopy(value)))),
+                settle_state=Mock(side_effect=settlement_error))
             for name,value in replacements.items():stack.enter_context(patch.object(o,name,value))
             sleep=stack.enter_context(patch.object(o.time,'sleep',side_effect=LoopObserved('loop reached sleep')))
             with self.assertRaises(Exception) as caught:o.supervise()
@@ -170,9 +172,9 @@ class OwnerTests(unittest.TestCase):
             self.assertTrue(state['request_hold'])
 
     def test_clean_finally_settles_native_before_publishing(self):
-        state=dict(launch_id='a',proxy_started=True)
+        state=dict(launch_id='a',proxy_started=False)
         calls=[]
-        with patch.object(o,'read',return_value={'launch_id':'a','active_requests':0,'quarantined':False}),patch.object(o,'stop_proxy',side_effect=lambda *_:calls.append('proxy')),patch.object(o,'stop_exact',side_effect=lambda *_:calls.append('native') or {'pid_released':True}),patch.object(o,'write',side_effect=lambda *_:calls.append('write')):
+        with patch.object(o,'read',side_effect=FileNotFoundError),patch.object(o,'stop_proxy',side_effect=lambda *_:calls.append('proxy')),patch.object(o,'stop_exact',side_effect=lambda *_:calls.append('native') or {'pid_released':True}),patch.object(o,'write',side_effect=lambda *_:calls.append('write')):
             result=o.settle_state(None,{},state,Mock())
         self.assertEqual(calls,['proxy','native','write']);self.assertEqual(result['status'],'SETTLED')
         self.assertFalse(result['request_hold'])
@@ -264,7 +266,76 @@ class OwnerTests(unittest.TestCase):
             with patch.object(o,'read',side_effect=FileNotFoundError),patch.object(o,'stop_proxy'),patch.object(o,'stop_exact',side_effect=error),patch.object(o,'write') as write:
                 with self.assertRaises(TimeoutError):o.settle_state(None,{},state)
             self.assertEqual(state['status'],'HELD')
-            self.assertTrue(state['request_hold']);self.assertIsNone(state['settlement'])
+            self.assertFalse(state['request_hold']);self.assertIsNone(state['settlement'])
+            self.assertEqual(state['settlement_failure']['code'],'timeout')
             self.assertEqual(write.call_args.args[2]['status'],'HELD')
+
+
+    def test_primary_survives_settlement_and_receipt_double_failure(self):
+        primary=o.OwnerRefusal('native_identity_or_capacity_changed')
+        for receipt_error in (None, OSError('private-file-detail')):
+            with self.subTest(receipt_failure=receipt_error is not None),patch('builtins.print') as journal:
+                error,_,writes,mocks,sleep=self._supervise_loading_fixture(primary,
+                    settlement_error=TimeoutError('private-cleanup-detail'),receipt_error=receipt_error)
+            self.assertIs(error,primary)
+            mocks['settle_state'].assert_called_once()
+            state=mocks['settle_state'].call_args.args[2]
+            self.assertEqual(state['primary_failure']['phase'],'LOADING')
+            self.assertEqual(state['primary_failure']['code'],'native_identity_or_capacity_changed')
+            self.assertEqual(state['primary_failure']['operation'],'native_readiness')
+            self.assertGreaterEqual(state['primary_failure']['cycle_elapsed_s'],0)
+            self.assertEqual(state['settlement_failure']['phase'],'SETTLING')
+            self.assertEqual(state['settlement_failure']['code'],'timeout')
+            if receipt_error is not None:self.assertEqual(state['receipt_failure']['code'],'os_error')
+            emitted=' '.join(call.args[0] for call in journal.call_args_list)
+            self.assertIn('primary_failure',emitted);self.assertIn('settlement_failure',emitted)
+            self.assertNotIn('private-',emitted)
+            sleep.assert_not_called()
+
+    def test_physical_failure_does_not_create_request_hold_but_ambiguity_does(self):
+        cases=[(False,False,None,False), (False,True,None,True),
+               (True,False,None,True), (True,False,{'launch_id':'old'},True),
+               (True,False,{'launch_id':'a','active_requests':1,'quarantined':False},True),
+               (True,False,{'launch_id':'a','active_requests':0,'quarantined':True},True),
+               (False,False,{'launch_id':'a','active_requests':1,'quarantined':False},True)]
+        for started,held,receipt,expected in cases:
+            with self.subTest(started=started,held=held,receipt=receipt):
+                state=dict(launch_id='a',proxy_started=started,request_hold=held)
+                with patch.object(o,'read',side_effect=FileNotFoundError if receipt is None else None,return_value=receipt),patch.object(o,'stop_proxy'),patch.object(o,'stop_exact',side_effect=TimeoutError),patch.object(o,'write'),patch('builtins.print'):
+                    with self.assertRaises(TimeoutError):o.settle_state(None,{},state)
+                self.assertEqual(state['status'],'HELD');self.assertEqual(state['request_hold'],expected)
+                with patch.object(o,'read',side_effect=FileNotFoundError),patch.object(o,'stop_proxy'),patch.object(o,'stop_exact',return_value={'pid_released':True,'cgroup_empty':True,'gpu_compute_empty':True}),patch.object(o,'write'):
+                    o.settle_state(None,{},state)
+                self.assertEqual(state['status'],'SETTLED');self.assertEqual(state['request_hold'],expected)
+                self.assertIn('settlement_failure',state)  # Previous fault evidence retained.
+
+
+    def test_loop_failure_records_specific_operation_and_cycle_elapsed(self):
+        def deadline(m,key,*,progress):
+            progress('http_slots')
+            raise o.MandatoryGuardTimeout('mandatory_guard_timeout')
+        with patch('builtins.print'):
+            error,_,writes,mocks,sleep=self._supervise_loading_fixture(deadline)
+        self.assertIsInstance(error,o.MandatoryGuardTimeout)
+        diagnostic=mocks['settle_state'].call_args.args[2]['primary_failure']
+        self.assertEqual(diagnostic['operation'],'http_slots')
+        self.assertEqual(diagnostic['code'],'mandatory_guard_timeout')
+        self.assertGreaterEqual(diagnostic['cycle_elapsed_s'],0)
+        sleep.assert_not_called()
+        self.assertEqual(o.failure(o.OwnerRefusal('private_token'),'LOADING')['code'],'unexpected_error')
+
+    def test_proxy_creation_failure_cannot_claim_no_proxy_admission(self):
+        with patch.object(o.subprocess,'Popen',side_effect=OSError('private-child-detail')),patch('builtins.print'):
+            error,_,writes,mocks,sleep=self._supervise_loading_fixture(lambda *a,**kw:True)
+        self.assertIsInstance(error,OSError)
+        state=mocks['settle_state'].call_args.args[2]
+        self.assertTrue(state['proxy_started'])
+        starting=[v for n,v in writes if n=='state.json' and v['status']=='STARTING_PROXY']
+        self.assertTrue(starting[0]['proxy_started'])
+        self.assertEqual(state['primary_failure']['operation'],'proxy_start')
+
+    def test_arbitrary_exception_text_is_never_a_diagnostic(self):
+        for exc in (RuntimeError('private-token'),ValueError('private-prompt'),OSError('private-path')):
+            self.assertNotIn('private-',json.dumps(o.failure(exc,'LOADING')))
 
 if __name__ == '__main__':unittest.main()

@@ -1,0 +1,34 @@
+{
+  "status": "SOURCE_ONLY_READY_FOR_ROOT_REVIEW",
+  "utc": "2026-09-27T19:27:30.665737+00:00",
+  "native_id": "01a0e445-a819-7622-a5ea-ca006b1de33b",
+  "start_utc": "2026-09-27T19:09:25Z",
+  "hard_deadline_utc": "2026-09-27T19:36:00Z",
+  "original_cause": "UNKNOWN",
+  "offline_r9_replay": "PASS baseline7768181c; no repeat",
+  "tests": {
+    "discovered": 58,
+    "passed": 57,
+    "skipped": 1,
+    "skip": "Explicit private R9 replay not repeated per Root",
+    "log_sha256": "0a8fbfd41acafc234f6c0006997370926467c9a69e6744b0f6f10105c384aed5"
+  },
+  "syntax": "PASS",
+  "help": "PASS",
+  "manifest_validation": "PASS",
+  "launch_equality": "PASS",
+  "live_contact": false,
+  "model_mutation": false,
+  "inference": false,
+  "subagents": false,
+  "push": false,
+  "actual_950000_capacity": "NOT_TESTED",
+  "production": "NOT_TESTED",
+  "sova": "NOT_TESTED",
+  "last_dispatched": false,
+  "final_reentry_regression": {
+    "passed": 11,
+    "reason": "Final one-line same-manifest preservation constraint",
+    "log_sha256": "4fdcd29d8698df551f9565145495ef4a9d66718184e922312906a5787a101131"
+  }
+}
