@@ -1,13 +1,12 @@
 # Sova project execution
 
-## H017 recovery checkpoint, 27 September 2026
+## Current authorization: H018, 28 September 2026
 
-The user authorized MiMo integration with a **two-hour foreground limit**:
-19:07:11–21:07:11UTC (21:07–23:07 Ljubljana). This supersedes the closed H016
-window and old holds. Live work has now stopped after failed MiMo acceptance;
-only review/publication remains before the deadline. Read
-`docs/h017-mimo-integration-results-20260927.md` and local
-`orchestration/tasks/H017-20260927/STATUS.md`.
+The user resumed MiMo integration and authorized **up to two hours**. The new
+foreground window is 23:38:03UTC27September–01:38:03UTC28September
+(01:38–03:38 Ljubljana). This supersedes closed H017 execution holds, but does
+not renew its expired client clocks. Read `docs/h018-mimo-integration-plan.md`,
+the H017 results and local `orchestration/tasks/H018-20260928/STATUS.md`.
 
 Use eight decode threads,64 batch threads and the already-verified MiMo Pro-RL
 checkpoint/runtime. Root selects950,000 usable context under the user's explicit
@@ -15,13 +14,19 @@ permission to reduce1M slightly. Keep F16 cache, GOMP_SPINCOUNT=0, ordinary
 CPU-expert allocation, external eight-node interleave and the selected GPU.
 No new model download, runtime/dependency rebuild or thread sweep.
 
-No optimized64K or near950K job was launched. LAST dispatch authority is inactive,
-all old acceptance clocks expire with this window, and automation remains paused.
-Do not start another model load or long test without a new user execution window.
-A future final independent job may run64K then near950K only after native tool
-and Sova delegation acceptance. Its existing eight-hour background cap is
-separate from any foreground limit; neither may silently extend. Close paid CLI
-sessions after dispatch verification, then wait for the user's nudge.
+No optimized64K or near950K job has yet run. First reproduce and repair the swap
+limit lifecycle defect with a small disposable no-GPU container. Review the
+repair before paying for another model load. Preserve enforced zero owned swap;
+do not treat Linux's `max` value as zero. Preinstall independent test units before
+loading. Avoid system daemon-reload during model inference.
+
+After genuine950K native tool and Sova delegation acceptance, the final task is
+one independent systemd job: optimized64K followed by near950K only if64K passes.
+Renew its dispatch authority once for H018; retain the eight-hour total background
+cap. Aim application acceptance complete by01:15UTC, final dispatch by01:25UTC,
+and reserve recovery/publication time before01:38:03. Close paid worker CLI
+sessions after actual startup verification, keep automation paused, and wait
+for the user's nudge. No paid polling while the long test runs.
 
 ## Roles and execution
 
@@ -98,7 +103,7 @@ actual delta; a reviewed narrow correction may retain host swap as telemetry
 while keeping zero owned swap, zero OOM and the15% available-memory floor.
 No four-way
 stress before improved physical cooling and separate user authorization. No
-BMC/fan/ECC/driver/reboot/Proxmox work in H017. Existing manual server-GPU fans
+BMC/fan/ECC/driver/reboot/Proxmox work in H018. Existing manual server-GPU fans
 remain unchanged. Installer work remains paused.
 
 ## Publication and continuity
