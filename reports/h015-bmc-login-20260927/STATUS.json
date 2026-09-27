@@ -10,8 +10,8 @@
   "probe_finish_utc": "2026-09-27T08:16:02.314709+00:00",
   "probe_exit_code": 0,
   "work_completed_utc": "2026-09-27T08:17:15.834450+00:00",
-  "wrapper_exit_code": null,
-  "wrapper_exit_note": "Written by parent wrapper after native session exits: ../exit-01-code and ../finished-01-utc. Not yet available inside the running session.",
+  "wrapper_exit_code": 0,
+  "wrapper_exit_note": "Original native run exit read from parent wrapper receipt; this continuation is source-only.",
   "outcome": "LOGIN_PASS_FAN_READBACK_HTTP_500",
   "authentication": "accepted owned UI session; exact pin before credentials; own logout HTTP 200",
   "mapping": "unavailable: PWM GET HTTP 500; no index/PWMNum inferred",
@@ -22,5 +22,9 @@
   "login_attempts": 1,
   "bmc_http_requests": 6,
   "optional_thermal_get": "not run",
-  "next_action": "Root review of this access result; no retry, account change or controller activation in this task."
+  "next_action": "Root review of this access result; no retry, account change or controller activation in this task.",
+  "source_only_continuation_utc": "2026-09-27T08:23:02.858903+00:00",
+  "user_comparison_supports_role_restriction": true,
+  "http_500_error_details_dropped": true,
+  "wrapper_finished_utc": "2026-09-27T08:18:16Z"
 }

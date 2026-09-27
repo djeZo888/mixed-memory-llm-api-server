@@ -85,3 +85,24 @@ checked, and new files inspected with whitespace and pattern-based secret scans.
 The parent wrapper writes the actual native exit status/time after this session
 ends. Bundle SHA and commit are recorded in the task-root `RESULT-DELIVERY.json`
 and final handoff, outside the bundle to avoid a self-referential digest.
+
+## Source-only continuation before 08:22:50 UTC
+
+The latest **user-observed browser comparison** is that Fan Control fails or is
+unavailable for sova Operator but works as Administrator. This is separate from
+our four API HTTP 500 responses and supports a role restriction. It does not
+identify the exact backend error or authorize an account/role change. The earlier
+statement about no demonstrated required account change remains bounded to the
+API evidence; the comparative browser evidence adds support for role dependence.
+
+**The reviewed error cleaner dropped HTTP 500 error details.** Its fan-field
+whitelist yielded `{}`; the original error bodies were not retained. Their exact
+cause cannot be recovered from the sanitized receipt.
+
+Readily available private local login/XHR excerpts were scanned without printing
+or copying vendor code or authentication data. They show cookie API/session
+storage usage, CSRF-header setup and the jQuery XHR marker. This limited marker
+inspection establishes neither complete browser/probe cookie equivalence nor a
+specific mismatch. No conclusive cookie/header mismatch was demonstrated.
+`FOLLOWUP.json` records these source-only findings and distinct evidence origins.
+No network request, login, write, test or probe was made in this continuation.
