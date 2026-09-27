@@ -1,0 +1,112 @@
+{
+  "utc": "2026-09-27T17:21:45.781872+00:00",
+  "status": "STARTUP_IDENTITY_AND_CANONICAL_GO_PASS",
+  "scope": "one authorized read-only canonical startup correction; no probe, request or mutation",
+  "go": {
+    "local_raw_sha256": "4ab4c1f0375e1bb2756760d9f9f165ff62544f9e84bf643c1b13273107324a5e",
+    "remote_raw_sha256": "7650de14ffe4e874eeb45a512386c14e307e77220b3c7e5da07d908939472d64",
+    "local_canonical_sha256": "98f910a5d8ba4ae8b69d2b995a390d3712ad6f32f733db9646c8b245725a42b8",
+    "remote_canonical_sha256": "98f910a5d8ba4ae8b69d2b995a390d3712ad6f32f733db9646c8b245725a42b8",
+    "complete_canonical_equal": true,
+    "raw_equal": false
+  },
+  "serialization_candidates_match": {
+    "sort_indent2_newline": true,
+    "sort_compact_newline": false,
+    "sort_default_newline": false
+  },
+  "source_sha256": {
+    "PLAN.json": "091cebb338a251e36307d30301e1542783bb552c8b3b82a370542da821573068",
+    "authority.py": "5f94109a3dbd51d97b9f740356eaf553236c9c17369c49b04389f12443887a8c",
+    "controller.py": "890cd6ea6afc015beea6741b838f90a7485f5a9257fb2495fee8f08267c80dbb",
+    "decode_affinity.py": "d210b2fe7751b1a62ad7bce521f371dea49f1dfe0d14e422b6a8a61ecdbc0fb7",
+    "dispatch_pair.py": "b4861cf4e55cdcff69068ffa1fa3d0ca4b9860aeab98421229ba87d63057e5d5",
+    "launch_pair.py": "e14662a422b5c1c70d536b31ac53e92fd1f51be7ec5fd4bbe123a1422180f957",
+    "r12-spread4/LAUNCH.json": "3f1cc59587d777799b3aa4e0f6939338c68a3d99d39a0cf87c53911f0b1b1fda",
+    "r12-spread4/authority.py": "5f94109a3dbd51d97b9f740356eaf553236c9c17369c49b04389f12443887a8c",
+    "r12-spread4/benchmark.py": "d3b019e4a55adaa4380d08a8c8c5e2053a6490fb5a827f6f7585e515a4509e00",
+    "r12-spread4/candidate_owner.py": "a43430ae82284a91c40c2559883c87ba3bb5fa2806cb608f64018e121ab1ff2a",
+    "r12-spread4/decode_affinity.py": "d210b2fe7751b1a62ad7bce521f371dea49f1dfe0d14e422b6a8a61ecdbc0fb7",
+    "r12-spread4/inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
+    "r12-spread4/launch_profile.py": "e1a69beec517c211f76ffb3865bedaee22809f5f300a88be5a9b014bdb228812",
+    "r12-spread4/native_identity.py": "0ba1f5781585ba887bd639e950870976e0ecb159caa674cb72dfa41cc48d3518",
+    "r12-spread4/private_proxy.py": "4d76bff2e2330c3ca5675f0c2c6413b9dc945d62fe11cb56e678bdb89d9c1317",
+    "r12-spread4/profile_activity.py": "dadbb73a4096364a5ddd401dd8dbd3f40d1dd9ec453d1ce10eebc59c82fe051a",
+    "r12-spread4/telemetry.py": "79b63724750bdc51f029353bd2f3e6670da224946071b963d8b833e980f50c99",
+    "r12-spread4/verify_retained.py": "e98d55e1fd9425a061e94bba963c062de97904924ec96d1918ab627185e180fc",
+    "r13-spread2/LAUNCH.json": "a339771d9f11bb2dc94a33a52cf91ddd4a0467e8c4f71276ea27734229f36dae",
+    "r13-spread2/authority.py": "5f94109a3dbd51d97b9f740356eaf553236c9c17369c49b04389f12443887a8c",
+    "r13-spread2/benchmark.py": "566edb9835e3f8760f6d2cf2202b3e40e2d7563f2a4badab19366b7b68efdca7",
+    "r13-spread2/candidate_owner.py": "2ffa678e9802c44481f16567fb1760278d39b1572cc1d1ea829ec0695c99eb53",
+    "r13-spread2/decode_affinity.py": "d210b2fe7751b1a62ad7bce521f371dea49f1dfe0d14e422b6a8a61ecdbc0fb7",
+    "r13-spread2/inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
+    "r13-spread2/launch_profile.py": "59ba22da753531c53113fc569072c0b00d41dbc0829a60652ee892a9c3669bec",
+    "r13-spread2/native_identity.py": "0ba1f5781585ba887bd639e950870976e0ecb159caa674cb72dfa41cc48d3518",
+    "r13-spread2/private_proxy.py": "4d76bff2e2330c3ca5675f0c2c6413b9dc945d62fe11cb56e678bdb89d9c1317",
+    "r13-spread2/profile_activity.py": "dadbb73a4096364a5ddd401dd8dbd3f40d1dd9ec453d1ce10eebc59c82fe051a",
+    "r13-spread2/telemetry.py": "79b63724750bdc51f029353bd2f3e6670da224946071b963d8b833e980f50c99",
+    "r13-spread2/verify_retained.py": "06343be2c371a46c4b62bb5bdf42f98e1e2826d4bb7fe0c3c5fc26d236b436f0",
+    "stage_pair.py": "6950495ef453c2e7f51fa7b124d6608193ff536becbe66a500def623d51c7443"
+  },
+  "source_hash_count": 31,
+  "all_31_exact": true,
+  "controller_unit": {
+    "TimeoutStopUSec": "7min 30s",
+    "RuntimeMaxUSec": "35min 36s",
+    "MainPID": "2823617",
+    "ControlPID": "0",
+    "ExecMainStartTimestamp": "Sun 2026-09-27 17:14:23 UTC",
+    "ControlGroup": "/system.slice/h016-affinity14-20260927.service",
+    "ActiveState": "active",
+    "SubState": "running",
+    "InvocationID": "9ea907b6950f4df2841009848a9cf2f3"
+  },
+  "first_unit": {
+    "TimeoutStopUSec": "7min",
+    "RuntimeMaxUSec": "35min 34s",
+    "MainPID": "2825099",
+    "ControlPID": "0",
+    "ExecMainStartTimestamp": "Sun 2026-09-27 17:14:26 UTC",
+    "ControlGroup": "/system.slice/h016-mimo-profile-20260927-r12-spread4.service",
+    "ActiveState": "active",
+    "SubState": "running",
+    "InvocationID": "a96ebf9ef4a64c18ac06ddefc38ed91f"
+  },
+  "native": {
+    "id": "71a5bdbfaa55f42a183dfb9b30408fa97ef331d24a4653bdbc9736efe3a9d7a7",
+    "name": "/llm-h016-mimo-pro-r12-spread4",
+    "image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 2827801,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-27T17:14:39.634214299Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "limits": {
+      "Memory": 755914244096,
+      "MemorySwap": 755914244096,
+      "CpusetCpus": "0-7,16-71",
+      "CpusetMems": "0-7"
+    }
+  },
+  "registered_storage_root_guard": "PASS",
+  "actual_atomic_json_implementation": "    def atomic_json(self, relative, value):\n        \"\"\"Write+fsync+rename+directory-fsync; caller owns the shared lease.\n\n        Interrupted temporary files are never treated as completion. On lost\n        storage they remain on that anchored filesystem; cleanup cannot fall\n        through to another filesystem.\n        \"\"\"\n        parts = _parts(relative)\n        self._authorize(parts)\n        if not isinstance(value, dict):\n            raise StorageIOError(\"invalid_storage_json\")\n        encoded = (json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + \"\\n\").encode()\n        if len(encoded) > MAX_CHUNK:\n            raise StorageIOError(\"storage_json_too_large\")\n        temporary = \"/\".join(parts[:-1] + [\".installer-\" + uuid.uuid4().hex])\n        with self._lock:\n            existing = self.stat(relative, missing_ok=True)\n            if existing is not None:\n                _protected(existing, self.uid, private=True)\n            try:\n                with self.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600) as stream:\n                    stream.write(encoded)\n                    stream.fsync()\n                self.replace(temporary, relative)\n            finally:\n                with contextlib.suppress(Exception):\n                    self.unlink(temporary, missing_ok=True)\n",
+  "pair_phase": "PROFILE_RUNNING",
+  "current_profile": "r12-spread4",
+  "first_owner": {
+    "status": "LOADING",
+    "pid": 2825099,
+    "candidate_id": "71a5bdbfaa55f42a183dfb9b30408fa97ef331d24a4653bdbc9736efe3a9d7a7",
+    "native_pid": 2827801,
+    "native_started_at": "2026-09-27T17:14:39.634214299Z"
+  },
+  "latest_saved_guard_utc": "2026-09-27T17:21:41.601456+00:00",
+  "complete_private_startup_sha256": "20e6ef3076c544f97924f72db82bdba614aa4bac91f7b14eeb020052c9ce2ebd"
+}

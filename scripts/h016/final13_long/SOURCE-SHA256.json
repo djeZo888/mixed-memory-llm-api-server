@@ -1,10 +1,10 @@
 {
   "scripts/h016/final13_long/README.md": "68c925090e2c5cb5ab7ae673a9b0eeadc050a5f9c5176a6b218e150d4544a5e9",
-  "scripts/h016/final13_long/client.py": "4b55f870f852fc02cd601a4e8b51db3e672b78f7ddea4e1310a7d6188602bc50",
+  "scripts/h016/final13_long/client.py": "efbd8a3f36fd480bca5ac40e47cbffb3e1896ebe72060680a7e9abede85c3f9a",
   "scripts/h016/final13_long/h016-final13-long.service": "547859b72a1951f9ff60e93f0de380ece3c946b961451bcd2d14a2998ecce6c8",
   "scripts/h016/final13_long/reader.py": "3adf8f433981c97a80dc23fcc0e9ed9e256c8d48755dc9579f1efcd9033541a5",
   "scripts/h016/final13_long/test_client.py": "89eedeff9f59dee3bbcc2b418ad005334ff0ba8ec9a4b2243b7175af150187c4",
-  "scripts/h016/final13_long/test_last_ownership.py": "239371693287fb41adf8b88c325d4b96b8d344a64c1127acec52f88ba3debdea",
+  "scripts/h016/final13_long/test_last_ownership.py": "82b9df51b5054c52c006e4d3f894a10f5adf914a52ee6b0ed67c87a29f166de9",
   "scripts/h016/final13_long/test_reader_completion.py": "cabe34f51fd9b8d89e48ceb7c5eb777cc8c6d98783cebc6bc7f26f1251272736",
   "scripts/h016/r9/LAUNCH.json": "44fae95b9e124db6a42ed1a343840d0912b7cfd114abddcbdf2b4e0bb7582ed8",
   "scripts/h016/r9/allocation.py": "e7ea91ca49e78d37537301a49347925b9cb06c98506898a01f2ecfe9221d0edb",

@@ -231,6 +231,7 @@ class OwnershipTests(unittest.TestCase):
 
     def test_ambiguous_replies_keep_ownership_and_exact_settlement(self):
         cases = {
+            'http09_normalized_to_10': b'HTTP/0.9 429 Too Many Requests\r\n' + MARKER + b'Content-Length: 0\r\n\r\n',
             'upstream_429': b'HTTP/1.0 429 Too Many Requests\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{}',
             'duplicate_marker': b'HTTP/1.0 429 Too Many Requests\r\n' + MARKER + MARKER + b'Content-Length: 0\r\n\r\n',
             'duplicate_length': b'HTTP/1.0 429 Too Many Requests\r\n' + MARKER + b'Content-Length: 0\r\nContent-Length: 0\r\n\r\n',
@@ -274,6 +275,37 @@ class OwnershipTests(unittest.TestCase):
 
 
 class RealSocketFramingTests(unittest.TestCase):
+    def test_raw_http09_remains_ambiguous_despite_normalized_version_10(self):
+        # Real socket framing reproduces the stdlib normalization that must
+        # never turn a non-reviewed wire status line into local BUSY proof.
+        left, right = socket.socketpair()
+        reader = types.SimpleNamespace(utc_now=lambda: 'fixture', count=lambda *_: (1, b'{}'))
+        evidence = []
+        c.adapter(reader, object(), object(), time.time() + 30,
+                  on_local_busy=evidence.append)
+        connection = reader.http.client.HTTPConnection('127.0.0.1', 30012, timeout=1)
+        connection.sock = left
+        response = None
+        try:
+            right.sendall(b'HTTP/0.9 429 Too Many Requests\r\n' + MARKER + b'Content-Length: 0\r\n\r\n')
+            right.shutdown(socket.SHUT_WR)
+            with mock.patch.object(c, 'write'):
+                connection.request('POST', '/v1/chat/completions', b'{}',
+                                   {'Authorization': 'Bearer offline-fixture'})
+                response = connection.getresponse()
+            self.assertEqual(response.status, 429)
+            self.assertEqual(response.version, 10)
+            self.assertEqual(response._h016_status_line, b'HTTP/0.9 429 Too Many Requests\r\n')
+            self.assertTrue(response._h016_headers_complete)
+            self.assertFalse(c.local_busy_response(response))
+            self.assertEqual(evidence, [])
+        finally:
+            if response is not None:
+                response.close()
+            connection.close()
+            left.close()
+            right.close()
+
     def test_http10_logical_close_keeps_socket_timeout_usable_for_busy_eof(self):
         # UNIX socketpair only: actual HTTPConnection/HTTPResponse behavior,
         # including getresponse() closing its logical socket on HTTP/1.0.

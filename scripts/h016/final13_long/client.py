@@ -38,6 +38,7 @@ class LocalBusyNotSubmitted(RuntimeError):
 def local_busy_response(response):
     """Only the pinned proxy's exact pre-dispatch rejection is attributable."""
     if (response.status != 429 or response.version != 10 or
+            getattr(response, '_h016_status_line', None) != b'HTTP/1.0 429 Too Many Requests\r\n' or
             not getattr(response, '_h016_headers_complete', False) or
             getattr(response.msg, 'defects', [])):
         return False
@@ -146,6 +147,7 @@ def adapter(reader, o, h, deadline, on_local_busy=None):
         def __init__(self, sock, *args, **kwargs):
             super().__init__(sock, *args, **kwargs)
             self._h016_socket = sock
+            self._h016_status_line = None
             self._h016_headers_complete = False
             response = self
             class HeaderBoundary:
@@ -154,6 +156,7 @@ def adapter(reader, o, h, deadline, on_local_busy=None):
                 def readline(self, *args):
                     line = self.raw.readline(*args)
                     if line.startswith(b'HTTP/'):
+                        response._h016_status_line = line
                         response._h016_headers_complete = False
                     elif line in (b'\r\n', b'\n'):
                         response._h016_headers_complete = True
