@@ -1,0 +1,22 @@
+[
+  {
+    "path": "src/llama-mmap.cpp",
+    "sha256": "3ca6869dfccbdbbafad0802e1a3d7db52174347d36174a982c1a662d7034b9c6",
+    "bytes": 27187
+  },
+  {
+    "path": "common/arg.cpp",
+    "sha256": "25c465a79b18a360d8bbe422feafa292ebca1f570985b21d69bbdc0f3df6e1f9",
+    "bytes": 220849
+  },
+  {
+    "path": "ggml/src/ggml-cpu/ggml-cpu.cpp",
+    "sha256": "7a850fc98efd2dfb94647ad3617c226cd87291f6eef4a2ec8cd58cc2ffc52725",
+    "bytes": 24798
+  },
+  {
+    "path": "ggml/src/ggml-cpu/ggml-cpu.c",
+    "sha256": "559612b11d5aa286365c975dbe79deec9b3f4e89b06bd217bab98239cf30a942",
+    "bytes": 132087
+  }
+]
