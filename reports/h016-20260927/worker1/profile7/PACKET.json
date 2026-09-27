@@ -4,7 +4,7 @@
     "benchmark.py": "c61f91a72c7d147efc359f02fdeba6fff9a972a3295a71e8556f551536bd1490",
     "candidate_owner.py": "af03d05a1ba66ede3d06939b62e548d4d5a76847d56c6728e92bafa379e86d5f",
     "inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
-    "launch_r6.py": "81d06b2b4aa2d0dd92e076074871cbf36117679033e662279a63e2a20904f3b9",
+    "launch_r6.py": "b6eb9a39fa12bb8aee1d0c169dd8e7ea64ee0b437a26b813ec052885d0cbac01",
     "native_identity.py": "0ba1f5781585ba887bd639e950870976e0ecb159caa674cb72dfa41cc48d3518",
     "private_proxy.py": "4d76bff2e2330c3ca5675f0c2c6413b9dc945d62fe11cb56e678bdb89d9c1317",
     "profile_activity.py": "908b571f49b53edd7f12bf2bf9e51078f28d6648f05cac63ab0eedaf48bb879a",
@@ -18,10 +18,13 @@
     "test_repair.py": "147edacb49fb2004175b5577d8956c809a879aec50b299733d36514d042b399a",
     "verify_retained.py": "738a06ba04ecc6246b793eb8d4d4d0a2ac44cb5383dfe8a1697e92809e8557fd"
   },
-  "minimal_diff_sha256": "ecfd8964465bed2cf408cd340e2eaae7119a879577838cdeddc159b8e2d25883",
+  "minimal_diff_sha256": "92a5004228d7ee22990ce3a515f1de06f3d7124cc01dca78e9bc49049446dd92",
   "source_base": "7d92f02",
   "checks": ".......s...............\n----------------------------------------------------------------------\nRan 23 tests in 0.234s\n\nOK (skipped=1)\n",
   "focused_final_checks": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.006s\n\nOK\n",
   "final_review_adjustment": "perf report --symfs /proc/nativePID/root resolves existing container library symbols; no profiler or model setting changed.",
-  "diff_format": "zero context unified diff to avoid blank context trailing whitespace in stored patch"
+  "diff_format": "zero context unified diff to avoid blank context trailing whitespace in stored patch",
+  "root_go_base": "6e8bd31",
+  "final_launcher_correction": "systemd-run outside h.transaction; no other runtime source changes",
+  "final_launcher_checks": "PASS: systemd-run outside all parent context managers at line 34\nPASS: all R6 Python syntax; native argv and mandatory guard unchanged\nlaunch_r6.py sha256 b6eb9a39fa12bb8aee1d0c169dd8e7ea64ee0b437a26b813ec052885d0cbac01\nstaging payload sha256 6737b179fcf53c6a63bd4832c5d08b08fd1202b98a288f66899702c4ae4e2364\n"
 }

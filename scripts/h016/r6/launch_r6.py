@@ -29,8 +29,9 @@ def main(run=False):
                'global_end_utc': cfg['global_end_utc'], 'no_inference_dispatched_by_launcher': True}
     if run:
         save(h, 'INITIAL-LAUNCH.json', receipt)
-        with h.transaction():
-            subprocess.run(argv, check=True, stdout=subprocess.DEVNULL, timeout=10)
+        # All parent preflight/save transactions are closed. The independent
+        # child performs its authoritative preflight and lease acquisition.
+        subprocess.run(argv, check=True, stdout=subprocess.DEVNULL, timeout=10)
         receipt['status'] = 'SYSTEMD_DISPATCHED_READBACK_REQUIRED'
         receipt['unit_readback'] = run_cmd(['systemctl', 'show', unit, '-p',
             'MainPID,InvocationID,ExecMainStartTimestamp,ActiveState,SubState,ControlGroup,RuntimeMaxUSec,TimeoutStopUSec'])
