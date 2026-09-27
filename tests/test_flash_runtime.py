@@ -23,6 +23,13 @@ class SharedHttpPolicy(unittest.TestCase):
                 return types.SimpleNamespace(prompt_ids=list(range(len(text))))
         app=FastAPI();server=types.SimpleNamespace(app=app)
         app.state.openai_serving_chat=Serving()
+        # Match the two pinned native routes that the adapter replaces. The
+        # installation guard deliberately rejects an empty or drifted router.
+        async def native_tokenize():
+            raise AssertionError('replaced native tokenize endpoint was called')
+        server.openai_v1_tokenize=native_tokenize
+        app.add_api_route('/v1/tokenize',native_tokenize,methods=['POST'])
+        app.add_api_route('/tokenize',native_tokenize,methods=['POST'])
         install_tokenize_route(server,types.SimpleNamespace)
         @app.post('/v1/chat/completions')
         async def chat(request:Request):

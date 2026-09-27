@@ -20,3 +20,11 @@ Build/test gates pending: isolated Python full HTTP checks, server/web
 lock-verified typechecks/builds and runtime imports, paired native image build.
 No activation/tag/unit/profile/config writes to production. Candidate-only until
 root GO plus Worker1's fresh authenticated1M backend/pool/tokenizer receipt.
+
+05:24 UTC update: full prepared Python HTTP/capacity/readiness suite now passes
+38 tests. First full run exposed a stale HTTP fixture with no pinned native
+tokenize routes (5 unexpected_native_tokenize_route errors); fixture now supplies
+the exact two routes the production adapter requires. No production relaxation.
+Initial build preflight stopped before writes because an added all-ancestor check
+rejected existing ~/.local0775; guard now uses H008's canonical protected
+graphroot check (share/containers/storage0700). Original preflight log retained.

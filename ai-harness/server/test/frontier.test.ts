@@ -296,10 +296,11 @@ test("unqualified tokenizer and unavailable protected key never start inference 
 });
 
 test("production has no 16K cap; exact input plus complete output reservation at limit +/-1", async (t) => {
-  const f = await fixture({ contextWindow: 480000 });
+  for (const contextWindow of [480000, 1048576] as const) {
+  const f = await fixture({ contextWindow });
   t.after(f.close);
-  for (const count of [16001, 479998 - 65536 - 1, 479998 - 65536]) {
-    f.setCount({ ...f.countResponse, context_limit: 480000, count });
+  for (const count of [16001, (contextWindow - 2) - 65536 - 1, (contextWindow - 2) - 65536]) {
+    f.setCount({ ...f.countResponse, context_limit: contextWindow, count });
     const index = f.requests.length;
     const p = f.send({ max_tokens: 999999 });
     await until(() => f.requests.length === index + 1);
@@ -310,22 +311,23 @@ test("production has no 16K cap; exact input plus complete output reservation at
   }
   f.setCount({
     ...f.countResponse,
-    context_limit: 480000,
-    count: 479998 - 65536 + 1,
+    context_limit: contextWindow,
+    count: (contextWindow - 2) - 65536 + 1,
   });
   assert.equal((await f.send()).status, 413);
   assert.equal(f.requests.length, 3);
-  for (const count of [479992, 479993]) {
-    f.setCount({ ...f.countResponse, context_limit: 480000, count });
+  for (const count of [contextWindow - 8, contextWindow - 7]) {
+    f.setCount({ ...f.countResponse, context_limit: contextWindow, count });
     const index = f.requests.length,
       p = f.send({ max_tokens: 1 });
     await until(() => f.requests.length === index + 1);
     f.complete(index);
     assert.equal((await p).status, 200);
   }
-  f.setCount({ ...f.countResponse, context_limit: 480000, count: 479994 });
+  f.setCount({ ...f.countResponse, context_limit: contextWindow, count: contextWindow - 6 });
   assert.equal((await f.send({ max_tokens: 1 })).status, 413);
   assert.equal(f.requests.length, 5);
+  }
 });
 
 test("bounded queue expiry and session-token revoke cancel queued ownership immediately", async (t) => {
