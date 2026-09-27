@@ -1,0 +1,6 @@
+{
+  "source_hashes_match_go": true,
+  "go_patch_sha256": "63746fb97ec2094de574910cc3054678b00cb55d67b77582311424d02b31ca65",
+  "current_patch_sha256": "4036bf8518c9880664e969bfb798afcd5b9bd3dc0abadeff841c628244eb3a49",
+  "explanation": "GO individual source hashes explicitly bind benchmark32cd65e4 with immediate FIRST_OUTPUT recording; its patch field still names prior63746 draft. Executed source is exactly every individually approved hash; no R8 source edits after GO."
+}
