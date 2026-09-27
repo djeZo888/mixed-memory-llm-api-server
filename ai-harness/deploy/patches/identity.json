@@ -1,6 +1,6 @@
 {
   "sourceRevision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
-  "patchSetSha256": "e487935b3d6efce51216b8755cbd712912c30c7d45f6a9e5e293f0f998f89a65",
+  "patchSetSha256": "a6dd7df37313edc4ea2f6bc742ffb6ff431a37abacb2facdbbf422a4c9f9d4bd",
   "patches": [
     {
       "path": "0001-gateway-request-budget.patch",
@@ -49,7 +49,7 @@
     },
     {
       "path": "0010-frontier-model-accounting.patch",
-      "sha256": "ecd037dbd7cc3f56c47efa04d121e8779a9124e209fb4cda2b35cb7931b42192",
+      "sha256": "43a2620284ccb6110723119ab4720d0f047ffd3805db8d84a3eaf7463d501c99",
       "phase": "source"
     }
   ],
@@ -282,7 +282,7 @@
     {
       "path": "packages/local-runtime-v2/src/service/model-system/resolution/model-token-estimator.ts",
       "originalSha256": null,
-      "patchedSha256": "b51fc7fec8ebe9874adf3545f05c8cc6f64a2d74c994ba04531450a746b9ea0d"
+      "patchedSha256": "649b21e84263c278c1a43d8cc17ab19fdbf08a5a4b95c666d9a914dd81abea68"
     },
     {
       "path": "packages/local-runtime-v2/src/service/model-system/resolution/dynamic-max-tokens.ts",

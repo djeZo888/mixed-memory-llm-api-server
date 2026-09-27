@@ -18,7 +18,19 @@ export const MODEL_REF = `custom_provider:harness/${MODEL}`;
 export const REQUEST_TIMEOUT_MS = 151 * 60 * 1000;
 export const SHARED_SLOT_INSTRUCTIONS = 'Two shared inference slots serve all chats and agents. Delegate independent tasks when useful; excess inference requests are queued.\n';
 
-export function localConfig(env) {
+export const DEFAULT_FRONTIER_PROFILE = Object.freeze({ model: FRONTIER_MODEL, contextWindow: FRONTIER_CONTEXT, maxOutputTokens: 65536 });
+export function selectedFrontierProfile(selection) {
+  if (selection?.model === FRONTIER_MODEL) return DEFAULT_FRONTIER_PROFILE;
+  if (selection?.model !== 'mimo-v2.6-pro-rl' || selection.mimoEnabled !== true ||
+      typeof selection.mimoQualificationSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(selection.mimoQualificationSha256) ||
+      !Number.isSafeInteger(selection.mimoContextWindow) || selection.mimoContextWindow < 2 || selection.mimoContextWindow > 1048576 ||
+      !Number.isSafeInteger(selection.mimoMaxOutputTokens) || selection.mimoMaxOutputTokens < 1 || selection.mimoMaxOutputTokens > 65536 || selection.mimoMaxOutputTokens >= selection.mimoContextWindow) throw Error('Unqualified active frontier profile');
+  return Object.freeze({ model: selection.model, contextWindow: selection.mimoContextWindow, maxOutputTokens: selection.mimoMaxOutputTokens });
+}
+export function frontierSlotPolicy(frontier = DEFAULT_FRONTIER_PROFILE) {
+  return frontier.model === FRONTIER_MODEL ? FRONTIER_SLOT_POLICY : 'Managed slot clarification: the two shared inference slots above are Qwen slots. Frontier MiMo-V2.6-Pro-RL occupies the single swappable frontier slot and queue; GLM is retained for rollback, with no concurrent GLM/MiMo capacity. MiMo input is text-only; use browser/search/PDF text or OCR and approved image generation/edit MCP tools. Main Qwen vision is unchanged.\n';
+}
+export function localConfig(env, frontier = DEFAULT_FRONTIER_PROFILE) {
   if (env.AI_HARNESS_GATEWAY_URL !== 'http://10.0.2.2:8081/v1') {
     throw new Error('Expected the reviewed rootless gateway URL.');
   }
@@ -38,10 +50,10 @@ export function localConfig(env) {
         kind: 'custom', name: 'Local frontier gateway', enabled: true,
         api: 'openai-completions',
         options: { baseURL: 'http://10.0.2.2:8081/frontier/v1', apiKey: token, timeout: REQUEST_TIMEOUT_MS },
-        models: { [FRONTIER_MODEL]: { id: FRONTIER_MODEL, name: 'GLM-5.3-Flash', enabled: true,
+        models: { [frontier.model]: { id: frontier.model, name: frontier.model === FRONTIER_MODEL ? 'GLM-5.3-Flash' : 'MiMo-V2.6-Pro-RL', enabled: true,
           tool_call: true, reasoning: true,
-          limit: { context: FRONTIER_CONTEXT, output: 65536 },
-          thinking: { effortOptions: ['high'], defaultEffort: 'high' },
+          limit: { context: frontier.contextWindow, output: frontier.maxOutputTokens },
+          ...(frontier.model === FRONTIER_MODEL ? { thinking: { effortOptions: ['high'], defaultEffort: 'high' } } : {}),
           modalities: { input: ['text'], output: ['text'] },
         } },
       },
@@ -208,36 +220,43 @@ function writePrivateJson(profile, name, value) {
   }
 }
 
-export function frontierAgentMarkdown() {
+export function frontierAgentMarkdown(frontier = DEFAULT_FRONTIER_PROFILE) {
   return `---
 name: frontier
 description: Deep research, multi-document analysis, hard reasoning and independent diagnosis; selective escalation from Qwen.
-model: custom_provider:frontier/glm-5.3-flash
-effort: high
-disallowedTools: [task, task_append]
+model: custom_provider:frontier/${frontier.model}
+${frontier.model === FRONTIER_MODEL ? 'effort: high\n' : ''}disallowedTools: [task, task_append]
 x-mavis:
-  contextWindow: ${FRONTIER_CONTEXT}
-  maxOutputTokens: 65536
+  contextWindow: ${frontier.contextWindow}
+  maxOutputTokens: ${frontier.maxOutputTokens}
 ---
 ${FRONTIER_INSTRUCTIONS}
 Use the normal approved tools, research, browser, search, PDF, code and image capabilities. Do not delegate recursively. Report uncertainty and evidence; reuse completed results.
 `;
 }
-export function seedFrontierAgent(profile) {
+function isManagedFrontierAgent(bytes) {
+  if (createHash('sha256').update(bytes).digest('hex') === PRIOR_FRONTIER_AGENT_SHA256 || bytes.equals(Buffer.from(frontierAgentMarkdown()))) return true;
+  // Only these explicitly reviewed generated profiles are eligible for a
+  // future capacity switch/rollback. Arbitrary numeric edits are user content.
+  return [131072, 1048576].some(contextWindow => bytes.equals(Buffer.from(
+    frontierAgentMarkdown({ model: 'mimo-v2.6-pro-rl', contextWindow, maxOutputTokens: 65536 }),
+  )));
+}
+export function seedFrontierAgent(profile, frontier = DEFAULT_FRONTIER_PROFILE) {
   safeDirectory(profile, true);
   const agents = path.join(profile, 'agents');
   if (!statIfPresent(agents)) mkdirSync(agents, { mode: 0o700 });
   safeDirectory(agents, true);
   const directory = path.join(agents, 'frontier');
   const target = path.join(directory, 'agent.md');
-  const content = Buffer.from(frontierAgentMarkdown());
+  const content = Buffer.from(frontierAgentMarkdown(frontier));
   if (statIfPresent(directory)) {
     safeDirectory(directory, true);
     const previous = safeRead(target, true);
     if (previous.equals(content)) return;
     // Only the exact prior reviewed 480K managed file is eligible. Custom bytes,
     // unsafe ownership/modes, links and extra profile content are never adopted.
-    if (createHash('sha256').update(previous).digest('hex') !== PRIOR_FRONTIER_AGENT_SHA256) {
+    if (!isManagedFrontierAgent(previous)) {
       throw new Error('Existing frontier agent differs; explicit migration required.');
     }
     const staging = mkdtempSync(path.join(agents, '.frontier-migrate-'));
@@ -258,7 +277,7 @@ export function seedFrontierAgent(profile) {
   } finally { rmSync(staging, { recursive: true, force: true }); }
 }
 
-export function configureProfile(env, skillsSource = SKILLS_SOURCE) {
+export function configureProfile(env, skillsSource = SKILLS_SOURCE, frontier = DEFAULT_FRONTIER_PROFILE) {
   const profile = env.MINIMAX_DATA_DIR;
   if (!profile || !path.isAbsolute(profile) || profile === '/' || realpathSync(profile) !== profile) {
     throw new Error('MINIMAX_DATA_DIR must be a canonical isolated absolute directory.');
@@ -266,9 +285,12 @@ export function configureProfile(env, skillsSource = SKILLS_SOURCE) {
   if (env.HOME !== path.join(profile, 'home')) throw new Error('HOME must be the isolated profile/home directory.');
   const stat = lstatSync(profile);
   if (!stat.isDirectory() || stat.uid !== process.getuid()) throw new Error('Profile must be owned by the engine user.');
-  const config = localConfig(env);
+  const config = localConfig(env, frontier);
+  const slotPolicy = frontierSlotPolicy(frontier);
   mkdirSync(env.HOME, { recursive: true, mode: 0o700 });
   if (realpathSync(env.HOME) !== env.HOME) throw new Error('Profile home must not be a symlink.');
+  // Reject custom frontier conflicts before changing managed global policy.
+  seedFrontierAgent(profile, frontier);
   // The pinned native GlobalInstructions reader uses dataDir/AGENTS.md, not a
   // config.yaml prompt field. Seed once and preserve later user instructions.
   const instructions = path.join(profile, 'AGENTS.md');
@@ -279,20 +301,21 @@ export function configureProfile(env, skillsSource = SKILLS_SOURCE) {
     }
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
-    writeFileSync(instructions, SHARED_SLOT_INSTRUCTIONS + FRONTIER_INSTRUCTIONS + FRONTIER_SLOT_POLICY, { mode: 0o600, flag: 'wx' });
+    writeFileSync(instructions, SHARED_SLOT_INSTRUCTIONS + FRONTIER_INSTRUCTIONS + slotPolicy, { mode: 0o600, flag: 'wx' });
   }
   // Upgrade the instruction surface by appending a managed policy. Existing user
   // text stays byte-for-byte intact; a refreshed runner can discover frontier.
-  const previousInstructions = safeRead(instructions, true).toString('utf8');
-  const additions = [FRONTIER_INSTRUCTIONS, FRONTIER_SLOT_POLICY].filter(policy => !previousInstructions.includes(policy)).join('');
-  if (additions) {
+  const originalInstructions = safeRead(instructions, true).toString('utf8');
+  // Replace only the exact managed slot paragraph; preserve surrounding user text.
+  const previousInstructions = originalInstructions.replace(frontierSlotPolicy(frontier.model === FRONTIER_MODEL ? { model: 'mimo-v2.6-pro-rl' } : DEFAULT_FRONTIER_PROFILE), slotPolicy);
+  const additions = [FRONTIER_INSTRUCTIONS, slotPolicy].filter(policy => !previousInstructions.includes(policy)).join('');
+  if (additions || previousInstructions !== originalInstructions) {
     const staging = path.join(profile, `.AGENTS-${process.pid}.tmp`);
     try {
-      writeFileSync(staging, previousInstructions + '\n' + additions, { mode: 0o600, flag: 'wx' });
+      writeFileSync(staging, previousInstructions + (additions ? '\n' + additions : ''), { mode: 0o600, flag: 'wx' });
       renameSync(staging, instructions);
     } finally { try { unlinkSync(staging); } catch (error) { if (error.code !== 'ENOENT') throw error; } }
   }
-  seedFrontierAgent(profile);
   seedReviewedSkills(profile, skillsSource);
   writePrivateJson(profile, 'mcp.json', localMcpConfig(env));
   // JSON is a YAML subset. Never print this ephemeral session gateway token.
@@ -301,7 +324,7 @@ export function configureProfile(env, skillsSource = SKILLS_SOURCE) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try { configureProfile(process.env); }
+  try { configureProfile(process.env, SKILLS_SOURCE, selectedFrontierProfile(JSON.parse(readFileSync('/opt/ai-harness/config/active-frontier.json', 'utf8')))); }
   // Filesystem errors can embed environment-derived paths. Never echo them or
   // the supplied environment: only the fixed failure category reaches logs.
   catch { process.stderr.write('Engine profile rejected: invalid or unsafe profile configuration.\n'); process.exitCode = 1; }

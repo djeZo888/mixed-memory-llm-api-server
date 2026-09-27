@@ -1,0 +1,9 @@
+
+ RUN  v5.0.1 /Users/agent/CodexProjects/llm-orchestration/tasks/H016-MIMO-INTEGRATION-20260927/repo/ai-harness/web
+
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  13:12:27
+   Duration  591ms (environment 72%, setup 11%, tests 11%, transform 5%, import 1%)
+

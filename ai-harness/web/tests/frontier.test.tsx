@@ -87,3 +87,10 @@ it.each([
   expect(badge.textContent).toContain(`lane ${lane}`);
   expect(screen.queryByRole('progressbar')).toBeNull();
 });
+
+it('MiMo shows separate allocated and largest completed input plus historical actual model', async () => {
+  vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>({model:'mimo-v2.6-pro-rl',provider:'mimo',configured:true,state:'idle',contextWindow:131072,queued:0,capacity:{configured:131072,allocated:131072,occupiedTested:4096},requests:[{model:'glm-5.3-flash',state:'settled'}]})})));
+  render(<FrontierActivity sessionId="owned" />);
+  const badge=await screen.findByLabelText('Frontier child activity');
+  expect(badge.textContent).toContain('allocated 131,072');expect(badge.textContent).toContain('largest completed input 4,096');expect(badge.textContent).toContain('glm-5.3-flash settled');expect(screen.queryByRole('progressbar')).toBeNull();
+});

@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
-import { frontierConfiguration } from "./frontier.js";
+import { loadFrontierSelection, loadActiveFrontier } from "./active-frontier.js";
+import { FRONTIER_MODEL } from "./frontier.js";
+import { MIMO_MODEL } from "./mimo.js";
 import { FrontierLedger } from "./frontier-ledger.js";
 import { readProtectedCredential } from "./protected-credential.js";
 export { readProtectedCredential } from "./protected-credential.js";
@@ -53,7 +55,7 @@ export async function start() {
     const observed = serviceAvailability(
       nodeAvailability
         ? (name) => nodeAvailability!.get(name)
-        : id === "glm-5.3-flash"
+        : [FRONTIER_MODEL, MIMO_MODEL].includes(id)
           ? () => ({ state: "unknown", dispatch: "hold" })
           : undefined,
       id,
@@ -136,29 +138,18 @@ export async function start() {
       });
     }
     frontierLedger = new FrontierLedger(application.store.db);
-    let configured: ReturnType<typeof frontierConfiguration>;
+    let selectedFrontierModel: typeof FRONTIER_MODEL | typeof MIMO_MODEL = FRONTIER_MODEL;
+    let frontier: import("./gateway.js").GatewayOptions["frontier"];
     try {
-      configured = frontierConfiguration(
-        JSON.parse(
-          readFileSync(
-            new URL("../../config/frontier.json", import.meta.url),
-            "utf8",
-          ),
-        ),
-      );
-    } catch {
-      /* Missing/invalid frontier config never prevents Qwen startup. */
-    }
-    const frontier = configured
-      ? {
-          ...configured,
-          // Lazy read: missing frontier credential never prevents Qwen startup.
-          upstreamKey: () =>
-            readProtectedCredential(required("AI_HARNESS_FRONTIER_KEY_FILE")),
-          onRequestState: (record: import("./frontier.js").FrontierRecord) =>
-            frontierLedger!.record(record),
-        }
-      : undefined;
+      // Read selected model before qualification: never disguise a rejected
+      // MiMo selection as an available GLM fallback.
+      const rawSelection = JSON.parse(readFileSync(new URL("../../config/active-frontier.json", import.meta.url), "utf8"));
+      if (rawSelection?.model === MIMO_MODEL) selectedFrontierModel = MIMO_MODEL;
+      const selection = loadFrontierSelection();
+      frontier = loadActiveFrontier(selection,
+        () => readProtectedCredential(required("AI_HARNESS_FRONTIER_KEY_FILE")),
+        (record) => frontierLedger!.record(record));
+    } catch { /* Only the selected frontier is disabled. Qwen startup survives. */ }
     const states = Object.fromEntries(
       (
         application.store.db
@@ -168,6 +159,8 @@ export async function start() {
     );
     gateway = createGateway({
       frontier,
+      selectedFrontierModel,
+      initialFrontierOwnerModel: (application.store.db.prepare("SELECT json_extract(value,'$.model') AS model FROM frontier_requests WHERE state IN ('active','quarantined') ORDER BY updated_at DESC LIMIT 1").get() as {model?: string} | undefined)?.model,
       upstreamKey: key,
       images: application.images,
       availability,

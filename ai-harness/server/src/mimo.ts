@@ -1,4 +1,4 @@
-/** Disabled/unwired MiMo protocol adapter. No queue, selection, URL or credentials.
+/** MiMo protocol adapter; production candidate remains disabled. No queue, selection, URL or credentials.
  * Only the existing shared frontier owner may eventually supply transport and
  * authenticated observations. Static config and native count integers attest
  * neither loaded identity nor allocation. See the H014 qualification gates. */
@@ -99,7 +99,9 @@ export function prepareMimo(value: unknown): MimoPrepared {
   const b = jsonCopy(value);
   fields(b, ['model', 'messages', 'tools', 'tool_choice', 'parallel_tool_calls', 'n',
     'stream', 'stream_options', 'max_tokens', 'max_completion_tokens', 'temperature',
-    'top_p', 'stop', 'reasoning_effort', 'chat_template_kwargs']);
+    'top_p', 'stop', 'reasoning_effort', 'chat_template_kwargs', 'store']);
+  if (b.store !== undefined && b.store !== false) fail();
+  delete b.store;
   if (b.model !== MIMO_MODEL || !Array.isArray(b.messages) || !b.messages.length || b.messages.length > 4096) fail();
   const pending = new Set<string>(), seen = new Set<string>();
   for (const m of b.messages) {
@@ -130,9 +132,10 @@ export function prepareMimo(value: unknown): MimoPrepared {
   if (b.tools !== undefined) {
     if (!Array.isArray(b.tools) || b.tools.length > 128) fail();
     for (const t of b.tools) {
-      fields(t, ['type', 'function']); fields(t.function, ['name', 'description', 'parameters']);
+      fields(t, ['type', 'function']); fields(t.function, ['name', 'description', 'parameters', 'strict']);
       if (t.type !== 'function' || !name(t.function.name) || toolNames.includes(t.function.name) ||
-        (t.function.description !== undefined && typeof t.function.description !== 'string') || !object(t.function.parameters)) fail();
+        (t.function.description !== undefined && typeof t.function.description !== 'string') ||
+        (t.function.strict !== undefined && typeof t.function.strict !== 'boolean') || !object(t.function.parameters)) fail();
       toolNames.push(t.function.name);
     }
   }
@@ -206,20 +209,25 @@ export interface MimoQualification {
   evidenceSha256: string;
   identity: MimoBackendIdentity;
   checks: { artifactBytes: true; nativePrecision: true; allocation: true; reserves: true;
-    templateAndTokenizer: true; textArrayRendering: true; countBoundary: true;
-    generationCeiling: true; reasoningAndTools: true; singleOwner: true };
+    templateAndTokenizer: true; textArrayRendering: true;
+    admissionBound: { basis: "pinned-source-s-minus-one"; arithmeticFixtures: true; shortNativeCountUsageMatch: true };
+    generationCeiling: { requestedMaxTokens: number; requestedCeilingAccepted: true; largestCompletedOutputTokens: number };
+    reasoningAndTools: true; singleOwner: true };
 }
-function qualification(value: MimoQualification): MimoQualification {
+export function validateMimoQualification(value: MimoQualification): MimoQualification {
   const q = jsonCopy(value) as unknown as MimoQualification;
   const i = q?.identity, c = q?.checks;
   if (q?.qualified !== true || !digest(q.evidenceSha256) || !object(i) || !object(c) ||
     ['artifactBytes', 'nativePrecision', 'allocation', 'reserves', 'templateAndTokenizer',
-      'textArrayRendering', 'countBoundary', 'generationCeiling', 'reasoningAndTools', 'singleOwner'].some(k => (c as unknown as Obj)[k] !== true) ||
+      'textArrayRendering', 'reasoningAndTools', 'singleOwner'].some(k => (c as unknown as Obj)[k] !== true) ||
     i.model !== MIMO_MODEL || i.runtimeRevision !== MIMO_RUNTIME || i.artifactRevision !== MIMO_ARTIFACT_REVISION ||
     i.artifactManifestSha256 !== MIMO_ARTIFACT_MANIFEST_SHA256 ||
     ['runtimeBuildSha256', 'loadedTensorMetadataSha256', 'loadedTokenizerSha256', 'loadedTemplateSha256'].some(k => !digest(i[k])) ||
     !token(i.serverInstance) || !token(i.serverGeneration) || !positive(i.actualSlotContext) || i.actualSlotContext < 2 ||
     !positive(i.maxOutputTokens) || i.maxOutputTokens > 2147483647 || i.maxOutputTokens >= i.actualSlotContext ||
+    !object(c.admissionBound) || c.admissionBound.basis !== "pinned-source-s-minus-one" || c.admissionBound.arithmeticFixtures !== true || c.admissionBound.shortNativeCountUsageMatch !== true ||
+    !object(c.generationCeiling) || c.generationCeiling.requestedMaxTokens !== Math.min(65536, i.maxOutputTokens) || c.generationCeiling.requestedCeilingAccepted !== true ||
+    !positive(c.generationCeiling.largestCompletedOutputTokens) || c.generationCeiling.largestCompletedOutputTokens > c.generationCeiling.requestedMaxTokens ||
     i.parallel !== 1 || i.contextShift !== false || i.speculative !== false || i.mtp !== false || i.multimodal !== false ||
     i.assistantPrefill !== false || i.jinja !== true || typeof i.kvUnified !== 'boolean' || i.swaFull !== false) fail('mimo_unqualified');
   return freeze(q);
@@ -251,7 +259,7 @@ const admissions = new WeakSet<object>();
 const dispatchedAdmissions = new WeakSet<object>();
 function admitMimo(prepared: MimoPrepared, proof: MimoQualification, observed: MimoBackendIdentity, promptTokens: number): MimoAdmission {
   if (!preparedSet.has(prepared)) fail('mimo_uncanonical_body');
-  const q = qualification(proof); match(q, observed);
+  const q = validateMimoQualification(proof); match(q, observed);
   const { actualSlotContext: s, maxOutputTokens: ceiling } = q.identity;
   const o = prepared.outputTokens;
   if (!uint(promptTokens) || o > ceiling || promptTokens >= s || o > s - 1 - promptTokens) fail('mimo_context_full');
@@ -270,7 +278,7 @@ function withinSignal<T>(operation: () => Promise<T>, signal: AbortSignal): Prom
 }
 export async function countMimo(prepared: MimoPrepared, proof: MimoQualification, transport: MimoCountTransport, signal: AbortSignal): Promise<MimoAdmission> {
   if (!preparedSet.has(prepared)) fail('mimo_uncanonical_body');
-  const q = qualification(proof);
+  const q = validateMimoQualification(proof);
   if (prepared.outputTokens > q.identity.maxOutputTokens) fail('mimo_output_limit');
   const boundedSignal = AbortSignal.any([signal, AbortSignal.timeout(15000)]);
   match(q, await withinSignal(() => transport.observe(boundedSignal), boundedSignal));

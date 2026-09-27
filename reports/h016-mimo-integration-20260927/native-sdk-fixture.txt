@@ -1,0 +1,35 @@
+{
+  "result": "PASS",
+  "evidence": "OFFLINE retained MiniMax child binding/SDK payload.17 fixture tools include code_review, omit browser; NOT production17 qualification, no deployed-image or llama runtime proof",
+  "sourceRevision": "740746982d66ab7f51244e254dc000fb25e0ebcc",
+  "model": "custom_provider:frontier/mimo-v2.6-pro-rl",
+  "contextWindow": 131072,
+  "maxOutputTokens": 65536,
+  "tools": [
+    "read",
+    "write",
+    "edit",
+    "bash",
+    "grep",
+    "glob",
+    "skill",
+    "code_review",
+    "request_feature_enable",
+    "web_fetch",
+    "task_query",
+    "task_output",
+    "task_stop",
+    "mcp__searxng__searxng_search",
+    "mcp__image__image_capabilities",
+    "mcp__image__image_generate",
+    "mcp__image__image_edit"
+  ],
+  "toolFunctionFields": [
+    "name",
+    "description",
+    "parameters",
+    "strict"
+  ],
+  "networkRequests": 0,
+  "toolExecutions": 0
+}

@@ -6,7 +6,7 @@ import type {
   ServiceAvailability,
 } from "./service-availability.js";
 
-const SERVICES = ["qwen-gpu0", "qwen-gpu1", "image", "glm-5.3-flash"] as const;
+const SERVICES = ["qwen-gpu0", "qwen-gpu1", "image", "glm-5.3-flash", "mimo-v2.6-pro-rl"] as const;
 type ServiceId = (typeof SERVICES)[number];
 export interface HardwareLatch {
   /** Authoritative latch origin, never inferred from the current node boot. */
@@ -104,7 +104,7 @@ export class NodeAvailability {
     for (const id of SERVICES) {
       // Flash has no agreed passive /readiness route; observe node status only.
       const probe =
-        id === "glm-5.3-flash" ? undefined : options.readiness?.[id];
+        ["glm-5.3-flash", "mimo-v2.6-pro-rl"].includes(id) ? undefined : options.readiness?.[id];
       if (probe)
         this.readiness.set(
           id,

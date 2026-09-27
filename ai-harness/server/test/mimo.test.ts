@@ -17,7 +17,7 @@ const identity = (): MimoBackendIdentity => ({ model: MIMO_MODEL, runtimeRevisio
   assistantPrefill: false, jinja: true, kvUnified: false, swaFull: false });
 const proof = (): MimoQualification => ({ qualified: true, evidenceSha256: d, identity: identity(),
   checks: { artifactBytes: true, nativePrecision: true, allocation: true, reserves: true, templateAndTokenizer: true,
-    textArrayRendering: true, countBoundary: true, generationCeiling: true, reasoningAndTools: true, singleOwner: true } });
+    textArrayRendering: true, admissionBound: { basis: "pinned-source-s-minus-one", arithmeticFixtures: true, shortNativeCountUsageMatch: true }, generationCeiling: { requestedMaxTokens: 20, requestedCeilingAccepted: true, largestCompletedOutputTokens: 10 }, reasoningAndTools: true, singleOwner: true } });
 const tool = { type: 'function', function: { name: 'lookup', description: 'fixture',
   parameters: { type: 'object', properties: { query: { type: 'string' } } } } };
 const request = (extra = {}) => ({ model: MIMO_MODEL, messages: [{ role: 'user', content: 'Hello' }], max_tokens: 20, ...extra });
@@ -38,9 +38,9 @@ const stream = (events: unknown[], observed = identity(), httpComplete = true) =
 
 test('disabled candidate pins all artifacts but advertises no live capacity or readiness', async () => {
   const c = JSON.parse(readFileSync(new URL('../../config/mimo-candidate.json', import.meta.url), 'utf8'));
-  assert.equal(c.enabled, false); assert.equal(c.qualified, false); assert.equal(c.wired, false);
+  assert.equal(c.enabled, false); assert.equal(c.qualified, false); assert.equal(c.wired, true);
   assert.equal(c.actualSlotContext, null); assert.equal(c.maxOutputTokens, null); assert.equal(c.qualifiedContext, null);
-  assert.equal(c.nativeSettlementQualified, false); assert.equal(c.livePortVerified, false); assert.equal(c.proposedPrivatePort, 30012);
+  assert.equal(c.serialCompletionQualified, false); assert.equal(c.livePortVerified, false); assert.equal(c.proposedPrivatePort, 30012);
   const manifestBytes = readFileSync(new URL('../../../reports/h014-provider-contract-20260927/SELECTED-ARTIFACT.json', import.meta.url));
   assert.equal(createHash('sha256').update(manifestBytes).digest('hex'), MIMO_ARTIFACT_MANIFEST_SHA256);
   const manifest = JSON.parse(manifestBytes.toString());

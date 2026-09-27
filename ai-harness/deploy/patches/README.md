@@ -153,9 +153,9 @@ and explicit custom restrictions preserved. This is not live acceptance.
 
 ## H008 frontier accounting patch
 
-`0010-frontier-model-accounting.patch` selects a Flash-specific UTF-8 scheduling
+`0010-frontier-model-accounting.patch` selects a Flash/MiMo-specific UTF-8 scheduling
 heuristic at the three current v2 dynamic-output/compaction call sites. It does not
-claim to implement the GLM tokenizer: exact fully rendered count admission belongs
+claim to implement either native tokenizer: exact fully rendered count admission belongs
 to the host's fixed frontier gateway contract. Every Qwen/other-provider estimator
 is unchanged. The new patchset identity in `identity.json` is authoritative and
 supersedes the historical prose hash above. See

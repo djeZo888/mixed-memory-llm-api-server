@@ -1,3 +1,5 @@
+import { MIMO_MODEL, prepareMimo, countMimo, mimoGenerationRequest, MimoStreamValidator, MimoError, type MimoAdmission } from "./mimo.js";
+import { mimoUrl, MIMO_PRODUCTION_OUTPUT, type MimoFrontierOptions } from "./mimo-frontier.js";
 import {
   FRONTIER_MODEL,
   frontierUrl,
@@ -32,7 +34,11 @@ export interface GatewayUpstream {
   alias: string;
 }
 export interface GatewayOptions {
-  frontier?: FrontierOptions;
+  frontier?: FrontierOptions | MimoFrontierOptions;
+  /** Actual selected identity even when qualification fails; never fallback. */
+  selectedFrontierModel?: typeof FRONTIER_MODEL | typeof MIMO_MODEL;
+  /** Latest unresolved durable request owner, retained across profile changes. */
+  initialFrontierOwnerModel?: string;
   images?: ImageBroker;
   dispatchHeld?: (alias: string) => boolean;
   /** Local cached observation only; unknown preserves existing admission behavior. */
@@ -70,6 +76,9 @@ export interface Gateway {
     model: string;
     contextWindow: number | null;
     configured: boolean;
+    provider: "glm" | "mimo";
+    maxOutputTokens: number | null;
+    capacity: { published: number; configured: number | null; allocated: number | null; occupiedTested: number | null };
     queued: number;
     state: LaneState | "unavailable";
     availability: ServiceAvailability;
@@ -475,6 +484,15 @@ export function createGateway(options: GatewayOptions): Gateway {
     options.onLaneState,
     options.availability,
   );
+  const mimo = options.frontier && "provider" in options.frontier ? options.frontier : undefined;
+  const glm = options.frontier && !("provider" in options.frontier) ? options.frontier : undefined;
+  const frontierModel = mimo ? MIMO_MODEL : options.selectedFrontierModel ?? FRONTIER_MODEL;
+  if ((glm && frontierModel !== FRONTIER_MODEL) || (mimo && options.selectedFrontierModel === FRONTIER_MODEL)) throw Error("Frontier selection mismatch");
+  // Keep the existing durable GLM key as the one shared frontier slot. Any
+  // retained prior provider uncertainty blocks selection across app restarts.
+  const previousFrontier = options.initialFrontierOwnerModel !== undefined || [FRONTIER_MODEL, MIMO_MODEL].some(id =>
+    ["active", "quarantined"].includes(options.initialLaneStates?.[id] ?? "idle")) ? "quarantined" : "idle";
+  const unresolvedProviderChange = previousFrontier !== "idle" && ((options.initialFrontierOwnerModel !== undefined && options.initialFrontierOwnerModel !== frontierModel) || (frontierModel === FRONTIER_MODEL && ["active", "quarantined"].includes(options.initialLaneStates?.[MIMO_MODEL] ?? "idle")));
   const frontierAvailability: AvailabilityProvider =
     options.availability ??
     (() => ({
@@ -484,7 +502,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     }));
   const frontierAdmission = options.frontier
     ? new Admission(
-        [{ url: frontierUrl(options.frontier), alias: FRONTIER_MODEL }],
+        [{ url: mimo ? mimoUrl(mimo) : frontierUrl(glm!), alias: frontierModel }],
         8,
         128 * 1024 * 1024,
         positive(
@@ -492,8 +510,8 @@ export function createGateway(options: GatewayOptions): Gateway {
           30 * 60 * 1000,
           "frontier queue timeout",
         ),
-        options.initialLaneStates,
-        options.onLaneState,
+        { [frontierModel]: previousFrontier },
+        (_alias, state) => options.onLaneState?.(FRONTIER_MODEL, state),
         frontierAvailability,
       )
     : undefined;
@@ -513,6 +531,8 @@ export function createGateway(options: GatewayOptions): Gateway {
     forceCloseConnections: true,
   });
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof MimoError)
+      return reply.code(error.code === "mimo_context_full" || error.code === "mimo_output_limit" ? 413 : error.code === "mimo_invalid_request" || error.code === "mimo_tool_history" ? 400 : 503).send({ error: { code: error.code, message: "MiMo request or qualification rejected" } });
     if (error instanceof ApiError)
       return reply
         .code(error.statusCode)
@@ -644,12 +664,12 @@ export function createGateway(options: GatewayOptions): Gateway {
     if (
       frontier &&
       (options.dispatchHeld?.("harness") ||
-        options.dispatchHeld?.(FRONTIER_MODEL))
+        options.dispatchHeld?.(frontierModel))
     )
       throw new ApiError(503, "frontier_held", "Frontier dispatch is held");
-    const body = frontier
-      ? frontierBody(request.body)
-      : requestBody(request.body);
+    const prepared = frontier && mimo ? prepareMimo(request.body) : undefined;
+    if (prepared && prepared.outputTokens > MIMO_PRODUCTION_OUTPUT) throw new ApiError(413, "mimo_output_limit", "MiMo production output ceiling exceeded");
+    const body = prepared ? prepared.body : frontier ? frontierBody(request.body) : requestBody(request.body);
     const bodyBytes = Buffer.byteLength(JSON.stringify(body));
     const token = request.headers.authorization!.slice(7);
     const sessionId = tokens.get(token);
@@ -664,7 +684,7 @@ export function createGateway(options: GatewayOptions): Gateway {
           id: randomBytes(16).toString("hex"),
           sessionId,
           state: "queued",
-          model: FRONTIER_MODEL,
+          model: frontierModel,
           contextWindow: options.frontier!.contextWindow,
           updatedAt: new Date().toISOString(),
         }
@@ -758,7 +778,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     if (
       frontier &&
       (options.dispatchHeld?.("harness") ||
-        options.dispatchHeld?.(FRONTIER_MODEL))
+        options.dispatchHeld?.(frontierModel))
     ) {
       selectedAdmission.settle(lane, true);
       recordState("rejected");
@@ -788,15 +808,26 @@ export function createGateway(options: GatewayOptions): Gateway {
         "Selected inference lane is unavailable",
       );
     }
+    let mimoAdmission: MimoAdmission | undefined;
+    let mimoPayload: string | undefined;
     if (frontier) {
       try {
-        const counted = await countFrontier(
-          options.frontier!,
-          body,
-          key,
-          cancelled.signal,
-        );
-        Object.assign(record!, counted);
+        if (mimo && prepared) {
+          mimoAdmission = await countMimo(prepared, mimo.qualification, {
+            observe: mimo.observe,
+            post: (r) => fetch(`${mimoUrl(mimo).replace(/\/v1$/, "")}${r.path}`, {
+              method: r.method, redirect: "error", headers: { authorization: `Bearer ${key}`, "content-type": "application/json" }, body: r.body, signal: r.signal,
+            }),
+          }, cancelled.signal);
+          const observed = await mimo.observe(cancelled.signal);
+          mimoPayload = mimoGenerationRequest(mimoAdmission, observed).body;
+          Object.assign(record!, { promptTokens: mimoAdmission.promptTokens, reservedOutput: prepared.outputTokens,
+            canonicalRequestSha256: prepared.sha256, qualificationEvidenceSha256: mimo.qualification.evidenceSha256,
+            serverInstance: observed.serverInstance, serverGeneration: observed.serverGeneration });
+        } else {
+          const counted = await countFrontier(glm!, body, key, cancelled.signal);
+          Object.assign(record!, counted);
+        }
         if (cancelled.signal.aborted)
           throw new ApiError(499, "cancelled", "Request cancelled");
         // This catch owns the single release. Do not call requireCurrentToken,
@@ -809,7 +840,7 @@ export function createGateway(options: GatewayOptions): Gateway {
           );
         if (
           options.dispatchHeld?.("harness") ||
-          options.dispatchHeld?.(FRONTIER_MODEL)
+          options.dispatchHeld?.(frontierModel)
         )
           throw new ApiError(503, "frontier_held", "Frontier dispatch is held");
         if (selectedAdmission.available(lane).dispatch !== "allow")
@@ -828,7 +859,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     }
     lane.dispatched = true;
     lane.ownerSettled = false;
-    const payload = JSON.stringify({ ...body, model: lane.upstream.alias });
+    const payload = mimoPayload ?? JSON.stringify({ ...body, model: lane.upstream.alias });
     const endpoint = new URL(
       `${lane.upstream.url.replace(/\/$/, "")}/chat/completions`,
     );
@@ -872,10 +903,14 @@ export function createGateway(options: GatewayOptions): Gateway {
     await new Promise<void>((resolve) => {
       let settled = false;
       let timeout: NodeJS.Timeout | undefined;
+      let mimoValidator: MimoStreamValidator | undefined;
+      const mimoChunks: Buffer[] = [];
+      const settlementAbort = new AbortController();
       const settle = (confirmed: boolean) => {
         if (settled) return;
         settled = true;
         clearTimeout(timeout);
+        settlementAbort.abort();
         active.delete(upstream);
         selectedAdmission.settle(lane, confirmed);
         try {
@@ -921,7 +956,11 @@ export function createGateway(options: GatewayOptions): Gateway {
             return;
           }
           upstreamResponse = response;
-          if (!disconnected) {
+          if (mimoAdmission) {
+            try { mimoValidator = new MimoStreamValidator(mimoAdmission, { status: response.statusCode ?? 502, contentType: String(response.headers["content-type"] ?? "") }); }
+            catch { response.resume(); fail("mimo_stream_invalid", "MiMo stream rejected; owner requires settlement review"); return; }
+          }
+          if (!disconnected && !mimoValidator) {
             reply.raw.statusCode = response.statusCode ?? 502;
             for (const header of [
               "content-type",
@@ -936,6 +975,11 @@ export function createGateway(options: GatewayOptions): Gateway {
           }
           response.on("data", (chunk: Buffer) => {
             if (settled) return;
+            if (mimoValidator) {
+              try { mimoValidator.push(chunk); if (!disconnected) mimoChunks.push(Buffer.from(chunk)); }
+              catch { mimoChunks.length = 0; fail("mimo_stream_invalid", "MiMo stream rejected; owner requires settlement review"); }
+              return;
+            }
             observe.data(chunk);
             if (!disconnected && !reply.raw.destroyed) {
               if (!reply.raw.write(chunk)) {
@@ -944,8 +988,27 @@ export function createGateway(options: GatewayOptions): Gateway {
               }
             }
           });
-          response.once("end", () => {
+          response.once("end", async () => {
             if (settled) return;
+            if (mimoValidator && mimo) {
+              try {
+                const observed = await mimo.observe(settlementAbort.signal);
+                if (settled) return;
+                const result = mimoValidator.finish(response.complete, observed);
+                record!.backendResponseId = result.responseId;
+                recordState("active");
+                if (mimo.serialCompletionQualified !== true) throw Error("Serial native completion unqualified");
+                // Hold tool fragments until full SSE/HTTP validation under the qualified serial runtime.
+                // A detached consumer never interrupts this bounded upstream drain.
+                if (!disconnected && !reply.raw.destroyed) {
+                  reply.raw.statusCode = 200;
+                  reply.raw.setHeader("content-type", "text/event-stream");
+                  reply.raw.end(Buffer.concat(mimoChunks));
+                }
+                settle(true);
+              } catch { fail("mimo_settlement_unconfirmed", "MiMo owner requires settlement review"); }
+              return;
+            }
             observe.end();
             const status = response.statusCode ?? 502;
             const rejectedBeforeGeneration = [
@@ -1020,16 +1083,22 @@ export function createGateway(options: GatewayOptions): Gateway {
       })),
     }),
     frontierSnapshot: () => ({
-      model: FRONTIER_MODEL,
+      model: frontierModel,
+      provider: frontierModel === MIMO_MODEL ? "mimo" : "glm",
+      maxOutputTokens: mimo ? Math.min(MIMO_PRODUCTION_OUTPUT, mimo.qualification.identity.maxOutputTokens) : glm ? 65536 : null,
+      capacity: mimo ? mimo.capacity : { published: 1048576, configured: glm?.contextWindow ?? null, allocated: null, occupiedTested: null },
       configured: !!options.frontier,
       contextWindow: options.frontier?.contextWindow ?? null,
       queued: frontierAdmission?.queued ?? 0,
       state: frontierAdmission?.lanes[0]?.state ?? "unavailable",
-      availability: serviceAvailability(frontierAvailability, FRONTIER_MODEL),
+      availability: serviceAvailability(frontierAvailability, frontierModel),
     }),
     reconcileAfterOwnerSettlement: (aliases) => {
       const qwen = admission.reconcileAfterOwnerSettlement(aliases);
       // Only an exact owner-settlement alias may release frontier uncertainty.
+      // Normal MiMo serial completion is handled above. Generic administration
+      // cannot clear ambiguity or authorize a physical model switch.
+      if (frontierModel === MIMO_MODEL || unresolvedProviderChange) return qwen && !aliases.some(a => a === MIMO_MODEL || a === FRONTIER_MODEL);
       const frontier = aliases.includes(FRONTIER_MODEL)
         ? (frontierAdmission?.reconcileAfterOwnerSettlement([FRONTIER_MODEL]) ??
           true)

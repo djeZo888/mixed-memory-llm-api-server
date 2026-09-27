@@ -1,6 +1,7 @@
 /** Trusted release configuration. Inventory never confers execution/action authority. */
 import { isIPv4 } from "node:net";
 import { readFileSync } from "node:fs";
+import { loadFrontierSelection } from "./active-frontier.js";
 import { NODE_IDS, SERVICE_IDS, type NodeId } from "./node-contract.js";
 
 export type RegistryNode = {
@@ -145,10 +146,17 @@ export function validateSystemRegistry(raw: unknown): SystemRegistry {
   }
   return { schema_version: 1, credentials, transports, nodes, services, components };
 }
+/** Inventory shows the selected shared frontier, never two concurrent slots. */
+export function selectRegistryFrontier(registry: SystemRegistry, model: string): SystemRegistry {
+  if (model === "glm-5.3-flash") return registry;
+  if (model !== "mimo-v2.6-pro-rl") throw Error("Invalid selected frontier");
+  return validateSystemRegistry({ ...registry, services: registry.services.map(s => s.id === "glm-5.3-flash"
+    ? { ...s, id: model, observation_key: model, display_name: "Frontier MiMo-V2.6-Pro-RL" } : s) });
+}
 export function loadSystemRegistry(): SystemRegistry {
   // Fixed path relative to source/dist, shipped and reviewed with the release.
   // No request parameter, browser endpoint, environment URL or credential path.
   const text = readFileSync(new URL("../../config/system-registry.json", import.meta.url), "utf8");
   if (Buffer.byteLength(text) > 128 * 1024) fail();
-  return validateSystemRegistry(JSON.parse(text));
+  return selectRegistryFrontier(validateSystemRegistry(JSON.parse(text)), loadFrontierSelection().model);
 }

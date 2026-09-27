@@ -17,7 +17,12 @@ export interface FrontierRecord {
   id: string;
   sessionId: string;
   state: FrontierRequestState;
-  model: typeof FRONTIER_MODEL;
+  model: typeof FRONTIER_MODEL | "mimo-v2.6-pro-rl";
+  canonicalRequestSha256?: string;
+  qualificationEvidenceSha256?: string;
+  serverInstance?: string;
+  serverGeneration?: string;
+  backendResponseId?: string;
   contextWindow: number;
   promptTokens?: number;
   reservedOutput?: number;

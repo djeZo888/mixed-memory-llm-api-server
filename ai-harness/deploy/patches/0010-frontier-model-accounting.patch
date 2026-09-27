@@ -7,10 +7,10 @@ new file mode 100644
 +import type { AgentMessage } from '@earendil-works/pi-agent-core';
 +import { BpeTokenEstimator, createDefaultTokenEstimator, type TokenEstimator } from '@mavis/context-manager';
 +
-+/** Local scheduling heuristic only, NOT the GLM tokenizer or an admission proof.
++/** Local scheduling heuristic only, NOT a model tokenizer or an admission proof.
 + * The host gateway counts the fully rendered prompt with the pinned upstream
 + * tokenizer/template before EVERY frontier inference, including compaction.
-+ * UTF-8 sizing deliberately triggers earlier compaction than o200k for Flash.
++ * UTF-8 sizing deliberately triggers earlier compaction than o200k for Flash/MiMo.
 + * Qwen and every other provider retain their original estimator instance.
 + */
 +class FrontierSchedulingEstimator extends BpeTokenEstimator {
@@ -21,7 +21,7 @@ new file mode 100644
 +}
 +const frontierEstimator = new FrontierSchedulingEstimator();
 +export function modelTokenEstimator(model: { provider: string; id: string }): TokenEstimator {
-+  return model.provider === 'custom_provider:frontier' && model.id === 'glm-5.3-flash'
++  return model.provider === 'custom_provider:frontier' && ['glm-5.3-flash', 'mimo-v2.6-pro-rl'].includes(model.id)
 +    ? frontierEstimator : createDefaultTokenEstimator();
 +}
 diff --git a/packages/local-runtime-v2/src/service/model-system/resolution/dynamic-max-tokens.ts b/packages/local-runtime-v2/src/service/model-system/resolution/dynamic-max-tokens.ts

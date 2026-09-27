@@ -1,0 +1,40 @@
+{
+  "utc": "2026-09-27T11:18:43.340222+00:00",
+  "server_focused": {
+    "passed": 87,
+    "failed": 0,
+    "command": "tsx --test --test-timeout=15000 test/{mimo,mimo-integration,frontier,frontier-contract,frontier-ledger,gateway,node-availability,system-registry}.test.ts"
+  },
+  "after_final_candidate_field_rename": {
+    "mimo_passed": 11
+  },
+  "managed_profile_after_exact_numeric_edit_fix": {
+    "passed": 17,
+    "skipped": 1,
+    "failed": 0,
+    "skip": "existing installed CLI fixture requires packaged /opt/ai-harness/skills absent on this Mac"
+  },
+  "launcher": {
+    "passed": 21,
+    "failed": 0
+  },
+  "web_frontier": {
+    "passed": 7,
+    "failed": 0
+  },
+  "server_typecheck": "PASS",
+  "web_typecheck": "PASS",
+  "server_compile": "PASS",
+  "native_sdk_fixture": "PASS retained patched source, not deployed image or production browser roster",
+  "native_estimator_source": "PASS exact changed source with retained real classes; no new engine build",
+  "dependencies": "Reused existing H008 locked server/web dependencies; no install",
+  "inference": false,
+  "image_build": false,
+  "activation": false,
+  "backend_contact": false,
+  "ai_vm_contact": false,
+  "bmc_contact": false,
+  "subagents": false,
+  "push": false,
+  "final_quiet_readback": "2026-09-27T11:17:42.506382+00:00 same data/unit/container identities"
+}

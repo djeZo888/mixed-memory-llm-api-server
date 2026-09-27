@@ -313,3 +313,44 @@ test('H013 frontier migration changes only exact protected managed 480K agent by
     assert.deepEqual(readdirSync(path.join(profile, 'agents')), ['frontier']);
   } finally { rmSync(profile, { recursive: true, force: true }); }
 });
+
+test('MiMo selected native profile and exact managed migration/rollback preserve Qwen/custom/history', async () => {
+  const { selectedFrontierProfile, frontierSlotPolicy } = await import('./configure-profile.mjs');
+  const selected = selectedFrontierProfile({ model:'mimo-v2.6-pro-rl', mimoEnabled:true, mimoQualificationSha256:'a'.repeat(64), mimoContextWindow:131072, mimoMaxOutputTokens:65536 });
+  const config=localConfig(fixture,selected),glm=localConfig(fixture);
+  assert.equal(config.defaultModel,glm.defaultModel);assert.deepEqual(config.custom_provider.harness,glm.custom_provider.harness);assert.deepEqual(config.agents,glm.agents);
+  assert.deepEqual(Object.keys(config.custom_provider.frontier.models),['mimo-v2.6-pro-rl']);
+  assert.deepEqual(config.custom_provider.frontier.models['mimo-v2.6-pro-rl'].limit,{context:131072,output:65536});
+  assert.equal(config.custom_provider.frontier.models['mimo-v2.6-pro-rl'].thinking,undefined);
+  assert.match(frontierAgentMarkdown(selected),/model: custom_provider:frontier\/mimo-v2.6-pro-rl/);assert.match(frontierAgentMarkdown(selected),/disallowedTools: \[task, task_append\]/);assert.ok(!frontierAgentMarkdown(selected).includes('effort: high'));
+  assert.throws(()=>selectedFrontierProfile({model:'mimo-v2.6-pro-rl',mimoEnabled:false}));
+  const profile=realpathSync(mkdtempSync(path.join(os.tmpdir(),'h016-profile-'))),env={...fixture,MINIMAX_DATA_DIR:profile,HOME:path.join(profile,'home')};
+  try {
+    configureProfile(env,reviewedSource);
+    const agent=path.join(profile,'agents/frontier/agent.md'),instructions=path.join(profile,'AGENTS.md');
+    writeFileSync(path.join(profile,'history-fixture.json'),'preserved');
+    writeFileSync(instructions,readFileSync(instructions,'utf8')+'User custom text.\n');
+    configureProfile(env,reviewedSource,selected);assert.equal(readFileSync(agent,'utf8'),frontierAgentMarkdown(selected));assert.ok(readFileSync(instructions,'utf8').includes(frontierSlotPolicy(selected)));assert.ok(!readFileSync(instructions,'utf8').includes(FRONTIER_SLOT_POLICY));
+    configureProfile(env,reviewedSource);assert.equal(readFileSync(agent,'utf8'),frontierAgentMarkdown());assert.ok(readFileSync(instructions,'utf8').endsWith('User custom text.\n'));assert.equal(readFileSync(path.join(profile,'history-fixture.json'),'utf8'),'preserved');
+    writeFileSync(agent,frontierAgentMarkdown()+'User custom agent instructions.');
+    assert.throws(()=>seedFrontierAgent(profile,selected),/explicit migration/);assert.ok(readFileSync(agent,'utf8').endsWith('User custom agent instructions.'));
+  } finally {rmSync(profile,{recursive:true,force:true});}
+});
+
+test('MiMo numerical user edits never become managed prior content', async () => {
+  const profile=realpathSync(mkdtempSync(path.join(os.tmpdir(),'h016-numeric-')));
+  const approved={model:'mimo-v2.6-pro-rl',contextWindow:131072,maxOutputTokens:65536};
+  try {
+    seedFrontierAgent(profile,approved);
+    const agent=path.join(profile,'agents/frontier/agent.md');
+    for(const changed of [{...approved,contextWindow:262144},{...approved,maxOutputTokens:32768}]) {
+      const edited=frontierAgentMarkdown(changed);writeFileSync(agent,edited,{mode:0o600});
+      assert.throws(()=>seedFrontierAgent(profile),/explicit migration/);
+      assert.equal(readFileSync(agent,'utf8'),edited);
+    }
+    writeFileSync(agent,frontierAgentMarkdown(approved),{mode:0o600});
+    seedFrontierAgent(profile,{...approved,contextWindow:1048576});
+    assert.equal(readFileSync(agent,'utf8'),frontierAgentMarkdown({...approved,contextWindow:1048576}));
+    seedFrontierAgent(profile);assert.equal(readFileSync(agent,'utf8'),frontierAgentMarkdown());
+  } finally {rmSync(profile,{recursive:true,force:true});}
+});

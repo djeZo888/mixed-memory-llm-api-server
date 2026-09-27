@@ -1,0 +1,67 @@
+{
+  "kind": "TEMPLATE_ONLY_NOT_QUALIFIED",
+  "serviceId": "mimo-v2.6-pro-rl",
+  "privatePort": 30012,
+  "full17ToolRosterQualified": false,
+  "strictNestedSchemasQualified": false,
+  "serialCompletionQualified": false,
+  "capacity": {
+    "published": 1048576,
+    "configured": null,
+    "allocated": null,
+    "occupiedTested": null
+  },
+  "nativePins": {
+    "buildInfo": null,
+    "modelPath": null,
+    "chatTemplateSha256": null,
+    "toolTemplateSha256": null
+  },
+  "qualification": {
+    "qualified": false,
+    "evidenceSha256": null,
+    "identity": {
+      "model": "mimo-v2.6-pro-rl",
+      "runtimeRevision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "runtimeBuildSha256": null,
+      "artifactRevision": "ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d",
+      "artifactManifestSha256": "6ac4242ac5d4df5b083b133062c78b792f1fdc7716d32c0e0000122e3263744b",
+      "loadedTensorMetadataSha256": null,
+      "loadedTokenizerSha256": null,
+      "loadedTemplateSha256": null,
+      "serverInstance": null,
+      "serverGeneration": null,
+      "actualSlotContext": null,
+      "maxOutputTokens": null,
+      "parallel": 1,
+      "contextShift": false,
+      "speculative": false,
+      "mtp": false,
+      "multimodal": false,
+      "assistantPrefill": false,
+      "jinja": true,
+      "kvUnified": null,
+      "swaFull": false
+    },
+    "checks": {
+      "artifactBytes": false,
+      "nativePrecision": false,
+      "allocation": false,
+      "reserves": false,
+      "templateAndTokenizer": false,
+      "textArrayRendering": false,
+      "admissionBound": {
+        "basis": "pinned-source-s-minus-one",
+        "arithmeticFixtures": false,
+        "shortNativeCountUsageMatch": false
+      },
+      "generationCeiling": {
+        "requestedMaxTokens": 65536,
+        "requestedCeilingAccepted": false,
+        "largestCompletedOutputTokens": null
+      },
+      "reasoningAndTools": false,
+      "singleOwner": false
+    }
+  }
+}

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 type Snapshot = {
   model: string;
+  provider?: string;
+  capacity?: { configured: number | null; allocated: number | null; occupiedTested: number | null };
   configured: boolean;
   state: string;
   availability?: { state: 'available' | 'unavailable' | 'unknown' };
   contextWindow: number | null;
   queued: number;
-  requests: { state: string; promptTokens?: number; reservedOutput?: number; updatedAt: string }[];
+  requests: { model?: string; state: string; promptTokens?: number; reservedOutput?: number; updatedAt: string }[];
 };
 export function FrontierActivity({ sessionId }: { sessionId: string }) {
   const [value, setValue] = useState<Snapshot | null>(null);
@@ -42,10 +44,11 @@ export function FrontierActivity({ sessionId }: { sessionId: string }) {
         {value.model} child · backend {value.availability?.state ?? 'unknown'} · lane{' '}
         {value.state} · queue {value.queued}/8 · context{' '}
         {value.contextWindow?.toLocaleString() ?? 'unknown'}
+        {value.provider === 'mimo' && value.capacity && (<> · allocated {value.capacity.allocated?.toLocaleString() ?? 'unknown'} · largest completed input {value.capacity.occupiedTested?.toLocaleString() ?? 'unknown'}</>)}
         {latest && (
           <>
             {' '}
-            · this chat: {latest.state}
+            · this chat: {latest.model ?? value.model} {latest.state}
             {latest.promptTokens !== undefined && (
               <>
                 {' '}

@@ -1,8 +1,8 @@
 {
-  "kind": "disabled_mimo_candidate_not_registry_entry",
+  "kind": "disabled_mimo_candidate_not_qualification",
   "enabled": false,
   "qualified": false,
-  "wired": false,
+  "wired": true,
   "model": "mimo-v2.6-pro-rl",
   "defaultFrontier": "glm-5.3-flash",
   "runtimeRevision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
@@ -98,7 +98,7 @@
     "kvUnified": null,
     "swaFull": false
   },
-  "nativeSettlementQualified": false,
+  "serialCompletionQualified": false,
   "sharedFrontierOwnerRequired": true,
-  "activation": "HELD: W1 backend proof, root review, shared-lane integration and independent acceptance required"
+  "activation": "HELD: W1 granular backend/serial scheduling proof, full production tool qualification, root review and independent acceptance required"
 }
