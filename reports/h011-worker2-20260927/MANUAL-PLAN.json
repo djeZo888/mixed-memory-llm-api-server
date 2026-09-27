@@ -1,0 +1,30 @@
+{
+  "status": "PREPARED_OFFLINE_NOT_EXECUTED",
+  "main_input_tokens": 1000000,
+  "main_output_tokens_including_reasoning": 1024,
+  "configured_capacity": 1048576,
+  "production_default": 480000,
+  "phase_budgets_seconds": {
+    "startup": 1800,
+    "short": 300,
+    "fixture": 600,
+    "main": 7200,
+    "restore": 1800
+  },
+  "normal_total_budget_seconds": 11700,
+  "systemd_final_stop_grace_seconds": 1830,
+  "absolute_supervisor_max_seconds": 13530,
+  "success": "PASSED_RETAINED_PENDING_PRODUCTION_PROMOTION",
+  "failure": "Confirm exact candidate stop then original owner 480K restore; quarantine uncertainty",
+  "main_http_request_hard_limit_seconds": 7200,
+  "owned_candidate_stop_grace_seconds": 30,
+  "owned_stop_command_timeout_seconds": 45,
+  "native_socket_close_is_drain_proof": false,
+  "retained_after_job_exit": true,
+  "reboot_restores_original_480k": true,
+  "native_active_counter": "Unavailable; explicit fresh prerequisite, no atomic drain claim",
+  "linear_planning_minutes": {
+    "input1m": 62.6800537109375,
+    "positions1048576": 65.7248
+  }
+}

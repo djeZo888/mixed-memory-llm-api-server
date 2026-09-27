@@ -1,0 +1,15 @@
+test_full_target_fixture_with_character_mock_only (__main__.CandidateRuntime.test_full_target_fixture_with_character_mock_only) ... ok
+test_middleware_rejects_stale_480k_and_accepts_candidate_count (__main__.CandidateRuntime.test_middleware_rejects_stale_480k_and_accepts_candidate_count) ... ok
+test_same_native_processing_and_selected_context (__main__.CandidateRuntime.test_same_native_processing_and_selected_context) ... ok
+test_edit_requires_exact_single_site (__main__.Preparation.test_edit_requires_exact_single_site) ... ok
+test_exact_baseline_and_production_unchanged (__main__.Preparation.test_exact_baseline_and_production_unchanged) ... ok
+test_materialization_refuses_duplicate_without_overwrite (__main__.Preparation.test_materialization_refuses_duplicate_without_overwrite) ... ok
+test_start_always_fails_closed_without_maintenance_bypass (__main__.Preparation.test_start_always_fails_closed_without_maintenance_bypass) ... ok
+test_allowlist_default_and_capacity (__main__.Profiles.test_allowlist_default_and_capacity) ... ok
+test_exact_native_count_and_pins_and_output_reserve (__main__.Profiles.test_exact_native_count_and_pins_and_output_reserve) ... ok
+test_native_margins_and_mismatched_allocation_refused (__main__.Profiles.test_native_margins_and_mismatched_allocation_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 1.362s
+
+OK

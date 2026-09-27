@@ -1,0 +1,16 @@
+test_body_sent_timestamp_is_after_request_boundary_without_hot_persist (h011_reused_stream_tests.StreamTests.test_body_sent_timestamp_is_after_request_boundary_without_hot_persist) ... ok
+test_boundary_checkpoint_time_is_deducted_from_global_request_budget (h011_reused_stream_tests.StreamTests.test_boundary_checkpoint_time_is_deducted_from_global_request_budget) ... ok
+test_cancelled_read_retains_partial_data_and_distinguishes_client_cancel (h011_reused_stream_tests.StreamTests.test_cancelled_read_retains_partial_data_and_distinguishes_client_cancel) ... ok
+test_completed_correctness_and_wrong_answer_are_distinct (h011_reused_stream_tests.StreamTests.test_completed_correctness_and_wrong_answer_are_distinct) ... ok
+test_completed_stream_drains_without_persistence_in_hot_loop (h011_reused_stream_tests.StreamTests.test_completed_stream_drains_without_persistence_in_hot_loop) ... ok
+test_disconnect_keeps_partial_data_and_error_is_not_native_failure (h011_reused_stream_tests.StreamTests.test_disconnect_keeps_partial_data_and_error_is_not_native_failure) ... ok
+test_eof_without_done_is_not_complete (h011_reused_stream_tests.StreamTests.test_eof_without_done_is_not_complete) ... ok
+test_hot_loop_and_buffer_have_no_filesystem_or_guard_calls (h011_reused_stream_tests.StreamTests.test_hot_loop_and_buffer_have_no_filesystem_or_guard_calls) ... ok
+test_malformed_line_keeps_raw_and_previous_usage_delta_and_timing (h011_reused_stream_tests.StreamTests.test_malformed_line_keeps_raw_and_previous_usage_delta_and_timing) ... ok
+test_output_cap_is_unproven_even_if_json_looks_complete (h011_reused_stream_tests.StreamTests.test_output_cap_is_unproven_even_if_json_looks_complete) ... ok
+test_trailing_body_at_bound_does_not_claim_eof (h011_reused_stream_tests.StreamTests.test_trailing_body_at_bound_does_not_claim_eof) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.061s
+
+OK

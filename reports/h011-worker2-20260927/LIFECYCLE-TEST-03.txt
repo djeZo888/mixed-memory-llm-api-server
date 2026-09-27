@@ -1,0 +1,13 @@
+test_exact_candidate_projection_keeps_all_original_containment_gates (__main__.Lifecycle.test_exact_candidate_projection_keeps_all_original_containment_gates) ... ok
+test_only_exact_owned_id_stopped_and_confirmation_durable (__main__.Lifecycle.test_only_exact_owned_id_stopped_and_confirmation_durable) ... ok
+test_restore_invokes_original_owner_only_after_confirmed_candidate_stop (__main__.Lifecycle.test_restore_invokes_original_owner_only_after_confirmed_candidate_stop) ... ok
+test_retention_needs_every_terminal_gate (__main__.Lifecycle.test_retention_needs_every_terminal_gate) ... ok
+test_running_after_stop_never_authorizes_restore (__main__.Lifecycle.test_running_after_stop_never_authorizes_restore) ... ok
+test_start_refuses_stale_owner_without_systemd_or_mutation (__main__.Lifecycle.test_start_refuses_stale_owner_without_systemd_or_mutation) ... ok
+test_unit_has_no_destructive_execstop_and_source_uses_distinct_candidate (__main__.Lifecycle.test_unit_has_no_destructive_execstop_and_source_uses_distinct_candidate) ... ok
+test_unknown_create_or_changed_identity_never_stopped (__main__.Lifecycle.test_unknown_create_or_changed_identity_never_stopped) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.004s
+
+OK
