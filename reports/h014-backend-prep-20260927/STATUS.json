@@ -1,0 +1,81 @@
+{
+  "status": "INDEPENDENT_DOWNLOAD_BUILD_RUNNING_NORMAL_RECOVERY_COMPLETE",
+  "snapshot_utc": "2026-09-27T07:26:43.265745+00:00",
+  "native_session": "01a0e1b3-7ec8-7762-b133-555f2a792c11",
+  "started_utc": "2026-09-27T07:10:32Z",
+  "hard_deadline_utc": "2026-09-27T07:35:32Z",
+  "root_checkpoint_utc": "2026-09-27T07:56:00Z",
+  "root_code": "54744f3d16d237837919ae604ce78b90731bcb4c",
+  "model_revision": "ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d",
+  "runtime_pin": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+  "model_bytes_total": 577669438240,
+  "bytes_present": 42555274656,
+  "verified_shards": 1,
+  "verified_bytes": 5948832,
+  "jobs": {
+    "download": {
+      "unit": "h014-pro-download-20260927.service",
+      "pid": 1726144,
+      "start_utc": "2026-09-27T07:20:01Z",
+      "os_deadline_utc": "2026-09-27T08:50:01Z"
+    },
+    "build": {
+      "unit": "h014-pro-build-20260927-r2.service",
+      "pid": 1764333,
+      "start_utc": "2026-09-27T07:22:42Z",
+      "os_deadline_utc": "2026-09-27T08:52:42Z",
+      "phase": "COMPILING_CUDA_394_OF_604_AT_SNAPSHOT"
+    },
+    "recovery": {
+      "unit": "h014-normal-recovery-20260927-r2.service",
+      "pid_at_start": 1764336,
+      "start_utc": "2026-09-27T07:22:42Z",
+      "completed_utc": "2026-09-27T07:26:19Z",
+      "result": "success"
+    }
+  },
+  "paths": {
+    "run": "/data/build/h014-pro-7ac59a6-20260927",
+    "model": "/data/models-large/mimo-v2.6-pro-rl-ba4eabb7",
+    "log": "/data/logs/h014-pro-prep-20260927"
+  },
+  "remote_source_sha256": {
+    "RECOVERY-PINS.json": "32dafbf2456d71d67c55fcf9c0c1a1887ddb662fbfa345999deb792cb044ec33",
+    "Dockerfile": "929ddec4856baf0373a8fb53d03e61c78ba82fd7446efc04d4eaf4a0baa57dff",
+    "Dockerfile.dockerignore": "01b7a56e38adade665fdd453bde0151a9baa81552a8ddf5db0af63c87b035303",
+    "recover-r2.py": "beb00a108e0797fd82e6406109abe7dc5dc209cfa320ef597c9bea8d69c01f65",
+    "prep-build-r2.py": "928ac3495f61349a8f5460ef72499e0baef803074460828f8c3265bef44fdf84",
+    "recover.py": "b8e87f91e85a0bb462e51ecd8869b8f4f431ff74cbdb0dfd16dab7a01de15745",
+    "SELECTED-ARTIFACT.json": "6ac4242ac5d4df5b083b133062c78b792f1fdc7716d32c0e0000122e3263744b",
+    "prep.py": "03c0933c194c79a6aca5e98e26bd1682f99927c0f9dbfe53f25d9938caf3724c"
+  },
+  "native_readiness": {
+    "qwen0": {
+      "http_status": 200,
+      "utc": "2026-09-27T07:26:44.357945+00:00",
+      "no_generation_request": true
+    },
+    "qwen1": {
+      "http_status": 200,
+      "utc": "2026-09-27T07:26:45.359887+00:00",
+      "no_generation_request": true
+    },
+    "flash": {
+      "readiness_http_status": 200,
+      "ready": true,
+      "context_length": 1048576,
+      "observed_utc": "2026-09-27T07:27:19.179530+00:00",
+      "wrong_route_health_returned": 404
+    }
+  },
+  "recovery_readback": "RECOVERY-READBACK.json",
+  "model_loaded": false,
+  "sova": "PAUSED",
+  "claims_not_made": [
+    "full download/hash set",
+    "built image acceptance",
+    "MiMo inference/tools/quality/context fit",
+    "ECC-only causal effect"
+  ],
+  "next_action": "Root one bounded readback at07:56; retain partials; no thermal retry; later full hash/tensor inventory, image identity/CLI then separately authorized placement/load review."
+}

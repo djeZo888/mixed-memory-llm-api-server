@@ -1,0 +1,133 @@
+{
+  "build-LAUNCH.json": {
+    "command": [
+      "systemd-run",
+      "--unit=h014-pro-build-20260927",
+      "--property=Type=exec",
+      "--property=RuntimeMaxSec=5400",
+      "--property=TimeoutStopSec=40",
+      "--property=KillMode=control-group",
+      "--property=Restart=no",
+      "--property=UMask=0077",
+      "--property=Nice=10",
+      "--property=StandardOutput=null",
+      "--property=StandardError=null",
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/data/build/h014-pro-7ac59a6-20260927/prep.py",
+      "build"
+    ],
+    "session": "01a0e1b3-7ec8-7762-b133-555f2a792c11",
+    "unit_properties": "RuntimeMaxUSec=1h 30min\nMainPID=1726315\nExecMainStartTimestamp=Sun 2026-09-27 07:20:01 UTC\nId=h014-pro-build-20260927.service\nActiveState=active\nSubState=running\nInvocationID=e1bd57a619284e0eb34c45af2bf53c6e\n",
+    "utc": "2026-09-27T07:20:01.605305+00:00"
+  },
+  "recovery-LAUNCH.json": {
+    "command": [
+      "systemd-run",
+      "--unit=h014-normal-recovery-20260927",
+      "--property=Type=exec",
+      "--property=RuntimeMaxSec=900",
+      "--property=TimeoutStopSec=30",
+      "--property=KillMode=control-group",
+      "--property=Restart=no",
+      "--property=UMask=0077",
+      "--property=StandardOutput=null",
+      "--property=StandardError=null",
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/data/build/h014-pro-7ac59a6-20260927/recover.py",
+      "--run"
+    ],
+    "properties": "MainPID=1742841\nExecMainStartTimestamp=Sun 2026-09-27 07:21:10 UTC\nId=h014-normal-recovery-20260927.service\nActiveState=active\nInvocationID=3e654a1bace84a94afb79dcaf1b46d4a\n",
+    "utc": "2026-09-27T07:21:10.233026+00:00"
+  },
+  "download-LAUNCH.json": {
+    "command": [
+      "systemd-run",
+      "--unit=h014-pro-download-20260927",
+      "--property=Type=exec",
+      "--property=RuntimeMaxSec=5400",
+      "--property=TimeoutStopSec=40",
+      "--property=KillMode=control-group",
+      "--property=Restart=no",
+      "--property=UMask=0077",
+      "--property=Nice=10",
+      "--property=StandardOutput=null",
+      "--property=StandardError=null",
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/data/build/h014-pro-7ac59a6-20260927/prep.py",
+      "download"
+    ],
+    "session": "01a0e1b3-7ec8-7762-b133-555f2a792c11",
+    "unit_properties": "RuntimeMaxUSec=1h 30min\nMainPID=1726144\nExecMainStartTimestamp=Sun 2026-09-27 07:20:01 UTC\nId=h014-pro-download-20260927.service\nActiveState=active\nSubState=running\nInvocationID=528af0f4f3eb4002b934eea0a06217b7\n",
+    "utc": "2026-09-27T07:20:01.296477+00:00"
+  },
+  "h014-normal-recovery-20260927-r2-LAUNCH.json": {
+    "command": [
+      "systemd-run",
+      "--unit=h014-normal-recovery-20260927-r2",
+      "--property=Type=exec",
+      "--property=RuntimeMaxSec=900",
+      "--property=TimeoutStopSec=40",
+      "--property=KillMode=control-group",
+      "--property=Restart=no",
+      "--property=UMask=0077",
+      "--property=StandardOutput=null",
+      "--property=StandardError=append:/data/logs/h014-pro-prep-20260927/h014-normal-recovery-20260927-r2-startup.log",
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/data/build/h014-pro-7ac59a6-20260927/recover-r2.py",
+      "--run"
+    ],
+    "properties": "MainPID=1764336\nExecMainStartTimestamp=Sun 2026-09-27 07:22:42 UTC\nId=h014-normal-recovery-20260927-r2.service\nActiveState=active\nInvocationID=bc04647771f441809ac2f1a5d23aec30\n",
+    "utc": "2026-09-27T07:22:42.402510+00:00"
+  },
+  "h014-pro-build-20260927-r2-LAUNCH.json": {
+    "command": [
+      "systemd-run",
+      "--unit=h014-pro-build-20260927-r2",
+      "--property=Type=exec",
+      "--property=RuntimeMaxSec=5400",
+      "--property=TimeoutStopSec=40",
+      "--property=KillMode=control-group",
+      "--property=Restart=no",
+      "--property=UMask=0077",
+      "--property=StandardOutput=null",
+      "--property=StandardError=append:/data/logs/h014-pro-prep-20260927/h014-pro-build-20260927-r2-startup.log",
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/data/build/h014-pro-7ac59a6-20260927/prep-build-r2.py",
+      "build"
+    ],
+    "properties": "MainPID=1764333\nExecMainStartTimestamp=Sun 2026-09-27 07:22:42 UTC\nId=h014-pro-build-20260927-r2.service\nActiveState=active\nInvocationID=19f0fd1342be47eb925ee3cdacab5851\n",
+    "utc": "2026-09-27T07:22:42.372440+00:00"
+  },
+  "units": "RuntimeMaxUSec=1h 30min\nMainPID=1726144\nResult=success\nExecMainStartTimestamp=Sun 2026-09-27 07:20:01 UTC\nExecMainStatus=0\nId=h014-pro-download-20260927.service\nActiveState=active\nSubState=running\n\nRuntimeMaxUSec=1h 30min\nMainPID=1764333\nResult=success\nExecMainStartTimestamp=Sun 2026-09-27 07:22:42 UTC\nExecMainStatus=0\nId=h014-pro-build-20260927-r2.service\nActiveState=active\nSubState=running\n\nRuntimeMaxUSec=infinity\nMainPID=0\nResult=success\nExecMainStartTimestamp=\nExecMainStatus=0\nId=h014-normal-recovery-20260927-r2.service\nActiveState=inactive\nSubState=dead\n",
+  "model_bytes": {
+    "MiMo-V2.6-Pro-RL-MXFP4-00004-of-00013.gguf.partial": 9849335808,
+    "MiMo-V2.6-Pro-RL-MXFP4-00005-of-00013.gguf.partial": 8799375360,
+    "MiMo-V2.6-Pro-RL-MXFP4-00002-of-00013.gguf.partial": 12202369024,
+    "MiMo-V2.6-Pro-RL-MXFP4-00001-of-00013.gguf": 5948832,
+    "MiMo-V2.6-Pro-RL-MXFP4-00003-of-00013.gguf.partial": 11698245632
+  },
+  "bytes_present": 42555274656,
+  "remote_source_sha256": {
+    "RECOVERY-PINS.json": "32dafbf2456d71d67c55fcf9c0c1a1887ddb662fbfa345999deb792cb044ec33",
+    "Dockerfile": "929ddec4856baf0373a8fb53d03e61c78ba82fd7446efc04d4eaf4a0baa57dff",
+    "Dockerfile.dockerignore": "01b7a56e38adade665fdd453bde0151a9baa81552a8ddf5db0af63c87b035303",
+    "recover-r2.py": "beb00a108e0797fd82e6406109abe7dc5dc209cfa320ef597c9bea8d69c01f65",
+    "prep-build-r2.py": "928ac3495f61349a8f5460ef72499e0baef803074460828f8c3265bef44fdf84",
+    "recover.py": "b8e87f91e85a0bb462e51ecd8869b8f4f431ff74cbdb0dfd16dab7a01de15745",
+    "SELECTED-ARTIFACT.json": "6ac4242ac5d4df5b083b133062c78b792f1fdc7716d32c0e0000122e3263744b",
+    "prep.py": "03c0933c194c79a6aca5e98e26bd1682f99927c0f9dbfe53f25d9938caf3724c"
+  },
+  "source_commit": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+  "gpu": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, 36, Disabled, Disabled\nGPU-69acfa26-8b60-61b5-702d-aee252c163cc, 45, Disabled, Disabled\nGPU-5d895991-b794-2b4c-b9c4-5f1b668afd23, 51, Disabled, Disabled\nGPU-93dbfca8-ef3a-9628-a798-6a4afd0af528, 35, Disabled, Disabled\n",
+  "fan_active": "active"
+}

@@ -1,0 +1,50 @@
+{
+  "utc": "2026-09-27T07:27:19.179530+00:00",
+  "journal": "Sep 27 07:22:42 llmserver systemd[1]: Starting h014-normal-recovery-20260927-r2.service - /usr/bin/python3 -I -B /data/build/h014-pro-7ac59a6-20260927/recover-r2.py --run...\nSep 27 07:22:42 llmserver systemd[1]: Started h014-normal-recovery-20260927-r2.service - /usr/bin/python3 -I -B /data/build/h014-pro-7ac59a6-20260927/recover-r2.py --run.\nSep 27 07:26:19 llmserver systemd[1]: h014-normal-recovery-20260927-r2.service: Deactivated successfully.\nSep 27 07:26:19 llmserver systemd[1]: h014-normal-recovery-20260927-r2.service: Consumed 44.213s CPU time, 68.7M memory peak, 0B memory swap peak.\n",
+  "image_unit": "MainPID=0\nResult=success\nExecMainStatus=0\nActiveState=active\nSubState=exited\n",
+  "image_state": {
+    "phase": "warm",
+    "warm": true,
+    "container": {
+      "id": "15031b926938cd0492e1c678d8319e4ed2363d1bc705e6d53ebed5f1ee9db1d6",
+      "image_id": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef"
+    },
+    "failure": null,
+    "completed_utc": "2026-09-27T07:26:17.090662+00:00",
+    "updated_utc": "2026-09-27T07:26:17.090683+00:00"
+  },
+  "flash": {
+    "/v1/readiness": {
+      "http_status": 200,
+      "fields": {
+        "ready": true
+      }
+    },
+    "/get_server_info": {
+      "http_status": 200,
+      "fields": {
+        "status": "ready",
+        "model_path": "/models",
+        "served_model_name": "glm-5.3-flash",
+        "max_total_num_tokens": 1048576,
+        "context_length": 1048576
+      }
+    }
+  },
+  "intent": {
+    "glm": {
+      "selected": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "desired": "running",
+      "observed": "ready",
+      "failure": null,
+      "boot_policy": "resume"
+    },
+    "qwen": {
+      "selected": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "desired": "running",
+      "observed": "ready",
+      "failure": null,
+      "boot_policy": "resume"
+    }
+  }
+}
