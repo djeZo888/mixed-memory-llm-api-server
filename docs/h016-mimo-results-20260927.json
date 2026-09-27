@@ -320,5 +320,80 @@
     "owned_swap_bytes": 0,
     "oom_events": 0,
     "status": "ALLOCATION_SNAPSHOT_ONLY; short/native qualification running"
+  },
+  "optimized_r9": {
+    "context": 1000000,
+    "threads_decode": 8,
+    "threads_batch": 64,
+    "decode_placement": "guest spread",
+    "gomp_spincount": 0,
+    "memory_interleave": "guest nodes0-7",
+    "ggml_numa": "disabled",
+    "rows": [
+      {
+        "input_tokens": 4096,
+        "output_tokens": 47,
+        "input_tokens_per_second": 71.48750149419524,
+        "output_tokens_per_second": 9.577676518139807,
+        "ttft_seconds": 57.618973279000784,
+        "total_seconds": 62.422120176001044,
+        "correctness": "PASS",
+        "done": true,
+        "full_http_drain": true,
+        "native_settlement": "AUTHENTICATED_SLOT_IDLE_AFTER_FULL_DRAIN",
+        "cached_tokens": 0,
+        "receipt_sha256": "a1311d6ea483622bed241420ad551cc25b11be81b718092f99a82d4a71dc3c76"
+      },
+      {
+        "input_tokens": 16384,
+        "output_tokens": 45,
+        "input_tokens_per_second": 69.558121293392,
+        "output_tokens_per_second": 9.413228538427258,
+        "ttft_seconds": 235.8779058020009,
+        "total_seconds": 240.55336788400018,
+        "correctness": "PASS",
+        "done": true,
+        "full_http_drain": true,
+        "native_settlement": "AUTHENTICATED_SLOT_IDLE_AFTER_FULL_DRAIN",
+        "cached_tokens": 0,
+        "receipt_sha256": "c2dbc6fa7eabb006f7c025e182e2cdf9692ffde9bfd054bc6bc35d1721f59bb7"
+      }
+    ],
+    "native17": {
+      "status": "PASS",
+      "actual_input_tokens": [
+        9538,
+        9634
+      ],
+      "actual_output_tokens": [
+        60,
+        53
+      ],
+      "requested_output_ceiling_each_turn": 65536,
+      "scope": "17 tools advertised; one actual read and paired continuation; not all17 tools executed"
+    },
+    "sampled_memory": {
+      "interval_approx_seconds": 5,
+      "samples": 264,
+      "gpu_peak_used_mib": 89770,
+      "gpu_min_free_mib": 7481,
+      "gpu_max_temperature_c": 47,
+      "cgroup_max_gib": 573.368034362793,
+      "anonymous_max_gib": 497.2843132019043,
+      "file_cache_max_gib": 225.9764404296875,
+      "host_available_min_gib": 356.4315071105957,
+      "owned_swap_max_bytes": 0,
+      "note": "Sampled maxima, not kernel memory.peak. Anonymous/file maxima occur at different times; do not add them."
+    },
+    "settlement": {
+      "cgroup_empty": true,
+      "gpu_compute_empty": true,
+      "pid_zero": true,
+      "utc": "2026-09-27T17:07:45.840075+00:00"
+    },
+    "original_glm_ready_utc": "2026-09-27T17:09:27.446467+00:00",
+    "raw_evidence_sha256": "c2d43fe768e7bb4c47398e205c5af496d077fdd9fbc0a931795f253726d9cbd3",
+    "systemd_result": "failed/exit-code despite ExecMainStatus0; cause unresolved, native settlement independently verified",
+    "production_sova_status": "PENDING"
   }
 }

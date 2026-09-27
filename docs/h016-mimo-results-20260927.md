@@ -272,3 +272,33 @@ zero, and registered storage guards passed. Short-context and native tool checks
 were still running. This snapshot proves allocation, not long-context correctness
 or production readiness. The 1,000,192 physical cache cells remain a source
 calculation; no component-byte readback has been established.
+
+## Optimized 8-thread qualification — completed17:07:33UTC
+
+The same1,000,000 usable-token allocation passed a discarded representative
+warm-up, fresh4K/16K retrieval/arithmetic requests and a native tool continuation.
+
+| Actual input | Output | Input tokens/s | Output tokens/s | First token | Total |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 4,096 | 47 | 71.49 | 9.58 | 57.62s | 62.42s |
+| 16,384 | 45 | 69.56 | 9.41 | 235.88s | 240.55s |
+
+Both requests used fresh prefixes/cache0 and passed correctness, terminal-stream,
+full-drain and authenticated-idle checks. The tool check advertised all17 schemas,
+executed one actual read and consumed its result in the second turn. Both requests
+accepted a65,536-token output ceiling; actual outputs were60 and53 tokens. This
+proves the tested continuation, not execution of every tool or a full65K output.
+
+Across264 roughly5-second samples, VRAM use peaked at89,770MiB, free VRAM stayed
+at least7,481MiB and the frontier GPU reached47C. Sampled cgroup memory peaked at
+573.37GiB; anonymous memory peaked at497.28GiB. File cache peaked at225.98GiB at
+a different time, so those maxima must not be added. Host available RAM remained
+at least356.43GiB; owned swap/OOM/guard failures were zero. These are sampled
+values, not a recovered kernel memory.peak counter.
+
+The exact native process, cgroup and GPU allocation settled at17:07:45UTC; the
+original GLM was ready at17:09:27. The experimental systemd unit reports
+failed/exit-code despite ExecMainStatus0, an unresolved wrapper-status discrepancy.
+Actual model settlement and restoration were independently verified. Four-thread
+and conditional two-thread comparison is now dispatched; production/Sova
+acceptance and the final64K→near1M job remain pending.
