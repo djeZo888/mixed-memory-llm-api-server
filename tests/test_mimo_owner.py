@@ -95,6 +95,37 @@ class OwnerTests(unittest.TestCase):
         self.assertEqual(receipt['resource_memory'],
                          {'host': host, 'baseline': self.baseline, 'cgroup': None})
 
+    def test_unexpected_validation_retains_safe_metadata_and_fails_closed(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            cg = Path(td)
+            for name, value in self.sample['cgroup'].items():
+                (cg / name).write_text('\n'.join(k + ' ' + v for k, v in value.items())
+                                      if isinstance(value, dict) else value)
+            for kind in (KeyError, ValueError, RuntimeError):
+                original = kind('PRIVATE_EXCEPTION_MESSAGE')
+                with self.subTest(kind=kind.__name__), \
+                        patch.object(o, 'run', return_value=o.GPU + ', 100, 7, 69'), \
+                        patch.object(o, 'memory', return_value=dict(self.baseline)), \
+                        patch.object(o, 'cgpath', return_value=cg), \
+                        patch.object(o, 'validate_sample', side_effect=original):
+                    try:
+                        o.sample_guard(self.m, self.baseline, 85, {'pid': 123})
+                    except Exception as caught:
+                        self.assertIs(caught, original)
+                        receipt = o.failure(caught, 'RUNNING', 'resource_validate')
+                    else:
+                        self.fail('validation exception must fail closed')
+                self.assertEqual(receipt['code'], 'unexpected_error')
+                self.assertEqual(receipt['exception_class'], kind.__name__)
+                self.assertIsInstance(receipt['owner_source_line'], int)
+                self.assertIn('validate_sample(m, sample, baseline, limit)',
+                              PATH.read_text().splitlines()[receipt['owner_source_line'] - 1])
+                self.assertEqual(receipt['resource_memory'],
+                                 {'host': self.baseline, 'baseline': self.baseline,
+                                  'cgroup': self.sample['cgroup']})
+                self.assertNotIn('PRIVATE_EXCEPTION_MESSAGE', json.dumps(receipt))
+
     def test_mandatory_timeout_not_optional_mapping_wait(self):
         start=time.monotonic()
         with self.assertRaises(o.MandatoryGuardTimeout) as raised:

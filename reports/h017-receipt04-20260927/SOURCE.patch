@@ -1,0 +1,101 @@
+diff --git a/scripts/runtime/mimo/owner.py b/scripts/runtime/mimo/owner.py
+index df82643..e42a09f 100644
+--- a/scripts/runtime/mimo/owner.py
++++ b/scripts/runtime/mimo/owner.py
+@@ -106,7 +106,17 @@ def failure(exc, phase, operation=None, elapsed=None):
+         result['operation'] = operation
+     if type(elapsed) in (int, float) and math.isfinite(elapsed) and elapsed >= 0:
+         result['cycle_elapsed_s'] = round(elapsed, 6)
+-    if type(exc) is OwnerRefusal and hasattr(exc, 'resource_memory'):
++    if code == 'unexpected_error':
++        safe_types = (KeyError, ValueError, RuntimeError, TypeError, AttributeError,
++                      IndexError, AssertionError, OverflowError, ZeroDivisionError)
++        result['exception_class'] = (type(exc).__name__ if type(exc) in safe_types
++                                     else 'OtherException')
++        trace = exc.__traceback__
++        while trace is not None:
++            if trace.tb_frame.f_code.co_filename == __file__:
++                result['owner_source_line'] = trace.tb_lineno
++            trace = trace.tb_next
++    if hasattr(exc, 'resource_memory'):
+         result['resource_memory'] = exc.resource_memory
+     return result
+ 
+@@ -467,13 +477,30 @@ def sample_guard(m, baseline, limit, native=None, *, progress=lambda _: None):
+     progress('resource_validate')
+     try:
+         validate_sample(m, sample, baseline, limit)
+-    except OwnerRefusal as exc:
++    except Exception as exc:
+         # Preserve the actual cheap failing sample, before the last-good receipt
+         # can obscure it. No extra sampling, process scan or per-token work.
+-        keys = ('MemTotal', 'MemAvailable', 'SwapTotal', 'SwapFree')
+-        exc.resource_memory = {'host': {k: sample['host'][k] for k in keys},
+-                               'baseline': {k: baseline[k] for k in keys},
+-                               'cgroup': sample.get('cgroup')}
++        # Diagnostic failure must never replace the original guard failure.
++        # Keep only bounded numeric fields; no exception messages or locals.
++        try:
++            def numeric_fields(value, keys):
++                value = value if type(value) is dict else {}
++                return {k: v for k in keys if
++                        (type(v := value.get(k)) is int or
++                         (type(v) is str and len(v) <= 32 and v.isascii() and v.isdecimal()))}
++            keys = ('MemTotal', 'MemAvailable', 'SwapTotal', 'SwapFree')
++            cg = sample.get('cgroup')
++            safe_cg = None
++            if type(cg) is dict:
++                safe_cg = numeric_fields(cg, ('memory.current', 'memory.max',
++                                             'memory.swap.current', 'memory.swap.max'))
++                safe_cg['memory.events'] = numeric_fields(cg.get('memory.events'),
++                    ('low', 'high', 'max', 'oom', 'oom_kill', 'oom_group_kill'))
++            exc.resource_memory = {'host': numeric_fields(sample.get('host'), keys),
++                                   'baseline': numeric_fields(baseline, keys),
++                                   'cgroup': safe_cg}
++        except Exception:
++            pass
+         raise
+     return sample
+ 
+diff --git a/tests/test_mimo_owner.py b/tests/test_mimo_owner.py
+index 2cace3b..5828d63 100644
+--- a/tests/test_mimo_owner.py
++++ b/tests/test_mimo_owner.py
+@@ -95,6 +95,37 @@ class OwnerTests(unittest.TestCase):
+         self.assertEqual(receipt['resource_memory'],
+                          {'host': host, 'baseline': self.baseline, 'cgroup': None})
+ 
++    def test_unexpected_validation_retains_safe_metadata_and_fails_closed(self):
++        import tempfile
++        with tempfile.TemporaryDirectory() as td:
++            cg = Path(td)
++            for name, value in self.sample['cgroup'].items():
++                (cg / name).write_text('\n'.join(k + ' ' + v for k, v in value.items())
++                                      if isinstance(value, dict) else value)
++            for kind in (KeyError, ValueError, RuntimeError):
++                original = kind('PRIVATE_EXCEPTION_MESSAGE')
++                with self.subTest(kind=kind.__name__), \
++                        patch.object(o, 'run', return_value=o.GPU + ', 100, 7, 69'), \
++                        patch.object(o, 'memory', return_value=dict(self.baseline)), \
++                        patch.object(o, 'cgpath', return_value=cg), \
++                        patch.object(o, 'validate_sample', side_effect=original):
++                    try:
++                        o.sample_guard(self.m, self.baseline, 85, {'pid': 123})
++                    except Exception as caught:
++                        self.assertIs(caught, original)
++                        receipt = o.failure(caught, 'RUNNING', 'resource_validate')
++                    else:
++                        self.fail('validation exception must fail closed')
++                self.assertEqual(receipt['code'], 'unexpected_error')
++                self.assertEqual(receipt['exception_class'], kind.__name__)
++                self.assertIsInstance(receipt['owner_source_line'], int)
++                self.assertIn('validate_sample(m, sample, baseline, limit)',
++                              PATH.read_text().splitlines()[receipt['owner_source_line'] - 1])
++                self.assertEqual(receipt['resource_memory'],
++                                 {'host': self.baseline, 'baseline': self.baseline,
++                                  'cgroup': self.sample['cgroup']})
++                self.assertNotIn('PRIVATE_EXCEPTION_MESSAGE', json.dumps(receipt))
++
+     def test_mandatory_timeout_not_optional_mapping_wait(self):
+         start=time.monotonic()
+         with self.assertRaises(o.MandatoryGuardTimeout) as raised:

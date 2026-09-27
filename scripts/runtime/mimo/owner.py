@@ -106,7 +106,17 @@ def failure(exc, phase, operation=None, elapsed=None):
         result['operation'] = operation
     if type(elapsed) in (int, float) and math.isfinite(elapsed) and elapsed >= 0:
         result['cycle_elapsed_s'] = round(elapsed, 6)
-    if type(exc) is OwnerRefusal and hasattr(exc, 'resource_memory'):
+    if code == 'unexpected_error':
+        safe_types = (KeyError, ValueError, RuntimeError, TypeError, AttributeError,
+                      IndexError, AssertionError, OverflowError, ZeroDivisionError)
+        result['exception_class'] = (type(exc).__name__ if type(exc) in safe_types
+                                     else 'OtherException')
+        trace = exc.__traceback__
+        while trace is not None:
+            if trace.tb_frame.f_code.co_filename == __file__:
+                result['owner_source_line'] = trace.tb_lineno
+            trace = trace.tb_next
+    if hasattr(exc, 'resource_memory'):
         result['resource_memory'] = exc.resource_memory
     return result
 
@@ -467,13 +477,30 @@ def sample_guard(m, baseline, limit, native=None, *, progress=lambda _: None):
     progress('resource_validate')
     try:
         validate_sample(m, sample, baseline, limit)
-    except OwnerRefusal as exc:
+    except Exception as exc:
         # Preserve the actual cheap failing sample, before the last-good receipt
         # can obscure it. No extra sampling, process scan or per-token work.
-        keys = ('MemTotal', 'MemAvailable', 'SwapTotal', 'SwapFree')
-        exc.resource_memory = {'host': {k: sample['host'][k] for k in keys},
-                               'baseline': {k: baseline[k] for k in keys},
-                               'cgroup': sample.get('cgroup')}
+        # Diagnostic failure must never replace the original guard failure.
+        # Keep only bounded numeric fields; no exception messages or locals.
+        try:
+            def numeric_fields(value, keys):
+                value = value if type(value) is dict else {}
+                return {k: v for k in keys if
+                        (type(v := value.get(k)) is int or
+                         (type(v) is str and len(v) <= 32 and v.isascii() and v.isdecimal()))}
+            keys = ('MemTotal', 'MemAvailable', 'SwapTotal', 'SwapFree')
+            cg = sample.get('cgroup')
+            safe_cg = None
+            if type(cg) is dict:
+                safe_cg = numeric_fields(cg, ('memory.current', 'memory.max',
+                                             'memory.swap.current', 'memory.swap.max'))
+                safe_cg['memory.events'] = numeric_fields(cg.get('memory.events'),
+                    ('low', 'high', 'max', 'oom', 'oom_kill', 'oom_group_kill'))
+            exc.resource_memory = {'host': numeric_fields(sample.get('host'), keys),
+                                   'baseline': numeric_fields(baseline, keys),
+                                   'cgroup': safe_cg}
+        except Exception:
+            pass
         raise
     return sample
 

@@ -1,0 +1,223 @@
+{
+  "rc": 0,
+  "stderr": "",
+  "events": {
+    "archive": {
+      "path": "/data/build/H017-20260927/worker1-receipt04",
+      "old_container_id": "624bd1f5bb049adc8ead5205ff0f2446d4c61c6701b551871ee4fc42ab3deb8f",
+      "index": {
+        "/data/services/mimo-h016-20260927/manifest.json": {
+          "sha256": "129fd5d82c8dbc63146189e4448dcd4615929a7e6588cc1842f9e786a81a5378",
+          "archive": "archive/c574aa91e51f1605b275d92912bb3b7a1505ad9752fc981dc224943d4552dbf9"
+        },
+        "/data/services/mimo-h016-20260927/state.json": {
+          "sha256": "bb8ffd143111c63c187db93909c39f5c2fb419aaf2f10c2a7acad03779b23bfc",
+          "archive": "archive/94440d3e4e2f3f3a8c0827d3df80613bbb9c409c85266e0e820dba80df2dbccc"
+        },
+        "/data/services/mimo-h016-20260927/selection.json": {
+          "sha256": "598c6547d5566bcd930e24748de02c88f0efae1e1433d2d5f0d3edf8120a2625",
+          "archive": "archive/23cc546054c46ac421f0c70f018bc55874569a56ea012e2da9af735462fea285"
+        },
+        "/data/services/mimo-h016-20260927/guard.json": {
+          "sha256": "1dc466baef70417fd990058149f69a16658bc8096ccf1780cc4cc5540bed03b7",
+          "archive": "archive/8123ec4e80d3fd1214572f1a5dbeb8c5deb81d41f6eb3ce935fd2aea27c8b6fa"
+        },
+        "/data/services/mimo-h016-20260927/proxy-state.json": {
+          "sha256": "7cad2045beecd31c2fb411eb1b7801f11e32508a8ea01684869af0f56f156c84",
+          "archive": "archive/79fb37487c7a8c2303d8d73682103d88e643f781e46ac8d7080bdf77f90ce7c4"
+        },
+        "/data/services/mimo-h016-20260927/source/owner.py": {
+          "sha256": "6b9e409b4f32eb7b05af35c0d1ceeda533daa439f6abe4eab65847321bc1e04f",
+          "archive": "archive/9566cb9c22521f55e78c85a8a04f7437afee997c7a60ce4158c01734fd779970"
+        },
+        "/data/services/mimo-h016-20260927/source/launch.json": {
+          "sha256": "1fbfd1e9360c6ef7ed86bb26b339a65d21c21991dd1e5da48683f0df36d368cd",
+          "archive": "archive/7b6802fa9e95af14f3446506db9bd91e6fbef8ff2e5b682bfe58ad1a7c4be1ec"
+        },
+        "/data/services/mimo-h016-20260927/source/private_proxy.py": {
+          "sha256": "a77224f28c5367f26b0336722c6717bf8aa021107a7a4753705cc10a2599de52",
+          "archive": "archive/eea0053719323ca02c6883e90a6777be81e70a4d8a6acbaebd872d51afd9db13"
+        },
+        "/data/services/flash-h008-20260926/config.json": {
+          "sha256": "4a5ea3904fba96480884b91414524617683b50e6f79fef96261e2b92183e6b71",
+          "archive": "archive/3d293b2ef0a112499f4fdc215e0208148a2b9d1f989fc57e5f2c2c2e4eb57a38"
+        },
+        "/data/services/flash-h008-20260926/state.json": {
+          "sha256": "43eaa823c03576df6a4670475f547dbc983a3ccc4376693380b1c37f206ffb6f",
+          "archive": "archive/392294fb4c05496f70364bf37e7d39e9019b0cf2eaf34c1bc5551b9b399a36ba"
+        },
+        "/data/services/flash-h008-20260926/source/owner.py": {
+          "sha256": "d4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1",
+          "archive": "archive/58d488f0b87831bc73084db6082361a0709753fa54b0adce7c10610bf0c2c54e"
+        }
+      }
+    },
+    "removed_exact_settled": "624bd1f5bb049adc8ead5205ff0f2446d4c61c6701b551871ee4fc42ab3deb8f",
+    "staged": {
+      "utc": "2026-09-27T20:23:57.217665+00:00",
+      "manifest_sha256": "e5fa5be2a05c037ac8bac892f73c484f7bbf18e510008d1f4c00729ffd2a77fb",
+      "selection": {
+        "generation": 7,
+        "manifest_sha256": "e5fa5be2a05c037ac8bac892f73c484f7bbf18e510008d1f4c00729ffd2a77fb",
+        "schema_version": 1,
+        "selected_frontier": "mimo-v2.6-pro-rl"
+      },
+      "owner_sha256": "dd9c10c75214fbbf8f1d5566618ac35bafa17f709ffc12ec3f84003dc9e30786"
+    },
+    "hardware_after_lease_release": {
+      "hardware_latched": false,
+      "hardware_latched_boot_id": null,
+      "reason": null,
+      "hardware_validation_age_ms": 5795.557498931885,
+      "hardware_validated_boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+      "hardware_validated_gpu_uuids": [
+        "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+      ],
+      "identity": [
+        [
+          "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+          "validated"
+        ]
+      ]
+    },
+    "actual_corrected_start": {
+      "utc": "2026-09-27T20:23:58.340788+00:00",
+      "unit": {
+        "MainPID": "1997457",
+        "ControlPID": "0",
+        "Result": "success",
+        "ExecMainStartTimestamp": "Sun 2026-09-27 20:23:57 UTC",
+        "Id": "llm-frontier-mimo.service",
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "736061cbb3fc45718902c57a34fa4be0"
+      },
+      "state": {
+        "baseline": {
+          "Active": 18186711040,
+          "Active(anon)": 3497607168,
+          "Active(file)": 14689103872,
+          "AnonHugePages": 0,
+          "AnonPages": 9950478336,
+          "Bounce": 0,
+          "Buffers": 151347200,
+          "Cached": 386600644608,
+          "CommitLimit": 476567744512,
+          "Committed_AS": 38155091968,
+          "DirectMap1G": 46170898432,
+          "DirectMap2M": 893801988096,
+          "DirectMap4k": 24176918528,
+          "Dirty": 995328,
+          "FileHugePages": 0,
+          "FilePmdMapped": 0,
+          "HardwareCorrupted": 0,
+          "HugePages_Free": 0,
+          "HugePages_Rsvd": 0,
+          "HugePages_Surp": 0,
+          "HugePages_Total": 0,
+          "Hugepagesize": 2097152,
+          "Hugetlb": 0,
+          "Inactive": 378501931008,
+          "Inactive(anon)": 8991326208,
+          "Inactive(file)": 369510604800,
+          "KReclaimable": 2603872256,
+          "KernelStack": 26296320,
+          "Mapped": 3308752896,
+          "MemAvailable": 920441032704,
+          "MemFree": 538588102656,
+          "MemTotal": 946820976640,
+          "Mlocked": 28409856,
+          "NFS_Unstable": 0,
+          "PageTables": 66568192,
+          "Percpu": 123273216,
+          "SReclaimable": 2520088576,
+          "SUnreclaim": 925765632,
+          "SecPageTables": 0,
+          "Shmem": 2543304704,
+          "ShmemHugePages": 0,
+          "ShmemPmdMapped": 0,
+          "Slab": 3445854208,
+          "SwapCached": 29851648,
+          "SwapFree": 1418194944,
+          "SwapTotal": 3157258240,
+          "Unaccepted": 0,
+          "Unevictable": 28422144,
+          "VmallocChunk": 0,
+          "VmallocTotal": 14073748835531776,
+          "VmallocUsed": 664469504,
+          "Writeback": 0,
+          "WritebackTmp": 0,
+          "Zswap": 0,
+          "Zswapped": 0
+        },
+        "boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+        "launch_id": "b50f557c5eb5409989948ac5d40727ab",
+        "manifest_sha256": "e5fa5be2a05c037ac8bac892f73c484f7bbf18e510008d1f4c00729ffd2a77fb",
+        "native": null,
+        "proxy_started": false,
+        "request_hold": false,
+        "schema_version": 2,
+        "selection": {
+          "generation": 7,
+          "manifest_sha256": "e5fa5be2a05c037ac8bac892f73c484f7bbf18e510008d1f4c00729ffd2a77fb",
+          "schema_version": 1,
+          "selected_frontier": "mimo-v2.6-pro-rl"
+        },
+        "status": "CREATING",
+        "supervisor": {
+          "invocation_id": "736061cbb3fc45718902c57a34fa4be0",
+          "pid": 1997457,
+          "unit": "llm-frontier-mimo.service"
+        }
+      },
+      "selection": {
+        "generation": 7,
+        "manifest_sha256": "e5fa5be2a05c037ac8bac892f73c484f7bbf18e510008d1f4c00729ffd2a77fb",
+        "schema_version": 1,
+        "selected_frontier": "mimo-v2.6-pro-rl"
+      },
+      "manifest_sha256": "e5fa5be2a05c037ac8bac892f73c484f7bbf18e510008d1f4c00729ffd2a77fb",
+      "other3": [
+        {
+          "id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+          "pid": 1784601,
+          "started_at": "2026-09-27T07:23:02.292048637Z",
+          "image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+          "scheduler": [
+            {
+              "pid": "1787027",
+              "wchan": "do_poll.constprop.0"
+            }
+          ]
+        },
+        {
+          "id": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+          "pid": 1819707,
+          "started_at": "2026-09-27T07:24:24.160125383Z",
+          "image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+          "scheduler": [
+            {
+              "pid": "1821923",
+              "wchan": "do_poll.constprop.0"
+            }
+          ]
+        },
+        {
+          "id": "15031b926938cd0492e1c678d8319e4ed2363d1bc705e6d53ebed5f1ee9db1d6",
+          "pid": 1833066,
+          "started_at": "2026-09-27T07:25:19.347996519Z",
+          "image": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+          "scheduler": [
+            {
+              "pid": "1834448",
+              "wchan": "do_poll.constprop.0"
+            }
+          ]
+        }
+      ],
+      "native_container": null,
+      "journal": "2026-09-27T20:23:57.299404+00:00 llmserver systemd[1]: Starting llm-frontier-mimo.service - Single supervised MiMo production owner...\n2026-09-27T20:23:57.340368+00:00 llmserver systemd[1]: Started llm-frontier-mimo.service - Single supervised MiMo production owner.\n"
+    }
+  }
+}

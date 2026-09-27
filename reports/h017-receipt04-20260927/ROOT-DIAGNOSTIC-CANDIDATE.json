@@ -1,0 +1,15 @@
+{
+  "utc": "2026-09-27T20:23:20.423221+00:00",
+  "status": "FOCUSED_TESTS_PASS_INSTRUMENTATION_ONLY",
+  "old_owner_sha256": "6b9e409b4f32eb7b05af35c0d1ceeda533daa439f6abe4eab65847321bc1e04f",
+  "new_owner_sha256": "dd9c10c75214fbbf8f1d5566618ac35bafa17f709ffc12ec3f84003dc9e30786",
+  "old_manifest_sha256": "83daa3e66924a8f945c168dfe9e0856c8c518196908335e029708eb46c0636eb",
+  "new_manifest_sha256": "e5fa5be2a05c037ac8bac892f73c484f7bbf18e510008d1f4c00729ffd2a77fb",
+  "patch_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H017-RECEIPT-04-20260927/SOURCE.patch",
+  "patch_sha256": "f561f89655e6ae3535f324a02e283a9ba3c9d0af0e1e744e912468c03d62f583",
+  "test_receipt": "/Users/agent/CodexProjects/llm-orchestration/tasks/H017-RECEIPT-04-20260927/repo/reports/h017-receipt04-20260927/DIAGNOSTIC-TESTS.txt",
+  "test_sha256": "37493c7ec06660ebf479aec8171bd8055d36e1a6f0f8c823d34e5b5908f3a51c",
+  "cause": "UNKNOWN",
+  "scope": "Sanitized unexpected exception class/owner line and numeric sample retention; guards unchanged; not a proven cause repair.",
+  "root_authority": "Direct ROOT GO20:22: one diagnostic ordinary start before20:26, no further load."
+}

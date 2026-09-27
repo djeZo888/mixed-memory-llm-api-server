@@ -1,0 +1,43 @@
+{
+  "status": "SHORT_STAGED_NOT_INSTALLED_OR_DISPATCHED",
+  "utc": "2026-09-27T20:25:36.689546+00:00",
+  "owner_status": "LOADING",
+  "identity": {
+    "boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+    "manifest_sha256": "e5fa5be2a05c037ac8bac892f73c484f7bbf18e510008d1f4c00729ffd2a77fb",
+    "supervisor": {
+      "invocation_id": "736061cbb3fc45718902c57a34fa4be0",
+      "pid": 1997457,
+      "unit": "llm-frontier-mimo.service"
+    },
+    "launch_id": "b50f557c5eb5409989948ac5d40727ab",
+    "native": {
+      "container_id": "5b7fc5b24279a290d5ca6b698d7fcf2d4baffd931a018e6c9da70462760a3208",
+      "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "pid": 1997941,
+      "pid_start_ticks": "5334216",
+      "started_at": "2026-09-27T20:23:58.787814571Z"
+    }
+  },
+  "source_sha256": {
+    "/data/build/H016-20260927/worker1-final13-long/client.py": "efbd8a3f36fd480bca5ac40e47cbffb3e1896ebe72060680a7e9abede85c3f9a",
+    "/data/build/H016-20260927/worker1-final13-long/reader.py": "3adf8f433981c97a80dc23fcc0e9ed9e256c8d48755dc9579f1efcd9033541a5",
+    "/data/services/mimo-h016-20260927/source/owner.py": "dd9c10c75214fbbf8f1d5566618ac35bafa17f709ffc12ec3f84003dc9e30786",
+    "/data/services/mimo-h016-20260927/source/private_proxy.py": "a77224f28c5367f26b0336722c6717bf8aa021107a7a4753705cc10a2599de52",
+    "/data/build/H016-20260927/worker1-r9/benchmark.py": "269a8572a24ade777d48ad14804c9d7eef218bf6a8207a6a8be474d387ce0144",
+    "/data/build/H016-20260927/worker1-r9/candidate_owner.py": "9ed901ac7a198b66fb4c9d5dddb56985d1392e256b9971df754a345f5784c253",
+    "/data/build/H016-20260927/worker1-r9/telemetry.py": "79b63724750bdc51f029353bd2f3e6670da224946071b963d8b833e980f50c99",
+    "/data/build/H016-20260927/worker1-r9/verify_retained.py": "fd98e17a1c8712ddb9aa9393057a81243d1751a2ea45cca76e33738e1cd3a32c",
+    "/data/build/H016-20260927/worker1-r9/private_proxy.py": "334e206552b55379c27ddc663dfc202be20d26d290a977457c77c2028eee0f25",
+    "/data/build/H016-20260927/worker1-r9/native_identity.py": "15e3a67acef5c60e48728d51c12cefbe0e46037d4f76ed7ec9eb59841bba43ed",
+    "/data/build/H016-20260927/worker1-r9/inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
+    "/data/build/H016-20260927/worker1-r9/allocation.py": "e7ea91ca49e78d37537301a49347925b9cb06c98506898a01f2ecfe9221d0edb",
+    "/data/build/H016-20260927/worker1-r9/profile_activity.py": "dadbb73a4096364a5ddd401dd8dbd3f40d1dd9ec453d1ce10eebc59c82fe051a",
+    "/data/build/H017-20260927/worker1-receipt04/short/client.py": "2982fc5a3f41393590a0092319a5efda45b8326f8227476ee01485266cc845d0",
+    "/data/build/H017-20260927/worker1-receipt04/short/h017-receipt04-short.service": "662208a1b89fa5a787fe03a7f9e181935febe114ff1b51a4caf559e0602e0ed5"
+  },
+  "authority_sha256": "6f63f7ba62f242014f0062a54bcf52c82806892a6872adbac52691854258b027",
+  "path": "/data/build/H017-20260927/worker1-receipt04/short",
+  "log": "/data/logs/H017-20260927/worker1-receipt04-short"
+}
