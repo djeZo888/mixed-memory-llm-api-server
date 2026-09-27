@@ -1,168 +1,49 @@
 # AGENTS.md
 
-## Latest task precedence — 27 September 2026
+## Current work — 27 September 2026
 
-User resumed after all Codex updates. H013 may continue: promote actual passed
-1M Flash to production and retain its research/document/difficult-reasoning
-delegation role, while Qwen remains coordinator and preferred routine coding/
-agentic model. Remove the user-visible "native code workflow qualified" label;
-preserve truthful readiness and underlying evidence. Disable ECC on all three
-Blackwells; retain Ada off. Integrated fans boost100% at>=70C. External Server
-CHA_FAN3 is currently100%; user requests100% at>=70C and50% below70C after exact
-header/API verification. Missing/stale GPU temperature must not lower cooling.
-Worker2 owns BMC discovery/control; Worker1 owns ai-vm operations. Preserve85C
-load cutoff. No host reboot or guessed IPMI raw commands.
+User resumed after Codex updates. Root coordinates/reviews/publishes; remote
+workers implement and test. Explicit current user instructions supersede older
+milestone restrictions. Do not repeat completed setup or tests just because a
+historical handoff still calls them pending.
 
-After H013 completion, H014 explicitly authorizes downloading and implementing
-MiMo-V2.6-Flash-RL as a frontier alternative, retaining GLM and both Qwens/image.
-Use serial standalone tests on the frontier GPU first; simultaneous GLM/MiMo
-residency is an explicit later option to evaluate after MiMo1M results, not yet
-qualified. Warm and benchmark4K/16K/64K plus tool/technical tasks, then review
-allocation/runtime evidence for the1M trial. Select default only from honest capability,
-quality and performance evidence. See docs/h014-mimo-trial-plan.md. Historical
-MiMo research-only and Codex update holds below are superseded by this request.
+Read the latest local task STATUS/HANDOFF files and the relevant repository
+report before acting. Current plans: [H013](docs/h013-ecc-off-repeat.md),
+[fan control](docs/h013-fan-control.md), [H014 MiMo](docs/h014-mimo-trial-plan.md).
+The exact Flash 1,000,000-input-token trial PASSED at04:30:46UTC; never replay it
+as a readiness test. Original evidence is immutable and archived privately.
 
-H013 update checkpoint: the exact1M H012 request passed at04:30:46UTC and remains
-warm pending production promotion. The user requests a safe opportunity to
-update Codex on all3Macs. Finish current evidence handoffs, then no new native
-tasks or VM maintenance until the user resumes after updates. Continuation
-automation is paused. Read [the current checkpoint](docs/h013-status-20260927.md)
-and local H013 UPDATE-HANDOFF.md. Never replay the completed1M request. BMC sova
-Operator credentials are stored privately on ai-harness; authenticated sensor
-and CHA_FAN3 control discovery remains untested.
+H013 continues durable Flash1,048,576 production promotion, matching Sova
+configuration/plain display label, ECC off on all three Blackwells (Ada off),
+and one guarded four-model repeat. The authorized guest reboot occurred at
+05:33:56UTC; newboot6535a867-8e27-49d9-8a04-4ecc1adb1e32 and all four ECC modes
+Disabled/Disabled were verified. Do not reboot again without a concrete new
+recovery need and review. No Proxmox reboot, GPU reset or driver update.
 
-User fan-control amendment: investigate and implement supported integrated GPU
-fan boost to 100% at >=70C, and investigate the Server Blackwell's external fans
-on motherboard CHA_FAN3. Source review and actual capability/readback precede
-activation; preserve the active1M test unchanged. Keep85C load cutoff. Do not
-guess motherboard PWM mappings or IPMI raw commands. BMC capability is unverified.
-This supersedes historical no-fan-change wording for this narrow scope; ECC and
-cooling changes together cannot establish isolated ECC thermal causality.
+Integrated fan control is installed and live-tested:100% at>=70C, return to
+firmware after<=65C for30s. External Server CHA_FAN3 remains user-set100% while
+BMC web-session authentication/mapping is unresolved. Desired external policy
+is100% at>=70C and50% below70C; missing/stale GPU temperature must not lower
+cooling. The protected credential stays on ai-harness. No guessed PWM/IPMI writes.
+Worker1 owns ai-vm; Worker2 owns BMC/ai-harness and independent acceptance.
 
-H013 is the current user request: inspect the running H012 Flash 1M test, preserve
-its final result, then disable ECC on all three Blackwells (Ada stays off), reboot
-ai-vm and run one guarded four-model repeat. Do not interrupt the active 1M job.
-Follow [the H013 plan](docs/h013-ecc-off-repeat.md). Successful 1M is preserved
-through a reviewed durable configuration before reboot; failed or incomplete
-1M is never promoted. This explicitly supersedes the prior ECC-on policy and
-permits one new concurrent test despite the historical cooling hold, with all
-temperature/memory guards retained. No host reboot or hardware changes are
-included. Worker1 owns VM operations; Worker2 independently reviews source,
-reboot/context preservation and comparison evidence. Sova remains paused during
-maintenance. Root reviews, coordinates and publishes.
+Keep85C or the lower hardware cutoff,7% frontier GPU reserve,16GiB per Qwen,
+5% Ada and15% host reserve. Stop an experiment on concrete guard failure;
+no automatic thermal retry. Cooling/ECC changes together cannot isolate ECC's
+thermal effect. Three Blackwells use the workstation PSU; Ada has its own PSU.
+Do not equate summed GPU board power with wall/PSU power.
 
+After H013 settles, H014 authorizes MiMo-V2.6-Flash-RL download/implementation:
+selected native MXFP4 weights, pinned SM120 mixed CPU/GPU runtime, warmed
+4K/16K/64K and tool/technical checks. Review allocation/runtime before full1M.
+Retain GLM and initially compare serially on the frontier GPU. Concurrent
+GLM/MiMo residency is a later option to assess after MiMo1M; user then decides.
+Keep paid CLI sessions closed while independent bounded jobs merely run.
 
-H012 supersedes H011's 1M hold for one **Flash-only** trial: the user explicitly
-requests starting it now and ending the turn once native progress is confirmed.
-Follow [the H012 launch contract](docs/h012-flash-1m-launch.md). Keep Sova paused
-and the other three models idle; no concurrent-load or Qwen/image requests.
-Preserve all temperature, memory, ownership and progress guards. Successful1M
-stays loaded; failures use the reviewed exact-stop480K fallback. The separate
-four-way cooling hold below remains in effect. Use a fresh bounded Worker1 CLI.
-
-H011 closeout: the fan-adjusted repeat again reached the85C test cutoff; both
-Qwen GPUs reached85C. Sustained load remains unqualified and1M was NOT started.
-Read [the H011 result](docs/h011-status-20260927.md). Allfour backends were
-recovered ready at480K; Sova stayspaused. The user will improve cooling before
-another sustained test. Preserve this hold and all failed-attempt evidence.
-The prepared1M runner retains successful1M; no unconditional480K restoration.
-
-H011 explicitly authorizes a sustained four-model overlap test to assess load
-and stability, plus preparation of a user-operated 1M Flash test. Follow the
-[H011 plan](docs/h011-fourway-manual-1m-plan.md). Use one driver/owner for all four
-clients; the former H010 one-attempt limit is historical and does not gate this
-new task. Three Blackwells use the 2200W workstation PSU; Ada has its own PSU.
-Keep production at480000. A reviewed temporary1048576 profile/manual runner may
-be implemented and staged. The user subsequently authorized starting its
-allocation/probe/1M inference after the four-way test, in a fresh native task;
-finish the turn after durable running proof and review results when they return.
-On verified1M success retain the candidate loaded for already-authorized
-production promotion; restore480K only on failure/timeout. Keep Sova paused
-until the return/result-review turn. Preserve runtime/model pins and normal guards. Worker1 owns
-live inference/telemetry and staging; Worker2 owns app quiet/recovery, independent
-review and manual-runner source. Root coordinates, reviews and publishes.
-
-## Prior H010 scope
-
-H010, authorized27September, extends Flash live occupancy testing to65536tokens
-and asks for CPU-only comparison only if supported with minor changes. Follow
-[the bounded H010 plan](docs/h010-flash-64k-plan.md). It supersedes H009's16K test
-ceiling for this task; keep production480000 and current memory/ECC policy.
-The [H010 result](docs/h010-status-20260927.md) records the 65536-token PASS and
-conditional capacity estimate. CPU-only is not a supported minor configuration
-change in the pinned architecture. Larger occupancy remains unqualified.
-
-Sova now includes the ai-harness application and separate Qwen/image services.
-The authorized H008/H009 scope adds GLM-5.3-Flash on a dedicated fast Blackwell
-with CPU experts, while Qwen1 uses the additional Server Blackwell. Read
-[H009's current checkpoint](docs/h009-status-20260926.md) and the task handoff
-before interpreting historical scope below. Flash targets 480000 configured
-context; this round tests only 4K/16K occupied input, with 7% free GPU and 15%
-host reserve. Qwen remains coordinator and preferred coding/agentic model;
-Flash is selective research, document analysis and difficult reasoning.
-The user selected ECC on all three Blackwells and off on Ada to retain Full HD.
-Workers own implementation/live tests; root owns planning, coordination, review
-and integration. Existing installer exclusions remain. Current explicit user
-instructions supersede historical task-only restrictions without another
-approval roundtrip. Qualification and final deployed state must come from the
-latest evidence, not this summary.
-
-Benchmark stream capture must drain promptly. Do not acquire lifecycle locks,
-run full storage checks, rewrite full receipts or fsync every token in the stream
-read loop. Perform heavyweight checks at request boundaries, collect separate
-periodic telemetry, and use bounded buffered checkpoints for ordinary deltas.
-Keep ownership and terminal records durable. Label instrumented client timings
-separately from native decode windows and full-request averages.
-
-## Historical milestones and standing operating rules
-
-Current guidance for agents and operators. Read the
-[current scope and ownership checkpoint](docs/orchestration/2026-09-17-resumed.md)
-and the relevant task handoff before work; preserve their evidence boundaries.
-
-Temporary exception, 2026-09-19: the user approved the bounded GPU split
-experiment in [BENCHPREP authority and RUN handoff](docs/benchmark-gpu-split.md).
-Its dual-backend benchmark overrides the historical one-active-backend scope
-only for that experiment. BENCHPREP is source/offline preparation plus read-only
-baseline inspection; root dispatches a fresh BENCHRUN after review. It does not
-authorize a production redesign, installer work, or launching RUN from PREP.
-
-Current bounded exception, 2026-09-20: concurrent production API source preparation
-is authorized in the isolated `CONCURRENT-API-SOURCE-20260920` Worker1 task while
-the separately owned benchmark runs. [Fixed-slot source contract](docs/concurrent-api.md)
-and [candidate evidence gate](docs/concurrent-profile-acceptance.md) supersede the
-historical singleton restriction for this task only. Exactly GLM/GPU0 and
-Qwen/GPU1 may be admitted by the reviewed fixed pair. Source preparation grants
-no ai-vm contact or activation; favorable benchmark results, accepted capacity
-evidence and root source review precede a fresh activation session. Installer,
-frontend and future ai-harness work remain outside this task.
-
-Current explicit authority, 2026-09-21: [dual-Q production source](docs/concurrent-api.md)
-supersedes singleton/G-Q-only restrictions for DUALQ-PREP-20260921. Default Qwen
-per GPU, optional GLM on GPU0 retaining GPU1 Qwen; both480000, existing72-vCPU
-VM, shared Q8/G72 masks, pinned runtimes/weights and15% sampled working-set
-margin. This PREP is source/offline plus authorized read-only inspection only.
-No keeper release/deployment/inference/push/merge before root exact source review.
-Existing allow_interrupt for any running target remains required; no atomic
-drain claim, common router, frontend, ai-harness policy or installer work.
-
-Current Image21 authority, 2026-09-23: the approved
-[dedicated Ada plan](docs/qwen-image-2.1-ada-plan.md) and
-[current qualification report](reports/image21-qualify-20260923/RESULT.md) cover
-three resident models: both existing 480,000-token text Qwens and dedicated
-Qwen-Image-2.1 generation. Six opaque sizes are accepted: 1024x1024, 1024x576,
-1216x704, 1472x832, 1760x992 and public 1920x1080 (native 1920x1088,
-exact crop of eight bottom rows). Public hard ceiling: 1920x1080 / 2073600 pixels;
-native cap: 2088960 pixels. Editing, transparency and UHD remain unqualified.
-The separate image API unit owns backend boot and reconciliation. Older singleton,
-two-model and no-new-model clauses are superseded only within this approved scope;
-installer, frontend and harness exclusions remain. The bounded Full HD change is governed by
-[its current report](reports/image21-fhd-20260923/RESULT.md): root reviews the exact
-candidate before guarded atomic activation, then Worker1 performs exactly one
-public Full HD generation. Preserve original qualification receipts and both warm
-text services; no model/runtime/placement changes or new memory benchmark. Root
-owns final review and normal PR5 update; no main merge or force push.
-
+The prior full guidance is retained in Git history at commit5a06690. Old
+update holds, source-only phases, singleton models, ECC-on settings and historic
+installer milestones do not override this current scope. Installer work stays
+paused. Preserve useful rollback artifacts and historical receipts.
 
 ## Authorized sequence and ownership
 
@@ -187,32 +68,28 @@ owns final review and normal PR5 update; no main merge or force push.
   warnings, pass/fail limits and next action in the task's designated handoff;
   use `reports/` when within scope. Do not edit concurrently owned source.
 
-## VM role, models and evidence
+## Model and evidence boundaries
 
-- ai-vm is API-only, with an OpenAI-compatible inference contract and one active
-  model/backend at a time, selected through the API before inference. GLM may
-  use system RAM and both GPUs; maximize each model’s practical context. Tools, browsing, scraping, browser automation and
-  agents run on clients as an explicit ordinary user in a trusted workspace;
-  human chat UI belongs on the separate frontend VM.
-- Exactly two current model identities: **GLM5.3 UD-Q4_K_XL** flagship and
-  **Qwen3.8-27B FP8** fast model. Historical defaults do not authorize unrequested
-  downloads or activations; task-authorized live deployment is permitted.
-- Use [`scripts/llmctl`](scripts/llmctl) and declarative
-  [model](configs/models/) and [runtime](configs/runtimes/) profiles. Keep the
-  architecture extensible; deliberate reviewed host, port, model, quantization
-  and runtime pins are allowed per deployment. Prefer official implementation
-  sources.
-- Aim for the highest practical supported context capacity on the hardware.
-  Distinguish declared capacity, configured capacity and measured occupied
-  context. Neither 32K nor a 2048-token test output budget is a product limit;
-  source/build checks do not establish accepted native 1M context.
-- Runtime/model readiness, direct API behavior and current profile status must
-  come from durable reviewed/current evidence, never this guidance snapshot.
-  Source checks are not live inference, agent, context or installation acceptance.
-- Native API listeners remain authenticated IPv4 loopback (`127.0.0.1`). Frontend
-  clients use reviewed private transport and explicit protected access policy,
-  including API-key authentication and documented firewall/TLS policy. No public,
-  wildcard or IPv6 exposure; reuse reviewed modules without a new policy framework.
+- Sova separates logical models, instances and services. Current deployments
+  use two Qwen3.8-27B FP8 instances at 480,000 context, one GLM-5.3-Flash
+  frontier with CPU experts and a fast Blackwell, and Qwen-Image-2.1 on Ada.
+  Historical full GLM and older models are retained only as documented rollback.
+  Read current receipts for availability; this file is not a health check.
+- Qwen coordinates and normally handles coding/agentic work. Flash is selective
+  for research, many documents, hard reasoning and independent review; exceptional
+  stuck coding requires explicit justification and Qwen verification. Never
+  infer model superiority from size or one benchmark.
+- Reuse existing llmctl, profiles and transport. Native inference remains
+  authenticated on IPv4 loopback, exposed to clients only through the reviewed
+  private transport/access policy. No new public/wildcard/IPv6 listener.
+- Separate published, configured and actually occupied context, allocation
+  checks, native inference, tool workflow and full application acceptance.
+  Preserve model/runtime/tokenizer/quantization identity in results. Never use
+  an old model's alias or capacity rules to disguise a new model.
+- Benchmark readers must drain promptly: no lifecycle lock, full storage scan,
+  full receipt rewrite or fsync per token. Heavy checks belong at boundaries,
+  with separate periodic telemetry and bounded buffered checkpoints. Separate
+  prefill, decode and total request time; HTTP overlap alone is not compute proof.
 
 ## Storage, lifecycle and recovery
 
