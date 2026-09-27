@@ -1,0 +1,9 @@
+--- /etc/systemd/system/ai-harness-status.service.d/30-h008-registry.conf
++++ /home/user/ai-harness-build/H016-FINAL-BUILD-ACTIVATE-20260927/proposed/30-h008-registry.conf
+@@ -1,4 +1,4 @@
+ [Service]
+-WorkingDirectory=/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/server
++WorkingDirectory=/opt/ai-harness/releases/6c4b5869d9bc7658fcaf565b642bd951ad0f5752-h016-final18/ai-harness/server
+ ExecStart=
+-ExecStart=/home/user/.local/opt/ai-harness/node-v24.21.0/bin/node /opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/server/dist/status-main.js
++ExecStart=/home/user/.local/opt/ai-harness/node-v24.21.0/bin/node /opt/ai-harness/releases/6c4b5869d9bc7658fcaf565b642bd951ad0f5752-h016-final18/ai-harness/server/dist/status-main.js

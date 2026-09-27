@@ -5,5 +5,5 @@
   "maximumSeconds": 2100,
   "baseCommit": "4c12d239300d05c8fae12d9048bfa187128587dd",
   "role": "mac-worker2",
-  "exitStatus": "RUNNING"
+  "exitStatus": "CHECKPOINT_COMPLETE_NATIVE_EXIT_TO_BE_RECORDED_BY_WRAPPER"
 }

@@ -36,3 +36,38 @@ umask made payload directories0700, overlaid onto /opt and /usr. Preserved and
 never activated. Narrow fix explicitly sets only task-owned payload directories
 0755 before COPY; compiled bytes/profile/receipt remain identical. Replaced by a
 corrected single-COPY layer over the same6641 base; not a model/native rebuild.
+
+Final build and immutable host stage PASSED at17:42:59UTC. Final source
+6c4b5869d9bc7658fcaf565b642bd951ad0f5752; image
+46feffff8fe00e5993a8e0d35f5a7932f82ee43ef91d87759f568c3a6029dc1e.
+31 exact base layers +1 COPY. All26025 file/link inventory entries compared;
+45 payload entries changed, all non-payload entries unchanged. Five actual-image
+focused profile tests PASS; CLI0.5.1 and native/pins/patchset lineage PASS.
+Protected root receipt validates; actual metadata0755/0644, /etc/ai-harness0700.
+Pair dry-run and proposed app systemd unit verification PASS. Unit diffs only
+change release paths; data, credential and environment references preserved.
+Corrected independent build unit invocation26928d19d277481bb8e1ef23f602582a
+settled exit0/MainPID0/inactive. No inference or foreground HTTP owner exists.
+
+Source exact packet and SOURCE-FINAL.bundle are in taskroot; BUILD-MANIFEST.json
+binds source, image, receipt, active config, full host and driver closure.
+Raw logs/inventories/failed candidate evidence stay private outsideGit and on
+ai-harness. The rejected image is retained, never tagged to production.
+
+HELD prerequisite: root direct final source/image/pair review plus actual W1
+ordinary production readiness. Pair has NOT been applied and app acceptance
+has NOT run. Original tag9ef885 and installed7143 units remain; app inactive,
+search/status/admin active with prior PIDs. Receipt qualification is historical
+R9 provenance only. No userdata/chats/owner.sqlite read or writes, no quarantine
+clear/reset or replay. No ai-vm/backend/BMC contact, no app restart, no push.
+Checkpoint/exit rather than paid waiting. Any continuation keeps ORIGINAL
+18:07:02.677994UTC cap; the acceptance envelope does not extend this worker.
+
+Later root-supplied PREP16 report confirms the completed qualification and defines
+accepted image/inventory/tokenizer-carrier digest scopes. All82 source pins match
+its80 stage entries +2 installed-unit proposals; five qualification-member pins
+match; runtime/artifact/template/usable/output/parallel and8/64/F16/loadnone pins
+match the approved receipt. This validates static packet consistency, not actual
+W1 deployed files/readiness. The delta bundle cannot be imported in this isolated
+copy because prerequisite85e438895ddeef593ac721e2872eb2cd7f1559d9 is absent; no
+W1 source was merged, rebuilt or changed. Root already reviewed those sources.
