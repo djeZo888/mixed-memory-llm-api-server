@@ -1,0 +1,11 @@
+{
+  "result": "PASS",
+  "dist_changed": [
+    "active-frontier.js"
+  ],
+  "compiled_sha256": "3a4b7f6a2563fd1c123cc14532fdd29c1ba3613544c87f7a3056b17bfefa0c35",
+  "only_compiled_delta": "receipt path literal",
+  "web_and_locked_dependencies_unchanged": true,
+  "engine_iid": "sha256:6641df04cf4e8375029639a67c22da7c3ff4719d2b8e58748572f049de8fb022",
+  "engine_rebuilt": false
+}
