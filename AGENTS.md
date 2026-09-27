@@ -1,5 +1,16 @@
 # AGENTS.md
 
+## Active H016 execution window
+
+On27September the user authorized final MiMo shard verification/recovery,
+native integration, warmed4K/16K/64K benchmarks and maximum-context analysis.
+Window10:48:08–13:48:08UTC, with new benchmark admission stopping13:25UTC.
+Sova downtime is explicitly allowed. This supersedes the previous H014 hold
+for a new window. Read [H016 plan](docs/h016-mimo-integration-window.md) and
+local orchestration/tasks/H016-20260927/STATUS.md. Both workers execute;
+root plans, reviews and publishes. Reuse the existing successful image and
+verified shards. No four-way stress, BMC/fan/ECC, reboot or driver work.
+
 ## Current work — 27 September 2026
 
 User resumed after Codex updates. Root coordinates/reviews/publishes; remote
