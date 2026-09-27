@@ -43,6 +43,10 @@ After H013 settles, proceed with the selected pinned SM120 mixed CPU/GPU runtime
 Retain GLM and initially compare serially on the frontier GPU. Concurrent
 GLM/MiMo residency is a later option to assess after MiMo1M; user then decides.
 Keep paid CLI sessions closed while independent bounded jobs merely run.
+Use systemd on Linux or launchd on macOS for long-lived jobs. A detached/nohup
+child alone did not survive a native CLI deadline during H013. Verify the job
+survives CLI exit; retain its intent and inspect actual remote state before
+recovering an interrupted launcher. Never infer dispatch from a local PID alone.
 
 The prior full guidance is retained in Git history at commit5a06690. Old
 update holds, source-only phases, singleton models, ECC-on settings and historic
