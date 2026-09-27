@@ -62,8 +62,12 @@ After warm-up, a sample showed **46,482 MiB (45.39 GiB) device-used VRAM**,
 approximately **533.89 GB anonymous host allocation**, and **194.79 GB file
 cache**. Total cgroup memory was approximately 730.39 GB. File cache is
 reclaimable and is not another copy of resident anonymous model demand;
-cgroup counters are not process RSS. Per-rung peaks and larger-context
-estimates remain pending. No owned swap or OOM was observed in these samples.
+cgroup counters are not process RSS. The 64K rung's sampled cgroup maximum was
+680.006 GiB: anonymous memory reached 497.265 GiB, file cache 181.142 GiB and
+kernel memory 1.599 GiB. Host available memory stayed above 356.016 GiB.
+Device-used VRAM stayed at 46,482 MiB; maximum frontier temperature was 51°C.
+No owned swap or OOM was observed. Exact 16K/64K request boundaries show zero
+storage-I/O and major-fault growth; the 4K request lacks exact I/O boundaries.
 
 ## Issues that consumed the window
 
@@ -91,16 +95,28 @@ reach its final buffer-name log.
 
 The user requested actual CPU/GPU utilization, host DRAM and GPU memory
 bandwidth, source comparisons and targeted runtime optimizations. Decode
-averaged about58 sampled CPU cores, so a single active CPU thread does not
-explain the result. Selected optimized CPU backend/ISA is not yet proven by
-the captured logs. Sampled GPU utilization is low; hardware-counter profiling
-is needed before assigning a cause. Utilization percentages, theoretical
-bandwidth and measured GB/s must remain distinct.
+averaged about 58 sampled CPU cores, so a single active CPU thread does not
+explain the result. A live mapping confirms `libggml-cpu-zen4.so`; generic CPU
+fallback is unsupported by the evidence. Sampled GPU utilization was 0–4%.
+Useful expert computation, unpacking, synchronization and NUMA costs remain
+unseparated. The guest exposes no AMD memory-controller PMU, so actual host
+DRAM GB/s cannot be obtained from its current counters. Utilization percentages,
+logical weight bytes and measured bandwidth must remain distinct.
 
-The existing R5 owner still settles at13:40; changing source files cannot extend
-its already-imported deadlines. A fresh reviewed profiling owner may follow,
-with15:15 admission and15:35 settlement boundaries. No repeated large-context
-benchmarks or unreviewed settings sweep is planned.
+R5 settled at 13:40:11 and original GLM readiness was restored at 13:42:07.
+A fresh profiling owner is approved with 15:15 admission and 15:35 settlement
+boundaries. It uses the same model/runtime settings and a discarded tiny warm-up,
+then short unprofiled/profiled output fixtures with raw stream timestamps and
+bounded CPU profiling. No repeated large-context benchmarks or unreviewed
+settings sweep is planned.
+
+The [pinned-source review](../reports/h016-mimo-decode-research-20260927/REPORT.md)
+found no inspected token-rate limiter. `OMP_NUM_THREADS=1` also does not prove a
+single-thread graph: the OpenMP graph requests its thread count explicitly.
+The closest published Pro result uses a GB300 with coherent Grace memory;
+its approximately 30 tokens/s cannot serve as a target for PCIe CPU-expert
+execution. A reported 18.6 tokens/s result is MiMo Flash with eight GPUs and
+most expert layers GPU-resident, also a different workload and architecture.
 
 ## Integration and capacity limits
 
@@ -117,6 +133,15 @@ Published model context, configured allocation and largest completed input are
 reported separately. A configured 131K window and completed 4K/16K/64K inputs do not
 prove 1M capacity or long-context correctness. No occupied 1M test is authorized
 in this window. The existing GLM 1M test will not be repeated.
+
+At fixed placement, the source-derived global F16 cache grows by 51,200 bytes
+per configured token; compact sliding-window storage is a separate fixed
+component. Holding other allocations constant predicts 86,162 MiB device-used
+at 943,718 tokens, 88,910 MiB at decimal 1,000,000, and 91,282 MiB at 1,048,576.
+The last misses the required 7% free-VRAM reserve by approximately 883 MiB,
+before any additional workspace growth. Decimal 1M has only about 1.45 GiB
+remaining above that reserve. These are allocation estimates, not tested
+capacities or speed/correctness predictions.
 
 Sova's application is paused while this work runs. User histories and files are
 preserved; the original GLM and harness release remain the rollback. No new
