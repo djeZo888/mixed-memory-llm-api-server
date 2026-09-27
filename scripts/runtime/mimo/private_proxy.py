@@ -175,7 +175,13 @@ def serve():
                         return self.error(503)
                     owned = owner.acquire(blocking=False)
                     if not owned:
-                        return self.error(429)
+                        # Unique local rejection: no durable begin or native I/O occurred.
+                        self.send_response(429)
+                        self.send_header('Content-Length', '0')
+                        self.send_header('X-H016-Admission', 'rejected-local-busy-before-native-v1')
+                        self.end_headers()
+                        self.close_connection = True
+                        return
                     if disposition is not None:
                         disposition.begin()
                 path = '/health' if self.path == '/v1/readiness' else self.path

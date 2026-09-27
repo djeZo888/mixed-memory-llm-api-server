@@ -23,6 +23,42 @@ ACTIVE_CAP = 8 * 60 * 60
 OUTPUT = 1024
 LABEL = 'LAST-near1M'
 COUNT_CAP = 15
+ADMISSION_HEADER = 'x-h016-admission'
+LOCAL_BUSY_MARKER = 'rejected-local-busy-before-native-v1'
+LANE_CONTRACT = 'ordinary-proxy-single-active-chat-lock-v1'
+READER = Path(__file__).with_name('reader.py')
+
+
+class LocalBusyNotSubmitted(RuntimeError):
+    def __init__(self, evidence):
+        super().__init__('local_busy_not_submitted')
+        self.evidence = evidence
+
+
+def local_busy_response(response):
+    """Only the pinned proxy's exact pre-dispatch rejection is attributable."""
+    if (response.status != 429 or response.version != 10 or
+            not getattr(response, '_h016_headers_complete', False) or
+            getattr(response.msg, 'defects', [])):
+        return False
+    headers = {}
+    for name, value in response.getheaders():
+        headers.setdefault(name.lower(), []).append(value)
+    if (headers.get(ADMISSION_HEADER) != [LOCAL_BUSY_MARKER] or
+            headers.get('content-length') != ['0'] or
+            any(len(values) != 1 for values in headers.values()) or
+            set(headers) - {ADMISSION_HEADER, 'content-length', 'server', 'date'}):
+        return False
+    # HTTPConnection never redirects; length0 must be completely consumed/closed.
+    # EOF, parser/timeout errors propagate as ambiguous instead of clearing flags.
+    # The source-pinned HTTP/1.0 rejection closes the peer connection. Inspect
+    # the underlying stream: read(1) alone would hide illegal bytes after CL0.
+    sock = response._h016_socket
+    if hasattr(sock, 'settimeout'):
+        sock.settimeout(5)
+    if response.fp is None or response.fp.read(1) != b'':
+        return False
+    return response.read(1) == b'' and response.isclosed() and response.length == 0
 
 
 def request_plan(capacity):
@@ -59,8 +95,7 @@ def validate_go(go, now):
     require(type(go.get('active_cap_seconds')) is int and go['active_cap_seconds'] == ACTIVE_CAP, 'exact_8h_cap_required')
     require(now < go['admit_before_epoch'] <= go['hard_end_epoch'] - ACTIVE_CAP, 'finite_admission_required')
     require(go.get('private_api') == {'host': HOST, 'port': PORT, 'model': 'mimo-v2.6-pro-rl'}, 'private_api_identity')
-    require(go.get('w2_exclusive_frontier_sova_paused') is True and go.get('other_three_loaded_idle') is True
-            and go.get('lane_exclusive_until_epoch', 0) >= go['hard_end_epoch'], 'exclusive_lane_authority_required')
+    require(go.get('frontier_claim_contract') == LANE_CONTRACT, 'proxy_single_active_claim_contract_required')
     require(set(go.get('acceptance', {})) == {'final_native17', 'production', 'sova'}, 'all_acceptance_proofs_required')
     require(isinstance(go.get('source_sha256'), dict) and go['source_sha256'], 'source_pins_required')
     require(isinstance(go.get('production_identity'), dict) and go['production_identity'], 'actual_owner_required')
@@ -105,17 +140,42 @@ def check_identity(o, go, allow_active=False):
     return manifest, state, guard
 
 
-def adapter(reader, o, h, deadline):
+def adapter(reader, o, h, deadline, on_local_busy=None):
     original = http.client.HTTPConnection
+    class FramedResponse(http.client.HTTPResponse):
+        def __init__(self, sock, *args, **kwargs):
+            super().__init__(sock, *args, **kwargs)
+            self._h016_socket = sock
+            self._h016_headers_complete = False
+            response = self
+            class HeaderBoundary:
+                def __init__(self, raw):
+                    self.raw = raw
+                def readline(self, *args):
+                    line = self.raw.readline(*args)
+                    if line.startswith(b'HTTP/'):
+                        response._h016_headers_complete = False
+                    elif line in (b'\r\n', b'\n'):
+                        response._h016_headers_complete = True
+                    return line
+                def __getattr__(self, name):
+                    return getattr(self.raw, name)
+            # stdlib accepts header EOF without its blank terminator; retain
+            # that wire evidence for the sole positively classified BUSY path.
+            self.fp = HeaderBoundary(self.fp)
     class PrivateConnection(original):
+        response_class = FramedResponse
         def __init__(self, host, port=None, *args, **kwargs):
             require((host, port) == ('127.0.0.1', 30012), 'reader_endpoint_changed')
             super().__init__(HOST, PORT, *args, **kwargs)
+            self._h016_route = None
         def connect(self):
             super().connect()
             if getattr(self, '_count_deadline', None):
                 self.sock.settimeout(max(.001, self._count_deadline - time.monotonic()))
         def request(self, method, url, *args, **kwargs):
+            require(method in ('POST',) and url in ('/v1/chat/completions', '/v1/chat/completions/input_tokens'), 'reader_route_changed')
+            self._h016_route = (method, url)
             if method == 'POST' and url == '/v1/chat/completions/input_tokens':
                 self._count_deadline = time.monotonic() + COUNT_CAP
                 self.timeout = min(self.timeout or COUNT_CAP, COUNT_CAP)
@@ -124,6 +184,21 @@ def adapter(reader, o, h, deadline):
                 write(o, h, getattr(reader, 'active_label', LABEL) + '-BODY-SENT.json', {'event': 'BODY_SENT', 'utc': reader.utc_now(),
                     'monotonic_seconds': time.monotonic()})
             return result
+        def getresponse(self):
+            response = super().getresponse()
+            if (self.host == HOST and self.port == PORT and
+                    self._h016_route == ('POST', '/v1/chat/completions') and
+                    local_busy_response(response)):
+                evidence = {'status': 'BUSY_NOT_SUBMITTED', 'method': 'POST',
+                    'host': HOST, 'port': PORT, 'route': '/v1/chat/completions',
+                    'http_status': 429, 'admission_marker': LOCAL_BUSY_MARKER,
+                    'empty_body_fully_drained': True,
+                    'native_settlement': 'NOT_APPLICABLE_TO_THIS_UNSUBMITTED_REQUEST'}
+                require(on_local_busy is not None, 'local_busy_disposition_callback_required')
+                on_local_busy(evidence)
+                raise LocalBusyNotSubmitted(evidence)
+            return response
+    reader.LOCAL_BUSY_EXCEPTION = LocalBusyNotSubmitted
     reader.http = types.SimpleNamespace(client=types.SimpleNamespace(HTTPConnection=PrivateConnection))
     reader.LOG = LOG
     reader.CLIENT_END = reader.ADMIT_END = deadline
@@ -159,7 +234,7 @@ def read_go(o):
 
 def preflight(o, go):
     validate_go(go, time.time())
-    require(str(Path(__file__).resolve()) in go['source_sha256'] and str(OWNER) in go['source_sha256'], 'client_and_owner_pins_required')
+    require({str(Path(__file__).resolve()), str(READER.resolve()), str(OWNER), str(OWNER.with_name('private_proxy.py'))} <= set(go['source_sha256']), 'client_reader_owner_proxy_pins_required')
     reader_dir = Path(go['reader_directory'])
     require(reader_dir.is_absolute() and str(reader_dir).startswith('/data/build/H016-20260927/'), 'registered_reader_path_required')
     required = {'benchmark.py', 'candidate_owner.py', 'telemetry.py', 'verify_retained.py', 'private_proxy.py'}
@@ -225,8 +300,21 @@ def run():
     require(not Path(LOG, 'CLIENT.json').exists(), 'single_attempt_no_replay')
     write(o, h, 'CLIENT.json', result)
     sys.path.insert(0, str(reader_dir))
-    reader = load_module('long_reviewed_reader', reader_dir / 'benchmark.py')
-    adapter(reader, o, h, deadline)
+    reader = load_module('long_reviewed_reader', READER)
+    def busy_not_submitted(evidence):
+        result['stages'][reader.active_label] = 'BUSY_NOT_SUBMITTED'
+        result.update(status='BUSY_NOT_SUBMITTED', request_may_be_active=False,
+                      owned_disposition={**evidence, 'label': reader.active_label}, finished_epoch=time.time())
+        write(o, h, 'CLIENT.json', result)
+    def own_stream_drained(row):
+        disposition = row.get('owned_stream_disposition', {})
+        require(disposition.get('status') == 'OWN_STREAM_TERMINAL_FULL_DRAIN' and
+                row.get('done') is True and row.get('full_http_drain') is True,
+                'own_stream_completion_evidence_required')
+        result.update(request_may_be_active=False, owned_disposition={**disposition, 'label': reader.active_label},
+                      full_http_drain=True, last_completed_receipt=reader.active_label + '.json')
+        write(o, h, 'CLIENT.json', result)
+    adapter(reader, o, h, deadline, on_local_busy=busy_not_submitted)
     key = o.read_key(h)
     require(o.native_ready(manifest, key) is True, 'actual_production_native_not_ready')
     code, slots = reader.get(PORT, '/slots', key)
@@ -269,14 +357,20 @@ def run():
             require(time.time() + forecast < deadline, 'measured_completion_estimate_exceeds_cap')
             result['stages'][label] = 'RUNNING'
             result.update(status=label + '_RUNNING', request_may_be_active=True,
+                          owned_disposition={'status': 'UNKNOWN_POSSIBLY_SUBMITTED', 'label': label},
                           exact_input_tokens=exact, output_budget=output, actual_slot=manifest['context'],
                           admission_planning_seconds=forecast, final_count_seconds=reader.last_count_seconds)
             write(o, h, 'CLIENT.json', result)
-            row = reader.request(h, key, payload, label, failed, manifest['context'], planning_seconds=forecast)
+            row = reader.request(h, key, payload, label, failed, manifest['context'], planning_seconds=forecast,
+                                 on_owned_stream_drained=own_stream_drained)
             reader.record_semantics(h, label, row, reader.fixture_correct(row, codes), 'long_fixture_semantics_failed')
             require(row.get('done') is True and row.get('full_http_drain') is True
                     and row.get('native_settlement', {}).get('status') == 'AUTHENTICATED_SLOT_IDLE_AFTER_FULL_DRAIN',
                     'long_terminal_and_idle_proof_required')
+            # OUR completion was durably cleared inside the reader before its
+            # first global probe. Shared-lane availability can only stop this
+            # chain; it cannot turn another caller into our unsettled request.
+            require(result.get('request_may_be_active') is False, 'own_completion_callback_missing')
             # Allow the existing private proxy's final disposition publication to settle.
             for _ in range(25):
                 proxy = o.read(o.BASE / 'proxy-state.json')
@@ -291,6 +385,10 @@ def run():
                           full_http_drain=True, last_completed_receipt=label + '.json')
             write(o, h, 'CLIENT.json', result)
         result.update(status='PASS_KEEP_WARM', finished_epoch=time.time())
+    except LocalBusyNotSubmitted:
+        require(result.get('status') == 'BUSY_NOT_SUBMITTED' and result.get('request_may_be_active') is False,
+                'local_busy_disposition_not_persisted')
+        return
     except BaseException as exc:
         result.update(status='FAILED_NO_RETRY', error_type=type(exc).__name__, finished_epoch=time.time())
         raise

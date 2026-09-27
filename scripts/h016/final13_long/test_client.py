@@ -14,8 +14,7 @@ class SourceGates(unittest.TestCase):
         return {'authorized': True, 'purpose': 'H016_LAST_NEAR1M', 'active_cap_seconds': 28800,
                 'admit_before_epoch': 100, 'hard_end_epoch': 28900,
                 'private_api': {'host': c.HOST, 'port': c.PORT, 'model': 'mimo-v2.6-pro-rl'},
-                'w2_exclusive_frontier_sova_paused': True, 'other_three_loaded_idle': True,
-                'lane_exclusive_until_epoch': 28900,
+                'frontier_claim_contract': c.LANE_CONTRACT,
                 'acceptance': {k: {} for k in ('final_native17', 'production', 'sova')},
                 'source_sha256': {'some': 'pin'}, 'production_identity': {'actual': 'identity'}}
 
@@ -38,11 +37,9 @@ class SourceGates(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 c.validate_go(go, 0)
 
-    def test_eight_hours_and_exclusive_lane_are_mandatory(self):
+    def test_eight_hours_and_proxy_claim_are_mandatory(self):
         for key, value in [('authorized', False), ('active_cap_seconds', 28801),
-                           ('lane_exclusive_until_epoch', 28899),
-                           ('w2_exclusive_frontier_sova_paused', False),
-                           ('other_three_loaded_idle', False), ('admit_before_epoch', 101)]:
+                           ('frontier_claim_contract', 'unproven'), ('admit_before_epoch', 101)]:
             go = self.go()
             go[key] = value
             with self.assertRaises(RuntimeError):
