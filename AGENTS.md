@@ -6,10 +6,10 @@ On27September the user authorized final MiMo shard verification/recovery,
 native integration, warmed4K/16K/64K benchmarks and maximum-context analysis.
 Original window10:48:08–13:48:08UTC. At~13:26 the user extended it by two
 hours to **15:48:08UTC** for MiMo decode bottleneck investigation and targeted
-optimizations. The running R5 still has immutable13:40 settlement and13:25
-admission; disk source edits do not change those imported deadlines. Finish its
-64K request, preserve evidence, settle normally, then use a reviewed fresh
-profiling owner with admission15:15/settlement15:35. Short output-focused tests
+optimizations. R5 completed64K, settled normally13:40:11, and restored GLM
+readiness13:42:07. R6 dispatched13:58:55 with unchanged native settings and
+admission15:15/settlement15:35. Its independent owner runs the reviewed short
+baseline/profile pair; do not duplicate those requests. Short output-focused tests
 only; no repeat large-context ladder or1M run. W1 measures actual CPU/ISA/GPU and
 available hostDRAM/GPUmemory counters; W2 reviews pinned runtime and primary
 sources. Distinguish GB/s counters from utilization percentages/theory. At most
@@ -29,16 +29,20 @@ The cold mmap path passed text and tiny tool/continuation semantics, but suffere
 severe disk paging; none of those timings is a warmed benchmark. Explicit loading
 then exposed a blocking monitor diagnostic and a likely huge CUDA-host allocation.
 The monitor is corrected; R5 adds only --no-host to none/interleave and loaded
-at12:48:55UTC. Warmed4K and16K passed at about61input/.91output tokens/s.
-The actual65536-input run started13:10:15 and is still in progress at13:20.
+at12:48:55UTC. Warmed4K,16K and64K passed at about61input/.91output tokens/s.
+The65536-input run completed13:28:56 in1121.75seconds. Decode used about58
+CPU-core equivalents with low sampledGPUutilization and no16K/64KstorageI/O
+growth. Zen4library mapping is proven; actualCPUexpertkernel/barrier split and
+DRAM/VRAMbyte rates remain pending. GuestUMC/uncorePMUs are unavailable.
 Read docs/h016-mimo-results-20260927.md for measured evidence and limits.
 Do not repeat completed tests or old loading attempts. MiMo harness overlay
 6641df04 and the single production owner/node source passed offline checks;
 host release928b3b4-h016 is staged but unactivated. Full17-tool native acceptance,
 live lifecycle and application delegation remain NOT_TESTED. Receipt access
 under protected /etc/ai-harness needs a narrow future correction; do not loosen
-private directory permissions. Prioritize64K completion, exact R5 settlement
-and original GLM/Sova restoration inside this window. No late production reload.
+private directory permissions. Prioritize short profiling/causal optimizations
+and exact final settlement/original GLM-Sova recovery by15:48:08. No late
+production reload or activation without complete native and application checks.
 Sova app is paused and histories/files are preserved.
 The older H014 download hold below is historical; latest H016 STATUS is authority.
 
