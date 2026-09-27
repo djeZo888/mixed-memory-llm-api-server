@@ -1,5 +1,5 @@
 1977a0947a4a036adea9e1f5677c41984cea49bfd4f3a6b2a03782510ba074fc  packages/agent-core/src/pi-turn-runner/defaults.ts
-ac725f4baa2a923a704b0250165b389f7745139231bf108f3ac3df3a0541e35a  third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
+8e461b8fb7381d1898b9dfb5b683b06ff3a26505bfe1a9790f408f23c327d9b8  third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
 d9e32a17514f055d093704b6c6dc18fd35fd3d6009790d869e9f6dc2542aa3a8  packages/agent-tools/src/desktop/local-browser.ts
 218bbbd905900c9a472bf3653da2d560d2a6c4640e93b976ba4454d9b7591505  packages/tui/src/runtime/browser/headless-chrome-provider.ts
 92203c34dd98bc98380ff17593cfef189109cf8da803bea76f9c80aead3a163d  packages/tui/src/runtime/browser/headless-chrome-transport.ts
@@ -45,3 +45,5 @@ cca909428167b3e7df603e19d6a0579fb5238da17b47f6af945f563ebf99adeb  packages/tui/s
 8aa364ff3b35dd5df9d6cdefe47f2072525dea2d7f084738ac1f6632d4ffe1a4  packages/local-runtime-v2/src/service/model-system/resolution/dynamic-max-tokens.ts
 c433228e1abb0e80fbff858d9fee5ef4ddf34cb12e9daf781aaade6e71c2029a  packages/local-runtime-v2/src/service/turn-system/compaction/execution/local-context-footprint.ts
 895f92e89592bde6964f1a18c34922062c0e02f837af1c9b5450bfb157231f58  packages/local-runtime-v2/src/service/turn-system/compaction/execution/checkpoint-provider.ts
+44dc9f2ae31622919cc5237600788e1b040a45a2d9d92cdb8af295b7e537436a  packages/agent-core/src/pi-turn-runner/llm.ts
+f202e1c1400533ce70796c1d505416ad7eddd727107f84b98bb43621f00c9e25  packages/agent-core/src/pi-turn-runner/llm-retry.ts

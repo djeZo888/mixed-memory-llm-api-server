@@ -1,0 +1,7 @@
+{
+  "oldPatchSetSha256": "a6dd7df37313edc4ea2f6bc742ffb6ff431a37abacb2facdbbf422a4c9f9d4bd",
+  "patchSetSha256": "38d7b6a7978e5e95e69db790cf2e3465a0e33ddd27124b1b7af387518e9722bf",
+  "patchSha256": "e85a87cd59e0e2a298d001293fd30280f4b5d3f1b95a426edf7d2df23472688b",
+  "enginePinsAndHostLauncher": "Computed patchset identity updated only; no final image ID, runtime winner or qualification pins generated",
+  "fullBuildExecuted": false
+}

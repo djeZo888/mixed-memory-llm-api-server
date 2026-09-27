@@ -58,7 +58,7 @@
     ],
     "identityBoundary": "These resulting hashes apply immediately after 0001; identity.json pins the final combined source."
   },
-  "patchSetSha256": "a6dd7df37313edc4ea2f6bc742ffb6ff431a37abacb2facdbbf422a4c9f9d4bd",
+  "patchSetSha256": "38d7b6a7978e5e95e69db790cf2e3465a0e33ddd27124b1b7af387518e9722bf",
   "patchIdentity": "patches/identity.json",
   "transportPatch": {
     "patches": [
@@ -80,8 +80,8 @@
     ],
     "transport": {
       "gatewayOrigin": "http://10.0.2.2:8081",
-      "headersTimeoutMs": 9060000,
-      "bodyTimeoutMs": 9060000,
+      "headersTimeoutMs": 30660000,
+      "bodyTimeoutMs": 30660000,
       "undici": "7.29.1",
       "undiciIntegrity": "sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q=="
     },
@@ -99,7 +99,7 @@
       {
         "path": "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts",
         "originalSha256": "9271d59f34d58854af1e0a32a6d67e55fedd68673519f22c08eebce97ca8be21",
-        "patchedSha256": "ac725f4baa2a923a704b0250165b389f7745139231bf108f3ac3df3a0541e35a"
+        "patchedSha256": "8e461b8fb7381d1898b9dfb5b683b06ff3a26505bfe1a9790f408f23c327d9b8"
       }
     ]
   },

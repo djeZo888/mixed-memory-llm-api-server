@@ -41,3 +41,5 @@ c974773228f6e16682987a33fdd0be844fdfa1a85d94bc4632da38860113d758  packages/tui/s
 729301a7d2479042c2a87057485bd0ddf9e34da437f6b8b1238ebe21a781d3c8  packages/local-runtime-v2/src/service/model-system/resolution/dynamic-max-tokens.ts
 1978bc09c0563a64d977e715db13b1cbe24c6773684dcb77e396112ec2b1db79  packages/local-runtime-v2/src/service/turn-system/compaction/execution/local-context-footprint.ts
 3add59a5345b1de12727f912a19ebc494f09691985fbdd896e5d5d0f4b7328e1  packages/local-runtime-v2/src/service/turn-system/compaction/execution/checkpoint-provider.ts
+80f43b4e02d1084739ad23d963e50ac0e303d89ef041b65f2d313d122c668e16  packages/agent-core/src/pi-turn-runner/llm.ts
+91550d853a2050e588c8ea084e5abd8ee4775236df97ac0683a02b5aa5225396  packages/agent-core/src/pi-turn-runner/llm-retry.ts

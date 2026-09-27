@@ -165,3 +165,17 @@ supersedes the historical prose hash above. See
 child binding/model override and provider payload with no network/tool execution.
 `native-frontier-compaction.mjs` exercises actual v2 checkpoint fitting, compaction
 replacement and continuation with synthetic generation. Neither is live inference.
+
+## H016 MiMo request budget (0011)
+
+The zero-context patch requires `git apply --unidiff-zero` after the original
+three-file hashes match the reviewed closure. MiMo receives a 511-minute provider
+and whole-stream signal deadline and zero SDK/framework retries. Other model
+budgets remain unchanged; only the reviewed shared origin gets 511-minute Undici
+inactivity. Canonical identity/pin hashes describe this source patchset, not a
+production image, native runtime winner or qualification receipt.
+
+The incremental compile and actual6641 read-only payload probe are recorded in
+`reports/h016-timeout-compile-20260927`. No image was built. Original6641 still
+contains the preceding code. Final single-layer assembly and activation remain
+held for W1 actual context/winner and root review.

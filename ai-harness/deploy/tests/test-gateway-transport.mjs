@@ -36,7 +36,8 @@ try {
   for (const patch of identity.patches) {
     const patchPath = path.join(patches, patch.path);
     assert.equal(sha(readFileSync(patchPath)), patch.sha256);
-    for (const args of [['apply', '--check', patchPath], ['apply', patchPath]]) {
+    const format = patch.path === '0011-mimo-request-budget.patch' ? ['--unidiff-zero'] : [];
+    for (const args of [['apply', ...format, '--check', patchPath], ['apply', ...format, patchPath]]) {
       const result = spawnSync('git', args, { cwd: copied, encoding: 'utf8' });
       assert.equal(result.status, 0, result.stderr);
     }
@@ -73,7 +74,7 @@ test('exact gateway scope, native signal/options retention and no global fetch m
   const fallback = async (...args) => { calls.push(args); return new Response('fixture'); };
   const { harnessGatewayFetch, gatewayDispatcher, GATEWAY_TRANSPORT_TIMEOUT_MS } = instantiate(Agent);
   try {
-    assert.equal(GATEWAY_TRANSPORT_TIMEOUT_MS, 9_060_000);
+    assert.equal(GATEWAY_TRANSPORT_TIMEOUT_MS, 30_660_000);
     for (const origin of ['https://api.openai.com/v1', 'http://10.0.2.2:8082/v1', 'https://10.0.2.2:8081/v1', 'http://10.0.2.20:8081/v1', 'invalid']) {
       assert.equal(harnessGatewayFetch(origin, fallback), fallback);
     }
@@ -126,9 +127,9 @@ test('short-timeout fixture proves delayed headers/body survive dispatch default
     await assert.rejects(shortBody.text(), (error) => error.cause?.code === 'UND_ERR_BODY_TIMEOUT');
     assert.equal(await (await longFetch(`${gateway}/headers`)).text(), 'headers survived');
     assert.equal(await (await longFetch(`${gateway}/body`)).text(), 'first second');
-    const extended = dispatched.filter((entry) => entry.headersTimeout === 9_060_000);
+    const extended = dispatched.filter((entry) => entry.headersTimeout === 30_660_000);
     assert.ok(extended.length >= 2);
-    assert.ok(extended.every((entry) => entry.bodyTimeout === 9_060_000));
+    assert.ok(extended.every((entry) => entry.bodyTimeout === 30_660_000));
     for (const url of ['/headers', '/cancel']) {
       const controller = new AbortController();
       const started = performance.now();

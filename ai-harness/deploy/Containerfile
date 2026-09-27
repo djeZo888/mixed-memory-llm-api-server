@@ -34,12 +34,13 @@ RUN test "$(git rev-parse HEAD)" = ae65651df5f97ae1085ab4e19964f4b78c769a4e \
     && sha256sum -c /tmp/ai-harness-patches/source-source.SHA256SUMS \
     && sha256sum -c /tmp/ai-harness-patches/dependency-patched.SHA256SUMS \
     && cd /tmp/ai-harness-patches && sha256sum -c SHA256SUMS \
-    && printf '%s\n' 'a6dd7df37313edc4ea2f6bc742ffb6ff431a37abacb2facdbbf422a4c9f9d4bd  SHA256SUMS' | sha256sum -c - \
+    && printf '%s\n' '38d7b6a7978e5e95e69db790cf2e3465a0e33ddd27124b1b7af387518e9722bf  SHA256SUMS' | sha256sum -c - \
     && cd /build/minimax \
     && for patch in /tmp/ai-harness-patches/[0-9]*.patch; do \
          if [[ "${patch##*/}" = 0003-gateway-undici-dependency.patch ]]; then continue; fi; \
-         git apply --check --whitespace=error --exclude=third_party/pi-mono/packages/ai/package.json --exclude=pnpm-lock.yaml "$patch" \
-           && git apply --whitespace=error --exclude=third_party/pi-mono/packages/ai/package.json --exclude=pnpm-lock.yaml "$patch" || exit; \
+         patch_options=(); if [[ "${patch##*/}" = 0011-mimo-request-budget.patch ]]; then patch_options+=(--unidiff-zero); fi; \
+         git apply "${patch_options[@]}" --check --whitespace=error --exclude=third_party/pi-mono/packages/ai/package.json --exclude=pnpm-lock.yaml "$patch" \
+           && git apply "${patch_options[@]}" --whitespace=error --exclude=third_party/pi-mono/packages/ai/package.json --exclude=pnpm-lock.yaml "$patch" || exit; \
        done \
     && sha256sum -c /tmp/ai-harness-patches/patched.SHA256SUMS
 # Upstream release packaging requires a clean committed tree. Commit only the
@@ -140,7 +141,7 @@ RUN if ! test -s /usr/share/zoneinfo/Europe/Ljubljana; then \
 LABEL org.opencontainers.image.title="ai-harness local MiniMax engine" \
       org.opencontainers.image.version="0.0.3" \
       org.opencontainers.image.revision="ae65651df5f97ae1085ab4e19964f4b78c769a4e" \
-      org.opencontainers.image.ai-harness.patchset="a6dd7df37313edc4ea2f6bc742ffb6ff431a37abacb2facdbbf422a4c9f9d4bd" \
+      org.opencontainers.image.ai-harness.patchset="38d7b6a7978e5e95e69db790cf2e3465a0e33ddd27124b1b7af387518e9722bf" \
       org.opencontainers.image.source="https://github.com/MiniMax-AI/minimax-code"
 COPY --from=build /opt/minimax /opt/minimax
 COPY deploy/patches /usr/local/share/ai-harness-patches
