@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "status": "LADDER_COMPLETE_DECODE_INVESTIGATION_ACTIVE",
+  "window": {
+    "start_utc": "2026-09-27T10:48:08Z",
+    "deadline_utc": "2026-09-27T15:48:08Z",
+    "original_deadline_utc": "2026-09-27T13:48:08Z"
+  },
+  "model": {
+    "repository": "AesSedai/MiMo-V2.6-Pro-RL-GGUF",
+    "revision": "ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d",
+    "verified_shards": 13,
+    "weight_bytes": 577669438240,
+    "precision": "MXFP4 experts; BF16/F32 nonexperts"
+  },
+  "configuration": {
+    "runtime_revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+    "image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "configured_context": 131072,
+    "cache_precision": "F16 K/V; compact SWA",
+    "cpu_threads": 64,
+    "gpu_count": 1,
+    "placement": "CPU MoE, GPU nonexperts; ordinary host allocation; NUMA interleave 0-7",
+    "batch": 2048,
+    "ubatch": 512,
+    "thinking": false,
+    "output_budget": 256
+  },
+  "benchmarks": [
+    {
+      "input_tokens": 4096,
+      "output_tokens": 41,
+      "cached_input_tokens": 0,
+      "prefill_seconds": 67.06260400000001,
+      "prefill_tokens_per_second": 61.07725849714991,
+      "decode_seconds": 43.776970999999996,
+      "decode_tokens_per_second": 0.9137224226865766,
+      "time_to_first_token_seconds": 67.34915535599794,
+      "total_seconds": 111.12656197199976,
+      "correctness": "PASS",
+      "correctness_scope": "Expected retrieval and arithmetic substrings plus normal stop; not strict JSON or general engineering quality.",
+      "done": true,
+      "full_http_drain": true,
+      "request_sha256": "8722e8fc2a07b9ff4d8b65f6cb6a9037aad89388791e7992040c182ee15595a2"
+    },
+    {
+      "input_tokens": 16384,
+      "output_tokens": 55,
+      "cached_input_tokens": 0,
+      "prefill_seconds": 269.654152,
+      "prefill_tokens_per_second": 60.759309205815605,
+      "decode_seconds": 59.139754999999994,
+      "decode_tokens_per_second": 0.9130913714471763,
+      "time_to_first_token_seconds": 269.9579532379976,
+      "total_seconds": 329.09793935999915,
+      "correctness": "PASS",
+      "correctness_scope": "Expected retrieval and arithmetic substrings plus normal stop; not strict JSON or general engineering quality.",
+      "done": true,
+      "full_http_drain": true,
+      "request_sha256": "140c783fff02eadb907dfa75161db586039f00c7a6a04cc1eed61e19c78cde0a"
+    },
+    {
+      "input_tokens": 65536,
+      "output_tokens": 45,
+      "cached_input_tokens": 0,
+      "prefill_seconds": 1073.2424950000002,
+      "prefill_tokens_per_second": 61.06355302302859,
+      "decode_seconds": 48.187979,
+      "decode_tokens_per_second": 0.9130907938679064,
+      "time_to_first_token_seconds": 1073.5566010699986,
+      "total_seconds": 1121.745313929001,
+      "correctness": "PASS",
+      "correctness_scope": "Expected retrieval and arithmetic substrings plus normal stop; not strict JSON or general engineering quality.",
+      "done": true,
+      "full_http_drain": true,
+      "request_sha256": "db53e41394b2e78514e1ab58938b9fb0dc0082c2f455a87b1c1ae2a88521e645"
+    }
+  ],
+  "integration": {
+    "harness_built": true,
+    "host_release_staged": true,
+    "native_basic_text_tool_continuation_passed": true,
+    "native_full_17_tool_qualification": "NOT_TESTED",
+    "requested_65536_output_ceiling_live_qualification": "NOT_TESTED",
+    "live_production_owner_lifecycle": "NOT_TESTED",
+    "actual_harness_delegation": "NOT_TESTED",
+    "sova_mimo_enabled": false
+  },
+  "memory_note": "Detailed phase/counter evidence: reports/h016-20260927/worker1/phase6; current max-context projections assume fixed non-KV overhead and are not allocation validation.",
+  "memory": {
+    "configured_context": 131072,
+    "frontier_gpu_device_used_max_mib": 46482,
+    "frontier_gpu_free_min_mib": 50769,
+    "frontier_gpu_temperature_max_c": 51,
+    "anonymous_host_max_gib": 497.265148,
+    "file_cache_max_gib": 181.408,
+    "kernel_max_gib": 1.598503,
+    "sampled_cgroup_max_gib": 680.235,
+    "lifetime_cgroup_peak_gib": 680.506729,
+    "owned_swap_bytes": 0,
+    "owned_oom_count": 0,
+    "note": "Sampled observed maxima, cgroup rather than process RSS. File cache is reclaimable; shmem already included. Existing host swap is nonzero. Allocated context fixed across all rungs."
+  }
+}

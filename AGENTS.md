@@ -4,7 +4,19 @@
 
 On27September the user authorized final MiMo shard verification/recovery,
 native integration, warmed4K/16K/64K benchmarks and maximum-context analysis.
-Window10:48:08–13:48:08UTC, with new benchmark admission stopping13:25UTC.
+Original window10:48:08–13:48:08UTC. At~13:26 the user extended it by two
+hours to **15:48:08UTC** for MiMo decode bottleneck investigation and targeted
+optimizations. The running R5 still has immutable13:40 settlement and13:25
+admission; disk source edits do not change those imported deadlines. Finish its
+64K request, preserve evidence, settle normally, then use a reviewed fresh
+profiling owner with admission15:15/settlement15:35. Short output-focused tests
+only; no repeat large-context ladder or1M run. W1 measures actual CPU/ISA/GPU and
+available hostDRAM/GPUmemory counters; W2 reviews pinned runtime and primary
+sources. Distinguish GB/s counters from utilization percentages/theory. At most
+two evidence-based short A/B optimizations after review, no blind rebuild or
+fallback download. Prefer MiMoFlash only if Pro remains impractical and after
+review; no Flash download has been dispatched. The extension supersedes old
+13:48 handoff/restore instructions below.
 Sova downtime is explicitly allowed. This supersedes the previous H014 hold
 for a new window. Read [H016 plan](docs/h016-mimo-integration-window.md) and
 local orchestration/tasks/H016-20260927/STATUS.md. Both workers execute;

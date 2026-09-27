@@ -1,8 +1,8 @@
 # MiMo Pro-RL qualification — 27 September 2026
 
-Execution window: **10:48:08–13:48:08 UTC**, limited to three hours. This report
-is an intermediate checkpoint; the final availability and benchmark table will
-be updated before the window closes.
+Original window: **10:48:08–13:48:08 UTC**. The user extended it by two hours
+to **15:48:08 UTC** to investigate slow decode. This report is an intermediate
+checkpoint; the full 4K/16K/64K ladder is complete, while profiling is in progress.
 
 ## Candidate and completed work
 
@@ -33,7 +33,7 @@ early/middle/end retrieval codes and verifiable arithmetic.
 |---:|---:|---:|---:|---:|---:|---|
 | 4,096 | 41 | 61.08 | 0.914 | 67.35 s | 111.13 s | PASS |
 | 16,384 | 55 | 60.76 | 0.913 | 269.96 s | 329.10 s | PASS |
-| 65,536 | — | — | — | — | — | Pending |
+| 65,536 | 45 | 61.06 | 0.913 | 1,073.56 s | 1,121.75 s | PASS |
 
 The 4K native prefill was 67.062604 s; native decode was 43.776971 s. The
 native output rate counts 40 decode intervals for 41 reported output tokens.
@@ -52,7 +52,11 @@ refused 64K because it treated any cache reclamation as a stall. The observed
 272 MiB of clean file-cache reclamation caused no major faults, refaults or
 storage reads, and throughput was unchanged. The gate was narrowed using those
 measurements; the completed 16K test was not repeated. A separate 64K-only job
-was dispatched at 13:10:12 UTC.
+was dispatched at 13:10:12 UTC and completed at **13:28:56 UTC**. Native
+prefill took 1,073.242495 seconds and decode 48.187979 seconds, with zero
+cached input and normal stop/DONE/full HTTP drain. Basic retrieval/arithmetic
+checks passed. The native client then settled while the original R5 model
+remained loaded. Decode is consistently slow across all three input sizes.
 
 After warm-up, a sample showed **46,482 MiB (45.39 GiB) device-used VRAM**,
 approximately **533.89 GB anonymous host allocation**, and **194.79 GB file
@@ -83,6 +87,21 @@ GLM recovery evidence is retained. The source-supported CUDA allocation cause
 is stronger than the observed timeout alone, but the failed attempt did not
 reach its final buffer-name log.
 
+## Extended decode investigation
+
+The user requested actual CPU/GPU utilization, host DRAM and GPU memory
+bandwidth, source comparisons and targeted runtime optimizations. Decode
+averaged about58 sampled CPU cores, so a single active CPU thread does not
+explain the result. Selected optimized CPU backend/ISA is not yet proven by
+the captured logs. Sampled GPU utilization is low; hardware-counter profiling
+is needed before assigning a cause. Utilization percentages, theoretical
+bandwidth and measured GB/s must remain distinct.
+
+The existing R5 owner still settles at13:40; changing source files cannot extend
+its already-imported deadlines. A fresh reviewed profiling owner may follow,
+with15:15 admission and15:35 settlement boundaries. No repeated large-context
+benchmarks or unreviewed settings sweep is planned.
+
 ## Integration and capacity limits
 
 The actual MiniMax 17-tool schema was counted at 9,461 input tokens. That is
@@ -95,7 +114,7 @@ frontier response text until stream validation completes; progressive MiMo text
 display is not implemented. Ambiguous requests are held without automatic replay.
 
 Published model context, configured allocation and largest completed input are
-reported separately. A configured 131K window and a completed 4K input do not
+reported separately. A configured 131K window and completed 4K/16K/64K inputs do not
 prove 1M capacity or long-context correctness. No occupied 1M test is authorized
 in this window. The existing GLM 1M test will not be repeated.
 
