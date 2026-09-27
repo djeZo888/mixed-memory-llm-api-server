@@ -41,6 +41,9 @@ HEX = re.compile(r'[0-9a-f]{64}\Z')
 BOOT = Path('/proc/sys/kernel/random/boot_id')
 LEASE_PATH = Path('/run/llmctl/lifecycle.lock')
 SETTLEMENT_LEASE_SECONDS = 10
+MEMORY_SLICE = 'llmmimo.slice'
+MEMORY_SLICE_PATH = Path('/sys/fs/cgroup') / MEMORY_SLICE
+MEMORY_SLICE_UNIT = Path('/etc/systemd/system') / MEMORY_SLICE
 OWNER_FAILURE_CODES = frozenset({
     'added_host_swap', 'artifact_manifest_changed', 'boot_changed',
     'command_failed', 'command_output_bound', 'container_not_settled',
@@ -51,6 +54,7 @@ OWNER_FAILURE_CODES = frozenset({
     'key_invalid', 'launch_source_changed', 'native_bind_changed',
     'native_cgroup_not_empty', 'native_configuration_changed', 'native_generation_changed',
     'native_identity_or_capacity_changed', 'native_load_timeout', 'native_memory_oom_or_swap',
+    'native_memory_policy_changed',
     'native_not_running', 'native_pins_required', 'native_process_changed',
     'native_response_limit', 'no_double_launch', 'not_selected',
     'numa_seccomp_changed', 'old_native_pid_remains', 'owned_container_missing_requires_review',
@@ -341,6 +345,7 @@ def write(h, filename, value):
 def source_preflight(h, m):
     validate_manifest(m)
     required = {str(BASE / 'source' / n) for n in ('owner.py', 'private_proxy.py', 'launch.json')}
+    required.update((str(MEMORY_SLICE_UNIT), '/etc/systemd/system/' + UNIT))
     required |= {'/usr/local/lib/llm-server/node-api/scripts/control/' + n
                  for n in ('node.py', 'node_observation.py', 'node_collectors.py', 'passive.py')}
     require(required <= set(m['source_sha256']), 'deployed_source_closure_required')
@@ -430,6 +435,46 @@ def temperature_limit(xml):
     return min(limits)
 
 
+def limit_value(raw):
+    """Bounded kernel-value classification, never turn unlimited into zero."""
+    if type(raw) is str and len(raw) <= 32:
+        if raw == 'max':
+            return {'class': 'max', 'raw': raw}
+        if raw == '':
+            return {'class': 'empty', 'raw': raw}
+        if raw.isascii() and raw.isdecimal():
+            return {'class': 'zero' if int(raw) == 0 else 'finite', 'raw': raw}
+    # Arbitrary invalid bytes are not safe log content; retain classification.
+    return {'class': 'invalid'}
+
+
+def memory_policy(m, native=None):
+    """The dedicated persistent parent supplies the effective zero-swap cap."""
+    expected = ('[Unit]\nDescription=MiMo dedicated zero-swap boundary\n'
+                '[Slice]\nMemoryAccounting=yes\nMemoryMax=' + str(m['memory']['limit_bytes']) +
+                '\nMemorySwapMax=0\n')
+    require(protected(MEMORY_SLICE_UNIT).decode() == expected, 'native_memory_policy_changed')
+    children = []
+    with os.scandir(MEMORY_SLICE_PATH) as entries:
+        for entry in entries:
+            if entry.is_dir(follow_symlinks=False):
+                children.append(entry.name)
+                require(len(children) <= 1, 'native_memory_policy_changed')
+    require(children == ([] if native is None else ['docker-' + native['container_id'] + '.scope'])
+            and not (MEMORY_SLICE_PATH / 'cgroup.procs').read_text().strip(), 'native_memory_policy_changed')
+    values = {n: (MEMORY_SLICE_PATH / n).read_text().strip() for n in
+              ('memory.max', 'memory.swap.max', 'memory.swap.current')}
+    try:
+        require(values == {'memory.max': str(m['memory']['limit_bytes']),
+                           'memory.swap.max': '0', 'memory.swap.current': '0'}, 'native_memory_policy_changed')
+    except OwnerRefusal as exc:
+        # This boundary also runs before sample_guard's validation catch. Preserve
+        # safe raw literals/classification here, without arbitrary malformed text.
+        exc.resource_memory = {'memory_policy': {k: limit_value(v) for k, v in values.items()}}
+        raise
+    return values
+
+
 def validate_sample(m, sample, baseline, limit):
     """Own frontier GPU only; other owners enforce their own GPU reserves."""
     rows, mem = sample['gpus'], sample['host']
@@ -449,10 +494,16 @@ def validate_sample(m, sample, baseline, limit):
         'delta_bytes': (mem['SwapTotal'] - mem['SwapFree']) - (baseline['SwapTotal'] - baseline['SwapFree'])}
     cg = sample.get('cgroup')
     if cg is not None:
-        require(int(cg['memory.max']) == m['memory']['limit_bytes']
+        require(all(limit_value(cg.get(k))['class'] in ('zero', 'finite') for k in
+                    ('memory.max', 'memory.current', 'memory.swap.current'))
+                and all(limit_value(cg.get('memory.events', {}).get(k, '0'))['class'] in ('zero', 'finite')
+                        for k in ('oom', 'oom_kill'))
+                and int(cg['memory.max']) == m['memory']['limit_bytes']
                 and int(cg['memory.current']) <= m['memory']['limit_bytes']
                 and int(cg['memory.swap.current']) == 0
-                and int(cg['memory.swap.max']) == 0
+                and cg['memory.swap.max'] in ('0', 'max')
+                and sample.get('memory_policy') == {'memory.max': str(m['memory']['limit_bytes']),
+                    'memory.swap.max': '0', 'memory.swap.current': '0'}
                 and all(int(cg['memory.events'].get(k, 0)) == 0 for k in ('oom', 'oom_kill')), 'native_memory_oom_or_swap')
     return row
 
@@ -471,6 +522,9 @@ def sample_guard(m, baseline, limit, native=None, *, progress=lambda _: None):
     if native is not None:
         progress('cgroup_memory')
         cg = cgpath(native['pid'])
+        require(cg == MEMORY_SLICE_PATH / ('docker-' + native['container_id'] + '.scope'),
+                'native_memory_policy_changed')
+        sample['memory_policy'] = memory_policy(m, native)
         sample['cgroup'] = {n: (cg / n).read_text().strip() for n in
                            ('memory.current', 'memory.max', 'memory.swap.current', 'memory.swap.max')}
         sample['cgroup']['memory.events'] = dict(x.split() for x in (cg / 'memory.events').read_text().splitlines())
@@ -494,6 +548,7 @@ def sample_guard(m, baseline, limit, native=None, *, progress=lambda _: None):
             if type(cg) is dict:
                 safe_cg = numeric_fields(cg, ('memory.current', 'memory.max',
                                              'memory.swap.current', 'memory.swap.max'))
+                safe_cg['limit_classification'] = {k: limit_value(cg.get(k)) for k in ('memory.max', 'memory.swap.max')}
                 safe_cg['memory.events'] = numeric_fields(cg.get('memory.events'),
                     ('low', 'high', 'max', 'oom', 'oom_kill', 'oom_group_kill'))
             exc.resource_memory = {'host': numeric_fields(sample.get('host'), keys),
@@ -519,7 +574,7 @@ def create_argv(h, m, launch_id):
     return ['docker', 'create', '--name', m['container_name'], '--network', 'host', '--read-only',
             '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--security-opt', 'seccomp=' + str(GLM_BASE / 'source/numa-seccomp.json'),
             '--log-driver', 'local', '--log-opt', 'max-size=64m', '--log-opt', 'max-file=2', '--restart', 'no',
-            '--cpuset-cpus', '0-7,16-71', '--cpuset-mems', '0-7', '--memory', limit, '--memory-swap', limit,
+            '--cgroup-parent', MEMORY_SLICE, '--cpuset-cpus', '0-7,16-71', '--cpuset-mems', '0-7', '--memory', limit, '--memory-swap', limit,
             '--gpus', 'device=' + GPU, '--label', 'io.h016.owner=' + OWNER,
             '--label', 'io.h016.manifest=' + digest(m), '--label', 'io.h016.launch=' + launch_id,
             '--mount', 'type=bind,src=' + h.MODEL + ',dst=/models,readonly',
@@ -539,6 +594,7 @@ def exact_container(c, m, state, *, configuration=True):
                 and host['Memory'] == host['MemorySwap'] == m['memory']['limit_bytes']
                 and host['ReadonlyRootfs'] is True and host['NetworkMode'] == 'host'
                 and host['RestartPolicy']['Name'] == 'no' and not host['Privileged']
+                and host['CgroupParent'] == MEMORY_SLICE
                 and host['CpusetCpus'] == '0-7,16-71' and host['CpusetMems'] == '0-7'
                 and host['CapDrop'] == ['ALL'] and len(host['DeviceRequests']) == 1
                 and host['DeviceRequests'][0]['DeviceIDs'] == [GPU], 'native_configuration_changed')
@@ -764,6 +820,7 @@ def supervise(dry_run=False):
                 require(m['memory']['limit_bytes'] <= baseline['MemAvailable'] - .15 * baseline['MemTotal'], 'reviewed_memory_exceeds_fresh_reserve')
                 limit = temperature_limit(run(['nvidia-smi', '--id=' + GPU, '-q', '-x'], 2))
                 sample_guard(m, baseline, limit)
+                memory_policy(m)
                 latch(h, boot)
             found = run(['docker', 'ps', '-aq', '--no-trunc', '--filter', 'name=^/' + m['container_name'] + '$'], 2).strip()
             if found:

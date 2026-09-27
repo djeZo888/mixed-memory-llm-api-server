@@ -1,0 +1,84 @@
+{
+  "utc": "2026-09-27T23:56:40.442296+00:00",
+  "stage": "SOURCE_EVIDENCE_COMPLETE_COMMITTING",
+  "source": "685e234a14f071fbc456a5d91a21a286aa81ab01",
+  "session": {
+    "type": "thread.started",
+    "thread_id": "01a0e53d-eeb3-7622-84b4-8757cc616a11"
+  },
+  "quiet_present": true,
+  "repro": {
+    "status": "PASS",
+    "plain_swap_max_before": "0",
+    "plain_swap_max_after": "max",
+    "tiny_memory_bytes": 67108864,
+    "slice_swap_max_after_reload": "0",
+    "slice_swap_max_after_restart_reload": "0",
+    "tiny_swap_current": "0",
+    "tiny_oom": "0",
+    "job": "inactive success",
+    "cleanup": "exact owned containers and prototype slice removed"
+  },
+  "fix_sha256": "dbb54dd908a5f9d1e833d34f9cf5d72fce27583fea089c35071b46e0b91f4e05",
+  "tests": {
+    "owner": {
+      "run": 41,
+      "skip": 1,
+      "status": "PASS"
+    },
+    "last": {
+      "run": 31,
+      "status": "PASS"
+    },
+    "short": {
+      "run": 7,
+      "status": "PASS"
+    }
+  },
+  "proposal": "Dedicated persistent llmmimo.slice cap MemoryMax=755914244096 / MemorySwapMax=0. Exact parent path and raw parent cap checked; child 0 or max classified without coercion. Invalid/empty/finite-positive refuse. Existing native resource reserves unchanged. Patch in task repo ready for root/W2 review. Production NOT deployed.",
+  "service_sha256": "367b5ca357091523e6515889fb9920f9036821f839618bfab630378af8d343d5",
+  "slice_sha256": "7a656fbba99b8e20c40d6d653efa76029bd0a768b7e3dccefa7e74b318a3231f",
+  "repro_unit": "h018-swap-repro-01.service",
+  "refusals": [
+    "baseline source-only interrupted prior to mutation",
+    "strict CPU tick equality refused before mutation twice; retained native poll proof and exact PID identity used after removing unintended tick gate",
+    "incidental canonical LeaseBusy before mutation; ordinary bounded acquisition used"
+  ],
+  "glm": "EXACT_ORIGINAL_GLM_SETTLED; PID/cgroup/GPU release true; resident identities retained",
+  "residents": {
+    "before_and_after_limits_identical": true,
+    "new_weakenings": 0,
+    "preexisting_swap_max": "max on all three residents BEFORE H018 reload",
+    "preexisting_swap_current_bytes": {
+      "/llm-image-backend": "4096",
+      "/llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv": "1416466432",
+      "/llmctl-qwen38-27b-q0-480000-yarn4-bf16kv": "214511616"
+    }
+  },
+  "next": "Source/tests/manifest freeze; preinstall independent H018 short/LAST definitions without dispatch. Production owner remains unchanged; root/W2 review required for later model load.",
+  "repro704": {
+    "status": "PASS",
+    "path": "/sys/fs/cgroup/llmmimo.slice/docker-<exact-owned-id>.scope",
+    "parent_memory_max": "755914244096",
+    "parent_memory_swap_max": "0",
+    "parent_swap_current": "0",
+    "child_memory_max": "67108864",
+    "child_swap_max_before_reload": "0",
+    "child_swap_max_after_reload": "max",
+    "container_restart_then_reload": "PASS",
+    "actual_candidate_memory_policy_function": "PASS all four policy stages",
+    "owned_removed": true,
+    "prototype_policy_removed": true
+  },
+  "parent_diagnostic": "All three parent fields tested max/empty/positive/invalid. Existing OwnerRefusal retains classified resource_memory before raising; malformed strings not logged. Successful predicates unchanged from live704 proof.",
+  "candidate_manifest": "scripts/h018/manifest.candidate.json",
+  "manifest_sha256": "8636d893e23ef4a6d7b7ff2414d154aa97c74ccba61fd8186aa028304be6826c",
+  "preinstalled": [
+    "h018-short.service",
+    "h018-last950k.service"
+  ],
+  "production_installed_owner": "dd9c10c75214fbbf8f1d5566618ac35bafa17f709ffc12ec3f84003dc9e30786",
+  "exact_proof": "reports/h018-swap-repair-20260928/REPRO704.json",
+  "quiet_original_sha256": "b89de894fcd4c1ad44e77c74e777a688b92fd7b0c6700cc1ab9643f7a44d9197",
+  "final_receipt": "reports/h018-swap-repair-20260928/FINAL.json"
+}

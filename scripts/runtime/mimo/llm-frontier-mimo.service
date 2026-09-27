@@ -1,7 +1,7 @@
 [Unit]
 Description=Single supervised MiMo production owner
-Requires=docker.service
-After=docker.service llmctl-boot.service llm-frontier-flash.service
+Requires=docker.service llmmimo.slice
+After=llmmimo.slice docker.service llmctl-boot.service llm-frontier-flash.service
 RequiresMountsFor=/data /data/models-large
 BindsTo=data.mount data-models\x2dlarge.mount
 

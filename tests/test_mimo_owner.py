@@ -21,9 +21,54 @@ class OwnerTests(unittest.TestCase):
     def setUp(self):
         self.m = {'memory': {'limit_bytes':800}, 'native_argv':['--load-mode','none'], 'container_name':'llm-frontier-mimo-production'}
         self.baseline = dict(MemTotal=1000,MemAvailable=900,SwapTotal=100,SwapFree=100)
-        self.sample = dict(gpus=[dict(uuid=o.GPU,total_mib=100,free_mib=7,temp_c=69)],host=dict(self.baseline),
+        self.sample = dict(memory_policy={'memory.max':'800','memory.swap.max':'0','memory.swap.current':'0'},gpus=[dict(uuid=o.GPU,total_mib=100,free_mib=7,temp_c=69)],host=dict(self.baseline),
             cgroup={'memory.max':'800','memory.current':'790','memory.swap.current':'0','memory.swap.max':'0',
                     'memory.events':{'oom':'0','oom_kill':'0'}})
+
+    def test_swap_limit_classes_and_parent_enforcement(self):
+        for raw, kind in [('0', 'zero'), ('max', 'max'), ('', 'empty'), ('oops', 'invalid'),
+                          ('1', 'finite'), ('-1', 'invalid'), ('1' * 33, 'invalid')]:
+            self.assertEqual(o.limit_value(raw)['class'], kind)
+            sample = copy.deepcopy(self.sample)
+            sample['cgroup']['memory.swap.max'] = raw
+            if raw in ('0', 'max'):
+                o.validate_sample(self.m, sample, self.baseline, 85)
+            else:
+                with self.assertRaisesRegex(o.OwnerRefusal, 'native_memory_oom_or_swap'):
+                    o.validate_sample(self.m, sample, self.baseline, 85)
+        for key, value in [('memory.swap.max', 'max'), ('memory.swap.current', '1'), ('memory.max', 'max')]:
+            sample = copy.deepcopy(self.sample)
+            sample['memory_policy'][key] = value
+            with self.assertRaisesRegex(o.OwnerRefusal, 'native_memory_oom_or_swap'):
+                o.validate_sample(self.m, sample, self.baseline, 85)
+        sample = copy.deepcopy(self.sample)
+        del sample['memory_policy']
+        with self.assertRaises(o.OwnerRefusal):
+            o.validate_sample(self.m, sample, self.baseline, 85)
+
+    def test_parent_limit_refusal_retains_safe_diagnostics(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            parent = Path(td)
+            (parent / 'cgroup.procs').write_text('')
+            values = {'memory.max': '800', 'memory.swap.max': '0', 'memory.swap.current': '0'}
+            unit = b'[Unit]\nDescription=MiMo dedicated zero-swap boundary\n[Slice]\nMemoryAccounting=yes\nMemoryMax=800\nMemorySwapMax=0\n'
+            for field in ('memory.max', 'memory.swap.max', 'memory.swap.current'):
+                for raw, kind in [('max', 'max'), ('', 'empty'), ('19', 'finite'), ('PRIVATE_INVALID', 'invalid')]:
+                    for name, value in {**values, field: raw}.items():
+                        (parent / name).write_text(value)
+                    with patch.object(o, 'MEMORY_SLICE_PATH', parent), patch.object(o, 'protected', return_value=unit):
+                        with self.assertRaises(o.OwnerRefusal) as caught:
+                            o.memory_policy(self.m)
+                    receipt = o.failure(caught.exception, 'RUNNING', 'cgroup_memory')
+                    self.assertEqual(receipt['code'], 'native_memory_policy_changed')
+                    detail = receipt['resource_memory']['memory_policy'][field]
+                    self.assertEqual(detail['class'], kind)
+                    if kind == 'invalid':
+                        self.assertEqual(detail, {'class': 'invalid'})
+                        self.assertNotIn(raw, json.dumps(receipt))
+                    else:
+                        self.assertEqual(detail['raw'], raw)
 
     def test_only_owned_gpu_is_required(self):
         o.validate_sample(self.m,self.sample,self.baseline,85)
@@ -98,7 +143,8 @@ class OwnerTests(unittest.TestCase):
     def test_unexpected_validation_retains_safe_metadata_and_fails_closed(self):
         import tempfile
         with tempfile.TemporaryDirectory() as td:
-            cg = Path(td)
+            cg = Path(td) / 'docker-fixture.scope'
+            cg.mkdir()
             for name, value in self.sample['cgroup'].items():
                 (cg / name).write_text('\n'.join(k + ' ' + v for k, v in value.items())
                                       if isinstance(value, dict) else value)
@@ -108,9 +154,11 @@ class OwnerTests(unittest.TestCase):
                         patch.object(o, 'run', return_value=o.GPU + ', 100, 7, 69'), \
                         patch.object(o, 'memory', return_value=dict(self.baseline)), \
                         patch.object(o, 'cgpath', return_value=cg), \
+                        patch.object(o, 'MEMORY_SLICE_PATH', cg.parent), \
+                        patch.object(o, 'memory_policy', return_value=self.sample['memory_policy']), \
                         patch.object(o, 'validate_sample', side_effect=original):
                     try:
-                        o.sample_guard(self.m, self.baseline, 85, {'pid': 123})
+                        o.sample_guard(self.m, self.baseline, 85, {'pid': 123, 'container_id': 'fixture'})
                     except Exception as caught:
                         self.assertIs(caught, original)
                         receipt = o.failure(caught, 'RUNNING', 'resource_validate')
@@ -123,7 +171,9 @@ class OwnerTests(unittest.TestCase):
                               PATH.read_text().splitlines()[receipt['owner_source_line'] - 1])
                 self.assertEqual(receipt['resource_memory'],
                                  {'host': self.baseline, 'baseline': self.baseline,
-                                  'cgroup': self.sample['cgroup']})
+                                  'cgroup': {**self.sample['cgroup'], 'limit_classification': {
+                                      'memory.max': {'class': 'finite', 'raw': '800'},
+                                      'memory.swap.max': {'class': 'zero', 'raw': '0'}}}})
                 self.assertNotIn('PRIVATE_EXCEPTION_MESSAGE', json.dumps(receipt))
 
     def test_mandatory_timeout_not_optional_mapping_wait(self):
@@ -163,6 +213,7 @@ class OwnerTests(unittest.TestCase):
                 BOOT=SimpleNamespace(read_text=lambda:'fixture-boot'),storage_paths=Mock(),
                 memory=Mock(return_value={**self.baseline,'MemAvailable':1000}),
                 temperature_limit=Mock(return_value=85),run=Mock(side_effect=run),
+                memory_policy=Mock(return_value={}),
                 sample_guard=Mock(side_effect=[self.sample,sample_error or self.sample]),
                 latch=Mock(return_value={'hardware_latched':False}),
                 create_argv=Mock(return_value=['fixture-create']),inspect=Mock(return_value={'State':{'Pid':123}}),
