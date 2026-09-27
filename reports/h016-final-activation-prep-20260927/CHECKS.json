@@ -1,0 +1,23 @@
+{
+  "result": "PASS_OFFLINE_ONLY",
+  "profileTests": 5,
+  "driverTests": 4,
+  "clockTests": 4,
+  "rollbackFixture": "PASS five managed tuples/custom preservation",
+  "payloadFilesVerified": 44,
+  "payloadArchiveSha256": "0d34ca656248d8293ee4098ef1ba0202fc02353ac35a515870220e8fcc805d17",
+  "approvedPromptAndLiveAssertions": "unchanged except timing admission",
+  "pairedPinsPatchesLauncher": "exact reviewed hashes",
+  "syntaxAndHolds": "PASS",
+  "initialAuditCorrection": "archive also includes wrapper/host artifacts; payload filter corrected, all payload hashes identical",
+  "finalImage": "NOT_BUILT",
+  "liveAcceptance": "NOT_TESTED",
+  "rawLogs": {
+    "clock-tests-final.txt": "e6ec182765cd965f2837d8eeaef5a64af48a104f245cd1a0b7281559194c57c1",
+    "rollback-tests.txt": "dbcdae7a009bb335a96cc809a8e59edd4717d4d6d2a51b16f5b54825b27fdc5e",
+    "driver-tests-final.tap": "a67e5c63b3f18d2fffdf3bed5977eefaaec4d40ad505501b2106678e87d00c9e",
+    "profile-tests.tap": "e6811544f61df89195867ced797c6984f9174bb279d36f1a7967505837610330",
+    "driver-tests.tap": "52ca2a60fc33583c36018c37cd8787b278060d601d15d86f2f8021425f581e57",
+    "clock-tests.txt": "e6ec182765cd965f2837d8eeaef5a64af48a104f245cd1a0b7281559194c57c1"
+  }
+}

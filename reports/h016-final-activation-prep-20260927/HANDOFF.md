@@ -27,8 +27,9 @@ artifacts; initial local closure comparison corrected to exact payload subset.
 
 Native01a0e3a9-b83e-7e40-b596-6dd1eba93de9, original start16:19:05.247072Z and
 hard deadline16:34:05.247072Z unchanged. Two root interruptions followed completed
-command tools; their actual exits in SESSION.json. Current phase03 actual exit
-and finish are written by existing wrapper to taskroot exit-03-code/finished-03-utc
-AFTER this return; do not substitute source completion time. Root gets named HEAD
-bundle/RESULT.json. No host/VM/BMC/model contact, build, service/data access,
+command tools; their actual exits in SESSION.json. Phase03 watchdog exited143 at16:33:50UTC, before the original cap; PID absent.
+Root authorized mechanical packaging after that exit: the already-authored
+one-line canonical-metadata filter and prepared closure checks, then honest
+metadata/commit/bundle. No new native session or implementation. Root gets the
+named HEAD bundle and task result. No host/VM/BMC/model contact, build, service/data access,
 activation, subagent, direct push or paid waiting occurred.

@@ -41,7 +41,7 @@ copy={
  'deploy/engine/configure-profile.mjs':profile,
  'deploy/run-engine.sh':repo/'ai-harness/deploy/run-engine.sh',
  'deploy/engine/pins.json':repo/'ai-harness/deploy/engine/pins.json',
- **{str(p.relative_to(repo/'ai-harness')):p for p in (repo/'ai-harness/deploy/patches').rglob('*') if p.is_file()},
+ **{str(p.relative_to(repo/'ai-harness')):p for p in (repo/'ai-harness/deploy/patches').rglob('*') if p.is_file() and 'payload/usr/local/share/ai-harness-patches/'+str(p.relative_to(repo/'ai-harness/deploy/patches')) in inputs},
  'config/system-registry.json':repo/'ai-harness/config/system-registry.json',
  **{f'config/{n}':stage/'config'/n for n in ['active-frontier.json','mimo-candidate.json']},
  **{f'server/dist/{n}':repo/'reports/h016-status-timeout-staging-20260927/artifacts/server/dist'/n for n in ['gateway.js','gateway.d.ts','system-registry.js','system-registry.d.ts']}}

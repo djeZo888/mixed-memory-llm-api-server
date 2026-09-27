@@ -1,0 +1,28 @@
+{
+  "nativeId": "01a0e3a9-b83e-7e40-b596-6dd1eba93de9",
+  "startedUtc": "2026-09-27T16:19:05.247072+00:00",
+  "hardDeadlineUtc": "2026-09-27T16:34:05.247072+00:00",
+  "maximumSeconds": 900,
+  "phase1": {
+    "exit": 1,
+    "finishedUtc": "2026-09-27T16:24:16Z"
+  },
+  "phase2": {
+    "exit": 1,
+    "finishedUtc": "2026-09-27T16:29:35Z"
+  },
+  "phase3ActualExit": {
+    "exitCode": 143,
+    "finishedUtc": "2026-09-27T16:33:50Z",
+    "reason": "original bounded watchdog TERM during final packaging; no live request",
+    "processObserved": "ABSENT"
+  },
+  "scope": "SOURCE_ONLY",
+  "mechanicalPackaging": {
+    "authorizedBy": "root after native exit; already-authored filter and prepared closure checks only",
+    "utc": "2026-09-27T16:36:49.835481+00:00",
+    "newNativeSession": false,
+    "newImplementation": false,
+    "hostOrVmContact": false
+  }
+}
