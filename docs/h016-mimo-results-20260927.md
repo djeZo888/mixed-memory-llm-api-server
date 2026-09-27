@@ -1,7 +1,7 @@
 # MiMo Pro-RL qualification — 27 September 2026
 
-Original window: **10:48:08–13:48:08 UTC**. Two user-authorized extensions make
-the current final deadline **17:48:08 UTC**. This is an intermediate checkpoint:
+Original window: **10:48:08–13:48:08 UTC**. Two two-hour extensions and a further45minutes for4/conditional2-thread tests
+make the current final deadline **18:33:08 UTC /20:33Ljubljana**. This is an intermediate checkpoint:
 the initial 4K/16K/64K ladder is complete and output speed has improved. The user
 now requests a new ladder at final optimized settings, maximum safe configured
 context and full Sova integration with MiMo as the primary frontier.

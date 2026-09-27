@@ -3,9 +3,12 @@
   "status": "OPTIMIZATION_CONFIRMED_FINAL_CAPACITY_AND_INTEGRATION_ACTIVE",
   "window": {
     "start_utc": "2026-09-27T10:48:08Z",
-    "deadline_utc": "2026-09-27T17:48:08Z",
+    "deadline_utc": "2026-09-27T18:33:08Z",
     "original_deadline_utc": "2026-09-27T13:48:08Z",
-    "first_extended_deadline_utc": "2026-09-27T15:48:08Z"
+    "first_extended_deadline_utc": "2026-09-27T15:48:08Z",
+    "latest_user_authorized_end_utc": "2026-09-27T18:33:08Z",
+    "latest_extension": "45minutes for4-thread and conditional2-thread comparisons",
+    "second_extended_deadline_utc": "2026-09-27T17:48:08Z"
   },
   "model": {
     "repository": "AesSedai/MiMo-V2.6-Pro-RL-GGUF",
@@ -298,7 +301,7 @@
       "other_models": "unchanged",
       "status": "COMPILED_OFFLINE_PASS_NOT_DEPLOYED"
     },
-    "four_then_conditional_two": "USER_AUTHORIZED_SOURCE_PREPARATION; actualtests pending; additionaltime authorization notassumed",
+    "four_then_conditional_two": "USER_AUTHORIZED_SOURCE_PREPARATION;45minuteextensiongranted;actualtests pending",
     "foreground_largest_input_target": 16384
   }
 }

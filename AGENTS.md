@@ -2,7 +2,7 @@
 
 ## Active H016 execution window
 
-Latest user extension at14:56UTC adds two more hours: **final17:48:08UTC**.
+Latest user extension adds45minutes for the requested4-thread and conditional2-thread comparisons: **final18:33:08UTC /20:33Ljubljana**. RunningR9 deadlines remain unchanged; new tasks use the new bounded window.
 MiMo Pro is now explicitly the intended primary frontier replacing GLM, after
 qualification. Keep two Qwen instances and the image model. R7's single
 GOMP_SPINCOUNT=0 change improved unprofiled output to5.885tok/s for128 tokens
@@ -13,7 +13,7 @@ one CPU per guest NUMA node, then eight CPUs on guest node0. Keep external
 memory interleave fixed and disable GGML NUMA affinity in both so strict decode
 masks are effective. Verify actual active-thread affinity. Guest node0 is not
 proof of physical host GPU locality; aggregate Proxmox affinity is insufficient.
-The 16-thread result remains the measured incumbent until these tests finish.
+The8spread profile is the measured incumbent at9.20988outputtok/s,18.64% above16threads. Whole-window affinitydiagnostic wasINCONCLUSIVE; fourlater snapshots show the eight expected singletonguestCPUs. User now requires4spread (CPUs0,24,40,56), and2spread (0,40) onlyif4isfaster. Retain131072context,83-input/128-output fixture,64batch/GOMP0/interleave. Do notinterrupt runningR9 orhotpatch itsbounds. First4/2candidate mustwaitR9exactsettlement.
 Validate maximum safe F16 allocation (target decimal1,000,000, fallback917,504)
 while retaining7% freeVRAM. No cache precision change. The latest user explicitly
 authorizes a near-1M occupied-context test as the FINAL independent background
