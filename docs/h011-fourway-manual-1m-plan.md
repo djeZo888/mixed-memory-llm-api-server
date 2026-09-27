@@ -2,7 +2,9 @@
 
 Started 2026-09-27 00:55 UTC. Root coordinates/reviews; two workers use fresh
 bounded Codex CLI sessions and isolated copies of root commit 5328a77. Aim to
-finish this round within 90 minutes; do not automatically run 1M inference.
+finish active preparation within 90 minutes. The user subsequently authorized
+starting the durable 1M job after the concurrency test, then ending the turn
+while it runs. They will return after about one hour to check progress.
 
 ## Worker1: one owner for all four inference clients
 
@@ -52,9 +54,12 @@ checks, or production-default increase. Snapshot exact prior state, prevent
 harness use of the experimental lane, and restore the qualified 480K service
 through its owner on success/failure. Protect against uncertain in-flight work,
 SSH disconnect and duplicate submission. Preserve the other three models.
-Prepare and test offline/configuration logic only; do NOT execute 1M allocation
-or inference. Explain any live-unverified boundaries rather than claim acceptance.
-Worker1 stages the reviewed runner on ai-vm after the overlap test.
+The preparation session remains source/offline only. After root review and
+staging, a fresh bounded Worker1 native session with direct updated authority
+will allocate the temporary profile, verify a short probe, and start the
+1,000,000-token request. It exits once independent job ownership and actual
+running progress are confirmed; no paid worker session needs to wait for inference.
+Explain live-unverified boundaries rather than claim acceptance before results.
 
 Derive a rough duration from 64K measured TTFT (246.468s), clearly separating a
 linear planning reference (~63min for 1,000,000 input tokens) from unknown
@@ -63,7 +68,9 @@ automatic retries, durable logs/result JSON and a short status command.
 
 ## Finish
 
-Review actual concurrent load/stability, not just request admission. Restore
-Sova and all four warm services, publish compact evidence/code/commands in the
-existing GitHub branch/PR, and report PSU measurement limits. Do not run the
-long manual test on the user's behalf in this task.
+Review actual concurrent load/stability, not just request admission. Preserve
+all four model services and publish compact evidence/code/commands in the
+existing GitHub branch/PR, with PSU measurement limits. Keep Sova paused for
+the long job. The background job restores the original 480K Flash backend on
+completion/failure; Sova app restoration and result review follow when the user
+returns. Never claim the 1M test passed merely because it started.
