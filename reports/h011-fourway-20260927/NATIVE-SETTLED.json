@@ -1,0 +1,38 @@
+{
+  "utc": "2026-09-27T01:23:55.817741+00:00",
+  "all_native_settled": true,
+  "warm_native_complete": true,
+  "ready": {
+    "30010": {
+      "schema_version": 1,
+      "model_alias": "glm-5.3-flash",
+      "ready": true,
+      "state": "up",
+      "admitting": null
+    },
+    "30002": {
+      "schema_version": 1,
+      "model_alias": "qwen3.8-27b-gpu0",
+      "ready": true,
+      "state": "up",
+      "admitting": null
+    },
+    "30004": {
+      "schema_version": 1,
+      "model_alias": "qwen3.8-27b",
+      "ready": true,
+      "state": "up",
+      "admitting": null
+    },
+    "30006": {
+      "ready": true,
+      "busy": false,
+      "admitting": true,
+      "state": "ready",
+      "maximum_supported_generation_size": "1920x1080"
+    }
+  },
+  "connections": "",
+  "atomic_drain_claim": false,
+  "basis": "Completed owned warm native usage/finish/DONE; all owned clients terminal; quiet root/W2 scope; current readiness and no established inference sockets"
+}

@@ -134,20 +134,27 @@ def writer():
   try:persist()
   except BaseException as e:result['writer_error']=type(e).__name__;cancel('checkpoint_failed');return
 
+def collect_logs(start,end):
+ for lane,name in NAMES.items():
+  if lane not in LOGGABLE:continue
+  p=subprocess.run(['docker','logs','--timestamps','--since',start,'--until',end,'--tail','500',name],capture_output=True,text=True,timeout=5)
+  assert p.returncode==0,'native_log_read_failed:'+lane
+  put('native-'+lane,{'poll_utc':end,'text':p.stdout+p.stderr})
+ # Ada Docker logging is none. Existing owner unit journal may be empty; retain that fact.
+ p=subprocess.run(['journalctl','-u','llm-image-api','--since',start,'--until',end,'--no-pager','-o','short-iso'],capture_output=True,text=True,timeout=5)
+ assert p.returncode==0,'image_owner_journal_read_failed'
+ put('native-image-owner',{'poll_utc':end,'text':p.stdout,'native_gpu_phase_available':False})
+ p=subprocess.run(['journalctl','-k','--since',start,'--until',end,'--no-pager','-o','short-iso'],capture_output=True,text=True,timeout=5)
+ assert p.returncode==0,'kernel_journal_read_failed'
+ lines=[l for l in p.stdout.splitlines() if re.search(r'NVRM.*Xid|out of memory|oom-kill|PCIe.*(?:fatal|error)|AER:.*(?:fatal|uncorrected)',l,re.I)]
+ put('kernel-window',{'utc':end,'text':p.stdout})
+ if lines:put('kernel-errors',{'utc':end,'lines':lines});cancel('kernel_hardware_or_oom_error')
+
 def native_logs():
  start=result['utc']
  while not done.wait(5):
   end=now()
-  try:
-   for lane,name in NAMES.items():
-    if lane not in LOGGABLE:continue
-    p=subprocess.run(['docker','logs','--timestamps','--since',start,'--until',end,'--tail','500',name],capture_output=True,text=True,timeout=5)
-    assert p.returncode==0
-    put('native-'+lane,{'poll_utc':end,'text':p.stdout+p.stderr})
-   p=subprocess.run(['journalctl','-k','--since',start,'--until',end,'--no-pager','-o','short-iso'],capture_output=True,text=True,timeout=5)
-   lines=[l for l in p.stdout.splitlines() if re.search(r'NVRM.*Xid|out of memory|oom-kill|PCIe.*(?:fatal|error)|AER:.*(?:fatal|uncorrected)',l,re.I)]
-   if lines:put('kernel-errors',{'utc':end,'lines':lines});cancel('kernel_hardware_or_oom_error')
-   start=end
+  try:collect_logs(start,end);start=end
   except BaseException as e:result['native_log_error']=type(e).__name__;cancel('native_error_monitor_failed');return
 
 def boundary_guard():
@@ -254,6 +261,9 @@ def main():
   result['cpu_package_power']='exposed energy counters' if ENERGY_PATHS else 'UNAVAILABLE: guest powercap and hwmon empty; no BMC device exposed'
   result['baseline']=sample();assert safety(result['baseline']) is None,'baseline_resource_failure';samples.append(result['baseline'])
   result['kernel_before']=run(['journalctl','-k','--since','-10min','--no-pager','-o','short-iso'])
+  collect_logs(result['utc'],now())
+  assert not result['cancel_reason'],'idle_full_telemetry_preflight_failed'
+  result['full_idle_telemetry_preflight_utc']=now()
   persist()
   for fn in (telemetry,writer,native_logs):
    t=threading.Thread(target=fn,daemon=True);t.start();background.append(t)

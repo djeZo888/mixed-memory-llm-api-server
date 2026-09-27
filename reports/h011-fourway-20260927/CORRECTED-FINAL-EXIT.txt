@@ -1,0 +1,6 @@
+{"Status":"exited","Running":false,"Paused":false,"Restarting":false,"OOMKilled":false,"Dead":false,"Pid":0,"ExitCode":0,"Error":"","StartedAt":"2026-09-27T01:20:50.979004748Z","FinishedAt":"2026-09-27T01:29:44.668792153Z"}
+GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, 60028, sglang::scheduler, 61630
+GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23, 122657, sgl_diffusion::scheduler, 32228
+GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528, 28430, sglang::scheduler, 61630
+2026-09-27T01:29:33+00:00 llmserver kernel: ptrace attach of "sglang::scheduler"[3565229] was attempted by "py-spy dump --native --pid 53"[3690235]
+2026-09-27T01:29:33+00:00 llmserver kernel: ptrace attach of "sglang::scheduler"[3565229] was attempted by "py-spy dump --native --pid 53"[3690235]

@@ -8,10 +8,11 @@ The initial executed case submitted exactly one request to each lane. Five
 seconds after the barrier, the monitor failed because Ada uses Docker logging
 `none`; it canceled the clients. Flash native work did not settle with socket
 closure. Initial source is preserved as `attempt01-job-body.py`; raw assembled
-source and fixtures remain in the task-side hash manifest. The unexecuted
-correction probes Docker log capability before starting clients and explicitly
-records unavailable Ada native phase logs. Root authorizes it only after
-confirmed natural settlement, or in a fresh directly authorized recovery session.
+source and fixtures remain in the task-side hash manifest. The corrected source probes Docker log capability before starting clients and explicitly
+records unavailable Ada native phase logs. It was executed once after directly authorized original-owner recovery and a
+completed8192-token warmup; the corrected pass stopped on Qwen1 reaching85C.
+Flash subsequently hit its native watchdog again. No replay or second recovery
+is permitted by this dated task.
 
 The corrected candidate prepares one fresh65536-token Flash request (high
 reasoning, clear_thinking,768output), twelve fresh262144-token fixtures per Qwen

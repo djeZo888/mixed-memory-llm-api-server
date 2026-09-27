@@ -1,0 +1,103 @@
+{
+  "container": {
+    "Id": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
+    "Image": "sha256:51791e17c0149019e2ddc032d8c1b2f60b86c3a6c293daff639e20053baa858a",
+    "started_at": "2026-09-27T01:20:50.979004748Z"
+  },
+  "container_warm_preserved": true,
+  "end_utc": "2026-09-27T01:23:26.483846+00:00",
+  "established_tcp30010_after_close": "",
+  "fixture_source_sha256": "66b05346d3a43dd3442c25149522d931bad7453d514e3569b34853950387c2ab",
+  "native_capacity": {
+    "chunked_prefill_size": 2048,
+    "context_length": 480000,
+    "disable_radix_cache": true,
+    "kt_cpuinfer": 64,
+    "kt_gpu_prefill_token_threshold": 2048,
+    "kt_numa_nodes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "kt_threadpool_count": 8,
+    "kv_cache_dtype": "fp8_e4m3",
+    "max_req_input_len": 479994,
+    "max_req_len": null,
+    "max_running_requests": 1,
+    "max_total_num_tokens": 480000,
+    "max_total_tokens": 480000
+  },
+  "readiness_after": [
+    200,
+    {
+      "admitting": null,
+      "model_alias": "glm-5.3-flash",
+      "ready": true,
+      "schema_version": 1,
+      "state": "up"
+    }
+  ],
+  "script_sha256": "c10309f6799910377f97fe1f96cf474742ff07fec5dcd7ed0c69bc88b554b9b6",
+  "start_utc": "2026-09-27T01:22:42.744743+00:00",
+  "status": "COMPLETE",
+  "request": {
+    "actual_cap_seconds": 180,
+    "body_drained": true,
+    "cached_input_tokens": null,
+    "decode_rate_status": "NATIVE_INCREMENTAL_USAGE_OBSERVED_CLIENT_TIME_WINDOW",
+    "decode_rate_window": {
+      "end_native_tokens": 128,
+      "end_seconds": 38.150009016000695,
+      "start_native_tokens": 1,
+      "start_seconds": 28.80316819700056
+    },
+    "decode_tokens_per_second": 13.5874786421778,
+    "effective_input_tokens_per_second_ttft_basis": 284.41315705169825,
+    "elapsed_seconds": 38.15040901800057,
+    "end_utc": "2026-09-27T01:23:25.435097+00:00",
+    "expected_result": {
+      "aligned_bytes": 4352,
+      "early": "H10E-52EQ7CL7",
+      "end": "H10E-C3MMJVEF",
+      "middle": "H10M-ZG8YNNZN"
+    },
+    "finish_reason": "length",
+    "first_native_delta_client_utc": "2026-09-27T01:23:16.087861+00:00",
+    "first_nonempty_delta_seconds": 28.80316819700056,
+    "first_positive_native_usage_seconds": 28.80316819700056,
+    "http_status": 200,
+    "input_tokens": 8192,
+    "last_native_delta_client_utc": "2026-09-27T01:23:25.434707+00:00",
+    "last_nonempty_delta_seconds": 38.150009016000695,
+    "native_phase_observation_limit": "no inference of compile or prefill phase from silence alone",
+    "native_reasoning_usage_caveat": "Preserve native detail; reasoning deltas are not a separate native token count.",
+    "nonempty_delta_count": 127,
+    "output_cap_includes_reasoning": true,
+    "output_cap_reached": true,
+    "output_tokens": 128,
+    "phase": "client_closed",
+    "request_deadline_utc": "2026-09-27T01:25:47.284679+00:00",
+    "request_socket_closed": true,
+    "requested_output": 128,
+    "semantic_status": "UNPROVEN_OUTPUT_CAP",
+    "settle_seconds": 0,
+    "sse_done": true,
+    "start_utc": "2026-09-27T01:22:47.284685+00:00",
+    "status": "TRANSPORT_PASS",
+    "ttft_basis": "request start to first nonempty native content, reasoning, or tool delta; transport included",
+    "ttft_seconds": 28.80316819700056,
+    "usage": {
+      "completion_tokens": 128,
+      "prompt_tokens": 8192,
+      "prompt_tokens_details": null,
+      "reasoning_tokens": 0,
+      "total_tokens": 8320
+    },
+    "wire_payload_sha256": "28e1603d04c61821cf3691ef54f93419deaa4e8a2f85916152908db3059339fa"
+  }
+}

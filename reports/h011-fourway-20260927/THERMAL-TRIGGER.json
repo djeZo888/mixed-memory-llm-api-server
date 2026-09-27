@@ -1,0 +1,232 @@
+{
+  "utc": "2026-09-27T01:24:39.604730+00:00",
+  "monotonic": 14930.206995216,
+  "gpu": {
+    "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237": {
+      "power.draw": "600.66",
+      "power.draw.average": "600.66",
+      "power.draw.instant": "581.58",
+      "power.limit": "600.00",
+      "utilization.gpu": "100",
+      "memory.total": "97887",
+      "memory.used": "61640",
+      "memory.free": "35610",
+      "temperature.gpu": "77",
+      "clocks_event_reasons.active": "0x0000000000000004",
+      "ecc.errors.uncorrected.volatile.total": "0",
+      "clocks_event_reasons.sw_power_cap": "Active",
+      "clocks_event_reasons.hw_slowdown": "Not Active",
+      "clocks_event_reasons.hw_thermal_slowdown": "Not Active",
+      "clocks_event_reasons.hw_power_brake_slowdown": "Not Active",
+      "clocks_event_reasons.sw_thermal_slowdown": "Not Active"
+    },
+    "GPU-69acfa26-8b60-61b5-702d-aee252c163cc": {
+      "power.draw": "111.12",
+      "power.draw.average": "111.12",
+      "power.draw.instant": "92.73",
+      "power.limit": "600.00",
+      "utilization.gpu": "2",
+      "memory.total": "97887",
+      "memory.used": "31530",
+      "memory.free": "65720",
+      "temperature.gpu": "44",
+      "clocks_event_reasons.active": "0x0000000000000000",
+      "ecc.errors.uncorrected.volatile.total": "0",
+      "clocks_event_reasons.sw_power_cap": "Not Active",
+      "clocks_event_reasons.hw_slowdown": "Not Active",
+      "clocks_event_reasons.hw_thermal_slowdown": "Not Active",
+      "clocks_event_reasons.hw_power_brake_slowdown": "Not Active",
+      "clocks_event_reasons.sw_thermal_slowdown": "Not Active"
+    },
+    "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23": {
+      "power.draw": "297.59",
+      "power.draw.average": "297.59",
+      "power.draw.instant": "304.75",
+      "power.limit": "300.00",
+      "utilization.gpu": "100",
+      "memory.total": "49140",
+      "memory.used": "33432",
+      "memory.free": "15080",
+      "temperature.gpu": "68",
+      "clocks_event_reasons.active": "0x0000000000000004",
+      "ecc.errors.uncorrected.volatile.total": "[N/A]",
+      "clocks_event_reasons.sw_power_cap": "Active",
+      "clocks_event_reasons.hw_slowdown": "Not Active",
+      "clocks_event_reasons.hw_thermal_slowdown": "Not Active",
+      "clocks_event_reasons.hw_power_brake_slowdown": "Not Active",
+      "clocks_event_reasons.sw_thermal_slowdown": "Not Active"
+    },
+    "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528": {
+      "power.draw": "599.25",
+      "power.draw.average": "599.25",
+      "power.draw.instant": "487.47",
+      "power.limit": "600.00",
+      "utilization.gpu": "100",
+      "memory.total": "97887",
+      "memory.used": "61639",
+      "memory.free": "35613",
+      "temperature.gpu": "86",
+      "clocks_event_reasons.active": "0x0000000000000000",
+      "ecc.errors.uncorrected.volatile.total": "0",
+      "clocks_event_reasons.sw_power_cap": "Not Active",
+      "clocks_event_reasons.hw_slowdown": "Not Active",
+      "clocks_event_reasons.hw_thermal_slowdown": "Not Active",
+      "clocks_event_reasons.hw_power_brake_slowdown": "Not Active",
+      "clocks_event_reasons.sw_thermal_slowdown": "Not Active"
+    }
+  },
+  "cgroups": {
+    "flash": {
+      "memory.current": 326285574144,
+      "memory.swap.current": 0,
+      "events": {
+        "low": 0,
+        "high": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0
+      },
+      "cpu": {
+        "usage_usec": 5341349820,
+        "user_usec": 4937448880,
+        "system_usec": 403900940,
+        "core_sched.force_idle_usec": 0,
+        "nr_periods": 0,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "memory_stat": {
+        "anon": 311490674688,
+        "file": 14072877056,
+        "workingset_refault_anon": 0,
+        "workingset_refault_file": 0,
+        "pgmajfault": 150830
+      }
+    },
+    "qwen0": {
+      "memory.current": 5845766144,
+      "memory.swap.current": 0,
+      "events": {
+        "low": 0,
+        "high": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0
+      },
+      "cpu": {
+        "usage_usec": 2036140281,
+        "user_usec": 1978315621,
+        "system_usec": 57824660,
+        "core_sched.force_idle_usec": 0,
+        "nr_periods": 0,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "memory_stat": {
+        "anon": 4352229376,
+        "file": 1417412608,
+        "workingset_refault_anon": 0,
+        "workingset_refault_file": 90488,
+        "pgmajfault": 8008
+      }
+    },
+    "qwen1": {
+      "memory.current": 6130405376,
+      "memory.swap.current": 0,
+      "events": {
+        "low": 0,
+        "high": 0,
+        "max": 393,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0
+      },
+      "cpu": {
+        "usage_usec": 2045412116,
+        "user_usec": 1984095572,
+        "system_usec": 61316543,
+        "core_sched.force_idle_usec": 0,
+        "nr_periods": 0,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "memory_stat": {
+        "anon": 4364726272,
+        "file": 1534439424,
+        "workingset_refault_anon": 0,
+        "workingset_refault_file": 76919,
+        "pgmajfault": 11136
+      }
+    },
+    "image": {
+      "memory.current": 40332189696,
+      "memory.swap.current": 0,
+      "events": {
+        "low": 0,
+        "high": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0
+      },
+      "cpu": {
+        "usage_usec": 2097890768,
+        "user_usec": 1916993436,
+        "system_usec": 180897331,
+        "core_sched.force_idle_usec": 0,
+        "nr_periods": 0,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "memory_stat": {
+        "anon": 2782265344,
+        "file": 37308710912,
+        "workingset_refault_anon": 0,
+        "workingset_refault_file": 483,
+        "pgmajfault": 7856
+      }
+    }
+  },
+  "gpu_query_end_monotonic": 14930.277879942,
+  "ram": {
+    "MemTotal": 946820972544,
+    "MemAvailable": 606797807616,
+    "SwapTotal": 3157258240,
+    "SwapFree": 3091197952
+  },
+  "swap": {
+    "pswpin": 2440,
+    "pswpout": 15827
+  },
+  "cpu_ticks": [
+    5441846,
+    6,
+    592276,
+    100990357,
+    257432,
+    0,
+    4520,
+    122303,
+    0,
+    0
+  ],
+  "pressure": {
+    "memory": "some avg10=0.00 avg60=0.00 avg300=0.00 total=375715\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=374623\n",
+    "io": "some avg10=0.00 avg60=0.14 avg300=0.39 total=61841924\nfull avg10=0.00 avg60=0.14 avg300=0.39 total=60738921\n",
+    "cpu": "some avg10=4.12 avg60=1.77 avg300=0.95 total=68206846\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n"
+  },
+  "cpu_energy_uj": {},
+  "three_blackwell_w": 1311.03,
+  "ada_external_w": 297.59,
+  "all_four_diagnostic_w": 1608.62
+}

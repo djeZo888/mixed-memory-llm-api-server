@@ -7,7 +7,7 @@ assert 'Root explicit corrected-pass GO' in contract
 settled=json.loads((TASK/'evidence/NATIVE-SETTLED.json').read_text())
 assert settled['all_native_settled'] is True, 'native_settlement_required'
 quiet=json.loads((TASK/'HARNESS-QUIET-01.json').read_text());assert quiet['after_units']['ai-harness.service']['ActiveState']=='inactive'
-baseline=json.loads((TASK/'evidence/LIVE-BASELINE.json').read_text())
+baseline=json.loads((TASK/'evidence/LIVE-RECOVERED.json').read_text())
 lanes=['qwen0','qwen1','image','flash']
 params={'base':'5328a771596db54bee8b28e5f33b99892b3f5b7e','session_id':json.loads((TASK/'PROGRESS.json').read_text())['session_id'],'boot':baseline['boot_id'],'source_matches':json.loads((TASK/'evidence/PREFLIGHT.json').read_text())['source_matches'],'containers':{lane:{'Id':v['id'],'Image':v['image'],'StartedAt':v['state']['StartedAt']} for lane,v in zip(lanes,baseline['containers'])},'capacities':{lane:baseline['native'][str(port)]['capacity'] for lane,port in [('flash',30010),('qwen0',30002),('qwen1',30004)]},'quiet_sha256':hashlib.sha256((TASK/'HARNESS-QUIET-01.json').read_bytes()).hexdigest(),'root_contract_sha256':hashlib.sha256(contract.encode()).hexdigest()}
 common=(HERE/'vm-common.py').read_text()
@@ -20,7 +20,7 @@ remote=common+'\nFILES='+repr({n:base64.b64encode(b).decode() for n,b in files.i
 import base64
 log='/data/logs/flash-h008-20260926';unit='h011-fourway02';owner=log+'/H011-FOURWAY02-OWNER.json'
 assert not P(owner).exists(),'existing_owner_no_replay'
-assert time.time()<datetime.datetime(2026,9,27,1,25,tzinfo=datetime.timezone.utc).timestamp(),'too_late_to_dispatch'
+assert time.time()<datetime.datetime(2026,9,27,1,33,tzinfo=datetime.timezone.utc).timestamp(),'too_late_to_dispatch'
 with transaction() as (_,g):
  s.root_payload_guard()
  for n,raw in FILES.items():write_new(log+'/'+n,base64.b64decode(raw),g)

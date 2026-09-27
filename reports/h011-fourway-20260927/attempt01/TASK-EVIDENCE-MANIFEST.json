@@ -1,0 +1,207 @@
+[
+  {
+    "path": "evidence/LATEST.json",
+    "bytes": 425081,
+    "sha256": "eb9c4e7adcf6c5ab8d87aa21f26dff267b78088efd79cdd1e9de89fe2261ad6b"
+  },
+  {
+    "path": "evidence/PRE-HANDBACK-SUMMARY.json",
+    "bytes": 9218,
+    "sha256": "7198903e316c25ea99966b34e81029c5ad3be8086410c86e84a329ec57cb56a8"
+  },
+  {
+    "path": "evidence/FIXTURES.stderr",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "evidence/FINAL-FLASH-EXIT.txt",
+    "bytes": 3965,
+    "sha256": "e76479882014ee2e6f26baed98082f3aa5ebdf12d2447d96b5eaf9dcae3fd06d"
+  },
+  {
+    "path": "evidence/FINAL-IDENTITY.json",
+    "bytes": 7761,
+    "sha256": "f27c0e69008a5fdc6a7dae38a58bdce27bddf131a6c4353b73ee710189500f56"
+  },
+  {
+    "path": "evidence/OWNER.json",
+    "bytes": 6146,
+    "sha256": "6aa64d3ee2175288427e14e3b7821c9e82cd14cbdec8b4ac5d05308b6000f687"
+  },
+  {
+    "path": "evidence/LIVE-BASELINE.json",
+    "bytes": 64877,
+    "sha256": "91ac89bffb74ae38b3b71e0958b340f399c6598fb950dc0822224ca8c3eaa451"
+  },
+  {
+    "path": "evidence/FINAL-HANDBACK.json",
+    "bytes": 1169,
+    "sha256": "807e025d4f747b4d428c16b9c56b0030dbfc8c2eaa6ad8880defd063af70ff12"
+  },
+  {
+    "path": "evidence/ATTEMPT01-FLASH-NATIVE.log",
+    "bytes": 3683,
+    "sha256": "11c9aedce3b80d95cca808891b38bcfd4cfff8a54b5ef1dea7022ea55b3ffb12"
+  },
+  {
+    "path": "evidence/FINAL-IDENTITY.stderr",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "evidence/FLASH-TERMINAL-NATIVE.log",
+    "bytes": 422347,
+    "sha256": "27724173675814957dce3d5b213e4b8192d1e283dcd45acdf51a28046753a09a"
+  },
+  {
+    "path": "evidence/FIXTURES02.stderr",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "evidence/FIXTURES02.json",
+    "bytes": 21481325,
+    "sha256": "2fb663f5704a954d970a5910bcf80093db6969ed66a2807f3c54c2a8660a1ba3"
+  },
+  {
+    "path": "evidence/ATTEMPT01.json",
+    "bytes": 425081,
+    "sha256": "eb9c4e7adcf6c5ab8d87aa21f26dff267b78088efd79cdd1e9de89fe2261ad6b"
+  },
+  {
+    "path": "evidence/RAW-MANIFEST.json",
+    "bytes": 1836,
+    "sha256": "4149d1e1fc43bbe4f82d312c1199c511dd232b4e1d3dc0edf07a22aa3b746538"
+  },
+  {
+    "path": "evidence/SETTLEMENT-LATEST.json",
+    "bytes": 6027,
+    "sha256": "a9d17b1849ac026e2193a817f8c2b8c539e6b33c54991a14f28efa6aca55aac9"
+  },
+  {
+    "path": "evidence/DISPATCH.stderr",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "evidence/PREFLIGHT.stderr",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "evidence/ATTEMPT01-SETTLEMENT-TELEMETRY.jsonl",
+    "bytes": 145243,
+    "sha256": "82509a67186d54fa1baac4bf26daa16bb86ce7ec1db7d1aab799addf10f60e47"
+  },
+  {
+    "path": "evidence/OFFLINE-TESTS.txt",
+    "bytes": 267,
+    "sha256": "d2b61e2ab4d97fb7be3119ad96e6f306079affde511cbc7d001c58860f4000b3"
+  },
+  {
+    "path": "evidence/FIXTURES.json",
+    "bytes": 7335944,
+    "sha256": "b2dbbc725a62e9eecf4da90e95320a7667693e0a5c8badc99493b047513a076e"
+  },
+  {
+    "path": "evidence/FIXTURES02-SUMMARY.txt",
+    "bytes": 2483,
+    "sha256": "cf4d2ae3df304b74cd91f42de6fac339d9e953e9103ff9cf08152a7ac122a893"
+  },
+  {
+    "path": "evidence/PREFLIGHT.json",
+    "bytes": 7761,
+    "sha256": "12d19d14e03604f4fe0a33b098734bde26538e6660f00f2f685587fa089339c5"
+  },
+  {
+    "path": "evidence/FLASH-SETTLEMENT-NATIVE.log",
+    "bytes": 5085,
+    "sha256": "25ef39e53bfb6ae8da41d552591c08a2c3a569d8bda4ce76da97e8d6a0a3b2b7"
+  },
+  {
+    "path": "evidence/OWNER01.json",
+    "bytes": 6146,
+    "sha256": "6aa64d3ee2175288427e14e3b7821c9e82cd14cbdec8b4ac5d05308b6000f687"
+  },
+  {
+    "path": "evidence/NVIDIA-QUERY-HELP.txt",
+    "bytes": 30958,
+    "sha256": "7b12a4c770db5761aa835cfd5dce988e7c5abcfa271ab796763904927ae5dea5"
+  },
+  {
+    "path": "evidence/LIVE-PRE-HANDBACK.json",
+    "bytes": 33055,
+    "sha256": "698a936588ec3afb92cdd9aaa9b2972d5aff6348cf8c862050e3d7ac1f1a2829"
+  },
+  {
+    "path": "evidence/ATTEMPT01-ANALYSIS.json",
+    "bytes": 7509,
+    "sha256": "002fd51a447a6458acdf71cae3cb08c96803a539fc18982bb6f494e39eea8a24"
+  },
+  {
+    "path": "evidence/BASELINE-SUMMARY.json",
+    "bytes": 9897,
+    "sha256": "5530e8a820e9bd3a870a61ee484b04c19a07ff13376651e4601b054f1a32b1bc"
+  },
+  {
+    "path": "evidence/raw/H011-FOURWAY-qwen1-0-OWNER.json",
+    "bytes": 213,
+    "sha256": "5da6772e4c0eedee230654101318578f571d8a830405d3061cbe8525eb93886f"
+  },
+  {
+    "path": "evidence/raw/H011-FOURWAY-qwen0-0-OWNER.json",
+    "bytes": 213,
+    "sha256": "aad5705d3fad0d0135c9e08465d366c9a6ab0aadf59c794289605bff2e36b628"
+  },
+  {
+    "path": "evidence/raw/H011-FOURWAY-telemetry.jsonl",
+    "bytes": 154413,
+    "sha256": "855c49a3455d65ff2878c8269476ddf97b18d28008cb00e2d0c147ccc304c4a9"
+  },
+  {
+    "path": "evidence/raw/H011-FOURWAY-native-qwen1.jsonl",
+    "bytes": 4404,
+    "sha256": "fd159313e4d83a596693d52c2ef05d4cc8c8190ac667e222893b52d814acae41"
+  },
+  {
+    "path": "evidence/raw/H011-FOURWAY-image-0-OWNER.json",
+    "bytes": 214,
+    "sha256": "2837f156924c0f9cd7f89d18945bd567d9deb1d708bb9c5d4aa48872087b260b"
+  },
+  {
+    "path": "evidence/raw/H011-FOURWAY-native-flash.jsonl",
+    "bytes": 721,
+    "sha256": "5e17527225175a7e99314b09e1f1550b09ed711717bb89b76da430956d2b4a64"
+  },
+  {
+    "path": "evidence/raw/H011-FOURWAY-job.py",
+    "bytes": 25198,
+    "sha256": "1bab4103c82a213e0d576b372ed8a472631c0e67d6931bf03bc0ec6030c07a5c"
+  },
+  {
+    "path": "evidence/raw/H011-FOURWAY-OWNER.json",
+    "bytes": 6850,
+    "sha256": "1b7d08a5c7248d7692d4d0c2a7e4ff1db9c0511ae1245a156681f56e907d9e68"
+  },
+  {
+    "path": "evidence/raw/H011-FOURWAY-native-qwen0.jsonl",
+    "bytes": 4673,
+    "sha256": "7e7e3b9606cb045d3b6c3786246af0b1bad62439844f35257719bab7a85680a9"
+  },
+  {
+    "path": "evidence/raw/H011-FOURWAY-flash-0-OWNER.json",
+    "bytes": 213,
+    "sha256": "db3559d87e56d5cb2e3ee98ef2bac490233363e1937bd2e261bf05ef674ffbd1"
+  },
+  {
+    "path": "evidence/raw/H011-FOURWAY-FIXTURES.json",
+    "bytes": 7335944,
+    "sha256": "b2dbbc725a62e9eecf4da90e95320a7667693e0a5c8badc99493b047513a076e"
+  },
+  {
+    "path": "evidence/raw/H011-FOURWAY.json",
+    "bytes": 439255,
+    "sha256": "97328bb9e6703466ca1c22189287d74e7dd8327ef475de025d42f4f2630500a0"
+  }
+]
