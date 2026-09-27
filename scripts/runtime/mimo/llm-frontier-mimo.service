@@ -15,8 +15,8 @@ ExecStart=/usr/bin/python3 -I -B /data/services/mimo-h016-20260927/source/owner.
 ExecStopPost=/usr/bin/python3 -I -B /data/services/mimo-h016-20260927/source/owner.py settle
 TimeoutStopSec=45
 KillMode=control-group
-StandardOutput=null
-StandardError=null
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target

@@ -70,13 +70,82 @@ class OwnerTests(unittest.TestCase):
 
     def test_mandatory_timeout_not_optional_mapping_wait(self):
         start=time.monotonic()
-        with self.assertRaises(TimeoutError):
+        with self.assertRaises(o.MandatoryGuardTimeout) as raised:
             with o.bounded(.02):
                 time.sleep(.2)
+        self.assertIsInstance(raised.exception, TimeoutError)
+        self.assertEqual(str(raised.exception), 'mandatory_guard_timeout')
         self.assertLess(time.monotonic()-start,.1)
         source=PATH.read_text()
         self.assertNotIn('numa_maps',source);self.assertNotIn('/smaps',source)
         self.assertNotIn('placement(',source)
+
+    def _supervise_loading_fixture(self, readiness_error, *, sample_error=None):
+        """Run the actual owner loop, mocking every host/network boundary."""
+        class LoopObserved(Exception):
+            pass
+        manifest=copy.deepcopy(self.m)
+        selected=dict(selected_frontier=o.MODEL,manifest_sha256=o.digest(manifest),generation=1)
+        native=dict(container_id='a'*64,pid=123)
+        helper=SimpleNamespace(acquire_lease=lambda **_:contextlib.nullcontext(),
+            MountedStorageGuard=lambda _:contextlib.nullcontext(),
+            s=SimpleNamespace(root_payload_guard=lambda:None))
+        writes=[]
+        def read(path):
+            if path == o.BASE / 'manifest.json':return manifest
+            raise FileNotFoundError(path)
+        def run(argv,*_):
+            if argv[:2] == ['systemctl','show']:return 'MainPID=0\nActiveState=inactive\n'
+            if argv == ['fixture-create']:return 'a'*64
+            return ''
+        with contextlib.ExitStack() as stack:
+            replacements=dict(setup=Mock(return_value=helper),source_preflight=Mock(),
+                read=Mock(side_effect=read),require_selected=Mock(return_value=selected),
+                unit_identity=Mock(return_value={'pid':1,'invocation_id':'fixture'}),
+                BOOT=SimpleNamespace(read_text=lambda:'fixture-boot'),storage_paths=Mock(),
+                memory=Mock(return_value={**self.baseline,'MemAvailable':1000}),
+                temperature_limit=Mock(return_value=85),run=Mock(side_effect=run),
+                sample_guard=Mock(side_effect=[self.sample,sample_error or self.sample]),
+                latch=Mock(return_value={'hardware_latched':False}),
+                create_argv=Mock(return_value=['fixture-create']),inspect=Mock(return_value={'State':{'Pid':123}}),
+                exact_container=Mock(side_effect=lambda c,*_:c),native_identity=Mock(return_value=native),
+                cgpath=Mock(return_value=Path('/fixture/cgroup')),read_key=Mock(return_value=b'fixture'),
+                native_ready=Mock(side_effect=readiness_error),
+                write=Mock(side_effect=lambda h,name,value:writes.append((name,copy.deepcopy(value)))),
+                settle_state=Mock())
+            for name,value in replacements.items():stack.enter_context(patch.object(o,name,value))
+            sleep=stack.enter_context(patch.object(o.time,'sleep',side_effect=LoopObserved('loop reached sleep')))
+            with self.assertRaises(Exception) as caught:o.supervise()
+        return caught.exception,LoopObserved,writes,replacements,sleep
+
+    def test_loading_readiness_socket_timeout_remains_pending(self):
+        error,marker,writes,mocks,sleep=self._supervise_loading_fixture(TimeoutError('socket timed out'))
+        self.assertIsInstance(error,marker)
+        guards=[value for name,value in writes if name == 'guard.json']
+        self.assertEqual(len(guards),1)
+        self.assertEqual(guards[0]['status'],'ok')
+        self.assertIsNone(guards[0]['proxy'])
+        sleep.assert_called_once()
+        mocks['settle_state'].assert_called_once()
+        self.assertEqual(mocks['settle_state'].call_args.args[2]['status'],'LOADING')
+
+    def test_mandatory_deadline_inside_readiness_is_fatal_and_settles(self):
+        deadline=o.MandatoryGuardTimeout('mandatory_guard_timeout')
+        error,_,writes,mocks,sleep=self._supervise_loading_fixture(deadline)
+        self.assertIs(error,deadline)
+        self.assertNotIn('guard.json',[name for name,_ in writes])
+        sleep.assert_not_called()
+        mocks['settle_state'].assert_called_once()
+
+    def test_guard_timeout_outside_readiness_is_fatal_and_settles(self):
+        for deadline in (TimeoutError('nvml timeout'),o.MandatoryGuardTimeout('mandatory_guard_timeout')):
+            with self.subTest(error=type(deadline).__name__):
+                error,_,writes,mocks,sleep=self._supervise_loading_fixture(None,sample_error=deadline)
+                self.assertIs(error,deadline)
+                self.assertNotIn('guard.json',[name for name,_ in writes])
+                mocks['native_ready'].assert_not_called()
+                sleep.assert_not_called()
+                mocks['settle_state'].assert_called_once()
 
     def test_no_double_launch_and_ambiguity_no_replay(self):
         selected=dict(selected_frontier=o.MODEL,manifest_sha256=o.digest(self.m))

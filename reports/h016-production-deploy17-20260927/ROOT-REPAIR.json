@@ -1,0 +1,76 @@
+{
+  "status": "SOURCE_REPAIR_TESTED_AWAIT_ROOT_REVIEW_NO_DEPLOY",
+  "utc": "2026-09-27T17:52:08.999092+00:00",
+  "owner_sha256": "7768181c10bb35c7fcaa02d243913aaedf9ff7396416252b826dc2bbdb814a2c",
+  "unit_sha256": "c0c260e2fd554fc74ab045d072bdfa902780d05fa23b88f69f6324079e40573a",
+  "source_patch_sha256": "1b4b3c2d37842e3a935adb351d872c933b1ba092e4c76da1dc01d213a5675233",
+  "tests": {
+    "command": "python3 -m unittest discover -s tests -p test_mimo_owner.py -v",
+    "passed": 19,
+    "failures": 0,
+    "output_sha256": "6a863d1577a0cb4f85504bd46ef3520e6f80c4a90c4cafe96117a39dc3dfcac1",
+    "test_source_sha256": "6bf8fbc878aedaa54acf31da09cd2bcb05dc1f0ae4f662f1809c1a6379ed79a3",
+    "original_source_regression": {
+      "original_owner_sha256": "c7b4b109138de2ab566d7403f79b24f0203ac3f2bc6080e07d7604f30803221a",
+      "behavior": "ordinary readiness socket TimeoutError propagates fatally before guard publication",
+      "error_type": "TimeoutError",
+      "guard_written": false,
+      "next_loop_reached": false,
+      "settlement_called": 1,
+      "original_start_cause": "UNPROVEN",
+      "source_bug_reproduced_offline": true
+    }
+  },
+  "original_start_cause": "UNPROVEN",
+  "new_manifest_canonical_sha256": "c2d4cb314ce86a6c082faf784a5c3c55a6bb95acc1056f43f8baaeaa43f9016b",
+  "deployment": "NOT_DISPATCHED",
+  "proposal": {
+    "status": "INACTIVE_AWAIT_SEPARATE_ROOT_GO",
+    "observed_selection_generation": 2,
+    "proposed_selection_generation": 3,
+    "proposed_manifest_canonical_sha256": "c2d4cb314ce86a6c082faf784a5c3c55a6bb95acc1056f43f8baaeaa43f9016b",
+    "replacement_sources": {
+      "/data/services/mimo-h016-20260927/source/owner.py": "7768181c10bb35c7fcaa02d243913aaedf9ff7396416252b826dc2bbdb814a2c",
+      "/data/services/mimo-h016-20260927/source/llm-frontier-mimo.service": "c0c260e2fd554fc74ab045d072bdfa902780d05fa23b88f69f6324079e40573a",
+      "/etc/systemd/system/llm-frontier-mimo.service": "c0c260e2fd554fc74ab045d072bdfa902780d05fa23b88f69f6324079e40573a"
+    },
+    "failed_container_id": "144757b104c97ffad8d05158e93f1abcb929d34083a1a944c5690e0e801e7fdc",
+    "failed_container_name": "llm-frontier-mimo-production",
+    "failed_launch_id": "6c00066c594c420183430c5014d403f1",
+    "failed_invocation": "c378d6ca8b384f6787c2fcdfe9e36842",
+    "failed_state_manifest": "1cf16e3394666a515d032139bd0f27be9f31eba5e7c57720771580cbe56f3129",
+    "action_after_go": "Exact docker rm only after fresh protected state/unit/container/PID/cgroup/GPU settlement and request_hold=false proof; preserve failed raw bytes and logs first under new protected rollback subdirectory. Do not clear or infer request disposition. No model/weight/cache change.",
+    "exact_removal_argv": [
+      "docker",
+      "rm",
+      "144757b104c97ffad8d05158e93f1abcb929d34083a1a944c5690e0e801e7fdc"
+    ],
+    "preserve_before_removal": [
+      "original manifest.json raw bytes",
+      "original selection.json raw bytes",
+      "original state.json raw bytes",
+      "original owner.py and both unit bytes",
+      "exact docker inspect",
+      "raw docker stdout/stderr logs",
+      "raw systemctl properties",
+      "raw journal",
+      "current source closure/hash report"
+    ],
+    "sequence": [
+      "Archive failed artifacts with anchored registered guards",
+      "Refresh exact settled identity under canonical lease and verify old source pins",
+      "Remove ONLY exact failed container before selecting new manifest",
+      "Install ONLY3 changed source destinations and manifest, preserve protected rollback",
+      "Publish next factual MiMo generation3 with canonical proposed manifest digest",
+      "Release lease; daemon-reload and read-only source preflight",
+      "Arm independent18:10 normal-stop cutoff",
+      "ONE corrected ordinary start only after separate rootGO and before17:55",
+      "Immediate ROOT-NOTICE; no inference"
+    ],
+    "immutable_static_qualification_sha256": "f03120cf00356e0d1992129aac81ae37959677519f9cc2c463ab6f98a0867455",
+    "readiness_cutoff": "2026-09-27T18:10:00Z"
+  },
+  "patch_sha256": "b6debcdfa5989507c52365d56a1ba0c67120ca70442ab30cce008dfeaea8157f",
+  "whitespace": "PASS",
+  "host_changes_since_repair_request": "NONE"
+}

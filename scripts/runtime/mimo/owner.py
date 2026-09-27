@@ -92,12 +92,16 @@ def run(argv, timeout=10):
         child.stdout.close()
 
 
+class MandatoryGuardTimeout(TimeoutError):
+    """The whole mandatory sample expired; never a pending readiness probe."""
+
+
 @contextlib.contextmanager
 def bounded(seconds=5):
     """Whole mandatory sample deadline, not a timeout per mapping/file."""
     previous = signal.getsignal(signal.SIGALRM)
     def expired(*_):
-        raise TimeoutError('mandatory_guard_timeout')
+        raise MandatoryGuardTimeout('mandatory_guard_timeout')
     signal.signal(signal.SIGALRM, expired)
     signal.setitimer(signal.ITIMER_REAL, seconds)
     try:
@@ -571,10 +575,10 @@ def supervise(dry_run=False):
                     ready = False
                     try:
                         ready = native_ready(m, key)
-                    except TimeoutError:
+                    except MandatoryGuardTimeout:
                         raise
                     except (ConnectionError, OSError, http.client.HTTPException):
-                        pass  # Loading may not have bound the native endpoint yet.
+                        pass  # Loading may not yet bind or answer within the HTTP timeout.
                     if ready is True:
                         state['status'] = 'STARTING_PROXY'
                         write(h, 'state.json', state)
