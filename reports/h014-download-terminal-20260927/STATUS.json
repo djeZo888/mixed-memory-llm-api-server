@@ -11,7 +11,11 @@
     "snapshot_end_utc": "2026-09-27T08:55:27.351662+00:00",
     "collector_exit_code": 0,
     "report_written_utc": "2026-09-27T08:57:13.242233+00:00",
-    "native_session_exit": "Pending process exit; launcher writes task finished-utc and exit-code after this session returns."
+    "native_session_exit": {
+      "code": 0,
+      "finished_utc": "2026-09-27T08:58:08Z",
+      "evidence": "Root reviewed the preserved launcher exit-code and finished-utc after native exit."
+    }
   },
   "collection": {
     "vm_snapshots": 1,
