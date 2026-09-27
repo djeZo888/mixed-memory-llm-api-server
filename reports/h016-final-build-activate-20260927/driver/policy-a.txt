@@ -1,0 +1,4 @@
+1. Draft retention policy, 2026-09-01. Status: unsigned draft.
+2. The proposal retains ordinary event records for 30 days.
+3. The proposal retains audit records for 90 days.
+4. Draft proposals never override a signed amendment.

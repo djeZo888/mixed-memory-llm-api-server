@@ -1,0 +1,23 @@
+{
+  "phase": "PRE_BUILD",
+  "baseSource": "4c12d239300d05c8fae12d9048bfa187128587dd",
+  "receiptSha256": "f03120cf00356e0d1992129aac81ae37959677519f9cc2c463ab6f98a0867455",
+  "receiptQualified": true,
+  "receiptCapacity": {
+    "published": 1048576,
+    "configured": 1000000,
+    "allocated": 1000000,
+    "occupiedTested": 16384
+  },
+  "receiptEvidenceKind": "R9_NATIVE_QUALIFIED_STATIC_EXPERIMENTAL_PROVENANCE",
+  "receiptEvidenceNote": "Root direct approval identifies completed JSON; accompanying markdown retains older incomplete preparation history. No static receipt is live ordinary readiness.",
+  "retainedArchiveSha256": "0d34ca656248d8293ee4098ef1ba0202fc02353ac35a515870220e8fcc805d17",
+  "retainedPayloadFilesVerified": 44,
+  "profileTests": 5,
+  "driverTests": 4,
+  "clockTests": 5,
+  "syntax": "PASS",
+  "profileSha256": "045d0ed290a4870182610745a5a51ba471d9797bf5aebffbb3148ca4d000e020",
+  "liveAcceptance": "NOT_RUN",
+  "pairApply": false
+}
