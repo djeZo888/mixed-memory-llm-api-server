@@ -1,0 +1,144 @@
+{
+  "status": "PRODUCTION_FLASH_1M_READY_IMAGE_RECOVERY_PENDING",
+  "observed_utc": "2026-09-27T05:41:25.522525+00:00",
+  "boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+  "gpu_readback": {
+    "exit": 0,
+    "stdout": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, Disabled, Disabled, 36, 0, 36234, 97887\nGPU-69acfa26-8b60-61b5-702d-aee252c163cc, Disabled, Disabled, 40, 0, 69508, 97887\nGPU-5d895991-b794-2b4c-b9c4-5f1b668afd23, Disabled, Disabled, 35, 0, 48510, 49140\nGPU-93dbfca8-ef3a-9628-a798-6a4afd0af528, Disabled, Disabled, 36, 0, 36237, 97887\n",
+    "stderr": ""
+  },
+  "native_capacity": {
+    "flash": {
+      "status": 200,
+      "top": {
+        "context_length": 1048576,
+        "max_total_tokens": 1048576,
+        "max_total_num_tokens": 1048576,
+        "max_req_input_len": 1048570,
+        "max_running_requests": 1,
+        "mem_fraction_static": 0.65,
+        "model_path": "/models",
+        "served_model_name": "glm-5.3-flash"
+      },
+      "internal_states": [
+        {
+          "context_length": 1048576,
+          "max_total_tokens": 1048576,
+          "max_running_requests": 1,
+          "mem_fraction_static": 0.65,
+          "model_path": "/models",
+          "served_model_name": "glm-5.3-flash"
+        }
+      ]
+    },
+    "qwen0": {
+      "status": 200,
+      "top": {
+        "context_length": 480000,
+        "max_total_tokens": 480000,
+        "max_total_num_tokens": 480000,
+        "max_req_input_len": 479994,
+        "max_running_requests": 1,
+        "mem_fraction_static": 0.8,
+        "model_path": "/models",
+        "served_model_name": "qwen3.8-27b-gpu0"
+      },
+      "internal_states": [
+        {
+          "context_length": 480000,
+          "max_total_tokens": 480000,
+          "max_running_requests": 1,
+          "mem_fraction_static": 0.8,
+          "model_path": "/models",
+          "served_model_name": "qwen3.8-27b-gpu0"
+        }
+      ]
+    },
+    "qwen1": {
+      "status": 200,
+      "top": {
+        "context_length": 480000,
+        "max_total_tokens": 480000,
+        "max_total_num_tokens": 480000,
+        "max_req_input_len": 479994,
+        "max_running_requests": 1,
+        "mem_fraction_static": 0.8,
+        "model_path": "/models",
+        "served_model_name": "qwen3.8-27b"
+      },
+      "internal_states": [
+        {
+          "context_length": 480000,
+          "max_total_tokens": 480000,
+          "max_running_requests": 1,
+          "mem_fraction_static": 0.8,
+          "model_path": "/models",
+          "served_model_name": "qwen3.8-27b"
+        }
+      ]
+    }
+  },
+  "kernel_fault_lines": [],
+  "short_correctness": {
+    "utc": "2026-09-27T05:42:33.866462+00:00",
+    "duration_s": 15.378890249999984,
+    "request": {
+      "model": "glm-5.3-flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Compute 17 + 25. Reply with only the integer answer."
+        }
+      ],
+      "max_tokens": 128,
+      "temperature": 0,
+      "stream": false
+    },
+    "result": {
+      "status": 200,
+      "body": {
+        "id": "046624d9d891494db3c82124038bfe72",
+        "object": "chat.completion",
+        "created": 1790487753,
+        "model": "glm-5.3-flash",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "42",
+              "reasoning_content": null,
+              "tool_calls": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "matched_stop": 154827
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 26,
+          "total_tokens": 29,
+          "completion_tokens": 3,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0
+        },
+        "metadata": {
+          "weight_version": "default"
+        }
+      }
+    },
+    "correct": true
+  },
+  "limits": [
+    "Short correctness check is not a warmed throughput benchmark.",
+    "Image owner remains closed without backend; four-way repeat not yet performed.",
+    "Sova candidate is built and tested but not activated.",
+    "BMC fan automation awaits working web login and exact PWM mapping."
+  ],
+  "maintenance_notes": [
+    "Transient lifecycle lease collision left model processes running; one reviewed retry followed.",
+    "Dict-only receipt writer rejected a list after first ECC setter. Verified partial-state continuation issued only remaining setters, then the one guest reboot.",
+    "Original 1M scientific evidence unchanged.",
+    "Active node observer is under node-api, not control-api; exact reviewed source installed only in the actual imported path."
+  ]
+}
