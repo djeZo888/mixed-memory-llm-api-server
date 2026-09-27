@@ -1,0 +1,16 @@
+{
+  "native_id": "01a0e1c4-9999-7250-9565-b8e1be1d19c5",
+  "start_utc": "2026-09-27T07:29:13Z",
+  "deadline_utc": "2026-09-27T07:39:13.043661+00:00",
+  "source_snapshot": "587308b4e5ccc15a535f05b370f7cc599d257820",
+  "built_source": "7143c17d73173db9364b77956679c86d7026a4ae",
+  "evidence": {
+    "../ROOT-GO-20260927.md": "04611187bd0615ac8bc375f288b14677786f7cdd6a0982e641497e503b8dabc9",
+    "../evidence/CHECKPOINT.json": "7ff951123b40879864206014f84ab26c5258a94c0341e4ec07b5c1a293046b81",
+    "../evidence/RECOVERY-READBACK.json": "120895002efdeba06be3af59ef2b9fbef64653536de8013a9cf1580bdb944b55",
+    "../evidence/ACTIVATION-REVIEW.md": "af5cdd1cf6ec0a00167f12e1394ea2c670c2ba71055f112f7a41a832999f7328",
+    "../evidence/ROOT-NOTICE-SETTLEMENT.json": "6e09b7bbf4b25886746d3effc4f2c1927e2f6715fc7db3f8953cbe3943a3bf76",
+    "../evidence/WARM02-STATUS.json": "6939f91579e036468f2f0379317211145cda7cb2518574e2fa22d6c2fe520aca",
+    "../evidence/PRODUCTION-CAPACITY.json": "708fb8d3fb63ac90408462657187b9d4ca8b5e2840fcf7eac680da9fd9afd38b"
+  }
+}

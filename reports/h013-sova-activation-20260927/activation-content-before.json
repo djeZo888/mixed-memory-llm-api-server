@@ -1,0 +1,166 @@
+{
+  "utc": "2026-09-27T07:30:50.244611+00:00",
+  "data": {
+    "sessions": {
+      "count": 26,
+      "sha256": "19ca377e380d72c39a6b31eaec57a889801ca2dc127167b0ef49cf85b99c4508",
+      "states": [
+        [
+          "idle",
+          25
+        ],
+        [
+          "interrupted",
+          1
+        ]
+      ]
+    },
+    "messages": {
+      "count": 133,
+      "sha256": "5e5b42e190814d176ebd78f2bdffc5c15499761fe8d50752a0a91549fd5c2015"
+    },
+    "files": {
+      "count": 62,
+      "sha256": "131d5f4a3e30fef0ea137a1c144a7efd40c47f4f154697a140c3e7ac02a1207d"
+    },
+    "runs": {
+      "count": 48,
+      "sha256": "3b50c72001731a0f75532bfc482d57791e04685eb565bdb5f32e539cd1719032",
+      "states": [
+        [
+          "cancelled",
+          5
+        ],
+        [
+          "completed",
+          42
+        ],
+        [
+          "interrupted",
+          1
+        ]
+      ]
+    },
+    "events": {
+      "count": 25359,
+      "sha256": "8100305ce6ec9d753d9390660d8410e4029b0235e60cd92862b14be904fefd98"
+    },
+    "quarantined_workspaces": {
+      "count": 1,
+      "sha256": "5805d468bf5ed2d4c602e3643882a1f0d70cdbd6b00b9667e10b110081d2d2b0"
+    },
+    "h003_image_jobs": {
+      "count": 19,
+      "sha256": "9370dc782305a1284a4a3758470bfa6e3018aca5a009ca7a88c81a110ea67311",
+      "states": [
+        [
+          "cancelled",
+          1
+        ],
+        [
+          "completed",
+          18
+        ]
+      ]
+    },
+    "h003_image_lane": {
+      "count": 1,
+      "sha256": "56d994d4e38d429e78bb9c6b0b440dac01b94e17f65c791640d741d2989d0359",
+      "states": [
+        [
+          "quarantined",
+          1
+        ]
+      ]
+    },
+    "h005_image_ownership": {
+      "count": 1,
+      "sha256": "465d674ce6bae7911e62c34c8ec4790981ae2eb73f9db75b8f8fe54a2d2c25a1",
+      "states": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    "gateway_lanes": {
+      "count": 3,
+      "sha256": "6ddd5f19b7a7c7170eb335b4df060f4a86c92989c714a887a0e9fde0a2ab749e",
+      "states": [
+        [
+          "idle",
+          3
+        ]
+      ]
+    },
+    "frontier_requests": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "states": []
+    }
+  },
+  "files": {
+    "regular_non_database_files": 17597,
+    "sha256": "1e262519cde8059973b23a2fc2a2838e2a15cb4429269fe18e57cc4adb906f51",
+    "excluded_database_and_transient_files": 160
+  },
+  "units": {
+    "ai-harness.service": {
+      "MainPID": "0",
+      "WorkingDirectory": "/opt/ai-harness/releases/296ae49e44eb250773223885b843994e2c5b9bcc/ai-harness/server",
+      "Id": "ai-harness.service",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-searxng.service": {
+      "MainPID": "190181",
+      "WorkingDirectory": "!/home/user",
+      "Id": "ai-harness-searxng.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-status.service": {
+      "MainPID": "187415",
+      "WorkingDirectory": "/opt/ai-harness/components/H008-REGISTRY-296ae49/ai-harness/server",
+      "Id": "ai-harness-status.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-admin.service": {
+      "MainPID": "66185",
+      "WorkingDirectory": "",
+      "Id": "ai-harness-admin.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    }
+  },
+  "containers": [
+    {
+      "id": "9bc2e4a10a7d82d275161d2567d25603af4b8063b1f14b59858ca28e6e9db558",
+      "image": "sha256:4ea190ed2bbb9a72b1719ce0947d4a144a0a74df9ac1272da28084761e6eef20",
+      "names": [
+        "ai-harness-searxng"
+      ],
+      "state": "running"
+    }
+  ],
+  "owner": {},
+  "dispatch": {
+    "admin_relay_failures": {
+      "count": 1,
+      "sha256": "2b5034e423c5ddd121bead118e2d9eec7f84304f0bf5fb53d746c71209e62816"
+    },
+    "admin_relay_operations": {
+      "count": 20,
+      "sha256": "53c19ac995b4577f58b499539c86bb127bd426d9d38b309f8e7f765cb296aad2"
+    },
+    "dispatch_holds": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  }
+}
