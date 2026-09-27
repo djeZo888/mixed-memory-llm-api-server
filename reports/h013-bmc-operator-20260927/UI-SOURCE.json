@@ -1,0 +1,48 @@
+{
+  "path": "/source.min.js",
+  "decoded_sha256": "3cd95fe3076f2a8f2518816fcb9b8f70b2b246477c5122d40317c93f2df2cbfd",
+  "modules": [
+    {
+      "module": "views/settings/fan_control/AutoView",
+      "source_private_evidence": {
+        "sha256": "25c9eba9a97d7bfb1ae25e9c4903a28386eeb6ff2e31588d94f68c8684b3c9fd",
+        "bytes": 2856,
+        "note": "Vendor implementation retained privately; public report describes observed API contract."
+      }
+    },
+    {
+      "module": "views/settings/fan_control/ManualItemView",
+      "source_private_evidence": {
+        "sha256": "af4ab8d2daef06a470cb83091631e6a4d97e8792f8eafa6eaf09d140cad3d3df",
+        "bytes": 7057,
+        "note": "Vendor implementation retained privately; public report describes observed API contract."
+      }
+    },
+    {
+      "module": "views/settings/fan_control/ManualView",
+      "source_private_evidence": {
+        "sha256": "d7f53b9700bf3bf223aec879c7ccc7b3e6de0f6fc55e92e2d52cf91547991bf1",
+        "bytes": 1439,
+        "note": "Vendor implementation retained privately; public report describes observed API contract."
+      }
+    },
+    {
+      "module": "views/settings/fan_control/SourceView",
+      "source_private_evidence": {
+        "sha256": "2b4fa270fba8072188915ef79a1812c3b770d104dccfd6a4afc54e2794954f8f",
+        "bytes": 6311,
+        "note": "Vendor implementation retained privately; public report describes observed API contract."
+      }
+    }
+  ],
+  "login_source_private_evidence": {
+    "sha256": "541fdf958865d7569ef5087a9bd86aabf0507a777707cbcce03f68a8792dbc61",
+    "bytes": 3646,
+    "note": "Vendor implementation retained privately; public report describes observed API contract."
+  },
+  "xhr_header_source_private_evidence": {
+    "sha256": "fb2a6112f9605951eb8c7266cb3433e02f87e9fcdb33c19a5a732b1b5760a697",
+    "bytes": 1276,
+    "note": "Vendor implementation retained privately; public report describes observed API contract."
+  }
+}
