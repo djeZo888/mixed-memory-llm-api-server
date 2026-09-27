@@ -16,11 +16,18 @@ all13 shards /577,669,438,240bytes are verified. Reuse them and imagecdb6efd.
 The cold mmap path passed text and tiny tool/continuation semantics, but suffered
 severe disk paging; none of those timings is a warmed benchmark. Explicit loading
 then exposed a blocking monitor diagnostic and a likely huge CUDA-host allocation.
-The monitor is corrected; R5 adds only --no-host to none/interleave and started
-12:37:37UTC. Full load and 4K/16K/64K results remain pending. Do not repeat old
-attempts. MiMo harness overlay6641df04 has built and passed offline checks; a
-single production owner/node source packet is under review. Sova app is paused
-and histories/files are preserved. No production MiMo activation has occurred.
+The monitor is corrected; R5 adds only --no-host to none/interleave and loaded
+at12:48:55UTC. Warmed4K and16K passed at about61input/.91output tokens/s.
+The actual65536-input run started13:10:15 and is still in progress at13:20.
+Read docs/h016-mimo-results-20260927.md for measured evidence and limits.
+Do not repeat completed tests or old loading attempts. MiMo harness overlay
+6641df04 and the single production owner/node source passed offline checks;
+host release928b3b4-h016 is staged but unactivated. Full17-tool native acceptance,
+live lifecycle and application delegation remain NOT_TESTED. Receipt access
+under protected /etc/ai-harness needs a narrow future correction; do not loosen
+private directory permissions. Prioritize64K completion, exact R5 settlement
+and original GLM/Sova restoration inside this window. No late production reload.
+Sova app is paused and histories/files are preserved.
 The older H014 download hold below is historical; latest H016 STATUS is authority.
 
 ## Current work — 27 September 2026
