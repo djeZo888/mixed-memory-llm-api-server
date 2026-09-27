@@ -1,0 +1,18 @@
+{
+  "status": "OFFLINE_SOURCE_REVIEW_ONLY",
+  "proven": "ValueError at owner455 int(cg[memory.swap.max]); earlier chained memory.max/current/swap.current predicates passed.",
+  "literal_failing_value": "UNKNOWN_NOT_RETAINED",
+  "latest_retained_zero_utc": "2026-09-27T20:35:19.510881+00:00",
+  "all_retained_swap_max_values": [
+    "0"
+  ],
+  "docker_hostconfig": {
+    "Memory": 755914244096,
+    "MemorySwap": 755914244096,
+    "MemorySwappiness": null,
+    "MemoryReservation": 0,
+    "CgroupParent": ""
+  },
+  "known_source": "create_argv passes equal --memory and --memory-swap; exact_container checks equality; known scripts contain no later docker update or swap.max writer. Why read failed and whether configured limit changed are UNKNOWN.",
+  "future_narrow_proposal": "Classify decimal/max/empty/invalid without raw arbitrary text, keep required numeric zero and fail closed. Never permit swap or coerce max to0. No patch installed."
+}

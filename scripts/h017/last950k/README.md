@@ -85,4 +85,11 @@ the separate LAST-BUSY-FIX packet. No Linux
 unit/runtime execution, live API, long request, or production acceptance was
 performed. The client remains SOURCE ONLY.
 
-H017 amendment: production allocation and short continuation at actual950000 remain pending. Historical R9 1M/16K/full17 receipts retain their original identity and scope. Root GO must bind a truthful production amendment plus actual Sova PASS and genuine new production identity; no new occupied950K qualification is claimed. This namespace is inactive and the H016 staged namespace is unchanged.
+H017 final receipt05: diagnostic owner5b7fc allocated usable950000 and completed
+only tiny14-input/2-output text. Full17 was not submitted before owner failure;
+no current qualifier exists. Exact physical settlement passed20:41:00. Root
+subsequently authorized original GLM recovery; see
+`reports/h017-final-receipt05-20260927/ROOT-RECOVERY.json` for measured status.
+Historical R9 1M/16K/full17 retains its original identity and scope. LAST remains
+inactive, authorizedfalse, without production/Sova acceptance or root GO. No
+occupied950K claim or dispatch is made.
