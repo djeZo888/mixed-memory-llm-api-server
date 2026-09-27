@@ -1,5 +1,24 @@
 # GPU fan boost and motherboard fan control
 
+## Current deployment and BMC access — 27 September, 08:24 UTC
+
+Integrated NVML fan boost is deployed and live-tested, including restart after
+the guest reboot. It commands 100% at 70 C and restores firmware control after
+65 C or below for 30 seconds. The ECC-off overlap still reached the server
+Blackwell's 85 C guard; no further stress repeat is planned before cooling is
+improved. External fans remain user-set 100%.
+
+BMC web authentication now succeeds with the saved sova credential. Four fan
+GETs return HTTP500 under the Operator account, while the user confirms the
+administrator can open Fan Control. A user-side role elevation is the next
+controlled comparison; it has not been performed. The admin screenshot shows
+Zone4(CHA_FAN3), flat100% duty and CPU Package Temperature as the curve input.
+The requested GPU-temperature policy still requires a telemetry bridge and
+qualified channel-only control/failure behavior. No fan writes were made.
+[Current access evidence](../reports/h015-bmc-login-20260927/REPORT.md).
+
+## Design and historical qualification steps
+
 User steering, 27 September 2026: command GPU fans to 100% at 70C or above.
 The passive Server Blackwell uses external fans connected to CHA_FAN3 on the
 ASUS Pro WS WRX90E-SAGE SE. This is an amendment to the H013 comparison, not

@@ -26,8 +26,9 @@ omitted from the receipt. Fan GETs retained no whitelisted configuration fields
 response bodies were not retained by the reviewed fan filter, so no backend error
 code or cause is claimed.
 
-**No further account configuration change is demonstrated as necessary.** These
-HTTP 500 responses do not establish a missing privilege or justify Administrator.
+**The API result alone does not establish the required account change.** These
+HTTP 500 responses do not establish a missing privilege. The later user-observed
+Operator/Administrator comparison below supports a role-dependent restriction.
 The user-reported screenshot settings (Enabled; channels 1/2/8 Operator; KVM and
 VMedia off; SNMP ReadWrite/SHA256/AES) were not independently queried or changed.
 No account, role, password, SNMP, global mode/source or fan setting was written.
@@ -86,7 +87,12 @@ The parent wrapper writes the actual native exit status/time after this session
 ends. Bundle SHA and commit are recorded in the task-root `RESULT-DELIVERY.json`
 and final handoff, outside the bundle to avoid a self-referential digest.
 
-## Source-only continuation before 08:22:50 UTC
+## Source-only continuation and actual exit
+
+The original deadline was 08:22:50 UTC. Source-only packaging finished and the
+native session exited successfully at 08:23:13, 23 seconds beyond that limit.
+No BMC request occurred after 08:16:02. This overrun is not a deadline extension
+or authorization for another task; the worker is stopped.
 
 The latest **user-observed browser comparison** is that Fan Control fails or is
 unavailable for sova Operator but works as Administrator. This is separate from
@@ -106,3 +112,24 @@ inspection establishes neither complete browser/probe cookie equivalence nor a
 specific mismatch. No conclusive cookie/header mismatch was demonstrated.
 `FOLLOWUP.json` records these source-only findings and distinct evidence origins.
 No network request, login, write, test or probe was made in this continuation.
+
+## Root review of the user's admin screenshot
+
+The administrator screenshot labels the panel **Zone4(CHA_FAN3)** and shows a
+flat 100% blue curve, with visible duty fields all at 100%. Its horizontal axis
+is **CPU Package Temperature**, not the NVIDIA GPU temperature. This supports
+the user's configured full-speed setting and establishes the displayed zone
+name, but does not prove instantaneous duty or the API's zero-based index and
+PWMNum. Do not turn the displayed zone number into a guessed API address.
+
+The user reports that this page fails/is unavailable under sova Operator and
+works as Administrator. The next controlled account change to test is sova
+Administrator on its enabled channels, preserving its password and other
+settings, followed by one fresh owned-session read. This is a proposed user-side
+change, not an executed role elevation or proof that all setters will succeed.
+No SNMP permission change is needed to test the existing HTTPS route.
+
+Leave the current curve at 100%. A later controller must read the exact server
+GPU temperature from ai-vm; setting a 70 C breakpoint on this CPU-temperature
+curve would not implement the requested GPU policy. Existing channel mapping,
+write semantics and failure behavior remain to be qualified before low duty.

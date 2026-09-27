@@ -27,7 +27,12 @@ recovery need and review. No Proxmox reboot, GPU reset or driver update.
 
 Integrated fan control is installed and live-tested:100% at>=70C, return to
 firmware after<=65C for30s. External Server CHA_FAN3 remains user-set100% while
-BMC web-session authentication/mapping is unresolved. Desired external policy
+BMC web login succeeded at08:16UTC; Operator fan GETs returned500, and the user
+confirmed the same page fails under Operator but works as Administrator.
+The proposed user-side role change is pending, not performed. Exact API channel
+mapping and write behavior remain unresolved. The admin screenshot labels
+Zone4(CHA_FAN3) with a flat100% CPU-temperature curve; do not infer the API index
+or substitute CPU temperature for GPU temperature. Desired external policy
 is100% at>=70C and50% below70C; missing/stale GPU temperature must not lower
 cooling. The protected credential stays on ai-harness. No guessed PWM/IPMI writes.
 Worker1 owns ai-vm; Worker2 owns BMC/ai-harness and independent acceptance.
