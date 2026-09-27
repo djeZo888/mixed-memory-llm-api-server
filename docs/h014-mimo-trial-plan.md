@@ -1,5 +1,21 @@
 # H014 — MiMo frontier comparison
 
+## Download terminal result — 08:55 UTC, 27 September
+
+All **577,669,438,240 expected bytes (577.669 GB / 537.997 GiB)** are present.
+Existing hash receipts verify **12/13 shards**, totaling528,287,426,336 bytes.
+Shard12 contains its full49,382,011,904 expected bytes in a `.partial` file;
+the90-minute job deadline interrupted its final hash verification at08:50:03.
+The terminal outcome is **TIMEOUT**, not complete artifact verification.
+All recorded download processes are settled. No restart, resume, new hash
+pass, model load or inference occurred during this read-only collection.
+
+The runtime build already passed; preserve it and all model files. Next work
+starts by checking the final shard against its pinned published hash, without
+repeating verification of unchanged completed shards. The download heartbeat
+is paused. Native model qualification and benchmarks remain in the next
+bounded execution window. [Terminal evidence](../reports/h014-download-terminal-20260927/).
+
 ## Execution checkpoint — 07:40 UTC, 27 September
 
 The isolated llama.cpp7ac59a6 /CUDA13.2.1 SM120a image built successfully and

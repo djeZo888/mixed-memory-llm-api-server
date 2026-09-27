@@ -52,12 +52,14 @@ MXFP4/BF16 Flash as fallback if impractical. Retain native expert precision and
 BF16/F32 nonexperts; the old155.9GiB Flash artifact also quantizes attention toQ8.
 Verify actual tensor metadata, source/runtime identity and memory reserves.
 The isolated SM120 runtime build has passed version/help checks; MiMo has not
-loaded. The independent13-shard download was19.23% complete at07:37UTC and has
-an08:50UTC deadline. Preserve partials and inspect its existing terminal receipt;
-do not launch duplicate downloads or rebuild the successful image. At the
-current three-hour checkpoint, collect already-started job results and report;
-the next bounded execution window covers native load, warmed4K/16K/64K and
-tool/technical checks. Review allocation/runtime before full1M.
+loaded. At08:55UTC, all577,669,438,240 expected bytes were present, but only
+12/13 shards (528,287,426,336 bytes) were hash-verified. The90-minute download
+job timed out at08:50:03 during the last hash check; shard12 remains a full-size
+49,382,011,904-byte .partial. All owned processes settled. Do not call the
+artifact verified, redownload complete files, or rebuild the successful image.
+The download heartbeat is paused. The next bounded execution window starts
+with verification of the retained final shard, then native load, warmed
+4K/16K/64K and tool/technical checks. Review allocation/runtime before full1M.
 Retain GLM and initially compare serially on the frontier GPU. Concurrent
 GLM/MiMo residency is a later option to assess after MiMo1M; user then decides.
 Keep paid CLI sessions closed while independent bounded jobs merely run.
