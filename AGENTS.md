@@ -34,8 +34,10 @@ thermal effect. Three Blackwells use the workstation PSU; Ada has its own PSU.
 Do not equate summed GPU board power with wall/PSU power.
 
 H014 prioritizes the best practical MiMo frontier quality, not GLM co-residency.
-Assess the stronger Pro candidate before selecting full-quality Flash; retain
-native expert precision and verify exact conversion/runtime support and reserves.
+Root selected Pro for the first bounded trial after source review, with
+MXFP4/BF16 Flash as fallback if impractical. Retain native expert precision and
+BF16/F32 nonexperts; the old155.9GiB Flash artifact also quantizes attention toQ8.
+Verify actual tensor metadata, source/runtime identity and memory reserves.
 After H013 settles, proceed with the selected pinned SM120 mixed CPU/GPU runtime, warmed
 4K/16K/64K and tool/technical checks. Review allocation/runtime before full1M.
 Retain GLM and initially compare serially on the frontier GPU. Concurrent

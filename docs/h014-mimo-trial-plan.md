@@ -2,18 +2,37 @@
 
 ## Latest selection priority
 
-At 06:22 UTC the user clarified that the best practical MiMo quality is the
-primary goal. Keeping GLM and MiMo resident together is optional and must not
-drive a quality-reducing quantization choice. The proposed Flash GGUF preserves
-the released experts' native MXFP4 format; its conversion/runtime still requires
-verification. Root and Worker2 are checking whether the stronger Pro variant is
-practical on the same RAM plus one fast Blackwell before the download decision.
-No MiMo weights have been downloaded. Assess Pro first if its runtime support
-and memory reserves are practical; full-quality Flash remains the alternative.
-The Flash-specific steps below remain the candidate plan pending that assessment;
-they do not authorize silently downgrading precision for sharing. Weight-file
-size alone is not a complete allocation estimate, and published benchmark
-advantages do not establish local inference speed or reliable tool use.
+The user clarified that the best practical MiMo quality is the primary goal.
+Keeping GLM and MiMo resident together is optional and must not drive a
+quality-reducing quantization choice. Root selects **MiMo-V2.6-Pro-RL for the
+first bounded trial**, after the source review completed at 06:39 UTC.
+
+Selected candidate: `AesSedai/MiMo-V2.6-Pro-RL-GGUF`, revision
+`ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d`, thirteen MXFP4 shards totaling
+**577,669,438,240 bytes / 537.997 GiB**. The published tensor inventory is
+207 MXFP4, 163 BF16 and 357 F32 tensors. Inspect actual downloaded metadata,
+verify all published file hashes, and record the unresolved author converter /
+source-checkpoint provenance. This is a concrete candidate, not a claim of
+verified bit-equivalence or local inference quality.
+
+Runtime research pin: llama.cpp `7ac59a6e3ad851cd41af00f678effab0598ba9a8`.
+Use an isolated SM120 build; no production runtime replacement. First establish
+normal 4K generation and tools before committing to larger tests. Pro's CPU
+expert prefill can be much slower than GLM's layerwise GPU prefill; no rate is
+assumed. Native weight format does not establish activation arithmetic quality.
+
+The fallback, if Pro is incompatible or impractical, is the MXFP4/BF16 Flash
+candidate at `AesSedai/MiMo-V2.6-Flash-RL-GGUF`, revision
+`05c13439c18ba7183cb6afe294924c75ba7aa7b4`, **162.896 GiB**. Do not download it
+alongside Pro merely as a precaution. The earlier 155.875 GiB ggml-org artifact
+also converts attention/nonexpert matrices to Q8 and is no longer the selected
+quality-first artifact. [Source review and exact manifests](../reports/h014-mimo-selection-20260927/REPORT.md).
+
+Pro's 1M F16 global cache is 50 GiB; its nonexpert trunk matrices are roughly
+39.5 GiB before workspace. Keep suitable nonexpert tensors in system RAM if
+needed to preserve precision and the GPU reserve. Validate actual compact
+sliding-window allocation and placement before claiming 1M capacity. Host file
+bytes, resident memory and reclaimable cache are separate measurements.
 
 Authorized27September2026. Execute after H013 production1M promotion, cooling,
 ECC-off reboot and the single guarded overlap test settle. A failed thermal
@@ -22,7 +41,7 @@ Do not start MiMo load if the assigned frontier GPU is unhealthy or unsafe.
 
 ## Objective
 
-Keep qualified GLM-5.3-Flash available while installing MiMo-V2.6-Flash-RL as a
+Keep qualified GLM-5.3-Flash available to restore while installing MiMo-V2.6-Pro-RL as a
 second selectable frontier implementation. Initial standalone comparisons share
 one fast Blackwell and system RAM and run serially in the frontier slot. Preserve both warm
 Qwen480K lanes and the Ada image service. Do not replace a working default with
@@ -36,8 +55,9 @@ replace measured local tool reliability or establish electronics expertise.
 ## Bounded work
 
 1. Worker1 pins a current MiMo-capable runtime and exact model revision, verifies
-   SM120/CUDA/CPU-expert support, and downloads only selected native-MXFP4 GGUF
-   shards (approximately155.9GiB). Preserve native4-bit experts; noQ2 reduction.
+   SM120/CUDA/CPU-expert support, and downloads only the thirteen selected Pro
+   shards. Preserve native expert precision and BF16/F32 other tensors; no
+   extra Q8, Q2 or other storage quantization to make room for GLM.
    A recent llama.cpp is the first candidate. Confirm native loader, chat/tool
    parser and mixed CPU/GPU placement before a large allocation. Alternate
    runtimes require a concrete incompatibility or performance hypothesis.

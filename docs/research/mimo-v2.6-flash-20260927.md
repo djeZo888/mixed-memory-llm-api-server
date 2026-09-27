@@ -1,5 +1,12 @@
 # MiMo-V2.6-Flash as a possible GLM Flash replacement
 
+**Selection update:** the quality-first trial now selects Pro first; see the
+[current plan](../h014-mimo-trial-plan.md) and [pinned source review](../../reports/h014-mimo-selection-20260927/REPORT.md).
+The 155.875 GiB Flash artifact discussed below retains native expert MXFP4 but
+also quantizes nonexpert matrices to Q8. It is not a full-native-precision
+artifact. A separate MXFP4/BF16 Flash candidate is 162.896 GiB. The original
+research below is retained with this correction; no model has yet been run.
+
 Research only, 27 September 2026. The user proposes replacing GLM-5.3-Flash,
 reusing its system RAM and one fast Blackwell. Both Qwen instances and the Ada
 image service remain separate. No MiMo download, runtime installation or model
