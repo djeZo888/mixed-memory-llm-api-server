@@ -1,0 +1,16 @@
+{
+  "r3_guard_sha256": "df2c572fba760c963886a80a4a534c12b3c817465efc4a54aa85e01a72c7f39f",
+  "r3_owner_sha256": "71528b171f2a54aafd409743d0ae0d831674fe22c8079ee25b6fc8babdeee546",
+  "r4_guard_sha256": "2c0e7483845530cf9b669d699c67b574e0f4a8cbba21dd6c511bc7ddf7f817aa",
+  "r4_owner_sha256": "fd66a568d57f50c646c3a88b35020b0d1ecd4adc9ade33fe52cd5f304c38dcfa",
+  "r4_benchmark_sha256": "ece4d5d801edc10505ae7d7e9e108a8d4a017e76ac436a220b050f0239e75803",
+  "base": "/data/build/H016-20260927/worker1-r4",
+  "log": "/data/logs/H016-20260927/worker1-r4",
+  "name": "llm-h016-mimo-pro-r4",
+  "unit": "h016-mimo-initial-20260927-r4.service",
+  "runtime_identity": "same none/interleave image/nativeargv asr3",
+  "guard_contract": "Mandatory5s GPUtimeout2s +host+cgroup, no proc status/maps/smaps/task reads. Optional3s(+0.2 reap cap) postload/postwarm diagnostic, UNAVAILABLE never physicalfailure; ownerguardcontinues. Allprecautions/reservesunchanged.",
+  "admission": "2026-09-27T13:25:00Z",
+  "settlement": "2026-09-27T13:40:00Z",
+  "handoff": "none; final clean productionreload afterviability preferred; W2 ownsprospective runtime/mimo+node source, notdeployed"
+}

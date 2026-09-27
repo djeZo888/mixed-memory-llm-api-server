@@ -1,0 +1,203 @@
+{
+  "utc": "2026-09-27T12:10:16.055878+00:00",
+  "unit": {
+    "MainPID": "1918783",
+    "ControlGroup": "/system.slice/h016-mimo-initial-20260927-r2.service",
+    "ActiveState": "active",
+    "InvocationID": "c2f28671f5de4674b526a2fe92e0fba3"
+  },
+  "stop_signal_sent_utc": "2026-09-27T12:10:17.394175+00:00",
+  "container": {
+    "Id": "dff50683e03a6568a711bc15219be0190115066aa7ff2360919814e1df44c813",
+    "Image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "Name": "/llm-h016-mimo-pro-r2",
+    "State": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 1921878,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-27T11:39:45.479666175Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  "results": {
+    "TEXT-False.json": {
+      "correctness": "PASS",
+      "done": true,
+      "expected_input_tokens": 22,
+      "finish_reason": "stop",
+      "finished_utc": "2026-09-27T11:42:08.007942+00:00",
+      "full_http_drain": true,
+      "label": "TEXT-False",
+      "native_timings": {
+        "cache_n": 0,
+        "predicted_ms": 12933.754,
+        "predicted_n": 4,
+        "predicted_per_second": 0.23195121849387268,
+        "predicted_per_token_ms": 4311.251333333334,
+        "prompt_ms": 87124.971,
+        "prompt_n": 22,
+        "prompt_per_second": 0.25251084445124233,
+        "prompt_per_token_ms": 3960.225954545455
+      },
+      "output_budget": 256,
+      "request_sha256": "657c8cfc28f9567fddff42b977e9171ec56709b50baa69ab970ce39012b73f16",
+      "response_id": "chatcmpl-ZxRpegSQV6NbclasCBg22Gf8683oiyO9",
+      "started_utc": "2026-09-27T11:40:27.651500+00:00",
+      "status": "TRANSPORT_COMPLETE",
+      "thinking": false,
+      "total_seconds": 100.35636893999981,
+      "ttft_seconds": 87.42466278199936,
+      "usage": {
+        "completion_tokens": 4,
+        "prompt_tokens": 22,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 26
+      }
+    },
+    "TEXT-True.json": {
+      "correctness": "PASS",
+      "done": true,
+      "expected_input_tokens": 20,
+      "finish_reason": "stop",
+      "finished_utc": "2026-09-27T11:42:52.685857+00:00",
+      "full_http_drain": true,
+      "label": "TEXT-True",
+      "native_timings": {
+        "cache_n": 0,
+        "predicted_ms": 39396.185,
+        "predicted_n": 16,
+        "predicted_per_second": 0.38074752669579554,
+        "predicted_per_token_ms": 2626.412333333333,
+        "prompt_ms": 4396.027,
+        "prompt_n": 20,
+        "prompt_per_second": 4.5495625936783375,
+        "prompt_per_token_ms": 219.80135
+      },
+      "output_budget": 2048,
+      "request_sha256": "71f3dae3c0bbaf6c8c3f8997ea7baf4cefe102b7ef10946476c571fd0a119a41",
+      "response_id": "chatcmpl-tnHOCneIYL5UAmK5fzUwm1naEb966fEp",
+      "started_utc": "2026-09-27T11:42:08.599543+00:00",
+      "status": "TRANSPORT_COMPLETE",
+      "thinking": true,
+      "total_seconds": 44.086204497001745,
+      "ttft_seconds": 5.884396642999491,
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 20,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 36
+      }
+    },
+    "TOOL-CALL.json": {
+      "correctness": "UNSCORED",
+      "done": true,
+      "expected_input_tokens": 122,
+      "finish_reason": "tool_calls",
+      "finished_utc": "2026-09-27T11:58:19.134821+00:00",
+      "full_http_drain": true,
+      "label": "TOOL-CALL",
+      "native_timings": {
+        "cache_n": 0,
+        "predicted_ms": 57664.127,
+        "predicted_n": 26,
+        "predicted_per_second": 0.43354510508760497,
+        "predicted_per_token_ms": 2306.56508,
+        "prompt_ms": 867903.602,
+        "prompt_n": 122,
+        "prompt_per_second": 0.14056860660430814,
+        "prompt_per_token_ms": 7113.9639508196715
+      },
+      "output_budget": 2048,
+      "request_sha256": "50d048fb2e140bbabdcdd1930945a06883cc770c63310f6c831133f61a4f274a",
+      "response_id": "chatcmpl-RTT9TBb3IjQiXylvbbHjzGH69YHlBFhL",
+      "started_utc": "2026-09-27T11:42:53.267649+00:00",
+      "status": "TRANSPORT_COMPLETE",
+      "thinking": false,
+      "total_seconds": 925.8670722440002,
+      "ttft_seconds": 881.3994594329997,
+      "usage": {
+        "completion_tokens": 26,
+        "prompt_tokens": 122,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 148
+      }
+    },
+    "TOOL-CONTINUATION.json": {
+      "correctness": "UNSCORED",
+      "done": true,
+      "expected_input_tokens": 160,
+      "finish_reason": "stop",
+      "finished_utc": "2026-09-27T12:03:54.275751+00:00",
+      "full_http_drain": true,
+      "label": "TOOL-CONTINUATION",
+      "native_timings": {
+        "cache_n": 0,
+        "predicted_ms": 46847.524,
+        "predicted_n": 23,
+        "predicted_per_second": 0.46960859660373944,
+        "predicted_per_token_ms": 2129.432909090909,
+        "prompt_ms": 286688.266,
+        "prompt_n": 160,
+        "prompt_per_second": 0.5580974841851393,
+        "prompt_per_token_ms": 1791.8016625
+      },
+      "output_budget": 2048,
+      "request_sha256": "438c80d11d185b40211572c80fb0125cc4819d139c3daa1a7335f6a1592cfffc",
+      "response_id": "chatcmpl-PlJNoGfa15zc7rVeALflIxxDMwYDUiRf",
+      "started_utc": "2026-09-27T11:58:20.439817+00:00",
+      "status": "TRANSPORT_COMPLETE",
+      "thinking": false,
+      "total_seconds": 333.83590114099934,
+      "ttft_seconds": 286.98531448200083,
+      "usage": {
+        "completion_tokens": 23,
+        "prompt_tokens": 160,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 183
+      }
+    },
+    "WARM4K-DISCARDED.json": {
+      "expected_input_tokens": 4096,
+      "label": "WARM4K-DISCARDED",
+      "output_budget": 256,
+      "request_sha256": "d77f3b71f803681e36809ce6e2637f3724f3258ed1f3f55999227555075d8674",
+      "started_utc": "2026-09-27T12:03:56.373417+00:00",
+      "status": "SUBMITTED",
+      "thinking": false
+    }
+  },
+  "slots": [
+    {
+      "id": 0,
+      "n_ctx": 131072,
+      "speculative": false,
+      "is_processing": true,
+      "id_task": 81,
+      "n_prompt_tokens": 2048,
+      "n_prompt_tokens_processed": 0,
+      "n_prompt_tokens_cache": 0,
+      "next_token": [
+        {
+          "has_next_token": false,
+          "has_new_line": false,
+          "n_remain": 256,
+          "n_decoded": 0
+        }
+      ]
+    }
+  ]
+}

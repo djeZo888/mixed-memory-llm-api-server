@@ -1,0 +1,150 @@
+{
+  "commit": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+  "files": {
+    "common/arg.cpp": {
+      "sha256": "25c465a79b18a360d8bbe422feafa292ebca1f570985b21d69bbdc0f3df6e1f9",
+      "excerpts": [
+        {
+          "start": 2426,
+          "end": 2432,
+          "text": "2426:     add_opt(common_arg(\n2427:         {\"--no-host\"},\n2428:         \"bypass host buffer allowing extra buffers to be used\",\n2429:         [](common_params & params) {\n2430:             params.no_host = true;\n2431:         }\n2432:     ).set_env(\"LLAMA_ARG_NO_HOST\"));"
+        },
+        {
+          "start": 2755,
+          "end": 2761,
+          "text": "2755:     add_opt(common_arg(\n2756:         {\"-cmoe\", \"--cpu-moe\"},\n2757:         \"keep all Mixture of Experts (MoE) weights in the CPU\",\n2758:         [](common_params & params) {\n2759:             params.tensor_buft_overrides.push_back(llm_ffn_exps_cpu_override());\n2760:         }\n2761:     ).set_env(\"LLAMA_ARG_CPU_MOE\"));"
+        }
+      ]
+    },
+    "common/common.h": {
+      "sha256": "292817b2482dce5f4d23cd723ee02b0a4f1325f308e88130adda365908db7465",
+      "excerpts": [
+        {
+          "start": 1148,
+          "end": 1158,
+          "text": "1148: const char * const LLM_FFN_EXPS_REGEX = \"\\\\.ffn_(up|down|gate|gate_up)_(ch|)exps\";\n1149: \n1150: const char * const LLM_FFN_DENSE_REGEX = \"\\\\.ffn_(up|down|gate)\\\\.\";\n1151: \n1152: inline std::string llm_ffn_block_regex(int idx, const char * ffn_regex) {\n1153:     return string_format(\"blk\\\\.%d%s\", idx, ffn_regex);\n1154: }\n1155: \n1156: inline llama_model_tensor_buft_override llm_ffn_exps_cpu_override() {\n1157:     return { LLM_FFN_EXPS_REGEX, ggml_backend_cpu_buffer_type() };\n1158: }"
+        }
+      ]
+    },
+    "common/common.cpp": {
+      "sha256": "727619fe7705a6137e82f40dc7f9003aaae9d4c957f1946d820d87ec7289eb96",
+      "excerpts": [
+        {
+          "start": 1643,
+          "end": 1649,
+          "text": "1643:     mparams.lazy_mode = params.lazy_mode;\n1644:     mparams.tensor_split    = params.tensor_split;\n1645:     mparams.check_tensors   = params.check_tensors;\n1646:     mparams.use_extra_bufts = !params.no_extra_bufts;\n1647:     mparams.no_host         = params.no_host;\n1648: \n1649:     if (params.kv_overrides.empty()) {"
+        }
+      ]
+    },
+    "src/llama-model.cpp": {
+      "sha256": "15acd497f5ad85fd2754e8023b0ea524fd8961e326f6d3df15244fbd69b1b88b",
+      "excerpts": [
+        {
+          "start": 1074,
+          "end": 1133,
+          "text": "1074: // CPU: ACCEL -> GPU host -> CPU extra -> CPU\n1075: static buft_list_t make_cpu_buft_list(const std::vector<llama_device> & devices, bool use_extra_bufts, bool no_host) {\n1076:     buft_list_t buft_list;\n1077: \n1078:     // add ACCEL buffer types\n1079:     for (size_t i = 0; i < ggml_backend_dev_count(); ++i) {\n1080:         ggml_backend_dev_t dev = ggml_backend_dev_get(i);\n1081:         if (ggml_backend_dev_type(dev) == GGML_BACKEND_DEVICE_TYPE_ACCEL) {\n1082:             auto * buft = ggml_backend_dev_buffer_type(dev);\n1083:             // skip\n1084:             if (buft != ggml_backend_cpu_buffer_type()) {\n1085:                 buft_list.emplace_back(dev, buft);\n1086:             }\n1087:         }\n1088:     }\n1089: \n1090:     // add a host buffer type\n1091:     // storing the tensors in a host buffer is useful when the processing of large batches\n1092:     // is offloaded to a GPU device, since it reduces the time spent on data transfers\n1093:     // generally, this will be done using the first device in the list\n1094:     // a better approach would be to handle this on a weight-by-weight basis using the offload_op\n1095:     // function of the device to determine if it would benefit from being stored in a host buffer\n1096:     if (!no_host) {\n1097:         for (const auto & dev : devices) {\n1098:             ggml_backend_buffer_type_t buft = ggml_backend_dev_host_buffer_type(dev.dev);\n1099:             if (buft) {\n1100:                 buft_list.emplace_back(dev.dev, buft);\n1101:                 break;\n1102:             }\n1103:         }\n1104:     }\n1105: \n1106:     // add extra buffer types\n1107:     if (use_extra_bufts) {\n1108:         auto * cpu_dev = ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_CPU);\n1109:         if (cpu_dev == nullptr) {\n1110:             throw std::runtime_error(format(\"%s: no CPU backend found\", __func__));\n1111:         }\n1112: \n1113:         auto * cpu_reg = ggml_backend_dev_backend_reg(cpu_dev);\n1114:         auto ggml_backend_dev_get_extra_bufts_fn = (ggml_backend_dev_get_extra_bufts_t)\n1115:             ggml_backend_reg_get_proc_address(cpu_reg, \"ggml_backend_dev_get_extra_bufts\");\n1116:         if (ggml_backend_dev_get_extra_bufts_fn) {\n1117:             ggml_backend_buffer_type_t * extra_bufts = ggml_backend_dev_get_extra_bufts_fn(cpu_dev);\n1118:             while (extra_bufts && *extra_bufts) {\n1119:                 buft_list.emplace_back(cpu_dev, *extra_bufts);\n1120:                 ++extra_bufts;\n1121:             }\n1122:         }\n1123:     }\n1124: \n1125:     // add the CPU buffer type\n1126:     for (size_t i = 0; i < ggml_backend_dev_count(); ++i) {\n1127:         ggml_backend_dev_t dev = ggml_backend_dev_get(i);\n1128:         if (ggml_backend_dev_type(dev) == GGML_BACKEND_DEVICE_TYPE_CPU) {\n1129:             buft_list.emplace_back(dev, ggml_backend_dev_buffer_type(dev));\n1130:         }\n1131:     }\n1132: \n1133:     return buft_list;"
+        },
+        {
+          "start": 1535,
+          "end": 1544,
+          "text": "1535:     LLAMA_LOG_INFO(\"%s: loading model tensors, this can take a while... (load_mode = %s)\\n\",\n1536:         __func__, load_mode_name);\n1537: \n1538:     // build a list of buffer types for the CPU and GPU devices\n1539:     pimpl->cpu_buft_list = make_cpu_buft_list(devices, params.use_extra_bufts, params.no_host);\n1540:     for (const auto & dev : devices) {\n1541:         buft_list_t buft_list = make_gpu_buft_list(dev.dev, split_mode, tensor_split);\n1542:         // add CPU buffer types as a fallback\n1543:         buft_list.insert(buft_list.end(), pimpl->cpu_buft_list.begin(), pimpl->cpu_buft_list.end());\n1544:         pimpl->gpu_buft_list.emplace(dev.dev, std::move(buft_list));"
+        },
+        {
+          "start": 1863,
+          "end": 1876,
+          "text": "1863:             }\n1864:         } else {\n1865:             ggml_backend_buffer_t buf;\n1866:             if (ml.no_alloc) {\n1867:                 buf = ggml_backend_buft_alloc_buffer(buft, /*size =*/ 0); // dummy buffer\n1868:                 for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {\n1869:                     t->buffer = buf; // set dummy buffer for weights so that the backend scheduler won't try to allocate them\n1870:                 }\n1871:             } else {\n1872:                 buf = ggml_backend_alloc_ctx_tensors_from_buft(ctx, buft); // real buffer\n1873:             }\n1874:             if (buf == nullptr) {\n1875:                 throw std::runtime_error(format(\"unable to allocate %s buffer\", ggml_backend_buft_name(buft)));\n1876:             }"
+        },
+        {
+          "start": 1916,
+          "end": 1921,
+          "text": "1916:     // print memory requirements per buffer type\n1917:     for (auto & [_, bufs] : pimpl->ctxs_bufs) {\n1918:         for (auto & buf: bufs) {\n1919:             LLAMA_LOG_INFO(\"%s: %12s model buffer size = %8.2f MiB\\n\",\n1920:                 __func__, ggml_backend_buffer_name(buf.get()), ggml_backend_buffer_get_size(buf.get()) / 1024.0 / 1024.0);\n1921:         }"
+        }
+      ]
+    },
+    "src/llama-model-loader.cpp": {
+      "sha256": "efdb5f273bd1ab77301f2cadea1a5a804bafb28040aca033e45605a97a450242",
+      "excerpts": [
+        {
+          "start": 1055,
+          "end": 1077,
+          "text": "1055: \n1056:     // create a temporary dummy buffer for the weight so that supports_op can check the buffer type\n1057:     GGML_ASSERT(w->buffer == nullptr);\n1058:     w->buffer = ggml_backend_buft_alloc_buffer(buft, 0);\n1059:     bool op_supported = ggml_backend_dev_supports_op(dev, op_tensor);\n1060:     ggml_backend_buffer_free(w->buffer);\n1061:     w->buffer = nullptr;\n1062: \n1063:     return op_supported;\n1064: }\n1065: \n1066: // find the first buffer type in the list that can use the tensor\n1067: static ggml_backend_buffer_type_t select_weight_buft(const llama_hparams & hparams, ggml_tensor * tensor, ggml_op op, const buft_list_t * buft_list) {\n1068:     GGML_ASSERT(!buft_list->empty());\n1069:     for (const auto & cur : *buft_list) {\n1070:         ggml_backend_dev_t cur_dev = cur.first;\n1071:         ggml_backend_buffer_type_t cur_buft = cur.second;\n1072:         if (weight_buft_supported(hparams, tensor, op, cur_buft, cur_dev)) {\n1073:             return cur_buft;\n1074:         }\n1075:     }\n1076: \n1077:     return nullptr;"
+        },
+        {
+          "start": 1234,
+          "end": 1277,
+          "text": "1234:         // check overrides\n1235:         if (tensor_buft_overrides) {\n1236:             std::string tensor_name = tn.str();\n1237:             for (const auto * overrides = tensor_buft_overrides; overrides->pattern != nullptr; ++overrides) {\n1238:                 std::regex pattern(overrides->pattern);\n1239:                 if (std::regex_search(tensor_name, pattern)) {\n1240:                     if (overrides->buft == ggml_backend_cpu_buffer_type()) {\n1241:                         // when overriding to a CPU buffer, consider the extra buffer types\n1242:                         buft = select_weight_buft(hparams, t_meta, op, buft_list_cpu);\n1243:                         if (use_mmap) {\n1244:                             static std::once_flag once;\n1245:                             std::call_once(once, [] {\n1246:                                 LLAMA_LOG_WARN(\"llama_model_loader: tensor overrides to CPU are used with mmap enabled - consider using --load-mode none for better performance\\n\");\n1247:                             });\n1248:                         }\n1249:                     } else {\n1250:                         buft = overrides->buft;\n1251:                     }\n1252: \n1253:                     LLAMA_LOG_DEBUG(\"tensor %s (%zu MiB %s) buffer type overridden to %s\\n\",\n1254:                             tensor_name.c_str(),\n1255:                             ggml_nbytes(t_meta) / 1024 / 1024, ggml_type_name(t_meta->type),\n1256:                             ggml_backend_buft_name(buft));\n1257:                     break;\n1258:                 }\n1259:             }\n1260:         }\n1261: \n1262:         if (!buft) {\n1263:             buft = select_weight_buft(hparams, t_meta, op, buft_list);\n1264:             if (!buft) {\n1265:                 throw std::runtime_error(format(\"failed to find a compatible buffer type for tensor %s\", tn.str().c_str()));\n1266:             }\n1267:         }\n1268: \n1269:         // avoid using a host buffer when using mmap\n1270:         auto * buft_dev = ggml_backend_buft_get_device(buft);\n1271:         if (use_mmap && buft_dev && buft == ggml_backend_dev_host_buffer_type(buft_dev)) {\n1272:             auto * cpu_dev = ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_CPU);\n1273:             if (!cpu_dev) {\n1274:                 throw std::runtime_error(\"no CPU backend found\");\n1275:             }\n1276:             buft = ggml_backend_dev_buffer_type(cpu_dev);\n1277:         }"
+        },
+        {
+          "start": 1510,
+          "end": 1520,
+          "text": "1510:     // NVMe raid configurations might require more / larger buffers.\n1511:     constexpr size_t n_buffers = 4;\n1512: \n1513:     size_t alignment = 1;\n1514:     for (const auto & file : files) {\n1515:         alignment = std::max(file->read_alignment(), alignment);\n1516:     }\n1517: \n1518:     // Buffer size: balance between memory usage and I/O efficiency\n1519:     // 64MB works well for NVMe drives\n1520:     const size_t buffer_size = alignment != 1 ? 64 * 1024 * 1024 + 2 * alignment : 1 * 1024 * 1024;"
+        },
+        {
+          "start": 1567,
+          "end": 1578,
+          "text": "1567:         // If the backend is supported, create pinned memory buffers and events for synchronisation.\n1568:         for (size_t idx = 0; idx < n_buffers; ++idx) {\n1569:             auto * buf = ggml_backend_buft_alloc_buffer(host_buft, buffer_size);\n1570: \n1571:             if (!buf) {\n1572:                 LLAMA_LOG_DEBUG(\"%s: failed to allocate host buffer for async uploads for device %s\\n\", func,\n1573:                     ggml_backend_dev_name(dev));\n1574:                 return nullptr;\n1575:             }\n1576: \n1577:             host_buffers.emplace_back(buf);\n1578:             host_ptrs.emplace_back(ggml_backend_buffer_get_base(buf));"
+        }
+      ]
+    },
+    "ggml/src/ggml-cuda/ggml-cuda.cu": {
+      "sha256": "3743393c56dfc30a2b43cd18859187acebb407e61e1ef97a1ea5190762b24273",
+      "excerpts": [
+        {
+          "start": 1255,
+          "end": 1315,
+          "text": "1255: // host buffer type\n1256: \n1257: static const char * ggml_backend_cuda_host_buffer_type_name(ggml_backend_buffer_type_t buft) {\n1258:     return GGML_CUDA_NAME \"_Host\";\n1259: \n1260:     GGML_UNUSED(buft);\n1261: }\n1262: \n1263: static bool ggml_backend_buft_is_cuda_host(ggml_backend_buffer_type_t buft) {\n1264:     return buft->iface.get_name == ggml_backend_cuda_host_buffer_type_name;\n1265: }\n1266: \n1267: static void ggml_backend_cuda_host_buffer_free_buffer(ggml_backend_buffer_t buffer) {\n1268:     CUDA_CHECK(cudaFreeHost(buffer->context));\n1269: }\n1270: \n1271: static void * ggml_cuda_host_malloc(size_t size) {\n1272:     if (getenv(\"GGML_CUDA_NO_PINNED\") != nullptr) {\n1273:         return nullptr;\n1274:     }\n1275: \n1276:     void * ptr = nullptr;\n1277:     cudaError_t err = cudaMallocHost((void **) &ptr, size);\n1278:     if (err != cudaSuccess) {\n1279:         // clear the error\n1280:         (void)cudaGetLastError();\n1281:         GGML_LOG_DEBUG(\"%s: failed to allocate %.2f MiB of pinned memory: %s\\n\", __func__,\n1282:                            size / 1024.0 / 1024.0, cudaGetErrorString(err));\n1283:         return nullptr;\n1284:     }\n1285: \n1286:     return ptr;\n1287: }\n1288: \n1289: static ggml_backend_buffer_t ggml_backend_cuda_host_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {\n1290:     void * ptr = ggml_cuda_host_malloc(size);\n1291: \n1292:     if (ptr == nullptr) {\n1293:         // fallback to cpu buffer\n1294:         return ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);\n1295:     }\n1296: \n1297:     ggml_backend_buffer_t buffer = ggml_backend_cpu_buffer_from_ptr(ptr, size);\n1298:     buffer->buft = buft;\n1299:     buffer->iface.free_buffer = ggml_backend_cuda_host_buffer_free_buffer;\n1300: \n1301:     return buffer;\n1302: }\n1303: \n1304: ggml_backend_buffer_type_t ggml_backend_cuda_host_buffer_type() {\n1305:     static struct ggml_backend_buffer_type ggml_backend_cuda_buffer_type_host = {\n1306:         /* .iface    = */ {\n1307:             /* .get_name         = */ ggml_backend_cuda_host_buffer_type_name,\n1308:             /* .alloc_buffer     = */ ggml_backend_cuda_host_buffer_type_alloc_buffer,\n1309:             /* .get_alignment    = */ ggml_backend_cpu_buffer_type()->iface.get_alignment,\n1310:             /* .get_max_size     = */ NULL, // defaults to SIZE_MAX\n1311:             /* .get_alloc_size   = */ ggml_backend_cpu_buffer_type()->iface.get_alloc_size,\n1312:             /* .is_host          = */ ggml_backend_cpu_buffer_type()->iface.is_host,\n1313:         },\n1314:         /* .device   = */ ggml_backend_reg_dev_get(ggml_backend_cuda_reg(), 0),\n1315:         /* .context  = */ nullptr,"
+        },
+        {
+          "start": 5206,
+          "end": 5220,
+          "text": "5206:         case GGML_OP_MUL_MAT:\n5207:         case GGML_OP_MUL_MAT_ID:\n5208:             {\n5209:                 struct ggml_tensor * a = op->src[0];\n5210:                 struct ggml_tensor * b = op->src[1];\n5211:                 if (a->nb[0] != ggml_element_size(a) || b->nb[0] != ggml_element_size(b)) {\n5212:                     return false; // TODO this could in principle be implemented though currently there is no use case.\n5213:                 }\n5214:                 if (b->type == GGML_TYPE_F16 && a->type != GGML_TYPE_F16 && !ggml_cuda_op_mul_mat_use_fwht(op)) {\n5215:                     return false;\n5216:                 }\n5217:                 if (op->op == GGML_OP_MUL_MAT_ID && ggml_get_op_params_i32(op, 3) == GGML_PREC_F32) {\n5218:                     return false;\n5219:                 }\n5220: #ifdef GGML_USE_MUSA"
+        },
+        {
+          "start": 5238,
+          "end": 5265,
+          "text": "5238:                     case GGML_TYPE_Q4_0:\n5239:                     case GGML_TYPE_Q4_1:\n5240:                     case GGML_TYPE_Q5_0:\n5241:                     case GGML_TYPE_Q5_1:\n5242:                     case GGML_TYPE_Q8_0:\n5243:                     case GGML_TYPE_MXFP4:\n5244:                     case GGML_TYPE_NVFP4:\n5245:                     case GGML_TYPE_Q2_K:\n5246:                     case GGML_TYPE_Q3_K:\n5247:                     case GGML_TYPE_Q4_K:\n5248:                     case GGML_TYPE_Q5_K:\n5249:                     case GGML_TYPE_Q6_K:\n5250:                     case GGML_TYPE_Q8_K:\n5251:                     case GGML_TYPE_IQ1_M:\n5252:                     case GGML_TYPE_IQ1_S:\n5253:                     case GGML_TYPE_IQ2_S:\n5254:                     case GGML_TYPE_IQ2_XS:\n5255:                     case GGML_TYPE_IQ2_XXS:\n5256:                     case GGML_TYPE_IQ3_S:\n5257:                     case GGML_TYPE_IQ3_XXS:\n5258:                     case GGML_TYPE_IQ4_NL:\n5259:                     case GGML_TYPE_IQ4_XS:\n5260:                     case GGML_TYPE_BF16:\n5261:                         return true;\n5262:                     default:\n5263:                         return false;\n5264:                 }\n5265:             } break;"
+        },
+        {
+          "start": 5609,
+          "end": 5614,
+          "text": "5609: static bool ggml_backend_cuda_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {\n5610:     ggml_backend_cuda_device_context * dev_ctx = (ggml_backend_cuda_device_context *) dev->context;\n5611:     const bool integrated = ggml_cuda_info().devices[dev_ctx->device].integrated;\n5612:     return (ggml_backend_buft_is_cuda(buft) && buft->device == dev) || (integrated && ggml_backend_buft_is_cuda_host(buft));\n5613: }\n5614: "
+        }
+      ]
+    },
+    "ggml/src/ggml-cpu/repack.cpp": {
+      "sha256": "0d604f463513bc796ffd7031f770c1706300990c0a8670a0e9000949667155c3",
+      "excerpts": [
+        {
+          "start": 5162,
+          "end": 5179,
+          "text": "5162: static const char * ggml_backend_cpu_repack_buffer_type_get_name(ggml_backend_buffer_type_t buft) {\n5163:     return \"CPU_REPACK\";\n5164: \n5165:     GGML_UNUSED(buft);\n5166: }\n5167: \n5168: static ggml_backend_buffer_t ggml_backend_cpu_repack_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {\n5169:     ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);\n5170: \n5171:     if (buffer == nullptr) {\n5172:         return nullptr;\n5173:     }\n5174: \n5175:     buffer->buft              = buft;\n5176:     buffer->iface.init_tensor = ggml_backend_cpu_repack_buffer_init_tensor;\n5177:     buffer->iface.set_tensor  = ggml_backend_cpu_repack_buffer_set_tensor;\n5178:     buffer->iface.get_tensor  = nullptr;\n5179:     buffer->iface.cpy_tensor  = nullptr;"
+        },
+        {
+          "start": 5191,
+          "end": 5220,
+          "text": "5191:     bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {\n5192:         if (    op->op == GGML_OP_MUL_MAT &&\n5193:                 op->src[0]->buffer &&\n5194:                 (ggml_n_dims(op->src[0]) == 2) &&\n5195:                 op->src[0]->buffer->buft == ggml_backend_cpu_repack_buffer_type() &&\n5196:                 ggml_repack_get_optimal_repack_type(op->src[0])\n5197:                 ) {\n5198:             if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {\n5199:                 return false;\n5200:             }\n5201:             if (op->src[1]->type == GGML_TYPE_F32) {\n5202:                 return true;\n5203:             }\n5204:             //if (op->src[1]->type == GGML_TYPE_Q8_0) {\n5205:             //    return true;\n5206:             //}\n5207:             // may be possible if Q8_0 packed...\n5208:         } else if (op->op == GGML_OP_MUL_MAT_ID\n5209:                 && op->src[0]->buffer\n5210:                 && (ggml_n_dims(op->src[0]) == 3)\n5211:                 && op->src[0]->buffer->buft == ggml_backend_cpu_repack_buffer_type()\n5212:                 && ggml_repack_get_optimal_repack_type(op->src[0])\n5213:                 ) {\n5214:             if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {\n5215:                 return false;\n5216:             }\n5217:             if (op->src[1]->type == GGML_TYPE_F32) {\n5218:                 return true;\n5219:             }\n5220:             //if (op->src[1]->type == GGML_TYPE_Q8_0) {"
+        }
+      ]
+    },
+    "ggml/src/ggml-backend.cpp": {
+      "sha256": "2dd6a572f087a1fddaa52dbf2378b777cd21752f4b2a1292c8da3bcb05fbcfd9",
+      "excerpts": [
+        {
+          "start": 2441,
+          "end": 2456,
+          "text": "2441: static const char * ggml_backend_cpu_buffer_type_get_name(ggml_backend_buffer_type_t buft) {\n2442:     return \"CPU\";\n2443: \n2444:     GGML_UNUSED(buft);\n2445: }\n2446: \n2447: static ggml_backend_buffer_t ggml_backend_cpu_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {\n2448:     void * data = ggml_aligned_malloc(size);\n2449: \n2450:     if (data == NULL) {\n2451:         GGML_LOG_ERROR(\"%s: failed to allocate buffer of size %zu\\n\", __func__, size);\n2452:         return NULL;\n2453:     }\n2454: \n2455:     return ggml_backend_buffer_init(buft, ggml_backend_cpu_buffer_i, data, size);\n2456: }"
+        }
+      ]
+    },
+    "ggml/src/ggml.c": {
+      "sha256": "8e5e1083f80984a095f7cbc40110c8b47c5e8db71ed41de2f3c374badd25ddf6",
+      "excerpts": [
+        {
+          "start": 332,
+          "end": 370,
+          "text": "332: void * ggml_aligned_malloc(size_t size) {\n333: #if defined(__s390x__)\n334:     const int alignment = 256;\n335: #else\n336:     const int alignment = 64;\n337: #endif\n338: \n339: #if defined(_MSC_VER) || defined(__MINGW32__)\n340:     return _aligned_malloc(size, alignment);\n341: #else\n342:     if (size == 0) {\n343:         GGML_LOG_WARN(\"Behavior may be unexpected when allocating 0 bytes for ggml_aligned_malloc!\\n\");\n344:         return NULL;\n345:     }\n346:     void * aligned_memory = NULL;\n347:   #ifdef GGML_USE_CPU_HBM\n348:     int result = hbw_posix_memalign(&aligned_memory, alignment, size);\n349:   #elif TARGET_OS_OSX\n350:     GGML_UNUSED(alignment);\n351:     kern_return_t alloc_status = vm_allocate((vm_map_t) mach_task_self(), (vm_address_t *) &aligned_memory, size, VM_FLAGS_ANYWHERE);\n352:     int result = EFAULT;\n353:     switch (alloc_status) {\n354:         case KERN_SUCCESS:\n355:             result = 0;\n356:             break;\n357:         case KERN_INVALID_ADDRESS:\n358:             result = EINVAL;\n359:             break;\n360:         case KERN_NO_SPACE:\n361:             result = ENOMEM;\n362:             break;\n363:         default:\n364:             result = EFAULT;\n365:             break;\n366:     }\n367:   #else\n368:     int result = posix_memalign(&aligned_memory, alignment, size);\n369:   #endif\n370:     if (result != 0) {"
+        }
+      ]
+    }
+  }
+}

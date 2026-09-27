@@ -1,0 +1,26 @@
+{
+  "candidate_id": "9392b7e58b460fc16c616f7538f1c8e1cb4482ee12a6ec9bab8908f52ff69e06",
+  "error": "owned_supervisor_interrupted",
+  "error_type": "RuntimeError",
+  "glm_suppressed": true,
+  "memory_limit_bytes": 759135469568,
+  "native_cgroup": "/sys/fs/cgroup/system.slice/docker-9392b7e58b460fc16c616f7538f1c8e1cb4482ee12a6ec9bab8908f52ff69e06.scope",
+  "native_pid": 2411235,
+  "native_settled": {
+    "cgroup_empty": true,
+    "gpu_compute_empty": true,
+    "pid_zero": true,
+    "utc": "2026-09-27T12:18:03.276949+00:00"
+  },
+  "native_started_at": "2026-09-27T12:13:01.655286021Z",
+  "old_glm_settled_utc": "2026-09-27T12:13:00.873341+00:00",
+  "pid": 2408129,
+  "post_glm_baseline": {
+    "MemAvailable": 918732218368,
+    "MemTotal": 946820976640,
+    "SwapFree": 3093032960,
+    "SwapTotal": 3157258240
+  },
+  "started_utc": "2026-09-27T12:12:48.855489+00:00",
+  "status": "FAILED_SETTLING"
+}

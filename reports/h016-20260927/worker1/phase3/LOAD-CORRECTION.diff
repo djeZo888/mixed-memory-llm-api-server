@@ -1,0 +1,25 @@
+--- 782bd29/candidate_owner.py
++++ r3/candidate_owner.py
+@@ -20,2 +20,2 @@
+-BASE = '/data/build/H016-20260927/worker1-r2'
+-NAME = 'llm-h016-mimo-pro-r2'
++BASE = '/data/build/H016-20260927/worker1-r3'
++NAME = 'llm-h016-mimo-pro-r3'
+@@ -88,0 +89 @@
++        h.require(hashes.get('numactl') == 'f3944bcd7848d64424f8daf27f350b03d7f3281b2fb9be5eaaba0ddd0e72efb8' and hashes.get('libnuma.so.1.0.0') == '02d7582c5d391e460e56aa67a414360e3183b968206645b9123f9dc7bff5d009', 'interleave_dependency_pins')
+@@ -257 +258 @@
+-        argv = ['docker', 'create', '--name', NAME, '--network', 'host', '--read-only', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--security-opt', 'seccomp=' + GLM_SOURCE + '/numa-seccomp.json', '--log-driver', 'local', '--log-opt', 'max-size=64m', '--log-opt', 'max-file=2', '--restart', 'no', '--cpuset-cpus', '0-7,16-71', '--cpuset-mems', '0-7', '--memory', str(limit), '--memory-swap', str(limit), '--gpus', 'device=' + GPU, '--label', 'io.h016.owner=H016-20260927', '--mount', 'type=bind,src=' + h.MODEL + ',dst=/models,readonly', '--mount', 'type=bind,src=/data/services/secrets/llm-api-key,dst=/run/secrets/llm-api-key,readonly', '--tmpfs', '/tmp:rw,noexec,nosuid,size=1g', '--env', 'CUDA_CACHE_DISABLE=1', '--env', 'OMP_NUM_THREADS=1', IMAGE] + cfg['native_argv']
++        argv = ['docker', 'create', '--name', NAME, '--network', 'host', '--read-only', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--security-opt', 'seccomp=' + GLM_SOURCE + '/numa-seccomp.json', '--log-driver', 'local', '--log-opt', 'max-size=64m', '--log-opt', 'max-file=2', '--restart', 'no', '--cpuset-cpus', '0-7,16-71', '--cpuset-mems', '0-7', '--memory', str(limit), '--memory-swap', str(limit), '--gpus', 'device=' + GPU, '--label', 'io.h016.owner=H016-20260927', '--mount', 'type=bind,src=' + h.MODEL + ',dst=/models,readonly', '--mount', 'type=bind,src=/data/services/secrets/llm-api-key,dst=/run/secrets/llm-api-key,readonly', '--tmpfs', '/tmp:rw,noexec,nosuid,size=1g', '--env', 'CUDA_CACHE_DISABLE=1', '--env', 'OMP_NUM_THREADS=1', '--mount', 'type=bind,src=' + BASE + '/numactl,dst=/usr/bin/numactl,readonly', '--mount', 'type=bind,src=' + BASE + '/libnuma.so.1.0.0,dst=/usr/lib/x86_64-linux-gnu/libnuma.so.1,readonly', '--entrypoint', '/usr/bin/numactl', IMAGE, '--interleave=0-7', '/opt/llama/llama-server'] + cfg['native_argv']
+@@ -283 +284 @@
+-        load_end = min(time.time() + 1800, ADMIT_END)
++        load_end = min(time.time() + 1200, ADMIT_END)
+--- 782bd29/verify_retained.py
++++ r3/verify_retained.py
+@@ -16 +16 @@
+-LOG = '/data/logs/H016-20260927/worker1-r2'
++LOG = '/data/logs/H016-20260927/worker1-r3'
+--- 782bd29/LAUNCH.json
++++ r3/LAUNCH.json
+@@ -50 +50 @@
+-    "mmap",
++    "none",

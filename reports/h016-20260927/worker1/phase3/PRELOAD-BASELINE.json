@@ -1,0 +1,69 @@
+{
+  "utc": "2026-09-27T12:12:44.309752+00:00",
+  "host": {
+    "MemTotal": 946820976640,
+    "MemAvailable": 606607319040,
+    "AnonPages": 323041447936,
+    "Mapped": 4194918400,
+    "Cached": 601342504960,
+    "Buffers": 254910464,
+    "Shmem": 2565955584,
+    "SwapTotal": 3157258240,
+    "SwapFree": 3093032960
+  },
+  "gpus": [
+    {
+      "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "total_mib": 97887.0,
+      "used_mib": 61016.0,
+      "free_mib": 36234.0,
+      "temp_c": 35.0,
+      "util_pct": 0.0,
+      "board_w": 15.15
+    },
+    {
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "total_mib": 97887.0,
+      "used_mib": 27742.0,
+      "free_mib": 69508.0,
+      "temp_c": 42.0,
+      "util_pct": 0.0,
+      "board_w": 32.48
+    },
+    {
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "total_mib": 49140.0,
+      "used_mib": 32238.0,
+      "free_mib": 16274.0,
+      "temp_c": 40.0,
+      "util_pct": 0.0,
+      "board_w": 26.15
+    },
+    {
+      "uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+      "total_mib": 97887.0,
+      "used_mib": 61015.0,
+      "free_mib": 36237.0,
+      "temp_c": 35.0,
+      "util_pct": 0.0,
+      "board_w": 80.97
+    }
+  ],
+  "r2_owned_swap": 0,
+  "r2_oom_killed": false,
+  "dependency_modes": {
+    "numactl": {
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o755",
+      "bytes": 36080
+    },
+    "libnuma.so.1.0.0": {
+      "uid": 0,
+      "gid": 1001,
+      "mode": "0o644",
+      "bytes": 52248
+    }
+  },
+  "note": "preflight baseline while restored GLM runs; owner records fresh post-GLM-stop memory and exact container limit before create"
+}
