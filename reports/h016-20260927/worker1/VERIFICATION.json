@@ -1,0 +1,178 @@
+{
+  "actual_sha256": "b48324c51d29df0a68a0c7f3a0fe9cbd10ded3a0fa109dc6cad5e42a59c1b9d3",
+  "bytes_hashed": 49382011904,
+  "deadline_utc": "2026-09-27T11:14:55.132982+00:00",
+  "historical_status_sha256": "85dec9e1759ccef54dd8534511dcba403431774a0811b412f0eb5cde79114cf1",
+  "manifest_sha256": "6ac4242ac5d4df5b083b133062c78b792f1fdc7716d32c0e0000122e3263744b",
+  "model_loaded": false,
+  "pid": 1167521,
+  "ppid": 1,
+  "promoted_stat": {
+    "ctime_ns": 1790506521145080320,
+    "dev": 2081,
+    "ino": 157286414,
+    "mtime_ns": 1790498991029723725,
+    "size": 49382011904
+  },
+  "promoted_utc": "2026-09-27T10:55:21.277624+00:00",
+  "retained_before": {
+    "ctime_ns": 1790498991029723725,
+    "dev": 2081,
+    "ino": 157286414,
+    "mtime_ns": 1790498991029723725,
+    "size": 49382011904
+  },
+  "reused_files": [
+    {
+      "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00001-of-00013.gguf",
+      "provenance": "H014 verified receipt; unchanged protected file stats",
+      "sha256": "8dfdbb3c425fe5b7d2488c113ab43400cbd5ebb8d23c2846fb5cf79cce108d6d",
+      "stat": {
+        "ctime_ns": 1790493610460709031,
+        "dev": 2081,
+        "ino": 157286403,
+        "mtime_ns": 1790493603155639876,
+        "size": 5948832
+      }
+    },
+    {
+      "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00002-of-00013.gguf",
+      "provenance": "H014 verified receipt; unchanged protected file stats",
+      "sha256": "83f2fb7024a823a3c06e80869320f22f0e1a86b9b39ae12ed42a19a94d1ac300",
+      "stat": {
+        "ctime_ns": 1790495237550433600,
+        "dev": 2081,
+        "ino": 157286404,
+        "mtime_ns": 1790495209581255226,
+        "size": 48771368416
+      }
+    },
+    {
+      "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00003-of-00013.gguf",
+      "provenance": "H014 verified receipt; unchanged protected file stats",
+      "sha256": "fd8176686f491b3809ec4fd696fa5c6d295f123f66b8030dd762760f0e49eac2",
+      "stat": {
+        "ctime_ns": 1790495270712644830,
+        "dev": 2081,
+        "ino": 157286405,
+        "mtime_ns": 1790495245923486960,
+        "size": 48771368448
+      }
+    },
+    {
+      "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00004-of-00013.gguf",
+      "provenance": "H014 verified receipt; unchanged protected file stats",
+      "sha256": "a4214ed488d89b58312c0b06a5722b5996a6bc63dcd1c60d881403e5412c19d8",
+      "stat": {
+        "ctime_ns": 1790495558536125867,
+        "dev": 2081,
+        "ino": 157286406,
+        "mtime_ns": 1790495534051112852,
+        "size": 48771368448
+      }
+    },
+    {
+      "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00005-of-00013.gguf",
+      "provenance": "H014 verified receipt; unchanged protected file stats",
+      "sha256": "34a0be954b0a7f252d0bedebd84ace8fa7b840bf4b878206199499559b951a99",
+      "stat": {
+        "ctime_ns": 1790495651831225887,
+        "dev": 2081,
+        "ino": 157286407,
+        "mtime_ns": 1790495626846191731,
+        "size": 48771368448
+      }
+    },
+    {
+      "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00006-of-00013.gguf",
+      "provenance": "H014 verified receipt; unchanged protected file stats",
+      "sha256": "08040c3efc402b01c91835030f429a4afd2af8f96ccf557e0090ddcc03d5c531",
+      "stat": {
+        "ctime_ns": 1790497037023970091,
+        "dev": 2081,
+        "ino": 157286408,
+        "mtime_ns": 1790497008387819031,
+        "size": 48771368448
+      }
+    },
+    {
+      "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00007-of-00013.gguf",
+      "provenance": "H014 verified receipt; unchanged protected file stats",
+      "sha256": "92a7099339906389fe78957b6f6ba1039f667cdff38803418385ffac9e8fdab4",
+      "stat": {
+        "ctime_ns": 1790497071180150840,
+        "dev": 2081,
+        "ino": 157286409,
+        "mtime_ns": 1790497042323998098,
+        "size": 48771368448
+      }
+    },
+    {
+      "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00008-of-00013.gguf",
+      "provenance": "H014 verified receipt; unchanged protected file stats",
+      "sha256": "5da24f2484be35c1ac25f989ed8924896161ac042a53acba6a66c8b72b3c6bb3",
+      "stat": {
+        "ctime_ns": 1790497412201981916,
+        "dev": 2081,
+        "ino": 157286410,
+        "mtime_ns": 1790497378542799478,
+        "size": 48771368448
+      }
+    },
+    {
+      "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00009-of-00013.gguf",
+      "provenance": "H014 verified receipt; unchanged protected file stats",
+      "sha256": "06c458a70e545d16d059b7099538148aee19620dad0f164eea17f138134b7d62",
+      "stat": {
+        "ctime_ns": 1790497522518581781,
+        "dev": 2081,
+        "ino": 157286411,
+        "mtime_ns": 1790497488270395254,
+        "size": 48771368448
+      }
+    },
+    {
+      "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00010-of-00013.gguf",
+      "provenance": "H014 verified receipt; unchanged protected file stats",
+      "sha256": "d42439dd6da5dc30dc5280ecad19c2a118e294711961bc1b68e0f5c0793355b6",
+      "stat": {
+        "ctime_ns": 1790498381014895462,
+        "dev": 2081,
+        "ino": 157286412,
+        "mtime_ns": 1790498351425701983,
+        "size": 48771368448
+      }
+    },
+    {
+      "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00011-of-00013.gguf",
+      "provenance": "H014 verified receipt; unchanged protected file stats",
+      "sha256": "e80233937acad71ab100c04a8f34b8d9dba513d9ef682a3e1f483b8282b3048c",
+      "stat": {
+        "ctime_ns": 1790498891529113934,
+        "dev": 2081,
+        "ino": 157286413,
+        "mtime_ns": 1790498856064895613,
+        "size": 48771368448
+      }
+    },
+    {
+      "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00013-of-00013.gguf",
+      "provenance": "H014 verified receipt; unchanged protected file stats",
+      "sha256": "1dc2bc4e2c649f3a15e8f1aa33b71abc1ac4d740b27ed438e5c9ed727079db85",
+      "stat": {
+        "ctime_ns": 1790498936548390310,
+        "dev": 2081,
+        "ino": 157286415,
+        "mtime_ns": 1790498912372241995,
+        "size": 40567793056
+      }
+    }
+  ],
+  "session": "01a0e27e-32c5-7530-ac90-390e985795a2",
+  "source_sha256": "2aa4ffac4a8ed2474e79512ba0116c352652f59c810fcfb6fcfca21cd57bcb0d",
+  "started_utc": "2026-09-27T10:54:55.132956+00:00",
+  "status": "VERIFIED_COMPLETE",
+  "updated_utc": "2026-09-27T10:55:11.008758+00:00",
+  "verified_bytes": 577669438240,
+  "verified_shards": 13
+}
