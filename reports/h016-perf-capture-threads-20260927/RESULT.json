@@ -1,0 +1,13 @@
+{
+  "status": "SOURCE_REVIEW_COMPLETE",
+  "base": "6adafffa1ba3c42d69a2c4c5c275b8a56ffaa659",
+  "branch": "worker2/h016-perf-capture-threads",
+  "manual_command": "EARLY-COMMAND.md",
+  "thread_decision": "Conditional final t16/tb64 comparison against R7 with GOMP_SPINCOUNT=0 retained; startup reload required on inspected server path; root GO and W1 ownership",
+  "r7_result": "NOT_OBSERVED_NOT_WAITED",
+  "live_actions": "NONE",
+  "bundle": "RESULT.bundle",
+  "bundle_commit_identity": "git bundle list-heads RESULT.bundle",
+  "checks": "CHECKS.json",
+  "hard_deadline_utc": "2026-09-27T14:45:02.476909+00:00"
+}
