@@ -1,0 +1,354 @@
+{
+  "observed_utc": "2026-09-27T16:38:40.100094+00:00",
+  "baseline_finished_utc": "2026-09-27T16:38:31.812378+00:00",
+  "actual_input": 83,
+  "actual_output": 128,
+  "native_output_tokens_s": 9.209882711781072,
+  "sse_output_tokens_s": 9.209864306125807,
+  "r8_reference_output_tokens_s": 7.763077714,
+  "improvement_pct": 18.637002630694944,
+  "prefill_seconds": 2.125482,
+  "ttft_seconds": 2.442546674996265,
+  "total_seconds": 16.232357357999717,
+  "done": true,
+  "full_http_drain": true,
+  "slot_idle": true,
+  "quality": "UNSCORED_LENGTH_FINISH",
+  "affinity_status": "INCONCLUSIVE",
+  "affinity_reason": "some_task_reads_unavailable",
+  "substantial_tid_count": 8,
+  "substantial_tasks": [
+    {
+      "allowed_cpu_observations": [
+        [
+          0
+        ]
+      ],
+      "cpu_seconds": 2.37,
+      "last_cpu_observations": [
+        0
+      ],
+      "snapshot_observations": 5,
+      "starttime_ticks": 3910834,
+      "substantial_activity": true,
+      "system_tick_delta": 12,
+      "tid": 2104505,
+      "user_tick_delta": 225
+    },
+    {
+      "allowed_cpu_observations": [
+        [
+          1
+        ],
+        [
+          16
+        ]
+      ],
+      "cpu_seconds": 1.49,
+      "last_cpu_observations": [
+        1,
+        16
+      ],
+      "snapshot_observations": 5,
+      "starttime_ticks": 3978805,
+      "substantial_activity": true,
+      "system_tick_delta": 2,
+      "tid": 2273693,
+      "user_tick_delta": 147
+    },
+    {
+      "allowed_cpu_observations": [
+        [
+          2
+        ],
+        [
+          24
+        ]
+      ],
+      "cpu_seconds": 1.54,
+      "last_cpu_observations": [
+        2,
+        24
+      ],
+      "snapshot_observations": 5,
+      "starttime_ticks": 3978805,
+      "substantial_activity": true,
+      "system_tick_delta": 4,
+      "tid": 2273694,
+      "user_tick_delta": 150
+    },
+    {
+      "allowed_cpu_observations": [
+        [
+          3
+        ],
+        [
+          32
+        ]
+      ],
+      "cpu_seconds": 1.96,
+      "last_cpu_observations": [
+        3,
+        32
+      ],
+      "snapshot_observations": 5,
+      "starttime_ticks": 3978805,
+      "substantial_activity": true,
+      "system_tick_delta": 6,
+      "tid": 2273695,
+      "user_tick_delta": 190
+    },
+    {
+      "allowed_cpu_observations": [
+        [
+          4
+        ],
+        [
+          40
+        ]
+      ],
+      "cpu_seconds": 1.47,
+      "last_cpu_observations": [
+        4,
+        40
+      ],
+      "snapshot_observations": 5,
+      "starttime_ticks": 3978805,
+      "substantial_activity": true,
+      "system_tick_delta": 2,
+      "tid": 2273696,
+      "user_tick_delta": 145
+    },
+    {
+      "allowed_cpu_observations": [
+        [
+          5
+        ],
+        [
+          48
+        ]
+      ],
+      "cpu_seconds": 1.55,
+      "last_cpu_observations": [
+        5,
+        48
+      ],
+      "snapshot_observations": 5,
+      "starttime_ticks": 3978805,
+      "substantial_activity": true,
+      "system_tick_delta": 4,
+      "tid": 2273697,
+      "user_tick_delta": 151
+    },
+    {
+      "allowed_cpu_observations": [
+        [
+          6
+        ],
+        [
+          56
+        ]
+      ],
+      "cpu_seconds": 1.95,
+      "last_cpu_observations": [
+        6,
+        56
+      ],
+      "snapshot_observations": 5,
+      "starttime_ticks": 3978805,
+      "substantial_activity": true,
+      "system_tick_delta": 7,
+      "tid": 2273698,
+      "user_tick_delta": 188
+    },
+    {
+      "allowed_cpu_observations": [
+        [
+          7
+        ],
+        [
+          64
+        ]
+      ],
+      "cpu_seconds": 1.92,
+      "last_cpu_observations": [
+        7,
+        64
+      ],
+      "snapshot_observations": 5,
+      "starttime_ticks": 3978805,
+      "substantial_activity": true,
+      "system_tick_delta": 4,
+      "tid": 2273699,
+      "user_tick_delta": 188
+    }
+  ],
+  "raw_affinity_sha256": "216aa3a796a33afb62e233545cc76469ca489eabdfc29a46e300c11cdc93963d",
+  "late_snapshots": [
+    {
+      "utc": "2026-09-27T16:38:17.729052+00:00",
+      "task_read_errors": [
+        {
+          "error_type": "FileNotFoundError",
+          "tid": 2276568
+        },
+        {
+          "error_type": "FileNotFoundError",
+          "tid": 2276569
+        },
+        {
+          "error_type": "FileNotFoundError",
+          "tid": 2276576
+        }
+      ],
+      "substantial_task_affinities": {
+        "2104505": [
+          0
+        ],
+        "2273693": [
+          1
+        ],
+        "2273694": [
+          2
+        ],
+        "2273695": [
+          3
+        ],
+        "2273696": [
+          4
+        ],
+        "2273697": [
+          5
+        ],
+        "2273698": [
+          6
+        ],
+        "2273699": [
+          7
+        ]
+      }
+    },
+    {
+      "utc": "2026-09-27T16:38:18.226630+00:00",
+      "task_read_errors": [],
+      "substantial_task_affinities": {
+        "2104505": [
+          0
+        ],
+        "2273693": [
+          16
+        ],
+        "2273694": [
+          24
+        ],
+        "2273695": [
+          32
+        ],
+        "2273696": [
+          40
+        ],
+        "2273697": [
+          48
+        ],
+        "2273698": [
+          56
+        ],
+        "2273699": [
+          64
+        ]
+      }
+    },
+    {
+      "utc": "2026-09-27T16:38:18.726518+00:00",
+      "task_read_errors": [],
+      "substantial_task_affinities": {
+        "2104505": [
+          0
+        ],
+        "2273693": [
+          16
+        ],
+        "2273694": [
+          24
+        ],
+        "2273695": [
+          32
+        ],
+        "2273696": [
+          40
+        ],
+        "2273697": [
+          48
+        ],
+        "2273698": [
+          56
+        ],
+        "2273699": [
+          64
+        ]
+      }
+    },
+    {
+      "utc": "2026-09-27T16:38:19.726583+00:00",
+      "task_read_errors": [],
+      "substantial_task_affinities": {
+        "2104505": [
+          0
+        ],
+        "2273693": [
+          16
+        ],
+        "2273694": [
+          24
+        ],
+        "2273695": [
+          32
+        ],
+        "2273696": [
+          40
+        ],
+        "2273697": [
+          48
+        ],
+        "2273698": [
+          56
+        ],
+        "2273699": [
+          64
+        ]
+      }
+    },
+    {
+      "utc": "2026-09-27T16:38:20.726509+00:00",
+      "task_read_errors": [],
+      "substantial_task_affinities": {
+        "2104505": [
+          0
+        ],
+        "2273693": [
+          16
+        ],
+        "2273694": [
+          24
+        ],
+        "2273695": [
+          32
+        ],
+        "2273696": [
+          40
+        ],
+        "2273697": [
+          48
+        ],
+        "2273698": [
+          56
+        ],
+        "2273699": [
+          64
+        ]
+      }
+    }
+  ],
+  "settlement": "IN_PROGRESS_NORMAL_CONTROLLER_STOP",
+  "second_profile": "NOT_ADMITTED_AS_OF_READBACK"
+}

@@ -1,0 +1,15 @@
+{
+  "utc": "2026-09-27T16:46:01.979838+00:00",
+  "status": "EXACT_AUTHORIZED_R9_ALREADY_DISPATCHED_OBSERVED_NO_REPLAY",
+  "unit": "MainPID=2388016\nControlPID=0\nLoadState=loaded\nActiveState=active\nSubState=running\nInvocationID=f7d09bc5011543f99d321e1bdd4e5adb\n",
+  "owner_status": "LOADING",
+  "owner_pid": 2388016,
+  "native_pid": 2391866,
+  "candidate_id": "e281df9fb64d87e32668cc4da2e368d41c2a48fe0b3d7b8d4923615a84d3807e",
+  "native_started_at": "2026-09-27T16:45:17.969315454Z",
+  "all_approved_source_hashes_match": true,
+  "go_sha256": "75a8dc85b35ec760b4fed0148957077d88d3ce4d8a9de059ba9c18c38d6afd1f",
+  "winner_sha256": "eb7c91edea9e4593c2f874931556a3256f7fa6766f7b14b4e8ccb4d8ec6d1db9",
+  "stage_attempt": "REFUSED_NONEMPTY_NAMESPACE_NO_OVERWRITE",
+  "this_session_dispatch": "NOT_RUN_EXISTING_OWNER_PRESERVED"
+}

@@ -1,0 +1,1683 @@
+diff --git a/scripts/h016/finalprep11/dispatch_r9.py b/scripts/h016/finalprep11/dispatch_r9.py
+index 798827d..52e0561 100644
+--- a/scripts/h016/finalprep11/dispatch_r9.py
++++ b/scripts/h016/finalprep11/dispatch_r9.py
+@@ -24,10 +24,10 @@ from launch_r9 import main
+ main(run=True)
+ '''.replace('PAYLOAD_AUTHORITY',repr(go))
+ r=subprocess.run(['ssh','ai-vm','sudo -n python3 -B -'],input=code,text=True,capture_output=True,timeout=60)
+-(T/'private/finalprep11/R9-DISPATCH.stderr').write_text(r.stderr)
+-(T/'private/finalprep11/R9-DISPATCH.stdout').write_text(r.stdout)
++(T/'private/finalsource13/R9-DISPATCH.stderr').write_text(r.stderr)
++(T/'private/finalsource13/R9-DISPATCH.stdout').write_text(r.stdout)
+ if r.returncode:raise RuntimeError('R9 launcher failed; inspect actual state; no replay: '+r.stderr[-1500:])
+-out=json.loads(r.stdout);(T/'private/finalprep11/R9-INITIAL-LAUNCH.json').write_text(json.dumps(out,indent=2)+'\n')
++out=json.loads(r.stdout);(T/'private/finalsource13/R9-INITIAL-LAUNCH.json').write_text(json.dumps(out,indent=2)+'\n')
+ notice={k:out[k] for k in ['utc','status','unit','unit_readback','admission_end_utc','settlement_utc','global_end_utc']}
+ (T/'R9-DISPATCH.json').write_text(json.dumps(notice,indent=2)+'\n')
+ with (T/'ROOT-NOTICE.md').open('a') as f:f.write('\n## R9 SYSTEMD DISPATCH\n'+json.dumps(notice,indent=2)+'\n')
+diff --git a/scripts/h016/finalprep11/stage_r9.py b/scripts/h016/finalprep11/stage_r9.py
+index be07340..d727036 100644
+--- a/scripts/h016/finalprep11/stage_r9.py
++++ b/scripts/h016/finalprep11/stage_r9.py
+@@ -14,7 +14,7 @@ files={n:base64.b64encode((S/n).read_bytes()).decode() for n in SOURCE_NAMES}
+ winner_raw=(T/'ROOT-WINNER.json').read_bytes()
+ assert go['winner_sha256']==hashlib.sha256(winner_raw).hexdigest()
+ winner=json.loads(winner_raw)
+-assert winner['authorized'] is True and winner['threads'] in (16,64) and winner['context']==1000000
++assert winner['authorized'] is True and winner['threads'] in (8,16) and winner['context']==1000000
+ fixture=(T.parent/'H016-BACKEND-02-20260927/private/mimo-production-fixture-65536.json').read_bytes()
+ assert hashlib.sha256(fixture).hexdigest()==go['fixture_sha256']==FIXTURE_SHA
+ assert {n:hashlib.sha256(base64.b64decode(b)).hexdigest() for n,b in files.items()}==go['source_sha256']
+@@ -61,6 +61,6 @@ with h.transaction() as g:
+ print(json.dumps({'status':'EXACT_R9_STAGED_NO_DISPATCH','utc':h.now(),'base':B,'log':L,'source_hashes':hashes}))
+ '''.replace('PAYLOAD_FILES',repr(files)).replace('PAYLOAD_AUTHORITY',repr(go))
+ r=subprocess.run(['ssh','ai-vm','sudo -n python3 -B -'],input=code,text=True,capture_output=True,timeout=40)
+-(T/('private/finalprep11/R9-STAGING-'+datetime.datetime.now(datetime.timezone.utc).strftime('%H%M%S')+'.stderr')).write_text(r.stderr)
++(T/('private/finalsource13/R9-STAGING-'+datetime.datetime.now(datetime.timezone.utc).strftime('%H%M%S')+'.stderr')).write_text(r.stderr)
+ if r.returncode:raise RuntimeError('staging failed '+r.stderr[-1000:])
+ out=json.loads(r.stdout);(T/'R9-STAGED.json').write_text(json.dumps(out,indent=2)+'\n');print(json.dumps(out))
+diff --git a/scripts/h016/r9/LAUNCH.json b/scripts/h016/r9/LAUNCH.json
+index dd3afb2..3bad3ac 100644
+--- a/scripts/h016/r9/LAUNCH.json
++++ b/scripts/h016/r9/LAUNCH.json
+@@ -34,19 +34,17 @@
+     "--fit",
+     "off",
+     "--threads",
+-    "16",
++    "8",
+     "--threads-batch",
+     "64",
+     "--cpu-mask",
+-    "0xffffffffffffff00ff",
++    "0x10101010101010001",
+     "--cpu-mask-batch",
+     "0xffffffffffffff00ff",
+     "--cpu-strict",
+     "1",
+     "--cpu-strict-batch",
+     "1",
+-    "--numa",
+-    "distribute",
+     "--load-mode",
+     "none",
+     "--batch-size",
+@@ -84,7 +82,7 @@
+   "benchmark_max_output": 256,
+   "runtime_mask": "/run/systemd/system.control/llm-frontier-flash.service",
+   "native_load_timeout_seconds": 1200,
+-  "admission_end_utc": "2026-09-27T17:00:00Z",
++  "admission_end_utc": "2026-09-27T17:17:00Z",
+   "request_end_utc": "2026-09-27T17:25:00Z",
+   "global_end_utc": "2026-09-27T17:48:08Z",
+   "baseline_only": false,
+@@ -95,8 +93,11 @@
+   "fixture_thinking": false,
+   "discarded_warmup_input": 4096,
+   "final_qualification": true,
+-  "planned_client_end_utc": "2026-09-27T17:05:00Z",
+-  "threads": 16,
++  "planned_client_end_utc": "2026-09-27T17:17:00Z",
++  "threads": 8,
+   "allocation_proof": "ACTUAL_PROPS_SLOT_AND_MEMORY_WITH_SOURCE_CALCULATED_PHYSICAL_POOL",
+-  "physical_cache_pool_tokens": 1000192
++  "physical_cache_pool_tokens": 1000192,
++  "normal_cleanup_utc": "2026-09-27T17:17:30Z",
++  "decode_profile": "8spread",
++  "thread_selection_status": "ROOT_SELECTED_ACTUAL_R10_SPREAD02_WHOLE_PROFILE_20260927"
+ }
+diff --git a/scripts/h016/r9/allocation.py b/scripts/h016/r9/allocation.py
+index 182e769..f1661c8 100644
+--- a/scripts/h016/r9/allocation.py
++++ b/scripts/h016/r9/allocation.py
+@@ -20,7 +20,8 @@ _BACKEND = r"(CPU(?:_Mapped|_REPACK)?|CUDA_Host|CUDA\d+)"
+ 
+ 
+ def parse_native_allocation(raw_text: str, expected_context: int, *,
+-                            expected_pool_context: int | None = None) -> dict:
++                            expected_pool_context: int | None = None,
++                            expected_usable_context: int | None = None) -> dict:
+     """Fail-closed extraction of one load's native global/SWA F16 allocation.
+ 
+     Expected pinned log shapes: creating non-SWA/SWA KV cache, KV buffer size,
+@@ -31,10 +32,15 @@ def parse_native_allocation(raw_text: str, expected_context: int, *,
+     """
+     if type(expected_context) is not int or expected_context <= 0:
+         raise ValueError('expected_context must be a positive integer')
++    if expected_usable_context is None:
++        expected_usable_context = expected_context
++    if type(expected_usable_context) is not int or (expected_context, expected_usable_context) not in (
++            (expected_context, expected_context), (1000000, 1000192)):
++        raise ValueError('usable context must be exact or reviewed million-context rounding')
+     if expected_pool_context is None:
+         expected_pool_context = expected_context
+-    if type(expected_pool_context) is not int or expected_pool_context < expected_context:
+-        raise ValueError('expected_pool_context must be an explicit integer at least expected_context')
++    if type(expected_pool_context) is not int or expected_pool_context < expected_usable_context:
++        raise ValueError('expected_pool_context must be an explicit integer at least expected usable context')
+     raw = raw_text.encode('utf-8')
+     if len(raw) > MAX_LOG_BYTES:
+         raise ValueError('native allocation log exceeds bounded capture size')
+@@ -95,7 +101,7 @@ def parse_native_allocation(raw_text: str, expected_context: int, *,
+             reasons.append(reason)
+ 
+     need(contexts == [expected_pool_context], 'native_context_missing_duplicate_or_mismatched')
+-    need(slots == [{'slots': 1, 'context': expected_context}], 'single_slot_context_missing_or_mismatched')
++    need(slots == [{'slots': 1, 'context': expected_usable_context}], 'single_slot_context_missing_or_mismatched')
+     for kind, cells, layers, bytes_per_cell in [
+             ('global', expected_pool_context, 10, GLOBAL_BYTES_PER_CELL),
+             ('swa', 768, 60, 60 * 8 * (192 + 128) * 2)]:
+@@ -126,9 +132,9 @@ def parse_native_allocation(raw_text: str, expected_context: int, *,
+     return {'status': 'PROVEN' if not reasons else 'UNPROVEN', 'reasons': sorted(set(reasons)),
+         'raw_log_sha256': hashlib.sha256(raw).hexdigest(), 'raw_log_bytes': len(raw),
+         'configured_context': expected_context, 'native_context_records': contexts,
+-        'usable_context_tokens': expected_context, 'expected_physical_pool_cells': expected_pool_context,
++        'usable_context_tokens': expected_usable_context, 'expected_physical_pool_cells': expected_pool_context,
+         'slot_records': slots, 'actual_global_pool_cells': actual_cells,
+-        'pool_padding_cells': actual_cells - expected_context if actual_cells is not None else None,
++        'pool_padding_cells': actual_cells - expected_usable_context if actual_cells is not None else None,
+         'occupied_input_tokens': None, 'occupied_scope': 'Not established by allocation logs.',
+         'global_kv_bytes_formula': '51200 * actual_global_pool_cells',
+         'global_kv_bytes_calculated': GLOBAL_BYTES_PER_CELL * actual_cells if actual_cells is not None else None,
+diff --git a/scripts/h016/r9/benchmark.py b/scripts/h016/r9/benchmark.py
+index 8242ada..4ecb766 100644
+--- a/scripts/h016/r9/benchmark.py
++++ b/scripts/h016/r9/benchmark.py
+@@ -19,9 +19,13 @@ from candidate_owner import ADMIT_END, HARD_END, BASE, LOG, get, save
+ from telemetry import bounded_placement
+ MODEL = 'mimo-v2.6-pro-rl'
+ SEED = 270927
+-CLIENT_END = min(HARD_END - 1200, datetime.datetime(2026, 9, 27, 17, 5,
++CLIENT_END = min(HARD_END - 480, datetime.datetime(2026, 9, 27, 17, 17,
+                  tzinfo=datetime.timezone.utc).timestamp())
+-TOOL_PAIR_PLANNING_SECONDS = 900
++TOOL_TURN_SECONDS = 450
++PREFILL_PLANNING_TOKENS_PER_SECOND = 61.0
++DECODE_PLANNING_TOKENS_PER_SECOND = 7.76
++PLANNING_MARGIN = 1.20
++PLANNING_OVERHEAD_SECONDS = 30
+ FIXTURE_SHA = '2fb03cef2e700b304f8eea538a5ef8df300afc53bb0a94241bc754c17679ef78'
+ TOOLS_SHA = '80e7a1e12e073ac57638e86638cf571158711ff821c96605135627777ce44e8c'
+ READ_NAME = 'FINAL17-READ.txt'
+@@ -104,6 +108,7 @@ def admit(h, failed, planning_seconds=0):
+ 
+ 
+ def request(h, key, payload, label, failed, capacity, planning_seconds=0):
++    h.require(not pathlib.Path(LOG, label + '.json').exists(), 'existing_receipt_no_replay')
+     admit(h, failed, planning_seconds)
+     expected, raw = count(key, payload)
+     h.require(expected + payload['max_tokens'] <= capacity - 1, 'context_admission')
+@@ -111,6 +116,9 @@ def request(h, key, payload, label, failed, capacity, planning_seconds=0):
+     start = time.monotonic()
+     deadline = CLIENT_END
+     row = {'label': label, 'started_utc': h.now(), 'started_monotonic_seconds': start, 'raw_chunks': [], 'terminal_sse_events': [], 'expected_input_tokens': expected, 'request_sha256': hashlib.sha256(raw).hexdigest(), 'thinking': payload['chat_template_kwargs']['enable_thinking'], 'output_budget': payload['max_tokens'], 'status': 'SUBMITTED'}
++    row['client_deadline_utc'] = datetime.datetime.fromtimestamp(deadline, datetime.timezone.utc).isoformat()
++    row['client_bound_seconds'] = deadline - time.time()
++    row['admission_planning_seconds'] = planning_seconds
+     save(h, label + '.json', row)
+     c = http.client.HTTPConnection('127.0.0.1', 30012, timeout=max(.1, deadline - time.time()))
+     response = None
+@@ -136,6 +144,12 @@ def request(h, key, payload, label, failed, capacity, planning_seconds=0):
+         c.request('POST', '/v1/chat/completions', raw, {'Authorization': 'Bearer ' + key.decode(), 'Content-Type': 'application/json'})
+         row['request_sent_monotonic_seconds'] = time.monotonic()
+         row['request_sent_utc'] = utc_now()
++        sent = {'event': 'BODY_SENT', 'label': label, 'utc': row['request_sent_utc'],
++                'monotonic_seconds': row['request_sent_monotonic_seconds'],
++                'request_sha256': row['request_sha256'], 'expected_input_tokens': expected,
++                'client_deadline_utc': row['client_deadline_utc']}
++        sent_line = (json.dumps(sent, separators=(',', ':')) + '\n').encode()
++        h.require(os.write(progress_fd, sent_line) == len(sent_line), 'body_sent_progress_short_write')
+         response = c.getresponse()
+         h.require(response.status == 200, 'native_http_failure')
+         done, usage, finish = False, None, None
+@@ -293,18 +307,44 @@ def phase_request(h, key, payload, label, failed, state, planning_seconds,
+ 
+ 
+ def project_seconds(row, target):
+-    """Only a conservative admission forecast; never reported as performance."""
+-    timing = row['native_timings']
+-    native_prompt = timing['prompt_ms'] / 1000
+-    native_decode = timing['predicted_ms'] / 1000
+-    # Do not extrapolate from allocated context. Scale occupied prompt work only,
+-    # add measured request overhead and full 256-output allowance at actual rate.
+-    intervals = timing['predicted_n'] - 1
+-    if native_prompt <= 0 or native_decode <= 0 or intervals <= 0:
+-        raise RuntimeError('positive_native_timing_required_for_projection')
+-    overhead = max(0, row['total_seconds'] - native_prompt - native_decode)
+-    return 1.5 * (native_prompt * target / row['expected_input_tokens']
+-                  + native_decode * 255 / intervals + overhead) + 60
++    """Conservative per-NEXT forecast; prior slower timing can only enlarge it.
++
++    The reference rates are measured historical rates, not a winner claim. A
++    maximum 256-token answer is allowed; no allocated-context extrapolation.
++    """
++    prompt = target / PREFILL_PLANNING_TOKENS_PER_SECOND
++    decode = 256 / DECODE_PLANNING_TOKENS_PER_SECOND
++    overhead = 0
++    if row is not None:
++        timing = row['native_timings']
++        native_prompt = timing['prompt_ms'] / 1000
++        native_decode = timing['predicted_ms'] / 1000
++        intervals = timing['predicted_n'] - 1
++        if native_prompt <= 0 or native_decode <= 0 or intervals <= 0:
++            raise RuntimeError('positive_native_timing_required_for_projection')
++        prompt = max(prompt, native_prompt * target / row['expected_input_tokens'])
++        decode = max(decode, native_decode * 255 / intervals)
++        overhead = max(0, row['total_seconds'] - native_prompt - native_decode)
++    return PLANNING_MARGIN * (prompt + decode + overhead) + PLANNING_OVERHEAD_SECONDS
++
++
++def next_admission(h, failed, label, planning_seconds, completed, native_tool_qualification=False):
++    """Persist why the next request cannot fit; completed receipts are immutable."""
++    row = {'utc': utc_now(), 'next_request': label, 'completed_inputs': list(completed),
++           'native_tool_qualification': native_tool_qualification,
++           'planning_only_seconds': planning_seconds,
++           'finish_target_utc': datetime.datetime.fromtimestamp(CLIENT_END, datetime.timezone.utc).isoformat(),
++           'formula': '1.20 * (max(input/61, prior measured prompt projection) + max(256/7.76, prior measured decode projection) + measured overhead) + 30; tool-turn planning allowance450s; request deadline remains absolute CLIENT_END',
++           'limit': 'Per-next bounded admission only; no promise the remaining ladder or a 65536-output ceiling will complete.'}
++    try:
++        admit(h, failed, planning_seconds)
++    except RuntimeError as exc:
++        row.update(status='NOT_TESTED', reason=str(exc))
++        save(h, 'FINAL-ADMISSION-' + label + '.json', row)
++        save(h, 'FINAL-CLIENT-INCOMPLETE.json', row)
++        raise
++    row['status'] = 'ADMITTED'
++    save(h, 'FINAL-ADMISSION-' + label + '.json', row)
+ 
+ 
+ def load_production_fixture(h):
+@@ -366,15 +406,15 @@ def continuation(payload, row, tool_text):
+     return result
+ 
+ 
+-def production_pair(h, key, failed, state):
+-    admit(h, failed, TOOL_PAIR_PLANNING_SECONDS)
++def production_pair(h, key, failed, state, completed):
++    next_admission(h, failed, 'FINAL17-TURN1', TOOL_TURN_SECONDS, completed)
+     payload = load_production_fixture(h)
+     path = prepare_read_fixture(h)
+     payload['messages'] = [
+         {'role': 'developer', 'content': 'For this qualification, call read exactly once with only the path argument specified by the user. Do not call another tool. After the real read result, add A and B and return only the integer sum, one space, then its exact MARKER value. Do not invent the file contents.'},
+         {'role': 'user', 'content': [{'type': 'text', 'text': 'Read the real allowlisted file ' + path + ' using read({"path": "' + path + '"}). After its tool result, return A+B and the MARKER as instructed. Do not answer before the tool result.'}]}]
+     first = phase_request(h, key, payload, 'FINAL17-TURN1', failed, state,
+-                          TOOL_PAIR_PLANNING_SECONDS)
++                          TOOL_TURN_SECONDS)
+     correct = first['finish_reason'] == 'tool_calls' and len(first['tool_calls']) == 1
+     record_semantics(h, 'FINAL17-TURN1', first, correct, 'actual_one_read_tool_call_required')
+     try:
+@@ -385,8 +425,9 @@ def production_pair(h, key, failed, state):
+         raise
+     # Both the input count and generation receive this exact equivalent body.
+     second_payload = continuation(payload, first, tool_text)
++    next_admission(h, failed, 'FINAL17-TURN2', TOOL_TURN_SECONDS, completed)
+     second = phase_request(h, key, second_payload, 'FINAL17-TURN2', failed, state,
+-                           TOOL_PAIR_PLANNING_SECONDS / 2)
++                           TOOL_TURN_SECONDS)
+     correct = (second['finish_reason'] == 'stop' and not second['tool_calls']
+                and second['content'].strip() == '5 ' + READ_MARKER)
+     record_semantics(h, 'FINAL17-TURN2', second, correct, 'actual_tool_continuation_incorrect')
+@@ -405,9 +446,11 @@ def production_pair(h, key, failed, state):
+ 
+ def qualify(h, key, failed):
+     state = json.loads(pathlib.Path(LOG, 'OWNER.json').read_text())
+-    h.require(state['context'] == state['allocated_context'] and state['context'] in [1000000, 917504]
+-              and state['threads'] in [16, 64], 'final_actual_allocation_and_thread_winner_required')
+-    admit(h, failed, 2400)
++    h.require((state['context'], state['allocated_context']) in
++              [(1000000, 1000000), (1000000, 1000192), (917504, 917504)]
++              and state['threads'] in [8, 16], 'final_actual_allocation_and_thread_winner_required')
++    warm_seconds = project_seconds(None, 4096)
++    next_admission(h, failed, 'FINAL-WARM4096-DISCARDED', warm_seconds, [])
+     code, props = get(30012, '/props', key)
+     h.require(code == 200 and props['default_generation_settings']['n_ctx'] == state['allocated_context']
+               and props['total_slots'] == 1 and props['model_alias'] == MODEL and props['is_sleeping'] is False,
+@@ -419,8 +462,8 @@ def qualify(h, key, failed):
+     # The one defined representative warmup supplies the initial short-answer
+     # correctness and guard checkpoint; no extra benchmark request is admitted.
+     warm, _, codes = fixture(key, 4096, 'H016-R9-FRESH-WARM-' + utc_now(),
+-                             lambda: admit(h, failed, 2400))
+-    row = phase_request(h, key, warm, 'FINAL-WARM4096-DISCARDED', failed, state, 2400,
++                             lambda: admit(h, failed, warm_seconds))
++    row = phase_request(h, key, warm, 'FINAL-WARM4096-DISCARDED', failed, state, warm_seconds,
+                         exact_input=4096, require_uncached=True)
+     row['measurement_role'] = 'DISCARDED_REPRESENTATIVE_WARMUP'
+     record_semantics(h, 'FINAL-WARM4096-DISCARDED', row, fixture_correct(row, codes),
+@@ -428,15 +471,9 @@ def qualify(h, key, failed):
+     save(h, 'POST-WARM-PLACEMENT.json', bounded_placement(state['native_pid']))
+     reference = row
+     completed = []
+-    for target in [4096, 16384, 65536]:
+-        remaining = [n for n in [4096, 16384, 65536] if n >= target]
+-        forecast = sum(project_seconds(reference, n) for n in remaining) + TOOL_PAIR_PLANNING_SECONDS
+-        save(h, 'FINAL-ADMISSION-' + str(target) + '.json', {
+-            'utc': utc_now(), 'target': target, 'remaining_targets': remaining,
+-            'planning_only_seconds': forecast, 'finish_target_utc': datetime.datetime.fromtimestamp(CLIENT_END, datetime.timezone.utc).isoformat(),
+-            'source_measurement': reference['label'], 'formula': '1.5 * (measured_prompt_s * occupied_target / measured_input + measured_decode_s * 255 / (predicted_n-1) + measured_overhead) + 60 per rung; plus 900s tool pair',
+-            'limit': 'Conservative admission forecast only; not measured speed or proof of completion.'})
+-        admit(h, failed, forecast)
++    for target in [4096, 16384]:
++        forecast = project_seconds(reference, target)
++        next_admission(h, failed, 'FINAL-BENCH' + str(target), forecast, completed)
+         payload, _, codes = fixture(key, target, 'H016-R9-FRESH-MEASURED-' + str(target) + '-' + utc_now(),
+                                     lambda: admit(h, failed, forecast))
+         label = 'FINAL-BENCH' + str(target)
+@@ -450,8 +487,11 @@ def qualify(h, key, failed):
+         save(h, 'FINAL-LADDER-CHECKPOINT.json', {'completed': completed, 'utc': utc_now(),
+              'allocated_context': state['allocated_context'], 'threads': state['threads'],
+              'last_receipt': label + '.json', 'native_tool_qualification': False})
+-    production_pair(h, key, failed, state)
++    production_pair(h, key, failed, state, completed)
+     save(h, 'FINAL-CLIENT-COMPLETE.json', {'status': 'PASS', 'utc': utc_now(),
+-         'measured_inputs': completed, 'allocated_context': state['allocated_context'],
++         'measured_inputs': completed, 'largest_occupied_benchmark_input': 16384,
++         'benchmark_65536': 'NOT_TESTED_DEFERRED_TO_LAST_ROOTGO',
++         'scope': 'Foreground 4K/16K and actual native17 only; no64K or near1M occupation claim.',
++         'allocated_context': state['allocated_context'],
+          'threads': state['threads'], 'native_tool_qualification': True,
+          'application_acceptance': 'NOT_TESTED', 'ordinary_production_load': 'NOT_TESTED'})
+diff --git a/scripts/h016/r9/candidate_owner.py b/scripts/h016/r9/candidate_owner.py
+index 97b79ec..8919d18 100644
+--- a/scripts/h016/r9/candidate_owner.py
++++ b/scripts/h016/r9/candidate_owner.py
+@@ -25,9 +25,9 @@ GLM_ID = '2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab'
+ GLM_SOURCE = '/data/services/flash-h008-20260926/source'
+ GLM_OWNER_SHA = 'd4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1'
+ SERVICE = 'llm-frontier-flash.service'
+-ADMIT_END = datetime.datetime(2026, 9, 27, 17, 0, tzinfo=datetime.timezone.utc).timestamp()
++ADMIT_END = datetime.datetime(2026, 9, 27, 17, 17, tzinfo=datetime.timezone.utc).timestamp()
+ HARD_END = datetime.datetime(2026, 9, 27, 17, 25, tzinfo=datetime.timezone.utc).timestamp()
+-SETTLE_START = HARD_END - 600  # Start normal cleanup by 17:15, before physical settlement deadline.
++SETTLE_START = HARD_END - 450  # 17:17:30; existing 420s stop budget plus 30s physical margin.
+ PRESERVED = ['llmctl-qwen38-27b-q0-480000-yarn4-bf16kv', 'llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv', 'llm-image-backend']
+ SOURCE_NAMES = {'LAUNCH.json', 'candidate_owner.py', 'benchmark.py', 'allocation.py',
+                 'native_identity.py', 'private_proxy.py', 'telemetry.py',
+@@ -46,7 +46,7 @@ def validate_authority(cfg, hashes):
+         raise RuntimeError('root_go_expired_or_outside_admission')
+     if go.get('winner_sha256') != hashlib.sha256(winner_raw).hexdigest():
+         raise RuntimeError('root_winner_not_bound')
+-    if type(winner.get('threads')) is not int or winner['threads'] not in (16, 64):
++    if type(winner.get('threads')) is not int or winner['threads'] not in (8, 16):
+         raise RuntimeError('root_threads_invalid')
+     if winner.get('context') != 1000000 or cfg['capacity'] != winner['context']:
+         raise RuntimeError('r9_context_requires_exact_review')
+@@ -62,7 +62,7 @@ def validate_authority(cfg, hashes):
+         raise RuntimeError('incomplete_or_drifted_source_closure')
+     if go.get('fixture_sha256') != FIXTURE_SHA or hashes.get('mimo-production-fixture-65536.json') != FIXTURE_SHA:
+         raise RuntimeError('production_fixture_not_bound')
+-    if cfg['admission_end_utc'] != '2026-09-27T17:00:00Z' or cfg['request_end_utc'] != '2026-09-27T17:25:00Z':
++    if cfg['admission_end_utc'] != '2026-09-27T17:17:00Z' or cfg['request_end_utc'] != '2026-09-27T17:25:00Z':
+         raise RuntimeError('deadline_changed')
+     logging = winner.get('logging_decision', {})
+     if (logging.get('keep_existing_default_verbosity') != 3 or
+@@ -78,6 +78,24 @@ def validate_authority(cfg, hashes):
+         if argv.count(flag) != 1 or argv[argv.index(flag) + 1] != value:
+             raise RuntimeError('reviewed_native_argv_changed')
+ 
++    # Eight threads requires explicit root selection plus an actual pair proof pin.
++    profile = cfg.get('decode_profile', '16distribute')
++    expected = {'16distribute': (16, '0xffffffffffffff00ff', 'distribute'),
++                '8spread': (8, '0x10101010101010001', None),
++                '8local': (8, '0xff', None)}
++    if profile not in expected or expected[profile][0] != winner['threads']:
++        raise RuntimeError('decode_profile_mismatch')
++    if winner['threads'] == 8 and (winner.get('decode_profile') != profile or
++            not isinstance(winner.get('actual_pair_proof_sha256'), str) or
++            len(winner['actual_pair_proof_sha256']) != 64 or
++            any(c not in '0123456789abcdef' for c in winner['actual_pair_proof_sha256'])):
++        raise RuntimeError('eight_threads_requires_actual_reviewed_pair_proof')
++    if argv[argv.index('--cpu-mask') + 1] != expected[profile][1]:
++        raise RuntimeError('decode_affinity_mismatch')
++    numa = argv[argv.index('--numa') + 1] if '--numa' in argv else None
++    if numa != expected[profile][2]:
++        raise RuntimeError('decode_numa_mismatch')
++
+ 
+ def capture_phase(h, state, label, occupied=None):
+     """Bounded boundary counters; never called from the five-second guard."""
+@@ -207,6 +225,48 @@ def require_r8_settled(h):
+               'r8_proxy_present')
+ 
+ 
++def require_affinity_pair_settled(h):
++    """Observe the independent pair only. No stop, restart, or adoption."""
++    base = P('/data/logs/H016-20260927')
++    pair = json.loads((base / 'worker1-affinity02/PAIR.json').read_text())
++    h.require(pair.get('controller_invocation_id') == '3a323326650f4380a0dec32f96b13895',
++              'affinity_pair_generation_changed')
++    h.require(pair.get('status') in ('PAIR_COMPLETE_ORIGINAL_GLM_READY_AWAIT_ROOT_WINNER',
++              'PAIR_STOPPED_ORIGINAL_GLM_READY_NO_REPLAY'), 'affinity_pair_not_terminal')
++    for profile in ('affinity02', 'r10-spread02', 'r11-local02'):
++        unit = ('h016-affinity02-20260927.service' if profile == 'affinity02' else
++                'h016-mimo-profile-20260927-' + profile + '.service')
++        props = dict(x.split('=', 1) for x in run_cmd(['systemctl', 'show', unit, '-p',
++                     'MainPID,ControlPID,ActiveState,InvocationID']).splitlines())
++        h.require(props.get('MainPID') == props.get('ControlPID') == '0' and
++                  props.get('ActiveState') in ('inactive', 'failed'), 'affinity_owner_active')
++        h.require(not P('/sys/fs/cgroup/system.slice', unit).exists(), 'affinity_unit_cgroup_present')
++        if profile == 'affinity02':
++            h.require(props.get('InvocationID') == pair['controller_invocation_id'], 'affinity_controller_changed')
++            continue
++        path = base / ('worker1-' + profile) / 'OWNER.json'
++        if not path.exists():
++            h.require(not run_cmd(['docker', 'ps', '-aq', '--filter',
++                      'name=^/llm-h016-mimo-pro-' + profile + '$']).strip(), 'unrecorded_affinity_candidate')
++            continue
++        old = json.loads(path.read_text())
++        h.require(old.get('status') == 'SETTLED_GLM_RESTORED' and not old.get('glm_suppressed') and
++                  not old.get('guard_failure'), 'affinity_owner_not_settled')
++        for field in ('pid', 'proxy_pid'):
++            h.require(not old.get(field) or not P('/proc', str(old[field])).exists(),
++                      'affinity_owner_or_proxy_process_remains')
++        if old.get('candidate_id'):
++            c = inspect(old['candidate_id'])
++            h.require(c['Id'] == old['candidate_id'] and c['Image'] == IMAGE and
++                      c['Name'] == '/llm-h016-mimo-pro-' + profile and not c['State']['Running'] and
++                      c['State']['Pid'] == 0 and c['State']['StartedAt'] == old['native_started_at'],
++                      'affinity_native_not_settled')
++            h.require(all(old.get('native_settled', {}).get(k) is True for k in
++                      ('pid_zero', 'cgroup_empty', 'gpu_compute_empty')), 'affinity_settlement_proof_missing')
++            h.require(not P('/proc', str(old['native_pid'])).exists() and
++                      not P(old['native_cgroup']).exists(), 'affinity_native_process_remains')
++
++
+ def capture_native_log(h, state, label):
+     """Retain every emitted log line privately; never filter backend selection."""
+     if not state.get('candidate_id'):
+@@ -222,6 +282,7 @@ def capture_native_log(h, state, label):
+ 
+ def preflight(h):
+     require_r8_settled(h)
++    require_affinity_pair_settled(h)
+     with h.transaction() as g, h.AnchoredRoot(BASE, g) as a:
+         hashes = json.loads(P(BASE, 'SOURCE-SHA256.json').read_text())
+         for name, digest in hashes.items():
+@@ -442,23 +503,26 @@ def main(run=False):
+         observed = {'utc': h.now(), 'owner_id': state['candidate_id'], 'pid': state['native_pid'], **compact_identity(props)}
+         # Persist only identity fields, before every individually diagnosed assertion.
+         save(h, 'NATIVE-OBSERVED.json', observed)
+-        validate_identity(observed, cfg['capacity'])
++        h.require(observed['context'] in (1000000, 1000192), 'actual_usable_context_invalid')
++        validate_identity(observed, observed['context'])
+         save(h, 'NATIVE-IDENTITY.json', observed)
+         capture_native_log(h, state, 'NATIVE-STARTUP-FULL')
+         from allocation import parse_native_allocation
+         startup = json.loads(P(LOG, 'NATIVE-STARTUP-FULL.json').read_text())
+-        components = parse_native_allocation(startup['text'], cfg['capacity'], expected_pool_context=cfg['physical_cache_pool_tokens'])
+-        save(h, 'ALLOCATION-COMPONENTS.json', components)
+-        require_consistent_components(h, components, cfg['capacity'], cfg['physical_cache_pool_tokens'])
+         code, slots = get(30012, '/slots', key)
+-        h.require(code == 200 and len(slots) == 1 and slots[0].get('n_ctx') == cfg['capacity']
++        h.require(code == 200 and len(slots) == 1 and slots[0].get('n_ctx') == observed['context']
+                   and slots[0].get('is_processing') is False, 'actual_slot_capacity_or_idle_mismatch')
++        components = parse_native_allocation(startup['text'], cfg['capacity'],
++            expected_pool_context=cfg['physical_cache_pool_tokens'], expected_usable_context=slots[0]['n_ctx'])
++        save(h, 'ALLOCATION-COMPONENTS.json', components)
++        require_consistent_components(h, components, slots[0]['n_ctx'], cfg['physical_cache_pool_tokens'])
+         # Native padding/source arithmetic is not an observed physical-cell counter.
+         # Root accepts exposed capacity + measured allocation/reserve at default
+         # verbosity. Preserve missing component logs without fabricating readback.
+         actual_pool = components['actual_global_pool_cells']
+         h.require(actual_pool in (None, cfg['physical_cache_pool_tokens']), 'observed_physical_pool_mismatch')
+         allocation = {'status': 'EXPOSED_CAPACITY_READBACK', 'utc': h.now(),
++            'requested_context': cfg['capacity'], 'effective_configured_context': slots[0]['n_ctx'],
+             'actual_props_context': observed['context'], 'actual_slot_context': slots[0]['n_ctx'],
+             'actual_physical_pool_cells': actual_pool,
+             'source_calculated_physical_pool_cells': cfg['physical_cache_pool_tokens'],
+@@ -468,6 +532,8 @@ def main(run=False):
+             'components': components, 'component_byte_readback': components['status'],
+             'scope': 'Usable native slot allocation; physical padding calculated when unlogged; occupied-context correctness separate.'}
+         save(h, 'ALLOCATION.json', allocation)
++        state['requested_context'] = cfg['capacity']
++        state['effective_configured_context'] = slots[0]['n_ctx']
+         state['allocated_context'] = slots[0]['n_ctx']
+         state['physical_cache_pool_tokens'] = actual_pool
+         state['source_calculated_physical_cache_pool_tokens'] = cfg['physical_cache_pool_tokens']
+@@ -481,16 +547,13 @@ def main(run=False):
+         from benchmark import qualify
+         qualify(h, key, failed)
+         h.require(not failed.is_set() and proxy.poll() is None, 'guard_or_proxy_failed')
+-        state.update(status='FINAL_NATIVE_QUALIFIED_WARM_AWAIT_ROOT', qualification_done_utc=h.now())
+-        save(h, 'OWNER.json', state)
+-        # Independent guard retains warm owner for serial follow-up/W2; no paid CLI wait.
+-        while time.time() < SETTLE_START:
+-            h.require(not failed.is_set() and proxy.poll() is None and inspect(state['candidate_id'])['State']['Running'], 'warm_owner_guard_failed')
+-            time.sleep(5)
+-        # No persistent adoption in initial packet: bounded deadline always settles.
+-        # Ordinary production load requires separate review; no adoption is implemented.
+-        state['status'] = 'DEADLINE_SETTLING_UNADOPTED_CANDIDATE'
++        state.update(status='FINAL_NATIVE_16K_TOOLS_QUALIFIED_SETTLING', qualification_done_utc=h.now(),
++                     occupied_tested=16384, deferred_65536='NOT_TESTED_FOREGROUND')
+         save(h, 'OWNER.json', state)
++        # Root-reviewed foreground terminal proof ends this experiment immediately.
++        # Existing finally performs ordinary exact settlement and original GLM restore.
++        exit_code = 0
++
+     except BaseException as exc:
+         state.update(status='FAILED_SETTLING', error_type=type(exc).__name__, error=str(exc) if isinstance(exc, RuntimeError) else type(exc).__name__)
+         save(h, 'OWNER.json', state)
+diff --git a/scripts/h016/r9/launch_r9.py b/scripts/h016/r9/launch_r9.py
+index dfe9eeb..7b47f4a 100644
+--- a/scripts/h016/r9/launch_r9.py
++++ b/scripts/h016/r9/launch_r9.py
+@@ -5,13 +5,24 @@ import json
+ import pathlib
+ import subprocess
+ import time
+-from candidate_owner import BASE, LOG, HARD_END, ADMIT_END, SETTLE_START, preflight, save, run_cmd
++from candidate_owner import BASE, LOG, HARD_END, ADMIT_END, SETTLE_START, preflight, run_cmd
+ from verify_retained import dependency
+ 
+ 
++def save_status(h, name, value):
++    """Storage-only receipt: never compete with the dispatched child lease."""
++    with h.MountedStorageGuard(h.s) as guard, h.AnchoredRoot(LOG, guard) as log:
++        h.s.root_payload_guard()
++        log.atomic_json(name, value)
++        h.s.root_payload_guard()
++
++
+ def main(run=False):
+     h = dependency()
+-    h.require(time.time() + 1200 + 2400 < HARD_END - 1200, 'insufficient_load_and_final_qualification_window')
++    # Admit only bounded load plus the next warm request, never all remaining rungs.
++    from benchmark import project_seconds, CLIENT_END
++    h.require(time.time() + 1200 + project_seconds(None, 4096) < CLIENT_END,
++              'insufficient_load_and_next_warm_window')
+     cfg, proof = preflight(h)
+     unit = 'h016-mimo-final-20260927-r9.service'
+     h.require(run_cmd(['systemctl', 'show', unit, '-p', 'LoadState', '--value']).strip() == 'not-found', 'r9_unit_exists_no_replay')
+@@ -28,14 +39,14 @@ def main(run=False):
+                'admission_end_utc': cfg['admission_end_utc'], 'settlement_utc': cfg['request_end_utc'],
+                'global_end_utc': cfg['global_end_utc'], 'no_inference_dispatched_by_launcher': True}
+     if run:
+-        save(h, 'INITIAL-LAUNCH.json', receipt)
++        save_status(h, 'INITIAL-LAUNCH.json', receipt)
+         # All parent preflight/save transactions are closed. The independent
+         # child performs its authoritative preflight and lease acquisition.
+         subprocess.run(argv, check=True, stdout=subprocess.DEVNULL, timeout=10)
+         receipt['status'] = 'SYSTEMD_DISPATCHED_READBACK_REQUIRED'
+         receipt['unit_readback'] = run_cmd(['systemctl', 'show', unit, '-p',
+             'MainPID,InvocationID,ExecMainStartTimestamp,ActiveState,SubState,ControlGroup,RuntimeMaxUSec,TimeoutStopUSec'])
+-        save(h, 'INITIAL-LAUNCH.json', receipt)
++        save_status(h, 'INITIAL-LAUNCH.json', receipt)
+     print(json.dumps(receipt))
+ 
+ 
+diff --git a/scripts/h016/r9/private_proxy.py b/scripts/h016/r9/private_proxy.py
+index e99f4b8..9c1b8b4 100644
+--- a/scripts/h016/r9/private_proxy.py
++++ b/scripts/h016/r9/private_proxy.py
+@@ -79,7 +79,7 @@ def serve():
+     props = json.loads(response.read())
+     probe.close()
+     capacity = props.get('default_generation_settings', {}).get('n_ctx')
+-    h.require(response.status == 200 and capacity == json.loads(__import__('pathlib').Path(__file__).with_name('LAUNCH.json').read_text())['capacity'] and props.get('total_slots') == 1 and props.get('model_alias') == MODEL and props.get('is_sleeping') is False, 'loaded_capacity_identity_required')
++    h.require(response.status == 200 and json.loads(__import__('pathlib').Path(__file__).with_name('LAUNCH.json').read_text())['capacity'] == 1000000 and capacity in (1000000, 1000192) and props.get('total_slots') == 1 and props.get('model_alias') == MODEL and props.get('is_sleeping') is False, 'loaded_capacity_identity_required')
+     owner = threading.Lock()
+     quarantine = threading.Event()
+ 
+@@ -111,9 +111,9 @@ def serve():
+                 return self.error(404)
+             chat = self.path == '/v1/chat/completions'
+             now = time.time()
+-            if chat and now >= datetime.datetime(2026, 9, 27, 17, 0, tzinfo=datetime.timezone.utc).timestamp():
++            if chat and now >= datetime.datetime(2026, 9, 27, 17, 17, tzinfo=datetime.timezone.utc).timestamp():
+                 return self.error(503)
+-            deadline = min(now + 7200, datetime.datetime(2026, 9, 27, 17, 25, tzinfo=datetime.timezone.utc).timestamp())
++            deadline = min(now + 7200, datetime.datetime(2026, 9, 27, 17, 17, tzinfo=datetime.timezone.utc).timestamp())
+             if now >= deadline:
+                 return self.error(503)
+             owned = False
+diff --git a/scripts/h016/r9/test_allocation.py b/scripts/h016/r9/test_allocation.py
+index f1231bd..70d206d 100644
+--- a/scripts/h016/r9/test_allocation.py
++++ b/scripts/h016/r9/test_allocation.py
+@@ -54,6 +54,26 @@ class AllocationTests(unittest.TestCase):
+         self.assertEqual(proof['pool_padding_cells'], 192)
+         self.assertEqual(proof['global_kv_bytes_calculated'], 51209830400)
+ 
++    def test_reviewed_usable_rounding_is_separate_from_config_and_physical_pool(self):
++        proof = parse_native_allocation(log_fixture(1000192), 1000000,
++                                        expected_pool_context=1000192,
++                                        expected_usable_context=1000192)
++        self.assertEqual(proof['status'], 'PROVEN', proof['reasons'])
++        self.assertEqual(proof['configured_context'], 1000000)
++        self.assertEqual(proof['usable_context_tokens'], 1000192)
++        self.assertEqual(proof['actual_global_pool_cells'], 1000192)
++        self.assertEqual(proof['pool_padding_cells'], 0)
++        self.assertEqual(parse_native_allocation(log_fixture(1000192), 1000000,
++                         expected_pool_context=1000192)['status'], 'UNPROVEN')
++        with self.assertRaises(ValueError):
++            parse_native_allocation(log_fixture(1000192), 1000000,
++                                    expected_pool_context=1000000,
++                                    expected_usable_context=1000192)
++        with self.assertRaises(ValueError):
++            parse_native_allocation(log_fixture(1000448), 1000000,
++                                    expected_pool_context=1000448,
++                                    expected_usable_context=1000448)
++
+     def test_fallback_requires_its_own_actual_pool(self):
+         self.assertEqual(parse_native_allocation(log_fixture(917504), 917504)['status'], 'PROVEN')
+         self.assertEqual(parse_native_allocation(log_fixture(), 917504)['status'], 'UNPROVEN')
+diff --git a/scripts/h016/r9/test_final_benchmark.py b/scripts/h016/r9/test_final_benchmark.py
+index 97114cd..6898114 100644
+--- a/scripts/h016/r9/test_final_benchmark.py
++++ b/scripts/h016/r9/test_final_benchmark.py
+@@ -80,7 +80,7 @@ class FinalTests(unittest.TestCase):
+             p.start()
+             self.addCleanup(p.stop)
+ 
+-    def stream_request(self, events, *, done=True, expected=83, output=128):
++    def stream_request(self, events, *, done=True, expected=83, output=128, planning_seconds=0):
+         wire = b''.join(b'data: ' + json.dumps(e).encode() + b'\n\n' for e in events)
+         if done:
+             wire += b'data: [DONE]\n\n'
+@@ -93,7 +93,7 @@ class FinalTests(unittest.TestCase):
+         payload = b.body('technical', False, output)
+         raw = json.dumps(payload, separators=(',', ':')).encode()
+         with mock.patch.object(b, 'count', return_value=(expected, raw)) as counter, mock.patch.object(b.http.client, 'HTTPConnection', return_value=connection):
+-            row = b.request(self.h, b'fake-offline-key', payload, 'TEST', threading.Event(), 1000000)
++            row = b.request(self.h, b'fake-offline-key', payload, 'TEST', threading.Event(), 1000000, planning_seconds)
+         counter.assert_called_once()
+         self.assertEqual(connection.request.call_args.args[2], raw)
+         self.assertEqual(pathlib.Path(self.tmp.name, 'TEST-REQUEST.json').read_bytes(), raw)
+@@ -113,8 +113,9 @@ class FinalTests(unittest.TestCase):
+         raw_saved = [json.loads(x) for x in pathlib.Path(self.tmp.name, 'TEST-RAW.jsonl').read_text().splitlines()]
+         self.assertEqual(b''.join(base64.b64decode(x['base64']) for x in raw_saved), wire)
+         progress = pathlib.Path(self.tmp.name, 'TEST-PROGRESS.jsonl').read_text().splitlines()
+-        self.assertEqual(len(progress), 1)
+-        self.assertEqual(json.loads(progress[0])['event'], 'FIRST_OUTPUT')
++        self.assertEqual(len(progress), 2)
++        self.assertEqual(json.loads(progress[0])['event'], 'BODY_SENT')
++        self.assertEqual(json.loads(progress[1])['event'], 'FIRST_OUTPUT')
+         self.assertEqual(row['native_interval_tokens_per_second'], 127 / 20)
+         self.assertEqual(row['correctness'], 'UNSCORED')
+         self.assertEqual(row['finish_reason'], 'length')
+@@ -142,6 +143,83 @@ class FinalTests(unittest.TestCase):
+                 b.request(self.h, b'x', b.body('x'), 'LATE', threading.Event(), 1000000, 100000)
+             counter.assert_not_called()
+ 
++    def test_next_bound_uses_only_next_rung_and_slower_actual_timing(self):
++        short = b.project_seconds(None, 4096)
++        long = b.project_seconds(None, 65536)
++        self.assertAlmostEqual(short, 1.2 * (4096 / 61 + 256 / 7.76) + 30)
++        self.assertGreater(long, short)
++        reference = {'native_timings': {'prompt_ms': 100000, 'predicted_ms': 10000,
++                                      'predicted_n': 51},
++                     'expected_input_tokens': 4096, 'total_seconds': 120}
++        self.assertGreater(b.project_seconds(reference, 4096), short)
++        # The short rung can fit while the later one cannot; no ladder-wide gate.
++        with mock.patch.object(b, 'ADMIT_END', b.CLIENT_END), \
++                mock.patch.object(b.time, 'time', return_value=b.CLIENT_END - short - 1):
++            b.next_admission(self.h, threading.Event(), 'NEXT4096', short, [])
++            with self.assertRaisesRegex(RuntimeError, 'completion_budget_unavailable'):
++                b.next_admission(self.h, threading.Event(), 'NEXT65536', long, [4096])
++        incomplete = b.save.call_args.args[2]
++        self.assertEqual(incomplete['status'], 'NOT_TESTED')
++        self.assertEqual(incomplete['completed_inputs'], [4096])
++
++    def test_existing_receipt_refuses_replay_before_count(self):
++        retained = pathlib.Path(self.tmp.name, 'PASSED.json')
++        retained.write_text('{"correctness":"PASS"}')
++        with mock.patch.object(b, 'count') as counter:
++            with self.assertRaisesRegex(RuntimeError, 'existing_receipt_no_replay'):
++                b.request(self.h, b'x', b.body('x'), 'PASSED', threading.Event(), 1000000)
++            counter.assert_not_called()
++        self.assertEqual(retained.read_text(), '{"correctness":"PASS"}')
++
++    def test_absolute_end_retains_eight_minute_physical_settlement_reserve(self):
++        self.assertEqual(b.CLIENT_END, owner.HARD_END - 480)
++        self.assertEqual(datetime.datetime.fromtimestamp(b.CLIENT_END, datetime.timezone.utc).isoformat(),
++                         '2026-09-27T17:17:00+00:00')
++
++    def test_foreground_ends_after_16k_and_native_tools_without_64k(self):
++        state = {'context': 1000000, 'allocated_context': 1000000, 'threads': 16, 'native_pid': 12}
++        pathlib.Path(self.tmp.name, 'OWNER.json').write_text(json.dumps(state))
++        events, projections = [], []
++        props = {'default_generation_settings': {'n_ctx': 1000000}, 'total_slots': 1,
++                 'model_alias': b.MODEL, 'is_sleeping': False}
++        slots = [{'n_ctx': 1000000, 'is_processing': False}]
++        def phase(h, key, payload, label, failed, state, planning_seconds, **kwargs):
++            events.append(label)
++            return {'label': label}
++        def projection(row, target):
++            projections.append((row.get('label') if row else None, target))
++            return 100 if target < 65536 else 100000
++        def tools(h, key, failed, state, completed):
++            self.assertEqual(completed, [4096, 16384])
++            events.extend(['FINAL17-TURN1', 'FINAL17-TURN2'])
++            b.save(self.h, 'FINAL17-QUALIFICATION.json', {'status': 'PASS'})
++        with mock.patch.object(b, 'get', side_effect=[(200, props), (200, slots)]), \
++                mock.patch.object(b, 'fixture', return_value=(b.body('x'), b'{}', ['a', 'b', 'c'])), \
++                mock.patch.object(b, 'phase_request', side_effect=phase), \
++                mock.patch.object(b, 'fixture_correct', return_value=True), \
++                mock.patch.object(b, 'production_pair', side_effect=tools), \
++                mock.patch.object(b, 'project_seconds', side_effect=projection):
++            b.qualify(self.h, b'x', threading.Event())
++        self.assertEqual(events, ['FINAL-WARM4096-DISCARDED', 'FINAL-BENCH4096',
++                                 'FINAL-BENCH16384', 'FINAL17-TURN1', 'FINAL17-TURN2'])
++        self.assertFalse(any(target == 65536 for _, target in projections))
++        receipts = {call.args[1]: call.args[2] for call in b.save.call_args_list}
++        self.assertEqual(receipts['FINAL17-QUALIFICATION.json']['status'], 'PASS')
++        complete = receipts['FINAL-CLIENT-COMPLETE.json']
++        self.assertEqual(complete['status'], 'PASS')
++        self.assertEqual(complete['measured_inputs'], [4096, 16384])
++        self.assertEqual(complete['largest_occupied_benchmark_input'], 16384)
++        self.assertEqual(complete['benchmark_65536'], 'NOT_TESTED_DEFERRED_TO_LAST_ROOTGO')
++        self.assertTrue(complete['native_tool_qualification'])
++        self.assertNotIn('FINAL-BENCH65536.json', receipts)
++
++    def test_planning_forecast_never_becomes_request_timeout(self):
++        row, _ = self.stream_request(self.events(), planning_seconds=1)
++        self.assertEqual(row['admission_planning_seconds'], 1)
++        self.assertEqual(row['client_deadline_utc'],
++                         datetime.datetime.fromtimestamp(b.CLIENT_END, datetime.timezone.utc).isoformat())
++        self.assertGreater(row['client_bound_seconds'], 1)
++
+     def test_fixture_has_seed_before_every_exact_count(self):
+         observed = []
+         def counter(key, payload):
+@@ -262,7 +340,7 @@ class FinalTests(unittest.TestCase):
+                     'request_sha256': 'second-request-hash'}
+         state = {'context': 1000000, 'allocated_context': 1000000, 'threads': 16}
+         with mock.patch.object(b, 'load_production_fixture', return_value=copy.deepcopy(original)), mock.patch.object(b, 'phase_request', side_effect=phase):
+-            b.production_pair(self.h, b'fake-key', threading.Event(), state)
++            b.production_pair(self.h, b'fake-key', threading.Event(), state, [4096, 16384])
+         self.assertEqual(len(received), 2)
+         summary = b.save.call_args.args[2]
+         self.assertTrue(summary['native_tool_qualification'])
+diff --git a/scripts/h016/r9/test_final_owner.py b/scripts/h016/r9/test_final_owner.py
+index f1ff1e0..9880631 100644
+--- a/scripts/h016/r9/test_final_owner.py
++++ b/scripts/h016/r9/test_final_owner.py
+@@ -24,6 +24,16 @@ class FinalOwnerTests(unittest.TestCase):
+         self.temp = tempfile.TemporaryDirectory()
+         self.base = pathlib.Path(self.temp.name)
+         self.cfg = json.loads((ROOT / 'LAUNCH.json').read_text())
++        # Keep legacy16 as an explicit fixture when reviewed LAUNCH selects8.
++        self.cfg['threads'] = 16
++        self.cfg['decode_profile'] = '16distribute'
++        argv = self.cfg['native_argv']
++        argv[argv.index('--threads') + 1] = '16'
++        argv[argv.index('--cpu-mask') + 1] = '0xffffffffffffff00ff'
++        if '--numa' in argv:
++            argv[argv.index('--numa') + 1] = 'distribute'
++        else:
++            argv.extend(['--numa', 'distribute'])
+         self.winner = {'authorized': True, 'threads': 16, 'context': 1000000,
+                        'expected_physical_cache_pool_tokens': 1000192,
+                        'physical_padding_multiple': 256,
+@@ -104,6 +114,93 @@ class FinalOwnerTests(unittest.TestCase):
+         with self.assertRaisesRegex(RuntimeError, 'root_authority_missing'):
+             self.validate()
+ 
++    def select_eight(self, profile='8spread'):
++        self.cfg['threads'] = self.winner['threads'] = 8
++        self.cfg['decode_profile'] = self.winner['decode_profile'] = profile
++        argv = self.cfg['native_argv']
++        argv[argv.index('--threads') + 1] = '8'
++        argv[argv.index('--cpu-mask') + 1] = ('0x10101010101010001' if profile == '8spread' else '0xff')
++        pos = argv.index('--numa')
++        del argv[pos:pos + 2]
++
++    def test_actual_eight_requires_explicit_pair_proof_and_exact_placement(self):
++        self.select_eight()
++        with self.assertRaisesRegex(RuntimeError, 'actual_reviewed_pair_proof'):
++            self.validate()
++        self.winner['actual_pair_proof_sha256'] = 'a' * 64
++        self.validate()
++        self.winner['decode_profile'] = '8local'
++        with self.assertRaisesRegex(RuntimeError, 'actual_reviewed_pair_proof'):
++            self.validate()
++        self.winner['decode_profile'] = '8spread'
++        argv = self.cfg['native_argv']
++        argv[argv.index('--cpu-mask') + 1] = '0xff'
++        with self.assertRaisesRegex(RuntimeError, 'decode_affinity_mismatch'):
++            self.validate()
++        self.cfg['decode_profile'] = self.winner['decode_profile'] = '8local'
++        self.validate()
++        argv.extend(['--numa', 'distribute'])
++        with self.assertRaisesRegex(RuntimeError, 'decode_numa_mismatch'):
++            self.validate()
++
++    def test_thread_profile_mismatch_and_unreviewed_64_refused(self):
++        self.cfg['decode_profile'] = '8local'
++        with self.assertRaisesRegex(RuntimeError, 'decode_profile_mismatch'):
++            self.validate()
++        self.winner['threads'] = 64
++        with self.assertRaisesRegex(RuntimeError, 'root_threads_invalid'):
++            self.validate()
++
++    def affinity_pair(self, *, change_pair=None, active=False, running=False,
++                      remains=False, invocation_changed=False):
++        pair = {'controller_invocation_id': '3a323326650f4380a0dec32f96b13895',
++                'status': 'PAIR_STOPPED_ORIGINAL_GLM_READY_NO_REPLAY'}
++        if change_pair:
++            change_pair(pair)
++        old = {'status': 'SETTLED_GLM_RESTORED', 'glm_suppressed': False,
++               'candidate_id': 'retained-spread-id', 'native_pid': 123,
++               'native_started_at': '2026-09-27T16:28:00Z',
++               'native_cgroup': '/sys/fs/cgroup/retained-spread',
++               'native_settled': {key: True for key in
++                   ('pid_zero', 'cgroup_empty', 'gpu_compute_empty')}}
++        container = {'Id': old['candidate_id'], 'Image': owner.IMAGE,
++                     'Name': '/llm-h016-mimo-pro-r10-spread02',
++                     'State': {'Pid': 123 if running else 0, 'Running': running,
++                               'StartedAt': old['native_started_at']}}
++        def read(path, *_, **kwargs):
++            return json.dumps(pair if path.name == 'PAIR.json' else old)
++        def exists(path):
++            return ('worker1-r10-spread02/OWNER.json' in str(path)
++                    or (remains and str(path) == old['native_cgroup']))
++        def command(argv):
++            if argv[0] == 'docker':
++                return ''  # Skipped second child: no unit/container/owner.
++            invocation = 'changed' if invocation_changed else pair['controller_invocation_id']
++            return ('MainPID=' + ('2100223' if active else '0') + '\nControlPID=0\nActiveState='
++                    + ('active' if active else 'inactive') + '\nInvocationID=' + invocation)
++        harness = type('Harness', (), {'require': staticmethod(require)})()
++        with mock.patch.object(pathlib.Path, 'read_text', autospec=True, side_effect=read), \
++                mock.patch.object(pathlib.Path, 'exists', autospec=True, side_effect=exists), \
++                mock.patch.object(owner, 'run_cmd', side_effect=command), \
++                mock.patch.object(owner, 'inspect', return_value=container):
++            owner.require_affinity_pair_settled(harness)
++
++    def test_terminal_affinity_pair_with_skipped_second_child_is_accepted(self):
++        self.affinity_pair()
++        self.affinity_pair(change_pair=lambda p: p.update(
++            status='PAIR_COMPLETE_ORIGINAL_GLM_READY_AWAIT_ROOT_WINNER'))
++
++    def test_active_or_unsettled_affinity_pair_refused(self):
++        for kwargs, reason in [
++                ({'change_pair': lambda p: p.update(status='PROFILE_RUNNING')}, 'affinity_pair_not_terminal'),
++                ({'change_pair': lambda p: p.update(controller_invocation_id='other')}, 'affinity_pair_generation_changed'),
++                ({'active': True}, 'affinity_owner_active'),
++                ({'running': True}, 'affinity_native_not_settled'),
++                ({'remains': True}, 'affinity_native_process_remains'),
++                ({'invocation_changed': True}, 'affinity_controller_changed')]:
++            with self.subTest(reason=reason), self.assertRaisesRegex(RuntimeError, reason):
++                self.affinity_pair(**kwargs)
++
+     def test_no_implicit_capacity_fallback(self):
+         self.winner['context'] = self.cfg['capacity'] = 917504
+         with self.assertRaisesRegex(RuntimeError, 'r9_context_requires_exact_review'):
+@@ -111,7 +208,7 @@ class FinalOwnerTests(unittest.TestCase):
+ 
+     def test_expiry_and_admission_are_absolute(self):
+         self.validate()
+-        self.go['expires_utc'] = '2026-09-27T17:00:01+00:00'
++        self.go['expires_utc'] = '2026-09-27T17:17:01+00:00'
+         with self.assertRaisesRegex(RuntimeError, 'root_go_expired_or_outside_admission'):
+             self.validate()
+         self.go['expires_utc'] = '2026-09-27T16:00:00+00:00'
+@@ -207,10 +304,10 @@ class FinalOwnerTests(unittest.TestCase):
+             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                     and node.func.attr == 'datetime':
+                 dates.append(tuple(arg.value for arg in node.args if isinstance(arg, ast.Constant)))
+-        self.assertEqual(sorted(dates), [(2026, 9, 27, 17, 0), (2026, 9, 27, 17, 25)])
++        self.assertEqual(sorted(dates), [(2026, 9, 27, 17, 17), (2026, 9, 27, 17, 17)])
+         self.assertIn("['capacity']", source)
+         self.assertNotIn('131072', source)
+-        self.assertEqual(owner.ADMIT_END, datetime.datetime(2026, 9, 27, 17, 0,
++        self.assertEqual(owner.ADMIT_END, datetime.datetime(2026, 9, 27, 17, 17,
+                          tzinfo=datetime.timezone.utc).timestamp())
+         self.assertEqual(owner.HARD_END, datetime.datetime(2026, 9, 27, 17, 25,
+                          tzinfo=datetime.timezone.utc).timestamp())
+diff --git a/scripts/h016/r9/test_launcher_contention.py b/scripts/h016/r9/test_launcher_contention.py
+new file mode 100644
+index 0000000..589eadb
+--- /dev/null
++++ b/scripts/h016/r9/test_launcher_contention.py
+@@ -0,0 +1,47 @@
++"""Actual interprocess canonical flock contention; fixture-only status I/O."""
++import ast,contextlib,json,os,pathlib,subprocess,sys,tempfile,unittest
++from types import SimpleNamespace
++ROOT=pathlib.Path(__file__).resolve().parents[2]
++sys.path.insert(0,str(ROOT))
++from common.lifecycle_lease import acquire_lease,LeaseBusy
++HERE=pathlib.Path(__file__).parent
++
++def function(path,name,namespace):
++ tree=ast.parse(path.read_text());node=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name==name)
++ exec(compile(ast.Module(body=[node],type_ignores=[]),str(path),'exec'),namespace)
++ return namespace[name]
++
++class ContentionTest(unittest.TestCase):
++ def test_launcher_status_writes_do_not_take_child_lifecycle_lease(self):
++  with tempfile.TemporaryDirectory() as td:
++   root=pathlib.Path(td); log=root/'logs';log.mkdir();uid=os.getuid()
++   childcode="import sys,time;from pathlib import Path;sys.path.insert(0,sys.argv[1]);from common.lifecycle_lease import acquire_lease\nwith acquire_lease(system_root=Path(sys.argv[2]),trusted_uid=int(sys.argv[3])):\n print('HELD',flush=True);sys.stdin.read(1)"
++   child=subprocess.Popen([sys.executable,'-c',childcode,str(ROOT),str(root),str(uid)],stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True)
++   try:
++    self.assertEqual(child.stdout.readline().strip(),'HELD');events=[]
++    @contextlib.contextmanager
++    def guard(_):
++     events.append('guard_enter');yield None;events.append('guard_exit')
++    class Anchor:
++     def __init__(self,path,g):self.path=pathlib.Path(path);self.path.mkdir(exist_ok=True)
++     def __enter__(self):events.append('anchor_enter');return self
++     def __exit__(self,*a):events.append('anchor_exit')
++     def atomic_json(self,name,value):
++      tmp=self.path/(name+'.tmp');tmp.write_text(json.dumps(value));tmp.replace(self.path/name)
++    @contextlib.contextmanager
++    def transaction():
++     with acquire_lease(blocking=False,system_root=root,trusted_uid=uid):yield None
++    h=SimpleNamespace(s=SimpleNamespace(root_payload_guard=lambda:events.append('root_guard')),MountedStorageGuard=guard,AnchoredRoot=Anchor,transaction=transaction)
++    # The old status pattern really contends with the other process.
++    with self.assertRaises(LeaseBusy):
++     with h.transaction():pass
++    function(HERE/'launch_r9.py','save_status',{'LOG':log})(h,'INITIAL-LAUNCH.json',{'status':'fixture'})
++    self.assertEqual(json.loads((log/'INITIAL-LAUNCH.json').read_text()),{'status':'fixture'})
++    self.assertEqual(events.count('root_guard'),2)
++    # Status writes did not release/bypass the actual child-owned canonical lock.
++    with self.assertRaises(LeaseBusy):
++     with acquire_lease(blocking=False,system_root=root,trusted_uid=uid):pass
++   finally:
++    child.stdin.write('x');child.stdin.flush();child.wait(timeout=5);child.stdin.close();child.stdout.close()
++   with acquire_lease(blocking=False,system_root=root,trusted_uid=uid):pass
++if __name__=='__main__':unittest.main()
+diff --git a/scripts/runtime/mimo/launch.json b/scripts/runtime/mimo/launch.json
+index 92b4521..034b06f 100644
+--- a/scripts/runtime/mimo/launch.json
++++ b/scripts/runtime/mimo/launch.json
+@@ -11,12 +11,12 @@
+     "--api-key-file",
+     "/run/secrets/llm-api-key",
+     "--ctx-size",
+-    "131072",
++    "1000000",
+     "--parallel",
+     "1",
+     "--kv-unified",
+     "--kv-unified-per-slot",
+-    "131072",
++    "1000000",
+     "--cache-type-k",
+     "f16",
+     "--cache-type-v",
+@@ -33,19 +33,17 @@
+     "--fit",
+     "off",
+     "--threads",
+-    "16",
++    "8",
+     "--threads-batch",
+     "64",
+     "--cpu-mask",
+-    "0xffffffffffffff00ff",
++    "0x10101010101010001",
+     "--cpu-mask-batch",
+     "0xffffffffffffff00ff",
+     "--cpu-strict",
+     "1",
+     "--cpu-strict-batch",
+     "1",
+-    "--numa",
+-    "distribute",
+     "--load-mode",
+     "none",
+     "--batch-size",
+@@ -78,6 +76,6 @@
+     "--poll-batch",
+     "0"
+   ],
+-  "initial_context": 131072,
++  "initial_context": 1000000,
+   "max_output_tokens": 65536
+ }
+diff --git a/scripts/runtime/mimo/owner.py b/scripts/runtime/mimo/owner.py
+index bae1009..6f378b0 100644
+--- a/scripts/runtime/mimo/owner.py
++++ b/scripts/runtime/mimo/owner.py
+@@ -158,8 +158,16 @@ def launch_args(manifest):
+     raw = protected(BASE / 'source/launch.json')
+     require(hashlib.sha256(raw).hexdigest() == manifest['source_sha256'][str(BASE / 'source/launch.json')], 'launch_source_changed')
+     argv = json.loads(raw)['native_argv']
+-    for name in ('--ctx-size', '--kv-unified-per-slot'):
+-        argv[argv.index(name) + 1] = str(manifest['context'])
++    context_flags = ('--ctx-size', '--kv-unified-per-slot')
++    if manifest['context'] in (1000000, 1000192):
++        # The reviewed 1M request may expose allocator-rounded usable capacity.
++        # Preserve the source request; native_ready still requires exact actual
++        # props/slots agreement with manifest.context, never invented equality.
++        require(all(argv.count(name) == 1 and argv[argv.index(name) + 1] == '1000000'
++                    for name in context_flags), 'reviewed_1m_request_required')
++    else:
++        for name in context_flags:
++            argv[argv.index(name) + 1] = str(manifest['context'])
+     require(type(manifest.get('no_host')) is bool, 'reviewed_no_host_required')
+     if manifest['no_host']:
+         argv.append('--no-host')
+@@ -182,8 +190,11 @@ def validate_manifest(m):
+             and HEX.fullmatch(m['tool_template_sha256'])), 'tool_template_pin_invalid')
+     require(isinstance(m.get('container_name'), str) and re.fullmatch(r'llm-frontier-mimo-[a-z0-9-]{1,64}', m['container_name']), 'production_container_name_required')
+     budget = m.get('memory', {})
++    # The measured cgroup peak already includes charged file cache. Only a
++    # separately justified incremental startup allowance belongs in the sum.
+     require(all(type(budget.get(k)) is int and budget[k] > 0 for k in
+-                ('limit_bytes', 'qualified_peak_bytes', 'startup_cache_bytes'))
++                ('limit_bytes', 'qualified_peak_bytes'))
++            and type(budget.get('startup_cache_bytes')) is int and budget['startup_cache_bytes'] >= 0
+             and budget['limit_bytes'] >= budget['qualified_peak_bytes'] + budget['startup_cache_bytes'],
+             'reviewed_memory_peak_and_cache_required')
+     artifact = m.get('artifact', {})
+diff --git a/scripts/runtime/mimo/private_proxy.py b/scripts/runtime/mimo/private_proxy.py
+index fa1ca9b..43b0eaf 100644
+--- a/scripts/runtime/mimo/private_proxy.py
++++ b/scripts/runtime/mimo/private_proxy.py
+@@ -151,7 +151,7 @@ def serve():
+                 return self.error(404)
+             chat = self.path == '/v1/chat/completions'
+             now = time.time()
+-            deadline = now + 7200
++            deadline = now + 8 * 60 * 60
+             owned = False
+             conn = None
+             terminal = False
+diff --git a/tests/test_mimo_owner.py b/tests/test_mimo_owner.py
+index a50b7d7..bfcbb9a 100644
+--- a/tests/test_mimo_owner.py
++++ b/tests/test_mimo_owner.py
+@@ -125,6 +125,52 @@ class OwnerTests(unittest.TestCase):
+             m['native_argv'].append('--arbitrary')
+             with self.assertRaises(RuntimeError):o.launch_args(m)
+ 
++    def test_reviewed_1m_request_preserved_for_actual_allocator_rounding(self):
++        base=json.loads(PATH.with_name('launch.json').read_text())
++        for flag in ('--ctx-size','--kv-unified-per-slot'):
++            base['native_argv'][base['native_argv'].index(flag)+1]='1000000'
++        raw=json.dumps(base).encode()
++        for actual in (1000000,1000192):
++            m=dict(context=actual,no_host=True,
++                   source_sha256={str(o.BASE / 'source/launch.json'):hashlib.sha256(raw).hexdigest()},
++                   native_argv=base['native_argv']+['--no-host'])
++            with patch.object(o,'protected',return_value=raw):
++                self.assertEqual(o.launch_args(m),m['native_argv'])
++                self.assertEqual(m['context'],actual)
++                m['native_argv'][m['native_argv'].index('--ctx-size')+1]='1000192'
++                with self.assertRaisesRegex(RuntimeError,'reviewed_native_argv_changed'):
++                    o.launch_args(m)
++
++    def test_reviewed_1m_capacity_rejects_stale_or_mixed_source_request(self):
++        for requested in (('131072','131072'),('1000000','1000192'),('1000192','1000000')):
++            base=json.loads(PATH.with_name('launch.json').read_text())
++            for flag,value in zip(('--ctx-size','--kv-unified-per-slot'),requested):
++                base['native_argv'][base['native_argv'].index(flag)+1]=value
++            raw=json.dumps(base).encode()
++            for actual in (1000000,1000192):
++                m=dict(context=actual,no_host=True,
++                       source_sha256={str(o.BASE / 'source/launch.json'):hashlib.sha256(raw).hexdigest()},
++                       native_argv=base['native_argv']+['--no-host'])
++                with patch.object(o,'protected',return_value=raw),self.assertRaisesRegex(RuntimeError,'reviewed_1m_request_required'):
++                    o.launch_args(m)
++
++    def test_memory_peak_includes_cache_only_incremental_startup_added(self):
++        m=json.loads((PATH.parents[3] / 'reports/h016-production-owner-20260927/REVIEW-MANIFEST.template.json').read_text())
++        m.update(qualified=True,no_host=True,native_argv=['--no-host'],qualification_sha256={'fixture':'0'*64})
++        m['artifact']['files']=[{} for _ in range(13)]
++        m['memory']=dict(limit_bytes=704,qualified_peak_bytes=704,startup_cache_bytes=0)
++        o.validate_manifest(m)  # Cgroup peak already contains its charged file cache.
++        m['memory']=dict(limit_bytes=704,qualified_peak_bytes=700,startup_cache_bytes=4)
++        o.validate_manifest(m)  # Separately justified incremental allowance.
++        for budget in (dict(limit_bytes=704,qualified_peak_bytes=704,startup_cache_bytes=-1),
++                       dict(limit_bytes=704,qualified_peak_bytes=704,startup_cache_bytes=1),
++                       dict(limit_bytes=704,qualified_peak_bytes=700,startup_cache_bytes=5),
++                       dict(limit_bytes=704,qualified_peak_bytes=0,startup_cache_bytes=0),
++                       dict(limit_bytes=704,qualified_peak_bytes=700,startup_cache_bytes=False)):
++            m['memory']=budget
++            with self.assertRaisesRegex(RuntimeError,'reviewed_memory_peak_and_cache_required'):
++                o.validate_manifest(m)
++
+     def test_explicit_glm_rollback_publishes_valid_selection_before_start(self):
+         selected=dict(schema_version=1,selected_frontier=o.MODEL,generation=4)
+         state=dict(status='SETTLED',request_hold=False,native={'container_id':'a'},native_cgroup='/fixture/absent',
+diff --git a/tests/test_mimo_proxy_deadline.py b/tests/test_mimo_proxy_deadline.py
+new file mode 100644
+index 0000000..99d78cb
+--- /dev/null
++++ b/tests/test_mimo_proxy_deadline.py
+@@ -0,0 +1,131 @@
++"""Ordinary production proxy deadline/closure fixtures; no network or host I/O."""
++import contextlib
++import hashlib
++import importlib.util
++import io
++import json
++from email.message import Message
++from pathlib import Path
++import sys
++from types import SimpleNamespace
++import unittest
++from unittest.mock import Mock, patch
++
++ROOT = Path(__file__).resolve().parents[1]
++SOURCE = ROOT / 'scripts/runtime/mimo'
++
++
++def load(name, path):
++    spec = importlib.util.spec_from_file_location(name, path)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++o = load('mimo_deadline_owner', SOURCE / 'owner.py')
++with patch.dict(sys.modules, {'owner': o}):
++    p = load('mimo_deadline_proxy', SOURCE / 'private_proxy.py')
++
++
++class DeadlineTests(unittest.TestCase):
++    def run_request(self, elapsed):
++        now = [100000.0]
++        state = SimpleNamespace(quarantined=False, broken=Mock(is_set=lambda: False),
++                                begin=Mock(), finish=Mock())
++        server = Mock()
++        with patch.object(p, 'setup', return_value=Mock()), \
++                patch.object(p, 'read', return_value={'context': 1000000}), \
++                patch.object(p, 'validate_manifest'), patch.object(p, 'require_selected'), \
++                patch.object(p, 'read_key', return_value=b'fixture-only'), \
++                patch.object(p, 'native_ready', return_value=True), \
++                patch.object(p, 'Disposition', return_value=state), \
++                patch.object(p.http.server, 'ThreadingHTTPServer', return_value=server) as create:
++            p.serve()
++        handler = object.__new__(create.call_args.args[1])
++        body = json.dumps({'model': p.MODEL, 'messages': [{'role': 'user', 'content': 'fixture'}],
++                          'max_tokens': 128, 'stream': True, 'stream_options': {'include_usage': True},
++                          'chat_template_kwargs': {'enable_thinking': False},
++                          'reasoning_format': 'deepseek', 'add_generation_prompt': True}).encode()
++        handler.client_address = ('10.156.100.61', 1)
++        handler.command, handler.path = 'POST', '/v1/chat/completions'
++        handler.headers = Message()
++        handler.headers['Authorization'] = 'Bearer fixture-only'
++        handler.headers['Content-Length'] = str(len(body))
++        handler.connection = Mock()
++        handler.rfile, handler.wfile = io.BytesIO(body), io.BytesIO()
++        handler.send_response = Mock()
++        handler.send_header = Mock()
++        handler.end_headers = Mock()
++        stream = (b'data: {"choices":[{"finish_reason":"length"}],"usage":{"completion_tokens":128}}\n\n'
++                  b'data: [DONE]\n\n')
++        response = Mock(status=200)
++        response.getheader.return_value = 'text/event-stream'
++        response.read1.side_effect = [stream, b'']
++        count = Mock(status=200)
++        count.read.return_value = b'{"input_tokens":83}'
++        connection = Mock()
++        def getresponse():
++            if connection.getresponse.call_count == 1:
++                return count
++            now[0] += elapsed
++            return response
++        connection.getresponse.side_effect = getresponse
++        with patch.object(p.time, 'time', side_effect=lambda: now[0]), \
++                patch.object(p.http.client, 'HTTPConnection', return_value=connection) as native:
++            handler.forward()
++        return handler, state, connection, response, native, stream
++
++    def test_stream_after_two_hours_drains_within_fixed_eight_hour_budget(self):
++        handler, state, connection, response, native, stream = self.run_request(28799)
++        self.assertEqual(native.call_args.kwargs['timeout'], 28800)
++        self.assertEqual(connection.sock.settimeout.call_args_list[-1].args, (1.0,))
++        self.assertEqual(handler.wfile.getvalue(), stream)
++        self.assertEqual(response.read1.call_count, 2)  # Terminal stream and full HTTP drain.
++        state.finish.assert_called_once_with(True)
++        self.assertEqual(connection.request.call_count, 2)  # Count then one generation.
++        connection.close.assert_called_once()
++
++    def test_absolute_eight_hour_boundary_holds_ambiguous_request_without_replay(self):
++        handler, state, connection, response, native, _ = self.run_request(28800)
++        self.assertEqual(native.call_args.kwargs['timeout'], 28800)
++        response.read1.assert_not_called()
++        state.finish.assert_called_once_with(False)
++        self.assertEqual(connection.request.call_count, 2)
++        connection.close.assert_called_once()
++        self.assertEqual(handler.wfile.getvalue(), b'')
++
++
++class SourceClosureTests(unittest.TestCase):
++    def manifest(self):
++        paths = [str(o.BASE / 'source' / name) for name in ('owner.py', 'private_proxy.py', 'launch.json')]
++        paths += ['/usr/local/lib/llm-server/node-api/scripts/control/' + name
++                  for name in ('node.py', 'node_observation.py', 'node_collectors.py', 'passive.py')]
++        return {'source_sha256': {name: '0' * 64 for name in paths}, 'qualification_sha256': {}}
++
++    def test_proxy_pin_cannot_be_omitted_from_protected_closure(self):
++        manifest = self.manifest()
++        del manifest['source_sha256'][str(o.BASE / 'source/private_proxy.py')]
++        with patch.object(o, 'validate_manifest'), \
++                self.assertRaisesRegex(RuntimeError, 'deployed_source_closure_required'):
++            o.source_preflight(None, manifest)
++
++    def test_old_two_hour_proxy_pin_rejects_updated_protected_bytes(self):
++        current = (SOURCE / 'private_proxy.py').read_bytes()
++        old = current.replace(b'deadline = now + 8 * 60 * 60', b'deadline = now + 7200')
++        self.assertNotEqual(current, old)
++        manifest = self.manifest()
++        proxy = str(o.BASE / 'source/private_proxy.py')
++        # Check the changed file first, before any unrelated deployment fixtures.
++        manifest['source_sha256'] = {proxy: hashlib.sha256(old).hexdigest(), **manifest['source_sha256']}
++        manifest['source_sha256'][proxy] = hashlib.sha256(old).hexdigest()
++        h = SimpleNamespace(MountedStorageGuard=lambda _: contextlib.nullcontext(None),
++                            s=SimpleNamespace(root_payload_guard=lambda: None))
++        with patch.object(o, 'validate_manifest'), patch.object(o, 'storage_paths'), \
++                patch.object(o, 'protected', return_value=current) as protected, \
++                self.assertRaisesRegex(RuntimeError, 'reviewed_file_changed'):
++            o.source_preflight(h, manifest)
++        protected.assert_called_once_with(proxy)
++
++
++if __name__ == '__main__':
++    unittest.main()
+diff --git a/scripts/h016/final13_long/client.py b/scripts/h016/final13_long/client.py
+new file mode 100644
+index 0000000..618a122
+--- /dev/null
++++ b/scripts/h016/final13_long/client.py
+@@ -0,0 +1,316 @@
++#!/usr/bin/env python3
++"""Root-reviewed LAST request; source-only until protected explicit GO exists."""
++import argparse
++import contextlib
++import datetime
++import hashlib
++import http.client
++import importlib.util
++import json
++import os
++from pathlib import Path
++import signal
++import sys
++import time
++import types
++
++BASE = Path('/data/build/H016-20260927/worker1-final13-long')
++LOG = '/data/logs/H016-20260927/worker1-final13-long'
++OWNER = Path('/data/services/mimo-h016-20260927/source/owner.py')
++UNIT = 'h016-final13-long.service'
++HOST, PORT = '10.156.100.60', 30012
++ACTIVE_CAP = 8 * 60 * 60
++OUTPUT = 1024
++LABEL = 'LAST-near1M'
++COUNT_CAP = 15
++
++
++def request_plan(capacity):
++    return [('LAST-64K', 65536, 256), (LABEL, token_target(capacity), OUTPUT)]
++
++
++def require(value, reason):
++    if not value:
++        raise RuntimeError(reason)
++
++
++def sha(raw):
++    return hashlib.sha256(raw).hexdigest()
++
++
++def load_module(name, path):
++    spec = importlib.util.spec_from_file_location(name, path)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++def owner():
++    # Trust the same protected ancestry contract before importing privileged code.
++    import stat
++    for p in [OWNER, *OWNER.parents]:
++        st = p.lstat()
++        require(st.st_uid == 0 and not st.st_mode & 0o022 and not stat.S_ISLNK(st.st_mode), 'owner_protected_ancestry')
++    return load_module('long_production_owner', OWNER)
++
++
++def validate_go(go, now):
++    require(go.get('authorized') is True and go.get('purpose') == 'H016_LAST_NEAR1M', 'root_go_required')
++    require(type(go.get('active_cap_seconds')) is int and go['active_cap_seconds'] == ACTIVE_CAP, 'exact_8h_cap_required')
++    require(now < go['admit_before_epoch'] <= go['hard_end_epoch'] - ACTIVE_CAP, 'finite_admission_required')
++    require(go.get('private_api') == {'host': HOST, 'port': PORT, 'model': 'mimo-v2.6-pro-rl'}, 'private_api_identity')
++    require(go.get('w2_exclusive_frontier_sova_paused') is True and go.get('other_three_loaded_idle') is True
++            and go.get('lane_exclusive_until_epoch', 0) >= go['hard_end_epoch'], 'exclusive_lane_authority_required')
++    require(set(go.get('acceptance', {})) == {'final_native17', 'production', 'sova'}, 'all_acceptance_proofs_required')
++    require(isinstance(go.get('source_sha256'), dict) and go['source_sha256'], 'source_pins_required')
++    require(isinstance(go.get('production_identity'), dict) and go['production_identity'], 'actual_owner_required')
++
++
++def token_target(capacity):
++    require(type(capacity) is int and capacity in (1000000, 1000192), 'actual_near1m_slot_required')
++    target = capacity - OUTPUT - 1
++    require(target + OUTPUT <= capacity - 1, 'output_and_native_slot_reserve')
++    return target
++
++
++def write(o, h, name, value):
++    with h.MountedStorageGuard(h.s) as g, h.AnchoredRoot(LOG, g) as a:
++        h.s.root_payload_guard()
++        a.atomic_json(name, value)
++        h.s.root_payload_guard()
++
++
++def check_identity(o, go, allow_active=False):
++    manifest = o.read(o.BASE / 'manifest.json')
++    o.validate_manifest(manifest)
++    require(o.digest(manifest) == go['manifest_sha256'], 'production_manifest_changed')
++    o.require_selected(manifest)
++    state = o.read(o.BASE / 'state.json')
++    actual = {k: state.get(k) for k in ('boot_id', 'manifest_sha256', 'supervisor', 'launch_id', 'native')}
++    require(actual == go['production_identity'] and state.get('status') == 'RUNNING'
++            and state.get('request_hold') is False, 'production_owner_changed_or_held')
++    unit = dict(x.split('=', 1) for x in o.run(['systemctl', 'show', o.UNIT, '-p', 'MainPID,InvocationID,ActiveState'], 2).splitlines())
++    require(unit['ActiveState'] == 'active' and int(unit['MainPID']) == state['supervisor']['pid']
++            and unit['InvocationID'] == state['supervisor']['invocation_id'], 'production_supervisor_changed')
++    guard = o.read(o.BASE / 'guard.json')
++    require(guard.get('status') == 'ok' and guard.get('native') == state['native']
++            and guard.get('supervisor') == state['supervisor'] and guard.get('boot_id') == state['boot_id']
++            and guard.get('manifest_sha256') == go['manifest_sha256']
++            and 0 <= time.monotonic() - guard.get('observed_monotonic_s', 0) <= 15
++            and guard.get('hardware_latched') is False, 'fresh_existing_owner_guard_required')
++    proxy = o.read(o.BASE / 'proxy-state.json')
++    require(proxy.get('launch_id') == state['launch_id'] and proxy.get('native') == state['native']
++            and proxy.get('quarantined') is False and proxy.get('active_requests') in ((0, 1) if allow_active else (0,)),
++            'production_lane_not_clean')
++    return manifest, state, guard
++
++
++def adapter(reader, o, h, deadline):
++    original = http.client.HTTPConnection
++    class PrivateConnection(original):
++        def __init__(self, host, port=None, *args, **kwargs):
++            require((host, port) == ('127.0.0.1', 30012), 'reader_endpoint_changed')
++            super().__init__(HOST, PORT, *args, **kwargs)
++        def connect(self):
++            super().connect()
++            if getattr(self, '_count_deadline', None):
++                self.sock.settimeout(max(.001, self._count_deadline - time.monotonic()))
++        def request(self, method, url, *args, **kwargs):
++            if method == 'POST' and url == '/v1/chat/completions/input_tokens':
++                self._count_deadline = time.monotonic() + COUNT_CAP
++                self.timeout = min(self.timeout or COUNT_CAP, COUNT_CAP)
++            result = super().request(method, url, *args, **kwargs)
++            if method == 'POST' and url == '/v1/chat/completions':
++                write(o, h, getattr(reader, 'active_label', LABEL) + '-BODY-SENT.json', {'event': 'BODY_SENT', 'utc': reader.utc_now(),
++                    'monotonic_seconds': time.monotonic()})
++            return result
++    reader.http = types.SimpleNamespace(client=types.SimpleNamespace(HTTPConnection=PrivateConnection))
++    reader.LOG = LOG
++    reader.CLIENT_END = reader.ADMIT_END = deadline
++    original_count = reader.count
++    def bounded_count(key, payload):
++        started_count = time.monotonic()
++        value = original_count(key, payload)
++        elapsed = time.monotonic() - started_count
++        require(elapsed <= COUNT_CAP, 'count_exceeded_15s_no_dispatch')
++        reader.last_count_seconds = elapsed
++        return value
++    reader.count = bounded_count
++    reader.save = lambda hh, name, value: write(o, hh, name, value)
++    def get(port, path, key):
++        require(port == PORT, 'reader_get_port_changed')
++        c = original(HOST, PORT, timeout=5)
++        try:
++            c.request('GET', path, headers={'Authorization': 'Bearer ' + key.decode()})
++            r = c.getresponse()
++            raw = r.read(1024 * 1024 + 1)
++            require(len(raw) <= 1024 * 1024, 'private_response_bound')
++            return r.status, json.loads(raw)
++        finally:
++            c.close()
++    reader.get = get
++
++
++def read_go(o):
++    raw = o.protected(BASE / 'ROOT-GO.json')
++    go = json.loads(raw)
++    return go, sha(raw)
++
++
++def preflight(o, go):
++    validate_go(go, time.time())
++    require(str(Path(__file__).resolve()) in go['source_sha256'] and str(OWNER) in go['source_sha256'], 'client_and_owner_pins_required')
++    reader_dir = Path(go['reader_directory'])
++    require(reader_dir.is_absolute() and str(reader_dir).startswith('/data/build/H016-20260927/'), 'registered_reader_path_required')
++    required = {'benchmark.py', 'candidate_owner.py', 'telemetry.py', 'verify_retained.py', 'private_proxy.py'}
++    require({str(reader_dir / x) for x in required} <= set(go['source_sha256']), 'reader_closure_pins_required')
++    for path, pin in go['source_sha256'].items():
++        require(o.HEX.fullmatch(pin) and sha(o.protected(path)) == pin, 'source_pin_changed')
++    for label, proof in go['acceptance'].items():
++        raw = o.protected(proof['path'])
++        require(sha(raw) == proof['sha256'], 'acceptance_pin_changed_' + label)
++        value = json.loads(raw)
++        # Root names the existing receipt's status field/value, preserving its schema.
++        require(proof.get('expected_value') in ('PASS', 'PASSED') and value.get(proof['status_field']) == proof['expected_value'],
++                'actual_acceptance_not_pass_' + label)
++    h = o.setup()
++    manifest, state, guard = check_identity(o, go)
++    o.source_preflight(h, manifest)
++    token_target(manifest['context'])
++    own = dict(x.split('=', 1) for x in o.run(['systemctl', 'show', UNIT, '-p', 'MainPID,InvocationID,ActiveState,ControlGroup'], 2).splitlines())
++    cg = Path('/proc/self/cgroup').read_text().split('::', 1)[1].strip()
++    require(own['ActiveState'] in ('active', 'activating') and int(own['MainPID']) == os.getpid()
++            and own['InvocationID'] == os.environ.get('INVOCATION_ID') and cg == own['ControlGroup'], 'independent_systemd_owner_required')
++    return h, manifest, state, guard, reader_dir
++
++
++def settle():
++    o = owner()
++    go, go_sha = read_go(o)
++    try:
++        result = o.read(Path(LOG) / 'CLIENT.json')
++    except FileNotFoundError:
++        return
++    require(result.get('go_sha256') == go_sha, 'client_authority_changed')
++    require(go.get('authorized') is True and go.get('purpose') == 'H016_LAST_NEAR1M', 'settlement_root_go_required')
++    require({str(OWNER), str(Path(__file__).resolve())} <= set(go.get('source_sha256', {})), 'settlement_pins_required')
++    for path, pin in go['source_sha256'].items():
++        require(o.HEX.fullmatch(pin) and sha(o.protected(path)) == pin, 'settlement_source_changed')
++    if result.get('status') == 'PASS_KEEP_WARM' or not result.get('request_may_be_active'):
++        return
++    # Never change selection or restart a model. The reviewed unit's ExecStopPost
++    # performs exact container/PID/cgroup/GPU settlement, preserving request hold.
++    state = o.read(o.BASE / 'state.json')
++    expected = go['production_identity']
++    require(all(state.get(k) == v for k, v in expected.items()), 'failure_owner_identity_changed')
++    if state.get('status') == 'SETTLED':
++        return
++    unit = dict(x.split('=', 1) for x in o.run(['systemctl', 'show', o.UNIT, '-p', 'MainPID,InvocationID'], 2).splitlines())
++    require(unit['InvocationID'] == expected['supervisor']['invocation_id']
++            and int(unit['MainPID']) == expected['supervisor']['pid'], 'failure_supervisor_changed')
++    o.run(['systemctl', 'stop', o.UNIT], 55)
++    final = o.read(o.BASE / 'state.json')
++    require(final.get('status') == 'SETTLED' and final.get('settlement') ==
++            {'pid_released': True, 'cgroup_empty': True, 'gpu_compute_empty': True}, 'existing_owner_settlement_unproven')
++
++
++def run():
++    o = owner()
++    go, go_sha = read_go(o)
++    h, manifest, state, guard, reader_dir = preflight(o, go)
++    started = time.time()
++    deadline = min(started + ACTIVE_CAP, go['hard_end_epoch'])
++    result = {'status': 'PREPARING', 'go_sha256': go_sha, 'started_epoch': started,
++              'hard_end_epoch': deadline, 'completed_rungs': [], 'stages': {'LAST-64K': 'QUEUED', LABEL: 'QUEUED_AFTER_64K_PASS'}, 'production_identity': go['production_identity'], 'request_may_be_active': False}
++    require(not Path(LOG, 'CLIENT.json').exists(), 'single_attempt_no_replay')
++    write(o, h, 'CLIENT.json', result)
++    sys.path.insert(0, str(reader_dir))
++    reader = load_module('long_reviewed_reader', reader_dir / 'benchmark.py')
++    adapter(reader, o, h, deadline)
++    key = o.read_key(h)
++    require(o.native_ready(manifest, key) is True, 'actual_production_native_not_ready')
++    code, slots = reader.get(PORT, '/slots', key)
++    require(code == 200 and len(slots) == 1 and slots[0].get('n_ctx') == manifest['context']
++            and slots[0].get('is_processing') is False, 'private_api_actual_slot_required')
++    guard_stack = contextlib.ExitStack()
++    mounted = guard_stack.enter_context(h.MountedStorageGuard(h.s))
++    anchored = guard_stack.enter_context(h.AnchoredRoot(LOG, mounted))
++    guard_file = guard_stack.enter_context(anchored.open('GUARD-PROGRESS.jsonl', os.O_WRONLY | os.O_CREAT | os.O_EXCL))
++    class ExistingOwnerGuard:
++        def is_set(self):
++            # No filesystem, lifecycle lock, systemctl, or guard sampling per delta.
++            require(time.time() < deadline, 'finite_active_deadline')
++            return False
++    failed = ExistingOwnerGuard()
++    def alarm(*_):
++        failed.is_set()
++        _, _, sample = check_identity(o, go, allow_active=True)
++        raw = (json.dumps(sample, separators=(',', ':')) + '\n').encode()
++        require(os.write(guard_file.fileno(), raw) == len(raw), 'guard_receipt_short_write')
++    def interrupted(*_):
++        raise RuntimeError('long_client_interrupted')
++    signal.signal(signal.SIGTERM, interrupted)
++    signal.signal(signal.SIGINT, interrupted)
++    signal.signal(signal.SIGALRM, alarm)
++    signal.setitimer(signal.ITIMER_REAL, 5, 5)
++    try:
++        write(o, h, 'GUARD-BEFORE.json', guard)
++        for label, target, output in request_plan(manifest['context']):
++            # A later rung is reachable only after prior semantic/transport/idle PASS.
++            check_identity(o, go)
++            reader.active_label = label
++            result['stages'][label] = 'PREPARING'
++            write(o, h, 'CLIENT.json', result)
++            payload, _, codes = reader.fixture(key, target, 'H016-' + label + '-20260927', failed.is_set)
++            payload['max_tokens'] = output
++            exact, _ = reader.count(key, payload)
++            require(exact == target and exact + output <= manifest['context'] - 1, 'exact_prompt_output_reserve')
++            forecast = exact / 61 + output / 7.76 + 300
++            require(time.time() + forecast < deadline, 'measured_completion_estimate_exceeds_cap')
++            result['stages'][label] = 'RUNNING'
++            result.update(status=label + '_RUNNING', request_may_be_active=True,
++                          exact_input_tokens=exact, output_budget=output, actual_slot=manifest['context'],
++                          admission_planning_seconds=forecast, final_count_seconds=reader.last_count_seconds)
++            write(o, h, 'CLIENT.json', result)
++            row = reader.request(h, key, payload, label, failed, manifest['context'], planning_seconds=forecast)
++            reader.record_semantics(h, label, row, reader.fixture_correct(row, codes), 'long_fixture_semantics_failed')
++            require(row.get('done') is True and row.get('full_http_drain') is True
++                    and row.get('native_settlement', {}).get('status') == 'AUTHENTICATED_SLOT_IDLE_AFTER_FULL_DRAIN',
++                    'long_terminal_and_idle_proof_required')
++            # Allow the existing private proxy's final disposition publication to settle.
++            for _ in range(25):
++                proxy = o.read(o.BASE / 'proxy-state.json')
++                if proxy.get('active_requests') == 0:
++                    break
++                time.sleep(.2)
++            _, _, final_guard = check_identity(o, go)
++            write(o, h, label + '-GUARD-AFTER.json', final_guard)
++            result['stages'][label] = 'PASS'
++            result['completed_rungs'].append(target)
++            result.update(status=label + '_PASS', request_may_be_active=False,
++                          full_http_drain=True, last_completed_receipt=label + '.json')
++            write(o, h, 'CLIENT.json', result)
++        result.update(status='PASS_KEEP_WARM', finished_epoch=time.time())
++    except BaseException as exc:
++        result.update(status='FAILED_NO_RETRY', error_type=type(exc).__name__, finished_epoch=time.time())
++        raise
++    finally:
++        signal.setitimer(signal.ITIMER_REAL, 0)
++        guard_stack.close()
++        write(o, h, 'CLIENT.json', result)
++
++
++def main():
++    p = argparse.ArgumentParser(description=__doc__)
++    p.add_argument('action', choices=['run', 'settle'])
++    args = p.parse_args()
++    try:
++        run() if args.action == 'run' else settle()
++    except BaseException as exc:
++        print(json.dumps({'status': 'REFUSED_OR_FAILED', 'error_type': type(exc).__name__}))
++        return 1
++    return 0
++
++
++if __name__ == '__main__':
++    raise SystemExit(main())
+diff --git a/scripts/h016/final13_long/test_client.py b/scripts/h016/final13_long/test_client.py
+new file mode 100644
+index 0000000..5463480
+--- /dev/null
++++ b/scripts/h016/final13_long/test_client.py
+@@ -0,0 +1,101 @@
++import importlib.util
++from pathlib import Path
++import unittest
++from unittest.mock import patch
++import types
++
++spec = importlib.util.spec_from_file_location('long_client', Path(__file__).with_name('client.py'))
++c = importlib.util.module_from_spec(spec)
++spec.loader.exec_module(c)
++
++
++class SourceGates(unittest.TestCase):
++    def go(self):
++        return {'authorized': True, 'purpose': 'H016_LAST_NEAR1M', 'active_cap_seconds': 28800,
++                'admit_before_epoch': 100, 'hard_end_epoch': 28900,
++                'private_api': {'host': c.HOST, 'port': c.PORT, 'model': 'mimo-v2.6-pro-rl'},
++                'w2_exclusive_frontier_sova_paused': True, 'other_three_loaded_idle': True,
++                'lane_exclusive_until_epoch': 28900,
++                'acceptance': {k: {} for k in ('final_native17', 'production', 'sova')},
++                'source_sha256': {'some': 'pin'}, 'production_identity': {'actual': 'identity'}}
++
++    def test_each_real_slot_keeps_output_and_native_reserve(self):
++        self.assertEqual(c.token_target(1000000), 998975)
++        self.assertEqual(c.token_target(1000192), 999167)
++        for n in (1000000, 1000192):
++            self.assertEqual(c.token_target(n) + 1024, n - 1)
++
++    def test_no_rounded_or_fallback_capacity_invention(self):
++        for n in (917504, 1048576, 999999, True, '1000000'):
++            with self.assertRaises(RuntimeError):
++                c.token_target(n)
++
++    def test_authority_requires_every_acceptance(self):
++        c.validate_go(self.go(), 0)
++        for name in ('final_native17', 'production', 'sova'):
++            go = self.go()
++            del go['acceptance'][name]
++            with self.assertRaises(RuntimeError):
++                c.validate_go(go, 0)
++
++    def test_eight_hours_and_exclusive_lane_are_mandatory(self):
++        for key, value in [('authorized', False), ('active_cap_seconds', 28801),
++                           ('lane_exclusive_until_epoch', 28899),
++                           ('w2_exclusive_frontier_sova_paused', False),
++                           ('other_three_loaded_idle', False), ('admit_before_epoch', 101)]:
++            go = self.go()
++            go[key] = value
++            with self.assertRaises(RuntimeError):
++                c.validate_go(go, 0)
++
++    def test_closed_admission(self):
++        with self.assertRaises(RuntimeError):
++            c.validate_go(self.go(), 100)
++
++    def test_reader_deadlines_and_private_endpoint_are_rebound(self):
++        seen = []
++        class FakeConnection:
++            def __init__(self, host, port, *args, **kwargs):
++                seen.append((host, port))
++            def request(self, *args, **kwargs):
++                return None
++        reader = types.SimpleNamespace(utc_now=lambda: 'now', count=lambda *_: (12, b'body'))
++        with patch.object(c.http.client, 'HTTPConnection', FakeConnection), patch.object(c, 'write') as saved:
++            c.adapter(reader, object(), object(), 123456)
++            self.assertEqual(reader.CLIENT_END, 123456)
++            self.assertEqual(reader.ADMIT_END, 123456)
++            connection = reader.http.client.HTTPConnection('127.0.0.1', 30012)
++            connection.request('POST', '/v1/chat/completions', b'private')
++            self.assertEqual(seen, [(c.HOST, c.PORT)])
++            self.assertEqual(saved.call_args.args[2], 'LAST-near1M-BODY-SENT.json')
++            self.assertNotIn('private', str(saved.call_args))
++            with self.assertRaises(RuntimeError):
++                reader.http.client.HTTPConnection('127.0.0.1', 9999)
++
++    def test_64k_precedes_near_with_distinct_output_reserves(self):
++        self.assertEqual(c.request_plan(1000192), [('LAST-64K', 65536, 256), ('LAST-near1M', 999167, 1024)])
++
++    def test_count_over_15_seconds_refuses_before_dispatch(self):
++        reader = types.SimpleNamespace(count=lambda *_: (12, b'body'))
++        c.adapter(reader, object(), object(), 123456)
++        with patch.object(c.time, 'monotonic', side_effect=[0, 15.01]):
++            with self.assertRaisesRegex(RuntimeError, 'count_exceeded_15s'):
++                reader.count(b'key', {})
++        with patch.object(c.time, 'monotonic', side_effect=[0, 14.99]):
++            self.assertEqual(reader.count(b'key', {}), (12, b'body'))
++
++    def test_source_has_no_launch_or_restart(self):
++        source = Path(c.__file__).read_text()
++        self.assertNotIn("['systemctl', 'start'", source)
++        self.assertNotIn("['systemctl', 'restart'", source)
++        unit = Path(c.__file__).with_name('h016-final13-long.service').read_text()
++        self.assertIn('RuntimeMaxSec=8h', unit)
++        self.assertIn('Restart=no', unit)
++        self.assertIn('ExecStopPost=', unit)
++        for dependency in ('BindsTo=', 'Requires=', 'After='):
++            self.assertNotIn(dependency + 'llm-frontier-mimo.service', unit)
++        self.assertIn('RequiresMountsFor=/data /data/models-large', unit)
++
++
++if __name__ == '__main__':
++    unittest.main()
+diff --git a/scripts/h016/final13_long/h016-final13-long.service b/scripts/h016/final13_long/h016-final13-long.service
+new file mode 100644
+index 0000000..dcda384
+--- /dev/null
++++ b/scripts/h016/final13_long/h016-final13-long.service
+@@ -0,0 +1,16 @@
++[Unit]
++Description=H016 LAST near1M single request, root GO required
++RequiresMountsFor=/data /data/models-large
++
++[Service]
++Type=simple
++User=root
++UMask=0077
++Restart=no
++ExecStart=/usr/bin/python3 -I -B /data/build/H016-20260927/worker1-final13-long/client.py run
++ExecStopPost=/usr/bin/python3 -I -B /data/build/H016-20260927/worker1-final13-long/client.py settle
++RuntimeMaxSec=8h
++TimeoutStopSec=65
++KillMode=control-group
++StandardOutput=null
++StandardError=null
