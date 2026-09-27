@@ -262,3 +262,13 @@ four-way stress test, BMC/fan/ECC change, driver change or reboot was performed.
 - [Staged harness and held activation](../reports/h016-final-integration-20260927/REPORT.md)
 
 Credentials, model shards and bulky traces remain outside Git.
+
+## Final allocation checkpoint — 16:57:43 UTC
+
+The R9 experimental process loaded with **1,000,000 usable tokens**, confirmed
+by both native props and its single slot. VRAM was 89,770 MiB used and 7,481 MiB
+free out of 97,887 MiB (7.6425% free), at 41 C. Owned swap and OOM events were
+zero, and registered storage guards passed. Short-context and native tool checks
+were still running. This snapshot proves allocation, not long-context correctness
+or production readiness. The 1,000,192 physical cache cells remain a source
+calculation; no component-byte readback has been established.

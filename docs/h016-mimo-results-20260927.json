@@ -303,5 +303,22 @@
     },
     "four_then_conditional_two": "USER_AUTHORIZED_SOURCE_PREPARATION;45minuteextensiongranted;actualtests pending",
     "foreground_largest_input_target": 16384
+  },
+  "current_allocation_snapshot": {
+    "observed_utc": "2026-09-27T16:57:43Z",
+    "owner": "R9 experimental qualification",
+    "requested_context": 1000000,
+    "props_context": 1000000,
+    "usable_slot_context": 1000000,
+    "physical_cache_cells_calculated": 1000192,
+    "physical_cache_cells_measured": null,
+    "gpu_used_mib": 89770,
+    "gpu_free_mib": 7481,
+    "gpu_total_mib": 97887,
+    "gpu_free_percent": 7.642485723334048,
+    "temperature_c": 41,
+    "owned_swap_bytes": 0,
+    "oom_events": 0,
+    "status": "ALLOCATION_SNAPSHOT_ONLY; short/native qualification running"
   }
 }
