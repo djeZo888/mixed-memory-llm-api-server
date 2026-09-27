@@ -98,17 +98,44 @@ bandwidth, source comparisons and targeted runtime optimizations. Decode
 averaged about 58 sampled CPU cores, so a single active CPU thread does not
 explain the result. A live mapping confirms `libggml-cpu-zen4.so`; generic CPU
 fallback is unsupported by the evidence. Sampled GPU utilization was 0–4%.
-Useful expert computation, unpacking, synchronization and NUMA costs remain
-unseparated. The guest exposes no AMD memory-controller PMU, so actual host
-DRAM GB/s cannot be obtained from its current counters. Utilization percentages,
-logical weight bytes and measured bandwidth must remain distinct.
+The guest exposes no AMD memory-controller PMU. The user has now enabled the
+host's existing `amd_uncore` module and installed `perf` 6.12.107. All eight
+host UMCs and their read/write CAS events are visible; a measurement aligned
+with decode is still pending. Utilization percentages, logical weight bytes
+and measured bandwidth must remain distinct.
 
 R5 settled at 13:40:11 and original GLM readiness was restored at 13:42:07.
-A fresh profiling owner is approved with 15:15 admission and 15:35 settlement
-boundaries. It uses the same model/runtime settings and a discarded tiny warm-up,
-then short unprofiled/profiled output fixtures with raw stream timestamps and
-bounded CPU profiling. No repeated large-context benchmarks or unreviewed
-settings sweep is planned.
+R6 completed two short output fixtures after a discarded warm-up. Both used
+83 input tokens and produced 128 output tokens, with the same 131K allocation:
+
+| Sample | Output tokens/s | TTFT | Complete request |
+|---|---:|---:|---:|
+| Unprofiled baseline | 0.9352 | 3.445 s | 139.241 s |
+| CPU-profiled request | 0.9823 | 3.394 s | 132.683 s |
+
+Raw stream arrivals agree with native decode timing within 3 milliseconds.
+This rules out a client-side pacing explanation for these samples. The second
+sample ran after additional warming and produced different text; its 5% higher
+rate is not a demonstrated profiler benefit or an optimization result.
+
+**94.56% of sampled CPU time was in two OpenMP spin-wait loops**, resolved
+against the actual mapped `libgomp` binary and disassembly. Another 4.28% was
+in the repacked MXFP4 CPU GEMV kernel. The profile consumed 59.11 CPU-core
+equivalents at IPC 0.13. This proves that the high CPU utilization largely
+represents waiting, but does not mean 94.56% of wall time is recoverable or
+identify the underlying reason for each wait. GPU SM activity averaged 2.89%.
+The available PCIe traffic and GPU activity counters are not VRAM bandwidth.
+
+R6 settled normally and GLM readiness was restored at 14:25:33. R7 started at
+14:28:05 with exactly one runtime change: `GOMP_SPINCOUNT=0`. It retains the
+same 64 threads, NUMA placement, weights, kernels, GPU and fixtures. Startup
+guards and the actual environment passed readback; performance is pending.
+The paid launcher session exited at 14:32:20 while the bounded native owner
+continued. Admission closes at 15:15 and settlement begins by 15:35.
+
+See the [resolved profile and launch evidence](../reports/h016-20260927/worker1/profile8/HANDOFF.md).
+No repeated large-context benchmark, GPU-profiler injection or unreviewed
+settings sweep was used for this A/B test.
 
 The [pinned-source review](../reports/h016-mimo-decode-research-20260927/REPORT.md)
 found no inspected token-rate limiter. `OMP_NUM_THREADS=1` also does not prove a

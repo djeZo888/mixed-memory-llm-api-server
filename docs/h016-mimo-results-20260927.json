@@ -100,5 +100,53 @@
     "owned_swap_bytes": 0,
     "owned_oom_count": 0,
     "note": "Sampled observed maxima, cgroup rather than process RSS. File cache is reclaimable; shmem already included. Existing host swap is nonzero. Allocated context fixed across all rungs."
+  },
+  "decode_investigation": {
+    "r6": {
+      "status": "COMPLETE",
+      "configured_context_tokens": 131072,
+      "input_tokens_each": 83,
+      "output_tokens_each": 128,
+      "baseline": {
+        "decode_intervals": 127,
+        "native_decode_seconds": 135.798129,
+        "raw_stream_decode_seconds": 135.795453,
+        "ttft_seconds": 3.445216,
+        "total_seconds": 139.241376
+      },
+      "profile": {
+        "native_decode_seconds": 129.291929,
+        "raw_stream_decode_seconds": 129.289301,
+        "ttft_seconds": 3.39375,
+        "total_seconds": 132.683292,
+        "cpu_core_equivalents": 59.11,
+        "ipc": 0.13,
+        "sampled_cpu_time_libgomp_wait_percent": 94.56,
+        "sampled_cpu_time_repacked_mxfp4_gemv_percent": 4.28,
+        "gpu_sm_activity_mean_percent": 2.889
+      },
+      "correctness": "UNSCORED_THROUGHPUT_FIXTURES",
+      "settled_original_glm_ready_utc": "2026-09-27T14:25:33.556894Z"
+    },
+    "r7": {
+      "status": "LOADING_AT_LAST_VERIFIED_CHECKPOINT",
+      "native_started_utc": "2026-09-27T14:28:05.871420053Z",
+      "only_runtime_delta": {
+        "GOMP_SPINCOUNT": "0"
+      },
+      "decode_threads": 64,
+      "batch_threads": 64,
+      "result": null
+    },
+    "host_dram_bandwidth": {
+      "status": "COUNTERS_READY_MEASUREMENT_PENDING",
+      "host_perf_version": "6.12.107",
+      "umc_devices": 8,
+      "scope": "whole Proxmox host, not VM-only"
+    },
+    "gpu_vram_bandwidth": {
+      "status": "NOT_MEASURED",
+      "reason": "Available activity and PCIe counters do not measure VRAM byte traffic; exact native run was not launched under a supported GPU byte-counter profiler."
+    }
   }
 }
