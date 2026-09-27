@@ -1,142 +1,81 @@
 {
   "schema_version": 1,
-  "status": "MAIN_NOT_DISPATCHED_IDENTITY_ORDER_GUARD_FAILURE_480K_READY_RECOVERY_OWNER_ACTIVE",
-  "observed_utc": "2026-09-27T02:28:47.230166+00:00",
-  "session_id": "01a0e0a0-d9d2-7903-8ea5-ac9d52b07955",
-  "native_session_hard_end_utc": "2026-09-27T02:35:32Z",
-  "job_started_utc": "2026-09-27T02:23:18.654667+00:00",
-  "unit": "h011-manual1m.service",
-  "unit_state": {
-    "MainPID": "277683",
+  "status": "RUNNING_PREFILL_CONFIRMED",
+  "observed_utc": "2026-09-27T02:37:00.093243+00:00",
+  "unit": {
+    "MainPID": "408410",
     "Result": "success",
     "ActiveState": "active",
     "SubState": "running"
   },
-  "job_nonce": "6628556e430948b9b826247a0536d8ed",
-  "owner_status": "CANDIDATE_STOP_CONFIRMED",
-  "candidate_id": "8a0bb8f7fe9c17080d2d8d1be507a4ecfda1a39ef40a158ee2d5fc13b5533824",
-  "failure": {
-    "code": "other_models_changed",
-    "type": "ValueError",
-    "utc": "2026-09-27T02:25:32.479366+00:00"
+  "unit_name": "h012-manual1m-02.service",
+  "job_nonce": "80f690e35a6849fe841efcc0957b9809",
+  "candidate_id": "5e4fd432cd86ddac3021f804facae4f5dbf710bcaf2873200e8834ec323977ea",
+  "request": {
+    "status": "RUNNING",
+    "phase": "awaiting_first_nonempty_delta",
+    "start_utc": "2026-09-27T02:36:10.090609+00:00",
+    "request_body_sent_utc": "2026-09-27T02:36:10.091602+00:00",
+    "request_deadline_utc": "2026-09-27T04:36:10.090598+00:00",
+    "requested_output": 1024,
+    "input_tokens": null,
+    "output_tokens": null,
+    "sse_done": false
   },
-  "main_request_body_sent_utc": null,
-  "main_request_start_utc": null,
-  "main_request_deadline_utc": null,
-  "main_native_prefill_chunks": 0,
-  "main_dispatched": false,
-  "one_million_pass": false,
-  "allocated_capacity": {
-    "chunked_prefill_size": 2048,
-    "context_length": 1048576,
-    "disable_radix_cache": true,
-    "kt_cpuinfer": 64,
-    "kt_gpu_prefill_token_threshold": 2048,
-    "kt_numa_nodes": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7
-    ],
-    "kt_threadpool_count": 8,
-    "kv_cache_dtype": "fp8_e4m3",
-    "max_req_input_len": 1048570,
-    "max_running_requests": 1,
-    "max_total_num_tokens": 1048576,
-    "max_total_tokens": 1048576
+  "native_tokenize": {
+    "context_limit": 1048576,
+    "count": 1000000,
+    "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+    "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
   },
-  "short_probe": {
-    "status": "TRANSPORT_PASS",
-    "start_utc": "2026-09-27T02:24:51.507236+00:00",
-    "end_utc": "2026-09-27T02:24:53.436587+00:00",
-    "input_tokens": 16,
-    "output_tokens": 10,
-    "finish_reason": "stop",
-    "sse_done": true,
-    "body_drained": true
-  },
-  "exact_input_parity": {
-    "rendered_tokens": 1000000,
-    "rendered_token_ids_sha256": "bb6b41af2c18ed5c953469bfef64b030b7b6762f343a42ba61c8bc25653f4a1e",
-    "native_tokenize": {
-      "context_limit": 1048576,
-      "count": 1000000,
-      "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
-      "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+  "configured_capacity": 1048576,
+  "main_native_prefill_chunks": [
+    "2026-09-27T02:36:23.035434457Z [2026-09-27 02:36:23] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, token usage: 0.00, #running-req: 0, #queue-req: 0, input throughput (token/s): 1.28, cuda graph: False",
+    "2026-09-27T02:36:29.938306318Z [2026-09-27 02:36:29] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, token usage: 0.00, #running-req: 0, #queue-req: 0, input throughput (token/s): 296.69, cuda graph: False",
+    "2026-09-27T02:36:41.012322012Z [2026-09-27 02:36:41] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, token usage: 0.01, #running-req: 0, #queue-req: 0, input throughput (token/s): 184.94, cuda graph: False",
+    "2026-09-27T02:36:47.689527403Z [2026-09-27 02:36:47] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, token usage: 0.01, #running-req: 0, #queue-req: 0, input throughput (token/s): 306.71, cuda graph: False",
+    "2026-09-27T02:36:54.487898512Z [2026-09-27 02:36:54] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, token usage: 0.01, #running-req: 0, #queue-req: 0, input throughput (token/s): 301.25, cuda graph: False"
+  ],
+  "latest_telemetry": {
+    "utc": "2026-09-27T02:36:50.247099+00:00",
+    "gpu": {
+      "free_mib": "61600",
+      "temp_c": "47",
+      "total_mib": "97887",
+      "used_mib": "35650",
+      "util_pct": "97",
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
     },
-    "serialized_request_bytes": 3966865,
-    "reasoning_effort": "high",
-    "seed": "H011-manual1m:6628556e430948b9b826247a0536d8ed"
+    "ram": {
+      "MemAvailable": 606780485632,
+      "MemTotal": 946820972544,
+      "SwapFree": 3080712192,
+      "SwapTotal": 3157258240
+    },
+    "cgroup": {
+      "memory.current": 314557440000,
+      "memory.peak": 318037024768,
+      "memory.swap.current": 0
+    },
+    "memory.events": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0
+    },
+    "vmstat": null
   },
-  "candidate_stop_confirmed_utc": "2026-09-27T02:25:43.389531+00:00",
-  "candidate_stop_confirmed_current": true,
-  "candidate_cgroup_empty_or_absent": true,
-  "original_flash_id": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
-  "original_flash_ready": {
-    "schema_version": 1,
-    "model_alias": "glm-5.3-flash",
-    "ready": true,
-    "state": "up",
-    "admitting": null
-  },
-  "original_capacity": {
-    "context_length": 480000,
-    "max_total_tokens": 480000,
-    "max_total_num_tokens": 480000,
-    "max_req_input_len": 479994,
-    "max_running_requests": 1,
-    "kv_cache_dtype": "fp8_e4m3",
-    "kt_cpuinfer": 64,
-    "kt_threadpool_count": 8,
-    "kt_numa_nodes": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7
-    ],
-    "disable_radix_cache": true,
-    "chunked_prefill_size": 2048,
-    "kt_gpu_prefill_token_threshold": 2048
-  },
-  "production_config_unchanged": true,
-  "production_state_unchanged": true,
-  "sova": "PAUSED",
-  "sova_verified_utc": "2026-09-27T02:28:47.892145+00:00",
-  "other_three": "loaded idle; full prior identity hashes reproduced using current content with original Mounts ordering",
-  "failure_cause": "Docker Mounts array order varies between inspect calls; raw array included in identity hash",
-  "automatic_retry": false,
-  "recovery_limit": "Durable owner remains active in bounded restoration loop; final other-model equality uses same unstable ordering. Do not replay/delete or claim terminal cleanup complete.",
-  "gpus_current": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, 34, 97887, 35610, 0, 600.00, Not Active, Not Active\nGPU-69acfa26-8b60-61b5-702d-aee252c163cc, 37, 97887, 73626, 0, 600.00, Not Active, Not Active\nGPU-5d895991-b794-2b4c-b9c4-5f1b668afd23, 34, 49140, 16270, 0, 300.00, Not Active, Not Active\nGPU-93dbfca8-ef3a-9628-a798-6a4afd0af528, 35, 97887, 35613, 0, 600.00, Not Active, Not Active",
-  "host_current": {
-    "MemTotal": 946820972544,
-    "MemAvailable": 607393095680,
-    "SwapTotal": 3157258240,
-    "SwapFree": 3085692928
-  },
-  "original_owned_cgroup": {
-    "memory.max": "697932185600\n",
-    "memory.swap.max": "0\n",
-    "memory.current": "314442133504\n",
-    "memory.swap.current": "0\n",
-    "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n"
-  },
-  "hardware_latches": {},
-  "storage_guards": "PASS",
-  "archive_sha256": "df127011181e4bf195f10b66f0082b1d52b7de0570dffab70be779b553ab88c0",
-  "manual_sha256": "94de4735a332889050abcfb142b7b4994be6fc0cb2dd125d254420cefea2d00c",
-  "manifest_sha256": "d4168973e2ac0de8ae00bd8820ada39914e22aa53142f494e03ffc819431060b",
-  "watchdog_sha256": "1156c3a9b41802d9683e79cb5b0d2e29930df378de02157ce89f10ba8a93fe67",
-  "watchdog_seconds": 300,
-  "status_command": "ssh -T ai-vm sudo -n python3 -I -B /data/services/h011-manual1m-20260927/manual.py status",
-  "result_command": "ssh -T ai-vm sudo -n python3 -I -B /data/services/h011-manual1m-20260927/manual.py result",
-  "owner_receipt": "/data/logs/flash-h008-20260926/H011-MANUAL1M-OWNER.json",
-  "result_receipt": "/data/logs/flash-h008-20260926/H011-MANUAL1M.json"
+  "failure": null,
+  "one_million_pass": false,
+  "source_manifest_sha256": "f5186cd4efdd0797c126b9c979c3055017aa8047dbb807e57c0aeca7cab1daa4",
+  "candidate_archive_sha256": "180b0e9188fd41846ffe4e31d6c90aa4c973a9f9170663786ce482b871b408d5",
+  "worker_session_id": "01a0e0a0-d9d2-7903-8ea5-ac9d52b07955",
+  "paid_native_exit": "02:35:06 UTC; watchdog exit 143; independent job unaffected",
+  "sova": "paused",
+  "other_models": "loaded and idle",
+  "success_policy": "PASSED_RETAINED_PENDING_PRODUCTION_PROMOTION",
+  "failure_policy": "Exact candidate stop before original 480K recovery; quarantine uncertain ownership",
+  "status_command": "sudo python3 -I -B /data/services/h012-manual1m-02-20260927/manual.py status"
 }
