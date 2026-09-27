@@ -286,15 +286,15 @@ class Attempt:
 
 
 @contextlib.contextmanager
-def start_admission():
-    """Only retry entry contention, before any backend mutation (max 2s).
+def lease_admission(deadline):
+    """Retry only canonical lease acquisition, within the caller's budget.
 
     The yielded body's exceptions are outside the retry loop. A systemd child
     must never be launched with a parent holding this canonical lease.
     """
-    deadline = time.monotonic() + START_ADMISSION_SECONDS
     with contextlib.ExitStack() as stack:
         while True:
+            require(time.monotonic() < deadline, 'owned_operation_deadline')
             try:
                 lease = stack.enter_context(acquire_lease(blocking=False))
             except LeaseBusy:
@@ -306,7 +306,13 @@ def start_admission():
                     raise
             else:
                 break
+        require(time.monotonic() < deadline, 'owned_operation_deadline')
         yield lease
+
+
+def start_admission():
+    """Preserve the start owner's two-second entry contention allowance."""
+    return lease_admission(time.monotonic() + START_ADMISSION_SECONDS)
 
 
 def verify_source_closure(config):
@@ -791,8 +797,9 @@ def recover():
     # Every subprocess lifecycle owner independently takes the SAME canonical lease.
     # A latched recovery attempt must not stop a healthy peer or existing work.
     # Gate outside cleanup: failure before mutation must cause no stop/reset.
+    # All active admissions share 840s; only failure settlement may use 900s.
     try:
-        with acquire_lease(blocking=False) as lease:
+        with lease_admission(OPERATION_DEADLINE) as lease:
             runtime.lease = lease
             runtime.guards()
             runtime.require_hardware()
@@ -802,7 +809,7 @@ def recover():
     mutation_started = False
     attempt_phase('recover_mutation_admission')
     try:
-        with acquire_lease(blocking=False) as lease:
+        with lease_admission(OPERATION_DEADLINE) as lease:
             runtime.lease = lease
             runtime.guards()
             runtime.require_hardware()
@@ -812,7 +819,8 @@ def recover():
         result = run(['systemctl', 'restart', UNIT], timeout=840, check=False)
         require(result.returncode == 0, 'owned_systemd_restart_warm_failed')
         attempt_phase('recover_verify')
-        with acquire_lease(blocking=False):
+        with lease_admission(OPERATION_DEADLINE) as lease:
+            runtime.lease = lease
             runtime.guards()
             state = runtime.state()
             require(state['phase'] == 'warm' and state['warm'] is True, 'owned_warm_receipt_missing')
@@ -833,7 +841,8 @@ def recover():
             run(['systemctl', 'stop', UNIT], timeout=40, check=False)
         except (subprocess.TimeoutExpired, RuntimeError):
             run(['systemctl', 'kill', '--kill-whom=all', '--signal=KILL', UNIT], timeout=5, check=False)
-        with acquire_lease(blocking=False):
+        with lease_admission(OPERATION_DEADLINE) as lease:
+            runtime.lease = lease
             runtime.guards()
             failed = runtime.state()
             value = runtime.inspect_owned(failed, missing_ok=True)

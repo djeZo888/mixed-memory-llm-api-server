@@ -298,6 +298,7 @@ class ServiceReview(unittest.TestCase):
         from lifecycle.runtime_io import LifecycleError
         for failure in ('latch', 'lease', 'storage'):
             runtime = Mock()
+            clock = [0.0]
             contexts = [contextlib.nullcontext('first'), contextlib.nullcontext('second')]
             expected = RuntimeError
             if failure == 'latch':
@@ -308,9 +309,17 @@ class ServiceReview(unittest.TestCase):
                 expected = LeaseBusy
             else:
                 runtime.guards.side_effect = [None, RuntimeError('guard_failed')]
+            def acquire(**_kwargs):
+                if len(contexts) > 1:
+                    return contexts.pop(0)
+                if isinstance(contexts[0], BaseException):
+                    raise contexts[0]
+                return contexts[0]
             with self.subTest(failure=failure), \
                     patch.object(service, 'Runtime', return_value=runtime), \
-                    patch.object(service, 'acquire_lease', side_effect=contexts), \
+                    patch.object(service, 'acquire_lease', side_effect=acquire), \
+                    patch.object(service.time, 'monotonic', side_effect=lambda: clock[0]), \
+                    patch.object(service.time, 'sleep', side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)), \
                     patch.object(service, 'run') as run:
                 with self.assertRaises(expected):
                     service.recover()
