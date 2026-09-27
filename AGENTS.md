@@ -17,14 +17,20 @@ The 16-thread result remains the measured incumbent until these tests finish.
 Validate maximum safe F16 allocation (target decimal1,000,000, fallback917,504)
 while retaining7% freeVRAM. No cache precision change. The latest user explicitly
 authorizes a near-1M occupied-context test as the FINAL independent background
-job after short/native/production/Sova qualification. Reserve output/template
+job after short/native/production/Sova qualification. The reviewed final sequence
+runs 4K/16K and full native tool continuation in the foreground; the last
+independent job runs the pending 64K benchmark first, then near-1M only after
+64K correctness, guards and full native settlement pass. Qualify production
+truthfully at occupiedTested=16384; never predeclare 64K or 1M success. Report
+64K running / near-1M queued at dispatch. Reserve output/template
 space within the actual usable window. Verify startup, logs and safeguards,
 close all paid sessions, pause monitoring and wait for the user's later nudge.
 Give that job a finite eight-hour active budget; do not poll it with paid workers.
 Production MiMo requests get eight hours active plus a separate 30-minute queue;
 provider timeout is eight hours31minutes. Qwen and GLM retain existing limits.
 The user explicitly requests a NEW4K/16K/64K ladder at final optimized settings;
-the old prohibition below no longer applies to that new ladder. Complete native
+the old prohibition below no longer applies to that new ladder. The 64K rung
+now runs in the final independent job to avoid paid observation. Complete native
 17-tool/65,536-ceiling and actual Sova delegation before primary activation.
 All clients must be independent Linuxsystemd jobs with durable streamed
 timestamps/results; never SIGINT/resume a CLI whose foreground tool owns a
