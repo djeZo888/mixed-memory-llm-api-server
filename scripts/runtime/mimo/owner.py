@@ -373,7 +373,7 @@ def create_argv(h, m, launch_id):
             '--label', 'io.h016.manifest=' + digest(m), '--label', 'io.h016.launch=' + launch_id,
             '--mount', 'type=bind,src=' + h.MODEL + ',dst=/models,readonly',
             '--mount', 'type=bind,src=/data/services/secrets/llm-api-key,dst=/run/secrets/llm-api-key,readonly',
-            '--tmpfs', '/tmp:rw,noexec,nosuid,size=1g', '--env', 'CUDA_CACHE_DISABLE=1', '--env', 'OMP_NUM_THREADS=1',
+            '--tmpfs', '/tmp:rw,noexec,nosuid,size=1g', '--env', 'CUDA_CACHE_DISABLE=1', '--env', 'OMP_NUM_THREADS=1', '--env', 'GOMP_SPINCOUNT=0',
             '--mount', 'type=bind,src=' + str(BASE / 'source/numactl') + ',dst=/usr/bin/numactl,readonly',
             '--mount', 'type=bind,src=' + str(BASE / 'source/libnuma.so.1.0.0') + ',dst=/usr/lib/x86_64-linux-gnu/libnuma.so.1,readonly',
             '--entrypoint', '/usr/bin/numactl', IMAGE, '--interleave=0-7', '/opt/llama/llama-server'] + launch_args(m)

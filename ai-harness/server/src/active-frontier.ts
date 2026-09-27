@@ -28,7 +28,7 @@ export function loadActiveFrontier(selection: ActiveFrontierSelection, upstreamK
   }
   const candidate = JSON.parse(readFileSync(new URL('../../config/mimo-candidate.json', import.meta.url), 'utf8'));
   if (!candidate.enabled || !candidate.qualified || candidate.model !== MIMO_MODEL) throw Error('MiMo candidate disabled');
-  const receipt = readMimoEvidence('/etc/ai-harness/mimo-qualification.json');
+  const receipt = readMimoEvidence('/etc/sova-qualification/mimo.json');
   if (createHash('sha256').update(receipt.text).digest('hex') !== selection.mimoQualificationSha256) throw Error('MiMo receipt not reviewed');
   const { qualification, capacity, nativePins } = validateMimoIntegration(receipt.value);
   if (selection.mimoContextWindow !== qualification.identity.actualSlotContext || selection.mimoMaxOutputTokens !== Math.min(65536, qualification.identity.maxOutputTokens)) throw Error('MiMo profile/capacity mismatch');

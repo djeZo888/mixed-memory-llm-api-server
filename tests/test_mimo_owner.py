@@ -33,6 +33,31 @@ class OwnerTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'owned_gpu_missing'):
             o.validate_sample(self.m,self.sample,self.baseline,85)
 
+    def test_creation_pins_spin_policy_without_changing_native_configuration(self):
+        native = json.loads(PATH.with_name('launch.json').read_text())['native_argv'] + ['--no-host']
+        manifest = {**self.m, 'native_argv': native,
+                    'source_sha256': {str(o.BASE / 'source/owner.py'): hashlib.sha256(PATH.read_bytes()).hexdigest()}}
+        with patch.object(o, 'launch_args', return_value=native):
+            argv = o.create_argv(SimpleNamespace(MODEL='/fixture/models'), manifest, 'fixture-launch')
+        values = lambda flag: [argv[i + 1] for i, value in enumerate(argv[:-1]) if value == flag]
+        self.assertEqual(values('--env'), ['CUDA_CACHE_DISABLE=1', 'OMP_NUM_THREADS=1', 'GOMP_SPINCOUNT=0'])
+        self.assertEqual(values('--cpuset-cpus'), ['0-7,16-71'])
+        self.assertEqual(values('--cpuset-mems'), ['0-7'])
+        self.assertEqual(values('--gpus'), ['device=' + o.GPU])
+        self.assertEqual(argv[argv.index(o.IMAGE) + 1:], ['--interleave=0-7', '/opt/llama/llama-server'] + native)
+        self.assertEqual(values('--memory'), values('--memory-swap'))
+        self.assertEqual(values('--restart'), ['no'])
+        self.assertIn('io.h016.manifest=' + o.digest(manifest), values('--label'))
+        changed = copy.deepcopy(manifest)
+        changed['source_sha256'][str(o.BASE / 'source/owner.py')] = '0' * 64
+        self.assertNotEqual(o.digest(changed), o.digest(manifest))
+        container = {'Config': {'Labels': {'io.h016.owner': o.OWNER,
+                     'io.h016.manifest': o.digest(manifest), 'io.h016.launch': 'fixture-launch'}},
+                     'Name': '/' + manifest['container_name'], 'Image': o.IMAGE}
+        self.assertIs(o.exact_container(container, manifest, {'launch_id': 'fixture-launch'}, configuration=False), container)
+        with self.assertRaisesRegex(RuntimeError, 'exact_owned_container_required'):
+            o.exact_container(container, changed, {'launch_id': 'fixture-launch'}, configuration=False)
+
     def test_fatal_own_temperature_reserve_host_swap_oom_and_ceiling(self):
         for target,key,value in [('gpu','temp_c',85),('gpu','free_mib',6.99),('host','MemAvailable',149),
                                  ('host','SwapFree',99),('cgroup','memory.swap.current','1'),
