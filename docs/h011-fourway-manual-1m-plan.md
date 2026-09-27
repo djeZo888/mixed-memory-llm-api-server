@@ -36,6 +36,17 @@ GPU telemetry proves wall power, PSU input/output or transient capability.
 The user confirms the three Blackwells use the workstation 2200W PSU; Ada uses
 the separate Core X PSU. Report their loads separately. No Proxmox operations or driver/ECC changes.
 
+### Fan-adjusted repeat authorized during execution
+
+The initial attempt stopped because the recorder assumed Ada supported Docker
+logs. Its corrected attempt stopped at the Server Blackwell's85C temperature
+cutoff (one later86C sample), before sustained qualification. The user then
+increased that card's fan speed and confirmed readiness for another attempt.
+This explicitly authorizes one fan-adjusted repeat with unchanged temperature,
+memory and power settings. Preserve all attempts and label fan speed as a
+user-reported change; no RPM measurement is implied. A further failure does not
+authorize a tuning sweep or forced1M launch.
+
 ## Worker2: independent review and manual 1M preparation
 
 Pause/restore the application using existing correct health/status parsers and
