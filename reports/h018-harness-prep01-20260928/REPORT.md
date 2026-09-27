@@ -58,14 +58,23 @@ automatic restart, data restore, reset or quarantine clear was performed.
 
 ## Independent owner review
 
-Frozen W1 snapshot was not yet available during initial source preparation.
+Frozen W1 snapshot was unavailable at handoff; the early diff review found
+parent-policy failure evidence is lost before the validation handler. See
+OWNER-REVIEW.md for the pinned finding and effective-parent policy caveat.
 The review focus requires persistent zero-swap policy on the exact Docker scope
 or a proven covering ancestor: supervisor-only MemorySwapMax cannot establish
 coverage of a sibling scope. Unlimited/nonzero/empty/invalid values must fail
 closed with bounded safe evidence; never treat max as0. Preserve cgroup identity,
 owned swap/OOM0, GPU7%, host15%, thermal and exact proxy/settlement semantics.
 The daemon-reload hypothesis remains locally unproven until W1 evidence arrives.
-Any subsequent frozen review is recorded separately in OWNER-REVIEW.md.
+No frozen-source acceptance is claimed; W1/root must resolve the early finding.
 
 Native session/start/hard deadline are in SESSION.json. Wrapper records actual
 exit after handback; no paid wait for qualification or snapshot is authorized.
+
+Fresh ai-harness stage:479 verified entries at source3760c615, manifest054c7cf7.
+STAGE.json preserves the old449 manifest;448 payload entries match, while its
+SOURCE-COMMIT metadata has a pre-existing hash mismatch (observed442ad888).
+The new stage uses the exact fresh source commit. No historical artifact was
+rewritten. A receipt filename typo was corrected after read-only revalidation;
+source mutations were not replayed.
