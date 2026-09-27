@@ -1,6 +1,19 @@
 # AGENTS.md
 
-## Latest task precedence — 26 September 2026
+## Latest task precedence — 27 September 2026
+
+H011 explicitly authorizes a sustained four-model overlap test to assess load
+and stability, plus preparation of a user-operated 1M Flash test. Follow the
+[H011 plan](docs/h011-fourway-manual-1m-plan.md). Use one driver/owner for all four
+clients; the former H010 one-attempt limit is historical and does not gate this
+new task. Three Blackwells use the 2200W workstation PSU; Ada has its own PSU.
+Keep production at480000. A reviewed temporary1048576 profile/manual runner may
+be implemented and staged, but do not run its allocation/inference until the
+user invokes it. Preserve runtime/model pins and normal guards. Worker1 owns
+live inference/telemetry and staging; Worker2 owns app quiet/recovery, independent
+review and manual-runner source. Root coordinates, reviews and publishes.
+
+## Prior H010 scope
 
 H010, authorized27September, extends Flash live occupancy testing to65536tokens
 and asks for CPU-only comparison only if supported with minor changes. Follow
