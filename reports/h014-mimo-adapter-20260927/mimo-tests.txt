@@ -1,0 +1,18 @@
+✔ disabled candidate pins all artifacts but advertises no live capacity or readiness (1.364959ms)
+✔ full history and pure text arrays survive without mutation or false equivalence (0.449291ms)
+✔ closed grammar rejects media, role/control injection, malformed history and unsafe limits (8.960459ms)
+✔ required actual qualified identity, exact P+O=S-1 boundary and no output shrinking (3.085ms)
+✔ native count POST uses byte-identical full canonical generation body and strict integer response (2.892084ms)
+✔ complete stream handles arbitrary byte splits, empty fragments, usage-only frame and HTTP drain (1.846417ms)
+✔ mixed reasoning/content/tool deltas assemble native IDs/names/arguments only after complete drain (0.256375ms)
+✔ protocol failures never produce completed tools or silently accept truncated/mismatched output (1.268208ms)
+✔ ambiguity holds existing owner without replay/switch; transport completion does not prove settlement (0.10125ms)
+✔ count aborts bounded observation, post and stalled body without retry; bad SSE envelopes fail closed (18.518417ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 186.377416
