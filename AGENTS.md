@@ -8,9 +8,21 @@ qualification. Keep two Qwen instances and the image model. R7's single
 GOMP_SPINCOUNT=0 change improved unprofiled output to5.885tok/s for128 tokens
 and6.005tok/s for512; profiled3.364tok/s is separate. R8's same83-input/128-output
 fixture reached7.76308tok/s (+31.9% overR7), with fullstream/nativeidle evidence.
-Root selected **16decode/64batchthreads with GOMP_SPINCOUNT=0**; no furtherA/B.
+The user subsequently requested two bounded **8-decode/64-batch** comparisons:
+one CPU per guest NUMA node, then eight CPUs on guest node0. Keep external
+memory interleave fixed and disable GGML NUMA affinity in both so strict decode
+masks are effective. Verify actual active-thread affinity. Guest node0 is not
+proof of physical host GPU locality; aggregate Proxmox affinity is insufficient.
+The 16-thread result remains the measured incumbent until these tests finish.
 Validate maximum safe F16 allocation (target decimal1,000,000, fallback917,504)
-while retaining7% freeVRAM. No cache precision change or occupied1M benchmark.
+while retaining7% freeVRAM. No cache precision change. The latest user explicitly
+authorizes a near-1M occupied-context test as the FINAL independent background
+job after short/native/production/Sova qualification. Reserve output/template
+space within the actual usable window. Verify startup, logs and safeguards,
+close all paid sessions, pause monitoring and wait for the user's later nudge.
+Give that job a finite eight-hour active budget; do not poll it with paid workers.
+Production MiMo requests get eight hours active plus a separate 30-minute queue;
+provider timeout is eight hours31minutes. Qwen and GLM retain existing limits.
 The user explicitly requests a NEW4K/16K/64K ladder at final optimized settings;
 the old prohibition below no longer applies to that new ladder. Complete native
 17-tool/65,536-ceiling and actual Sova delegation before primary activation.
@@ -21,8 +33,10 @@ and its terminal SSE/tool continuation was lost; it is NOT_QUALIFIED, not a
 model failure. A14:54:34 Proxmox UMC capture was idle, not decode. Preserve it
 and coordinate a replacement with actual native phase evidence.
 R7 settled and originalGLM readiness15:14:33 was verified. R8 normal settlement
-was requested15:32:36 after its completedresult. No warm adoption. New experimental owners
-close admission17:00 and settle17:25, leaving recovery/reporting before17:48:08.
+was requested15:32:36 after its completedresult and GLM restored15:34:27.
+No warm adoption. The frozen R9 is HELD pending the 8-thread comparisons;
+review new experimental deadlines before launch and retain recovery/reporting
+time before17:48:08. Do not hotpatch deadlines of an already-running owner.
 Qualified permanent production may remain warm. This paragraph supersedes older
 15:48 checkpoint and initial131K promotion instructions below. Read latestSTATUS.
 

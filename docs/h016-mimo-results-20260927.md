@@ -160,7 +160,15 @@ storage-read growth, owned swap or OOM. The frontier GPU reached 42°C and
 23% utilization in the available samples. Thread affinity observations do not
 by themselves identify which workers were active, and activity is not bandwidth.
 
-A new 4K/16K/64K ladder will use these settings and the final allocated context.
+The user next requested two eight-thread trials: one decode CPU per guest NUMA
+node versus eight on guest node0. Both retain 64 batch threads and external
+memory interleave; GGML's NUMA affinity override is disabled so distinct strict
+decode masks can take effect. Their actual thread placement must be checked.
+Guest node0 is not proof of physical GPU-local execution because Proxmox's
+aggregate CPU mask does not establish individual vCPU pinning. The 16-thread
+result remains the incumbent; 10 tokens/s has not been demonstrated.
+
+A new 4K/16K/64K ladder will use the selected settings and final allocated context.
 The first allocation target is decimal 1,000,000 tokens; 917,504 is the fallback
 if actual allocation or workspace fails the 7% GPU reserve. Native cache padding
 to 256-cell blocks may make the physical pool 1,000,192 positions. Usable slot
@@ -202,8 +210,18 @@ display is not implemented. Ambiguous requests are held without automatic replay
 
 Published model context, configured allocation and largest completed input are
 reported separately. A configured 131K window and completed 4K/16K/64K inputs do not
-prove 1M capacity or long-context correctness. No occupied 1M test is authorized
-in this window. The existing GLM 1M test will not be repeated.
+prove 1M capacity or long-context correctness. The latest user instruction
+authorizes a near-1M-input test as the final independent background task after
+native and Sova qualification. Its prompt must reserve answer/template space
+inside the actual usable window. After startup is verified, paid sessions and
+automated checks will stop; results await the user's later nudge. The existing
+GLM 1M test will not be repeated.
+
+The planned production MiMo budget is eight hours per active inference request,
+with a separate 30-minute queue and an eight-hour-31-minute provider limit.
+Qwen and GLM keep their existing limits. This requires changes through stream
+drain as well as connection setup; long context must not fail solely because a
+shorter transport timer remained in place.
 
 At fixed placement, the source-derived global F16 cache grows by 51,200 bytes
 per configured token; compact sliding-window storage is a separate fixed
