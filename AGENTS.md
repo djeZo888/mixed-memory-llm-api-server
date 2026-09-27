@@ -2,11 +2,20 @@
 
 ## Latest task precedence — 27 September 2026
 
+H013 update checkpoint: the exact1M H012 request passed at04:30:46UTC and remains
+warm pending production promotion. The user requests a safe opportunity to
+update Codex on all3Macs. Finish current evidence handoffs, then no new native
+tasks or VM maintenance until the user resumes after updates. Continuation
+automation is paused. Read [the current checkpoint](docs/h013-status-20260927.md)
+and local H013 UPDATE-HANDOFF.md. Never replay the completed1M request. BMC sova
+Operator credentials are stored privately on ai-harness; authenticated sensor
+and CHA_FAN3 control discovery remains untested.
+
 User fan-control amendment: investigate and implement supported integrated GPU
 fan boost to 100% at >=70C, and investigate the Server Blackwell's external fans
 on motherboard CHA_FAN3. Source review and actual capability/readback precede
 activation; preserve the active1M test unchanged. Keep85C load cutoff. Do not
-guess motherboard PWM mappings or IPMI raw commands. Host/BMC access is pending.
+guess motherboard PWM mappings or IPMI raw commands. BMC capability is unverified.
 This supersedes historical no-fan-change wording for this narrow scope; ECC and
 cooling changes together cannot establish isolated ECC thermal causality.
 
