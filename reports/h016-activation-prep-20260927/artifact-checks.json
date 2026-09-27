@@ -1,0 +1,23 @@
+{
+  "result": "PASS",
+  "image": "6641df04cf4e8375029639a67c22da7c3ff4719d2b8e58748572f049de8fb022",
+  "base": "9ef88598cf54a03aa259c5aa2d2878b34b7473cfcec7c8c07cee6ba462c39f1c",
+  "base_layers": 30,
+  "new_layers": 1,
+  "source": "928b3b470058241f089a839367d4b30d5887a6e3",
+  "dependencies": {
+    "server": {
+      "entries": 4036,
+      "sha256": "29109e37145dad2d9e61d0908abcb65eb0440a32ba0ca8abac6fa9557810ad6e"
+    },
+    "web": {
+      "entries": 10174,
+      "sha256": "ba85281cf9211094bb239e2dbb55f0f90a9767f2110812730b461256bb4b7392"
+    }
+  },
+  "source_archive_and_dist_hashes": "PASS",
+  "production_unit_hashes": {
+    "ai-harness.service": "eee8e1d7a3f370e3fcdbf5783f1b03df8672296abcf27726cdaca73c62b71b9c",
+    "30-h008-registry.conf": "e033a07a50b8c5f9f535909e1405c87f99f932a3c1506aa36c30a4647462ac16"
+  }
+}
