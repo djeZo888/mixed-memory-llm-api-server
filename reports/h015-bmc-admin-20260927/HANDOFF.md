@@ -9,3 +9,14 @@ Reused unchanged reviewed protected ai-harness probe.py/ui_probe.py, matched to 
 Native ID: 01a0e201-bb5c-7f51-a0c6-221125e42564. Source base: 511a2ed93d556147d200ddc6c97b4ced38868657. Wrapper start: 2026-09-27T08:35:58Z; hard deadline: 2026-09-27T08:39:58.788280+00:00. Probe start: 08:36:45.442361 UTC; finish: 08:36:46.190961 UTC; SSH/probe process exit 0. Wrapper records actual native exit after this session ends; no exit value fabricated here.
 
 Write ability remains UNQUALIFIED. Root reviews receipt and writes final prose. Any future write requires current access/identity checks and separate write qualification/authorization; no Administrator-to-Operator change is part of this task. No further probe scheduled.
+
+Parent-wrapper final receipt: native exited0 at08:37:50UTC,112 seconds after
+start and within the four-minute bound. No worker process remains.
+
+Root conclusion: for the selected HTTPS route, plan on retaining an authorized
+Administrator credential in the dedicated host-side controller. This is ongoing
+service access, not a permanently logged-in browser or credentials for LLMs.
+The exact minimum permission for writes is untested; an alternative protocol
+could permit a narrower role, but none has been qualified. Static firmware
+curves can persist without an active controller, but this CPU-temperature
+curve does not implement the requested NVIDIA GPU-temperature policy.

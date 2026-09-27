@@ -1,12 +1,25 @@
 # GPU fan boost and motherboard fan control
 
-## Current deployment and BMC access — 27 September, 08:24 UTC
+## Current deployment and BMC access — 27 September
+
+**08:36 update:** the user changed sova to Administrator. The unchanged probe
+then passed login, all four fan GETs and owned logout (six HTTP200 responses).
+CHA_FAN3 is exactly `Zone4(CHA_FAN3)`, array index3, PWMNum3, PWMSrc0; the saved
+five points are20/45/65/90/100 C, all100% duty. Actual fan writes remain untested.
+The same route failed its reads under Operator, so do not assume a role
+downgrade will preserve future control. The intended dedicated host-side
+controller needs a credential authorized for recurring changes, with no model
+or task-container access to that credential. A permanent browser login is not
+needed. [Administrator readback](../reports/h015-bmc-admin-20260927/HANDOFF.md).
 
 Integrated NVML fan boost is deployed and live-tested, including restart after
 the guest reboot. It commands 100% at 70 C and restores firmware control after
 65 C or below for 30 seconds. The ECC-off overlap still reached the server
 Blackwell's 85 C guard; no further stress repeat is planned before cooling is
 improved. External fans remain user-set 100%.
+
+The following paragraph records the earlier access failure, now superseded by
+the successful Administrator comparison above.
 
 BMC web authentication now succeeds with the saved sova credential. Four fan
 GETs return HTTP500 under the Operator account, while the user confirms the
