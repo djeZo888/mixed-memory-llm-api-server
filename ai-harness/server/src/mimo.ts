@@ -104,7 +104,7 @@ export function prepareMimo(value: unknown): MimoPrepared {
   const pending = new Set<string>(), seen = new Set<string>();
   for (const m of b.messages) {
     fields(m, ['role', 'content', 'name', 'tool_calls', 'tool_call_id', 'reasoning_content']);
-    if (!['system', 'developer', 'user', 'assistant', 'tool'].includes(String(m.role))) fail();
+    if (typeof m.role !== 'string' || !['system', 'developer', 'user', 'assistant', 'tool'].includes(m.role)) fail();
     if (m.name !== undefined && !name(m.name)) fail();
     if (m.reasoning_content !== undefined && (m.role !== 'assistant' || typeof m.reasoning_content !== 'string')) fail();
     if (m.role === 'tool') {
@@ -431,7 +431,7 @@ export class MimoStreamValidator {
       }
     }
     if (choice.finish_reason !== undefined && choice.finish_reason !== null) {
-      if (!['stop', 'length', 'tool_calls'].includes(String(choice.finish_reason))) this.reject();
+      if (typeof choice.finish_reason !== 'string' || !['stop', 'length', 'tool_calls'].includes(choice.finish_reason)) this.reject();
       this.finishReason = choice.finish_reason as MimoStreamResult['finishReason'];
     }
   }

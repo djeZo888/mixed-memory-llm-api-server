@@ -242,3 +242,15 @@ test('count aborts bounded observation, post and stalled body without retry; bad
   for (const response of [{ status: 503, contentType: 'text/event-stream' }, { status: 200, contentType: 'application/json' }])
     assert.throws(() => new MimoStreamValidator(admission(), response), { code: 'mimo_stream_invalid' });
 });
+
+
+test('root regression: role and finish reason require strings without coercion', () => {
+  for (const role of [['user'], ['assistant'], {}, 0, 1, true, false, null]) {
+    assert.throws(() => prepareMimo(request({ messages: [{ role, content: 'fixture' }] })), { code: 'mimo_invalid_request' });
+  }
+  for (const finishReason of [['stop'], ['length'], ['tool_calls'], {}, 0, 1, true, false]) {
+    assert.throws(() => stream([chunk({}, finishReason), usage(), '[DONE]']), { code: 'mimo_stream_invalid' });
+  }
+  // Null remains the legitimate nonterminal marker, never a terminal reason.
+  assert.throws(() => stream([chunk({}, null), usage(), '[DONE]']), { code: 'mimo_stream_invalid' });
+});

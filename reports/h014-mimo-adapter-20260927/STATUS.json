@@ -5,7 +5,7 @@
   "native_session_id": "01a0e1b0-0b4e-7962-af5b-470f9fca1774",
   "wrapper_start_utc": "2026-09-27T07:06:45Z",
   "hard_deadline_utc": "2026-09-27T07:31:45.896641+00:00",
-  "written_utc": "2026-09-27T07:21:46.089685+00:00",
+  "written_utc": "2026-09-27T07:27:09.627589+00:00",
   "runtime_revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
   "enabled": false,
   "qualified": false,
@@ -22,5 +22,9 @@
   "subagents": false,
   "next_owner": "Root review; W1 qualification and settlement proof; later shared-lane wiring and independent acceptance",
   "bundle": "../H014-MIMO-ADAPTER.bundle",
-  "exact_source_and_bundle_hashes": "../DELIVERY.json after commit"
+  "exact_source_and_bundle_hashes": "../DELIVERY.json after commit",
+  "phase1_commit": "1b9956f93e1b8813cb5664f9528d4b7babe98d66",
+  "root_review_followup": "COMPLETE: two nonstring guards; 11 MiMo tests and noEmit PASS",
+  "same_native_session_and_original_deadline": true,
+  "full_tool_schema_qualified": false
 }

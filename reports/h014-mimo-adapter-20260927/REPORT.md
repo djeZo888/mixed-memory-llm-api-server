@@ -122,3 +122,29 @@ bootstrap, application/image build or full unrelated suite ran. Symlink removed.
 
 No public research repeated; no subagents, VM/ai-harness/BMC contact or traffic,
 inference, download, deployment, application/image build, UI work or push.
+
+## Same-session root review correction
+
+Original phase1 commit `1b9956f93e1b8813cb5664f9528d4b7babe98d66` and
+`mimo-tests.txt` are preserved. The narrow follow-up requires actual string
+types before message-role and stream finish-reason allowlists; singleton arrays
+and other nonstrings cannot pass by coercion. One focused regression test covers
+both fields; null remains a nonterminal stream marker, never a terminal reason.
+
+Affected MiMo suite: **11/11 PASS**, command unchanged, output
+`mimo-tests-phase2.txt`. Source `tsc --noEmit` **PASS** with reused matching
+dependencies; temporary symlink removed. No GLM rerun, build or live contact.
+All files tracked at the original base remain byte-identical.
+
+Ordinary native MiniMax full tool-schema compatibility remains **unqualified**.
+The closed adapter does not accept every possible function field (for example
+`tools.function.strict`) or establish compatibility with the full production
+tool roster. No speculative strict support was added. Qualifying the actual
+roster/schema payloads and native behavior remains a separate integration gate.
+
+This correction uses original native session
+`01a0e1b0-0b4e-7962-af5b-470f9fca1774` and the unchanged original hard bound
+`2026-09-27T07:31:45Z`. MiMo remains disabled/unwired/unqualified. Root's Sova
+activation uses separately accepted old artifacts and is outside this change.
+Replacement bundle includes both commits against the original base; new head
+and bundle hashes are recorded in task `../DELIVERY.json`.

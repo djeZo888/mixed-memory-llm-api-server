@@ -3,9 +3,9 @@
   "final_mimo_tests": {
     "command": "ai-harness/server/node_modules/.bin/tsx --test --test-timeout=15000 ai-harness/server/test/mimo.test.ts",
     "exit_code": 0,
-    "passed": 10,
+    "passed": 11,
     "failed": 0,
-    "output": "mimo-tests.txt"
+    "output": "mimo-tests-phase2.txt"
   },
   "initial_glm_regression": {
     "command": "ai-harness/server/node_modules/.bin/tsx --test --test-timeout=15000 ai-harness/server/test/mimo.test.ts ai-harness/server/test/frontier-contract.test.ts",
@@ -54,5 +54,19 @@
     "scope": "seven explicitly staged source/config/test/report files",
     "patterns": "private-key headers, HF/GitHub/OpenAI/AWS credential formats; no credential contents printed"
   },
-  "remote": "Local filesystem origin, no embedded credentials; no push performed"
+  "remote": "Local filesystem origin, no embedded credentials; no push performed",
+  "phase1_mimo_tests": {
+    "command": "ai-harness/server/node_modules/.bin/tsx --test --test-timeout=15000 ai-harness/server/test/mimo.test.ts",
+    "exit_code": 0,
+    "passed": 10,
+    "failed": 0,
+    "output": "mimo-tests.txt"
+  },
+  "root_review_followup": {
+    "scope": "two typeof guards and nonstring regression cases only",
+    "no_emit_typecheck": "PASS",
+    "phase1_logs_preserved": true,
+    "native_session_unchanged": true,
+    "full_tool_schema_and_production_roster_qualified": false
+  }
 }
