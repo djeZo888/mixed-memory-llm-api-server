@@ -1,0 +1,13 @@
+{
+  "official_revision": "73875d00b30a89ef8cc353a0b60b0e9f9561952d",
+  "tokenizer_config_sha256": "413a7845f52943ccf4de0e5c838414507d16c44dbf573da9e20bc8902b384d06",
+  "template_sha256": "11ea52e156de38a458e6b7720ad45915d65b97d4ec979a09f55e3c9bd1b4d059",
+  "official_embedded_and_standalone_template_equal": true,
+  "bos_token": null,
+  "add_bos_token": false,
+  "eos_token": "<|im_end|>",
+  "tokenizer_class": "Qwen2Tokenizer",
+  "model_max_length": 1048576,
+  "loaded_gguf_vocabulary_and_template_verified": false,
+  "full_tokenizer_vocabulary_fetched": false
+}
