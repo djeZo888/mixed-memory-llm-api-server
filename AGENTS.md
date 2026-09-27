@@ -13,10 +13,14 @@ verified shards. No four-way stress, BMC/fan/ECC, reboot or driver work.
 
 H016 checkpoint: the final retained shard passed its hash at10:55:21UTC;
 all13 shards /577,669,438,240bytes are verified. Reuse them and imagecdb6efd.
-The initial native qualification job actually started11:26:06UTC, candidate
-loading11:26:21; this is dispatch evidence, not a completed benchmark.
-MiMo shared-frontier harness source928b3b4 is reviewed and its new engine overlay
-is building on9ef885. Sova app is paused and histories/files are preserved.
+The cold mmap path passed text and tiny tool/continuation semantics, but suffered
+severe disk paging; none of those timings is a warmed benchmark. Explicit loading
+then exposed a blocking monitor diagnostic and a likely huge CUDA-host allocation.
+The monitor is corrected; R5 adds only --no-host to none/interleave and started
+12:37:37UTC. Full load and 4K/16K/64K results remain pending. Do not repeat old
+attempts. MiMo harness overlay6641df04 has built and passed offline checks; a
+single production owner/node source packet is under review. Sova app is paused
+and histories/files are preserved. No production MiMo activation has occurred.
 The older H014 download hold below is historical; latest H016 STATUS is authority.
 
 ## Current work — 27 September 2026
