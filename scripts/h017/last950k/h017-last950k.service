@@ -1,0 +1,16 @@
+[Unit]
+Description=H017 LAST 64K then near950K chain, root GO required
+RequiresMountsFor=/data /data/models-large
+
+[Service]
+Type=simple
+User=root
+UMask=0077
+Restart=no
+ExecStart=/usr/bin/python3 -I -B /data/build/H017-20260927/worker1-last950k/client.py run
+ExecStopPost=/usr/bin/python3 -I -B /data/build/H017-20260927/worker1-last950k/client.py settle
+RuntimeMaxSec=8h
+TimeoutStopSec=65
+KillMode=control-group
+StandardOutput=null
+StandardError=null
