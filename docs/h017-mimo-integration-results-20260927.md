@@ -2,18 +2,21 @@
 
 ## Current state
 
-**In progress.** The authorized foreground window is 19:07:11–21:07:11 UTC
-(21:07–23:07 Ljubljana). A 950K ordinary-service load stopped at 19:44 UTC
-because an aggregate host-swap guard fired. After exact settlement and a
-reviewed correction, the ordinary service restarted at 19:58:45 UTC. It reached
-READY at 20:10:08 with an actual usable 950,000-token slot. The independent
-short qualification started at 20:10:18 and returned the correct two-token
-answer with full stream completion. At 20:10:22 the ordinary supervisor failed
-in its resource-validation stage, before the tool-call request was submitted.
-Its exact process/cgroup/GPU allocation was released. One final diagnostic
-attempt started at 20:23:57 with unchanged resource checks and additional safe
-exception detail. The cause remains unknown; this is not a demonstrated repair.
-Sova is paused and the long-context job has not started.
+**MiMo integration remains incomplete; the working GLM-backed Sova service was
+restored.** The two-hour foreground window is 19:07:11–21:07:11 UTC
+(21:07–23:07 Ljubljana). GLM authenticated readiness passed at 20:45:14;
+the original Sova application was restored at 20:48:10. Its health, status and
+system endpoints returned HTTP 200, and the existing observer reported GLM,
+both Qwens and image ready. Chats and files were preserved.
+
+MiMo loaded successfully with 950,000 usable tokens twice, and each attempt
+returned a correct tiny text response. Its supervisor then failed during a
+swap-limit check. The diagnostic attempt identified `ValueError` at
+`int(cg['memory.swap.max'])`; the exact nonnumeric value was not retained.
+No current 950K tool continuation or Sova delegation acceptance passed.
+**Neither the optimized 64K test nor the near-950K test was launched.** There
+is no background benchmark for the user to wait for. No further model load or
+live investigation is included in this window.
 
 Worker1 operates ai-vm; Worker2 operates ai-harness and independently reviews
 the service changes. Root coordinates, reviews and publishes. Original chats,
@@ -120,18 +123,62 @@ and 17,597 non-database files matched their preserved records. Worker2 closed
 its preparation CLI while waiting for native qualification. No dependency or
 native runtime rebuild is planned.
 
-## Remaining acceptance and final job
+## Located failure and next repair
 
-1. Actual 950K props/slot, memory reserve and short native tool continuation.
-2. Minimal Sova profile/configuration layer over the existing accepted image.
-3. Real Qwen parent → MiMo child/tool result → Qwen verification, followed by
-   ordinary Sova activation and preservation/health checks.
-4. As the last task, one independent Linux systemd client runs optimized 64K,
-   then near 950K only after correctness, terminal/drain, idle and resource
-   checks pass. At 950,000 usable capacity the near-limit input target is
-   948,975 tokens with a 1,024-token answer allowance and one spare slot.
+The last diagnostic load started at 20:23:57 and reached READY at 20:35:08.
+The tiny 14-input/two-output response fully drained at 20:35:22.995940.
+At 20:35:24.460174 the owner raised `ValueError` on line 455, converting
+`memory.swap.max` to an integer. Numeric-only diagnostics omitted the offending
+value. The model's captured swap usage and OOM counts were zero; available host
+memory was 358.19 GiB. This was not a demonstrated model OOM or inference failure.
+A separate cleanup timeout was retained; subsequent exact process, cgroup,
+GPU and proxy release passed, with no uncertain request left active.
 
-The final job has one total eight-hour deadline and no automatic replay. After
-startup is verified, paid worker sessions close and the automation stays paused.
-The user will request a later result check. Allocation and small-context success
-do not establish near-maximum speed or correctness.
+Both short-test launch helpers run `systemctl daemon-reload` after model
+readiness. An upstream [Moby issue](https://github.com/moby/moby/issues/51446)
+documents that operation changing Docker's `memory.swap.max` from `0` to `max`
+with the systemd cgroup driver. This is a strong explanation to test, **not a
+locally proven cause**: our failing raw value was not captured and no controlled
+reproduction was performed. A literal `max` is a valid Linux cgroup value but
+would violate this model's intended zero-swap policy.
+
+The next bounded task should reproduce the limit transition with a disposable,
+small container before paying for another model load. Preserve zero-swap
+enforcement across systemd reloads, classify `0`, `max`, empty and invalid
+values without an uncaught conversion, and preinstall test units before loading
+MiMo. Do not treat `max` as zero or weaken the limit simply to avoid the crash.
+This repair and its deployment remain pending.
+
+Repeated loading of the roughly 578 GB checkpoint took about eleven minutes
+per full load. The window was spent on supervisor/settlement corrections and
+diagnosing service failures; no model download, runtime rebuild, new thread
+sweep or long benchmark consumed this window. Small native responses alone do
+not establish a reliable persistent service.
+
+## Recovery and remaining acceptance
+
+Original GLM selection generation 8 and source/configuration were restored.
+GLM remains at 1,048,576 tokens; both Qwens remain at 480,000. Sova retains
+release `7143c17` / image `9ef8859`. The two Qwen and image containers were not
+recreated. Normal Sova startup reconciled the idle image lane; it did not clear
+historical quarantines. The preserved data includes 26 chats, 133 messages,
+62 file records and 17,597 non-database files. Restoration used readiness and
+preservation checks, with no new inference requests.
+
+Remaining work is: the swap-limit lifecycle repair, current 950K native tool
+continuation, and actual Qwen parent → MiMo child → Qwen verification using the
+prepared Sova release. Only after these pass should a new final independent job
+run optimized 64K followed by near 950K. The prepared target is 948,975 input
+tokens with a 1,024-token output allowance and one spare slot, within one total
+eight-hour background cap. Its dispatch authority is inactive and must be
+renewed for a new execution window; old expired acceptance clocks are not valid.
+
+Paid worker sessions close after recovery/publication, and the existing
+automation stays paused. Credentials, complete streams and bulky traces remain
+private. Exact sanitized failure and GLM recovery evidence is in
+[`reports/h017-final-receipt05-20260927`](../reports/h017-final-receipt05-20260927).
+The [Sova recovery receipt](../reports/h017-final-integration04-20260927/ORIGINAL-RECOVERY.json)
+records health, all four model instances, preserved data and zero recovery
+inference. Worker1's final CLI stopped at its 20:46 cap after backend recovery;
+Worker2's final recovery CLI exited successfully at 20:51:24. No paid worker
+session remains waiting for a model or benchmark.

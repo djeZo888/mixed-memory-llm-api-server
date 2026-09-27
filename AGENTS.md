@@ -1,10 +1,12 @@
 # Sova project execution
 
-## Current authorization: H017, 27 September 2026
+## H017 recovery checkpoint, 27 September 2026
 
-The user resumed MiMo integration with a **two-hour foreground limit**:
+The user authorized MiMo integration with a **two-hour foreground limit**:
 19:07:11–21:07:11UTC (21:07–23:07 Ljubljana). This supersedes the closed H016
-window and old holds. Read `docs/h017-mimo-final-integration.md` and local
+window and old holds. Live work has now stopped after failed MiMo acceptance;
+only review/publication remains before the deadline. Read
+`docs/h017-mimo-integration-results-20260927.md` and local
 `orchestration/tasks/H017-20260927/STATUS.md`.
 
 Use eight decode threads,64 batch threads and the already-verified MiMo Pro-RL
@@ -13,13 +15,13 @@ permission to reduce1M slightly. Keep F16 cache, GOMP_SPINCOUNT=0, ordinary
 CPU-expert allocation, external eight-node interleave and the selected GPU.
 No new model download, runtime/dependency rebuild or thread sweep.
 
-The last task is a finite independent Linuxsystemd job: optimized64K first,
-then near950K only if64K passes. Reserve output/template space within the actual
-usable slot. Launch only after real persistent-service and Sova delegation
-acceptance. Verify startup, close paid worker sessions, keep automation paused
-and wait for the user's later nudge. No paid polling of the long test. The
-existing eight-hour background-test cap is separate from the two-hour foreground
-window; neither may silently extend.
+No optimized64K or near950K job was launched. LAST dispatch authority is inactive,
+all old acceptance clocks expire with this window, and automation remains paused.
+Do not start another model load or long test without a new user execution window.
+A future final independent job may run64K then near950K only after native tool
+and Sova delegation acceptance. Its existing eight-hour background cap is
+separate from any foreground limit; neither may silently extend. Close paid CLI
+sessions after dispatch verification, then wait for the user's nudge.
 
 ## Roles and execution
 
@@ -36,19 +38,25 @@ image model remain on their GPUs. GLM1,048,576 is the working rollback.
 
 ## Starting state and evidence
 
-H016 ended with GLM and original Sova7143/9ef885 restored and all four instances
-ready. MiMo is exactly settled. No optimized64K or near1M job started.
+H017 restored original GLM1,048,576 at20:45:14 and original Sova7143/9ef885 at
+20:48:10. Existing observer reported all four instances ready at20:49:08.
+MiMo is exactly settled. No optimized64K or near950K job started.
 Eight threads measured9.20988outputtokens/s; four6.76392, so two was skipped.
 Native4K/16K and genuine tool continuation passed at1,000,000 usable context.
 R9 sampled VRAM89,770MiB/free7,481MiB and cgroup573.37GiB including file cache.
 These are historical measured results, not proof of current availability.
 
-The ordinary MiMo supervisor failed before its proxy started. Cleanup's
-LeaseBusy/TimeoutExpired may have masked the primary error; cause is UNKNOWN.
-A later node lock holder is not proof of that historical cause. Start with
-retained evidence, offline readiness validation and narrow primary-error/
-settlement corrections. Reuse qualified artifacts; avoid replaying completed
-benchmarks. Never adopt an unknown running owner or hotpatch its deadlines.
+H017 twice achieved actual950000 capacity and tiny text, then supervisorfailure.
+The diagnostic attempt located ValueError at int(cg['memory.swap.max']), owner
+line455. Exact nonnumeric value was omitted by numeric-only diagnostics. Owned
+swap/OOM were zero; exact PID/cgroup/GPU/proxy settlement passed. Test dispatch
+called systemctl daemon-reload immediately before failure. Moby issue51446
+documents a possible zero-to-max reset; local causality remains unproven.
+Next window: reproduce with a small disposable container, preserve swap limits
+across reload, handle nonnumeric values without weakening zero-swap enforcement,
+and preinstall test units before another model load. Reuse qualified artifacts;
+do not replay historical benchmarks or change precision/runtime/threads. Never
+adopt an unknown running owner or hotpatch its deadlines.
 
 ## Runtime and request ownership
 

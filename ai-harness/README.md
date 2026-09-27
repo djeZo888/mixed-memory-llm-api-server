@@ -117,9 +117,12 @@ explore/verifier/custom restrictions remain unchanged.
 ## Capacity and context
 
 Qwen main and child sessions have a fixed **480,000-token context**. The restored
-GLM frontier child uses **1,048,576 tokens**. The staged H016 MiMo candidate passed
-native qualification at **1,000,000 tokens**, but production startup failed and
-MiMo remains unavailable to Sova. The maximum
+GLM frontier child uses **1,048,576 tokens**. The staged MiMo candidate passed
+historical native qualification at **1,000,000 tokens**. The later **950,000-token**
+profile loaded and answered tiny text, but its supervisor failed on a swap-limit
+check before tool/Sova acceptance. MiMo remains unavailable to Sova; the original
+application was restored at 20:48 UTC on September 27 with histories/files intact.
+No long-context MiMo test is running. The maximum
 output is **65,536 tokens per inference request**, including reasoning where
 counted. Input and output share the context window; these are configured limits,
 not a claim that full-window occupancy or full-length output has been accepted.
@@ -132,7 +135,7 @@ coding and ordinary agents. A parent may selectively delegate an independent
 subtask to the native `frontier` child on a separate inference lane; the parent
 then reviews the returned result. MiMo V2.6 Pro-RL remains the intended
 replacement, but the active frontier is GLM-5.3-Flash following verified recovery. See the
-[MiMo integration state and tested limits](../docs/h016-mimo-results-20260927.md).
+[MiMo integration state and remaining repair](../docs/h017-mimo-integration-results-20260927.md).
 The staged MiMo release permits eight hours of active inference plus a separate
 30-minute queue; it has not been activated. Qwen and GLM retain their existing limits.
 

@@ -95,9 +95,9 @@ arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-
 
 ## Current models and dated acceptance
 
-**September 27, 18:21 UTC checkpoint:** Sova is online with GLM-5.3-Flash,
+**September 27, 20:49 UTC checkpoint:** Sova is online with GLM-5.3-Flash,
 two Qwen instances and the image service. MiMo V2.6 Pro-RL passed optimized
-native tests, but its persistent service failed during loading; it is not yet
+native tests, but its persistent supervisor failed on a swap-limit check; it is not yet
 enabled in Sova. The original application release and chats/files were preserved.
 Current availability comes from the status API; the measurements below are dated evidence.
 
@@ -105,7 +105,7 @@ Current availability comes from the status API; the measurements below are dated
 |---|---:|---|---|
 | Qwen0 | 480,000 | `http://10.156.100.60:30002/v1` | Coordination, coding and tools |
 | Qwen1 | 480,000 | `http://10.156.100.60:30004/v1` | Second concurrent Qwen lane |
-| MiMo V2.6 Pro-RL | 1,000,000 | `http://10.156.100.60:30012/v1` | Staged candidate; production startup failed, unavailable |
+| MiMo V2.6 Pro-RL | 950,000 prepared | `http://10.156.100.60:30012/v1` | Staged candidate; supervisor failure, unavailable |
 | GLM-5.3-Flash | 1,048,576 | `http://10.156.100.60:30010/v1` | Active frontier after verified recovery |
 
 MiMo retains native MXFP4 experts and BF16/F32 nonexpert tensors. At a
@@ -116,6 +116,12 @@ sampled cgroup memory reached **573.37 GiB**, including reclaimable file cache.
 Native tool-call continuation passed. Optimized 64K and near-million occupied
 context are pending; allocation does not establish long-context correctness.
 [MiMo results, configuration and limits](docs/h016-mimo-results-20260927.md).
+
+The later **950,000-token allocation** was confirmed with **85.12 GiB VRAM
+used and 9.85 GiB free**. Tiny text generation passed, but a supervisor error
+prevented tool and Sova acceptance. The original GLM-backed service was restored
+with chats/files intact. No optimized 64K or near-950K background job is running.
+[Integration outcome and next repair](docs/h017-mimo-integration-results-20260927.md).
 
 The earlier GLM test with exactly **1,000,000 input tokens** passed at approximately
 **145.85 input tokens/s** and **12.26 output tokens/s**, taking **6,876.78 seconds**.
