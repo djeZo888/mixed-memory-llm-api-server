@@ -1,0 +1,1 @@
+PASS syntax only: {'.py': 5, '.mjs': 11, '.sh': 4}
