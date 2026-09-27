@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "task": "H013-WORKER2-20260927",
+  "status": "REVIEW_COMPLETE_OFFLINE_ONLY",
+  "review_complete": true,
+  "runtime_work_complete": false,
+  "base_head": "33c49020fa5d107006c1d7566f63f83033f3dbe0",
+  "branch": "worker2/h013-reboot-review",
+  "session": {
+    "thread_id": "01a0e0f3-afe0-7380-813c-186f67fc447b",
+    "started_utc": "2026-09-27T03:41:01Z",
+    "review_completed_utc": "2026-09-27T03:48:31.566981+00:00",
+    "metadata_source": "../events-01.jsonl thread.started; ../started-01-utc"
+  },
+  "scope": "Only isolated mac-worker2 source/evidence review; proposal for root review, no activation",
+  "no_live_work": true,
+  "ai_vm_contact": false,
+  "ai_harness_contact": false,
+  "worker1_contact": false,
+  "inference": false,
+  "benchmark": false,
+  "allocation": false,
+  "downloads": false,
+  "builds": false,
+  "deployment": false,
+  "shared_checkout_edits": false,
+  "push": false,
+  "runtime_source_changes": false,
+  "h012_outcome": "UNVERIFIED; latest local evidence RUNNING_PREFILL_CONFIRMED 2026-09-27T02:37:00Z; no PASS inferred",
+  "sova": {
+    "required_state": "paused",
+    "live_state_verified": false
+  },
+  "recommendation": "Only after verified PASS: three exact production context source edits, source manifest update and native acceptance through existing owner; preserve historical receipts and rollback; align later Sova/node capacity. New H013 exact ECC current/pending Disabled gate, historical H012 source unchanged; reuse exact fan03 fixture bytes and driver bounds.",
+  "findings": [
+    "H012 retained candidate is not reboot durable; original owner currently restores480K",
+    "Manual candidate validation depends on original production hashes; validate/stop before promotion",
+    "Manual stop_candidate rewrites H012 terminal owner; separate H013 maintenance receipt required",
+    "Normal runtime owner has no ECC-enabled predicate; H012 historical runner does",
+    "Sova gateway allowlists, provider and managed agent all need accepted1048576 agreement before later unpause",
+    "fan03 dispatcher absolute launch deadline expired",
+    "fan03 raw fixtures/telemetry/XML absent in checkout; manifests and compact evidence only",
+    "Both Qwen peaks85C are test guard evidence, individual thermal slowdown flags zero in compact summary; aggregate active bitmask analyzer not reliable"
+  ],
+  "offline_checks": [
+    {
+      "name": "attempt02 reconstruction exact five identity substitutions and SHA256",
+      "result": "PASS"
+    },
+    {
+      "name": "retained-success transport semantic drain finish usage resource identity predicates",
+      "result": "PASS"
+    },
+    {
+      "name": "existing seven-case mount identity regression",
+      "result": "PASS"
+    },
+    {
+      "name": "proposed three-file replacements exact sites syntax and profile arithmetic",
+      "result": "PASS"
+    },
+    {
+      "name": "independent local report ordering and preservation review",
+      "result": "PASS"
+    }
+  ],
+  "proposal_only_source_sha256": {
+    "scripts/runtime/flash/file_auth.py": "5cad2c509e5c82cd7162f7a10ded2d08c4af768a20dbb9d8ddafb9a49fa5ecbb",
+    "scripts/runtime/flash/tokenize_adapter.py": "f5f863fd41732a7e56cb73e883471572819ac4554b687befd8e6205006509386",
+    "scripts/runtime/flash/idle.py": "3fd14b64793b79d97da179c98606c1f9b58a05420fe3eb01096d0301e63086e4"
+  },
+  "source_evidence_sha256": {
+    "scripts/runtime/flash/file_auth.py": "841e7968e89504fd4f03210476423a49e2145c9d2b7cc4d7d32fc65a780405b8",
+    "scripts/runtime/flash/tokenize_adapter.py": "31273f8be764a526f62da55e0038b87cb90fef7b05468de184e840ca4d6eec55",
+    "scripts/runtime/flash/idle.py": "030037024701cacf1f0accff8edb273cd7d1c290df53f87077fb740aec38638b",
+    "AGENTS.md": "390321c0dfb089a2e972d30bc3be585485329f7d948d0386db902cfd3904ff3b",
+    "docs/h013-ecc-off-repeat.md": "0109b89771e9fce1b02610de485a88f31259dfd9ea412d3f55c9e73ae5567b65",
+    "scripts/runtime/flash/owner.py": "d4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1",
+    "scripts/runtime/flash/llm-frontier-flash.service": "f92c8eef83fe4367cf8f74808aecfcbb0fca905cb5afb9e3afc09cef8576bc7e",
+    "scripts/control/node_observation.py": "f97e5f939ad9eae4f2b5599b01c8ae515694933537290831d38a0463bf55f55a",
+    "scripts/control/node_collectors.py": "2b3306f953d4fc615533d75b2d4a7ebb1548a6793cf86ccbcce5729e53fbdd3f",
+    "scripts/lifecycle/hardware_policy.py": "c779739a1776ea919f491a60a34811639e2df934a94ea909053710e4864e7229",
+    "configs/deployments/glm-5.3-flash-480000-fp8-kt.json": "3478b9e3e4a70f0da528bc271a2ca12d6be1e9aa1fd18efb0a45f96108c64155",
+    "ai-harness/config/frontier.json": "5c10ef1e1eae12ac297b7eabd07ba8023d799b25edc01626162a26e9c18f2261",
+    "ai-harness/server/src/frontier.ts": "b331f6599a010f1d984eca444b60dd5689c813428b91e793bc539c5bcd500ca4",
+    "ai-harness/deploy/engine/configure-profile.mjs": "f2a0b4b1fa9d6771acadfd8d09946d3606f4f76ad65f8a6efc7c9c8c9cf57630",
+    "reports/h011-worker2-20260927/manual/manual.py": "aa6a03e34d64db6fa2d24c4d4327e938a0a9264a34f81a47eca4e4a5c0384175",
+    "reports/h011-worker2-20260927/manual/context_profile.py": "7dec02f12dab46f6b94c8dafa9ba1098a6f1fe874ff41668974048dc2a406e70",
+    "reports/h011-worker2-20260927/manual/baseline-sha256.json": "c3d88ee63cc3a36a6c398b0f8b57e5a2e3dcda480423f47e2a606bee8bc92cc6",
+    "reports/h012-flash1m-20260927/LAUNCH-RECEIPT.json": "f230a4f93654390ad622664f9750c1e4cf71fced2691c8c24a4b24b3b7a03367",
+    "reports/h012-flash1m-20260927/REVIEW02.json": "b7e128bf8419f345806d4b565bac1b075ac594df68e616dc2b16534fea0fe62b",
+    "reports/h012-flash1m-20260927/STAGE02.json": "636e0cda63c7c570c452cb1088e663764cf1efb2eb28b3c637006a2005aab4b2",
+    "reports/h012-flash1m-20260927/MOUNT-ORDER-FIX-AND-FRESH-IDENTITIES.patch": "cff4cc91360d46e23ef23d81df9adb62837d8f6edbd25c7ce3d6d012e18eedba",
+    "reports/h011-fourway-20260927/attempt03/driver/job-body.py": "dbcbb86cfaf9559afd8584c2dbd1ba1602d937c1a05d3e9870e541c686fa04a7",
+    "reports/h011-fourway-20260927/attempt03/driver/vm-common.py": "f0e1b7d38c927cefe7a6c68d262903934ab5235abf57bfc86df2b13db8f98631",
+    "reports/h011-fourway-20260927/attempt03/driver/dispatch.py": "3ba9eb85879fd0603da880fce2cf25a43dc1ed1e490dca278b948daa8b26738c",
+    "reports/h011-fourway-20260927/attempt03/driver/fixture_native.py": "63db7c931fce7bf18eab20b36840fa65730f4068e7984bd51693a48bd44d347f",
+    "reports/h011-fourway-20260927/attempt03/driver/analyze.py": "f06a2add7efba6563b5405d244fd1e9456bedbfbe8b29c387b3b87aa7778c06f",
+    "reports/h011-fourway-20260927/attempt03/RESULTS.json": "ec9b6e4a3e92ff6da0103e6509451013ffad1f6fd1c34a73fe482cb90c028c25",
+    "reports/h011-fourway-20260927/attempt03/RESULTS.md": "e3f97363c3e6fd4d2cd69b568fade7195b78af388775cddde3ede578d3037353",
+    "reports/h011-fourway-20260927/attempt03/FIXTURE-COUNTS-HASHES.json": "d6d602a482befed5e52372fe62bb0512f4b818f5fce58f262fd477d7895bcbea",
+    "reports/h011-fourway-20260927/attempt03/FINAL-IDENTITY.json": "98a59a1b44b4dbc9ef5b32a5d9fcaedce3719881a100d99a3f181b99cd9cfa84",
+    "reports/h011-fourway-20260927/attempt03/RAW-HASHES.json": "d76249b24c8e495e7613e7cce921bf0e23c40efbf92ff6f265b2ba26947ea194",
+    "reports/h011-fourway-20260927/attempt03/EVIDENCE-HASHES.json": "f098ea9b07dc1dd5d3b1baa4cb42369d79c5b090248ee54391a60648967149ee"
+  },
+  "report_sha256": "255b0e7be8efa75de17b4875233835be7790242197497137ecbae24d78787fb3",
+  "required_before_live_repeat": [
+    "Root concrete H012 terminal review",
+    "Worker1 exact installed/staged identity and storage/ownership checks",
+    "Conditional durable production1M acceptance before reboot, else confirmed original480K",
+    "New boot ID, exact GPU mapping, all current/pending ECC Disabled, correct native pools",
+    "Verified original fan03 fixture bytes and one reviewed fresh driver namespace; unchanged guards/limits"
+  ],
+  "fourway_bounds": {
+    "submission_window_seconds": 300,
+    "per_request_seconds": 540,
+    "job_seconds": 900,
+    "flash": {
+      "requests": 1,
+      "input": 65536,
+      "output": 768,
+      "pool_if_verified_pass": 1048576,
+      "pool_otherwise": 480000
+    },
+    "each_qwen": {
+      "max_requests": 12,
+      "input": 262144,
+      "output": 128,
+      "pool": 480000
+    },
+    "image": {
+      "max_requests": 8,
+      "public_size": "1920x1080"
+    },
+    "thermal_cutoff_c": 85,
+    "flash_vram_reserve_pct": 7,
+    "host_reserve_pct": 15,
+    "flash_cgroup_gib": 650,
+    "native_forward_progress_watchdog_seconds": 300,
+    "h012_main_deadline_seconds": 7200
+  },
+  "limitations": [
+    "No current live outcome/state independently checked",
+    "Raw fan03 numeric fan/clocks/thermal thresholds unavailable",
+    "Power limits are preserved report values, not rederived raw measurements",
+    "No CPU/wall/PSU power measurement",
+    "No causal ECC or sustained-compute qualification from historical thermal stop"
+  ],
+  "next_owner": "root reviews; Worker1 implements and performs live VM changes; root publishes",
+  "deliverables": [
+    "REPORT.md",
+    "STATUS.json",
+    "../H013-WORKER2-REVIEW.bundle"
+  ]
+}
