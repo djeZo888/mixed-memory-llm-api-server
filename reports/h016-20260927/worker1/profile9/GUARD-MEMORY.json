@@ -1,0 +1,31 @@
+{
+  "observed_utc": "2026-09-27T14:56:40.249177+00:00",
+  "samples": 338,
+  "sample_window_utc": [
+    "2026-09-27T14:28:06.871376+00:00",
+    "2026-09-27T14:56:36.132709+00:00"
+  ],
+  "sampled_peak_cgroup_current_bytes": 656401608704,
+  "cgroup_memory_peak_bytes": 656408612864,
+  "peak_scope": "Entire current R7 container cgroup lifetime, including loading; not per-request peak",
+  "latest_current_bytes": 656093278208,
+  "latest_anon_bytes": 533914587136,
+  "latest_file_bytes": 121123971072,
+  "latest_kernel_bytes": 1054720000,
+  "latest_file_mapped_subset_bytes": 262971392,
+  "latest_shmem_subset_bytes": 260861952,
+  "sampled_min_host_memavailable_bytes": 383257063424,
+  "sampled_max_owned_swap_bytes": 0,
+  "sampled_max_temperatures_c": {
+    "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237": 35.0,
+    "GPU-69acfa26-8b60-61b5-702d-aee252c163cc": 46.0,
+    "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23": 40.0,
+    "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528": 36.0
+  },
+  "guard_boundary": {
+    "registered": "PASS",
+    "root": "PASS",
+    "native_slot_processing": false
+  },
+  "do_not_double_count": "memory.stat file_mapped and shmem are subsets; anon+file+kernel approximates current. Artifact bytes and context reserve are separate facts."
+}
