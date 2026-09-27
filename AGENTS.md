@@ -2,6 +2,19 @@
 
 ## Latest task precedence — 27 September 2026
 
+H013 is the current user request: inspect the running H012 Flash 1M test, preserve
+its final result, then disable ECC on all three Blackwells (Ada stays off), reboot
+ai-vm and run one guarded four-model repeat. Do not interrupt the active 1M job.
+Follow [the H013 plan](docs/h013-ecc-off-repeat.md). Successful 1M is preserved
+through a reviewed durable configuration before reboot; failed or incomplete
+1M is never promoted. This explicitly supersedes the prior ECC-on policy and
+permits one new concurrent test despite the historical cooling hold, with all
+temperature/memory guards retained. No host reboot or hardware changes are
+included. Worker1 owns VM operations; Worker2 independently reviews source,
+reboot/context preservation and comparison evidence. Sova remains paused during
+maintenance. Root reviews, coordinates and publishes.
+
+
 H012 supersedes H011's 1M hold for one **Flash-only** trial: the user explicitly
 requests starting it now and ending the turn once native progress is confirmed.
 Follow [the H012 launch contract](docs/h012-flash-1m-launch.md). Keep Sova paused
