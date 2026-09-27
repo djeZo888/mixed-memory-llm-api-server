@@ -1,8 +1,10 @@
 # MiMo Pro-RL qualification — 27 September 2026
 
-Original window: **10:48:08–13:48:08 UTC**. The user extended it by two hours
-to **15:48:08 UTC** to investigate slow decode. This report is an intermediate
-checkpoint; the full 4K/16K/64K ladder is complete, while profiling is in progress.
+Original window: **10:48:08–13:48:08 UTC**. Two user-authorized extensions make
+the current final deadline **17:48:08 UTC**. This is an intermediate checkpoint:
+the initial 4K/16K/64K ladder is complete and output speed has improved. The user
+now requests a new ladder at final optimized settings, maximum safe configured
+context and full Sova integration with MiMo as the primary frontier.
 
 ## Candidate and completed work
 
@@ -21,7 +23,7 @@ checkpoint; the full 4K/16K/64K ladder is complete, while profiling is in progre
   status changes passed **68 offline tests**; live lifecycle and application
   acceptance are still separate requirements.
 
-## Benchmarks
+## Historical ladder before the output-speed correction
 
 All measured rungs use the same **131,072-token configured window**, F16 KV
 cache with compact sliding-window storage, CPU-MoE placement, batch/ubatch
@@ -129,9 +131,34 @@ The available PCIe traffic and GPU activity counters are not VRAM bandwidth.
 R6 settled normally and GLM readiness was restored at 14:25:33. R7 started at
 14:28:05 with exactly one runtime change: `GOMP_SPINCOUNT=0`. It retains the
 same 64 threads, NUMA placement, weights, kernels, GPU and fixtures. Startup
-guards and the actual environment passed readback; performance is pending.
+guards and the actual environment passed readback. The completed unprofiled
+128-token sample reached **5.885 output tokens/s**, versus 0.935 before the change.
+A longer, unprofiled 512-token sample reached **6.005 output tokens/s** in
+87.48 seconds overall. These capped responses measure throughput, not quality.
+The profiled 128-token sample reached 3.364 tokens/s; instrumentation and run
+order affect that comparison, so it is not the production-speed estimate.
 The paid launcher session exited at 14:32:20 while the bounded native owner
 continued. Admission closes at 15:15 and settlement begins by 15:35.
+
+The R7 CPU profile averaged 8.59 core equivalents at IPC 2.53. The earlier
+spin loops no longer dominated; scheduler transitions and MXFP4 matrix work
+became the largest sampled costs. Whole-container lifetime memory peaked at
+611.33 GiB, including reclaimable file cache; the latest split was approximately
+497.25 GiB anonymous memory, 112.81 GiB file cache and 0.98 GiB kernel memory.
+Owned swap remained zero and the frontier GPU reached at most 46°C.
+
+A further single-variable trial now compares 16 decode threads with 64, while
+retaining 64 input-processing threads and all other inference settings. Once
+the configuration is selected, a new 4K/16K/64K ladder will use the final allocated
+context. The first allocation target is decimal 1,000,000 tokens; 917,504 is the
+fallback if actual allocation or workspace fails the 7% GPU reserve.
+
+The user-supplied 20-second Proxmox capture began at 14:54:34 UTC, after MiMo
+had stopped generating. Its four intervals estimated 1.61, 1.66, 4.84 and
+1.63 GB/s across the whole host. This is an **idle baseline, not MiMo bandwidth**.
+All eight controllers supplied read/write counters without multiplexing.
+The conversion follows Linux's Zen5 estimate of 64 bytes per CAS command.
+A coordinated decode capture is deferred until the user returns.
 
 See the [resolved profile and launch evidence](../reports/h016-20260927/worker1/profile8/HANDOFF.md).
 No repeated large-context benchmark, GPU-profiler injection or unreviewed
@@ -147,9 +174,13 @@ most expert layers GPU-resident, also a different workload and architecture.
 
 ## Integration and capacity limits
 
-The actual MiniMax 17-tool schema was counted at 9,461 input tokens. That is
-**count-only** evidence; native generation with the complete roster and the
-65,536 output setting, plus real harness delegation, are still pending.
+An initial native request using the full MiniMax 17-tool roster and the 65,536
+output ceiling generated a response, but the session-bound receiver was
+interrupted before saving the complete stream. Tool execution and continuation
+did not run. This is an orchestration failure and **does not qualify integration**.
+Future clients run as independent Linux services with durable receipts. The
+full check will run at the selected final settings, followed by real harness
+delegation and independent parent verification.
 
 The candidate harness shares the existing frontier queue with GLM. Qwen remains
 the coordinator and usual coding worker. This first MiMo integration buffers
@@ -181,5 +212,7 @@ four-way stress test, BMC/fan/ECC change, driver change or reboot was performed.
 - [Ordinary allocation snapshot](../reports/h016-20260927/worker1/phase4/STATUS.json)
 - [Harness integration source](../reports/h016-mimo-integration-20260927/REPORT.md)
 - [Single-owner source and test limits](../reports/h016-production-owner-20260927/REPORT.md)
+- [R7 output-speed correction and receiver incident](../reports/h016-20260927/worker1/profile9/HANDOFF.md)
+- [Staged harness and held activation](../reports/h016-final-integration-20260927/REPORT.md)
 
 Credentials, model shards and bulky traces remain outside Git.

@@ -2,6 +2,28 @@
 
 ## Active H016 execution window
 
+Latest user extension at14:56UTC adds two more hours: **final17:48:08UTC**.
+MiMo Pro is now explicitly the intended primary frontier replacing GLM, after
+qualification. Keep two Qwen instances and the image model. R7's single
+GOMP_SPINCOUNT=0 change improved unprofiled output to5.885tok/s for128 tokens
+and6.005tok/s for512; profiled3.364tok/s is separate. One further -t16/-tb64
+comparison is authorized across the same8guestNUMAs. Choose the winner, then
+validate maximum safe F16 allocation (target decimal1,000,000, fallback917,504)
+while retaining7% freeVRAM. No cache precision change or occupied1M benchmark.
+The user explicitly requests a NEW4K/16K/64K ladder at final optimized settings;
+the old prohibition below no longer applies to that new ladder. Complete native
+17-tool/65,536-ceiling and actual Sova delegation before primary activation.
+All clients must be independent Linuxsystemd jobs with durable streamed
+timestamps/results; never SIGINT/resume a CLI whose foreground tool owns a
+request. One native17 response completed but its local driver was interrupted
+and its terminal SSE/tool continuation was lost; it is NOT_QUALIFIED, not a
+model failure. A14:54:34 Proxmox UMC capture was idle, not decode. Preserve it
+and coordinate a replacement with actual native phase evidence.
+Existing R7 still has immutable15:15/15:35 boundaries. New experimental owners
+close admission17:00 and settle17:25, leaving recovery/reporting before17:48:08.
+Qualified permanent production may remain warm. This paragraph supersedes older
+15:48 checkpoint and initial131K promotion instructions below. Read latestSTATUS.
+
 On27September the user authorized final MiMo shard verification/recovery,
 native integration, warmed4K/16K/64K benchmarks and maximum-context analysis.
 Original window10:48:08–13:48:08UTC. At~13:26 the user extended it by two

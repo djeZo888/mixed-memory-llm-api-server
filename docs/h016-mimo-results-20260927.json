@@ -1,10 +1,11 @@
 {
   "schema_version": 1,
-  "status": "LADDER_COMPLETE_DECODE_INVESTIGATION_ACTIVE",
+  "status": "OPTIMIZATION_CONFIRMED_FINAL_CAPACITY_AND_INTEGRATION_ACTIVE",
   "window": {
     "start_utc": "2026-09-27T10:48:08Z",
-    "deadline_utc": "2026-09-27T15:48:08Z",
-    "original_deadline_utc": "2026-09-27T13:48:08Z"
+    "deadline_utc": "2026-09-27T17:48:08Z",
+    "original_deadline_utc": "2026-09-27T13:48:08Z",
+    "first_extended_deadline_utc": "2026-09-27T15:48:08Z"
   },
   "model": {
     "repository": "AesSedai/MiMo-V2.6-Pro-RL-GGUF",
@@ -80,8 +81,8 @@
     "harness_built": true,
     "host_release_staged": true,
     "native_basic_text_tool_continuation_passed": true,
-    "native_full_17_tool_qualification": "NOT_TESTED",
-    "requested_65536_output_ceiling_live_qualification": "NOT_TESTED",
+    "native_full_17_tool_qualification": "NOT_QUALIFIED_LOCAL_RECEIVER_INTERRUPTED",
+    "requested_65536_output_ceiling_live_qualification": "SUBMITTED_AND_NATIVE_SLOT_READBACK_ONLY_FULL_TOOL_CONTINUATION_PENDING",
     "live_production_owner_lifecycle": "NOT_TESTED",
     "actual_harness_delegation": "NOT_TESTED",
     "sova_mimo_enabled": false
@@ -129,24 +130,67 @@
       "settled_original_glm_ready_utc": "2026-09-27T14:25:33.556894Z"
     },
     "r7": {
-      "status": "LOADING_AT_LAST_VERIFIED_CHECKPOINT",
+      "status": "COMPLETE_SPEEDUP_CONFIRMED",
       "native_started_utc": "2026-09-27T14:28:05.871420053Z",
       "only_runtime_delta": {
         "GOMP_SPINCOUNT": "0"
       },
       "decode_threads": 64,
       "batch_threads": 64,
-      "result": null
+      "result": {
+        "unprofiled_128_output_tps": 5.885186,
+        "profiled_128_output_tps": 3.363969,
+        "unprofiled_512_output_tps": 6.0046127881965905,
+        "unprofiled_128_improvement_factor": 6.29289,
+        "scope": "Unscored throughput fixtures; profile overhead and run order differ."
+      },
+      "evidence": "reports/h016-20260927/worker1/profile9",
+      "cpu_profile": {
+        "average_core_equivalents": 8.590875,
+        "ipc": 2.533,
+        "sampled_finish_task_switch_percent": 49.52,
+        "sampled_mxfp4_gemv_percent": 38.13
+      },
+      "memory_evidence": "reports/h016-20260927/worker1/profile9/GUARD-MEMORY.json"
     },
     "host_dram_bandwidth": {
-      "status": "COUNTERS_READY_MEASUREMENT_PENDING",
+      "status": "IDLE_CAPTURE_ONLY_DECODE_CAPTURE_DEFERRED",
       "host_perf_version": "6.12.107",
       "umc_devices": 8,
-      "scope": "whole Proxmox host, not VM-only"
+      "scope": "whole Proxmox host, not VM-only",
+      "capture_start_utc": "2026-09-27T14:54:34Z",
+      "estimated_bytes_per_cas": 64,
+      "interval_estimated_total_GB_s": [
+        1.611230496544471,
+        1.6551268753630786,
+        4.83897444063554,
+        1.6296654298508644
+      ],
+      "note": "Capture starts after native decode ended. No inference bandwidth claim. User away; coordinated replacement optional after return."
     },
     "gpu_vram_bandwidth": {
       "status": "NOT_MEASURED",
       "reason": "Available activity and PCIe counters do not measure VRAM byte traffic; exact native run was not launched under a supported GPU byte-counter profiler."
+    },
+    "r8": {
+      "status": "SOURCE_REVIEWED_PENDING_LAUNCH",
+      "only_inference_delta": "decode threads64 to16; batch threads64 retained",
+      "configured_context": 131072,
+      "GOMP_SPINCOUNT": "0",
+      "test": "Same unprofiled83-input/128-output fixture after discarded tiny warmup"
     }
+  },
+  "benchmarks_scope": "Historical pre-optimization R5 ladder at131072 configured context. A new ladder at selected optimized settings and final allocated context is authorized and pending.",
+  "final_capacity_plan": {
+    "target_decimal_tokens": 1000000,
+    "fallback_tokens": 917504,
+    "cache_precision": "F16",
+    "minimum_gpu_free_fraction": 0.07,
+    "host_reserve_fraction": 0.15,
+    "status": "PROJECTION_ONLY_ACTUAL_ALLOCATION_PENDING",
+    "largest_new_occupied_test_tokens": 65536,
+    "primary_frontier": "mimo-v2.6-pro-rl",
+    "qwen_instances": 2,
+    "image_model_preserved": true
   }
 }
