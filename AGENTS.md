@@ -83,7 +83,12 @@ Preserve primary and cleanup failures separately and retain genuine request
 ambiguity. Cleanup failure without a request is not proof of an active request.
 
 Retain7% free frontier VRAM,15% available host memory, Qwen16GiB and Ada5%
-reserves; stop on owned swap/OOM or85C/the lower hardware limit. No four-way
+reserves; stop on owned swap/OOM or85C/the lower hardware limit. Aggregate host
+swap changes are not proof that MiMo swapped: the H017 load stopped on that
+comparison despite owned swap0 and about652GiB host available. Diagnose the
+actual delta; a reviewed narrow correction may retain host swap as telemetry
+while keeping zero owned swap, zero OOM and the15% available-memory floor.
+No four-way
 stress before improved physical cooling and separate user authorization. No
 BMC/fan/ECC/driver/reboot/Proxmox work in H017. Existing manual server-GPU fans
 remain unchanged. Installer work remains paused.
