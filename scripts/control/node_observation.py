@@ -33,6 +33,62 @@ IMAGE_REVISION = '790c92633540aa0cb11d9abf19eb46d861714758'
 PROFILE_ROOT = Path('/usr/local/lib/llm-server/node-api/configs/deployments')
 UNITS = {'control': 'llm-control.service', 'image': 'llm-image-api.service',
          'node': 'llm-node.service'}
+# Exact historical 480K and pending H013 1M source identities, not qualification.
+# Publish capacity only after authenticated native allocation agrees below.
+FLASH_CONTEXT_SOURCES = {
+    480000: {
+        'file_auth.py': '841e7968e89504fd4f03210476423a49e2145c9d2b7cc4d7d32fc65a780405b8',
+        'tokenize_adapter.py': '31273f8be764a526f62da55e0038b87cb90fef7b05468de184e840ca4d6eec55',
+        'idle.py': '030037024701cacf1f0accff8edb273cd7d1c290df53f87077fb740aec38638b',
+    },
+    1048576: {
+        'file_auth.py': '5cad2c509e5c82cd7162f7a10ded2d08c4af768a20dbb9d8ddafb9a49fa5ecbb',
+        'tokenize_adapter.py': 'f5f863fd41732a7e56cb73e883471572819ac4554b687befd8e6205006509386',
+        'idle.py': '3fd14b64793b79d97da179c98606c1f9b58a05420fe3eb01096d0301e63086e4',
+    },
+}
+FLASH_COMMON_SOURCES = {
+    'owner.py': 'd4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1',
+    'tool_runtime.py': 'bd44a5a2970bfe5cc4c789b526a6b8b605b7bfb0d4a650da83adc0a43ac346fa',
+    'native-source-pins.json': 'b5fab69c0466d61adda5ea02494e87bab61beff2bc0194f28b3ac4aa7d77f195',
+    'numa-seccomp.json': '835759ce29944318d0a8de36cc62940e79125a15eedec3448fde1edd3fa320bf',
+}
+
+
+def flash_source_context(config, read):
+    from runtime.flash.owner import BASE
+    manifest = config.get('source_sha256', {})
+    names = {'file_auth.py', 'tokenize_adapter.py', 'idle.py', 'owner.py',
+             'tool_runtime.py', 'native-source-pins.json', 'numa-seccomp.json'}
+    if type(manifest) is not dict or set(manifest) != names:
+        raise ValueError('frontier_source_manifest_unknown')
+    if any(manifest[name] != digest for name, digest in FLASH_COMMON_SOURCES.items()):
+        raise ValueError('frontier_common_source_unknown')
+    for name, digest in manifest.items():
+        if (type(digest) is not str or not HEX.fullmatch(digest)
+                or hashlib.sha256(read(Path(BASE) / 'source' / name,
+                    modes={0o644}, maximum=1024*1024)).hexdigest() != digest):
+            raise ValueError('frontier_source_identity_changed')
+    for context, pins in FLASH_CONTEXT_SOURCES.items():
+        if all(manifest[name] == digest for name, digest in pins.items()):
+            return context
+    raise ValueError('frontier_context_source_unknown')
+
+
+def flash_native_context(code, value, context):
+    if code != 200 or type(context) is not int or context not in FLASH_CONTEXT_SOURCES or type(value) is not dict:
+        raise ValueError('frontier_native_capacity_unknown')
+    states = value.get('internal_states', [])
+    if type(states) is not list or any(type(row) is not dict for row in states):
+        raise ValueError('frontier_native_capacity_unknown')
+    expected = {'context_length': context, 'max_total_tokens': context,
+                'max_total_num_tokens': context, 'max_req_input_len': context - 6}
+    for field, expected_value in expected.items():
+        values = [row[field] for row in [value, *states] if field in row]
+        if not values or any(type(v) is not int or v != expected_value for v in values):
+            raise ValueError('frontier_native_capacity_mismatch')
+    return {'configured_context_tokens': context,
+            'deployment_id': 'glm-5.3-flash-' + str(context) + '-fp8-kt'}
 
 
 def generation(value):
@@ -55,7 +111,8 @@ def strict_json(raw):
 
 def native_get(port, path, key, seconds):
     if (port, path) not in ((30002, '/v1/readiness'), (30004, '/v1/readiness'),
-                            (30010, '/v1/readiness'), (30006, '/v1/image-capabilities'), (30000, '/control/v1/readiness')):
+                            (30010, '/v1/readiness'), (30010, '/get_server_info'),
+                            (30006, '/v1/image-capabilities'), (30000, '/control/v1/readiness')):
         raise ValueError('unregistered_passive_route')
     conn = http.client.HTTPConnection('127.0.0.1', port, timeout=max(.001, seconds))
     deadline = time.monotonic() + seconds
@@ -337,11 +394,14 @@ class CanonicalIdentityReader:
                 validate_container(raw[0], config, state)
             else:
                 self._absent(NAME, remaining())
-            result.update(selected='glm-5.3-flash', deployment_id='glm-5.3-flash-480000-fp8-kt',
-                model_alias='glm-5.3-flash', configured_context_tokens=480000, max_output_tokens=65536,
+            binding.validate_path('services', BASE + '/source')
+            source_context = flash_source_context(config, self.read)
+            result.update(selected='glm-5.3-flash', deployment_id=None,
+                model_alias='glm-5.3-flash', configured_context_tokens=None, max_output_tokens=65536,
+                source_context_tokens=source_context,
                 installed_capabilities=['chat.completions'], owner_identity=owner,
                 running=bool(owner and owner['running']), ownership_valid=True)
-            semantics = [state, owner]
+            semantics = [state, owner, config['source_sha256']]
         else:
             state = binding.read_json('services', binding.path('services', 'image21-runtime-20260923/state.json'))
             if state.get('schema_version') != 1 or state.get('owner') != IMAGE_OWNER:
@@ -520,6 +580,17 @@ class PassiveServiceCollector:
             if self.service_id == 'glm-5.3-flash':
                 response = self.get(30010, '/v1/readiness', key, max(.001, seconds - (self.clock() - started)))
                 status = text_readiness(*response, 'glm-5.3-flash')
+                if status['ready']:
+                    capacity = flash_native_context(*self.get(30010, '/get_server_info', key,
+                        max(.001, seconds - (self.clock() - started))), result.get('source_context_tokens'))
+                    # Bracket readback with the same source/container/boot identity.
+                    current = self.reader.service(self.service_id, max(.001, seconds - (self.clock() - started)))
+                    if (type(result.get('generation')) is not int or type(current.get('generation')) is not int
+                            or not current.get('ownership_valid') or not current.get('running')
+                            or current.get('generation') != result.get('generation')
+                            or self.clock() - started >= seconds):
+                        raise ValueError('frontier_capacity_identity_changed')
+                    status.update(capacity)
             elif self.service_id == 'image':
                 response = self.get(30006, '/v1/image-capabilities', key, max(.001, seconds - (self.clock() - started)))
                 status = image_readiness(*response)

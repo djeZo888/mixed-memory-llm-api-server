@@ -46,7 +46,7 @@ class FlashTokenize(unittest.TestCase):
                 return types.SimpleNamespace(prompt_ids=[1,2,3,4])
         payload = self.payload() | {'tools':[{'type':'function','function':{'name':'weather'}}]}
         result = a.count_native(payload, request_type=types.SimpleNamespace, serving_chat=Serving())
-        self.assertEqual(result['count'], 4); self.assertEqual(result['context_limit'], 480000)
+        self.assertEqual(result['count'], 4); self.assertEqual(result['context_limit'], 1048576)
         self.assertEqual(calls[0][0].tools, payload['tools']); self.assertFalse(calls[0][1])
 
     def test_no_character_estimate_fallback(self):

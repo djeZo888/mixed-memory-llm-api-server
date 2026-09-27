@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { configureProfile, localConfig, MODEL, MODEL_REF, REQUEST_TIMEOUT_MS, SHARED_SLOT_INSTRUCTIONS, CURATED_SKILLS, SKILLS_SOURCE, SEARXNG_URL, IMAGE_TIMEOUT_MS, localMcpConfig, FRONTIER_INSTRUCTIONS, FRONTIER_SLOT_POLICY, frontierAgentMarkdown } from './configure-profile.mjs';
+import { configureProfile, localConfig, MODEL, MODEL_REF, REQUEST_TIMEOUT_MS, SHARED_SLOT_INSTRUCTIONS, CURATED_SKILLS, SKILLS_SOURCE, SEARXNG_URL, IMAGE_TIMEOUT_MS, localMcpConfig, FRONTIER_INSTRUCTIONS, FRONTIER_SLOT_POLICY, FRONTIER_CONTEXT, frontierAgentMarkdown, seedFrontierAgent } from './configure-profile.mjs';
 
 const reviewedSource = realpathSync(existsSync(SKILLS_SOURCE) ? SKILLS_SOURCE : fileURLToPath(new URL('../../skills', import.meta.url)));
 const configure = env => configureProfile(env, reviewedSource);
@@ -255,7 +255,11 @@ test('managed frontier custom agent uses native model/limits and preserves tools
   assert.deepEqual(Object.keys(config.agents), ['default']);
   assert.equal(config.custom_provider.frontier.options.baseURL, 'http://10.0.2.2:8081/frontier/v1');
   assert.equal(config.custom_provider.frontier.options.timeout, REQUEST_TIMEOUT_MS);
+  assert.equal(FRONTIER_CONTEXT, 1048576);
+  assert.deepEqual(config.custom_provider.frontier.models['glm-5.3-flash'].limit, { context: 1048576, output: 65536 });
+  assert.equal(config.defaultModelContextWindow, 480000);
   const markdown = frontierAgentMarkdown();
+  assert.match(markdown, /contextWindow: 1048576/);
   assert.match(markdown, /model: custom_provider:frontier\/glm-5.3-flash/);
   assert.match(markdown, /disallowedTools: \[task, task_append\]/);
   assert.match(markdown, /effort: high/);
@@ -275,5 +279,37 @@ test('managed frontier seed preserves custom conflict and rejects symlink escape
     assert.equal(readFileSync(agent, 'utf8'), 'User-owned custom frontier.');
     unlinkSync(agent); symlinkSync('/tmp/unused-h008-agent-target', agent);
     assert.throws(() => configure(env));
+  } finally { rmSync(profile, { recursive: true, force: true }); }
+});
+
+
+test('H013 frontier migration changes only exact protected managed 480K agent bytes', () => {
+  const profile = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'h013-profile-')));
+  const directory = path.join(profile, 'agents', 'frontier');
+  const agent = path.join(directory, 'agent.md');
+  const previous = frontierAgentMarkdown().replace('contextWindow: 1048576', 'contextWindow: 480000');
+  try {
+    mkdirSync(directory, { recursive: true, mode: 0o700 });
+    writeFileSync(agent, previous, { mode: 0o600 });
+    writeFileSync(path.join(directory, 'user-notes.txt'), 'untouched notes');
+    writeFileSync(path.join(profile, 'history.json'), '{"untouched":true}');
+    seedFrontierAgent(profile);
+    assert.equal(readFileSync(agent, 'utf8'), frontierAgentMarkdown());
+    assert.equal(lstatSync(agent).mode & 0o777, 0o600);
+    seedFrontierAgent(profile);
+    assert.equal(readFileSync(path.join(directory, 'user-notes.txt'), 'utf8'), 'untouched notes');
+    assert.equal(readFileSync(path.join(profile, 'history.json'), 'utf8'), '{"untouched":true}');
+    writeFileSync(agent, previous + '\nUser addition.');
+    assert.throws(() => seedFrontierAgent(profile), /explicit migration required/);
+    assert.equal(readFileSync(agent, 'utf8'), previous + '\nUser addition.');
+    writeFileSync(agent, previous); chmodSync(agent, 0o620);
+    assert.throws(() => seedFrontierAgent(profile), /unsafe skills file/);
+    chmodSync(agent, 0o600); chmodSync(directory, 0o720);
+    assert.throws(() => seedFrontierAgent(profile), /unsafe skills directory/);
+    chmodSync(directory, 0o700);
+    linkSync(agent, path.join(directory, 'hard-link'));
+    assert.throws(() => seedFrontierAgent(profile), /unsafe skills file/);
+    assert.equal(readFileSync(agent, 'utf8'), previous);
+    assert.deepEqual(readdirSync(path.join(profile, 'agents')), ['frontier']);
   } finally { rmSync(profile, { recursive: true, force: true }); }
 });

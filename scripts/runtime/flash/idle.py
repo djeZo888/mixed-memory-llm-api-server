@@ -48,7 +48,7 @@ def install(scheduler_module):
         import torch
         native={'context':self.model_config.context_len,'pool':self.max_total_num_tokens,
                 'max_req_len':self.max_req_len,'max_req_input_len':self.max_req_input_len}
-        if native != {'context':480000,'pool':480000,'max_req_len':479999,'max_req_input_len':479994}:
+        if native != {'context':1048576,'pool':1048576,'max_req_len':1048575,'max_req_input_len':1048570}:
             raise RuntimeError('flash_native_allocation_mismatch')
         if torch.cuda.get_device_capability() != (12,0):
             raise RuntimeError('flash_sm120_device_required')

@@ -1,5 +1,6 @@
 import { constants, closeSync, fstatSync, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 export const CURATED_SKILLS = Object.freeze(['technical-research', 'code-investigation', 'calculations', 'technical-testing', 'pdf', 'image']);
@@ -7,7 +8,8 @@ export const SKILLS_SOURCE = '/opt/ai-harness/skills';
 export const SEARXNG_URL = 'http://10.0.2.2:8082';
 export const IMAGE_TIMEOUT_MS = 50 * 60 * 1000;
 
-export const FRONTIER_CONTEXT = 480000; // Replace only with reviewed qualification; gateway independently enforces it.
+export const FRONTIER_CONTEXT = 1048576; // H013 source candidate only; gateway config stays unqualified until reviewed PASS.
+const PRIOR_FRONTIER_AGENT_SHA256 = 'ac773137a850439b9109bc22080071d46d60b8758ad9660d15981f7a7c761dfe';
 export const FRONTIER_MODEL = 'glm-5.3-flash';
 export const FRONTIER_INSTRUCTIONS = 'Qwen is the default coordinator and ordinary coding/agentic worker. Select task(agent_name=frontier) for deep research, multi-document analysis, hard reasoning or independent diagnosis. Exceptional stuck coding needs explicit justification and Qwen verification. Frontier shares the workspace: code changes must be foreground or explicitly disjoint ownership. Use native task ownership, cancellation and result reuse. Neither model is presumed universally superior.\n';
 export const FRONTIER_SLOT_POLICY = 'Managed slot clarification: the two shared inference slots above are Qwen slots. Frontier GLM-5.3-Flash has one separate inference slot and queue. Flash model input is text-only; use browser/search/PDF text or OCR and approved image generation/edit MCP tools. Main Qwen vision is unchanged.\n';
@@ -222,6 +224,7 @@ Use the normal approved tools, research, browser, search, PDF, code and image ca
 `;
 }
 export function seedFrontierAgent(profile) {
+  safeDirectory(profile, true);
   const agents = path.join(profile, 'agents');
   if (!statIfPresent(agents)) mkdirSync(agents, { mode: 0o700 });
   safeDirectory(agents, true);
@@ -230,7 +233,21 @@ export function seedFrontierAgent(profile) {
   const content = Buffer.from(frontierAgentMarkdown());
   if (statIfPresent(directory)) {
     safeDirectory(directory, true);
-    if (!safeRead(target, true).equals(content)) throw new Error('Existing frontier agent differs; explicit migration required.');
+    const previous = safeRead(target, true);
+    if (previous.equals(content)) return;
+    // Only the exact prior reviewed 480K managed file is eligible. Custom bytes,
+    // unsafe ownership/modes, links and extra profile content are never adopted.
+    if (createHash('sha256').update(previous).digest('hex') !== PRIOR_FRONTIER_AGENT_SHA256) {
+      throw new Error('Existing frontier agent differs; explicit migration required.');
+    }
+    const staging = mkdtempSync(path.join(agents, '.frontier-migrate-'));
+    try {
+      const replacement = path.join(staging, 'agent.md');
+      writeFileSync(replacement, content, { mode: 0o600, flag: 'wx' });
+      safeDirectory(profile, true); safeDirectory(agents, true); safeDirectory(directory, true);
+      if (!safeRead(target, true).equals(previous)) throw new Error('Frontier agent changed during migration.');
+      renameSync(replacement, target);
+    } finally { rmSync(staging, { recursive: true, force: true }); }
     return;
   }
   const staging = mkdtempSync(path.join(agents, '.frontier-'));

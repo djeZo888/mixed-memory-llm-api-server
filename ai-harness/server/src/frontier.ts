@@ -3,7 +3,7 @@ import { ApiError } from "./errors.js";
 export const FRONTIER_REVISION = "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a";
 // Root-frozen source evidence: SGLang-KT tp_worker.py267-271,
 // scheduler.py1395 and utils.py101 at this exact revision (Flash pin above).
-// With context/pool 480000: input <=479993, input+requested output <=479998.
+// For accepted pool P: input <=P-7, input+requested output <=P-2.
 // Actual pool/readback remains a backend activation gate.
 export const FRONTIER_RUNTIME_REVISION =
   "541ddc37cbc92c60dc748db5ff1a2aad0b069a80";
@@ -24,7 +24,7 @@ export interface FrontierRecord {
   updatedAt: string;
 }
 export interface FrontierOptions {
-  contextWindow: 128000 | 256000 | 480000;
+  contextWindow: 128000 | 256000 | 480000 | 1048576;
   tokenizerRevision: string;
   templateRevision: string;
   upstreamKey: string | (() => string | Promise<string>);
@@ -194,7 +194,7 @@ export async function countFrontier(
   signal: AbortSignal,
 ) {
   if (
-    ![128000, 256000, 480000].includes(options.contextWindow) ||
+    ![128000, 256000, 480000, 1048576].includes(options.contextWindow) ||
     options.tokenizerRevision !== FRONTIER_REVISION ||
     options.templateRevision !== FRONTIER_REVISION
   )
@@ -286,7 +286,7 @@ export function frontierConfiguration(
     v.qualified !== true ||
     v.model !== FRONTIER_MODEL ||
     typeof v.contextWindow !== "number" ||
-    ![128000, 256000, 480000].includes(v.contextWindow) ||
+    ![128000, 256000, 480000, 1048576].includes(v.contextWindow) ||
     v.maxOutputTokens !== 65536 ||
     v.tokenizerRevision !== FRONTIER_REVISION ||
     v.templateRevision !== FRONTIER_REVISION

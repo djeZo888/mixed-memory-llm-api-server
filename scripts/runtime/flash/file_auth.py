@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from tokenize_adapter import normalized_text_request, count_native, install_tokenize_route, MAX_BODY, MODEL
 
 PORT = 30010
-BOUNDS = {'max_input_tokens':479993, 'max_total_tokens':479998}
+BOUNDS = {'max_input_tokens':1048569, 'max_total_tokens':1048574}
 
 def verify_sources():
     pins = json.loads(Path(__file__).with_name('native-source-pins.json').read_text())
@@ -125,7 +125,7 @@ def main():
     from sglang.srt.entrypoints import http_server as server
     from sglang.srt.entrypoints.openai.protocol import ChatCompletionRequest
     argv=['--model-path','/models','--served-model-name',MODEL,'--host','127.0.0.1','--port',str(PORT),
-          '--tp-size','1','--context-length','480000','--max-total-tokens','480000',
+          '--tp-size','1','--context-length','1048576','--max-total-tokens','1048576',
           '--max-running-requests','1','--mem-fraction-static','0.65','--chunked-prefill-size','2048',
           '--kt-weight-path','/models','--kt-method','FP8','--kt-cpuinfer','64','--kt-threadpool-count','8','--kt-numa-nodes','0','1','2','3','4','5','6','7','--kt-num-gpu-experts','0',
           '--kt-gpu-prefill-token-threshold','2048','--tool-call-parser','glm47','--reasoning-parser','glm45',
@@ -134,7 +134,7 @@ def main():
     native_parser=argparse.ArgumentParser()
     ServerArgs.add_cli_args(native_parser)
     args=ServerArgs.from_cli_args(native_parser.parse_args(argv))
-    assert args.context_length==args.max_total_tokens==480000 and args.api_key is None
+    assert args.context_length==args.max_total_tokens==1048576 and args.api_key is None
     install_tokenize_route(server,ChatCompletionRequest)
     install_readiness(server)
     server.app.add_middleware(ContractMiddleware,key=key,server=server,request_type=ChatCompletionRequest)

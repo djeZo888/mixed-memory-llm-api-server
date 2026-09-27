@@ -66,7 +66,7 @@ class SharedHttpPolicy(unittest.TestCase):
             for payload in bad:self.assertEqual(self.client.post(route,json=payload,headers=self.headers).status_code,400)
 
     def test_native_input_and_sum_bounds(self):
-        for n,max_tokens,code in [(479993,5,200),(479994,1,400),(479993,6,400)]:
+        for n,max_tokens,code in [(1048569,5,200),(1048570,1,400),(1048569,6,400)]:
             r=self.client.post('/v1/tokenize',json=self.payload('x'*n)|{'max_tokens':max_tokens},headers=self.headers)
             self.assertEqual(r.status_code,code)
 
