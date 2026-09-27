@@ -1,0 +1,1 @@
+{"utc": "2026-09-27T02:16:21.737799+00:00", "purpose": "read-only nested transaction diagnosis; no start/save or container mutation", "source_manifest_sha256": "423a18cb6dbcdcc89e3150e404ebe819a8d2c6b8af301be67ac1f8b7d185554b", "outer_canonical_lease_acquired": true, "ops_lease_is_none_inside_outer": true, "nested_transaction_exception": "LeaseBusy", "outer_lease_released": true}

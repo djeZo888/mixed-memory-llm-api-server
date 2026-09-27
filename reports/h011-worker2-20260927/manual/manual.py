@@ -94,6 +94,12 @@ def cleanup_decision(candidate_present, identity_valid, stop_confirmed):
     if candidate_present and (not identity_valid or not stop_confirmed):return 'QUARANTINE'
     return 'RESTORE_ORIGINAL'
 
+def canonical_mounts(mounts):
+    require(type(mounts) is list,'mounts_invalid')
+    require(all(type(m) is dict and type(m.get('Destination')) is str for m in mounts),'mount_destination_invalid')
+    require(len({m['Destination'] for m in mounts})==len(mounts),'duplicate_mount_destination')
+    return sorted(mounts,key=lambda m:m['Destination'])
+
 class Ops:
     def __init__(self):
         require(os.getuid()==0,'root_owner_required')
@@ -174,6 +180,7 @@ class Ops:
         for row in selected:
             c=inspect(row['ID']);require(c['State']['Running'],'other_model_not_running')
             identity={k:c[k] for k in ('Id','Image','HostConfig','Config','Mounts')}
+            identity['Mounts']=canonical_mounts(identity['Mounts'])
             result[c['Name']]={'id':c['Id'],'image':c['Image'],'started_at':c['State']['StartedAt'],
                                'identity_sha256':sha(json.dumps(identity,sort_keys=True,separators=(',',':')).encode())}
         return result
@@ -479,23 +486,27 @@ def job_run():
 def start(acknowledged):
     require(acknowledged,'fresh_harness_stopped_and_all_clients_settled_ack_required')
     ops=Ops()
-    with ops.transaction():
-        require(not Path(LOG,PREFIX+'-OWNER.json').exists() and not Path(LOG,PREFIX+'.json').exists(),'duplicate_or_stale_job_no_replay')
-        ops.idle_precondition();config,state,c=ops.original()
-        manifest=protected(STAGE+'/candidate-sha256.json',(0o644,))
-        job={'schema_version':1,'owner':OWNER,'nonce':uuid.uuid4().hex,'status':'OWNED_BEFORE_DISPATCH',
-             'started_utc':now(),'hard_end_epoch':time.time()+TOTAL,'phase_budgets_seconds':BUDGET,
-             'boot_id':Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
-             'source_manifest_sha256':sha(manifest),'image':IMAGE,'unit':UNIT,
-             'fresh_manual_prerequisite_acknowledged':True,'atomic_native_drain_claim':False,
-             'candidate_id':None,'automatic_retry':False,'success_policy':RETAINED}
-        ops.save(PREFIX+'-OWNER.json',job,exclusive=True)
-        # systemd owns the independent process. No ExecStop/Post removes models.
-        run(['systemd-run','--unit='+UNIT,'--property=Type=exec','--property=RuntimeMaxSec='+str(TOTAL),
-             '--property=TimeoutStopSec=1830','--property=KillMode=control-group','--property=Restart=no',
-             '--property=UMask=0077','--property=StandardOutput=null','--property=StandardError=null',
-             '/usr/bin/python3','-I','-B',STAGE+'/manual.py','_run'],30)
-        job['status']='DISPATCHED';job['dispatch_utc']=now();ops.save(PREFIX+'-OWNER.json',job)
+    with ops.transaction() as (lease,_):
+        ops.lease=lease
+        try:
+            require(not Path(LOG,PREFIX+'-OWNER.json').exists() and not Path(LOG,PREFIX+'.json').exists(),'duplicate_or_stale_job_no_replay')
+            ops.idle_precondition();config,state,c=ops.original()
+            manifest=protected(STAGE+'/candidate-sha256.json',(0o644,))
+            job={'schema_version':1,'owner':OWNER,'nonce':uuid.uuid4().hex,'status':'OWNED_BEFORE_DISPATCH',
+                 'started_utc':now(),'hard_end_epoch':time.time()+TOTAL,'phase_budgets_seconds':BUDGET,
+                 'boot_id':Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
+                 'source_manifest_sha256':sha(manifest),'image':IMAGE,'unit':UNIT,
+                 'fresh_manual_prerequisite_acknowledged':True,'atomic_native_drain_claim':False,
+                 'candidate_id':None,'automatic_retry':False,'success_policy':RETAINED}
+            ops.save(PREFIX+'-OWNER.json',job,exclusive=True)
+            # systemd owns the independent process. No ExecStop/Post removes models.
+            run(['systemd-run','--unit='+UNIT,'--property=Type=exec','--property=RuntimeMaxSec='+str(TOTAL),
+                 '--property=TimeoutStopSec=1830','--property=KillMode=control-group','--property=Restart=no',
+                 '--property=UMask=0077','--property=StandardOutput=null','--property=StandardError=null',
+                 '/usr/bin/python3','-I','-B',STAGE+'/manual.py','_run'],30)
+            job['status']='DISPATCHED';job['dispatch_utc']=now();ops.save(PREFIX+'-OWNER.json',job)
+        finally:
+            ops.lease=None
     return {k:job[k] for k in ('status','unit','nonce','started_utc','phase_budgets_seconds','success_policy')}
 
 def status_result(detail=False):

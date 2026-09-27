@@ -1,0 +1,30 @@
+[
+  {
+    "case": "original",
+    "status": "PASS",
+    "real_canonical_flock": true,
+    "real_receipt_files": true,
+    "result": "LeaseBusy"
+  },
+  {
+    "case": "corrected",
+    "status": "PASS",
+    "real_canonical_flock": true,
+    "real_receipt_files": true,
+    "result": "DISPATCHED"
+  },
+  {
+    "case": "dispatch_error",
+    "status": "PASS",
+    "real_canonical_flock": true,
+    "real_receipt_files": true,
+    "result": "RuntimeError"
+  },
+  {
+    "case": "existing_owner",
+    "status": "PASS",
+    "real_canonical_flock": true,
+    "real_receipt_files": true,
+    "result": "ValueError"
+  }
+]
