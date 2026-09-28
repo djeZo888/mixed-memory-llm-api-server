@@ -30,9 +30,16 @@
   "harness_routing": "not registered; later scope",
   "phase": "QUALIFIED_RESIDENT_LOOPBACK",
   "prior_port30012": "REJECTED before any bind; reserved MiMo endpoint",
-  "load_deadline": "2026-09-28T23:35:00+00:00",
-  "acceptance_deadline": "2026-09-28T23:50:00+00:00",
   "allocated_pool_tokens": 200000,
   "occupied_input_tokens_tested": 15625,
-  "container_id": "5deb31661139ce99a1556aedef7438f22f27c8578b953eda9227095df5c03ebb"
+  "container_id": "5deb31661139ce99a1556aedef7438f22f27c8578b953eda9227095df5c03ebb",
+  "persistent_unit_enabled": true,
+  "next_start_warmup_timeout_seconds": 600,
+  "current_guard_original_deadlines": {
+    "load": "2026-09-28T23:35:00+00:00",
+    "acceptance": "2026-09-28T23:50:00+00:00",
+    "qualified": true
+  },
+  "profile_qualification": "immutable profile reusable; instance readiness freshly observed",
+  "next_start_runtime_tested": false
 }
