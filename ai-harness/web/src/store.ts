@@ -10,7 +10,7 @@ import {
   type ImageCapabilities,
 } from './image-capabilities';
 import { uploadKey, uploadProblem } from './uploads';
-import type { Artifact, Attachment, ServerEvent, Session, Snapshot, Thread } from './types';
+import type { Attachment, ServerEvent, Session, Snapshot, Thread } from './types';
 
 export interface ViewState {
   sessions: Session[];
@@ -30,7 +30,7 @@ export interface ViewState {
   imageJobsError: string | null;
   busy: Record<string, boolean>;
   attachments: Record<string, Attachment[]>;
-  imageReferences: Record<string, Artifact[]>;
+  imageReferences: Record<string, Attachment[]>;
   submitted: Record<string, string[] | undefined>;
 }
 export interface UploadUpdate {
@@ -55,6 +55,10 @@ export function pendingRunIds(state: ViewState, id: string): string[] {
     ]),
   ];
 }
+export const codexSpecialistAvailable = (state: ViewState, count = 1) =>
+  state.codexAvailable === true && state.codexHealth?.imageToolEnabled === true &&
+  canStageEditReference(state.imageCapabilities, count);
+
 export class HarnessStore {
   private state: ViewState = {
     sessions: [],
@@ -472,6 +476,9 @@ export class HarnessStore {
   send = (id: string, text: string) => {
     const attachments = lookup(this.state.attachments, id) ?? [];
     const imageReferences = lookup(this.state.imageReferences, id) ?? [];
+    if (this.state.thread?.session.id === id && this.state.thread.session.engineKind === 'codex' && imageReferences.length && !codexSpecialistAvailable(this.state,imageReferences.length)) {
+      this.update({error:'Codex image specialist is unavailable.'}); return Promise.resolve(false);
+    }
     if (
       (!text.trim() && attachments.length === 0 && imageReferences.length === 0) ||
       this.state.busy[busyKey('upload', id)] ||
@@ -555,7 +562,8 @@ export class HarnessStore {
     if (!artifact || !['image/png', 'image/jpeg'].includes(artifact.mimeType)) return;
     const current = lookup(this.state.imageReferences, id) ?? [];
     if (current.some((item) => item.id === artifactId)) return;
-    if (!canStageEditReference(this.state.imageCapabilities, current.length + 1)) {
+    if (!canStageEditReference(this.state.imageCapabilities, current.length + 1) ||
+      (this.state.thread.session.engineKind === 'codex' && !codexSpecialistAvailable(this.state, current.length + 1))) {
       this.update({
         error: `Image editing with ${current.length + 1} reference(s) is unavailable.`,
       });
@@ -637,6 +645,11 @@ export class HarnessStore {
       this.state.busy[busyKey('delete', id)]
     )
       return false;
+    // Engine identity belongs to the upload target, even when navigation changes
+    // the visible thread while a previous file is awaiting its response.
+    const targetSession = this.state.thread?.session.id === id
+      ? this.state.thread.session : this.state.sessions.find(session => session.id === id);
+    const targetIsCodex = targetSession?.engineKind === 'codex';
     const unique = [...new Map(files.map((file) => [uploadKey(file), file])).values()];
     if (!unique.length) return false;
     const generation = this.generation;
@@ -648,7 +661,7 @@ export class HarnessStore {
       id,
       async () => {
         const known = this.uploadedFiles.get(id) ?? new Map<string, string>();
-        const attachedIds = new Set((lookup(this.state.attachments, id) ?? []).map((a) => a.id));
+        const attachedIds = new Set([...(lookup(this.state.attachments, id) ?? []), ...(lookup(this.state.imageReferences, id) ?? [])].map((a) => a.id));
         for (const [key, attachmentId] of known) {
           if (!attachedIds.has(attachmentId)) known.delete(key);
         }
@@ -662,15 +675,20 @@ export class HarnessStore {
           const previous = known.get(uploadKey(file));
           if (
             previous &&
-            (lookup(this.state.attachments, id) ?? []).some((a) => a.id === previous)
+            [...(lookup(this.state.attachments, id) ?? []), ...(lookup(this.state.imageReferences, id) ?? [])].some((a) => a.id === previous)
           ) {
             onUpdate?.({ file, status: 'ready' });
             continue;
           }
           try {
+            const codex = targetIsCodex;
+            const imageFile = file.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg|avif|heic|bmp|tiff?)$/i.test(file.name);
+            const specialist = codex && imageFile;
+            if (specialist && (!['image/png','image/jpeg'].includes(file.type) || !codexSpecialistAvailable(this.state,(lookup(this.state.imageReferences,id) ?? []).length+1)))
+              throw new Error('Codex image specialist accepts qualified PNG/JPEG references only; native image recognition is unavailable.');
             const problem = uploadProblem(
               file,
-              this.state.visionAvailable || imageReferencesAvailable(this.state.imageCapabilities),
+              codex ? specialist : this.state.visionAvailable || imageReferencesAvailable(this.state.imageCapabilities),
             );
             if (problem) throw new Error(problem);
             onUpdate?.({ file, status: 'uploading' });
@@ -682,15 +700,12 @@ export class HarnessStore {
             known.set(uploadKey(file), attachment.id);
             const thread = this.state.thread;
             this.update({
-              attachments: {
+              ...(specialist ? {
+                imageReferences: {...this.state.imageReferences,[id]:[...(lookup(this.state.imageReferences,id) ?? []).filter(a=>a.id!==attachment.id),attachment]},
+              } : {attachments: {
                 ...this.state.attachments,
-                [id]: [
-                  ...(lookup(this.state.attachments, id) ?? []).filter(
-                    (a) => a.id !== attachment.id,
-                  ),
-                  attachment,
-                ],
-              },
+                [id]: [...(lookup(this.state.attachments,id) ?? []).filter(a=>a.id!==attachment.id),attachment],
+              }}),
               ...(thread?.session.id === id
                 ? {
                     thread: {

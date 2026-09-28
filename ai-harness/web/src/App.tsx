@@ -10,7 +10,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { HarnessStore, busyKey, pendingRunIds } from './store';
+import { codexSpecialistAvailable, HarnessStore, busyKey, pendingRunIds } from './store';
 import { isActive, type Status } from './types';
 import { resolveStatus } from './status';
 import { FrontierActivity } from './FrontierActivity';
@@ -398,7 +398,7 @@ export function App({ store }: { store: HarnessStore }) {
                     store.addImageReference(thread.session.id, artifactId)
                   }
                   editUnavailable={
-                    canStageEditReference(state.imageCapabilities)
+                    canStageEditReference(state.imageCapabilities) && (thread.session.engineKind !== 'codex' || codexSpecialistAvailable(state))
                       ? undefined
                       : state.imageCapabilitiesLoaded
                         ? 'Image editing is unavailable for this service.'

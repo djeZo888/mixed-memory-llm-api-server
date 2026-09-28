@@ -30,6 +30,7 @@ export interface BrokerOptions {
   /** Protected durable host gate; never supplied by browser/task requests. */
   dispatchHeld?: () => boolean;
   cancelImages?: (sessionId: string) => void;
+  validateCodexImageReferences?: (count: number) => Promise<void>;
 }
 interface Runner {
   engine: Engine;
@@ -144,7 +145,7 @@ export class Broker {
     for (const id of imageReferences) {
       const f = this.store.file(id);
       if (
-        f.kind !== "artifact" ||
+        (f.kind !== "artifact" && !(s.engineKind === "codex" && f.kind === "attachment")) ||
         f.sessionId !== sessionId ||
         !["image/png", "image/jpeg"].includes(f.mimeType)
       )
@@ -498,10 +499,13 @@ export class Broker {
         const imageRefRow = this.store.db
           .prepare("SELECT data FROM h003_run_image_refs WHERE run_id=?")
           .get(run.id);
-        const imagePaths = await this.files.imageReferences(
-          s.id,
-          imageRefRow ? JSON.parse(String(imageRefRow.data)) : [],
-        );
+        const imageReferenceIds: string[] = imageRefRow ? JSON.parse(String(imageRefRow.data)) : [];
+        if (s.engineKind === "codex" && imageReferenceIds.length) {
+          if (!this.options.enginePolicy?.codex?.imageToolEnabled || !this.options.validateCodexImageReferences)
+            throw new ApiError(400,"codex_image_tool_unavailable","Codex image specialist is not qualified");
+          await this.options.validateCodexImageReferences(imageReferenceIds.length);
+        }
+        const imagePaths = await this.files.imageReferences(s.id, imageReferenceIds, s.engineKind === "codex");
         if (active.cancelled) await cancelBeforePrompt();
         else {
           const handoff = this.store.db

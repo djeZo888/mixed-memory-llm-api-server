@@ -253,6 +253,7 @@ export interface CodexCapability {
   reason: string;
 }
 export interface CodexHealth {
+  imageToolEnabled?: boolean;
   available?: boolean;
   configured?: boolean;
   version?: string | null;

@@ -156,6 +156,7 @@ export async function createApp(options: AppOptions): Promise<{
       store,
       files,
       cancelImages: (id) => images?.cancelSession(id),
+      validateCodexImageReferences: (count) => assertCodexImageReferences(count),
     });
     if (options.imageBackend)
       images = new ImageBroker({
@@ -174,6 +175,14 @@ export async function createApp(options: AppOptions): Promise<{
         );
       return images;
     };
+    const codexImageEnabled = () => !!images && options.enginePolicy?.codex?.imageToolEnabled === true &&
+      codexAvailable(options.enginePolicy, options.codexEngineFactory);
+    async function assertCodexImageReferences(count: number, staging = false) {
+      if (!codexImageEnabled()) throw new ApiError(400,"codex_image_tool_unavailable","Codex image specialist is not qualified");
+      const capabilities = await imageBroker().capabilities();
+      if (!options.imageBackend?.profiles(capabilities).some(p => p.operation === "edit" && (staging ? p.referenceCount >= count : p.referenceCount === count)))
+        throw new ApiError(400,"codex_image_tool_unavailable","Qualified image editing is unavailable");
+    }
     app.addHook("onRequest", async (req, reply) => {
       const host = req.headers.host;
       if (
@@ -247,6 +256,7 @@ export async function createApp(options: AppOptions): Promise<{
       visionAvailable: options.visionAvailable === true,
       engines: { default: "minimax", codex: { available: codexAvailable(options.enginePolicy, options.codexEngineFactory), preview: true,
         configured: !!options.codexEngineFactory,
+        imageToolEnabled: codexImageEnabled(),
         version: options.enginePolicy?.codex?.engineVersion ?? null,
         readiness: codexAvailable(options.enginePolicy, options.codexEngineFactory) ? "not-probed" : "disabled",
         protocolQualified: options.enginePolicy?.codex?.protocolQualified === true,
@@ -386,6 +396,8 @@ export async function createApp(options: AppOptions): Promise<{
           "unsupported_slash_command",
           "Native CLI slash commands are not supported in ai-harness v0.0.3. Please phrase a normal task instead.",
         );
+      if (store.getSession(id(req)).engineKind === "codex" && imageReferences.length)
+        await assertCodexImageReferences(imageReferences.length);
       const runId = broker.enqueue(
         id(req),
         "message",
@@ -408,7 +420,8 @@ export async function createApp(options: AppOptions): Promise<{
     });
     app.post("/api/sessions/:id/uploads", async (req, reply) => {
       const sessionId = id(req);
-      store.getSession(sessionId);
+      const uploadSession = store.getSession(sessionId);
+      let specialistUpload = false;
       let uploaded: import("./store.js").FileRecord | undefined;
       try {
         for await (const part of req.parts()) {
@@ -418,8 +431,16 @@ export async function createApp(options: AppOptions): Promise<{
               "invalid_upload",
               "Expected exactly one multipart file",
             );
+          const imageUpload = part.mimetype.startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp|tiff?|svg|heic)$/i.test(part.filename);
+          if (uploadSession.engineKind === "codex" && imageUpload) {
+            if (!["image/png","image/jpeg"].includes(part.mimetype)) {
+              part.file.resume(); throw new ApiError(415,"codex_media_unsupported","Specialist references require PNG or JPEG");
+            }
+            try { await assertCodexImageReferences(1, true); } catch (error) { part.file.resume(); throw error; }
+            specialistUpload = true;
+          }
           if (
-            options.visionAvailable !== true &&
+            !specialistUpload && options.visionAvailable !== true &&
             (part.mimetype.startsWith("image/") ||
               /\.(png|jpe?g|webp|gif|bmp|tiff?|svg|heic)$/i.test(part.filename))
           ) {
@@ -443,6 +464,7 @@ export async function createApp(options: AppOptions): Promise<{
             "missing_file",
             "Expected one multipart file",
           );
+        if (specialistUpload) await files.validateImageReference(sessionId, uploaded.id, true);
         return reply.code(201).send({ attachment: store.publicFile(uploaded) });
       } catch (error) {
         if (uploaded) await files.discardAttachment(uploaded);
