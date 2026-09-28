@@ -1,0 +1,19 @@
+{
+  "task": "H019-HARNESS-PREP01",
+  "native_session_id": "01a0e5cb-2069-7661-b178-7c7ac500a191",
+  "utc": "2026-09-28T02:15:02.839028+00:00",
+  "deadline_file": {
+    "startedUtc": "2026-09-28T02:14:49.099570+00:00",
+    "hardDeadlineUtc": "2026-09-28T02:39:49.099570+00:00",
+    "maximumSeconds": 1500
+  },
+  "own_25min_deadline": "2026-09-28T02:40:02.839028+00:00",
+  "hard_deadline_utc": "2026-09-28T02:43:00Z",
+  "role": "worker2",
+  "scope": "ai-harness-only",
+  "status": "PREPARATION_SOURCE_READY",
+  "effectiveDeadlineUtc": "2026-09-28T02:39:49.099570+00:00",
+  "modelOverride": false,
+  "aiVmContact": false,
+  "exitRecorder": "../wrapper.log"
+}
