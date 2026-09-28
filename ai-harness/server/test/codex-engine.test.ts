@@ -47,6 +47,7 @@ function fixture(
   config: {
     nativeId?: string;
     delegation?: boolean;
+    qualifiedChildModels?: readonly string[];
     gateway?: () => Promise<boolean>;
     terminate?: () => Promise<boolean>;
   } = {},
@@ -87,6 +88,7 @@ function fixture(
   const runtime: CodexRuntime = {
     pin: CODEX_PIN,
     delegationEnabled: config.delegation,
+    qualifiedChildModels: config.qualifiedChildModels,
     protocolQualified: true,
     modelPolicyVersion: "fixture-policy",
     model: "qwen3.8-27b",
@@ -619,6 +621,26 @@ test("finished spawn tool with pending child cannot turn native cleanup into par
         u.detail?.includes("cleanup"),
     ),
   );
+});
+
+test("MiMo child lifecycle requires the explicit trusted runtime model policy", async () => {
+  for (const qualified of [false, true]) {
+    const f = fixture({ delegation: true,
+      ...(qualified ? { qualifiedChildModels: ["qwen3.8-27b", "mimo-v2.6-pro-rl"] } : {}) });
+    const pending = f.engine.prompt("synthetic qualified child lifecycle");
+    const checked = qualified ? pending : assert.rejects(pending, /unqualified|Unqualified/);
+    await tick();
+    const item = { tool: "spawnAgent", status: "inProgress", senderThreadId: "thread-1",
+      receiverThreadIds: [], agentsStates: {}, model: "" };
+    f.item("spawn", "collabAgentToolCall", item, "started");
+    f.item("spawn", "collabAgentToolCall", { ...item, status: "completed", model: "mimo-v2.6-pro-rl",
+      receiverThreadIds: ["child-mimo"], agentsStates: { "child-mimo": { status: "completed", message: null } } });
+    if (qualified) {
+      f.complete();
+      assert.equal(await checked, "completed");
+      assert.ok(f.updates.some(update => update.type === "progress" && update.name === "MiMo child" && update.status === "completed"));
+    } else { await checked; await f.engine.close(); }
+  }
 });
 
 test("private compaction uses exact pinned RPC; missing/failed compaction never claims readiness", async () => {

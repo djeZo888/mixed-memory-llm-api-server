@@ -28,7 +28,13 @@ test("reviewed providers keep distinct budgets, selected-model identity and seri
   assert.throws(() => translateResponses(b, 65536, codexProvider("qwen3.8-27b")), /mismatched provider/);
   assert.throws(() => translateResponses(b, 65536, { ...selected, contextWindow: 480000 }), /mismatched provider/);
   assert.throws(() => translateResponses(b, 65536, { ...selected, parallelToolCalls: true }), /mismatched provider/);
-  assert.throws(() => translateResponses({ ...b, parallel_tool_calls: true }), /serial auto/);
+  const serial = translateResponses({ ...b, parallel_tool_calls: true }, 65536, selected);
+  assert.equal(serial.body.parallel_tool_calls, false);
+  assert.deepEqual(serial.toolPolicy, { requestedParallelToolCalls: true, effectiveParallelToolCalls: false });
+  assert.deepEqual(translated.toolPolicy, { requestedParallelToolCalls: false, effectiveParallelToolCalls: false });
+  assert.deepEqual(qwen.toolPolicy, { requestedParallelToolCalls: true, effectiveParallelToolCalls: true });
+  const qwenSerial = translateResponses({ ...captured[0].body, parallel_tool_calls: false });
+  assert.deepEqual(qwenSerial.toolPolicy, { requestedParallelToolCalls: false, effectiveParallelToolCalls: false });
   assert.throws(() => translateResponses({ ...b, tool_choice: "none" }), /serial auto/);
 });
 
@@ -107,4 +113,13 @@ test("serial provider rejects a second emitted tool even while old paired batche
   const stream = new ResponsesStream(translateResponses(request()), () => {});
   const tool = (index: number) => ({ index, id: `call-${index}`, type: "function", function: { name: "get_goal", arguments: "{}" } });
   assert.throws(() => stream.push(Buffer.from(`data: ${JSON.stringify({ choices: [{ delta: { tool_calls: [tool(0), tool(1)] }, finish_reason: "tool_calls" }] })}\n\n`)), /Invalid tool index/);
+});
+
+test("safe diagnostics retain requested and effective tool policy without altering the stream", () => {
+  const translated = translateResponses({ ...request(), parallel_tool_calls: true });
+  const observed: unknown[] = [];
+  const stream = new ResponsesStream(translated, () => {}, event => observed.push(event.toolPolicy));
+  stream.push(Buffer.from('data: {"choices":[{"delta":{"content":"serial policy"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1,"completion_tokens":1}}\n\n'));
+  stream.push(Buffer.from("data: [DONE]\n\n")); stream.end();
+  assert.deepEqual(observed, [translated.toolPolicy, translated.toolPolicy]);
 });

@@ -24,12 +24,17 @@ const NAMESPACE_TOOLS: Readonly<Record<string, readonly string[]>> = Object.free
 export interface ResponsesTranslation {
     body: Record<string, any>;
     provider: CodexProviderContract;
+    toolPolicy: ResponsesToolPolicy;
     tools: Map<string, {
         custom: boolean;
         grammar: boolean;
         namespace?: string;
         originalName?: string;
     }>;
+}
+export interface ResponsesToolPolicy {
+    requestedParallelToolCalls: boolean;
+    effectiveParallelToolCalls: boolean;
 }
 export interface ResponsesFingerprint {
     bytes: number;
@@ -55,6 +60,7 @@ export type ResponsesDiagnostic = {
     model: string;
     finishReason: "stop" | "tool_calls" | "length" | "unsupported";
     finishReasonSha256: string;
+    toolPolicy: ResponsesToolPolicy;
 } | {
     type: "response_terminal";
     responseId: string;
@@ -66,6 +72,7 @@ export type ResponsesDiagnostic = {
     reasoning?: ResponsesFingerprint;
     tools: ResponsesToolDiagnostic[];
     usage: { input_tokens: number; output_tokens: number; total_tokens: number };
+    toolPolicy: ResponsesToolPolicy;
 };
 const fingerprint = (value: string): ResponsesFingerprint => ({
     bytes: Buffer.byteLength(value), sha256: createHash("sha256").update(value).digest("hex"),
@@ -143,8 +150,13 @@ export function translateResponses(value: unknown, outputLimit = 65536, selected
         reject("Unsupported tool choice");
     if (typeof b.parallel_tool_calls !== "boolean")
         reject("parallel_tool_calls required");
-    if (!provider.parallelToolCalls && (b.parallel_tool_calls !== false || b.tool_choice !== "auto"))
+    if (!provider.parallelToolCalls && b.tool_choice !== "auto")
         reject("Provider requires qualified serial auto tool semantics");
+    // Pinned Codex requests permission for parallel calls, not a mandatory batch.
+    // The reviewed MiMo provider only generates serial calls. Retain both values
+    // explicitly; never infer this adaptation for an arbitrary model/descriptor.
+    const toolPolicy = Object.freeze({ requestedParallelToolCalls: b.parallel_tool_calls,
+        effectiveParallelToolCalls: provider.parallelToolCalls ? b.parallel_tool_calls : false });
     const output = b.max_output_tokens ?? outputLimit;
     if (!uint(output) || output < 1 || output > outputLimit)
         reject("Output reservation must be 1..65536");
@@ -325,7 +337,7 @@ export function translateResponses(value: unknown, outputLimit = 65536, selected
             messages.splice(0, messages.length, { role: "system", content: "Sova Qwen policy adaptation: system instructions take priority over developer instructions; both take priority over user messages. Later instructions at the same priority resolve conflicts. The JSON below retains the original ordered instruction messages and zero-based translated-message positions. Apply their content at the stated priority; ordinary conversation history follows in its original order.\n" + JSON.stringify(policy) }, ...history);
         }
     }
-    return { provider, tools, body: { model: b.model, ...(provider.reasoning === "none" ? { reasoning_effort: "none" } : {}), messages, tools: chatTools, tool_choice: b.tool_choice, parallel_tool_calls: b.parallel_tool_calls, stream: true, stream_options: { include_usage: true }, max_tokens: output } };
+    return { provider, toolPolicy, tools, body: { model: b.model, ...(provider.reasoning === "none" ? { reasoning_effort: "none" } : {}), messages, tools: chatTools, tool_choice: b.tool_choice, parallel_tool_calls: toolPolicy.effectiveParallelToolCalls, stream: true, stream_options: { include_usage: true }, max_tokens: output } };
 }
 /** Bounded SSE converter. Native usage is required; no invented token counts. */
 /** Static diagnostics only: never include raw provider text or malformed JSON. */
@@ -474,7 +486,8 @@ export class ResponsesStream {
                 if (this.onDiagnostic) this.diagnose({ type: "provider_finish", responseId: this.responseId,
                     model: this.translation.body.model,
                     finishReason: ["stop", "tool_calls", "length"].includes(c.finish_reason) ? c.finish_reason : "unsupported",
-                    finishReasonSha256: fingerprint(JSON.stringify(c.finish_reason)).sha256 });
+                    finishReasonSha256: fingerprint(JSON.stringify(c.finish_reason)).sha256,
+                    toolPolicy: { ...this.translation.toolPolicy } });
             }
         }
     }
@@ -545,7 +558,8 @@ export class ResponsesStream {
             model: this.translation.body.model, finishReason: this.finishReason as "stop" | "tool_calls" | "length",
             status: incomplete ? "incomplete" : "completed", ...(this.textStarted ? { messageId: this.messageId } : {}),
             text: fingerprint(this.text), ...(this.reasoningStarted ? { reasoning: fingerprint(this.reasoning) } : {}), tools: diagnosticTools,
-            usage: { input_tokens: this.usage.input_tokens, output_tokens: this.usage.output_tokens, total_tokens: this.usage.total_tokens } });
+            usage: { input_tokens: this.usage.input_tokens, output_tokens: this.usage.output_tokens, total_tokens: this.usage.total_tokens },
+            toolPolicy: { ...this.translation.toolPolicy } });
     }
     end() {
         this.buffer += this.decoder.end();

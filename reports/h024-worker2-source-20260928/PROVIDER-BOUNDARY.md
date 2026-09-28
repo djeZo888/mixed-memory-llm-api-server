@@ -49,3 +49,22 @@ The typed descriptor retained by the stream is immutable.
 Validation: 56 focused Responses/provider/namespace/engine/child tests passed
 with the supplied W1 compile support. Native reasoning serialization is separately
 recorded in IMAGE-TRACE.md; live route qualification remains blocked as above.
+
+## Final reviewed serial adaptation (supersedes the initial flag blocker)
+
+Root and W1 explicitly approved treating native `parallel_tool_calls:true` as
+permission, not a required batch. Only the exact reviewed MiMo serial descriptor
+now maps that permission to false. Translation retains immutable
+`toolPolicy.requestedParallelToolCalls` and `effectiveParallelToolCalls`; both
+provider-finish and canonical-terminal diagnostics copy those booleans. Qwen's
+requested value stays unchanged. Serial output index validation, old history,
+namespace/call/result identity and `tool_choice:none` rejection remain intact.
+No native binary or `use_responses_lite` change was made.
+
+The final pinned-native MiMo fixture now exercises the entire actual local mock
+path: native request (true) -> real translator (effective false) -> synthetic
+Chat plaintext reasoning plus one tool -> real ResponsesStream -> actual native
+MCP -> next actual native request -> real translator. Exact reasoning/call/result
+identity and requested/effective metadata pass. Earlier blocker captures remain
+preserved privately. This is offline contract PASS, not live MiMo qualification.
+See the final section of IMAGE-TRACE.md for exact hashes and scope.
