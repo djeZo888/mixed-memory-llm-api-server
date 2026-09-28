@@ -24,7 +24,7 @@ const png = (width = 64, height = 64) =>
   sharp({ create: { width, height, channels: 3, background: "#728344" } })
     .png()
     .toBuffer();
-async function fixture(t: TestContext) {
+async function fixture(t: TestContext, codexImages = false) {
   const dir = await realpath(
     await mkdtemp(path.join(tmpdir(), "h003-integration-")),
   );
@@ -156,6 +156,8 @@ async function fixture(t: TestContext) {
   // Text requests use the same local fixture listener, never production.
   gateway = createGateway({
     upstreamKey: "offline-secret",
+    codexImageJobsQualified: codexImages,
+    ownership: { recoveryReady: true, onRequestState: () => {} },
     images: application.images,
     upstreams: [
       {
@@ -597,4 +599,22 @@ test("approval token route refuses direct requests/forged forwarding/bearer and 
   );
   assert.match(generic, /proxy_set_header X-AI-Harness-Approval-Proxy "";/);
   assert.ok(!generic.includes("image-approval-proxy.conf"));
+});
+
+
+test("Codex specialist gate reuses image ownership and cannot approve or clear active work by revocation", async t => {
+  const f = await fixture(t, true), token = f.gateway.issueToken(f.session.id, 'codex');
+  const submitted = await f.internal('POST', '/v1/image-jobs', {requestId:'codex-owned-job',operation:'generation',prompt:'owned fixture',size:'64x64'}, token);
+  assert.equal(submitted.statusCode,200);const job=submitted.json().job;
+  await until(()=>f.requests.length===1);
+  const other=f.gateway.issueToken('unrelated','codex');
+  assert.equal((await f.internal('GET',`/v1/image-jobs/${job.id}`,undefined,other)).statusCode,404);
+  assert.equal((await f.internal('POST',`/v1/image-jobs/${job.id}/approval`,{decision:'approve'},token)).statusCode,403);
+  assert.equal((await f.internal('POST',`/v1/image-jobs/${job.id}/cancel`,{},token)).statusCode,200);
+  f.gateway.revokeSession(f.session.id);
+  assert.equal(await f.gateway.confirmSettlement({sessionId:f.session.id}),true);
+  assert.equal(f.images!.snapshot().lane,'active');
+  assert.equal(f.images!.get(f.session.id,job.id).cancelRequested,true);
+  await f.complete();await until(()=>f.images!.snapshot().lane==='idle');
+  assert.equal(f.requests.length,1);
 });
