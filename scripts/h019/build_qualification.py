@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """H019 post-PASS qualifier adapted from the reviewed H018 mapping, with fresh identity and
 actual full17 read/result/continuation verification. Never emits a PASS from count.
-Usage: python3 build_qualification.py TASK_DIRECTORY COLLECTION_JSON
+Usage: python3 build_qualification.py INPUT_TASK_DIRECTORY COLLECTION_JSON [OUTPUT_TASK_DIRECTORY]
 """
 from pathlib import Path
 import base64,copy,datetime,hashlib,json,subprocess,sys
-T=Path(sys.argv[1]).resolve();P=T/'private';R=T/'repo';collection=Path(sys.argv[2]).resolve()
+I=Path(sys.argv[1]).resolve();T=Path(sys.argv[3]).resolve() if len(sys.argv)>3 else I
+P=T/'private';R=I/'repo';collection=Path(sys.argv[2]).resolve()
+P.mkdir(parents=True,exist_ok=True)
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def digest(raw):return hashlib.sha256(raw).hexdigest()
 def load(p):return json.loads(p.read_text())
 def write(p,v):p.write_text(json.dumps(v,indent=2)+'\n');p.chmod(0o600)
-col=load(collection);start=load(T/'READINESS.json')['production_identity'];st=col['ordinary_state'];receipts=col['receipts'];rows={n:json.loads(v['raw']) for n,v in receipts.items() if n.endswith('.json')}
+col=load(collection);start=load(I/'READINESS.json')['production_identity'];st=col['ordinary_state'];receipts=col['receipts'];rows={n:json.loads(v['raw']) for n,v in receipts.items() if n.endswith('.json')}
 assert col['status']=='TERMINAL_COLLECTED' and col['unit']['MainPID']=='0' and col['unit']['Result']=='success' and col['unit']['ExecMainStatus']=='0'
 client=rows['CLIENT.json'];native=rows['FINAL17-QUALIFICATION.json'];alloc=rows['ALLOCATION.json']
 assert client['status']=='PASS_KEEP_WARM' and client['request_may_be_active'] is False
@@ -53,7 +55,19 @@ for label in labels:
  assert [actual_calls[k] for k in sorted(actual_calls)]==row['tool_calls']
  assert [ch['finish_reason'] for event in parsed for ch in event.get('choices',[]) if ch.get('finish_reason') is not None]==[row['finish_reason']]
  assert row['native_settlement']['is_processing'] is False
- assert rows[label+'-BODY-SENT.json']['request_sha256']==row['request_sha256']
+ # The pinned transport emits timing-only BODY_SENT receipts. Request bytes
+ # are bound above to the completed row's SHA; validate this event's timeline.
+ sent=rows[label+'-BODY-SENT.json']
+ assert sent['event']=='BODY_SENT'
+ progress=[json.loads(line) for line in receipts[label+'-PROGRESS.jsonl']['raw'].splitlines()]
+ sent_progress=[event for event in progress if event['event']=='BODY_SENT']
+ assert len(sent_progress)==1
+ sent_progress=sent_progress[0]
+ assert sent_progress['label']==label and sent_progress['request_sha256']==row['request_sha256']
+ assert sent_progress['expected_input_tokens']==row['expected_input_tokens']
+ assert sent_progress['monotonic_seconds']==row['request_sent_monotonic_seconds']
+ assert sent_progress['utc']==row['request_sent_utc']
+ assert row['started_monotonic_seconds']<=sent['monotonic_seconds']<=sent_progress['monotonic_seconds']<=row['first_output_monotonic_seconds']
  assert row['usage']['total_tokens']==row['usage']['prompt_tokens']+row['usage']['completion_tokens']
  assert row['native_settlement']['monotonic_seconds']>=row['drained_monotonic_seconds']>=row['done_monotonic_seconds']>=row['last_output_monotonic_seconds']>=row['first_output_monotonic_seconds']
  summaries[label]={k:row[k] for k in ('usage','expected_input_tokens','output_budget','finish_reason','correctness','done','full_http_drain','owned_stream_disposition','native_settlement','request_sha256','request_sent_utc','drained_utc','native_timings','ttft_seconds','total_seconds','first_output_utc','last_output_utc')}
@@ -98,7 +112,7 @@ assert q['nativePins']['chatTemplateSha256']==digest(alloc['props']['chat_templa
 assert 0<occupied<950000 and len(json.dumps(q).encode())<=65536
 # Candidate file precedes schema validation; only successful validation publishes qualifier.
 write(T/'QUALIFICATION-950K.CANDIDATE.json',q)
-run=subprocess.run(['node','--experimental-transform-types',str(P/'schema/validate.mjs'),str(T/'QUALIFICATION-950K.CANDIDATE.json'),str(P/'ALLOCATION.json')],text=True,capture_output=True)
+run=subprocess.run(['node','--experimental-transform-types',str(I/'private/schema/validate.mjs'),str(T/'QUALIFICATION-950K.CANDIDATE.json'),str(P/'ALLOCATION.json')],text=True,capture_output=True)
 (P/'VALIDATOR.stdout').write_text(run.stdout);(P/'VALIDATOR.stderr').write_text(run.stderr);assert run.returncode==0,(run.returncode,run.stderr)
 validation=json.loads(run.stdout);write(T/'SCHEMA-VALIDATION.json',validation);(T/'QUALIFICATION-950K.CANDIDATE.json').rename(T/'QUALIFICATION-950K.json')
 for name in ('ALLOCATION.json','FINAL17-QUALIFICATION.json'):
