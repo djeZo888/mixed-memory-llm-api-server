@@ -6,10 +6,10 @@ import { setTimeout as delay } from "node:timers/promises";
 import { createGateway, type GatewayOptions } from "../src/gateway.js";
 const captured=JSON.parse(readFileSync(new URL('./fixtures/codex/native-requests.json',import.meta.url),'utf8'))[0].body;
 async function until(f:()=>boolean){for(let n=0;n<500;n++){if(f())return;await delay(5);}throw Error('timeout');}
-async function fixture(responses?:GatewayOptions['responses']){
+async function fixture(responses?:GatewayOptions['responses'], options: Partial<GatewayOptions> = {}){
  const seen:{body:any,res:ServerResponse}[]=[],states:any[]=[];
  const backend=createServer(async(req,res)=>{const chunks=[];for await(const c of req)chunks.push(c);seen.push({body:JSON.parse(Buffer.concat(chunks).toString()),res});});await new Promise<void>(r=>backend.listen(0,'127.0.0.1',r));const port=(backend.address() as any).port;
- const gateway=createGateway({upstreamKey:'fixture-key',qwenOutputLimit:responses?.outputLimit,upstreams:[{url:`http://127.0.0.1:${port}/0/v1`,alias:'qwen3.8-27b-gpu0'},{url:`http://127.0.0.1:${port}/1/v1`,alias:'qwen3.8-27b'}],ownership:{recoveryReady:true,onRequestState:r=>states.push(r)},responses:responses??{enabled:true,countQwen:async()=>({inputTokens:100,contextWindow:480000})}});
+ const gateway=createGateway({upstreamKey:'fixture-key',qwenOutputLimit:responses?.outputLimit,upstreams:[{url:`http://127.0.0.1:${port}/0/v1`,alias:'qwen3.8-27b-gpu0'},{url:`http://127.0.0.1:${port}/1/v1`,alias:'qwen3.8-27b'}],ownership:{recoveryReady:true,onRequestState:r=>states.push(r)},responses:responses??{enabled:true,countQwen:async()=>({inputTokens:100,contextWindow:480000})},...options});
  const url=await gateway.app.listen({host:'127.0.0.1',port:0});const token=gateway.issueToken('s');
  const send=(tokenOverride=token,signal?:AbortSignal,overrides:any={})=>fetch(url+'/v1/responses',{method:'POST',headers:{authorization:`Bearer ${tokenOverride}`,'content-type':'application/json'},body:JSON.stringify({...captured,...overrides}),signal});
  const emit=(i:number,v:unknown)=>{if(!seen[i].res.headersSent)seen[i].res.setHeader('content-type','text/event-stream');seen[i].res.write(`data: ${JSON.stringify(v)}\n\n`);};
@@ -53,3 +53,25 @@ test('Codex host observes accepted drain after producer cleanup without replay o
  f.done(0);await(await pending).text();assert.equal(await proof,true);assert.equal(f.seen.length,1);
  assert.equal(f.states.at(-1).state,'settled');
 });
+
+for (const failure of ['transport','active-deadline'] as const) {
+ test(`signal settlement observation ends false on actual gateway ${failure} without replay`, async t => {
+  const f=await fixture(undefined,failure==='active-deadline'?{activeTimeoutMs:80}:{});t.after(f.close);
+  const pending=f.send().then(async r=>({status:r.status,body:await r.text().catch(()=>"interrupted")})).catch(e=>e);
+  await until(()=>f.seen.length===1);
+  const stop=new AbortController();
+  const proof=f.gateway.observeSettlement({sessionId:'s'},stop.signal);
+  f.gateway.revokeSession('s');
+  if(failure==='transport'){
+   f.emit(0,{choices:[{delta:{content:'partial'}}]});
+   f.seen[0].res.destroy();
+  }
+  assert.equal(await proof,false);
+  const result=await pending;
+  if(failure==='active-deadline'){assert.equal(result.status,504);assert.match(result.body,/active_timeout/);}
+  assert.equal(f.gateway.sessionWork('s')[0]!.state,'uncertain');
+  assert.equal(f.gateway.snapshot().lanes[0]!.state,'quarantined');
+  assert.equal(await f.gateway.confirmSettlement({sessionId:'s'}),false);
+  assert.equal(f.seen.length,1);
+ });
+}
