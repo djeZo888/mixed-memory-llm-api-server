@@ -1,0 +1,104 @@
+{
+  "capturedBeforeUtc": "2026-09-28T03:58:55Z",
+  "actualStatus": {
+    "pid": 301728,
+    "startedUtc": "2026-09-27T07:32:20Z",
+    "release": "7143c17d73173db9364b77956679c86d7026a4ae",
+    "cwd": "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/server",
+    "executable": "/home/user/.local/opt/ai-harness/node-v24.21.0/bin/node"
+  },
+  "loadedStatus": {
+    "release": "34959c67baea0d8a357cbea4cefac1658f3553f0-h019-prep01",
+    "dropInChangedUtc": "2026-09-28T03:21:06.528205910Z",
+    "needDaemonReload": false
+  },
+  "app": {
+    "pid": 0,
+    "state": "inactive"
+  },
+  "credentialMetadata": {
+    "path": "/etc/ai-harness/control-api-key",
+    "mode": "0600",
+    "owner": "root:root",
+    "readForExistingPassiveGetOnly": true,
+    "mutated": false
+  },
+  "modelEvidenceLimits": "Existing passive model_alias/deployment_id/generation and node_manager.running are available; these do not attest native process PID. No ai-vm SSH or benchmark polling.",
+  "passiveObservedBefore": {
+    "node_manager": {
+      "running": true,
+      "generation": 4902192187430733,
+      "state": "ok",
+      "freshness": "fresh",
+      "observed_at": "2026-09-28T04:00:08.254908+00:00"
+    },
+    "services": [
+      {
+        "service_id": "qwen-gpu0",
+        "model_alias": "qwen3.8-27b-gpu0",
+        "deployment_id": "qwen38-27b-q0-480000-yarn4-bf16kv",
+        "generation": 5183996324027758,
+        "configured_context_tokens": 480000,
+        "max_output_tokens": null,
+        "observed_at": "2026-09-28T04:00:08.667641+00:00",
+        "age_ms": 2672,
+        "freshness": "fresh"
+      },
+      {
+        "service_id": "qwen-gpu1",
+        "model_alias": "qwen3.8-27b",
+        "deployment_id": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+        "generation": 6022637887592269,
+        "configured_context_tokens": 480000,
+        "max_output_tokens": null,
+        "observed_at": "2026-09-28T04:00:08.663716+00:00",
+        "age_ms": 2676,
+        "freshness": "fresh"
+      },
+      {
+        "service_id": "image",
+        "model_alias": "qwen-image-2.1",
+        "deployment_id": "image21-runtime-20260923",
+        "generation": 8035765252897144,
+        "configured_context_tokens": null,
+        "max_output_tokens": null,
+        "observed_at": "2026-09-28T04:00:08.651969+00:00",
+        "age_ms": 2688,
+        "freshness": "fresh"
+      },
+      {
+        "service_id": "glm-5.3-flash",
+        "model_alias": "glm-5.3-flash",
+        "deployment_id": null,
+        "generation": 738345717725155,
+        "configured_context_tokens": null,
+        "max_output_tokens": 65536,
+        "observed_at": "2026-09-28T04:00:08.739323+00:00",
+        "age_ms": 2601,
+        "freshness": "fresh"
+      },
+      {
+        "service_id": "mimo-v2.6-pro-rl",
+        "model_alias": "mimo-v2.6-pro-rl",
+        "deployment_id": "mimo-v2.6-pro-rl-950000-mxfp4",
+        "generation": 5627722361891117,
+        "configured_context_tokens": 950000,
+        "max_output_tokens": 65536,
+        "observed_at": "2026-09-28T04:00:09.079631+00:00",
+        "age_ms": 2261,
+        "freshness": "fresh"
+      },
+      {
+        "service_id": "control",
+        "model_alias": null,
+        "deployment_id": null,
+        "generation": 350849685829967,
+        "configured_context_tokens": null,
+        "max_output_tokens": null,
+        "observed_at": "2026-09-28T04:00:08.273555+00:00",
+        "age_ms": 3067,
+        "freshness": "fresh"
+      }
+    ]
+  }
+}
