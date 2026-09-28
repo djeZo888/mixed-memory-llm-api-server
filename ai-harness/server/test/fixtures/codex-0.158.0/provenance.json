@@ -1,0 +1,15 @@
+{
+  "release": "rust-v0.158.0",
+  "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+  "generatorPlatform": "official aarch64-apple-darwin 0.158.0 supplied by W1",
+  "linuxSchemaEquivalence": "NOT_TESTED by W2",
+  "files": {
+    "InitializeParams.json": "b55124e7c0f36a1789396daa5578217a92be67f053903696236686e59f6f212e",
+    "LICENSE": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+    "NOTICE": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+    "ThreadResumeParams.json": "c818e26d830ac4430791eab7d4a872d2384fa6006b14c505d8caf46e7e093527",
+    "ThreadStartParams.json": "e9c6d3cc18d049bfbc0249add3808fb8e5a27e1a0b5a423767aafbc3859a9428",
+    "TurnInterruptParams.json": "6dff382dae73d1dbc58406ed045605f647e7a49660e2540fbd2c6c24d60c5f2b",
+    "TurnStartParams.json": "2dfcf68705896fadc344ccfeb2e9fe5a6bcbbb8b9a90cf449ce232b636daf05a"
+  }
+}

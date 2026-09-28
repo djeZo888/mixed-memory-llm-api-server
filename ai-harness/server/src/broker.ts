@@ -289,6 +289,7 @@ export class Broker {
         )
         .digest("hex");
     let summary = "";
+    const summaryParts = new Map<string, string>();
     let success = false;
     let cleanupConfirmed = false;
     let promptRejectedDuringCancellation = false;
@@ -308,10 +309,13 @@ export class Broker {
       const update = (u: EngineUpdate) => {
         if (this.active.get(s.workspaceId) !== active) return;
         if (u.type === "text") {
-          if (!u.text) return;
+          if (!u.text && !u.replace) return;
           const thought = u.channel === "thought";
-          if (!thought) summary += u.text;
           const id = messageId(u.nativeMessageId, thought);
+          if (!thought) {
+            summaryParts.set(id, u.replace ? u.text : (summaryParts.get(id) ?? "") + u.text);
+            summary = [...summaryParts.values()].join("");
+          }
           const phase = phases.get(id) ?? {
             phase: (thought
               ? "thinking"
@@ -321,7 +325,7 @@ export class Broker {
               : {}),
             streamState: "streaming" as const,
           };
-          this.store.appendDelta(s.id, id, u.text, run.id, phase);
+          this.store.appendDelta(s.id, id, u.text, run.id, phase, u.replace);
           assistantIds.add(id);
           if (!thought) assistantId = id;
         } else if (u.type === "phase") {

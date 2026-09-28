@@ -500,12 +500,13 @@ export class Store {
     text: string,
     runId: string,
     phase?: MessagePhase,
+    replace = false,
   ): Event {
     let event: Event;
     this.db.exec("BEGIN IMMEDIATE");
     try {
       const existing = this.db
-        .prepare("SELECT session_id,run_id FROM messages WHERE id=?")
+        .prepare("SELECT session_id,run_id,role FROM messages WHERE id=?")
         .get(messageId);
       if (!existing)
         this.addMessage(
@@ -517,13 +518,14 @@ export class Store {
           messageId,
           phase,
         );
-      else if (existing.session_id !== sessionId || existing.run_id !== runId)
+      else if (existing.session_id !== sessionId || existing.run_id !== runId || existing.role !== "assistant")
         throw new Error("Message ownership mismatch");
-      this.appendMessage(messageId, text);
+      if (replace) this.db.prepare("UPDATE messages SET content=? WHERE id=?").run(text, messageId);
+      else this.appendMessage(messageId, text);
       event = this.writeEvent(
         sessionId,
-        "assistant_delta",
-        { messageId, text, ...(phase ?? {}) },
+        replace ? "message" : "assistant_delta",
+        replace ? { message: this.message(messageId) } : { messageId, text, ...(phase ?? {}) },
         runId,
       );
       this.db.exec("COMMIT");

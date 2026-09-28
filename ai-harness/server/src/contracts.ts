@@ -146,6 +146,8 @@ export type EngineUpdate =
   | {
       type: "text";
       text: string;
+      /** Authoritative native completed text replaces this assistant item only. */
+      replace?: true;
       nativeMessageId?: string;
       channel?: MessageChannel;
       phaseSource?: string;
