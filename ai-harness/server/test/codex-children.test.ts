@@ -97,3 +97,40 @@ test("collaboration completed state cannot settle an observed active child turn;
   );
   assert.equal(c.summary().failed, 1);
 });
+test("child tool completed notification must carry a terminal tool status", () => {
+  for (const type of ["commandExecution", "fileChange", "mcpToolCall"]) {
+    const c = new CodexChildren(
+      () => "parent",
+      () => {},
+    );
+    c.item(spawn("child"), true);
+    c.notification("turn/started", {
+      threadId: "child",
+      turn: { id: "active" },
+    });
+    c.notification("item/started", {
+      threadId: "child",
+      turnId: "active",
+      item: { id: "tool", type, status: "inProgress" },
+    });
+    assert.throws(
+      () =>
+        c.notification("item/completed", {
+          threadId: "child",
+          turnId: "active",
+          item: { id: "tool", type, status: "inProgress" },
+        }),
+      /not terminal/,
+    );
+    assert.throws(
+      () =>
+        c.notification("item/completed", {
+          threadId: "child",
+          turnId: "active",
+          item: { id: "tool", type, status: "unknown" },
+        }),
+      /not terminal/,
+    );
+    assert.equal(c.unfinished, true);
+  }
+});

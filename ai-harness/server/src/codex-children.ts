@@ -32,7 +32,10 @@ export class CodexChildren {
       id: string;
       terminal: boolean;
       terminalStatus?: string;
-      items: Map<string, { type: string; completed: boolean }>;
+      items: Map<
+        string,
+        { type: string; completed: boolean; snapshot?: string }
+      >;
     }
   >();
   constructor(
@@ -213,6 +216,29 @@ export class CodexChildren {
       const previous = turn.items.get(item.id),
         complete = method === "item/completed";
       if (
+        ![
+          "userMessage",
+          "agentMessage",
+          "reasoning",
+          "commandExecution",
+          "fileChange",
+          "mcpToolCall",
+          "contextCompaction",
+        ].includes(item.type)
+      )
+        throw new CodexProtocolError("Unsupported child item");
+      if (
+        complete &&
+        ["commandExecution", "fileChange", "mcpToolCall"].includes(item.type) &&
+        !["completed", "failed", "declined"].includes(String(item.status))
+      )
+        throw new CodexProtocolError("Child tool completion is not terminal");
+      if (complete && previous?.completed) {
+        if (previous.snapshot !== JSON.stringify(item))
+          throw new CodexProtocolError("Conflicting child item completion");
+        return;
+      }
+      if (
         (complete && !previous) ||
         (previous && previous.type !== item.type) ||
         (!complete && previous?.completed)
@@ -220,7 +246,11 @@ export class CodexChildren {
         throw new CodexProtocolError("Invalid child item lifecycle");
       if (!previous && turn.items.size >= 10000)
         throw new CodexProtocolError("Child item bound exceeded");
-      turn.items.set(item.id, { type: item.type, completed: complete });
+      turn.items.set(item.id, {
+        type: item.type,
+        completed: complete,
+        snapshot: complete ? JSON.stringify(item) : undefined,
+      });
     }
     // Child content stays private; lifecycle alone populates durable Activity.
   }
