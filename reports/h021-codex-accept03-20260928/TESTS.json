@@ -1,8 +1,8 @@
 {
   "task": "H021 ACCEPT03 W2",
   "nativeSessionId": "01a0e6b3-3461-7e13-9302-d3d09d8f73cb",
-  "checkedUtc": "2026-09-28T06:50:27.210543+00:00",
-  "sourceRevision": "d27200c94929b062bc35268d2ab1202da3f1b912",
+  "checkedUtc": "2026-09-28T06:53:01.521765+00:00",
+  "sourceRevision": "3a69a3701c0f9016a9a676bc32a67fca028bd668",
   "initialBase": "9ee552dcc8fd5086c97d47eea33828c8e0cf15c5",
   "integratedBase": "dd0535e80df3665ebe39946033f2e175b15253e7",
   "results": [
@@ -139,6 +139,13 @@
       "case": "download-actual-linux-repair",
       "status": "NOT_TESTED",
       "reason": "Host window released; W1 exclusive next pilot"
+    },
+    {
+      "case": "download-explicit-no-retry",
+      "status": "PASS",
+      "passed": 4,
+      "evidence": "evidence/download-no-retry.tap",
+      "note": "Pinned1.63.0 supports maxRetries; explicit0 equivalent to default0. No repeated real download."
     }
   ],
   "modelRequests": 0,

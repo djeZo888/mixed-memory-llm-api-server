@@ -1,3 +1,4 @@
+import { normalize, MAX_IMAGE_BYTES } from "./image-codec.js";
 import { constants } from "node:fs";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -223,7 +224,17 @@ export class Files {
     }
     return out;
   }
-  async imageReferences(sessionId: string, ids: string[]): Promise<string[]> {
+  async validateImageReference(sessionId: string, id: string, allowUploads = false) {
+    const f = this.store.file(requireId(id));
+    if (f.sessionId !== sessionId || (f.kind !== "artifact" && !(allowUploads && f.kind === "attachment")) || !["image/png","image/jpeg"].includes(f.mimeType))
+      throw new ApiError(400,"invalid_image_reference","Image reference does not belong to this chat");
+    const {handle,stat} = await this.openGuarded(path.join(this.root, f.kind === "attachment" ? "uploads" : "artifacts"), f.path);
+    try {
+      if (stat.size > MAX_IMAGE_BYTES) throw new ApiError(413,"image_too_large","Reference exceeds limit");
+      await normalize(await handle.readFile()); // Validate only; original bytes are never replaced.
+    } finally { await handle.close(); }
+  }
+  async imageReferences(sessionId: string, ids: string[], allowUploads = false): Promise<string[]> {
     if (!ids.length) return [];
     const s = this.store.getSession(sessionId);
     await this.prepare(sessionId, s.workspaceId);
@@ -235,7 +246,7 @@ export class Files {
     for (const id of ids) {
       const f = this.store.file(requireId(id));
       if (
-        f.kind !== "artifact" ||
+        (f.kind !== "artifact" && !(allowUploads && f.kind === "attachment")) ||
         f.sessionId !== sessionId ||
         !["image/png", "image/jpeg"].includes(f.mimeType)
       )
@@ -244,8 +255,9 @@ export class Files {
           "invalid_image_reference",
           "Image artifact does not belong to this chat",
         );
+      if (allowUploads) await this.validateImageReference(sessionId, id, true);
       const { handle, stat } = await this.openGuarded(
-        path.join(this.root, "artifacts"),
+        path.join(this.root, f.kind === "attachment" ? "uploads" : "artifacts"),
         f.path,
       );
       if (stat.size > MAX_ARTIFACT) {
