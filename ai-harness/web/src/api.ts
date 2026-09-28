@@ -73,11 +73,11 @@ export interface StreamCallbacks {
 export interface Transport {
   health(
     signal?: AbortSignal,
-  ): Promise<{ visionAvailable: boolean; availability?: HealthAvailability }>;
+  ): Promise<{ visionAvailable: boolean; availability?: HealthAvailability; engines?: { codex?: { available?: boolean } } }>;
   imageCapabilities(signal?: AbortSignal): Promise<unknown>;
   list(signal?: AbortSignal): Promise<{ sessions: Session[] }>;
   snapshot(id: string, signal?: AbortSignal): Promise<Snapshot>;
-  create(): Promise<{ session: Session }>;
+  create(engineKind?: 'minimax' | 'codex'): Promise<{ session: Session }>;
   remove(id: string): Promise<{ status: 'deleting' | 'deleted' }>;
   send(
     id: string,
@@ -130,7 +130,7 @@ export const api: Transport = {
   imageCapabilities: (signal) => request('/api/image-capabilities', { signal }),
   list: (signal) => request('/api/sessions', { signal }),
   snapshot: (id, signal) => request(sessionPath(id), { signal }),
-  create: () => post('/api/sessions', {}),
+  create: (engineKind) => post('/api/sessions', engineKind ? { engineKind } : {}),
   remove: (id) => request(sessionPath(id), { method: 'DELETE' }),
   send: (id, text, attachmentIds, imageReferences) =>
     post(`${sessionPath(id)}/messages`, {

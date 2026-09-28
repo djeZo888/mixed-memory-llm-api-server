@@ -3,6 +3,7 @@ import type { Store, Run, StoredSession } from "./store.js";
 import { Files } from "./files.js";
 import type {
   Engine,
+  EngineKind,
   EngineFactory,
   EngineUpdate,
   Context,
@@ -11,11 +12,14 @@ import type {
   Activity,
 } from "./contracts.js";
 import { CONTEXT_LIMIT } from "./contracts.js";
+import { assertEngineAvailable, createEngineRouter, type EnginePolicy } from "./engine-router.js";
 import { ApiError } from "./errors.js";
 export interface BrokerOptions {
   store: Store;
   files: Files;
   engineFactory: EngineFactory;
+  codexEngineFactory?: EngineFactory;
+  enginePolicy?: EnginePolicy;
   launcher: string;
   gatewayUrl: string;
   issueToken: (sessionId: string) => string;
@@ -86,8 +90,9 @@ export class Broker {
       ? { runId: active.run.id, workspaceId: active.run.workspaceId }
       : undefined;
   }
-  async createSession(workspaceId?: string) {
-    const s = this.store.createSession(workspaceId);
+  async createSession(workspaceId?: string, engineKind: EngineKind = "minimax") {
+    assertEngineAvailable(engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
+    const s = this.store.createSession(workspaceId, engineKind, engineKind === "codex" ? this.options.enginePolicy!.codex : {});
     await this.files.prepare(s.id, s.workspaceId);
     return this.store.publicSession(s);
   }
@@ -99,6 +104,9 @@ export class Broker {
     imageReferences: string[] = [],
   ): string {
     const s = this.store.getSession(sessionId);
+    assertEngineAvailable(s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
+    if (s.engineKind === "codex" && (attachmentIds.length || imageReferences.length))
+      throw new ApiError(400, "codex_media_unsupported", "Codex preview does not yet support attachments or image references");
     if (this.options.dispatchHeld?.())
       throw new ApiError(
         503,
@@ -235,8 +243,15 @@ export class Broker {
       engine: null as unknown as Engine,
       update: onUpdate,
     };
-    entry.engine = this.options.engineFactory({
+    const factory = createEngineRouter(this.options.engineFactory, this.options.codexEngineFactory, this.options.enginePolicy);
+    try {
+    entry.engine = factory({
       sessionId: s.id,
+      engineKind: s.engineKind,
+      engineVersion: s.engineVersion,
+      modelPolicyVersion: s.modelPolicyVersion,
+      nativeState: s.nativeState,
+      onNativeState: (state) => this.store.setNativeState(s.id, s.engineKind, state),
       dispatchHeld: this.options.dispatchHeld,
       profileDir: this.files.profile(s.id),
       workspace: this.files.workspace(s.workspaceId),
@@ -246,9 +261,10 @@ export class Broker {
       gatewayToken: token,
       stderrPath: this.files.log(s.id),
       onExit: () => this.options.revokeToken(token),
-      onNativeSessionId: (id) => this.store.setNative(s.id, id),
+      onNativeSessionId: (id) => this.store.setNative(s.id, id, s.engineKind),
       onUpdate: (u) => entry.update(u),
     });
+    } catch (error) { this.options.revokeToken(token); throw error; }
     this.runners.set(s.id, entry);
     await this.waitForDispatch();
     await entry.engine.start();
@@ -526,7 +542,7 @@ export class Broker {
       if (run.kind === "handoff" && !active.cancelled) {
         if (!summary.trim())
           throw new Error("Engine produced no handoff summary");
-        const next = await this.createSession(s.workspaceId);
+        const next = await this.createSession(s.workspaceId, s.engineKind);
         this.store.setTitle(next.id, `Continue: ${s.title}`);
         this.store.touchContext(next.id);
         const m = this.store.addMessage(

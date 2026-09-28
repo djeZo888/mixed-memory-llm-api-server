@@ -1,6 +1,13 @@
 export const CONTEXT_LIMIT = 480000 as const;
 export const MAX_OUTPUT = 65536 as const;
 export const MODEL = "qwen3.8-27b";
+export type EngineKind = "minimax" | "codex";
+export interface NativeEngineState {
+  activeTurnId: string | null;
+  /** Locally assigned notification cursor; native JSONL has no replay cursor. */
+  eventCursor: number;
+  ownership: "idle" | "active" | "uncertain";
+}
 export type Status =
   | "idle"
   | "queued"
@@ -25,6 +32,8 @@ export interface Session {
   updatedAt: string;
   status: Status;
   context?: Context;
+  engineKind?: EngineKind;
+  engineVersion?: string;
 }
 export type MessageChannel = "thought" | "commentary" | "final" | "unknown";
 export interface MessagePhase {
@@ -180,6 +189,11 @@ export type EngineUpdate =
   | { type: "artifact"; path: string; name?: string; mimeType?: string };
 export interface EngineOptions {
   sessionId: string;
+  engineKind?: EngineKind;
+  engineVersion?: string;
+  modelPolicyVersion?: string;
+  nativeState?: NativeEngineState;
+  onNativeState?: (state: NativeEngineState) => void;
   profileDir: string;
   workspace: string;
   nativeSessionId?: string;

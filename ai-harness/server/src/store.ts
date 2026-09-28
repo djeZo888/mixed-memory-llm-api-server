@@ -14,6 +14,8 @@ import type {
   Activity,
   RunSnapshot,
   SubagentSummary,
+  EngineKind,
+  NativeEngineState,
 } from "./contracts.js";
 import { CONTEXT_LIMIT, unknownSubagents } from "./contracts.js";
 import { environment } from "./locale.js";
@@ -22,6 +24,9 @@ import { ApiError, requireId } from "./errors.js";
 
 export interface StoredSession extends Session {
   workspaceId: string;
+  engineKind: EngineKind;
+  modelPolicyVersion?: string;
+  nativeState: NativeEngineState;
   nativeSessionId?: string;
   deleted: boolean;
   deleteRequested: boolean;
@@ -82,6 +87,22 @@ export class Store {
       CREATE TABLE IF NOT EXISTS h002_activities(session_id TEXT NOT NULL,run_id TEXT NOT NULL,id TEXT NOT NULL,data TEXT NOT NULL,PRIMARY KEY(run_id,id));
       CREATE TABLE IF NOT EXISTS h002_subagents(run_id TEXT PRIMARY KEY,data TEXT NOT NULL);
     `);
+    // Companion metadata keeps legacy rows/history/files byte-for-byte intact.
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS h021_session_engines(
+        session_id TEXT PRIMARY KEY REFERENCES sessions(id),
+        engine_kind TEXT NOT NULL, engine_version TEXT, model_policy_version TEXT,
+        workspace_id TEXT NOT NULL, active_turn_id TEXT, event_cursor INTEGER NOT NULL DEFAULT 0,
+        ownership TEXT NOT NULL DEFAULT 'idle'
+      );
+      CREATE TABLE IF NOT EXISTS h021_migrations(name TEXT PRIMARY KEY);
+    `);
+    if (!this.db.prepare("SELECT name FROM h021_migrations WHERE name='engine_identity'").get()) {
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        this.db.exec("INSERT OR IGNORE INTO h021_session_engines(session_id,engine_kind,workspace_id) SELECT id,'minimax',workspace_id FROM sessions; INSERT INTO h021_migrations VALUES('engine_identity'); COMMIT");
+      } catch (error) { this.db.exec("ROLLBACK"); throw error; }
+    }
     this.recoverLegacyFiles();
     this.recoverLegacyActivities();
     // A process restart never replays a queued prompt or a tool effect.
@@ -104,6 +125,7 @@ export class Store {
         .run(now());
       for (const run of interruptedRuns) this.emitRun(String(run.id));
       for (const r of interrupted) {
+        this.db.prepare("UPDATE h021_session_engines SET ownership='uncertain' WHERE session_id=? AND engine_kind='codex'").run(r.session_id);
         this.quarantine(
           this.getSession(r.session_id, true).workspaceId,
           "restart_during_run",
@@ -143,7 +165,13 @@ export class Store {
     this.db.close();
     this.events.removeAllListeners();
   }
-  createSession(workspaceId: string = randomUUID()): StoredSession {
+  createSession(
+    workspaceId: string = randomUUID(),
+    engineKind: EngineKind = "minimax",
+    metadata: { engineVersion?: string; modelPolicyVersion?: string } = {},
+  ): StoredSession {
+    if (engineKind !== "minimax" && engineKind !== "codex")
+      throw new ApiError(400, "unknown_engine", "Unknown engine kind");
     const id = randomUUID(),
       time = now();
     const context: Context = {
@@ -154,6 +182,8 @@ export class Store {
       source: "empty",
       updatedAt: time,
     };
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
     this.db
       .prepare(
         "INSERT INTO sessions(id,title,created_at,updated_at,status,context,workspace_id) VALUES(?,?,?,?,?,?,?)",
@@ -167,6 +197,11 @@ export class Store {
         JSON.stringify(context),
         workspaceId,
       );
+    this.db.prepare(`INSERT INTO h021_session_engines
+      (session_id,engine_kind,engine_version,model_policy_version,workspace_id)
+      VALUES(?,?,?,?,?)`).run(id, engineKind, metadata.engineVersion ?? null, metadata.modelPolicyVersion ?? null, workspaceId);
+    this.db.exec("COMMIT");
+    } catch (error) { this.db.exec("ROLLBACK"); throw error; }
     return this.getSession(id);
   }
   getSession(id: string, includeDeleted = false): StoredSession {
@@ -175,7 +210,18 @@ export class Store {
       | undefined;
     if (!r || (r.deleted && !includeDeleted))
       throw new ApiError(404, "not_found", "Session not found");
+    const engine = this.db.prepare("SELECT * FROM h021_session_engines WHERE session_id=?").get(id);
+    if (!engine || !["minimax", "codex"].includes(String(engine.engine_kind)) ||
+      engine.workspace_id !== r.workspace_id || !Number.isSafeInteger(engine.event_cursor) || Number(engine.event_cursor) < 0 ||
+      !["idle", "active", "uncertain"].includes(String(engine.ownership)) ||
+      (engine.active_turn_id !== null && (typeof engine.active_turn_id !== "string" || !engine.active_turn_id || /[\x00-\x20\x7f]/.test(engine.active_turn_id))) ||
+      (engine.ownership === "idle" && engine.active_turn_id !== null))
+      throw new ApiError(409, "engine_metadata_invalid", "Session engine metadata requires operator review");
     return {
+      engineKind: engine.engine_kind as EngineKind,
+      engineVersion: engine.engine_version === null ? undefined : String(engine.engine_version),
+      modelPolicyVersion: engine.model_policy_version === null ? undefined : String(engine.model_policy_version),
+      nativeState: { activeTurnId: engine.active_turn_id as string | null, eventCursor: Number(engine.event_cursor), ownership: engine.ownership as NativeEngineState["ownership"] },
       id: String(r.id),
       title: String(r.title),
       createdAt: String(r.created_at),
@@ -194,6 +240,8 @@ export class Store {
     const {
       workspaceId,
       nativeSessionId,
+      nativeState,
+      modelPolicyVersion,
       deleted,
       deleteRequested,
       ...result
@@ -238,10 +286,25 @@ export class Store {
       throw error;
     }
   }
-  setNative(id: string, nativeId: string) {
+  setNative(id: string, nativeId: string, engineKind: EngineKind = "minimax") {
+    const session = this.getSession(id);
+    if (session.engineKind !== engineKind || (session.nativeSessionId && session.nativeSessionId !== nativeId))
+      throw new ApiError(409, "engine_resume_mismatch", "Native session cannot change engine or identity");
+    if (!nativeId || nativeId.length > 512 || /[\x00-\x20\x7f]/.test(nativeId))
+      throw new ApiError(409, "engine_metadata_invalid", "Invalid native session identity");
     this.db
       .prepare("UPDATE sessions SET native_session_id=? WHERE id=?")
       .run(nativeId, id);
+  }
+  setNativeState(id: string, engineKind: EngineKind, state: NativeEngineState) {
+    const session = this.getSession(id);
+    if (session.engineKind !== engineKind || !Number.isSafeInteger(state.eventCursor) ||
+      state.eventCursor < session.nativeState.eventCursor || !["idle", "active", "uncertain"].includes(state.ownership) ||
+      (state.activeTurnId !== null && (typeof state.activeTurnId !== "string" || !state.activeTurnId || state.activeTurnId.length > 512 || /[\x00-\x20\x7f]/.test(state.activeTurnId))) ||
+      (state.ownership === "idle" && state.activeTurnId !== null))
+      throw new ApiError(409, "engine_metadata_invalid", "Invalid native ownership update");
+    this.db.prepare("UPDATE h021_session_engines SET active_turn_id=?,event_cursor=?,ownership=? WHERE session_id=?")
+      .run(state.activeTurnId, state.eventCursor, state.ownership, id);
   }
   setTitle(id: string, title: string) {
     this.db

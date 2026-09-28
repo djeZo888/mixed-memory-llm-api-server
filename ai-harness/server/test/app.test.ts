@@ -177,6 +177,7 @@ test("JSON contract, durable messages/native identity/events and unknown context
     environment: health.json().environment,
     status: "ok",
     visionAvailable: false,
+    engines: { default: "minimax", codex: { available: false, preview: true } },
   });
   const s = await h.session();
   assert.equal(s.context.used, 0);

@@ -29,6 +29,7 @@ function Badge({ status }: { status: Status }) {
 
 export function App({ store }: { store: HarnessStore }) {
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
+  const [newEngine, setNewEngine] = useState<'minimax' | 'codex'>('minimax');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [narrow, setNarrow] = useState(window.innerWidth <= 700);
   const sidebar = useRef<HTMLElement>(null);
@@ -39,6 +40,7 @@ export function App({ store }: { store: HarnessStore }) {
   const sidebarButton = useRef<HTMLButtonElement>(null);
   const thread = state.thread;
   const selected = state.selectedId;
+  useEffect(() => { if (!state.codexAvailable) setNewEngine('minimax'); }, [state.codexAvailable]);
   const title =
     thread?.session.title ||
     state.sessions.find((s) => s.id === selected)?.title ||
@@ -124,11 +126,19 @@ export function App({ store }: { store: HarnessStore }) {
             <X size={19} />
           </button>
         </div>
+        <label className="sidebar-hint">
+          Harness for new chat
+          <select aria-label="Harness for new chat" value={newEngine}
+            onChange={(event) => setNewEngine(event.target.value as 'minimax' | 'codex')}>
+            <option value="minimax">MiniMax</option>
+            <option value="codex" disabled={!state.codexAvailable}>Codex (preview){state.codexAvailable ? '' : ' — pending'}</option>
+          </select>
+        </label>
         <button
           className="new-chat"
           disabled={!!state.busy[busyKey('create')]}
           onClick={() => {
-            void store.create();
+            void store.create(newEngine);
             setSidebarOpen(false);
           }}
         >
@@ -193,7 +203,7 @@ export function App({ store }: { store: HarnessStore }) {
             <Menu size={20} />
           </button>
           <div className="chat-heading">
-            <span className="eyebrow">CONVERSATION</span>
+            <span className="eyebrow">CONVERSATION{thread ? ` · ${thread.session.engineKind === 'codex' ? 'Codex (preview)' : 'MiniMax'}` : ''}</span>
             <h1>{selected ? title : 'Your workspace'}</h1>
           </div>
           {thread && (

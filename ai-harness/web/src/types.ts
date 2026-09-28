@@ -18,7 +18,10 @@ export interface Context {
   updatedAt: string;
   source?: string;
 }
+export type EngineKind = 'minimax' | 'codex';
 export interface Session {
+  engineKind?: EngineKind;
+  engineVersion?: string;
   id: string;
   title: string;
   createdAt: string;
