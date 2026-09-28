@@ -1,0 +1,13 @@
+# H028 initial hardware and isolated Ada qualification
+
+The new RTX6000 Ada UUID GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf is present at guest01:00.0. A3.027-second existing-runtime transfer negotiated Gen4x16 throughout,33–35C, no observed kernel fault. Idle Gen1 downshift is normal evidence, not the loaded result. Integrated fan controller extends its explicit UUID allowlist only; existing70C100% and <=65C30s firmware return remain, server stays external.24 focused fan tests pass. Newcard hot/cool crossing was not exercised live.
+
+The dedicated authenticated loopback30014 endpoint is resident under qwen-ada200k.service. Native context/max_total/max_total_num_tokens and memory.token_capacity are exactly200000, BF16KV12.207(native rounded GB), same pinned FP8 artifacts and SGLang image. The separate Ada profile uses installed Triton FP8 and mem_fraction_static0.90; original Blackwell CUTLASS/480K profiles remain unchanged and stopped.250K was rejected analytically before allocation.
+
+Qualification settled23:30:08UTC. Discarded warmup3519input/81output. One measured generation15625input/446output, stop,24.201751s dispatch-to-drain,4.556735s client event TTFT,22.704038output tokens/s=(446−1)/(last−first). Exact retrieval values passed. Structured add(2,3) and continuation5 passed. All four streams have native usage, DONE and fullEOF; no replay. Minimum sampled free4850MiB of49140=9.86976%, peak61C; max300.1W board reading.200K occupied context and throughput beyond this short case are NOT_TESTED.
+
+Qualification is tied to boot992bf979-efae-495b-9ab2-26e75ed5c5d0 and DockerStartedAt23:26:33.687801684Z, preserving the original receipt. A reviewed future-start supervisor fix rejects stale receipts after container restart; running process retains a7016197 source, installed next-start sourcebd8cdd05. No healthy model restart was performed. Optional native freeze_gc401 is retained; authentication was not relaxed. Four exact-tuple/identity fixtures pass; cold future-start guard has not been live-retested.
+
+MAC match/set-name recovery was verified: enp6s18,bc:24:11:b5:6d:da,10.156.100.60/24,default10.156.100.1. Existing private node/control sockets were restored via their unchanged guarded apply/check paths. W2 recurring rearm source installed separately23:30:41; its first bounded activation settled23:30:46 and original12unit hashes were unchanged. Final status projection belongs to W2. No old model/frontier start, host/BMC/power/ECC/driver changes or GitHub publication by this worker.
+
+Raw requests, responses, logs and per-sample data remain private on the VM and Mac task directory. Compact counters and source identities are adjacent. Exact source/deployment receipts in task output take precedence over this abbreviated narrative.

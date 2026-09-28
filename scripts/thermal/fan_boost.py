@@ -16,6 +16,7 @@ import stat
 import time
 
 KNOWN = {
+    "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf": "Ada-Qwen200K",
     "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237": "Qwen0",
     "GPU-69acfa26-8b60-61b5-702d-aee252c163cc": "Flash",
     "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23": "Ada",

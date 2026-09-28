@@ -112,7 +112,7 @@ class SafetyTests(unittest.TestCase):
         for t in range(2, 32, 2): self.at(t, 65)
         self.assertFalse(self.defaults())
         self.at(32, 65)
-        self.assertEqual(len(self.defaults()), 3)
+        self.assertEqual(len(self.defaults()), len(m.INTEGRATED))
         self.assertFalse(any(self.store.owned.values()))
     def test_cooldown_resets_on_warm_gap_error_and_stale(self):
         for cause in ('warm', 'gap', 'error', 'stale'):
@@ -131,7 +131,7 @@ class SafetyTests(unittest.TestCase):
                 for t in range(start, start + 30, 2): self.at(t)
                 self.assertFalse(self.defaults())
                 self.at(start + 30)
-                self.assertEqual(len(self.defaults()), 3)
+                self.assertEqual(len(self.defaults()), len(m.INTEGRATED))
     def test_restart_owned_requires_new_continuous_cooldown(self):
         self.setup_controller(owned=True)
         self.at(0)
@@ -139,7 +139,7 @@ class SafetyTests(unittest.TestCase):
         for t in range(2, 32, 2): self.at(t)
         self.assertFalse(self.defaults())
         self.at(32)
-        self.assertEqual(len(self.defaults()), 3)
+        self.assertEqual(len(self.defaults()), len(m.INTEGRATED))
     def test_failed_setter_keeps_owner_and_other_devices_protected(self):
         self.setup_controller()
         self.jobs.apis[U].fail_set = {1}
@@ -237,6 +237,30 @@ class SafetyTests(unittest.TestCase):
         result = m.device_job(U, 'default', True, lambda: api)
         self.assertFalse(result['ok'])
         self.assertEqual([x[1] for x in api.calls if x[0] == 'boost'], [0,1,2])
+    def test_new_ada_uuid_is_stable_under_reordered_config(self):
+        new = "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf"
+        self.assertIn(new, m.INTEGRATED)
+        value = {"version": 1, "devices": list(reversed(m.KNOWN))}
+        self.assertEqual(m.validate_config(value), value)
+        api = API(count=1)
+        result = m.device_job(new, "inspect", False, lambda: api)
+        self.assertTrue(result["ok"])
+        self.assertEqual(api.calls, [("bind", new)])
+        self.assertNotIn(m.EXTERNAL, m.INTEGRATED)
+
+    def test_new_ada_preserves_hot_and_cool_hysteresis(self):
+        new = "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf"
+        self.setup_controller()
+        self.at(0, 69)
+        self.assertFalse(self.store.owned[new])
+        self.at(2, 70)
+        self.assertTrue(self.store.owned[new])
+        for t in range(4, 34, 2): self.at(t, 65)
+        self.assertNotIn((new, "default"), self.defaults())
+        self.at(34, 65)
+        self.assertIn((new, "default"), self.defaults())
+        self.assertFalse(self.store.owned[new])
+
     def test_config_exact_identity_duplicates_unknown_and_extra(self):
         valid = {'version': 1, 'devices': list(m.KNOWN)}
         self.assertEqual(m.validate_config(valid), valid)
