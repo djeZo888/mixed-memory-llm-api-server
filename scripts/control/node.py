@@ -224,6 +224,23 @@ class NodeStatus:
             result['services'].append(item)
         from .node_observation import aggregate_generation
         result['generation'] = aggregate_generation(boot_id, result['services'])
+        # Observation-only instance: excluded from SERVICES, action impact and CAS.
+        from .node_observation import ADA_SERVICE, ADA_ALIAS, ADA_GPU
+        ada = self._read(ADA_SERVICE)
+        raw = ada['value'] or {}
+        current = valid(ada) and valid(boot) and raw.get('boot_id') == boot_id and boot_id is not None
+        ready = boolean(raw.get('ready')) if current else None
+        result['services'].append(dict(envelope(ada), service_id=ADA_SERVICE,
+            generation=None, affected_services=[], required_gpu_uuids=[ADA_GPU],
+            model_alias=ADA_ALIAS if current else None,
+            deployment_id=identifier(raw.get('deployment_id')) if current else None,
+            configured_context_tokens=integer(raw.get('configured_context_tokens')) if current else None,
+            ready=ready, admitting=None, functional_qualified=None, hardware_latched=None,
+            reason=reason(raw.get('reason')) if current else ada['reason'],
+            installed_capabilities=['chat.completions'] if current else [],
+            activity='unknown', active_requests=None, queue_depth=None,
+            availability='available' if ready is True else 'unavailable' if ready is False else 'unknown',
+            observation_only=True))
         node_sample = self._read('node')
         node_raw = node_sample['value'] or {}
         result['node_manager'] = dict(envelope(node_sample), service_id='node',

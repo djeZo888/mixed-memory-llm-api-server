@@ -102,13 +102,13 @@ class DiscoveryTests(unittest.TestCase):
 
     def test_one_extra_slot_bounded_production_capacity(self):
         callbacks = collectors.production_callbacks()
-        self.assertEqual(len(callbacks), 19)
-        self.assertEqual(MAX_COLLECTORS, 19)
+        self.assertEqual(len(callbacks), 20)
+        self.assertEqual(MAX_COLLECTORS, 20)
         self.assertIn('gpu_metrics', callbacks)
         self.assertEqual(len([key for key in callbacks if key.startswith('gpu:')]), 4)
         BoundedObservers(callbacks).close()
         with self.assertRaises(ValueError):
-            BoundedObservers({str(i): lambda _: {} for i in range(20)})
+            BoundedObservers({str(i): lambda _: {} for i in range(21)})
 
     def test_unassigned_timeout_has_fair_budget_and_healthy_peer_keeps_capture_age(self):
         self.inventory.last_proof[0]['gpu_uuids'] += [SECOND]

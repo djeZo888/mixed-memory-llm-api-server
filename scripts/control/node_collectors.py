@@ -317,7 +317,7 @@ class HardwareEvidenceCollector:
 
 
 def production_callbacks(identity_reader=None, *, control_key=None):
-    from .node_observation import CanonicalIdentityReader, PassiveServiceCollector
+    from .node_observation import CanonicalIdentityReader, PassiveServiceCollector, AdaPassiveCollector
     from .node_resources import resource_callbacks
     reader = identity_reader or CanonicalIdentityReader()
     inventory = InventoryCollector()
@@ -329,5 +329,6 @@ def production_callbacks(identity_reader=None, *, control_key=None):
     result.update(resource_callbacks())
     result.update({'gpu:' + collector.gpu_uuid: collector for collector in gpus})
     result['gpu_metrics'] = DiscoveredGpuCollector(inventory)
+    result['qwen-ada200k'] = AdaPassiveCollector(reader)
     result['hardware_evidence'] = HardwareEvidenceCollector(inventory, gpus)
     return result

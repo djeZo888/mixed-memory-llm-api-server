@@ -161,6 +161,7 @@ def native_get(port, path, key, seconds):
     if (port, path) not in ((30002, '/v1/readiness'), (30004, '/v1/readiness'),
                             (30010, '/v1/readiness'), (30010, '/get_server_info'),
                             (30012, '/props'), (30012, '/slots'),
+                            (30014, '/v1/readiness'), (30014, '/get_server_info'),
                             (30006, '/v1/image-capabilities'), (30000, '/control/v1/readiness')):
         raise ValueError('unregistered_passive_route')
     conn = http.client.HTTPConnection('127.0.0.1', port, timeout=max(.001, seconds))
@@ -657,6 +658,99 @@ def aggregate_generation(boot_id, rows, gpu_uuid=None):
     if boot_id is None or any(type(r.get('generation')) is not int for r in rows):
         return None
     return generation([boot_id, gpu_uuid, [r['generation'] for r in rows]])
+
+
+ADA_SERVICE = 'qwen-ada200k'
+ADA_ALIAS = 'qwen3.8-27b-ada200k'
+ADA_BASE = '/data/services/qwen-ada200k-h028-20260929'
+ADA_GPU = 'GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf'
+ADA_AUTH_PATH = '/data/services/llm-manager/adapters/sglang38_file_auth.py'
+ADA_AUTH_SHA256 = 'e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7da4'
+ADA_SOURCES = {
+    'ada_owner.py': '1c953d0eeab64251e9144a2e5f72a2e9120b823c90928e594379b734ff744c2c',
+    'ada_launcher.py': '0c050ceea238d702d20c93eb082e99cce1b19ccb3712f2eb837d2ff0177fcf46',
+    'ada_supervisor.py': 'bd8cdd058bb1c7653e684e1e0c38c3428730c30ad59325b287de074362c03af2',
+}
+
+
+def ada_native_capacity(code, value):
+    if code != 200 or type(value) is not dict:
+        raise ValueError('ada_capacity_unknown')
+    states = value.get('internal_states', [])
+    if type(states) is not list or any(type(row) is not dict for row in states):
+        raise ValueError('ada_capacity_unknown')
+    for field, expected in {'context_length': 200000, 'max_total_tokens': 200000,
+            'max_total_num_tokens': 200000, 'max_req_input_len': 199994}.items():
+        values = [row[field] for row in [value, *states] if field in row]
+        if not values or any(type(v) is not int or v != expected for v in values):
+            raise ValueError('ada_capacity_mismatch')
+
+
+class AdaPassiveCollector:
+    """Fixed read-only Ada instance. No owner operation or lifecycle authority."""
+    def __init__(self, reader, *, get=native_get, clock=time.monotonic):
+        self.reader, self.get, self.clock = reader, get, clock
+
+    def __call__(self, seconds):
+        deadline = self.clock() + seconds
+        def remaining():
+            left = deadline - self.clock()
+            if left <= 0:
+                raise TimeoutError('observation_deadline')
+            return left
+        boot = self.reader.boot()['boot_id']
+        binding = self.reader.binding(remaining())
+        def read(path, mode=0o600):
+            binding.validate_path('data', path)
+            remaining()
+            return self.reader.read(Path(path), modes={mode}, maximum=65536)
+        config_raw, state_raw = read(ADA_BASE + '/config.json'), read(ADA_BASE + '/state.json')
+        config, state = strict_json(config_raw), strict_json(state_raw)
+        auth_source = read(ADA_AUTH_PATH, 0o644)
+        if hashlib.sha256(auth_source).hexdigest() != ADA_AUTH_SHA256:
+            raise ValueError('ada_auth_source_changed')
+        sources = {}
+        for name, digest in ADA_SOURCES.items():
+            raw = read(ADA_BASE + '/source/' + name, 0o644)
+            if config.get('source_sha256', {}).get(name) != digest or hashlib.sha256(raw).hexdigest() != digest:
+                raise ValueError('ada_source_identity_changed')
+            sources[name] = raw
+        # This exact reviewed owner module has inert imports and definitions.
+        # Never call operate(), storage(), or its CLI entry point.
+        owner = {'__name__': '_passive_ada_owner'}
+        exec(compile(sources['ada_owner.py'], 'pinned_ada_owner.py', 'exec'), owner)
+        identity = state.get('container') or {}
+        container_id = identity.get('id')
+        if type(container_id) is not str or not HEX.fullmatch(container_id):
+            raise ValueError('ada_container_unknown')
+        def inspect():
+            values = strict_json(self.reader.run(['/usr/bin/docker', 'inspect', container_id], remaining()))
+            if type(values) is not list or len(values) != 1 or type(values[0]) is not dict:
+                raise ValueError('ada_container_unknown')
+            owner['validate_container'](values[0], config, state)
+            return values[0]
+        first = inspect()
+        running = first.get('State', {}).get('Running')
+        if type(running) is not bool:
+            raise ValueError('ada_process_unknown')
+        result = {'boot_id': boot, 'model_alias': ADA_ALIAS,
+            'deployment_id': 'qwen-ada200k-h028-20260929', 'ready': False if not running else None,
+            'reason': 'service_stopped' if not running else 'readiness_unknown',
+            'configured_context_tokens': None, 'functional_qualified': None}
+        if running:
+            key = _key(read('/data/services/secrets/llm-api-key'))
+            status = text_readiness(*self.get(30014, '/v1/readiness', key, remaining()), ADA_ALIAS)
+            ada_native_capacity(*self.get(30014, '/get_server_info', key, remaining()))
+            result.update(status, configured_context_tokens=200000)
+        final = inspect()
+        if (first.get('State') != final.get('State') or self.reader.boot()['boot_id'] != boot
+                or read(ADA_BASE + '/config.json') != config_raw or read(ADA_BASE + '/state.json') != state_raw):
+            raise ValueError('ada_identity_changed')
+        if (read(ADA_AUTH_PATH, 0o644) != auth_source or any(
+                read(ADA_BASE + '/source/' + name, 0o644) != raw for name, raw in sources.items())):
+            raise ValueError('ada_source_identity_changed')
+        remaining()
+        return result
 
 
 class PassiveServiceCollector:
