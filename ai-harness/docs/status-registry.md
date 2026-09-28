@@ -1,4 +1,4 @@
-# Status registry (H006 source candidate)
+# Status registry
 
 The independent status process loads `ai-harness/config/system-registry.json`
 from the reviewed release at startup. In an installed layout the exact location
@@ -8,8 +8,8 @@ resolve that same file. Ship the config with the reviewed server build. It is
 trusted release configuration with the same protected deployment/ownership
 boundary as server code, not writable through any HTTP API. There is no browser,
 request, URL or environment override. Invalid configuration fails startup. Restart
-of the status process to load a reviewed change is deployment, outside this source
-candidate's authorization.
+of the status process loads reviewed configuration changes. H020 permits only a
+root-reviewed status release/restart; it does not authorize other service changes.
 
 `nodes` controls enumeration and display names. Each `node-v1` observer resolves
 its `observation.transport` through `transports`, then performs only
@@ -153,6 +153,7 @@ configuration, **not consumed by gateway/inference clients in this patch**:
 
 | Reference | Current runtime binding | Existing owner/source |
 |---|---|---|
+| frontier-private | ai-vm private IPv4 GLM 30010/v1; MiMo 30012/v1 | active-frontier.ts selects frontier.json / mimo-candidate.json and protected qualification receipt; frontier.ts / mimo-frontier.ts own workload clients |
 | qwen-gpu0-private | ai-vm private IPv4 port 30002 | gateway.ts / backend-readiness.ts |
 | qwen-gpu1-private | ai-vm private IPv4 port 30004 | gateway.ts / backend-readiness.ts |
 | image-private | ai-vm private IPv4 port 30006 | image-upstream.ts |
@@ -197,3 +198,53 @@ The browser fixture uses already installed Playwright and Chrome against local
 synthetic backends, including an offline third node, both real IDs, unified Host /
 Type / State columns, nulls, desktop/mobile layout, transport loss and existing
 action/recovery confirmations. It is not evidence of deployed UI or live VM health.
+
+## H020 model identity and selection
+
+Each model service may declare a `model` descriptor with `display_name`,
+`instance_name`, `expected_alias`, and `selection_group` (`frontier` or null).
+Service display names, model labels, instance names, placement (`node_id`) and
+endpoint references are trusted descriptive configuration. For example the two
+Qwen instances share a model label but retain separate service IDs, expected
+native aliases, instance names, endpoint references and observed deployments.
+These descriptors grant no execution or action authority. Existing canonical
+frontier IDs/aliases, owner nodes and endpoint references remain pinned.
+
+`active-frontier.json` is the separate trusted selection authority, loaded at
+startup by the existing selection validator. Its model is attached as runtime
+`selected_frontier` metadata; selection never rewrites registry labels. Every
+public node includes that loaded selection snapshot. Missing or invalid selection
+fails startup rather than falling back to a different model. A reviewed status
+restart is required to load changed files; changing a unit path without restarting
+leaves the old process and its old configuration in memory. The repository GLM
+default is not the live selection: the H020 candidate preserves deployed H019
+MiMo selection bytes exactly.
+
+Service rows expose `configured_model`, `selection` (selected, dormant, unknown,
+or not_applicable), `observed_model` and `identity_status` separately. A model's
+current readiness requires fresh node and service observations plus an exact
+configured expected-alias match. Missing aliases remain unknown; wrong aliases
+are mismatch; stale/unavailable observations cannot certify readiness. Dormant
+frontier rows retain explicit observer evidence, but current ready/admitting are
+null and health unknown. Neither model can borrow the other's service evidence.
+Non-model services retain their existing independently observed readiness.
+Browser transport failure also clears displayed current ready/admitting and model
+dependency joins while retaining historical evidence with stale labels.
+
+Measured GPU rows remain keyed by their observed UUID, with their own observation
+freshness. `required_gpu_uuids` is the node's reported dependency configuration;
+`affected_services` is action impact scope. Neither proves process occupancy.
+The additive `observed_ready_dependents` joins a freshly observed matching model
+with projected current readiness and its reported required UUID to a freshly
+measured GPU row. Dormant or unknown-selection instances never enter this ready
+dependency list, even when their raw observer reports ready; a dormant instance
+reporting ready instead shows an explicit selection conflict in its service row. The UI explicitly
+calls these ready model dependencies, not occupancy, and displays unchanged action
+impact IDs separately. Missing hardware rows are never synthesized from required
+UUIDs. No GPU ordinal or configured model label substitutes for UUID evidence.
+
+Status availability does not qualify ordinary Sova chat (still paused following
+the separate HTTP400 delegation failure), and does not establish independent
+near-950K benchmark completion. H020 changes no workload endpoints, selection,
+inference service, native owner, driver, GPU policy, action allowlist, credentials,
+confirmation, dispatch interlock or queue.

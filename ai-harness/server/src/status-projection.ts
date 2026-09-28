@@ -5,16 +5,39 @@ const current = (o: { state: string; freshness: string }) => o.state === "ok" &&
 /** Join expectations after sanitizing and aging native facts. No parent health inheritance. */
 export function projectNode(node: NodeSnapshot, config: RegistryNode, registry: SystemRegistry) {
   const services = registry.services.filter(s => s.node_id === node.node_id).map(s => {
-    const native = node.services.find(n => n.service_id === s.observation_key) ??
+    const observed = node.services.find(n => n.service_id === s.observation_key);
+    const native = observed ??
       sanitizeNode({ schema_version: 1, node_id: node.node_id, services: [{ service_id: s.observation_key, reason: "not_observed" }] }, node.node_id, [s.observation_key]).services[0]!;
+    const selection = s.model?.selection_group === "frontier"
+      ? registry.selected_frontier === undefined ? "unknown"
+        : s.model.expected_alias === registry.selected_frontier ? "selected" : "dormant"
+      : "not_applicable";
+    const identity = !s.model ? "not_applicable"
+      : native.freshness === "stale" || node.freshness === "stale" ? "stale"
+      : !current(node) || !current(native) ? "unavailable"
+      : native.model_alias === null ? "unknown"
+      : native.model_alias === s.model.expected_alias ? "matched" : "mismatch";
+    const usable = current(node) && current(native) &&
+      (identity === "matched" || identity === "not_applicable") &&
+      selection !== "dormant" && selection !== "unknown";
     return {
       ...native, service_id: s.id, node_id: s.node_id, display_name: s.display_name,
+      configured_model: s.model ?? null, selection, identity_status: identity,
+      selection_conflict: selection === "dormant" && identity === "matched" && native.ready === true,
+      observed_model: {
+        node_id: observed ? node.node_id : null, service_id: observed?.service_id ?? null,
+        model_alias: native.model_alias, deployment_id: native.deployment_id,
+        required_gpu_uuids: native.required_gpu_uuids,
+        ...observation(native), ready: native.ready,
+      },
       type: "service" as const, owner: s.owner,
       configured_capabilities: s.capabilities,
       endpoint_ref: s.endpoint_ref,
       evidence_source: "native-service" as const,
-      current_state: current(native) ? native.availability : "unknown",
-      health: current(native) ? native.ready === true ? "ready" : native.ready === false ? "not_ready" : "unknown" : "unknown",
+      ready: usable ? native.ready : null,
+      admitting: usable ? native.admitting : null,
+      current_state: selection === "dormant" ? "dormant" : identity === "mismatch" ? "mismatch" : usable ? native.availability : "unknown",
+      health: usable ? native.ready === true ? "ready" : native.ready === false ? "not_ready" : "unknown" : "unknown",
     };
   });
   const components = registry.components.filter(c => c.node_id === node.node_id).map(c => {
@@ -38,5 +61,18 @@ export function projectNode(node: NodeSnapshot, config: RegistryNode, registry: 
       ready: null, actions: [] as string[],
     };
   });
-  return { ...node, display_name: config.display_name, services, components };
+  const gpus = node.gpus.map(gpu => ({
+    ...gpu,
+    // affected_services is the owner's action impact scope, not a running-model assignment.
+    // A dependency join requires fresh matching service/model and measured GPU presence.
+    // The node reports required UUIDs, not per-process occupancy. Never rewrite impact IDs.
+    observed_ready_dependents: current(node) && current(gpu) ? services.filter(s =>
+      s.identity_status === "matched" && s.ready === true &&
+      s.observed_model.required_gpu_uuids.includes(gpu.uuid)).map(s => ({
+        service_id: s.service_id, node_id: s.node_id, display_name: s.display_name,
+        instance_name: s.configured_model!.instance_name,
+        model_alias: s.observed_model.model_alias, selection: s.selection,
+      })) : [],
+  }));
+  return { ...node, display_name: config.display_name, selected_frontier: registry.selected_frontier ?? null, services, components, gpus };
 }

@@ -6,7 +6,7 @@ import { chromium } from '../../web/node_modules/playwright/index.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { AdminActions } from '../dist/admin-actions.js';
 import { createStatusService } from '../dist/status-service.js';
-import { loadSystemRegistry } from '../dist/system-registry.js';
+import { loadSystemRegistry, selectRegistryFrontier } from '../dist/system-registry.js';
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/h005/node-status-v1.json', import.meta.url), 'utf8'));
 const diskFixture = JSON.parse(readFileSync(new URL('./fixtures/h005/disk-volumes-v1.json', import.meta.url), 'utf8'));
 const fresh = { state: 'ok', freshness: 'fresh', observed_at: new Date().toISOString(), age_ms: 0, reason: null };
@@ -14,7 +14,15 @@ let volumeFailure = false;
 function snapshot(id) {
   const node = structuredClone(fixture);
   Object.assign(node, fresh, { node_id: id, boot_id: '37e425eb-3d3e-4070-80a0-5ecfb39604f1', generation: 2 });
-  node.services = (id === 'ai-vm' ? ['qwen-gpu0', 'qwen-gpu1', 'image', 'control'] : ['harness', 'search', 'status']).map(service_id => ({ ...fresh, service_id, generation: 2, availability: service_id === 'qwen-gpu0' ? 'unavailable' : 'available', hardware_latched: service_id === 'qwen-gpu0', ready: service_id !== 'qwen-gpu0', admitting: service_id !== 'qwen-gpu0', activity: 'idle', active_requests: 0, queue_depth: 0, affected_services: [service_id] }));
+  node.services = (id === 'ai-vm' ? ['qwen-gpu0', 'qwen-gpu1', 'image', 'control', 'glm-5.3-flash', 'mimo-v2.6-pro-rl'] : ['harness', 'search', 'status']).map(service_id => ({ ...fresh, service_id, generation: 2, availability: service_id === 'qwen-gpu0' ? 'unavailable' : 'available', hardware_latched: service_id === 'qwen-gpu0', ready: service_id !== 'qwen-gpu0', admitting: service_id !== 'qwen-gpu0', activity: 'idle', active_requests: 0, queue_depth: 0, affected_services: [service_id] }));
+  for (const row of node.services) {
+    const aliases = { 'qwen-gpu0': 'qwen3.8-27b-gpu0', 'qwen-gpu1': 'qwen3.8-27b', image: 'qwen-image-2.1', 'glm-5.3-flash': 'glm-5.3-flash', 'mimo-v2.6-pro-rl': 'mimo-v2.6-pro-rl' };
+    row.model_alias = aliases[row.service_id] ?? null;
+    row.deployment_id = row.service_id + '-fixture';
+    const gpuIndex = { 'qwen-gpu0': 1, 'qwen-gpu1': 2, image: 3, 'glm-5.3-flash': 4, 'mimo-v2.6-pro-rl': 4 }[row.service_id];
+    row.required_gpu_uuids = gpuIndex ? ['GPU-00000000-0000-0000-0000-00000000000' + gpuIndex] : [];
+    if (row.service_id === 'glm-5.3-flash') row.ready = row.admitting = false;
+  }
   const GiB = 1024 ** 3;
   node.gpus = id === 'ai-vm' ? Array.from({length:4},(_,i)=>({ ...fresh,
     uuid: 'GPU-00000000-0000-0000-0000-00000000000'+(i+1), generation: 2,
@@ -25,7 +33,7 @@ function snapshot(id) {
     power_draw_w:i===3?18:210, power_limit_w:i===2?300:600,
     ecc_mode:'enabled', ecc_uncorrected_volatile:0,
     pcie_generation:i===3?1:5, pcie_width:16, pcie_generation_max:5, pcie_width_max:16,
-    affected_services:i===0?['qwen-gpu0']:i===1?['qwen-gpu1']:i===2?['image']:[],
+    affected_services:i===0?['qwen-gpu0']:i===1?['qwen-gpu1']:i===2?['image']:['glm-5.3-flash','mimo-v2.6-pro-rl'],
   })):[];
   node.resources.memory = {...fresh,total_bytes:512*GiB,available_bytes:179.5*GiB,swap_total_bytes:8*GiB,swap_free_bytes:8*GiB,pressure_some_avg10:0.1,pressure_full_avg10:0};
   node.resources.disk = structuredClone(diskFixture);
@@ -44,7 +52,11 @@ const freeze = {hold:a=>holds.add(a.idempotency_key),acknowledge:async()=>({}),r
 function backend(id) {return { status: async () => snapshot(id), action: async action => { calls.push(action);if(failNextAction){failNextAction=false;throw Error("synthetic lost response");}return { schema_version: 1, node_id: id, operation_id: 'fixture-operation', action: action.action, service_id:action.service_id??null,gpu_uuid:action.gpu_uuid??null,expected_boot_id:action.expected_boot_id,expected_generation:action.expected_generation,status: 'succeeded', affected_services: [action.service_id] }; }, operation: async () => ({ schema_version: 1, node_id: id, operation_id: 'fixture-operation', action: 'service.start', status: 'succeeded', affected_services: ['qwen-gpu0'] }) };}
 const backends={'ai-vm':backend('ai-vm'),'ai-harness':backend('ai-harness')};
 const actions=new AdminActions({db,freeze,backends,autoPoll:false});
-const registry=loadSystemRegistry();
+const registry=selectRegistryFrontier(loadSystemRegistry(),'mimo-v2.6-pro-rl');
+const custom=registry.services.find(s=>s.id==='mimo-v2.6-pro-rl');
+custom.display_name='Configured research frontier';
+custom.model.display_name='Configured model label';
+custom.model.instance_name='Configured instance alpha';
 registry.nodes.push({id:'offline-lab',display_name:'Offline laboratory',observation:{adapter:'unsupported',transport:null}});
 registry.services.push({id:'lab-job',node_id:'offline-lab',display_name:'Expected lab job',observation_key:'lab-job',owner:'unassigned',capabilities:[],endpoint_ref:null});
 const service = createStatusService({registry,backends,actions,freeze,origins:['http://127.0.0.1:5197'],autoPoll:false});
@@ -77,9 +89,14 @@ try {
   assert.match(await page.locator('#overview [data-node-id="offline-lab"]').innerText(),/Unknown/);
   assert.equal(await page.locator('#overview [data-node-id="offline-lab"]').getByText('0%',{exact:true}).count(),0);
   assert.ok((await inventory.boundingBox()).y<(await page.locator('#nodes').boundingBox()).y);
+  const selectedRow=inventory.locator('tr').filter({hasText:'Configured research frontier'});
+  for(const text of ['Configured model: Configured model label','instance: Configured instance alpha','selection: selected','Observed model: mimo-v2.6-pro-rl','identity: matched','Endpoint reference: frontier-private','Ready / admitting: true / true']) assert.ok((await selectedRow.innerText()).includes(text),text);
+  const dormantRow=inventory.locator('tr').filter({hasText:'Frontier GLM-5.3-Flash'});
+  assert.match(await dormantRow.innerText(),/selection: dormant/);
+  assert.match(await dormantRow.innerText(),/Ready \/ admitting: unknown \/ unknown/);
   assert.equal(await page.locator('#action-form').count(),0);
   assert.equal(await page.locator('.gpu-table tr').count(),5);
-  for(const text of ['UUID …00000001','UUID …00000004','Assigned: image','Unassigned','179.5 GiB / 512 GiB','16 GiB / 32 GiB','512 GiB / 1 TiB','1 TiB / 2 TiB','1.5 MiB/s'])assert.ok((await page.locator('#nodes').innerText()).includes(text),text);
+  for(const text of ['UUID GPU-00000000-0000-0000-0000-000000000001','UUID GPU-00000000-0000-0000-0000-000000000004','Action impact IDs: image','Ready model dependencies (not occupancy): mimo-v2.6-pro-rl','179.5 GiB / 512 GiB','16 GiB / 32 GiB','512 GiB / 1 TiB','1 TiB / 2 TiB','1.5 MiB/s'])assert.ok((await page.locator('#nodes').innerText()).includes(text),text);
   assert.ok(!(await page.locator('#nodes').innerText()).includes('[object Object]'));
   assert.equal(await page.locator('.volume-table tr').count(),8);
   assert.equal(await page.getByRole('heading',{name:'Registered volume roles'}).count(),2);
@@ -100,6 +117,9 @@ try {
   await page.getByText('Status transport unavailable.',{exact:false}).waitFor();
   assert.match(await page.locator('#overview [data-node-id="ai-vm"]').innerText(),/Unknown · stale/);
   assert.equal(await page.locator('#inventory .badge.available').count(),0);
+  assert.ok(!(await inventory.innerText()).includes('Ready / admitting: true / true'));
+  assert.ok(!(await page.locator('#nodes').innerText()).includes('Ready model dependencies (not occupancy): mimo-v2.6-pro-rl'));
+  assert.match(await selectedRow.innerText(),/identity: stale/);
   await page.unroute('**/api/status/v1/system');
   await page.goto('http://127.0.0.1:5197/admin');
   await page.locator('#target option').nth(1).waitFor({state:'attached'});

@@ -1,0 +1,15 @@
+{
+  "focused": {
+    "pass": 17,
+    "fail": 0
+  },
+  "statusTypecheck": "PASS",
+  "syntheticChromeStatusAdmin": "PASS (custom labels, selection, GPU dependency language, transport loss masking, desktop/mobile, existing admin safeguards)",
+  "sourceCommit": "739462b7e246f92a3c4161c4535a1a2d8a0886f2",
+  "recordedUtc": "2026-09-28T04:14:00.425023+00:00",
+  "focusedCommand": "./node_modules/.bin/tsx --test --test-timeout=15000 test/frontier-registry.test.ts test/system-registry.test.ts test/status-service.test.ts",
+  "typecheck": "PASS on final changed status graph with declaration emission",
+  "browser": "PASS final changed compiled modules with retained unchanged H019 dist and retained local dependencies",
+  "stageDiff": "7 changed files; MiMo selector identical; staged ordinary-account load succeeds",
+  "scope": "No native build, install, inference, backend switch or benchmark readback"
+}
