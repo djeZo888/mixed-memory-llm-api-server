@@ -1,0 +1,11 @@
+{
+  "clockFixtures": "5 PASS",
+  "targetedAdmissionFixture": "1 PASS",
+  "launcherBashSyntax": "PASS",
+  "scopedSecretScan": "PASS",
+  "diffReview": "only six clock-bearing source/metadata files; no acceptance body/predicate/roster changes",
+  "bothPreflightsCharged": "supervisor charges first elapsed time; live workDeadline and absolute cleanup bound charge second elapsed time; live enforces >=720s after second preflight",
+  "newClockTests": false,
+  "broaderTests": false,
+  "historicalReportAndEvidence": "preserved; PREP01 REPORT.md describes its original clock, superseded by FINAL04 CLOCKS.json"
+}

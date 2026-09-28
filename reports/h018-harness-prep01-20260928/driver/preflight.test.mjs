@@ -16,8 +16,8 @@ test('preflight refuses outside its independent Linux systemd owner before file 
  await assert.rejects(preflight({},'/absent'),process.platform==='linux'?/independent Linux systemd owner required/:/linux/);
 });
 test('admission boundary and exact profile source pin',()=>{
- assert.equal(ADMIT_UTC,'2026-09-28T00:59:30Z');
- assert.equal(SETTLE_UTC,'2026-09-28T01:14:30Z');
+ assert.equal(ADMIT_UTC,'2026-09-28T01:09:30Z');
+ assert.equal(SETTLE_UTC,'2026-09-28T01:24:30Z');
  assertAdmission(Date.parse(ADMIT_UTC));assert.throws(()=>assertAdmission(Date.parse(ADMIT_UTC)+1));
  assert.equal(Date.parse(SETTLE_UTC)-Date.parse(ADMIT_UTC),900000);
  assert.equal(sha(readFileSync(new URL('../../../ai-harness/deploy/engine/configure-profile.mjs',import.meta.url))),PROFILE_SHA256);

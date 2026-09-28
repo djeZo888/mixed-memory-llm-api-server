@@ -18,9 +18,9 @@
     "cache": "F16"
   },
   "acceptance": {
-    "admitTheoreticalUtc": "2026-09-28T00:59:30Z",
-    "stopUtc": "2026-09-28T01:14:30Z",
-    "hardSettlementUtc": "2026-09-28T01:15:00Z",
+    "admitTheoreticalUtc": "2026-09-28T01:09:30Z",
+    "stopUtc": "2026-09-28T01:24:30Z",
+    "hardSettlementUtc": "2026-09-28T01:25:00Z",
     "minimumWorkSecondsAfterMeasuredPreflight": 720,
     "maximumWorkSeconds": 1200,
     "maximumSupervisorSeconds": 1380,

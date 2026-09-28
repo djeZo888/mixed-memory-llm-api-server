@@ -1,0 +1,28 @@
+{
+  "authority": "ROOT-CLOCK-FINAL.md direct root 2026-09-28T00:44Z",
+  "stopUtc": "2026-09-28T01:24:30Z",
+  "hardSettlementUtc": "2026-09-28T01:25:00Z",
+  "theoreticalPostPreflightAdmissionUtc": "2026-09-28T01:09:30Z",
+  "actualServiceEntry": "earlier than theoretical admission by both measured preflight durations; supervisor monotonic bound also applies",
+  "minimumActualWorkSeconds": 720,
+  "cleanupSeconds": 180,
+  "maximumWorkSeconds": 1200,
+  "maximumSupervisorSeconds": 1380,
+  "finalStopGraceSeconds": 30,
+  "nativeHardEndUtc": "2026-09-28T01:22:00Z",
+  "W1LastAdmissionUtc": "2026-09-28T01:30:00Z",
+  "globalHardEndUtc": "2026-09-28T01:38:03Z",
+  "originalStageSource": "3760c615ec4c4785d1a3e5f5ca4781066782ad66",
+  "originalStageManifest": "054c7cf73f69740e739d18af05c55402603a68839ebacb80eb461b60886bf724",
+  "originalStageEntries": 479,
+  "sourceFilesChanged": [
+    "launch-app-acceptance.sh",
+    "driver/supervise.py",
+    "driver/supervise_test.py",
+    "driver/preflight.mjs",
+    "driver/preflight.test.mjs",
+    "SOURCE-CLOSURE.json"
+  ],
+  "runningClocksChanged": false,
+  "fullRestage": false
+}

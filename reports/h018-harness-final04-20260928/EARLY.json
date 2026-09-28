@@ -1,0 +1,17 @@
+{
+  "nativeSession": "01a0e576-8f03-7311-ac09-22341837a3bb",
+  "host": "mac-worker2",
+  "startedUtc": "2026-09-28T00:42:27.061320+00:00",
+  "hardDeadlineUtc": "2026-09-28T01:22:00Z",
+  "source": "5b3841755e295917b1b32bb1a66c37d68967e191",
+  "status": "REVIEW_COMMITTED_FUTURE_CLOCK_PREP",
+  "applicationStopUtc": "2026-09-28T01:24:30Z",
+  "hardSettlementUtc": "2026-09-28T01:25:00Z",
+  "qualification": "NOT_PROVIDED_NEW_950K_FULL17",
+  "imageBuild": false,
+  "pairApplied": false,
+  "acceptanceDispatched": false,
+  "exit": "wrapper records actual exit after handback",
+  "reviewRecordCommit": "6540d216820a5cc22fdd349d84ddc4d937f86dee",
+  "reviewBundle": "H018-REVIEW03-records.bundle"
+}
