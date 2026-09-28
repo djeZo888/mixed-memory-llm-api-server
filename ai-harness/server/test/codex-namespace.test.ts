@@ -19,3 +19,15 @@ test('namespace unknown forms, duplicate tuples and reserved-name collisions fai
   const b=fixture();mutate(b);assert.throws(()=>translateResponses(b));
  }
 });
+test('actual Linux MCP namespace catalog and calls retain scoped identities',()=>{
+ const b=JSON.parse(readFileSync(new URL('./fixtures/codex/native-mcp-namespaces.json',import.meta.url),'utf8'));
+ for(const ns of b.tools) for(const f of ns.tools){
+  const request=structuredClone(b);request.input.push({type:'function_call',call_id:'mcp-call',namespace:ns.name,name:f.name,arguments:'{}'},{type:'function_call_output',call_id:'mcp-call',output:'fixture result'});
+  const t=translateResponses(request),mapped=`sova_ns_${ns.name.length}_${ns.name}_${f.name}`;
+  assert.equal(t.body.messages.at(-2).tool_calls[0].function.name,mapped);
+  const frames:string[]=[];const s=new ResponsesStream(t,x=>frames.push(x));
+  for(const v of [{choices:[{delta:{tool_calls:[{index:0,id:'mcp-next',type:'function',function:{name:mapped,arguments:'{}'}}]},finish_reason:'tool_calls'}]},{choices:[],usage:{prompt_tokens:1,completion_tokens:1}}])s.push(Buffer.from(`data: ${JSON.stringify(v)}\n\n`));s.push(Buffer.from('data: [DONE]\n\n'));s.end();
+  const item=frames.map(v=>JSON.parse(v.split('\ndata: ')[1]!)).find(v=>v.type==='response.output_item.done').item;assert.equal(item.namespace,ns.name);assert.equal(item.name,f.name);
+ }
+ const unsafe=structuredClone(b);unsafe.tools.find((t:any)=>t.name==='mcp__image').tools[0].name='image_generate';assert.throws(()=>translateResponses(unsafe));
+});
