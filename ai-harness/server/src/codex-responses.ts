@@ -123,7 +123,9 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
             if (!object(inner) || inner.type !== "function" || !NAMESPACE_TOOLS[t.name]!.includes(inner.name))
                 reject("Unsupported namespace tool");
             fields(inner, ["type", "name", "description", "strict", "parameters"]);
-            const name = `sova_ns_${t.name.length}_${t.name}_${inner.name}`;
+            // Aliases are looked up in the request-local map, never decoded. Keep the
+            // qualified identity legible without an artificial numeric length marker.
+            const name = `sova_ns_${t.name}_${inner.name}`;
             if (name.length > 64 || namespaced.has(name)) reject("Namespace transport collision or length");
             namespaced.set(name, { namespace: t.name, originalName: inner.name });
             expandedTools.push({ ...inner, name, description: `Namespace ${t.name} guidance: ${t.description}\n\n${string(inner.description)}` });
@@ -192,7 +194,7 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
                 reject("Interleaved new tool calls before pending results");
             const id = string(item.call_id), originalName = string(item.name), custom = item.type === "custom_tool_call";
             if (item.namespace != null && (!Object.hasOwn(NAMESPACE_TOOLS, item.namespace) || custom)) reject("Unsupported history namespace");
-            const name = item.namespace == null ? originalName : `sova_ns_${item.namespace.length}_${item.namespace}_${originalName}`;
+            const name = item.namespace == null ? originalName : `sova_ns_${item.namespace}_${originalName}`;
             if (item.namespace == null && originalName.startsWith("sova_ns_")) reject("Transport name is not a native history identity");
             if (!id || calls.has(id))
                 reject("Duplicate tool call ID");

@@ -731,3 +731,27 @@ test("resume usage does not weaken real item ordering", async () => {
   await assert.rejects(f.engine.prompt("must not dispatch"));
   assert.equal(f.requests.filter(r => r.method === "turn/start").length, 0); await f.engine.close();
 });
+
+test('cancel keeps native uncertainty until delayed durable gateway drain and returns cancelled', async () => {
+ const {GatewayOwnership}=await import('../src/gateway-ownership.js');
+ const owners=new GatewayOwnership({recoveryReady:true,onRequestState:()=>{}}),request=owners.begin('session');
+ owners.transition(request,'draining');
+ const f=fixture({gateway:()=>owners.waitForSettlement({sessionId:'session'},1000)});
+ const pending=f.engine.prompt('stop fixture');await tick();
+ const cancelled=f.engine.cancel();f.complete('interrupted');await tick();
+ assert.equal(f.states.at(-1)!.ownership,'uncertain');assert.ok(f.calls.indexOf('terminate')<f.calls.indexOf('gateway-proof'));
+ owners.transition(request,'settled');await cancelled;assert.equal(await pending,'cancelled');
+ assert.equal(f.states.at(-1)!.ownership,'idle');assert.equal(f.requests.filter(r=>r.method==='turn/start').length,1);
+});
+test('drain observation timeout or unconfirmed native process never releases cancellation ownership', async () => {
+ const {GatewayOwnership}=await import('../src/gateway-ownership.js');
+ for(const nativeConfirmed of [true,false]){
+  const owners=new GatewayOwnership({recoveryReady:true,onRequestState:()=>{}}),request=owners.begin('session');
+  if(!nativeConfirmed)owners.transition(request,'settled');
+  const f=fixture({terminate:async()=>nativeConfirmed,gateway:()=>owners.waitForSettlement({sessionId:'session'},5)});
+  const pending=f.engine.prompt('stop fixture');const rejected=assert.rejects(pending,/unconfirmed/);await tick();
+  const cancelled=assert.rejects(f.engine.cancel(),/unconfirmed/);f.complete('interrupted');
+  await Promise.all([rejected,cancelled]);assert.equal(f.states.at(-1)!.ownership,'uncertain');
+  await assert.rejects(f.engine.close(),/unconfirmed/);
+ }
+});

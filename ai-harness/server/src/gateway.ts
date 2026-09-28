@@ -90,8 +90,9 @@ export interface Gateway {
   issueToken(sessionId: string, scope?: "minimax" | "codex"): string;
   revokeToken(token: string): void;
   revokeSession(sessionId: string): void;
-  /** Gateway proof only; caller also proves native parent/children cannot emit more work. */
-  confirmSettlement(query: SettlementQuery): Promise<boolean>;
+  /** Gateway proof only; optional bounded drain observation (0..15000ms).
+   * Caller separately proves native parent/children cannot emit more work. */
+  confirmSettlement(query: SettlementQuery, waitMs?: number): Promise<boolean>;
   sessionWork(sessionId: string): import("./gateway-ownership.js").RequestOwnership[];
   snapshot(): {
     queued: number;
@@ -1195,7 +1196,7 @@ export function createGateway(options: GatewayOptions): Gateway {
         for (const controller of frontierCancellations.get(token) ?? []) controller.abort();
       }
     },
-    confirmSettlement: async (query) => ownership.confirm(query),
+    confirmSettlement: async (query, waitMs = 0) => ownership.waitForSettlement(query, waitMs),
     sessionWork: (sessionId) => ownership.snapshot(sessionId),
     snapshot: () => ({
       queued: admission.queued,
