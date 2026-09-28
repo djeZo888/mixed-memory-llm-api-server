@@ -622,15 +622,23 @@ test("finished spawn tool with pending child cannot turn native cleanup into par
 });
 
 test("private compaction uses exact pinned RPC; missing/failed compaction never claims readiness", async () => {
-  for (const outcome of ["success", "missing", "failure"]) {
+  for (const outcome of ["success", "missing", "failure", "interrupted"]) {
     const f = fixture();
     const pending = f.engine.compact();
-    const result = outcome === "success" ? pending : assert.rejects(pending);
+    const result = ["success", "interrupted"].includes(outcome)
+      ? pending
+      : assert.rejects(pending);
     await tick();
     if (outcome !== "missing")
       f.item("compact", "contextCompaction", {}, "started");
     if (outcome === "success") f.item("compact", "contextCompaction");
-    f.complete(outcome === "failure" ? "failed" : "completed");
+    f.complete(
+      outcome === "failure"
+        ? "failed"
+        : outcome === "interrupted"
+          ? "interrupted"
+          : "completed",
+    );
     await result;
     assert.equal(
       f.requests.filter((r) => r.method === "thread/compact/start").length,

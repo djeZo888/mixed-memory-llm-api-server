@@ -1502,3 +1502,15 @@ h1 {
   color: #737e70;
   font-size: 11px;
 }
+
+.codex-capabilities {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+.codex-capabilities[open] {
+  max-height: 290px;
+  overflow-y: auto;
+}
+.codex-capabilities ul {
+  padding-left: 17px;
+}

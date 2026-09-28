@@ -536,7 +536,13 @@ export function ConversationReplies({
     </>
   );
 }
-export function WorkingStatus({ thread }: { thread: Thread }) {
+export function WorkingStatus({
+  thread,
+  unavailable = false,
+}: {
+  thread: Thread;
+  unavailable?: boolean;
+}) {
   const runs = [...thread.runs].reverse();
   const current = currentRun(thread.runs);
   const status = resolveStatus(thread.session.status, thread.runs);
@@ -561,7 +567,9 @@ export function WorkingStatus({ thread }: { thread: Thread }) {
               ? 'Running · working'
               : status[0].toUpperCase() + status.slice(1)
             : status === 'idle'
-              ? 'Ready'
+              ? unavailable
+                ? 'Preview disabled'
+                : 'Ready'
               : status}
         </strong>
       </span>
