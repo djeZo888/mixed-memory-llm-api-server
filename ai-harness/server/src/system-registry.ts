@@ -17,6 +17,7 @@ export type RegistryService = {
   owner: string;
   capabilities: string[];
   endpoint_ref: string | null;
+  model?: { display_name: string; instance_name: string; expected_alias: string; selection_group: "frontier" | null };
 };
 export type RegistryComponent = {
   id: string;
@@ -39,6 +40,8 @@ export type RegistryTransport = {
 export type RegistryCredential = { id: string; systemd_credential: string };
 export type SystemRegistry = {
   schema_version: 1;
+  /** Runtime selection from active-frontier.json, separate from descriptive labels. */
+  selected_frontier?: string;
   credentials: RegistryCredential[];
   transports: RegistryTransport[];
   nodes: RegistryNode[];
@@ -48,10 +51,10 @@ export type SystemRegistry = {
 export const isActionNode = (id: string): id is NodeId =>
   (NODE_IDS as readonly string[]).includes(id);
 const fail = (): never => { throw Error("Invalid system registry"); };
-function object(value: unknown, keys: string[]): Record<string, unknown> {
+function object(value: unknown, keys: string[], optional: string[] = []): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return fail();
   const v = value as Record<string, unknown>;
-  if (Object.keys(v).length !== keys.length || keys.some(k => !Object.hasOwn(v, k))) return fail();
+  if (Object.keys(v).some(k => !keys.includes(k) && !optional.includes(k)) || keys.some(k => !Object.hasOwn(v, k))) return fail();
   return v;
 }
 const id = (v: unknown): string => typeof v === "string" && /^[a-z][a-z0-9_.-]{0,63}$/.test(v) && !["constructor", "prototype", "__proto__"].includes(v) ? v : fail();
@@ -63,7 +66,7 @@ function list<T>(v: unknown, max: number, parse: (x: unknown) => T): T[] {
 function unique(values: string[]) { if (new Set(values).size !== values.length) fail(); }
 const endpointRefs = ["frontier-private", "qwen-gpu0-private", "qwen-gpu1-private", "image-private", "control-private", "harness-local", "search-local", "status-uds"];
 export function validateSystemRegistry(raw: unknown): SystemRegistry {
-  const v = object(raw, ["schema_version", "credentials", "transports", "nodes", "services", "components"]);
+  const v = object(raw, ["schema_version", "credentials", "transports", "nodes", "services", "components"], ["selected_frontier"]);
   if (v.schema_version !== 1) fail();
   const credentials = list(v.credentials, 16, entry => {
     const c = object(entry, ["id", "systemd_credential"]);
@@ -108,10 +111,16 @@ export function validateSystemRegistry(raw: unknown): SystemRegistry {
   if (!nodes.length) fail();
   unique(nodes.map(n => n.id));
   const services = list(v.services, 128, entry => {
-    const s = object(entry, ["id", "node_id", "display_name", "observation_key", "owner", "capabilities", "endpoint_ref"]);
+    const s = object(entry, ["id", "node_id", "display_name", "observation_key", "owner", "capabilities", "endpoint_ref"], ["model"]);
     if (s.endpoint_ref !== null && !endpointRefs.includes(s.endpoint_ref as string)) fail();
     const capabilities = list(s.capabilities, 32, id); unique(capabilities);
-    return { id: id(s.id), node_id: id(s.node_id), display_name: label(s.display_name), observation_key: id(s.observation_key), owner: label(s.owner), capabilities, endpoint_ref: s.endpoint_ref } as RegistryService;
+    let model: RegistryService["model"];
+    if (s.model !== undefined) {
+      const m = object(s.model, ["display_name", "instance_name", "expected_alias", "selection_group"]);
+      if (m.selection_group !== null && m.selection_group !== "frontier") fail();
+      model = { display_name: label(m.display_name), instance_name: label(m.instance_name), expected_alias: id(m.expected_alias), selection_group: m.selection_group as "frontier" | null };
+    }
+    return { ...(model ? { model } : {}), id: id(s.id), node_id: id(s.node_id), display_name: label(s.display_name), observation_key: id(s.observation_key), owner: label(s.owner), capabilities, endpoint_ref: s.endpoint_ref } as RegistryService;
   });
   const components = list(v.components, 128, entry => {
     const c = object(entry, ["id", "node_id", "display_name", "type", "owner", "parent_id", "independently_restartable", "observation"]);
@@ -149,23 +158,19 @@ export function validateSystemRegistry(raw: unknown): SystemRegistry {
   for (const model of ["glm-5.3-flash", "mimo-v2.6-pro-rl"]) {
     for (const s of services) {
       if ((s.id === model || s.observation_key === model) &&
-          (s.id !== model || s.observation_key !== model || s.node_id !== "ai-vm" || s.endpoint_ref !== "frontier-private")) fail();
+          (s.id !== model || s.observation_key !== model || s.node_id !== "ai-vm" || s.endpoint_ref !== "frontier-private" ||
+           s.model?.expected_alias !== model || s.model.selection_group !== "frontier")) fail();
     }
   }
-  return { schema_version: 1, credentials, transports, nodes, services, components };
+  if (v.selected_frontier !== undefined && !services.some(s => s.model?.selection_group === "frontier" && s.model.expected_alias === v.selected_frontier)) fail();
+  return { schema_version: 1, credentials, transports, nodes, services, components,
+    ...(v.selected_frontier === undefined ? {} : { selected_frontier: id(v.selected_frontier) }) };
 }
 /** Inventory retains both identities; selection never creates another queue or readiness. */
 export function selectRegistryFrontier(registry: SystemRegistry, model: string): SystemRegistry {
-  if (!["glm-5.3-flash", "mimo-v2.6-pro-rl"].includes(model)) throw Error("Invalid selected frontier");
   const valid = validateSystemRegistry(registry);
-  if (!valid.services.some(s => s.id === model)) throw Error("Selected frontier missing from registry");
-  return validateSystemRegistry({ ...valid, services: valid.services.map(s => {
-    if (s.id === "glm-5.3-flash" && model !== s.id)
-      return { ...s, display_name: "GLM-5.3-Flash (dormant; manual rollback)" };
-    if (s.id === "mimo-v2.6-pro-rl")
-      return { ...s, display_name: model === s.id ? "MiMo V2.6 Pro-RL" : "MiMo V2.6 Pro-RL (dormant)" };
-    return s;
-  }) });
+  if (!valid.services.some(s => s.model?.selection_group === "frontier" && s.model.expected_alias === model)) throw Error("Selected frontier missing from registry");
+  return validateSystemRegistry({ ...valid, selected_frontier: model });
 }
 export function loadSystemRegistry(): SystemRegistry {
   // Fixed path relative to source/dist, shipped and reviewed with the release.

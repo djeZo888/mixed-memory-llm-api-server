@@ -16,6 +16,16 @@ function rangeInterval(g){const range=numeric(g.temperature_min_c," °C")+" – 
 function metric(title,observation,rows){const box=el("div",undefined,"metric");box.append(el("strong",title),el("small",observationText(observation)));const list=el("dl");for(const [label,value]of rows){list.append(el("dt",label),el("dd",value));}box.append(list);return box;}
 function observationText(o){return (o?.state||"unknown")+" · "+(o?.freshness||"unknown")+" · age "+(o?.age_ms==null?"unknown":Math.round(o.age_ms/1000)+"s")+(o?.observed_at?" · "+o.observed_at:"");}
 function currentMetric(o,value){return (o?.state==="ok"&&o?.freshness==="fresh"?value:"Unknown")+" · "+(o?.freshness||"unknown");}
+function modelDetails(s){
+  if(!s.configured_model)return [];
+  const c=s.configured_model,o=s.observed_model||{};
+  return ["Configured model: "+c.display_name+" · instance: "+c.instance_name,
+    "Expected alias: "+c.expected_alias+" · selection: "+s.selection,
+    "Observed model: "+(o.model_alias||"unknown")+" · identity: "+s.identity_status,
+    "Observed instance: "+(o.node_id||"unknown")+" / "+(o.service_id||"unknown")+" · deployment: "+(o.deployment_id||"unknown"),
+    "Reported required GPU UUIDs: "+((o.required_gpu_uuids||[]).join(", ")||"unknown"),
+    "Endpoint reference: "+(s.endpoint_ref||"none")];
+}
 function render(data){
   $("overview").replaceChildren();$("inventory").replaceChildren();$("nodes").replaceChildren();
   const rows=[];
@@ -27,13 +37,15 @@ function render(data){
     summary.append(summaryMetrics);$("overview").append(summary);
     for(const s of [...node.services,...(node.components||[])]){
       const service=s.type==="service",identity=s.service_id||s.component_id;
-      const info=detail(s.display_name||identity,[identity,...(service?["Configured: "+(s.configured_capabilities||[]).join(", "),"Observed capabilities: "+((s.installed_capabilities||[]).join(", ")||"unknown")]:["Parent: "+(s.parent_id||"none"),"Independent restart: "+(s.independently_restartable?"yes (owner only)":"no")])]);
+      const info=detail(s.display_name||identity,[identity,...(service?["Configured: "+(s.configured_capabilities||[]).join(", "),"Observed capabilities: "+((s.installed_capabilities||[]).join(", ")||"unknown"),...modelDetails(s)]:["Parent: "+(s.parent_id||"none"),"Independent restart: "+(s.independently_restartable?"yes (owner only)":"no")])]);
       const evidence=detail(s.evidence_source||"unknown",[observationText(s),"Owner: "+s.owner]);
       rows.push([info,node.node_id,s.type,badge(s.current_state||"unknown"),detail(s.health||"unknown",service?["Ready / admitting: "+String(s.ready??"unknown")+" / "+String(s.admitting??"unknown"),"Activity: "+s.activity,"Work: "+String(s.active_requests??"?")+" active · "+String(s.queue_depth??"?")+" queued",s.hardware_latched?"Hardware disabled for this boot":s.reason||""]:[s.reason||"No independent readiness proof"]),evidence]);
     }
     const p=el("section",undefined,"panel");p.dataset.nodeId=node.node_id;p.append(el("h2",name+" · resources"),badge(node.freshness),el("p",observationText(node)+" · Boot: "+(node.boot_id||"unknown"),"muted"));
-    if(node.gpus.length){const gpuTable=table(["GPU / assignment","Temperature / sampled range","Memory used / total","Power draw / limit","ECC","PCIe current / max"],node.gpus.map(g=>[
-      detail(g.name||"Unknown GPU",["UUID …"+g.uuid.slice(-8),(g.affected_services||[]).length?"Assigned: "+g.affected_services.join(", "):"Unassigned"]),
+    if(node.gpus.length){const gpuTable=table(["GPU / observed dependencies","Temperature / sampled range","Memory used / total","Power draw / limit","ECC","PCIe current / max"],node.gpus.map(g=>[
+      detail(g.name||"Unknown GPU",["UUID "+g.uuid,observationText(g),
+        "Ready model dependencies (not occupancy): "+((g.observed_ready_dependents||[]).map(b=>b.model_alias+" · "+b.instance_name+" ("+b.node_id+" / "+b.service_id+"; "+b.selection+")").join(", ")||"unknown / none observed"),
+        "Action impact IDs: "+((g.affected_services||[]).join(", ")||"none reported")]),
       detail(numeric(g.temperature_c," °C"),[rangeInterval(g)]),
       bytes(g.memory_used_mib==null?null:g.memory_used_mib*1048576)+" / "+bytes(g.memory_total_mib==null?null:g.memory_total_mib*1048576),
       numeric(g.power_draw_w," W")+" / "+numeric(g.power_limit_w," W"),
@@ -64,7 +76,7 @@ function render(data){
   $("inventory").append(el("h2","Services and components"),el("p","Configured placement is inventory. State, readiness and observation freshness are separate; capabilities sharing a process have no independent readiness proof.","muted"),table(["Service / component","Host","Type","State","Health / readiness","Evidence"],rows));
   $("notice").textContent="Last refreshed "+new Date().toLocaleTimeString()+" · Independent of the chat process";
 }
-let polling=false,lastData=null,lastReceived=0;async function refresh(){if(polling)return;polling=true;try{lastData=await json("/api/status/v1/system");lastReceived=performance.now();render(lastData);}catch{if(lastData){const stale=structuredClone(lastData),elapsed=performance.now()-lastReceived;function age(v){if(!v||typeof v!=="object")return;if(Object.hasOwn(v,"age_ms")){if(v.age_ms!==null)v.age_ms+=elapsed;if(v.freshness==="fresh")v.freshness="stale";}if(Object.hasOwn(v,"current_state"))v.current_state="unknown";if(Object.hasOwn(v,"health"))v.health="unknown";Object.values(v).forEach(age);}age(stale);render(stale);}$("notice").textContent="Status transport unavailable. Previously displayed values may be stale; this does not prove hardware absence.";}finally{polling=false;}}
+let polling=false,lastData=null,lastReceived=0;async function refresh(){if(polling)return;polling=true;try{lastData=await json("/api/status/v1/system");lastReceived=performance.now();render(lastData);}catch{if(lastData){const stale=structuredClone(lastData),elapsed=performance.now()-lastReceived;function age(v){if(!v||typeof v!=="object")return;if(Object.hasOwn(v,"age_ms")){if(v.age_ms!==null)v.age_ms+=elapsed;if(v.freshness==="fresh")v.freshness="stale";}if(Object.hasOwn(v,"current_state"))v.current_state="unknown";if(Object.hasOwn(v,"health"))v.health="unknown";if(Object.hasOwn(v,"ready"))v.ready=null;if(Object.hasOwn(v,"admitting"))v.admitting=null;if(Object.hasOwn(v,"identity_status")&&v.identity_status!=="not_applicable")v.identity_status="stale";if(Object.hasOwn(v,"observed_ready_dependents"))v.observed_ready_dependents=[];Object.values(v).forEach(age);}age(stale);render(stale);}$("notice").textContent="Status transport unavailable. Previously displayed values may be stale; this does not prove hardware absence.";}finally{polling=false;}}
 let targets=[],pending=null,operationTimer=null,dispatchImpact=null,lastOperation=null,recoveryTarget=null,recoveryKey=null;
 function selection(){return targets[Number($("target").value)];}
 function impact(){const t=selection();pending=null;$("interrupt").checked=false;$("action").replaceChildren();if(!t)return;for(const a of t.actions){const o=el("option",a);o.value=a;$("action").append(o);}$("impact").textContent="Affected services: "+t.affected_services.join(", ")+"\\nActivity: "+t.activity+"; active requests: "+(t.active_requests??"unknown")+"; queued: "+(t.queue_depth??"unknown")+"\\nNew dispatch paused: "+(t.dispatch_scope?.includes("harness")?"all app work":(t.dispatch_scope||[]).join(", ")||"no model lanes")+(t.dispatch_scope?.includes("harness")?"\\nHarness aggregate work: "+(dispatchImpact?.activity||"unknown")+"; active: "+(dispatchImpact?.active_requests??"unknown")+"; queued: "+(dispatchImpact?.queue_depth??"unknown")+" (readiness does not prove idle)":"")+"\\nBoot: "+t.expected_boot_id+"; target generation: "+t.expected_generation+"\\nReboot affects every listed service and requires later boot confirmation. No offline power-on is available.";}

@@ -52,7 +52,13 @@
       "capabilities": [
         "chat.completions"
       ],
-      "endpoint_ref": "qwen-gpu0-private"
+      "endpoint_ref": "qwen-gpu0-private",
+      "model": {
+        "display_name": "Qwen3.8 27B",
+        "instance_name": "Qwen GPU0",
+        "expected_alias": "qwen3.8-27b-gpu0",
+        "selection_group": null
+      }
     },
     {
       "id": "qwen-gpu1",
@@ -63,7 +69,13 @@
       "capabilities": [
         "chat.completions"
       ],
-      "endpoint_ref": "qwen-gpu1-private"
+      "endpoint_ref": "qwen-gpu1-private",
+      "model": {
+        "display_name": "Qwen3.8 27B",
+        "instance_name": "Qwen GPU1",
+        "expected_alias": "qwen3.8-27b",
+        "selection_group": null
+      }
     },
     {
       "id": "image",
@@ -75,7 +87,13 @@
         "images.generations",
         "images.edits"
       ],
-      "endpoint_ref": "image-private"
+      "endpoint_ref": "image-private",
+      "model": {
+        "display_name": "Qwen Image 2.1",
+        "instance_name": "Image backend",
+        "expected_alias": "qwen-image-2.1",
+        "selection_group": null
+      }
     },
     {
       "id": "control",
@@ -133,7 +151,13 @@
         "chat.completions",
         "tokenize"
       ],
-      "endpoint_ref": "frontier-private"
+      "endpoint_ref": "frontier-private",
+      "model": {
+        "display_name": "GLM-5.3-Flash",
+        "instance_name": "Frontier GLM",
+        "expected_alias": "glm-5.3-flash",
+        "selection_group": "frontier"
+      }
     },
     {
       "id": "mimo-v2.6-pro-rl",
@@ -145,7 +169,13 @@
         "chat.completions",
         "input_tokens"
       ],
-      "endpoint_ref": "frontier-private"
+      "endpoint_ref": "frontier-private",
+      "model": {
+        "display_name": "MiMo V2.6 Pro-RL",
+        "instance_name": "Frontier MiMo",
+        "expected_alias": "mimo-v2.6-pro-rl",
+        "selection_group": "frontier"
+      }
     }
   ],
   "components": [
