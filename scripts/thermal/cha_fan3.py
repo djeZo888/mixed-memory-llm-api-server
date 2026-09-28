@@ -245,13 +245,35 @@ def invariant(s):
     shape(s)
     for p in s[PATHS[1]][3]['CurrentPWMdata'][:4]:
         p['Duty'] = None
-    def clean(v):
-        if isinstance(v, dict):
-            return {k: clean(x) for k, x in v.items() if not re.fullmatch(r'(?:PWM[1-8]_)?LastTemp|PWM[1235678]_LastSource', k)}
-        if isinstance(v, list):
-            return [clean(x) for x in v]
-        return v
-    return clean(s)
+    return configuration_only(s)
+
+def configuration_only(v):
+    # Last-selected source is observation, not the configured /source mask.
+    if isinstance(v, dict):
+        return {k: configuration_only(x) for k, x in v.items()
+                if not re.fullmatch(r'(?:PWM[1-8]_)?LastTemp|PWM[1235678]_LastSource', k)}
+    if isinstance(v, list):
+        return [configuration_only(x) for x in v]
+    return v
+
+def configuration_diff(before, after):
+    rows = []
+    def value(v):
+        raw = json.dumps(v, sort_keys=True)
+        return v if len(raw) <= 512 else {'value_sha256': digest(v), 'encoded_size': len(raw)}
+    def walk(a, b, path):
+        if len(rows) >= 32:
+            return
+        if isinstance(a, dict) and isinstance(b, dict):
+            for key in sorted(a.keys() | b.keys()):
+                walk(a.get(key), b.get(key), path + '/' + key)
+        elif isinstance(a, list) and isinstance(b, list) and len(a) == len(b):
+            for i, (x, y) in enumerate(zip(a, b)):
+                walk(x, y, path + '/' + str(i))
+        elif a != b:
+            rows.append({'path': path, 'before': value(a), 'after': value(b)})
+    walk(before, after, '')
+    return rows
 
 def payload(s, duty):
     shape(s)
@@ -389,7 +411,7 @@ class Controller:
     def __init__(self, bmc, store):
         self.bmc, self.store = bmc, store
         self.expected = None
-        self.baseline = store.read('baseline.json')
+        self.baseline = configuration_only(store.read('baseline.json'))
         self.proof = store.read('status.json') or {}
         self.readback_at = self.proof.get('readback_at')
         self.stopping = lambda: False
@@ -408,6 +430,9 @@ class Controller:
             self.baseline = inv
             self.store.write('baseline.json', inv)
         if inv != self.baseline:
+            self.store.write('invariant-mismatch.json', {'at': utc(),
+                'baseline_sha256': digest(self.baseline), 'observed_sha256': digest(inv),
+                'differences': configuration_diff(self.baseline, inv), 'limit': 32})
             raise Fault('bmc_invariant_changed')
         self.readback_at = utc()
         return s, duty

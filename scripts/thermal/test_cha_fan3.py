@@ -177,6 +177,19 @@ class ControllerTests(unittest.TestCase):
         c,b,s=self.make();c.start();b.s[f.PATHS[2]]['PWM4_1']=1
         c.terminal('user_disabled_sources_changed')
         self.assertEqual(b.puts,1);self.assertIn('safe_high_unavailable',c.proof['errors'][0])
+    def test_invariant_mismatch_retains_exact_bounded_path(self):
+        c,b,s=self.make();c.start();b.s[f.PATHS[1]][0]['PWMSrc']=1
+        with self.assertRaisesRegex(f.Fault,'invariant_changed'):c.inspect()
+        receipt=s.read('invariant-mismatch.json')
+        self.assertEqual(receipt['differences'],[{'path':'//api/fanctrl/PWM/0/PWMSrc','before':0,'after':1}])
+        self.assertLess(len(json.dumps(receipt)),4096)
+    def test_old_baseline_keeps_config_excludes_only_observation(self):
+        b=FakeBMC(80);s=MemoryStore();baseline=f.invariant(b.snapshot())
+        baseline[f.PATHS[3]]['PWM8_LastSource']=0;s.write('baseline.json',baseline)
+        b.s[f.PATHS[3]]['PWM8_LastSource']=2
+        c=f.Controller(b,s);c.start();self.assertEqual(b.puts,0)
+        b.s[f.PATHS[2]]['PWM8_1']=1
+        with self.assertRaisesRegex(f.Fault,'invariant_changed'):c.inspect()
     def test_other_zone_drift_no_write(self):
         c,b,s=self.make();c.start();b.s[f.PATHS[1]][0]['PWMSrc']=1
         c.terminal('bmc_invariant_changed');self.assertEqual(b.puts,1)
