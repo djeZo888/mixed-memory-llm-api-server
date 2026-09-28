@@ -5,8 +5,12 @@
 The two-hour window runs from23:38:03UTC September27 to01:38:03UTC September28.
 The swap-limit mechanism has been reproduced locally and a narrow repair has
 passed small-container checks and independent review. Deployment of the ordinary
-MiMo service began its ordinary 950K load at **00:03:07 UTC**; actual readiness
-and Sova acceptance remain pending at this checkpoint. No long benchmark is running.
+MiMo service began its ordinary 950K load at **00:03:07 UTC** and actual native
+and private-API readiness was confirmed at **00:15:43 UTC**. The tiny text
+request passed, but the subsequent native tool test was interrupted by a
+separate hardware-status proof failure. A reviewed owner-only correction is
+installed and a fresh load began at **00:47:40 UTC**. Native tool and Sova
+acceptance remain pending. No long benchmark is running.
 
 Sova was paused normally at23:41:52UTC. Chats, files and existing quarantines
 were preserved. The original GLM process was normally stopped and its exact
@@ -34,7 +38,40 @@ The actual production container is beneath the required slice. At startup,
 both parent and child had the 704 GiB limit, zero swap limit/current and no
 owned OOM events. The deployment worker exited at 00:10:04 UTC while the
 ordinary service continued loading independently. This is startup evidence,
-not yet readiness or long-context qualification.
+not long-context qualification. The later readiness check confirmed 950,000
+usable tokens on both native and private API, the same process identity,
+10,091 MiB of GPU memory free out of 97,887 MiB, and a 36°C GPU temperature.
+Container memory was 622,077,083,648 bytes, including file cache; owned swap
+and OOM remained zero.
+
+At 00:16:03, the owner refused an unconfirmed GPU health-latch status during
+the first 9,536-token tool prefill. Cleanup separately exceeded its command
+timeout. A 00:19:51 read verified the exact process, cgroup and GPU allocation
+were released. The later protected hardware state had no positive fault and
+a fresh proof, which does not reconstruct its state at the failure instant.
+The original failed request and uncertainty records remain retained. This
+second failure is distinct from the repaired swap-limit reset.
+
+The last successful health proof was nearly 11 seconds old five seconds before
+the failure, against a 15-second freshness limit. This supports expiry as the
+cause; the exact failing projection was not retained. The correction reuses the
+owner's existing fresh GPU measurement to renew an expired, same-boot negative
+proof under the canonical lock. Positive faults, unknown storage and invalid
+evidence still stop the service. Explicit monotonic deadline checks preserve
+the five-second total guard budget even when a lower-level helper catches a
+timeout exception. The shared hardware-policy module remains unchanged.
+
+Independent review reproduced and rejected an earlier timer-handling defect,
+then verified the corrected owner with a delayed-read fixture. The final
+owner SHA-256 is `218c890f1f3d8f7f80998aaf5cf7463c32febf5e454713f40da76a9ed60027d0`.
+Focused owner checks passed (48 passes and one historical skip). Failed
+request evidence and its exact physical/proxy settlement remain preserved;
+the unfinished request was not replayed.
+
+A subsequent start at 00:43 was rejected for lock contention before creating
+any model process. One fresh ordinary start then succeeded at 00:47:40 with a
+new launch identity and the corrected owner. Its persistent parent again
+enforces 704 GiB and zero swap. This is load-start evidence only.
 
 The exact production parent settings were exercised using a tiny64MiB child,
 without allocating704GiB or loading model weights. Parent704GiB/zero-swap

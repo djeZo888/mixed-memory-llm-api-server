@@ -44,10 +44,17 @@ CLI sessions and isolated copies, recording session IDs and compact evidence.
 ## Time and recovery
 
 First repair/preparation tasks are bounded to about25minutes. Aim to finish
-application acceptance by01:15UTC and launch the final job by01:25UTC, leaving
+application acceptance by01:25UTC and launch the final job by01:30UTC, leaving
 time to publish and close before01:38:03UTC. Do not silently extend deadlines or
 hotpatch running ownership records. If acceptance cannot complete, restore the
 known GLM1M/Sova release and report the specific missing work instead.
+
+At 00:44UTC, root authorized an adjustment of the not-yet-started
+application client's internal clock: stop at01:24:30 and settle by01:25.
+The minimum720seconds of work plus180seconds of cleanup, final01:30 dispatch
+cutoff, and user's01:38:03 foreground limit remain. This accommodates the
+additional independently reviewed health-proof correction without changing
+any running request's deadline.
 
 Retain7% free frontier VRAM,15% available host memory, zero owned swap/OOM and
 the existing thermal limits. Preserve canonical lifecycle/storage guards and

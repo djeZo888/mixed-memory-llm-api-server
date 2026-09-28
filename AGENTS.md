@@ -23,7 +23,10 @@ loading. Avoid system daemon-reload during model inference.
 After genuine950K native tool and Sova delegation acceptance, the final task is
 one independent systemd job: optimized64K followed by near950K only if64K passes.
 Renew its dispatch authority once for H018; retain the eight-hour total background
-cap. Aim application acceptance complete by01:15UTC, final dispatch by01:25UTC,
+cap. Following the independently reviewed health-proof repair, the not-yet-run
+application client may be retimed to stop at01:24:30UTC and settle by01:25UTC,
+preserving720seconds of work plus180seconds of cleanup at admission. Do not
+change a running client's clocks. Aim final dispatch by01:30UTC,
 and reserve recovery/publication time before01:38:03. Close paid worker CLI
 sessions after actual startup verification, keep automation paused, and wait
 for the user's nudge. No paid polling while the long test runs.
