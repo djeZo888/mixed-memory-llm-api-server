@@ -1,40 +1,41 @@
-# Sova current task — H022
+# Sova current task — H023
 
-Latest user request: check the existing H019 near-950K benchmark, then prepare
-the next Codex implementation plan. This turn is read-only on the VMs and
-planning/documentation only. Worker1 may collect the existing unit's current
-progress or terminal evidence once; this supersedes H021's no-poll instruction
-for that collection only. No rerun, new inference, holds removal, deployment,
-model/runtime changes or hardware work. Worker2 reviews source/evidence offline.
-Root coordinates, reviews and publishes the plan. Use fresh bounded native
-worker CLI sessions and close them after their result, with no paid waiting.
+Latest user has replaced the third Blackwell fan and restarted the host/VMs.
+Restore/check both VMs, bring current MiMo Pro-RL, two Qwens and image model up
+and warm; qualify CHA_FAN3 control, benchmark third-GPU cooling and run bounded
+four-way concurrency. If the stock Qwen Blackwell still overheats at100% fans,
+test a lower supported GPU power limit. Root plans/reviews/publishes; both Mac
+workers perform VM work in fresh bounded native CLI sessions and isolated copies.
 
-H021 has completed a deployed optional Codex preview. The app is active;
-MiniMax remains default. Codex image tools remain disabled, the separate MiMo
-hold and historical quarantines remain. Old statements below describing the
-app as paused or authorizing implementation are historical, not current grants.
-See ai-harness/PLAN-CODEX-COMPLETION.md for the next proposed work.
+This authorization supersedes prior read-only/shutdown/no-stress restrictions
+for this scope. Subsequent user steering authorizes a separate two-hour Codex
+implementation window after the cooling/four-way test; use the reviewed Codex
+completion plan and both workers. No 950K rerun, new models, GLM restoration,
+driver/runtime upgrade or Proxmox change. Preserve chats/files,
+weights/configuration, historical failures and uncertain request evidence.
+Recover prior-boot held MiMo ownership via its lifecycle path with current
+absence/boot proof, not by deleting history or forging readiness.
 
-## Historical execution instructions — H021
+Worker1 owns ai-vm lifecycle, warmups, thermal tests and conditional power limits.
+Worker2 owns ai-harness/BMC and independent review. Do not overlap fan setter
+qualification with load testing. Use current UUIDs, fresh readback and existing
+85C cutoff. User's CHA_FAN3 baseline is75%; only exact channel changes after
+review, preserving all other mode/source/curve settings. No guessed IPMI raw
+writes or lowering cooling on stale/missing temperature. Integrated GPU fan
+boost at70C remains; do not conflate a configured duty with physical RPM.
 
-Latest user request authorizes implementation of ai-harness/PLAN-CODEX-HARNESS.md with both workers. This supersedes H020's plan-only limit. Root plans, coordinates, reviews and publishes; mac-worker1 and mac-worker2 implement/build/test over SSH in fresh bounded native Codex CLI sessions and isolated copies. Retain session IDs, incremental commits and compact durable evidence. Do not keep paid sessions idle waiting for native work. Historical instructions: docs/orchestration/AGENTS-H020-archive.md.
+Use short staged thermal load then roughly5min actual four-instance overlap,
+with a 16K occupied MiMo prompt and unchanged other-model settings. Configured
+950K/480K capacities remain unchanged. Qualify CHA_FAN3 100% control while idle,
+restore the user's 75% baseline and retain ability to raise it for heat.
+with bounded requests, telemetry and settlement. Do not claim PSU nameplate or
+transient capacity from GPU wattage alone. All3Blackwells share2200W PSU; Ada is
+separately powered. Keep models warm afterward if healthy. No paid worker idle
+through long loads. Initial hardware window15:04–17:05UTC September28; checkpoint
+unfinished work rather than extending silently. Start and record the separate
+user-authorized two-hour Codex window after hardware work. Large MiMo context
+testing waits until Codex is working and a later user-authorized test window.
+Source and reports remain on
+feature/glm53-flash / draftPR10; no merge of incomplete qualification.
 
-Leave the existing h019-final950k.service benchmark on ai-vm untouched. Do not poll it, send competing MiMo inference, change any inference runtime/configuration or restart control/node/model services, hardware, drivers or VMs. No GLM restoration. No new GPU stress tests or BMC/fan changes. MiMo-specific live Codex acceptance is deferred until that benchmark is known settled; fixture/source qualification can proceed. Qwen short acceptance is permitted only through centrally coordinated existing admission ownership, never by bypassing global capacity. Avoid sustained server-Blackwell load. Image short acceptance likewise requires existing job ownership. No model capacity benchmarks.
-
-Implement Codex as a selectable controlled preview beside MiniMax, keeping MiniMax default and existing native sessions tied to their engine. Stage A pins the exact Linux CLI/source/schema and qualifies local Responses/tools/continuation before UI activation. Use private App Server stdio inside existing rootless task isolation, scoped local gateway credentials, no OpenAI inference/auth/search fallback. Preserve chats, uploads, artifacts, original histories, trusted configuration and status repair. Keep stop/restart/uncertain-work ownership truthful; no blind request replay or premature slot release. Preserve actual reasoning fields only under a verified local contract, never fabricate encrypted state or internal reasoning.
-
-Worker1 owns protocol/provider/gateway/tool integration; Worker2 owns engine adapter/session persistence/UI. Coordinate shared contracts before editing. Worker2 may develop independent offline lifecycle fixtures while Worker1 resolves the protocol gate. Cross-review each other's focused changes before root approves an exact pilot deployment. Source/build/test work stays on workers. Root may synchronize code, edit project plans/reports, review and publish. No additional user permission needed for routine authorized changes.
-
-The existing Sova app is paused; a separate MiniMax/MiMo HTTP400 issue remains unresolved. Do not claim it fixed by Codex acceptance. Preserve active-frontier MiMo selection and the deployed H020 status release; runtime descriptive inventory must not silently revert to repository default GLM. Deployment must preserve prior releases and data and must not affect the running MiMo benchmark. Keep status available where practical, but do not spend time maintaining general app availability during implementation.
-
-Use feature/glm53-flash and draft PR10. Do not merge incomplete acceptance into main. Automation remains paused. No automatic engine/dependency upgrades. Record actual PASS/FAIL/NOT_TESTED evidence and limitations. Latest user task has no new fixed wall deadline; each assigned worker task remains bounded and produces a terminal checkpoint before continuation.
-
-H021 PILOT05 completes the planned central engine-status view. A reviewed
-ai-harness-only status release is permitted alongside the final app release;
-preserve H020's model identity/placement repair, actual registry/selector and
-user data. The earlier exact status-PID preservation check was for releases
-that did not change status code; it is superseded only for this intentional
-status update. Engine data comes from configured app health with explicit
-freshness/unavailable states, independently of model readiness. No ai-vm node,
-control, model or benchmark inspection/mutation is authorized. Do not restart
-the app until Worker2 has released all acceptance ownership.
+Historical instructions: docs/orchestration/AGENTS-H022-archive.md.

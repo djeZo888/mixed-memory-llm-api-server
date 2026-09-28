@@ -1,0 +1,119 @@
+{
+  "command": {
+    "action": "start",
+    "command": "sudo -n systemctl start --no-block llm-frontier-mimo.service",
+    "exit": 0,
+    "finished_utc": "2026-09-28T15:40:42.160567+00:00",
+    "parent_lease_held": false,
+    "ssh_alias": "ai-vm",
+    "timeout_seconds": 120,
+    "utc": "2026-09-28T15:40:41.980386+00:00"
+  },
+  "consumption": {
+    "recovery_sha256": "135b2b61f4cd247b9a44c6a1339a4b6f294c814c9043ccd71221d28a3ab79bc4",
+    "schema_version": 1,
+    "successor_launch_id": "3b42b8b128f945a188be6b1b439eacf9",
+    "supervisor": {
+      "invocation_id": "b9712462f5064a089cd06cdcee037284",
+      "pid": 661048,
+      "unit": "llm-frontier-mimo.service"
+    }
+  },
+  "consumption_raw_sha256": "c6f5065df2aef2c57c33924dbcece2a41b9f6438a4d086cc7f290e76681bd2a2",
+  "container": {
+    "id": "02b4b51c95a5b3f80794214746c9914f300c242e48ac44a4d6e05984993c849b",
+    "image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "labels": {
+      "io.h016.launch": "3b42b8b128f945a188be6b1b439eacf9",
+      "io.h016.manifest": "2141e174172acced9fc8e2d0fc9a90b0fb053f8862dba6160fa55e5cc44226db",
+      "io.h016.owner": "H016-MIMO-PERSISTENT-20260927",
+      "local.h014.cuda.architectures": "120a-real",
+      "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+      "org.opencontainers.image.revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "org.opencontainers.image.source": "https://github.com/ggml-org/llama.cpp",
+      "org.opencontainers.image.version": "h014-7ac59a6"
+    },
+    "name": "/llm-frontier-mimo-production",
+    "state": {
+      "Dead": false,
+      "Error": "",
+      "ExitCode": 0,
+      "FinishedAt": "0001-01-01T00:00:00Z",
+      "OOMKilled": false,
+      "Paused": false,
+      "Pid": 661585,
+      "Restarting": false,
+      "Running": true,
+      "StartedAt": "2026-09-28T15:40:44.091098717Z",
+      "Status": "running"
+    }
+  },
+  "further_polling": "NONE",
+  "native_cgroup_matches": true,
+  "native_identity_matches": true,
+  "observed_utc": "2026-09-28T15:40:52.586695+00:00",
+  "predecessor": {
+    "id": "aae59a6db7da41ff58056ce11e762060a6fe8aeecdad3d0e6813057573238d54",
+    "name": "/llm-frontier-mimo-production-prior-b23d112359424d909862207e30f0c9d7",
+    "state": {
+      "Dead": false,
+      "Error": "",
+      "ExitCode": 1,
+      "FinishedAt": "2026-09-28T07:40:14.672873423Z",
+      "OOMKilled": false,
+      "Paused": false,
+      "Pid": 0,
+      "Restarting": false,
+      "Running": false,
+      "StartedAt": "2026-09-28T02:46:14.337383705Z",
+      "Status": "exited"
+    }
+  },
+  "primary_failure": null,
+  "proxy": "NOT_STARTED_AT_LOADING_SNAPSHOT",
+  "readiness": "NOT_TESTED",
+  "same_start_snapshots": 2,
+  "settlement_failure": null,
+  "state": {
+    "boot_id": "17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125",
+    "container_id": "02b4b51c95a5b3f80794214746c9914f300c242e48ac44a4d6e05984993c849b",
+    "launch_id": "3b42b8b128f945a188be6b1b439eacf9",
+    "manifest_sha256": "2141e174172acced9fc8e2d0fc9a90b0fb053f8862dba6160fa55e5cc44226db",
+    "native": {
+      "container_id": "02b4b51c95a5b3f80794214746c9914f300c242e48ac44a4d6e05984993c849b",
+      "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "pid": 661585,
+      "pid_start_ticks": "244391",
+      "started_at": "2026-09-28T15:40:44.091098717Z"
+    },
+    "native_cgroup": "/sys/fs/cgroup/llmmimo.slice/docker-02b4b51c95a5b3f80794214746c9914f300c242e48ac44a4d6e05984993c849b.scope",
+    "proxy_started": false,
+    "request_hold": false,
+    "selection": {
+      "generation": 12,
+      "manifest_sha256": "2141e174172acced9fc8e2d0fc9a90b0fb053f8862dba6160fa55e5cc44226db",
+      "schema_version": 1,
+      "selected_frontier": "mimo-v2.6-pro-rl"
+    },
+    "status": "LOADING",
+    "supervisor": {
+      "invocation_id": "b9712462f5064a089cd06cdcee037284",
+      "pid": 661048,
+      "unit": "llm-frontier-mimo.service"
+    }
+  },
+  "state_raw_sha256": "23903110fe6536db28d2ce7cdbf8dd326c2fc196358bdf54c1f16bf5803bb59a",
+  "status": "INDEPENDENT_LOADING_CONFIRMED",
+  "unit": {
+    "ActiveState": "active",
+    "ControlGroup": "/system.slice/llm-frontier-mimo.service",
+    "ExecMainStatus": "0",
+    "InvocationID": "b9712462f5064a089cd06cdcee037284",
+    "Job": "",
+    "MainPID": "661048",
+    "Result": "success",
+    "SubState": "running"
+  },
+  "warm": "NOT_TESTED"
+}
