@@ -3,11 +3,11 @@
 FROM 5ec052185fc8683a36bb0d2e0882bfc709de4ed56cae16fde2b0b64b2180727c
 USER root
 COPY codex-x86_64-unknown-linux-musl /opt/sova/bin/codex
-COPY config.toml requirements.toml models.json /opt/sova/codex/
+COPY config.toml config-image-jobs.toml requirements.toml models.json /opt/sova/codex/
 COPY browser-mcp.mjs /opt/sova/browser/browser-mcp.mjs
 COPY skills/ /opt/sova/codex/skills/
 COPY upstream/ /opt/sova/codex/upstream/
 COPY sova-overlay.md /opt/sova/codex/sova-overlay.md
 RUN echo "167c0148a849d2444f1b5a7fb5f8bb2de1de5ae13a2a504b833fc765980f5cd9  /opt/sova/bin/codex" | sha256sum -c - && chmod 0555 /opt/sova/bin/codex && mkdir -p /etc/codex && cp /opt/sova/codex/requirements.toml /etc/codex/requirements.toml && chmod 0444 /etc/codex/requirements.toml /opt/sova/codex/*.toml /opt/sova/codex/models.json && chmod -R a+rX /opt/sova/browser /opt/sova/codex/skills /opt/sova/codex/upstream /opt/sova/codex/sova-overlay.md
-LABEL org.opencontainers.image.revision="064c6b8c737f5b41d171fdda80bd9ef10ad06eb3" org.opencontainers.image.ai-harness.patchset="fc58824904adfed55fed6ac1a181e64954fb432abdcfe9d2a8a08e5cb202ab71"
+LABEL org.opencontainers.image.revision="064c6b8c737f5b41d171fdda80bd9ef10ad06eb3" org.opencontainers.image.ai-harness.patchset="c4543706a9b61e59a718ccfd36842cbbec05102ac718c22a9d02bc25d2099030"
 ENTRYPOINT ["/opt/sova/bin/codex", "app-server", "--listen", "stdio://"]

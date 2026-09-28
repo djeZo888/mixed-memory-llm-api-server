@@ -18,7 +18,7 @@ const NAMESPACE_TOOLS: Readonly<Record<string, readonly string[]>> = Object.free
     multi_agent_v1: ["spawn_agent", "wait_agent", "send_input", "resume_agent", "close_agent"],
     mcp__browser: ["browser_open", "browser_download"],
     mcp__search: ["searxng_search"],
-    mcp__image: ["image_capabilities"],
+    mcp__image: ["image_capabilities", "image_generate", "image_edit"],
 });
 export interface ResponsesTranslation {
     body: Record<string, any>;

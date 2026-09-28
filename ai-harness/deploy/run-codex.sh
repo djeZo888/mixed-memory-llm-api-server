@@ -5,7 +5,7 @@ umask 077
 
 usage() {
   cat <<'EOF'
-Usage: run-codex.sh --profile-dir ABS --workspace ABS
+Usage: run-codex.sh --profile-dir ABS --workspace ABS [--image-jobs-qualified]
 
 Run the reviewed Codex image through local, rootless Podman using private AppServer stdio.
 Both existing directories must be owned by this user, resolve without symlinks,
@@ -31,6 +31,7 @@ die() { printf 'run-codex: %s\n' "$*" >&2; exit 64; }
 
 profile_dir=''
 workspace=''
+image_config=config.toml
 while (($#)); do
   case "$1" in
     --help|-h) usage; exit 0 ;;
@@ -38,6 +39,9 @@ while (($#)); do
       (($# >= 2)) || die '--profile-dir needs an absolute path'
       [[ -z "$profile_dir" ]] || die 'duplicate --profile-dir'
       profile_dir=$2; shift 2 ;;
+    --image-jobs-qualified)
+      [[ "$image_config" = config.toml ]] || die 'duplicate image gate'
+      image_config=config-image-jobs.toml; shift ;;
     --workspace)
       (($# >= 2)) || die '--workspace needs an absolute path'
       [[ -z "$workspace" ]] || die 'duplicate --workspace'
@@ -108,19 +112,20 @@ unset gateway_token
 rootless=$("$podman_bin" --remote=false info --format '{{.Host.Security.Rootless}}' 2>/dev/null) || die 'local Podman rootless readiness check failed'
 [[ "$rootless" = true ]] || die 'Podman must report rootless=true'
 
-image_tag=localhost/sova-codex:0.158.0-h021-pilot03
+image_tag=localhost/sova-codex:0.158.0-h021-pilot04
+expected_image_id=17dae2a64865c2a09cd00c85e492bc0cdca3674d25ae9be8f6bb64a0c82c219d
 revision=064c6b8c737f5b41d171fdda80bd9ef10ad06eb3
-patchset=fc58824904adfed55fed6ac1a181e64954fb432abdcfe9d2a8a08e5cb202ab71
+patchset=c4543706a9b61e59a718ccfd36842cbbec05102ac718c22a9d02bc25d2099030
 image_metadata=$("$podman_bin" --remote=false image inspect --format '{{.Id}}|{{index .Labels "org.opencontainers.image.revision"}}|{{index .Labels "org.opencontainers.image.ai-harness.patchset"}}' "$image_tag" 2>/dev/null) || die 'reviewed engine image is absent; build it separately after bootstrap'
 image_id=${image_metadata%%|*}
 image_labels=${image_metadata#*|}
 image_revision=${image_labels%%|*}
 image_patchset=${image_labels#*|}
-[[ "$image_id" =~ ^(sha256:)?[0-9a-f]{64}$ && "$image_revision" = "$revision" && "$image_patchset" = "$patchset" ]] || die 'local image identity, Codex revision or patchset label does not match the reviewed pins'
+[[ "${image_id#sha256:}" = "$expected_image_id" && "$image_revision" = "$revision" && "$image_patchset" = "$patchset" ]] || die 'local image identity, Codex revision or patchset label does not match the reviewed pins'
 
 "$python_bin" - "$launcher_dir/codex" <<'PY_POLICY' || die 'Codex policy checksum mismatch'
 import hashlib,pathlib,sys
-p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest() == 'fc58824904adfed55fed6ac1a181e64954fb432abdcfe9d2a8a08e5cb202ab71'
+p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml', 'config-image-jobs.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest() == 'c4543706a9b61e59a718ccfd36842cbbec05102ac718c22a9d02bc25d2099030'
 PY_POLICY
 # Task state is persistent; trusted configuration is an immutable bind mount.
 # Native proper-lockfile writes a sibling dataDir.lock. Nest dataDir inside the
@@ -168,7 +173,7 @@ exec "$python_bin" "$launcher_dir/engine/task-egress.py" -- \
   --stop-signal SIGTERM --stop-timeout 20 \
   --volume "$profile_dir:$profile_dir:rw,rprivate" \
   --volume "$workspace:$workspace:rw,rprivate" \
-  --volume "$launcher_dir/codex/config.toml:$container_data/config.toml:ro,rprivate" \
+  --volume "$launcher_dir/codex/$image_config:$container_data/config.toml:ro,rprivate" \
   --volume "$launcher_dir/codex/skills/sova-local-tools:$container_data/skills/sova-local-tools:ro,rprivate" \
   --workdir "$workspace" \
   --env "HOME=$container_home" --env "CODEX_HOME=$container_data" \

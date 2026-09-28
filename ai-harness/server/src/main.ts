@@ -14,6 +14,7 @@ import { createEngine } from "./engine.js";
 import { composeCodexHost, type CodexHostQualification } from "./codex-host.js";
 import { GatewayOwnershipLedger } from "./gateway-ownership.js";
 import { createProductionQwenVerifier, loadQwenReceipt } from "./codex-production.js";
+import { createResponsesDiagnostics } from "./codex-diagnostics.js";
 import { codexDeployment } from "./codex-deployment.js";
 import {
   NodeAvailability,
@@ -39,7 +40,7 @@ function port(name: string, fallback: number) {
 }
 /** Explicit reviewed release entrypoint. Ordinary main.start() remains MiniMax-only.
  * The receipt is a protected host file outside task mounts and binds current instances. */
-export async function startCodexPreview(receiptPath: string, outputLimit = 65536) {
+export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false) {
   let qualification: CodexHostQualification | undefined;
   try {
     const receipt = await loadQwenReceipt(receiptPath);
@@ -50,7 +51,9 @@ export async function startCodexPreview(receiptPath: string, outputLimit = 65536
     for (const alias of Object.keys(receipt.lanes)) {
       try { await verifyLane(alias); qualifiedAliases.push(alias); } catch { /* Only this Codex lane stays disabled. */ }
     }
-    if (qualifiedAliases.length) qualification = { protocolQualified: true, rootlessQualified: true, verifyLane, outputLimit, qualifiedAliases, nativeDelegationQualified: true };
+    if (qualifiedAliases.length) qualification = { protocolQualified: true, rootlessQualified: true, verifyLane, outputLimit, qualifiedAliases, nativeDelegationQualified: true,
+      ...(imageJobsQualified ? { imageJobsQualified: true as const, capabilities: { image: { supported: true, qualification: "scripted_fixture" as const, reason: "Reviewed existing specialist broker integration; live Codex image generation/edit acceptance pending" } } } : {}),
+      onResponsesError: createResponsesDiagnostics(path.join(required("AI_HARNESS_DATA_DIR"), "codex-responses-errors.jsonl")) };
   } catch { /* A failed optional preview must not remove MiniMax or stored histories. */ }
   if (!qualification) process.stderr.write("Codex preview unavailable: deployment identity/allocation unqualified; MiniMax startup continues\n");
   return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit });

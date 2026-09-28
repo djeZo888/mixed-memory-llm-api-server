@@ -2,7 +2,7 @@
 import { CODEX_PIN, type CodexRuntime } from "./codex-engine.js";
 import { CODEX_MODEL_POLICY, createRootlessCodexLauncher } from "./codex-launcher.js";
 import { createCodexQwenCounter, type QwenCountQualification } from "./codex-qwen.js";
-import type { Gateway } from "./gateway.js";
+import type { Gateway, GatewayOptions } from "./gateway.js";
 
 export interface CodexHostQualification {
   protocolQualified: true;
@@ -14,6 +14,7 @@ export interface CodexHostQualification {
   /** Explicit independent specialist ownership gate, never inferred from protocol PASS. */
   imageJobsQualified?: true;
   nativeDelegationQualified?: true;
+  onResponsesError?: NonNullable<GatewayOptions["responses"]>["onError"];
   capabilities?: CodexRuntime['capabilities'];
 }
 export function composeCodexHost(launcherPath: string, gateway: () => Gateway | undefined,
@@ -30,10 +31,10 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     delegationEnabled: qualification?.nativeDelegationQualified === true,
     maxChildren: 4,
     capabilities: qualification?.capabilities,
-    launchRootless: input => createRootlessCodexLauncher(launcherPath)(input),
+    launchRootless: input => createRootlessCodexLauncher(launcherPath)({ ...input, imageJobsQualified: qualification?.imageJobsQualified === true }),
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },
     confirmGatewaySettlement: async query => (await gateway()?.confirmSettlement(query)) === true,
   };
   return { runtime, responses: qualification ? { enabled: true, outputLimit: qualification.outputLimit, qualifiedAliases: qualification.qualifiedAliases,
-    countQwen: createCodexQwenCounter(qualification.verifyLane) } : undefined };
+    onError: qualification.onResponsesError, countQwen: createCodexQwenCounter(qualification.verifyLane) } : undefined };
 }
