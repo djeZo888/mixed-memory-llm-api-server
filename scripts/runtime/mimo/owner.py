@@ -572,13 +572,16 @@ def sample_guard(m, baseline, limit, native=None, *, progress=lambda _: None, pr
     return sample
 
 
-def latch(h, boot, *, evidence=None, deadline=None):
+def latch(h, boot, *, evidence=None, deadline=None, lease=None):
     from lifecycle.storage_binding import RegisteredStorageBinding
     from lifecycle.manager import StorageRunner
     from lifecycle.hardware_policy import read_latch_status, RegisteredLatchStore, HardwarePolicy
     from control.hardware_latch import HardwareLatch, _timestamp, MAX_AGE_MS
     diagnostic = {'stage': 'registered_read', 'refresh_attempted': False}
     def check_deadline():
+        if lease is not None:
+            from common.lifecycle_lease import _validate_borrowed_lease
+            _validate_borrowed_lease(lease)
         # read_latch_status intentionally maps read exceptions to unknown; an
         # outer alarm swallowed there must still leave the whole cycle closed.
         if deadline is not None and time.monotonic() >= deadline:
@@ -595,14 +598,15 @@ def latch(h, boot, *, evidence=None, deadline=None):
         diagnostic['stage'] = 'canonical_lease'
         # No waiting/retry or nested deadline: supervise's existing bounded(5)
         # covers the prior <=2s GPU sample and this entire refresh transaction.
-        with h.acquire_lease(blocking=False) as lease:
+        with (h.acquire_lease(blocking=False) if lease is None else contextlib.nullcontext(lease)) as active:
+            active.validate()
             result = read_latch_status(binding, [GPU], current_boot_id=boot)
             diagnostic['under_lease'] = result
             check_deadline()
             if result.get('hardware_latched') is False:
                 return result  # The scheduled producer refreshed before entry.
             diagnostic['stage'] = 'protected_state'
-            store = RegisteredLatchStore(binding, lease=lease)
+            store = RegisteredLatchStore(binding, lease=active)
             state = HardwareLatch(store.read()).export_state()
             check_deadline()
             record = state['targets'].get(GPU, {})
@@ -628,7 +632,7 @@ def latch(h, boot, *, evidence=None, deadline=None):
             diagnostic['sample'] = evidence
             diagnostic['stage'] = 'validate_required'
             check_deadline()
-            HardwarePolicy(store, lease=lease).validate_required(GPU, current_boot_id=boot,
+            HardwarePolicy(store, lease=active).validate_required(GPU, current_boot_id=boot,
                 observed_at=evidence['observed_at'], observation_id=evidence['observation_id'])
             check_deadline()
             diagnostic['stage'] = 'post_projection'
@@ -636,7 +640,7 @@ def latch(h, boot, *, evidence=None, deadline=None):
             diagnostic['post'] = result
             check_deadline()
             require(result.get('hardware_latched') is False, 'owned_gpu_latch_unproven')
-            lease.validate()
+            active.validate()
         return {**result, 'owner_refresh': diagnostic}
     except BaseException as exc:
         # Only policy projections, validated timestamps/UUIDs and fixed stages;
@@ -891,13 +895,15 @@ def supervise(dry_run=False):
             glm = dict(x.split('=', 1) for x in run(['systemctl', 'show', GLM_UNIT, '-p', 'MainPID,ActiveState'], 2).splitlines())
             require(glm['MainPID'] == '0' and glm['ActiveState'] in ('inactive', 'failed'), 'glm_must_be_settled_before_selection')
             require(not run(['nvidia-smi', '--id=' + GPU, '--query-compute-apps=pid', '--format=csv,noheader,nounits'], 2).strip(), 'frontier_compute_present')
+            launch_guard_started = time.monotonic()
             with bounded():
                 baseline = memory()
                 require(m['memory']['limit_bytes'] <= baseline['MemAvailable'] - .15 * baseline['MemTotal'], 'reviewed_memory_exceeds_fresh_reserve')
                 limit = temperature_limit(run(['nvidia-smi', '--id=' + GPU, '-q', '-x'], 2))
-                sample_guard(m, baseline, limit)
+                sample = sample_guard(m, baseline, limit, proof_boot=boot)
                 memory_policy(m)
-                latch(h, boot)
+                latch(h, boot, evidence=sample.get('hardware_validation'),
+                      deadline=launch_guard_started + 5, lease=lease)
             found = run(['docker', 'ps', '-aq', '--no-trunc', '--filter', 'name=^/' + m['container_name'] + '$'], 2).strip()
             if found:
                 require(previous is not None and previous.get('manifest_sha256') == digest(m), 'unrecorded_container_exists')

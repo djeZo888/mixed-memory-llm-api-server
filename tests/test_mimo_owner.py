@@ -195,7 +195,7 @@ class OwnerTests(unittest.TestCase):
         manifest=copy.deepcopy(self.m)
         selected=dict(selected_frontier=o.MODEL,manifest_sha256=o.digest(manifest),generation=1)
         native=dict(container_id='a'*64,pid=123)
-        helper=SimpleNamespace(acquire_lease=lambda **_:contextlib.nullcontext(),
+        helper=SimpleNamespace(acquire_lease=lambda **_:contextlib.nullcontext('held-lease-fixture'),
             MountedStorageGuard=lambda _:contextlib.nullcontext(),
             s=SimpleNamespace(root_payload_guard=lambda:None))
         writes=[]
@@ -228,6 +228,15 @@ class OwnerTests(unittest.TestCase):
             sleep=stack.enter_context(patch.object(o.time,'sleep',side_effect=LoopObserved('loop reached sleep')))
             with self.assertRaises(Exception) as caught:o.supervise()
         return caught.exception,LoopObserved,writes,replacements,sleep
+
+    def test_launch_borrows_held_lease_and_passes_same_boot_sample(self):
+        self.sample['hardware_validation'] = {'observation_id': 'fresh-fixture'}
+        _, _, _, mocks, _ = self._supervise_loading_fixture(ConnectionError('loading'))
+        call = mocks['latch'].call_args_list[0]
+        self.assertEqual(call.kwargs['lease'], 'held-lease-fixture')
+        self.assertIs(call.kwargs['evidence'], self.sample['hardware_validation'])
+        self.assertEqual(mocks['sample_guard'].call_args_list[0].kwargs['proof_boot'], 'fixture-boot')
+        self.assertIsInstance(call.kwargs['deadline'], float)
 
     def test_loading_readiness_socket_timeout_remains_pending(self):
         error,marker,writes,mocks,sleep=self._supervise_loading_fixture(TimeoutError('socket timed out'))
@@ -477,6 +486,45 @@ class LatchRefreshTests(unittest.TestCase):
         self.assertTrue(result['owner_refresh']['refresh_attempted'])
         self.assertEqual(self.store.writes, 1)
         self.assertEqual(self.store.state['validated'][o.GPU]['observed_at'], self.evidence['observed_at'])
+
+    def borrowed_scope(self):
+        import os
+        from common.lifecycle_lease import _validate_borrowed_lease
+        return patch('common.lifecycle_lease._validate_borrowed_lease',
+            side_effect=lambda lease: _validate_borrowed_lease(lease,
+                system_root=self.root, trusted_uid=os.geteuid()))
+
+    def test_borrowed_lease_refresh_never_reacquires_or_releases_parent(self):
+        with self.h.acquire_lease(blocking=False) as lease, self.borrowed_scope():
+            with patch.object(self.h, 'acquire_lease', side_effect=AssertionError('nested acquisition')), patch.object(o, 'run', side_effect=AssertionError('extra sample')):
+                result = o.latch(self.h, self.boot, evidence=self.evidence, lease=lease)
+            lease.validate()
+        self.assertFalse(result['hardware_latched'])
+        self.assertEqual(self.store.writes, 1)
+        self.assertEqual(self.store.state['validated'][o.GPU]['observation_id'], self.evidence['observation_id'])
+
+    def test_invalid_expired_or_wrong_scope_borrow_refused_even_with_fresh_proof(self):
+        from common.lifecycle_lease import LeaseError
+        self.store.state['validated'][o.GPU]['observed_at'] = self.stamp()
+        with self.h.acquire_lease(blocking=False) as lease:
+            # A valid capability for the fixture is not a production-root lease.
+            with self.assertRaisesRegex(LeaseError, 'borrowed_lease_scope_mismatch'):
+                o.latch(self.h, self.boot, lease=lease)
+        for bad in (lease, object()):
+            with self.borrowed_scope(), self.assertRaises(LeaseError):
+                o.latch(self.h, self.boot, lease=bad)
+        self.assertEqual(self.store.writes, 0)
+
+    def test_borrowed_lease_requires_fresh_same_boot_evidence(self):
+        before = copy.deepcopy(self.store.state)
+        with self.h.acquire_lease(blocking=False) as lease, self.borrowed_scope():
+            for evidence in (None, {**self.evidence, 'observed_at': self.stamp(-30)},
+                             {**self.evidence, 'boot_id': 'different'}):
+                with self.assertRaises(Exception):
+                    o.latch(self.h, self.boot, evidence=evidence, lease=lease)
+                lease.validate()
+        self.assertEqual(self.store.state, before)
+        self.assertEqual(self.store.writes, 0)
 
     def test_fresh_proof_never_acquires_lease(self):
         self.store.state['validated'][o.GPU]['observed_at'] = self.stamp()
