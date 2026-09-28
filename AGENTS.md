@@ -1,149 +1,74 @@
-# Sova project execution
+# Sova project execution — H019
 
-## H018 outcome — recovery complete, MiMo integration incomplete
+## Current user authorization
 
-At 01:24 UTC September 28, original GLM at 1,048,576 tokens, both Qwen 480K
-instances, image and original Sova 7143/9ef885 were verified ready. Histories
-and files were preserved. H018 closed within its authorized two-hour window;
-there is no long-running benchmark and automation remains paused. Both paid
-worker sessions exited successfully, at 01:24:23 and 01:26:23 UTC respectively.
+The user authorized another two-hour foreground window, September 28 2026
+02:10:29–04:10:29 UTC (04:10–06:10 Ljubljana). Finish MiMo integration using
+both Mac workers. Root plans, coordinates, reviews and publishes; workers do
+implementation, builds, tests and VM operations through fresh bounded native
+Codex CLI sessions over SSH in isolated working copies. Preserve session IDs,
+compact checkpoints and reusable artifacts. Avoid paid sessions waiting idle.
 
-Read `docs/h018-mimo-integration-results.md` and the local H018 HANDOFF first.
-MiMo 950K allocation and tiny text passed, but native tool qualification was
-interrupted by supervisor lifecycle-lock contention. Exact failed native/proxy
-release and normal original-service recovery are documented. Do not replay
-uncertain requests or treat historical 1M native qualification as current 950K
-Sova acceptance.
+The user explicitly changed two earlier requirements:
+- Keep MiMo selected/resident at the deadline; do NOT swap it back to GLM.
+  Sova may remain down. A real hardware/resource fault still requires stopping
+  affected work safely; do not keep a failing GPU workload alive or load GLM.
+- Skip the unrun optimized 64K benchmark. The final independent test goes
+  directly to near-950K input in the 950,000-token window.
 
-The periodic hardware-proof write correction is reviewed/tested source only:
-new shared policy cf558128, while installed copies retain c779739a. Its report
-lists affected source-hash closures. A resumed execution must deploy consistently,
-measure proof freshness/lock duration, stage clients before loading, and use
-fresh admission clocks. All H018 client authorities below are historical and
-do not authorize a new dispatch. No new model download, thread sweep or repeat
-GLM million-token test is needed.
+Read docs/h018-mimo-integration-results.md and docs/h019-mimo-finalization-plan.md.
+H018 records and client clocks are historical. Do not repeat completed model
+hashing/downloads, native builds, 4K/16K benchmarks, thread tuning, or the passed
+GLM million-token benchmark. Retain the verified MiMo Pro-RL MXFP4/BF16/F32
+checkpoint/runtime, eight decode threads, 64 batch threads, F16 KV, 950K context,
+GOMP_SPINCOUNT=0 and all-node memory interleave.
 
-## Historical authorization: H018, 28 September 2026 (closed)
+## Execution and acceptance
 
-The user resumed MiMo integration and authorized **up to two hours**. The new
-foreground window is 23:38:03UTC27September–01:38:03UTC28September
-(01:38–03:38 Ljubljana). This supersedes closed H017 execution holds, but does
-not renew its expired client clocks. Read `docs/h018-mimo-integration-plan.md`,
-the H017 results and local `orchestration/tasks/H018-20260928/STATUS.md`.
+Deploy the reviewed periodic health-write fix; repair the demonstrated nested
+lease issue narrowly. First measure health-proof freshness and canonical-lock
+hold time before another expensive model load. Stage independent test clients
+before loading. No full filesystem scans in periodic health writes. Preserve
+heavy storage checks at lifecycle boundaries and lightweight exact mount/path/
+registration checks during use. Do not widen proof TTL or erase positive faults.
 
-Use eight decode threads,64 batch threads and the already-verified MiMo Pro-RL
-checkpoint/runtime. Root selects950,000 usable context under the user's explicit
-permission to reduce1M slightly. Keep F16 cache, GOMP_SPINCOUNT=0, ordinary
-CPU-expert allocation, external eight-node interleave and the selected GPU.
-No new model download, runtime/dependency rebuild or thread sweep.
+Worker1 owns ai-vm. Worker2 owns ai-harness preparation and independent review.
+Coordinate shared deployment; workers must not change each other's live host.
+Sova downtime is authorized and nobody is using it. Preserve chats, uploads,
+artifacts, credentials and historical failure evidence. Keep the two Qwens and
+image resident where practical; do not spend time restoring front-end availability.
 
-No optimized64K or near950K job has yet run. First reproduce and repair the swap
-limit lifecycle defect with a small disposable no-GPU container. Review the
-repair before paying for another model load. Preserve enforced zero owned swap;
-do not treat Linux's `max` value as zero. Preinstall independent test units before
-loading. Avoid system daemon-reload during model inference.
+After actual native tools/result and Sova delegation acceptance, launch one
+independent near-950K test with the existing eight-hour background limit. Count
+actual input tokens and reserve output/template space. Verify real startup and
+then close paid CLI sessions; user will nudge for results. Do not stay active to
+poll a multi-hour request, and leave the existing automation paused.
 
-After genuine950K native tool and Sova delegation acceptance, the final task is
-one independent systemd job: optimized64K followed by near950K only if64K passes.
-Renew its dispatch authority once for H018; retain the eight-hour total background
-cap. Following the independently reviewed health-proof repair, the not-yet-run
-application client may be retimed to stop at01:24:30UTC and settle by01:25UTC,
-preserving720seconds of work plus180seconds of cleanup at admission. Do not
-change a running client's clocks. Aim final dispatch by01:30UTC,
-and reserve recovery/publication time before01:38:03. Close paid worker CLI
-sessions after actual startup verification, keep automation paused, and wait
-for the user's nudge. No paid polling while the long test runs.
+Use current failure evidence to make narrow fixes, not blanket timeouts or
+safety bypasses. Preserve request ownership, complete SSE/HTTP drain and native
+settlement checks. Never automatically replay ambiguous requests. A parent
+waiting on a child does not hold an inference slot. Do not hold lifecycle locks
+across inference or expensive periodic work. Do not invent new approval steps
+for work already authorized here; root review of an exact changed artifact is
+sufficient for coordinated deployment.
 
-## Roles and execution
+## Resource and data boundaries
 
-Mac-Orchestrator plans, coordinates, reviews and publishes. Implementation,
-builds, tests and VM operations run through mac-worker1/mac-worker2 in fresh
-bounded native Codex CLI sessions and isolated copies. Retain session IDs and
-compact durable records. Worker1 owns ai-vm, Worker2 owns ai-harness and
-independent acceptance. Coordinate shared mutations and model inference.
-Root may edit planning/reports and synchronize reviewed Git artifacts.
+Use registered storage and the existing canonical /run/llmctl/lifecycle.lock;
+never replace/unlink it. Nested operations borrow and validate the existing
+lease. Preserve MiMo's dedicated 704 GiB zero-swap slice, zero owned swap/OOM,
+15% host available-memory reserve and 7% frontier GPU free-memory reserve.
+Keep existing Qwen and Ada guards. Stop on 85C or lower hardware limit.
+No four-way stress, driver/ECC/BMC/fan changes, host/VM reboot, Proxmox changes,
+new model/runtime builds, installer work or model precision changes in H019.
+Credentials stay private outside Git and task containers; do not print them.
 
-Sova downtime is authorized during integration. Preserve chats, files, job
-records, quarantines and rollback artifacts. Two Qwen480K instances plus the
-image model remain on their GPUs. GLM1,048,576 is the working rollback.
+## Publication and handoff
 
-## Starting state and evidence
-
-H017 restored original GLM1,048,576 at20:45:14 and original Sova7143/9ef885 at
-20:48:10. Existing observer reported all four instances ready at20:49:08.
-MiMo is exactly settled. No optimized64K or near950K job started.
-Eight threads measured9.20988outputtokens/s; four6.76392, so two was skipped.
-Native4K/16K and genuine tool continuation passed at1,000,000 usable context.
-R9 sampled VRAM89,770MiB/free7,481MiB and cgroup573.37GiB including file cache.
-These are historical measured results, not proof of current availability.
-
-H017 twice achieved actual950000 capacity and tiny text, then supervisorfailure.
-The diagnostic attempt located ValueError at int(cg['memory.swap.max']), owner
-line455. Exact nonnumeric value was omitted by numeric-only diagnostics. Owned
-swap/OOM were zero; exact PID/cgroup/GPU/proxy settlement passed. Test dispatch
-called systemctl daemon-reload immediately before failure. Moby issue51446
-documents a possible zero-to-max reset; local causality remains unproven.
-Next window: reproduce with a small disposable container, preserve swap limits
-across reload, handle nonnumeric values without weakening zero-swap enforcement,
-and preinstall test units before another model load. Reuse qualified artifacts;
-do not replay historical benchmarks or change precision/runtime/threads. Never
-adopt an unknown running owner or hotpatch its deadlines.
-
-## Runtime and request ownership
-
-Distinguish configured capacity, actual occupied tokens, allocation, native
-acceptance and application acceptance. Preserve exact model/runtime/tokenizer/
-quantization identity. No aliases that disguise model changes. Qwen remains
-the coordinator and usual coding worker; MiMo becomes the selective frontier
-after actual acceptance. Keep logical models separate from model instances.
-
-Use independent Linuxsystemd jobs for live clients. Never interrupt a CLI that
-owns a foreground request. Preserve terminal SSE, usage, DONE, full HTTP drain
-and native settlement; socket closure alone is not GPU cancellation. No
-automatic replay of uncertain requests. Positive local busy rejection must be
-distinguished from upstream errors. A later caller cannot become our request.
-
-Avoid per-token lifecycle locks, full storage scans, receipt rewrites or fsync.
-Heavy checks belong at boundaries; periodic telemetry must stay bounded.
-Report input processing, output generation and total latency separately.
-
-## Storage, hardware and recovery
-
-Use installed registered-storage/root-disk guards and protected
-`/etc/local-ai-server/storage.json` authority. Verify registered UUIDs, mounts,
-roots and operation paths before/after authorized data writes. Keep models,
-cache, builds, container storage and logs under registered /data roots. No
-stale-checkout guard fallback or environment identity override.
-
-Reuse canonical `/run/llmctl/lifecycle.lock`; nested operations borrow the
-validated lease. Never replace/unlink the lock or bypass ownership. Exact
-settlement must prove native PID/cgroup/GPU release before changing selection.
-Preserve primary and cleanup failures separately and retain genuine request
-ambiguity. Cleanup failure without a request is not proof of an active request.
-
-Retain7% free frontier VRAM,15% available host memory, Qwen16GiB and Ada5%
-reserves; stop on owned swap/OOM or85C/the lower hardware limit. Aggregate host
-swap changes are not proof that MiMo swapped: the H017 load stopped on that
-comparison despite owned swap0 and about652GiB host available. Diagnose the
-actual delta; a reviewed narrow correction may retain host swap as telemetry
-while keeping zero owned swap, zero OOM and the15% available-memory floor.
-No four-way
-stress before improved physical cooling and separate user authorization. No
-BMC/fan/ECC/driver/reboot/Proxmox work in H018. Existing manual server-GPU fans
-remain unchanged. Installer work remains paused.
-
-## Publication and continuity
-
-Use scoped branches and reviewable commits; no direct main push. Run a scoped
-secret scan and diff/whitespace review before publication. Never commit tokens,
-credentials, private keys, model weights or bulky traces. Protected credential
-files remain outside repositories and task containers. Preserve exact user data
-and previous releases; no global prune, unrelated cleanup or token regeneration.
-
-Current root review branch is feature/glm53-flash; PR10 remains draft until
-its scope is genuinely accepted. Keep results/status/next steps in project files.
-Record missing tests honestly at the time limit and recover the last working
-service if the new one is not qualified. Do not infer permission extensions.
-
-Historical instructions are archived in `docs/orchestration/AGENTS-H016-archive.md`
-and Git. They are evidence, not competing instructions for this window.
+Use feature/glm53-flash and draft PR10. Root synchronizes reviewed worker commits,
+scans changed files for credentials and pushes GitHub. Distinguish tested source,
+live deployment, allocation, native qualification and application acceptance.
+No main merge until appropriate acceptance. Record actual unavailable subsystems
+and unfinished work. At the deadline keep MiMo selected; no automatic GLM rollback.
+Historical instructions: docs/orchestration/AGENTS-H018-archive.md, not current
+execution authority. Latest explicit user directions override older plans.
