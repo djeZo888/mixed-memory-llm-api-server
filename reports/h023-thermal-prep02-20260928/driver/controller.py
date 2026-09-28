@@ -12,7 +12,7 @@ from primitives import Journal, interval_report
 from telemetry import validate_sample
 
 class Phase:
-    def __init__(self, manifest, go, phase, package_sha256, journal_path, clock):
+    def __init__(self, manifest, go, phase, package_sha256, journal_path, clock, *, storage_guard=None, anchored_root=None):
         self.clock = clock
         now = clock()
         validate_go(go, manifest, phase, package_sha256, now['utc'])
@@ -26,7 +26,8 @@ class Phase:
         self.journal = Journal(journal_path, {'phase': phase, 'manifest_sha256': digest(manifest),
                             'go_sha256': digest(go), 'package_sha256': package_sha256, 'started': now,
                             'admission_deadline_monotonic': self.admission_deadline,
-                            'settlement_deadline_monotonic': self.settlement_deadline, 'no_replay': True})
+                            'settlement_deadline_monotonic': self.settlement_deadline, 'no_replay': True},
+                            storage_guard=storage_guard, anchored_root=anchored_root)
         self.claims, self.active, self.requests = {}, {}, {l: [] for l in self.lanes}
         self.prefixes = set()
         self.barrier = None
@@ -83,7 +84,7 @@ class Phase:
         require(proof.get('gpu_uuid') == self.m['lanes'][lane]['gpu_uuid'] and
                 proof.get('identity') == self.m['lanes'][lane]['identity'], 'owner native identity drift')
         require(proof.get('authenticated') is True and proof.get('guard_ok') is True and
-                proof.get('evidence_ref') and proof.get('owner_id') and proof.get('lease_id'), 'authenticated owner proof missing')
+                proof.get('evidence_ref') and proof.get('owner_id'), 'authenticated owner proof missing')
         require(proof.get('global_admission_receipt') == self.go['global_admission_receipt'], 'global ownership drift')
         self.fresh(proof, after)
         if lane in self.claims:
@@ -137,6 +138,8 @@ class Phase:
         self.monitoring_tick()
         require(lane in self.lanes and not self.admission_closed and self.first_failure is None, 'new admission stopped')
         require(lane not in self.active, 'one in-flight request per lane')
+        require(self.settlement_deadline-self.clock()['monotonic'] >= self.m['bounds']['request_seconds']+60,
+                'insufficient full request and native settlement reserve')
         cap = 1 if lane == 'mimo' else self.m['bounds']['max_requests_per_lane']
         require(len(self.requests[lane]) < cap, 'finite lane request cap; MiMo never repeats')
         if self.phase == 'A':

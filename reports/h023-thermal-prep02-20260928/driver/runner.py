@@ -104,8 +104,11 @@ class Runner:
             thread.join(max(0,self.p.settlement_deadline-self.p.clock()['monotonic']))
         while self.p.active and self.p.clock()['monotonic'] < self.p.settlement_deadline:
             for lane,row in list(self.p.active.items()):
-                proof=self.a.settlement(lane,row)
-                if proof is not None:self.p.settled(lane,proof)
+                try:
+                    proof=self.a.settlement(lane,row)
+                    if proof is not None and lane in self.p.active:self.p.settled(lane,proof)
+                except Exception as exc:
+                    self.p.fail('native_settlement_read_failed:'+type(exc).__name__,lane)
             self.sleep(.2)
         self.p.monitoring_tick()
         self.finished.set();monitor.join(10)

@@ -57,7 +57,7 @@ class NativeAdapter:
     def __init__(self,m,go,journal_path):
         self.m,self.go=m,go
         self.owner_id=m['task_id']+'-'+go['phase']+'-'+go['go_id']
-        self.started_utc=clock()['utc'];self.physically_stopped=set();self.stopped={};self.cg={};self.latest_identity={}
+        self.started_utc=clock()['utc'];self.physically_stopped=set();self.stopping={};self.stopped={};self.cg={};self.latest_identity={}
         required={str(MIMO),str(IMAGE),str(ROOT/'scripts/lifecycle/manager.py'),
                   str(ROOT/'scripts/common/lifecycle_lease.py'),str(ROOT/'scripts/install/storage.py'),str(ROOT/'scripts/install/storage_io.py')}
         require(required <= set(m['source_sha256']),'fixed owner/guard source closure required')
@@ -67,7 +67,7 @@ class NativeAdapter:
         require(hashlib.sha256(Path(__file__).read_bytes()).hexdigest()==m['owner_adapter_sha256'],'fixed adapter hash changed')
         sys.path.insert(0,str(ROOT/'scripts'))
         from install.storage import Storage
-        from install.storage_io import MountedStorageGuard
+        from install.storage_io import MountedStorageGuard, AnchoredRoot
         from common.lifecycle_lease import acquire_lease
         from lifecycle.manager import load_manager
         class Command:
@@ -75,7 +75,7 @@ class NativeAdapter:
         registration=Storage({},Command()).read_registration()
         self.storage=Storage({'data_dir':registration['data']['path'],'data_uuid':registration['data']['uuid'],
             'model_dir':registration['models']['path'],'model_uuid':registration['models']['uuid'],'storage_mode':registration['storage_mode']},Command())
-        self.guard_cls,self.acquire=MountedStorageGuard,acquire_lease
+        self.guard_cls,self.root_cls,self.acquire=MountedStorageGuard,AnchoredRoot,acquire_lease
         self.manager=load_manager(types.SimpleNamespace(instance=None),ROOT/'configs')
         self.o=module(MIMO,'h023_current_mimo');self.image_module=module(IMAGE,'h023_current_image')
         self.image=self.image_module.Runtime()
@@ -85,14 +85,20 @@ class NativeAdapter:
         self.fans=FanReader();self.spool_baseline=None
         self.journal_path=Path(journal_path)
         require(str(self.journal_path).startswith('/data/logs/H023-') and '..' not in self.journal_path.parts,'registered H023 journal required')
-        with self.boundary(full_scan=True):pass
+        # One full registration/root/lease boundary; retain guard for lightweight
+        # mountinfo/path/FD checks throughout telemetry and all journal writes.
+        with self.acquire(blocking=False):
+            self.storage.root_payload_guard()
+            self.guard=self.guard_cls(self.storage)
+            self.guard.check_path(str(self.journal_path.parent))
         own=dict(s.split('=',1) for s in run(['systemctl','show',go['unit'],'-p','MainPID,InvocationID,ActiveState,ControlGroup']).splitlines())
         require(int(own['MainPID'])==os.getpid() and own['InvocationID']==os.environ.get('INVOCATION_ID')
                 and own['ActiveState'] in ('active','activating') and
                 Path('/proc/self/cgroup').read_text().split('::',1)[1].strip()==own['ControlGroup'],'independent current systemd owner required')
     @contextlib.contextmanager
     def boundary(self,full_scan=False):
-        with self.acquire(blocking=False) as lease, self.guard_cls(self.storage) as guard:
+        with self.acquire(blocking=False) as lease:
+            guard=self.guard
             if full_scan:self.storage.root_payload_guard()
             guard.check_path(str(self.journal_path.parent))
             yield lease
@@ -100,10 +106,9 @@ class NativeAdapter:
     @contextlib.contextmanager
     def read_boundary(self):
         # Read-only request/telemetry checks: no lifecycle lease, no recursive scan.
-        with self.guard_cls(self.storage) as guard:
-            guard.check_path(str(self.journal_path.parent))
-            yield
-    def intent(self):return self.boundary(full_scan=False)
+        self.guard.check_path(str(self.journal_path.parent))
+        yield
+    def intent(self):return self.read_boundary()
     def rpc(self,lane,path,raw=None):
         spec=self.m['lanes'][lane];url=urlsplit(spec['endpoint'])
         allowed={'/v1/readiness','/get_server_info','/props','/slots','/health/ready','/v1/image-capabilities',spec.get('count_path')}
@@ -139,11 +144,13 @@ class NativeAdapter:
                 identity={'native':o.native_identity(c),'supervisor':state['supervisor'],'proxy':{k:proxy[k] for k in ('pid','pid_start_ticks','parent_pid')},
                           'launch':state['launch_id'],'container':container_identity(c),'policy':o.digest(manifest)}
             elif lane.startswith('qwen'):
-                target='glm' if lane=='qwen0' else 'qwen';slot=self.manager.read_state()['slots'][target]
+                target='glm' if lane=='qwen0' else 'qwen';slot=self.manager.read_state(offline=True)['slots'][target]
                 c=self.manager.trusted_container(slot['container'])
                 identity={'container':container_identity(c),'generation':slot['generation'],'runtime_profile':slot['container']}
             else:
-                st=self.image.state();c=self.image.inspect_owned(st)
+                with self.root_cls(str(self.image_module.BASE),self.guard) as root:st=root.read_json('state.json')
+                require(st['schema_version']==1 and st['owner']==self.image_module.OWNER,'image state identity mismatch')
+                c=self.image.inspect_owned(st)
                 identity={'container':container_identity(c),'run_id':st['run_id']}
             require(identity==spec['identity'],'current lane native identity changed')
             self.cg[lane]=Path('/sys/fs/cgroup'+identity['container']['cgroup'])
@@ -210,30 +217,76 @@ class NativeAdapter:
             st=self.o.read(self.o.BASE/'state.json')
             require(st.get('status')=='SETTLED' and st.get('settlement')=={'pid_released':True,'cgroup_empty':True,'gpu_compute_empty':True},'MiMo stop settlement unproven')
         else:
-            with self.boundary() as lease:
-                cid=self.m['lanes'][lane]['identity']['container']['Id']
-                c=json.loads(run(['docker','inspect',cid]))[0]
-                require(container_identity(c)==self.m['lanes'][lane]['identity']['container'],'stop exact native changed')
-                if lane.startswith('qwen'):
-                    target='glm' if lane=='qwen0' else 'qwen';slot=self.manager.read_state()['slots'][target]
-                    intent_before={k:slot[k] for k in ('selected','desired','boot_policy')}
-                    run(['docker','stop','--time','3',cid],12)
-                    c=json.loads(run(['docker','inspect',cid]))[0]
-                    require(not c['State']['Running'] and c['State']['Pid']==0 and not c['State']['Restarting'],'Qwen physical stop failed')
-                    require(not self.cg[lane].exists() or not (self.cg[lane]/'cgroup.procs').read_text().strip(),'owned cgroup still populated')
-                    self.manager.dispatch('boot-stop',lease=lease,target=target,expected_generation=slot['generation'])
-                    after=self.manager.read_state()['slots'][target];require({k:after[k] for k in intent_before}==intent_before,'Qwen intent drift')
-                else:
-                    self.image.lease=lease;self.image_module.OPERATION_DEADLINE=time.monotonic()+60;self.image.reset_owned()
-                    require(self.image.state()['phase']=='stopped','image exact owner stop unproven')
+            cid=self.m['lanes'][lane]['identity']['container']['Id']
+            expected=self.m['lanes'][lane]['identity']
+            if lane.startswith('qwen'):
+                target='glm' if lane=='qwen0' else 'qwen'
+                before=self.manager.read_state(offline=True)['slots'][target]
+                require(before['generation']==expected['generation'] and before['container']==expected['runtime_profile'],'stop slot drift')
+                intent_before={k:before[k] for k in ('selected','desired','boot_policy','failure')}
+            else:
+                with self.root_cls(str(self.image_module.BASE),self.guard) as root:before=root.read_json('state.json')
+                require(before['run_id']==expected['run_id'],'image stop run drift')
+            # STOP intent is already durable. Do not hold the canonical lease
+            # over a physical wait: the healthy MiMo owner checks it nonblocking.
+            self.stopping[lane]={'intent':intent,'state':before,'stage':'PHYSICAL_STOPPING'}
+            c=json.loads(run(['docker','inspect',cid]))[0]
+            require(container_identity(c)==expected['container'],'stop immediate native drift')
+            run(['docker','stop','--time','3' if lane.startswith('qwen') else '30',cid],12 if lane.startswith('qwen') else 45)
+            c=json.loads(run(['docker','inspect',cid]))[0]
+            require(c['Id']==cid and c['Image']==expected['container']['Image'] and not c['State']['Running']
+                    and c['State']['Pid']==0 and not c['State']['Restarting'],'physical stop failed')
+            require(not self.cg[lane].exists() or not (self.cg[lane]/'cgroup.procs').read_text().strip(),'owned cgroup still populated')
+            require(not Path('/proc',str(expected['container']['Pid'])).exists(),'owned native PID not released')
+            self.stopping[lane]['stage']='STOPPED_BOOKKEEPING_PENDING'
+            if lane.startswith('qwen'):
+                with self.boundary() as lease:
+                    slot=self.manager.read_state(offline=True)['slots'][target]
+                    require(slot==before,'stop slot changed during physical wait')
+                    self.manager.dispatch('boot-stop',lease=lease,target=target,expected_generation=before['generation'])
+                    # Existing boot-stop intentionally preserves desired/selected/
+                    # boot policy but clears failure. Retain pre-existing failure.
+                    if intent_before['failure'] is not None:
+                        with self.manager.slot_context(target):
+                            self.manager.state['failure']=intent_before['failure'];self.manager.save(emergency=True)
+                    after=self.manager.read_state(offline=True)['slots'][target]
+                    require({k:after[k] for k in intent_before}==intent_before,'Qwen intent/failure drift')
+            else:
+                self.image_module.OPERATION_DEADLINE=time.monotonic()+60
+                # Same reset_owned physical removal + owned spool/state primitives,
+                # with physical wait/removal outside the borrowed bookkeeping lease.
+                self.stopping[lane]['stage']='REMOVING_EXACT_STOPPED_CONTAINER'
+                self.image_module.run(['docker','rm',cid])
+                require(self.image.inspect_owned(before,missing_ok=True) is None,'image exact removal unproven')
+                self.stopping[lane]['stage']='REMOVED_BOOKKEEPING_PENDING'
+                with self.boundary() as lease:
+                    self.image.lease=lease
+                    with self.root_cls(str(self.image_module.BASE),self.guard) as root:current=root.read_json('state.json')
+                    require(current==before,'image state changed during physical wait')
+                    if before.get('run_id'):before['last_tmp_cleanup']=self.image.cleanup_tmp(before['run_id'])
+                    before.update(phase='stopped',container=None,warm=False)
+                    self.image.save(before)
         # Stopped identities cannot be represented as running preflight receipts.
         # Keep exact stop evidence durably separate; runner retains UNKNOWN ownership
         # until root inspects it. Never fabricate native-idle running proxy proof.
-        target=self.journal_path/('NATIVE-STOP-'+lane+'.json')
         proof={'intent':intent,'physical_stop_proven':True,'observed':clock(),'no_replay':True}
-        with target.open('x') as f:json.dump(proof,f);f.flush();os.fsync(f.fileno())
+        self.journal.write('NATIVE-STOP-'+lane,proof,exclusive=True)
         self.physically_stopped.add(lane)
+        self.stopping.pop(lane,None)
         return proof
+    def stopping_identity(self,lane):
+        """Retain the exact STOPPING identity while physical wait/bookkeeping runs."""
+        expected=self.m['lanes'][lane]['identity'];item=self.stopping[lane]
+        if lane.startswith('qwen'):c=self.manager.trusted_container(expected['runtime_profile'])
+        else:c=self.image.inspect_owned(item['state'],missing_ok=True)
+        if c is None:
+            require(lane=='image' and item['stage'] in ('REMOVING_EXACT_STOPPED_CONTAINER','REMOVED_BOOKKEEPING_PENDING'), 'unexpected stopped container absence')
+        elif c['State']['Running']:
+            require(container_identity(c)==expected['container'],'stopping live identity drift')
+        else:
+            require(c['Id']==expected['container']['Id'] and c['Image']==expected['container']['Image']
+                    and c['State']['Pid']==0 and not c['State']['Restarting'],'stopping identity drift')
+        return expected
     def sample(self,due):
         return sample(self,due)
 
@@ -254,7 +307,7 @@ def sample(a,due):
     for lane in LANES:
         spec=a.m['lanes'][lane];v=rows[spec['gpu_uuid']]
         # No lease or recursive root scan in periodic telemetry.
-        identities[lane]=(a.m['lanes'][lane]['identity'] if lane in a.physically_stopped else a.identity(lane,lifecycle_boundary=False))
+        identities[lane]=(a.m['lanes'][lane]['identity'] if lane in a.physically_stopped else a.stopping_identity(lane) if lane in a.stopping else a.identity(lane,lifecycle_boundary=False))
         g={'type':v['name'],'family':spec['gpu_family'],
            'clocks':{k:float(v['clocks.current.'+k]) for k in ('graphics','sm','memory')},
            'throttle':{k:v['clocks_event_reasons.'+k]=='Active' for k in reasons},
@@ -272,8 +325,8 @@ def sample(a,due):
                             'unavailable_reason':None if allfans else 'external server cooling; integrated fan unavailable','individual':allfans}
         gpu[spec['gpu_uuid']]=g
         cg=a.cg[lane]
-        if lane in a.physically_stopped and not cg.exists():
-            cgroups[lane]={'memory_current':0,'swap_current':0,'events':{'oom':0,'oom_kill':0,'max':0},'cpu':{'usage_usec':0},'physically_settled_cgroup_absent':True}
+        if (lane in a.physically_stopped or lane in a.stopping) and not cg.exists():
+            cgroups[lane]={'memory_current':0,'swap_current':0,'events':{'oom':0,'oom_kill':0,'max':0},'cpu':{'usage_usec':0},'cgroup_absent':True,'ownership_state':'STOPPED' if lane in a.physically_stopped else 'STOPPING'}
             continue
         cgroups[lane]={'memory_current':int((cg/'memory.current').read_text()),'swap_current':int((cg/'memory.swap.current').read_text()),
                                    'events':pairs(cg/'memory.events'),'cpu':pairs(cg/'cpu.stat')}
@@ -285,7 +338,7 @@ def sample(a,due):
         if re.search(r'NVRM.*Xid|out of memory|oom-kill|AER:.*(?:fatal|uncorrected)',line,re.I):
             events.append({'kind':'Xid' if 'Xid' in line else 'AER' if 'AER' in line else 'OOM','lane':None,'sha256':hashlib.sha256(line.encode()).hexdigest()})
     return {'boot_id':Path('/proc/sys/kernel/random/boot_id').read_text().strip(),'deployment_sha256':digest(a.m),'identities':identities,
-            'guard_ok':True,'physically_settled_lanes':sorted(a.physically_stopped),'utc':start['utc'],'start_monotonic':start['monotonic'],'due_monotonic':min(due,start['monotonic']),
+            'guard_ok':True,'stopping_lanes':{l:v['stage'] for l,v in list(a.stopping.items())},'physically_settled_lanes':sorted(a.physically_stopped),'utc':start['utc'],'start_monotonic':start['monotonic'],'due_monotonic':min(due,start['monotonic']),
             'end_monotonic':time.monotonic(),'gpu':gpu,'cgroups':cgroups,'guest':{'ram_total_bytes':ram['MemTotal'],
             'ram_available_bytes':ram['MemAvailable'],'swap_in':swap['pswpin'],'swap_out':swap['pswpout'],
             'cpu_ticks':list(map(int,Path('/proc/stat').read_text().splitlines()[0].split()[1:]))},

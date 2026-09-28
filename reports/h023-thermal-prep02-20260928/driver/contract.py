@@ -108,8 +108,9 @@ def validate_manifest(m):
     bounds = m.get('bounds', {})
     require(bounds.get('A') == {'admission_seconds': 300, 'activity_target_seconds': 180}, 'phase A bounds')
     require(bounds.get('B') == {'admission_seconds': 300}, 'phase B bounds')
-    for key, cap in (('settlement_seconds', 600), ('request_seconds', 540), ('max_requests_per_lane', 1000)):
+    for key, cap in (('settlement_seconds', 1020), ('request_seconds', 900), ('max_requests_per_lane', 1000)):
         require(type(bounds.get(key)) is int and 1 <= bounds[key] <= cap, 'finite '+key+' required')
+    require(bounds['request_seconds'] == 900 and bounds['settlement_seconds'] >= 960, '900s request plus finite stop reserve required')
     require(m.get('workload') == {'mimo_input_range': [16000, 16384], 'qwen_input_range': [4096, 16384],
             'max_output_tokens': 128, 'image_size': '1920x1080', 'image_n': 1}, 'workload drift')
     guard = m.get('guard', {})
@@ -140,6 +141,8 @@ def validate_go(go, m, phase, package_sha256, now_utc):
             'GO admission window exceeds bound')
     require(utc_seconds(go['admission_deadline_utc']) < utc_seconds(go['settlement_deadline_utc']) <=
             utc_seconds(go['admission_deadline_utc']) + m['bounds']['settlement_seconds'], 'GO settlement bound')
+    require(utc_seconds(go['settlement_deadline_utc'])-utc_seconds(go['admission_deadline_utc']) >= m['bounds']['request_seconds']+60,
+            'full request and settlement reserve after admission required')
     require(go.get('quiet_confirmed') is True and nonempty(go.get('global_admission_receipt')),
             'current global ownership/quiet receipt required')
     return go

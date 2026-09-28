@@ -16,6 +16,17 @@ def package():
     files = {name: hashlib.sha256((here/name).read_bytes()).hexdigest() for name in SOURCE_FILES}
     return {'files': files, 'package_sha256': digest(files)}
 
+def failure_receipt(exc, phase=None, run_entered=False):
+    # The exact journal path and owned receipts survive a top-level exception.
+    # Never turn a submitted/uncertain request into a no-dispatch replay permit.
+    submitted = phase is not None and any(phase.requests.values())
+    return {'status': 'POSSIBLY_SUBMITTED_UNKNOWN_OWNED' if submitted or run_entered else 'REFUSED_NO_DISPATCH',
+            'reason_type': type(exc).__name__, 'automatic_retry': False,
+            'journal': str(phase.journal.path) if phase else None,
+            'active': phase.active if phase else {}, 'requests': phase.requests if phase else {},
+            'stop_intents': phase.stop_intents if phase else {},
+            'reason': str(exc) if isinstance(exc, Refusal) else 'top-level execution failure; inspect exact owned receipts'}
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--manifest', type=Path)
@@ -42,14 +53,28 @@ def main():
         m=json.loads(protected(args.manifest));g=json.loads(protected(args.go))
         validate_go(g,m,args.phase,result['package_sha256'],clock()['utc'])
         adapter=NativeAdapter(m,g,args.journal)
-        phase=Phase(m,g,args.phase,result['package_sha256'],args.journal,clock)
-        try:result=Runner(phase,adapter).run()
-        finally:adapter.fans.close()
+        phase=None;entered=False
+        try:
+            phase=Phase(m,g,args.phase,result['package_sha256'],args.journal,clock,
+                        storage_guard=adapter.guard,anchored_root=adapter.root_cls)
+            adapter.journal=phase.journal
+            entered=True
+            result=Runner(phase,adapter).run()
+        except Exception as exc:
+            result=failure_receipt(exc,phase,entered)
+            if phase:
+                try:phase.journal.write('TOP-ERROR',result)
+                except Exception:result['error_receipt_persistence']='FAILED_RETAIN_ORIGINAL_JOURNAL'
+        finally:
+            for close in (adapter.fans.close,adapter.guard.close):
+                try:close()
+                except Exception as exc:
+                    result=failure_receipt(exc,phase,entered)
     print(json.dumps(result, indent=2))
 
 if __name__ == '__main__':
     try:
         main()
     except (Refusal, KeyError, TypeError, ValueError, OSError) as exc:
-        print(json.dumps({'status': 'REFUSED_NO_DISPATCH', 'reason': str(exc)}))
+        print(json.dumps(failure_receipt(exc)))
         sys.exit(2)

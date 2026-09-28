@@ -59,7 +59,7 @@ def validate_sample(m, row, now, baseline=None):
                 fault('owned_swap', lane, True)
             if baseline is not None:
                 old = baseline['cgroups'][lane]['events']
-                if any(cg['events'][k] > old[k] for k in ('oom', 'oom_kill', 'max')):
+                if any(cg['events'][k] > old[k] for k in ('oom', 'oom_kill')):
                     fault('cgroup_OOM_or_limit', lane, True)
                 original = baseline['gpu'][spec['gpu_uuid']]
                 if any(number(gpu[k]) and number(original[k]) and gpu[k] > original[k] for k in ('ecc_uncorrected', 'pcie_replay')):

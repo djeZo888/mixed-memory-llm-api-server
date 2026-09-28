@@ -178,8 +178,8 @@
     "B": {
       "admission_seconds": 300
     },
-    "settlement_seconds": 420,
-    "request_seconds": 360,
+    "settlement_seconds": 1020,
+    "request_seconds": 900,
     "max_requests_per_lane": 100
   },
   "workload": {

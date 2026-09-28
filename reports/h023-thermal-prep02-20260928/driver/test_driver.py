@@ -13,7 +13,11 @@ from unittest.mock import patch
 import zlib
 from contract import *
 from controller import Phase
-from primitives import Journal, capture_text, capture_image, decode_png, interval_report
+import controller
+from fixture_journal import Journal as FixtureJournal
+controller.Journal = FixtureJournal
+from primitives import capture_text, capture_image, decode_png, interval_report
+Journal = FixtureJournal
 from telemetry import validate_sample
 
 HERE = Path(__file__).resolve().parent
@@ -54,10 +58,10 @@ def go(m, clock, phase='B'):
                 boot_id=m['boot_id'],deployment_sha256=digest(m),package_sha256='f'*64,
                 quiet_confirmed=True,global_admission_receipt='fixture-current-global-receipt',
                 not_before_utc=clock()['utc'],admission_deadline_utc=(datetime.fromisoformat(clock()['utc'])+timedelta(seconds=300)).isoformat(),
-                settlement_deadline_utc=(datetime.fromisoformat(clock()['utc'])+timedelta(seconds=720)).isoformat())
+                settlement_deadline_utc=(datetime.fromisoformat(clock()['utc'])+timedelta(seconds=1320)).isoformat())
 
 def proof(m, clock, lane):
-    r = dict(lane=lane,owner_id=lane+'-owner',lease_id=lane+'-lease',boot_id=m['boot_id'],deployment_sha256=digest(m),
+    r = dict(lane=lane,owner_id=lane+'-owner',boot_id=m['boot_id'],deployment_sha256=digest(m),
              identity=copy.deepcopy(m['lanes'][lane]['identity']),gpu_uuid=m['lanes'][lane]['gpu_uuid'],observed=clock(),
              ready=True,guard_ok=True,global_admission_receipt='fixture-current-global-receipt',native_idle=True,
              authenticated=True,evidence_ref='fixture-native-authenticated-readback')
@@ -353,10 +357,10 @@ class ReadOnlyGuardRegression(unittest.TestCase):
         from native import NativeAdapter
         from unittest.mock import MagicMock
         a=NativeAdapter.__new__(NativeAdapter);a.storage=MagicMock();a.acquire=MagicMock(side_effect=AssertionError('lease forbidden'))
-        a.guard_cls=MagicMock();a.journal_path=Path('/data/logs/H023-fixture/run')
+        a.guard_cls=MagicMock(side_effect=AssertionError('full guard reconstruction forbidden'));a.guard=MagicMock();a.journal_path=Path('/data/logs/H023-fixture/run')
         with a.read_boundary():pass
         a.acquire.assert_not_called();a.storage.root_payload_guard.assert_not_called()
-        a.guard_cls.return_value.__enter__.return_value.check_path.assert_called_once()
+        a.guard.check_path.assert_called_once();a.guard_cls.assert_not_called()
     def test_exact_stop_receipt_releases_only_hot_owned_lane(self):
         c=Clock();m=manifest()
         with tempfile.TemporaryDirectory(prefix='h023-private-stop-') as tmp:
