@@ -22,3 +22,28 @@ The user authorized implementation of the published Codex plan with both workers
 ## Acceptance status
 
 Implementation in progress. No Codex live behavior is claimed as passed yet.
+
+## Wave 1 checkpoint — 2026-09-28 05:50 UTC
+
+Both initial native worker sessions completed and exited successfully. Worker1
+source `9ca04d799b3c68f6fa8f0f6c66630801670e711c` and Worker2 handoff
+`65b0a426c7610cb965a2ee3bdfc59f136a7e11d2` are merged, preserving their history.
+
+- Exact Codex 0.158.0 Linux binary and generated schemas are pinned. Linux and
+  Mac schema parity passed. Native mock-provider tests exercised two tool IDs,
+  an actual patch, and a subsequent read/assertion in the same native thread.
+- Session migration, immutable engine choice, streamed messages, reconnect,
+  cancellation and retained gateway ownership have fixture coverage. Cross-review
+  found and fixed a queued-successor ownership race before live acceptance.
+- Worker2 reports 445 server and 180 web tests passed. Worker1 reports 47 focused
+  provider/ownership checks and 18 launcher fixtures passed. Its separate full
+  suite had one stale status assertion already corrected in Worker2's merge.
+  Integrated regression runs belong to the next worker checkpoint.
+- These results do not qualify live Qwen, real container tool workflows, native
+  delegation, compression recall or deployment. Codex remains disabled by default.
+
+Fresh bounded sessions now complete host composition, tools, delegation and
+workflow acceptance. A small Qwen0 test requires an explicit app-owner handoff:
+keep the inactive application from starting concurrently, preserve unresolved
+lane state, and use one gateway on its existing port. No distributed inference
+scheduler is introduced for this pilot. MiMo/H019 remain untouched and unpolled.
