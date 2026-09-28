@@ -1,5 +1,5 @@
 {
-  "status": "partial; remaining cases follow in ACCEPT05",
+  "status": "matched batch complete; 9 PASS and 1 FAIL; lifecycle and final release pending",
   "source": "5f95693e8c83bd40ca167b9b8fe2e1520ce51634",
   "context": 480000,
   "outputLimitPerRequest": 1024,
@@ -108,6 +108,51 @@
       "retries": 0,
       "manualPromptInterventions": 0,
       "toolErrorClassification": "web_fetch failed; installed browser navigation/query succeeded in same turn"
+    },
+    {
+      "engine": "codex",
+      "caseId": "research-page",
+      "verdict": "PASS",
+      "frontendElapsedMs": 67398,
+      "requestCount": 3,
+      "actualLanes": [
+        "qwen3.8-27b-gpu0"
+      ],
+      "promptTokens": 41283,
+      "completionTokens": 395,
+      "retries": 0,
+      "manualPromptInterventions": 0,
+      "toolErrorClassification": null
+    },
+    {
+      "engine": "minimax",
+      "caseId": "pdf-units",
+      "verdict": "PASS",
+      "frontendElapsedMs": 84799,
+      "requestCount": 11,
+      "actualLanes": [
+        "qwen3.8-27b-gpu0"
+      ],
+      "promptTokens": 193349,
+      "completionTokens": 2046,
+      "retries": 0,
+      "manualPromptInterventions": 0,
+      "toolErrorClassification": null
+    },
+    {
+      "engine": "codex",
+      "caseId": "pdf-units",
+      "verdict": "FAIL",
+      "frontendElapsedMs": 144871,
+      "requestCount": 6,
+      "actualLanes": [
+        "qwen3.8-27b-gpu0"
+      ],
+      "promptTokens": 76781,
+      "completionTokens": 1099,
+      "retries": 0,
+      "manualPromptInterventions": 0,
+      "toolErrorClassification": null
     }
   ],
   "notes": [
@@ -116,20 +161,9 @@
     "Actual usage sums all per-session gateway requests, including native follow-on requests; it is not occupied context.",
     "Engine prompts/tool catalogs/profiles differ; MiniMax native version and actual image are not exposed by public session metadata. Codex image/profile pin must not be presented as MiniMax native identity.",
     "No prompt replay; blocked segments and later genuine settlement receipts are preserved.",
-    "Native Codex message phase absent remains unclassified; no fabricated reasoning or encrypted state."
+    "Native Codex message phase absent remains unclassified; no fabricated reasoning or encrypted state.",
+    "Codex PDF first attempt failed despite successful extraction/render: no requested summary PDF or numeric final answer. Final response13 tokens; no1024 output-cap hit or retained decoder error. No repeat on unchanged source."
   ],
-  "remainingUnsubmitted": [
-    {
-      "engine": "codex",
-      "caseId": "research-page"
-    },
-    {
-      "engine": "minimax",
-      "caseId": "pdf-units"
-    },
-    {
-      "engine": "codex",
-      "caseId": "pdf-units"
-    }
-  ]
+  "remainingUnsubmitted": [],
+  "checkedUtc": "2026-09-28T08:02:47.087946+00:00"
 }
