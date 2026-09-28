@@ -1,0 +1,9 @@
+# Codex 0.158.0 pin and narrow local protocol
+
+Official release/source/license URLs and SHA256 are in PIN.json. Full generated schema/type trees are packaged in the worker output, with deterministic manifests committed here; the consolidated JSON schema is committed as the application contract. First capture is actual aarch64 macOS official AppServer traffic, sanitized by replacing fixture paths and generated UUIDs. No model inference occurred. Do not label it Linux execution.
+
+The local model catalog is text-only, uses per-model contexts, disables hosted search and reasoning summaries. Codex core/src/client.rs unconditionally emits the optional include request for reasoning.encrypted_content. The bridge recognizes that request but never emits encrypted state, and rejects incoming reasoning state, unsupported settings and media. Source ModelInfo supports model_catalog_json and per-model context/max-context; no generic inference output config exists in this release. Gateway enforces the explicit 65,536 output ceiling and exact input reservation through a required qualified tokenizer callback.
+
+Custom tools use a documented transport wrapper {input:string}; the original string is restored exactly as custom_tool_call. This does not claim native constrained grammar sampling. Only plain custom text and the exact hash-pinned upstream apply_patch grammar are supported; the bridge validates every returned patch before exposing it to AppServer. Other grammars fail explicitly. This release has only Freeform ApplyPatchToolType; no function-form model-catalog variant exists.
+
+Actual local reasoning content is currently rejected because no local round-trip reasoning contract is qualified. No content is fabricated or silently discarded. MiMo Responses route remains disabled; source/fixture translation alone is not live qualification. Preview requires Linux launcher, tokenizer, protocol and lifecycle acceptance before enabling.

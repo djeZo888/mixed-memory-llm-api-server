@@ -1,3 +1,5 @@
+import { translateResponses, ResponsesStream, CODEX_CONTEXT } from "./codex-responses.js";
+import { GatewayOwnership, type OwnershipOptions, type SettlementQuery } from "./gateway-ownership.js";
 import { MIMO_MODEL, prepareMimo, countMimo, mimoGenerationRequest, MimoStreamValidator, MimoError, type MimoAdmission } from "./mimo.js";
 import { mimoUrl, MIMO_PRODUCTION_OUTPUT, type MimoFrontierOptions } from "./mimo-frontier.js";
 import {
@@ -39,6 +41,13 @@ export interface GatewayUpstream {
   alias: string;
 }
 export interface GatewayOptions {
+  ownership?: OwnershipOptions;
+  responses?: {
+    /** Closed by default. Host reviewed policy only; never browser controlled. */
+    enabled: boolean;
+    /** Count the EXACT final Qwen chat template/history/tool payload on this lane. */
+    countQwen: (body: Readonly<Record<string, unknown>>, lane: GatewayUpstream, key: string, signal: AbortSignal) => Promise<{inputTokens:number; contextWindow:480000}>;
+  };
   frontier?: FrontierOptions | MimoFrontierOptions;
   /** Actual selected identity even when qualification fails; never fallback. */
   selectedFrontierModel?: typeof FRONTIER_MODEL | typeof MIMO_MODEL;
@@ -68,6 +77,10 @@ export interface Gateway {
   app: FastifyInstance;
   issueToken(sessionId: string): string;
   revokeToken(token: string): void;
+  revokeSession(sessionId: string): void;
+  /** Gateway proof only; caller also proves native parent/children cannot emit more work. */
+  confirmSettlement(query: SettlementQuery): Promise<boolean>;
+  sessionWork(sessionId: string): import("./gateway-ownership.js").RequestOwnership[];
   snapshot(): {
     queued: number;
     queuedBytes: number;
@@ -522,6 +535,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     : undefined;
   // Validate fixture override at construction; select the real model per request.
   activeRequestTimeoutMs("qwen", options.activeTimeoutMs);
+  const ownership = new GatewayOwnership(options.ownership);
   const tokens = new Map<string, string>();
   const frontierCancellations = new Map<string, Set<AbortController>>();
   const active = new Set<ClientRequest>();
@@ -654,8 +668,13 @@ export function createGateway(options: GatewayOptions): Gateway {
   });
 
   async function chat(request: FastifyRequest, reply: FastifyReply) {
-    const frontier =
-      request.routeOptions.url === "/frontier/v1/chat/completions";
+    const isResponses = request.routeOptions.url?.endsWith("/responses") === true;
+    if (isResponses && options.responses?.enabled !== true) throw new ApiError(503,"codex_protocol_disabled","Codex Responses preview is disabled");
+    const translated = isResponses ? translateResponses(request.body) : undefined;
+    if (translated) request.body = translated.body;
+    const frontier = request.routeOptions.url?.startsWith("/frontier/") === true;
+    // MiMo remains SOURCE/FIXTURE ONLY until an independent live qualification.
+    if (isResponses && frontier) throw new ApiError(503,"codex_frontier_unqualified","Codex frontier live routing is not qualified");
     const selectedAdmission = frontier ? frontierAdmission : admission;
     if (!selectedAdmission || (frontier && !options.frontier))
       throw new ApiError(
@@ -681,6 +700,11 @@ export function createGateway(options: GatewayOptions): Gateway {
         "unauthorized",
         "Inference authorization required",
       );
+    const ownedRequest = ownership.begin(sessionId);
+    const settleLane = (lane: Lane, confirmed: boolean) => {
+      selectedAdmission.settle(lane, confirmed);
+      try { ownership.transition(ownedRequest, confirmed && lane.state === "idle" ? "settled" : "uncertain", lane.upstream.alias); } catch { /* ledger retains uncertainty; callback must never crash transport */ }
+    };
     const record: FrontierRecord | undefined = frontier
       ? {
           id: randomBytes(16).toString("hex"),
@@ -700,7 +724,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     };
     recordState("queued");
     const cancelled = new AbortController();
-    if (frontier) {
+    {
       const owned =
         frontierCancellations.get(token) ?? new Set<AbortController>();
       frontierCancellations.set(token, owned);
@@ -718,6 +742,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       cancelled.abort();
       // A cancelled consumer is detached. Keep consuming upstream with bounded
       // observation buffers; aborting its socket would not prove GPU settlement.
+      if (ownedRequest.state === "accepted") ownership.transition(ownedRequest, "draining");
       upstreamResponse?.resume();
     };
     reply.raw.once("close", disconnect);
@@ -725,13 +750,15 @@ export function createGateway(options: GatewayOptions): Gateway {
     try {
       lane = await selectedAdmission.acquire(cancelled.signal, bodyBytes);
     } catch (error) {
+      ownership.transition(ownedRequest, "settled");
       recordState(cancelled.signal.aborted ? "cancelled" : "rejected");
       reply.raw.removeListener("close", disconnect);
       if (disconnected) return reply;
+      if (tokens.get(token) !== sessionId) throw new GatewayError(401,"unauthorized","Inference authorization required");
       throw error;
     }
     if (disconnected) {
-      selectedAdmission.settle(lane, true);
+      settleLane(lane, true);
       recordState("cancelled");
       reply.raw.removeListener("close", disconnect);
       return reply;
@@ -740,7 +767,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       if (tokens.get(token) === sessionId) return;
       // No upstream request exists yet: release this admission safely. Revoking
       // a token never aborts an already dispatched generation or its drain.
-      selectedAdmission.settle(lane, true);
+      settleLane(lane, true);
       recordState("rejected");
       reply.raw.removeListener("close", disconnect);
       throw new GatewayError(
@@ -759,7 +786,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       if (!key || !/^[\x21-\x7e]+$/.test(key))
         throw new Error("Invalid upstream credential");
     } catch {
-      selectedAdmission.settle(lane, true);
+      settleLane(lane, true);
       recordState("rejected");
       reply.raw.removeListener("close", disconnect);
       throw new GatewayError(
@@ -769,7 +796,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       );
     }
     if (disconnected) {
-      selectedAdmission.settle(lane, true);
+      settleLane(lane, true);
       recordState("cancelled");
       reply.raw.removeListener("close", disconnect);
       return reply;
@@ -782,7 +809,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       (options.dispatchHeld?.("harness") ||
         options.dispatchHeld?.(frontierModel))
     ) {
-      selectedAdmission.settle(lane, true);
+      settleLane(lane, true);
       recordState("rejected");
       reply.raw.removeListener("close", disconnect);
       throw new ApiError(503, "frontier_held", "Frontier dispatch is held");
@@ -794,14 +821,14 @@ export function createGateway(options: GatewayOptions): Gateway {
     )
       await new Promise<void>((resolve) => setTimeout(resolve, 50));
     if (disconnected || cancelled.signal.aborted) {
-      selectedAdmission.settle(lane, true);
+      settleLane(lane, true);
       recordState("cancelled");
       reply.raw.removeListener("close", disconnect);
       return reply;
     }
     requireCurrentToken();
     if (selectedAdmission.available(lane).dispatch !== "allow") {
-      selectedAdmission.settle(lane, true);
+      settleLane(lane, true);
       recordState("rejected");
       reply.raw.removeListener("close", disconnect);
       throw new GatewayError(
@@ -809,6 +836,19 @@ export function createGateway(options: GatewayOptions): Gateway {
         "lane_unavailable",
         "Selected inference lane is unavailable",
       );
+    }
+    if (translated) {
+      try {
+        ownership.transition(ownedRequest, "counting", lane.upstream.alias);
+        const finalBody = { ...body, model: lane.upstream.alias };
+        const count = await options.responses!.countQwen(finalBody, lane.upstream, key, cancelled.signal);
+        if (count.contextWindow !== CODEX_CONTEXT["qwen3.8-27b"] || !Number.isSafeInteger(count.inputTokens) || count.inputTokens < 0)
+          throw new ApiError(503,"codex_tokenizer_unqualified","Exact input count is unavailable");
+        if (count.inputTokens + Number(body.max_tokens) > count.contextWindow)
+          throw new ApiError(413,"codex_context_full","Input plus reserved output exceeds model context");
+        if (cancelled.signal.aborted || tokens.get(token) !== sessionId) throw new ApiError(499,"cancelled","Request cancelled before dispatch");
+        if (selectedAdmission.available(lane).dispatch !== "allow") throw new ApiError(503,"lane_unavailable","Lane unavailable after count");
+      } catch (error) { settleLane(lane,true); reply.raw.removeListener("close",disconnect); throw error; }
     }
     let mimoAdmission: MimoAdmission | undefined;
     let mimoPayload: string | undefined;
@@ -853,12 +893,13 @@ export function createGateway(options: GatewayOptions): Gateway {
           );
         recordState("active");
       } catch (error) {
-        selectedAdmission.settle(lane, true);
+        settleLane(lane, true);
         reply.raw.removeListener("close", disconnect);
         recordState(cancelled.signal.aborted ? "cancelled" : "rejected");
         throw error;
       }
     }
+    ownership.transition(ownedRequest, "accepted", lane.upstream.alias);
     lane.dispatched = true;
     lane.ownerSettled = false;
     const payload = mimoPayload ?? JSON.stringify({ ...body, model: lane.upstream.alias });
@@ -901,6 +942,9 @@ export function createGateway(options: GatewayOptions): Gateway {
         }
       },
     );
+    const bridge = translated ? new ResponsesStream(translated, data => {
+      if (!disconnected && !reply.raw.destroyed) reply.raw.write(data);
+    }) : undefined;
     reply.hijack();
     await new Promise<void>((resolve) => {
       let settled = false;
@@ -914,7 +958,7 @@ export function createGateway(options: GatewayOptions): Gateway {
         clearTimeout(timeout);
         settlementAbort.abort();
         active.delete(upstream);
-        selectedAdmission.settle(lane, confirmed);
+        settleLane(lane, confirmed);
         try {
           recordState(confirmed ? "settled" : "quarantined");
         } catch {
@@ -970,11 +1014,14 @@ export function createGateway(options: GatewayOptions): Gateway {
               "cache-control",
               "x-request-id",
             ]) {
+              if (bridge && header === "content-encoding") continue;
               const value = response.headers[header];
               if (value !== undefined) reply.raw.setHeader(header, value);
             }
             reply.raw.setHeader("x-accel-buffering", "no");
           }
+          const bridgeSuccess = bridge && response.statusCode === 200;
+          if (bridgeSuccess && !disconnected) reply.raw.setHeader("content-type", "text/event-stream");
           response.on("data", (chunk: Buffer) => {
             if (settled) return;
             if (mimoValidator) {
@@ -983,6 +1030,10 @@ export function createGateway(options: GatewayOptions): Gateway {
               return;
             }
             observe.data(chunk);
+            if (bridgeSuccess) {
+              try { bridge.push(chunk); } catch { fail("responses_stream_invalid","Upstream stream does not satisfy the local Responses contract"); }
+              return;
+            }
             if (!disconnected && !reply.raw.destroyed) {
               if (!reply.raw.write(chunk)) {
                 response.pause();
@@ -1012,6 +1063,7 @@ export function createGateway(options: GatewayOptions): Gateway {
               return;
             }
             observe.end();
+            if (bridgeSuccess) { try { bridge.end(); } catch { fail("responses_stream_invalid","Responses stream truncated or missing usage"); return; } }
             const status = response.statusCode ?? 502;
             const rejectedBeforeGeneration = [
               400, 401, 403, 404, 405, 413, 415, 422, 429,
@@ -1052,6 +1104,8 @@ export function createGateway(options: GatewayOptions): Gateway {
     });
     return reply;
   }
+  app.post("/v1/responses", chat);
+  app.post("/frontier/v1/responses", chat);
   app.post("/v1/chat/completions", chat);
   app.post("/frontier/v1/chat/completions", chat);
   app.addHook("preClose", async () => {
@@ -1065,6 +1119,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     issueToken(sessionId) {
       if (!sessionId) throw new Error("sessionId is required");
       const token = randomBytes(32).toString("base64url");
+      ownership.registerSession(sessionId);
       tokens.set(token, sessionId);
       return token;
     },
@@ -1075,6 +1130,14 @@ export function createGateway(options: GatewayOptions): Gateway {
       for (const controller of frontierCancellations.get(token) ?? [])
         controller.abort();
     },
+    revokeSession(sessionId) {
+      for (const [token, owner] of tokens) if (owner === sessionId) {
+        tokens.delete(token);
+        for (const controller of frontierCancellations.get(token) ?? []) controller.abort();
+      }
+    },
+    confirmSettlement: async (query) => ownership.confirm(query),
+    sessionWork: (sessionId) => ownership.snapshot(sessionId),
     snapshot: () => ({
       queued: admission.queued,
       queuedBytes: admission.queuedBytes,
