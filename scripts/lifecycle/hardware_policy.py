@@ -134,7 +134,7 @@ class RegisteredLatchStore:
         _validate_borrowed_lease(self.lease, system_root=self.system_root, trusted_uid=self.trusted_uid)
 
 
-def read_latch_status(binding, gpu_uuids, *, current_boot_id=None, wall=time.time, strict=False):
+def read_latch_status(binding, gpu_uuids, *, current_boot_id=None, wall=time.time):
     """Safe passive fixed-path projection; storage outage returns explicit unknown.
 
     identity excludes observation timestamps/pending counts; use it for target
@@ -185,8 +185,6 @@ def read_latch_status(binding, gpu_uuids, *, current_boot_id=None, wall=time.tim
                 'identity': identity}
 
     except Exception:
-        if strict:
-            raise  # Owner refresh must distinguish stale proof from failed I/O.
         return unknown
 
 

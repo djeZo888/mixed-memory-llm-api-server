@@ -586,7 +586,7 @@ def latch(h, boot, *, evidence=None, deadline=None):
     try:
         check_deadline()
         binding = RegisteredStorageBinding.read_registered(StorageRunner())
-        result = read_latch_status(binding, [GPU], current_boot_id=boot, strict=True)
+        result = read_latch_status(binding, [GPU], current_boot_id=boot)
         diagnostic['pre'] = result
         check_deadline()
         if result.get('hardware_latched') is False:
@@ -596,7 +596,7 @@ def latch(h, boot, *, evidence=None, deadline=None):
         # No waiting/retry or nested deadline: supervise's existing bounded(5)
         # covers the prior <=2s GPU sample and this entire refresh transaction.
         with h.acquire_lease(blocking=False) as lease:
-            result = read_latch_status(binding, [GPU], current_boot_id=boot, strict=True)
+            result = read_latch_status(binding, [GPU], current_boot_id=boot)
             diagnostic['under_lease'] = result
             check_deadline()
             if result.get('hardware_latched') is False:
@@ -632,7 +632,7 @@ def latch(h, boot, *, evidence=None, deadline=None):
                 observed_at=evidence['observed_at'], observation_id=evidence['observation_id'])
             check_deadline()
             diagnostic['stage'] = 'post_projection'
-            result = read_latch_status(binding, [GPU], current_boot_id=boot, strict=True)
+            result = read_latch_status(binding, [GPU], current_boot_id=boot)
             diagnostic['post'] = result
             check_deadline()
             require(result.get('hardware_latched') is False, 'owned_gpu_latch_unproven')
