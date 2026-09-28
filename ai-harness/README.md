@@ -168,8 +168,11 @@ After replies and compression, the UI reports **estimated occupied context**,
 not cumulative token usage. A stale value describes an earlier observation;
 unavailable means no usable measurement, not zero. Native automatic compression
 keeps original visible history and archived tool results. There is no user
-context setting. The Qwen budget starts normal compression near 412,416
+context setting. MiniMax's Qwen budget starts normal compression near 412,416
 input tokens to reserve output space; tool results may be archived earlier.
+The Codex preview uses a 400,000-token compaction threshold within the same
+480,000-token window. Its native fixture passed; local-model recall after
+compaction still requires separate acceptance.
 Native CLI slash commands such as `/status`, `/context` and `/compact` are
 unsupported and rejected in the web integration. Automatic compression remains
 supported. A manual native compaction/recall probe passed; production-threshold
