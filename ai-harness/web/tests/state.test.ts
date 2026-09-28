@@ -54,3 +54,18 @@ describe('snapshot and stream reconciliation', () => {
     expect(thread.activity[1].detail).toHaveLength(DETAIL_LIMIT);
   });
 });
+it('retains identical ordered native deltas and reconciles canonical replacement without replay doubling', () => {
+  const events = [
+    event(1, 'assistant_delta', { messageId: 'native', text: 'ha' }),
+    event(2, 'assistant_delta', { messageId: 'native', text: 'ha' }),
+    event(3, 'message', { message: { id: 'native', role: 'assistant', content: 'canonical final', createdAt, phase: 'final' } }),
+  ];
+  let thread = reconcileSnapshot(snapshot());
+  thread = applyEvent(thread, events[0]); thread = applyEvent(thread, events[1]);
+  expect(thread.messages[0].content).toBe('haha');
+  thread = applyEvent(thread, events[2]);
+  for (const e of events) thread = applyEvent(thread, e);
+  expect(thread.messages[0].content).toBe('canonical final');
+  const snap = { ...snapshot(), messages: thread.messages, events, watermark: 3 };
+  expect(reconcileSnapshot(snap, events).messages[0].content).toBe('canonical final');
+});

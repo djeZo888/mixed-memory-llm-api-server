@@ -21,6 +21,7 @@ export interface ViewState {
   connection: 'connecting' | 'connected' | 'reconnecting' | 'offline';
   visionAvailable: boolean;
   healthLoaded: boolean;
+  codexAvailable?: boolean;
   serviceAvailability?: HealthAvailability;
   imageCapabilities: ImageCapabilities | null;
   imageCapabilitiesLoaded: boolean;
@@ -131,7 +132,7 @@ export class HarnessStore {
     const current = () => !this.closed && lifetime === this.lifetime;
     const unknown = () => {
       if (current())
-        this.update({ healthLoaded: true, serviceAvailability: healthAvailability(undefined) });
+        this.update({ healthLoaded: true, codexAvailable: false, serviceAvailability: healthAvailability(undefined) });
     };
     const deadline = setTimeout(() => {
       read.abort();
@@ -142,6 +143,7 @@ export class HarnessStore {
       if (!current() || read.signal.aborted) return;
       this.update({
         visionAvailable: health.visionAvailable === true,
+        codexAvailable: health.engines?.codex?.available === true,
         healthLoaded: true,
         serviceAvailability: healthAvailability(health.availability),
       });
@@ -421,12 +423,16 @@ export class HarnessStore {
       this.update({ busy: { ...this.state.busy, [key]: false } });
     }
   }
-  create = () => {
+  create = (engineKind: 'minimax' | 'codex' = 'minimax') => {
+    if (engineKind === 'codex' && !this.state.codexAvailable) {
+      this.update({ error: 'Codex preview is not available yet.' });
+      return Promise.resolve();
+    }
     const generation = this.generation;
     return this.action(
       'create',
       '',
-      () => this.transport.create(),
+      () => this.transport.create(engineKind === 'minimax' ? undefined : engineKind),
       ({ session }) => {
         this.listGeneration++;
         this.update({

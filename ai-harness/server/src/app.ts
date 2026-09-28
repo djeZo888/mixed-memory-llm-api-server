@@ -14,6 +14,7 @@ import { Broker, type BrokerOptions } from "./broker.js";
 import { contentDisposition, imageMime } from "./file-metadata.js";
 import { environment } from "./locale.js";
 import { REVIEWED_SKILLS } from "./policy.js";
+import { codexAvailable, assertEngineAvailable } from "./engine-router.js";
 import type { Event } from "./contracts.js";
 import type { AvailabilityProvider } from "./service-availability.js";
 // MiniMax ae65651 packages/tui/src/acp/commands.ts: exact, case-sensitive
@@ -243,12 +244,21 @@ export async function createApp(options: AppOptions): Promise<{
       environment: environment(),
       status: "ok",
       visionAvailable: options.visionAvailable === true,
+      engines: { default: "minimax", codex: { available: codexAvailable(options.enginePolicy, options.codexEngineFactory), preview: true,
+        configured: !!options.codexEngineFactory,
+        version: options.enginePolicy?.codex?.engineVersion ?? null,
+        readiness: codexAvailable(options.enginePolicy, options.codexEngineFactory) ? "not-probed" : "disabled",
+        capabilities: { text: true, media: false, steering: false, delegation: false, frontier: false, reasoning: false },
+      } },
       ...(options.availabilitySummary ? { availability: options.availabilitySummary() } : {}),
     }));
     app.get("/api/sessions", async () => ({ sessions: store.listSessions() }));
     app.post("/api/sessions", async (req) => {
-      only(object(req.body), []);
-      return { session: await broker.createSession() };
+      const body = object(req.body);
+      only(body, ["engineKind"]);
+      const engineKind = body.engineKind ?? "minimax";
+      assertEngineAvailable(engineKind, options.enginePolicy, options.codexEngineFactory);
+      return { session: await broker.createSession(undefined, engineKind) };
     });
     app.get("/api/image-capabilities", async () =>
       imageBroker().capabilities(),

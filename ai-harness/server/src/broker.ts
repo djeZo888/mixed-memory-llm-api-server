@@ -3,6 +3,7 @@ import type { Store, Run, StoredSession } from "./store.js";
 import { Files } from "./files.js";
 import type {
   Engine,
+  EngineKind,
   EngineFactory,
   EngineUpdate,
   Context,
@@ -11,11 +12,15 @@ import type {
   Activity,
 } from "./contracts.js";
 import { CONTEXT_LIMIT } from "./contracts.js";
+import { assertEngineAvailable, createEngineRouter, type EnginePolicy } from "./engine-router.js";
 import { ApiError } from "./errors.js";
 export interface BrokerOptions {
   store: Store;
   files: Files;
   engineFactory: EngineFactory;
+  codexEngineFactory?: EngineFactory;
+  codexGatewayUrl?: string;
+  enginePolicy?: EnginePolicy;
   launcher: string;
   gatewayUrl: string;
   issueToken: (sessionId: string) => string;
@@ -86,8 +91,9 @@ export class Broker {
       ? { runId: active.run.id, workspaceId: active.run.workspaceId }
       : undefined;
   }
-  async createSession(workspaceId?: string) {
-    const s = this.store.createSession(workspaceId);
+  async createSession(workspaceId?: string, engineKind: EngineKind = "minimax") {
+    assertEngineAvailable(engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
+    const s = this.store.createSession(workspaceId, engineKind, engineKind === "codex" ? this.options.enginePolicy!.codex : {});
     await this.files.prepare(s.id, s.workspaceId);
     return this.store.publicSession(s);
   }
@@ -99,6 +105,9 @@ export class Broker {
     imageReferences: string[] = [],
   ): string {
     const s = this.store.getSession(sessionId);
+    assertEngineAvailable(s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
+    if (s.engineKind === "codex" && (attachmentIds.length || imageReferences.length))
+      throw new ApiError(400, "codex_media_unsupported", "Codex preview does not yet support attachments or image references");
     if (this.options.dispatchHeld?.())
       throw new ApiError(
         503,
@@ -235,20 +244,28 @@ export class Broker {
       engine: null as unknown as Engine,
       update: onUpdate,
     };
-    entry.engine = this.options.engineFactory({
+    const factory = createEngineRouter(this.options.engineFactory, this.options.codexEngineFactory, this.options.enginePolicy);
+    try {
+    entry.engine = factory({
       sessionId: s.id,
+      engineKind: s.engineKind,
+      engineVersion: s.engineVersion,
+      modelPolicyVersion: s.modelPolicyVersion,
+      nativeState: s.nativeState,
+      onNativeState: (state) => this.store.setNativeState(s.id, s.engineKind, state),
       dispatchHeld: this.options.dispatchHeld,
       profileDir: this.files.profile(s.id),
       workspace: this.files.workspace(s.workspaceId),
       nativeSessionId: s.nativeSessionId,
       launcher: this.options.launcher,
-      gatewayUrl: this.options.gatewayUrl,
+      gatewayUrl: s.engineKind === "codex" ? this.options.codexGatewayUrl ?? this.options.gatewayUrl : this.options.gatewayUrl,
       gatewayToken: token,
       stderrPath: this.files.log(s.id),
       onExit: () => this.options.revokeToken(token),
-      onNativeSessionId: (id) => this.store.setNative(s.id, id),
+      onNativeSessionId: (id) => this.store.setNative(s.id, id, s.engineKind),
       onUpdate: (u) => entry.update(u),
     });
+    } catch (error) { this.options.revokeToken(token); throw error; }
     this.runners.set(s.id, entry);
     await this.waitForDispatch();
     await entry.engine.start();
@@ -272,6 +289,7 @@ export class Broker {
         )
         .digest("hex");
     let summary = "";
+    const summaryParts = new Map<string, string>();
     let success = false;
     let cleanupConfirmed = false;
     let promptRejectedDuringCancellation = false;
@@ -291,10 +309,13 @@ export class Broker {
       const update = (u: EngineUpdate) => {
         if (this.active.get(s.workspaceId) !== active) return;
         if (u.type === "text") {
-          if (!u.text) return;
+          if (!u.text && !u.replace) return;
           const thought = u.channel === "thought";
-          if (!thought) summary += u.text;
           const id = messageId(u.nativeMessageId, thought);
+          if (!thought) {
+            summaryParts.set(id, u.replace ? u.text : (summaryParts.get(id) ?? "") + u.text);
+            summary = [...summaryParts.values()].join("");
+          }
           const phase = phases.get(id) ?? {
             phase: (thought
               ? "thinking"
@@ -304,7 +325,7 @@ export class Broker {
               : {}),
             streamState: "streaming" as const,
           };
-          this.store.appendDelta(s.id, id, u.text, run.id, phase);
+          this.store.appendDelta(s.id, id, u.text, run.id, phase, u.replace);
           assistantIds.add(id);
           if (!thought) assistantId = id;
         } else if (u.type === "phase") {
@@ -526,7 +547,7 @@ export class Broker {
       if (run.kind === "handoff" && !active.cancelled) {
         if (!summary.trim())
           throw new Error("Engine produced no handoff summary");
-        const next = await this.createSession(s.workspaceId);
+        const next = await this.createSession(s.workspaceId, s.engineKind);
         this.store.setTitle(next.id, `Continue: ${s.title}`);
         this.store.touchContext(next.id);
         const m = this.store.addMessage(
@@ -549,6 +570,10 @@ export class Broker {
       await active.cancelPromise;
       if (active.cancelFailed)
         throw new CancellationSettlementError(active.cancelled);
+      // Initial Codex preview proves exact container cleanup per turn; the next
+      // follow-up creates a new scoped runner and resumes the persisted thread.
+      if (s.engineKind === "codex" && !(await this.closeRunner(s.id)))
+        throw Object.assign(new Error("Codex cleanup unconfirmed"), { code: "engine_settlement_unknown" });
       this.store.settleRun(
         run.id,
         active.cancelled ? "cancelled" : "completed",

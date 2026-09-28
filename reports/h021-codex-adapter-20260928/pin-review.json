@@ -1,0 +1,22 @@
+{
+  "schemas": {
+    "files": 314,
+    "manifestSha256": "041df798508a083b4fa2f0cdc39b4e13c3267eb41d441a5c02fcb6af4767d7d1",
+    "mismatches": [],
+    "canonicalManifestSha256": "34eb8ce8e50ca393210234ab0c2df79ef3b8391dfef101da1962a66590d96437",
+    "canonicalDigestMatchesPin": true
+  },
+  "types": {
+    "files": 732,
+    "manifestSha256": "1778c8c23411f4230656fab9fad0467b026c1614e34d42ccca87c60c61252dcf",
+    "mismatches": [],
+    "canonicalManifestSha256": "a3174aa4b085b8d19d317740f0b92baf12457aba5b431f7055921cce2349473e",
+    "canonicalDigestMatchesPin": true
+  },
+  "LICENSE": {
+    "sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc"
+  },
+  "NOTICE": {
+    "sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915"
+  }
+}
