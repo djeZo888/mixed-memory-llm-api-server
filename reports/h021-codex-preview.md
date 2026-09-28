@@ -2,12 +2,17 @@
 
 ## Current checkpoint
 
-September 28, 2026, 08:56 UTC. Codex 0.158.0 is deployed as an optional
+September 28, 2026, 10:11 UTC. Codex 0.158.0 is deployed as an optional
 new-chat engine. MiniMax remains default; existing conversations retain their
-engine, history and files. The final application and central engine-status
-release passed deployment readback at 08:27 UTC. Final focused acceptance found
-an image-tool argument loop and an unconfirmed logical cleanup after Stop;
-those remain under bounded investigation. This is not full production acceptance.
+engine, history and files. Coding, public research, native child delegation,
+cold resume, real Stop and same-chat follow-up have passed bounded live checks.
+**Codex image tools are disabled after the unchanged image test failed again.**
+Use MiniMax for images and the tested PDF workflow. This is a controlled preview,
+not full feature parity or production acceptance.
+
+Open Sova, choose **Harness: Codex (preview)** and then **New chat**. Existing
+chats keep their original engine. Inference uses local Qwen, with no OpenAI
+model login or hosted inference fallback.
 
 The independent MiMo near-950K test was neither inspected nor changed. MiMo
 dispatch remains held in Sova to avoid competing with it. Its previous
@@ -76,20 +81,49 @@ they are not occupied context.
   interrupted and inference drained. Exact container kill/removal events and
   `podman exists` exit 1 prove physical removal. The application nevertheless
   retained uncertain native ownership and quarantined that workspace. This
-  cancellation check remains FAIL until the confirmation path is understood;
-  no stored uncertainty was manually cleared. An earlier Stop fixture used an
+  historical cancellation attempt remains FAIL; the later repaired acceptance
+  below passed without manually clearing stored uncertainty. An earlier Stop fixture used an
   incorrect accessible-button locator and never clicked; its naturally completed
   task and successful follow-up are not cancellation acceptance.
 
 See the [focused results](h021-codex-focused-cases.json) for distinct outcomes.
 
+### Cancellation repair
+
+A later real Stop on the 15-second repair reproduced the logical failure. The
+native container was removed promptly, but the single accepted Qwen request
+finished 45.6 seconds after Stop. The gateway intentionally lets accepted model
+work drain, so a separate 15-second cleanup deadline was incompatible with its
+ownership policy. No follow-up or image request was admitted after that failure.
+
+The next repair keeps the task in **cancelling** and its workspace occupied until
+all owned inference requests settle durably. Existing request deadlines still
+apply. Unconfirmed native cleanup fails immediately; shutdown stops observation
+and retains uncertainty. It does not cancel native GPU work or release capacity
+early. The repair passed 37 focused fixtures, type checking and a cached server
+build. A new real Stop passed: cancellation remained pending for the accepted
+request's 38.5-second drain, then reached cancelled with native ownership idle,
+no remaining request and no new quarantine. A distinct same-native-thread
+follow-up answered correctly in 19.6 seconds and survived browser reload.
+See the [cancellation evidence](h021-codex-cancellation.json) and
+[final live cases](h021-codex-final-cases.json). Original failed runs and their
+quarantines remain recorded.
+
+The final unchanged image test still failed, this time with two invalid
+`image_capabilities` calls containing `{"__v":"0"}`. Four model requests ran;
+no image job was submitted. The same turn was stopped and all ownership settled.
+The simpler alias did not qualify this workflow. Only Codex's image enable flag
+was then removed; strict tool argument validation and MiniMax's image service
+were preserved. No further parameter sweep or prompt rescue was performed.
+
 ## Known limits
 
-- Codex currently uses the qualified Qwen0 lane. Qwen1 has stale control-generation
-  metadata; it has not been accepted by bypassing that check. MiniMax's existing
+- Codex currently uses the qualified Qwen0 lane. Qwen1 failed its current-generation
+  check during qualification; that guard was not bypassed. MiniMax's existing
   pool is separate from this Codex qualification limit.
 - Native image/audio/video recognition is unavailable in the Codex preview.
-  Specialist image generation/editing is a separate tool capability.
+  Specialist image generation/editing is separate and is currently disabled
+  for Codex after failed workflow acceptance; MiniMax retains it.
 - MiMo live Codex acceptance is deferred while the independent test owns it.
 - A real native child completed successfully and reconnect preserved history.
   Its next follow-up was interrupted before new inference. A reproduced native
@@ -99,6 +133,10 @@ See the [focused results](h021-codex-focused-cases.json) for distinct outcomes.
   native thread and one fresh authorized inference request. History and final
   native/gateway settlement were verified. The original failure remains recorded.
   Local-model recall after compaction is still unqualified.
+- Some fresh Codex messages lack reliable phase metadata and remain unclassified.
+  The current renderer labels those messages “Legacy response”; this does not
+  mean the new conversation is using an old engine. Improving that label and
+  qualifying reliable final/progress separation remain follow-up work.
 - An early real-Qwen stream decoding failure remains unproven in cause. Later
   successful cases do not erase it. The new protected diagnostics record only
   bounded, static error codes and ownership IDs, without prompts or credentials.
@@ -119,9 +157,26 @@ configuration backups, a consistent database backup and private evidence remain
 available. No automatic rollback or replay is performed when task settlement is
 uncertain. Publication remains on the feature branch and draft PR10.
 
-Deployed application source: `adb763cfd0d0e2b6174dfa28439e117f8a2a03be`.
+Deployed application source: `bbeec44d44c29d1b50ce8374c5d26170bc844f5a`.
 The rootless Codex image and read-only policy are pinned in the deployment
 receipt. Both output ceilings were verified from the reviewed source and active
-unit; this did not require generating a 64K answer. Application activation
-preserved all 39 session rows, 194 messages, 60 runs and 104 file rows present
-at the deployment barrier, along with image history, active selector and holds.
+unit; this did not require generating a 64K answer. The final image-flag change preserved 46 sessions, 215 messages, 70 runs and
+107 file rows, image history, active selector and holds. Normal startup
+reconciliation marked the two already interrupted test sessions stale, retained
+their quarantines and appended six lifecycle events. Original events, failed
+runs, native ownership, messages and files remained unchanged. The first
+post-start check ran before those events had been appended; a later read-only
+check of the same deployment passed without another restart or helper change.
+Saved pre-update state retains the original failure reasons; no uncertainty
+was manually cleared. The prior source-bound reader intentionally rejects the
+changed unit; its positive pre-switch proofs remain retained.
+
+The temporary Qwen1 acceptance hold was removed at 10:12 UTC after all three
+new runs settled. The separate MiMo benchmark hold and all three historical
+workspace quarantines remain. No model runtime, GPU or benchmark was inspected
+or changed by this work.
+
+Both final worker CLI sessions exited successfully (Worker1 10:03 UTC, Worker2
+10:15 UTC). The small comparison favored MiniMax for completion time and tool
+workflow reliability. Keep it as default while evaluating the explicit Codex
+preview; these single cases do not justify a general model-quality claim.

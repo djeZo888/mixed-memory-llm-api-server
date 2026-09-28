@@ -84,6 +84,11 @@ adapter, private App Server, persistent per-engine chats, tools and central
 engine status are deployed. See the [acceptance report](reports/h021-codex-preview.md)
 and [original plan](ai-harness/PLAN-CODEX-HARNESS.md). Remaining qualification:
 
+- Repair Codex's parameterless image-tool calls before re-enabling its image
+  flag. The bounded repeat supplied `__v=0`, failed twice and dispatched no image
+  jobs; simpler namespace aliases did not qualify it. Preserve MiniMax images.
+- Improve the “Legacy response” label for new messages lacking phase metadata;
+  qualify final/progress separation without inventing a reasoning trace.
 - Investigate the PDF workflow's early completion. Two retained attempts failed
   despite successful extraction; do not turn repeated prompting into a PASS.
 - Qualify live compaction and recall through an owned test path. Native protocol

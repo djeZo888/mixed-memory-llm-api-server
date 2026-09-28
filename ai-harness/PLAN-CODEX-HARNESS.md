@@ -250,8 +250,11 @@ interventions. Harness features do not establish a model-quality improvement.
 
 ### Current implementation status
 
-H021 implementation is now in progress. No Codex behavior is qualified until
-its recorded acceptance passes. The existing MiniMax-to-MiMo HTTP400 repair
+H021 delivered a selectable controlled preview. The
+[acceptance report](../reports/h021-codex-preview.md) records tested coding,
+research, delegation and lifecycle behavior, retained PDF/image failures and
+remaining qualification. MiniMax remains default; Codex image tools are disabled.
+Full parity, live compaction recall and second-lane qualification remain pending. The existing MiniMax-to-MiMo HTTP400 repair
 and completion review of the running near-950K benchmark remain separate work;
 this plan does not claim either is fixed. MiMo live Codex qualification is
 deferred while that benchmark owns the frontier runtime.

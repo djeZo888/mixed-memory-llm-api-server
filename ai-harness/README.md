@@ -16,6 +16,9 @@ paid inference. MiniMax remains the default. See the
 [current acceptance report](../reports/h021-codex-preview.md) for completed
 checks, retained failures and remaining limits. The first two Codex PDF workflow
 attempts failed; use MiniMax for the tested PDF extraction/creation workflow.
+Codex image tools are disabled after two retained workflow failures; MiniMax
+image generation and guarded editing remain available. Real Stop, same-thread
+follow-up and reconnect passed on the final Codex repair.
 The [earlier worker-path failure](docs/acceptance-v0.0.3-historical-worker-failure.md)
 remains historical evidence. [v0.0.2 acceptance](docs/acceptance-v0.0.2.md)
 records earlier chat/progress/download/ZIP checks; [v0.0.1](docs/acceptance-v0.0.1.md)
