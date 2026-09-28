@@ -93,7 +93,7 @@ class RearmTests(unittest.TestCase):
         self.refuse = True
         with patch.object(recovery.time, 'monotonic', return_value=0), \
                 patch.object(recovery.time, 'sleep') as sleep, redirect_stderr(io.StringIO()):
-            with self.assertRaisesRegex(recovery.RearmError, 'manual rearm required'):
+            with self.assertRaisesRegex(recovery.RearmError, 'next timer observation'):
                 recovery.recover()
         self.assertEqual([args.args[0] for args in sleep.call_args_list], list(recovery.DELAYS[1:]))
         self.assertEqual(sum(recovery.NETWORK_HELPER in args for args in self.commands),
@@ -112,24 +112,43 @@ class RearmTests(unittest.TestCase):
         sleep.assert_called_once_with(5)
         self.assertEqual(len(self.mutations()), 2)
 
+    def test_late_network_return_recovers_on_next_timer_run(self):
+        self.states[recovery.SOCKETS[0]]['ActiveState'] = 'failed'
+        self.refuse = True
+        with patch.object(recovery.time, 'monotonic', return_value=0), \
+                patch.object(recovery.time, 'sleep'), redirect_stderr(io.StringIO()):
+            with self.assertRaisesRegex(recovery.RearmError, 'run exhausted'):
+                recovery.recover()
+            self.assertEqual(self.mutations(), [])
+            # Independent later invocation, including long-after-boot NIC repair.
+            self.refuse = False
+            self.assertIn('sockets active', recovery.recover())
+            self.commands.clear()
+            self.assertIn('no enabled stopped sockets', recovery.recover())
+            self.assertEqual(self.mutations(), [])
+            self.assertFalse(any(recovery.NETWORK_HELPER in a for a in self.commands))
+
     def test_time_budget_stops_before_next_sleep(self):
         with patch.object(recovery, 'rearm_once', side_effect=recovery.RearmError('down')) as attempt, \
-                patch.object(recovery.time, 'monotonic', side_effect=[0, 0, 539]), \
+                patch.object(recovery.time, 'monotonic', side_effect=[0, 0, 89]), \
                 patch.object(recovery.time, 'sleep') as sleep, redirect_stderr(io.StringIO()):
             with self.assertRaises(recovery.RearmError):
                 recovery.recover()
         attempt.assert_called_once()
         sleep.assert_not_called()
 
-    def test_source_timer_is_once_per_boot_with_no_restart_or_dependency(self):
+    def test_source_timer_repeats_after_inactive_without_restart_or_dependency(self):
         self.assertIn('passed', recovery.source_check())
         units = recovery.expected_units()
         service = units['llm-private-network-rearm.service']
         timer = units['llm-private-network-rearm.timer']
-        self.assertIn('TimeoutStartSec=600', service)
+        self.assertIn('TimeoutStartSec=120', service)
+        self.assertIn('Type=oneshot', service)
+        self.assertNotIn('RemainAfterExit', service)
         self.assertIn('Restart=no', service)
         self.assertIn('OnBootSec=45s', timer)
-        self.assertNotIn('OnUnit', timer)
+        self.assertIn('OnUnitInactiveSec=120s', timer)
+        self.assertIn('Unit=llm-private-network-rearm.service', timer)
         self.assertNotIn('Requires=', service)
         self.assertNotIn('Wants=', service)
         self.assertLess(sum(recovery.DELAYS), recovery.BUDGET_SECONDS)

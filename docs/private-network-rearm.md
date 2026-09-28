@@ -1,11 +1,14 @@
 # H028 finite private transport recovery
 
-The boot timer gives an interface/address that returns after the original socket
-dependency failure a finite recovery window. It starts after 45 seconds and the
-helper tries at most seven times, with delays of 0, 5, 15, 30, 60, 120 and 240
-seconds. The helper has a 540-second total budget; systemd has a 600-second hard
-timeout. Exhaustion is a reported failure requiring an operator to start the
-recovery service again. There is no recurring timer or automatic model recovery.
+The timer continuously observes slowly, including when the interface/address
+returns long after boot or a manual NIC repair. It first runs after 45 seconds,
+then 120 seconds after the previous recovery service run becomes inactive.
+Each run makes at most four attempts with delays of 0, 5, 15 and 30 seconds,
+a 90-second total helper budget, and a 120-second systemd hard timeout. Exhaustion
+is reported honestly; the next slow timer observation remains scheduled.
+A single oneshot service and OnUnitInactiveSec prevent overlapping timer runs.
+Healthy sockets require only state reads and produce no mutations. There is no
+automatic model recovery or unbounded per-run retry loop.
 
 Only existing enabled (including runtime-enabled) inactive/failed transport
 sockets are candidates. Active sockets are not restarted; disabled/masked sockets
@@ -55,9 +58,10 @@ Enabling the new timer does not enable any transport socket. If boot time is
 already beyond 45 seconds, the timer starts the bounded helper immediately.
 Record status and a bounded journal for the new service, then current socket
 states and private status API reachability. An HTTP response or listening socket
-does not qualify model readiness. Preserve any failure logs on exhaustion. A
-later operator-authorized retry uses only
-`systemctl start llm-private-network-rearm.service`; it is not an automatic loop.
+does not qualify model readiness. Preserve failure logs on exhaustion. The next
+timer observation occurs 120 seconds after completion, whether the prior run
+succeeded or failed. An operator may also start the same service explicitly;
+systemd does not create a second concurrent instance of this fixed service.
 
 Rollback stops/disables only the new timer, stops the new recovery service, and
 removes only new files whose installed hashes match the recorded delivery. Then
@@ -65,5 +69,6 @@ daemon-reload. Do not stop the existing sockets, reverse enabled states, remove
 ingress, rewrite the original receipt, or touch native upstream/model services.
 
 Local focused tests simulate unavailable/recovered networking, finite backoff,
-guard refusal, pending activation and operator-disabled sockets. Live systemd
+guard refusal, pending activation, operator-disabled sockets and a late-network
+return after an earlier run exhausted its budget. Live systemd
 activation and late-network recovery require W1's actual deployment receipt.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Finite boot recovery for existing enabled PRIVATEAPI transport sockets only.
+"""Bounded recovery runs for existing enabled PRIVATEAPI transport sockets only.
 
 The unchanged private_network.py apply/check commands own all installation,
 source-receipt, interface and ingress guards. This helper cannot enable sockets,
@@ -19,8 +19,8 @@ NETWORK_HELPER = '/usr/local/lib/llm-server/private-network/private_network.py'
 SYSTEMCTL = '/usr/bin/systemctl'
 SOCKETS = tuple(f'llm-private-{role}.socket' for role in
                ('control', 'glm', 'qwen38', 'image', 'node', 'frontier'))
-DELAYS = (0, 5, 15, 30, 60, 120, 240)
-BUDGET_SECONDS = 540
+DELAYS = (0, 5, 15, 30)
+BUDGET_SECONDS = 90
 ENABLED = ('enabled', 'enabled-runtime')
 
 
@@ -38,17 +38,18 @@ After=network.target
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/python3 -I -B /usr/local/lib/llm-server/private-network/private_network_rearm.py rearm
-TimeoutStartSec=600
+TimeoutStartSec=120
 Restart=no
 UMask=0077
 LimitCORE=0
 ''',
-        'llm-private-network-rearm.timer': '''# H028 finite boot grace; no recurring or persistent retry loop.
+        'llm-private-network-rearm.timer': '''# H028 slow observation; bounded runs cannot overlap on this single service.
 [Unit]
-Description=Start bounded private API socket recovery after boot
+Description=Observe and recover private API sockets after boot or late network return
 
 [Timer]
 OnBootSec=45s
+OnUnitInactiveSec=120s
 AccuracySec=1s
 Unit=llm-private-network-rearm.service
 Persistent=no
@@ -138,7 +139,7 @@ def recover():
             last = str(exc)
             print(f'private transport recovery attempt {number}/{len(DELAYS)}: {last}',
                   file=sys.stderr, flush=True)
-    raise RearmError('finite boot recovery exhausted; manual rearm required: ' + last)
+    raise RearmError('bounded recovery run exhausted; next timer observation remains scheduled: ' + last)
 
 
 def source_check():

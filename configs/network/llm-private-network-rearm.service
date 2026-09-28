@@ -6,7 +6,7 @@ After=network.target
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/python3 -I -B /usr/local/lib/llm-server/private-network/private_network_rearm.py rearm
-TimeoutStartSec=600
+TimeoutStartSec=120
 Restart=no
 UMask=0077
 LimitCORE=0

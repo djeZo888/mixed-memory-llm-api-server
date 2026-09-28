@@ -1,9 +1,10 @@
-# H028 finite boot grace; no recurring or persistent retry loop.
+# H028 slow observation; bounded runs cannot overlap on this single service.
 [Unit]
-Description=Start bounded private API socket recovery after boot
+Description=Observe and recover private API sockets after boot or late network return
 
 [Timer]
 OnBootSec=45s
+OnUnitInactiveSec=120s
 AccuracySec=1s
 Unit=llm-private-network-rearm.service
 Persistent=no
