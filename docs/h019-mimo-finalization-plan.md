@@ -5,7 +5,9 @@
 September 28, 2026, 02:10:29–04:10:29 UTC. The user permits Sova downtime and
 requires leaving MiMo selected/resident if integration is unfinished. Do not
 restore GLM at the deadline. Skip the unrun 64K benchmark and proceed directly
-to the near-950K test after short integration checks pass.
+to the near-950K test after short native checks pass. Aim to finish Sova first,
+but an application-only problem must not block a qualified native benchmark;
+Sova may remain paused with its acceptance explicitly incomplete.
 
 ## Starting point
 

@@ -38,8 +38,11 @@ Sova downtime is authorized and nobody is using it. Preserve chats, uploads,
 artifacts, credentials and historical failure evidence. Keep the two Qwens and
 image resident where practical; do not spend time restoring front-end availability.
 
-After actual native tools/result and Sova delegation acceptance, launch one
-independent near-950K test with the existing eight-hour background limit. Count
+Aim to finish native tools/result and Sova delegation acceptance, then launch
+one independent near-950K test with the existing eight-hour background limit. If
+only Sova application integration remains incomplete, a stable qualified native
+MiMo service may run the private-API benchmark while Sova stays paused. Record
+Sova's incomplete acceptance honestly; it is not a native benchmark prerequisite. Count
 actual input tokens and reserve output/template space. Verify real startup and
 then close paid CLI sessions; user will nudge for results. Do not stay active to
 poll a multi-hour request, and leave the existing automation paused.
