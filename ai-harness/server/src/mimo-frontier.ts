@@ -14,6 +14,12 @@ export interface MimoFrontierOptions {
   capacity: { published: 1048576; configured: number; allocated: number; occupiedTested: number };
   upstreamKey: string | (() => string | Promise<string>);
   observe: (signal: AbortSignal) => Promise<MimoBackendIdentity>;
+  /** Request-local current owner capsule; production must not replay receipt IDs
+   * as observations after a reboot/restart. Existing admission owns this call. */
+  current?: (signal: AbortSignal) => Promise<{
+    qualification: MimoQualification;
+    observe: (signal: AbortSignal) => Promise<MimoBackendIdentity>;
+  }>;
   /** Root/W1 qualification of the pinned one-slot serial scheduling contract.
    * Allows normal next-request admission, never process/model switching. */
   serialCompletionQualified: true;
@@ -69,7 +75,7 @@ export function observeMimoNative(props: any, slots: any, q: MimoQualification, 
     typeof slots[0]?.is_processing !== 'boolean' || Object.hasOwn(slots[0], 'prompt') || Object.hasOwn(slots[0], 'generated')) throw Error('MiMo native identity/capacity mismatch');
   return q.identity;
 }
-async function nativeJson(url: string, key: string, signal: AbortSignal): Promise<unknown> {
+export async function nativeJson(url: string, key: string, signal: AbortSignal): Promise<unknown> {
   const response = await fetch(url, { redirect: 'error', headers: { authorization: `Bearer ${key}` }, signal });
   if (!response.ok || !response.body) { await response.body?.cancel(); throw Error('MiMo observation unavailable'); }
   const reader = response.body.getReader(); let bytes = 0; const chunks: Uint8Array[] = [];

@@ -40,18 +40,19 @@ function port(name: string, fallback: number) {
 }
 /** Explicit reviewed release entrypoint. Ordinary main.start() remains MiniMax-only.
  * The receipt is a protected host file outside task mounts and binds current instances. */
-export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false) {
+export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false, frontierResponsesQualified = false) {
   let qualification: CodexHostQualification | undefined;
   try {
     const receipt = await loadQwenReceipt(receiptPath);
     const inferenceKey = await readProtectedCredential(required("AI_HARNESS_INFERENCE_KEY_FILE"));
     const controlKey = await readProtectedCredential(required("AI_HARNESS_NODE_CONTROL_KEY_FILE"));
     const verifyLane = createProductionQwenVerifier(receipt, { inferenceKey, controlKey });
-    const qualifiedAliases: string[] = [];
-    for (const alias of Object.keys(receipt.lanes)) {
-      try { await verifyLane(alias); qualifiedAliases.push(alias); } catch { /* Only this Codex lane stays disabled. */ }
-    }
-    if (qualifiedAliases.length) qualification = { protocolQualified: true, rootlessQualified: true, verifyLane, outputLimit, qualifiedAliases, nativeDelegationQualified: true,
+    // This list pins reviewed lane policy, not ephemeral startup readiness.
+    // Host composition revalidates current owner identity for every admission;
+    // counter revalidates again before/after counting on the selected lane.
+    const qualifiedAliases = Object.keys(receipt.lanes);
+    qualification = { protocolQualified: true, rootlessQualified: true, verifyLane, outputLimit, qualifiedAliases, nativeDelegationQualified: true,
+      ...(frontierResponsesQualified ? { frontierResponsesQualified: true as const } : {}),
       ...(imageJobsQualified ? { imageJobsQualified: true as const, capabilities: { image: { supported: true, qualification: "scripted_fixture" as const, reason: "Reviewed existing specialist broker integration; live Codex image generation/edit acceptance pending" } } } : {}),
       onResponsesError: createResponsesDiagnostics(path.join(required("AI_HARNESS_DATA_DIR"), "codex-responses-errors.jsonl")) };
   } catch { /* A failed optional preview must not remove MiniMax or stored histories. */ }
@@ -177,7 +178,8 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
       const selection = loadFrontierSelection();
       frontier = loadActiveFrontier(selection,
         () => readProtectedCredential(required("AI_HARNESS_FRONTIER_KEY_FILE")),
-        (record) => frontierLedger!.record(record));
+        (record) => frontierLedger!.record(record),
+        () => readProtectedCredential(required("AI_HARNESS_NODE_CONTROL_KEY_FILE")));
     } catch { /* Only the selected frontier is disabled. Qwen startup survives. */ }
     const states = Object.fromEntries(
       (

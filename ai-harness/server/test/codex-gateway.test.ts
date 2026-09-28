@@ -75,3 +75,11 @@ for (const failure of ['transport','active-deadline'] as const) {
   assert.equal(f.seen.length,1);
  });
 }
+
+test('current owner requalification changes eligible lane without restarting or bypassing shared admission',async t=>{
+ let aliases:readonly string[]=[];
+ const f=await fixture({enabled:true,currentAliases:async()=>aliases,countQwen:async(_b,l)=>{assert.equal(l.alias,'qwen3.8-27b');return {inputTokens:10,contextWindow:480000};}});t.after(f.close);
+ const blocked=await f.send();assert.equal(blocked.status,503);assert.equal(f.seen.length,0);assert.equal(await f.gateway.confirmSettlement({sessionId:'s'}),true);
+ aliases=['qwen3.8-27b'];const first=f.send();await until(()=>f.seen.length===1);assert.equal(f.seen[0].body.model,'qwen3.8-27b');const queued=f.send();await until(()=>f.gateway.snapshot().queued===1);
+ f.done(0);await(await first).text();await until(()=>f.seen.length===2);f.done(1);await(await queued).text();assert.equal(await f.gateway.confirmSettlement({sessionId:'s'}),true);
+});

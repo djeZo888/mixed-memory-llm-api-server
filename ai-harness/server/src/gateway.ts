@@ -1,4 +1,6 @@
-import { translateResponses, ResponsesStream, responsesFailureCode, CODEX_CONTEXT } from "./codex-responses.js";
+import { codexProvider, type CodexProviderContract } from "./codex-provider.js";
+import type { ProviderBoundaryCapture, ProviderFailure } from "./provider-diagnostics.js";
+import { translateResponses, ResponsesStream, responsesFailureCode, CODEX_CONTEXT, type ResponsesDiagnostic } from "./codex-responses.js";
 import { GatewayOwnership, type OwnershipOptions, type SettlementQuery } from "./gateway-ownership.js";
 import { MIMO_MODEL, prepareMimo, countMimo, mimoGenerationRequest, MimoStreamValidator, MimoError, type MimoAdmission } from "./mimo.js";
 import { mimoUrl, MIMO_PRODUCTION_OUTPUT, type MimoFrontierOptions } from "./mimo-frontier.js";
@@ -42,6 +44,11 @@ export interface GatewayUpstream {
 }
 export interface GatewayOptions {
   ownership?: OwnershipOptions;
+  /** Explicit host acceptance capture only; raw bytes never enter normal logs. */
+  diagnostics?: {
+    capture?: (event: ProviderBoundaryCapture) => void;
+    onFailure?: (event: ProviderFailure) => void;
+  };
   /** Trusted temporary matched pilot ceiling for BOTH text engines; default65536. */
   qwenOutputLimit?: number;
   responses?: {
@@ -51,6 +58,11 @@ export interface GatewayOptions {
     outputLimit?: number;
     /** Per-request filter inside the existing shared queue; MiniMax keeps all lanes. */
     qualifiedAliases?: readonly string[];
+    /** Revalidate current owner policy for each admission, not startup-only IDs. */
+    currentAliases?: () => Promise<readonly string[]>;
+    /** Independent reviewed MiMo Responses acceptance gate; holds still win. */
+    frontierQualified?: true;
+    onDiagnostic?: (event: {requestId:string;sessionId:string;lane:string;diagnostic: ResponsesDiagnostic}) => void;
     /** Bounded host diagnostics keyed to the existing request owner, no model text. */
     /** Explicit private acceptance capture only; production leaves this absent. */
     onTrace?: (event: {requestId:string;sessionId:string;lane:string;chunk:Buffer}) => void;
@@ -565,6 +577,16 @@ export function createGateway(options: GatewayOptions): Gateway {
     connectionTimeout: 0,
     forceCloseConnections: true,
   });
+  const rawBodies = new WeakMap<FastifyRequest, Buffer>();
+  if (options.diagnostics?.capture) {
+    const parseJson = app.getDefaultJsonParser("error", "error");
+    app.removeContentTypeParser("application/json");
+    app.addContentTypeParser("application/json", { parseAs: "buffer" }, (request, body, done) => {
+      const bytes = body as Buffer;
+      if (request.method === "POST" && /\/(responses|chat\/completions)$/.test(request.url)) rawBodies.set(request, Buffer.from(bytes));
+      parseJson(request, bytes.toString("utf8"), done);
+    });
+  }
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof MimoError)
       return reply.code(error.code === "mimo_context_full" || error.code === "mimo_output_limit" ? 413 : error.code === "mimo_invalid_request" || error.code === "mimo_tool_history" ? 400 : 503).send({ error: { code: error.code, message: "MiMo request or qualification rejected" } });
@@ -697,42 +719,54 @@ export function createGateway(options: GatewayOptions): Gateway {
     const isResponses = request.routeOptions.url?.endsWith("/responses") === true;
     if (isResponses && options.responses?.enabled !== true) throw new ApiError(503,"codex_protocol_disabled","Codex Responses preview is disabled");
     if (isResponses && options.ownership?.recoveryReady !== true) throw new ApiError(503,"codex_ownership_unavailable","Durable session ownership required");
-    const translated = isResponses ? translateResponses(request.body, options.responses?.outputLimit) : undefined;
-    if (translated) request.body = translated.body;
-    const frontier = request.routeOptions.url?.startsWith("/frontier/") === true;
-    // MiMo remains SOURCE/FIXTURE ONLY until an independent live qualification.
-    if (isResponses && frontier) throw new ApiError(503,"codex_frontier_unqualified","Codex frontier live routing is not qualified");
-    const selectedAdmission = frontier ? frontierAdmission : admission;
-    if (!selectedAdmission || (frontier && !options.frontier))
-      throw new ApiError(
-        503,
-        "frontier_unavailable",
-        "Frontier is not qualified",
-      );
-    if (
-      frontier &&
-      (options.dispatchHeld?.("harness") ||
-        options.dispatchHeld?.(frontierModel))
-    )
-      throw new ApiError(503, "frontier_held", "Frontier dispatch is held");
-    const prepared = frontier && mimo ? prepareMimo(request.body) : undefined;
-    if (prepared && prepared.outputTokens > MIMO_PRODUCTION_OUTPUT) throw new ApiError(413, "mimo_output_limit", "MiMo production output ceiling exceeded");
-    const body = prepared ? prepared.body : frontier ? frontierBody(request.body) : requestBody(request.body);
-    if (!frontier && options.qwenOutputLimit !== undefined) {
-      if (!Number.isSafeInteger(options.qwenOutputLimit) || options.qwenOutputLimit < 1 || options.qwenOutputLimit > MAX_OUTPUT) throw Error("Invalid trusted Qwen output cap");
-      body.max_tokens = Math.min(Number(body.max_tokens ?? body.max_completion_tokens ?? MAX_OUTPUT), options.qwenOutputLimit);
-      if (body.max_completion_tokens !== undefined) body.max_completion_tokens = body.max_tokens;
-    }
-    const bodyBytes = Buffer.byteLength(JSON.stringify(body));
     const token = request.headers.authorization!.slice(7);
     const sessionId = tokens.get(token);
-    if (!sessionId)
-      throw new GatewayError(
-        401,
-        "unauthorized",
-        "Inference authorization required",
-      );
+    if (!sessionId) throw new GatewayError(401, "unauthorized", "Inference authorization required");
     const ownedRequest = ownership.begin(sessionId);
+    const requestedModel = (request.body as any)?.model;
+    const model = typeof requestedModel === "string" && [MODEL, MIMO_MODEL, FRONTIER_MODEL].includes(requestedModel) ? requestedModel : MODEL;
+    const capture = (phase: ProviderBoundaryCapture["phase"], bytes: Buffer, lane?: string) => {
+      try { options.diagnostics?.capture?.({ requestId: ownedRequest.id, sessionId, model, phase, bytes, lane }); } catch { /* Diagnostics cannot change ownership. */ }
+    };
+    const diagnosticFailure = (error: unknown, phase: ProviderFailure["phase"]) => {
+      // Only validator-owned static codes; no request or exception text.
+      const code = error instanceof MimoError || error instanceof ApiError || error instanceof GatewayError ? error.code : "provider_validation_failed";
+      try { options.diagnostics?.onFailure?.({ requestId: ownedRequest.id, sessionId, model, phase, code,
+        ...(error instanceof MimoError && error.rule ? {rule:error.rule} : {}) }); } catch { /* Best effort. */ }
+    };
+    if (options.diagnostics?.capture) capture("pre_normalization", rawBodies.get(request) ?? Buffer.from(JSON.stringify(request.body)));
+    rawBodies.delete(request);
+    let provider: CodexProviderContract | undefined;
+    let translated: ReturnType<typeof translateResponses> | undefined;
+    let prepared: ReturnType<typeof prepareMimo> | undefined;
+    let body: Record<string, any>;
+    const frontier = request.routeOptions.url?.startsWith("/frontier/") === true || (isResponses && requestedModel === MIMO_MODEL);
+    const selectedAdmission = frontier ? frontierAdmission : admission;
+    try {
+      provider = isResponses ? codexProvider(requestedModel) : undefined;
+      if (isResponses && frontier && (options.responses?.frontierQualified !== true || !mimo || provider?.model !== MIMO_MODEL))
+        throw new ApiError(503, "codex_frontier_unqualified", "Codex frontier live routing is not qualified");
+      if (!selectedAdmission || (frontier && !options.frontier)) throw new ApiError(503, "frontier_unavailable", "Frontier is not qualified");
+      if (frontier && (options.dispatchHeld?.("harness") || options.dispatchHeld?.(frontierModel)))
+        throw new ApiError(503, "frontier_held", "Frontier dispatch is held");
+      translated = isResponses ? translateResponses(request.body, options.responses?.outputLimit, provider) : undefined;
+      const input = translated?.body ?? request.body;
+      prepared = frontier && mimo ? prepareMimo(input) : undefined;
+      if (prepared && prepared.outputTokens > MIMO_PRODUCTION_OUTPUT) throw new ApiError(413, "mimo_output_limit", "MiMo production output ceiling exceeded");
+      body = prepared ? prepared.body : frontier ? frontierBody(input) : requestBody(input);
+      if (!frontier && options.qwenOutputLimit !== undefined) {
+        if (!Number.isSafeInteger(options.qwenOutputLimit) || options.qwenOutputLimit < 1 || options.qwenOutputLimit > MAX_OUTPUT) throw Error("Invalid trusted Qwen output cap");
+        body.max_tokens = Math.min(Number(body.max_tokens ?? body.max_completion_tokens ?? MAX_OUTPUT), options.qwenOutputLimit);
+        if (body.max_completion_tokens !== undefined) body.max_completion_tokens = body.max_tokens;
+      }
+    } catch (error) {
+      diagnosticFailure(error, "validation");
+      ownership.transition(ownedRequest, "settled");
+      throw error;
+    }
+    // The preceding validation proved this owner exists; no inference accepted yet.
+    if (!selectedAdmission) throw Error("Validated admission missing");
+    const bodyBytes = Buffer.byteLength(JSON.stringify(body));
     const settleLane = (lane: Lane, confirmed: boolean) => {
       const ownerReleased = selectedAdmission.settle(lane, confirmed);
       try { ownership.transition(ownedRequest, confirmed && ownerReleased ? "settled" : "uncertain", lane.upstream.alias); } catch { /* ledger retains uncertainty; callback must never crash transport */ }
@@ -780,7 +814,9 @@ export function createGateway(options: GatewayOptions): Gateway {
     reply.raw.once("close", disconnect);
     let lane: Lane;
     try {
-      lane = await selectedAdmission.acquire(cancelled.signal, bodyBytes, translated ? options.responses?.qualifiedAliases : undefined);
+      const aliases = translated && !frontier ? await options.responses?.currentAliases?.() ?? options.responses?.qualifiedAliases : undefined;
+      if (aliases && !aliases.length) throw new ApiError(503, "codex_qwen_identity_unqualified", "No currently qualified Qwen lane");
+      lane = await selectedAdmission.acquire(cancelled.signal, bodyBytes, aliases);
     } catch (error) {
       ownership.transition(ownedRequest, "settled");
       recordState(cancelled.signal.aborted ? "cancelled" : "rejected");
@@ -869,7 +905,7 @@ export function createGateway(options: GatewayOptions): Gateway {
         "Selected inference lane is unavailable",
       );
     }
-    if (translated) {
+    if (translated && !frontier) {
       try {
         ownership.transition(ownedRequest, "counting", lane.upstream.alias);
         const finalBody = { ...body, model: lane.upstream.alias };
@@ -881,23 +917,29 @@ export function createGateway(options: GatewayOptions): Gateway {
           throw new ApiError(413,"codex_context_full","Input plus reserved output exceeds model context");
         if (cancelled.signal.aborted || tokens.get(token) !== sessionId) throw new ApiError(499,"cancelled","Request cancelled before dispatch");
         if (selectedAdmission.available(lane).dispatch !== "allow") throw new ApiError(503,"lane_unavailable","Lane unavailable after count");
-      } catch (error) { settleLane(lane,true); reply.raw.removeListener("close",disconnect); if (cancelled.signal.aborted) throw new ApiError(499,"cancelled","Request cancelled before dispatch"); throw error; }
+      } catch (error) { diagnosticFailure(error, "counting"); settleLane(lane,true); reply.raw.removeListener("close",disconnect); if (cancelled.signal.aborted) throw new ApiError(499,"cancelled","Request cancelled before dispatch"); throw error; }
     }
     let mimoAdmission: MimoAdmission | undefined;
     let mimoPayload: string | undefined;
+    let requestMimo: Awaited<ReturnType<NonNullable<MimoFrontierOptions["current"]>>> | undefined;
     if (frontier) {
       try {
         if (mimo && prepared) {
-          mimoAdmission = await countMimo(prepared, mimo.qualification, {
-            observe: mimo.observe,
+          ownership.transition(ownedRequest, "counting", lane.upstream.alias);
+          if (provider && (provider.contextWindow !== mimo.contextWindow || provider.maxOutputTokens !== MIMO_PRODUCTION_OUTPUT))
+            throw new ApiError(503, "codex_frontier_unqualified", "MiMo provider capacity is not qualified");
+          requestMimo = mimo.current ? await mimo.current(cancelled.signal) : { qualification: mimo.qualification, observe: mimo.observe };
+          mimoAdmission = await countMimo(prepared, requestMimo.qualification, {
+            observe: requestMimo.observe,
             post: (r) => fetch(`${mimoUrl(mimo).replace(/\/v1$/, "")}${r.path}`, {
               method: r.method, redirect: "error", headers: { authorization: `Bearer ${key}`, "content-type": "application/json" }, body: r.body, signal: r.signal,
             }),
           }, cancelled.signal);
-          const observed = await mimo.observe(cancelled.signal);
+          ownership.account(ownedRequest, { inputTokens: mimoAdmission.promptTokens, reservedOutputTokens: prepared.outputTokens });
+          const observed = await requestMimo.observe(cancelled.signal);
           mimoPayload = mimoGenerationRequest(mimoAdmission, observed).body;
           Object.assign(record!, { promptTokens: mimoAdmission.promptTokens, reservedOutput: prepared.outputTokens,
-            canonicalRequestSha256: prepared.sha256, qualificationEvidenceSha256: mimo.qualification.evidenceSha256,
+            canonicalRequestSha256: prepared.sha256, qualificationEvidenceSha256: requestMimo.qualification.evidenceSha256,
             serverInstance: observed.serverInstance, serverGeneration: observed.serverGeneration });
         } else {
           const counted = await countFrontier(glm!, body, key, cancelled.signal);
@@ -926,6 +968,7 @@ export function createGateway(options: GatewayOptions): Gateway {
           );
         recordState("active");
       } catch (error) {
+        diagnosticFailure(error, "counting");
         settleLane(lane, true);
         reply.raw.removeListener("close", disconnect);
         recordState(cancelled.signal.aborted ? "cancelled" : "rejected");
@@ -936,6 +979,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     lane.dispatched = true;
     lane.ownerSettled = false;
     const payload = mimoPayload ?? JSON.stringify({ ...body, model: lane.upstream.alias });
+    if (options.diagnostics?.capture) capture("normalized_request", Buffer.from(payload), lane.upstream.alias);
     const endpoint = new URL(
       `${lane.upstream.url.replace(/\/$/, "")}/chat/completions`,
     );
@@ -979,7 +1023,10 @@ export function createGateway(options: GatewayOptions): Gateway {
     );
     let bridgeInvalid = false;
     const bridge = translated ? new ResponsesStream(translated, data => {
+      if (options.diagnostics?.capture) capture("responses_sse", Buffer.from(data), lane.upstream.alias);
       if (!disconnected && !reply.raw.destroyed) reply.raw.write(data);
+    }, diagnostic => {
+      try { options.responses?.onDiagnostic?.({requestId:ownedRequest.id,sessionId,lane:lane.upstream.alias,diagnostic}); } catch { /* Observer never owns settlement. */ }
     }) : undefined;
     reply.hijack();
     await new Promise<void>((resolve) => {
@@ -1060,13 +1107,14 @@ export function createGateway(options: GatewayOptions): Gateway {
           if (bridgeSuccess && !disconnected) reply.raw.setHeader("content-type", "text/event-stream");
           response.on("data", (chunk: Buffer) => {
             if (settled) return;
+            if (options.diagnostics?.capture) capture("provider_sse", Buffer.from(chunk), lane.upstream.alias);
+            if (bridgeSuccess) try { options.responses?.onTrace?.({requestId:ownedRequest.id,sessionId,lane:lane.upstream.alias,chunk:Buffer.from(chunk)}); } catch { /* private capture */ }
             if (mimoValidator) {
               try { mimoValidator.push(chunk); if (!disconnected) mimoChunks.push(Buffer.from(chunk)); }
               catch { mimoChunks.length = 0; fail("mimo_stream_invalid", "MiMo stream rejected; owner requires settlement review"); }
               return;
             }
             observe.data(chunk);
-            if (bridgeSuccess) try { options.responses?.onTrace?.({requestId:ownedRequest.id,sessionId,lane:lane.upstream.alias,chunk:Buffer.from(chunk)}); } catch { /* capture cannot change transport */ }
             if (bridgeSuccess) {
               if (!bridgeInvalid) try { bridge.push(chunk); } catch (error) {
                 try { options.responses?.onError?.({requestId:ownedRequest.id,sessionId,lane:lane.upstream.alias,phase:'stream',code:responsesFailureCode(error)}); } catch { /* diagnostics never affect ownership */ }
@@ -1095,7 +1143,7 @@ export function createGateway(options: GatewayOptions): Gateway {
             if (settled) return;
             if (mimoValidator && mimo) {
               try {
-                const observed = await mimo.observe(settlementAbort.signal);
+                const observed = await requestMimo!.observe(settlementAbort.signal);
                 if (settled) return;
                 const result = mimoValidator.finish(response.complete, observed);
                 record!.backendResponseId = result.responseId;
@@ -1103,12 +1151,21 @@ export function createGateway(options: GatewayOptions): Gateway {
                 if (mimo.serialCompletionQualified !== true) throw Error("Serial native completion unqualified");
                 // Hold tool fragments until full SSE/HTTP validation under the qualified serial runtime.
                 // A detached consumer never interrupts this bounded upstream drain.
+                // Native serial completion is proven before any tool completion
+                // reaches the client. Converter failure cannot un-settle GPU work.
+                settle(true);
                 if (!disconnected && !reply.raw.destroyed) {
                   reply.raw.statusCode = 200;
                   reply.raw.setHeader("content-type", "text/event-stream");
-                  reply.raw.end(Buffer.concat(mimoChunks));
+                  if (bridge) {
+                    try { for (const chunk of mimoChunks) bridge.push(chunk); bridge.end(); reply.raw.end(); }
+                    catch (error) {
+                      try { options.responses?.onError?.({requestId:ownedRequest.id,sessionId,lane:lane.upstream.alias,phase:'terminal',code:responsesFailureCode(error)}); } catch { /* Diagnostics only. */ }
+                      if (!reply.raw.headersSent) sendRawError(reply,502,"responses_stream_invalid","Unqualified Responses output contract");
+                      else reply.raw.destroy();
+                    }
+                  } else reply.raw.end(Buffer.concat(mimoChunks));
                 }
-                settle(true);
               } catch { fail("mimo_settlement_unconfirmed", "MiMo owner requires settlement review"); }
               return;
             }

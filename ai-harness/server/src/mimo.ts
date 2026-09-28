@@ -14,15 +14,15 @@ const MAX_STREAM = 32 * 1024 * 1024;
 const MAX_EVENT = 1024 * 1024;
 type Obj = Record<string, unknown>;
 export class MimoError extends Error {
-  constructor(public readonly code: string) { super(code); }
+  constructor(public readonly code: string, public readonly rule?: string) { super(code); }
 }
-function fail(code = 'mimo_invalid_request'): never { throw new MimoError(code); }
+function fail(code = 'mimo_invalid_request', rule?: string): never { throw new MimoError(code, rule); }
 function object(v: unknown): v is Obj {
   return !!v && typeof v === 'object' && !Array.isArray(v) &&
     [Object.prototype, null].includes(Object.getPrototypeOf(v));
 }
-function fields(v: unknown, allowed: readonly string[]): asserts v is Obj {
-  if (!object(v) || Object.keys(v).some(k => !allowed.includes(k))) fail();
+function fields(v: unknown, allowed: readonly string[], rule = "object_fields"): asserts v is Obj {
+  if (!object(v) || Object.keys(v).some(k => !allowed.includes(k))) fail("mimo_invalid_request", rule);
 }
 function uint(v: unknown): v is number { return Number.isSafeInteger(v) && Number(v) >= 0; }
 function positive(v: unknown): v is number { return uint(v) && v > 0; }
@@ -99,23 +99,23 @@ export function prepareMimo(value: unknown): MimoPrepared {
   const b = jsonCopy(value);
   fields(b, ['model', 'messages', 'tools', 'tool_choice', 'parallel_tool_calls', 'n',
     'stream', 'stream_options', 'max_tokens', 'max_completion_tokens', 'temperature',
-    'top_p', 'stop', 'reasoning_effort', 'chat_template_kwargs', 'store']);
-  if (b.store !== undefined && b.store !== false) fail();
+    'top_p', 'stop', 'reasoning_effort', 'chat_template_kwargs', 'store'], 'request_fields');
+  if (b.store !== undefined && b.store !== false) fail('mimo_invalid_request', 'store_false_required');
   delete b.store;
-  if (b.model !== MIMO_MODEL || !Array.isArray(b.messages) || !b.messages.length || b.messages.length > 4096) fail();
+  if (b.model !== MIMO_MODEL || !Array.isArray(b.messages) || !b.messages.length || b.messages.length > 4096) fail('mimo_invalid_request', 'model_messages');
   const pending = new Set<string>(), seen = new Set<string>();
   for (const m of b.messages) {
-    fields(m, ['role', 'content', 'name', 'tool_calls', 'tool_call_id', 'reasoning_content']);
-    if (typeof m.role !== 'string' || !['system', 'developer', 'user', 'assistant', 'tool'].includes(m.role)) fail();
-    if (m.name !== undefined && !name(m.name)) fail();
-    if (m.reasoning_content !== undefined && (m.role !== 'assistant' || typeof m.reasoning_content !== 'string')) fail();
+    fields(m, ['role', 'content', 'name', 'tool_calls', 'tool_call_id', 'reasoning_content'], 'message_fields');
+    if (typeof m.role !== 'string' || !['system', 'developer', 'user', 'assistant', 'tool'].includes(m.role)) fail('mimo_invalid_request', 'message_role');
+    if (m.name !== undefined && !name(m.name)) fail('mimo_invalid_request', 'message_name');
+    if (m.reasoning_content !== undefined && (m.role !== 'assistant' || typeof m.reasoning_content !== 'string')) fail('mimo_invalid_request', 'assistant_reasoning_content');
     if (m.role === 'tool') {
       if (!token(m.tool_call_id) || !pending.delete(m.tool_call_id)) fail('mimo_tool_history');
     } else if (m.tool_call_id !== undefined || pending.size) fail('mimo_tool_history');
     if (m.tool_calls !== undefined) {
-      if (m.role !== 'assistant' || !Array.isArray(m.tool_calls) || !m.tool_calls.length || m.tool_calls.length > 128) fail();
+      if (m.role !== 'assistant' || !Array.isArray(m.tool_calls) || !m.tool_calls.length || m.tool_calls.length > 128) fail('mimo_invalid_request', 'assistant_tool_calls');
       for (const call of m.tool_calls) {
-        fields(call, ['id', 'type', 'function']); fields(call.function, ['name', 'arguments']);
+        fields(call, ['id', 'type', 'function'], 'history_call_fields'); fields(call.function, ['name', 'arguments'], 'history_function_fields');
         if (!token(call.id) || seen.has(call.id) || call.type !== 'function' || !name(call.function.name)) fail('mimo_tool_history');
         try { argsObject(call.function.arguments); } catch { fail('mimo_invalid_tool_arguments'); }
         pending.add(call.id); seen.add(call.id);
@@ -124,18 +124,18 @@ export function prepareMimo(value: unknown): MimoPrepared {
     if (!(typeof m.content === 'string' ||
       (m.content === null && m.role === 'assistant' && Array.isArray(m.tool_calls)) ||
       (Array.isArray(m.content) && m.content.length <= 4096 && m.content.every(p => {
-        fields(p, ['type', 'text']); return p.type === 'text' && typeof p.text === 'string';
-      })))) fail();
+        fields(p, ['type', 'text'], 'message_text_part_fields'); return p.type === 'text' && typeof p.text === 'string';
+      })))) fail('mimo_invalid_request', 'message_content_shape');
   }
   if (pending.size) fail('mimo_tool_history');
   const toolNames: string[] = [];
   if (b.tools !== undefined) {
-    if (!Array.isArray(b.tools) || b.tools.length > 128) fail();
+    if (!Array.isArray(b.tools) || b.tools.length > 128) fail('mimo_invalid_request', 'tools_roster');
     for (const t of b.tools) {
-      fields(t, ['type', 'function']); fields(t.function, ['name', 'description', 'parameters', 'strict']);
+      fields(t, ['type', 'function'], 'tool_fields'); fields(t.function, ['name', 'description', 'parameters', 'strict'], 'tool_function_fields');
       if (t.type !== 'function' || !name(t.function.name) || toolNames.includes(t.function.name) ||
         (t.function.description !== undefined && typeof t.function.description !== 'string') ||
-        (t.function.strict !== undefined && typeof t.function.strict !== 'boolean') || !object(t.function.parameters)) fail();
+        (t.function.strict !== undefined && typeof t.function.strict !== 'boolean') || !object(t.function.parameters)) fail('mimo_invalid_request', 'tool_schema');
       toolNames.push(t.function.name);
     }
   }
@@ -145,11 +145,12 @@ export function prepareMimo(value: unknown): MimoPrepared {
   const output = Number(a ?? c);
   // Native int32 constraint, NOT a qualified provider ceiling.
   if (output > 2147483647) fail('mimo_output_limit');
-  if ((b.n !== undefined && b.n !== 1) || (b.tool_choice !== undefined && b.tool_choice !== 'auto') ||
-    (b.parallel_tool_calls !== undefined && b.parallel_tool_calls !== false) ||
-    (b.stream !== undefined && b.stream !== true)) fail();
+  if (b.n !== undefined && b.n !== 1) fail('mimo_invalid_request', 'single_choice_required');
+  if (b.tool_choice !== undefined && b.tool_choice !== 'auto') fail('mimo_invalid_request', 'auto_tool_choice_required');
+  if (b.parallel_tool_calls !== undefined && b.parallel_tool_calls !== false) fail('mimo_invalid_request', 'serial_tool_calls_required');
+  if (b.stream !== undefined && b.stream !== true) fail('mimo_invalid_request', 'stream_required');
   if (b.stream_options !== undefined) {
-    fields(b.stream_options, ['include_usage']); if (b.stream_options.include_usage !== true) fail();
+    fields(b.stream_options, ['include_usage'], 'stream_options_fields'); if (b.stream_options.include_usage !== true) fail('mimo_invalid_request', 'usage_required');
   }
   for (const [key, low, high] of [['temperature', 0, 2], ['top_p', 0, 1]] as const) {
     if (b[key] !== undefined && (typeof b[key] !== 'number' || b[key] < low || b[key] > high)) fail();
@@ -157,12 +158,12 @@ export function prepareMimo(value: unknown): MimoPrepared {
   if (b.stop !== undefined && !(typeof b.stop === 'string' && b.stop.length > 0 && b.stop.length <= 4096) &&
     !(Array.isArray(b.stop) && b.stop.length > 0 && b.stop.length <= 16 && b.stop.every(s => typeof s === 'string' && s.length > 0 && s.length <= 4096))) fail();
   // Only explicit off is accepted as an effort value. No invented high/low mapping.
-  if (b.reasoning_effort !== undefined && b.reasoning_effort !== 'none') fail();
+  if (b.reasoning_effort !== undefined && b.reasoning_effort !== 'none') fail('mimo_invalid_request', 'reasoning_effort_contract');
   let thinking = b.reasoning_effort !== 'none';
   if (b.chat_template_kwargs !== undefined) {
-    fields(b.chat_template_kwargs, ['enable_thinking']);
+    fields(b.chat_template_kwargs, ['enable_thinking'], 'thinking_fields');
     if (typeof b.chat_template_kwargs.enable_thinking !== 'boolean' ||
-      (b.reasoning_effort === 'none' && b.chat_template_kwargs.enable_thinking)) fail();
+      (b.reasoning_effort === 'none' && b.chat_template_kwargs.enable_thinking)) fail('mimo_invalid_request', 'thinking_conflict');
     thinking = b.chat_template_kwargs.enable_thinking;
   }
   delete b.max_completion_tokens; delete b.reasoning_effort;

@@ -75,7 +75,7 @@ OWNER_FAILURE_CODES = frozenset({
     'supervisor_not_current', 'tool_template_pin_invalid', 'unrecorded_container_exists',
     'verified_artifact_required', 'verified_shard_changed',
     'new_boot_recovery_invalid', 'new_boot_owner_present', 'new_boot_archive_changed',
-    'new_boot_recovery_consumed', 'source_only_amendment_required',
+    'new_boot_recovery_consumed', 'source_only_amendment_required', 'guard_lock_changed',
 })
 
 
@@ -588,6 +588,14 @@ def latch(h, boot, *, evidence=None, deadline=None, lease=None):
     from lifecycle.hardware_policy import read_latch_status, RegisteredLatchStore, HardwarePolicy
     from control.hardware_latch import HardwareLatch, _timestamp, MAX_AGE_MS
     diagnostic = {'stage': 'registered_read', 'refresh_attempted': False}
+    def fresh_sample():
+        observed = _timestamp(evidence.get('observed_at')) if isinstance(evidence, dict) else None
+        require(isinstance(evidence, dict)
+                and set(evidence) == {'gpu_uuid', 'boot_id', 'observed_at', 'observation_id'}
+                and observed is not None and 0 <= (time.time() - observed) * 1000 <= MAX_AGE_MS
+                and re.fullmatch('[0-9a-f]{32}', str(evidence.get('observation_id')))
+                and evidence.get('gpu_uuid') == GPU and evidence.get('boot_id') == boot
+                and BOOT.read_text().strip() == boot, 'owned_gpu_latch_unproven')
     def check_deadline():
         if lease is not None:
             from common.lifecycle_lease import _validate_borrowed_lease
@@ -596,6 +604,39 @@ def latch(h, boot, *, evidence=None, deadline=None, lease=None):
         # outer alarm swallowed there must still leave the whole cycle closed.
         if deadline is not None and time.monotonic() >= deadline:
             raise MandatoryGuardTimeout('mandatory_guard_timeout')
+    @contextlib.contextmanager
+    def refresh_lease():
+        # Only supervise supplies a deadline, already bounded by its total5s
+        # cycle (including sampling). No second timeout or blocking flock.
+        if lease is not None or deadline is None:
+            with (h.acquire_lease(blocking=False) if lease is None else contextlib.nullcontext(lease)) as active:
+                yield active
+            return
+        from common.lifecycle_lease import LeaseBusy
+        def identity():
+            info = LEASE_PATH.lstat()
+            return info.st_dev, info.st_ino
+        original = identity()
+        with contextlib.ExitStack() as stack:
+            while True:
+                check_deadline()
+                fresh_sample()
+                require(identity() == original, 'guard_lock_changed')
+                current = read_latch_status(binding, [GPU], current_boot_id=boot)
+                require(current.get('hardware_latched') is not True
+                        and [GPU, boot, 'validated'] in current.get('identity', []), 'owned_gpu_latch_unproven')
+                try:
+                    active = stack.enter_context(h.acquire_lease(blocking=False))
+                except LeaseBusy:
+                    diagnostic['lease_contentions'] = diagnostic.get('lease_contentions', 0) + 1
+                    time.sleep(min(.05, max(0, deadline - time.monotonic())))
+                    continue
+                require(identity() == original, 'guard_lock_changed')
+                check_deadline()
+                active.validate()
+                yield active
+                active.validate()
+                return
     try:
         check_deadline()
         binding = RegisteredStorageBinding.read_registered(StorageRunner())
@@ -606,15 +647,16 @@ def latch(h, boot, *, evidence=None, deadline=None, lease=None):
             return result
         require(result.get('hardware_latched') is not True, 'owned_gpu_latch_unproven')
         diagnostic['stage'] = 'canonical_lease'
-        # No waiting/retry or nested deadline: supervise's existing bounded(5)
-        # covers the prior <=2s GPU sample and this entire refresh transaction.
-        with (h.acquire_lease(blocking=False) if lease is None else contextlib.nullcontext(lease)) as active:
+        # Retry only transient canonical contention inside the remaining cycle.
+        # Missing identity, positive latches, source/storage errors stay fatal.
+        with refresh_lease() as active:
             active.validate()
             result = read_latch_status(binding, [GPU], current_boot_id=boot)
             diagnostic['under_lease'] = result
             check_deadline()
             if result.get('hardware_latched') is False:
                 return result  # The scheduled producer refreshed before entry.
+            require(result.get('hardware_latched') is not True, 'owned_gpu_latch_unproven')
             diagnostic['stage'] = 'protected_state'
             store = RegisteredLatchStore(binding, lease=active)
             state = HardwareLatch(store.read()).export_state()
@@ -631,13 +673,7 @@ def latch(h, boot, *, evidence=None, deadline=None, lease=None):
             require(proof.get('boot_id') == boot and age is not None and age > MAX_AGE_MS,
                     'owned_gpu_latch_unproven')
             diagnostic['stage'] = 'fresh_sample_required'
-            require(isinstance(evidence, dict)
-                    and set(evidence) == {'gpu_uuid', 'boot_id', 'observed_at', 'observation_id'}
-                    and _timestamp(evidence.get('observed_at')) is not None
-                    and re.fullmatch('[0-9a-f]{32}', str(evidence.get('observation_id')))
-                    and evidence.get('gpu_uuid') == GPU
-                    and evidence.get('boot_id') == boot and BOOT.read_text().strip() == boot,
-                    'owned_gpu_latch_unproven')
+            fresh_sample()
             diagnostic['refresh_attempted'] = True
             diagnostic['sample'] = evidence
             diagnostic['stage'] = 'validate_required'

@@ -26,6 +26,7 @@ const id = (v: unknown): v is string =>
 /** Pinned collabAgentToolCall states, never inferred from a tool's own completion. */
 export class CodexChildren {
   private children = new Map<string, string>();
+  private models = new Map<string, string>();
   private turns = new Map<
     string,
     {
@@ -42,9 +43,14 @@ export class CodexChildren {
     private parent: () => string | undefined,
     private emit: (u: EngineUpdate) => void,
     private max = 4,
+    private qualifiedModels: readonly string[] = ["qwen3.8-27b"],
   ) {
     if (!Number.isSafeInteger(max) || max < 1 || max > 4)
       throw new CodexProtocolError("Invalid child bound");
+    if (!qualifiedModels.includes("qwen3.8-27b") || new Set(qualifiedModels).size !== qualifiedModels.length ||
+        qualifiedModels.some(model => !["qwen3.8-27b", "mimo-v2.6-pro-rl"].includes(model)))
+      throw new CodexProtocolError("Invalid qualified child model policy");
+    this.qualifiedModels = Object.freeze([...qualifiedModels]);
   }
   owns(thread: unknown): thread is string {
     return typeof thread === "string" && this.children.has(thread);
@@ -78,7 +84,7 @@ export class CodexChildren {
       type: "progress",
       kind: "subagent",
       label: `Native child ${mapped}`,
-      name: "Qwen child",
+      name: this.models.get(thread) === "mimo-v2.6-pro-rl" ? "MiMo child" : "Qwen child",
       subagentId: thread,
       parentSessionId: this.parent(),
       status: mapped,
@@ -91,11 +97,17 @@ export class CodexChildren {
       !isRecord(value) ||
       value.parentThreadId !== this.parent() ||
       value.modelProvider !== "sova" ||
-      value.model !== "qwen3.8-27b" ||
+      !this.qualifiedModels.includes(String(value.model)) ||
       !id(value.id)
     )
       throw new CodexProtocolError("Unowned or unqualified child thread");
+    this.bindModel(value.id, String(value.model));
     this.state(value.id, "pendingInit");
+  }
+  private bindModel(thread: string, model: string) {
+    if (!this.qualifiedModels.includes(model) || (this.models.has(thread) && this.models.get(thread) !== model))
+      throw new CodexProtocolError("Changed or unqualified child model");
+    this.models.set(thread, model);
   }
   item(value: Record<string, unknown>, complete: boolean) {
     if (
@@ -109,18 +121,20 @@ export class CodexChildren {
       (complete && value.status === "inProgress") ||
       (value.model != null &&
         value.model !== "" &&
-        value.model !== "qwen3.8-27b")
+        !this.qualifiedModels.includes(String(value.model)))
     )
       throw new CodexProtocolError("Unqualified native collaboration event");
     if (
       complete &&
       value.tool === "spawnAgent" &&
       value.status === "completed" &&
-      value.model !== "qwen3.8-27b"
+      !this.qualifiedModels.includes(String(value.model))
     )
       throw new CodexProtocolError("Spawned child model is unqualified");
     for (const thread of value.receiverThreadIds) {
       if (!id(thread)) throw new CodexProtocolError("Invalid child identity");
+      if (value.tool === "spawnAgent" && typeof value.model === "string" && value.model)
+        this.bindModel(thread, value.model);
       if (!this.owns(thread)) {
         if (value.tool !== "spawnAgent")
           throw new CodexProtocolError("Unknown native child");
