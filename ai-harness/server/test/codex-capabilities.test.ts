@@ -4,8 +4,8 @@ import {codexCapabilities} from '../src/codex-capabilities.js';
 
 test('usable tool metadata distinguishes direct native qualification from matched model acceptance',()=>{
  const c=codexCapabilities();
- for(const name of ['search','browser','pdf'] as const){assert.equal(c[name].supported,true);assert.equal(c[name].qualification,'native_fixture');assert.match(c[name].reason,/pending/);}
- assert.equal(c.coding.supported,true);assert.equal(c.coding.qualification,'live');assert.match(c.coding.reason,/Qwen0/);
+ for(const name of ['search','browser','pdf'] as const){assert.equal(c[name].supported,true);assert.equal(c[name].qualification,'native_fixture');assert.match(c[name].reason,/passed|acceptance/);}
+ assert.equal(c.coding.supported,true);assert.equal(c.coding.qualification,'live');assert.match(c.coding.reason,/Qwen0/);assert.match(c.pdf.reason,/workflow FAILED/);assert.match(c.pdf.reason,/no summary PDF or final numeric answer/);
  for(const name of ['image','frontier','nativeMedia','nativeDelegation'] as const)assert.equal(c[name].supported,false);
 });
 test('image and delegation metadata never override independent operational gates or native media',()=>{

@@ -17,7 +17,17 @@ export type RegistryService = {
   owner: string;
   capabilities: string[];
   endpoint_ref: string | null;
+  /** Descriptive catalog only; enabled state and qualification come from app health. */
+  engines?: RegistryEngine[];
+  engine_health?: { hostname: string; port: number; host_header: string; path: "/api/health" };
   model?: { display_name: string; instance_name: string; expected_alias: string; selection_group: "frontier" | null };
+};
+export type RegistryEngine = {
+  id: "minimax" | "codex";
+  display_name: string;
+  expected_version: string | null;
+  preview: boolean;
+  capabilities: string[];
 };
 export type RegistryComponent = {
   id: string;
@@ -111,7 +121,7 @@ export function validateSystemRegistry(raw: unknown): SystemRegistry {
   if (!nodes.length) fail();
   unique(nodes.map(n => n.id));
   const services = list(v.services, 128, entry => {
-    const s = object(entry, ["id", "node_id", "display_name", "observation_key", "owner", "capabilities", "endpoint_ref"], ["model"]);
+    const s = object(entry, ["id", "node_id", "display_name", "observation_key", "owner", "capabilities", "endpoint_ref"], ["model", "engines", "engine_health"]);
     if (s.endpoint_ref !== null && !endpointRefs.includes(s.endpoint_ref as string)) fail();
     const capabilities = list(s.capabilities, 32, id); unique(capabilities);
     let model: RegistryService["model"];
@@ -120,7 +130,31 @@ export function validateSystemRegistry(raw: unknown): SystemRegistry {
       if (m.selection_group !== null && m.selection_group !== "frontier") fail();
       model = { display_name: label(m.display_name), instance_name: label(m.instance_name), expected_alias: id(m.expected_alias), selection_group: m.selection_group as "frontier" | null };
     }
-    return { ...(model ? { model } : {}), id: id(s.id), node_id: id(s.node_id), display_name: label(s.display_name), observation_key: id(s.observation_key), owner: label(s.owner), capabilities, endpoint_ref: s.endpoint_ref } as RegistryService;
+    let engines: RegistryEngine[] | undefined;
+    let engine_health: RegistryService["engine_health"];
+    if (s.engine_health !== undefined && s.engines === undefined) fail();
+    if (s.engines !== undefined) {
+      // A catalog creates no new action identity or arbitrary network destination.
+      if (s.id !== "harness" || s.node_id !== "ai-harness" || s.endpoint_ref !== "harness-local" || model) fail();
+      engines = list(s.engines, 2, entry => {
+        const e = object(entry, ["id", "display_name", "expected_version", "preview", "capabilities"]);
+        if (!["minimax", "codex"].includes(e.id as string) || typeof e.preview !== "boolean") fail();
+        const capabilities = list(e.capabilities, 32, id); unique(capabilities);
+        return { id: e.id, display_name: label(e.display_name), expected_version: e.expected_version === null ? null : label(e.expected_version), preview: e.preview, capabilities } as RegistryEngine;
+      });
+      unique(engines.map(e => e.id));
+      const h = object(s.engine_health, ["hostname", "port", "host_header", "path"]);
+      const privateAddress = (v: unknown) => {
+        if (typeof v !== "string" || !isIPv4(v)) return false;
+        const p = v.split(".").map(Number);
+        return v === "127.0.0.1" || p[0] === 10 || (p[0] === 172 && p[1] >= 16 && p[1] <= 31) || (p[0] === 192 && p[1] === 168);
+      };
+      const host = typeof h.host_header === "string" ? /^(\d+\.\d+\.\d+\.\d+)(?::([0-9]{1,5}))?$/.exec(h.host_header) : null;
+      if (!privateAddress(h.hostname) || !Number.isInteger(h.port) || Number(h.port) < 1 || Number(h.port) > 65535 ||
+          !host || !privateAddress(host[1]) || (host[2] && (Number(host[2]) < 1 || Number(host[2]) > 65535)) || h.path !== "/api/health") fail();
+      engine_health = { hostname: h.hostname as string, port: h.port as number, host_header: h.host_header as string, path: "/api/health" };
+    }
+    return { ...(model ? { model } : {}), ...(engines ? { engines, engine_health } : {}), id: id(s.id), node_id: id(s.node_id), display_name: label(s.display_name), observation_key: id(s.observation_key), owner: label(s.owner), capabilities, endpoint_ref: s.endpoint_ref } as RegistryService;
   });
   const components = list(v.components, 128, entry => {
     const c = object(entry, ["id", "node_id", "display_name", "type", "owner", "parent_id", "independently_restartable", "observation"]);

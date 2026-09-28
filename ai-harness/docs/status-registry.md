@@ -248,3 +248,49 @@ the separate HTTP400 delegation failure), and does not establish independent
 near-950K benchmark completion. H020 changes no workload endpoints, selection,
 inference service, native owner, driver, GPU policy, action allowlist, credentials,
 confirmation, dispatch interlock or queue.
+
+### Harness engine catalog and passive app observations (H021)
+
+The existing `harness` service may carry a bounded `engines` catalog for
+MiniMax and Codex: display name, expected deployment-policy version (nullable),
+preview label and descriptive capability names. It adds no services or controls.
+Only the reviewed `ai-harness` / `harness-local` binding accepts this catalog and
+its required `engine_health` endpoint (private IPv4, port, private IPv4 Host and
+exact `/api/health` path; no credential or method configuration).
+Older registries without it remain valid. On deployment, add
+the catalog plus engine-health endpoint to
+the **actual current registry**, preserving every model/placement entry and the
+separate active-frontier selector; never replace these with repository defaults.
+
+The existing status process observes the configured local app with bounded
+`GET /api/health` (release-configured hostname/port/Host; current catalog uses
+loopback 8080 and app Host `10.156.100.61`; no credentials,
+redirects or retry). Its independent ObserverCache polls every 5 seconds with
+2-second deadline and 15-second freshness threshold. An abort-ignoring request
+retains its observer slot until settled. No native engines are started, and
+this observer never calls model, control or node endpoints.
+
+Public `nodes[].engines[]` separates `configured` catalog from allowlisted
+`observed` app health: version, configured/enabled policy, preview,
+protocol qualification, capability flags and per-capability qualification.
+`version_evidence: app-deployment-policy` is **not an observed native process
+version**. MiniMax health now explicitly reports selectable with unknown native
+version and qualification; both native startup readiness values remain
+unprobed. Codex still follows its existing deployment gate. Neither a package
+version, app availability, node readiness nor model readiness is a startup test.
+
+Engine rows retain the catalog when unavailable/missing, compare a reported
+version only against a configured expectation, and retain last observations
+with age after failure. Current selection enablement/protocol qualification
+are null on stale, unavailable or mismatching observations. A wholly failed
+status transport also suppresses current enablement/default in the page while
+labelling retained capability data as last observed. `ready` is always null;
+`actions` is empty. Capability qualification is exactly what app health reports,
+not additional live acceptance or model readiness. H020's model identity,
+selection, placement and observation aging are unchanged.
+
+Focused offline qualification:
+`tsx --test test/engine-status.test.ts test/status-service.test.ts test/system-registry.test.ts test/frontier-registry.test.ts`
+and `node test/engine-status-browser.mjs <fresh.png> <stale.png>` after build.
+The browser fixture runs local synthetic observers in existing installed Chrome;
+it does not contact production or perform native/model work.

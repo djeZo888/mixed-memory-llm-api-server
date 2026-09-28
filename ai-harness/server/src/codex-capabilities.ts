@@ -44,19 +44,19 @@ export function codexCapabilities(
     ),
     search: {
       supported: true, qualification: "native_fixture",
-      reason: "Actual rootless Linux SearXNG MCP returned primary sources; matched model research acceptance pending",
+      reason: "H021 matched Codex Qwen0 research used SearXNG, primary-source browsing and a correct cited answer; retained coordinator acceptance",
     },
     browser: {
       supported: true, qualification: "native_fixture",
-      reason: "Actual rootless Linux public navigation/render and private-address rejection passed; repaired PDF download Linux acceptance pending",
+      reason: "H021 matched Codex Qwen0 primary-source browser research passed; direct rootless navigation/render and private-address rejection also passed",
     },
     pdf: {
       supported: true, qualification: "native_fixture",
-      reason: "Actual rootless Linux helper extraction/render/creation passed; matched model PDF acceptance pending",
+      reason: "Direct rootless Linux extraction/render/creation helpers passed. Matched Codex PDF workflow FAILED: extraction/render succeeded after two path errors, but no summary PDF or final numeric answer",
     },
     coding: {
       supported: true, qualification: "live",
-      reason: "Qwen0 native shell/read, freeform file edit/test and resumed follow-up passed; matched Python/C/C++/Node comparison pending",
+      reason: "H021 matched Python, C++ and Node coding repairs passed independent original tests for both engines; earlier Qwen0 shell/edit/resumed follow-up passed",
     },
     ...reviewed,
     nativeDelegation: {

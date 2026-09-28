@@ -72,10 +72,10 @@ def readback(db, q, binding):
         done = any(t == 'done' and d.get('runId') == run for t, d in events)
         cleanup = any(t == 'progress' and d.get('kind') == 'cleanup' and d.get('label') == 'Owned engine container cleanup confirmed; interrupted work was not replayed' for t, d in events)
         # Source-bound broker completion already waits native delegation settlement;
-        # failure requires its explicit exact-container cleanup event. Codex idle is
+        # failed/interrupted outcomes require the explicit exact-container cleanup event. Codex idle is
         # persisted only after exact supervisor cleanup + children + gateway drain.
-        native = e['ownership'] == 'idle' and e['active_turn_id'] is None and (r['status'] != 'failed' or cleanup)
-        settled = r['status'] in ('completed', 'cancelled', 'failed') and done and native and not active and not quarantine and not pending and not image_pending
+        native = e['ownership'] == 'idle' and e['active_turn_id'] is None and (r['status'] not in ('failed', 'interrupted') or cleanup)
+        settled = r['status'] in ('completed', 'cancelled', 'failed', 'interrupted') and done and native and not active and not quarantine and not pending and not image_pending
         return {'sessionId': session, 'runId': run, 'settled': bool(settled), 'evidence': {
             'binding': binding, 'authority': 'source-bound broker/native supervisor/child cleanup and durable per-session gateway/image records; no PID-only proof',
             'engine': dict(e), 'runStatus': r['status'], 'doneEvent': done, 'cleanupEvent': cleanup,

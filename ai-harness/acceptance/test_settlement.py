@@ -90,6 +90,46 @@ class SettlementTests(unittest.TestCase):
         self.event("progress", {"kind": "cleanup", "label": "Owned engine container cleanup confirmed; interrupted work was not replayed"})
         self.assertTrue(self.read()["settled"])
 
+    def test_interrupted_requires_exact_run_cleanup_and_preserves_outcome(self):
+        self.db.execute("UPDATE runs SET status='interrupted'")
+        self.assertFalse(self.read()["settled"])
+        cleanup = {"kind": "cleanup", "label": "Owned engine container cleanup confirmed; interrupted work was not replayed"}
+        self.event("progress", cleanup, run="another-run")
+        self.assertFalse(self.read()["settled"])
+        self.event("progress", cleanup)
+        result = self.read()
+        self.assertTrue(result["settled"])
+        self.assertEqual(result["evidence"]["runStatus"], "interrupted")
+        self.assertEqual(self.db.execute("SELECT status FROM runs").fetchone()[0], "interrupted")
+
+    def test_clean_interrupted_still_requires_all_current_positive_ownership_gates(self):
+        self.db.execute("UPDATE runs SET status='interrupted'")
+        self.event("progress", {"kind": "cleanup", "label": "Owned engine container cleanup confirmed; interrupted work was not replayed"})
+        self.assertTrue(self.read()["settled"])
+        mutations = [
+            ("UPDATE h021_session_engines SET ownership='uncertain'", "UPDATE h021_session_engines SET ownership='idle'"),
+            ("UPDATE h021_session_engines SET active_turn_id='active'", "UPDATE h021_session_engines SET active_turn_id=NULL"),
+            ("INSERT INTO quarantined_workspaces VALUES('ws-owned','unknown')", "DELETE FROM quarantined_workspaces"),
+            ("UPDATE runs SET status='running'", "UPDATE runs SET status='interrupted'"),
+        ]
+        for mutation, restore in mutations:
+            with self.subTest(mutation=mutation):
+                self.db.execute(mutation)
+                self.assertFalse(self.read()["settled"])
+                self.db.execute(restore)
+                self.assertTrue(self.read()["settled"])
+        self.request(state="uncertain")
+        self.assertFalse(self.read()["settled"])
+        self.request(state="settled")
+        self.image(state="failed", error="image_completion_unknown")
+        self.assertFalse(self.read()["settled"])
+        self.db.execute("DELETE FROM h003_image_jobs")
+        self.create_run("active-successor", "owned", "queued")
+        self.assertFalse(self.read()["settled"])
+        self.db.execute("DELETE FROM runs WHERE id='active-successor'")
+        self.db.execute("DELETE FROM events WHERE type='done'")
+        self.assertFalse(self.read()["settled"])
+
     def test_failure_generic_progress_does_not_prove_cleanup(self):
         self.db.execute("UPDATE runs SET status='failed'")
         self.event("progress", {"kind": "cleanup", "label": "PID exited"})

@@ -7,6 +7,7 @@ import { AdminActions } from "./admin-actions.js";
 import { loadSystemRegistry } from "./system-registry.js";
 import { nodeClient, nodeObserver } from "./node-client.js";
 import { createStatusService } from "./status-service.js";
+import { appHealthObserver } from "./engine-status.js";
 /** Independent entry point: no chat/store/engine instance or native probes. */
 export async function startStatus() {
   if (Number(process.versions.node.split(".")[0]) !== 24)
@@ -38,7 +39,9 @@ export async function startStatus() {
   };
   const actions = new AdminActions({ db: freeze.db, freeze, backends });
   const observers = Object.fromEntries(registry.nodes.map(node => [node.id, nodeObserver(node, registry, credentials)]));
-  const service = createStatusService({ backends: observers, registry, freeze, actions });
+  const service = createStatusService({ backends: observers, registry, freeze, actions,
+    ...(registry.services.some(s => s.engines?.length) ? { engineHealth: appHealthObserver(registry) } : {}),
+  });
   service.app.addHook("onClose", async () => {
     freeze.close();
   });
