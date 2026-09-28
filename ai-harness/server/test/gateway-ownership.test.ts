@@ -34,3 +34,34 @@ test('observation timeout, unknown recovery, uncertainty and failed persistence 
  assert.throws(()=>bad.transition(pending,'settled'));assert.equal(await proof,false);assert.equal(bad.snapshot('s')[0]?.state,'uncertain');
  for(const budget of [-1,15001,NaN])assert.throws(()=>a.waitForSettlement({sessionId:'s'},budget));
 });
+
+test('signal observation survives 46s fake time while old bounded proof remains bounded; every owner must durably settle', async t => {
+ t.mock.timers.enable({apis:['setTimeout']});
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ const a=new GatewayOwnership(new GatewayOwnershipLedger(db).options());
+ const parent=a.begin('s'),child=a.begin('s'),other=a.begin('other');a.transition(parent,'draining');
+ const stop=new AbortController();let resolved=false;
+ const proof=a.waitForSettlement({sessionId:'s'},stop.signal).then(v=>{resolved=true;return v;});
+ const old=a.waitForSettlement({sessionId:'s'},15000);
+ t.mock.timers.tick(46000);assert.equal(await old,false);await Promise.resolve();assert.equal(resolved,false);
+ a.transition(other,'settled');a.transition(parent,'settled');await Promise.resolve();assert.equal(resolved,false);
+ assert.equal(db.prepare("SELECT count(*) AS n FROM h021_gateway_requests WHERE session_id='s' AND state!='settled'").get()!.n,1);
+ a.transition(child,'settled');assert.equal(await proof,true);
+ assert.equal(db.prepare("SELECT count(*) AS n FROM h021_gateway_requests WHERE session_id='s' AND state!='settled'").get()!.n,0);
+ const {getEventListeners}=await import('node:events');assert.equal(getEventListeners(stop.signal,'abort').length,0);
+});
+
+test('signal observer fails closed for unknown/recovery/uncertain, ledger write failure and shutdown; listeners are removed', async () => {
+ const {getEventListeners}=await import('node:events');
+ const signal=new AbortController();const a=new GatewayOwnership({recoveryReady:true,onRequestState:()=>{}});
+ assert.equal(await a.waitForSettlement({sessionId:'unknown'},signal.signal),false);
+ const notReady=new GatewayOwnership();notReady.registerSession('s');assert.equal(await notReady.waitForSettlement({sessionId:'s'},signal.signal),false);
+ const r=a.begin('s');const uncertain=a.waitForSettlement({sessionId:'s'},signal.signal);a.transition(r,'uncertain');assert.equal(await uncertain,false);
+ let fail=false;const bad=new GatewayOwnership({recoveryReady:true,onRequestState:()=>{if(fail)throw Error('disk');}});
+ const b=bad.begin('s');bad.transition(b,'draining');const failed=bad.waitForSettlement({sessionId:'s'},signal.signal);
+ fail=true;assert.throws(()=>bad.transition(b,'settled'),/ledger/);assert.equal(await failed,false);assert.equal(bad.snapshot('s')[0]!.state,'uncertain');
+ const owner=a.begin('pending');a.transition(owner,'draining');const stopped=a.waitForSettlement({sessionId:'pending'},signal.signal);
+ signal.abort();assert.equal(await stopped,false);assert.equal(a.snapshot('pending')[0]!.state,'draining');
+ a.transition(owner,'settled');assert.equal(await a.waitForSettlement({sessionId:'pending'},signal.signal),false);
+ assert.equal(getEventListeners(signal.signal,'abort').length,0);
+});

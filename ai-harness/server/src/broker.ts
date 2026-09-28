@@ -588,7 +588,17 @@ export class Broker {
       );
       success = true;
     } catch (error) {
-      this.store.quarantine(run.workspaceId, "engine_settlement_unconfirmed");
+      // Stop can reject the native prompt before its accepted inference drains.
+      // Keep Codex cancelling and the active workspace locked until cleanup proves
+      // durable settlement or fails. Other engines keep their existing behavior.
+      const cancellationRace =
+        promptRejectedDuringCancellation ||
+        (error instanceof CancellationSettlementError &&
+          error.requestedAtFailure);
+      const observingCodexStop =
+        this.store.getSession(run.sessionId, true).engineKind === "codex" && cancellationRace;
+      if (!observingCodexStop)
+        this.store.quarantine(run.workspaceId, "engine_settlement_unconfirmed");
       this.store.markContextStale(run.sessionId, run.id);
       const backgroundUnknown =
         !!error &&
@@ -596,7 +606,7 @@ export class Broker {
         "code" in error &&
         error.code === "engine_settlement_unknown";
       failureStatus = backgroundUnknown ? "interrupted" : "failed";
-      this.store.updateRun(run.id, failureStatus);
+      if (!observingCodexStop) this.store.updateRun(run.id, failureStatus);
       const emitFailure = () =>
         this.store.emit(
           run.sessionId,
@@ -611,17 +621,21 @@ export class Broker {
           },
           run.id,
         );
-      // Capture Stop intent at a prompt failure or a known cancel-settlement
-      // failure, before cleanup can admit a later Stop for an unrelated error.
-      const cancellationRace =
-        promptRejectedDuringCancellation ||
-        (error instanceof CancellationSettlementError &&
-          error.requestedAtFailure);
       if (!cancellationRace) emitFailure();
+      let cleanupFailure: "native_cleanup_unconfirmed" | "gateway_settlement_unconfirmed" | undefined;
       try {
         cleanupConfirmed = await this.closeRunner(run.sessionId);
-      } catch {
+      } catch (cleanupError) {
         cleanupConfirmed = false;
+        // Only these static proof reasons may reach the UI; never raw native errors.
+        if (cleanupError && typeof cleanupError === "object" && "cleanupFailure" in cleanupError &&
+            (cleanupError.cleanupFailure === "native_cleanup_unconfirmed" ||
+             cleanupError.cleanupFailure === "gateway_settlement_unconfirmed"))
+          cleanupFailure = cleanupError.cleanupFailure;
+      }
+      if (observingCodexStop && !cleanupConfirmed) {
+        this.store.quarantine(run.workspaceId, "engine_settlement_unconfirmed");
+        this.store.updateRun(run.id, failureStatus);
       }
       // Exact launcher/container cleanup completes requested Stop even if the
       // concurrent ACP cancel RPC rejects or times out. Unconfirmed cleanup
@@ -649,6 +663,7 @@ export class Broker {
           "error",
           {
             code: "engine_cleanup_unknown",
+            ...(cleanupFailure ? { cleanupFailure } : {}),
             message:
               "Workspace remains quarantined until process cleanup is confirmed",
           },

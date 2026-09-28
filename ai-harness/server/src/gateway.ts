@@ -93,6 +93,9 @@ export interface Gateway {
   /** Gateway proof only; optional bounded drain observation (0..15000ms).
    * Caller separately proves native parent/children cannot emit more work. */
   confirmSettlement(query: SettlementQuery, waitMs?: number): Promise<boolean>;
+  /** Observe durable session transitions until settlement/failure or host shutdown.
+   * No separate timeout: existing request and queue deadlines own expiry. */
+  observeSettlement(query: SettlementQuery, stop: AbortSignal): Promise<boolean>;
   sessionWork(sessionId: string): import("./gateway-ownership.js").RequestOwnership[];
   snapshot(): {
     queued: number;
@@ -1197,6 +1200,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       }
     },
     confirmSettlement: async (query, waitMs = 0) => ownership.waitForSettlement(query, waitMs),
+    observeSettlement: (query, stop) => ownership.waitForSettlement(query, stop),
     sessionWork: (sessionId) => ownership.snapshot(sessionId),
     snapshot: () => ({
       queued: admission.queued,

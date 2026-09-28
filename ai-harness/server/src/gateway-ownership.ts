@@ -54,19 +54,25 @@ export class GatewayOwnership {
     } }
     confirm(query: SettlementQuery): boolean { return this.options?.recoveryReady === true && !this.failed && this.knownSessions.has(query.sessionId) && ![...this.records.values()].some(r => r.sessionId === query.sessionId); }
     /** Observe durable drain only; caller must first stop native producers and revoke admission.
+     * Numeric budgets preserve the bounded proof API; a host signal observes the
+     * existing request lifecycle and stops false on shutdown. Neither releases work.
      * No request replay, lane release or uncertain-record reconciliation happens here.
      */
-    waitForSettlement(query: SettlementQuery, waitMs: number): Promise<boolean> {
-        if (!Number.isSafeInteger(waitMs) || waitMs < 0 || waitMs > 15000)
+    waitForSettlement(query: SettlementQuery, budget: number | AbortSignal): Promise<boolean> {
+        const waitMs = typeof budget === "number" ? budget : undefined;
+        const signal = typeof budget === "number" ? undefined : budget;
+        if (waitMs !== undefined && (!Number.isSafeInteger(waitMs) || waitMs < 0 || waitMs > 15000))
             throw Error("Invalid settlement observation budget");
         const unavailable = () => this.options?.recoveryReady !== true || this.failed ||
             !this.knownSessions.has(query.sessionId) ||
             [...this.records.values()].some(r => r.sessionId === query.sessionId && r.state === "uncertain");
+        if (signal?.aborted || unavailable()) return Promise.resolve(false);
         if (this.confirm(query)) return Promise.resolve(true);
-        if (!waitMs || unavailable()) return Promise.resolve(false);
+        if (waitMs === 0) return Promise.resolve(false);
         return new Promise(resolve => {
             const finish = (settled: boolean) => {
                 clearTimeout(timer);
+                signal?.removeEventListener("abort", stopped);
                 this.settlementObservers.delete(observe);
                 resolve(settled);
             };
@@ -74,8 +80,12 @@ export class GatewayOwnership {
                 if (this.confirm(query)) finish(true);
                 else if (unavailable()) finish(false);
             };
-            const timer = setTimeout(() => finish(false), waitMs);
+            const stopped = () => finish(false);
+            // Signal-bound Codex observation uses existing request/queue deadlines.
+            // Those owners publish uncertain on expiry; observation has no second timer.
+            const timer = waitMs === undefined ? undefined : setTimeout(stopped, waitMs);
             this.settlementObservers.add(observe);
+            signal?.addEventListener("abort", stopped, { once: true });
         });
     }
     snapshot(sessionId: string) { return [...this.records.values()].filter(r => r.sessionId === sessionId).map(r => ({ ...r })); }

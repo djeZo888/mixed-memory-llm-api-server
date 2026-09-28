@@ -77,8 +77,8 @@ function identifier(v: unknown): v is string {
     !/[\x00-\x20\x7f]/.test(v)
   );
 }
-function fault(message: string): never {
-  throw new CodexProtocolError(message);
+function fault(message: string, cleanupFailure?: "native_cleanup_unconfirmed" | "gateway_settlement_unconfirmed"): never {
+  throw Object.assign(new CodexProtocolError(message), cleanupFailure ? { cleanupFailure } : {});
 }
 
 /** Controlled offline-qualified subset. Each turn closes its exact rootless container before
@@ -420,21 +420,26 @@ export class CodexEngine implements Engine {
       this.state("uncertain");
       // A rejected launcher can have created a container before losing its handle.
       // Absence of a returned process is not a no-process attestation.
-      const nativeSettled = this.child
-        ? await this.child.terminateAndConfirm()
-        : !this.launchAttempted;
+      let nativeSettled = !this.launchAttempted;
+      if (this.child) {
+        try { nativeSettled = await this.child.terminateAndConfirm(); }
+        catch { nativeSettled = false; }
+      }
       // Stop producers, revoke this runner capability, then prove all retained lineage drained.
       if (nativeSettled) this.children.interruptedAfterCleanup();
       this.runtime.revokeGatewaySession(this.options.sessionId);
       this.options.onExit?.();
+      // An unconfirmed producer cannot safely enter an extended drain observation.
+      if (!nativeSettled)
+        fault("Native container cleanup is unconfirmed", "native_cleanup_unconfirmed");
       const gatewaySettled = await this.runtime.confirmGatewaySettlement({
         sessionId: this.options.sessionId,
         gatewayToken: this.options.gatewayToken,
         nativeThreadId: this.nativeId,
         activeTurnId: this.turnId,
       });
-      if (!nativeSettled || !gatewaySettled)
-        fault("Native container or owned gateway settlement is unconfirmed");
+      if (!gatewaySettled)
+        fault("Owned gateway settlement is unconfirmed", "gateway_settlement_unconfirmed");
       this.stopped = true;
       this.turnId = null;
       this.state("idle", null);
