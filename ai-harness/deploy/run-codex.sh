@@ -112,10 +112,10 @@ unset gateway_token
 rootless=$("$podman_bin" --remote=false info --format '{{.Host.Security.Rootless}}' 2>/dev/null) || die 'local Podman rootless readiness check failed'
 [[ "$rootless" = true ]] || die 'Podman must report rootless=true'
 
-image_tag=localhost/sova-codex:0.158.0-h021-pilot05
-expected_image_id=822a648bb4ae3fb431f1f2c32ee1d4b320b24df66382451136b7f3fd90115327
+image_tag=localhost/sova-codex:0.158.0-h024-release02
+expected_image_id=d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad
 revision=064c6b8c737f5b41d171fdda80bd9ef10ad06eb3
-patchset=a8d237cf0e4fd7fcbdca5d025ce7981dfda5b6db676d065c0f8dfe399d9923e3
+patchset=dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec
 image_metadata=$("$podman_bin" --remote=false image inspect --format '{{.Id}}|{{index .Labels "org.opencontainers.image.revision"}}|{{index .Labels "org.opencontainers.image.ai-harness.patchset"}}' "$image_tag" 2>/dev/null) || die 'reviewed engine image is absent; build it separately after bootstrap'
 image_id=${image_metadata%%|*}
 image_labels=${image_metadata#*|}
@@ -125,7 +125,7 @@ image_patchset=${image_labels#*|}
 
 "$python_bin" - "$launcher_dir/codex" <<'PY_POLICY' || die 'Codex policy checksum mismatch'
 import hashlib,pathlib,sys
-p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml', 'config-image-jobs.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest() == 'a8d237cf0e4fd7fcbdca5d025ce7981dfda5b6db676d065c0f8dfe399d9923e3'
+p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml', 'config-image-jobs.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest() == 'dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec'
 PY_POLICY
 # Task state is persistent; trusted configuration is an immutable bind mount.
 # Native proper-lockfile writes a sibling dataDir.lock. Nest dataDir inside the
