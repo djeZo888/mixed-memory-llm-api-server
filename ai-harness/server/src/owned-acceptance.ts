@@ -71,6 +71,18 @@ export function createHostOwnedAcceptance(policy: string, activeRunId: (sessionI
     onRunFinished: close,
     onDiagnostic: (event: Parameters<NonNullable<NonNullable<GatewayOptions["responses"]>["onDiagnostic"]>>[0]) => metadata(event),
     onFailure: (event: Parameters<NonNullable<NonNullable<GatewayOptions["diagnostics"]>["onFailure"]>>[0]) => metadata(event),
+    // Staging is separate from execution: an operator's unused exact ticket
+    // can attach owned image references before the first run UUID exists.
+    imageReference(sessionId: string) {
+      if (eligible(sessionId)?.ticket.image === true) return true;
+      try {
+        const ticket=grants().find(t=>t.sessionId===sessionId);
+        if (!ticket?.image || consumedTickets.has(ticket.id) || ticket.expiresAt<=now() || ticket.expiresAt-now()>30*60*1000) return false;
+        const target=join(directory,ticket.id), st=lstatSync(target);
+        return st.isDirectory() && !st.isSymbolicLink() && st.uid===uid && !(st.mode&0o077)
+          && lstatSync(join(target,"binding.json"),{throwIfNoEntry:false})===undefined;
+      } catch { return false; }
+    },
     image: (sessionId: string) => eligible(sessionId)?.ticket.image === true,
     frontier: (sessionId: string) => eligible(sessionId)?.ticket.frontier === true,
     capture(event: ProviderBoundaryCapture) {

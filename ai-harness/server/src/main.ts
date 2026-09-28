@@ -108,6 +108,7 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     engineFactory: createEngine,
     ...codexOptions,
     imageAcceptance: codex.qualification?.imageAcceptance,
+    imageReferenceAcceptance: owned?.imageReference,
     onRunAccepted: owned?.onRunAccepted,
     onRunFinished: owned?.onRunFinished,
     imageBackend: new ImageUpstream({ key }),

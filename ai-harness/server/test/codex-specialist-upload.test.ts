@@ -56,3 +56,29 @@ test('trusted run acceptance precedes dispatch and final callback preserves ordi
  for(let i=0;i<100&&!finished.length;i++)await new Promise(r=>setTimeout(r,5));
  assert.equal(f.prompts.length,1);assert.deepEqual(finished,accepted);
 });
+
+test('unbound reference staging preserves strict ownership and requires running permission at dispatch',async t=>{
+ let staged:string|undefined,run:string|undefined;let f:Awaited<ReturnType<typeof setup>>;
+ f=await setup(t,false,true,{imageReferenceAcceptance:id=>id===staged,imageAcceptance:id=>id===staged&&f.broker.currentImageRun(id)?.runId===run&&run!==undefined,onRunAccepted:(_id,rid)=>{run=rid;}});
+ staged=f.session.id;
+ assert.equal((await f.request('/api/health')).json().engines.codex.imageToolEnabled,false);
+ const invalid=await f.upload(Buffer.from('not an image'));assert.equal(invalid.statusCode,400);assert.equal(invalid.json().error.code,'invalid_image');
+ const uploaded=await f.upload(await png());assert.equal(uploaded.statusCode,201,uploaded.body);assert.equal(run,undefined);
+ const fileId=uploaded.json().attachment.id,other=await f.broker.createSession(undefined,'codex');
+ staged=other.id;
+ const foreign=await f.request(`/api/sessions/${other.id}/messages`,{text:'edit',imageReferences:[fileId]});assert.equal(foreign.statusCode,400);assert.equal(foreign.json().error.code,'invalid_image_reference');assert.equal(run,undefined);
+ staged=f.session.id;
+ const invalidId=await f.request(`/api/sessions/${f.session.id}/messages`,{text:'edit',imageReferences:['../foreign']});assert.equal(invalidId.statusCode,400);
+ const accepted=await f.request(`/api/sessions/${f.session.id}/messages`,{text:'edit owned reference',imageReferences:[fileId]});assert.equal(accepted.statusCode,202,accepted.body);
+ for(let i=0;i<100&&!f.prompts.length;i++)await new Promise(r=>setTimeout(r,5));
+ assert.equal(f.prompts.length,1);assert.match(f.prompts[0].text,/\.image-references\//);assert.deepEqual(f.prompts[0].attachments,[]);
+ assert.equal((await f.request('/api/health')).json().engines.codex.imageToolEnabled,false);
+});
+
+test('reference staging alone never qualifies dispatch',async t=>{
+ let staged:string|undefined;const finished:string[]=[];const f=await setup(t,false,true,{imageReferenceAcceptance:id=>id===staged,onRunFinished:(_sid,rid)=>finished.push(rid)});staged=f.session.id;
+ const uploaded=await f.upload(await png());assert.equal(uploaded.statusCode,201);
+ const accepted=await f.request(`/api/sessions/${f.session.id}/messages`,{text:'edit',imageReferences:[uploaded.json().attachment.id]});assert.equal(accepted.statusCode,202);
+ for(let i=0;i<100&&!finished.length;i++)await new Promise(r=>setTimeout(r,5));
+ assert.equal(finished.length,1);assert.equal(f.prompts.length,0);assert.equal(f.store.getSession(f.session.id).status,'failed');
+});

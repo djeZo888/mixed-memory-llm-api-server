@@ -32,6 +32,8 @@ export interface BrokerOptions {
   cancelImages?: (sessionId: string) => void;
   /** Trusted exact-session/run gate; ordinary capability stays independently qualified. */
   imageAcceptance?: (sessionId: string) => boolean;
+  /** Trusted unbound ticket permits reference staging only, never image dispatch. */
+  imageReferenceAcceptance?: (sessionId: string) => boolean;
   /** Trusted one-shot scope binder, after durable enqueue and before dispatch. */
   onRunAccepted?: (sessionId: string, runId: string) => void;
   /** Revoke owned acceptance after any attempt; completion is not settlement proof. */
@@ -146,7 +148,7 @@ export class Broker {
           "This chat already has a pending context compaction",
         );
     }
-    if (s.engineKind === "codex" && imageReferences.length && !this.options.enginePolicy?.codex?.imageToolEnabled && this.options.imageAcceptance?.(sessionId) !== true)
+    if (s.engineKind === "codex" && imageReferences.length && !this.options.enginePolicy?.codex?.imageToolEnabled && this.options.imageAcceptance?.(sessionId) !== true && this.options.imageReferenceAcceptance?.(sessionId) !== true)
       throw new ApiError(400,"codex_image_tool_unavailable","Codex image specialist is not qualified");
     if (this.options.dispatchHeld?.())
       throw new ApiError(
