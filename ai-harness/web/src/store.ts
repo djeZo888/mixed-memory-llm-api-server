@@ -237,6 +237,7 @@ export class HarnessStore {
         completed.add(event.data.runId);
     for (const run of snapshot.runs ?? []) if (!runPending(run.status)) completed.add(run.id);
     this.completedRuns.set(snapshot.session.id, completed);
+    this.clearSettledCompaction(snapshot.session.id);
   }
   private showThread(thread: Thread) {
     const id = thread.session.id;
@@ -331,6 +332,7 @@ export class HarnessStore {
       const completed = this.completedRuns.get(event.sessionId) ?? new Set<string>();
       completed.add(event.data.run.id);
       this.completedRuns.set(event.sessionId, completed);
+      this.clearSettledCompaction(event.sessionId);
     }
     if (
       event.type === 'state' &&
@@ -342,6 +344,7 @@ export class HarnessStore {
       const completed = this.completedRuns.get(event.sessionId) ?? new Set<string>();
       completed.add(event.data.runId);
       this.completedRuns.set(event.sessionId, completed);
+      this.clearSettledCompaction(event.sessionId);
       const pending = (lookup(this.state.submitted, event.sessionId) ?? []).filter(
         (id) => id !== event.data.runId,
       );
@@ -595,6 +598,82 @@ export class HarnessStore {
         // A late acknowledgement must not replace a newer terminal state event.
         if (thread?.session.id === id && thread.lastEventId === cursor)
           this.showThread({ ...thread, session: { ...thread.session, status } });
+        if (this.state.selectedId === id) void this.resync();
+      },
+    );
+  };
+  private compactionAction(id: string): { actionId: string; runId?: string } | undefined {
+    const raw = sessionStorage.getItem(`ai-harness:compaction:${id}`);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (
+      typeof saved?.actionId !== 'string' ||
+      !/^[a-zA-Z0-9_-]{1,80}$/.test(saved.actionId) ||
+      (saved.runId !== undefined && typeof saved.runId !== 'string')
+    )
+      throw new Error(
+        'Saved compaction action is unreadable; refresh its status before starting another.',
+      );
+    return saved;
+  }
+  private clearSettledCompaction(id: string) {
+    try {
+      const saved = this.compactionAction(id);
+      if (saved?.runId && this.completedRuns.get(id)?.has(saved.runId))
+        sessionStorage.removeItem(`ai-harness:compaction:${id}`);
+    } catch {
+      // Retaining an uncertain action is safer than generating a replacement.
+    }
+  }
+  compact = (id: string) => {
+    if (
+      this.state.thread?.session.id !== id ||
+      this.state.thread.session.engineKind !== 'codex' ||
+      pendingRunIds(this.state, id).length
+    )
+      return Promise.resolve(false);
+    return this.action(
+      'compact',
+      id,
+      async () => {
+        this.clearSettledCompaction(id);
+        const saved = this.compactionAction(id);
+        const action = saved ?? { actionId: crypto.randomUUID() };
+        // Persist before dispatch: a lost acknowledgement or page refresh must
+        // reconcile this exact action instead of compacting a second time.
+        sessionStorage.setItem(`ai-harness:compaction:${id}`, JSON.stringify(action));
+        try {
+          const result = await this.transport.compact(id, action.actionId);
+          if (typeof result?.runId !== 'string' || !result.runId)
+            throw new Error('Compaction acknowledgement omitted its run ID');
+          sessionStorage.setItem(
+            `ai-harness:compaction:${id}`,
+            JSON.stringify({ ...action, runId: result.runId }),
+          );
+          return result;
+        } catch (error) {
+          if (
+            error instanceof ApiError &&
+            error.status >= 400 &&
+            error.status < 500 &&
+            error.status !== 408
+          ) {
+            // Rejection of a retry cannot prove the original uncertain attempt
+            // was never accepted. Only a fresh action's rejection releases it.
+            if (!saved) sessionStorage.removeItem(`ai-harness:compaction:${id}`);
+            throw error;
+          }
+          throw new Error(
+            'Compaction outcome is unconfirmed. Retry Compact context to check the same action.',
+          );
+        }
+      },
+      ({ runId }) => {
+        const settled = this.completedRuns.get(id)?.has(runId);
+        this.clearSettledCompaction(id);
+        this.update({
+          submitted: { ...this.state.submitted, [id]: settled ? undefined : [runId] },
+        });
         if (this.state.selectedId === id) void this.resync();
       },
     );

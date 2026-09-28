@@ -257,6 +257,22 @@ export function App({ store }: { store: HarnessStore }) {
           {thread && (
             <div className="header-actions">
               <Badge status={resolveStatus(thread.session.status, thread.runs)} />
+              {thread.session.engineKind === 'codex' && (
+                <button
+                  className="text-button"
+                  title="Summarize working context while keeping visible history and files"
+                  disabled={
+                    !state.codexAvailable ||
+                    !thread.messages.length ||
+                    !!state.busy[busyKey('compact', selected!)] ||
+                    isActive(thread.session.status) ||
+                    pendingRunIds(state, selected!).length > 0
+                  }
+                  onClick={() => void store.compact(selected!)}
+                >
+                  Compact context
+                </button>
+              )}
               <button
                 className="text-button handoff"
                 disabled={

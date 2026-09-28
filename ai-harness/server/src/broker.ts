@@ -105,9 +105,41 @@ export class Broker {
     text: string,
     attachmentIds: string[] = [],
     imageReferences: string[] = [],
+    compactionActionId?: string,
   ): string {
     const s = this.store.getSession(sessionId);
+    if (kind === "compact") {
+      if (!compactionActionId)
+        throw new ApiError(
+          400, "invalid_action", "Context compaction requires an action ID",
+        );
+      // Retrieving a durable action never redispatches it, even after a restart
+      // changed the original run to interrupted or disabled the engine policy.
+      const existing = this.store.compactionRun(s.id, compactionActionId);
+      if (existing) return existing;
+    }
     assertEngineAvailable(s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
+    if (kind === "compact") {
+      if (s.engineKind !== "codex")
+        throw new ApiError(
+          409, "compaction_unavailable",
+          "Manual context compaction is available for Codex chats only",
+        );
+      if (!s.nativeSessionId)
+        throw new ApiError(
+          409, "compaction_empty",
+          "Start a Codex conversation before compacting its context",
+        );
+      const pending = [
+        ...(this.queues.get(s.workspaceId) ?? []),
+        ...[...this.active.values()].map((active) => active.run),
+      ];
+      if (pending.some((run) => run.sessionId === s.id && run.kind === "compact"))
+        throw new ApiError(
+          409, "compaction_pending",
+          "This chat already has a pending context compaction",
+        );
+    }
     if (s.engineKind === "codex" && imageReferences.length && !this.options.enginePolicy?.codex?.imageToolEnabled)
       throw new ApiError(400,"codex_image_tool_unavailable","Codex image specialist is not qualified");
     if (this.options.dispatchHeld?.())
@@ -155,7 +187,7 @@ export class Broker {
           "Image artifact does not belong to this chat",
         );
     }
-    const run = this.store.createRun(s, kind, text, attachmentIds);
+    const run = this.store.createRun(s, kind, text, attachmentIds, compactionActionId);
     if (imageReferences.length)
       this.store.db
         .prepare("INSERT INTO h003_run_image_refs VALUES(?,?)")
@@ -491,7 +523,21 @@ export class Broker {
         }
       };
       if (active.cancelled) await cancelBeforePrompt();
-      else {
+      else if (run.kind === "compact") {
+        try {
+          await this.waitForDispatch(active);
+          if (!engine.compact)
+            throw new ApiError(
+              409, "compaction_unavailable",
+              "This engine does not support manual context compaction",
+            );
+          this.store.setStatus(s.id, "compacting", run.id);
+          if ((await engine.compact()) === "cancelled") active.cancelled = true;
+        } catch (error) {
+          promptRejectedDuringCancellation = active.cancelled;
+          throw error;
+        }
+      } else {
         const attachments = await this.files.attachments(
           s.id,
           run.attachmentIds,
@@ -614,10 +660,14 @@ export class Broker {
           {
             code: backgroundUnknown
               ? "engine_settlement_unknown"
-              : "engine_failed",
+              : run.kind === "compact"
+                ? "compaction_failed"
+                : "engine_failed",
             message: backgroundUnknown
               ? "Native completion could not be confirmed; process cleanup is being verified. The run was not accepted as completed."
-              : "Engine request failed; partial history is retained and cleanup is being verified. The prompt was not replayed.",
+              : run.kind === "compact"
+                ? "Context compaction failed; visible history and files are retained and cleanup is being verified. Compaction was not replayed."
+                : "Engine request failed; partial history is retained and cleanup is being verified. The prompt was not replayed.",
           },
           run.id,
         );

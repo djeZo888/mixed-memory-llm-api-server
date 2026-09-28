@@ -478,7 +478,7 @@ function AssistantReply({
                     ? 'Final answer'
                     : message.streamState === 'streaming'
                       ? 'Assistant · responding'
-                      : 'Legacy response'}
+                      : 'Assistant response'}
                 </strong>
                 <Timestamp value={message.createdAt} />
               </div>

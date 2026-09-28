@@ -35,7 +35,7 @@ export interface Run {
   id: string;
   sessionId: string;
   workspaceId: string;
-  kind: "message" | "handoff";
+  kind: "message" | "handoff" | "compact";
   text: string;
   attachmentIds: string[];
   status: string;
@@ -86,6 +86,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS h002_file_names(file_id TEXT PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,display_name TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS h002_activities(session_id TEXT NOT NULL,run_id TEXT NOT NULL,id TEXT NOT NULL,data TEXT NOT NULL,PRIMARY KEY(run_id,id));
       CREATE TABLE IF NOT EXISTS h002_subagents(run_id TEXT PRIMARY KEY,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS h024_compaction_actions(session_id TEXT NOT NULL REFERENCES sessions(id),action_id TEXT NOT NULL,run_id TEXT NOT NULL UNIQUE REFERENCES runs(id),PRIMARY KEY(session_id,action_id));
     `);
     // Companion metadata keeps legacy rows/history/files byte-for-byte intact.
     this.db.exec(`
@@ -777,27 +778,48 @@ export class Store {
       after = next.at(-1)!.id;
     }
   }
+  compactionRun(sessionId: string, actionId: string): string | undefined {
+    const row = this.db
+      .prepare("SELECT run_id FROM h024_compaction_actions WHERE session_id=? AND action_id=?")
+      .get(sessionId, actionId);
+    return row ? String(row.run_id) : undefined;
+  }
   createRun(
     s: StoredSession,
     kind: Run["kind"],
     text: string,
     attachmentIds: string[],
+    compactionActionId?: string,
   ): Run {
     const id = randomUUID(),
       time = now();
-    this.db
-      .prepare("INSERT INTO runs VALUES(?,?,?,?,?,?,?,?,?)")
-      .run(
-        id,
-        s.id,
-        s.workspaceId,
-        kind,
-        text,
-        JSON.stringify(attachmentIds),
-        "queued",
-        time,
-        time,
-      );
+    // Persist the action and run together before publishing or scheduling work.
+    // Restart recovery retains the binding and never requeues this run.
+    if (compactionActionId) this.db.exec("BEGIN IMMEDIATE");
+    try {
+      this.db
+        .prepare("INSERT INTO runs VALUES(?,?,?,?,?,?,?,?,?)")
+        .run(
+          id,
+          s.id,
+          s.workspaceId,
+          kind,
+          text,
+          JSON.stringify(attachmentIds),
+          "queued",
+          time,
+          time,
+        );
+      if (compactionActionId) {
+        this.db
+          .prepare("INSERT INTO h024_compaction_actions VALUES(?,?,?)")
+          .run(s.id, compactionActionId, id);
+        this.db.exec("COMMIT");
+      }
+    } catch (error) {
+      if (compactionActionId) this.db.exec("ROLLBACK");
+      throw error;
+    }
     this.touchContext(s.id, id);
     this.emitRun(id);
     return {

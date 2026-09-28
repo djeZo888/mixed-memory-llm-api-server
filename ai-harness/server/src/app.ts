@@ -418,6 +418,14 @@ export async function createApp(options: AppOptions): Promise<{
       await broker.cancel(id(req));
       return reply.code(202).send({ status: "cancelling" });
     });
+    app.post("/api/sessions/:id/compact", async (req, reply) => {
+      const body = object(req.body);
+      only(body, ["actionId"]);
+      const actionId = requireId(body.actionId);
+      return reply.code(202).send({
+        runId: broker.enqueue(id(req), "compact", "", [], [], actionId),
+      });
+    });
     app.post("/api/sessions/:id/handoff", async (req, reply) => {
       only(object(req.body), []);
       return reply

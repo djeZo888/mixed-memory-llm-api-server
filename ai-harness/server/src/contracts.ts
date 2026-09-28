@@ -119,7 +119,7 @@ export interface Activity {
 }
 export interface RunSnapshot {
   id: string;
-  kind: "message" | "handoff";
+  kind: "message" | "handoff" | "compact";
   status:
     | "queued"
     | "running"
@@ -216,6 +216,7 @@ export interface Engine {
     text: string,
     attachments?: { path: string; mimeType: string; name: string }[],
   ): Promise<void | "completed" | "cancelled">;
+  compact?(): Promise<"completed" | "cancelled">;
   cancel(): Promise<void>;
   close(): Promise<void>;
 }

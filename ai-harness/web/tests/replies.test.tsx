@@ -71,6 +71,7 @@ describe('reply-level conversation presentation', () => {
     );
     rerender(<ConversationReplies thread={thread} />);
     expect(screen.queryByLabelText('Final answer')).not.toBeInTheDocument();
+    expect(screen.getByText('Assistant · responding')).toBeInTheDocument();
     thread = applyEvent(
       thread,
       runEvent(
@@ -90,6 +91,7 @@ describe('reply-level conversation presentation', () => {
     const progress = screen.getByText('Progress', { selector: 'summary span' }).closest('details');
     expect(progress).not.toHaveAttribute('open');
     expect(screen.getByLabelText('Final answer')).toHaveClass('message-final');
+    expect(screen.queryByText('Assistant · responding')).not.toBeInTheDocument();
     expect(
       within(screen.getByLabelText('Final answer')).getByText('The fixtures pass.'),
     ).toBeInTheDocument();
@@ -321,8 +323,45 @@ describe('reply-level conversation presentation', () => {
     render(<ConversationReplies thread={thread} />);
     expect(screen.getByText('Earlier request')).toBeInTheDocument();
     expect(screen.getByText('Earlier complete answer')).toBeInTheDocument();
+    expect(screen.getByText('Assistant response')).toBeInTheDocument();
     expect(screen.queryByText('Progress')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Final answer')).not.toBeInTheDocument();
+  });
+
+  it('labels a newly completed unknown phase neutrally without changing its content or native identity', () => {
+    const message = replyMessage('answer', 'assistant', 'Analysis: retained unclassified text.', {
+      runId: 'run/one',
+      nativeMessageId: 'native/message',
+      nativeTurnId: 'native/turn',
+      phase: 'unclassified',
+      streamState: 'completed',
+    });
+    let thread = applyEvent(
+      replyThread({ messages: [], runs: [replyRun('run/one')] }),
+      runEvent(
+        1,
+        'assistant_delta',
+        {
+          messageId: message.id,
+          text: message.content,
+          phase: message.phase,
+          nativeMessageId: message.nativeMessageId,
+          nativeTurnId: message.nativeTurnId,
+        },
+        'run/one',
+      ),
+    );
+    const { rerender } = render(<ConversationReplies thread={thread} />);
+    expect(screen.getByText('Assistant · responding')).toBeInTheDocument();
+    thread = applyEvent(thread, runEvent(2, 'message', { message }, 'run/one'));
+    rerender(<ConversationReplies thread={thread} />);
+    expect(screen.getByText('Assistant response')).toBeInTheDocument();
+    expect(screen.getByText(message.content)).toBeInTheDocument();
+    expect(screen.queryByText('Assistant · responding')).not.toBeInTheDocument();
+    expect(screen.queryByText('Legacy response')).not.toBeInTheDocument();
+    expect(screen.queryByText('Reasoning')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Final answer')).not.toBeInTheDocument();
+    expect(thread.messages).toEqual([message]);
   });
 
   it('keeps unassociated historic activity visible without attributing it to the latest reply', () => {

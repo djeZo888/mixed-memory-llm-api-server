@@ -126,7 +126,7 @@ export type RunStatus =
   'queued' | 'running' | 'cancelling' | 'completed' | 'cancelled' | 'interrupted' | 'failed';
 export interface RunSnapshot {
   id: string;
-  kind: 'message' | 'handoff';
+  kind: 'message' | 'handoff' | 'compact';
   status: RunStatus;
   createdAt: string;
   updatedAt: string;

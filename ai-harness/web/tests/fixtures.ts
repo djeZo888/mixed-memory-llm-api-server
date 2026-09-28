@@ -52,6 +52,7 @@ export function fixtureTransport() {
     send: vi.fn(async () => ({ runId: 'run/1' })),
     cancel: vi.fn(async () => ({ status: 'cancelling' as const })),
     handoff: vi.fn(async () => ({ runId: 'handoff/1' })),
+    compact: vi.fn<Transport['compact']>(async () => ({ runId: 'compact/1' })),
     upload: vi.fn(async () => ({
       attachment: { id: 'file/1', name: 'notes.txt', size: 10, mimeType: 'text/plain' },
     })),
