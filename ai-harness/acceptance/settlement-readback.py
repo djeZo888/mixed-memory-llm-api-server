@@ -49,7 +49,7 @@ def readback(db, q, binding):
     try:
         r = db.execute('select id,session_id,workspace_id,status from runs where id=? and session_id=?', (run, session)).fetchone()
         assert r, 'run missing'
-        e = db.execute('select engine_kind,ownership,active_turn_id,native_thread_id from h021_session_engines where session_id=?', (session,)).fetchone()
+        e = db.execute('select e.engine_kind,e.ownership,e.active_turn_id,s.native_session_id as native_thread_id from h021_session_engines e join sessions s on s.id=e.session_id where e.session_id=?', (session,)).fetchone()
         assert e and e['engine_kind'] in ('codex', 'minimax'), 'engine unknown'
         active = [dict(v) for v in db.execute("select id,status from runs where session_id=? and status not in ('completed','cancelled','failed','interrupted')", (session,))]
         quarantine = db.execute('select reason from quarantined_workspaces where id=?', (r['workspace_id'],)).fetchone()
