@@ -82,7 +82,9 @@ installer implementation and tests remain paused.
 **H021 preview implemented; MiniMax remains default.** The local Responses
 adapter, private App Server, persistent per-engine chats, tools and central
 engine status are deployed. See the [acceptance report](reports/h021-codex-preview.md)
-and [original plan](ai-harness/PLAN-CODEX-HARNESS.md). Remaining qualification:
+and [original plan](ai-harness/PLAN-CODEX-HARNESS.md). The next proposed work is
+organized in the [completion plan](ai-harness/PLAN-CODEX-COMPLETION.md).
+Remaining qualification:
 
 - Repair Codex's parameterless image-tool calls before re-enabling its image
   flag. The bounded repeat supplied `__v=0`, failed twice and dispatched no image

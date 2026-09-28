@@ -1,5 +1,11 @@
 # H019 — MiMo finalization checkpoint
 
+**Later result, collected September 28 at 11:07 UTC:** the long test failed at
+07:40 UTC after a recorded lifecycle-lock conflict during hardware supervision.
+MiMo is selected but no longer resident; held ownership remains. See the
+[H022 result](../reports/h022-950k-status.md). The checkpoint below preserves the
+original launch evidence and does not claim long-context success.
+
 Foreground window: September 28, 2026, 02:10:29–04:10:29 UTC.
 
 ## Decisions

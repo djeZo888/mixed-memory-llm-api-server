@@ -1,5 +1,10 @@
 # H021 — optional Codex preview
 
+Later read-only H022 collection found the independent near-950K MiMo test failed;
+MiMo is no longer resident. See the [test result](h022-950k-status.md) and the
+[next completion plan](../ai-harness/PLAN-CODEX-COMPLETION.md). H021's dated
+acceptance evidence below is preserved.
+
 ## Current checkpoint
 
 September 28, 2026, 10:11 UTC. Codex 0.158.0 is deployed as an optional

@@ -29,6 +29,8 @@ local Qwen service without hosted OpenAI inference. See the
 [implementation and acceptance report](reports/h021-codex-preview.md) for tested
 workflows and remaining limits, and the
 [original integration plan](ai-harness/PLAN-CODEX-HARNESS.md) for its scope.
+The [completion plan](ai-harness/PLAN-CODEX-COMPLETION.md) prioritizes the
+remaining tool, model-routing, compression and reliability qualification.
 The [H020 status repair](docs/h020-results.md) now separates configured models,
 selected frontier and fresh native identity, with measured GPU UUID dependency
 joins. The status-only deployment preserves the running model services.
@@ -114,21 +116,23 @@ arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-
 
 ## Current models and dated acceptance
 
-**September 28, 03:39 UTC checkpoint:** MiMo V2.6 Pro-RL is the selected,
-resident frontier service at 950,000 configured tokens. Current native text and
-tool/continuation qualification passed. Its independent near-950K request was
-confirmed processing; the result remains pending. Both Qwens and the image
-service were preserved. Ordinary Sova chat remains paused after its delegated
-MiMo request failed validation with HTTP400; native model readiness is not
-application acceptance. Histories and files are intact. See the
-[H019 checkpoint and pending work](docs/h019-mimo-finalization-results.md).
+**September 28, 11:07 UTC checkpoint:** MiMo V2.6 Pro-RL remains the selected
+frontier profile at 950,000 configured tokens, but its native process is absent.
+The near-950K test failed at 07:40 UTC after a recorded lifecycle-lock conflict
+in hardware supervision, followed by a settlement timeout. It did not produce
+a completed answer; 950K remains unqualified. Held ownership is preserved.
+See the [collected result and resource evidence](reports/h022-950k-status.md).
+Sova's application was restored during H021 with MiniMax default and optional
+Codex preview; MiMo delegation remains unavailable and its separate HTTP400
+repair is pending. Histories and files are preserved. Earlier successful short
+native turns are recorded in the [H019 checkpoint](docs/h019-mimo-finalization-results.md).
 Current availability comes from the status API; the measurements below are dated evidence.
 
 | Model / instance | Configured context | Private API base | Role |
 |---|---:|---|---|
 | Qwen0 | 480,000 | `http://10.156.100.60:30002/v1` | Coordination, coding and tools |
 | Qwen1 | 480,000 | `http://10.156.100.60:30004/v1` | Second concurrent Qwen lane |
-| MiMo V2.6 Pro-RL | 950,000 | `http://10.156.100.60:30012/v1` | Selected native frontier; Sova delegation repair pending |
+| MiMo V2.6 Pro-RL | 950,000 configured target | `http://10.156.100.60:30012/v1` | Selected but not resident; recovery and delegation repair pending |
 | GLM-5.3-Flash | 1,048,576 retained profile | `http://10.156.100.60:30010/v1` | Dormant alternative, not the running frontier |
 
 MiMo retains native MXFP4 experts and BF16/F32 nonexpert tensors. At a
@@ -136,17 +140,20 @@ MiMo retains native MXFP4 experts and BF16/F32 nonexpert tensors. At a
 passed 4K/16K inputs at **71.49/69.56 input tokens/s** and **9.58/9.41 output
 tokens/s**. Sampled peak GPU usage was **87.67 GiB**, with **7.31 GiB free**;
 sampled cgroup memory reached **573.37 GiB**, including reclaimable file cache.
-Native tool-call continuation passed. Optimized 64K and near-million occupied
-context are pending; allocation does not establish long-context correctness.
+Native tool-call continuation passed. Optimized 64K was skipped and near-million
+occupied context remains unqualified after the failed H019 test; allocation
+does not establish long-context correctness.
 [MiMo results, configuration and limits](docs/h016-mimo-results-20260927.md).
 
 The latest **950,000-token allocation** showed **85.74 GiB device memory
 used and 9.85 GiB free**. After the supervisor repairs, two native tool turns
 processed 9,536/9,635 input tokens at **67.37/65.43 input tokens/s** and
 **9.39/9.58 output tokens/s**. The final 948,975-input-token request was submitted
-once at 03:36:16 UTC, with an independent deadline of 11:36:11 UTC. Its correctness,
-speed and peak memory remain unverified. The optimized 64K test was skipped as
-requested. [Current native and application evidence](docs/h019-mimo-finalization-results.md).
+once at 03:36:16 UTC, with an independent deadline of 11:36:11 UTC. It failed
+before that deadline and has no completed correctness or speed result. Its
+retained resource samples are in the [H022 result](reports/h022-950k-status.md).
+The optimized 64K test was skipped as requested.
+[Earlier native and application evidence](docs/h019-mimo-finalization-results.md).
 
 The earlier GLM test with exactly **1,000,000 input tokens** passed at approximately
 **145.85 input tokens/s** and **12.26 output tokens/s**, taking **6,876.78 seconds**.

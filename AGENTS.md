@@ -1,4 +1,21 @@
-# Sova execution — H021
+# Sova current task — H022
+
+Latest user request: check the existing H019 near-950K benchmark, then prepare
+the next Codex implementation plan. This turn is read-only on the VMs and
+planning/documentation only. Worker1 may collect the existing unit's current
+progress or terminal evidence once; this supersedes H021's no-poll instruction
+for that collection only. No rerun, new inference, holds removal, deployment,
+model/runtime changes or hardware work. Worker2 reviews source/evidence offline.
+Root coordinates, reviews and publishes the plan. Use fresh bounded native
+worker CLI sessions and close them after their result, with no paid waiting.
+
+H021 has completed a deployed optional Codex preview. The app is active;
+MiniMax remains default. Codex image tools remain disabled, the separate MiMo
+hold and historical quarantines remain. Old statements below describing the
+app as paused or authorizing implementation are historical, not current grants.
+See ai-harness/PLAN-CODEX-COMPLETION.md for the next proposed work.
+
+## Historical execution instructions — H021
 
 Latest user request authorizes implementation of ai-harness/PLAN-CODEX-HARNESS.md with both workers. This supersedes H020's plan-only limit. Root plans, coordinates, reviews and publishes; mac-worker1 and mac-worker2 implement/build/test over SSH in fresh bounded native Codex CLI sessions and isolated copies. Retain session IDs, incremental commits and compact durable evidence. Do not keep paid sessions idle waiting for native work. Historical instructions: docs/orchestration/AGENTS-H020-archive.md.
 
