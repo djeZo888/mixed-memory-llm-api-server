@@ -1,0 +1,27 @@
+✔ retained frontier identities retain both visible rows without relabeling identities or altering Qwen/image (2.891834ms)
+✔ MiMo readiness requires exact fresh canonical node observation; GLM ready cannot supply it (1.283875ms)
+✔ custom configured labels and both frontier selections stay separate from observed identities and impact scope (1.236042ms)
+✔ missing, stale, mismatched, unavailable and unselected evidence cannot certify configured model or GPU dependency (1.071625ms)
+✔ Qwen instances keep distinct configured aliases, observed deployments and UUIDs; unsupported nodes remain visible (0.474375ms)
+✔ hung observer is capped, deadline does not block healthy peer, late success discarded (18.346667ms)
+✔ fresh success ages independently, transport errors never invent absence (0.514209ms)
+✔ exact shared v1 fixture preserves nullable identities, independent metrics and no invented capability (1.20975ms)
+✔ status works without chat/storage and one hung node cannot hold peer; sanitizes payloads (51.164958ms)
+✔ cached successful HTTP cannot refresh aged underlying service; unknown boot disables targets (2.748667ms)
+✔ typed async admin relay keeps key/boot/generation, namespaces receipts and does not replay (11.741834ms)
+✔ exact additive disk roles retain separate capacities/freshness and unavailable mount never borrows root (1.950792ms)
+✔ registry retains third/unreachable node and missing service rows; support and new services gain no controls (3.150958ms)
+✔ malformed/missing fields stay unknown; explicit model.control and node_manager facts remain informational and age independently (1.585042ms)
+✔ mismatched or duplicate native evidence leaves configured rows visible and unknown (1.530166ms)
+✔ default registry retains seven action identities and adds passive frontier inventory (2.210667ms)
+✔ malformed, duplicate, unbounded and dangling registry input fails closed (8.909417ms)
+✔ unknown node cannot fall through to local helper; unsupported adapter is passive unknown (1.168291ms)
+✔ generic third-node passive transport reaches only bounded fixed GET; failed peers and absent services remain visible without targets (81.464792ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 234.653375

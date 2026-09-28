@@ -1,0 +1,18 @@
+{
+  "cwd": "/Users/agent/CodexProjects/llm-orchestration/tasks/H020-REVIEW02-20260928/candidate-corrected/ai-harness/server",
+  "command": [
+    "node_modules/.bin/tsc",
+    "--noEmit",
+    "--target",
+    "ES2023",
+    "--module",
+    "NodeNext",
+    "--moduleResolution",
+    "NodeNext",
+    "--strict",
+    "--esModuleInterop",
+    "--skipLibCheck",
+    "src/status-main.ts"
+  ],
+  "exitCode": 0
+}

@@ -1,0 +1,32 @@
+✔ fresh success ages independently, transport errors never invent absence (1.022542ms)
+✔ cached successful HTTP cannot refresh aged underlying service; unknown boot disables targets (34.191667ms)
+✖ registry retains third/unreachable node and missing service rows; support and new services gain no controls (3.512625ms)
+✔ mismatched or duplicate native evidence leaves configured rows visible and unknown (1.747708ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 167.641875
+
+✖ failing tests:
+
+test at ai-harness/server/test/status-service.test.ts:1:7028
+✖ registry retains third/unreachable node and missing service rows; support and new services gain no controls (3.512625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  6 !== 5
+
+      at TestContext.<anonymous> (/Users/agent/CodexProjects/llm-orchestration/tasks/H020-REVIEW01-20260928/repo/ai-harness/server/test/status-service.test.ts:267:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 6,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
