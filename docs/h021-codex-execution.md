@@ -21,7 +21,12 @@ The user authorized implementation of the published Codex plan with both workers
 
 ## Acceptance status
 
-Implementation in progress. No Codex live behavior is claimed as passed yet.
+Implementation and acceptance are in progress. The
+[stage 3 report](../reports/h021-codex-stage3.md) records the successful real
+Qwen coding/tool/follow-up gate and retained first failures. On September 28
+at 07:18 UTC, the deployed optional preview passed public UI health with
+MiniMax still default. Matched coding/research/PDF and specialist image
+acceptance remain in progress; MiMo acceptance remains deferred.
 
 ## Wave 1 checkpoint — 2026-09-28 05:50 UTC
 

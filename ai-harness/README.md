@@ -8,9 +8,13 @@ refresh, with no fallback or retry. Root visual review is recorded in the
 [compact evidence summary](docs/acceptance-v0.0.3.json).
 
 See [chat examples](docs/chat-examples-v0.0.3.md) for usable image prompts.
-The [optional Codex harness plan](PLAN-CODEX-HARNESS.md) retains MiniMax and
-requires local-provider compatibility tests first; no Codex integration has
-been implemented by that planning task.
+The [optional Codex harness plan](PLAN-CODEX-HARNESS.md) is being implemented
+as a selectable preview beside MiniMax. The pinned Codex 0.158.0 integration
+uses local Qwen through Sova's shared gateway, without OpenAI model login or
+paid inference. MiniMax remains the default. See the
+[execution record](../docs/h021-codex-execution.md) and
+[real-model gate](../reports/h021-codex-stage3.md) for completed checks and
+remaining acceptance.
 The [earlier worker-path failure](docs/acceptance-v0.0.3-historical-worker-failure.md)
 remains historical evidence. [v0.0.2 acceptance](docs/acceptance-v0.0.2.md)
 records earlier chat/progress/download/ZIP checks; [v0.0.1](docs/acceptance-v0.0.1.md)
@@ -64,6 +68,10 @@ This is a shared workspace service with no per-person privacy boundary.
 
 - Choose **New chat**, or select an existing chat from the list, then send a task.
   Follow-ups in one chat run sequentially; separate chats can run concurrently.
+- When the Codex preview is enabled, choose **Harness: MiniMax / Codex** for a
+  new chat. Existing chats retain their engine for follow-ups. An engine's
+  capability panel distinguishes qualified features from pending or unsupported
+  ones; a Codex preview does not imply that every MiniMax feature is qualified.
 - Attach PDFs, source/text files or images; download files from artifact links.
   Earlier PDF and image coverage is recorded in the
   [v0.0.1 report](docs/acceptance-v0.0.1.md).
@@ -123,9 +131,11 @@ Qwen main and child sessions have a fixed **480,000-token context**. At the
 September 28, 03:39 UTC checkpoint, **MiMo V2.6 Pro-RL** is selected and resident
 with **950,000 configured tokens**. Current native text/tool continuation passed;
 an independent 948,975-input-token test was confirmed processing and its outcome
-is pending. GLM's retained **1,048,576-token** profile is dormant. Ordinary chat
-remains paused because its native frontier child hit an unresolved HTTP400
-validation failure before MiMo admission. Histories and files are preserved.
+is pending. GLM's retained **1,048,576-token** profile is dormant. Ordinary Qwen
+chat reopened for the H021 preview; frontier dispatch remains held while the
+independent long test runs. The earlier native frontier child hit an unresolved
+HTTP400 validation failure before MiMo admission. This Codex work does not
+repair or qualify that path. Histories and files are preserved.
 See the [current checkpoint](../docs/h019-mimo-finalization-results.md).
 The maximum
 output is **65,536 tokens per inference request**, including reasoning where
