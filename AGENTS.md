@@ -1,4 +1,20 @@
-# Sova current checkpoint — H025 closed
+# Active H026 — quick Qwen power-cap comparison
+
+Latest user authorizes temporary550W and500W Qwen power limits and quick
+performance comparisons. This is a new bounded task, September28 21:03–21:30UTC;
+stop new measurements21:23. Root stated both Qwen cards sequentially after an
+optional scope clarification; later user steering wins. See
+`docs/h026-qwen-power-plan.md` for the600/550/500/600 drift-anchor method.
+
+W1 is the sole VM writer in a fresh mac-worker1 native CLI; W2 performs one short
+independent source/method review in a fresh mac-worker2 native CLI, no VM calls.
+Root plans/reviews/publishes. Reuse current warm Qwens at480K and existing small
+streaming helper where practical. Preserve85C/fan guards and native ownership;
+no H025 multi-lane campaign, new framework, model loads or large-context sweep.
+Restore original600W limits and upper services after temporary measurements.
+No permanent cap policy or frontier/Ada/fan changes are authorized here.
+
+# Previous checkpoint — H025 closed
 
 Execution closed on September 28, 2026, at 20:59:33 UTC. Final worker2 native
 session exited 0; its wrapper and watchdog are absent. Worker1's final source
