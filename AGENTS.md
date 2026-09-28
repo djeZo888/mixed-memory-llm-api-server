@@ -1,6 +1,29 @@
 # Sova project execution
 
-## Current authorization: H018, 28 September 2026
+## H018 outcome — recovery complete, MiMo integration incomplete
+
+At 01:24 UTC September 28, original GLM at 1,048,576 tokens, both Qwen 480K
+instances, image and original Sova 7143/9ef885 were verified ready. Histories
+and files were preserved. H018 closed within its authorized two-hour window;
+there is no long-running benchmark and automation remains paused. Both paid
+worker sessions exited successfully, at 01:24:23 and 01:26:23 UTC respectively.
+
+Read `docs/h018-mimo-integration-results.md` and the local H018 HANDOFF first.
+MiMo 950K allocation and tiny text passed, but native tool qualification was
+interrupted by supervisor lifecycle-lock contention. Exact failed native/proxy
+release and normal original-service recovery are documented. Do not replay
+uncertain requests or treat historical 1M native qualification as current 950K
+Sova acceptance.
+
+The periodic hardware-proof write correction is reviewed/tested source only:
+new shared policy cf558128, while installed copies retain c779739a. Its report
+lists affected source-hash closures. A resumed execution must deploy consistently,
+measure proof freshness/lock duration, stage clients before loading, and use
+fresh admission clocks. All H018 client authorities below are historical and
+do not authorize a new dispatch. No new model download, thread sweep or repeat
+GLM million-token test is needed.
+
+## Historical authorization: H018, 28 September 2026 (closed)
 
 The user resumed MiMo integration and authorized **up to two hours**. The new
 foreground window is 23:38:03UTC27September–01:38:03UTC28September

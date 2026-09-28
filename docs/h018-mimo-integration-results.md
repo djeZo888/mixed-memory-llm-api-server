@@ -2,17 +2,23 @@
 
 ## Current checkpoint
 
-The two-hour window runs from23:38:03UTC September27 to01:38:03UTC September28.
-The swap-limit mechanism has been reproduced locally and a narrow repair has
-passed small-container checks and independent review. Deployment of the ordinary
-MiMo service began its ordinary 950K load at **00:03:07 UTC** and actual native
-and private-API readiness was confirmed at **00:15:43 UTC**. The tiny text
-request passed, but the subsequent native tool test was interrupted by a
-separate hardware-status proof failure. A reviewed owner-only correction is
-installed and a fresh load began at **00:47:40 UTC**. Native tool and Sova
-acceptance remain pending. No long benchmark is running.
+The two-hour window runs from 23:38:03 UTC September 27 to 01:38:03 UTC September 28.
+The swap-limit mechanism was reproduced and its repair passed focused checks.
+Both ordinary MiMo loads reached actual 950K readiness and passed tiny text,
+but supervision stopped the subsequent native tool requests. The replacement
+load failed on lifecycle-lock contention during a GPU health-proof refresh.
+**MiMo is not qualified for Sova, and neither the optimized 64K nor near-950K
+benchmark has started.**
 
-Sova was paused normally at23:41:52UTC. Chats, files and existing quarantines
+Original GLM rollback started at **01:14:12 UTC**. Authenticated readiness and
+the **1,048,576-token** configuration passed at **01:19:33 UTC**. Original
+Sova release `7143c17d` / image `9ef88598` started at **01:22:52 UTC** and
+its required HTTP endpoints passed at **01:24:11 UTC**. The two Qwen
+instances and image service were kept resident. All 26 chats, 133 messages,
+62 recorded files and 17,597 workspace files were preserved. The image lane
+reconciled normally to idle; the existing workspace quarantine was retained.
+
+At the beginning of the window, Sova was paused normally at 23:41:52 UTC. Chats, files and existing quarantines
 were preserved. The original GLM process was normally stopped and its exact
 process/cgroup/GPU allocation released. Both Qwens and image remain resident.
 
@@ -98,9 +104,72 @@ It also prepared the existing950K
 Sova configuration using retained compiled artifacts. No native rebuild or
 model download is required.
 
-Remaining gates are actual production allocation/readiness, native tool/result
-continuation, then genuine Qwen-parent → MiMo-child → Qwen-verification in Sova.
+Allocation/readiness passed twice. Remaining gates after the next deployment
+are native tool/result continuation, then genuine Qwen-parent → MiMo-child →
+Qwen-verification in Sova.
 Only after these pass will the final independent job run optimized64K followed
 by948,975 input tokens and up to1,024 output tokens within the950K window.
 Its total background limit is eight hours. After startup verification, paid
 worker sessions close and the user can request a later result check.
+
+## Second attempt and remaining blocker
+
+The replacement load reached native/private 950,000-token readiness at
+00:59:53 UTC. Tiny text completed at 00:59:58. The next tool prefill was
+interrupted at 01:00:16 by `lifecycle_busy` while the supervisor tried to
+refresh expired health evidence. Cleanup separately timed out at 01:00:25.
+The exact native process, cgroup, GPU allocation and proxy were later proven
+released under the canonical lock. The failed request remains recorded as
+terminated without a proven complete HTTP response; it was not replayed.
+
+At readiness the GPU had **10,091 / 97,887 MiB free**: approximately
+**85.74 GiB device memory used and 9.85 GiB free**, at **36°C**. Container
+memory was **625.47 GiB including reclaimable file cache**; owned swap/OOM
+were zero. These are allocation/short-request observations, not a successful
+950K input test or a prediction of large-context speed.
+
+The node-status service was directly observed holding the lifecycle lock at
+01:10:54. The holder at the earlier failure instant was not captured. The
+later inactive-client staging operation occurred at 01:01:22–01:01:23, so it
+did not cause the 01:00:16 failure.
+
+Source review and a focused regression established that four updated GPU
+health proofs cause eight recursive root-directory scans while holding the
+lock. The declared observer timeout does not interrupt those Python scans.
+A narrow source correction removes the duplicate scans from periodic proof
+writes, retaining the existing lease, registration, mount, path, protected JSON
+and atomic-write checks. Full scans remain at initialization and lifecycle
+boundaries. The regression changed from eight scans to zero; **59 focused
+checks passed**. This correction is **not deployed or live-qualified**.
+It does not establish the exact historical lock holder or guarantee that all
+remaining observer operations fit their time budget.
+
+Most of this window went into the supervisor/storage fixes, two model loads,
+failure investigation and restoration. There was no model download, native
+runtime rebuild, thread sweep or repeated large-context benchmark.
+
+## Next bounded execution
+
+1. Deploy the reviewed periodic-write correction with matching hashes across
+   the control, node and imported policy copies; preserve the closed H018
+   manifests and receipts as historical evidence.
+2. Measure healthy proof freshness and canonical-lock duration before another
+   model load. Capture the holder at the failure instant if contention recurs.
+   Review the separately identified nested lease-acquisition path as well.
+3. Stage all clients before loading, then repeat genuine native tool/result and
+   Sova delegation acceptance. Do not stage files under the lifecycle lock
+   while a request is active.
+4. Only after acceptance, launch the independent 64K → near-950K job and close
+   paid sessions. Old admission clocks must not be reused.
+
+The automatic follow-up remains paused. There is no long test to wait for at
+this checkpoint. Both worker CLI sessions exited successfully: Worker1 at
+01:24:23 UTC and Worker2 at 01:26:23 UTC. No paid worker remains waiting.
+
+## Evidence
+
+- [Backend failure, exact settlement and recovery](../reports/h018-recovery06-20260928/README.md)
+- [Original Sova recovery and preserved histories/files](../reports/h018-original-recovery07-20260928/REPORT.md)
+- [Periodic-write source fix and 59 focused checks](../reports/h018-latch-write-fix06-20260928/README.md)
+- [Independent locking review](../reports/h018-lease-review05-20260928/README.md)
+- [Historical optimized 4K/16K performance](h016-mimo-results-20260927.md)

@@ -95,10 +95,12 @@ arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-
 
 ## Current models and dated acceptance
 
-**September 27, 20:49 UTC checkpoint:** Sova is online with GLM-5.3-Flash,
+**September 28, 01:24 UTC checkpoint:** Sova is online with GLM-5.3-Flash,
 two Qwen instances and the image service. MiMo V2.6 Pro-RL passed optimized
-native tests, but its persistent supervisor failed on a swap-limit check; it is not yet
-enabled in Sova. The original application release and chats/files were preserved.
+native tests, but remains unavailable after a supervisor locking failure during
+950K tool qualification. The swap-limit repair passed; a further periodic
+health-write correction passed 59 focused checks but is not deployed. Original
+GLM/Sova recovery and preservation of chats/files were verified.
 Current availability comes from the status API; the measurements below are dated evidence.
 
 | Model / instance | Configured context | Private API base | Role |
@@ -117,11 +119,11 @@ Native tool-call continuation passed. Optimized 64K and near-million occupied
 context are pending; allocation does not establish long-context correctness.
 [MiMo results, configuration and limits](docs/h016-mimo-results-20260927.md).
 
-The later **950,000-token allocation** was confirmed with **85.12 GiB VRAM
+The latest **950,000-token allocation** showed **85.74 GiB device memory
 used and 9.85 GiB free**. Tiny text generation passed, but a supervisor error
 prevented tool and Sova acceptance. The original GLM-backed service was restored
 with chats/files intact. No optimized 64K or near-950K background job is running.
-[Integration outcome and next repair](docs/h017-mimo-integration-results-20260927.md).
+[Latest integration outcome and next repair](docs/h018-mimo-integration-results.md).
 
 The earlier GLM test with exactly **1,000,000 input tokens** passed at approximately
 **145.85 input tokens/s** and **12.26 output tokens/s**, taking **6,876.78 seconds**.

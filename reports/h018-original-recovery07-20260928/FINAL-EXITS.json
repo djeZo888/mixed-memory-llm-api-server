@@ -1,0 +1,27 @@
+{
+  "scope": "Root checked actual wrapper exit files after native CLI return. This supplements historical pending-exit session records.",
+  "sessions": [
+    {
+      "worker": "mac-worker1",
+      "nativeSessionId": "01a0e596-88bd-7f91-bb98-4a1a21311f63",
+      "exitCode": 0,
+      "finishedUtc": "2026-09-28T01:24:23Z",
+      "source": "worker1/recovery-06",
+      "receiptHashes": {
+        "exit-code": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "finished-utc": "cc772ffd948f5b393b8c2d3ec23588c0582375eeed1763924f8bca74e561c411"
+      }
+    },
+    {
+      "worker": "mac-worker2",
+      "nativeSessionId": "01a0e599-c8dc-7593-a605-bbfb9c12135e",
+      "exitCode": 0,
+      "finishedUtc": "2026-09-28T01:26:23Z",
+      "source": "worker2/original-recovery-07",
+      "receiptHashes": {
+        "exit-code": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "finished-utc": "9daf4de38bc9e4f75e2c2c7a824592e58eaa5afc90d48f791b34a5ccd142700f"
+      }
+    }
+  ]
+}
