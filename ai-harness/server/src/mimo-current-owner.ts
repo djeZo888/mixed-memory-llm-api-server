@@ -4,6 +4,7 @@
  * proxy identities (node_observation._mimo), never a saved instance string. */
 import { MIMO_MODEL, validateMimoQualification, type MimoQualification } from "./mimo.js";
 import { nativeJson, observeMimoNative, MIMO_URL, type MimoFrontierOptions, type MimoNativePins } from "./mimo-frontier.js";
+import { boundedControlGet } from "./codex-production.js";
 import { ApiError } from "./errors.js";
 const NODE = "http://10.156.100.60:30008/control/v1/node/status";
 const GPU = "GPU-69acfa26-8b60-61b5-702d-aee252c163cc";
@@ -24,7 +25,7 @@ export function mimoOwnerStamp(value: any, context: number, now = Date.now()): s
 
 export function createCurrentMimoProvider(reviewed: MimoQualification, pins: MimoNativePins,
   key: MimoFrontierOptions["upstreamKey"], controlKey: () => Promise<string>,
-  get: (url: string, key: string, signal: AbortSignal) => Promise<any> = nativeJson,
+  get: (url: string, key: string, signal: AbortSignal) => Promise<any> = (url, credential, signal) => url === NODE ? boundedControlGet(url, credential, signal) : nativeJson(url, credential, signal),
   now: () => number = Date.now): NonNullable<MimoFrontierOptions["current"]> {
   const immutable = validateMimoQualification(reviewed);
   return async signal => {

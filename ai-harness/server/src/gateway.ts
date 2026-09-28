@@ -62,6 +62,7 @@ export interface GatewayOptions {
     currentAliases?: () => Promise<readonly string[]>;
     /** Independent reviewed MiMo Responses acceptance gate; holds still win. */
     frontierQualified?: true;
+    frontierAcceptance?: (sessionId: string) => boolean;
     onDiagnostic?: (event: {requestId:string;sessionId:string;lane:string;diagnostic: ResponsesDiagnostic}) => void;
     /** Bounded host diagnostics keyed to the existing request owner, no model text. */
     /** Explicit private acceptance capture only; production leaves this absent. */
@@ -742,9 +743,13 @@ export function createGateway(options: GatewayOptions): Gateway {
     let body: Record<string, any>;
     const frontier = request.routeOptions.url?.startsWith("/frontier/") === true || (isResponses && requestedModel === MIMO_MODEL);
     const selectedAdmission = frontier ? frontierAdmission : admission;
+    const frontierAllowed = () => {
+      if (options.responses?.frontierQualified === true) return true;
+      try { return options.responses?.frontierAcceptance?.(sessionId) === true; } catch { return false; }
+    };
     try {
       provider = isResponses ? codexProvider(requestedModel) : undefined;
-      if (isResponses && frontier && (options.responses?.frontierQualified !== true || !mimo || provider?.model !== MIMO_MODEL))
+      if (isResponses && frontier && (!frontierAllowed() || !mimo || provider?.model !== MIMO_MODEL))
         throw new ApiError(503, "codex_frontier_unqualified", "Codex frontier live routing is not qualified");
       if (!selectedAdmission || (frontier && !options.frontier)) throw new ApiError(503, "frontier_unavailable", "Frontier is not qualified");
       if (frontier && (options.dispatchHeld?.("harness") || options.dispatchHeld?.(frontierModel)))
@@ -924,6 +929,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     let requestMimo: Awaited<ReturnType<NonNullable<MimoFrontierOptions["current"]>>> | undefined;
     if (frontier) {
       try {
+        if (isResponses && !frontierAllowed()) throw new ApiError(503, "codex_frontier_unqualified", "Owned frontier acceptance expired");
         if (mimo && prepared) {
           ownership.transition(ownedRequest, "counting", lane.upstream.alias);
           if (provider && (provider.contextWindow !== mimo.contextWindow || provider.maxOutputTokens !== MIMO_PRODUCTION_OUTPUT))
@@ -966,6 +972,7 @@ export function createGateway(options: GatewayOptions): Gateway {
             "lane_unavailable",
             "Frontier backend is unavailable",
           );
+        if (isResponses && !frontierAllowed()) throw new ApiError(503, "codex_frontier_unqualified", "Owned frontier acceptance expired");
         recordState("active");
       } catch (error) {
         diagnosticFailure(error, "counting");

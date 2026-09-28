@@ -39,3 +39,11 @@ test('private sink captures only selected session with byte limit and hashes; no
  const session=randomUUID(),requestId=randomUUID();const capture=createOwnedProviderCapture(directory,session,4);
  try{capture.capture({requestId,sessionId:randomUUID(),model:MIMO_MODEL,phase:'provider_sse',bytes:Buffer.from('skip')});capture.capture({requestId,sessionId:session,model:MIMO_MODEL,phase:'provider_sse',bytes:Buffer.from('real')});capture.capture({requestId,sessionId:session,model:MIMO_MODEL,phase:'provider_sse',bytes:Buffer.from('overflow')});capture.close();const lines=readFileSync(join(directory,'capture-index.jsonl'),'utf8').trim().split('\n').map(x=>JSON.parse(x));assert.equal(lines.length,2);assert.equal(lines[0].sha256,createHash('sha256').update('real').digest('hex'));assert.equal(lines[1].complete,false);assert.equal(readdirSync(directory).length,2);}finally{capture.close();rmSync(directory,{recursive:true,force:true});}
 });
+
+test('owned acceptance is exact session/run, bounded, revocable and fail closed',async()=>{
+ const {createOwnedProviderAcceptance}=await import('../src/provider-diagnostics.js');
+ const sessionId='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',runId='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';let active:string|undefined=runId,now=1000;
+ const scope=createOwnedProviderAcceptance({sessionId,runId,expiresAt:2000,activeRunId:()=>active},()=>now);
+ assert.equal(scope.allow(sessionId),true);assert.equal(scope.allow(runId),false);active=sessionId;assert.equal(scope.allow(sessionId),false);active=runId;now=2000;assert.equal(scope.allow(sessionId),false);now=1000;scope.close();assert.equal(scope.allow(sessionId),false);
+ assert.throws(()=>createOwnedProviderAcceptance({sessionId,runId,expiresAt:2000000,activeRunId:()=>runId},()=>1000));
+});

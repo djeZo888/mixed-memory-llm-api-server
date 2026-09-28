@@ -62,3 +62,26 @@ export function createOwnedProviderCapture(directory: string, sessionId: string,
     close() { if (!closed) { closed = true; closeSync(index); } },
   };
 }
+
+/** Temporary review-owned gate. The active run comes from the trusted Store,
+ * never from a provider request. Closing or expiry prevents new dispatch only;
+ * already accepted requests retain normal drain/settlement ownership. */
+export function createOwnedProviderAcceptance(input: {
+  sessionId: string; runId: string; expiresAt: number;
+  activeRunId: (sessionId: string) => string | undefined;
+}, now: () => number = Date.now) {
+  const id = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
+  if (!id.test(input.sessionId) || !id.test(input.runId) || !Number.isFinite(input.expiresAt) ||
+      input.expiresAt <= now() || input.expiresAt - now() > 30 * 60 * 1000)
+    throw Error("Invalid bounded owned provider acceptance");
+  const {sessionId, runId, expiresAt, activeRunId} = input;
+  let closed = false;
+  return {
+    allow: (candidate: string) => {
+      if (closed || candidate !== sessionId || now() >= expiresAt) return false;
+      try { return activeRunId(sessionId) === runId; } catch { return false; }
+    },
+    close: () => { closed = true; },
+    scope: Object.freeze({sessionId, runId, expiresAt}),
+  };
+}

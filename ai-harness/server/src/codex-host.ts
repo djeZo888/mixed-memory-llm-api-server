@@ -12,6 +12,8 @@ export interface CodexHostQualification {
   outputLimit?: number;
   /** MiMo protocol/live qualification is separate from Qwen/rootless proof. */
   frontierResponsesQualified?: true;
+  /** Temporary trusted exact session/run acceptance; never inferred from request body. */
+  frontierAcceptance?: (sessionId: string) => boolean;
   onResponsesDiagnostic?: NonNullable<GatewayOptions["responses"]>["onDiagnostic"];
   qualifiedAliases?: readonly string[];
   /** Explicit independent specialist ownership gate, never inferred from protocol PASS. */
@@ -34,7 +36,7 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     imageToolEnabled: qualification?.imageJobsQualified === true,
     delegationEnabled: qualification?.nativeDelegationQualified === true,
     maxChildren: 4,
-    qualifiedChildModels: qualification?.frontierResponsesQualified === true ? ["qwen3.8-27b", "mimo-v2.6-pro-rl"] : ["qwen3.8-27b"],
+    qualifiedChildModels: (qualification?.frontierResponsesQualified === true || !!qualification?.frontierAcceptance) ? ["qwen3.8-27b", "mimo-v2.6-pro-rl"] : ["qwen3.8-27b"],
     capabilities: qualification?.capabilities,
     launchRootless: input => createRootlessCodexLauncher(launcherPath)({ ...input, imageJobsQualified: qualification?.imageJobsQualified === true }),
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },
@@ -46,7 +48,7 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     // Invoke before broker.close(): stopping observation is not settlement proof.
     stopSettlementObservation: () => settlementObservation.abort(),
     responses: qualification ? { enabled: true, outputLimit: qualification.outputLimit, qualifiedAliases: qualification.qualifiedAliases,
-    frontierQualified: qualification.frontierResponsesQualified,
+    frontierQualified: qualification.frontierResponsesQualified, frontierAcceptance: qualification.frontierAcceptance,
     onError: qualification.onResponsesError, onDiagnostic: qualification.onResponsesDiagnostic,
     currentAliases: async () => {
       const aliases = qualification.qualifiedAliases ?? ["qwen3.8-27b-gpu0", "qwen3.8-27b"];

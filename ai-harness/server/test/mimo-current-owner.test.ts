@@ -22,3 +22,15 @@ test('unknown/stale/held/changed capacity and physical GPU never qualify from a 
  for(const patch of [{hardware_latched:null},{hardware_latched:true},{ready:false},{availability:'unknown'},{configured_context_tokens:480000},{max_output_tokens:131072},{required_gpu_uuids:['GPU-other']},{reason:'software_quarantine'},{generation:null}]){const v=node();Object.assign(v.services[0],patch);assert.throws(()=>mimoOwnerStamp(v,950000,now));}
  const v=node();v.boot_id='invalid';assert.throws(()=>mimoOwnerStamp(v,950000,now));const stale=node();stale.age_ms=15001;assert.throws(()=>mimoOwnerStamp(stale,950000,now));
 });
+
+test('control transport sends no browser fetch metadata and respects cancellation',async t=>{
+ const {createServer}=await import('node:http');const {boundedControlGet}=await import('../src/codex-production.js');
+ const server=createServer((req,res)=>{assert.equal(req.headers.authorization,'Bearer fixture');assert.equal(req.headers['sec-fetch-mode'],undefined);assert.equal(req.headers.origin,undefined);res.end('{"ok":true}');});
+ await new Promise<void>(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise<void>(r=>server.close(()=>r())));
+ const url=`http://127.0.0.1:${(server.address() as any).port}/control/v1/node/status`;
+ assert.deepEqual(await boundedControlGet(url,'fixture'),{ok:true});
+ const cancelled=new AbortController();cancelled.abort();await assert.rejects(boundedControlGet(url,'fixture',cancelled.signal));
+});
+test('owner identity ignores ordinary active request and thermal sample telemetry',()=>{
+ const before=node(),after={...node(),active_requests:1,temperature:65,observed_at:new Date(now+10).toISOString()};assert.equal(mimoOwnerStamp(before,950000,now),mimoOwnerStamp(after,950000,now+10));
+});

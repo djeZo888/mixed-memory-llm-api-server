@@ -8,7 +8,7 @@ export { readProtectedCredential } from "./protected-credential.js";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createApp } from "./app.js";
-import { createGateway, type LaneState } from "./gateway.js";
+import { createGateway, type LaneState, type GatewayOptions } from "./gateway.js";
 import { ImageUpstream } from "./image-upstream.js";
 import { createEngine } from "./engine.js";
 import { composeCodexHost, type CodexHostQualification } from "./codex-host.js";
@@ -40,7 +40,7 @@ function port(name: string, fallback: number) {
 }
 /** Explicit reviewed release entrypoint. Ordinary main.start() remains MiniMax-only.
  * The receipt is a protected host file outside task mounts and binds current instances. */
-export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false, frontierResponsesQualified = false) {
+export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false, frontierResponsesQualified = false, acceptance?: { frontier: (sessionId: string) => boolean; diagnostics?: GatewayOptions["diagnostics"] }) {
   let qualification: CodexHostQualification | undefined;
   try {
     const receipt = await loadQwenReceipt(receiptPath);
@@ -52,14 +52,15 @@ export async function startCodexPreview(receiptPath: string, outputLimit = 65536
     // counter revalidates again before/after counting on the selected lane.
     const qualifiedAliases = Object.keys(receipt.lanes);
     qualification = { protocolQualified: true, rootlessQualified: true, verifyLane, outputLimit, qualifiedAliases, nativeDelegationQualified: true,
+      ...(acceptance ? { frontierAcceptance: acceptance.frontier } : {}),
       ...(frontierResponsesQualified ? { frontierResponsesQualified: true as const } : {}),
       ...(imageJobsQualified ? { imageJobsQualified: true as const, capabilities: { image: { supported: true, qualification: "scripted_fixture" as const, reason: "Reviewed existing specialist broker integration; live Codex image generation/edit acceptance pending" } } } : {}),
       onResponsesError: createResponsesDiagnostics(path.join(required("AI_HARNESS_DATA_DIR"), "codex-responses-errors.jsonl")) };
   } catch { /* A failed optional preview must not remove MiniMax or stored histories. */ }
   if (!qualification) process.stderr.write("Codex preview unavailable: deployment identity/allocation unqualified; MiniMax startup continues\n");
-  return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit });
+  return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit, providerDiagnostics: acceptance?.diagnostics });
 }
-export async function start(codex: { enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number } = {}) {
+export async function start(codex: { enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number; providerDiagnostics?: GatewayOptions["diagnostics"] } = {}) {
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw new Error("Node 24 is required");
   const dataDir = required("AI_HARNESS_DATA_DIR"),
@@ -197,6 +198,7 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     gateway = createGateway({
       ownership,
       responses: codexHost.responses,
+      diagnostics: codex.providerDiagnostics,
       qwenOutputLimit: codex.pilotOutputLimit ?? codex.qualification?.outputLimit,
       frontier,
       selectedFrontierModel,

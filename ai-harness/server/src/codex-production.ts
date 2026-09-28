@@ -76,11 +76,11 @@ export async function loadQwenReceipt(file: string): Promise<QwenDeploymentRecei
       ![0, process.getuid?.()].includes(st.uid) || st.size > 32768) fail();
   return validateQwenReceipt(JSON.parse(await readFile(file, "utf8")));
 }
-async function boundedGet(url: string, key: string): Promise<any> {
+export async function boundedControlGet(url: string, key: string, signal?: AbortSignal): Promise<any> {
   // Control rejects browser Sec-Fetch headers. Use the existing host HTTP style,
   // no browser fetch metadata, redirects, pooled connection or ambient proxy.
   return new Promise((resolve, reject) => {
-    const req = request(url, { method: "GET", agent: false, headers: { authorization: `Bearer ${key}`, accept: "application/json" }, signal: AbortSignal.timeout(30000) }, response => {
+    const req = request(url, { method: "GET", agent: false, headers: { authorization: `Bearer ${key}`, accept: "application/json" }, signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(30000)]) : AbortSignal.timeout(30000) }, response => {
       const chunks: Buffer[] = []; let size = 0;
       response.on("data", (chunk: Buffer) => { size += chunk.length; if (size > 512 * 1024) { response.destroy(); reject(Error("Bounded Qwen identity response exceeded")); } else chunks.push(chunk); });
       response.on("error", () => reject(Error("Qwen identity transport unavailable")));
@@ -93,7 +93,7 @@ async function boundedGet(url: string, key: string): Promise<any> {
   });
 }
 export function createProductionQwenVerifier(receiptValue: unknown, credentials: { controlKey: string; inferenceKey: string },
-  get: (url: string, key: string) => Promise<any> = boundedGet, now: () => number = Date.now) {
+  get: (url: string, key: string) => Promise<any> = boundedControlGet, now: () => number = Date.now) {
   const receipt = validateQwenReceipt(receiptValue);
   return async (alias: string): Promise<QwenCountQualification> => {
     if (!Object.hasOwn(receipt.lanes, alias)) return fail();
