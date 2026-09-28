@@ -468,10 +468,36 @@ export class CodexEngine implements Engine {
       this.state("active");
       return;
     }
+    if (method === "thread/tokenUsage/updated") {
+      if (p.threadId !== this.nativeId)
+        fault("Notification for an unowned native thread");
+      if (
+        !identifier(p.turnId) ||
+        !isRecord(p.tokenUsage) ||
+        !isRecord(p.tokenUsage.last) ||
+        !Number.isSafeInteger(p.tokenUsage.last.totalTokens) ||
+        Number(p.tokenUsage.last.totalTokens) < 0 ||
+        p.tokenUsage.modelContextWindow !== this.runtime.contextLimit
+      )
+        fault("Invalid or unqualified native context usage");
+      // Pinned thread/resume replays historical usage before turn/start. It is
+      // neither a new turn nor proof of active ownership. Await current usage
+      // instead of attributing the restored snapshot to the follow-up request.
+      const current = this.active && !!this.turnId && p.turnId === this.turnId;
+      this.options.onUpdate({
+        type: "context",
+        used: current ? Number(p.tokenUsage.last.totalTokens) : null,
+        estimated: true,
+        source: current
+          ? "codex.latest-request.totalTokens"
+          : "codex.restored-usage.awaiting-current-request",
+      });
+      this.cursor++;
+      return;
+    }
     const relevant =
       method.startsWith("turn/") ||
-      method.startsWith("item/") ||
-      method === "thread/tokenUsage/updated";
+      method.startsWith("item/");
     if (!relevant) {
       if (
         [
@@ -568,21 +594,6 @@ export class CodexEngine implements Engine {
           nativeMessageId: p.itemId,
           channel: item.channel ?? "unknown",
           phaseSource: "codex.item.phase",
-        });
-      } else if (method === "thread/tokenUsage/updated") {
-        if (
-          !isRecord(p.tokenUsage) ||
-          !isRecord(p.tokenUsage.last) ||
-          !Number.isSafeInteger(p.tokenUsage.last.totalTokens) ||
-          Number(p.tokenUsage.last.totalTokens) < 0 ||
-          p.tokenUsage.modelContextWindow !== this.runtime.contextLimit
-        )
-          fault("Invalid or unqualified native context usage");
-        this.options.onUpdate({
-          type: "context",
-          used: Number(p.tokenUsage.last.totalTokens),
-          estimated: true,
-          source: "codex.latest-request.totalTokens",
         });
       }
     }
