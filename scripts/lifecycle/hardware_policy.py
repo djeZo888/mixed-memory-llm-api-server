@@ -117,20 +117,16 @@ class RegisteredLatchStore:
         else:
             storage_io = self.storage_io
         from lifecycle.storage_binding import _entered_storage_context
-        # Same registered root-payload guard as the installed owner helper,
-        # before and after every AI-service state write; no helper path fallback.
-        self.binding.storage.root_payload_guard(self.binding.registry, roles=('data',))
+        # Periodic proofs retain mounted/path/anchored checks; recursive root
+        # payload scans remain at initialization and lifecycle boundaries.
         self.binding.validate_path('services', self.binding.path('services', STATE_SUFFIX))
-        try:
-            with self.binding.mounted_guard(storage_io, roles=('data',)) as guard:
-                with _entered_storage_context(storage_io.AnchoredRoot(self.binding.path('services'), guard)) as anchored:
-                    # No mkdir/bootstrap fallback. Activation must install protected state.
-                    HardwareLatch(anchored.read_json(STATE_SUFFIX, max_bytes=65536))
-                    HardwareLatch(value)
-                    anchored.atomic_json(STATE_SUFFIX, value)
-                    anchored.check()
-        finally:
-            self.binding.storage.root_payload_guard(self.binding.registry, roles=('data',))
+        with self.binding.mounted_guard(storage_io, roles=('data',)) as guard:
+            with _entered_storage_context(storage_io.AnchoredRoot(self.binding.path('services'), guard)) as anchored:
+                # No mkdir/bootstrap fallback. Activation must install protected state.
+                HardwareLatch(anchored.read_json(STATE_SUFFIX, max_bytes=65536))
+                HardwareLatch(value)
+                anchored.atomic_json(STATE_SUFFIX, value)
+                anchored.check()
         _validate_borrowed_lease(self.lease, system_root=self.system_root, trusted_uid=self.trusted_uid)
 
 

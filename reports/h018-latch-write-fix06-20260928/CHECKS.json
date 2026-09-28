@@ -1,0 +1,106 @@
+{
+  "status": "PASS",
+  "recordedUtc": "2026-09-28T01:16:32.304258+00:00",
+  "testsRun": 59,
+  "failures": 0,
+  "errors": 0,
+  "skipped": [],
+  "elapsedSeconds": 0.499,
+  "command": "PYTHONPATH=scripts python3 -m unittest -v tests.lifecycle.test_latch_periodic_write tests.lifecycle.test_h005_latch_initialization tests.test_hardware_latch tests.test_node_hardware_wiring tests.install.test_storage_io.StorageIOTests.test_atomic_json_interruption_preserves_previous_and_resume tests.install.test_storage_io.StorageIOTests.test_mount_loss_preserves_old_state_without_error_fallback tests.install.test_storage_io.StorageIOTests.test_registration_identity_drift_rejected_even_same_device tests.install.test_storage_io.StorageIOTests.test_symlink_ancestry_and_file_symlinks_refused tests.install.test_storage_io.StorageIOTests.test_hardlink_truncate_and_replace_rejected_without_changing_bytes tests.install.test_storage_io.StorageIOTests.test_file_or_parent_permission_drift_rejected tests.install.test_storage_io.StorageIOTests.test_json_requires_private_regular_bounded_object tests.install.test_storage_io.MountedStorageGuardTests.test_same_device_replacement_mount_id_rejected tests.install.test_storage_io.MountedStorageGuardTests.test_registry_byte_drift_rejected_with_same_inode tests.install.test_storage_io.MountedStorageGuardTests.test_registry_replacement_with_identical_bytes_rejected tests.install.test_storage_io.MountedStorageGuardTests.test_guarded_write_detects_mount_loss_through_fast_guard tests.lifecycle.test_storage_binding.StorageBindingTests.test_bound_identity_rejects_registry_rewrite_or_deletion tests.lifecycle.test_storage_binding.StorageBindingTests.test_hidden_submount_rejected_for_existing_and_missing_descendants tests.lifecycle.test_storage_binding.StorageBindingTests.test_private_json_reader_rejects_fifo_links_modes_and_oversize tests.lifecycle.test_real_storage_roles.RealStorageRoleIntegrationTests.test_reduced_roles_require_protected_registration_and_keep_full_identity tests.lifecycle.test_real_storage_roles.RealStorageRoleIntegrationTests.test_data_only_rejects_changed_uuid_mount_and_unverified_configuration tests.lifecycle.test_real_storage_roles.RealStorageRoleIntegrationTests.test_real_role_guard_refuses_same_device_nested_mount_before_write tests.lifecycle.test_real_storage_roles.RealStorageRoleIntegrationTests.test_real_data_only_writer_retains_unverified_registration_byte_guard tests.lifecycle.test_lease.LeaseTests.test_borrow_validation_never_opens_lock_or_flocks tests.lifecycle.test_lease.LeaseTests.test_constructor_and_arbitrary_fd_do_not_mint_lease tests.lifecycle.test_lease.LeaseTests.test_stale_lease_rejected_after_owner_exit tests.lifecycle.test_lease.LeaseTests.test_replaced_inode_rejected_and_old_descriptor_released tests.lifecycle.test_lease.LeaseTests.test_expected_scope_rejects_other_root_uid_and_subclass tests.lifecycle.test_lease.LeaseTests.test_permission_change_invalidates_active_lease",
+  "targets": [
+    "tests.lifecycle.test_latch_periodic_write",
+    "tests.lifecycle.test_h005_latch_initialization",
+    "tests.test_hardware_latch",
+    "tests.test_node_hardware_wiring",
+    "tests.install.test_storage_io.StorageIOTests.test_atomic_json_interruption_preserves_previous_and_resume",
+    "tests.install.test_storage_io.StorageIOTests.test_mount_loss_preserves_old_state_without_error_fallback",
+    "tests.install.test_storage_io.StorageIOTests.test_registration_identity_drift_rejected_even_same_device",
+    "tests.install.test_storage_io.StorageIOTests.test_symlink_ancestry_and_file_symlinks_refused",
+    "tests.install.test_storage_io.StorageIOTests.test_hardlink_truncate_and_replace_rejected_without_changing_bytes",
+    "tests.install.test_storage_io.StorageIOTests.test_file_or_parent_permission_drift_rejected",
+    "tests.install.test_storage_io.StorageIOTests.test_json_requires_private_regular_bounded_object",
+    "tests.install.test_storage_io.MountedStorageGuardTests.test_same_device_replacement_mount_id_rejected",
+    "tests.install.test_storage_io.MountedStorageGuardTests.test_registry_byte_drift_rejected_with_same_inode",
+    "tests.install.test_storage_io.MountedStorageGuardTests.test_registry_replacement_with_identical_bytes_rejected",
+    "tests.install.test_storage_io.MountedStorageGuardTests.test_guarded_write_detects_mount_loss_through_fast_guard",
+    "tests.lifecycle.test_storage_binding.StorageBindingTests.test_bound_identity_rejects_registry_rewrite_or_deletion",
+    "tests.lifecycle.test_storage_binding.StorageBindingTests.test_hidden_submount_rejected_for_existing_and_missing_descendants",
+    "tests.lifecycle.test_storage_binding.StorageBindingTests.test_private_json_reader_rejects_fifo_links_modes_and_oversize",
+    "tests.lifecycle.test_real_storage_roles.RealStorageRoleIntegrationTests.test_reduced_roles_require_protected_registration_and_keep_full_identity",
+    "tests.lifecycle.test_real_storage_roles.RealStorageRoleIntegrationTests.test_data_only_rejects_changed_uuid_mount_and_unverified_configuration",
+    "tests.lifecycle.test_real_storage_roles.RealStorageRoleIntegrationTests.test_real_role_guard_refuses_same_device_nested_mount_before_write",
+    "tests.lifecycle.test_real_storage_roles.RealStorageRoleIntegrationTests.test_real_data_only_writer_retains_unverified_registration_byte_guard",
+    "tests.lifecycle.test_lease.LeaseTests.test_borrow_validation_never_opens_lock_or_flocks",
+    "tests.lifecycle.test_lease.LeaseTests.test_constructor_and_arbitrary_fd_do_not_mint_lease",
+    "tests.lifecycle.test_lease.LeaseTests.test_stale_lease_rejected_after_owner_exit",
+    "tests.lifecycle.test_lease.LeaseTests.test_replaced_inode_rejected_and_old_descriptor_released",
+    "tests.lifecycle.test_lease.LeaseTests.test_expected_scope_rejects_other_root_uid_and_subclass",
+    "tests.lifecycle.test_lease.LeaseTests.test_permission_change_invalidates_active_lease"
+  ],
+  "regressionOriginal": {
+    "result": "EXPECTED_FAIL",
+    "testsRun": 1,
+    "recursiveRootScanCalls": 8,
+    "retainedGuardAssertions": "passed before final scan-count assertion"
+  },
+  "regressionCorrected": {
+    "result": "PASS",
+    "testsRun": 1,
+    "recursiveRootScanCalls": 0,
+    "changedGpuProofWrites": 4,
+    "canonicalLeaseValidations": 12,
+    "registeredPathValidations": 12,
+    "mountedGuards": 4,
+    "boundedAnchoredReads": 4,
+    "hardwareLatchValidations": 8,
+    "anchoredAtomicWritesAndFinalChecks": 4
+  },
+  "scope": "local source fixtures only; no live Linux mount, hardware, VM, harness, deployment, build or model acceptance",
+  "knownLegacyTargetsNotRun": [
+    "tests.lifecycle.test_hardware_policy: existing three-GPU unpack with four UUIDs; old periodic scan expectation",
+    "tests.lifecycle.test_boot_hardware_readiness: existing three-GPU unpack with four UUIDs"
+  ],
+  "scopeIntegrity": {
+    "onlyModifiedPreexistingScript": "scripts/lifecycle/hardware_policy.py",
+    "allOtherHardwarePolicyMethodsAstUnchanged": true,
+    "initializationRecursiveScanLinesRetained": [
+      88,
+      109
+    ],
+    "allOtherTrackedScriptsByteUnchanged": true,
+    "sourceSha256Before": "c779739a1776ea919f491a60a34811639e2df934a94ea909053710e4864e7229",
+    "sourceSha256After": "cf5581289148f419f7056165e244ade8d696542cbb24c045b7d3533f873c46d1"
+  },
+  "independentSourceReview": {
+    "agent": "guard_review",
+    "status": "NO_BLOCKING_FINDINGS",
+    "reviewed": "exact facility chain, final source diff, regression assertions, recorded targeted results and deployment pin effects",
+    "testsRerunByReviewer": false,
+    "reviewedUtc": "2026-09-28T01:19:18.411525+00:00"
+  },
+  "publicationChecks": {
+    "scopedSecretScan": "PASS",
+    "scanScope": [
+      "reports/h018-latch-write-fix06-20260928/CHECKS.json",
+      "reports/h018-latch-write-fix06-20260928/EARLY.json",
+      "reports/h018-latch-write-fix06-20260928/FINDINGS.json",
+      "reports/h018-latch-write-fix06-20260928/README.md",
+      "reports/h018-latch-write-fix06-20260928/SOURCE.patch",
+      "scripts/lifecycle/hardware_policy.py",
+      "tests/lifecycle/test_latch_periodic_write.py"
+    ],
+    "patterns": [
+      "private_key",
+      "aws_access_key",
+      "github_token",
+      "openai_token",
+      "slack_token",
+      "credential_literal"
+    ],
+    "limitation": "high-signal local regex scan, not a comprehensive secret detector",
+    "stagedDiffWhitespace": "PASS",
+    "sourcePatchReverseApplyCheck": "PASS",
+    "reviewableArtifactsEmittedBeforePackaging": true,
+    "patchFormatting": "One context line preserves normal git apply while avoiding trailing spaces on blank context lines in the committed patch artifact."
+  }
+}

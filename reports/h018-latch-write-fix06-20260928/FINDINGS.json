@@ -1,0 +1,74 @@
+{
+  "status": "SOURCE_FIX_TARGETED_CHECKS_PASS_NOT_DEPLOYED",
+  "startingBase": "639e72ff6d64bc5840d4201e871d191a8d8b827a",
+  "sourceSha256Before": "c779739a1776ea919f491a60a34811639e2df934a94ea909053710e4864e7229",
+  "sourceSha256After": "cf5581289148f419f7056165e244ade8d696542cbb24c045b7d3533f873c46d1",
+  "sourcePatchSha256": "6d36b006f1207cd22a9ea1dd16a642e20c15592789535b3b771ed5804f14d1f6",
+  "change": "Remove only pre/post recursive root scans from RegisteredLatchStore.write; retain all independent guard calls and initialization scans.",
+  "observedLocalRegression": {
+    "originalRootScans": 8,
+    "correctedRootScans": 0,
+    "changedGpuProofWrites": 4,
+    "latencyMeasurement": false
+  },
+  "guardChain": {
+    "canonicalLease": "hardware_policy.py:114,130 -> common/lifecycle_lease.py:245-253; active mint/process/FD/canonical inode/mode/scope",
+    "registeredPath": "lifecycle/storage_binding.py:254-285 -> verify(data), protected no-symlink ancestry, actual mount UUID/type",
+    "mountedIdentity": "lifecycle/storage_binding.py:192-233 and install/storage_io.py:120-158,228-319; protected registration bytes/inode/modes, mount IDs, stable identity, before/after verify_full",
+    "protectedWrite": "install/storage_io.py:348-439,579-648; protected FD ancestry/device/path, 65536-byte private existing JSON, HardwareLatch old/new validation, anchored atomic replace/fsync and explicit check",
+    "stickyAndFreshness": "control/hardware_latch.py:251-320 and lifecycle/hardware_policy.py:229-246 unchanged"
+  },
+  "boundariesRetained": {
+    "hardwarePolicyInitialize": [
+      88,
+      109
+    ],
+    "mimoOwner": [
+      342,
+      344,
+      356,
+      376,
+      732,
+      749,
+      888,
+      918,
+      1004,
+      1019
+    ],
+    "otherTrackedScripts": "unchanged, including all lifecycle/deployment guards"
+  },
+  "deploymentClosureNextWindow": {
+    "oldSharedPolicySha256": "c779739a1776ea919f491a60a34811639e2df934a94ea909053710e4864e7229",
+    "newSharedPolicySha256": "cf5581289148f419f7056165e244ade8d696542cbb24c045b7d3533f873c46d1",
+    "manifestEntries": [
+      "scripts/h018/manifest.candidate.json:306 control-api/scripts/lifecycle/hardware_policy.py",
+      "scripts/h018/manifest.candidate.json:350 node-api/scripts/lifecycle/hardware_policy.py"
+    ],
+    "hardcodedActualImportPins": [
+      "scripts/h018/live04/deploy.py:52",
+      "scripts/h018/live04/start02.py:37"
+    ],
+    "completeAcceptanceSourceMap": "scripts/lifecycle/concurrent_profiles.py:222-249,282",
+    "filenameClosures": [
+      "scripts/control/installation.py:38",
+      "scripts/control/node_installation.py:28"
+    ],
+    "requirement": "Review and bind new actually installed/imported bytes and dependent complete source identities in a fresh next-window deployment; preserve all old manifests/receipts as historical evidence.",
+    "imageOwnerReleaseSourceMap": "scripts/image_runtime/service.py:43-51,318-331: protected release_source_sha256 includes hardware_policy; an updated image-owner release copy requires fresh reviewed matching config, not rewriting historical config"
+  },
+  "currentHolderProvidedByRoot": {
+    "atUtc": "2026-09-28T01:10:54Z",
+    "process": "node_serve.py",
+    "unit": "llm-node.service",
+    "pid": 3309508,
+    "fd": 7,
+    "inode": 1838,
+    "device": "00:1a",
+    "evidence": "User-supplied W1 /proc/locks plus all-FD scan; not independently queried by this source-only task"
+  },
+  "historical010016Holder": "UNPROVEN",
+  "causalityLimit": "No exact historical cause, measured scan latency, all-contention fix, live Linux-mount acceptance, deployment qualification or model/application acceptance claimed.",
+  "prohibitedActionsPerformed": false,
+  "preservation": "No old application/history/staged files, manifests, evidence or source pins changed. Recovery belongs to root/W1.",
+  "localStatusRead": "Expected local tasks/H018-20260928/STATUS.md unavailable; latest task authority and supplied timeline used."
+}
