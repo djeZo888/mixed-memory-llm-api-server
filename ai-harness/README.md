@@ -8,13 +8,14 @@ refresh, with no fallback or retry. Root visual review is recorded in the
 [compact evidence summary](docs/acceptance-v0.0.3.json).
 
 See [chat examples](docs/chat-examples-v0.0.3.md) for usable image prompts.
-The [optional Codex harness plan](PLAN-CODEX-HARNESS.md) is being implemented
+The [optional Codex harness](PLAN-CODEX-HARNESS.md) is deployed
 as a selectable preview beside MiniMax. The pinned Codex 0.158.0 integration
 uses local Qwen through Sova's shared gateway, without OpenAI model login or
 paid inference. MiniMax remains the default. See the
 [execution record](../docs/h021-codex-execution.md) and
-[real-model gate](../reports/h021-codex-stage3.md) for completed checks and
-remaining acceptance.
+[current acceptance report](../reports/h021-codex-preview.md) for completed
+checks, retained failures and remaining limits. The first two Codex PDF workflow
+attempts failed; use MiniMax for the tested PDF extraction/creation workflow.
 The [earlier worker-path failure](docs/acceptance-v0.0.3-historical-worker-failure.md)
 remains historical evidence. [v0.0.2 acceptance](docs/acceptance-v0.0.2.md)
 records earlier chat/progress/download/ZIP checks; [v0.0.1](docs/acceptance-v0.0.1.md)

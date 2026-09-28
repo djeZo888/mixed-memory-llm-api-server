@@ -79,12 +79,26 @@ installer implementation and tests remain paused.
 
 ## Optional Codex harness
 
-**PLAN ONLY — not implemented.** Follow the
-[Codex harness plan](ai-harness/PLAN-CODEX-HARNESS.md) after a separate execution
-request. Keep MiniMax available, qualify the Responses/local-provider contract
-first, then implement the engine adapter, shared tools and lifecycle acceptance.
-Compare both engines on the same models and bounded tasks before choosing a
-default. The current App Server experimental status is an explicit pilot risk.
+**H021 preview implemented; MiniMax remains default.** The local Responses
+adapter, private App Server, persistent per-engine chats, tools and central
+engine status are deployed. See the [acceptance report](reports/h021-codex-preview.md)
+and [original plan](ai-harness/PLAN-CODEX-HARNESS.md). Remaining qualification:
+
+- Investigate the PDF workflow's early completion. Two retained attempts failed
+  despite successful extraction; do not turn repeated prompting into a PASS.
+- Qualify live compaction and recall through an owned test path. Native protocol
+  fixtures passed, but the deployed app has no short forced-compaction entrypoint.
+  Avoid a large prefill merely to trigger the production threshold.
+- After the separate near-950K benchmark is reviewed and settled, fix the existing
+  MiniMax-to-MiMo validation failure and qualify Codex frontier delegation.
+- Qualify Codex on Qwen1 without bypassing its current-generation metadata guard.
+- Qualify native media recognition separately from specialist image tools.
+- If optimizing Codex latency, first measure gateway validation, tokenization,
+  queue, inference and native continuation separately. The small matched tasks
+  were slower than MiniMax; existing inter-request gaps do not prove a cause.
+
+Keep the pinned App Server's experimental status explicit. Do not change the
+default engine based only on its feature list or scripted fixtures.
 
 ## Flash follow-up qualification
 

@@ -1,0 +1,108 @@
+{
+  "task": "H021-ACCEPT06",
+  "nativeSessionId": "01a0e723-a48a-7843-b8ba-eb5ea1b44c1a",
+  "exactSource": "adb763cfd0d0e2b6174dfa28439e117f8a2a03be",
+  "imageId": "822a648bb4ae3fb431f1f2c32ee1d4b320b24df66382451136b7f3fd90115327",
+  "policySha256": "a8d237cf0e4fd7fcbdca5d025ce7981dfda5b6db676d065c0f8dfe399d9923e3",
+  "outputCeiling": 65536,
+  "context": 480000,
+  "finishedUtc": "2026-09-28T08:56:27.764889+00:00",
+  "finalState": "TERMINAL_BLOCKED_NATIVE_OWNERSHIP_UNCONFIRMED",
+  "results": {
+    "cold-resume": {
+      "verdict": "PASS",
+      "settled": true,
+      "sessionId": "43020d7c-88bb-401f-a430-0c30dcc01232",
+      "runId": "52f6fd65-52e6-44a6-890b-8b7def804678"
+    },
+    "pdf-regression": {
+      "verdict": "FAIL",
+      "settled": true,
+      "sessionId": "f33c4c84-8e55-4b80-a396-14b7d02e61b9",
+      "runId": "ee75488e-ef83-48ed-a060-1deda96e3634"
+    },
+    "stop-reconnect-followup": {
+      "verdict": "FAIL",
+      "settled": true,
+      "sessionId": "3497483a-8573-42a0-9704-a08174936cc3",
+      "runId": null
+    },
+    "ui-status": {
+      "verdict": "PASS",
+      "settled": true,
+      "sessionId": null,
+      "runId": null
+    },
+    "image-minimax": {
+      "verdict": "PASS",
+      "settled": true,
+      "sessionId": "c76ba1b2-01e2-4eb9-a51c-2f3a4f1598db",
+      "runId": "29e898d4-8586-4238-bafe-c5bef6068552"
+    },
+    "image-codex": {
+      "verdict": "FAIL",
+      "settled": false,
+      "sessionId": "bd71984f-2f90-4375-bca4-6c76730ba224",
+      "runId": "fb979a83-38aa-41df-8088-be5417188bcf"
+    },
+    "stop-ui": {
+      "verdict": "FAIL",
+      "settled": true,
+      "sessionId": "3497483a-8573-42a0-9704-a08174936cc3",
+      "runId": "1b50f607-b505-4c69-b5ff-b9d3747c0c7f"
+    },
+    "stop-followup": {
+      "verdict": "PASS",
+      "settled": true,
+      "sessionId": "3497483a-8573-42a0-9704-a08174936cc3",
+      "runId": "c7f97888-dd23-42b6-b553-e93fedbd8d64"
+    },
+    "compaction-recall": {
+      "verdict": "NOT_TESTED",
+      "settled": true,
+      "sessionId": null,
+      "runId": null
+    },
+    "stop-final": {
+      "verdict": "FAIL",
+      "settled": false,
+      "sessionId": "bd71984f-2f90-4375-bca4-6c76730ba224",
+      "runId": "fb979a83-38aa-41df-8088-be5417188bcf"
+    }
+  },
+  "sourceReceiptSha256": "e0965713ab8d1affb1bf4e1f7b63b2067e779a8660c7cbd341f6e24c873d2463",
+  "stopImageFailure": {
+    "sessionId": "bd71984f-2f90-4375-bca4-6c76730ba224",
+    "runId": "fb979a83-38aa-41df-8088-be5417188bcf",
+    "runStatus": "interrupted",
+    "settled": false,
+    "reason": "Repeated image_capabilities schema validation failures; bounded existing real UI Stop interrupted run with engine_settlement_unknown and engine_cleanup_unknown",
+    "actualUiStop": true,
+    "cancelPostCount": 1,
+    "autonomousCapabilityCalls": 16,
+    "autonomousCapabilityRetries": 15,
+    "modelPostSubmissions": 1,
+    "operatorRetries": 0,
+    "submittedImageJobs": 0,
+    "outputImages": 0,
+    "noProviderFallback": true
+  },
+  "physicalCleanup": {
+    "exactContainerAbsent": true,
+    "evidenceObservedAt": "2026-09-28T08:55:25Z",
+    "logicalCleanupConfirmed": false,
+    "quarantinePreserved": true,
+    "note": "Exact container event identity and exists exit1; does not change failed run outcome or clear stored uncertainty"
+  },
+  "holds": {
+    "frontier": "preserved",
+    "finalQwen1Acceptance": "retained pending reviewed cleanup handoff"
+  },
+  "protectedBenchmark": "not inspected or changed",
+  "nativeCliExit": {
+    "code": 0,
+    "at": "2026-09-28T08:58:08Z"
+  },
+  "codexImageGatewayRequests": 18,
+  "note": "One user task, 16 autonomous invalid capability calls, zero image jobs. These are model tool retries, not HTTP retry or operator prompt replay."
+}

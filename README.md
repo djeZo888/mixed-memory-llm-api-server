@@ -1,7 +1,7 @@
 # Sova
 
 Sova is the whole-system name for this open-source AI workspace project: a
-chat/task harness, MiniMax agent runtime, two Qwen text instances, a selectable
+chat/task harness, MiniMax and optional Codex agent runtimes, two Qwen text instances, a selectable
 frontier reasoning worker, dedicated
 image generation and guarded editing, search/browser/PDF/coding tools, and
 deterministic lifecycle, status and administration software. Source paths, VM
@@ -23,9 +23,12 @@ service launch paths remain pinned. Manual update commands are available.
 See the [verified policy and coverage limits](docs/h007-update-policy-20260926.md). The historical H006
 report stays unchanged. Maintenance-window automation is future work.
 
-The [Codex harness plan](ai-harness/PLAN-CODEX-HARNESS.md) proposes a selectable
-alternative to MiniMax. It is **planning only**, with local-provider protocol
-qualification required before implementation or a default-engine change.
+**Codex is available as a new-chat preview alongside MiniMax.** MiniMax remains
+the default, and each conversation keeps its selected engine. Codex uses the
+local Qwen service without hosted OpenAI inference. See the
+[implementation and acceptance report](reports/h021-codex-preview.md) for tested
+workflows and remaining limits, and the
+[original integration plan](ai-harness/PLAN-CODEX-HARNESS.md) for its scope.
 The [H020 status repair](docs/h020-results.md) now separates configured models,
 selected frontier and fresh native identity, with measured GPU UUID dependency
 joins. The status-only deployment preserves the running model services.
@@ -35,7 +38,10 @@ flowchart TB
     User["LAN browser"]
     subgraph H["current placement: ai-harness VM"]
         Web["Web chat and task API"]
+        Engines["Per-chat engine selection / MiniMax default"]
         Agent["MiniMax main and child agents"]
+        Codex["Codex preview / private App Server"]
+        Responses["Local Responses adapter / Qwen0 qualified"]
         Tools["Search, browser, PDF and coding tools"]
         Gateway["Inference gateway: two Qwen slots + one frontier slot"]
         ImageJobs["Image tools and job broker"]
@@ -57,7 +63,13 @@ flowchart TB
     end
     User --> Web
     User --> Status
-    Web --> Agent
+    Web --> Engines
+    Engines --> Agent
+    Engines --> Codex
+    Codex --> Responses
+    Responses --> Gateway
+    Codex --> Tools
+    Codex --> ImageJobs
     Web --> Data
     Agent --> Tools
     Agent --> Gateway

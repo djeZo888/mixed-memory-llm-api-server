@@ -2,10 +2,12 @@
 
 ## Current checkpoint
 
-September 28, 2026, 08:09 UTC. Codex 0.158.0 is deployed as an optional
+September 28, 2026, 08:56 UTC. Codex 0.158.0 is deployed as an optional
 new-chat engine. MiniMax remains default; existing conversations retain their
-engine, history and files. Final tool/lifecycle acceptance and central engine
-status integration are in progress.
+engine, history and files. The final application and central engine-status
+release passed deployment readback at 08:27 UTC. Final focused acceptance found
+an image-tool argument loop and an unconfirmed logical cleanup after Stop;
+those remain under bounded investigation. This is not full production acceptance.
 
 The independent MiMo near-950K test was neither inspected nor changed. MiMo
 dispatch remains held in Sova to avoid competing with it. Its previous
@@ -39,8 +41,14 @@ errors and successfully extracted and rendered the source. It then ended with
 response used 13 tokens; no request reached the 1,024-token cap. The native
 runtime reported task completion, without a retained decoder error. The raw
 upstream finish reason was not retained, so model-versus-provider cause is not
-proved. The installed instructions are being corrected to reflect the preview's
-lack of native vision. The original failed attempt remains in the results.
+proved. The installed instructions now require absolute workspace paths and
+text/metadata checks, and avoid asking the preview to perform unsupported native
+vision. One unchanged-fixture repeat on the corrected release also failed: it
+extracted text, announced rendering, and ended without the numeric answer or
+summary PDF. That repeat used the normal 65,536-token ceiling, a changed
+condition from the matched table. No third attempt or prompt rescue was made.
+PDF helpers work directly, but this complete Codex workflow is not qualified.
+Use MiniMax for the tested PDF workflow.
 
 Completion times end at the application's terminal task state. Separately
 recorded confirmations establish that all native work and upstream requests
@@ -59,7 +67,21 @@ they are not occupied context.
   cancellation, uncertain ownership and restart behavior have fixture coverage.
 - Image tool catalog, trusted enable flag, existing broker integration and
   3,300-second queue/execution timeout passed native configuration and focused
-  tests. The live Codex image workflow is still pending.
+  tests. MiniMax generated one correct 1024×576 blue-mug image in 37.2 seconds;
+  inline preview, downloaded PNG, independent settlement and visual review passed.
+  Codex repeatedly supplied invalid `__ns`/`ns` arguments to the no-argument
+  capabilities tool. Sixteen calls failed schema validation, with zero image
+  jobs dispatched. There were no operator retries or provider fallbacks.
+- The actual UI Stop was exercised once on that Codex tool loop. The task became
+  interrupted and inference drained. Exact container kill/removal events and
+  `podman exists` exit 1 prove physical removal. The application nevertheless
+  retained uncertain native ownership and quarantined that workspace. This
+  cancellation check remains FAIL until the confirmation path is understood;
+  no stored uncertainty was manually cleared. An earlier Stop fixture used an
+  incorrect accessible-button locator and never clicked; its naturally completed
+  task and successful follow-up are not cancellation acceptance.
+
+See the [focused results](h021-codex-focused-cases.json) for distinct outcomes.
 
 ## Known limits
 
@@ -70,9 +92,13 @@ they are not occupied context.
   Specialist image generation/editing is a separate tool capability.
 - MiMo live Codex acceptance is deferred while the independent test owns it.
 - A real native child completed successfully and reconnect preserved history.
-  Its next follow-up was interrupted before new inference; lifecycle diagnosis
-  is in progress. Local-model recall after compaction is still unqualified.
-  Scripted/native mock evidence is not substituted for these checks.
+  Its next follow-up was interrupted before new inference. A reproduced native
+  resume event-ordering defect is now repaired: historical token-usage updates
+  cannot claim ownership of a new turn. Seven new boundary fixtures passed;
+  a distinct live cold-resume follow-up passed in 34.3 seconds, using the same
+  native thread and one fresh authorized inference request. History and final
+  native/gateway settlement were verified. The original failure remains recorded.
+  Local-model recall after compaction is still unqualified.
 - An early real-Qwen stream decoding failure remains unproven in cause. Later
   successful cases do not erase it. The new protected diagnostics record only
   bounded, static error codes and ownership IDs, without prompts or credentials.
@@ -84,9 +110,18 @@ Codex executable, source and generated schemas are pinned to 0.158.0 /
 task-scoped gateway credentials and global inference admission are reused.
 No hosted OpenAI inference, login or search fallback is configured.
 
-The final release will restore the normal 65,536-token output ceiling on both
-engines, retain Qwen's 480,000 context and Codex's 400,000 compaction threshold,
-and expose current engine metadata in central status. Old releases, service
+The final release restores the normal 65,536-token output ceiling on both
+engines and retains Qwen's 480,000 context and Codex's 400,000 compaction
+threshold. Central status now reads the configured engine catalog and observed
+app policy, with separate version, freshness and unavailable states. It does
+not infer engine readiness from a model being loaded. Old releases, service
 configuration backups, a consistent database backup and private evidence remain
 available. No automatic rollback or replay is performed when task settlement is
 uncertain. Publication remains on the feature branch and draft PR10.
+
+Deployed application source: `adb763cfd0d0e2b6174dfa28439e117f8a2a03be`.
+The rootless Codex image and read-only policy are pinned in the deployment
+receipt. Both output ceilings were verified from the reviewed source and active
+unit; this did not require generating a 64K answer. Application activation
+preserved all 39 session rows, 194 messages, 60 runs and 104 file rows present
+at the deployment barrier, along with image history, active selector and holds.
