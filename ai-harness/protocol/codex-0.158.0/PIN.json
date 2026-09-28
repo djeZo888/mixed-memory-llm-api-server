@@ -1,0 +1,56 @@
+{
+  "release": "rust-v0.158.0",
+  "version": "0.158.0",
+  "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+  "sourceUrl": "https://github.com/openai/codex/tree/064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+  "releaseUrl": "https://github.com/openai/codex/releases/tag/rust-v0.158.0",
+  "selection": "Official stable release explicitly selected; no coordinator-bundled binary used. Source/schema review and Linux execution gates tracked separately.",
+  "assets": [
+    {
+      "name": "codex-x86_64-unknown-linux-musl.tar.gz",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.158.0/codex-x86_64-unknown-linux-musl.tar.gz",
+      "archiveSha256": "af9f5aa6e6662accf9d707cef0d9ca083880a173a9c2b6c22947edb7830e5778",
+      "executableSha256": "167c0148a849d2444f1b5a7fb5f8bb2de1de5ae13a2a504b833fc765980f5cd9",
+      "platform": "linux",
+      "executablePath": "/Users/agent/CodexProjects/llm-orchestration/tasks/H021-PROTOCOL01-20260928/private/linux/codex-x86_64-unknown-linux-musl"
+    },
+    {
+      "name": "codex-aarch64-apple-darwin.tar.gz",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.158.0/codex-aarch64-apple-darwin.tar.gz",
+      "archiveSha256": "341c4a08f9ce1935b3007376dc2a3d50a0a89112930e9a474ae61367218f6e8a",
+      "executableSha256": "788a818fbb9596869c7a487554507cb8bdca17584b8671112b23f9e225ba35c8",
+      "platform": "mac",
+      "executablePath": "/Users/agent/CodexProjects/llm-orchestration/tasks/H021-PROTOCOL01-20260928/private/mac/codex-aarch64-apple-darwin"
+    }
+  ],
+  "linuxExecution": "PASS version and generated schema/types only; network-none rootless container",
+  "macExecution": "PASS version/schema generation only",
+  "LICENSE": {
+    "sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+    "url": "https://github.com/openai/codex/blob/064c6b8c737f5b41d171fdda80bd9ef10ad06eb3/LICENSE"
+  },
+  "NOTICE": {
+    "sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+    "url": "https://github.com/openai/codex/blob/064c6b8c737f5b41d171fdda80bd9ef10ad06eb3/NOTICE"
+  },
+  "schemaGeneration": {
+    "platform": "aarch64-apple-darwin",
+    "commands": [
+      "codex app-server generate-json-schema --out output/schemas",
+      "codex app-server generate-ts --out output/types"
+    ]
+  },
+  "schemasManifestSha256": "34eb8ce8e50ca393210234ab0c2df79ef3b8391dfef101da1962a66590d96437",
+  "typesManifestSha256": "a3174aa4b085b8d19d317740f0b92baf12457aba5b431f7055921cce2349473e",
+  "linuxValidation": {
+    "host": "ai-harness",
+    "imageId": "sha256:5ec052185fc8683a36bb0d2e0882bfc709de4ed56cae16fde2b0b64b2180727c",
+    "network": "none",
+    "container": "h021-protocol01-schema (removed)",
+    "schemaMacLinuxEquality": true
+  },
+  "manifestHashEncoding": "SHA256 of UTF-8 compact JSON array entries, separators comma/colon, no trailing newline; sorted relative paths",
+  "schemasManifestFileSha256": "041df798508a083b4fa2f0cdc39b4e13c3267eb41d441a5c02fcb6af4767d7d1",
+  "typesManifestFileSha256": "1778c8c23411f4230656fab9fad0467b026c1614e34d42ccca87c60c61252dcf",
+  "nativeMockExecution": "PASS macOS aarch64 official AppServer, actual two tool IDs + custom patch + second-turn exec read/assert + final; no inference"
+}
