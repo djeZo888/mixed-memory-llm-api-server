@@ -1,0 +1,154 @@
+{
+  "status": "FAILED_NATIVE_QUALIFICATION_NO_RETRY",
+  "utc": "2026-09-28T01:03:42.958825+00:00",
+  "production_identity": {
+    "boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+    "launch_id": "07216daca7ee417bb2574fc4fe39af9f",
+    "manifest_sha256": "952ac402a3f76b31da1e80bdb0b92541b61374737c4850aa8d4a5937fad2fcee",
+    "native": {
+      "container_id": "47e7bb5a091162f7550dd2431505f9ffe1186aa2f939efe891418c995d388bae",
+      "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "pid": 2619835,
+      "pid_start_ticks": "6916378",
+      "started_at": "2026-09-28T00:47:40.406969734Z"
+    },
+    "supervisor": {
+      "invocation_id": "666c1c52cadd453a9dc264b6e1823c5b",
+      "pid": 2619425,
+      "unit": "llm-frontier-mimo.service"
+    }
+  },
+  "primary_failure": {
+    "code": "lifecycle_busy",
+    "cycle_elapsed_s": 0.162932,
+    "hardware_evidence": {
+      "pre": {
+        "hardware_latched": null,
+        "hardware_latched_boot_id": null,
+        "identity": [
+          [
+            "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+            "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+            "validated"
+          ]
+        ],
+        "reason": "hardware_latch_unknown"
+      },
+      "refresh_attempted": false,
+      "stage": "canonical_lease"
+    },
+    "observed_at": "2026-09-28T01:00:16.138523+00:00",
+    "operation": "hardware_latch",
+    "phase": "RUNNING"
+  },
+  "cleanup_failure": {
+    "code": "command_timeout",
+    "observed_at": "2026-09-28T01:00:25.163753+00:00",
+    "operation": "settlement",
+    "phase": "SETTLING"
+  },
+  "capacity": {
+    "native_and_private_verified_at_dispatch": 950000,
+    "largest_completed_prompt_tokens": 14,
+    "failed_full17_counted_expected_tokens": 9540,
+    "failed_full17_actual_processed_tokens": "UNPROVEN"
+  },
+  "tiny_text": {
+    "content": "READY",
+    "correctness": "PASS",
+    "usage": {
+      "completion_tokens": 2,
+      "prompt_tokens": 14,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "total_tokens": 16
+    },
+    "request_sha256": "473f1f4eccca14ab47c92bf19d3b2cb107c77f0ff143cfaae1569b33a4c314ef",
+    "request_sent_utc": "2026-09-28T00:59:56.598077+00:00",
+    "first_output_utc": "2026-09-28T00:59:57.665562+00:00",
+    "last_output_utc": "2026-09-28T00:59:57.665562+00:00",
+    "done_utc": "2026-09-28T00:59:57.812840+00:00",
+    "drained_utc": "2026-09-28T00:59:58.106907+00:00",
+    "done": true,
+    "full_http_drain": true,
+    "owned_stream_disposition": {
+      "drained_monotonic_seconds": 69901.454628946,
+      "drained_utc": "2026-09-28T00:59:58.106907+00:00",
+      "request_sha256": "473f1f4eccca14ab47c92bf19d3b2cb107c77f0ff143cfaae1569b33a4c314ef",
+      "response_id": "chatcmpl-YF44Zwrj2zbN7JIohvBg9X70V7CcLuBj",
+      "status": "OWN_STREAM_TERMINAL_FULL_DRAIN"
+    },
+    "native_settlement": {
+      "is_processing": false,
+      "monotonic_seconds": 69901.735529151,
+      "slot_id": 0,
+      "status": "AUTHENTICATED_SLOT_IDLE_AFTER_FULL_DRAIN",
+      "utc": "2026-09-28T00:59:58.387800+00:00"
+    },
+    "ttft_seconds": 1.975710059996345,
+    "total_seconds": 2.4170550489943707
+  },
+  "tiny_input_processing_seconds": 1.051045,
+  "tiny_output_generation_seconds": 0.147262,
+  "failed_full17": {
+    "status": "FAILED_QUARANTINE_NO_RETRY",
+    "expected_input_tokens": 9540,
+    "request_sent_utc": "2026-09-28T01:00:01.289724+00:00",
+    "request_sha256": "bf254278639b602dcf87ba29fcf9e76c4f8d5fe5a0dcdb7d01aa22c871ae3275",
+    "finished_utc": "2026-09-28T01:00:16.482822+00:00",
+    "error_type": "RuntimeError",
+    "raw_chunks": [],
+    "terminal_sse_events": []
+  },
+  "continuation": "NOT_STARTED",
+  "resource_facts": {
+    "observed_at": "2026-09-28T01:00:11.234380+00:00",
+    "scope": "Last recorded guard before failure, not current availability or current idle proof.",
+    "cgroup": {
+      "memory.current": "671876067328",
+      "memory.events": {
+        "high": "0",
+        "low": "0",
+        "max": "0",
+        "oom": "0",
+        "oom_group_kill": "0",
+        "oom_kill": "0"
+      },
+      "memory.max": "755914244096",
+      "memory.swap.current": "0",
+      "memory.swap.max": "0"
+    },
+    "memory_policy": {
+      "memory.max": "755914244096",
+      "memory.swap.current": "0",
+      "memory.swap.max": "0"
+    },
+    "host_available_bytes": 385988411392,
+    "host_total_bytes": 946820976640,
+    "host_available_percent": 40.766778611281275,
+    "host_swap_diagnostic": {
+      "baseline_used_bytes": 3157229568,
+      "delta_bytes": -12288,
+      "used_bytes": 3157217280
+    },
+    "gpus": [
+      {
+        "free_mib": 9979.0,
+        "temp_c": 38.0,
+        "total_mib": 97887.0,
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+      }
+    ]
+  },
+  "qualifier_emitted": false,
+  "build_qualification_executed": false,
+  "persistent_enable_executed": false,
+  "W2_inference_authorized_by_this_task": false,
+  "LAST_dispatched": false,
+  "strict_true_enforcement": "NOT_TESTED",
+  "current4K16K64K": "NOT_TESTED",
+  "near950K": "NOT_TESTED",
+  "replay_permitted": false
+}

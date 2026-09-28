@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "prior_task": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928",
+  "raw_copied": false,
+  "artifacts": {
+    "ROOT-FAILURE-LIVE05.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/ROOT-FAILURE-LIVE05.json",
+      "sha256": "f682a1c3c91b3835240eb209fa35c7c1376af72141a0956a0093891654f9ddb8"
+    },
+    "ROOT-RECOVERY-CHECKPOINT.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/ROOT-RECOVERY-CHECKPOINT.json",
+      "sha256": "dfe6ca32f04a52a6d147ea090daa49fd71a04a4f4b49d1d8eca3e00e986a3f8d"
+    },
+    "ROOT-ROLLBACK-START.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/ROOT-ROLLBACK-START.json",
+      "sha256": "512936c60dc8df166818993fc7ebdab1343303b5fccb69fb96a2e32418f6a73c"
+    },
+    "ROOT-LAST-PREP-LIVE05.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/ROOT-LAST-PREP-LIVE05.json",
+      "sha256": "e284f8cf54bee607092eb871cbb8b2a27cb74959b4a8bdd81c4251e9d38fb057"
+    },
+    "ROOT-DISPATCH-LIVE05.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/ROOT-DISPATCH-LIVE05.json",
+      "sha256": "f03f2924a045afdb43a5533f103586d7eac7de9e5c31b6987f3a66cb4b04941e"
+    },
+    "private/EXACT-PHYSICAL-SETTLEMENT-LIVE05.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/EXACT-PHYSICAL-SETTLEMENT-LIVE05.json",
+      "sha256": "bbfb136a19321e32d7e11882a6d4c6acf978aa3518a0a398197152639a74899c"
+    },
+    "private/LAST-RETIME.diff": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/LAST-RETIME.diff",
+      "sha256": "ec2623e91deed48bbd4ca8f72c19c80abaa83bf282ded1aba2b64dda0902b580"
+    },
+    "current-short02/CLIENT.json": {
+      "sha256": "3b82106a9735edf29f7c0ba0982c7bbebcc471f11851320bd50d933c0bc4f612",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/CLIENT.json",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/CLIENT.json"
+    },
+    "current-short02/ALLOCATION.json": {
+      "sha256": "b09f22e3b493e3263a43e057ea8a24982b11f567ab008b3878bdbb5e3a4c6002",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/ALLOCATION.json",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/ALLOCATION.json"
+    },
+    "current-short02/GUARD-PROGRESS.json": {
+      "sha256": "aa8a192892abaa97ba342b1133e3f3b8be7a4105ca77e9f9e7e225c093b53000",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/GUARD-PROGRESS.json",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/GUARD-PROGRESS.json"
+    },
+    "current-short02/DISPATCH.json": {
+      "sha256": "aab17f9fbd5f9b4a27bc593f67dd3403c3b90ca6db05dff1f08cc67ec63f18c3",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/DISPATCH.json",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/DISPATCH.json"
+    },
+    "current-short02/DISPATCH-ATTEMPT.json": {
+      "sha256": "1bcf148ee16bc4514854af32ed45ea1a015daa1bdfa90f72ed645d8b931bb551",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/DISPATCH-ATTEMPT.json",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/DISPATCH-ATTEMPT.json"
+    },
+    "current-short02/FINAL17-READ.txt": {
+      "sha256": "71ec1e3da054c590303251a90f199e725cbceac2e530e5ce0512aaeb4791b8c0",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/FINAL17-READ.txt",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/FINAL17-READ.txt"
+    },
+    "current-short02/SHORT-TEXT.json": {
+      "sha256": "86bcbba2deebb170941302267c9dd956e620cd41ad6e4575281ad6febb9ef191",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/SHORT-TEXT.json",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/SHORT-TEXT.json"
+    },
+    "current-short02/SHORT-TEXT-REQUEST.json": {
+      "sha256": "473f1f4eccca14ab47c92bf19d3b2cb107c77f0ff143cfaae1569b33a4c314ef",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/SHORT-TEXT-REQUEST.json",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/SHORT-TEXT-REQUEST.json"
+    },
+    "current-short02/SHORT-TEXT-RAW.jsonl": {
+      "sha256": "97cf061c0816d46e2075874d9418ac1c45183e260551cda252358c2bff32e239",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/SHORT-TEXT-RAW.jsonl",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/SHORT-TEXT-RAW.jsonl"
+    },
+    "current-short02/SHORT-TEXT-PROGRESS.jsonl": {
+      "sha256": "42bfdb6a923db8f4d0d8c5d1f5f78e7117dc178cbb8bbb0cb80dc6f69305f777",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/SHORT-TEXT-PROGRESS.jsonl",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/SHORT-TEXT-PROGRESS.jsonl"
+    },
+    "current-short02/SHORT-TEXT-GUARD-AFTER.json": {
+      "sha256": "5f9f6fe614e3c30ff2dcf9f3dc39ea7ba3e6beb31780cf36a9968cecf2343715",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/SHORT-TEXT-GUARD-AFTER.json",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/SHORT-TEXT-GUARD-AFTER.json"
+    },
+    "current-short02/FINAL17-TURN1.json": {
+      "sha256": "4254663b8aa800fa6de8c6f774c9b1b3da20d904faa682aca8c6fdded9b54a21",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/FINAL17-TURN1.json",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/FINAL17-TURN1.json"
+    },
+    "current-short02/FINAL17-TURN1-REQUEST.json": {
+      "sha256": "bf254278639b602dcf87ba29fcf9e76c4f8d5fe5a0dcdb7d01aa22c871ae3275",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/FINAL17-TURN1-REQUEST.json",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/FINAL17-TURN1-REQUEST.json"
+    },
+    "current-short02/FINAL17-TURN1-RAW.jsonl": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/FINAL17-TURN1-RAW.jsonl",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/FINAL17-TURN1-RAW.jsonl"
+    },
+    "current-short02/FINAL17-TURN1-PROGRESS.jsonl": {
+      "sha256": "bc03fd745fca6b8a5c18f28941c3341fb921fed225cd7950b042a4ca92e8dfae",
+      "remote_path": "/data/logs/H018-20260928/worker1-short02/FINAL17-TURN1-PROGRESS.jsonl",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-05-20260928/private/live05-short02/FINAL17-TURN1-PROGRESS.jsonl"
+    },
+    "recovery06/ROOT-READY.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-RECOVERY-06-20260928/ROOT-READY.json",
+      "sha256": "192d13e22cb1fde9c6f8d9280e916b0c2d940a6884e8f8aed5d891da51f9284e"
+    },
+    "recovery06/READ-GLM-READY.py": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-RECOVERY-06-20260928/READ-GLM-READY.py",
+      "sha256": "2ecdca66f7e41860e68ec8f22c96425614ecfde8636f1bcd6af3f9c854ba1e0c"
+    },
+    "recovery06/private/read-glm-supported.py": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-RECOVERY-06-20260928/private/read-glm-supported.py",
+      "sha256": "63936c437672fbb180180cf9a1e2a39a535e704a8db4cc5c647b4c81c82969f6"
+    }
+  },
+  "current_source_sha256": {
+    "scripts/h018/live05/enable_selected.py": "d143918b2c8b8ee81c1b265b16b4efcfceed07211ccf57028a209a09b718bd1d",
+    "scripts/h018/live05/retime_last.py": "9ef3cc3ed87b68d9d8c6ba89766f16685ce49e0ec06157fe70544400929e581c"
+  },
+  "last_client_already_in_base": {
+    "path": "scripts/h018/last950k/client.py",
+    "base_commit": "093c6bdaa7939bc3bec36e206745c5ed98fa9bed",
+    "sha256": "28d61829c6b28067b59db4520ef72a94d5b230cfb28058f2cfe8984525b1f63b"
+  },
+  "swap_fix_history_reused": {
+    "commit": "637b684",
+    "proof_directory": "reports/h018-swap-repair-20260928",
+    "retested": false
+  },
+  "native_event_timeline_source": {
+    "path": "/Users/agent/.codex/sessions/2026/09/28/rollout-2026-09-28T02-58-36-01a0e585-588d-75e2-9382-bc279dfcffcf.jsonl",
+    "scope": "Referenced local events 62/64,69/71,76/78/79 only; raw stream preserved in place. Exact decoded command hashes are in SOURCE-REVIEW.md."
+  }
+}
