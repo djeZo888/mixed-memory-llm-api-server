@@ -6,6 +6,10 @@ import { HarnessStore } from '../src/store';
 import { fixtureTransport, snapshot } from './fixtures';
 it('reuses selected Codex artifact as attachment and never claims native image recognition', async () => {
   const { transport } = fixtureTransport();
+  transport.health.mockResolvedValue({
+    visionAvailable: false,
+    engines: { codex: { available: true } },
+  });
   const file = {
     id: 'artifact-a',
     name: 'notes.txt',
@@ -28,4 +32,20 @@ it('reuses selected Codex artifact as attachment and never claims native image r
   expect(
     screen.getByText(/Native image, audio and video recognition is unavailable/),
   ).toBeInTheDocument();
+});
+it('disabled Codex keeps history visible and composer read-only', async () => {
+  const { transport } = fixtureTransport();
+  transport.snapshot.mockImplementation(async (id) => ({
+    ...snapshot(id),
+    session: { ...snapshot(id).session, engineKind: 'codex' },
+    messages: [
+      { id: 'old', role: 'user', content: 'Retained history', createdAt: '2026-09-28T06:00:00Z' },
+    ],
+  }));
+  const store = new HarnessStore(transport);
+  render(<App store={store} />);
+  expect(await screen.findByText(/Codex preview is disabled/)).toBeInTheDocument();
+  expect(screen.getByText('Retained history')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled();
+  expect(transport.send).not.toHaveBeenCalled();
 });

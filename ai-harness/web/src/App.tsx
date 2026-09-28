@@ -142,7 +142,7 @@ export function App({ store }: { store: HarnessStore }) {
           </select>
         </label>
         {state.codexHealth && (
-          <details className="sidebar-hint">
+          <details className="sidebar-hint codex-capabilities">
             <summary>Codex preview capabilities</summary>
             <p>
               {state.codexHealth.configured ? 'Configured' : 'Not configured'} ·{' '}
@@ -157,7 +157,19 @@ export function App({ store }: { store: HarnessStore }) {
               {Object.entries(state.codexHealth.capabilityDetails ?? {}).map(
                 ([name, capability]) => (
                   <li key={name}>
-                    {name}: {capability.supported ? 'Supported' : 'Unavailable'} (
+                    {{
+                      nativeDelegation: 'Native delegation',
+                      nativeMedia: 'Native media',
+                      compaction: 'Compaction',
+                      attachments: 'File attachments',
+                      search: 'Search',
+                      browser: 'Browser',
+                      pdf: 'PDF',
+                      image: 'Image specialist',
+                      coding: 'Coding',
+                      frontier: 'MiMo frontier',
+                    }[name] ?? name}
+                    : {capability.supported ? 'Supported' : 'Unavailable'} (
                     {capability.qualification.replaceAll('_', ' ')}) — {capability.reason}
                   </li>
                 ),
@@ -276,7 +288,14 @@ export function App({ store }: { store: HarnessStore }) {
             )}
           </div>
         )}
-        {thread && <WorkingStatus thread={thread} />}
+        {thread && (
+          <WorkingStatus
+            thread={thread}
+            unavailable={
+              thread.session.engineKind === 'codex' && state.healthLoaded && !state.codexAvailable
+            }
+          />
+        )}
         {state.error && (
           <div className="error-banner" role="alert">
             <span>{state.error}</span>

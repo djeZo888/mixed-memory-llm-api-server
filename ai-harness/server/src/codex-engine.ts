@@ -173,7 +173,7 @@ export class CodexEngine implements Engine {
         compactionId,
         status: "failed",
       });
-    if (this.compactRequested && !this.compacting.size)
+    if (this.compactRequested && !this.compactObserved)
       this.options.onUpdate({
         type: "compaction",
         compactionId: "requested-compaction",
@@ -518,6 +518,15 @@ export class CodexEngine implements Engine {
           fault(
             "Native items or descendants are incomplete; completion cannot be accepted",
           );
+        if (p.turn.status !== "completed") {
+          for (const compactionId of this.compacting)
+            this.options.onUpdate({
+              type: "compaction",
+              compactionId,
+              status: "failed",
+            });
+          this.compacting.clear();
+        }
         this.completedTurn = {
           id: this.turnId!,
           status: String(p.turn.status),

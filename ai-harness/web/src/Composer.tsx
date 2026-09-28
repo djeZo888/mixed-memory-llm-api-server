@@ -45,6 +45,7 @@ export function Composer({
   const attachments = lookup(state.attachments, id) ?? [];
   const imageReferences = lookup(state.imageReferences, id) ?? [];
   const codex = state.thread?.session.engineKind === 'codex';
+  const codexUnavailable = codex && state.healthLoaded && state.codexAvailable !== true;
   const imageUploads =
     !codex && (state.visionAvailable || imageReferencesAvailable(state.imageCapabilities));
   const reusableFiles = [
@@ -53,7 +54,13 @@ export function Composer({
   ].filter((file) => !/^(image|audio|video)\//i.test(file.mimeType));
   const busy = (action: string) => state.busy[busyKey(action, id)];
   const locked =
-    uploading || busy('send') || busy('upload') || busy('delete') || state.loading || !state.thread;
+    codexUnavailable ||
+    uploading ||
+    busy('send') ||
+    busy('upload') ||
+    busy('delete') ||
+    state.loading ||
+    !state.thread;
   const active = isActive(state.thread?.session.status) || pendingRunIds(state, id).length > 0;
   const imageActive = state.thread?.imageJobs?.some(imageJobActive) ?? false;
   const availability = state.healthLoaded ? availabilityNotice(state.serviceAvailability) : '';
@@ -358,6 +365,11 @@ export function Composer({
           </div>
         </div>
       </form>
+      {codexUnavailable && (
+        <p className="composer-queue-note" role="status">
+          Codex preview is disabled. This chat’s history and files remain available.
+        </p>
+      )}
       {active && (
         <p className="composer-queue-note">
           New messages queue for the next turn. Stop cancels active and queued turns.
