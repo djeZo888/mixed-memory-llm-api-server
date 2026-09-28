@@ -318,7 +318,11 @@ class Admission {
     } catch {
       /* Fail closed locally; previous durable active remains unsafe. */
     }
+    // Capture THIS owner's durable outcome before pumping a queued successor,
+    // which can synchronously change the same mutable lane back to active.
+    const ownerReleased = lane.state === "idle";
     this.notifyAvailabilityChanged();
+    return ownerReleased;
   }
   notifyAvailabilityChanged() {
     if (this.stopped) return;
@@ -705,8 +709,8 @@ export function createGateway(options: GatewayOptions): Gateway {
       );
     const ownedRequest = ownership.begin(sessionId);
     const settleLane = (lane: Lane, confirmed: boolean) => {
-      selectedAdmission.settle(lane, confirmed);
-      try { ownership.transition(ownedRequest, confirmed && lane.state === "idle" ? "settled" : "uncertain", lane.upstream.alias); } catch { /* ledger retains uncertainty; callback must never crash transport */ }
+      const ownerReleased = selectedAdmission.settle(lane, confirmed);
+      try { ownership.transition(ownedRequest, confirmed && ownerReleased ? "settled" : "uncertain", lane.upstream.alias); } catch { /* ledger retains uncertainty; callback must never crash transport */ }
     };
     const record: FrontierRecord | undefined = frontier
       ? {
@@ -757,7 +761,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       recordState(cancelled.signal.aborted ? "cancelled" : "rejected");
       reply.raw.removeListener("close", disconnect);
       if (disconnected) return reply;
-      if (tokens.get(token) !== sessionId) throw new GatewayError(401,"unauthorized","Inference authorization required");
+      if (!frontier && tokens.get(token) !== sessionId) throw new GatewayError(401,"unauthorized","Inference authorization required");
       throw error;
     }
     if (disconnected) {
@@ -851,7 +855,7 @@ export function createGateway(options: GatewayOptions): Gateway {
           throw new ApiError(413,"codex_context_full","Input plus reserved output exceeds model context");
         if (cancelled.signal.aborted || tokens.get(token) !== sessionId) throw new ApiError(499,"cancelled","Request cancelled before dispatch");
         if (selectedAdmission.available(lane).dispatch !== "allow") throw new ApiError(503,"lane_unavailable","Lane unavailable after count");
-      } catch (error) { settleLane(lane,true); reply.raw.removeListener("close",disconnect); throw error; }
+      } catch (error) { settleLane(lane,true); reply.raw.removeListener("close",disconnect); if (cancelled.signal.aborted) throw new ApiError(499,"cancelled","Request cancelled before dispatch"); throw error; }
     }
     let mimoAdmission: MimoAdmission | undefined;
     let mimoPayload: string | undefined;
@@ -1079,13 +1083,6 @@ export function createGateway(options: GatewayOptions): Gateway {
               return;
             }
             observe.end();
-            if (bridgeSuccess && !bridgeInvalid) { try { bridge.end(); } catch {
-              bridgeInvalid = true;
-              if (!disconnected && !reply.raw.destroyed) {
-                if (!reply.raw.headersSent) sendRawError(reply,502,"responses_stream_invalid","Responses stream truncated or missing usage"); else reply.raw.destroy();
-              }
-              disconnected = true;
-            } }
             const status = response.statusCode ?? 502;
             const rejectedBeforeGeneration = [
               400, 401, 403, 404, 405, 413, 415, 422, 429,
@@ -1098,8 +1095,17 @@ export function createGateway(options: GatewayOptions): Gateway {
               response.complete &&
               (rejectedBeforeGeneration ||
                 (success && (body.stream !== true || observe.terminal)));
-            if (!disconnected && !reply.raw.destroyed) reply.raw.end();
+            // Release the proven native inference owner before exposing tool
+            // completions: parents cannot retain a GPU permit while tools run.
             settle(confirmed);
+            if (bridgeSuccess && !bridgeInvalid) { try { bridge.end(); } catch {
+              bridgeInvalid = true;
+              if (!disconnected && !reply.raw.destroyed) {
+                if (!reply.raw.headersSent) sendRawError(reply,502,"responses_stream_invalid","Responses stream truncated or missing usage"); else reply.raw.destroy();
+              }
+              disconnected = true;
+            } }
+            if (!disconnected && !reply.raw.destroyed) reply.raw.end();
           });
           response.once("error", () =>
             fail("upstream_interrupted", "Inference transport was interrupted"),

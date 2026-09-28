@@ -46,3 +46,6 @@ test("interleaved parallel tool/result ordering rejects before generating invali
 test("all actual native five-request tool/edit/read/continuation captures translate without dropping results",()=>{
  const all=JSON.parse(readFileSync(new URL('./fixtures/codex/native-tool-continuation.json',import.meta.url),'utf8'));assert.equal(all.length,5);all.forEach((b:any)=>assert.doesNotThrow(()=>translateResponses(b)));const last=translateResponses(all.at(-1));assert.ok(last.body.messages.some((m:any)=>m.role==='tool'&&m.tool_call_id==='call_native_read'&&m.content.includes('native followup read PASS')));assert.equal(last.body.reasoning_effort,'none');assert.equal(translateResponses(request(),1024).body.max_tokens,1024);
 });
+test("tool completion waits for native HTTP drain, not merely an SSE DONE marker",()=>{
+ let wire='';const s=new ResponsesStream(translateResponses(request()),x=>wire+=x);s.push(chunk({choices:[{delta:{tool_calls:[{index:0,id:'call_wait',type:'function',function:{name:'get_goal',arguments:'{}'}}]},finish_reason:'tool_calls'}]}));s.push(chunk({choices:[],usage:{prompt_tokens:5,completion_tokens:2}}));s.push(Buffer.from('data: [DONE]\n\n'));assert.doesNotMatch(wire,/response.output_item.done|response.completed/);s.end();assert.match(wire,/response.output_item.done/);assert.match(wire,/response.completed/);assert.throws(()=>s.end());
+});

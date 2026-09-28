@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""Reuse existing container ownership/security fixtures for Codex; fake Podman only."""
+import importlib.util
+import hashlib
+from pathlib import Path
+import unittest
+
+spec = importlib.util.spec_from_file_location('minimax_launcher_fixture', Path(__file__).with_name('test-run-engine.py'))
+base = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(base)
+base.LAUNCHER = Path(__file__).resolve().parents[1] / 'run-codex.sh'
+base.REVISION = '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3'
+base.PATCHSET = hashlib.sha256(b''.join((base.LAUNCHER.parent/'codex'/n).read_bytes() for n in ['config.toml','requirements.toml','models.json'])).hexdigest()
+
+class CodexLauncherContract(base.LauncherContract):
+    def test_acp_transport_mounts_and_environment_allowlist(self):
+        self.env.update(OPENAI_API_KEY='fixture-never-export', SSH_AUTH_SOCK='/private/ssh', CODEX_HOME='/private/codex', NODE_OPTIONS='--inspect', CONTAINER_HOST='ssh://wrong', HTTP_PROXY='http://wrong')
+        request='{"id":1,"method":"initialize"}\n'
+        result=self.invoke(text=request)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(result.stdout,request)
+        calls=self.calls();run=calls[-3]['argv'];name=run[run.index('--name')+1]
+        for c in calls:
+            self.assertFalse({'OPENAI_API_KEY','SSH_AUTH_SOCK','CODEX_HOME','NODE_OPTIONS','CONTAINER_HOST','HTTP_PROXY'} & c['env'].keys())
+            self.assertNotIn(base.TOKEN,' '.join(c['argv']))
+        mounts=[run[i+1] for i,v in enumerate(run) if v=='--volume']
+        self.assertEqual(mounts,[f'{self.profile}:{self.profile}:rw,rprivate',f'{self.workspace}:{self.workspace}:rw,rprivate',f'{base.LAUNCHER.parent}/codex/config.toml:{self.profile}/codex-home/config.toml:ro,rprivate'])
+        env=[run[i+1] for i,v in enumerate(run) if v=='--env']
+        self.assertIn(f'CODEX_HOME={self.profile}/codex-home',env)
+        self.assertIn(f'HOME={self.profile}/codex-home/home',env)
+        self.assertFalse(any('MINIMAX' in x or 'OPENAI' in x for x in env))
+        for flag in ['--pull=never','--read-only','--init','--cgroup-parent=aiharnesstasks.slice','no-new-privileges']:self.assertIn(flag,run)
+        self.assertEqual(calls[-2]['argv'],['--remote=false','rm','--force','--time','20','--ignore',name])
+        self.assertEqual(calls[-1]['argv'],['--remote=false','container','exists',name])
+    def test_symlinked_engine_state_rejected(self):
+        (self.profile/'codex-home').symlink_to(self.home,target_is_directory=True)
+        result=self.invoke();self.assertEqual(result.returncode,64)
+        self.assertFalse(any('run' in c['argv'] for c in self.calls()))
+    def test_symlinked_engine_home_rejected(self):
+        (self.profile/'codex-home').mkdir()
+        (self.profile/'codex-home'/'home').symlink_to(self.home,target_is_directory=True)
+        self.assertEqual(self.invoke().returncode,64)
+        self.assertFalse(any('run' in c['argv'] for c in self.calls()))
+    def test_help_does_not_start_podman(self):
+        result=self.invoke(['--help']);self.assertEqual(result.returncode,0)
+        self.assertIn('private AppServer stdio',result.stdout);self.assertFalse(self.calls())
+
+if __name__=='__main__': unittest.main()
